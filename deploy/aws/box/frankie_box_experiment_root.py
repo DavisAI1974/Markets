@@ -56,6 +56,21 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
     # A partial member is how a trading day is cut from its UTC partitions (the take up to the 17:00 ET halt; the rest
     # is the next day's): it is the whole day, carried and listed in the binding, never a reason to refuse the day.
     partial_members = list(receipt.get('partial_members') or [])
+    # A day that opens at the prior day's halt (a tail member) opens with the prior day's closing book, the same one its
+    # ingest opened with (Greg, 2026-09-29): read again in place from the prior day's sealed ingest and checked against
+    # what this day's ingest recorded; the legacy pass replays the day's records onto it. Absent = listed, never refused.
+    tail_members = list(receipt.get('tail_members_ingested') or receipt.get('tail_members') or [])
+    opening_book, opening_state = receipt.get('opening_book'), None
+    if opening_book and opening_book.get('status') == 'seeded':
+        sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+        from research.kalshi.frankie_boss import opening_book as opening_books
+        opening_state, again = opening_books.load(opening_book['receipt'])
+        if any(again[k] != opening_book[k] for k in ('checkpoint_sha256', 'checkpoint_state_hash', 'adapter_state_hash')):
+            raise ValueError('the prior day\'s closing book differs from the one this day\'s ingest opened with')
+    elif tail_members:
+        opening_book = dict(opening_book or {}, status='absent',
+                            listed='this day opens at the prior halt and its ingest had no opening book; the legacy pass '
+                                   'starts from an empty book')
     directory = Path(receipt_path).parent
     journal = directory / receipt['journal_file']
     if journal.stat().st_size != receipt['journal_bytes'] or _sha256_file(journal) != receipt['journal_sha256']:
@@ -84,13 +99,15 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
                    'authorship is needed', ingestion_receipt=receipt_pin, completion=witness(completion_path),
                    calculation_pins=witness(output / 'calculation-pins.json'), container=container, manifest=manifest,
                    record_count=receipt['record_count'], journal_count=receipt['journal_count'],
-                   journal_hash=receipt['journal_hash'], day_role=day_role, partial_members=partial_members)
+                   journal_hash=receipt['journal_hash'], day_role=day_role, partial_members=partial_members,
+                   tail_members=tail_members, opening_book=opening_book)
     save_new(output / 'source-binding.json', binding)
     from frankie_box_boss_session import Session
     session = Session(output, day, '00', None)
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
     session.phase('deriving', 'experiment ROOT: the legacy pass on the sealed day; bedrock off')
-    result = session.derive(source=SimpleNamespace(container=container), bedrock=False, digest=digest)
+    result = session.derive(source=SimpleNamespace(container=container), bedrock=False, digest=digest,
+                            opening_adapter_state=opening_state, opening_book=opening_book)
     # Greg, 2026-09-29: no data is dropped even when it is not all complete; a calculation that cannot use a record
     # skips over it, the day is not skipped. Producer failures stay in derive.json (and the failures spool) with their
     # record index and error, and are named in the receipt; the day's calculations go on to the next steps.
@@ -103,7 +120,7 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
                 root_processes=result.get('root_processes'),
                 not_run=[dict(process=k, reason='switched off for the experiment (Greg, 2026-09-29)')
                          for k, v in (result.get('root_processes') or {}).items() if v == 'skipped'],
-                failure_count=failures,
+                failure_count=failures, opening_book=opening_book,
                 failures_note=(None if not failures else 'records a producer could not use; each listed with its index '
                                'and error in derive.json / work/derived/.rows/failures.jsonl; every other record calculated'),
                 model_calls=0, source_replays=0, source_writes=0,

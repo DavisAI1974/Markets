@@ -104,7 +104,7 @@ instead of skipping [the day]." Applied in 91cac9ea:
 - Still stopping, on purpose (listed): duplicates (two sealed ingests / two ROOTs of a day, a day searched twice), the
   leakage gate (a source that fails is not placed, listed), a day with no book frames (the search has no axis).
 
-## The midweek manifest question (open, Greg's call)
+## The midweek manifest question (DECIDED later the same day: tail take + the prior day's closing book; built, see below)
 A trading day opens 18:00 ET the day before, so Tuesday 20211005 = the TAIL of the 20211004 UTC partition (after the
 21:00Z halt) + the HEAD of the 20211005 partition (up to its halt). `derive_trading_day_manifest.py` refuses a tail
 take ("ingest that day from the whole block"), and `ingest_block_sources.py` can only stop early in a partition
@@ -113,8 +113,50 @@ Options: (a) teach the derivation + ingest tool a TAIL take (start at the halt b
 already measured the before/after-halt counts per partition); (b) ingest the Mon-Wed block whole and have ROOT split
 it by trading day. (a) keeps one journal per day, which is what every experiment step expects. Nothing drops either way.
 
+## Later still: Tuesday and Wednesday built (Greg: "We will be running Tuesdays and Wednesdays for a while";
+"build the remaining missing hrs for Tuesday so we can combine with what we already have for Tue to get a complete tue
+book"; then "Go, build the three pieces and if possible ingest wed separately"). Built, NOT run:
+- Manifests `blocks/BLOCK_20211005_SOURCE_MANIFEST.json` (2,104,864 records: the 19,182 after the 21:00Z halt of the
+  20211004 partition + 2,085,682 before the halt of 20211005; hash 4bb86f47) and `BLOCK_20211006_SOURCE_MANIFEST.json`
+  (2,304,995: 26,248 + 2,278,747; hash 67c3d701). `derive_trading_day_manifest.py` now writes a TAIL member
+  (`tail_members`: skip = the prior day's pre-halt records, take = the post-halt records; only as the first member).
+  Monday's manifest re-derives byte for byte (the key is written only when a day has a tail).
+- The book at the halt: Monday's ingest never took Tuesday's first 2 hours, and a book starting empty at the halt would
+  miss every order resting across it. `opening_book.py` reads the PRIOR day's closing book from its sealed ingest's
+  `builder-checkpoint.c15.json` in place (sha256 against the receipt, state hash against the receipt and its own body)
+  for both receipt kinds: a normal ingest (Tuesday for Wednesday) and Monday's recovery receipt
+  (`blocks/MONDAY_RECOVERY_RECEIPT_20260922.json`, checkpoint 0262b0e9 beside the Monday container). Restored with
+  `mbo_resume_state.restore_adapter_state` (exact round trip), counters zeroed: the day's counts are its own, the book
+  is real. Nothing re-ingested, nothing copied.
+- `ingest_block_sources.py --opening-receipt`: decodes and skips the tail partition's prior-day records (never appended
+  or counted), verifies the cut on both sides (last skipped record = the prior day's session, first taken = this day's)
+  and that the opening book ends exactly at that cut (same partition, its take = this skip, same session), seeds the
+  builder's adapter before the first record. The conformance drain replays the prefix chain only, never the book.
+  Receipt: `tail_members_ingested`, `opening_book` (descriptor; `absent` and listed when no receipt is given).
+- ROOT: `Session.derive(opening_adapter_state=, opening_book=)`; `frankie_box_experiment_root.py` reads the ingest
+  receipt's `opening_book`, loads the same checkpoint again and checks it equals what the ingest opened with, then the
+  legacy pass replays the day onto it (derive.json carries `opening_book`).
+- `frankie_box_ingest_block.sh`: `OPENING_RECEIPT` (the first day's prior receipt: `$ROOT/work/ingest-*/ingestion-
+  receipt.json` or Monday's committed recovery receipt path), and `MANIFEST` may be a comma list for fetch/ingest: each
+  day its own journal, each after the first opening with the book the one before closed with; a failed day stops the
+  list (the next waits on its book). Fetch hard-links a partition already verified under another block (Tuesday's
+  20211004 is in Monday's block), downloading only what is missing.
+- Orchestrator: a day with a tail member records `opens_after` (the prior day) and its ingest WAITS on that day's sealed
+  ingest (Monday = the committed recovery receipt); plan override `opening_receipt`.
+- Not yet: the teacher-only step (not built) must seed the same book for a midweek day's walk; the Monday checkpoint's
+  presence at `/opt/frankie-box/work/ingest-20211004-ingest-1790057801/builder-checkpoint.c15.json` is read from the
+  recovery receipt, not probed (the box is stopped); a missing file fails the ingest at its start, before any record.
+
+Tonight's dispatch (each on Greg's go; box `i-035994afa8bdf66a5` stopped): start the box; restage the tip; fetch with
+presigns for glbx-mdp3-20211004/05/06 (`ACTION=fetch MANIFEST=<Tue>,<Wed>`); then ONE ingest dispatch through
+`frankie_box_run.yml` (timeout ~4 h: about 1.1 h per day at Monday's 1.77 ms/record plus each day's conformance drain):
+`ACTION=ingest MANIFEST=research/kalshi/frankie_boss/blocks/BLOCK_20211005_SOURCE_MANIFEST.json,research/kalshi/
+frankie_boss/blocks/BLOCK_20211006_SOURCE_MANIFEST.json OPENING_RECEIPT=research/kalshi/frankie_boss/blocks/
+MONDAY_RECOVERY_RECEIPT_20260922.json`, with the progress probe on it. Then each day's ROOT (`frankie_box_experiment_root.sh`,
+DIGEST off unless it is a classroom-arm day).
+
 ## Next (in order)
-0. Greg's call on the midweek manifests (section above); then build it.
+0. DONE (built, not run): the midweek manifests (section above). Run Tue + Wed ingest on Greg's go.
 1. The teacher-only batch step `frankie_box_experiment_teacher.py/.sh` (DAYS=<list>; each day its own fresh walk of
    JournalTeacherR3 on its sealed journal, in parallel; writes `DIPOLE_CLASSROOM_SOURCE_V1` to
    `/opt/frankie-box/work/experiment-teacher-rows/<day>/host-dipole-classroom-source.c15.json`; skips days a launch

@@ -9,8 +9,12 @@ day D takes, from each partition, the pre-halt records labelled D plus the post-
 
 A partition whose contribution is its WHOLE file is a full member; one whose contribution is exactly its pre-halt
 records (a leading take) is a partial member (`partial_members`, which ingest_block_sources stops at and verifies at
-the boundary). A contribution that would be a TAIL (post-halt records only, the prior partition of a weekday) is refused
-here: that day is ingested from the whole block, not by itself. The members keep their sha256 and size (the whole file),
+the boundary). A contribution of post-halt records only (a TAIL: the prior partition of a Tuesday-Friday) is a tail
+member (`tail_members`, Greg 2026-09-29: "build the remaining missing hrs for Tuesday"): ingest_block_sources skips its
+declared pre-halt records (the prior day's, never counted), verifies the cut on both sides, and opens the day's book
+from the prior day's sealed ingest (opening_book.py). A tail can only open the stream (the first contributing
+partition). `tail_members` is written only when a day has one, so a manifest without a tail (Monday's) re-derives byte
+for byte as before. The members keep their sha256 and size (the whole file),
 `mbo_records` becomes the take, and the manifest hash is recomputed by raw_mbo_source_manifest.manifest_hash. The
 derivation is a pure function of the block manifest and the trading day (no clock in the body; the chat-9 ship review), so
 a committed trading-day manifest is re-derivable byte for byte and its hash confirmable by anyone; provenance is
@@ -88,16 +92,26 @@ def derive(block, trading_day):
     if any(s['mbo_records'] != s['before_halt'] + s['after_halt'] for s in sessions_in_replay_order(block)):
         raise ValueError('the block manifest sessions do not reconcile to their partitions')
     by_key = {s['member_key']: s for s in block['sources']}
-    sources, sessions, partial = [], [], []
+    sources, sessions, partial, tail = [], [], [], []
     for entry, take, kind in contributions(block, trading_day):
         if kind == 'none':
             continue
-        if kind == 'tail':
-            raise ValueError(f'{entry["member_key"]} contributes a tail (post-halt records only) to {trading_day}; '
-                             'a tail take is not supported by itself: ingest that day from the whole block')
         member = dict(by_key[entry['member_key']])
         member['member_index'] = len(sources)
-        if kind == 'leading':
+        if kind == 'tail':
+            if sources:
+                raise ValueError(f'{entry["member_key"]} contributes a tail to {trading_day} after another partition; a tail '
+                                 'opens the trading day, so it must be the first contributing partition')
+            if take != entry['after_halt']:
+                raise ValueError(f'{entry["member_key"]} contributes {take} records to {trading_day}, not its post-halt '
+                                 f'{entry["after_halt"]}; a tail is exactly the records after the halt')
+            tail.append(dict(member_key=member['member_key'], partition_mbo_records=member['mbo_records'],
+                             skip=entry['before_halt'], take=take,
+                             reason='records at or after the 21:00Z halt open this trading day; the records before it '
+                                    'are the prior trading day (skipped, never counted); the book opens from the prior '
+                                    'day\'s sealed ingest'))
+            member['mbo_records'] = take
+        elif kind == 'leading':
             partial.append(dict(member_key=member['member_key'], partition_mbo_records=member['mbo_records'], take=take,
                                 reason='records before the 21:00Z halt belong to this trading day; the rest are the next day'))
             member['mbo_records'] = take
@@ -110,6 +124,8 @@ def derive(block, trading_day):
                 total_mbo_records=sum(s['mbo_records'] for s in sources), partial_members=partial,
                 derived_from=dict(block=block['block'], manifest_hash=block['manifest_hash']),
                 ingested=False, scheduled=False, prefixes_built=False)   # no clock in the hashed body: the derivation is a pure function
+    if tail:
+        body['tail_members'] = tail
     body['manifest_hash'] = manifest_hash(body)
     block_source_scope(body, expected_manifest_hash=body['manifest_hash'])      # the validator's word, before anything is written
     return body
@@ -128,6 +144,7 @@ def main():
     print(json.dumps(dict(status='trading_day_manifest_derived', trading_day=args.trading_day, out=args.out,
                           members=[(s['member_key'], s['mbo_records']) for s in body['sources']],
                           total_mbo_records=body['total_mbo_records'], partial_members=body['partial_members'],
+                          tail_members=body.get('tail_members', []),
                           manifest_hash=body['manifest_hash'])))
 
 

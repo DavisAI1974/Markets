@@ -5,7 +5,12 @@
 #   canary  the ingest tool on the first CANARY records: the measured rate, no completion claim
 #   ingest  the ingest tool to completion (the pinned conformance stack reconciles the declared counts)
 #   status  what is on the box: partitions, work directories, receipts (touches no git: the current checkout is read)
-# Inputs: ACTION, MANIFEST (repo-relative, default the Monday trading day), WORKERS (default 31: the parent keeps a CPU),
+# Inputs: ACTION, MANIFEST (repo-relative, default the Monday trading day; for fetch and ingest a COMMA LIST of trading
+# days in order, each its own journal, each after the first opening with the book the one before it closed with: Greg,
+# 2026-09-29 "ingest wed separately so it's there when we need it right after"), OPENING_RECEIPT (the prior trading day's
+# sealed ingest receipt for the FIRST day of the list when that day opens at the prior halt: $ROOT/work/ingest-*/
+# ingestion-receipt.json, or Monday's committed research/kalshi/frankie_boss/blocks/MONDAY_RECOVERY_RECEIPT_20260922.json;
+# see opening_book.py), WORKERS (default 31: the parent keeps a CPU),
 # CANARY (default 20000), MARKETS_SHA (the DISPATCHED COMMIT; frankie_box_run.yml sets it from GITHUB_SHA: the box checks out
 # that commit, never a branch name, and refuses a HEAD that differs; the chat-9 ship review), CYCLE (00).
 # Order (the chat-9 ship review): the cycle units are checked idle BEFORE the checkout moves (a running session lazy-loads
@@ -16,10 +21,25 @@ set -u
 ROOT=/opt/frankie-box; CYCLE="${CYCLE:-00}"; ACTION="${ACTION:-status}"; WORKERS="${WORKERS:-31}"; CANARY="${CANARY:-20000}"
 MARKETS_SHA="${MARKETS_SHA:-}"
 MANIFEST="${MANIFEST:-research/kalshi/frankie_boss/blocks/BLOCK_20211004_SOURCE_MANIFEST.json}"
+MANIFESTS="$MANIFEST"; OPENING_RECEIPT="${OPENING_RECEIPT:-}"
 case "$MARKETS_SHA" in ""|*[!0-9a-f]*) echo "MARKETS_SHA must be the dispatched commit (frankie_box_run.yml sets it from GITHUB_SHA)"; exit 2;; esac
 [ "${#MARKETS_SHA}" -eq 40 ] || { echo "MARKETS_SHA must be the full 40-hex commit"; exit 2; }
-case "$MANIFEST" in research/kalshi/frankie_boss/blocks/BLOCK_*_SOURCE_MANIFEST.json) ;; *) echo "MANIFEST must be a committed blocks/BLOCK_*_SOURCE_MANIFEST.json"; exit 2;; esac
-case "$MANIFEST" in *..*|research/kalshi/frankie_boss/blocks/*/*) echo "MANIFEST must be a file directly under blocks/"; exit 2;; esac
+case "$MANIFESTS" in *..*) echo "MANIFEST must not contain .."; exit 2;; esac
+COUNT=0
+for ONE in $(echo "$MANIFESTS" | tr ',' ' '); do
+  case "$ONE" in research/kalshi/frankie_boss/blocks/BLOCK_*_SOURCE_MANIFEST.json) ;; *) echo "MANIFEST must be committed blocks/BLOCK_*_SOURCE_MANIFEST.json files ($ONE)"; exit 2;; esac
+  case "$ONE" in research/kalshi/frankie_boss/blocks/*/*) echo "MANIFEST must be files directly under blocks/ ($ONE)"; exit 2;; esac
+  COUNT=$((COUNT + 1))
+done
+[ "$COUNT" -ge 1 ] || { echo "MANIFEST names no manifest"; exit 2; }
+if [ "$COUNT" -gt 1 ]; then case "$ACTION" in fetch|ingest) ;; *) echo "a MANIFEST list is for fetch and ingest only"; exit 2;; esac; fi
+case "$OPENING_RECEIPT" in
+  "") ;;
+  research/kalshi/frankie_boss/blocks/MONDAY_RECOVERY_RECEIPT_*.json) OPENING_RECEIPT="$ROOT/markets/$OPENING_RECEIPT" ;;
+  "$ROOT"/work/ingest-*/ingestion-receipt.json) ;;
+  *) echo "OPENING_RECEIPT must be a sealed ingest's $ROOT/work/ingest-*/ingestion-receipt.json or a committed blocks/MONDAY_RECOVERY_RECEIPT_*.json"; exit 2;;
+esac
+case "$OPENING_RECEIPT" in *..*) echo "OPENING_RECEIPT must not contain .."; exit 2;; esac
 case "$WORKERS" in ""|*[!0-9]*) echo "WORKERS must be an integer"; exit 2;; esac
 case "$CANARY" in ""|*[!0-9]*) echo "CANARY must be an integer"; exit 2;; esac
 NCPU=$(nproc 2>/dev/null || echo 1)
@@ -45,13 +65,23 @@ manifest_ok() {   # M, BLOCK, DATA from the checkout as it stands (status) or as
   DATA="$ROOT/data/block_$BLOCK"
 }
 prepare() { units_idle || return 2; checkout_markets || return 2; manifest_ok || return 2; mkdir -p "$DATA"; }
+each_day() {   # $1 = fetch|ingest over the MANIFEST list, in order; a day that fails stops the list (the next day's book waits on it)
+  units_idle || return 2; checkout_markets || return 2
+  for MANIFEST in $(echo "$MANIFESTS" | tr ',' ' '); do
+    manifest_ok || return 2; mkdir -p "$DATA"
+    if [ "$1" = fetch ]; then fetch || return $?; continue; fi
+    run_tool ingest || { echo "### the list stops at $MANIFEST; the days after it wait (each opens with the book this day closes with)"; return 3; }
+    [ -s "$OUT/ingestion-receipt.json" ] || { echo "### $OUT has no ingestion receipt; the list stops at $MANIFEST"; return 3; }
+    OPENING_RECEIPT="$OUT/ingestion-receipt.json"     # the next day opens with the book this day closed with
+  done
+}
 fetch() {
   [ -n "${MAP_URL:-}" ] || { echo "MAP_URL not set (dispatch frankie_box_run.yml with presign=<bucket>/<prefix>/<member_key> for every partition)"; return 2; }
   case "$MAP_URL" in https://*.amazonaws.com/*) ;; *) echo "MAP_URL must be an https amazonaws URL"; return 2;; esac
   cd "$ROOT/tmp" || return 2
   curl -fsS --proto =https -m 60 --retry 3 -o ingest-map.json --url "$MAP_URL" || { echo "map download failed"; return 2; }
   M="$M" DATA="$DATA" ROOT="$ROOT" MARKETS_SHA="$MARKETS_SHA" "$PY" - <<'PYEOF'
-import hashlib, json, os, subprocess, sys, time
+import glob, hashlib, json, os, subprocess, sys, time
 sys.path.insert(0, os.path.join(os.environ['ROOT'], 'markets'))
 from research.kalshi.frankie_boss.block_source_scope import block_source_scope     # the tool's own validation, before any path is built
 m = json.load(open('ingest-map.json')); manifest = json.load(open(os.environ['M'])); data = os.path.realpath(os.environ['DATA'])
@@ -70,6 +100,16 @@ for member in scope.members:
     if not dest.startswith(data + os.sep):
         raise SystemExit(f'{member.member_key} escapes the data directory; refused')
     key = next((k for k in m if k.endswith('/' + member.member_key) or k == member.member_key), None)
+    if not os.path.exists(dest):
+        # the same partition already verified under another block (Tuesday's 20211004 tail is in Monday's block): hard-link it,
+        # nothing downloaded or copied; only a file whose size and sha256 equal the manifest's is linked
+        for other in sorted(glob.glob(os.path.join(os.path.dirname(data), 'block_*', member.member_key))):
+            if os.path.getsize(other) == member.size_bytes and sha(other) == member.sha256:
+                os.link(other, dest)
+                receipt['files'].append(dict(member_key=member.member_key, status='linked', linked_from=other, sha256=member.sha256))
+                print('linked', dest, 'from', other); break
+        if os.path.exists(dest):
+            continue
     if os.path.exists(dest):
         have = sha(dest)
         if have == member.sha256 and os.path.getsize(dest) == member.size_bytes:
@@ -108,6 +148,10 @@ run_tool() {   # $1 = canary|ingest (prepare ran: units idle, the dispatched com
   done
   OUT="$ROOT/work/ingest-$BLOCK-$1-$(date +%s)"     # a fresh directory per run, CREATED BY THE TOOL (it refuses an existing one; run 35680854102); it writes once, never over
   EXTRA=""; [ "$1" = canary ] && EXTRA="--canary-records $CANARY"
+  if [ -n "$OPENING_RECEIPT" ]; then
+    [ -s "$OPENING_RECEIPT" ] || { echo "OPENING_RECEIPT $OPENING_RECEIPT is not on the box"; return 2; }
+    EXTRA="$EXTRA --opening-receipt $OPENING_RECEIPT"; echo "### opening book: the prior day's sealed ingest $OPENING_RECEIPT"
+  fi
   [ "${PROFILE:-0}" = 1 ] && EXTRA="$EXTRA --profile"     # PROFILE=1: cProfile the parent, profile.txt in the work directory (a measurement)
   echo "### $1: block $BLOCK, $WORKERS workers, manifest $MANIFEST, markets $MARKETS_SHA, out $OUT"
   ( cd "$ROOT/markets" && PYTHONPATH="$ROOT/markets" "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
@@ -121,15 +165,15 @@ status() {
   echo "### markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD 2>/dev/null || echo unknown) (as it stands; status moves nothing)"
   echo "### partitions under $ROOT/data"; ls -la "$ROOT"/data/block_* 2>/dev/null || echo "(none)"
   echo "### ingest work directories"; ls -d "$ROOT"/work/ingest-* 2>/dev/null || echo "(none)"
-  for d in "$ROOT"/work/ingest-*/; do [ -d "$d" ] || continue; for R in canary-receipt.json ingestion-receipt.json; do [ -s "$d$R" ] && { echo "### $d$R"; "$PY" -c "import json,sys; r=json.load(open(sys.argv[1])); keys=('schema','block','trading_day','records','record_count','records_per_second','extrapolated_hours_for_total','journal_count','journal_head_hash','journal_sha256','sessions','partial_members','partial_members_ingested','completion_claimed','workers'); print(json.dumps({k: r[k] for k in keys if k in r}, sort_keys=True))" "$d$R"; }; done; done
+  for d in "$ROOT"/work/ingest-*/; do [ -d "$d" ] || continue; for R in canary-receipt.json ingestion-receipt.json; do [ -s "$d$R" ] && { echo "### $d$R"; "$PY" -c "import json,sys; r=json.load(open(sys.argv[1])); keys=('schema','block','trading_day','records','record_count','records_per_second','extrapolated_hours_for_total','journal_count','journal_head_hash','journal_sha256','sessions','partial_members','partial_members_ingested','tail_members_ingested','opening_book','completion_claimed','workers'); print(json.dumps({k: r[k] for k in keys if k in r}, sort_keys=True))" "$d$R"; }; done; done
   for d in "$ROOT"/work/ingest-*/; do [ -s "$d/journal.compact.sqlite" ] && { echo "### $d/journal.compact.sqlite (boxes, rows, bytes)"; "$PY" -c "import sqlite3,sys,os; p=sys.argv[1]; db=sqlite3.connect('file:'+p+'?mode=ro', uri=True); n,rows,body=next(db.execute('SELECT count(*), coalesce(sum(count),0), coalesce(sum(length(body)),0) FROM blocks')); print(dict(boxes=n, rows=rows, block_bytes=body, file_bytes=os.path.getsize(p), bytes_per_row=(round(body/rows,1) if rows else None)))" "$d/journal.compact.sqlite"; }; done
   echo "### receipts"; ls "$ROOT"/receipts/ingest-* 2>/dev/null || echo "(none)"
   df -h / | tail -1
 }
 case "$ACTION" in
-  fetch) prepare && fetch ;;
+  fetch) each_day fetch ;;
   canary) prepare && run_tool canary ;;
-  ingest) prepare && run_tool ingest ;;
+  ingest) each_day ingest ;;
   status) manifest_ok && status ;;
   *) echo "ACTION must be fetch, canary, ingest or status"; exit 2 ;;
 esac

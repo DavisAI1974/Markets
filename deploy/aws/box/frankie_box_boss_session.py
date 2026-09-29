@@ -693,12 +693,16 @@ class Session:
             return None
 
     # ---- derive (the pin's producers on this cycle's rows) ------------------------------------------------
-    def derive(self, *, source=None, bedrock=True, digest=True):
+    def derive(self, *, source=None, bedrock=True, digest=True, opening_adapter_state=None, opening_book=None):
         """The ROOT's four processes on the sealed source: (1) the legacy pass (every INPUT record -> the five legacy layers
         and the row spools), (2) the bedrock traversal, (3) the bedrock projection, (4) the derivation digest.
         bedrock=False (Greg, 2026-09-29: no bedrock in the experiment) skips (2) and (3): the bedrock layers are recorded
         as not_derived with that reason, never as a producer failure. digest=False skips (4) (the experiment reads the
-        JSON, not Frankie's Markdown digest). Frankie's cycle keeps both on (the defaults)."""
+        JSON, not Frankie's Markdown digest). Frankie's cycle keeps both on (the defaults).
+        opening_adapter_state (Greg, 2026-09-29, a day that opens at the prior day's halt): the prior day's closing book
+        from its sealed ingest (research/kalshi/frankie_boss/opening_book.py), restored into the pinned adapter with its
+        counters zeroed, so the legacy pass replays the day's records onto the real book instead of an empty one;
+        opening_book is its descriptor, carried into derive.json. None = an empty book (every day before this switch)."""
         pin = self._pin() if source is not None else self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
         moved = _box_module('frankie_box_bedrock')._move_aside(              # an earlier derivation is moved aside with a receipt, never overwritten
@@ -730,6 +734,17 @@ class Session:
         from research.kalshi.frankie_raw_mbo_benchmark.a_memory_member_first_recalculation_20260828 import (
             describe_structure, book_transition, BOOK_FIELDS)
         adapter = V4MboAdapter()
+        if opening_adapter_state is not None:
+            import importlib
+            from research.kalshi.frankie_boss import mbo_resume_state
+            mbo_resume_state = importlib.reload(mbo_resume_state)   # bound to the pinned producer module registered just above
+            if mbo_resume_state.V4MboAdapter is not V4MboAdapter:
+                raise ValueError('the opening book would restore into a different adapter than the pinned producer')
+            adapter = mbo_resume_state.restore_adapter_state(opening_adapter_state)   # validated, exact round trip
+            adapter.record_count = 0
+            adapter.completed_event_group_count = 0
+            self.note(f'derive: opening book from {(opening_book or {}).get("checkpoint")} '
+                      f'({(opening_book or {}).get("resting_orders")} resting orders)')
         binner = native_roll20.SecondBinner(clock=native_roll20.RECV_CLOCK)
         B = _box_module('frankie_box_bedrock')
         prices, frames, structures, failures = [B.RowSpool(derived / '.rows' / (name + '.jsonl'))
@@ -797,6 +812,7 @@ class Session:
             layers.setdefault(layer, dict(status='could_not', reason='no producer in the pin derives this layer; NO_PRODUCER_FOUND', producer=None))
         receipt = dict(schema='FRANKIE_BOX_DERIVATION_RECEIPT_V1', at=time.time(), cycle=self.cycle, pin_group=pin['group'],
                        source_binding=self.source_binding, rows=container, input_records=len(records), legacy_rows=legacy_count, adapter_records=adapter.record_count,
+                       opening_book=opening_book if opening_adapter_state is not None else (opening_book or dict(status='empty', reason='the legacy pass starts from an empty book')),
                        f_last_groups=adapter.completed_event_group_count, failures=failures, failure_count=len(failures),
                        producers=self._producer_witnesses(pin), layers={})
         for name, value in layers.items():

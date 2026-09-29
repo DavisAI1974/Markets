@@ -67,13 +67,14 @@ DATA = WORK / 'experiment-data'
 SEARCH = WORK / 'experiment-search'
 ROWS_FILE = 'host-dipole-classroom-source.c15.json'
 MONDAY = '20211004'                      # the gold standard: never re-ingested
+MONDAY_RECOVERY = 'research/kalshi/frankie_boss/blocks/MONDAY_RECOVERY_RECEIPT_20260922.json'   # its ingest was recovered
 CYCLE = '00'
 BATCH = 5                                # the teacher's Dipole rows: 1 day in 5 (Greg, 2026-09-29)
 CLASS_OF_WEEKDAY = {0: 'monday', 1: 'midweek', 2: 'midweek', 3: 'thursday', 4: 'friday'}
 ROLE_OF_YEAR = {2021: 'discovery', 2022: 'discovery', 2023: 'discovery', 2024: 'confirmation', 2025: 'confirmation'}
 INGESTION_SCHEMA = 'BOSS_BLOCK_INGESTION_RECEIPT_V1'
 OVERRIDES = ('ingest', 'calculations', 'launch', 'preparation', 'principal_inputs', 'host_config', 'run',
-             'teacher_rows', 'jev_stamp', 'frankie_ledgers')
+             'teacher_rows', 'jev_stamp', 'frankie_ledgers', 'opening_receipt')
 
 
 def sha256_file(path):
@@ -156,17 +157,22 @@ def load_plan(a, code_root):
             continue
         manifest = e.get('manifest') or 'research/kalshi/frankie_boss/blocks/BLOCK_%s_SOURCE_MANIFEST.json' % day
         mpath = Path(code_root) / manifest
-        manifest_ok, gap = False, None
+        manifest_ok, gap, opens_after = False, None, None
         if mpath.is_file():
             m = json.loads(mpath.read_bytes())
             manifest_ok = str(m.get('trading_day')) == day
+            # a day that opens at the prior day's halt (a tail member, Greg 2026-09-29): its ingest opens with the book the
+            # prior trading day closed with, so it waits on that day's sealed ingest (the date of the tail's partition)
+            tails = m.get('tail_members') or []
+            if manifest_ok and tails:
+                opens_after = tails[0]['member_key'].split('-')[-1].split('.')[0]
             if not manifest_ok:
                 gap = ('%s is for trading day %s, not %s (a multi-day block manifest is not a day)'
                        % (manifest, m.get('trading_day'), day))
         elif not e.get('ingest'):
             gap = 'no committed per-day manifest %s and no sealed ingest named in the plan' % manifest
         days.append(dict(day=day, cls=cls, role=role, classroom_arm=day in arm, manifest=manifest if manifest_ok else None,
-                         manifest_gap=gap, **{k: e[k] for k in OVERRIDES if e.get(k)}))
+                         manifest_gap=gap, opens_after=opens_after, **{k: e[k] for k in OVERRIDES if e.get(k)}))
     for d in arm:
         if d not in names:
             refused.append(dict(day=d, reason='a classroom-arm day that is not in the day list'))
@@ -336,11 +342,16 @@ class Run:
                                                                      'name its sealed ingest directory in the plan')
         if not e['manifest']:
             return self.record('ingest', e['day'], 'waiting', reason=e['manifest_gap'])
+        env = dict(ACTION='ingest', MANIFEST=e['manifest'], WORKERS=self.a.ingest_workers)
+        if e.get('opens_after'):
+            opening, gap = self.opening_of(e)
+            if gap:
+                return self.record('ingest', e['day'], 'waiting', reason=gap)
+            env['OPENING_RECEIPT'] = str(opening)
         if not self.disk_ok('ingest'):
             return None
         before = set(WORK.glob('ingest-*'))
-        code, log = self.child('ingest', e['day'], 'frankie_box_ingest_block.sh',
-                               dict(ACTION='ingest', MANIFEST=e['manifest'], WORKERS=self.a.ingest_workers))
+        code, log = self.child('ingest', e['day'], 'frankie_box_ingest_block.sh', env)
         made = sorted(set(WORK.glob('ingest-*')) - before)
         receipt, why = ingest_of(e)
         if code != 0 or not receipt or why:
@@ -348,6 +359,24 @@ class Run:
                                reason=why or 'no sealed ingest of the day after the step (its directory is kept)')
         return self.record('ingest', e['day'], 'done', exit_code=code, log=log, ingest=str(receipt.parent),
                            receipt=str(receipt), receipt_sha256=sha256_file(receipt), new_bytes=new_bytes(receipt.parent))
+
+    @staticmethod
+    def opening_of(e):
+        """(the prior trading day's sealed ingest receipt, None) or (None, why the day waits). Monday's ingest was
+        recovered, so its receipt is the committed recovery receipt (opening_book.py reads both kinds)."""
+        if e.get('opening_receipt'):
+            return e['opening_receipt'], None
+        prior = e['opens_after']
+        if prior == MONDAY:
+            return MONDAY_RECOVERY, None
+        found = sealed_ingests(prior)
+        if len(found) > 1:
+            return None, ('two or more sealed ingests of %s, the day before %s (%s): name the one to open from in the plan '
+                          '(opening_receipt)' % (prior, e['day'], ', '.join(str(p.parent) for p in found)))
+        if not found:
+            return None, ('%s opens at the %s halt with the book %s closed with; %s has no sealed ingest yet (the day waits '
+                          'on it)' % (e['day'], prior, prior, prior))
+        return found[0], None
 
     def root(self, e):
         calc, attempts = root_of(e, self.plan['run'])
