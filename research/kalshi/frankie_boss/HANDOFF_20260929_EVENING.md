@@ -120,3 +120,18 @@ frankie_box_run.yml script=deploy/aws/box/frankie_box_pull_runner_ingest.sh vari
 RUN=36571235912 ATTEMPT=1 PARALLEL=2 POINTER_SOURCE=artifact" timeout=10800 presign_hours=12
 presign="getprefix:bento-568968024170-us-east-2-an/frankie/ingest/20211019/ getprefix:bento-568968024170-us-east-2-an/frankie/ingest/20211020/".
 If the jobs were killed: ingest both on a box (partitions pre-fetched on main).
+
+## Addendum ~18:55Z: day-file agent FINAL (no day file attached yet)
+Consensus request 1 = 36609379489 (families=consensus; days 20211005,20211006,20211012,20211013,20211020,20221004,20221005;
+prints 2021-09-30/10-07/10-14/10-21, 2022-09-29/10-06; also covers 20211019) still RUNNING, not cancelled.
+When it lands: restage the tip; frankie_box_experiment.sh ACTION=plan then ACTION=start, RUN=days-20260929-1
+DAY_CLASS=midweek DAYS=20211005,20211006,20211012,20211013,20221004,20221005 STAGES=ingest,external
+EXTERNAL_HISTORY_RUN=36576414768 EXTERNAL_HISTORY_FAMILY_RUNS=consensus=36609379489 PARALLEL_DAYS=2 CODE_ROOT=<new staged>
+(start refuses if the plan variables differ from the run's plan.json). Presign: getprefix:bento-568968024170-us-east-2-an/frankie/day_history/36576414768/
+getprefix:.../frankie/day_history/36609379489/ getprefix:.../nymex/ng_fut_parent_v0/ + the 12 put: slots
+frankie/day_external/<day>/day-external.json and day-external-receipt.json (ACTION=plan prints the exact string);
+presign_hours 6, timeout 10800.
+Remaining consensus requests, ONE at a time: ng_historical_mbo_5y_to_s3_20260820.yml mode=day_history families=consensus
+days=...: req2 = 20221011,20221012,20221018,20221019 (prints 2022-10-13, 2022-10-20); req3 = 20231003,20231004,20231010,
+20231011,20231017,20231018 (prints 2023-09-28/10-05/10-12/10-19); req4 = the 13 confirmation days (9 prints; data only,
+no day file). The eia930-only run 36608262546 finished but is not needed.
