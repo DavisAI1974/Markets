@@ -11,8 +11,10 @@ box dispatch (scripts refuse a staged checkout that differs from MARKETS_SHA); n
 keys are secrets and do not rotate; a probe on every long box run. Ask Greg for the AWS pair at the start (needed for
 direct SSM probes and S3 reads from the container; put it in `~/.config/markets/env`, chmod 600, verify with STS).
 
-## Greg's last words to this chat (~12:05Z): GO GIVEN for these three
-- **Set up the Linux box now** ("Start setting up linux box. We have well over an hour of runway. Tell next guy to do
+## Greg's last words to this chat (~12:05Z): GO GIVEN for the last two; the box setup is ON HOLD
+- **ON HOLD, do NOT start or set up the second box** (Greg ~12:30Z: "I wouldn't worry about setting up box right now.
+  Probably won't need extra one."). The earlier go is withdrawn for now; kept below only as the recipe if he asks again.
+  Former item: **Set up the Linux box now** ("Start setting up linux box. We have well over an hour of runway. Tell next guy to do
   it."): i-08cee7171c0a76a04, r6i.2xlarge, 8 vCPU / 64 GB, 300 GB gp3, us-east-2, STOPPED. Greg's go to START it is
   given. (The closing chat's start call was refused by Claude Code's permission check, not by AWS; nothing started.)
   Steps: start it; confirm SSM Online (instance profile; if none, attach the one the main box uses); OS, python3, disk;
@@ -49,7 +51,7 @@ direct SSM probes and S3 reads from the container; put it in `~/.config/markets/
 1. **Probe everything running** (handoff table): Wednesday 20211006 (then `ACTION=conform` on it), the four ingests of
    orchestrator run `pairs2-20260929-1`, Databento run 36564541947 (Oct 2024+2025), free fetch run 36557302661.
    Re-arm your own check-ins (the closing chat's triggers do not reach you).
-2. **CPUs** (Greg: "We need more CPUs for 4 pairs and we have a 32 cpu box doing nothing"): EC2 shows the stopped boxes
+2. **CPUs** (ON HOLD per Greg ~12:30Z, probably no extra box needed; do not start one. Earlier, Greg: "We need more CPUs for 4 pairs and we have a 32 cpu box doing nothing"): EC2 shows the stopped boxes
    as r6i.2xlarge 8 vCPU Linux and r7i.4xlarge 16 vCPU **Windows** (CLAUDE.md says the Windows host was resized to 32
    vCPU; EC2 disagrees). Ask Greg which box; our pipeline is Linux (`/opt/frankie-box`, SSM, venv). Setting up a second
    Linux box = copy the setup (venv, markets checkout, scripts) to it, then the orchestrator runs with `instance=<id>`.
