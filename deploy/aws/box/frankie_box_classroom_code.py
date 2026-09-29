@@ -20,8 +20,9 @@ import re
 from pathlib import Path
 
 SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'
-RULES_PATH = Path(__file__).resolve().parents[3] / 'research/kalshi/frankie_boss/knowledge/CLASSROOM_RULES_V1.json'
-RULES_SCHEMA = 'FRANKIE_CLASSROOM_RULES_V1'
+# V2 = V1 with R17 amended (Greg, 2026-09-29); V1 is kept unchanged beside it
+RULES_PATH = Path(__file__).resolve().parents[3] / 'research/kalshi/frankie_boss/knowledge/CLASSROOM_RULES_V2.json'
+RULES_SCHEMA = 'FRANKIE_CLASSROOM_RULES_V2'
 STATES = ('PRESENT', 'MISSING', 'INVALID', 'ABLATED')
 STATE_MEANING = {
     'PRESENT': 'a measured value at that cursor',
