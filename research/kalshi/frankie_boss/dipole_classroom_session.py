@@ -191,7 +191,7 @@ def _grade_exhaustive(key, observation_review, relationship_scan):
         if not ok:
             all_pairs=False;corrections.append(f"relationship:{pair[0]}:{pair[1]}")
         relationship_grades.append({"left":pair[0],"right":pair[1],"claimed":claim["direction_relation"],
-            "actual":actual["direction_relation"],"correct":ok,"correlation":actual["correlation"],
+            "actual":actual["direction_relation"],"correct":ok,"co_movement":actual["co_movement"],
             "developing_structure":claim["developing_structure"],
             "explanation":("Correct directional relationship for the current causal window."
                 if ok else f"Dipole's exact directional relationship is {actual['direction_relation']}, not {claim['direction_relation']}.")})

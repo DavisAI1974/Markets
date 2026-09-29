@@ -64,8 +64,8 @@ def render_pre_message(message: Mapping) -> str:
     if review is not None:
         if len(review)!=PAIR_COUNT:raise ValueError("TEACH transcript requires the full 171-pair relationship scan")
         for pair in review:
-            corr=pair["correlation"]
-            parts.append(f"- `{pair['left']}` ↔ `{pair['right']}` | direction `{pair['direction_relation']}` | PRESENT overlap `{corr['present_overlap']}` | Pearson `{_line(corr['pearson'])}` | reason `{corr['reason'] or 'none'}` | limit `{pair['interpretation_limit']}`")
+            counts=pair["co_movement"]
+            parts.append(f"- `{pair['left']}` ↔ `{pair['right']}` | direction `{pair['direction_relation']}` | both PRESENT `{counts['both_present']}` | steps `{counts['steps']}` | state pairs `{counts['state_pairs']}` | misaligned `{counts['misaligned_cursors']}` | limit `{pair['interpretation_limit']}`")
         parts.append("")
     parts += ["## Frankie's assignment","",message["teachback_instruction"],"",f"Answer wall: `{message['future_wall']}`",""]
     return "\n".join(parts)
@@ -110,7 +110,7 @@ def render_grade(grade: Mapping) -> str:
     for item in grade["component_grades"]:
         parts += [f"## {item['name']}","",item["explanation"],""]
         for relation in item["relationship_grades"]:
-            corr=relation.get("correlation");corr_text="" if corr is None else f" | correlation evidence `{corr}`"
+            corr=relation.get("co_movement");corr_text="" if corr is None else f" | co-movement counts `{corr}`"
             parts.append(f"- relationship with `{relation['with']}`: **{relation['status']}** — {relation['explanation']}{corr_text}")
         if item["relationship_grades"]:parts.append("")
     audit=grade.get("exhaustive_audit")
@@ -125,7 +125,7 @@ def render_grade(grade: Mapping) -> str:
     parts += ["# Dipole grades Frankie's 171-pair ledger",""]
     if len(audit["relationship_grades"])!=PAIR_COUNT:raise ValueError("post-grade relationship audit incomplete")
     for pair in audit["relationship_grades"]:
-        parts.append(f"- `{pair['left']}` ↔ `{pair['right']}` | claimed `{pair['claimed']}` | actual `{pair['actual']}` | correct `{pair['correct']}` | correlation `{pair['correlation']}` | developing structure `{_line(pair['developing_structure'])}` — {pair['explanation']}")
+        parts.append(f"- `{pair['left']}` ↔ `{pair['right']}` | claimed `{pair['claimed']}` | actual `{pair['actual']}` | correct `{pair['correct']}` | co-movement counts `{pair['co_movement']}` | developing structure `{_line(pair['developing_structure'])}` — {pair['explanation']}")
     parts.append("")
     if grade["correction_ids"]:
         parts += ["## Corrections Frankie must resolve before teacher completion",""]+[f"- `{item}`" for item in grade["correction_ids"]]+[""]

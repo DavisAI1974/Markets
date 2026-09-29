@@ -1,6 +1,6 @@
 # Spec: the scientific teacher (Greg, 2026-09-29)
 
-Status: SPEC, draft. Nothing built. Not in the Excel build plan (R3 or R4): it goes into the plan before it is built.
+Status: SPEC, confirmed by Greg 2026-09-29 ("I agree with everything you did"). Nothing built. Not in the Excel build plan (R3 or R4): it goes into the plan before it is built.
 Greg: "Yes write scientific teacher and the rules file." The classroom rules: `knowledge/CLASSROOM_RULES_V1.json`.
 
 ## The design (Greg)
@@ -75,5 +75,5 @@ the classroom runs with the BOSS teacher and Frankie's code answers only.
 5. The classroom loads the rules file; the tied teachers switch on.
 
 ## Open for Greg
-- The 171 pooled Pearson pairs in the grading key against D37 (rules file, open item 1).
+- (Resolved 2026-09-29: the pooled Pearson is out of the build; the 171 pairs carry co-movement counts.)
 - Whether a model is ever given a seat. If so, one seat only, and a different model from anything else in the loop.

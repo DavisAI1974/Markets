@@ -29,7 +29,6 @@ withhold the answer key, but never reduce the required coverage.
 """
 from __future__ import annotations
 
-import math
 from enum import Enum
 from typing import Any, Mapping, Sequence
 
@@ -56,9 +55,11 @@ _STATE_NAMES = tuple(state.name for state in TargetState)
 _DIRECTIONS = ("RISE", "FALL", "FLAT", "INSUFFICIENT")
 _RELATIONS = ("SAME_DIRECTION", "OPPOSITE_DIRECTION", "UNRESOLVED", "HYPOTHESIS")
 PAIR_COUNT = len(COLUMNS) * (len(COLUMNS) - 1) // 2
-# Pearson over fewer overlapping PRESENT points than this is noise; below it only the overlap
-# count is reported. Declared once here; every layer and message text reads this constant.
-MIN_PEARSON_PRESENT_OVERLAP = 8
+# Greg, 2026-09-29: "take the average plan out of the build". A Pearson coefficient is an average (D37), so the
+# 171 pairs carry co-movement COUNTS instead, with no minimum (a floor is a gate): every aligned cursor's state
+# pairing is counted, and every consecutive both-PRESENT step is counted by how the two moved.
+CO_MOVEMENT_SCHEMA = "DIPOLE_PAIR_CO_MOVEMENT_COUNTS_V1"
+CO_MOVEMENT_STEP_KEYS = ("same_direction","opposite_direction","left_moved_only","right_moved_only","neither_moved")
 
 
 class ClassroomMode(str, Enum):
@@ -273,17 +274,44 @@ def _change(previous: Mapping[str, Any] | None, current_ledger: Sequence[Mapping
         "previous_direction": previous["direction"],"current_direction": _direction(current_ledger)}
 
 
-def _pearson(left: Sequence[Mapping[str, Any]], right: Sequence[Mapping[str, Any]]) -> dict:
-    pairs = [(a["value"],b["value"]) for a,b in zip(left,right)
-        if a["cursor"] == b["cursor"] and a["state"] == b["state"] == TargetState.PRESENT.name]
-    n=len(pairs)
-    if n<MIN_PEARSON_PRESENT_OVERLAP:
-        return {"present_overlap":n,"pearson":None,"reason":f"FEWER_THAN_{MIN_PEARSON_PRESENT_OVERLAP}_OVERLAPPING_PRESENT_VALUES"}
-    xs=[a for a,_ in pairs];ys=[b for _,b in pairs];mx=sum(xs)/n;my=sum(ys)/n
-    vx=sum((x-mx)**2 for x in xs);vy=sum((y-my)**2 for y in ys)
-    if vx==0 or vy==0:return {"present_overlap":n,"pearson":None,"reason":"ZERO_VARIANCE"}
-    value=sum((x-mx)*(y-my) for x,y in pairs)/math.sqrt(vx*vy)
-    return {"present_overlap":n,"pearson":float(value),"reason":None}
+def _co_movement(left: Sequence[Mapping[str, Any]], right: Sequence[Mapping[str, Any]]) -> dict:
+    """Counts only (D37: no coefficient, no average, no minimum). Every aligned cursor is counted by its state pairing;
+    a cursor whose ids differ between the two ledgers is counted as misaligned, never dropped. Consecutive
+    both-PRESENT cursors form the steps, each counted by how the two values moved."""
+    state_pairs: dict = {};misaligned=0;present=[]
+    for a,b in zip(left,right):
+        if a["cursor"] != b["cursor"]:
+            misaligned+=1;continue
+        key=a["state"]+"|"+b["state"];state_pairs[key]=state_pairs.get(key,0)+1
+        if a["state"] == b["state"] == TargetState.PRESENT.name:present.append((a["value"],b["value"]))
+    steps={k:0 for k in CO_MOVEMENT_STEP_KEYS}
+    for (x0,y0),(x1,y1) in zip(present,present[1:]):
+        dx=(x1>x0)-(x1<x0);dy=(y1>y0)-(y1<y0)
+        if dx and dy:steps["same_direction" if dx==dy else "opposite_direction"]+=1
+        elif dx:steps["left_moved_only"]+=1
+        elif dy:steps["right_moved_only"]+=1
+        else:steps["neither_moved"]+=1
+    return {"schema":CO_MOVEMENT_SCHEMA,"aligned_cursors":min(len(left),len(right)),
+        "ledger_lengths":[len(left),len(right)],"unpaired_cursors":abs(len(left)-len(right)),"misaligned_cursors":misaligned,
+        "state_pairs":dict(sorted(state_pairs.items())),"both_present":len(present),
+        "steps_between_consecutive_both_present":max(len(present)-1,0),"steps":steps}
+
+
+def validate_co_movement(relation: Mapping[str, Any]) -> None:
+    """Fail closed unless a pair carries the co-movement counts whole and no coefficient (no Pearson, D37)."""
+    if "correlation" in relation:
+        raise ValueError("Dipole pair carries a correlation coefficient; the pooled Pearson is out of the build")
+    c=relation.get("co_movement")
+    if type(c) is not dict or c.get("schema")!=CO_MOVEMENT_SCHEMA:
+        raise ValueError("Dipole pair co-movement counts required")
+    ints=[c.get("aligned_cursors"),c.get("unpaired_cursors"),c.get("misaligned_cursors"),c.get("both_present"),
+        c.get("steps_between_consecutive_both_present")]
+    steps=c.get("steps");pairs=c.get("state_pairs")
+    if (any(type(v) is not int or v<0 for v in ints) or type(steps) is not dict or tuple(steps)!=CO_MOVEMENT_STEP_KEYS
+            or any(type(v) is not int or v<0 for v in steps.values())
+            or sum(steps.values())!=c["steps_between_consecutive_both_present"]
+            or type(pairs) is not dict or any(type(v) is not int or v<0 for v in pairs.values())):
+        raise ValueError("Dipole pair co-movement counts malformed")
 
 
 def _direction_relation(left: str,right: str) -> str:
@@ -321,10 +349,9 @@ def build_teacher_key(snapshot: Mapping[str, Any], previous_snapshot: Mapping[st
     relationships=[]
     for i,left in enumerate(COLUMNS):
         for right in COLUMNS[i+1:]:
-            corr=_pearson(ledgers[left],ledgers[right])
             relationships.append({"left":left,"right":right,
                 "direction_relation":_direction_relation(directions[left],directions[right]),
-                "correlation":corr,
+                "co_movement":_co_movement(ledgers[left],ledgers[right]),
                 "interpretation_limit":"DESCRIPTIVE_WITHIN_CAUSAL_WINDOW_NOT_CAUSATION_OR_FUTURE_PREDICTION"})
     if len(relationships)!=PAIR_COUNT:raise ValueError("complete pairwise Dipole scan required")
     body={"schema":KEY_SCHEMA,"request_id":snapshot["request_id"],"cycle_index":snapshot["cycle_index"],
@@ -405,7 +432,7 @@ def build_pre_message(key:Mapping[str,Any],*,mode:str,prior_grade:Mapping[str,An
         "relationship_pairs_required":PAIR_COUNT,"prior_cycle_correction":prior_summary,
         "teacher_opening":"Complete Dipole coverage is mandatory. We will account for all 19 components, all PRESENT values, every MISSING/INVALID/ABLATED state and reason, prior-cycle changes, full-book/FIFO/order behavior where justified, and the full intra-Dipole relationship surface. Observation, interpretation, hypothesis, and unknowable future outcome must remain separate.",
         "components":components,"relationship_review":relationship_review,
-        "relationship_instruction":f"Consider all {PAIR_COUNT} Dipole pairs. Pearson is reported only with at least {MIN_PEARSON_PRESENT_OVERLAP} overlapping PRESENT values and nonzero variance; below that threshold only the overlap count is retained. It is descriptive, not proof of causation or future outcome. Label unsupported developing structures HYPOTHESIS.",
+        "relationship_instruction":f"Consider all {PAIR_COUNT} Dipole pairs. Each pair carries co-movement COUNTS, never a coefficient or an average: the count of every state pairing across the aligned cursors, and, over consecutive both-PRESENT cursors, how many steps the two moved the same way, the opposite way, one side only, or neither. There is no minimum; every count is reported. The counts are descriptive, not proof of causation or future outcome. Label unsupported developing structures HYPOTHESIS.",
         "teachback_instruction":"In your own words, cover all 19 dimensions without omission: what happened, what changed or stayed stable, what the states/values mean, why, FIFO/full-book/order behavior where appropriate, every relevant relationship/correlation, what may be a developing structure, and what cannot yet be known.",
         "future_wall":"DO_NOT_CLAIM_OR_USE_ANY_OUTCOME_NOT_CAUSALLY_AVAILABLE_AT_THIS_CUTOFF"}
     body["teacher_message_hash"]=evidence_hash(body);return body
@@ -521,9 +548,9 @@ def grade_teachback(key:Mapping[str,Any],teachback:Mapping[str,Any])->dict:
                 cid=f"relationship:{left}:{right}";corrections.append(cid)
             relgrades.append({"with":other,"claimed":relation["relation"],"actual":actual_relation,
                 "status":"CORRECT" if ok else "CORRECTION",
-                "correlation":pairs[(left,right)]["correlation"],
+                "co_movement":pairs[(left,right)]["co_movement"],
                 "explanation":("The directional claim matches the exact causal-window comparison."
-                    if ok else f"The exact directional comparison is {actual_relation}, not {relation['relation']}. Pearson, when present, remains descriptive only.")})
+                    if ok else f"The exact directional comparison is {actual_relation}, not {relation['relation']}. The co-movement counts remain descriptive only.")})
         component_grades.append({"name":name,"state_counts_correct":counts_ok,"state_correct":state_ok,"direction_correct":direction_ok,
             "explanation":explanation,"relationship_grades":relgrades})
     corrections=tuple(dict.fromkeys(corrections));mastered=factual_ok and relationship_ok and not corrections

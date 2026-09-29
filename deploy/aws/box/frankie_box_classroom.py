@@ -195,11 +195,11 @@ def series_text(comp):
     return '\n'.join(lines)
 
 
-def _pearson_text(pair):
-    corr = pair.get('correlation') or {}
-    if corr.get('pearson') is None:
-        return f'Pearson not reported ({corr.get("reason")}; {corr.get("present_overlap")} overlapping PRESENT values)'
-    return f'Pearson {corr["pearson"]:.6f} over {corr.get("present_overlap")} overlapping PRESENT values'
+def _co_movement_text(pair):
+    """The pair's co-movement COUNTS, whole (Greg, 2026-09-29: no Pearson, no average, no minimum)."""
+    c = pair['co_movement']
+    return (f'both PRESENT {c["both_present"]}; steps {json.dumps(c["steps"], sort_keys=True)}; '
+            f'state pairs {json.dumps(c["state_pairs"], sort_keys=True)}; misaligned cursors {c["misaligned_cursors"]}')
 
 
 def _states_present(comp):
@@ -238,7 +238,7 @@ def component_prompt(visible, name, *, cycle, request_id, evidence_text=None):
     lines.append(series_text(comp))
     lines.append(f'----- RELATIONSHIPS of {name} with the later components ({len(pairs)} pairs; Dipole\'s exact directional relation in this causal window) -----')
     for pair in pairs:
-        lines.append(f'{pair["right"]}: {pair["direction_relation"]}; {_pearson_text(pair)}')
+        lines.append(f'{pair["right"]}: {pair["direction_relation"]}; {_co_movement_text(pair)}')
     lines.append(pre.get('relationship_instruction', ''))
     lines.append('----- TASK -----')
     lines.append('Answer with ONE JSON object and nothing else, with exactly these keys: '
@@ -391,10 +391,9 @@ def summary_prompt(visible, outputs, *, cycle, request_id):
         lines.append(f'----- {comp["name"]} (counts {json.dumps(comp["state_counts"], sort_keys=True)}; terminal {comp["terminal_state"]}; direction {comp["first_to_last_present_direction"]}) -----')
         for field in NARRATIVE:
             lines.append(f'{field}: {out[field]}')
-    lines.append('----- THE 171 PAIRS (left | right | reported relation | Pearson) -----')
+    lines.append('----- THE 171 PAIRS (left | right | reported relation | co-movement counts) -----')
     for pair in pre['relationship_review']:
-        corr = pair.get('correlation') or {}
-        lines.append(f'{pair["left"]} | {pair["right"]} | {pair["direction_relation"]} | {corr.get("pearson") if corr.get("pearson") is not None else corr.get("reason")}')
+        lines.append(f'{pair["left"]} | {pair["right"]} | {pair["direction_relation"]} | {_co_movement_text(pair)}')
     lines.append(f'Novelty invitation: {pre.get("novelty_invitation", "")}')
     lines.append('----- TASK -----')
     lines.append('Answer with ONE JSON object and nothing else: {"cycle_summary": "the whole cycle across the 19 components, in your words", '
