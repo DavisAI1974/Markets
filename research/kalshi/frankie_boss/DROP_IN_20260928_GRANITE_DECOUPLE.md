@@ -68,7 +68,7 @@ Unwired, because each was added after the plan (the code stays and is only disco
 - **The Granite exhaustion/D teach-back**: now code-only priming.
 - **Jev's sit-in relay and the CLM sidecar**: never part of the principal; simply do not dispatch them.
 
-The rerun therefore runs, in order: verify, labels, engine, derive, reading, merges, the governed classroom, the teach priming (code), writing, push, the correction. The Granite role table below is a later proposal and does not apply to this rerun.
+The rerun therefore runs, in order: verify, labels, engine, derive, reading, merges, the governed classroom, the teach priming (code), writing, push, the correction.
 
 ## Greg's direction this chat (the load-bearing part)
 - **Granite is a small piece of Frankie: a reasoning boost, nothing else.** Frankie is the system (code, calculations,
@@ -95,12 +95,12 @@ The rerun therefore runs, in order: verify, labels, engine, derive, reading, mer
 3. **The joined teachers are BUILT, NOT RUN** (dfe08ca7):
    - builder: `frankie_box_joined_teacher.py`/`.sh`;
    - delivery to both teachers: `dipole_joined_teacher.py`, the scientific request, the box readings and the validators, with `ACTION=config JOINED=<MANIFEST.json>`.
-   - Held until Frankie's role is defined.
+   - Switched off for r10 (not in the Excel plan). Turning it on is Greg's call (see "The two teachers are TIED TOGETHER").
 4. **r9 is stopped and its data kept**, along with every fix since: the single-read walk, the concurrent teacher, the uncapped teacher, the parts-not-truncation notes, and the duplicate refusal. See the handoff.
 
 ## NEXT (in order, each on Greg's word)
 0. **The r10 rerun of the Frankie part and the classroom, on the plan wiring** (step 4 below), first.
-1. **Later, not for this rerun: agree the Granite role table with Greg.** It is in the handoff under "Granite is a reasoning boost". The proposal:
+1. **Later, not for this rerun; superseded by `SPEC-decouple-granite.md` unless Greg revisits it: the earlier Granite role table.** It is in the handoff under "Granite is a reasoning boost". The proposal:
    - To code: the reading notes (the data is already exact), the merges (line dedupe), the classroom observation transcription, and the accounting entry plus the ten ledgers.
    - Stays Granite: novel findings, the run analysis, the correction turn, the scientific teacher, the BOSS teacher and Frankie's replies.
    - The whole-corpus staged re-reads before each role are replaced by inputs that code selects for each question.
@@ -130,7 +130,7 @@ Every box step goes through `.github/workflows/frankie_box_run.yml`: inputs `scr
 
 1. **Session start.**
    - Run using-agent-skills.
-   - Fetch and check out `claude/frankie-monday-cycle-0-urozez`; confirm the tip is 77948797 or later.
+   - Fetch and check out `claude/frankie-monday-cycle-0-urozez`; confirm the tip is this drop-in's latest commit or later.
    - Read this drop-in and the build plan sheets Build Plans, Components and Gates.
 2. **Check what is running or billing (read-only), before anything else.** The earlier chat did not verify Pod state after stopping r9.
    - The 4 A100 Pods from r6/r9 may still be up (about $6.36/h): BOSS kqp1qwzv6vo67a; readers x2vprjb4cs2ulu, mhj0jwod7yfdz5 and vbh922dqk8x2f9. Check them with the Runpod MCP (list pods) and `/opt/frankie-box/pods.json`.
@@ -165,7 +165,7 @@ Every box step goes through `.github/workflows/frankie_box_run.yml`: inputs `scr
 
 ## RESEARCH TRACK: the experiment (Greg, 2026-09-29). Direction set; NOT yet in the Excel build plan
 Greg's idea: run code over the raw ingest data and the cycle calculations thousands of ways, looking for correlations,
-novel findings and trade strategies. Code does the search on the box's CPUs; Granite only gets the short list to reason over.
+novel findings and trade strategies. Code does the search on the box's CPUs. The experiment's Granite pass is REMOVED (`SPEC-decouple-granite.md`); only the classroom arm (the plan classroom, on the first and last two discovery days) uses Granite, through C35.
 
 - **No bedrock for the experiment.** The inputs are:
   - the raw ingest: each day's compact journal, every book level;
@@ -185,7 +185,7 @@ novel findings and trade strategies. Code does the search on the box's CPUs; Gra
   - every raw and calculation series, times transforms, lags, cells, conditions and targets;
   - each test with its own circular-shift chance check, reported as counts (D37);
   - the leakage gate on every target;
-  - survivors to symbolic regression, then a short Granite reasoning pass;
+  - survivors to symbolic regression (no Granite pass);
   - any trade idea judged per cell, net of fees at maker and taker, on the confirmation days.
   - The joined-teacher builder (dfe08ca7) is the starting slice. Point it at the raw journal and the experiment-calcs JSON instead of the bedrock.
 - **Architecture (Greg):** a stripped-down version of today's run. An EXPERIMENT ORCHESTRATOR workflow calls only the needed pieces of today's run: fetch, ingest, the derive WITHOUT bedrock, and the export. The new search part is then built and attached to it.
