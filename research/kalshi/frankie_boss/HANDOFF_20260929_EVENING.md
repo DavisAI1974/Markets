@@ -145,3 +145,15 @@ else fetch: presign native/20211001_20211101/glbx-mdp3-20211018/19/20.mbo.dbn.zs
 partitions would need a fetch there. Dispatch per day: frankie_box_ingest_block.sh ACTION=ingest DAYS_AT_ONCE=1
 WORKERS=7 VERIFY=inline timeout 43200 MANIFEST=research/kalshi/frankie_boss/blocks/BLOCK_<day>_SOURCE_MANIFEST.json.
 They get their day files from consensus request 1 (36609379489) once sealed.
+
+## Addendum ~19:20Z: consensus request 1 CANCELLED -- do NOT build with 36609379489
+Run 36609379489 ended CANCELLED at ~19:18Z (not by the day-file agent or this chat): its upload holds only 8 objects
+and NO consensus/receipt.json. Building with consensus=36609379489 would list consensus.fetch as "no receipt" in every
+day file, and a day file is never overwritten. So:
+1. Dispatch a FRESH consensus-only request with the same days as request 1: ng_historical_mbo_5y_to_s3_20260820.yml
+   mode=day_history families=consensus days=20211005,20211006,20211012,20211013,20211020,20221004,20221005 (also
+   covers 20211019). One at a time, then requests 2-4 as listed above.
+2. The run days-20260929-1 has consensus=36609379489 baked into its plan.json (start refuses a different plan), so build
+   the 6 box days' files in a NEW run, e.g. RUN=days-20260929-2 with EXTERNAL_HISTORY_FAMILY_RUNS=consensus=<new id>
+   (same DAYS/DAY_CLASS/EXTERNAL_HISTORY_RUN=36576414768), and point the Pod ROOT loop at that run
+   (ACTION=loop RUN=days-20260929-2 ...). days-20260929-1 stays as evidence (ingest reuse only).
