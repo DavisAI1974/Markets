@@ -109,6 +109,31 @@ def new_bytes(path):
 
 # ---------------------------------------------------------------------------------------------------------------- plan
 
+def pair_units(days):
+    """Midweek days into units (Greg, 2026-09-29): "we may not have equal amount of tue and wed. We'll pair them up like
+    that for as many pairs as we can get. They probably won't all have consecutive dates though." First every Tuesday with
+    the Wednesday of its own week; then the Tuesdays and Wednesdays left over, each in date order, the k-th Tuesday with
+    the k-th Wednesday (a pair across weeks, its days in date order: the second applies the first's findings); what is
+    still left is a single. Units are returned in date order of their first day. Nothing is dropped."""
+    parse = lambda d: dt.date(int(d[:4]), int(d[4:6]), int(d[6:8]))
+    tues = sorted(d for d in days if parse(d).weekday() == 1)
+    weds = sorted(d for d in days if parse(d).weekday() == 2)
+    units, used = [], set()
+    for t in tues:
+        w = (parse(t) + dt.timedelta(days=1)).strftime('%Y%m%d')
+        if w in weds:
+            units.append(dict(kind='same_week', days=[t, w]))
+            used.update((t, w))
+    left_t = [d for d in tues if d not in used]
+    left_w = [d for d in weds if d not in used]
+    for t, w in zip(left_t, left_w):
+        units.append(dict(kind='cross_week', days=sorted([t, w])))
+    for d in left_t[len(left_w):] + left_w[len(left_t):]:
+        units.append(dict(kind='single', days=[d]))
+    units.sort(key=lambda u: u['days'][0])
+    return units
+
+
 def load_plan(a, code_root):
     """The run's plan: the days with their class and role, overrides per day, and the fixed settings. Only rule breaks
     refuse the plan (a day listed twice, a malformed day, an unknown class or field). A day outside the run's class or
@@ -122,15 +147,24 @@ def load_plan(a, code_root):
     entries += [dict(day=d) for d in (a.days or '').split(',') if d.strip()]
     klass = a.day_class or doc.get('class')
     arm = sorted(set((a.classroom_arm or '').split(',') if a.classroom_arm else doc.get('classroom_arm') or []) - {''})
+    listed = sorted({str(e['day']) for e in entries if str(e['day']).isdigit() and len(str(e['day'])) == 8})
+    units = {role: pair_units([d for d in listed if d[4:6] == '10' and ROLE_OF_YEAR.get(int(d[:4])) == role
+                               and CLASS_OF_WEEKDAY.get(dt.date(int(d[:4]), int(d[4:6]), int(d[6:8])).weekday()) == klass])
+             for role in ('discovery', 'confirmation')}
     if not arm:
         # Greg, 2026-09-29: the classroom arm runs on days 1 and 2 of every five (they apply their findings), off on 3, 4
-        # and 5, then on again: the run's discovery days of its class, in date order, position i on when i % 5 < 2
-        # (--classroom-arm-cycle ON/OF, default 2/5; 5/5 = every day). An explicit list (--classroom-arm) wins.
+        # and 5, then on again (--classroom-arm-cycle ON/CYCLE, default 2/5; 5/5 = every day). An explicit list
+        # (--classroom-arm) wins. Then (Greg): "We'll pair them up like that for as many pairs as we can get. They probably
+        # won't all have consecutive dates though": the cycle is counted in days over the discovery UNITS (pairs, then
+        # singles) in date order, and a unit is on when the position of its first day is on, so a pair is never split:
+        # with 2/5 and pairs the arm runs on units 1, 4, 6, 9, ... (2 days in 5 over the run, every arm unit a whole pair).
         on, cycle = (int(x) for x in a.classroom_arm_cycle.split('/'))
-        listed = sorted({str(e['day']) for e in entries if str(e['day']).isdigit() and len(str(e['day'])) == 8})
-        discovery = [d for d in listed if d[4:6] == '10' and ROLE_OF_YEAR.get(int(d[:4])) == 'discovery'
-                     and CLASS_OF_WEEKDAY.get(dt.date(int(d[:4]), int(d[4:6]), int(d[6:8])).weekday()) == klass]
-        arm = [d for i, d in enumerate(discovery) if i % cycle < on]
+        position = 0
+        for unit in units['discovery']:
+            if position % cycle < on:
+                arm.extend(unit['days'])
+            position += len(unit['days'])
+        arm = sorted(arm)
     refused, days, left_out = [], [], []
     names = [e['day'] for e in entries]
     for d in sorted({n for n in names if names.count(n) > 1}):
@@ -186,7 +220,10 @@ def load_plan(a, code_root):
     for d in arm:
         if d not in names:
             refused.append(dict(day=d, reason='a classroom-arm day that is not in the day list'))
-    plan = dict(schema=SCHEMA, run=a.run, cls=klass, days=days, left_out=left_out, classroom_arm=arm,
+    # the days run unit by unit (a pair's two days side by side, --parallel-days 4 = two pairs at once), discovery first
+    order = {d: i for i, d in enumerate(d for role in ('discovery', 'confirmation') for u in units[role] for d in u['days'])}
+    days.sort(key=lambda e: (order.get(e['day'], len(order)), e['day']))
+    plan = dict(schema=SCHEMA, run=a.run, cls=klass, days=days, left_out=left_out, classroom_arm=arm, units=units,
                 frozen_survivors=a.frozen_survivors or None, historical_claims=a.historical_claims or None,
                 lags=a.lags, transforms=a.transforms or None, batch=BATCH)
     return plan, refused
