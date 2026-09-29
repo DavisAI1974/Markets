@@ -25,11 +25,16 @@ shift farther than max(2L+1, m/10) steps gives the windowed maximum |D| a shuffl
 reports how many shifts there were and how many reached the observed |D| (the same statistic and null as the joined-
 teacher builder, dfe08ca7). Results are COUNTS per pair, cell, lag and day, never a coefficient or an average (D37).
 A pair is "beyond chance" only when shifts > 0 and none reached it; that label is orientation, the counts are the result.
+TRANSFORMS (frankie_box_experiment_transforms.TRANSFORMS): every series is turned into a step series by each chosen
+transform (sign_of_step, run_length, magnitude_class, level_crossing, acceleration; all causal, -1/0/+1, same length).
+Pairs: x under transform T against y under the same T, and x under T against y's sign_of_step (does T of x lead the
+direction of y). The statistic and the chance check are the same for every transform; each row names x_transform and
+y_transform. Steps a transform could not classify (an unknown value) are counted per series and transform, never filled.
 Cells: whole-day, plus every text column whose name ends in session_phase / continuity_segment / source_day /
 source_role (the joined teacher's cell names); every other text column is listed as a cell not yet used.
 
-LISTED, NOT YET SEARCHED (never dropped): the INPUT record spool (every record), other transforms (levels, magnitudes,
-run lengths), other cells, conditions, targets beyond the series themselves, the teacher's Dipole source, claims
+LISTED, NOT YET SEARCHED (never dropped): the INPUT record spool (every record), transform pairs other than the two
+above, other cells, conditions, targets beyond the series themselves, the teacher's Dipole source, claims
 (Frankie's and Jev's) - each named in the MANIFEST's not_searched list.
 
 WALLS. The day must be declared a discovery day; a confirmation day is refused unless a frozen survivor list is given
@@ -52,7 +57,8 @@ F_LAST = 128                       # the exchange record flag that closes a grou
 NOT_SEARCHED = (
     ('root/work/derived/.rows/input-*.jsonl fields', 'per-event prices, order ids, queue positions, sequence gaps (only per-group '
      'counts and sizes by action and side are searched)'),
-    ('transforms', 'levels, magnitudes, run lengths, first differences (only the sign of each step is searched here)'),
+    ('transform pairs', 'x under transform T against y under a different transform other than sign_of_step (only T vs T '
+     'and T vs sign_of_step are run); transforms not in frankie_box_experiment_transforms.TRANSFORMS'),
     ('conditions', 'conditioning on a state (e.g. book regime) before counting'),
     ('targets', 'targets other than the series themselves (e.g. the mid N groups ahead, fills, exhaustion)'),
     ('dipole on search-only days', "the teacher's Dipole measurements exist only where a launch ran (the classroom-arm days); "
@@ -329,32 +335,54 @@ def couple(fx, fy, lags):
 _JOB = {}
 
 
+def _step_job(args):
+    """One series under one transform: its step series and the steps it could not classify (an unknown value)."""
+    import frankie_box_experiment_transforms as T
+    name, tname = args
+    values = _JOB['series'][name]
+    steps = T.TRANSFORMS[tname](values)
+    return tname, name, steps, T.unclassified(values, steps)
+
+
+def y_transforms(tx):
+    """The y-side transforms paired with x under tx: the same transform, and the direction of y (sign_of_step)."""
+    return (tx,) if tx == 'sign_of_step' else (tx, 'sign_of_step')
+
+
 def _cell_job(args):
-    """One cell and one x series against every other series: writes its own part file (counts only)."""
-    import numpy as np
-    part, cell_col, cell_value, x, lags, survivors, header = args
-    signs, idx = _JOB['signs'], _JOB['cells'][(cell_col, cell_value)]
+    """One cell and one x series under one transform against every other series: its own part file (counts only)."""
+    part, cell_col, cell_value, tx, x, lags, survivors, header = args
+    steps, idx = _JOB['steps'], _JOB['cells'][(cell_col, cell_value)]
     pick = (lambda v: v) if idx is None else (lambda v: v[idx])
-    sx = pick(signs[x])
+    sx = pick(steps[tx][x])
     if sx.size < 2:
         return part, 0, 0
     fx = transforms(sx)
     count = beyond = 0
     with open(part + '.tmp', 'w') as out:
-        for y in sorted(signs):
-            if y == x or (survivors is not None and (x, y, cell_col, cell_value) not in survivors):
+        for ty in y_transforms(tx):
+            if ty not in steps:
                 continue
-            row = dict(header, x=x, y=y, cell=cell_col, cell_value=cell_value, transform='sign_of_step',
-                       **couple(fx, transforms(pick(signs[y])), lags))
-            out.write(json.dumps(row, sort_keys=True) + '\n')
-            count += 1
-            beyond += row['beyond_chance']
+            for y in sorted(steps[ty]):
+                if y == x or (survivors is not None and (tx, x, ty, y, cell_col, cell_value) not in survivors):
+                    continue
+                row = dict(header, x=x, y=y, cell=cell_col, cell_value=cell_value, transform=tx, x_transform=tx,
+                           y_transform=ty, **couple(fx, transforms(pick(steps[ty][y])), lags))
+                out.write(json.dumps(row, sort_keys=True) + '\n')
+                count += 1
+                beyond += row['beyond_chance']
     os.replace(part + '.tmp', part)
     return part, count, beyond
 
 
-def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, workers=8):
+def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, workers=8, transform_names=None):
     import numpy as np
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import frankie_box_experiment_transforms as T
+    transform_names = list(transform_names or T.TRANSFORMS)
+    unknown = [t for t in transform_names if t not in T.TRANSFORMS]
+    if unknown:
+        raise SystemExit('unknown transforms %s (known: %s)' % (unknown, sorted(T.TRANSFORMS)))
     data_root = Path(data_root or '/opt/frankie-box/work/experiment-data')
     day_dir = data_root / day / ('cycle-' + cycle)
     if not (day_dir / 'MANIFEST.json').is_file():
@@ -365,17 +393,23 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     if day_role == 'confirmation':
         if not frozen:
             raise SystemExit('a confirmation day stays untouched until the survivor list is frozen: give --frozen-survivors')
-        survivors = {(s['x'], s['y'], s.get('cell', 'whole-day'), s.get('cell_value')) for s in json.loads(Path(frozen).read_bytes())['survivors']}
+        survivors = {(s.get('x_transform', 'sign_of_step'), s['x'], s.get('y_transform', 'sign_of_step'), s['y'],
+                      s.get('cell', 'whole-day'), s.get('cell_value'))
+                     for s in json.loads(Path(frozen).read_bytes())['survivors']}
+        transform_names = sorted({k[0] for k in survivors} | {k[2] for k in survivors})
     target = Path(root) / day / ('cycle-' + cycle) / day_role
     if (target / 'MANIFEST.json').exists():
         raise SystemExit('%s already searched: the same day is not searched twice (duplicate data declines the run)' % target)
     axis, series, cells, sources, notes, gates = build_series(day_dir, log)
     names = sorted(series)
-    signs = {}
-    for name in names:
-        s = np.sign(np.diff(series[name]))
-        s[~np.isfinite(s)] = 0
-        signs[name] = s.astype(np.float64)
+    import multiprocessing
+    context = multiprocessing.get_context('fork')                # the workers share the arrays, no copy
+    _JOB.update(series=series)
+    steps, unclassified = {t: {} for t in transform_names}, {t: {} for t in transform_names}
+    with context.Pool(workers) as pool:
+        for tname, name, st, n_unknown in pool.imap_unordered(_step_job, [(n, t) for t in transform_names for n in names]):
+            steps[tname][name] = st
+            unclassified[tname][name] = n_unknown
     cell_index = {('whole-day', None): None}
     for col, values in sorted(cells.items()):
         arrived = np.asarray(values[1:], dtype=object)          # a step belongs to the cell of the group it arrives at
@@ -384,14 +418,12 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     staging = target.parent / (target.name + '.partial')
     (staging / 'couplings').mkdir(parents=True, exist_ok=True)
     header = dict(day=day, cycle=cycle, day_role=day_role)
-    jobs = [(str(staging / 'couplings' / ('%04d-%s.jsonl' % (c, hashlib.sha256(x.encode()).hexdigest()[:16]))),
-             col, value, x, lags, survivors, header)
+    jobs = [(str(staging / 'couplings' / ('%04d-%s-%s.jsonl' % (c, tx, hashlib.sha256(x.encode()).hexdigest()[:16]))),
+             col, value, tx, x, lags, survivors, header)
             for c, (col, value) in enumerate(sorted(cell_index, key=lambda k: (k[0] != 'whole-day', k[0], str(k[1]))))
-            for x in names]
-    _JOB.update(signs=signs, cells=cell_index)
+            for tx in transform_names for x in names]
+    _JOB.update(steps=steps, cells=cell_index)
     started = time.time()
-    import multiprocessing
-    context = multiprocessing.get_context('fork')                # the workers share the sign arrays, no copy
     parts, count, beyond = [], 0, 0
     with context.Pool(workers) as pool:
         for part, n_rows, n_beyond in pool.imap_unordered(_cell_job, jobs):
@@ -405,6 +437,9 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     data=str(day_dir), data_manifest_sha256=sha256_file(day_dir / 'MANIFEST.json'),
                     sources=sources, notes=notes, leakage=gates, lags=lags,
                     series=names, cells=[(c, v) for c, v, _ in cell_specs],
+                    transforms=dict(names=transform_names, pairs={t: list(y_transforms(t)) for t in transform_names},
+                                    module_sha256=sha256_file(Path(T.__file__)),
+                                    unclassified_steps=unclassified),
                     couplings=dict(parts=part_pins, rows=count, beyond_chance=beyond, jobs=len(jobs), workers=workers),
                     not_searched=[dict(item=a, what=b) for a, b in NOT_SEARCHED],
                     rule='counts per pair, cell, lag and day; never pooled across days; never a coefficient or an average '
@@ -412,9 +447,10 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     frozen_survivors=str(frozen) if frozen else None, model_calls=0)
     (staging / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     os.replace(staging, target)
-    log('search: %d series (%d sources failed the leakage gate, listed), %d cells, %d pair rows, %d beyond chance (a '
-        'count, not a finding by itself) in %.0f s' % (len(names), sum(1 for g in gates if g['passed'] is False),
-                                                       len(cell_specs), count, beyond, manifest['seconds']))
+    log('search: %d series x %d transforms (%d sources failed the leakage gate, listed), %d cells, %d pair rows, %d '
+        'beyond chance (a count, not a finding by itself) in %.0f s' % (
+            len(names), len(transform_names), sum(1 for g in gates if g['passed'] is False), len(cell_specs), count,
+            beyond, manifest['seconds']))
     return manifest
 
 
@@ -426,12 +462,14 @@ def main():
     p.add_argument('--lags', type=int, default=20)
     p.add_argument('--frozen-survivors')
     p.add_argument('--workers', type=int, default=8, help='worker processes (the box has 32 CPUs)')
+    p.add_argument('--transforms', help='comma list from frankie_box_experiment_transforms.TRANSFORMS (default: all)')
     a = p.parse_args()
     if not (len(a.day) == 8 and a.day.isdigit() and a.cycle.isdigit()):
         raise SystemExit('--day YYYYMMDD and --cycle NN required')
     here = Path(__file__).resolve()
     sys.path.insert(0, str(here.parents[3]))          # the checkout root: research.*, odcore.*
-    m = search(a.day, a.cycle, a.day_role, a.lags, a.frozen_survivors, lambda text: print(text, flush=True), workers=a.workers)
+    m = search(a.day, a.cycle, a.day_role, a.lags, a.frozen_survivors, lambda text: print(text, flush=True),
+               workers=a.workers, transform_names=[t for t in (a.transforms or '').split(',') if t] or None)
     print(json.dumps(dict(target=str(ROOT / a.day / ('cycle-' + a.cycle) / a.day_role), couplings=m['couplings'],
                           leakage_failed=[g['series'] for g in m['leakage'] if g['passed'] is False],
                           not_searched=m['not_searched']), indent=1))

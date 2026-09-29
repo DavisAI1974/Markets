@@ -19,6 +19,8 @@ how many reached the observed count. Where the claimed direction is stated in a 
   held       beyond chance and moving the claimed way;
   shown_otherwise  beyond chance and moving the other way -> the challenge, worded "the data is showing this instead";
   unresolved not beyond chance, or no claimed direction to compare.
+  counts_only  a row on another transform pair than the claim's (x_transform, y_transform; default sign_of_step on
+             both sides): its counts are reported, it is never marked.
 The disposition word (SUPPORTED_SCOPED, CONTRADICTED_SCOPED, PLAUSIBLE_UNRESOLVED, INSUFFICIENT_EVIDENCE, the words of
 dipole_scientific_review) is orientation only (R14); the counts and days are the finding. Lags outside the search's
 window, cells the search did not run, transforms it did not run and series it does not carry are listed under
@@ -163,7 +165,10 @@ def test(claims_doc, days):
                 for x, y in ((a, b), (b, a)):
                     for r in rows.get((d['day'], x, y), []):
                         observed = 'same' if r['same_way'] > r['opposite'] else 'opposite' if r['opposite'] > r['same_way'] else 'even'
-                        if c['direction'] is None or not r['beyond_chance']:
+                        tx, ty = r.get('x_transform', r.get('transform', 'sign_of_step')), r.get('y_transform', 'sign_of_step')
+                        if (tx, ty) != (c.get('x_transform', 'sign_of_step'), c.get('y_transform', 'sign_of_step')):
+                            mark = 'counts_only'          # another transform pair than the claim's: reported, not marked
+                        elif c['direction'] is None or not r['beyond_chance']:
                             mark = 'unresolved'
                         elif observed == c['direction']:
                             mark = 'held'
@@ -176,7 +181,8 @@ def test(claims_doc, days):
                                                      x, y, r['same_way'], r['opposite'], r['best_lag'], r['null_shifts'], c['direction']))
                         verdicts.append(mark)
                         tests.append(dict(day=d['day'], x=x, y=y, cell=r['cell'], cell_value=r['cell_value'],
-                                          transform=r['transform'], lag=r['best_lag'], steps=r['steps'],
+                                          transform=r['transform'], x_transform=tx, y_transform=ty,
+                                          lag=r['best_lag'], steps=r['steps'],
                                           counts=dict(same_way=r['same_way'], opposite=r['opposite'], both_moving=r['both_moving'],
                                                       x_moves=r['x_moves'], y_moves=r['y_moves']),
                                           chance_check=dict(shifts=r['null_shifts'], reached=r['null_at_or_beyond'],
@@ -193,12 +199,15 @@ def test(claims_doc, days):
                 untested.append('the claimed cell "%s" was not a cell of the search' % cell)
         if c['direction'] is None:
             untested.append('no direction stated in a testable form ("%s"): counts reported, nothing marked held' % c['direction_text'])
-        untested.append('transforms other than the sign of each step (levels, magnitudes, run lengths) not run yet')
+        claimed = (c.get('x_transform', 'sign_of_step'), c.get('y_transform', 'sign_of_step'))
+        if not any(t['x_transform'] == claimed[0] and t['y_transform'] == claimed[1] for t in tests):
+            untested.append('no search row carries the claimed transform pair %s -> %s on the days given' % claimed)
         results.append(dict(claim_id=c['id'], statement=c['statement'], author=claims_doc['author'], day_made=c['day_made'],
                             series_matched=matched, cannot_test_yet=[dict(series=m, reason='not in the search (no series of this '
                                                                          'name on any day given)') for m in missing],
                             tests=tests, counts=dict(tests=len(tests), held=held, shown_otherwise=other,
-                                                     unresolved=verdicts.count('unresolved')),
+                                                     unresolved=verdicts.count('unresolved'),
+                                                     counts_only=verdicts.count('counts_only')),
                             days_tested=sorted({t['day'] for t in tests}), disposition=disposition,
                             disposition_note='orientation only (R14); the counts and days above are the finding',
                             challenge=challenges, untested=untested))
