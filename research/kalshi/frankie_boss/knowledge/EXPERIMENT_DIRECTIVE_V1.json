@@ -1,0 +1,23 @@
+{
+ "schema": "FRANKIE_EXPERIMENT_DIRECTIVE_V1",
+ "set_by": "Greg Davis, 2026-09-29",
+ "applies_to": ["Frankie", "the BOSS teacher", "the scientific teacher (the search)", "the classroom", "Jev"],
+ "directive": "We are trying to make correlations and the best trade signals we can.",
+ "greg_verbatim": [
+  "We're trying to make correlations and the best trade signals we can.",
+  "I don't want to limit it before we push the boundaries on the possibilities. I want to find out all sorts of new and amazing things about dipole.",
+  "NO DATA IS DROPPED, even when incomplete: a calculation skips over the missing piece and lists it; never skip the day or the run for it."
+ ],
+ "what_we_are_shooting_for": [
+  "Correlations: which series move with which, at which lag, in which cell of the trading day, across the NG order book (every order event and book level of the front month), the Dipole measurements, the calculation layers, and Frankie's historical data points (positioning, weather observed and forecast, model disagreement, grid wind and gas burn, weekly storage and its estimate vs actual, the futures curve).",
+  "The best trade signals: relationships that lead the NG price and would pay per cell, net of fees at maker and taker, on days they were not found on.",
+  "New dipole findings of any kind: direction, magnitude, timing, exhaustion, divergence and anything else the dipole can carry (D51); nothing is ruled out early (D52)."
+ ],
+ "how": [
+  "Every trading day is its own record (18:00 ET the prior day to the 17:00 ET halt); days are never pooled; midweek Tuesdays and Wednesdays are one class.",
+  "Results are counts with the days named, never an average, a pooled coefficient or a fitted slope as the finding (D37).",
+  "Every claim is a hypothesis with its author (R11) until it is tested on other days; a relationship found on discovery days is confirmed only on days it was not found on.",
+  "Every value is used only from the moment it was public; nothing after a decision's cutoff reaches it.",
+  "A missing value is listed with its day and reason; the day still runs."
+ ]
+}

@@ -70,6 +70,14 @@ NOT_SEARCHED = (
 )
 
 
+
+def directive_witness():
+    """The experiment's directive (Greg, 2026-09-29), named in this step's record: what the run is shooting for.
+    research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json, whole text in the receipt."""
+    path = Path(__file__).resolve().parents[3] / 'research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json'
+    data = path.read_bytes()
+    return dict(path=str(path), sha256=hashlib.sha256(data).hexdigest(), directive=json.loads(data))
+
 def unpack_spool(path):
     """Every row of a ROOT row spool, decoded by the journal's own codec, in file order (streamed)."""
     from research.kalshi.frankie_boss.c15_journal import unpack
@@ -460,6 +468,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     cell_specs = [(c, v, None) for c, v in cell_index]
     manifest = dict(schema=SCHEMA, day=day, cycle=cycle, day_role=day_role, at=time.time(), seconds=time.time() - started,
                     data=str(day_dir), data_manifest_sha256=sha256_file(day_dir / 'MANIFEST.json'),
+                    experiment_directive=directive_witness(),
                     sources=sources, notes=notes, leakage=gates, lags=lags,
                     series=names, cells=[(c, v) for c, v, _ in cell_specs],
                     transforms=dict(names=transform_names, pairs={t: list(y_transforms(t)) for t in transform_names},

@@ -41,6 +41,14 @@ ROWS_FILE = 'host-dipole-classroom-source.c15.json'
 NG_TICK_RAW = 1_000_000            # NG tick 0.001 in the DBN fixed-point price (1e-9)
 
 
+
+def directive_witness():
+    """The experiment's directive (Greg, 2026-09-29), named in this step's record: what the run is shooting for.
+    research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json, whole text in the receipt."""
+    path = Path(__file__).resolve().parents[3] / 'research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json'
+    data = path.read_bytes()
+    return dict(path=str(path), sha256=hashlib.sha256(data).hexdigest(), directive=json.loads(data))
+
 def _sha256(path):
     h = hashlib.sha256()
     with open(path, 'rb') as f:
@@ -143,7 +151,8 @@ def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ext
                   entity_rows=len(hashes), as_of=as_of, through_cursor=through, walk_seconds=round(walked, 1),
                   seconds=round(time.time() - started, 1), rows_file=dict(file=ROWS_FILE, sha256=_sha256(out / ROWS_FILE)),
                   attachment_file=dict(file='teacher-attachment.pkl', sha256=_sha256(out / 'teacher-attachment.pkl')),
-                  model_calls=0, caveat='whole-day context: the exact-row check in finish compares the rows with themselves')
+                  model_calls=0, caveat='whole-day context: the exact-row check in finish compares the rows with themselves',
+                  experiment_directive=directive_witness())
     code = 4 if external.get('status') == 'refused' else 0
     if external.get('status') not in ('absent', 'refused'):
         try:

@@ -60,6 +60,19 @@ def _dump(path, body):
     Path(path).write_text(json.dumps(body, indent=1, sort_keys=True, default=str))
 
 
+DIRECTIVE_PATH = ROOT / 'research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json'
+
+
+def directive():
+    """The experiment's directive (Greg, 2026-09-29: "make sure frankie and teachers and classroom has the directive of
+    what we're shooting for with this experiment"), loaded whole, and its witness for the receipt."""
+    data = DIRECTIVE_PATH.read_bytes()
+    value = json.loads(data)
+    if value.get('schema') != 'FRANKIE_EXPERIMENT_DIRECTIVE_V1' or not value.get('directive'):
+        raise ValueError('%s is not the experiment directive' % DIRECTIVE_PATH)
+    return value, dict(path=str(DIRECTIVE_PATH), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+
 def _attach_to_brain_entry(entry_dir, classroom_external_md, day_file, day_sha, day_receipt, day):
     """His external teach-back into the entry (include true) and the day file listed as an attachment; MANIFEST rewritten."""
     manifest_path = Path(entry_dir) / 'MANIFEST.json'
@@ -159,7 +172,9 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
     visible = F.final_model_visible_classroom(pkg)
     request = {'attachment': {'dipole_classroom': visible}}                     # the V1 request, unchanged
     ext_visible = EXT.model_visible_external(ext['binding'], ext['pre_message'])
-    request_v2 = {'attachment': {'dipole_classroom': visible, 'dipole_external': ext_visible}}
+    the_directive, directive_witness = directive()
+    request_v2 = {'attachment': {'dipole_classroom': visible, 'dipole_external': ext_visible,
+                                 'experiment_directive': the_directive}}
     # Jev's material: the SAME model-visible classroom Frankie answers (V2: the 19/171 and the external section), written
     # BEFORE any answer and OUTSIDE work/classroom/ (the blind wall of frankie_box_jev_relay.sh ACTION=material)
     jev_dir = calculations / 'jev-material'
@@ -238,13 +253,20 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
 
     manifest = BR.write_entry(work, out, brain, '00', day=day)
     manifest = _attach_to_brain_entry(entry, d / 'classroom-external.md', day_file, day_sha, day_receipt, day)
+    directive_bytes = DIRECTIVE_PATH.read_bytes()
+    with (Path(entry) / 'experiment-directive.json').open('xb') as f:
+        f.write(directive_bytes)
+    manifest['entries'].append(dict(name='experiment-directive.json', bytes=len(directive_bytes),
+                                    sha256=hashlib.sha256(directive_bytes).hexdigest(), source=str(DIRECTIVE_PATH),
+                                    include=True, kind="the experiment's directive (Greg): what we are shooting for"))
+    (Path(entry) / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     key = ext['teacher_key']
     result = dict(schema=SCHEMA, day=day, status='complete', mode=mode, components=report['components'],
                   observations=report['observations'], pairs=report['pairs'], novel_findings=len(novel),
                   dropped_findings=len(built['dropped_findings']), correction_ids=len(correction.get('correction_ids') or ()),
                   teacher_complete=completion.get('teacher_complete'), completion_hash=completion.get('completion_hash'),
                   carried_from_previous=carried, classroom_rules=rules_witness, teacher_rows=str(teacher_rows),
-                  v1_unchanged=pkg2['v1_unchanged'],
+                  experiment_directive=directive_witness, v1_unchanged=pkg2['v1_unchanged'],
                   external=dict(day_file=dict(path=str(day_file), sha256=day_sha, found=day_source,
                                               receipt=str(day_receipt) if day_receipt.is_file() else None),
                                 section=ext['section_receipt'], external_key_hash=key['external_key_hash'],
@@ -256,7 +278,7 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
                                 mastered=ext_grade['mastered'], teacher_complete=ext_completion['teacher_complete'],
                                 completion_hash=ext_completion['completion_hash'], carried_from_previous=external_carried),
                   jev_material=dict(path=str(jev_path), sha256=hashlib.sha256(jev_raw).hexdigest(), bytes=len(jev_raw),
-                                    carries=['dipole_classroom', 'dipole_external']),
+                                    carries=['dipole_classroom', 'dipole_external', 'experiment_directive']),
                   stand_ins=dict(request_sha256=request_sha256, request_v2_sha256=request_v2_sha256, session_id=session_id,
                                  model_identity=MODEL_IDENTITY,
                                  why='the experiment has no principal request; the V1 request identity is the digest of the '
