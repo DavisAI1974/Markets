@@ -13,7 +13,7 @@
 set -eu
 : "${MARKETS_SHA:?dispatched commit required}"
 ROOT=/opt/frankie-box
-export DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive HOME="${HOME:-/root}"   # SSM runs without HOME; git --global needs it
 echo "### identity"; hostname; . /etc/os-release; echo "$PRETTY_NAME"; nproc; free -g | head -2; df -h / | tail -1
 echo "### apt"
 apt-get update -q >/dev/null
