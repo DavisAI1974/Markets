@@ -1,11 +1,12 @@
 # The experiment orchestrator (frankie_box_experiment.py; SPEC-experiment-orchestrator.md "How the orchestrator runs"):
 # one run over a list of days of ONE class, calling the committed steps in order (fetch, ingest, root, teacher, data,
 # search, lessons), a receipt per day and step under /opt/frankie-box/work/experiment/<RUN>/, resume on restart, a stop
-# and save at the disk floor. No model call, no Granite, no Pod.
+# and save at the disk floor. No data dropped: a day's gap waits or is skipped over on that day's steps (listed), the
+# rest runs. No model call, no Granite, no Pod.
 # Inputs: CODE_ROOT (staged checkout), ACTION (plan | start | status; default plan, read-only), RUN (the run name),
 # DAYS (comma list YYYYMMDD) and/or PLAN (a plan JSON, repo-relative or under /opt/frankie-box), DAY_CLASS (monday |
 # midweek | thursday | friday), CLASSROOM_ARM (comma list), FROZEN_SURVIVORS (confirmation days only), HISTORICAL_CLAIMS
-# (repo-relative committed file), WITHOUT_DIPOLE (1 to export and search days with no Dipole rows), STAGES (comma list),
+# (repo-relative committed file), STAGES (comma list),
 # LAGS, TRANSFORMS, INGEST_WORKERS (31), DATA_WORKERS (1), SEARCH_WORKERS (8), PARALLEL_DAYS (4), DISK_FLOOR_GB (100),
 # MAP_URL (the presigned partitions, for STAGES=fetch). A probe: frankie_box_progress.sh
 # DIRECTORY=/opt/frankie-box/work/experiment/<RUN>.
@@ -22,7 +23,6 @@ set -- --action "$ACTION" --run "$RUN" --commit "$MARKETS_SHA" --code-root "$COD
 [ -z "${CLASSROOM_ARM:-}" ] || set -- "$@" --classroom-arm "$CLASSROOM_ARM"
 [ -z "${FROZEN_SURVIVORS:-}" ] || set -- "$@" --frozen-survivors "$FROZEN_SURVIVORS"
 [ -z "${HISTORICAL_CLAIMS:-}" ] || set -- "$@" --historical-claims "$HISTORICAL_CLAIMS"
-[ "${WITHOUT_DIPOLE:-0}" != 1 ] || set -- "$@" --without-dipole
 [ -z "${STAGES:-}" ] || set -- "$@" --stages "$STAGES"
 [ -z "${TRANSFORMS:-}" ] || set -- "$@" --transforms "$TRANSFORMS"
 set -- "$@" --lags "${LAGS:-20}" --ingest-workers "${INGEST_WORKERS:-31}" --data-workers "${DATA_WORKERS:-1}" \

@@ -9,7 +9,9 @@ checked against the receipt), builds the SAME whole-day calculation pin (whole_d
 ROOT), and runs the SAME Session.derive with bedrock OFF: ROOT process 1 (the legacy pass: every INPUT record, the five
 legacy layers and the row spools) always, process 4 (the Markdown digest) only when asked (classroom-arm days, where
 Frankie reads it), processes 2 and 3 (the bedrock traversal and projection) never.
-Nothing is re-ingested: the sealed journal is read in place, read-only. A day already calculated declines (duplicate
+Nothing is re-ingested: the sealed journal is read in place, read-only. Incomplete data never stops the day: a
+partial member (the trading-day cut) is carried, producer failures are listed in the receipt and every other record is
+calculated (status calculations_retained_with_failures). A day already calculated declines (duplicate
 data). A confirmation day is refused unless the frozen survivor list is given (R15: confirmation days stay untouched).
 """
 import argparse
@@ -51,9 +53,9 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
         raise ValueError('a compact BOSS_BLOCK_INGESTION_RECEIPT_V1 is required')
     if receipt.get('trading_day') != day:
         raise ValueError('the ingestion receipt is for trading day %s, not %s' % (receipt.get('trading_day'), day))
-    if receipt.get('partial_members'):
-        raise ValueError('the ingest has partial members %s: listed, and a partial day is not calculated as whole'
-                         % receipt['partial_members'])
+    # A partial member is how a trading day is cut from its UTC partitions (the take up to the 17:00 ET halt; the rest
+    # is the next day's): it is the whole day, carried and listed in the binding, never a reason to refuse the day.
+    partial_members = list(receipt.get('partial_members') or [])
     directory = Path(receipt_path).parent
     journal = directory / receipt['journal_file']
     if journal.stat().st_size != receipt['journal_bytes'] or _sha256_file(journal) != receipt['journal_sha256']:
@@ -82,15 +84,17 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
                    'authorship is needed', ingestion_receipt=receipt_pin, completion=witness(completion_path),
                    calculation_pins=witness(output / 'calculation-pins.json'), container=container, manifest=manifest,
                    record_count=receipt['record_count'], journal_count=receipt['journal_count'],
-                   journal_hash=receipt['journal_hash'], day_role=day_role)
+                   journal_hash=receipt['journal_hash'], day_role=day_role, partial_members=partial_members)
     save_new(output / 'source-binding.json', binding)
     from frankie_box_boss_session import Session
     session = Session(output, day, '00', None)
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
     session.phase('deriving', 'experiment ROOT: the legacy pass on the sealed day; bedrock off')
     result = session.derive(source=SimpleNamespace(container=container), bedrock=False, digest=digest)
-    if result['failure_count']:
-        raise ValueError('producer failures are retained in derive.json; no completion is declared')
+    # Greg, 2026-09-29: no data is dropped even when it is not all complete; a calculation that cannot use a record
+    # skips over it, the day is not skipped. Producer failures stay in derive.json (and the failures spool) with their
+    # record index and error, and are named in the receipt; the day's calculations go on to the next steps.
+    failures = result['failure_count']
     calc = dict(schema='FRANKIE_EXPERIMENT_DAY_CALCULATIONS_V1', commit=commit, day=day, day_role=day_role,
                 source_binding=witness(output / 'source-binding.json'),
                 calculation_pins=witness(output / 'calculation-pins.json'),
@@ -99,7 +103,11 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
                 root_processes=result.get('root_processes'),
                 not_run=[dict(process=k, reason='switched off for the experiment (Greg, 2026-09-29)')
                          for k, v in (result.get('root_processes') or {}).items() if v == 'skipped'],
-                model_calls=0, source_replays=0, source_writes=0, status='calculations_retained')
+                failure_count=failures,
+                failures_note=(None if not failures else 'records a producer could not use; each listed with its index '
+                               'and error in derive.json / work/derived/.rows/failures.jsonl; every other record calculated'),
+                model_calls=0, source_replays=0, source_writes=0,
+                status='calculations_retained' if not failures else 'calculations_retained_with_failures')
     save_new(output / 'calculations-receipt.json', calc)
     session.phase('derived')
     return calc

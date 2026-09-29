@@ -17,13 +17,20 @@ the committed box script, run as a child with its own inputs, its output kept in
   lessons  frankie_box_scientific_teacher.sh          (after each batch: every discovery-day search of the run so far,
            the committed historical claims, and Jev's / Frankie's claims where the plan names them)
 
-WALLS. Days are never pooled and classes never mix: every day of a run must be of the run's class (weekday: monday,
-midweek = Tue/Wed, thursday, friday; holidays not modelled, listed). Discovery = October days of 2021-2023,
-confirmation = October days of 2024-2025 (R15); any other day is refused. A confirmation day is refused unless the
-frozen survivor list is given. A day listed twice, two sealed ingests of one day, or two finished ROOTs of one day
-decline the run (duplicate data), with the reason. Every day needs its committed per-day manifest
-(research/kalshi/frankie_boss/blocks/BLOCK_<day>_SOURCE_MANIFEST.json with trading_day = the day) or a sealed ingest
-named in the plan; a day without either is refused at plan time. No model call, no Granite, no Pod.
+NO DATA IS DROPPED (Greg, 2026-09-29): incomplete data never stops the run or skips a day. A calculation that cannot
+use a piece of data (missing, incomplete) skips over that piece, and the step says what it skipped and why; every
+other day and step goes on. So a day's gap is recorded on that day's steps and the rest runs:
+  a day with no manifest and no sealed ingest: its fetch and ingest wait (listed); its later steps wait on the ingest;
+  a day with no Dipole rows (the teacher batch not built or failed for it): exported and searched without them, the
+    Dipole listed missing in its receipts (a later search with the rows would be a second search of the day: declined,
+    so the receipt names it);
+  a ROOT with producer failures: calculations_retained_with_failures, the failures listed, the day goes on.
+WALLS (rules, not data gaps; each listed with its reason). Days are never pooled and classes never mix: a day of
+another class than the run's is left out of this run (weekday: monday, midweek = Tue/Wed, thursday, friday; holidays
+not modelled). Discovery = October days of 2021-2023, confirmation = October days of 2024-2025 (R15); a day outside
+them is left out, and a confirmation day stays untouched until the frozen survivor list is given. Duplicate data
+declines the run: a day listed twice; two sealed ingests or two finished ROOTs of one day decline that day's step,
+naming both. No model call, no Granite, no Pod.
 
 RESUME. A receipt per day and step (per batch for teacher and lessons) under /opt/frankie-box/work/experiment/<run>/.
 A restart with the same plan skips every step whose receipt says done or reused and runs the rest; a different plan
@@ -102,8 +109,10 @@ def new_bytes(path):
 # ---------------------------------------------------------------------------------------------------------------- plan
 
 def load_plan(a, code_root):
-    """The run's plan: the days with their class and role, overrides per day, and the fixed settings. Refuses a plan
-    that would mix classes, pool days, touch an unfrozen confirmation day, or ingest a day with no committed manifest."""
+    """The run's plan: the days with their class and role, overrides per day, and the fixed settings. Only rule breaks
+    refuse the plan (a day listed twice, a malformed day, an unknown class or field). A day outside the run's class or
+    the assigned Octobers, or an unfrozen confirmation day, is left out of this run with its reasons; a day with no
+    manifest stays in, its gap recorded, and its steps wait on it (a sealed ingest found on the box is used first)."""
     doc = {}
     if a.plan:
         path = Path(a.plan) if Path(a.plan).is_absolute() else Path(code_root) / a.plan
@@ -112,7 +121,7 @@ def load_plan(a, code_root):
     entries += [dict(day=d) for d in (a.days or '').split(',') if d.strip()]
     klass = a.day_class or doc.get('class')
     arm = sorted(set((a.classroom_arm or '').split(',') if a.classroom_arm else doc.get('classroom_arm') or []) - {''})
-    refused, days = [], []
+    refused, days, left_out = [], [], []
     names = [e['day'] for e in entries]
     for d in sorted({n for n in names if names.count(n) > 1}):
         refused.append(dict(day=d, reason='the day is listed %d times (duplicate data declines the run)' % names.count(d)))
@@ -123,6 +132,7 @@ def load_plan(a, code_root):
         unknown = sorted(set(e) - {'day', 'manifest', *OVERRIDES})
         if unknown:
             refused.append(dict(day=day, reason='unknown plan fields %s' % unknown))
+        outs = []
         try:
             date = dt.date(int(day[:4]), int(day[4:6]), int(day[6:8]))
             if len(day) != 8 or not day.isdigit():
@@ -132,37 +142,37 @@ def load_plan(a, code_root):
             continue
         cls = CLASS_OF_WEEKDAY.get(date.weekday())
         if cls != klass:
-            refused.append(dict(day=day, reason='a %s day in a %s run: classes never mix' % (cls or 'weekend', klass)))
+            outs.append('a %s day in a %s run: classes never mix (left out of this run)' % (cls or 'weekend', klass))
         role = ROLE_OF_YEAR.get(date.year) if date.month == 10 else None
         if role is None:
-            refused.append(dict(day=day, reason='only October days of 2021-2023 (discovery) and 2024-2025 (confirmation) '
-                                                'are assigned (R15); widening to other months is a plan change for Greg'))
+            outs.append('only October days of 2021-2023 (discovery) and 2024-2025 (confirmation) are assigned (R15); '
+                        'widening to other months is a plan change for Greg')
         if role == 'confirmation' and not a.frozen_survivors:
-            refused.append(dict(day=day, reason='a confirmation day stays untouched until the survivor list is frozen '
-                                                '(give FROZEN_SURVIVORS)'))
+            outs.append('a confirmation day stays untouched until the survivor list is frozen (give FROZEN_SURVIVORS)')
         if day in arm and role != 'discovery':
-            refused.append(dict(day=day, reason='a classroom-arm day is always a discovery day'))
+            outs.append('a classroom-arm day is always a discovery day')
+        if outs:
+            left_out.append(dict(day=day, reasons=outs))
+            continue
         manifest = e.get('manifest') or 'research/kalshi/frankie_boss/blocks/BLOCK_%s_SOURCE_MANIFEST.json' % day
         mpath = Path(code_root) / manifest
-        manifest_ok = False
+        manifest_ok, gap = False, None
         if mpath.is_file():
             m = json.loads(mpath.read_bytes())
             manifest_ok = str(m.get('trading_day')) == day
             if not manifest_ok:
-                refused.append(dict(day=day, reason='%s is for trading day %s, not %s (a multi-day block manifest is not '
-                                                    'a day: derive the day with operations/derive_trading_day_manifest.py)'
-                                                    % (manifest, m.get('trading_day'), day)))
-        elif not e.get('ingest') and day != MONDAY:
-            refused.append(dict(day=day, reason='no committed per-day manifest %s and no sealed ingest named in the plan'
-                                                % manifest))
+                gap = ('%s is for trading day %s, not %s (a multi-day block manifest is not a day)'
+                       % (manifest, m.get('trading_day'), day))
+        elif not e.get('ingest'):
+            gap = 'no committed per-day manifest %s and no sealed ingest named in the plan' % manifest
         days.append(dict(day=day, cls=cls, role=role, classroom_arm=day in arm, manifest=manifest if manifest_ok else None,
-                         **{k: e[k] for k in OVERRIDES if e.get(k)}))
+                         manifest_gap=gap, **{k: e[k] for k in OVERRIDES if e.get(k)}))
     for d in arm:
         if d not in names:
             refused.append(dict(day=d, reason='a classroom-arm day that is not in the day list'))
-    plan = dict(schema=SCHEMA, run=a.run, cls=klass, days=days, classroom_arm=arm,
+    plan = dict(schema=SCHEMA, run=a.run, cls=klass, days=days, left_out=left_out, classroom_arm=arm,
                 frozen_survivors=a.frozen_survivors or None, historical_claims=a.historical_claims or None,
-                without_dipole=bool(a.without_dipole), lags=a.lags, transforms=a.transforms or None, batch=BATCH)
+                lags=a.lags, transforms=a.transforms or None, batch=BATCH)
     return plan, refused
 
 
@@ -181,7 +191,7 @@ def sealed_ingests(day):
         except (OSError, ValueError):
             continue
         if r.get('schema') == INGESTION_SCHEMA and r.get('writer') == 'compact' and str(r.get('trading_day')) == day \
-                and (receipt.parent / 'completion.json').is_file() and not r.get('partial_members'):
+                and (receipt.parent / 'completion.json').is_file():      # partial members = the trading-day cut: kept
             out.append(receipt)
     return out
 
@@ -303,6 +313,8 @@ class Run:
         if receipt or why:
             return self.record('fetch', e['day'], 'skipped' if receipt else 'refused',
                                reason='the day is ingested already: %s' % receipt.parent if receipt else why)
+        if not e['manifest']:
+            return self.record('fetch', e['day'], 'waiting', reason=e['manifest_gap'])
         if not os.environ.get('MAP_URL'):
             return self.record('fetch', e['day'], 'refused', reason='MAP_URL not set: dispatch with presign=<bucket>/<key> '
                                                                     'for every partition of the days')
@@ -322,6 +334,8 @@ class Run:
         if e['day'] == MONDAY:
             return self.record('ingest', e['day'], 'refused', reason='Monday 20211004 is the gold standard: never re-ingested; '
                                                                      'name its sealed ingest directory in the plan')
+        if not e['manifest']:
+            return self.record('ingest', e['day'], 'waiting', reason=e['manifest_gap'])
         if not self.disk_ok('ingest'):
             return None
         before = set(WORK.glob('ingest-*'))
@@ -343,7 +357,7 @@ class Run:
                                if (calc / 'calculations-receipt.json').is_file() else None)
         ing = self.receipt('ingest', e['day'])
         if not (ing and ing['status'] in FINISHED):
-            return self.record('root', e['day'], 'refused', reason='the day has no sealed ingest yet (stage ingest)')
+            return self.record('root', e['day'], 'waiting', reason='the day has no sealed ingest yet (stage ingest)')
         if not self.disk_ok('root'):
             return None
         output = ROOTS / ('%s-%s-a%d' % (self.plan['run'], e['day'], len(attempts) + 1))
@@ -356,9 +370,11 @@ class Run:
         if code != 0 or not (output / 'calculations-receipt.json').is_file():
             return self.record('root', e['day'], 'failed', exit_code=code, log=log, output_root=str(output),
                                interrupted_attempts=attempts, reason='no calculations-receipt.json (the attempt is kept)')
+        calc = json.loads((output / 'calculations-receipt.json').read_bytes())
         return self.record('root', e['day'], 'done', exit_code=code, log=log, calculations=str(output),
                            receipt_sha256=sha256_file(output / 'calculations-receipt.json'), new_bytes=new_bytes(output),
-                           interrupted_attempts=attempts, digest=e['classroom_arm'])
+                           interrupted_attempts=attempts, digest=e['classroom_arm'],
+                           root_status=calc.get('status'), producer_failures=calc.get('failure_count'))
 
     def teacher(self, batch_key, entries):
         todo = [e for e in entries if rows_of(e)[0] is None]
@@ -372,17 +388,22 @@ class Run:
         for e in todo:
             ing = self.receipt('ingest', e['day'])
             if not (ing and ing['status'] in FINISHED):
-                return self.record('teacher', batch_key, 'refused', reason='%s has no sealed ingest yet' % e['day'])
-            receipts.append(ing['receipt'])
+                continue                                  # that day waits on its ingest; the rest of the batch runs
+            receipts.append((e['day'], ing['receipt']))
+        waiting = [e['day'] for e in todo if e['day'] not in dict(receipts)]
+        if not receipts:
+            return self.record('teacher', batch_key, 'waiting', days=waiting, reason='no day of the batch has a sealed ingest yet')
         if not self.disk_ok('teacher'):
             return None
         code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh',
-                               dict(DAYS=','.join(e['day'] for e in todo), INGESTION_RECEIPTS=','.join(receipts)))
-        missing = [e['day'] for e in todo if rows_of(e)[0] is None]
-        return self.record('teacher', batch_key, 'done' if code == 0 and not missing else 'failed', exit_code=code, log=log,
-                           days=[e['day'] for e in todo], rows_missing=missing,
-                           new_bytes=sum(new_bytes(TEACHER_ROWS / e['day']) for e in todo),
-                           reason=None if code == 0 and not missing else 'rows missing for %s' % missing)
+                               dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts)))
+        missing = [d for d, _ in receipts if rows_of(dict(day=d))[0] is None]
+        return self.record('teacher', batch_key, 'done' if code == 0 and not missing and not waiting else 'failed',
+                           exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
+                           new_bytes=sum(new_bytes(TEACHER_ROWS / d) for d, _ in receipts),
+                           reason=None if code == 0 and not missing and not waiting else
+                           'rows missing for %s, waiting on ingest %s (those days go on without Dipole rows, listed)'
+                           % (missing, waiting))
 
     def data(self, e):
         target = DATA / e['day'] / ('cycle-' + CYCLE)
@@ -391,11 +412,13 @@ class Run:
         root = self.receipt('root', e['day'])
         ing = self.receipt('ingest', e['day'])
         if not (root and root['status'] in FINISHED and ing and ing['status'] in FINISHED):
-            return self.record('data', e['day'], 'refused', reason='the day has no ROOT or no sealed ingest yet')
+            return self.record('data', e['day'], 'waiting', reason='the day has no ROOT or no sealed ingest yet')
         rows, source = rows_of(e)
-        if rows is None and not self.plan['without_dipole']:
-            return self.record('data', e['day'], 'refused', reason='the day has no Dipole rows yet (the teacher batch did '
-                                                                   'not finish; the plan does not say without_dipole)')
+        dipole_missing = None
+        if rows is None:
+            dipole_missing = ('no Dipole rows for the day (teacher batch: %s); exported and searched without them, listed '
+                              'missing; a later search with the rows would be a second search of the day (declined)'
+                              % ((self.receipt('teacher', self.batch_of(e['day'])) or {}).get('status') or 'not run'))
         env = dict(ACTION='export', DAY=e['day'], CYCLE=CYCLE, CALCULATIONS=root['calculations'], INGEST=ing['ingest'])
         for key, var in (('launch', 'LAUNCH'), ('preparation', 'PREPARATION'), ('principal_inputs', 'PRINCIPAL_INPUTS'),
                          ('host_config', 'HOST_CONFIG'), ('run', 'RUN')):
@@ -409,7 +432,8 @@ class Run:
         if code != 0 or not (target / 'MANIFEST.json').is_file():
             return self.record('data', e['day'], 'failed', exit_code=code, log=log, reason='no exported MANIFEST.json')
         return self.record('data', e['day'], 'done', exit_code=code, log=log, target=str(target), dipole=source,
-                           manifest_sha256=sha256_file(target / 'MANIFEST.json'), new_bytes=new_bytes(target))
+                           dipole_missing=dipole_missing, manifest_sha256=sha256_file(target / 'MANIFEST.json'),
+                           new_bytes=new_bytes(target))
 
     def search(self, e):
         target = SEARCH / e['day'] / ('cycle-' + CYCLE) / e['role']
@@ -417,7 +441,7 @@ class Run:
             return self.record('search', e['day'], 'reused', target=str(target))
         d = self.receipt('data', e['day'])
         if not (d and d['status'] in FINISHED):
-            return self.record('search', e['day'], 'refused', reason='the day data is not exported yet')
+            return self.record('search', e['day'], 'waiting', reason='the day data is not exported yet')
         if not self.disk_ok('search'):
             return None
         env = dict(DAY=e['day'], CYCLE=CYCLE, DAY_ROLE=e['role'], LAGS=self.plan['lags'], WORKERS=self.a.search_workers)
@@ -434,7 +458,7 @@ class Run:
     def lessons(self, batch_key, entries):
         searched = [e for e in self.plan['days'] if e['role'] == 'discovery' and self.finished('search', e['day'])]
         if not searched:
-            return self.record('lessons', batch_key, 'refused', reason='no discovery-day search finished yet')
+            return self.record('lessons', batch_key, 'waiting', reason='no discovery-day search finished yet')
         searches = ','.join(str(SEARCH / e['day'] / ('cycle-' + CYCLE) / 'discovery') for e in searched)
         calls = []
         if self.plan['historical_claims']:
@@ -456,6 +480,13 @@ class Run:
         return self.record('lessons', batch_key, 'failed' if bad else 'done', calls=results,
                            searched_days=[e['day'] for e in searched],
                            reason='%d teacher call(s) failed' % len(bad) if bad else None)
+
+    def batch_of(self, day):
+        for role in ('discovery', 'confirmation'):
+            role_days = [e['day'] for e in self.plan['days'] if e['role'] == role]
+            if day in role_days:
+                return '%s-%02d' % (role, role_days.index(day) // BATCH + 1)
+        return None
 
     # the loop
     def start(self, stages):
@@ -521,6 +552,7 @@ class Run:
             batches['%s/%s' % (r['key'], r['stage'])] = r['status']
         unfinished = sorted({(k, s) for k, v in rows.items() for s, st in v.items() if st not in FINISHED})
         out = dict(schema=SCHEMA, run=self.plan['run'], plan_sha256=plan_digest(self.plan), stages=list(stages), days=rows,
+                   left_out=self.plan['left_out'],
                    batches=batches, stopped=self.stopped, free_bytes=shutil.disk_usage(BOX_ROOT).free,
                    unfinished=[dict(day=k, stage=s) for k, s in unfinished], model_calls=0)
         tmp = self.dir / 'summary.pending'
@@ -562,7 +594,6 @@ def main():
     p.add_argument('--classroom-arm', help='comma list of the classroom-arm days (DIGEST=on for their ROOT)')
     p.add_argument('--frozen-survivors', help='the frozen survivor list (required for any confirmation day)')
     p.add_argument('--historical-claims', help='a committed knowledge/HISTORICAL_CLAIMS_V1-*.json (repo-relative)')
-    p.add_argument('--without-dipole', action='store_true', help='export and search days with no Dipole rows (listed missing)')
     p.add_argument('--stages', default=','.join(STAGES), help='comma list, run in the fixed order %s' % ','.join(STAGES))
     p.add_argument('--lags', type=int, default=20)
     p.add_argument('--transforms', help='the search transforms (comma list; default all)')
@@ -591,9 +622,12 @@ def main():
                               free_bytes=shutil.disk_usage(BOX_ROOT).free), indent=1, sort_keys=True))
         return
     plan, refused = load_plan(a, a.code_root)
-    if refused:
+    if refused:        # only rule breaks decline the run (a day listed twice, a bad day, an unknown class or field)
         print(json.dumps(dict(refused=refused, plan=plan), indent=1, sort_keys=True))
         raise SystemExit('the plan is refused (%d reasons above); nothing started' % len(refused))
+    if not plan['days']:
+        print(json.dumps(dict(left_out=plan['left_out']), indent=1, sort_keys=True))
+        raise SystemExit('every day of the plan is left out (reasons above); nothing to run')
     if a.action == 'plan':
         print(json.dumps(dict(plan=plan, plan_sha256=plan_digest(plan), days=preview(plan), stages=stages,
                               free_bytes=shutil.disk_usage(BOX_ROOT).free), indent=1, sort_keys=True))
