@@ -124,17 +124,20 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
   FROZEN_SURVIVORS HISTORICAL_CLAIMS WITHOUT_DIPOLE STAGES LAGS TRANSFORMS *_WORKERS PARALLEL_DAYS DISK_FLOOR_GB MAP_URL]`.
   `ACTION=plan` is read-only (what each day and step would do). Stages in fixed order: fetch, ingest, root, teacher,
   data, search, lessons. Fetch is its own dispatch (`STAGES=fetch`, presigned partitions) while the URLs are live.
-- Refused at plan time (nothing starts): a day of another class, a day outside October 2021-2025, a confirmation day
-  without FROZEN_SURVIVORS, a day listed twice, a day with no committed per-day manifest
-  (`blocks/BLOCK_<day>_SOURCE_MANIFEST.json`, trading_day = the day) and no sealed ingest named in a PLAN file.
-  Only 20211003 and 20211004 have per-day manifests today; Tuesday/Wednesday cannot be derived alone
-  (`derive_trading_day_manifest.py` refuses a tail day): an open item.
+- NO DATA DROPPED (Greg, 2026-09-29): a gap skips over the calculation that needs it, never the day or the run. A day
+  with no committed per-day manifest (`blocks/BLOCK_<day>_SOURCE_MANIFEST.json`, trading_day = the day) and no sealed
+  ingest stays in the run, its steps WAIT (listed); no Dipole rows -> exported and searched without them (listed);
+  ROOT producer failures -> `calculations_retained_with_failures` (listed), the day goes on.
+- Only rule breaks refuse the plan (a day listed twice, a malformed day). A day of another class, outside October
+  2021-2025, or an unfrozen confirmation day is LEFT OUT of that run with its reasons.
+- Only 20211003 and 20211004 have per-day manifests today; Tuesday/Wednesday need a tail take (handoff, "The midweek
+  manifest question"): Greg's call.
 - Monday 20211004 is never re-ingested; two sealed ingests or two finished ROOTs of one day decline (duplicate data):
   name the one to use in a PLAN file (`{"class": "monday", "days": [{"day": "20211004", "ingest": ..., "calculations":
   ..., "run": ...}]}`).
 - Teacher batches of 5 per role; data and search wait on the batch (1 day in 5); lessons after each discovery batch.
-  While `frankie_box_experiment_teacher.sh` is not built the batch records `not_built` and the days stop before data
-  (or WITHOUT_DIPOLE=1 exports and searches them without Dipole rows, listed missing).
+  While `frankie_box_experiment_teacher.sh` is not built the batch records `not_built` and its days are exported and
+  searched without Dipole rows (listed missing in the receipts).
 
 - One dispatch starts `frankie_box_experiment.py` on its own lock `box-experiment-*`, so it runs
   beside Frankie's runs and never queues behind them.

@@ -15,7 +15,9 @@
 
 - **LATEST (2026-09-29, Code session): the EXPERIMENT is being built; Monday r10 is PARKED; both EC2 boxes STOPPED.**
   Start from `research/kalshi/frankie_boss/DROP_IN_20260929_EXPERIMENT.md` and `HANDOFF_20260929_EXPERIMENT_BUILD.md`.
-  ChatGPT builds three pieces in parallel per `CHATGPT_BRIEF_EXPERIMENT_20260929.md`.
+  ChatGPT's three pieces (orchestrator, historical claims, transforms) were built by Claude instead; none has run.
+  **NO DATA IS DROPPED, even when incomplete (Greg): a calculation skips over the missing piece and lists it; never
+  skip the day or the run for it.** Open: Greg's call on the midweek (tail-take) manifests; the teacher-only step.
 
 - **STATE 2026-09-28 16:1xZ: READ FIRST `research/kalshi/frankie_boss/HANDOFF_20260928_R6_LAUNCH.md`.** Branch
   `claude/frankie-monday-cycle-0-urozez`. Cycle 0 launch r6 RUNNING (run 36448920615, parallel context preparation;

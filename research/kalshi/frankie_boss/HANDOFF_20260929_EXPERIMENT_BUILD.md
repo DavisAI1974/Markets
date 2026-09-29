@@ -84,11 +84,41 @@ Honest limits of these pieces:
   built, batches record `not_built`.
 - The transforms multiply the search's pairs (up to 9 transform pairs per ordered series pair); no wall time is measured.
 
+## Greg's rule, restated 2026-09-29 (after the three pieces): NO DATA IS DROPPED, EVEN WHEN IT IS NOT ALL COMPLETE
+"We might not be able to include it in a calc if it's missing important data, but then we'll just skip over [it]
+instead of skipping [the day]." Applied in 91cac9ea:
+- `frankie_box_experiment_root.py` REFUSED any ingest with partial members. Every trading-day ingest has one (Monday's
+  20211004 partition is taken up to the 17:00 ET halt; the rest is Tuesday's), so it would have refused Monday itself.
+  Now the partial members are carried and listed in the source binding.
+- The same ROOT refused to declare the day when a producer failed on some records. Now it writes
+  `calculations_retained_with_failures` with the failure count (each failure is in derive.json and the failures spool
+  with its record index and error); every other record is calculated and the day goes on.
+- The orchestrator no longer refuses the whole plan for one day's gap: a day with no manifest stays in and its steps
+  WAIT (listed); a day with no Dipole rows is exported and searched without them (listed missing, `dipole_missing` in
+  the receipt); a teacher batch runs for the days that have an ingest while the others wait. Only rule breaks refuse the
+  plan (a day listed twice, a malformed day); a day of another class, outside the assigned Octobers, or an unfrozen
+  confirmation day is LEFT OUT of that run with its reasons (walls, not data gaps). WITHOUT_DIPOLE is gone.
+- Still stopping, on purpose (listed): duplicates (two sealed ingests / two ROOTs of a day, a day searched twice), the
+  leakage gate (a source that fails is not placed, listed), a day with no book frames (the search has no axis).
+
+## The midweek manifest question (open, Greg's call)
+A trading day opens 18:00 ET the day before, so Tuesday 20211005 = the TAIL of the 20211004 UTC partition (after the
+21:00Z halt) + the HEAD of the 20211005 partition (up to its halt). `derive_trading_day_manifest.py` refuses a tail
+take ("ingest that day from the whole block"), and `ingest_block_sources.py` can only stop early in a partition
+(partial members), not start late. So only Monday-type days (whose prior partition is a Sunday) can be ingested alone.
+Options: (a) teach the derivation + ingest tool a TAIL take (start at the halt boundary; the staged block manifest
+already measured the before/after-halt counts per partition); (b) ingest the Mon-Wed block whole and have ROOT split
+it by trading day. (a) keeps one journal per day, which is what every experiment step expects. Nothing drops either way.
+
+## Next (in order)
+0. Greg's call on the midweek manifests (section above); then build it.
 1. The teacher-only batch step `frankie_box_experiment_teacher.py/.sh` (DAYS=<list>; each day its own fresh walk of
    JournalTeacherR3 on its sealed journal, in parallel; writes `DIPOLE_CLASSROOM_SOURCE_V1` to
    `/opt/frankie-box/work/experiment-teacher-rows/<day>/host-dipole-classroom-source.c15.json`; skips days a launch
    already covered). The standalone call chain is mapped in `TEACHER_ONLY_CALL_MAP_20260929.md` (call sequence
-   with real names, pinned files, CPU/taskset, the walk-cache trap, the unsettled items). Build from it.
+   with real names, pinned files, CPU/taskset, the walk-cache trap, the unsettled items). Build from it. The
+   orchestrator already calls it as `frankie_box_experiment_teacher.sh DAYS=<comma list> INGESTION_RECEIPTS=<comma
+   list, same order>` (box-experiment lock added); a day it cannot finish is listed and goes on without rows.
 1b. BOTH TEACHERS HAVE ALL THE DIPOLE DATA (Greg, 2026-09-29: "the boss teacher will still absolutely have all dipole
    data available just not fresh calcs on it every day. I guess that applies to both teachers"). Fresh Dipole calcs
    run 1 day in 5 (batched per day); what the teachers READ is everything that exists. Built: the scientific teacher
@@ -96,11 +126,13 @@ Honest limits of these pieces:
    material (and Jev's material) must also carry every earlier discovery day's Dipole rows (launch sources +
    experiment-teacher-rows, read in place, each labelled with its day, never merged across days) and the historical
    Dipole catalog (knowledge/DIPOLE_SHARED_CATALOG_20260922.json) whole. Nothing recomputed; never Frankie's answers.
-2. Merge ChatGPT's branches when they land (orchestrator, historical claims, transforms); wire the transforms into
-   the search.
+2. ChatGPT's pieces are DONE (built by Claude). Open from them: widen the historical crosswalk (10 of 4,806 candidates
+   are testable claims today); measure the transforms' cost on the first search.
 3. On Greg's go when the box is up, in order: restage the tip; `frankie_box_venv_duckdb.sh ACTION=check` then
-   `install`; `frankie_box_brain_calcs.sh ACTION=show` (read-only); the Monday day data `frankie_box_experiment_data.sh
-   ACTION=plan` then `export`; the Monday search (discovery); probes on every long step.
+   `install`; `frankie_box_brain_calcs.sh ACTION=show` (read-only); `frankie_box_experiment.sh ACTION=plan` for Monday
+   (read-only; a PLAN file naming Monday's sealed ingest, its ROOT `monday-calculations/full-20211004-20260927-r1-48`
+   and its r9 run directory, since those already exist and are never rebuilt); then the Monday day data and search
+   (through the orchestrator `STAGES=data,search,lessons` or the step scripts); probes on every long step.
 4. Open for Greg (listed in the runbook section 6): the MIXED files (session-request, comparison, principal-inputs
    receipt) - filter the data part through?; the BOSS forecast journals (`handoff-*`) - Frankie's decision process or
    data?; the Granite critic files; the canary-vs-no-canary question for the disk measurement; to reach r10 the
