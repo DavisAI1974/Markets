@@ -12,6 +12,12 @@ listed with its reason); counts never averages; py_compile / bash -n only; `[ski
 push before a staged-code dispatch; every ingest/conform timeout 43200; one agent per job, and they must not push over
 each other's staged code (tell main before any push). No more Pod start-ups without Greg's word; disk cleanup waits.
 
+## CORRECTIONS (read the handoff addenda at its end: they override the steps below)
+- Consensus request 1 (36609379489) was CANCELLED ~19:18Z with no receipt: do NOT build with it. Dispatch a fresh
+  consensus-only request (same 7 days), then build the 6 box days in a NEW run (e.g. days-20260929-2, consensus=<new id>)
+  and point the Pod loop at that run.
+- 20211019/20211020 runner jobs were KILLED at 6 h: box-ingest both first (partitions pre-fetched on main).
+
 ## First (in order)
 1. Probe the 3 boxes (main i-035994afa8bdf66a5 us-east-1, twin i-0d17573dbce871520 us-east-1, i-08cee7171c0a76a04
    us-east-2) and the runs: consensus request 1 = 36609379489; runner ingest 36571235912 (20211019/20 vs the 6 h limit
