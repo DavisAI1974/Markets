@@ -69,7 +69,7 @@ concurrency:
   # never queue behind a run holding box-run.
   # The staged-code cleanup and the bedrock-table cleanup (Greg, 2026-09-29) remove only named, unused files: their own
   # lock, so they never queue behind a running stage.
-  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_cycle0.sh' && format('box-cycle0-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_ingest_block.sh' && format('box-ingest-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh' || inputs.script == 'deploy/aws/box/frankie_box_console.sh' || inputs.script == 'deploy/aws/box/frankie_box_jev_reports.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_cycle.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && format('clm-pod-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh' && format('jev-pod-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_principal_inputs.sh' && format('box-inputs-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_upload.sh' && format('clm-upload-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_relay.sh' && format('jev-relay-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_digest_canary.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_composition.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_stacks.sh' || inputs.script == 'deploy/aws/box/frankie_box_parallel_journal_canary.sh') && format('box-canary-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_joined_teacher.sh' && format('box-joined-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_export_calcs.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_data.sh') && format('box-export-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_experiment_search.sh' || inputs.script == 'deploy/aws/box/frankie_box_scientific_teacher.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment.sh') && format('box-experiment-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_experiment_teacher.sh' && format('box-teacher-{0}-{1}', inputs.instance, github.run_id)) || ((inputs.script == 'deploy/aws/box/frankie_box_experiment_classroom.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_classroom_v2.sh') && format('box-classroom-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_day_facts.sh' && format('box-facts-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_day_external.sh' && format('box-external-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_cleanup_code.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_bedrock.sh') && format('box-cleanup-code-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
+  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_cycle0.sh' && format('box-cycle0-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_ingest_block.sh' && format('box-ingest-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh' || inputs.script == 'deploy/aws/box/frankie_box_console.sh' || inputs.script == 'deploy/aws/box/frankie_box_jev_reports.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_cycle.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && format('clm-pod-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh' && format('jev-pod-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_principal_inputs.sh' && format('box-inputs-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_upload.sh' && format('clm-upload-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_relay.sh' && format('jev-relay-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_digest_canary.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_composition.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_stacks.sh' || inputs.script == 'deploy/aws/box/frankie_box_parallel_journal_canary.sh') && format('box-canary-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_joined_teacher.sh' && format('box-joined-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_export_calcs.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_data.sh') && format('box-export-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_experiment_search.sh' || inputs.script == 'deploy/aws/box/frankie_box_scientific_teacher.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment.sh') && format('box-experiment-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_experiment_teacher.sh' && format('box-teacher-{0}-{1}', inputs.instance, github.run_id)) || ((inputs.script == 'deploy/aws/box/frankie_box_experiment_classroom.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_classroom_v2.sh') && format('box-classroom-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_day_facts.sh' && format('box-facts-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_day_external.sh' && format('box-external-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_runner_ingest.sh' && format('runner-ingest-{0}', github.run_id)) || ((inputs.script == 'deploy/aws/box/frankie_box_cleanup_code.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_bedrock.sh') && format('box-cleanup-code-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
   cancel-in-progress: false
 jobs:
   validate-staging-route:
@@ -111,8 +111,114 @@ jobs:
     with:
       action: ${{ needs.validate-staging-route.outputs.action }}
     secrets: inherit
+  # Ingest on GitHub-hosted runners (Greg, 2026-09-29: "Keep ingest data in aws and make a pointer that points at git
+  # ... use those CPUs just for ingest"): script=deploy/aws/box/frankie_runner_ingest.sh, variables="DAYS=d1,d2,..
+  # [WORKERS=3] [VERIFY=inline] [OBSERVATION=full] [MODE=sequential]". One job per day on its own runner; journals go to
+  # S3 (frankie/ingest/<day>/gh-<run>-<attempt>/), never to git; the pointers are committed to frankie-ingest-pointers.
+  runner-plan:
+    if: github.repository == 'DavisAI1974/Markets' && inputs.script == 'deploy/aws/box/frankie_runner_ingest.sh'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      days: ${{ steps.plan.outputs.days }}
+      env: ${{ steps.plan.outputs.env }}
+    steps:
+      - id: plan
+        env:
+          VARIABLES: ${{ inputs.variables }}
+        run: |
+          python3 -I -S -B - <<'PY'
+          import json, os, re
+          pairs = dict(item.split('=', 1) for item in os.environ['VARIABLES'].split() if '=' in item)
+          unknown = set(pairs) - {'DAYS', 'WORKERS', 'VERIFY', 'OBSERVATION', 'MODE'}
+          if unknown:
+              raise SystemExit('unknown variables: %s' % sorted(unknown))
+          days = [d for d in pairs.get('DAYS', '').split(',') if d]
+          if not days or not all(re.fullmatch(r'[0-9]{8}', d) for d in days) or len(set(days)) != len(days):
+              raise SystemExit('DAYS must be distinct YYYYMMDD values separated by commas')
+          rest = {k: v for k, v in pairs.items() if k != 'DAYS'}
+          if not all(re.fullmatch(r'[A-Za-z0-9_-]+', v) for v in rest.values()):
+              raise SystemExit('variable values must be [A-Za-z0-9_-]')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('days=%s\n' % json.dumps(days))
+              out.write('env=%s\n' % json.dumps(rest))
+          print('days', days, 'settings', rest)
+          PY
+  runner-ingest:
+    needs: runner-plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        day: ${{ fromJSON(needs.runner-plan.outputs.days) }}
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_EC2_METADATA_DISABLED: 'true'
+      DAY: ${{ matrix.day }}
+      WORKERS: ${{ fromJSON(needs.runner-plan.outputs.env).WORKERS || '3' }}
+      VERIFY: ${{ fromJSON(needs.runner-plan.outputs.env).VERIFY || 'inline' }}
+      OBSERVATION: ${{ fromJSON(needs.runner-plan.outputs.env).OBSERVATION || 'full' }}
+      MODE: ${{ fromJSON(needs.runner-plan.outputs.env).MODE || 'sequential' }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13.15'
+      - name: The box venv's pinned packages
+        run: python -m pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r deploy/aws/box/frankie_box_venv_requirements.txt
+      - name: Ingest the day (journal and receipts to S3; pointer for git)
+        run: POINTER="$RUNNER_TEMP/pointer-$DAY.json" bash deploy/aws/box/frankie_runner_ingest.sh
+      - name: Keep the pointer (also when the day failed)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ingest-pointer-${{ matrix.day }}
+          path: ${{ runner.temp }}/pointer-${{ matrix.day }}.json
+          if-no-files-found: warn
+          retention-days: 90
+  runner-pointers:
+    needs: runner-ingest
+    if: always() && needs.runner-ingest.result != 'skipped'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ingest-pointer-*
+          path: pointers
+          merge-multiple: true
+      - name: Commit the pointers to the branch frankie-ingest-pointers ([skip ci]; the run branch's tip never moves)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ls pointers/*.json >/dev/null 2>&1 || { echo "no pointer was written"; exit 1; }
+          git init -q repo && cd repo
+          git config user.name frankie-runner; git config user.email frankie-runner@markets.local
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git fetch -q --depth 1 origin frankie-ingest-pointers; then git checkout -q -b frankie-ingest-pointers FETCH_HEAD
+          else git checkout -q --orphan frankie-ingest-pointers; fi
+          mkdir -p ingest_pointers
+          for f in ../pointers/*.json; do
+            day=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['day'])" "$f")
+            cp "$f" "ingest_pointers/${day}-gh-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
+          done
+          git add ingest_pointers
+          git commit -q -m "Ingest pointers: run ${GITHUB_RUN_ID} [skip ci]"
+          for i in 1 2 3 4; do git push -q origin HEAD:frankie-ingest-pointers && break; sleep $((2 ** i)); git pull -q --rebase origin frankie-ingest-pointers || true; done
+          git log --oneline -1
+          for f in ingest_pointers/*-gh-${GITHUB_RUN_ID}-*.json; do python3 -c "
+          import json,sys; p=json.load(open(sys.argv[1])); print(p['day'], p['status'], p['wall_seconds'], 's', sum(f['bytes'] for f in p['files']), 'bytes', 's3://%s/%s' % (p['bucket'], p['prefix']))" "$f"; done
   run:
-    if: github.repository == 'DavisAI1974/Markets' && inputs.script != 'deploy/aws/box/frankie_box_stage_code.sh'
+    if: github.repository == 'DavisAI1974/Markets' && inputs.script != 'deploy/aws/box/frankie_box_stage_code.sh' && inputs.script != 'deploy/aws/box/frankie_runner_ingest.sh'
     runs-on: ubuntu-24.04
     timeout-minutes: 1440
     env:
@@ -197,8 +303,8 @@ jobs:
                   bucket, _, prefix = item[len('getprefix:'):].partition('/')
                   # also read-only: the 30 days' history and curve pulls the day file is built from (2026-09-29,
                   # frankie_box_day_external.sh)
-                  if not prefix.startswith(('clm-sidecar/', 'frankie/day_history/', 'nymex/ng_fut_parent_v0/')) or '..' in prefix:
-                      raise SystemExit('getprefix is for clm-sidecar/, frankie/day_history/ and nymex/ng_fut_parent_v0/ only')
+                  if not prefix.startswith(('clm-sidecar/', 'frankie/day_history/', 'nymex/ng_fut_parent_v0/', 'frankie/ingest/')) or '..' in prefix:
+                      raise SystemExit('getprefix is for clm-sidecar/, frankie/day_history/, nymex/ng_fut_parent_v0/ and frankie/ingest/ only')
                   region = 'us-east-1' if bucket.endswith('us-east-1') else 'us-east-2'
                   pages = boto3.client('s3', region_name=region).get_paginator('list_objects_v2').paginate(Bucket=bucket, Prefix=prefix)
                   items += ['%s/%s' % (bucket, o['Key']) for page in pages for o in page.get('Contents', [])]
