@@ -190,6 +190,32 @@ uses a prior day's sealed ingest when one exists and otherwise lets the day warm
 open from those prior receipts (still supported). Days are now independent, so later Tue/Wed ingests can run as
 separate dispatches.
 
+## Speed items 1-5 + resume (Greg: "Do 1-5 now. We are supposed to have save code so we can pick up where we left
+off"; "We can break my gold standard"), built 959c5e12, review fixes c887bf9a, NOT run except as noted
+1. Days side by side: a git worktree per dispatched commit (`/opt/frankie-box/ingest-code/<sha>`, under a lock; the
+   shared checkout is never moved), `DAYS_AT_ONCE`, an own concurrency group per ingest dispatch, a per-dispatch presign
+   map; the orchestrator ingests `--parallel-days` at once, each day warming its own opening book.
+2. `operations/parallel_ingest.py` (SPEC-ingest-parallel-replay): pass 1 state only (chain + book; exact state saved
+   every 20,000 records at a group-closed point, the adapter PICKLED so key order is kept), pass 2 workers replay each
+   segment through `C15BuilderNoObservation` into spools (placeholder previous_hash) and must end on pass 1's state,
+   pass 3 patches the hash and cuts boxes exactly as append(). Saved passes: `RESUME_DIR` / `--resume` continues a day.
+   Observation 'none' only.
+3. `VERIFY=deferred`: seal + completion from the builder state (complete()'s count refusals kept);
+   `ACTION=conform DIRECTORY=<ingest dir>` runs the drain later -> conformance.json.
+4. `OBSERVATION=none`: no full-book copy at a group close (`c15_builder_none.py` subclass; c15_builder.py keeps its
+   pinned bytes and identity); `observation_replay.py` rebuilds it for the teacher.
+5. `fast_mbo_decode.py`: batch decode, every per-record check kept.
+Wrapper defaults stay Frankie's (sequential, full, inline). Orchestrator defaults: parallel, none, deferred.
+Open: the disk gate does not reserve for spools x parallel days; `status` reads the shared checkout's manifests.
+First real use tonight: Wednesday (run 36551601815, c887bf9a): SEQUENTIAL, OBSERVATION=full (classroom days need the
+teacher's observations), VERIFY=deferred, warm start, fast decode, WORKERS=16, beside Tuesday; out
+`work/ingest-20211006-ingest-1790675371`. The chained Tue,Wed run 36547330372 must be CANCELLED once Tuesday's
+ingestion-receipt.json exists (else it starts a second Wednesday: duplicate data).
+
+## Classroom arm revised (Greg, 2026-09-29): discovery days 1 and 2 of every five on, 3-5 off (orchestrator
+`--classroom-arm-cycle 2/5`); Tue 20211005 and Wed 20211006 are days 1 and 2. Their ROOTs run DIGEST=off tonight (the
+experiment's classroom arm is not wired yet); the digest is a later step when it is.
+
 ## Next (in order)
 0. DONE: the midweek manifests (built, 66f50851 / 25b30d9c). Ingest running; then each day's ROOT on the go given.
 1. The teacher-only batch step `frankie_box_experiment_teacher.py/.sh` (DAYS=<list>; each day its own fresh walk of
