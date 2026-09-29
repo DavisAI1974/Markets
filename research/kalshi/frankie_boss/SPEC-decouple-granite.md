@@ -14,6 +14,9 @@ Greg's answers (AskUserQuestion, 2026-09-29):
 2. The analysis: "Frankie does the analysis" (not Granite). Frankie is the system (code, calculations, brain).
 3. The classroom: "Keep it on the critic": the classroom is answered by the critic under the closed schema (C23),
    not by a principal engine.
+4. Greg: "The only analysis granite should do is to say how he feels he performed." So the analysis is Frankie's
+   (code), plus ONE Granite item: Granite's own self-assessment of how it performed (as the critic and in the
+   classroom), filed as Granite's, labelled as its own view, never as a result.
 Consequence for r10: r10 WAITS for this build (the principal's reading/merges/writing move off Granite; the classroom
 moves onto the critic lane). Build list and open items: the section "R3 BUILD" at the end of this file.
 
@@ -71,4 +74,6 @@ Open for Greg:
   classroom today REFUSES on an invalid answer. On the critic lane: does an invalid classroom answer block, or is it
   recorded as the critic's own and the run goes on?
 - What Frankie's analysis must carry beyond the measured facts (his comparisons of derived layers with the frozen
-  brain, the lessons for the next cycle), and which of those are computed.
+  brain, the lessons for the next cycle), and which of those are computed. Granite's only analysis item is its
+  self-assessment (decision 4); where it sits: one closed-schema critic call after the classroom, its text appended to
+  the analysis as its own labelled section (proposed).
