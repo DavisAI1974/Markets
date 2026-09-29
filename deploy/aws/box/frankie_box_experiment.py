@@ -9,9 +9,22 @@ the committed box script, run as a child with its own inputs, its output kept in
            its own while the short-lived URLs are live; a day whose sealed ingest exists is skipped)
   ingest   frankie_box_ingest_block.sh ACTION=ingest  (one day at a time: the script checks out the commit into the box's
            ingest checkout; never Monday 20211004, the gold standard: its sealed ingest is found, never rebuilt)
+  external frankie_box_day_external.sh ACTION=build|link (Frankie's historical data points, the day file
+           FRANKIE_DAY_EXTERNAL_V1, attached beside the day's sealed ingest; reads S3 only through the dispatch's
+           presigned map: getprefix frankie/day_history/<EXTERNAL_HISTORY_RUN>/ and nymex/ng_fut_parent_v0/, put slots
+           frankie/day_external/<day>/day-external.json and day-external-receipt.json. A day whose history or curve is not
+           in the map yet WAITS, listed: the day is never skipped, and a day file is never built without its pieces)
   root     frankie_box_experiment_root.sh             (bedrock off; DIGEST=on only on the classroom-arm days)
   teacher  frankie_box_experiment_teacher.sh DAYS=... (the Dipole rows, 1 day in 5: a batch of up to five days, each its
-           own walk; a day whose rows exist is skipped; while the script is not built the batch stops here, listed)
+           own walk; a day whose rows exist is skipped; while the script is not built the batch stops here, listed;
+           it takes the day file beside the sealed ingest and builds the BOSS teacher's external section)
+  classroom frankie_box_experiment_classroom_v2.sh    (classroom-arm days only, after root + teacher: the 19/171 classroom
+           plus the external section; the arm days one after another in plan order, each carrying the previous arm
+           day's work/classroom as PREVIOUS; the run's first arm day carries the latest earlier classroom day on the box,
+           or the plan's previous_classroom)
+  jev      frankie_box_jev_relay.sh ACTION=material   (classroom-arm days: Jev's material, relayed when the dispatch
+           presigned the slots putrange:<jev bucket>/clm-sidecar/<stamp>/material:8; the Jev Pod is its own workflow step
+           and cannot be started from the box, so the step records waiting_for_pod with the exact dispatches)
   data     frankie_box_experiment_data.sh ACTION=export
   search   frankie_box_experiment_search.sh
   lessons  frankie_box_scientific_teacher.sh          (after each batch: every discovery-day search of the run so far,
@@ -24,7 +37,10 @@ other day and step goes on. So a day's gap is recorded on that day's steps and t
   a day with no Dipole rows (the teacher batch not built or failed for it): exported and searched without them, the
     Dipole listed missing in its receipts (a later search with the rows would be a second search of the day: declined,
     so the receipt names it);
-  a ROOT with producer failures: calculations_retained_with_failures, the failures listed, the day goes on.
+  a ROOT with producer failures: calculations_retained_with_failures, the failures listed, the day goes on;
+  a day whose day file is not attached yet (history not on S3, or not presigned): its external step waits and so do its
+    root, teacher, classroom, data and search (each reads the day file; a step run without it could not be run again:
+    duplicate data); the ingest-only steps of every day go on. EXTERNAL_WAIT=off lets them run without it (listed).
 WALLS (rules, not data gaps; each listed with its reason). Days are never pooled and classes never mix: a day of
 another class than the run's is left out of this run (weekday: monday, midweek = Tue/Wed, thursday, friday; holidays
 not modelled). Discovery = October days of 2021-2023, confirmation = October days of 2024-2025 (R15); a day outside
@@ -56,8 +72,9 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 SCHEMA = 'FRANKIE_EXPERIMENT_RUN_V1'
-STAGES = ('fetch', 'ingest', 'root', 'teacher', 'data', 'search', 'lessons')
+STAGES = ('fetch', 'ingest', 'external', 'root', 'teacher', 'classroom', 'jev', 'data', 'search', 'lessons')
 FINISHED = ('done', 'reused', 'skipped')
+HANDED_OFF = 'waiting_for_pod'           # the jev step's end on the box: material relayed, the Pod is its own dispatch
 BOX_ROOT = Path('/opt/frankie-box')
 WORK = BOX_ROOT / 'work'
 RUNS = WORK / 'experiment'
@@ -66,6 +83,12 @@ TEACHER_ROWS = WORK / 'experiment-teacher-rows'
 DATA = WORK / 'experiment-data'
 SEARCH = WORK / 'experiment-search'
 ROWS_FILE = 'host-dipole-classroom-source.c15.json'
+DAY_EXTERNAL = WORK / 'day-external'
+DAY_FILE, DAY_FILE_RECEIPT = 'day-external.json', 'day-external-receipt.json'
+BRAIN = BOX_ROOT / 'brain'
+S3_BUCKET = 'bento-568968024170-us-east-2-an'
+JEV_BUCKET = 'frankie-granite42-568968024170-us-east-1'
+CURVE_PREFIX = 'nymex/ng_fut_parent_v0'
 MONDAY = '20211004'                      # the gold standard: never re-ingested
 MONDAY_RECOVERY = '/opt/frankie-box/work/sealed-recovery-35796793428/recovery-receipt.json'   # its ingest was recovered; checkpoint beside it
 CYCLE = '00'
@@ -74,7 +97,7 @@ CLASS_OF_WEEKDAY = {0: 'monday', 1: 'midweek', 2: 'midweek', 3: 'thursday', 4: '
 ROLE_OF_YEAR = {2021: 'discovery', 2022: 'discovery', 2023: 'discovery', 2024: 'confirmation', 2025: 'confirmation'}
 INGESTION_SCHEMA = 'BOSS_BLOCK_INGESTION_RECEIPT_V1'
 OVERRIDES = ('ingest', 'calculations', 'launch', 'preparation', 'principal_inputs', 'host_config', 'run',
-             'teacher_rows', 'jev_stamp', 'frankie_ledgers', 'opening_receipt')
+             'teacher_rows', 'jev_stamp', 'frankie_ledgers', 'opening_receipt', 'previous_classroom')
 
 
 def sha256_file(path):
@@ -225,8 +248,24 @@ def load_plan(a, code_root):
     days.sort(key=lambda e: (order.get(e['day'], len(order)), e['day']))
     plan = dict(schema=SCHEMA, run=a.run, cls=klass, days=days, left_out=left_out, classroom_arm=arm, units=units,
                 frozen_survivors=a.frozen_survivors or None, historical_claims=a.historical_claims or None,
-                lags=a.lags, transforms=a.transforms or None, batch=BATCH)
+                lags=a.lags, transforms=a.transforms or None, batch=BATCH,
+                external_history_run=a.external_history_run or None, external_wait=a.external_wait != 'off',
+                brain=a.brain, previous_classroom=a.previous_classroom or None, directive=directive_of(code_root))
     return plan, refused
+
+
+DIRECTIVE = 'research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json'
+
+
+def directive_of(code_root):
+    """The experiment's directive (Greg, 2026-09-29) this run works under: named in the plan and every step receipt."""
+    path = Path(code_root) / DIRECTIVE
+    if not path.is_file():
+        return dict(path=DIRECTIVE, absent='not in the staged checkout')
+    data = path.read_bytes()
+    doc = json.loads(data)
+    return dict(path=DIRECTIVE, sha256=hashlib.sha256(data).hexdigest(), schema=doc.get('schema'),
+                directive=doc.get('directive'))
 
 
 def plan_digest(plan):
@@ -285,7 +324,84 @@ def rows_of(entry):
     return None, None
 
 
+def attached_day_file(ingest_dir):
+    """(day file, sha256, None) beside a sealed ingest when it and its receipt agree; (None, None, why) otherwise, and
+    why starts with DIFFERS when a file is there but differs from its receipt (never overwritten: refused)."""
+    path, receipt = Path(ingest_dir) / DAY_FILE, Path(ingest_dir) / DAY_FILE_RECEIPT
+    if not path.is_file():
+        return None, None, 'no %s beside the sealed ingest %s' % (DAY_FILE, ingest_dir)
+    if not receipt.is_file():
+        return None, None, '%s beside %s has no %s' % (DAY_FILE, ingest_dir, DAY_FILE_RECEIPT)
+    want = json.loads(receipt.read_bytes()).get('sha256')
+    have = sha256_file(path)
+    if have != want:
+        return None, None, 'DIFFERS: %s has sha256 %s, its receipt names %s' % (path, have, want)
+    return path, have, None
+
+
+def latest_classroom_before(day):
+    """The latest complete classroom of an earlier trading day on the box (any experiment ROOT): (directory, day) or
+    (None, None). Two complete classrooms of that same day decline (duplicate data)."""
+    found = {}
+    for completion in ROOTS.glob('*/work/classroom/completion.json'):
+        d = completion.parent
+        try:
+            r = json.loads((d / 'receipt.json').read_bytes())
+        except (OSError, ValueError):
+            continue
+        if r.get('status') == 'complete' and str(r.get('day', '')) < day:
+            found.setdefault(str(r['day']), []).append(d)
+    if not found:
+        return None, None
+    last = max(found)
+    if len(found[last]) > 1:
+        raise SystemExit('two complete classrooms of %s (%s): duplicate data; name previous_classroom in the plan'
+                         % (last, [str(p) for p in found[last]]))
+    return found[last][0], last
+
+
+def jev_stamp(plan, e):
+    return e.get('jev_stamp') or '%s-jev-%s' % (plan['run'], e['day'])
+
+
+def presign_items(plan, code_root):
+    """The presign string one orchestrator dispatch carries (frankie_box_run.yml presign=...): every partition of every
+    planned day's manifest (fetch), the day history and curve prefixes (read-only getprefix), the day-file upload slots
+    of every day, and Jev's material slots of every classroom-arm day. Listed items only; nothing is presigned here."""
+    items = []
+    for e in plan['days']:
+        if not e.get('manifest'):
+            items.append('# %s: no committed manifest yet (its partitions are named once the manifest is committed)' % e['day'])
+            continue
+        m = json.loads((Path(code_root) / e['manifest']).read_bytes())
+        base = m.get('archive_prefix') or ''
+        for member in m.get('sources') or []:
+            key = member['member_key']
+            part = key.split('-')[-1].split('.')[0]
+            prefix = base
+            if len(base) >= 7 and base[-7:-3].isdigit() and base[-3] == '-':      # .../YYYY-MM: the member's own month
+                prefix = base[:-7] + '%s-%s' % (part[:4], part[4:6])
+            items.append('%s/%s/%s' % (m.get('bucket') or S3_BUCKET, prefix, key))
+    if plan.get('external_history_run'):
+        items.append('getprefix:%s/frankie/day_history/%s/' % (S3_BUCKET, plan['external_history_run']))
+        items.append('getprefix:%s/%s/' % (S3_BUCKET, CURVE_PREFIX))
+    else:
+        items.append('# no EXTERNAL_HISTORY_RUN: the day files cannot be built in this dispatch (the external step waits)')
+    for e in plan['days']:
+        for name in (DAY_FILE, DAY_FILE_RECEIPT):
+            items.append('put:%s/frankie/day_external/%s/%s' % (S3_BUCKET, e['day'], name))
+    for e in plan['days']:
+        if e['classroom_arm']:
+            items.append('putrange:%s/clm-sidecar/%s/material:8' % (JEV_BUCKET, jev_stamp(plan, e)))
+    return list(dict.fromkeys(items))
+
+
 # --------------------------------------------------------------------------------------------------------------- run
+
+def done_status(r):
+    """A step is finished when done, reused or skipped, or (jev) when its material went out and it waits for the Pod."""
+    return bool(r and (r['status'] in FINISHED or (r['status'] == HANDED_OFF and r.get('material_sent'))))
+
 
 class Run:
     def __init__(self, a, plan, code_root, commit, log=print):
@@ -294,6 +410,8 @@ class Run:
         self.box = self.code_root / 'deploy' / 'aws' / 'box'
         self.floor = int(a.disk_floor_gb * 1024 ** 3)
         self.stopped = None
+        self._map = None
+        self._attached = {}
         sys.path.insert(0, str(self.box))
         from frankie_box_progress import Probe
         self.probe = Probe(self.dir, request_sha256=plan_digest(plan), phase='experiment')
@@ -307,15 +425,15 @@ class Run:
         return json.loads(path.read_bytes()) if path.is_file() else None
 
     def finished(self, stage, key):
-        r = self.receipt(stage, key)
-        return bool(r and r['status'] in FINISHED)
+        return done_status(self.receipt(stage, key))
 
     def record(self, stage, key, status, **fields):
         path = self.receipt_path(stage, key)
         path.parent.mkdir(parents=True, exist_ok=True)
         previous = self.receipt(stage, key)
         body = dict(schema='FRANKIE_EXPERIMENT_STEP_V1', run=self.plan['run'], stage=stage, key=key, status=status,
-                    at=time.time(), commit=self.commit, plan_sha256=plan_digest(self.plan), **fields)
+                    at=time.time(), commit=self.commit, plan_sha256=plan_digest(self.plan),
+                    directive_sha256=(self.plan.get('directive') or {}).get('sha256'), **fields)
         if previous:
             body['previous_attempts'] = (previous.get('previous_attempts') or []) + [
                 {k: previous.get(k) for k in ('status', 'at', 'reason', 'exit_code')}]
@@ -442,6 +560,9 @@ class Run:
         ing = self.receipt('ingest', e['day'])
         if not (ing and ing['status'] in FINISHED):
             return self.record('root', e['day'], 'waiting', reason='the day has no sealed ingest yet (stage ingest)')
+        ready, why = self.external_ready(e)
+        if not ready:
+            return self.record('root', e['day'], 'waiting', reason=why)
         if not self.disk_ok('root'):
             return None
         output = ROOTS / ('%s-%s-a%d' % (self.plan['run'], e['day'], len(attempts) + 1))
@@ -460,6 +581,211 @@ class Run:
                            interrupted_attempts=attempts, digest=e['classroom_arm'],
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'))
 
+    # Frankie's historical data points: the day file beside the sealed ingest
+    def ingest_dir(self, e):
+        ing = self.receipt('ingest', e['day'])
+        if ing and ing['status'] in FINISHED and ing.get('ingest'):
+            return Path(ing['ingest'])
+        receipt, _ = ingest_of(e)
+        return receipt.parent if receipt else None
+
+    def external_ready(self, e):
+        """(True, None) when the day file is attached beside the sealed ingest (or EXTERNAL_WAIT=off), else (False, why)."""
+        if not self.plan.get('external_wait', True):
+            return True, None
+        if e['day'] in self._attached:
+            return True, None
+        directory = self.ingest_dir(e)
+        if directory is None:
+            return False, 'the day has no sealed ingest yet, so no day file beside it (stages ingest, external)'
+        path, sha, why = attached_day_file(directory)
+        if path is None:
+            return False, 'the day file of the historical data points is not attached yet (stage external): %s' % why
+        self._attached[e['day']] = (str(path), sha)
+        return True, None
+
+    def url_map(self):
+        """The dispatch's presigned map (MAP_URL), read once: (map, None) or (None, why)."""
+        if self._map is None:
+            url = os.environ.get('MAP_URL')
+            if not url:
+                self._map = (None, 'MAP_URL not set: dispatch with the presign string ACTION=plan prints (getprefix for '
+                                   'the day history and the curve, put slots under frankie/day_external/<day>/)')
+            else:
+                import urllib.request
+                try:
+                    self._map = (json.loads(urllib.request.urlopen(url, timeout=60).read()), None)
+                except Exception as error:          # an expired or unreadable map: listed, the step waits
+                    self._map = (None, 'the presigned map could not be read (%s: %s)' % (type(error).__name__, error))
+        return self._map
+
+    @staticmethod
+    def history_lacking(day, url_map, history_run):
+        """The keys a day file needs that the map does not hold: the history manifest, the day's EIA-930 files, the
+        curve's definition/statistics/mbo of the day's two UTC partitions. Empty = the history is on S3 and presigned."""
+        hp = 'frankie/day_history/%s' % history_run
+        date = dt.date(int(day[:4]), int(day[4:6]), int(day[6:8]))
+        lack = []
+        if hp + '/manifest.json' not in url_map:
+            lack.append(hp + '/manifest.json')
+        if not any(k.startswith('%s/eia930/%s/' % (hp, date.isoformat())) for k in url_map):
+            lack.append('%s/eia930/%s/*' % (hp, date.isoformat()))
+        for part in ((date - dt.timedelta(days=1)).strftime('%Y%m%d'), day):
+            for schema in ('definition', 'statistics', 'mbo'):
+                key = '%s/%s/native/glbx-mdp3-%s.%s.dbn.zst' % (CURVE_PREFIX, schema, part, schema)
+                if key not in url_map:
+                    lack.append(key)
+        return lack
+
+    def external(self, e):
+        day = e['day']
+        ing = self.receipt('ingest', day)
+        if not (ing and ing['status'] in FINISHED):
+            return self.record('external', day, 'waiting', reason='the day has no sealed ingest yet (the day file is '
+                                                                  'attached beside it)')
+        directory = Path(ing['ingest'])
+        path, sha, why = attached_day_file(directory)
+        if path is not None:
+            return self.record('external', day, 'reused', day_file=str(path), sha256=sha, ingest=str(directory))
+        if why.startswith('DIFFERS'):
+            return self.record('external', day, 'refused', reason=why + ' (a day file is never overwritten; move it aside '
+                                                                          'with a receipt first)')
+        history = self.plan.get('external_history_run')
+        if not history:
+            return self.record('external', day, 'waiting', reason='no EXTERNAL_HISTORY_RUN given (the day_history run '
+                                                                  'whose objects the day file is built from)')
+        attempts = sorted(DAY_EXTERNAL.glob('%s-ext-%s-a*' % (self.plan['run'], day)))
+        built = [a for a in attempts if (a / day / DAY_FILE).is_file()]
+        env = dict(DAYS=day, HISTORY_RUN=history, BRAIN=self.plan.get('brain') or str(BRAIN), WORKERS=1)
+        if built:
+            env.update(ACTION='link', RUN=built[-1].name)          # an earlier build of this run: attach it, never rebuild
+        else:
+            url_map, why = self.url_map()
+            if url_map is None:
+                return self.record('external', day, 'waiting', reason=why)
+            lacking = self.history_lacking(day, url_map, history)
+            if lacking:
+                return self.record('external', day, 'waiting', lacking=lacking,
+                                   reason='the day\'s history is not on S3 yet or not presigned (%d keys lacking); the day '
+                                          'waits, never skipped, and no day file is built without its pieces' % len(lacking))
+            if not self.disk_ok('external'):
+                return None
+            env.update(ACTION='build', RUN='%s-ext-%s-a%d' % (self.plan['run'], day, len(attempts) + 1))
+        code, log = self.child('external', day, 'frankie_box_day_external.sh', env)
+        path, sha, why = attached_day_file(directory)
+        if path is None:
+            return self.record('external', day, 'failed', exit_code=code, log=log, action=env['ACTION'], external_run=env['RUN'],
+                               reason='no day file attached beside the sealed ingest after the step: %s' % why)
+        self._attached[day] = (str(path), sha)
+        return self.record('external', day, 'done', exit_code=code, log=log, action=env['ACTION'], external_run=env['RUN'],
+                           day_file=str(path), sha256=sha, ingest=str(directory),
+                           new_bytes=new_bytes(DAY_EXTERNAL / env['RUN']) if env['ACTION'] == 'build' else 0,
+                           upload_or_brain_exit_code=code)
+
+    # the classroom arm (V2: the 19/171 classroom plus the external section) and Jev's material
+    def previous_of(self, e):
+        """(PREVIOUS classroom directory or None, why it waits or None, where it came from)."""
+        if e.get('previous_classroom'):
+            return e['previous_classroom'], None, 'plan (the day)'
+        arm_days = [x for x in self.plan['days'] if x['classroom_arm']]
+        i = [x['day'] for x in arm_days].index(e['day'])
+        if i > 0:
+            prev = arm_days[i - 1]['day']
+            r = self.receipt('classroom', prev)
+            if not (r and r['status'] in ('done', 'reused') and r.get('classroom')):
+                return None, 'the previous arm day %s has no complete classroom yet (its history is carried in)' % prev, None
+            return r['classroom'], None, 'the previous arm day of this run (%s)' % prev
+        if self.plan.get('previous_classroom'):
+            return self.plan['previous_classroom'], None, 'plan (PREVIOUS_CLASSROOM)'
+        found, found_day = latest_classroom_before(e['day'])
+        if found is None:
+            return None, None, 'none: no complete classroom of an earlier day on the box (history starts here)'
+        return str(found), None, 'the latest earlier classroom day on the box (%s)' % found_day
+
+    def classroom(self, e):
+        day = e['day']
+        if not e['classroom_arm']:
+            return self.record('classroom', day, 'skipped', reason='not a classroom-arm day')
+        root = self.receipt('root', day)
+        if not (root and root['status'] in FINISHED and root.get('calculations')):
+            return self.record('classroom', day, 'waiting', reason='the day has no ROOT yet (stage root)')
+        calc = Path(root['calculations'])
+        d = calc / 'work' / 'classroom'
+        if (d / 'completion.json').is_file():
+            r = json.loads((d / 'receipt.json').read_bytes()) if (d / 'receipt.json').is_file() else {}
+            return self.record('classroom', day, 'reused', classroom=str(d), receipt_schema=r.get('schema'),
+                               receipt_status=r.get('status'))
+        if not (calc / 'work' / 'derivation-digest-full.md').is_file():
+            return self.record('classroom', day, 'refused', reason='the ROOT %s ran without the digest; a classroom-arm day '
+                                                                   'needs DIGEST=on (its brain entry takes it)' % calc)
+        rows, source = rows_of(e)
+        if rows is None or not str(rows).startswith(str(TEACHER_ROWS) + '/'):
+            return self.record('classroom', day, 'waiting', reason='no teacher-only Dipole rows under %s yet (stage teacher; '
+                                                                   'found: %s)' % (TEACHER_ROWS, source))
+        ready, why = self.external_ready(e)
+        if not ready:
+            return self.record('classroom', day, 'waiting', reason=why)
+        previous, why, previous_from = self.previous_of(e)
+        if why:
+            return self.record('classroom', day, 'waiting', reason=why)
+        if previous and not (Path(previous) / 'completion.json').is_file():
+            return self.record('classroom', day, 'waiting', reason='PREVIOUS %s holds no completion.json' % previous)
+        if not self.disk_ok('classroom'):
+            return None
+        env = dict(DAY=day, CALCULATIONS=calc, TEACHER_ROWS=rows, BRAIN=self.plan.get('brain') or str(BRAIN))
+        if previous:
+            env['PREVIOUS'] = previous
+        code, log = self.child('classroom', day, 'frankie_box_experiment_classroom_v2.sh', env)
+        r = json.loads((d / 'receipt.json').read_bytes()) if (d / 'receipt.json').is_file() else {}
+        fields = dict(exit_code=code, log=log, classroom=str(d), previous=previous, previous_from=previous_from,
+                      receipt_status=r.get('status'), external=(r.get('external') or {}).get('completion_hash'),
+                      brain_entry=r.get('brain_entry'), jev_material=r.get('jev_material'))
+        if code == 0 and (d / 'completion.json').is_file():
+            return self.record('classroom', day, 'done', new_bytes=new_bytes(d), **fields)
+        if code == 3 and r.get('status') == 'refused':
+            return self.record('classroom', day, 'refused', reason=r.get('reason'), **fields)
+        return self.record('classroom', day, 'failed', reason='no completion.json after the step (its log names why)', **fields)
+
+    def jev(self, e):
+        day = e['day']
+        if not e['classroom_arm']:
+            return self.record('jev', day, 'skipped', reason='not a classroom-arm day (Jev sits in on the arm days only)')
+        c = self.receipt('classroom', day)
+        if not (c and c['status'] in ('done', 'reused') and c.get('classroom')):
+            return self.record('jev', day, 'waiting', reason='the day\'s classroom is not complete yet (its material is '
+                                                             'written by the classroom step)')
+        calc = Path(c['classroom']).parent.parent
+        material = calc / 'jev-material' / 'classroom-request.json'
+        if not material.is_file():
+            return self.record('jev', day, 'failed', reason='no Jev material at %s' % material)
+        stamp = jev_stamp(self.plan, e)
+        relay = ('frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_relay.sh variables="ACTION=material STAMP=%s '
+                 'DAY=%s DAY_ROLE=discovery MATERIAL=%s" presign="putrange:%s/clm-sidecar/%s/material:8"'
+                 % (stamp, day, material, JEV_BUCKET, stamp))
+        pod = 'frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_pod.sh variables="STAMP=%s DAY=%s"' % (stamp, day)
+        after = ('frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_relay.sh variables="ACTION=frankie STAMP=%s '
+                 'DAY=%s SESSION=%s" presign="putrange:%s/clm-sidecar/%s/frankie:8" (after his claims are filed)'
+                 % (stamp, day, calc, JEV_BUCKET, stamp))
+        dispatches = dict(pod=pod, frankie_outputs=after, material_relay=relay)
+        previous = self.receipt('jev', day)
+        if previous and previous.get('material_sent'):
+            return self.record('jev', day, HANDED_OFF, material_sent=True, stamp=stamp, material=str(material),
+                               dispatches=dispatches, reason='material relayed earlier; the Jev Pod is its own dispatch')
+        url_map, why = self.url_map()
+        slots = sorted(k for k in (url_map or {}) if k.startswith('put:clm-sidecar/%s/material/' % stamp))
+        if not slots:
+            return self.record('jev', day, HANDED_OFF, material_sent=False, stamp=stamp, material=str(material),
+                               dispatches=dispatches, reason='no material slots for %s in this dispatch (%s): relay it with '
+                               'the material_relay dispatch, then the Pod' % (stamp, why or 'not presigned'))
+        code, log = self.child('jev', day, 'frankie_box_jev_relay.sh', dict(ACTION='material', STAMP=stamp, DAY=day,
+                                                                            DAY_ROLE='discovery', MATERIAL=material))
+        if code != 0:
+            return self.record('jev', day, 'failed', exit_code=code, log=log, stamp=stamp, material=str(material),
+                               dispatches=dispatches, reason='the material relay failed (its log names why)')
+        return self.record('jev', day, HANDED_OFF, material_sent=True, exit_code=code, log=log, stamp=stamp,
+                           material=str(material), dispatches=dispatches,
+                           reason='material relayed; the Jev Pod cannot be started from the box: dispatch it (dispatches.pod)')
+
     def teacher(self, batch_key, entries):
         todo = [e for e in entries if rows_of(e)[0] is None]
         if not todo:
@@ -468,11 +794,15 @@ class Run:
         if not (self.box / 'frankie_box_experiment_teacher.sh').is_file():
             return self.record('teacher', batch_key, 'not_built', days=[e['day'] for e in todo],
                                reason='frankie_box_experiment_teacher.sh is not in the staged checkout yet')
-        receipts = []
+        receipts, external_waiting = [], {}
         for e in todo:
             ing = self.receipt('ingest', e['day'])
             if not (ing and ing['status'] in FINISHED):
                 continue                                  # that day waits on its ingest; the rest of the batch runs
+            ready, why = self.external_ready(e)
+            if not ready:
+                external_waiting[e['day']] = why          # the teacher builds the external section: it waits for the file
+                continue
             receipts.append((e['day'], ing['receipt']))
         waiting = [e['day'] for e in todo if e['day'] not in dict(receipts)]
         if not receipts:
@@ -484,6 +814,7 @@ class Run:
         missing = [d for d, _ in receipts if rows_of(dict(day=d))[0] is None]
         return self.record('teacher', batch_key, 'done' if code == 0 and not missing and not waiting else 'failed',
                            exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
+                           external_waiting=external_waiting,
                            new_bytes=sum(new_bytes(TEACHER_ROWS / d) for d, _ in receipts),
                            reason=None if code == 0 and not missing and not waiting else
                            'rows missing for %s, waiting on ingest %s (those days go on without Dipole rows, listed)'
@@ -506,6 +837,9 @@ class Run:
         ing = self.receipt('ingest', e['day'])
         if not (root and root['status'] in FINISHED and ing and ing['status'] in FINISHED):
             return self.record('data', e['day'], 'waiting', reason='the day has no ROOT or no sealed ingest yet')
+        ready, why = self.external_ready(e)
+        if not ready:
+            return self.record('data', e['day'], 'waiting', reason=why)
         rows, source = rows_of(e)
         dipole_missing = None
         if rows is None:
@@ -535,6 +869,9 @@ class Run:
         d = self.receipt('data', e['day'])
         if not (d and d['status'] in FINISHED):
             return self.record('search', e['day'], 'waiting', reason='the day data is not exported yet')
+        ready, why = self.external_ready(e)
+        if not ready:
+            return self.record('search', e['day'], 'waiting', reason=why)
         if not self.disk_ok('search'):
             return None
         env = dict(DAY=e['day'], CYCLE=CYCLE, DAY_ROLE=e['role'], LAGS=self.plan['lags'], WORKERS=self.a.search_workers)
@@ -607,7 +944,8 @@ class Run:
                     fn(e)
                     tick(stage, e['day'])
 
-        for stage, parallel in (('fetch', 1), ('ingest', self.a.parallel_days), ('root', self.a.parallel_days)):
+        for stage, parallel in (('fetch', 1), ('ingest', self.a.parallel_days), ('external', self.a.parallel_days),
+                                ('root', self.a.parallel_days)):
             if stage in stages and not self.stopped:
                 per_day(stage, getattr(self, stage), parallel)
         by_role = [[e for e in days if e['role'] == role] for role in ('discovery', 'confirmation')]
@@ -619,6 +957,14 @@ class Run:
             key = '%s-%02d' % (role, n)
             if 'teacher' in stages and not self.finished('teacher', key):
                 self.teacher(key, entries)
+            # the classroom arm: the arm days one after another in plan order (each carries the previous arm day's
+            # history), then Jev's material; the other days record skipped
+            for stage in ('classroom', 'jev'):
+                if stage in stages and not self.stopped:
+                    for e in entries:
+                        if not self.stopped and not self.finished(stage, e['day']):
+                            getattr(self, stage)(e)
+                        tick(stage, e['day'])
             for stage, parallel in (('data', self.a.parallel_days), ('search', 1)):
                 if stage in stages and not self.stopped:
                     todo = [e for e in entries if not self.finished(stage, e['day'])]
@@ -643,11 +989,17 @@ class Run:
         for p in sorted((self.dir / 'batches').glob('*/*.json')) if (self.dir / 'batches').is_dir() else ():
             r = json.loads(p.read_bytes())
             batches['%s/%s' % (r['key'], r['stage'])] = r['status']
-        unfinished = sorted({(k, s) for k, v in rows.items() for s, st in v.items() if st not in FINISHED})
+        unfinished = sorted({(k, s) for k, v in rows.items() for s, st in v.items()
+                             if not done_status(self.receipt(s, k))})
+        handed_off = sorted(k for k in rows if (self.receipt('jev', k) or {}).get('status') == HANDED_OFF)
         out = dict(schema=SCHEMA, run=self.plan['run'], plan_sha256=plan_digest(self.plan), stages=list(stages), days=rows,
                    left_out=self.plan['left_out'],
                    batches=batches, stopped=self.stopped, free_bytes=shutil.disk_usage(BOX_ROOT).free,
-                   unfinished=[dict(day=k, stage=s) for k, s in unfinished], model_calls=0)
+                   unfinished=[dict(day=k, stage=s) for k, s in unfinished],
+                   waiting_for_pod=[dict(day=k, material_sent=(self.receipt('jev', k) or {}).get('material_sent'),
+                                         pod=((self.receipt('jev', k) or {}).get('dispatches') or {}).get('pod'))
+                                    for k in handed_off],
+                   model_calls=0)
         tmp = self.dir / 'summary.pending'
         tmp.write_text(json.dumps(out, indent=1, sort_keys=True) + '\n', encoding='utf-8')
         os.replace(tmp, self.dir / 'summary.json')
@@ -670,6 +1022,9 @@ def preview(plan):
                         root=next((str(p) for p in ROOTS.glob('%s-%s*' % (plan['run'], e['day']))
                                    if (p / 'calculations-receipt.json').is_file()), e.get('calculations') or 'to run'),
                         dipole_rows=('%s (%s)' % (rows, source)) if rows else 'batch (1 day in 5)',
+                        external=(lambda d: ('attached ' + str(attached_day_file(d)[0])) if d and attached_day_file(d)[0]
+                                  else 'to attach')(receipt.parent if receipt else None),
+                        classroom=('V2, PREVIOUS carried' if e['classroom_arm'] else 'not an arm day'),
                         data='exported' if (target / 'MANIFEST.json').is_file() else 'to export',
                         search='searched' if (search / 'MANIFEST.json').is_file() else 'to search'))
     return out
@@ -701,7 +1056,15 @@ def main():
     p.add_argument('--ingest-verify', choices=('inline', 'deferred'), default='deferred')
     p.add_argument('--data-workers', type=int, default=1)
     p.add_argument('--search-workers', type=int, default=8)
-    p.add_argument('--parallel-days', type=int, default=4, help='days at once for the root and data steps')
+    p.add_argument('--parallel-days', type=int, default=4,
+                   help='days at once for the ingest, external, root and data steps (4 = two Tue/Wed pairs)')
+    p.add_argument('--external-history-run', help='the frankie_day_history GitHub run id whose S3 objects the day files '
+                                                  'are built from (frankie/day_history/<id>/)')
+    p.add_argument('--external-wait', choices=('on', 'off'), default='on',
+                   help='on: a day\'s root, teacher, classroom, data and search wait for its day file (default)')
+    p.add_argument('--brain', default=str(BRAIN), help='Frankie\'s brain (the classroom and day-file entries)')
+    p.add_argument('--previous-classroom', help='the run\'s first arm day: PREVIOUS = this <root>/work/classroom '
+                                                '(default: the latest earlier classroom day on the box)')
     p.add_argument('--disk-floor-gb', type=float, default=100.0)
     a = p.parse_args()
     import re
@@ -731,6 +1094,8 @@ def main():
         raise SystemExit('every day of the plan is left out (reasons above); nothing to run')
     if a.action == 'plan':
         print(json.dumps(dict(plan=plan, plan_sha256=plan_digest(plan), days=preview(plan), stages=stages,
+                              presign=' '.join(i for i in presign_items(plan, a.code_root) if not i.startswith('#')),
+                              presign_notes=[i for i in presign_items(plan, a.code_root) if i.startswith('#')],
                               free_bytes=shutil.disk_usage(BOX_ROOT).free), indent=1, sort_keys=True))
         return
     saved = run_dir / 'plan.json'

@@ -1,6 +1,6 @@
 # The experiment orchestrator (frankie_box_experiment.py; SPEC-experiment-orchestrator.md "How the orchestrator runs"):
-# one run over a list of days of ONE class, calling the committed steps in order (fetch, ingest, root, teacher, data,
-# search, lessons), a receipt per day and step under /opt/frankie-box/work/experiment/<RUN>/, resume on restart, a stop
+# one run over a list of days of ONE class, calling the committed steps in order (fetch, ingest, external, root, teacher,
+# classroom, jev, data, search, lessons), a receipt per day and step under /opt/frankie-box/work/experiment/<RUN>/, resume on restart, a stop
 # and save at the disk floor. No data dropped: a day's gap waits or is skipped over on that day's steps (listed), the
 # rest runs. No model call, no Granite, no Pod.
 # Inputs: CODE_ROOT (staged checkout), ACTION (plan | start | status; default plan, read-only), RUN (the run name),
@@ -8,7 +8,10 @@
 # midweek | thursday | friday), CLASSROOM_ARM (comma list), FROZEN_SURVIVORS (confirmation days only), HISTORICAL_CLAIMS
 # (repo-relative committed file), STAGES (comma list),
 # LAGS, TRANSFORMS, INGEST_WORKERS (31), DATA_WORKERS (1), SEARCH_WORKERS (8), PARALLEL_DAYS (4), DISK_FLOOR_GB (100),
-# MAP_URL (the presigned partitions, for STAGES=fetch). A probe: frankie_box_progress.sh
+# EXTERNAL_HISTORY_RUN (the day_history run id the day files are built from), EXTERNAL_WAIT (on|off), BRAIN,
+# PREVIOUS_CLASSROOM (the run's first arm day), MAP_URL (the dispatch's presigned map: the partitions for fetch, the
+# day history and curve prefixes and the day-file slots for external, Jev's material slots for jev; ACTION=plan prints
+# the whole presign string). A probe: frankie_box_progress.sh
 # DIRECTORY=/opt/frankie-box/work/experiment/<RUN>.
 set -eu
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"; : "${RUN:?run name required}"
@@ -26,6 +29,14 @@ set -- --action "$ACTION" --run "$RUN" --commit "$MARKETS_SHA" --code-root "$COD
 [ -z "${HISTORICAL_CLAIMS:-}" ] || set -- "$@" --historical-claims "$HISTORICAL_CLAIMS"
 [ -z "${STAGES:-}" ] || set -- "$@" --stages "$STAGES"
 [ -z "${TRANSFORMS:-}" ] || set -- "$@" --transforms "$TRANSFORMS"
+case "${EXTERNAL_HISTORY_RUN:-}" in ""|*[!0-9]*) [ -z "${EXTERNAL_HISTORY_RUN:-}" ] || { echo "EXTERNAL_HISTORY_RUN must be the numeric run id" >&2; exit 2; };; esac
+[ -z "${EXTERNAL_HISTORY_RUN:-}" ] || set -- "$@" --external-history-run "$EXTERNAL_HISTORY_RUN"
+case "${EXTERNAL_WAIT:-on}" in on|off) ;; *) echo "EXTERNAL_WAIT must be on or off" >&2; exit 2;; esac
+set -- "$@" --external-wait "${EXTERNAL_WAIT:-on}" --brain "${BRAIN:-/opt/frankie-box/brain}"
+case "${BRAIN:-/opt/frankie-box/brain}${PREVIOUS_CLASSROOM:-}" in *..*) echo "no .. in BRAIN or PREVIOUS_CLASSROOM" >&2; exit 2;; esac
+case "${BRAIN:-/opt/frankie-box/brain}" in /opt/frankie-box/*) ;; *) echo "BRAIN must be under /opt/frankie-box" >&2; exit 2;; esac
+case "${PREVIOUS_CLASSROOM:-}" in ""|/opt/frankie-box/work/experiment-roots/*/work/classroom) ;; *) echo "PREVIOUS_CLASSROOM must be an experiment root's work/classroom" >&2; exit 2;; esac
+[ -z "${PREVIOUS_CLASSROOM:-}" ] || set -- "$@" --previous-classroom "$PREVIOUS_CLASSROOM"
 set -- "$@" --lags "${LAGS:-20}" --ingest-workers "${INGEST_WORKERS:-31}" --data-workers "${DATA_WORKERS:-1}" \
   --search-workers "${SEARCH_WORKERS:-8}" --parallel-days "${PARALLEL_DAYS:-4}" --disk-floor-gb "${DISK_FLOOR_GB:-100}"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT" MAP_URL="${MAP_URL:-}"
