@@ -26,6 +26,10 @@ import boto3
 
 HERE = Path(__file__).resolve().parent
 BUCKET, REGION = 'frankie-granite42-568968024170-us-east-1', 'us-east-1'
+# Jev's brain (Greg, 2026-09-29: his outputs and his lessons from the teacher go into his brain): one entry per day he
+# ran (JEV_BRAIN_ENTRY_V1, his claims whole) and the scientific teacher's lessons on those claims (JEV_LESSONS_V1),
+# carried whole into his next day. Durable data lives on S3 (D34). Never Frankie's answers (the blind wall).
+JEV_BRAIN = 'clm-sidecar/jev-brain'
 IMAGE = 'vllm/vllm-openai:latest'
 # 48 GB tiers first (cheapest that fit Qwen3-8B plus the CLM heads); then the larger tiers in stock 2026-09-28 08:30Z,
 # when every 48 GB tier read NONE. Known-good vLLM architectures (Ampere, Hopper) before Blackwell.
@@ -147,7 +151,22 @@ def main():
     env.update({var: put('%s/out/%s' % (base, name)) for var, name in OUTPUTS.items()})
     if args.jev:
         s3.upload_file(str(HERE / 'sit_in.py'), BUCKET, '%s/code/sit_in.py' % base)
-        config = dict(material=[get('%s/material/%04d.json' % (base, i)) for i in range(8)],
+        entry_key = '%s/entries/%s-%s.json' % (JEV_BRAIN, args.day, args.stamp)
+        brain = []
+        for kind in ('entries', 'lessons'):
+            for page in s3.get_paginator('list_objects_v2').paginate(Bucket=BUCKET, Prefix='%s/%s/' % (JEV_BRAIN, kind)):
+                for item in page.get('Contents', []):
+                    name = item['Key'].rsplit('/', 1)[1]
+                    if kind == 'entries' and name.startswith(args.day + '-'):
+                        raise SystemExit('Jev already has a brain entry for day %s (%s): the same day is not run twice '
+                                         '(duplicate data declines the run)' % (args.day, item['Key']))
+                    brain.append(dict(kind=kind, key=item['Key'], bytes=item['Size'], url=get(item['Key'])))
+        brain.sort(key=lambda b: (b['kind'], b['key']))
+        print('JEV brain: %d entries, %d lessons carried into day %s' % (
+            sum(b['kind'] == 'entries' for b in brain), sum(b['kind'] == 'lessons' for b in brain), args.day), flush=True)
+        config = dict(brain=brain, brain_entry=dict(key=entry_key, url=put(entry_key)),
+                      lessons_key='%s/lessons/%s-%s.json' % (JEV_BRAIN, args.day, args.stamp),
+                      material=[get('%s/material/%04d.json' % (base, i)) for i in range(8)],
                       frankie=[get('%s/frankie/%04d.json' % (base, i)) for i in range(8)],
                       **{name: put('%s/jev/%s' % (base, key)) for name, key in (
                           ('claims', 'claims.json'), ('comparison', 'comparison.json'), ('report', 'report.md'),

@@ -19,6 +19,13 @@ One day, in this order (the blind wall is enforced here, not only by the relay):
      Frankie's findings agree, differ or contradict. Orientation for the search, never a result.
   5. REPORT: every claim individually, the comparison, and the counts (filed, unparsed, duplicates), plus the
      transcript and a receipt.
+  6. BRAIN (Greg, 2026-09-29: "his outputs should go into his knowledge base in his brain too", "and his lessons from
+     the teacher while he's learning"): his day is written to his brain as JEV_BRAIN_ENTRY_V1 (his claims whole, the
+     material pins, what he carried in). On his next day every earlier entry is read whole, with the scientific
+     teacher's lessons on those claims (JEV_LESSONS_V1: per claim, the tests run, the counts and days, the challenge
+     "the data is showing this instead", the tests not yet run), so he learns from what the tests showed. A day whose
+     lessons are not written yet is carried as "lessons pending". His brain NEVER carries Frankie's answers or the
+     comparison: that would make his next claims lean on Frankie's and end their independence (the blind wall).
 
 Nothing is cut (Greg): material longer than one Jev prompt is READ IN PIECES a little under the limit, every piece
 into its own note, notes kept as MULTIPLE NOTE PACKS, every step run once per pack and every answer kept. A cut-off
@@ -241,6 +248,50 @@ def material_text(material):
     return '\n\n'.join(parts)
 
 
+def load_brain(config, day):
+    """Every earlier brain entry and every lessons file, whole, checked; returns (text for the student, pins)."""
+    entries, lessons, pins = [], {}, []
+    for item in config.get('brain') or []:
+        raw = urllib.request.urlopen(item['url'], timeout=120).read()
+        value = json.loads(raw)
+        pins.append(dict(kind=item['kind'], key=item['key'], bytes=len(raw), sha256=sha(raw)))
+        if item['kind'] == 'entries':
+            if value.get('schema') != 'JEV_BRAIN_ENTRY_V1':
+                raise ValueError('%s is not a JEV_BRAIN_ENTRY_V1' % item['key'])
+            if value.get('day') == day:
+                raise ValueError('%s is an entry for this same day %s: the same day is not run twice' % (item['key'], day))
+            if value.get('include', True):
+                entries.append(value)
+        else:
+            if value.get('schema') != 'JEV_LESSONS_V1':
+                raise ValueError('%s is not a JEV_LESSONS_V1' % item['key'])
+            lessons[value.get('claims_sha256')] = dict(value, key=item['key'])
+    if not entries:
+        return '', pins
+    blocks = []
+    for entry in sorted(entries, key=lambda e: (e.get('day'), e.get('filed_at') or 0)):
+        taught = lessons.get(entry.get('claims_sha256'))
+        by_claim = {r.get('claim_id'): r for r in (taught or {}).get('results') or []}
+        lines = ['===== YOUR EARLIER DAY %s (%s): %d claims; the teacher\'s lessons: %s =====' % (
+            entry.get('day'), entry.get('stamp'), len(entry.get('claims') or []),
+            'written (%s)' % taught['key'] if taught else 'pending (not tested yet)')]
+        for claim in entry.get('claims') or []:
+            lines.append('CLAIM %s [%s]: %s' % (claim.get('id'), claim.get('kind'), json.dumps(
+                {k: claim.get(k) for k in ('statement', 'series', 'cells', 'condition', 'lag', 'target', 'direction', 'evidence')},
+                sort_keys=True)))
+            result = by_claim.get(claim.get('id'))
+            if result is not None:
+                lines.append('  TEACHER\'S LESSON: %s' % json.dumps(result, sort_keys=True))
+            elif taught:
+                lines.append('  TEACHER\'S LESSON: none written for this claim (listed, not filled in)')
+        for other in [r for r in (taught or {}).get('results') or [] if r.get('claim_id') not in
+                      {c.get('id') for c in entry.get('claims') or []}]:
+            lines.append('  TEACHER\'S LESSON on an unmatched claim id: %s' % json.dumps(other, sort_keys=True))
+        blocks.append('\n'.join(lines))
+    return ('===== YOUR BRAIN: your own earlier claims and what the scientific teacher\'s tests showed (never anyone '
+            'else\'s answers) =====\n' + '\n\n'.join(blocks)), pins
+
+
 def student_claims(day, text):
     """Jev's claims from the material, one JSON answer per note pack, every claim kept and labelled as his."""
     packs = notes(text, 'finding mechanisms, novel findings and tests to run in the dipole classroom material for the '
@@ -249,7 +300,9 @@ def student_claims(day, text):
     answers = [a for number, pack in enumerate(packs, 1) for a in complete(lambda p: (
         'You are Jev, an independent student reading the Dipole classroom material for the natural gas trading day %s '
         '(pack %d of %d: the whole material, or notes read from every piece of it). You work alone: you have not seen '
-        'anyone else\'s answer. File CLAIMS for a scientist to test on the data; you do not grade or teach.\n'
+        'anyone else\'s answer. File CLAIMS for a scientist to test on the data; you do not grade or teach. If the '
+        'material carries YOUR BRAIN (your earlier claims and the teacher\'s lessons on them), learn from it: build on '
+        'what held, and where the data showed something else, say what you now claim instead.\n'
         'Return JSON only: {"claims": [{"kind": "mechanism" | "novel_finding" | "test_next", "statement": "one '
         'falsifiable sentence", "series": ["the dipole components, pairs or survivor series it uses, by their names in '
         'the material"], "cells": ["where it should hold, e.g. a component, pair, session phase or side"], "condition": '
@@ -312,6 +365,10 @@ def main():
     calls = lambda: state.get('model_calls_before_restart', 0) + CALLS[0]
     state['model_calls_before_restart'] = state.get('model_calls', 0)
 
+    # 0. BRAIN: his earlier days and the teacher's lessons on them, whole (never Frankie's)
+    brain_text, brain_pins = load_brain(config, day)
+    log('brain: %d files carried (%d chars)' % (len(brain_pins), len(brain_text)))
+
     # 1. MATERIAL (never Frankie's)
     material = wait_bundle(config['material'], 'JEV_DAY_MATERIAL_V1', wait, poll)
     if material is None:
@@ -325,7 +382,8 @@ def main():
 
     # 2-3. STUDENT, then FILE the claims before anything of Frankie's is read
     if not state.get('claims_filed'):
-        claims, unparsed, raw = student_claims(day, material_text(material))
+        text = material_text(material) + ('\n\n' + brain_text if brain_text else '')
+        claims, unparsed, raw = student_claims(day, text)
         filed_at = time.time()
         document = dict(schema='JEV_CLAIMS_V1', stamp=stamp, day=day, author='jev', model=JEV_MODEL, filed_at=filed_at,
                         blind=dict(frankie_read=False, statement='filed before any of Frankie\'s outputs were read'),
@@ -408,6 +466,22 @@ def main():
                    claims_count=len(claims), unparsed=len(state.get('unparsed') or []),
                    comparison_available=bool(comparison.get('available')),
                    report=dict(bytes=len(report.encode()), sha256=sha(report.encode())), status='done')
+    # 6. BRAIN: this day's entry, his claims whole, never the comparison (the blind wall)
+    if not state.get('brain_written'):
+        entry = dict(schema='JEV_BRAIN_ENTRY_V1', stamp=stamp, day=day, author='jev', model=JEV_MODEL, include=True,
+                     filed_at=state['claims_filed']['at'], claims_sha256=state['claims_filed']['sha256'],
+                     claims=claims, unparsed=state.get('unparsed') or [],
+                     material=dict((k, material['material'].get(k)) for k in ('path', 'bytes', 'sha256', 'source')),
+                     unavailable=material.get('unavailable') or [], brain_carried=brain_pins,
+                     lessons_key=config.get('lessons_key'), lessons='pending: the scientific teacher writes JEV_LESSONS_V1 '
+                     'to lessons_key, bound to claims_sha256',
+                     excluded=dict(comparison='never carried: his next claims must not lean on Frankie\'s answers'))
+        data = json.dumps(entry, sort_keys=True, indent=1).encode()
+        log('brain entry %s -> HTTP %d' % (config['brain_entry']['key'], put(config['brain_entry']['url'], data,
+                                                                            'application/json')))
+        state.update(brain_written=dict(key=config['brain_entry']['key'], sha256=sha(data), bytes=len(data)))
+        save_state(state)
+    receipt.update(brain_carried=len(brain_pins), brain_entry=state['brain_written'])
     log('receipt -> HTTP %d' % put(config['receipt'], json.dumps(receipt, sort_keys=True).encode(), 'application/json'))
 
 

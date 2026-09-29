@@ -47,7 +47,7 @@ Frankie's cycle (context, teacher, principal, Granite, classroom) is not called;
 
 Not called:
 - the trading-day preparation (native context, the teacher);
-- the principal inputs, the launch, the Pods, Granite and the brain entry, on every day; the classroom, except on the
+- the principal inputs, the launch, the Pods and Granite, on every day; the brain entry and the classroom, except on the
   three classroom-arm days below (where it is Frankie's code, still without the launch, Granite or a Pod);
 - the digest render (Frankie's read format; the experiment reads the JSON).
 
@@ -79,6 +79,10 @@ new dipole data and push the dipole research forward (D51: the dipole is open re
   - the classroom package: `prepare_integrated_cycle`, without the scientific dialogue per the plan;
   - the principal's classroom stage, answered by Frankie's code (`frankie_box_classroom_code.py`, no Granite): the 19
     components, the summary and the correction, under `knowledge/CLASSROOM_RULES_V1.json`;
+  - Frankie's brain entry (Greg, 2026-09-29: his outputs and his lessons from the teacher go into his brain): the day's
+    classroom ledgers and analysis through `frankie_box_brain.write_entry`, as in the full run, plus the scientific
+    teacher's lessons on his claims (the same JEV_LESSONS_V1 shape, author frankie), carried into his next
+    classroom-arm day. Not built: part of the classroom-arm build (step 8);
   - the scientific teacher's turn (`SPEC-scientific-teacher.md`): this experiment's search, tied to the BOSS teacher.
   - No Granite and no Pod in this arm (superseded 2026-09-29: it used to say "needs Granite and a Pod"). The launch
     is not called (see "Not called" above), so its B2 critic does not run here.
@@ -124,6 +128,20 @@ new dipole data and push the dipole research forward (D51: the dipole is open re
   - `clm_sidecar/launch.py --jev --day` + `pod_bootstrap.sh` JEV_ONLY: his Pod serves only his chat; no Granite key.
   - `frankie_box_jev_pod.sh` (runner marker) + the "Jev Pod" step in `frankie_box_run.yml` (own lock, always deleted).
   - The claims file is what the scientific teacher reads; its reader is part of the search build (6b).
+- **His brain (Greg, 2026-09-29: "his outputs should go into his knowledge base in his brain too", "and his lessons
+  from the teacher while he's learning"). BUILT 2026-09-29, not run.** On S3 (D34) under `clm-sidecar/jev-brain/`:
+  - `entries/<day>-<stamp>.json` (JEV_BRAIN_ENTRY_V1), written at the end of each of his days: his claims whole, the
+    unparsed answers, the material pins, the brain files he carried in, `claims_sha256`, `include: true`.
+  - `lessons/<day>-<stamp>.json` (JEV_LESSONS_V1), written by the scientific teacher once it has tested that day's
+    claims, bound to the entry by `claims_sha256`: `{schema, day, stamp, claims_sha256, written_by:
+    "scientific_teacher", results: [{claim_id, tests: [{series, transform, lag, cell, condition, target, days,
+    counts, chance_check}], disposition (orientation only, R14), challenge ("the data is showing this instead ...",
+    R07), untested: [..]}]}`. Counts, never an average (D37). Its writer is part of the search build (6b).
+  - On his next day `launch.py --jev` hands him every entry and lessons file; `sit_in.py` reads them whole, puts them
+    beside the day's material as YOUR BRAIN (each earlier claim with the teacher's lesson on it, or "pending"), and
+    tells him to build on what held and to say what he claims instead where the data showed something else.
+  - The same day is never run twice (a second entry for a day declines the run). His brain NEVER carries Frankie's
+    answers or the comparison: that would make his next claims lean on Frankie's and end their independence.
 - **Before it is built:** Greg adds Jev to the Excel build plan with this track (unplanned = unwired).
 
 ## How the orchestrator runs

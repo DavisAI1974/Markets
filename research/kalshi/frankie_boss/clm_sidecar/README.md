@@ -82,5 +82,8 @@ path is retired: Frankie is code, Granite is only the full run's B2 critic, and 
   4. Read: `frankie_box_jev_reports.sh` with `presign=getprefix:frankie-granite42-568968024170-us-east-1/clm-sidecar/<s>/`.
 - **Outputs:** `clm-sidecar/<s>/jev/claims.json`, `comparison.json`, `report.md`, `transcript.jsonl.gz`, `receipt.json`
   (granite_calls 0, Jev's model calls counted).
+- **His brain:** `clm-sidecar/jev-brain/entries/<day>-<s>.json` (his claims whole, written at the end of his day) and
+  `clm-sidecar/jev-brain/lessons/<day>-<s>.json` (the scientific teacher's test results on those claims, written by the
+  search). Both are read whole on his next day as YOUR BRAIN. Never Frankie's answers or the comparison.
 - **Nothing cut:** material longer than one prompt is read in note packs; a cut-off answer is regenerated in halves;
   unparsed answers and repeated claims are kept and listed.
