@@ -24,6 +24,14 @@ on:
         description: 'curve_days: hard ceiling on the whole quote; nothing is bought above it'
         required: false
         default: '100'
+      ranges:
+        description: 'curve_days: comma list of UTC START:END (YYYY-MM-DD, END exclusive) instead of the 30 days; empty = the 30 days'
+        required: false
+        default: ''
+      quote_only:
+        description: 'curve_days: 1 = print the quotes, buy nothing'
+        required: false
+        default: '0'
       families:
         description: 'day_history: all, or a comma list of calendar,cot,storage,consensus,weather_obs,mos,eia930'
         required: false
@@ -115,7 +123,9 @@ jobs:
       PREFIX: nymex/ng_fut_parent_v0
       SCHEMAS: ${{ inputs.schemas }}
       CEILING_USD: ${{ inputs.ceiling_usd }}
-      CANDIDATES: research/kalshi/frankie_boss/blocks/DAY_SELECTION_CANDIDATES_20260929.json
+      CANDIDATES: ${{ inputs.ranges == '' && 'research/kalshi/frankie_boss/blocks/DAY_SELECTION_CANDIDATES_20260929.json' || '' }}
+      RANGES: ${{ inputs.ranges }}
+      QUOTE_ONLY: ${{ inputs.quote_only }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -125,6 +135,7 @@ jobs:
       - run: |
           case "$SCHEMAS" in *[!a-z0-9_,-]*) echo "schemas must be a comma list"; exit 2;; esac
           case "$CEILING_USD" in *[!0-9.]*) echo "ceiling must be a number"; exit 2;; esac
+          case "$RANGES" in *[!0-9:,-]*) echo "ranges must be START:END,START:END"; exit 2;; esac
           python research/kalshi/frankie_boss/operations/pull_curve_days.py
       - if: always()
         uses: actions/upload-artifact@v4

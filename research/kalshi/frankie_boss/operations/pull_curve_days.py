@@ -11,7 +11,11 @@ stype parent: every listed month and the calendar spreads) for exactly the UTC p
 Native compressed DBN is kept byte for byte (the 5-year pull's invariant); each object is uploaded with its sha256 and a
 manifest. Before anything is bought the whole request is quoted per schema and refused above CEILING_USD. Each job id is
 written to S3 before polling, so a rerun reuses it and never buys the same span twice. Nothing is converted, sampled or
-dropped. Environment: DATABENTO_API_KEY, BUCKET, PREFIX, SCHEMAS (comma list), CEILING_USD, CANDIDATES.
+dropped. Environment: DATABENTO_API_KEY, BUCKET, PREFIX, SCHEMAS (comma list), CEILING_USD, and either CANDIDATES
+(the 30 days) or RANGES (comma list of UTC START:END ranges, END exclusive), Greg 2026-09-29: "do the 30 days first then do Oct for the 5
+years and then do the other months for the 5 years that we don't already have"). A day whose native file for a schema is
+already under PREFIX is skipped for that schema (never bought twice); spans never cross a month. QUOTE_ONLY=1 prints the
+quotes and buys nothing.
 """
 import datetime as dt
 import glob
@@ -36,11 +40,13 @@ def env(name):
 
 
 def ranges(days):
-    """Contiguous [start, end) date spans covering exactly the given UTC partition days."""
+    """Contiguous [start, end) date spans covering exactly the given UTC partition days, never crossing a month."""
     days = sorted(dt.date(int(d[:4]), int(d[4:6]), int(d[6:])) for d in days)
+    if not days:
+        return []
     spans, start, prev = [], days[0], days[0]
     for d in days[1:]:
-        if d != prev + dt.timedelta(days=1):
+        if d != prev + dt.timedelta(days=1) or d.month != prev.month:
             spans.append((start, prev + dt.timedelta(days=1)))
             start = d
         prev = d
@@ -52,13 +58,28 @@ def main():
     key, bucket, prefix = env('DATABENTO_API_KEY'), env('BUCKET'), env('PREFIX').strip('/')
     schemas = [s.strip() for s in env('SCHEMAS').split(',') if s.strip()]
     ceiling = float(env('CEILING_USD'))
-    candidates = json.loads(Path(env('CANDIDATES')).read_bytes())
-    days = sorted({p['partition'] for p in candidates['proposed_partitions']})
-    spans = ranges(days)
-    print('[plan] %d partitions in %d spans: %s' % (len(days), len(spans),
-          ', '.join('%s..%s' % (a, b - dt.timedelta(days=1)) for a, b in spans)), flush=True)
+    quote_only = os.environ.get('QUOTE_ONLY') == '1'
+    if os.environ.get('CANDIDATES'):
+        candidates = json.loads(Path(os.environ['CANDIDATES']).read_bytes())
+        wanted = sorted({p['partition'] for p in candidates['proposed_partitions']})
+    else:
+        wanted = set()
+        for part in env('RANGES').split(','):
+            a, b = (dt.date.fromisoformat(x) for x in part.split(':'))
+            wanted.update((a + dt.timedelta(days=i)).strftime('%Y%m%d') for i in range((b - a).days))
+        wanted = sorted(wanted)
     s3 = boto3.client('s3', region_name=os.environ.get('AWS_DEFAULT_REGION'))
     client = db.Historical(key)
+    held = {}
+    for schema in schemas:
+        names = set()
+        for page in s3.get_paginator('list_objects_v2').paginate(Bucket=bucket, Prefix='%s/%s/native/' % (prefix, schema)):
+            names.update(o['Key'].rsplit('/', 1)[-1] for o in page.get('Contents', []))
+        held[schema] = {d for d in wanted if 'glbx-mdp3-%s.%s.dbn.zst' % (d, schema) in names}
+    plan = {schema: ranges([d for d in wanted if d not in held[schema]]) for schema in schemas}
+    for schema in schemas:
+        print('[plan] %s: %d days wanted, %d already held (skipped), %d spans to buy' % (
+            schema, len(wanted), len(held[schema]), len(plan[schema])), flush=True)
 
     def exists(name):
         try:
@@ -78,18 +99,24 @@ def main():
     quotes = {}
     for schema in schemas:
         quotes[schema] = [float(client.metadata.get_cost(dataset=DATASET, symbols=[SYMBOL], stype_in=STYPE, schema=schema,
-                                                          start=a.isoformat(), end=b.isoformat())) for a, b in spans]
+                                                          start=a.isoformat(), end=b.isoformat())) for a, b in plan[schema]]
         print('[quote] %s $%.4f' % (schema, sum(quotes[schema])), flush=True)
     total = sum(sum(q) for q in quotes.values())
     print('[quote] total $%.4f ceiling $%.2f' % (total, ceiling), flush=True)
+    Path('/tmp/curve-days-receipt.json').write_text(json.dumps(dict(quote_only=quote_only, quotes_usd=quotes,
+                                                                     total_quote_usd=total, ceiling_usd=ceiling), indent=1))
+    if quote_only:
+        print('[quote-only] nothing bought', flush=True)
+        return
     if total > ceiling:
         raise SystemExit('total quote $%.4f exceeds the ceiling $%.2f; nothing bought' % (total, ceiling))
 
     receipt = dict(schema='FRANKIE_CURVE_DAYS_PULL_V1', dataset=DATASET, symbol=SYMBOL, stype_in=STYPE, schemas=schemas,
-                   partitions=days, spans=[[a.isoformat(), b.isoformat()] for a, b in spans], quotes_usd=quotes,
+                   partitions_wanted=wanted, already_held={k: sorted(v) for k, v in held.items()},
+                   spans={k: [[a.isoformat(), b.isoformat()] for a, b in v] for k, v in plan.items()}, quotes_usd=quotes,
                    total_quote_usd=total, ceiling_usd=ceiling, native_dbn_preserved=True, results=[])
     for schema in schemas:
-        for (a, b), quote in zip(spans, quotes[schema]):
+        for (a, b), quote in zip(plan[schema], quotes[schema]):
             seg = '%s_%s' % (a.strftime('%Y%m%d'), b.strftime('%Y%m%d'))
             base = '%s/%s' % (prefix, schema)
             done, job_key, manifest_key = ('%s/_done/%s.done' % (base, seg), '%s/_jobs/%s.json' % (base, seg),
