@@ -84,6 +84,9 @@ CATALOG = (
     ('principal_inputs', 'principal-inputs-receipt.json', MIXED, "calculation result together with the shared knowledge (Frankie's brain)"),
     ('principal_inputs', 'retained-witnesses.json', INCLUDE, 'the retained historical contract sections'),
     ('host_config', 'actual-host-configuration.json', INCLUDE, 'the whole host run configuration'),
+    # TEACHER: the experiment's teacher-only step (1 day in 5, batched per day; /opt/frankie-box/work/experiment-teacher-rows/<day>/)
+    ('teacher', 'host-dipole-classroom-source*.json', INCLUDE, "the teacher's Dipole measurements from the teacher-only step"),
+    ('teacher', '*.json', INCLUDE, 'the teacher-only step receipt'),
     # CYCLE: one run directory (/opt/frankie-box/work/runs/<run_id>/), this cycle's execution/cycle-<NN>/
     ('run', 'execution/cycle-{cycle}/host-dipole-classroom-teacher-key*', GRADED, 'the graded answer key (R10)'),
     ('run', 'execution/cycle-{cycle}/classroom-audit/*post-grade*', GRADED, 'the classroom grade (R10)'),
@@ -197,12 +200,13 @@ def main():
     p.add_argument('--principal-inputs', help='/opt/frankie-box/work/principal-inputs/<r>')
     p.add_argument('--host-config', help='/opt/frankie-box/work/monday-run-config/<r>')
     p.add_argument('--run', help='ONE run directory: /opt/frankie-box/work/runs/<run_id>')
+    p.add_argument('--teacher', help='the teacher-only step directory of the day: /opt/frankie-box/work/experiment-teacher-rows/<day>')
     p.add_argument('--plan-only', action='store_true', help='print what would be linked, excluded and missing; write nothing')
     a = p.parse_args()
     if not (len(a.day) == 8 and a.day.isdigit() and a.cycle.isdigit()):
         raise SystemExit('--day YYYYMMDD and --cycle NN required')
     dirs = dict(ingest=a.ingest, authorship=a.authorship, root=a.calculations, preparation=a.preparation, principal_inputs=a.principal_inputs,
-                host_config=a.host_config, run=a.run)
+                host_config=a.host_config, run=a.run, teacher=a.teacher)
     for name, value in dirs.items():
         if value and not str(Path(value).resolve()).startswith('/opt/frankie-box/'):
             raise SystemExit('%s must be under /opt/frankie-box' % name)

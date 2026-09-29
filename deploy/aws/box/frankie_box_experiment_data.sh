@@ -22,6 +22,7 @@ set -- --day "$DAY" --cycle "$CYCLE" --calculations "$CALCULATIONS"
 [ -z "${PRINCIPAL_INPUTS:-}" ] || set -- "$@" --principal-inputs "$PRINCIPAL_INPUTS"
 [ -z "${HOST_CONFIG:-}" ] || set -- "$@" --host-config "$HOST_CONFIG"
 [ -z "${RUN:-}" ] || set -- "$@" --run "$RUN"
+[ -z "${TEACHER:-}" ] || set -- "$@" --teacher "$TEACHER"
 case "$ACTION" in plan) set -- "$@" --plan-only;; export) ;; *) echo "ACTION must be plan or export" >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 exec nice -n 10 /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_data.py" "$@"

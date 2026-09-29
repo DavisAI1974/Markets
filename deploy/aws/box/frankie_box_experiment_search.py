@@ -200,7 +200,8 @@ def build_series(day_dir, log):
             asof('events', np.asarray(known, dtype=np.float64), counts)
     else:
         notes.append(dict(source='events', missing=str(rows_dir / 'input-*.jsonl')))
-    dipole_paths = sorted((day_dir / 'run' / 'execution').glob('cycle-*/host-dipole-classroom-source*.json'))
+    dipole_paths = sorted((day_dir / 'run' / 'execution').glob('cycle-*/host-dipole-classroom-source*.json')) + \
+        sorted((day_dir / 'teacher').glob('host-dipole-classroom-source*.json'))   # the launch's, or the teacher-only step's
     if len(dipole_paths) > 1:
         raise SystemExit('%d Dipole classroom sources for one day (%s): duplicate data declines the run'
                          % (len(dipole_paths), ', '.join(str(p) for p in dipole_paths)))
