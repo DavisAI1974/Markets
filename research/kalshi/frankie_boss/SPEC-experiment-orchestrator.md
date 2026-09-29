@@ -159,6 +159,19 @@ new dipole data and push the dipole research forward (D51: the dipole is open re
     answers or the comparison: that would make his next claims lean on Frankie's and end their independence.
 - **Before it is built:** Greg adds Jev to the Excel build plan with this track (unplanned = unwired).
 
+## The teacher's Dipole rows: 1 day in 5, batched (Greg, 2026-09-29)
+Greg: "Just for the sake of speed we decide to do 1 of 5 days and when it runs it will take the accumulated data from
+off days and run it on 5th." The teacher (JournalTeacherR3, CPU only, no Pod, no model) runs on every 5th discovery day
+over the accumulated days since its last run, so every day ends with its Dipole rows:
+- Each day is its OWN walk on its own sealed journal, starting fresh; the batch never walks across days (that would
+  carry one day's state into the next: pooling, and a broken causal wall).
+- The days of a batch run in parallel on the box's CPUs (the speed is there: one wall-time of a day for five).
+- The search runs on the same rhythm: teacher x5, then search x5, then the scientific teacher's lessons; searching
+  daily without the Dipole and again later would build the same thing twice.
+- Lessons on Dipole claims lag by up to four days; until then a brain shows them "pending".
+- A classroom-arm day already has its Dipole rows from the launch; the batch skips it (duplicate data declines).
+- Built next: the teacher-only step (the retained_preparation_recovery call, as a box script).
+
 ## How the orchestrator runs
 - **A box-side orchestrator** (`frankie_box_experiment.py`), started by one workflow dispatch, with:
   - its own concurrency lock `box-experiment-*`, so it runs beside Frankie's runs and never queues behind them;
