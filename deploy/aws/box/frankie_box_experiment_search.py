@@ -48,8 +48,10 @@ from pathlib import Path
 SCHEMA = 'FRANKIE_EXPERIMENT_SEARCH_V1'
 ROOT = Path('/opt/frankie-box/work/experiment-search')
 CELL_NAMES = ('session_phase', 'continuity_segment', 'source_day', 'source_role')
+F_LAST = 128                       # the exchange record flag that closes a group (the same close the frames spool marks)
 NOT_SEARCHED = (
-    ('root/work/derived/.rows/input-*.jsonl', 'every INPUT record (per-group event counts by action and side are the next source)'),
+    ('root/work/derived/.rows/input-*.jsonl fields', 'per-event prices, order ids, queue positions, sequence gaps (only per-group '
+     'counts and sizes by action and side are searched)'),
     ('transforms', 'levels, magnitudes, run lengths, first differences (only the sign of each step is searched here)'),
     ('conditions', 'conditioning on a state (e.g. book regime) before counting'),
     ('targets', 'targets other than the series themselves (e.g. the mid N groups ahead, fills, exhaustion)'),
@@ -165,6 +167,38 @@ def build_series(day_dir, log):
         asof(spool, known, num)
         for k in text:
             notes.append(dict(source=spool, text_column=k, placed='not placed as a cell (asof of text is the next step)'))
+    inputs = sorted(rows_dir.glob('input-*.jsonl'))
+    if len(inputs) > 1:
+        raise SystemExit('%d INPUT spools in %s (%s): the same records twice would be counted twice (duplicate data '
+                         'declines the run)' % (len(inputs), rows_dir, ', '.join(p.name for p in inputs)))
+    if inputs:
+        counts, known, records, groups, open_group, unknown = {}, [], 0, 0, {}, 0
+        for record in unpack_spool(inputs[0]):
+            records += 1
+            action, side = str(record.get('action')), str(record.get('side'))
+            key = '%s_%s' % (action, side)
+            open_group[key] = open_group.get(key, 0) + 1
+            size = record.get('size')
+            if isinstance(size, (int, float)) and not isinstance(size, bool):
+                open_group[key + '_size'] = open_group.get(key + '_size', 0) + size
+            else:
+                unknown += 1
+            flags = record.get('flags')
+            if isinstance(flags, int) and flags & F_LAST:
+                for k in set(counts) | set(open_group):
+                    counts.setdefault(k, [0.0] * groups).append(float(open_group.get(k, 0)))
+                known.append(float(record.get('ts_recv')) if record.get('ts_recv') is not None else float('nan'))
+                groups += 1
+                open_group = {}
+        sources.append(dict(source='events', path=str(inputs[0]), rows=records, groups=groups, sha256=sha256_file(inputs[0]),
+                            numeric=sorted(counts), records_without_numeric_size=unknown,
+                            after_last_close=dict(records=sum(v for k, v in open_group.items() if not k.endswith('_size')),
+                                                  note='records after the last F_LAST close belong to no closed group; counted here, not placed')))
+        if groups:
+            counts['total'] = [float(sum(counts[k][g] for k in counts if not k.endswith('_size'))) for g in range(groups)]
+            asof('events', np.asarray(known, dtype=np.float64), counts)
+    else:
+        notes.append(dict(source='events', missing=str(rows_dir / 'input-*.jsonl')))
     derived = day_dir / 'root' / 'work' / 'derived'
     flow_path, roll_path = derived / 'legacy_native_signed_flow.json', derived / 'legacy_per_second_roll20.json'
     if flow_path.is_file():
