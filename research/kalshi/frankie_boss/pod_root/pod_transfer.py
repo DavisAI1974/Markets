@@ -176,6 +176,8 @@ def get_to_file(url, path, expect_bytes, retries=8):
 def get_parts_to_file(parts, path):
     """Several presigned part objects concatenated into one file, in order; returns (bytes, sha256 of the whole)."""
     path = Path(path)
+    if len(parts) == 1:                              # one object (an S3 copy of the whole file): straight into place
+        return get_to_file(parts[0]['url'], path, parts[0]['bytes'])
     h, total = hashlib.sha256(), 0
     tmp = path.with_name(path.name + '.assembling')
     with open(tmp, 'wb') as out:
