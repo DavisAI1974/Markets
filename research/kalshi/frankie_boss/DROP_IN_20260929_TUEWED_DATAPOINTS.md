@@ -11,7 +11,7 @@ box dispatch (scripts refuse a staged checkout that differs from MARKETS_SHA); n
 keys are secrets and do not rotate; a probe on every long box run. Ask Greg for the AWS pair at the start (needed for
 direct SSM probes and S3 reads from the container; put it in `~/.config/markets/env`, chmod 600, verify with STS).
 
-## Greg's last words to this chat (~12:05Z): GO GIVEN for these two
+## Greg's last words to this chat (~12:05Z): GO GIVEN for these three
 - **Set up the Linux box now** ("Start setting up linux box. We have well over an hour of runway. Tell next guy to do
   it."): i-08cee7171c0a76a04, r6i.2xlarge, 8 vCPU / 64 GB, 300 GB gp3, us-east-2, STOPPED. Greg's go to START it is
   given. (The closing chat's start call was refused by Claude Code's permission check, not by AWS; nothing started.)
@@ -36,6 +36,14 @@ direct SSM probes and S3 reads from the container; put it in `~/.config/markets/
   newest staged tip and anything a running run points at). Same for `/opt/frankie-box/ingest-code/<sha>` worktrees not
   in use. Only if a kind would be left with NONE, keep one good (complete, `staging-receipt.json` status staged)
   example of that kind as a template. Named-only, refuse open files, print what was removed and its bytes.
+  Greg's restatement (~12:20Z): "Delete every staged code checkout, transfer pack and ingest worktree on the box that
+  nothing uses. That means no running process, no current run's receipt or config, and not the newest staged version.
+  Keep one good, complete example of a kind only if deleting would leave none of that kind, as a template. Print what
+  it removes and how much space that frees." Report the total bytes freed per kind (checkouts, transfer packs, ingest
+  worktrees) as counts, not averages.
+- **Disk outlook** (Greg): "We should have enough disk space once we zip the remaining good files." So the order is:
+  delete bedrock tables + unused code/packs/worktrees + failed/unused/duplicate runs, then zip the keepers (work list
+  item 3); a disk grow is only the fallback if free space is still short after that.
 
 ## Work list, in order
 1. **Probe everything running** (handoff table): Wednesday 20211006 (then `ACTION=conform` on it), the four ingests of
