@@ -8,6 +8,9 @@
 # Frankie's historical data points: optional DAY_EXTERNALS + DAY_EXTERNAL_SHA256S (comma lists, same order as DAYS, given
 # together); without them each day's file is taken from beside its sealed ingest (its day-external-receipt.json sha256).
 # The BOSS teacher's external section is written to <day>/external-section/.
+# CPU budget (Greg, 2026-09-29: "add the cpu budget to teacher"): optional CPUS = how many of the box's cores the
+# teacher may use (default all of them, as before), split between the days and pinned from core 0; the cores left over
+# stay free for the ingests and other steps running beside it.
 set -u
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"
 : "${DAYS:?comma list of days required}"; : "${INGESTION_RECEIPTS:?comma list of ingestion receipts required}"
@@ -21,7 +24,15 @@ if [ -n "${DAY_EXTERNALS:-}${DAY_EXTERNAL_SHA256S:-}" ]; then
   [ "$NX" = "$ND" ] && [ "$NS" = "$ND" ] || { echo "DAY_EXTERNALS and DAY_EXTERNAL_SHA256S must be comma lists as long as DAYS" >&2; exit 2; }
   case "$DAY_EXTERNALS" in *..*) echo "no .. in DAY_EXTERNALS" >&2; exit 2;; esac
 fi
-NCPU=$(nproc); SHARE=$((NCPU / ND)); [ "$SHARE" -ge 2 ] || SHARE=2
+NCPU=$(nproc)
+if [ -n "${CPUS:-}" ]; then
+  case "$CPUS" in *[!0-9]*|0) echo "CPUS must be a positive integer (the teacher's core budget)" >&2; exit 2;; esac
+  [ "$CPUS" -le "$NCPU" ] || { echo "CPUS=$CPUS exceeds the box's $NCPU cores" >&2; exit 2; }
+  NCPU=$CPUS
+fi
+SHARE=$((NCPU / ND)); [ "$SHARE" -ge 2 ] || SHARE=2
+[ -z "${CPUS:-}" ] || [ $((SHARE * ND)) -le "$(nproc)" ] || { echo "$ND days need at least $((2 * ND)) cores; CPUS=$NCPU gives $SHARE each" >&2; exit 2; }
+echo "### teacher CPU budget: $NCPU of $(nproc) cores, $SHARE per day"
 LOGS=/opt/frankie-box/work/experiment-teacher-rows/logs; mkdir -p "$LOGS"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 I=0; PIDS=""

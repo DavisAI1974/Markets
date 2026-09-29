@@ -810,7 +810,8 @@ class Run:
         if not self.disk_ok('teacher'):
             return None
         code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh',
-                               dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts)))
+                               dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts),
+                                    **({'CPUS': self.a.teacher_cpus} if self.a.teacher_cpus else {})))
         missing = [d for d, _ in receipts if rows_of(dict(day=d))[0] is None]
         return self.record('teacher', batch_key, 'done' if code == 0 and not missing and not waiting else 'failed',
                            exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
@@ -1057,6 +1058,8 @@ def main():
     p.add_argument('--ingest-verify', choices=('inline', 'deferred'), default='deferred')
     p.add_argument('--data-workers', type=int, default=1)
     p.add_argument('--search-workers', type=int, default=8)
+    p.add_argument('--teacher-cpus', type=int, default=0,
+                   help='the teacher step\'s core budget (0 = every core of the box, as before); the rest stay free')
     p.add_argument('--parallel-days', type=int, default=4,
                    help='days at once for the ingest, external, root and data steps (4 = two Tue/Wed pairs)')
     p.add_argument('--external-history-run', help='the frankie_day_history GitHub run id whose S3 objects the day files '

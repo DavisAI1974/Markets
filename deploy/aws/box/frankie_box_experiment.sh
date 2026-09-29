@@ -7,7 +7,7 @@
 # DAYS (comma list YYYYMMDD) and/or PLAN (a plan JSON, repo-relative or under /opt/frankie-box), DAY_CLASS (monday |
 # midweek | thursday | friday), CLASSROOM_ARM (comma list), FROZEN_SURVIVORS (confirmation days only), HISTORICAL_CLAIMS
 # (repo-relative committed file), STAGES (comma list),
-# LAGS, TRANSFORMS, INGEST_WORKERS (31), DATA_WORKERS (1), SEARCH_WORKERS (8), PARALLEL_DAYS (4), DISK_FLOOR_GB (100),
+# LAGS, TRANSFORMS, INGEST_WORKERS (31), DATA_WORKERS (1), SEARCH_WORKERS (8), TEACHER_CPUS (0 = every core), PARALLEL_DAYS (4), DISK_FLOOR_GB (100),
 # EXTERNAL_HISTORY_RUN (the day_history run id the day files are built from), EXTERNAL_WAIT (on|off), BRAIN,
 # PREVIOUS_CLASSROOM (the run's first arm day), MAP_URL (the dispatch's presigned map: the partitions for fetch, the
 # day history and curve prefixes and the day-file slots for external, Jev's material slots for jev; ACTION=plan prints
@@ -38,6 +38,6 @@ case "${BRAIN:-/opt/frankie-box/brain}" in /opt/frankie-box/*) ;; *) echo "BRAIN
 case "${PREVIOUS_CLASSROOM:-}" in ""|/opt/frankie-box/work/experiment-roots/*/work/classroom) ;; *) echo "PREVIOUS_CLASSROOM must be an experiment root's work/classroom" >&2; exit 2;; esac
 [ -z "${PREVIOUS_CLASSROOM:-}" ] || set -- "$@" --previous-classroom "$PREVIOUS_CLASSROOM"
 set -- "$@" --lags "${LAGS:-20}" --ingest-workers "${INGEST_WORKERS:-31}" --data-workers "${DATA_WORKERS:-1}" \
-  --search-workers "${SEARCH_WORKERS:-8}" --parallel-days "${PARALLEL_DAYS:-4}" --disk-floor-gb "${DISK_FLOOR_GB:-100}"
+  --search-workers "${SEARCH_WORKERS:-8}" --teacher-cpus "${TEACHER_CPUS:-0}" --parallel-days "${PARALLEL_DAYS:-4}" --disk-floor-gb "${DISK_FLOOR_GB:-100}"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT" MAP_URL="${MAP_URL:-}"
 exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment.py" "$@"
