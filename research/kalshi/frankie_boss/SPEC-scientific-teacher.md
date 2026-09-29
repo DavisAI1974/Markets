@@ -55,13 +55,25 @@ more times."
 
 - **Frankie's 12 historical data points are part of his ingest (Greg, 2026-09-29: "everyone who sees his ingest
   should see these data points too").** The 12 of `FRANKIE_DATA_WISHLIST_20260929.md` (Greg's set: the ten single
-  points plus EIA weekly storage and the storage estimate vs actual) are staged ONCE per trading day, at their native
+  points plus EIA weekly storage and the storage estimate vs actual; the futures curve shape is the 13th, below) are staged ONCE per trading day, at their native
   resolution (hourly stays hourly, weekly stays weekly), each value stamped with the time it became public, into one
   file beside the day's sealed ingest, its sha256 in a receipt. Every reader of the ingest reads that same file: Frankie,
   the BOSS teacher, the scientific teacher (the search, as series on the day's causal time axis: a value exists from its
   publication time on), and whoever else is given the ingest. Nothing re-fetches or re-derives it a second time. A
   missing value is listed with its day and reason, never a reason to drop the day. Source plan:
   `HISTORICAL_DATA_PLAN_20260929.md` (in progress).
+- **The 13th: the futures curve shape, behind leak guards (Greg, 2026-09-29: "He'll get the futures curve shape too. We
+  just have to put huge leak guards up so forecaster can't see them").** The curve is price content, and a trading day's
+  own curve (its settles, and any curve built during or after it) is the answer. So:
+  1. Curve values are stamped with their settlement publication time and are visible to a trading day only if published
+     before that day opens (18:00 ET the prior calendar day): in practice the prior sessions' settled curve, never the
+     day's own.
+  2. The day file carries them in their own section marked `price_derived: true`.
+  3. Every reader takes the file through one as-of reader given the cutoff; a value past the cutoff is REFUSED with its
+     name and time (a hard error, never a silent filter), so a leak stops the run instead of shaping a forecast.
+  4. Staging refuses to write the day file if any price-derived value's publication time is at or after the day's open,
+     and names it.
+  5. The search runs `odcore/leakage.py` on every target as before; the curve fields are in its checked set.
 
 ## Tied together, separate roles (rule R12)
 - The BOSS teacher never becomes a reviewer only and never rewrites its targets from a discussion (CHAT15 handoff).
