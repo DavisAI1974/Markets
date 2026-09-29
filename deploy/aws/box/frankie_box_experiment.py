@@ -22,21 +22,39 @@ the committed box script, run as a child with its own inputs, its output kept in
            plus the external section; the arm days one after another in plan order, each carrying the previous arm
            day's work/classroom as PREVIOUS; the run's first arm day carries the latest earlier classroom day on the box,
            or the plan's previous_classroom)
-  reports  frankie_box_experiment_day_reports.sh      (classroom-arm days, after the classroom step is done, reused or
-           refused; Greg, 2026-09-29: "make sure classroom is printing out an analysis after every day has gone through
-           it, and same with Frankie, and have them number their reports"; "There will be (3) #1's and so on"; "Write
-           plain language interpreters to their code. I don't want you making interpretations"): reads the day's
-           classroom outputs and writes CLASSROOM REPORT #N and FRANKIE REPORT #N (one number per trade day, shared with
-           that day's JEV REPORT #N; the jev step's Pod dispatch carries REPORT_NUMBER=N) into
-           /opt/frankie-box/work/experiment-reports/ and the classroom dir, printed in full here and in its log. A report
-           failure is recorded (retried on the next start) and never stops the run
+           The day's report number N is reserved right after its classroom step (done, reused or refused), where the
+           reports used to run, so the numbering is unchanged (frankie_box_experiment_day_reports.reserve_number)
   jev      frankie_box_jev_relay.sh ACTION=material   (classroom-arm days: Jev's material, relayed when the dispatch
            presigned the slots putrange:<jev bucket>/clm-sidecar/<stamp>/material:8; the Jev Pod is its own workflow step
            and cannot be started from the box, so the step records waiting_for_pod with the exact dispatches)
   data     frankie_box_experiment_data.sh ACTION=export
   search   frankie_box_experiment_search.sh
   lessons  frankie_box_scientific_teacher.sh          (after each batch: every discovery-day search of the run so far,
-           the committed historical claims, and Jev's / Frankie's claims where the plan names them)
+           the committed historical claims, and Jev's / Frankie's claims where the plan names them; on a classroom-arm
+           day whose plan names no ledgers, Frankie's claims are the novel findings of that day's classroom ledgers.json,
+           R09: the teacher reads nothing else of it; a call whose lessons file is already there is reused, not re-run)
+  exchange frankie_box_experiment_exchange.sh         (classroom-arm discovery days, after the batch's lessons and the
+           day's search: the three-way exchange, SPEC-scientific-teacher.md step 5. Per scientific-teacher result on a
+           claim that tested the day: the BOSS teacher's turn from its own Dipole rows (targets, masks, controls), the
+           scientific teacher's reply with the search counts, Frankie's reply by his code; the teachers' own findings
+           filed, scoped, day named. Receipt and files under <run>/exchange/<day>/; Frankie's view into his brain as
+           <day>-exchange. Code only)
+  voice    NOT WIRED (records waiting, not_wired; never blocks the school or the reports): the post-class discussion
+           voiced by a model from the exchange's voice_turns (knowledge/GRANITE_DISCUSSION_VOICE_ROLE_V1.md, a draft)
+           needs Greg's own confirmation of an R17 amendment, the build-plan component and the Pod; its validator is
+           built (frankie_box_exchange_voice.py, code only)
+  school   frankie_box_school_knowledge.sh            (classroom-arm days after the exchange; never Monday 20211004):
+           Frankie's SCHOOL KNOWLEDGE BASE, ONE file <brain>/school/<day>.json (FRANKIE_SCHOOL_KNOWLEDGE_V1) and its row
+           in <brain>/school/index.json (day, file, sha256, bytes, report number N); the brain loader and the next
+           classroom day read every earlier day's file
+  reports  frankie_box_experiment_day_reports.sh      (classroom-arm days, after the exchange; Greg, 2026-09-29: "make
+           sure classroom is printing out an analysis after every day has gone through it, and same with Frankie, and
+           have them number their reports"; "There will be (3) #1's and so on"; "Write plain language interpreters to
+           their code. I don't want you making interpretations"): reads the day's classroom outputs and its exchange and
+           writes CLASSROOM REPORT #N and FRANKIE REPORT #N (N reserved after the classroom, shared with that day's JEV
+           REPORT #N) into /opt/frankie-box/work/experiment-reports/ and the classroom dir, printed in full here and in
+           its log. Reports written before the day's exchange existed are rebuilt once it does (a revision, same N). A
+           report failure is recorded (retried on the next start) and never stops the run
 
 NO DATA IS DROPPED (Greg, 2026-09-29): incomplete data never stops the run or skips a day. A calculation that cannot
 use a piece of data (missing, incomplete) skips over that piece, and the step says what it skipped and why; every
@@ -80,7 +98,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 SCHEMA = 'FRANKIE_EXPERIMENT_RUN_V1'
-STAGES = ('fetch', 'ingest', 'external', 'root', 'teacher', 'classroom', 'reports', 'jev', 'data', 'search', 'lessons')
+STAGES = ('fetch', 'ingest', 'external', 'root', 'teacher', 'classroom', 'jev', 'data', 'search', 'lessons', 'exchange',
+          'voice', 'school', 'reports')
 FINISHED = ('done', 'reused', 'skipped')
 HANDED_OFF = 'waiting_for_pod'           # the jev step's end on the box: material relayed, the Pod is its own dispatch
 BOX_ROOT = Path('/opt/frankie-box')
@@ -92,6 +111,8 @@ DATA = WORK / 'experiment-data'
 SEARCH = WORK / 'experiment-search'
 REPORTS = WORK / 'experiment-reports'     # the day reports: CLASSROOM / FRANKIE REPORT #N (one number per trade day)
 REPORTS_SCHEMA = 'FRANKIE_EXPERIMENT_DAY_REPORTS_RECEIPT_V1'
+LESSONS_ROOT = WORK / 'experiment-teacher'  # the scientific teacher's lessons (frankie_box_scientific_teacher.ROOT)
+SCHOOL_RECEIPT_SCHEMA = 'FRANKIE_SCHOOL_KNOWLEDGE_RECEIPT_V1'
 ROWS_FILE = 'host-dipole-classroom-source.c15.json'
 DAY_EXTERNAL = WORK / 'day-external'
 DAY_FILE, DAY_FILE_RECEIPT = 'day-external.json', 'day-external-receipt.json'
@@ -829,8 +850,10 @@ class Run:
 
     def reports(self, e):
         """CLASSROOM REPORT #N and FRANKIE REPORT #N of an arm day, once its classroom step is done, reused or refused
-        (a refused day is reported too, with the reason). Printed here in full. A failure is recorded (retried on the next
-        start) and never stops the run; no disk-floor check (the reports are a few kilobytes)."""
+        (a refused day is reported too, with the reason), after the day's exchange stage: the exchange is carried when it
+        is done, otherwise its status is listed in both reports, and they are rebuilt (a revision, same N) once the
+        exchange is there (reports_stale). Printed here in full. A failure is recorded (retried on the next start) and
+        never stops the run; no disk-floor check (the reports are a few kilobytes)."""
         day = e['day']
         try:
             if not e['classroom_arm']:
@@ -850,6 +873,12 @@ class Run:
             env = dict(DAY=day, CLASSROOM=classroom, RUN=self.plan['run'], REPORTS_DIR=REPORTS, DAY_CLASS=e['cls'])
             if c['status'] == 'refused' and c.get('reason'):
                 env['REFUSED_REASON'] = c['reason']      # used only when the classroom wrote no receipt of its own
+            x = self.receipt('exchange', day)
+            if x and x['status'] in ('done', 'reused') and x.get('exchange'):
+                env['EXCHANGE'] = x['exchange']
+            else:
+                env['EXCHANGE_LISTED'] = 'the day\'s exchange stage is %s%s' % (
+                    (x or {}).get('status') or 'not run', (': ' + x['reason']) if (x or {}).get('reason') else '')
             code, log = self.child('reports', day, 'frankie_box_experiment_day_reports.sh', env)
             r = self.reports_receipt(log)
             for item in (r or {}).get('reports') or []:
@@ -858,6 +887,7 @@ class Run:
                 except OSError as error:
                     self.log('reports %s: %s could not be read back (%s)' % (day, item.get('file'), error))
             fields = dict(exit_code=code, log=log, classroom=classroom, classroom_status=c['status'],
+                          exchange_status=(x or {}).get('status'), exchange=env.get('EXCHANGE'),
                           report_number=(r or {}).get('report_number'),
                           reports=[{k: item.get(k) for k in ('kind', 'number', 'revision', 'file', 'sha256', 'existing')}
                                    for item in (r or {}).get('reports') or []],
@@ -868,6 +898,177 @@ class Run:
                 code, '' if r else ' without a receipt'), **fields)
         except Exception as error:        # a report failure never stops the run: recorded, retried on the next start
             return self.record('reports', day, 'failed', reason='%s: %s' % (type(error).__name__, error))
+
+    def guarded(self, stage, e):
+        """A step after the lessons (exchange, voice, school, reports): an error is recorded as the step's failure with its
+        reason (retried on the next start); it never stops the run or the other days."""
+        try:
+            return getattr(self, stage)(e)
+        except Exception as error:
+            return self.record(stage, e['day'], 'failed', reason='%s: %s' % (type(error).__name__, error))
+
+    def reports_stale(self, e):
+        """True when the day's reports were written without its exchange and the exchange is there now (rebuilt once)."""
+        r, x = self.receipt('reports', e['day']), self.receipt('exchange', e['day'])
+        return bool(r and r['status'] == 'done' and r.get('exchange_status') not in ('done', 'reused')
+                    and x and x['status'] in ('done', 'reused'))
+
+    def report_number(self, e):
+        """The day's report number N: reserved once, right after its classroom step, in the reports' own index
+        (frankie_box_experiment_day_reports.reserve_number), so the numbering is what it was when the reports ran there."""
+        import frankie_box_experiment_day_reports as R
+        return R.reserve_number(REPORTS, self.plan['run'], e['day'])[0]
+
+    def reserve_after_classroom(self, e):
+        c = self.receipt('classroom', e['day'])
+        if not (e['classroom_arm'] and c and c['status'] in ('done', 'reused', 'refused')):
+            return
+        try:
+            self.log('report number %s: #%d (reserved after the classroom)' % (e['day'], self.report_number(e)))
+        except Exception as error:        # the reports step assigns it then; never stops the run
+            self.log('report number %s not reserved here (%s: %s); the reports step assigns it' % (
+                e['day'], type(error).__name__, error))
+
+    # the three-way exchange (SPEC-scientific-teacher.md step 5), its voice (not wired) and the school knowledge base
+    def rows_file(self, e):
+        """(the BOSS teacher's Dipole rows file of the day, None) or (None, why)."""
+        base, source = rows_of(e)
+        if base is None:
+            return None, 'no Dipole rows of the day (teacher batch: %s)' % (
+                (self.receipt('teacher', self.batch_of(e['day'])) or {}).get('status') or 'not run')
+        if source == 'launch run':
+            found = sorted(Path(base).glob('execution/cycle-*/host-dipole-classroom-source*.json'))
+            if len(found) != 1:
+                return None, '%d Dipole sources in the launch run %s (one is needed; none is chosen)' % (len(found), base)
+            return found[0], None
+        return Path(base) / ROWS_FILE, None
+
+    def lessons_files(self, e, lessons):
+        """(the lessons files of the day's batch that may have tested the day, listed): Frankie's of the day, Jev's of
+        the day, the historical lessons of the batch's searched days (the exchange re-checks each file's days)."""
+        day, files, listed = e['day'], [], []
+        mine = LESSONS_ROOT / 'frankie' / ('%s-frankie.json' % day)
+        if mine.is_file():
+            files.append(mine)
+        else:
+            listed.append('no FRANKIE_LESSONS_V1 of %s (no novel findings of his were tested for the day)' % day)
+        files += sorted((LESSONS_ROOT / 'jev').glob('%s-*.json' % day))
+        if self.plan.get('historical_claims'):
+            path = self.historical_lessons(lessons.get('searched_days') or [])
+            (files.append(path) if path and path.is_file() else
+             listed.append('no historical lessons for the searched days %s (%s)' % (lessons.get('searched_days'), path)))
+        return files, listed
+
+    def historical_lessons(self, searched_days):
+        """The HISTORICAL_LESSONS_V1 file the scientific teacher writes for these searched days (its own name rule)."""
+        if not searched_days:
+            return None
+        claims = json.loads((self.code_root / self.plan['historical_claims']).read_bytes())
+        return LESSONS_ROOT / 'historical' / ('%s-%s.json' % ('-'.join(sorted(searched_days)), claims['catalog_sha256'][:12]))
+
+    def exchange(self, e):
+        day = e['day']
+        if not e['classroom_arm']:
+            return self.record('exchange', day, 'skipped', reason='not a classroom-arm day')
+        if e['role'] != 'discovery':
+            return self.record('exchange', day, 'skipped', reason='discovery days only (R15)')
+        target = self.dir / 'exchange' / day
+        if (target / 'receipt.json').is_file():
+            r = json.loads((target / 'receipt.json').read_bytes())
+            return self.record('exchange', day, 'reused', exchange=r['exchange']['path'], frankie_view=r['frankie_view']['path'],
+                               exchange_sha256=r['exchange']['sha256'], brain_entry=r.get('brain_entry'), counts=r.get('counts'))
+        key = self.batch_of(day)
+        lessons = self.receipt('lessons', key)
+        if not (lessons and lessons['status'] in FINISHED):
+            return self.record('exchange', day, 'waiting', reason='the lessons of the batch %s are %s' % (
+                key, (lessons or {}).get('status') or 'not run'))
+        search = self.receipt('search', day)
+        if not (search and search['status'] in FINISHED):
+            return self.record('exchange', day, 'waiting', reason='the day\'s search is %s' % ((search or {}).get('status')
+                                                                                              or 'not run'))
+        files, listed = self.lessons_files(e, lessons)
+        if not files:
+            return self.record('exchange', day, 'skipped', listed=listed,
+                               reason='no lessons file of the batch %s tested the day (listed)' % key)
+        rows, rows_why = self.rows_file(e)
+        env = dict(DAY=day, RUN=self.plan['run'], LESSONS=','.join(str(f) for f in files), OUT_DIR=target,
+                   BRAIN=self.plan.get('brain') or str(BRAIN))
+        if rows is not None:
+            env['TEACHER_ROWS'] = rows
+        code, log = self.child('exchange', day, 'frankie_box_experiment_exchange.sh', env)
+        if code != 0 or not (target / 'receipt.json').is_file():
+            return self.record('exchange', day, 'failed', exit_code=code, log=log, lessons=[str(f) for f in files],
+                               listed=listed, reason='no exchange receipt after the step (its log names why)')
+        r = json.loads((target / 'receipt.json').read_bytes())
+        return self.record('exchange', day, 'done', exit_code=code, log=log, exchange=r['exchange']['path'],
+                           frankie_view=r['frankie_view']['path'], exchange_sha256=r['exchange']['sha256'],
+                           brain_entry=r.get('brain_entry'), counts=r.get('counts'), lessons=[str(f) for f in files],
+                           listed=listed, teacher_rows=str(rows) if rows else None, teacher_rows_listed=rows_why,
+                           new_bytes=new_bytes(target))
+
+    def voice(self, e):
+        """NOT WIRED: records waiting (not_wired), never blocks the school or the reports; the summary lists it apart."""
+        import frankie_box_exchange_voice as V
+        day = e['day']
+        if not e['classroom_arm']:
+            return self.record('voice', day, 'skipped', reason='not a classroom-arm day')
+        x = self.receipt('exchange', day)
+        if not (x and x['status'] in ('done', 'reused') and x.get('frankie_view')):
+            return self.record('voice', day, 'skipped' if (x or {}).get('status') == 'skipped' else 'waiting',
+                               not_wired=True, reason='the day\'s exchange is %s; and %s' % (
+                                   (x or {}).get('status') or 'not run', V.NOT_WIRED))
+        given = V.voice_input(json.loads(Path(x['frankie_view']).read_bytes()))
+        return self.record('voice', day, 'waiting', not_wired=True, reason=V.NOT_WIRED, charter=given['charter'],
+                           voice_input=dict(items=len(given['items']), turns=sum(len(i['turns']) for i in given['items']),
+                                            exchange=x['frankie_view']))
+
+    def school(self, e):
+        day = e['day']
+        if not e['classroom_arm']:
+            return self.record('school', day, 'skipped', reason='not a classroom-arm day')
+        if day == MONDAY:
+            return self.record('school', day, 'skipped', reason='Monday 20211004 is out of the school (it starts with the '
+                                                                'first school day)')
+        brain = Path(self.plan.get('brain') or str(BRAIN))
+        index = brain / 'school' / 'index.json'
+        rows = [r for r in (json.loads(index.read_bytes()).get('rows') or [])
+                if r.get('day') == day] if index.is_file() else []
+        if rows:
+            return self.record('school', day, 'reused', file=str(brain / 'school' / rows[-1]['file']), row=rows[-1])
+        c = self.receipt('classroom', day)
+        if not (c and c['status'] in ('done', 'reused', 'refused')):
+            return self.record('school', day, 'waiting', reason='the day\'s classroom step is %s' % (
+                (c or {}).get('status') or 'not run'))
+        x = self.receipt('exchange', day)
+        if not (x and x['status'] in ('done', 'reused', 'skipped')):
+            return self.record('school', day, 'waiting', reason='the day\'s exchange is %s (the school file is written '
+                                                                'once, with it)' % ((x or {}).get('status') or 'not run'))
+        classroom = c.get('classroom') or (str(Path(self.receipt('root', day)['calculations']) / 'work' / 'classroom')
+                                           if (self.receipt('root', day) or {}).get('calculations') else None)
+        if not classroom:
+            return self.record('school', day, 'failed', reason='no classroom directory named for the day')
+        env = dict(DAY=day, RUN=self.plan['run'], REPORT_NUMBER=self.report_number(e), CLASSROOM=classroom, BRAIN=brain)
+        if x['status'] in ('done', 'reused'):
+            env['EXCHANGE_VIEW'] = x['frankie_view']
+        else:
+            env['EXCHANGE_LISTED'] = 'the exchange was skipped: %s' % x.get('reason')
+        mine = LESSONS_ROOT / 'frankie' / ('%s-frankie.json' % day)
+        if mine.is_file():
+            env['LESSONS'] = mine
+        base, source = rows_of(e)
+        if base is not None and source != 'launch run':
+            env['TEACHER_ROWS'] = base
+        code, log = self.child('school', day, 'frankie_box_school_knowledge.sh', env)
+        try:
+            lines = [z for z in Path(log).read_text(encoding='utf-8', errors='replace').splitlines() if z.strip()]
+            r = json.loads(lines[-1]) if lines else None
+        except (OSError, ValueError):
+            r = None
+        if code != 0 or not (isinstance(r, dict) and r.get('schema') == SCHOOL_RECEIPT_SCHEMA):
+            return self.record('school', day, 'failed', exit_code=code, log=log, reason='no school receipt after the step '
+                                                                                        '(its log names why)')
+        return self.record('school', day, 'done', exit_code=code, log=log, file=r['file'], row=r['row'],
+                           sections=r.get('sections'), missing=r.get('missing'), withheld=r.get('withheld'))
 
     def jev(self, e):
         day = e['day']
@@ -885,7 +1086,11 @@ class Run:
         relay = ('frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_relay.sh variables="ACTION=material STAMP=%s '
                  'DAY=%s DAY_ROLE=discovery MATERIAL=%s" presign="putrange:%s/clm-sidecar/%s/material:8"'
                  % (stamp, day, material, JEV_BUCKET, stamp))
-        number = (self.receipt('reports', day) or {}).get('report_number')     # his report is JEV REPORT #N of the day
+        try:                                                                  # his report is JEV REPORT #N of the day
+            number = self.report_number(e)
+        except Exception as error:        # listed; the dispatch then carries no number (jev_report takes the next free one)
+            number = None
+            self.log('jev %s: no report number (%s: %s)' % (day, type(error).__name__, error))
         pod = 'frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_pod.sh variables="STAMP=%s DAY=%s%s"' % (
             stamp, day, ' REPORT_NUMBER=%d' % number if isinstance(number, int) else '')
         after = ('frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_relay.sh variables="ACTION=frankie STAMP=%s '
@@ -1022,13 +1227,24 @@ class Run:
         for e in entries:
             if e.get('jev_stamp'):
                 calls.append(('jev-%s' % e['day'], dict(JEV_STAMP=e['jev_stamp'])))
-            if e.get('frankie_ledgers'):
-                calls.append(('frankie-%s' % e['day'], dict(FRANKIE_LEDGERS=e['frankie_ledgers'], FRANKIE_DAY=e['day'])))
+            ledgers = e.get('frankie_ledgers')
+            if not ledgers and e['classroom_arm']:
+                # the day's own classroom ledgers: the scientific teacher reads only their novel findings (R09)
+                c = self.receipt('classroom', e['day'])
+                if c and c['status'] in ('done', 'reused') and c.get('classroom') and \
+                        (Path(c['classroom']) / 'ledgers.json').is_file():
+                    ledgers = str(Path(c['classroom']) / 'ledgers.json')
+            if ledgers:
+                calls.append(('frankie-%s' % e['day'], dict(FRANKIE_LEDGERS=ledgers, FRANKIE_DAY=e['day'])))
         if not calls:
             return self.record('lessons', batch_key, 'skipped', reason='no claims named: no historical claims file and no '
                                                                        'Jev or Frankie claims for the days of this batch')
         results = []
         for name, env in calls:
+            written = self.lessons_written(name, [e['day'] for e in searched])
+            if written:                           # already taught: a second call would decline (duplicate data)
+                results.append(dict(claims=name, exit_code=0, reused=[str(w) for w in written]))
+                continue
             code, log = self.child('lessons', '%s-%s' % (batch_key, name), 'frankie_box_scientific_teacher.sh',
                                    dict(env, SEARCHES=searches))
             results.append(dict(claims=name, exit_code=code, log=log))
@@ -1036,6 +1252,17 @@ class Run:
         return self.record('lessons', batch_key, 'failed' if bad else 'done', calls=results,
                            searched_days=[e['day'] for e in searched],
                            reason='%d teacher call(s) failed' % len(bad) if bad else None)
+
+    def lessons_written(self, name, searched_days):
+        """The lessons files a call of this batch already wrote (the scientific teacher's own names), or []."""
+        if name == 'historical':
+            path = self.historical_lessons(searched_days)
+            return [path] if path and path.is_file() else []
+        kind, _, day = name.partition('-')
+        if kind == 'frankie':
+            path = LESSONS_ROOT / 'frankie' / ('%s-frankie.json' % day)
+            return [path] if path.is_file() else []
+        return sorted((LESSONS_ROOT / 'jev').glob('%s-*.json' % day)) if kind == 'jev' else []
 
     def batch_of(self, day):
         for role in ('discovery', 'confirmation'):
@@ -1084,12 +1311,14 @@ class Run:
             if 'teacher' in stages and not self.finished('teacher', key):
                 self.teacher(key, entries)
             # the classroom arm: the arm days one after another in plan order (each carries the previous arm day's
-            # history), then the day reports, then Jev's material; the other days record skipped
-            for stage in ('classroom', 'reports', 'jev'):
+            # history; the day's report number is reserved right after it), then Jev's material; other days skip
+            for stage in ('classroom', 'jev'):
                 if stage in stages and not self.stopped:
                     for e in entries:
                         if not self.stopped and not self.finished(stage, e['day']):
                             getattr(self, stage)(e)
+                        if stage == 'classroom' and {'jev', 'school', 'reports'} & set(stages):
+                            self.reserve_after_classroom(e)
                         tick(stage, e['day'])
             for stage, parallel in (('data', self.a.parallel_days), ('search', 1)):
                 if stage in stages and not self.stopped:
@@ -1105,6 +1334,15 @@ class Run:
                         tick(stage, e['day'])
             if 'lessons' in stages and role == 'discovery' and not self.stopped and not self.finished('lessons', key):
                 self.lessons(key, entries)
+            # after the lessons: the three-way exchange of each arm day, its voice (not wired), the school knowledge
+            # base, then the day reports (they carry the exchange; rebuilt once when it arrives after them)
+            for stage in ('exchange', 'voice', 'school', 'reports'):
+                if stage in stages and not self.stopped:
+                    for e in entries:
+                        if not self.stopped and (not self.finished(stage, e['day']) or
+                                                 (stage == 'reports' and self.reports_stale(e))):
+                            self.guarded(stage, e)
+                        tick(stage, e['day'])
         return self.summary(stages)
 
     def summary(self, stages):
@@ -1116,12 +1354,15 @@ class Run:
             r = json.loads(p.read_bytes())
             batches['%s/%s' % (r['key'], r['stage'])] = r['status']
         unfinished = sorted({(k, s) for k, v in rows.items() for s, st in v.items()
-                             if not done_status(self.receipt(s, k))})
+                             if not done_status(self.receipt(s, k)) and not (self.receipt(s, k) or {}).get('not_wired')})
+        not_wired = sorted({(k, s) for k, v in rows.items() for s, st in v.items()
+                            if (self.receipt(s, k) or {}).get('not_wired') and not done_status(self.receipt(s, k))})
         handed_off = sorted(k for k in rows if (self.receipt('jev', k) or {}).get('status') == HANDED_OFF)
         out = dict(schema=SCHEMA, run=self.plan['run'], plan_sha256=plan_digest(self.plan), stages=list(stages), days=rows,
                    left_out=self.plan['left_out'],
                    batches=batches, stopped=self.stopped, free_bytes=shutil.disk_usage(BOX_ROOT).free,
                    unfinished=[dict(day=k, stage=s) for k, s in unfinished],
+                   not_wired=[dict(day=k, stage=s, reason=(self.receipt(s, k) or {}).get('reason')) for k, s in not_wired],
                    waiting_for_pod=[dict(day=k, material_sent=(self.receipt('jev', k) or {}).get('material_sent'),
                                          pod=((self.receipt('jev', k) or {}).get('dispatches') or {}).get('pod'))
                                     for k in handed_off],
@@ -1151,6 +1392,11 @@ def preview(plan):
                         external=(lambda d: ('attached ' + str(attached_day_file(d)[0])) if d and attached_day_file(d)[0]
                                   else 'to attach')(receipt.parent if receipt else None),
                         classroom=('V2, PREVIOUS carried' if e['classroom_arm'] else 'not an arm day'),
+                        exchange=('after the batch lessons (three-way, code only)' if e['classroom_arm'] and
+                                  e['role'] == 'discovery' else 'not an arm day'),
+                        voice='not wired' if e['classroom_arm'] else 'not an arm day',
+                        school=('<brain>/school/%s.json after the exchange' % e['day'] if e['classroom_arm'] and
+                                e['day'] != MONDAY else 'not in the school'),
                         data='exported' if (target / 'MANIFEST.json').is_file() else 'to export',
                         search='searched' if (search / 'MANIFEST.json').is_file() else 'to search'))
     return out

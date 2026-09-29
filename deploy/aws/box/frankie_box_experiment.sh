@@ -1,6 +1,7 @@
 # The experiment orchestrator (frankie_box_experiment.py; SPEC-experiment-orchestrator.md "How the orchestrator runs"):
 # one run over a list of days of ONE class, calling the committed steps in order (fetch, ingest, external, root, teacher,
-# classroom, reports, jev, data, search, lessons), a receipt per day and step under /opt/frankie-box/work/experiment/<RUN>/, resume on restart, a stop
+# classroom, jev, data, search, lessons, exchange, voice (not wired: records waiting), school, reports), a receipt per day
+# and step under /opt/frankie-box/work/experiment/<RUN>/, resume on restart, a stop
 # and save at the disk floor. No data dropped: a day's gap waits or is skipped over on that day's steps (listed), the
 # rest runs. No model call, no Granite, no Pod.
 # Inputs: CODE_ROOT (staged checkout), ACTION (plan | start | status; default plan, read-only), RUN (the run name),

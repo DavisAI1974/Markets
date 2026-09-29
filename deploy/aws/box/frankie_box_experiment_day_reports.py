@@ -23,8 +23,19 @@ reason where there is one; the glossary is constant text; hashes and paths appea
 A refused classroom day still gets both reports, stating the recorded refusal and its reason (the classroom's own
 receipt, or the orchestrator's reason given as --refused-reason when the classroom never wrote one).
 
+THE THREE-WAY EXCHANGE (2026-09-29): the orchestrator runs this step after the day's exchange stage
+(frankie_box_experiment_exchange.py) and gives its exchange.json as --exchange (or --exchange-listed, the reason there is
+none). Both reports then carry "The three-way exchange": the recorded counts, every item with the BOSS teacher's and the
+scientific teacher's recorded turns (position, reasoning, checks, proposed tests), the teachers' own findings; the
+FRANKIE report adds his recorded reply per item (position, resolution, his corrected understanding, the disagreement he
+still holds, or the recorded reason his turn is withheld). The same fixed templates; nothing interpreted. The exchange's
+sha256 is part of the reports' source: reports built before it, or from another exchange, are superseded by a revision
+with the same N.
+
 NUMBERING (Greg: "There will be (3) #1's and so on"). N is ONE number per trade day, shared by that day's Classroom,
-Frankie and Jev reports. It is assigned once per (run, day) under an exclusive lock on <reports-dir>/.lock: an existing
+Frankie and Jev reports. The orchestrator reserves it right after the day's classroom step (reserve_number, the same
+rule and index), where this step used to run, so the numbering is unchanged now that the reports follow the exchange.
+It is assigned once per (run, day) under an exclusive lock on <reports-dir>/.lock: an existing
 (run, day) entry in <reports-dir>/index.json is reused, never renumbered; otherwise N = 1 + the highest day number in the
 index or in any report file name there. A number is never given to another day. A report file is never overwritten
 (written 'xb'): when the day's reports already exist and were built from the same classroom receipt they are printed
@@ -102,6 +113,17 @@ GLOSSARY = (
     ('deferred', 'left out of the section by Greg for now; not missing.'),
     ('brain entry', 'the folder written for the day that Frankie\'s later days read; its MANIFEST lists each file, its '
                     'bytes, and whether it is included in his later reading.'),
+    ('three-way exchange', 'after the day\'s lessons: for each claim the scientific teacher tested, the BOSS teacher answers '
+                           'from its own Dipole rows, the scientific teacher answers back with the search\'s counts, and '
+                           'Frankie\'s code replies; all three are code, each turn labelled with its author.'),
+    ('BOSS teacher', 'the teacher code: its own Dipole rows of the day, its targets, masks and controls.'),
+    ('scientific teacher', 'the experiment\'s search: every claim tested with its own chance check, reported as counts per '
+                           'day.'),
+    ('position', 'AGREE, DISAGREE or UNRESOLVED, as each turn recorded it toward the turn before it.'),
+    ('the teachers\' own finding', 'a pair both teachers measured the same way on the day (the BOSS teacher\'s step counts '
+                                    'and a search row beyond chance); a hypothesis, scoped, its day named.'),
+    ('resolution', 'Frankie\'s recorded reply per item: RESOLVED_HELD_ON_DAY, RESOLVED_SHOWN_OTHERWISE_ON_DAY or '
+                   'KEPT_AS_HYPOTHESIS.'),
 )
 # Greg's 13 historical data points: the plain meaning of each point id (constant text; the recorded name is shown beside it)
 POINT_GLOSSARY = (
@@ -216,9 +238,16 @@ def ref_text(ref):
 class Day:
     """What the reports translate, read from the classroom directory (and the brain entry its receipt names)."""
 
-    def __init__(self, day, classroom, refused_reason):
+    def __init__(self, day, classroom, refused_reason, exchange=None, exchange_listed=None):
         self.day, self.dir = day, Path(classroom)
         self.docs, self.absent = {}, []
+        self.exchange, self.exchange_sha256, self.exchange_path = None, None, exchange
+        self.exchange_listed = exchange_listed
+        if exchange:
+            raw = Path(exchange).read_bytes()
+            self.exchange, self.exchange_sha256 = json.loads(raw), sha256_bytes(raw)
+            if str(self.exchange.get('day')) != str(day):
+                raise SystemExit('the exchange %s is for day %s, not %s' % (exchange, self.exchange.get('day'), day))
         receipt_path = self.dir / 'receipt.json'
         if receipt_path.is_file():
             raw = receipt_path.read_bytes()
@@ -405,7 +434,7 @@ def classroom_report(d, number, revision, run, cls, frankie_file):
     title = '# CLASSROOM REPORT #%d%s' % (number, '' if revision == 1 else ' (revision %d)' % revision)
     L = header(title, d, run, cls, 'FRANKIE REPORT #%d' % number, frankie_file)
     if d.status != 'complete':
-        return L + refused_lines(d) + glossary_lines() + evidence(d)
+        return L + refused_lines(d) + exchange_lines(d, False) + glossary_lines() + evidence(d)
     comps = component_facts(d)
     pairs, wrong_pairs, recorded = pair_facts(d)
     points = point_facts(d)
@@ -504,6 +533,7 @@ def classroom_report(d, number, revision, run, cls, frankie_file):
                   rec(completion.get('learning_measurement')),
                   rec((completion.get('audit') or {}).get('unresolved_disagreements'))), '']
     L += external_classroom_lines(d, points)
+    L += exchange_lines(d, False)
     return L + glossary_lines() + evidence(d)
 
 
@@ -659,7 +689,7 @@ def frankie_report(d, number, revision, run, cls, classroom_file):
     title = '# FRANKIE REPORT #%d%s' % (number, '' if revision == 1 else ' (revision %d)' % revision)
     L = header(title, d, run, cls, 'CLASSROOM REPORT #%d' % number, classroom_file)
     if d.status != 'complete':
-        return L + refused_lines(d) + glossary_lines() + evidence(d)
+        return L + refused_lines(d) + exchange_lines(d, True) + glossary_lines() + evidence(d)
     comps = component_facts(d)
     pairs, wrong_pairs, _ = pair_facts(d)
     ext_series = external_series_facts(d)
@@ -807,7 +837,73 @@ def frankie_report(d, number, revision, run, cls, classroom_file):
                 '%s: %s' % (k, v) for k, v in sorted(u.items())) if isinstance(u, dict) else u))
         if m.get('unavailable'):
             L.append('')
+    L += exchange_lines(d, True)
     return L + glossary_lines() + evidence(d)
+
+
+# ------------------------------------------------------------------------------------------------- the exchange section
+def exchange_lines(d, with_frankie):
+    """The three-way exchange, translated field by field (both reports; the FRANKIE report adds his turn per item)."""
+    L = ['## The three-way exchange', '']
+    x = d.exchange
+    if x is None:
+        return L + ['Not recorded: %s.' % (d.exchange_listed or 'no exchange was given for this day'), '']
+    c = x.get('counts') or {}
+    fmt = lambda m: listing('%s %s' % (k, v) for k, v in sorted((m or {}).items()))
+    L += ['Items discussed (recorded): %s (by author: %s). The BOSS teacher\'s positions: %s. The scientific teacher\'s '
+          'positions: %s. Frankie\'s resolutions: %s. The teachers\' own findings: %s (by kind: %s).' % (
+              rec(c.get('items')), fmt(c.get('by_author')), fmt(c.get('boss_positions')), fmt(c.get('science_positions')),
+              fmt(c.get('frankie_resolutions')), rec(c.get('teachers_findings')), fmt(c.get('teachers_findings_by_kind'))), '']
+    if x.get('sources', {}).get('teacher_rows_listed'):
+        L += ['The BOSS teacher\'s rows (recorded): %s.' % x['sources']['teacher_rows_listed'], '']
+    for item in x.get('items') or []:
+        claim = item.get('claim') or {}
+        L += ['### Item %s (%s)' % (item.get('item_id'), rec(item.get('author_label'))), '',
+              '- The claim, as recorded: %s. Claimed direction (recorded): %s. Days tested (recorded): %s. The scientific '
+              'teacher\'s disposition word (recorded; orientation only): %s.' % (
+                  rec(claim.get('statement')), rec(claim.get('direction')), listing(claim.get('days_tested')),
+                  rec(claim.get('disposition')))]
+        for t in item.get('turns') or []:
+            if t.get('seat') == 'frankie' and not with_frankie:
+                continue
+            who = {'boss_teacher': 'the BOSS teacher', 'scientific_teacher': 'the scientific teacher',
+                   'frankie': 'Frankie'}.get(t.get('seat'), rec(t.get('seat')))
+            if t.get('withheld'):
+                L.append('- Turn %s, %s: withheld. Recorded reason: %s' % (rec(t.get('turn')), who, rec(t.get('reason'))))
+                continue
+            r = t.get('record') or {}
+            L.append('- Turn %s, %s (%s): position %s. Recorded reasoning: %s' % (
+                rec(t.get('turn')), who, rec(t.get('author_label')), rec(r.get('position')), rec(r.get('reasoning'))))
+            for chk in r.get('evidence_checks') or []:
+                L.append('  - Check, result %s (recorded): %s' % (rec(chk.get('result')), rec(chk.get('check'))))
+            if t.get('seat') == 'frankie':
+                L.append('  - His resolution (recorded): %s. His corrected understanding, as recorded: %s' % (
+                    rec(t.get('resolution')), rec(t.get('corrected_understanding'))))
+                held = t.get('remaining_disagreements') or []
+                L += ['  - Disagreement he still holds, as recorded: %s' % z for z in held] or [
+                    '  - Disagreement he still holds, as recorded: none']
+                L += ['  - What he learned, as recorded: %s' % z for z in r.get('learned') or []]
+            for z in r.get('next_tests') or r.get('next_steps') or []:
+                L.append('  - Next (recorded): %s' % z)
+        L.append('')
+    findings = x.get('teachers_findings') or []
+    L += ['### The teachers\' own findings', '', 'Recorded: %d.' % len(findings), '']
+    for f in findings:
+        L.append('- %s (kind recorded: %s; days named: %s; status recorded: %s): %s' % (
+            rec(f.get('finding_id')), rec(f.get('kind')), listing(f.get('days_named')), rec(f.get('status')),
+            rec(f.get('statement'))))
+    if findings:
+        L.append('')
+    withheld = x.get('jev_withheld')
+    if withheld:
+        L += ['Jev\'s items withheld from Frankie\'s view (recorded): %s items, %s findings. Recorded reason: %s' % (
+            rec(withheld.get('items')), rec(withheld.get('findings')), rec(withheld.get('reason'))), '']
+    try:
+        import frankie_box_exchange_voice as V
+        voice = V.NOT_WIRED
+    except ImportError as error:
+        voice = 'the voice module is not importable here (%s)' % error
+    return L + ['### The discussion (voice)', '', 'Not voiced: %s.' % voice, '']
 
 
 # ------------------------------------------------------------------------------------------------------ the evidence
@@ -832,6 +928,8 @@ def evidence(d):
                          ('brain MANIFEST sha256', (d.brain or {}).get('manifest_sha256'))):
         if value:
             L.append('- %s: %s' % (label, value))
+    if d.exchange is not None:
+        L.append('- the three-way exchange: %s, sha256 %s' % (d.exchange_path, d.exchange_sha256))
     if d.absent:
         L += ['- files not found or not readable (each section above states what is not recorded):']
         L += ['  - %s: %s' % (name, why) for name, why in d.absent]
@@ -872,6 +970,23 @@ def day_number(reports, index, run, day):
     return (max(used) if used else 0) + 1, True
 
 
+def reserve_number(reports, run_name, day):
+    """The day's report number N, assigned now or already there, under the same lock and rule as run() (the orchestrator
+    reserves it right after the day's classroom step, so the Jev Pod dispatch carries it and the numbering is unchanged
+    now that the reports follow the exchange). Returns (number, assigned now?)."""
+    reports = Path(reports)
+    reports.mkdir(parents=True, exist_ok=True)
+    with open(reports / '.lock', 'a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        index = read_index(reports)
+        number, new_day = day_number(reports, index, run_name, day)
+        if new_day:
+            index['days'].append(dict(run=run_name, day=day, number=number, at=time.time(),
+                                      commit=os.environ.get('MARKETS_SHA'), reserved_by='orchestrator after the classroom'))
+            write_index(reports, index)
+    return number, new_day
+
+
 def file_name(kind, number, revision):
     return '%s-report-%04d%s.md' % (kind, number, '' if revision == 1 else '-r%d' % revision)
 
@@ -890,8 +1005,8 @@ def write_new(path, raw):
         return False, '%s: %s' % (type(error).__name__, error)
 
 
-def run(day, classroom, run_name, reports, cls, refused_reason):
-    d = Day(day, classroom, refused_reason)
+def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, exchange_listed=None):
+    d = Day(day, classroom, refused_reason, exchange, exchange_listed)
     reports.mkdir(parents=True, exist_ok=True)
     out, printed, problems = [], [], []
     with open(reports / '.lock', 'a+') as lock:
@@ -905,7 +1020,8 @@ def run(day, classroom, run_name, reports, cls, refused_reason):
         mine = {k: [r for r in index['reports'] if r['run'] == run_name and r['day'] == day and r['kind'] == k]
                 for k in KINDS}
         latest = {k: (mine[k][-1] if mine[k] else None) for k in KINDS}
-        reuse = all(latest[k] and latest[k]['source_sha256'] == d.source['sha256'] for k in KINDS)
+        reuse = all(latest[k] and latest[k]['source_sha256'] == d.source['sha256']
+                    and latest[k].get('exchange_sha256') == d.exchange_sha256 for k in KINDS)
         if reuse:
             for k in KINDS:
                 path = Path(latest[k]['file'])
@@ -947,7 +1063,7 @@ def run(day, classroom, run_name, reports, cls, refused_reason):
                              classroom_copy=copy, classroom_copy_listed=copy_why, sha256=sha256_bytes(raw),
                              bytes=len(raw), source=d.source['kind'], source_sha256=d.source['sha256'],
                              classroom=str(d.dir), classroom_status=d.status, supersedes=superseded, at=time.time(),
-                             commit=os.environ.get('MARKETS_SHA'))
+                             commit=os.environ.get('MARKETS_SHA'), exchange_sha256=d.exchange_sha256)
                 index['reports'].append(entry)
                 printed.append((k, raw.decode('utf-8')))
                 out.append(dict(kind=k, number=number, revision=revision, file=str(central), classroom_copy=copy,
@@ -959,6 +1075,8 @@ def run(day, classroom, run_name, reports, cls, refused_reason):
     print('=' * 100)
     receipt = dict(schema=SCHEMA, run=run_name, day=day, report_number=number, number_assigned_now=new_day,
                    classroom=str(d.dir), classroom_status=d.status, built_from=d.source, reports=out,
+                   exchange=dict(path=d.exchange_path, sha256=d.exchange_sha256) if d.exchange is not None else
+                   dict(listed=d.exchange_listed),
                    index=str(reports / 'index.json'), problems=problems, model_calls=0)
     print('REPORT_NUMBER=%d' % number)
     print(json.dumps(receipt, sort_keys=True), flush=True)
@@ -974,6 +1092,9 @@ def main():
     ap.add_argument('--day-class', help='the run\'s day class (default: from the weekday, as the orchestrator assigns it)')
     ap.add_argument('--refused-reason', help='the orchestrator\'s reason when it refused the classroom before a receipt '
                                              'was written (used only when the classroom holds no receipt.json)')
+    ap.add_argument('--exchange', help='the day\'s exchange.json (FRANKIE_EXPERIMENT_EXCHANGE_V1, the orchestrator\'s exchange '
+                                       'stage)')
+    ap.add_argument('--exchange-listed', help='why there is no exchange for the day (the orchestrator\'s reason)')
     a = ap.parse_args()
     if not re.fullmatch('[0-9]{8}', a.day):
         ap.error('--day must be YYYYMMDD')
@@ -981,7 +1102,7 @@ def main():
         ap.error('--run: letters, digits, _ and - only')
     cls = a.day_class or CLASS_OF_WEEKDAY.get(dt.date(int(a.day[:4]), int(a.day[4:6]), int(a.day[6:])).weekday(),
                                                'weekend')
-    return run(a.day, a.classroom, a.run, Path(a.reports_dir), cls, a.refused_reason)
+    return run(a.day, a.classroom, a.run, Path(a.reports_dir), cls, a.refused_reason, a.exchange, a.exchange_listed)
 
 
 if __name__ == '__main__':

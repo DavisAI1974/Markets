@@ -26,7 +26,9 @@ SCHEMA = 'FRANKIE_BOX_BRAIN_ENTRY_V1'
 # 20211003 Sunday entry on the box) is still read, labelled day unknown. A cycle reads EVERY entry written so far, from
 # every day and every cycle, except its own day+cycle (Greg: the cycles replay the day and restart earlier, so his
 # reasoning may carry later data; only the actual run data ahead of time is walled, and that is the cycle being run).
-ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*', '[0-9]' * 8 + '-lessons')
+ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*', '[0-9]' * 8 + '-lessons', '[0-9]' * 8 + '-exchange')
+# The day kinds that are not a cycle: read after that day's cycles, in this order (the lessons, then the exchange built on them)
+DAY_KINDS = {'lessons': 10 ** 6, 'exchange': 10 ** 6 + 1}
 
 
 def entry_name(day, cycle):
@@ -40,10 +42,11 @@ def entry_name(day, cycle):
 
 def parse_entry_name(name):
     """(day or None, cycle) of an entry directory name, or None when the name is not an entry. A day's lessons entry
-    (<day>-lessons: the scientific teacher's test results on Frankie's claims) parses as (day, 'lessons')."""
-    lessons = re.fullmatch(r'([0-9]{8})-lessons', name)
-    if lessons:
-        return lessons.group(1), 'lessons'
+    (<day>-lessons: the scientific teacher's test results on Frankie's claims) parses as (day, 'lessons'); a day's
+    exchange entry (<day>-exchange: the three-way exchange of the two teachers and Frankie) as (day, 'exchange')."""
+    kind = re.fullmatch(r'([0-9]{8})-(lessons|exchange)', name)
+    if kind:
+        return kind.group(1), kind.group(2)
     match = re.fullmatch(r'(?:([0-9]{8})-)?cycle-([0-9]+)', name)
     return (match.group(1), match.group(2)) if match else None
 
@@ -77,6 +80,124 @@ def write_lessons_entry(brain, day, lessons_path):
     tmp.write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     os.replace(tmp, manifest_path)
     return manifest
+
+
+def write_exchange_entry(brain, day, exchange_path):
+    """The three-way exchange of one classroom-arm day (FRANKIE_EXPERIMENT_EXCHANGE_V1, Frankie's view, written by
+    frankie_box_experiment_exchange.py) as the brain entry <brain>/<day>-exchange/ (SPEC-scientific-teacher.md step 5:
+    "Frankie is taught from the exchange"). Read by every later cycle like any entry. Only the view built for Frankie is
+    accepted (Jev's claims withheld, the lessons wall); each turn is labelled with its author (R11). The same bytes twice
+    decline; a second exchange of the same day is added beside the first (the manifest lists both)."""
+    brain, source = Path(brain), Path(exchange_path)
+    data = source.read_bytes()
+    value = json.loads(data)
+    if value.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1' or value.get('view') != 'frankie' or str(value.get('day')) != str(day):
+        raise ValueError(f'{source} is not the Frankie view of the FRANKIE_EXPERIMENT_EXCHANGE_V1 of {day}')
+    entry_dir = brain / f'{day}-exchange'
+    manifest_path = entry_dir / 'MANIFEST.json'
+    manifest = json.loads(manifest_path.read_bytes()) if manifest_path.is_file() else dict(
+        schema=SCHEMA, cycle='exchange', day=str(day), entry_kind='teacher_exchange', entries=[], unavailable=[],
+        note="the three-way exchange (the BOSS teacher, the scientific teacher, Frankie's code), each turn labelled with "
+             "its author; counts per day are the finding (R14); the teachers' own findings scoped with their days named")
+    digest = sha256_bytes(data)
+    if any(e.get('sha256') == digest for e in manifest['entries']):
+        raise ValueError(f'this exchange is already in {entry_dir} (duplicate data declines)')
+    name = f'teacher-exchange-{digest[:16]}.json'
+    entry_dir.mkdir(parents=True, exist_ok=True)
+    (entry_dir / name).write_bytes(data)
+    manifest['entries'].append(dict(name=name, bytes=len(data), sha256=digest, source=str(source), include=True,
+                                    kind="the three-way exchange: the BOSS teacher's turn, the scientific teacher's reply, "
+                                         "Frankie's reply, and the teachers' own findings"))
+    manifest['at'] = time.time()
+    tmp = entry_dir / 'MANIFEST.json.tmp'
+    tmp.write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    os.replace(tmp, manifest_path)
+    return manifest
+
+
+# Frankie's SCHOOL KNOWLEDGE BASE (Greg, 2026-09-29): one JSON file per classroom-arm day, <brain>/school/<day>.json
+# (FRANKIE_SCHOOL_KNOWLEDGE_V1, written by frankie_box_school_knowledge.py), and the append-only <brain>/school/index.json
+# (one row per day: day, file, sha256, bytes, report number N). A day file is never overwritten; a day already in the index
+# with other bytes declines (duplicate data, R16). The loader reads every EARLIER day's school file (the day's own and
+# later days never), each checked against its index row; an item whose bytes the corpus already carries (the same
+# lessons or exchange file read as a brain entry) is carried once, as a reference.
+SCHOOL_DIR = 'school'
+SCHOOL_SCHEMA = 'FRANKIE_SCHOOL_KNOWLEDGE_V1'
+SCHOOL_INDEX_SCHEMA = 'FRANKIE_SCHOOL_INDEX_V1'
+
+
+def _school_index(brain):
+    path = Path(brain) / SCHOOL_DIR / 'index.json'
+    if not path.is_file():
+        return dict(schema=SCHOOL_INDEX_SCHEMA, rows=[])
+    index = json.loads(path.read_bytes())
+    if index.get('schema') != SCHOOL_INDEX_SCHEMA or not isinstance(index.get('rows'), list):
+        raise ValueError(f'{path} is not a {SCHOOL_INDEX_SCHEMA}')
+    return index
+
+
+def write_school_day(brain, day, data, report_number, run):
+    """<brain>/school/<day>.json (written once, 'xb') and its row appended to <brain>/school/index.json under an exclusive
+    lock. Returns (row, reused): the same bytes again reuse the row; other bytes for a day already there decline."""
+    import fcntl
+    if not re.fullmatch('[0-9]{8}', str(day)):
+        raise ValueError('school day must be YYYYMMDD')
+    value = json.loads(data)
+    if value.get('schema') != SCHOOL_SCHEMA or str(value.get('day')) != str(day):
+        raise ValueError(f'not a {SCHOOL_SCHEMA} of {day}')
+    school = Path(brain) / SCHOOL_DIR
+    school.mkdir(parents=True, exist_ok=True)
+    digest = sha256_bytes(data)
+    with open(school / '.lock', 'a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        index = _school_index(brain)
+        mine = [r for r in index['rows'] if r.get('day') == str(day)]
+        if mine:
+            if mine[-1].get('sha256') != digest:
+                raise ValueError(f'the school already holds day {day} with other bytes (sha256 {mine[-1].get("sha256")}): '
+                                 'duplicate data declines (R16)')
+            return mine[-1], True
+        path = school / f'{day}.json'
+        if path.exists() and sha256_bytes(path.read_bytes()) != digest:
+            raise ValueError(f'{path} exists with other bytes and no index row: never overwritten (move it aside with a receipt)')
+        if not path.exists():
+            with path.open('xb') as f:
+                f.write(data)
+        row = dict(day=str(day), file=f'{day}.json', sha256=digest, bytes=len(data), report_number=report_number,
+                   run=run, include=True, at=time.time())
+        index['rows'].append(row)
+        tmp = school / 'index.json.tmp'
+        tmp.write_text(json.dumps(index, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+        os.replace(tmp, school / 'index.json')
+    return row, False
+
+
+def school_rows(brain, before_day=None, pinned=None):
+    """([(row, document)], listed): every school day before before_day (None = every day) whose file matches its index
+    row, read whole; listed = the rows not read, each with its reason (include false, a later or the same day, a missing
+    or changed file). pinned: the rows a captured knowledge base holds (read instead of the live index)."""
+    loaded, listed = [], []
+    try:
+        rows = list(pinned) if pinned is not None else _school_index(brain)['rows']
+    except (OSError, ValueError) as error:
+        return loaded, [dict(row=None, reason=f'the school index could not be read ({type(error).__name__}: {error})')]
+    for row in sorted(rows, key=lambda r: str(r.get('day'))):
+        day = str(row.get('day'))
+        if before_day is not None and not day < str(before_day):
+            continue                     # the day being run and later days are never read (the causal wall)
+        if not row.get('include', True):
+            listed.append(dict(row=row, reason='excluded by its index row (include false)'))
+            continue
+        path = Path(brain) / SCHOOL_DIR / str(row.get('file'))
+        if not path.is_file():
+            listed.append(dict(row=row, reason=f'{path} is missing'))
+            continue
+        data = path.read_bytes()
+        if sha256_bytes(data) != row.get('sha256'):
+            listed.append(dict(row=row, reason=f'{path} differs from its index row'))
+            continue
+        loaded.append((row, json.loads(data)))
+    return loaded, listed
 ACCOUNTING_NAME = 'accounting-and-ledgers.md'
 
 
@@ -207,6 +328,9 @@ def capture_base(brain, request_identity):
                                cycle=manifest.get('cycle'), day=manifest.get('day'), source_schema=manifest.get('schema'))
     value = dict(schema='FRANKIE_ACCUMULATED_KNOWLEDGE_BASE_V1', request_identity=request_identity,
                  entries=list(entries.values()), rule='all previously stored intact knowledge; immutable for this request')
+    school = _school_index(brain)['rows'] if (brain / SCHOOL_DIR / 'index.json').is_file() else []
+    if school:          # the school days written so far, pinned by their index rows (the files are never overwritten)
+        value['school'] = [{k: r.get(k) for k in ('day', 'file', 'sha256', 'bytes', 'report_number', 'include')} for r in school]
     snapshot.parent.mkdir(parents=True, exist_ok=True)
     with snapshot.open('x', encoding='utf-8') as handle:
         json.dump(value, handle, indent=1, sort_keys=True)
@@ -703,9 +827,9 @@ def entries_before(brain, cycle, day=None):
         except Exception:
             continue
         entry_day, cyc = parsed
-        label = (f'{entry_day}-lessons' if cyc == 'lessons' else
+        label = (f'{entry_day}-{cyc}' if cyc in DAY_KINDS else
                  f'{entry_day}-cycle-{cyc}' if entry_day else f'cycle-{cyc} (day not recorded)')
-        found.append(((entry_day or '', 10 ** 6 if cyc == 'lessons' else int(cyc)), label, manifest, d))
+        found.append(((entry_day or '', DAY_KINDS.get(cyc) or int(cyc)), label, manifest, d))
     return [(label, manifest, d) for _, label, manifest, d in sorted(found, key=lambda x: x[0])]
 
 
@@ -720,7 +844,22 @@ def identity(brain, cycle, *, snapshot=None, day=None):
         for e in manifest.get('entries', []):
             if e.get('include'):
                 h.update(f'{cyc}/{e["name"]}/{e["sha256"]}\n'.encode())
+    for row, _ in _school_for(brain, snapshot, day)[0]:
+        h.update(f'school/{row["day"]}/{row["sha256"]}\n'.encode())
     return h.hexdigest()[:16]
+
+
+SCHOOL_SECTIONS = ('frankie_classwork', 'boss_teacher', 'scientific_teacher', 'exchange', 'day_file')
+
+
+def _school_for(brain, snapshot, day):
+    """The school days a cycle of `day` reads: every earlier day of the live index, or of the rows a captured base pinned
+    (a base captured before the school existed pins none). Without a day nothing is read (the wall needs the day)."""
+    if day is None:
+        return [], []
+    if snapshot:
+        return school_rows(brain, day, pinned=json.loads(Path(snapshot).read_bytes()).get('school') or [])
+    return school_rows(brain, day)
 
 
 def load(brain, cycle, *, snapshot=None, carried=None, day=None):
@@ -796,6 +935,41 @@ def load(brain, cycle, *, snapshot=None, carried=None, day=None):
                          + data.decode('utf-8', errors='replace') + '\n')
             members.append(dict(name=f'brain-cycle-{cyc}-{name}', bytes=len(data), sha256=e['sha256'], treatment='brain: prior cycle calculation findings, whole'))
             carried[e['sha256']] = f'brain cycle {cyc} {name}'
+    # Frankie's school knowledge base: every earlier classroom day's school file, section by section, each labelled with
+    # its author (R11). An inline item whose source bytes are already carried (the same lessons or exchange file read as
+    # a brain entry above) is a one-line reference; a pointer item (a large file) is named, never read here.
+    loaded, listed = _school_for(brain, snapshot, day)
+    if loaded:
+        parts.append("\n\n## Frankie's school: the school knowledge of every earlier classroom day (FRANKIE_SCHOOL_KNOWLEDGE_V1), "
+                     'each section labelled with its author; counts per day, never pooled\n')
+    for row, doc in loaded:
+        sections = doc.get('sections') or {}
+        for section in [x for x in SCHOOL_SECTIONS if x in sections] + sorted(set(sections) - set(SCHOOL_SECTIONS)):
+            body = sections[section] or {}
+            for item in body.get('items') or []:
+                label = f'school-{row["day"]}-{section}-{item.get("name")}'
+                if item.get('inline') and 'content' in item:
+                    if item.get('sha256') and reference(label, item):
+                        continue
+                    text = json.dumps(item['content'], indent=1, sort_keys=True, default=str)
+                    parts.append(f"\n### School day {row['day']} (report #{row.get('report_number')}), {section} by "
+                                 f"{item.get('author') or body.get('author')}: {item.get('name')} (source {item.get('path')}, "
+                                 f"sha256 {str(item.get('sha256'))[:16]})\n\n" + text + '\n')
+                    members.append(dict(name=label, bytes=len(text), sha256=item.get('sha256'),
+                                        treatment=f'school: {section} ({item.get("author") or body.get("author")}), inline'))
+                    if item.get('sha256'):
+                        carried[item['sha256']] = f'school day {row["day"]} {section} {item.get("name")}'
+                else:
+                    why = item.get('pointer_reason') or 'a pointer'
+                    parts.append(f"\n### School day {row['day']}, {section} by {item.get('author') or body.get('author')}: "
+                                 f"{item.get('name')}: a pointer, not read here ({why}); path {item.get('path')}, "
+                                 f"sha256 {item.get('sha256')}, bytes {item.get('bytes')}\n")
+                    members.append(dict(name=label, bytes=item.get('bytes'), sha256=item.get('sha256'),
+                                        treatment=f'school pointer; not in the corpus ({why})'))
+        for m in doc.get('missing') or []:
+            parts.append(f"- School day {row['day']}: {m.get('section')} / {m.get('item')} missing: {m.get('reason')}\n")
+    for x in listed:
+        members.append(dict(name=f'school-{(x.get("row") or {}).get("day")}', treatment='school day not read: ' + x['reason']))
     return ''.join(parts), members
 
 

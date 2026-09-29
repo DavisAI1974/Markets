@@ -7,7 +7,9 @@
 # are REPORT_NUMBER=N and the receipt JSON. No model, no Pod, no Granite. Inputs: CODE_ROOT (staged checkout), DAY
 # (YYYYMMDD), CLASSROOM (<root>/work/classroom under /opt/frankie-box/work/experiment-roots/), RUN (the orchestrator run
 # name), REPORTS_DIR (default /opt/frankie-box/work/experiment-reports), DAY_CLASS (optional; default from the weekday),
-# REFUSED_REASON (optional: the orchestrator's reason when it refused the classroom before a receipt was written).
+# REFUSED_REASON (optional: the orchestrator's reason when it refused the classroom before a receipt was written),
+# EXCHANGE (optional: the day's exchange.json under /opt/frankie-box/work/experiment/<run>/exchange/<day>/; both
+# reports carry the three-way exchange), EXCHANGE_LISTED (optional: why there is none).
 set -eu
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"
 : "${DAY:?YYYYMMDD required}"; : "${CLASSROOM:?the classroom directory of the day required}"; : "${RUN:?the orchestrator run name required}"
@@ -23,5 +25,9 @@ case "${DAY_CLASS:-}" in ""|monday|midweek|thursday|friday) ;; *) echo "DAY_CLAS
 set -- --day "$DAY" --classroom "$CLASSROOM" --run "$RUN" --reports-dir "$REPORTS_DIR"
 [ -z "${DAY_CLASS:-}" ] || set -- "$@" --day-class "$DAY_CLASS"
 [ -z "${REFUSED_REASON:-}" ] || set -- "$@" --refused-reason "$REFUSED_REASON"
+case "${EXCHANGE:-}" in ""|/opt/frankie-box/work/experiment/*/exchange/[0-9]*/exchange.json) ;; *) echo "EXCHANGE must be an orchestrator run's exchange/<day>/exchange.json" >&2; exit 2;; esac
+case "${EXCHANGE:-}" in *..*) echo "no .. in EXCHANGE" >&2; exit 2;; esac
+[ -z "${EXCHANGE:-}" ] || set -- "$@" --exchange "$EXCHANGE"
+[ -z "${EXCHANGE_LISTED:-}" ] || set -- "$@" --exchange-listed "$EXCHANGE_LISTED"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_day_reports.py" "$@"

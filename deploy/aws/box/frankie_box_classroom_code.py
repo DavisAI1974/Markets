@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'
@@ -239,3 +240,162 @@ def correction_answer(correction):
               'assembly difference to be traced in the code.' if resolutions else
               f'{AUTHOR}: no correction ids; nothing changes.')
     return dict(what_i_will_change=change, remaining_disagreements=[], correction_resolutions=resolutions)
+
+
+# ------------------------------------------------------------------------------------ the three-way exchange (his reply)
+EXCHANGE_RESOLUTIONS = ('RESOLVED_HELD_ON_DAY', 'RESOLVED_SHOWN_OTHERWISE_ON_DAY', 'KEPT_AS_HYPOTHESIS')
+
+
+def exchange_reply(*, item_id, author, day, final, joint, day_text, marks, lessons_sha256, proposed):
+    """Frankie's reply in the three-way exchange (frankie_box_experiment_exchange.py; SPEC-scientific-teacher.md step 5),
+    computed by his code from the two teachers' turns only: the BOSS teacher's and the scientific teacher's positions, the
+    teachers' own findings on this item (each with its counts, its day and its cites), the search's counts per day.
+    Returned in dipole_scientific_review.parse_reply's shape (item_id, position, reasoning, learned, next_steps; the
+    exchange binds responds_to_hash and validates it with dipole_teacher_discussion.parse_frankie), plus his resolution:
+      RESOLVED_HELD_ON_DAY            both teachers measured the claimed way on the day: resolved for that day in his words,
+                                      still a HYPOTHESIS, never promoted on one appearance (R06);
+      RESOLVED_SHOWN_OTHERWISE_ON_DAY both teachers measured the other way: "the data is showing this instead" is taken for
+                                      that subclaim on that day only; the claim as made on its own day stays (R07, R08);
+      KEPT_AS_HYPOTHESIS              no combination both teachers support, or their rows point both ways (R06).
+    Remaining disagreement is stated explicitly (an empty list is said in words). No future-outcome claim (R02)."""
+    boss, science = final['boss_teacher'], final['classroom_teacher']
+    whose = {'frankie': 'my finding', 'historical': 'the historical claim'}.get(author, 'the claim')
+    kinds = sorted({f['kind'] for f in joint})
+    cites = [c for f in joint for c in f.get('cites') or []]
+    remaining = []
+    if joint and kinds == ['both_teachers_measured_the_claimed_way']:
+        position, resolution = 'AGREE', 'RESOLVED_HELD_ON_DAY'
+        understanding = (f'{AUTHOR}: on {day} both teachers measured {whose} {item_id} the claimed way. '
+                         + ' '.join(f['statement'] for f in joint)
+                         + f' I keep it a HYPOTHESIS scoped to {day}: one day, never promoted on one appearance (R06).')
+    elif joint and kinds == ['both_teachers_measured_otherwise']:
+        position, resolution = 'AGREE', 'RESOLVED_SHOWN_OTHERWISE_ON_DAY'
+        understanding = (f'{AUTHOR}: the data is showing this instead on {day} for {whose} {item_id}. '
+                         + ' '.join(f['statement'] for f in joint)
+                         + f' I take that for this subclaim on {day} only (R07); the claim as it was made on its own day '
+                           'stays as it was measured there.')
+    elif joint:
+        position, resolution = 'UNRESOLVED', 'KEPT_AS_HYPOTHESIS'
+        understanding = (f'{AUTHOR}: the teachers measured {whose} {item_id} jointly on {day}, but their joint rows are of '
+                         f'kinds {", ".join(kinds)}. ' + ' '.join(f['statement'] for f in joint)
+                         + ' I keep it as a hypothesis (R06).')
+        if len(kinds) > 1:
+            remaining.append(f'the teachers\' joint rows on {day} point both ways ({", ".join(kinds)}); I set neither above '
+                             'the other')
+    else:
+        position, resolution = 'UNRESOLVED', 'KEPT_AS_HYPOTHESIS'
+        understanding = (f'{AUTHOR}: no combination both teachers support on {day} for {whose} {item_id} (the BOSS teacher\'s '
+                         f'position {boss["position"]}, the scientific teacher\'s position {science["position"]}); {day_text}. '
+                         'I keep it as a hypothesis with these counts named (R06).')
+        if {boss['position'], science['position']} == {'AGREE', 'DISAGREE'}:
+            remaining.append(f'the BOSS teacher\'s position is {boss["position"]} and the scientific teacher\'s is '
+                             f'{science["position"]} on {day}; I hold neither over the other')
+    held = [d for d, c in marks.items() if c.get('held')]
+    other = [d for d, c in marks.items() if c.get('shown_otherwise')]
+    if held and other:
+        remaining.append(f'across the discovery days tested it held on {", ".join(held)} and was shown otherwise on '
+                         f'{", ".join(other)}; each day stays on its own, never pooled (R05), and this stays open')
+        for d in held + other:
+            cite = dict(value=str(d), source_sha256=lessons_sha256, what='day tested')
+            if cite not in cites:
+                cites.append(cite)
+    if resolution != 'RESOLVED_HELD_ON_DAY' and not joint:
+        for token in re.findall(r'(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])', day_text):
+            cite = dict(value=token, source_sha256=lessons_sha256, what='the search\'s counts on the day')
+            if cite not in cites:
+                cites.append(cite)
+    if understanding.strip() in (item_id, f'{AUTHOR}: {item_id}'):
+        raise ValueError('a bare id echo is not a resolution (R08)')
+    reasoning = (understanding + ' ' + ('Remaining disagreement: ' + '; '.join(remaining) + '.' if remaining else
+                                        'I hold no remaining disagreement on this item.')
+                 + ' No outcome after the causal cutoff is known or claimed (R02).')
+    learned = [f['statement'] for f in joint] or [f'on {day}: {day_text}']
+    next_steps = list(proposed) + [f're-test {whose} on each later discovery day as it is searched (R06)']
+    reply = dict(item_id=item_id, position=position, reasoning=reasoning, learned=learned, next_steps=next_steps)
+    side = dict(resolution=resolution, correction_id=item_id, corrected_understanding=understanding,
+                remaining_disagreements=remaining, future_outcome_claimed=False, rules=['R02', 'R06', 'R07', 'R08'],
+                cites=cites)
+    if resolution not in EXCHANGE_RESOLUTIONS:
+        raise ValueError('unknown exchange resolution')
+    return reply, side
+
+
+# ------------------------------------------------------------------------------ the school: reproduction across days
+REPRODUCTION_SCHEMA = 'FRANKIE_SCHOOL_REPRODUCTION_V1'
+
+
+def school_reproduction(visible, school):
+    """Frankie's code reading his school knowledge base (every EARLIER classroom day's school file, frankie_box_brain.
+    school_rows): each hypothesis filed on an earlier day is checked on today's TEACH evidence (rule R06: tracked for
+    reproduction in later causally available windows). Two kinds, each on its own day, never pooled:
+      his novel findings (steps-vs-endpoints: a pair whose first-to-last relation and step counts pointed different ways):
+        pattern_again     today the pair has the same relation and its steps again point the other way;
+        pattern_not_seen  today the pair has the same relation and its steps do not point the other way;
+        relation_differs  today the pair's first-to-last relation is another one;
+      the teachers' own findings (a pair both teachers measured one way on the day):
+        same_way_today / other_way_today / even_today   today's step counts of the pair against that way;
+      and not_measurable (the pair is not in today's review, or carries no co-movement counts), with the reason.
+    Every check carries today's counts and the earlier day's file sha256. Counts, never a rate or an average (R05)."""
+    pre = _require_teach(visible)
+    review = {(p['left'], p['right']): p for p in pre.get('relationship_review') or []}
+
+    def today(left, right):
+        p = review.get((left, right)) or review.get((right, left))
+        if p is None:
+            return None, 'the pair is not in today\'s relationship review'
+        if p.get('co_movement') is None:
+            return None, 'today\'s review carries no co-movement counts for the pair'
+        return p, None
+
+    checks, read = [], []
+    for row, doc in school:
+        read.append(dict(day=row['day'], file=row.get('file'), sha256=row['sha256'], report_number=row.get('report_number')))
+        sections = doc.get('sections') or {}
+        for item in (sections.get('frankie_classwork') or {}).get('items') or []:
+            if item.get('name') != 'novel_findings' or not item.get('inline'):
+                continue
+            for f in item.get('content') or []:
+                refs = [r for r in f.get('evidence_refs') or [] if r.get('kind') == 'DIPOLE_RELATIONSHIP']
+                match = re.search(r'end this window (\w+) first-to-last', f.get('premise') or '')
+                for r in refs:
+                    p, why = today(r['left'], r['right'])
+                    base = dict(kind='novel_finding', earlier_day=row['day'], earlier_sha256=row['sha256'],
+                                finding_id=f.get('finding_id'), left=r['left'], right=r['right'],
+                                earlier_relation=match.group(1) if match else None)
+                    if p is None:
+                        checks.append(dict(base, result='not_measurable', reason=why))
+                        continue
+                    steps = p['co_movement']['steps']
+                    now = _step_disagreement(p)
+                    result = ('relation_differs' if base['earlier_relation'] != p['direction_relation'] else
+                              'pattern_again' if now is not None else 'pattern_not_seen')
+                    checks.append(dict(base, result=result, today_relation=p['direction_relation'],
+                                       today_steps=dict(steps)))
+        for item in (sections.get('exchange') or {}).get('items') or []:
+            if not item.get('inline'):
+                continue
+            for f in (item.get('content') or {}).get('teachers_findings') or []:
+                pair = (f.get('scope') or {}).get('pair')
+                way = f.get('joint_way')
+                base = dict(kind='teachers_finding', earlier_day=row['day'], earlier_sha256=row['sha256'],
+                            finding_id=f.get('finding_id'), pair=pair, earlier_way=way)
+                if not pair or way is None:
+                    checks.append(dict(base, result='not_measurable', reason='the finding names no pair or way this code reads'))
+                    continue
+                p, why = today(pair[0], pair[1])
+                if p is None:
+                    checks.append(dict(base, result='not_measurable', reason=why))
+                    continue
+                steps = p['co_movement']['steps']
+                s, o = steps['same_direction'], steps['opposite_direction']
+                now = 'same' if s > o else 'opposite' if o > s else None
+                checks.append(dict(base, result='even_today' if now is None else 'same_way_today' if now == way
+                                   else 'other_way_today', today_steps=dict(steps)))
+    per_day = {}
+    for c in checks:
+        d = per_day.setdefault(c['earlier_day'], {})
+        d[c['result']] = d.get(c['result'], 0) + 1
+    return dict(schema=REPRODUCTION_SCHEMA, author=AUTHOR, school_days_read=read, checks=checks,
+                counts_per_earlier_day=dict(sorted(per_day.items())), model_calls=0,
+                rule='each earlier day and each hypothesis on its own; counts, never pooled (R05); a hypothesis is tracked '
+                     'for reproduction, never promoted on one appearance (R06)')

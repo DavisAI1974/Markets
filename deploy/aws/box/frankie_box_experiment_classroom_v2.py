@@ -22,6 +22,13 @@ Jev's material is the V2 model-visible classroom ({'dipole_classroom', 'dipole_e
 attachment (name, sha256, bytes, path, S3 key; not copied into his corpus, the same way the day-external step lists it).
 Wednesday takes PREVIOUS = Tuesday's work/classroom: the V1 history and grade as the V1 arm does, and the external
 history and grade the same way (only the correction ids travel, rule R10).
+
+THE SCHOOL (Greg, 2026-09-29): before the answers are filed, the classroom reads Frankie's school knowledge base, every
+EARLIER classroom day's <brain>/school/<day>.json checked against its index row (frankie_box_brain.school_rows; a missing
+or changed file is listed, never read), and Frankie's code checks each hypothesis filed there on today's TEACH evidence
+(frankie_box_classroom_code.school_reproduction: his earlier novel findings and the teachers' own findings, per earlier
+day, counts only). The result travels in code-answers.json ("school") and the receipt ("school_knowledge"); it is not
+part of the model-visible request, so Jev's material never carries it.
 """
 import argparse
 import hashlib
@@ -198,10 +205,17 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
         _dump(d / 'receipt.json', refusal)
         print(json.dumps(refusal), flush=True)
         return 3
+    school, school_listed = BR.school_rows(brain, before_day=day)
+    reproduction = K.school_reproduction(visible, school)
+    school_witness = dict(read=reproduction['school_days_read'],
+                          listed=[dict(day=(x.get('row') or {}).get('day'), reason=x['reason']) for x in school_listed],
+                          counts_per_earlier_day=reproduction['counts_per_earlier_day'],
+                          index=str(Path(brain) / BR.SCHOOL_DIR / 'index.json'))
     built = C.assemble(visible, outputs, summary)
     report = C.validate(visible, built['ledgers'])
     ext_report = EXT.validate_external_ledgers(ext_ledgers, ext['pre_message'])
-    _dump(d / 'code-answers.json', dict(schema=K.SCHEMA, rules=rules_witness, outputs=outputs, summary=summary, model_calls=0))
+    _dump(d / 'code-answers.json', dict(schema=K.SCHEMA, rules=rules_witness, outputs=outputs, summary=summary,
+                                        school=reproduction, model_calls=0))
     _dump(d / 'ledgers.json', built['ledgers'])
     (d / 'classroom.md').write_text(C.render_markdown(built['ledgers'], built['dropped_findings']))
     _dump(d / 'external-code-answers.json', dict(schema=KX.SCHEMA, rules=rules_witness, ledgers=ext_ledgers, model_calls=0))
@@ -265,7 +279,8 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
                   observations=report['observations'], pairs=report['pairs'], novel_findings=len(novel),
                   dropped_findings=len(built['dropped_findings']), correction_ids=len(correction.get('correction_ids') or ()),
                   teacher_complete=completion.get('teacher_complete'), completion_hash=completion.get('completion_hash'),
-                  carried_from_previous=carried, classroom_rules=rules_witness, teacher_rows=str(teacher_rows),
+                  carried_from_previous=carried, school_knowledge=school_witness, classroom_rules=rules_witness,
+                  teacher_rows=str(teacher_rows),
                   experiment_directive=directive_witness, v1_unchanged=pkg2['v1_unchanged'],
                   external=dict(day_file=dict(path=str(day_file), sha256=day_sha, found=day_source,
                                               receipt=str(day_receipt) if day_receipt.is_file() else None),
