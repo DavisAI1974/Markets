@@ -224,7 +224,9 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
             driver = SourceConformanceDriver(scope, journal_path, expected_scope_hash=expected_scope_hash)
         stack.callback(driver.close)
         if observation_mode == 'none':
-            driver._builder.observation_mode = 'none'        # item 4: no full-book copy at a group close (c15_builder)
+            # item 4: no full-book copy at a group close; a subclass, so c15_builder.py (and the pinned identity) is unchanged
+            from research.kalshi.frankie_boss.c15_builder_none import C15BuilderNoObservation
+            driver._builder.__class__ = C15BuilderNoObservation
         member_counts = [0] * len(scope.members)
         if opening is not None:
             # the day opens with the prior day's closing book (opening_book.py), set before the first record is applied;
@@ -484,15 +486,12 @@ def _emitter(output):
     return emit
 
 
-def conform_directory(directory, manifest_path, *, workers):
+def conform_directory(directory, *, workers):
     """Item 3's later half: the conformance drain on a sealed ingest whose conformance was deferred; writes
-    conformance.json beside it (the completion the drain claims, and whether it equals completion.json)."""
-    if not manifest_path:
-        raise SystemExit('--conform needs --manifest (the day manifest the ingest ran)')
+    conformance.json beside it (the completion the drain claims, and whether it equals completion.json). The day's
+    manifest is the committed one whose hash the receipt names."""
     receipt = json.loads((directory / 'ingestion-receipt.json').read_bytes())
-    manifest = json.loads(Path(manifest_path).read_bytes())
-    if receipt.get('manifest_hash') != manifest.get('manifest_hash'):
-        raise SystemExit('the manifest is not the one this ingest ran')
+    _, manifest = opening_books._manifest_by_hash(receipt['manifest_hash'])
     scope = block_source_scope(manifest, expected_manifest_hash=manifest['manifest_hash'])
     raw = (directory / 'builder-checkpoint.c15.json').read_bytes()
     if hashlib.sha256(raw).hexdigest() != receipt['checkpoint_sha256']:
@@ -521,7 +520,7 @@ def main():
     parser.add_argument('--fetch', action='store_true', help='download missing members from the manifest bucket')
     parser.add_argument('--env-file', default=str(ROOT / 'scratchpad' / 'aws.env'))
     parser.add_argument('--output-dir')
-    parser.add_argument('--session-policy', required=True, help='per_member_file | cme_trading_day | constant:<id>')
+    parser.add_argument('--session-policy', help='per_member_file | cme_trading_day | constant:<id> (required except with --conform)')
     parser.add_argument('--source-object', choices=('member_key', 'path'), default='member_key')
     parser.add_argument('--writer', choices=('compact', 'raw', 'both'), default='compact')
     parser.add_argument('--canary-records', type=int)
@@ -552,9 +551,9 @@ def main():
                              'in the output directory; a measurement of where the parent\'s time goes, no change to what is written')
     args = parser.parse_args()
     if args.conform:
-        return conform_directory(Path(args.conform).resolve(), args.manifest, workers=args.workers)
-    if not args.output_dir:
-        raise SystemExit('--output-dir required')
+        return conform_directory(Path(args.conform).resolve(), workers=args.workers)
+    if not args.output_dir or not args.session_policy:
+        raise SystemExit('--output-dir and --session-policy required')
     output = Path(args.output_dir).resolve()
     if args.canary_records is not None and not any(word in output.name.lower() for word in ('scratch', 'canary')):
         raise SystemExit('a canary output directory must say scratch or canary in its name')
@@ -641,6 +640,11 @@ def main():
         state = result['state']
         checkpoint_raw = canonical_bytes(pack(state))
         checkpoint = directory / 'builder-checkpoint.c15.json'
+        if args.resume and checkpoint.exists():          # an attempt that stopped between its checkpoint and its receipt
+            checkpoint.rename(checkpoint.with_name(checkpoint.name + f'.stopped-{int(time.time())}'))
+            for stale in ('completion.json',):
+                if (directory / stale).exists():
+                    (directory / stale).rename(directory / f'{stale}.stopped-{int(time.time())}')
         with checkpoint.open('xb') as stream:
             stream.write(checkpoint_raw); stream.flush(); os.fsync(stream.fileno())
         write_once(directory / 'completion.json', dict(result['completion'], conformance=result.get('conformance', 'inline')))

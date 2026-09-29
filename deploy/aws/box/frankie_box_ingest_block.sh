@@ -108,12 +108,13 @@ fetch() {
   [ -n "${MAP_URL:-}" ] || { echo "MAP_URL not set (dispatch frankie_box_run.yml with presign=<bucket>/<prefix>/<member_key> for every partition)"; return 2; }
   case "$MAP_URL" in https://*.amazonaws.com/*) ;; *) echo "MAP_URL must be an https amazonaws URL"; return 2;; esac
   cd "$ROOT/tmp" || return 2
-  curl -fsS --proto =https -m 60 --retry 3 -o ingest-map.json --url "$MAP_URL" || { echo "map download failed"; return 2; }
-  M="$M" DATA="$DATA" ROOT="$ROOT" MK="$MK" MARKETS_SHA="$MARKETS_SHA" "$PY" - <<'PYEOF'
+  MAPF="ingest-map-$$.json"     # per dispatch: dispatches running side by side never share or delete each other's map
+  curl -fsS --proto =https -m 60 --retry 3 -o "$MAPF" --url "$MAP_URL" || { echo "map download failed"; return 2; }
+  MAPF="$MAPF" M="$M" DATA="$DATA" ROOT="$ROOT" MK="$MK" MARKETS_SHA="$MARKETS_SHA" "$PY" - <<'PYEOF'
 import glob, hashlib, json, os, subprocess, sys, time
 sys.path.insert(0, os.environ['MK'])
 from research.kalshi.frankie_boss.block_source_scope import block_source_scope     # the tool's own validation, before any path is built
-m = json.load(open('ingest-map.json')); manifest = json.load(open(os.environ['M'])); data = os.path.realpath(os.environ['DATA'])
+m = json.load(open(os.environ['MAPF'])); manifest = json.load(open(os.environ['M'])); data = os.path.realpath(os.environ['DATA'])
 scope = block_source_scope(manifest, expected_manifest_hash=manifest['manifest_hash'])   # refuses '..', a leading '/', a bad hash
 def sha(p):
     h = hashlib.sha256()
@@ -169,7 +170,7 @@ with open(name, 'x') as f: json.dump(receipt, f, indent=1, sort_keys=True)
 print('RECEIPT', name)
 raise SystemExit(0 if not receipt['refused'] else 1)
 PYEOF
-  code=$?; rm -f "$ROOT/tmp/ingest-map.json"; return $code
+  code=$?; rm -f "$ROOT/tmp/$MAPF"; return $code
 }
 run_tool() {   # $1 = canary|ingest (prepare ran: units idle, the dispatched commit checked out, the manifest read)
   for member in $("$PY" -c "import json,sys; print(' '.join(s['member_key'] for s in json.load(open(sys.argv[1]))['sources']))" "$M"); do
@@ -215,10 +216,11 @@ at_once() {   # DAYS_AT_ONCE days of the list side by side (each warms its own b
   done
   [ "$FAILED" -eq 0 ] || { echo "### $FAILED day(s) have no sealed ingest; each directory is kept (RESUME_DIR continues a parallel one)"; return 3; }
 }
-conform() {   # item 3's later half: the conformance drain on a sealed ingest whose conformance was deferred
+conform() {   # item 3's later half: the conformance drain on a sealed ingest whose conformance was deferred (the day's
+  # manifest is the committed one the receipt names by hash)
   [ -n "$DIRECTORY" ] && [ -s "$DIRECTORY/ingestion-receipt.json" ] || { echo "DIRECTORY must hold a sealed ingestion-receipt.json"; return 2; }
   ( cd "$MK" && PYTHONPATH="$MK" "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
-      --conform "$DIRECTORY" --manifest "$M" --workers "$WORKERS" ) || { echo "conform failed or differs (exit $?)"; return 3; }
+      --conform "$DIRECTORY" --workers "$WORKERS" ) || { echo "conform failed or differs (exit $?)"; return 3; }
   cat "$DIRECTORY/conformance.json"
 }
 status() {
@@ -233,7 +235,7 @@ status() {
 case "$ACTION" in
   fetch) each_day fetch ;;
   canary) prepare && run_tool canary ;;
-  conform) prepare && conform ;;
+  conform) units_idle && checkout_markets && conform ;;
   ingest) each_day ingest ;;
   status) manifest_ok && status ;;
   *) echo "ACTION must be fetch, canary, ingest, conform or status"; exit 2 ;;

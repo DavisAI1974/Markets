@@ -392,18 +392,9 @@ class Run:
         """(the prior trading day's sealed ingest receipt, None); (None, None) when the prior day has none, so the day
         warms its own book from its tail partition; (None, why) only when the prior day is ambiguous (duplicate data).
         Monday's ingest was recovered: its receipt is the recovery receipt on the box (opening_book.py reads both)."""
-        if e.get('opening_receipt'):
-            return e['opening_receipt'], None
-        prior = e['opens_after']
-        if prior == MONDAY and Path(MONDAY_RECOVERY).is_file():
-            return MONDAY_RECOVERY, None
-        found = sealed_ingests(prior)
-        if len(found) > 1:
-            return None, ('two or more sealed ingests of %s, the day before %s (%s): name the one to open from in the plan '
-                          '(opening_receipt)' % (prior, e['day'], ', '.join(str(p.parent) for p in found)))
-        if not found:
-            return None, None          # the day warms its own book from the tail partition (listed in its receipt)
-        return found[0], None
+        # every day warms its own book unless the plan names a prior receipt: a day's journal must not depend on whether
+        # the day before happened to seal first when days run side by side (the review of 959c5e12, finding 11)
+        return (e['opening_receipt'], None) if e.get('opening_receipt') else (None, None)
 
     def root(self, e):
         calc, attempts = root_of(e, self.plan['run'])

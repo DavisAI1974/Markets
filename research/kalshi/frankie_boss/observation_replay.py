@@ -7,7 +7,8 @@ that record, where the book is the day's opening book (opening-book.c15.json bes
 ingestion receipt) with every INPUT record applied in order. This generator replays exactly that and puts the
 observation back into each APPLIED payload that closes a group (receipt not None); nothing else in an entry changes.
 The pinned teacher (c15_teacher_r3.py) reads e['observation'] and is not edited: the teacher-only step feeds it these
-entries instead of the stored ones (swap, never edit).
+entries instead of the stored ones (swap, never edit). The values are the book's; the key ORDER of the integrity counter
+map may differ from a full-mode run's stored bytes, because the opening book is restored from its canonical export.
 """
 try:
     from .c15_observer import observe_book

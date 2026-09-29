@@ -29,10 +29,12 @@ decoded again to hold the records, no state is recomputed), finished spools are 
 pass 3 always rebuilds the container (a partial one is moved aside, never deleted).
 Nothing is dropped: every record is journaled; a record a step cannot process raises, as in the sequential writer.
 """
+import gc
 import hashlib
 import json
 import multiprocessing
 import os
+import pickle
 import struct
 import time
 from contextlib import ExitStack
@@ -41,6 +43,7 @@ from pathlib import Path
 
 from research.kalshi.frankie_boss import fast_mbo_decode, mbo_source
 from research.kalshi.frankie_boss.c15_builder import C15Builder
+from research.kalshi.frankie_boss.c15_builder_none import C15BuilderNoObservation
 from research.kalshi.frankie_boss.c15_journal import SCHEMA, canonical_bytes, pack, unpack
 from research.kalshi.frankie_boss.c15_registry import implementation_identity
 from research.kalshi.frankie_boss.causal_prefix_records import RecordInput, RecordPrefixChain
@@ -110,17 +113,23 @@ def _sha256_file(path):
     return h.hexdigest()
 
 
-def _state(chain, adapter, sessions, cursor):
+def _state(chain, adapter, sessions, cursor, pickles):
+    """The canonical state (for the equality checks and the opening book) plus the adapter PICKLED: a restore from the
+    canonical export rebuilds integrity counters and the activity windows' counters in another key order, and those
+    dicts reach the APPLIED bodies in their order (the review of 959c5e12, finding 2); the pickle keeps every dict,
+    Counter, defaultdict and deque exactly as the live adapter holds them, so a worker's bodies are the sequential
+    writer's bytes."""
+    pickles.append(pickle.dumps(adapter, protocol=pickle.HIGHEST_PROTOCOL))
     return dict(cursor=cursor, chain=chain.export_state(), adapter=export_adapter_state(adapter),
-                sessions=[[iid, session] for iid, session in sorted(sessions.items())])
+                sessions=[[iid, session] for iid, session in sessions.items()])
 
 
 def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_names, evolve=True,
-             segment_records=SEGMENT_RECORDS, event=None):
+             segment_records=SEGMENT_RECORDS, event=None, opening_descriptor=None):
     """The decoded records of the trading day, in order, plus (evolve) the saved states. Cuts the day exactly as
     ingest_block_sources.ingest does, with the same boundary checks."""
     dbn, zstd = mbo_source._check_pin(pin)
-    records, states, partials, skipped, sessions_seen = [], [], [], [], []
+    records, states, partials, skipped, sessions_seen, pickles = [], [], [], [], [], []
     member_counts = [0] * len(scope.members)
     adapter = V4MboAdapter()
     if opening_state is not None:
@@ -156,6 +165,13 @@ def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_
                 before, after = session(member, last), session(member, first)
                 if after <= before:
                     raise ValueError(f'the declared skip of {member.member_key} does not end at a trading-day boundary')
+                if opening_state is not None and opening_descriptor is not None and opening_descriptor.get('status') == 'seeded':
+                    end = opening_descriptor.get('prior_end') or {}          # the sequential writer's check, the same refusal
+                    if (end.get('member_key') != member.member_key or end.get('take') != tail['skip']
+                            or opening_descriptor.get('prior_last_session') != before):
+                        raise ValueError(f'the opening book ends at {end} (session {opening_descriptor.get("prior_last_session")}); '
+                                         f'this day opens after {tail["skip"]} records of {member.member_key} (session {before}): '
+                                         'the opening book is not the prior day of this cut')
                 skipped.append(dict(member_key=member.member_key, skip=tail['skip'], take=tail['take'],
                                     declared_partition_mbo_records=tail['partition_mbo_records'],
                                     last_skipped_session_id=before, first_session_id=after, boundary='trading_day'))
@@ -180,7 +196,7 @@ def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_
                     sessions_seen.append((session_id, cursor, index))
                 if evolve:
                     if cursor == 0:
-                        states.append(_state(chain, adapter, sessions, 0))       # the day's opening state
+                        states.append(_state(chain, adapter, sessions, 0, pickles))       # the day's opening state
                     msg = adapter.normalize(raw, None, name, member.sha256)
                     previous_session = sessions.get(msg.instrument_id)
                     if msg.instrument_id in chain.open_instruments and session_id != previous_session:
@@ -203,7 +219,7 @@ def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_
                     except RuntimeError:
                         pass
                     else:
-                        states.append(_state(chain, adapter, sessions, cursor + 1))
+                        states.append(_state(chain, adapter, sessions, cursor + 1, pickles))
                 if take is not None and taken == take['take']:
                     following = next(iterator, None)
                     if following is None:
@@ -220,12 +236,9 @@ def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_
                     event(dict(phase='parallel_pass1', records=len(records), states=len(states),
                                seconds=round(time.perf_counter() - started, 3)))
     if evolve:
-        final = _state(chain, adapter, sessions, len(records))
-        if states[-1]['cursor'] == len(records):
-            states[-1] = final
-        else:
-            states.append(final)
-    return dict(records=records, states=states, partials=partials, skipped=skipped, sessions_seen=sessions_seen,
+        if states[-1]['cursor'] != len(records):
+            states.append(_state(chain, adapter, sessions, len(records), pickles))
+    return dict(records=records, states=states, pickles=pickles, partials=partials, skipped=skipped, sessions_seen=sessions_seen,
                 member_counts=member_counts, opening_result=opening_result, seconds=round(time.perf_counter() - started, 3))
 
 
@@ -242,12 +255,13 @@ def _segment(k):
     s = _SHARED
     start_state, end_state = s['states'][k], s['states'][k + 1]
     started = time.process_time()
-    b = C15Builder.__new__(C15Builder)
+    b = C15BuilderNoObservation.__new__(C15BuilderNoObservation)
     b.scope, b.identity, b._failed = s['scope'], implementation_identity(), False
     b.chain = RecordPrefixChain.restore(s['scope'], start_state['chain'])
-    b.adapter = restore_adapter_state(start_state['adapter'])
+    b.adapter = pickle.loads(s['pickles'][k])                   # the live adapter, exactly (key order included)
+    if export_adapter_state(b.adapter) != start_state['adapter']:
+        raise ValueError(f'segment {k}: the pickled adapter differs from its canonical state; refused')
     b._sessions = {int(iid): session for iid, session in start_state['sessions']}
-    b.observation_mode = 'none'
     final = s['spools'] / f'spool-{k:05d}.bin'
     part = final.with_name(final.name + '.part')
     if part.exists():
@@ -258,7 +272,8 @@ def _segment(k):
         b.apply(raw, source_member_index=member_index, session_id=session_id, raw_symbol=None,
                 source_dbn_object=s['names'][member_index])
     b.journal.close()
-    if b.chain.export_state() != end_state['chain'] or export_adapter_state(b.adapter) != end_state['adapter']:
+    if (b.chain.export_state() != end_state['chain'] or export_adapter_state(b.adapter) != end_state['adapter']
+            or [[iid, v] for iid, v in b._sessions.items()] != end_state['sessions']):
         raise ValueError(f'segment {k}: the replayed end state differs from pass 1 at cursor {end_state["cursor"]}; refused')
     os.replace(part, final)
     done = dict(segment=k, start_cursor=start_state['cursor'], end_cursor=end_state['cursor'], entries=b.journal.entries,
@@ -294,6 +309,12 @@ class _Tail:
 
 
 def completion_from(scope, builder, member_counts):
+    """The completion complete() would claim, from the builder state, with complete()'s own count refusals (the review of
+    959c5e12, finding 4): every declared record of every member ingested, no more, no less."""
+    expected = [member.mbo_records for member in scope.members]
+    if builder.chain.next_cursor != sum(expected) or list(member_counts) != expected:
+        raise ValueError(f'source record count is incomplete or does not reconcile: ingested {list(member_counts)} '
+                         f'(cursor {builder.chain.next_cursor}), declared {expected}')
     state = builder.export_state()
     completion = SourceCompletion('BOSS_SOURCE_CONFORMANCE_V1', scope.kind.value, scope.genesis_hash(), sum(member_counts),
                                   tuple(member_counts), builder.chain.next_global_group_ordinal, builder.chain.prefix_hash,
@@ -325,32 +346,39 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
     output = Path(output)
     seg_dir = output / 'segments'
     seg_dir.mkdir(exist_ok=True)
-    plan_path, states_path = seg_dir / 'plan.json', seg_dir / 'states.c15.json'
+    plan_path, states_path, pickles_path = seg_dir / 'plan.json', seg_dir / 'states.c15.json', seg_dir / 'adapters.pickle'
     identity = implementation_identity()
     plan = json.loads(plan_path.read_bytes()) if (resume and plan_path.is_file()) else None
     if plan is not None and (plan.get('schema') != PLAN_SCHEMA or plan.get('manifest_hash') != manifest_hash
                              or plan.get('implementation') != identity or plan.get('segment_records') != segment_records
-                             or _sha256_file(states_path) != plan.get('states_sha256')):
+                             or _sha256_file(states_path) != plan.get('states_sha256')
+                             or _sha256_file(pickles_path) != plan.get('adapters_sha256')):
         raise ValueError('the saved pass-1 plan is for another manifest, code identity or segment size; refused '
                          '(move segments/ aside to start over)')
     if plan is None:
         if plan_path.exists():
             raise ValueError(f'{plan_path} exists; resume with --resume or move segments/ aside')
         one = pass_one(scope, paths, pin, session, takes=takes, tails=tails, opening_state=opening_state,
-                       source_names=source_names, segment_records=segment_records, event=event)
+                       source_names=source_names, segment_records=segment_records, event=event,
+                       opening_descriptor=opening_descriptor)
         states_raw = canonical_bytes(pack(one['states']))
         with states_path.open('xb') as stream:
             stream.write(states_raw); stream.flush(); os.fsync(stream.fileno())
+        pickles_raw = pickle.dumps(one['pickles'], protocol=pickle.HIGHEST_PROTOCOL)
+        with pickles_path.open('xb') as stream:
+            stream.write(pickles_raw); stream.flush(); os.fsync(stream.fileno())
         plan = dict(schema=PLAN_SCHEMA, manifest_hash=manifest_hash, implementation=identity, segment_records=segment_records,
                     records=len(one['records']), segments=len(one['states']) - 1, states_sha256=hashlib.sha256(states_raw).hexdigest(),
+                    adapters_sha256=hashlib.sha256(pickles_raw).hexdigest(),
                     partials=one['partials'], skipped=one['skipped'], sessions_seen=one['sessions_seen'],
                     member_counts=one['member_counts'], opening_result=one['opening_result'], pass1_seconds=one['seconds'])
         with plan_path.open('x') as stream:
             json.dump(plan, stream, sort_keys=True)
-        states = one['states']
+        states, pickles = one['states'], one['pickles']
         records = one['records']
     else:
         states = unpack(json.loads(states_path.read_bytes()))
+        pickles = pickle.loads(pickles_path.read_bytes())
         one = pass_one(scope, paths, pin, session, takes=takes, tails=tails, opening_state=opening_state,
                        source_names=source_names, evolve=False, event=event)          # the records again; no state recomputed
         records = one['records']
@@ -376,9 +404,12 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
     # PASS 2
     pass2_started = time.perf_counter()
     pending = [k for k in range(plan['segments']) if _done(seg_dir, k) is None]
-    _SHARED.update(scope=scope, states=states, records=records, names=source_names, spools=seg_dir)
+    _SHARED.update(scope=scope, states=states, pickles=pickles, records=records, names=source_names, spools=seg_dir)
+    del one
     worker_cpu = 0.0
     if pending:
+        gc.collect()
+        gc.freeze()          # the forked workers share the records without the collector touching (and copying) every page
         with multiprocessing.get_context('fork').Pool(workers) as pool:
             for done in pool.imap_unordered(_segment, pending):
                 worker_cpu += done['cpu_seconds']
@@ -387,6 +418,7 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
     pass2_seconds = time.perf_counter() - pass2_started
     _SHARED.clear()
     del records
+    gc.unfreeze()
     # PASS 3
     pass3_started = time.perf_counter()
     if Path(journal_path).exists():

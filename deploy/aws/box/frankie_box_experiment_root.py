@@ -60,6 +60,7 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
     # ingest opened with (Greg, 2026-09-29): read again in place from the prior day's sealed ingest and checked against
     # what this day's ingest recorded; the legacy pass replays the day's records onto it. Absent = listed, never refused.
     tail_members = list(receipt.get('tail_members_ingested') or receipt.get('tail_members') or [])
+    directory = Path(receipt_path).parent
     opening_book, opening_state = receipt.get('opening_book'), None
     own = receipt.get('opening_book_file')
     if own:
@@ -81,7 +82,6 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
         opening_book = dict(opening_book or {}, status='absent',
                             listed='this day opens at the prior halt and its ingest had no opening book; the legacy pass '
                                    'starts from an empty book')
-    directory = Path(receipt_path).parent
     journal = directory / receipt['journal_file']
     if journal.stat().st_size != receipt['journal_bytes'] or _sha256_file(journal) != receipt['journal_sha256']:
         raise ValueError('the sealed journal differs from its ingestion receipt (bytes or sha256)')

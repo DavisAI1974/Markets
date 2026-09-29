@@ -106,12 +106,7 @@ class C15Builder:
                 raise ValueError("adapter and prefix disagree on F_LAST closure")
             new = book.orders.get(msg.order_id)
             spliced = None
-            if self.__dict__.get('observation_mode') == 'none':
-                # the experiment's journal (Greg, 2026-09-29: "Do 1-5 now", item 4): no full-book copy at a group close;
-                # the book is the INPUT records replayed (the ROOT does it; opening-book.c15.json opens the day), so the
-                # observation is derivable, never lost. Frankie's full run keeps the default 'full'.
-                observation = None
-            elif getattr(self.journal, 'accepts_spliced', False):
+            if getattr(self.journal, 'accepts_spliced', False):
                 # the compact path (Greg, 2026-09-22): the observation's bytes maintained incrementally and spliced by the
                 # writer; the raw path below still packs observe_book, and the two are proven byte-identical by test
                 composers = self.__dict__.setdefault('_composers', {})
