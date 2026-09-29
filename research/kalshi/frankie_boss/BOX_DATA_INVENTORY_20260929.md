@@ -67,3 +67,14 @@ open file, a locked calculation root; copies every small JSON inside a target to
 `work/bedrock` holds 14 `recovery-*` generations; only `9defa3169f...` (ledgers, 787 GB), `1b8392a5...` (result) and
 `8c03f629...` (checkpoint) are pinned. The other 11 total ~27.5 GB (8.2, 6.2, 5.5, 2.5 GB and seven of 0.73 GB). Plus
 `work/bedrock/ledgers` 2.46 GB. Candidates for the failed/duplicate pass with their evidence.
+
+## 3. Done 2026-09-29 ~12:20-12:30Z
+- Bedrock tables and projection working files: `frankie_box_cleanup_bedrock.sh` (plan run 36567025806, delete run
+  after it): 39 paths / 22 targets, 395,132,195,689 bytes removed, 8,334 JSON receipts copied to
+  `/opt/frankie-box/receipts/bedrock-cleanup-20260929T121941Z/`; free 336,182,874,112 -> 731,221,213,184 bytes.
+- Then Greg: "Delete all 818 of bedrock. None of it is needed": the whole `work/bedrock` (ledgers, all 14 recovery
+  generations, checkpoints) removed with `TARGETS=@work/bedrock` (receipt `receipts/bedrock-whole-<utc>/`). The
+  retained-copy section above is therefore history: the Monday root now keeps only its receipts, `derive.json`, the
+  digests, `.projection-v2/published-e6ff...` (147 GB), `.digest-109f.../calculation-layers` (213 GB, CLM manifest),
+  `.rows` (57 GB) and `superseded/` (3.8 GB). Those four are Greg's call for a next pass.
+- CPUs: 32 of 32 cores at 100% (5 s sample, ~12:25Z), 57 Python workers all allowed on cores 0-31.
