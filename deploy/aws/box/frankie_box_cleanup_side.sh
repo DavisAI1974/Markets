@@ -2,6 +2,10 @@
 # bedrock side builds filled the 2 TB disk). Deletes ONLY what is named, and only when nothing of it was saved:
 #   SIDE_DIRS   comma-separated .digest-side-<id> directory names under work/derived: each must hold no
 #               table-*.save.json (no finished table) and no file any running process has open.
+#   SCRATCHES   optional comma-separated .digest-<32 hex> scratch directories under work/derived that never saved a
+#               table (no table-*.save.json anywhere in them): abandoned digest attempts (Greg, 2026-09-29: "Clean the
+#               disk out now first quickly. Use process we used yesterday."). Same rules: refused if any table was
+#               saved, if any file under it is open, or if the calculation root is locked (ROOT running).
 #   PARTIAL     optional <.digest-hex>:<NNNN>: that scratch's table-NNNN.txt and table-NNNN/ (a table the paused ROOT
 #               was still writing): refused if table-NNNN.save.json exists or the calculation root is locked (ROOT
 #               running).
@@ -10,7 +14,7 @@ set -eu
 : "${DIRECTORY:?Monday calculation root required}"
 case "$DIRECTORY" in /opt/frankie-box/work/monday-calculations/*) ;; *) echo "Monday calculation root required" >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1
-exec /opt/frankie-box/venv/bin/python -I -S -B - "$DIRECTORY" "${SIDE_DIRS:-}" "${PARTIAL:-}" <<'PY'
+exec /opt/frankie-box/venv/bin/python -I -S -B - "$DIRECTORY" "${SIDE_DIRS:-}" "${PARTIAL:-}" "${SCRATCHES:-}" <<'PY'
 import fcntl, json, os, re, shutil, sys
 from pathlib import Path
 
@@ -53,6 +57,24 @@ for name in side_names:
     saved = sorted(p.name for p in path.glob('table-*.save.json'))
     if saved:
         raise SystemExit('%s holds finished tables %s; refusing' % (name, saved))
+    plan.append(path)
+
+scratch_names = [n for n in (sys.argv[4] if len(sys.argv) > 4 else '').split(',') if n]
+if scratch_names:
+    lock_all = (root / 'calculation.lock').open('a')
+    try:
+        fcntl.flock(lock_all, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        raise SystemExit('the calculation root is locked: ROOT is running') from None
+for name in scratch_names:
+    if not re.fullmatch(r'\.digest-[0-9a-f]{32}', name):
+        raise SystemExit('scratch name must be .digest-<32 hex>: %r' % name)
+    path = derived / name
+    if path.is_symlink() or not path.is_dir() or path.resolve().parent != derived:
+        raise SystemExit('not a digest scratch of this root: %s' % path)
+    saved = sorted(str(p.relative_to(path)) for p in path.rglob('table-*.save.json'))
+    if saved:
+        raise SystemExit('%s saved tables %s; refusing' % (name, saved[:5]))
     plan.append(path)
 
 if partial:
