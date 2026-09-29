@@ -1,0 +1,91 @@
+{
+  "archive_prefix": "nymex/ng_mbo_5y_v0/native",
+  "block": "20221011",
+  "bucket": "bento-568968024170-us-east-2-an",
+  "canonical_source_rewritten": false,
+  "causal_clock": "ts_recv_ns",
+  "derived_from": {
+    "block": "20221010_20221012",
+    "manifest_hash": "aba92a722b9aaa8e1e70005babc52c1a32ec12d209b173b3b0318aeab5ffe3f9"
+  },
+  "halt_boundaries_close_groups": true,
+  "halt_utc_hour": 21,
+  "ingested": false,
+  "manifest_hash": "a175c0752790d46ea508dd8665284a4404af97d46c395fa5bda31ece35187be8",
+  "member_seams_close_groups": true,
+  "model_calls": 0,
+  "partial_members": [
+    {
+      "member_key": "glbx-mdp3-20221011.mbo.dbn.zst",
+      "partition_mbo_records": 1280660,
+      "reason": "records before the 21:00Z halt belong to this trading day; the rest are the next day",
+      "take": 1272263
+    }
+  ],
+  "prefix": "nymex/ng_mbo_5y_v0/native",
+  "prefixes_built": false,
+  "role": "HELD_OUT_BLIND_BLOCK",
+  "sampled": false,
+  "scheduled": false,
+  "schema": "BOSS_BLOCK_SOURCE_MANIFEST_V1",
+  "sessions": [
+    {
+      "after_halt": 13206,
+      "archive_key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221010.mbo.dbn.zst",
+      "before_halt": 1214969,
+      "day_utc": "20221010",
+      "f_last_groups": 966223,
+      "first_ts_recv_ns": 1665360000000000000,
+      "halt_boundary_f_last": true,
+      "instruments": 1,
+      "last_record_f_last": true,
+      "last_ts_recv_ns": 1665446399865457208,
+      "mbo_records": 1228175,
+      "member_key": "glbx-mdp3-20221010.mbo.dbn.zst"
+    },
+    {
+      "after_halt": 8397,
+      "archive_key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221011.mbo.dbn.zst",
+      "before_halt": 1272263,
+      "day_utc": "20221011",
+      "f_last_groups": 1020865,
+      "first_ts_recv_ns": 1665446400000000000,
+      "halt_boundary_f_last": true,
+      "instruments": 1,
+      "last_record_f_last": true,
+      "last_ts_recv_ns": 1665532799840129301,
+      "mbo_records": 1280660,
+      "member_key": "glbx-mdp3-20221011.mbo.dbn.zst"
+    }
+  ],
+  "source_kind": "NATIVE_DBN_MBO",
+  "sources": [
+    {
+      "mbo_records": 13206,
+      "member_index": 0,
+      "member_key": "glbx-mdp3-20221010.mbo.dbn.zst",
+      "sha256": "ff844ddd8da14cb916c05f5f4cab244e9142ac89738455a8a294235c8d1ee80e",
+      "size_bytes": 21770634
+    },
+    {
+      "mbo_records": 1272263,
+      "member_index": 1,
+      "member_key": "glbx-mdp3-20221011.mbo.dbn.zst",
+      "sha256": "85dbbe8f64dcdb8e50d4483387c8d0a196d6bfffd10e2cab82f0565a86619a2d",
+      "size_bytes": 22761904
+    }
+  ],
+  "staged_by": "deploy/aws/box/frankie_box_day_facts.py (presigned GET of the archive keys, counts by stage_block_sources.count_records; no S3 copy)",
+  "staged_unix": 1790686262,
+  "tail_members": [
+    {
+      "member_key": "glbx-mdp3-20221010.mbo.dbn.zst",
+      "partition_mbo_records": 1228175,
+      "reason": "records at or after the 21:00Z halt open this trading day; the records before it are the prior trading day (skipped, never counted); the book opens from the prior day's sealed ingest",
+      "skip": 1214969,
+      "take": 13206
+    }
+  ],
+  "total_mbo_records": 1285469,
+  "trading_day": "20221011"
+}
