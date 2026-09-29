@@ -1,0 +1,2586 @@
+{
+ "days": [
+  {
+   "consensus": {
+    "for_last_print": "2021-09-30T10:30:00-04:00",
+    "for_next_print": "2021-10-07T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2018-09-29",
+    "publication_et": "2021-10-01T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2021-09-28"
+   },
+   "day": "2021-10-05",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2021-09-26T22:00:00+00:00",
+     "2021-10-05T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2021-10-05T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2021-10-03T22:30:00+00:00",
+      "runtime_utc": "2021-10-03T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-04T04:30:00+00:00",
+      "runtime_utc": "2021-10-04T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-04T10:30:00+00:00",
+      "runtime_utc": "2021-10-04T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-04T16:30:00+00:00",
+      "runtime_utc": "2021-10-04T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2021-10-04T22:30:00+00:00",
+      "runtime_utc": "2021-10-04T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-05T04:30:00+00:00",
+      "runtime_utc": "2021-10-05T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-05T10:30:00+00:00",
+      "runtime_utc": "2021-10-05T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-05T16:30:00+00:00",
+      "runtime_utc": "2021-10-05T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2021-10-04T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2021-09-28",
+    "last_prompt_symbol": "NGV21",
+    "sessions_since_prompt_expiry": 5
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2021-09-30T10:30:00-04:00",
+     "week_ending": "2021-09-24"
+    },
+    "next_print": {
+     "release_et": "2021-10-07T10:30:00-04:00",
+     "week_ending": "2021-10-01"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2021-10-03",
+    "hours_utc": [
+     "2021-10-04T22:00:00+00:00",
+     "2021-10-05T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2021-09-30T10:30:00-04:00",
+    "for_next_print": "2021-10-07T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2018-09-29",
+    "publication_et": "2021-10-01T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2021-09-28"
+   },
+   "day": "2021-10-06",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2021-09-27T22:00:00+00:00",
+     "2021-10-06T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2021-10-06T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2021-10-04T22:30:00+00:00",
+      "runtime_utc": "2021-10-04T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-05T04:30:00+00:00",
+      "runtime_utc": "2021-10-05T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-05T10:30:00+00:00",
+      "runtime_utc": "2021-10-05T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-05T16:30:00+00:00",
+      "runtime_utc": "2021-10-05T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2021-10-05T22:30:00+00:00",
+      "runtime_utc": "2021-10-05T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-06T04:30:00+00:00",
+      "runtime_utc": "2021-10-06T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-06T10:30:00+00:00",
+      "runtime_utc": "2021-10-06T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-06T16:30:00+00:00",
+      "runtime_utc": "2021-10-06T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2021-10-05T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2021-09-28",
+    "last_prompt_symbol": "NGV21",
+    "sessions_since_prompt_expiry": 6
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2021-09-30T10:30:00-04:00",
+     "week_ending": "2021-09-24"
+    },
+    "next_print": {
+     "release_et": "2021-10-07T10:30:00-04:00",
+     "week_ending": "2021-10-01"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2021-10-04",
+    "hours_utc": [
+     "2021-10-05T22:00:00+00:00",
+     "2021-10-06T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2021-10-07T10:30:00-04:00",
+    "for_next_print": "2021-10-14T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2018-10-06",
+    "publication_et": "2021-10-08T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2021-10-05"
+   },
+   "day": "2021-10-12",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2021-10-03T22:00:00+00:00",
+     "2021-10-12T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2021-10-12T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2021-10-10T22:30:00+00:00",
+      "runtime_utc": "2021-10-10T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-11T04:30:00+00:00",
+      "runtime_utc": "2021-10-11T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-11T10:30:00+00:00",
+      "runtime_utc": "2021-10-11T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-11T16:30:00+00:00",
+      "runtime_utc": "2021-10-11T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2021-10-11T22:30:00+00:00",
+      "runtime_utc": "2021-10-11T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-12T04:30:00+00:00",
+      "runtime_utc": "2021-10-12T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-12T10:30:00+00:00",
+      "runtime_utc": "2021-10-12T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-12T16:30:00+00:00",
+      "runtime_utc": "2021-10-12T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2021-10-11T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2021-09-28",
+    "last_prompt_symbol": "NGV21",
+    "sessions_since_prompt_expiry": 10
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2021-10-07T10:30:00-04:00",
+     "week_ending": "2021-10-01"
+    },
+    "next_print": {
+     "release_et": "2021-10-14T10:30:00-04:00",
+     "week_ending": "2021-10-08"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2021-10-10",
+    "hours_utc": [
+     "2021-10-11T22:00:00+00:00",
+     "2021-10-12T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2021-10-07T10:30:00-04:00",
+    "for_next_print": "2021-10-14T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2018-10-06",
+    "publication_et": "2021-10-08T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2021-10-05"
+   },
+   "day": "2021-10-13",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2021-10-04T22:00:00+00:00",
+     "2021-10-13T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2021-10-13T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2021-10-11T22:30:00+00:00",
+      "runtime_utc": "2021-10-11T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-12T04:30:00+00:00",
+      "runtime_utc": "2021-10-12T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-12T10:30:00+00:00",
+      "runtime_utc": "2021-10-12T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-12T16:30:00+00:00",
+      "runtime_utc": "2021-10-12T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2021-10-12T22:30:00+00:00",
+      "runtime_utc": "2021-10-12T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-13T04:30:00+00:00",
+      "runtime_utc": "2021-10-13T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-13T10:30:00+00:00",
+      "runtime_utc": "2021-10-13T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-13T16:30:00+00:00",
+      "runtime_utc": "2021-10-13T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2021-10-12T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2021-09-28",
+    "last_prompt_symbol": "NGV21",
+    "sessions_since_prompt_expiry": 11
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2021-10-07T10:30:00-04:00",
+     "week_ending": "2021-10-01"
+    },
+    "next_print": {
+     "release_et": "2021-10-14T10:30:00-04:00",
+     "week_ending": "2021-10-08"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2021-10-11",
+    "hours_utc": [
+     "2021-10-12T22:00:00+00:00",
+     "2021-10-13T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2021-10-14T10:30:00-04:00",
+    "for_next_print": "2021-10-21T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2018-10-13",
+    "publication_et": "2021-10-15T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2021-10-12"
+   },
+   "day": "2021-10-19",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2021-10-10T22:00:00+00:00",
+     "2021-10-19T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2021-10-19T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2021-10-17T22:30:00+00:00",
+      "runtime_utc": "2021-10-17T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-18T04:30:00+00:00",
+      "runtime_utc": "2021-10-18T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-18T10:30:00+00:00",
+      "runtime_utc": "2021-10-18T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-18T16:30:00+00:00",
+      "runtime_utc": "2021-10-18T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2021-10-18T22:30:00+00:00",
+      "runtime_utc": "2021-10-18T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-19T04:30:00+00:00",
+      "runtime_utc": "2021-10-19T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-19T10:30:00+00:00",
+      "runtime_utc": "2021-10-19T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2021-10-19T16:30:00+00:00",
+      "runtime_utc": "2021-10-19T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2021-10-18T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2021-09-28",
+    "last_prompt_symbol": "NGV21",
+    "sessions_since_prompt_expiry": 15
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2021-10-14T10:30:00-04:00",
+     "week_ending": "2021-10-08"
+    },
+    "next_print": {
+     "release_et": "2021-10-21T10:30:00-04:00",
+     "week_ending": "2021-10-15"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2021-10-17",
+    "hours_utc": [
+     "2021-10-18T22:00:00+00:00",
+     "2021-10-19T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2022-09-29T10:30:00-04:00",
+    "for_next_print": "2022-10-06T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2019-09-28",
+    "publication_et": "2022-09-30T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2022-09-27"
+   },
+   "day": "2022-10-04",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2022-09-25T22:00:00+00:00",
+     "2022-10-04T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2022-10-04T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2022-10-02T22:30:00+00:00",
+      "runtime_utc": "2022-10-02T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-03T04:30:00+00:00",
+      "runtime_utc": "2022-10-03T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-03T10:30:00+00:00",
+      "runtime_utc": "2022-10-03T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-03T16:30:00+00:00",
+      "runtime_utc": "2022-10-03T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2022-10-03T22:30:00+00:00",
+      "runtime_utc": "2022-10-03T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-04T04:30:00+00:00",
+      "runtime_utc": "2022-10-04T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-04T10:30:00+00:00",
+      "runtime_utc": "2022-10-04T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-04T16:30:00+00:00",
+      "runtime_utc": "2022-10-04T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2022-10-03T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2022-09-28",
+    "last_prompt_symbol": "NGV22",
+    "sessions_since_prompt_expiry": 4
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2022-09-29T10:30:00-04:00",
+     "week_ending": "2022-09-23"
+    },
+    "next_print": {
+     "release_et": "2022-10-06T10:30:00-04:00",
+     "week_ending": "2022-09-30"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2022-10-02",
+    "hours_utc": [
+     "2022-10-03T22:00:00+00:00",
+     "2022-10-04T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2022-09-29T10:30:00-04:00",
+    "for_next_print": "2022-10-06T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2019-09-28",
+    "publication_et": "2022-09-30T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2022-09-27"
+   },
+   "day": "2022-10-05",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2022-09-26T22:00:00+00:00",
+     "2022-10-05T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2022-10-05T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2022-10-03T22:30:00+00:00",
+      "runtime_utc": "2022-10-03T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-04T04:30:00+00:00",
+      "runtime_utc": "2022-10-04T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-04T10:30:00+00:00",
+      "runtime_utc": "2022-10-04T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-04T16:30:00+00:00",
+      "runtime_utc": "2022-10-04T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2022-10-04T22:30:00+00:00",
+      "runtime_utc": "2022-10-04T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-05T04:30:00+00:00",
+      "runtime_utc": "2022-10-05T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-05T10:30:00+00:00",
+      "runtime_utc": "2022-10-05T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-05T16:30:00+00:00",
+      "runtime_utc": "2022-10-05T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2022-10-04T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2022-09-28",
+    "last_prompt_symbol": "NGV22",
+    "sessions_since_prompt_expiry": 5
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2022-09-29T10:30:00-04:00",
+     "week_ending": "2022-09-23"
+    },
+    "next_print": {
+     "release_et": "2022-10-06T10:30:00-04:00",
+     "week_ending": "2022-09-30"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2022-10-03",
+    "hours_utc": [
+     "2022-10-04T22:00:00+00:00",
+     "2022-10-05T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2022-10-06T10:30:00-04:00",
+    "for_next_print": "2022-10-13T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2019-10-05",
+    "publication_et": "2022-10-07T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2022-10-04"
+   },
+   "day": "2022-10-11",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2022-10-02T22:00:00+00:00",
+     "2022-10-11T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2022-10-11T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2022-10-09T22:30:00+00:00",
+      "runtime_utc": "2022-10-09T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-10T04:30:00+00:00",
+      "runtime_utc": "2022-10-10T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-10T10:30:00+00:00",
+      "runtime_utc": "2022-10-10T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-10T16:30:00+00:00",
+      "runtime_utc": "2022-10-10T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2022-10-10T22:30:00+00:00",
+      "runtime_utc": "2022-10-10T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-11T04:30:00+00:00",
+      "runtime_utc": "2022-10-11T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-11T10:30:00+00:00",
+      "runtime_utc": "2022-10-11T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-11T16:30:00+00:00",
+      "runtime_utc": "2022-10-11T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2022-10-10T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2022-09-28",
+    "last_prompt_symbol": "NGV22",
+    "sessions_since_prompt_expiry": 9
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2022-10-06T10:30:00-04:00",
+     "week_ending": "2022-09-30"
+    },
+    "next_print": {
+     "release_et": "2022-10-13T10:30:00-04:00",
+     "week_ending": "2022-10-07"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2022-10-09",
+    "hours_utc": [
+     "2022-10-10T22:00:00+00:00",
+     "2022-10-11T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2022-10-06T10:30:00-04:00",
+    "for_next_print": "2022-10-13T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2019-10-05",
+    "publication_et": "2022-10-07T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2022-10-04"
+   },
+   "day": "2022-10-12",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2022-10-03T22:00:00+00:00",
+     "2022-10-12T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2022-10-12T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2022-10-10T22:30:00+00:00",
+      "runtime_utc": "2022-10-10T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-11T04:30:00+00:00",
+      "runtime_utc": "2022-10-11T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-11T10:30:00+00:00",
+      "runtime_utc": "2022-10-11T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-11T16:30:00+00:00",
+      "runtime_utc": "2022-10-11T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2022-10-11T22:30:00+00:00",
+      "runtime_utc": "2022-10-11T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-12T04:30:00+00:00",
+      "runtime_utc": "2022-10-12T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-12T10:30:00+00:00",
+      "runtime_utc": "2022-10-12T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-12T16:30:00+00:00",
+      "runtime_utc": "2022-10-12T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2022-10-11T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2022-09-28",
+    "last_prompt_symbol": "NGV22",
+    "sessions_since_prompt_expiry": 10
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2022-10-06T10:30:00-04:00",
+     "week_ending": "2022-09-30"
+    },
+    "next_print": {
+     "release_et": "2022-10-13T10:30:00-04:00",
+     "week_ending": "2022-10-07"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2022-10-10",
+    "hours_utc": [
+     "2022-10-11T22:00:00+00:00",
+     "2022-10-12T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2022-10-13T10:30:00-04:00",
+    "for_next_print": "2022-10-20T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2019-10-12",
+    "publication_et": "2022-10-14T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2022-10-11"
+   },
+   "day": "2022-10-18",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2022-10-09T22:00:00+00:00",
+     "2022-10-18T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2022-10-18T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2022-10-16T22:30:00+00:00",
+      "runtime_utc": "2022-10-16T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-17T04:30:00+00:00",
+      "runtime_utc": "2022-10-17T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-17T10:30:00+00:00",
+      "runtime_utc": "2022-10-17T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-17T16:30:00+00:00",
+      "runtime_utc": "2022-10-17T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2022-10-17T22:30:00+00:00",
+      "runtime_utc": "2022-10-17T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-18T04:30:00+00:00",
+      "runtime_utc": "2022-10-18T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-18T10:30:00+00:00",
+      "runtime_utc": "2022-10-18T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-18T16:30:00+00:00",
+      "runtime_utc": "2022-10-18T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2022-10-17T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2022-09-28",
+    "last_prompt_symbol": "NGV22",
+    "sessions_since_prompt_expiry": 14
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2022-10-13T10:30:00-04:00",
+     "week_ending": "2022-10-07"
+    },
+    "next_print": {
+     "release_et": "2022-10-20T10:30:00-04:00",
+     "week_ending": "2022-10-14"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2022-10-16",
+    "hours_utc": [
+     "2022-10-17T22:00:00+00:00",
+     "2022-10-18T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2022-10-13T10:30:00-04:00",
+    "for_next_print": "2022-10-20T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2019-10-12",
+    "publication_et": "2022-10-14T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2022-10-11"
+   },
+   "day": "2022-10-19",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2022-10-10T22:00:00+00:00",
+     "2022-10-19T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2022-10-19T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2022-10-17T22:30:00+00:00",
+      "runtime_utc": "2022-10-17T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-18T04:30:00+00:00",
+      "runtime_utc": "2022-10-18T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-18T10:30:00+00:00",
+      "runtime_utc": "2022-10-18T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-18T16:30:00+00:00",
+      "runtime_utc": "2022-10-18T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2022-10-18T22:30:00+00:00",
+      "runtime_utc": "2022-10-18T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-19T04:30:00+00:00",
+      "runtime_utc": "2022-10-19T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-19T10:30:00+00:00",
+      "runtime_utc": "2022-10-19T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2022-10-19T16:30:00+00:00",
+      "runtime_utc": "2022-10-19T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2022-10-18T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2022-09-28",
+    "last_prompt_symbol": "NGV22",
+    "sessions_since_prompt_expiry": 15
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2022-10-13T10:30:00-04:00",
+     "week_ending": "2022-10-07"
+    },
+    "next_print": {
+     "release_et": "2022-10-20T10:30:00-04:00",
+     "week_ending": "2022-10-14"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2022-10-17",
+    "hours_utc": [
+     "2022-10-18T22:00:00+00:00",
+     "2022-10-19T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2023-09-28T10:30:00-04:00",
+    "for_next_print": "2023-10-05T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2020-09-26",
+    "publication_et": "2023-09-29T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2023-09-26"
+   },
+   "day": "2023-10-03",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2023-09-24T22:00:00+00:00",
+     "2023-10-03T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2023-10-03T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2023-10-01T22:30:00+00:00",
+      "runtime_utc": "2023-10-01T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-02T04:30:00+00:00",
+      "runtime_utc": "2023-10-02T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-02T10:30:00+00:00",
+      "runtime_utc": "2023-10-02T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-02T16:30:00+00:00",
+      "runtime_utc": "2023-10-02T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2023-10-02T22:30:00+00:00",
+      "runtime_utc": "2023-10-02T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-03T04:30:00+00:00",
+      "runtime_utc": "2023-10-03T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-03T10:30:00+00:00",
+      "runtime_utc": "2023-10-03T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-03T16:30:00+00:00",
+      "runtime_utc": "2023-10-03T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2023-10-02T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2023-09-27",
+    "last_prompt_symbol": "NGV23",
+    "sessions_since_prompt_expiry": 4
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2023-09-28T10:30:00-04:00",
+     "week_ending": "2023-09-22"
+    },
+    "next_print": {
+     "release_et": "2023-10-05T10:30:00-04:00",
+     "week_ending": "2023-09-29"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2023-10-01",
+    "hours_utc": [
+     "2023-10-02T22:00:00+00:00",
+     "2023-10-03T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2023-09-28T10:30:00-04:00",
+    "for_next_print": "2023-10-05T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2020-09-26",
+    "publication_et": "2023-09-29T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2023-09-26"
+   },
+   "day": "2023-10-04",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2023-09-25T22:00:00+00:00",
+     "2023-10-04T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2023-10-04T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2023-10-02T22:30:00+00:00",
+      "runtime_utc": "2023-10-02T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-03T04:30:00+00:00",
+      "runtime_utc": "2023-10-03T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-03T10:30:00+00:00",
+      "runtime_utc": "2023-10-03T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-03T16:30:00+00:00",
+      "runtime_utc": "2023-10-03T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2023-10-03T22:30:00+00:00",
+      "runtime_utc": "2023-10-03T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-04T04:30:00+00:00",
+      "runtime_utc": "2023-10-04T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-04T10:30:00+00:00",
+      "runtime_utc": "2023-10-04T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-04T16:30:00+00:00",
+      "runtime_utc": "2023-10-04T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2023-10-03T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2023-09-27",
+    "last_prompt_symbol": "NGV23",
+    "sessions_since_prompt_expiry": 5
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2023-09-28T10:30:00-04:00",
+     "week_ending": "2023-09-22"
+    },
+    "next_print": {
+     "release_et": "2023-10-05T10:30:00-04:00",
+     "week_ending": "2023-09-29"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2023-10-02",
+    "hours_utc": [
+     "2023-10-03T22:00:00+00:00",
+     "2023-10-04T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2023-10-05T10:30:00-04:00",
+    "for_next_print": "2023-10-12T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2020-10-03",
+    "publication_et": "2023-10-06T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2023-10-03"
+   },
+   "day": "2023-10-10",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2023-10-01T22:00:00+00:00",
+     "2023-10-10T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2023-10-10T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2023-10-08T22:30:00+00:00",
+      "runtime_utc": "2023-10-08T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-09T04:30:00+00:00",
+      "runtime_utc": "2023-10-09T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-09T10:30:00+00:00",
+      "runtime_utc": "2023-10-09T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-09T16:30:00+00:00",
+      "runtime_utc": "2023-10-09T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2023-10-09T22:30:00+00:00",
+      "runtime_utc": "2023-10-09T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-10T04:30:00+00:00",
+      "runtime_utc": "2023-10-10T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-10T10:30:00+00:00",
+      "runtime_utc": "2023-10-10T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-10T16:30:00+00:00",
+      "runtime_utc": "2023-10-10T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2023-10-09T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2023-09-27",
+    "last_prompt_symbol": "NGV23",
+    "sessions_since_prompt_expiry": 9
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2023-10-05T10:30:00-04:00",
+     "week_ending": "2023-09-29"
+    },
+    "next_print": {
+     "release_et": "2023-10-12T10:30:00-04:00",
+     "week_ending": "2023-10-06"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2023-10-08",
+    "hours_utc": [
+     "2023-10-09T22:00:00+00:00",
+     "2023-10-10T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2023-10-05T10:30:00-04:00",
+    "for_next_print": "2023-10-12T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2020-10-03",
+    "publication_et": "2023-10-06T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2023-10-03"
+   },
+   "day": "2023-10-11",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2023-10-02T22:00:00+00:00",
+     "2023-10-11T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2023-10-11T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2023-10-09T22:30:00+00:00",
+      "runtime_utc": "2023-10-09T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-10T04:30:00+00:00",
+      "runtime_utc": "2023-10-10T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-10T10:30:00+00:00",
+      "runtime_utc": "2023-10-10T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-10T16:30:00+00:00",
+      "runtime_utc": "2023-10-10T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2023-10-10T22:30:00+00:00",
+      "runtime_utc": "2023-10-10T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-11T04:30:00+00:00",
+      "runtime_utc": "2023-10-11T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-11T10:30:00+00:00",
+      "runtime_utc": "2023-10-11T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-11T16:30:00+00:00",
+      "runtime_utc": "2023-10-11T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2023-10-10T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2023-09-27",
+    "last_prompt_symbol": "NGV23",
+    "sessions_since_prompt_expiry": 10
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2023-10-05T10:30:00-04:00",
+     "week_ending": "2023-09-29"
+    },
+    "next_print": {
+     "release_et": "2023-10-12T10:30:00-04:00",
+     "week_ending": "2023-10-06"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2023-10-09",
+    "hours_utc": [
+     "2023-10-10T22:00:00+00:00",
+     "2023-10-11T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2023-10-12T10:30:00-04:00",
+    "for_next_print": "2023-10-19T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2020-10-10",
+    "publication_et": "2023-10-13T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2023-10-10"
+   },
+   "day": "2023-10-17",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2023-10-08T22:00:00+00:00",
+     "2023-10-17T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2023-10-17T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2023-10-15T22:30:00+00:00",
+      "runtime_utc": "2023-10-15T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-16T04:30:00+00:00",
+      "runtime_utc": "2023-10-16T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-16T10:30:00+00:00",
+      "runtime_utc": "2023-10-16T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-16T16:30:00+00:00",
+      "runtime_utc": "2023-10-16T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2023-10-16T22:30:00+00:00",
+      "runtime_utc": "2023-10-16T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-17T04:30:00+00:00",
+      "runtime_utc": "2023-10-17T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-17T10:30:00+00:00",
+      "runtime_utc": "2023-10-17T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-17T16:30:00+00:00",
+      "runtime_utc": "2023-10-17T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2023-10-16T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2023-09-27",
+    "last_prompt_symbol": "NGV23",
+    "sessions_since_prompt_expiry": 14
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2023-10-12T10:30:00-04:00",
+     "week_ending": "2023-10-06"
+    },
+    "next_print": {
+     "release_et": "2023-10-19T10:30:00-04:00",
+     "week_ending": "2023-10-13"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2023-10-15",
+    "hours_utc": [
+     "2023-10-16T22:00:00+00:00",
+     "2023-10-17T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2023-10-12T10:30:00-04:00",
+    "for_next_print": "2023-10-19T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2020-10-10",
+    "publication_et": "2023-10-13T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2023-10-10"
+   },
+   "day": "2023-10-18",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2023-10-09T22:00:00+00:00",
+     "2023-10-18T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2023-10-18T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2023-10-16T22:30:00+00:00",
+      "runtime_utc": "2023-10-16T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-17T04:30:00+00:00",
+      "runtime_utc": "2023-10-17T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-17T10:30:00+00:00",
+      "runtime_utc": "2023-10-17T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-17T16:30:00+00:00",
+      "runtime_utc": "2023-10-17T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2023-10-17T22:30:00+00:00",
+      "runtime_utc": "2023-10-17T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-18T04:30:00+00:00",
+      "runtime_utc": "2023-10-18T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-18T10:30:00+00:00",
+      "runtime_utc": "2023-10-18T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2023-10-18T16:30:00+00:00",
+      "runtime_utc": "2023-10-18T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2023-10-17T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2023-09-27",
+    "last_prompt_symbol": "NGV23",
+    "sessions_since_prompt_expiry": 15
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2023-10-12T10:30:00-04:00",
+     "week_ending": "2023-10-06"
+    },
+    "next_print": {
+     "release_et": "2023-10-19T10:30:00-04:00",
+     "week_ending": "2023-10-13"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2023-10-16",
+    "hours_utc": [
+     "2023-10-17T22:00:00+00:00",
+     "2023-10-18T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2024-09-26T10:30:00-04:00",
+    "for_next_print": "2024-10-03T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2021-09-25",
+    "publication_et": "2024-09-27T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2024-09-24"
+   },
+   "day": "2024-10-01",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2024-09-22T22:00:00+00:00",
+     "2024-10-01T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2024-10-01T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2024-09-29T22:30:00+00:00",
+      "runtime_utc": "2024-09-29T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-09-30T04:30:00+00:00",
+      "runtime_utc": "2024-09-30T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-09-30T10:30:00+00:00",
+      "runtime_utc": "2024-09-30T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-09-30T16:30:00+00:00",
+      "runtime_utc": "2024-09-30T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2024-09-30T22:30:00+00:00",
+      "runtime_utc": "2024-09-30T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-01T04:30:00+00:00",
+      "runtime_utc": "2024-10-01T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-01T10:30:00+00:00",
+      "runtime_utc": "2024-10-01T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-01T16:30:00+00:00",
+      "runtime_utc": "2024-10-01T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2024-09-30T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2024-09-26",
+    "last_prompt_symbol": "NGV24",
+    "sessions_since_prompt_expiry": 3
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2024-09-26T10:30:00-04:00",
+     "week_ending": "2024-09-20"
+    },
+    "next_print": {
+     "release_et": "2024-10-03T10:30:00-04:00",
+     "week_ending": "2024-09-27"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2024-09-29",
+    "hours_utc": [
+     "2024-09-30T22:00:00+00:00",
+     "2024-10-01T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2024-09-26T10:30:00-04:00",
+    "for_next_print": "2024-10-03T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2021-09-25",
+    "publication_et": "2024-09-27T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2024-09-24"
+   },
+   "day": "2024-10-02",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2024-09-23T22:00:00+00:00",
+     "2024-10-02T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2024-10-02T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2024-09-30T22:30:00+00:00",
+      "runtime_utc": "2024-09-30T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-01T04:30:00+00:00",
+      "runtime_utc": "2024-10-01T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-01T10:30:00+00:00",
+      "runtime_utc": "2024-10-01T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-01T16:30:00+00:00",
+      "runtime_utc": "2024-10-01T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2024-10-01T22:30:00+00:00",
+      "runtime_utc": "2024-10-01T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-02T04:30:00+00:00",
+      "runtime_utc": "2024-10-02T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-02T10:30:00+00:00",
+      "runtime_utc": "2024-10-02T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-02T16:30:00+00:00",
+      "runtime_utc": "2024-10-02T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2024-10-01T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2024-09-26",
+    "last_prompt_symbol": "NGV24",
+    "sessions_since_prompt_expiry": 4
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2024-09-26T10:30:00-04:00",
+     "week_ending": "2024-09-20"
+    },
+    "next_print": {
+     "release_et": "2024-10-03T10:30:00-04:00",
+     "week_ending": "2024-09-27"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2024-09-30",
+    "hours_utc": [
+     "2024-10-01T22:00:00+00:00",
+     "2024-10-02T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2024-10-03T10:30:00-04:00",
+    "for_next_print": "2024-10-10T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2021-10-02",
+    "publication_et": "2024-10-04T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2024-10-01"
+   },
+   "day": "2024-10-08",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2024-09-29T22:00:00+00:00",
+     "2024-10-08T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2024-10-08T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2024-10-06T22:30:00+00:00",
+      "runtime_utc": "2024-10-06T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-07T04:30:00+00:00",
+      "runtime_utc": "2024-10-07T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-07T10:30:00+00:00",
+      "runtime_utc": "2024-10-07T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-07T16:30:00+00:00",
+      "runtime_utc": "2024-10-07T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2024-10-07T22:30:00+00:00",
+      "runtime_utc": "2024-10-07T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-08T04:30:00+00:00",
+      "runtime_utc": "2024-10-08T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-08T10:30:00+00:00",
+      "runtime_utc": "2024-10-08T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-08T16:30:00+00:00",
+      "runtime_utc": "2024-10-08T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2024-10-07T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2024-09-26",
+    "last_prompt_symbol": "NGV24",
+    "sessions_since_prompt_expiry": 8
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2024-10-03T10:30:00-04:00",
+     "week_ending": "2024-09-27"
+    },
+    "next_print": {
+     "release_et": "2024-10-10T10:30:00-04:00",
+     "week_ending": "2024-10-04"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2024-10-06",
+    "hours_utc": [
+     "2024-10-07T22:00:00+00:00",
+     "2024-10-08T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2024-10-03T10:30:00-04:00",
+    "for_next_print": "2024-10-10T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2021-10-02",
+    "publication_et": "2024-10-04T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2024-10-01"
+   },
+   "day": "2024-10-09",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2024-09-30T22:00:00+00:00",
+     "2024-10-09T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2024-10-09T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2024-10-07T22:30:00+00:00",
+      "runtime_utc": "2024-10-07T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-08T04:30:00+00:00",
+      "runtime_utc": "2024-10-08T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-08T10:30:00+00:00",
+      "runtime_utc": "2024-10-08T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-08T16:30:00+00:00",
+      "runtime_utc": "2024-10-08T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2024-10-08T22:30:00+00:00",
+      "runtime_utc": "2024-10-08T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-09T04:30:00+00:00",
+      "runtime_utc": "2024-10-09T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-09T10:30:00+00:00",
+      "runtime_utc": "2024-10-09T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-09T16:30:00+00:00",
+      "runtime_utc": "2024-10-09T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2024-10-08T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2024-09-26",
+    "last_prompt_symbol": "NGV24",
+    "sessions_since_prompt_expiry": 9
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2024-10-03T10:30:00-04:00",
+     "week_ending": "2024-09-27"
+    },
+    "next_print": {
+     "release_et": "2024-10-10T10:30:00-04:00",
+     "week_ending": "2024-10-04"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2024-10-07",
+    "hours_utc": [
+     "2024-10-08T22:00:00+00:00",
+     "2024-10-09T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2024-10-10T10:30:00-04:00",
+    "for_next_print": "2024-10-17T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2021-10-09",
+    "publication_et": "2024-10-11T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2024-10-08"
+   },
+   "day": "2024-10-15",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2024-10-06T22:00:00+00:00",
+     "2024-10-15T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2024-10-15T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2024-10-13T22:30:00+00:00",
+      "runtime_utc": "2024-10-13T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-14T04:30:00+00:00",
+      "runtime_utc": "2024-10-14T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-14T10:30:00+00:00",
+      "runtime_utc": "2024-10-14T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-14T16:30:00+00:00",
+      "runtime_utc": "2024-10-14T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2024-10-14T22:30:00+00:00",
+      "runtime_utc": "2024-10-14T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-15T04:30:00+00:00",
+      "runtime_utc": "2024-10-15T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-15T10:30:00+00:00",
+      "runtime_utc": "2024-10-15T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-15T16:30:00+00:00",
+      "runtime_utc": "2024-10-15T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2024-10-14T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2024-09-26",
+    "last_prompt_symbol": "NGV24",
+    "sessions_since_prompt_expiry": 13
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2024-10-10T10:30:00-04:00",
+     "week_ending": "2024-10-04"
+    },
+    "next_print": {
+     "release_et": "2024-10-17T10:30:00-04:00",
+     "week_ending": "2024-10-11"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2024-10-13",
+    "hours_utc": [
+     "2024-10-14T22:00:00+00:00",
+     "2024-10-15T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2024-10-10T10:30:00-04:00",
+    "for_next_print": "2024-10-17T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2021-10-09",
+    "publication_et": "2024-10-11T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2024-10-08"
+   },
+   "day": "2024-10-16",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2024-10-07T22:00:00+00:00",
+     "2024-10-16T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2024-10-16T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2024-10-14T22:30:00+00:00",
+      "runtime_utc": "2024-10-14T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-15T04:30:00+00:00",
+      "runtime_utc": "2024-10-15T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-15T10:30:00+00:00",
+      "runtime_utc": "2024-10-15T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-15T16:30:00+00:00",
+      "runtime_utc": "2024-10-15T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2024-10-15T22:30:00+00:00",
+      "runtime_utc": "2024-10-15T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-16T04:30:00+00:00",
+      "runtime_utc": "2024-10-16T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-16T10:30:00+00:00",
+      "runtime_utc": "2024-10-16T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2024-10-16T16:30:00+00:00",
+      "runtime_utc": "2024-10-16T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2024-10-15T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2024-09-26",
+    "last_prompt_symbol": "NGV24",
+    "sessions_since_prompt_expiry": 14
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2024-10-10T10:30:00-04:00",
+     "week_ending": "2024-10-04"
+    },
+    "next_print": {
+     "release_et": "2024-10-17T10:30:00-04:00",
+     "week_ending": "2024-10-11"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2024-10-14",
+    "hours_utc": [
+     "2024-10-15T22:00:00+00:00",
+     "2024-10-16T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2025-09-25T10:30:00-04:00",
+    "for_next_print": "2025-10-02T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 3.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2022-09-24",
+    "publication_et": "2025-09-26T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2025-09-23"
+   },
+   "day": "2025-09-30",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2025-09-21T22:00:00+00:00",
+     "2025-09-30T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2025-09-30T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2025-09-28T22:30:00+00:00",
+      "runtime_utc": "2025-09-28T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-09-29T04:30:00+00:00",
+      "runtime_utc": "2025-09-29T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-09-29T10:30:00+00:00",
+      "runtime_utc": "2025-09-29T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-09-29T16:30:00+00:00",
+      "runtime_utc": "2025-09-29T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2025-09-29T22:30:00+00:00",
+      "runtime_utc": "2025-09-29T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-09-30T04:30:00+00:00",
+      "runtime_utc": "2025-09-30T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-09-30T10:30:00+00:00",
+      "runtime_utc": "2025-09-30T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-09-30T16:30:00+00:00",
+      "runtime_utc": "2025-09-30T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2025-09-29T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2025-09-26",
+    "last_prompt_symbol": "NGV25",
+    "sessions_since_prompt_expiry": 2
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2025-09-25T10:30:00-04:00",
+     "week_ending": "2025-09-19"
+    },
+    "next_print": {
+     "release_et": "2025-10-02T10:30:00-04:00",
+     "week_ending": "2025-09-26"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2025-09-28",
+    "hours_utc": [
+     "2025-09-29T22:00:00+00:00",
+     "2025-09-30T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2025-09-25T10:30:00-04:00",
+    "for_next_print": "2025-10-02T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 4.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2022-09-24",
+    "publication_et": "2025-09-26T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2025-09-23"
+   },
+   "day": "2025-10-01",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2025-09-22T22:00:00+00:00",
+     "2025-10-01T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2025-10-01T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2025-09-29T22:30:00+00:00",
+      "runtime_utc": "2025-09-29T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-09-30T04:30:00+00:00",
+      "runtime_utc": "2025-09-30T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-09-30T10:30:00+00:00",
+      "runtime_utc": "2025-09-30T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-09-30T16:30:00+00:00",
+      "runtime_utc": "2025-09-30T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2025-09-30T22:30:00+00:00",
+      "runtime_utc": "2025-09-30T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-01T04:30:00+00:00",
+      "runtime_utc": "2025-10-01T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-01T10:30:00+00:00",
+      "runtime_utc": "2025-10-01T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-01T16:30:00+00:00",
+      "runtime_utc": "2025-10-01T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2025-09-30T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2025-09-26",
+    "last_prompt_symbol": "NGV25",
+    "sessions_since_prompt_expiry": 3
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2025-09-25T10:30:00-04:00",
+     "week_ending": "2025-09-19"
+    },
+    "next_print": {
+     "release_et": "2025-10-02T10:30:00-04:00",
+     "week_ending": "2025-09-26"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2025-09-29",
+    "hours_utc": [
+     "2025-09-30T22:00:00+00:00",
+     "2025-10-01T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2025-10-02T10:30:00-04:00",
+    "for_next_print": "2025-10-09T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 10.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2022-09-24",
+    "publication_et": "2025-09-26T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2025-09-23"
+   },
+   "day": "2025-10-07",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2025-09-28T22:00:00+00:00",
+     "2025-10-07T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2025-10-07T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2025-10-05T22:30:00+00:00",
+      "runtime_utc": "2025-10-05T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-06T04:30:00+00:00",
+      "runtime_utc": "2025-10-06T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-06T10:30:00+00:00",
+      "runtime_utc": "2025-10-06T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-06T16:30:00+00:00",
+      "runtime_utc": "2025-10-06T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2025-10-06T22:30:00+00:00",
+      "runtime_utc": "2025-10-06T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-07T04:30:00+00:00",
+      "runtime_utc": "2025-10-07T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-07T10:30:00+00:00",
+      "runtime_utc": "2025-10-07T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-07T16:30:00+00:00",
+      "runtime_utc": "2025-10-07T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2025-10-06T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2025-09-26",
+    "last_prompt_symbol": "NGV25",
+    "sessions_since_prompt_expiry": 7
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2025-10-02T10:30:00-04:00",
+     "week_ending": "2025-09-26"
+    },
+    "next_print": {
+     "release_et": "2025-10-09T10:30:00-04:00",
+     "week_ending": "2025-10-03"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2025-10-05",
+    "hours_utc": [
+     "2025-10-06T22:00:00+00:00",
+     "2025-10-07T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2025-10-02T10:30:00-04:00",
+    "for_next_print": "2025-10-09T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 11.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2022-09-24",
+    "publication_et": "2025-09-26T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2025-09-23"
+   },
+   "day": "2025-10-08",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2025-09-29T22:00:00+00:00",
+     "2025-10-08T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2025-10-08T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2025-10-06T22:30:00+00:00",
+      "runtime_utc": "2025-10-06T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-07T04:30:00+00:00",
+      "runtime_utc": "2025-10-07T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-07T10:30:00+00:00",
+      "runtime_utc": "2025-10-07T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-07T16:30:00+00:00",
+      "runtime_utc": "2025-10-07T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2025-10-07T22:30:00+00:00",
+      "runtime_utc": "2025-10-07T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-08T04:30:00+00:00",
+      "runtime_utc": "2025-10-08T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-08T10:30:00+00:00",
+      "runtime_utc": "2025-10-08T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-08T16:30:00+00:00",
+      "runtime_utc": "2025-10-08T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2025-10-07T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2025-09-26",
+    "last_prompt_symbol": "NGV25",
+    "sessions_since_prompt_expiry": 8
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2025-10-02T10:30:00-04:00",
+     "week_ending": "2025-09-26"
+    },
+    "next_print": {
+     "release_et": "2025-10-09T10:30:00-04:00",
+     "week_ending": "2025-10-03"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2025-10-06",
+    "hours_utc": [
+     "2025-10-07T22:00:00+00:00",
+     "2025-10-08T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2025-10-09T10:30:00-04:00",
+    "for_next_print": "2025-10-16T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 17.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2022-09-24",
+    "publication_et": "2025-09-26T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2025-09-23"
+   },
+   "day": "2025-10-14",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2025-10-05T22:00:00+00:00",
+     "2025-10-14T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2025-10-14T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2025-10-12T22:30:00+00:00",
+      "runtime_utc": "2025-10-12T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-13T04:30:00+00:00",
+      "runtime_utc": "2025-10-13T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-13T10:30:00+00:00",
+      "runtime_utc": "2025-10-13T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-13T16:30:00+00:00",
+      "runtime_utc": "2025-10-13T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2025-10-13T22:30:00+00:00",
+      "runtime_utc": "2025-10-13T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-14T04:30:00+00:00",
+      "runtime_utc": "2025-10-14T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-14T10:30:00+00:00",
+      "runtime_utc": "2025-10-14T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-14T16:30:00+00:00",
+      "runtime_utc": "2025-10-14T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2025-10-13T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2025-09-26",
+    "last_prompt_symbol": "NGV25",
+    "sessions_since_prompt_expiry": 12
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2025-10-09T10:30:00-04:00",
+     "week_ending": "2025-10-03"
+    },
+    "next_print": {
+     "release_et": "2025-10-16T10:30:00-04:00",
+     "week_ending": "2025-10-10"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2025-10-12",
+    "hours_utc": [
+     "2025-10-13T22:00:00+00:00",
+     "2025-10-14T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2025-10-09T10:30:00-04:00",
+    "for_next_print": "2025-10-16T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 18.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2022-09-24",
+    "publication_et": "2025-09-26T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2025-09-23"
+   },
+   "day": "2025-10-15",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2025-10-06T22:00:00+00:00",
+     "2025-10-15T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2025-10-15T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2025-10-13T22:30:00+00:00",
+      "runtime_utc": "2025-10-13T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-14T04:30:00+00:00",
+      "runtime_utc": "2025-10-14T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-14T10:30:00+00:00",
+      "runtime_utc": "2025-10-14T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-14T16:30:00+00:00",
+      "runtime_utc": "2025-10-14T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2025-10-14T22:30:00+00:00",
+      "runtime_utc": "2025-10-14T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-15T04:30:00+00:00",
+      "runtime_utc": "2025-10-15T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-15T10:30:00+00:00",
+      "runtime_utc": "2025-10-15T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-15T16:30:00+00:00",
+      "runtime_utc": "2025-10-15T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2025-10-14T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2025-09-26",
+    "last_prompt_symbol": "NGV25",
+    "sessions_since_prompt_expiry": 13
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2025-10-09T10:30:00-04:00",
+     "week_ending": "2025-10-03"
+    },
+    "next_print": {
+     "release_et": "2025-10-16T10:30:00-04:00",
+     "week_ending": "2025-10-10"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2025-10-13",
+    "hours_utc": [
+     "2025-10-14T22:00:00+00:00",
+     "2025-10-15T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  },
+  {
+   "consensus": {
+    "for_last_print": "2025-10-16T10:30:00-04:00",
+    "for_next_print": "2025-10-23T10:30:00-04:00"
+   },
+   "cot": {
+    "age_days_at_open": 24.1,
+    "confidence": "derived",
+    "delayed": false,
+    "needs_history_from": "2022-09-24",
+    "publication_et": "2025-09-26T15:30:00-04:00",
+    "published_during_day": [],
+    "report_date": "2025-09-23"
+   },
+   "day": "2025-10-21",
+   "eia930": {
+    "availability": "nominal: an hour is public about one hour after it ends (EIA-930 hourly collection); the API serves the CURRENT revision, not the first-published one",
+    "hours_utc": [
+     "2025-10-12T22:00:00+00:00",
+     "2025-10-21T21:00:00+00:00"
+    ]
+   },
+   "halt_utc": "2025-10-21T21:00:00+00:00",
+   "mos": {
+    "at_open": [
+     {
+      "available_utc": "2025-10-19T22:30:00+00:00",
+      "runtime_utc": "2025-10-19T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-20T04:30:00+00:00",
+      "runtime_utc": "2025-10-20T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-20T10:30:00+00:00",
+      "runtime_utc": "2025-10-20T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-20T16:30:00+00:00",
+      "runtime_utc": "2025-10-20T12:00:00+00:00"
+     }
+    ],
+    "during_day": [
+     {
+      "available_utc": "2025-10-20T22:30:00+00:00",
+      "runtime_utc": "2025-10-20T18:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-21T04:30:00+00:00",
+      "runtime_utc": "2025-10-21T00:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-21T10:30:00+00:00",
+      "runtime_utc": "2025-10-21T06:00:00+00:00"
+     },
+     {
+      "available_utc": "2025-10-21T16:30:00+00:00",
+      "runtime_utc": "2025-10-21T12:00:00+00:00"
+     }
+    ]
+   },
+   "open_utc": "2025-10-20T22:00:00+00:00",
+   "squeeze_watch": {
+    "last_prompt_expiry": "2025-09-26",
+    "last_prompt_symbol": "NGV25",
+    "sessions_since_prompt_expiry": 17
+   },
+   "storage": {
+    "last_print_before_open": {
+     "release_et": "2025-10-16T10:30:00-04:00",
+     "week_ending": "2025-10-10"
+    },
+    "next_print": {
+     "release_et": "2025-10-23T10:30:00-04:00",
+     "week_ending": "2025-10-17"
+    }
+   },
+   "weather_obs": {
+    "gas_day_gw_hdd_known_at_open": "2025-10-19",
+    "hours_utc": [
+     "2025-10-20T22:00:00+00:00",
+     "2025-10-21T21:00:00+00:00"
+    ],
+    "note": "realized gw_hdd of a gas day (America/Chicago) is complete at its end; the gas day that ended before the open is D-2 (D-1 ends at 00:00 CT on D, inside the day)"
+   }
+  }
+ ],
+ "schema": "FRANKIE_DAY_HISTORY_AVAILABILITY_V1",
+ "source": "offline: calendar rules and the feeds' own publication rules; no network"
+}

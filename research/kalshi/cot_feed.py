@@ -162,7 +162,11 @@ STORE_NAME = "ng_cot_{code}.json"
 # Coverage the forecaster needs, plus the prior history the percentile windows
 # need in order to be real rather than truncated. 3y percentile at 2025-01-01
 # requires genuine data back to 2022-01-01; we pull from 2019 for headroom.
-BUILD_YEARS = tuple(range(2019, dt.date.today().year + 1))
+# 2026-09-29 (the experiment's October 2021-2025 days, DAY_SELECTION_20260929.md): a 3y window ending at a
+# late-September 2021 report starts in late September 2018, and MIN_OBS_3Y (140 of ~156) would otherwise let a
+# 2019-start pull serve a percentile off ~143 weeks - a truncated window that passes the count. So the pull
+# starts in 2018; every later value is unchanged (its window lies after 2018 anyway).
+BUILD_YEARS = tuple(range(2018, dt.date.today().year + 1))
 
 REQUIRED_COVERAGE_START = dt.date(2025, 1, 1)
 REQUIRED_COVERAGE_END = dt.date(2026, 3, 1)
