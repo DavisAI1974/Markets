@@ -2,12 +2,16 @@
 
     python launch.py --dataset-key <s3 key from the box extract manifest> --stamp <name> [--max-minutes 150]
     python launch.py --jev --day YYYYMMDD --stamp <name> [--max-minutes 480]      (Jev, the blind outside student)
+    python launch.py --jev --day YYYYMMDD --stamp <name> --report-number N          (his report is JEV REPORT #N)
 
 --jev (Greg, 2026-09-29: "yes, include him"; SPEC-experiment-orchestrator.md, section "Jev"): the Pod serves Jev's
 Qwen3-8B chat only (no CLM learner, no encoder) and runs sit_in.py for one classroom-arm day: it reads the day's
 material slots (clm-sidecar/<stamp>/material/), files his claims, then reads Frankie's code-classroom slots
 (clm-sidecar/<stamp>/frankie/) and writes the comparison, report, transcript and receipt under clm-sidecar/<stamp>/jev/.
-No Granite key and no Granite Pod: Jev never questions Granite.
+No Granite key and no Granite Pod: Jev never questions Granite. After the Pod, jev_report.py writes the day's
+numbered JEV REPORT #N (Greg: "make sure Jev does one per trade day"; one number per trade day, shared with the box's
+CLASSROOM and FRANKIE REPORT #N; --report-number, else the next free number on S3) from the collected files, his words
+verbatim under fixed labels, and prints it in full; it never changes the outcome.
 
 Runpod REST v2 (api.runpod.io, the live openapi spec): GET /v2/catalog/gpus for stock, POST /v2/pods, GET and DELETE
 /v2/pods/{id}. The Pod is always deleted, on success, failure or timeout. Outputs land in S3 under
@@ -132,6 +136,9 @@ def main():
     parser.add_argument('--checkpoint-minutes', type=int, default=30)
     parser.add_argument('--start-minutes', type=int, default=30,
                         help='delete the Pod if it has never started by then (the 150-minute None run, 2026-09-28)')
+    parser.add_argument('--report-number', type=int, default=0,
+                        help='--jev: the trade day\'s report number from the box reports step (CLASSROOM / FRANKIE REPORT '
+                             '#N), so his report is JEV REPORT #N; 0 = the next free number on S3 (jev_report.py)')
     parser.add_argument('--sit-in-pods', default='',
                         help='RETIRED (2026-09-29): Jev no longer questions Granite; a non-empty value is refused')
     args = parser.parse_args()
@@ -236,6 +243,14 @@ def main():
     for item in s3.list_objects_v2(Bucket=BUCKET, Prefix='%s/jev/' % base).get('Contents', []):
         if not item['Key'].endswith('config.json'):
             s3.download_file(BUCKET, item['Key'], str(local / item['Key'].rsplit('/', 1)[1]))
+    if args.jev:
+        # JEV REPORT #N (Greg, 2026-09-29: "make sure Jev does one per trade day"): his files verbatim under fixed labels,
+        # numbered with the day's shared report number; written create-only, printed in full. The sit-in is not touched.
+        try:
+            import jev_report
+            jev_report.publish(s3, BUCKET, args.stamp, args.day, local, outcome, args.report_number or None)
+        except Exception as error:  # noqa: BLE001 (the report never changes the Pod's outcome; its failure is printed)
+            print('JEV REPORT not written: %s: %s' % (type(error).__name__, error), flush=True)
     print('OUTCOME %s; outputs in s3://%s/%s/out/' % (outcome, BUCKET, base), flush=True)
     sys.exit(0 if outcome == 'done' else 1)
 

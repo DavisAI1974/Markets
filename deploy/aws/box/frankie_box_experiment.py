@@ -22,6 +22,14 @@ the committed box script, run as a child with its own inputs, its output kept in
            plus the external section; the arm days one after another in plan order, each carrying the previous arm
            day's work/classroom as PREVIOUS; the run's first arm day carries the latest earlier classroom day on the box,
            or the plan's previous_classroom)
+  reports  frankie_box_experiment_day_reports.sh      (classroom-arm days, after the classroom step is done, reused or
+           refused; Greg, 2026-09-29: "make sure classroom is printing out an analysis after every day has gone through
+           it, and same with Frankie, and have them number their reports"; "There will be (3) #1's and so on"; "Write
+           plain language interpreters to their code. I don't want you making interpretations"): reads the day's
+           classroom outputs and writes CLASSROOM REPORT #N and FRANKIE REPORT #N (one number per trade day, shared with
+           that day's JEV REPORT #N; the jev step's Pod dispatch carries REPORT_NUMBER=N) into
+           /opt/frankie-box/work/experiment-reports/ and the classroom dir, printed in full here and in its log. A report
+           failure is recorded (retried on the next start) and never stops the run
   jev      frankie_box_jev_relay.sh ACTION=material   (classroom-arm days: Jev's material, relayed when the dispatch
            presigned the slots putrange:<jev bucket>/clm-sidecar/<stamp>/material:8; the Jev Pod is its own workflow step
            and cannot be started from the box, so the step records waiting_for_pod with the exact dispatches)
@@ -72,7 +80,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 SCHEMA = 'FRANKIE_EXPERIMENT_RUN_V1'
-STAGES = ('fetch', 'ingest', 'external', 'root', 'teacher', 'classroom', 'jev', 'data', 'search', 'lessons')
+STAGES = ('fetch', 'ingest', 'external', 'root', 'teacher', 'classroom', 'reports', 'jev', 'data', 'search', 'lessons')
 FINISHED = ('done', 'reused', 'skipped')
 HANDED_OFF = 'waiting_for_pod'           # the jev step's end on the box: material relayed, the Pod is its own dispatch
 BOX_ROOT = Path('/opt/frankie-box')
@@ -82,6 +90,8 @@ ROOTS = WORK / 'experiment-roots'
 TEACHER_ROWS = WORK / 'experiment-teacher-rows'
 DATA = WORK / 'experiment-data'
 SEARCH = WORK / 'experiment-search'
+REPORTS = WORK / 'experiment-reports'     # the day reports: CLASSROOM / FRANKIE REPORT #N (one number per trade day)
+REPORTS_SCHEMA = 'FRANKIE_EXPERIMENT_DAY_REPORTS_RECEIPT_V1'
 ROWS_FILE = 'host-dipole-classroom-source.c15.json'
 DAY_EXTERNAL = WORK / 'day-external'
 DAY_FILE, DAY_FILE_RECEIPT = 'day-external.json', 'day-external-receipt.json'
@@ -746,6 +756,60 @@ class Run:
             return self.record('classroom', day, 'refused', reason=r.get('reason'), **fields)
         return self.record('classroom', day, 'failed', reason='no completion.json after the step (its log names why)', **fields)
 
+    # the day reports (Greg, 2026-09-29: "make sure classroom is printing out an analysis after every day has gone through
+    # it, and same with Frankie, and have them number their reports")
+    @staticmethod
+    def reports_receipt(log):
+        """The day reports step's receipt: the last line of its log, or None."""
+        try:
+            lines = [x for x in Path(log).read_text(encoding='utf-8', errors='replace').splitlines() if x.strip()]
+            r = json.loads(lines[-1]) if lines else None
+        except (OSError, ValueError):
+            return None
+        return r if isinstance(r, dict) and r.get('schema') == REPORTS_SCHEMA else None
+
+    def reports(self, e):
+        """CLASSROOM REPORT #N and FRANKIE REPORT #N of an arm day, once its classroom step is done, reused or refused
+        (a refused day is reported too, with the reason). Printed here in full. A failure is recorded (retried on the next
+        start) and never stops the run; no disk-floor check (the reports are a few kilobytes)."""
+        day = e['day']
+        try:
+            if not e['classroom_arm']:
+                return self.record('reports', day, 'skipped', reason='not a classroom-arm day (no classroom ran, so no '
+                                                                     'classroom or Frankie report)')
+            c = self.receipt('classroom', day)
+            if not (c and c['status'] in ('done', 'reused', 'refused')):
+                return self.record('reports', day, 'waiting', reason='the day\'s classroom step is %s (the reports follow '
+                                   'a done, reused or refused classroom)' % ((c or {}).get('status') or 'not run'))
+            classroom = c.get('classroom')
+            if not classroom:                    # refused before the classroom step named its directory (e.g. no digest)
+                root = self.receipt('root', day) or {}
+                classroom = str(Path(root['calculations']) / 'work' / 'classroom') if root.get('calculations') else None
+            if not classroom:
+                return self.record('reports', day, 'failed', reason='neither the classroom step nor the root step names '
+                                                                    'the day\'s classroom directory')
+            env = dict(DAY=day, CLASSROOM=classroom, RUN=self.plan['run'], REPORTS_DIR=REPORTS, DAY_CLASS=e['cls'])
+            if c['status'] == 'refused' and c.get('reason'):
+                env['REFUSED_REASON'] = c['reason']      # used only when the classroom wrote no receipt of its own
+            code, log = self.child('reports', day, 'frankie_box_experiment_day_reports.sh', env)
+            r = self.reports_receipt(log)
+            for item in (r or {}).get('reports') or []:
+                try:
+                    self.log(Path(item['file']).read_text(encoding='utf-8', errors='replace'))
+                except OSError as error:
+                    self.log('reports %s: %s could not be read back (%s)' % (day, item.get('file'), error))
+            fields = dict(exit_code=code, log=log, classroom=classroom, classroom_status=c['status'],
+                          report_number=(r or {}).get('report_number'),
+                          reports=[{k: item.get(k) for k in ('kind', 'number', 'revision', 'file', 'sha256', 'existing')}
+                                   for item in (r or {}).get('reports') or []],
+                          problems=(r or {}).get('problems'))
+            if code == 0 and r:
+                return self.record('reports', day, 'done', **fields)
+            return self.record('reports', day, 'failed', reason='the report step exited %d%s (its log names why)' % (
+                code, '' if r else ' without a receipt'), **fields)
+        except Exception as error:        # a report failure never stops the run: recorded, retried on the next start
+            return self.record('reports', day, 'failed', reason='%s: %s' % (type(error).__name__, error))
+
     def jev(self, e):
         day = e['day']
         if not e['classroom_arm']:
@@ -762,7 +826,9 @@ class Run:
         relay = ('frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_relay.sh variables="ACTION=material STAMP=%s '
                  'DAY=%s DAY_ROLE=discovery MATERIAL=%s" presign="putrange:%s/clm-sidecar/%s/material:8"'
                  % (stamp, day, material, JEV_BUCKET, stamp))
-        pod = 'frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_pod.sh variables="STAMP=%s DAY=%s"' % (stamp, day)
+        number = (self.receipt('reports', day) or {}).get('report_number')     # his report is JEV REPORT #N of the day
+        pod = 'frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_pod.sh variables="STAMP=%s DAY=%s%s"' % (
+            stamp, day, ' REPORT_NUMBER=%d' % number if isinstance(number, int) else '')
         after = ('frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_relay.sh variables="ACTION=frankie STAMP=%s '
                  'DAY=%s SESSION=%s" presign="putrange:%s/clm-sidecar/%s/frankie:8" (after his claims are filed)'
                  % (stamp, day, calc, JEV_BUCKET, stamp))
@@ -959,8 +1025,8 @@ class Run:
             if 'teacher' in stages and not self.finished('teacher', key):
                 self.teacher(key, entries)
             # the classroom arm: the arm days one after another in plan order (each carries the previous arm day's
-            # history), then Jev's material; the other days record skipped
-            for stage in ('classroom', 'jev'):
+            # history), then the day reports, then Jev's material; the other days record skipped
+            for stage in ('classroom', 'reports', 'jev'):
                 if stage in stages and not self.stopped:
                     for e in entries:
                         if not self.stopped and not self.finished(stage, e['day']):

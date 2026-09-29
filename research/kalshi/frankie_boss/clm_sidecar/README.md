@@ -74,14 +74,20 @@ path is retired: Frankie is code, Granite is only the full run's B2 critic, and 
   1. Material, box side, after the day's classroom package exists: `frankie_box_jev_relay.sh ACTION=material STAMP=<s>
      DAY=YYYYMMDD DAY_ROLE=discovery MATERIAL=<request or package JSON> [SURVIVORS=<survivor list JSON>]` with
      `presign=putrange:frankie-granite42-568968024170-us-east-1/clm-sidecar/<s>/material:8`.
-  2. Jev's Pod, runner side: `frankie_box_jev_pod.sh STAMP=<s> DAY=YYYYMMDD [MAX_MINUTES=480] [WAIT_MINUTES=360]`
-     (`launch.py --jev`; the Pod is always deleted).
+  2. Jev's Pod, runner side: `frankie_box_jev_pod.sh STAMP=<s> DAY=YYYYMMDD [MAX_MINUTES=480] [WAIT_MINUTES=360]
+     [REPORT_NUMBER=N]` (`launch.py --jev`; the Pod is always deleted). REPORT_NUMBER is the trade day's number from
+     the box reports step (CLASSROOM / FRANKIE REPORT #N; the orchestrator's jev step prints it in the Pod dispatch),
+     so his report is JEV REPORT #N (`jev_report.py`; without it the next free number on S3).
   3. Frankie's outputs, box side, after his classroom receipt exists: `frankie_box_jev_relay.sh ACTION=frankie
      STAMP=<s> DAY=YYYYMMDD SESSION=<session root>` with
      `presign=putrange:frankie-granite42-568968024170-us-east-1/clm-sidecar/<s>/frankie:8`.
   4. Read: `frankie_box_jev_reports.sh` with `presign=getprefix:frankie-granite42-568968024170-us-east-1/clm-sidecar/<s>/`.
 - **Outputs:** `clm-sidecar/<s>/jev/claims.json`, `comparison.json`, `report.md`, `transcript.jsonl.gz`, `receipt.json`
-  (granite_calls 0, Jev's model calls counted).
+  (granite_calls 0, Jev's model calls counted), and `jev-report-NNNN.md`: JEV REPORT #N (Greg, 2026-09-29: "make sure
+  Jev does one per trade day"; "Write plain language interpreters to their code"), written on the runner by
+  `jev_report.py` after the Pod: his claims, comparison and report verbatim under fixed labels, one number per trade day
+  shared with that day's CLASSROOM and FRANKIE REPORT (numbers claimed create-only under
+  `clm-sidecar/jev-reports/numbers/`), never overwritten, printed in full in the job log and the step summary.
 - **His brain:** `clm-sidecar/jev-brain/entries/<day>-<s>.json` (his claims whole, written at the end of his day) and
   `clm-sidecar/jev-brain/lessons/<day>-<s>.json` (the scientific teacher's test results on those claims, written by the
   search). Both are read whole on his next day as YOUR BRAIN. Never Frankie's answers or the comparison.
