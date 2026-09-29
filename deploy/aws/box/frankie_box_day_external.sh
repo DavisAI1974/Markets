@@ -4,7 +4,8 @@
 # and attaches them: hard links beside the day's sealed ingest, the S3 day key through presigned PUT slots, a listed
 # attachment in the brain (<BRAIN>/<day>-external/). ACTION=link attaches an existing RUN again (after an ingest seals).
 # Inputs: CODE_ROOT (a checkout whose HEAD is MARKETS_SHA: /opt/frankie-box/code/* or /opt/frankie-box/ingest-code/*),
-# DAYS (comma list YYYYMMDD), RUN (fresh for build), HISTORY_RUN (the day_history GitHub run id), MAP_URL (build:
+# DAYS (comma list YYYYMMDD), RUN (fresh for build), HISTORY_RUN (the day_history GitHub run id), EIA930_HISTORY_RUN
+# (optional: a second day_history run id the eia930 family is read from), MAP_URL (build:
 # frankie_box_run.yml presign), BRAIN (optional, under /opt/frankie-box), WORKERS (default 2, days side by side).
 # No ingest, no journal or receipt of the ingest edited, no pinned file touched, no model call; the box writes nothing to
 # S3 except through the presigned slots it is handed. SSM runs this under sh: POSIX only.
@@ -18,6 +19,8 @@ case "$CODE_ROOT$RUN$DAYS$BRAIN" in *..*) echo "no .. in CODE_ROOT, RUN, DAYS or
 case "$RUN" in *[!A-Za-z0-9_-]*) echo "RUN must be [A-Za-z0-9_-]" >&2; exit 2;; esac
 case "$DAYS" in *[!0-9,]*) echo "DAYS must be YYYYMMDD values separated by commas" >&2; exit 2;; esac
 case "$HISTORY_RUN" in ""|*[!0-9]*) echo "HISTORY_RUN must be the numeric GitHub run id" >&2; exit 2;; esac
+EIA930_HISTORY_RUN="${EIA930_HISTORY_RUN:-}"
+case "$EIA930_HISTORY_RUN" in *[!0-9]*) echo "EIA930_HISTORY_RUN must be the numeric GitHub run id" >&2; exit 2;; esac
 case "$WORKERS" in ""|*[!0-9]*) echo "WORKERS must be an integer" >&2; exit 2;; esac
 case "$BRAIN" in ""|/opt/frankie-box/*) ;; *) echo "BRAIN must be under /opt/frankie-box" >&2; exit 2;; esac
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "CODE_ROOT differs from MARKETS_SHA" >&2; exit 2; }
@@ -35,5 +38,6 @@ export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT:$CODE
 set -- --action "$ACTION" --code-root "$CODE_ROOT" --markets-sha "$MARKETS_SHA" --days "$DAYS" --run "$RUN" \
   --history-run "$HISTORY_RUN" --workers "$WORKERS"
 [ -z "$MAPF" ] || set -- "$@" --map "$MAPF"
+[ -z "$EIA930_HISTORY_RUN" ] || set -- "$@" --eia930-history-run "$EIA930_HISTORY_RUN"
 [ -z "$BRAIN" ] || set -- "$@" --brain "$BRAIN"
 nice -n 10 /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_day_external.py" "$@"

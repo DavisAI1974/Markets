@@ -101,16 +101,20 @@ def sha256_bytes(raw):
 # ------------------------------------------------------------------------------------------------ the builder pieces
 
 class Build:
-    def __init__(self, src, history_prefix, day):
+    def __init__(self, src, history_prefix, day, eia930_prefix=None):
         self.src, self.hp, self.day = Path(src), history_prefix.strip('/'), day
+        # the EIA-930 family may come from a second day_history run (an eia930-only re-fetch with the real key, Greg
+        # 2026-09-29); both prefixes are recorded in the day file, both manifests check the objects read
+        self.eia_hp = (eia930_prefix or history_prefix).strip('/')
         self.open, self.halt = session(day)
         self.open_ns, self.halt_ns = ns(self.open), ns(self.halt)
         self.date = dt.date(int(day[:4]), int(day[4:6]), int(day[6:]))
         self.points, self.missing, self.inputs = {}, [], []
         self.manifest = {}
-        m = self.src / self.hp / 'manifest.json'
-        if m.is_file():
-            self.manifest = {e['key']: e for e in json.loads(m.read_bytes())}
+        for prefix in dict.fromkeys((self.hp, self.eia_hp)):
+            m = self.src / prefix / 'manifest.json'
+            if m.is_file():
+                self.manifest.update({e['key']: e for e in json.loads(m.read_bytes())})
 
     def read(self, key, binary=False):
         """A local copy of an S3 object, its sha256 checked against the day-history manifest when it names it."""
@@ -361,9 +365,9 @@ class Build:
 
     # 5, 7
     def eia930(self):
-        base = self.src / self.hp / 'eia930' / self.date.isoformat()
+        base = self.src / self.eia_hp / 'eia930' / self.date.isoformat()
         if not base.is_dir():
-            return self.lack('eia930', 'no EIA-930 hourly files for the day under the day-history run')
+            return self.lack('eia930', 'no EIA-930 hourly files for the day under the day-history run %s' % self.eia_hp)
         rows, us48 = [], {}
         for path in sorted(base.glob('*.json')):
             route, ba = path.stem.rsplit('_', 1)
@@ -541,8 +545,29 @@ class Build:
         self.lack('squeeze_watch.calendar_front_next_spread_chg_3d', 'needs the settlements of three prior sessions; the '
                   'pull holds the two UTC partitions of the day (the spread itself is in curve.settled_shape)')
 
+    # every gap the fetch recorded that touches the day: listed as missing with the fetch's own reason (Greg: no data
+    # dropped, missing is LISTED, the day is never skipped)
+    FAMILIES = ('calendar', 'cot', 'storage', 'consensus', 'weather_obs', 'mos', 'eia930')
+
+    def source_gaps(self):
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from fetch_day_history import storage_prints_around
+        prints = {p['release_et'][:10] for p in storage_prints_around(self.date)}
+        months = {(self.date - dt.timedelta(days=k)).strftime('%Y-%m') for k in range(0, 12)}
+        touching = {self.date.isoformat(), 'all', str(self.date.year)} | prints | months
+        for fam in self.FAMILIES:
+            prefix = self.eia_hp if fam == 'eia930' else self.hp
+            key = f'{prefix}/{fam}/receipt.json'
+            if not (self.src / key).is_file():
+                self.lack(fam + '.fetch', 'no %s receipt under %s (the family was not fetched in that run)' % (fam, prefix))
+                continue
+            for g in self.read(key).get('gaps') or []:
+                if str(g.get('day')) in touching:
+                    self.lack(fam + '.fetch_gap', '%s (fetch gap keyed %s in %s)' % (g.get('reason'), g.get('day'), prefix))
+
     def run(self, with_curve=True, src_curve=None):
-        for piece in (self.calendar, self.cot, self.storage, self.estimate, self.weather, self.mos, self.eia930):
+        for piece in (self.calendar, self.cot, self.storage, self.estimate, self.weather, self.mos, self.eia930,
+                      self.source_gaps):
             try:
                 piece()
             except StagingRefused:
@@ -560,7 +585,7 @@ class Build:
             self.lack('curve', 'not built in this run (--no-curve)')
         body = dict(schema=SCHEMA, trading_day=self.day, open_utc=self.open.isoformat(), halt_utc=self.halt.isoformat(),
                     open_ns=self.open_ns, halt_ns=self.halt_ns, built_utc=dt.datetime.now(UTC).isoformat(),
-                    history_prefix=self.hp, inputs=self.inputs, points=self.points, missing=self.missing,
+                    history_prefix=self.hp, eia930_history_prefix=self.eia_hp, inputs=self.inputs, points=self.points, missing=self.missing,
                     guard='time only: every row carries published_ns < halt_ns; read through AsOfReader')
         check_day_file(body)
         return body
@@ -700,6 +725,7 @@ def main():
     b = sub.add_parser('build')
     b.add_argument('--src', required=True, help='local mirror of the S3 keys')
     b.add_argument('--history-prefix', required=True, help='frankie/day_history/<run>')
+    b.add_argument('--eia930-history-prefix', help='frankie/day_history/<run> of the eia930 family (default --history-prefix)')
     b.add_argument('--curve-dir', help='default <src>/nymex/ng_fut_parent_v0')
     b.add_argument('--day', required=True)
     b.add_argument('--out', required=True)
@@ -714,7 +740,7 @@ def main():
     if not (len(a.day) == 8 and a.day.isdigit()):
         raise SystemExit('--day YYYYMMDD required')
     t0 = time.time()
-    body = Build(a.src, a.history_prefix, a.day).run(with_curve=not a.no_curve, src_curve=a.curve_dir)
+    body = Build(a.src, a.history_prefix, a.day, a.eia930_history_prefix).run(with_curve=not a.no_curve, src_curve=a.curve_dir)
     raw = json.dumps(body, separators=(',', ':'), sort_keys=True).encode()
     with open(a.out, 'xb') as f:
         f.write(raw)

@@ -8,7 +8,8 @@
 # midweek | thursday | friday), CLASSROOM_ARM (comma list), FROZEN_SURVIVORS (confirmation days only), HISTORICAL_CLAIMS
 # (repo-relative committed file), STAGES (comma list),
 # LAGS, TRANSFORMS, INGEST_WORKERS (31), DATA_WORKERS (1), SEARCH_WORKERS (8), TEACHER_CPUS (0 = every core), PARALLEL_DAYS (4), DISK_FLOOR_GB (100),
-# EXTERNAL_HISTORY_RUN (the day_history run id the day files are built from), EXTERNAL_WAIT (on|off), BRAIN,
+# EXTERNAL_HISTORY_RUN (the day_history run id the day files are built from), EXTERNAL_HISTORY_EIA930_RUN (optional
+# second run id for the eia930 family), EXTERNAL_WAIT (on|off), BRAIN,
 # PREVIOUS_CLASSROOM (the run's first arm day), MAP_URL (the dispatch's presigned map: the partitions for fetch, the
 # day history and curve prefixes and the day-file slots for external, Jev's material slots for jev; ACTION=plan prints
 # the whole presign string). A probe: frankie_box_progress.sh
@@ -31,6 +32,8 @@ set -- --action "$ACTION" --run "$RUN" --commit "$MARKETS_SHA" --code-root "$COD
 [ -z "${TRANSFORMS:-}" ] || set -- "$@" --transforms "$TRANSFORMS"
 case "${EXTERNAL_HISTORY_RUN:-}" in ""|*[!0-9]*) [ -z "${EXTERNAL_HISTORY_RUN:-}" ] || { echo "EXTERNAL_HISTORY_RUN must be the numeric run id" >&2; exit 2; };; esac
 [ -z "${EXTERNAL_HISTORY_RUN:-}" ] || set -- "$@" --external-history-run "$EXTERNAL_HISTORY_RUN"
+case "${EXTERNAL_HISTORY_EIA930_RUN:-}" in *[!0-9]*) echo "EXTERNAL_HISTORY_EIA930_RUN must be the numeric run id" >&2; exit 2;; esac
+[ -z "${EXTERNAL_HISTORY_EIA930_RUN:-}" ] || set -- "$@" --external-eia930-history-run "$EXTERNAL_HISTORY_EIA930_RUN"
 case "${EXTERNAL_WAIT:-on}" in on|off) ;; *) echo "EXTERNAL_WAIT must be on or off" >&2; exit 2;; esac
 set -- "$@" --external-wait "${EXTERNAL_WAIT:-on}" --brain "${BRAIN:-/opt/frankie-box/brain}"
 case "${BRAIN:-/opt/frankie-box/brain}${PREVIOUS_CLASSROOM:-}" in *..*) echo "no .. in BRAIN or PREVIOUS_CLASSROOM" >&2; exit 2;; esac

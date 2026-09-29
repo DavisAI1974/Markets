@@ -57,18 +57,27 @@ def ymd(day):
     return dt.date(int(day[:4]), int(day[4:6]), int(day[6:]))
 
 
-def wanted_keys(day, keys, history_prefix, prints):
-    """The keys of the map one trading day needs."""
+def wanted_keys(day, keys, history_prefix, prints, eia930_prefix=None):
+    """The keys of the map one trading day needs. With eia930_prefix (a second day_history run), the eia930 family is
+    taken from that run only (its manifest, its receipt, the day's files) and not from history_prefix."""
     d = ymd(day)
+    split = bool(eia930_prefix) and eia930_prefix != history_prefix
     months = {(d - dt.timedelta(days=k)).strftime('%Y%m') for k in range(0, 12)}
     parts = [(d - dt.timedelta(days=1)).strftime('%Y%m%d'), day]
     out = []
     for k in keys:
         if k.startswith('put:'):
             continue
+        if split and k.startswith(eia930_prefix + '/'):
+            rel = k[len(eia930_prefix) + 1:]
+            if rel in ('manifest.json', 'eia930/receipt.json') or rel.startswith('eia930/%s/' % d.isoformat()):
+                out.append(k)
+            continue
         if k.startswith(history_prefix + '/'):
             rel = k[len(history_prefix) + 1:]
             fam = rel.split('/', 1)[0]
+            if split and fam == 'eia930':
+                continue
             name = rel.rsplit('/', 1)[-1]
             if rel in ('manifest.json',) or rel.endswith('/receipt.json') or fam in ('calendar', 'storage'):
                 out.append(k)
@@ -135,7 +144,7 @@ def build_day(job):
     target = run_dir / day
     target.mkdir(parents=True, exist_ok=False)
     t0 = time.time()
-    body = Build(job['src'], job['history_prefix'], day).run(with_curve=True, src_curve=str(Path(job['src']) / CURVE))
+    body = Build(job['src'], job['history_prefix'], day, job.get('eia930_prefix')).run(with_curve=True, src_curve=str(Path(job['src']) / CURVE))
     check_day_file(body)
     raw = json.dumps(body, separators=(',', ':'), sort_keys=True).encode()
     with open(target / FILE, 'xb') as f:
@@ -143,7 +152,8 @@ def build_day(job):
     receipt = dict(schema=RECEIPT_SCHEMA, trading_day=day, file=FILE, bytes=len(raw),
                    sha256=hashlib.sha256(raw).hexdigest(), s3_key=S3_DAY.format(day=day, name=FILE),
                    s3_receipt_key=S3_DAY.format(day=day, name=RECEIPT), markets_sha=job['markets_sha'], run=job['run'],
-                   history_prefix=job['history_prefix'], built_seconds=round(time.time() - t0, 1),
+                   history_prefix=job['history_prefix'], eia930_history_prefix=job.get('eia930_prefix') or job['history_prefix'],
+                   built_seconds=round(time.time() - t0, 1),
                    points={k: len(v['rows']) for k, v in body['points'].items()}, missing=body['missing'],
                    inputs=body['inputs'], curve_verification=job['curve_verification'],
                    reader='research/kalshi/frankie_boss/operations/frankie_day_external.py AsOfReader',
@@ -155,7 +165,12 @@ def build_day(job):
 
 def sealed_ingests(day):
     found = []
-    for r in sorted(glob.glob(str(WORK / ('ingest-%s-ingest-*' % day) / 'ingestion-receipt.json'))):
+    # the box's own ingests (ingest-<day>-ingest-*) and the GitHub-runner ingests pulled onto the box
+    # (ingest-<day>-gh-*); a pulled directory counts once it carries completion.json (a partial pull is not sealed)
+    rs = sorted(glob.glob(str(WORK / ('ingest-%s-ingest-*' % day) / 'ingestion-receipt.json')))
+    rs += sorted(r for r in glob.glob(str(WORK / ('ingest-%s-gh-*' % day) / 'ingestion-receipt.json'))
+                 if (Path(r).parent / 'completion.json').is_file())
+    for r in rs:
         try:
             if json.loads(Path(r).read_bytes()).get('trading_day') == day:
                 found.append(Path(r).parent)
@@ -231,6 +246,7 @@ def main():
     p.add_argument('--days', required=True)
     p.add_argument('--run', required=True)
     p.add_argument('--history-run', required=True, help='the day_history GitHub run id (frankie/day_history/<id>)')
+    p.add_argument('--eia930-history-run', default='', help='optional day_history run id the eia930 family is read from')
     p.add_argument('--map', default='')
     p.add_argument('--brain', default='')
     p.add_argument('--workers', type=int, default=2)
@@ -243,8 +259,9 @@ def main():
     url_map = json.loads(Path(a.map).read_bytes()) if a.map else {}
     run_dir = OUT / a.run
     history_prefix = 'frankie/day_history/%s' % a.history_run
+    eia930_prefix = 'frankie/day_history/%s' % (a.eia930_history_run or a.history_run)
     record = dict(schema='FRANKIE_DAY_EXTERNAL_RUN_V1', action=a.action, run=a.run, days=days, markets_sha=a.markets_sha,
-                  history_prefix=history_prefix, at=time.time(), fetch=[], curve=[], built=[], attach=[])
+                  history_prefix=history_prefix, eia930_history_prefix=eia930_prefix, at=time.time(), fetch=[], curve=[], built=[], attach=[])
     if a.action == 'build':
         if run_dir.exists():
             raise SystemExit('%s exists: a build RUN is fresh (ACTION=link reuses one)' % run_dir)
@@ -252,11 +269,12 @@ def main():
         src.mkdir(parents=True)
         for day in days:
             prints = sorted({x['release_et'][:10] for x in storage_prints_around(ymd(day))})
-            keys = wanted_keys(day, url_map, history_prefix, prints)
+            keys = wanted_keys(day, url_map, history_prefix, prints, eia930_prefix)
             print('### %s: %d objects to fetch' % (day, len(keys)), flush=True)
             fetch(keys, url_map, src, record['fetch'])
         curve = verify_curve(src, record['curve'])
-        jobs = [dict(day=d, run_dir=str(run_dir), src=str(src), history_prefix=history_prefix, code_root=a.code_root,
+        jobs = [dict(day=d, run_dir=str(run_dir), src=str(src), history_prefix=history_prefix, eia930_prefix=eia930_prefix,
+                     code_root=a.code_root,
                      markets_sha=a.markets_sha, run=a.run, curve_verification=curve) for d in days]
         with ProcessPoolExecutor(max_workers=max(1, min(a.workers, len(days)))) as pool:
             for r in pool.map(build_day, jobs):

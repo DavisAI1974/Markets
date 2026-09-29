@@ -261,6 +261,8 @@ def load_plan(a, code_root):
                 lags=a.lags, transforms=a.transforms or None, batch=BATCH,
                 external_history_run=a.external_history_run or None, external_wait=a.external_wait != 'off',
                 brain=a.brain, previous_classroom=a.previous_classroom or None, directive=directive_of(code_root))
+    if getattr(a, 'external_eia930_history_run', None):       # only when given: earlier plans keep their digest
+        plan['external_eia930_history_run'] = a.external_eia930_history_run
     return plan, refused
 
 
@@ -394,6 +396,8 @@ def presign_items(plan, code_root):
             items.append('%s/%s/%s' % (m.get('bucket') or S3_BUCKET, prefix, key))
     if plan.get('external_history_run'):
         items.append('getprefix:%s/frankie/day_history/%s/' % (S3_BUCKET, plan['external_history_run']))
+        if plan.get('external_eia930_history_run'):
+            items.append('getprefix:%s/frankie/day_history/%s/' % (S3_BUCKET, plan['external_eia930_history_run']))
         items.append('getprefix:%s/%s/' % (S3_BUCKET, CURVE_PREFIX))
     else:
         items.append('# no EXTERNAL_HISTORY_RUN: the day files cannot be built in this dispatch (the external step waits)')
@@ -630,16 +634,19 @@ class Run:
         return self._map
 
     @staticmethod
-    def history_lacking(day, url_map, history_run):
-        """The keys a day file needs that the map does not hold: the history manifest, the day's EIA-930 files, the
-        curve's definition/statistics/mbo of the day's two UTC partitions. Empty = the history is on S3 and presigned."""
+    def history_lacking(day, url_map, history_run, eia930_run=None):
+        """The keys a day file needs that the map does not hold: the history manifest(s), the day's EIA-930 files (from
+        eia930_run when given, else history_run), the curve's definition/statistics/mbo of the day's two UTC partitions.
+        Empty = the history is on S3 and presigned."""
         hp = 'frankie/day_history/%s' % history_run
+        ep = 'frankie/day_history/%s' % (eia930_run or history_run)
         date = dt.date(int(day[:4]), int(day[4:6]), int(day[6:8]))
         lack = []
-        if hp + '/manifest.json' not in url_map:
-            lack.append(hp + '/manifest.json')
-        if not any(k.startswith('%s/eia930/%s/' % (hp, date.isoformat())) for k in url_map):
-            lack.append('%s/eia930/%s/*' % (hp, date.isoformat()))
+        for prefix in dict.fromkeys((hp, ep)):
+            if prefix + '/manifest.json' not in url_map:
+                lack.append(prefix + '/manifest.json')
+        if not any(k.startswith('%s/eia930/%s/' % (ep, date.isoformat())) for k in url_map):
+            lack.append('%s/eia930/%s/*' % (ep, date.isoformat()))
         for part in ((date - dt.timedelta(days=1)).strftime('%Y%m%d'), day):
             for schema in ('definition', 'statistics', 'mbo'):
                 key = '%s/%s/native/glbx-mdp3-%s.%s.dbn.zst' % (CURVE_PREFIX, schema, part, schema)
@@ -667,13 +674,15 @@ class Run:
         attempts = sorted(DAY_EXTERNAL.glob('%s-ext-%s-a*' % (self.plan['run'], day)))
         built = [a for a in attempts if (a / day / DAY_FILE).is_file()]
         env = dict(DAYS=day, HISTORY_RUN=history, BRAIN=self.plan.get('brain') or str(BRAIN), WORKERS=1)
+        if self.plan.get('external_eia930_history_run'):
+            env['EIA930_HISTORY_RUN'] = self.plan['external_eia930_history_run']
         if built:
             env.update(ACTION='link', RUN=built[-1].name)          # an earlier build of this run: attach it, never rebuild
         else:
             url_map, why = self.url_map()
             if url_map is None:
                 return self.record('external', day, 'waiting', reason=why)
-            lacking = self.history_lacking(day, url_map, history)
+            lacking = self.history_lacking(day, url_map, history, self.plan.get('external_eia930_history_run'))
             if lacking:
                 return self.record('external', day, 'waiting', lacking=lacking,
                                    reason='the day\'s history is not on S3 yet or not presigned (%d keys lacking); the day '
@@ -1130,6 +1139,8 @@ def main():
                    help='days at once for the ingest, external, root and data steps (4 = two Tue/Wed pairs)')
     p.add_argument('--external-history-run', help='the frankie_day_history GitHub run id whose S3 objects the day files '
                                                   'are built from (frankie/day_history/<id>/)')
+    p.add_argument('--external-eia930-history-run', help='optional second day_history run id the eia930 family of the '
+                                                         'day files is read from (both ids recorded in each day file)')
     p.add_argument('--external-wait', choices=('on', 'off'), default='on',
                    help='on: a day\'s root, teacher, classroom, data and search wait for its day file (default)')
     p.add_argument('--brain', default=str(BRAIN), help='Frankie\'s brain (the classroom and day-file entries)')
