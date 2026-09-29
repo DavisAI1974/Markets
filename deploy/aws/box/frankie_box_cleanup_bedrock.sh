@@ -5,6 +5,8 @@
 #                                     table-NNNN.save.json exists
 #   .digest-side-work | .digest-side-<id>   the side builder's bedrock tables
 #   .projection-v2/published-<32 hex> | .projection-v2/member | .projection-v2/lifecycle   projection outputs/archives
+#   @work/bedrock (alone)             the whole <root>/work/bedrock (Greg: "Delete all 818 of bedrock. None of it is
+#                                     needed"); only the open-file and lock refusals apply
 # Refused (nothing removed) when: the root's calculations receipt is not calculations_retained with bedrock tables
 # "retained in the layer files"; any pinned ledger, derive.json, digest or the moved-aside digest is missing or differs
 # in size (derive.json and the digest proof also by sha256); a target is named by any *.json outside work/derived under
@@ -53,6 +55,69 @@ def size(path):
 def free():
     st = os.statvfs(BOX)
     return st.f_bavail * st.f_frsize
+
+# ---- TARGETS=@work/bedrock: the whole bedrock directory (Greg, 2026-09-29: "Delete all 818 of bedrock. None of it is
+# needed"). No retained-copy gate and no reference refusal (his call); still refused on an open file or a locked root.
+# The *.json files naming it are listed in the receipt for the record.
+if targets == ['@work/bedrock']:
+    whole = root / 'work' / 'bedrock'
+    if whole.is_symlink() or not whole.is_dir():
+        raise SystemExit('no bedrock directory: %s' % whole)
+    held = []
+    for proc in Path('/proc').iterdir():
+        if proc.name.isdigit():
+            try:
+                for fd in (proc / 'fd').iterdir():
+                    try:
+                        t = os.readlink(fd)
+                    except OSError:
+                        continue
+                    if t.startswith(str(whole) + '/'):
+                        held.append((int(proc.name), t))
+            except OSError:
+                pass
+    if held:
+        raise SystemExit('files in use, nothing removed: %s' % json.dumps(held[:10]))
+    lock = (root / 'calculation.lock').open('a')
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        raise SystemExit('the calculation root is locked: ROOT is running') from None
+    named = subprocess.run(['grep', '-rlF', '--include=*.json', str(whole), str(BOX / 'work'), str(BOX / 'receipts')],
+                           capture_output=True, text=True).stdout.split()
+    named = [n for n in named if not n.startswith(str(whole) + '/')]
+    parts = sorted(((size(p), p.name) for p in whole.iterdir()), reverse=True)
+    total = sum(s for s, _ in parts)
+    for s, n in parts:
+        print('  %14d  work/bedrock/%s' % (s, n))
+    print(json.dumps(dict(schema='FRANKIE_CLEANUP_BEDROCK_PLAN_V1', mode=mode, target='work/bedrock', target_bytes=total,
+                          named_by=len(named), free_bytes=free()), sort_keys=True))
+    if mode == 'plan':
+        sys.exit(0)
+    before = free()
+    stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
+    keep = BOX / 'receipts' / ('bedrock-whole-%s' % stamp)
+    keep.mkdir(parents=True)
+    saved = 0
+    for base, dirs, files in os.walk(whole):
+        for name in files:
+            f = Path(base) / name
+            if name.endswith('.json') and f.lstat().st_size <= 4 << 20:
+                dest = keep / f.relative_to(root / 'work')
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(f, dest)
+                saved += 1
+    shutil.rmtree(whole)
+    after = free()
+    out = dict(schema='FRANKIE_CLEANUP_BEDROCK_WHOLE_V1', at=stamp, removed=str(whole), removed_bytes=total,
+               parts=[dict(name=n, bytes=s) for s, n in parts], named_by=named, json_evidence_copied=saved,
+               evidence_directory=str(keep), why='Greg 2026-09-29: "Delete all 818 of bedrock. None of it is needed"',
+               free_bytes_before=before, free_bytes_after=after, freed_bytes=after - before)
+    with open(keep / 'bedrock-whole-receipt.json', 'x') as f:
+        json.dump(out, f, sort_keys=True, indent=1)
+        f.flush(); os.fsync(f.fileno())
+    print(json.dumps({k: v for k, v in out.items() if k not in ('parts', 'named_by')}, sort_keys=True))
+    sys.exit(0)
 
 # ---- the retained copy (the receipt's own words and pins)
 receipt = json.loads((root / 'calculations-receipt.json').read_bytes())
