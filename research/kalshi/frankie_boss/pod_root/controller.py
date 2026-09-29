@@ -181,7 +181,9 @@ class PodWorker:
             r = c.getresponse()
             data = r.read()
             if r.status not in (200, 409):
-                raise RuntimeError('%s %s -> HTTP %d %s' % (method, path, r.status, data[:300]))
+                # 503 = the Pod's bootstrap failed and serves its own report (failing step + log tail): printed whole
+                raise RuntimeError('%s %s -> HTTP %d %s' % (method, path, r.status,
+                                                            data.decode('utf-8', 'replace') if r.status == 503 else data[:300]))
             return json.loads(data)
         finally:
             c.close()
