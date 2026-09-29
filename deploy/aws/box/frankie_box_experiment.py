@@ -591,6 +591,9 @@ class Run:
         if not self.disk_ok('root'):
             return None
         output = ROOTS / ('%s-%s-a%d' % (self.plan['run'], e['day'], len(attempts) + 1))
+        held = self.claim_root(e, output)          # None = no claim store on the box: exactly as before
+        if held is not None and not held[0]:
+            return self.record('root', e['day'], 'waiting', reason=held[1], claim=held[2])
         env = dict(INGESTION_RECEIPT=ing['receipt'], INGESTION_RECEIPT_SHA256=ing['receipt_sha256'], DAY=e['day'],
                    DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=self.a.data_workers,
                    DIGEST='on' if e['classroom_arm'] else 'off')
@@ -598,13 +601,45 @@ class Run:
             env['FROZEN_SURVIVORS'] = self.plan['frozen_survivors']
         code, log = self.child('root', e['day'], 'frankie_box_experiment_root.sh', env)
         if code != 0 or not (output / 'calculations-receipt.json').is_file():
+            self.claim_end(e, output, None, 'the box ROOT attempt ended without calculations-receipt.json (exit %s)' % code)
             return self.record('root', e['day'], 'failed', exit_code=code, log=log, output_root=str(output),
                                interrupted_attempts=attempts, reason='no calculations-receipt.json (the attempt is kept)')
         calc = json.loads((output / 'calculations-receipt.json').read_bytes())
+        self.claim_end(e, output, sha256_file(output / 'calculations-receipt.json'), None)
         return self.record('root', e['day'], 'done', exit_code=code, log=log, calculations=str(output),
                            receipt_sha256=sha256_file(output / 'calculations-receipt.json'), new_bytes=new_bytes(output),
                            interrupted_attempts=attempts, digest=e['classroom_arm'],
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'))
+
+    # The shared ROOT claim (frankie_box_root_claims.py; SPEC-pod-day-runner.md): the Pods, the worker boxes and this
+    # orchestrator run the ROOT of a day only after claiming it once. Opt-in: while /opt/frankie-box/work/root-claims does
+    # not exist nothing is claimed or checked (the orchestrator behaves exactly as before).
+    def claim_root(self, e, output):
+        """None (no claim store), (True, None, claim) when this box took the claim, or (False, why, holder)."""
+        import frankie_box_root_claims as claims
+        if not claims.active():
+            return None
+        run, day, me = self.plan['run'], e['day'], claims.this_box()
+        ok, doc = claims.claim(run, day, me, output.name, self.commit, by='frankie_box_experiment.py')
+        if not ok and doc and doc.get('where') == me and not doc.get('done') and not claims.root_running(day):
+            # this box's own claim from an orchestrator that stopped (no ROOT of the day runs here): moved aside, retaken
+            claims.release(run, day, 'stale: held by this box and no ROOT of the day runs here', me, expect_where=me)
+            ok, doc = claims.claim(run, day, me, output.name, self.commit, by='frankie_box_experiment.py')
+        if ok:
+            return True, None, doc
+        return False, ('the day is claimed by %s since %s (attempt %s%s): its ROOT runs there and lands under %s; the next '
+                       'start reuses it' % (doc.get('where'), doc.get('started_utc'), doc.get('attempt'),
+                                            ', done' if doc.get('done') else '', ROOTS)), doc
+
+    def claim_end(self, e, output, receipt_sha256, failure):
+        import frankie_box_root_claims as claims
+        if not claims.active():
+            return
+        run, day, me = self.plan['run'], e['day'], claims.this_box()
+        if failure is None:
+            claims.done(run, day, me, output.name, output, receipt_sha256)
+        else:
+            claims.release(run, day, failure, me, expect_where=me, expect_attempt=output.name)
 
     # Frankie's historical data points: the day file beside the sealed ingest
     def ingest_dir(self, e):
