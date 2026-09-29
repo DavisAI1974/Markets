@@ -57,29 +57,40 @@ def ymd(day):
     return dt.date(int(day[:4]), int(day[4:6]), int(day[6:]))
 
 
-def wanted_keys(day, keys, history_prefix, prints, eia930_prefix=None):
-    """The keys of the map one trading day needs. With eia930_prefix (a second day_history run), the eia930 family is
-    taken from that run only (its manifest, its receipt, the day's files) and not from history_prefix."""
+FAMILIES = ('calendar', 'cot', 'storage', 'consensus', 'weather_obs', 'mos', 'eia930')
+
+
+def family_prefixes(history_prefix, eia930_prefix=None, overrides=None):
+    """family -> the day_history prefix it is read from: history_prefix, except eia930 (eia930_prefix) and overrides."""
+    fam = {f: history_prefix for f in FAMILIES}
+    if eia930_prefix:
+        fam['eia930'] = eia930_prefix
+    fam.update({f: v for f, v in (overrides or {}).items() if f in fam and v})
+    return fam
+
+
+def wanted_keys(day, keys, history_prefix, prints, eia930_prefix=None, overrides=None):
+    """The keys of the map one trading day needs. A family taken from another day_history run (eia930_prefix, the
+    overrides) is read from that run only: its files, its receipt, the run's manifest; never from history_prefix."""
     d = ymd(day)
-    split = bool(eia930_prefix) and eia930_prefix != history_prefix
+    fam_of = family_prefixes(history_prefix, eia930_prefix, overrides)
+    prefixes = sorted(set(fam_of.values()) | {history_prefix}, key=len, reverse=True)
     months = {(d - dt.timedelta(days=k)).strftime('%Y%m') for k in range(0, 12)}
     parts = [(d - dt.timedelta(days=1)).strftime('%Y%m%d'), day]
     out = []
     for k in keys:
         if k.startswith('put:'):
             continue
-        if split and k.startswith(eia930_prefix + '/'):
-            rel = k[len(eia930_prefix) + 1:]
-            if rel in ('manifest.json', 'eia930/receipt.json') or rel.startswith('eia930/%s/' % d.isoformat()):
-                out.append(k)
-            continue
-        if k.startswith(history_prefix + '/'):
-            rel = k[len(history_prefix) + 1:]
+        prefix = next((x for x in prefixes if k.startswith(x + '/')), None)
+        if prefix is not None:
+            rel = k[len(prefix) + 1:]
             fam = rel.split('/', 1)[0]
-            if split and fam == 'eia930':
-                continue
             name = rel.rsplit('/', 1)[-1]
-            if rel in ('manifest.json',) or rel.endswith('/receipt.json') or fam in ('calendar', 'storage'):
+            if rel == 'manifest.json':
+                out.append(k)
+            elif fam_of.get(fam) != prefix:
+                continue
+            elif rel.endswith('/receipt.json') or fam in ('calendar', 'storage'):
                 out.append(k)
             elif fam == 'cot' and rel.startswith('cot/store/') and name.endswith('.json'):
                 out.append(k)
@@ -144,7 +155,7 @@ def build_day(job):
     target = run_dir / day
     target.mkdir(parents=True, exist_ok=False)
     t0 = time.time()
-    body = Build(job['src'], job['history_prefix'], day, job.get('eia930_prefix')).run(with_curve=True, src_curve=str(Path(job['src']) / CURVE))
+    body = Build(job['src'], job['history_prefix'], day, job.get('eia930_prefix'), job.get('overrides')).run(with_curve=True, src_curve=str(Path(job['src']) / CURVE))
     check_day_file(body)
     raw = json.dumps(body, separators=(',', ':'), sort_keys=True).encode()
     with open(target / FILE, 'xb') as f:
@@ -153,6 +164,8 @@ def build_day(job):
                    sha256=hashlib.sha256(raw).hexdigest(), s3_key=S3_DAY.format(day=day, name=FILE),
                    s3_receipt_key=S3_DAY.format(day=day, name=RECEIPT), markets_sha=job['markets_sha'], run=job['run'],
                    history_prefix=job['history_prefix'], eia930_history_prefix=job.get('eia930_prefix') or job['history_prefix'],
+                   family_history_prefixes=family_prefixes(job['history_prefix'], job.get('eia930_prefix'),
+                                                           job.get('overrides')),
                    built_seconds=round(time.time() - t0, 1),
                    points={k: len(v['rows']) for k, v in body['points'].items()}, missing=body['missing'],
                    inputs=body['inputs'], curve_verification=job['curve_verification'],
@@ -247,6 +260,7 @@ def main():
     p.add_argument('--run', required=True)
     p.add_argument('--history-run', required=True, help='the day_history GitHub run id (frankie/day_history/<id>)')
     p.add_argument('--eia930-history-run', default='', help='optional day_history run id the eia930 family is read from')
+    p.add_argument('--family-history-runs', default='', help='optional family=<run id>,... read from other day_history runs')
     p.add_argument('--map', default='')
     p.add_argument('--brain', default='')
     p.add_argument('--workers', type=int, default=2)
@@ -260,8 +274,15 @@ def main():
     run_dir = OUT / a.run
     history_prefix = 'frankie/day_history/%s' % a.history_run
     eia930_prefix = 'frankie/day_history/%s' % (a.eia930_history_run or a.history_run)
+    overrides = {}
+    for item in [x for x in a.family_history_runs.split(',') if x]:
+        fam, _, rid = item.partition('=')
+        if fam not in FAMILIES or not rid.isdigit():
+            raise SystemExit('--family-history-runs: family=<numeric run id> with a family of %s' % (FAMILIES,))
+        overrides[fam] = 'frankie/day_history/%s' % rid
     record = dict(schema='FRANKIE_DAY_EXTERNAL_RUN_V1', action=a.action, run=a.run, days=days, markets_sha=a.markets_sha,
-                  history_prefix=history_prefix, eia930_history_prefix=eia930_prefix, at=time.time(), fetch=[], curve=[], built=[], attach=[])
+                  history_prefix=history_prefix, eia930_history_prefix=eia930_prefix,
+                  family_history_prefixes=family_prefixes(history_prefix, eia930_prefix, overrides), at=time.time(), fetch=[], curve=[], built=[], attach=[])
     if a.action == 'build':
         if run_dir.exists():
             raise SystemExit('%s exists: a build RUN is fresh (ACTION=link reuses one)' % run_dir)
@@ -269,12 +290,12 @@ def main():
         src.mkdir(parents=True)
         for day in days:
             prints = sorted({x['release_et'][:10] for x in storage_prints_around(ymd(day))})
-            keys = wanted_keys(day, url_map, history_prefix, prints, eia930_prefix)
+            keys = wanted_keys(day, url_map, history_prefix, prints, eia930_prefix, overrides)
             print('### %s: %d objects to fetch' % (day, len(keys)), flush=True)
             fetch(keys, url_map, src, record['fetch'])
         curve = verify_curve(src, record['curve'])
         jobs = [dict(day=d, run_dir=str(run_dir), src=str(src), history_prefix=history_prefix, eia930_prefix=eia930_prefix,
-                     code_root=a.code_root,
+                     overrides=overrides, code_root=a.code_root,
                      markets_sha=a.markets_sha, run=a.run, curve_verification=curve) for d in days]
         with ProcessPoolExecutor(max_workers=max(1, min(a.workers, len(days)))) as pool:
             for r in pool.map(build_day, jobs):
