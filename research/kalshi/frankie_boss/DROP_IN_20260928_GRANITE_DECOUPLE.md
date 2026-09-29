@@ -9,6 +9,12 @@
 - r10 uses only those roles, so it proceeds on Greg's go.
 - The spec is a draft Greg may still tweak.
 
+**2026-09-29, latest: the scientific teacher and the classroom rules (drafts, Greg's to confirm).** Read
+`SPEC-scientific-teacher.md` and `knowledge/CLASSROOM_RULES_V1.json` (17 rules, each with its source). Three seats, no
+model in any: Frankie (his code, calcs, brain), the BOSS teacher (code), the scientific teacher (the experiment's
+search: every claim tested with its own chance check, counts per cell and day). The two teachers stay tied with
+separate roles. Not in the build plan yet; the tied teachers stay unwired for r10 until the search exists.
+
 **2026-09-29, later: R3 ROLES ON THE R4 POD (Greg). r10 WAITS for the build.** Granite = the C21-C24 shadow critic only,
 served from the R4 Pod, plus one self-assessment of how it performed; Granite has NOTHING to do with the classroom
 (Greg 23:17 ET), which Frankie's code answers; Frankie does the analysis; the principal's reading, merges and writing
