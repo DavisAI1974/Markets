@@ -26,7 +26,7 @@ SCHEMA = 'FRANKIE_BOX_BRAIN_ENTRY_V1'
 # 20211003 Sunday entry on the box) is still read, labelled day unknown. A cycle reads EVERY entry written so far, from
 # every day and every cycle, except its own day+cycle (Greg: the cycles replay the day and restart earlier, so his
 # reasoning may carry later data; only the actual run data ahead of time is walled, and that is the cycle being run).
-ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*')
+ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*', '[0-9]' * 8 + '-lessons')
 
 
 def entry_name(day, cycle):
@@ -39,9 +39,44 @@ def entry_name(day, cycle):
 
 
 def parse_entry_name(name):
-    """(day or None, cycle) of an entry directory name, or None when the name is not an entry."""
+    """(day or None, cycle) of an entry directory name, or None when the name is not an entry. A day's lessons entry
+    (<day>-lessons: the scientific teacher's test results on Frankie's claims) parses as (day, 'lessons')."""
+    lessons = re.fullmatch(r'([0-9]{8})-lessons', name)
+    if lessons:
+        return lessons.group(1), 'lessons'
     match = re.fullmatch(r'(?:([0-9]{8})-)?cycle-([0-9]+)', name)
     return (match.group(1), match.group(2)) if match else None
+
+
+def write_lessons_entry(brain, day, lessons_path):
+    """The scientific teacher's lessons on Frankie's claims of one day (FRANKIE_LESSONS_V1, written by
+    frankie_box_scientific_teacher.py) as the brain entry <brain>/<day>-lessons/ (Greg, 2026-09-29: "his lessons from
+    the teacher while he's learning"). Read by every later cycle like any entry. Test results computed from the data,
+    never a grade or an answer key (R10). A second lessons file for the same day is added beside the first (the manifest
+    lists both); the same bytes twice decline."""
+    brain, source = Path(brain), Path(lessons_path)
+    data = source.read_bytes()
+    value = json.loads(data)
+    if value.get('schema') != 'FRANKIE_LESSONS_V1' or value.get('author') != 'frankie':
+        raise ValueError(f'{source} is not a FRANKIE_LESSONS_V1 of Frankie\'s claims')
+    entry_dir = brain / f'{day}-lessons'
+    manifest_path = entry_dir / 'MANIFEST.json'
+    manifest = json.loads(manifest_path.read_bytes()) if manifest_path.is_file() else dict(
+        schema=SCHEMA, cycle='lessons', day=str(day), entry_kind='teacher_lessons', entries=[], unavailable=[],
+        note="the scientific teacher's test results on Frankie's claims, per day, counts as the finding (R14)")
+    digest = sha256_bytes(data)
+    if any(e.get('sha256') == digest for e in manifest['entries']):
+        raise ValueError(f'these lessons are already in {entry_dir} (duplicate data declines)')
+    name = f'teacher-lessons-{digest[:16]}.json'
+    entry_dir.mkdir(parents=True, exist_ok=True)
+    (entry_dir / name).write_bytes(data)
+    manifest['entries'].append(dict(name=name, bytes=len(data), sha256=digest, source=str(source), include=True,
+                                    kind="the scientific teacher's lessons on Frankie's claims (counts, challenges, untested)"))
+    manifest['at'] = time.time()
+    tmp = entry_dir / 'MANIFEST.json.tmp'
+    tmp.write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    os.replace(tmp, manifest_path)
+    return manifest
 ACCOUNTING_NAME = 'accounting-and-ledgers.md'
 
 
@@ -668,8 +703,9 @@ def entries_before(brain, cycle, day=None):
         except Exception:
             continue
         entry_day, cyc = parsed
-        label = f'{entry_day}-cycle-{cyc}' if entry_day else f'cycle-{cyc} (day not recorded)'
-        found.append(((entry_day or '', int(cyc)), label, manifest, d))
+        label = (f'{entry_day}-lessons' if cyc == 'lessons' else
+                 f'{entry_day}-cycle-{cyc}' if entry_day else f'cycle-{cyc} (day not recorded)')
+        found.append(((entry_day or '', 10 ** 6 if cyc == 'lessons' else int(cyc)), label, manifest, d))
     return [(label, manifest, d) for _, label, manifest, d in sorted(found, key=lambda x: x[0])]
 
 

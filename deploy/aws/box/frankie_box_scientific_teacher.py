@@ -27,8 +27,9 @@ untested / cannot_test_yet, never dropped.
 Writes, per author, one lessons file bound to the exact claims it answers (claims_sha256):
   JEV_LESSONS_V1      -> Jev's brain (clm-sidecar/jev-brain/lessons/<day>-<stamp>.json; uploaded through the presigned
                          slot in MAP_URL when given, since the box writes nothing in S3), read on his next day;
-  FRANKIE_LESSONS_V1  -> kept under /opt/frankie-box/work/experiment-teacher/ for Frankie's brain entry on his next
-                         classroom-arm day. Neither ever carries the other's claims.
+  FRANKIE_LESSONS_V1  -> kept under /opt/frankie-box/work/experiment-teacher/ and filed into Frankie's brain as the entry
+                         <brain>/<day>-lessons/ (frankie_box_brain.write_lessons_entry), read by every later cycle.
+                         Neither ever carries the other's claims.
 """
 import argparse
 import hashlib
@@ -204,7 +205,7 @@ def test(claims_doc, days):
     return results
 
 
-def write(doc, days, results, out_dir, map_url=None, log=print):
+def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/frankie-box/brain'):
     schema = 'JEV_LESSONS_V1' if doc['author'] == 'jev' else 'FRANKIE_LESSONS_V1'
     lessons = dict(schema=schema, author=doc['author'], day=doc['day'], stamp=doc['stamp'], claims_sha256=doc['claims_sha256'],
                    claims_source=doc['source'], written_by='scientific_teacher', at=time.time(),
@@ -230,6 +231,13 @@ def write(doc, days, results, out_dir, map_url=None, log=print):
         request = urllib.request.Request(entries[key]['url'], data=data, method='PUT')
         with urllib.request.urlopen(request, timeout=300) as response:
             log('uploaded to Jev\'s brain: %s HTTP %d' % (key[4:], response.status))
+    if doc['author'] == 'frankie':
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_brain as brain
+        m = brain.write_lessons_entry(brain_dir, doc['day'], path)
+        log('into Frankie\'s brain: %s (%d lessons files for %s)' % (Path(brain_dir) / (doc['day'] + '-lessons'),
+                                                                    len(m['entries']), doc['day']))
     return path
 
 
