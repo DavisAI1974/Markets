@@ -1,0 +1,3842 @@
+{
+ "answered_by": "Frankie's brain (code, no model)",
+ "asked_by": "Greg, 2026-09-29",
+ "brain": {
+  "path": "research/kalshi/knowledge/ng_brain.json",
+  "plays": 90,
+  "sha256": "bf473faef4d5a1b8fc68a214616e6c6163f0db1794ac98818a5401225563da57",
+  "version": "s105.9"
+ },
+ "carried": [
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 24,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.session_b_share"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.session_b_share",
+   "play_ids": [
+    "daytype.eia_preprint_overextension_gate",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.s1void_injection_chain_bleed",
+    "monday.overnight_headfake_into_catchup",
+    "selector.divergence_resolution",
+    "structure.accumulation_arm_turn"
+   ],
+   "play_status": {
+    "DEGENERATE": 3,
+    "PROVISIONAL": 3
+   },
+   "plays": 6,
+   "plays_by_condition": 5,
+   "plays_by_text": 6,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 8,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.big_print_b_share"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.big_print_b_share",
+   "play_ids": [
+    "daytype.eia_preprint_overextension_gate",
+    "direction.giveback_exhaustion_boundary",
+    "flow.big_print_bshare_thin_tape_guard",
+    "flow.price_free_absorption_proxy",
+    "structure.accumulation_arm_turn"
+   ],
+   "play_status": {
+    "PROPOSED": 2,
+    "PROVISIONAL": 3
+   },
+   "plays": 5,
+   "plays_by_condition": 5,
+   "plays_by_text": 4,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.bidweek_delivery_month",
+   "play_ids": [
+    "weather.hydro_winter_buffer",
+    "weather.month_tail_gates",
+    "weather.revision_seasonal_sign_map",
+    "weather.winter_heating_size_term"
+   ],
+   "play_status": {
+    "PROVISIONAL": 4
+   },
+   "plays": 4,
+   "plays_by_condition": 4,
+   "plays_by_text": 0,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.days_to_next_eia_release",
+   "play_ids": [
+    "magnitude.catalyst_condition_sort",
+    "magnitude.shoulder_counter_print_damping",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "play_status": {
+    "DEGENERATE": 1,
+    "HYPOTHESIS": 1,
+    "PROVISIONAL": 1
+   },
+   "plays": 3,
+   "plays_by_condition": 3,
+   "plays_by_text": 1,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 27,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.session_signed_flow"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.session_signed_flow",
+   "play_ids": [
+    "flow.price_free_absorption_proxy",
+    "handoff.residual_tilt_field",
+    "monday.catchup_window_tilt_gate",
+    "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell"
+   ],
+   "play_status": {
+    "PROPOSED": 3,
+    "PROVISIONAL": 1
+   },
+   "plays": 4,
+   "plays_by_condition": 2,
+   "plays_by_text": 3,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 3,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.big_prints_n"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.big_prints_n",
+   "play_ids": [
+    "flow.big_print_bshare_thin_tape_guard",
+    "flow.price_free_absorption_proxy"
+   ],
+   "play_status": {
+    "PROPOSED": 2
+   },
+   "plays": 2,
+   "plays_by_condition": 2,
+   "plays_by_text": 1,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.days_to_futures_expiry",
+   "play_ids": [
+    "flow.resting_program_inverts_aggressor_tilt",
+    "magnitude.block_gap_ownership"
+   ],
+   "play_status": {
+    "PROPOSED": 1,
+    "PROVISIONAL": 1
+   },
+   "plays": 2,
+   "plays_by_condition": 2,
+   "plays_by_text": 0,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 2,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.phase_signed_flow[]"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.phase_signed_flow[]",
+   "play_ids": [
+    "magnitude.terminal_impact_coefficient_carry",
+    "structure.failed_rally_tell",
+    "structure.void_precedes_impact_collapse"
+   ],
+   "play_status": {
+    "HYPOTHESIS": 1,
+    "PROPOSED": 2
+   },
+   "plays": 3,
+   "plays_by_condition": 1,
+   "plays_by_text": 2,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 1,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.bcom_roll_day_n",
+   "play_ids": [
+    "flow.resting_program_inverts_aggressor_tilt"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 1,
+   "plays_by_text": 0,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 1,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.gsci_roll_day_n",
+   "play_ids": [
+    "flow.resting_program_inverts_aggressor_tilt"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 1,
+   "plays_by_text": 0,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "dow",
+   "cadence": "derived",
+   "carried_on_experiment_days": true,
+   "declines": 62,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "dow",
+   "play_ids": [
+    "boundary.chain_staleness_gate",
+    "boundary.prior_close_flow_direction_disagreement",
+    "boundary.seam_gap_up_prior_on_worsening_cot",
+    "daytype.covering_giveback_self_limiting",
+    "daytype.eia_print_impulse_arbiter",
+    "daytype.eia_window_reopen_to_print",
+    "daytype.friday_turn_exhaustion_gate",
+    "daytype.monday_weekend_gap",
+    "daytype.storage_thursday_magnitude",
+    "daytype.weekend_crest_friday",
+    "direction.absorption_is_reversal",
+    "direction.book_contrarian",
+    "direction.cross_block_reversion",
+    "direction.flow_nowcast",
+    "direction.giveback_exhaustion_boundary",
+    "exit.recruitment_reversal",
+    "flow.big_print_bshare_thin_tape_guard",
+    "level.giveback_origin_shelf",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "magnitude.positioning_saturation_turn",
+    "magnitude.rally_quality_giveback_rung",
+    "magnitude.s1void_injection_chain_bleed",
+    "magnitude.shoulder_counter_print_damping",
+    "magnitude.shoulder_weather_band_void",
+    "magnitude.unpriced_shot_extension",
+    "magnitude.weekend_chain_drift_day_move",
+    "midweek.giveback_exhaustion_reversal_recognition",
+    "midweek.stretched_extreme_close_giveback",
+    "midweek.young_chain_extension_full_band",
+    "monday.catchup_window_tilt_gate",
+    "monday.overnight_headfake_into_catchup",
+    "monday.seam_chainage_accommodation_gate",
+    "monday.window_deep_book_shakeout",
+    "positioning.covering_self_limiting_cot_wow_gate",
+    "selector.divergence_resolution",
+    "selector.midblock_right_the_ship",
+    "shape.grind_vs_spike",
+    "signal.mos_first_appearance_vs_revision",
+    "structure.accumulation_arm_turn",
+    "structure.chain_polarity_flip",
+    "structure.covering_absorption_directional_tell",
+    "structure.covering_extension_distribution_flip",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed",
+    "tape.squeeze_ignition_flush_conjunction",
+    "tape.squeeze_ratchet_confirm",
+    "timing.catalyst_continuity_frontrun",
+    "timing.subsecond_reversal_exhaustion",
+    "weather.burn_conversion_gate",
+    "weather.revision_seasonal_sign_map",
+    "weekend.carry_realization_flip"
+   ],
+   "play_status": {
+    "DEGENERATE": 8,
+    "HYPOTHESIS": 9,
+    "PROPOSED": 6,
+    "PROVISIONAL": 28,
+    "REFUTED": 1,
+    "STABLE": 1
+   },
+   "plays": 53,
+   "plays_by_condition": 0,
+   "plays_by_text": 53,
+   "upstream_source": "day of week",
+   "whole_block": true
+  },
+  {
+   "block": "note",
+   "cadence": "-",
+   "carried_on_experiment_days": true,
+   "declines": 9,
+   "field_name_shared_with": [
+    "cash_basis.note",
+    "cot.note",
+    "flow_calendar.note",
+    "freeze_risk.note",
+    "frozen_structure_stale.note",
+    "grid_stack.note",
+    "model_disagreement.disagreement[].note",
+    "model_disagreement.note",
+    "model_disagreement.stability.GFS[].note",
+    "model_disagreement.stability.MEX[].note",
+    "model_disagreement.stability.NAM[].note",
+    "ngwu_balance.note",
+    "nuclear_outages.note",
+    "options_surface.note",
+    "solar.note",
+    "squeeze_watch.note",
+    "steo_vintage.note",
+    "storage_consensus.note",
+    "storage_regional.note",
+    "storage_vintage.note",
+    "tape_conditions.l1_book.note",
+    "tape_conditions.note",
+    "tape_conditions.prior_full_session.l1_book.note",
+    "tape_conditions.prior_full_session.note",
+    "vol_regime.note",
+    "weather.note",
+    "weather_forecast.note",
+    "weather_forecast_cycle.note"
+   ],
+   "in_live_list": true,
+   "path": "note",
+   "play_ids": [
+    "boundary.seam_gap_up_prior_on_worsening_cot",
+    "daytype.eia_preprint_overextension_gate",
+    "daytype.friday_crest_trim_discriminator",
+    "daytype.storage_thursday_magnitude",
+    "magnitude.crash_regime_bands",
+    "magnitude.s1void_injection_chain_bleed",
+    "magnitude.shoulder_counter_print_damping",
+    "structure.chain_polarity_flip",
+    "structure.covering_extension_distribution_flip",
+    "structure.failed_rally_tell",
+    "tape.squeeze_ratchet_confirm"
+   ],
+   "play_status": {
+    "DEGENERATE": 3,
+    "HYPOTHESIS": 2,
+    "PROVISIONAL": 6
+   },
+   "plays": 11,
+   "plays_by_condition": 0,
+   "plays_by_text": 11,
+   "upstream_source": "free-text annotation, not a quantity",
+   "whole_block": true
+  },
+  {
+   "block": "holiday",
+   "cadence": "static, 194d runway",
+   "carried_on_experiment_days": true,
+   "declines": 3,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "holiday",
+   "play_ids": [
+    "boundary.seam_gap_up_prior_on_worsening_cot",
+    "boundary.weekend_gap_wide_band_emission",
+    "daytype.friday_turn_exhaustion_gate",
+    "daytype.monday_weekend_gap",
+    "magnitude.block_gap_ownership",
+    "magnitude.catalyst_condition_sort",
+    "monday.catchup_window_tilt_gate",
+    "monday.window_deep_book_shakeout",
+    "weekend.seam_delta_requires_level_difference"
+   ],
+   "play_status": {
+    "HYPOTHESIS": 1,
+    "PROPOSED": 2,
+    "PROVISIONAL": 6
+   },
+   "plays": 9,
+   "plays_by_condition": 0,
+   "plays_by_text": 9,
+   "upstream_source": "CME holiday table - HARDCODED, ends 2027-02-15 (A-14)",
+   "whole_block": true
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 24,
+   "field_name_shared_with": [
+    "tape_conditions.session_b_share"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.prior_full_session.session_b_share",
+   "play_ids": [
+    "daytype.eia_preprint_overextension_gate",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.s1void_injection_chain_bleed",
+    "monday.overnight_headfake_into_catchup",
+    "selector.divergence_resolution",
+    "structure.accumulation_arm_turn"
+   ],
+   "play_status": {
+    "DEGENERATE": 3,
+    "PROVISIONAL": 3
+   },
+   "plays": 6,
+   "plays_by_condition": 0,
+   "plays_by_text": 6,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 8,
+   "field_name_shared_with": [
+    "tape_conditions.big_print_b_share"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.prior_full_session.big_print_b_share",
+   "play_ids": [
+    "daytype.eia_preprint_overextension_gate",
+    "flow.big_print_bshare_thin_tape_guard",
+    "flow.price_free_absorption_proxy",
+    "structure.accumulation_arm_turn"
+   ],
+   "play_status": {
+    "PROPOSED": 2,
+    "PROVISIONAL": 2
+   },
+   "plays": 4,
+   "plays_by_condition": 0,
+   "plays_by_text": 4,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 27,
+   "field_name_shared_with": [
+    "tape_conditions.session_signed_flow"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.prior_full_session.session_signed_flow",
+   "play_ids": [
+    "handoff.residual_tilt_field",
+    "monday.catchup_window_tilt_gate",
+    "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell"
+   ],
+   "play_status": {
+    "PROPOSED": 2,
+    "PROVISIONAL": 1
+   },
+   "plays": 3,
+   "plays_by_condition": 0,
+   "plays_by_text": 3,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 5,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.in_bcom_roll",
+   "play_ids": [
+    "daytype.thin_session_range_invariance",
+    "flow.resting_program_inverts_aggressor_tilt",
+    "handoff.residual_tilt_field"
+   ],
+   "play_status": {
+    "PROPOSED": 3
+   },
+   "plays": 3,
+   "plays_by_condition": 0,
+   "plays_by_text": 3,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 5,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.in_gsci_roll",
+   "play_ids": [
+    "daytype.thin_session_range_invariance",
+    "flow.resting_program_inverts_aggressor_tilt",
+    "handoff.residual_tilt_field"
+   ],
+   "play_status": {
+    "PROPOSED": 3
+   },
+   "plays": 3,
+   "plays_by_condition": 0,
+   "plays_by_text": 3,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 2,
+   "field_name_shared_with": [
+    "tape_conditions.session_b_share_two_sided"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.prior_full_session.session_b_share_two_sided",
+   "play_ids": [
+    "magnitude.s1void_injection_chain_bleed",
+    "monday.overnight_headfake_into_catchup",
+    "structure.accumulation_arm_turn"
+   ],
+   "play_status": {
+    "DEGENERATE": 2,
+    "PROVISIONAL": 1
+   },
+   "plays": 3,
+   "plays_by_condition": 0,
+   "plays_by_text": 3,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 2,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.session_b_share_two_sided"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.session_b_share_two_sided",
+   "play_ids": [
+    "magnitude.s1void_injection_chain_bleed",
+    "monday.overnight_headfake_into_catchup",
+    "structure.accumulation_arm_turn"
+   ],
+   "play_status": {
+    "DEGENERATE": 2,
+    "PROVISIONAL": 1
+   },
+   "plays": 3,
+   "plays_by_condition": 0,
+   "plays_by_text": 3,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 2,
+   "field_name_shared_with": [
+    "tape_conditions.phase_signed_flow[]"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.prior_full_session.phase_signed_flow[]",
+   "play_ids": [
+    "structure.failed_rally_tell",
+    "structure.void_precedes_impact_collapse"
+   ],
+   "play_status": {
+    "HYPOTHESIS": 1,
+    "PROPOSED": 1
+   },
+   "plays": 2,
+   "plays_by_condition": 0,
+   "plays_by_text": 2,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 1,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.is_expiry_day",
+   "play_ids": [
+    "daytype.thin_session_range_invariance",
+    "handoff.residual_tilt_field"
+   ],
+   "play_status": {
+    "PROPOSED": 2
+   },
+   "plays": 2,
+   "plays_by_condition": 0,
+   "plays_by_text": 2,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.is_opex_day",
+   "play_ids": [
+    "daytype.thin_session_range_invariance",
+    "handoff.residual_tilt_field"
+   ],
+   "play_status": {
+    "PROPOSED": 2
+   },
+   "plays": 2,
+   "plays_by_condition": 0,
+   "plays_by_text": 2,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 0,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.session"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.session",
+   "play_ids": [
+    "monday.overnight_headfake_into_catchup",
+    "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell"
+   ],
+   "play_status": {
+    "DEGENERATE": 1,
+    "PROPOSED": 1
+   },
+   "plays": 2,
+   "plays_by_condition": 0,
+   "plays_by_text": 2,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "contract_structure",
+   "cadence": "daily",
+   "carried_on_experiment_days": true,
+   "declines": 21,
+   "field_name_shared_with": [
+    "curve_regime"
+   ],
+   "in_live_list": true,
+   "path": "contract_structure.curve_regime",
+   "play_ids": [
+    "magnitude.positioning_saturation_turn"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "CME definitions + forward curve, calendar-front pair",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 3,
+   "field_name_shared_with": [
+    "tape_conditions.big_prints_n"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.prior_full_session.big_prints_n",
+   "play_ids": [
+    "flow.big_print_bshare_thin_tape_guard"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 2,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.l1_book.quote_bid_share"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.l1_book.quote_bid_share",
+   "play_ids": [
+    "direction.book_contrarian"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 2,
+   "field_name_shared_with": [
+    "tape_conditions.l1_book.quote_bid_share"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.prior_full_session.l1_book.quote_bid_share",
+   "play_ids": [
+    "direction.book_contrarian"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "contract_structure",
+   "cadence": "daily",
+   "carried_on_experiment_days": true,
+   "declines": 0,
+   "field_name_shared_with": [
+    "squeeze_watch.calendar_front_next_spread"
+   ],
+   "in_live_list": true,
+   "path": "contract_structure.calendar_front_next_spread",
+   "play_ids": [
+    "structure.squeeze_unwind"
+   ],
+   "play_status": {
+    "DESCRIPTOR": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "CME definitions + forward curve, calendar-front pair",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.in_bidweek",
+   "play_ids": [
+    "daytype.thin_session_range_invariance"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 23,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.never_masked"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.never_masked",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 23,
+   "field_name_shared_with": [
+    "tape_conditions.never_masked"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.prior_full_session.never_masked",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 21,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.n_trades"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.n_trades",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 21,
+   "field_name_shared_with": [
+    "tape_conditions.n_trades"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.prior_full_session.n_trades",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 3,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.gsci_ng_roll_this_month",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 2,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.bcom_ng_roll_this_month",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 2,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.business_day_of_month",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "contract_structure",
+   "cadence": "daily",
+   "carried_on_experiment_days": true,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cash_basis.vintage_asof",
+    "options_surface.vintage_asof",
+    "squeeze_watch.vintage_asof",
+    "vol_regime.vintage_asof"
+   ],
+   "in_live_list": true,
+   "path": "contract_structure.vintage_asof",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CME definitions + forward curve, calendar-front pair",
+   "whole_block": false
+  },
+  {
+   "block": "flow_calendar",
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "declines": 1,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "flow_calendar.in_bcom_hedge_roll",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 1,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.big_print_b_share_two_sided"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.big_print_b_share_two_sided",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 1,
+   "field_name_shared_with": [
+    "tape_conditions.prior_full_session.phase_volume_lots[]"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.phase_volume_lots[]",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 1,
+   "field_name_shared_with": [
+    "tape_conditions.big_print_b_share_two_sided"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.prior_full_session.big_print_b_share_two_sided",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  },
+  {
+   "block": "tape_conditions",
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "declines": 1,
+   "field_name_shared_with": [
+    "tape_conditions.phase_volume_lots[]"
+   ],
+   "in_live_list": true,
+   "path": "tape_conditions.prior_full_session.phase_volume_lots[]",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
+   "whole_block": false
+  }
+ ],
+ "live_list": {
+  "folded_points": 1275,
+  "path": "research/kalshi/store/data_points.json",
+  "served_points": 1717,
+  "sha256": "61c5b97fce633a8e361fae32fb3d909956e64ea8f4a2dc0461588337884d50e6"
+ },
+ "not_in_live_list": [
+  {
+   "block": "grid_stack",
+   "cadence": null,
+   "carried_on_experiment_days": null,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": false,
+   "path": "grid_stack.bas.US48.gas_share_chg_7d",
+   "play_ids": [
+    "weather.summer_burn_lane_exclusion"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 1,
+   "plays_by_text": 0,
+   "upstream_source": null,
+   "whole_block": false
+  },
+  {
+   "block": "self",
+   "cadence": null,
+   "carried_on_experiment_days": null,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": false,
+   "path": "self.guess_day_move_usd",
+   "play_ids": [
+    "magnitude.emission_ceiling_check"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 1,
+   "plays_by_text": 0,
+   "upstream_source": null,
+   "whole_block": false
+  }
+ ],
+ "order": "plays naming it in a parsed condition, then all plays naming it, then declines on it",
+ "rest_wished": [
+  {
+   "block": "model_disagreement",
+   "cadence": "per cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "model_disagreement.stability.MEX[].d_gw_cdd",
+    "model_disagreement.stability.NAM[].d_gw_cdd",
+    "weather_forecast.run_delta[].d_gw_cdd"
+   ],
+   "in_live_list": true,
+   "path": "model_disagreement.stability.GFS[].d_gw_cdd",
+   "play_ids": [
+    "timing.catalyst_continuity_frontrun",
+    "weather.burn_conversion_gate",
+    "weather.burn_is_demand_arrival_not_direction",
+    "weather.revision_seasonal_sign_map",
+    "weekend.seam_delta_requires_level_difference"
+   ],
+   "play_status": {
+    "HYPOTHESIS": 1,
+    "PROPOSED": 2,
+    "PROVISIONAL": 1,
+    "REFUTED": 1
+   },
+   "plays": 5,
+   "plays_by_condition": 0,
+   "plays_by_text": 5,
+   "upstream_source": "cross-model spread between MOS families",
+   "whole_block": false
+  },
+  {
+   "block": "model_disagreement",
+   "cadence": "per cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "model_disagreement.stability.GFS[].d_gw_cdd",
+    "model_disagreement.stability.NAM[].d_gw_cdd",
+    "weather_forecast.run_delta[].d_gw_cdd"
+   ],
+   "in_live_list": true,
+   "path": "model_disagreement.stability.MEX[].d_gw_cdd",
+   "play_ids": [
+    "timing.catalyst_continuity_frontrun",
+    "weather.burn_conversion_gate",
+    "weather.burn_is_demand_arrival_not_direction",
+    "weather.revision_seasonal_sign_map",
+    "weekend.seam_delta_requires_level_difference"
+   ],
+   "play_status": {
+    "HYPOTHESIS": 1,
+    "PROPOSED": 2,
+    "PROVISIONAL": 1,
+    "REFUTED": 1
+   },
+   "plays": 5,
+   "plays_by_condition": 0,
+   "plays_by_text": 5,
+   "upstream_source": "cross-model spread between MOS families",
+   "whole_block": false
+  },
+  {
+   "block": "model_disagreement",
+   "cadence": "per cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "model_disagreement.stability.GFS[].d_gw_cdd",
+    "model_disagreement.stability.MEX[].d_gw_cdd",
+    "weather_forecast.run_delta[].d_gw_cdd"
+   ],
+   "in_live_list": true,
+   "path": "model_disagreement.stability.NAM[].d_gw_cdd",
+   "play_ids": [
+    "timing.catalyst_continuity_frontrun",
+    "weather.burn_conversion_gate",
+    "weather.burn_is_demand_arrival_not_direction",
+    "weather.revision_seasonal_sign_map",
+    "weekend.seam_delta_requires_level_difference"
+   ],
+   "play_status": {
+    "HYPOTHESIS": 1,
+    "PROPOSED": 2,
+    "PROVISIONAL": 1,
+    "REFUTED": 1
+   },
+   "plays": 5,
+   "plays_by_condition": 0,
+   "plays_by_text": 5,
+   "upstream_source": "cross-model spread between MOS families",
+   "whole_block": false
+  },
+  {
+   "block": "weather_forecast",
+   "cadence": "per model cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "model_disagreement.stability.GFS[].d_gw_cdd",
+    "model_disagreement.stability.MEX[].d_gw_cdd",
+    "model_disagreement.stability.NAM[].d_gw_cdd"
+   ],
+   "in_live_list": true,
+   "path": "weather_forecast.run_delta[].d_gw_cdd",
+   "play_ids": [
+    "timing.catalyst_continuity_frontrun",
+    "weather.burn_conversion_gate",
+    "weather.burn_is_demand_arrival_not_direction",
+    "weather.revision_seasonal_sign_map",
+    "weekend.seam_delta_requires_level_difference"
+   ],
+   "play_status": {
+    "HYPOTHESIS": 1,
+    "PROPOSED": 2,
+    "PROVISIONAL": 1,
+    "REFUTED": 1
+   },
+   "plays": 5,
+   "plays_by_condition": 0,
+   "plays_by_text": 5,
+   "upstream_source": "NWS MOS (GFS/NAM/MEX) via the IEM archive",
+   "whole_block": false
+  },
+  {
+   "block": "weather_forecast",
+   "cadence": "per model cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "weather_forecast.forecast_run_delta_cdd",
+   "play_ids": [
+    "selector.divergence_resolution",
+    "signal.mos_first_appearance_vs_revision",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "play_status": {
+    "DEGENERATE": 1,
+    "HYPOTHESIS": 1,
+    "PROVISIONAL": 1
+   },
+   "plays": 3,
+   "plays_by_condition": 0,
+   "plays_by_text": 3,
+   "upstream_source": "NWS MOS (GFS/NAM/MEX) via the IEM archive",
+   "whole_block": false
+  },
+  {
+   "block": "squeeze_watch",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 3,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "squeeze_watch.calendar_dte_limb_satisfied_live",
+   "play_ids": [
+    "structure.squeeze_unwind",
+    "tape.squeeze_ratchet_confirm"
+   ],
+   "play_status": {
+    "DESCRIPTOR": 1,
+    "PROVISIONAL": 1
+   },
+   "plays": 2,
+   "plays_by_condition": 0,
+   "plays_by_text": 2,
+   "upstream_source": "expiry/OI/positioning conjunction detector",
+   "whole_block": false
+  },
+  {
+   "block": "cash_basis",
+   "cadence": "weekly batches",
+   "carried_on_experiment_days": false,
+   "declines": 21,
+   "field_name_shared_with": [
+    "cot.age_days",
+    "grid_stack.age_days",
+    "ngwu_balance.age_days",
+    "ngwu_balance.latest_sd_levels.age_days",
+    "nuclear_outages.age_days",
+    "steo_vintage.age_days",
+    "storage_vintage.age_days"
+   ],
+   "in_live_list": true,
+   "path": "cash_basis.age_days",
+   "play_ids": [
+    "weather.burn_is_demand_arrival_not_direction"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "Henry Hub cash vs front-futures settle",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 21,
+   "field_name_shared_with": [
+    "cash_basis.age_days",
+    "grid_stack.age_days",
+    "ngwu_balance.age_days",
+    "ngwu_balance.latest_sd_levels.age_days",
+    "nuclear_outages.age_days",
+    "steo_vintage.age_days",
+    "storage_vintage.age_days"
+   ],
+   "in_live_list": true,
+   "path": "cot.age_days",
+   "play_ids": [
+    "weather.burn_is_demand_arrival_not_direction"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 21,
+   "field_name_shared_with": [
+    "cash_basis.age_days",
+    "cot.age_days",
+    "ngwu_balance.age_days",
+    "ngwu_balance.latest_sd_levels.age_days",
+    "nuclear_outages.age_days",
+    "steo_vintage.age_days",
+    "storage_vintage.age_days"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.age_days",
+   "play_ids": [
+    "weather.burn_is_demand_arrival_not_direction"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "ngwu_balance",
+   "cadence": "weekly - DISCONTINUED",
+   "carried_on_experiment_days": false,
+   "declines": 21,
+   "field_name_shared_with": [
+    "cash_basis.age_days",
+    "cot.age_days",
+    "grid_stack.age_days",
+    "ngwu_balance.latest_sd_levels.age_days",
+    "nuclear_outages.age_days",
+    "steo_vintage.age_days",
+    "storage_vintage.age_days"
+   ],
+   "in_live_list": true,
+   "path": "ngwu_balance.age_days",
+   "play_ids": [
+    "weather.burn_is_demand_arrival_not_direction"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA Natural Gas Weekly Update. LIVE RISK: final edition was the week ending 2026-01-21",
+   "whole_block": false
+  },
+  {
+   "block": "ngwu_balance",
+   "cadence": "weekly - DISCONTINUED",
+   "carried_on_experiment_days": false,
+   "declines": 21,
+   "field_name_shared_with": [
+    "cash_basis.age_days",
+    "cot.age_days",
+    "grid_stack.age_days",
+    "ngwu_balance.age_days",
+    "nuclear_outages.age_days",
+    "steo_vintage.age_days",
+    "storage_vintage.age_days"
+   ],
+   "in_live_list": true,
+   "path": "ngwu_balance.latest_sd_levels.age_days",
+   "play_ids": [
+    "weather.burn_is_demand_arrival_not_direction"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA Natural Gas Weekly Update. LIVE RISK: final edition was the week ending 2026-01-21",
+   "whole_block": false
+  },
+  {
+   "block": "nuclear_outages",
+   "cadence": "daily, age 1d",
+   "carried_on_experiment_days": false,
+   "declines": 21,
+   "field_name_shared_with": [
+    "cash_basis.age_days",
+    "cot.age_days",
+    "grid_stack.age_days",
+    "ngwu_balance.age_days",
+    "ngwu_balance.latest_sd_levels.age_days",
+    "steo_vintage.age_days",
+    "storage_vintage.age_days"
+   ],
+   "in_live_list": true,
+   "path": "nuclear_outages.age_days",
+   "play_ids": [
+    "weather.burn_is_demand_arrival_not_direction"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "NRC daily reactor status",
+   "whole_block": false
+  },
+  {
+   "block": "steo_vintage",
+   "cadence": "monthly, 1-34d stale",
+   "carried_on_experiment_days": false,
+   "declines": 21,
+   "field_name_shared_with": [
+    "cash_basis.age_days",
+    "cot.age_days",
+    "grid_stack.age_days",
+    "ngwu_balance.age_days",
+    "ngwu_balance.latest_sd_levels.age_days",
+    "nuclear_outages.age_days",
+    "storage_vintage.age_days"
+   ],
+   "in_live_list": true,
+   "path": "steo_vintage.age_days",
+   "play_ids": [
+    "weather.burn_is_demand_arrival_not_direction"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA STEO monthly archived workbooks - the complete balance as-of release",
+   "whole_block": false
+  },
+  {
+   "block": "storage_vintage",
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "declines": 21,
+   "field_name_shared_with": [
+    "cash_basis.age_days",
+    "cot.age_days",
+    "grid_stack.age_days",
+    "ngwu_balance.age_days",
+    "ngwu_balance.latest_sd_levels.age_days",
+    "nuclear_outages.age_days",
+    "steo_vintage.age_days"
+   ],
+   "in_live_list": true,
+   "path": "storage_vintage.age_days",
+   "play_ids": [
+    "weather.burn_is_demand_arrival_not_direction"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA storage as-of each vintage - the revision process",
+   "whole_block": false
+  },
+  {
+   "block": "squeeze_watch",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 5,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "squeeze_watch.active",
+   "play_ids": [
+    "tape.squeeze_ignition_flush_conjunction"
+   ],
+   "play_status": {
+    "DEGENERATE": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "expiry/OI/positioning conjunction detector",
+   "whole_block": false
+  },
+  {
+   "block": "squeeze_watch",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 5,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "squeeze_watch.unwind_watch",
+   "play_ids": [
+    "structure.squeeze_unwind"
+   ],
+   "play_status": {
+    "DESCRIPTOR": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "expiry/OI/positioning conjunction detector",
+   "whole_block": false
+  },
+  {
+   "block": "firehose_present",
+   "cadence": "per day",
+   "carried_on_experiment_days": false,
+   "declines": 2,
+   "field_name_shared_with": [
+    "tape_conditions.firehose_present.l1_book",
+    "tape_conditions.prior_full_session.firehose_present.l1_book"
+   ],
+   "in_live_list": true,
+   "path": "firehose_present.l1_book",
+   "play_ids": [
+    "monday.window_deep_book_shakeout"
+   ],
+   "play_status": {
+    "HYPOTHESIS": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "whether the MBO firehose reached this day",
+   "whole_block": false
+  },
+  {
+   "block": "storage_consensus",
+   "cadence": "weekly, pre-print",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "storage_consensus.next_print",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "street consensus for the storage print",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "cot.ice.hh_index.managed_money_net_pctile_3y",
+    "cot.ice.ld1.managed_money_net_pctile_3y",
+    "cot.ice.pen.managed_money_net_pctile_3y",
+    "cot.managed_money_net_pctile_3y"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.hh_basis.managed_money_net_pctile_3y",
+   "play_ids": [
+    "boundary.weekend_gap_wide_band_emission"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_pctile_3y",
+    "cot.ice.ld1.managed_money_net_pctile_3y",
+    "cot.ice.pen.managed_money_net_pctile_3y",
+    "cot.managed_money_net_pctile_3y"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.hh_index.managed_money_net_pctile_3y",
+   "play_ids": [
+    "boundary.weekend_gap_wide_band_emission"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_pctile_3y",
+    "cot.ice.hh_index.managed_money_net_pctile_3y",
+    "cot.ice.pen.managed_money_net_pctile_3y",
+    "cot.managed_money_net_pctile_3y"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.ld1.managed_money_net_pctile_3y",
+   "play_ids": [
+    "boundary.weekend_gap_wide_band_emission"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_pctile_3y",
+    "cot.ice.hh_index.managed_money_net_pctile_3y",
+    "cot.ice.ld1.managed_money_net_pctile_3y",
+    "cot.managed_money_net_pctile_3y"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.pen.managed_money_net_pctile_3y",
+   "play_ids": [
+    "boundary.weekend_gap_wide_band_emission"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net",
+    "cot.ice.hh_index.managed_money_net",
+    "cot.ice.ld1.managed_money_net",
+    "cot.ice.pen.managed_money_net"
+   ],
+   "in_live_list": true,
+   "path": "cot.managed_money_net",
+   "play_ids": [
+    "boundary.weekend_gap_wide_band_emission"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.ERCO.gas_share",
+    "grid_stack.bas.MISO.gas_share",
+    "grid_stack.bas.PJM.gas_share",
+    "grid_stack.bas.SOCO.gas_share",
+    "grid_stack.bas.SWPP.gas_share",
+    "grid_stack.bas.US48.gas_share"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.CISO.gas_share",
+   "play_ids": [
+    "weather.summer_burn_lane_exclusion"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.ERCO.solar_mwh",
+    "grid_stack.bas.MISO.solar_mwh",
+    "grid_stack.bas.PJM.solar_mwh",
+    "grid_stack.bas.SOCO.solar_mwh",
+    "grid_stack.bas.SWPP.solar_mwh",
+    "grid_stack.bas.US48.solar_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.CISO.solar_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.ERCO.wind_mwh",
+    "grid_stack.bas.MISO.wind_mwh",
+    "grid_stack.bas.PJM.wind_mwh",
+    "grid_stack.bas.SOCO.wind_mwh",
+    "grid_stack.bas.SWPP.wind_mwh",
+    "grid_stack.bas.US48.wind_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.CISO.wind_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.gas_share",
+    "grid_stack.bas.MISO.gas_share",
+    "grid_stack.bas.PJM.gas_share",
+    "grid_stack.bas.SOCO.gas_share",
+    "grid_stack.bas.SWPP.gas_share",
+    "grid_stack.bas.US48.gas_share"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.ERCO.gas_share",
+   "play_ids": [
+    "weather.summer_burn_lane_exclusion"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.solar_mwh",
+    "grid_stack.bas.MISO.solar_mwh",
+    "grid_stack.bas.PJM.solar_mwh",
+    "grid_stack.bas.SOCO.solar_mwh",
+    "grid_stack.bas.SWPP.solar_mwh",
+    "grid_stack.bas.US48.solar_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.ERCO.solar_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.wind_mwh",
+    "grid_stack.bas.MISO.wind_mwh",
+    "grid_stack.bas.PJM.wind_mwh",
+    "grid_stack.bas.SOCO.wind_mwh",
+    "grid_stack.bas.SWPP.wind_mwh",
+    "grid_stack.bas.US48.wind_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.ERCO.wind_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.gas_share",
+    "grid_stack.bas.ERCO.gas_share",
+    "grid_stack.bas.PJM.gas_share",
+    "grid_stack.bas.SOCO.gas_share",
+    "grid_stack.bas.SWPP.gas_share",
+    "grid_stack.bas.US48.gas_share"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.MISO.gas_share",
+   "play_ids": [
+    "weather.summer_burn_lane_exclusion"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.solar_mwh",
+    "grid_stack.bas.ERCO.solar_mwh",
+    "grid_stack.bas.PJM.solar_mwh",
+    "grid_stack.bas.SOCO.solar_mwh",
+    "grid_stack.bas.SWPP.solar_mwh",
+    "grid_stack.bas.US48.solar_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.MISO.solar_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.wind_mwh",
+    "grid_stack.bas.ERCO.wind_mwh",
+    "grid_stack.bas.PJM.wind_mwh",
+    "grid_stack.bas.SOCO.wind_mwh",
+    "grid_stack.bas.SWPP.wind_mwh",
+    "grid_stack.bas.US48.wind_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.MISO.wind_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.gas_share",
+    "grid_stack.bas.ERCO.gas_share",
+    "grid_stack.bas.MISO.gas_share",
+    "grid_stack.bas.SOCO.gas_share",
+    "grid_stack.bas.SWPP.gas_share",
+    "grid_stack.bas.US48.gas_share"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.PJM.gas_share",
+   "play_ids": [
+    "weather.summer_burn_lane_exclusion"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.solar_mwh",
+    "grid_stack.bas.ERCO.solar_mwh",
+    "grid_stack.bas.MISO.solar_mwh",
+    "grid_stack.bas.SOCO.solar_mwh",
+    "grid_stack.bas.SWPP.solar_mwh",
+    "grid_stack.bas.US48.solar_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.PJM.solar_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.wind_mwh",
+    "grid_stack.bas.ERCO.wind_mwh",
+    "grid_stack.bas.MISO.wind_mwh",
+    "grid_stack.bas.SOCO.wind_mwh",
+    "grid_stack.bas.SWPP.wind_mwh",
+    "grid_stack.bas.US48.wind_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.PJM.wind_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.gas_share",
+    "grid_stack.bas.ERCO.gas_share",
+    "grid_stack.bas.MISO.gas_share",
+    "grid_stack.bas.PJM.gas_share",
+    "grid_stack.bas.SWPP.gas_share",
+    "grid_stack.bas.US48.gas_share"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.SOCO.gas_share",
+   "play_ids": [
+    "weather.summer_burn_lane_exclusion"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.solar_mwh",
+    "grid_stack.bas.ERCO.solar_mwh",
+    "grid_stack.bas.MISO.solar_mwh",
+    "grid_stack.bas.PJM.solar_mwh",
+    "grid_stack.bas.SWPP.solar_mwh",
+    "grid_stack.bas.US48.solar_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.SOCO.solar_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.wind_mwh",
+    "grid_stack.bas.ERCO.wind_mwh",
+    "grid_stack.bas.MISO.wind_mwh",
+    "grid_stack.bas.PJM.wind_mwh",
+    "grid_stack.bas.SWPP.wind_mwh",
+    "grid_stack.bas.US48.wind_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.SOCO.wind_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.gas_share",
+    "grid_stack.bas.ERCO.gas_share",
+    "grid_stack.bas.MISO.gas_share",
+    "grid_stack.bas.PJM.gas_share",
+    "grid_stack.bas.SOCO.gas_share",
+    "grid_stack.bas.US48.gas_share"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.SWPP.gas_share",
+   "play_ids": [
+    "weather.summer_burn_lane_exclusion"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.solar_mwh",
+    "grid_stack.bas.ERCO.solar_mwh",
+    "grid_stack.bas.MISO.solar_mwh",
+    "grid_stack.bas.PJM.solar_mwh",
+    "grid_stack.bas.SOCO.solar_mwh",
+    "grid_stack.bas.US48.solar_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.SWPP.solar_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.wind_mwh",
+    "grid_stack.bas.ERCO.wind_mwh",
+    "grid_stack.bas.MISO.wind_mwh",
+    "grid_stack.bas.PJM.wind_mwh",
+    "grid_stack.bas.SOCO.wind_mwh",
+    "grid_stack.bas.US48.wind_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.SWPP.wind_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.gas_share",
+    "grid_stack.bas.ERCO.gas_share",
+    "grid_stack.bas.MISO.gas_share",
+    "grid_stack.bas.PJM.gas_share",
+    "grid_stack.bas.SOCO.gas_share",
+    "grid_stack.bas.SWPP.gas_share"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.US48.gas_share",
+   "play_ids": [
+    "weather.summer_burn_lane_exclusion"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.solar_mwh",
+    "grid_stack.bas.ERCO.solar_mwh",
+    "grid_stack.bas.MISO.solar_mwh",
+    "grid_stack.bas.PJM.solar_mwh",
+    "grid_stack.bas.SOCO.solar_mwh",
+    "grid_stack.bas.SWPP.solar_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.US48.solar_mwh",
+   "play_ids": [
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "model_disagreement",
+   "cadence": "per cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "model_disagreement.stability.MEX[].d_gw_hdd",
+    "model_disagreement.stability.NAM[].d_gw_hdd",
+    "weather_forecast.run_delta[].d_gw_hdd",
+    "weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[].d_gw_hdd",
+    "weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[].d_gw_hdd"
+   ],
+   "in_live_list": true,
+   "path": "model_disagreement.stability.GFS[].d_gw_hdd",
+   "play_ids": [
+    "weather.revision_seasonal_sign_map"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "cross-model spread between MOS families",
+   "whole_block": false
+  },
+  {
+   "block": "model_disagreement",
+   "cadence": "per cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "model_disagreement.stability.GFS[].d_gw_hdd",
+    "model_disagreement.stability.NAM[].d_gw_hdd",
+    "weather_forecast.run_delta[].d_gw_hdd",
+    "weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[].d_gw_hdd",
+    "weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[].d_gw_hdd"
+   ],
+   "in_live_list": true,
+   "path": "model_disagreement.stability.MEX[].d_gw_hdd",
+   "play_ids": [
+    "weather.revision_seasonal_sign_map"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "cross-model spread between MOS families",
+   "whole_block": false
+  },
+  {
+   "block": "model_disagreement",
+   "cadence": "per cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "model_disagreement.stability.GFS[].d_gw_hdd",
+    "model_disagreement.stability.MEX[].d_gw_hdd",
+    "weather_forecast.run_delta[].d_gw_hdd",
+    "weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[].d_gw_hdd",
+    "weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[].d_gw_hdd"
+   ],
+   "in_live_list": true,
+   "path": "model_disagreement.stability.NAM[].d_gw_hdd",
+   "play_ids": [
+    "weather.revision_seasonal_sign_map"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "cross-model spread between MOS families",
+   "whole_block": false
+  },
+  {
+   "block": "ngwu_balance",
+   "cadence": "weekly - DISCONTINUED",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "ngwu_balance.lng_vessel_capacity_bcf",
+   "play_ids": [
+    "supply.lng_export_throughput_vessel_line"
+   ],
+   "play_status": {
+    "WIRED_UNPROVEN": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA Natural Gas Weekly Update. LIVE RISK: final edition was the week ending 2026-01-21",
+   "whole_block": false
+  },
+  {
+   "block": "ngwu_balance",
+   "cadence": "weekly - DISCONTINUED",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "ngwu_balance.lng_vessels_departed",
+   "play_ids": [
+    "supply.lng_export_throughput_vessel_line"
+   ],
+   "play_status": {
+    "WIRED_UNPROVEN": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA Natural Gas Weekly Update. LIVE RISK: final edition was the week ending 2026-01-21",
+   "whole_block": false
+  },
+  {
+   "block": "squeeze_watch",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "contract_structure.calendar_front_next_spread"
+   ],
+   "in_live_list": true,
+   "path": "squeeze_watch.calendar_front_next_spread",
+   "play_ids": [
+    "structure.squeeze_unwind"
+   ],
+   "play_status": {
+    "DESCRIPTOR": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "expiry/OI/positioning conjunction detector",
+   "whole_block": false
+  },
+  {
+   "block": "storage",
+   "cadence": "weekly Thu 10:30 ET",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage_regional.regions.east.vs_5yr",
+    "storage_regional.regions.l48.vs_5yr",
+    "storage_regional.regions.midwest.vs_5yr",
+    "storage_regional.regions.mountain.vs_5yr",
+    "storage_regional.regions.pacific.vs_5yr",
+    "storage_regional.regions.south_central.vs_5yr",
+    "storage_regional.regions.south_central_nonsalt.vs_5yr",
+    "storage_regional.regions.south_central_salt.vs_5yr"
+   ],
+   "in_live_list": true,
+   "path": "storage.vs_5yr",
+   "play_ids": [
+    "weather.burn_is_demand_arrival_not_direction"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA weekly working gas in storage",
+   "whole_block": false
+  },
+  {
+   "block": "storage",
+   "cadence": "weekly Thu 10:30 ET",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage_regional.regions.east.weekly_chg",
+    "storage_regional.regions.l48.weekly_chg",
+    "storage_regional.regions.midwest.weekly_chg",
+    "storage_regional.regions.mountain.weekly_chg",
+    "storage_regional.regions.pacific.weekly_chg",
+    "storage_regional.regions.south_central.weekly_chg",
+    "storage_regional.regions.south_central_nonsalt.weekly_chg",
+    "storage_regional.regions.south_central_salt.weekly_chg"
+   ],
+   "in_live_list": true,
+   "path": "storage.weekly_chg",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA weekly working gas in storage",
+   "whole_block": false
+  },
+  {
+   "block": "storage_consensus",
+   "cadence": "weekly, pre-print",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage_consensus.next_print.consensus_chg_bcf"
+   ],
+   "in_live_list": true,
+   "path": "storage_consensus.last_print.consensus_chg_bcf",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "street consensus for the storage print",
+   "whole_block": false
+  },
+  {
+   "block": "storage_consensus",
+   "cadence": "weekly, pre-print",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage_consensus.last_print.consensus_chg_bcf"
+   ],
+   "in_live_list": true,
+   "path": "storage_consensus.next_print.consensus_chg_bcf",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "street consensus for the storage print",
+   "whole_block": false
+  },
+  {
+   "block": "storage_regional",
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage.weekly_chg",
+    "storage_regional.regions.l48.weekly_chg",
+    "storage_regional.regions.midwest.weekly_chg",
+    "storage_regional.regions.mountain.weekly_chg",
+    "storage_regional.regions.pacific.weekly_chg",
+    "storage_regional.regions.south_central.weekly_chg",
+    "storage_regional.regions.south_central_nonsalt.weekly_chg",
+    "storage_regional.regions.south_central_salt.weekly_chg"
+   ],
+   "in_live_list": true,
+   "path": "storage_regional.regions.east.weekly_chg",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA regional + salt/non-salt storage",
+   "whole_block": false
+  },
+  {
+   "block": "storage_regional",
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage.weekly_chg",
+    "storage_regional.regions.east.weekly_chg",
+    "storage_regional.regions.midwest.weekly_chg",
+    "storage_regional.regions.mountain.weekly_chg",
+    "storage_regional.regions.pacific.weekly_chg",
+    "storage_regional.regions.south_central.weekly_chg",
+    "storage_regional.regions.south_central_nonsalt.weekly_chg",
+    "storage_regional.regions.south_central_salt.weekly_chg"
+   ],
+   "in_live_list": true,
+   "path": "storage_regional.regions.l48.weekly_chg",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA regional + salt/non-salt storage",
+   "whole_block": false
+  },
+  {
+   "block": "storage_regional",
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage.weekly_chg",
+    "storage_regional.regions.east.weekly_chg",
+    "storage_regional.regions.l48.weekly_chg",
+    "storage_regional.regions.mountain.weekly_chg",
+    "storage_regional.regions.pacific.weekly_chg",
+    "storage_regional.regions.south_central.weekly_chg",
+    "storage_regional.regions.south_central_nonsalt.weekly_chg",
+    "storage_regional.regions.south_central_salt.weekly_chg"
+   ],
+   "in_live_list": true,
+   "path": "storage_regional.regions.midwest.weekly_chg",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA regional + salt/non-salt storage",
+   "whole_block": false
+  },
+  {
+   "block": "storage_regional",
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage.weekly_chg",
+    "storage_regional.regions.east.weekly_chg",
+    "storage_regional.regions.l48.weekly_chg",
+    "storage_regional.regions.midwest.weekly_chg",
+    "storage_regional.regions.pacific.weekly_chg",
+    "storage_regional.regions.south_central.weekly_chg",
+    "storage_regional.regions.south_central_nonsalt.weekly_chg",
+    "storage_regional.regions.south_central_salt.weekly_chg"
+   ],
+   "in_live_list": true,
+   "path": "storage_regional.regions.mountain.weekly_chg",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA regional + salt/non-salt storage",
+   "whole_block": false
+  },
+  {
+   "block": "storage_regional",
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage.weekly_chg",
+    "storage_regional.regions.east.weekly_chg",
+    "storage_regional.regions.l48.weekly_chg",
+    "storage_regional.regions.midwest.weekly_chg",
+    "storage_regional.regions.mountain.weekly_chg",
+    "storage_regional.regions.south_central.weekly_chg",
+    "storage_regional.regions.south_central_nonsalt.weekly_chg",
+    "storage_regional.regions.south_central_salt.weekly_chg"
+   ],
+   "in_live_list": true,
+   "path": "storage_regional.regions.pacific.weekly_chg",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA regional + salt/non-salt storage",
+   "whole_block": false
+  },
+  {
+   "block": "storage_regional",
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage.weekly_chg",
+    "storage_regional.regions.east.weekly_chg",
+    "storage_regional.regions.l48.weekly_chg",
+    "storage_regional.regions.midwest.weekly_chg",
+    "storage_regional.regions.mountain.weekly_chg",
+    "storage_regional.regions.pacific.weekly_chg",
+    "storage_regional.regions.south_central_nonsalt.weekly_chg",
+    "storage_regional.regions.south_central_salt.weekly_chg"
+   ],
+   "in_live_list": true,
+   "path": "storage_regional.regions.south_central.weekly_chg",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA regional + salt/non-salt storage",
+   "whole_block": false
+  },
+  {
+   "block": "storage_regional",
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage.weekly_chg",
+    "storage_regional.regions.east.weekly_chg",
+    "storage_regional.regions.l48.weekly_chg",
+    "storage_regional.regions.midwest.weekly_chg",
+    "storage_regional.regions.mountain.weekly_chg",
+    "storage_regional.regions.pacific.weekly_chg",
+    "storage_regional.regions.south_central.weekly_chg",
+    "storage_regional.regions.south_central_salt.weekly_chg"
+   ],
+   "in_live_list": true,
+   "path": "storage_regional.regions.south_central_nonsalt.weekly_chg",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA regional + salt/non-salt storage",
+   "whole_block": false
+  },
+  {
+   "block": "storage_regional",
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "storage.weekly_chg",
+    "storage_regional.regions.east.weekly_chg",
+    "storage_regional.regions.l48.weekly_chg",
+    "storage_regional.regions.midwest.weekly_chg",
+    "storage_regional.regions.mountain.weekly_chg",
+    "storage_regional.regions.pacific.weekly_chg",
+    "storage_regional.regions.south_central.weekly_chg",
+    "storage_regional.regions.south_central_nonsalt.weekly_chg"
+   ],
+   "in_live_list": true,
+   "path": "storage_regional.regions.south_central_salt.weekly_chg",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "EIA regional + salt/non-salt storage",
+   "whole_block": false
+  },
+  {
+   "block": "vol_regime",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "vol_regime.n0_net_sigma_10",
+   "play_ids": [
+    "magnitude.block_gap_ownership"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "realized vol regime derived from the tape",
+   "whole_block": false
+  },
+  {
+   "block": "vol_regime",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "vol_regime.n0_prev_trades",
+   "play_ids": [
+    "daytype.thin_session_range_invariance"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "realized vol regime derived from the tape",
+   "whole_block": false
+  },
+  {
+   "block": "vol_regime",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "vol_regime.n0_range_pctile",
+   "play_ids": [
+    "magnitude.block_gap_ownership"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "realized vol regime derived from the tape",
+   "whole_block": false
+  },
+  {
+   "block": "weather_forecast",
+   "cadence": "per model cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "weather_forecast.horizons[].forecast_gw_cdd"
+   ],
+   "in_live_list": true,
+   "path": "weather_forecast.forecast_gw_cdd",
+   "play_ids": [
+    "selector.divergence_resolution"
+   ],
+   "play_status": {
+    "DEGENERATE": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "NWS MOS (GFS/NAM/MEX) via the IEM archive",
+   "whole_block": false
+  },
+  {
+   "block": "weather_forecast",
+   "cadence": "per model cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "weather_forecast.forecast_run_delta",
+   "play_ids": [
+    "signal.mos_first_appearance_vs_revision"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "NWS MOS (GFS/NAM/MEX) via the IEM archive",
+   "whole_block": false
+  },
+  {
+   "block": "weather_forecast",
+   "cadence": "per model cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "weather_forecast.forecast_gw_cdd"
+   ],
+   "in_live_list": true,
+   "path": "weather_forecast.horizons[].forecast_gw_cdd",
+   "play_ids": [
+    "selector.divergence_resolution"
+   ],
+   "play_status": {
+    "DEGENERATE": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "NWS MOS (GFS/NAM/MEX) via the IEM archive",
+   "whole_block": false
+  },
+  {
+   "block": "weather_forecast",
+   "cadence": "per model cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "weather_forecast.forecast_gw_hdd"
+   ],
+   "in_live_list": true,
+   "path": "weather_forecast.horizons[].forecast_gw_hdd",
+   "play_ids": [
+    "magnitude.shoulder_weather_band_void"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "NWS MOS (GFS/NAM/MEX) via the IEM archive",
+   "whole_block": false
+  },
+  {
+   "block": "weather_forecast",
+   "cadence": "per model cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "model_disagreement.stability.GFS[].d_gw_hdd",
+    "model_disagreement.stability.MEX[].d_gw_hdd",
+    "model_disagreement.stability.NAM[].d_gw_hdd",
+    "weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[].d_gw_hdd",
+    "weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[].d_gw_hdd"
+   ],
+   "in_live_list": true,
+   "path": "weather_forecast.run_delta[].d_gw_hdd",
+   "play_ids": [
+    "weather.revision_seasonal_sign_map"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "NWS MOS (GFS/NAM/MEX) via the IEM archive",
+   "whole_block": false
+  },
+  {
+   "block": "weather_forecast_cycle",
+   "cadence": "per cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "model_disagreement.stability.GFS[].d_gw_hdd",
+    "model_disagreement.stability.MEX[].d_gw_hdd",
+    "model_disagreement.stability.NAM[].d_gw_hdd",
+    "weather_forecast.run_delta[].d_gw_hdd",
+    "weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[].d_gw_hdd"
+   ],
+   "in_live_list": true,
+   "path": "weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[].d_gw_hdd",
+   "play_ids": [
+    "weather.revision_seasonal_sign_map"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "MOS cycle timing - which run was available at decision time",
+   "whole_block": false
+  },
+  {
+   "block": "weather_forecast_cycle",
+   "cadence": "per cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "model_disagreement.stability.GFS[].d_gw_hdd",
+    "model_disagreement.stability.MEX[].d_gw_hdd",
+    "model_disagreement.stability.NAM[].d_gw_hdd",
+    "weather_forecast.run_delta[].d_gw_hdd",
+    "weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[].d_gw_hdd"
+   ],
+   "in_live_list": true,
+   "path": "weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[].d_gw_hdd",
+   "play_ids": [
+    "weather.revision_seasonal_sign_map"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "MOS cycle timing - which run was available at decision time",
+   "whole_block": false
+  },
+  {
+   "block": "squeeze_watch",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 9,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "squeeze_watch.calendar_limb_satisfied_live",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "expiry/OI/positioning conjunction detector",
+   "whole_block": false
+  },
+  {
+   "block": "squeeze_watch",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 7,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "squeeze_watch.days_to_calendar_front_expiry_live",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "expiry/OI/positioning conjunction detector",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 3,
+   "field_name_shared_with": [
+    "cot.ice.hh_index.managed_money_net_pctile_1y",
+    "cot.ice.ld1.managed_money_net_pctile_1y",
+    "cot.ice.pen.managed_money_net_pctile_1y",
+    "cot.managed_money_net_pctile_1y"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.hh_basis.managed_money_net_pctile_1y",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 3,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_pctile_1y",
+    "cot.ice.ld1.managed_money_net_pctile_1y",
+    "cot.ice.pen.managed_money_net_pctile_1y",
+    "cot.managed_money_net_pctile_1y"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.hh_index.managed_money_net_pctile_1y",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 3,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_pctile_1y",
+    "cot.ice.hh_index.managed_money_net_pctile_1y",
+    "cot.ice.ld1.managed_money_net_pctile_1y",
+    "cot.managed_money_net_pctile_1y"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.pen.managed_money_net_pctile_1y",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cash_basis",
+   "cadence": "weekly batches",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "contract_structure.vintage_asof",
+    "options_surface.vintage_asof",
+    "squeeze_watch.vintage_asof",
+    "vol_regime.vintage_asof"
+   ],
+   "in_live_list": true,
+   "path": "cash_basis.vintage_asof",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "Henry Hub cash vs front-futures settle",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cot.ice.hh_index.managed_money_net_chg_wow",
+    "cot.ice.ld1.managed_money_net_chg_wow",
+    "cot.ice.pen.managed_money_net_chg_wow",
+    "cot.managed_money_net_chg_wow"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.hh_basis.managed_money_net_chg_wow",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cot.ice.hh_index.report_date",
+    "cot.ice.ld1.report_date",
+    "cot.ice.pen.report_date",
+    "cot.report_date"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.hh_basis.report_date",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_chg_wow",
+    "cot.ice.ld1.managed_money_net_chg_wow",
+    "cot.ice.pen.managed_money_net_chg_wow",
+    "cot.managed_money_net_chg_wow"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.hh_index.managed_money_net_chg_wow",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.report_date",
+    "cot.ice.ld1.report_date",
+    "cot.ice.pen.report_date",
+    "cot.report_date"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.hh_index.report_date",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_chg_wow",
+    "cot.ice.hh_index.managed_money_net_chg_wow",
+    "cot.ice.pen.managed_money_net_chg_wow",
+    "cot.managed_money_net_chg_wow"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.ld1.managed_money_net_chg_wow",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.report_date",
+    "cot.ice.hh_index.report_date",
+    "cot.ice.pen.report_date",
+    "cot.report_date"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.ld1.report_date",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_chg_wow",
+    "cot.ice.hh_index.managed_money_net_chg_wow",
+    "cot.ice.ld1.managed_money_net_chg_wow",
+    "cot.managed_money_net_chg_wow"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.pen.managed_money_net_chg_wow",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.report_date",
+    "cot.ice.hh_index.report_date",
+    "cot.ice.ld1.report_date",
+    "cot.report_date"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.pen.report_date",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.report_date",
+    "cot.ice.hh_index.report_date",
+    "cot.ice.ld1.report_date",
+    "cot.ice.pen.report_date"
+   ],
+   "in_live_list": true,
+   "path": "cot.report_date",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "options_surface",
+   "cadence": "daily settle",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cash_basis.vintage_asof",
+    "contract_structure.vintage_asof",
+    "squeeze_watch.vintage_asof",
+    "vol_regime.vintage_asof"
+   ],
+   "in_live_list": true,
+   "path": "options_surface.vintage_asof",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "NG options settle IV surface, ON/LNE roots",
+   "whole_block": false
+  },
+  {
+   "block": "squeeze_watch",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cash_basis.vintage_asof",
+    "contract_structure.vintage_asof",
+    "options_surface.vintage_asof",
+    "vol_regime.vintage_asof"
+   ],
+   "in_live_list": true,
+   "path": "squeeze_watch.vintage_asof",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "expiry/OI/positioning conjunction detector",
+   "whole_block": false
+  },
+  {
+   "block": "vol_regime",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cash_basis.vintage_asof",
+    "contract_structure.vintage_asof",
+    "options_surface.vintage_asof",
+    "squeeze_watch.vintage_asof"
+   ],
+   "in_live_list": true,
+   "path": "vol_regime.vintage_asof",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "realized vol regime derived from the tape",
+   "whole_block": false
+  }
+ ],
+ "schema": "FRANKIE_DATA_WISHLIST_V1",
+ "top10": [
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 3,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_pctile_1y",
+    "cot.ice.hh_index.managed_money_net_pctile_1y",
+    "cot.ice.ld1.managed_money_net_pctile_1y",
+    "cot.ice.pen.managed_money_net_pctile_1y"
+   ],
+   "in_live_list": true,
+   "path": "cot.managed_money_net_pctile_1y",
+   "play_ids": [
+    "boundary.seam_gap_up_prior_on_worsening_cot",
+    "magnitude.positioning_saturation_turn",
+    "magnitude.unpriced_shot_extension",
+    "structure.covering_absorption_directional_tell"
+   ],
+   "play_status": {
+    "PROPOSED": 1,
+    "PROVISIONAL": 3
+   },
+   "plays": 4,
+   "plays_by_condition": 4,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "weather_forecast",
+   "cadence": "per model cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "weather_forecast.horizons[].forecast_gw_hdd"
+   ],
+   "in_live_list": true,
+   "path": "weather_forecast.forecast_gw_hdd",
+   "play_ids": [
+    "magnitude.block_gap_ownership",
+    "magnitude.shoulder_counter_print_damping",
+    "magnitude.shoulder_weather_band_void",
+    "selector.divergence_resolution"
+   ],
+   "play_status": {
+    "DEGENERATE": 2,
+    "PROVISIONAL": 2
+   },
+   "plays": 4,
+   "plays_by_condition": 4,
+   "plays_by_text": 1,
+   "upstream_source": "NWS MOS (GFS/NAM/MEX) via the IEM archive",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_chg_wow",
+    "cot.ice.hh_index.managed_money_net_chg_wow",
+    "cot.ice.ld1.managed_money_net_chg_wow",
+    "cot.ice.pen.managed_money_net_chg_wow"
+   ],
+   "in_live_list": true,
+   "path": "cot.managed_money_net_chg_wow",
+   "play_ids": [
+    "boundary.seam_gap_up_prior_on_worsening_cot",
+    "daytype.covering_giveback_self_limiting",
+    "positioning.covering_self_limiting_cot_wow_gate"
+   ],
+   "play_status": {
+    "PROVISIONAL": 3
+   },
+   "plays": 3,
+   "plays_by_condition": 3,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_pctile_3y",
+    "cot.ice.hh_index.managed_money_net_pctile_3y",
+    "cot.ice.ld1.managed_money_net_pctile_3y",
+    "cot.ice.pen.managed_money_net_pctile_3y"
+   ],
+   "in_live_list": true,
+   "path": "cot.managed_money_net_pctile_3y",
+   "play_ids": [
+    "boundary.weekend_gap_wide_band_emission",
+    "weekend.seam_sign_from_stability_ladder"
+   ],
+   "play_status": {
+    "PROPOSED": 2
+   },
+   "plays": 2,
+   "plays_by_condition": 2,
+   "plays_by_text": 1,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [
+    "grid_stack.bas.CISO.wind_mwh",
+    "grid_stack.bas.ERCO.wind_mwh",
+    "grid_stack.bas.MISO.wind_mwh",
+    "grid_stack.bas.PJM.wind_mwh",
+    "grid_stack.bas.SOCO.wind_mwh",
+    "grid_stack.bas.SWPP.wind_mwh"
+   ],
+   "in_live_list": true,
+   "path": "grid_stack.bas.US48.wind_mwh",
+   "play_ids": [
+    "weather.freeze_conjunction_class2",
+    "weather.renewables_masking_flip"
+   ],
+   "play_status": {
+    "PROVISIONAL": 2
+   },
+   "plays": 2,
+   "plays_by_condition": 2,
+   "plays_by_text": 1,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "squeeze_watch",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 4,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "squeeze_watch.sessions_since_prompt_expiry",
+   "play_ids": [
+    "magnitude.block_gap_ownership",
+    "structure.squeeze_unwind"
+   ],
+   "play_status": {
+    "DESCRIPTOR": 1,
+    "PROVISIONAL": 1
+   },
+   "plays": 2,
+   "plays_by_condition": 1,
+   "plays_by_text": 1,
+   "upstream_source": "expiry/OI/positioning conjunction detector",
+   "whole_block": false
+  },
+  {
+   "block": "grid_stack",
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "grid_stack.bas.US48.est_gas_burn_bcfd",
+   "play_ids": [
+    "weather.burn_conversion_gate",
+    "weather.burn_is_demand_arrival_not_direction"
+   ],
+   "play_status": {
+    "PROPOSED": 1,
+    "REFUTED": 1
+   },
+   "plays": 2,
+   "plays_by_condition": 1,
+   "plays_by_text": 2,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel",
+   "whole_block": false
+  },
+  {
+   "block": "cot",
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "declines": 3,
+   "field_name_shared_with": [
+    "cot.ice.hh_basis.managed_money_net_pctile_1y",
+    "cot.ice.hh_index.managed_money_net_pctile_1y",
+    "cot.ice.pen.managed_money_net_pctile_1y",
+    "cot.managed_money_net_pctile_1y"
+   ],
+   "in_live_list": true,
+   "path": "cot.ice.ld1.managed_money_net_pctile_1y",
+   "play_ids": [
+    "magnitude.positioning_saturation_turn"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 1,
+   "plays_by_text": 0,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH",
+   "whole_block": false
+  },
+  {
+   "block": "model_disagreement",
+   "cadence": "per cycle",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "model_disagreement.summary.max_abs_spread_gw_hdd",
+   "play_ids": [
+    "weather.revision_seasonal_sign_map"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 1,
+   "plays_by_text": 0,
+   "upstream_source": "cross-model spread between MOS families",
+   "whole_block": false
+  },
+  {
+   "block": "weather",
+   "cadence": "daily, T+1",
+   "carried_on_experiment_days": false,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "weather.gw_hdd",
+   "play_ids": [
+    "structure.accumulation_arm_turn"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 1,
+   "plays_by_text": 0,
+   "upstream_source": "NWS/IEM ASOS observations",
+   "whole_block": false
+  }
+ ],
+ "whole_blocks": [
+  {
+   "block": "dow",
+   "cadence": "derived",
+   "carried_on_experiment_days": true,
+   "declines": 62,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "dow",
+   "play_ids": [
+    "boundary.chain_staleness_gate",
+    "boundary.prior_close_flow_direction_disagreement",
+    "boundary.seam_gap_up_prior_on_worsening_cot",
+    "daytype.covering_giveback_self_limiting",
+    "daytype.eia_print_impulse_arbiter",
+    "daytype.eia_window_reopen_to_print",
+    "daytype.friday_turn_exhaustion_gate",
+    "daytype.monday_weekend_gap",
+    "daytype.storage_thursday_magnitude",
+    "daytype.weekend_crest_friday",
+    "direction.absorption_is_reversal",
+    "direction.book_contrarian",
+    "direction.cross_block_reversion",
+    "direction.flow_nowcast",
+    "direction.giveback_exhaustion_boundary",
+    "exit.recruitment_reversal",
+    "flow.big_print_bshare_thin_tape_guard",
+    "level.giveback_origin_shelf",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "magnitude.positioning_saturation_turn",
+    "magnitude.rally_quality_giveback_rung",
+    "magnitude.s1void_injection_chain_bleed",
+    "magnitude.shoulder_counter_print_damping",
+    "magnitude.shoulder_weather_band_void",
+    "magnitude.unpriced_shot_extension",
+    "magnitude.weekend_chain_drift_day_move",
+    "midweek.giveback_exhaustion_reversal_recognition",
+    "midweek.stretched_extreme_close_giveback",
+    "midweek.young_chain_extension_full_band",
+    "monday.catchup_window_tilt_gate",
+    "monday.overnight_headfake_into_catchup",
+    "monday.seam_chainage_accommodation_gate",
+    "monday.window_deep_book_shakeout",
+    "positioning.covering_self_limiting_cot_wow_gate",
+    "selector.divergence_resolution",
+    "selector.midblock_right_the_ship",
+    "shape.grind_vs_spike",
+    "signal.mos_first_appearance_vs_revision",
+    "structure.accumulation_arm_turn",
+    "structure.chain_polarity_flip",
+    "structure.covering_absorption_directional_tell",
+    "structure.covering_extension_distribution_flip",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed",
+    "tape.squeeze_ignition_flush_conjunction",
+    "tape.squeeze_ratchet_confirm",
+    "timing.catalyst_continuity_frontrun",
+    "timing.subsecond_reversal_exhaustion",
+    "weather.burn_conversion_gate",
+    "weather.revision_seasonal_sign_map",
+    "weekend.carry_realization_flip"
+   ],
+   "play_status": {
+    "DEGENERATE": 8,
+    "HYPOTHESIS": 9,
+    "PROPOSED": 6,
+    "PROVISIONAL": 28,
+    "REFUTED": 1,
+    "STABLE": 1
+   },
+   "plays": 53,
+   "plays_by_condition": 0,
+   "plays_by_text": 53,
+   "upstream_source": "day of week",
+   "whole_block": true
+  },
+  {
+   "block": "weather",
+   "cadence": "daily, T+1",
+   "carried_on_experiment_days": false,
+   "declines": 4,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "weather",
+   "play_ids": [
+    "daytype.friday_exit_decomposition",
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.block_gap_ownership",
+    "magnitude.positioning_saturation_turn",
+    "magnitude.s1void_injection_chain_bleed",
+    "magnitude.shoulder_weather_band_void",
+    "selector.divergence_resolution",
+    "signal.mos_first_appearance_vs_revision",
+    "structure.squeeze_unwind",
+    "timing.catalyst_continuity_frontrun",
+    "weather.absolute_hdd_bar_unevaluable_in_cdd_regime",
+    "weather.burn_conversion_gate",
+    "weather.burn_is_demand_arrival_not_direction",
+    "weather.month_tail_gates",
+    "weather.renewables_masking_flip",
+    "weather.revision_seasonal_sign_map",
+    "weather.winter_heating_size_term",
+    "weekend.carry_realization_flip",
+    "weekend.seam_delta_requires_level_difference"
+   ],
+   "play_status": {
+    "DEGENERATE": 2,
+    "DESCRIPTOR": 1,
+    "HYPOTHESIS": 1,
+    "PROPOSED": 3,
+    "PROVISIONAL": 12,
+    "REFUTED": 1
+   },
+   "plays": 20,
+   "plays_by_condition": 0,
+   "plays_by_text": 20,
+   "upstream_source": "NWS/IEM ASOS observations",
+   "whole_block": true
+  },
+  {
+   "block": "storage",
+   "cadence": "weekly Thu 10:30 ET",
+   "carried_on_experiment_days": false,
+   "declines": 43,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "storage",
+   "play_ids": [
+    "daytype.eia_window_reopen_to_print",
+    "daytype.friday_exit_decomposition",
+    "daytype.storage_thursday_magnitude",
+    "daytype.surprise_magnitude",
+    "daytype.weekday_archetype",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.positioning_saturation_turn",
+    "magnitude.s1void_injection_chain_bleed",
+    "magnitude.shoulder_counter_print_damping",
+    "selector.divergence_resolution",
+    "timing.catalyst_continuity_frontrun",
+    "weather.burn_is_demand_arrival_not_direction",
+    "weather.month_tail_gates",
+    "weather.renewables_masking_flip",
+    "weather.summer_burn_lane_exclusion",
+    "weather.winter_heating_size_term",
+    "weekend.carry_realization_flip"
+   ],
+   "play_status": {
+    "DEGENERATE": 3,
+    "HYPOTHESIS": 1,
+    "PROPOSED": 2,
+    "PROVISIONAL": 11
+   },
+   "plays": 17,
+   "plays_by_condition": 0,
+   "plays_by_text": 17,
+   "upstream_source": "EIA weekly working gas in storage",
+   "whole_block": true
+  },
+  {
+   "block": "note",
+   "cadence": "-",
+   "carried_on_experiment_days": true,
+   "declines": 9,
+   "field_name_shared_with": [
+    "cash_basis.note",
+    "cot.note",
+    "flow_calendar.note",
+    "freeze_risk.note",
+    "frozen_structure_stale.note",
+    "grid_stack.note",
+    "model_disagreement.disagreement[].note",
+    "model_disagreement.note",
+    "model_disagreement.stability.GFS[].note",
+    "model_disagreement.stability.MEX[].note",
+    "model_disagreement.stability.NAM[].note",
+    "ngwu_balance.note",
+    "nuclear_outages.note",
+    "options_surface.note",
+    "solar.note",
+    "squeeze_watch.note",
+    "steo_vintage.note",
+    "storage_consensus.note",
+    "storage_regional.note",
+    "storage_vintage.note",
+    "tape_conditions.l1_book.note",
+    "tape_conditions.note",
+    "tape_conditions.prior_full_session.l1_book.note",
+    "tape_conditions.prior_full_session.note",
+    "vol_regime.note",
+    "weather.note",
+    "weather_forecast.note",
+    "weather_forecast_cycle.note"
+   ],
+   "in_live_list": true,
+   "path": "note",
+   "play_ids": [
+    "boundary.seam_gap_up_prior_on_worsening_cot",
+    "daytype.eia_preprint_overextension_gate",
+    "daytype.friday_crest_trim_discriminator",
+    "daytype.storage_thursday_magnitude",
+    "magnitude.crash_regime_bands",
+    "magnitude.s1void_injection_chain_bleed",
+    "magnitude.shoulder_counter_print_damping",
+    "structure.chain_polarity_flip",
+    "structure.covering_extension_distribution_flip",
+    "structure.failed_rally_tell",
+    "tape.squeeze_ratchet_confirm"
+   ],
+   "play_status": {
+    "DEGENERATE": 3,
+    "HYPOTHESIS": 2,
+    "PROVISIONAL": 6
+   },
+   "plays": 11,
+   "plays_by_condition": 0,
+   "plays_by_text": 11,
+   "upstream_source": "free-text annotation, not a quantity",
+   "whole_block": true
+  },
+  {
+   "block": "holiday",
+   "cadence": "static, 194d runway",
+   "carried_on_experiment_days": true,
+   "declines": 3,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "holiday",
+   "play_ids": [
+    "boundary.seam_gap_up_prior_on_worsening_cot",
+    "boundary.weekend_gap_wide_band_emission",
+    "daytype.friday_turn_exhaustion_gate",
+    "daytype.monday_weekend_gap",
+    "magnitude.block_gap_ownership",
+    "magnitude.catalyst_condition_sort",
+    "monday.catchup_window_tilt_gate",
+    "monday.window_deep_book_shakeout",
+    "weekend.seam_delta_requires_level_difference"
+   ],
+   "play_status": {
+    "HYPOTHESIS": 1,
+    "PROPOSED": 2,
+    "PROVISIONAL": 6
+   },
+   "plays": 9,
+   "plays_by_condition": 0,
+   "plays_by_text": 9,
+   "upstream_source": "CME holiday table - HARDCODED, ends 2027-02-15 (A-14)",
+   "whole_block": true
+  },
+  {
+   "block": "curve_regime",
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "declines": 21,
+   "field_name_shared_with": [
+    "contract_structure.curve_regime"
+   ],
+   "in_live_list": true,
+   "path": "curve_regime",
+   "play_ids": [
+    "magnitude.positioning_saturation_turn"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "backwardation/contango label off the forward curve",
+   "whole_block": true
+  },
+  {
+   "block": "stor_surprise",
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "declines": 1,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "stor_surprise",
+   "play_ids": [
+    "daytype.surprise_magnitude"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "actual minus consensus",
+   "whole_block": true
+  }
+ ]
+}
