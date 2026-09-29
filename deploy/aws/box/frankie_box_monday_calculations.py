@@ -127,6 +127,27 @@ def resume_legacy(session, source):
     return receipt
 
 
+def whole_day_pin_document(source, rule='One complete Monday delivery; all registry groups and all three bedrock groups. '
+                                         'Historical definitions carry no execution-cycle roster.'):
+    """The whole-day calculation pin for a source: the historical groups without cycle rosters, the complete-registry
+    group, and the three bedrock groups (the experiment's ROOT uses the same pin with bedrock off). Shared by the Monday
+    ROOT and frankie_box_experiment_root.py so the pin is built in one place."""
+    historical_path = REPOSITORY / 'research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json'
+    historical = json.loads(historical_path.read_bytes())
+    groups = []
+    for item in historical['pins']:
+        item = copy.deepcopy(item)
+        item.pop('cycles', None)
+        item.pop('bedrock', None)
+        groups.append(item)
+    pin = copy.deepcopy(next(g for g in groups if g.get('complete_registry')))
+    pin['bedrock'] = [copy.deepcopy(next(g for g in groups if g['group'] == name))
+                     for name in ('derived_geometry', 'prebirth_opportunity', 'causal_clocks')]
+    return dict(schema='FRANKIE_WHOLE_DAY_CALCULATION_PIN_V1',
+        forecast_mode='whole_day_next_session', source_binding=source, pin=pin, groups=groups,
+        historical_definition_file=witness(historical_path), rule=rule)
+
+
 def calculate(commit, authorship_path, authorship_sha256, output_root, data_workers=1, resume_checkpoint=None, reconstruct_missing=False, binding_sha256=None,
               bedrock=True, digest=True):
     """bedrock=False / digest=False (Greg, 2026-09-29, the experiment): skip ROOT processes 2+3 (bedrock traversal and
@@ -177,22 +198,7 @@ def calculate(commit, authorship_path, authorship_sha256, output_root, data_work
             container=recovered.container, completion=recovered.descriptor['completion'],
             source_prefix_hash=recovered.completion['source_prefix_hash'],
             record_count=recovered.completion['record_count'])
-        historical_path = REPOSITORY / 'research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json'
-        historical = json.loads(historical_path.read_bytes())
-        groups = []
-        for item in historical['pins']:
-            item = copy.deepcopy(item)
-            item.pop('cycles', None)
-            item.pop('bedrock', None)
-            groups.append(item)
-        pin = copy.deepcopy(next(g for g in groups if g.get('complete_registry')))
-        pin['bedrock'] = [copy.deepcopy(next(g for g in groups if g['group'] == name))
-                         for name in ('derived_geometry', 'prebirth_opportunity', 'causal_clocks')]
-        document = dict(schema='FRANKIE_WHOLE_DAY_CALCULATION_PIN_V1',
-            forecast_mode='whole_day_next_session', source_binding=source, pin=pin, groups=groups,
-            historical_definition_file=witness(historical_path),
-            rule='One complete Monday delivery; all registry groups and all three bedrock groups. Historical definitions carry no execution-cycle roster.')
-        save_new(output / 'calculation-pins.json', document)
+        save_new(output / 'calculation-pins.json', whole_day_pin_document(source))
         binding = dict(schema='FRANKIE_MONDAY_CALCULATION_SOURCE_V1', source=source, data_workers=data_workers,
             authorship=authorship_pin, ingestion_receipt=launch['ingestion_receipt'],
             calculation_pins=witness(output / 'calculation-pins.json'),
