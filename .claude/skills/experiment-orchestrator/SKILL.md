@@ -48,6 +48,7 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 | 6 | search | series x transforms x lags x cells x conditions x targets | NOT built (start from the joined-teacher builder, dfe08ca7) |
 | 6b | scientific teacher | the search's classroom-facing turn: claims (Frankie's, labelled) -> tests -> counts + challenges + untested combinations, tied to the BOSS teacher | NOT built (`SPEC-scientific-teacher.md` build order 3-5) |
 | 7 | survivors | symbolic regression (`odcore/symbolic.py`); no Granite pass, no model | NOT built |
+| J | Jev | blind outside student (Qwen3-8B, his own Pod, classroom-arm days only): files labelled CLAIMS the search tests; never sees Frankie's answers first, never in the classroom | NOT built - rework `clm_sidecar/sit_in.py` + `frankie_box_jev_relay.sh` (spec section "Jev") |
 | 8 | confirmation | frozen survivor list on confirmation days, per cell, net of fees maker AND taker | NOT built |
 | C | classroom arm | teacher + `prepare_integrated_cycle` + the principal's classroom stage answered by Frankie's code (no Granite) + the scientific teacher's turn (6b) | reuses the full run; waits on r10 showing the code classroom end to end |
 
@@ -60,7 +61,8 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 4. Series + search (5-6), attached to the orchestrator.
 5. The scientific teacher's turn on the search (6b); the tied teachers switch on.
 6. Survivors + confirmation (7-8).
-7. Classroom arm (after r10 runs the code classroom end to end).
+7. Jev (J), after Greg adds him to the build plan.
+8. Classroom arm (after r10 runs the code classroom end to end).
 
 ## 3. What can be dispatched today (each on Greg's go)
 
@@ -85,12 +87,18 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
   and Frankie until the survivor list is frozen. Never fetch-and-peek, never "just check one".
 - **Classroom arm on exactly three days**: the FIRST discovery day and the LAST TWO before the
   freeze. It runs only on discovery days, never on a confirmation day (R15). The classroom itself is
-  code and the launch is not called, so these days are CPU only too: no critic, no Granite, no Pod.
+  code and the launch is not called: no critic, no Granite. The only Pod on these days is Jev's own.
 - **The loop (three seats)**: search survivors go to the BOSS teacher and the classroom as material.
   Frankie's findings come back as HYPOTHESES (claims, never truth, R11); the search, as the
   scientific teacher, tests them across every discovery day with the chance check and hands back
   counts; the BOSS teacher answers within its own role (R12). A survivor is reported as a scoped
   finding with its days named.
+- **Jev (Greg, 2026-09-29: "yes, include him")**: the blind outside student, NOT a classroom seat
+  (R17 stands). Qwen3-8B on his own Pod, classroom-arm days only. Sees what Frankie sees (classroom
+  package + survivors), never Frankie's answers before filing his own. Files labelled CLAIMS only;
+  the search tests them like Frankie's and reports counts with his name and the days. Never touches
+  Frankie's session, the teachers, grading or confirmation days. Keeps his seat by counts: his
+  surviving claims per day beside Frankie's; no better than chance and he comes out.
 - **Every test gets its own circular-shift chance check. The finding is COUNTS, never an average**
   (D37; an R2, a pooled correlation or a fitted slope is an average - use `per_event.py`).
   Coefficients are kept where they are read per pair/cell/day with their overlap count (Greg: "We

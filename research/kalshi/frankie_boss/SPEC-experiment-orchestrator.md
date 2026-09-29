@@ -90,7 +90,36 @@ new dipole data and push the dipole research forward (D51: the dipole is open re
 - **Why these three days:**
   - The first seeds the search with Frankie's and the teacher's hypotheses from day one.
   - The last two examine everything the search has accumulated, while that material is still discovery data. Their findings are the last hypotheses the search tests before the list is frozen.
-- **Cost:** every day, the classroom-arm days included, is CPU only. No Pod.
+- **Cost:** every day is CPU only for Frankie, the teachers and the search. The three classroom-arm days also run
+  Jev on his own Pod (section "Jev" below); no other day uses a Pod.
+
+## Jev: the blind outside student (Greg, 2026-09-29: "yes, include him")
+- **Who:** Jev, Qwen3-8B chat on his OWN Pod (never the Granite Pod). A different model from anything else in the
+  loop, which is the only way a model may hold a seat (`SPEC-scientific-teacher.md`, open item "one seat only, a
+  different model"). He is NOT one of the three classroom seats and never speaks in the classroom (R17 stands).
+- **What he sees:** the same material Frankie gets on that day - the classroom package (the dipole material, the
+  171 pairs with their coefficients, overlap counts and co-movement counts) and the search's survivor list so far.
+  **Blind to Frankie:** he never sees Frankie's answers, analysis or novel findings before filing his own, so
+  agreement between them is independent evidence.
+- **What he produces:** CLAIMS only, labelled as Jev's (R11 applies to him as to Frankie): proposed mechanisms,
+  novel findings, and "test this next" combinations. No grades, no corrections, no teaching.
+- **Where his claims go:** to the search, which as the scientific teacher tests every one like Frankie's claims -
+  its own circular-shift chance check, the leakage gate, counts with the days named (D37), orientation word only
+  (R14), untested combinations listed, never dropped. A surviving Jev claim is a scoped finding with his name and
+  its days on it.
+- **What he never touches:** Frankie's session, the BOSS teacher's measurements, the classroom grade, the teachers'
+  exchange, and confirmation days (R15). Nothing he writes enters Frankie's input.
+- **When:** the three classroom-arm days only (the first discovery day and the last two before the freeze). Those
+  are the experiment's only Pod days, and the Pod is Jev's.
+- **How he keeps the seat:** by counts, per day: how many of his claims survive the search, set beside the
+  hypotheses Frankie's code surfaces that day. If his survive at no better than chance, he comes out.
+- **Code:** `research/kalshi/frankie_boss/clm_sidecar/sit_in.py` is reworked (swap, not a new path): the STUDENT
+  step stays (answer from the material alone), the OBSERVER compares his claims with Frankie's only AFTER both are
+  filed, the FRANKIE step that asked Granite is removed (Frankie is code; his answers are read from his classroom
+  ledgers and analysis), and his claims are written as a labelled claims file the scientific teacher reads.
+  `deploy/aws/box/frankie_box_jev_relay.sh` feeds him the classroom package and the survivor list, not session
+  heartbeats (on 2026-09-28 his 58 feed bundles carried only a derive-stage heartbeat and he filed nothing).
+- **Before it is built:** Greg adds Jev to the Excel build plan with this track (unplanned = unwired).
 
 ## How the orchestrator runs
 - **A box-side orchestrator** (`frankie_box_experiment.py`), started by one workflow dispatch, with:
@@ -110,4 +139,5 @@ new dipole data and push the dipole research forward (D51: the dipole is open re
 5. The scientific teacher's turn on top of the search, with the discussion schemas (`SPEC-scientific-teacher.md` build
    order 4); then the classroom loads the rules file and the tied teachers switch on.
 6. Survivors and confirmation (steps 7-8).
-7. The classroom arm on the first and the last two discovery days (after r10 shows the plan classroom running end to end).
+7. Jev's sit-in reworked (section "Jev"), after Greg adds him to the build plan.
+8. The classroom arm on the first and the last two discovery days (after r10 shows the plan classroom running end to end).

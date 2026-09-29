@@ -76,4 +76,7 @@ the classroom runs with the BOSS teacher and Frankie's code answers only.
 
 ## Open for Greg
 - (Resolved 2026-09-29: the coefficients stay; each of the 171 pairs also carries co-movement counts; nothing flattened or normalized.)
-- Whether a model is ever given a seat. If so, one seat only, and a different model from anything else in the loop.
+- (Resolved 2026-09-29, Greg: "yes, include him") One model, outside the three seats: Jev (Qwen3-8B, his own Pod), the
+  blind outside student on the experiment's classroom-arm days. His labelled claims go to the scientific teacher to be
+  tested like Frankie's; he never speaks in the classroom (R17) and never sees Frankie's answers first. Detail:
+  `SPEC-experiment-orchestrator.md`, section "Jev".
