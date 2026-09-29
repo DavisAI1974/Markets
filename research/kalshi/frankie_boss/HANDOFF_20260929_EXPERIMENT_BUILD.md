@@ -249,6 +249,14 @@ pulls as modes of `ng_historical_mbo_5y_to_s3_20260820.yml` (new workflow files 
 is NG.v.0 (front month only, full depth); the other months come from the NG.FUT parent pull to `nymex/ng_fut_parent_v0/`.
 Greg cancels the Databento subscription after the pulls finish: tell him when the last file has landed.
 
+## Next two pairs (Greg, 2026-09-29 ~11:1xZ)
+"Let's get ingesting ready for the next two pairs while we're waiting for these 2 to finish. As soon as these 2 are
+done, we start next 2 pairs." and "Get all of our changes deployed before we start new groups." Next two pairs =
+2021-10-12/13 and 2022-10-04/05 (20211019 is a single, after). Day facts + block manifests on the box: RUN
+next2pairs-20260929-1 (staged 6d07952e). Before they start: the classroom/teacher 13-point work merged, every change
+pushed, the tip restaged, the per-day manifests committed; then all four ingest side by side (warm start each).
+Tue/Wed: never paused mid-process; after each finishes it waits only if its 13 points are not ready.
+
 ## Next (in order)
 0. DONE: the midweek manifests (built, 66f50851 / 25b30d9c). Ingest running; then each day's ROOT on the go given.
 1. The teacher-only batch step `frankie_box_experiment_teacher.py/.sh` (DAYS=<list>; each day its own fresh walk of
