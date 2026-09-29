@@ -21,6 +21,7 @@ set -- --action "$ACTION" --run "$RUN" --commit "$MARKETS_SHA" --code-root "$COD
 [ -z "${DAYS:-}" ] || set -- "$@" --days "$DAYS"
 [ -z "${DAY_CLASS:-}" ] || set -- "$@" --day-class "$DAY_CLASS"
 [ -z "${CLASSROOM_ARM:-}" ] || set -- "$@" --classroom-arm "$CLASSROOM_ARM"
+[ -z "${CLASSROOM_ARM_CYCLE:-}" ] || set -- "$@" --classroom-arm-cycle "$CLASSROOM_ARM_CYCLE"
 [ -z "${FROZEN_SURVIVORS:-}" ] || set -- "$@" --frozen-survivors "$FROZEN_SURVIVORS"
 [ -z "${HISTORICAL_CLAIMS:-}" ] || set -- "$@" --historical-claims "$HISTORICAL_CLAIMS"
 [ -z "${STAGES:-}" ] || set -- "$@" --stages "$STAGES"

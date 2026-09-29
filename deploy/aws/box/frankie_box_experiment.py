@@ -122,6 +122,15 @@ def load_plan(a, code_root):
     entries += [dict(day=d) for d in (a.days or '').split(',') if d.strip()]
     klass = a.day_class or doc.get('class')
     arm = sorted(set((a.classroom_arm or '').split(',') if a.classroom_arm else doc.get('classroom_arm') or []) - {''})
+    if not arm:
+        # Greg, 2026-09-29: the classroom arm runs on days 1 and 2 of every five (they apply their findings), off on 3, 4
+        # and 5, then on again: the run's discovery days of its class, in date order, position i on when i % 5 < 2
+        # (--classroom-arm-cycle ON/OF, default 2/5; 5/5 = every day). An explicit list (--classroom-arm) wins.
+        on, cycle = (int(x) for x in a.classroom_arm_cycle.split('/'))
+        listed = sorted({str(e['day']) for e in entries if str(e['day']).isdigit() and len(str(e['day'])) == 8})
+        discovery = [d for d in listed if d[4:6] == '10' and ROLE_OF_YEAR.get(int(d[:4])) == 'discovery'
+                     and CLASS_OF_WEEKDAY.get(dt.date(int(d[:4]), int(d[4:6]), int(d[6:8])).weekday()) == klass]
+        arm = [d for i, d in enumerate(discovery) if i % cycle < on]
     refused, days, left_out = [], [], []
     names = [e['day'] for e in entries]
     for d in sorted({n for n in names if names.count(n) > 1}):
@@ -647,7 +656,10 @@ def main():
     p.add_argument('--plan', help='a plan JSON (days with overrides, class, classroom_arm), absolute or repo-relative')
     p.add_argument('--days', help='comma list of YYYYMMDD (added to the plan file\'s days)')
     p.add_argument('--day-class', help='monday | midweek | thursday | friday (classes never mix)')
-    p.add_argument('--classroom-arm', help='comma list of the classroom-arm days (DIGEST=on for their ROOT)')
+    p.add_argument('--classroom-arm', help='comma list of the classroom-arm days (DIGEST=on for their ROOT); default the cycle')
+    p.add_argument('--classroom-arm-cycle', default='2/5',
+                   help='ON/CYCLE: the classroom arm on the first ON of every CYCLE discovery days in date order (Greg, '
+                        '2026-09-29: days 1 and 2 on, 3-5 off; 5/5 = every day)')
     p.add_argument('--frozen-survivors', help='the frozen survivor list (required for any confirmation day)')
     p.add_argument('--historical-claims', help='a committed knowledge/HISTORICAL_CLAIMS_V1-*.json (repo-relative)')
     p.add_argument('--stages', default=','.join(STAGES), help='comma list, run in the fixed order %s' % ','.join(STAGES))

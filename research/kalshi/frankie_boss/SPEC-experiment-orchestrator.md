@@ -86,8 +86,13 @@ Not called:
 - Discovery: the October days of 2021-2023. Confirmation: the October days of 2024-2025. Then widen to every year, reported per season.
 - Source: the 5-year NG MBO pull on S3 (`nymex/ng_mbo_5y_v0`). List it first to confirm coverage.
 
-## The classroom arm (Greg, 2026-09-29: "just at the beginning run and last 2 runs")
-The FIRST discovery day and the LAST TWO discovery days (before the survivor list is frozen) also run the plan's governed dipole classroom (C14/D5), so the teacher and Frankie work on
+## The classroom arm (Greg, 2026-09-29: "just at the beginning run and last 2 runs"; REVISED the same day)
+REVISED (Greg, 2026-09-29, later): "I'm going to have it run on day 1 & 2 so they can apply their findings and then off
+3,4,5 then back on for 1,2 and so on. If we are finding that their part is pretty quick, I might go back to all 5 but
+I'll see how days 1 and 2 go first." So the arm runs on discovery days 1 and 2 of every five in date order, off on 3-5
+(orchestrator `--classroom-arm-cycle 2/5`, the default; `5/5` = every day; an explicit `--classroom-arm` list wins).
+The first-and-last-two rule below is superseded by this cycle.
+(Superseded:) The FIRST discovery day and the LAST TWO discovery days (before the survivor list is frozen) also run the plan's governed dipole classroom (C14/D5), so the teacher and Frankie work on
 new dipole data and push the dipole research forward (D51: the dipole is open research).
 - **The added pieces of today's run it calls** (all reused):
   - the teacher on that day's journal: JournalTeacherR3 with the teacher changes (all levels, the whole day, unknown trades carried), read once beside the context walk (saved walk blocks, the concurrent teacher);

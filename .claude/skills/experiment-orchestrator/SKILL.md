@@ -94,9 +94,10 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 - **Discovery = October days of 2021-2023. Confirmation = October days of 2024-2025.** Then widen
   to every year, reported per season. Confirmation days stay UNTOUCHED by the search, the teacher
   and Frankie until the survivor list is frozen. Never fetch-and-peek, never "just check one".
-- **Classroom arm on exactly three days**: the FIRST discovery day and the LAST TWO before the
-  freeze. It runs only on discovery days, never on a confirmation day (R15). The classroom itself is
-  code and the launch is not called: no critic, no Granite. The only Pod on these days is Jev's own.
+- **Classroom arm: days 1 and 2 of every five discovery days** (Greg, 2026-09-29, revised: on 1-2, off 3-5, repeat;
+  he may go to all five if their part is quick). Orchestrator `--classroom-arm-cycle 2/5` (default). Never on a
+  confirmation day (R15). The classroom itself is code and the launch is not called: no critic, no Granite. The only Pod
+  on these days is Jev's own.
 - **The loop (three seats)**: search survivors go to the BOSS teacher and the classroom as material.
   Frankie's findings come back as HYPOTHESES (claims, never truth, R11); the search, as the
   scientific teacher, tests them across every discovery day with the chance check and hands back
