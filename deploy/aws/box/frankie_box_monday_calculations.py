@@ -127,7 +127,12 @@ def resume_legacy(session, source):
     return receipt
 
 
-def calculate(commit, authorship_path, authorship_sha256, output_root, data_workers=1, resume_checkpoint=None, reconstruct_missing=False, binding_sha256=None):
+def calculate(commit, authorship_path, authorship_sha256, output_root, data_workers=1, resume_checkpoint=None, reconstruct_missing=False, binding_sha256=None,
+              bedrock=True, digest=True):
+    """bedrock=False / digest=False (Greg, 2026-09-29, the experiment): skip ROOT processes 2+3 (bedrock traversal and
+    projection) / 4 (the Markdown digest). Frankie's cycle keeps both on (the defaults)."""
+    if resume_checkpoint and not bedrock:
+        raise ValueError('a resume checkpoint belongs to the bedrock traversal; it cannot resume a bedrock-off ROOT')
     require_checkout(commit)
     from research.kalshi.frankie_boss.frankie_journal_reader import worker_budget
     worker_budget(data_workers)  # Existing reader validates and caps to available CPUs.
@@ -201,16 +206,19 @@ def calculate(commit, authorship_path, authorship_sha256, output_root, data_work
     session.phase('deriving', 'complete Monday roots and all producer groups; sealed source only')
     session.native_resume_checkpoint = resume_checkpoint
     session.native_reconstruct_missing = reconstruct_missing
-    result = resume_legacy(session, recovered) if resume_checkpoint else session.derive(source=recovered)
+    result = resume_legacy(session, recovered) if resume_checkpoint else session.derive(source=recovered, bedrock=bedrock, digest=digest)
     if result['failure_count']:
         raise ValueError('Monday producer failures are retained in derive.json; no completion is declared')
     receipt = dict(schema='FRANKIE_MONDAY_CALCULATIONS_V1', commit=commit,
         source_binding=witness(output / 'source-binding.json'),
         calculation_pins=witness(output / 'calculation-pins.json'),
         derivation=witness(session.work / 'derive.json'),
-        result=result['bedrock']['result'], ledgers=result['bedrock']['ledgers'],
-        digest=witness(session.work / 'derivation-digest-full.md'),
-        digest_proof=witness(session.work / 'digest-proof.json'),
+        result=result['bedrock']['result'] if bedrock else None, ledgers=result['bedrock']['ledgers'] if bedrock else None,
+        digest=witness(session.work / 'derivation-digest-full.md') if digest else None,
+        digest_proof=witness(session.work / 'digest-proof.json') if digest else None,
+        root_processes=result.get('root_processes') or dict(legacy='run', bedrock_traversal='run', bedrock_projection='run', digest='run'),
+        not_run=[dict(process=k, reason='switched off for the experiment (Greg, 2026-09-29)')
+                 for k, v in (result.get('root_processes') or {}).items() if v == 'skipped'],
         recovery_checkpoint=witness(Path(resume_checkpoint)) if resume_checkpoint else None,
         reconstruction_authorized=reconstruct_missing,
         model_calls=0, source_replays=0, source_writes=0,
@@ -235,9 +243,12 @@ def main():
     parser.add_argument('--resume-checkpoint')
     parser.add_argument('--reconstruct-missing', action='store_true')
     parser.add_argument('--binding-sha256')
+    parser.add_argument('--bedrock', choices=('on', 'off'), default='on', help='off: skip ROOT processes 2 and 3 (the experiment)')
+    parser.add_argument('--digest', choices=('on', 'off'), default='on', help='off: skip ROOT process 4 (the experiment)')
     args = parser.parse_args()
     print(json.dumps(calculate(args.commit, args.authorship, args.authorship_sha256, args.output_root, args.data_workers,
-        args.resume_checkpoint, args.reconstruct_missing, args.binding_sha256), sort_keys=True), flush=True)
+        args.resume_checkpoint, args.reconstruct_missing, args.binding_sha256,
+        bedrock=args.bedrock == 'on', digest=args.digest == 'on'), sort_keys=True), flush=True)
 
 
 if __name__ == '__main__':

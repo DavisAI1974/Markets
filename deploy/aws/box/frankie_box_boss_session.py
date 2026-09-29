@@ -693,7 +693,12 @@ class Session:
             return None
 
     # ---- derive (the pin's producers on this cycle's rows) ------------------------------------------------
-    def derive(self, *, source=None):
+    def derive(self, *, source=None, bedrock=True, digest=True):
+        """The ROOT's four processes on the sealed source: (1) the legacy pass (every INPUT record -> the five legacy layers
+        and the row spools), (2) the bedrock traversal, (3) the bedrock projection, (4) the derivation digest.
+        bedrock=False (Greg, 2026-09-29: no bedrock in the experiment) skips (2) and (3): the bedrock layers are recorded
+        as not_derived with that reason, never as a producer failure. digest=False skips (4) (the experiment reads the
+        JSON, not Frankie's Markdown digest). Frankie's cycle keeps both on (the defaults)."""
         pin = self._pin() if source is not None else self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
         moved = _box_module('frankie_box_bedrock')._move_aside(              # an earlier derivation is moved aside with a receipt, never overwritten
@@ -783,7 +788,12 @@ class Session:
             'legacy_structure_observables': dict(status='derived' if structures else 'could_not', producer='a_memory_member_first_recalculation_20260828.describe_structure per F_LAST group (action string, side string, mirror, fill disposition, family candidate)',
                                                  count=len(structures), groups=structures, reason=None if structures else 'no F_LAST group closed'),
         }
+        bedrock_off = set(pin.get('projection_layers') or pin.get('bedrock_layers') or []) if (pin.get('bedrock') and not bedrock) else set()
         for layer in pin['registry_layers']:
+            if layer in bedrock_off:
+                layers.setdefault(layer, dict(status='not_derived', producer=None,
+                                              reason='bedrock off: ROOT processes 2 (traversal) and 3 (projection) skipped for the '
+                                                     'experiment (Greg, 2026-09-29); not a producer failure'))
             layers.setdefault(layer, dict(status='could_not', reason='no producer in the pin derives this layer; NO_PRODUCER_FOUND', producer=None))
         receipt = dict(schema='FRANKIE_BOX_DERIVATION_RECEIPT_V1', at=time.time(), cycle=self.cycle, pin_group=pin['group'],
                        source_binding=self.source_binding, rows=container, input_records=len(records), legacy_rows=legacy_count, adapter_records=adapter.record_count,
@@ -795,12 +805,25 @@ class Session:
             receipt['layers'][name] = dict(status=value['status'], producer=value.get('producer'), reason=value.get('reason'), **witness(path), path=str(path))
         # THE BEDROCK rides beside the legacy five (never through them): the pinned traversal on the same records, the
         # twenty layers projected by the producers' own crosswalk into the same work/derived/ (frankie_box_bedrock.py).
-        receipt['bedrock'] = self._derive_bedrock(records, container, pin, derived, receipt['layers']) if pin.get('bedrock') else None
+        if pin.get('bedrock') and bedrock:
+            receipt['bedrock'] = self._derive_bedrock(records, container, pin, derived, receipt['layers'])
+        elif pin.get('bedrock'):
+            receipt['bedrock'] = dict(schema='FRANKIE_BOX_DERIVE_BEDROCK_V1', skipped=True, layers=[], not_derived=sorted(bedrock_off),
+                                      reason='bedrock off: ROOT processes 2 and 3 skipped for the experiment (Greg, 2026-09-29)')
+            self.note(f'bedrock off: {len(bedrock_off)} bedrock layers not derived (traversal and projection skipped)')
+        else:
+            receipt['bedrock'] = None
+        receipt['root_processes'] = dict(legacy='run', bedrock_traversal='run' if (pin.get('bedrock') and bedrock) else 'skipped',
+                                         bedrock_projection='run' if (pin.get('bedrock') and bedrock) else 'skipped',
+                                         digest='run' if digest else 'skipped')
         receipt['pin_identity'] = dict(sha256=pin['pins_witness']['sha256'], cycle_index=pin['cycle_index'], group=pin['group'],
                                        bedrock_layers=list(pin.get('bedrock_layers') or []))
         write_json(self.work / 'derive.json', receipt)
-        probe.update('root-digest')
-        self._write_digest(receipt, layers, prices, frames, structures, roll, first, buys, sells)
+        if digest:
+            probe.update('root-digest')
+            self._write_digest(receipt, layers, prices, frames, structures, roll, first, buys, sells)
+        else:
+            self.note('digest off: ROOT process 4 skipped (the experiment reads the JSON layer files and row spools)')
         probe.update('root-derived', state='complete', failed=len(failures))
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
         return receipt

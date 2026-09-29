@@ -21,6 +21,9 @@ case "${RECONSTRUCT_MISSING:-0}" in
   1) [ -n "${RESUME_CHECKPOINT:-}" ] || exit 2; set -- "$@" --reconstruct-missing ;;
   *) echo "RECONSTRUCT_MISSING must be 0 or 1" >&2; exit 2 ;;
 esac
+# BEDROCK=off / DIGEST=off (Greg, 2026-09-29, the experiment): skip ROOT processes 2+3 / 4. Default on (Frankie's cycle).
+case "${BEDROCK:-on}" in on|off) set -- "$@" --bedrock "${BEDROCK:-on}";; *) echo "BEDROCK must be on or off" >&2; exit 2;; esac
+case "${DIGEST:-on}" in on|off) set -- "$@" --digest "${DIGEST:-on}";; *) echo "DIGEST must be on or off" >&2; exit 2;; esac
 exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_monday_calculations.py" \
   --commit "$MARKETS_SHA" --authorship "$AUTHORSHIP" --authorship-sha256 "$AUTHORSHIP_SHA256" --output-root "$OUTPUT_ROOT" \
   --data-workers "${DATA_WORKERS:-1}" "$@"
