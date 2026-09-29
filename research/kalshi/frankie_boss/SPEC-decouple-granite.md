@@ -12,13 +12,14 @@ Greg's answers (AskUserQuestion, 2026-09-29):
 1. "Pod serves the critic only": Granite is the C21-C24 shadow critic, served from the R4 Pod. C35 is no longer a
    Granite role: the principal session makes no Granite call for reading, merges or writing.
 2. The analysis: "Frankie does the analysis" (not Granite). Frankie is the system (code, calculations, brain).
-3. The classroom: "Keep it on the critic": the classroom is answered by the critic under the closed schema (C23),
-   not by a principal engine.
+3. The classroom: SUPERSEDED by Greg, 2026-09-29 23:17 ET: "Granite has absolutely nothing to do with classroom
+   anymore." (His earlier answer "Keep it on the critic" is withdrawn.) The classroom (19 components, summary,
+   correction) is answered by Frankie's code, with no Granite call of any kind.
 4. Greg: "The only analysis granite should do is to say how he feels he performed." So the analysis is Frankie's
-   (code), plus ONE Granite item: Granite's own self-assessment of how it performed (as the critic and in the
-   classroom), filed as Granite's, labelled as its own view, never as a result.
-Consequence for r10: r10 WAITS for this build (the principal's reading/merges/writing move off Granite; the classroom
-moves onto the critic lane). Build list and open items: the section "R3 BUILD" at the end of this file.
+   (code), plus ONE Granite item: Granite's own self-assessment of how it performed as the critic, filed as
+   Granite's, labelled as its own view, never as a result.
+Consequence for r10: r10 WAITS for this build (the principal's reading, merges, writing and classroom all move off
+Granite; Granite is the launch's critic plus its one self-assessment). Build list and open items: the section "R3 BUILD" at the end of this file.
 
 
 Status: SPEC, draft. **Greg: we might still tweak it in the next chat.** The reference is the build plan,
@@ -66,14 +67,13 @@ Principal session `deploy/aws/box/frankie_box_boss_session.py` (not pinned; swap
 2. writing: Frankie's analysis, the accounting entry and the ten output ledgers are written by Frankie's code from
    verify/labels/derive/compare/receipts and the brain (a new box module). The response keeps the shape the adapter
    and the recorder validate (lessons = [analysis, accounting entry, ten ledgers] + the four classroom ledgers).
-3. classroom (19 components, summary) and the correction: routed to the critic lane, closed schema (C23 parser),
-   the critic's identity and receipts recorded as the critic's.
+3. classroom (19 components, summary) and the correction: answered by Frankie's code, no model call (Greg: "Granite
+   has absolutely nothing to do with classroom anymore").
 4. engine reach stays only as the Pod reach the critic lane needs.
 Open for Greg:
-- C24 says an invalid, empty or unavailable critic must never block and leaves the native result authoritative. The
-  classroom today REFUSES on an invalid answer. On the critic lane: does an invalid classroom answer block, or is it
-  recorded as the critic's own and the run goes on?
+- The classroom by code: the code answers what the teacher data and Frankie's calculations carry (the observations,
+  the 171 pairs). A novel finding needs something to find it; by code that is only what a computation surfaces.
 - What Frankie's analysis must carry beyond the measured facts (his comparisons of derived layers with the frozen
   brain, the lessons for the next cycle), and which of those are computed. Granite's only analysis item is its
   self-assessment (decision 4); where it sits: one closed-schema critic call after the classroom, its text appended to
-  the analysis as its own labelled section (proposed).
+  the analysis as its own labelled section (proposed; after the critic, not the classroom).
