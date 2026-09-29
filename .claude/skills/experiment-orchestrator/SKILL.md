@@ -131,6 +131,11 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 
 ## 6. Open / contradictory - ask Greg, do not resolve
 
+- **END-OF-BUILD CODE INSPECTION (Greg, 2026-09-29: "We'll do all that at the end").** Code on this branch was changed
+  during runs to relaunch or to do truncated runs. Before any result from the experiment or the full run is trusted,
+  inspect all of it for leftovers of that: caps, truncation, sampling, resume/relaunch shortcuts, hard-coded days or
+  cycles, and switches left in a run-time position. Not now; at the end, as its own step.
+
 - The day-data catalog leaves three kinds of file out for Greg's call, each listed in the MANIFEST: MIXED
   (`session-request.json`, `comparison.json`, `principal-inputs-receipt.json`: data together with Frankie's brain;
   a filter would let the data part through), OTHER_MODEL (the Granite critic, its self-assessment, and the BOSS
