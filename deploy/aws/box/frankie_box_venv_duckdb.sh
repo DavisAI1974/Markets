@@ -3,6 +3,7 @@
 # httpfs; the extension server extensions.duckdb.org may be unreachable, so each extension is installed from the file its
 # PyPI package carries), plus pyarrow. ACTION=check (read-only: what is installed) or ACTION=install.
 set -eu
+export HOME="${HOME:-/root}"   # SSM runs without HOME; DuckDB refuses to load extensions without a home directory (2026-09-29)
 PY=/opt/frankie-box/venv/bin/python
 case "${ACTION:-check}" in
   check) ;;

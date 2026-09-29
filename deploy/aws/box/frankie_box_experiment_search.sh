@@ -7,6 +7,7 @@
 # cycle-<NN>/<role>/ (MANIFEST + couplings/*.jsonl). Needs duckdb 1.5.5 + its bundled extensions and pyarrow in the venv.
 # A probe: frankie_box_progress.sh DIRECTORY=/opt/frankie-box/work/experiment-search/<day>.
 set -eu
+export HOME="${HOME:-/root}"   # SSM runs without HOME; DuckDB refuses to load extensions without a home directory (2026-09-29)
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"
 : "${DAY:?YYYYMMDD required}"; : "${CYCLE:?cycle required}"; : "${DAY_ROLE:?discovery or confirmation required}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac

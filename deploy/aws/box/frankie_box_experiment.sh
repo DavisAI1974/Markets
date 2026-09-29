@@ -15,6 +15,7 @@
 # the whole presign string). A probe: frankie_box_progress.sh
 # DIRECTORY=/opt/frankie-box/work/experiment/<RUN>.
 set -eu
+export HOME="${HOME:-/root}"   # SSM runs without HOME; DuckDB refuses to load extensions without a home directory (2026-09-29)
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"; : "${RUN:?run name required}"
 ACTION="${ACTION:-plan}"
 case "$ACTION" in plan|start|status) ;; *) echo "ACTION must be plan, start or status" >&2; exit 2;; esac
