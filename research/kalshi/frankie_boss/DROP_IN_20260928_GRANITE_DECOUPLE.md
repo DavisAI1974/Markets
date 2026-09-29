@@ -156,4 +156,6 @@ novel findings and trade strategies. Code does the search on the box's CPUs; Gra
   - survivors to symbolic regression, then a short Granite reasoning pass;
   - any trade idea judged per cell, net of fees at maker and taker, on the confirmation days.
   - The joined-teacher builder (dfe08ca7) is the starting slice. Point it at the raw journal and the experiment-calcs JSON instead of the bedrock.
-- **Before building:** Greg adds the track to the Excel build plan (`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`), and a spec is written.
+- **Architecture (Greg):** a stripped-down version of today's run. An EXPERIMENT ORCHESTRATOR workflow calls only the needed pieces of today's run: fetch, ingest, the derive WITHOUT bedrock, and the export. The new search part is then built and attached to it.
+  - Spec: `research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md`.
+  - Before building, Greg adds the track to the Excel build plan (`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`).
