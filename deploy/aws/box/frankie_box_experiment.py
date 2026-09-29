@@ -162,7 +162,8 @@ def load_plan(a, code_root):
             m = json.loads(mpath.read_bytes())
             manifest_ok = str(m.get('trading_day')) == day
             # a day that opens at the prior day's halt (a tail member, Greg 2026-09-29): its ingest opens with the book the
-            # prior trading day closed with, so it waits on that day's sealed ingest (the date of the tail's partition)
+            # prior trading day closed with when that day's sealed ingest exists, and otherwise warms its own book from the
+            # tail partition (no wait: "we will just be running tue and weds for a while")
             tails = m.get('tail_members') or []
             if manifest_ok and tails:
                 opens_after = tails[0]['member_key'].split('-')[-1].split('.')[0]
@@ -346,8 +347,9 @@ class Run:
         if e.get('opens_after'):
             opening, gap = self.opening_of(e)
             if gap:
-                return self.record('ingest', e['day'], 'waiting', reason=gap)
-            env['OPENING_RECEIPT'] = str(opening)
+                return self.record('ingest', e['day'], 'refused', reason=gap)
+            if opening:
+                env['OPENING_RECEIPT'] = str(opening)
         if not self.disk_ok('ingest'):
             return None
         before = set(WORK.glob('ingest-*'))
@@ -362,20 +364,20 @@ class Run:
 
     @staticmethod
     def opening_of(e):
-        """(the prior trading day's sealed ingest receipt, None) or (None, why the day waits). Monday's ingest was
-        recovered, so its receipt is the committed recovery receipt (opening_book.py reads both kinds)."""
+        """(the prior trading day's sealed ingest receipt, None); (None, None) when the prior day has none, so the day
+        warms its own book from its tail partition; (None, why) only when the prior day is ambiguous (duplicate data).
+        Monday's ingest was recovered: its receipt is the recovery receipt on the box (opening_book.py reads both)."""
         if e.get('opening_receipt'):
             return e['opening_receipt'], None
         prior = e['opens_after']
-        if prior == MONDAY:
+        if prior == MONDAY and Path(MONDAY_RECOVERY).is_file():
             return MONDAY_RECOVERY, None
         found = sealed_ingests(prior)
         if len(found) > 1:
             return None, ('two or more sealed ingests of %s, the day before %s (%s): name the one to open from in the plan '
                           '(opening_receipt)' % (prior, e['day'], ', '.join(str(p.parent) for p in found)))
         if not found:
-            return None, ('%s opens at the %s halt with the book %s closed with; %s has no sealed ingest yet (the day waits '
-                          'on it)' % (e['day'], prior, prior, prior))
+            return None, None          # the day warms its own book from the tail partition (listed in its receipt)
         return found[0], None
 
     def root(self, e):

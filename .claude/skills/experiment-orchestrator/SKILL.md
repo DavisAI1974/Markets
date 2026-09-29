@@ -131,9 +131,11 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 - Only rule breaks refuse the plan (a day listed twice, a malformed day). A day of another class, outside October
   2021-2025, or an unfrozen confirmation day is LEFT OUT of that run with its reasons.
 - Per-day manifests: 20211003, 20211004, and (2026-09-29, tail take) 20211005 and 20211006. A midweek day opens at the
-  prior halt: its manifest has a `tail_members` entry, its ingest opens with the prior day's closing book
-  (`opening_book.py`, `OPENING_RECEIPT`; Monday's = `blocks/MONDAY_RECOVERY_RECEIPT_20260922.json`) and WAITS on that
-  day's sealed ingest; the ROOT replays the day onto the same book. `frankie_box_ingest_block.sh ACTION=ingest` takes a
+  prior halt: its manifest has a `tail_members` entry. Its ingest opens with the prior day's closing book when given
+  `OPENING_RECEIPT` (`opening_book.py`; Monday's = `/opt/frankie-box/work/sealed-recovery-35796793428/recovery-receipt.json`),
+  and otherwise WARMS its own book from the tail partition (its 00:00Z snapshot to the halt, book only, not journaled):
+  no Monday ingest is needed. The opening book is written beside the journal (`opening-book.c15.json`) and the ROOT
+  replays the day onto it. `frankie_box_ingest_block.sh ACTION=ingest` takes a
   comma list of manifests (Tue,Wed: each its own journal, each opening from the one before). Handoff section "Later
   still: Tuesday and Wednesday built".
 - Monday 20211004 is never re-ingested; two sealed ingests or two finished ROOTs of one day decline (duplicate data):

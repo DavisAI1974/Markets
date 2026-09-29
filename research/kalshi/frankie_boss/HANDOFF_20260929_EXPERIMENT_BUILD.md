@@ -177,6 +177,19 @@ DIGEST off unless it is a classroom-arm day).
   `native_roll20.py` and `a_memory_member_first_recalculation_20260828.py` live in the box's pinned producers checkout
   and were not audited here.
 
+## No Monday dependency (Greg, 2026-09-29: "We can't do that dependency for later weeks because we will just be
+running tue and weds for a while")
+A day with a tail member no longer needs the prior day's ingest. Without OPENING_RECEIPT the ingest WARMS its own book:
+the tail partition's prior-day records are applied to the book only (never journaled, never counted), from the
+partition's first record, which is Databento's 00:00Z book snapshot (checked by its F_SNAPSHOT flag and listed in the
+receipt; a partition without one is listed, not refused), up to the halt. Either way (warmed or seeded from a prior
+receipt) the ingest writes the opening book beside the journal (`opening-book.c15.json`, sha256 + adapter state hash in
+the receipt's `opening_book_file`), and the day's ROOT opens from those bytes, with no prior day needed. The orchestrator
+uses a prior day's sealed ingest when one exists and otherwise lets the day warm (no wait). Tonight's running ingest
+(25b30d9c) predates this: Tuesday is seeded from Monday's recovery checkpoint, Wednesday from Tuesday's, and their ROOTs
+open from those prior receipts (still supported). Days are now independent, so later Tue/Wed ingests can run as
+separate dispatches.
+
 ## Next (in order)
 0. DONE: the midweek manifests (built, 66f50851 / 25b30d9c). Ingest running; then each day's ROOT on the go given.
 1. The teacher-only batch step `frankie_box_experiment_teacher.py/.sh` (DAYS=<list>; each day its own fresh walk of

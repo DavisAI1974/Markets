@@ -184,7 +184,12 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
     at a trading-day boundary; the pinned conformance stack then reconciles the declared counts as ever. `tails` (from
     tail_skips) skips the first member's prior-day records up to the halt and verifies the cut on both sides; `opening`
     (opening_adapter, from the prior day's sealed ingest) is the book the day opens with, and `opening_descriptor` says
-    where it came from (its prior_end must be this cut: the same member and a take equal to the skip).
+    where it came from (its prior_end must be this cut: the same member and a take equal to the skip). Without `opening`
+    the day WARMS its own book (Greg, 2026-09-29: "we will just be running tue and weds for a while", so a Tuesday cannot
+    wait on a Monday ingest): the tail partition's prior-day records are applied to the book only (never journaled,
+    never counted), from the partition's first record (its 00:00Z book snapshot, which is checked and listed) up to the
+    halt; the book at the halt is then the day's opening book. Either way the opening book is written beside the journal
+    (opening-book.c15.json, sha256 in the receipt) so the day's ROOT opens from the same bytes without the prior day.
     """
     SourceConformanceDriver._check_scope(scope, expected_scope_hash)
     takes = dict(takes or {})
@@ -221,6 +226,7 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
             # the conformance drain replays the prefix chain only, never the book, so the seed is inside its checks
             driver._builder.adapter = opening
         cursor, sessions_seen, stopped, partials, skipped = 0, [], False, [], []
+        opening_result, opening_file = None, None
         if event is not None:
             event(dict(phase='ingestion', records=0, total_records=total))
         for index, (stream, (_, ts_out), member, path) in enumerate(zip(streams, metadata, scope.members, paths)):
@@ -230,12 +236,25 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
             records = mbo_source._records(stream, pin, ts_out, dbn)
             tail = tails.get(member.member_key)
             if tail is not None:
-                # the prior trading day's records of this partition: decoded to reach the cut, never appended or counted
-                last_skipped = None
-                for _ in range(tail['skip']):
+                # the prior trading day's records of this partition: decoded to reach the cut, never appended or counted;
+                # without a prior day's book they are applied to the BOOK ONLY (the warm start), nothing else
+                warming = opening is None
+                adapter = driver._builder.adapter
+                last_skipped, first_flags, snapshots, warm_started = None, None, 0, time.perf_counter()
+                for position in range(tail['skip']):
                     last_skipped = next(records, None)
                     if last_skipped is None:
                         raise ValueError(f'{member.member_key} ends inside its declared skip of {tail["skip"]} records')
+                    if warming:
+                        flags = last_skipped.get('flags')
+                        if position == 0:
+                            first_flags = flags
+                        if type(flags) is int and flags & 32:          # F_SNAPSHOT
+                            snapshots += 1
+                        adapter.apply(last_skipped, None, name, member.sha256)
+                        if event is not None and (position + 1) % 100000 == 0:
+                            event(dict(phase='opening_book_warm', records=position + 1, of=tail['skip'],
+                                       seconds=round(time.perf_counter() - warm_started, 3)))
                 first_taken = next(records, None)
                 if first_taken is None:
                     raise ValueError(f'{member.member_key} ends at its skip; the declared take of {tail["take"]} is absent')
@@ -253,6 +272,33 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                 skipped.append(dict(member_key=member.member_key, skip=tail['skip'], take=tail['take'],
                                     declared_partition_mbo_records=tail['partition_mbo_records'],
                                     last_skipped_session_id=before, first_session_id=after, boundary='trading_day'))
+                if warming:
+                    adapter.assert_groups_closed()                   # the halt closes every group (declared, now checked)
+                    adapter.record_count = 0                         # the day's counts are its own; the book is the book
+                    adapter.completed_event_group_count = 0
+                    starts = type(first_flags) is int and bool(first_flags & 32)
+                    opening_result = dict(status='warmed_from_partition', member_key=member.member_key,
+                                          records_applied_to_book=tail['skip'], first_record_flags=first_flags,
+                                          snapshot_records=snapshots, starts_with_snapshot=starts,
+                                          seconds=round(time.perf_counter() - warm_started, 3),
+                                          rule='the prior trading day\'s records of this partition applied to the book only '
+                                               '(not journaled, not counted), from its first record to the halt')
+                    if not starts:
+                        opening_result['listed'] = ('the partition does not open with a book snapshot (F_SNAPSHOT); orders '
+                                                    'resting before its first record are not in the book until they '
+                                                    'trade, are modified or cancelled')
+                else:
+                    opening_result = dict(opening_descriptor or {}, status='seeded')
+                from research.kalshi.frankie_boss.mbo_resume_state import export_adapter_state
+                book_state = export_adapter_state(adapter)
+                book_raw = canonical_bytes(pack(book_state))
+                book_path = Path(journal_path).parent / 'opening-book.c15.json'
+                with book_path.open('xb') as stream:
+                    stream.write(book_raw); stream.flush(); os.fsync(stream.fileno())
+                opening_file = dict(file=book_path.name, bytes=len(book_raw), sha256=hashlib.sha256(book_raw).hexdigest(),
+                                    adapter_state_hash=book_state['state_hash'])
+                opening_result.update(file=opening_file, instruments=len(book_state['books']),
+                                      resting_orders=sum(len(b['orders']) for b in book_state['books']))
                 records = itertools.chain((first_taken,), records)
             for raw in records:
                 session_id = session(member, raw)
@@ -299,7 +345,8 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                         extrapolated_hours_for_total=round(total * ingest_seconds / cursor / 3600, 2),
                         journal_count=journal_count, journal_head_hash=head, sessions=sessions, workers=workers,
                         worker_cpu_seconds=round(worker_cpu, 3), ingested_records=cursor, completion_claimed=False,
-                        partial_members=partials, tail_members=skipped, packing=packing)
+                        partial_members=partials, tail_members=skipped, opening_book=opening_result,
+                        opening_book_file=opening_file, packing=packing)
         if event is not None:
             event(dict(phase='source_verification', records=cursor, total_records=total))
         verify_started = time.perf_counter()
@@ -327,7 +374,7 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                       ms_per_record=round(1000 * ingest_seconds / cursor, 3),
                       conformance_seconds=round(verify_seconds, 3), sessions=sessions, records=cursor,
                       workers=workers, worker_cpu_seconds=round(worker_cpu, 3), partial_members=partials, tail_members=skipped,
-                      packing=packing)
+                      opening_book=opening_result, opening_book_file=opening_file, packing=packing)
         if event is not None:
             event(dict(phase='source_saved', records=cursor, total_records=total, journal_hash=completion.journal_hash))
         return result
@@ -443,7 +490,8 @@ def main():
     parser.add_argument('--opening-receipt',
                         help='the PRIOR trading day\'s sealed ingest receipt (BOSS_BLOCK_INGESTION_RECEIPT_V1, or Monday\'s '
                              'FRANKIE_SEALED_INGESTION_RECOVERY_RECEIPT_V1): the day opens with its closing book (opening_book.py). '
-                             'Without it a day with a tail member opens from an empty book, listed in the receipt')
+                             'Without it a day with a tail member warms its own book from the tail partition (its 00:00Z '
+                             'snapshot to the halt), so no prior day needs to be ingested')
     parser.add_argument('--profile', action='store_true',
                         help='run the ingest under cProfile and file profile.txt (top functions by own time and by cumulative time) '
                              'in the output directory; a measurement of where the parent\'s time goes, no change to what is written')
@@ -480,8 +528,7 @@ def main():
     if args.opening_receipt:
         adapter_state, opening_descriptor = opening_books.load(args.opening_receipt)
         opening_descriptor['used_for'] = 'writer run(s) of this ingest, each restored afresh'
-    elif tails:
-        opening_descriptor = opening_books.absent('no --opening-receipt was given for a day that opens at the prior halt')
+    # without --opening-receipt a day with a tail member warms its own book from the tail partition (ingest())
     pin = mbo_source.MboSourcePin(3, mbo_source.runtime_hash())
     common = dict(schema=None, manifest_hash=manifest['manifest_hash'], scope_hash=scope.genesis_hash(),
                   scope_kind=scope.kind.value, session_policy=policy_name, halt_utc_hour=halt,
@@ -530,6 +577,7 @@ def main():
                        records_per_second=result['records_per_second'], ms_per_record=result['ms_per_record'],
                        conformance_seconds=result['conformance_seconds'], sessions=result['sessions'],
                        partial_members_ingested=result['partial_members'], tail_members_ingested=result['tail_members'],
+                       opening_book=result['opening_book'], opening_book_file=result['opening_book_file'],
                        packing=result['packing'], boxes=(_boxes(journal) if writer == 'compact' else None),
                        ingested_unix=int(time.time()), model_calls=0, training_updates=0)
         write_once(directory / 'ingestion-receipt.json', receipt)

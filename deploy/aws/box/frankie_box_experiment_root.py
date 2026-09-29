@@ -61,7 +61,17 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
     # what this day's ingest recorded; the legacy pass replays the day's records onto it. Absent = listed, never refused.
     tail_members = list(receipt.get('tail_members_ingested') or receipt.get('tail_members') or [])
     opening_book, opening_state = receipt.get('opening_book'), None
-    if opening_book and opening_book.get('status') == 'seeded':
+    own = receipt.get('opening_book_file')
+    if own:
+        # the day's own ingest wrote the book it opened with beside the journal (seeded or warmed from the tail partition):
+        # the same bytes, sha256 checked against the receipt; no prior day is needed
+        sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+        from research.kalshi.frankie_boss.c15_journal import unpack
+        raw = (directory / own['file']).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != own['sha256']:
+            raise ValueError('the opening book beside the journal differs from its ingestion receipt')
+        opening_state = unpack(json.loads(raw))
+    elif opening_book and opening_book.get('status') == 'seeded':
         sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
         from research.kalshi.frankie_boss import opening_book as opening_books
         opening_state, again = opening_books.load(opening_book['receipt'])
