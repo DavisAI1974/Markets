@@ -69,8 +69,8 @@ the real ASOF alignment.
 1. The teacher-only batch step `frankie_box_experiment_teacher.py/.sh` (DAYS=<list>; each day its own fresh walk of
    JournalTeacherR3 on its sealed journal, in parallel; writes `DIPOLE_CLASSROOM_SOURCE_V1` to
    `/opt/frankie-box/work/experiment-teacher-rows/<day>/host-dipole-classroom-source.c15.json`; skips days a launch
-   already covered). A research agent was mapping the standalone call chain at close (retained_preparation_recovery
-   .py:93-104 is the known outside-the-walk call); redo that research if its report is not in this file.
+   already covered). The standalone call chain is mapped in `TEACHER_ONLY_CALL_MAP_20260929.md` (call sequence
+   with real names, pinned files, CPU/taskset, the walk-cache trap, the unsettled items). Build from it.
 1b. BOTH TEACHERS HAVE ALL THE DIPOLE DATA (Greg, 2026-09-29: "the boss teacher will still absolutely have all dipole
    data available just not fresh calcs on it every day. I guess that applies to both teachers"). Fresh Dipole calcs
    run 1 day in 5 (batched per day); what the teachers READ is everything that exists. Built: the scientific teacher
