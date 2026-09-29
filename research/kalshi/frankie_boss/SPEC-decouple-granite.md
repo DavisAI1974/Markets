@@ -1,5 +1,23 @@
 # Spec: Granite only in the roles the build plan gave it (Greg, 2026-09-29)
 
+## DECISION 2026-09-29 (late), supersedes the tables below: R3 roles on the R4 Pod
+Greg: "Go off an earlier r like r2 or 3 and see if they match 4. If 4 is different use 2 or 3", "Except for the pod
+use", and "It should just be a logic helper for frankie". R2 is not in the repo; R3 (2026-09-14 closeout) and R4
+(2026-09-21) are, and they differ (full cell diff: `GRANITE_CALL_INVENTORY_R10_20260929.md`, R3 vs R4 section):
+- R3: Granite has ONE role, the B2 shadow teacher/critic under a closed schema (C21-C24), B1 authoritative. C22 had
+  no serving path; there is no C35; C14 has no classroom.
+- R4 added on 2026-09-21: C22 as the retained RunPod Pod service; C35 (the BOSS vLLM as Frankie's principal engine:
+  reading, writing); the governed classroom in C14.
+Greg's answers (AskUserQuestion, 2026-09-29):
+1. "Pod serves the critic only": Granite is the C21-C24 shadow critic, served from the R4 Pod. C35 is no longer a
+   Granite role: the principal session makes no Granite call for reading, merges or writing.
+2. The analysis: "Frankie does the analysis" (not Granite). Frankie is the system (code, calculations, brain).
+3. The classroom: "Keep it on the critic": the classroom is answered by the critic under the closed schema (C23),
+   not by a principal engine.
+Consequence for r10: r10 WAITS for this build (the principal's reading/merges/writing move off Granite; the classroom
+moves onto the critic lane). Build list and open items: the section "R3 BUILD" at the end of this file.
+
+
 Status: SPEC, draft. **Greg: we might still tweak it in the next chat.** The reference is the build plan,
 `artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`.
 
@@ -36,3 +54,21 @@ This spec keeps them, because the plan's classroom is answered by the principal 
 1. Confirm that the classroom answers (C14) count as an original role.
 2. The code-first table in the handoff (moving the reading notes, merges, transcription and ledgers to code) was a proposal. Under "only the original roles" those stay on Granite, because they are C35. Keep them as they are, or revisit later.
 3. Any Pods still up from r6/r9: the next session checks them first, and stops them only on Greg's word.
+
+
+## R3 BUILD (on Greg's go; nothing built yet)
+Principal session `deploy/aws/box/frankie_box_boss_session.py` (not pinned; swap modules where a module is replaced):
+1. reading + merges: no model call. The notes the writing and the classroom read are assembled by code from the
+   delivered evidence and the derivation (the data is exact already); the merge is a line-exact dedupe, nothing dropped.
+2. writing: Frankie's analysis, the accounting entry and the ten output ledgers are written by Frankie's code from
+   verify/labels/derive/compare/receipts and the brain (a new box module). The response keeps the shape the adapter
+   and the recorder validate (lessons = [analysis, accounting entry, ten ledgers] + the four classroom ledgers).
+3. classroom (19 components, summary) and the correction: routed to the critic lane, closed schema (C23 parser),
+   the critic's identity and receipts recorded as the critic's.
+4. engine reach stays only as the Pod reach the critic lane needs.
+Open for Greg:
+- C24 says an invalid, empty or unavailable critic must never block and leaves the native result authoritative. The
+  classroom today REFUSES on an invalid answer. On the critic lane: does an invalid classroom answer block, or is it
+  recorded as the critic's own and the run goes on?
+- What Frankie's analysis must carry beyond the measured facts (his comparisons of derived layers with the frozen
+  brain, the lessons for the next cycle), and which of those are computed.

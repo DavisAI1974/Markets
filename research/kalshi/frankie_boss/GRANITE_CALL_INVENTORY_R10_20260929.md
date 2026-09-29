@@ -100,3 +100,18 @@ correction's learning_history (row 12a).
 
 Before r10 on the box: `frankie_box_serverless_config.sh ACTION=show` (read-only). If the file is present, r10 refuses
 at preflight until `ACTION=remove` (Greg's go).
+
+
+## R3 vs R4 (Greg 2026-09-29: "If 4 is different use 2 or 3", "Except for the pod use")
+R2 is not in the repo (only R3 `Frankie_BOSS_Build_Plan_R3_20260914_Closeout.xlsx` and R4). Granite-relevant cells:
+| Row | R3 (2026-09-14) | R4 (2026-09-21) |
+|---|---|---|
+| Build Plans B2 reasoning / Granite role | "Granite critiques or teaches through a closed schema"; "Shadow-only initially" | same text, plus Current capability: "the same BOSS vLLM is now the principal engine" |
+| C22 function now | "No approved model download or serving path is wired into Frankie/BOSS." | the retained RunPod Pod service (vLLM, jobs_v1); "Since 2026-09-21 also the principal engine" |
+| C35 | absent | "bounded reading of the delivered evidence through the BOSS, writing of the four files" |
+| C14 capability | "six unbuilt B2/C1 columns remain explicitly ABLATED" (no classroom) | the governed classroom (171 pairs, 19 dimensions) travels with each cycle; role still "Training-target contract only" |
+| C21, C23, C24 | intended role, authority, never-do: identical in both | identical; capability/status updated to "built and run" |
+| Roadmap stage 8 | "Pin checkpoint/runtime and wire serving ... shadow disagreement policy" | "Retained Granite service on RunPod ... Since 2026-09-21 the same service is Frankie's engine" |
+| Preservation Audit | no Granite rows | adds "Principal engine": the BOSS vLLM is the engine |
+Greg's decision: R3 roles (the shadow critic only) on the R4 Pod; the classroom on the critic; Frankie does the
+analysis. See `SPEC-decouple-granite.md` DECISION block.
