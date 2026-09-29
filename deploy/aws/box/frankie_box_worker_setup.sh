@@ -132,6 +132,9 @@ fi
 git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_SHA"
 git -C "$ROOT/markets" checkout -q --detach "$MARKETS_SHA"
 git -C "$ROOT/markets" log --oneline -1
+# the dispatched commit as an ingest worktree too, like frankie_box_ingest_block.sh makes (a CODE_ROOT for day facts)
+[ -e "$ROOT/ingest-code/$MARKETS_SHA/.git" ] || git -C "$ROOT/markets" worktree add -q --detach "$ROOT/ingest-code/$MARKETS_SHA" "$MARKETS_SHA"
+echo "ingest worktree $ROOT/ingest-code/$MARKETS_SHA"
 echo "### receipt"
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 "$ROOT/venv/bin/python" - "$ROOT/receipts/worker-setup-$STAMP.json" "$MARKETS_SHA" "$DIFF" <<'PY'
