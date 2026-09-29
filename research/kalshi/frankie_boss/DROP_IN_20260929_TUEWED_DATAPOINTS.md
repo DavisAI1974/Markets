@@ -29,6 +29,14 @@ direct SSM probes and S3 reads from the container; put it in `~/.config/markets/
   Deletion = a committed, named-only script like `frankie_box_cleanup_side.sh` (refuse open files; print what was
   removed and its bytes).
 
+- **Old staged code gets deleted** ("get rid of old staged code unless we're using it. If there won't be any example
+  in there after that, then leave 1 good example of each in case we want a template but that's only if we are
+  eliminating the rest."): under `/opt/frankie-box/code/` delete every staged checkout `<sha>-<run>-<n>/` and every
+  `transfer-*` pack that no running process, no current run's receipt/config and no current `CODE_ROOT` uses (keep the
+  newest staged tip and anything a running run points at). Same for `/opt/frankie-box/ingest-code/<sha>` worktrees not
+  in use. Only if a kind would be left with NONE, keep one good (complete, `staging-receipt.json` status staged)
+  example of that kind as a template. Named-only, refuse open files, print what was removed and its bytes.
+
 ## Work list, in order
 1. **Probe everything running** (handoff table): Wednesday 20211006 (then `ACTION=conform` on it), the four ingests of
    orchestrator run `pairs2-20260929-1`, Databento run 36564541947 (Oct 2024+2025), free fetch run 36557302661.
