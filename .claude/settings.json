@@ -53,9 +53,15 @@
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "bash scripts/session_start.sh" }
+          {
+            "type": "command",
+            "command": "bash scripts/session_start.sh"
+          }
         ]
       }
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "codebase-memory-mcp"
+  ]
 }
