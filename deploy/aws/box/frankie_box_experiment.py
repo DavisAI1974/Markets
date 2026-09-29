@@ -1040,9 +1040,10 @@ def main():
     p.add_argument('--days', help='comma list of YYYYMMDD (added to the plan file\'s days)')
     p.add_argument('--day-class', help='monday | midweek | thursday | friday (classes never mix)')
     p.add_argument('--classroom-arm', help='comma list of the classroom-arm days (DIGEST=on for their ROOT); default the cycle')
-    p.add_argument('--classroom-arm-cycle', default='2/5',
-                   help='ON/CYCLE: the classroom arm on the first ON of every CYCLE discovery days in date order (Greg, '
-                        '2026-09-29: days 1 and 2 on, 3-5 off; 5/5 = every day)')
+    p.add_argument('--classroom-arm-cycle', default='5/5',
+                   help='ON/CYCLE: the classroom arm on the first ON of every CYCLE discovery days in date order. Default '
+                        '5/5 = every day (Greg, 2026-09-29, later: "Just run every pair will get teach and class. It\'s '
+                        'easier that way unless we see that process is taking a long time"); 2/5 = days 1 and 2 of five')
     p.add_argument('--frozen-survivors', help='the frozen survivor list (required for any confirmation day)')
     p.add_argument('--historical-claims', help='a committed knowledge/HISTORICAL_CLAIMS_V1-*.json (repo-relative)')
     p.add_argument('--stages', default=','.join(STAGES), help='comma list, run in the fixed order %s' % ','.join(STAGES))

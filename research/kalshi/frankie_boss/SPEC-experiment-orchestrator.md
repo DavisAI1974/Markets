@@ -90,6 +90,12 @@ Not called:
 - Discovery: the October days of 2021-2023. Confirmation: the October days of 2024-2025. Then widen to every year, reported per season.
 - Source: the 5-year NG MBO pull on S3 (`nymex/ng_mbo_5y_v0`). List it first to confirm coverage.
 
+## The classroom arm: EVERY DAY (Greg, 2026-09-29, latest)
+"Just run every pair will get teach and class. It's easier that way unless we see that process is taking a long time."
+The orchestrator default is now `--classroom-arm-cycle 5/5`: every discovery day gets the teacher and the classroom,
+pairs in order (the second day of a pair carries the first's classroom history). The 2/5 cycle below is kept as an
+option if the classroom step turns out slow.
+
 ## The classroom arm (Greg, 2026-09-29: "just at the beginning run and last 2 runs"; REVISED the same day)
 REVISED (Greg, 2026-09-29, later): "I'm going to have it run on day 1 & 2 so they can apply their findings and then off
 3,4,5 then back on for 1,2 and so on. If we are finding that their part is pretty quick, I might go back to all 5 but
