@@ -75,5 +75,5 @@ the classroom runs with the BOSS teacher and Frankie's code answers only.
 5. The classroom loads the rules file; the tied teachers switch on.
 
 ## Open for Greg
-- (Resolved 2026-09-29: the pooled Pearson is out of the build; the 171 pairs carry co-movement counts.)
+- (Resolved 2026-09-29: the coefficients stay; each of the 171 pairs also carries co-movement counts; nothing flattened or normalized.)
 - Whether a model is ever given a seat. If so, one seat only, and a different model from anything else in the loop.

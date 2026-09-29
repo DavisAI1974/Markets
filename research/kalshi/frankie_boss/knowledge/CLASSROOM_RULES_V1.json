@@ -53,8 +53,8 @@
         "boss_teacher",
         "scientific_teacher"
       ],
-      "rule": "Counts, never averages as findings. A correlation, an R2 and a fitted slope are averages and are not used; the 171 pairs carry co-movement counts (no Pearson, no minimum). Data may be grouped over a defined range and counted per group, never averaged. Results are per cell and per day, never pooled.",
-      "source": "CLAUDE.md D37 and the trading rules (per cell always, never pool); research/kalshi/per_event.py; Greg 2026-09-29: \"take the average plan out of the build\", \"We can define a group them over a certain range but not an average\"; dipole_classroom.py _co_movement"
+      "rule": "Never flatten or normalize dipole results. Coefficients are kept (each pair's Pearson over its own window, reported with its overlap count), and each pair also carries its co-movement counts; a coefficient is read per pair, per cell and per day, never pooled with others into one number, never averaged across results or normalized. Data may be grouped over a defined range and counted per group, never averaged.",
+      "source": "Greg 2026-09-29: \"We want the coefficients, just not a bunch of dipole results flattened or normalized\", \"We can define a group them over a certain range but not an average\"; CLAUDE.md D37 (no average as a verdict); the trading rules (per cell always, never pool)"
     },
     {
       "id": "R06",

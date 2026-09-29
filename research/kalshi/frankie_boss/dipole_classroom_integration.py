@@ -3,7 +3,7 @@
 The earlier ``dipole_classroom_hardening`` module remains in the repository as reviewed
 history/test compatibility, but it is not on the production adapter MRO or curriculum
 builder path after integration.  This module owns the two hardening policies that remain
-live (mastery-based taper/regression and the co-movement counts re-pin) and composes the
+live (mastery-based taper/regression and the Pearson overlap re-pin) and composes the
 reviewed final classroom behavior directly onto the base mandatory classroom adapter.
 
 No governed Dipole teacher mathematics, Frankie inputs, calculations, planes, replay,
@@ -23,6 +23,7 @@ from .dipole_classroom_final_review import (
 )
 from .frankie_dipole_classroom_adapter import DipoleClassroomPrincipalAdapter
 
+MIN_PEARSON_PRESENT_OVERLAP = classroom.MIN_PEARSON_PRESENT_OVERLAP
 
 _PREVIOUS_MODE = {
     classroom.ClassroomMode.TEACH.value: classroom.ClassroomMode.TEACH.value,
@@ -61,7 +62,7 @@ def select_integrated_mode(history: Sequence[Mapping[str, Any]]) -> str:
 
 
 def _repin_teacher_key_correlations(key: Mapping[str, Any]) -> dict:
-    """Fail closed on malformed keys and on any pair without the co-movement counts (no Pearson, Greg 2026-09-29)."""
+    """Fail closed on malformed keys and suppress sub-floor Pearson coefficients."""
     if (
         key.get("schema") != classroom.KEY_SCHEMA
         or key.get("relationship_pairs_scanned") != classroom.PAIR_COUNT
@@ -71,7 +72,19 @@ def _repin_teacher_key_correlations(key: Mapping[str, Any]) -> dict:
     relationships = []
     for relation in key["relationship_scan"]:
         item = dict(relation)
-        classroom.validate_co_movement(item)
+        correlation = dict(item["correlation"])
+        overlap = correlation.get("present_overlap")
+        if type(overlap) is not int or overlap < 0:
+            raise ValueError("Dipole Pearson overlap must be a nonnegative integer")
+        if overlap < MIN_PEARSON_PRESENT_OVERLAP:
+            correlation = {
+                "present_overlap": overlap,
+                "pearson": None,
+                "reason": (
+                    f"FEWER_THAN_{MIN_PEARSON_PRESENT_OVERLAP}_OVERLAPPING_PRESENT_VALUES"
+                ),
+            }
+        item["correlation"] = correlation
         relationships.append(item)
     body = {k: v for k, v in key.items() if k != "teacher_key_hash"}
     body["relationship_scan"] = tuple(relationships)

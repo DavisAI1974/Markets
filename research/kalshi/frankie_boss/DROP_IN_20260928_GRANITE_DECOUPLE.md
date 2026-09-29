@@ -137,7 +137,7 @@ The rerun therefore runs, in order: verify, labels, engine, derive, reading, mer
    Then the launch and the principal, with probes on both. No Jev relay (unwired). **Do not resend the dipole catalog.**
 
 ## Open calls for Greg (carried)
-- DONE 2026-09-29: the classroom's 171 pairs carry co-movement COUNTS; the pooled Pearson and its 8-point floor are out of the build (Greg: "take the average plan out of the build"; grouping over a defined range is allowed, an average is not).
+- DONE 2026-09-29: the Pearson coefficients STAY (Greg: "We want the coefficients, just not a bunch of dipole results flattened or normalized"); each of the 171 pairs now also carries co-movement COUNTS beside its coefficient. Grouping over a defined range is allowed, an average is not. Open: which "average plan" Greg meant to take out.
 - The same Granite model plays every role, so agreement between roles is not independent confirmation.
 - `concurrent_teacher`: when the teacher fails to pickle it falls back to in-process. Keep that fallback, or make it a hard stop?
 - A full audit of anything still dropped or capped, across every process.

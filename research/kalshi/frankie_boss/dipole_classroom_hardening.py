@@ -3,7 +3,7 @@
 This module leaves the governed Dipole teacher mathematics and lawful Sunday host
 untouched. It narrows only the classroom transport/control seam:
 
-- The 171 pairs carry co-movement counts only; no Pearson coefficient and no minimum (Greg, 2026-09-29; D37).
+- Pearson is exposed only at a declared minimum of eight overlapping PRESENT values.
 - Classroom taper regresses one level after a non-mastered/unfinished cycle.
 - Prior-cycle feedback is reduced to correction locations, never the prior answer key.
 - Same-session correction carries only the mistakes that require correction, not the
@@ -38,7 +38,8 @@ from .frankie_principal_adapter import (
     json_form,
 )
 
-# Declared once in the core module; re-exported here for existing importers.
+# Both are declared once in the core module; re-exported here for existing importers.
+MIN_PEARSON_PRESENT_OVERLAP = classroom.MIN_PEARSON_PRESENT_OVERLAP
 PRIOR_CORRECTION_SCHEMA = classroom.PRIOR_CORRECTION_SCHEMA
 prior_correction_summary = classroom.prior_correction_summary
 
@@ -79,10 +80,11 @@ def select_hardened_mode(history: Sequence[Mapping[str, Any]]) -> str:
 
 
 def _harden_teacher_key_correlations(key: Mapping[str, Any]) -> dict:
-    """Fail closed on a key whose pairs do not carry the co-movement counts; no governed observation changes.
+    """Re-apply the declared Pearson floor to a key from any builder; no governed observation changes.
 
-    Greg, 2026-09-29: the pooled Pearson is out of the build (a coefficient is an average, D37). On a core-built key
-    this is an identity that re-pins the hash; a key assembled elsewhere that still carries a coefficient is refused.
+    The core builder already applies MIN_PEARSON_PRESENT_OVERLAP, so on a core-built key this is
+    an identity that re-pins the hash; it exists so a key assembled elsewhere cannot carry a
+    sub-floor coefficient into the classroom.
     """
     if (
         key.get("schema") != classroom.KEY_SCHEMA
@@ -93,7 +95,17 @@ def _harden_teacher_key_correlations(key: Mapping[str, Any]) -> dict:
     relationships = []
     for relation in key["relationship_scan"]:
         item = dict(relation)
-        classroom.validate_co_movement(item)
+        correlation = dict(item["correlation"])
+        overlap = correlation.get("present_overlap")
+        if type(overlap) is not int or overlap < 0:
+            raise ValueError("Dipole Pearson overlap must be a nonnegative integer")
+        if overlap < MIN_PEARSON_PRESENT_OVERLAP:
+            correlation = {
+                "present_overlap": overlap,
+                "pearson": None,
+                "reason": f"FEWER_THAN_{MIN_PEARSON_PRESENT_OVERLAP}_OVERLAPPING_PRESENT_VALUES",
+            }
+        item["correlation"] = correlation
         relationships.append(item)
     body = {k: v for k, v in key.items() if k != "teacher_key_hash"}
     body["relationship_scan"] = tuple(relationships)
@@ -128,7 +140,7 @@ def prepare_hardened_cycle(
         classroom.build_teacher_key(snapshot, previous_snapshot)
     )
     mode = select_hardened_mode(history)
-    # The core builder now emits the prior-correction SUMMARY and the co-movement counts text itself.
+    # The core builder now emits the prior-correction SUMMARY and the Pearson-floor text itself.
     message = classroom.build_pre_message(key, mode=mode, prior_grade=prior_grade)
     binding = {
         "request_id": request_id,
