@@ -115,8 +115,15 @@ def main():
                    partitions_wanted=wanted, already_held={k: sorted(v) for k, v in held.items()},
                    spans={k: [[a.isoformat(), b.isoformat()] for a, b in v] for k, v in plan.items()}, quotes_usd=quotes,
                    total_quote_usd=total, ceiling_usd=ceiling, native_dbn_preserved=True, results=[])
-    for schema in schemas:
-        for (a, b), quote in zip(plan[schema], quotes[schema]):
+    # Every job is submitted first (its id saved to S3 before any poll), then all are polled together and each is
+    # downloaded the moment it is done: Databento runs them side by side (one at a time took ~4 minutes each). The
+    # earliest days go first (the running Tue/Wed first), MBO before the small schemas within a span.
+    pending = []
+    for (a, b) in sorted({span for sch in schemas for span in plan[sch]}):
+        for schema in sorted(schemas, key=lambda x: x != 'mbo'):
+            if (a, b) not in plan[schema]:
+                continue
+            quote = quotes[schema][plan[schema].index((a, b))]
             seg = '%s_%s' % (a.strftime('%Y%m%d'), b.strftime('%Y%m%d'))
             base = '%s/%s' % (prefix, schema)
             done, job_key, manifest_key = ('%s/_done/%s.done' % (base, seg), '%s/_jobs/%s.json' % (base, seg),
@@ -139,38 +146,51 @@ def main():
                                        quote_usd=quote, symbol=SYMBOL, stype_in=STYPE, dataset=DATASET,
                                        submitted_at_utc=dt.datetime.now(dt.timezone.utc).isoformat()))
                 print('[submit] %s %s job=%s quote=$%.4f' % (schema, seg, jid, quote), flush=True)
-            deadline = time.time() + 4.5 * 3600
-            while True:
-                state = client.batch.get_job_details(jid).get('state')
-                print('[poll] %s %s job=%s state=%s' % (schema, seg, jid, state), flush=True)
-                if state == 'done':
-                    break
-                if state in {'failed', 'expired'}:
-                    raise RuntimeError('%s %s job %s state=%s' % (schema, seg, jid, state))
-                if time.time() > deadline:
-                    raise RuntimeError('%s %s job %s polling deadline; a rerun reuses the saved job id' % (schema, seg, jid))
-                time.sleep(20)
-            with tempfile.TemporaryDirectory(prefix='ngfut_') as tmp:
-                client.batch.download(jid, output_dir=tmp)
-                files = sorted(glob.glob(os.path.join(tmp, '**', '*.dbn.zst'), recursive=True))
-                if not files:
-                    raise RuntimeError('%s %s job %s: no .dbn.zst downloaded' % (schema, seg, jid))
-                entries = []
-                for f in files:
-                    path = Path(f)
-                    h, size = hashlib.sha256(), 0
-                    with path.open('rb') as fh:
-                        for chunk in iter(lambda: fh.read(8 * 1024 * 1024), b''):
-                            h.update(chunk)
-                            size += len(chunk)
-                    obj = '%s/native/%s' % (base, path.name)
-                    s3.upload_file(str(path), bucket, obj, ExtraArgs=dict(Metadata=dict(sha256=h.hexdigest(), job_id=jid)))
-                    entries.append(dict(key=obj, bytes=size, sha256=h.hexdigest()))
-                    print('[upload] %s %d bytes %s' % (obj, size, h.hexdigest()), flush=True)
-            put_json(manifest_key, dict(schema=schema, segment=seg, job_id=jid, quote_usd=quote, objects=entries))
-            s3.put_object(Bucket=bucket, Key=done, Body=b'done\n')
-            receipt['results'].append(dict(schema=schema, segment=seg, job_id=jid, objects=len(entries),
-                                           bytes=sum(e['bytes'] for e in entries)))
+            pending.append(dict(schema=schema, seg=seg, base=base, jid=jid, quote=quote, done=done, manifest=manifest_key))
+
+    def fetch(item):
+        schema, seg, base, jid = item['schema'], item['seg'], item['base'], item['jid']
+        with tempfile.TemporaryDirectory(prefix='ngfut_') as tmp:
+            client.batch.download(jid, output_dir=tmp)
+            files = sorted(glob.glob(os.path.join(tmp, '**', '*.dbn.zst'), recursive=True))
+            if not files:
+                raise RuntimeError('%s %s job %s: no .dbn.zst downloaded' % (schema, seg, jid))
+            entries = []
+            for f in files:
+                path = Path(f)
+                h, size = hashlib.sha256(), 0
+                with path.open('rb') as fh:
+                    for chunk in iter(lambda: fh.read(8 * 1024 * 1024), b''):
+                        h.update(chunk)
+                        size += len(chunk)
+                obj = '%s/native/%s' % (base, path.name)
+                s3.upload_file(str(path), bucket, obj, ExtraArgs=dict(Metadata=dict(sha256=h.hexdigest(), job_id=jid)))
+                entries.append(dict(key=obj, bytes=size, sha256=h.hexdigest()))
+                print('[upload] %s %d bytes %s' % (obj, size, h.hexdigest()), flush=True)
+        put_json(item['manifest'], dict(schema=schema, segment=seg, job_id=jid, quote_usd=item['quote'], objects=entries))
+        s3.put_object(Bucket=bucket, Key=item['done'], Body=b'done\n')
+        receipt['results'].append(dict(schema=schema, segment=seg, job_id=jid, objects=len(entries),
+                                       bytes=sum(e['bytes'] for e in entries)))
+
+    deadline = time.time() + 5.3 * 3600
+    while pending:
+        still = []
+        for item in pending:
+            state = client.batch.get_job_details(item['jid']).get('state')
+            if state == 'done':
+                print('[done] %s %s job=%s' % (item['schema'], item['seg'], item['jid']), flush=True)
+                fetch(item)
+            elif state in {'failed', 'expired'}:
+                raise RuntimeError('%s %s job %s state=%s' % (item['schema'], item['seg'], item['jid'], state))
+            else:
+                still.append(item)
+        pending = still
+        if pending:
+            print('[poll] %d jobs still running: %s' % (len(pending), ', '.join('%s %s' % (x['schema'], x['seg'])
+                                                                                  for x in pending[:6])), flush=True)
+            if time.time() > deadline:
+                raise RuntimeError('polling deadline with %d jobs running; a rerun reuses the saved job ids' % len(pending))
+            time.sleep(30)
     put_json('%s/receipts/%s.json' % (prefix, dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')), receipt)
     Path('/tmp/curve-days-receipt.json').write_text(json.dumps(receipt, indent=1, sort_keys=True))
     print('[done] %d segment results' % len(receipt['results']), flush=True)
