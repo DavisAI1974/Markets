@@ -18,6 +18,14 @@ Greg's answers (AskUserQuestion, 2026-09-29):
 4. Greg: "The only analysis granite should do is to say how he feels he performed." So the analysis is Frankie's
    (code), plus ONE Granite item: Granite's own self-assessment of how it performed as the critic, filed as
    Granite's, labelled as its own view, never as a result.
+5. What Frankie's analysis covers (Greg, 2026-09-29 23:21 ET, verbatim list):
+   - what he learned in the classroom;
+   - what he learned from the cycles and the calculations;
+   - new exhaustion findings;
+   - his suggestions on how to improve the daily runs, and any additional calculations;
+   - things to improve him;
+   - any trade signal insight.
+   Plus Granite's one labelled section: how it feels it performed as the critic.
 Consequence for r10: r10 WAITS for this build (the principal's reading, merges, writing and classroom all move off
 Granite; Granite is the launch's critic plus its one self-assessment). Build list and open items: the section "R3 BUILD" at the end of this file.
 
@@ -73,7 +81,9 @@ Principal session `deploy/aws/box/frankie_box_boss_session.py` (not pinned; swap
 Open for Greg:
 - The classroom by code: the code answers what the teacher data and Frankie's calculations carry (the observations,
   the 171 pairs). A novel finding needs something to find it; by code that is only what a computation surfaces.
-- What Frankie's analysis must carry beyond the measured facts (his comparisons of derived layers with the frozen
-  brain, the lessons for the next cycle), and which of those are computed. Granite's only analysis item is its
+- Frankie's analysis sections are decision 5. For each, the build names the code source it is computed from
+  (classroom ledgers; derive/compare against the frozen brain; the exhaustion/D priming facts and the exhaustion
+  layers; receipts and progress timings; trade signal insight from the calculations), and lists as unknown whatever
+  has no source yet, never filling it. Granite's only analysis item is its
   self-assessment (decision 4); where it sits: one closed-schema critic call after the classroom, its text appended to
   the analysis as its own labelled section (proposed; after the critic, not the classroom).
