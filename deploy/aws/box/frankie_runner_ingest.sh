@@ -55,9 +55,14 @@ PY
 echo "### ingest $DAY: $WORKERS workers, mode $MODE, observation $OBSERVATION, verify $VERIFY"
 STATUS=sealed
 START=$(date +%s)
+set +e
 PYTHONPATH="$PWD" python research/kalshi/frankie_boss/operations/ingest_block_sources.py --manifest "$M" \
   --sources-dir "$WORK/sources" --output-dir "$OUT" --session-policy cme_trading_day --workers "$WORKERS" \
-  --mode "$MODE" --observation "$OBSERVATION" --verify "$VERIFY" > "$WORK/ingest.log" 2>&1 || STATUS=failed
+  --mode "$MODE" --observation "$OBSERVATION" --verify "$VERIFY" 2>&1 | tee "$WORK/ingest.log" \
+  | grep --line-buffered -E '"records": [0-9]*00000,|"phase": "(start|complete|conformance)|Error|error|Traceback'
+TOOL_EXIT=${PIPESTATUS[0]}   # the probe above: every 100k records, the phases and any error stream to the job log
+set -e
+[ "$TOOL_EXIT" = 0 ] || STATUS=failed
 WALL=$(( $(date +%s) - START ))
 tail -n 40 "$WORK/ingest.log"
 [ -s "$OUT/ingestion-receipt.json" ] || STATUS=failed
