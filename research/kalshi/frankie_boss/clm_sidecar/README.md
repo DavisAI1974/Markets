@@ -61,24 +61,26 @@ rest" tables.
   the run finishes head-only and says so.
 - `vllm/vllm-openai:latest` is not pinned. The status marker records the vLLM version that ran.
 
-## Sit-in with Frankie (Greg, 2026-09-28)
-Jev sits in with Frankie through the principal's reading and classroom, in two roles, and they talk every few
-minutes. Jev writes a report every 30 minutes, so each run leaves something to evaluate.
-- **Feed out of the box:** `deploy/aws/box/frankie_box_jev_relay.sh` has its own `jev-relay` lock and runs beside the
-  principal. It is read-only on the session.
-  - Every `RELAY_SECONDS` (120) it bundles the session's phase, note, progress, `work/classroom/*.json` and each finished
-    model call's answer text.
-  - Each bundle goes to the next presigned slot, `clm-sidecar/<STAMP>/feed/NNNN.json`. The first bundle also carries the
-    request's `dipole_classroom` material.
-  - Dispatch with `presign="putrange:frankie-granite42-568968024170-us-east-1/clm-sidecar/<STAMP>/feed:240"`,
-    `presign_hours=12`, variables `STAMP=<STAMP> REQUEST_DIRECTORY=<principal request dir>`.
-- **Jev's Pod:** dispatch `frankie_box_clm_sidecar_pod.sh` with `SIT_IN_PODS=<reading Pods 2-4>` and a long
-  `MAX_MINUTES`. `sit_in.py` runs after learn.py, using Qwen3-8B chat on the Pod. Each turn:
-  - the **student** answers Frankie's topic from the dipole material alone;
-  - the **observer** compares the two against the material (JSON: agree, disagreements, evidence, question);
-  - **Frankie** (Granite on a reading Pod, never the BOSS, jobs_v1) answers the question;
-  - the observer closes the turn as settled or open.
-- **Reports:** `clm-sidecar/<STAMP>/sit-in/report-NNNN.md` every 30 min, listing every turn individually (never
-  averaged), plus `sit-in/transcript.jsonl.gz`.
-- **Isolation:** nothing Jev writes goes into Frankie's session. Frankie's replies to Jev are extra Granite calls on the
-  reading Pods, which share the slots with the principal's reading.
+## Jev, the experiment's blind outside student (Greg, 2026-09-29: "yes, include him")
+This replaces the 2026-09-28 sit-in, where Jev questioned Granite as "Frankie" through the principal's reading. That
+path is retired: Frankie is code, Granite is only the full run's B2 critic, and Jev never questions Granite. Spec:
+`research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md`, section "Jev".
+- **Who and when:** Qwen3-8B chat on his own Pod, on the experiment's three classroom-arm (discovery) days only. Not a
+  classroom seat; he never speaks in the classroom (R17).
+- **Order, the blind wall enforced in `sit_in.py`:** read the day's material (classroom package + search survivors
+  so far), file CLAIMS (JEV_CLAIMS_V1, sha256 and filed_at recorded), and only then read Frankie's code-classroom
+  outputs and write the comparison (orientation only, never a verdict). The search tests every claim.
+- **Dispatches (`frankie_box_run.yml`, each on Greg's go):**
+  1. Material, box side, after the day's classroom package exists: `frankie_box_jev_relay.sh ACTION=material STAMP=<s>
+     DAY=YYYYMMDD DAY_ROLE=discovery MATERIAL=<request or package JSON> [SURVIVORS=<survivor list JSON>]` with
+     `presign=putrange:frankie-granite42-568968024170-us-east-1/clm-sidecar/<s>/material:8`.
+  2. Jev's Pod, runner side: `frankie_box_jev_pod.sh STAMP=<s> DAY=YYYYMMDD [MAX_MINUTES=480] [WAIT_MINUTES=360]`
+     (`launch.py --jev`; the Pod is always deleted).
+  3. Frankie's outputs, box side, after his classroom receipt exists: `frankie_box_jev_relay.sh ACTION=frankie
+     STAMP=<s> DAY=YYYYMMDD SESSION=<session root>` with
+     `presign=putrange:frankie-granite42-568968024170-us-east-1/clm-sidecar/<s>/frankie:8`.
+  4. Read: `frankie_box_jev_reports.sh` with `presign=getprefix:frankie-granite42-568968024170-us-east-1/clm-sidecar/<s>/`.
+- **Outputs:** `clm-sidecar/<s>/jev/claims.json`, `comparison.json`, `report.md`, `transcript.jsonl.gz`, `receipt.json`
+  (granite_calls 0, Jev's model calls counted).
+- **Nothing cut:** material longer than one prompt is read in note packs; a cut-off answer is regenerated in halves;
+  unparsed answers and repeated claims are kept and listed.

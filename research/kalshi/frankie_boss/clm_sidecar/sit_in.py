@@ -1,46 +1,49 @@
-"""Jev sits in with Frankie (Greg, 2026-09-28): two roles, talking with Frankie every few minutes, a report every 30 min.
+"""Jev, the blind outside student in the experiment (Greg, 2026-09-29: "yes, include him").
 
-Runs on Jev's Pod. Inputs arrive through one presigned config object (CONFIG_URL): the GET URLs of the box relay's
-feed slots (clm-sidecar/<stamp>/feed/NNNN.json, written by deploy/aws/box/frankie_box_jev_relay.sh) and the PUT URLs
-of the report slots and the transcript. Jev's own model is Qwen3-8B chat on this Pod (JEV_CHAT_URL). Frankie is Granite
-on the reading Pods (GRANITE_PODS, never the BOSS Pod), asked through the same jobs_v1 protocol the box uses.
+Spec: research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md, section "Jev". Runs on Jev's OWN Pod (Qwen3-8B
+chat, JEV_CHAT_URL), on the three classroom-arm days of the experiment only. Jev is NOT one of the three classroom seats
+and never speaks in the classroom (rule R17). No Granite call of any kind: Frankie is code, and his answers are read
+from his classroom files, never asked for.
 
-Each turn takes the next new thing Frankie produced (a classroom answer first, else the latest reading note):
-  1. STUDENT (Jev): answers the same topic from the dipole classroom material alone, without seeing Frankie's answer;
-  2. OBSERVER (Jev): compares the student and Frankie against the dipole material, as JSON (agree, disagreements,
-     evidence, question_for_frankie);
-  3. FRANKIE (Granite): answers the observer's question about his own answer;
-  4. OBSERVER (Jev): closes the turn (settled or open, and why).
-Every REPORT_MINUTES the report lists every turn individually (topic, agree, the disagreement, settled/open, the
-question and Frankie's reply) plus a short synthesis. Nothing Jev writes goes into Frankie's session; Frankie's replies
-to Jev are recorded here only. Rough by design; zero synthetic data (every input is the run's own material).
+One day, in this order (the blind wall is enforced here, not only by the relay):
+  1. MATERIAL: the day's JEV_DAY_MATERIAL_V1 bundle (the classroom package and the search's survivor list so far,
+     written by deploy/aws/box/frankie_box_jev_relay.sh ACTION=material). A day not declared discovery is refused (R15).
+  2. STUDENT: Jev reads the material whole (in note packs when it is longer than one prompt, nothing cut) and files
+     CLAIMS only, labelled as his: mechanisms, novel findings, and tests to run next, each naming the series, cells,
+     condition, lag, target and the numbers from the material it rests on. No grades, no corrections, no teaching.
+  3. FILE: the claims go up as JEV_CLAIMS_V1 (sha256 recorded, filed_at stamped) BEFORE anything of Frankie's is read.
+     The scientific teacher (the experiment's search) tests every claim like Frankie's and reports counts; nothing
+     here is a verdict (R11, R14).
+  4. COMPARE: only after the claims are filed, Frankie's code-classroom outputs (JEV_FRANKIE_OUTPUTS_V1: his ledgers,
+     classroom receipt and analysis, written by the relay ACTION=frankie) are read, and Jev lists where his claims and
+     Frankie's findings agree, differ or contradict. Orientation for the search, never a result.
+  5. REPORT: every claim individually, the comparison, and the counts (filed, unparsed, duplicates), plus the
+     transcript and a receipt.
 
-Nothing is cut (Greg, 2026-09-28): the dipole material, Frankie's answers, the queue and the report go whole. Jev's model
-has a 32,768-token context, so anything longer than one Jev prompt is READ IN PIECES a little under the limit: every piece
-becomes its own note, and the notes are kept as MULTIPLE NOTE PACKS each a little under the limit (never folded into
-shorter notes). Every step then runs once per pack and every answer is kept. Jev's output is the remaining context; an
-answer cut off by the model (finish_reason length) is REGENERATED from its input in halves, again, until every answer is
-complete; the same for Frankie's replies. An observer answer that is not JSON is asked again. Every queued item is
-discussed (classroom items first, then reading notes oldest first). The sit-in's progress (feed position, queue, turns,
-the dipole material) is saved to STATE_PATH after every step and loaded at start, so a restart picks up where it stopped. Oversize relay bundles arrive as JEV_FEED_PART_V1
-parts over consecutive slots and are joined and checked (sha256) here.
+Nothing is cut (Greg): material longer than one Jev prompt is READ IN PIECES a little under the limit, every piece
+into its own note, notes kept as MULTIPLE NOTE PACKS, every step run once per pack and every answer kept. A cut-off
+answer (finish_reason length) is regenerated from its input in halves until whole. An answer that is not JSON is asked
+again once and, if still not JSON, kept whole under "unparsed" (listed, never dropped). A claim repeated in the same
+words is kept and marked duplicate_of (listed, not dropped). Progress is saved to STATE_PATH after every step, so a
+restart picks up where it stopped. Oversize bundles arrive as JEV_FEED_PART_V1 parts over consecutive slots and are
+joined and checked (sha256) here.
 """
 import gzip
 import hashlib
-import http.client
 import json
 import os
 import re
-import ssl
 import time
 import urllib.error
 import urllib.request
 
-CONTEXT = 131072                 # Granite's only context; output = the remaining context (Greg, 2026-09-16)
 JEV_CONTEXT = 32768
 JEV_PIECE_CHARS = 54000          # one piece or note pack per Jev prompt: a little under the input room (~18k of 32,768 tokens)
 JEV_PROMPT_CHARS = JEV_CONTEXT * 3
+JEV_MODEL = 'Qwen3-8B'
 STATE_PATH = os.environ.get('SIT_IN_STATE', '/workspace/jev-sit-in/state.json')
+CLAIM_KINDS = ('mechanism', 'novel_finding', 'test_next')
+CALLS = [0]                      # every Jev model call this process made (retries and note reading included)
 
 
 class Incomplete(Exception):
@@ -67,6 +70,10 @@ def put(url, data, content_type='application/octet-stream'):
         return response.status
 
 
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
 def jev(prompt):
     """Jev's own model: Qwen3-8B chat served on this Pod. Output = the remaining context; a cut-off answer raises Incomplete."""
     if len(prompt) > JEV_PROMPT_CHARS:
@@ -78,62 +85,12 @@ def jev(prompt):
                            temperature=0, max_tokens=max_tokens, chat_template_kwargs=dict(enable_thinking=False))).encode()
     request = urllib.request.Request(os.environ.get('JEV_CHAT_URL', 'http://127.0.0.1:8091/v1/chat/completions'),
                                      data=body, headers={'Content-Type': 'application/json'})
+    CALLS[0] += 1
     with urllib.request.urlopen(request, timeout=900) as response:
         choice = json.loads(response.read())['choices'][0]
     if choice.get('finish_reason') == 'length':
         raise Incomplete('Jev stopped at %d output tokens' % max_tokens)
     return choice['message']['content']
-
-
-def frankie(prompt, pod):
-    """Frankie = Granite on a reading Pod, jobs_v1 (POST /v1/jobs/<id>, poll, GET result). Output = remaining context."""
-    key, model = os.environ['GRANITE_KEY'], os.environ.get('GRANITE_MODEL', 'granite42-smoke')
-    max_tokens = max(1024, CONTEXT - len(prompt) // 3 - 512)
-    body = json.dumps(dict(model=model, messages=[dict(role='user', content=prompt)], temperature=0, max_tokens=max_tokens,
-                           stream=False, chat_template_kwargs=dict(enable_thinking=False)), sort_keys=True).encode()
-    digest = hashlib.sha256(body).hexdigest()
-    job = hashlib.sha256(('jev-sit-in:%s:%s' % (os.environ.get('STAMP', ''), digest)).encode()).hexdigest()
-
-    def call(method, path, payload=b''):
-        connection = http.client.HTTPSConnection(pod + '-8081.proxy.runpod.net', 443, timeout=80,
-                                                 context=ssl.create_default_context())
-        try:
-            headers = {'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json', 'Connection': 'close'}
-            if method == 'POST':
-                headers['X-Granite-Request-SHA256'] = digest
-            connection.request(method, path, payload if method == 'POST' else None, headers)
-            response = connection.getresponse()
-            return response.status, response.read()
-        finally:
-            connection.close()
-
-    path = '/v1/jobs/' + job
-    started = time.time()
-    while time.time() - started < 3600:
-        try:
-            status, raw = call('GET', path)
-            if status == 404:
-                status, raw = call('POST', path, body)
-                if status != 202:
-                    return None, 'job create refused: HTTP %d %s' % (status, raw.decode('utf-8', errors='replace'))
-            elif status == 200:
-                state = json.loads(raw)
-                if state.get('state') == 'completed':
-                    status, raw = call('GET', path + '/result')
-                    if status == 200:
-                        result = json.loads(raw)
-                        choice = (result.get('choices') or [{}])[0]
-                        if choice.get('finish_reason') == 'length':
-                            raise Incomplete('Frankie stopped at %d output tokens' % max_tokens)
-                        return (choice.get('message') or {}).get('content'), None
-                if state.get('state') in ('failed', 'ambiguous'):
-                    return None, 'job ' + str(state.get('state'))
-            elif status in (401, 403):
-                return None, 'Granite credential refused (HTTP %d)' % status
-        except (OSError, ValueError, http.client.HTTPException) as error:
-            log('frankie call retry:', type(error).__name__)
-        time.sleep(5)
-    return None, 'no answer within an hour'
 
 
 def parse_json(text):
@@ -201,19 +158,16 @@ def notes(material, purpose):
     return packs
 
 
-def each_pack(packs, make_prompt):
-    """One complete answer (or more, when regenerated in halves) per pack; every answer kept, in order."""
-    return [a for pack in packs for a in complete(make_prompt, pack)]
-
-
-def observer_json():
-    """The observer's JSON for one pack; an answer that is not JSON is asked again once, stated plainly."""
+def json_asker():
+    """A Jev call that wants a JSON object: an answer that is not JSON is asked again once, stated plainly; if it is still
+    not JSON it is kept whole as {"raw": text} (listed as unparsed by the caller, never dropped)."""
     answers = []
-    def ask(p):
-        text = jev(p)
+
+    def ask(prompt):
+        text = jev(prompt)
         value = parse_json(text)
         if value is None:
-            text = jev(p + '\n\nYour previous answer was not JSON. Return the JSON object only.')
+            text = jev(prompt + '\n\nYour previous answer was not JSON. Return the JSON object only.')
             value = parse_json(text)
         answers.append(text)
         return value if value is not None else dict(raw=text)
@@ -222,11 +176,10 @@ def observer_json():
 
 def save_state(state):
     try:
-        path = STATE_PATH
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path + '.tmp', 'w') as handle:
+        os.makedirs(os.path.dirname(STATE_PATH), exist_ok=True)
+        with open(STATE_PATH + '.tmp', 'w') as handle:
             json.dump(state, handle)
-        os.replace(path + '.tmp', path)
+        os.replace(STATE_PATH + '.tmp', STATE_PATH)
     except OSError as error:
         log('state not saved:', error)
 
@@ -239,178 +192,223 @@ def load_state():
         return None
 
 
-def join_bundle(first, feed, position):
-    """A JEV_FEED_PART_V1 bundle: every part from consecutive slots, joined and checked; None until all have landed."""
-    parts = [first]
-    while len(parts) < first['parts']:
-        if position + len(parts) >= len(feed):
-            raise ValueError('bundle parts run past the feed slots')
-        part = get_json(feed[position + len(parts)])
-        if part is None:
-            return None, 0
-        if (part.get('schema') != 'JEV_FEED_PART_V1' or part.get('sha256') != first['sha256']
-                or part.get('part') != len(parts) or part.get('parts') != first['parts']):
-            raise ValueError('feed part %d out of order for bundle %s' % (len(parts), first['sha256']))
-        parts.append(part)
-    raw = ''.join(p['data'] for p in parts).encode()
-    if hashlib.sha256(raw).hexdigest() != first['sha256'] or len(raw) != first['bytes']:
-        raise ValueError('joined feed bundle differs from its sha256')
-    return json.loads(raw), len(parts)
+def read_bundle(slots, schema):
+    """The bundle in the first slot (joined from JEV_FEED_PART_V1 parts over consecutive slots, checked by sha256), or
+    None while it has not fully landed."""
+    first = get_json(slots[0]) if slots else None
+    if first is None:
+        return None
+    if first.get('schema') == 'JEV_FEED_PART_V1':
+        parts = [first]
+        while len(parts) < first['parts']:
+            if len(parts) >= len(slots):
+                raise ValueError('bundle parts run past the slots')
+            part = get_json(slots[len(parts)])
+            if part is None:
+                return None
+            if (part.get('schema') != 'JEV_FEED_PART_V1' or part.get('sha256') != first['sha256']
+                    or part.get('part') != len(parts) or part.get('parts') != first['parts']):
+                raise ValueError('part %d out of order for bundle %s' % (len(parts), first['sha256']))
+            parts.append(part)
+        raw = ''.join(p['data'] for p in parts).encode()
+        if sha(raw) != first['sha256'] or len(raw) != first['bytes']:
+            raise ValueError('joined bundle differs from its sha256')
+        first = json.loads(raw)
+    if first.get('schema') != schema:
+        raise ValueError('expected %s, got %s' % (schema, first.get('schema')))
+    return first
 
 
-def is_classroom(item):
-    name = (item.get('name') or '').lower()
-    return item.get('kind') == 'classroom' or any(word in name for word in ('classroom', 'component', 'summary', 'science',
-                                                                             'teach', 'observation', 'dipole'))
+def wait_bundle(slots, schema, seconds, poll):
+    started = time.time()
+    while True:
+        bundle = read_bundle(slots, schema)
+        if bundle is not None or time.time() - started >= seconds:
+            return bundle
+        time.sleep(poll)
+
+
+def material_text(material):
+    parts = ['===== CLASSROOM PACKAGE (%s, %s, sha256 %s) =====\n%s' % (
+        material['material'].get('source'), material['material'].get('path'), material['material'].get('sha256'),
+        json.dumps(material['material'].get('dipole_classroom'), sort_keys=True))]
+    if material.get('survivors'):
+        parts.append('===== SEARCH SURVIVORS SO FAR (%s, sha256 %s) =====\n%s' % (
+            material['survivors'].get('path'), material['survivors'].get('sha256'),
+            json.dumps(material['survivors'].get('list'), sort_keys=True)))
+    for item in material.get('unavailable') or []:
+        parts.append('===== NOT AVAILABLE: %s (%s) =====' % (item.get('item'), item.get('reason')))
+    return '\n\n'.join(parts)
+
+
+def student_claims(day, text):
+    """Jev's claims from the material, one JSON answer per note pack, every claim kept and labelled as his."""
+    packs = notes(text, 'finding mechanisms, novel findings and tests to run in the dipole classroom material for the '
+                        'natural gas trading day %s' % day)
+    ask, raw = json_asker()
+    answers = [a for number, pack in enumerate(packs, 1) for a in complete(lambda p: (
+        'You are Jev, an independent student reading the Dipole classroom material for the natural gas trading day %s '
+        '(pack %d of %d: the whole material, or notes read from every piece of it). You work alone: you have not seen '
+        'anyone else\'s answer. File CLAIMS for a scientist to test on the data; you do not grade or teach.\n'
+        'Return JSON only: {"claims": [{"kind": "mechanism" | "novel_finding" | "test_next", "statement": "one '
+        'falsifiable sentence", "series": ["the dipole components, pairs or survivor series it uses, by their names in '
+        'the material"], "cells": ["where it should hold, e.g. a component, pair, session phase or side"], "condition": '
+        '"when it applies", "lag": "the lead or lag, or null", "target": "what it predicts or explains", "direction": '
+        '"the sign or relation claimed", "evidence": ["the numbers from the material it rests on, quoted"]}]}.\n'
+        'Every claim must name its series and quote its numbers. A claim about a later outcome is a test_next, never a '
+        'fact.\n\nMATERIAL:\n%s' % (day, number, len(packs), p)), pack, ask)]
+    claims, unparsed, seen = [], [], {}
+    for pack_number, answer in enumerate(answers, 1):
+        if 'raw' in answer and len(answer) == 1:
+            unparsed.append(dict(pack=pack_number, text=answer['raw']))
+            continue
+        items = answer.get('claims')
+        if not isinstance(items, list):
+            unparsed.append(dict(pack=pack_number, text=json.dumps(answer, sort_keys=True)))
+            continue
+        for item in items:
+            if not isinstance(item, dict) or not str(item.get('statement') or '').strip():
+                unparsed.append(dict(pack=pack_number, text=json.dumps(item, sort_keys=True)))
+                continue
+            statement = ' '.join(str(item['statement']).split())
+            base = sha(('jev:%s:%s' % (day, statement)).encode())[:16]
+            seen[base] = seen.get(base, 0) + 1
+            claim = dict(item, id=base if seen[base] == 1 else '%s-%d' % (base, seen[base]), author='jev', model=JEV_MODEL,
+                         day=day, pack=pack_number, statement=statement,
+                         kind=item.get('kind') if item.get('kind') in CLAIM_KINDS else 'unstated:%s' % item.get('kind'),
+                         duplicate_of=base if seen[base] > 1 else None)
+            claims.append(claim)
+    return claims, unparsed, raw
+
+
+def compare(day, claims, frankie):
+    """After the claims are filed: where Jev's claims and Frankie's code findings agree, differ or contradict."""
+    files = frankie.get('files') or {}
+    text = 'JEV CLAIMS (filed before Frankie was read):\n%s\n\nFRANKIE (his code classroom: ledgers, receipt, analysis):\n%s' % (
+        json.dumps([dict(id=c['id'], kind=c['kind'], statement=c['statement'], series=c.get('series'),
+                         direction=c.get('direction')) for c in claims], sort_keys=True),
+        '\n\n'.join('===== %s (%s, sha256 %s) =====\n%s' % (name, f.get('path'), f.get('sha256'), f.get('text'))
+                    for name, f in sorted(files.items())))
+    packs = notes(text, 'comparing Jev\'s claims with Frankie\'s classroom findings for the trading day %s' % day)
+    ask, raw = json_asker()
+    verdicts = [v for pack in packs for v in complete(lambda p: (
+        'You are Jev. Your claims were filed before you read Frankie\'s classroom findings. Compare them (below whole, or '
+        'one pack of notes read from every piece). This is orientation for a scientist who will test both; it is not a '
+        'verdict. Return JSON only: {"agree": [{"jev_claim_id": "..", "frankie": "the ledger entry or line", "why": ".."}], '
+        '"differ": [{"jev_claim_id": "..", "frankie": "..", "how": ".."}], "contradict": [{"jev_claim_id": "..", '
+        '"frankie": "..", "values": ["the numbers on each side"]}], "only_jev": [".."], "only_frankie": [".."]}.\n\n%s'
+        % p), pack, ask)]
+    return verdicts, raw
 
 
 def main():
     config = get_json(os.environ['CONFIG_URL'])
-    feed, reports, transcript_url = config['feed'], config['reports'], config['transcript']
-    pods = [p for p in os.environ['GRANITE_PODS'].split(',') if p]
-    discuss, report_every = int(os.environ.get('DISCUSS_SECONDS', '180')), int(os.environ.get('REPORT_MINUTES', '30')) * 60
+    stamp, day = os.environ.get('STAMP', ''), os.environ['DAY']
+    wait, poll = int(os.environ.get('WAIT_SECONDS', '21600')), int(os.environ.get('POLL_SECONDS', '60'))
     state = load_state() or {}
-    if state.get('stamp') not in (None, os.environ.get('STAMP')):
+    if state.get('stamp') not in (None, stamp) or state.get('day') not in (None, day):
         state = {}                                   # another sit-in's progress: start fresh, never mix
-    dipole, queue, turns = state.get('dipole', ''), state.get('queue', []), state.get('turns', [])
-    next_feed, report_index, final = state.get('next_feed', 0), state.get('report_index', 0), state.get('final', False)
-    window_start, pod_turn, last_report = state.get('window_start', 0), state.get('pod_turn', 0), time.time()
-    if state:
-        log('resumed: feed %d, %d queued, %d turns, report %d' % (next_feed, len(queue), len(turns), report_index))
+    state.update(stamp=stamp, day=day)
+    calls = lambda: state.get('model_calls_before_restart', 0) + CALLS[0]
+    state['model_calls_before_restart'] = state.get('model_calls', 0)
 
-    def checkpoint():
-        save_state(dict(stamp=os.environ.get('STAMP'), dipole=dipole, queue=queue, turns=turns, next_feed=next_feed,
-                        report_index=report_index, final=final, window_start=window_start, pod_turn=pod_turn))
+    # 1. MATERIAL (never Frankie's)
+    material = wait_bundle(config['material'], 'JEV_DAY_MATERIAL_V1', wait, poll)
+    if material is None:
+        raise SystemExit('no JEV_DAY_MATERIAL_V1 bundle within %d s' % wait)
+    if material.get('day') != day or material.get('day_role') != 'discovery':
+        raise SystemExit('material is for day %s (%s), this sit-in is day %s: refused (Jev runs on discovery days only, R15)'
+                         % (material.get('day'), material.get('day_role'), day))
+    log('material: %s bytes sha256 %s; survivors %s; unavailable %s' % (
+        material['material'].get('bytes'), material['material'].get('sha256'),
+        'yes' if material.get('survivors') else 'no', [u.get('item') for u in material.get('unavailable') or []]))
 
-    while True:
-        # 1. read every feed bundle the relay has written since the last pass
-        while next_feed < len(feed):
-            bundle, used = get_json(feed[next_feed]), 1
-            if bundle is None:
-                break
-            if bundle.get('schema') == 'JEV_FEED_PART_V1':
-                bundle, used = join_bundle(bundle, feed, next_feed)
-                if bundle is None:
-                    break                      # the remaining parts have not landed yet; read again next pass
-            # every piece of dipole material is kept whole, each labelled by its source: the shared file the relay was
-            # given (DIPOLE_FILE) and the request's own classroom attachment when a launch writes it
-            carried = bundle.get('dipole') or {}
-            if carried.get('dipole_classroom') is not None:
-                label = '%s %s' % (carried.get('source') or 'REQUEST ATTACHMENT dipole_classroom', carried.get('path'))
-                if label not in dipole:
-                    dipole += ('\n\n' if dipole else '') + '===== %s =====\n%s' % (label, json.dumps(carried['dipole_classroom']))
-                    log('dipole material: %s, %d chars in all (whole)' % (label, len(dipole)))
-            for name, text in (bundle.get('classroom') or {}).items():
-                queue.append(dict(kind='classroom', name=name, text=text or ''))
-            for answer in bundle.get('answers') or []:
-                if answer.get('text'):
-                    queue.append(dict(kind='answer', name=answer.get('name'), text=answer['text']))
-            log('feed %04d phase=%s queue=%d' % (next_feed, bundle.get('phase'), len(queue)))
-            final = bundle.get('phase') in ('pushed', 'done', 'complete', 'completed', 'refused', 'failed', 'stopped')
-            next_feed += used
-            checkpoint()
-        # 2. one discussion turn per item, every item: classroom first, then the reading notes oldest first
-        item = next((q for q in queue if is_classroom(q)), None) or (queue[0] if queue else None)
-        if item is not None:
-            pod = pods[pod_turn % len(pods)]
-            pod_turn += 1
-            topic = item.get('name') or item['kind']
-            frankie_text = item['text']
-            turn = dict(at=time.time(), topic=topic, kind=item['kind'], pod=pod)
-            try:
-                purpose = 'the Dipole classroom topic "%s" for the Monday 2021-10-04 natural gas trading day' % topic
-                material = notes(dipole, purpose) if dipole else ['(not received yet)']
-                # STUDENT: one complete answer per material pack, every answer kept
-                answers = each_pack(material, lambda pack: (
-                    'You are Jev, a student in the Dipole classroom for the Monday 2021-10-04 natural gas trading day. '
-                    'Topic: %s.\nAnswer it yourself from the dipole classroom material below (the whole material, or one '
-                    'pack of notes read from every piece of it): what the dipole components and their pair relations show, '
-                    'with the numbers you rely on.\n\nDIPOLE MATERIAL:\n%s' % (topic, pack)))
-                turn['student'] = '\n\n'.join('[student answer %d/%d]\n%s' % (k, len(answers), a)
-                                                for k, a in enumerate(answers, 1))
-                # OBSERVER: the three texts whole in one comparison document, as note packs; one JSON per pack
-                comparison = notes('STUDENT:\n%s\n\nFRANKIE:\n%s\n\nDIPOLE MATERIAL:\n%s' % (
-                    turn['student'], frankie_text, '\n\n'.join(material)),
-                    'comparing the STUDENT and FRANKIE answers against the DIPOLE MATERIAL on ' + purpose)
-                ask, raw = observer_json()
-                verdicts = [v for pack in comparison for v in complete(lambda p: (
-                    'You are Jev, the classroom observer. Compare the STUDENT answer and FRANKIE\'s answer on the topic '
-                    '"%s" against the DIPOLE MATERIAL (below whole, or one pack of notes read from every piece). Return JSON '
-                    'only: {"agree": true|false, "disagreements": [..], "evidence": [..numbers from the material..], '
-                    '"question_for_frankie": "one pointed question"}.\n\n%s' % (topic, p)), pack, ask)]
-                questions = [v.get('question_for_frankie') for v in verdicts if v.get('question_for_frankie')]
-                turn['observer'] = dict(agree=all(v.get('agree') is True for v in verdicts) if verdicts else None,
-                                        disagreements=[d for v in verdicts for d in (v.get('disagreements') or [])],
-                                        evidence=[d for v in verdicts for d in (v.get('evidence') or [])],
-                                        question_for_frankie=' | '.join(questions), packs=verdicts, raw=raw)
-                question = '\n'.join('%d. %s' % (k, q) for k, q in enumerate(questions, 1)) or \
-                    'Which dipole evidence most supports your answer?'
-                # FRANKIE: his whole answer and every question; a cut-off reply is regenerated from his answer in halves
-                def ask_frankie(prompt):
-                    text, error = frankie(prompt, pod)
-                    if error:
-                        raise RuntimeError(error)
-                    return text
-                replies = complete(lambda part: (
-                    'You are Frankie, reviewing your own Dipole classroom answer for the Monday 2021-10-04 trading day with a '
-                    'classroom observer. Your answer on "%s" (whole, or one part of it when it is long):\n%s\n\nThe observer '
-                    'asks:\n%s\nAnswer directly, citing the dipole evidence; say plainly if you would change your answer.'
-                    % (topic, part, question)), frankie_text, ask_frankie)
-                turn['frankie_reply'] = '\n\n'.join('[Frankie reply %d/%d]\n%s' % (k, len(replies), r)
-                                                      for k, r in enumerate(replies, 1))
-                turn['frankie_error'] = None
-                ask, raw = observer_json()
-                closings = [v for pack in notes(turn['frankie_reply'], 'Frankie\'s reply to: ' + question)
-                            for v in complete(lambda p: (
-                                'You are Jev, the classroom observer. Frankie replied to your questions:\n%s\n\nHis reply '
-                                '(whole, or one pack of notes read from every piece):\n%s\n\nReturn JSON only: '
-                                '{"settled": true|false, "why": "one sentence"}.' % (question, p)), pack, ask)]
-                turn['closing'] = dict(settled=all(c.get('settled') is True for c in closings) if closings else None,
-                                       why=' | '.join(str(c.get('why')) for c in closings if c.get('why')), packs=closings, raw=raw)
-            except Exception as error:  # noqa: BLE001  -- a failed turn is recorded, never hidden; the item stays queued
-                turn['error'] = '%s: %s' % (type(error).__name__, error)
-            turns.append(turn)
-            if 'error' not in turn:
-                queue = [q for q in queue if q is not item]
-            else:
-                queue = [q for q in queue if q is not item] + [item]      # tried again after the others, never dropped
-            checkpoint()
-            log('turn %d topic=%s agree=%s settled=%s' % (len(turns), topic, (turn.get('observer') or {}).get('agree'),
-                                                         (turn.get('closing') or {}).get('settled')))
-        # 3. the scheduled report, every REPORT_MINUTES, whole
-        if time.time() - last_report >= report_every or (final and not queue):
-            window = turns[window_start:]
-            cell = lambda value: str(value).replace('|', '/').replace('\n', ' ')   # whole, one table line
-            rows = ['| # | topic | kind | agree | settled | disagreements | question | Frankie replied |', '|---|---|---|---|---|---|---|---|']
-            for number, turn in enumerate(window, window_start + 1):
-                observer, closing = turn.get('observer') or {}, turn.get('closing') or {}
-                rows.append('| %d | %s | %s | %s | %s | %s | %s | %s |' % (
-                    number, cell(turn['topic']), turn['kind'], observer.get('agree'), closing.get('settled'),
-                    cell('; '.join(str(d) for d in observer.get('disagreements') or [])),
-                    cell(observer.get('question_for_frankie', '')),
-                    'yes' if turn.get('frankie_reply') else cell(turn.get('frankie_error') or turn.get('error') or 'no')))
-            table = '\n'.join(rows)
-            syntheses = each_pack(notes(table, 'the classroom turns table for the operator summary'), lambda pack: (
-                'Summarize for the operator what Jev learned in this window from the classroom turns below (the whole table, '
-                'or one pack of notes read from every piece): where Jev and Frankie agree, where they differ, what stayed '
-                'open, and what to look at next. Name turns by number.\n\n' + pack)) if window else ['No turns yet.']
-            synthesis = '\n\n'.join(syntheses)
-            report = '# Jev sit-in report %d (%s)\n\nFeed bundles read: %d. Turns this window: %d (total %d).\n\n%s\n\n## Turns\n\n%s\n' % (
-                report_index, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), next_feed, len(window), len(turns),
-                synthesis, table)
-            if report_index < len(reports):
-                log('report %d -> HTTP %d' % (report_index, put(reports[report_index], report.encode(), 'text/markdown')))
-            else:
-                log('report %d has no slot left (%d report slots); kept in the transcript and the saved state' % (
-                    report_index, len(reports)))
-                turns.append(dict(at=time.time(), kind='report', topic='report %d' % report_index, report=report))
-            put(transcript_url, gzip.compress('\n'.join(json.dumps(t, sort_keys=True) for t in turns).encode()))
-            report_index, window_start, last_report = report_index + 1, len(turns), time.time()
-            checkpoint()
-            if final and not queue:
-                log('session final and nothing queued; sit-in ends')
-                return
-        time.sleep(discuss if item is None or not queue or 'error' in turns[-1] else 5)
+    # 2-3. STUDENT, then FILE the claims before anything of Frankie's is read
+    if not state.get('claims_filed'):
+        claims, unparsed, raw = student_claims(day, material_text(material))
+        filed_at = time.time()
+        document = dict(schema='JEV_CLAIMS_V1', stamp=stamp, day=day, author='jev', model=JEV_MODEL, filed_at=filed_at,
+                        blind=dict(frankie_read=False, statement='filed before any of Frankie\'s outputs were read'),
+                        material=dict((k, material['material'].get(k)) for k in ('path', 'bytes', 'sha256', 'source')),
+                        survivors=dict((k, (material.get('survivors') or {}).get(k)) for k in ('path', 'bytes', 'sha256'))
+                        if material.get('survivors') else None,
+                        unavailable=material.get('unavailable') or [], claims=claims, unparsed=unparsed,
+                        counts=dict(claims=len(claims), unparsed=len(unparsed),
+                                    duplicates=sum(1 for c in claims if c.get('duplicate_of')),
+                                    by_kind={k: sum(1 for c in claims if c['kind'] == k) for k in sorted({c['kind'] for c in claims})}))
+        data = json.dumps(document, sort_keys=True, indent=1).encode()
+        log('claims filed -> HTTP %d (%d claims, %d unparsed)' % (put(config['claims'], data, 'application/json'),
+                                                                  len(claims), len(unparsed)))
+        state.update(claims_filed=dict(sha256=sha(data), bytes=len(data), at=filed_at), claims=claims, unparsed=unparsed,
+                     student_raw=raw, model_calls=calls())
+        save_state(state)
+    claims = state['claims']
+
+    # 4. COMPARE, only now (the blind wall: the claims are filed and pinned above)
+    if not state.get('compared'):
+        assert state.get('claims_filed'), 'the blind wall: Frankie is read only after the claims are filed'
+        frankie = wait_bundle(config['frankie'], 'JEV_FRANKIE_OUTPUTS_V1', wait, poll)
+        if frankie is None:
+            comparison = dict(schema='JEV_COMPARISON_V1', stamp=stamp, day=day, available=False,
+                              reason='no JEV_FRANKIE_OUTPUTS_V1 bundle within %d s' % wait)
+        else:
+            frankie_read_at = time.time()
+            verdicts, raw = compare(day, claims, frankie)
+            comparison = dict(schema='JEV_COMPARISON_V1', stamp=stamp, day=day, available=True, orientation_only=True,
+                              claims_sha256=state['claims_filed']['sha256'], claims_filed_at=state['claims_filed']['at'],
+                              frankie_read_at=frankie_read_at,
+                              frankie_files={k: dict(path=v.get('path'), bytes=v.get('bytes'), sha256=v.get('sha256'))
+                                             for k, v in (frankie.get('files') or {}).items()},
+                              frankie_unavailable=frankie.get('unavailable') or [],
+                              packs=verdicts, raw=raw,
+                              agree=[x for v in verdicts for x in (v.get('agree') or [])],
+                              differ=[x for v in verdicts for x in (v.get('differ') or [])],
+                              contradict=[x for v in verdicts for x in (v.get('contradict') or [])],
+                              only_jev=[x for v in verdicts for x in (v.get('only_jev') or [])],
+                              only_frankie=[x for v in verdicts for x in (v.get('only_frankie') or [])],
+                              unparsed=[v['raw'] for v in verdicts if 'raw' in v and len(v) == 1])
+        data = json.dumps(comparison, sort_keys=True, indent=1).encode()
+        log('comparison -> HTTP %d' % put(config['comparison'], data, 'application/json'))
+        state.update(compared=comparison, model_calls=calls())
+        save_state(state)
+    comparison = state['compared']
+
+    # 5. REPORT, transcript, receipt
+    cell = lambda value: str(value).replace('|', '/').replace('\n', ' ')
+    rows = ['| # | id | kind | statement | series | direction | evidence | duplicate of |', '|---|---|---|---|---|---|---|---|']
+    for number, c in enumerate(claims, 1):
+        rows.append('| %d | %s | %s | %s | %s | %s | %s | %s |' % (
+            number, c['id'], c['kind'], cell(c['statement']), cell('; '.join(map(str, c.get('series') or []))),
+            cell(c.get('direction')), cell('; '.join(map(str, c.get('evidence') or []))), c.get('duplicate_of') or ''))
+    lines = ['# Jev, blind outside student: day %s (%s)' % (day, stamp), '',
+             'Model %s on his own Pod; no Granite call. Claims filed %s, before Frankie was read (sha256 %s). Every claim '
+             'is a CLAIM for the scientific teacher (the experiment\'s search) to test; search results: pending.' % (
+                 JEV_MODEL, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(state['claims_filed']['at'])),
+                 state['claims_filed']['sha256']), '',
+             'Counts: %d claims, %d unparsed answers (kept whole below), %d repeated in the same words.' % (
+                 len(claims), len(state.get('unparsed') or []), sum(1 for c in claims if c.get('duplicate_of'))),
+             'Not available for this day: %s.' % (', '.join('%s (%s)' % (u.get('item'), u.get('reason'))
+                                                             for u in material.get('unavailable') or []) or 'nothing'), '',
+             '## Claims', ''] + rows + ['', '## Beside Frankie (orientation only, not a verdict)', '']
+    if comparison.get('available'):
+        for key in ('agree', 'differ', 'contradict', 'only_jev', 'only_frankie'):
+            lines.append('- %s: %d' % (key, len(comparison.get(key) or [])))
+            lines += ['  - %s' % cell(json.dumps(x, sort_keys=True)) for x in comparison.get(key) or []]
+    else:
+        lines.append('Frankie\'s classroom outputs not available: %s' % comparison.get('reason'))
+    if state.get('unparsed'):
+        lines += ['', '## Unparsed answers (kept whole)', ''] + ['### pack %s\n\n%s' % (u['pack'], u['text'])
+                                                               for u in state['unparsed']]
+    report = '\n'.join(lines) + '\n'
+    log('report -> HTTP %d' % put(config['report'], report.encode(), 'text/markdown'))
+    transcript = [dict(step='student', answers=state.get('student_raw')), dict(step='compare', answers=comparison.get('raw'))]
+    put(config['transcript'], gzip.compress('\n'.join(json.dumps(t, sort_keys=True) for t in transcript).encode()))
+    receipt = dict(schema='JEV_SIT_IN_RECEIPT_V1', stamp=stamp, day=day, model=JEV_MODEL, granite_calls=0,
+                   jev_model_calls=calls(), claims=state['claims_filed'],
+                   claims_count=len(claims), unparsed=len(state.get('unparsed') or []),
+                   comparison_available=bool(comparison.get('available')),
+                   report=dict(bytes=len(report.encode()), sha256=sha(report.encode())), status='done')
+    log('receipt -> HTTP %d' % put(config['receipt'], json.dumps(receipt, sort_keys=True).encode(), 'application/json'))
 
 
 if __name__ == '__main__':

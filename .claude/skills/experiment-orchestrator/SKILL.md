@@ -48,7 +48,7 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 | 6 | search | series x transforms x lags x cells x conditions x targets | NOT built (start from the joined-teacher builder, dfe08ca7) |
 | 6b | scientific teacher | the search's classroom-facing turn: claims (Frankie's, labelled) -> tests -> counts + challenges + untested combinations, tied to the BOSS teacher | NOT built (`SPEC-scientific-teacher.md` build order 3-5) |
 | 7 | survivors | symbolic regression (`odcore/symbolic.py`); no Granite pass, no model | NOT built |
-| J | Jev | blind outside student (Qwen3-8B, his own Pod, classroom-arm days only): files labelled CLAIMS the search tests; never sees Frankie's answers first, never in the classroom | NOT built - rework `clm_sidecar/sit_in.py` + `frankie_box_jev_relay.sh` (spec section "Jev") |
+| J | Jev | blind outside student (Qwen3-8B, his own Pod, classroom-arm days only): files labelled CLAIMS the search tests; never sees Frankie's answers first, never in the classroom | **built 2026-09-29, not run**: `clm_sidecar/sit_in.py`, `frankie_box_jev_relay.sh ACTION=material\|frankie`, `launch.py --jev`, `frankie_box_jev_pod.sh` (spec section "Jev"; dispatch order in `clm_sidecar/README.md`) |
 | 8 | confirmation | frozen survivor list on confirmation days, per cell, net of fees maker AND taker | NOT built |
 | C | classroom arm | teacher + `prepare_integrated_cycle` + the principal's classroom stage answered by Frankie's code (no Granite) + the scientific teacher's turn (6b) | reuses the full run; waits on r10 showing the code classroom end to end |
 

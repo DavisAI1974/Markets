@@ -113,12 +113,17 @@ new dipole data and push the dipole research forward (D51: the dipole is open re
   are the experiment's only Pod days, and the Pod is Jev's.
 - **How he keeps the seat:** by counts, per day: how many of his claims survive the search, set beside the
   hypotheses Frankie's code surfaces that day. If his survive at no better than chance, he comes out.
-- **Code:** `research/kalshi/frankie_boss/clm_sidecar/sit_in.py` is reworked (swap, not a new path): the STUDENT
-  step stays (answer from the material alone), the OBSERVER compares his claims with Frankie's only AFTER both are
-  filed, the FRANKIE step that asked Granite is removed (Frankie is code; his answers are read from his classroom
-  ledgers and analysis), and his claims are written as a labelled claims file the scientific teacher reads.
-  `deploy/aws/box/frankie_box_jev_relay.sh` feeds him the classroom package and the survivor list, not session
-  heartbeats (on 2026-09-28 his 58 feed bundles carried only a derive-stage heartbeat and he filed nothing).
+- **Code (BUILT 2026-09-29, py_compile only, not run):**
+  - `clm_sidecar/sit_in.py`: material -> STUDENT claims (JEV_CLAIMS_V1, filed with sha256 and filed_at) -> only then
+    Frankie's outputs -> comparison (JEV_COMPARISON_V1, orientation only) -> report, transcript, receipt
+    (JEV_SIT_IN_RECEIPT_V1, granite_calls 0). The old Granite "Frankie" step is gone.
+  - `deploy/aws/box/frankie_box_jev_relay.sh`: ACTION=material (JEV_DAY_MATERIAL_V1: classroom package + survivors,
+    refuses anything under a classroom/out directory and any day not DAY_ROLE=discovery) and ACTION=frankie
+    (JEV_FRANKIE_OUTPUTS_V1: ledgers, classroom receipt, analysis; refuses until the receipt exists). Replaces the
+    heartbeat relay (on 2026-09-28 his 58 feed bundles carried only a derive-stage heartbeat and he filed nothing).
+  - `clm_sidecar/launch.py --jev --day` + `pod_bootstrap.sh` JEV_ONLY: his Pod serves only his chat; no Granite key.
+  - `frankie_box_jev_pod.sh` (runner marker) + the "Jev Pod" step in `frankie_box_run.yml` (own lock, always deleted).
+  - The claims file is what the scientific teacher reads; its reader is part of the search build (6b).
 - **Before it is built:** Greg adds Jev to the Excel build plan with this track (unplanned = unwired).
 
 ## How the orchestrator runs

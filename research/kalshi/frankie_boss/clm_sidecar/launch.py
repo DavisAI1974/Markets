@@ -1,6 +1,13 @@
 """CLM sidecar launcher (runs on the GitHub runner): one GPU Pod, run learn.py on the dataset, collect, delete the Pod.
 
     python launch.py --dataset-key <s3 key from the box extract manifest> --stamp <name> [--max-minutes 150]
+    python launch.py --jev --day YYYYMMDD --stamp <name> [--max-minutes 480]      (Jev, the blind outside student)
+
+--jev (Greg, 2026-09-29: "yes, include him"; SPEC-experiment-orchestrator.md, section "Jev"): the Pod serves Jev's
+Qwen3-8B chat only (no CLM learner, no encoder) and runs sit_in.py for one classroom-arm day: it reads the day's
+material slots (clm-sidecar/<stamp>/material/), files his claims, then reads Frankie's code-classroom slots
+(clm-sidecar/<stamp>/frankie/) and writes the comparison, report, transcript and receipt under clm-sidecar/<stamp>/jev/.
+No Granite key and no Granite Pod: Jev never questions Granite.
 
 Runpod REST v2 (api.runpod.io, the live openapi spec): GET /v2/catalog/gpus for stock, POST /v2/pods, GET and DELETE
 /v2/pods/{id}. The Pod is always deleted, on success, failure or timeout. Outputs land in S3 under
@@ -111,43 +118,49 @@ def pick_gpu():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset-key', required=True)
+    parser.add_argument('--dataset-key', default='')
+    parser.add_argument('--jev', action='store_true', help='Jev only: the blind outside student for one classroom-arm day')
+    parser.add_argument('--day', default='', help='--jev: the classroom-arm (discovery) day, YYYYMMDD')
+    parser.add_argument('--wait-minutes', type=int, default=360,
+                        help='--jev: how long the sit-in waits for the material and then for Frankie\'s outputs')
     parser.add_argument('--stamp', required=True)
     parser.add_argument('--max-minutes', type=int, default=150)
     parser.add_argument('--checkpoint-minutes', type=int, default=30)
     parser.add_argument('--start-minutes', type=int, default=30,
                         help='delete the Pod if it has never started by then (the 150-minute None run, 2026-09-28)')
     parser.add_argument('--sit-in-pods', default='',
-                        help='comma list of Frankie reading Pods (never the BOSS) Jev may question: turns on the sit-in')
-    parser.add_argument('--feed-slots', type=int, default=240)
-    parser.add_argument('--report-slots', type=int, default=48)
+                        help='RETIRED (2026-09-29): Jev no longer questions Granite; a non-empty value is refused')
     args = parser.parse_args()
+    if args.sit_in_pods:
+        raise SystemExit('--sit-in-pods is retired: Jev never questions Granite (Frankie is code). Use --jev --day.')
+    if args.jev == bool(args.dataset_key):
+        raise SystemExit('give either --dataset-key (the CLM learner) or --jev (the blind outside student), not both or neither')
+    if args.jev and not (len(args.day) == 8 and args.day.isdigit()):
+        raise SystemExit('--jev needs --day YYYYMMDD (a classroom-arm discovery day)')
     s3 = boto3.client('s3', region_name=REGION)
     base = 'clm-sidecar/%s' % args.stamp
-    s3.head_object(Bucket=BUCKET, Key=args.dataset_key)            # the box extract uploaded it
-    for name in ('learn.py', 'pod_bootstrap.sh'):
-        s3.upload_file(str(HERE / name), BUCKET, '%s/code/%s' % (base, name))
     ttl = (args.max_minutes + 60) * 60
     get = lambda key: s3.generate_presigned_url('get_object', Params=dict(Bucket=BUCKET, Key=key), ExpiresIn=ttl)
     put = lambda key: s3.generate_presigned_url('put_object', Params=dict(Bucket=BUCKET, Key=key), ExpiresIn=ttl)
-    env = dict(BOOTSTRAP_URL=get('%s/code/pod_bootstrap.sh' % base), LEARN_URL=get('%s/code/learn.py' % base),
-               DATASET_URL=get(args.dataset_key), STAMP=args.stamp, CHECKPOINT_MINUTES=str(args.checkpoint_minutes))
+    s3.upload_file(str(HERE / 'pod_bootstrap.sh'), BUCKET, '%s/code/pod_bootstrap.sh' % base)
+    env = dict(BOOTSTRAP_URL=get('%s/code/pod_bootstrap.sh' % base), STAMP=args.stamp, CHECKPOINT_MINUTES=str(args.checkpoint_minutes))
     env.update({var: put('%s/out/%s' % (base, name)) for var, name in OUTPUTS.items()})
-    pods = [p for p in args.sit_in_pods.split(',') if p]
-    if pods:        # Greg, 2026-09-28: Jev sits in with Frankie (sit_in.py); the box relay writes the feed slots
+    if args.jev:
         s3.upload_file(str(HERE / 'sit_in.py'), BUCKET, '%s/code/sit_in.py' % base)
-        config = dict(feed=[get('%s/feed/%04d.json' % (base, i)) for i in range(args.feed_slots)],
-                      reports=[put('%s/sit-in/report-%04d.md' % (base, i)) for i in range(args.report_slots)],
-                      transcript=put('%s/sit-in/transcript.jsonl.gz' % base))
-        s3.put_object(Bucket=BUCKET, Key='%s/sit-in/config.json' % base, Body=json.dumps(config).encode(),
+        config = dict(material=[get('%s/material/%04d.json' % (base, i)) for i in range(8)],
+                      frankie=[get('%s/frankie/%04d.json' % (base, i)) for i in range(8)],
+                      **{name: put('%s/jev/%s' % (base, key)) for name, key in (
+                          ('claims', 'claims.json'), ('comparison', 'comparison.json'), ('report', 'report.md'),
+                          ('transcript', 'transcript.jsonl.gz'), ('receipt', 'receipt.json'))})
+        s3.put_object(Bucket=BUCKET, Key='%s/jev/config.json' % base, Body=json.dumps(config).encode(),
                       ServerSideEncryption='AES256')
-        code, info = api('GET', '/v2/pods/' + pods[0])
-        granite_key = (json.loads(info).get('env') or {}).get('RUNPOD_GRANITE_API_KEY') if code == 200 else None
-        if not granite_key:
-            raise SystemExit('Granite service credential not readable from Pod %s (HTTP %d)' % (pods[0], code))
-        env.update(SIT_IN='1', SIT_IN_URL=get('%s/code/sit_in.py' % base), CONFIG_URL=get('%s/sit-in/config.json' % base),
-                   GRANITE_PODS=','.join(pods), GRANITE_KEY=granite_key)
-        print('SIT-IN with Frankie reading Pods %s; feed %d slots, %d report slots' % (pods, args.feed_slots, args.report_slots), flush=True)
+        env.update(JEV_ONLY='1', SIT_IN_URL=get('%s/code/sit_in.py' % base), CONFIG_URL=get('%s/jev/config.json' % base),
+                   DAY=args.day, WAIT_SECONDS=str(args.wait_minutes * 60))
+        print('JEV for day %s: material and frankie slots under %s/, outputs under %s/jev/; no Granite' % (args.day, base, base), flush=True)
+    else:
+        s3.head_object(Bucket=BUCKET, Key=args.dataset_key)            # the box extract uploaded it
+        s3.upload_file(str(HERE / 'learn.py'), BUCKET, '%s/code/learn.py' % base)
+        env.update(LEARN_URL=get('%s/code/learn.py' % base), DATASET_URL=get(args.dataset_key))
     gpu, centers = pick_gpu()
     body = dict(name='clm-sidecar-' + args.stamp, image=IMAGE, cloud='SECURE', gpu=dict(id=gpu, count=1), disk=80,
                 env=env, entrypoint=['python3', '-c', ENTRY], startSsh=False, startJupyter=False)
@@ -201,7 +214,7 @@ def main():
             s3.download_file(BUCKET, '%s/out/%s' % (base, name), str(local / name))
         except Exception as error:  # noqa: BLE001
             print('no %s: %s' % (name, str(error)[:120]))
-    for item in s3.list_objects_v2(Bucket=BUCKET, Prefix='%s/sit-in/' % base).get('Contents', []):
+    for item in s3.list_objects_v2(Bucket=BUCKET, Prefix='%s/jev/' % base).get('Contents', []):
         if not item['Key'].endswith('config.json'):
             s3.download_file(BUCKET, item['Key'], str(local / item['Key'].rsplit('/', 1)[1]))
     print('OUTCOME %s; outputs in s3://%s/%s/out/' % (outcome, BUCKET, base), flush=True)

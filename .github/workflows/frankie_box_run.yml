@@ -65,7 +65,7 @@ concurrency:
   # cycle-0 dispatch waits behind another or replaces a queued one.
   # Principal inputs (one single-core read of ROOT's retained evidence into a fresh root) has its own lock so it can
   # run beside the read-only CLM extract (Greg, 2026-09-28: run in parallel).
-  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_cycle0.sh' && format('box-cycle0-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh' || inputs.script == 'deploy/aws/box/frankie_box_console.sh' || inputs.script == 'deploy/aws/box/frankie_box_jev_reports.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_cycle.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && format('clm-pod-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_principal_inputs.sh' && format('box-inputs-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_upload.sh' && format('clm-upload-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_relay.sh' && format('jev-relay-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_digest_canary.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_composition.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_stacks.sh' || inputs.script == 'deploy/aws/box/frankie_box_parallel_journal_canary.sh') && format('box-canary-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_joined_teacher.sh' && format('box-joined-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_export_calcs.sh' && format('box-export-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
+  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_cycle0.sh' && format('box-cycle0-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh' || inputs.script == 'deploy/aws/box/frankie_box_console.sh' || inputs.script == 'deploy/aws/box/frankie_box_jev_reports.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_cycle.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && format('clm-pod-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh' && format('jev-pod-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_principal_inputs.sh' && format('box-inputs-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_upload.sh' && format('clm-upload-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_relay.sh' && format('jev-relay-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_digest_canary.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_composition.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_stacks.sh' || inputs.script == 'deploy/aws/box/frankie_box_parallel_journal_canary.sh') && format('box-canary-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_joined_teacher.sh' && format('box-joined-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_export_calcs.sh' && format('box-export-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
   cancel-in-progress: false
 jobs:
   validate-staging-route:
@@ -163,7 +163,7 @@ jobs:
         run: |
           echo "repository secrets set: RUNPOD_API_KEY=$HAS_RUNPOD_API_KEY FRANKIE_GITHUB_TOKEN=$HAS_FRANKIE_GITHUB_TOKEN DATABENTO_API_KEY=$HAS_DATABENTO_API_KEY AWS_PAIR=$HAS_AWS_PAIR"
       - name: Require the box Online in SSM (read-only)
-        if: inputs.script != 'deploy/aws/box/frankie_box_disk_rescue.sh' && inputs.script != 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
+        if: inputs.script != 'deploy/aws/box/frankie_box_disk_rescue.sh' && inputs.script != 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && inputs.script != 'deploy/aws/box/frankie_box_jev_pod.sh'
         run: |
           python - <<'PY'
           import boto3, os
@@ -395,12 +395,28 @@ jobs:
           [[ "${v[DATASET_KEY]:-}" =~ ^(host-deliveries|clm-sidecar)/[A-Za-z0-9_./-]+$ ]] || { echo "DATASET_KEY required"; exit 1; }
           [[ "${v[MAX_MINUTES]:-150}" =~ ^[0-9]+$ ]] || { echo "MAX_MINUTES must be an integer"; exit 1; }
           [[ "${v[CHECKPOINT_MINUTES]:-30}" =~ ^[0-9]+$ ]] || { echo "CHECKPOINT_MINUTES must be an integer"; exit 1; }
-          [[ "${v[SIT_IN_PODS]:-}" =~ ^([a-z0-9]{6,40}(,[a-z0-9]{6,40})*)?$ ]] || { echo "SIT_IN_PODS must be comma-separated Pod ids"; exit 1; }
           python research/kalshi/frankie_boss/clm_sidecar/launch.py --dataset-key "${v[DATASET_KEY]}" --stamp "${v[STAMP]}" \
-            --max-minutes "${v[MAX_MINUTES]:-150}" --checkpoint-minutes "${v[CHECKPOINT_MINUTES]:-30}" --sit-in-pods "${v[SIT_IN_PODS]:-}" 2>&1 | tee box-run-output.txt
+            --max-minutes "${v[MAX_MINUTES]:-150}" --checkpoint-minutes "${v[CHECKPOINT_MINUTES]:-30}" 2>&1 | tee box-run-output.txt
           { echo '### CLM sidecar report'; cat clm-sidecar-out/report.md 2>/dev/null || echo '(no report)'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Jev Pod (runner; the experiment's blind outside student on his own GPU Pod, always deleted; no Granite)
+        if: inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh'
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: |
+          set -euo pipefail
+          declare -A v=()
+          for pair in $VARIABLES; do v[${pair%%=*}]=${pair#*=}; done
+          [[ "${v[STAMP]:-}" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "STAMP required"; exit 1; }
+          [[ "${v[DAY]:-}" =~ ^[0-9]{8}$ ]] || { echo "DAY=YYYYMMDD required (a classroom-arm discovery day)"; exit 1; }
+          [[ "${v[MAX_MINUTES]:-480}" =~ ^[0-9]+$ ]] || { echo "MAX_MINUTES must be an integer"; exit 1; }
+          [[ "${v[WAIT_MINUTES]:-360}" =~ ^[0-9]+$ ]] || { echo "WAIT_MINUTES must be an integer"; exit 1; }
+          [[ "${v[CHECKPOINT_MINUTES]:-30}" =~ ^[0-9]+$ ]] || { echo "CHECKPOINT_MINUTES must be an integer"; exit 1; }
+          python research/kalshi/frankie_boss/clm_sidecar/launch.py --jev --day "${v[DAY]}" --stamp "${v[STAMP]}" \
+            --max-minutes "${v[MAX_MINUTES]:-480}" --wait-minutes "${v[WAIT_MINUTES]:-360}" \
+            --checkpoint-minutes "${v[CHECKPOINT_MINUTES]:-30}" 2>&1 | tee box-run-output.txt
+          { echo '### Jev report'; cat clm-sidecar-out/report.md 2>/dev/null || echo '(no report)'; } >> "$GITHUB_STEP_SUMMARY"
       - name: CLM sidecar Pod cleanup (always delete the Pod)
-        if: always() && inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
+        if: always() && (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' || inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh')
         env:
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
         run: |
@@ -413,7 +429,7 @@ jobs:
           print('cleanup delete', pod, c.getresponse().status)
           PY
       - name: CLM sidecar outputs (artifact)
-        if: always() && inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
+        if: always() && (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' || inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: clm-sidecar-${{ github.run_id }}
@@ -421,7 +437,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
       - name: Run the committed script on the box
-        if: inputs.script != 'deploy/aws/box/frankie_box_console.sh' && inputs.script != 'deploy/aws/box/frankie_box_disk_rescue.sh' && inputs.script != 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
+        if: inputs.script != 'deploy/aws/box/frankie_box_console.sh' && inputs.script != 'deploy/aws/box/frankie_box_disk_rescue.sh' && inputs.script != 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && inputs.script != 'deploy/aws/box/frankie_box_jev_pod.sh'
         run: |
           set -euo pipefail
           sets=()
