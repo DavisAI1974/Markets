@@ -66,6 +66,13 @@ Not called:
    - Results are reported as counts, never coefficients or averages (D37).
    - The leakage gate (`odcore/leakage.py`) runs on every target.
    - Start from the joined-teacher builder (dfe08ca7): its sign-step coupling and cells, pointed at the journal and the calculation JSON instead of the bedrock.
+   - FIRST SLICE BUILT 2026-09-29, not run: `deploy/aws/box/frankie_box_experiment_search.py` (+ `.sh`,
+     `box-experiment-*` lock). Series from the exported day data on the F_LAST axis via DuckDB ASOF; the leakage gate
+     runs odcore on each source's real alignment (a hollow first version that could not fail was caught and replaced
+     before commit); sign-of-step couplings at every lag -L..L per cell with the joined teacher's statistic and
+     circular-shift chance check, as counts; discovery days only unless a frozen survivor list is given; one day per
+     run; the not-yet-searched sources, transforms, conditions, targets and claims listed in the MANIFEST. DuckDB is
+     installed into the box venv by `frankie_box_venv_duckdb.sh` (duckdb 1.5.5 + bundled extensions + pyarrow; Greg's go).
 7. **Survivors** (no Granite, no model of any kind, per `SPEC-decouple-granite.md` and rule R17):
    - symbolic regression (`odcore/symbolic.py`);
    - the survivor list goes to the classroom arm as material, and to confirmation.
