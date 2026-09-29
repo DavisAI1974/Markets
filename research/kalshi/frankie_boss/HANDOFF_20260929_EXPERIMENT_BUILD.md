@@ -41,6 +41,9 @@ Three relay starts (idx resets at 0000/0020/0027). The r9 principal never passed
 12. Keys do not rotate; never re-raise.
 13. ChatGPT builds new pieces in parallel: `CHATGPT_BRIEF_EXPERIMENT_20260929.md` (orchestrator, historical Dipole
     claims from the earlier exhaustive search, transforms). New files only, own branches; Claude merges.
+    SUPERSEDED the same day: "I'm going to have you do chatgpts part" - Claude built all three (below).
+14. NO DATA IS DROPPED, even when incomplete: a calculation skips over the missing piece and lists it; never skip the
+    day or the run for it (section below).
 
 ## Built this session (commit, what)
 | Commit | What |
@@ -77,9 +80,9 @@ Honest limits of these pieces:
   testable form here", which is not a judgment that it cannot be tested. The crosswalk is a table in the code (authored
   by Claude from reading the sources; Greg may amend); widening it is open work. It was built in the container because
   the box's staged checkout has no git history (8 sources exist only at their catalog revision).
-- A refuses every day without a committed per-day manifest; today only 20211003 and 20211004 have one, and
-  Tue/Wed cannot be derived alone (`derive_trading_day_manifest.py` refuses a tail day). How midweek days get their
-  manifests is open (Greg's call: a new derivation, or ingest the block as a whole).
+- Every day needs a committed per-day manifest to be ingested; today only 20211003 and 20211004 have one, and
+  Tue/Wed cannot be derived alone (`derive_trading_day_manifest.py` refuses a tail day). Since 91cac9ea such a day
+  WAITS (listed) instead of refusing the run. How midweek days get their manifests is open (section below).
 - A calls the teacher-only step as `frankie_box_experiment_teacher.sh DAYS=<list> INGESTION_RECEIPTS=<list>`; until it is
   built, batches record `not_built`.
 - The transforms multiply the search's pairs (up to 9 transform pairs per ordered series pair); no wall time is measured.
