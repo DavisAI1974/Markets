@@ -41,6 +41,21 @@ Not called:
 - Discovery: the October days of 2021-2023. Confirmation: the October days of 2024-2025. Then widen to every year, reported per season.
 - Source: the 5-year NG MBO pull on S3 (`nymex/ng_mbo_5y_v0`). List it first to confirm coverage.
 
+## The classroom arm (Greg, 2026-09-29: the dipole teacher and the classroom on 1 of every 5 experiment runs)
+Every fifth experiment day also runs the plan's governed dipole classroom (C14/D5), so the teacher and Frankie work on
+new dipole data and push the dipole research forward (D51: the dipole is open research).
+- **The added pieces of today's run it calls** (all reused):
+  - the teacher on that day's journal: JournalTeacherR3 with the teacher changes (all levels, the whole day, unknown trades carried), read once beside the context walk (saved walk blocks, the concurrent teacher);
+  - the classroom package: `prepare_integrated_cycle`, without the scientific dialogue per the plan;
+  - the principal's classroom stage on the BOSS: the 19 components, the summary and the correction.
+  - That arm alone needs Granite and a Pod.
+- **The loop between the two arms:**
+  - The search's survivors go to the teacher and the classroom as material to teach and examine.
+  - Frankie's classroom findings and novel findings come back to the search as HYPOTHESES (rule 3: claims, never truth). The search then tests them across every discovery day, with the chance check.
+  - A novel finding from the classroom that survives the search on other days is a scoped finding with its days named.
+- **Only discovery days.** A classroom day is always a discovery day, never a confirmation day: the confirmation days stay untouched by the search, the teacher and Frankie until the survivor list is frozen.
+- **Cost:** only the classroom arm uses a Pod (about $1.59/h per A100). The other four of every five days are CPU only.
+
 ## How the orchestrator runs
 - **A box-side orchestrator** (`frankie_box_experiment.py`), started by one workflow dispatch, with:
   - its own concurrency lock `box-experiment-*`, so it runs beside Frankie's runs and never queues behind them;
@@ -57,3 +72,4 @@ Not called:
 3. The orchestrator for steps 1-4, run on Tue 2021-10-05 and Wed 2021-10-06, plus the Monday export.
 4. The search (steps 5-6), attached to the orchestrator.
 5. Survivors and confirmation (steps 7-8).
+6. The classroom arm on every fifth discovery day (after r10 shows the plan classroom running end to end).
