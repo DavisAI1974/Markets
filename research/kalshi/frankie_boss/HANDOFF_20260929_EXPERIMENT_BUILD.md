@@ -234,6 +234,21 @@ answers TEACH only (GUIDED on a later block is refused with the reason); learnin
 mode and prior correction ids carry).
 Day selection (Greg): "Use 2021-2026" -> late Sept through October of 2021-2026; the agent's DAY_SELECTION doc pending.
 
+## HOLD ON EVERY OTHER DAY (Greg, 2026-09-29 ~10:5xZ, standing)
+"Don't let any other days run until we get code and ingestment correct first and then we'll bring the next two days
+over and then we can bring the rest after that." Only Tue 20211005 and Wed 20211006 run on the box. No other trading
+day is fetched to the box, ingested, or run (not the day-facts script, not the orchestrator over the 30 days) until
+Greg says the code and the ingest are correct; then the NEXT TWO days only, then the rest. The S3 history pulls
+(the 13 points: day_history and the curve, 30 days -> October 2021-2025 -> the rest of the 5 years) are downloads to
+S3, not day runs; they continue.
+
+Also 2026-09-29 (this block's session): Frankie's data wish list (`FRANKIE_DATA_WISHLIST_20260929.md`, 13 points incl.
+storage, storage estimate vs actual and the futures curve; one file per day beside the ingest, every reader sees it,
+time-only leak guard); the 30 days (`DAY_SELECTION_20260929.md`); the history plan (`HISTORICAL_DATA_PLAN_20260929.md`);
+pulls as modes of `ng_historical_mbo_5y_to_s3_20260820.yml` (new workflow files 404 until run once). The 5-year MBO pull
+is NG.v.0 (front month only, full depth); the other months come from the NG.FUT parent pull to `nymex/ng_fut_parent_v0/`.
+Greg cancels the Databento subscription after the pulls finish: tell him when the last file has landed.
+
 ## Next (in order)
 0. DONE: the midweek manifests (built, 66f50851 / 25b30d9c). Ingest running; then each day's ROOT on the go given.
 1. The teacher-only batch step `frankie_box_experiment_teacher.py/.sh` (DAYS=<list>; each day its own fresh walk of
