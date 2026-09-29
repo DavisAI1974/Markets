@@ -1,0 +1,178 @@
+{
+ "block": "20231010",
+ "bucket": "bento-568968024170-us-east-2-an",
+ "day": "20231010",
+ "files": [
+  {
+   "bytes": 666452,
+   "path": "builder-checkpoint.c15.json",
+   "sha256": "ace264453328d7a4873528a5686aef8c7dc8c3008369289e996f7e784f6cb0a6"
+  },
+  {
+   "bytes": 569,
+   "path": "completion.json",
+   "sha256": "a2c858bd351bc96e765b64f6bf8509d51156b0284021a6a5aed9fe83bebed184"
+  },
+  {
+   "bytes": 4291,
+   "path": "ingestion-receipt.json",
+   "sha256": "ef27ae6d6e83d6add8cd5e4d58ca6dfd99f0a26ec444538174ca794e74fbf1f4"
+  },
+  {
+   "bytes": 11694415872,
+   "path": "journal.compact.sqlite",
+   "sha256": "09779f9b164903d0d17fe7d198e69954ab58fe89151dac916c43b16ebf25c185"
+  },
+  {
+   "bytes": 714270,
+   "path": "opening-book.c15.json",
+   "sha256": "14c4aa8c5cda71cc1cbc5eb912dfe6f667cf31cfd2bcaea9c65ef843995d54c2"
+  },
+  {
+   "bytes": 246865,
+   "path": "progress.jsonl",
+   "sha256": "c50ecf0d700b5be10f968731e7796bcf48860b049cb3d989b90c4cf92a317eed"
+  },
+  {
+   "bytes": 246865,
+   "path": "runner-ingest.log",
+   "sha256": "c50ecf0d700b5be10f968731e7796bcf48860b049cb3d989b90c4cf92a317eed"
+  }
+ ],
+ "manifest": "research/kalshi/frankie_boss/blocks/BLOCK_20231010_SOURCE_MANIFEST.json",
+ "manifest_hash": "16d9c1926874808c355a4461b8309c107ac46c146b02d02b3bcc66e74aa6ed7b",
+ "prefix": "frankie/ingest/20231010/gh-36571235912-1",
+ "receipt": {
+  "block": "20231010",
+  "boxes": 19332,
+  "bucket": "bento-568968024170-us-east-2-an",
+  "checkpoint_sha256": "ace264453328d7a4873528a5686aef8c7dc8c3008369289e996f7e784f6cb0a6",
+  "checkpoint_state_hash": "fa7db265c2a32cd92a1ffe908918cd67c8cd27182f706f38d1c46a30daea44cf",
+  "completion_digest": "30d4f4ddf8cf5d30a6e5ffb3eb07b3bc8d06b0c8b376855270345354399710d9",
+  "conformance": "inline",
+  "conformance_seconds": 8296.098,
+  "extraction_hash": "d4b0b14f648ec94b804b87d4abf30e350ab1106a1e3a69782e8c297cf2cd512f",
+  "extraction_pin": {
+   "dbn_version": 3,
+   "runtime_hash": "74f4b8c96409dd75bf2d3a6b8b0c9442916250185f7324027c6e0c7f7cf64c64"
+  },
+  "group_count": 726763,
+  "halt_utc_hour": 21,
+  "ingest_cpu_seconds": 3520.102,
+  "ingest_seconds": 9237.778,
+  "ingested_unix": 1790704073,
+  "journal_bytes": 11694415872,
+  "journal_count": 1924716,
+  "journal_file": "journal.compact.sqlite",
+  "journal_hash": "a311a892c21b44c663377300384966f50724405de266730c8579444b8eb5d1d7",
+  "journal_sha256": "09779f9b164903d0d17fe7d198e69954ab58fe89151dac916c43b16ebf25c185",
+  "manifest_hash": "16d9c1926874808c355a4461b8309c107ac46c146b02d02b3bcc66e74aa6ed7b",
+  "member_keys": [
+   "glbx-mdp3-20231009.mbo.dbn.zst",
+   "glbx-mdp3-20231010.mbo.dbn.zst"
+  ],
+  "mode": "sequential",
+  "model_calls": 0,
+  "ms_per_record": 9.599,
+  "observation_mode": "full",
+  "opening_book": {
+   "file": {
+    "adapter_state_hash": "44bd898fea4665017acbb05282bba45966c873580064ed7371fb3247fe5bb798",
+    "bytes": 714270,
+    "file": "opening-book.c15.json",
+    "sha256": "14c4aa8c5cda71cc1cbc5eb912dfe6f667cf31cfd2bcaea9c65ef843995d54c2"
+   },
+   "first_record_flags": 40,
+   "instruments": 1,
+   "member_key": "glbx-mdp3-20231009.mbo.dbn.zst",
+   "records_applied_to_book": 1110927,
+   "resting_orders": 722,
+   "rule": "the prior trading day's records of this partition applied to the book only (not journaled, not counted), from its first record to the halt",
+   "seconds": 361.615,
+   "snapshot_records": 740,
+   "starts_with_snapshot": true,
+   "status": "warmed_from_partition"
+  },
+  "opening_book_file": {
+   "adapter_state_hash": "44bd898fea4665017acbb05282bba45966c873580064ed7371fb3247fe5bb798",
+   "bytes": 714270,
+   "file": "opening-book.c15.json",
+   "sha256": "14c4aa8c5cda71cc1cbc5eb912dfe6f667cf31cfd2bcaea9c65ef843995d54c2"
+  },
+  "packing": {
+   "block_bytes": 16777216,
+   "block_rows": 256,
+   "standard": "box_standard.TARGET_BOXES 1189: rows per box = partition_entries_for(2 x declared records), bytes per box = the format ceiling"
+  },
+  "parallel": null,
+  "partial_members": [
+   {
+    "member_key": "glbx-mdp3-20231010.mbo.dbn.zst",
+    "partition_mbo_records": 962614,
+    "reason": "records before the 21:00Z halt belong to this trading day; the rest are the next day",
+    "take": 956257
+   }
+  ],
+  "partial_members_ingested": [
+   {
+    "boundary": "trading_day",
+    "declared_partition_mbo_records": 962614,
+    "member_key": "glbx-mdp3-20231010.mbo.dbn.zst",
+    "next_session_id": "20231011",
+    "take": 956257
+   }
+  ],
+  "prefix": "nymex/ng_mbo_5y_v0/native",
+  "python": "3.13.15",
+  "record_count": 962358,
+  "records_per_second": 104.18,
+  "schema": "BOSS_BLOCK_INGESTION_RECEIPT_V1",
+  "scope": "block",
+  "scope_hash": "35d2c74b7a6bc6af261208082b1ef91e6e95dc796768965c47fdf96fc5257ec3",
+  "scope_kind": "RESULT_BEARING",
+  "session_policy": "cme_trading_day",
+  "sessions": [
+   {
+    "first_cursor": 0,
+    "member_index": 0,
+    "session_id": "20231010"
+   }
+  ],
+  "source_object_naming": "member_key",
+  "source_prefix_hash": "cd05ec60d2339a4a087d8b02a906f27bc6a05c2518bd360ad4fa299fdf6b7022",
+  "tail_members": [
+   {
+    "member_key": "glbx-mdp3-20231009.mbo.dbn.zst",
+    "partition_mbo_records": 1117028,
+    "reason": "records at or after the 21:00Z halt open this trading day; the records before it are the prior trading day (skipped, never counted); the book opens from the prior day's sealed ingest",
+    "skip": 1110927,
+    "take": 6101
+   }
+  ],
+  "tail_members_ingested": [
+   {
+    "boundary": "trading_day",
+    "declared_partition_mbo_records": 1117028,
+    "first_session_id": "20231010",
+    "last_skipped_session_id": "20231009",
+    "member_key": "glbx-mdp3-20231009.mbo.dbn.zst",
+    "skip": 1110927,
+    "take": 6101
+   }
+  ],
+  "total_mbo_records": 962358,
+  "trading_day": "20231010",
+  "training_updates": 0,
+  "verify": "inline",
+  "writer": "compact"
+ },
+ "runner": {
+  "attempt": "1",
+  "commit": "af36937d1e478831d4c7bc612c98d969e9a0848b",
+  "cpus": 4,
+  "run_id": "36571235912"
+ },
+ "schema": "FRANKIE_INGEST_POINTER_V1",
+ "status": "sealed",
+ "wall_seconds": 17545
+}
