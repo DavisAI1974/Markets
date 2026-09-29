@@ -9,12 +9,32 @@ on:
       - 'research/kalshi/ng_mbo_5y_native_to_s3.py'
       - 'research/kalshi/ng_mbo_5y_native_to_s3_safe.py'
   workflow_dispatch:
+    # 2026-09-29 (Greg: "do the 30 days immediately"): two more modes on this already-registered workflow, because a new
+    # workflow file cannot be dispatched until it has run once. five_year (default) is the original job, unchanged.
+    inputs:
+      mode:
+        description: 'five_year (original) | curve_days (NG.FUT parent for the 30 experiment days) | day_history (free sources)'
+        required: false
+        default: 'five_year'
+      schemas:
+        description: 'curve_days: comma list of definition,statistics,mbo'
+        required: false
+        default: 'definition,statistics,mbo'
+      ceiling_usd:
+        description: 'curve_days: hard ceiling on the whole quote; nothing is bought above it'
+        required: false
+        default: '100'
+      families:
+        description: 'day_history: all, or a comma list of calendar,cot,storage,consensus,weather_obs,mos,eia930'
+        required: false
+        default: 'all'
 
 permissions:
   contents: read
 
 jobs:
   pull-year:
+    if: ${{ github.event_name == 'push' || inputs.mode == '' || inputs.mode == 'five_year' }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
@@ -79,6 +99,90 @@ jobs:
         with:
           name: ng-mbo-5y-${{ matrix.label }}
           path: /tmp/${{ matrix.label }}.json
+          if-no-files-found: ignore
+
+  curve-days:
+    # The futures curve for the 30 experiment days (research/kalshi/frankie_boss/operations/pull_curve_days.py).
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'curve_days' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      DATABENTO_API_KEY: ${{ secrets.MARKETS_NG_LIVE_MBO }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      BUCKET: bento-568968024170-us-east-2-an
+      PREFIX: nymex/ng_fut_parent_v0
+      SCHEMAS: ${{ inputs.schemas }}
+      CEILING_USD: ${{ inputs.ceiling_usd }}
+      CANDIDATES: research/kalshi/frankie_boss/blocks/DAY_SELECTION_CANDIDATES_20260929.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet databento boto3
+      - run: |
+          case "$SCHEMAS" in *[!a-z0-9_,-]*) echo "schemas must be a comma list"; exit 2;; esac
+          case "$CEILING_USD" in *[!0-9.]*) echo "ceiling must be a number"; exit 2;; esac
+          python research/kalshi/frankie_boss/operations/pull_curve_days.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: curve-days-${{ github.run_id }}
+          path: /tmp/curve-days-receipt.json
+          if-no-files-found: ignore
+
+  day-history:
+    # The free historical sources for the 30 days (research/kalshi/frankie_boss/operations/fetch_day_history.py), the
+    # same steps as frankie_day_history.yml action=fetch; uploads under frankie/day_history/<run_id>/ only.
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'day_history' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    env:
+      PYTHONPATH: research/kalshi
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+      FAMILIES: ${{ inputs.families }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --no-cache-dir requests boto3==1.42.23
+      - run: |
+          set -euo pipefail
+          case "$FAMILIES" in *[!a-z0-9_,]*) echo "families must be a comma list of names"; exit 2;; esac
+          python research/kalshi/frankie_boss/operations/fetch_day_history.py fetch --family "$FAMILIES" --out day-history
+      - name: Upload to S3 (new prefix, new objects only)
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-2
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          import boto3
+          bucket = 'bento-568968024170-us-east-2-an'
+          prefix = f"frankie/day_history/{os.environ['GITHUB_RUN_ID']}/"
+          s3 = boto3.client('s3', region_name='us-east-2')
+          files = sorted(p for p in pathlib.Path('day-history').rglob('*') if p.is_file())
+          manifest = []
+          for p in files:
+              key = prefix + str(p.relative_to('day-history'))
+              body = p.read_bytes()
+              s3.put_object(Bucket=bucket, Key=key, Body=body, ServerSideEncryption='AES256')
+              manifest.append(dict(key=key, bytes=len(body), sha256=hashlib.sha256(body).hexdigest()))
+          s3.put_object(Bucket=bucket, Key=prefix + 'manifest.json', Body=json.dumps(manifest, indent=1).encode(),
+                        ServerSideEncryption='AES256')
+          print(f'uploaded {len(manifest)} objects under s3://{bucket}/{prefix}')
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: day-history-${{ github.run_id }}
+          path: day-history/**/receipt.json
           if-no-files-found: ignore
 
 # 2026-08-21 resume trigger: reuse canonical jobs and finish missing native segment manifests.
