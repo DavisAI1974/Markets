@@ -65,7 +65,25 @@ cf308f79 / 8c295d29; every script touched today passes bash -n. Run each check o
 Also caught before commit: a leakage gate that could never fail (it only read rows up to i); replaced by the gate on
 the real ASOF alignment.
 
-## Next (in order)
+## Later the same day: ChatGPT's three pieces, built by Claude (Greg: "I'm going to have you do chatgpts part")
+| Commit | What |
+|---|---|
+| e7ae50ab | C: `frankie_box_experiment_transforms.py` (sign_of_step, run_length, magnitude_class, level_crossing, acceleration; causal, running LOWER medians, no caps) wired into the search (x under T vs y under T, and vs y's sign_of_step; rows name x_transform / y_transform; `TRANSFORMS=`); the scientific teacher marks only rows on the claim's own transform pair (`counts_only` otherwise) |
+| e2d6bf36 | B: `frankie_box_historical_claims.py` + committed `knowledge/HISTORICAL_CLAIMS_V1-9b2ca9849e4f.json`: 127 catalog sources read at their revisions (sha256 checked; 0 unreadable), 4,806 candidate statements enumerated mechanically, 10 testable claims (H01-H10) from a declared crosswalk whose verbatim anchors are verified in the source bytes, 4,799 listed not_testable with reasons; the teacher takes `HISTORICAL_CLAIMS=`, lists a claim's condition as untested, writes HISTORICAL_LESSONS_V1 (into nobody's brain) |
+| 2ccbea3a | A: `frankie_box_experiment.py` + `.sh` (plan / start / status; see the runbook section 5); `box-experiment-*` lock for it and the future teacher step |
+
+Honest limits of these pieces:
+- B's crosswalk is thin: 10 claims out of 4,806 candidates. Everything else is listed "no crosswalk entry: not put in
+  testable form here", which is not a judgment that it cannot be tested. The crosswalk is a table in the code (authored
+  by Claude from reading the sources; Greg may amend); widening it is open work. It was built in the container because
+  the box's staged checkout has no git history (8 sources exist only at their catalog revision).
+- A refuses every day without a committed per-day manifest; today only 20211003 and 20211004 have one, and
+  Tue/Wed cannot be derived alone (`derive_trading_day_manifest.py` refuses a tail day). How midweek days get their
+  manifests is open (Greg's call: a new derivation, or ingest the block as a whole).
+- A calls the teacher-only step as `frankie_box_experiment_teacher.sh DAYS=<list> INGESTION_RECEIPTS=<list>`; until it is
+  built, batches record `not_built`.
+- The transforms multiply the search's pairs (up to 9 transform pairs per ordered series pair); no wall time is measured.
+
 1. The teacher-only batch step `frankie_box_experiment_teacher.py/.sh` (DAYS=<list>; each day its own fresh walk of
    JournalTeacherR3 on its sealed journal, in parallel; writes `DIPOLE_CLASSROOM_SOURCE_V1` to
    `/opt/frankie-box/work/experiment-teacher-rows/<day>/host-dipole-classroom-source.c15.json`; skips days a launch

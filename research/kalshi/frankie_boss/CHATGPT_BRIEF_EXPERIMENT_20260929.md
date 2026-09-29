@@ -1,5 +1,9 @@
 # Brief for ChatGPT: new pieces of the Frankie experiment (2026-09-29)
 
+**STATUS 2026-09-29 (later): all three pieces were built by Claude on Greg's word ("I'm going to have you do chatgpts
+part") on the run branch: C transforms e7ae50ab, B historical claims e2d6bf36, A orchestrator 2ccbea3a. Do not build
+them again; this brief is kept as the record of what was asked.**
+
 Greg wants ChatGPT building new pieces of the experiment while Claude builds the teacher-only batch step. Read this
 whole brief, then the files it names. Where this brief and a spec disagree, the spec wins and you say so.
 
