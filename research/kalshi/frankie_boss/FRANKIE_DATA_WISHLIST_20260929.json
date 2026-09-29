@@ -722,6 +722,29 @@
    "whole_block": false
   },
   {
+   "block": "firehose_present",
+   "cadence": "per day",
+   "carried_on_experiment_days": true,
+   "declines": 2,
+   "field_name_shared_with": [
+    "tape_conditions.firehose_present.l1_book",
+    "tape_conditions.prior_full_session.firehose_present.l1_book"
+   ],
+   "in_live_list": true,
+   "path": "firehose_present.l1_book",
+   "play_ids": [
+    "monday.window_deep_book_shakeout"
+   ],
+   "play_status": {
+    "HYPOTHESIS": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "whether the MBO firehose reached this day",
+   "whole_block": false
+  },
+  {
    "block": "tape_conditions",
    "cadence": "per session",
    "carried_on_experiment_days": true,
@@ -805,6 +828,66 @@
    "plays_by_condition": 0,
    "plays_by_text": 1,
    "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays",
+   "whole_block": false
+  },
+  {
+   "block": "vol_regime",
+   "cadence": "daily",
+   "carried_on_experiment_days": true,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "vol_regime.n0_net_sigma_10",
+   "play_ids": [
+    "magnitude.block_gap_ownership"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "realized vol regime derived from the tape",
+   "whole_block": false
+  },
+  {
+   "block": "vol_regime",
+   "cadence": "daily",
+   "carried_on_experiment_days": true,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "vol_regime.n0_prev_trades",
+   "play_ids": [
+    "daytype.thin_session_range_invariance"
+   ],
+   "play_status": {
+    "PROPOSED": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "realized vol regime derived from the tape",
+   "whole_block": false
+  },
+  {
+   "block": "vol_regime",
+   "cadence": "daily",
+   "carried_on_experiment_days": true,
+   "declines": 0,
+   "field_name_shared_with": [],
+   "in_live_list": true,
+   "path": "vol_regime.n0_range_pctile",
+   "play_ids": [
+    "magnitude.block_gap_ownership"
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "plays_by_text": 1,
+   "upstream_source": "realized vol regime derived from the tape",
    "whole_block": false
   },
   {
@@ -1035,6 +1118,310 @@
    "plays_by_text": 0,
    "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED",
    "whole_block": false
+  },
+  {
+   "block": "vol_regime",
+   "cadence": "daily",
+   "carried_on_experiment_days": true,
+   "declines": 1,
+   "field_name_shared_with": [
+    "cash_basis.vintage_asof",
+    "contract_structure.vintage_asof",
+    "options_surface.vintage_asof",
+    "squeeze_watch.vintage_asof"
+   ],
+   "in_live_list": true,
+   "path": "vol_regime.vintage_asof",
+   "play_ids": [],
+   "play_status": {},
+   "plays": 0,
+   "plays_by_condition": 0,
+   "plays_by_text": 0,
+   "upstream_source": "realized vol regime derived from the tape",
+   "whole_block": false
+  }
+ ],
+ "carried_families": [
+  {
+   "cadence": "derived",
+   "carried_on_experiment_days": true,
+   "data_points": 1,
+   "family": "dow",
+   "fields_named": [
+    {
+     "path": "dow",
+     "plays": 53
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 9,
+    "DESCRIPTOR": 1,
+    "HYPOTHESIS": 9,
+    "PROPOSED": 16,
+    "PROVISIONAL": 43,
+    "REFUTED": 1,
+    "STABLE": 2,
+    "WIRED_UNPROVEN": 1
+   },
+   "plays": 82,
+   "plays_by_condition": 0,
+   "upstream_source": "day of week"
+  },
+  {
+   "cadence": "-",
+   "carried_on_experiment_days": true,
+   "data_points": 1,
+   "family": "note",
+   "fields_named": [
+    {
+     "path": "note",
+     "plays": 11
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 9,
+    "DESCRIPTOR": 1,
+    "HYPOTHESIS": 10,
+    "PROPOSED": 20,
+    "PROVISIONAL": 38,
+    "REFUTED": 1,
+    "STABLE": 2,
+    "WIRED_UNPROVEN": 1
+   },
+   "plays": 82,
+   "plays_by_condition": 0,
+   "upstream_source": "free-text annotation, not a quantity"
+  },
+  {
+   "cadence": "per session",
+   "carried_on_experiment_days": true,
+   "data_points": 92,
+   "family": "tape_conditions",
+   "fields_named": [
+    {
+     "path": "tape_conditions.session_b_share",
+     "plays": 6
+    },
+    {
+     "path": "tape_conditions.prior_full_session.session_b_share",
+     "plays": 6
+    },
+    {
+     "path": "tape_conditions.big_print_b_share",
+     "plays": 5
+    },
+    {
+     "path": "tape_conditions.session_signed_flow",
+     "plays": 4
+    },
+    {
+     "path": "tape_conditions.prior_full_session.big_print_b_share",
+     "plays": 4
+    },
+    {
+     "path": "tape_conditions.session_b_share_two_sided",
+     "plays": 3
+    },
+    {
+     "path": "tape_conditions.prior_full_session.session_signed_flow",
+     "plays": 3
+    },
+    {
+     "path": "tape_conditions.prior_full_session.session_b_share_two_sided",
+     "plays": 3
+    },
+    {
+     "path": "tape_conditions.phase_signed_flow[]",
+     "plays": 3
+    },
+    {
+     "path": "tape_conditions.session",
+     "plays": 2
+    },
+    {
+     "path": "tape_conditions.prior_full_session.phase_signed_flow[]",
+     "plays": 2
+    },
+    {
+     "path": "tape_conditions.big_prints_n",
+     "plays": 2
+    },
+    {
+     "path": "tape_conditions.prior_full_session.l1_book.quote_bid_share",
+     "plays": 1
+    },
+    {
+     "path": "tape_conditions.prior_full_session.big_prints_n",
+     "plays": 1
+    },
+    {
+     "path": "tape_conditions.l1_book.quote_bid_share",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 5,
+    "DESCRIPTOR": 1,
+    "HYPOTHESIS": 4,
+    "PROPOSED": 11,
+    "PROVISIONAL": 20,
+    "WIRED_UNPROVEN": 1
+   },
+   "plays": 42,
+   "plays_by_condition": 10,
+   "upstream_source": "Databento MBO/MBP-10 NYMEX tape - prior-session activity. NEVER MASKED"
+  },
+  {
+   "cadence": "static, 194d runway",
+   "carried_on_experiment_days": true,
+   "data_points": 3,
+   "family": "holiday",
+   "fields_named": [
+    {
+     "path": "holiday",
+     "plays": 9
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 1,
+    "HYPOTHESIS": 2,
+    "PROPOSED": 8,
+    "PROVISIONAL": 12,
+    "REFUTED": 1
+   },
+   "plays": 24,
+   "plays_by_condition": 0,
+   "upstream_source": "CME holiday table - HARDCODED, ends 2027-02-15 (A-14)"
+  },
+  {
+   "cadence": "static rules",
+   "carried_on_experiment_days": true,
+   "data_points": 34,
+   "family": "flow_calendar",
+   "fields_named": [
+    {
+     "path": "flow_calendar.bidweek_delivery_month",
+     "plays": 4
+    },
+    {
+     "path": "flow_calendar.in_gsci_roll",
+     "plays": 3
+    },
+    {
+     "path": "flow_calendar.in_bcom_roll",
+     "plays": 3
+    },
+    {
+     "path": "flow_calendar.days_to_next_eia_release",
+     "plays": 3
+    },
+    {
+     "path": "flow_calendar.is_opex_day",
+     "plays": 2
+    },
+    {
+     "path": "flow_calendar.is_expiry_day",
+     "plays": 2
+    },
+    {
+     "path": "flow_calendar.days_to_futures_expiry",
+     "plays": 2
+    },
+    {
+     "path": "flow_calendar.in_bidweek",
+     "plays": 1
+    },
+    {
+     "path": "flow_calendar.gsci_roll_day_n",
+     "plays": 1
+    },
+    {
+     "path": "flow_calendar.bcom_roll_day_n",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 1,
+    "HYPOTHESIS": 1,
+    "PROPOSED": 7,
+    "PROVISIONAL": 10
+   },
+   "plays": 19,
+   "plays_by_condition": 9,
+   "upstream_source": "exchange + index calendar: roll, BCOM, expiry, holidays"
+  },
+  {
+   "cadence": "daily",
+   "carried_on_experiment_days": true,
+   "data_points": 42,
+   "family": "vol_regime",
+   "fields_named": [
+    {
+     "path": "vol_regime.n0_range_pctile",
+     "plays": 1
+    },
+    {
+     "path": "vol_regime.n0_prev_trades",
+     "plays": 1
+    },
+    {
+     "path": "vol_regime.n0_net_sigma_10",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 1,
+    "HYPOTHESIS": 4,
+    "PROPOSED": 2,
+    "PROVISIONAL": 4,
+    "STABLE": 1
+   },
+   "plays": 12,
+   "plays_by_condition": 0,
+   "upstream_source": "realized vol regime derived from the tape"
+  },
+  {
+   "cadence": "per day",
+   "carried_on_experiment_days": true,
+   "data_points": 2,
+   "family": "firehose_present",
+   "fields_named": [
+    {
+     "path": "firehose_present.l1_book",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 2,
+    "HYPOTHESIS": 2,
+    "PROVISIONAL": 6
+   },
+   "plays": 10,
+   "plays_by_condition": 0,
+   "upstream_source": "whether the MBO firehose reached this day"
+  },
+  {
+   "cadence": "daily",
+   "carried_on_experiment_days": true,
+   "data_points": 52,
+   "family": "contract_structure",
+   "fields_named": [
+    {
+     "path": "contract_structure.curve_regime",
+     "plays": 1
+    },
+    {
+     "path": "contract_structure.calendar_front_next_spread",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 1,
+    "PROVISIONAL": 2
+   },
+   "plays": 3,
+   "plays_by_condition": 0,
+   "upstream_source": "CME definitions + forward curve, calendar-front pair"
   }
  ],
  "live_list": {
@@ -1085,7 +1472,196 @@
    "whole_block": false
   }
  ],
- "order": "plays naming it in a parsed condition, then all plays naming it, then declines on it",
+ "order": "families: plays naming the family or any of its points; points: parsed conditions, all plays, declines",
+ "rest_families": [
+  {
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "data_points": 1,
+   "family": "stor_surprise",
+   "fields_named": [
+    {
+     "path": "stor_surprise",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "PROVISIONAL": 2
+   },
+   "plays": 2,
+   "plays_by_condition": 0,
+   "upstream_source": "actual minus consensus"
+  },
+  {
+   "cadence": "weekly, pre-print",
+   "carried_on_experiment_days": false,
+   "data_points": 102,
+   "family": "storage_consensus",
+   "fields_named": [
+    {
+     "path": "storage_consensus.next_print.consensus_chg_bcf",
+     "plays": 1
+    },
+    {
+     "path": "storage_consensus.next_print",
+     "plays": 1
+    },
+    {
+     "path": "storage_consensus.last_print.consensus_chg_bcf",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "PROVISIONAL": 2
+   },
+   "plays": 2,
+   "plays_by_condition": 0,
+   "upstream_source": "street consensus for the storage print"
+  },
+  {
+   "cadence": "per cycle",
+   "carried_on_experiment_days": false,
+   "data_points": 35,
+   "family": "weather_forecast_cycle",
+   "fields_named": [
+    {
+     "path": "weather_forecast_cycle.weekday_open.delta_vs_prior_by_horizon[].d_gw_hdd",
+     "plays": 1
+    },
+    {
+     "path": "weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[].d_gw_hdd",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 1,
+    "PROPOSED": 1
+   },
+   "plays": 2,
+   "plays_by_condition": 0,
+   "upstream_source": "MOS cycle timing - which run was available at decision time"
+  },
+  {
+   "cadence": "per day",
+   "carried_on_experiment_days": false,
+   "data_points": 4,
+   "family": "frozen_structure_stale",
+   "fields_named": [],
+   "play_status": {
+    "DEGENERATE": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "upstream_source": "staleness flag on the one-shot mask"
+  },
+  {
+   "cadence": "weekly - DISCONTINUED",
+   "carried_on_experiment_days": false,
+   "data_points": 83,
+   "family": "ngwu_balance",
+   "fields_named": [
+    {
+     "path": "ngwu_balance.lng_vessels_departed",
+     "plays": 1
+    },
+    {
+     "path": "ngwu_balance.lng_vessel_capacity_bcf",
+     "plays": 1
+    },
+    {
+     "path": "ngwu_balance.latest_sd_levels.age_days",
+     "plays": 1
+    },
+    {
+     "path": "ngwu_balance.age_days",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "WIRED_UNPROVEN": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "upstream_source": "EIA Natural Gas Weekly Update. LIVE RISK: final edition was the week ending 2026-01-21"
+  },
+  {
+   "cadence": "daily settle",
+   "carried_on_experiment_days": false,
+   "data_points": 67,
+   "family": "options_surface",
+   "fields_named": [],
+   "play_status": {
+    "HYPOTHESIS": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "upstream_source": "NG options settle IV surface, ON/LNE roots"
+  },
+  {
+   "cadence": "monthly, 1-34d stale",
+   "carried_on_experiment_days": false,
+   "data_points": 95,
+   "family": "steo_vintage",
+   "fields_named": [
+    {
+     "path": "steo_vintage.age_days",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "PROVISIONAL": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "upstream_source": "EIA STEO monthly archived workbooks - the complete balance as-of release"
+  },
+  {
+   "cadence": "weekly",
+   "carried_on_experiment_days": false,
+   "data_points": 56,
+   "family": "storage_regional",
+   "fields_named": [
+    {
+     "path": "storage_regional.regions.south_central_salt.weekly_chg",
+     "plays": 1
+    },
+    {
+     "path": "storage_regional.regions.south_central_nonsalt.weekly_chg",
+     "plays": 1
+    },
+    {
+     "path": "storage_regional.regions.south_central.weekly_chg",
+     "plays": 1
+    },
+    {
+     "path": "storage_regional.regions.pacific.weekly_chg",
+     "plays": 1
+    },
+    {
+     "path": "storage_regional.regions.mountain.weekly_chg",
+     "plays": 1
+    },
+    {
+     "path": "storage_regional.regions.midwest.weekly_chg",
+     "plays": 1
+    },
+    {
+     "path": "storage_regional.regions.l48.weekly_chg",
+     "plays": 1
+    },
+    {
+     "path": "storage_regional.regions.east.weekly_chg",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 1
+   },
+   "plays": 1,
+   "plays_by_condition": 0,
+   "upstream_source": "EIA regional + salt/non-salt storage"
+  }
+ ],
  "rest_wished": [
   {
    "block": "model_disagreement",
@@ -1519,29 +2095,6 @@
    "plays_by_condition": 0,
    "plays_by_text": 1,
    "upstream_source": "expiry/OI/positioning conjunction detector",
-   "whole_block": false
-  },
-  {
-   "block": "firehose_present",
-   "cadence": "per day",
-   "carried_on_experiment_days": false,
-   "declines": 2,
-   "field_name_shared_with": [
-    "tape_conditions.firehose_present.l1_book",
-    "tape_conditions.prior_full_session.firehose_present.l1_book"
-   ],
-   "in_live_list": true,
-   "path": "firehose_present.l1_book",
-   "play_ids": [
-    "monday.window_deep_book_shakeout"
-   ],
-   "play_status": {
-    "HYPOTHESIS": 1
-   },
-   "plays": 1,
-   "plays_by_condition": 0,
-   "plays_by_text": 1,
-   "upstream_source": "whether the MBO firehose reached this day",
    "whole_block": false
   },
   {
@@ -2704,66 +3257,6 @@
    "whole_block": false
   },
   {
-   "block": "vol_regime",
-   "cadence": "daily",
-   "carried_on_experiment_days": false,
-   "declines": 0,
-   "field_name_shared_with": [],
-   "in_live_list": true,
-   "path": "vol_regime.n0_net_sigma_10",
-   "play_ids": [
-    "magnitude.block_gap_ownership"
-   ],
-   "play_status": {
-    "PROVISIONAL": 1
-   },
-   "plays": 1,
-   "plays_by_condition": 0,
-   "plays_by_text": 1,
-   "upstream_source": "realized vol regime derived from the tape",
-   "whole_block": false
-  },
-  {
-   "block": "vol_regime",
-   "cadence": "daily",
-   "carried_on_experiment_days": false,
-   "declines": 0,
-   "field_name_shared_with": [],
-   "in_live_list": true,
-   "path": "vol_regime.n0_prev_trades",
-   "play_ids": [
-    "daytype.thin_session_range_invariance"
-   ],
-   "play_status": {
-    "PROPOSED": 1
-   },
-   "plays": 1,
-   "plays_by_condition": 0,
-   "plays_by_text": 1,
-   "upstream_source": "realized vol regime derived from the tape",
-   "whole_block": false
-  },
-  {
-   "block": "vol_regime",
-   "cadence": "daily",
-   "carried_on_experiment_days": false,
-   "declines": 0,
-   "field_name_shared_with": [],
-   "in_live_list": true,
-   "path": "vol_regime.n0_range_pctile",
-   "play_ids": [
-    "magnitude.block_gap_ownership"
-   ],
-   "play_status": {
-    "PROVISIONAL": 1
-   },
-   "plays": 1,
-   "plays_by_condition": 0,
-   "plays_by_text": 1,
-   "upstream_source": "realized vol regime derived from the tape",
-   "whole_block": false
-  },
-  {
    "block": "weather_forecast",
    "cadence": "per model cycle",
    "carried_on_experiment_days": false,
@@ -3273,27 +3766,6 @@
    "plays_by_text": 0,
    "upstream_source": "expiry/OI/positioning conjunction detector",
    "whole_block": false
-  },
-  {
-   "block": "vol_regime",
-   "cadence": "daily",
-   "carried_on_experiment_days": false,
-   "declines": 1,
-   "field_name_shared_with": [
-    "cash_basis.vintage_asof",
-    "contract_structure.vintage_asof",
-    "options_surface.vintage_asof",
-    "squeeze_watch.vintage_asof"
-   ],
-   "in_live_list": true,
-   "path": "vol_regime.vintage_asof",
-   "play_ids": [],
-   "play_status": {},
-   "plays": 0,
-   "plays_by_condition": 0,
-   "plays_by_text": 0,
-   "upstream_source": "realized vol regime derived from the tape",
-   "whole_block": false
   }
  ],
  "schema": "FRANKIE_DATA_WISHLIST_V1",
@@ -3542,6 +4014,408 @@
    "plays_by_text": 0,
    "upstream_source": "NWS/IEM ASOS observations",
    "whole_block": false
+  }
+ ],
+ "top10_families": [
+  {
+   "cadence": "daily, T+1",
+   "carried_on_experiment_days": false,
+   "data_points": 6,
+   "family": "weather",
+   "fields_named": [
+    {
+     "path": "weather",
+     "plays": 20
+    },
+    {
+     "path": "weather.gw_hdd",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 5,
+    "DESCRIPTOR": 1,
+    "HYPOTHESIS": 2,
+    "PROPOSED": 6,
+    "PROVISIONAL": 20,
+    "REFUTED": 1,
+    "WIRED_UNPROVEN": 1
+   },
+   "plays": 36,
+   "plays_by_condition": 5,
+   "upstream_source": "NWS/IEM ASOS observations"
+  },
+  {
+   "cadence": "weekly Thu 10:30 ET",
+   "carried_on_experiment_days": false,
+   "data_points": 6,
+   "family": "storage",
+   "fields_named": [
+    {
+     "path": "storage",
+     "plays": 17
+    },
+    {
+     "path": "storage.weekly_chg",
+     "plays": 1
+    },
+    {
+     "path": "storage.vs_5yr",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 6,
+    "HYPOTHESIS": 4,
+    "PROPOSED": 2,
+    "PROVISIONAL": 20,
+    "REFUTED": 1
+   },
+   "plays": 33,
+   "plays_by_condition": 0,
+   "upstream_source": "EIA weekly working gas in storage"
+  },
+  {
+   "cadence": "weekly Fri, suspended in shutdowns",
+   "carried_on_experiment_days": false,
+   "data_points": 79,
+   "family": "cot",
+   "fields_named": [
+    {
+     "path": "cot.managed_money_net_pctile_1y",
+     "plays": 4
+    },
+    {
+     "path": "cot.managed_money_net_chg_wow",
+     "plays": 3
+    },
+    {
+     "path": "cot.managed_money_net_pctile_3y",
+     "plays": 2
+    },
+    {
+     "path": "cot.managed_money_net",
+     "plays": 1
+    },
+    {
+     "path": "cot.ice.pen.managed_money_net_pctile_3y",
+     "plays": 1
+    },
+    {
+     "path": "cot.ice.ld1.managed_money_net_pctile_3y",
+     "plays": 1
+    },
+    {
+     "path": "cot.ice.ld1.managed_money_net_pctile_1y",
+     "plays": 1
+    },
+    {
+     "path": "cot.ice.hh_index.managed_money_net_pctile_3y",
+     "plays": 1
+    },
+    {
+     "path": "cot.ice.hh_basis.managed_money_net_pctile_3y",
+     "plays": 1
+    },
+    {
+     "path": "cot.age_days",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "HYPOTHESIS": 1,
+    "PROPOSED": 3,
+    "PROVISIONAL": 12
+   },
+   "plays": 16,
+   "plays_by_condition": 8,
+   "upstream_source": "CFTC Commitments of Traders, futures and ICE HH"
+  },
+  {
+   "cadence": "per model cycle",
+   "carried_on_experiment_days": false,
+   "data_points": 68,
+   "family": "weather_forecast",
+   "fields_named": [
+    {
+     "path": "weather_forecast.run_delta[].d_gw_cdd",
+     "plays": 5
+    },
+    {
+     "path": "weather_forecast.forecast_gw_hdd",
+     "plays": 4
+    },
+    {
+     "path": "weather_forecast.forecast_run_delta_cdd",
+     "plays": 3
+    },
+    {
+     "path": "weather_forecast.run_delta[].d_gw_hdd",
+     "plays": 1
+    },
+    {
+     "path": "weather_forecast.horizons[].forecast_gw_hdd",
+     "plays": 1
+    },
+    {
+     "path": "weather_forecast.horizons[].forecast_gw_cdd",
+     "plays": 1
+    },
+    {
+     "path": "weather_forecast.forecast_run_delta",
+     "plays": 1
+    },
+    {
+     "path": "weather_forecast.forecast_gw_cdd",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 4,
+    "HYPOTHESIS": 1,
+    "PROPOSED": 2,
+    "PROVISIONAL": 5,
+    "REFUTED": 1
+   },
+   "plays": 13,
+   "plays_by_condition": 4,
+   "upstream_source": "NWS MOS (GFS/NAM/MEX) via the IEM archive"
+  },
+  {
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "data_points": 1,
+   "family": "curve_regime",
+   "fields_named": [
+    {
+     "path": "curve_regime",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 2,
+    "HYPOTHESIS": 2,
+    "PROVISIONAL": 5
+   },
+   "plays": 9,
+   "plays_by_condition": 0,
+   "upstream_source": "backwardation/contango label off the forward curve"
+  },
+  {
+   "cadence": "daily, wall = period+2",
+   "carried_on_experiment_days": false,
+   "data_points": 88,
+   "family": "grid_stack",
+   "fields_named": [
+    {
+     "path": "grid_stack.bas.US48.wind_mwh",
+     "plays": 2
+    },
+    {
+     "path": "grid_stack.bas.US48.est_gas_burn_bcfd",
+     "plays": 2
+    },
+    {
+     "path": "grid_stack.bas.US48.solar_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.US48.gas_share",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.SWPP.wind_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.SWPP.solar_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.SWPP.gas_share",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.SOCO.wind_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.SOCO.solar_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.SOCO.gas_share",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.PJM.wind_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.PJM.solar_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.PJM.gas_share",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.MISO.wind_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.MISO.solar_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.MISO.gas_share",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.ERCO.wind_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.ERCO.solar_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.ERCO.gas_share",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.CISO.wind_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.CISO.solar_mwh",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.bas.CISO.gas_share",
+     "plays": 1
+    },
+    {
+     "path": "grid_stack.age_days",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "PROPOSED": 1,
+    "PROVISIONAL": 6,
+    "REFUTED": 1
+   },
+   "plays": 8,
+   "plays_by_condition": 4,
+   "upstream_source": "EIA-930 hourly/daily BA operations: demand, day-ahead forecast, gen by fuel"
+  },
+  {
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "data_points": 22,
+   "family": "squeeze_watch",
+   "fields_named": [
+    {
+     "path": "squeeze_watch.sessions_since_prompt_expiry",
+     "plays": 2
+    },
+    {
+     "path": "squeeze_watch.calendar_dte_limb_satisfied_live",
+     "plays": 2
+    },
+    {
+     "path": "squeeze_watch.unwind_watch",
+     "plays": 1
+    },
+    {
+     "path": "squeeze_watch.calendar_front_next_spread",
+     "plays": 1
+    },
+    {
+     "path": "squeeze_watch.active",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "DEGENERATE": 1,
+    "DESCRIPTOR": 1,
+    "PROPOSED": 1,
+    "PROVISIONAL": 3
+   },
+   "plays": 6,
+   "plays_by_condition": 1,
+   "upstream_source": "expiry/OI/positioning conjunction detector"
+  },
+  {
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "data_points": 86,
+   "family": "solar",
+   "fields_named": [],
+   "play_status": {
+    "PROPOSED": 1,
+    "PROVISIONAL": 3
+   },
+   "plays": 4,
+   "plays_by_condition": 0,
+   "upstream_source": "solar geometry + EIA-930 solar generation"
+  },
+  {
+   "cadence": "per cycle",
+   "carried_on_experiment_days": false,
+   "data_points": 431,
+   "family": "model_disagreement",
+   "fields_named": [
+    {
+     "path": "model_disagreement.stability.NAM[].d_gw_cdd",
+     "plays": 5
+    },
+    {
+     "path": "model_disagreement.stability.MEX[].d_gw_cdd",
+     "plays": 5
+    },
+    {
+     "path": "model_disagreement.stability.GFS[].d_gw_cdd",
+     "plays": 5
+    },
+    {
+     "path": "model_disagreement.summary.max_abs_spread_gw_hdd",
+     "plays": 1
+    },
+    {
+     "path": "model_disagreement.stability.NAM[].d_gw_hdd",
+     "plays": 1
+    },
+    {
+     "path": "model_disagreement.stability.MEX[].d_gw_hdd",
+     "plays": 1
+    },
+    {
+     "path": "model_disagreement.stability.GFS[].d_gw_hdd",
+     "plays": 1
+    }
+   ],
+   "play_status": {
+    "PROPOSED": 1,
+    "PROVISIONAL": 1
+   },
+   "plays": 2,
+   "plays_by_condition": 1,
+   "upstream_source": "cross-model spread between MOS families"
+  },
+  {
+   "cadence": "daily",
+   "carried_on_experiment_days": false,
+   "data_points": 157,
+   "family": "freeze_risk",
+   "fields_named": [],
+   "play_status": {
+    "PROVISIONAL": 1,
+    "WIRED_UNPROVEN": 1
+   },
+   "plays": 2,
+   "plays_by_condition": 0,
+   "upstream_source": "station-level freeze-off proxy off the same ASOS obs"
   }
  ],
  "whole_blocks": [
