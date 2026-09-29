@@ -74,6 +74,13 @@ them is left out, and a confirmation day stays untouched until the frozen surviv
 declines the run: a day listed twice; two sealed ingests or two finished ROOTs of one day decline that day's step,
 naming both. No model call, no Granite, no Pod.
 
+CPU BOOKING (Greg, 2026-09-29: "Correct 16 and no double booking"; "They all get the same 16 and workers so we wait
+until 16 are available"). Every day-run step (root, teacher, classroom, data, search, lessons, exchange, voice, school,
+reports) runs through frankie_box_cores.py: it books EXACTLY 16 CPUs in the box's ledger and starts the step under
+taskset -c <those 16>, so every worker it pins lands inside them; its workers = 15 (root DATA_WORKERS, search WORKERS; the
+teacher splits its own 16). Fewer than 16 free: the step does not start and is recorded 'waiting: N free of 16 needed'
+(a later start retries it). The ingest books its own 8 per day process in frankie_box_ingest_block.sh (the same waiting).
+
 RESUME. A receipt per day and step (per batch for teacher and lessons) under /opt/frankie-box/work/experiment/<run>/.
 A restart with the same plan skips every step whose receipt says done or reused and runs the rest; a different plan
 for the same run is refused. Steps that failed, were refused or are not built are retried on the next start.
@@ -456,10 +463,13 @@ class Run:
         self.box = self.code_root / 'deploy' / 'aws' / 'box'
         self.floor = int(a.disk_floor_gb * 1024 ** 3)
         self.stopped = None
+        self._cpu = {}                     # (stage, key) -> the CPU ledger's line for the child: booked, waiting, refused
         self._map = None
         self._attached = {}
         sys.path.insert(0, str(self.box))
         from frankie_box_progress import Probe
+        import frankie_box_cores
+        self.cores = frankie_box_cores     # the box's CPU booking ledger (DAY_RUN_CPUS, ingest_workers, WAITING_EXIT)
         self.probe = Probe(self.dir, request_sha256=plan_digest(plan), phase='experiment')
 
     # receipts
@@ -477,6 +487,15 @@ class Run:
         path = self.receipt_path(stage, key)
         path.parent.mkdir(parents=True, exist_ok=True)
         previous = self.receipt(stage, key)
+        cpu = [self._cpu.pop(k) for k in sorted(self._cpu) if k[0] == stage and (k[1] == key or k[1].startswith(key + '-'))]
+        if cpu:
+            fields['cpu_booking'] = cpu if len(cpu) > 1 else cpu[0]
+            waits = [c for c in cpu if c['status'] == 'waiting']
+            refusals = [c for c in cpu if c['status'] == 'refused']
+            if waits and status == 'failed':      # not started for want of CPUs: waiting, retried by a later start
+                status, fields['reason'] = 'waiting', '; '.join(c['line'] for c in waits)
+            elif refusals and status == 'failed':  # the sizing rule refused the booking: the rule is the reason
+                fields['reason'] = '; '.join(c['line'] for c in refusals)
         body = dict(schema='FRANKIE_EXPERIMENT_STEP_V1', run=self.plan['run'], stage=stage, key=key, status=status,
                     at=time.time(), commit=self.commit, plan_sha256=plan_digest(self.plan),
                     directive_sha256=(self.plan.get('directive') or {}).get('sha256'), **fields)
@@ -517,11 +536,26 @@ class Run:
         logs.mkdir(parents=True, exist_ok=True)
         log_path = logs / ('%s-%s.log' % (key, stage))
         full = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), **{k: str(v) for k, v in env.items()})
+        command = ['sh' if script.endswith('ingest_block.sh') else 'bash', str(self.box / script)]
+        if stage in self.cores.DAY_RUN_STAGES:  # exactly 16 CPUs booked, the step under taskset -c <them> (frankie_box_cores.py)
+            command = [sys.executable, '-B', str(self.box / 'frankie_box_cores.py'), 'run', '--kind', 'day-run', '--day', key,
+                       '--run', self.plan['run'], '--stage', stage, '--commit', self.commit, '--'] + command
         with open(log_path, 'ab') as out:
             out.write(('\n### %s %s %s at %s\n' % (stage, key, script, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))).encode())
             out.flush()
-            code = subprocess.run(['sh' if script.endswith('ingest_block.sh') else 'bash', str(self.box / script)],
-                                  env=full, stdout=out, stderr=subprocess.STDOUT).returncode
+            start = out.tell()
+            code = subprocess.run(command, env=full, stdout=out, stderr=subprocess.STDOUT).returncode
+        with open(log_path, 'rb') as read:
+            read.seek(start)
+            lines = read.read().decode('utf-8', 'replace').splitlines()
+        # the ledger's own line from this run of the step (frankie_box_cores.py prints it): booked, waiting or refused
+        for tag, status, exit_code in (('CPU_BOOKING_WAITING ', 'waiting', self.cores.WAITING_EXIT),
+                                       ('CPU_BOOKING_REFUSED ', 'refused', self.cores.REFUSED_EXIT),
+                                       ('CPU_BOOKING ', 'booked', None)):
+            found = [line[len(tag):] for line in lines if line.startswith(tag)]
+            if found and exit_code in (None, code):
+                self._cpu[(stage, key)] = dict(status=status, line=found[-1], exit_code=code)
+                break
         return code, str(log_path)
 
     # stages
@@ -555,8 +589,10 @@ class Run:
             return self.record('ingest', e['day'], 'waiting', reason=e['manifest_gap'])
         # Greg, 2026-09-29 ("Do 1-5 now"): the experiment's journal is ingested by the parallel writer (saved passes, so a
         # stopped day resumes), with no full-book copy at a group close and the conformance drain deferred; days run side
-        # by side (--parallel-days), the workers split between them
-        share = max(1, self.a.ingest_workers // max(1, self.a.parallel_days))
+        # by side (--parallel-days)
+        # CPU booking: each day process books its own 8 CPUs, so WORKERS is per day process, never split: the most the 8
+        # fit (inline verify 3, deferred 7; frankie_box_cores.INGEST_RULE), capped by --ingest-workers
+        share = max(1, min(self.a.ingest_workers, self.cores.ingest_workers(self.a.ingest_verify)))
         env = dict(ACTION='ingest', MANIFEST=e['manifest'], WORKERS=share, MODE=self.a.ingest_mode,
                    OBSERVATION=self.a.ingest_observation, VERIFY=self.a.ingest_verify)
         resume = self.resume_dir(e)
@@ -616,7 +652,7 @@ class Run:
         if held is not None and not held[0]:
             return self.record('root', e['day'], 'waiting', reason=held[1], claim=held[2])
         env = dict(INGESTION_RECEIPT=ing['receipt'], INGESTION_RECEIPT_SHA256=ing['receipt_sha256'], DAY=e['day'],
-                   DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=self.a.data_workers,
+                   DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=self.cores.DAY_RUN_CPUS - 1,
                    DIGEST='on' if e['classroom_arm'] else 'off')
         if self.plan['frozen_survivors']:
             env['FROZEN_SURVIVORS'] = self.plan['frozen_survivors']
@@ -1140,8 +1176,7 @@ class Run:
         if not self.disk_ok('teacher'):
             return None
         code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh',
-                               dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts),
-                                    **({'CPUS': self.a.teacher_cpus} if self.a.teacher_cpus else {})))
+                               dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts)))
         missing = [d for d, _ in receipts if rows_of(dict(day=d))[0] is None]
         return self.record('teacher', batch_key, 'done' if code == 0 and not missing and not waiting else 'failed',
                            exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
@@ -1205,7 +1240,7 @@ class Run:
             return self.record('search', e['day'], 'waiting', reason=why)
         if not self.disk_ok('search'):
             return None
-        env = dict(DAY=e['day'], CYCLE=CYCLE, DAY_ROLE=e['role'], LAGS=self.plan['lags'], WORKERS=self.a.search_workers)
+        env = dict(DAY=e['day'], CYCLE=CYCLE, DAY_ROLE=e['role'], LAGS=self.plan['lags'], WORKERS=self.cores.DAY_RUN_CPUS - 1)
         if self.plan['transforms']:
             env['TRANSFORMS'] = self.plan['transforms']
         if e['role'] == 'confirmation':
@@ -1421,18 +1456,22 @@ def main():
     p.add_argument('--stages', default=','.join(STAGES), help='comma list, run in the fixed order %s' % ','.join(STAGES))
     p.add_argument('--lags', type=int, default=20)
     p.add_argument('--transforms', help='the search transforms (comma list; default all)')
-    p.add_argument('--ingest-workers', type=int, default=31)
+    p.add_argument('--ingest-workers', type=int, default=31,
+                   help='a ceiling on the WORKERS of each ingest day process; each books 8 CPUs, so the most that fit is used '
+                        '(inline verify 3, deferred 7)')
     # full + sequential until observation_replay feeds the teacher's walk: the Dipole teacher reads the stored observation
     # (a none-mode day would get no Dipole rows); the parallel writer is none-mode only (--ingest-mode parallel then)
     p.add_argument('--ingest-mode', choices=('sequential', 'parallel'), default='sequential')
     p.add_argument('--ingest-observation', choices=('full', 'none'), default='full')
     p.add_argument('--ingest-verify', choices=('inline', 'deferred'), default='deferred')
-    p.add_argument('--data-workers', type=int, default=1)
-    p.add_argument('--search-workers', type=int, default=8)
-    p.add_argument('--teacher-cpus', type=int, default=0,
-                   help='the teacher step\'s core budget (0 = every core of the box, as before); the rest stay free')
+    # the CPU booking sets these (Greg, 2026-09-29: "They all get the same 16 and workers"): every day-run step books 16
+    # CPUs and runs 15 workers; the three flags are kept so a dispatch that names them still parses, and are not used
+    p.add_argument('--data-workers', type=int, default=1, help='not used: ROOT runs 15 workers in its booked 16 CPUs')
+    p.add_argument('--search-workers', type=int, default=8, help='not used: the search runs 15 workers in its booked 16')
+    p.add_argument('--teacher-cpus', type=int, default=0, help='not used: the teacher splits its booked 16 CPUs')
     p.add_argument('--parallel-days', type=int, default=4,
-                   help='days at once for the ingest, external, root and data steps (4 = two Tue/Wed pairs)')
+                   help='days at once for the ingest, external, root and data steps (4 = two Tue/Wed pairs); each day-run '
+                        'step books 16 CPUs, so a day that cannot book them waits (32 CPUs = two at once)')
     p.add_argument('--external-history-run', help='the frankie_day_history GitHub run id whose S3 objects the day files '
                                                   'are built from (frankie/day_history/<id>/)')
     p.add_argument('--external-eia930-history-run', help='optional second day_history run id the eia930 family of the '

@@ -10,7 +10,8 @@
 # 2026-09-29 "ingest wed separately so it's there when we need it right after"), OPENING_RECEIPT (the prior trading day's
 # sealed ingest receipt for the FIRST day of the list when that day opens at the prior halt: $ROOT/work/ingest-*/
 # ingestion-receipt.json, or Monday's recovery receipt on the box, $ROOT/work/sealed-recovery-*/recovery-receipt.json,
-# whose checkpoint sits beside it; see opening_book.py), WORKERS (default 31: the parent keeps a CPU),
+# whose checkpoint sits beside it; see opening_book.py), WORKERS (PER DAY PROCESS; default the most its CPU booking fits:
+# 3 with VERIFY=inline, 7 with VERIFY=deferred and for a conform; see "CPU booking" below),
 # CANARY (default 20000), MARKETS_SHA (the DISPATCHED COMMIT; frankie_box_run.yml sets it from GITHUB_SHA: the box checks out
 # that commit, never a branch name, and refuses a HEAD that differs; the chat-9 ship review), CYCLE (00).
 # Order (the chat-9 ship review): the cycle units are checked idle BEFORE the checkout moves (a running session lazy-loads
@@ -18,7 +19,7 @@
 # it, and every destination is pinned under the data directory. Nothing deleted, nothing overwritten, no key, no model call,
 # no S3 write (publish is a separate action on Greg's word). SSM runs this under sh: POSIX only.
 set -u
-ROOT=/opt/frankie-box; CYCLE="${CYCLE:-00}"; ACTION="${ACTION:-status}"; WORKERS="${WORKERS:-31}"; CANARY="${CANARY:-20000}"
+ROOT=/opt/frankie-box; CYCLE="${CYCLE:-00}"; ACTION="${ACTION:-status}"; WORKERS="${WORKERS:-}"; CANARY="${CANARY:-20000}"
 MARKETS_SHA="${MARKETS_SHA:-}"
 # an ingest names its day(s) explicitly: the default (Monday) is for status only, so a dispatch that forgets MANIFEST
 # never ingests Monday a second time (the gold standard; the read-only audit of 2026-09-29)
@@ -61,7 +62,22 @@ case "$OPENING_RECEIPT" in
   *) echo "OPENING_RECEIPT must be a sealed ingest's $ROOT/work/ingest-*/ingestion-receipt.json or a recovery's $ROOT/work/sealed-recovery-*/recovery-receipt.json (its checkpoint beside it)"; exit 2;;
 esac
 case "$OPENING_RECEIPT" in *..*) echo "OPENING_RECEIPT must not contain .."; exit 2;; esac
+# CPU booking (Greg, 2026-09-29: "Correct 16 and no double booking"; "We don't double book cores or workers"): every
+# ingest, canary and conform day process books 8 CPUs in the box's ledger (frankie_box_cores.py) and runs under
+# taskset -c <its 8>, so every reader worker (pinned from cpus[1:] of the process's own affinity) and every encoder stays
+# inside them. THE RULE: VERIFY=inline runs the encode pool and the conformance-reader pool at the same time, so it needs
+# WORKERS x 2 + 1 CPUs; VERIFY=deferred and a conform run one pool: WORKERS + 1. Above 8 the dispatch is REFUSED here with
+# that reason (measured 2026-09-29: an inline WORKERS=7 ingest ran 14 workers + its parent). Fewer than 8 free: the day
+# does not start, prints CPU_BOOKING_WAITING with 'waiting: N free of 8 needed' and the script exits 75 (retry later).
+if [ -z "$WORKERS" ]; then
+  if [ "$ACTION" = conform ] || [ "$VERIFY" = deferred ]; then WORKERS=7; else WORKERS=3; fi
+fi
 case "$WORKERS" in ""|*[!0-9]*) echo "WORKERS must be an integer"; exit 2;; esac
+if [ "$ACTION" = conform ] || [ "$VERIFY" = deferred ]; then DEMAND=$((WORKERS + 1)); FITS=7; RULE="one pool: WORKERS + 1"
+else DEMAND=$((WORKERS * 2 + 1)); FITS=3; RULE="VERIFY=inline runs the encode and verify pools together: WORKERS x 2 + 1"; fi
+case "$ACTION" in canary|ingest|conform)
+  [ "$DEMAND" -le 8 ] || { echo "WORKERS=$WORKERS needs $DEMAND CPUs ($RULE), more than the 8 a day process books; refused (the most that fits: $FITS)"; exit 2; } ;;
+esac
 case "$CANARY" in ""|*[!0-9]*) echo "CANARY must be an integer"; exit 2;; esac
 NCPU=$(nproc 2>/dev/null || echo 1)
 [ "$WORKERS" -le "$NCPU" ] || { echo "WORKERS must be at most the box's $NCPU CPUs"; exit 2; }
@@ -99,7 +115,9 @@ each_day() {   # $1 = fetch|ingest over the MANIFEST list, in order; a day that 
   for MANIFEST in $(echo "$MANIFESTS" | tr ',' ' '); do
     manifest_ok || return 2; mkdir -p "$DATA"
     if [ "$1" = fetch ]; then fetch || return $?; continue; fi
-    run_tool ingest || { echo "### the list stops at $MANIFEST; the days after it wait (each opens with the book this day closes with)"; return 3; }
+    run_tool ingest; RC=$?
+    [ "$RC" != 75 ] || { echo "### the list waits at $MANIFEST for its CPU booking; the days after it wait too (exit 75)"; return 75; }
+    [ "$RC" = 0 ] || { echo "### the list stops at $MANIFEST; the days after it wait (each opens with the book this day closes with)"; return 3; }
     [ -s "$OUT/ingestion-receipt.json" ] || { echo "### $OUT has no ingestion receipt; the list stops at $MANIFEST"; return 3; }
     OPENING_RECEIPT="$OUT/ingestion-receipt.json"     # the next day opens with the book this day closed with
   done
@@ -189,17 +207,23 @@ run_tool() {   # $1 = canary|ingest (prepare ran: units idle, the dispatched com
   fi
   [ "${PROFILE:-0}" = 1 ] && EXTRA="$EXTRA --profile"     # PROFILE=1: cProfile the parent, profile.txt in the work directory (a measurement)
   echo "### $1: block $BLOCK, $WORKERS workers, manifest $MANIFEST, markets $MARKETS_SHA, out $OUT"
-  ( cd "$MK" && PYTHONPATH="$MK" "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
-      --manifest "$M" --sources-dir "$DATA" --output-dir "$OUT" --session-policy cme_trading_day --workers "$WORKERS" $EXTRA ) \
-    || { echo "$1 failed (exit $?); the directory $OUT is kept"; return 3; }
+  # inside its CPU booking: frankie_box_cores.py books 8 CPUs, starts the tool under taskset -c <them>, releases at its end
+  ( cd "$MK" && PYTHONPATH="$MK" "$PY" "$MK/deploy/aws/box/frankie_box_cores.py" run --kind "$1" --day "$BLOCK" \
+      --run "$(basename "$OUT")" --stage "$1" --commit "$MARKETS_SHA" --workers "$WORKERS" --verify "$VERIFY" -- \
+      "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
+      --manifest "$M" --sources-dir "$DATA" --output-dir "$OUT" --session-policy cme_trading_day --workers "$WORKERS" $EXTRA )
+  RC=$?
+  [ "$RC" != 75 ] || { echo "### $1 of block $BLOCK WAITING for its CPU booking (not started; nothing written)"; return 75; }
+  [ "$RC" = 0 ] || { echo "$1 failed (exit $RC); the directory $OUT is kept"; return 3; }
   for R in canary-receipt.json ingestion-receipt.json; do [ -s "$OUT/$R" ] && { echo "### $R"; cat "$OUT/$R"; }; done
   [ -s "$OUT/profile.txt" ] && { echo "### profile.txt (whole)"; cat "$OUT/profile.txt"; }
   return 0     # the tool's exit decided above; a missing ingestion receipt on a canary is not a failure (run 35681037861 exited 1 on this test)
 }
-at_once() {   # DAYS_AT_ONCE days of the list side by side (each warms its own book), the workers split between them
+at_once() {   # DAYS_AT_ONCE days of the list side by side (each warms its own book), each day process its own 8-CPU booking
+  # with WORKERS workers (never split, never shared: a day that cannot book its 8 waits and is listed)
   N=$(echo "$MANIFESTS" | tr ',' '\n' | grep -c .); AT=$DAYS_AT_ONCE; [ "$N" -ge "$AT" ] || AT=$N
-  SHARE=$((WORKERS / AT)); [ "$SHARE" -ge 1 ] || SHARE=1
-  RUNNING=0; FAILED=0
+  SHARE=$WORKERS
+  RUNNING=0; FAILED=0; WAITED=0
   for MANIFEST in $(echo "$MANIFESTS" | tr ',' ' '); do       # POSIX sh: batches of AT days, each batch waited whole
     manifest_ok || return 2; mkdir -p "$DATA"
     ( WORKERS=$SHARE; run_tool ingest ) > "$ROOT/tmp/ingest-$BLOCK-$$.log" 2>&1 &
@@ -212,15 +236,22 @@ at_once() {   # DAYS_AT_ONCE days of the list side by side (each warms its own b
   for MANIFEST in $(echo "$MANIFESTS" | tr ',' ' '); do
     manifest_ok || return 2
     echo "### $MANIFEST"; cat "$ROOT/tmp/ingest-$BLOCK-$$.log"
-    grep -q '"schema": "BOSS_BLOCK_INGESTION_RECEIPT_V1"' "$ROOT/tmp/ingest-$BLOCK-$$.log" || FAILED=$((FAILED + 1))
+    if ! grep -q '"schema": "BOSS_BLOCK_INGESTION_RECEIPT_V1"' "$ROOT/tmp/ingest-$BLOCK-$$.log"; then
+      FAILED=$((FAILED + 1)); if grep -q '^CPU_BOOKING_WAITING ' "$ROOT/tmp/ingest-$BLOCK-$$.log"; then WAITED=$((WAITED + 1)); fi
+    fi
   done
-  [ "$FAILED" -eq 0 ] || { echo "### $FAILED day(s) have no sealed ingest; each directory is kept (RESUME_DIR continues a parallel one)"; return 3; }
+  [ "$FAILED" -eq 0 ] || [ "$FAILED" != "$WAITED" ] || { echo "### $WAITED day(s) WAITING for a CPU booking (not started); retry later (exit 75)"; return 75; }
+  [ "$FAILED" -eq 0 ] || { echo "### $FAILED day(s) have no sealed ingest ($WAITED of them waiting for a CPU booking); each directory is kept (RESUME_DIR continues a parallel one)"; return 3; }
 }
 conform() {   # item 3's later half: the conformance drain on a sealed ingest whose conformance was deferred (the day's
   # manifest is the committed one the receipt names by hash)
   [ -n "$DIRECTORY" ] && [ -s "$DIRECTORY/ingestion-receipt.json" ] || { echo "DIRECTORY must hold a sealed ingestion-receipt.json"; return 2; }
-  ( cd "$MK" && PYTHONPATH="$MK" "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
-      --conform "$DIRECTORY" --workers "$WORKERS" ) || { echo "conform failed or differs (exit $?)"; return 3; }
+  ( cd "$MK" && PYTHONPATH="$MK" "$PY" "$MK/deploy/aws/box/frankie_box_cores.py" run --kind conform \
+      --day "$(basename "$DIRECTORY")" --run "$(basename "$DIRECTORY")" --stage conform --commit "$MARKETS_SHA" --workers "$WORKERS" -- \
+      "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py --conform "$DIRECTORY" --workers "$WORKERS" )
+  RC=$?
+  [ "$RC" != 75 ] || { echo "### conform WAITING for its CPU booking (not started)"; return 75; }
+  [ "$RC" = 0 ] || { echo "conform failed or differs (exit $RC)"; return 3; }
   cat "$DIRECTORY/conformance.json"
 }
 status() {

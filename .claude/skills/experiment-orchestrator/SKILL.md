@@ -151,6 +151,11 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 - Per-day, per-step receipt in `/opt/frankie-box/work/experiment/<run>/`. A restart skips finished
   steps. Save progress on every stop, and stop-and-save at a disk floor.
 - Days run in parallel across CPUs where steps allow; the ingest's causal parent stays one per day.
+- **CPU booking (Greg, 2026-09-29: "Correct 16 and no double booking")**: every day-run step books EXACTLY 16 CPUs in
+  `/opt/frankie-box/cpu-bookings/` (`frankie_box_cores.py`) and runs under `taskset -c` of them with 15 workers; fewer
+  than 16 free = the step records `waiting: N free of 16 needed` and a later start retries. Each ingest day process
+  books 8 (inline verify needs WORKERS x 2 + 1, deferred WORKERS + 1; above 8 is refused). On a 32-CPU box that is two
+  day-run steps at once, so `PARALLEL_DAYS=2` avoids planned waits. Probe: `frankie_box_cores.sh ACTION=show`.
 - Workflow inputs: day list, class, discovery/confirmation assignment, stage range.
 - Probe every run: `frankie_box_progress.sh DIRECTORY=/opt/frankie-box/work/experiment/<run>`.
 - **Disk: measure the first day's bytes (journal + calc JSON) and extrapolate before queueing

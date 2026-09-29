@@ -11,6 +11,9 @@
 # CPU budget (Greg, 2026-09-29: "add the cpu budget to teacher"): optional CPUS = how many of the box's cores the
 # teacher may use (default all of them, as before), split between the days and pinned from core 0; the cores left over
 # stay free for the ingests and other steps running beside it.
+# CPU booking (Greg, 2026-09-29: "Correct 16 and no double booking"): the cores are THIS PROCESS'S OWN affinity, never the
+# box's absolute 0..N-1. The orchestrator starts this step under taskset -c <its booked 16> (frankie_box_cores.py), so
+# every day's taskset is a slice of the booking; started by hand with the box's whole affinity it is exactly as before.
 set -u
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"
 : "${DAYS:?comma list of days required}"; : "${INGESTION_RECEIPTS:?comma list of ingestion receipts required}"
@@ -24,7 +27,9 @@ if [ -n "${DAY_EXTERNALS:-}${DAY_EXTERNAL_SHA256S:-}" ]; then
   [ "$NX" = "$ND" ] && [ "$NS" = "$ND" ] || { echo "DAY_EXTERNALS and DAY_EXTERNAL_SHA256S must be comma lists as long as DAYS" >&2; exit 2; }
   case "$DAY_EXTERNALS" in *..*) echo "no .. in DAY_EXTERNALS" >&2; exit 2;; esac
 fi
-NCPU=$(nproc)
+MINE=$(/opt/frankie-box/venv/bin/python -c 'import os; print(" ".join(str(c) for c in sorted(os.sched_getaffinity(0))))') \
+  || { echo "could not read this process's CPU affinity" >&2; exit 2; }
+NCPU=$(echo "$MINE" | wc -w)
 if [ -n "${CPUS:-}" ]; then
   case "$CPUS" in *[!0-9]*|0) echo "CPUS must be a positive integer (the teacher's core budget)" >&2; exit 2;; esac
   [ "$CPUS" -le "$NCPU" ] || { echo "CPUS=$CPUS exceeds the box's $NCPU cores" >&2; exit 2; }
@@ -42,6 +47,7 @@ for DAY in $(echo "$DAYS" | tr ',' ' '); do
   case "$R" in /opt/frankie-box/work/ingest-*/ingestion-receipt.json) ;; *) echo "bad receipt $R" >&2; exit 2;; esac
   [ -s "$R" ] || { echo "no receipt at $R" >&2; exit 2; }
   FIRST=$(( (I - 1) * SHARE )); LAST=$(( FIRST + SHARE - 1 )); [ "$LAST" -lt "$NCPU" ] || LAST=$((NCPU - 1))
+  PIN=$(echo "$MINE" | tr ' ' '\n' | sed -n "$((FIRST + 1)),$((LAST + 1))p" | paste -sd, -)   # positions in the affinity
   SHA=$(sha256sum "$R" | cut -d' ' -f1)
   EXTRA=""
   if [ -n "${DAY_EXTERNALS:-}" ]; then
@@ -51,9 +57,9 @@ for DAY in $(echo "$DAYS" | tr ',' ' '); do
     EXTRA="--day-external $X --day-external-sha256 $XS"
   fi
   LOG="$LOGS/$DAY-$(date +%s).log"
-  echo "### $DAY: CPUs $FIRST-$LAST, receipt $R ($SHA), log $LOG ${EXTRA:+(day file given)}"
+  echo "### $DAY: CPUs $PIN, receipt $R ($SHA), log $LOG ${EXTRA:+(day file given)}"
   # shellcheck disable=SC2086
-  taskset -c "$FIRST-$LAST" /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_teacher.py" \
+  taskset -c "$PIN" /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_teacher.py" \
     --day "$DAY" --ingestion-receipt "$R" --ingestion-receipt-sha256 "$SHA" --workers $((SHARE - 1)) $EXTRA > "$LOG" 2>&1 &
   PIDS="$PIDS $!:$DAY:$LOG"
 done

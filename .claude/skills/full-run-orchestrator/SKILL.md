@@ -87,6 +87,11 @@ principal inputs, trading-day preparation. The drop-in names their current recei
   MODE=profile|threads` (catch one core carrying the whole step), `frankie_box_disk_usage.sh`,
   `frankie_box_console.sh` when SSM itself is dead.
 - Output over ~23k chars arrives paged as "report part i/n" - read every part.
+- CPU ledger (built 2026-09-29, not run): `frankie_box_cores.sh ACTION=show [JSON=1 WINDOW=2]` (box-progress lock,
+  read-only) prints every CPU -> its booking or the unbooked Frankie process holding it, live use, the free count and
+  whether a day run (16) or an ingest (8) can book now. Needs the dispatched commit on the box (staged checkout or
+  ingest worktree) or `CODE_ROOT=`. Day-run steps book exactly 16 and wait otherwise; ingests book 8 per day process
+  (inline verify = WORKERS x 2 + 1 must fit 8). `ACTION=reap` releases bookings whose pids are gone.
 - **A green workflow, an SSM ack or a staged checkout is not proof of execution.** Only a receipt is.
 
 ## 6. Done = receipts reconcile
