@@ -18,7 +18,8 @@ ACTION=show); never leave a job on a GitHub runner that can outlast its 6 h limi
 1. Probe: main (frankie_box_cores.sh ACTION=show CODE_ROOT=<staged>; days-20260929-3 progress.json; the ROOT receipts of
    20211005/20211006), twin, i-08cee, and runs 36630611178 (day run), 36630605941 (20251014 verify), 36618331994
    (consensus request 2), 36630617830 (Pod create: "agent up" lines).
-2. Pods: ACTION=status on rf8eux1c88pfn0,xfpt6fy3mjkn4l,6ijaa67k785doa,lunj1qj145rswp. When all answer, start the loop
+2. Pods: ALL FOUR AGENTS UP at 21:25Z (handoff addendum 21:30Z), empty and billing. ACTION=status on
+   rf8eux1c88pfn0,xfpt6fy3mjkn4l,6ijaa67k785doa,lunj1qj145rswp, then start the loop
    (ACTION=loop RUN=days-20260929-3 CODE_ROOT=<staged> PODS=<the 4>) - it fills them from the ROOT line (20211012,
    20211013, 20221004, 20221005). A 503 = a failed boot with its failing step: fix pod_bootstrap.sh, push, restage,
    recreate (Pods keep their creation commit). Old 4 Pods + their 500 GB volumes: delete only on Greg's word.

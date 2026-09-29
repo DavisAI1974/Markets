@@ -101,3 +101,11 @@ Status check run 36632088486 (21:16Z): rf8eux1c88pfn0 and lunj1qj145rswp UP (age
 3.13.15, markets_commit f86bb7c2, jobs []); xfpt6fy3mjkn4l and 6ijaa67k785doa still HTTP 502 "Waiting for service to
 respond" 13 min into boot (no 503 = no failed step). The fixed boot is proven on 2 of 4. First thing next chat: ACTION=status
 on all four; if a 502 persists past ~40 min with no 503, the create run 36630617830's log says what it saw. Then the loop.
+
+## Addendum 21:30Z: ALL FOUR new ROOT Pods up
+The create run 36630617830 finished success at 21:25:38Z: "agents up ['6ijaa67k785doa', 'lunj1qj145rswp',
+'rf8eux1c88pfn0', 'xfpt6fy3mjkn4l']; never started []". Up at: lunj1qj145rswp 21:10:12Z, rf8eux1c88pfn0 21:12:16Z,
+xfpt6fy3mjkn4l 21:22:34Z, 6ijaa67k785doa 21:25:38Z (boot 7 to 22 min; the host reports 128 CPUs, the agent's own status
+reports 14 usable). No 503, no failed step. They are EMPTY and billing ($1.59/h each, $6.36/h for the four). Greg: "we
+will fill them in next chat". The queue at 21:03Z: 20211012 ready, 20211013 / 20221004 / 20221005 behind_in_root_line,
+20211005 / 20211006 root_running_on_box. Next chat: ACTION=status once, then ACTION=loop (drop-in step 2).
