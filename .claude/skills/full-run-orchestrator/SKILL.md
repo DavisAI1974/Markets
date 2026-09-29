@@ -1,11 +1,11 @@
 ---
-name: frankie-daily-run
-description: Operator checklist for the Frankie/BOSS daily run on the Linux box (the "Monday cycle 0" run) - where the state lives, the HOLD/go rule, the stage-config-launch-principal-record-retain sequence through frankie_box_run.yml, how to probe and what receipts to reconcile, and the traps that cost the Sep 23-29 sessions time. Use at the start of any session that will launch, resume, monitor or verify a Frankie day run, before dispatching anything.
+name: full-run-orchestrator
+description: Full run orchestrator - operator runbook for the Frankie/BOSS full daily run on the Linux box (the "Monday cycle 0" run) - where the state lives, the HOLD/go rule, the stage-config-launch-principal-record-retain sequence through frankie_box_run.yml, how to probe and what receipts to reconcile, and the traps that cost the Sep 23-29 sessions time. Use at the start of any session that will launch, resume, monitor or verify a Frankie day run, before dispatching anything.
 ---
 
-# Frankie daily run
+# Full run orchestrator
 
-This is the procedure, not the state. **The current drop-in doc wins over this file** for every
+The FULL run (fetch -> ingest -> ROOT -> principal inputs -> cycle -> principal -> retain). The stripped-down experiment path has its own runbook, `experiment-orchestrator`. This is the procedure, not the state. **The current drop-in doc wins over this file** for every
 run id, path, sha and count. Values below marked (as of 2026-09-29) are there so you know what to
 look for, not to be dispatched blind. If this file and the drop-in disagree, say so to Greg
 rather than picking one.
