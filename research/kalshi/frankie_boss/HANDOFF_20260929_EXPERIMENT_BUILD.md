@@ -216,6 +216,24 @@ ingestion-receipt.json exists (else it starts a second Wednesday: duplicate data
 `--classroom-arm-cycle 2/5`); Tue 20211005 and Wed 20211006 are days 1 and 2. Their ROOTs run DIGEST=off tonight (the
 experiment's classroom arm is not wired yet); the digest is a later step when it is.
 
+## Classroom arm BUILT for Tue/Wed (Greg: "Build the arm now to run on tues and wed ... 2 less data days is a weaker
+result"; then "Don't let tues and wed classroom/teachers run without these updates. Pause them if you have to. The teach
+and class are very important pieces to our research"). Built, NOT run (teacher and classroom PAUSED until Greg confirms):
+- A. `frankie_box_experiment_teacher.py/.sh` (88854711): the Dipole teacher's rows per day without a launch
+  (TEACHER_ONLY_CALL_MAP), the day's own instrument, per-day walk cache, days side by side under taskset.
+- B-D. `frankie_box_experiment_classroom.py/.sh` (bb904afc + Jev material): package from the teacher attachment, the
+  day before's completion and grade carried in, Frankie's code answers (TEACH), the host's grade and correction,
+  acknowledgement, completion, transcript, Frankie's brain entry <day>-cycle-00 (needs the ROOT with DIGEST=on); Jev's
+  material (the same model-visible classroom) written before the answers to <root>/jev-material/classroom-request.json.
+- E. The scientific teacher's turn (built earlier) after the day's search.
+- J. Jev: relay ACTION=material MATERIAL=<root>/jev-material/classroom-request.json, his Pod (frankie_box_jev_pod.sh,
+  Greg's go: a Pod costs), relay ACTION=frankie SESSION=<root> after the classroom receipt, reports.
+Order per day: ROOT (DIGEST=on) + teacher side by side -> classroom (Tue, then Wed with PREVIOUS=Tue) -> Jev -> data ->
+search -> scientific teacher. Listed limits: stand-in request identity/session (no principal request); Frankie's code
+answers TEACH only (GUIDED on a later block is refused with the reason); learning_history cannot cross days (only the
+mode and prior correction ids carry).
+Day selection (Greg): "Use 2021-2026" -> late Sept through October of 2021-2026; the agent's DAY_SELECTION doc pending.
+
 ## Next (in order)
 0. DONE: the midweek manifests (built, 66f50851 / 25b30d9c). Ingest running; then each day's ROOT on the go given.
 1. The teacher-only batch step `frankie_box_experiment_teacher.py/.sh` (DAYS=<list>; each day its own fresh walk of

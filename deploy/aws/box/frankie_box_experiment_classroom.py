@@ -17,7 +17,8 @@ The launch is not called. The same calls the full run makes, in one process on t
 No principal request exists in the experiment: the request identity is the digest of the model-visible request and the
 session is named experiment-<day>-classroom (listed in the receipt as stand-ins). GUIDED, SOCRATIC and VERIFY modes are
 refused by Frankie's code (it answers TEACH only): such a day is refused with the reason, listed, and the run goes on.
-Files: <calculations>/work/classroom/ (R09: the day-data export keeps work/classroom/** from the teachers).
+Files: <calculations>/work/classroom/ (R09: the day-data export keeps work/classroom/** from the teachers), and Jev's
+material <calculations>/jev-material/classroom-request.json (the model-visible classroom, written before the answers).
 """
 import argparse
 import hashlib
@@ -88,6 +89,17 @@ def run(day, calculations, teacher_rows, previous, brain):
     mode = pkg['binding']['mode']
     visible = F.final_model_visible_classroom(pkg)
     request = {'attachment': {'dipole_classroom': visible}}
+    # Jev's material (the blind outside student; SPEC "Jev"): the SAME model-visible classroom Frankie answers, written
+    # BEFORE Frankie's code answers and OUTSIDE work/classroom/ (frankie_box_jev_relay.sh ACTION=material refuses anything
+    # under a classroom or out directory: the blind wall); his claims are filed before he reads Frankie's outputs
+    jev_dir = calculations / 'jev-material'
+    jev_dir.mkdir(exist_ok=True)
+    jev_path = jev_dir / 'classroom-request.json'
+    jev_raw = json.dumps(request, indent=1, sort_keys=True, default=str).encode('utf-8')
+    if jev_path.exists() and jev_path.read_bytes() != jev_raw:
+        raise SystemExit('%s exists with other bytes; refused' % jev_path)
+    if not jev_path.exists():
+        jev_path.write_bytes(jev_raw)
     rules, rules_witness = K.rules()
     names = [c['name'] for c in C.components(visible)]
     try:
@@ -139,6 +151,7 @@ def run(day, calculations, teacher_rows, previous, brain):
                   dropped_findings=len(built['dropped_findings']), correction_ids=len(correction.get('correction_ids') or ()),
                   teacher_complete=completion.get('teacher_complete'), completion_hash=completion.get('completion_hash'),
                   carried_from_previous=carried, classroom_rules=rules_witness, teacher_rows=str(teacher_rows),
+                  jev_material=dict(path=str(jev_path), sha256=hashlib.sha256(jev_raw).hexdigest(), bytes=len(jev_raw)),
                   stand_ins=dict(request_sha256=request_sha256, session_id=session_id, model_identity=MODEL_IDENTITY,
                                  why='the experiment has no principal request; the request identity is the digest of the '
                                      'model-visible request'),
