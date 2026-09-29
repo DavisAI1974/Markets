@@ -9,6 +9,7 @@
 #    box's; ingest worktrees are added from it per dispatch.
 # 5. The layout /opt/frankie-box/{work,data,code,ingest-code,receipts,brain,tmp,logs} and root's git identity.
 # Prints versions and a freeze diff against the pin list; writes receipts/worker-setup-<utc>.json. No data is copied.
+# SSM runs this under sh: POSIX only.
 set -eu
 : "${MARKETS_SHA:?dispatched commit required}"
 ROOT=/opt/frankie-box
@@ -119,7 +120,8 @@ EOF
 "$ROOT/venv/bin/python" -m pip install -q --disable-pip-version-check --no-cache-dir \
   --extra-index-url https://download.pytorch.org/whl/cpu -r "$REQ"
 "$ROOT/venv/bin/python" -m pip freeze --disable-pip-version-check | sort -f > "$ROOT/tmp/worker-freeze.txt"
-DIFF=$(diff <(sort -f "$REQ") "$ROOT/tmp/worker-freeze.txt" || true)
+sort -f "$REQ" > "$ROOT/tmp/worker-requirements.sorted"
+DIFF=$(diff "$ROOT/tmp/worker-requirements.sorted" "$ROOT/tmp/worker-freeze.txt" || true)
 [ -z "$DIFF" ] && echo "freeze matches the main box's 75 pins" || { echo "freeze differs:"; echo "$DIFF"; }
 echo "### markets checkout"
 git config --global user.name frankie-box; git config --global user.email frankie-box@markets.local
