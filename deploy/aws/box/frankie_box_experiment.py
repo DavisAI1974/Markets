@@ -657,8 +657,10 @@ def main():
     p.add_argument('--lags', type=int, default=20)
     p.add_argument('--transforms', help='the search transforms (comma list; default all)')
     p.add_argument('--ingest-workers', type=int, default=31)
-    p.add_argument('--ingest-mode', choices=('sequential', 'parallel'), default='parallel')
-    p.add_argument('--ingest-observation', choices=('full', 'none'), default='none')
+    # full + sequential until observation_replay feeds the teacher's walk: the Dipole teacher reads the stored observation
+    # (a none-mode day would get no Dipole rows); the parallel writer is none-mode only (--ingest-mode parallel then)
+    p.add_argument('--ingest-mode', choices=('sequential', 'parallel'), default='sequential')
+    p.add_argument('--ingest-observation', choices=('full', 'none'), default='full')
     p.add_argument('--ingest-verify', choices=('inline', 'deferred'), default='deferred')
     p.add_argument('--data-workers', type=int, default=1)
     p.add_argument('--search-workers', type=int, default=8)
