@@ -1,0 +1,90 @@
+{
+ "archive_prefix": "nymex/ng_mbo_5y_v0/native",
+ "block": "20221003_20221005",
+ "bucket": "bento-568968024170-us-east-2-an",
+ "canonical_source_rewritten": false,
+ "causal_clock": "ts_recv_ns",
+ "halt_boundaries_close_groups": true,
+ "halt_utc_hour": 21,
+ "ingested": false,
+ "manifest_hash": "5407a160ec1f3cc3f8d7e65d33fba49df59fab97fbc6b10b0e3462d6278712bf",
+ "member_seams_close_groups": true,
+ "model_calls": 0,
+ "prefix": "nymex/ng_mbo_5y_v0/native",
+ "prefixes_built": false,
+ "role": "HELD_OUT_BLIND_BLOCK",
+ "sampled": false,
+ "scheduled": false,
+ "schema": "BOSS_BLOCK_SOURCE_MANIFEST_V1",
+ "sessions": [
+  {
+   "after_halt": 8464,
+   "archive_key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221003.mbo.dbn.zst",
+   "before_halt": 1435807,
+   "day_utc": "20221003",
+   "f_last_groups": 1131123,
+   "first_ts_recv_ns": 1664755200000000000,
+   "halt_boundary_f_last": true,
+   "instruments": 1,
+   "last_record_f_last": true,
+   "last_ts_recv_ns": 1664841599887521706,
+   "mbo_records": 1444271,
+   "member_key": "glbx-mdp3-20221003.mbo.dbn.zst"
+  },
+  {
+   "after_halt": 7737,
+   "archive_key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221004.mbo.dbn.zst",
+   "before_halt": 1632188,
+   "day_utc": "20221004",
+   "f_last_groups": 1280149,
+   "first_ts_recv_ns": 1664841600000000000,
+   "halt_boundary_f_last": true,
+   "instruments": 1,
+   "last_record_f_last": true,
+   "last_ts_recv_ns": 1664927999995877819,
+   "mbo_records": 1639925,
+   "member_key": "glbx-mdp3-20221004.mbo.dbn.zst"
+  },
+  {
+   "after_halt": 8162,
+   "archive_key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221005.mbo.dbn.zst",
+   "before_halt": 1308708,
+   "day_utc": "20221005",
+   "f_last_groups": 1032376,
+   "first_ts_recv_ns": 1664928000000000000,
+   "halt_boundary_f_last": true,
+   "instruments": 1,
+   "last_record_f_last": true,
+   "last_ts_recv_ns": 1665014399971331827,
+   "mbo_records": 1316870,
+   "member_key": "glbx-mdp3-20221005.mbo.dbn.zst"
+  }
+ ],
+ "source_kind": "NATIVE_DBN_MBO",
+ "sources": [
+  {
+   "mbo_records": 1444271,
+   "member_index": 0,
+   "member_key": "glbx-mdp3-20221003.mbo.dbn.zst",
+   "sha256": "75b83085cd5b801c9ce1ba180990e96e4cb944bb74f83d60db8c89d107a8b742",
+   "size_bytes": 25375981
+  },
+  {
+   "mbo_records": 1639925,
+   "member_index": 1,
+   "member_key": "glbx-mdp3-20221004.mbo.dbn.zst",
+   "sha256": "e9ca8adb0e15df1e8af6f1784385775b8fc2c12be5775aec7b1aab1f1a737750",
+   "size_bytes": 28802266
+  },
+  {
+   "mbo_records": 1316870,
+   "member_index": 2,
+   "member_key": "glbx-mdp3-20221005.mbo.dbn.zst",
+   "sha256": "7b2c6a8dc82bab50fe6e650fda5259a820ce52d24423b15b34de0fb8397c2bc6",
+   "size_bytes": 23163109
+  }
+ ],
+ "staged_by": "deploy/aws/box/frankie_box_day_facts.py (presigned GET of the archive keys, counts by stage_block_sources.count_records; no S3 copy)",
+ "staged_unix": 1790680742,
+ "total_mbo_records": 4401066
+}
