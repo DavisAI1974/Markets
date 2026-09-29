@@ -20,10 +20,9 @@ What this session does, in order (each stage leaves a receipt under <session>/wo
            the producers' own crosswalk, each filed derived or could_not with the measured reason (the candidate lane's
            900 s warmup against the slice). The request must carry this checkout's pin (refused, receipted, otherwise);
   reading  the BOSS reads the whole delivered evidence (prompt.md) in bounded chunks that fit its 131,072 context,
-           one job per chunk, notes per chunk, then merges the notes hierarchically. THE READING LANE (Greg,
-           2026-09-21, "park the reading part"): when /opt/frankie-box/serverless.json names a RunPod serverless
-           endpoint serving the same pinned checkpoint, the parts and the merge groups fan out over its workers
-           (frankie_box_serverless_config.sh, operations/serverless_reading_endpoint.py); otherwise the Pod, one at a time;
+           one job per chunk, notes per chunk, then merges the notes hierarchically. THE READING LANE is the Pods
+           (pods.json), never serverless (Greg, 2026-09-28: "Not using serverless anymore"; the build plan R4 C22 names
+           the Pod): a /opt/frankie-box/serverless.json left on the box is refused with the reason;
   writing  the BOSS writes the analysis, the calculation_accounting entry and the ten output ledgers from the
            instruction, the derivation digest and the merged notes; the four files are assembled exactly in the
            first run's shapes and pushed by frankie_box_push_response.sh.
@@ -56,14 +55,10 @@ PRODUCERS = ROOT / 'producers'
 CONTEXT = 131072
 SSM_REGION = 'us-east-2'
 RUNPOD_KEY_PARAMETER = '/markets/frankie/granite-service'
-SERVERLESS_CONFIG = ROOT / 'serverless.json'                       # written by frankie_box_serverless_config.sh (the reading lane)
-SERVERLESS_KEY_PARAMETER = '/markets/frankie/runpod-serverless'   # the RunPod API key for api.runpod.ai, in memory only
-SERVERLESS_HOST = os.environ.get('FRANKIE_SERVERLESS_HOST', 'api.runpod.ai')   # a local fake only in tests (FRANKIE_SERVERLESS_PLAIN_HTTP=1)
-SERVERLESS_POLL_SECONDS = 15
+SERVERLESS_CONFIG = ROOT / 'serverless.json'                       # the UNWIRED serverless reading lane's intent file; its presence is a refusal
 READING_LEDGER = ROOT / 'reading-ledger.json'   # L6: every value digest read so far, by cycle; the merged notes per cycle
 PART_INPUT_TOKENS = 87_000                      # exact tokens per part when the tokenizer is present; reading.json part_input_tokens
 READING_CONFIG = ROOT / 'reading.json'    # {"tensor_mode": "values" | "identity"} (frankie_box_serverless_config.sh ACTION=reading)
-SERVERLESS_MAX_RESPONSE = 8 * 1024 * 1024
 POD_ID_DEFAULT = 'fhiwwlouzyx6l2'
 PODS_CONFIG = ROOT / 'pods.json'   # {"pods": [...], "slots": n} written by frankie_box_pods_config.sh (Greg, 2026-09-28: several A100 Pods)
 SERVED_MODEL_DEFAULT = 'granite42-smoke'   # the retained identity's served model name (granite_retained_lifecycle)
@@ -265,7 +260,6 @@ class Session:
         self.request_sha256 = None
         self.contract = None
         self.engine = None
-        self.serverless = None            # the reading lane (RunPod serverless), when configured; else the Pod
         self.pods = [pod_id]               # the Pods the reading lane spreads over; pods.json replaces it, the first is the BOSS
         self.slots = 1                     # calls in flight per Pod (pods.json "slots"); above the Pod's --max-num-seqs (1) they queue on the Pod
         self._pod_pool = None
@@ -503,193 +497,18 @@ class Session:
         self.note(f'engine: BOSS {served} on Pod {self.pod_id} healthy (jobs_v1); reading lane over {len(self.pods)} Pod(s) x {self.slots} slot(s)')
         return self.engine
 
-    # ---- the reading lane: RunPod serverless workers serving the same pinned checkpoint ----------------
-    def serverless_reach(self):
-        """Greg, 2026-09-21: "park the reading part" on serverless. When /opt/frankie-box/serverless.json names an
-        endpoint, the reading parts and the merge groups fan out over its workers (each one full-context sequence of
-        the pinned Granite checkpoint, served under the retained name). The RunPod API key comes from the SecureString
-        /markets/frankie/runpod-serverless into memory only. A configuration without a readable key or a healthy
-        endpoint is a refusal (the configuration is an intent), never a silent fall-back to the Pod."""
-        if not SERVERLESS_CONFIG.exists():
-            self.serverless = None
-            return None
-        cfg = load_json(SERVERLESS_CONFIG)
-        endpoint = str(cfg.get('endpoint_id', ''))
-        if not re.fullmatch('[a-z0-9]{6,40}', endpoint):
-            self.refuse(f'{SERVERLESS_CONFIG} names no endpoint id')
-        workers = int(cfg.get('workers', 8))
-        if not 1 <= workers <= 999:
-            self.refuse(f'{SERVERLESS_CONFIG} workers must be 1..999')
-        import boto3
-        try:
-            key = boto3.client('ssm', region_name=SSM_REGION).get_parameter(
-                Name=SERVERLESS_KEY_PARAMETER, WithDecryption=True)['Parameter']['Value'].strip()
-        except Exception as error:
-            code = getattr(error, 'response', {}).get('Error', {}).get('Code') or type(error).__name__
-            self.refuse(f'{SERVERLESS_KEY_PARAMETER} not readable from the box role: {code} (the serverless lane is configured)')
-        if not re.fullmatch('[A-Za-z0-9_-]{20,256}', key):
-            self.refuse(f'{SERVERLESS_KEY_PARAMETER} is not an API key shape ({len(key)} chars); not printed')
-        status, health = self._serverless_exchange('GET', f'/v2/{endpoint}/health', None, key)
-        if status != 200 or not isinstance(health, dict):
-            self.refuse(f'serverless endpoint {endpoint} health HTTP {status}: {str(health)}')
-        config_hash = sha256_bytes(json.dumps(dict(endpoint_id=endpoint, served_model_name=self.served_model, context=CONTEXT,
-                                                   transport_protocol='runpod_serverless_v2'), sort_keys=True).encode())
-        self.serverless = dict(endpoint_id=endpoint, key=key, workers=workers, config_hash=config_hash,
-                               execution_timeout_ms=int(cfg.get('execution_timeout_ms', 4 * 3600 * 1000)))
-        write_json(self.work / 'engine-serverless.json', dict(schema='FRANKIE_BOX_SERVERLESS_LANE_V1', at=time.time(), endpoint_id=endpoint,
-                   workers=workers, served_model_name=self.served_model, context=CONTEXT, transport_protocol='runpod_serverless_v2',
-                   config_hash=config_hash, health=health, credential=SERVERLESS_KEY_PARAMETER + ' (in memory only, never written)'))
-        self.note(f'reading lane: serverless endpoint {endpoint}, up to {workers} workers; health {json.dumps(health.get("workers", health))}')
-        return self.serverless
-
-    @staticmethod
-    def _serverless_exchange(method, path, body, key, timeout=HTTP_TIMEOUT):
-        """One bounded JSON exchange with api.runpod.ai (Bearer key, never logged). Returns (status, parsed_or_text)."""
-        import http.client
-        import ssl
-        if method not in ('GET', 'POST') or not re.fullmatch(r'/v2/[a-z0-9]{6,40}/(health|run|status/[A-Za-z0-9_-]{1,80})', path):
-            raise ValueError('serverless path refused')
-        raw = None if body is None else json.dumps(body, allow_nan=False).encode()
-        if os.environ.get('FRANKIE_SERVERLESS_PLAIN_HTTP') == '1':
-            host, port = SERVERLESS_HOST.split(':')
-            connection = http.client.HTTPConnection(host, int(port), timeout=timeout)
-        else:
-            connection = http.client.HTTPSConnection(SERVERLESS_HOST, 443, timeout=timeout, context=ssl.create_default_context())
-        try:
-            headers = {'Authorization': 'Bearer ' + key, 'Accept': 'application/json', 'Connection': 'close'}
-            if raw is not None:
-                headers['Content-Type'] = 'application/json'
-                headers['Content-Length'] = str(len(raw))
-            connection.request(method, path, raw, headers)
-            response = connection.getresponse()
-            data = response.read(SERVERLESS_MAX_RESPONSE + 1)
-            if len(data) > SERVERLESS_MAX_RESPONSE:
-                raise ValueError('serverless response exceeds the byte bound')
-            text = data.decode('utf-8', errors='replace')
-            if key in text:
-                raise ValueError('credential echo rejected')
-            try:
-                return response.status, json.loads(data) if data else None
-            except ValueError:
-                return response.status, text
-        finally:
-            connection.close()
-
-    def _supersede_job(self, directory, name, text):
-        """Move a durable job directory whose prompt is not the one asked now aside (never deleted), with a receipt."""
-        stamp = f'{int(time.time())}-{uuid.uuid4().hex[:8]}'
-        aside = directory.parent / f'{directory.name}.superseded-{stamp}'
-        os.replace(directory, aside)
-        write_json(aside / 'superseded.json', dict(schema='FRANKIE_BOX_JOB_SUPERSEDED_V1', at=time.time(), name=name, moved_to=str(aside),
-                   reason='the prompt asked now differs from the prompt this job answered', prompt_sha256_now=sha256_bytes(text.encode('utf-8'))))
-        directory.mkdir(parents=True, exist_ok=True)
-        self.note(f'{name}: durable outcome answered a different prompt; moved aside to {aside.name} and asked again')
-
-    def serverless_job(self, name, text):
-        """One reading part (or merge group) as one RunPod serverless job: the same chat body the Pod gets (no output
-        limit: max_tokens = the whole remaining context), through the worker's OpenAI route so the result is the
-        same chat-completion JSON the Pod returns (usage, finish_reason, model). Durable on the box: the RunPod job id
-        is recorded before polling and resumed after a restart; a result the provider no longer holds (30 minutes
-        after completion) is recorded as lost and the part is submitted again, once per incarnation, on record."""
-        from research.kalshi.frankie_boss.granite_sagemaker import _json, _final_text
-        from research.kalshi.frankie_boss.granite_shadow import IncompleteModelOutput
-        lane = self.serverless
-        if lane is None:
-            raise RuntimeError('serverless lane not reached')
-        directory = self.work / 'serverless-jobs' / name
-        directory.mkdir(parents=True, exist_ok=True)
-        outcome_path = directory / 'outcome.json'
-        prompt_path = directory / 'prompt.txt'
-        if outcome_path.exists():
-            # Durable by NAME, bound by CONTENT: an outcome is resumed only when it answered this exact prompt. A prompt
-            # that moved (a code fix on restart) moves the old job aside with a receipt and the part is asked again.
-            if not prompt_path.is_file():
-                self.note(f'{name}: durable outcome carries no prompt.txt to bind it to this prompt; resumed unverified')
-                return load_json(outcome_path)
-            if prompt_path.read_text(encoding='utf-8') == text:
-                return load_json(outcome_path)
-            self._supersede_job(directory, name, text)
-        estimate = self._input_tokens(text)
-        max_tokens = CONTEXT - estimate - 256
-        if max_tokens < 1024:
-            raise ValueError(f'prompt {name} leaves under 1024 tokens of context by the byte estimate ({estimate} tokens)')
-        chat = dict(model=self.served_model, messages=[dict(role='user', content=text)], temperature=0,
-                    max_tokens=int(max_tokens), stream=False, chat_template_kwargs=dict(enable_thinking=False))
-        body = dict(input=dict(openai_route='/v1/chat/completions', openai_input=chat),
-                    policy=dict(executionTimeout=int(lane['execution_timeout_ms']), ttl=int(lane['execution_timeout_ms']) + 6 * 3600 * 1000))
-        body_hash = sha256_bytes(_json(chat).encode())
-        write_json(directory / 'request.json', dict(schema='FRANKIE_BOX_SERVERLESS_JOB_V1', name=name, endpoint_id=lane['endpoint_id'],
-                   body_sha256=body_hash, body_bytes=len(_json(chat)), estimated_input_tokens=estimate, max_tokens=int(max_tokens),
-                   served_model_name=self.served_model, config_hash=lane['config_hash']))
-        write_text(directory / 'prompt.txt', text)
-        key, endpoint = lane['key'], lane['endpoint_id']
-        started = time.time()
-        job_path = directory / 'runpod-job.json'
-        job = load_json(job_path) if job_path.exists() else None
-        submissions = (job or {}).get('submissions', 0)
-
-        def submit():
-            nonlocal job, submissions
-            if submissions >= 2:
-                raise RuntimeError(f'{name}: two submissions already recorded; not submitting a third')
-            status, reply = self._serverless_exchange('POST', f'/v2/{endpoint}/run', body, key)
-            if status != 200 or not isinstance(reply, dict) or not reply.get('id'):
-                raise ConnectionError(f'serverless run refused: HTTP {status} {str(reply)}')
-            submissions += 1
-            job = dict(id=reply['id'], submitted_at=time.time(), submissions=submissions, status=reply.get('status'))
-            write_json(job_path, job)
-            self._observe(directory, 'submitted:' + str(reply.get('status')))
-
-        last = None
-        while True:
-            try:
-                if job is None:
-                    submit()                      # inside the retry loop: a refused or dropped submission is retried, never lost
-                status, state = self._serverless_exchange('GET', f'/v2/{endpoint}/status/{job["id"]}', None, key)
-                if status == 404:
-                    self._observe(directory, 'lost')
-                    submit()
-                    time.sleep(SERVERLESS_POLL_SECONDS)
-                    continue
-                if status in (401, 403):
-                    self.refuse(f'the serverless endpoint rejected the API key (HTTP {status})')
-                if status != 200 or not isinstance(state, dict):
-                    raise ConnectionError(f'status HTTP {status}')
-                phase = state.get('status')
-                if phase != last:
-                    self._observe(directory, str(phase))
-                    last = phase
-                if phase == 'COMPLETED':
-                    output = state.get('output')
-                    if isinstance(output, list) and len(output) == 1:
-                        output = output[0]
-                    if not isinstance(output, dict) or 'choices' not in output:
-                        outcome = dict(schema='FRANKIE_BOX_SERVERLESS_JOB_OUTCOME_V1', name=name, error='unrecognised output shape',
-                                       text=None, incomplete=False, model=None, raw_output=state.get('output'))
-                    else:
-                        result = json.dumps(output, sort_keys=True).encode()
-                        write_bytes(directory / 'result.json', result)
-                        outcome = self._parse(name, result, 200, directory, _final_text, IncompleteModelOutput)
-                        outcome['schema'] = 'FRANKIE_BOX_SERVERLESS_JOB_OUTCOME_V1'
-                    outcome.update(runpod_job_id=job['id'], endpoint_id=endpoint, worker_id=state.get('workerId'),
-                                   delay_ms=state.get('delayTime'), execution_ms=state.get('executionTime'), submissions=submissions,
-                                   body_sha256=body_hash, seconds=time.time() - started, estimated_input_tokens=estimate, max_tokens=int(max_tokens))
-                    write_json(outcome_path, outcome)
-                    return outcome
-                if phase in ('FAILED', 'CANCELLED', 'TIMED_OUT'):
-                    outcome = dict(schema='FRANKIE_BOX_SERVERLESS_JOB_OUTCOME_V1', name=name, error=f'remote job {phase}: {str(state.get("error"))}',
-                                   control={k: v for k, v in state.items() if k != 'output'}, text=None, incomplete=False, model=None,
-                                   runpod_job_id=job['id'], endpoint_id=endpoint, submissions=submissions)
-                    write_json(outcome_path, outcome)
-                    return outcome
-            except (ConnectionError, OSError, TimeoutError) as error:
-                self._observe(directory, 'http_' + type(error).__name__)
-            time.sleep(SERVERLESS_POLL_SECONDS)
+    # ---- the reading lane runs on the Pods only (Greg, 2026-09-28: "Not using serverless anymore"; C22 names the Pod) ----
+    def serverless_unwired(self):
+        """The RunPod serverless reading lane is UNWIRED: it is not in the build plan R4 (C22 names the Pod). A serverless
+        configuration left on the box is an intent this session no longer honours, so it is a refusal with the reason,
+        never a silent fall-back (frankie_box_serverless_config.sh ACTION=remove moves it aside)."""
+        if SERVERLESS_CONFIG.exists():
+            self.refuse(f'{SERVERLESS_CONFIG} is present but the serverless reading lane is unwired (not in the build plan R4; '
+                        'Greg 2026-09-28: not using serverless anymore); move it aside with frankie_box_serverless_config.sh ACTION=remove')
+        return None
 
     def reader(self, name, text):
-        """The reading lane: the serverless endpoint when configured, else the Pods (a free one from the pool)."""
-        if self.serverless is not None:
-            return self.serverless_job(name, text)
+        """The reading lane: the Pods (a free one from the pool); the serverless lane is unwired (build plan R4, C22)."""
         if len(self.pods) * self.slots == 1:
             return self.boss(name, text)
         pod = self._pod_pool.get()
@@ -703,12 +522,12 @@ class Session:
             state = 'failed' if failed else ('complete' if done == total and not in_flight else 'running')
             _box_module('frankie_box_progress').for_session(self).update(
                 label, done, total, in_flight=in_flight, failed=failed, state=state)
-            lane = f'serverless x{self.serverless["workers"]}' if self.serverless else f'Pod x{len(self.pods)} slots x{self.slots}'
+            lane = f'Pod x{len(self.pods)} slots x{self.slots}'
             self.note(f'{label}: {done}/{total} done, {in_flight} in flight, {failed} failed ({lane})')
 
     def _fan_out(self, label, items, work):
         """Retain submission order and count only successful work as completed."""
-        workers = self.serverless['workers'] if self.serverless else len(self.pods) * self.slots
+        workers = len(self.pods) * self.slots
         done, in_flight, failed, results = 0, 0, 0, [None] * len(items)
         self._progress_note(label, done, len(items), in_flight, failed)
         def one(index):
@@ -1504,7 +1323,7 @@ class Session:
             aside = self._preserve_reading_paths(retained)
             if aside is not None:
                 self._reading_passes[i] = '-pass-' + aside.name.rsplit('-', 1)[-1]
-        self.note(f'reading: {len(chunks)} parts, {len(pending)} to read ({"serverless x%d" % self.serverless["workers"] if self.serverless else "Pod x1"})')
+        self.note(f'reading: {len(chunks)} parts, {len(pending)} to read (Pod x{len(self.pods)} slots x{self.slots})')
 
         def read_part(item):
             i, s, e = item
@@ -1526,7 +1345,7 @@ class Session:
         write_text(self.work / 'merged-notes.md', merged)
         write_json(self.work / 'reading.json', dict(schema='FRANKIE_BOX_READING_RECEIPT_V2', status='complete', at=time.time(), parts=len(chunks),
                    corpus_sha256=corpus_sha, notes_dir=str(notes_dir), outcomes=outcomes, new_outcomes=new_outcomes, merged=witness(self.work / 'merged-notes.md'),
-                   lane=dict(serverless=self.serverless['endpoint_id'], workers=self.serverless['workers']) if self.serverless else dict(pod=self.pod_id, pods=self.pods, slots=self.slots)))
+                   lane=dict(pod=self.pod_id, pods=self.pods, slots=self.slots)))
         self.note(f'reading done: {len(chunks)} parts, merged notes {len(merged.encode("utf-8"))} bytes')
         self.docs()
         ledger = load_json(READING_LEDGER) if READING_LEDGER.exists() else dict(schema='FRANKIE_BOX_READING_LEDGER_V1', values={}, cycles={})
@@ -1799,7 +1618,7 @@ class Session:
         write_text(notes_dir / f'note-{i:04d}.md', note)
         if unusable:
             self.note(f'{label}: {len(unusable)} piece(s) still unusable at {MIN_SPLIT_BYTES} bytes ({", ".join(unusable)}); kept whole, marked')
-        return dict(part=i, job_id=final.get('job_id') or final.get('runpod_job_id'), lane='serverless' if self.serverless else 'pod',
+        return dict(part=i, job_id=final.get('job_id') or final.get('runpod_job_id'), lane='pod',
                     incomplete=final.get('incomplete'), error=final.get('error'), attempts=len(attempts),
                     halves=len(pieces) > 1, pieces=[dict(start=a, end=b, name=name) for name, a, b, *_ in pieces], unusable=unusable)
 
@@ -1873,9 +1692,11 @@ class Session:
             self.note('classroom: ledgers already assembled; nothing to do')
             return complete
         if visible['pre_message'].get('shared_knowledge') is not None:
-            return _box_module('frankie_box_classroom_staged').run(
-                self,C,cache,root=ROOT,staged=_box_module('frankie_box_staged_session'),
-                dialogue=_box_module('frankie_box_scientific_dialogue'))
+            # UNWIRED (build plan R4: the classroom is C14 through the C35 engine; the scientific-teacher dialogue and the
+            # teacher discussion were added 2026-09-22, after the plan). A classroom package carrying shared knowledge is
+            # refused with the reason rather than routed to the dialogue (frankie_box_classroom_staged / _scientific_dialogue).
+            self.refuse('classroom: the package carries shared_knowledge (the scientific dialogue), which is unwired for this run '
+                        '(not in the build plan R4); rebuild the classroom package with classroom_scientific_dialogue false')
         names = [c['name'] for c in C.components(visible)]
         rid = self.request['request_id']
         mode = visible['pre_message']['mode']
@@ -1886,7 +1707,7 @@ class Session:
                 for p in evidence_paths if p.is_file())
             if not evidence_text.strip():
                 self.refuse('classroom: independent current evidence is missing')
-        self.note(f'classroom: {len(names)} component answers on the {"serverless" if self.serverless else "Pod"} lane, then the summary on the BOSS')
+        self.note(f'classroom: {len(names)} component answers on the Pod lane, then the summary on the BOSS')
 
         def one(name):
             index = names.index(name)
@@ -1971,34 +1792,21 @@ class Session:
             bound = load_json(answer_path).get('correction_request') or {}
             if bound.get('request_sha256') != correction['request_sha256'] or bound.get('post_grade_hash') != correction['post_grade_hash']:
                 self.refuse(f'correction: {answer_path.name} answers another correction request ({bound.get("request_sha256", "")[:16]} / {bound.get("post_grade_hash", "")[:16]}); move it aside with a receipt')
-        scientific_exchange = None
         if correction.get('scientific_review_request') is not None:
-            cache_module = _box_module('frankie_box_classroom_cache')
-            visible = C.visible_of(self.request)
-            science_cache = cache_module.ClassroomCache(d / 'scientific-dialogue',
-                dict(cache_module.identity(self,visible,C),correction_request_hash=correction['request_sha256']),
-                writer=write_json)
-            scientific_exchange = _box_module('frankie_box_scientific_dialogue').run(
-                self,correction,root=ROOT,cache=science_cache,classroom_module=C,
-                staged_module=_box_module('frankie_box_staged_session'))
+            # UNWIRED (build plan R4: the correction is the plain C14 classroom correction through the C35 engine; the
+            # scientific-teacher review was added 2026-09-22, after the plan). A correction request carrying it is refused
+            # with the reason rather than routed to the dialogue (frankie_box_scientific_dialogue / _classroom_staged).
+            self.refuse('correction: the request carries scientific_review_request (the scientific dialogue), which is unwired for '
+                        'this run (not in the build plan R4); re-export the correction request with classroom_scientific_dialogue false')
         if not answer_path.exists():
-            if scientific_exchange is not None:
-                parsed, call = _box_module('frankie_box_classroom_staged').run_correction(
-                    self,C,science_cache,correction=correction,ledgers=ledgers,
-                    scientific_exchange=scientific_exchange,root=ROOT,
-                    staged=_box_module('frankie_box_staged_session'),
-                    dialogue=_box_module('frankie_box_scientific_dialogue'))
-            else:
-                text = C.correction_prompt(correction, ledgers, cycle=self.cycle)
-                parsed, call = self._classroom_call('classroom-correction', text, lambda body: C.parse_correction(body, correction), 'boss')
+            text = C.correction_prompt(correction, ledgers, cycle=self.cycle)
+            parsed, call = self._classroom_call('classroom-correction', text, lambda body: C.parse_correction(body, correction), 'boss')
             write_json(answer_path, dict(schema='FRANKIE_BOX_CLASSROOM_CORRECTION_V1', call=call, parsed=parsed,
                        correction_request=dict(witness(path), request_sha256=correction['request_sha256'], post_grade_hash=correction['post_grade_hash'],
                                                correction_ids=correction['correction_ids'])))
         parsed = load_json(answer_path)['parsed']
         session_id, model_identity = response['session_id'], response['model_identity_as_reported_by_session']
         reply = C.correction_response(correction, parsed, session_id=session_id, model_identity=model_identity)
-        if scientific_exchange is not None:
-            reply['dipole_scientific_exchange'] = scientific_exchange
         write_bytes(self.out / 'correction-response.json', json.dumps(reply, indent=1, sort_keys=True, ensure_ascii=False).encode('utf-8'))
         request_sha256, response_sha256 = C.attestation_request_sha256(correction), C.adapter_digest(reply)
         engine = load_json(self.work / 'engine.json') if (self.work / 'engine.json').exists() else {}
@@ -2443,7 +2251,7 @@ class Session:
         if stage == 'preflight':
             self.labels()
             self.engine_reach()
-            self.serverless_reach()
+            self.serverless_unwired()
             classroom_module().visible_of(self.request)      # the request must carry the TEACH classroom this session answers
             print('preflight: OK', flush=True)
             return
@@ -2470,6 +2278,7 @@ class Session:
         self.phase('verified', 'request, contract and rows verified on the box; session running')
         self.labels()
         self.engine_reach()
+        self.serverless_unwired()
         self.phase('deriving')
         needed, why = retained_derivation or self._derive_needed()     # whole and dense at the current schema, under the request's pin, bedrock included
         if needed:
@@ -2478,11 +2287,8 @@ class Session:
         self.compare()                       # cheap, rebuilt every run: the derived layers beside the frozen files the brain carries now
         self.phase('reading')
         if not self._corpus_current():       # a corpus the session would read differently now (the brain, the digest, the render) is read again
-            self.serverless_reach()
             self.reading()
         self.phase('classroom')
-        if self.serverless is None:
-            self.serverless_reach()
         self.classroom()
         self.phase('teach')
         if not (self.work / 'teach' / 'exhaustion-teachback.json').exists():

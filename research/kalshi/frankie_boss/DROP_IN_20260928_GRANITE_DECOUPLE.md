@@ -9,6 +9,17 @@
 - r10 uses only those roles, so it proceeds on Greg's go.
 - The spec is a draft Greg may still tweak.
 
+**2026-09-29, tooling session: the Granite inventory and the unwiring are done. READ `GRANITE_CALL_INVENTORY_R10_20260929.md`.**
+- Every Granite call reachable in r10 is listed with file:line, its build-plan R4 row and its gate.
+- The three with no plan role are UNWIRED in `frankie_box_boss_session.py`: the classroom scientific-dialogue branch and
+  the correction scientific-review branch are refusals now, and the serverless reading lane is removed (the Pods only;
+  Greg: "Not using serverless anymore"). A `/opt/frankie-box/serverless.json` on the box makes r10 refuse at preflight;
+  check with `frankie_box_serverless_config.sh ACTION=show`, move aside with `ACTION=remove` on Greg's go.
+- Open for Greg: C14 names no Granite (the classroom through C35 is an inference); the critic knowledge loop, the critic
+  priming and the correction's learning_history (2026-09-22, inside kept roles, not plan lines).
+- Greg 2026-09-29: Granite "should just be a logic helper for frankie".
+- `codebase-memory-mcp` is registered on this branch (`.mcp.json`, `enabledMcpjsonServers`); `.cbmignore` re-includes `deploy/`.
+
 Paste this box into the new chat.
 
 ```

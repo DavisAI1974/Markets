@@ -1,15 +1,15 @@
-# Write (or show) the box's serverless READING lane configuration: /opt/frankie-box/serverless.json. The session
-# (frankie_box_boss_session.py) fans the reading parts out over the RunPod serverless endpoint named here when this file
-# exists and the SecureString /markets/frankie/runpod-serverless (us-east-2, the RunPod API key, read into memory only)
-# is readable; the merges and the writing stay on the retained Pod. Inputs: ENDPOINT_ID (required to write), WORKERS
-# (default 16), GPU (label only), ACTION (write | show | remove | key | reading; default show); reading takes TENSOR_MODE (values | identity). Never prints a key. The running session
-# picks the file up at its next reading stage (an ACTION=restart_session on frankie_box_session.sh applies it now).
+# UNWIRED (Greg, 2026-09-28: "Not using serverless anymore"; the build plan R4 C22 names the Pod). The session
+# (frankie_box_boss_session.py) no longer has a serverless reading lane: when /opt/frankie-box/serverless.json is present
+# the session REFUSES with the reason. This script now only shows or moves that file aside (ACTION=show | remove) and
+# keeps the read-only key probe (ACTION=key) and the reading render's tensor mode (ACTION=reading). ACTION=write is
+# refused. Never prints a key.
 set -u
 ROOT=/opt/frankie-box; F="$ROOT/serverless.json"; ACTION="${ACTION:-show}"
 case "$ACTION" in
-  show) [ -s "$F" ] && { echo "### $F"; cat "$F"; } || echo "no serverless configuration on the box (reading runs on the retained Pod)";;
+  show) [ -s "$F" ] && { echo "### $F (PRESENT: the session refuses until it is moved aside, ACTION=remove)"; cat "$F"; } || echo "no serverless configuration on the box (the reading lane is the Pods)";;
   remove) [ -s "$F" ] && { mv "$F" "$ROOT/receipts/serverless-removed-$(date +%s).json"; echo "moved aside (nothing deleted)"; } || echo "nothing to remove";;
   write)
+    echo "the serverless reading lane is unwired (not in the build plan R4; Greg 2026-09-28: not using serverless anymore); nothing written"; exit 2
     ENDPOINT_ID="${ENDPOINT_ID:-}"; WORKERS="${WORKERS:-16}"; GPU="${GPU:-}"
     # POSIX tests: SSM runs this under sh (dash), where `[[` does not exist (run 35617650693: "[[: not found").
     printf '%s\n' "$ENDPOINT_ID" | grep -Eq '^[a-z0-9]{6,40}$' || { echo "ENDPOINT_ID must be the RunPod endpoint id"; exit 2; }
