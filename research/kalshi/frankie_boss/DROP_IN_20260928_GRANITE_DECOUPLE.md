@@ -1,3 +1,5 @@
+**SUPERSEDED 2026-09-29 00:1xZ ET: use `DROP_IN_20260929_PRINCIPAL_CODE.md`.**
+
 # DROP-IN: Frankie cycle 0, Granite decoupling (2026-09-28, end of chat; updated 2026-09-29)
 
 **2026-09-29, the latest direction, read it first: `SPEC-decouple-granite.md`.**
