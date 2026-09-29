@@ -31,8 +31,8 @@ Status: SPEC. Nothing is built beyond the per-cycle calculation export (f751ccbe
 - **Data access (Greg, 2026-09-29):** both teachers read every bit of Frankie's ingest data (the journal, every book
   level) and every calculation layer directly, except the files Frankie generates himself to reason toward forecasts
   (R09); no teacher data is built a second or third time. Full text: `SPEC-scientific-teacher.md`, "Data access".
-- **Frankie's 13 historical data points ride with his ingest (Greg, 2026-09-29; the 13th, the futures curve shape, is
-  behind leak guards: only curves settled before the day opens, refused past the cutoff):** "everyone who sees his ingest should
+- **Frankie's 13 historical data points ride with his ingest (Greg, 2026-09-29; the 13th, the futures curve shape, has
+  a time-only leak guard like the ingest: everything up to a decision's cutoff, refused past it):** "everyone who sees his ingest should
   see these data points too". One file per trading day beside the sealed ingest (native resolution, publication time
   on every value), read by Frankie, both teachers and the search alike; built once. Text: `SPEC-scientific-teacher.md`.
 - **Consequence for this spec:** step 7 has no Granite pass; the classroom arm is code (teacher + classroom package +

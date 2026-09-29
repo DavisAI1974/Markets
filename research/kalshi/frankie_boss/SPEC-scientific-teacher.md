@@ -62,18 +62,18 @@ more times."
   publication time on), and whoever else is given the ingest. Nothing re-fetches or re-derives it a second time. A
   missing value is listed with its day and reason, never a reason to drop the day. Source plan:
   `HISTORICAL_DATA_PLAN_20260929.md` (in progress).
-- **The 13th: the futures curve shape, behind leak guards (Greg, 2026-09-29: "He'll get the futures curve shape too. We
-  just have to put huge leak guards up so forecaster can't see them").** The curve is price content, and a trading day's
-  own curve (its settles, and any curve built during or after it) is the answer. So:
-  1. Curve values are stamped with their settlement publication time and are visible to a trading day only if published
-     before that day opens (18:00 ET the prior calendar day): in practice the prior sessions' settled curve, never the
-     day's own.
-  2. The day file carries them in their own section marked `price_derived: true`.
-  3. Every reader takes the file through one as-of reader given the cutoff; a value past the cutoff is REFUSED with its
-     name and time (a hard error, never a silent filter), so a leak stops the run instead of shaping a forecast.
-  4. Staging refuses to write the day file if any price-derived value's publication time is at or after the day's open,
-     and names it.
-  5. The search runs `odcore/leakage.py` on every target as before; the curve fields are in its checked set.
+- **The 13th: the futures curve shape (Greg, 2026-09-29: "He'll get the futures curve shape too. We just have to put
+  huge leak guards up so forecaster can't see them"; then: "We're trying to make correlations and the best trade signals
+  we can. I'm not concerned about him having trade curves").** Frankie gets the curve like he gets the front month's
+  MBO: everything up to the moment of a decision, including the back months trading during the day. The guard is time
+  only, the same wall as the ingest: nothing published after a decision's cutoff reaches the forecast.
+  1. Every curve value carries its own timestamp (a trade/quote time, or a settlement's publication time).
+  2. Every reader goes through one as-of reader given the cutoff; a value past it is REFUSED with its name and time (a
+     hard error, never a silent filter), so a leak stops the run instead of shaping a forecast.
+  3. Staging checks the stamps and names any value without one.
+  4. The search runs `odcore/leakage.py` on every target as before; the curve fields are in its checked set.
+  Source: the 5-year MBO pull holds ONE instrument, the volume-leading front month (`NG.v.0`, `instruments: 1` in every
+  staged partition), so the back months are not in hand; `HISTORICAL_DATA_PLAN_20260929.md` names the pull and its cost.
 
 ## Tied together, separate roles (rule R12)
 - The BOSS teacher never becomes a reviewer only and never rewrites its targets from a discussion (CHAT15 handoff).
