@@ -13,6 +13,10 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
+- **LATEST (2026-09-29, Code session): the EXPERIMENT is being built; Monday r10 is PARKED; both EC2 boxes STOPPED.**
+  Start from `research/kalshi/frankie_boss/DROP_IN_20260929_EXPERIMENT.md` and `HANDOFF_20260929_EXPERIMENT_BUILD.md`.
+  ChatGPT builds three pieces in parallel per `CHATGPT_BRIEF_EXPERIMENT_20260929.md`.
+
 - **STATE 2026-09-28 16:1xZ: READ FIRST `research/kalshi/frankie_boss/HANDOFF_20260928_R6_LAUNCH.md`.** Branch
   `claude/frankie-monday-cycle-0-urozez`. Cycle 0 launch r6 RUNNING (run 36448920615, parallel context preparation;
   r4/r5 stopped). 4 A100 Pods up (--max-num-seqs 3, SLOTS 3; first = BOSS kqp1qwzv6vo67a), billing ~$6.36/h.
