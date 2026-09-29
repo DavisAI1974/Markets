@@ -1,5 +1,7 @@
 # CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-22 06:4xZ, Frankie/BOSS: THE MONDAY INGEST IS RUNNING on the box (run 35694087514, 5x faster: 1.77 ms/record, about an hour); the launch build behind it (schedule, host, box modules) is NOT built; no canary without Greg's word)
 
+**STATE 2026-09-29 (Granite decoupled from Frankie, draft):** READ FIRST `research/kalshi/frankie_boss/SPEC-decouple-granite.md` (Greg: "it adds nothing"; a draft he may still tweak; r10 HELD until it is settled), then `research/kalshi/frankie_boss/DROP_IN_20260928_GRANITE_DECOUPLE.md`. Branch `claude/frankie-monday-cycle-0-urozez`.
+
 **STATE 2026-09-28 (end of chat, Granite decoupling):** Granite = a reasoning boost only; the exhaustion/D priming is now code only (no rerun needed: no completed run ever used the Granite teach-back); joined teachers built, not run; r9 stopped; HOLD. READ FIRST: `research/kalshi/frankie_boss/DROP_IN_20260928_GRANITE_DECOUPLE.md`. Branch `claude/frankie-monday-cycle-0-urozez`.
 
 **STATE 2026-09-28 (joined teachers):** r9 STOPPED (data kept); joined teachers BUILT not run (dfe08ca7); bedrock = teacher logic helper, never Frankie's knowledge base. READ FIRST: `research/kalshi/frankie_boss/HANDOFF_20260928_JOINED_TEACHERS.md`. Branch `claude/frankie-monday-cycle-0-urozez`. HOLD.

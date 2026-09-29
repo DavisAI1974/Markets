@@ -132,3 +132,15 @@ Unwired in commit 77948797, because each was added after R4:
 - Jev and the CLM sidecar (not dispatched).
 
 Greg: rerun the Frankie part AND the classroom as r10. The step-by-step work instructions are in `DROP_IN_20260928_GRANITE_DECOUPLE.md`.
+
+## Update 2026-09-29: decouple Granite from Frankie. READ `SPEC-decouple-granite.md` FIRST
+Greg: "We are decoupling granite from granite. It adds nothing." It is read as decoupling Granite from Frankie; confirm that reading first.
+- The spec is a DRAFT that Greg may still tweak in the next chat.
+- It covers:
+  - every Granite call and its code replacement;
+  - the build plan's B1 no-Granite path as the operational arm;
+  - r10 HELD until the spec is settled;
+  - the open points: the classroom without a model student, the grading key, the host recorder path, the Excel plan, and the Pods.
+- Also this chat:
+  - the experiment orchestrator spec (`SPEC-experiment-orchestrator.md`), with the classroom arm on the first and the last two discovery days;
+  - the per-cycle calculation export for the experiments (f751ccbe, `frankie_box_export_calcs.sh`).

@@ -1,11 +1,17 @@
-# DROP-IN: Frankie cycle 0, Granite decoupling (2026-09-28, end of chat)
+# DROP-IN: Frankie cycle 0, Granite decoupling (2026-09-28, end of chat; updated 2026-09-29)
+
+**2026-09-29, the latest direction, read it first: `SPEC-decouple-granite.md`.** Greg: decouple Granite from Frankie ("it
+adds nothing"). The spec is a draft Greg may still tweak in this chat. Everything below that still calls Granite (the r10
+reading, merges, classroom and writing, and the experiment's Granite pass) waits on that spec.
 
 Paste this box into the new chat.
 
 ```
 Frankie Monday cycle 0: Granite decoupling. Run using-agent-skills before anything.
 Branch: claude/frankie-monday-cycle-0-urozez. Fetch it and check it out; the tip must be this drop-in's commit or later.
-READ FIRST: research/kalshi/frankie_boss/DROP_IN_20260928_GRANITE_DECOUPLE.md (this file), then
+READ FIRST: research/kalshi/frankie_boss/SPEC-decouple-granite.md (Greg 2026-09-29: decouple Granite from Frankie,
+"it adds nothing"; a draft Greg may still tweak; confirm its reading and open points with him BEFORE any rerun), then
+research/kalshi/frankie_boss/DROP_IN_20260928_GRANITE_DECOUPLE.md (this file), then research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md, then
 research/kalshi/frankie_boss/HANDOFF_20260928_JOINED_TEACHERS.md (every update block, in order).
 Rules:
 - No tests, no validations, no canaries. py_compile with python3.12 only. Put [skip ci] on every push.
@@ -16,7 +22,7 @@ Rules:
 - Zero data dropped; no caps; no truncation; nothing normalized or averaged. Unknown or incomplete data is listed.
 - Duplicate data declines the run, with the reason.
 - Keys are secrets.
-Next: rerun the Frankie part AND the classroom as r10 on the build-plan wiring (Greg: "Unwire everything that isn't in
+Next: settle SPEC-decouple-granite.md with Greg (r10 is HELD until then: as written it still calls Granite), then rerun the Frankie part AND the classroom as r10 on the build-plan wiring (Greg: "Unwire everything that isn't in
 the build plan and we rerun Frankie part in new chat"; "we'll have to rerun classroom too"), each step on Greg's go.
 ```
 
