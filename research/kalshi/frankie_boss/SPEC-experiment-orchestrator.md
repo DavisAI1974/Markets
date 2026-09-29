@@ -1,7 +1,37 @@
 # Spec: the experiment orchestrator (Greg, 2026-09-29)
 
 Status: SPEC. Nothing is built beyond the per-cycle calculation export (f751ccbe). It goes into the Excel build plan
-(`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`) as a research track before it is built.
+(`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`) as a research track before it is built (Greg adds it).
+
+## UPDATE 2026-09-29 (late): the teachers are tied and Granite is out of the classroom. This supersedes the text below.
+- **Granite** (`SPEC-decouple-granite.md`, DECISION and BUILT blocks): Granite is ONLY the B2 shadow critic (C21-C24) on
+  the R4 Pod, plus one labelled self-assessment of how it performed as the critic. C35 is no longer a Granite role.
+  Greg: "Granite has absolutely nothing to do with classroom anymore." The experiment makes NO Granite call anywhere:
+  not in the search, not over the survivors, not in the classroom arm.
+- **The classroom is Frankie's code** (`deploy/aws/box/frankie_box_classroom_code.py`): TEACH answered in the parsers'
+  own shapes (counts, extremes, each of the 171 pairs' Pearson coefficient over its own window with its overlap count,
+  plus its co-movement counts, nothing flattened or normalized); GUIDED/SOCRATIC/VERIFY refused with the reason; novel
+  findings filed as HYPOTHESIS only where a computation surfaces them. The rules file
+  `knowledge/CLASSROOM_RULES_V1.json` (R01-R17, confirmed) is loaded and witnessed in the classroom receipt.
+- **The teachers are tied** (`SPEC-scientific-teacher.md`, confirmed): three seats, none of them a model (rule R17):
+  - Frankie: the learner; his findings are claims, never truth (R11). Source: his code, calculations and brain.
+  - The BOSS teacher: mathematics, representation supervision, targets, masks, controls. Source: JournalTeacherR3 on
+    the day's journal, the classroom package, the teacher key.
+  - **The scientific teacher IS this experiment's search** (its classroom-facing side): every claim becomes a
+    testable statement over the day's series, with its own circular-shift chance check, the leakage gate, results as
+    counts with the days named (D37), a disposition word as orientation only (R14), "the data is showing this
+    instead" where a subclaim is contradicted (R07), and the untested combinations listed, never dropped.
+  - The two teachers keep separate roles (R12); neither sees Frankie's decision process or graded outcomes (R09, R10).
+  - Reused, not copied: `dipole_teacher_discussion.py` (roles, positions, schemas; only what produces a turn changes,
+    from a model prompt to a test result), `dipole_scientific_review.py` (request, exchange, disposition schemas), the
+    joined-teacher builder (dfe08ca7, the starting slice of the tests). Swapped out:
+    `deploy/aws/box/frankie_box_scientific_dialogue.py` (it sends teacher turns to Granite).
+  - Until the search exists the tied teachers stay unwired; the full run's classroom runs with the BOSS teacher and
+    Frankie's code only (config `classroom_scientific_dialogue: false`).
+- **Consequence for this spec:** step 7 has no Granite pass; the classroom arm is code (teacher + classroom package +
+  Frankie's classroom code + the scientific teacher's turn from the search), so it needs no Pod for the classroom
+  itself. Whether a classroom-arm day also runs the launch (whose B2 critic is the only Granite use, on a Pod) is
+  OPEN for Greg.
 
 ## What it is
 Greg: "a stripped down version of today's run". The experiment orchestrator is its own workflow. It calls ONLY the
@@ -28,9 +58,9 @@ Not called:
    - Results are reported as counts, never coefficients or averages (D37).
    - The leakage gate (`odcore/leakage.py`) runs on every target.
    - Start from the joined-teacher builder (dfe08ca7): its sign-step coupling and cells, pointed at the journal and the calculation JSON instead of the bedrock.
-7. **Survivors** (the Granite pass below is REMOVED per `SPEC-decouple-granite.md`: it is not an original plan role; survivors go to symbolic regression and confirmation; the classroom arm stays, it is the plan classroom):
+7. **Survivors** (no Granite, no model of any kind, per `SPEC-decouple-granite.md` and rule R17):
    - symbolic regression (`odcore/symbolic.py`);
-   - then one short Granite reasoning pass over the survivor list (mechanisms, novel findings). This is the only model use.
+   - the survivor list goes to the classroom arm as material, and to confirmation.
 8. **Confirmation:** the frozen survivor list is run on the confirmation days, untouched until then. Any trade idea is judged per cell, net of fees at maker and taker.
 
 ## Days
@@ -47,17 +77,21 @@ new dipole data and push the dipole research forward (D51: the dipole is open re
 - **The added pieces of today's run it calls** (all reused):
   - the teacher on that day's journal: JournalTeacherR3 with the teacher changes (all levels, the whole day, unknown trades carried), read once beside the context walk (saved walk blocks, the concurrent teacher);
   - the classroom package: `prepare_integrated_cycle`, without the scientific dialogue per the plan;
-  - the principal's classroom stage on the BOSS: the 19 components, the summary and the correction.
-  - That arm alone needs Granite and a Pod.
+  - the principal's classroom stage, answered by Frankie's code (`frankie_box_classroom_code.py`, no Granite): the 19
+    components, the summary and the correction, under `knowledge/CLASSROOM_RULES_V1.json`;
+  - the scientific teacher's turn (`SPEC-scientific-teacher.md`): this experiment's search, tied to the BOSS teacher.
+  - No Granite in this arm (superseded 2026-09-29: it used to say "needs Granite and a Pod"). A Pod is used only if
+    the day also runs the launch's B2 critic, which is OPEN for Greg.
 - **The loop between the two arms:**
   - The search's survivors go to the teacher and the classroom as material to teach and examine.
-  - Frankie's classroom findings and novel findings come back to the search as HYPOTHESES (rule 3: claims, never truth). The search then tests them across every discovery day, with the chance check.
+  - Frankie's classroom findings and novel findings come back to the search as HYPOTHESES (rule R11: claims, never truth). The search, as the scientific teacher, tests them across every discovery day, with the chance check, and hands back counts, challenges and the tests not yet run; the BOSS teacher answers within its own role (R12).
   - A novel finding from the classroom that survives the search on other days is a scoped finding with its days named.
 - **Only discovery days.** A classroom day is always a discovery day, never a confirmation day: the confirmation days stay untouched by the search, the teacher and Frankie until the survivor list is frozen.
 - **Why these three days:**
   - The first seeds the search with Frankie's and the teacher's hypotheses from day one.
   - The last two examine everything the search has accumulated, while that material is still discovery data. Their findings are the last hypotheses the search tests before the list is frozen.
-- **Cost:** only these three days use a Pod (about $1.59/h per A100); every other day is CPU only.
+- **Cost:** every day, the classroom-arm days included, is CPU only, unless Greg decides a classroom-arm day also runs
+  the launch's B2 critic (then that day uses a Pod, about $1.59/h per A100).
 
 ## How the orchestrator runs
 - **A box-side orchestrator** (`frankie_box_experiment.py`), started by one workflow dispatch, with:
@@ -74,5 +108,7 @@ new dipole data and push the dipole research forward (D51: the dipole is open re
 2. `bedrock=False` in the derive stage (a switch; Frankie's cycle keeps its bedrock).
 3. The orchestrator for steps 1-4, run on Tue 2021-10-05 and Wed 2021-10-06, plus the Monday export.
 4. The search (steps 5-6), attached to the orchestrator.
-5. Survivors and confirmation (steps 7-8).
-6. The classroom arm on the first and the last two discovery days (after r10 shows the plan classroom running end to end).
+5. The scientific teacher's turn on top of the search, with the discussion schemas (`SPEC-scientific-teacher.md` build
+   order 4); then the classroom loads the rules file and the tied teachers switch on.
+6. Survivors and confirmation (steps 7-8).
+7. The classroom arm on the first and the last two discovery days (after r10 shows the plan classroom running end to end).

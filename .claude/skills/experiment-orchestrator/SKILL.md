@@ -7,8 +7,25 @@ description: Experiment orchestrator - runbook for the stripped-down Frankie exp
 
 Greg: "a stripped down version of today's run." Its own workflow, calling ONLY the pieces of the
 full run the experiment needs (reused, never copied), with a new search engine attached behind
-it. Frankie's cycle (context, teacher, principal, Granite, classroom) is NOT called, except on
-the three classroom-arm days. Everything else is code on the box's CPUs.
+it. Frankie's cycle (context, teacher, principal, Granite, classroom) is NOT called, except the
+teacher and the code classroom on the three classroom-arm days. Everything is code on the box's CPUs.
+
+**As of 2026-09-29 (late) - read before anything below:**
+- **Granite is decoupled.** It is ONLY the full run's B2 shadow critic (C21-C24) on the Pod, plus one
+  labelled self-assessment (`SPEC-decouple-granite.md`, DECISION + BUILT). **The experiment makes no
+  Granite call anywhere**: not in the search, not over the survivors, not in the classroom arm. The
+  classroom is Frankie's code (`deploy/aws/box/frankie_box_classroom_code.py`) under the confirmed
+  rules file `research/kalshi/frankie_boss/knowledge/CLASSROOM_RULES_V1.json` (R01-R17; R17 = no model
+  voice in the classroom).
+- **The teachers are tied** (`SPEC-scientific-teacher.md`, confirmed): three seats, none a model -
+  Frankie (learner, his findings are claims, R11), the BOSS teacher (JournalTeacherR3 + classroom
+  package + teacher key), and the **scientific teacher = this experiment's search** (its
+  classroom-facing side: claim -> tests -> counts, challenges worded "the data is showing this
+  instead" (R07), untested combinations listed). The two teachers keep separate roles (R12) and never
+  see Frankie's decision process or graded outcomes (R09, R10). Reuse `dipole_teacher_discussion.py`
+  and `dipole_scientific_review.py` schemas (a turn becomes a test result, not a model prompt); swap
+  out `frankie_box_scientific_dialogue.py` (it sends turns to Granite). Until the search exists the
+  tied teachers stay unwired (`classroom_scientific_dialogue: false`).
 
 **Source of truth: `research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md`** on the run
 branch (as of 2026-09-29 `claude/frankie-monday-cycle-0-urozez`). If this file and the spec
@@ -25,23 +42,25 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 | 1 | fetch | `frankie_box_ingest_block.sh ACTION=fetch MANIFEST=...` (presigned map, sha256 + size verified) | built (full run's) |
 | 2 | ingest | `frankie_box_ingest_block.sh ACTION=canary\|ingest\|status` - sealed compact journal + receipt | built (full run's) |
 | 3 | calculations | derive stage with a new `bedrock=False` switch skipping `_derive_bedrock` | **NOT built** - `bedrock=False` exists only in the digest render, not in `Session.derive` |
-| 4 | export | `frankie_box_export_calcs.sh` -> `frankie_box_brain.export_calculations` | **built** (f751ccbe) |
+| 4 | export | `frankie_box_export_calcs.sh` -> `frankie_box_brain.export_calculations`; also runs automatically after every cycle from `brain_entry()` (a failure is noted, never blocks the cycle). Store: `/opt/frankie-box/work/experiment-calcs/<day>/cycle-<NN>/` = the derive stage's JSON layer files + `derive.json`, hard-linked, + MANIFEST (bytes, sha256); bedrock layers are NOT exported | **built** (f751ccbe) |
 | - | orchestrator | `frankie_box_experiment.py` + `frankie_experiment.yml` (`ACTION=start\|status\|stop`) | **NOT built** |
 | 5 | series | one causal time axis per day from the journal + calc JSON | NOT built |
 | 6 | search | series x transforms x lags x cells x conditions x targets | NOT built (start from the joined-teacher builder, dfe08ca7) |
-| 7 | survivors | symbolic regression (`odcore/symbolic.py`) | NOT built |
+| 6b | scientific teacher | the search's classroom-facing turn: claims (Frankie's, labelled) -> tests -> counts + challenges + untested combinations, tied to the BOSS teacher | NOT built (`SPEC-scientific-teacher.md` build order 3-5) |
+| 7 | survivors | symbolic regression (`odcore/symbolic.py`); no Granite pass, no model | NOT built |
 | 8 | confirmation | frozen survivor list on confirmation days, per cell, net of fees maker AND taker | NOT built |
-| C | classroom arm | teacher + `prepare_integrated_cycle` (no scientific dialogue) + principal classroom stage | reuses the full run; waits on r10 showing the plan classroom end to end |
+| C | classroom arm | teacher + `prepare_integrated_cycle` + the principal's classroom stage answered by Frankie's code (no Granite) + the scientific teacher's turn (6b) | reuses the full run; waits on r10 showing the code classroom end to end |
 
 ## 2. Build order - each step on Greg's go
 
-1. **Add the track to the Excel build plan** (`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`)
-   BEFORE building anything. Unplanned = unwired.
+1. **Greg adds the track to the Excel build plan** (`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`),
+   with the scientific teacher and the rules file, BEFORE anything is built. Unplanned = unwired.
 2. `bedrock=False` switch in the derive stage. Frankie's cycle keeps its bedrock, so the default stays unchanged.
 3. Orchestrator for steps 1-4, first on Tue 2021-10-05 and Wed 2021-10-06, plus the Monday export.
 4. Series + search (5-6), attached to the orchestrator.
-5. Survivors + confirmation (7-8).
-6. Classroom arm (after r10 runs the plan classroom end to end).
+5. The scientific teacher's turn on the search (6b); the tied teachers switch on.
+6. Survivors + confirmation (7-8).
+7. Classroom arm (after r10 runs the code classroom end to end).
 
 ## 3. What can be dispatched today (each on Greg's go)
 
@@ -65,13 +84,18 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
   to every year, reported per season. Confirmation days stay UNTOUCHED by the search, the teacher
   and Frankie until the survivor list is frozen. Never fetch-and-peek, never "just check one".
 - **Classroom arm on exactly three days**: the FIRST discovery day and the LAST TWO before the
-  freeze. It runs only on discovery days, never on a confirmation day. Only these days use a Pod
-  (~$1.59/h per A100); every other day is CPU only.
-- **The loop**: search survivors go to the teacher/classroom as material. Frankie's findings come
-  back as HYPOTHESES (claims, never truth), and the search tests them across every discovery day
-  with the chance check. A survivor is reported as a scoped finding with its days named.
-- **Every test gets its own circular-shift chance check. Results are COUNTS, never coefficients
-  or averages** (D37; an R2, a correlation or a fitted slope is an average - use `per_event.py`).
+  freeze. It runs only on discovery days, never on a confirmation day (R15). The classroom itself is
+  code, so these days are CPU only too - unless Greg decides such a day also runs the launch's B2
+  critic (the only Granite use, ~$1.59/h per A100 Pod). OPEN, see section 6.
+- **The loop (three seats)**: search survivors go to the BOSS teacher and the classroom as material.
+  Frankie's findings come back as HYPOTHESES (claims, never truth, R11); the search, as the
+  scientific teacher, tests them across every discovery day with the chance check and hands back
+  counts; the BOSS teacher answers within its own role (R12). A survivor is reported as a scoped
+  finding with its days named.
+- **Every test gets its own circular-shift chance check. The finding is COUNTS, never an average**
+  (D37; an R2, a pooled correlation or a fitted slope is an average - use `per_event.py`).
+  Coefficients are kept where they are read per pair/cell/day with their overlap count (Greg: "We
+  want the coefficients, just not a bunch of dipole results flattened or normalized"); never pooled.
 - **Leakage gate (`odcore/leakage.py`) on every target.** Every series row carries only what was
   knowable at that moment (causal clocks).
 - **Zero data dropped**: every event, every book level, fills, FIFO, and unknown-side trades carried.
@@ -94,13 +118,12 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 
 ## 6. Open / contradictory - ask Greg, do not resolve
 
-- Spec step 7 header says the Granite pass is REMOVED (per `SPEC-decouple-granite.md`), but its
-  body still lists "one short Granite reasoning pass ... the only model use". Treat it as removed
-  until Greg says otherwise.
+- Does a classroom-arm day also run the full run's launch (whose B2 critic is the only Granite use,
+  on a Pod), or only the teacher + code classroom? Decides whether those three days cost Pod time.
 - The spec calls a 1-2 minute canary "the standing rule for measurements". The drop-in and
   CLAUDE.md say "no canaries". Ask which applies to the disk measurement.
-- `SPEC-decouple-granite.md` itself is a draft (is C14 an original role?). That decides whether the
-  classroom arm stays as written.
+- (Resolved 2026-09-29: Granite has nothing to do with the classroom; the spec's step 7 Granite pass
+  is deleted.)
 - **Do not confuse with `SPEC-experiment-locks.md` / `SPEC-experiment-runner.md`**: those are the
   paired-arm experiment for BOSS models (plan G20-G22: arm locks, reveal ledger, scoring). That is
   a different "experiment", not this orchestrator.
