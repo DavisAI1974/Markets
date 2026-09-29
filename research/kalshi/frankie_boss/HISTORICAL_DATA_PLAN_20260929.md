@@ -1,5 +1,9 @@
 # Historical data for Frankie's 13 points on the 30 experiment days (2026-09-29)
 
+> **Deferred by Greg (2026-09-29): "Right now we're not worried about squeeze. We can do that later."** The squeeze_watch
+> points (sessions since expiry; the calendar front-next spread change) stay in the day file where already computed, but
+> nothing is built for them now (no extra settlement history, no classroom or teacher wiring). Deferred, not dropped.
+
 Greg, 2026-09-29: "find the historical data that Frankie wants for the days it just picked. Some of this is hourly
 data, some isn't." "We'll give him storage for 11 points." "it's 12 now." "We'll do est vs actual storage numbers."
 "everyone who sees his ingest should see these data points too." "He'll get the futures curve shape too." "We're trying
