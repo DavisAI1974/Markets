@@ -11,6 +11,24 @@ box dispatch (scripts refuse a staged checkout that differs from MARKETS_SHA); n
 keys are secrets and do not rotate; a probe on every long box run. Ask Greg for the AWS pair at the start (needed for
 direct SSM probes and S3 reads from the container; put it in `~/.config/markets/env`, chmod 600, verify with STS).
 
+## Greg's last words to this chat (~12:05Z): GO GIVEN for these two
+- **Set up the Linux box now** ("Start setting up linux box. We have well over an hour of runway. Tell next guy to do
+  it."): i-08cee7171c0a76a04, r6i.2xlarge, 8 vCPU / 64 GB, 300 GB gp3, us-east-2, STOPPED. Greg's go to START it is
+  given. (The closing chat's start call was refused by Claude Code's permission check, not by AWS; nothing started.)
+  Steps: start it; confirm SSM Online (instance profile; if none, attach the one the main box uses); OS, python3, disk;
+  build `/opt/frankie-box` like the main box: the venv (same packages: read `pip freeze` of
+  /opt/frankie-box/venv on the main box over SSM and install the same versions, incl. databento-dbn, zstandard,
+  duckdb 1.5.5, numpy), the staged code through `frankie_box_stage_code.sh ACTION=stage` with
+  `instance=i-08cee7171c0a76a04 region=us-east-2` (the workflow takes both inputs), the data layout
+  (`/opt/frankie-box/{work,data,code,receipts,brain,tmp}`). Then two pairs can run on it (orchestrator with
+  instance/region inputs). Grow its 300 GB disk if needed (Greg's go).
+- **Bedrock tables get deleted** ("bedrock table gets deleted. We already have this data."): the bedrock projection
+  `.projection-v2` (345 GB) and the bedrock digest table scratches of the Monday root
+  (`work/monday-calculations/full-20211004-20260927-r1-48/work/derived/`), after naming the retained copy of the data
+  (the inventory agent was told to list them with that evidence in `BOX_DATA_INVENTORY_20260929.md` and commit it).
+  Deletion = a committed, named-only script like `frankie_box_cleanup_side.sh` (refuse open files; print what was
+  removed and its bytes).
+
 ## Work list, in order
 1. **Probe everything running** (handoff table): Wednesday 20211006 (then `ACTION=conform` on it), the four ingests of
    orchestrator run `pairs2-20260929-1`, Databento run 36564541947 (Oct 2024+2025), free fetch run 36557302661.
