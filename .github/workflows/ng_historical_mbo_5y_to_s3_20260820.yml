@@ -36,6 +36,10 @@ on:
         description: 'day_history: all, or a comma list of calendar,cot,storage,consensus,weather_obs,mos,eia930'
         required: false
         default: 'all'
+      days:
+        description: 'day_history: comma list of YYYYMMDD, a subset of the selected days (empty = all of them)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -153,6 +157,7 @@ jobs:
     env:
       PYTHONPATH: research/kalshi
       FAMILIES: ${{ inputs.families }}
+      DAY_HISTORY_DAYS: ${{ inputs.days }}
       # the fetch stops making requests after 330 min (each then recorded as a gap) so every receipt closes and uploads
       DAY_HISTORY_DEADLINE_S: '19800'
     steps:
@@ -186,6 +191,8 @@ jobs:
       - run: |
           set -euo pipefail
           case "$FAMILIES" in *[!a-z0-9_,]*) echo "families must be a comma list of names"; exit 2;; esac
+          case "$DAY_HISTORY_DAYS" in *[!0-9,]*) echo "days must be a comma list of YYYYMMDD"; exit 2;; esac
+          echo "days: ${DAY_HISTORY_DAYS:-all selected}"
           python research/kalshi/frankie_boss/operations/fetch_day_history.py fetch --family "$FAMILIES" --out day-history
       - name: Upload to S3 (new prefix, new objects only)
         if: always()

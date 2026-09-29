@@ -65,8 +65,16 @@ WAYBACK_PAGES = {                               # the pages STORAGE_CONSENSUS_NO
 
 
 def days_selected():
-    body = json.loads(CANDIDATES.read_bytes())
-    return [dt.date.fromisoformat(f'{d[:4]}-{d[4:6]}-{d[6:]}') for d in body['proposed']]
+    """The selected days; DAY_HISTORY_DAYS (comma list YYYYMMDD, Greg 2026-09-29: the fetch in chunks) narrows them to a
+    subset, and a day outside the selection is refused."""
+    proposed = json.loads(CANDIDATES.read_bytes())['proposed']
+    subset = [d for d in os.environ.get('DAY_HISTORY_DAYS', '').split(',') if d]
+    if subset:
+        unknown = sorted(set(subset) - set(proposed))
+        if unknown:
+            raise SystemExit(f'DAY_HISTORY_DAYS names days outside the selection: {unknown}')
+        proposed = [d for d in proposed if d in set(subset)]
+    return [dt.date.fromisoformat(f'{d[:4]}-{d[4:6]}-{d[6:]}') for d in proposed]
 
 
 def session_bounds(day):
@@ -235,7 +243,8 @@ class Receipt:
     def __init__(self, out, family):
         self.dir = Path(out) / family
         self.dir.mkdir(parents=True, exist_ok=True)
-        self.body = dict(family=family, started_utc=dt.datetime.now(UTC).isoformat(), files=[], requests=[], gaps=[])
+        self.body = dict(family=family, started_utc=dt.datetime.now(UTC).isoformat(), files=[], requests=[], gaps=[],
+                         days=[d.strftime('%Y%m%d') for d in days_selected()])
 
     def save(self, name, data, url=None):
         path = self.dir / name
