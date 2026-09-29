@@ -55,7 +55,8 @@ NOT_SEARCHED = (
     ('transforms', 'levels, magnitudes, run lengths, first differences (only the sign of each step is searched here)'),
     ('conditions', 'conditioning on a state (e.g. book regime) before counting'),
     ('targets', 'targets other than the series themselves (e.g. the mid N groups ahead, fills, exhaustion)'),
-    ('run/execution/cycle-*/host-dipole-classroom-source*', "the teacher's Dipole measurements (JournalTeacherR3)"),
+    ('dipole on search-only days', "the teacher's Dipole measurements exist only where a launch ran (the classroom-arm days); "
+     'on other days they are listed missing (running the teacher alone on CPU is possible but not built)'),
     ('claims', "Frankie's and Jev's claims (the scientific teacher's turn tests them; built next)"),
 )
 
@@ -199,6 +200,38 @@ def build_series(day_dir, log):
             asof('events', np.asarray(known, dtype=np.float64), counts)
     else:
         notes.append(dict(source='events', missing=str(rows_dir / 'input-*.jsonl')))
+    dipole_paths = sorted((day_dir / 'run' / 'execution').glob('cycle-*/host-dipole-classroom-source*.json'))
+    if len(dipole_paths) > 1:
+        raise SystemExit('%d Dipole classroom sources for one day (%s): duplicate data declines the run'
+                         % (len(dipole_paths), ', '.join(str(p) for p in dipole_paths)))
+    if dipole_paths:
+        from research.kalshi.frankie_boss.c15_journal import unpack
+        raw = dipole_paths[0].read_bytes()
+        source = unpack(json.loads(raw))
+        rows = source.get('rows') or ()
+        names = list(source.get('coverage_columns') or ())
+        values = {name: [] for name in names}
+        states = {name: {} for name in names}
+        known = []
+        for row in rows:
+            known.append(float(row['ts_recv_ns']))
+            by_name = {c['name']: c for c in row.get('components') or ()}
+            for name in names:
+                c = by_name.get(name) or {}
+                state = str(c.get('state'))
+                states[name][state] = states[name].get(state, 0) + 1
+                v = c.get('value')
+                values[name].append(float(v) if state == 'PRESENT' and isinstance(v, (int, float)) else float('nan'))
+        sources.append(dict(source='dipole', path=str(dipole_paths[0]), rows=len(rows), sha256=hashlib.sha256(raw).hexdigest(),
+                            schema=source.get('schema'), through_cursor=source.get('through_cursor'),
+                            components=names, states_per_component=states,
+                            note="the teacher's Dipole measurements (JournalTeacherR3), one row per context cursor; a value "
+                                 'only where the state is PRESENT, the other states counted here'))
+        if rows:
+            asof('dipole', np.asarray(known, dtype=np.float64), values)
+    else:
+        notes.append(dict(source='dipole', missing=str(day_dir / 'run' / 'execution' / 'cycle-*' / 'host-dipole-classroom-source*'),
+                          reason='no launch ran for this day (only the classroom-arm days have the teacher\'s Dipole rows)'))
     derived = day_dir / 'root' / 'work' / 'derived'
     flow_path, roll_path = derived / 'legacy_native_signed_flow.json', derived / 'legacy_per_second_roll20.json'
     if flow_path.is_file():
