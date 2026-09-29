@@ -85,8 +85,7 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
   and Frankie until the survivor list is frozen. Never fetch-and-peek, never "just check one".
 - **Classroom arm on exactly three days**: the FIRST discovery day and the LAST TWO before the
   freeze. It runs only on discovery days, never on a confirmation day (R15). The classroom itself is
-  code, so these days are CPU only too - unless Greg decides such a day also runs the launch's B2
-  critic (the only Granite use, ~$1.59/h per A100 Pod). OPEN, see section 6.
+  code and the launch is not called, so these days are CPU only too: no critic, no Granite, no Pod.
 - **The loop (three seats)**: search survivors go to the BOSS teacher and the classroom as material.
   Frankie's findings come back as HYPOTHESES (claims, never truth, R11); the search, as the
   scientific teacher, tests them across every discovery day with the chance check and hands back
@@ -118,12 +117,8 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 
 ## 6. Open / contradictory - ask Greg, do not resolve
 
-- Does a classroom-arm day also run the full run's launch (whose B2 critic is the only Granite use,
-  on a Pod), or only the teacher + code classroom? Decides whether those three days cost Pod time.
 - The spec calls a 1-2 minute canary "the standing rule for measurements". The drop-in and
   CLAUDE.md say "no canaries". Ask which applies to the disk measurement.
-- (Resolved 2026-09-29: Granite has nothing to do with the classroom; the spec's step 7 Granite pass
-  is deleted.)
 - **Do not confuse with `SPEC-experiment-locks.md` / `SPEC-experiment-runner.md`**: those are the
   paired-arm experiment for BOSS models (plan G20-G22: arm locks, reveal ledger, scoring). That is
   a different "experiment", not this orchestrator.

@@ -29,9 +29,8 @@ Status: SPEC. Nothing is built beyond the per-cycle calculation export (f751ccbe
   - Until the search exists the tied teachers stay unwired; the full run's classroom runs with the BOSS teacher and
     Frankie's code only (config `classroom_scientific_dialogue: false`).
 - **Consequence for this spec:** step 7 has no Granite pass; the classroom arm is code (teacher + classroom package +
-  Frankie's classroom code + the scientific teacher's turn from the search), so it needs no Pod for the classroom
-  itself. Whether a classroom-arm day also runs the launch (whose B2 critic is the only Granite use, on a Pod) is
-  OPEN for Greg.
+  Frankie's classroom code + the scientific teacher's turn from the search). It does not run the launch, so there is
+  no critic, no Granite and no Pod on any experiment day: the whole experiment is CPU only.
 
 ## What it is
 Greg: "a stripped down version of today's run". The experiment orchestrator is its own workflow. It calls ONLY the
@@ -48,7 +47,8 @@ Frankie's cycle (context, teacher, principal, Granite, classroom) is not called;
 
 Not called:
 - the trading-day preparation (native context, the teacher);
-- the principal inputs, the launch, the Pods, Granite, the classroom and the brain entry;
+- the principal inputs, the launch, the Pods, Granite and the brain entry, on every day; the classroom, except on the
+  three classroom-arm days below (where it is Frankie's code, still without the launch, Granite or a Pod);
 - the digest render (Frankie's read format; the experiment reads the JSON).
 
 ## The new part (built after the orchestrator)
@@ -80,8 +80,8 @@ new dipole data and push the dipole research forward (D51: the dipole is open re
   - the principal's classroom stage, answered by Frankie's code (`frankie_box_classroom_code.py`, no Granite): the 19
     components, the summary and the correction, under `knowledge/CLASSROOM_RULES_V1.json`;
   - the scientific teacher's turn (`SPEC-scientific-teacher.md`): this experiment's search, tied to the BOSS teacher.
-  - No Granite in this arm (superseded 2026-09-29: it used to say "needs Granite and a Pod"). A Pod is used only if
-    the day also runs the launch's B2 critic, which is OPEN for Greg.
+  - No Granite and no Pod in this arm (superseded 2026-09-29: it used to say "needs Granite and a Pod"). The launch
+    is not called (see "Not called" above), so its B2 critic does not run here.
 - **The loop between the two arms:**
   - The search's survivors go to the teacher and the classroom as material to teach and examine.
   - Frankie's classroom findings and novel findings come back to the search as HYPOTHESES (rule R11: claims, never truth). The search, as the scientific teacher, tests them across every discovery day, with the chance check, and hands back counts, challenges and the tests not yet run; the BOSS teacher answers within its own role (R12).
@@ -90,8 +90,7 @@ new dipole data and push the dipole research forward (D51: the dipole is open re
 - **Why these three days:**
   - The first seeds the search with Frankie's and the teacher's hypotheses from day one.
   - The last two examine everything the search has accumulated, while that material is still discovery data. Their findings are the last hypotheses the search tests before the list is frozen.
-- **Cost:** every day, the classroom-arm days included, is CPU only, unless Greg decides a classroom-arm day also runs
-  the launch's B2 critic (then that day uses a Pod, about $1.59/h per A100).
+- **Cost:** every day, the classroom-arm days included, is CPU only. No Pod.
 
 ## How the orchestrator runs
 - **A box-side orchestrator** (`frankie_box_experiment.py`), started by one workflow dispatch, with:
