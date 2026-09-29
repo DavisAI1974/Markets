@@ -9,6 +9,11 @@
 - r10 uses only those roles, so it proceeds on Greg's go.
 - The spec is a draft Greg may still tweak.
 
+**2026-09-29, latest: THE PRINCIPAL IS CODE (built, py_compile only, nothing run).** Frankie's code does reading,
+classroom, correction, a small priming (no bedrock) and writing; Granite is the launch's B2 shadow critic plus ONE
+labelled self-assessment (never blocking). The BOSS is the whole native system; Granite is a small piece of it. See the
+BUILT block in `SPEC-decouple-granite.md`. Next, on Greg's go: restage the tip, then the r10 config, launch, principal.
+
 **2026-09-29, latest: the scientific teacher and the classroom rules (drafts, Greg's to confirm).** Read
 `SPEC-scientific-teacher.md` and `knowledge/CLASSROOM_RULES_V1.json` (17 rules, each with its source). Three seats, no
 model in any: Frankie (his code, calcs, brain), the BOSS teacher (code), the scientific teacher (the experiment's

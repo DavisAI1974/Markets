@@ -1,0 +1,241 @@
+"""The Dipole classroom answered by Frankie's code (Greg, 2026-09-29: "Granite has absolutely nothing to do with
+classroom anymore"; SPEC-decouple-granite.md decision 3; knowledge/CLASSROOM_RULES_V1.json).
+
+No model call. Every answer is computed from the model-visible classroom the request carries and is returned in exactly
+the shapes frankie_box_classroom.parse_component / parse_summary / parse_correction return, so the repository's
+validators, the assembly, the host grade and the correction contract are unchanged. Every text says what it is: a count
+or a value computed here, the teacher's own wording quoted as the teacher's, or something this code does not compute
+(listed as unknown, never filled in). No average, no smoothing, no normalization of any dipole result: counts,
+extremes and the teacher's own coefficients per pair only (rules R04, R05).
+
+TEACH shows the evidence, so the code transcribes and counts it. GUIDED, SOCRATIC and VERIFY withhold the key and ask
+for Frankie's own independent claims; the code has no independent source for the 19 dimensions yet, so those modes are
+refused with the reason (never answered from the host key).
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+
+SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'
+RULES_PATH = Path(__file__).resolve().parents[3] / 'research/kalshi/frankie_boss/knowledge/CLASSROOM_RULES_V1.json'
+RULES_SCHEMA = 'FRANKIE_CLASSROOM_RULES_V1'
+STATES = ('PRESENT', 'MISSING', 'INVALID', 'ABLATED')
+STATE_MEANING = {
+    'PRESENT': 'a measured value at that cursor',
+    'MISSING': 'no value was available at that cursor; the teacher\'s recorded reason is kept with it',
+    'INVALID': 'a value was produced at that cursor but failed its validity rule; the teacher\'s recorded reason is kept with it',
+    'ABLATED': 'the input was deliberately removed at that cursor (ablation); the teacher\'s recorded reason is kept with it',
+}
+AUTHOR = 'Frankie\'s code (computed; no model)'
+COMPOSITION = ('TEACH mode, answered by Frankie\'s code (no model call): state counts, terminal state, first-to-last PRESENT '
+               'direction, every observation cursor/state/value and every pair direction are transcribed from the model-visible '
+               'pre-message; each narrative states what it is (a count or value computed by code, the teacher\'s wording quoted '
+               'as the teacher\'s, or UNKNOWN where the code computes nothing); pair texts carry the teacher\'s coefficient and the '
+               'co-movement counts per pair; novel findings are only what a computation surfaces (a pair whose first-to-last '
+               'relation and its step counts point different ways), filed as hypotheses; the correction takes the data the teacher '
+               'shows for each corrected subclaim. Governed by knowledge/CLASSROOM_RULES_V1.json')
+
+
+class ModeNotAnswerable(ValueError):
+    """The classroom mode asks for independent claims the code has no source for (refused with the reason)."""
+
+
+def rules():
+    """The classroom rules file, loaded whole, and its witness for the receipt."""
+    data = RULES_PATH.read_bytes()
+    value = json.loads(data)
+    if value.get('schema') != RULES_SCHEMA or not isinstance(value.get('rules'), list) or not value['rules']:
+        raise ValueError(f'{RULES_PATH} is not the classroom rules file ({RULES_SCHEMA})')
+    return value, dict(path=str(RULES_PATH), bytes=len(data), sha256=hashlib.sha256(data).hexdigest(),
+                       rules=[r['id'] for r in value['rules']])
+
+
+def _require_teach(visible):
+    mode = visible['pre_message']['mode']
+    if mode != 'TEACH':
+        raise ModeNotAnswerable(f'classroom mode {mode} withholds the evidence and asks for Frankie\'s independent claims; '
+                                'Frankie\'s code has no independent source for the 19 dimensions yet (not built), and it never '
+                                'answers from the host key')
+    return visible['pre_message']
+
+
+def _num(value):
+    return repr(float(value))
+
+
+def _steps(present):
+    """Counts of how consecutive PRESENT values moved: rises, falls, unchanged."""
+    rises = falls = same = 0
+    for (_, a), (_, b) in zip(present, present[1:]):
+        if b > a:
+            rises += 1
+        elif b < a:
+            falls += 1
+        else:
+            same += 1
+    return rises, falls, same
+
+
+def _reasons(comp):
+    found = {}
+    for p in comp['observations']:
+        if p['state'] != 'PRESENT':
+            key = (p['state'], p.get('raw_reason') or '(no reason recorded)')
+            found[key] = found.get(key, 0) + 1
+    return found
+
+
+def component_answer(visible, comp, rights):
+    """One component, in parse_component's TEACH shape (six narratives, one explanation per occurring state, one
+    interpretation per pair in the order of `rights`)."""
+    _require_teach(visible)
+    name = comp['name']
+    present = [(int(p['cursor']), float(p['value'])) for p in comp['observations'] if p['state'] == 'PRESENT']
+    counts = {s: int(comp['state_counts'][s]) for s in STATES}
+    rises, falls, same = _steps(present)
+    if present:
+        first, last = present[0], present[-1]
+        low = min(present, key=lambda cv: (cv[1], cv[0]))
+        high = max(present, key=lambda cv: (cv[1], -cv[0]))
+        span = (f'first PRESENT at cursor {first[0]} = {_num(first[1])}, last PRESENT at cursor {last[0]} = {_num(last[1])}; '
+                f'lowest {_num(low[1])} at cursor {low[0]}, highest {_num(high[1])} at cursor {high[0]}; '
+                f'between consecutive PRESENT observations: {rises} rises, {falls} falls, {same} unchanged')
+        evidence = (f'cursors {first[0]} and {last[0]} (first and last PRESENT), {low[0]} and {high[0]} (the extremes); every one '
+                    f'of the {len(comp["observations"])} retained cursors is listed in dipole_observation_review')
+    else:
+        span = 'no PRESENT observation in the window, so no value, extreme or step can be counted'
+        evidence = f'every one of the {len(comp["observations"])} retained cursors is listed in dipole_observation_review (none PRESENT)'
+    reasons = _reasons(comp)
+    reason_text = '; '.join(f'{n} {state} ({reason})' for (state, reason), n in sorted(reasons.items())) or 'none'
+    terminal = (f'terminal state {comp["terminal_state"]}'
+                + (f' = {_num(comp["terminal_value"])}' if comp['terminal_state'] == 'PRESENT' and comp.get('terminal_value') is not None else '')
+                + (f' ({comp.get("terminal_reason")})' if comp.get('terminal_reason') else ''))
+    teacher = ' '.join(str(comp[f]) for f in ('role', 'behavior_basis') if comp.get(f))
+    result = dict(
+        explanation=(f'{AUTHOR}: {name} over {len(comp["observations"])} retained cursors; state counts '
+                     f'{json.dumps(counts, sort_keys=True)}; {span}; {terminal}; first-to-last PRESENT direction '
+                     f'{comp["first_to_last_present_direction"]}.'),
+        why=(f'The teacher\'s definition of this component, quoted as the teacher\'s (not a claim of Frankie\'s): {teacher or "(none given)"} '
+             f'Frankie\'s code adds no interpretation of its own (rule R01).'),
+        market_behavior=('Not interpreted by Frankie\'s code: the market meaning of these states and values is interpretation, '
+                         f'left open (rule R01). What was measured: {json.dumps(counts, sort_keys=True)}; {span}.'),
+        fifo_full_book_order_link=('Not computed by Frankie\'s code from this component\'s window; listed as unknown, not filled in '
+                                   '(rule R04).'),
+        evidence=evidence + '.',
+        uncertainty=(f'Non-PRESENT observations: {reason_text}. Change from the previous cycle as the teacher recorded it: '
+                     f'{json.dumps(comp.get("change_from_previous"), sort_keys=True)}. No outcome after the causal cutoff is '
+                     'known or claimed (rule R02).'),
+    )
+    occurring = [s for s in STATES if any(p['state'] == s for p in comp['observations'])]
+    result['state_explanations'] = {s: f'{name}: {STATE_MEANING[s]}' + (f' (unit {comp["unit"]})' if s == 'PRESENT' and comp.get('unit') else '')
+                                    for s in occurring}
+    by_right = {p['right']: p for p in _pairs(visible, name)}
+    pairs = []
+    for right in rights:
+        p = by_right[right]
+        corr = p.get('correlation') or {}
+        coefficient = (f'Pearson {corr["pearson"]!r} over {corr.get("present_overlap")} overlapping PRESENT values'
+                       if corr.get('pearson') is not None else
+                       f'Pearson not reported ({corr.get("reason")}; {corr.get("present_overlap")} overlapping PRESENT values)')
+        moves = p.get('co_movement')
+        moves_text = ('co-movement counts not carried by this package' if moves is None else
+                      f'co-movement over {moves["steps_between_consecutive_both_present"]} consecutive both-PRESENT steps: '
+                      f'{json.dumps(moves["steps"], sort_keys=True)}; state pairings {json.dumps(moves["state_pairs"], sort_keys=True)}')
+        pairs.append(dict(right=right, developing_structure=None, correlation_interpretation=(
+            f'{AUTHOR}: Dipole\'s relation {p["direction_relation"]}; {coefficient}; {moves_text}. Descriptive for this pair and '
+            'window only; no causation or outcome claimed (rules R01, R02, R05).')))
+    result['pairs'] = pairs
+    return result
+
+
+def _pairs(visible, name):
+    return [p for p in (visible['pre_message'].get('relationship_review') or []) if p['left'] == name]
+
+
+def _step_disagreement(pair):
+    """A pair whose first-to-last relation and its step-by-step counts point different ways, or None."""
+    moves = pair.get('co_movement')
+    if moves is None:
+        return None
+    same, opposite = moves['steps']['same_direction'], moves['steps']['opposite_direction']
+    relation = pair['direction_relation']
+    if relation == 'SAME_DIRECTION' and opposite > same:
+        return same, opposite
+    if relation == 'OPPOSITE_DIRECTION' and same > opposite:
+        return same, opposite
+    return None
+
+
+def summary_answer(visible, outputs):
+    """The summary in parse_summary's shape. Novel findings are only what a computation here surfaces: a pair whose
+    first-to-last relation and its step-by-step co-movement counts point different ways (filed as a HYPOTHESIS)."""
+    pre = _require_teach(visible)
+    comps = list(pre['components'])
+    by_direction, by_terminal = {}, {}
+    for c in comps:
+        by_direction.setdefault(c['first_to_last_present_direction'], []).append(c['name'])
+        by_terminal.setdefault(c['terminal_state'], []).append(c['name'])
+    review = list(pre.get('relationship_review') or [])
+    relations = {}
+    for p in review:
+        relations[p['direction_relation']] = relations.get(p['direction_relation'], 0) + 1
+    reported = sum(1 for p in review if (p.get('correlation') or {}).get('pearson') is not None)
+    not_reported = {}
+    for p in review:
+        corr = p.get('correlation') or {}
+        if corr.get('pearson') is None:
+            not_reported[str(corr.get('reason'))] = not_reported.get(str(corr.get('reason')), 0) + 1
+    disagreements = [(p, d) for p in review for d in [_step_disagreement(p)] if d is not None]
+    cycle_summary = (f'{AUTHOR}: {len(comps)} components. First-to-last PRESENT direction: '
+                     + '; '.join(f'{k} {len(v)} ({", ".join(v)})' for k, v in sorted(by_direction.items()))
+                     + '. Terminal state: ' + '; '.join(f'{k} {len(v)} ({", ".join(v)})' for k, v in sorted(by_terminal.items())) + '.')
+    correlation_review = (f'{AUTHOR}: {len(review)} pairs. Dipole\'s relation: {json.dumps(relations, sort_keys=True)}. Pearson reported '
+                          f'on {reported} pairs; not reported on {len(review) - reported} ({json.dumps(not_reported, sort_keys=True)}). '
+                          f'{len(disagreements)} pairs whose first-to-last relation and step-by-step co-movement counts point different '
+                          'ways (filed as hypotheses). Every coefficient and count is per pair and per window, never pooled or '
+                          'averaged (rule R05).')
+    questions = []
+    for c in comps:
+        if c['first_to_last_present_direction'] in ('FLAT', 'INSUFFICIENT') or c['terminal_state'] != 'PRESENT':
+            questions.append(f'{c["name"]}: direction {c["first_to_last_present_direction"]}, terminal {c["terminal_state"]}; '
+                             'what drives it is not computed by Frankie\'s code from this window.')
+    unresolved = [f'{p["left"]}/{p["right"]}' for p in review if p['direction_relation'] == 'UNRESOLVED']
+    if unresolved:
+        questions.append(f'{len(unresolved)} pairs are UNRESOLVED in this window: {", ".join(unresolved)}.')
+    findings = []
+    for p, (same, opposite) in disagreements:
+        findings.append(dict(
+            finding_id=f'steps-vs-endpoints:{p["left"]}:{p["right"]}',
+            premise=(f'HYPOTHESIS: {p["left"]} and {p["right"]} end this window {p["direction_relation"]} first-to-last, while their '
+                     f'consecutive both-PRESENT steps moved the same way {same} times and the opposite way {opposite} times.'),
+            why_novel=('Computed by Frankie\'s code from the pair\'s co-movement counts; the classroom key grades the first-to-last '
+                       'relation only, so a step-by-step pattern running the other way is not in the curriculum. One window; kept as '
+                       'a hypothesis for reproduction in later causal windows (rule R06).'),
+            future_outcome_claimed=False,
+            evidence_refs=[dict(kind='DIPOLE_RELATIONSHIP', left=p['left'], right=p['right'], claimed_relation='HYPOTHESIS',
+                                reasoning=(f'Dipole relation {p["direction_relation"]}; co-movement steps '
+                                           f'{json.dumps(p["co_movement"]["steps"], sort_keys=True)}.'))]))
+    return dict(cycle_summary=cycle_summary, correlation_review=correlation_review, unresolved_questions=questions,
+                novel_findings=findings)
+
+
+def correction_answer(correction):
+    """The correction in parse_correction's shape: each correction id resolved by taking the data the teacher shows for
+    exactly that subclaim (rule R07, R08). The code holds no disagreement it could state, so none is claimed."""
+    items = {item['correction_id']: item for item in correction.get('data_review_items') or []}
+    resolutions = []
+    for cid in correction['correction_ids']:
+        item = items.get(cid)
+        if item is None:
+            detail = 'no data review item carries this id; the id is resolved as the teacher listed it, with nothing else changed'
+        else:
+            shown = {k: v for k, v in item.items() if k not in ('correction_id', 'message')}
+            detail = f'{item.get("message", "")} Frankie\'s code takes the data shown for exactly this subclaim: {json.dumps(shown, sort_keys=True, default=list)}'
+        resolutions.append(dict(correction_id=cid, corrected_understanding=f'{AUTHOR}: {detail}'))
+    change = (f'{AUTHOR}: the {len(resolutions)} corrected subclaims are read from the data the teacher shows for each; nothing '
+              'broader is discarded. The code transcribes TEACH evidence, so a correction here points at a transcription or '
+              'assembly difference to be traced in the code.' if resolutions else
+              f'{AUTHOR}: no correction ids; nothing changes.')
+    return dict(what_i_will_change=change, remaining_disagreements=[], correction_resolutions=resolutions)

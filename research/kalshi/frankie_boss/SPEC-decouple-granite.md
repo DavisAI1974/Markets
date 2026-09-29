@@ -68,7 +68,18 @@ This spec keeps them, because the plan's classroom is answered by the principal 
 3. Any Pods still up from r6/r9: the next session checks them first, and stops them only on Greg's word.
 
 
-## R3 BUILD (on Greg's go; nothing built yet)
+## R3 BUILD: BUILT 2026-09-29 (Greg: "Let's fix all the code then"); py_compile only, nothing run
+- reading + merges: code (merged-notes.md = the corpus whole; reading.json mode code, model_calls 0).
+- classroom + correction: `deploy/aws/box/frankie_box_classroom_code.py` (TEACH answered by code in the parsers' shapes;
+  GUIDED/SOCRATIC/VERIFY refused with the reason; rules file loaded, witness in the receipt).
+- writing: `deploy/aws/box/frankie_box_writing_code.py` (analysis with Greg's six sections, UNKNOWN where no source;
+  accounting entry; ten ledgers) + Granite's one self-assessment (`_granite_self_assessment`, never blocking, C24).
+- priming: the bedrock-built exhaustion/D priming is gone (Greg: "Get rid of bedrock and leave something small");
+  `teach` files a small code priming (work/teach/priming.md: where exhaustion and D are learned, the frozen files by
+  digest; no bedrock). The critic's priming and knowledge loop stay (Greg: "the two critic additions are fine").
+- the run and the correction need no Pod; only the self-assessment reaches it.
+
+## R3 BUILD (as specified before the build)
 Principal session `deploy/aws/box/frankie_box_boss_session.py` (not pinned; swap modules where a module is replaced):
 1. reading + merges: no model call. The notes the writing and the classroom read are assembled by code from the
    delivered evidence and the derivation (the data is exact already); the merge is a line-exact dedupe, nothing dropped.

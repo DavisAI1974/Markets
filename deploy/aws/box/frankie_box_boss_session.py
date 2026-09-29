@@ -23,9 +23,13 @@ What this session does, in order (each stage leaves a receipt under <session>/wo
            one job per chunk, notes per chunk, then merges the notes hierarchically. THE READING LANE is the Pods
            (pods.json), never serverless (Greg, 2026-09-28: "Not using serverless anymore"; the build plan R4 C22 names
            the Pod): a /opt/frankie-box/serverless.json left on the box is refused with the reason;
-  writing  the BOSS writes the analysis, the calculation_accounting entry and the ten output ledgers from the
-           instruction, the derivation digest and the merged notes; the four files are assembled exactly in the
-           first run's shapes and pushed by frankie_box_push_response.sh.
+  writing  FRANKIE'S CODE writes the analysis (Greg's six sections), the calculation_accounting entry and the ten
+           output ledgers (frankie_box_writing_code); the four files keep the first run's shapes and are pushed by
+           frankie_box_push_response.sh. Granite, the B2 shadow critic, gives ONE labelled self-assessment of how it
+           performed as the critic; it never blocks the run.
+  2026-09-29 (Greg: R3 roles on the R4 Pod): the principal makes no other model call. Reading, merges, the classroom
+           (frankie_box_classroom_code, under knowledge/CLASSROOM_RULES_V1.json), the correction, the small priming and
+           the writing are all code. The BOSS is the whole native system; Granite is its small critic.
 Output-incomplete outputs (finish_reason length) are kept and alerted (output-incomplete-*.json), per the standing
 rule: output = remaining context, the alert is the signal. Nothing is stopped by this script; a refusal writes the
 reason to <session>/note and exits nonzero so the heartbeat shows it.
@@ -184,6 +188,10 @@ CLASSROOM_KEYS = ('dipole_teachback', 'dipole_observation_review', 'dipole_relat
 BRAIN_DIR = ROOT / 'brain'   # Frankie's brain on the box: <brain>/cycle-<NN>/ entries (published to git by the pusher)
 
 
+class SoftRefusal(RuntimeError):
+    """A refusal inside Granite's self-assessment: recorded in its section, the run goes on (C24)."""
+
+
 def _pin_worker(cpus):
     """A fan-out thread takes the next CPU in turn and is pinned to it (Greg, 2026-09-28: pin workers to CPUs so none sit
     idle); the prompt building and tokenizing each thread does before its model call run on its own CPU."""
@@ -282,6 +290,8 @@ class Session:
             print(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), text, flush=True)
 
     def refuse(self, why):
+        if getattr(self, '_soft', False):          # inside Granite's self-assessment only: never a blocking dependency (C24)
+            raise SoftRefusal(why)
         self.note('REFUSED: ' + why)
         write_json(ROOT / 'receipts' / f'boss-session-refusal-{int(time.time())}-{uuid.uuid4().hex[:8]}.json',
                    dict(schema='FRANKIE_BOX_BOSS_SESSION_REFUSAL_V1', at=time.time(), cycle=self.cycle, reason=why))
@@ -1295,58 +1305,22 @@ class Session:
             return None
 
     def reading(self):
+        """The delivered evidence, read by Frankie's CODE (Greg, 2026-09-29: Granite serves the critic only; no model reads
+        for the principal). The corpus the session builds (reading_corpus) is recorded whole: merged-notes.md is the
+        corpus itself, every byte in order, nothing dropped, deduped or summarized; reading.json witnesses it."""
         corpus = self.reading_corpus()
         data = corpus.read_bytes()
         corpus_sha = sha256_bytes(data)
-        chunks = self._chunks(data)
-        notes_dir = self.work / f'notes-{corpus_sha[:12]}-unbounded'   # keyed by the corpus and the output policy: capped notes never mix in
-        notes_dir.mkdir(exist_ok=True)
         self._preserve_reading_paths([self.work / name for name in ('reading.json', 'reading-plan.json', 'merged-notes.md')])
-        write_json(self.work / 'reading-plan.json', dict(schema='FRANKIE_BOX_READING_PLAN_V1', corpus=dict(witness(corpus), path=str(corpus)),
-                   notes_dir=str(notes_dir), chunk_bytes=CHUNK_BYTES, part_input_tokens=getattr(self, '_part_tokens', None),
-                   chunks=[dict(index=i, start=s, end=e) for i, (s, e) in enumerate(chunks)]))
-        header = ('You are Frankie, the BOSS: the principal session for cycle {cycle} of the ' + self.day + ' trading-day run, reading the delivered '
-                  'evidence on your box. Request {req}. This is part {i} of {n} of the delivered evidence (the request prompt with the '
-                  'producer-evidence members decoded; bytes {s}-{e} of the reading corpus); '
-                  'you see only this part now, the other parts in other calls, and your notes are merged afterwards. Write NOTES for the '
-                  'merge, nothing else: (1) observed facts with their exact numbers, hashes and section ids as they appear; (2) what in this '
-                  'part bears on the cycle-{cycle} pin layers legacy_price, legacy_native_signed_flow, legacy_per_second_roll20, '
-                  'legacy_book_imbalance, legacy_structure_observables, and on the frozen learned-structure layers; (3) instructions '
-                  'the evidence gives the principal; (4) open questions. Distinguish what is observed from what you infer. Never invent '
-                  'a number or a hash. Markdown; no length limit.\n\n----- PART {i}/{n} BEGINS -----\n')
-        pending = [(i, s, e) for i, (s, e) in enumerate(chunks)
-                   if self._reading_part_receipt(notes_dir, i, s, e, corpus_sha) is None]
-        self._reading_passes = {}
-        for i, _, _ in pending:
-            retained = [notes_dir / f'note-{i:04d}.md', notes_dir / f'part-{i:04d}.json',
-                        *sorted(notes_dir.glob(f'attempt-{i:04d}-*.md'))]
-            aside = self._preserve_reading_paths(retained)
-            if aside is not None:
-                self._reading_passes[i] = '-pass-' + aside.name.rsplit('-', 1)[-1]
-        self.note(f'reading: {len(chunks)} parts, {len(pending)} to read (Pod x{len(self.pods)} slots x{self.slots})')
-
-        def read_part(item):
-            i, s, e = item
-            outcome = self._read_part_guarded(i, s, e, len(chunks), data, header, notes_dir)
-            write_json(notes_dir / f'part-{i:04d}.json', dict(schema='FRANKIE_READING_PART_V1',
-                       request_sha256=self.request_sha256, corpus_sha256=corpus_sha,
-                       part=i, start=s, end=e, note=witness(notes_dir / f'note-{i:04d}.md'), outcome=outcome))
-            return outcome
-
-        new_outcomes = self._fan_out('reading', pending, read_part)
-        outcomes = [load_json(notes_dir / f'part-{i:04d}.json')['outcome'] for i in range(len(chunks))]
-        if any(o.get('unusable') != [] for o in outcomes):
-            write_json(self.work / 'reading.json', dict(schema='FRANKIE_BOX_READING_RECEIPT_V2',
-                       status='incomplete', at=time.time(), parts=len(chunks), corpus_sha256=corpus_sha,
-                       notes_dir=str(notes_dir), outcomes=outcomes, new_outcomes=new_outcomes))
-            self.refuse('reading contains unusable parts after retry and split; preserved, no merge or advancement')
-        merged = self._merge([(notes_dir / f'note-{i:04d}.md').read_text(encoding='utf-8')
-                              for i in range(len(chunks))], level=0)
-        write_text(self.work / 'merged-notes.md', merged)
-        write_json(self.work / 'reading.json', dict(schema='FRANKIE_BOX_READING_RECEIPT_V2', status='complete', at=time.time(), parts=len(chunks),
-                   corpus_sha256=corpus_sha, notes_dir=str(notes_dir), outcomes=outcomes, new_outcomes=new_outcomes, merged=witness(self.work / 'merged-notes.md'),
-                   lane=dict(pod=self.pod_id, pods=self.pods, slots=self.slots)))
-        self.note(f'reading done: {len(chunks)} parts, merged notes {len(merged.encode("utf-8"))} bytes')
+        write_json(self.work / 'reading-plan.json', dict(schema='FRANKIE_BOX_READING_PLAN_V1', mode='code', model_calls=0,
+                   corpus=dict(witness(corpus), path=str(corpus)), notes_dir=None, chunk_bytes=None, part_input_tokens=None, chunks=[]))
+        header = (f'# The delivered evidence for cycle {self.cycle} of the {self.day} trading-day run, request {self.request["request_id"]}, '
+                  f'recorded whole by Frankie\'s code (corpus sha256 {corpus_sha}; {len(data)} bytes; no model read it)\n\n')
+        write_text(self.work / 'merged-notes.md', header + data.decode('utf-8', errors='replace'))
+        write_json(self.work / 'reading.json', dict(schema='FRANKIE_BOX_READING_RECEIPT_V2', status='complete', mode='code', model_calls=0,
+                   at=time.time(), parts=0, corpus_sha256=corpus_sha, corpus=dict(witness(corpus), path=str(corpus)), notes_dir=None,
+                   outcomes=[], new_outcomes=[], merged=witness(self.work / 'merged-notes.md'), lane=dict(code=True)))
+        self.note(f'reading done by code: corpus {len(data)} bytes recorded whole (sha256 {corpus_sha[:16]}); no model call')
         self.docs()
         ledger = load_json(READING_LEDGER) if READING_LEDGER.exists() else dict(schema='FRANKIE_BOX_READING_LEDGER_V1', values={}, cycles={})
         ledger.setdefault('cycles', {})[self.cycle] = dict(merged_notes_path=str(self.work / 'merged-notes.md'),
@@ -1673,10 +1647,11 @@ class Session:
         self.refuse(f'{name}: the BOSS\'s classroom answer was unusable twice ({last or ""}); nothing filed')
 
     def classroom(self):
-        """Turn 1 of the Dipole classroom (Greg, 2026-09-21: option 1). The 19 component answers fan out on the reading
-        lane, the summary answer runs on the BOSS, and the four ledgers are assembled from the TEACH pre-message facts
-        and those answers, validated by the repo's own validators, and written to work/classroom/ledgers.json. Resumable:
-        every parsed answer and the ledgers are durable; a re-run makes no model call."""
+        """Turn 1 of the Dipole classroom, answered by FRANKIE'S CODE (Greg, 2026-09-29: "Granite has absolutely nothing to
+        do with classroom anymore"). The 19 component answers and the summary are computed by frankie_box_classroom_code
+        from the model-visible package, in the parsers' own shapes; the four ledgers are assembled and validated by the
+        repo's validators exactly as before and written to work/classroom/ledgers.json. The classroom rules file is loaded
+        and its witness is in the receipt. No model call."""
         C = classroom_module()
         try:
             visible = C.visible_of(self.request)
@@ -1697,48 +1672,34 @@ class Session:
             # refused with the reason rather than routed to the dialogue (frankie_box_classroom_staged / _scientific_dialogue).
             self.refuse('classroom: the package carries shared_knowledge (the scientific dialogue), which is unwired for this run '
                         '(not in the build plan R4); rebuild the classroom package with classroom_scientific_dialogue false')
+        K = _box_module('frankie_box_classroom_code')
+        try:
+            rules, rules_witness = K.rules()
+        except (OSError, ValueError) as error:
+            self.refuse(f'classroom: the classroom rules file could not be loaded ({type(error).__name__}: {error})')
         names = [c['name'] for c in C.components(visible)]
-        rid = self.request['request_id']
-        mode = visible['pre_message']['mode']
-        evidence_text = None
-        if mode != 'TEACH':
-            evidence_paths = [self.work / n for n in ('merged-notes.md','derivation-digest-full.md')]
-            evidence_text = '\n'.join('----- ' + p.name + ' -----\n' + p.read_text(encoding='utf-8')
-                for p in evidence_paths if p.is_file())
-            if not evidence_text.strip():
-                self.refuse('classroom: independent current evidence is missing')
-        self.note(f'classroom: {len(names)} component answers on the Pod lane, then the summary on the BOSS')
-
-        def one(name):
-            index = names.index(name)
-            filename = f'component-{index:02d}-{name}.json'
-            comp = C.component(visible, name)
-            rights = [p['right'] for p in C.pairs_of(visible, name)]
-            text = C.component_prompt(visible, name, cycle=self.cycle, request_id=rid, evidence_text=evidence_text)
-            text += '\nClassroom exchange identity: ' + cache_module.digest(cache_module.science(cache.identity)) + '\n'
-            retained = cache.load(filename, text)
-            if retained is not None:
-                return retained
-            parsed, call = self._classroom_call(f'classroom-{index:02d}-{name}', text, lambda body: C.parse_component(body, comp, rights, mode=mode), 'reader')
-            return cache.save(filename, text, dict(schema='FRANKIE_BOX_CLASSROOM_COMPONENT_V1', name=name, call=call, parsed=parsed))
-
-        results = self._fan_out('classroom', names, one)
-        outputs = {r['name']: r['parsed'] for r in results}
-        text = C.summary_prompt(visible, outputs, cycle=self.cycle, request_id=rid)
-        text += '\nClassroom exchange identity: ' + cache_module.digest(cache_module.science(cache.identity)) + '\n'
-        _box_module('frankie_box_progress').for_session(self).update('classroom-summary', total=1, in_flight=1)
-        summary = cache.load('summary.json', text)
-        if summary is None:
-            parsed, call = self._classroom_call('classroom-summary', text, C.parse_summary, 'boss')
-            summary = cache.save('summary.json', text, dict(schema='FRANKIE_BOX_CLASSROOM_SUMMARY_V1', call=call, parsed=parsed))
+        self.note(f'classroom: {len(names)} component answers and the summary by Frankie\'s code under rules {rules_witness["sha256"][:16]} (no model)')
+        outputs = {}
+        try:
+            for name in names:
+                comp = C.component(visible, name)
+                outputs[name] = K.component_answer(visible, comp, [p['right'] for p in C.pairs_of(visible, name)])
+            summary = dict(parsed=K.summary_answer(visible, outputs))
+        except K.ModeNotAnswerable as error:
+            self.refuse(f'classroom: {error}')
+        results = [dict(name=name, call=dict(author='code', model_calls=0)) for name in names]
+        summary['call'] = dict(author='code', model_calls=0)
+        write_json(d / 'code-answers.json', dict(schema=K.SCHEMA, at=time.time(), rules=rules_witness, outputs=outputs,
+                                                 summary=summary['parsed'], model_calls=0))
         try:
             built = C.assemble(visible, outputs, summary['parsed'])
             report = C.validate(visible, built['ledgers'])
         except ValueError as error:
             self.refuse(f'classroom: the assembled ledgers did not validate ({str(error)}); nothing filed; the parsed answers stay under {d}')
         cache.publish(built['ledgers'], C.render_markdown(built['ledgers'], built['dropped_findings']),
-            dict(schema='FRANKIE_BOX_CLASSROOM_RECEIPT_V1', at=time.time(), report=report, composition=C.COMPOSITION,
+            dict(schema='FRANKIE_BOX_CLASSROOM_RECEIPT_V1', at=time.time(), report=report, composition=_box_module('frankie_box_classroom_code').COMPOSITION,
                  dropped_findings=built['dropped_findings'], calls=[r['call'] for r in results] + [summary['call']],
+                 author='code', model_calls=0, classroom_rules=rules_witness,
                  teacher_message_hash=visible['pre_message']['teacher_message_hash'],
                  classroom_binding_hash=visible['binding']['classroom_binding_hash']))
         _box_module('frankie_box_progress').for_session(self).update('classroom-published', 1, 1, state='complete')
@@ -1763,7 +1724,8 @@ class Session:
 
     def correction(self):
         """Turn 2 of the Dipole classroom: the host's correction request (request/classroom-correction-request.json, exported
-        from the host and fetched onto the box) answered on the BOSS by the SAME session identity that wrote the response;
+        from the host and fetched onto the box) answered by FRANKIE'S CODE (no model call; frankie_box_classroom_code,
+        checked by the same parse_correction) under the SAME session identity that wrote the response;
         the three correction files are written to out/ for the pusher (TURN=correction). Durable: the parsed answer is
         kept, a re-run makes no model call."""
         C = classroom_module()
@@ -1799,8 +1761,8 @@ class Session:
             self.refuse('correction: the request carries scientific_review_request (the scientific dialogue), which is unwired for '
                         'this run (not in the build plan R4); re-export the correction request with classroom_scientific_dialogue false')
         if not answer_path.exists():
-            text = C.correction_prompt(correction, ledgers, cycle=self.cycle)
-            parsed, call = self._classroom_call('classroom-correction', text, lambda body: C.parse_correction(body, correction), 'boss')
+            parsed = C.parse_correction(json.dumps(_box_module('frankie_box_classroom_code').correction_answer(correction)), correction)
+            call = dict(author='code', model_calls=0)
             write_json(answer_path, dict(schema='FRANKIE_BOX_CLASSROOM_CORRECTION_V1', call=call, parsed=parsed,
                        correction_request=dict(witness(path), request_sha256=correction['request_sha256'], post_grade_hash=correction['post_grade_hash'],
                                                correction_ids=correction['correction_ids'])))
@@ -1809,21 +1771,19 @@ class Session:
         reply = C.correction_response(correction, parsed, session_id=session_id, model_identity=model_identity)
         write_bytes(self.out / 'correction-response.json', json.dumps(reply, indent=1, sort_keys=True, ensure_ascii=False).encode('utf-8'))
         request_sha256, response_sha256 = C.attestation_request_sha256(correction), C.adapter_digest(reply)
-        engine = load_json(self.work / 'engine.json') if (self.work / 'engine.json').exists() else {}
         record = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=request_sha256,
                       response_sha256=response_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
-                      host_authority=('Frankie, the BOSS, on Greg Davis\'s box i-035994afa8bdf66a5 (us-east-1), under Greg\'s instruction of '
-                                      '2026-09-21 (option 1: the Dipole classroom correction turn answered by the same session that wrote the '
-                                      f'response; the engine is the BOSS vLLM on Pod {engine.get("pod_id", self.pod_id)}); session code '
-                                      'deploy/aws/box/frankie_box_boss_session.py'),
+                      host_authority=('Frankie on Greg Davis\'s box i-035994afa8bdf66a5 (us-east-1): the Dipole classroom correction turn '
+                                      'answered by Frankie\'s code in the same session that wrote the response (Greg, 2026-09-29: Granite has '
+                                      'nothing to do with the classroom; no model call); session code deploy/aws/box/frankie_box_boss_session.py'),
                       turn='classroom-correction', correction_request_sha256=correction['request_sha256'], post_grade_hash=correction['post_grade_hash'],
                       response=dict(witness(self.out / 'correction-response.json'), path=str(self.out / 'correction-response.json')),
-                      classroom_composition=C.COMPOSITION)
+                      classroom_composition=_box_module('frankie_box_classroom_code').COMPOSITION)
         write_bytes(self.out / 'host-correction-record.json', json.dumps(record, indent=1, sort_keys=True).encode('utf-8'))
         attestation = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=request_sha256,
                            response_sha256=response_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
                            host_record=dict(witness(self.out / 'host-correction-record.json'), path=str((self.out / 'host-correction-record.json').resolve())),
-                           turn='classroom-correction', classroom_composition=C.COMPOSITION)
+                           turn='classroom-correction', classroom_composition=_box_module('frankie_box_classroom_code').COMPOSITION)
         write_bytes(self.out / 'host-correction-attestation.json', json.dumps(attestation, indent=1, sort_keys=True).encode('utf-8'))
         self.docs()
         write_json(d / 'correction-receipt.json', dict(schema='FRANKIE_BOX_CORRECTION_RECEIPT_V1', at=time.time(), request_sha256=request_sha256,
@@ -1836,32 +1796,34 @@ class Session:
 
     # ---- the exhaustion/D priming (code only since 2026-09-28; beside the classroom, never in response.json) -----
     def teach(self):
-        """The exhaustion/D priming, CODE ONLY (Greg, 2026-09-28: Granite is a reasoning boost, not Frankie; the priming is
-        decoupled from it). The facts are computed by code from this session's own bedrock files and the brain's frozen
-        learned structure (frankie_box_teach.facts) and filed whole under work/teach/: exhaustion-teachback.json (the
-        record) and exhaustion-teachback.md (the facts text and the frozen files, whole), which the brain entry carries
-        and the next cycle reads. No model call. Durable: a restart re-uses the filed record."""
+        """A SMALL priming, code only, with no bedrock in it (Greg, 2026-09-29: "Get rid of bedrock and leave something
+        small in there"; the bedrock is the teachers' logic helper, never Frankie's knowledge base). It names where his
+        exhaustion and D learning comes from (the classroom: the teachers teach it, Frankie talks to them) and the frozen
+        learned-structure files of his own brain for the four D/exhaustion layers, by name and digest only.
+        work/teach/priming.json and priming.md; the brain entry carries priming.md. No model call."""
         T = _box_module('frankie_box_teach')
         d = self.work / 'teach'
         d.mkdir(exist_ok=True)
-        path = d / 'exhaustion-teachback.json'
+        path = d / 'priming.json'
         if path.exists():
-            self.note('teach: the exhaustion/D priming is already filed; nothing to do')
+            self.note('teach: the small priming is already filed; nothing to do')
             return load_json(path)
-        try:
-            f = T.facts(self.work, BRAIN_DIR, PRODUCERS)
-        except (ValueError, TypeError, KeyError) as error:
-            self.refuse(f'teach: the facts could not be computed from this session\'s files ({type(error).__name__}: {error})')
-        text = T.facts_text(f)
-        record = dict(schema=T.CODE_SCHEMA, at=time.time(), cycle=self.cycle, request_id=self.request['request_id'],
-                      facts={k: v for k, v in f.items() if k != 'frozen'}, facts_text=text, facts_sha256=sha256_bytes(text.encode('utf-8')),
-                      frozen=[dict(layer=x['layer'], name=x['name'], source=x['source'], bytes=x['bytes'], sha256=x['sha256']) for x in f['frozen']],
-                      model_calls=0)
+        manifest_path = BRAIN_DIR / T.FROZEN_DIR / 'MANIFEST.json'
+        entries = load_json(manifest_path).get('entries', []) if manifest_path.is_file() else []
+        frozen = [dict(layer=layer, name=e.get('name'), source=e.get('source'), bytes=e.get('bytes'), sha256=e.get('sha256'))
+                  for layer in T.FROZEN_LAYERS for e in entries if e.get('include') and layer in (e.get('layers') or [])]
+        missing = [layer for layer in T.FROZEN_LAYERS if not any(f['layer'] == layer for f in frozen)]
+        text = ('Exhaustion and D: you learn them in the Dipole classroom. The two teachers teach them (the bedrock is their '
+                'logic helper, never your knowledge base), and you talk with them about what you find; your findings reach '
+                'them as claims. Your own frozen learned structure for these layers is in your brain: '
+                + ('; '.join(f'{f["layer"]}: {f["source"]} ({f["sha256"]})' for f in frozen) or 'none found in the frozen entry')
+                + ('' if not missing else f'. Not found in the frozen entry: {", ".join(missing)}.'))
+        record = dict(schema='FRANKIE_BOX_TEACH_PRIMING_V2', at=time.time(), cycle=self.cycle, request_id=self.request['request_id'],
+                      text=text, frozen=frozen, missing=missing, bedrock=False, model_calls=0)
         write_json(path, record)
-        write_text(d / 'exhaustion-teachback.md', T.facts_markdown(record))
-        self.note(f'teach: the exhaustion/D priming filed by code ({len(text.encode("utf-8"))} bytes of facts and frozen structure; no model call); '
-                  f'{d / "exhaustion-teachback.md"}')
-        return load_json(path)
+        write_text(d / 'priming.md', f'# Priming (cycle {self.cycle}; small, code only, no bedrock)\n\n{text}\n')
+        self.note(f'teach: the small priming filed by code ({len(text.encode("utf-8"))} bytes; no bedrock; no model call)')
+        return record
 
     def _teach_section(self):
         """The analysis section written by the writing stage from the filed priming: where it is and what it carries (the
@@ -1930,140 +1892,87 @@ class Session:
         return inputs
 
     def _corpus_current(self):
-        """True when reading.json records the corpus the session would read now (identity + sha); False = read again."""
+        """True when reading.json records, by code, the corpus the session would read now; a receipt from the retired
+        model reading, or one for another corpus, is read again by code."""
         receipt = self.work / 'reading.json'
         if not receipt.exists() or not (self.work / 'merged-notes.md').exists():
             return False
-        corpus = self.reading_corpus()
         value = load_json(receipt)
-        if value.get('schema') != 'FRANKIE_BOX_READING_RECEIPT_V2' or value.get('status') != 'complete':
+        if value.get('schema') != 'FRANKIE_BOX_READING_RECEIPT_V2' or value.get('status') != 'complete' or value.get('mode') != 'code':
             return False
-        data = corpus.read_bytes()
-        corpus_sha = sha256_bytes(data)
-        chunks = self._chunks(data)
-        notes_dir = self.work / f'notes-{corpus_sha[:12]}-unbounded'
-        return (value.get('schema') == 'FRANKIE_BOX_READING_RECEIPT_V2'
-                and value.get('status') == 'complete' and value.get('parts') == len(chunks)
-                and value.get('corpus_sha256') == corpus_sha
-                and value.get('merged') == witness(self.work / 'merged-notes.md')
-                and all(self._reading_part_receipt(notes_dir, i, start, end, corpus_sha) is not None
-                        for i, (start, end) in enumerate(chunks)))
+        corpus = self.reading_corpus()
+        return (value.get('corpus_sha256') == sha256_bytes(corpus.read_bytes())
+                and value.get('merged') == witness(self.work / 'merged-notes.md'))
 
     # ---- writing (the four files) ------------------------------------------------------------------------
+    def _granite_self_assessment(self):
+        """Granite's ONE text in the principal session (Greg, 2026-09-29: "The only analysis granite should do is to say how
+        he feels he performed"): one call over the critic's own output for this cycle, filed as Granite's own view. Never
+        a blocking dependency (C24): a missing output, an unreachable Pod or a failed call is recorded and the run goes on."""
+        path = self.work / 'granite-self-assessment.json'
+        searched = [self.request_directory.parent, self.request_directory.parent.parent]
+        outputs = sorted(p for base in searched for p in base.glob('critic-spool/*/outcome.json'))
+        if not outputs:
+            return dict(error=f'no critic output found under {", ".join(str(b) + "/critic-spool" for b in searched)}')
+        critic = outputs[-1]
+        critic_witness = dict(witness(critic), path=str(critic))
+        if path.exists():
+            kept = load_json(path)
+            if kept.get('critic_output') == critic_witness:
+                return kept
+        prompt = ('You are Granite, the shadow critic (B2, C21-C24) of Frankie\'s cycle ' + str(self.cycle) + ', request '
+                  + self.request['request_id'] + '. Below is your own output as the critic for this cycle, whole. In your own words, '
+                  'say how you feel you performed as the critic: what you did well, what you missed, what you would do differently. '
+                  'This is your own view; it is filed as yours and never as a result. Plain text.\n\n----- YOUR CRITIC OUTPUT -----\n'
+                  + critic.read_text(encoding='utf-8', errors='replace') + '\n----- END -----\n')
+        self._soft = True
+        try:
+            if self.engine is None:
+                self.engine_reach()
+            outcome = self.boss('granite-self-assessment', prompt)
+        except Exception as error:                 # any failure of this one call is recorded; the run goes on (C24)
+            record = dict(error=f'{type(error).__name__}: {error}', critic_output=critic_witness)
+        else:
+            record = dict(text=outcome.get('text') or '', job_id=outcome.get('job_id'), model=outcome.get('model'),
+                          incomplete=outcome.get('incomplete'), pod_id=(self.engine or {}).get('pod_id'),
+                          critic_output=critic_witness, error=None if outcome.get('text') else (outcome.get('error') or 'empty output'))
+        finally:
+            self._soft = False
+        write_json(path, dict(record, schema='FRANKIE_BOX_GRANITE_SELF_ASSESSMENT_V1', at=time.time()))
+        return record
+
     def writing(self):
+        """The four files, written by FRANKIE'S CODE (frankie_box_writing_code): his analysis (Greg's six sections, each from
+        a named file, UNKNOWN where nothing computes it), ONE calculation_accounting entry, the ten output ledgers, and
+        Granite's one labelled self-assessment. Same shapes the adapter and the recorder validate."""
         from research.kalshi.frankie_boss.frankie_principal_adapter import digest, OUTPUT_LEDGERS, CALCULATION_ACCOUNTING_LEDGER
+        W = _box_module('frankie_box_writing_code')
         verify = load_json(self.work / 'verify.json')
         labels = load_json(self.work / 'labels.json')
         derive = load_json(self.work / 'derive.json')
-        digest_path = self.work / 'derivation-digest-full.md'
-        notes = (self.work / 'merged-notes.md').read_text(encoding='utf-8')
-        instruction = self.request['instruction']
-        packets = self._packets_text()
-        retained = self._bedrock_retained()
-        bedrock = '; the bedrock tables are retained on the box' if retained else ''
-        intro = (f'You are Frankie, the BOSS: the principal session for cycle {self.cycle} of the {self.day} trading-day run, on your box '
-                 f'i-035994afa8bdf66a5 (Greg Davis, 2026-09-21, option A). Request {self.request["request_id"]}, request_sha256 '
-                 f'{self.request_sha256}. You have read the whole delivered evidence and your derivation (its header, layer statuses and legacy '
-                 f'tables, whole{bedrock}) in parts; your merged '
-                 'notes follow (whole, or one pack of them when they are longer than one call: every pack is given in its own call and '
-                 'every answer is kept), then the request instruction, then the packets the session code wrote for you (the comparison '
-                 'packet: your derived layers beside the frozen learned-structure files; the session receipts packet: your own provider '
-                 'invocations, what you read, the wall you kept), then your derivation digest\'s header and layer statuses (its legacy '
-                 'tables you read whole in the reading parts, and your notes carry them).\n\n')
-        # Greg, 2026-09-28: nothing cut. The notes go whole, in packs a little under the context limit when they are longer
-        # than one call (every pack its own call, every answer kept); the digest's header and layer statuses go in every call
-        # (its tables were read whole in the reading and the notes carry them; no partial table prefix is included); a
-        # cut-off answer (output incomplete) is regenerated from its pack in halves until it comes back whole.
-        digest_total = digest_path.stat().st_size
-        with digest_path.open('rb') as source:
-            status = b''
-            while True:
-                block = source.read(1 << 20)
-                if not block:
-                    break
-                status += block
-                at = status.find(b'\n### table ')
-                if at >= 0:
-                    status = status[:at + 1]
-                    break
-        tail = ('\n----- REQUEST INSTRUCTION -----\n' + instruction + '\n' + packets + '----- DERIVATION DIGEST (header and layer statuses) -----\n'
-                + status.decode('utf-8', errors='replace') + f'\n[the digest tables follow ({digest_total - len(status)} more bytes): you read the legacy '
-                f'tables whole in the reading parts and your merged notes carry them{bedrock}]\n----- END -----\n\n')
-
-        def frame(pack, k, count):
-            label = '----- MERGED NOTES -----\n' if count == 1 else f'----- MERGED NOTES, PACK {k}/{count} (the other packs are given in other calls) -----\n'
-            return intro + label + pack + tail
-
-        digest_included = dict(bytes_total=digest_total, bytes_in_every_writing_call=len(status), tables='read whole in the reading parts')
-
-        def written(name, task):
-            """Every outcome for one writing task over the notes packs, each complete (regenerated from halves when cut)."""
-            room = CHUNK_BYTES - len((intro + tail + task).encode('utf-8')) - 4000        # a little under the limit
-            if room < 20000:
-                raise RuntimeError(f'{name}: the fixed parts of the prompt leave {room} bytes for notes; nothing is cut, so this stops')
-            packs = _packs(notes, room)
-            outcomes = []
-            for k, pack in enumerate(packs, 1):
-                outcomes += self._boss_complete(f'{name}' + ('' if len(packs) == 1 else f'-pack-{k:03d}'),
-                                                lambda piece, k=k: frame(piece, k, len(packs)) + task, pack)
-            return outcomes
-
-        self.note('writing: the analysis')
-        analyses = written('write-analysis', 'TASK: write your run analysis now as the instruction asks (Markdown, no limit on length; '
-                             'cite the retained section hashes from your notes exactly; separate observed results from interpretation; '
-                             'name failures, unavailable observations, uncertainties and next lessons; do not claim later cycles or learning '
-                             'steps have completed). When your notes arrive in packs, write the analysis of THIS pack; every pack\'s analysis '
-                             'is kept, in order. WHAT THIS SESSION FILES into the response, and nothing else: this analysis text as the '
-                             f'first lesson, then ONE accounting entry (ledger "{CALCULATION_ACCOUNTING_LEDGER}"), then the ten output ledgers '
-                             f'({", ".join(OUTPUT_LEDGERS)}), each written in its own later call. No other entry is filed (no classroom '
-                             'lesson, no run_analysis entry): never describe any other entry as written or filed; anything else you want '
-                             'recorded goes into this analysis text itself. THE EXHAUSTION AND D PRIMING filed earlier in this session by code (work/teach/, '
-                             'not in this call\'s context) is appended by the session to this analysis as its own section; do not restate '
-                             'it, refer to it.')
-        analysis = analyses[-1]
-        analysis_md = '\n\n'.join(((f'## Analysis, part {k} of {len(analyses)}\n\n' if len(analyses) > 1 else '') +
-                                    (o.get('text') or f'(the BOSS produced no analysis: {o.get("error")})'))
-                                   for k, o in enumerate(analyses, 1)) + '\n'
-        analysis_md = analysis_md.rstrip('\n') + self._teach_section() + '\n'     # a section of the analysis text; response.json gains no key
-        self.note('writing: the calculation accounting')
-        accounting_entry = self._json_entries(written('write-accounting', f'TASK: write the ONE accounting entry: a JSON object whose "ledger" field is '
-                               f'"{CALCULATION_ACCOUNTING_LEDGER}", with a "layers" list carrying EVERY layer of this cycle\'s pin '
-                               f'({", ".join(derive["layers"])}) as {{"layer", "status": derived|compared|could_not, "where" (the derivation '
-                               'file), "compared_with" (retained sections or frozen learned-structure layers and what differed), "reason"}}; '
-                               'use the derivation digest statuses, never claim a derivation the digest does not carry. THE COMPARISON STEP: the '
-                               'comparison packet lists, for every frozen learned-structure layer, the files it names and their content shape, and '
-                               'the frozen files themselves are in your merged notes (your brain, frozen learned structure); for each pin layer you '
-                               'compared with them, file status "compared" with what differed (or that nothing differed) and which frozen file you '
-                               'compared with; where no frozen file speaks to a layer, say so in its reason; "derived" alone is for a layer you '
-                               'derived and could not compare. THE BEDROCK (Greg, 2026-09-21): '
-                               'a bedrock layer is accounted for like a pinned one, with its own status and reason, '
-                               'exactly as the derivation digest files it (a could_not layer carries the measured reason, never an empty '
-                               'derived). When your notes arrive in packs, file the entry from THIS pack; every pack\'s entry is kept. Output JSON only.'),
-                               CALCULATION_ACCOUNTING_LEDGER)
+        comparison = load_json(self.work / 'comparison.json') if (self.work / 'comparison.json').is_file() else None
+        receipts = load_json(self.work / 'session-receipts.json') if (self.work / 'session-receipts.json').is_file() else None
+        classroom = self.classroom_ledgers()
+        classroom_receipt = load_json(self.work / 'classroom' / 'receipt.json')
+        pin = self._pin()
+        required = set(pin.get('registry_layers') or []) | set(pin.get('bedrock_layers') or []) | set(derive.get('layers') or {})
+        self.note('writing: Granite\'s self-assessment as the critic (its one call; never blocking)')
+        self_assessment = self._granite_self_assessment()
+        ctx = dict(cycle=self.cycle, verify=verify, labels=labels, derive=derive, comparison=comparison, receipts=receipts,
+                   classroom_ledgers=classroom, classroom_receipt=classroom_receipt, visible=classroom_module().visible_of(self.request),
+                   rules_witness=classroom_receipt.get('classroom_rules'), self_assessment=self_assessment,
+                   code_commit=os.environ.get('MARKETS_SHA'),
+                   stages=[dict(stage=n, author='code') for n in ('verify', 'labels', 'derive', 'compare', 'reading', 'classroom', 'teach', 'writing')])
+        self.note('writing: Frankie\'s analysis, the accounting entry and the ten ledgers by code')
+        analysis_md = W.analysis_markdown(ctx)
+        accounting_entry = W.accounting_entry(CALCULATION_ACCOUNTING_LEDGER, derive, comparison, required)
         accounting_entry['harness_derivation'] = {name: dict(status=v['status'], producer=v.get('producer'), reason=v.get('reason'), sha256=v['sha256'])
                                                   for name, v in derive['layers'].items()}
-        for name in derive['layers']:
-            if not any(isinstance(l, dict) and l.get('layer') == name for l in accounting_entry.get('layers', []) if isinstance(accounting_entry.get('layers'), list)):
-                accounting_entry.setdefault('layers_missing_from_boss_entry', []).append(dict(layer=name, status=derive['layers'][name]['status'],
-                    reason=derive['layers'][name].get('reason') or 'omitted by the BOSS; status from the harness derivation'))
-        ledgers = []
-        registry = self._registry()
-        for name in OUTPUT_LEDGERS:
-            self.note(f'writing: ledger {name}')
-            description = registry.get(name)
-            ledgers.append(self._json_entries(written(f'write-{name}', f'TASK: file the append-only output ledger "{name}" of the native ingestion registry for '
-                                f'this cycle as ONE JSON object whose "ledger" field is "{name}"' +
-                                (f'. The registry describes it as: {json.dumps(description)}' if description else '') +
-                                '. Fill it from your notes, the derivation digest and the packets above only' +
-                                (' (THE SESSION RECEIPTS PACKET above is observed fact for this ledger: your own provider invocations, what you read, the wall you kept; '
-                                 'cite its rows, never say no observed fact exists when the packet carries one)' if name in RECEIPT_LEDGERS else '') +
-                                '; a ledger you cannot fill is filed with its "reason", never omitted. When your notes arrive in packs, file the '
-                                'ledger from THIS pack; every pack\'s object is kept. Output JSON only.'), name))
+        ledgers = W.output_ledgers(OUTPUT_LEDGERS, self._registry(), ctx)
         contract = self.request['attachment']['feedback_contract']
         session_id = f'boss:frankie-box:i-035994afa8bdf66a5:cycle-{self.cycle}'
-        engine = load_json(self.work / 'engine.json')
-        model_identity = (analysis.get('model') or engine['served_model_name']) + \
-            f' (the BOSS: vLLM on RunPod Pod {engine["pod_id"]}, jobs_v1, context {CONTEXT}; as reported in the chat completion "model" field)'
+        model_identity = ('Frankie\'s code (no model call in the principal session; Granite, the B2 shadow critic, gives only its '
+                          'labelled self-assessment' + (f', job {self_assessment.get("job_id")}' if self_assessment.get('job_id') else '') + ')')
         response = dict(request_sha256=self.request_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
                         sections={k: v['sha256'] for k, v in self.request['attachment']['section_evidence'].items()},
                         feedback=dict(request_id=self.request['request_id'], input_hash=verify['input_hash'], source_hash=contract['source_hash'],
@@ -2076,17 +1985,16 @@ class Session:
             response['pending_feedback'] = dict(request_id=self.request['request_id'],
                 input_hash=verify['input_hash'], source_hash=contract['source_hash'],
                 forecast_target=labels['forecast_target'])
-        classroom = self.classroom_ledgers()
-        response.update(classroom)                # the Dipole classroom, turn 1 (work/classroom/receipt.json has the counts and the composition)
-        classroom_receipt = load_json(self.work / 'classroom' / 'receipt.json')
+        response.update(classroom)
         write_bytes(self.out / 'response.json', json.dumps(response, indent=1, sort_keys=True, ensure_ascii=False).encode('utf-8'))
         write_text(self.out / 'analysis.md', analysis_md)
         response_sha256 = digest(response)
+        authority = ('Frankie on Greg Davis\'s box i-035994afa8bdf66a5 (us-east-1): the response written by Frankie\'s code '
+                     '(Greg, 2026-09-29: Granite serves the B2 shadow critic only, plus its one labelled self-assessment); '
+                     'session code deploy/aws/box/frankie_box_boss_session.py')
         record = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=self.request_sha256,
                       response_sha256=response_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
-                      host_authority=('Frankie, the BOSS, on Greg Davis\'s box i-035994afa8bdf66a5 (us-east-1), under Greg\'s instruction of '
-                                      '2026-09-21 (option A: the calculations are Frankie\'s, run on the box; the engine is the BOSS vLLM on '
-                                      f'Pod {engine["pod_id"]}); session code deploy/aws/box/frankie_box_boss_session.py'),
+                      host_authority=authority,
                       response=dict(witness(self.out / 'response.json'), path=str(self.out / 'response.json')),
                       analysis=dict(witness(self.out / 'analysis.md'), path=str(self.out / 'analysis.md')),
                       classroom=dict(classroom_receipt['report'], composition=classroom_receipt['composition']))
@@ -2099,9 +2007,10 @@ class Session:
         print(analysis_md, flush=True)
         write_json(self.work / 'writing.json', dict(schema='FRANKIE_BOX_WRITING_RECEIPT_V1', at=time.time(), response_sha256=response_sha256,
                    files={n: witness(self.out / n) for n in ('response.json', 'analysis.md', 'host-session-record.json', 'host-attestation.json')},
-                   lessons=len(response['lessons']), analysis_incomplete=bool(analysis.get('incomplete')), digest_in_writing_calls=digest_included,
+                   lessons=len(response['lessons']), author='code', model_calls=0 if not self_assessment.get('job_id') else 1,
+                   granite_self_assessment=dict(job_id=self_assessment.get('job_id'), error=self_assessment.get('error')),
                    classroom=classroom_receipt['report'], inputs=self._writing_inputs(), packets=[n for n in PACKETS if (self.work / n).is_file()]))
-        self.note(f'written: four files, response_sha256 {response_sha256[:16]}, {len(response["lessons"])} lessons, the four classroom ledgers')
+        self.note(f'written by code: four files, response_sha256 {response_sha256[:16]}, {len(response["lessons"])} lessons, the four classroom ledgers')
         self.docs()
 
     def _boss_complete(self, name, make_prompt, text, depth=0):
@@ -2250,14 +2159,19 @@ class Session:
         self.brain_ready()
         if stage == 'preflight':
             self.labels()
-            self.engine_reach()
             self.serverless_unwired()
+            self._soft = True                                # the Pod serves only Granite's self-assessment: reported, never required
+            try:
+                self.engine_reach()
+            except SoftRefusal as error:
+                self.note(f'preflight: Pod not reachable ({error}); only Granite\'s self-assessment needs it, the run does not')
+            finally:
+                self._soft = False
             classroom_module().visible_of(self.request)      # the request must carry the TEACH classroom this session answers
             print('preflight: OK', flush=True)
             return
         if stage == 'correction':
-            self.engine_reach()
-            self.phase('correction', 'answering the Dipole classroom correction on the BOSS')
+            self.phase('correction', 'answering the Dipole classroom correction by Frankie\'s code (no model)')
             self.correction()
             self.push(turn='correction')
             return
@@ -2277,8 +2191,7 @@ class Session:
             return
         self.phase('verified', 'request, contract and rows verified on the box; session running')
         self.labels()
-        self.engine_reach()
-        self.serverless_unwired()
+        self.serverless_unwired()           # the principal needs no Pod: Frankie's code does every stage; Granite's self-assessment reaches it itself
         self.phase('deriving')
         needed, why = retained_derivation or self._derive_needed()     # whole and dense at the current schema, under the request's pin, bedrock included
         if needed:
@@ -2291,18 +2204,18 @@ class Session:
         self.phase('classroom')
         self.classroom()
         self.phase('teach')
-        if not (self.work / 'teach' / 'exhaustion-teachback.json').exists():
+        if not (self.work / 'teach' / 'priming.json').exists():
             self.teach()
         self.phase('writing')
         self.receipts()
         response_path = self.out / 'response.json'
         written = load_json(self.work / 'writing.json') if (self.work / 'writing.json').exists() else {}
-        if (not written or not response_path.exists() or any(k not in load_json(response_path) for k in CLASSROOM_KEYS)
+        if (not written or written.get('author') != 'code' or not response_path.exists() or any(k not in load_json(response_path) for k in CLASSROOM_KEYS)
                 or written.get('inputs') != self._writing_inputs()
                 or any(not (self.out / name).is_file() or witness(self.out / name) != expected
                        for name, expected in written.get('files', {}).items())
                 or set(written.get('files', {})) != {'response.json', 'analysis.md', 'host-session-record.json', 'host-attestation.json'}):
-            self.writing()          # durable BOSS jobs: a call whose prompt is unchanged is reused; the calls whose inputs moved run again
+            self.writing()          # by code; a response written earlier by a model is written again by code
         self.push()
 
 

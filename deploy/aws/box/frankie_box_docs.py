@@ -323,9 +323,10 @@ def build_docs(work, out, cycle):
     # BR-7 (2026-09-21): the exhaustion/D teach-back beside the classroom; the bedrock run receipt and result as JSON docs;
     # the three exact ledgers copied WHOLE under bedrock/ledgers/ (the digest carries the carrier columns, the bundle the
     # rows); every bedrock layer file referenced by name, bytes and sha256 (its content is in the DIGEST_V6 tables).
-    teach = work / 'teach' / 'exhaustion-teachback.md'
-    if teach.is_file():
-        put('exhaustion-teachback.md', teach.read_bytes(), teach, "the exhaustion and D priming: facts computed by code from the bedrock files and the frozen learned structure, whole; no model call (session code)")
+    # The bedrock-built exhaustion/D priming is removed (Greg, 2026-09-29); only the small code priming is published.
+    priming = work / 'teach' / 'priming.md'
+    if priming.is_file():
+        put('priming.md', priming.read_bytes(), priming, "the small priming: no bedrock, code only (session code)")
     bedrock = work / 'bedrock'
     for name in ('receipt.json', 'result.json'):
         p = bedrock / name
