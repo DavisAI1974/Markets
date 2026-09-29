@@ -47,6 +47,11 @@ direct SSM probes and S3 reads from the container; put it in `~/.config/markets/
   delete bedrock tables + unused code/packs/worktrees + failed/unused/duplicate runs, then zip the keepers (work list
   item 3); a disk grow is only the fallback if free space is still short after that.
 
+## STATUS ~13:05Z (read the handoff's "Update ~13:05Z" first)
+Disk cleanup DONE (1.55 TB free). i-08cee set up and running day facts for the 13 confirmation days. 12 discovery
+days ingesting on GitHub runners (run 36571235912; pointers on branch frankie-ingest-pointers). New 16 vCPU box
+terminated. Items 2, 3 (code, bedrock) and the box setup below are done; item 1's Wednesday is sealed (conform pending).
+
 ## Work list, in order
 1. **Probe everything running** (handoff table): Wednesday 20211006 (then `ACTION=conform` on it), the four ingests of
    orchestrator run `pairs2-20260929-1`, Databento run 36564541947 (Oct 2024+2025), free fetch run 36557302661.

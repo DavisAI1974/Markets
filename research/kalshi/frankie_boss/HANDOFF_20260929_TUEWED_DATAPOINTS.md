@@ -93,3 +93,29 @@ numbers are not extracted from the archived pages; Frankie's code answers TEACH 
 GUIDED after two mastered TEACH classroom days (the next classroom day after Tue/Wed if both are mastered: build GUIDED
 answers or hold at TEACH, Greg's call); the BOSS teacher's answer turn of the three-way conference (spec item 5) is not
 built; Jev's material may exceed 8 x 4 MB relay slots.
+
+## Update ~13:05Z (this chat, continued)
+- **Disk**: staged code cleanup (58 checkouts, 77.2 GB), bedrock tables + projection working files (395.1 GB), then the
+  whole Monday `work/bedrock` (818.6 GB, Greg: "none of it is needed"). Main box free 265 GB -> 1.55 TB. Receipts:
+  `receipts/code-cleanup-20260929T120938Z.json`, `receipts/bedrock-cleanup-20260929T121941Z/`,
+  `receipts/bedrock-whole-20260929T122144Z/`. Detail: `BOX_DATA_INVENTORY_20260929.md`.
+- **Ingest on the main box**: Tue 20211005 sealed (2 h 12 min), Wed 20211006 sealed 12:3xZ (2 h 51 min, DEFERRED verify:
+  needs `frankie_box_ingest_block.sh ACTION=conform DIRECTORY=/opt/frankie-box/work/ingest-20211006-ingest-1790675371`),
+  pairs2: 20221005 sealed (1 h 24 min), 20221004/20211012/20211013 at 82/66/67% at 12:58Z (deferred verify each).
+- **Boxes**: i-08cee7171c0a76a04 (r6i.2xlarge 8 vCPU, us-east-2) STARTED and set up like the main box
+  (`frankie_box_worker_setup.sh`: same Python 3.13.15 build, the main box's 75 pins, markets checkout + ingest worktree;
+  receipt `receipts/worker-setup-*.json`). The Windows box i-0e90ee6110ef609aa is untouched (stopped). A 16 vCPU Linux box
+  I launched by mistake (i-0fbd6837a0a2b4f9f) was TERMINATED on Greg's word (no new boxes). us-east-2 on-demand vCPU cap
+  is 16; the Claude user cannot read or request quotas.
+- **Ingest on GitHub runners** (Greg: "keep ingest data in aws and make a pointer that points at git ... use git's CPUs"):
+  `frankie_box_run.yml script=deploy/aws/box/frankie_runner_ingest.sh variables="DAYS=... WORKERS=3 VERIFY=inline"`, one
+  4-CPU runner per day (public repo: free), journal + receipts to `s3://bento-568968024170-us-east-2-an/frankie/ingest/
+  <day>/gh-<run>-<attempt>/`, pointers committed to the branch `frankie-ingest-pointers` (`ingest_pointers/`). Boxes may
+  `getprefix:` `frankie/ingest/` to pull a journal. RUN 36571235912 (12:54Z): the 12 remaining discovery days
+  20211019/20, 20221011/12, 20221018/19, 20231003/04, 20231010/11, 20231017/18 (first batch logs progress only at the end).
+- **Manifests**: day facts run `next6pairs-20260929-1` on i-08cee (18 partitions, every day reconciled, single
+  instrument); 6 block + 12 day manifests committed (af36937d). Day facts for the 13 confirmation days
+  (2024-2025, `CONFIRMATION=staging-only`, run `confirm7-20260929-1`) dispatched on i-08cee ~13:00Z; then derive their
+  manifests (bare-namespace runner: the package __init__ imports torch) and ingest them on i-08cee (Greg: "fill up idle
+  box") and/or runners.
+- Keys: the Claude pair lives in `~/.config/markets/env` of this container only (Greg: no rotation until the build is done).
