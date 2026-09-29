@@ -2,7 +2,8 @@
 # counts, each discovery day on its own, and their lessons written (Jev's uploaded to his brain on S3 through the
 # presigned slot). Code only; no model call. Inputs: CODE_ROOT, SEARCHES (space-free, comma-separated discovery-day
 # search directories), and JEV_STAMP (with presign getprefix:.../clm-sidecar/<stamp>/jev/ and
-# put:.../clm-sidecar/jev-brain/lessons/<day>-<stamp>.json) and/or FRANKIE_LEDGERS + FRANKIE_DAY.
+# put:.../clm-sidecar/jev-brain/lessons/<day>-<stamp>.json) and/or FRANKIE_LEDGERS + FRANKIE_DAY and/or HISTORICAL_CLAIMS
+# (a committed research/kalshi/frankie_boss/knowledge/HISTORICAL_CLAIMS_V1-*.json, relative to the staged checkout).
 set -eu
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"; : "${SEARCHES:?search directories required}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
@@ -13,5 +14,9 @@ for d in $(echo "$SEARCHES" | tr ',' ' '); do
 done
 [ -z "${JEV_STAMP:-}" ] || set -- "$@" --jev-stamp "$JEV_STAMP"
 [ -z "${FRANKIE_LEDGERS:-}" ] || set -- "$@" --frankie-ledgers "$FRANKIE_LEDGERS" --frankie-day "${FRANKIE_DAY:?FRANKIE_DAY required}"
+if [ -n "${HISTORICAL_CLAIMS:-}" ]; then
+  case "$HISTORICAL_CLAIMS" in research/kalshi/frankie_boss/knowledge/HISTORICAL_CLAIMS_V1-*.json) ;; *) echo "HISTORICAL_CLAIMS must be a committed knowledge/HISTORICAL_CLAIMS_V1 file" >&2; exit 2;; esac
+  set -- "$@" --historical-claims "$CODE_ROOT/$HISTORICAL_CLAIMS"
+fi
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT" MAP_URL="${MAP_URL:-}"
 exec nice -n 10 /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_scientific_teacher.py" "$@"

@@ -7,7 +7,8 @@ Code only; no model call.
 Takes, each labelled with its author (rule R11: claims, never truth):
   - Jev's claims: JEV_CLAIMS_V1 (clm_sidecar/sit_in.py), each naming its series, direction, lag and cells;
   - Frankie's claims: ONLY the novel findings of his classroom ledgers (dipole_novel_findings). The rest of his ledgers,
-    his analysis and his answers are his reasoning and are never read here (rule R09).
+    his analysis and his answers are his reasoning and are never read here (rule R09);
+  - the historical Dipole claims: HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py, committed), author 'historical'.
 and the search's results for every DISCOVERY day given (frankie_box_experiment_search.py outputs; a confirmation day is
 refused: R15). A claim made on one day is tested on every discovery day given, and each day is reported on its own
 (never pooled).
@@ -31,6 +32,9 @@ Writes, per author, one lessons file bound to the exact claims it answers (claim
                          slot in MAP_URL when given, since the box writes nothing in S3), read on his next day;
   FRANKIE_LESSONS_V1  -> kept under /opt/frankie-box/work/experiment-teacher/ and filed into Frankie's brain as the entry
                          <brain>/<day>-lessons/ (frankie_box_brain.write_lessons_entry), read by every later cycle.
+  HISTORICAL_LESSONS_V1 -> kept under /opt/frankie-box/work/experiment-teacher/historical/<days>-<catalog sha12>.json,
+                         the historical catalog's claims (frankie_box_historical_claims.py) tested on the days given;
+                         into nobody's brain here (which material carries it is the classroom step's).
                          Neither ever carries the other's claims.
 """
 import argparse
@@ -79,6 +83,23 @@ def jev_claims(path):
                    lag=claimed_lag(c.get('lag')), cells=list(c.get('cells') or []), day_made=doc.get('day'))
               for c in doc.get('claims') or []]
     return dict(author='jev', stamp=doc.get('stamp'), day=doc.get('day'), claims_sha256=sha256_bytes(raw),
+                source=str(path), claims=claims)
+
+
+def historical_claims(path):
+    """HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py): the catalog's claims, author 'historical'; only its
+    claims are tested, its not_testable list travels with the lessons by reference (claims_source)."""
+    raw = Path(path).read_bytes()
+    doc = json.loads(raw)
+    if doc.get('schema') != 'HISTORICAL_CLAIMS_V1':
+        raise SystemExit('%s is not a HISTORICAL_CLAIMS_V1' % path)
+    claims = [dict(id=c['id'], statement=c['statement'], kind='historical', series=list(c['series']),
+                   direction=c.get('direction') if c.get('direction') in ('same', 'opposite') else None,
+                   direction_text=c.get('direction'), lag=claimed_lag(c.get('lag')), cells=list(c.get('cells') or []),
+                   condition=c.get('condition'), x_transform=c.get('x_transform', 'sign_of_step'),
+                   y_transform=c.get('y_transform', 'sign_of_step'), source=c.get('source'), day_made=None)
+              for c in doc.get('claims') or []]
+    return dict(author='historical', stamp=doc['catalog_sha256'][:12], day=None, claims_sha256=sha256_bytes(raw),
                 source=str(path), claims=claims)
 
 
@@ -197,6 +218,9 @@ def test(claims_doc, days):
         for cell in c['cells']:
             if not any(norm(cell) in norm('%s %s' % cv) for d in days for cv in d['cells']):
                 untested.append('the claimed cell "%s" was not a cell of the search' % cell)
+        if c.get('condition'):
+            untested.append('the claimed condition "%s" is not applied by the search (conditions not searched yet): the '
+                            'counts are over every step of the cell' % c['condition'])
         if c['direction'] is None:
             untested.append('no direction stated in a testable form ("%s"): counts reported, nothing marked held' % c['direction_text'])
         claimed = (c.get('x_transform', 'sign_of_step'), c.get('y_transform', 'sign_of_step'))
@@ -215,7 +239,9 @@ def test(claims_doc, days):
 
 
 def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/frankie-box/brain'):
-    schema = 'JEV_LESSONS_V1' if doc['author'] == 'jev' else 'FRANKIE_LESSONS_V1'
+    schema = {'jev': 'JEV_LESSONS_V1', 'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1'}[doc['author']]
+    if doc['author'] == 'historical':
+        doc = dict(doc, day='-'.join(sorted(d['day'] for d in days)))      # the days tested, each still on its own
     lessons = dict(schema=schema, author=doc['author'], day=doc['day'], stamp=doc['stamp'], claims_sha256=doc['claims_sha256'],
                    claims_source=doc['source'], written_by='scientific_teacher', at=time.time(),
                    searches=[dict(day=d['day'], cycle=d['cycle'], dir=str(d['dir']), manifest_sha256=d['manifest_sha256'])
@@ -257,6 +283,7 @@ def main():
     p.add_argument('--jev-stamp', help='fetch clm-sidecar/<stamp>/jev/claims.json through MAP_URL (presign getprefix) instead')
     p.add_argument('--frankie-ledgers', help='Frankie\'s classroom ledgers.json of one day (only its novel findings are read)')
     p.add_argument('--frankie-day', help='the day of those ledgers (YYYYMMDD)')
+    p.add_argument('--historical-claims', help='a HISTORICAL_CLAIMS_V1 file (frankie_box_historical_claims.py)')
     a = p.parse_args()
     if a.jev_stamp and not a.jev_claims:
         key = 'clm-sidecar/%s/jev/claims.json' % a.jev_stamp
@@ -271,11 +298,12 @@ def main():
         a.jev_claims = str(target)
     if a.frankie_ledgers and not (a.frankie_day and len(a.frankie_day) == 8 and a.frankie_day.isdigit()):
         raise SystemExit('--frankie-day YYYYMMDD required with --frankie-ledgers')
-    if not (a.jev_claims or a.frankie_ledgers):
-        raise SystemExit('give --jev-claims / --jev-stamp and/or --frankie-ledgers')
+    if not (a.jev_claims or a.frankie_ledgers or a.historical_claims):
+        raise SystemExit('give --jev-claims / --jev-stamp, --frankie-ledgers and/or --historical-claims')
     days = load_searches(a.search)
     for doc in ([jev_claims(a.jev_claims)] if a.jev_claims else []) + \
-               ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []):
+               ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []) + \
+               ([historical_claims(a.historical_claims)] if a.historical_claims else []):
         write(doc, days, test(doc, days), ROOT, os.environ.get('MAP_URL'))
 
 
