@@ -95,3 +95,9 @@ Also: GRANITE_DISCUSSION_VOICE_ROLE_V1.md (Granite's explicit charter; DRAFT unt
 - "Go" was read as "stop the old Pods" when Greg meant the queue order. Ask when a one-word go could match two questions.
 - The twin fetch failed twice (block manifest prefix is not the S3 key -> use the canonical manifest's archive_key; and
   WORKERS defaults to 31 -> pass WORKERS=7 on a 16-CPU box).
+
+## Addendum 21:17Z: Pod agents
+Status check run 36632088486 (21:16Z): rf8eux1c88pfn0 and lunj1qj145rswp UP (agent answers: 14 usable CPUs, Python
+3.13.15, markets_commit f86bb7c2, jobs []); xfpt6fy3mjkn4l and 6ijaa67k785doa still HTTP 502 "Waiting for service to
+respond" 13 min into boot (no 503 = no failed step). The fixed boot is proven on 2 of 4. First thing next chat: ACTION=status
+on all four; if a 502 persists past ~40 min with no 503, the create run 36630617830's log says what it saw. Then the loop.
