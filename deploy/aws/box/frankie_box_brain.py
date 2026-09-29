@@ -419,7 +419,9 @@ def export_calculations(work, day, cycle, root=EXPERIMENT_ROOT):
     skipped = []
     for name, entry in sorted((derive.get('layers') or {}).items()):
         path = Path(entry['path']) if entry.get('path') else work / 'derived' / f'{name}.json'
-        if name in bedrock:
+        if name in bedrock or entry.get('bedrock'):
+            # the 44 projection layers are listed in derive.bedrock.layers; the two section files
+            # (bedrock_section_4_2 / 4_4) carry bedrock=True on their own entry only, and leaked through before
             skipped.append(dict(layer=name, reason='bedrock layer (not exported for the experiments)'))
         elif not path.is_file():
             skipped.append(dict(layer=name, reason=f'no layer file ({entry.get("status")}: {entry.get("reason")})'))

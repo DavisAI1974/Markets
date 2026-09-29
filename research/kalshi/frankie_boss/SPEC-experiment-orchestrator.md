@@ -45,8 +45,8 @@ Frankie's cycle (context, teacher, principal, Granite, classroom) is not called;
 |---|---|---|---|
 | 1 fetch | the trading-day partitions from S3 | `frankie_box_ingest_block.sh ACTION=fetch` (presigned map) | the DBN partitions, verified by sha256 and size |
 | 2 ingest | the gold-standard trading-day ingest | `frankie_box_ingest_block.sh ACTION=ingest` | the sealed compact journal and its receipt (record count measured at ingest, the seal) |
-| 3 calculations | the derive stage WITHOUT the bedrock | `frankie_box_monday_calculations.py` / `Session.derive` with a new `bedrock=False` switch that skips `_derive_bedrock` | the legacy layers and the pin's calculation layers |
-| 4 export | the per-cycle calculation export | `frankie_box_brain.export_calculations` (built, f751ccbe) | `/opt/frankie-box/work/experiment-calcs/<day>/cycle-<NN>/`: the JSON layer files hard-linked, plus MANIFEST |
+| 3 ROOT | the calculations root (Greg, 2026-09-29: "we forgot root in the experiment"), WITHOUT the bedrock | `frankie_box_monday_calculations.py` (`Session.derive` with a new `bedrock=False` switch that skips `_derive_bedrock`; not built; today the script is Monday-only) | the ROOT's own outputs: `derive.json`, the 5 legacy layers, and the row spools `work/derived/.rows/*.jsonl` (every INPUT record decoded, prices, book frames, structures, failures), with the pin, source binding and receipt |
+| 4 export | every data JSON of the day and cycle from ROOT, CONFIG and CYCLE (built 2026-09-29, not run) | `frankie_box_experiment_data.sh ACTION=plan\|export` (`frankie_box_experiment_data.py`, a catalog) | `/opt/frankie-box/work/experiment-data/<day>/cycle-<NN>/<stage>/...` hard-linked + MANIFEST: files, excluded (R09 Frankie's reasoning, R10 grades, bedrock, mixed, other models' output, each with its reason), missing (a stage that never got that far), unclaimed (listed with bytes). Replaces the calc-only `export_calculations` for the experiment; that one still runs from `brain_entry` and no longer leaks the two bedrock section files |
 
 Not called:
 - the trading-day preparation (native context, the teacher);
@@ -55,7 +55,12 @@ Not called:
 - the digest render (Frankie's read format; the experiment reads the JSON).
 
 ## The new part (built after the orchestrator)
-5. **Series:** from each day's compact journal (every event, every book level, fills, FIFO, unknown-side trades carried) and the exported calculation JSON. Everything goes on one time axis per day, and every row carries only what was knowable at that moment (the causal clocks).
+5. **Series:** from the exported day data (step 4): the ROOT's row spools (every INPUT record already decoded by ROOT, so
+   the journal is NOT decoded a second time), the legacy layers, the schedule, the teacher's Dipole measurements and the
+   cycle records. Where a field exists only in the sealed journal (e.g. every resting order at a group close), the journal
+   is read in place through `FrankieCompactReader`, never re-written. Everything goes on one time axis per day ordered by
+   the entry ordinal / cursor (receive clocks can run backwards), and every row carries only what was knowable at that
+   moment (the causal clocks).
 6. **Search:** series x transforms x lags x cells x conditions x targets.
    - Every test gets its own circular-shift chance check.
    - Results are reported as counts, never coefficients or averages (D37).

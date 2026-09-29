@@ -41,8 +41,8 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 |---|---|---|---|
 | 1 | fetch | `frankie_box_ingest_block.sh ACTION=fetch MANIFEST=...` (presigned map, sha256 + size verified) | built (full run's) |
 | 2 | ingest | `frankie_box_ingest_block.sh ACTION=canary\|ingest\|status` - sealed compact journal + receipt | built (full run's) |
-| 3 | calculations | derive stage with a new `bedrock=False` switch skipping `_derive_bedrock` | **NOT built** - `bedrock=False` exists only in the digest render, not in `Session.derive` |
-| 4 | export | `frankie_box_export_calcs.sh` -> `frankie_box_brain.export_calculations`; also runs automatically after every cycle from `brain_entry()` (a failure is noted, never blocks the cycle). Store: `/opt/frankie-box/work/experiment-calcs/<day>/cycle-<NN>/` = the derive stage's JSON layer files + `derive.json`, hard-linked, + MANIFEST (bytes, sha256); bedrock layers are NOT exported | **built** (f751ccbe) |
+| 3 | ROOT | the calculations root (`frankie_box_monday_calculations.py`) WITHOUT bedrock: `derive.json`, 5 legacy layers, row spools `work/derived/.rows/*.jsonl` (every INPUT record decoded), pin, source binding, receipt (Greg: "we forgot root in the experiment") | **NOT built for new days** - `bedrock=False` exists only in the digest render, and the script is Monday-only |
+| 4 | export (day data) | `frankie_box_experiment_data.sh ACTION=plan\|export DAY CYCLE CALCULATIONS [PREPARATION PRINCIPAL_INPUTS HOST_CONFIG RUN]`: every data JSON of the day from ROOT, CONFIG and CYCLE, hard-linked under `/opt/frankie-box/work/experiment-data/<day>/cycle-<NN>/`; MANIFEST lists files, excluded (R09, R10, bedrock, mixed, other models, each with reason), missing, unclaimed. The older calc-only export (`frankie_box_export_calcs.sh`, also from `brain_entry()`) remains and no longer leaks the two bedrock section files | **built 2026-09-29, not run** |
 | - | orchestrator | `frankie_box_experiment.py` + `frankie_experiment.yml` (`ACTION=start\|status\|stop`) | **NOT built** |
 | 5 | series | one causal time axis per day from the journal + calc JSON | NOT built |
 | 6 | search | series x transforms x lags x cells x conditions x targets | NOT built (start from the joined-teacher builder, dfe08ca7) |
@@ -77,6 +77,12 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
   is a Tue/Wed-only manifest. `ACTION=status` is read-only and safe.
 - **Tue/Wed calculations: not dispatchable as-is.** `frankie_box_monday_calculations.sh` demands
   a Monday `AUTHORSHIP` receipt. Adapting it is part of build step 3.
+
+- **Monday day data** (built 2026-09-29): `frankie_box_experiment_data.sh ACTION=plan` first (read-only: what would
+  be linked, excluded, missing, unclaimed), then `ACTION=export`, with `DAY=20211004 CYCLE=00
+  CALCULATIONS=/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48` plus whichever of
+  PREPARATION / PRINCIPAL_INPUTS / HOST_CONFIG / RUN exist (ONE run directory; runs are never merged). Hard links, so
+  the root and the export must be on the same filesystem (the script refuses rather than copy).
 
 ## 4. Walls that never bend (experiment-specific)
 
@@ -124,6 +130,13 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
   JSON/CSV/Parquet, including on S3 with credentials).
 
 ## 6. Open / contradictory - ask Greg, do not resolve
+
+- The day-data catalog leaves three kinds of file out for Greg's call, each listed in the MANIFEST: MIXED
+  (`session-request.json`, `comparison.json`, `principal-inputs-receipt.json`: data together with Frankie's brain;
+  a filter would let the data part through), OTHER_MODEL (the Granite critic, its self-assessment, and the BOSS
+  native/controller journals and forecast records in `handoff-*`: the native system's own forecasts - Frankie's
+  decision process, or data?), and the teacher's JSON: JournalTeacherR3 / parallel_teacher write no JSON of their own
+  (memory and pickles); the teacher's measurements reach disk as JSON only inside `host-dipole-classroom-source`.
 
 - The spec calls a 1-2 minute canary "the standing rule for measurements". The drop-in and
   CLAUDE.md say "no canaries". Ask which applies to the disk measurement.

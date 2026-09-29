@@ -1,0 +1,212 @@
+"""Every data JSON of one day and cycle, from the ROOT, CONFIG and CYCLE processes, for the experiment's teachers.
+
+Greg, 2026-09-29: "we forgot root in the experiment"; "fix gaps"; and the rule for both teachers (the BOSS teacher and
+the scientific teacher, the experiment's search): they read every bit of Frankie's ingest data except the files he
+generates himself to reason toward forecasts, so nothing is built a second or third time. Spec:
+research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md and SPEC-scientific-teacher.md ("Data access").
+
+Nothing is recomputed or copied: every included file is HARD-LINKED (no second write, no extra disk; the link survives
+any later cleanup of the run directory) under /opt/frankie-box/work/experiment-data/<day>/cycle-<NN>/<stage>/<relative
+path>, with its bytes and sha256 in MANIFEST.json. Every catalogued pattern lands in exactly one list:
+  files     included (data, or a receipt that tells where the data came from);
+  excluded  present on disk but kept from the teachers, each with its reason:
+              FRANKIE_REASONING  his own notes, analysis, response, ledgers, classroom answers, priming, brain (R09);
+              GRADED             grades and the graded answer key (R09/R10: the teachers never see graded outcomes);
+              BEDROCK            the bedrock layers, ledgers and sections (Greg, 2026-09-29: no bedrock in the experiment);
+              MIXED              files carrying data and Frankie's reasoning together; a filter is Greg's call;
+              OTHER_MODEL        model output that is not Frankie's (the Granite critic, its self-assessment, the BOSS
+                                 forecast journals); where it falls under the rule is Greg's call;
+  missing   a catalogued pattern that matched nothing (e.g. a config or cycle stage that never got that far), listed,
+            never filled in;
+  unclaimed every other file under a given directory that no pattern claims (native pickles, SQLite state, walk
+            caches, Markdown, other cycles' files), listed with its bytes so nothing goes unaccounted; not linked.
+A day and cycle is exported once: an existing MANIFEST declines the run with the reason (duplicate data). Exactly one
+run directory per day and cycle is taken (the caller names it); runs are never merged.
+"""
+import argparse
+import hashlib
+import json
+import os
+import shutil
+import time
+from pathlib import Path
+
+SCHEMA = 'FRANKIE_EXPERIMENT_DATA_V1'
+ROOT = Path('/opt/frankie-box/work/experiment-data')
+
+INCLUDE, FRANKIE_REASONING, GRADED, BEDROCK, MIXED, OTHER_MODEL = (
+    'INCLUDE', 'FRANKIE_REASONING', 'GRADED', 'BEDROCK', 'MIXED', 'OTHER_MODEL')
+
+# (stage, glob relative to that stage's directory, disposition, what it is). Order matters: the first pattern that
+# claims a file decides it, so the specific exclusions come before the broad inclusions.
+CATALOG = (
+    # ROOT: the calculations root (/opt/frankie-box/work/monday-calculations/<root>/)
+    ('root', 'work/derived/.projection-v2/**/*', BEDROCK, 'the 44 bedrock projection layers and their receipts'),
+    ('root', 'work/bedrock/**/*', BEDROCK, 'the bedrock traversal: result, ledgers, receipts'),
+    ('root', 'work/derived/bedrock_section_*', BEDROCK, 'bedrock sections 4.2 / 4.4'),
+    ('root', 'work/classroom/**/*', FRANKIE_REASONING, "Frankie's classroom answers and ledgers (R09)"),
+    ('root', 'work/teach/**/*', FRANKIE_REASONING, "Frankie's priming (R09)"),
+    ('root', 'work/boss-jobs/**/*', FRANKIE_REASONING, "the principal's model calls (R09)"),
+    ('root', 'work/reading*.json', FRANKIE_REASONING, "Frankie's reading corpus and plan (R09)"),
+    ('root', 'work/knowledge-base-*.json', FRANKIE_REASONING, "the pin of Frankie's brain (R09)"),
+    ('root', 'work/writing.json', FRANKIE_REASONING, "Frankie's writing stage (R09)"),
+    ('root', 'work/granite-self-assessment.json', OTHER_MODEL, "Granite's self-assessment as the critic"),
+    ('root', 'work/comparison.json', MIXED, 'derived layers beside the frozen brain (brain = Frankie)'),
+    ('root', 'out/**/*', FRANKIE_REASONING, "Frankie's response, analysis, attestations (R09)"),
+    ('root', 'work/derive.json', INCLUDE, 'the derivation receipt: every layer, status, producer, sha256, row counts'),
+    ('root', 'work/derived/legacy_*.json', INCLUDE, 'the five legacy layers: price, signed flow, roll20, book frames, structure'),
+    ('root', 'work/derived/.rows/*.jsonl', INCLUDE, 'the ROOT row spools: every INPUT record, prices, book frames, structures, failures'),
+    ('root', 'work/labels.json', INCLUDE, 'timing labels computed by code'),
+    ('root', 'work/digest-proof.json', INCLUDE, 'exact table proofs for the digest'),
+    ('root', 'work/derive-only-measurement.json', INCLUDE, 'digest size'),
+    ('root', 'work/verify.json', INCLUDE, 'the session verification receipt'),
+    ('root', 'calculation-pins.json', INCLUDE, 'the whole-day calculation pin'),
+    ('root', 'source-binding.json', INCLUDE, 'the sealed journal the calculations read'),
+    ('root', 'calculations-receipt.json', INCLUDE, 'the calculations receipt'),
+    ('root', 'progress.json', INCLUDE, 'progress probe'),
+    ('root', 'checkpoints.json', INCLUDE, 'progress checkpoints'),
+    # CONFIG: the trading-day preparation, the principal inputs, the host configuration
+    ('preparation', 'schedule/schedule.json', INCLUDE, 'the day schedule: cutoffs, steps, sessions per cycle, from the journal'),
+    ('preparation', 'schedule/receipt.json', INCLUDE, 'the schedule receipt'),
+    ('preparation', 'prefixes/*.json', INCLUDE, 'the prefix bindings and witnesses'),
+    ('preparation', '*.json', INCLUDE, 'preparation configuration, intent and receipts'),
+    ('principal_inputs', 'knowledge-base-receipt.json', FRANKIE_REASONING, "the pin of Frankie's brain (R09)"),
+    ('principal_inputs', 'principal-inputs-receipt.json', MIXED, "calculation result together with the shared knowledge (Frankie's brain)"),
+    ('principal_inputs', 'retained-witnesses.json', INCLUDE, 'the retained historical contract sections'),
+    ('host_config', 'actual-host-configuration.json', INCLUDE, 'the whole host run configuration'),
+    # CYCLE: one run directory (/opt/frankie-box/work/runs/<run_id>/), this cycle's execution/cycle-<NN>/
+    ('run', 'execution/cycle-{cycle}/host-dipole-classroom-teacher-key*', GRADED, 'the graded answer key (R10)'),
+    ('run', 'execution/cycle-{cycle}/classroom-audit/*post-grade*', GRADED, 'the classroom grade (R10)'),
+    ('run', 'execution/cycle-{cycle}/classroom-audit/**/*', FRANKIE_REASONING, "Frankie's teach-back, novelty, acknowledgement (R09)"),
+    ('run', 'execution/cycle-{cycle}/principal/session-response.json', FRANKIE_REASONING, "Frankie's reply (R09)"),
+    ('run', 'execution/cycle-{cycle}/principal/classroom-correction-response.json', FRANKIE_REASONING, "Frankie's correction reply (R09)"),
+    ('run', 'execution/cycle-{cycle}/principal/session-request.json', MIXED, "the request: the classroom package together with Frankie's knowledge base"),
+    ('run', 'execution/cycle-{cycle}/principal/classroom-correction-request.json', INCLUDE, "the teacher's correction request"),
+    ('run', 'execution/cycle-{cycle}/principal/**/*', INCLUDE, 'principal adapter receipts and witnesses'),
+    ('run', 'execution/cycle-{cycle}/critic-spool/**/*', OTHER_MODEL, 'the Granite critic request and answer'),
+    ('run', 'execution/cycle-{cycle}/actual-critic-request.json', OTHER_MODEL, 'the Granite critic request'),
+    ('run', 'execution/cycle-{cycle}/host-dipole-classroom-source*', INCLUDE, "the teacher's Dipole measurements (JournalTeacherR3), lossless"),
+    ('run', 'execution/cycle-{cycle}/host-dipole-classroom-pre-message*', INCLUDE, "the teacher's message into the classroom"),
+    ('run', 'execution/cycle-{cycle}/**/*.json', INCLUDE, 'cycle receipts, request plan, waits, journal pins, feedback'),
+    ('run', 'execution/cycle-{cycle}/**/*.jsonl', INCLUDE, 'cycle event logs'),
+    ('run', 'handoff-*/**/*', OTHER_MODEL, "the BOSS controller and native journals and forecast records (the native system's own forecasts)"),
+    ('run', 'host-progress/**/*', INCLUDE, 'run progress and native training events'),
+    ('run', 'execution/*.json', INCLUDE, 'execution identity'),
+    ('run', '*.json', INCLUDE, 'run-level host receipts'),
+)
+
+
+def _sha256(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        while block := f.read(64 * 1024 * 1024):
+            h.update(block)
+    return h.hexdigest()
+
+
+def plan(day, cycle, dirs):
+    """(files, excluded, missing, notes) for one day and cycle: every catalogued file decided by the first pattern that
+    claims it; a directory not given is listed, never guessed."""
+    claimed, files, excluded, missing, notes = set(), [], [], [], []
+    for stage, pattern, disposition, what in CATALOG:
+        base = dirs.get(stage)
+        glob = pattern.format(cycle=cycle)
+        if base is None:
+            missing.append(dict(stage=stage, pattern=glob, what=what, reason='no %s directory given' % stage))
+            continue
+        base = Path(base)
+        if not base.is_dir():
+            missing.append(dict(stage=stage, pattern=glob, what=what, reason='%s directory %s absent' % (stage, base)))
+            continue
+        matched = [p for p in sorted(base.glob(glob)) if p.is_file() and not p.is_symlink()]
+        fresh = [p for p in matched if p.resolve() not in claimed]
+        if not matched:
+            missing.append(dict(stage=stage, pattern=glob, what=what,
+                                reason='nothing on disk (the stage may not have got this far)'))
+            continue
+        for p in fresh:
+            claimed.add(p.resolve())
+            item = dict(stage=stage, path=str(p.relative_to(base)), source=str(p), pattern=glob, what=what)
+            if disposition == INCLUDE:
+                files.append(item)
+            else:
+                excluded.append(dict(item, reason=disposition, bytes=p.stat().st_size))
+    unclaimed = []
+    for stage, base in dirs.items():
+        if base and Path(base).is_dir():
+            for p in sorted(Path(base).rglob('*')):
+                if p.is_file() and not p.is_symlink() and p.resolve() not in claimed:
+                    unclaimed.append(dict(stage=stage, path=str(p.relative_to(base)), bytes=p.stat().st_size))
+    notes.append(dict(unclaimed=unclaimed))
+    return files, excluded, missing, notes
+
+
+def export(day, cycle, dirs, root=ROOT):
+    target = Path(root) / str(day) / f'cycle-{cycle}'
+    if (target / 'MANIFEST.json').exists():
+        raise SystemExit('%s already exported (%s): the same day and cycle is not exported twice (duplicate data declines '
+                         'the run); move it aside with a receipt to redo it' % (target, target / 'MANIFEST.json'))
+    files, excluded, missing, notes = plan(day, cycle, dirs)
+    staging = target.parent / (target.name + '.partial')
+    if staging.exists():
+        shutil.rmtree(staging)
+    for item in files:
+        destination = staging / item['stage'] / item['path']
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            os.link(item['source'], destination)
+            item['linked'] = True
+        except OSError as error:
+            raise SystemExit('cannot hard-link %s (%s): a copy would be a second build of the data; nothing written'
+                             % (item['source'], error))
+        item['bytes'] = destination.stat().st_size
+        item['sha256'] = _sha256(destination)
+    manifest = dict(schema=SCHEMA, day=str(day), cycle=str(cycle), at=time.time(),
+                    directories={k: (str(v) if v else None) for k, v in dirs.items()},
+                    files=files, excluded=excluded, missing=missing, unclaimed=notes[0]['unclaimed'],
+                    counts=dict(files=len(files), bytes=sum(f['bytes'] for f in files), excluded=len(excluded),
+                                missing=len(missing), unclaimed=len(notes[0]['unclaimed']),
+                                unclaimed_bytes=sum(u['bytes'] for u in notes[0]['unclaimed'])),
+                    rule=('both teachers read every data file of the day except the files Frankie generates himself to '
+                          'reason toward forecasts (R09), grades (R10), the bedrock (Greg 2026-09-29), mixed files and '
+                          'other models\' output (listed for Greg); hard links only, nothing recomputed'))
+    staging.mkdir(parents=True, exist_ok=True)
+    (staging / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    os.replace(staging, target)
+    return manifest
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument('--day', required=True)
+    p.add_argument('--cycle', required=True)
+    p.add_argument('--calculations', required=True, help='the ROOT: /opt/frankie-box/work/monday-calculations/<root>')
+    p.add_argument('--preparation', help='/opt/frankie-box/work/trading-day-preparation/<r>')
+    p.add_argument('--principal-inputs', help='/opt/frankie-box/work/principal-inputs/<r>')
+    p.add_argument('--host-config', help='/opt/frankie-box/work/monday-run-config/<r>')
+    p.add_argument('--run', help='ONE run directory: /opt/frankie-box/work/runs/<run_id>')
+    p.add_argument('--plan-only', action='store_true', help='print what would be linked, excluded and missing; write nothing')
+    a = p.parse_args()
+    if not (len(a.day) == 8 and a.day.isdigit() and a.cycle.isdigit()):
+        raise SystemExit('--day YYYYMMDD and --cycle NN required')
+    dirs = dict(root=a.calculations, preparation=a.preparation, principal_inputs=a.principal_inputs,
+                host_config=a.host_config, run=a.run)
+    for name, value in dirs.items():
+        if value and not str(Path(value).resolve()).startswith('/opt/frankie-box/'):
+            raise SystemExit('%s must be under /opt/frankie-box' % name)
+    if a.plan_only:
+        files, excluded, missing, notes = plan(a.day, a.cycle, dirs)
+        print(json.dumps(dict(files=[(f['stage'], f['path']) for f in files],
+                              excluded=[(e['stage'], e['path'], e['reason']) for e in excluded],
+                              missing=[(m['stage'], m['pattern'], m['reason']) for m in missing],
+                              unclaimed=[(u['stage'], u['path'], u['bytes']) for u in notes[0]['unclaimed']]), indent=1))
+        return
+    m = export(a.day, a.cycle, dirs)
+    print(json.dumps(dict(target=str(ROOT / a.day / ('cycle-' + a.cycle)), counts=m['counts'],
+                          excluded=[(e['stage'], e['path'], e['reason']) for e in m['excluded']],
+                          missing=[(x['stage'], x['pattern'], x['reason']) for x in m['missing']],
+                          unclaimed=[(u['stage'], u['path'], u['bytes']) for u in m['unclaimed']]), indent=1))
+
+
+if __name__ == '__main__':
+    main()
