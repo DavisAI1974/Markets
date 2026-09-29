@@ -155,8 +155,30 @@ frankie_boss/blocks/BLOCK_20211006_SOURCE_MANIFEST.json OPENING_RECEIPT=research
 MONDAY_RECOVERY_RECEIPT_20260922.json`, with the progress probe on it. Then each day's ROOT (`frankie_box_experiment_root.sh`,
 DIGEST off unless it is a classroom-arm day).
 
+## RUNNING (Greg's "Go for all", 2026-09-29 ~09:00Z)
+- Box `i-035994afa8bdf66a5` STARTED (control run 36546524863, SSM Online 09:03Z). Now billing.
+- Fetch (run 36546879068): 20211004 hard-linked from Monday's block, 20211005 and 20211006 downloaded, sha256 + size
+  verified; receipts `/opt/frankie-box/receipts/ingest-fetch-20211005-1790672762.json`, `-20211006-1790672765.json`.
+- Ingest try 1 (run 36547021157, 66f50851) stopped before any record: Monday's checkpoint is beside its recovery receipt
+  in `/opt/frankie-box/work/sealed-recovery-35796793428/`, not beside the container. Fixed in 25b30d9c; its work dir
+  `work/ingest-20211005-ingest-1790672828` holds no receipt (kept, not a sealed ingest).
+- Ingest Tue then Wed (run 36547330372, 25b30d9c, timeout 86400, OPENING_RECEIPT = Monday's on-box recovery receipt):
+  RUNNING, `work/ingest-20211005-ingest-1790673001`, about 2 ms/record at 09:13Z (70,000 of 2,104,864 in 170 s).
+  Wednesday follows in the same dispatch from Tuesday's closing book. Probes: `frankie_box_read_log.sh MODE=tail
+  FILE=work/ingest-20211005-ingest-1790673001/progress.jsonl`, `MODE=processes FILE=work`.
+- Staging for the ROOT: restage the tip before each ROOT dispatch (docs pushes move the tip).
+- Read-only audit of the Tuesday path (two agents): no run-time relaunch or truncation leftover, no check against
+  Monday's sizes. Fixed in 25b30d9c: ROOT reader passed over an INPUT without an MBO record unlisted and then refused the
+  day (now listed, a failure of the day); search cells with < 2 steps now listed; search leakage print key; a day export
+  is reused only from this run's ROOT; ACTION=ingest requires MANIFEST. Left as is (listed): cycle '00' literals (the
+  whole-day pin admits cycle 0 only), Monday wording in ROOT messages, OBSERVATION_CHECK_EVERY = 64 (the incremental
+  observation's differential check), the ingest's CYCLE units check; the 09-23 perf rewrites of the adapter, observer
+  and builder run for the first time on Tuesday (the differential check refuses on drift). The producers
+  `native_roll20.py` and `a_memory_member_first_recalculation_20260828.py` live in the box's pinned producers checkout
+  and were not audited here.
+
 ## Next (in order)
-0. DONE (built, not run): the midweek manifests (section above). Run Tue + Wed ingest on Greg's go.
+0. DONE: the midweek manifests (built, 66f50851 / 25b30d9c). Ingest running; then each day's ROOT on the go given.
 1. The teacher-only batch step `frankie_box_experiment_teacher.py/.sh` (DAYS=<list>; each day its own fresh walk of
    JournalTeacherR3 on its sealed journal, in parallel; writes `DIPOLE_CLASSROOM_SOURCE_V1` to
    `/opt/frankie-box/work/experiment-teacher-rows/<day>/host-dipole-classroom-source.c15.json`; skips days a launch
