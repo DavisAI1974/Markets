@@ -14,6 +14,15 @@ Writes /opt/frankie-box/work/experiment-teacher-rows/<day>/: host-dipole-classro
 and the classroom read), teacher-attachment.pkl (the attachment the classroom package is built from), receipt.json.
 A day whose rows exist declines (duplicate data). Caveat kept from the call map: with the whole day as the context the
 exact-row check in finish compares the rows with themselves.
+
+Frankie's historical data points (Greg, 2026-09-29; research/kalshi/frankie_boss/dipole_classroom_external.py): the day
+file (FRANKIE_DAY_EXTERNAL_V1) is read the same way every reader of the ingest reads it: given as --day-external +
+--day-external-sha256 (checked BEFORE the walk; a mismatch is refused), or taken from beside the sealed ingest (its
+day-external-receipt.json sha256 must match the bytes). After the rows, the BOSS teacher's external section is built once
+into <out>/external-section/ (the rows' as-of alignment, the facts of every point, the pairs in the classroom's shapes)
+through operations/frankie_day_external.AsOfReader at the rows' cutoff. No day file beside the ingest: listed in the
+receipt, the rows stand (the classroom V2 builds the section when the file is there). A file beside the ingest that
+differs from its receipt, or a section that fails, is listed in the receipt; the rows stand and the step exits 4.
 """
 import argparse
 import hashlib
@@ -40,10 +49,27 @@ def _sha256(path):
     return h.hexdigest()
 
 
-def teach(day, receipt_path, receipt_sha256, workers):
+def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None):
     receipt_path = Path(receipt_path)
     if _sha256(receipt_path) != receipt_sha256:
         raise SystemExit('the ingestion receipt differs from the sha256 given')
+    from research.kalshi.frankie_boss import dipole_classroom_external as EXT
+    try:
+        day_file, day_sha, day_source = EXT.resolve_day_file(day_external, day_external_sha256, receipt_path)
+    except EXT.DayExternalRefused as error:
+        if day_external is not None:
+            raise SystemExit('the day file of the historical data points: %s' % error)
+        day_file = None
+        external = dict(status='absent', reason=str(error),
+                        listed='no external section built here; the classroom V2 builds it when the day file is there')
+    if day_file is not None:
+        if _sha256(day_file) != day_sha:
+            if day_external is not None:
+                raise SystemExit('the day file %s differs from the sha256 %s given; refused' % (day_file, day_sha))
+            external = dict(status='refused', path=str(day_file), sha256_expected=day_sha,
+                            reason='the day file beside the ingest differs from its day-external-receipt.json sha256')
+        else:
+            external = dict(path=str(day_file), sha256=day_sha, found=day_source)
     rc = json.loads(receipt_path.read_bytes())
     if rc.get('schema') != 'BOSS_BLOCK_INGESTION_RECEIPT_V1' or rc.get('writer') != 'compact' or rc.get('trading_day') != day:
         raise SystemExit('a compact BOSS_BLOCK_INGESTION_RECEIPT_V1 of trading day %s is required' % day)
@@ -118,9 +144,19 @@ def teach(day, receipt_path, receipt_sha256, workers):
                   seconds=round(time.time() - started, 1), rows_file=dict(file=ROWS_FILE, sha256=_sha256(out / ROWS_FILE)),
                   attachment_file=dict(file='teacher-attachment.pkl', sha256=_sha256(out / 'teacher-attachment.pkl')),
                   model_calls=0, caveat='whole-day context: the exact-row check in finish compares the rows with themselves')
+    code = 4 if external.get('status') == 'refused' else 0
+    if external.get('status') not in ('absent', 'refused'):
+        try:
+            key, section = EXT.ensure_external_section(out, source, external['path'], external['sha256'], trading_day=day,
+                                                       built_by='teacher-only step')
+            external.update(status='built' if not section['reused'] else 'reused', section=section)
+        except Exception as error:                 # listed; the rows stand; the classroom V2 refuses with the same error
+            external.update(status='failed', error='%s: %s' % (type(error).__name__, error))
+            code = 4
+    result['external_section'] = external
     (out / 'receipt.json').write_text(json.dumps(result, indent=1, sort_keys=True))
     print(json.dumps(result, sort_keys=True), flush=True)
-    return 0
+    return code
 
 
 def main():
@@ -129,8 +165,12 @@ def main():
     p.add_argument('--ingestion-receipt', required=True)
     p.add_argument('--ingestion-receipt-sha256', required=True)
     p.add_argument('--workers', type=int, default=8)
+    p.add_argument('--day-external', help='the day file (FRANKIE_DAY_EXTERNAL_V1); default: beside the sealed ingest')
+    p.add_argument('--day-external-sha256', help='its sha256 (given together with --day-external; a mismatch is refused)')
     a = p.parse_args()
-    return teach(a.day, a.ingestion_receipt, a.ingestion_receipt_sha256, a.workers)
+    if (a.day_external is None) != (a.day_external_sha256 is None):
+        p.error('--day-external and --day-external-sha256 are given together')
+    return teach(a.day, a.ingestion_receipt, a.ingestion_receipt_sha256, a.workers, a.day_external, a.day_external_sha256)
 
 
 if __name__ == '__main__':

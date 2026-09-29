@@ -64,6 +64,14 @@ def material_bundle():
                   material=dict(pin, source='request attachment dipole_classroom' if 'attachment' in value else 'classroom package',
                                 dipole_classroom=package),
                   survivors=None, unavailable=[])
+    # the classroom V2's external section (Frankie's historical data points), the same model-visible material Frankie
+    # answers (frankie_box_experiment_classroom_v2.py); a V1 classroom day carries none and says so
+    external = (value.get('attachment') or {}).get('dipole_external') if isinstance(value, dict) and 'attachment' in value else None
+    if external is not None:
+        bundle['material']['dipole_external'] = external
+    else:
+        bundle['unavailable'].append(dict(item='dipole_external', path=source,
+                                          reason='the classroom material carries no external section (a V1 classroom day)'))
     survivors = os.environ['SURVIVORS']
     if survivors and Path(survivors).exists():
         raw, pin = whole(survivors)
@@ -82,6 +90,7 @@ def frankie_bundle():
         raise SystemExit('%s absent: Frankie\'s classroom stage has not completed, nothing to compare yet' % receipt)
     bundle = dict(schema='JEV_FRANKIE_OUTPUTS_V1', stamp=STAMP, day=DAY, at=time.time(), files={}, unavailable=[])
     for name, path in (('ledgers', session / 'work' / 'classroom' / 'ledgers.json'), ('receipt', receipt),
+                       ('external_ledgers', session / 'work' / 'classroom' / 'external-code-answers.json'),
                        ('analysis', session / 'out' / 'analysis.md')):
         if path.exists():
             raw, pin = whole(path)

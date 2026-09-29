@@ -239,6 +239,10 @@ def material_text(material):
     parts = ['===== CLASSROOM PACKAGE (%s, %s, sha256 %s) =====\n%s' % (
         material['material'].get('source'), material['material'].get('path'), material['material'].get('sha256'),
         json.dumps(material['material'].get('dipole_classroom'), sort_keys=True))]
+    if material['material'].get('dipole_external') is not None:
+        parts.append('===== EXTERNAL SECTION: THE HISTORICAL DATA POINTS BESIDE THE 19 DIPOLE COLUMNS (same material, '
+                     'sha256 %s) =====\n%s' % (material['material'].get('sha256'),
+                                                json.dumps(material['material']['dipole_external'], sort_keys=True)))
     if material.get('survivors'):
         parts.append('===== SEARCH SURVIVORS SO FAR (%s, sha256 %s) =====\n%s' % (
             material['survivors'].get('path'), material['survivors'].get('sha256'),
