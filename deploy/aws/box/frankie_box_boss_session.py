@@ -1730,6 +1730,13 @@ class Session:
             self.note(f'brain: cycle {self.cycle} entry written, {len(m["entries"])} documents in {BRAIN_DIR / ("cycle-" + self.cycle)}')
         except Exception as error:
             raise RuntimeError(f'brain findings were not retained: {type(error).__name__}: {error}') from error
+        # the second copy of the calculations, for the experiments (Greg, 2026-09-29); never blocks Frankie's cycle
+        try:
+            e = brain_module().export_calculations(self.work, self.day, self.cycle)
+            self.note(f'experiment calculations: {len(e["files"])} JSON files for {self.day} cycle {self.cycle} '
+                      f'({len(e["not_exported"])} layers not exported, listed in the manifest)')
+        except Exception as error:
+            self.note(f'experiment calculations NOT exported ({type(error).__name__}: {error}); the brain entry is unaffected')
 
     def docs(self):
         """Every session document as Markdown under out/docs (README + index); never fails the session."""

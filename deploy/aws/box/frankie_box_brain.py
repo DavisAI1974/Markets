@@ -333,6 +333,57 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
     return manifest
 
 
+EXPERIMENT_ROOT = Path('/opt/frankie-box/work/experiment-calcs')
+EXPERIMENT_SCHEMA = 'FRANKIE_EXPERIMENT_CALCULATIONS_V1'
+
+
+def export_calculations(work, day, cycle, root=EXPERIMENT_ROOT):
+    """The second copy of this cycle's calculations, for the experiments (Greg, 2026-09-29: "make sure json is gen after
+    each cycle and one goes to frankie knowledge and one could go to wherever we need it to do the experiment").
+
+    The brain entry keeps the calculations as Frankie reads them (the derivation digest). This copy keeps the SAME
+    calculations as the machine-readable JSON layer files the derive stage wrote (work/derived/*.json) plus derive.json,
+    hard-linked (no second write, no extra disk; a link survives any later cleanup of the run directory), each with its
+    bytes and sha256 in MANIFEST.json. The bedrock layers are not exported (Greg: the experiment does not need the
+    bedrock). Nothing is recalculated, averaged or reduced. Idempotent: an existing complete export is returned."""
+    work = Path(work)
+    target = Path(root) / str(day) / f'cycle-{cycle}'
+    manifest_path = target / 'MANIFEST.json'
+    if manifest_path.is_file():
+        return json.loads(manifest_path.read_bytes())
+    derive_path = work / 'derive.json'
+    derive = json.loads(derive_path.read_bytes())
+    bedrock = set((derive.get('bedrock') or {}).get('layers') or [])
+    sources = [('derive.json', derive_path)]
+    skipped = []
+    for name, entry in sorted((derive.get('layers') or {}).items()):
+        path = Path(entry['path']) if entry.get('path') else work / 'derived' / f'{name}.json'
+        if name in bedrock:
+            skipped.append(dict(layer=name, reason='bedrock layer (not exported for the experiments)'))
+        elif not path.is_file():
+            skipped.append(dict(layer=name, reason=f'no layer file ({entry.get("status")}: {entry.get("reason")})'))
+        else:
+            sources.append((path.name, path))
+    staging = target.with_name(target.name + '.partial')
+    if staging.exists():
+        shutil.rmtree(staging)
+    staging.mkdir(parents=True)
+    for name, path in sources:
+        try:
+            os.link(path, staging / name)
+        except OSError:
+            shutil.copy2(path, staging / name)          # another filesystem: a whole copy, same bytes
+    digests = sha256_files([staging / name for name, _ in sources])
+    files = [dict(name=name, source=str(path), bytes=(staging / name).stat().st_size, sha256=digest)
+             for (name, path), digest in zip(sources, digests)]
+    manifest = dict(schema=EXPERIMENT_SCHEMA, day=str(day), cycle=str(cycle), at=time.time(), files=files, not_exported=skipped,
+                    note='the calculations of this cycle as their JSON layer files, hard-linked from the derive stage; the brain '
+                         'entry carries the same calculations as the derivation digest')
+    (staging / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    os.replace(staging, target)
+    return manifest
+
+
 def check(brain, cycle):
     """The earlier cycles WITHOUT a usable brain entry (no manifest, or the digest missing or not matching). Empty = ready."""
     brain = Path(brain)

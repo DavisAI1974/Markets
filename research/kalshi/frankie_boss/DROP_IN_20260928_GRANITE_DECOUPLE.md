@@ -130,3 +130,30 @@ Every box step goes through `.github/workflows/frankie_box_run.yml`: inputs `scr
   - r9 ran code 222ac66b, which had no save code, so it left NO saved walk blocks. r10 does the first full walk and saves its blocks as it goes, into the journal's walk-cache.
   - A stopped r10 resumes from them.
   - The saved blocks need at least 30 GB free (`FRANKIE_WALK_CACHE_MIN_FREE_GB`).
+
+## RESEARCH TRACK: the experiment (Greg, 2026-09-29). Direction set; NOT yet in the Excel build plan
+Greg's idea: run code over the raw ingest data and the cycle calculations thousands of ways, looking for correlations,
+novel findings and trade strategies. Code does the search on the box's CPUs; Granite only gets the short list to reason over.
+
+- **No bedrock for the experiment.** The inputs are:
+  - the raw ingest: each day's compact journal, every book level;
+  - the cycle calculations, as JSON.
+- **The calculations are written once per cycle and kept in two places** (built in this commit):
+  - Frankie's brain entry: the derivation digest, as before.
+  - The experiment store: `/opt/frankie-box/work/experiment-calcs/<day>/cycle-<NN>/`. It holds the derive stage's JSON layer files and derive.json, hard-linked with a MANIFEST giving bytes and sha256. The bedrock layers are not exported.
+  - `brain_entry()` does this after every cycle via `frankie_box_brain.export_calculations`. A failure is noted and never blocks the cycle.
+  - For the Monday root that already exists: `frankie_box_export_calcs.sh`, run on its own lock `box-export-*`, with `WORK=/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work DAY=20211004 CYCLE=00`.
+- **Days** (the day-class doctrine: never mix classes; report every day on its own, never pooled):
+  - Midweek Tuesday/Wednesday first. Tue 2021-10-05 and Wed 2021-10-06 are already fetched to the box in the staged block 20211004-20211006 and just need ingesting.
+  - Thursday (EIA print day) is its own class, done later.
+  - Monday stays its own class.
+  - Discovery: October days of 2021-2023. Confirmation: October days of 2024-2025, untouched until the discovery list is frozen. Then widen to all years, reported per season.
+  - Source: the 5-year NG MBO pull on S3 (`nymex/ng_mbo_5y_v0`). Confirm coverage with a listing first.
+- **The search, to be built:**
+  - every raw and calculation series, times transforms, lags, cells, conditions and targets;
+  - each test with its own circular-shift chance check, reported as counts (D37);
+  - the leakage gate on every target;
+  - survivors to symbolic regression, then a short Granite reasoning pass;
+  - any trade idea judged per cell, net of fees at maker and taker, on the confirmation days.
+  - The joined-teacher builder (dfe08ca7) is the starting slice. Point it at the raw journal and the experiment-calcs JSON instead of the bedrock.
+- **Before building:** Greg adds the track to the Excel build plan (`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`), and a spec is written.
