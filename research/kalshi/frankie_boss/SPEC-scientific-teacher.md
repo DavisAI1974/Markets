@@ -53,6 +53,16 @@ more times."
   teacher that needs a view computes it from those two sources at read time (for the search: DuckDB over the journal's
   SQLite and the calculation JSON, no copy written).
 
+- **Frankie's 12 historical data points are part of his ingest (Greg, 2026-09-29: "everyone who sees his ingest
+  should see these data points too").** The 12 of `FRANKIE_DATA_WISHLIST_20260929.md` (Greg's set: the ten single
+  points plus EIA weekly storage and the storage estimate vs actual) are staged ONCE per trading day, at their native
+  resolution (hourly stays hourly, weekly stays weekly), each value stamped with the time it became public, into one
+  file beside the day's sealed ingest, its sha256 in a receipt. Every reader of the ingest reads that same file: Frankie,
+  the BOSS teacher, the scientific teacher (the search, as series on the day's causal time axis: a value exists from its
+  publication time on), and whoever else is given the ingest. Nothing re-fetches or re-derives it a second time. A
+  missing value is listed with its day and reason, never a reason to drop the day. Source plan:
+  `HISTORICAL_DATA_PLAN_20260929.md` (in progress).
+
 ## Tied together, separate roles (rule R12)
 - The BOSS teacher never becomes a reviewer only and never rewrites its targets from a discussion (CHAT15 handoff).
 - The scientific teacher never grades Frankie: fact grading stays the deterministic classroom grade.
