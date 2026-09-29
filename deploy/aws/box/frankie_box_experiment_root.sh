@@ -6,7 +6,7 @@
 # DIGEST (on | off, default off). A probe: frankie_box_progress.sh DIRECTORY=<OUTPUT_ROOT>.
 set -eu
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"
-: "${INGESTION_RECEIPT:?the day's ingestion receipt required}"; : "${INGESTION_RECEIPT_SHA256:?its sha256 required}"
+: "${INGESTION_RECEIPT:?the ingestion receipt of the day required}"; : "${INGESTION_RECEIPT_SHA256:?its sha256 required}"
 : "${DAY:?YYYYMMDD required}"; : "${DAY_ROLE:?discovery or confirmation required}"; : "${OUTPUT_ROOT:?fresh output root required}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 case "$OUTPUT_ROOT" in /opt/frankie-box/work/experiment-roots/*) ;; *) echo "OUTPUT_ROOT under /opt/frankie-box/work/experiment-roots required" >&2; exit 2;; esac
