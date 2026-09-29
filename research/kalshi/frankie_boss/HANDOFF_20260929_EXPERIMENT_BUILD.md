@@ -71,6 +71,13 @@ the real ASOF alignment.
    `/opt/frankie-box/work/experiment-teacher-rows/<day>/host-dipole-classroom-source.c15.json`; skips days a launch
    already covered). A research agent was mapping the standalone call chain at close (retained_preparation_recovery
    .py:93-104 is the known outside-the-walk call); redo that research if its report is not in this file.
+1b. BOTH TEACHERS HAVE ALL THE DIPOLE DATA (Greg, 2026-09-29: "the boss teacher will still absolutely have all dipole
+   data available just not fresh calcs on it every day. I guess that applies to both teachers"). Fresh Dipole calcs
+   run 1 day in 5 (batched per day); what the teachers READ is everything that exists. Built: the scientific teacher
+   tests on every discovery day whose Dipole rows exist. NOT built: on a classroom-arm day the BOSS teacher's classroom
+   material (and Jev's material) must also carry every earlier discovery day's Dipole rows (launch sources +
+   experiment-teacher-rows, read in place, each labelled with its day, never merged across days) and the historical
+   Dipole catalog (knowledge/DIPOLE_SHARED_CATALOG_20260922.json) whole. Nothing recomputed; never Frankie's answers.
 2. Merge ChatGPT's branches when they land (orchestrator, historical claims, transforms); wire the transforms into
    the search.
 3. On Greg's go when the box is up, in order: restage the tip; `frankie_box_venv_duckdb.sh ACTION=check` then
