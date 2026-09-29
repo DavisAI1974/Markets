@@ -58,7 +58,7 @@ for entry in (str(ROOT),):
 
 from research.kalshi.frankie_boss import mbo_source                                   # noqa: E402
 from research.kalshi.frankie_boss.block_source_scope import block_source_scope          # noqa: E402
-from research.kalshi.frankie_boss.c15_journal import evidence_hash, pack, canonical_bytes  # noqa: E402
+from research.kalshi.frankie_boss.c15_journal import evidence_hash, pack, unpack, canonical_bytes  # noqa: E402
 from research.kalshi.frankie_boss.compact_build_journal import conformance_driver_with_compact_journal  # noqa: E402
 from research.kalshi.frankie_boss.compact_journal import CompactReader, MAX_BYTES      # noqa: E402
 from research.kalshi.frankie_boss.box_standard import partition_entries_for            # noqa: E402
@@ -66,6 +66,8 @@ from research.kalshi.frankie_boss.compact_conformance_reader import CompactConfo
 from research.kalshi.frankie_boss.selected_source_scope import source_manifest, source_scope  # noqa: E402
 from research.kalshi.frankie_boss.source_conformance import SourceConformanceDriver     # noqa: E402
 from research.kalshi.frankie_boss import opening_book as opening_books                  # noqa: E402
+from research.kalshi.frankie_boss import fast_mbo_decode                                # noqa: E402
+from research.kalshi.frankie_boss.operations import parallel_ingest                     # noqa: E402
 
 RECEIPT_SCHEMA = 'BOSS_BLOCK_INGESTION_RECEIPT_V1'
 CANARY_SCHEMA = 'BOSS_BLOCK_INGESTION_CANARY_V1'
@@ -175,7 +177,7 @@ def opening_adapter(adapter_state):
 
 def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, journal_path,
            writer='compact', canary_records=None, block_bytes=MAX_BYTES // 2, workers=0, event=None, takes=None, block_rows=None,
-           tails=None, opening=None, opening_descriptor=None):
+           tails=None, opening=None, opening_descriptor=None, observation_mode='full', verify='inline', fast_decode=True):
     """The ingest_sources loop with a chosen writer, a per-record session policy and member-key naming.
 
     Returns dict(kind='canary'|'complete', ...). The record decode is mbo_source's pinned extractor,
@@ -221,6 +223,9 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
         else:
             driver = SourceConformanceDriver(scope, journal_path, expected_scope_hash=expected_scope_hash)
         stack.callback(driver.close)
+        if observation_mode == 'none':
+            driver._builder.observation_mode = 'none'        # item 4: no full-book copy at a group close (c15_builder)
+        member_counts = [0] * len(scope.members)
         if opening is not None:
             # the day opens with the prior day's closing book (opening_book.py), set before the first record is applied;
             # the conformance drain replays the prefix chain only, never the book, so the seed is inside its checks
@@ -233,7 +238,8 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
             name = member.member_key if source_object == 'member_key' else str(path)
             take = takes.get(member.member_key)
             taken = 0
-            records = mbo_source._records(stream, pin, ts_out, dbn)
+            # item 5 (Greg, 2026-09-29): many records per decoder call, every per-record check kept (fast_mbo_decode.py)
+            records = (fast_mbo_decode.records if fast_decode else mbo_source._records)(stream, pin, ts_out, dbn)
             tail = tails.get(member.member_key)
             if tail is not None:
                 # the prior trading day's records of this partition: decoded to reach the cut, never appended or counted;
@@ -308,6 +314,7 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                               session_id=session_id, raw_symbol=None, source_dbn_object=name)
                 cursor += 1
                 taken += 1
+                member_counts[index] += 1
                 if canary_records is not None and cursor >= canary_records:
                     # the canary stop comes BEFORE the take (the ship review 2026-09-22): a canary of exactly the take once ran
                     # complete() and wrote an ingestion receipt inside a canary directory; a canary verifies no boundary
@@ -350,7 +357,12 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
         if event is not None:
             event(dict(phase='source_verification', records=cursor, total_records=total))
         verify_started = time.perf_counter()
-        if writer == 'compact' and workers > 0:
+        if verify == 'deferred' and writer == 'compact':
+            # item 3 (Greg, 2026-09-29): the seal now, the conformance drain later (--conform on this directory); the
+            # completion is the builder's own state, the same fields complete() would claim after the drain
+            journal.seal()
+            completion, state = parallel_ingest.completion_from(scope, driver._builder, member_counts)
+        elif writer == 'compact' and workers > 0:
             # Seal at the writer's tail, then run the one conformance drain through the first run's
             # conformance reader: workers verify every original body and hash, then send only
             # the conformance fields. Full book observations do not cross IPC. The seal
@@ -373,6 +385,7 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                       records_per_second=round(cursor / ingest_seconds, 2),
                       ms_per_record=round(1000 * ingest_seconds / cursor, 3),
                       conformance_seconds=round(verify_seconds, 3), sessions=sessions, records=cursor,
+                      conformance='deferred' if (verify == 'deferred' and writer == 'compact') else 'inline',
                       workers=workers, worker_cpu_seconds=round(worker_cpu, 3), partial_members=partials, tail_members=skipped,
                       opening_book=opening_result, opening_book_file=opening_file, packing=packing)
         if event is not None:
@@ -471,6 +484,34 @@ def _emitter(output):
     return emit
 
 
+def conform_directory(directory, manifest_path, *, workers):
+    """Item 3's later half: the conformance drain on a sealed ingest whose conformance was deferred; writes
+    conformance.json beside it (the completion the drain claims, and whether it equals completion.json)."""
+    if not manifest_path:
+        raise SystemExit('--conform needs --manifest (the day manifest the ingest ran)')
+    receipt = json.loads((directory / 'ingestion-receipt.json').read_bytes())
+    manifest = json.loads(Path(manifest_path).read_bytes())
+    if receipt.get('manifest_hash') != manifest.get('manifest_hash'):
+        raise SystemExit('the manifest is not the one this ingest ran')
+    scope = block_source_scope(manifest, expected_manifest_hash=manifest['manifest_hash'])
+    raw = (directory / 'builder-checkpoint.c15.json').read_bytes()
+    if hashlib.sha256(raw).hexdigest() != receipt['checkpoint_sha256']:
+        raise SystemExit('the builder checkpoint differs from the receipt')
+    state = unpack(json.loads(raw))
+    started = time.perf_counter()
+    completion, verified = parallel_ingest.conform(scope, directory / receipt['journal_file'], state, workers=max(1, workers),
+                                                   emit=_emitter(directory))
+    claimed = json.loads((directory / 'completion.json').read_bytes())
+    same = all(claimed.get(k) == v for k, v in asdict(completion).items() if k != 'member_counts') \
+        and list(claimed.get('member_counts') or []) == list(completion.member_counts)
+    result = dict(schema='BOSS_BLOCK_INGESTION_CONFORMANCE_V1', completion=asdict(completion), completion_digest=completion.digest,
+                  state_hash=verified['state_hash'], equals_deferred_completion=same, seconds=round(time.perf_counter() - started, 3),
+                  at=int(time.time()))
+    write_once(directory / 'conformance.json', result)
+    print(json.dumps(dict(status='conformed' if same else 'CONFORMANCE_DIFFERS', directory=str(directory), **result), default=str))
+    return 0 if same else 1
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--manifest', help='committed block manifest (BOSS_BLOCK_SOURCE_MANIFEST_V1)')
@@ -479,7 +520,7 @@ def main():
     parser.add_argument('--sources-dir', help='directory holding the block members by member_key')
     parser.add_argument('--fetch', action='store_true', help='download missing members from the manifest bucket')
     parser.add_argument('--env-file', default=str(ROOT / 'scratchpad' / 'aws.env'))
-    parser.add_argument('--output-dir', required=True)
+    parser.add_argument('--output-dir')
     parser.add_argument('--session-policy', required=True, help='per_member_file | cme_trading_day | constant:<id>')
     parser.add_argument('--source-object', choices=('member_key', 'path'), default='member_key')
     parser.add_argument('--writer', choices=('compact', 'raw', 'both'), default='compact')
@@ -492,14 +533,39 @@ def main():
                              'FRANKIE_SEALED_INGESTION_RECOVERY_RECEIPT_V1): the day opens with its closing book (opening_book.py). '
                              'Without it a day with a tail member warms its own book from the tail partition (its 00:00Z '
                              'snapshot to the halt), so no prior day needs to be ingested')
+    parser.add_argument('--mode', choices=('sequential', 'parallel'), default='sequential',
+                        help='parallel (item 2): operations/parallel_ingest.py, three saved passes, 31 workers; needs '
+                             '--observation none and the compact writer')
+    parser.add_argument('--observation', choices=('full', 'none'), default='full',
+                        help='none (item 4, the experiment): no full-book copy at a group close; the book is the INPUT '
+                             'records replayed from opening-book.c15.json. full: Frankie\'s journal, as before')
+    parser.add_argument('--verify', choices=('inline', 'deferred'), default='inline',
+                        help='deferred (item 3): seal and write the completion from the builder state; run the drain later '
+                             'with --conform <this directory>')
+    parser.add_argument('--resume', action='store_true',
+                        help='parallel mode: continue in an existing --output-dir (saved pass 1 and finished segments reused)')
+    parser.add_argument('--segment-records', type=int, default=parallel_ingest.SEGMENT_RECORDS)
+    parser.add_argument('--conform', help='a sealed ingest directory with conformance deferred: run the drain now, write '
+                                          'conformance.json beside it (needs --manifest)')
     parser.add_argument('--profile', action='store_true',
                         help='run the ingest under cProfile and file profile.txt (top functions by own time and by cumulative time) '
                              'in the output directory; a measurement of where the parent\'s time goes, no change to what is written')
     args = parser.parse_args()
+    if args.conform:
+        return conform_directory(Path(args.conform).resolve(), args.manifest, workers=args.workers)
+    if not args.output_dir:
+        raise SystemExit('--output-dir required')
     output = Path(args.output_dir).resolve()
     if args.canary_records is not None and not any(word in output.name.lower() for word in ('scratch', 'canary')):
         raise SystemExit('a canary output directory must say scratch or canary in its name')
-    output.mkdir(parents=True, exist_ok=False)
+    if args.mode == 'parallel' and (args.observation != 'none' or args.writer != 'compact' or args.canary_records is not None
+                                    or args.sunday):
+        raise SystemExit('--mode parallel runs the compact writer, --observation none, a block day, no canary')
+    if args.resume and args.mode != 'parallel':
+        raise SystemExit('--resume is the parallel mode\'s (its passes are saved)')
+    if args.resume and (output / 'ingestion-receipt.json').exists():
+        raise SystemExit(f'{output} already holds a sealed ingest; nothing to resume')
+    output.mkdir(parents=True, exist_ok=args.resume)
     emit = _emitter(output)
 
     if args.sunday:
@@ -535,7 +601,8 @@ def main():
                   source_object_naming=args.source_object, extraction_pin=asdict(pin), extraction_hash=pin.digest,
                   total_mbo_records=sum(m.mbo_records for m in scope.members), python=sys.version.split()[0], **source_label,
                   trading_day=manifest.get('trading_day'), partial_members=list(manifest.get('partial_members') or []),
-                  tail_members=list(manifest.get('tail_members') or []), opening_book=opening_descriptor)
+                  tail_members=list(manifest.get('tail_members') or []), opening_book=opening_descriptor,
+                  mode=args.mode, observation_mode=args.observation, verify=args.verify)
 
     writers = ('raw', 'compact') if args.writer == 'both' else (args.writer,)
     results = {}
@@ -544,11 +611,22 @@ def main():
         directory.mkdir(exist_ok=True)
         journal = directory / ('source.sqlite' if writer == 'raw' else 'journal.compact.sqlite')
         emit(dict(phase='start', writer=writer, journal=str(journal), canary_records=args.canary_records))
-        run_ingest = lambda: ingest(scope, paths, expected_scope_hash=scope.genesis_hash(), pin=pin, session=session,
-                                    source_object=args.source_object, journal_path=journal, writer=writer,
-                                    canary_records=args.canary_records, block_bytes=args.block_bytes, workers=args.workers, event=emit, takes=takes,
-                                    block_rows=args.block_rows, tails=tails, opening_descriptor=opening_descriptor,
-                                    opening=(opening_adapter(adapter_state) if args.opening_receipt else None))
+        if args.mode == 'parallel':
+            total = sum(member.mbo_records for member in scope.members)
+            run_ingest = lambda: parallel_ingest.ingest_parallel(
+                scope, paths, pin=pin, session=session, source_names=[m.member_key for m in scope.members],
+                journal_path=journal, output=directory, takes=takes, tails=tails,
+                opening_state=(adapter_state if args.opening_receipt else None), opening_descriptor=opening_descriptor,
+                workers=max(1, args.workers), encoders=args.workers, block_rows=args.block_rows or partition_entries_for(2 * total),
+                block_bytes=args.block_bytes, verify=args.verify, resume=args.resume, manifest_hash=manifest['manifest_hash'],
+                segment_records=args.segment_records, event=emit)
+        else:
+            run_ingest = lambda: ingest(scope, paths, expected_scope_hash=scope.genesis_hash(), pin=pin, session=session,
+                                        source_object=args.source_object, journal_path=journal, writer=writer,
+                                        canary_records=args.canary_records, block_bytes=args.block_bytes, workers=args.workers, event=emit, takes=takes,
+                                        block_rows=args.block_rows, tails=tails, opening_descriptor=opening_descriptor,
+                                        opening=(opening_adapter(adapter_state) if args.opening_receipt else None),
+                                        observation_mode=args.observation, verify=args.verify)
         if args.profile:
             result = profiled(run_ingest, directory / 'profile.txt')
         else:
@@ -565,7 +643,7 @@ def main():
         checkpoint = directory / 'builder-checkpoint.c15.json'
         with checkpoint.open('xb') as stream:
             stream.write(checkpoint_raw); stream.flush(); os.fsync(stream.fileno())
-        write_once(directory / 'completion.json', result['completion'])
+        write_once(directory / 'completion.json', dict(result['completion'], conformance=result.get('conformance', 'inline')))
         receipt = dict(common, schema=RECEIPT_SCHEMA, writer=writer,
                        record_count=result['completion']['record_count'], journal_count=result['completion']['journal_count'],
                        journal_hash=result['completion']['journal_hash'], group_count=result['completion']['group_count'],
@@ -579,6 +657,7 @@ def main():
                        partial_members_ingested=result['partial_members'], tail_members_ingested=result['tail_members'],
                        opening_book=result['opening_book'], opening_book_file=result['opening_book_file'],
                        packing=result['packing'], boxes=(_boxes(journal) if writer == 'compact' else None),
+                       conformance=result.get('conformance', 'inline'), parallel=result.get('parallel'),
                        ingested_unix=int(time.time()), model_calls=0, training_updates=0)
         write_once(directory / 'ingestion-receipt.json', receipt)
         emit(dict(phase='complete', writer=writer, journal_count=receipt['journal_count'], journal_hash=receipt['journal_hash'],

@@ -343,7 +343,15 @@ class Run:
                                                                      'name its sealed ingest directory in the plan')
         if not e['manifest']:
             return self.record('ingest', e['day'], 'waiting', reason=e['manifest_gap'])
-        env = dict(ACTION='ingest', MANIFEST=e['manifest'], WORKERS=self.a.ingest_workers)
+        # Greg, 2026-09-29 ("Do 1-5 now"): the experiment's journal is ingested by the parallel writer (saved passes, so a
+        # stopped day resumes), with no full-book copy at a group close and the conformance drain deferred; days run side
+        # by side (--parallel-days), the workers split between them
+        share = max(1, self.a.ingest_workers // max(1, self.a.parallel_days))
+        env = dict(ACTION='ingest', MANIFEST=e['manifest'], WORKERS=share, MODE=self.a.ingest_mode,
+                   OBSERVATION=self.a.ingest_observation, VERIFY=self.a.ingest_verify)
+        resume = self.resume_dir(e)
+        if resume:
+            env['RESUME_DIR'] = str(resume)
         if e.get('opens_after'):
             opening, gap = self.opening_of(e)
             if gap:
@@ -361,6 +369,14 @@ class Run:
                                reason=why or 'no sealed ingest of the day after the step (its directory is kept)')
         return self.record('ingest', e['day'], 'done', exit_code=code, log=log, ingest=str(receipt.parent),
                            receipt=str(receipt), receipt_sha256=sha256_file(receipt), new_bytes=new_bytes(receipt.parent))
+
+    @staticmethod
+    def resume_dir(e):
+        """A parallel ingest of the day that stopped before its receipt (its saved pass 1 is there): continued, not
+        restarted. Two such directories are ambiguous: the newest is continued and the others are listed in the log."""
+        found = sorted(p.parent.parent for p in WORK.glob('ingest-%s-ingest-*/segments/plan.json' % e['day'])
+                       if not (p.parent.parent / 'ingestion-receipt.json').exists())
+        return found[-1] if found else None
 
     @staticmethod
     def opening_of(e):
@@ -554,7 +570,7 @@ class Run:
                     fn(e)
                     tick(stage, e['day'])
 
-        for stage, parallel in (('fetch', 1), ('ingest', 1), ('root', self.a.parallel_days)):
+        for stage, parallel in (('fetch', 1), ('ingest', self.a.parallel_days), ('root', self.a.parallel_days)):
             if stage in stages and not self.stopped:
                 per_day(stage, getattr(self, stage), parallel)
         by_role = [[e for e in days if e['role'] == role] for role in ('discovery', 'confirmation')]
@@ -638,6 +654,9 @@ def main():
     p.add_argument('--lags', type=int, default=20)
     p.add_argument('--transforms', help='the search transforms (comma list; default all)')
     p.add_argument('--ingest-workers', type=int, default=31)
+    p.add_argument('--ingest-mode', choices=('sequential', 'parallel'), default='parallel')
+    p.add_argument('--ingest-observation', choices=('full', 'none'), default='none')
+    p.add_argument('--ingest-verify', choices=('inline', 'deferred'), default='deferred')
     p.add_argument('--data-workers', type=int, default=1)
     p.add_argument('--search-workers', type=int, default=8)
     p.add_argument('--parallel-days', type=int, default=4, help='days at once for the root and data steps')

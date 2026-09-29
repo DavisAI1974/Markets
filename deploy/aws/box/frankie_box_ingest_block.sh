@@ -25,6 +25,23 @@ MARKETS_SHA="${MARKETS_SHA:-}"
 [ "$ACTION" != ingest ] || [ -n "${MANIFEST:-}" ] || { echo "ACTION=ingest requires MANIFEST (the day list); refused"; exit 2; }
 MANIFEST="${MANIFEST:-research/kalshi/frankie_boss/blocks/BLOCK_20211004_SOURCE_MANIFEST.json}"
 MANIFESTS="$MANIFEST"; OPENING_RECEIPT="${OPENING_RECEIPT:-}"
+# Greg, 2026-09-29 ("Do 1-5 now. We are supposed to have save code so we can pick up where we left off"):
+#   MODE=sequential|parallel (parallel = operations/parallel_ingest.py: three saved passes on the workers; needs OBSERVATION=none)
+#   OBSERVATION=full|none (none = the experiment journal: no full-book copy at a group close)
+#   VERIFY=inline|deferred (deferred = seal now, ACTION=conform DIRECTORY=<ingest dir> runs the drain later)
+#   DAYS_AT_ONCE=N (the MANIFEST list N days at a time, each its own journal, the workers split between them; only
+#     without OPENING_RECEIPT, each day warming its own opening book), RESUME_DIR=<an ingest dir> (parallel: continue it)
+# The defaults are Frankie's journal as before (sequential, full, inline, one day at a time).
+MODE="${MODE:-sequential}"; OBSERVATION="${OBSERVATION:-full}"; VERIFY="${VERIFY:-inline}"; DAYS_AT_ONCE="${DAYS_AT_ONCE:-1}"
+RESUME_DIR="${RESUME_DIR:-}"; DIRECTORY="${DIRECTORY:-}"
+case "$MODE" in sequential|parallel) ;; *) echo "MODE must be sequential or parallel"; exit 2;; esac
+case "$OBSERVATION" in full|none) ;; *) echo "OBSERVATION must be full or none"; exit 2;; esac
+case "$VERIFY" in inline|deferred) ;; *) echo "VERIFY must be inline or deferred"; exit 2;; esac
+case "$DAYS_AT_ONCE" in ""|*[!0-9]*|0) echo "DAYS_AT_ONCE must be a positive integer"; exit 2;; esac
+case "$RESUME_DIR" in ""|"$ROOT"/work/ingest-*) ;; *) echo "RESUME_DIR must be an existing $ROOT/work/ingest-* directory"; exit 2;; esac
+case "$DIRECTORY" in ""|"$ROOT"/work/ingest-*) ;; *) echo "DIRECTORY must be a $ROOT/work/ingest-* directory"; exit 2;; esac
+case "$RESUME_DIR$DIRECTORY" in *..*) echo "no .. in RESUME_DIR or DIRECTORY"; exit 2;; esac
+[ "$DAYS_AT_ONCE" = 1 ] || [ -z "$OPENING_RECEIPT" ] || { echo "DAYS_AT_ONCE > 1 runs days that warm their own books: no OPENING_RECEIPT"; exit 2; }
 case "$MARKETS_SHA" in ""|*[!0-9a-f]*) echo "MARKETS_SHA must be the dispatched commit (frankie_box_run.yml sets it from GITHUB_SHA)"; exit 2;; esac
 [ "${#MARKETS_SHA}" -eq 40 ] || { echo "MARKETS_SHA must be the full 40-hex commit"; exit 2; }
 case "$MANIFESTS" in *..*) echo "MANIFEST must not contain .."; exit 2;; esac
@@ -35,6 +52,8 @@ for ONE in $(echo "$MANIFESTS" | tr ',' ' '); do
   COUNT=$((COUNT + 1))
 done
 [ "$COUNT" -ge 1 ] || { echo "MANIFEST names no manifest"; exit 2; }
+[ -z "$RESUME_DIR" ] || [ "$COUNT" = 1 ] || { echo "RESUME_DIR continues ONE day: MANIFEST names that day only"; exit 2; }
+[ -z "$RESUME_DIR" ] || [ "$MODE" = parallel ] || { echo "RESUME_DIR is the parallel mode's"; exit 2; }
 if [ "$COUNT" -gt 1 ]; then case "$ACTION" in fetch|ingest) ;; *) echo "a MANIFEST list is for fetch and ingest only"; exit 2;; esac; fi
 case "$OPENING_RECEIPT" in
   "") ;;
@@ -54,14 +73,21 @@ units_idle() {
     if systemctl is-active --quiet "$U.service"; then echo "$U is running: the ingest waits (the box is the cycle's while its unit runs)"; return 2; fi
   done
 }
-checkout_markets() {   # only after units_idle: the running session's lazy imports read this checkout
-  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_SHA" || { echo "markets fetch of $MARKETS_SHA failed"; return 2; }
-  git -C "$ROOT/markets" checkout -q "$MARKETS_SHA" || { echo "markets checkout of $MARKETS_SHA failed"; return 2; }
-  [ "$(git -C "$ROOT/markets" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "markets HEAD differs from the dispatched commit; refused"; return 2; }
-  echo "markets HEAD $MARKETS_SHA (the dispatched commit)"
+MK="$ROOT/markets"      # the code the tool runs from; checkout_markets points it at this commit's own worktree
+checkout_markets() {   # item 1 (Greg, 2026-09-29): one worktree per dispatched commit, made under a lock, so dispatches running
+  # side by side never move each other's code (the shared checkout is fetched into, never checked out any more)
+  MK="$ROOT/ingest-code/$MARKETS_SHA"
+  mkdir -p "$ROOT/ingest-code" "$ROOT/tmp"
+  ( flock 9
+    if [ ! -e "$MK/.git" ]; then
+      git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_SHA" || { echo "markets fetch of $MARKETS_SHA failed"; exit 2; }
+      git -C "$ROOT/markets" worktree add -q --detach "$MK" "$MARKETS_SHA" || { echo "worktree for $MARKETS_SHA failed"; exit 2; }
+    fi ) 9>"$ROOT/tmp/ingest-code.lock" || return 2
+  [ "$(git -C "$MK" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "the worktree HEAD differs from the dispatched commit; refused"; return 2; }
+  echo "markets worktree $MK (the dispatched commit)"
 }
 manifest_ok() {   # M, BLOCK, DATA from the checkout as it stands (status) or as just checked out (fetch, canary, ingest)
-  M="$ROOT/markets/$MANIFEST"; [ -s "$M" ] || { echo "manifest missing at $M"; return 2; }
+  M="$MK/$MANIFEST"; [ -s "$M" ] || { echo "manifest missing at $M"; return 2; }
   BLOCK=$("$PY" -c "import json,sys; print(json.load(open(sys.argv[1]))['block'])" "$M") || return 2
   case "$BLOCK" in ""|*[!0-9_]*) echo "bad block name in the manifest; refused"; return 2;; esac
   DATA="$ROOT/data/block_$BLOCK"
@@ -69,6 +95,7 @@ manifest_ok() {   # M, BLOCK, DATA from the checkout as it stands (status) or as
 prepare() { units_idle || return 2; checkout_markets || return 2; manifest_ok || return 2; mkdir -p "$DATA"; }
 each_day() {   # $1 = fetch|ingest over the MANIFEST list, in order; a day that fails stops the list (the next day's book waits on it)
   units_idle || return 2; checkout_markets || return 2
+  if [ "$1" = ingest ] && [ "$DAYS_AT_ONCE" -gt 1 ]; then at_once; return $?; fi
   for MANIFEST in $(echo "$MANIFESTS" | tr ',' ' '); do
     manifest_ok || return 2; mkdir -p "$DATA"
     if [ "$1" = fetch ]; then fetch || return $?; continue; fi
@@ -82,9 +109,9 @@ fetch() {
   case "$MAP_URL" in https://*.amazonaws.com/*) ;; *) echo "MAP_URL must be an https amazonaws URL"; return 2;; esac
   cd "$ROOT/tmp" || return 2
   curl -fsS --proto =https -m 60 --retry 3 -o ingest-map.json --url "$MAP_URL" || { echo "map download failed"; return 2; }
-  M="$M" DATA="$DATA" ROOT="$ROOT" MARKETS_SHA="$MARKETS_SHA" "$PY" - <<'PYEOF'
+  M="$M" DATA="$DATA" ROOT="$ROOT" MK="$MK" MARKETS_SHA="$MARKETS_SHA" "$PY" - <<'PYEOF'
 import glob, hashlib, json, os, subprocess, sys, time
-sys.path.insert(0, os.path.join(os.environ['ROOT'], 'markets'))
+sys.path.insert(0, os.environ['MK'])
 from research.kalshi.frankie_boss.block_source_scope import block_source_scope     # the tool's own validation, before any path is built
 m = json.load(open('ingest-map.json')); manifest = json.load(open(os.environ['M'])); data = os.path.realpath(os.environ['DATA'])
 scope = block_source_scope(manifest, expected_manifest_hash=manifest['manifest_hash'])   # refuses '..', a leading '/', a bad hash
@@ -150,18 +177,49 @@ run_tool() {   # $1 = canary|ingest (prepare ran: units idle, the dispatched com
   done
   OUT="$ROOT/work/ingest-$BLOCK-$1-$(date +%s)"     # a fresh directory per run, CREATED BY THE TOOL (it refuses an existing one; run 35680854102); it writes once, never over
   EXTRA=""; [ "$1" = canary ] && EXTRA="--canary-records $CANARY"
+  EXTRA="$EXTRA --mode $MODE --observation $OBSERVATION --verify $VERIFY"
+  if [ -n "$RESUME_DIR" ]; then
+    [ -d "$RESUME_DIR" ] || { echo "RESUME_DIR $RESUME_DIR is not on the box"; return 2; }
+    OUT="$RESUME_DIR"; EXTRA="$EXTRA --resume"; echo "### resuming in $OUT (saved pass 1 and finished segments are reused)"
+  fi
   if [ -n "$OPENING_RECEIPT" ]; then
     [ -s "$OPENING_RECEIPT" ] || { echo "OPENING_RECEIPT $OPENING_RECEIPT is not on the box"; return 2; }
     EXTRA="$EXTRA --opening-receipt $OPENING_RECEIPT"; echo "### opening book: the prior day's sealed ingest $OPENING_RECEIPT"
   fi
   [ "${PROFILE:-0}" = 1 ] && EXTRA="$EXTRA --profile"     # PROFILE=1: cProfile the parent, profile.txt in the work directory (a measurement)
   echo "### $1: block $BLOCK, $WORKERS workers, manifest $MANIFEST, markets $MARKETS_SHA, out $OUT"
-  ( cd "$ROOT/markets" && PYTHONPATH="$ROOT/markets" "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
+  ( cd "$MK" && PYTHONPATH="$MK" "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
       --manifest "$M" --sources-dir "$DATA" --output-dir "$OUT" --session-policy cme_trading_day --workers "$WORKERS" $EXTRA ) \
     || { echo "$1 failed (exit $?); the directory $OUT is kept"; return 3; }
   for R in canary-receipt.json ingestion-receipt.json; do [ -s "$OUT/$R" ] && { echo "### $R"; cat "$OUT/$R"; }; done
   [ -s "$OUT/profile.txt" ] && { echo "### profile.txt (whole)"; cat "$OUT/profile.txt"; }
   return 0     # the tool's exit decided above; a missing ingestion receipt on a canary is not a failure (run 35681037861 exited 1 on this test)
+}
+at_once() {   # DAYS_AT_ONCE days of the list side by side (each warms its own book), the workers split between them
+  N=$(echo "$MANIFESTS" | tr ',' '\n' | grep -c .); AT=$DAYS_AT_ONCE; [ "$N" -ge "$AT" ] || AT=$N
+  SHARE=$((WORKERS / AT)); [ "$SHARE" -ge 1 ] || SHARE=1
+  RUNNING=0; FAILED=0
+  for MANIFEST in $(echo "$MANIFESTS" | tr ',' ' '); do       # POSIX sh: batches of AT days, each batch waited whole
+    manifest_ok || return 2; mkdir -p "$DATA"
+    ( WORKERS=$SHARE; run_tool ingest ) > "$ROOT/tmp/ingest-$BLOCK-$$.log" 2>&1 &
+    echo "### started $MANIFEST (pid $!, $SHARE workers, log $ROOT/tmp/ingest-$BLOCK-$$.log)"
+    RUNNING=$((RUNNING + 1))
+    if [ "$RUNNING" -ge "$AT" ]; then wait; RUNNING=0; fi
+    sleep 1                                   # distinct output directory names (their names carry the second)
+  done
+  wait
+  for MANIFEST in $(echo "$MANIFESTS" | tr ',' ' '); do
+    manifest_ok || return 2
+    echo "### $MANIFEST"; cat "$ROOT/tmp/ingest-$BLOCK-$$.log"
+    grep -q '"schema": "BOSS_BLOCK_INGESTION_RECEIPT_V1"' "$ROOT/tmp/ingest-$BLOCK-$$.log" || FAILED=$((FAILED + 1))
+  done
+  [ "$FAILED" -eq 0 ] || { echo "### $FAILED day(s) have no sealed ingest; each directory is kept (RESUME_DIR continues a parallel one)"; return 3; }
+}
+conform() {   # item 3's later half: the conformance drain on a sealed ingest whose conformance was deferred
+  [ -n "$DIRECTORY" ] && [ -s "$DIRECTORY/ingestion-receipt.json" ] || { echo "DIRECTORY must hold a sealed ingestion-receipt.json"; return 2; }
+  ( cd "$MK" && PYTHONPATH="$MK" "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
+      --conform "$DIRECTORY" --manifest "$M" --workers "$WORKERS" ) || { echo "conform failed or differs (exit $?)"; return 3; }
+  cat "$DIRECTORY/conformance.json"
 }
 status() {
   echo "### markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD 2>/dev/null || echo unknown) (as it stands; status moves nothing)"
@@ -175,7 +233,8 @@ status() {
 case "$ACTION" in
   fetch) each_day fetch ;;
   canary) prepare && run_tool canary ;;
+  conform) prepare && conform ;;
   ingest) each_day ingest ;;
   status) manifest_ok && status ;;
-  *) echo "ACTION must be fetch, canary, ingest or status"; exit 2 ;;
+  *) echo "ACTION must be fetch, canary, ingest, conform or status"; exit 2 ;;
 esac

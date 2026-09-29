@@ -127,6 +127,37 @@ class CompactBuildJournal:
         self.appends += 1
         return digest
 
+    @staticmethod
+    def previous_hash_token(value):
+        """The canonical bytes of the envelope's previous_hash node (canonical_tagged_bytes of pack: no spaces)."""
+        return b'["previous_hash",["str","' + value.encode('ascii') + b'"]]'
+
+    def append_body(self, kind, body, placeholder):
+        """The parallel writer's pass 3 (operations/parallel_ingest.py; Greg, 2026-09-29, item 2): a body a worker serialised
+        with a fixed placeholder where previous_hash goes. The placeholder's canonical `"previous_hash",["str",<64 hex>]`
+        node must occur exactly once; it is replaced by this entry's real previous hash, then the digest and the box
+        cut are exactly append()'s, so the rows, digests, head hash and boxes equal the sequential writer's."""
+        if self.sealed:
+            raise ValueError('container already sealed')
+        ordinal, previous = self.count, self.head_hash
+        if body.count(b'["ordinal",["int",%d]]' % ordinal) != 1:
+            raise ValueError(f'entry {ordinal}: the body does not carry this ordinal; out of order')
+        token = self.previous_hash_token(placeholder)
+        if body.count(token) != 1:
+            raise ValueError(f'entry {ordinal}: the previous_hash placeholder must occur exactly once')
+        body = body.replace(token, self.previous_hash_token(previous), 1)
+        digest = hashlib.sha256(DIGEST_PREFIX + body).hexdigest()
+        if len(body) > MAX_BYTES // 2:
+            raise ValueError('oversized row')
+        if self._rows and (self._pending_bytes + len(body) > self.block_bytes or len(self._rows) == self.block_rows):
+            self.flush()
+        if not self._rows:
+            self._pending_previous = previous
+        self._rows.append((ordinal, kind, body, digest)); self._trees.append(None); self._pending_bytes += len(body)
+        self.writer.count, self.writer.head_hash = ordinal + 1, digest
+        self.appends += 1
+        return digest
+
     def _insert(self, start, count, blob, previous, head):
         started = time.perf_counter()
         digest = hashlib.sha256(blob).hexdigest()
