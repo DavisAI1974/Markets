@@ -110,3 +110,13 @@ archive prefix needs a workflow change (design in the cleanup report: pod_transf
 ## Keys
 AWS pair (Claude IAM user) was set in this container's ~/.config/markets/env (Greg: fine to use; rotate after the build).
 EIA key lives in SSM /markets/EIA_API_KEY (us-east-2); Greg also pasted it in chat (rotate later).
+
+## Addendum ~18:50Z: runner-day pull FINAL
+10/12 runner days PLACED on main and sha256-verified against their pointer artifacts (run 36611619437): each is the ONE
+sealed ingest of its day at /opt/frankie-box/work/ingest-<day>-gh-36571235912-1 for 20221011 20221012 20221018 20221019
+20231003 20231004 20231010 20231011 20231017 20231018 (records: /opt/frankie-box/receipts/runner-pull-<day>-gh-36571235912-1.json).
+20211019/20211020 were still ingesting on runners at 18:30Z (6 h limit ~18:55Z). If they sealed, place them with:
+frankie_box_run.yml script=deploy/aws/box/frankie_box_pull_runner_ingest.sh variables="DAYS=20211019,20211020
+RUN=36571235912 ATTEMPT=1 PARALLEL=2 POINTER_SOURCE=artifact" timeout=10800 presign_hours=12
+presign="getprefix:bento-568968024170-us-east-2-an/frankie/ingest/20211019/ getprefix:bento-568968024170-us-east-2-an/frankie/ingest/20211020/".
+If the jobs were killed: ingest both on a box (partitions pre-fetched on main).
