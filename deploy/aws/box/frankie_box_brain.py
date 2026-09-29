@@ -136,9 +136,11 @@ def _school_index(brain):
     return index
 
 
-def write_school_day(brain, day, data, report_number, run):
+def write_school_day(brain, day, data, report_number, run, school_day=None):
     """<brain>/school/<day>.json (written once, 'xb') and its row appended to <brain>/school/index.json under an exclusive
-    lock. Returns (row, reused): the same bytes again reuse the row; other bytes for a day already there decline."""
+    lock. Returns (row, reused): the same bytes again reuse the row; other bytes for a day already there decline.
+    school_day: the day's position in Frankie's class line (frankie_box_frankie_queue.py; equal to report_number), kept in
+    the row when given."""
     import fcntl
     if not re.fullmatch('[0-9]{8}', str(day)):
         raise ValueError('school day must be YYYYMMDD')
@@ -165,6 +167,8 @@ def write_school_day(brain, day, data, report_number, run):
                 f.write(data)
         row = dict(day=str(day), file=f'{day}.json', sha256=digest, bytes=len(data), report_number=report_number,
                    run=run, include=True, at=time.time())
+        if school_day is not None:
+            row['school_day'] = school_day
         index['rows'].append(row)
         tmp = school / 'index.json.tmp'
         tmp.write_text(json.dumps(index, indent=1, sort_keys=True) + '\n', encoding='utf-8')

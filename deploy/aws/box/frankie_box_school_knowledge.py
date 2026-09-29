@@ -237,6 +237,7 @@ def main():
     p.add_argument('--day', required=True)
     p.add_argument('--run', required=True)
     p.add_argument('--report-number', type=int, required=True)
+    p.add_argument('--school-day', type=int, help='the day\'s school-day number in Frankie\'s class line (= the report number)')
     p.add_argument('--classroom', required=True, help='the day\'s <root>/work/classroom')
     p.add_argument('--exchange-view', help='the exchange\'s exchange-frankie.json')
     p.add_argument('--exchange-listed', help='why there is no exchange view (the orchestrator\'s reason)')
@@ -255,7 +256,10 @@ def main():
     doc = build(a.day, a.run, a.report_number, a.classroom, a.exchange_view, a.exchange_listed, a.lessons,
                 a.teacher_rows, rules_witness)
     data = (json.dumps(doc, indent=1, sort_keys=True, default=str) + '\n').encode('utf-8')
-    row, reused = BR.write_school_day(a.brain, a.day, data, a.report_number, a.run)
+    if a.school_day is not None and a.school_day != a.report_number:
+        raise SystemExit('the school day %d and the report number %d differ: the class line gives one number to both'
+                         % (a.school_day, a.report_number))
+    row, reused = BR.write_school_day(a.brain, a.day, data, a.report_number, a.run, school_day=a.school_day)
     receipt = dict(schema=RECEIPT_SCHEMA, run=a.run, day=a.day, status='complete', file=str(Path(a.brain) / 'school' / row['file']),
                    index=str(Path(a.brain) / 'school' / 'index.json'), row=row, reused=reused,
                    sections={k: len(v['items']) for k, v in doc['sections'].items()}, missing=len(doc['missing']),

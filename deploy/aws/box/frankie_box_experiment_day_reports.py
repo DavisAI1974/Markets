@@ -37,7 +37,9 @@ Frankie and Jev reports. The orchestrator reserves it right after the day's clas
 rule and index), where this step used to run, so the numbering is unchanged now that the reports follow the exchange.
 It is assigned once per (run, day) under an exclusive lock on <reports-dir>/.lock: an existing
 (run, day) entry in <reports-dir>/index.json is reused, never renumbered; otherwise N = 1 + the highest day number in the
-index or in any report file name there. A number is never given to another day. A report file is never overwritten
+index or in any report file name there. A number is never given to another day. With Frankie's class line
+(frankie_box_frankie_queue.py) the class worker reserves N = the day's SCHOOL-DAY number (its position in the class line)
+when it takes the day, before the classroom, so this step, the school step and Jev's dispatch all read that N. A report file is never overwritten
 (written 'xb'): when the day's reports already exist and were built from the same classroom receipt they are printed
 again; when the classroom has changed since (refused, then run again) the new reports keep N and are written as
 revision r2, r3, ... (classroom-report-NNNN-r2.md), naming the file they supersede. Each report goes into the reports
@@ -970,21 +972,38 @@ def day_number(reports, index, run, day):
     return (max(used) if used else 0) + 1, True
 
 
-def reserve_number(reports, run_name, day):
+def reserve_number(reports, run_name, day, number=None):
     """The day's report number N, assigned now or already there, under the same lock and rule as run() (the orchestrator
     reserves it right after the day's classroom step, so the Jev Pod dispatch carries it and the numbering is unchanged
-    now that the reports follow the exchange). Returns (number, assigned now?)."""
+    now that the reports follow the exchange). Returns (number, assigned now?).
+    number (Frankie's class line, frankie_box_frankie_queue.py; Greg, 2026-09-29: "Class days are sequential"): the
+    day's SCHOOL-DAY number, which N must equal. A day already holding another N, or an N another day holds, refuses
+    (SystemExit): a number is never given to two days and a day is never renumbered."""
     reports = Path(reports)
     reports.mkdir(parents=True, exist_ok=True)
     with open(reports / '.lock', 'a+') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         index = read_index(reports)
-        number, new_day = day_number(reports, index, run_name, day)
+        have, new_day = day_number(reports, index, run_name, day)
+        if number is not None:
+            if not new_day and have != number:
+                raise SystemExit('%s %s holds report number %d already; its school day is %d (never renumbered)'
+                                 % (run_name, day, have, number))
+            if new_day:
+                taken = [e for e in index['days'] if e['number'] == number] + \
+                        [p.name for p in reports.iterdir() for m in [FILE_RE.match(p.name)] if m and int(m.group(2)) == number]
+                if taken:
+                    raise SystemExit('report number %d (the school day of %s %s) is held already: %s' % (
+                        number, run_name, day, taken))
+                have = number
         if new_day:
-            index['days'].append(dict(run=run_name, day=day, number=number, at=time.time(),
-                                      commit=os.environ.get('MARKETS_SHA'), reserved_by='orchestrator after the classroom'))
+            index['days'].append(dict(run=run_name, day=day, number=have, at=time.time(),
+                                      commit=os.environ.get('MARKETS_SHA'),
+                                      reserved_by='orchestrator after the classroom' if number is None else
+                                      'frankie class line: school day %d' % number,
+                                      **({} if number is None else dict(school_day=number))))
             write_index(reports, index)
-    return number, new_day
+    return have, new_day
 
 
 def file_name(kind, number, revision):

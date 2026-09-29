@@ -15,8 +15,11 @@
 # second run id for the eia930 family), EXTERNAL_HISTORY_FAMILY_RUNS (optional family=<run id>,...), EXTERNAL_WAIT (on|off), BRAIN,
 # PREVIOUS_CLASSROOM (the run's first arm day), MAP_URL (the dispatch's presigned map: the partitions for fetch, the
 # day history and curve prefixes and the day-file slots for external, Jev's material slots for jev; ACTION=plan prints
-# the whole presign string). A probe: frankie_box_progress.sh
-# DIRECTORY=/opt/frankie-box/work/experiment/<RUN>.
+# the whole presign string), FRANKIE_QUEUE (on|off, default on: classroom-arm days enter Frankie's class line, arrival
+# FIFO, one class at a time), ROOT_QUEUE (on|off, default on: ROOT-ready days enter the ROOT line, arrival FIFO to the next
+# free day-run slot), QUEUE_WORKER_SECONDS (43200: a kicked queue worker's bound and the wait on this run's ROOT-line
+# days), QUEUE_POLL_SECONDS (60). A probe: frankie_box_progress.sh DIRECTORY=/opt/frankie-box/work/experiment/<RUN>; the
+# queue: frankie_box_frankie_queue.sh ACTION=show.
 set -eu
 export HOME="${HOME:-/root}"   # SSM runs without HOME; DuckDB refuses to load extensions without a home directory (2026-09-29)
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"; : "${RUN:?run name required}"
@@ -46,6 +49,10 @@ case "${BRAIN:-/opt/frankie-box/brain}${PREVIOUS_CLASSROOM:-}" in *..*) echo "no
 case "${BRAIN:-/opt/frankie-box/brain}" in /opt/frankie-box/*) ;; *) echo "BRAIN must be under /opt/frankie-box" >&2; exit 2;; esac
 case "${PREVIOUS_CLASSROOM:-}" in ""|/opt/frankie-box/work/experiment-roots/*/work/classroom) ;; *) echo "PREVIOUS_CLASSROOM must be an experiment root's work/classroom" >&2; exit 2;; esac
 [ -z "${PREVIOUS_CLASSROOM:-}" ] || set -- "$@" --previous-classroom "$PREVIOUS_CLASSROOM"
+case "${FRANKIE_QUEUE:-on}${ROOT_QUEUE:-on}" in onon|onoff|offon|offoff) ;; *) echo "FRANKIE_QUEUE and ROOT_QUEUE must be on or off" >&2; exit 2;; esac
+case "${QUEUE_WORKER_SECONDS:-43200}${QUEUE_POLL_SECONDS:-60}" in *[!0-9]*) echo "QUEUE_WORKER_SECONDS and QUEUE_POLL_SECONDS must be whole seconds" >&2; exit 2;; esac
+set -- "$@" --frankie-queue "${FRANKIE_QUEUE:-on}" --root-queue "${ROOT_QUEUE:-on}" \
+  --queue-worker-seconds "${QUEUE_WORKER_SECONDS:-43200}" --queue-poll-seconds "${QUEUE_POLL_SECONDS:-60}"
 set -- "$@" --lags "${LAGS:-20}" --ingest-workers "${INGEST_WORKERS:-31}" --data-workers "${DATA_WORKERS:-1}" \
   --search-workers "${SEARCH_WORKERS:-8}" --teacher-cpus "${TEACHER_CPUS:-0}" --parallel-days "${PARALLEL_DAYS:-4}" --disk-floor-gb "${DISK_FLOOR_GB:-100}"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT" MAP_URL="${MAP_URL:-}"

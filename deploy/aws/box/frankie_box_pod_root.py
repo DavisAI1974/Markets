@@ -39,6 +39,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parents[2] / 'research' / 'kalshi' / 'frankie_boss' / 'pod_root'))
 import frankie_box_experiment as X        # noqa: E402  (the orchestrator's own rules: ingest_of, root_of, attached_day_file)
 import frankie_box_root_claims as claims  # noqa: E402
+import frankie_box_frankie_queue as Q     # noqa: E402  (Frankie's ROOT line: arrival order for every claim)
 import pod_transfer as T                  # noqa: E402
 
 PROTOCOL = '1'
@@ -139,6 +140,25 @@ def day_state(run, plan, e, ignore_claim=False):
                 attempt='%s-%s-a%d' % (run, day, len(attempts) + 1), interrupted_attempts=[str(a) for a in attempts],
                 conformance=r.get('conformance'), conformed=(directory / 'conformance.json').is_file(),
                 runner_prefix=runner, day_external_sha256=day_sha)
+
+
+def line_order(run, days):
+    """Frankie's ROOT line (frankie_box_frankie_queue.py; Greg: "Whichever trade date hits that spot first goes first"):
+    when the run has entries in the line, its days are listed in LINE order (arrival seq), and a ready day may be claimed
+    only when no earlier entry of the line is still waiting to start (root_gate): its state becomes behind_in_root_line
+    or not_in_root_line otherwise, with the reason. The controller takes the first ready day, so it takes the front. A
+    run with no entry in the line is listed in plan order, as before."""
+    doc = Q.load('root')
+    seq = {x['day']: x['seq'] for x in doc['entries'] if x['run'] == run}
+    if not seq:
+        return days
+    for d in days:
+        if d['state'] == 'ready':
+            ok, why = Q.root_gate(run, d['day'])
+            if not ok:
+                d.update(state=why.split(':')[0], reason=why)
+        d['root_line_seq'] = seq.get(d['day'])
+    return sorted(days, key=lambda d: (d['root_line_seq'] is None, d['root_line_seq'] or 0))
 
 
 def url_map():
@@ -309,7 +329,7 @@ def main():
                       free_bytes=shutil.disk_usage(X.BOX_ROOT).free)
     plan = plan_of(run)
     if action == 'queue':
-        days = [day_state(run, plan, e) for e in plan['days']]
+        days = line_order(run, [day_state(run, plan, e) for e in plan['days']])
         counts = {}
         for d in days:
             counts[d['state']] = counts.get(d['state'], 0) + 1
@@ -324,9 +344,14 @@ def main():
         st = day_state(run, plan, entry_of(plan, day))
         if st['state'] != 'ready':
             return result(action='claim', claimed=False, state=st)
+        gate, why = Q.root_gate(run, day)            # Frankie's ROOT line: days leave in arrival order (never skipped)
+        if not gate:
+            return result(action='claim', claimed=False, state=dict(st, state=why.split(':')[0], reason=why))
         ok, doc = claims.claim(run, day, where, st['attempt'], env.get('COMMIT') or env.get('CODE_COMMIT'),
                                by='frankie_box_pod_root.py')
-        return result(action='claim', claimed=ok, claim=doc, state=st)
+        if ok:
+            Q.root_claimed(run, day, where, st['attempt'], by='frankie_box_pod_root.py claim')
+        return result(action='claim', claimed=ok, claim=doc, state=st, root_line=why)
     attempt = env.get('ATTEMPT') or ''
     if action == 'export':
         names = [n for n in (env.get('FILES') or '').split(',') if n]

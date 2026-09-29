@@ -146,6 +146,18 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
   While `frankie_box_experiment_teacher.sh` is not built the batch records `not_built` and its days are exported and
   searched without Dipole rows (listed missing in the receipts).
 
+- **Frankie's FIFO queue (built 2026-09-29, not run: `frankie_box_frankie_queue.py` + `.sh`).** Two arrival-order lines
+  under `/opt/frankie-box/work/frankie-queue/` (enqueued_at then a monotonic seq; nothing dropped, skipped or reordered):
+  the ROOT line (`ROOT_QUEUE=on`, default: a day enters when its sealed ingest + day file are there, leaves in arrival
+  order to the next free day-run slot, box or Pod via the root claims; Pod claims are gated by `root_gate`) and the CLASS
+  line (`FRANKIE_QUEUE=on`, default: an arm day enters when ROOT + teacher rows + day file are there; ONE class at a time;
+  class k carries class k-1; school day = position in the line = report number N). Workers are kicked by every
+  orchestrator start and every enqueue (detached, bounded, one per line) and poll a waiting day instead of ending.
+  Probe: `frankie_box_frankie_queue.sh ACTION=show` (box-progress lock). Dispatches: `ACTION=enqueue LINE RUN DAY`,
+  `ACTION=worker LINE [MAX_SECONDS]`, `ACTION=kick LINE` (each its own concurrency group). Open for Greg: the school
+  knowledge base still reads earlier school days by TRADING DATE (`school_rows before_day`), while PREVIOUS follows the
+  class line (flagged `previous_trade_date_later`). A box slot = 16 CPUs free in the CPU ledger (`box_slots` reads
+  `frankie_box_cores.usage`; the ROOT step books them itself; a step that cannot book waits and keeps its place).
 - One dispatch starts `frankie_box_experiment.py` on its own lock `box-experiment-*`, so it runs
   beside Frankie's runs and never queues behind them.
 - Per-day, per-step receipt in `/opt/frankie-box/work/experiment/<run>/`. A restart skips finished

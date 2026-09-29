@@ -56,6 +56,24 @@ the committed box script, run as a child with its own inputs, its output kept in
            its log. Reports written before the day's exchange existed are rebuilt once it does (a revision, same N). A
            report failure is recorded (retried on the next start) and never stops the run
 
+FRANKIE'S FIFO QUEUE (frankie_box_frankie_queue.py; Greg, 2026-09-29: "I don't want any days dropped and moved forward
+because he was busy"; "order by first in the pod first out the pod or box"; "Class days are sequential"). Two lines on the
+box, each arrival-order FIFO (enqueued_at, then a monotonic seq): nothing dropped, skipped or reordered.
+  ROOT line  (--root-queue on, the default): a day enters the moment its sealed ingest and day file are there
+             (root_enqueue, after its external step and again at the root stage); days leave in arrival order to the next
+             free day-run slot (a box slot, or a Pod through the root claims); this run's root stage then waits for its own
+             days (bounded by --queue-worker-seconds; re-kicking the ROOT worker), so the plan order no longer decides ROOT
+             order. --root-queue off: the ROOTs run here in plan order, as before.
+  CLASS line (--frankie-queue on, the default, classroom-arm days): a day enters the moment its ROOT (digest) and teacher
+             rows are done and its day file is attached (classroom_ready, the classroom step's own checks: enqueue_classroom);
+             the one class worker runs classroom, frankie_lessons, exchange, voice, school and reports for ONE day at a
+             time, carries the last class to finish (previous_of), gives each class its school-day number = its position in
+             the class line = its report number N, and polls a waiting day instead of ending. This run then records the
+             day's classroom as queued and leaves its class side to the worker (queue_owned). --frankie-queue off: the
+             classroom side runs here as before, still one class at a time on the box (class-running.lock).
+Every start kicks both workers (detached, bounded; a second worker of a line exits at once). Probe:
+frankie_box_frankie_queue.sh ACTION=show (read-only, both lines).
+
 NO DATA IS DROPPED (Greg, 2026-09-29): incomplete data never stops the run or skips a day. A calculation that cannot
 use a piece of data (missing, incomplete) skips over that piece, and the step says what it skipped and why; every
 other day and step goes on. So a day's gap is recorded on that day's steps and the rest runs:
@@ -466,6 +484,8 @@ class Run:
         self._cpu = {}                     # (stage, key) -> the CPU ledger's line for the child: booked, waiting, refused
         self._map = None
         self._attached = {}
+        self.queue_previous = None       # the class worker: (PREVIOUS, None, from) taken from the class line
+        self.school_day = None           # the class worker: the class line's school-day number = the report number N
         sys.path.insert(0, str(self.box))
         from frankie_box_progress import Probe
         import frankie_box_cores
@@ -811,6 +831,8 @@ class Run:
     # the classroom arm (V2: the 19/171 classroom plus the external section) and Jev's material
     def previous_of(self, e):
         """(PREVIOUS classroom directory or None, why it waits or None, where it came from)."""
+        if self.queue_previous is not None:        # the class worker: class k carries class k-1 of the class line
+            return self.queue_previous
         if e.get('previous_classroom'):
             return e['previous_classroom'], None, 'plan (the day)'
         arm_days = [x for x in self.plan['days'] if x['classroom_arm']]
@@ -828,29 +850,43 @@ class Run:
             return None, None, 'none: no complete classroom of an earlier day on the box (history starts here)'
         return str(found), None, 'the latest earlier classroom day on the box (%s)' % found_day
 
+    def classroom_ready(self, e):
+        """The classroom step's readiness checks, in its order: (None, None, facts) when the day may take its class now;
+        ('reused', None, facts) when its classroom is complete already; else (status, reason, facts). facts carry calc,
+        the classroom directory d and the teacher rows once known. Used by the step and by the class line's enqueue."""
+        root = self.receipt('root', e['day'])
+        if not (root and root['status'] in FINISHED and root.get('calculations')):
+            return 'waiting', 'the day has no ROOT yet (stage root)', {}
+        calc = Path(root['calculations'])
+        facts = dict(calc=calc, d=calc / 'work' / 'classroom')
+        if (facts['d'] / 'completion.json').is_file():
+            return 'reused', None, facts
+        if not (calc / 'work' / 'derivation-digest-full.md').is_file():
+            return 'refused', ('the ROOT %s ran without the digest; a classroom-arm day needs DIGEST=on (its brain entry '
+                               'takes it)' % calc), facts
+        rows, source = rows_of(e)
+        if rows is None or not str(rows).startswith(str(TEACHER_ROWS) + '/'):
+            return 'waiting', 'no teacher-only Dipole rows under %s yet (stage teacher; found: %s)' % (TEACHER_ROWS,
+                                                                                                    source), facts
+        facts['rows'] = rows
+        ready, why = self.external_ready(e)
+        if not ready:
+            return 'waiting', why, facts
+        return None, None, facts
+
     def classroom(self, e):
         day = e['day']
         if not e['classroom_arm']:
             return self.record('classroom', day, 'skipped', reason='not a classroom-arm day')
-        root = self.receipt('root', day)
-        if not (root and root['status'] in FINISHED and root.get('calculations')):
-            return self.record('classroom', day, 'waiting', reason='the day has no ROOT yet (stage root)')
-        calc = Path(root['calculations'])
-        d = calc / 'work' / 'classroom'
-        if (d / 'completion.json').is_file():
+        status, why, facts = self.classroom_ready(e)
+        d = facts.get('d')
+        if status == 'reused':
             r = json.loads((d / 'receipt.json').read_bytes()) if (d / 'receipt.json').is_file() else {}
             return self.record('classroom', day, 'reused', classroom=str(d), receipt_schema=r.get('schema'),
                                receipt_status=r.get('status'))
-        if not (calc / 'work' / 'derivation-digest-full.md').is_file():
-            return self.record('classroom', day, 'refused', reason='the ROOT %s ran without the digest; a classroom-arm day '
-                                                                   'needs DIGEST=on (its brain entry takes it)' % calc)
-        rows, source = rows_of(e)
-        if rows is None or not str(rows).startswith(str(TEACHER_ROWS) + '/'):
-            return self.record('classroom', day, 'waiting', reason='no teacher-only Dipole rows under %s yet (stage teacher; '
-                                                                   'found: %s)' % (TEACHER_ROWS, source))
-        ready, why = self.external_ready(e)
-        if not ready:
-            return self.record('classroom', day, 'waiting', reason=why)
+        if status:
+            return self.record('classroom', day, status, reason=why)
+        calc, rows = facts['calc'], facts['rows']
         previous, why, previous_from = self.previous_of(e)
         if why:
             return self.record('classroom', day, 'waiting', reason=why)
@@ -861,9 +897,12 @@ class Run:
         env = dict(DAY=day, CALCULATIONS=calc, TEACHER_ROWS=rows, BRAIN=self.plan.get('brain') or str(BRAIN))
         if previous:
             env['PREVIOUS'] = previous
-        code, log = self.child('classroom', day, 'frankie_box_experiment_classroom_v2.sh', env)
+        import frankie_box_frankie_queue as Q
+        with Q.class_running(self.log):              # exactly one class at a time on the box, queue or not
+            code, log = self.child('classroom', day, 'frankie_box_experiment_classroom_v2.sh', env)
         r = json.loads((d / 'receipt.json').read_bytes()) if (d / 'receipt.json').is_file() else {}
         fields = dict(exit_code=code, log=log, classroom=str(d), previous=previous, previous_from=previous_from,
+                      school_day=self.school_day,
                       receipt_status=r.get('status'), external=(r.get('external') or {}).get('completion_hash'),
                       brain_entry=r.get('brain_entry'), jev_material=r.get('jev_material'))
         if code == 0 and (d / 'completion.json').is_file():
@@ -871,6 +910,118 @@ class Run:
         if code == 3 and r.get('status') == 'refused':
             return self.record('classroom', day, 'refused', reason=r.get('reason'), **fields)
         return self.record('classroom', day, 'failed', reason='no completion.json after the step (its log names why)', **fields)
+
+    # Frankie's FIFO queue (frankie_box_frankie_queue.py): the ROOT line and the CLASS line, arrival order
+    def queue_owned(self, e):
+        """True when the class line runs this arm day's class side (classroom, frankie_lessons, exchange, voice, school,
+        reports), not this orchestrator: the queue is on and the day is in the line, or its classroom is not finished
+        yet (it enters the line once ready; nothing class-side runs here before it). A day whose classroom finished
+        before the line existed keeps its class side here, as before."""
+        if not (getattr(self.a, 'frankie_queue', 'off') == 'on' and e['classroom_arm']):
+            return False
+        import frankie_box_frankie_queue as Q
+        return Q.entry_of('class', self.plan['run'], e['day']) is not None or not self.finished('classroom', e['day'])
+
+    def enqueue_classroom(self, e):
+        """The class line's door: the classroom step's own readiness checks, then the day's entry (arrival order). The
+        classroom receipt says queued with the entry's seq; the worker's classroom step replaces it."""
+        import frankie_box_frankie_queue as Q
+        day = e['day']
+        if not e['classroom_arm']:
+            return self.record('classroom', day, 'skipped', reason='not a classroom-arm day')
+        prior = self.receipt('classroom', day)
+        if self.finished('classroom', day) or (prior and prior['status'] != 'waiting' and
+                                               Q.entry_of('class', self.plan['run'], day) is not None):
+            return prior                             # in the line already (or its class is done): never recorded twice
+        status, why, facts = self.classroom_ready(e)
+        if status == 'reused' and Q.entry_of('class', self.plan['run'], day) is None:
+            return self.classroom(e)                 # complete before the line existed: recorded reused, as before
+        if status == 'waiting':
+            return self.record('classroom', day, status, reason='%s (the class line takes the day once it is ready)' % why)
+        # a refused day (a ROOT without the digest) enters the line too: never skipped, its class step refuses there with
+        # the reason, its reports print it, and the line stops at it until the day is put right
+        entry, outcome = Q.enqueue('class', self.plan['run'], day, self.commit, self.code_root, plan_digest(self.plan),
+                                   Q.settings_of(self.a), dict(calculations=str(facts['calc']), classroom=str(facts['d']),
+                                                               teacher_rows=str(facts.get('rows')), refused=why,
+                                                               day_file=list(self._attached.get(day) or []) or None),
+                                   by='frankie_box_experiment.py %s' % self.plan['run'])
+        if entry is None:
+            return self.record('classroom', day, 'refused', reason=outcome)
+        return self.record('classroom', day, 'queued', queue_seq=entry['seq'], queue_state=entry['state'],
+                           queue=str(Q.QUEUE), enqueued_utc=entry['enqueued_utc'],
+                           reason='in Frankie\'s class line at seq %d (%s, %s): the class worker runs its class side in '
+                                  'arrival order, one class at a time' % (entry['seq'], outcome, entry['state']))
+
+    def root_enqueue(self, e):
+        """The ROOT line's door: the root step's own readiness checks (a finished ROOT is recorded reused as before; the
+        sealed ingest; the day file attached), then the day's entry (arrival order). The root receipt says queued."""
+        import frankie_box_frankie_queue as Q
+        day = e['day']
+        prior = self.receipt('root', day)
+        if self.finished('root', day) or (prior and prior['status'] == 'queued' and
+                                          Q.entry_of('root', self.plan['run'], day) is not None):
+            return prior                             # finished (its measured bytes kept) or in the line already
+        calc, attempts = root_of(e, self.plan['run'])
+        if calc:
+            return self.root(e)
+        ing = self.receipt('ingest', day)
+        if not (ing and ing['status'] in FINISHED):
+            return self.record('root', day, 'waiting', reason='the day has no sealed ingest yet (stage ingest); it enters '
+                                                              'the ROOT line once it has one and its day file')
+        ready, why = self.external_ready(e)
+        if not ready:
+            return self.record('root', day, 'waiting', reason='%s (it enters the ROOT line once ready)' % why)
+        entry, outcome = Q.enqueue('root', self.plan['run'], day, self.commit, self.code_root, plan_digest(self.plan),
+                                   Q.settings_of(self.a), dict(ingest=ing.get('ingest'), receipt=ing.get('receipt'),
+                                                               receipt_sha256=ing.get('receipt_sha256'),
+                                                               day_file=list(self._attached.get(day) or []) or None,
+                                                               interrupted_attempts=attempts),
+                                   by='frankie_box_experiment.py %s' % self.plan['run'])
+        if entry is None:
+            return self.record('root', day, 'refused', reason=outcome)
+        if entry['state'] == 'done':
+            return self.root(e)
+        return self.record('root', day, 'queued', queue_seq=entry['seq'], queue_state=entry['state'], queue=str(Q.QUEUE),
+                           enqueued_utc=entry['enqueued_utc'],
+                           reason='in the ROOT line at seq %d (%s, %s): it runs in arrival order in the next free day-run '
+                                  'slot (box or Pod)' % (entry['seq'], outcome, entry['state']))
+
+    def kick(self, line):
+        import frankie_box_frankie_queue as Q
+        try:
+            return Q.kick(line, self.code_root, self.commit, self.a.queue_worker_seconds, self.a.queue_poll_seconds,
+                          by='frankie_box_experiment.py %s' % self.plan['run'], log=self.log)
+        except Exception as error:                   # listed; the next start kicks again
+            self.log('the %s worker could not be kicked (%s: %s)' % (line, type(error).__name__, error))
+            return None
+
+    def await_roots(self, days):
+        """This run's ROOT-line days: wait (polling, bounded by --queue-worker-seconds) until each has left the line done
+        or failed, re-kicking the ROOT worker when none runs; each day's root receipt is then the worker's. A day still
+        in the line at the bound stays queued (listed); the next start waits again."""
+        import frankie_box_frankie_queue as Q
+        deadline = time.monotonic() + self.a.queue_worker_seconds
+        while True:
+            left = []
+            for e in days:
+                x = Q.entry_of('root', self.plan['run'], e['day'])
+                if x is None:
+                    continue
+                if x['state'] == 'done' and (self.receipt('root', e['day']) or {}).get('status') not in FINISHED:
+                    self.root(e)                     # finished elsewhere (a Pod): recorded reused here
+                if x['state'] in ('queued', 'running'):
+                    left.append('%s seq %d %s%s' % (e['day'], x['seq'], x['state'],
+                                                     (' at %s' % x['where']) if x.get('where') else ''))
+            if not left:
+                return
+            self.probe.update('root line: waiting on %d day(s)' % len(left), 0, None)
+            if time.monotonic() + self.a.queue_poll_seconds > deadline:
+                self.log('root line: %d day(s) still in the line at the bound (%s); they stay queued' % (len(left), left))
+                return
+            status, held = Q.worker_state('root')
+            if not held:
+                self.kick('root')
+            time.sleep(self.a.queue_poll_seconds)
 
     # the day reports (Greg, 2026-09-29: "make sure classroom is printing out an analysis after every day has gone through
     # it, and same with Frankie, and have them number their reports")
@@ -953,7 +1104,8 @@ class Run:
         """The day's report number N: reserved once, right after its classroom step, in the reports' own index
         (frankie_box_experiment_day_reports.reserve_number), so the numbering is what it was when the reports ran there."""
         import frankie_box_experiment_day_reports as R
-        return R.reserve_number(REPORTS, self.plan['run'], e['day'])[0]
+        # the class worker: N is the class line's school-day number (the queue assigns it; a day holding another N refuses)
+        return R.reserve_number(REPORTS, self.plan['run'], e['day'], number=self.school_day)[0]
 
     def reserve_after_classroom(self, e):
         c = self.receipt('classroom', e['day'])
@@ -1084,6 +1236,8 @@ class Run:
         if not classroom:
             return self.record('school', day, 'failed', reason='no classroom directory named for the day')
         env = dict(DAY=day, RUN=self.plan['run'], REPORT_NUMBER=self.report_number(e), CLASSROOM=classroom, BRAIN=brain)
+        if self.school_day is not None:
+            env['SCHOOL_DAY'] = self.school_day        # the class line's school-day number (= REPORT_NUMBER), in the row
         if x['status'] in ('done', 'reused'):
             env['EXCHANGE_VIEW'] = x['frankie_view']
         else:
@@ -1263,7 +1417,7 @@ class Run:
             if e.get('jev_stamp'):
                 calls.append(('jev-%s' % e['day'], dict(JEV_STAMP=e['jev_stamp'])))
             ledgers = e.get('frankie_ledgers')
-            if not ledgers and e['classroom_arm']:
+            if not ledgers and e['classroom_arm'] and not self.queue_owned(e):   # queued days: the class worker calls it
                 # the day's own classroom ledgers: the scientific teacher reads only their novel findings (R09)
                 c = self.receipt('classroom', e['day'])
                 if c and c['status'] in ('done', 'reused') and c.get('classroom') and \
@@ -1332,10 +1486,33 @@ class Run:
                     fn(e)
                     tick(stage, e['day'])
 
+        # the ROOT line (--root-queue on): a day enters it the moment it is ROOT-ready (right after its external step), and
+        # the ROOTs run in arrival order in the free day-run slots; this run then waits for its own days
+        root_line = 'root' in stages and getattr(self.a, 'root_queue', 'off') == 'on'
+
+        def external_then_line(e):
+            r = self.external(e)
+            if root_line and not self.stopped and (self.root_enqueue(e) or {}).get('status') == 'queued':
+                self.kick('root')
+            return r
+
         for stage, parallel in (('fetch', 1), ('ingest', self.a.parallel_days), ('external', self.a.parallel_days),
                                 ('root', self.a.parallel_days)):
             if stage in stages and not self.stopped:
-                per_day(stage, getattr(self, stage), parallel)
+                if stage == 'external' and root_line:
+                    per_day(stage, external_then_line, parallel)
+                elif stage == 'root' and root_line:
+                    todo = [e for e in days if not self.finished('root', e['day'])]
+                    for e in todo:
+                        if not self.stopped:
+                            self.root_enqueue(e)
+                    if todo:
+                        self.kick('root')
+                        self.await_roots(todo)
+                    for e in days:
+                        tick(stage, e['day'])
+                else:
+                    per_day(stage, getattr(self, stage), parallel)
         by_role = [[e for e in days if e['role'] == role] for role in ('discovery', 'confirmation')]
         batches = [(role_days[0]['role'], i // BATCH + 1, role_days[i:i + BATCH])
                    for role_days in by_role if role_days for i in range(0, len(role_days), BATCH)]
@@ -1347,14 +1524,21 @@ class Run:
                 self.teacher(key, entries)
             # the classroom arm: the arm days one after another in plan order (each carries the previous arm day's
             # history; the day's report number is reserved right after it), then Jev's material; other days skip
+            # with the class line on (--frankie-queue on), an arm day ENTERS the line here instead (arrival order, one class
+            # at a time by the class worker, which also reserves its report number = its school day)
+            enqueued = False
             for stage in ('classroom', 'jev'):
                 if stage in stages and not self.stopped:
                     for e in entries:
+                        owned = stage == 'classroom' and self.queue_owned(e)
                         if not self.stopped and not self.finished(stage, e['day']):
-                            getattr(self, stage)(e)
-                        if stage == 'classroom' and {'jev', 'school', 'reports'} & set(stages):
+                            r = self.enqueue_classroom(e) if owned else getattr(self, stage)(e)
+                            enqueued = enqueued or (owned and (r or {}).get('status') == 'queued')
+                        if stage == 'classroom' and not owned and {'jev', 'school', 'reports'} & set(stages):
                             self.reserve_after_classroom(e)
                         tick(stage, e['day'])
+            if enqueued:
+                self.kick('class')
             for stage, parallel in (('data', self.a.parallel_days), ('search', 1)):
                 if stage in stages and not self.stopped:
                     todo = [e for e in entries if not self.finished(stage, e['day'])]
@@ -1374,11 +1558,36 @@ class Run:
             for stage in ('exchange', 'voice', 'school', 'reports'):
                 if stage in stages and not self.stopped:
                     for e in entries:
-                        if not self.stopped and (not self.finished(stage, e['day']) or
-                                                 (stage == 'reports' and self.reports_stale(e))):
-                            self.guarded(stage, e)
+                        if not self.stopped and not self.queue_owned(e) and (not self.finished(stage, e['day']) or
+                                                                             (stage == 'reports' and self.reports_stale(e))):
+                            self.guarded(stage, e)       # a class-line day's class side is the class worker's
                         tick(stage, e['day'])
+        # every start kicks the workers of lines that hold days not done (a waiting day resumes without a dispatch)
+        import frankie_box_frankie_queue as Q
+        for line, on in (('root', getattr(self.a, 'root_queue', 'off')), ('class', getattr(self.a, 'frankie_queue', 'off'))):
+            try:
+                pending = on == 'on' and any(x['state'] != 'done' for x in Q.load(line)['entries'])
+            except (OSError, ValueError, SystemExit) as error:
+                self.log('the %s line could not be read (%s)' % (line, error))
+                pending = False
+            if pending:
+                self.kick(line)
         return self.summary(stages)
+
+    def queue_listing(self):
+        """This run's days in Frankie's two lines (seq, state, reason, school day), for the summary; a day of the run that
+        is in neither line is not listed here (its steps are in `days` above)."""
+        import frankie_box_frankie_queue as Q
+        out = {}
+        for line in Q.LINES:
+            try:
+                doc = Q.load(line)
+            except (OSError, ValueError, SystemExit) as error:
+                out[line] = dict(unreadable=str(error))
+                continue
+            out[line] = [{k: x.get(k) for k in ('seq', 'day', 'state', 'reason', 'where', 'school_day', 'done_seq')}
+                         for x in Q.ordered(doc) if x['run'] == self.plan['run']]
+        return out
 
     def summary(self, stages):
         rows = {}
@@ -1401,6 +1610,7 @@ class Run:
                    waiting_for_pod=[dict(day=k, material_sent=(self.receipt('jev', k) or {}).get('material_sent'),
                                          pod=((self.receipt('jev', k) or {}).get('dispatches') or {}).get('pod'))
                                     for k in handed_off],
+                   frankie_queue=self.queue_listing(),
                    model_calls=0)
         tmp = self.dir / 'summary.pending'
         tmp.write_text(json.dumps(out, indent=1, sort_keys=True) + '\n', encoding='utf-8')
@@ -1484,6 +1694,15 @@ def main():
     p.add_argument('--previous-classroom', help='the run\'s first arm day: PREVIOUS = this <root>/work/classroom '
                                                 '(default: the latest earlier classroom day on the box)')
     p.add_argument('--disk-floor-gb', type=float, default=100.0)
+    p.add_argument('--frankie-queue', choices=('on', 'off'), default='on',
+                   help='on: classroom-arm days enter Frankie\'s class line (arrival FIFO, one class at a time, the class '
+                        'worker runs their class side); off: the classroom side runs in this run as before')
+    p.add_argument('--root-queue', choices=('on', 'off'), default='on',
+                   help='on: ROOT-ready days enter the ROOT line (arrival FIFO to the next free day-run slot, box or Pod) '
+                        'and this run waits for its own; off: the ROOTs run here in plan order as before')
+    p.add_argument('--queue-worker-seconds', type=int, default=43200,
+                   help='the bound of a kicked queue worker and of this run\'s wait on its ROOT-line days')
+    p.add_argument('--queue-poll-seconds', type=int, default=60, help='the queue workers\' and the wait\'s poll interval')
     a = p.parse_args()
     import re
     if not re.fullmatch('[A-Za-z0-9_-]{1,64}', a.run):
