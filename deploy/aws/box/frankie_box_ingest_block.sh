@@ -232,6 +232,19 @@ status() {
   echo "### receipts"; ls "$ROOT"/receipts/ingest-* 2>/dev/null || echo "(none)"
   df -h / | tail -1
 }
+# Worker spread (Greg, 2026-09-29: "Is there any way we can speed this part up?" / "Fix that please"): the reader pins each
+# worker to one CPU from cpus[1:], so drains started side by side all land on CPUs 1..N while the rest idle (measured
+# 16:50Z: CPUs 1-6 at 100%, 7-31 idle; spreading them made the drains 4-5x faster). While an ingest or conform runs, a
+# sidecar re-runs the committed frankie_box_spread_workers.sh every 60 s (CPU affinity only; nothing stopped or changed in
+# what is written); it ends with this script.
+spread_sidecar() {
+  mkdir -p "$ROOT/logs"
+  ( while :; do SP="$ROOT/ingest-code/$MARKETS_SHA/deploy/aws/box/frankie_box_spread_workers.sh"
+      [ -f "$SP" ] && sh "$SP" >>"$ROOT/logs/spread-workers.log" 2>&1; sleep 60; done ) >/dev/null 2>&1 </dev/null &
+  SPREAD_PID=$!
+  trap 'kill "$SPREAD_PID" 2>/dev/null' EXIT
+}
+case "$ACTION" in ingest|conform) spread_sidecar ;; esac
 case "$ACTION" in
   fetch) each_day fetch ;;
   canary) prepare && run_tool canary ;;
