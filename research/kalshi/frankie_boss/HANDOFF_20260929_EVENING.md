@@ -135,3 +135,13 @@ Remaining consensus requests, ONE at a time: ng_historical_mbo_5y_to_s3_20260820
 days=...: req2 = 20221011,20221012,20221018,20221019 (prints 2022-10-13, 2022-10-20); req3 = 20231003,20231004,20231010,
 20231011,20231017,20231018 (prints 2023-09-28/10-05/10-12/10-19); req4 = the 13 confirmation days (9 prints; data only,
 no day file). The eia930-only run 36608262546 finished but is not needed.
+
+## Addendum ~18:58Z: 20211019 + 20211020 need a BOX INGEST (runner jobs killed)
+Runner-ingest jobs for 20211019 and 20211020 (run 36571235912) were KILLED at the 6 h limit (18:54:42Z / 18:55:07Z):
+nothing on S3, no pointer artifact, nothing on the box. Ingest both on the first free box slot (ingestion #1): their
+partitions were pre-fetched on MAIN at ~18:12Z (receipts/ingest-fetch-20211019-*, -20211020-*; verify they exist,
+else fetch: presign native/20211001_20211101/glbx-mdp3-20211018/19/20.mbo.dbn.zst). Main at 18:41Z was allocated
+~29/32 cores (3 conforms x 7 + 20251014 x 8); the twin frees a slot when 20251001 seals (was 94% at 18:41Z) but the
+partitions would need a fetch there. Dispatch per day: frankie_box_ingest_block.sh ACTION=ingest DAYS_AT_ONCE=1
+WORKERS=7 VERIFY=inline timeout 43200 MANIFEST=research/kalshi/frankie_boss/blocks/BLOCK_<day>_SOURCE_MANIFEST.json.
+They get their day files from consensus request 1 (36609379489) once sealed.
