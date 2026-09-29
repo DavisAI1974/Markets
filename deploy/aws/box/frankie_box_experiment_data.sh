@@ -5,7 +5,8 @@
 # recomputed or copied; the same day and cycle is exported once (duplicate data declines the run).
 # ACTION=plan (read-only: prints what would be linked, excluded, missing and unclaimed) or ACTION=export.
 # Inputs: CODE_ROOT (staged checkout), DAY (YYYYMMDD), CYCLE (NN), CALCULATIONS (the ROOT, e.g.
-# /opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48), and as far as they exist: PREPARATION
+# /opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48), and as far as they exist: INGEST (the ingest
+# directory holding journal.compact.sqlite), LAUNCH (the monday-launch authorship directory), PREPARATION
 # (trading-day-preparation/<r>), PRINCIPAL_INPUTS (principal-inputs/<r>), HOST_CONFIG (monday-run-config/<r>), RUN (ONE
 # runs/<run_id>). A directory not given is listed as missing, never guessed.
 set -eu
@@ -15,6 +16,8 @@ ACTION="${ACTION:-plan}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
 set -- --day "$DAY" --cycle "$CYCLE" --calculations "$CALCULATIONS"
+[ -z "${INGEST:-}" ] || set -- "$@" --ingest "$INGEST"
+[ -z "${LAUNCH:-}" ] || set -- "$@" --authorship "$LAUNCH"
 [ -z "${PREPARATION:-}" ] || set -- "$@" --preparation "$PREPARATION"
 [ -z "${PRINCIPAL_INPUTS:-}" ] || set -- "$@" --principal-inputs "$PRINCIPAL_INPUTS"
 [ -z "${HOST_CONFIG:-}" ] || set -- "$@" --host-config "$HOST_CONFIG"

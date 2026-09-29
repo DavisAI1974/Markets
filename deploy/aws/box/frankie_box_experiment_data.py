@@ -1,5 +1,7 @@
 """Every data JSON of one day and cycle, from the ROOT, CONFIG and CYCLE processes, for the experiment's teachers.
 
+The processes, in run order: INGEST, AUTHORSHIP, ROOT (calculations), CONFIG (trading-day preparation, principal
+inputs, host configuration), CYCLE (one run directory).
 Greg, 2026-09-29: "we forgot root in the experiment"; "fix gaps"; and the rule for both teachers (the BOSS teacher and
 the scientific teacher, the experiment's search): they read every bit of Frankie's ingest data except the files he
 generates himself to reason toward forecasts, so nothing is built a second or third time. Spec:
@@ -40,6 +42,14 @@ INCLUDE, FRANKIE_REASONING, GRADED, BEDROCK, MIXED, OTHER_MODEL = (
 # (stage, glob relative to that stage's directory, disposition, what it is). Order matters: the first pattern that
 # claims a file decides it, so the specific exclusions come before the broad inclusions.
 CATALOG = (
+    # INGEST: the gold-standard ingest (/opt/frankie-box/work/ingest-<day>-.../), read in place, never rebuilt
+    ('ingest', '**/journal.compact.sqlite', INCLUDE, 'the sealed compact journal (every event, every book level); linked, never rewritten'),
+    ('ingest', '**/ingestion-receipt.json', INCLUDE, 'the ingestion receipt: record and journal counts, journal sha256, packing'),
+    ('ingest', '**/completion.json', INCLUDE, 'the ingest completion: record_count, journal_count, journal_hash, groups'),
+    ('ingest', '**/builder-checkpoint.c15.json', INCLUDE, 'the builder state at completion'),
+    ('ingest', '**/*.json', INCLUDE, 'ingest receipts (canary, proofs, manifests)'),
+    # AUTHORSHIP: the Monday launch authorship the ROOT requires (/opt/frankie-box/work/monday-launch/<r>/)
+    ('authorship', '**/*.json', INCLUDE, 'the launch authorship receipt and its companions'),
     # ROOT: the calculations root (/opt/frankie-box/work/monday-calculations/<root>/)
     ('root', 'work/derived/.projection-v2/**/*', BEDROCK, 'the 44 bedrock projection layers and their receipts'),
     ('root', 'work/bedrock/**/*', BEDROCK, 'the bedrock traversal: result, ledgers, receipts'),
@@ -180,6 +190,8 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--day', required=True)
     p.add_argument('--cycle', required=True)
+    p.add_argument('--ingest', help='the ingest directory: /opt/frankie-box/work/ingest-<day>-...')
+    p.add_argument('--authorship', help='the launch authorship directory: /opt/frankie-box/work/monday-launch/<r>')
     p.add_argument('--calculations', required=True, help='the ROOT: /opt/frankie-box/work/monday-calculations/<root>')
     p.add_argument('--preparation', help='/opt/frankie-box/work/trading-day-preparation/<r>')
     p.add_argument('--principal-inputs', help='/opt/frankie-box/work/principal-inputs/<r>')
@@ -189,7 +201,7 @@ def main():
     a = p.parse_args()
     if not (len(a.day) == 8 and a.day.isdigit() and a.cycle.isdigit()):
         raise SystemExit('--day YYYYMMDD and --cycle NN required')
-    dirs = dict(root=a.calculations, preparation=a.preparation, principal_inputs=a.principal_inputs,
+    dirs = dict(ingest=a.ingest, authorship=a.authorship, root=a.calculations, preparation=a.preparation, principal_inputs=a.principal_inputs,
                 host_config=a.host_config, run=a.run)
     for name, value in dirs.items():
         if value and not str(Path(value).resolve()).startswith('/opt/frankie-box/'):

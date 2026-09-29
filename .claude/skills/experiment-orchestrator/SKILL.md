@@ -81,7 +81,10 @@ the never-bend rules. Read its sections 0, 3, 5 and 7 first. They all apply here
 - **Monday day data** (built 2026-09-29): `frankie_box_experiment_data.sh ACTION=plan` first (read-only: what would
   be linked, excluded, missing, unclaimed), then `ACTION=export`, with `DAY=20211004 CYCLE=00
   CALCULATIONS=/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48` plus whichever of
-  PREPARATION / PRINCIPAL_INPUTS / HOST_CONFIG / RUN exist (ONE run directory; runs are never merged). Hard links, so
+  INGEST (as of 2026-09-29 `/opt/frankie-box/work/ingest-20211004-ingest-1790057801`), LAUNCH (authorship,
+  `/opt/frankie-box/work/monday-launch/full-20211004-20260923-r4`), PREPARATION / PRINCIPAL_INPUTS / HOST_CONFIG / RUN
+  exist (ONE run directory; runs are never merged). The five processes before the cycle, in order: ingest,
+  authorship, ROOT calculations, trading-day preparation, principal inputs (+ host config). Hard links, so
   the root and the export must be on the same filesystem (the script refuses rather than copy).
 
 ## 4. Walls that never bend (experiment-specific)
