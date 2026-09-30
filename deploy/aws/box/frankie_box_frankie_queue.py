@@ -363,6 +363,22 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print):
             signalled = int(old)
         else:
             raise SystemExit('the root worker lock is held but pid %s is not a root worker (%r): nothing signalled' % (old, cmd))
+    # an earlier handover's worker still WAITING on the lock (it never took it, so it runs nothing) is ended: only the
+    # newest code takes over
+    superseded = []
+    for proc in Path('/proc').iterdir():
+        if not proc.name.isdigit() or int(proc.name) in (os.getpid(), signalled):
+            continue
+        try:
+            c = (proc / 'cmdline').read_bytes().replace(b'\0', b' ').decode(errors='replace')
+        except OSError:
+            continue
+        if 'frankie_box_frankie_queue.py' in c and '--line root' in c and '--wait-lock' in c:
+            try:
+                os.kill(int(proc.name), signal.SIGTERM)
+                superseded.append(int(proc.name))
+            except OSError:
+                pass
     (QUEUE / 'logs').mkdir(parents=True, exist_ok=True)
     log_path = QUEUE / 'logs' / ('%s-worker.log' % line)
     argv = [sys.executable, '-B', str(HERE / 'frankie_box_frankie_queue.py'), '--action', 'worker', '--line', line,
@@ -375,8 +391,9 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print):
            '-p', 'StandardError=append:%s' % log_path] + [x for k, v in sorted(env.items()) for x in ('-E', '%s=%s' % (k, v))] + argv
     code = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).returncode
     with locked():
-        event(line, 'handover', old_pid=old, signalled=signalled, unit=unit, exit_code=code, commit=commit)
-    return dict(old_worker=old, signalled=signalled, new_unit=unit, systemd_run_exit=code, log=str(log_path),
+        event(line, 'handover', old_pid=old, signalled=signalled, superseded=superseded, unit=unit, exit_code=code,
+              commit=commit)
+    return dict(old_worker=old, signalled=signalled, superseded_waiting=superseded, new_unit=unit, systemd_run_exit=code, log=str(log_path),
                 note='the old worker finishes the days in its slots and ends; the new one waits on the lock, then runs')
 
 
@@ -799,6 +816,7 @@ def _after_root(run, e, code_root, commit, log):
 
 
 TEACHER_BOOK_WAIT = 1800        # seconds the slot's teacher retries a CPU booking the slot itself just released
+CLASS_WAIT = 43200              # seconds a day waits in its slot for its class in the class line
 
 
 def _finish_day(run, e, code_root, commit, log):
@@ -823,7 +841,38 @@ def _finish_day(run, e, code_root, commit, log):
     else:
         facts['teacher'] = dict(status='rows present', rows=str(X.rows_of(e)[0]))
     facts['class_line'] = _after_root(run, e, code_root, commit, log)
-    return True, facts
+    if not e['classroom_arm']:
+        return True, facts
+    # Frankie: the day waits IN ITS SLOT for its class (the class line: one class at a time, school-day order; classroom,
+    # Frankie's lessons, exchange, voice, school, the day reports). The slot's CPUs are not booked while it waits, so the
+    # class worker books them for the class: no second slot, no deadlock (Greg, 2026-09-30: "it should run through the
+    # frankie and jev steps").
+    deadline = time.monotonic() + CLASS_WAIT
+    while True:
+        c = entry_of('class', run.plan['run'], e['day'])
+        state = (c or {}).get('state')
+        if state in ('done', 'failed') or (c is None and run.finished('classroom', e['day'])):
+            break
+        if c is None and (facts.get('class_line') or {}).get('status') not in ('queued', None):
+            facts['frankie'] = dict(status='not queued', reason=(facts.get('class_line') or {}).get('reason'))
+            return False, facts
+        if time.monotonic() > deadline:
+            facts['frankie'] = dict(status='waiting', reason='the class line did not reach the day in %d s' % CLASS_WAIT)
+            return False, facts
+        if c is None:
+            facts['class_line'] = _after_root(run, e, code_root, commit, log)
+        time.sleep(60)
+    facts['frankie'] = dict(status=state or 'classroom finished', reason=(c or {}).get('reason'),
+                            school_day=(c or {}).get('school_day'))
+    if state == 'failed':
+        return False, facts
+    # Jev: his material relayed from the day's classroom; his Pod is a GitHub dispatch (the runner holds the Runpod key),
+    # listed in the receipt's dispatches.pod (standing go: one Jev Pod per trade day, deleted after)
+    j = run.guarded('jev', e) or {}
+    facts['jev'] = dict(status=j.get('status'), reason=j.get('reason'), material_sent=j.get('material_sent'),
+                        dispatches=j.get('dispatches'))
+    import frankie_box_experiment as X2
+    return j.get('status') in X2.FINISHED + (X2.HANDED_OFF,), facts
 
 
 def _finish_job(entry, code_root, commit, log, holder):
@@ -840,14 +889,13 @@ def _finish_job(entry, code_root, commit, log, holder):
 
 
 def _needs_finish(x, plans):
-    """A done ROOT-line entry whose day still lacks its teacher rows (the rest of the day not run)."""
-    import frankie_box_experiment as X
+    """A done ROOT-line entry whose whole day (teacher, Frankie's class, Jev) has not finished in a slot yet: its ROOT
+    ran on a Pod, before the whole-day rule, or its finish failed (retried once per worker start)."""
     if x['state'] != 'done' or (x.get('finish') or {}).get('state') == 'finished':
         return False
     if x['run'] not in plans:
         plans[x['run']] = _plan_of(x['run'])
-    e = next((d for d in plans[x['run']].get('days') or [] if d['day'] == x['day']), None)
-    return e is not None and X.rows_of(e)[0] is None
+    return any(d['day'] == x['day'] for d in plans[x['run']].get('days') or [])
 
 
 def _root_job(entry, code_root, commit, log, holder):
