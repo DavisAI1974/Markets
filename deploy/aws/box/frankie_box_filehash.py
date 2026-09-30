@@ -27,12 +27,20 @@ def witness(path):
         hit = _CACHE.get(key)
     if hit is not None:
         return dict(hit)
-    hashed, size = hashlib.sha256(), 0
-    with open(path, 'rb') as source:
-        for block in iter(lambda: source.read(1 << 24), b''):
-            hashed.update(block)
-            size += len(block)
-    if _key(path) != key or size != key[3]:
+    # a network volume (the Pods' /opt/frankie-box) can move a just-closed file's mtime/ctime after the close while its
+    # bytes stay the same: hash again until one pass sees a stable key (at most 3 passes); a file whose size or bytes
+    # keep changing is still refused
+    for _ in range(3):
+        hashed, size = hashlib.sha256(), 0
+        with open(path, 'rb') as source:
+            for block in iter(lambda: source.read(1 << 24), b''):
+                hashed.update(block)
+                size += len(block)
+        after = _key(path)
+        if after == key and size == key[3]:
+            break
+        key = after
+    else:
         raise ValueError(f'file changed while it was hashed: {path}')
     value = dict(bytes=size, sha256=hashed.hexdigest())
     with _LOCK:
