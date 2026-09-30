@@ -10,6 +10,10 @@ Greg: start a NEW chat from this so old material is not dragged back in.
 - The experiment day workflow = MONDAY'S RUN WITH FEWER STEPS (table below). DROPS CONFIRMED ("The drops are right").
 - ZERO PROCESS CODE CHANGES until the workflow is fixed; then build the traffic controller to the table.
 - PAUSE (02:40Z): days stop after their ROOT; no new days start until Greg's go.
+- DAYS STAY WHERE THEY ARE (Greg, 2026-09-30 ~02:50Z: "leave the days in their boxes and pods to resume once we get
+  our end right"): each Pod keeps its day and its finished ROOT on the Pod (no loop import, no clean, no delete, no stop,
+  no new claim); main's 20231003 / 20221019 ROOTs stay in main's experiment-roots; the 6 earlier days stay on main. Each
+  day RESUMES IN ITS OWN BOX OR POD when the traffic controller is built to the run table and Greg says go.
 - Standing: 16 CPUs per day run (booked in the ledger, never fewer), 8 per ingest day process, never double-book; FIFO by
   arrival; ingestion #1 until all 31 days ingested; never stop a running job; no data dropped; counts never averages;
   py_compile / bash -n only; [skip ci] on every push; restage after every push; nothing long on a 6 h GitHub runner;
