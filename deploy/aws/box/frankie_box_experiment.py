@@ -443,8 +443,16 @@ def presign_items(plan, code_root):
             continue
         m = json.loads((Path(code_root) / e['manifest']).read_bytes())
         base = m.get('archive_prefix') or ''
+        # a member's own archive_key (the sessions / tail_members entries) is the S3 key: the archive_prefix alone is not
+        # (20211011-13 and 20221003-05 sit under a range folder, <prefix>/<YYYYMMDD_YYYYMMDD>/<member>; built from the
+        # prefix they 404'd, 2026-09-29)
+        archive_keys = {x['member_key']: x['archive_key'] for x in (m.get('sessions') or []) + (m.get('tail_members') or [])
+                        if isinstance(x, dict) and x.get('member_key') and x.get('archive_key')}
         for member in m.get('sources') or []:
             key = member['member_key']
+            if key in archive_keys:
+                items.append('%s/%s' % (m.get('bucket') or S3_BUCKET, archive_keys[key]))
+                continue
             part = key.split('-')[-1].split('.')[0]
             prefix = base
             if len(base) >= 7 and base[-7:-3].isdigit() and base[-3] == '-':      # .../YYYY-MM: the member's own month
