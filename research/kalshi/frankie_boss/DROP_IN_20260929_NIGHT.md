@@ -1,5 +1,11 @@
 # DROP-IN 2026-09-29 night (next chat): fill the 4 ROOT Pods, keep day runs on 16 booked cores, finish ingestion
 
+## TOP RULE (Greg, 2026-09-30 ~01:20Z): FILL THE OPEN SPACES FIRST
+There is no more important work than getting every open space filled (every free core on main and the twin, every Pod)
+with days. Do that BEFORE any other work: no investigating, no building, no docs until every possible space is full. Only
+the small box i-08cee is left out. Check the spaces (frankie_box_cores.sh ACTION=show on main, processes on the twin,
+the ROOT line, the Pods) and fill them first, every time a space opens.
+
 Branch `claude/frankie-monday-cycle-0-urozez`: `git fetch origin claude/frankie-monday-cycle-0-urozez && git checkout -B
 claude/frankie-monday-cycle-0-urozez origin/claude/frankie-monday-cycle-0-urozez` (tip f86bb7c2 or a later handoff doc
 commit). Read `research/kalshi/frankie_boss/HANDOFF_20260929_NIGHT.md` (state, run ids, Pod ids, Greg's calls). Skills

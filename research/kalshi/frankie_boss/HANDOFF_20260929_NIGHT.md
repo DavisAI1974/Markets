@@ -1,5 +1,11 @@
 # HANDOFF 2026-09-29 ~21:10Z (night): day runs on 16 booked cores, 4 new ROOT Pods booting, ledger + FIFO queue + exchange built
 
+## TOP RULE (Greg, 2026-09-30 ~01:20Z): FILL THE OPEN SPACES FIRST
+There is no more important work than getting every open space filled (every free core on main and the twin, every Pod)
+with days. Do that BEFORE any other work: no investigating, no building, no docs until every possible space is full. Only
+the small box i-08cee is left out. Check the spaces (frankie_box_cores.sh ACTION=show on main, processes on the twin,
+the ROOT line, the Pods) and fill them first, every time a space opens.
+
 Branch `claude/frankie-monday-cycle-0-urozez` (no merge base with trunk), tip `f86bb7c2` at close. Read with
 `DROP_IN_20260929_NIGHT.md`. Earlier today: `HANDOFF_20260929_EVENING.md` (+ its addenda, written by the previous chat).
 Session: https://claude.ai/code/session_01AbJHiaG5VPQxUinLQhyMVB
