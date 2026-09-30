@@ -16,17 +16,17 @@ worker (zero process code changes until the workflow is fixed; Greg).
 |---|---|---|
 | 1 | Fetch + ingest: sealed journal and receipt | KEEP |
 | 2 | 13-point day file beside the ingest (Frankie, both teachers and the search read it) | KEEP |
-| 3 | Authorship | DROP (confirm) |
+| 3 | Authorship | DROP |
 | 4 | ROOT calculations: derive.json, 5 legacy layers, row spools, digest on classroom days: ROOT hands its sheets to Frankie | KEEP (bedrock off) |
-| 5 | Trading-day preparation part 1: the native context walk | DROP (confirm) |
+| 5 | Trading-day preparation part 1: the native context walk | DROP |
 | 6 | Trading-day preparation part 2: the BOSS teacher (JournalTeacherR3) reads Frankie's ingest (every level, whole day) -> Dipole rows | KEEP |
-| 7 | Principal inputs + host config | DROP (confirm) |
-| 8 | Launch/cycle: context, principal model call, Granite B2 critic | DROP (confirm), except the classroom pieces below |
+| 7 | Principal inputs + host config | DROP |
+| 8 | Launch/cycle: context, principal model call, Granite B2 critic | DROP, except the classroom pieces below |
 | 9 | Classroom package: prepare_integrated_cycle (ROOT's sheets + teacher rows + day file) | KEEP |
 | 10 | Classroom: the principal's classroom stage answered by Frankie's code (19 components, summary, correction), finishing his calcs from ROOT's sheets | KEEP |
 | 11 | The meeting: Frankie + the BOSS teacher + the scientific teacher (the search), Granite opening and voicing the conversation (CLASSROOM_RULES_V2, R17 amended) | KEEP (the Granite voice call is not wired: needs Greg's go on the Session.boss edit) |
 | 12 | Frankie's brain entry: classroom ledgers + his lessons | KEEP |
-| 13 | Record / correction / retain | DROP (confirm), except the brain entry and the day reports |
+| 13 | Record / correction / retain | DROP, except the brain entry and the day reports |
 | 14 | Jev: blind outside student, his own Pod, claims only | KEEP |
 | 15 | Experiment-only: data export, search, lessons, day reports (CLASSROOM / FRANKIE / JEV REPORT #N) | KEEP |
 
@@ -36,7 +36,9 @@ FIRST-RUN CHECK (Greg): the first time Frankie runs his part, put the question t
 day's steps?" and record his answer in the day report before the order is locked. (In the experiment Frankie's
 classroom is code; the question goes to him through his session / the meeting's Granite voice once wired; if neither
 can ask it, tell Greg.)
-Open: confirm the DROP rows; Granite Session.boss go.
+DROP rows CONFIRMED by Greg 2026-09-30 ("The drops are right"). Open: Granite Session.boss go.
+PAUSE (Greg, 2026-09-30 ~02:40Z): days stop after their ROOT; no new days start (Pod loop cancelled, orchestrator days-20260930-1
+ended while waiting, the old ROOT worker ends after its two ROOTs). Restart only on Greg's go with the worker built to the table.
 
 ## RULE (Greg, 2026-09-30 ~02:05Z): A DAY NEVER LEAVES ITS SLOT BEFORE THE WHOLE DAY IS DONE
 "The days are supposed to go through all of the processes until everything is done for that day"; "no more days quit
