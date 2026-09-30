@@ -3,6 +3,33 @@
 Status: SPEC. Nothing is built beyond the per-cycle calculation export (f751ccbe). It goes into the Excel build plan
 (`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`) as a research track before it is built (Greg adds it).
 
+## THE EXPERIMENT DAY: EVERY STEP IN ORDER, WHAT IT DOES, WHO DOES IT (Greg, 2026-09-30). Supersedes every list below.
+Greg: every step carries its description. Frankie is in the classroom, the meeting and the end. 6b, survivors and Jev
+keep the runbook's order. The traffic agent (the ROOT-line worker) follows THIS order; where code or a runbook differs,
+they change, not this list. Box and Pod days run the same steps from one file. Granite is only the meeting's voice.
+
+| # | Step | What it does | Who does it |
+|---|---|---|---|
+| 1 | Fetch | Pulls the day's raw order-book data (every order, every level) from S3 onto the box or Pod; checks every file's fingerprint. | Box code, no model |
+| 2 | Ingest | Writes the day into the sealed journal (the gold-standard record of every event) with its receipt. | Box code |
+| 3 | Day file | Attaches Frankie's 13 historical data points for the day beside the ingest. | Box code |
+| 4 | ROOT | Frankie's calculations on the whole day, bedrock off: derive.json, 5 legacy layers, row spools, the digest on classroom days. The sheets he learns from. | Frankie's calculation code |
+| 5 | BOSS teacher | Reads the whole ingest, every level, and writes the Dipole rows: the teacher's answer key for the classroom. | BOSS teacher (JournalTeacherR3), code |
+| 6 | Data export | Puts ROOT's sheets, the day file and the teacher rows in one folder with a manifest; leaves out what the teachers must never see (Frankie's decision process, his graded outcomes). | Box code |
+| 7 | Series | One time axis per day; every value carries only what was known at that moment (nothing from the future). | Box code |
+| 8 | Search | Tests every pair of measurements by cell and time lag, each with its own chance check. Counts, never averages. | Scientific teacher's engine, code |
+| 9 | Scientific teacher (6b) | Takes claims (historical ones, Frankie's earlier findings, Jev's earlier claims), tests each against the search, answers with counts: held / shown otherwise / unresolved, and "the data is showing this instead". | Scientific teacher, code |
+| 10 | Survivors | Symbolic regression over the search: the relationships that hold across the discovery days. Material for the classroom and for Jev. NOT BUILT. | Code (odcore/symbolic.py) |
+| 11 | Frankie: classroom | Frankie works the 19 components from ROOT's sheets, learns from the BOSS teacher, is graded and corrected. | Frankie (his code), BOSS teacher |
+| 12 | Frankie's findings tested | His new and novel findings go to the scientific teacher as claims and come back with counts. | Scientific teacher, Frankie's claims |
+| 13 | The meeting | Frankie, the BOSS teacher and the scientific teacher discuss his novel findings. Granite opens and voices the conversation, never calculations. Granite is called when the meeting starts (one meeting at a time, in class order), so his Pod follows the meeting's time. Voice call NOT WIRED (needs Greg's go on the Session.boss edit). | Frankie, both teachers, Granite (voice) |
+| 14 | Frankie: end of day | His brain entry, his school knowledge (what he carries to the next day), the day reports. | Frankie |
+| 15 | Jev | Blind outside student on his own Pod: sees what Frankie saw (classroom package + survivors), never Frankie's answers; files labelled claims the scientific teacher tests. | Jev (Qwen3-8B), his own Pod |
+| 16 | Confirmation | Later, on the 2024-2025 days: the frozen survivor list tested per cell, net of fees maker and taker. NOT BUILT. | Code |
+
+OPEN for Greg: (1) survivors before Frankie's classroom (#10), as material? (2) survivors are cross-day: a day's
+classroom uses the survivors of the batches finished so far? (3) Jev's claims are tested at the next batch's step 9?
+
 ## UPDATE 2026-09-30 morning (Greg): the day workflow in MONDAY'S ORDER, Frankie on it. Supersedes the table below.
 Greg's calls this morning:
 - The day runs Monday's steps IN MONDAY'S ORDER with the lighter run's pieces; the only drops are Granite and the
