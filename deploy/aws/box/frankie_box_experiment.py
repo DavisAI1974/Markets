@@ -566,8 +566,10 @@ class Run:
         full = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), **{k: str(v) for k, v in env.items()})
         command = ['sh' if script.endswith('ingest_block.sh') else 'bash', str(self.box / script)]
         if stage in self.cores.DAY_RUN_STAGES:  # exactly 16 CPUs booked, the step under taskset -c <them> (frankie_box_cores.py)
+            inside = getattr(self, 'slot_booking', None)   # the day's held slot (ROOT line): its steps never re-book
             command = [sys.executable, '-B', str(self.box / 'frankie_box_cores.py'), 'run', '--kind', 'day-run', '--day', key,
-                       '--run', self.plan['run'], '--stage', stage, '--commit', self.commit, '--'] + command
+                       '--run', self.plan['run'], '--stage', stage, '--commit', self.commit] + \
+                (['--inside', inside] if inside else []) + ['--'] + command
         with open(log_path, 'ab') as out:
             out.write(('\n### %s %s %s at %s\n' % (stage, key, script, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))).encode())
             out.flush()
@@ -1514,9 +1516,10 @@ class Run:
                     for e in todo:
                         if not self.stopped:
                             self.root_enqueue(e)
-                    if todo:
-                        self.kick('root')
-                        self.await_roots(todo)
+                    # the whole day is the ROOT line's (Greg, 2026-09-30: a day never leaves its slot until every kept
+                    # step of the run table is done): its worker runs ROOT, teacher, data, search, lessons, the class and
+                    # Jev in the day's one held slot, so this start neither waits for the ROOTs nor runs any later step
+                    self.kick('root')
                     for e in days:
                         tick(stage, e['day'])
                 else:
@@ -1525,7 +1528,7 @@ class Run:
         batches = [(role_days[0]['role'], i // BATCH + 1, role_days[i:i + BATCH])
                    for role_days in by_role if role_days for i in range(0, len(role_days), BATCH)]
         for role, n, entries in batches:
-            if self.stopped:
+            if self.stopped or root_line:            # with the ROOT line on, every step after ROOT runs in the day's slot
                 break
             key = '%s-%02d' % (role, n)
             if 'teacher' in stages and not self.finished('teacher', key):

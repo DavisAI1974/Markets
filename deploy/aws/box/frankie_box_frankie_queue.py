@@ -554,6 +554,8 @@ def class_day(entry, previous, school_day, code_root, commit, log):
     """Run the entry's class-side steps in order: ('done' | 'waiting' | 'failed', reason, facts)."""
     run, e = _run_for(entry, code_root, commit, log)
     day = e['day']
+    if _slot_live(entry.get('slot_booking')):
+        run.slot_booking = entry['slot_booking']    # the class inside the day's own held slot
     run.school_day = school_day
     run.queue_previous = previous[:3]
     facts = dict(stages={})
@@ -802,6 +804,31 @@ def root_claimed(run, day, where, attempt, by):
         event('root', 'claimed', seq=x['seq'], day=day, run=run, where=where, attempt=attempt, by=by)
 
 
+def _book_slot(x, stage, commit):
+    """The day's slot (Greg, 2026-09-30: "once the day enters a pod or box it doesn't leave until the entire work flow is
+    over"): EXACTLY 16 CPUs booked once in the core ledger, held by this worker process for the whole day (ROOT, teacher,
+    data, search, lessons, the class, Jev); every step runs inside it (frankie_box_cores.py run --inside) and nothing
+    re-books between steps, so no other day can take the CPUs while the day is between two steps. Returns (booking id,
+    None) or (None, the ledger's waiting/refused reason)."""
+    import frankie_box_cores as C
+    b, outcome = C.book('day-run', os.getpid(), dict(day=x['day'], run=x['run'], stage='day-slot-' + stage, commit=commit),
+                        1.0)
+    return (b['booking'], None) if b else (None, outcome.get('reason'))
+
+
+def _release_slot(booking, reason):
+    import frankie_box_cores as C
+    try:
+        C.release(booking, reason)
+    except (OSError, ValueError) as error:          # the ledger's reap releases it once this worker is gone
+        print('slot %s not released now (%s); reaped when its holder ends' % (booking, error), flush=True)
+
+
+def _slot_live(booking):
+    import frankie_box_cores as C
+    return bool(booking) and C.held_booking(booking)[0] is not None
+
+
 def _after_root(run, e, code_root, commit, log):
     """A finished ROOT of a line day: an arm day whose teacher rows are there enters the class line at once (the
     classroom step's own readiness checks), and the class worker is kicked. Returns what happened, for the entry."""
@@ -809,14 +836,22 @@ def _after_root(run, e, code_root, commit, log):
         return None
     c = run.enqueue_classroom(e)
     out = dict(status=(c or {}).get('status'), seq=(c or {}).get('queue_seq'), reason=(c or {}).get('reason'))
+    slot = getattr(run, 'slot_booking', None)
+    if slot:
+        with locked():                              # the class runs inside the day's own held slot (no second booking)
+            doc = load('class')
+            y = next((z for z in doc['entries'] if z['run'] == run.plan['run'] and z['day'] == e['day']), None)
+            if y is not None and y['state'] != 'done' and y.get('slot_booking') != slot:
+                y['slot_booking'] = slot
+                save('class', doc)
+                event('class', 'slot', seq=y['seq'], day=y['day'], run=y['run'], slot_booking=slot)
     if (c or {}).get('status') == 'queued':
         kick('class', code_root, commit, run.a.queue_worker_seconds, run.a.queue_poll_seconds,
              by='ROOT line after %s %s' % (run.plan['run'], e['day']), log=log)
     return out
 
 
-TEACHER_BOOK_WAIT = 1800        # seconds the slot's teacher retries a CPU booking the slot itself just released
-CLASS_WAIT = 43200              # seconds a day waits in its slot for its class in the class line
+TEACHER_BOOK_WAIT = 1800        # seconds the teacher retries a CPU booking (only when the day holds no slot)
 
 
 def _finish_day(run, e, code_root, commit, log):
@@ -864,17 +899,13 @@ def _finish_day(run, e, code_root, commit, log):
     if not e['classroom_arm']:
         return True, facts
     facts['class_line'] = _after_root(run, e, code_root, commit, log)
-    deadline = time.monotonic() + CLASS_WAIT
-    while True:
+    while True:                                     # the day waits IN its slot until its class is done (no deadline)
         c = entry_of('class', run.plan['run'], e['day'])
         state = (c or {}).get('state')
         if state in ('done', 'failed') or (c is None and run.finished('classroom', e['day'])):
             break
         if c is None and (facts.get('class_line') or {}).get('status') not in ('queued', None):
             facts['frankie'] = dict(status='not queued', reason=(facts.get('class_line') or {}).get('reason'))
-            return False, facts
-        if time.monotonic() > deadline:
-            facts['frankie'] = dict(status='waiting', reason='the class line did not reach the day in %d s' % CLASS_WAIT)
             return False, facts
         if c is None:
             facts['class_line'] = _after_root(run, e, code_root, commit, log)
@@ -895,11 +926,15 @@ def _finish_job(entry, code_root, commit, log, holder):
     finish")."""
     try:
         run, e = _run_for(entry, code_root, commit, log)
+        run.slot_booking = holder['slot']
         ok, facts = _finish_day(run, e, code_root, commit, log)
-        holder['result'] = ('finished' if ok else 'finish_failed',
-                            None if ok else 'teacher: %s' % (facts.get('teacher') or {}).get('reason'), facts)
+        holder['result'] = ('finished' if ok else 'finish_failed', None if ok else 'the day stopped at: %s' % json.dumps(
+            {k: (v or {}).get('reason') if isinstance(v, dict) else v for k, v in facts.items()}, sort_keys=True), facts)
     except (Exception, SystemExit) as error:
         holder['result'] = ('finish_failed', '%s: %s' % (type(error).__name__, error), {})
+    finally:
+        _release_slot(holder['slot'], 'the day %s %s left its slot: %s' % (entry['run'], entry['day'],
+                                                                           (holder.get('result') or ('ended',))[0]))
 
 
 def _needs_finish(x, plans):
@@ -907,6 +942,8 @@ def _needs_finish(x, plans):
     ran on a Pod, before the whole-day rule, or its finish failed (retried once per worker start)."""
     if x['state'] != 'done' or (x.get('finish') or {}).get('state') == 'finished':
         return False
+    if 'pod:' in str(x.get('done_by') or '') or str(x.get('where') or '').startswith('pod:'):
+        return False                                # its ROOT ran on a Pod: the day finishes in its Pod (never a box slot)
     if x['run'] not in plans:
         plans[x['run']] = _plan_of(x['run'])
     return any(d['day'] == x['day'] for d in plans[x['run']].get('days') or [])
@@ -916,6 +953,7 @@ def _root_job(entry, code_root, commit, log, holder):
     """One day in a box slot (a thread): the orchestrator's own root step, then the rest of the day in the same slot."""
     try:
         run, e = _run_for(entry, code_root, commit, log)
+        run.slot_booking = holder['slot']
         r = run.root(e)
         if r is None:
             holder['result'] = ('queued', 'the disk floor: %s' % (run.stopped or {}).get('reason'), {})
@@ -931,6 +969,9 @@ def _root_job(entry, code_root, commit, log, holder):
             holder['result'] = ('failed', '%s: %s' % (r['status'], r.get('reason')), dict(log=r.get('log')))
     except (Exception, SystemExit) as error:          # a refusal (SystemExit) is the day's failure, never the worker's
         holder['result'] = ('failed', '%s: %s' % (type(error).__name__, error), {})
+    finally:
+        _release_slot(holder['slot'], 'the day %s %s left its slot: %s' % (entry['run'], entry['day'],
+                                                                           (holder.get('result') or ('ended',))[0]))
 
 
 def _sync_root(doc, x, plans):
@@ -1058,17 +1099,16 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     if x['seq'] in retried:
                         continue                            # a failed finish is retried once per worker start
                     retried.add(x['seq'])
-                if free is None:
-                    free, source = slots_now(x)
-                if free <= 0:
-                    break
-                holder = {}
-                x['finish'] = dict(state='running', started_utc=utc(), pid=os.getpid(), commit=commit)
+                slot, why = _book_slot(x, 'finish', commit)
+                if slot is None:
+                    source = why
+                    break                                   # no free slot: the days behind wait
+                holder = dict(slot=slot)
+                x['finish'] = dict(state='running', started_utc=utc(), pid=os.getpid(), commit=commit, slot_booking=slot)
                 t = threading.Thread(target=_finish_job, args=(dict(x), code_root, commit, log, holder), daemon=True)
                 running[x['seq']] = dict(thread=t, holder=holder, kind='finish')
                 t.start()
-                free -= 1
-                event('root', 'finish_take', seq=x['seq'], day=x['day'], run=x['run'], where='box-slot', slots=source)
+                event('root', 'finish_take', seq=x['seq'], day=x['day'], run=x['run'], where='box-slot', slot_booking=slot)
             for x in ordered(doc):
                 if x['state'] in ('done', 'running'):
                     continue
@@ -1079,19 +1119,18 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     retried.add(x['seq'])                   # retried once per worker start
                 if stop:
                     break
-                if free is None:
-                    free, source = slots_now(x)
-                if free <= 0:
+                slot, why = _book_slot(x, 'root', commit)
+                if slot is None:
+                    source = why
                     break                                   # no free slot: everything behind the front waits
-                holder = {}
+                holder = dict(slot=slot)
                 x.setdefault('attempts', []).append(dict(where='box-slot', pid=os.getpid(), commit=commit,
-                                                         started=time.time(), started_utc=utc(), slots=source))
-                x.update(state='running', where='box-slot', reason='running in a box slot (%s)' % source)
+                                                         started=time.time(), started_utc=utc(), slot_booking=slot))
+                x.update(state='running', where='box-slot', reason='its whole day in the held box slot %s' % slot)
                 t = threading.Thread(target=_root_job, args=(dict(x), code_root, commit, log, holder), daemon=True)
                 running[x['seq']] = dict(thread=t, holder=holder)
                 t.start()
-                free -= 1
-                event('root', 'take', seq=x['seq'], day=x['day'], run=x['run'], where='box-slot', slots=source)
+                event('root', 'take', seq=x['seq'], day=x['day'], run=x['run'], where='box-slot', slot_booking=slot)
             save('root', doc)
             pending = [x for x in doc['entries'] if x['state'] != 'done' or
                        (x.get('finish') or {}).get('state') not in ('finished', 'failed') and _needs_finish(x, plans)]

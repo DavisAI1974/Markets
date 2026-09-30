@@ -320,10 +320,13 @@ def reap_locked():
 def attribution(procs, bookings):
     """{pid: booking id} for every process that is a booking pid or a descendant of one (the job's tree)."""
     owner = {}
-    for b in bookings:
-        roots = [p['pid'] for p in b.get('pids') or [] if alive(p)]
-        for pid in descendants(procs, roots):
-            owner.setdefault(pid, b['booking'])
+    # a step's own pid first (a held day slot's steps are attached to it), then the holders: every slot of the ROOT-line
+    # worker shares one holder pid, so its descendants would otherwise all read as the first slot's
+    for holders in (False, True):
+        for b in bookings:
+            roots = [p['pid'] for p in b.get('pids') or [] if alive(p) and (p.get('role') == 'booking holder') == holders]
+            for pid in descendants(procs, roots):
+                owner.setdefault(pid, b['booking'])
     return owner
 
 
@@ -457,11 +460,56 @@ def cmd_book(a):
     return WAITING_EXIT if outcome['status'] == 'waiting' else REFUSED_EXIT
 
 
+def held_booking(booking):
+    """The live booking `booking` (its file read under the lock), or (None, why)."""
+    with Lock():
+        path = LEDGER / (booking + '.json')
+        if not path.is_file():
+            return None, 'booking %s is not in the ledger (released or never made)' % booking
+        b = json.loads(path.read_bytes())
+        if not any(alive(p) for p in b.get('pids') or []):
+            return None, 'booking %s has no live pid (its holder is gone)' % booking
+        return b, None
+
+
+def cmd_run_inside(a, command):
+    """A step of a day that already HOLDS its day-run booking (Greg, 2026-09-30: a day never leaves its slot until every
+    kept step of the run table is done): the step runs under taskset of the held CPUs, its pid is added to the booking,
+    nothing is booked or released here (the slot's holder releases it when the whole day is done)."""
+    b, why = held_booking(a.inside)
+    if b is None:
+        emit_outcome(a, dict(status='refused', reason=why))
+        return REFUSED_EXIT
+    emit_outcome(a, dict(status='booked', booking=b['booking'], cpus=b['cpu_list'], parent_cpu=b['parent_cpu'],
+                         inside=True, reason='inside the day\'s held slot %s: CPUs %s' % (b['booking'], b['cpu_list'])))
+    print('### inside the held day slot %s: CPUs %s (stage %s)' % (b['booking'], b['cpu_list'], a.stage), flush=True)
+    env = dict(os.environ, FRANKIE_CPU_BOOKING=b['booking'], FRANKIE_BOOKED_CPUS=b['cpu_list'])
+    try:
+        child = subprocess.Popen(['taskset', '-c', b['cpu_list']] + command, env=env)
+    except OSError as error:
+        print('### the step did not start (%s); the slot stays held' % error, flush=True)
+        return 1
+    try:
+        attach(b['booking'], child.pid, 'step %s (under taskset, inside the held slot)' % (a.stage or '?'))
+    except (OSError, ValueError, KeyError) as error:
+        print('### the step pid %d was not added to the booking (%s)' % (child.pid, error), flush=True)
+
+    def forward(signum, _frame):
+        if child.poll() is None:
+            child.send_signal(signum)
+    for s in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(s, forward)
+    code = child.wait()
+    return 128 - code if code < 0 else code
+
+
 def cmd_run(a):
     command = a.command[1:] if a.command[:1] == ['--'] else a.command
     if not command:
         print('run needs -- <command...>', file=sys.stderr)
         return REFUSED_EXIT
+    if getattr(a, 'inside', None):
+        return cmd_run_inside(a, command)
     b, outcome = book(a.kind, os.getpid(), meta_of(a), a.window)
     if not b:
         emit_outcome(a, outcome)
@@ -606,6 +654,8 @@ def main():
         if name == 'book':
             s.add_argument('--pid', type=int, help='the process that holds the booking (default: the caller\'s parent)')
         else:
+            s.add_argument('--inside', help='run inside this live day-run booking (the day\'s held slot): no booking, '
+                                            'no release')
             s.add_argument('command', nargs=argparse.REMAINDER, help='-- the command to run under taskset')
     s = sub.add_parser('release')
     s.add_argument('--booking', required=True)
@@ -619,6 +669,8 @@ def main():
     a = p.parse_args()
     if getattr(a, 'booking', None) and not re.fullmatch('[A-Za-z0-9_.-]{1,160}', a.booking):
         raise SystemExit('--booking: a booking id from the ledger')
+    if getattr(a, 'inside', None) and not re.fullmatch('[A-Za-z0-9_.-]{1,160}', a.inside):
+        raise SystemExit('--inside: a booking id from the ledger')
     return dict(book=cmd_book, run=cmd_run, release=cmd_release, reap=cmd_reap, show=cmd_show, allowed=cmd_allowed)[a.action](a)
 
 
