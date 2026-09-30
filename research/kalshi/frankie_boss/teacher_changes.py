@@ -295,19 +295,21 @@ class _Long:
         return _absorption_value(t.abs_removed, t.abs_fills, t.incomplete)
 
 
-_CONTROL_LONG = None
+_CONTROL_LONG = {}      # id(history) -> (weak ref to that deque, its _Long); a deque is unhashable, so keyed by identity
 
 
 def _control_long(key, history):
     """The running totals of this pass's history: keyed by the pass's own history deque (a new one every iter_raw), so a
     later preparation never continues an earlier one's totals."""
-    global _CONTROL_LONG
     import weakref
-    if _CONTROL_LONG is None:
-        _CONTROL_LONG = weakref.WeakKeyDictionary()
-    long = _CONTROL_LONG.get(history)
-    if long is None:
-        long = _CONTROL_LONG[history] = _Long()
+    k = id(history)
+    held = _CONTROL_LONG.get(k)
+    if held is None or held[0]() is not history:
+        def gone(ref, k=k):
+            if _CONTROL_LONG.get(k, (None,))[0] is ref:
+                del _CONTROL_LONG[k]
+        held = _CONTROL_LONG[k] = (weakref.ref(history, gone), _Long())
+    long = held[1]
     if history:
         long.feed(history[-1])
     return long
