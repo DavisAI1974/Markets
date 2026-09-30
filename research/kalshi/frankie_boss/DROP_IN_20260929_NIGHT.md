@@ -16,7 +16,7 @@ worker (zero process code changes until the workflow is fixed; Greg).
 |---|---|---|
 | 1 | Fetch + ingest: sealed journal and receipt | KEEP |
 | 2 | 13-point day file beside the ingest (Frankie, both teachers and the search read it) | KEEP |
-| 3 | Authorship | DROP |
+| 3 | Authorship | REMOVED (Greg, 2026-09-30: "take that step out, we're way past it"): no day, resumed or new, is gated on an authorship receipt |
 | 4 | ROOT calculations: derive.json, 5 legacy layers, row spools, digest on classroom days: ROOT hands its sheets to Frankie | KEEP (bedrock off) |
 | 5 | Trading-day preparation part 1: the native context walk | DROP |
 | 6 | Trading-day preparation part 2: the BOSS teacher (JournalTeacherR3) reads Frankie's ingest (every level, whole day) -> Dipole rows | KEEP |
