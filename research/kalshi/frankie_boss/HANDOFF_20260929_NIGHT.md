@@ -11,10 +11,12 @@ the ROOT line, the Pods) and fill them first, every time a space opens.
 before the end"; "when 2 spots open put them back so they can finish". Found: the ROOT line released a day's 16 CPUs
 right after its ROOT; the next day took the slot within seconds, so the teacher found 0 free and the day stopped (6 days:
 20211005/06/12/13, 20221004/05). Fixed in frankie_box_frankie_queue.py (ACTION=handover moves the running worker to it):
-a box-slot day runs ROOT -> its own teacher -> Frankie (it waits IN its slot for its class in the class line:
-one class at a time, school-day order: classroom, lessons, exchange, voice, school, reports) -> Jev (material relayed;
-his Pod is a GitHub dispatch, standing go) -> the day data export -> the search (the experiment-orchestrator
-runbook's order; lessons stay per discovery batch) in the SAME slot; a day whose ROOT is done but whose teacher
+a box-slot day runs, in the SAME slot, in the order the inputs demand: ROOT -> teacher (the BOSS teacher walks
+the day's own sealed ingest) -> data export -> search (the scientific teacher's evidence) -> batch lessons ->
+Frankie's class in the class line (classroom with the BOSS teacher's rows, Frankie's lessons tested on the searches,
+the three-way exchange Frankie + BOSS teacher + scientific teacher, school, reports; one class at a time; the day
+waits in its slot) -> Jev (material; his Pod is a GitHub dispatch, standing go). 1be6bce8 had search AFTER the class
+(a deadlock: Frankie's lessons need the search); fixed before it took over; a day whose ROOT is done but whose teacher
 rows are missing (the 6 above, every Pod day) takes the next free slot AHEAD of any new ROOT. The classroom itself stays
 in the class line (one class at a time, school-day order).
 
