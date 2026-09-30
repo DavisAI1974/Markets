@@ -3,6 +3,38 @@
 Status: SPEC. Nothing is built beyond the per-cycle calculation export (f751ccbe). It goes into the Excel build plan
 (`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`) as a research track before it is built (Greg adds it).
 
+## AGREED DAY WORKFLOW (Greg, 2026-09-30 ~02:35Z): Monday's run with fewer steps
+Greg: "This workflow shouldn't change from what we ran for Monday, just less steps"; "I like your run plan"; "When
+frankie runs his part for the 1st time, ask him if that's the right order but it seems right". A day keeps its Pod or
+box slot until every KEPT step is done (no day leaves early). Status: agreed on paper; NOT yet built into the ROOT-line
+worker (zero process code changes until the workflow is fixed; Greg).
+
+| # | Monday step (what it hands on) | Experiment day |
+|---|---|---|
+| 1 | Fetch + ingest: sealed journal and receipt | KEEP |
+| 2 | 13-point day file beside the ingest (Frankie, both teachers and the search read it) | KEEP |
+| 3 | Authorship | DROP (confirm) |
+| 4 | ROOT calculations: derive.json, 5 legacy layers, row spools, digest on classroom days: ROOT hands its sheets to Frankie | KEEP (bedrock off) |
+| 5 | Trading-day preparation part 1: the native context walk | DROP (confirm) |
+| 6 | Trading-day preparation part 2: the BOSS teacher (JournalTeacherR3) reads Frankie's ingest (every level, whole day) -> Dipole rows | KEEP |
+| 7 | Principal inputs + host config | DROP (confirm) |
+| 8 | Launch/cycle: context, principal model call, Granite B2 critic | DROP (confirm), except the classroom pieces below |
+| 9 | Classroom package: prepare_integrated_cycle (ROOT's sheets + teacher rows + day file) | KEEP |
+| 10 | Classroom: the principal's classroom stage answered by Frankie's code (19 components, summary, correction), finishing his calcs from ROOT's sheets | KEEP |
+| 11 | The meeting: Frankie + the BOSS teacher + the scientific teacher (the search), Granite opening and voicing the conversation (CLASSROOM_RULES_V2, R17 amended) | KEEP (the Granite voice call is not wired: needs Greg's go on the Session.boss edit) |
+| 12 | Frankie's brain entry: classroom ledgers + his lessons | KEEP |
+| 13 | Record / correction / retain | DROP (confirm), except the brain entry and the day reports |
+| 14 | Jev: blind outside student, his own Pod, claims only | KEEP |
+| 15 | Experiment-only: data export, search, lessons, day reports (CLASSROOM / FRANKIE / JEV REPORT #N) | KEEP |
+
+Dependencies found 2026-09-30 (so the built worker orders them this way): Frankie's lessons and the three-way meeting
+need the day's search, so data export + search run BEFORE the class; the teacher rows before the classroom package.
+FIRST-RUN CHECK (Greg): the first time Frankie runs his part, put the question to him: "is this the right order of the
+day's steps?" and record his answer in the day report before the order is locked. (In the experiment Frankie's
+classroom is code; the question goes to him through his session / the meeting's Granite voice once wired; if neither
+can ask it, tell Greg.)
+Open: confirm the DROP rows; Granite Session.boss go.
+
 ## UPDATE 2026-09-29 (late): the teachers are tied and Granite is out of the classroom. This supersedes the text below.
 - **Granite** (`SPEC-decouple-granite.md`, DECISION and BUILT blocks): Granite is ONLY the B2 shadow critic (C21-C24) on
   the R4 Pod, plus one labelled self-assessment of how it performed as the critic. C35 is no longer a Granite role.
