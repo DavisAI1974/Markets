@@ -821,8 +821,9 @@ CLASS_WAIT = 43200              # seconds a day waits in its slot for its class 
 
 def _finish_day(run, e, code_root, commit, log):
     """The rest of the day in the SAME slot (Greg, 2026-09-30: "the days are supposed to go through all of the processes
-    until everything is done for that day"; "no more days quit before the end"): the day's own teacher rows (a batch of
-    this one day, key day-<YYYYMMDD>; the rows are per day either way), then the class line for an arm day. The slot is
+    until everything is done for that day"; "no more days quit before the end"; "follow the runbook for experiment
+    orchestrator"): the day's own teacher rows (a batch of this one day, key day-<YYYYMMDD>; the rows are per day either
+    way), then for an arm day Frankie's class (class line) and Jev, then the day data export and the search. The slot is
     held by the worker's thread from the ROOT to here, so no other day takes it in between. A teacher that finds its 16
     CPUs taken (another runner booked them in the gap) retries for TEACHER_BOOK_WAIT seconds. Returns (ok, facts)."""
     import frankie_box_experiment as X
@@ -842,7 +843,7 @@ def _finish_day(run, e, code_root, commit, log):
         facts['teacher'] = dict(status='rows present', rows=str(X.rows_of(e)[0]))
     facts['class_line'] = _after_root(run, e, code_root, commit, log)
     if not e['classroom_arm']:
-        return True, facts
+        return _data_search(run, e, facts)
     # Frankie: the day waits IN ITS SLOT for its class (the class line: one class at a time, school-day order; classroom,
     # Frankie's lessons, exchange, voice, school, the day reports). The slot's CPUs are not booked while it waits, so the
     # class worker books them for the class: no second slot, no deadlock (Greg, 2026-09-30: "it should run through the
@@ -872,7 +873,21 @@ def _finish_day(run, e, code_root, commit, log):
     facts['jev'] = dict(status=j.get('status'), reason=j.get('reason'), material_sent=j.get('material_sent'),
                         dispatches=j.get('dispatches'))
     import frankie_box_experiment as X2
-    return j.get('status') in X2.FINISHED + (X2.HANDED_OFF,), facts
+    if j.get('status') not in X2.FINISHED + (X2.HANDED_OFF,):
+        return False, facts
+    return _data_search(run, e, facts)
+
+
+def _data_search(run, e, facts):
+    """The runbook's next steps of the day, still in its slot (experiment-orchestrator: teacher, classroom, jev, data,
+    search): the day data export, then the search. The lessons are per batch of discovery days (the orchestrator's)."""
+    import frankie_box_experiment as X
+    for stage in ('data', 'search'):
+        r = run.guarded(stage, e) or {}
+        facts[stage] = dict(status=r.get('status'), reason=r.get('reason'), target=r.get('target'), log=r.get('log'))
+        if r.get('status') not in X.FINISHED:
+            return False, facts
+    return True, facts
 
 
 def _finish_job(entry, code_root, commit, log, holder):

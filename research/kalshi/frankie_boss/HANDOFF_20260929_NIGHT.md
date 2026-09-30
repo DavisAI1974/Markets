@@ -13,7 +13,8 @@ right after its ROOT; the next day took the slot within seconds, so the teacher 
 20211005/06/12/13, 20221004/05). Fixed in frankie_box_frankie_queue.py (ACTION=handover moves the running worker to it):
 a box-slot day runs ROOT -> its own teacher -> Frankie (it waits IN its slot for its class in the class line:
 one class at a time, school-day order: classroom, lessons, exchange, voice, school, reports) -> Jev (material relayed;
-his Pod is a GitHub dispatch, standing go) in the SAME slot; a day whose ROOT is done but whose teacher
+his Pod is a GitHub dispatch, standing go) -> the day data export -> the search (the experiment-orchestrator
+runbook's order; lessons stay per discovery batch) in the SAME slot; a day whose ROOT is done but whose teacher
 rows are missing (the 6 above, every Pod day) takes the next free slot AHEAD of any new ROOT. The classroom itself stays
 in the class line (one class at a time, school-day order).
 
