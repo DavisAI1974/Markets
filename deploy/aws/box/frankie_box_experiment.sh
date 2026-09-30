@@ -56,4 +56,28 @@ set -- "$@" --frankie-queue "${FRANKIE_QUEUE:-on}" --root-queue "${ROOT_QUEUE:-o
 set -- "$@" --lags "${LAGS:-20}" --ingest-workers "${INGEST_WORKERS:-31}" --data-workers "${DATA_WORKERS:-1}" \
   --search-workers "${SEARCH_WORKERS:-8}" --teacher-cpus "${TEACHER_CPUS:-0}" --parallel-days "${PARALLEL_DAYS:-4}" --disk-floor-gb "${DISK_FLOOR_GB:-100}"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT" MAP_URL="${MAP_URL:-}"
+# DETACH=on (ACTION=start only; 2026-09-30, "never leave a job on a GitHub runner that can outlast its 6 h limit"): the
+# start runs as its own systemd unit, not under the SSM command, so the runner's 6 h end (and its cancel step) cannot stop
+# it; the dispatch returns once the unit is up. Refused while any start of the same RUN is alive (never two orchestrators
+# on one run). Log: /opt/frankie-box/logs/experiment-<RUN>.log; probe as before (frankie_box_progress.sh).
+case "${DETACH:-off}" in on|off) ;; *) echo "DETACH must be on or off" >&2; exit 2;; esac
+if [ "${DETACH:-off}" = on ]; then
+  [ "$ACTION" = start ] || { echo "DETACH=on is for ACTION=start only" >&2; exit 2; }
+  case "$RUN" in *[!A-Za-z0-9_-]*) echo "RUN must be letters, digits, _ or -" >&2; exit 2;; esac
+  command -v systemd-run >/dev/null || { echo "DETACH=on needs systemd-run on the box" >&2; exit 2; }
+  if pgrep -f -- "frankie_box_experiment.py --action start --run $RUN " >/dev/null; then
+    echo "an orchestrator start of $RUN is alive (pids: $(pgrep -f -- "frankie_box_experiment.py --action start --run $RUN " | tr '\n' ' ')); not started twice" >&2
+    exit 3
+  fi
+  mkdir -p /opt/frankie-box/logs
+  LOG="/opt/frankie-box/logs/experiment-$RUN.log"; UNIT="frankie-experiment-$RUN-$(date +%s)"
+  set -- -E HOME="$HOME" -E PYTHONDONTWRITEBYTECODE=1 -E PYTHONNOUSERSITE=1 -E PYTHONPATH="$CODE_ROOT" -E MAP_URL="$MAP_URL" \
+    /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment.py" "$@"
+  systemd-run --unit "$UNIT" --collect -p StandardOutput=append:"$LOG" -p StandardError=append:"$LOG" "$@"
+  echo "orchestrator $RUN started detached: unit $UNIT, log $LOG"
+  sleep 10
+  systemctl is-active "$UNIT" || { echo "the unit is not active 10 s after start; log tail:"; tail -n 40 "$LOG"; exit 3; }
+  tail -n 20 "$LOG"
+  exit 0
+fi
 exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment.py" "$@"
