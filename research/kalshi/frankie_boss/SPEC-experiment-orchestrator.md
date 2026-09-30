@@ -3,7 +3,45 @@
 Status: SPEC. Nothing is built beyond the per-cycle calculation export (f751ccbe). It goes into the Excel build plan
 (`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`) as a research track before it is built (Greg adds it).
 
-## AGREED DAY WORKFLOW (Greg, 2026-09-30 ~02:35Z): Monday's run with fewer steps
+## UPDATE 2026-09-30 morning (Greg): the day workflow in MONDAY'S ORDER, Frankie on it. Supersedes the table below.
+Greg's calls this morning:
+- The day runs Monday's steps IN MONDAY'S ORDER with the lighter run's pieces; the only drops are Granite and the
+  steps already dropped. Frankie's steps are ON the list (they kept being left off).
+- Pod and box days: EXACTLY the same steps and processes, ONE file, two names (box / Pod). No separate Pod path.
+  Today the Pod path (pod_root/controller.py + pod_agent.py) runs ROOT only: to be replaced by the one day-runner,
+  built only after this order is settled and on Greg's go.
+- Staggering is Greg's call, not code or a rule: boxes and Pods ingest, a day moves off after its ingest, the next
+  ingest starts; Greg moves batches of ingested days forward into ROOT when he decides, so days never all hit the same
+  steps at once.
+- No code changes before this workflow is gone over with Greg (the only change so far: 15fc75df teacher crash fix).
+
+| # | Monday step | This run's piece | Keep |
+|---|---|---|---|
+| 1 | Fetch + ingest (sealed journal) | fetch, ingest | KEEP |
+| 2 | Day file (13 points) | external | KEEP |
+| 3 | ROOT calculations | root (bedrock off) | KEEP |
+| 4 | Trading-day prep 1: native context walk | - | DROP |
+| 5 | Trading-day prep 2: the BOSS teacher's Dipole rows | teacher | KEEP |
+| 5b | (new) the scientific teacher prepares: data export, search, batch lessons | data, search, lessons | KEEP |
+| 6 | Principal inputs + config | - | DROP |
+| 7 | Granite Pod, launch, B2 critic | - | DROP (Granite) |
+| 8 | Frankie: reading | classroom package (ROOT's sheets + teacher rows + day file) | KEEP |
+| 9 | Frankie: CLASSROOM (Dipole classroom) | classroom v2: Frankie's code, 19 components + day-file points | KEEP |
+| 10 | Frankie: TEACH (teach-back with the teachers) | the meeting: three-way exchange (OPEN: confirm) | KEEP |
+| 11 | Frankie: writing | Frankie's lessons (OPEN: confirm) | KEEP |
+| 12 | Record initial: pre-grade | classroom v2 host grade | KEEP |
+| 13 | Resume 1: grading + correction request | classroom v2 | KEEP |
+| 14 | Frankie: correction | classroom v2 | KEEP |
+| 15 | Record correction | classroom v2 | KEEP |
+| 16 | Resume 2: final grade, classroom receipt | classroom completion | KEEP |
+| 17 | Retain | brain entry, school knowledge, day reports | KEEP |
+| 18 | (new) Jev | Jev relay -> his own Pod | KEEP |
+
+OPEN for Greg: (a) today's code runs the meeting and Frankie's lessons AFTER grading/correction (Monday has TEACH and
+writing BEFORE them): move them to Monday's place? (b) rows 10/11 mapping right? (c) main's ROOT-line worker still
+takes queued days into ROOT on its own (FIFO): keep, or only finish the days it holds?
+
+## AGREED DAY WORKFLOW (Greg, 2026-09-30 ~02:35Z): Monday's run with fewer steps (SUPERSEDED by the update above)
 Greg: "This workflow shouldn't change from what we ran for Monday, just less steps"; "I like your run plan"; "When
 frankie runs his part for the 1st time, ask him if that's the right order but it seems right". A day keeps its Pod or
 box slot until every KEPT step is done (no day leaves early). Status: agreed on paper; NOT yet built into the ROOT-line
