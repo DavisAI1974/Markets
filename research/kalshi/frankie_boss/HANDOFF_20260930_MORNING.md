@@ -4,11 +4,7 @@ Branch `claude/frankie-monday-cycle-0-urozez`. The run table is in `HANDOFF_2026
 
 ## Next chat
 1. GET DAYS RUNNING. Every box slot and every Pod busy with days.
-2. Check the day workflow stated last chat is good: a day enters a box or Pod, and stays there until every step of the
-   run table is done. ROOT finishing starts the next step. Pod and box days have the same steps.
+2. Check the day workflow is good: a day enters a box or Pod and stays there until every step of the run table is done.
+   ROOT finishing starts the next step. Pod and box days have the same steps.
 
-Keep it simple. No reports, no tests, no validations, no redesign.
-
-## Pushed last chat
-- dab6eb9a: a box day holds its 16 CPUs from ROOT to the end of its day. The worker was restarted on it.
-- 91f5cb1a: fix for why all 5 Pod ROOTs failed ("file changed while it was hashed"). The Pod ROOT loop was restarted on it.
+Keep it simple. No reports, no tests, no validations.
