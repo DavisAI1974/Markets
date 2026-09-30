@@ -279,12 +279,13 @@ def _worker_status(line, **fields):
     os.replace(tmp, path)
 
 
-def _take_worker_lock(line):
-    """The open lock file when this process is the line's one worker, else None (a worker runs already)."""
+def _take_worker_lock(line, wait=False):
+    """The open lock file when this process is the line's one worker, else None (a worker runs already). wait=True
+    blocks until the running worker releases it (the handover: the new worker starts the moment the old one ends)."""
     QUEUE.mkdir(parents=True, exist_ok=True)
     f = open(QUEUE / ('%s-worker.lock' % line), 'a+')
     try:
-        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(f, fcntl.LOCK_EX if wait else fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
         f.close()
         return None
@@ -341,6 +342,42 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print):
         event(line, 'kick', by=by, commit=commit, code_root=str(code_root), max_seconds=max_seconds, how=how, log=str(log_path))
     log('%s worker started (%s); log %s' % (line, how, log_path))
     return dict(started=True, how=how, log=str(log_path))
+
+
+def handover(line, code_root, commit, max_seconds, poll_seconds, log=print):
+    """Move the line to new code without stopping any running day (2026-09-30): the running worker gets SIGTERM, which
+    only stops it TAKING new work (its running days finish in their slots, then it ends and releases its lock); a new
+    worker at this commit starts detached now and waits on the lock, so it takes over the moment the old one ends."""
+    if line != 'root':
+        raise SystemExit('handover is for the root line')
+    status, held = worker_state(line)
+    old = (status or {}).get('pid')
+    signalled = None
+    if held and old:
+        try:
+            cmd = Path('/proc/%d/cmdline' % int(old)).read_bytes().replace(b'\0', b' ').decode(errors='replace')
+        except OSError:
+            cmd = ''
+        if 'frankie_box_frankie_queue.py' in cmd and '--action worker' in cmd and '--line root' in cmd:
+            os.kill(int(old), signal.SIGTERM)
+            signalled = int(old)
+        else:
+            raise SystemExit('the root worker lock is held but pid %s is not a root worker (%r): nothing signalled' % (old, cmd))
+    (QUEUE / 'logs').mkdir(parents=True, exist_ok=True)
+    log_path = QUEUE / 'logs' / ('%s-worker.log' % line)
+    argv = [sys.executable, '-B', str(HERE / 'frankie_box_frankie_queue.py'), '--action', 'worker', '--line', line,
+            '--code-root', str(code_root), '--commit', commit, '--max-seconds', str(int(max_seconds)),
+            '--poll-seconds', str(int(poll_seconds)), '--wait-lock']
+    env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
+               MARKETS_SHA=commit, CODE_ROOT=str(code_root))
+    unit = 'frankie-queue-%s-handover-%d' % (line, int(time.time()))
+    cmd = ['systemd-run', '--unit', unit, '--collect', '-p', 'StandardOutput=append:%s' % log_path,
+           '-p', 'StandardError=append:%s' % log_path] + [x for k, v in sorted(env.items()) for x in ('-E', '%s=%s' % (k, v))] + argv
+    code = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).returncode
+    with locked():
+        event(line, 'handover', old_pid=old, signalled=signalled, unit=unit, exit_code=code, commit=commit)
+    return dict(old_worker=old, signalled=signalled, new_unit=unit, systemd_run_exit=code, log=str(log_path),
+                note='the old worker finishes the days in its slots and ends; the new one waits on the lock, then runs')
 
 
 def _run_for(entry, code_root, commit, log):
@@ -704,8 +741,8 @@ def box_slots(settings):
     held, _, _, bookings = C.usage(1.0, exclude=C.ancestors(C.processes(), me) | {me})
     booked = {c for b in bookings for c in b['cpus']}
     free = [c for c in C.online_cpus() if c not in booked and c not in held]
-    return len(free) // C.DAY_RUN_CPUS, None, 'frankie_box_cores: %d free CPUs = %d slot(s) of %d' % (
-        len(free), len(free) // C.DAY_RUN_CPUS, C.DAY_RUN_CPUS)
+    return len(free) // C.DAY_RUN_CPUS, len(C.online_cpus()) // C.DAY_RUN_CPUS, \
+        'frankie_box_cores: %d free CPUs = %d slot(s) of %d' % (len(free), len(free) // C.DAY_RUN_CPUS, C.DAY_RUN_CPUS)
 
 
 def root_gate(run, day):
@@ -761,16 +798,69 @@ def _after_root(run, e, code_root, commit, log):
     return out
 
 
+TEACHER_BOOK_WAIT = 1800        # seconds the slot's teacher retries a CPU booking the slot itself just released
+
+
+def _finish_day(run, e, code_root, commit, log):
+    """The rest of the day in the SAME slot (Greg, 2026-09-30: "the days are supposed to go through all of the processes
+    until everything is done for that day"; "no more days quit before the end"): the day's own teacher rows (a batch of
+    this one day, key day-<YYYYMMDD>; the rows are per day either way), then the class line for an arm day. The slot is
+    held by the worker's thread from the ROOT to here, so no other day takes it in between. A teacher that finds its 16
+    CPUs taken (another runner booked them in the gap) retries for TEACHER_BOOK_WAIT seconds. Returns (ok, facts)."""
+    import frankie_box_experiment as X
+    facts = {}
+    if X.rows_of(e)[0] is None:
+        deadline = time.monotonic() + TEACHER_BOOK_WAIT
+        while True:
+            t = run.teacher('day-%s' % e['day'], [e]) or {}
+            if t.get('status') != 'waiting' or X.rows_of(e)[0] is not None or time.monotonic() > deadline:
+                break
+            log('teacher %s %s: waiting (%s); retrying in the held slot' % (run.plan['run'], e['day'], t.get('reason')))
+            time.sleep(30)
+        facts['teacher'] = dict(status=t.get('status'), reason=t.get('reason'), log=t.get('log'))
+        if X.rows_of(e)[0] is None:
+            return False, facts
+    else:
+        facts['teacher'] = dict(status='rows present', rows=str(X.rows_of(e)[0]))
+    facts['class_line'] = _after_root(run, e, code_root, commit, log)
+    return True, facts
+
+
+def _finish_job(entry, code_root, commit, log, holder):
+    """A day whose ROOT is done but whose day is not (its ROOT ran on a Pod, or before the whole-day rule): the rest
+    of the day in a box slot, ahead of any new ROOT (Greg, 2026-09-30: "when 2 spots open put them back so they can
+    finish")."""
+    try:
+        run, e = _run_for(entry, code_root, commit, log)
+        ok, facts = _finish_day(run, e, code_root, commit, log)
+        holder['result'] = ('finished' if ok else 'finish_failed',
+                            None if ok else 'teacher: %s' % (facts.get('teacher') or {}).get('reason'), facts)
+    except (Exception, SystemExit) as error:
+        holder['result'] = ('finish_failed', '%s: %s' % (type(error).__name__, error), {})
+
+
+def _needs_finish(x, plans):
+    """A done ROOT-line entry whose day still lacks its teacher rows (the rest of the day not run)."""
+    import frankie_box_experiment as X
+    if x['state'] != 'done' or (x.get('finish') or {}).get('state') == 'finished':
+        return False
+    if x['run'] not in plans:
+        plans[x['run']] = _plan_of(x['run'])
+    e = next((d for d in plans[x['run']].get('days') or [] if d['day'] == x['day']), None)
+    return e is not None and X.rows_of(e)[0] is None
+
+
 def _root_job(entry, code_root, commit, log, holder):
-    """One ROOT in a box slot (a thread): the orchestrator's own root step, then the class line for an arm day."""
+    """One day in a box slot (a thread): the orchestrator's own root step, then the rest of the day in the same slot."""
     try:
         run, e = _run_for(entry, code_root, commit, log)
         r = run.root(e)
         if r is None:
             holder['result'] = ('queued', 'the disk floor: %s' % (run.stopped or {}).get('reason'), {})
         elif r['status'] in ('done', 'reused'):
-            holder['result'] = ('done', None, dict(calculations=r.get('calculations'), root_status=r['status'],
-                                                   class_line=_after_root(run, e, code_root, commit, log)))
+            ok, facts = _finish_day(run, e, code_root, commit, log)
+            holder['result'] = ('done', None, dict(facts, calculations=r.get('calculations'), root_status=r['status'],
+                                                   finish='finished' if ok else 'finish_failed'))
         elif r['status'] == 'waiting' and r.get('claim'):
             holder['result'] = ('claimed_elsewhere', r.get('reason'), dict(claim=r.get('claim')))
         elif r['status'] == 'waiting':
@@ -828,10 +918,12 @@ def _sync_root(doc, x, plans):
     return None
 
 
-def root_worker(code_root, commit, max_seconds, poll_seconds, log=print):
+def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lock=False):
     """The one ROOT worker: box slots filled from the front of the ROOT line in arrival order; Pod claims followed. It
-    never starts a ROOT after its bound or a stop signal, and waits for the ROOTs it started (their receipts are theirs)."""
-    lock = _take_worker_lock('root')
+    never starts a ROOT after its bound or a stop signal, and waits for the ROOTs it started (their receipts are theirs).
+    Each box-slot day runs its whole day in the slot (ROOT, its teacher, the class line); days whose ROOT is done but
+    whose day is not take free slots first."""
+    lock = _take_worker_lock('root', wait=wait_lock)
     if lock is None:
         status, _ = worker_state('root')
         log('a ROOT worker runs already (pid %s): this one ends; the running worker takes every entry' % (status or {}).get('pid'))
@@ -856,12 +948,20 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print):
                 job = running.pop(seq)
                 y = find(doc, seq)
                 result, reason, facts = job['holder'].get('result') or ('failed', 'the slot ended without a result', {})
+                if job.get('kind') == 'finish':
+                    y['finish'] = dict(y.get('finish') or {}, state='finished' if result == 'finished' else 'failed',
+                                       reason=reason, ended_utc=utc(), facts=facts)
+                    event('root', 'finish_end', seq=seq, day=y['day'], run=y['run'], result=result, reason=reason, facts=facts)
+                    log('FINISH seq %d %s (%s): %s%s' % (seq, y['day'], y['run'], result, (': %s' % reason) if reason else ''))
+                    continue
                 _end_attempt(y, result, reason)
                 y['attempts'][-1].update(facts)
                 if result == 'done':
                     y.update(state='done', reason=None, where='box-slot', calculations=facts.get('calculations'),
                              class_line=facts.get('class_line'), done_seq=doc['next_done_seq'], done_at=time.time(),
-                             done_utc=utc())
+                             done_utc=utc(), finish=dict(state='finished' if facts.get('finish') == 'finished' else 'failed',
+                                                         facts={k: facts.get(k) for k in ('teacher', 'class_line')},
+                                                         ended_utc=utc()))
                     doc['next_done_seq'] += 1
                 elif result == 'claimed_elsewhere':
                     y.update(state='running', where=(facts.get('claim') or {}).get('where'), reason=reason)
@@ -880,6 +980,33 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print):
                 if x['state'] == 'done' and x.pop('needs_receipt', None):
                     after.append(dict(x))
             free, blocked, source = None, None, None
+
+            def slots_now(x):
+                f, total, src = box_slots(x.get('settings') or {})
+                if total is None:
+                    total = f if f is not None else 0
+                # a slot whose day is between two bookings (ROOT ended, teacher not booked yet) is still that day's
+                return (min(f, total - len(running)) if f is not None else total - len(running)), src
+
+            # first the days whose ROOT is done but whose day is not: back into a slot ahead of any new ROOT
+            for x in ordered(doc):
+                if stop or x['seq'] in running or not _needs_finish(x, plans):
+                    continue
+                if (x.get('finish') or {}).get('state') == 'failed':
+                    if x['seq'] in retried:
+                        continue                            # a failed finish is retried once per worker start
+                    retried.add(x['seq'])
+                if free is None:
+                    free, source = slots_now(x)
+                if free <= 0:
+                    break
+                holder = {}
+                x['finish'] = dict(state='running', started_utc=utc(), pid=os.getpid(), commit=commit)
+                t = threading.Thread(target=_finish_job, args=(dict(x), code_root, commit, log, holder), daemon=True)
+                running[x['seq']] = dict(thread=t, holder=holder, kind='finish')
+                t.start()
+                free -= 1
+                event('root', 'finish_take', seq=x['seq'], day=x['day'], run=x['run'], where='box-slot', slots=source)
             for x in ordered(doc):
                 if x['state'] in ('done', 'running'):
                     continue
@@ -891,9 +1018,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print):
                 if stop:
                     break
                 if free is None:
-                    free, total, source = box_slots(x.get('settings') or {})
-                    if free is None:
-                        free = total - len(running)
+                    free, source = slots_now(x)
                 if free <= 0:
                     break                                   # no free slot: everything behind the front waits
                 holder = {}
@@ -906,7 +1031,8 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print):
                 free -= 1
                 event('root', 'take', seq=x['seq'], day=x['day'], run=x['run'], where='box-slot', slots=source)
             save('root', doc)
-            pending = [x for x in doc['entries'] if x['state'] != 'done']
+            pending = [x for x in doc['entries'] if x['state'] != 'done' or
+                       (x.get('finish') or {}).get('state') not in ('finished', 'failed') and _needs_finish(x, plans)]
             n_done = len(doc['entries']) - len(pending)
             end = None
             if not running and not pending and not after:
@@ -950,7 +1076,8 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('--action', required=True, choices=('show', 'enqueue', 'worker', 'kick'))
+    p.add_argument('--action', required=True, choices=('show', 'enqueue', 'worker', 'kick', 'handover'))
+    p.add_argument('--wait-lock', action='store_true', help='worker: wait for the running worker to end (handover)')
     p.add_argument('--line', choices=LINES)
     p.add_argument('--code-root')
     p.add_argument('--commit')
@@ -972,12 +1099,18 @@ def main():
         raise SystemExit('--max-seconds >= 60 and --poll-seconds 5..600 required')
     sys.path.insert(0, str(HERE))
     if a.action == 'worker':
-        fn = class_worker if a.line == 'class' else root_worker
-        code = fn(a.code_root, a.commit, a.max_seconds, a.poll_seconds, log=lambda t: print(t, flush=True))
+        if a.line == 'class':
+            code = class_worker(a.code_root, a.commit, a.max_seconds, a.poll_seconds, log=lambda t: print(t, flush=True))
+        else:
+            code = root_worker(a.code_root, a.commit, a.max_seconds, a.poll_seconds, log=lambda t: print(t, flush=True),
+                               wait_lock=a.wait_lock)
         print(json.dumps(show(20)['lines'][a.line], indent=1, sort_keys=True, default=str))
         return code
     if a.action == 'kick':
         print(json.dumps(kick(a.line, a.code_root, a.commit, a.max_seconds, a.poll_seconds, by='dispatch'), sort_keys=True))
+        return 0
+    if a.action == 'handover':
+        print(json.dumps(handover(a.line, a.code_root, a.commit, a.max_seconds, a.poll_seconds), sort_keys=True, default=str))
         return 0
     # enqueue: the orchestrator's own readiness checks on the run's saved plan, then the entry (and the kick)
     import re

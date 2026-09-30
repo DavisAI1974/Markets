@@ -6,6 +6,15 @@ with days. Do that BEFORE any other work: no investigating, no building, no docs
 the small box i-08cee is left out. Check the spaces (frankie_box_cores.sh ACTION=show on main, processes on the twin,
 the ROOT line, the Pods) and fill them first, every time a space opens.
 
+## RULE (Greg, 2026-09-30 ~02:05Z): A DAY NEVER LEAVES ITS SLOT BEFORE THE WHOLE DAY IS DONE
+"The days are supposed to go through all of the processes until everything is done for that day"; "no more days quit
+before the end"; "when 2 spots open put them back so they can finish". Found: the ROOT line released a day's 16 CPUs
+right after its ROOT; the next day took the slot within seconds, so the teacher found 0 free and the day stopped (6 days:
+20211005/06/12/13, 20221004/05). Fixed in frankie_box_frankie_queue.py (ACTION=handover moves the running worker to it):
+a box-slot day runs ROOT -> its own teacher -> the class line in the SAME slot; a day whose ROOT is done but whose teacher
+rows are missing (the 6 above, every Pod day) takes the next free slot AHEAD of any new ROOT. The classroom itself stays
+in the class line (one class at a time, school-day order).
+
 Branch `claude/frankie-monday-cycle-0-urozez`: `git fetch origin claude/frankie-monday-cycle-0-urozez && git checkout -B
 claude/frankie-monday-cycle-0-urozez origin/claude/frankie-monday-cycle-0-urozez` (tip f86bb7c2 or a later handoff doc
 commit). Read `research/kalshi/frankie_boss/HANDOFF_20260929_NIGHT.md` (state, run ids, Pod ids, Greg's calls). Skills

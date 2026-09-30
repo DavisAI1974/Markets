@@ -11,12 +11,14 @@
 #   worker  LINE                 the line's one worker in the foreground, bounded [MAX_SECONDS=1500 POLL_SECONDS=60]; a
 #                                second worker exits at once; exit 0 idle, 3 stopped at a failed entry, 5 saved at the bound
 #   kick    LINE                 starts the line's worker detached (systemd-run) unless one runs [MAX_SECONDS=43200]
+#   handover LINE=root           the running worker stops taking work and ends after its running days; a new worker at
+#                                this commit (every day runs its whole day in its slot) waits on the lock and takes over
 # LINE is root or class. MARKETS_SHA (the dispatched commit) is required for every action but show.
 set -eu
 export HOME="${HOME:-/root}"
 : "${CODE_ROOT:?staged checkout required}"
 ACTION="${ACTION:-show}"
-case "$ACTION" in show|enqueue|worker|kick) ;; *) echo "ACTION must be show, enqueue, worker or kick" >&2; exit 2;; esac
+case "$ACTION" in show|enqueue|worker|kick|handover) ;; *) echo "ACTION must be show, enqueue, worker, kick or handover" >&2; exit 2;; esac
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 case "$CODE_ROOT" in *..*) echo "no .. in CODE_ROOT" >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
@@ -38,6 +40,11 @@ case "$ACTION" in
   kick)
     case "${MAX_SECONDS:-43200}" in ""|*[!0-9]*) echo "MAX_SECONDS must be whole seconds" >&2; exit 2;; esac
     exec "$PY" -B "$SCRIPT" --action kick "$@" --max-seconds "${MAX_SECONDS:-43200}" ;;
+  handover)
+    # the root line to this commit without stopping a running day: the old worker stops TAKING work (SIGTERM), finishes
+    # the days in its slots and ends; a new worker at this commit waits on the lock and takes over (2026-09-30)
+    case "${MAX_SECONDS:-43200}" in ""|*[!0-9]*) echo "MAX_SECONDS must be whole seconds" >&2; exit 2;; esac
+    exec "$PY" -B "$SCRIPT" --action handover "$@" --max-seconds "${MAX_SECONDS:-43200}" ;;
   enqueue)
     : "${RUN:?the orchestrator run name required}"; : "${DAY:?YYYYMMDD required}"
     case "$RUN" in ""|*[!A-Za-z0-9_-]*) echo "RUN: letters, digits, _ and - only" >&2; exit 2;; esac
