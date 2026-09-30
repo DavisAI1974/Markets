@@ -14,21 +14,21 @@ they change, not this list. Box and Pod days run the same steps from one file. G
 | 2 | Ingest | Writes the day into the sealed journal (the gold-standard record of every event) with its receipt. | Box code |
 | 3 | Day file | Attaches Frankie's 13 historical data points for the day beside the ingest. | Box code |
 | 4 | ROOT | Frankie's calculations on the whole day, bedrock off: derive.json, 5 legacy layers, row spools, the digest on classroom days. The sheets he learns from. | Frankie's calculation code |
-| 5 | BOSS teacher | Reads the whole ingest, every level, and writes the Dipole rows: the teacher's answer key for the classroom. | BOSS teacher (JournalTeacherR3), code |
-| 6 | Data export | Puts ROOT's sheets, the day file and the teacher rows in one folder with a manifest; leaves out what the teachers must never see (Frankie's decision process, his graded outcomes). | Box code |
-| 7 | Series | One time axis per day; every value carries only what was known at that moment (nothing from the future). | Box code |
-| 8 | Search | Tests every pair of measurements by cell and time lag, each with its own chance check. Counts, never averages. | Scientific teacher's engine, code |
-| 9 | Scientific teacher (6b) | Takes claims (historical ones, Frankie's earlier findings, Jev's earlier claims), tests each against the search, answers with counts: held / shown otherwise / unresolved, and "the data is showing this instead". | Scientific teacher, code |
-| 10 | Survivors | Symbolic regression over the search: the relationships that hold across the discovery days. Material for the classroom and for Jev. NOT BUILT. | Code (odcore/symbolic.py) |
-| 11 | Frankie: classroom | Frankie works the 19 components from ROOT's sheets, learns from the BOSS teacher, is graded and corrected. | Frankie (his code), BOSS teacher |
-| 12 | Frankie's findings tested | His new and novel findings go to the scientific teacher as claims and come back with counts. | Scientific teacher, Frankie's claims |
-| 13 | The meeting | Frankie, the BOSS teacher and the scientific teacher discuss his novel findings. Granite opens and voices the conversation, never calculations. Granite is called when the meeting starts (one meeting at a time, in class order), so his Pod follows the meeting's time. Voice call NOT WIRED (needs Greg's go on the Session.boss edit). | Frankie, both teachers, Granite (voice) |
-| 14 | Frankie: end of day | His brain entry, his school knowledge (what he carries to the next day), the day reports. | Frankie |
-| 15 | Jev | Blind outside student on his own Pod: sees what Frankie saw (classroom package + survivors), never Frankie's answers; files labelled claims the scientific teacher tests. | Jev (Qwen3-8B), his own Pod |
-| 16 | Confirmation | Later, on the 2024-2025 days: the frozen survivor list tested per cell, net of fees maker and taker. NOT BUILT. | Code |
+| 5 | BOSS teacher reads | The original BOSS teacher (mathematics, representation supervision, targets, masks, controls) reads ALL of Frankie's ingest, every level, whole day, and writes the Dipole rows. It sees everything EXCEPT Frankie's trade reasoning / decision process in his brain (rule R09). | BOSS teacher (JournalTeacherR3), code |
+| 6 | Frankie: classroom | RIGHT AFTER the teacher's read (Greg, 2026-09-30): Frankie works the 19 components from ROOT's sheets, learns from the BOSS teacher, is graded and corrected. | Frankie (his code), BOSS teacher |
+| 7 | Data export | Puts ROOT's sheets, the day file and the teacher rows in one folder with a manifest; leaves out what the teachers must never see (Frankie's decision process, his graded outcomes: R09, R10). | Box code |
+| 8 | Series | One time axis per day; every value carries only what was known at that moment (nothing from the future). | Box code |
+| 9 | Search | Tests every pair of measurements by cell and time lag, each with its own chance check. Counts, never averages. | OPEN: the BOSS teacher (SPEC-joined-teachers 09-28: it runs the coupling search as the data specialist) or the scientific teacher (SPEC-scientific-teacher 09-29). Greg decides. |
+| 10 | Scientific teacher (6b) | Takes claims (historical ones, Frankie's findings, Jev's earlier claims), tests each against the search, answers with counts: held / shown otherwise / unresolved, and "the data is showing this instead". | Scientific teacher, code |
+| 11 | Survivors | Symbolic regression over the search: the relationships that hold across the discovery days. Material for later classrooms and for Jev. NOT BUILT. | Code (odcore/symbolic.py) |
+| 12 | The meeting | Frankie, the BOSS teacher and the scientific teacher discuss his new and novel findings. Granite opens and voices the conversation, never calculations; he is called when the meeting starts (one meeting at a time, in class order), so his Pod follows the meeting's time. Voice call NOT WIRED (needs Greg's go on the Session.boss edit). | Frankie, both teachers, Granite (voice) |
+| 13 | Frankie: end of day | His brain entry, his school knowledge (what he carries to the next day), the day reports. | Frankie |
+| 14 | Jev | Blind outside student on his own Pod: sees what Frankie saw (classroom package + survivors), never Frankie's answers; files labelled claims the scientific teacher tests. | Jev (Qwen3-8B), his own Pod |
+| 15 | Confirmation | Later, on the 2024-2025 days: the frozen survivor list tested per cell, net of fees maker and taker. NOT BUILT. | Code |
 
-OPEN for Greg: (1) survivors before Frankie's classroom (#10), as material? (2) survivors are cross-day: a day's
-classroom uses the survivors of the batches finished so far? (3) Jev's claims are tested at the next batch's step 9?
+OPEN for Greg: (1) step 9, whose search: the BOSS teacher's (09-28) or the scientific teacher's (09-29)? (2) survivors
+are cross-day: a day's classroom uses the survivors of the batches finished so far? (3) Jev's claims are tested at the
+next batch's step 10?
 
 ## UPDATE 2026-09-30 morning (Greg): the day workflow in MONDAY'S ORDER, Frankie on it. Supersedes the table below.
 Greg's calls this morning:
