@@ -37,9 +37,12 @@ Greg's calls this morning:
 | 17 | Retain | brain entry, school knowledge, day reports | KEEP |
 | 18 | (new) Jev | Jev relay -> his own Pod | KEEP |
 
-OPEN for Greg: (a) today's code runs the meeting and Frankie's lessons AFTER grading/correction (Monday has TEACH and
-writing BEFORE them): move them to Monday's place? (b) rows 10/11 mapping right? (c) main's ROOT-line worker still
-takes queued days into ROOT on its own (FIFO): keep, or only finish the days it holds?
+SETTLED (Greg, 2026-09-30 morning): Frankie's classroom comes EARLY so he learns from the BOSS teacher; the meeting
+with both teachers comes AFTER, to discuss his new and novel findings. The built order already matches, so no reorder:
+teacher rows -> data export, search, batch lessons -> Frankie's classroom (grade and correction inside it) -> Frankie's
+lessons (his novel findings tested on the search) -> the meeting (three-way exchange) -> brain entry, school, reports ->
+Jev. Every 16-core slot always holds a day (the ROOT-line worker keeps filling slots FIFO). The pieces are built: link
+them in this order, one file for box and Pod.
 
 ## AGREED DAY WORKFLOW (Greg, 2026-09-30 ~02:35Z): Monday's run with fewer steps (SUPERSEDED by the update above)
 Greg: "This workflow shouldn't change from what we ran for Monday, just less steps"; "I like your run plan"; "When
