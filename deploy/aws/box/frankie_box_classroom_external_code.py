@@ -18,7 +18,8 @@ same Pearson/co-movement/relation mathematics as the key), per series and per pa
 Dipole pair needs the Dipole observations the V1 classroom shows in GUIDED: pass them as `dipole_visible`; without them
 those pairs are answered UNRESOLVED and listed as not measurable. What the GUIDED evidence cannot determine (a table's
 total rows known or not yet known) is answered as unknown and listed, never filled in (R04).
-SOCRATIC and VERIFY withhold the evidence itself: refused with the reason, never answered from the host key.
+SOCRATIC and VERIFY use the learner-owned sealed-journal reading plus the causal day file. Missing independent
+evidence refuses; no host key fallback. Source-built, runtime unverified.
 """
 from __future__ import annotations
 
@@ -31,7 +32,7 @@ SCHEMA = 'FRANKIE_BOX_CLASSROOM_EXTERNAL_CODE_V1'
 AUTHOR = 'Frankie\'s code (computed; no model)'
 TEACHBACK_SCHEMA = 'DIPOLE_CLASSROOM_EXTERNAL_TEACHBACK_V1'
 NOVEL_SCHEMA = 'FRANKIE_DIPOLE_EXTERNAL_NOVEL_FINDING_V1'
-MODES_ANSWERED = ('TEACH', 'GUIDED')
+MODES_ANSWERED = ('TEACH', 'GUIDED', 'SOCRATIC', 'VERIFY')
 NOT_SUPPLIED = 'DIPOLE_OBSERVATIONS_NOT_SUPPLIED_TO_THIS_SEAT'
 
 
@@ -40,12 +41,8 @@ class ModeNotAnswerable(ValueError):
 
 
 INDEPENDENT_ROUTE_GAP = (
-    'the day file itself is readable independently of the key (independent_day_file_evidence: every known value, each '
-    'series\' facts, each table\'s known / not-yet-known row counts and the missing lists, through '
-    'operations/frankie_day_external.AsOfReader at the classroom cutoff), but the per-row alignment (state counts, '
-    'terminal state, direction, the runs) needs the Dipole rows\' own timestamps and every pair needs the Dipole '
-    'ledgers; those come only from the 19-dimension route, which has no independent producer yet (the pinned C15 teacher '
-    'walk is the only one; a second walk under Frankie\'s seat is listed as Greg\'s call)')
+    'the independent day-file reader needs the learner-owned Dipole snapshot for row alignment and every pair; '
+    'the runner supplies that separate sealed-journal reading in SOCRATIC/VERIFY, never the host snapshot')
 
 
 def _pre(visible):
@@ -56,13 +53,14 @@ def _pre(visible):
     return pre
 
 
-def independent_day_file_evidence(pre):
+def independent_day_file_evidence(pre, snapshot=None):
     """The external evidence Frankie's seat can read on its own in any mode: the day file named by the pre-message's
     descriptor (path + sha256, checked), read through the existing as-of reader at the classroom cutoff. The same
     reading half build_external_key uses, without the teacher's rows: per series its known values and facts (with the
     table's not-yet-known count from the file), per point its tables' known / not-yet-known row counts, its series and
-    its missing entries, the absent series and the unassigned missing entries. What it cannot supply is listed: the
-    per-row alignment and every pair need the Dipole rows (see INDEPENDENT_ROUTE_GAP). Nothing here reads the key."""
+    its missing entries, the absent series and the unassigned missing entries. Without a learner snapshot, missing
+    per-row alignment and pairs are listed. With one, the existing math computes those from the learner's own rows.
+    Nothing here reads the host key or host rows."""
     EXT = _external_math()
     descriptor = pre['day_file']
     dx, reader, witness = EXT.open_day_external(descriptor['path'], descriptor['sha256'], int(pre['cutoff_ns']),
@@ -96,7 +94,7 @@ def independent_day_file_evidence(pre):
                            tables=[tables.get(t, dict(name=t, absent=True, reason='not in the day file (see missing)'))
                                    for t in p['tables']],
                            missing=mine))
-    return dict(schema='FRANKIE_BOX_INDEPENDENT_DAY_FILE_EVIDENCE_V1', author=AUTHOR, day_file=witness,
+    result = dict(schema='FRANKIE_BOX_INDEPENDENT_DAY_FILE_EVIDENCE_V1', author=AUTHOR, day_file=witness,
                 cutoff_ns=cutoff, open_ns=open_ns, series=series, series_absent=absent, points=points,
                 missing_not_assigned=[m for m in missing if id(m) not in assigned],
                 not_supplied=['alignment (state counts, terminal state, direction, runs per series): needs the Dipole '
@@ -104,6 +102,45 @@ def independent_day_file_evidence(pre):
                               'Dipole ledgers and the row alignment'],
                 rule='read from the day file at the cutoff, never from the teacher\'s key or rows (R09/R10); what is not '
                      'readable here is listed, not filled in (R04)')
+    if snapshot is None:
+        return result
+    # The caller supplies ONLY Frankie's newly calculated snapshot. Align the same
+    # day-file entries with its own row times, using the original scientific functions.
+    np = EXT._np()
+    dip = EXT.dipole_arrays(snapshot)
+    if (snapshot['as_of'] != cutoff or dip['n'] != pre['rows'] or
+            int(dip['cursors'][0]) != pre['first_cursor'] or int(dip['cursors'][-1]) != pre['last_cursor'] or
+            names != [s['name'] for s in pre['series']]):
+        raise ValueError('learner external reading does not span the requested source window/series')
+    ledgers = {}
+    for entry, shaped in zip(entries, series):
+        idx = EXT._align(np, entry, dip)
+        codes, values = EXT._ledger(np, entry, idx)
+        direction = EXT._direction(np, codes, values)
+        ledgers[entry['name']] = (codes, values, direction)
+        segments = EXT._segments(np, entry, idx, dip)
+        nonpresent = {}
+        for seg in segments:
+            if seg['state'] != 'PRESENT':
+                reason = seg['state'] + '|' + str(seg['reason'])
+                nonpresent[reason] = nonpresent.get(reason, 0) + seg['rows']
+        last = segments[-1]
+        shaped['alignment'] = dict(rows=dip['n'],
+            state_counts={state: int(np.sum(codes == i)) for i, state in enumerate(EXT.STATES)},
+            nonpresent_rows_by_reason=dict(sorted(nonpresent.items())), segments=segments,
+            terminal_state=last['state'], terminal_value=last['value'], terminal_reason=last['reason'],
+            first_to_last_present_direction=direction)
+    dipole = {c: (dip['codes'][c], dip['values'][c], EXT._direction(np, dip['codes'][c], dip['values'][c]))
+              for c in pre['dipole_columns']}
+    review = [EXT._pair(np, name, c, 'EXTERNAL_DIPOLE', ledgers[name], dipole[c])
+              for name in names for c in pre['dipole_columns']]
+    review += [EXT._pair(np, a, b, 'EXTERNAL_EXTERNAL', ledgers[a], ledgers[b])
+               for i, a in enumerate(names) for b in names[i + 1:]]
+    if [[p['left'], p['right']] for p in review] != pre['relationship_pairs']:
+        raise ValueError('learner external pair roster differs from the request')
+    result.update(relationship_review=review, learner_source_snapshot_hash=snapshot['source_snapshot_hash'],
+                  teacher_message_hash=pre['teacher_message_hash'], not_supplied=[])
+    return result
 
 
 def _external_math():
@@ -281,13 +318,23 @@ def _guided_point(EXT, p):
     return dict(p, tables=tables)
 
 
-def _section(visible, dipole_visible):
+def _section(visible, dipole_visible, independent_evidence=None):
     """(series in the TEACH shape, the pair review, the attribution text, the questions this evidence leaves)."""
     pre = _pre(visible)
     if pre['mode'] == 'TEACH':
         return (list(pre['series']), list(pre['relationship_review']), 'the teacher\'s relation', [],
                 [dict(p, day=pre['trading_day']) for p in pre['points']],
                 'not in the day file')
+    if pre['mode'] in ('SOCRATIC', 'VERIFY'):
+        own = (dipole_visible or {}).get('learner_evidence')
+        if independent_evidence is None or own is None:
+            raise ModeNotAnswerable('independent external answers require the learner-owned journal/day-file reading')
+        if (independent_evidence['teacher_message_hash'] != pre['teacher_message_hash'] or
+                independent_evidence['learner_source_snapshot_hash'] != own['witness']['source_snapshot_hash']):
+            raise ValueError('independent external evidence belongs to another learner reading/request')
+        return (independent_evidence['series'], independent_evidence['relationship_review'],
+                'computed from the learner-owned journal reading and the causal day file', [],
+                [dict(p, day=pre['trading_day']) for p in independent_evidence['points']], 'not in the day file')
     EXT = _external_math()
     if dipole_visible is not None:
         binding, dipole_binding = visible['binding'], dipole_visible['binding']
@@ -321,12 +368,12 @@ def _section(visible, dipole_visible):
             questions, points, 'table counts withheld in GUIDED (unknown; not inferred from selected series)')
 
 
-def answers(visible, *, dipole_visible=None, learner_context=None):
+def answers(visible, *, dipole_visible=None, learner_context=None, independent_evidence=None):
     """All four external ledgers: TEACH transcribed from the shown evidence; GUIDED computed from the visible known
     values, row runs and (when supplied) the V1 classroom's Dipole observations. `learner_context` (the classroom's
     legal-knowledge and school reproductions) is carried into the review text, never into the ledgers' facts."""
     pre = _pre(visible)
-    series, review, basis, mode_questions, points, absent_text = _section(visible, dipole_visible)
+    series, review, basis, mode_questions, points, absent_text = _section(visible, dipole_visible, independent_evidence)
     by_relation, reported, not_reported = {}, 0, {}
     for p in review:
         by_relation[p['direction_relation']] = by_relation.get(p['direction_relation'], 0) + 1

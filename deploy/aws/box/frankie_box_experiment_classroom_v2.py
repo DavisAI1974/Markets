@@ -29,7 +29,7 @@ receipt is published after histories and the complete brain entry. completion.js
 
 THE SCHOOL (Greg, 2026-10-06): before answers, read completed school files available at this workflow boundary,
 regardless of trading-date order. Each <brain>/school/<day>.json is checked against its index row (a missing or changed
-file is listed, never read), and Frankie's code checks each hypothesis filed there on today's lawful TEACH/GUIDED evidence
+file is listed, never read), and Frankie's code checks supported hypotheses on today's lawful mode-specific evidence
 (frankie_box_classroom_code.school_reproduction: his earlier novel findings and the teachers' own findings, per earlier
 day, counts only). The result travels in code-answers.json ("school") and the receipt ("school_knowledge"); it is not
 part of the model-visible request, so Jev's material never carries it.
@@ -143,6 +143,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     C, K, BR = _box('frankie_box_classroom'), _box('frankie_box_classroom_code'), _box('frankie_box_brain')
     KX = _box('frankie_box_classroom_external_code')
     LS = _box('frankie_box_lane_state')
+    KR = _box('frankie_box_classroom_reader')
 
     calculations, teacher_rows = Path(calculations), Path(teacher_rows)
     work, out = calculations / 'work', calculations / 'out'
@@ -203,7 +204,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                     teacher_receipt=_sha256(teacher_rows / 'receipt.json'), attachment=attachment_sha,
                     day_file=str(day_file), day_sha256=day_sha, previous=carried, previous_external=external_carried,
                     directive=_sha256(DIRECTIVE_PATH), rules=rules_witness,
-                    producers={m.__name__: _sha256(m.__file__) for m in (F, S, R, EXT, V2, C, K, KX, LS, BR)})
+                    producers={m.__name__: _sha256(m.__file__) for m in (F, S, R, EXT, V2, C, K, KX, LS, BR, KR)},
+                    learner_reading_producers=KR.producer_hashes())
     state = _load_raw_state(state_path) if state_path.exists() else dict(identity=identity, started=time.time(), phases={})
     phase_directory = d / 'saved-phases'
     phase_directory.mkdir(exist_ok=True)
@@ -273,7 +275,17 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         return selected, school, listed
     knowledge_input, school, school_listed = phase('learner_inputs', learner_inputs)
     knowledge = knowledge_input['documents']
+    learner_reading, independent_external = None, None
     try:
+        if mode in ('SOCRATIC', 'VERIFY'):
+            snapshot, learner_reading = phase('learner_reading', lambda: KR.read_day(
+                day, calculations, visible['binding'], day_file=day_file, day_sha256=day_sha,
+                save_requested=save_requested))
+            own_evidence = phase('independent_evidence', lambda: K.independent_evidence(visible, snapshot, learner_reading))
+            # Keep request/Jev material unchanged. Only Frankie's answer consumers get his own reading.
+            visible = dict(visible, learner_evidence=own_evidence)
+            independent_external = phase('independent_external', lambda: KX.independent_day_file_evidence(
+                ext_visible['pre_message'], snapshot))
         if mode == 'GUIDED':
             # The derived view is a completed learner calculation, not a host answer. Save it once so
             # resume can serve every remaining consumer without recalculating its 19 components/171 pairs.
@@ -289,11 +301,12 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             learner_context=learner_context)) for n in names}
         summary = phase('summary', lambda: K.summary_answer(visible, outputs, learner_context=learner_context))
         ext_ledgers = phase('external_answers', lambda: KX.answers(
-            ext_visible, dipole_visible=visible, learner_context=learner_context))
+            ext_visible, dipole_visible=visible, learner_context=learner_context,
+            independent_evidence=independent_external))
     except (K.ModeNotAnswerable, KX.ModeNotAnswerable) as error:
         refusal = dict(schema=SCHEMA, day=day, status='refused', mode=mode, reason=str(error),
-                       listed='Frankie\'s code answers TEACH and GUIDED; SOCRATIC/VERIFY require a lawful independent '
-                              'evidence reader and remain refused with the reason')
+                       listed='SOCRATIC/VERIFY require the learner-owned sealed-journal/day-file reader; '
+                              'missing evidence never falls back to the host key')
         _dump(d / 'receipt.json', refusal)
         print(json.dumps(refusal), flush=True)
         return 3
@@ -305,11 +318,13 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     report = phase('answer_report', lambda: C.validate(visible, built['ledgers']))
     ext_report = phase('external_report', lambda: EXT.validate_external_ledgers(ext_ledgers, ext['pre_message']))
     _dump(d / 'code-answers.json', dict(schema=K.SCHEMA, rules=rules_witness, outputs=outputs, summary=summary,
-                                        school=reproduction, stage_knowledge=knowledge_reproduction, model_calls=0))
+                                        school=reproduction, stage_knowledge=knowledge_reproduction,
+                                        learner_reading=learner_reading, model_calls=0))
     _dump(d / 'learner-knowledge.json', dict(day=day, stage='classroom', documents=knowledge,
                                            versions=knowledge_input['versions'], listed=knowledge_input['listed'],
                                            school_documents=school, school_listed=school_listed,
                                            school_sources=reproduction['school_days_read'],
+                                           learner_reading=learner_reading,
                                            applied_to=['component_answer', 'summary_answer']))
     _dump(d / 'ledgers.json', built['ledgers'])
     _text(d / 'classroom.md', C.render_markdown(built['ledgers'], built['dropped_findings']))
@@ -410,6 +425,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                   dropped_findings=len(built['dropped_findings']), correction_ids=len(correction.get('correction_ids') or ()),
                   teacher_complete=completion.get('teacher_complete'), completion_hash=completion.get('completion_hash'),
                   carried_from_previous=carried, school_knowledge=school_witness, classroom_rules=rules_witness,
+                  learner_reading=learner_reading,
                   stage_knowledge=dict(path=str(d / 'learner-knowledge.json'),
                                        sha256=_sha256(d / 'learner-knowledge.json'),
                                        versions=knowledge_input['versions'],

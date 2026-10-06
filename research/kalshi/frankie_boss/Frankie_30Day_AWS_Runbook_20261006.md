@@ -1,5 +1,11 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+**Latest continuation:** The step-2 handoff now records the authorized learner-owned journal read and wired external
+reader for SOCRATIC/VERIFY (source only), plus Greg's all-plane discovery mission and the R4 build-document BOSS role.
+The BOSS retains mathematics, representation supervision, targets, masks, controls and training responsibilities;
+research collaboration is additive. Its broader knowledge integration, remaining typed consumers and #3/#4 still need
+completion. #2 is open. Historical pending-walk/uncalled-adapter statements below are superseded; no real E2E ran.
+
 **08:02 ET handoff:** Greg asked to stop before completing #2. Accumulated native claims now feed owner-local
 scientific calculations before classroom-arm exchanges; counts outside a claim's applied scope cannot confirm it.
 CCode `c547c01a` adds an uncalled external day-file adapter. SOCRATIC/VERIFY still need Greg's ruling on a second

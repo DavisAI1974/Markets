@@ -28,10 +28,65 @@ Greg's further emphasis: the hope is that 30 days provide enough cumulative evid
 every bit of new knowledge forming the foundation for the next. These are not 30 isolated trials. The directive now
 explicitly calls for combining, extending and testing accumulated knowledge between stages, not waiting for day end.
 
+## 2026-10-06 continuation — learner reading and full BOSS-role clarification
+
+Greg confirmed that accumulated-knowledge recognition is the goal and authorized a second walk when it supplies a
+concrete improvement. The source-built improvement here is lawful current Dipole/external evidence in SOCRATIC/VERIFY,
+so accumulated findings can be applied before answers without using the withheld host snapshot. This is NOT a claim
+that re-running the same mathematics independently validates the science, nor that all discovery surfaces are complete.
+
+- `frankie_box_classroom_reader.py` reads ROOT's hash-bound sealed-source descriptor and calls the existing teacher
+  measurement implementation in a separate learner-owned directory/cache. It uses the same held 16-CPU lane, 15 workers,
+  requested whole-day cursor/cutoff, and existing raw/attachment continuation hooks. Completed reading/answer phases are
+  reused on resume. It does not read the host attachment/key or rebuild ingest/ROOT. Its provenance and timing are recorded.
+- The classroom runner now supplies that evidence in SOCRATIC/VERIFY. The external adapter from CCode is called and uses
+  the same as-of/alignment/pair mathematics against the learner's own row times. TEACH/GUIDED visibility, mastery,
+  progression, PREVIOUS and grading are unchanged. The Jev request is written before and separately from learner evidence.
+- Both stage findings and school findings reach the existing recognition calculations before answers. Endpoint-versus-step
+  patterns and the teacher-row step part of accumulated teacher findings can be matched explicitly. The latter is NOT a
+  test of the finding's separate F_LAST/lag/cell/transform/condition/chance claim. Unsupported structures remain listed.
+  Broader nonlinear/multivariable discovery, all-plane connections and strategy discovery remain required in #3/#4.
+- Greg's mission clarification is in the actual `knowledge/EXPERIMENT_DIRECTIVE_V1.json`: ALL normal input/calculation
+  planes, including FIFO/full book/order age/queue position, causal layers, families/d-groups, Dipole/exhaustion and the
+  external data, must contribute to joint cumulative discovery and candidate signals/strategies. Examples are not a whitelist.
+- Read the R4 build workbook (Components C14-C16, C36-C38) and original-role clarification in `SPEC-joined-teachers.md`.
+  The BOSS teacher's broader mathematics, representation supervision, targets, masks, controls and training responsibilities
+  remain. Research and collaboration are additions. The scientific teacher is the mechanism/evidence specialist.
+  Do NOT substitute the new learner reader or the later exchange for the BOSS's full teaching/knowledge integration.
+  Existing shared/joined teacher source readers and discussion delivery already implement parts of this requirement.
+  Reconcile them with the active experiment before building anything else; absence from one route is not absence from
+  the repository. No BOSS-role or training-path rewrite was made.
+
+**#2 remains open:** finish BOSS teaching-input integration, non-classroom-arm accumulated claim delivery, and applicable
+remaining typed consumers alongside #3/#4. No runtime/E2E success, measured added cost or discovered trading signal is
+claimed. No tests, installs, model calls, AWS starts or compute dispatch. Syntax/source review only. Exactly three held
+CPU lanes; no Pods. #5, Granite and Jev discussion boundaries remain; preserved search/confirmation draft is unapplied.
+
+This continuation supersedes the historical SOCRATIC/VERIFY refusal/uncalled-adapter and pending-walk-decision statements below.
+
+### Existing-implementation audit, before further building
+
+Greg: "Both teachers should be reading all of the data that Frankie uses and ingests except for his trade logic.
+That should already be built into them" and "Before you start building things make sure it isn't already done. Don't assume".
+Source audit (not runtime verification):
+
+| Requirement | Existing implementation | Active-workflow distinction |
+|---|---|---|
+| Both teachers read ingest/calculations, excluding private trade reasoning | `SPEC-scientific-teacher.md`, Data access, explicitly requires this; `frankie_box_experiment_data.py` inventories the sealed journal, external day file and ROOT sources | Inventory/export is availability, not proof that a teacher consumed every plane. The catalog explicitly excludes bedrock paths. |
+| Broader calculation data for both teachers | `frankie_box_joined_teacher.py` reads existing derive layers; `dipole_joined_teacher.py` binds source bytes; `frankie_box_scientific_dialogue.py` passes the same joined sources into `frankie_box_teacher_discussion.py` | This older model-driven route exists. `frankie_box_host_config.py` explicitly disables scientific dialogue and removes/refuses joined configuration. The current experiment uses code-only seats. Do not blindly restore the older model route. |
+| Actual source coverage on the 30-day route | `frankie_box_experiment_root.py`, `frankie_box_experiment_search.py`, `frankie_box_experiment_surface.py` | ROOT explicitly uses `bedrock=False`; search reads selected spools/group fields, Dipole and external series. The full native journal surface helper already exists but is not called by the active search. Its related draft stays unapplied. Full-book/FIFO raw fields and derived families/D layers must be traced separately, not assumed equivalent. |
+| Accumulated scientific claims and BOSS participation | `frankie_box_teacher_knowledge.py`, `frankie_box_experiment_exchange.py` | Existing code retests completed legal claims and supplies BOSS with Dipole rows plus scientific lessons. This does not prove all-plane input consumption or original representation/training integration. Non-classroom delivery remains open. |
+| Independent classroom observations | Existing full-run staged adapter can make model claims from retained current evidence; existing code adapter already computes GUIDED observations | No existing code-only SOCRATIC/VERIFY journal-to-observation connection was found in the traced experiment. The narrow new reader reuses the original journal/teacher math and recovery; it does not replace either teacher or provide the broad discovery engine. |
+
+Next: reuse and connect existing components only after tracing their producers, consumers, exclusions and current role
+contracts. CCode's separate Step #3 assignment is `HANDOFF_20261006_CCODE_STEP3.md`; it owns search/source coverage,
+not the Step #2 classroom or teacher-knowledge files. This is a handoff for Greg to relay, not a claim that CCode was
+messaged or has started. Neither audit proves an E2E or a scientific improvement at runtime.
+
 ## Ordered checklist
 
 - [x] 1. Linux ownership and retained-day save/resume — source-built, runtime unverified.
-- [ ] 2. Actual legal knowledge delivery — learner-answer/carry slice built here; reused teacher and cumulative lesson exchange built; GUIDED integrated; independent modes and remaining readers open.
+- [ ] 2. Actual legal knowledge delivery — learner-answer/carry slice built here; reused teacher and cumulative lesson exchange built; all four mode readers source-wired; broader BOSS teaching and remaining readers open.
 - [ ] 3. Existing native-field search surfaces, cross-transform pairs, conditions/cells, targets, Dipole, scoped claims and unchanged symbolic discovery.
 - [ ] 4. Candidate/survivor batches and scientific double-checks, with equal checked single-occurrence treatment.
 - [ ] 5. Discuss remaining freeze/evaluation purpose and costs; Greg removed the old year-based holdout for these 30 days. No #5 implementation yet.

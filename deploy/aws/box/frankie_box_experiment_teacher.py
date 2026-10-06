@@ -76,7 +76,7 @@ def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ext
 
 
 def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None,
-           *, save_requested):
+           *, save_requested, learner_binding=None, learner_directory=None):
     receipt_path = Path(receipt_path)
     if _sha256(receipt_path) != receipt_sha256:
         raise SystemExit('the ingestion receipt differs from the sha256 given')
@@ -107,12 +107,22 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     if journal.stat().st_size != rc['journal_bytes'] or _sha256(journal) != rc['journal_sha256']:
         raise SystemExit('the sealed journal differs from its ingestion receipt')
     out = OUT / day
+    if learner_binding is not None:
+        # The learner owns a separate calculation and recovery namespace. It may reuse the
+        # measurement functions, never the host's completed measurements or walk state.
+        if learner_directory is None or Path(learner_directory).resolve() == out.resolve():
+            raise ValueError('learner reading requires its own output directory')
+        if (learner_binding['through_cursor'] != rc['record_count'] - 1 or
+                learner_binding['source_hash'] != rc['source_prefix_hash']):
+            raise ValueError('learner binding does not name this complete sealed day')
+        out = Path(learner_directory)
     retained_receipt_path = out / 'receipt.json'
     retained_receipt = (json.loads(retained_receipt_path.read_bytes())
                         if retained_receipt_path.exists() else None)
     if retained_receipt is not None:
         if (retained_receipt.get('schema') != 'FRANKIE_EXPERIMENT_TEACHER_ROWS_V1' or
                 retained_receipt.get('day') != day or
+                retained_receipt.get('learner_binding') != learner_binding or
                 retained_receipt.get('ingestion_receipt', {}).get('sha256') != receipt_sha256):
             raise ValueError('retained teacher receipt belongs to another day or ingestion; preserved')
         old_external = retained_receipt.get('external_section', {})
@@ -157,7 +167,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                   workers=workers)
     builder = SimpleNamespace(journal=reader, _failed=False, chain=SimpleNamespace(next_cursor=rc['record_count']))
     through = rc['record_count'] - 1
-    bound = int(time.time() * 1e9)                   # as_of in row_pass is only an upper bound; the day's max is taken below
+    bound = (learner_binding['as_of'] if learner_binding is not None else int(time.time() * 1e9))
     PJ._SERIAL = CS.journal_prefix
     PJ._ENTITY[0] = entity
     h0 = T.evidence_hash
@@ -169,12 +179,15 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         rows, processed, hashes = PT.row_pass(teacher, evidence, as_of=bound, source_manifest_hash=rc['manifest_hash'],
             recovery_path=out / 'teacher-raw-state.pkl',
             recovery_identity=dict(receipt_sha256=receipt_sha256, journal_sha256=rc['journal_sha256'],
-                                   journal_count=rc['journal_count'], journal_hash=rc['journal_hash'], through=through),
+                                   journal_count=rc['journal_count'], journal_hash=rc['journal_hash'], through=through,
+                                   **({'learner_binding': learner_binding} if learner_binding is not None else {})),
             save_requested=save_requested)
         if save_requested():
             raise PT.TeacherSaved('teacher raw pass saved; attachment assembly has not started')
         walked = time.time() - started
         as_of = max(r[4] for r in rows)
+        if learner_binding is not None and as_of != bound:
+            raise ValueError('learner reading does not end at its requested whole-day cutoff')
         spec = [(cursor, True, h) for cursor, h in sorted(hashes.items())]
         attachment = PT.finish(teacher, rows, processed, hashes, spec, source_manifest_hash=rc['manifest_hash'],
                                recovery_path=out / 'teacher-attachment-state.pkl',
@@ -220,8 +233,11 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                   attachment_file=dict(file='teacher-attachment.pkl', sha256=_sha256(out / 'teacher-attachment.pkl')),
                   model_calls=0, caveat='whole-day context: the exact-row check in finish compares the rows with themselves',
                   experiment_directive=directive_witness())
+    if learner_binding is not None:
+        result.update(learner_binding=learner_binding, evidence_seat='frankie',
+                      independent_scientific_verification=False)
     code = 4 if external.get('status') == 'refused' else 0
-    if external.get('status') not in ('absent', 'refused'):
+    if learner_binding is None and external.get('status') not in ('absent', 'refused'):
         try:
             key, section = EXT.ensure_external_section(out, source, external['path'], external['sha256'], trading_day=day,
                                                        built_by='teacher-only step')
