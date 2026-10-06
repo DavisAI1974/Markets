@@ -1,0 +1,177 @@
+{
+ "schema": "FRANKIE_CLASSROOM_RULES_V3",
+ "status": "CONFIRMED by Greg 2026-10-06: V2 retained unchanged; R17 amended for Granite as a bounded active post-class coordinator/facilitator, never a scientific seat or calculator.",
+ "purpose": "The one place the classroom rules live. The classroom code is to load this file and hold every answer, teacher reading and correction to it; Frankie's analysis cites it. Each rule names where it came from.",
+ "seats": {
+  "frankie": "the learner: his code, calculations and brain; his findings are claims",
+  "boss_teacher": "the original BOSS teacher: mathematics, representation supervision, targets, masks and controls, plus scientific research; code",
+  "scientific_teacher": "mechanism and evidence; tests every claim as a hypothesis with its own chance check (SPEC-scientific-teacher.md)"
+ },
+ "rules": [
+  {
+   "id": "R01",
+   "applies_to": [
+    "frankie",
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "Observation, interpretation and hypothesis stay distinct. A state or value is an observation; its market meaning is interpretation; an unsupported developing structure is labelled HYPOTHESIS.",
+   "source": "research/kalshi/frankie_boss/dipole_classroom.py:334 (causality_rule), :366 (observation_interpretation_boundary), :408"
+  },
+  {
+   "id": "R02",
+   "applies_to": [
+    "frankie",
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "No future-outcome claim. Nothing in the classroom states or implies a later outcome; future_outcome_claimed is false in every answer and finding.",
+   "source": "dipole_classroom.py:334, :366; dipole_classroom_final_review.py:454; dipole_classroom_integration.py:146"
+  },
+  {
+   "id": "R03",
+   "applies_to": [
+    "frankie"
+   ],
+   "rule": "Complete coverage: all 19 dimensions in governed order, every retained cursor accounted for, all 171 pairs considered. Nothing is skipped because it is repetitive, neutral, missing, invalid or ablated.",
+   "source": "dipole_classroom.py:10 (complete Dipole coverage is invariant), :409; dipole_classroom_final_review.py:454"
+  },
+  {
+   "id": "R04",
+   "applies_to": [
+    "frankie",
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "Zero data dropped: no caps, no truncation, nothing normalized or averaged. Unknown or incomplete data is listed, never dropped or filled in.",
+   "source": "DROP_IN_20260928_GRANITE_DECOUPLE.md rules; HANDOFF_20260928_JOINED_TEACHERS.md standing rules"
+  },
+  {
+   "id": "R05",
+   "applies_to": [
+    "frankie",
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "Never flatten or normalize dipole results. Coefficients are kept (each pair's Pearson over its own window, reported with its overlap count), and each pair also carries its co-movement counts; a coefficient is read per pair, per cell and per day, never pooled with others into one number, never averaged across results or normalized. Data may be grouped over a defined range and counted per group, never averaged.",
+   "source": "Greg 2026-09-29: \"We want the coefficients, just not a bunch of dipole results flattened or normalized\", \"We can define a group them over a certain range but not an average\"; CLAUDE.md D37 (no average as a verdict); the trading rules (per cell always, never pool)"
+  },
+  {
+   "id": "R06",
+   "applies_to": [
+    "frankie",
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "A novel finding is never an error for being new. It is kept as a hypothesis with its evidence cited, tracked for reproduction in later causally available windows, and never promoted into the curriculum on one appearance.",
+   "source": "dipole_classroom_final_review.py:12, :206 (promotion_rule), :454"
+  },
+  {
+   "id": "R07",
+   "applies_to": [
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "Corrections are specific: where a claim differs, the wording is 'the data is showing this instead', naming the values or states. Only the contradicted subclaim changes; a broader premise that is not itself contradicted stays.",
+   "source": "dipole_classroom_final_review.py:206, :284, :342"
+  },
+  {
+   "id": "R08",
+   "applies_to": [
+    "frankie"
+   ],
+   "rule": "Resolve every correction id in your own words (a bare id echo is not a resolution) and state any remaining disagreement explicitly.",
+   "source": "dipole_classroom_final_review.py:342, :361"
+  },
+  {
+   "id": "R09",
+   "applies_to": [
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "The teachers see all the data except how Frankie makes decisions: his decision process is withheld.",
+   "source": "HANDOFF_20260928_JOINED_TEACHERS.md, Greg's decisions, rule 1"
+  },
+  {
+   "id": "R10",
+   "applies_to": [
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "Graded outcomes are kept out of the lesson material. The next cycle carries WHERE Frankie was corrected, never the answer key or the exhaustive grade.",
+   "source": "HANDOFF_20260928_JOINED_TEACHERS.md rule 2; dipole_classroom.py:379; dipole_classroom_hardening.py:8, :195"
+  },
+  {
+   "id": "R11",
+   "applies_to": [
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "Frankie's findings, his independent and novel ones included, reach both teachers as claims, never as truth, labelled as his.",
+   "source": "HANDOFF_20260928_JOINED_TEACHERS.md rule 3; SPEC-joined-teachers.md"
+  },
+  {
+   "id": "R12",
+   "applies_to": [
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "The two teachers are tied together and keep their separate roles. The BOSS teacher hands over what it measured; the scientific teacher hands back its test results, challenges and proposed tests; each turn builds on the other's; a new discovery from the exchange is recorded as the teachers' own finding.",
+   "source": "DROP_IN_20260928_GRANITE_DECOUPLE.md, The two teachers are TIED TOGETHER; dipole_teacher_discussion.py (roles boss_teacher_scientific, scientific_teacher)"
+  },
+  {
+   "id": "R13",
+   "applies_to": [
+    "frankie",
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "Nothing is dropped early. An early negative (one window, one day, one cell) is a scoped finding with its data named; a path is set aside only at the end of all research runs on the historical data. Dipole direction is open research.",
+   "source": "CLAUDE.md D52, D51, D31"
+  },
+  {
+   "id": "R14",
+   "applies_to": [
+    "frankie",
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "A disposition word (supported, contradicted, unresolved, insufficient) is orientation only. The finding is what the test measured: its counts, cells and days, stated as what the data is showing.",
+   "source": "Greg's standing preference (outcomes open-ended, never a binary); dipole_scientific_review.py DISPOSITIONS"
+  },
+  {
+   "id": "R15",
+   "applies_to": [
+    "frankie",
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "Discovery days only. The classroom and both teachers work on discovery days; confirmation days stay untouched by the classroom, the teachers and Frankie until the survivor list is frozen.",
+   "source": "SPEC-experiment-orchestrator.md, the classroom arm"
+  },
+  {
+   "id": "R16",
+   "applies_to": [
+    "frankie",
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "Duplicate data declines the run, with the reason.",
+   "source": "DROP_IN_20260928_GRANITE_DECOUPLE.md rules"
+  },
+  {
+   "id": "R17",
+   "applies_to": [
+    "frankie",
+    "boss_teacher",
+    "scientific_teacher"
+   ],
+   "rule": "No model computes or decides in the classroom. Every scientific seat's content comes from code, calculations or a measured test. After class, Granite may actively coordinate the three-seat discussion: ask bounded follow-up/clarifying questions, keep disagreements/open tests organized, and request that a code seat run or name the next test. Granite is not a fourth evidence seat and never calculates, grades, chooses survivors, confirms claims, forecasts or trades. A requested calculation is executed by the appropriate code stage before its result may be spoken. Every empirical statement remains bound to the speaking seat's source. Agreement among voices is never confirmation.",
+   "source": "Greg 2026-10-06: choose the active facilitator/coordinator plan for Granite; knowledge/GRANITE_DISCUSSION_COORDINATOR_ROLE_V2.md. Supersedes V2 R17 for the 30-day experiment.",
+   "amended_from": "V2: Granite could only voice the post-class three-seat discussion."
+  }
+ ],
+ "open_for_greg": [
+  "Anything to add or cut."
+ ]
+}
