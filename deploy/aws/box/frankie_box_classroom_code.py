@@ -1,5 +1,5 @@
 """The Dipole classroom answered by Frankie's code (Greg, 2026-09-29: "Granite has absolutely nothing to do with
-classroom anymore"; SPEC-decouple-granite.md decision 3; knowledge/CLASSROOM_RULES_V1.json).
+classroom anymore"; SPEC-decouple-granite.md decision 3; knowledge/CLASSROOM_RULES_V3.json).
 
 No model call. Every answer is computed from the model-visible classroom the request carries and is returned in exactly
 the shapes frankie_box_classroom.parse_component / parse_summary / parse_correction return, so the repository's
@@ -20,9 +20,9 @@ import re
 from pathlib import Path
 
 SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'
-# V2 = V1 with R17 amended (Greg, 2026-09-29); V1 is kept unchanged beside it
-RULES_PATH = Path(__file__).resolve().parents[3] / 'research/kalshi/frankie_boss/knowledge/CLASSROOM_RULES_V2.json'
-RULES_SCHEMA = 'FRANKIE_CLASSROOM_RULES_V2'
+# V3 = V2 with R17 amended for Granite's active bounded post-class facilitator role (Greg, 2026-10-06)
+RULES_PATH = Path(__file__).resolve().parents[3] / 'research/kalshi/frankie_boss/knowledge/CLASSROOM_RULES_V3.json'
+RULES_SCHEMA = 'FRANKIE_CLASSROOM_RULES_V3'
 STATES = ('PRESENT', 'MISSING', 'INVALID', 'ABLATED')
 STATE_MEANING = {
     'PRESENT': 'a measured value at that cursor',
@@ -37,7 +37,7 @@ COMPOSITION = ('TEACH mode, answered by Frankie\'s code (no model call): state c
                'as the teacher\'s, or UNKNOWN where the code computes nothing); pair texts carry the teacher\'s coefficient and the '
                'co-movement counts per pair; novel findings are only what a computation surfaces (a pair whose first-to-last '
                'relation and its step counts point different ways), filed as hypotheses; the correction takes the data the teacher '
-               'shows for each corrected subclaim. Governed by knowledge/CLASSROOM_RULES_V1.json')
+               'shows for each corrected subclaim. Governed by knowledge/CLASSROOM_RULES_V3.json')
 
 
 class ModeNotAnswerable(ValueError):
