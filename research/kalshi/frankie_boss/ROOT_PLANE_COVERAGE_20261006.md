@@ -1,7 +1,15 @@
 # ROOT frame wiring and the full registry — 2026-10-06
 
-Source-built, runtime-unverified. No AWS action, data/scientific run, installation, test suite or E2E. The latest full-depth continuation
+Source-built, runtime-unverified. No AWS action, data/scientific run, test suite or E2E. A later explicitly authorized local memory-tool installation attempt was blocked before activation; see the Step #2 handoff. The latest full-depth continuation
 starts at `166507b6`; the earlier frame-section slice started at `c75a805a`. CCode owns the separate Step #4 assignment; its scientific-teacher files are unchanged here.
+
+## Latest bedrock requirement
+
+Greg now explicitly requires the bedrock information for Frankie and both teachers, without requiring its giant rendered
+table. The older exclusion is superseded as a requirement; source activation remains pending complete recovery and actual
+consumer wiring. `BEDROCK_SHARED_STREAM_ROUTE_20261006.md` traces the existing incremental calculators, exact local ledgers,
+shared readers and historical/live learning routes. No producer switch was flipped. The original scientific formulas and
+lawful availability times remain mandatory; omitting table rendering cannot mean dropping evidence.
 
 ## Direct answer to Greg's 99-plane question
 

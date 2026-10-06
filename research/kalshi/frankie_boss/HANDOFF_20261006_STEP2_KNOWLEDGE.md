@@ -1,5 +1,37 @@
 # Frankie AWS — step 2 learner delivery checkpoint
 
+## Parallel owner clarification — CCode smaller-model work
+
+Greg says the other chat's report supports the smaller model and intends CCode to implement that work. Keep model
+loading/facilitator transport on CCode's separate branch; Codex retains ROOT/bedrock/shared-evidence wiring. CCode's
+existing Step #4 scientific files remain his. Required edits to shared classroom/exchange/queue files should be named
+in the handoff for integration rather than concurrently changed. Include the exact report/model identity; it has not
+been supplied here. The existing authoritative workflow calls freeze/evaluation Step #5, so label the model assignment
+**smaller-model facilitator integration** to avoid conflating the two. No freeze draft, AWS run or model evaluation is
+authorized by that assignment. Fetch latest and preserve newer work.
+
+## Latest clarification — shared bedrock information and live recognition
+
+Greg explicitly requires bedrock **information** for Frankie and both teachers; the giant rendered table is not the
+objective. This supersedes the older information-exclusion policy. Reuse the existing incremental calculators and one
+owner-local evidence store, then connect actual learner/teacher consumers. Calculating or retaining results alone does
+not establish learned live recognition. Exact evidence may remain large and stays on its owning lane. The working
+storage choice is to keep exact local ledgers and omit giant rendered/redundant table copies, not discard evidence.
+
+Read `BEDROCK_SHARED_STREAM_ROUTE_20261006.md` for the three user-authorized agents' source review. Existing native
+calculation, full-state checkpoints, shared-source readers and historical/live model routes exist. The experiment still
+has opening-state, recovery, manifest, producer-selection and actual consumer gaps; no disabled producer was activated.
+The BOSS's broader representation/target/mask/control role remains required; its existing training harness cannot be
+silently substituted for the current experiment. The latest requirement is also in `knowledge/EXPERIMENT_DIRECTIVE_V1.json`.
+
+Greg explicitly authorized installing the local codebase-memory MCP after its configured executable was found absent.
+The official v0.11.0 portable release passed its published SHA-256 check, but native installation activation failed.
+The CLI separately fails `secure CLI coordination could not be created (process-fingerprint)` in this managed environment;
+a diagnostic shows `getpid()` and `/proc/self` identify different PIDs, and the corresponding numeric process executable
+is unreadable. The earlier handoff records a successful installation in another workspace, confirming Greg's recollection.
+No activation/security check was bypassed. The MCP is **not available or used** in this continuation; agents read source.
+This local-tool permission does not authorize AWS installation or computation. No tests, model/data runs or E2E occurred.
+
 ## Existing full-feed framework and shared evidence — Greg, 2026-10-06 09:53 ET
 
 Greg clarified: reuse the original 99-layer delivery framework and adjust its consumers; teachers should read the
