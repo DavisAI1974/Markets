@@ -37,7 +37,7 @@ the worker's result, or the run stops.
 Pinned files unchanged: c15_teacher_r3.py, c15_teacher.py, c15_normalizer.py, c15_normalizer_r3.py, dipole_target.py.
 """
 from concurrent.futures import ProcessPoolExecutor
-from collections import deque
+from collections import Counter, deque
 import hashlib
 import multiprocessing
 import os
@@ -312,8 +312,20 @@ class _RawStreams:
         # the row's value is replaced exactly as attach builds it: control columns dict(v), R3 columns value/state/reason
         for index, column, slot in self.where.pop(token):
             v = value if slot == '-' else value[int(slot)]
+            carried = self.rows[index][3][column]
+            resolved = dict(v)
+            # teacher_changes wraps the deferred result with current-book flags
+            # and unknown-side counts in the parent. Replacing the placeholder
+            # wholesale loses those inputs. Reapply the same wrappers after the
+            # worker result, preserving its value/state/reason and original math.
+            if carried.get('incomplete'):
+                incomplete = Counter(resolved.get('incomplete', {})) + Counter(carried['incomplete'])
+                resolved['incomplete'] = dict(sorted(incomplete.items()))
+            resolved.update({k: x for k, x in carried.items()
+                             if k not in ('value', 'state', 'mask', 'reason', 'incomplete')})
             # every carried key kept (incomplete lists, unknown-side counts); R3's model-side mask left out as attach does
-            self.rows[index][3][column] = ({k: x for k, x in v.items() if k != 'mask'} if 7 <= column < 13 else dict(v))
+            self.rows[index][3][column] = ({k: x for k, x in resolved.items() if k != 'mask'}
+                                          if 7 <= column < 13 else resolved)
         self.resolved += 1
 
     def finish(self):
@@ -432,7 +444,8 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
     rows, processed, entity_hashes = [], 0, {}
     continuation = {} if recovery_path or retain_dstate else None
     identity = dict(binding=self.binding, source_manifest_hash=source_manifest_hash,
-                    entity=entity, source=recovery_identity) if recovery_path else None
+                    entity=entity, source=recovery_identity,
+                    parallel_teacher_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()) if recovery_path else None
     if identity is not None and retain_dstate:
         identity['dstate_schema'] = DSTATE_SCHEMA
     if recovery_path and Path(recovery_path).exists():
@@ -524,7 +537,8 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
                        target_units=units, builder_code_sha=builder_sha)
     recovery_identity = dict(binding=self.binding, candidate=candidate, source=source_manifest_hash,
                              processed=processed, context=hashlib.sha256(_canonical(spec)).hexdigest(),
-                             normalizer=self.normalizer.export())
+                             normalizer=self.normalizer.export(),
+                             parallel_teacher_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
     if dstate_rows is not None:
         recovery_identity['dstate_sha256'] = T.evidence_hash(dstate_rows)
     saved = _load_raw_state(recovery_path) if recovery_path and Path(recovery_path).exists() else None

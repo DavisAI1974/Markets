@@ -6,6 +6,43 @@ installs, runtime downloads, dispatch, AWS actions or E2E. Stop before workflow 
 
 ## Actual connections changed
 
+### Parent annotation loss fixed after `21df8f1`
+
+Source tracing found a concrete drop in `parallel_teacher._RawStreams._resolve`: replacing a deferred
+calculation placeholder with its worker result discarded annotations the parent added after scheduling
+that calculation. `teacher_changes.control_columns` adds current-book integrity/incomplete counters;
+`teacher_changes.r3_iter_raw` adds those counters plus unknown-side trade count and volume. The worker
+returns its own window calculation, so those parent annotations are not present in its result.
+
+The resolver now preserves the worker's numeric value, state and reason, adds the parent's incomplete
+counters using the same Counter addition as the original wrapper, and reapplies its other carried
+metadata. R3 target-mask handling is unchanged. This repairs the existing calculation's output
+assembly; it adds no measurement, formula, target, label or acceptance rule.
+
+The actual existing path is: resolved raw mappings -> attachment `raw` -> snapshot `raw_components`
+-> exact APPLIED cursor/prefix placement -> `dipole.group.rows[position].raw_components.*` -> existing
+numeric/categorical transforms and coupling search. The host and separately owned lawful learner
+walk both use this resolver. Both teachers' downstream search consumers can receive those fields
+through their existing candidate/lesson routes; this is not a claim that every such consumer is complete.
+The 19 output columns do not cap these nested input-evidence fields.
+
+Raw-pass and attachment recovery identities now bind the parallel-teacher source SHA256. Previously
+they bound teacher/source identities without this resolver implementation. Old partial state is
+refused and preserved rather than silently reusing outputs that lost annotations. Old completed
+artifacts remain unchanged and retain their actual previous coverage; no rerun or migration occurred.
+
+Verification: direct source review of the deferred producer/wrapper/resolver and downstream consumer
+interfaces, `ast.parse` of the changed module without imports, and no-index whitespace checks. No
+tests, installs, model/data runs, AWS actions, dispatch or E2E. SOURCE-BUILT / RUNTIME-UNVERIFIED.
+
+CCode's assignment was reread after Greg identified an overlapping candidate-origin investigation.
+That four-file draft was set aside; commit object `9c19cc2e7b1232f81b984b074ffb9690991b2d08` was created
+but never attached to the work branch. Do not cherry-pick it as completed integration. CCode retains
+candidate/scientific-reader work, candidate-delivery review, historical reconsideration capabilities
+and completed-native semantic review. Await his concrete caller requirements before overlapping them.
+
+### Earlier source slice
+
 1. `parallel_teacher.row_pass(retain_dstate=True)` captures all fields of the existing per-entity
    DState immediately after its original group update, from the existing continuation machine.
    Cursor/prefix, publisher/instrument, member/session, receive time, group ordinal and tick are retained.

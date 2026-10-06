@@ -61,6 +61,24 @@ enabled producer or model route merely to turn retained products into purported 
 
 ## Ownership and completion
 
+### Coordination finding from Codex, 2026-10-06
+
+Greg confirmed you are actively handling the assigned candidate work. Source inspection at `21df8f1`
+found `frankie_box_teacher_knowledge.teach_accumulated` skips every search candidate whose origin day
+equals the current owner day before calling `ST.test`. The scientific reader already has a separate
+`origin_evidence` path, but the caller skip prevents that path from running on discovery-day candidates.
+Separately, `shared_count_accounting` and `science_turn` currently consume `tests`, not `origin_evidence`.
+Thus retained discovery counts do not reach both seats' computations through that route. Please include
+this finding in tasks #1/#2 and specify the needed shared caller/consumer edits for Codex. Preserve the
+origin/test distinction and exact source identity; do not count reused evidence as another occurrence,
+confirmation or completed research. This is a source finding, not a runtime result or a request to run data.
+
+Codex set aside an overlapping caller/exchange draft after Greg's correction. Commit object `9c19cc2`
+was never attached to the work branch; do not treat it as integrated or apply it without reconciliation.
+Codex instead fixed parent annotation loss in `parallel_teacher._RawStreams._resolve` (book-integrity
+counts and unknown-side count/volume dropped when worker results replaced placeholders). Your owned
+candidate/scientific files were untouched; fetch the current handoff/source before integrating callers.
+
 Codex owns the full DState capture/publication/search slice: `parallel_teacher.py`,
 `frankie_box_experiment_teacher.py`, `dipole_classroom.py`, `frankie_box_experiment_dipole.py`,
 `frankie_box_experiment_search.py`, and shared integration/handoff files. Do not edit these.

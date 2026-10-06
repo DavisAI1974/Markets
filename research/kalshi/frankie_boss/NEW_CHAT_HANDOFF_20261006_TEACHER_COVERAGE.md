@@ -6,6 +6,20 @@ Verified implementation tip before this documentation-only handoff:
 3e0a6f0a9268669e3d153106a45760cf1b8fd67c.
 Fetch the current branch and inspect its head; preserve any newer CCode work.
 
+Latest source continuation builds on `21df8f140e6e59e713bf4a7f1d3e9d614faefa1b` and fixes parent
+annotation loss in `parallel_teacher._RawStreams._resolve`. Deferred worker results now retain the
+parent's book-integrity/incomplete counters and unknown-side trade counts/volume. Those raw fields
+reach the already-built snapshot/exact-cursor search path; target values, states, reasons and masks
+retain their original handling. Raw/attachment recovery now binds this implementation's SHA256.
+Read the parent-annotation section in `DIPOLE_TEACHER_COVERAGE_CONTINUATION_20261006.md`.
+This is SOURCE-BUILT / RUNTIME-UNVERIFIED; full both-teacher coverage remains incomplete.
+
+Greg explicitly confirmed CCode is actively handling his assigned candidate work. Reread
+`CCODE_NEXT_SOURCE_TASKS_20261006.md` before selecting further work; await his caller requirements.
+An overlapping origin-evidence draft was set aside. Its commit object `9c19cc2` was never attached
+to the branch and is not accepted integration. CCode's owned source files remain untouched here.
+Current local snapshot: `/workspace/scratch/930896a7f725/Markets`, partial source, not a Git checkout.
+
 ## Read first
 
 All paths below are under research/kalshi/frankie_boss/ unless otherwise stated:
