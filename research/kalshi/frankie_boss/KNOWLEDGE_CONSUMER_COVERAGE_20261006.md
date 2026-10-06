@@ -1,5 +1,19 @@
 # Step #2 — current knowledge consumers, 2026-10-06
 
+## Latest candidate and historical-rework integration
+
+After `03f29be`, lawful `FRANKIE_SEARCH_FINDINGS_V1` now reaches the existing candidate adapter and
+owner-local `ST.test` through `teach_accumulated`. Completed `SEARCH_CANDIDATE_LESSONS_V1` publishes
+through the existing brain writer and enters both exchange seats, including BOSS shared accounting
+and Frankie's reply. Exact source/scope, origin-evidence separation and restart deduplication remain.
+The standalone CCode publication route remains guarded; the accumulated caller publishes these checks.
+
+Both teachers now carry explicit pending historical reproduction/rework duties. Claude's old dead/no-good
+conclusions are claims, not closure; R11/R13 and the directive record Greg's clarification. CCode builds
+their capabilities and must not perform Dipole research reruns/rework himself. The original calculations
+and repair/reformulation have not been executed; unmapped historical items and original BOSS training
+consumers remain open. See `DIPOLE_TEACHER_COVERAGE_CONTINUATION_20261006.md` for precise source coverage.
+
 ## Priming correction and native model evidence
 
 `Session.teach()` now files `FRANKIE_BOX_TEACH_PRIMING_V3`: bedrock information is required alongside all applicable

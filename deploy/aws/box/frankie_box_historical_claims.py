@@ -311,7 +311,10 @@ def build(catalog_path=CATALOG, review_path=REVIEW):
                            target=x['target'], direction=x['direction'], x_transform='sign_of_step',
                            y_transform='sign_of_step', construction=x['construction'],
                            search_construction=x['search_construction'], review_group=x['review_group'],
-                           evidence=list(x['evidence'])))
+                           evidence=list(x['evidence']),
+                           research_rework=dict(status='OPEN_REWORK_REQUIRED', closed=False,
+                               original_calculation_reproduction='pending_teacher_work',
+                               repair_or_reformulation='pending_teacher_work')))
     def norm(text):
         return re.sub(r'\s+', ' ', text)
     for c in candidates:
@@ -337,12 +340,17 @@ def build(catalog_path=CATALOG, review_path=REVIEW):
         not_testable.append(dict(source=review_path, statement=None,
                                  reason='the review headings %s differ from the catalog review_groups %s'
                                         % (listed, catalog.get('review_groups'))))
+    for item in not_testable:
+        item['research_status'] = 'OPEN_MAPPING_OR_REWORK_REQUIRED'
+        item['closed'] = False
     doc = dict(schema=SCHEMA, author='historical', catalog=catalog_path, catalog_sha256=sha256_bytes(catalog_bytes),
                catalog_version=catalog.get('version'), review=review_path, review_sha256=sha256_bytes(review_bytes),
                crosswalk_sha256=sha256_bytes(json.dumps(CROSSWALK, sort_keys=True).encode()),
                builder_sha256=sha256_bytes(Path(__file__).read_bytes()),
                rule='R11: claims, never truth; each labelled with its source; K01: constructions kept distinct; no '
-                    'model (R17); candidates not put in testable form are listed, never dropped',
+                    'model (R17); candidates not put in testable form are listed, never dropped; '
+                    'old rejected/dead/no-good conclusions are not truth or closure: original calculations must be '
+                    'reproduced and repair/reformulation investigated by both teachers before closure is considered',
                sources=sources, review_groups=groups, claims=claims, candidates=len(candidates),
                not_testable=not_testable, model_calls=0)
     return doc

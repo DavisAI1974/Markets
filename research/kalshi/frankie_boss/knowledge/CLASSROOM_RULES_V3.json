@@ -107,8 +107,8 @@
     "boss_teacher",
     "scientific_teacher"
    ],
-   "rule": "Frankie's findings, his independent and novel ones included, reach both teachers as claims, never as truth, labelled as his.",
-   "source": "HANDOFF_20260928_JOINED_TEACHERS.md rule 3; SPEC-joined-teachers.md"
+   "rule": "Frankie's findings, his independent and novel ones included, and historical conclusions from Claude or any other author reach both teachers as source-labelled claims, never as truth. Old rejected, dead or no-good research must be reconsidered by both the BOSS teacher and scientific teacher. Reproduce applicable original calculations, examine failure causes and investigate repairs or reformulations; no research is closed on an inherited rejection or before that rework is performed. Preserve original scoped evidence and mark unfinished reproduction/rework explicitly open.",
+   "source": "HANDOFF_20260928_JOINED_TEACHERS.md rule 3; SPEC-joined-teachers.md; Greg 2026-10-06: nothing is considered closed until reworked again, applies to both teachers"
   },
   {
    "id": "R12",
@@ -126,7 +126,7 @@
     "boss_teacher",
     "scientific_teacher"
    ],
-   "rule": "Nothing is dropped early. An early negative (one window, one day, one cell) is a scoped finding with its data named; a path is set aside only at the end of all research runs on the historical data. Dipole direction is open research.",
+   "rule": "Nothing is dropped early. An early negative (one window, one day, one cell) is a scoped finding with its data named; a path is set aside only at the end of all research runs on the historical data and after the reproduction and rework required by R11. Inherited dead/no-good labels cannot close a path. Dipole direction is open research.",
    "source": "CLAUDE.md D52, D51, D31"
   },
   {

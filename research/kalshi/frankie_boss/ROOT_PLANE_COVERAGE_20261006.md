@@ -1,5 +1,14 @@
 # ROOT frame wiring and the full registry — 2026-10-06
 
+## Latest full Dipole state/raw continuation
+
+The post-`03f29be` slice in `DIPOLE_TEACHER_COVERAGE_CONTINUATION_20261006.md` supersedes statements below
+that the teacher's complete DState is not retained. Newly produced experiment teacher sources retain
+the original per-group state and all existing raw component mappings, and their exact leaves reach
+the existing cursor-bound search. Older sources keep their actual limited coverage. Candidate results
+now reach owner-local scientific checking and both exchange seats; this does not establish complete
+native model/representation supervision or all 99-layer consumption. No calculations were run.
+
 Source-built, runtime-unverified. No AWS action, data/scientific run, test suite or E2E. A later explicitly authorized local memory-tool installation attempt was blocked before activation; see the Step #2 handoff. The latest full-depth continuation
 starts at `166507b6`; the earlier frame-section slice started at `c75a805a`. CCode owns the separate Step #4 assignment; its scientific-teacher files are unchanged here.
 

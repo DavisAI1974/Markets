@@ -82,6 +82,9 @@ AUTHOR_LABEL = {
 }
 BOSS_AUTHOR = "the BOSS teacher's code (its own Dipole rows and accounting of shared search results; no model)"
 SCIENCE_AUTHOR = "the scientific teacher's code (the experiment's search counts; no model)"
+HISTORICAL_REWORK = ('Reproduce the original source-bound research calculation; inspect assumptions and failure '
+                    'causes; investigate a repair or reformulation. Old rejection labels do not close this '
+                    'research; record missing inputs and unfinished work.')
 WHOLE_DAY = 'whole-day'
 JEV_WALL = ("Jev's raw claims stay out of Frankie's replies and exchange view while Jev is blind; after Jev's own claim "
             "is sealed and scientifically tested, the tested result may enter Frankie's brain separately as jev-tested; "
@@ -569,6 +572,8 @@ def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id
                                                              'pair of its own components to mask or control'],
                 original_duties='PRESERVED', target_changes='NONE', predictive_status='UNESTABLISHED',
                 economic_status='UNESTABLISHED')
+    if item['author'] == 'historical':
+        turn['next_tests'].append(HISTORICAL_REWORK)
     turn = D.parse_teacher(S.canonical(finite(turn)).decode(), item['request'], dict(item_id=item['item_id']), item['prior'])
     return turn, measured, components, proposals, said.cites
 
@@ -726,6 +731,8 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src)
                             'supplies no new test and does not downgrade a checked finding'],
                 original_duties='PRESERVED', target_changes='NONE', predictive_status='UNESTABLISHED',
                 economic_status='UNESTABLISHED')
+    if item['author'] == 'historical':
+        turn['next_tests'].append(HISTORICAL_REWORK)
     turn = D.parse_teacher(S.canonical(finite(turn)).decode(), item['request'], dict(item_id=item['item_id']), boss)
     side = dict(counts_on_day=tests_day, counts_per_day=marks, challenges_on_day=challenges, proposed_tests=proposed,
                 untested=untested, cannot_test_yet=cannot, day_text=day_text)
@@ -782,13 +789,26 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             boss, measured, components, proposals, boss_cites = boss_turn(D, S, item, prior, claim, measure, measure_why,
                                                                           day, src, rows_id, shared=shared)
             science, side, found, science_cites = science_turn(D, S, item, prior, claim, boss, measured, proposals, day, src)
+            rework = None
+            if src['author'] == 'historical':
+                # Scoped measurements remain evidence. Neither seat may turn an
+                # inherited rejection (or a counts-only reassessment) into closure.
+                rework = dict(status='OPEN_REWORK_REQUIRED', closed=False,
+                    claim_id=result['claim_id'], lesson_sha256=src['sha256'],
+                    prior_disposition=result.get('disposition'),
+                    original_calculation_reproduction='not_established_by_this_exchange',
+                    repair_or_reformulation='not_established_by_this_exchange',
+                    note='existing search counts may reassess a mapped claim; they do not establish '
+                         'reproduction or repair of the original discarded research')
+                side['untested'].append('Original research reproduction and repair/reformulation remain open; '
+                                        'the current count comparison does not establish their completion.')
             findings += found
             turns = [dict(turn=1, seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR,
                           responds_to='the scientific teacher\'s lessons result on the claim', record=boss,
                           measured=finite(measured), components=components, proposals=proposals,
-                          shared_accounting=finite(shared)),
+                          shared_accounting=finite(shared), research_rework=rework),
                      dict(turn=2, seat='scientific_teacher', author=D.CLASSROOM_ROLE, author_label=SCIENCE_AUTHOR,
-                          responds_to='the BOSS teacher\'s turn', record=science, **finite(side))]
+                          responds_to='the BOSS teacher\'s turn', record=science, research_rework=rework, **finite(side))]
             voice = [dict(seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR, text=boss['reasoning'],
                           lines=[c['check'] for c in boss['evidence_checks']] + boss['next_tests'], cites=boss_cites),
                      dict(seat='scientific_teacher', author=D.CLASSROOM_ROLE, author_label=SCIENCE_AUTHOR,
@@ -807,6 +827,10 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                 # only. Deliver the BOSS's actual shared arithmetic and limitations
                 # to this learner turn without changing its scientific resolution.
                 reply['learned'].extend(shared['teaching'])
+                if rework is not None:
+                    frankie_side['research_rework'] = rework
+                    reply['learned'].append('Historical conclusions are source-scoped claims, not final truth. '
+                        'This research remains open for original-calculation reproduction and repair or reformulation.')
                 if shared['teaching']:
                     reply['reasoning'] += (' I retain the BOSS teacher\'s shared count accounting and its original '
                                            'scope limits as teaching; it adds no measurement or confirmation.')

@@ -11,6 +11,15 @@ Steps #2/#3 remain open. Do not claim complete 99-layer computation or native mo
 
 ## Read first
 
+**Latest pre-#5 source continuation (2026-10-06, after `03f29be`):** read
+`DIPOLE_TEACHER_COVERAGE_CONTINUATION_20261006.md` and the priority/ownership clarification in
+`CCODE_NEXT_SOURCE_TASKS_20261006.md`. New teacher-only/learner-owned calculations retain full DState and
+raw component details into the existing exact-cursor search; candidate inputs now reach owner-local
+scientific checks and the BOSS/scientific exchange through completed brain lessons. Both teachers keep
+historical research reproduction/rework open; inherited Claude rejection labels are not truth or closure.
+CCode wires their capabilities; the teachers perform future authorized scientific reruns/rework, not CCode.
+This is a source slice, not complete coverage or a runtime result. Existing old artifacts remain unchanged.
+
 **Recovered Work integration (2026-10-06):** read `GRANITE_INTEGRATION_RECOVERY_20261006.md` for the
 restored Granite brain/queue/school/report and returned-record source wiring, exact verification limits,
 and the current ten-step checklist. AWS boxes remain stopped; no runtime/E2E result is claimed.
