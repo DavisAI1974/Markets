@@ -1,6 +1,51 @@
 # Detailed continuation handoff: BOTH teachers' Dipole coverage — 2026-10-06
 
-## Start here: current checkpoint
+## Latest Codex source continuation — selected export binding and optional-source visibility
+
+Started from fetched current `8bb4c0d33245972817e68e23c5e0218d986de08f`, preserving the newer
+documentation checkpoint above Greg's supplied `cb7acc40`. Only the reserved search module and
+shared handoffs change. CCode's latest observed branch remains `a9625ae2`; no new implementation
+from that branch is claimed integrated. Fetch current refs again before continuing.
+
+The previously reserved manifest-binding gap is now SOURCE-BUILT / RUNTIME-UNVERIFIED:
+- `build_series` selects unique stage/path pins from the existing export manifest. Frames are
+  checked unconditionally; structures, prices and INPUT spools are checked against byte count and
+  SHA256 while their original UTF-8 lines are decoded with the existing codec. Full exhaustion is
+  required before preparation can return/save. No extra giant-spool hashing pass is introduced.
+- Signed-flow and roll20 JSON are decoded from exactly the bytes checked against their export pins.
+  The external day file and optional companion receipt are independently export-bound; their mutual
+  hash check and the existing AsOfReader validation/publication-clock policy remain in force.
+- The preparation call receives the continuation's selected manifest hash and verifies it before
+  and after preparation. Publication checks and records that same hash instead of pinning a later
+  manifest. Existing code/manifest recovery identities refuse old incompatible prepared state.
+  New compatible prepared arrays are reused without rereading/recalculating raw evidence: their
+  original source reads were already checked. This is not a fresh proof of current disk bytes.
+
+Greg then asked whether optional sources could silently be passed over. Concrete fixes in this slice:
+- Selected-but-missing INPUT/Dipole paths remain discoverable from the manifest and refuse clearly;
+  they cannot become an optional absence because filesystem globbing no longer finds them.
+- External file discovery follows the selected ingest path, including nested catalogued paths.
+  Multiple day files refuse instead of picking or merging one. Existing physical files absent from
+  the selected export are not silently consumed. No export is expanded or rewritten.
+- A genuinely absent optional source is listed in manifest notes AND the source-disposition log;
+  other available evidence continues. Missing does not mean zero, fulfilled coverage or permission
+  to waive the source. Selected files with missing bytes, changed hashes or ambiguous pins refuse
+  preparation; all retained work stays intact. No new completeness/survivor policy is invented.
+- Empty signed-flow/roll20 inputs are explicit. A retained roll20 series without an integer
+  `first_second` lists every unplaced original ordinal, including boolean-clock rejection, rather
+  than silently bypassing the values. No clock, observation or numerical result is invented.
+
+Source/interface review, AST syntax without project imports, and whitespace checks only; no tests,
+installs, synthetic exercises, model/data/project runs, AWS actions, starts, dispatch, canaries or E2E.
+No current infrastructure status check is claimed. No codebase-memory tool was exposed; direct source
+inspection was used. STOP BEFORE #5; its draft and Granite pins remain untouched; discard `9c19cc2`.
+
+Next Codex work: review/integrate CCode returns and wire exact price/structure joins only after his
+original INPUT-index/instrument producer contract returns. CCode retains the full A/B/C/D queue,
+including all three Slice A corrections. Do not duplicate his work. Steps #2–#4 are still incomplete.
+The sections below describe earlier checkpoints; the manifest-binding investigation is no longer open.
+
+## Earlier documentation checkpoint — preserved history
 
 Repository: DavisAI1974/Markets
 Working branch: `ccr-5fce7de3-xa4hfg`

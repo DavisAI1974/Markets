@@ -68,6 +68,9 @@ their operation; prepared arrays and every completed transform are retained loca
 next partner and save all emitted rows, the exact next partner cursor, predictor FFTs and counts. Submitted workers
 drain before exit 75. Resume reuses these source/code-bound states in the same .partial directory. A hard-killed
 operation without matching state is retained and refused, never silently overwritten or represented as recovered.
+Generic source reads must match the selected export's byte-count/SHA256 pins, including frames when no INPUT or
+journal route is available. Spools are hashed as decoded; JSON and the optional external receipt use their checked
+bytes. Prepared arrays are saved only after those checks finish and remain bound to the manifest and this source.
 """
 import argparse
 import hashlib
@@ -141,12 +144,17 @@ def directive_witness():
     data = path.read_bytes()
     return dict(path=str(path), sha256=hashlib.sha256(data).hexdigest(), directive=json.loads(data))
 
-def unpack_spool(path):
-    """Every row of a ROOT row spool, decoded by the journal's own codec, in file order (streamed)."""
+def unpack_spool(path, pin):
+    """Decode every row; exhaustion must verify the consumed bytes against the selected export."""
     from research.kalshi.frankie_boss.c15_journal import unpack
-    with open(path, encoding='utf-8') as handle:
+    hashed, size = hashlib.sha256(), 0
+    with open(path, 'rb') as handle:
         for line in handle:
-            yield unpack(json.loads(line))
+            hashed.update(line)
+            size += len(line)
+            yield unpack(json.loads(line.decode('utf-8')))
+    if size != pin['bytes'] or hashed.hexdigest() != pin['sha256']:
+        raise ValueError('search spool differs from the selected export: ' + str(path))
 
 
 def columns(rows, time_key):
@@ -226,18 +234,55 @@ def asof_values(con, axis_t, known_at, values):
     return np.asarray([values[order[i]] if i >= 0 else None for i in positions], dtype=object)
 
 
-def build_series(day_dir, log, external_fields_mode=None, workers=15):
+def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_manifest_sha256=None):
     """The axis and every series on it. Returns (axis_time, series {name: np.ndarray}, cells {name: list}, sources, notes)."""
     import numpy as np
     import pyarrow as pa
     import duckdb
+    day_dir = Path(day_dir)
+    manifest_raw = (day_dir / 'MANIFEST.json').read_bytes()
+    manifest_sha256 = hashlib.sha256(manifest_raw).hexdigest()
+    if data_manifest_sha256 is not None and manifest_sha256 != data_manifest_sha256:
+        raise ValueError('selected export manifest differs from the search continuation')
+    exported = {}
+    for item in json.loads(manifest_raw)['files']:
+        stage, relative = Path(item['stage']), Path(item['path'])
+        if (stage.is_absolute() or len(stage.parts) != 1 or '..' in stage.parts
+                or relative.is_absolute() or '..' in relative.parts):
+            raise ValueError('export path escapes its selected stage')
+        key = str(stage / relative)
+        if key in exported:
+            raise ValueError('duplicate exported artifact identity: ' + key)
+        exported[key] = item
+
+    def source_pin(path):
+        relative = str(path.relative_to(day_dir))
+        pin = exported.get(relative)
+        if any(value.is_symlink() for value in (path, *path.parents)):
+            raise ValueError('search evidence must be an owner-local regular artifact: ' + relative)
+        if pin is None:
+            if path.exists():
+                raise ValueError('search evidence is not selected by the export: ' + relative)
+            return None
+        if not path.is_file():
+            raise ValueError('selected search evidence is missing: ' + relative)
+        return pin
+
+    def read_json(path, pin):
+        raw = path.read_bytes()
+        if len(raw) != pin['bytes'] or hashlib.sha256(raw).hexdigest() != pin['sha256']:
+            raise ValueError('search evidence differs from the selected export: ' + str(path))
+        return json.loads(raw)
+
     rows_dir = day_dir / 'root' / 'work' / 'derived' / '.rows'
     sources, notes = [], []
     frames_path = rows_dir / 'frames.jsonl'
-    if not frames_path.is_file():
+    frames_pin = source_pin(frames_path)
+    if frames_pin is None:
         raise SystemExit('no book-frame spool at %s: the ROOT legacy pass did not run for this day' % frames_path)
-    f_num, f_text, f_other, n = columns(unpack_spool(frames_path), 'ts_recv_ns')
-    sources.append(dict(source='frames', path=str(frames_path), rows=n, sha256=sha256_file(frames_path),
+    f_num, f_text, f_other, n = columns(unpack_spool(frames_path, frames_pin), 'ts_recv_ns')
+    sources.append(dict(source='frames', path=str(frames_path), rows=n,
+                        bytes=frames_pin['bytes'], sha256=frames_pin['sha256'],
                         numeric=sorted(f_num), text=sorted(f_text), not_searched=f_other,
                         frame_sections={section: dict(numeric=sorted(k for k in f_num if k.startswith((section + '.', section + '['))),
                                                       text=sorted(k for k in f_text if k.startswith((section + '.', section + '['))))
@@ -294,11 +339,12 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
 
     for spool, time_key in (('structures', 'ts_recv_ns'), ('prices', 'ts_recv')):
         path = rows_dir / (spool + '.jsonl')
-        if not path.is_file():
+        pin = source_pin(path)
+        if pin is None:
             notes.append(dict(source=spool, missing=str(path)))
             continue
-        num, text, other, count = columns(unpack_spool(path), time_key)
-        sources.append(dict(source=spool, path=str(path), rows=count, sha256=sha256_file(path),
+        num, text, other, count = columns(unpack_spool(path, pin), time_key)
+        sources.append(dict(source=spool, path=str(path), rows=count, bytes=pin['bytes'], sha256=pin['sha256'],
                             numeric=sorted(num), text=sorted(text), not_searched=other))
         if not count:
             notes.append(dict(source=spool, rows=0, reason='empty retained source spool; no observations to place'))
@@ -310,18 +356,17 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
         asof(spool, known, num)
         for k, values in text.items():
             text_cols[spool + '.' + k] = asof_values(con, axis, known, values).tolist()
-    inputs = sorted(rows_dir.glob('input-*.jsonl'))
+    # Include selected-but-missing INPUTs so disappearance cannot turn into an optional-source absence.
+    inputs = sorted(set(rows_dir.glob('input-*.jsonl')) | {
+        day_dir / relative for relative in exported
+        if Path(relative).parent == Path('root/work/derived/.rows')
+        and Path(relative).match('input-*.jsonl')})
     if len(inputs) > 1:
         raise SystemExit('%d INPUT spools in %s (%s): the same records twice would be counted twice (duplicate data '
                          'declines the run)' % (len(inputs), rows_dir, ', '.join(p.name for p in inputs)))
     if inputs:
-        input_sha256 = sha256_file(inputs[0])
-        exported = json.loads((day_dir / 'MANIFEST.json').read_bytes())['files']
-        for path, digest in ((inputs[0], input_sha256), (frames_path, sources[0]['sha256'])):
-            relative = str(path.relative_to(day_dir))
-            pins = [item for item in exported if str(Path(item['stage']) / item['path']) == relative]
-            if len(pins) != 1 or pins[0]['sha256'] != digest or pins[0]['bytes'] != path.stat().st_size:
-                raise ValueError('event INPUT/frame spool differs from the selected export: ' + relative)
+        input_pin = source_pin(inputs[0])
+        input_sha256 = input_pin['sha256']
         # Reuse ROOT's actual per-instrument membership. A global F_LAST bucket
         # mixes interleaved instruments; timestamp asof can select a later tie.
         event_frames, event_owners = JOURNAL._frame_index(f_num, recv)
@@ -331,7 +376,7 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
         records, unknown, unplaced = 0, 0, []
         event_fields, event_text, event_identities, event_other = {}, {}, set(), set()
         event_closes = []
-        for record in unpack_spool(inputs[0]):
+        for record in unpack_spool(inputs[0], input_pin):
             index = records
             records += 1
             action, side = (v.decode('ascii') if isinstance(v, bytes) else str(v)
@@ -389,7 +434,8 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
         if matched_closes:
             counts['total'] = [sum(value for key, value in group.items() if not key.endswith('_size'))
                                for group in group_counts]
-        sources.append(dict(source='events', path=str(inputs[0]), rows=records, groups=len(selected_closes), sha256=input_sha256,
+        sources.append(dict(source='events', path=str(inputs[0]), rows=records, groups=len(selected_closes),
+                            bytes=input_pin['bytes'], sha256=input_sha256,
                             numeric=sorted(counts), records_without_numeric_size=unknown, raw_f_last_closes=len(event_closes),
                             group_binding=dict(schema='FRANKIE_EVENT_GROUP_SEARCH_V2',
                                 frames_sha256=sources[0]['sha256'], implementation=JOURNAL.binding(),
@@ -422,12 +468,16 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
                               'projection unavailable, original records and index dispositions preserved'))
     else:
         notes.append(dict(source='events', missing=str(rows_dir / 'input-*.jsonl')))
-    dipole_paths = sorted((day_dir / 'run' / 'execution').glob('cycle-*/host-dipole-classroom-source*.json')) + \
-        sorted((day_dir / 'teacher').glob('host-dipole-classroom-source*.json'))   # the launch's, or the teacher-only step's
+    dipole_paths = sorted(set((day_dir / 'run' / 'execution').glob('cycle-*/host-dipole-classroom-source*.json')) |
+        set((day_dir / 'teacher').glob('host-dipole-classroom-source*.json')) | {
+            day_dir / relative for relative in exported
+            if (Path(relative).match('run/execution/cycle-*/host-dipole-classroom-source*.json')
+                or Path(relative).match('teacher/host-dipole-classroom-source*.json'))})
     if len(dipole_paths) > 1:
         raise SystemExit('%d Dipole classroom sources for one day (%s): duplicate data declines the run'
                          % (len(dipole_paths), ', '.join(str(p) for p in dipole_paths)))
     if dipole_paths:
+        source_pin(dipole_paths[0])   # a selected-but-missing source is not an optional absence
         import frankie_box_experiment_dipole as DIPOLE
         dipole_numeric, dipole_text, dipole_sources, dipole_notes = DIPOLE.read_columns(
             day_dir, dipole_paths[0], columns, journal_numeric, journal_text, recv)
@@ -443,35 +493,68 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
                           reason='no exported teacher-only or classroom Dipole source for this day'))
     derived = day_dir / 'root' / 'work' / 'derived'
     flow_path, roll_path = derived / 'legacy_native_signed_flow.json', derived / 'legacy_per_second_roll20.json'
-    if flow_path.is_file():
-        flow = json.loads(flow_path.read_bytes())
+    flow_pin = source_pin(flow_path)
+    if flow_pin is not None:
+        flow = read_json(flow_path, flow_pin)
         per = flow.get('per_second') or []
-        sources.append(dict(source='legacy_native_signed_flow', path=str(flow_path), rows=len(per), sha256=sha256_file(flow_path)))
+        sources.append(dict(source='legacy_native_signed_flow', path=str(flow_path), rows=len(per),
+                            bytes=flow_pin['bytes'], sha256=flow_pin['sha256']))
         if per:
             known = [(p['second'] + 1) * 10**9 for p in per]   # second s known at s+1
             asof('signed_flow', known, {'buy': [p.get('buy') for p in per], 'sell': [p.get('sell') for p in per]})
+        else:
+            notes.append(dict(source='legacy_native_signed_flow', rows=0,
+                              reason='empty retained per-second source; no observations to place'))
     else:
         notes.append(dict(source='legacy_native_signed_flow', missing=str(flow_path)))
-    if roll_path.is_file():
-        roll = json.loads(roll_path.read_bytes())
+    roll_pin = source_pin(roll_path)
+    if roll_pin is not None:
+        roll = read_json(roll_path, roll_pin)
         values = roll.get('series') or []
         first = roll.get('first_second')
-        sources.append(dict(source='legacy_per_second_roll20', path=str(roll_path), rows=len(values), sha256=sha256_file(roll_path)))
-        if values and first is not None:
+        sources.append(dict(source='legacy_per_second_roll20', path=str(roll_path), rows=len(values),
+                            bytes=roll_pin['bytes'], sha256=roll_pin['sha256']))
+        if values and type(first) is int:
             known = [(first + i + 1) * 10**9 for i in range(len(values))]
             asof('roll20', known, {'value': [float('nan') if v is None else v for v in values]})
+        elif values:
+            notes.append(dict(source='legacy_per_second_roll20', source_rows=len(values),
+                              unplaced_clock_ordinal_ranges=[[0, len(values) - 1]],
+                              reason='missing or non-integer first_second; every original row retained in the '
+                                     'pinned source; no guessed clock or placement; booleans are not clocks'))
+        else:
+            notes.append(dict(source='legacy_per_second_roll20', rows=0,
+                              reason='empty retained roll20 source; no observations to place'))
     else:
         notes.append(dict(source='legacy_per_second_roll20', missing=str(roll_path)))
     # Frankie's 13 historical points (FRANKIE_DAY_EXTERNAL_V1, Greg 2026-09-29: "everyone who sees his ingest should
     # see these data points too"): the day file attached beside the sealed ingest, exported with the ingest, read
     # through its one as-of reader at the day's halt (a value past it is refused, never filtered), each point a series
     # known from its own publication stamp; the leakage gate runs on each as on every other source.
-    external = day_dir / 'ingest' / 'day-external.json'
-    external_receipt = day_dir / 'ingest' / 'day-external-receipt.json'
-    if external.is_file():
-        from research.kalshi.frankie_boss.operations.frankie_day_external import AsOfReader, search_series, SEARCH_SERIES
-        body = json.loads(external.read_bytes())
-        reader = AsOfReader.open(external, body['halt_ns'], external_receipt if external_receipt.is_file() else None)
+    # The export catalog admits nested ingest paths; select its actual day file, not a guessed top-level alias.
+    external_paths = sorted(set((day_dir / 'ingest').rglob('day-external.json')) | {
+        day_dir / relative for relative, item in exported.items()
+        if item['stage'] == 'ingest' and Path(item['path']).name == 'day-external.json'})
+    if len(external_paths) > 1:
+        raise ValueError('more than one external day file; no selection or merge may be guessed: ' +
+                         ', '.join(str(path) for path in external_paths))
+    external = external_paths[0] if external_paths else day_dir / 'ingest' / 'day-external.json'
+    external_receipt = external.with_name('day-external-receipt.json')
+    external_pin = source_pin(external)
+    if external_pin is not None:
+        from research.kalshi.frankie_boss.operations.frankie_day_external import (
+            AsOfReader, search_series, SEARCH_SERIES, StagingRefused)
+        body = read_json(external, external_pin)
+        receipt_pin = source_pin(external_receipt)
+        if receipt_pin is not None:
+            receipt = read_json(external_receipt, receipt_pin)
+            if receipt['sha256'] != external_pin['sha256']:
+                raise StagingRefused('%s differs from its receipt sha256' % external)
+        else:
+            notes.append(dict(source='external.receipt', missing=str(external_receipt),
+                              reason='no selected companion receipt; day-file bytes remain bound to the export'))
+        # Same AsOfReader validation/clock policy as open(), consuming the exact checked bytes above.
+        reader = AsOfReader(body, body['halt_ns'])
         ext, absent = search_series(reader)
         for name, (known, values) in sorted(ext.items()):
             asof('external.' + name, known, {'value': values})
@@ -501,8 +584,10 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
                     text_cols[name] = asof_values(con, axis, stamps, leaf_values).tolist()
                     text_fields.append(name)
                 mixed.extend(dict(field=key, note=item) for item in listed)
-        sources.append(dict(source='external', path=str(external), sha256=sha256_file(external), schema=body.get('schema'),
-                            receipt=str(external_receipt) if external_receipt.is_file() else None,
+        sources.append(dict(source='external', path=str(external), bytes=external_pin['bytes'],
+                            sha256=external_pin['sha256'], schema=body.get('schema'),
+                            receipt=str(external_receipt) if receipt_pin is not None else None,
+                            receipt_pin={key: receipt_pin[key] for key in ('bytes', 'sha256')} if receipt_pin is not None else None,
                             series=sorted(ext), absent=absent, missing=body.get('missing'),
                             all_fields=dict(mode=mode, searched=searched_fields, cells=text_fields,
                                             alias_policy='retain entity fields alongside legacy aliases; shared values are not independent evidence',
@@ -524,6 +609,13 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
         source['exclusions'] = [note for note in notes if 'excluded' in note and
                                 (note.get('source') == source['source'] or note.get('source', '').startswith(prefix))]
     notes.append(dict(cells_not_yet_used=unused))
+    if sha256_file(day_dir / 'MANIFEST.json') != manifest_sha256:
+        raise ValueError('selected export manifest changed during source preparation')
+    for note in notes:
+        if note.get('source') and ('missing' in note or 'excluded' in note or 'reason' in note):
+            log('search source disposition: %s; %s; %s (full details retained in manifest notes)' % (
+                note['source'], note.get('missing', ''),
+                note.get('excluded') or note.get('reason') or 'not included in the selected export'))
     log('series: %d on %d groups (%d receive-clock steps backwards), %d cell columns' % (len(series), n, backwards, len(cells)))
     return axis, series, cells, sources, notes, gates
 
@@ -980,7 +1072,8 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         if _stop_requested():
             raise SystemExit(75)
         # This existing source preparation is one operation. A requested stop lets it finish and retains every array.
-        prepared = build_series(day_dir, log, external_fields_mode=external_fields_mode, workers=workers)
+        prepared = build_series(day_dir, log, external_fields_mode=external_fields_mode, workers=workers,
+                                data_manifest_sha256=identity['data_manifest_sha256'])
         _save_state(prepared_path, dict(identity=identity, prepared=prepared))
     axis, series, cells, sources, notes, gates = prepared
     if _stop_requested():
@@ -1038,8 +1131,10 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     part_pins = [dict(path=str(Path(p).relative_to(staging)), rows=None, sha256=sha256_file(p)) for p in sorted(parts)
                  if Path(p).exists()]
     cell_specs = [(c, v, None) for c, v in cell_index]
+    if sha256_file(day_dir / 'MANIFEST.json') != identity['data_manifest_sha256']:
+        raise ValueError('selected export manifest changed before search publication')
     manifest = dict(schema=SCHEMA, day=day, cycle=cycle, day_role=day_role, at=time.time(), seconds=time.time() - started,
-                    data=str(day_dir), data_manifest_sha256=sha256_file(day_dir / 'MANIFEST.json'),
+                    data=str(day_dir), data_manifest_sha256=identity['data_manifest_sha256'],
                     experiment_directive=directive_witness(),
                     sources=sources, notes=notes, leakage=gates, lags=lags,
                     series=names, cells=[(c, v) for c, v, _ in cell_specs],

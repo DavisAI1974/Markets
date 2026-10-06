@@ -6,6 +6,35 @@ installs, runtime downloads, dispatch, AWS actions or E2E. Stop before workflow 
 
 ## Actual connections changed
 
+### Selected-export binding and optional-source dispositions — after `8bb4c0d`
+
+Generic search now checks the existing export stage/path, byte-count and SHA256 contract for every
+generic file it actually consumes. Frame verification no longer depends on optional journal/INPUT
+routes. Spools are hashed as their UTF-8 rows are decoded; signed-flow/roll20 and external JSON use
+the exact checked bytes. External receipt bytes and its declared day-file hash are both checked.
+The original codec, AsOfReader validation, causal clocks, evidence values and scientific formulas
+remain unchanged. No new validator framework, field cap, target or acceptance rule was added.
+
+Manifest-selected INPUT and Dipole paths cannot disappear through filesystem-only discovery.
+External discovery respects the export's nested ingest paths; multiple files refuse without a guessed
+selection. Selected missing/changed artifacts and unselected physical inputs refuse preparation;
+genuinely absent optional sources remain explicitly missing while other evidence continues. The run
+log now surfaces source dispositions as well as the manifest notes. Missing coverage is not completed
+coverage. Empty signed-flow/roll20 sources and every roll20 ordinal lacking an integer starting clock
+are explicit; original evidence is retained and no clock/zero is manufactured.
+
+Preparation receives and checks the continuation's manifest hash; its result is saved only after
+stream hash checks and the final manifest check complete. Publication uses that same manifest pin.
+Existing code/manifest identity refuses old incompatible pending arrays; new compatible prepared
+state reuses already-verified inputs, without a fresh raw-data read or a claim about current disk
+bytes. Completed old artifacts remain unchanged; no migration, rerun or re-pin was performed.
+
+Verification: direct source/interface and recovery review, AST syntax without project imports, and
+whitespace only. SOURCE-BUILT / RUNTIME-UNVERIFIED. No tests, installs, scientific/data/model/project
+runs, AWS actions, starts, dispatch, canaries or E2E. STOP BEFORE #5; draft and Granite pins preserved.
+The exact price/structure join remains pending CCode's original INPUT-index/instrument producer
+contract. His three Slice A corrections and expanded B/C/D queue remain assigned and incomplete.
+
 ### CCode Slice A return `6e5fb403` — partial source integration after `59cca0d4`
 
 The discovery-day caller now invokes the existing reader's exact-origin path rather than skipping
