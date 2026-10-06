@@ -8,15 +8,20 @@ or a value computed here, the teacher's own wording quoted as the teacher's, or 
 (listed as unknown, never filled in). No average, no smoothing, no normalization of any dipole result: counts,
 extremes and the teacher's own coefficients per pair only (rules R04, R05).
 
-TEACH shows the evidence, so the code transcribes and counts it. GUIDED, SOCRATIC and VERIFY withhold the key and ask
-for Frankie's own independent claims; the code has no independent source for the 19 dimensions yet, so those modes are
-refused with the reason (never answered from the host key).
+TEACH shows the evidence, so the code transcribes and counts it. GUIDED (Greg, 2026-10-06: the lawful TEACH -> GUIDED
+progression) still shows every observation, the state counts and the non-present reasons, but withholds each
+component's terminal state and first-to-last direction and the whole 171-pair review: the code COMPUTES exactly those
+from the visible observations with the teacher's own measurement functions (dipole_classroom._direction, _pearson,
+_co_movement, _direction_relation), per component and per pair, and answers in the independent shape the classroom
+grades (parse_independent_component). The host key is never read. SOCRATIC and VERIFY withhold the observations
+themselves; the code has no independent reader for the 19 dimensions yet, so those modes are refused with the reason.
 """
 from __future__ import annotations
 
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
 
 SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'
@@ -31,13 +36,18 @@ STATE_MEANING = {
     'ABLATED': 'the input was deliberately removed at that cursor (ablation); the teacher\'s recorded reason is kept with it',
 }
 AUTHOR = 'Frankie\'s code (computed; no model)'
-COMPOSITION = ('TEACH mode, answered by Frankie\'s code (no model call): state counts, terminal state, first-to-last PRESENT '
-               'direction, every observation cursor/state/value and every pair direction are transcribed from the model-visible '
-               'pre-message; each narrative states what it is (a count or value computed by code, the teacher\'s wording quoted '
-               'as the teacher\'s, or UNKNOWN where the code computes nothing); pair texts carry the teacher\'s coefficient and the '
-               'co-movement counts per pair; novel findings are only what a computation surfaces (a pair whose first-to-last '
-               'relation and its step counts point different ways), filed as hypotheses; the correction takes the data the teacher '
-               'shows for each corrected subclaim. Governed by knowledge/CLASSROOM_RULES_V3.json')
+COMPOSITION = ('TEACH and GUIDED modes, answered by Frankie\'s code (no model call). TEACH: state counts, terminal state, '
+               'first-to-last PRESENT direction, every observation cursor/state/value and every pair direction are transcribed '
+               'from the model-visible pre-message. GUIDED: the same observations are shown but the terminal state, the direction '
+               'and the pair review are withheld, so the code computes them from the visible observations with the teacher\'s own '
+               'functions (per component, per pair; never from the key). Each narrative states what it is (a count or value '
+               'computed by code, the teacher\'s wording quoted as the teacher\'s, or UNKNOWN where the code computes nothing); '
+               'pair texts carry the coefficient and the co-movement counts per pair; novel findings are only what a computation '
+               'surfaces (a pair whose first-to-last relation and its step counts point different ways), filed as hypotheses; the '
+               'correction takes the data the teacher shows for each corrected subclaim. Governed by '
+               'knowledge/CLASSROOM_RULES_V3.json')
+MODES_ANSWERED = ('TEACH', 'GUIDED')
+_EVIDENCE_CACHE = {}
 
 
 class ModeNotAnswerable(ValueError):
@@ -54,13 +64,91 @@ def rules():
                        rules=[r['id'] for r in value['rules']])
 
 
-def _require_teach(visible):
-    mode = visible['pre_message']['mode']
-    if mode != 'TEACH':
-        raise ModeNotAnswerable(f'classroom mode {mode} withholds the evidence and asks for Frankie\'s independent claims; '
-                                'Frankie\'s code has no independent source for the 19 dimensions yet (not built), and it never '
-                                'answers from the host key')
-    return visible['pre_message']
+def _classroom_math():
+    """dipole_classroom from this checkout: the teacher's own measurement functions, loaded through
+    frankie_box_classroom.validators() (the torch-free namespace loader the box uses)."""
+    here = str(Path(__file__).resolve().parent)
+    if here not in sys.path:
+        sys.path.insert(0, here)
+    import frankie_box_classroom as C
+    return C.validators().classroom
+
+
+def _evidence(visible):
+    """The evidence the code answers from, in the TEACH pre-message's shape (components with terminal state and
+    direction, the 171-pair relationship_review), plus `evidence_source` saying where each came from.
+
+    TEACH: the pre-message as shown; the code transcribes.
+    GUIDED: the teacher shows every observation, the state counts and the non-present reasons and withholds the
+    terminal state, the first-to-last PRESENT direction and the pair review. Those are computed here from the visible
+    observations with the teacher's own functions (dipole_classroom._direction, _pearson, _co_movement,
+    _direction_relation), per component and per pair (R05); the host key is never read. The result is cached per
+    teacher message, so the 19 component answers, the summary and the reproductions read one computation.
+    SOCRATIC / VERIFY: the observations themselves are withheld; the code has no independent reader for the 19
+    dimensions (not built) and refuses with the reason, never answering from the key.
+    """
+    pre = visible['pre_message']
+    mode = pre['mode']
+    if mode == 'TEACH':
+        return dict(pre, evidence_source='TEACH: states, values, terminal states, directions and the pair review as the '
+                                         'teacher shows them, transcribed')
+    if mode != 'GUIDED':
+        raise ModeNotAnswerable(f'classroom mode {mode} withholds the observations and asks for Frankie\'s independent '
+                                'claims; Frankie\'s code has no independent source for the 19 dimensions yet (not built), '
+                                'and it never answers from the host key')
+    cached = _EVIDENCE_CACHE.get(pre.get('teacher_message_hash'))
+    if cached is not None:
+        return cached
+    math = _classroom_math()
+    comps, ledgers, directions = [], {}, {}
+    for comp in pre['components']:
+        ledger = [dict(cursor=int(p['cursor']), state=p['state'], value=p['value'], raw_reason=p.get('raw_reason'))
+                  for p in comp['observations']]
+        if not ledger:
+            raise ValueError(f'{comp["name"]}: GUIDED shows no observation to compute from')
+        counts = {s: sum(p['state'] == s for p in ledger) for s in STATES}
+        if {s: int(comp['state_counts'][s]) for s in STATES} != counts:
+            raise ValueError(f'{comp["name"]}: the shown state counts differ from the shown observations')
+        direction = math._direction(ledger)
+        last = ledger[-1]
+        ledgers[comp['name']], directions[comp['name']] = ledger, direction
+        comps.append(dict(comp, terminal_state=last['state'], terminal_value=last['value'],
+                          terminal_reason=last.get('raw_reason'), first_to_last_present_direction=direction))
+    names = [c['name'] for c in comps]
+    review = []
+    for i, left in enumerate(names):
+        for right in names[i + 1:]:
+            review.append(dict(left=left, right=right,
+                               direction_relation=math._direction_relation(directions[left], directions[right]),
+                               correlation=math._pearson(ledgers[left], ledgers[right]),
+                               co_movement=math._co_movement(ledgers[left], ledgers[right]),
+                               interpretation_limit='DESCRIPTIVE_WITHIN_CAUSAL_WINDOW_NOT_CAUSATION_OR_FUTURE_PREDICTION',
+                               computed_by=AUTHOR))
+    evidence = dict(pre, components=comps, relationship_review=review,
+                    evidence_source='GUIDED: terminal state, first-to-last PRESENT direction and every pair relation, '
+                                    'coefficient and co-movement count computed by Frankie\'s code from the visible '
+                                    'observations with the teacher\'s own functions; nothing read from the key')
+    _EVIDENCE_CACHE[pre.get('teacher_message_hash')] = evidence
+    return evidence
+
+
+def _component_evidence(visible, name):
+    for comp in _evidence(visible)['components']:
+        if comp['name'] == name:
+            return comp
+    raise KeyError(name)
+
+
+def _basis(visible):
+    """How a relation / direction is attributed in the texts: the teacher's (TEACH) or computed here (GUIDED)."""
+    return ('Dipole\'s relation' if visible['pre_message']['mode'] == 'TEACH' else
+            'relation computed by Frankie\'s code from the visible observations (withheld by the teacher in GUIDED)')
+
+
+def _observation_note(p):
+    if p['state'] == 'PRESENT':
+        return f'{AUTHOR}: cursor {int(p["cursor"])} PRESENT = {_num(p["value"])}'
+    return f'{AUTHOR}: cursor {int(p["cursor"])} {p["state"]} ({p.get("raw_reason") or "no reason recorded"})'
 
 
 def _num(value):
@@ -105,9 +193,12 @@ def _knowledge_notes(learner_context, component=None):
 
 
 def component_answer(visible, comp, rights, *, learner_context=None):
-    """One component, in parse_component's TEACH shape (six narratives, one explanation per occurring state, one
-    interpretation per pair in the order of `rights`)."""
-    _require_teach(visible)
+    """One component. TEACH: parse_component's shape (six narratives, one explanation per occurring state, one
+    interpretation per pair in the order of `rights`). GUIDED: parse_independent_component's shape, which adds the
+    claimed state counts, terminal state, direction, every observation with its note and each pair's relation, all
+    computed by this code from the visible observations (the teacher withholds them in GUIDED)."""
+    mode = visible['pre_message']['mode']
+    comp = _component_evidence(visible, comp['name'])
     name = comp['name']
     present = [(int(p['cursor']), float(p['value'])) for p in comp['observations'] if p['state'] == 'PRESENT']
     counts = {s: int(comp['state_counts'][s]) for s in STATES}
@@ -130,10 +221,11 @@ def component_answer(visible, comp, rights, *, learner_context=None):
                 + (f' = {_num(comp["terminal_value"])}' if comp['terminal_state'] == 'PRESENT' and comp.get('terminal_value') is not None else '')
                 + (f' ({comp.get("terminal_reason")})' if comp.get('terminal_reason') else ''))
     teacher = ' '.join(str(comp[f]) for f in ('role', 'behavior_basis') if comp.get(f))
+    computed = '' if mode == 'TEACH' else ' (terminal state and direction computed by Frankie\'s code from the visible observations)'
     result = dict(
         explanation=(f'{AUTHOR}: {name} over {len(comp["observations"])} retained cursors; state counts '
                      f'{json.dumps(counts, sort_keys=True)}; {span}; {terminal}; first-to-last PRESENT direction '
-                     f'{comp["first_to_last_present_direction"]}.'),
+                     f'{comp["first_to_last_present_direction"]}{computed}.'),
         why=(f'The teacher\'s definition of this component, quoted as the teacher\'s (not a claim of Frankie\'s): {teacher or "(none given)"} '
              f'Frankie\'s code adds no interpretation of its own (rule R01).'),
         market_behavior=('Not interpreted by Frankie\'s code: the market meaning of these states and values is interpretation, '
@@ -160,20 +252,32 @@ def component_answer(visible, comp, rights, *, learner_context=None):
         moves_text = ('co-movement counts not carried by this package' if moves is None else
                       f'co-movement over {moves["steps_between_consecutive_both_present"]} consecutive both-PRESENT steps: '
                       f'{json.dumps(moves["steps"], sort_keys=True)}; state pairings {json.dumps(moves["state_pairs"], sort_keys=True)}')
-        pairs.append(dict(right=right, developing_structure=None, correlation_interpretation=(
-            f'{AUTHOR}: Dipole\'s relation {p["direction_relation"]}; {coefficient}; {moves_text}. Descriptive for this pair and '
-            'window only; no causation or outcome claimed (rules R01, R02, R05).')))
+        pair = dict(right=right, developing_structure=None, correlation_interpretation=(
+            f'{AUTHOR}: {_basis(visible)} {p["direction_relation"]}; {coefficient}; {moves_text}. Descriptive for this pair and '
+            'window only; no causation or outcome claimed (rules R01, R02, R05).'))
+        if mode == 'GUIDED':
+            pair['direction_relation'] = p['direction_relation']       # the claimed relation the host grades
+        pairs.append(pair)
     result['pairs'] = pairs
     notes = _knowledge_notes(learner_context, component=name)
     if notes:
         result['evidence'] += (' Legal prior knowledge applied to this component and its pairs, each with its source '
             'and check result: ' + json.dumps(notes, sort_keys=True, default=str)
             + '. A measured component/pair is descriptive evidence, not a scientific confirmation of the prior claim.')
+    if mode == 'GUIDED':
+        # parse_independent_component's shape: the claims the host grades against its withheld key, every one of them
+        # computed above from the visible observations (R01: observations stay observations; R04: every cursor listed).
+        result['state_counts'] = counts
+        result['terminal_state'] = comp['terminal_state']
+        result['direction'] = comp['first_to_last_present_direction']
+        result['observations'] = [dict(cursor=int(p['cursor']), state=p['state'],
+                                       value=(float(p['value']) if p['state'] == 'PRESENT' else None),
+                                       explanation=_observation_note(p)) for p in comp['observations']]
     return result
 
 
 def _pairs(visible, name):
-    return [p for p in (visible['pre_message'].get('relationship_review') or []) if p['left'] == name]
+    return [p for p in (_evidence(visible).get('relationship_review') or []) if p['left'] == name]
 
 
 def _step_disagreement(pair):
@@ -193,7 +297,7 @@ def _step_disagreement(pair):
 def summary_answer(visible, outputs, *, learner_context=None):
     """The summary in parse_summary's shape. Novel findings are only what a computation here surfaces: a pair whose
     first-to-last relation and its step-by-step co-movement counts point different ways (filed as a HYPOTHESIS)."""
-    pre = _require_teach(visible)
+    pre = _evidence(visible)
     comps = list(pre['components'])
     by_direction, by_terminal = {}, {}
     for c in comps:
@@ -213,7 +317,7 @@ def summary_answer(visible, outputs, *, learner_context=None):
     cycle_summary = (f'{AUTHOR}: {len(comps)} components. First-to-last PRESENT direction: '
                      + '; '.join(f'{k} {len(v)} ({", ".join(v)})' for k, v in sorted(by_direction.items()))
                      + '. Terminal state: ' + '; '.join(f'{k} {len(v)} ({", ".join(v)})' for k, v in sorted(by_terminal.items())) + '.')
-    correlation_review = (f'{AUTHOR}: {len(review)} pairs. Dipole\'s relation: {json.dumps(relations, sort_keys=True)}. Pearson reported '
+    correlation_review = (f'{AUTHOR}: {len(review)} pairs ({pre["evidence_source"]}). Relation: {json.dumps(relations, sort_keys=True)}. Pearson reported '
                           f'on {reported} pairs; not reported on {len(review) - reported} ({json.dumps(not_reported, sort_keys=True)}). '
                           f'{len(disagreements)} pairs whose first-to-last relation and step-by-step co-movement counts point different '
                           'ways (filed as hypotheses). Every coefficient and count is per pair and per window, never pooled or '
@@ -278,7 +382,8 @@ def correction_answer(correction):
             detail = f'{item.get("message", "")} Frankie\'s code takes the data shown for exactly this subclaim: {json.dumps(shown, sort_keys=True, default=list)}'
         resolutions.append(dict(correction_id=cid, corrected_understanding=f'{AUTHOR}: {detail}'))
     change = (f'{AUTHOR}: the {len(resolutions)} corrected subclaims are read from the data the teacher shows for each; nothing '
-              'broader is discarded. The code transcribes TEACH evidence, so a correction here points at a transcription or '
+              'broader is discarded. The code transcribes the TEACH evidence or computes the GUIDED answers from the visible '
+              'observations with the teacher\'s own functions, so a correction here points at a transcription, computation or '
               'assembly difference to be traced in the code.' if resolutions else
               f'{AUTHOR}: no correction ids; nothing changes.')
     return dict(what_i_will_change=change, remaining_disagreements=[], correction_resolutions=resolutions)
@@ -379,7 +484,7 @@ def school_reproduction(visible, school):
         same_way_today / other_way_today / even_today   today's step counts of the pair against that way;
       and not_measurable (the pair is not in today's review, or carries no co-movement counts), with the reason.
     Every check carries today's counts and the earlier day's file sha256. Counts, never a rate or an average (R05)."""
-    pre = _require_teach(visible)
+    pre = _evidence(visible)
     review = {(p['left'], p['right']): p for p in pre.get('relationship_review') or []}
 
     def today(left, right):
@@ -460,7 +565,7 @@ def stage_knowledge_reproduction(visible, knowledge):
     This learner check never substitutes for the scientific teacher's lag/condition/equation tests. Full source
     documents are input, not version-only witnesses. No prior claim is relabelled as today's observation.
     """
-    pre = _require_teach(visible)
+    pre = _evidence(visible)
     review = {(p['left'], p['right']): p for p in pre.get('relationship_review') or []}
     components = {c['name']: c for c in pre['components']}
     checks, sources, listed = [], [], []
