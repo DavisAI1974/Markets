@@ -1,0 +1,6 @@
+# Codex equivalent of the repository's Claude .mcp.json registration.
+# Requires a trusted local checkout and the separately installed executable.
+# Hosted ChatGPT Work does not attach this server merely by reading this file.
+[mcp_servers.codebase-memory-mcp]
+command = "sh"
+args = ["-c", 'exec "$HOME/.local/bin/codebase-memory-mcp"']
