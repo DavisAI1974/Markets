@@ -6,6 +6,30 @@ installs, runtime downloads, dispatch, AWS actions or E2E. Stop before workflow 
 
 ## Actual connections changed
 
+### Generic search raw-value availability — continuation after `7d10fa5`
+
+`experiment_dipole` V3 projects raw component numeric `.value` as None when its producer has not
+declared integer PRESENT. The same projection feeds both positional rows and exact entity closing
+aliases. Original source mappings/bytes are untouched. PRESENT zeros and incomplete-but-PRESENT
+values stay numeric; independent metadata, reasons, states and DState are not suppressed. Every raw
+component is considered without an output-column whitelist. Targets and calculation formulas stay intact.
+
+`raw_value_projection.unavailable` lists affected components, producer states/reasons, and exact paired
+inclusive source ordinal/cursor ranges, counted once across aliases. Unplaced rows keep their existing
+dispositions. Manifest notes refer to this accounting; original scalar evidence remains in the pinned
+snapshot. No value fill, new target-validity mask or independent-observation claim is introduced.
+
+The existing recovery identity binds the changed helper/V3 plus the State producer module digest.
+Incompatible pending arrays refuse; existing completed searches retain their old coverage and are not
+rewritten/rerun. Source/interface review, AST syntax without imports and whitespace checks only.
+This supersedes the older raw-placeholder-open statements below; all runtime limits remain.
+
+Greg expanded CCode's assignment to conserve Codex usage. The top section of
+`CCODE_NEXT_SOURCE_TASKS_20261006.md` now governs ownership: discovery-day callers and both-seat
+origin computations, historical binding capabilities, native semantic consumers and other defined
+pre-#5 connections move to CCode. Codex retains this search fix and integration review. Missing
+mathematical/model/scheduling decisions stay held; neither agent runs the research under this hold.
+
 ### Latest CCode reader return reconciled before final handoff
 
 CCode returned `e61a382b4cd1c60454013092ee0ef8a9009e782e`, based on `42239c0`, changing only

@@ -43,6 +43,9 @@ Each input-record position is searched at its group close; this does not change 
 Dipole current components use exact journal source-cursor availability at each frame, including tied timestamps.
 Every original target row additionally supplies dipole.group.rows[position].* numeric/categorical channels at its
 exact owning INPUT group. Ordered slots preserve intermediate states; they are not independent observations.
+Raw component numeric values in both positional and entity closing-row channels require the producer's PRESENT
+state. Other states project to None with exact source-cursor/reason accounting; original snapshot evidence and
+independent metadata remain intact, including incomplete annotations on PRESENT values.
 The sealed ingest's complete INPUT/APPLIED envelopes additionally supply journal.group.entries[position].* at
 their exact existing ROOT group membership. Intermediate effects/order/rank fields are retained; missing full
 snapshots stay missing. Unknown/failed/unclosed/unmatched entries have explicit retained ordinal dispositions.

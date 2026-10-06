@@ -11,19 +11,21 @@ import json
 from pathlib import Path
 import re
 
-SCHEMA = 'FRANKIE_DIPOLE_GROUP_SEARCH_V2'
+SCHEMA = 'FRANKIE_DIPOLE_GROUP_SEARCH_V3'
 
 
 def binding():
-    from research.kalshi.frankie_boss import c15_journal
+    from research.kalshi.frankie_boss import c15_journal, c15_normalizer
     return dict(schema=SCHEMA, helper_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-                codec_sha256=hashlib.sha256(Path(c15_journal.__file__).read_bytes()).hexdigest())
+                codec_sha256=hashlib.sha256(Path(c15_journal.__file__).read_bytes()).hexdigest(),
+                state_sha256=hashlib.sha256(Path(c15_normalizer.__file__).read_bytes()).hexdigest())
 
 
 def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_times):
     """Return exact group rows and cursor-aligned components, with row dispositions."""
     from frankie_box_durable import witness
     from research.kalshi.frankie_boss.c15_journal import evidence_hash, unpack
+    from research.kalshi.frankie_boss.c15_normalizer import State
 
     day_dir, path = Path(day_dir), Path(path)
     manifest = json.loads((day_dir / 'MANIFEST.json').read_bytes())
@@ -100,6 +102,35 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
 
     buckets, searched_rows, states, dispositions = {}, 0, {name: {} for name in names}, {}
     closing_rows, closing_slots = {}, {}
+    unavailable_raw = {}
+    def projection(row, ordinal):
+        # Only the numeric view changes. The bound snapshot and its row mappings
+        # remain original evidence; absence of a value says nothing about metadata.
+        raw = row.get('raw_components')
+        if raw is None:
+            return row
+        projected = dict(raw)
+        for name, component in raw.items():
+            state = component.get('state')
+            if (type(state) is int and state == int(State.PRESENT)
+                    or not isinstance(component.get('value'), (int, float))):
+                continue
+            projected[name] = dict(component, value=None)
+            reason = component.get('reason')
+            key = json.dumps([name, state, reason], sort_keys=True)
+            item = unavailable_raw.setdefault(key, dict(component=name, state=state, reason=reason,
+                rows=0, source_ranges=[]))
+            item['rows'] += 1
+            ranges, cursor = item['source_ranges'], row['cursor']
+            # Paired ranges preserve the exact ordinal-to-cursor mapping without
+            # listing the same missing observation twice for its closing alias.
+            if ranges and ranges[-1]['ordinals'][1] + 1 == ordinal and ranges[-1]['cursors'][1] + 1 == cursor:
+                ranges[-1]['ordinals'][1] = ordinal
+                ranges[-1]['cursors'][1] = cursor
+            else:
+                ranges.append(dict(ordinals=[ordinal, ordinal], cursors=[cursor, cursor]))
+        return dict(row, raw_components=projected)
+
     def disposition(reason, ordinal):
         item = dispositions.setdefault(reason, dict(rows=0, ordinal_ranges=[]))
         item['rows'] += 1
@@ -133,13 +164,14 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
             if (any(state.get(key) != value for key, value in expected.items())
                     or (state.get('status') == 'GROUP_STATE') != (row['cursor'] == boundaries[position])):
                 raise ValueError('Dipole DState differs from its exact APPLIED entity or closing cursor')
-        buckets.setdefault(position, []).append(row)
+        projected = projection(row, ordinal)
+        buckets.setdefault(position, []).append(projected)
         if row['cursor'] == boundaries[position]:
             # A group's final row changes list position with group length. Give
             # its unchanged fields stable names without replacing intermediate
             # evidence, carrying state forward, or mixing entity identities.
             entity = '%d:%d' % (publisher, instrument)
-            closing_rows[position] = {'by_entity': {entity: row}}
+            closing_rows[position] = {'by_entity': {entity: projected}}
             slot = len(buckets[position]) - 1
             closing_slots[slot] = closing_slots.get(slot, 0) + 1
         searched_rows += 1
@@ -180,6 +212,12 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
              'available at each exact frame boundary; equal receive times never select a later cursor',
         alias_rule='group rows, entity closing rows and current component channels project the same evidence; '
                    'none is an independent observation or another occurrence')
+    report['raw_value_projection'] = dict(unavailable=list(unavailable_raw.values()),
+        rule='only raw_components.<name>.value numeric leaves require the producer integer PRESENT state; '
+             'other or undeclared states project to None, never measured zero; paired source ordinal/cursor '
+             'ranges are inclusive and counted once across positional/closing aliases; original values, states '
+             'and reasons remain in the hash-bound snapshot; independent metadata and incomplete-but-PRESENT '
+             'values remain available; unplaced rows retain their separate dispositions')
     report['group_close'] = dict(rows=len(closing_rows), absent_frames=n - len(closing_rows),
         original_row_slots=closing_slots, numeric=sorted(closing_numeric), text=sorted(closing_text), mixed=closing_mixed,
         channels='dipole.group_close.by_entity[publisher:instrument].*',
@@ -197,4 +235,7 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
              'NOT_F_LAST rows supply no new state; no independent observation or old-source backfill')
     notes = [dict(source='dipole', reason='teacher rows without exact journal group evidence remain in the bound source; '
                   'no timestamp fallback, tail backfill or synthetic target', dispositions=dispositions)] if searched_rows != len(rows) else []
+    if unavailable_raw:
+        notes.append(dict(source='dipole', reason='producer-declared unavailable raw numeric values are not observations; '
+                          'see sources[dipole].raw_value_projection for exact source cursors, states and reasons'))
     return numeric, text, [report], notes
