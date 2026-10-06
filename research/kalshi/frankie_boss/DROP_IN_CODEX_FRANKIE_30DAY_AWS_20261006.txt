@@ -1,0 +1,32 @@
+DROP-IN FOR CODEX — FINISH FRANKIE 30-DAY AWS WORKFLOW
+
+Repo: DavisAI1974/Markets
+Branch: chatgpt/frankie-30day-aws-workflow-20261006
+Starting handoff tip: 9d355fac22131a84646a9583c5ea18c1a2ee9589
+
+Use these repository files:
+- research/kalshi/frankie_boss/CODEX_HANDOFF_FRANKIE_30DAY_AWS_20261006.md
+- research/kalshi/frankie_boss/Frankie_30Day_AWS_Runbook_20261006.md
+
+Read the repository handoff, spec and skill first:
+1. research/kalshi/frankie_boss/HANDOFF_20261006_AWS_WORKFLOW.md
+2. research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md
+3. .claude/skills/experiment-orchestrator/SKILL.md
+Then read the repository Codex handoff/runbook and the Granite role/classroom rules named there. Verify the current branch/tip and preserve newer work.
+
+Build the actual workflow now. Reuse the existing CPU ledger, held slots, FIFO queues, claims, receipts and day runner. Three lanes: two 16-core lanes on main r7i.8xlarge and one on Linux r7i.4xlarge. A day stays on its SAME box/lane from ROOT to completion.
+
+Finish in order: remote Linux ROOT-to-finish runner; minimal cross-box small-state knowledge publish/pull; full existing search surface; survivor/freeze/confirmation wiring; small Granite facilitator loop; three-lane launch entry point and real operating commands.
+
+Frankie gets new legal knowledge immediately after EVERY knowledge-producing stage, before his next dependent step. Refresh other lanes at the next legal boundary. Preserve causal and answer-wall rules. Keep large ROOT artifacts on the assigned box.
+
+Granite is a bounded active post-class facilitator, with no critic/self-assessment role. Start with 3B Q4_K_M on local/free standard GitHub CPU if adequate, then small AWS CPU. 8B only if the real E2E exposes quality problems; paid GPU fallback only, no standing GPU.
+
+Use the connected Aws MCP. It has run_script/call_boto3, AWS documentation search, guided workflow skills, S3 transfer and task-polling tools. In run_script, import aws_mcp and use help(aws_mcp) plus await aws_mcp.search_functions(...) to discover higher-level workflow helpers. Search documentation with topic agent_skills before retrieve_skill, and copy returned skill names exactly. See the handoff for details.
+
+Preserve Frankie's inputs/calcs/planes/adapters/replay/Memory A. Every retained MBO record/field must reach computation. No silent drops, arbitrary limits, averaging, smoothing or normalization. No fourth-lane work, validator framework, test farm or broad A/B.
+
+Finish wiring first. One real ROOT-to-finish E2E after Greg's explicit AWS go; fix actual failures, then launch 30 days when authorized. Read-only AWS/GitHub investigation is fine. Do not start instances or dispatch compute without Greg's explicit go.
+
+The new runbook, Codex handoff and this drop-in are repository documents under research/kalshi/frankie_boss/. The workflow build and E2E remain to implement. Proceed with implementation; keep this focused and practical.
+
