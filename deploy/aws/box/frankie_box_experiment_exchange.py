@@ -479,8 +479,12 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src)
                             search=dict(t['counts'], steps=t['steps'], chance_shifts=ch.get('shifts'), chance_reached=ch.get('reached'))),
                 days_named=[day], disposition='SUPPORTED_SCOPED',
                 disposition_note='orientation only (R14): the counts and the day are the finding',
-                status='HYPOTHESIS', promotion='never promoted on one appearance; tracked for reproduction on later '
-                                               'discovery days (R06)',
+                status='HYPOTHESIS',
+                status_reason='the broader claim still requires mathematics, source, causal-timing and scientific '
+                              'double-checks; this exchange does not complete survivor promotion',
+                promotion='after those double-checks hold, one occurrence receives the same validity, certainty, '
+                          'survivor, teaching and knowledge treatment as multiple occurrences; no minimum-occurrence '
+                          'or minimum-days gate, rarity penalty or automatic hypothesis-only restriction (R06)',
                 future_outcome_claimed=False, cites=fsaid.cites))
     day_count = marks.get(day) or dict(tests=0, held=0, shown_otherwise=0, unresolved=0, counts_only=0)
     day_text = ('on %s the search carries %s rows of this claim: held %s, shown otherwise %s, unresolved %s, counts only %s' % (
@@ -519,7 +523,10 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src)
                              'cursors at lag 0'],
                 next_tests=[p['text'] for p in proposed] + ['untested (the lessons): ' + u for u in untested] +
                            ['cannot test yet: %s (%s)' % (x.get('series'), x.get('reason')) for x in cannot] +
-                           ['re-test on each later discovery day as it is searched; nothing is promoted on one appearance (R06)'],
+                           ['double-check the mathematics, source evidence, causal timing and scientific work; one '
+                            'checked occurrence is eligible for the same promotion as multiple occurrences (R06)',
+                            'test later discovery days when the scoped condition occurs; a day without that condition '
+                            'supplies no new test and does not downgrade a checked finding'],
                 original_duties='PRESERVED', target_changes='NONE', predictive_status='UNESTABLISHED',
                 economic_status='UNESTABLISHED')
     turn = D.parse_teacher(S.canonical(finite(turn)).decode(), item['request'], dict(item_id=item['item_id']), boss)
