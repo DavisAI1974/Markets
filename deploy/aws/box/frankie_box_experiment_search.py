@@ -84,10 +84,29 @@ NOT_SEARCHED = (
     ('targets', 'targets other than the series themselves (e.g. the mid N groups ahead, fills, exhaustion); a lagged series '
      'is already the y side at lag k, a fill count is already events.F_* per group; new target definitions are a '
      'mathematical decision'),
-    ('bedrock planes', 'order lifecycle, full-book/FIFO queue, microstructure mechanics, D family geometry, dipole state, '
-     'pre-birth and causal-clock layers (the 44 registry layers beyond the five legacy ones) are not derived by the '
-     'experiment ROOT (bedrock off, Greg 2026-09-29) and are excluded from the export (BEDROCK); re-enabling them is a '
-     'producer-activation decision, not a search change'),
+    ('per-level FIFO queue, order age, rolling activity and integrity at each F_LAST close',
+     'the pinned V4 adapter produces them in every event frame (book.bid_levels[i]/ask_levels[i]: size, order_count, '
+     'front_order_size, front_order_age_s, queue_age_median_s, queue_age_p90_s, largest_order_share; activity.<1|5|20|'
+     '60|300>.*; integrity.*) and the sealed journal keeps that frame in each APPLIED entry; the ROOT legacy pass spools '
+     'only best/mid/depth_imbalance_n and the eight BOOK_FIELDS of it (frankie_box_boss_session.py, the frames spool), so '
+     'no spool this search reads carries them: produced, not carried (the required change is named in the Step #3 map)'),
+    ("the D chain's own state and the Dipole rows' state reasons",
+     'c15_dstate.DState (anchor_dir, armed, broken, E, pull_depth, n_ext, m_last/m_prev, p_last/p_prev, g_E, age, '
+     'duration_last) is computed inside the pinned teacher and retained only as the six chain columns searched as '
+     'dipole.*; each row keeps every column\'s state (PRESENT/MISSING/INVALID/ABLATED) and raw_reason (CHAIN_BROKEN, '
+     'NO_COMPLETED_STEP, DEGENERATE_STEP, ...), which this search counts in the manifest and does not use as cells'),
+    ('structure identity lists', 'structures.order_ids[i] and structures.fill_disposition.*_order_ids[i] are order '
+     'identities flattened by position; they are searched as numeric series like every other leaf (listed here so the '
+     'count of searched series is read correctly; an identity has no steps of its own)'),
+    ('bedrock-only layers', 'the cross-group forms that only the bedrock traversal and projection produce (order identity '
+     'transitions and per-order lifecycles, contract/session roll state, bootstrap receipts, family lineage across groups, '
+     'open-world predecessor state, ancestry gaps, the bedrock replenishment/absorption and episode rows, v4 mechanics '
+     'fifo features, book-regime paths, feature-availability stamps, the five pre-birth layers, the discovery/evaluation/'
+     'lock clocks) are not derived by the experiment ROOT (bedrock off, Greg 2026-09-29) and are excluded from the export '
+     '(BEDROCK); their per-group forms that the legacy pass and the teacher DO produce are searched (plane receipt); '
+     're-enabling the rest is a producer-activation decision, not a search change'),
+    ('ROOT failures spool', 'root/work/derived/.rows/failures.jsonl (records the legacy pass could not apply) is not a '
+     'series; it is listed in the ROOT receipt, not searched'),
     ('native journal ordinal axis', 'frankie_box_experiment_surface.journal_axis reads every INPUT/APPLIED entry of the sealed '
      'journal (full book, FIFO order ids, APPLIED frame fields) on the native ordinal; it is not wired: it materializes '
      'every entry whole (the full-book observation per APPLIED entry) and changes the axis from group closes to entries, '
@@ -527,34 +546,163 @@ def y_transforms(tx):
     return tuple(T.TRANSFORMS)
 
 
+# Step #3 plane receipt (CCode, 2026-10-06). One row per registry layer of the complete registry (49, the pin
+# knowledge/CYCLE_CALCULATION_PINS.md) plus the categories the calculations themselves find (action-string families, mirror
+# identity, fill disposition, discovery status, the D chain's reasons) and the day file. Each row: the status of the plane
+# on the experiment path, the exact series/cells this search consumes it through (or nothing), and what remains of it.
+#   consumed            every retained form of the layer the path produces is a series or cell of this search
+#   consumed_partial    a per-group or teacher form is searched; a cross-group or per-level form of it is not (named)
+#   produced_not_carried the pinned producer computes it at every F_LAST close (it is in the journal's APPLIED frame) but
+#                       the ROOT legacy pass does not spool it, so no file this search reads carries it
+#   computed_not_retained the pinned teacher computes it and retains only a projection of it (named)
+#   built_not_called    an implementation exists in the repository and nothing on the experiment path calls it
+#   not_produced        only the bedrock traversal/projection (ROOT processes 2 and 3, off) produces it
+#   clock               a timestamp or availability rule; it places the series, it is not searched as one
+# The source keys name this search's own sources, so 'consumed' is downgraded to listed_missing / not_in_this_export when
+# the run did not read that source: the receipt says what this run read, never a claim of coverage.
+PLANE_COVERAGE = (
+    # registry group: legacy (5)
+    ('legacy_price', 'prices', 'consumed', 'prices.price, prices.size, prices.bid_px_00, prices.ask_px_00 (trades, as-of)', None),
+    ('legacy_native_signed_flow', 'legacy_native_signed_flow', 'consumed', 'signed_flow.buy, signed_flow.sell (per second, as-of)', None),
+    ('legacy_per_second_roll20', 'legacy_per_second_roll20', 'consumed', 'roll20.value (per second, as-of)', None),
+    ('legacy_book_imbalance', 'frames', 'consumed', 'frames.best_bid/best_ask/mid/depth_imbalance_n, frames.spread, '
+     'depth_imbalance_full, bid/ask_depth_full, bid/ask_order_count_full, bid/ask_price_level_count_full (the axis); '
+     'cell frames.transition (the sign signature)', None),
+    ('legacy_structure_observables', 'structures', 'consumed', 'structures.* per F_LAST group (describe_structure): '
+     'action_counts.<action>, side_counts.<side>, component_count, distinct_price_count, distinct_order_id_count, '
+     'price_raw_min/max/span, matches_carried_native_family, fill_disposition.*_count; cells action_string, side_string, '
+     'terminal_action, terminal_side, candidate_family_id, discovery_status, carried_native_family, mirror.side_string, '
+     'mirror.mirror_side_string, mirror.mirror_pair_key, mirror.orientation, fill_disposition.class, '
+     'fill_disposition.signature', None),
+    ('legacy_observable_crosswalk', None, 'clock', 'registry bookkeeping (which legacy observable maps to which native '
+     'layer); not a data plane', None),
+    # registry group: derived geometry (8)
+    ('derived_d_family_geometry', 'structures', 'consumed_partial', 'the per-group family descriptor above (every '
+     'action-string family the calculation finds, carried seed or open-world candidate, its mirror identity and fill '
+     'disposition) as structures.* series and cells', 'the cross-group family lineage rows (bedrock projection) are not produced'),
+    ('derived_roll20_and_dipole_state', 'legacy_per_second_roll20', 'consumed_partial', 'roll20.value',
+     'the per-second dipole state (native_flow_substrate.complete_second, bedrock) is not produced'),
+    ('derived_unresolved_age_chain_trajectory', 'dipole', 'consumed_partial', "the teacher's six chain columns "
+     'dipole.unresolved_age_groups_log, extension_count_log, step_ratio_log, pullback_ticks_last_log, '
+     'step_duration_groups_log, pullback_ticks_prev_log (4.10 exhaustion in its teacher form)',
+     "the chain's own state (c15_dstate.DState) is computed, not retained; the bedrock episode rows are not produced"),
+    ('derived_open_world_predecessor_state', 'structures', 'consumed_partial', 'cell structures.discovery_status '
+     '(CARRIED_SEED_MATCH / OPEN_WORLD_CANDIDATE per group)', 'predecessor state across groups (bedrock) is not produced'),
+    ('derived_ancestry_gaps', None, 'not_produced', None, 'bedrock projection only'),
+    ('derived_price_flow_book_paths', 'frames', 'consumed_partial', 'the legacy path: prices.*, frames.*, signed_flow.*',
+     'the book-regime path (native_book_regime.observe_snapshot, bedrock) is not produced'),
+    ('derived_v4_mechanics_fifo_features', None, 'produced_not_carried', None, 'the V4 window extras exist per frame '
+     '(native_full_capture_adapter._window_extras, bedrock) and the per-level fields below; neither is spooled'),
+    ('derived_feature_availability_timestamps', None, 'clock', 'the as-of placement of every series at its own '
+     'receive stamp (asof_values) is this layer applied, per source', None),
+    # registry group: pre-birth (5)
+    ('prebirth_predecessor_at_risk_state', None, 'not_produced', None, 'bedrock projection only'),
+    ('prebirth_unresolved_chain_extension_state', 'dipole', 'consumed_partial', 'dipole.extension_count_log, '
+     'step_ratio_log, pullback_ticks_* (the teacher form of the extension state)', 'the pre-birth layer itself is not produced'),
+    ('prebirth_ancestry_successor_opportunity', None, 'not_produced', None, 'bedrock projection only'),
+    ('prebirth_stopped_chain_false_context_controls', None, 'not_produced', None, 'bedrock projection only'),
+    ('prebirth_negative_opportunity_cases', None, 'not_produced', None, 'bedrock projection only'),
+    # registry group: causal clocks (7)
+    ('clock_event_time', None, 'clock', 'ts_event / ts_event_ns of every row: read, popped before the search (a clock)', None),
+    ('clock_receive_time', 'frames', 'clock', 'ts_recv_ns: the axis (running maximum of the frames\' receive clock) and '
+     'the known-at stamp of every source', None),
+    ('clock_event_known_by', None, 'clock', 'the as-of rule: a value is read at the first group close at or after its '
+     'receive stamp', None),
+    ('clock_feature_availability', None, 'clock', 'the leakage gate (odcore.leakage.assert_no_leakage) on every source', None),
+    ('clock_prospective_discovery_confirmation', None, 'not_produced', None, 'a host/bedrock clock; the experiment\'s '
+     'confirmation is the scientific teacher\'s lessons, not a series'),
+    ('clock_model_evaluation', None, 'not_produced', None, 'host clock, not on the experiment path'),
+    ('clock_lock_time', None, 'not_produced', None, 'host clock, not on the experiment path'),
+    # registry group: order lifecycle (9)
+    ('order_lifecycle_adds', 'events', 'consumed_partial', 'events.<action>_<side> per-group counts and sizes; '
+     'events.last.* (price, price_raw, size, flags, is_last, is_snapshot and every other quantity field) at the close; '
+     'cells events.last.action, events.last.side', 'per-order linking (bedrock) is not produced'),
+    ('order_lifecycle_cancels', 'events', 'consumed_partial', 'as adds', 'per-order linking (bedrock) is not produced'),
+    ('order_lifecycle_modifies', 'events', 'consumed_partial', 'as adds; the teacher\'s far_priority_loss_rate_64/1024',
+     'per-order linking (bedrock) is not produced'),
+    ('order_lifecycle_replaces', 'events', 'consumed_partial', 'as adds', 'per-order linking (bedrock) is not produced'),
+    ('order_lifecycle_trades', 'prices', 'consumed_partial', 'prices.*, events.T_*, signed_flow.*', 'per-order linking is not produced'),
+    ('order_lifecycle_fills', 'structures', 'consumed_partial', 'structures.fill_disposition.fill_id_count, '
+     'cancelled_fill_id_count, modified_fill_id_count, same_id_cancel_modify_count, unresolved_fill_id_count; cells '
+     'fill_disposition.class, fill_disposition.signature; events.F_* counts; the teacher\'s far_absorption_share_64/1024',
+     'the per-order fill disposition across groups (bedrock) is not produced'),
+    ('order_lifecycle_clears', 'events', 'consumed_partial', 'events.R_* / events.last.action == R and is_snapshot',
+     'the clear/bootstrap receipts (bedrock) are not produced'),
+    ('order_identity_transitions', None, 'not_produced', None, 'bedrock traversal only'),
+    ('contract_session_roll_state', None, 'not_produced', None, 'bedrock traversal only'),
+    # registry group: full-book FIFO queue (8)
+    ('full_bid_ask_depth', 'frames', 'consumed_partial', 'frames.bid_depth_full, frames.ask_depth_full',
+     'per-level size (book.bid_levels[i].size / ask_levels[i].size, top 10 each side) is produced per frame, not spooled'),
+    ('price_level_and_order_counts', 'frames', 'consumed_partial', 'frames.bid/ask_price_level_count_full, '
+     'frames.bid/ask_order_count_full', 'per-level order_count is produced per frame, not spooled'),
+    ('fifo_queues', None, 'produced_not_carried', None, 'the FIFO order of every level is in the journal\'s APPLIED '
+     'observation (c15_observer.observe_book) and the frame\'s levels; not spooled; the teacher consumes it internally'),
+    ('queue_age_and_survival', 'dipole', 'consumed_partial', 'the teacher\'s far_front_age_log, far_queue_age_p90_log, '
+     'far_identity_survival_64/1024, far_size_retention_64/1024 (far-side top-three cohort)',
+     'per-level front_order_age_s, queue_age_median_s, queue_age_p90_s for the top 10 levels each side are produced per '
+     'frame, not spooled'),
+    ('queue_concentration', 'dipole', 'consumed_partial', 'the teacher\'s far_size_hhi',
+     'per-level largest_order_share and front_order_size are produced per frame, not spooled'),
+    ('orders_and_volume_ahead', None, 'produced_not_carried', None, 'volume_ahead per resting order is derivable from the '
+     'APPLIED observation\'s FIFO ids and sizes; not spooled'),
+    ('spread_and_depth_imbalance', 'frames', 'consumed', 'frames.spread, frames.depth_imbalance_n, frames.depth_imbalance_full', None),
+    ('complete_state_reset_bootstrap_receipts', 'events', 'consumed_partial', 'events.last.is_snapshot (the record flag)',
+     'the bootstrap receipts (bedrock) are not produced'),
+    # registry group: microstructure mechanics (7)
+    ('mechanics_actions_by_side_and_level', 'structures', 'consumed_partial', 'structures.action_counts.*, side_counts.*, '
+     'events.<action>_<side>', 'by level: the frame\'s rolling activity windows (1/5/20/60/300 s: action_count, '
+     'action_qty, action_side_qty, top_level_add/cancel_qty_derived) are produced per frame, not spooled'),
+    ('aggressor_and_native_signed_flow', 'legacy_native_signed_flow', 'consumed_partial', 'signed_flow.buy/sell per second',
+     'the frame\'s trade_buy/sell_aggressor_qty and trade_aggressor_imbalance per window are produced, not spooled'),
+    ('depletion_and_replenishment', 'dipole', 'consumed_partial', 'the teacher\'s far_replenish_log1p_64/1024, '
+     'far_absorption_share_64/1024', 'the bedrock replenishment/absorption rows (native_replay_driver) are not produced'),
+    ('resilience_and_recovery', 'dipole', 'consumed_partial', 'the teacher\'s far_identity_survival_64/1024, '
+     'far_size_retention_64/1024', 'the bedrock recovery rows are not produced'),
+    ('churn_and_queue_turnover', None, 'produced_not_carried', None, 'the frame\'s add_cancel_churn and '
+     'priority_lost_modify_count per window are produced, not spooled'),
+    ('price_and_book_path', 'prices', 'consumed', 'prices.*, frames.* on the axis', None),
+    ('missingness_and_integrity_flags', 'dipole', 'consumed_partial', 'the Dipole rows\' states are counted per column in '
+     'the manifest (states_per_component); a value is used only where PRESENT',
+     'the frame\'s integrity counters (missing_level_on_remove, duplicate_add_order_id, cancel_missing_order, '
+     'modify_missing_treated_as_add, modify_side_change, add_invalid_side, sequence_regression, ...) are produced, not '
+     'spooled; the ROOT failures spool is not read; the rows\' raw_reason categories are retained, not cells'),
+    # categories the calculations find, beyond the registry names
+    ('action-string families (CARRIED_NATIVE_ACTION_FAMILIES and every open-world candidate)', 'structures', 'consumed',
+     'cells structures.action_string, structures.candidate_family_id, structures.carried_native_family, '
+     'structures.discovery_status; series structures.matches_carried_native_family', None),
+    ('mirror identity (canonical / mirror orientation, pair key)', 'structures', 'consumed',
+     'cells structures.mirror.orientation, structures.mirror.mirror_pair_key, structures.mirror.mirror_side_string', None),
+    ("the D chain's reasons (CHAIN_BROKEN, NO_COMPLETED_STEP, DEGENERATE_STEP) and every column's state", 'dipole',
+     'computed_not_retained', 'counted in the manifest only', 'retained per row as state/raw_reason; not used as cells '
+     '(the exact change is named in the Step #3 map)'),
+    ("the teacher's 19 Dipole columns", 'dipole', 'consumed', 'dipole.<column> for every column whose state is PRESENT', None),
+    ('odcore.info_dipole divergence / exhaustion (signed_flow_features, divergence, cell_signal)', None, 'built_not_called',
+     None, 'referenced only as the construction of historical claims H01/H02 (frankie_box_historical_claims.py); '
+     'computing it on the day\'s signed flow is a new derived series (a mathematical decision)'),
+    ("Frankie's 13 historical points (27 aliases)", 'external', 'consumed', 'external.<alias>.value', None),
+    ('day-file tables, every column per entity', 'external', 'consumed',
+     'external.<table>.<column>.entity=<id> (numeric), cells for text columns (SEARCH_EXTERNAL_FIELDS=all)', None),
+    ('sealed journal INPUT entries (every record, every field)', 'events', 'consumed',
+     'events.* per-group counts and events.last.<field>; identities and clocks listed (EVENT_IDENTITY_FIELDS)', None),
+    ('sealed journal APPLIED entries (the V4 frame and the full-book observation)', None, 'produced_not_carried', None,
+     'read whole by the BOSS teacher (JournalTeacherR3); frankie_box_experiment_surface.journal_axis reads them on the '
+     'native ordinal and is not called (a change of axis); the frame\'s per-level and activity fields are the '
+     'produced_not_carried rows above'),
+)
+
+
 def plane_summary(sources, notes):
-    """Per plane of the existing inventory: consumed here, listed, or not produced by the experiment path. Read from this
-    search's own sources and notes, so the receipt says what this run actually read (never a claim of coverage)."""
+    """Per registry layer and found category (PLANE_COVERAGE): its status on this run, the series/cells it reaches this
+    search through, and what remains. Read from this search's own sources and notes: a plane whose source this run did
+    not read is reported listed_missing or not_in_this_export, never consumed."""
     read = {s['source'] for s in sources}
     missing = {n['source'] for n in notes if 'missing' in n}
-
-    def status(key, consumed_by):
-        return ('consumed' if key in read else 'listed_missing' if key in missing else 'not_in_this_export',
-                consumed_by)
-    planes = {
-        'sealed journal (every event, every book level)': ('read_elsewhere', 'read by the BOSS teacher (JournalTeacherR3, '
-                                                           'pinned) and the ROOT legacy pass; this search reads the ROOT '
-                                                           'spools of it, not the journal itself (native ordinal axis '
-                                                           'listed, not wired)'),
-        'INPUT records (per-event fields)': status('events', 'events.* per-group counts and events.last.* fields'),
-        'book frames at F_LAST (best, mid, depth imbalance, full-depth transition fields)': status('frames', 'frames.* series; the axis'),
-        'group structure (actions by side)': status('structures', 'structures.* series'),
-        'trades (price, size, touch)': status('prices', 'prices.* series'),
-        'legacy signed flow (per second)': status('legacy_native_signed_flow', 'signed_flow.buy/sell'),
-        'legacy roll20 (per second)': status('legacy_per_second_roll20', 'roll20.value'),
-        "the teacher's Dipole rows (19 columns)": status('dipole', 'dipole.<column> series'),
-        "Frankie's 13 historical points (aliases)": status('external', 'external.<alias>.value'),
-        'day-file tables, every column per entity': status('external', 'external.<table>.<column>.entity=... (SEARCH_EXTERNAL_FIELDS)'),
-        'order lifecycle / full-book FIFO queue / microstructure mechanics / D family geometry / dipole state / pre-birth / '
-        'causal clocks (44 registry layers)': ('not_produced', 'the experiment ROOT runs with bedrock off and the export '
-                                               'excludes BEDROCK paths (Greg 2026-09-29); producer activation is a decision'),
-    }
-    return {name: dict(status=value[0], consumed_by=value[1]) for name, value in planes.items()}
+    out = {}
+    for name, source, status, consumed_by, remaining in PLANE_COVERAGE:
+        if source is not None and status in ('consumed', 'consumed_partial', 'clock') and source not in read:
+            status = 'listed_missing' if source in missing else 'not_in_this_export'
+        out[name] = dict(status=status, source=source, consumed_by=consumed_by, remaining=remaining)
+    return out
 
 
 def _cell_job(args):
