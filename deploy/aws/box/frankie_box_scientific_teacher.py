@@ -461,10 +461,15 @@ def test(claims_doc, days):
     rows = {}
     for d in days:
         for part in d['parts']:
+            rel = str(Path(part).relative_to(d['dir']))
             with open(part) as handle:
-                for line in handle:
+                for ordinal, line in enumerate(handle):
                     r = json.loads(line)
                     if (r['x'], r['y']) in wanted:
+                        # the row's exact identity: its part (the search's pin), its ordinal and the raw line's sha256,
+                        # the same three values Run.search_knowledge records for a candidate (part_sha256, row, row_sha256)
+                        r['_where'] = dict(part=rel, part_sha256=(d.get('part_pins') or {}).get(rel), row=ordinal,
+                                           row_sha256=sha256_bytes(line.encode()))
                         rows.setdefault((d['day'], r['x'], r['y']), []).append(r)
     results = []
     for c, matched, missing, pairs in per_claim:
@@ -472,44 +477,51 @@ def test(claims_doc, days):
         origin = c.get('origin') or {}
         origin_evidence = []
         source_row = c.get('source_claim') if origin else None
-        origin_part_bound = None
+        origin_part_bound, origin_row_found = None, False
         for d in days:
             for a, b in pairs:
                 forward = rows.get((d['day'], a, b), [])
                 for x, y in ((a, b), (b, a)):
                     for r in rows.get((d['day'], x, y), []):
-                        if (x, y) == (b, a):
-                            m = mirror_of(r, forward)
-                            if m is not None:
-                                mirrored.append(dict(day=d['day'], x=x, y=y, cell=r['cell'], cell_value=r['cell_value'],
-                                                     lag=r['best_lag'], mirror_of=dict(x=m['x'], y=m['y'], lag=m['best_lag']),
-                                                     mark='mirror', reason='the reversed orientation of the same pair, cell '
-                                                     'and transform pair at the negated lag carries the same counts: one '
-                                                     'measurement, listed once, never a second test'))
-                                continue
+                        m = mirror_of(r, forward) if (x, y) == (b, a) else None
                         observed = 'same' if r['same_way'] > r['opposite'] else 'opposite' if r['opposite'] > r['same_way'] else 'even'
                         tx, ty = r.get('x_transform', r.get('transform', 'sign_of_step')), r.get('y_transform', 'sign_of_step')
                         if origin and d['day'] == origin.get('day'):
                             # the candidate's own discovery day: its rows are the evidence the candidate was read from.
-                            # Listed with their counts, never marked held/shown_otherwise, never counted as a test.
+                            # Listed with their counts (a reversed row that mirrors a forward one included, marked as the
+                            # mirror), never marked held/shown_otherwise, never counted as a test, never dropped.
                             same_row = bool(source_row) and all(
                                 r.get(k) == source_row.get(k) for k in ('x', 'y', 'cell', 'cell_value', 'transform',
                                                                        'x_transform', 'y_transform', 'best_lag',
                                                                        'same_way', 'opposite', 'both_moving', 'steps'))
-                            # the discovery row's identity is its part's sha256 in the search given, not its field values
+                            where = r['_where']
+                            # the discovery row's identity: the candidate's part sha256, ordinal and raw-line sha256,
+                            # all three equal to this row's own; field equality is reported beside it, never instead
+                            bound = (where['part_sha256'] == origin.get('part_sha256') and where['row'] == origin.get('row')
+                                     and where['row_sha256'] == origin.get('row_sha256'))
+                            origin_row_found = origin_row_found or bound
                             origin_part_bound = origin.get('part_sha256') in set((d.get('part_pins') or {}).values())
                             origin_evidence.append(dict(
                                 day=d['day'], x=x, y=y, cell=r['cell'], cell_value=r['cell_value'], transform=r['transform'],
-                                x_transform=tx, y_transform=ty, lag=r['best_lag'], steps=r['steps'],
+                                x_transform=tx, y_transform=ty, lag=r['best_lag'], steps=r['steps'], where=where,
                                 counts=dict(same_way=r['same_way'], opposite=r['opposite'], both_moving=r['both_moving'],
                                             x_moves=r['x_moves'], y_moves=r['y_moves']),
                                 chance_check=dict(shifts=r['null_shifts'], reached=r['null_at_or_beyond'],
                                                   largest=r['null_largest'], exclusion=r['null_exclusion']),
                                 beyond_chance=r['beyond_chance'], search_manifest_sha256=d['manifest_sha256'],
-                                discovery_row=bool(same_row and origin_part_bound), fields_equal=same_row,
-                                origin_part_in_search=origin_part_bound, mark='origin_evidence',
+                                discovery_row=bound, fields_equal=same_row, origin_part_in_search=origin_part_bound,
+                                mark='origin_evidence_mirror' if m is not None else 'origin_evidence',
+                                mirror_of=(dict(x=m['x'], y=m['y'], lag=m['best_lag'], where=m['_where']) if m is not None else None),
                                 reason='the discovery day: reading the discovery evidence again is not an independent '
                                        'check and is not another occurrence'))
+                            continue
+                        if m is not None:
+                            mirrored.append(dict(day=d['day'], x=x, y=y, cell=r['cell'], cell_value=r['cell_value'],
+                                                 lag=r['best_lag'], where=r['_where'],
+                                                 mirror_of=dict(x=m['x'], y=m['y'], lag=m['best_lag'], where=m['_where']),
+                                                 mark='mirror', reason='the reversed orientation of the same pair, cell '
+                                                 'and transform pair at the negated lag carries the same counts: one '
+                                                 'measurement, listed once, never a second test'))
                             continue
                         scope_reasons = row_scope_reasons(c, r, reverse=(x, y) == (b, a))
                         if scope_reasons:
@@ -528,7 +540,7 @@ def test(claims_doc, days):
                         verdicts.append(mark)
                         tests.append(dict(day=d['day'], x=x, y=y, cell=r['cell'], cell_value=r['cell_value'],
                                           transform=r['transform'], x_transform=tx, y_transform=ty,
-                                          lag=r['best_lag'], steps=r['steps'],
+                                          lag=r['best_lag'], steps=r['steps'], where=r['_where'],
                                           counts=dict(same_way=r['same_way'], opposite=r['opposite'], both_moving=r['both_moving'],
                                                       x_moves=r['x_moves'], y_moves=r['y_moves']),
                                           chance_check=dict(shifts=r['null_shifts'], reached=r['null_at_or_beyond'],
@@ -560,6 +572,11 @@ def test(claims_doc, days):
                 untested.append('the origin part sha256 %s is not among the parts of the %s search given: the discovery '
                                 'row is bound by the candidate\'s provenance only, not identified in that search'
                                 % (str(origin.get('part_sha256'))[:12], origin.get('day')))
+            elif not origin_row_found:
+                untested.append('the discovery row (part %s, row %s, raw-line sha256 %s) was not found among the rows of '
+                                'the %s search given for this pair: the origin evidence listed is by field reading only'
+                                % (str(origin.get('part_sha256'))[:12], origin.get('row'),
+                                   str(origin.get('row_sha256'))[:12], origin.get('day')))
             if not tests:
                 untested.append('no completed search of another day was given that carries this pair, cell and transform '
                                 'pair: the candidate has its origin evidence only; whether a scientifically checked single '

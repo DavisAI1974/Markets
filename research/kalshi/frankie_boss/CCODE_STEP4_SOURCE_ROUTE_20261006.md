@@ -211,6 +211,17 @@ mathematics only:
    `source_claim`; the part identity (origin `part_sha256`) was never compared with the given search's part pins. Fix:
    `load_searches` carries `part_pins`; `discovery_row` requires both field equality and the origin part sha256 among
    the given search's parts (`origin_part_in_search`); a mismatch is listed under `untested`.
+3. (Codex's review of 046361e.) ORIGIN BOUND TO THE PART ONLY. `discovery_row` required the origin part sha256 to be
+   among the search's part pins and the field values to match; the row was not bound to its exact part, ordinal and
+   raw line. Fix: every row read from a part now carries `where` (part, the search's pinned part sha256, ordinal, the
+   raw line's sha256, the same three values `Run.search_knowledge` records as part_sha256/row/row_sha256);
+   `discovery_row` is true only when all three equal the candidate's origin; `fields_equal` and
+   `origin_part_in_search` are reported beside it; a discovery row not found among the given search's rows is said
+   under `untested`. Every test row and mirrored row names its `where` too.
+4. (Codex's review of 046361e.) MIRROR SKIP BEFORE ORIGIN EVIDENCE. On the discovery day a reversed row that mirrored a
+   forward row was dropped into `mirrored_rows` before the origin branch could list it. Fix: the origin-day branch runs
+   first; a reversed origin-day row is listed as origin evidence with mark `origin_evidence_mirror` and its `mirror_of`,
+   never counted, never dropped.
 Reviewed and found correct: exact series matching (`series_exact`), transform scope in both orientations, cell scope
 (`col=value` and whole-day labels), the lag window, the condition rule, the origin-day never-a-test rule, the source
 counts travelling whole in `source_claim`. No acceptance or survivor rule chosen. `frankie_box_candidate_claims.py` is
