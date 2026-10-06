@@ -262,7 +262,11 @@ def boundary(day, stage, publish=True, brain=BRAIN):
 
 
 def learner_knowledge(day, stage, brain=BRAIN, *, classroom_mode=None):
-    """Pin legal structured learner documents and explicitly list material withheld or unavailable to this reader."""
+    """Pin whole legal documents, including reconsideration and completed_native_evidence.
+
+    Preserve every top-level field unchanged; stage/answer walls apply to the
+    document, not a reduced selection of its claims or evidence fields.
+    """
     import frankie_box_brain as BR
     before = {'root': -20, 'teacher': -10, 'classroom': 0, 'search': 10,
               'lessons': 20, 'exchange': 40, 'voice': 40, 'meeting': 45, 'school': 50}.get(stage, 100)

@@ -176,6 +176,11 @@ def teach_accumulated(day, search, brain, out_dir):
                                        manifest_sha256=manifest_witness['sha256'])],
                         knowledge_retest=result_identity, model_calls=0,
                         rule='prior findings retained unchanged; each new day measured separately, never pooled')
+        # Preserve the source collection's open work and completed post-stream
+        # references whole. Their original days and hashes are not this day's tests.
+        for field in ('reconsideration', 'completed_native_evidence'):
+            if field in lesson:
+                expected[field] = lesson[field]
         if path.is_file():
             result = json.loads(path.read_bytes())
             header = {k: v for k, v in result.items() if k not in ('results', 'results_sha256')}

@@ -2019,7 +2019,9 @@ def main():
                         '5/5 = every day (Greg, 2026-09-29, later: "Just run every pair will get teach and class. It\'s '
                         'easier that way unless we see that process is taking a long time"); 2/5 = days 1 and 2 of five')
     p.add_argument('--frozen-survivors', help='the frozen survivor list (required for any confirmation day)')
-    p.add_argument('--historical-claims', help='a committed knowledge/HISTORICAL_CLAIMS_V1-*.json (repo-relative)')
+    p.add_argument('--historical-claims',
+                   default='research/kalshi/frankie_boss/knowledge/HISTORICAL_CLAIMS_V1-9dc79ca359e9.json',
+                   help='a committed knowledge/HISTORICAL_CLAIMS_V1-*.json (repo-relative); default the combined Dipole collection')
     p.add_argument('--stages', default=','.join(STAGES), help='comma list, run in the fixed order %s' % ','.join(STAGES))
     p.add_argument('--lags', type=int, default=20)
     p.add_argument('--transforms', help='the search transforms (comma list; default all)')

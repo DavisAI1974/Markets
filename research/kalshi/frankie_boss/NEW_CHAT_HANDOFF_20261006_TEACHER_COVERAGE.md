@@ -21,11 +21,14 @@ Read the stable-closing-row section of the continuation document for the gap, ch
 
 CCode's return has now arrived on `ccode/dipole-collection-20261006` at `b264f79`, based on
 `21df8f1`. Read `CCODE_HANDOFF_CODEX_DIPOLE_TEACHERS_20261006.md`, then the combined-collection
-document and section 7 of his step-4 route. Merge and shared-caller integration are the next work;
-this checkpoint does not yet include them. Keep both parent histories and all newer commits.
+document and section 7 of his step-4 route. Merged at `42239c098090763d1688b2b37e0fe1a2634c22a7`,
+with parents `2135bc1` and `b264f79`; all incoming CCode blobs preserved. Shared callers now default
+new plans to the combined claims collection, retain its reconsideration/native keys, and deliver
+the statuses and native references to both exchange seats. References are not semantic computation.
+Read the newest continuation section and follow-up CCode tasks for exact remaining defects.
 
-Greg explicitly confirmed CCode is actively handling his assigned candidate work. Reread
-`CCODE_NEXT_SOURCE_TASKS_20261006.md` before selecting further work; await his caller requirements.
+Greg explicitly confirmed CCode owns his assigned candidate work. Reread
+`CCODE_NEXT_SOURCE_TASKS_20261006.md` before selecting further work; new reader follow-ups are recorded.
 An overlapping origin-evidence draft was set aside. Its commit object `9c19cc2` was never attached
 to the branch and is not accepted integration. CCode's owned source files remain untouched here.
 Current local snapshot: `/workspace/scratch/930896a7f725/Markets`, partial source, not a Git checkout.

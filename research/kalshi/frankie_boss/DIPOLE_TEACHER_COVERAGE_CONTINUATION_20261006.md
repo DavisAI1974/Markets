@@ -6,6 +6,42 @@ installs, runtime downloads, dispatch, AWS actions or E2E. Stop before workflow 
 
 ## Actual connections changed
 
+### CCode collection merge and shared callers after `2135bc1`
+
+Merged CCode's exact `b264f7946b78200c9d47f7810ea6d325640b37ad` in `42239c0`, preserving
+both parent histories. All seven incoming files retain CCode's exact blob identities, including
+the combined catalog and 52,948,574-byte claims file. No catalog/claims builder or research was run
+here. CCode reports 1,538 sources, 82,372 candidate statements, 10 mapped claims and 82,365
+not_testable entries. These categories are not asserted to be a disjoint coverage percentage.
+
+New experiment plans default to the combined claims path; explicit overrides and existing frozen
+plans retain their own selection. `teach_accumulated` now carries `reconsideration` and
+`completed_native_evidence` unchanged into emitted retest lessons. `learner_knowledge` already reads
+whole hash-checked documents, and its contract now explicitly documents that preservation.
+
+The exchange reads both keys once per lesson, checks the reconsideration/claims hash binding, and
+states the mapped/candidate totals, catalog hash and all statuses in BOTH seats before validating
+their turn hashes. Historical `research_rework` retains the producer's construction/prior labels
+and attaches the collection context; reproduction and repair stay unestablished. Both seats cite
+the exact current-day native reference declared by the bound lesson, including its hash, counts,
+receipt, matching rule and listed gaps. Other-day references remain scoped to those days. Context
+is retained even for zero-result lessons; the new Frankie-view context obeys the existing Jev wall.
+
+This delivery is not a semantic calculation on native payloads: averages remain supplements and
+post-stream knowledge is never a live step. The accumulated path preserves prior references, but
+does not generate this day's native evidence for a candidate-only input. The full original BOSS
+representation/training consumer, original research reproduction/repair, trajectory semantics and
+the partial crosswalk remain open. No principal-catalog switch or claims-file split was chosen.
+
+Source review identified unresolved CCode-reader defects: part-set membership is not exact origin
+part/row binding, and mirror filtering can skip a reversed origin before it enters origin_evidence.
+The discovery-day caller skip and origin-count consumer gap also remain. Follow-up tasks are in
+`CCODE_NEXT_SOURCE_TASKS_20261006.md`; no private message to CCode was sent.
+
+Verification: exact merge parents and incoming blob identities; direct source/interface review;
+Python AST syntax and whitespace checks only. No project imports, tests, models/data runs, installs,
+AWS actions, dispatch or E2E. All source work remains runtime-unverified. Stop before workflow #5.
+
 ### Stable closing-row evidence and truthful classroom scope after `4c5b5ad`
 
 The positional `dipole.group.rows[slot]` projection fragments a closing DState/raw field across

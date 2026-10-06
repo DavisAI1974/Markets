@@ -4,6 +4,39 @@ Greg asked Codex to give CCode a few tasks while Codex continues separate eviden
 Start from the latest `ccr-5fce7de3-xa4hfg` tip, which includes `03f29be`, and preserve newer work.
 Use a separate branch. Read AGENTS.md and the latest successor/Step #4 handoffs first.
 
+## Return received and follow-up source defects — after `42239c0`
+
+Your `b264f7946b78200c9d47f7810ea6d325640b37ad` collection branch is merged with both histories
+preserved at `42239c098090763d1688b2b37e0fe1a2634c22a7`. Codex's `2135bc1` adds stable exact
+entity-scoped closing-row search fields and corrects stale classroom scope wording. Fetch the latest
+branch before working. Codex is integrating your requested plan/lesson/exchange callers separately.
+
+Source review of your return found these remaining owned-reader issues; fix the code, do not run research:
+
+1. `test()` reads rows without retaining their part or row ordinal. `origin_part_bound` only checks
+   whether the declared hash is anywhere in `d['part_pins'].values()`, while `same_row` compares a
+   selected field subset. Therefore a matching row from a different part/ordinal can be marked the
+   discovery row. Bind the actual read row to the candidate's exact part hash, row ordinal and
+   canonical row hash using the adapter's existing conventions; retain zero/mismatched matches explicitly.
+2. Mirror filtering runs before the origin-day branch. A candidate discovered in the reversed
+   orientation can have its exact origin row moved into `mirrored_rows` and skipped before
+   `origin_evidence` records it. Preserve exact origin identity while still counting no origin row
+   as an independent test. Review the mirror identity's omitted `null_exclusion` and `beyond_chance`
+   fields against the existing chance-check contract; do not invent another acceptance rule.
+3. The prior coordination finding below is still open: owner-local `teach_accumulated` skips
+   discovery-day candidates; both seats' arithmetic reads `tests`, not `origin_evidence`. Return
+   explicit caller/consumer requirements after fixing #1/#2. Codex owns those shared edits.
+4. `completed_native_evidence` reads and packages post-stream products, but its own rule says
+   nothing is computed there. The exchange now cites those bound references. Do not describe this
+   as completed semantic/computational coverage. Name any existing lawful semantic consumers or
+   precise missing definitions. The owner-local accumulated path carries prior top-level references
+   unchanged; it does not create this day's native evidence for a new candidate-only document.
+
+Historical rework remains open. Crosswalk growth must faithfully bind existing declared calculations;
+software support for such bindings is allowed, but neither CCode nor Codex should fabricate scientific
+results or treat a stored-count comparison as original reproduction/repair. The teachers do that work
+when execution is authorized. No tests, imports, installs, runs, AWS, dispatch, canary or E2E; stop before #5.
+
 **Execution ownership clarification from Greg:** CCode builds/repairs the teachers' code paths.
 CCode must NOT rerun, rework, evaluate or judge the Dipole research himself. The BOSS teacher and
 scientific teacher perform those scientific tasks through their governed code when execution is

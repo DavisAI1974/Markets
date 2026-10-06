@@ -152,6 +152,60 @@ def load_lessons(paths, day):
     return docs, listed
 
 
+def lesson_context(doc):
+    """Preserve the whole collection/evidence context once per source lesson.
+
+    The lesson's byte hash binds these declarations. A native reference is not
+    a new measurement, and transporting it does not prove a semantic calculation.
+    """
+    context = {key: doc[key] for key in ('reconsideration', 'completed_native_evidence') if key in doc}
+    collection = context.get('reconsideration')
+    if collection is not None and (collection.get('schema') != 'FRANKIE_HISTORICAL_RECONSIDERATION_V1'
+            or collection.get('claims_file_sha256') != doc.get('claims_sha256')):
+        raise ValueError('historical reconsideration differs from its lesson claims binding')
+    return context
+
+
+def context_checks(item, day, src, said):
+    """Both seats state the same source-scoped obligations before their turn is hashed."""
+    checks, words = [], []
+    context = item.get('lesson_context') or {}
+    collection = context.get('reconsideration')
+    if item['author'] == 'historical':
+        if collection is None:
+            words.append('This older historical lesson has no collection reconsideration summary; '
+                         'its mapped results do not establish collection coverage or completed rework.')
+        else:
+            words.append('Historical collection: mapped %s claims among %s candidate statements; '
+                         'catalog sha256 %s; statuses %s. Counts retain their source categories and are not '
+                         'a disjoint coverage percentage. Original-calculation reproduction and repair remain open.' % (
+                said.v(collection.get('mapped_claims'), src['sha256'], 'collection mapped claims'),
+                said.v(collection.get('candidates'), src['sha256'], 'collection candidate statements'),
+                said.v(collection.get('catalog_sha256'), src['sha256'], 'collection catalog sha256'),
+                said.v(json.dumps(collection.get('statuses'), sort_keys=True), src['sha256'], 'collection statuses')))
+    native = context.get('completed_native_evidence')
+    if native is not None:
+        reference = (native.get('by_day') or {}).get(day)
+        if reference is not None:
+            if str(reference.get('day')) != day:
+                raise ValueError('completed native reference names a different day')
+            words.append('Completed native evidence for this day, as declared by the bound scientific lesson: %s. '
+                         'Exact fields and post-stream rows remain completed-day knowledge; averages are labelled '
+                         'supplements only. This reference adds no independent measurement and does not establish '
+                         'a new semantic calculation or a live search step.' %
+                         said.v(json.dumps(reference, sort_keys=True), src['sha256'], 'completed native reference'))
+        else:
+            words.append('This lesson has no completed-native reference for the current day; '
+                         'references for other days remain in their original scope.')
+        if native.get('listed'):
+            words.append('Completed-native coverage still listed: %s.' %
+                         said.v(json.dumps(native['listed'], sort_keys=True), src['sha256'], 'native coverage listed'))
+    for text in words:
+        checks.append(dict(source_id=src['source_id'], claim='collection and completed-native scope',
+                           check=text, result='unresolved'))
+    return checks, words
+
+
 def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_witness):
     """Freeze the actual lesson inputs before any seat runs; never expose whole student brain documents to teachers."""
     import frankie_box_lane_state as LS
@@ -551,6 +605,9 @@ def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id
                      said.v(steps, rsha, 'consecutive both-PRESENT steps'))))
     # Shared accounting cannot turn agreement into another empirical check.
     own_position = position_of([c['result'] for c in checks])
+    context_evidence, context_words = context_checks(item, day, src, said)
+    checks.extend(context_evidence)
+    reasoning.extend(context_words)
     for text in shared['teaching']:
         checks.append(dict(source_id=src['source_id'], claim='accounting of the retained shared search counts',
                            check=text, result='unresolved'))
@@ -713,6 +770,9 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src)
                 for p in proposals]
     untested = list(result.get('untested') or [])
     cannot = list(result.get('cannot_test_yet') or [])
+    context_evidence, context_words = context_checks(item, day, src, said)
+    checks.extend(context_evidence)
+    reasoning.extend(context_words)
     turn = dict(item_id=item['item_id'], responds_to_hash=S.digest(boss), position=position_of(compared),
                 reasoning=' '.join(reasoning), evidence_checks=checks,
                 build_forward=[f['statement'] for f in findings],
@@ -758,7 +818,11 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
     rows_id = 'teacher-dipole-rows:%s' % day
     request = dict(shared_knowledge=dict(sources=[dict(source_id=rows_id)] + [dict(source_id=s['source_id']) for _, s in docs]))
     items, findings, seen, seen_results = [], [], set(), set()
+    lesson_contexts = []
     for doc, src in docs:
+        context = lesson_context(doc)
+        lesson_contexts.append(dict(source=src, context=context,
+                                    blind_jev=src['author'] == 'jev' and not src.get('accumulated')))
         if knowledge is None:
             claims, claims_why = claims_of(doc)
         else:
@@ -784,7 +848,7 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             prior = finite(result)
             claim = claims.get(result['claim_id'])
             item = dict(item_id=item_id, author=src['author'], claim_id=result['claim_id'], prior=prior, request=request,
-                        rows_sha256=measure['sha256'] if measure else None)
+                        rows_sha256=measure['sha256'] if measure else None, lesson_context=context)
             shared = shared_count_accounting(prior, day, src)
             boss, measured, components, proposals, boss_cites = boss_turn(D, S, item, prior, claim, measure, measure_why,
                                                                           day, src, rows_id, shared=shared)
@@ -793,8 +857,9 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             if src['author'] == 'historical':
                 # Scoped measurements remain evidence. Neither seat may turn an
                 # inherited rejection (or a counts-only reassessment) into closure.
-                rework = dict(status='OPEN_REWORK_REQUIRED', closed=False,
+                rework = dict(result.get('research_rework') or {}, status='OPEN_REWORK_REQUIRED', closed=False,
                     claim_id=result['claim_id'], lesson_sha256=src['sha256'],
+                    collection=context.get('reconsideration'),
                     prior_disposition=result.get('disposition'),
                     original_calculation_reproduction='not_established_by_this_exchange',
                     repair_or_reformulation='not_established_by_this_exchange',
@@ -886,6 +951,7 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                                            accumulated=bool(src.get('accumulated')),
                                            current_day_test_rows=len(side['counts_on_day']),
                                            retained_test_days=sorted(side['counts_per_day'])),
+                              lesson_context=context,
                               blind_jev=blind_jev,
                               turns=turns, voice_turns=voice))
     counts = dict(items=len(items), by_author={a: sum(i['author'] == a for i in items) for a in sorted(set(LESSONS.values()))},
@@ -900,7 +966,8 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                 roles=dict(boss_teacher=D.BOSS_ROLE, scientific_teacher=D.CLASSROOM_ROLE, frankie='frankie'),
                 positions=list(D.POSITIONS), dispositions=list(S.DISPOSITIONS),
                 sources=dict(lessons=[s for _, s in docs], teacher_rows=rows_source, teacher_rows_listed=measure_why),
-                items=items, teachers_findings=findings, counts=counts, listed=listed, model_calls=0,
+                items=items, lesson_contexts=lesson_contexts,
+                teachers_findings=findings, counts=counts, listed=listed, model_calls=0,
                 rule='each turn labelled with its author (R11); counts per day, never pooled or averaged (R04, R05); '
                      'the disposition word is orientation only (R14); no future-outcome claim (R02)')
     if knowledge is not None:
@@ -914,6 +981,7 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
     jev_items = [i for i in items if i['blind_jev']]
     blind_items = {i['item_id'] for i in jev_items}
     view = dict(full, view='frankie', items=[i for i in items if not i['blind_jev']],
+                lesson_contexts=[c for c in lesson_contexts if not c['blind_jev']],
                 teachers_findings=[f for f in findings if f['from_item'] not in blind_items],
                 jev_withheld=dict(items=len(jev_items), findings=sum(f['from_item'] in blind_items for f in findings),
                                   reason=JEV_WALL),
