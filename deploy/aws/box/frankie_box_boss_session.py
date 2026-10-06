@@ -2071,33 +2071,52 @@ class Session:
 
     # ---- the exhaustion/D priming (code only since 2026-09-28; beside the classroom, never in response.json) -----
     def teach(self):
-        """A SMALL priming, code only, with no bedrock in it (Greg, 2026-09-29: "Get rid of bedrock and leave something
-        small in there"; the bedrock is the teachers' logic helper, never Frankie's knowledge base). It names where his
-        exhaustion and D learning comes from (the classroom: the teachers teach it, Frankie talks to them) and the frozen
-        learned-structure files of his own brain for the four D/exhaustion layers, by name and digest only.
-        work/teach/priming.json and priming.md; the brain entry carries priming.md. No model call."""
+        """Small code priming for the shared calculation/knowledge mission, not a giant rendered table.
+
+        Greg's 2026-10-06 instruction requires bedrock information for Frankie and both teachers. Naming that
+        requirement here does not claim its complete consumer wiring. Preserve a prior V2 artifact and its frozen
+        selection when correcting the superseded exclusion; no calculation or model call is made here.
+        """
         T = _box_module('frankie_box_teach')
+        from frankie_box_durable import write_json as durable_json, write_chunks
         d = self.work / 'teach'
         d.mkdir(exist_ok=True)
         path = d / 'priming.json'
-        if path.exists():
-            self.note('teach: the small priming is already filed; nothing to do')
-            return load_json(path)
-        manifest_path = BRAIN_DIR / T.FROZEN_DIR / 'MANIFEST.json'
-        entries = load_json(manifest_path).get('entries', []) if manifest_path.is_file() else []
-        frozen = [dict(layer=layer, name=e.get('name'), source=e.get('source'), bytes=e.get('bytes'), sha256=e.get('sha256'))
-                  for layer in T.FROZEN_LAYERS for e in entries if e.get('include') and layer in (e.get('layers') or [])]
-        missing = [layer for layer in T.FROZEN_LAYERS if not any(f['layer'] == layer for f in frozen)]
-        text = ('Exhaustion and D: you learn them in the Dipole classroom. The two teachers teach them (the bedrock is their '
-                'logic helper, never your knowledge base), and you talk with them about what you find; your findings reach '
-                'them as claims. Your own frozen learned structure for these layers is in your brain: '
+        prior = load_json(path) if path.exists() else None
+        if prior is not None:
+            if (prior.get('schema') not in ('FRANKIE_BOX_TEACH_PRIMING_V2', 'FRANKIE_BOX_TEACH_PRIMING_V3')
+                    or prior.get('cycle') != self.cycle or prior.get('request_id') != self.request['request_id']):
+                raise ValueError('retained priming has another schema or session identity; preserved unchanged')
+            frozen, missing = prior['frozen'], prior['missing']
+        else:
+            manifest_path = BRAIN_DIR / T.FROZEN_DIR / 'MANIFEST.json'
+            entries = load_json(manifest_path).get('entries', []) if manifest_path.is_file() else []
+            frozen = [dict(layer=layer, name=e.get('name'), source=e.get('source'), bytes=e.get('bytes'), sha256=e.get('sha256'))
+                      for layer in T.FROZEN_LAYERS for e in entries if e.get('include') and layer in (e.get('layers') or [])]
+            missing = [layer for layer in T.FROZEN_LAYERS if not any(f['layer'] == layer for f in frozen)]
+        text = ('Exhaustion and D: use all applicable shared raw and calculated evidence, including full-depth FIFO, '
+                'bedrock, Dipole and exhaustion research, with accumulated knowledge to discover relationships, signals '
+                'and strategies. You and both teachers reuse the original owner-local calculation evidence; giant rendered '
+                'tables are not required. The BOSS retains its targets, masks, controls and representation-training role. '
+                'Completed knowledge is shared at applicable execution boundaries across random-order days; trading-date '
+                'chronology does not gate learning. Preserve causal availability, host-answer and Jev boundaries, and '
+                'withhold your private trade-decision logic from the teachers. Evidence aliases and same-instrument '
+                'remeasurement are not independent confirmation. This priming states the required connections, not proof '
+                'that every consumer is wired. Your frozen learned-structure sources for these layers are in your brain: '
                 + ('; '.join(f'{f["layer"]}: {f["source"]} ({f["sha256"]})' for f in frozen) or 'none found in the frozen entry')
                 + ('' if not missing else f'. Not found in the frozen entry: {", ".join(missing)}.'))
-        record = dict(schema='FRANKIE_BOX_TEACH_PRIMING_V2', at=time.time(), cycle=self.cycle, request_id=self.request['request_id'],
-                      text=text, frozen=frozen, missing=missing, bedrock=False, model_calls=0)
-        write_json(path, record)
-        write_text(d / 'priming.md', f'# Priming (cycle {self.cycle}; small, code only, no bedrock)\n\n{text}\n')
-        self.note(f'teach: the small priming filed by code ({len(text.encode("utf-8"))} bytes; no bedrock; no model call)')
+        record = dict(schema='FRANKIE_BOX_TEACH_PRIMING_V3', at=prior['at'] if prior else time.time(),
+                      cycle=self.cycle, request_id=self.request['request_id'], text=text, frozen=frozen, missing=missing,
+                      bedrock_information_required=True, bedrock_tables_embedded=False, model_calls=0)
+        if prior is not None and prior['schema'] == record['schema'] and prior != record:
+            raise ValueError('retained shared-evidence priming differs; preserved unchanged')
+        if prior != record:
+            durable_json(path, record)  # The durable writer retains the previous bytes before replacement.
+        markdown = f'# Priming (cycle {self.cycle}; shared evidence, code only)\n\n{text}\n'.encode('utf-8')
+        markdown_path = d / 'priming.md'
+        if not markdown_path.is_file() or markdown_path.read_bytes() != markdown:
+            write_chunks(markdown_path, [markdown])
+        self.note(f'teach: shared-evidence priming filed ({len(text.encode("utf-8"))} bytes; no model call)')
         return record
 
     def _teach_section(self):
@@ -2479,8 +2498,9 @@ class Session:
         self.phase('classroom')
         self.classroom()
         self.phase('teach')
-        if not (self.work / 'teach' / 'priming.json').exists():
-            self.teach()
+        # Idempotent publication also migrates the superseded V2 instruction and
+        # repairs a stop between JSON and Markdown publication, retaining prior bytes.
+        self.teach()
         self.phase('writing')
         self.receipts()
         response_path = self.out / 'response.json'

@@ -41,6 +41,9 @@ series too; identities and clocks are listed. Equal values never make different 
 V2 ROOT frames additionally carry full-depth/FIFO snapshots and every original group INPUT record, including bytes.
 Each input-record position is searched at its group close; this does not change lags to native-event units.
 Dipole component states and raw reasons supply categorical cells on the same as-of alignment as component values.
+The sealed ingest's complete INPUT/APPLIED envelopes additionally supply journal.group.entries[position].* at
+their exact existing ROOT group membership. Intermediate effects/order/rank fields are retained; missing full
+snapshots stay missing. Unknown/failed/unclosed/unmatched entries have explicit retained ordinal dispositions.
 
 LISTED, NOT SEARCHED (never dropped), each named in the MANIFEST's not_searched list with its reason: identity/clock
 fields, numeric-state conditions, new targets, the bedrock planes the experiment ROOT does not derive (bedrock off),
@@ -111,6 +114,10 @@ NOT_SEARCHED = (
      'journal (full book, FIFO order ids, APPLIED frame fields) on the native ordinal; it is not wired: it materializes '
      'every entry whole (the full-book observation per APPLIED entry) and changes the axis from group closes to entries, '
      'which is a mathematical decision on step counts, lags and the chance check'),
+    ('journal envelope boundaries', 'journal.group carries complete normal INPUT/APPLIED envelopes on existing exact '
+     'ROOT group membership. Failed, unknown, unpaired and unclosed or mismatched groups remain in the sealed ingest '
+     'with explicit ordinal dispositions. Intermediate observation=None is not a reconstructed full-book snapshot; '
+     'positional slots and duplicate source representations are not independent observations'),
     ('dipole where the teacher has not run', "the teacher's Dipole rows (the per-day teacher step, or a launch's) are searched "
      'when exported; a day whose teacher rows are not exported yet is listed missing, never searched without them'),
     ('claims', "Frankie's, Jev's and the historical claims are not searched here: frankie_box_scientific_teacher.py tests "
@@ -197,7 +204,7 @@ def asof_values(con, axis_t, known_at, values):
     return np.asarray([values[order[i]] if i >= 0 else None for i in positions], dtype=object)
 
 
-def build_series(day_dir, log, external_fields_mode=None):
+def build_series(day_dir, log, external_fields_mode=None, workers=15):
     """The axis and every series on it. Returns (axis_time, series {name: np.ndarray}, cells {name: list}, sources, notes)."""
     import numpy as np
     import pyarrow as pa
@@ -233,6 +240,19 @@ def build_series(day_dir, log, external_fields_mode=None):
     for native_source in native_sources:
         gates.append(dict(source=native_source['source'], passed=True,
                           reason='only exact emitting INPUT/instrument/receive matches placed; dispositions retain all other rows'))
+
+    import frankie_box_experiment_journal as JOURNAL
+    journal_numeric, journal_text, journal_sources, journal_notes = JOURNAL.read_columns(
+        day_dir, columns, f_num, recv, workers=workers, frame_sha256=sources[0]['sha256'])
+    series.update({name: np.asarray(values, dtype=object) for name, values in journal_numeric.items()})
+    text_cols.update(journal_text)
+    sources.extend(journal_sources)
+    notes.extend(journal_notes)
+    for journal_source in journal_sources:
+        placed = bool(journal_source.get('searched_rows'))
+        gates.append(dict(source=journal_source['source'], passed=True if placed else None,
+                          reason=('exact journal INPUT pairing and existing group membership; no timestamp-asof or invented intermediate state'
+                                  if placed else 'no journal rows placed; unsupported or incomplete source groups remain explicitly retained')))
 
     def asof(name, known_at, values_by_col):
         """Place a source on the axis with asof_values; its leakage gate runs first, on its first numeric column."""
@@ -728,11 +748,12 @@ PLANE_COVERAGE = (
      'identity/clock columns are listed; asof samples publication values at group closes; see actual channels/exclusions'),
     ('sealed journal INPUT entries (every record, every field)', 'events', 'consumed_partial',
      'events.* per-group counts and events.last.<field>; identities and clocks listed (EVENT_IDENTITY_FIELDS)',
-     'events.last is closing-only; V2 frames.input_records[i].* carries every group member/field. Full APPLIED envelope and event-axis search remain open'),
-    ('sealed journal APPLIED entries (the V4 frame and the full-book observation)', None, 'produced_not_carried', None,
-     'read whole by the BOSS teacher (JournalTeacherR3); frankie_box_experiment_surface.journal_axis reads them on the '
-     'native ordinal and is not called (a change of axis); new ROOTs carry the frame book/activity/integrity sections, '
-     'not the complete APPLIED envelope or full-book observation'),
+     'events.last is closing-only; V2 frames.input_records[i].* carries every group member/field. journal.group now carries '
+     'normal complete INPUT/APPLIED group envelopes; failed/unclosed/unmatched scopes and event-axis search remain explicit/open'),
+    ('sealed journal APPLIED entries (the V4 frame and the full-book observation)', 'journal.group', 'consumed_partial',
+     'journal.group.entries[position].* (complete normal INPUT/APPLIED envelopes at exact existing F_LAST membership)',
+     'intermediate effect/order/rank fields enter at their group close; absent snapshots remain None. Failed, unknown, '
+     'unpaired and unclosed/mismatched groups have explicit retained dispositions; native-event axis remains unapplied'),
 )
 
 
@@ -854,6 +875,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     import frankie_box_experiment_transforms as T
     import frankie_box_experiment_surface as SURFACE
     import frankie_box_experiment_native as NATIVE
+    import frankie_box_experiment_journal as JOURNAL
     external_fields_mode = os.environ.get('SEARCH_EXTERNAL_FIELDS', 'all')
     if external_fields_mode not in ('all', 'aliases'):
         raise ValueError('SEARCH_EXTERNAL_FIELDS must be all or aliases')
@@ -888,6 +910,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     code_sha256=sha256_file(__file__), transform_sha256=sha256_file(T.__file__),
                     external_fields_mode=external_fields_mode, surface_sha256=sha256_file(SURFACE.__file__),
                     native_reader_sha256=sha256_file(NATIVE.__file__),
+                    journal_reader=JOURNAL.binding(),
                     directive=directive_witness())
     identity_path = recovery / 'identity.pkl'
     if identity_path.is_file():
@@ -906,7 +929,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         if _stop_requested():
             raise SystemExit(75)
         # This existing source preparation is one operation. A requested stop lets it finish and retains every array.
-        prepared = build_series(day_dir, log, external_fields_mode=external_fields_mode)
+        prepared = build_series(day_dir, log, external_fields_mode=external_fields_mode, workers=workers)
         _save_state(prepared_path, dict(identity=identity, prepared=prepared))
     axis, series, cells, sources, notes, gates = prepared
     if _stop_requested():

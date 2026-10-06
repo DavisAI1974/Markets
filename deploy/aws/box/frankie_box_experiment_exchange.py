@@ -42,6 +42,11 @@ text cites with the sha256 of the file it came from), the input the later 'voice
 (knowledge/GRANITE_DISCUSSION_VOICE_ROLE_V1.md; frankie_box_exchange_voice.py holds its validator). No model is called
 here.
 
+The BOSS also accounts for every supplied current-day search row's transformed
+movement margins and teaches that accounting through the existing learner reply.
+These shared counts remain separate from its own measurements and joint findings;
+they neither change governed targets nor establish a PRESENT mask or new validity.
+
 Writes, under the orchestrator run (/opt/frankie-box/work/experiment/<run>/exchange/<day>/):
   exchange.json          FRANKIE_EXPERIMENT_EXCHANGE_V1, view full (every item, Jev's included, labelled)
   exchange-frankie.json  the same schema, view frankie (Jev's items and the findings from them withheld, counted)
@@ -73,7 +78,7 @@ AUTHOR_LABEL = {
     'jev': "Jev's claim (the blind outside student; a labelled claim, R11; he takes no seat)",
     'historical': "a historical Dipole claim (the committed catalog; a labelled claim, R11)",
 }
-BOSS_AUTHOR = "the BOSS teacher's code (its own Dipole rows of the day; no model)"
+BOSS_AUTHOR = "the BOSS teacher's code (its own Dipole rows and accounting of shared search results; no model)"
 SCIENCE_AUTHOR = "the scientific teacher's code (the experiment's search counts; no model)"
 WHOLE_DAY = 'whole-day'
 JEV_WALL = ("Jev's raw claims stay out of Frankie's replies and exchange view while Jev is blind; after Jev's own claim "
@@ -336,10 +341,101 @@ def position_of(results):
 
 
 # ------------------------------------------------------------------------------------------------ turn 1: BOSS teacher
-def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id):
+def shared_count_accounting(result, day, src):
+    """Exact complements of supplied search counts, never another scientific measurement.
+
+    Each row remains on its original day/cell/transform/lag scope. Nonzero
+    transformed movements are not PRESENT masks: zero can also encode an
+    unclassified input. No target, mask, score or validity rule is constructed.
+    """
+    said = Said()
+    measurements, listed, teaching, proposals = [], [], [], []
+    schema = 'FRANKIE_BOSS_SHARED_COUNT_ACCOUNTING_V1'
+    tests = result.get('tests')
+    if tests is None:
+        tests = []
+    if not isinstance(tests, list):
+        return dict(schema=schema, measurements=[], listed=[dict(reason='tests is not a row list')],
+                    teaching=['Shared search count accounting unavailable: tests is not a row list.'],
+                    proposals=[], cites=[], independent_measurements=0)
+    for ordinal, row in enumerate(tests):
+        origin = dict(lesson_sha256=src['sha256'], source_id=src['source_id'],
+                      claim_id=result.get('claim_id'), test_ordinal=ordinal,
+                      test_sha256=sha256_bytes(json.dumps(finite(row), sort_keys=True,
+                                                         separators=(',', ':')).encode()))
+        if not isinstance(row, dict):
+            listed.append(dict(origin, reason='test is not an object', source_test=row))
+            continue
+        if row.get('day') != day:
+            listed.append(dict(origin, day=row.get('day'), reason='outside current day; original status unchanged'))
+            continue
+        counts = row.get('counts')
+        reasons = []
+        for field in ('x', 'y', 'x_transform', 'y_transform', 'cell'):
+            if not isinstance(row.get(field), str) or not row[field]:
+                reasons.append('missing exact ' + field)
+        if 'cell_value' not in row or type(row.get('lag')) is not int:
+            reasons.append('missing exact cell value or integer lag')
+        names = ('same_way', 'opposite', 'both_moving', 'x_moves', 'y_moves')
+        if (not isinstance(counts, dict) or type(row.get('steps')) is not int
+                or any(type(counts.get(name)) is not int for name in names)):
+            reasons.append('steps and movement counts must be integers, excluding booleans')
+        else:
+            steps, both = row['steps'], counts['both_moving']
+            x, y = counts['x_moves'], counts['y_moves']
+            if any(value < 0 for value in (steps, *(counts[name] for name in names))):
+                reasons.append('negative movement count or step count')
+            if counts['same_way'] + counts['opposite'] != both:
+                reasons.append('same-way plus opposite counts differ from both-moving')
+            if both > min(x, y) or max(x, y) > steps or x + y - both > steps:
+                reasons.append('movement margins do not form a partition of the supplied steps')
+        if reasons:
+            listed.append(dict(origin, reason='; '.join(reasons), source_test=row))
+            teaching.append('Shared count accounting is unavailable for a retained current-day search row: '
+                            + '; '.join(reasons) + '. Its original scientific status is unchanged.')
+            continue
+        complements = dict(x_only=x - both, y_only=y - both, neither=steps - x - y + both)
+        scope = {key: row[key] for key in ('day', 'x', 'y', 'x_transform', 'y_transform', 'cell', 'cell_value', 'lag')}
+        scope_text = ('on %s, %s -> %s (%s / %s), cell %s=%s, lag %s' % tuple(
+            said.v(scope[key], src['sha256'], 'shared search row ' + key)
+            for key in ('day', 'x', 'y', 'x_transform', 'y_transform', 'cell', 'cell_value', 'lag')))
+        arithmetic = dict(x_only='x_moves - both_moving', y_only='y_moves - both_moving',
+                          neither='steps - x_moves - y_moves + both_moving')
+        text = ('Shared search accounting %s: at the retained circular shift, of %s transformed steps, x alone is nonzero %s times, '
+                'y alone %s, neither %s, and both %s. These are exact complements of the supplied movement counts; '
+                'they add no observation or scientific confirmation. Zero does not distinguish stationary from '
+                'missing or unclassified inputs, so these margins do not supply a target mask.' % (
+                    scope_text, said.v(steps, src['sha256'], 'shared search steps'),
+                    said.v(complements['x_only'], src['sha256'], 'derived accounting: ' + arithmetic['x_only']),
+                    said.v(complements['y_only'], src['sha256'], 'derived accounting: ' + arithmetic['y_only']),
+                    said.v(complements['neither'], src['sha256'], 'derived accounting: ' + arithmetic['neither']),
+                    said.v(both, src['sha256'], 'shared search both_moving')))
+        scope_not_tested = row.get('scope_not_tested')
+        if scope_not_tested:
+            text += ' Original untested scope remains: ' + json.dumps(scope_not_tested, sort_keys=True) + '.'
+        entry = dict(origin, scope=scope, source_test=row, original_status=row.get('mark'),
+                     scope_not_tested=scope_not_tested, chance_check=row.get('chance_check'),
+                     counts=dict(counts, steps=steps), accounting=complements, formulas=arithmetic,
+                     alignment='original search circular shift at the retained lag and cell',
+                     basis='shared_search_count_accounting', independent_measurement=False,
+                     scientific_status_changed=False, teaching=text)
+        measurements.append(entry)
+        teaching.append(text)
+        proposals.append(dict(proposal_id='control:shared-counts:' + origin['test_sha256'] + ':' + str(ordinal),
+            kind='control', pair=[row['x'], row['y']], scope=scope, origin=origin,
+            basis='shared_search_count_accounting', target_changes='NONE',
+            text='Proposed control %s: preserve the exact condition and lag when examining the underlying source '
+                 'states and feature availability before constructing any training target or mask. The supplied '
+                 'zero/nonzero margins do not determine those states; no control or target change is applied.' % scope_text))
+    return dict(schema=schema, measurements=measurements, listed=listed, teaching=teaching,
+                proposals=proposals, cites=said.cites, independent_measurements=0)
+
+
+def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id, *, shared=None):
     """The BOSS teacher's turn on one scientific-teacher result, within its own role: its measurement, its masks and
     controls. Returns (the turn in the discussion schema, the measured pairs and components, the proposals, cites)."""
     said = Said()
+    shared = shared if shared is not None else shared_count_accounting(result, day, src)
     rsha = measure['sha256'] if measure else None
     names = claimed_names(result)
     direction = claim.get('direction') if claim else None
@@ -448,14 +544,21 @@ def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id
                  'two axes are not the same steps and are not reconciled here' % (
                      ca, cb, said.v(same, rsha, 'steps: same_direction'), said.v(opposite, rsha, 'steps: opposite_direction'),
                      said.v(steps, rsha, 'consecutive both-PRESENT steps'))))
-    results = [c['result'] for c in checks]
-    turn = dict(item_id=item['item_id'], responds_to_hash=S.digest(item['prior']), position=position_of(results),
+    # Shared accounting cannot turn agreement into another empirical check.
+    own_position = position_of([c['result'] for c in checks])
+    for text in shared['teaching']:
+        checks.append(dict(source_id=src['source_id'], claim='accounting of the retained shared search counts',
+                           check=text, result='unresolved'))
+    reasoning.extend(shared['teaching'])
+    proposals.extend(shared['proposals'])
+    said.cites.extend(c for c in shared['cites'] if c not in said.cites)
+    turn = dict(item_id=item['item_id'], responds_to_hash=S.digest(item['prior']), position=own_position,
                 reasoning=' '.join(reasoning) or 'The BOSS teacher has nothing of its own to measure on this item.',
                 evidence_checks=checks,
                 build_forward=['the BOSS teacher\'s targets, masks and controls are unchanged by this exchange '
                                '(target_changes NONE); its proposals are tests for the search, listed, never applied here'],
                 teaching_implications=['Frankie is shown the teacher\'s own counts for the pairs of this claim on %s beside '
-                                       'the search\'s; nothing here grades him (R10)' % day],
+                                       'the search\'s; nothing here grades him (R10)' % day] + shared['teaching'],
                 proposed_training_experiments=[],
                 uncertainty=['one day, %s; the teacher\'s counts are over its own cursors, the search\'s over F_LAST group '
                              'closes at lags; agreement between the two is orientation, never predictive or economic '
@@ -508,7 +611,11 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src)
             c, ch = t['counts'], t['chance_check']
             beyond = bool(ch.get('shifts')) and ch.get('reached') == 0
             search_way = way_of(c['same_way'], c['opposite'])
-            result_ = 'unresolved' if not beyond else against(m['teacher_way'], search_way)
+            # The scientific reader retains counts for unsupported claim scopes.
+            # Their chance result cannot promote them into a joint finding here.
+            unsupported_scope = t.get('mark') == 'counts_only' or bool(t.get('scope_not_tested'))
+            result_ = ('unresolved' if unsupported_scope or not beyond
+                       else against(m['teacher_way'], search_way))
             row_text = ('on %s, whole day, %s -> %s (%s / %s) at lag %s: same way %s, opposite %s, both moving %s over %s '
                         'steps; chance check: %s of %s far shifts reached it' % (
                             said.v(day, lsha, 'day'), said.v(t['x'], lsha, 'x'), said.v(t['y'], lsha, 'y'),
@@ -517,6 +624,12 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src)
                             said.v(c['opposite'], lsha, 'opposite'), said.v(c['both_moving'], lsha, 'both_moving'),
                             said.v(t['steps'], lsha, 'steps'), said.v(ch.get('reached'), lsha, 'chance: reached'),
                             said.v(ch.get('shifts'), lsha, 'chance: shifts')))
+            if unsupported_scope:
+                row_text += ('; retained scientific scope is %s, with untested scope %s; no joint finding is made '
+                             'from this unsupported scope' % (
+                                 said.v(t.get('mark'), lsha, 'scientific scope mark'),
+                                 said.v(json.dumps(t.get('scope_not_tested') or [], sort_keys=True), lsha,
+                                        'scientific scope not tested')))
             checks.append(dict(source_id=src['source_id'], claim=teacher_text, check='the search ' + row_text, result=result_))
             compared.append(result_)
             reasoning.append('To the BOSS teacher\'s counts on %s / %s: the search %s (%s).' % (
@@ -663,13 +776,15 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             claim = claims.get(result['claim_id'])
             item = dict(item_id=item_id, author=src['author'], claim_id=result['claim_id'], prior=prior, request=request,
                         rows_sha256=measure['sha256'] if measure else None)
+            shared = shared_count_accounting(prior, day, src)
             boss, measured, components, proposals, boss_cites = boss_turn(D, S, item, prior, claim, measure, measure_why,
-                                                                          day, src, rows_id)
+                                                                          day, src, rows_id, shared=shared)
             science, side, found, science_cites = science_turn(D, S, item, prior, claim, boss, measured, proposals, day, src)
             findings += found
             turns = [dict(turn=1, seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR,
                           responds_to='the scientific teacher\'s lessons result on the claim', record=boss,
-                          measured=finite(measured), components=components, proposals=proposals),
+                          measured=finite(measured), components=components, proposals=proposals,
+                          shared_accounting=finite(shared)),
                      dict(turn=2, seat='scientific_teacher', author=D.CLASSROOM_ROLE, author_label=SCIENCE_AUTHOR,
                           responds_to='the BOSS teacher\'s turn', record=science, **finite(side))]
             voice = [dict(seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR, text=boss['reasoning'],
@@ -686,6 +801,18 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                     item_id=item_id, author=src['author'], day=day, final=final,
                     joint=[f for f in found], day_text=side['day_text'], marks=side['counts_per_day'],
                     lessons_sha256=src['sha256'], proposed=[p['text'] for p in side['proposed_tests']])
+                # The existing reply previously used joint findings/count totals
+                # only. Deliver the BOSS's actual shared arithmetic and limitations
+                # to this learner turn without changing its scientific resolution.
+                reply['learned'].extend(shared['teaching'])
+                if shared['teaching']:
+                    reply['reasoning'] += (' I retain the BOSS teacher\'s shared count accounting and its original '
+                                           'scope limits as teaching; it adds no measurement or confirmation.')
+                frankie_side['shared_accounting'] = dict(schema=shared['schema'],
+                    lesson_sha256=src['sha256'], test_origins=[{key: value[key] for key in
+                        ('test_ordinal', 'test_sha256', 'lesson_sha256')} for value in shared['measurements']],
+                    listed=shared['listed'], independent_measurements=0, scientific_status_changed=False)
+                frankie_side['cites'].extend(c for c in shared['cites'] if c not in frankie_side['cites'])
                 if src.get('accumulated') and not side['counts_on_day']:
                     # The unchanged seat calculation describes today's available checks. A missing new test
                     # must not turn an already checked historical finding back into an untested hypothesis.

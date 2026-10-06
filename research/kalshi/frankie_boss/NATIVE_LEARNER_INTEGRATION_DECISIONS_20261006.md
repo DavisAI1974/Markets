@@ -1,6 +1,6 @@
 # Native learner integration decisions — 2026-10-06
 
-Source review only. No model/data run, test suite, installation or AWS action. This document selects no new model,
+Source review and the narrow publication fix below only. No model/data run, test suite, installation or AWS action. This document selects no new model,
 objective, update policy or execution date. Steps #2/#3 remain open; the preserved #5 draft remains unapplied.
 
 ## Settled mission and existing roles
@@ -49,6 +49,20 @@ manifest records a 107,556,864-byte database at `E:/Codex/Frankie-BOSS-20260915/
 not proof of the current AWS location or a trained/accepted model. Locate the retained state first; only an actual
 absence or incompatibility requires a fresh-initialization/migration decision from Greg.
 
+The retained metadata establishes an **initial** state, not a trained successor. In
+`sunday_20260915_package/FB/actual-feedback-run/training-witnesses/state-00000000.c15.json`, sequence is zero,
+request/previous state are null, and the checkpoint hash is
+`097beec9b3e7d75910a230cd9c3dbc00342cc71070385031f15087de52f25759`. That directory's `initialization.c15.json`
+records initial model identity `6ea0a5a4504f3dc2ddb7acab1a3e9fa329d66aba2ddf2ec78f9e506fe5eb9384` and native hash
+`8522ad7bc96b0de55e7a5fa5eed58d450384d5aa5e7352409bb667ef870dd5cf`. These are different identity units from
+the database file SHA above. `FB/sunday-launch-20260915/actual-host-final-configuration.json` names the historical
+E-drive run directory. `CLAUDE_HANDOFF_20260920.md` explicitly records that training had never advanced past creation
+before its code-bound initial-state supersessions (lines 800–817); later initial database preservation appears at
+lines 2152–2158. Historical host task/diagnostic paths also name
+`C:/Codex/Frankie-BOSS-20260919/actual-feedback-run`. The September 27 Monday handoff still records
+`native_learning_performed=false`, pending lawful Tuesday outcomes. No current trained successor is established by
+the inspected repo metadata. Native ROOT calculation/replay checkpoints are not neural model checkpoints.
+
 **2. Actual BOSS learning objective and state.** R4 already establishes masked auxiliary representation supervision;
 the inspected R4/current directive/specs do not select its production weight or combination with this experiment's
 native learning objective. `NativeForecastLearner.step` currently optimizes forecast timing or gap/path objectives,
@@ -60,7 +74,15 @@ Settle the intended native objective/auxiliary combination and its versioned sta
 updates. `BossTrainingCheckpoint` supports an optional `teacher` model, but changing model/optimizer layout cannot
 silently rewrite an existing checkpoint. This decision preserves C14's mathematics; it does not invent new targets.
 
-**3. Execution-order model lineage across lanes.** Knowledge sharing is settled. Mutable model/optimizer sharing needs
+**3. Execution-order model lineage across lanes.** Knowledge sharing is settled, and an existing cumulative lineage
+contract already implements part of it: `critic_knowledge.CUMULATIVE` selects `cumulative_completed_cycles_v1`;
+`build_knowledge` preserves completed-record order and admits those records without a trading-time cutoff gate under
+that policy. `operations/run_actual_sunday.training_configuration` binds it as
+`FRANKIE_CUMULATIVE_TRAINING_CONFIGURATION_V1`; `feedback_cycle` checks the retained lineage before native updates.
+This is existing knowledge/coordinator plumbing, not a new policy decision. Its current consumer is the
+critic/principal route; binding knowledge into configuration is not proof it enters native feature computation.
+
+Mutable model/optimizer sharing across the three lanes still needs
 an explicit ordering contract: the existing checkpoint is single-writer, source-identity-bound and requires strictly
 increasing `training_cursor`; the old coordinator passes one source's `through_cursor`. Day-local cursors restarting at
 zero cannot become a global cursor by assumption. Keep each raw prefix/cutoff intact and distinguish it from update
@@ -75,6 +97,31 @@ its owning lane; model-state transfer/versioning is separately specified. No wei
 trading-date gate, extra lane or change of day owner is proposed. This policy is not implemented or selected here.
 
 ## Remaining source wiring after those bindings
+
+### Successor publication and pending target outcomes
+
+The ordinary native successor call already exists: `CycleCoordinator.run` invokes `NativeForecastLearner.step` inside
+`BossTrainingCheckpoint.apply_completed`, commits model/optimizer/RNG state with SQLite `synchronous=FULL`, then records
+training, lessons and completion. A missing runtime successor is not evidence that this normal call is absent.
+
+A narrow publication defect was corrected in source: `sunday_execution._save` previously fsynced file bytes but did
+not fsync the renamed directory entry. `ActualHost._training` uses this writer for independent training witnesses before
+the database commit. On POSIX, the writer now synchronizes the containing directory and its ancestors after rename,
+covering directories recently created by callers; `_save` itself creates no directories. An existing-identical retry
+also synchronizes them before returning, completing an interrupted publication. Directory errors propagate. Windows
+retains its existing file-fsync/rename behavior; no stronger Windows power-loss guarantee is claimed. Existing native
+code uses the same POSIX directory-fsync primitive; no unrelated transport/helper dependency was introduced.
+This fix changes neither learning mathematics nor selected inputs/objectives, and creates no checkpoint without an
+actual update. It is source-built, runtime-unverified; no test or model execution was performed.
+
+The separate pending-outcome transition is still missing. `SundayExecution.run_cycle` and `CycleCoordinator.run` both
+return an existing `pending_feedback` immediately. The original binding fixes `learning_cutoff_ns=None`, awaiting status
+and the retained pending principal envelope; changing those in place would violate identity checks. Completion needs
+separately attested target feedback bound to the original immutable forecast, request, source/input hashes and full
+session roster, with its lawful availability and learning cutoff. It must preserve the pending evidence and reuse the
+existing governed objective/checkpoint update without rerunning the forecast or inventing labels. No such transition
+was implemented here. The attested target contract and native integration discussion remain necessary; current
+experiment code classrooms must not be relabelled as neural training or a completed native cycle.
 
 The native encoder currently consumes exact raw records and declared metadata. Bedrock outputs, external tables and
 accumulated findings do not enter its computation merely by sharing a directory. Reconcile those lawful typed inputs

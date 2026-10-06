@@ -1,5 +1,31 @@
 # Frankie AWS — step 2 learner delivery checkpoint
 
+## Latest continuation — active BOSS shared evidence and corrected priming
+
+The search now also reads complete original normal INPUT/APPLIED envelopes through the existing verified full-evidence
+journal reader. Exact original input pairing and ROOT group membership place every field at its existing F_LAST row;
+intermediate effects/orders/ranks are carried, and absent snapshots remain absent. Unknown, failed, unpaired, incomplete
+and mismatched evidence has explicit ordinal dispositions. No replay or event-axis mathematics was added. Search resume
+binds the reader and shared extraction code. Read the new section in `ROOT_PLANE_COVERAGE_20261006.md`.
+
+The existing BOSS exchange now performs exact movement-count accounting over every supplied current-day scientific
+test row, including series outside its 19 target components. It preserves scopes/status/source hashes and sends its
+teaching and proposed controls through the existing Frankie reply/publication path. Shared accounting remains separate
+from the BOSS's original target measurements; reused search counts add no independent observation or confirmation.
+An exchange scope defect was corrected: `counts_only`/`scope_not_tested` rows no longer form supported joint findings
+just because the chance count passes. No scientific formulas or target/mask rules changed. Read the updated
+`KNOWLEDGE_CONSUMER_COVERAGE_20261006.md` for actual caller boundaries and non-classroom/model gaps.
+
+`Session.teach()` now uses small V3 shared-evidence priming rather than the obsolete bedrock exclusion. Its existing
+run stage calls the idempotent publication so resumed V2 instructions and interrupted Markdown publication can be
+corrected; prior bytes and frozen-source selection are preserved. Existing completed exchange/brain artifacts are not
+retroactively promoted to current coverage.
+
+The deeper checkpoint audit found initial-state metadata, not proof of a trained successor. Existing cumulative
+knowledge order is already implemented in the original critic/coordinator contract. Native model/optimizer continuation,
+production auxiliary-objective combination and three-lane update ordering remain distinct unresolved bindings.
+`NATIVE_LEARNER_INTEGRATION_DECISIONS_20261006.md` includes the exact evidence. No fresh model or objective was selected.
+
 ## New source slice — exact native emission and shared search, workflow still off
 
 The recovery foundation below now adds source-bound `FRANKIE_NATIVE_EMISSION_V1` coordinates to native member and

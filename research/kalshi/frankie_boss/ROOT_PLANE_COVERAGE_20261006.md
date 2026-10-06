@@ -80,6 +80,27 @@ finished-derivation resume refuse the old projection; they do not overwrite/repl
 ROOTs may still be reused by the orchestrator with their actual older coverage, never retroactively called full depth.
 Search continuation binds its source manifest, code and directive, preserving the corresponding prepared-array identity.
 
+## Complete normal journal envelopes on the existing group axis
+
+`frankie_box_experiment_journal.read_columns()` is now called by the existing `build_series()` search preparation.
+It reuses `FrankieCompactReader` (or the existing raw verified reader) to read complete original normal INPUT/APPLIED
+envelopes from the sealed exported ingest. The same `Session._find_observation` extraction semantics map INPUT ordinals
+to extracted indices; existing `frames.input_record_indices` establishes their exact F_LAST group membership. Pairing
+checks the original input ordinal, raw record, cursor, member/session and actual closing frame identity. It never guesses
+from timestamps or replays the adapter.
+
+Every nested/list/scalar leaf reaches `journal.group.entries[position].*` on the unchanged F_LAST axis. This includes
+per-record effects, order before/after, rank before/after, integrity, boundaries, receipts and full original observations
+where produced. The original journal has full-book observations at F_LAST; intermediate `observation=None` remains None,
+not a newly reconstructed snapshot. Original journal, frame and native projections alias the same underlying evidence.
+
+Failed, unknown, unpaired, incomplete and mismatched groups have explicit source-ordinal/frame dispositions; no values
+are invented to make a join succeed. Older exports without exact group membership remain explicitly unsupported. The
+manifest-bound journal and frame artifacts, ROOT source/derivation identities and counts are checked by this input reader.
+Search continuation binds the helper and existing extractor source hashes. The held search worker budget is passed into
+the existing compact reader, which fully closes before the search worker pool starts. No new lane, producer, statistic,
+event axis or scientific formula is introduced. These are source connections, not runtime or full 99-layer proof.
+
 ## Still open — not waived by full-depth wiring
 
 Continuation: `BEDROCK_SHARED_STREAM_ROUTE_20261006.md` now records an opt-in native recovery and exact-emission
@@ -89,17 +110,18 @@ and unmatched evidence has explicit dispositions. This supersedes the earlier bl
 orchestrator still does not select bedrock and no runtime execution occurred. It establishes neither complete 99-layer
 mapping nor consumption by the original native model and both teachers.
 
-- The complete original APPLIED envelope is not in this frame projection. It carries a current live-book observation,
-  not a claim to have read every journal envelope field. The full-evidence/native-ordinal helper remains uncalled and
-  the preserved axis-changing/freeze draft remains unapplied. Event-axis lag mathematics is not silently substituted.
+- Complete normal INPUT/APPLIED envelopes now reach the group-axis search as described above; failed/unpaired/unclosed
+  and mismatched evidence remains explicit. The native-ordinal helper and preserved axis-changing/freeze draft remain
+  unapplied. Positional within-group evidence is not a claim of identity-linked trajectories or native-event lag search.
 - Full snapshots and original events are available to the existing positional search, but cross-group identity/lifecycle,
   family/D geometry, prebirth, ancestry and other full-capture projections still require the currently disabled producers.
   `native_full_capture_adapter._window_extras` is one such producer. No activation occurred.
 - Dipole states/reasons now reach cells, but timestamp as-of sampling can still omit intermediate/tied teacher rows.
   Full `DState` is still not retained as its own surface. Six chain columns do not prove full-state consumption.
-- The active BOSS exchange remains a 19-component pair reader; broader original targets/masks/controls/representation
-  responsibilities remain required. The original joined reader exists but has different delivery and alignment limits;
-  do not call source availability or a broad exchange prompt actual computation.
+- The BOSS retains its 19-component target measurements and now also computes shared movement-count accounting from
+  supplied scoped search results; those results reach Frankie's exchange reply. Broader original target/mask/control/
+  representation responsibilities remain required. The historical joined reader is inactive, and complete normal
+  ingest delivery to search does not establish complete BOSS/native-model consumption.
 - Read `KNOWLEDGE_CONSUMER_COVERAGE_20261006.md` for the 23 knowledge/control/arm identities. Current source readers
   do not establish complete typed consumption of those layers. Legacy text/source pointers are explicitly listed.
 - Numeric-state conditions, target construction and active nonlinear/multivariable discovery connections remain #3/#4;

@@ -1,5 +1,43 @@
 # Step #2 — current knowledge consumers, 2026-10-06
 
+## Priming correction and native model evidence
+
+`Session.teach()` now files `FRANKIE_BOX_TEACH_PRIMING_V3`: bedrock information is required alongside all applicable
+raw/calculated evidence and accumulated knowledge for Frankie and both teachers. It preserves original BOSS duties,
+execution-boundary sharing and answer/private-logic walls, without embedding giant tables. The old "never your knowledge
+base" instruction is removed. On an actual future V2-to-V3 invocation, the existing durable writer retains the previous
+JSON/Markdown bytes; the original frozen-source selection remains fixed. Existing completed brain entries are not
+retroactively rewritten. Priming is an instruction, not proof of downstream data consumption.
+
+The older joined builder/model reader remains inactive in this experiment; changing it alone would not create an active
+consumer. The native learner report now identifies the historical retained checkpoint as sequence zero, with no trained
+successor established by the inspected repository metadata. Existing cumulative completed-cycle knowledge order is already
+implemented in the original critic/coordinator contract; three-lane mutable optimizer ordering is still a separate gap.
+See `NATIVE_LEARNER_INTEGRATION_DECISIONS_20261006.md`. No fresh weights, objective change or native training was selected.
+
+## Active BOSS exchange over shared search evidence
+
+`exchange()` now passes every current-day scoped scientific test row to `shared_count_accounting()` and `boss_turn()`.
+This applies to every supplied series identity, not only the 19 target components. It reuses the already bound legal
+lesson result rather than re-ingesting, rerunning search or loading another copy of the raw day. Exact complements
+(`x_moves - both_moving`, `y_moves - both_moving`, and `steps - x_moves - y_moves + both_moving`) explain the original
+movement partition. The original row, lesson/row hashes, transforms, cell/value, lag, chance counts, status and untested
+scope are retained. Malformed/inconsistent counts are explicitly listed and receive no invented accounting result.
+
+These calculations produce BOSS teaching and proposed source-state/availability controls; the existing Frankie reply
+now receives that teaching in `learned`, plus the existing proposed-next-step path. Blind Jev items remain withheld.
+Shared accounting is separate from BOSS's own target measurements and never enters the joint-measurement finding path
+as an extra occurrence or confirmation. A transformed zero is not a target-validity mask; targets and masks are unchanged.
+
+Source review also found an exchange defect: the scientific reader correctly retained unsupported scopes as
+`counts_only`, but `science_turn()` could still form a joint finding from their chance result. It now honors
+`counts_only` and `scope_not_tested`, retaining counts/reasons without a supported joint finding for that scope.
+No scientific formula, threshold or checked-single-occurrence policy changed.
+
+This expands an active computational/teaching consumer, but only for supplied legal scientific-result rows on the
+existing exchange path. It is not consumption of every raw/native field, post-stream section or historical prose layer,
+nor does it restore TeacherHead supervision. Non-classroom shared BOSS/exchange coverage remains a distinct gap.
+
 ## Existing full-feed framework and shared evidence — Greg, 2026-10-06 09:53 ET
 
 Greg clarified: reuse the original 99-layer delivery framework and adjust its consumers; teachers should read the
@@ -81,9 +119,9 @@ a historical arm policy, private reasoning and sealed answers must not be expose
 - `frankie_box_historical_claims.py` has an explicit anchored H01-H10 crosswalk over the shared historical catalog.
   H03-H05 use selected `ng_brain` statements; H06-H08 use selected Memory A capsule statements. Its `not_testable`
   inventory is not evidence of the remainder reaching computation. No new scientific crosswalk is invented here.
-- `frankie_box_experiment_exchange.boss_turn` computes from the BOSS's 19 components and their pairs, reports masks and
-  controls, and reports no own measurement for series outside that space. Full-depth search additions do not widen
-  that BOSS calculation by themselves. The scientific seat's supplied counts remain distinguishable from BOSS measurements.
+- `frankie_box_experiment_exchange.boss_turn` retains the BOSS's original 19-component measurements, masks and controls.
+  The active shared-count extension above also computes and teaches the supplied scientific-result scopes outside that
+  space. Shared accounting remains distinct from original target measurements and independent scientific checks.
 
 ## Original BOSS role: retained, not falsely declared integrated
 

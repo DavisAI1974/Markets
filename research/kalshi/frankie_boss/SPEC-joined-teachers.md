@@ -1,5 +1,21 @@
 # Spec: the joined teachers (Greg, 2026-09-28)
 
+## Current implementation clarification — 2026-10-06
+
+The historical build description below is not evidence that the active 30-day experiment calls this joined builder or
+its model discussion reader. Its current host configuration disables that route. The historical list-length/float/last-row
+projection is not the full-evidence consumer promised by this mission and is not silently enabled here.
+
+Greg now requires bedrock information for Frankie and both teachers through shared owner-local evidence. The older
+"bedrock goes to the teachers, not Frankie" restriction below is superseded. Giant rendered tables remain unnecessary.
+The existing experiment search now has source-built full-depth frame and exact native member/lifecycle connections;
+see `ROOT_PLANE_COVERAGE_20261006.md` and `BEDROCK_SHARED_STREAM_ROUTE_20261006.md` for their actual boundaries.
+Original BOSS targets, masks, controls and representation supervision remain required, distinct from code exchange.
+`NATIVE_LEARNER_INTEGRATION_DECISIONS_20261006.md` documents the unconnected native training route and existing contracts.
+No historical model/arm/holdout instructions in this specification override current experiment directives or AWS gates.
+
+The following sections retain their historical design/source record.
+
 Status: BUILT 2026-09-28 on Greg's go ("Go ahead and build the joined teachers"); not yet run on the box.
 - Builder: `deploy/aws/box/frankie_box_joined_teacher.py` + `.sh` (own lock `box-joined-*`). Reads the Monday root's layer
   files in place (derive.json from the calculations receipt), joins every numeric leaf per F_LAST group, runs the

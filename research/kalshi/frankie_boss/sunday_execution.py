@@ -44,16 +44,29 @@ def _adapter_identity(adapter_class):
 
 def _save(path,body):
     raw=canonical_bytes(pack(body))
-    if Path(path).exists():
-        if Path(path).read_bytes()!=raw:raise ValueError('retained Sunday execution evidence changed')
-        return
     path=Path(path)
+    def sync_directories():
+        # POSIX rename durability includes the containing directory. Callers
+        # may also have just created the witness directory or its ancestors.
+        # Preserve the existing Windows file-fsync/rename behavior explicitly;
+        # opening directories with O_DIRECTORY is a POSIX operation.
+        if os.name != 'posix':return
+        parent=path.absolute().parent
+        for directory in (parent,*parent.parents):
+            descriptor=os.open(directory,os.O_RDONLY | os.O_DIRECTORY)
+            try:os.fsync(descriptor)
+            finally:os.close(descriptor)
+    if path.exists():
+        if path.read_bytes()!=raw:raise ValueError('retained Sunday execution evidence changed')
+        sync_directories()  # Finish an interrupted rename publication on retry.
+        return
     temporary=path.with_name(path.name+'.partial-'+uuid.uuid4().hex)
     with temporary.open('xb') as handle:
         handle.write(raw);handle.flush();os.fsync(handle.fileno())
     # The driver holds its process-lifetime single-writer lock. A partial file
     # remains diagnostic evidence; only fully fsynced bytes become the record.
     temporary.rename(path)
+    sync_directories()
 
 
 def _load(path):

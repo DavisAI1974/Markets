@@ -595,13 +595,13 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
         absent('classroom.md', classroom)
     else:
         put('classroom.md', classroom.read_bytes(), classroom, "the Dipole classroom: Frankie's own teach-back of the 19-dimension surface for this cycle (case by case: set include false to keep it out)")
-    # The bedrock-built exhaustion/D priming is gone (the bedrock is the teachers' logic helper, never Frankie's knowledge
-    # base; Greg, 2026-09-29). The brain carries only the small code priming (no bedrock in it).
+    # Small priming describes shared evidence/knowledge; full scientific evidence has separate owner-local consumers.
+    # It embeds no giant rendered table and is not proof that every required consumer is connected.
     priming = work / 'teach' / 'priming.md'
     if calcs_only or not priming.is_file():
         absent('priming.md', priming)
     else:
-        put('priming.md', priming.read_bytes(), priming, 'the small priming: where exhaustion and D are learned (the classroom) and the frozen files for them, by name and digest; no bedrock; code only')
+        put('priming.md', priming.read_bytes(), priming, 'small code priming and frozen-source references; exact contents retained, no giant rendered table')
     bedrock = work / 'bedrock' / 'receipt.json'
     if bedrock.is_file():
         try:
