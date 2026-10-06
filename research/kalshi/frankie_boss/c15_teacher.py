@@ -65,7 +65,7 @@ class JournalTeacher:
             return IdentityNormalizer(self.normalizer.config.instrument_ids)
         return Normalizer.restore(self.normalizer.config,self.normalizer.export(),self.normalizer.state_hash)
 
-    def iter_raw(self,evidence,*,as_of):
+    def iter_raw(self,evidence,*,as_of,continuation=None):
         """Yield one raw row per complete-prefix input without constructing targets.
 
         Equations and group history are unchanged. Consumers must exhaust this
@@ -74,6 +74,16 @@ class JournalTeacher:
         groups=defaultdict(lambda:deque(maxlen=K_LONG))
         pending=defaultdict(list); machines={}; origins={}; ordinal=defaultdict(int)
         processed=0; last_recv=-1
+        if continuation:
+            if continuation['candidate'] != self.candidate_digest:
+                raise ValueError('saved control teacher identity differs')
+            groups.update(continuation['groups']); pending.update(continuation['pending'])
+            machines=continuation['machines']; origins=continuation['origins']
+            ordinal.update(continuation['ordinal'])
+            processed=continuation['processed']; last_recv=continuation['last_recv']
+            if continuation.get('whole_day_totals') is not None:
+                from .teacher_changes import restore_control_totals
+                restore_control_totals(groups, continuation['whole_day_totals'])
         for e in evidence:
             if e['cursor']!=processed:
                 raise ValueError('teacher prefix must account for every source cursor from zero')
@@ -102,6 +112,11 @@ class JournalTeacher:
                 groups[key].append(group)
                 raw=self._columns(e,groups[key],origins,key,machines,ordinal[key])
                 ordinal[key]+=1
+            if continuation is not None:
+                from .teacher_changes import saved_control_totals
+                continuation.update(candidate=self.candidate_digest, groups=dict(groups), pending=dict(pending),
+                    machines=machines, origins=origins, ordinal=dict(ordinal), processed=processed, last_recv=last_recv,
+                    whole_day_totals=saved_control_totals(groups))
             yield e,raw
 
     def attach(self,evidence,context,*,as_of,source_manifest_hash):

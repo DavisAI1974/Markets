@@ -350,7 +350,52 @@ def _candidate(self, T):
     return candidate
 
 
-def row_pass(self, evidence, *, as_of, source_manifest_hash):
+class TeacherSaved(SystemExit):
+    """The caller requested a save; no next source row has been consumed."""
+
+    def __init__(self, message):
+        print(message, flush=True)
+        super().__init__(75)
+
+
+def _save_raw_state(path, body):
+    # Same local, hash-bound pickle convention as the existing journal walk cache.
+    import pickle
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + '.pending')
+    with temporary.open('wb') as handle:
+        handle.write(b'0' * 64)
+        pickle.dump(body, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        handle.flush()
+        os.fsync(handle.fileno())
+    with temporary.open('rb') as handle:
+        handle.seek(64)
+        digest = hashlib.file_digest(handle, 'sha256').hexdigest().encode()
+    with temporary.open('r+b') as handle:
+        handle.write(digest)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, path)
+    fd = os.open(path.parent, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _load_raw_state(path):
+    import pickle
+    with Path(path).open('rb') as handle:
+        expected = handle.read(64)
+        if hashlib.file_digest(handle, 'sha256').hexdigest().encode() != expected:
+            raise ValueError('saved teacher state hash differs; retained, not discarded')
+        handle.seek(64)
+        return pickle.load(handle)
+
+
+def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
+             recovery_identity=None, save_requested=None):
     """Step 1 on its own (the teacher reading the journal): the raw streams over every entry, in order, with the window
     functions across the CPUs. Returns (rows, processed, entity row hashes): rows in cursor order, the wanted flag still
     unset (the context is not known yet); the entity row hashes are the 7-field evidence hashes of the session's entity
@@ -361,9 +406,29 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash):
         raise ValueError('nonnegative as_of required')
     entity = _ENTITY[0]
     rows, processed, entity_hashes = [], 0, {}
+    continuation = {} if recovery_path else None
+    identity = dict(binding=self.binding, source_manifest_hash=source_manifest_hash,
+                    entity=entity, source=recovery_identity) if recovery_path else None
+    if recovery_path and Path(recovery_path).exists():
+        saved = _load_raw_state(recovery_path)
+        if saved['identity'] != identity or saved['as_of'] > as_of:
+            raise ValueError('saved teacher source, code or causal bound differs')
+        as_of = saved['as_of']
+        rows, processed, entity_hashes = saved['rows'], saved['processed'], saved['entity_hashes']
+        continuation = saved['continuation']
+        if len(rows) != processed or (processed and (
+                continuation['control']['processed'] != processed or continuation['raw']['next_cursor'] != processed)):
+            raise ValueError('saved teacher streams and rows do not share one cursor')
+        if saved['complete']:
+            return rows, processed, entity_hashes
+        from itertools import islice
+        evidence = islice(evidence, processed, None)
+    def save(complete):
+        _save_raw_state(recovery_path, dict(identity=identity, as_of=as_of, rows=rows, processed=processed,
+            entity_hashes=entity_hashes, continuation=continuation, complete=complete))
     with _RawStreams(T, _cpus()) as streams:
         for e, old, six in T._paired_raw(self.control, self.raw_teacher, evidence, as_of=as_of,
-                                         source_manifest_hash=source_manifest_hash):
+                                         source_manifest_hash=source_manifest_hash, continuation=continuation):
             processed += 1
             m = e['normalized']
             if entity is None or (m['publisher_id'], m['instrument_id']) == tuple(entity):
@@ -373,9 +438,15 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash):
             rows.append((False, e['receipt'] is not None, m['instrument_id'], combined, m['ts_recv_ns'],
                          e['terminal_prefix_hash'], e['cursor'], six['evidence_content_hash']))
             streams.place(rows, len(rows) - 1)
+            if recovery_path and save_requested is not None and save_requested():
+                streams.finish()
+                save(False)
+                raise TeacherSaved('teacher saved after cursor %d; resume continues at %d' % (processed - 1, processed))
         streams.finish()
     if any(type(v['reason']) is str and v['reason'].startswith(RAW_MARK) for row in rows for v in row[3]):
         raise ValueError('parallel teacher raw placeholder left unresolved; run stopped')
+    if recovery_path:
+        save(True)
     return rows, processed, entity_hashes
 
 

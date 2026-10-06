@@ -5,8 +5,9 @@
   Frankie?"; "Get rid of your invalid code too ... nothing will be dropped like trades or anything because data is
   incomplete. We just list it and then we can try to fill in missing data later. Zero data gets dropped."
 
-The pinned files (c15_teacher.py, c15_teacher_r3.py, c15_dstate.py) are NOT edited; apply() swaps these functions in for
-one preparation (parallel_journal.parallel_walk) and restore() puts the pinned ones back.
+apply() swaps these calculation functions in for one preparation (parallel_journal.parallel_walk), and restore()
+puts the original functions back. Greg authorized save/restore-only hooks in the teacher streams on 2026-10-06;
+their calculation definitions remain unchanged.
 
   ZERO DROPPED  No value is marked INVALID and no event, trade or group is thrown away because data is incomplete. Every
                 value is computed from the data that is there, and what was incomplete is LISTED on it: an "incomplete"
@@ -298,6 +299,23 @@ class _Long:
 _CONTROL_LONG = {}      # id(history) -> (weak ref to that deque, its _Long); a deque is unhashable, so keyed by identity
 
 
+def saved_control_totals(groups):
+    """Retain running whole-day totals alongside their exact deque objects in the save payload."""
+    return {key: _CONTROL_LONG[id(history)][1] for key, history in groups.items()
+            if id(history) in _CONTROL_LONG and _CONTROL_LONG[id(history)][0]() is history}
+
+
+def restore_control_totals(groups, totals):
+    import weakref
+    for key, value in totals.items():
+        history = groups[key]
+        ident = id(history)
+        def gone(ref, ident=ident):
+            if _CONTROL_LONG.get(ident, (None,))[0] is ref:
+                del _CONTROL_LONG[ident]
+        _CONTROL_LONG[ident] = (weakref.ref(history, gone), value)
+
+
 def _control_long(key, history):
     """The running totals of this pass's history: keyed by the pass's own history deque (a new one every iter_raw), so a
     later preparation never continues an earlier one's totals."""
@@ -428,7 +446,7 @@ class _R3Long:
             self.cohorts[side].add(group)
 
 
-def r3_iter_raw(self, evidence, *, as_of, source_manifest_hash):
+def r3_iter_raw(self, evidence, *, as_of, source_manifest_hash, continuation=None):
     """The pinned RawJournalTeacherR3.iter_raw with the long horizon over the whole day, every level, the unknown-side
     trades carried, nothing INVALID; the content chain, checks and row shape are the pinned ones."""
     from collections import defaultdict, deque
@@ -446,7 +464,14 @@ def r3_iter_raw(self, evidence, *, as_of, source_manifest_hash):
     publishers = {}
     content = T.evidence_hash(dict(candidate=candidate, source=source_manifest_hash))
     last_recv = -1
-    for cursor, e in enumerate(evidence):
+    start = 0
+    if continuation:
+        if continuation['candidate'] != candidate or continuation['source_manifest_hash'] != source_manifest_hash:
+            raise ValueError('saved whole-day R3 source/identity differs')
+        history.update(continuation['history']); longs.update(continuation['longs'])
+        pending.update(continuation['pending']); publishers = continuation['publishers']
+        content = continuation['content']; last_recv = continuation['last_recv']; start = continuation['next_cursor']
+    for cursor, e in enumerate(evidence, start=start):
         if type(e['cursor']) is not int or e['cursor'] != cursor:
             raise ValueError('complete prefix requires every cursor from zero')
         m = e['normalized']
@@ -491,6 +516,10 @@ def r3_iter_raw(self, evidence, *, as_of, source_manifest_hash):
                 if book:
                     values = [_with(v, Counter(v.get('incomplete', {})) + book) for v in values]
         values = [dict(v, unknown_side_trades=unknown[0], unknown_side_volume=unknown[1]) for v in values]
+        if continuation is not None:
+            continuation.update(candidate=candidate, source_manifest_hash=source_manifest_hash,
+                history=dict(history), longs=dict(longs), pending=dict(pending), publishers=publishers,
+                content=content, last_recv=last_recv, next_cursor=cursor + 1)
         yield e, dict(cursor=cursor, source_prefix_hash=e['terminal_prefix_hash'],
                       as_of_ts_recv_ns=last_recv, evidence_content_hash=content, columns=values)
 

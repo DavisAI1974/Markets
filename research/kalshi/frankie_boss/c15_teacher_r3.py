@@ -169,10 +169,12 @@ class _OneRowInput:
         return row
 
 
-def _paired_raw(control_teacher,raw_teacher,evidence,*,as_of,source_manifest_hash):
+def _paired_raw(control_teacher,raw_teacher,evidence,*,as_of,source_manifest_hash,continuation=None):
     left,right=_OneRowInput(),_OneRowInput()
-    control=control_teacher.iter_raw(left,as_of=as_of)
-    raw=raw_teacher.iter_raw(right,as_of=as_of,source_manifest_hash=source_manifest_hash)
+    control_options={} if continuation is None else dict(continuation=continuation.setdefault('control', {}))
+    raw_options={} if continuation is None else dict(continuation=continuation.setdefault('raw', {}))
+    control=control_teacher.iter_raw(left,as_of=as_of,**control_options)
+    raw=raw_teacher.iter_raw(right,as_of=as_of,source_manifest_hash=source_manifest_hash,**raw_options)
     for e in evidence:
         left.row=right.row=e
         old,six=next(control),next(raw)
@@ -203,7 +205,7 @@ class RawJournalTeacherR3:
             horizons=(64, 1024), top_levels=3, imbalance_epsilon='.05',
             code={name: hashlib.sha256((here/name).read_bytes()).hexdigest() for name in files}))
 
-    def iter_raw(self, evidence, *, as_of, source_manifest_hash):
+    def iter_raw(self, evidence, *, as_of, source_manifest_hash, continuation=None):
         """Stream all six-column rows while retaining only defined group history."""
         if type(as_of) is not int or as_of < 0:
             raise ValueError('nonnegative as_of required')
@@ -217,7 +219,14 @@ class RawJournalTeacherR3:
         publishers = {}
         content = evidence_hash(dict(candidate=candidate, source=source_manifest_hash))
         last_recv = -1
-        for cursor, e in enumerate(evidence):
+        start = 0
+        if continuation:
+            if continuation['candidate'] != candidate or continuation['source_manifest_hash'] != source_manifest_hash:
+                raise ValueError('saved R3 teacher source/identity differs')
+            history.update(continuation['history']); pending.update(continuation['pending'])
+            publishers = continuation['publishers']; content = continuation['content']
+            last_recv = continuation['last_recv']; start = continuation['next_cursor']
+        for cursor, e in enumerate(evidence, start=start):
             if type(e['cursor']) is not int or e['cursor'] != cursor:
                 raise ValueError('complete prefix requires every cursor from zero')
             m = e['normalized']
@@ -251,6 +260,10 @@ class RawJournalTeacherR3:
                         pair = (_cohort(groups[-horizon-1][-1], groups[-horizon:], side)
                             if len(groups) > horizon else (_missing('WINDOW_SHORT'),)*2)
                         values[2+index], values[4+index] = pair
+            if continuation is not None:
+                continuation.update(candidate=candidate, source_manifest_hash=source_manifest_hash,
+                    history=dict(history), pending=dict(pending), publishers=publishers, content=content,
+                    last_recv=last_recv, next_cursor=cursor + 1)
             yield e,dict(cursor=cursor, source_prefix_hash=e['terminal_prefix_hash'],
                 as_of_ts_recv_ns=last_recv, evidence_content_hash=content, columns=values)
 

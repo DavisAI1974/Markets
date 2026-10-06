@@ -17,6 +17,26 @@ Original committed planning files: `53141aa8fbecc735315d5e1da9c2191d6523fb24`
 
 ## Settled decisions — do not reopen or reinterpret
 
+**Later authorization, 2026-10-06:** Greg approved save/restore-only hooks in `c15_teacher_r3.py` ("Add it")
+to preserve complete teacher continuation state, including unfinished groups. This is a narrow exception to
+the pinned-file restriction below; calculation definitions, inputs and outputs must remain scientifically unchanged.
+The companion control stream and the already-active `teacher_changes.py` path carry the same recovery hooks.
+Source/code provenance hashes naturally identify the new code. No additional test suite or validators: syntax
+checks while wiring, then the one explicitly authorized real E2E and fixes for its actual failures.
+
+**Step #1 remains in progress.** The teacher raw-pass save hook now retains both stream states, running whole-day
+totals/cohorts, all completed rows and evidence hashes. A requested save drains outstanding parallel results,
+atomically writes the hash-bound state, and exits before taking the next input row; resume uses that saved cursor.
+The raw-pass completion is also saved so attachment work need not repeat that calculation pass. This is source-built,
+not runtime-verified. It does not yet establish exact recovery for abrupt process/machine loss or every other stage.
+Do not mark Linux complete-state recovery done from these hooks alone. Other Linux/ROOT/knowledge/search edits
+remain local drafts pending their own completion and publication.
+
+Read-only AWS MCP investigation confirmed the two experiment boxes are stopped and neither has hibernation
+configured. Step Functions can preserve successful workflow steps on redrive; ElastiCache stores application-written
+cache data. Neither automatically captures a running calculation's internal state. Reuse helpful MCP capabilities
+for the existing three-lane AWS CPU workflow; no new service provisioning or compute dispatch is authorized.
+
 - **AWS CPU boxes only. Pods are retired.** No RunPod creation/dispatch, historical A100 ROOT launches or Jev Pod revival. `pod_root` paths are legacy names for reused controller/worker machinery.
 - Exactly three lanes: two held 16-CPU lanes on main `r7i.8xlarge`, one on Linux `r7i.4xlarge`. Reuse the CPU ledger, claims, FIFO lines, receipts and common day runner. Fifteen workers plus coordinator. A day keeps its same box/lane/work/cache from ROOT to completion or explicit stop/save. Giant journal/ROOT artifacts remain with the owner.
 - Preserve Frankie inputs, calculations, planes, adapters, replay and Memory A. Do not edit pinned `frankie_box_projection.py`, `context_session.py`, `c15_journal.py` or `c15_teacher_r3.py`.

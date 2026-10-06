@@ -6,7 +6,7 @@ The same calls the launch makes, in the pattern concurrent_teacher._run already 
 sealed journal read in place (its bytes and sha256 checked against its ingestion receipt), the parallel journal prefix,
 JournalTeacherR3 with the teacher changes (all levels, the whole day, unknown trades carried), row_pass, finish with the
 whole day as the context, then dipole_classroom.snapshot_teacher_attachment and sunday_execution._save. No model, no Pod,
-no Granite; nothing pinned is edited (context_session, c15_teacher_r3, the normalizers and teacher_changes are called).
+no Granite. Greg authorized save/restore-only teacher hooks on 2026-10-06; calculation definitions remain unchanged.
 The entity is the day's own instrument (the first INPUT record's publisher and instrument; the launch hard-coded the
 2021-10 front month 111313), with the NG tick 0.001 = 1,000,000 raw. The walk cache is a per-day scratch directory, never
 inside the sealed ingest.
@@ -125,14 +125,26 @@ def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ext
     h0 = T.evidence_hash
     T.evidence_hash = PJ._chain_hash_factory(h0)
     TC.apply()
+    import signal
+    save_requested = [False]
+    def request_save(*_):
+        save_requested[0] = True
+    previous_signal = signal.signal(signal.SIGTERM, request_save)
     try:
         evidence = PJ.parallel_journal_prefix(builder, through, None)
-        rows, processed, hashes = PT.row_pass(teacher, evidence, as_of=bound, source_manifest_hash=rc['manifest_hash'])
+        rows, processed, hashes = PT.row_pass(teacher, evidence, as_of=bound, source_manifest_hash=rc['manifest_hash'],
+            recovery_path=out / 'teacher-raw-state.pkl',
+            recovery_identity=dict(receipt_sha256=receipt_sha256, journal_sha256=rc['journal_sha256'],
+                                   journal_count=rc['journal_count'], journal_hash=rc['journal_hash'], through=through),
+            save_requested=lambda: save_requested[0])
+        if save_requested[0]:
+            raise PT.TeacherSaved('teacher raw pass saved; attachment assembly has not started')
         walked = time.time() - started
         as_of = max(r[4] for r in rows)
         spec = [(cursor, True, h) for cursor, h in sorted(hashes.items())]
         attachment = PT.finish(teacher, rows, processed, hashes, spec, source_manifest_hash=rc['manifest_hash'])
     finally:
+        signal.signal(signal.SIGTERM, previous_signal)
         TC.restore()
         T.evidence_hash = h0
         PJ._ENTITY[0] = None
