@@ -71,6 +71,8 @@ REGISTRY_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_r
 BYTES_PER_TOKEN = 1.6      # conservative for dense JSON evidence: the proven packet was 151 KB = 92,439 tokens
 CHUNK_BYTES = 140_000      # about 87k tokens at that rate, leaving the rest of the context to the BOSS's answer
 MIN_SPLIT_BYTES = 1024     # a reading piece is split for regeneration down to this size (Greg, 2026-09-28: every note complete)
+FRAME_SECTIONS = ('book', 'activity', 'integrity')
+FRAME_SECTIONS_SCHEMA = 'FRANKIE_ROOT_FRAME_SECTIONS_V1'
 
 
 def _packs(text, limit):
@@ -694,7 +696,7 @@ class Session:
 
     # ---- derive (the pin's producers on this cycle's rows) ------------------------------------------------
     def derive(self, *, source=None, bedrock=True, digest=True, opening_adapter_state=None, opening_book=None,
-               recovery=False, save_requested=None):
+               recovery=False, save_requested=None, retain_frame_sections=False):
         """The ROOT's four processes on the sealed source: (1) the legacy pass (every INPUT record -> the five legacy layers
         and the row spools), (2) the bedrock traversal, (3) the bedrock projection, (4) the derivation digest.
         bedrock=False (Greg, 2026-09-29: no bedrock in the experiment) skips (2) and (3): the bedrock layers are recorded
@@ -703,7 +705,9 @@ class Session:
         opening_adapter_state (Greg, 2026-09-29, a day that opens at the prior day's halt): the prior day's closing book
         from its sealed ingest (research/kalshi/frankie_boss/opening_book.py), restored into the pinned adapter with its
         counters zeroed, so the legacy pass replays the day's records onto the real book instead of an empty one;
-        opening_book is its descriptor, carried into derive.json. None = an empty book (every day before this switch)."""
+        opening_book is its descriptor, carried into derive.json. None = an empty book (every day before this switch).
+        retain_frame_sections carries the pinned adapter's already-computed book/activity/integrity sections into the
+        existing frame spool for the experiment. It does not call another producer, change depth or alter formulas."""
         pin = self._pin() if source is not None else self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
         if recovery and bedrock:
@@ -746,10 +750,12 @@ class Session:
         from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state, TeacherSaved
         identity = dict(source=self.source_binding, pin=pin['pins_witness']['sha256'],
                         producers=self._producer_witnesses(pin), opening_book=opening_book)
+        if retain_frame_sections:
+            identity['frame_sections_schema'] = FRAME_SECTIONS_SCHEMA
         recovery_path = self.work / 'legacy-state.pkl'
         saved = _load_raw_state(recovery_path) if recovery and recovery_path.exists() else None
         if saved and saved['identity'] != identity:
-            raise ValueError('saved ROOT source, producers or opening book changed')
+            raise ValueError('saved ROOT source, producers, opening book or frame projection changed; retained state preserved')
         adapter = V4MboAdapter()
         if opening_adapter_state is not None:
             import importlib
@@ -819,6 +825,12 @@ class Session:
                         transition = book_transition(previous_book, book)
                         record_book.update(transition['after'])  # exact producer-returned full-depth fields
                         record_book['transition'] = transition['sign_signature']
+                        if retain_frame_sections:
+                            # Original returned values, including nulls and empty lists; no top-N change or recomputation.
+                            # The legacy scalar columns remain at their original paths for existing consumers.
+                            for section in FRAME_SECTIONS:
+                                if section in frame:
+                                    record_book[section] = frame[section]
                         frames.append(record_book)
                     except Exception as error:
                         failures.append(dict(index=index, book=True, error=f'{type(error).__name__}: {error}'))
@@ -865,6 +877,11 @@ class Session:
                        opening_book=opening_book if opening_adapter_state is not None else (opening_book or dict(status='empty', reason='the legacy pass starts from an empty book')),
                        f_last_groups=adapter.completed_event_group_count, failures=failures, failure_count=len(failures),
                        producers=self._producer_witnesses(pin), layers={})
+        if retain_frame_sections:
+            layers['legacy_book_imbalance']['frame_sections_schema'] = FRAME_SECTIONS_SCHEMA
+            layers['legacy_book_imbalance']['frame_sections'] = list(FRAME_SECTIONS)
+            receipt['frame_sections_schema'] = FRAME_SECTIONS_SCHEMA
+            receipt['frame_sections'] = list(FRAME_SECTIONS)
         for name, value in layers.items():
             path = derived / f'{name}.json'
             write_json(path, value)

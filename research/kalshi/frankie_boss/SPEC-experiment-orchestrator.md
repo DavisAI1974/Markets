@@ -100,6 +100,11 @@ Causal/future leakage remains forbidden. "Immediate" means as soon as knowledge 
 
 ## 0. Canonical experiment workflow
 
+2026-10-06 source follow-up: the experiment ROOT retains the pinned adapter's original book/activity/integrity frame
+sections in the existing spool for its existing search consumer, under a versioned resume identity. No producer math
+or bedrock switch changed. This is partial all-plane wiring, not complete 99-layer coverage; see
+`ROOT_PLANE_COVERAGE_20261006.md` for the full registry accounting and remaining paths. Runtime remains unverified.
+
 The table below is execution authority. Older planning text below is retained only for provenance and implementation
 detail; where it conflicts with this table, this table wins.
 

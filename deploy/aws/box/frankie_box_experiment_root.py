@@ -165,7 +165,9 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     save_or_match(output / 'calculation-pins.json', whole_day_pin_document(
         source, rule='One complete day delivery for the experiment; the complete registry; the bedrock groups are named '
                      'by the pin but not derived (bedrock off).'))
+    from frankie_box_boss_session import Session, FRAME_SECTIONS_SCHEMA
     binding = dict(schema='FRANKIE_EXPERIMENT_DAY_CALCULATION_SOURCE_V1', source=source, data_workers=data_workers,
+                   frame_sections_schema=FRAME_SECTIONS_SCHEMA,
                    authorship=None, authorship_note='the experiment forecasts nothing through the full pipeline; no launch '
                    'authorship is needed', ingestion_receipt=receipt_pin, completion=witness(completion_path),
                    calculation_pins=witness(output / 'calculation-pins.json'), container=container, manifest=manifest,
@@ -175,7 +177,6 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     save_or_match(output / 'source-binding.json', binding)
     if external['status'] == 'attached':
         save_or_match(output / 'external-computation.json', external_computation)
-    from frankie_box_boss_session import Session
     session = Session(output, day, '00', None)
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
     session.phase('deriving', 'experiment ROOT: the legacy pass on the sealed day; bedrock off')
@@ -189,6 +190,8 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             raise ValueError('saved derivation belongs to another source/pin')
         if result.get('producers') != session._producer_witnesses(session._pin()):
             raise ValueError('saved derivation producers changed')
+        if result.get('frame_sections_schema') != FRAME_SECTIONS_SCHEMA:
+            raise ValueError('saved derivation has another frame projection; retained outputs preserved')
         for item in result['layers'].values():
             if witness(Path(item['path'])) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
                 raise ValueError('saved calculation layer differs: %s' % item['path'])
@@ -201,7 +204,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     else:
         result = session.derive(source=SimpleNamespace(container=container), bedrock=False, digest=digest,
                                 opening_adapter_state=opening_state, opening_book=opening_book,
-                                recovery=True, save_requested=save_requested)
+                                recovery=True, save_requested=save_requested, retain_frame_sections=True)
     # Greg, 2026-09-29: no data is dropped even when it is not all complete; a calculation that cannot use a record
     # skips over it, the day is not skipped. Producer failures stay in derive.json (and the failures spool) with their
     # record index and error, and are named in the receipt; the day's calculations go on to the next steps.
@@ -212,6 +215,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                 derivation=witness(session.work / 'derive.json'),
                 digest=witness(session.work / 'derivation-digest-full.md') if digest else None,
                 root_processes=result.get('root_processes'),
+                frame_sections_schema=result.get('frame_sections_schema'), frame_sections=result.get('frame_sections'),
                 not_run=[dict(process=k, reason='switched off for the experiment (Greg, 2026-09-29)')
                          for k, v in (result.get('root_processes') or {}).items() if v == 'skipped'],
                 failure_count=failures, opening_book=opening_book, external=external,

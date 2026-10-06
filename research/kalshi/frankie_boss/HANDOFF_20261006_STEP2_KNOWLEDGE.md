@@ -14,6 +14,12 @@ Codex must preserve CCode's scientific-teacher changes when they return. No #5 w
 Earlier stop requests and unapproved/uncalled-second-walk wording below are historical, superseded by the subsequent
 authorized continuation and learner-reader implementation recorded in this file. No real E2E has passed.
 
+**ROOT follow-up after `c75a805a`:** the experiment now opts into retaining the pinned frame's original book/activity/
+integrity sections through the existing row spool/export/search. Projection identity prevents mixed-shape resume.
+Read `ROOT_PLANE_COVERAGE_20261006.md` for the exact caller/consumer chain and Greg's 99-layer question: 49 is the
+calculation/clock subset, not the whole 99-layer ingestion/knowledge/answer/output roster. Full FIFO/order observations,
+intermediate events, disabled derived producers and complete teacher/knowledge consumption remain open. Source only.
+
 **Chat stop requested by Greg, 2026-10-06 08:02 ET:** finish only the accumulated native-claim connection below,
 update/commit/push/handoff, and stop. **Do not finish all of #2 in this chat.** Start the next chat at the latest branch
 tip, preserving newer work. This slice starts from `82649247acb793e5f4a695efa5badf8e17186caa`; the commit containing

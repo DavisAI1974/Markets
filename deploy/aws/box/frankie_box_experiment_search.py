@@ -85,12 +85,11 @@ NOT_SEARCHED = (
     ('targets', 'targets other than the series themselves (e.g. the mid N groups ahead, fills, exhaustion); a lagged series '
      'is already the y side at lag k, a fill count is already events.F_* per group; new target definitions are a '
      'mathematical decision'),
-    ('per-level FIFO queue, order age, rolling activity and integrity at each F_LAST close',
-     'the pinned V4 adapter produces them in every event frame (book.bid_levels[i]/ask_levels[i]: size, order_count, '
-     'front_order_size, front_order_age_s, queue_age_median_s, queue_age_p90_s, largest_order_share; activity.<1|5|20|'
-     '60|300>.*; integrity.*) and the sealed journal keeps that frame in each APPLIED entry; the ROOT legacy pass spools '
-     'only best/mid/depth_imbalance_n and the eight BOOK_FIELDS of it (frankie_box_boss_session.py, the frames spool), so '
-     'no spool this search reads carries them: produced, not carried (the required change is named in the Step #3 map)'),
+    ('full FIFO/order identities and legacy exports without frame sections',
+     'new experiment ROOTs retain the original book/activity/integrity sections; their leaves enter frames.* directly '
+     'at the same F_LAST close. The pinned frame contains top-ten level summaries, not every resting order or FIFO '
+     'identity. Those observations remain unconnected to search. Older ROOT spools are preserved and may lack the '
+     'new sections; sources[frames].frame_sections lists the fields actually present, never assumed retrofilled'),
     ("the D chain's own state and the Dipole rows' state reasons",
      'c15_dstate.DState (anchor_dir, armed, broken, E, pull_depth, n_ext, m_last/m_prev, p_last/p_prev, g_E, age, '
      'duration_last) is computed inside the pinned teacher and retained only as the six chain columns searched as '
@@ -210,7 +209,10 @@ def build_series(day_dir, log, external_fields_mode=None):
         raise SystemExit('no book-frame spool at %s: the ROOT legacy pass did not run for this day' % frames_path)
     f_num, f_text, f_other, n = columns(unpack_spool(frames_path), 'ts_recv_ns')
     sources.append(dict(source='frames', path=str(frames_path), rows=n, sha256=sha256_file(frames_path),
-                        numeric=sorted(f_num), text=sorted(f_text), not_searched=f_other))
+                        numeric=sorted(f_num), text=sorted(f_text), not_searched=f_other,
+                        frame_sections={section: dict(numeric=sorted(k for k in f_num if k.startswith(section + '.')),
+                                                      text=sorted(k for k in f_text if k.startswith(section + '.')))
+                                        for section in ('book', 'activity', 'integrity')}))
     recv = np.asarray(f_num.pop('ts_recv_ns'), dtype=np.int64)
     axis = np.maximum.accumulate(recv)  # exact nanoseconds; no loss of ordering above 2**53
     backwards = int(np.count_nonzero(np.diff(recv) < 0))
@@ -566,9 +568,10 @@ def y_transforms(tx):
     return tuple(T.TRANSFORMS)
 
 
-# Step #3 plane receipt (CCode, 2026-10-06). One row per registry layer of the complete registry (49, the pin
+# Step #3 plane receipt (CCode, 2026-10-06). One row per layer in the 49-layer calculation/clock subset (the pin
 # knowledge/CYCLE_CALCULATION_PINS.md) plus the categories the calculations themselves find (action-string families, mirror
-# identity, fill disposition, discovery status, the D chain's reasons) and the day file. Each row: the status of the plane
+# identity, fill disposition, discovery status, the D chain's reasons) and the day file. This is not the full 99-layer
+# ingestion/knowledge/answer/output roster. Each row: the status of the plane
 # on the experiment path, the exact series/cells this search consumes it through (or nothing), and what remains of it.
 #   consumed / consumed_partial are historical map labels, not runtime proof. plane_summary emits them as
 #   mapped / mapped_partial and points to actual source channels, exclusions, cells_not_counted and coupling parts.
@@ -610,8 +613,9 @@ PLANE_COVERAGE = (
     ('derived_ancestry_gaps', None, 'not_produced', None, 'bedrock projection only'),
     ('derived_price_flow_book_paths', 'frames', 'consumed_partial', 'the legacy path: prices.*, frames.*, signed_flow.*',
      'the book-regime path (native_book_regime.observe_snapshot, bedrock) is not produced'),
-    ('derived_v4_mechanics_fifo_features', None, 'produced_not_carried', None, 'the V4 window extras exist per frame '
-     '(native_full_capture_adapter._window_extras, bedrock) and the per-level fields below; neither is spooled'),
+    ('derived_v4_mechanics_fifo_features', None, 'not_produced', None,
+     'native_full_capture_adapter._window_extras belongs to the disabled full-capture traversal; '
+     'the retained V4 frame book/activity sections are related inputs, not this derived layer'),
     ('derived_feature_availability_timestamps', None, 'not_produced', None,
      'the registry layer is not produced by this ROOT; asof placement is not a substitute for its derived stamps'),
     # registry group: pre-birth (5)
@@ -651,17 +655,19 @@ PLANE_COVERAGE = (
     ('contract_session_roll_state', None, 'not_produced', None, 'bedrock traversal only'),
     # registry group: full-book FIFO queue (8)
     ('full_bid_ask_depth', 'frames', 'consumed_partial', 'frames.bid_depth_full, frames.ask_depth_full',
-     'per-level size (book.bid_levels[i].size / ask_levels[i].size, top 10 each side) is produced per frame, not spooled'),
+     'new frames.book.bid_levels[i]/ask_levels[i] carry top-ten size summaries; all resting orders/deeper level rows remain unconnected'),
     ('price_level_and_order_counts', 'frames', 'consumed_partial', 'frames.bid/ask_price_level_count_full, '
-     'frames.bid/ask_order_count_full', 'per-level order_count is produced per frame, not spooled'),
+     'frames.bid/ask_order_count_full; new frames.book.*_levels[i].order_count', 'per-level rows beyond the pinned frame top ten remain unconnected'),
     ('fifo_queues', None, 'produced_not_carried', None, 'the FIFO order of every level is in the journal\'s APPLIED '
-     'observation (c15_observer.observe_book) and the frame\'s levels; not spooled; the teacher consumes it internally'),
+     'observation (c15_observer.observe_book); the frame levels contain summaries, not FIFO ids; '
+     'the full observation is not spooled; the teacher consumes it internally'),
     ('queue_age_and_survival', 'dipole', 'consumed_partial', 'the teacher\'s far_front_age_log, far_queue_age_p90_log, '
      'far_identity_survival_64/1024, far_size_retention_64/1024 (far-side top-three cohort)',
-     'per-level front_order_age_s, queue_age_median_s, queue_age_p90_s for the top 10 levels each side are produced per '
-     'frame, not spooled'),
+     'new frames.book.*_levels[i] carries front_order_age_s, queue_age_median_s, queue_age_p90_s for the pinned top ten; '
+     'full per-order history remains unconnected'),
     ('queue_concentration', 'dipole', 'consumed_partial', 'the teacher\'s far_size_hhi',
-     'per-level largest_order_share and front_order_size are produced per frame, not spooled'),
+     'new frames.book.*_levels[i] carries largest_order_share/front_order_size for the pinned top ten; '
+     'deeper per-level/per-order rows remain unconnected'),
     ('orders_and_volume_ahead', None, 'produced_not_carried', None, 'volume_ahead per resting order is derivable from the '
      'APPLIED observation\'s FIFO ids and sizes; not spooled'),
     ('spread_and_depth_imbalance', 'frames', 'consumed', 'frames.spread, frames.depth_imbalance_n, frames.depth_imbalance_full', None),
@@ -669,22 +675,22 @@ PLANE_COVERAGE = (
      'the bootstrap receipts (bedrock) are not produced'),
     # registry group: microstructure mechanics (7)
     ('mechanics_actions_by_side_and_level', 'structures', 'consumed_partial', 'structures.action_counts.*, side_counts.*, '
-     'events.<action>_<side>', 'by level: the frame\'s rolling activity windows (1/5/20/60/300 s: action_count, '
-     'action_qty, action_side_qty, top_level_add/cancel_qty_derived) are produced per frame, not spooled'),
+     'events.<action>_<side>; new frames.activity.<window>.* carries the original rolling activity values',
+     'no complete per-order/per-level event history is inferred from window summaries'),
     ('aggressor_and_native_signed_flow', 'legacy_native_signed_flow', 'consumed_partial', 'signed_flow.buy/sell per second',
-     'the frame\'s trade_buy/sell_aggressor_qty and trade_aggressor_imbalance per window are produced, not spooled'),
+     'new frames.activity.<window>.* carries trade aggressor quantities/imbalance; individual intermediate events remain unsearched'),
     ('depletion_and_replenishment', 'dipole', 'consumed_partial', 'the teacher\'s far_replenish_log1p_64/1024, '
      'far_absorption_share_64/1024', 'the bedrock replenishment/absorption rows (native_replay_driver) are not produced'),
     ('resilience_and_recovery', 'dipole', 'consumed_partial', 'the teacher\'s far_identity_survival_64/1024, '
      'far_size_retention_64/1024', 'the bedrock recovery rows are not produced'),
-    ('churn_and_queue_turnover', None, 'produced_not_carried', None, 'the frame\'s add_cancel_churn and '
-     'priority_lost_modify_count per window are produced, not spooled'),
+    ('churn_and_queue_turnover', 'frames', 'consumed_partial',
+     'frames.activity.<window>.add_cancel_churn and priority_lost_modify_count',
+     'available only in ROOTs retaining frame sections; full FIFO turnover history remains unconnected'),
     ('price_and_book_path', 'prices', 'consumed', 'prices.*, frames.* on the axis', None),
     ('missingness_and_integrity_flags', 'dipole', 'consumed_partial', 'the Dipole rows\' states are counted per column in '
      'the manifest (states_per_component); a value is used only where PRESENT',
-     'the frame\'s integrity counters (missing_level_on_remove, duplicate_add_order_id, cancel_missing_order, '
-     'modify_missing_treated_as_add, modify_side_change, add_invalid_side, sequence_regression, ...) are produced, not '
-     'spooled; the ROOT failures spool is not read; the rows\' raw_reason categories are retained, not cells'),
+     'new frames.integrity.* carries every produced integrity counter; the ROOT failures spool is not read; '
+     'the rows\' raw_reason categories are retained, not cells'),
     # categories the calculations find, beyond the registry names
     ('action-string families (CARRIED_NATIVE_ACTION_FAMILIES and every open-world candidate)', 'structures', 'consumed',
      'cells structures.action_string, structures.candidate_family_id, structures.carried_native_family, '
@@ -707,8 +713,8 @@ PLANE_COVERAGE = (
      'only each closing INPUT is in events.last; intermediate field values, identity/metadata and nested fields remain unsearched'),
     ('sealed journal APPLIED entries (the V4 frame and the full-book observation)', None, 'produced_not_carried', None,
      'read whole by the BOSS teacher (JournalTeacherR3); frankie_box_experiment_surface.journal_axis reads them on the '
-     'native ordinal and is not called (a change of axis); the frame\'s per-level and activity fields are the '
-     'produced_not_carried rows above'),
+     'native ordinal and is not called (a change of axis); new ROOTs carry the frame book/activity/integrity sections, '
+     'not the complete APPLIED envelope or full-book observation'),
 )
 
 
@@ -735,6 +741,10 @@ def plane_summary(sources, notes):
                 status = 'not_requested'
             elif not fields.get('searched') and not fields.get('cells'):
                 status = 'read_without_channels'
+        if name == 'churn_and_queue_turnover' and receipt:
+            activity = (receipt.get('frame_sections') or {}).get('activity') or {}
+            if not activity.get('numeric'):
+                status = 'produced_not_carried'
         out[name] = dict(status=status, declared_status=declared_status, source=source, source_read=receipt is not None,
                          mapped_by=consumed_by, remaining=remaining,
                          evidence='sources placed_series/placed_cells/exclusions; cells_not_counted; couplings.parts')

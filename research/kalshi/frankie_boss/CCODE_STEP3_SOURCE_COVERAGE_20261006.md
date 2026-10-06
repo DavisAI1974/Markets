@@ -23,6 +23,19 @@ map are corrected below. Existing candidate/scientific counts are not independen
 Action-string family descriptors and teacher D-chain projections are related inputs, not proof that every registered
 D-family geometric or exhaustion calculation has been run. #2 and #3 remain open; no real E2E has passed.
 
+## ROOT frame-section follow-up after c75a805a
+
+Greg authorized continuing the available-data wiring. New experiment ROOTs now pass
+`retain_frame_sections=True`, retaining the original `book`, `activity` and `integrity` sections in the existing
+frame spool. The existing export and search already carry/flatten these fields. This closes gap 1 below for the
+sections actually computed by the pinned V4 frame; it does not activate full FIFO observations or deeper per-order
+history. Existing completed ROOTs are not retrofilled. Projection version pins preserve resume correctness.
+
+Read `ROOT_PLANE_COVERAGE_20261006.md` for the exact consumer chain and the authoritative 99-layer inventory.
+The 49 mapped calculation/clock layers are a subset of those 99, not the complete ingestion/knowledge/output roster.
+The other six source layers, 23 knowledge/control/arm layers, nine sealed answers, two disabled shadows and ten outputs
+have distinct roles. Coverage must follow actual applicable consumers, not a layer-count shortcut.
+
 ## 1. The producers on the experiment path and what each one emits
 
 - **Ingest** (`frankie_box_ingest_block.sh`, the pinned V4 adapter and `c15_observer.observe_book`): the sealed journal.
@@ -45,8 +58,9 @@ D-family geometric or exhaustion calculation has been run. #2 and #3 remain open
   discovery_status, price_raw_min/max/span, order_ids, fill_disposition{class, *_order_ids, *_count, signature},
   mirror{side_string, mirror_side_string, mirror_pair_key, orientation}`), `.rows/failures.jsonl`, the five legacy layer
   JSONs (`legacy_native_signed_flow.json`, `legacy_per_second_roll20.json` and the three spools under their layer names).
-  **The frames spool keeps 4 + 8 fields of the frame's `book` and nothing of its per-level lists, `activity` or
-  `integrity`** (lines 816-822: the exact dropped carrier).
+  The original spool kept only 4 + 8 book fields. New experiment ROOTs additionally retain the complete returned
+  `book`, `activity` and `integrity` sections; their scalar/list leaves enter the existing `frames.*` search channels.
+  The pinned frame has top-ten level summaries, not full per-order FIFO identities. Old spools remain unchanged.
 - **BOSS teacher** (`frankie_box_experiment_teacher.py` for every day in `_finish_day`; `c15_teacher_r3.JournalTeacherR3.attach`
   through `parallel_teacher.parallel_attach`): walks the journal whole (every level, FIFO ids, unknown trades carried),
   runs the far-side cohort geometry and the D chain (`c15_dstate.DChain`) and retains per context cursor one row of the
@@ -62,7 +76,7 @@ D-family geometric or exhaustion calculation has been run. #2 and #3 remain open
 
 ## 2. The receipt: every registry layer and every category the calculations find
 
-`PLANE_COVERAGE` names all 49 registry layers plus found categories (59 rows). It is a static source mapping.
+`PLANE_COVERAGE` names the 49-layer calculation/clock subset plus found categories (59 rows). It is a static source mapping.
 `plane_summary` writes `mapped` / `mapped_partial`, not a claim that a whole plane was consumed. Each source receipt
 now lists actual `placed_series`, `placed_cells` and exclusions. A missing source is `listed_missing` or
 `not_in_this_export`; an empty read is `read_without_channels`. The full day-file row is `not_requested` under
@@ -82,12 +96,12 @@ of complete scientific coverage.
 | Fill disposition (`order_lifecycle_fills`) | mapped_partial | `structures.fill_disposition.fill_id_count, cancelled_fill_id_count, modified_fill_id_count, same_id_cancel_modify_count, unresolved_fill_id_count`; cells `class, signature`; `events.F_*`; teacher `far_absorption_share_64/1024` | per-order disposition across groups: not produced |
 | D's / exhaustion (`derived_unresolved_age_chain_trajectory`, `prebirth_unresolved_chain_extension_state`) | mapped_partial | teacher `dipole.unresolved_age_groups_log, extension_count_log, step_ratio_log, pullback_ticks_last_log, step_duration_groups_log, pullback_ticks_prev_log` | `DState` computed, not retained; the rows' states counted in the manifest, reasons retained in source rows, neither used as cells; bedrock episode rows not produced |
 | Depletion/replenishment, resilience/recovery | mapped_partial | teacher `far_replenish_log1p_64/1024, far_absorption_share_64/1024, far_identity_survival_64/1024, far_size_retention_64/1024` | the bedrock replenishment/absorption/recovery rows: not produced |
-| FIFO queues, queue age and survival, queue concentration, orders and volume ahead | produced_not_carried / mapped_partial | teacher `far_front_age_log, far_queue_age_p90_log, far_size_hhi` (far-side top-three cohort) | per level, top 10 each side: `front_order_age_s, queue_age_median_s, queue_age_p90_s, largest_order_share, front_order_size, order_count, size` produced in every frame, not spooled; FIFO ids and order sizes in the APPLIED observation, not spooled; volume ahead is derivable, not a retained searched value |
-| Mechanics by side and level, churn and turnover, aggressor flow | mapped_partial / produced_not_carried | `structures.action_counts.*, side_counts.*`, `events.<action>_<side>`, `signed_flow.buy/sell` | the frame's rolling activity windows (`action_qty, action_side_qty, add_cancel_churn, priority_lost_modify_count, trade_*_aggressor_qty, trade_aggressor_imbalance, top_level_*_qty_derived`) produced, not spooled |
-| Missingness and integrity | mapped_partial | Dipole states counted per column (`states_per_component`), values used only where PRESENT | the frame's `integrity` counters produced, not spooled; `failures.jsonl` not read; `raw_reason` not cells |
+| FIFO queues, queue age and survival, queue concentration, orders and volume ahead | produced_not_carried / mapped_partial | teacher `far_front_age_log, far_queue_age_p90_log, far_size_hhi` (far-side top-three cohort) | per level, top 10 each side: `front_order_age_s, queue_age_median_s, queue_age_p90_s, largest_order_share, front_order_size, order_count, size` carried in new frame spools; FIFO ids and order sizes in the APPLIED observation, not spooled; volume ahead is derivable, not a retained searched value |
+| Mechanics by side and level, churn and turnover, aggressor flow | mapped_partial | `structures.action_counts.*, side_counts.*`, `events.<action>_<side>`, `signed_flow.buy/sell` | the frame's rolling activity windows (`action_qty, action_side_qty, add_cancel_churn, priority_lost_modify_count, trade_*_aggressor_qty, trade_aggressor_imbalance, top_level_*_qty_derived`) carried in new frame spools; old exports may lack them |
+| Missingness and integrity | mapped_partial | Dipole states counted per column (`states_per_component`), values used only where PRESENT | the frame's `integrity` counters carried by new ROOTs; `failures.jsonl` not read; `raw_reason` not cells |
 | Order lifecycle adds/cancels/modifies/replaces/trades/clears | mapped_partial | `events.<action>_<side>` counts and sizes; `events.last.<field>` at the close; cells `events.last.action/side`; `prices.*`; `events.last.is_snapshot` | per-order linking, identity transitions, roll state, bootstrap receipts: not produced |
 | Spread and depth imbalance, price and book path, legacy price/flow/roll20/book/structure | mapped | `frames.*`, `prices.*`, `signed_flow.*`, `roll20.value`, `structures.*` | none |
-| Full depth, level and order counts | mapped_partial | `frames.bid/ask_depth_full, bid/ask_order_count_full, bid/ask_price_level_count_full` | per-level size and order_count produced, not spooled |
+| Full depth, level and order counts | mapped_partial | `frames.bid/ask_depth_full, bid/ask_order_count_full, bid/ask_price_level_count_full` | per-level size and order_count carried in new frame spools; old exports may lack them |
 | Open-world predecessor state | mapped_partial | cell `structures.discovery_status` per group | across groups: not produced |
 | Ancestry gaps, book-regime paths, v4 mechanics fifo features (`_window_extras`), feature-availability stamps, the 5 pre-birth layers, discovery/evaluation/lock clocks, identity transitions, roll state, bootstrap receipts | not_produced | nothing | bedrock traversal/projection only |
 | `odcore.info_dipole` divergence/exhaustion | built_not_called | nothing | referenced only as the construction of historical claims H01/H02; computing it on the day's signed flow is a new derived series |
@@ -129,21 +143,16 @@ Both channel routes reach `build_series` -> `search` -> `_step_job` -> the exist
 `couple(fx, transforms(pick(steps[ty][y])), lags)`. The full transform roster already existed; its docstring correction
 is not a new cross-transform implementation. Data availability and actual completed calculations remain distinct.
 
-## 4. Remaining gaps, each with its exact missing connection and owner (reported, not implemented)
+## 4. Gap status and remaining connections
 
-1. **Per-level FIFO/queue-age/concentration, rolling activity, integrity at every F_LAST close** (produced_not_carried,
-   including per-level portions of several registry mappings). The values exist at the same F_LAST closes the axis uses
-   (the APPLIED frame of the sealed journal; the ROOT frame before spooling), so no axis, clock or grouping change is
-   needed. Two routes: (a) ROOT spool: in `frankie_box_boss_session.py` 816-822 spool the frame's
-   `book.bid_levels[i].*`, `book.ask_levels[i].*`, `book.bid_depth_n/ask_depth_n`, `activity.<w>.*` and `integrity.*`
-   beside the 12 current fields (the search's `columns()` already flattens list positions and nested keys, so
-   `frames.book.bid_levels[0].front_order_age_s` would be a series with no search change); owner: the ROOT session
-   module (Codex/ROOT), and the retained ROOT identity (legacy-state resume) must be re-minted for the changed row shape.
-   (b) Search-side: a reader of the journal's APPLIED entries that takes only `frame.book`/`activity`/`integrity` at
-   each APPLIED `ts_recv_ns` (the F_LAST close) and feeds `asof`; `surface.journal_axis` is the existing reader but
-   materializes every entry whole including the observation and changes the axis, so this route is new reader code in
-   my file. Either is a wiring of available data with the same statistic; it is outside the two authorized gaps, so it
-   is the next decision for Codex/Greg. Cost: 10 levels x 2 sides x 7 fields + 5 windows x ~14 fields adds ~200 series.
+1. **Frame-section wiring source-built, runtime-unverified.** The chosen route is the existing ROOT spool:
+   `Session.derive(retain_frame_sections=True)` -> `.rows/frames.jsonl` -> existing data export -> `columns()` ->
+   `frames.*` -> existing transforms/cells/coupling jobs. Original returned book/activity/integrity values are retained,
+   with no additional scientific computation. `FRANKIE_ROOT_FRAME_SECTIONS_V1` binds new ROOT source/state/receipts;
+   changed resume projections refuse without overwriting retained results. New source receipts list actual section
+   fields. Remaining: full FIFO identities, every resting order/deeper-level rows, and older exports without sections.
+   The pinned `native_full_capture_adapter._window_extras` is a different disabled producer; its derived layer is
+   not produced by this change. Top-ten summaries are not proof of all-book/order coverage.
 2. **The Dipole rows' `state` and `raw_reason` as cells** (retained_not_searched; the D chain's own categories
    `CHAIN_BROKEN` / `NO_COMPLETED_STEP` / `DEGENERATE_STEP` and every column's PRESENT/MISSING/INVALID/ABLATED). Exact
    change, my file: in the dipole block of `build_series`, beside `values[name]`, keep `reasons[name].append(c.get('raw_reason'))`

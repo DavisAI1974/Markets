@@ -1,5 +1,11 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+**ROOT frame sections, source-only continuation:** the experiment now retains existing book/activity/integrity values
+through the original frame spool/export/search, with a versioned resume binding. No extra producer pass or bedrock
+activation. This does not establish all-plane coverage. `ROOT_PLANE_COVERAGE_20261006.md` reconciles the 99-layer roster
+with the 49-layer calculation subset and lists remaining full-FIFO, event, derived-producer and knowledge-consumer gaps.
+CCode's next separate task is `HANDOFF_20261006_CCODE_STEP4.md`. #2/#3 stay open; no AWS go or E2E result.
+
 **External findings continuation:** existing external classroom discoveries now enter immediate brain publication,
 actual external-pair recognition and the existing scientific reader's explicitly labelled directional projection.
 Full source/scope is retained; old Dipole-only lessons cannot silently satisfy the expanded claim set. Source/syntax
