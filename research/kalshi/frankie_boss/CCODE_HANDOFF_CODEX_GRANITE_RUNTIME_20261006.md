@@ -1,5 +1,9 @@
 # CCode handoff to Codex: Granite meeting runtime is pinned and confirmed, 2026-10-06
 
+Current continuation: Codex's source integration is published at e0c6bb9, and CCode's cached-file fix at 03f29be
+is its direct child. The older branch/no-remote statements below describe the initial handoff only. Greg confirmed
+again that runtime decisions are settled: retain the committed model, pins, eight parameters and host order.
+
 Branch `ccr-5fce7de3-xa4hfg`, rebased 2026-10-06 onto `chatgpt/frankie-30day-aws-workflow-20261006` at `e9eac1d` (clean;
 CCode's files are new files). NOTE: Codex reported CCode's branch "merged cleanly", but no remote branch carries CCode's
 files at the time of this handoff (the chatgpt tip `e9eac1d` has none of them); whatever was merged stayed local to
@@ -72,8 +76,8 @@ needs no change: it still reads the two emitted lines.
 - `gate`: a confirmed set must satisfy `input_token_cap_per_call + max_output_tokens_per_turn <= context_size`.
 - `resolve_threads(params)`: null = `os.cpu_count()`; an integer is clamped to it. `LlamaServer` passes the resolved
   value to `--threads` and the record carries `runtime.effective = {threads, host_cpus}`.
-- `LlamaServer.count_tokens(messages)`: the input's token count from llama-server's own `/tokenize` (message contents
-  joined; the chat template adds a few dozen tokens, so it is a close lower bound).
+- `LlamaServer.count_tokens(messages)`: applies the server's chat template through `/apply-template`, then calls
+  `/tokenize` with special-token handling; each call retains the pre-count beside the server's prompt usage (section 1b).
 - `discuss_item`: before EVERY call the transcript is counted; over the cap, no call is made, the item is closed
   `LEFT_OPEN_BY_CODE` with an `input_cap` open item carrying the round, the count and the cap. Nothing is truncated
   and nothing relies on the server's context shift (which would drop seat material silently).
@@ -104,12 +108,12 @@ unconfirmed set and now refuses a cap that does not fit). No server was started.
 Threads: Greg left the host-count rule in place ("we'll let codex figure that out"). If the staged setup on a host
 wants a fixed count, set an integer in the JSON; it is clamped to the host's cores and the record shows the value used.
 
-## 4. Still Greg's
+## 4. Remaining execution and knowledge scope
 
-- Which host runs the one E2E first (runner: the exchange view presigned out and the record back; box: the box started
-  and `frankie_box_granite_meeting_setup.sh` run there, an install, so a go).
-- Whether the pinned llama.cpp release supports `json_schema` response format on `/v1/chat/completions`: verified only
-  when the pinned binary exists (the parser tolerates refusal; a non-JSON reply is refused and re-asked).
+- Host order is settled: free standard GitHub CPU runner first, existing small AWS CPU box second. Execution remains
+  unperformed and requires Greg's go; host order and the confirmed runtime parameters are not open questions.
+- Live verification of `json_schema` responses and prompt counts remains part of the authorized E2E. Static pinned-byte
+  inspection already found the required routes/options (section 1b); runtime verification is not a configuration choice.
 - Whether accumulated knowledge should be more than a label/sha index to the coordinator.
 
 ## 5. Boundaries kept

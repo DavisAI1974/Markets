@@ -118,11 +118,11 @@ scratchpad to hash its contents.
    context. Structural exercise with a stub server: over-cap at round 1 makes no call and lists the item open with the
    count; an under-cap LEAVE_OPEN runs as before; the gate still refuses an unconfirmed set and now refuses a cap that
    does not fit. The gate on the committed configuration returns `[]`. All values are unmeasured until the E2E.
-3. Which host first for the E2E: the GitHub runner path needs the small exchange view presigned out and the record back;
-   the small AWS CPU box path needs the box started for the meeting and the setup script run there (an install, so a go).
-4. The `json_schema` response format and `/v1/chat/completions` are llama.cpp server features; whether the pinned release
-   supports them is verified only when the pinned binary exists. The parser tolerates refusal (a non-JSON reply is refused
-   and re-asked within the turn budget).
+3. Host order is settled in the runtime contract: free standard GitHub CPU runner first, existing small AWS CPU box
+   second. The runner needs the exchange view out and record back; AWS setup/start still needs Greg's go. Execution
+   has not occurred; this does not reopen the host order or the confirmed runtime parameters.
+4. Static inspection of the pinned binary found `json_schema` and `/v1/chat/completions` (decision 6). Live behavior
+   remains unverified until the authorized E2E. The parser refuses and re-asks a non-JSON reply within the turn budget.
 6. (Codex's two findings, fixed by CCode 2026-10-06, commit after `e2a0097`.) PROVENANCE: `pins.llama_cpp_sha256` is the
    archive's hash and is verified at FETCH time only; the installed runtime is `llama-server` plus the shared libraries
    beside it (`llama-server` NEEDS `libllama-server-impl.so`, which NEEDS libllama-common, libmtmd, libllama, libggml,

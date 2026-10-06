@@ -41,9 +41,19 @@ python deploy/aws/box/frankie_box_lane_state.py \
 ```
 
 The runner workflow still supplies its artifact/optional presigned PUT. This change adds the owner-side acceptance
-and publication step; it does not choose or execute the first host, download a returned artifact, schedule automatic
-transport, or authorize a model call. Accumulated knowledge remains the existing label/hash index; its content scope
+and publication step. The settled host order is the free standard GitHub CPU runner first, then the existing small
+AWS CPU box; it is not an unanswered runtime choice. No returned artifact was downloaded, automatic transport
+scheduled, or model call authorized. Accumulated knowledge remains the existing label/hash index; its content scope
 is still Greg's decision. Brain delivery/reporting is not proof of every native learner consuming meeting semantics.
+
+## Settled runtime decisions — correction after Greg's clarification
+
+Greg and CCode already settled the coordinator role, IBM Granite 4.2 3B GGUF Q4_K_M, llama.cpp b11440 and its
+archive/binary/file pins, model pin, and host order in GRANITE_MEETING_RUNTIME_V1.json. The eight confirmed
+parameters remain temperature 0.0, top_p 0.9, 400 output tokens, 8192 input tokens, 16384 context, six coordinator
+turns per item, 3000 seconds per meeting, and threads null (the host's online CPU count). No parameter is reopened.
+The remaining live checks are execution evidence for the chosen runtime: startup, template/token-count agreement,
+structured replies and the one authorized E2E. Unperformed verification is not an unsettled configuration decision.
 
 ## Verification and boundaries
 
@@ -68,8 +78,9 @@ Publication uses the complete CCode Git tree as its base, preserving all unmodif
 3. [ ] Native-field search surfaces, transform pairs, conditions, targets, Dipole and symbolic discovery — open.
 4. [ ] Candidate/survivor batches and scientific double-checks — CCode source delivered; overall completion open.
 5. [ ] Discuss freeze/evaluation with Greg first — preserved draft remains unapplied.
-6. [ ] Granite final integration/decisions — named brain/queue/school/report/owner-import source wiring restored;
-   host/transport execution choice, accumulated-knowledge scope and runtime verification remain open.
+6. [ ] Granite final integration — runtime decisions settled; named brain/queue/school/report/owner-import source
+   wiring restored. Automatic return transport, accumulated-knowledge content scope and runtime verification remain
+   open; no new model/runtime/parameter or host-order decision is requested.
 7. [ ] Jev CPU blind comparison, claim sealing/testing and tested-knowledge publication — discussion pending.
 8. [ ] Three-lane launch/status/resume/stop, dependencies and controller lifetime — main save/resume remains open.
 9. [ ] One real ROOT-to-finish E2E after wiring/discussion and explicit AWS go — not run.
@@ -79,9 +90,11 @@ Native successor/pending-feedback work remains governed by PENDING_FEEDBACK_COMP
 successor handoff. No replacement weights, guessed outcomes, new objective, optimizer ordering or fresh-state
 supersede action is authorized by this integration. No claim that the 99-layer computation is complete.
 
-## Next CCode assignment prepared for Greg to pass along
+## CCode cached-file assignment delivered
 
-Own only frankie_box_granite_meeting_setup.sh and CCode's Granite fix-record/handoff documentation. Verify cached
-archives before extraction and cached GGUFs against the model pin on every invocation, not just after download.
-Keep extracted-file verification; refuse mismatches before success/path output. Preserve existing files and pins.
-Source/syntax only, [skip ci]; no setup, downloads, install, tests, model call, dispatch, AWS start or workflow #5.
+CCode delivered 03f29bef4a53c95296ca5c860712ba4a701bef0d directly on top of integration e0c6bb9. It verifies the
+cached archive before extraction and the cached GGUF against its pin on every invocation, retains extracted-file
+verification, and emits runtime paths only after all checks pass. An existing extraction is verified rather than
+overwritten. Codex reviewed source and checked shell syntax only. CCode separately reports eight scratchpad
+exercises with a stand-in model and dead proxy; those are not a real Granite run or the authorized E2E, and Codex
+did not repeat them. No setup, download, install, model call, dispatch or AWS action was performed by this integration.
