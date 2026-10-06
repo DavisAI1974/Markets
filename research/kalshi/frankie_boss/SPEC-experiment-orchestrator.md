@@ -74,6 +74,16 @@ run Frankie classroom, meeting, school retention or Jev unless the plan explicit
   the evidence while retaining its original teaching/math role.
 - **Survivors are cross-day.** They update at batch boundaries from already-completed discovery evidence; they do not
   block every individual day and are never built using confirmation days.
+- **Single-occurrence findings receive equal treatment (Greg, 2026-10-06).** One occurrence is just as valid and
+  certain as multiple occurrences when its mathematics and science check out after the work is double-checked.
+  Double-check the actual calculation, source evidence, timing/leakage and scientific test for the stated claim.
+  Once those checks hold, use the same acceptance, survivor, teaching and knowledge treatment as for any other
+  checked finding. No minimum-days/occurrences gate, rarity-based uncertainty label, confidence discount or automatic
+  hypothesis-only status. Occurrence counts are descriptive evidence, not an acceptance handicap. Preserve the exact
+  scope of the checked result and list actual errors, contradictions or incomplete checks on their merits. A day
+  without the relevant condition supplies no new test opportunity and does not downgrade an already checked finding.
+  This explicitly supersedes the older R06 prohibition on promotion after one appearance. Existing causal, answer-wall
+  and discovery/confirmation ordering rules still apply; the double-check is part of scientific work, not a new test farm.
 - **No same-day circular teaching.** A classroom cannot be taught a survivor that depends on that same classroom day's
   findings. It may use only an earlier completed survivor set.
 - **Jev stays blind.** His governed input may be produced after Frankie's classroom files physically exist, but the

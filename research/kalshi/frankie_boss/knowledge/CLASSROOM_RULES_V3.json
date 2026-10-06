@@ -1,6 +1,6 @@
 {
  "schema": "FRANKIE_CLASSROOM_RULES_V3",
- "status": "CONFIRMED by Greg 2026-10-06: V2 retained unchanged; R17 amended for Granite as a bounded active post-class coordinator/facilitator, never a scientific seat or calculator.",
+ "status": "CONFIRMED by Greg 2026-10-06: R17 amended for Granite as a bounded active post-class coordinator/facilitator, never a scientific seat or calculator; R06 clarified by Greg: double-checked single-occurrence findings receive the same validity, certainty and treatment as checked multi-occurrence findings, with no rarity handicap.",
  "purpose": "The one place the classroom rules live. The classroom code is to load this file and hold every answer, teacher reading and correction to it; Frankie's analysis cites it. Each rule names where it came from.",
  "seats": {
   "frankie": "the learner: his code, calculations and brain; his findings are claims",
@@ -63,8 +63,8 @@
     "boss_teacher",
     "scientific_teacher"
    ],
-   "rule": "A novel finding is never an error for being new. It is kept as a hypothesis with its evidence cited, tracked for reproduction in later causally available windows, and never promoted into the curriculum on one appearance.",
-   "source": "dipole_classroom_final_review.py:12, :206 (promotion_rule), :454"
+   "rule": "A novel finding is never an error for being new. Double-check its mathematics, source evidence, causal timing and scientific work. When those checks hold, one occurrence is just as valid and certain as multiple occurrences and receives the same acceptance, survivor, curriculum and knowledge treatment. No minimum-occurrence requirement, rarity-based uncertainty label, confidence discount or automatic hypothesis-only status. Keep the result scoped to what the work actually checked. Occurrence counts describe the evidence without handicapping the finding; actual errors, contradictions or incomplete checks are judged on their merits.",
+   "source": "Greg 2026-10-06: one occurrence is just as valid and certain as multi occurrence as long as the math and science check out; double check the work and if it still works then they get the same treatment as anything else. Supersedes the older one-appearance promotion prohibition in dipole_classroom_final_review.py."
   },
   {
    "id": "R07",

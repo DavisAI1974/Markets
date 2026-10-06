@@ -213,8 +213,9 @@ def summary_answer(visible, outputs):
             premise=(f'HYPOTHESIS: {p["left"]} and {p["right"]} end this window {p["direction_relation"]} first-to-last, while their '
                      f'consecutive both-PRESENT steps moved the same way {same} times and the opposite way {opposite} times.'),
             why_novel=('Computed by Frankie\'s code from the pair\'s co-movement counts; the classroom key grades the first-to-last '
-                       'relation only, so a step-by-step pattern running the other way is not in the curriculum. One window; kept as '
-                       'a hypothesis for reproduction in later causal windows (rule R06).'),
+                       'relation only, so a step-by-step pattern running the other way is not in the curriculum. '
+                       'The scientific work needs a double-check; once it holds, this finding receives the same treatment '
+                       'regardless of occurrence count (rule R06).'),
             future_outcome_claimed=False,
             evidence_refs=[dict(kind='DIPOLE_RELATIONSHIP', left=p['left'], right=p['right'], claimed_relation='HYPOTHESIS',
                                 reasoning=(f'Dipole relation {p["direction_relation"]}; co-movement steps '
@@ -254,7 +255,7 @@ def exchange_reply(*, item_id, author, day, final, joint, day_text, marks, lesso
     Returned in dipole_scientific_review.parse_reply's shape (item_id, position, reasoning, learned, next_steps; the
     exchange binds responds_to_hash and validates it with dipole_teacher_discussion.parse_frankie), plus his resolution:
       RESOLVED_HELD_ON_DAY            both teachers measured the claimed way on the day: resolved for that day in his words,
-                                      still a HYPOTHESIS, never promoted on one appearance (R06);
+                                      eligible for the same treatment after mathematical/scientific double-check (R06);
       RESOLVED_SHOWN_OTHERWISE_ON_DAY both teachers measured the other way: "the data is showing this instead" is taken for
                                       that subclaim on that day only; the claim as made on its own day stays (R07, R08);
       KEPT_AS_HYPOTHESIS              no combination both teachers support, or their rows point both ways (R06).
@@ -268,7 +269,8 @@ def exchange_reply(*, item_id, author, day, final, joint, day_text, marks, lesso
         position, resolution = 'AGREE', 'RESOLVED_HELD_ON_DAY'
         understanding = (f'{AUTHOR}: on {day} both teachers measured {whose} {item_id} the claimed way. '
                          + ' '.join(f['statement'] for f in joint)
-                         + f' I keep it a HYPOTHESIS scoped to {day}: one day, never promoted on one appearance (R06).')
+                         + f' I retain the measured scope on {day}. After the mathematical and scientific work is '
+                           'double-checked, this finding receives the same treatment regardless of occurrence count (R06).')
     elif joint and kinds == ['both_teachers_measured_otherwise']:
         position, resolution = 'AGREE', 'RESOLVED_SHOWN_OTHERWISE_ON_DAY'
         understanding = (f'{AUTHOR}: the data is showing this instead on {day} for {whose} {item_id}. '
@@ -399,4 +401,4 @@ def school_reproduction(visible, school):
     return dict(schema=REPRODUCTION_SCHEMA, author=AUTHOR, school_days_read=read, checks=checks,
                 counts_per_earlier_day=dict(sorted(per_day.items())), model_calls=0,
                 rule='each earlier day and each hypothesis on its own; counts, never pooled (R05); a hypothesis is tracked '
-                     'for reproduction, never promoted on one appearance (R06)')
+                     'for scientific checking; checked single-occurrence findings receive equal treatment (R06)')
