@@ -14,7 +14,7 @@ path>, with its bytes and sha256 in MANIFEST.json. Every catalogued pattern land
   excluded  present on disk but kept from the teachers, each with its reason:
               FRANKIE_REASONING  his own notes, analysis, response, ledgers, classroom answers, priming, brain (R09);
               GRADED             grades and the graded answer key (R09/R10: the teachers never see graded outcomes);
-              BEDROCK            the bedrock layers, ledgers and sections (Greg, 2026-09-29: no bedrock in the experiment);
+              BEDROCK            native artifacts outside the selected completed scientific evidence set;
               MIXED              files carrying data and Frankie's reasoning together; a filter is Greg's call;
               OTHER_MODEL        model output that is not Frankie's (the Granite critic, its self-assessment, the BOSS
                                  forecast journals); where it falls under the rule is Greg's call;
@@ -54,8 +54,8 @@ CATALOG = (
     # AUTHORSHIP: the Monday launch authorship the ROOT requires (/opt/frankie-box/work/monday-launch/<r>/)
     ('authorship', '**/*.json', INCLUDE, 'the launch authorship receipt and its companions'),
     # ROOT: the calculations root (/opt/frankie-box/work/monday-calculations/<root>/)
-    ('root', 'work/derived/.projection-v2/**/*', BEDROCK, 'the 44 bedrock projection layers and their receipts'),
-    ('root', 'work/bedrock/**/*', BEDROCK, 'the bedrock traversal: result, ledgers, receipts'),
+    ('root', 'work/derived/.projection-v2/**/*', BEDROCK, 'unselected projected aliases, ranges and publication receipts'),
+    ('root', 'work/bedrock/**/*', BEDROCK, 'unselected native generations, checkpoint state and staging'),
     ('root', 'work/derived/bedrock_section_*', BEDROCK, 'bedrock sections 4.2 / 4.4'),
     ('root', 'work/classroom/**/*', FRANKIE_REASONING, "Frankie's classroom answers and ledgers (R09)"),
     ('root', 'work/teach/**/*', FRANKIE_REASONING, "Frankie's priming (R09)"),
@@ -125,6 +125,10 @@ def plan(day, cycle, dirs):
     """(files, excluded, missing, notes) for one day and cycle: every catalogued file decided by the first pattern that
     claims it; a directory not given is listed, never guessed."""
     claimed, files, excluded, missing, notes = set(), [], [], [], []
+    if dirs.get('root') and Path(dirs['root']).is_dir():
+        from frankie_box_experiment_native import selected_files
+        files.extend(selected_files(dirs['root'], day))
+        claimed.update(Path(item['source']).resolve() for item in files)
     for stage, pattern, disposition, what in CATALOG:
         base = dirs.get(stage)
         glob = pattern.format(cycle=cycle)
@@ -178,6 +182,8 @@ def export(day, cycle, dirs, root=ROOT):
                              % (item['source'], error))
         item['bytes'] = destination.stat().st_size
         item['sha256'] = _sha256(destination)
+        if item.get('expected') and item['expected'] != {k: item[k] for k in ('bytes', 'sha256')}:
+            raise ValueError('selected native artifact changed while linking: ' + item['source'])
     ext = [f for f in files if f['stage'] == 'ingest' and Path(f['path']).name == 'day-external.json']
     external = (dict(status='attached', path='ingest/' + ext[0]['path'], sha256=ext[0]['sha256'], bytes=ext[0]['bytes'])
                 if len(ext) == 1 else
@@ -190,8 +196,10 @@ def export(day, cycle, dirs, root=ROOT):
                                 missing=len(missing), unclaimed=len(notes[0]['unclaimed']),
                                 unclaimed_bytes=sum(u['bytes'] for u in notes[0]['unclaimed'])),
                     rule=('both teachers read every data file of the day except the files Frankie generates himself to '
-                          'reason toward forecasts (R09), grades (R10), the bedrock (Greg 2026-09-29), mixed files and '
-                          'other models\' output (listed for Greg); hard links only, nothing recomputed'))
+                          'reason toward forecasts (R09), grades (R10), mixed files and other models\' output; '
+                          'selected complete native ledgers and section products are shared, checkpoint/staging state '
+                          'and duplicate projected aliases remain excluded; hard links only, nothing recomputed; '
+                          'availability is not proof of teacher consumption'))
     staging.mkdir(parents=True, exist_ok=True)
     (staging / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     os.replace(staging, target)

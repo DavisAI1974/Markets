@@ -1,11 +1,24 @@
 # Frankie AWS — step 2 learner delivery checkpoint
 
-## New source slice — native recovery foundation, workflow still off
+## New source slice — exact native emission and shared search, workflow still off
+
+The recovery foundation below now adds source-bound `FRANKIE_NATIVE_EMISSION_V1` coordinates to native member and
+lifecycle rows, with a distinct FINALIZE phase. The shared export selects completed exact native evidence; the existing
+search reads member/lifecycle ledgers once and places every leaf/ordered emission by exact INPUT cursor, instrument and
+receive time on the unchanged F_LAST axis. It does not use timestamp-as-of to collapse tied native groups. Terminal,
+unsupported and unmatched rows retain explicit original-ledger ordinal dispositions. Exact section products remain
+available for completed-knowledge consumers; availability does not establish those consumers. See the updated bedrock
+route and `NATIVE_LEARNER_INTEGRATION_DECISIONS_20261006.md` for remaining native model/BOSS decisions.
+
+Default-off producer selection, CCode ownership, scientific mathematics and the preserved #5 draft remain unchanged.
+Source-built/runtime-unverified: source review, syntax compilation and diff check only; no tests, data/model run or AWS.
+
+## Previous source slice — native recovery foundation
 
 `frankie_box_experiment_root.py --bedrock on` is now an explicit default-off source route. It binds the complete day
 manifest and original opening book, calls the existing native calculation/recovery path, retains exact ledgers and
 compressed projections, and omits giant rendered bedrock tables. The orchestrator still does not select it: shared
-consumers and lawful lifecycle emission timing remain open. Read `BEDROCK_SHARED_STREAM_ROUTE_20261006.md`.
+complete consumer coverage remains open. Read `BEDROCK_SHARED_STREAM_ROUTE_20261006.md`.
 
 Completed legacy/native stage receipts prevent replay of those completed stages during projection continuation. Native
 save/resume verifies full-state generation ancestry and opening provenance. These are source-built only: syntax/source
@@ -35,8 +48,9 @@ not establish learned live recognition. Exact evidence may remain large and stay
 storage choice is to keep exact local ledgers and omit giant rendered/redundant table copies, not discard evidence.
 
 Read `BEDROCK_SHARED_STREAM_ROUTE_20261006.md` for the three user-authorized agents' source review. Existing native
-calculation, full-state checkpoints, shared-source readers and historical/live model routes exist. The experiment still
-has opening-state, recovery, manifest, producer-selection and actual consumer gaps; no disabled producer was activated.
+calculation, full-state checkpoints, shared-source readers and historical/live model routes exist. The recovery,
+manifest and opening-state foundation is source-wired above; producer selection and complete actual consumers remain
+open. No disabled producer was activated.
 The BOSS's broader representation/target/mask/control role remains required; its existing training harness cannot be
 silently substituted for the current experiment. The latest requirement is also in `knowledge/EXPERIMENT_DIRECTIVE_V1.json`.
 

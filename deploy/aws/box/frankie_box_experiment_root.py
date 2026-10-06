@@ -191,9 +191,11 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                    journal_hash=receipt['journal_hash'], day_role=day_role, partial_members=partial_members,
                    tail_members=tail_members, opening_book=opening_book, external=external)
     if bedrock:
+        from frankie_box_native_emission import binding as emission_binding
         binding['native_calculation_policy'] = dict(schema=NATIVE_RECOVERY_SCHEMA,
             producer='existing_pinned_native_traversal', bedrock=True, source_manifest=manifest_pin,
-            representation='exact_local_ledgers_and_existing_compressed_projections', digest_bedrock=False)
+            representation='exact_local_ledgers_and_existing_compressed_projections', digest_bedrock=False,
+            emission=emission_binding())
     save_or_match(output / 'source-binding.json', binding)
     if external['status'] == 'attached':
         save_or_match(output / 'external-computation.json', external_computation)
@@ -218,6 +220,8 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             raise ValueError('saved derivation lacks completed native calculations; retained outputs preserved')
         if bedrock:
             native = result['bedrock']
+            if native.get('emission') != binding['native_calculation_policy']['emission']:
+                raise ValueError('saved native emission provenance policy differs; retained outputs preserved')
             for item in [native['receipt'], native['result'], *native['ledgers'].values()]:
                 if witness(Path(item['path'])) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
                     raise ValueError('saved native evidence differs: ' + item['path'])

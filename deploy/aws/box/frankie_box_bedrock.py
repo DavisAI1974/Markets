@@ -482,6 +482,13 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         # This pinned wrapper keeps the exact resting book while honestly marking
         # unavailable preceding activity anchors UNKNOWN_SINCE_RESUME.
         opening_adapter = FullCaptureAdapter.from_restored(opening_adapter)
+    emission = None
+    continuation_binding = opening_binding
+    if recovery:
+        import frankie_box_native_emission
+        emission = frankie_box_native_emission.binding()
+        continuation_binding = dict(schema='FRANKIE_NATIVE_CONTINUATION_V2',
+                                    opening_book=opening_binding, emission=emission)
     modules = loaded_modules(producers, native_replay_driver, native_calculation_runner, native_row_sink,
                              native_response, native_a_arm_launch, periodic_checkpointer, native_staging)
     out_dir = Path(out_dir)
@@ -545,7 +552,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     checkpoint = descriptor = None
     if resume_checkpoint:
         checkpoint, descriptor = read_checkpoint(resume_checkpoint, asdict(ident),
-                                                  continuation_binding=opening_binding)
+                                                  continuation_binding=continuation_binding)
         if descriptor is None and not reconstruct_missing:
             raise ValueError('adapter-only checkpoint requires explicit reconstruction authorization')
         if checkpoint['total_mbo_records'] != len(records):
@@ -556,7 +563,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         source_manifest_hash=ident.source_manifest_hash, total_mbo_records=len(records),
         checkpoint_dir=checkpoint_dir, phase='RT_NATIVE_TRAVERSAL',
         driver_identity=asdict(ident), progress=progress,
-        continuation_binding=opening_binding, save_requested=save_requested,
+        continuation_binding=continuation_binding, save_requested=save_requested,
         parent_checkpoint=witness(Path(resume_checkpoint)) | {'path': str(resume_checkpoint)} if resume_checkpoint else None)
     evidence = dict(run_id=ident.run_id, arm=ident.arm, mission_sha256=ident.mission_sha256,
         calculation_contract_sha256=ident.calculation_contract_sha256,
@@ -579,6 +586,9 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         evidence['exact_ledgers'] = {name: sink.path.as_posix() for name, sink in (
             ('exact_member_rows', sinks.member), ('exact_lifecycle_rows', sinks.lifecycle),
             ('legacy_observable_rows', sinks.legacy))}
+    if recovery:
+        if frankie_box_native_emission.install(driver) != emission:
+            raise ValueError('native emission helper changed during setup')
     checkpointer.driver = driver
     if checkpoint and descriptor is None:
         driver._frankie_reconstruction_checkpoint = checkpoint
@@ -657,6 +667,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                                     final=checkpointer.saved_checkpoints[-1], readback_verified=True),
                    identity=asdict(ident), identity_inputs=dict(mission=MISSION_PATH, contract=CONTRACT_PATH, knowledge_manifest=KNOWLEDGE_MANIFEST_PATH),
                    opening_book=opening_binding,
+                   emission=emission,
                    recovery=dict(parent_checkpoint=str(resume_checkpoint) if resume_checkpoint else None,
                        restored_state_records=checkpoint['completed_mbo_records'] if descriptor else 0,
                        authorized_reconstruction_records=checkpoint['completed_mbo_records'] if checkpoint and descriptor is None else 0),

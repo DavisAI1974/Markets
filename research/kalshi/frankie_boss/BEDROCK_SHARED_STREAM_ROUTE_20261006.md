@@ -69,7 +69,7 @@ Full book/FIFO state, queues, anchored accumulators, candidate/episode state, li
 | Native traversal lacked the experiment save callback | Source-wired complete closed-group save and pre-final/terminal boundaries; no hard-crash or runtime claim. |
 | Opening book reached only the legacy pass | Source-wired same state/provenance through pinned FullCaptureAdapter.from_restored; unknown prior activity remains explicit. |
 | Native runner requires the complete source manifest | The opt-in route now binds the existing committed manifest, scope and member counts. The default-off route retains its prior binding. |
-| `frankie_box_experiment_data.py` explicitly excludes native bedrock artifacts | Replace obsolete blanket exclusion with lawful shared surfaces while retaining sealed-answer/private-output boundaries. |
+| `frankie_box_experiment_data.py` explicitly excluded native bedrock artifacts | Source-wired selection of completed, source-bound exact ledgers and section products; checkpoint/staging/private artifacts remain excluded. Availability alone is not consumption. |
 | Current search/teacher connections do not establish every native row/section's consumption | Reuse the existing full-evidence reader where its identity/axis contract applies, and connect each applicable learner/teacher consumer. The preserved axis-changing draft remains unapplied; no event-axis lag substitution is implied. A manifest or retained file is not consumption. Coordinate scientific candidate/check routes with CCode's Step #4 owner. |
 | Segment receipts/readback and finalization/projection expect consolidated ledger paths | Retain exact local JSONL for the first connection slice. Eliminating consolidated files requires a separate segmented-reader/finalizer/projection change. |
 
@@ -86,14 +86,31 @@ This report adds no validator framework or tests. Source changes, once made, rem
 
 The user explicitly authorized a local codebase-memory-mcp installation during this continuation. The installer/CLI was blocked by its process-fingerprint check because `getpid` and `/proc` identities did not match in this environment. No memory graph review occurred. Findings in this report come from direct source inspection; this installation authorization is not AWS compute authorization.
 
-## Consumer timing and actual native-learning decisions still open
+## Exact emission and shared search connection
 
-The existing `native_causal_stream.CausalGroupStream` and `lifecycle_availability` preserve dictionaries and ledger
-provenance, but lifecycle availability is stamped with receive time alone. Tied F_LAST timestamps and finalization can
-therefore expose later-produced evidence too early if attached using timestamp-as-of alone. Member rows have group indices;
-lifecycle emission needs exact producing group/native cursor and finalization provenance before equivalent placement can
-be claimed. Keep the existing F_LAST statistic/lag units; do not apply the preserved axis-changing draft. Read exact member
-and lifecycle ledgers once, with compressed projections used for registry aliases/section products, not duplicate occurrences.
+`frankie_box_native_emission.py` now adds `FRANKIE_NATIVE_EMISSION_V1` alongside the original scientific values: exact
+producing group index, INPUT cursor, instrument and receive time, with a separate FINALIZE phase. It wraps the existing
+group/lifecycle/finalization boundaries without replacing scientific calculations or sinks. Its content identity is bound
+in ROOT source policy, native continuation checkpoints, completed native-stage identity and derivation receipts. Resume
+refuses a changed helper or older incompatible policy; retained artifacts are not rewritten.
+
+The existing export selects only a completed source-bound native receipt/result, the three authoritative exact ledgers and
+the two original compressed section products. It hard-links the original evidence; it does not ingest or recalculate it.
+`frankie_box_experiment_native.read_columns`, called by the existing search `build_series`, reads exact member/lifecycle
+ledgers once and matches the producing INPUT cursor, instrument and receive time directly to original ROOT frames.
+It preserves every nested/list/scalar leaf and every ordered per-section lifecycle emission. Equal receive timestamps
+do not collapse groups. The F_LAST axis, transforms, lag units and circular-shift statistic are unchanged.
+
+FINALIZE rows, older rows without provenance and rows without a matching successful ROOT frame retain explicit ledger
+ordinal-range dispositions. They are not assigned to an earlier live cell. Whole-day section products and the result remain
+completed-knowledge evidence awaiting applicable consumers; projected aliases and legacy rows are not counted as new
+independent observations. Positional emission slots preserve identities but are not identity-linked trajectories. Search
+resume binds the reader's content hash. This is partial source wiring, not full registry or teacher-consumption proof.
+
+Source review, syntax compilation and `git diff --check` only; no data/scientific run, test suite or E2E. The default-off
+workflow selection and preserved axis-changing draft are unchanged.
+
+## Actual native-learning decisions still open
 
 The native learner exists, but is not called by this code-only experiment. Its initializer explicitly creates an untrained
 candidate and must not replace retained trained weights silently. ActualHost's existing training.sqlite/witness restoration
@@ -107,3 +124,6 @@ The current Monday context author uses the whole declared day record count; a ge
 of an active fixed 4,096-row cap. Original typed DipoleTarget attachments can be reused; prose/classroom exchanges cannot
 substitute for same-forward representation supervision. These are source findings requiring integration decisions, not a
 request to launch a separate evaluation or to change the scientific mathematics.
+
+See `NATIVE_LEARNER_INTEGRATION_DECISIONS_20261006.md` for exact reusable source contracts, historical checkpoint
+identity and the unresolved objective/state/lineage choices. The completed-knowledge sharing requirement is already settled.

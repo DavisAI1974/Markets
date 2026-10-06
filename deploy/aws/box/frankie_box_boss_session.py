@@ -1078,6 +1078,12 @@ class Session:
             pin=pin['pins_witness']['sha256'], producers=self._producer_witnesses(pin),
             wrapper=witness(Path(B.__file__)), opening_book=opening_book,
             opening_adapter_state_hash=evidence_hash(opening_adapter_state))
+        if recovery:
+            from frankie_box_native_emission import binding as emission_binding
+            stage_identity['emission'] = emission_binding()
+            selected = (self.source_binding or {}).get('native_calculation_policy')
+            if selected is not None and selected.get('emission') != stage_identity['emission']:
+                raise ValueError('native emission implementation differs from the selected ROOT policy')
         if recovery and native_stage.is_file():
             saved = load_json(native_stage)
             if saved.get('identity') != stage_identity:
@@ -1123,6 +1129,7 @@ class Session:
                   f'({run["span_seconds"]:.1f} s of rows; the candidate lane needs {run["candidate_warmup_seconds"]} s); sections '
                   + ', '.join(f'{name[-3:].replace("_", ".")} {e["status"]} ({e["count"]} rows)' for name, e in sections.items()))
         return dict(schema='FRANKIE_BOX_DERIVE_BEDROCK_V1', layers=layers, sections={name: e['status'] for name, e in sections.items()},
+                    emission=run.get('emission'),
                     bedrock_groups=pin_groups(pin), producers_commit=code_commit,
                     cadence_policy=run['cadence_policy'], receipt=dict(witness(native_directory / 'receipt.json'), path=str(native_directory / 'receipt.json')),
                     result=run['result'], ledgers=run['ledgers'], reconciliation=run['reconciliation'], sections_fed=run['sections_fed'],

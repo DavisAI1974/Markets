@@ -82,6 +82,13 @@ Search continuation binds its source manifest, code and directive, preserving th
 
 ## Still open — not waived by full-depth wiring
 
+Continuation: `BEDROCK_SHARED_STREAM_ROUTE_20261006.md` now records an opt-in native recovery and exact-emission
+connection. Selected native member/lifecycle evidence enters the existing shared export/search on the same F_LAST axis
+by exact INPUT cursor/instrument/receive identity. Full nested leaves and ordered lifecycle emissions are retained; terminal
+and unmatched evidence has explicit dispositions. This supersedes the earlier blanket export exclusion, but the
+orchestrator still does not select bedrock and no runtime execution occurred. It establishes neither complete 99-layer
+mapping nor consumption by the original native model and both teachers.
+
 - The complete original APPLIED envelope is not in this frame projection. It carries a current live-book observation,
   not a claim to have read every journal envelope field. The full-evidence/native-ordinal helper remains uncalled and
   the preserved axis-changing/freeze draft remains unapplied. Event-axis lag mathematics is not silently substituted.

@@ -100,13 +100,11 @@ NOT_SEARCHED = (
     ('structure identity lists', 'structures.order_ids[i] and structures.fill_disposition.*_order_ids[i] are order '
      'identities flattened by position; they are searched as numeric series like every other leaf (listed here so the '
      'count of searched series is read correctly; an identity has no steps of its own)'),
-    ('bedrock-only layers', 'the cross-group forms that only the bedrock traversal and projection produce (order identity '
-     'transitions and per-order lifecycles, contract/session roll state, bootstrap receipts, family lineage across groups, '
-     'open-world predecessor state, ancestry gaps, the bedrock replenishment/absorption and episode rows, v4 mechanics '
-     'fifo features, book-regime paths, feature-availability stamps, the five pre-birth layers, the discovery/evaluation/'
-     'lock clocks) are not derived by the experiment ROOT (bedrock off, Greg 2026-09-29) and are excluded from the export '
-     '(BEDROCK); their per-group forms that the legacy pass and the teacher DO produce are searched (plane receipt); '
-     're-enabling the rest is a producer-activation decision, not a search change'),
+    ('native evidence boundaries', 'selected completed native member/lifecycle ledgers with exact emission provenance '
+     'enter the existing F_LAST axis, every leaf and ordered per-section emission slot. Native producers remain opt-in; '
+     'old provenance-free rows, unmatched ROOT frames and FINALIZE rows have explicit retained dispositions. '
+     'Whole-day summaries and duplicate projected aliases are not earlier live features. Positional emission slots '
+     'preserve all entity IDs but do not establish identity-linked trajectories or full teacher consumption'),
     ('ROOT failures spool', 'root/work/derived/.rows/failures.jsonl (records the legacy pass could not apply) is not a '
      'series; it is listed in the ROOT receipt, not searched'),
     ('native journal ordinal axis', 'frankie_box_experiment_surface.journal_axis reads every INPUT/APPLIED entry of the sealed '
@@ -225,6 +223,16 @@ def build_series(day_dir, log, external_fields_mode=None):
     con = duckdb.connect()
 
     gates = [dict(source='frames', passed=True, reason='the axis source itself: each value is its own group close')]
+
+    import frankie_box_experiment_native as NATIVE
+    native_numeric, native_text, native_sources, native_notes = NATIVE.read_columns(day_dir, columns, f_num, recv)
+    series.update({name: np.asarray(values, dtype=object) for name, values in native_numeric.items()})
+    text_cols.update(native_text)
+    sources.extend(native_sources)
+    notes.extend(native_notes)
+    for native_source in native_sources:
+        gates.append(dict(source=native_source['source'], passed=True,
+                          reason='only exact emitting INPUT/instrument/receive matches placed; dispositions retain all other rows'))
 
     def asof(name, known_at, values_by_col):
         """Place a source on the axis with asof_values; its leakage gate runs first, on its first numeric column."""
@@ -755,9 +763,21 @@ def plane_summary(sources, notes):
             activity = (receipt.get('frame_sections') or {}).get('activity') or {}
             if not activity.get('numeric'):
                 status = 'produced_not_carried'
+        if status == 'not_produced' and 'native.member' in read:
+            # The older table describes the legacy-only route. Exact native rows
+            # now have their own measured field/ordinal receipts; a file read is
+            # not a per-registry-layer proof, so do not invent that reconciliation.
+            status = 'native_evidence_present_layer_mapping_open'
         out[name] = dict(status=status, declared_status=declared_status, source=source, source_read=receipt is not None,
                          mapped_by=consumed_by, remaining=remaining,
                          evidence='sources placed_series/placed_cells/exclusions; cells_not_counted; couplings.parts')
+    if 'native.member' in read:
+        out['native_exact_emission_rows'] = dict(status='mapped_partial',
+            sources=['native.member', 'native.lifecycle'],
+            mapped_by='exact emitting INPUT cursor/instrument/receive -> unchanged F_LAST frame',
+            remaining='post-stream, unsupported and unmatched rows explicitly retained; identity-linked trajectories, '
+                      'full registry reconciliation and all teacher consumers remain open',
+            evidence='native source row/ordinal dispositions and actual placed_series/placed_cells')
     return out
 
 
@@ -833,6 +853,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import frankie_box_experiment_transforms as T
     import frankie_box_experiment_surface as SURFACE
+    import frankie_box_experiment_native as NATIVE
     external_fields_mode = os.environ.get('SEARCH_EXTERNAL_FIELDS', 'all')
     if external_fields_mode not in ('all', 'aliases'):
         raise ValueError('SEARCH_EXTERNAL_FIELDS must be all or aliases')
@@ -866,6 +887,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     transforms=transform_names, frozen_sha256=sha256_file(frozen) if frozen else None,
                     code_sha256=sha256_file(__file__), transform_sha256=sha256_file(T.__file__),
                     external_fields_mode=external_fields_mode, surface_sha256=sha256_file(SURFACE.__file__),
+                    native_reader_sha256=sha256_file(NATIVE.__file__),
                     directive=directive_witness())
     identity_path = recovery / 'identity.pkl'
     if identity_path.is_file():
