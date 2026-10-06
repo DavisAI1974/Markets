@@ -5,6 +5,15 @@ Started from `d303f84f87e67fff26ed6f6e011cbaf364d6a9cb`, verified by GitHub MCP 
 Fetch latest and preserve newer work. This is **source-built, runtime-unverified** work within #2, not completion of #2.
 Read `HANDOFF_20261006_STEP1_RECOVERY.md` and follow its canonical reading order, then this update.
 
+**Latest continuation, 2026-10-06:** Greg resumed work and authorized correcting CCode's verified integration defects.
+CCode Step #3 (`e46228fb`) is integrated over the newer `f143e775` work, with corrected event projection, entity-field
+retention, mixed/nested leaves, resume-mode binding and source-map receipts. Read
+`CCODE_STEP3_SOURCE_COVERAGE_20261006.md` for actual consumers and remaining gaps. Neither #2 nor #3 is complete.
+Greg assigned CCode the separate Step #4 work in `HANDOFF_20261006_CCODE_STEP4.md`. That file establishes ownership;
+Codex must preserve CCode's scientific-teacher changes when they return. No #5 work or AWS execution is authorized.
+Earlier stop requests and unapproved/uncalled-second-walk wording below are historical, superseded by the subsequent
+authorized continuation and learner-reader implementation recorded in this file. No real E2E has passed.
+
 **Chat stop requested by Greg, 2026-10-06 08:02 ET:** finish only the accumulated native-claim connection below,
 update/commit/push/handoff, and stop. **Do not finish all of #2 in this chat.** Start the next chat at the latest branch
 tip, preserving newer work. This slice starts from `82649247acb793e5f4a695efa5badf8e17186caa`; the commit containing
