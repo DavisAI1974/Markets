@@ -19,8 +19,8 @@ how many reached the observed count. Where the claimed direction is stated in a 
   held       beyond chance and moving the claimed way;
   shown_otherwise  beyond chance and moving the other way -> the challenge, worded "the data is showing this instead";
   unresolved not beyond chance, or no claimed direction to compare.
-  counts_only  a row on another transform pair than the claim's (x_transform, y_transform; default sign_of_step on
-             both sides): its counts are reported, it is never marked.
+  counts_only  a row outside the claim's transforms, lag or cells, or with an unapplied condition/lag relation:
+             its counts are reported, it is never marked as supporting or contradicting that claim.
 The disposition word (SUPPORTED_SCOPED, CONTRADICTED_SCOPED, PLAUSIBLE_UNRESOLVED, INSUFFICIENT_EVIDENCE, the words of
 dipole_scientific_review) is orientation only (R14); the counts and days are the finding. Lags outside the search's
 window, cells the search did not run, transforms it did not run and series it does not carry are listed under
@@ -159,6 +159,36 @@ def match(name, series):
     return out
 
 
+def row_scope_reasons(claim, row, reverse=False):
+    """Decide whether existing counts answer this claim; never alter or recompute the search mathematics."""
+    reasons = []
+    source = claim.get('source_claim') or {}
+    transforms = (claim.get('x_transform', source.get('x_transform', 'sign_of_step')),
+                  claim.get('y_transform', source.get('y_transform', 'sign_of_step')))
+    if reverse:
+        transforms = transforms[::-1]
+    actual = (row.get('x_transform', row.get('transform', 'sign_of_step')),
+              row.get('y_transform', 'sign_of_step'))
+    if actual != transforms:
+        reasons.append('another transform pair than the claim')
+    lag = claim.get('lag')
+    raw_lag = source.get('lag')
+    if raw_lag is not None and str(raw_lag).strip() and not re.fullmatch(r'[+-]?\d+', str(raw_lag).strip()):
+        reasons.append('the stated lag relation has no exact searched-lag binding')
+    elif lag is not None and row['best_lag'] != (-lag if reverse else lag):
+        reasons.append('the selected search lag is not the claimed lag in this pair orientation')
+    cells = claim.get('cells') or source.get('cells') or []
+    labels = {str(row['cell']), '%s=%s' % (row['cell'], row['cell_value']),
+              '%s %s' % (row['cell'], row['cell_value'])}
+    if row['cell_value'] is not None:
+        labels.add(str(row['cell_value']))
+    if cells and not any(str(cell) in labels for cell in cells):
+        reasons.append('the row is outside the explicitly named cells')
+    if claim.get('condition') or source.get('condition'):
+        reasons.append('the claimed condition has not been applied to these search counts')
+    return reasons
+
+
 def test(claims_doc, days):
     wanted = {}
     per_claim = []
@@ -189,8 +219,9 @@ def test(claims_doc, days):
                     for r in rows.get((d['day'], x, y), []):
                         observed = 'same' if r['same_way'] > r['opposite'] else 'opposite' if r['opposite'] > r['same_way'] else 'even'
                         tx, ty = r.get('x_transform', r.get('transform', 'sign_of_step')), r.get('y_transform', 'sign_of_step')
-                        if (tx, ty) != (c.get('x_transform', 'sign_of_step'), c.get('y_transform', 'sign_of_step')):
-                            mark = 'counts_only'          # another transform pair than the claim's: reported, not marked
+                        scope_reasons = row_scope_reasons(c, r, reverse=(x, y) == (b, a))
+                        if scope_reasons:
+                            mark = 'counts_only'  # retained observations, never evidence for an unapplied claim scope
                         elif c['direction'] is None or not r['beyond_chance']:
                             mark = 'unresolved'
                         elif observed == c['direction']:
@@ -210,11 +241,12 @@ def test(claims_doc, days):
                                                       x_moves=r['x_moves'], y_moves=r['y_moves']),
                                           chance_check=dict(shifts=r['null_shifts'], reached=r['null_at_or_beyond'],
                                                             largest=r['null_largest'], exclusion=r['null_exclusion']),
-                                          mark=mark, days_named=[d['day']]))
+                                          mark=mark, scope_not_tested=scope_reasons, days_named=[d['day']]))
         held, other = verdicts.count('held'), verdicts.count('shown_otherwise')
         disposition = ('INSUFFICIENT_EVIDENCE' if not tests else 'SUPPORTED_SCOPED' if held and not other
                        else 'CONTRADICTED_SCOPED' if other and not held else 'PLAUSIBLE_UNRESOLVED')
         untested = []
+        untested.extend(dict.fromkeys(reason for t in tests for reason in t['scope_not_tested']))
         if c['lag'] is not None and days and abs(c['lag']) > min(d['lags'] for d in days):
             untested.append('the claimed lag %d is outside the searched window of +-%d' % (c['lag'], min(d['lags'] for d in days)))
         for cell in c['cells']:
@@ -294,7 +326,7 @@ def publish_lessons(path, brain_dir='/opt/frankie-box/brain', log=print):
     schemas = {'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1', 'jev': 'JEV_LESSONS_V1'}
     if author not in schemas or lesson.get('schema') != schemas[author] or lesson.get('written_by') != 'scientific_teacher':
         raise ValueError('only completed scientific-teacher lessons may be published')
-    if author == 'jev':
+    if author == 'jev' and not lesson.get('knowledge_retest'):
         _, reused = brain.write_stage_entry(
             brain_dir, lesson['day'], 'jev-tested', [path],
             summary=dict(author='jev', claims_sha256=lesson['claims_sha256'],
@@ -302,7 +334,7 @@ def publish_lessons(path, brain_dir='/opt/frankie-box/brain', log=print):
                          dispositions={k: sum(r['disposition'] == k for r in lesson['results']) for k in DISPOSITIONS}))
         log('tested Jev knowledge published%s' % (' (reused)' if reused else ''))
         return
-    days = [lesson['day']] if author == 'frankie' else list(dict.fromkeys(d['day'] for d in lesson['searches']))
+    days = [lesson['day']] if author in ('frankie', 'jev') else list(dict.fromkeys(d['day'] for d in lesson['searches']))
     digest = sha256_bytes(raw)
     for day in days:
         entry = Path(brain_dir) / ('%s-lessons' % day)

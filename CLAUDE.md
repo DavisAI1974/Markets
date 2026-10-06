@@ -1,5 +1,12 @@
 # Current Frankie AWS continuation — 2026-10-06
 
+Greg requested a chat handoff at 08:02 ET before finishing all of #2. Latest slice wires native accumulated lesson
+claims into owner-local scientific tests before the classroom-arm exchange, with durable inputs/results and exact
+evidence reuse. Scope-ineligible counts cannot confirm a claim. Non-arm delivery and other #2 gaps remain explicit in
+the step-2 handoff. No tests/compute ran. Continue from the latest pushed tip; #2 is still open.
+CCode `c547c01a` is integrated: external independent day-file adapter built but not called; Dipole SOCRATIC/VERIFY
+still refuse. Discuss a second pinned-teacher walk with Greg before implementation (cost and independence semantics).
+
 Step #2 progress and parallel ownership: `research/kalshi/frankie_boss/HANDOFF_20261006_STEP2_KNOWLEDGE.md` and
 `CCODE_STEP2_TEACHER_PARALLEL_20261006.md` in the same directory. Read after the step-1 handoff's canonical reading order.
 Step #2 is still open; actual learner-answer/carry code is source-built, not runtime-verified. SOCRATIC/VERIFY

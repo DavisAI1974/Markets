@@ -1,5 +1,14 @@
 # CCode parallel assignment — step 2 reused-teacher delivery
 
+**Next assignment (printed for Greg at checkpoint `82649247`):** lawful SOCRATIC/VERIFY source readers, including
+external evidence. Own the two classroom answer modules and a narrow reader adapter only; coordinate runner changes
+with Codex. Preserve all visible observations, existing math/grading/PREVIOUS/progression and learner_context. Host
+teacher snapshots, answer keys, grades and prior answers are not current independent observations. Report exact missing
+source routes rather than fabricate completeness. Read the latest step-2 handoff; source/syntax only, [skip ci], no
+tests/installations/AWS/compute. `c547c01a` is now integrated: independent external day-file adapter built without a
+caller; precise Dipole/alignment gap named. Stop here. A second pinned-teacher walk needs Greg's ruling on cost and
+independent recognition; do not implement it or change grading/visibility. The older assignment below is history.
+
 **Delivered and integrated:** `89f94b26` then `ee2c554d` from `ccr-e9f0f4af-lqxmss`. The assignment below is retained
 as its scope record. The subsequent GUIDED reader extension `8b14182f` is also integrated, with Codex-owned runner
 connections completed. Withheld external table counts retain the existing correction path; visibility/grading unchanged.

@@ -17,8 +17,12 @@ case "$RUN" in ""|*[!A-Za-z0-9_-]*) echo "RUN: letters, digits, _ and - only" >&
 case "$OUT_DIR" in "/opt/frankie-box/work/experiment/$RUN/exchange/$DAY") ;; *) echo "OUT_DIR must be /opt/frankie-box/work/experiment/<RUN>/exchange/<DAY>" >&2; exit 2;; esac
 BRAIN="${BRAIN:-/opt/frankie-box/brain}"
 case "$BRAIN" in /opt/frankie-box/*) ;; *) echo "BRAIN must be under /opt/frankie-box" >&2; exit 2;; esac
-case "$BRAIN${TEACHER_ROWS:-}$LESSONS" in *..*) echo "no .. in paths" >&2; exit 2;; esac
+case "$BRAIN${TEACHER_ROWS:-}$LESSONS${SEARCH_DIR:-}" in *..*) echo "no .. in paths" >&2; exit 2;; esac
 set -- --day "$DAY" --run "$RUN" --out-dir "$OUT_DIR" --brain "$BRAIN"
+case "${SEARCH_DIR:-}" in
+  /opt/frankie-box/work/experiment-search/"$DAY"/cycle-*/discovery) set -- "$@" --search "$SEARCH_DIR";;
+  *) echo "SEARCH_DIR must be the owning day's completed discovery search" >&2; exit 2;;
+esac
 for f in $(echo "$LESSONS" | tr ',' ' '); do
   case "$f" in /opt/frankie-box/work/experiment-teacher/*.json) set -- "$@" --lessons "$f";; *) echo "lessons file under experiment-teacher required: $f" >&2; exit 2;; esac
 done

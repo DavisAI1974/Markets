@@ -1,5 +1,10 @@
 # Spec: the 30-day experiment orchestrator
 
+**08:02 ET handoff:** Greg asked to stop before completing #2. Accumulated native claims now feed owner-local
+scientific calculations before classroom-arm exchanges; counts outside a claim's applied scope cannot confirm it.
+CCode `c547c01a` adds an uncalled external day-file adapter. SOCRATIC/VERIFY still need Greg's ruling on a second
+Dipole teacher walk and independence semantics. See the step-2 handoff for exact remaining gaps. Source-built only.
+
 **Step #2 source checkpoint:** reused teachers, cumulative lesson exchange, cross-lane legal claim inputs and GUIDED readers are wired. SOCRATIC/VERIFY and remaining typed scientific consumers are still open. Follow `HANDOFF_20261006_STEP2_KNOWLEDGE.md`; no E2E has passed. Greg delegated the Granite discussion/report to another chat.
 
 **Knowledge stacking applies throughout:** the classroom, Frankie, both teachers and their exchanges must use applicable completed knowledge in their actual inputs/computations, regardless of trading date. Receipt-only availability is not consumption. Greg may consider repeated refinement passes over the same data after the initial 30 days; that remains undecided and outside the current build.

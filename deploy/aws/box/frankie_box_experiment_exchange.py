@@ -796,6 +796,7 @@ def main():
     p.add_argument('--teacher-rows', help='the BOSS teacher\'s Dipole rows of the day (host-dipole-classroom-source*.json)')
     p.add_argument('--out-dir', required=True, help='/opt/frankie-box/work/experiment/<run>/exchange/<day>')
     p.add_argument('--brain', default='/opt/frankie-box/brain')
+    p.add_argument('--search', required=True, help='the owning day completed search for accumulated native claim tests')
     a = p.parse_args()
     if not re.fullmatch('[0-9]{8}', a.day) or not re.fullmatch('[A-Za-z0-9_-]{1,64}', a.run):
         p.error('--day YYYYMMDD and --run of letters, digits, _ and - required')
@@ -806,6 +807,8 @@ def main():
     started = time.time()
     out = Path(a.out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    import frankie_box_teacher_knowledge as TK
+    accumulated_claim_tests = TK.teach_accumulated(a.day, a.search, a.brain, out / 'scientific-knowledge')
     full, view = exchange(a.day, a.run, a.lessons, a.teacher_rows, rules_witness,
                           brain=a.brain, input_path=out / 'learner-knowledge.json')
     written = {}
@@ -827,6 +830,7 @@ def main():
                    teacher_rows=full['sources']['teacher_rows'], teacher_rows_listed=full['sources']['teacher_rows_listed'],
                    lessons=full['sources']['lessons'], jev_withheld=view['jev_withheld'], rules=rules_witness,
                    knowledge_inputs=full.get('knowledge_inputs'),
+                   accumulated_claim_tests=accumulated_claim_tests,
                    seconds=round(time.time() - started, 1), at=time.time(), model_calls=0)
     tmp = out / 'receipt.pending'
     tmp.write_text(json.dumps(receipt, indent=1, sort_keys=True) + '\n', encoding='utf-8')

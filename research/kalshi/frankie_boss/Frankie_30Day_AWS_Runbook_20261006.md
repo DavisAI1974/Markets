@@ -1,5 +1,10 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+**08:02 ET handoff:** Greg asked to stop before completing #2. Accumulated native claims now feed owner-local
+scientific calculations before classroom-arm exchanges; counts outside a claim's applied scope cannot confirm it.
+CCode `c547c01a` adds an uncalled external day-file adapter. SOCRATIC/VERIFY still need Greg's ruling on a second
+Dipole teacher walk and independence semantics. See the step-2 handoff for exact remaining gaps. Source-built only.
+
 **Step #2 source checkpoint:** reused teachers, cumulative lesson exchange, cross-lane legal claim inputs and GUIDED readers are wired. SOCRATIC/VERIFY and remaining typed scientific consumers are still open. Follow `HANDOFF_20261006_STEP2_KNOWLEDGE.md`; no E2E has passed. Greg delegated the Granite discussion/report to another chat.
 
 **Knowledge stacking applies throughout:** the classroom, Frankie, both teachers and their exchanges must use applicable completed knowledge in their actual inputs/computations, regardless of trading date. Receipt-only availability is not consumption. Greg may consider repeated refinement passes over the same data after the initial 30 days; that remains undecided and outside the current build.
@@ -16,8 +21,8 @@ The year-role mapping and explicit knowledge-order policy change its identity. N
 below to untouched 2024-2025 confirmation are superseded for these 30 learning days; remaining #5 design requires discussion.
 
 **Step #2 source update:** `HANDOFF_20261006_STEP2_KNOWLEDGE.md` records actual structured knowledge reaching learner
-answers, pinned versions and complete previous-class carry. #2 remains open for CCode teacher reconciliation and
-remaining evidence readers. The existing non-TEACH classroom refusal is a launch limitation. Availability receipts
+answers, pinned versions and complete previous-class carry. Reused-teacher reconciliation is integrated; #2 remains open
+for remaining evidence readers and non-arm delivery. The SOCRATIC/VERIFY refusal is a launch limitation. Availability receipts
 are not consumption proof. No runtime/E2E verification or AWS compute occurred.
 
 **Current implementation checkpoint:** `HANDOFF_20261006_STEP1_RECOVERY.md` is the next-chat handoff. Step #1

@@ -5,6 +5,11 @@ Started from `d303f84f87e67fff26ed6f6e011cbaf364d6a9cb`, verified by GitHub MCP 
 Fetch latest and preserve newer work. This is **source-built, runtime-unverified** work within #2, not completion of #2.
 Read `HANDOFF_20261006_STEP1_RECOVERY.md` and follow its canonical reading order, then this update.
 
+**Chat stop requested by Greg, 2026-10-06 08:02 ET:** finish only the accumulated native-claim connection below,
+update/commit/push/handoff, and stop. **Do not finish all of #2 in this chat.** Start the next chat at the latest branch
+tip, preserving newer work. This slice starts from `82649247acb793e5f4a695efa5badf8e17186caa`; the commit containing
+this notice is the next checkpoint. No AWS go was given, and no real E2E has passed.
+
 **Greg's final correction, 2026-10-06:** remove chronological trading-date AND old discovery/confirmation knowledge
 gates for this experiment. All 30 October 2021-2025 days learn continuously in execution order; October 5, 2024 knowledge
 can teach October 8, 2022 when its work runs later. ROOT has parallel lanes. Newly completed knowledge is eligible at
@@ -133,6 +138,53 @@ JSON, generic text, search candidates or fitted equations into new claim tests. 
 connections remain to finish. Imported beyond-chance candidates are not a substitute for the complete owner-local
 search rows (including null/contradictory results); cross-owner testing still needs the owning-stage path. BOSS raw row
 production remains the original measurement mathematics, not a learned alteration of its formulas. #2 stays unchecked.
+
+## Latest slice: accumulated native claims reach the scientific calculation
+
+- New `deploy/aws/box/frankie_box_teacher_knowledge.py::teach_accumulated` pins completed scientific lessons and their
+  exact native claim projections from local/imported brain and school at the exchange boundary. Only legal claims
+  cross into the scientific teacher; private classroom reasoning and grades do not. Selection survives resume unchanged.
+- The existing exchange runner supplies its own day's completed search directory. Before teacher turns, accumulated
+  claims run through `frankie_box_scientific_teacher.test` on that owner's complete search parts. Manifest/day/part
+  hashes bind the actual evidence; giant files stay on the owner. No search is rerun and no new evidence is fabricated.
+- An exact claim already tested against the same search manifest is reused, not counted as another verification.
+  New result files are deterministic and retained before publication; restart reuses completed results. Each new result
+  retains original author, original claim day, scopes and original claims hash alongside the new day/search provenance.
+  Prior lessons remain intact. Additional already-tested Jev results use the ordinary lessons entry; the raw Jev wall
+  and first sealed/tested Jev publication are unchanged. No Jev CPU decision was made.
+- New results publish before the existing BOSS/scientific/Frankie turns select their inputs, so the new calculation
+  results reach those turns in this same stage. Receipts expose actual inputs, result files and reuse reasons.
+- Source review found the old lesson grader could mark a row held/shown-otherwise despite an unapplied lag, cell or
+  condition. Scope eligibility now retains those counts as `counts_only`, with explicit `scope_not_tested` reasons.
+  Reversed pair orientation reverses the claimed numeric lag and transform order. Unparsed lag relations and unapplied
+  conditions cannot support/contradict the claim. Search counts, chance checks and all scientific formulas are unchanged.
+  Building the missing conditioned/fixed-lag evidence remains #3/#4; this guard does not pretend those tests occurred.
+
+**Remaining #2 boundaries:** this new connection runs on the classroom-arm exchange route. The non-classroom-arm
+carried-claims route still needs the same owner-local input connection; do not describe all 30 day paths as complete.
+Batch cross-owner orchestration still waits rather than reading remote giant artifacts. Generic teacher/ROOT/search
+candidate/equation adapters are not built by this slice. SOCRATIC/VERIFY remain blocked as described below. The new adapter does not
+synthesize scoped claims from arbitrary JSON. Preserve all those gaps for the next chat; do not check off #2.
+
+**CCode parallel ownership:** the next assignment printed for Greg after checkpoint `82649247` is the lawful
+SOCRATIC/VERIFY evidence reader, including external evidence, in `frankie_box_classroom_code.py` and
+`frankie_box_classroom_external_code.py` plus a narrow reader adapter if needed. First trace lawful source inventories
+and existing math/contracts; if a required source route is missing, report the exact source-to-calculation gap rather
+than filling answers from host snapshots, keys, grades or prior answers. Preserve learner_context, PREVIOUS, progression,
+all observations and equal checked-single treatment. Codex owns runner/lane/brain/scientific/exchange files. Fetch latest
+before integration. CCode delivered `c547c01a0622d91de7b02b667579920ad90fbabe`, now integrated: external
+`independent_day_file_evidence(pre)` reads the descriptor-bound day file through the existing as-of reader, retaining
+known values, facts, table counts and missing lists. **Adapter built, no caller yet.** Alignment and pairs still need
+Dipole timestamps/ledgers. The 19 dimensions have only the pinned C15 teacher walk as their producer; ROOT has no
+separate producer, and the exported teacher rows are the withheld audit snapshot. Refusals now name this exact gap.
+No TEACH/GUIDED behavior, visibility, grading or mathematics changed. No tests/installations/execution. Push [skip ci].
+
+**Discuss with Greg next, before any independent-walk implementation:** CCode proposes a second sealed-journal walk
+under Frankie's seat using the pinned teacher at through_cursor/as_of. This repeats the heavy teacher stage, and the
+same instrument on the same bytes is a re-measurement, not automatically an independent scientific verification.
+Greg has not ruled on cost or recognition semantics. Codex's answer to "Do you want him to do this work?" was to stop
+CCode here, preserve the handoff, and discuss that choice in the new chat. Do not silently implement the second walk,
+force TEACH, expose the key, or label SOCRATIC/VERIFY complete. Granite report remains with the separate chat.
 
 ## Verification and boundaries
 

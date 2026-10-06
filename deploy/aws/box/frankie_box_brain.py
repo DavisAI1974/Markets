@@ -139,10 +139,12 @@ def write_lessons_entry(brain, day, lessons_path):
     data = source.read_bytes()
     value = json.loads(data)
     author = value.get('author')
-    schemas = {'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1'}
+    schemas = {'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1', 'jev': 'JEV_LESSONS_V1'}
     if author not in schemas or value.get('schema') != schemas[author]:
-        raise ValueError(f'{source} is not scientific-teacher lessons of Frankie or historical claims')
-    days = [str(value.get('day'))] if author == 'frankie' else [str(x.get('day')) for x in value.get('searches', [])]
+        raise ValueError(f'{source} is not scientific-teacher lessons of a known claim author')
+    if author == 'jev' and (not value.get('knowledge_retest') or value.get('written_by') != 'scientific_teacher'):
+        raise ValueError('only already-tested accumulated Jev claims use the additional lessons entry')
+    days = [str(value.get('day'))] if author in ('frankie', 'jev') else [str(x.get('day')) for x in value.get('searches', [])]
     if str(day) not in days:
         raise ValueError('lesson entry day is not bound by the scientific-teacher source')
     entry_dir = brain / f'{day}-lessons'

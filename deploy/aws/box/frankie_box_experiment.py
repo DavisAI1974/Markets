@@ -1367,7 +1367,8 @@ class Run:
         # Completed accumulated lessons are also actual exchange inputs, even without a new lesson of this day.
         rows, rows_why = self.rows_file(e)
         env = dict(DAY=day, RUN=self.plan['run'], LESSONS=','.join(str(f) for f in files), OUT_DIR=target,
-                   BRAIN=self.plan.get('brain') or str(BRAIN))
+                   BRAIN=self.plan.get('brain') or str(BRAIN),
+                   SEARCH_DIR=SEARCH / day / ('cycle-' + CYCLE) / 'discovery')
         if rows is not None:
             env['TEACHER_ROWS'] = rows
         code, log = self.child('exchange', day, 'frankie_box_experiment_exchange.sh', env)
@@ -1378,6 +1379,7 @@ class Run:
         return self.record('exchange', day, 'done', exit_code=code, log=log, exchange=r['exchange']['path'],
                            frankie_view=r['frankie_view']['path'], exchange_sha256=r['exchange']['sha256'],
                            brain_entry=r.get('brain_entry'), counts=r.get('counts'), lessons=[str(f) for f in files],
+                           accumulated_claim_tests=r.get('accumulated_claim_tests'),
                            listed=listed, teacher_rows=str(rows) if rows else None, teacher_rows_listed=rows_why,
                            new_bytes=new_bytes(target))
 
