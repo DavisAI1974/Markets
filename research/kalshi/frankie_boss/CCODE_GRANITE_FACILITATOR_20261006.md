@@ -45,7 +45,11 @@ against a real exchange). No model was downloaded, installed or called; no workf
 Status of the route: **built, uncalled, unverified at runtime, unpublished.** The gate refused the model on seven counts
 (six blank pins, unconfirmed parameters) when this was written, by design; after the 2026-10-06 pin fill (decision 1) it
 refused on one count only, the unconfirmed parameters; after Greg's confirmation of the parameters (decision 2) the gate
-returns `[]` on the committed configuration. Nothing has been fetched, installed, dispatched or called.
+returns `[]` on the committed configuration. Codex's review (2026-10-06, after merging the branch locally) found two
+source defects, both fixed the same day (decision 6): the gate compared the extracted `llama-server` to the ARCHIVE's
+sha256 and would have refused every correct install; and the token count joined message contents without the chat
+template. Nothing has been installed, dispatched or called; the pinned archive was fetched once more into the session
+scratchpad to hash its contents.
 
 ## 3. How the role's rules are enforced in code, not prose
 
@@ -119,6 +123,24 @@ returns `[]` on the committed configuration. Nothing has been fetched, installed
 4. The `json_schema` response format and `/v1/chat/completions` are llama.cpp server features; whether the pinned release
    supports them is verified only when the pinned binary exists. The parser tolerates refusal (a non-JSON reply is refused
    and re-asked within the turn budget).
+6. (Codex's two findings, fixed by CCode 2026-10-06, commit after `e2a0097`.) PROVENANCE: `pins.llama_cpp_sha256` is the
+   archive's hash and is verified at FETCH time only; the installed runtime is `llama-server` plus the shared libraries
+   beside it (`llama-server` NEEDS `libllama-server-impl.so`, which NEEDS libllama-common, libmtmd, libllama, libggml,
+   libggml-base; libggml loads the `libggml-cpu-*` variants at run time; libssl.so.3/libcrypto.so.3 come from the host).
+   New pins `llama_server_sha256` (b30ec35b...) and `llama_cpp_files` (all 50 regular files of the archive's top
+   directory, hashed from the pinned archive re-fetched into an empty scratchpad directory; sha256 verified equal to
+   the pin before extraction). `runtime_provenance(pins, binary)` verifies the binary and every manifest file beside
+   it and is what `gate` uses and what the record carries under `runtime.provenance`; the setup script runs the same
+   check after extraction and writes `provenance.json` beside the binary. Exercised: the real extracted set passes
+   (50 verified), a tampered library, a missing library, a wrong binary and a blank manifest each refuse with the file
+   named; the old comparison (binary vs archive hash) is confirmed unequal. TOKEN COUNT: `count_tokens` now asks the
+   server to apply its own chat template (`/apply-template`) and tokenizes that with `add_special` (the chat route's own
+   setting), so the cap is checked on exactly what the server will see; every call records `counted_before_call`
+   beside `usage.prompt_tokens` in the item's `token_counts`, so the E2E proves the method; a 404 on the route refuses
+   loudly rather than guess. `--no-context-shift` is passed, so an overflow is an error, never a silent drop. Static
+   read of the pinned bytes (strings, readelf; nothing executed): `/apply-template`, `/tokenize`, `add_special`,
+   `json_schema`, `response_format`, `/v1/chat/completions`, `--no-context-shift` are all present in b11440, which
+   answers decision 4 as far as bytes can; running it remains the E2E's.
 5. Whether accumulated knowledge should be more than a label/sha index to the coordinator (role V2 says "applicable
    accumulated knowledge"; the 3B context argues for names only, with a code answer on request as a later addition).
 

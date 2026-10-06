@@ -108,16 +108,43 @@ def gate(config, binary=None, model=None):
             reasons.append('input_token_cap_per_call + max_output_tokens_per_turn must fit inside context_size '
                            '(%r + %r vs %r): otherwise the server would shift context and drop seat material' % (cap, out, ctx))
     if binary is not None:
-        if not Path(binary).is_file():
-            reasons.append('llama-server binary is not at %s' % binary)
-        elif pins.get('llama_cpp_sha256') and sha256_bytes(Path(binary).read_bytes()) != pins['llama_cpp_sha256']:
-            reasons.append('llama-server binary sha256 differs from the pin')
+        reasons.extend(runtime_provenance(pins, binary)['reasons'])
     if model is not None:
         if not Path(model).is_file():
             reasons.append('model file is not at %s' % model)
         elif pins.get('model_sha256') and witness_file(model)['sha256'] != pins['model_sha256']:
             reasons.append('model file sha256 differs from the pin')
     return reasons
+
+
+def runtime_provenance(pins, binary):
+    """The chain pin -> archive -> extracted files. llama_cpp_sha256 is the ARCHIVE's hash, verified at fetch time by the
+    setup script; the installed runtime is llama-server plus the shared libraries beside it, so the gate verifies the
+    binary against llama_server_sha256 and every file of llama_cpp_files (the archive's extracted manifest) beside it.
+    Comparing the extracted binary to the archive hash would refuse every correct install (Codex, 2026-10-06)."""
+    reasons, verified = [], []
+    path = Path(binary)
+    if not path.is_file():
+        return dict(reasons=['llama-server binary is not at %s' % binary], verified=verified)
+    manifest = pins.get('llama_cpp_files') or {}
+    server_sha = pins.get('llama_server_sha256')
+    if not server_sha or not manifest:
+        return dict(reasons=['pins llama_server_sha256 / llama_cpp_files are explicit blanks: the extracted runtime cannot be '
+                             'verified (the archive hash llama_cpp_sha256 is not the binary\'s)'], verified=verified)
+    actual = sha256_bytes(path.read_bytes())
+    if actual != server_sha:
+        reasons.append('llama-server binary sha256 %s differs from pin llama_server_sha256 %s' % (actual[:12], server_sha[:12]))
+    root = path.parent
+    for name, sha in sorted(manifest.items()):
+        sibling = root / name
+        if not sibling.is_file():
+            reasons.append('extracted file %s missing beside llama-server' % name)
+        elif sha256_bytes(sibling.read_bytes()) != sha:
+            reasons.append('extracted file %s differs from pin llama_cpp_files' % name)
+        else:
+            verified.append(name)
+    return dict(reasons=reasons, verified=verified, archive_sha256=pins.get('llama_cpp_sha256'),
+                release=pins.get('llama_cpp_release'), asset=pins.get('llama_cpp_asset'))
 
 
 # ------------------------------------------------------------------------------------------ what Granite is given
@@ -282,6 +309,7 @@ class LlamaServer:
         self.binary, self.model, self.params, self.log = str(binary), str(model), params, log
         self.process, self.port, self.calls, self.tokens = None, None, 0, dict(prompt=0, completion=0)
         self.threads, self.host_cpus = resolve_threads(params)
+        self.last_usage = {}
 
     def start(self, wait_seconds=600):
         with socket.socket() as s:
@@ -289,7 +317,7 @@ class LlamaServer:
             self.port = s.getsockname()[1]
         command = [self.binary, '-m', self.model, '--host', '127.0.0.1', '--port', str(self.port),
                    '--ctx-size', str(int(self.params['context_size'])), '--threads', str(self.threads),
-                   '--parallel', '1', '--log-disable']
+                   '--parallel', '1', '--no-context-shift', '--log-disable']
         self.process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         deadline = time.monotonic() + wait_seconds
         while time.monotonic() < deadline:
@@ -305,27 +333,34 @@ class LlamaServer:
         self.stop()
         raise RuntimeError('llama-server did not report healthy within %d s' % wait_seconds)
 
-    def count_tokens(self, messages):
-        """The input's token count by the server's own tokenizer (/tokenize on the message contents; the chat template
-        adds a few dozen tokens on top, so this is a close lower bound, used against the per-call cap)."""
-        content = '\n'.join(m['content'] for m in messages)
-        request = urllib.request.Request('http://127.0.0.1:%d/tokenize' % self.port, data=json.dumps(dict(content=content)).encode(),
+    def _post(self, route, body):
+        request = urllib.request.Request('http://127.0.0.1:%d%s' % (self.port, route), data=json.dumps(body).encode(),
                                          method='POST', headers={'Content-Type': 'application/json'})
-        with urllib.request.urlopen(request, timeout=600) as response:
-            return len(json.loads(response.read())['tokens'])
+        try:
+            with urllib.request.urlopen(request, timeout=600) as response:
+                return json.loads(response.read())
+        except urllib.error.HTTPError as error:
+            if error.code == 404:
+                raise RuntimeError('the pinned llama-server has no %s route; the token count cannot be exact, so the meeting '
+                                   'refuses rather than guess' % route)
+            raise
+
+    def count_tokens(self, messages):
+        """The input's exact token count as the server will see it: the chat template applied by the server itself
+        (/apply-template), then its tokenizer with the special tokens (/tokenize add_special, the chat route's own
+        setting). Reconciled against usage.prompt_tokens after each call (discuss_item records both)."""
+        prompt = self._post('/apply-template', dict(messages=messages))['prompt']
+        return len(self._post('/tokenize', dict(content=prompt, add_special=True, parse_special=True))['tokens'])
 
     def chat(self, messages, schema):
         body = dict(messages=messages, temperature=self.params['temperature'], top_p=self.params['top_p'],
                     max_tokens=int(self.params['max_output_tokens_per_turn']),
                     response_format=dict(type='json_schema', json_schema=dict(name='coordinator_turn', schema=schema)),
                     stream=False)
-        request = urllib.request.Request('http://127.0.0.1:%d/v1/chat/completions' % self.port,
-                                         data=json.dumps(body).encode(), method='POST',
-                                         headers={'Content-Type': 'application/json'})
-        with urllib.request.urlopen(request, timeout=600) as response:
-            reply = json.loads(response.read())
+        reply = self._post('/v1/chat/completions', body)
         self.calls += 1
         usage = reply.get('usage') or {}
+        self.last_usage = usage
         self.tokens['prompt'] += int(usage.get('prompt_tokens') or 0)
         self.tokens['completion'] += int(usage.get('completion_tokens') or 0)
         return reply['choices'][0]['message']['content']
@@ -364,13 +399,15 @@ def discuss_item(server, item, system, params, log):
                                                                                         'open_items')},
                                                             instruction='Begin with this item. One action per reply.'),
                                                        sort_keys=True))]
-    cap, over_cap = int(params['input_token_cap_per_call']), None
+    cap, over_cap, token_counts = int(params['input_token_cap_per_call']), None, []
     for round_number in range(1, int(params['max_coordinator_turns_per_item']) + 1):
         counted = server.count_tokens(transcript)
         if counted > cap:
             over_cap = dict(round=round_number, input_tokens=counted, cap=cap)
             break
         raw = server.chat(transcript, ACTION_SCHEMA)
+        token_counts.append(dict(round=round_number, counted_before_call=counted,
+                                 prompt_tokens_used=(getattr(server, 'last_usage', None) or {}).get('prompt_tokens')))
         try:
             value = json.loads(raw)
         except ValueError as error:
@@ -417,7 +454,7 @@ def discuss_item(server, item, system, params, log):
                                     'open by code' % int(params['max_coordinator_turns_per_item'])))
     return dict(item_id=item['item_id'], author=item['author'], seat_statements=item['voiced'],
                 coordinator_turns=coordinator, code_seat_answers=answers, notes=notes, requested_tests=requests,
-                open_items=open_items, refused=refused, outcome=outcome,
+                open_items=open_items, refused=refused, outcome=outcome, token_counts=token_counts,
                 rule='four categories kept apart; agreement among voices is never confirmation (R17)')
 
 
@@ -477,6 +514,7 @@ def meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=No
         server.stop()
     record = dict(base, status='complete', items=items, not_discussed=not_discussed,
                   runtime=dict(binary=witness_file(binary), model=witness_file(model), parameters=params,
+                               provenance=runtime_provenance(config.get('pins') or {}, binary),
                                effective=dict(threads=server.threads, host_cpus=server.host_cpus)),
                   model_calls=server.calls, tokens=server.tokens, seconds=round(time.time() - started, 1),
                   counts=dict(items=len(items), coordinator_turns=sum(len(i['coordinator_turns']) for i in items),

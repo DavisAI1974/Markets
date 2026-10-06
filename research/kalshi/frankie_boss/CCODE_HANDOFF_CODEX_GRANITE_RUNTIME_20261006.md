@@ -1,7 +1,9 @@
 # CCode handoff to Codex: Granite meeting runtime is pinned and confirmed, 2026-10-06
 
-Branch `ccr-5fce7de3-xa4hfg`, tip `eed57b3` (on top of `chatgpt/frankie-30day-aws-workflow-20261006` at `3fa9f592`, which
-has not moved). CCode's files only; every existing non-CCode file is untouched. Source-built, runtime-unverified: no
+Branch `ccr-5fce7de3-xa4hfg`, rebased 2026-10-06 onto `chatgpt/frankie-30day-aws-workflow-20261006` at `e9eac1d` (clean;
+CCode's files are new files). NOTE: Codex reported CCode's branch "merged cleanly", but no remote branch carries CCode's
+files at the time of this handoff (the chatgpt tip `e9eac1d` has none of them); whatever was merged stayed local to
+Codex. The tip of this branch is the integration point. CCode's files only; every existing non-CCode file is untouched. Source-built, runtime-unverified: no
 model was fetched, installed or called; no workflow dispatched; no AWS action; no tests or E2E.
 
 Read first: `CCODE_GRANITE_FACILITATOR_20261006.md` (what is built, how the role is enforced in code, the named Codex
@@ -34,7 +36,27 @@ The confirmed eight, as committed (Greg: "Keep threads null"):
 All eight are unmeasured until the one authorized E2E. The estimate behind 3000 s: on 2 cores a worst-case 6-turn
 item is about 10 minutes, so about 5 such items are reached. Treat it as a canary figure, not a measurement.
 
-## 2. What changed in `deploy/aws/box/frankie_box_granite_meeting.py` at eed57b3
+## 1b. Codex's two findings, fixed (same day, commits after `e2a0097`)
+
+- **Provenance chain.** `pins.llama_cpp_sha256` is the ARCHIVE's hash; the old gate compared the extracted binary to it
+  and would have refused every correct install. Now: `pins.llama_server_sha256` and `pins.llama_cpp_files` (all 50
+  regular files of the archive, hashed from the pinned archive re-fetched into an empty scratchpad directory, archive
+  sha256 verified equal to the pin first). `runtime_provenance(pins, binary)` verifies the binary and every manifest
+  file beside it; `gate` uses it, the record carries it under `runtime.provenance`, and the setup script runs the same
+  check after extraction and writes `provenance.json` beside the binary. Host-provided libraries (libssl.so.3,
+  libcrypto.so.3, libstdc++) are NOT pinned; ubuntu-24.04 carries them, the AWS box must too.
+- **Token count.** `count_tokens` asks the server to apply its own chat template (`/apply-template`) and tokenizes that
+  with `add_special` (the chat route's own setting). Each call records `counted_before_call` beside the server's
+  `usage.prompt_tokens` in the item's `token_counts`; the E2E compares them. A 404 on the route refuses loudly.
+  `--no-context-shift` is passed to the server.
+- Static read of the pinned bytes (strings, readelf; nothing executed) shows `/apply-template`, `/tokenize`,
+  `add_special`, `json_schema`, `response_format`, `/v1/chat/completions` and `--no-context-shift` present in b11440.
+- Checks: py_compile; bash -n and sh -n on the setup script; JSON parse; git diff --check; the gate on the real
+  extracted set returns `[]` with 50 files verified; tampered, missing and wrong-binary copies refuse naming the file;
+  the setup script's verification block (run on the scratchpad set, not the script) passes and refuses the tampered
+  copy; the count path through a stubbed transport records both numbers. No server was started.
+
+## 2. What changed in `deploy/aws/box/frankie_box_granite_meeting.py` at ddbb6ab (parameters) and after
 
 - `gate`: a confirmed set must satisfy `input_token_cap_per_call + max_output_tokens_per_turn <= context_size`.
 - `resolve_threads(params)`: null = `os.cpu_count()`; an integer is clamped to it. `LlamaServer` passes the resolved

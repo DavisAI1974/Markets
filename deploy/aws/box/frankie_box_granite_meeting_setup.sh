@@ -25,6 +25,30 @@ fi
 case "$ASSET" in *.zip) unzip -oq "$ASSET";; *.tar.gz|*.tgz) tar -xzf "$ASSET";; *) echo "unknown asset format $ASSET" >&2; exit 4;; esac
 SERVER="$(find "$GRANITE_DIR" -type f -name llama-server | head -n 1)"
 [ -n "$SERVER" ] || { echo "llama-server not found in the extracted asset" >&2; exit 4; }
+# The provenance chain: the archive hash above covers the FETCH only. The installed runtime is llama-server plus the
+# shared libraries beside it, so every extracted file is verified against the pinned manifest (pins.llama_cpp_files) and
+# the binary against pins.llama_server_sha256; the same check the Python gate repeats at every meeting. A mismatch refuses.
+python3 - "$CONFIG" "$SERVER" "$REL" "$ASSET" "$ASSET_SHA" <<'EOF2'
+import hashlib, json, os, sys
+config, server, release, asset, asset_sha = sys.argv[1:6]
+pins = json.load(open(config))['pins']
+manifest, server_sha = pins.get('llama_cpp_files') or {}, pins.get('llama_server_sha256')
+if not manifest or not server_sha:
+    sys.exit('refused: pins llama_cpp_files / llama_server_sha256 are explicit blanks; the extracted runtime cannot be verified')
+root = os.path.dirname(server)
+digest = lambda path: hashlib.sha256(open(path, 'rb').read()).hexdigest()
+bad = [name for name, sha in sorted(manifest.items())
+       if not os.path.isfile(os.path.join(root, name)) or digest(os.path.join(root, name)) != sha]
+if bad:
+    sys.exit('refused: extracted files differ from pin llama_cpp_files: %s' % ', '.join(bad))
+if digest(server) != server_sha:
+    sys.exit('refused: llama-server sha256 differs from pin llama_server_sha256')
+provenance = dict(schema='FRANKIE_GRANITE_RUNTIME_PROVENANCE_V1', release=release, asset=asset, archive_sha256=asset_sha,
+                  server=server, server_sha256=server_sha, files_verified=len(manifest), host_cpus=os.cpu_count())
+with open(os.path.join(root, 'provenance.json'), 'w') as handle:
+    json.dump(provenance, handle, indent=1, sort_keys=True)
+print(json.dumps(provenance, sort_keys=True))
+EOF2
 # The official GGUF, from the pinned Hugging Face repository, verified by the pinned sha256.
 if [ ! -f "$FILE" ]; then
   curl -fsSL -o "$FILE.part" "https://huggingface.co/$REPO/resolve/main/$FILE"
