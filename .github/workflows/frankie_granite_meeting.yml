@@ -1,0 +1,65 @@
+name: Frankie Granite meeting (post-class coordinator on a standard CPU runner; dispatch only)
+# Greg, 2026-10-06 (GRANITE_DISCUSSION_REPORT_20261006.md): Granite 4.2 3B Q4_K_M with llama.cpp, free standard GitHub
+# CPU runner first, ephemeral per meeting. This workflow is the GitHub hosting of frankie_box_granite_meeting.py: it is
+# dispatched by hand with a presigned GET of one day's exchange-frankie.json (small) and a presigned PUT for the record.
+# It refuses while a pin in knowledge/GRANITE_MEETING_RUNTIME_V1.json is an explicit blank or the runtime parameters are
+# unconfirmed (the setup and the Python gate both check). Never scheduled, never on push. No Pod, no GPU, no AWS action.
+# The record's return to the owning lane's brain (kind meeting) is a named Codex edit; the artifact here is the record.
+on:
+  workflow_dispatch:
+    inputs:
+      exchange_get_url:
+        description: "presigned GET URL of the day's exchange-frankie.json (FRANKIE_EXPERIMENT_EXCHANGE_V1, view frankie)"
+        required: true
+      record_put_url:
+        description: 'presigned PUT URL for meeting.json (optional; the record is always kept as a run artifact)'
+        required: false
+        default: ''
+      inputs_only:
+        description: 'true = write what Granite would be given and stop; zero model calls'
+        required: false
+        default: 'true'
+permissions:
+  contents: read
+concurrency:
+  group: frankie-granite-meeting
+  cancel-in-progress: false
+jobs:
+  meeting:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      INPUTS_ONLY: ${{ inputs.inputs_only }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Fetch the exchange view (small; Jev raw items already withheld by the exchange)
+        run: |
+          mkdir -p work/meeting
+          curl -fsSL -o work/meeting/exchange-frankie.json "${{ inputs.exchange_get_url }}"
+          python3 -c "import json; d=json.load(open('work/meeting/exchange-frankie.json')); assert d.get('schema')=='FRANKIE_EXPERIMENT_EXCHANGE_V1' and d.get('view')=='frankie', 'not the Frankie view'"
+      - name: Pinned llama.cpp and Granite GGUF (refuses while any pin is blank)
+        if: inputs.inputs_only != 'true'
+        run: CODE_ROOT="$PWD" GRANITE_DIR="$PWD/work/granite" sh deploy/aws/box/frankie_box_granite_meeting_setup.sh | tee work/meeting/setup.txt
+      - name: The meeting (inputs only, or the ephemeral coordinator when pinned and confirmed)
+        run: |
+          if [ "$INPUTS_ONLY" = "true" ]; then
+            python3 deploy/aws/box/frankie_box_granite_meeting.py --exchange work/meeting/exchange-frankie.json --out-dir work/meeting/out --inputs-only
+          else
+            SERVER="$(sed -n 's/^LLAMA_SERVER=//p' work/meeting/setup.txt)"; MODEL="$(sed -n 's/^GGUF_MODEL=//p' work/meeting/setup.txt)"
+            python3 deploy/aws/box/frankie_box_granite_meeting.py --exchange work/meeting/exchange-frankie.json --out-dir work/meeting/out --binary "$SERVER" --model "$MODEL"
+          fi
+      - name: Return the record (optional presigned PUT)
+        if: inputs.record_put_url != ''
+        run: |
+          curl -fsSL -X PUT -H 'Content-Type: application/json' --data-binary @work/meeting/out/meeting.json "${{ inputs.record_put_url }}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: granite-meeting-record
+          path: work/meeting/out/
+          if-no-files-found: error
