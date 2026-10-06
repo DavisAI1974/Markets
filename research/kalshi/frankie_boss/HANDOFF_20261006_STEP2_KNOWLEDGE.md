@@ -1,5 +1,41 @@
 # Frankie AWS — step 2 learner delivery checkpoint
 
+## Existing full-feed framework and shared evidence — Greg, 2026-10-06 09:53 ET
+
+Greg clarified: reuse the original 99-layer delivery framework and adjust its consumers; teachers should read the
+same retained ingest/calculations, not build independent copies of ingestion. This is the intended integration route.
+
+The historical `audits/FRANKIE_FEED_AUDIT_SUNDAY_CYCLE0_20260916.md` reports the actual A_MEMORY delivery from run
+33746436209: 75 of 77 applicable inputs delivered, one principal-stamped lock clock and one degenerate Memory A proof.
+It lists all market-data groups delivered, and all knowledge groups with the stated proof exception. It also verifies
+30 original output ledgers. This confirms existing producer/carrier/knowledge machinery; it is not proof that the
+current stripped-down experiment calls every same consumer. Inspect/reuse those original routes before adding code.
+
+The source already separates ingestion from reading: one sealed journal is produced by ingest; ROOT and the BOSS
+teacher read it. `frankie_box_joined_teacher.py` reads ROOT layer files in place; `dipole_joined_teacher.sources` and
+`frankie_box_teacher_discussion.run` provide the shared-source delivery interfaces. Existing teacher rows/attachments
+are reused through `rows_of`/`Run.teacher`, and the scientific search reads exported ROOT/teacher/day-file outputs.
+No second Databento ingest, copied journal or independently reconstructed teacher book is required by this architecture.
+The new full-depth ROOT projection uses the already replayed live book, not a second replay.
+
+**Correction to earlier source-map wording:** the active experiment defaults `FRANKIE_TEACHER_CHANGES=1` and installs
+`teacher_changes.py`. Its `control_columns`, `_Cohort`, `r3_history_row` and long-horizon path already consume all
+levels/orders, with incomplete/unknown information retained. The old pinned top-three description is not the selected
+teacher behavior. ROOT's former top-ten exported frame and the teacher's existing all-level history are separate paths.
+The teacher still exposes its governed 19 columns to the current classroom/exchange; that output width does not mean
+it ingests only 19 fields, nor does it prove broader full-plane/knowledge teaching is complete.
+
+Continue by sharing existing lawful raw evidence and completed calculation products among Frankie and both teachers,
+using their existing manifests/hashes and owner-local readers. Perform each shared calculation once and reuse its
+result. Distinct teacher-only measurements/scientific checks remain distinct work, with original math and provenance.
+The authorized learner-owned SOCRATIC/VERIFY Dipole walk remains the specific answer-wall exception; do not silently
+remove it or replace it with the withheld host measurements, and do not call its remeasurement independent confirmation.
+A raw input can be shared while a host answer remains withheld.
+
+This amendment authorizes no AWS compute, producer activation, model role change or #5 work. Source-only full-depth
+changes were published at `fae3aaedaa178f1b7d6e07cdd31b7982506e00aa`. #2/#3 remain open. CCode's #4 files stay untouched.
+
+
 **Latest full-depth continuation (from `166507b6`):** Greg explicitly requires all applicable full-depth MBO/FIFO
 and joint accumulated-knowledge computation. New experiment ROOTs retain every level/FIFO queue, the complete resting
 book observation and every original INPUT field in each successful closed group, including bytes. These enter the

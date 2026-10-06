@@ -40,8 +40,8 @@ New experiment ROOTs still use the same pinned adapter replay. `Session.derive(r
 its existing `InstrumentBook.book_snapshot(include_full_depth=True, include_order_ids=True)` on the live book at each
 successful F_LAST close. The returned `bid_levels_full` / `ask_levels_full` iterate every level, without a slice.
 The original top-ten summaries remain as the original defined statistics alongside the complete lists; they no longer
-limit the available book evidence. The teacher's defined far-side cohorts are also unchanged, not relabelled full-book
-statistics. No pinned producer, scientific formula, ingest, model call or bedrock switch was changed.
+limit the available book evidence. The active `teacher_changes.py` teacher path already uses every level/order in its cohorts and history; its
+mathematics is unchanged. The older pinned top-three description is not the selected teacher behavior. No pinned producer, scientific formula, ingest, model call or bedrock switch was changed.
 
 | Evidence | Existing producer and new frame location | Search route |
 | --- | --- | --- |

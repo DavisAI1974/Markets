@@ -51,6 +51,13 @@ The 49 mapped calculation/clock layers are a subset of those 99, not the complet
 The other six source layers, 23 knowledge/control/arm layers, nine sealed answers, two disabled shadows and ten outputs
 have distinct roles. Coverage must follow actual applicable consumers, not a layer-count shortcut.
 
+## Teacher-depth correction
+
+The active experiment defaults `FRANKIE_TEACHER_CHANGES=1`; its cohorts and retained history already use ALL levels
+and orders (`teacher_changes._Cohort`, `r3_history_row`, `control_columns`). The old pinned top-three description did
+not account for this active override. ROOT top-ten frame coverage was a different gap. Read the shared-evidence
+amendment in `KNOWLEDGE_CONSUMER_COVERAGE_20261006.md`; reuse the original full-feed and joined-reader framework.
+
 ## 1. The producers on the experiment path and what each one emits
 
 - **Ingest** (`frankie_box_ingest_block.sh`, the pinned V4 adapter and `c15_observer.observe_book`): the sealed journal.
@@ -111,7 +118,7 @@ of complete scientific coverage.
 | Fill disposition (`order_lifecycle_fills`) | mapped_partial | `structures.fill_disposition.fill_id_count, cancelled_fill_id_count, modified_fill_id_count, same_id_cancel_modify_count, unresolved_fill_id_count`; cells `class, signature`; `events.F_*`; teacher `far_absorption_share_64/1024` | per-order disposition across groups: not produced |
 | D's / exhaustion (`derived_unresolved_age_chain_trajectory`, `prebirth_unresolved_chain_extension_state`) | mapped_partial | teacher `dipole.unresolved_age_groups_log, extension_count_log, step_ratio_log, pullback_ticks_last_log, step_duration_groups_log, pullback_ticks_prev_log` | `DState` computed, not retained; the rows' states counted in the manifest, reasons retained in source rows, neither used as cells; bedrock episode rows not produced |
 | Depletion/replenishment, resilience/recovery | mapped_partial | teacher `far_replenish_log1p_64/1024, far_absorption_share_64/1024, far_identity_survival_64/1024, far_size_retention_64/1024` | the bedrock replenishment/absorption/recovery rows: not produced |
-| FIFO queues, queue age and survival, queue concentration, orders and volume ahead | produced_not_carried / mapped_partial | teacher `far_front_age_log, far_queue_age_p90_log, far_size_hhi` (far-side top-three cohort) | per level, top 10 each side: `front_order_age_s, queue_age_median_s, queue_age_p90_s, largest_order_share, front_order_size, order_count, size` carried in new frame spools; FIFO ids and order sizes in the APPLIED observation, not spooled; volume ahead is derivable, not a retained searched value |
+| FIFO queues, queue age and survival, queue concentration, orders and volume ahead | produced_not_carried / mapped_partial | teacher `far_front_age_log, far_queue_age_p90_log, far_size_hhi` (all levels in the active teacher_changes path) | per level, top 10 each side: `front_order_age_s, queue_age_median_s, queue_age_p90_s, largest_order_share, front_order_size, order_count, size` carried in new frame spools; FIFO ids and order sizes in the APPLIED observation, not spooled; volume ahead is derivable, not a retained searched value |
 | Mechanics by side and level, churn and turnover, aggressor flow | mapped_partial | `structures.action_counts.*, side_counts.*`, `events.<action>_<side>`, `signed_flow.buy/sell` | the frame's rolling activity windows (`action_qty, action_side_qty, add_cancel_churn, priority_lost_modify_count, trade_*_aggressor_qty, trade_aggressor_imbalance, top_level_*_qty_derived`) carried in new frame spools; old exports may lack them |
 | Missingness and integrity | mapped_partial | Dipole states counted per column (`states_per_component`), values used only where PRESENT | the frame's `integrity` counters carried by new ROOTs; `failures.jsonl` not read; `raw_reason` not cells |
 | Order lifecycle adds/cancels/modifies/replaces/trades/clears | mapped_partial | `events.<action>_<side>` counts and sizes; `events.last.<field>` at the close; cells `events.last.action/side`; `prices.*`; `events.last.is_snapshot` | per-order linking, identity transitions, roll state, bootstrap receipts: not produced |
