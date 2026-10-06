@@ -29,7 +29,9 @@ untested / cannot_test_yet, never dropped.
 
 Writes, per author, one lessons file bound to the exact claims it answers (claims_sha256):
   JEV_LESSONS_V1      -> Jev's brain (clm-sidecar/jev-brain/lessons/<day>-<stamp>.json; uploaded through the presigned
-                         slot in MAP_URL when given, since the box writes nothing in S3), read on his next day;
+                         slot in MAP_URL when given) AND, only after Jev's own claims are sealed and tested here, the
+                         tested result enters Frankie's brain as <brain>/<day>-jev-tested/. Jev's blind wall ends after
+                         his independent claim is fixed; tested knowledge is not withheld from Frankie afterward;
   FRANKIE_LESSONS_V1  -> kept under /opt/frankie-box/work/experiment-teacher/ and filed into Frankie's brain as the entry
                          <brain>/<day>-lessons/ (frankie_box_brain.write_lessons_entry), read by every later cycle.
   HISTORICAL_LESSONS_V1 -> kept under /opt/frankie-box/work/experiment-teacher/historical/<days>-<catalog sha12>.json,
@@ -266,13 +268,24 @@ def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/
         request = urllib.request.Request(entries[key]['url'], data=data, method='PUT')
         with urllib.request.urlopen(request, timeout=300) as response:
             log('uploaded to Jev\'s brain: %s HTTP %d' % (key[4:], response.status))
-    if doc['author'] == 'frankie':
+    if doc['author'] in ('frankie', 'jev'):
         import sys
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import frankie_box_brain as brain
-        m = brain.write_lessons_entry(brain_dir, doc['day'], path)
-        log('into Frankie\'s brain: %s (%d lessons files for %s)' % (Path(brain_dir) / (doc['day'] + '-lessons'),
-                                                                    len(m['entries']), doc['day']))
+        if doc['author'] == 'frankie':
+            m = brain.write_lessons_entry(brain_dir, doc['day'], path)
+            log('into Frankie\'s brain: %s (%d lessons files for %s)' % (Path(brain_dir) / (doc['day'] + '-lessons'),
+                                                                        len(m['entries']), doc['day']))
+        else:
+            # Jev stays blind until his own claim file is sealed. This function runs only after those claims are
+            # tested, so the tested result is now useful knowledge rather than information that could bias Jev.
+            m, reused = brain.write_stage_entry(
+                brain_dir, doc['day'], 'jev-tested', [path],
+                summary=dict(author='jev', claims_sha256=doc['claims_sha256'],
+                             searches=[d['day'] for d in days],
+                             dispositions={k: sum(r['disposition'] == k for r in results) for k in DISPOSITIONS}))
+            log('tested Jev knowledge into Frankie\'s brain: %s%s' %
+                (Path(brain_dir) / (doc['day'] + '-jev-tested'), ' (reused)' if reused else ''))
     return path
 
 
