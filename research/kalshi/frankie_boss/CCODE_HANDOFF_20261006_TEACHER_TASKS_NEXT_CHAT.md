@@ -1,5 +1,33 @@
 # CCode new-chat handoff: the expanded pre-#5 queue, slice A done, slice B next, 2026-10-06
 
+## STATE AFTER THE SECOND CHAT (2026-10-06, later): slices A (follow-ups), B, C, D DONE on CCode's side
+
+Branch `ccode/teacher-tasks-20261006b`, rebased onto Codex's `59cca0d4`, pushed. Commits, one per slice, all `[skip ci]`:
+`9e456888` A follow-ups 1-3 (exchange) | `1eaa8c8d` B (historical bindings + reproduction capability + rework reads records)
+| `a1085a6e` C (owner's completed-native evidence in every accumulated result) | `77edcf41` D (row provenance on the ROOT
+price/structure spools; late knowledge listed at frozen boundaries). Detail and the closure table: step-4 report
+`CCODE_STEP4_SOURCE_ROUTE_20261006.md` section 8 (per slice) and section 9. Everything SOURCE-BUILT / RUNTIME-UNVERIFIED:
+`ast.parse` without project imports, `git diff --check`, `re.compile` of the recorded-output patterns read as string
+constants; no test, run, install, model call, AWS action, dispatch, canary or E2E; boxes untouched; STOP before #5 kept;
+the preserved draft unapplied; `9c19cc2` never applied; Codex's two reserved modules untouched.
+
+What a next chat (or Codex's integration review) picks up:
+1. Codex: integrate the four commits; the reserved search adapter for the new `provenance` row contract (report, slice D),
+   including excluding `provenance.*` from channels the way `EVENT_IDENTITY_FIELDS` are excluded.
+2. Greg's decisions, unchanged and now named in code: the REFORMULATIONS needs (a threshold state, a windowed transform, a
+   window, a LEG/SIDE definition, a flat-flow bar, an entry and a turn definition); the 4.4 pair-completion owner; a 4.2
+   step definition; the three native-learner decisions; the late-scheduling decision; the 52.9 MB claims file; the
+   principal_inputs catalog. Memory A: retired, recorded as H06-H08 `not_bound` in `REPRODUCTIONS`.
+3. When execution is authorized: the teachers run the bound reproductions through
+   `frankie_box_historical_reproduction` (`crypto_trend_flip` is stageable from history; `crypto_harness` needs `realbins/`,
+   `ng_leg_fingerprints` needs the S3 NG MBP-10 tapes and the regime caches); records land under `<work>/reproduction/`
+   and `ST.test` reads them. CCode runs nothing.
+Note for a rebuild of the claims file (not under the hold): the builder's own guard refuses to overwrite the committed
+file because `builder_sha256` changed; the committed file is byte-identical and current.
+
+---
+
+
 Branch `ccode/teacher-tasks-20261006b`, tip = slice A commit on top of Codex's `bbe2d56` (ccr-5fce7de3-xa4hfg).
 Fetch latest and preserve newer commits:
   git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
