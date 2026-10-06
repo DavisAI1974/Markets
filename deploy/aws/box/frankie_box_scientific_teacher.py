@@ -14,7 +14,11 @@ Takes, each labelled with its author (rule R11: claims, never truth):
     so neither teacher reads the mapped subset as the collection. Every historical result carries `research_rework`:
     a count comparison on stored search evidence is one status; the original calculation's reproduction and any
     repair/reformulation stay pending_teacher_work until a teacher performs them; a prior rejected/dead/no-good label
-    is carried as a label and never closes reconsideration (R11, R13; Greg, 2026-10-06);
+    is carried as a label and never closes reconsideration (R11, R13; Greg, 2026-10-06). Each mapped claim carries its
+    declared reproduction binding and reformulation needs (frankie_box_historical_claims.REPRODUCTIONS /
+    REFORMULATIONS, attached by claim id at read time; the committed claims file is untouched), and test() reads any
+    hash-bound HISTORICAL_REPRODUCTION_V1 record a teacher's authorized execution wrote under <work>/reproduction/
+    (frankie_box_historical_reproduction): performed_matched / performed_differs / not_run, else pending_teacher_work;
   - the search's own candidates: FRANKIE_SEARCH_FINDINGS_V1 (Run.search_knowledge: every beyond-chance row of one day's
     search, with part/row provenance), projected by frankie_box_candidate_claims.py, author 'search' (CCode step #4).
     Their series are matched exactly, and the rows of their own discovery day are listed as ORIGIN EVIDENCE, never
@@ -70,6 +74,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path('/opt/frankie-box/work/experiment-teacher')
+REPRODUCTION_DIR = ROOT / 'reproduction'      # HISTORICAL_REPRODUCTION_V1 records (frankie_box_historical_reproduction.record)
 DISPOSITIONS = ('SUPPORTED_SCOPED', 'PLAUSIBLE_UNRESOLVED', 'CONTRADICTED_SCOPED', 'INSUFFICIENT_EVIDENCE')
 SAME_WORDS = ('same', 'together', 'positive', 'aligned', 'co-move', 'comove', 'both rise', 'both fall', 'with')
 OPPOSITE_WORDS = ('opposite', 'inverse', 'negative', 'against', 'contrary', 'diverge')
@@ -129,11 +134,26 @@ def open_class(reason):
     return 'open_other', 'listed by the claims builder with its own reason'
 
 
-def reconsideration(doc, path, raw, claims):
+def reconsideration(doc, path, raw, claims, records_dir=None):
     """The historical collection's standing, carried with every lessons file so neither teacher reads a mapped subset
     as the collection, nor a prior rejection label as closure (R11, R13). Four statuses, each counted and bound to the
-    claims file by sha256; the full not_testable list stays in that file (path:line, catalog id, statement, reason)."""
+    claims file by sha256; the full not_testable list stays in that file (path:line, catalog id, statement, reason).
+    The reproduction status counts the declared bindings (defined / missing_inputs / not_bound / unmapped) and the
+    hash-bound records read under records_dir (performed_matched / performed_differs / not_run); a binding marks nothing
+    reproduced, and the bindings cover the mapped claims only: every not_testable statement has none and stays open."""
+    import frankie_box_historical_claims as HC
+    import frankie_box_historical_reproduction as HR
     not_testable = doc.get('not_testable') or []
+    bindings, reforms, performed, records_listed = {}, {}, {}, []
+    for c in claims:
+        binding = c.get('reproduction') or HC.reproduction_of(c['id'])
+        bindings[binding['status']] = bindings.get(binding['status'], 0) + 1
+        reform = c.get('reformulation') or HC.reformulation_of(c['id'])
+        reforms[reform['status']] = reforms.get(reform['status'], 0) + 1
+        records, listed = HR.records_for(c['id'], records_dir if records_dir is not None else REPRODUCTION_DIR)
+        records_listed.extend(listed)
+        word = HR.status_of(records)
+        performed[word] = performed.get(word, 0) + 1
     by_status = {}
     for item in not_testable:
         status, what = open_class(item.get('reason'))
@@ -154,12 +174,22 @@ def reconsideration(doc, path, raw, claims):
                         what='the mapped claims, read against the stored search counts of the days given (results below); '
                              'a count comparison on stored evidence, NOT a reproduction of the original calculation'),
                     original_calculation_awaiting_teacher_reproduction=dict(
-                        count=len(claims), status='pending_teacher_work',
-                        what='each mapped claim\'s original calculation (its construction, named per claim) has not been '
-                             'reproduced by either teacher; this file never marks it reproduced'),
+                        count=len(claims),
+                        status='pending_teacher_work' if performed.get('pending_teacher_work') or performed.get('not_run')
+                               or not performed else 'performed_where_bound',
+                        bindings=dict(sorted(bindings.items())), records=dict(sorted(performed.items())),
+                        records_listed=records_listed, binding_tables_sha256=HC.binding_tables_sha256(),
+                        records_dir=str(records_dir if records_dir is not None else REPRODUCTION_DIR),
+                        what='each mapped claim\'s original calculation is traced to code at its exact revision '
+                             '(REPRODUCTIONS: sources with sha256, entry point, inputs, recorded outputs); `records` counts '
+                             'the hash-bound HISTORICAL_REPRODUCTION_V1 records a teacher\'s authorized execution wrote, by '
+                             'status; a binding is not a reproduction; the bindings cover the mapped claims only, every '
+                             'not_testable statement has none and stays open; Memory A claims are not_bound (Greg, 2026-10-06)'),
                     teacher_repair_or_reformulation=dict(
-                        count=len(claims), status='pending_teacher_work', performed=0,
-                        what='no repair or reformulation of a mapped or unmapped claim is performed or recorded by this file'),
+                        count=len(claims), status='pending_teacher_work', performed=0, needs=dict(sorted(reforms.items())),
+                        what='REFORMULATIONS names, per mapped claim, what a declared repair or reformulation needs (a '
+                             'condition, a transform, a window, a turn or entry definition: mathematical decisions held for '
+                             'Greg); no repair or reformulation of a mapped or unmapped claim is performed or recorded here'),
                     missing_inputs_or_unsupported_computation_open=dict(
                         count=len(not_testable), status='OPEN_MAPPING_OR_REWORK_REQUIRED', by_status=by_status,
                         where='the claims file\'s not_testable list, each with path:line, catalog id, statement and reason; '
@@ -170,9 +200,13 @@ def reconsideration(doc, path, raw, claims):
                      'closed by a disposition word (R14)')
 
 
-def historical_claims(path):
+def historical_claims(path, records_dir=None):
     """HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py): the catalog's claims, author 'historical'. Its claims
-    are tested; its not_testable list travels with the lessons by reference, counted by open status (reconsideration)."""
+    are tested; its not_testable list travels with the lessons by reference, counted by open status (reconsideration).
+    Each claim carries `reproduction` (its declared binding: frankie_box_historical_claims.reproduction_of) and
+    `reformulation` (what a declared repair/reformulation needs: reformulation_of), attached here by claim id; the
+    committed claims file is read, never rewritten. Records of performed reproductions are read by test(), not frozen here."""
+    import frankie_box_historical_claims as HC
     raw = Path(path).read_bytes()
     doc = json.loads(raw)
     if doc.get('schema') != 'HISTORICAL_CLAIMS_V1':
@@ -182,10 +216,11 @@ def historical_claims(path):
                    direction_text=c.get('direction'), lag=claimed_lag(c.get('lag')), cells=list(c.get('cells') or []),
                    condition=c.get('condition'), x_transform=c.get('x_transform', 'sign_of_step'),
                    y_transform=c.get('y_transform', 'sign_of_step'), source=c.get('source'), day_made=None,
-                   source_claim=c)
+                   source_claim=c, reproduction=HC.reproduction_of(c['id']), reformulation=HC.reformulation_of(c['id']))
               for c in doc.get('claims') or []]
     return dict(author='historical', stamp=doc['catalog_sha256'][:12], day=None, claims_sha256=sha256_bytes(raw),
-                source=str(path), claims=claims, reconsideration=reconsideration(doc, path, raw, claims))
+                source=str(path), claims=claims,
+                reconsideration=reconsideration(doc, path, raw, claims, records_dir=records_dir))
 
 
 def frankie_claims(path, day):
@@ -599,16 +634,41 @@ def test(claims_doc, days):
         if source_rework is not None or claims_doc['author'] == 'historical':
             # R11/R13: a stored-count reassessment is one status; reproduction and repair stay pending until a teacher
             # performs them; a prior label (the source's evidence list) is carried, never read as closure.
+            # The reproduction status is READ, never set here: a hash-bound HISTORICAL_REPRODUCTION_V1 record under
+            # REPRODUCTION_DIR (written by the teachers' authorized execution through frankie_box_historical_reproduction)
+            # gives performed_matched / performed_differs / not_run; without one the claim's declared binding is named
+            # and the status stays pending_teacher_work (not_bound for the retired Memory A claims).
+            import frankie_box_historical_claims as HC
+            import frankie_box_historical_reproduction as HR
+            binding = c.get('reproduction') or HC.reproduction_of(c['id'])
+            reform = c.get('reformulation') or HC.reformulation_of(c['id'])
+            records, records_listed = HR.records_for(c['id'], REPRODUCTION_DIR)
+            reproduction = HR.status_of(records)
+            if reproduction == 'pending_teacher_work' and binding['status'] == 'not_bound':
+                reproduction = 'not_bound'
             result['research_rework'] = dict(source_rework or {}, status='OPEN_REWORK_REQUIRED', closed=False,
                 stored_evidence_reassessed=dict(performed=bool(tests), disposition=disposition,
                                                 days=sorted({t['day'] for t in tests}), counts=result['counts'],
                                                 rule='a count comparison on stored search evidence, not a reproduction'),
-                original_calculation_reproduction='pending_teacher_work',
-                repair_or_reformulation='pending_teacher_work',
+                original_calculation_reproduction=reproduction,
+                reproduction_binding=dict(status=binding['status'], entry_ids=binding.get('entry_ids') or [],
+                                          reason=binding.get('reason'),
+                                          sources=[dict(path=s['path'], revision=s['revision'], sha256=s['sha256'],
+                                                        catalog_id=s.get('catalog_id'))
+                                                   for e in binding.get('entries') or [] for s in e.get('sources') or []],
+                                          inputs_missing=[i.get('path') for e in binding.get('entries') or []
+                                                          for i in e.get('inputs') or [] if i.get('status') != 'committed'],
+                                          rule='a declared binding; not a reproduction'),
+                reproduction_records=dict(records=records, listed=records_listed, directory=str(REPRODUCTION_DIR)),
+                repair_or_reformulation='not_bound' if reform['status'] == 'not_bound' else 'pending_teacher_work',
+                reformulation_needs=dict(status=reform['status'], kind=reform.get('kind'), needs=list(reform.get('needs') or []),
+                                         where=list(reform.get('where') or []), decision=reform.get('decision')),
                 construction=c.get('construction') or (c.get('source_claim') or {}).get('construction'),
                 prior_labels=list((c.get('source_claim') or {}).get('evidence') or []),
                 rule='a prior rejected/dead/no-good label is a claim about the claim and cannot close reconsideration; '
-                     'this result reassesses stored evidence only; nothing here marks reproduction or repair performed')
+                     'this result reassesses stored evidence only; the reproduction status is read from a hash-bound '
+                     'record of the teachers\' own execution, never set by this reader; repair/reformulation needs are '
+                     'named, none is performed here')
         if origin:
             result.update(origin=origin, origin_evidence=origin_evidence,
                           origin_rule='origin-day rows are listed, never counted: the disposition and days_tested cover '

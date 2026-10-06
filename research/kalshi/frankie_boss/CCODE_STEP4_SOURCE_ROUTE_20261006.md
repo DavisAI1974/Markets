@@ -294,3 +294,187 @@ Changed: `frankie_box_teacher_knowledge.py`, `frankie_box_experiment_exchange.py
   retry is unchanged (same-bytes reuse, different-bytes refuse).
 Not done: `frankie_box_classroom_code.exchange_reply` is untouched (origin lines are added to the reply by the exchange).
 Checks: `ast.parse` without project imports, `git diff --check`. No run.
+
+### Slice A follow-ups 1-3 (parent `ef12b0eb` on Codex's `59cca0d4`; commit `9e456888`)
+
+Changed: `frankie_box_experiment_exchange.py` only.
+- (1) `science_turn(..., origin=)` takes the ONE computed `origin_evidence_accounting` object (the BOSS seat's) and consumes
+  its teaching lines in its own `evidence_checks` (result unresolved), `reasoning`, `teaching_implications` and cites before
+  `D.parse_teacher` / hashing: the same counts, explicitly not a second measurement; never in `compared`, findings,
+  promotion or target masks. `day_text` names the origin rows with margins stated and those listed without arithmetic;
+  sidecar `origin_accounting_consumed`. `exchange()` passes the object to both seats.
+- (2) the origin prose carries the shared route's qualification verbatim in meaning: nonzero transformed-step margins at the
+  retained circular shift, not PRESENT masks or known physical inactivity (zero may be stationary, missing or unclassified);
+  `formulas` and `alignment` recorded per row; the formulas are `count_margins`, unchanged.
+- (3) `origin['listed']` reasons are taught: a current-day origin row whose arithmetic cannot be performed keeps its source
+  row and reason, is named as identified discovery evidence (exact row / mirror / fields-equal / same pair) or as not
+  identifiable, and is never marked tested; the lines reach the BOSS turn, the scientific turn and the lawful Frankie reply.
+Slice A is now complete on CCode's side pending Codex's integration review. Checks: `ast.parse`, `git diff --check`. No run.
+
+### Slice B: faithful historical calculation bindings and the teachers' reproduction capability
+
+Changed: `frankie_box_historical_claims.py` (tables + accessors; `build()` output unchanged except `builder_sha256`),
+NEW `frankie_box_historical_reproduction.py` (the capability; never invoked), `frankie_box_scientific_teacher.py`,
+`frankie_box_experiment_exchange.py`, `frankie_box_teacher_knowledge.py` (identity binds the two new readers).
+The committed claims file `HISTORICAL_CLAIMS_V1-9dc79ca359e9.json` is byte-identical; the builder was not run.
+
+Traced first (every pin computed from git history here, verified byte-equal to the handoff's; none recomputed on the box):
+
+| binding | claims | original calculation (entry) | sources @ revision (catalog id) | inputs | recorded outputs | status |
+|---|---|---|---|---|---|---|
+| `crypto_trend_flip` | H01 H02 | `_info_dipole_trend_flip.py` main: `signed_flow_features` over the 30-min pre-entry window of 1-min bars per winner onset; confirm/diverge split; the aligned <= -0.2 gate; the 2-factor gate with `odcore.info_dipole.divergence` | `odcore/info_dipole.py` (review.091), `_info_dipole_trend_flip.py` (review.112), `_info_dipole_flow_detrend.py` (review.107, cited negative) @ `bb28b35e` | 6 `fingerprint_dataset/test_bars/*.json` + `fingerprint_dataset/onsets/winner_onsets.json` (1,560), all committed @ `bb28b35e` | 10 printed patterns (POOLED 1560 / 50 / 38 / +12; temporal +4 / +18; gate ~65 tol 1; per cell 100 / 84; 2-factor 317 / 64 / 58 / 52 / 49) + 2 prose (early 70 / late 62; "neutral") | defined |
+| `crypto_harness` | H01 H02 | `_info_dipole_harness.py` main: same timing trigger, champion OFI filter vs challenger `divergence()`, ZigZag theta 20 bps, OOS 40 percent | `_info_dipole_harness.py` (review.095), `_info_dipole_swing_backtest.py` (review.111), `odcore/info_dipole.py`, `_info_dipole_harness_results.json` (review.096) | `realbins/*_bins.json`: not in the repository at any revision | the results json, leaf by leaf (`config`, `per_venue`) | missing_inputs |
+| `ng_leg_fingerprints` | H03 H04 H05 H09 H10 | `characterize_turns.py <days>` -> `month_characterize.characterize_day("NG", day, "s3")`: legs by `lag_join.scan_moves` (TRIG 0.015); per leg `dipole_pieces` (dip_imb_level), `depth_pieces` (imb_R, aligned_imb_R, book), `turn_pieces` (turn_far_thinning), `move_path` (dir, continuation) | `month_characterize.py`, `event_move_baseline.py`, `characterize_turns.py`, `lag_join.py`, `forward_curve.py`, `nws_temp_feed.py` @ `21df8f14` (three swept catalog ids; the rest pinned here), `odcore/info_dipole.py` @ `bb28b35e`, `renders/ng_refine_s95/fingerprints.json` @ `21df8f14` (NOT in the catalog: bound by path + revision + sha256), `ng_brain.json` @ `bb28b35e` | NG MBP-10 day tapes on S3 (`nymex_mbp10/`) + local regime caches: not in the repository | `fingerprints.json` per leg, per claim field set; ng_brain prose (1,537 legs / 87.6 percent AND the brain's own recount 2,459/3,697 = 0.665; book_contrarian confidence 0.5 / UNCLEAR; turn_far_thinning demotion "held legs ~half negative"), each declared not comparable by code | missing_inputs |
+| `memory_a_retired` | H06 H07 H08 | Memory A exact native MBO closes (Oct 4 / Oct 5 2021) | the two catalog sources (positive knowledge doc, member-first receipt) @ `b4f364f0`, sha256 from the catalog (that revision is not in this clone); the recalculation script is in neither the catalog nor this repository's history | the A-memory ledger: not bound | preserved as evidence; not compared | not_bound: "Memory A retired by Greg 2026-10-06; original evidence preserved" |
+
+Built:
+- `frankie_box_historical_claims.REPRODUCTIONS` (the table above, every source with path, revision, sha256, role and catalog
+  id where one exists; entry point with cwd/script/argv/produced files; inputs with where they live; recorded outputs typed
+  `printed` / `json_file` / `prose`), `REFORMULATIONS` (per claim what a declared repair or reformulation NEEDS: H01 a
+  derived `aligned_flow` series, a threshold state and a pre-entry window; H02 a windowed `|imbalance| falling` transform
+  (none of `TRANSFORMS` is one); H03 the construction transfer roll20 vs Lee-Ready ~300 s, the |x| >= 0.15 state and a
+  LEG/SIDE definition; H04/H05 a numeric flat-flow bar the source never states, an entry definition, and n vs 10 levels;
+  H09/H10 a turn definition (the favourable peak within POST_S) and an entry-to-peak depth change; H06-H08 not_bound), the
+  accessors `reproduction_of`, `reformulation_of`, `binding_tables_sha256`. `frankie_box_experiment_surface.state_masks`
+  (sign states, built, unwired) and `frankie_box_experiment_transforms.TRANSFORMS` are named as the places; the decisions
+  are Greg's (mathematical), none is taken.
+- `frankie_box_historical_reproduction.py`: `stage` (git show at the pin, sha verified, into `<out>/tree/<path>`; on the box
+  everything is listed, nothing staged), `plan` (`HISTORICAL_REPRODUCTION_PLAN_V1`, executable yes/no), `run` (refuses
+  without the exact `AUTHORIZATION` literal or with missing inputs: `not_run` with the inputs named; never a stand-in),
+  `compare` (printed regex fields with the recorded tolerance only where the record says "~"; produced json vs the pinned
+  recorded file leaf by leaf over the declared fields; prose declared not comparable), `record`
+  (`HISTORICAL_REPRODUCTION_V1`: performed_matched / performed_differs / not_run, pins, `record_sha256`; written once under
+  `<work>/reproduction/`), `records_for` (hash-bound read: record sha holds AND pins equal the declared table's, else
+  listed), `status_of`. Nothing calls it today.
+- `frankie_box_scientific_teacher.py`: `historical_claims()` attaches `reproduction` and `reformulation` per claim (so they
+  freeze into `claim_inputs`); `test()`'s `research_rework` READS the status from the hash-bound records under
+  `REPRODUCTION_DIR` (`performed_matched` / `performed_differs` / `not_run`), else `pending_teacher_work`, or `not_bound`
+  for H06-H08; it carries `reproduction_binding` (pins, missing inputs), `reproduction_records` (records + listed),
+  `repair_or_reformulation` (`not_bound` / `pending_teacher_work`) and `reformulation_needs`; `reconsideration` counts
+  bindings by status, records by status (and the listed ones), reformulation needs by status, and says the bindings cover
+  the mapped claims only: every not_testable statement has none and stays open.
+- `frankie_box_experiment_exchange.py`: the historical item's `rework` keeps a `performed_*` reproduction status when the
+  reader reports a hash-bound record of that status (`reproduction_status_source` says so) and otherwise writes
+  `not_established_by_this_exchange` as before; the untested line says which. Repair/reformulation stays not established.
+- `teach_accumulated` identity binds `frankie_box_historical_claims` and `frankie_box_historical_reproduction` beside the
+  other readers (older pending `inputs.json` refuse the new semantics; completed results keep theirs).
+Not done, on purpose: no reproduction, repair or reformulation was run or judged; no condition, transform, window, turn
+or entry definition was chosen; the not_testable 82,365 have no binding (a binding needs a crosswalk entry first).
+Consequence to note: a future `frankie_box_historical_claims.py --out` run would produce a file differing from the committed
+one only in `builder_sha256` and refuse to overwrite it ("move it aside first"); that is the builder's own guard, unchanged.
+Checks: `ast.parse` of the five modules without project imports; the 10 recorded-output regexes compile (`re.compile` over the
+string constants read by `ast`, no project import); `git diff --check`. No run, no test.
+
+### Slice C: completed native evidence, its actual existing consumers, and the candidate-only accumulated route
+
+Changed: `frankie_box_teacher_knowledge.py` only (the repair); the rest of this slice is the source trace below.
+
+Every existing consumer of the completed native products (the receipt, `result.json`, sections 4.2 / 4.4, the FINALIZE
+rows), traced by name, each classed as COMPUTED by a named existing function / CONNECTED but unverified (packaging,
+hashing, citation or presentation: not semantic computation) / AWAITING a precise definition:
+
+| product | existing consumer (function) | what it does with it | class |
+|---|---|---|---|
+| member and lifecycle GROUP_CLOSE rows (exact emission provenance) | `frankie_box_experiment_native.read_columns` -> `frankie_box_experiment_search.build_series` -> transforms / `couple` | placed on the F_LAST axis at the exact INPUT cursor + instrument + receive time; every scalar leaf becomes a searched series (`native.lifecycle.mirror.*` = the 4.4 GROUP_CLOSE offers) | COMPUTED (the search) |
+| receipt (verdict, failed gates, groups, records, span, warm-up, minimum) | `frankie_box_experiment_native.selected_files` (gate: bedrock policy, completion status, pins); `frankie_box_scientific_teacher.completed_native_evidence` (read whole); `frankie_box_experiment_exchange.context_checks` (cited, sha256-bound) | selection gate; packaging; citation | COMPUTED as a selection gate only; otherwise CONNECTED-unverified |
+| `result.json` `section_summaries` | `frankie_box_boss_session._reusable_projection` and `frankie_box_projection.project` (pinned into the projection plan spec); `frankie_box_bedrock.project_sections` (copied whole into the section files); the scientific reader; the exchange citation | identity / packaging / citation; no arithmetic reads a summary number | CONNECTED-unverified |
+| `result.json` `averaged_companions` rows | the same three, plus the digest tables `bedrock.companions.4.2` (`frankie_box_digest_sources` / `_parallel` / `_render`) | copied, rendered; labelled supplement (D37) | by design NO semantic consumer: averages are not evidence |
+| 4.2 `first_last_pairs` + `declarations` (`native_book_regime.BookRegimeCalculator`) | `frankie_box_bedrock.project_sections` / `frankie_box_projection.project` (filed as the section file); digest tables `bedrock.first_last.4.2`, `bedrock.declarations.4.2`; the scientific reader; the exchange citation | packaging, presentation, citation; the books themselves are already on the frame axis (searched as frames) | AWAITING a definition: the step series a two-point session summary is (Greg; a mathematical decision, not a connection) |
+| 4.4 `matching_rule` + STREAM_END rows (`native_mirror.MirrorMatcher`) | `frankie_box_bedrock.project_sections` (the `mirror` lifecycle rows copied whole); digest tables `bedrock.lifecycle.mirror`, `bedrock.matching_rule.4.4`; the scientific reader; the exchange citation | packaging, presentation, citation | AWAITING a definition for any per-group pair-completion series: which group close owns a 4.4 pair completion (Greg) |
+| FINALIZE rows (member and lifecycle ledgers) | `frankie_box_experiment_native.read_columns` (disposition `post_stream_knowledge_only`, exact ordinal ranges; refuses one that names a live group); `frankie_box_scientific_teacher._finalize_rows` (parsed only at those ordinals while the whole ledger is hashed against the pin); the exchange citation | never a search step (no axis position); read whole into the per-day completed-native file | CONNECTED-unverified; post-stream knowledge has no step, so its only lawful consumer today is the teachers' exchange as cited knowledge |
+
+Nothing above was re-described as semantic coverage: packaging, hashing, citation and status counts are not computation.
+No claim adapter, measurement, target, independence claim, enabled producer or model route was invented.
+
+The repair (owner-local, within the existing pins and writer contract): `teach_accumulated` previously copied a retained
+lesson's `completed_native_evidence` through unchanged, so a candidate-only lesson (built from the owner's
+`FRANKIE_SEARCH_FINDINGS_V1`, which carries no such key) produced results with NO native evidence for the owning day, and
+every other retained lesson carried only its original days' references. Now the owning search's manifest is read up front
+(hash-checked; the parts are still hash-verified before the first new test) and the scientific reader's own
+`completed_native_evidence(days[0], out_dir)` runs once for the owner (its pinned receipt / result / sections / ledgers,
+bytes verified, written once under `<out_dir>/native/`; same bytes reuse, different bytes refuse). Every result header of
+the day carries `completed_native_evidence.by_day[day]` = that reference beside the retained lesson's references for other
+days (unchanged; a conflicting reference for the same day refuses), the merged `listed`, and `owner_day` naming the owning
+manifest. The exchange's `lesson_context` / `context_checks` then cite the owner's completed-native reference for the current
+day in BOTH seats, as they already do for lessons that carry one. No product is backfilled onto an earlier frame: the
+reference lives in the retest lessons of the completed owner day. Older pending `inputs.json` refuse (producer sha changed).
+Decisions kept open (Greg): which group owns a 4.4 pair completion; whether a 4.2 two-point session summary has a step
+definition. Neither is authority to invent a series or statistic, and none was. Checks: `ast.parse`, `git diff --check`. No run.
+
+### Slice D: identity plumbing (the price/structure producer task), native-consumer trace, late-arriving knowledge
+
+Changed: `frankie_box_boss_session.py` (the producer task), `frankie_box_teacher_knowledge.py` and
+`frankie_box_experiment_exchange.py` (late knowledge listed at the frozen boundaries). Read first: `ROOT_PLANE_COVERAGE`,
+`KNOWLEDGE_CONSUMER_COVERAGE`, `NATIVE_LEARNER_INTEGRATION_DECISIONS`, `PENDING_FEEDBACK_COMPLETION` (all 2026-10-06).
+
+**The producer change (`Session.derive`), the exact new row contract for Codex's reserved search adapter:**
+
+`ROW_PROVENANCE_SCHEMA = 'FRANKIE_ROOT_ROW_PROVENANCE_V1'`. Both legacy spools keep every existing field and value
+(calculation outputs unchanged) and gain ONE nested key, `provenance`, built only from identity already in scope where the
+row is appended; nothing is inferred, no positional join is made, no timestamp is used as an identity.
+
+| spool | existing fields (unchanged) | `provenance` (new) | semantics |
+|---|---|---|---|
+| `prices.jsonl` | `ts_recv`, `ts_event`, `price`, `size`, `bid_px_00`, `ask_px_00` | `schema`; `input_index` (int); `instrument_id`; `legacy_row_ordinal` (int) | `input_index` = the original extracted INPUT index of the record whose application produced this legacy row (the loop index; the same units as `frames.input_cursor` and `frames.input_record_indices[i]`); `instrument_id` = that INPUT record's `instrument_id` as the record carries it (None stays None); `legacy_row_ordinal` = the row's ordinal among that record's legacy rows (one record can yield several trade rows), so (`input_index`, `legacy_row_ordinal`) is unique |
+| `structures.jsonl` | `ts_recv_ns`, `ts_event_ns`, every `describe_structure(...)` key | `schema`; `input_cursor` (int); `instrument_id`; `input_record_indices` ([int] or None) | `input_cursor` = the closing INPUT index (the record whose application closed this F_LAST group: equal to `frames.input_cursor` of the same close); `instrument_id` = `frame['instrument_id']`; `input_record_indices` = the group's member INPUT indices when the frame sections retain them (equal to `frames.input_record_indices` of the same close), else None (never reconstructed) |
+
+Joins the adapter can make exactly, without timestamps: a structures row <-> its frame by (`provenance.input_cursor`,
+`provenance.instrument_id`) == (`frames.input_cursor`, `frames.native_frame.instrument_id`) under ROOT's own membership
+(`experiment_journal._frame_index`); a prices row -> its group by `provenance.input_index` in that group's
+`frames.input_record_indices` (exact membership). A structure failure (a frame without a structures row) no longer
+shifts any join, because each row names its own close. Detection: the derivation receipt carries `row_provenance_schema` and
+`row_provenance_fields`; `layers.legacy_price.row_provenance` and `layers.legacy_structure_observables.row_provenance` name
+the fields with the rule "identity fields, not observations: never a searched series". A retained older spool has no
+`provenance`: explicit, unsupported for these joins; the old timestamp aliases are not exact identity.
+
+Bindings: the legacy recovery identity (`legacy-state.pkl`) and the completed-legacy-stage identity (`legacy-stage.json`)
+both carry `row_provenance_schema`, so an older saved state or completed stage refuses with the existing messages and is
+preserved, never resumed under the new semantics (the same mechanism `FRAME_SECTIONS_SCHEMA` V1 -> V2 used). A non-recovery
+rerun still moves an earlier derivation aside with its receipt. `load_retained_layers` reads rows as dicts (extra key fine);
+the digest writer already renders nested frame fields (`book`, `transition`), so a nested `provenance` is within its contract.
+Interim hazard, stated for Codex's adapter (change #1): `frankie_box_experiment_search.columns()` flattens every scalar
+leaf, so until the reserved search excludes `provenance.*` the way it lists `EVENT_IDENTITY_FIELDS`, a NEW ROOT's spools
+would present `prices.provenance.input_index`, `structures.provenance.input_cursor`, `...instrument_id`,
+`...input_record_indices[i]` and the text `...schema` as channels; the same already holds today for the frames'
+`input_cursor` / `input_record_indices` leaves, which this change mirrors. No search runs under the hold.
+`describe_structure` lives in the pinned producers checkout (`_producer_module`, not this tree); nesting under `provenance`
+keeps its keys untouched whatever they are.
+
+**Identity-linked trajectories beyond positional slots (trace; interfaces returned, no unit or bridging chosen):**
+- Identity-linked today: frames by (`input_cursor`, instrument) with exact member indices; journal entries per exact group
+  (`journal.group.entries[position].*`, Codex); dipole target rows per group and the closing aliases per entity
+  (`dipole.group_close.by_entity.<publisher>:<instrument>.*`, incl. `dstate.state.*`): a DState trajectory per entity across
+  that entity's closes IS identity-linked by (publisher_id, instrument_id) on the existing F_LAST positions
+  (`retained_evidence_counts` already reads it that way); events per exact group (Codex's fix); now prices/structures (above).
+- Not identity-linked (positional): `dipole.group.rows[slot]`, `frames.book.*_levels_full[i]`, `...fifo_queue[j]`, native
+  lifecycle `[slot]`s. A per-order or per-level trajectory needs an axis keyed by `order_id` / price level across closes:
+  the data is present (`fifo_queue[j].order_id`, `observation.*`), the DEFINITION (which key, which lag unit, session
+  bridging) is held; proposed interface only: `build_series` derives `order.<order_id>.<field>` from the retained
+  `fifo_queue` leaves at each close of the order's instrument, lag unit = that instrument's closes (the existing axis);
+  no such series is built here.
+**Native representation / TeacherHead / training consumers:** per the decisions document the three decisions (retained
+starting state; objective + auxiliary weight; cross-lane lineage) are open for Greg; `NativeForecastLearner.step` reports
+`teacher_optimized=False`; the experiment classroom records `model_calls=0`. No adapter or identity plumbing is unambiguous
+without those decisions, so none was built; nothing is relabelled as training. Blocked precisely by: decision 1 (locate or
+declare the retained state), decision 2 (objective/auxiliary combination and its versioned state migration), decision 3 (a
+versioned model lineage with queued updates across the three lanes).
+**Late-arriving knowledge (audit + repair within the contracts):** both unfinished-work boundaries freeze their selection
+once (`teach_accumulated` -> `inputs.json`; `accumulated_lessons` -> `learner-knowledge.json`) and a restart re-reads the
+frozen selection; knowledge published after the freeze was silently invisible. Now each restart LISTS it: `late_arrivals()`
+computes what `learner_knowledge(day, 'exchange')` would select now minus the frozen sha256s (documents and containers), and
+the listing goes to the RECEIPTS (`accumulated_claim_tests.late_knowledge`; the exchange receipt's `late_knowledge` via the
+new `notes=` argument), never into the frozen files or the hashed, write-once exchange documents (a restart must reproduce
+their bytes exactly). Nothing is consumed late, no completed or frozen day is reopened, no scheduler policy is introduced.
+Blocked by the held late-scheduling decision: whether, when and under which owner a later retest consumes listed late
+knowledge (today: at the next owner boundary that freezes after it, by the existing selection).
+Checks: `ast.parse` of the three modules without project imports; `git diff --check`. No run.
+
+## 9. Closure table after slices A-D (against the existing contracts; SOURCE-BUILT / RUNTIME-UNVERIFIED throughout)
+
+| step | actual consumer / function | source-built connection | remaining implementation or decision | runtime verification needed |
+|---|---|---|---|---|
+| 1 | lane save/resume (Codex) | built | none named for CCode | whole |
+| 2 | `teach_accumulated` -> `ST.test` -> brain writer -> exchange seats -> Frankie reply | A: discovery-day candidates and origin evidence to BOTH seats' records and the lawful reply, listed reasons voiced; C: the owner's completed-native reference in every accumulated result; D: late knowledge listed at both frozen boundaries; B: historical reproduction status read from hash-bound records | the three native-learner decisions and the late-scheduling decision (Greg); Codex's integration review | whole |
+| 3 | `experiment_search.build_series` + transforms/coupling (Codex) | D: price/structure rows carry exact INPUT/instrument provenance (contract above; Codex's adapter pending, incl. excluding `provenance.*` from channels) | conditions, transforms, windows, turn/entry definitions (REFORMULATIONS); 4.4 pair ownership and a 4.2 step definition (Greg) | whole |
+| 4 | `ST.test`, `candidate_claims_doc`, exchange, `frankie_box_historical_claims` bindings, `frankie_box_historical_reproduction` | A: exact origin identity + both-seat arithmetic; B: REPRODUCTIONS / REFORMULATIONS (3 bound, 1 not_bound), stage/plan/run/compare/record capability (never invoked), `research_rework` reads records; C: every completed-native consumer classed | survivor/acceptance rules (#5); the teachers' authorized execution of the bound reproductions (inputs for two bindings are off-repository) | whole |
+| 5 | discussion | STOP | Greg | n/a |

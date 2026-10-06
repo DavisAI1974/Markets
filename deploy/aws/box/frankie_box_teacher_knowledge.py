@@ -23,12 +23,20 @@ def teach_accumulated(day, search, brain, out_dir):
     since added our own results to the brain. No search or claim synthesis occurs here.
     Discovery-day candidates are scheduled like every other claim: the scientific reader
     lists their origin evidence (never a test) from this owner's complete search parts.
+    Every result of this owning day carries the OWNER's completed native evidence (the
+    receipt, result summaries, sections 4.2/4.4 and FINALIZE rows the owner's search pinned),
+    read whole and bytes-verified by the scientific reader into <out_dir>/native/ once (same
+    bytes reuse, different bytes refuse) and set as completed_native_evidence.by_day[day];
+    a retained lesson's references for OTHER days are carried unchanged (CCode slice C:
+    candidate-only lessons previously produced no native evidence for the owning day).
     """
     import frankie_box_lane_state as LS
     import frankie_box_brain as BR
     import frankie_box_scientific_teacher as ST
     import frankie_box_experiment_exchange as EX
     import frankie_box_candidate_claims as CC
+    import frankie_box_historical_claims as HC
+    import frankie_box_historical_reproduction as HR
     from frankie_box_durable import write_json, witness
 
     day, search, out_dir = str(day), Path(search), Path(out_dir)
@@ -42,14 +50,20 @@ def teach_accumulated(day, search, brain, out_dir):
         raise ValueError('accumulated claims must use this owning day search')
     identity = dict(day=day, search=str(search), manifest=manifest_witness, brain=str(brain),
                     producer=witness(__file__), readers={m.__name__: witness(m.__file__)
-                                                       for m in (LS, BR, ST, EX, CC)})
+                                                       for m in (LS, BR, ST, EX, CC, HC, HR)})
     input_path = out_dir / 'inputs.json'
+    late_knowledge = dict(listed=[], frozen=False,
+                          rule='knowledge published after this owner froze its selection is LISTED here, never consumed by '
+                               'the frozen selection: no completed or frozen day is reopened and no frozen input is '
+                               'replaced (the late-scheduling decision is held for Greg); it is available at a later '
+                               'owner boundary through the same learner_knowledge selection')
     if input_path.is_file():
         inputs = json.loads(input_path.read_bytes())
         if inputs.get('identity') != identity or inputs.get('schema') != 'FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1':
             raise ValueError('retained scientific knowledge belongs to another search or reader')
         if inputs.get('selection_sha256') != _digest(inputs['selection']):
             raise ValueError('retained scientific knowledge selection differs from its binding')
+        late_knowledge.update(frozen=True, listed=late_arrivals(day, brain, inputs['selection'], LS))
     else:
         selected = LS.learner_knowledge(day, 'exchange', brain=brain)
         school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'])
@@ -142,7 +156,15 @@ def teach_accumulated(day, search, brain, out_dir):
                     already_tested.add(claim_key(lesson, claim))
 
     scheduled = set()
-    days = None
+    # The owning search's manifest (hash-checked above) names the days, series and parts; its evidence parts are
+    # hash-verified below before the first new test. The owner's completed native evidence is read once here so every
+    # result header of this day, new or reused, carries the same bytes-bound reference (post-stream knowledge of the
+    # completed owner day; never backfilled onto earlier frames: it is a reference in the retest lessons, not a series).
+    days = ST.load_searches([search])
+    if days[0]['manifest_sha256'] != manifest_witness['sha256']:
+        raise ValueError('owning search manifest changed after accumulated input selection')
+    native_ref, native_listed = ST.completed_native_evidence(days[0], out_dir)
+    parts_verified = False
     for item in documents:
         lesson, claims = item['lesson'], []
         for claim in item['claims']:
@@ -179,11 +201,27 @@ def teach_accumulated(day, search, brain, out_dir):
                                        manifest_sha256=manifest_witness['sha256'])],
                         knowledge_retest=result_identity, model_calls=0,
                         rule='prior findings retained unchanged; each new day measured separately, never pooled')
-        # Preserve the source collection's open work and completed post-stream
-        # references whole. Their original days and hashes are not this day's tests.
-        for field in ('reconsideration', 'completed_native_evidence'):
-            if field in lesson:
-                expected[field] = lesson[field]
+        # Preserve the source collection's open work whole. Its original days and hashes are not this day's tests.
+        if 'reconsideration' in lesson:
+            expected['reconsideration'] = lesson['reconsideration']
+        # Completed native evidence: the retained lesson's references for other days unchanged, plus THIS owner's
+        # (a candidate-only lesson carries none of its own; the owner's search pins are the only lawful source here).
+        carried = lesson.get('completed_native_evidence') or {}
+        by_day = dict(carried.get('by_day') or {})
+        if native_ref is not None:
+            if day in by_day and by_day[day] != native_ref:
+                raise ValueError('retained lesson carries a different completed-native reference for this owning day')
+            by_day[day] = native_ref
+        listed_native = list(carried.get('listed') or [])
+        listed_native += [x for x in native_listed if x not in listed_native]
+        expected['completed_native_evidence'] = dict(
+            by_day=by_day, listed=listed_native,
+            owner_day=dict(day=day, generated=native_ref is not None, search_manifest_sha256=manifest_witness['sha256'],
+                           reader='frankie_box_scientific_teacher.completed_native_evidence (owner-local, bytes-bound)'),
+            rule=carried.get('rule') or ('each searched day\'s completed native evidence (receipt, result summaries, sections '
+                                        '4.2/4.4, FINALIZE rows) read whole and bound by sha256 for both exchange seats; exact '
+                                        'numbers are evidence, averages are labelled supplements (D37); post-stream rows are '
+                                        'never search steps'))
         if path.is_file():
             result = json.loads(path.read_bytes())
             header = {k: v for k, v in result.items() if k not in ('results', 'results_sha256')}
@@ -192,7 +230,7 @@ def teach_accumulated(day, search, brain, out_dir):
                 raise ValueError('completed accumulated teaching differs from its exact retained inputs')
             reused.append(dict(path=str(path), reason='completed result reused; no scientific test repeated'))
         else:
-            if days is None:
+            if not parts_verified:
                 seen_parts = set()
                 for part in manifest['couplings']['parts']:
                     relative = Path(part['path'])
@@ -206,9 +244,7 @@ def teach_accumulated(day, search, brain, out_dir):
                     if actual['sha256'] != part['sha256'] or \
                             ('bytes' in part and actual['bytes'] != part['bytes']):
                         raise ValueError('owning search evidence differs from its manifest: %s' % source)
-                days = ST.load_searches([search])
-                if days[0]['manifest_sha256'] != manifest_witness['sha256']:
-                    raise ValueError('owning search manifest changed after accumulated input selection')
+                parts_verified = True
             results = ST.test(dict(author=lesson['author'], claims=claims), days)
             result = dict(expected, results=results, results_sha256=_digest(results))
             write_json(path, result)
@@ -231,4 +267,23 @@ def teach_accumulated(day, search, brain, out_dir):
                           claim_ids=[c['id'] for c in claims]))
     return dict(inputs=dict(path=str(input_path), sha256=input_hash), files=files,
                 reused=reused, listed=listed, selection_listed=inputs['selection']['selection_listed'],
-                school_listed=inputs['selection']['school_listed'])
+                school_listed=inputs['selection']['school_listed'], late_knowledge=late_knowledge)
+
+
+def late_arrivals(day, brain, selection, LS):
+    """Completed brain documents the learner selection would include NOW that the frozen selection did not see: listed
+    (label, kind, day, path, sha256, schema), not consumed. A delivery drop made visible at the unfinished-work boundary;
+    the frozen selection, its identity and every retained result are untouched (CCode slice D, 2026-10-06)."""
+    seen = set()
+    for document in selection.get('documents') or []:
+        source = document.get('source') or {}
+        seen.update(x for x in (source.get('sha256'), source.get('container_sha256')) if x)
+    for item in selection.get('listed') or []:
+        source = item.get('source')
+        seen.update(x for x in ((source or {}).get('sha256') if isinstance(source, dict) else item.get('sha256'),
+                                item.get('sha256')) if x)
+    current = LS.learner_knowledge(day, 'exchange', brain=brain)
+    return [dict(label=d.get('label'), kind=d.get('kind'), day=d.get('day'), path=d.get('path'), sha256=d.get('sha256'),
+                 schema=(d.get('content') or {}).get('schema') if isinstance(d.get('content'), dict) else None,
+                 reason='published after this owner froze its scientific selection; not consumed by the frozen selection')
+            for d in current['documents'] if d.get('sha256') not in seen]

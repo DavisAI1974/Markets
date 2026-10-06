@@ -1,0 +1,45 @@
+# CCODE drop-in for the next chat (2026-10-06, late)
+
+```
+CCODE DROP-IN (new chat, 2026-10-06, late): slices A-D returned; integration review + the provenance adapter handshake
+#run using-agent-skills
+Repo: DavisAI1974/Markets
+Branch: ccode/teacher-tasks-20261006b, rebased onto Codex's 80a0e279 (ccr-5fce7de3-xa4hfg); tip = this drop-in's commit on top of
+the handoff 0adcf3d6; the four slices are c31cad06 (A follow-ups) 7cb2ce52 (B) 11082ff8 (C) 2a05c147 (D).
+Codex's commits after the slice A merge touch only frankie_box_experiment_search.py and the shared docs. First commands:
+  git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
+  git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
+  git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -7     (expect clean; if Codex edited an owned module, read its diff before touching it)
+#run memory mcp: the MCP tool call times out at 60 s on this repo; the CLI index works in the foreground (minutes):
+  echo '{"repo_path":"/home/user/Markets","mode":"full"}' | codebase-memory-mcp cli --quiet --json index_repository
+  then codebase-memory-mcp cli --quiet search_graph / get_code_snippet (.cbmignore re-includes deploy/; project home-user-Markets)
+
+Read, in order (research/kalshi/frankie_boss/):
+  CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md   top section = state after slices A-D, what the next chat picks up
+  CCODE_NEXT_SOURCE_TASKS_20261006.md top section     Codex's review of the four returns lands HERE; it changed since the last read
+  NEW_CHAT_HANDOFF_20261006_TEACHER_COVERAGE.md       newest sections (export-pin binding of search inputs; omitted-row accounting)
+  CCODE_STEP4_SOURCE_ROUTE_20261006.md sections 8-9   per-slice detail incl. the provenance row contract (D) and the closure table
+
+DONE (SOURCE-BUILT / RUNTIME-UNVERIFIED, nothing run): A follow-ups 1-3 (scientific seat consumes the one origin accounting;
+zero/unclassified limitation; listed reasons voiced). B: REPRODUCTIONS/REFORMULATIONS in frankie_box_historical_claims.py
+(claims file byte-identical; pins verified from history), frankie_box_historical_reproduction.py stage/plan/run/compare/record
+(never invoked; run() needs the authorization literal), ST.historical_claims attaches bindings, ST.test reads
+HISTORICAL_REPRODUCTION_V1 records under <work>/reproduction/, the exchange keeps a performed status; H06-H08 not_bound
+(Memory A retired). C: every completed-native consumer classed; the owner's completed-native reference in every accumulated
+result. D: FRANKIE_ROOT_ROW_PROVENANCE_V1 `provenance` on prices/structures rows (exact INPUT index + instrument; recovery and
+receipt bound); late knowledge listed at both frozen boundaries, receipts only.
+NEXT: (1) Codex's integration review of the four returns: fix every source defect it names in the owned files, one [skip ci]
+commit per finding group; do not reapply what Codex integrated. (2) The provenance handshake: answer Codex's questions on
+the row contract (report, slice D); the search adapter, incl. excluding provenance.* from channels, is Codex's. (3) Nothing
+else is assigned: do not open or invent a slice; if the task doc assigns more, trace first, build only within settled
+contracts. Update step-4 report sections 8/9 and the handoff for anything done; push.
+
+Boundaries: source/interface review, ast.parse without project imports, git diff --check ONLY. No tests, runs, installs, model
+calls, AWS actions, dispatch, canaries or E2E. Do not edit frankie_box_experiment_dipole.py or frankie_box_experiment_search.py.
+Never call frankie_box_historical_reproduction.run(); never rebuild the claims file under the hold (its builder guard refuses:
+builder_sha256 changed, the committed file is current). Granite pins and parameters settled (threads null). STOP before #5;
+preserved draft unapplied; never apply 9c19cc2. Memory A retired: H06-H08 stay historical, bind nothing. Greg's decisions stay
+open: REFORMULATIONS needs (threshold state, windowed transform, window, LEG/SIDE, flat-flow bar, entry, turn), 4.4 pair owner,
+4.2 step definition, the three native-learner decisions, late scheduling, the 52.9 MB claims file, principal_inputs catalog.
+Nothing left on the scratchpad.
+```
