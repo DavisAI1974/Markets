@@ -26,13 +26,14 @@ SCHEMA = 'FRANKIE_BOX_BRAIN_ENTRY_V1'
 # 20211003 Sunday entry on the box) is still read, labelled day unknown. A cycle reads EVERY entry written so far, from
 # every day and every cycle, except its own day+cycle (Greg: the cycles replay the day and restart earlier, so his
 # reasoning may carry later data; only the actual run data ahead of time is walled, and that is the cycle being run).
-ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*', '[0-9]' * 8 + '-teacher', '[0-9]' * 8 + '-search',
+ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*', '[0-9]' * 8 + '-ingest', '[0-9]' * 8 + '-day-file',
+               '[0-9]' * 8 + '-root', '[0-9]' * 8 + '-teacher', '[0-9]' * 8 + '-search',
                '[0-9]' * 8 + '-lessons', '[0-9]' * 8 + '-jev-tested', '[0-9]' * 8 + '-exchange',
                '[0-9]' * 8 + '-survivors', '[0-9]' * 8 + '-confirmation')
 # Non-cycle knowledge entries, ordered inside one day. They become readable as soon as each stage writes them.
-DAY_KINDS = {'teacher': 10 ** 6 - 2, 'search': 10 ** 6 - 1, 'lessons': 10 ** 6,
-             'jev-tested': 10 ** 6 + 1, 'exchange': 10 ** 6 + 2, 'survivors': 10 ** 6 + 3,
-             'confirmation': 10 ** 6 + 4}
+DAY_KINDS = {'ingest': -40, 'day-file': -30, 'root': -20, 'teacher': -10,
+             'search': 10, 'lessons': 20, 'jev-tested': 30, 'exchange': 40,
+             'survivors': 50, 'confirmation': 60}
 
 
 def entry_name(day, cycle):
@@ -48,7 +49,7 @@ def parse_entry_name(name):
     """(day or None, cycle) of an entry directory name, or None when the name is not an entry. A day's lessons entry
     (<day>-lessons: the scientific teacher's test results on Frankie's claims) parses as (day, 'lessons'); a day's
     exchange entry (<day>-exchange: the three-way exchange of the two teachers and Frankie) as (day, 'exchange')."""
-    kind = re.fullmatch(r'([0-9]{8})-(teacher|search|lessons|jev-tested|exchange|survivors|confirmation)', name)
+    kind = re.fullmatch(r'([0-9]{8})-(ingest|day-file|root|teacher|search|lessons|jev-tested|exchange|survivors|confirmation)', name)
     if kind:
         return kind.group(1), kind.group(2)
     match = re.fullmatch(r'(?:([0-9]{8})-)?cycle-([0-9]+)', name)
@@ -62,7 +63,7 @@ def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 *
     evidence stays at its retained path and is represented by exact bytes + sha256 + path, so no giant duplicate is
     created and nothing is silently dropped. A repeat with identical bytes reuses the entry; different bytes decline.
     """
-    allowed = {'teacher', 'search', 'jev-tested', 'survivors', 'confirmation'}
+    allowed = {'ingest', 'day-file', 'root', 'teacher', 'search', 'jev-tested', 'survivors', 'confirmation'}
     if stage not in allowed:
         raise ValueError('stage knowledge must be one of %s' % sorted(allowed))
     if not re.fullmatch('[0-9]{8}', str(day)):
