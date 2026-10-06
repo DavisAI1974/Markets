@@ -50,6 +50,7 @@ FULL_HASH_CHECK_RECEIPTS = 2_000   # up to this many receipts the attachment has
 RAW_GUARD_EVERY = 20_000
 RAW_BATCH_CALLS = 32_768
 RAW_MARK = '\x00parallel-raw:'
+DSTATE_SCHEMA = 'FRANKIE_TEACHER_DSTATE_ROWS_V1'
 
 
 def _modules():
@@ -146,7 +147,8 @@ def _chunk(job):
         constants = (R.SCHEMA, R.CANDIDATE, hashlib.sha256(Path(R.__file__).read_bytes()).hexdigest(),
                      hashlib.sha256(Path(N.__file__).read_bytes()).hexdigest(), normalizer.config.config_hash)
     out, taken = [], 0
-    for wanted, has_receipt, iid, combined, now, prefix, cursor, content in rows:
+    for row in rows:
+        wanted, has_receipt, iid, combined, now, prefix, cursor, content = row[:8]
         normalized = ([normalizer.observe(iid, c, v['value'], N.State(v['state'])) for c, v in zip(T.CONTROL_COLUMNS, combined)]
                       if has_receipt else [N.NormalizedValue(v['value'], N.State(v['state'])) for v in combined])
         if not wanted:
@@ -394,8 +396,30 @@ def _load_raw_state(path):
         return pickle.load(handle)
 
 
+def _dstate_row(e, control):
+    """Snapshot the already-advanced machine; no replay, new transition or target."""
+    from dataclasses import asdict
+    from fractions import Fraction
+    m = e['normalized']
+    key = m['publisher_id'], m['instrument_id']
+    row = dict(schema=DSTATE_SCHEMA, cursor=e['cursor'], source_prefix_hash=e['terminal_prefix_hash'],
+               ts_recv_ns=m['ts_recv_ns'], publisher_id=key[0], instrument_id=key[1],
+               source_member_index=e['source_member_index'], session_id=e['session_id'])
+    if e['receipt'] is None:
+        return dict(row, status='NOT_F_LAST', state=None)
+    machine = control['machines'].get(key)
+    if (machine is None or machine._ordinal != control['ordinal'][key] - 1
+            or machine._member != e['source_member_index'] or machine._session != e['session_id']):
+        raise ValueError('DState machine does not belong to the current teacher group')
+    state = {name: (dict(numerator=value.numerator, denominator=value.denominator)
+                    if isinstance(value, Fraction) else value)
+             for name, value in asdict(machine._state).items()}
+    return dict(row, status='GROUP_STATE', group_ordinal=machine._ordinal,
+                tick_raw=machine._tick_raw, state=state)
+
+
 def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
-             recovery_identity=None, save_requested=None):
+             recovery_identity=None, save_requested=None, retain_dstate=False):
     """Step 1 on its own (the teacher reading the journal): the raw streams over every entry, in order, with the window
     functions across the CPUs. Returns (rows, processed, entity row hashes): rows in cursor order, the wanted flag still
     unset (the context is not known yet); the entity row hashes are the 7-field evidence hashes of the session's entity
@@ -406,9 +430,11 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
         raise ValueError('nonnegative as_of required')
     entity = _ENTITY[0]
     rows, processed, entity_hashes = [], 0, {}
-    continuation = {} if recovery_path else None
+    continuation = {} if recovery_path or retain_dstate else None
     identity = dict(binding=self.binding, source_manifest_hash=source_manifest_hash,
                     entity=entity, source=recovery_identity) if recovery_path else None
+    if identity is not None and retain_dstate:
+        identity['dstate_schema'] = DSTATE_SCHEMA
     if recovery_path and Path(recovery_path).exists():
         saved = _load_raw_state(recovery_path)
         if saved['identity'] != identity or saved['as_of'] > as_of:
@@ -437,6 +463,8 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
             combined[7:13] = [{k: x for k, x in v.items() if k != 'mask'} for v in six['columns']]   # every carried key kept
             rows.append((False, e['receipt'] is not None, m['instrument_id'], combined, m['ts_recv_ns'],
                          e['terminal_prefix_hash'], e['cursor'], six['evidence_content_hash']))
+            if retain_dstate:
+                rows[-1] += (_dstate_row(e, continuation['control']),)
             streams.place(rows, len(rows) - 1)
             if recovery_path and save_requested is not None and save_requested():
                 streams.finish()
@@ -466,6 +494,9 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
     if not spec:
         raise ValueError('nonempty complete prefix and context required')
     selected = tuple(cursor for cursor, _, _ in spec)
+    widths = {len(row) for row in rows}
+    if widths not in ({8}, {9}):
+        raise ValueError('teacher rows mix incompatible DState capture coverage')
     if (any(type(cursor) is not int or cursor < 0 for cursor in selected)
             or tuple(sorted(set(selected))) != selected):
         raise ValueError('ordered unique context cursors required')
@@ -474,6 +505,7 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
                 or entity_hashes.get(cursor) != item_hash):
             raise ValueError('context must match exact verified prefix row')
         rows[cursor] = (True,) + rows[cursor][1:]
+    dstate_rows = tuple(rows[cursor][8] for cursor in selected) if widths == {9} else None
     identity = isinstance(self.normalizer, R.IdentityNormalizerR3)
     code = Path(T.__file__).read_bytes()
     builder_sha = hashlib.sha1(b'blob ' + str(len(code)).encode() + b'\0' + code).hexdigest()
@@ -493,6 +525,8 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
     recovery_identity = dict(binding=self.binding, candidate=candidate, source=source_manifest_hash,
                              processed=processed, context=hashlib.sha256(_canonical(spec)).hexdigest(),
                              normalizer=self.normalizer.export())
+    if dstate_rows is not None:
+        recovery_identity['dstate_sha256'] = T.evidence_hash(dstate_rows)
     saved = _load_raw_state(recovery_path) if recovery_path and Path(recovery_path).exists() else None
     if saved and saved['identity'] != recovery_identity:
         raise ValueError('saved teacher attachment source, context or normalizer changed')
@@ -584,7 +618,8 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
         raise ValueError('parallel teacher attachment hash differs; run stopped')
     return dict(targets=tuple(targets), raw=raw_rows, processed_records=processed,
                 context_cursors=selected, step_receipts=tuple(receipts),
-                attachment_hash=attachment, candidate_digest=candidate)
+                attachment_hash=attachment, candidate_digest=candidate,
+                **(dict(dstate_rows=dstate_rows) if dstate_rows is not None else {}))
 
 
 def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):

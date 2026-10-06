@@ -152,6 +152,15 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
         note='all exact original target rows on their INPUT group; current components select the latest source cursor '
              'available at each exact frame boundary; equal receive times never select a later cursor',
         alias_rule='group rows and current component channels are projections of the same targets, not independent observations')
+    report['dstate'] = dict(retained_group_states=sum(
+        row.get('dstate', {}).get('status') == 'GROUP_STATE' for row in rows),
+        searched_group_states=sum(row['cursor'] in original and row.get('dstate', {}).get('status') == 'GROUP_STATE'
+                                  for row in rows),
+        status='retained' if any('dstate' in row for row in rows) else 'not_retained_by_this_source',
+        representation='exact numerator/denominator leaves for rational fields; no float reconstruction',
+        channels='dipole.group.rows[position].dstate.*',
+        note='same teacher updates as the six target columns; frozen states remain frozen; '
+             'NOT_F_LAST rows supply no new state; no independent observation or old-source backfill')
     notes = [dict(source='dipole', reason='teacher rows without exact journal group evidence remain in the bound source; '
                   'no timestamp fallback, tail backfill or synthetic target', dispositions=dispositions)] if searched_rows != len(rows) else []
     return numeric, text, [report], notes

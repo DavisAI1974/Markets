@@ -99,9 +99,10 @@ NOT_SEARCHED = (
      'at the group close. List-position channels are not an order-identity lifecycle calculation; the same rank may '
      'hold another order next group. Old ROOT spools are not retrofilled; inspect sources[frames].frame_sections'),
     ("the D chain's own state",
-     'c15_dstate.DState is computed inside the pinned teacher and retained only as the six chain columns. Dipole '
-     'component states/reasons use exact source cursors, and dipole.group.rows[position].* retains every target row '
-     'with exact journal group evidence, including tied/intermediate rows. Full internal DState remains unretained'),
+     'new experiment teacher rows retain all DState fields at the existing group update under '
+     'dipole.group.rows[position].dstate.*, including exact rational numerator/denominator leaves. '
+     'The source report states actual retained/searched coverage; older teacher sources are not backfilled. '
+     'This is the same teacher evidence, not another observation or native model supervision'),
     ('structure identity lists', 'structures.order_ids[i] and structures.fill_disposition.*_order_ids[i] are order '
      'identities flattened by position; they are searched as numeric series like every other leaf (listed here so the '
      'count of searched series is read correctly; an identity has no steps of its own)'),
@@ -628,7 +629,8 @@ PLANE_COVERAGE = (
     ('derived_unresolved_age_chain_trajectory', 'dipole', 'consumed_partial', "the teacher's six chain columns "
      'dipole.unresolved_age_groups_log, extension_count_log, step_ratio_log, pullback_ticks_last_log, '
      'step_duration_groups_log, pullback_ticks_prev_log (4.10 exhaustion in its teacher form)',
-     "the chain's own state (c15_dstate.DState) is computed, not retained; the bedrock episode rows are not produced"),
+     'new teacher sources also retain full DState through dipole.group.rows[position].dstate.*; '
+     'old sources have no trajectory backfill; the bedrock episode rows are not produced'),
     ('derived_open_world_predecessor_state', 'structures', 'consumed_partial', 'cell structures.discovery_status '
      '(CARRIED_SEED_MATCH / OPEN_WORLD_CANDIDATE per group)', 'predecessor state across groups (bedrock) is not produced'),
     ('derived_ancestry_gaps', None, 'not_produced', None, 'bedrock projection only'),

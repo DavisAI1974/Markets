@@ -181,7 +181,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             recovery_identity=dict(receipt_sha256=receipt_sha256, journal_sha256=rc['journal_sha256'],
                                    journal_count=rc['journal_count'], journal_hash=rc['journal_hash'], through=through,
                                    **({'learner_binding': learner_binding} if learner_binding is not None else {})),
-            save_requested=save_requested)
+            save_requested=save_requested, retain_dstate=True)
         if save_requested():
             raise PT.TeacherSaved('teacher raw pass saved; attachment assembly has not started')
         walked = time.time() - started

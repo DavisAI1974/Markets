@@ -224,6 +224,21 @@ def snapshot_teacher_attachment(teacher: Mapping[str, Any], *, request_id: str, 
     if tuple(sorted(set(cursors))) != cursors or any(type(c) is not int or not 0 <= c <= through_cursor for c in cursors):
         raise ValueError("teacher context cursors must be ordered unique members of causal prefix")
     rows = tuple(_target_row(t, r, s, c) for t, r, s, c in zip(targets, raw_rows, receipts, cursors))
+    if 'dstate_rows' in teacher:
+        states = tuple(teacher['dstate_rows'])
+        if len(states) != len(rows):
+            raise ValueError('teacher DState/target cardinality differs')
+        for row, state in zip(rows, states):
+            if (state.get('schema') != 'FRANKIE_TEACHER_DSTATE_ROWS_V1'
+                    or any(state.get(k) != row[k] for k in ('cursor', 'source_prefix_hash', 'ts_recv_ns'))
+                    or state.get('status') not in ('GROUP_STATE', 'NOT_F_LAST')
+                    or (state['status'] == 'GROUP_STATE') != isinstance(state.get('state'), dict)):
+                raise ValueError('teacher DState differs from its exact target source row')
+            row['dstate'] = state
+        # Keep the original precision and every carried reason/incomplete count.
+        # These are inputs to search, not extra target columns or new measurements.
+        for row, raw in zip(rows, raw_rows):
+            row['raw_components'] = {name: dict(value) for name, value in zip(COLUMNS, raw)}
     if any(row["as_of_ts_recv_ns"] > as_of or row["ts_recv_ns"] > as_of for row in rows):
         raise ValueError("classroom target exceeds causal cutoff")
     if any(row["source_manifest_hash"] != rows[0]["source_manifest_hash"] for row in rows):
