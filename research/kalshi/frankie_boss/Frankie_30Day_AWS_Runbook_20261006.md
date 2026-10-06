@@ -1,5 +1,16 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+**Greg, 2026-10-06 — random-order learning:** remove the chronological trading-date gate for this experiment's
+discovery knowledge. Stage/school knowledge becomes available when published at the next workflow boundary, including
+knowledge from a later market date. ROOT lanes run in parallel. Per-day raw-source timestamps, host-answer/Jev walls and
+discovery/confirmation separation remain. Same-day checked findings feed subsequent work immediately; do not withhold
+them for the rest of the day or count their reuse as an independent check.
+
+**Step #2 source update:** `HANDOFF_20261006_STEP2_KNOWLEDGE.md` records actual structured knowledge reaching learner
+answers, pinned versions and complete previous-class carry. #2 remains open for CCode teacher reconciliation and
+remaining evidence readers. The existing non-TEACH classroom refusal is a launch limitation. Availability receipts
+are not consumption proof. No runtime/E2E verification or AWS compute occurred.
+
 **Current implementation checkpoint:** `HANDOFF_20261006_STEP1_RECOVERY.md` is the next-chat handoff. Step #1
 (Linux ownership and retained-day save/recovery) is source-built; runtime verification remains pending the one E2E.
 The complete ten-step checkbox list and exact current low-level status/stop/resume commands are in that handoff.

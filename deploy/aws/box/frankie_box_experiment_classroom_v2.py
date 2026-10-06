@@ -27,9 +27,9 @@ Recovery retains the full package, learner inputs and each completed operation i
 the active operation, saves its result and returns 75; resume loads it without repeating its calculations. The final
 receipt is published after histories and the complete brain entry. completion.json alone is not a finished stage.
 
-THE SCHOOL (Greg, 2026-09-29): before the answers are filed, the classroom reads Frankie's school knowledge base, every
-EARLIER classroom day's <brain>/school/<day>.json checked against its index row (frankie_box_brain.school_rows; a missing
-or changed file is listed, never read), and Frankie's code checks each hypothesis filed there on today's TEACH evidence
+THE SCHOOL (Greg, 2026-10-06): before answers, read completed discovery school files available at this workflow boundary,
+regardless of trading-date order. Each <brain>/school/<day>.json is checked against its index row (a missing or changed
+file is listed, never read), and Frankie's code checks each hypothesis filed there on today's TEACH evidence
 (frankie_box_classroom_code.school_reproduction: his earlier novel findings and the teachers' own findings, per earlier
 day, counts only). The result travels in code-answers.json ("school") and the receipt ("school_knowledge"); it is not
 part of the model-visible request, so Jev's material never carries it.
@@ -180,6 +180,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     external_history, prior_external_grade, external_carried = [], None, None
     if previous:
         prev = Path(previous)
+        # Both local and imported predecessors must have the same complete, receipt-bound carry set. Grades
+        # remain host inputs; prepare_cycle_v2 exposes only the governed prior correction summary (R10).
+        LS.pack_classroom_carry(prev)
         history = json.loads((prev / 'history.json').read_bytes())
         prior_grade = json.loads((prev / 'post-grade.json').read_bytes())
         carried = dict(directory=str(prev), history_entries=len(history), history_sha256=_sha256(prev / 'history.json'),
@@ -200,7 +203,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                     teacher_receipt=_sha256(teacher_rows / 'receipt.json'), attachment=attachment_sha,
                     day_file=str(day_file), day_sha256=day_sha, previous=carried, previous_external=external_carried,
                     directive=_sha256(DIRECTIVE_PATH), rules=rules_witness,
-                    producers={m.__name__: _sha256(m.__file__) for m in (F, S, R, EXT, V2, C, K, KX)})
+                    producers={m.__name__: _sha256(m.__file__) for m in (F, S, R, EXT, V2, C, K, KX, LS, BR)})
     state = _load_raw_state(state_path) if state_path.exists() else dict(identity=identity, started=time.time(), phases={})
     phase_directory = d / 'saved-phases'
     phase_directory.mkdir(exist_ok=True)
@@ -264,13 +267,22 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     if not jev_path.exists():
         _bytes(jev_path, jev_raw)
     names = [c['name'] for c in C.components(visible)]
-    knowledge, school, school_listed = phase('learner_inputs', lambda: (
-        LS.visible_knowledge(day, 'classroom', brain=brain), *LS.learner_school(day, brain=brain)))
+    def learner_inputs():
+        selected = LS.learner_knowledge(day, 'classroom', brain=brain)
+        school, listed = LS.learner_school(day, brain=brain, versions=selected['versions'])
+        return selected, school, listed
+    knowledge_input, school, school_listed = phase('learner_inputs', learner_inputs)
+    knowledge = knowledge_input['documents']
     try:
-        outputs = {n: phase('component:' + n, lambda n=n: K.component_answer(
-            visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)])) for n in names}
-        summary = phase('summary', lambda: K.summary_answer(visible, outputs))
+        # These inputs and their checks are retained before any answer. A resume uses this exact selection,
+        # never a later peer knowledge version or a newly completed school day partway through the classroom.
         knowledge_reproduction = phase('knowledge_reproduction', lambda: K.stage_knowledge_reproduction(visible, knowledge))
+        reproduction = phase('school_reproduction', lambda: K.school_reproduction(visible, school))
+        learner_context = dict(stage_knowledge=knowledge_reproduction, school=reproduction)
+        outputs = {n: phase('component:' + n, lambda n=n: K.component_answer(
+            visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)],
+            learner_context=learner_context)) for n in names}
+        summary = phase('summary', lambda: K.summary_answer(visible, outputs, learner_context=learner_context))
         ext_ledgers = phase('external_answers', lambda: KX.answers(ext_visible))
     except (K.ModeNotAnswerable, KX.ModeNotAnswerable) as error:
         refusal = dict(schema=SCHEMA, day=day, status='refused', mode=mode, reason=str(error),
@@ -278,7 +290,6 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         _dump(d / 'receipt.json', refusal)
         print(json.dumps(refusal), flush=True)
         return 3
-    reproduction = phase('school_reproduction', lambda: K.school_reproduction(visible, school))
     school_witness = dict(read=reproduction['school_days_read'],
                           listed=[dict(day=(x.get('row') or {}).get('day'), reason=x['reason']) for x in school_listed],
                           counts_per_earlier_day=reproduction['counts_per_earlier_day'],
@@ -289,7 +300,10 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     _dump(d / 'code-answers.json', dict(schema=K.SCHEMA, rules=rules_witness, outputs=outputs, summary=summary,
                                         school=reproduction, stage_knowledge=knowledge_reproduction, model_calls=0))
     _dump(d / 'learner-knowledge.json', dict(day=day, stage='classroom', documents=knowledge,
-                                           school_sources=reproduction['school_days_read']))
+                                           versions=knowledge_input['versions'], listed=knowledge_input['listed'],
+                                           school_documents=school, school_listed=school_listed,
+                                           school_sources=reproduction['school_days_read'],
+                                           applied_to=['component_answer', 'summary_answer']))
     _dump(d / 'ledgers.json', built['ledgers'])
     _text(d / 'classroom.md', C.render_markdown(built['ledgers'], built['dropped_findings']))
     _dump(d / 'external-code-answers.json', dict(schema=KX.SCHEMA, rules=rules_witness, ledgers=ext_ledgers, model_calls=0))
@@ -391,6 +405,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                   carried_from_previous=carried, school_knowledge=school_witness, classroom_rules=rules_witness,
                   stage_knowledge=dict(path=str(d / 'learner-knowledge.json'),
                                        sha256=_sha256(d / 'learner-knowledge.json'),
+                                       versions=knowledge_input['versions'],
+                                       selection_listed=knowledge_input['listed'],
+                                       applied_to=['component_answer', 'summary_answer'],
                                        sources=knowledge_reproduction['sources'],
                                        checks=len(knowledge_reproduction['checks']), listed=knowledge_reproduction['listed']),
                   teacher_rows=str(teacher_rows),

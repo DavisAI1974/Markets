@@ -1,5 +1,14 @@
 # Current Frankie AWS continuation — 2026-10-06
 
+Step #2 progress and parallel ownership: `research/kalshi/frankie_boss/HANDOFF_20261006_STEP2_KNOWLEDGE.md` and
+`CCODE_STEP2_TEACHER_PARALLEL_20261006.md` in the same directory. Read after the step-1 handoff's canonical reading order.
+Step #2 is still open; actual learner-answer/carry code is source-built, not runtime-verified. Existing non-TEACH
+classroom modes lack independent readers; do not force TEACH or bypass them to claim a completed day.
+Greg's follow-up: discovery knowledge follows completed workflow order, not chronological market dates. Later-date
+findings may teach the next boundary; stage and school date gates are removed for this random-order experiment.
+Keep raw per-day timing, host-answer/Jev walls and confirmation separation. New checked findings can teach later
+same-day work immediately; there is no remainder-of-day embargo.
+
 For branch `chatgpt/frankie-30day-aws-workflow-20261006`, read FIRST
 `research/kalshi/frankie_boss/HANDOFF_20261006_STEP1_RECOVERY.md`, then the canonical spec and current runbook.
 Step #1 is source-built, runtime unverified; continue #2. Pause before #5 and the pending Jev CPU decision.

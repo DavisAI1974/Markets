@@ -89,7 +89,22 @@ def _reasons(comp):
     return found
 
 
-def component_answer(visible, comp, rights):
+def _knowledge_notes(learner_context, component=None):
+    """Prior checks used by the answer, separately scoped from today's measured observations."""
+    notes = []
+    for kind, result in (learner_context or {}).items():
+        for check in result.get('checks', []):
+            pair = check.get('pair') or [check.get('left'), check.get('right')]
+            if component is not None and check.get('component') != component and component not in pair:
+                continue
+            # Today's complete observations are already in the governed ledgers. Keep the exact prior finding,
+            # source binding and computed check here, without copying today's entire pair window into every answer.
+            note = {k: v for k, v in check.items() if k != 'today_evidence'}
+            notes.append(dict(input_kind=kind, **note))
+    return notes
+
+
+def component_answer(visible, comp, rights, *, learner_context=None):
     """One component, in parse_component's TEACH shape (six narratives, one explanation per occurring state, one
     interpretation per pair in the order of `rights`)."""
     _require_teach(visible)
@@ -149,6 +164,11 @@ def component_answer(visible, comp, rights):
             f'{AUTHOR}: Dipole\'s relation {p["direction_relation"]}; {coefficient}; {moves_text}. Descriptive for this pair and '
             'window only; no causation or outcome claimed (rules R01, R02, R05).')))
     result['pairs'] = pairs
+    notes = _knowledge_notes(learner_context, component=name)
+    if notes:
+        result['evidence'] += (' Legal prior knowledge applied to this component and its pairs, each with its source '
+            'and check result: ' + json.dumps(notes, sort_keys=True, default=str)
+            + '. A measured component/pair is descriptive evidence, not a scientific confirmation of the prior claim.')
     return result
 
 
@@ -170,7 +190,7 @@ def _step_disagreement(pair):
     return None
 
 
-def summary_answer(visible, outputs):
+def summary_answer(visible, outputs, *, learner_context=None):
     """The summary in parse_summary's shape. Novel findings are only what a computation here surfaces: a pair whose
     first-to-last relation and its step-by-step co-movement counts point different ways (filed as a HYPOTHESIS)."""
     pre = _require_teach(visible)
@@ -206,6 +226,26 @@ def summary_answer(visible, outputs):
     unresolved = [f'{p["left"]}/{p["right"]}' for p in review if p['direction_relation'] == 'UNRESOLVED']
     if unresolved:
         questions.append(f'{len(unresolved)} pairs are UNRESOLVED in this window: {", ".join(unresolved)}.')
+    if learner_context is not None:
+        prior_correction = pre.get('prior_cycle_correction')
+        if prior_correction is not None:
+            cycle_summary += (' Previous-class correction locations were carried into this review: '
+                + json.dumps(prior_correction, sort_keys=True, default=str)
+                + '. Current observations and relationships were recomputed from this window; no prior grade '
+                'values or answer key were used.')
+        notes = _knowledge_notes(learner_context)
+        correlation_review += (' Legal learner knowledge was applied before these answers. Each prior source and '
+            'its individual check, with original scope retained: ' + json.dumps(notes, sort_keys=True, default=str)
+            + '. Prior findings are not relabelled as observations from this window; unavailable conditions supply '
+            'no new test and do not downgrade a checked finding.')
+        for kind, result in learner_context.items():
+            for item in result.get('listed', []):
+                questions.append('Legal knowledge input not evaluated by this classroom check (%s): %s' %
+                                 (kind, json.dumps(item, sort_keys=True, default=str)))
+        for note in notes:
+            if note.get('result') == 'not_measurable':
+                questions.append('Prior finding has no applicable classroom measurement: ' +
+                                 json.dumps(note, sort_keys=True, default=str))
     findings = []
     for p, (same, opposite) in disagreements:
         findings.append(dict(
@@ -328,9 +368,9 @@ REPRODUCTION_SCHEMA = 'FRANKIE_SCHOOL_REPRODUCTION_V1'
 
 
 def school_reproduction(visible, school):
-    """Frankie's code reading his school knowledge base (every EARLIER classroom day's school file, frankie_box_brain.
-    school_rows): each hypothesis filed on an earlier day is checked on today's TEACH evidence (rule R06: tracked for
-    reproduction in later causally available windows). Two kinds, each on its own day, never pooled:
+    """Read completed discovery school files selected at this workflow boundary, regardless of trading-date order.
+    Each previously filed hypothesis is checked on today's TEACH evidence (R06). The retained `earlier_day` fields
+    mean earlier learning, not a chronological market-date restriction. Two kinds, each on its own day, never pooled:
       his novel findings (steps-vs-endpoints: a pair whose first-to-last relation and step counts pointed different ways):
         pattern_again     today the pair has the same relation and its steps again point the other way;
         pattern_not_seen  today the pair has the same relation and its steps do not point the other way;
@@ -350,10 +390,20 @@ def school_reproduction(visible, school):
             return None, 'today\'s review carries no co-movement counts for the pair'
         return p, None
 
-    checks, read = [], []
+    checks, read, listed = [], [], []
     for row, doc in school:
         read.append(dict(day=row['day'], file=row.get('file'), sha256=row['sha256'], report_number=row.get('report_number')))
         sections = doc.get('sections') or {}
+        for section, body in sections.items():
+            for item in body.get('items') or []:
+                supported = (section == 'frankie_classwork' and item.get('name') == 'novel_findings' or
+                             section == 'exchange' and isinstance(item.get('content'), dict) and
+                             'teachers_findings' in item['content'])
+                if not item.get('inline') or not supported:
+                    listed.append(dict(earlier_day=row['day'], earlier_sha256=row['sha256'], section=section,
+                                       item=item.get('name'), reason=('source pointer; bytes not supplied to this check'
+                                       if not item.get('inline') else
+                                       'school source read; this reproduction checks novel and teachers findings only')))
         for item in (sections.get('frankie_classwork') or {}).get('items') or []:
             if item.get('name') != 'novel_findings' or not item.get('inline'):
                 continue
@@ -398,7 +448,7 @@ def school_reproduction(visible, school):
     for c in checks:
         d = per_day.setdefault(c['earlier_day'], {})
         d[c['result']] = d.get(c['result'], 0) + 1
-    return dict(schema=REPRODUCTION_SCHEMA, author=AUTHOR, school_days_read=read, checks=checks,
+    return dict(schema=REPRODUCTION_SCHEMA, author=AUTHOR, school_days_read=read, checks=checks, listed=listed,
                 counts_per_earlier_day=dict(sorted(per_day.items())), model_calls=0,
                 rule='each earlier day and each hypothesis on its own; counts, never pooled (R05); a hypothesis is tracked '
                      'for scientific checking; checked single-occurrence findings receive equal treatment (R06)')
@@ -429,18 +479,22 @@ def stage_knowledge_reproduction(visible, knowledge):
     for source in knowledge:
         sources.append({k: source[k] for k in ('label', 'day', 'kind', 'path', 'sha256')})
         content = source['content']
+        found = False
         for bound in content.get('sources', []) if isinstance(content, dict) else []:
             if not bound.get('inline'):
                 listed.append(dict(label=source['label'], source=bound,
                                    reason='retained source pointer; source bytes are not supplied to this learner check'))
         for address, finding in claims(content):
+            found = True
+            binding = dict(source_label=source['label'], source_day=source['day'], source_kind=source['kind'],
+                           source_sha256=source['sha256'], address=address, finding=finding)
             refs = [r for r in finding.get('evidence_refs') or [] if r.get('kind') == 'DIPOLE_RELATIONSHIP']
             pairs = [(r.get('left'), r.get('right')) for r in refs]
             pair = (finding.get('scope') or {}).get('pair')
             component = (finding.get('scope') or {}).get('component')
             if component:
                 measured = components.get(component)
-                checks.append(dict(source_sha256=source['sha256'], address=address, finding=finding,
+                checks.append(dict(binding,
                                    component=component, result='today_component_measured' if measured else 'not_measurable',
                                    today_evidence=measured,
                                    reason=None if measured else 'the exact component is not in today\'s Dipole curriculum'))
@@ -449,16 +503,19 @@ def stage_knowledge_reproduction(visible, knowledge):
             if 'x' in finding and 'y' in finding:
                 pairs.append((finding['x'], finding['y']))
             if not pairs and not component:
-                checks.append(dict(source_sha256=source['sha256'], address=address, finding=finding,
+                checks.append(dict(binding,
                                    result='not_measurable', reason='the finding has no Dipole pair binding'))
             for left, right in pairs:
                 today = review.get((left, right)) or review.get((right, left))
                 measured = today is not None and today.get('co_movement') is not None
-                checks.append(dict(source_sha256=source['sha256'], address=address, finding=finding,
+                checks.append(dict(binding,
                                    pair=[left, right], result='today_pair_measured' if measured else 'not_measurable',
                                    today_evidence=today if measured else None,
                                    reason=None if measured else 'the exact pair is not in today\'s Dipole review; '
                                    'native search lag/condition/equation checks belong to the scientific teacher'))
+        if not found:
+            listed.append(dict(label=source['label'], day=source['day'], sha256=source['sha256'],
+                               reason='source read; it has no finding/claim binding this Dipole reproduction can evaluate'))
     return dict(schema='FRANKIE_STAGE_KNOWLEDGE_REPRODUCTION_V1', author=AUTHOR, sources=sources,
                 checks=checks, listed=listed, model_calls=0,
                 rule='apply source-bound findings individually; no occurrence gates, validity downgrade or pooled outputs')

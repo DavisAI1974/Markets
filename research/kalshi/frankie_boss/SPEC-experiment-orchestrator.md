@@ -1,5 +1,9 @@
 # Spec: the 30-day experiment orchestrator
 
+**Step #2 implementation update:** See `HANDOFF_20261006_STEP2_KNOWLEDGE.md` for the source-built learner-answer/carry
+slice and remaining gaps. #2 remains unchecked. Actual learner documents/checks now precede answers; transport
+availability is labelled separately. No scientific mathematics or curriculum advancement rule changed and no E2E ran.
+
 Status: **CANONICAL WORKFLOW RECONCILED 2026-10-06.** This replaces the conflicting September 29/30 workflow tables.
 The repository is brownfield: reuse the existing orchestrator, 16-CPU booking ledger, FIFO queues, receipts, ROOT,
 teacher, classroom, data/search and scientific-teacher pieces. Do not rebuild working machinery.
@@ -24,6 +28,14 @@ Greg, 2026-10-06:
   supersedes any older deferred/no-auto-teaching behavior for this 30-day experiment.
 
 ## Immediate brain / live-learning rule
+
+**Random-order discovery clarification (Greg, 2026-10-06):** the 30 days and parallel ROOT lanes are not chronological.
+Remove the trading-date gate on learned discovery knowledge. A completed stage/class can teach later workflow work
+even when its market date is later than the receiving day's. Stage and school readers use published availability at
+the workflow boundary, not `source_day < current_day`. Preserve causal timestamps inside each day's raw calculations,
+host-answer/Jev walls and the untouched discovery/confirmation split. Post-class checked findings become available
+immediately to subsequent same-day work; no remainder-of-day embargo. An earlier classroom cannot be credited with a
+finding produced afterward, and reuse of the same evidence is not an independent scientific check.
 
 The experiment is not testing Frankie by withholding knowledge. It is trying to make Frankie as capable as possible
 while the evidence arrives. Therefore:

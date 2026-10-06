@@ -432,8 +432,8 @@ def attached_day_file(ingest_dir):
     return path, have, None
 
 
-def latest_classroom_before(day):
-    """The latest complete classroom of an earlier trading day on the box (any experiment ROOT): (directory, day) or
+def latest_completed_classroom(day):
+    """The most recently completed other discovery classroom, regardless of trading-date order: (directory, day) or
     (None, None). Two complete classrooms of that same day decline (duplicate data)."""
     found = {}
     for completion in ROOTS.glob('*/work/classroom/completion.json'):
@@ -442,11 +442,13 @@ def latest_classroom_before(day):
             r = json.loads((d / 'receipt.json').read_bytes())
         except (OSError, ValueError):
             continue
-        if r.get('status') == 'complete' and str(r.get('day', '')) < day:
+        source_day = str(r.get('day', ''))
+        if r.get('status') == 'complete' and source_day != day and \
+                not (day[:4] in ('2021', '2022', '2023') and source_day[:4] in ('2024', '2025')):
             found.setdefault(str(r['day']), []).append(d)
     if not found:
         return None, None
-    last = max(found)
+    last = max(found, key=lambda date: max((d / 'receipt.json').stat().st_mtime for d in found[date]))
     if len(found[last]) > 1:
         raise SystemExit('two complete classrooms of %s (%s): duplicate data; name previous_classroom in the plan'
                          % (last, [str(p) for p in found[last]]))
@@ -591,7 +593,7 @@ class Run:
         if status in FINISHED and os.environ.get('FRANKIE_LANE_MAILBOX'):
             import frankie_box_lane_state as LS
             LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage)
-        fields['knowledge_consumed'] = self._knowledge.pop((stage, key), None)
+        fields['knowledge_available'] = self._knowledge.pop((stage, key), None)
         body = dict(schema='FRANKIE_EXPERIMENT_STEP_V1', run=self.plan['run'], stage=stage, key=key, status=status,
                     at=time.time(), commit=self.commit, plan_sha256=plan_digest(self.plan),
                     directive_sha256=(self.plan.get('directive') or {}).get('sha256'), **fields)
@@ -980,10 +982,10 @@ class Run:
             return r['classroom'], None, 'the previous arm day of this run (%s)' % prev
         if self.plan.get('previous_classroom'):
             return self.plan['previous_classroom'], None, 'plan (PREVIOUS_CLASSROOM)'
-        found, found_day = latest_classroom_before(e['day'])
+        found, found_day = latest_completed_classroom(e['day'])
         if found is None:
-            return None, None, 'none: no complete classroom of an earlier day on the box (history starts here)'
-        return str(found), None, 'the latest earlier classroom day on the box (%s)' % found_day
+            return None, None, 'none: no other complete discovery classroom on the box (history starts here)'
+        return str(found), None, 'the most recently completed classroom on the box (%s; trading-date order ignored)' % found_day
 
     def classroom_ready(self, e):
         """The classroom step's readiness checks, in its order: (None, None, facts) when the day may take its class now;

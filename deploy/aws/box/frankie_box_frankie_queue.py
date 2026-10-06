@@ -36,8 +36,8 @@ carries class k-1's classroom: PREVIOUS = the classroom of the entry that most r
 entry by completion sequence done_seq), recorded in the entry and in the classroom step's receipt (previous_from). Before
 the line has a done entry: the plan's PREVIOUS_CLASSROOM, else the most recently finished complete classroom on the box
 (by its completion.json time), recorded as the bootstrap. A previous class of a LATER trading date is carried as ordered
-and flagged previous_trade_date_later (the school knowledge base keeps its own trading-date wall: frankie_box_brain.
-school_rows before_day; listed, Greg's call).
+and flagged previous_trade_date_later. Greg 2026-10-06: this experiment's school reader also uses completed workflow
+order, not trading-date order; learned discovery knowledge from later market dates is eligible at the next boundary.
 
 WHAT THE CLASS WORKER RUNS per day (everything that carries his previous day), in order, through the orchestrator's own
 step methods (frankie_box_experiment.Run; nothing re-implemented): classroom FIRST, then data export and causal search,
@@ -429,6 +429,10 @@ def _signal_bound(*_):
 def previous_for(doc, entry, plan):
     """The class the entry carries: (directory or None, None, where it came from, record)."""
     import frankie_box_experiment as X
+    if 'previous' in entry:
+        # Resume the selected class, including an explicit empty bootstrap. Never repick after a save.
+        prior = entry['previous']
+        return prior.get('classroom'), None, entry['previous_from'], prior
     done = [x for x in doc['entries'] if x['state'] == 'done' and x.get('done_seq') and x.get('classroom')]
     if done:
         last = max(done, key=lambda x: x['done_seq'])
@@ -965,8 +969,8 @@ def _finish_day(run, e, code_root, commit, log):
             if not lease['waiting']:
                 break
             time.sleep(15)
-        for f in lease['files']:
-            LS.restore_file(f, [X.ROOTS])
+        if lease['files']:
+            LS.restore_classroom_carry(lease['previous'][0], lease['files'], [X.ROOTS])
         run.check_save()
         entry = dict(run=run.plan['run'], day=e['day'], settings=settings_of(run.a),
                      plan_sha256=X.plan_digest(run.plan), slot_booking=run.slot_booking)
@@ -975,9 +979,7 @@ def _finish_day(run, e, code_root, commit, log):
         if state != 'done':
             return False, facts
         c = Path(class_facts['classroom'])
-        LS.request('class_done', classroom=str(c), files=[LS.pack_file(c / name) for name in
-                   ('completion.json', 'history.json', 'post-grade.json', 'external-history.json', 'external-post-grade.json')
-                   if (c / name).is_file()])
+        LS.request('class_done', classroom=str(c), files=LS.pack_classroom_carry(c))
     elif e['classroom_arm']:
         # Greg's settled order: Frankie learns from ROOT + BOSS teacher BEFORE the search tests his resulting claims.
         facts['class_line'] = _after_root(run, e, code_root, commit, log)
