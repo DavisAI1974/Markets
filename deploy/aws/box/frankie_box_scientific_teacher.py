@@ -8,7 +8,13 @@ Takes, each labelled with its author (rule R11: claims, never truth):
   - Jev's claims: JEV_CLAIMS_V1 (clm_sidecar/sit_in.py), each naming its series, direction, lag and cells;
   - Frankie's claims: ONLY the novel findings of his classroom ledgers (dipole_novel_findings). The rest of his ledgers,
     his analysis and his answers are his reasoning and are never read here (rule R09);
-  - the historical Dipole claims: HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py, committed), author 'historical';
+  - the historical Dipole claims: HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py, committed), author 'historical'.
+    Its mapped claims are tested; its not_testable list (every statement the crosswalk did not put in testable form)
+    travels with the lessons under `reconsideration`, counted by open status and bound to the claims file by sha256,
+    so neither teacher reads the mapped subset as the collection. Every historical result carries `research_rework`:
+    a count comparison on stored search evidence is one status; the original calculation's reproduction and any
+    repair/reformulation stay pending_teacher_work until a teacher performs them; a prior rejected/dead/no-good label
+    is carried as a label and never closes reconsideration (R11, R13; Greg, 2026-10-06);
   - the search's own candidates: FRANKIE_SEARCH_FINDINGS_V1 (Run.search_knowledge: every beyond-chance row of one day's
     search, with part/row provenance), projected by frankie_box_candidate_claims.py, author 'search' (CCode step #4).
     Their series are matched exactly, and the rows of their own discovery day are listed as ORIGIN EVIDENCE, never
@@ -18,7 +24,10 @@ discovery/confirmation labels do not gate knowledge use (Greg, 2026-10-06). Each
 
 For each claim: its series names are matched to the search's series (normalized names; every match listed, an unmatched
 name listed as "not in the search"); for each matched pair and each day, the coupling rows (whole-day and every cell)
-are read whole and reported as their counts: same_way, opposite, both_moving, best lag, the chance check's shifts and
+are read whole and reported as their counts. The search writes both orientations of a pair; the reversed row at the
+negated lag with the same counts is the same measurement (D_yx[k] = D_xy[-k]) and is listed under mirrored_rows, never
+counted as a second test; a reversed row with no forward counterpart is read on its own with the claim's transforms
+swapped and its lag negated. Counts are reported as: same_way, opposite, both_moving, best lag, the chance check's shifts and
 how many reached the observed count. Where the claimed direction is stated in a testable form, each day is marked:
   held       beyond chance and moving the claimed way;
   shown_otherwise  beyond chance and moving the other way -> the challenge, worded "the data is showing this instead";
@@ -97,9 +106,69 @@ def jev_claims(path):
                 source=str(path), claims=claims)
 
 
+OPEN_CLASSES = (                 # not_testable reasons of frankie_box_historical_claims -> the open status they stay in
+    ('no crosswalk entry', 'awaiting_teacher_binding', 'not put in testable form: a statement with its source line, waiting '
+                                                       'for a teacher binding to series the search carries'),
+    ('code:', 'code_source_constructions', 'a source file whose constructions and methods are reached through the crosswalk; '
+                                           'its claims live in prose sources'),
+    ('source unreadable', 'missing_inputs', 'the catalog bytes of the source could not be read where the claims file was built'),
+    ('series the search does not carry', 'unsupported_computation', 'the claim names series no search carries yet'),
+    ('crosswalk anchor not found', 'missing_inputs', 'the declared anchor is not in the source bytes'),
+    ('crosswalk source not in the catalog', 'missing_inputs', 'the declared source is not in the catalog or unreadable'),
+)
+
+
+def open_class(reason):
+    for prefix, status, what in OPEN_CLASSES:
+        if str(reason or '').startswith(prefix):
+            return status, what
+    return 'open_other', 'listed by the claims builder with its own reason'
+
+
+def reconsideration(doc, path, raw, claims):
+    """The historical collection's standing, carried with every lessons file so neither teacher reads a mapped subset
+    as the collection, nor a prior rejection label as closure (R11, R13). Four statuses, each counted and bound to the
+    claims file by sha256; the full not_testable list stays in that file (path:line, catalog id, statement, reason)."""
+    not_testable = doc.get('not_testable') or []
+    by_status = {}
+    for item in not_testable:
+        status, what = open_class(item.get('reason'))
+        entry = by_status.setdefault(status, dict(count=0, what=what, reason_examples=[]))
+        entry['count'] += 1
+        if len(entry['reason_examples']) < 2 and item.get('reason') not in entry['reason_examples']:
+            entry['reason_examples'].append(item.get('reason'))
+    prior_labels = [dict(claim_id=c['id'], labels=list((c.get('source_claim') or {}).get('evidence') or []),
+                         source_rework=(c.get('source_claim') or {}).get('research_rework'))
+                    for c in claims]
+    return dict(schema='FRANKIE_HISTORICAL_RECONSIDERATION_V1', catalog=doc.get('catalog'),
+                catalog_sha256=doc.get('catalog_sha256'), catalog_version=doc.get('catalog_version'),
+                claims_file=str(path), claims_file_sha256=sha256_bytes(raw), sources=len(doc.get('sources') or []),
+                candidates=doc.get('candidates'), mapped_claims=len(claims), not_testable=len(not_testable),
+                statuses=dict(
+                    stored_evidence_reassessed=dict(
+                        count=len(claims), status='performed_here_where_tests_exist',
+                        what='the mapped claims, read against the stored search counts of the days given (results below); '
+                             'a count comparison on stored evidence, NOT a reproduction of the original calculation'),
+                    original_calculation_awaiting_teacher_reproduction=dict(
+                        count=len(claims), status='pending_teacher_work',
+                        what='each mapped claim\'s original calculation (its construction, named per claim) has not been '
+                             'reproduced by either teacher; this file never marks it reproduced'),
+                    teacher_repair_or_reformulation=dict(
+                        count=len(claims), status='pending_teacher_work', performed=0,
+                        what='no repair or reformulation of a mapped or unmapped claim is performed or recorded by this file'),
+                    missing_inputs_or_unsupported_computation_open=dict(
+                        count=len(not_testable), status='OPEN_MAPPING_OR_REWORK_REQUIRED', by_status=by_status,
+                        where='the claims file\'s not_testable list, each with path:line, catalog id, statement and reason; '
+                              'carried by reference (claims_file_sha256), never dropped')),
+                prior_labels=prior_labels,
+                rule='a prior rejected/dead/no-good/discarded label is a claim about the claim (R11); it travels as a label '
+                     'and never closes reconsideration (R13); a mapped subset is never the collection; nothing here is '
+                     'closed by a disposition word (R14)')
+
+
 def historical_claims(path):
-    """HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py): the catalog's claims, author 'historical'; only its
-    claims are tested, its not_testable list travels with the lessons by reference (claims_source)."""
+    """HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py): the catalog's claims, author 'historical'. Its claims
+    are tested; its not_testable list travels with the lessons by reference, counted by open status (reconsideration)."""
     raw = Path(path).read_bytes()
     doc = json.loads(raw)
     if doc.get('schema') != 'HISTORICAL_CLAIMS_V1':
@@ -112,7 +181,7 @@ def historical_claims(path):
                    source_claim=c)
               for c in doc.get('claims') or []]
     return dict(author='historical', stamp=doc['catalog_sha256'][:12], day=None, claims_sha256=sha256_bytes(raw),
-                source=str(path), claims=claims)
+                source=str(path), claims=claims, reconsideration=reconsideration(doc, path, raw, claims))
 
 
 def frankie_claims(path, day):
@@ -179,6 +248,7 @@ def load_searches(dirs):
         days.append(dict(dir=d, day=manifest['day'], cycle=manifest['cycle'], lags=manifest['lags'],
                          series=manifest['series'], cells=[tuple(c) for c in manifest['cells']],
                          parts=[d / p['path'] for p in manifest['couplings']['parts']],
+                         part_pins={p['path']: p.get('sha256') for p in manifest['couplings']['parts']},
                          manifest_sha256=sha256_bytes((d / 'MANIFEST.json').read_bytes())))
     if len({x['day'] for x in days}) != len(days):
         raise SystemExit('the same day was given twice (duplicate data declines the run)')
@@ -229,6 +299,23 @@ def row_scope_reasons(claim, row, reverse=False):
     return reasons
 
 
+MIRROR_FIELDS = ('same_way', 'opposite', 'both_moving', 'steps', 'null_shifts', 'null_at_or_beyond', 'null_largest')
+
+
+def mirror_of(row, forward_rows):
+    """The forward-orientation row this reversed row mirrors, or None. The search writes every ordered pair, and for
+    (y, x) the statistic is the (x, y) one read backwards: D_yx[k] = D_xy[-k], so the counts at the negated best lag
+    are the same measurement. Reading it as another test would count the same evidence twice (its tie-break can pick
+    the other sign of a tied lag; then nothing mirrors and the row is read on its own, as before)."""
+    for f in forward_rows:
+        if (f['cell'] == row['cell'] and f['cell_value'] == row['cell_value']
+                and f.get('x_transform', f.get('transform')) == row.get('y_transform', 'sign_of_step')
+                and f.get('y_transform', 'sign_of_step') == row.get('x_transform', row.get('transform'))
+                and f['best_lag'] == -row['best_lag'] and all(f.get(k) == row.get(k) for k in MIRROR_FIELDS)):
+            return f
+    return None
+
+
 def test(claims_doc, days):
     wanted = {}
     per_claim = []
@@ -256,14 +343,25 @@ def test(claims_doc, days):
                         rows.setdefault((d['day'], r['x'], r['y']), []).append(r)
     results = []
     for c, matched, missing, pairs in per_claim:
-        tests, verdicts, challenges = [], [], []
+        tests, verdicts, challenges, mirrored = [], [], [], []
         origin = c.get('origin') or {}
         origin_evidence = []
         source_row = c.get('source_claim') if origin else None
+        origin_part_bound = None
         for d in days:
             for a, b in pairs:
+                forward = rows.get((d['day'], a, b), [])
                 for x, y in ((a, b), (b, a)):
                     for r in rows.get((d['day'], x, y), []):
+                        if (x, y) == (b, a):
+                            m = mirror_of(r, forward)
+                            if m is not None:
+                                mirrored.append(dict(day=d['day'], x=x, y=y, cell=r['cell'], cell_value=r['cell_value'],
+                                                     lag=r['best_lag'], mirror_of=dict(x=m['x'], y=m['y'], lag=m['best_lag']),
+                                                     mark='mirror', reason='the reversed orientation of the same pair, cell '
+                                                     'and transform pair at the negated lag carries the same counts: one '
+                                                     'measurement, listed once, never a second test'))
+                                continue
                         observed = 'same' if r['same_way'] > r['opposite'] else 'opposite' if r['opposite'] > r['same_way'] else 'even'
                         tx, ty = r.get('x_transform', r.get('transform', 'sign_of_step')), r.get('y_transform', 'sign_of_step')
                         if origin and d['day'] == origin.get('day'):
@@ -273,6 +371,8 @@ def test(claims_doc, days):
                                 r.get(k) == source_row.get(k) for k in ('x', 'y', 'cell', 'cell_value', 'transform',
                                                                        'x_transform', 'y_transform', 'best_lag',
                                                                        'same_way', 'opposite', 'both_moving', 'steps'))
+                            # the discovery row's identity is its part's sha256 in the search given, not its field values
+                            origin_part_bound = origin.get('part_sha256') in set((d.get('part_pins') or {}).values())
                             origin_evidence.append(dict(
                                 day=d['day'], x=x, y=y, cell=r['cell'], cell_value=r['cell_value'], transform=r['transform'],
                                 x_transform=tx, y_transform=ty, lag=r['best_lag'], steps=r['steps'],
@@ -281,7 +381,8 @@ def test(claims_doc, days):
                                 chance_check=dict(shifts=r['null_shifts'], reached=r['null_at_or_beyond'],
                                                   largest=r['null_largest'], exclusion=r['null_exclusion']),
                                 beyond_chance=r['beyond_chance'], search_manifest_sha256=d['manifest_sha256'],
-                                discovery_row=same_row, mark='origin_evidence',
+                                discovery_row=bool(same_row and origin_part_bound), fields_equal=same_row,
+                                origin_part_in_search=origin_part_bound, mark='origin_evidence',
                                 reason='the discovery day: reading the discovery evidence again is not an independent '
                                        'check and is not another occurrence'))
                             continue
@@ -330,6 +431,10 @@ def test(claims_doc, days):
             if origin.get('day') not in {d['day'] for d in days}:
                 untested.append('the origin day %s search was not among the searches given; its discovery row is bound by '
                                 'the candidate\'s own provenance, not re-read here' % origin.get('day'))
+            elif origin_part_bound is False:
+                untested.append('the origin part sha256 %s is not among the parts of the %s search given: the discovery '
+                                'row is bound by the candidate\'s provenance only, not identified in that search'
+                                % (str(origin.get('part_sha256'))[:12], origin.get('day')))
             if not tests:
                 untested.append('no completed search of another day was given that carries this pair, cell and transform '
                                 'pair: the candidate has its origin evidence only; whether a scientifically checked single '
@@ -344,7 +449,21 @@ def test(claims_doc, days):
                                                counts_only=verdicts.count('counts_only')),
                       days_tested=sorted({t['day'] for t in tests}), disposition=disposition,
                       disposition_note='orientation only (R14); the counts and days above are the finding',
-                      challenge=challenges, untested=untested)
+                      challenge=challenges, untested=untested, mirrored_rows=mirrored)
+        source_rework = (c.get('source_claim') or {}).get('research_rework')
+        if source_rework is not None or claims_doc['author'] == 'historical':
+            # R11/R13: a stored-count reassessment is one status; reproduction and repair stay pending until a teacher
+            # performs them; a prior label (the source's evidence list) is carried, never read as closure.
+            result['research_rework'] = dict(source_rework or {}, status='OPEN_REWORK_REQUIRED', closed=False,
+                stored_evidence_reassessed=dict(performed=bool(tests), disposition=disposition,
+                                                days=sorted({t['day'] for t in tests}), counts=result['counts'],
+                                                rule='a count comparison on stored search evidence, not a reproduction'),
+                original_calculation_reproduction='pending_teacher_work',
+                repair_or_reformulation='pending_teacher_work',
+                construction=c.get('construction') or (c.get('source_claim') or {}).get('construction'),
+                prior_labels=list((c.get('source_claim') or {}).get('evidence') or []),
+                rule='a prior rejected/dead/no-good label is a claim about the claim and cannot close reconsideration; '
+                     'this result reassesses stored evidence only; nothing here marks reproduction or repair performed')
         if origin:
             result.update(origin=origin, origin_evidence=origin_evidence,
                           origin_rule='origin-day rows are listed, never counted: the disposition and days_tested cover '
@@ -371,6 +490,8 @@ def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/
                              for d in days],
                    results=results, model_calls=0,
                    rule='each day on its own, never pooled; counts are the finding, the disposition word is orientation')
+    if doc.get('reconsideration') is not None:
+        lessons['reconsideration'] = doc['reconsideration']
     if doc['author'] == 'search':
         lessons.update(source_manifest_sha256=doc.get('source_manifest_sha256'),
                        origin_rule='the candidates\' own discovery day is origin evidence, listed per claim and never '
