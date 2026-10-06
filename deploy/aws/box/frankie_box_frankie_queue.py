@@ -40,9 +40,9 @@ and flagged previous_trade_date_later (the school knowledge base keeps its own t
 school_rows before_day; listed, Greg's call).
 
 WHAT THE CLASS WORKER RUNS per day (everything that carries his previous day), in order, through the orchestrator's own
-step methods (frankie_box_experiment.Run; nothing re-implemented): classroom, frankie_lessons (the scientific teacher on
-the day's own classroom novel findings, R09; the orchestrator's batch lessons leave queued days to the worker), exchange,
-voice (not wired: passes as listed), school, reports. Jev's material relay stays the orchestrator's step (a hand-off to
+step methods (frankie_box_experiment.Run; nothing re-implemented): classroom FIRST, then data export and causal search,
+batch scientific-teacher lessons, Frankie's own novel findings tested, exchange, voice (not wired: passes as listed),
+school and reports. Jev's material relay stays the orchestrator's step (a hand-off to
 his Pod, never carried into the next class). Receipts per step in the run's own directory
 (/opt/frankie-box/work/experiment/<run>/days/<day>/<stage>.json), so a restart resumes exactly: finished steps are skipped.
 
@@ -80,7 +80,7 @@ QUEUE = Path('/opt/frankie-box/work/frankie-queue')
 SCHEMA = 'FRANKIE_QUEUE_LINE_V1'
 LINES = ('root', 'class')
 STATES = ('queued', 'running', 'done', 'failed')
-CLASS_STAGES = ('classroom', 'frankie_lessons', 'exchange', 'voice', 'school', 'reports')
+CLASS_STAGES = ('classroom', 'data', 'search', 'batch_lessons', 'frankie_lessons', 'exchange', 'voice', 'school', 'reports')
 CORES_PER_SLOT = 16                       # a box day-run slot: exactly 16 booked CPUs (the core ledger's rule)
 # the Run settings an entry carries (the enqueuer's orchestrator arguments), so the worker builds the same Run
 SETTINGS = dict(ingest_workers=31, parallel_days=4, ingest_mode='sequential', ingest_observation='full',
@@ -551,41 +551,106 @@ def frankie_lessons(run, e):
 
 
 def class_day(entry, previous, school_day, code_root, commit, log):
-    """Run the entry's class-side steps in order: ('done' | 'waiting' | 'failed', reason, facts)."""
+    """Run one classroom-arm day inside the SAME held 16-CPU slot.
+
+    Canonical order (Greg, settled 2026-09-30; reconciled 2026-10-06):
+      classroom immediately after the BOSS teacher read -> data export -> search -> batch scientific-teacher lessons
+      -> today's Frankie findings tested -> three-way exchange -> voice stub -> school -> reports.
+
+    The classroom is deliberately before search: Frankie first learns from ROOT + the BOSS teacher.  The later
+    scientific-teacher pass tests his resulting claims against the causal search before the meeting.  Nothing here
+    releases or re-books the day's slot.
+    """
     run, e = _run_for(entry, code_root, commit, log)
     day = e['day']
     if _slot_live(entry.get('slot_booking')):
-        run.slot_booking = entry['slot_booking']    # the class inside the day's own held slot
+        run.slot_booking = entry['slot_booking']
     run.school_day = school_day
     run.queue_previous = previous[:3]
     facts = dict(stages={})
-    for stage in CLASS_STAGES:
+
+    def keep(stage, r, receipt_stage=None, receipt_key=None):
+        receipt_stage = receipt_stage or stage
+        receipt_key = receipt_key or day
+        facts['stages'][stage] = dict(status=r['status'], reason=r.get('reason'),
+                                      receipt=str(run.receipt_path(receipt_stage, receipt_key)))
+        if r['status'] == 'waiting':
+            return 'waiting', '%s: %s' % (stage, r.get('reason'))
+        if not passed(run, receipt_stage, receipt_key):
+            if stage == 'classroom' and r['status'] == 'refused':
+                rep = run.guarded('reports', e)
+                facts['stages']['reports'] = dict(status=rep['status'], reason=rep.get('reason'),
+                                                  receipt=str(run.receipt_path('reports', day)))
+            return 'failed', '%s %s: %s' % (stage, r['status'], r.get('reason'))
+        return None, None
+
+    # 1. Frankie learns immediately after the BOSS teacher's read.
+    if passed(run, 'classroom', day):
+        r = run.receipt('classroom', day)
+    else:
+        r = run.classroom(e)
+        if r is None:
+            why = (run.stopped or {}).get('reason')
+            run.stopped = None
+            return 'waiting', 'classroom: %s' % why, facts
+        run.reserve_after_classroom(e)
+    state, why = keep('classroom', r)
+    if state:
+        return state, why, facts
+
+    # 2. Build/search the causal evidence only after Frankie's classroom work exists.
+    for stage in ('data', 'search'):
         if passed(run, stage, day):
             r = run.receipt(stage, day)
         else:
-            if stage == 'classroom':
-                r = run.classroom(e)
-                if r is not None:
-                    run.reserve_after_classroom(e)
-            elif stage == 'frankie_lessons':
-                r = frankie_lessons(run, e)
-            else:
-                r = run.guarded(stage, e)
-            if r is None:                                       # the disk floor: saved, the day waits
+            r = run.guarded(stage, e)
+            if r is None:
                 why = (run.stopped or {}).get('reason')
                 run.stopped = None
                 return 'waiting', '%s: %s' % (stage, why), facts
-        facts['stages'][stage] = dict(status=r['status'], reason=r.get('reason'),
-                                      receipt=str(run.receipt_path(stage, day)))
+        state, why = keep(stage, r)
+        if state:
+            return state, why, facts
+
+    # 3. Test prior/historical/Jev claims on the searches available so far.
+    key = run.batch_of(day)
+    if key and key.startswith('discovery') and not run.finished('lessons', key):
+        batch = [d for d in run.plan['days'] if run.batch_of(d['day']) == key]
+        r = run.lessons(key, batch) or {}
+    else:
+        r = run.receipt('lessons', key) if key else None
+        if r is None:
+            r = dict(status='skipped', reason='no discovery batch for this day')
+    if key:
+        state, why = keep('batch_lessons', r, 'lessons', key)
+        if state:
+            return state, why, facts
+    else:
+        facts['stages']['batch_lessons'] = dict(status=r['status'], reason=r.get('reason'), receipt=None)
+
+    # 4. Test this day's new Frankie findings against the search.
+    if passed(run, 'frankie_lessons', day):
+        r = run.receipt('frankie_lessons', day)
+    else:
+        r = frankie_lessons(run, e)
+    state, why = keep('frankie_lessons', r)
+    if state:
+        return state, why, facts
+
+    # 5. Only now do the teachers and Frankie meet; then retain the day.
+    for stage in ('exchange', 'voice', 'school', 'reports'):
         if passed(run, stage, day):
-            continue
-        if r['status'] == 'waiting':
-            return 'waiting', '%s: %s' % (stage, r.get('reason')), facts
-        if stage == 'classroom' and r['status'] == 'refused':
-            rep = run.guarded('reports', e)                     # a refused day is reported too (with the reason)
-            facts['stages']['reports'] = dict(status=rep['status'], reason=rep.get('reason'),
-                                              receipt=str(run.receipt_path('reports', day)))
-        return 'failed', '%s %s: %s' % (stage, r['status'], r.get('reason')), facts
+            r = run.receipt(stage, day)
+        else:
+            r = run.guarded(stage, e)
+            if r is None:
+                why = (run.stopped or {}).get('reason')
+                run.stopped = None
+                return 'waiting', '%s: %s' % (stage, why), facts
+        state, why = keep(stage, r)
+        if state:
+            return state, why, facts
+
     facts['classroom'] = run.receipt('classroom', day).get('classroom')
     return 'done', None, facts
 
@@ -855,22 +920,17 @@ TEACHER_BOOK_WAIT = 1800        # seconds the teacher retries a CPU booking (onl
 
 
 def _finish_day(run, e, code_root, commit, log):
-    """The rest of the day in the SAME slot (Greg, 2026-09-30: "the days are supposed to go through all of the processes
-    until everything is done for that day"; "no more days quit before the end"; "the teachers have to read Frankie's
-    ingest info and they have to meet with Frankie in classroom"). In the order each step's inputs demand:
-      teacher   the BOSS teacher walks the day's own sealed ingest -> its Dipole rows (a batch of this one day)
-      data      the day data export (ROOT, day file, the teacher's rows)
-      search    the scientific teacher's evidence: the day's search
-      lessons   the batch lessons (the scientific teacher on the claims named for the batch)
-      class     Frankie's class in the class line (one class at a time, school-day order): classroom (Frankie with the
-                BOSS teacher's rows), Frankie's lessons (his novel findings tested on the searches), the three-way exchange
-                (Frankie, the BOSS teacher, the scientific teacher), voice, school, the day reports. The day waits IN ITS
-                SLOT for its class; the slot's CPUs are not booked while it waits, so the class books them (no deadlock:
-                every input of the class is ready before the day enters the line).
-      jev       Jev's material from the classroom (his Pod is a GitHub dispatch, standing go)
-    The slot is held by the worker's thread from the ROOT to the end. Returns (ok, facts)."""
+    """Finish a day in the SAME held 16-CPU slot.
+
+    ROOT has already finished.  The BOSS teacher always reads next.  On classroom-arm days Frankie then enters the
+    class line immediately; that worker runs classroom -> data/search -> scientific-teacher tests -> meeting/end while
+    staying inside this slot.  Non-classroom days continue directly through data/search and any batch lessons.
+    Jev's blind material relay remains the final applicable handoff and never carries Frankie's answers.
+    """
     import frankie_box_experiment as X
     facts = {}
+
+    # BOSS teacher: whole journal, every level, day-local rows.
     if X.rows_of(e)[0] is None:
         deadline = time.monotonic() + TEACHER_BOOK_WAIT
         while True:
@@ -884,36 +944,43 @@ def _finish_day(run, e, code_root, commit, log):
             return False, facts
     else:
         facts['teacher'] = dict(status='rows present', rows=str(X.rows_of(e)[0]))
-    for stage in ('data', 'search'):
-        r = run.guarded(stage, e) or {}
-        facts[stage] = dict(status=r.get('status'), reason=r.get('reason'), target=r.get('target'), log=r.get('log'))
-        if r.get('status') not in X.FINISHED:
+
+    if e['classroom_arm']:
+        # Greg's settled order: Frankie learns from ROOT + BOSS teacher BEFORE the search tests his resulting claims.
+        facts['class_line'] = _after_root(run, e, code_root, commit, log)
+        while True:
+            cl = entry_of('class', run.plan['run'], e['day'])
+            state = (cl or {}).get('state')
+            if state in ('done', 'failed') or (cl is None and run.finished('classroom', e['day'])):
+                break
+            if cl is None and (facts.get('class_line') or {}).get('status') not in ('queued', None):
+                facts['frankie'] = dict(status='not queued', reason=(facts.get('class_line') or {}).get('reason'))
+                return False, facts
+            if cl is None:
+                facts['class_line'] = _after_root(run, e, code_root, commit, log)
+            time.sleep(60)
+        facts['frankie'] = dict(status=state or 'classroom finished', reason=(cl or {}).get('reason'),
+                                school_day=(cl or {}).get('school_day'))
+        if state == 'failed':
             return False, facts
-    key = run.batch_of(e['day'])
-    if key and key.startswith('discovery') and not run.finished('lessons', key):
-        batch = [d for d in run.plan['days'] if run.batch_of(d['day']) == key]
-        r = run.lessons(key, batch) or {}
-        facts['lessons'] = dict(batch=key, status=r.get('status'), reason=r.get('reason'))
-        if r.get('status') not in X.FINISHED:
-            return False, facts
+    else:
+        # Search-only discovery days do not enter the class line.
+        for stage in ('data', 'search'):
+            r = run.guarded(stage, e) or {}
+            facts[stage] = dict(status=r.get('status'), reason=r.get('reason'), target=r.get('target'), log=r.get('log'))
+            if r.get('status') not in X.FINISHED:
+                return False, facts
+        key = run.batch_of(e['day'])
+        if key and key.startswith('discovery') and not run.finished('lessons', key):
+            batch = [d for d in run.plan['days'] if run.batch_of(d['day']) == key]
+            r = run.lessons(key, batch) or {}
+            facts['lessons'] = dict(batch=key, status=r.get('status'), reason=r.get('reason'))
+            if r.get('status') not in X.FINISHED:
+                return False, facts
+
+    # Jev remains blind: the relay gives him only the governed classroom material, never Frankie's answers.
     if not e['classroom_arm']:
         return True, facts
-    facts['class_line'] = _after_root(run, e, code_root, commit, log)
-    while True:                                     # the day waits IN its slot until its class is done (no deadline)
-        c = entry_of('class', run.plan['run'], e['day'])
-        state = (c or {}).get('state')
-        if state in ('done', 'failed') or (c is None and run.finished('classroom', e['day'])):
-            break
-        if c is None and (facts.get('class_line') or {}).get('status') not in ('queued', None):
-            facts['frankie'] = dict(status='not queued', reason=(facts.get('class_line') or {}).get('reason'))
-            return False, facts
-        if c is None:
-            facts['class_line'] = _after_root(run, e, code_root, commit, log)
-        time.sleep(60)
-    facts['frankie'] = dict(status=state or 'classroom finished', reason=(c or {}).get('reason'),
-                            school_day=(c or {}).get('school_day'))
-    if state == 'failed':
-        return False, facts
     j = run.guarded('jev', e) or {}
     facts['jev'] = dict(status=j.get('status'), reason=j.get('reason'), material_sent=j.get('material_sent'),
                         dispatches=j.get('dispatches'))
