@@ -1042,6 +1042,18 @@ class Run:
             return self.record('classroom', day, 'waiting', reason=why)
         if previous and not (Path(previous) / 'completion.json').is_file():
             return self.record('classroom', day, 'waiting', reason='PREVIOUS %s holds no completion.json' % previous)
+        # The BOSS teacher's measured knowledge must be in the brain BEFORE Frankie's classroom reads it, whichever path
+        # brought the day here (a fresh teacher run, rows reused from an earlier run, or a ROOT found elsewhere that
+        # entered the class line without a teacher call). Idempotent: an identical entry is reused, not rewritten.
+        rows_path, why = self.rows_file(e)
+        if rows_path is None:
+            return self.record('classroom', day, 'waiting', reason=why)
+        try:
+            teacher_brain = self.teacher_knowledge(day, rows_path, rows_of(e)[1])
+        except (ValueError, FileNotFoundError) as error:
+            return self.record('classroom', day, 'refused', teacher_rows=str(rows_path),
+                               reason='the teacher knowledge of the day could not be published before the classroom: %s'
+                                      % error)
         if not self.disk_ok('classroom'):
             return None
         env = dict(DAY=day, CALCULATIONS=calc, TEACHER_ROWS=rows, BRAIN=self.plan.get('brain') or str(BRAIN))
@@ -1051,10 +1063,21 @@ class Run:
         with Q.class_running(self.log):              # exactly one class at a time on the box, queue or not
             code, log = self.child('classroom', day, 'frankie_box_experiment_classroom_v2.sh', env)
         r = json.loads((d / 'receipt.json').read_bytes()) if (d / 'receipt.json').is_file() else {}
+        # Delivery witness: the classroom's own learner-knowledge.json names every document its learner inputs read; the
+        # teacher entry counts as delivered only when that list carries its stage-knowledge.json sha256 (a receipt or a
+        # rows file alone proves nothing).
+        delivered, read = None, d / 'learner-knowledge.json'
+        if read.is_file():
+            documents = json.loads(read.read_bytes()).get('documents') or []
+            delivered = any(doc.get('sha256') == teacher_brain['knowledge_sha256'] for doc in documents)
+            if not delivered:
+                self.log('classroom %s: the teacher entry %s is NOT among the %d learner documents read' % (
+                    day, teacher_brain['path'], len(documents)))
         fields = dict(exit_code=code, log=log, classroom=str(d), previous=previous, previous_from=previous_from,
                       school_day=self.school_day,
                       receipt_status=r.get('status'), external=(r.get('external') or {}).get('completion_hash'),
-                      brain_entry=r.get('brain_entry'), jev_material=r.get('jev_material'))
+                      brain_entry=r.get('brain_entry'), jev_material=r.get('jev_material'),
+                      teacher_brain_entry=teacher_brain, teacher_knowledge_delivered=delivered)
         if code == 0 and self.classroom_ready(e)[0] == 'reused':
             return self.record('classroom', day, 'done', new_bytes=new_bytes(d), **fields)
         if code == 3 and r.get('status') == 'refused':
