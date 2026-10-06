@@ -1,107 +1,76 @@
-# Spec: the experiment orchestrator (Greg, 2026-09-29)
+# Spec: the 30-day experiment orchestrator
 
-Status: SPEC. Nothing is built beyond the per-cycle calculation export (f751ccbe). It goes into the Excel build plan
-(`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`) as a research track before it is built (Greg adds it).
+Status: **CANONICAL WORKFLOW RECONCILED 2026-10-06.** This replaces the conflicting September 29/30 workflow tables.
+The repository is brownfield: reuse the existing orchestrator, 16-CPU booking ledger, FIFO queues, receipts, ROOT,
+teacher, classroom, data/search and scientific-teacher pieces. Do not rebuild working machinery. Survivors,
+confirmation, the full search surface, and the remote worker's ROOT-to-finish path remain incomplete.
 
-## THE EXPERIMENT DAY: EVERY STEP IN ORDER, WHAT IT DOES, WHO DOES IT (Greg, 2026-09-30). Supersedes every list below.
-Greg: every step carries its description. Frankie is in the classroom, the meeting and the end. 6b, survivors and Jev
-keep the runbook's order. The traffic agent (the ROOT-line worker) follows THIS order; where code or a runbook differs,
-they change, not this list. Box and Pod days run the same steps from one file. Granite is only the meeting's voice.
+Greg, 2026-10-06:
+- One real end-to-end ROOT-to-finish test, then fix actual failures. Do not build a new validation/test framework.
+- A day owns its **same box, same 16-CPU lane and same worker allocation from ROOT until that day is finished**.
+- A 16-CPU day lane uses the existing **15 worker + 1 coordinator/ordered-consumer** rule and the CPU booking ledger.
+- The current 30-day ingests and retained progress are evidence: never re-ingest, delete, move or overwrite them casually.
+- The expensive AWS boxes are execution engines, not development environments. Settle and wire the workflow before
+  starting paid compute.
 
-| # | Step | What it does | Who does it |
-|---|---|---|---|
-| 1 | Fetch | Pulls the day's raw order-book data (every order, every level) from S3 onto the box or Pod; checks every file's fingerprint. | Box code, no model |
-| 2 | Ingest | Writes the day into the sealed journal (the gold-standard record of every event) with its receipt. | Box code |
-| 3 | Day file | Attaches Frankie's 13 historical data points for the day beside the ingest. | Box code |
-| 4 | ROOT | Frankie's calculations on the whole day, bedrock off: derive.json, 5 legacy layers, row spools, the digest on classroom days. The sheets he learns from. | Frankie's calculation code |
-| 5 | BOSS teacher reads | The original BOSS teacher (mathematics, representation supervision, targets, masks, controls) reads ALL of Frankie's ingest, every level, whole day, and writes the Dipole rows. It sees everything EXCEPT Frankie's trade reasoning / decision process in his brain (rule R09). | BOSS teacher (JournalTeacherR3), code |
-| 6 | Frankie: classroom | RIGHT AFTER the teacher's read (Greg, 2026-09-30): Frankie works the 19 components from ROOT's sheets, learns from the BOSS teacher, is graded and corrected. | Frankie (his code), BOSS teacher |
-| 7 | Data export | Puts ROOT's sheets, the day file and the teacher rows in one folder with a manifest; leaves out what the teachers must never see (Frankie's decision process, his graded outcomes: R09, R10). | Box code |
-| 8 | Series | One time axis per day; every value carries only what was known at that moment (nothing from the future). | Box code |
-| 9 | Search | Tests every pair of measurements by cell and time lag, each with its own chance check. Counts, never averages. | OPEN: the BOSS teacher (SPEC-joined-teachers 09-28: it runs the coupling search as the data specialist) or the scientific teacher (SPEC-scientific-teacher 09-29). Greg decides. |
-| 10 | Scientific teacher (6b) | Takes claims (historical ones, Frankie's findings, Jev's earlier claims), tests each against the search, answers with counts: held / shown otherwise / unresolved, and "the data is showing this instead". | Scientific teacher, code |
-| 11 | Survivors | Symbolic regression over the search: the relationships that hold across the discovery days. Material for later classrooms and for Jev. NOT BUILT. | Code (odcore/symbolic.py) |
-| 12 | The meeting | Frankie, the BOSS teacher and the scientific teacher discuss his new and novel findings. Granite opens and voices the conversation, never calculations; he is called when the meeting starts (one meeting at a time, in class order), so his Pod follows the meeting's time. Voice call NOT WIRED (needs Greg's go on the Session.boss edit). | Frankie, both teachers, Granite (voice) |
-| 13 | Frankie: end of day | His brain entry, his school knowledge (what he carries to the next day), the day reports. | Frankie |
-| 14 | Jev | Blind outside student on his own Pod: sees what Frankie saw (classroom package + survivors), never Frankie's answers; files labelled claims the scientific teacher tests. | Jev (Qwen3-8B), his own Pod |
-| 15 | Confirmation | Later, on the 2024-2025 days: the frozen survivor list tested per cell, net of fees maker and taker. NOT BUILT. | Code |
+## 0. Canonical experiment workflow
 
-OPEN for Greg: (1) step 9, whose search: the BOSS teacher's (09-28) or the scientific teacher's (09-29)? (2) survivors
-are cross-day: a day's classroom uses the survivors of the batches finished so far? (3) Jev's claims are tested at the
-next batch's step 10?
+The table below is execution authority. Older planning text below is retained only for provenance and implementation
+detail; where it conflicts with this table, this table wins.
 
-## UPDATE 2026-09-30 morning (Greg): the day workflow in MONDAY'S ORDER, Frankie on it. Supersedes the table below.
-Greg's calls this morning:
-- The day runs Monday's steps IN MONDAY'S ORDER with the lighter run's pieces; the only drops are Granite and the
-  steps already dropped. Frankie's steps are ON the list (they kept being left off).
-- Pod and box days: EXACTLY the same steps and processes, ONE file, two names (box / Pod). No separate Pod path.
-  Today the Pod path (pod_root/controller.py + pod_agent.py) runs ROOT only: to be replaced by the one day-runner,
-  built only after this order is settled and on Greg's go.
-- Staggering is Greg's call, not code or a rule: boxes and Pods ingest, a day moves off after its ingest, the next
-  ingest starts; Greg moves batches of ingested days forward into ROOT when he decides, so days never all hit the same
-  steps at once.
-- No code changes before this workflow is gone over with Greg (the only change so far: 15fc75df teacher crash fix).
+| # | Stage | When / dependency | What it does | Owner / compute |
+|---|---|---|---|---|
+| 0 | Preflight / resume reconciliation | Before paid execution; existing checks only | Pin commit and plan, find existing receipts/progress, confirm day ownership, 16 CPUs, disk floor and no duplicate active day. This is not a new validator project. | Existing controller/ledger/receipts |
+| 1 | Fetch + ingest | Already complete for retained days; only for a genuinely missing day | Produces the sealed causal journal and receipt. Never redo a finished ingest. | Existing ingest code |
+| 2 | Day file | Before ROOT/teacher/search when causally available | Attaches the stamped historical/external data once beside the ingest for every permitted reader. | Existing day-file code |
+| 3 | ROOT | Start of the held day lane | Frankie's whole-day calculations, bedrock/model calls off; row spools and governed calculation surfaces retained. | 16 CPUs, 15 workers + coordinator |
+| 4 | BOSS teacher read | Immediately after ROOT | JournalTeacherR3 reads the whole retained ingest/book and writes the teacher/Dipole rows. It keeps the original math/representation/targets/masks/controls role. | Same held 16-CPU lane |
+| 5 | Frankie classroom | **Immediately after BOSS teacher** on classroom-arm discovery days | Frankie learns from ROOT + BOSS teacher, covers the governed classroom components, is graded/corrected, and files new findings as claims. | Same held lane; class order remains sequential |
+| 6 | Data export | After teacher; after classroom on classroom-arm days | Exposes the permitted ROOT/day/teacher material with a manifest while withholding Frankie's private decision process and graded answer key. | Same held lane |
+| 7 | Causal series + search | After data export | Builds the per-day causal axis and tests relationships per cell/lag/transform with the leakage gate and each test's circular-shift chance check. Counts/days are the findings; coefficients stay scoped, never pooled. | **Scientific teacher's evidence engine**, same held lane |
+| 8 | Scientific teacher: carried claims | After the day's search | Tests historical claims and causally prior Frankie/Jev claims against all discovery searches available so far; reports counts, scoped support/contradiction/unresolved states and proposed tests. | Same held lane |
+| 9 | Scientific teacher: today's Frankie findings | After classroom + search, before the meeting | Tests today's new/novel Frankie claims against the searches available so far. | Same held lane |
+| 10 | Survivor/candidate update | **Batch/cross-day boundary, not a per-day lane blocker** | Builds scoped candidate/survivor relationships from completed discovery evidence. A day's classroom may consume only survivors completed before that classroom; no same-day circular promotion. | Cross-day code; NOT fully built |
+| 11 | Three-way meeting | After today's Frankie findings have been tested | Frankie + BOSS teacher + scientific teacher discuss the tested findings. Granite may only voice the three code-generated seats under R17; it does no calculation or decision. | Meeting is sequential in classroom order; voice transport not yet wired |
+| 12 | Frankie end of day | After meeting (or after the recorded voice-not-wired state) | Retains brain entry, school knowledge, corrections/lessons and numbered reports for the next classroom day. | Same held lane |
+| 13 | Jev blind comparison | Classroom-arm discovery days; governed material only | Jev receives the classroom material/survivors but never Frankie's answers before filing his own claims. His claims are labelled and feed later scientific-teacher testing. Prefer local/small CPU hosting if sufficient; no standing GPU Pod requirement. | Jev |
+| 14 | Freeze discovery survivors | After the discovery set is complete | Freeze the survivor list once; no confirmation data has been used to select it. | Cross-day code; NOT fully built |
+| 15 | Confirmation | Only after survivor freeze | Run the frozen relationships on untouched 2024-2025 confirmation days, per cell, including maker/taker/net-cost treatment where applicable. | CPU; NOT fully built |
 
-| # | Monday step | This run's piece | Keep |
-|---|---|---|---|
-| 1 | Fetch + ingest (sealed journal) | fetch, ingest | KEEP |
-| 2 | Day file (13 points) | external | KEEP |
-| 3 | ROOT calculations | root (bedrock off) | KEEP |
-| 4 | Trading-day prep 1: native context walk | - | DROP |
-| 5 | Trading-day prep 2: the BOSS teacher's Dipole rows | teacher | KEEP |
-| 5b | (new) the scientific teacher prepares: data export, search, batch lessons | data, search, lessons | KEEP |
-| 6 | Principal inputs + config | - | DROP |
-| 7 | Granite Pod, launch, B2 critic | - | DROP (Granite) |
-| 8 | Frankie: reading | classroom package (ROOT's sheets + teacher rows + day file) | KEEP |
-| 9 | Frankie: CLASSROOM (Dipole classroom) | classroom v2: Frankie's code, 19 components + day-file points | KEEP |
-| 10 | Frankie: TEACH (teach-back with the teachers) | the meeting: three-way exchange (OPEN: confirm) | KEEP |
-| 11 | Frankie: writing | Frankie's lessons (OPEN: confirm) | KEEP |
-| 12 | Record initial: pre-grade | classroom v2 host grade | KEEP |
-| 13 | Resume 1: grading + correction request | classroom v2 | KEEP |
-| 14 | Frankie: correction | classroom v2 | KEEP |
-| 15 | Record correction | classroom v2 | KEEP |
-| 16 | Resume 2: final grade, classroom receipt | classroom completion | KEEP |
-| 17 | Retain | brain entry, school knowledge, day reports | KEEP |
-| 18 | (new) Jev | Jev relay -> his own Pod | KEEP |
+### Non-classroom discovery days
 
-SETTLED (Greg, 2026-09-30 morning): Frankie's classroom comes EARLY so he learns from the BOSS teacher; the meeting
-with both teachers comes AFTER, to discuss his new and novel findings. The built order already matches, so no reorder:
-teacher rows -> data export, search, batch lessons -> Frankie's classroom (grade and correction inside it) -> Frankie's
-lessons (his novel findings tested on the search) -> the meeting (three-way exchange) -> brain entry, school, reports ->
-Jev. Every 16-core slot always holds a day (the ROOT-line worker keeps filling slots FIFO). The pieces are built: link
-them in this order, one file for box and Pod.
+They still run ROOT -> BOSS teacher -> data export -> causal search -> carried-claim scientific-teacher work. They do not
+run Frankie classroom, meeting, school retention or Jev unless the plan explicitly marks them as a classroom-arm day.
 
-## AGREED DAY WORKFLOW (Greg, 2026-09-30 ~02:35Z): Monday's run with fewer steps (SUPERSEDED by the update above)
-Greg: "This workflow shouldn't change from what we ran for Monday, just less steps"; "I like your run plan"; "When
-frankie runs his part for the 1st time, ask him if that's the right order but it seems right". A day keeps its Pod or
-box slot until every KEPT step is done (no day leaves early). Status: agreed on paper; NOT yet built into the ROOT-line
-worker (zero process code changes until the workflow is fixed; Greg).
+### Cross-day timing rules
 
-| # | Monday step (what it hands on) | Experiment day |
-|---|---|---|
-| 1 | Fetch + ingest: sealed journal and receipt | KEEP |
-| 2 | 13-point day file beside the ingest (Frankie, both teachers and the search read it) | KEEP |
-| 3 | Authorship | REMOVED (Greg, 2026-09-30: "take that step out, we're way past it"): no day, resumed or new, is gated on an authorship receipt |
-| 4 | ROOT calculations: derive.json, 5 legacy layers, row spools, digest on classroom days: ROOT hands its sheets to Frankie | KEEP (bedrock off) |
-| 5 | Trading-day preparation part 1: the native context walk | DROP |
-| 6 | Trading-day preparation part 2: the BOSS teacher (JournalTeacherR3) reads Frankie's ingest (every level, whole day) -> Dipole rows | KEEP |
-| 7 | Principal inputs + host config | DROP |
-| 8 | Launch/cycle: context, principal model call, Granite B2 critic | DROP, except the classroom pieces below |
-| 9 | Classroom package: prepare_integrated_cycle (ROOT's sheets + teacher rows + day file) | KEEP |
-| 10 | Classroom: the principal's classroom stage answered by Frankie's code (19 components, summary, correction), finishing his calcs from ROOT's sheets | KEEP |
-| 11 | The meeting: Frankie + the BOSS teacher + the scientific teacher (the search), Granite opening and voicing the conversation (CLASSROOM_RULES_V2, R17 amended) | KEEP (the Granite voice call is not wired: needs Greg's go on the Session.boss edit) |
-| 12 | Frankie's brain entry: classroom ledgers + his lessons | KEEP |
-| 13 | Record / correction / retain | DROP, except the brain entry and the day reports |
-| 14 | Jev: blind outside student, his own Pod, claims only | KEEP |
-| 15 | Experiment-only: data export, search, lessons, day reports (CLASSROOM / FRANKIE / JEV REPORT #N) | KEEP |
+- **Scientific teacher = search/evidence engine.** The later 2026-09-29 scientific-teacher decision supersedes the
+  earlier joined-teacher wording that made the BOSS teacher the search owner. The BOSS teacher consumes and discusses
+  the evidence while retaining its original teaching/math role.
+- **Survivors are cross-day.** They update at batch boundaries from already-completed discovery evidence; they do not
+  block every individual day and are never built using confirmation days.
+- **No same-day circular teaching.** A classroom cannot be taught a survivor that depends on that same classroom day's
+  findings. It may use only an earlier completed survivor set.
+- **Jev stays blind.** His governed input may be produced after Frankie's classroom files physically exist, but the
+  relay must contain only the material Frankie was allowed to see, never Frankie's answers. Jev's claims are evidence
+  for later scientific-teacher passes, not truth.
+- **Confirmation wall remains hard.** Confirmation days stay untouched until the discovery survivor list is frozen.
 
-Dependencies found 2026-09-30 (so the built worker orders them this way): Frankie's lessons and the three-way meeting
-need the day's search, so data export + search run BEFORE the class; the teacher rows before the classroom package.
-FIRST-RUN CHECK (Greg): the first time Frankie runs his part, put the question to him: "is this the right order of the
-day's steps?" and record his answer in the day report before the order is locked. (In the experiment Frankie's
-classroom is code; the question goes to him through his session / the meeting's Granite voice once wired; if neither
-can ask it, tell Greg.)
-DROP rows CONFIRMED by Greg 2026-09-30 ("The drops are right"). Open: Granite Session.boss go.
+### Lane and traffic-controller rule
+
+A day is assigned once at ROOT and remains on that same box and 16-CPU booking until its last applicable day stage
+finishes or the run is explicitly stopped/saved. The stage changes; the execution lane does not. On a 32-vCPU box this
+means two simultaneous day lanes. A 16-vCPU worker is one lane. Worker processes are pinned inside the booked CPU set;
+no cross-day CPU double booking.
+
+The main-box ROOT/class traffic controller already implements held slots. The remote worker agent is still ROOT-only and
+must be changed to execute the same ROOT-to-finish day runner instead of shipping a day back immediately after ROOT.
+
+### Testing rule
+
+Do not build a test harness, extra validators or canary suite for this workflow. After the wiring is complete, perform
+**one real ROOT-to-finish end-to-end run** on an already-ingested discovery day using the real receipts and lane logic.
+Fix actual failures as they appear and resume from retained receipts. After that succeeds, feed the 30-day pipeline.
 
 ## UPDATE 2026-09-29 (late): the teachers are tied and Granite is out of the classroom. This supersedes the text below.
 - **Granite** (`SPEC-decouple-granite.md`, DECISION and BUILT blocks): Granite is ONLY the B2 shadow critic (C21-C24) on
