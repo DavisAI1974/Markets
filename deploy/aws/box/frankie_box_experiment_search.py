@@ -45,6 +45,10 @@ not timestamp lookup or a global bucket across instruments. Unsupported old grou
 Dipole current components use exact journal source-cursor availability at each frame, including tied timestamps.
 Every original target row additionally supplies dipole.group.rows[position].* numeric/categorical channels at its
 exact owning INPUT group. Ordered slots preserve intermediate states; they are not independent observations.
+Structures additionally supply structures.group.* by exact original closing INPUT, instrument and full ROOT
+membership, bound to the selected derive receipt. Legacy structures.* timestamp aliases remain unchanged.
+Price V1 provenance incorrectly names the closing INPUT for earlier trades; exact price placement remains listed
+pending producer correction. Both spools' provenance.* fields are metadata, excluded from series and cells.
 Raw component numeric values in both positional and entity closing-row channels require the producer's PRESENT
 state. Other states project to None with exact source-cursor/reason accounting; original snapshot evidence and
 independent metadata remain intact, including incomplete annotations on PRESENT values.
@@ -76,6 +80,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -84,6 +89,7 @@ SCHEMA = 'FRANKIE_EXPERIMENT_SEARCH_V1'
 ROOT = Path('/opt/frankie-box/work/experiment-search')
 CELL_NAMES = ('session_phase', 'continuity_segment', 'source_day', 'source_role')
 F_LAST = 128                       # the exchange record flag that closes a group (the same close the frames spool marks)
+ROW_PROVENANCE_SCHEMA = 'FRANKIE_ROOT_ROW_PROVENANCE_V1'
 # Identity/metadata and absolute clocks are listed. ts_in_delta_ns is an interval, not an absolute clock;
 # it remains a quantity in the group-close projection. Identity relationships need their own lawful consumer.
 EVENT_IDENTITY_FIELDS = ('order_id', 'sequence', 'channel_id', 'instrument_id', 'publisher_id', 'ts_recv_ns', 'ts_event_ns',
@@ -114,6 +120,11 @@ NOT_SEARCHED = (
     ('structure identity lists', 'structures.order_ids[i] and structures.fill_disposition.*_order_ids[i] are order '
      'identities flattened by position; they are searched as numeric series like every other leaf (listed here so the '
      'count of searched series is read correctly; an identity has no steps of its own)'),
+    ('price/structure row provenance', 'provenance.* is retained identity metadata, not a numerical series or cell. '
+     'structures.group.* requires the selected derive receipt schema and exact ROOT closing INPUT, instrument and '
+     'full member list. Every unsupported original spool ordinal has a disposition. Price V1 original INPUT identity '
+     'awaits producer correction; prices.* remains a timestamp alias with explicit unselected-row accounting. '
+     'Exact structures and legacy aliases are duplicate representations, not independent evidence'),
     ('native evidence boundaries', 'selected completed native member/lifecycle ledgers with exact emission provenance '
      'enter the existing F_LAST axis, every leaf and ordered per-section emission slot. Native producers remain opt-in; '
      'old provenance-free rows, unmatched ROOT frames and FINALIZE rows have explicit retained dispositions. '
@@ -241,6 +252,106 @@ def asof_values(con, axis_t, known_at, values):
     return np.asarray([values[i] if i >= 0 else None for i in asof_source_rows(axis_t, known_at)], dtype=object)
 
 
+def root_row_columns(spool, numeric, text, count, frames, owners, axis_rows, producer_schema):
+    """Place structures by exact original INPUT membership; list the unresolved price producer identity.
+
+    V1 prices currently stamp the closing INPUT, not necessarily the INPUT that supplied the trade. Do not
+    reinterpret that input_index contract. Provenance and clocks remain in the pinned source, not features.
+    """
+    buckets, dispositions, seen = {}, {}, set()
+    identities = sorted(k for k in set(numeric) | set(text) if k == 'provenance' or k.startswith('provenance.'))
+    member_slots = sorted((int(m.group(1)), key) for key in numeric
+                          if (m := re.fullmatch(r'provenance\.input_record_indices\[(\d+)\]', key)))
+
+    def value(key, ordinal):
+        for mapping in (text, numeric):
+            if key in mapping and mapping[key][ordinal] is not None:
+                return mapping[key][ordinal]
+        return None
+
+    def disposition(reason, ordinal):
+        item = dispositions.setdefault(reason, dict(rows=0, ordinal_ranges=[]))
+        item['rows'] += 1
+        ranges = item['ordinal_ranges']
+        if ranges and ranges[-1][1] + 1 == ordinal:
+            ranges[-1][1] = ordinal
+        else:
+            ranges.append([ordinal, ordinal])
+
+    previous = None
+    for ordinal in range(count):
+        if spool == 'prices':
+            disposition('price_original_input_identity_pending', ordinal)
+            continue
+        if producer_schema != ROW_PROVENANCE_SCHEMA:
+            disposition('no_bound_row_provenance_producer', ordinal)
+            continue
+        if value('provenance.schema', ordinal) != ROW_PROVENANCE_SCHEMA:
+            disposition('missing_or_unsupported_row_provenance', ordinal)
+            continue
+        index = value('provenance.input_cursor', ordinal)
+        instrument = value('provenance.instrument_id', ordinal)
+        if any(type(v) is not int for v in (index, instrument)) or index < 0:
+            disposition('unusable_input_or_instrument_identity', ordinal)
+            continue
+        identity = index
+        if identity in seen or (previous is not None and identity <= previous):
+            raise ValueError(spool + ' original closing INPUT identities repeat or run backwards')
+        seen.add(identity)
+        previous = identity
+        if frames is None:
+            disposition('unsupported_root_group_membership', ordinal)
+            continue
+        position = owners.get(index)
+        if position is None:
+            disposition('no_exact_root_group', ordinal)
+            continue
+        frame = frames[position]
+        if instrument != frame['instrument']:
+            raise ValueError(spool + ' instrument differs from its exact ROOT group')
+        if spool == 'structures':
+            if index != frame['cursor']:
+                raise ValueError('structure does not name its owning group closing INPUT')
+            members, ended = [], False
+            for slot, key in member_slots:
+                member = value(key, ordinal)
+                if member is None:
+                    ended = True
+                    continue
+                if ended or slot != len(members) or type(member) is not int:
+                    raise ValueError('structure INPUT membership has noninteger members or positional gaps')
+                members.append(member)
+            if not members:
+                disposition('missing_structure_group_membership', ordinal)
+                continue
+            if members != sorted(frame['members']):
+                raise ValueError('structure INPUT membership differs from its exact ROOT frame')
+        buckets.setdefault(position, []).append(ordinal)
+        disposition('placed', ordinal)
+
+    # Preserve all existing value/text leaves; only explicit identity metadata and absolute clocks are listed.
+    clocks = {'ts_recv', 'ts_recv_ns', 'ts_event', 'ts_event_ns'}
+    excluded = set(identities) | clocks
+    out_numeric, out_text = {}, {}
+    for source, target in ((numeric, out_numeric), (text, out_text)):
+        for key, values in source.items():
+            if key in excluded or not buckets:
+                continue
+            target['structures.group.' + key] = [values[buckets[position][0]]
+                if position in buckets else None for position in range(axis_rows)]
+    report = dict(schema=ROW_PROVENANCE_SCHEMA, source_rows=count,
+                  placed_rows=dispositions.get('placed', {}).get('rows', 0),
+                  matched_root_frames=len(buckets), frames_without_source_rows=axis_rows - len(buckets),
+                  dispositions=dispositions, identities_and_clocks=sorted(set(identities) | (clocks & (set(numeric) | set(text)))),
+                  numeric=sorted(out_numeric), text=sorted(out_text),
+                  rule='structures equal the original closing INPUT cursor, instrument and full ROOT member list. '
+                       'Prices await corrected original trade INPUT provenance; V1 currently stamps the group close. '
+                       'No timestamp/ordinal join, fill or interpolation. '
+                       'Group projections and legacy timestamp aliases are the same evidence, not independent observations; '
+                       'positions are not identity-linked trajectories or a change to F_LAST lag units')
+    return out_numeric, out_text, report
+
+
 def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_manifest_sha256=None):
     """The axis and every series on it. Returns (axis_time, series {name: np.ndarray}, cells {name: list}, sources, notes)."""
     import numpy as np
@@ -363,6 +474,10 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
                 continue
             series[name + '.' + key] = asof_values(con, axis, known_at, values)
 
+    root_frames, root_owners = JOURNAL._frame_index(f_num, recv)
+    derive_path = day_dir / 'root' / 'work' / 'derive.json'
+    derive_pin = source_pin(derive_path)
+    derive = read_json(derive_path, derive_pin) if derive_pin is not None else {}
     for spool, time_key in (('structures', 'ts_recv_ns'), ('prices', 'ts_recv')):
         path = rows_dir / (spool + '.jsonl')
         pin = source_pin(path)
@@ -370,11 +485,32 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
             notes.append(dict(source=spool, missing=str(path)))
             continue
         num, text, other, count = columns(unpack_spool(path, pin), time_key)
+        group_numeric, group_text, group_report = root_row_columns(
+            spool, num, text, count, root_frames, root_owners, n, derive.get('row_provenance_schema'))
+        group_report.update(frames_sha256=frames_pin['sha256'], membership_implementation=JOURNAL.binding(),
+                            producer_receipt=dict(path=str(derive_path), bytes=derive_pin['bytes'], sha256=derive_pin['sha256'])
+                            if derive_pin is not None else None)
+        aliases = {spool + '.' + key for key in set(num) | set(text)}
+        if aliases & (set(group_numeric) | set(group_text)):
+            raise ValueError(spool + ' legacy aliases collide with exact group channel names')
+        series.update({key: np.asarray(values, dtype=object) for key, values in group_numeric.items()})
+        text_cols.update(group_text)
+        for mapping in (num, text):
+            for key in list(mapping):
+                if key == 'provenance' or key.startswith('provenance.'):
+                    del mapping[key]
         sources.append(dict(source=spool, path=str(path), rows=count, bytes=pin['bytes'], sha256=pin['sha256'],
-                            placement='legacy timestamp-asof alias; latest clock <= frame time, later row wins ties',
-                            identity_limit='not an exact INPUT/group or entity join; producer provenance and the '
-                                           'search adapter remain pending; no identity inferred from time or position',
+                            placement='structures.group.* uses exact ROOT membership; other aliases keep legacy timestamp-asof selection',
+                            identity_limit='price original INPUT provenance awaits producer correction; legacy asof aliases '
+                                           'do not establish exact group/entity identity; inspect exact_group_join dispositions',
+                            exact_group_join=group_report,
                             numeric=sorted(num), text=sorted(text), not_searched=other))
+        gates.append(dict(source=spool + '.group', passed=True if group_report['placed_rows'] else None,
+                          reason='only exact original INPUT/group membership placed; no timestamp selection or future fill'))
+        if group_report['placed_rows'] != count:
+            notes.append(dict(source=spool + '.group', reason='rows without supported exact ROOT membership remain in '
+                              'the pinned source; no guessed join; see exact_group_join dispositions',
+                              dispositions=group_report['dispositions']))
         if not count:
             notes.append(dict(source=spool, rows=0, reason='empty retained source spool; no observations to place'))
             continue
@@ -398,7 +534,7 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         input_sha256 = input_pin['sha256']
         # Reuse ROOT's actual per-instrument membership. A global F_LAST bucket
         # mixes interleaved instruments; timestamp asof can select a later tie.
-        event_frames, event_owners = JOURNAL._frame_index(f_num, recv)
+        event_frames, event_owners = root_frames, root_owners
         group_counts = [{} for _ in range(n)] if event_frames is not None else []
         group_unknown = [0] * n if event_frames is not None else []
         seen_members = [0] * n if event_frames is not None else []
@@ -797,7 +933,8 @@ PLANE_COVERAGE = (
     ('legacy_book_imbalance', 'frames', 'consumed', 'frames.best_bid/best_ask/mid/depth_imbalance_n, frames.spread, '
      'depth_imbalance_full, bid/ask_depth_full, bid/ask_order_count_full, bid/ask_price_level_count_full (the axis); '
      'cell frames.transition (the sign signature)', None),
-    ('legacy_structure_observables', 'structures', 'consumed', 'structures.* per F_LAST group (describe_structure): '
+    ('legacy_structure_observables', 'structures', 'consumed', 'structures.group.* at exact ROOT membership when '
+     'supported; structures.* legacy timestamp aliases (describe_structure): '
      'action_counts.<action>, side_counts.<side>, component_count, distinct_price_count, distinct_order_id_count, '
      'price_raw_min/max/span, matches_carried_native_family, fill_disposition.*_count; cells action_string, side_string, '
      'terminal_action, terminal_side, candidate_family_id, discovery_status, carried_native_family, mirror.side_string, '

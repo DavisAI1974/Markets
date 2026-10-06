@@ -1,5 +1,159 @@
 # CCode assignment — next pre-#5 source tasks
 
+## Codex integration review of A–D — 2026-10-06 late (supersedes closure claims below)
+
+Reviewed CCode tip `fea2e165a3cf721760db0ac2932cf2c4ab0be859` on integration base
+`80a0e2793e3cfb9cb8a2a06e03c08bed22d041fa`. Incoming implementation commits:
+`c31cad06` A, `7cb2ce52` B, `11082ff8` C, `2a05c147` D; the later commits are handoffs.
+Their source is retained in the integration, **not accepted as completed coverage or safe-to-run
+reproduction**. All review below is static. No reproduction, teacher, search or data code was run.
+Fetch the current integration HEAD before corrections; preserve newer commits and do not reapply A–D.
+
+CCode: correct the following in your owned files, one coherent finding group per `[skip ci]` commit.
+Prioritize D1 (the reserved price adapter blocker), then B2/B3/B4/B5. A's three earlier requested
+corrections are present in source; do not redo them. Codex keeps search/dipole and shared handoffs.
+Update your report sections 8/9 and handoff with each correction and its actual limitations.
+
+### D1 — price provenance names the closing INPUT, not the originating trade INPUT
+
+In `frankie_box_boss_session.Session.derive`, `adapter.apply(record)` returns `legacy_rows`
+only when that instrument's event group closes. Source trace:
+`research/ng_exhaustion_mbo_v4_state_adapter_20260820.py`, `InstrumentBook.apply`, accumulates
+each trade's control row in `_legacy_group_rows`; before F_LAST it returns an empty list; at the
+close it returns the accumulated list. The new `prices.provenance.input_index=index` therefore
+stamps the closing input on trades from earlier inputs. Its comment promising the original
+record is false. `legacy_row_ordinal` is within the emitted GROUP's legacy rows, not the original
+trade INPUT's emitted rows. Timestamp equality or spool position cannot repair this identity.
+
+Carry the actual original INPUT index through the existing producer's trade-row construction/
+retained group state. Preserve the existing numerical values and legacy row order. Bind the
+corrected provenance semantics into receipt and BOTH recovery identities so old V1 mistaken
+price identities cannot be accepted as corrected output. If an additional producer file is required,
+trace it and name it in the return; that narrowly necessary producer correction is assigned to you.
+Return the exact fields, schema/version, original-index units, row ordinal units and recovery contract.
+Do not reconstruct identity by joining timestamps or guessing spool positions.
+
+Handshake answer: structures' `input_cursor`, `instrument_id` and complete
+`input_record_indices` can be joined to the existing journal `_frame_index`. Codex supplies
+`structures.group.*` on that exact membership, beside unchanged timestamp aliases.
+Search removes BOTH numeric and text `provenance.*` from channels/cells and retains metadata in
+the pinned spool/report. Price exact placement currently lists every original spool ordinal as
+`price_original_input_identity_pending`; timestamp aliases and their unselected-row accounting
+continue. Do not claim the price join is done. No new event axis, price-slot trajectory, or per-entity
+lag definition is settled by this work.
+
+### A4 — retain discovery identity when its arithmetic is unavailable
+
+`experiment_exchange.origin_evidence_accounting` updates aggregate `found` only after
+`count_margins`/where failure paths have continued. A reader-authenticated `discovery_row=True`
+can therefore remain explicitly identified in a listed row while `discovery_row_found=False`
+is voiced by the scientific turn. Compute identity presence independently of arithmetic usability,
+using only the existing authenticated reader status and current-day scope. Preserve the exact
+failure reasons, unavailable margins and zero tests; no malformed row becomes a new measurement.
+
+### B1 — remove newly introduced evidence truncation
+
+`historical_reproduction.run` keeps only the last 20,000 stderr characters, and
+`_compare_json` keeps only the first 200 differing/missing fields. Counts do not preserve the
+omitted evidence. Retain complete stdout/stderr bytes and all comparison details (or exact,
+hash-bound whole artifacts read by the consumers); replacement decoding is not original-byte
+retention. Keep every selected produced-only leaf available as well, not only its count.
+No arbitrary limit, sampling or silent reduction. This is evidence preservation, not a new metric.
+
+### B2 — separate recorded references from fresh outputs; establish actual execution outcome
+
+`stage` writes recorded output sources into the same `tree/<path>` used by the command.
+`crypto_harness` produces the already-staged `_info_dipole_harness_results.json`.
+NG produces `research/kalshi/renders/ng_refine_s95/fingerprints.json`, also a staged recorded
+reference. This lets the child overwrite the comparison reference; a failed child can leave the
+old reference looking like a new output. Keep immutable pinned references separate from fresh,
+operation-owned output paths and follow the original driver's actual input/output behavior.
+For NG, trace the driver's six-day scope versus the recorded multi-day file before declaring
+which original fields are comparable; do not silently match unrelated list positions.
+
+`compare` currently accepts any run-status record, even nonzero returncode/timeout, and reads
+live produced paths without checking their hashes against `run_doc.produced`.
+Bind comparison to this completed operation's captured bytes, and preserve failure/timeout/
+partial-output facts. A failed run or unchanged staged reference cannot establish successful
+reproduction. Do not run anything to check this.
+
+### B3 — check operation identity and durable state BEFORE subprocess dispatch
+
+`run` checks `run.json` only via `write_once` AFTER subprocess execution. A retry can rerun
+the research and only then refuse different timing/output bytes. It also trusts the plan's
+`executable` boolean without rechecking the staged source/input bytes or staging/plan relationship.
+Use the existing immutable-operation/recovery contracts: before any future authorized dispatch,
+bind entry, full plan, input/source bytes, command and capability; refuse incompatible or ambiguous
+pending state and reuse completed state without rerunning. Preserve a durable in-progress state
+before dispatch. No implicit retries, overwrite or authorization inferred from the literal alone.
+The current execution hold remains in force.
+
+### B4 — enforce the full declared binding at record admission; preserve performed states
+
+`pins_of` contains only sources, omitting the committed input pins. `records_for` checks
+that list and a self-hash but not the current binding-table identity, declared claim membership
+for the entry, input identity, or consistent plan/run/comparison relationship. An old semantic
+binding or a record naming an unrelated claim can thus be accepted. Bind admission to the exact
+declared entry/claims/inputs/calculation and retained operation evidence using existing contracts;
+list rejected/mismatched records with their identities and reasons. A `not_bound` entry must
+not acquire performed status through an empty source-pin list. H06–H08 stay not_bound: Memory A
+is retired, not a new reproduction task.
+
+`status_of` promises differs-first but iterates `STATUSES` with matched first.
+`record` converts `performed_not_comparable` into `not_run`, losing the fact it executed.
+Preserve actual performed/failed/incomparable/not-run facts consistently through both teachers'
+readers and exchange, and keep every entry's status alongside any summary. Matching one entry
+does not close the other entries or historical reproduction/rework. No claim truth/survivor policy.
+
+### B5 — freeze the owner-local reproduction selection with the teacher's other inputs
+
+`scientific_teacher.test` dynamically reads global `REPRODUCTION_DIR`
+(`/opt/frankie-box/work/experiment-teacher/reproduction`) for each historical claim.
+The `records_dir` argument on collection reconsideration does not reach this reader.
+Neither current owner-local wiring nor an immutable per-operation record selection is established:
+new files can change results across claims or on a restart of the same frozen teacher operation.
+Wire the existing owner's records directory and pin/freeze all selected records with the existing
+teacher input/recovery identity; consume that selection consistently in both seats. List later
+arrivals separately without reopening frozen selections or inventing late scheduling.
+Bind the reproduction module and historical binding semantics into relevant recovery identities.
+
+### B6 — state the remaining input-supply gap accurately
+
+`stage` always lists noncommitted inputs missing, while `plan.executable` also requires the
+static binding status `defined`. Supplying original NG/harness bytes therefore has no implemented
+path that makes those `missing_inputs` entries executable. Trace the existing authorized local
+input/receipt contracts and implement only a settled contract; otherwise report the exact missing
+interface rather than claim runnable reproduction capability for these entries. Do not fetch data,
+activate an AWS source, invent inputs or implement Greg's undecided reformulation definitions.
+
+### C1 — distinguish native evidence identity from its local materialization path
+
+`teacher_knowledge.teach_accumulated` compares the entire carried same-day reference with
+`native_ref`. `scientific_teacher.completed_native_evidence` includes the output `path`
+in that reference, so identical bytes produced under a different owner output root are rejected.
+Compare content/source/manifest identity separately from storage location, preserving and checking
+the exact source references. Still refuse genuinely different evidence for the same frozen owner.
+If no current native reference exists, do not let a carried same-day reference from another
+manifest silently stand in for the current owner's evidence; preserve its original provenance.
+Report the actual result scope: a loop that skips all already-tested claims emits no new result
+header. This does not by itself supply missing completed-native computation or reopen prior lessons.
+
+### Closure and holds
+
+D's late-knowledge changes list receipts at the two frozen boundaries; source review found no
+reopening of their frozen documents. This does not resolve late scheduling. C's references and
+coverage table do not prove all native consumers perform the required calculations. Historical
+reproduction and repair/reformulation remain open for BOTH teachers; no run or repair occurred.
+Steps 2–4 remain incomplete; the 19 outputs never cap applicable evidence.
+
+Only source/interface review, AST syntax without project imports and whitespace checks.
+No tests, installs, runs, model calls, AWS actions, starts, dispatch, canaries or E2E.
+STOP before #5. Keep the draft unapplied and Granite pins unchanged (threads null).
+Never apply `9c19cc2`. Do not rebuild the 52.9 MB claims file under the hold.
+Greg's threshold/window/LEG-SIDE/flat-flow/entry/turn definitions, 4.4 pair ownership, 4.2
+step definition, three native-learner decisions, late scheduling and principal_inputs catalog
+remain open. Return source corrections and precise limitations, not a new invented slice.
+
 Latest reserved continuation after `1f8d64e1`: Codex now records exact original source ordinal
 ranges that the unchanged timestamp-asof alias does not select, using the same selection function
 as the value reader and its leakage gate. Price/structure receipts explicitly say the exact

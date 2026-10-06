@@ -1,5 +1,54 @@
 # Detailed continuation handoff: BOTH teachers' Dipole coverage — 2026-10-06
 
+## Latest integration review — CCode A–D and the provenance handshake (2026-10-06 late)
+
+CCode return `fea2e165a3cf721760db0ac2932cf2c4ab0be859` is retained atop integration
+`80a0e2793e3cfb9cb8a2a06e03c08bed22d041fa`: A `c31cad06`, B `7cb2ce52`,
+C `11082ff8`, D `2a05c147`, plus CCode's handoffs. This is source integration with
+explicit unresolved defects, not completed coverage or reproduction acceptance.
+Read the NEW TOP SECTION of `CCODE_NEXT_SOURCE_TASKS_20261006.md` before CCode resumes.
+It supersedes the older A-only follow-ups and the returned slice-closure claims.
+
+Codex traced the D producer through `InstrumentBook.apply`: legacy trade rows accumulate
+until the instrument's F_LAST close. The returned price provenance stamps ALL of those rows
+with that closing INPUT's index, not their actual originating INPUT. Thus the promised price
+identity is wrong. CCode owns the narrowly necessary producer correction, including retained
+group state and receipt/recovery versioning. Never repair this by a timestamp or spool-position
+join. Search explicitly lists all price ordinals as `price_original_input_identity_pending`;
+the original price timestamp aliases and their exact unselected-row ranges remain.
+
+The structure contract is usable: reserved search now adds `structures.group.*` by original
+closing INPUT cursor, instrument and the complete exact ROOT group member list, reusing the
+journal's existing membership reader. Its receipt is selected and hash/size checked against the
+export manifest; old/missing producer/membership information gets exact source-ordinal
+dispositions. Conflicting identities refuse. No clock join, forward fill, interpolation, pooling
+or replacement of the original `structures.*` aliases. Missing group values remain missing.
+Provenance metadata on BOTH prices and structures is excluded from numerical channels and
+text cells and retained in pinned evidence/reports. Alias collisions refuse. Duplicate
+representations are not independent observations or new lag/trajectory semantics.
+
+CCode corrections queued with source trace and disjoint ownership:
+- D1: original trade INPUT provenance (first, to unblock Codex's exact price adapter).
+- A4: aggregate discovery identity must survive unavailable arithmetic without becoming a test.
+- B1–B6: full stderr/comparison evidence; immutable reference vs fresh output separation;
+  pre-dispatch operation/retry identity; full source/input/entry record binding and accurate
+  performed statuses; frozen owner-local record selection; exact external-input supply gap.
+- C1: identical completed-native content at different materialization paths must not conflict;
+  preserve owner-manifest provenance and report the actual scope of emitted results.
+
+A's earlier three follow-ups are source-present. Late knowledge remains receipt-only at frozen
+boundaries. B does not yet establish safe runnable reproduction; no historical calculation or
+repair has been performed. H06–H08 remain historical/not_bound: Greg retired Memory A.
+Other historical rejection/no-good labels remain open for BOTH teachers' reproduction/rework.
+Steps 2–4 remain incomplete; the 19 outputs do not cap evidence.
+
+Checks here: source/interface review, AST syntax without project imports, whitespace only.
+No tests, examples, installs, project/data/model runs, historical reproduction calls, AWS
+actions, starts, dispatch, canaries or E2E. Codebase-memory MCP/CLI unavailable in this workspace;
+direct source review used. SOURCE-BUILT / RUNTIME-UNVERIFIED. Keep boxes stopped.
+STOP before #5; preserve its unapplied draft and Granite pins (threads null); never `9c19cc2`.
+Fetch current HEAD and preserve newer commits; the hashes above are reviewed checkpoints.
+
 ## Latest reserved continuation — timestamp selection dispositions, after `1f8d64e1`
 
 Fetched integration `1f8d64e18c2389ced9f570a02a95da994bd7f085`; CCode still at `a9625ae2`,
