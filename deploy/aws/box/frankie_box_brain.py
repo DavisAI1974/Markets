@@ -29,11 +29,11 @@ SCHEMA = 'FRANKIE_BOX_BRAIN_ENTRY_V1'
 ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*', '[0-9]' * 8 + '-ingest', '[0-9]' * 8 + '-day-file',
                '[0-9]' * 8 + '-root', '[0-9]' * 8 + '-teacher', '[0-9]' * 8 + '-search',
                '[0-9]' * 8 + '-lessons', '[0-9]' * 8 + '-jev-tested', '[0-9]' * 8 + '-exchange',
-               '[0-9]' * 8 + '-survivors', '[0-9]' * 8 + '-confirmation')
+               '[0-9]' * 8 + '-meeting', '[0-9]' * 8 + '-survivors', '[0-9]' * 8 + '-confirmation')
 # Non-cycle knowledge entries, ordered inside one day. They become readable as soon as each stage writes them.
 DAY_KINDS = {'ingest': -40, 'day-file': -30, 'root': -20, 'teacher': -10,
              'search': 10, 'lessons': 20, 'jev-tested': 30, 'exchange': 40,
-             'survivors': 50, 'confirmation': 60}
+             'meeting': 45, 'survivors': 50, 'confirmation': 60}
 
 
 def entry_name(day, cycle):
@@ -49,7 +49,7 @@ def parse_entry_name(name):
     """(day or None, cycle) of an entry directory name, or None when the name is not an entry. A day's lessons entry
     (<day>-lessons: the scientific teacher's test results on Frankie's claims) parses as (day, 'lessons'); a day's
     exchange entry (<day>-exchange: the three-way exchange of the two teachers and Frankie) as (day, 'exchange')."""
-    kind = re.fullmatch(r'([0-9]{8})-(ingest|day-file|root|teacher|search|lessons|jev-tested|exchange|survivors|confirmation)', name)
+    kind = re.fullmatch(r'([0-9]{8})-(ingest|day-file|root|teacher|search|lessons|jev-tested|exchange|meeting|survivors|confirmation)', name)
     if kind:
         return kind.group(1), kind.group(2)
     match = re.fullmatch(r'(?:([0-9]{8})-)?cycle-([0-9]+)', name)
@@ -198,6 +198,115 @@ def write_exchange_entry(brain, day, exchange_path):
     tmp.write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     os.replace(tmp, manifest_path)
     return manifest
+
+
+def read_meeting_record(record_path, *, exchange_path, expected_sha256=None, complete=True):
+    """Bind a discussion to the original Frankie exchange, not the runner's local paths."""
+    raw = Path(record_path).read_bytes()
+    if expected_sha256 is not None and sha256_bytes(raw) != expected_sha256:
+        raise ValueError('meeting record differs from its receipt')
+    record = json.loads(raw)
+    source_raw = Path(exchange_path).read_bytes()
+    source = json.loads(source_raw)
+    exchange = record.get('exchange') or {}
+    if (source.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1' or source.get('view') != 'frankie'
+            or not re.fullmatch(r'[0-9]{8}', str(source.get('day')))
+            or not source.get('run') or not source.get('exchange_hash')
+            or record.get('schema') != 'FRANKIE_GRANITE_MEETING_V1'
+            or record.get('day') != source['day'] or record.get('run') != source['run']
+            or exchange.get('sha256') != sha256_bytes(source_raw)
+            or exchange.get('exchange_hash') != source['exchange_hash']):
+        raise ValueError('meeting does not bind this run/day/Frankie exchange')
+    if record.get('status') not in (('complete',) if complete else ('complete', 'refused', 'inputs_only')):
+        raise ValueError('meeting has no accepted completion or refusal status')
+    if record['status'] == 'complete':
+        if not isinstance(record.get('items'), list) or not isinstance(record.get('not_discussed'), list):
+            raise ValueError('complete meeting must retain discussed and unreached items')
+        expected = [i['item_id'] for i in source.get('items') or []]
+        actual = [i.get('item_id') for i in record['items'] + record['not_discussed']]
+        if len(set(actual)) != len(actual) or len(set(expected)) != len(expected) or set(actual) != set(expected):
+            raise ValueError('meeting discussed/unreached items do not cover the exchange exactly once')
+        if any(not isinstance(i.get('open_items'), list) for i in record['not_discussed']):
+            raise ValueError('unreached meeting items must retain their open items')
+        for item in record['items']:
+            if not isinstance(item, dict) or any(not isinstance(item.get(k), list) for k in
+                    ('seat_statements', 'coordinator_turns', 'code_seat_answers', 'open_items', 'requested_tests')):
+                raise ValueError('meeting must retain the four attributed categories')
+            if any(t.get('evidentiary_weight') != 0 for t in item['coordinator_turns']):
+                raise ValueError('coordinator turns must have zero evidentiary weight')
+            if any(t.get('status') != 'requested_not_run' for t in item['requested_tests']):
+                raise ValueError('a meeting cannot report requested tests as executed')
+    return record
+
+
+def read_meeting_for_exchange(exchange_path):
+    """Read the owning experiment's receipt-bound meeting; never guess from an unrelated file."""
+    exchange_path = Path(exchange_path)
+    source = json.loads(exchange_path.read_bytes())
+    day = str(source.get('day'))
+    if (not re.fullmatch(r'[0-9]{8}', day) or source.get('view') != 'frankie'
+            or source.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1'):
+        raise ValueError('meeting lookup requires a dated Frankie exchange view')
+    directory = exchange_path.parent.parent.parent / 'meeting' / day
+    path, receipt_path = directory / 'meeting.json', directory / 'receipt.json'
+    if not receipt_path.is_file():
+        return dict(status='missing', record=None, path=None, receipt=None,
+                    reason='no published meeting receipt for this exchange')
+    receipt = json.loads(receipt_path.read_bytes())
+    pin = receipt.get('record') or {}
+    raw = path.read_bytes()
+    if (receipt.get('schema') != 'FRANKIE_GRANITE_MEETING_RECEIPT_V1'
+            or str(receipt.get('day')) != day or pin.get('bytes') != len(raw)
+            or pin.get('sha256') != sha256_bytes(raw)):
+        raise ValueError('meeting receipt identity, bytes or hash differs')
+    record = read_meeting_record(path, exchange_path=exchange_path, expected_sha256=pin['sha256'], complete=False)
+    if receipt.get('status') != record['status']:
+        raise ValueError('meeting receipt status differs from the retained record')
+    return dict(status=record['status'], record=record, path=str(path), receipt=receipt,
+                reason='; '.join(record.get('refused_to_run') or []) or
+                       ('inputs only; no coordinator model was called' if record['status'] == 'inputs_only' else None))
+
+
+def write_meeting_entry(brain, day, record_path, *, exchange_path):
+    """Immediately publish one immutable discussion; identical retries repair interrupted publication."""
+    import fcntl
+    from frankie_box_durable import write_bytes, write_json, sync_directory
+    source = Path(record_path)
+    raw = source.read_bytes()
+    digest = sha256_bytes(raw)
+    record = read_meeting_record(source, exchange_path=exchange_path, expected_sha256=digest)
+    if str(record['day']) != str(day):
+        raise ValueError('meeting brain entry day differs')
+    brain = Path(brain)
+    if any(p.is_symlink() for p in (brain, *brain.parents)):
+        raise ValueError('meeting brain path contains a symbolic link')
+    brain.mkdir(parents=True, exist_ok=True)
+    sync_directory(brain.parent)
+    entry = brain / ('%s-meeting' % day)
+    target, manifest_path = entry / 'meeting.json', entry / 'MANIFEST.json'
+    manifest = dict(schema=SCHEMA, cycle='meeting', day=str(day), entry_kind='meeting', entries=[
+        dict(name='meeting.json', bytes=len(raw), sha256=digest, include=True,
+             kind='post-class discussion; coordinator turns have zero evidentiary weight')], unavailable=[],
+        knowledge_status='available_immediately',
+        note='seat statements, coordinator turns, code-seat answers and open items/requested tests remain distinct')
+    lock_path = brain / '.meeting.lock'
+    if lock_path.is_symlink():
+        raise ValueError('meeting brain lock is a symbolic link')
+    with open(lock_path, 'a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if target.is_symlink() or manifest_path.is_symlink() or entry.is_symlink():
+            raise ValueError('meeting entry contains a symbolic link')
+        if target.exists() and target.read_bytes() != raw:
+            raise ValueError('different retained meeting bytes; never overwritten')
+        if manifest_path.exists() and json.loads(manifest_path.read_bytes()) != manifest:
+            raise ValueError('different retained meeting manifest; never overwritten')
+        reused = target.is_file() and manifest_path.is_file()
+        if not target.exists():
+            write_bytes(target, raw)
+        if not manifest_path.exists():
+            write_json(manifest_path, manifest)
+        sync_directory(entry)
+    return manifest, reused
 
 
 # Frankie's SCHOOL KNOWLEDGE BASE (Greg, 2026-09-29): one JSON file per classroom-arm day, <brain>/school/<day>.json

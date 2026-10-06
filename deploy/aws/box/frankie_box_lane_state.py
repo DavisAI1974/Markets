@@ -265,7 +265,7 @@ def learner_knowledge(day, stage, brain=BRAIN, *, classroom_mode=None):
     """Pin legal structured learner documents and explicitly list material withheld or unavailable to this reader."""
     import frankie_box_brain as BR
     before = {'root': -20, 'teacher': -10, 'classroom': 0, 'search': 10,
-              'lessons': 20, 'exchange': 40, 'voice': 40, 'school': 50}.get(stage, 100)
+              'lessons': 20, 'exchange': 40, 'voice': 40, 'meeting': 45, 'school': 50}.get(stage, 100)
     out, listed = [], []
     seen = set()
     versions = knowledge_versions()
@@ -306,6 +306,126 @@ def learner_knowledge(day, stage, brain=BRAIN, *, classroom_mode=None):
 
 def visible_knowledge(day, stage, brain=BRAIN):
     return learner_knowledge(day, stage, brain)['documents']
+
+
+def import_meeting_record(exchange_path, record_path, expected_sha256):
+    """Explicit owner-side return of a runner artifact; no dispatch, download or model call."""
+    import frankie_box_brain as BR
+    import frankie_box_granite_meeting as GM
+    import frankie_box_experiment as X
+    from frankie_box_durable import write_bytes, write_json
+    exchange_path, record_path = Path(exchange_path), Path(record_path)
+    exchange = json.loads(exchange_path.read_bytes())
+    day, run = str(exchange.get('day')), exchange.get('run')
+    import re
+    if not re.fullmatch(r'[0-9]{8}', day) or not isinstance(run, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', run):
+        raise ValueError('returned meeting needs the original run/day identity')
+    owner = Path('/opt/frankie-box/work/experiment') / run
+    if exchange_path != owner / 'exchange' / day / 'exchange-frankie.json':
+        raise ValueError('returned meeting must name the owning experiment exchange')
+    plan = json.loads((owner / 'plan.json').read_bytes())
+    if plan.get('schema') != X.SCHEMA or plan.get('run') != run or not any(e.get('day') == day for e in plan.get('days', [])):
+        raise ValueError('returned meeting is outside the retained plan')
+    plan_sha = X.plan_digest(plan)
+    def read_step(stage, required=False):
+        path = owner / 'days' / day / (stage + '.json')
+        if not path.is_file() and not required:
+            return None
+        value = json.loads(path.read_bytes())
+        if (value.get('schema') != 'FRANKIE_EXPERIMENT_STEP_V1' or value.get('run') != run
+                or value.get('key') != day or value.get('stage') != stage or value.get('plan_sha256') != plan_sha):
+            raise ValueError('retained %s step differs from the original run/day/plan' % stage)
+        return value
+    root = read_step('root', required=True)
+    if root.get('status') not in ('done', 'reused'):
+        raise ValueError('returned meeting needs the owning completed ROOT')
+    if root.get('remote_calculations'):
+        raise ValueError('return the meeting on its owning lane; this box only holds a remote ROOT receipt')
+    exchange_step = read_step('exchange', required=True)
+    exchange_receipt = json.loads((exchange_path.parent / 'receipt.json').read_bytes())
+    if (exchange_step.get('status') not in ('done', 'reused')
+            or exchange_receipt.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_RECEIPT_V1'
+            or exchange_receipt.get('status') != 'complete' or exchange_receipt.get('run') != run
+            or str(exchange_receipt.get('day')) != day
+            or exchange_receipt.get('exchange_hash') != exchange.get('exchange_hash')):
+        raise ValueError('returned meeting needs the original completed exchange receipt')
+    for field, name in (('frankie_view', 'exchange-frankie.json'), ('exchange', 'exchange.json')):
+        source = exchange_path.parent / name
+        pin = exchange_receipt.get(field) or {}
+        source_raw = source.read_bytes()
+        if (pin.get('path') != str(source) or exchange_step.get(field) != str(source)
+                or pin.get('bytes') != len(source_raw) or pin.get('sha256') != digest(source_raw)):
+            raise ValueError('original exchange %s differs from its retained source pin' % field)
+    raw = record_path.read_bytes()
+    if digest(raw) != expected_sha256:
+        raise ValueError('returned meeting differs from the supplied artifact hash')
+    record = BR.read_meeting_record(record_path, exchange_path=exchange_path,
+                                    expected_sha256=expected_sha256, complete=False)
+    target = owner / 'meeting' / day
+    if any(p.is_symlink() for p in (target, *target.parents)):
+        raise ValueError('returned meeting output traverses a symbolic link')
+    target.mkdir(parents=True, exist_ok=True)
+    lock_path = target / '.meeting.lock'
+    if lock_path.is_symlink():
+        raise ValueError('meeting lock is a symbolic link')
+    with lock_path.open('a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        output = target / 'meeting.json'
+        step = read_step('voice')
+        reports = read_step('reports')
+        refresh_reports = bool(reports and (reports.get('status') == 'done' or reports.get('meeting_refresh_pending')))
+        classroom = read_step('classroom') if refresh_reports else None
+        if refresh_reports and not (classroom and classroom.get('classroom')):
+            raise ValueError('completed reports have no retained classroom to refresh')
+        prior_receipt = target / 'receipt.json'
+        if prior_receipt.is_file():
+            retained_receipt = json.loads(prior_receipt.read_bytes())
+            if retained_receipt.get('status') == 'complete':
+                retained = BR.read_meeting_for_exchange(exchange_path)
+                if record['status'] != 'complete' or retained['receipt']['record']['sha256'] != expected_sha256:
+                    raise ValueError('a completed meeting receipt cannot be downgraded or re-pinned')
+        if step and step.get('status') in ('done', 'reused') and step.get('meeting_sha256') != expected_sha256:
+            raise ValueError('returned meeting differs from the completed voice step')
+        if output.is_file():
+            prior = BR.read_meeting_record(output, exchange_path=exchange_path, complete=False)
+            if prior['status'] == 'complete' and output.read_bytes() != raw:
+                raise ValueError('a different completed meeting is already retained')
+        if not output.is_file() or output.read_bytes() != raw:
+            write_bytes(output, raw)
+        if record['status'] == 'complete':
+            receipt = GM.publish_meeting_record(exchange_path, target, plan.get('brain') or BRAIN, include_inputs=False)
+        else:
+            receipt = dict(schema=GM.RECEIPT_SCHEMA, day=day, status=record['status'],
+                           record=GM.witness_file(output), refused_to_run=record.get('refused_to_run') or [],
+                           model_calls=record.get('model_calls', 0), publication='none')
+            write_json(target / 'receipt.json', receipt)
+        # Reconcile a prior non-blocking disposition; keep plan/CPU/owner identity intact.
+        step_path = owner / 'days' / day / 'voice.json'
+        if step is not None:
+            step.update(status='done' if record['status'] == 'complete' else 'waiting',
+                        meeting_status=record['status'], meeting=str(output), meeting_sha256=expected_sha256,
+                        model_calls=receipt.get('model_calls', 0), receipt=str(target / 'receipt.json'),
+                        publication=receipt.get('publication'), brain_entry=receipt.get('brain_entry'),
+                        counts=receipt.get('counts'), refused_to_run=receipt.get('refused_to_run') or [],
+                        non_blocking=record['status'] != 'complete', not_wired=False,
+                        reason=None if record['status'] == 'complete' else 'returned meeting did not call the model')
+            write_json(step_path, step)
+        if refresh_reports:
+            # A done class never re-enters the queue. Revise its existing numbered reports here.
+            import frankie_box_experiment_day_reports as R
+            entry = next(e for e in plan['days'] if e['day'] == day)
+            reports['meeting_refresh_pending'] = True
+            write_json(owner / 'days' / day / 'reports.json', reports)
+            refreshed = R.run(day, classroom['classroom'], run, X.REPORTS, entry['cls'],
+                              classroom.get('reason') if classroom.get('status') == 'refused' else None,
+                              exchange=exchange_step['exchange'], return_receipt=True)
+            reports.update(status='failed' if refreshed['problems'] else 'done', meeting=refreshed['meeting'],
+                           reports=refreshed['reports'], problems=refreshed['problems'],
+                           report_number=refreshed['report_number'], meeting_refresh_pending=bool(refreshed['problems']))
+            write_json(owner / 'days' / day / 'reports.json', reports)
+            if refreshed['problems']:
+                raise ValueError('returned meeting retained; report refresh needs recovery: %s' % refreshed['problems'])
+    return receipt
 
 
 def learner_school(day, brain=BRAIN, versions=None):
@@ -477,3 +597,13 @@ def _coordinate(body, code_root, commit):
     response = dict(id=body['id'], result=result)
     write(prior_response, response)
     return response
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description='Return a pinned Granite record to its owning experiment lane')
+    parser.add_argument('--import-meeting', required=True, metavar='RECORD')
+    parser.add_argument('--record-sha256', required=True)
+    parser.add_argument('--exchange', required=True, help='original owner-local exchange-frankie.json')
+    args = parser.parse_args()
+    print(json.dumps(import_meeting_record(args.exchange, args.import_meeting, args.record_sha256), sort_keys=True))

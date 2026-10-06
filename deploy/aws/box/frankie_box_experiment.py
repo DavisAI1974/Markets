@@ -39,10 +39,8 @@ the committed box script, run as a child with its own inputs, its output kept in
            scientific teacher's reply with the search counts, Frankie's reply by his code; the teachers' own findings
            filed, scoped, day named. Receipt and files under <run>/exchange/<day>/; Frankie's view into his brain as
            <day>-exchange. Code only)
-  voice    NOT WIRED (records waiting, not_wired; never blocks the school or the reports): the post-class discussion
-           voiced by a model from the exchange's voice_turns (knowledge/GRANITE_DISCUSSION_VOICE_ROLE_V1.md, a draft)
-           needs Greg's own confirmation of an R17 amendment, the build-plan component and the Pod; its validator is
-           built (frankie_box_exchange_voice.py, code only)
+  voice    frankie_box_granite_meeting.sh: the bounded CPU post-class coordinator (role V2), with immediate brain
+           publication. A missing/refused runtime is recorded as non-blocking; completed records are reused.
   school   frankie_box_school_knowledge.sh            (classroom-arm days after the exchange; never Monday 20211004):
            Frankie's SCHOOL KNOWLEDGE BASE, ONE file <brain>/school/<day>.json (FRANKIE_SCHOOL_KNOWLEDGE_V1) and its row
            in <brain>/school/index.json (day, file, sha256, bytes, report number N); the brain loader and the next
@@ -1260,6 +1258,7 @@ class Run:
                     self.log('reports %s: %s could not be read back (%s)' % (day, item.get('file'), error))
             fields = dict(exit_code=code, log=log, classroom=classroom, classroom_status=c['status'],
                           exchange_status=(x or {}).get('status'), exchange=env.get('EXCHANGE'),
+                          meeting=(r or {}).get('meeting'),
                           report_number=(r or {}).get('report_number'),
                           reports=[{k: item.get(k) for k in ('kind', 'number', 'revision', 'file', 'sha256', 'existing')}
                                    for item in (r or {}).get('reports') or []],
@@ -1284,10 +1283,19 @@ class Run:
             return self.record(stage, e['day'], 'failed', reason='%s: %s' % (type(error).__name__, error))
 
     def reports_stale(self, e):
-        """True when the day's reports were written without its exchange and the exchange is there now (rebuilt once)."""
+        """A newly returned meeting or exchange gets a report revision under the existing number."""
         r, x = self.receipt('reports', e['day']), self.receipt('exchange', e['day'])
-        return bool(r and r['status'] == 'done' and r.get('exchange_status') not in ('done', 'reused')
-                    and x and x['status'] in ('done', 'reused'))
+        if not (r and r['status'] == 'done' and x and x['status'] in ('done', 'reused')):
+            return False
+        if r.get('exchange_status') not in ('done', 'reused'):
+            return True
+        if x.get('frankie_view'):
+            import frankie_box_brain as BR
+            meeting = BR.read_meeting_for_exchange(x['frankie_view'])
+            current = ((meeting.get('receipt') or {}).get('record') or {}).get('sha256')
+            prior = r.get('meeting') or {}
+            return prior.get('sha256') != current or prior.get('status') != meeting['status']
+        return False
 
     def report_number(self, e):
         """The day's report number N: reserved once, right after its classroom step, in the reports' own index
@@ -1306,7 +1314,7 @@ class Run:
             self.log('report number %s not reserved here (%s: %s); the reports step assigns it' % (
                 e['day'], type(error).__name__, error))
 
-    # the three-way exchange (SPEC-scientific-teacher.md step 5), its voice (not wired) and the school knowledge base
+    # The three-way exchange, its bounded coordinator meeting and the school knowledge base.
     def rows_file(self, e):
         """(the BOSS teacher's Dipole rows file of the day, None) or (None, why)."""
         base, source = rows_of(e)
@@ -1384,20 +1392,44 @@ class Run:
                            new_bytes=new_bytes(target))
 
     def voice(self, e):
-        """NOT WIRED: records waiting (not_wired), never blocks the school or the reports; the summary lists it apart."""
-        import frankie_box_exchange_voice as V
+        """Run or reuse the bounded meeting; a recorded runtime refusal never blocks school/reports."""
+        import frankie_box_brain as BR
+        import frankie_box_granite_meeting as GM
         day = e['day']
         if not e['classroom_arm']:
             return self.record('voice', day, 'skipped', reason='not a classroom-arm day')
         x = self.receipt('exchange', day)
         if not (x and x['status'] in ('done', 'reused') and x.get('frankie_view')):
             return self.record('voice', day, 'skipped' if (x or {}).get('status') == 'skipped' else 'waiting',
-                               not_wired=True, reason='the day\'s exchange is %s; and %s' % (
-                                   (x or {}).get('status') or 'not run', V.NOT_WIRED))
-        given = V.voice_input(json.loads(Path(x['frankie_view']).read_bytes()))
-        return self.record('voice', day, 'waiting', not_wired=True, reason=V.NOT_WIRED, charter=given['charter'],
-                           voice_input=dict(items=len(given['items']), turns=sum(len(i['turns']) for i in given['items']),
-                                            exchange=x['frankie_view']))
+                               reason='the day\'s exchange is %s' % ((x or {}).get('status') or 'not run'))
+        target = self.dir / 'meeting' / day
+        brain = self.plan.get('brain') or str(BRAIN)
+        existing = target / 'meeting.json'
+        reused, code, log = False, 0, None
+        if existing.is_file():
+            record = BR.read_meeting_record(existing, exchange_path=x['frankie_view'], complete=False)
+            if record['status'] == 'complete':
+                GM.publish_meeting_record(x['frankie_view'], target, brain)
+                reused = True
+        if not reused:
+            env = dict(EXCHANGE_VIEW=x['frankie_view'], OUT_DIR=target, BRAIN=brain)
+            code, log = self.child('voice', day, 'frankie_box_granite_meeting.sh', env)
+            if code != 0:
+                return self.record('voice', day, 'failed', exit_code=code, log=log,
+                                   reason='meeting child failed; retained artifacts are kept for recovery')
+        result = BR.read_meeting_for_exchange(x['frankie_view'])
+        if result['status'] == 'missing':
+            return self.record('voice', day, 'failed', exit_code=code, log=log, reason=result['reason'])
+        r = result['receipt']
+        fields = dict(exit_code=code, log=log, meeting_status=result['status'], meeting=result['path'],
+                      meeting_sha256=r['record']['sha256'], model_calls=r.get('model_calls', 0),
+                      publication=r.get('publication'), brain_entry=r.get('brain_entry'),
+                      counts=r.get('counts'), receipt=str(target / 'receipt.json'))
+        if result['status'] == 'complete':
+            return self.record('voice', day, 'reused' if reused else 'done', **fields)
+        return self.record('voice', day, 'waiting', non_blocking=True,
+                           refused_to_run=r.get('refused_to_run') or [result['reason']],
+                           reason=result['reason'] or 'the runtime gate refused the meeting', **fields)
 
     def school(self, e):
         day = e['day']
@@ -1874,7 +1906,7 @@ class Run:
                         self.guarded('accumulated_lessons', e)
             if 'lessons' in stages and role == 'discovery' and not self.stopped and not self.finished('lessons', key):
                 self.lessons(key, entries)
-            # after the lessons: the three-way exchange of each arm day, its voice (not wired), the school knowledge
+            # after the lessons: the three-way exchange of each arm day, its meeting, the school knowledge
             # base, then the day reports (they carry the exchange; rebuilt once when it arrives after them)
             for stage in ('exchange', 'voice', 'school', 'reports'):
                 if stage in stages and not self.stopped:
@@ -1919,7 +1951,8 @@ class Run:
             r = json.loads(p.read_bytes())
             batches['%s/%s' % (r['key'], r['stage'])] = r['status']
         unfinished = sorted({(k, s) for k, v in rows.items() for s, st in v.items()
-                             if not done_status(self.receipt(s, k)) and not (self.receipt(s, k) or {}).get('not_wired')})
+                             if not done_status(self.receipt(s, k)) and not (self.receipt(s, k) or {}).get('not_wired')
+                             and not (s == 'voice' and (self.receipt(s, k) or {}).get('non_blocking'))})
         not_wired = sorted({(k, s) for k, v in rows.items() for s, st in v.items()
                             if (self.receipt(s, k) or {}).get('not_wired') and not done_status(self.receipt(s, k))})
         handed_off = sorted(k for k in rows if (self.receipt('jev', k) or {}).get('status') == HANDED_OFF)
@@ -1928,11 +1961,14 @@ class Run:
                    batches=batches, stopped=self.stopped, free_bytes=shutil.disk_usage(BOX_ROOT).free,
                    unfinished=[dict(day=k, stage=s) for k, s in unfinished],
                    not_wired=[dict(day=k, stage=s, reason=(self.receipt(s, k) or {}).get('reason')) for k, s in not_wired],
+                   meeting_waiting=[dict(day=k, reason=r.get('reason'), meeting_status=r.get('meeting_status'))
+                                    for k in rows for r in [self.receipt('voice', k) or {}]
+                                    if r.get('non_blocking')],
                    waiting_for_pod=[dict(day=k, material_sent=(self.receipt('jev', k) or {}).get('material_sent'),
                                          pod=((self.receipt('jev', k) or {}).get('dispatches') or {}).get('pod'))
                                     for k in handed_off],
                    frankie_queue=self.queue_listing(),
-                   model_calls=0)
+                   model_calls=sum((self.receipt('voice', k) or {}).get('model_calls', 0) for k in rows))
         tmp = self.dir / 'summary.pending'
         tmp.write_text(json.dumps(out, indent=1, sort_keys=True) + '\n', encoding='utf-8')
         os.replace(tmp, self.dir / 'summary.json')
@@ -1960,7 +1996,7 @@ def preview(plan):
                         classroom=('V2, PREVIOUS carried' if e['classroom_arm'] else 'not an arm day'),
                         exchange=('after the batch lessons (three-way, code only)' if e['classroom_arm'] and
                                   e['role'] == 'discovery' else 'not an arm day'),
-                        voice='not wired' if e['classroom_arm'] else 'not an arm day',
+                        voice='bounded meeting; missing runtime is non-blocking' if e['classroom_arm'] else 'not an arm day',
                         school=('<brain>/school/%s.json after the exchange' % e['day'] if e['classroom_arm'] and
                                 e['day'] != MONDAY else 'not in the school'),
                         data='exported' if (target / 'MANIFEST.json').is_file() else 'to export',

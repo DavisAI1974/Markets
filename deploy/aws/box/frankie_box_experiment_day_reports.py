@@ -47,7 +47,8 @@ dir (default /opt/frankie-box/work/experiment-reports) and into the classroom di
 stdout (how Greg sees them in the workflow log; ssm_run_sh.py pages long output, nothing is cut here). The last two lines
 are REPORT_NUMBER=N and a small receipt JSON (the number, each file and its sha256). The Jev Pod dispatch of the same day
 takes REPORT_NUMBER=N so his report is JEV REPORT #N (research/kalshi/frankie_boss/clm_sidecar/jev_report.py).
-No model call, no Granite, no Pod.
+No model call or Pod. A receipt-verified completed Granite discussion is translated only in the Frankie report;
+it has no evidentiary authority, and requested tests remain requests, not results.
 """
 import argparse
 import datetime as dt
@@ -245,11 +246,31 @@ class Day:
         self.docs, self.absent = {}, []
         self.exchange, self.exchange_sha256, self.exchange_path = None, None, exchange
         self.exchange_listed = exchange_listed
+        self.meeting = dict(status='missing', record=None, path=None, receipt=None,
+                            reason=exchange_listed or 'no Frankie exchange was given for this day')
         if exchange:
             raw = Path(exchange).read_bytes()
             self.exchange, self.exchange_sha256 = json.loads(raw), sha256_bytes(raw)
             if str(self.exchange.get('day')) != str(day):
                 raise SystemExit('the exchange %s is for day %s, not %s' % (exchange, self.exchange.get('day'), day))
+            if self.exchange.get('view') == 'frankie':
+                from frankie_box_brain import read_meeting_for_exchange
+                self.meeting = read_meeting_for_exchange(exchange)
+            else:
+                frankie_path = Path(exchange).with_name('exchange-frankie.json')
+                if not frankie_path.is_file():
+                    self.meeting['reason'] = 'the supplied full exchange has no sibling exchange-frankie.json'
+                else:
+                    frankie_view = json.loads(frankie_path.read_bytes())
+                    if (self.exchange.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1'
+                            or frankie_view.get('view') != 'frankie'
+                            or not self.exchange.get('run') or not self.exchange.get('exchange_hash')
+                            or any(frankie_view.get(k) != self.exchange.get(k)
+                                   for k in ('schema', 'day', 'run', 'exchange_hash'))):
+                        raise ValueError('the sibling Frankie view does not match this full exchange identity')
+                    from frankie_box_brain import read_meeting_for_exchange
+                    self.meeting = read_meeting_for_exchange(frankie_path)
+        self.meeting_sha256 = ((self.meeting.get('receipt') or {}).get('record') or {}).get('sha256')
         receipt_path = self.dir / 'receipt.json'
         if receipt_path.is_file():
             raw = receipt_path.read_bytes()
@@ -691,7 +712,7 @@ def frankie_report(d, number, revision, run, cls, classroom_file):
     title = '# FRANKIE REPORT #%d%s' % (number, '' if revision == 1 else ' (revision %d)' % revision)
     L = header(title, d, run, cls, 'CLASSROOM REPORT #%d' % number, classroom_file)
     if d.status != 'complete':
-        return L + refused_lines(d) + exchange_lines(d, True) + glossary_lines() + evidence(d)
+        return L + refused_lines(d) + exchange_lines(d, True) + glossary_lines() + evidence(d, True)
     comps = component_facts(d)
     pairs, wrong_pairs, _ = pair_facts(d)
     ext_series = external_series_facts(d)
@@ -840,7 +861,7 @@ def frankie_report(d, number, revision, run, cls, classroom_file):
         if m.get('unavailable'):
             L.append('')
     L += exchange_lines(d, True)
-    return L + glossary_lines() + evidence(d)
+    return L + glossary_lines() + evidence(d, True)
 
 
 # ------------------------------------------------------------------------------------------------- the exchange section
@@ -849,7 +870,7 @@ def exchange_lines(d, with_frankie):
     L = ['## The three-way exchange', '']
     x = d.exchange
     if x is None:
-        return L + ['Not recorded: %s.' % (d.exchange_listed or 'no exchange was given for this day'), '']
+        return L + ['Not recorded: %s.' % (d.exchange_listed or 'no exchange was given for this day'), ''] + meeting_lines(d, with_frankie)
     c = x.get('counts') or {}
     fmt = lambda m: listing('%s %s' % (k, v) for k, v in sorted((m or {}).items()))
     L += ['Items discussed (recorded): %s (by author: %s). The BOSS teacher\'s positions: %s. The scientific teacher\'s '
@@ -900,16 +921,47 @@ def exchange_lines(d, with_frankie):
     if withheld:
         L += ['Jev\'s items withheld from Frankie\'s view (recorded): %s items, %s findings. Recorded reason: %s' % (
             rec(withheld.get('items')), rec(withheld.get('findings')), rec(withheld.get('reason'))), '']
-    try:
-        import frankie_box_exchange_voice as V
-        voice = V.NOT_WIRED
-    except ImportError as error:
-        voice = 'the voice module is not importable here (%s)' % error
-    return L + ['### The discussion (voice)', '', 'Not voiced: %s.' % voice, '']
+    return L + meeting_lines(d, with_frankie)
+
+
+def meeting_record_lines(value):
+    """The recorded fields, without clipping, interpretation or combining items; safe Markdown even for code in text."""
+    text = json.dumps(value, sort_keys=True, indent=2, ensure_ascii=False)
+    fence = '`' * max(3, 1 + max((len(m.group()) for m in re.finditer(r'`+', text)), default=0))
+    return [fence + 'json', text, fence, '']
+
+
+def meeting_lines(d, with_frankie):
+    L = ['### The discussion (meeting)', '']
+    if not with_frankie:
+        return L + ["Withheld here: the meeting contains Frankie's discussion and appears only in his report.", '']
+    meeting = d.meeting
+    L += ['Recorded status: %s. Discussion has no evidentiary authority; the original code-seat evidence remains '
+          'authoritative. Requested tests are requests, not executed tests or results.' % meeting['status'], '']
+    record = meeting.get('record') or {}
+    if meeting['status'] != 'complete':
+        L += ['No completed discussion: %s.' % (meeting.get('reason') or meeting['status']), '']
+        return L + meeting_record_lines(dict(refused_to_run=record.get('refused_to_run') or []))
+    categories = (('Seat statements', ('seat_statements',)),
+                  ('Coordinator turns (coordination only)', ('coordinator_turns',)),
+                  ('Code-seat answers', ('code_seat_answers',)),
+                  ('Open items and requested tests (not results)', ('open_items', 'requested_tests')))
+    for item in record['items']:
+        L += ['#### Discussion item %s' % rec(item.get('item_id')), '']
+        for label, keys in categories:
+            L += ['**%s**' % label, ''] + meeting_record_lines({k: item.get(k) for k in keys})
+        category_keys = {k for _, keys in categories for k in keys}
+        L += ['**Other recorded item fields (including outcome, notes and refusals)**', '']
+        L += meeting_record_lines({k: v for k, v in item.items() if k not in category_keys})
+    L += ['#### Items not discussed (retained, including their open items)', '']
+    L += meeting_record_lines(record.get('not_discussed') or [])
+    L += ['#### Other recorded meeting fields', '']
+    L += meeting_record_lines({k: v for k, v in record.items() if k not in ('items', 'not_discussed')})
+    return L
 
 
 # ------------------------------------------------------------------------------------------------------ the evidence
-def evidence(d):
+def evidence(d, with_frankie=False):
     L = ['## Evidence', '', '- classroom directory: %s' % d.dir,
          '- built from: %s%s, sha256 %s' % (d.source['kind'], ' %s' % d.source['path'] if d.source['path'] else '',
                                              d.source['sha256'])]
@@ -932,6 +984,9 @@ def evidence(d):
             L.append('- %s: %s' % (label, value))
     if d.exchange is not None:
         L.append('- the three-way exchange: %s, sha256 %s' % (d.exchange_path, d.exchange_sha256))
+    if with_frankie and d.meeting.get('path'):
+        L.append('- the discussion record (%s): %s, sha256 %s; verified against its receipt and Frankie exchange' % (
+            d.meeting['status'], d.meeting['path'], d.meeting_sha256))
     if d.absent:
         L += ['- files not found or not readable (each section above states what is not recorded):']
         L += ['  - %s: %s' % (name, why) for name, why in d.absent]
@@ -1024,7 +1079,7 @@ def write_new(path, raw):
         return False, '%s: %s' % (type(error).__name__, error)
 
 
-def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, exchange_listed=None):
+def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, exchange_listed=None, *, return_receipt=False):
     d = Day(day, classroom, refused_reason, exchange, exchange_listed)
     reports.mkdir(parents=True, exist_ok=True)
     out, printed, problems = [], [], []
@@ -1040,7 +1095,9 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                 for k in KINDS}
         latest = {k: (mine[k][-1] if mine[k] else None) for k in KINDS}
         reuse = all(latest[k] and latest[k]['source_sha256'] == d.source['sha256']
-                    and latest[k].get('exchange_sha256') == d.exchange_sha256 for k in KINDS)
+                    and latest[k].get('exchange_sha256') == d.exchange_sha256
+                    and latest[k].get('meeting_sha256') == d.meeting_sha256
+                    and latest[k].get('meeting_status') == d.meeting['status'] for k in KINDS)
         if reuse:
             for k in KINDS:
                 path = Path(latest[k]['file'])
@@ -1082,7 +1139,8 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                              classroom_copy=copy, classroom_copy_listed=copy_why, sha256=sha256_bytes(raw),
                              bytes=len(raw), source=d.source['kind'], source_sha256=d.source['sha256'],
                              classroom=str(d.dir), classroom_status=d.status, supersedes=superseded, at=time.time(),
-                             commit=os.environ.get('MARKETS_SHA'), exchange_sha256=d.exchange_sha256)
+                             commit=os.environ.get('MARKETS_SHA'), exchange_sha256=d.exchange_sha256,
+                             meeting_sha256=d.meeting_sha256, meeting_status=d.meeting['status'])
                 index['reports'].append(entry)
                 printed.append((k, raw.decode('utf-8')))
                 out.append(dict(kind=k, number=number, revision=revision, file=str(central), classroom_copy=copy,
@@ -1096,10 +1154,11 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                    classroom=str(d.dir), classroom_status=d.status, built_from=d.source, reports=out,
                    exchange=dict(path=d.exchange_path, sha256=d.exchange_sha256) if d.exchange is not None else
                    dict(listed=d.exchange_listed),
+                   meeting=dict(status=d.meeting['status'], path=d.meeting.get('path'), sha256=d.meeting_sha256),
                    index=str(reports / 'index.json'), problems=problems, model_calls=0)
     print('REPORT_NUMBER=%d' % number)
     print(json.dumps(receipt, sort_keys=True), flush=True)
-    return 1 if problems else 0
+    return receipt if return_receipt else (1 if problems else 0)
 
 
 def main():

@@ -21,8 +21,8 @@ agreements, disagreements, missing evidence and requested tests. It adds no evid
   - every item is discussed or listed; the turn budget and the meeting time budget close an item as OPEN by code.
 
 The durable record FRANKIE_GRANITE_MEETING_V1 keeps the four categories apart: seat_statements, coordinator_turns,
-code_seat_answers, open_items/requested_tests. Publication into Frankie's brain (kind 'meeting') needs the brain writer
-and entry-kind registration in frankie_box_brain.py (Codex): until then the record is retained and the receipt says so.
+code_seat_answers, open_items/requested_tests. Complete records publish immediately into Frankie's brain when given
+the owning brain path. A runner retains the same bytes for an explicit owner-side return, reported by its receipt.
 
 Runtime: llama.cpp llama-server, ephemeral, started here and stopped here; model/release pins and the runtime parameters
 live in knowledge/GRANITE_MEETING_RUNTIME_V1.json and the gate refuses to call the model while a pin is null or the
@@ -458,7 +458,55 @@ def discuss_item(server, item, system, params, log):
                 rule='four categories kept apart; agreement among voices is never confirmation (R17)')
 
 
-def meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=None, brain=None, inputs_only=False,
+def publish_meeting_record(exchange_path, out_dir, brain=None, *, include_inputs=True):
+    """Finish publication from retained complete bytes, including after an interrupted receipt write."""
+    import frankie_box_brain as BR
+    from frankie_box_durable import write_json
+    out_dir = Path(out_dir)
+    record_path = out_dir / 'meeting.json'
+    pin = witness_file(record_path)
+    receipt_path = out_dir / 'receipt.json'
+    if receipt_path.is_file():
+        previous = json.loads(receipt_path.read_bytes())
+        if previous.get('status') == 'complete':
+            old_pin = previous.get('record') or {}
+            if any(old_pin.get(k) != pin[k] for k in ('bytes', 'sha256')):
+                raise ValueError('completed meeting differs from its retained receipt; never re-pinned')
+    record = BR.read_meeting_record(record_path, exchange_path=exchange_path, expected_sha256=pin['sha256'])
+    publication = 'retained; awaiting return to the owning lane brain'
+    brain_entry = None
+    if brain:
+        BR.write_meeting_entry(brain, record['day'], record_path, exchange_path=exchange_path)
+        entry = Path(brain) / ('%s-meeting' % record['day'])
+        brain_entry = dict(path=str(entry), manifest=witness_file(entry / 'MANIFEST.json'))
+        publication = 'published immediately to the owning lane brain'
+    receipt = dict(schema=RECEIPT_SCHEMA, day=record['day'], status='complete',
+                   record=pin, counts=record.get('counts'),
+                   model_calls=record['model_calls'], tokens=record.get('tokens'),
+                   publication=publication, brain_entry=brain_entry, seconds=record.get('seconds'))
+    inputs = out_dir / 'meeting-input.json'
+    if include_inputs and inputs.is_file():
+        receipt['inputs'] = witness_file(inputs)
+    write_json(out_dir / 'receipt.json', receipt)
+    return receipt
+
+
+def meeting(exchange_path, out_dir, **kwargs):
+    """Serialize a day's meeting and publication repair without replaying a completed model call."""
+    import fcntl
+    out_dir = Path(out_dir)
+    if any(p.is_symlink() for p in (out_dir, *out_dir.parents)):
+        raise ValueError('meeting output traverses a symbolic link')
+    out_dir.mkdir(parents=True, exist_ok=True)
+    lock_path = out_dir / '.meeting.lock'
+    if lock_path.is_symlink():
+        raise ValueError('meeting lock is a symbolic link')
+    with lock_path.open('a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        return _meeting(exchange_path, out_dir, **kwargs)
+
+
+def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=None, brain=None, inputs_only=False,
             log=print):
     import frankie_box_classroom_code as K
     from frankie_box_durable import write_json
@@ -467,6 +515,12 @@ def meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=No
     exchange = json.loads(raw)
     if exchange.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1' or exchange.get('view') != 'frankie':
         raise SystemExit('the meeting is given Frankie\'s view of the exchange only (view frankie)')
+    retained = out_dir / 'meeting.json'
+    if retained.is_file():
+        import frankie_box_brain as BR
+        previous = BR.read_meeting_record(retained, exchange_path=exchange_path, complete=False)
+        if previous['status'] == 'complete':
+            return publish_meeting_record(exchange_path, out_dir, brain)
     config, config_witness = load_config(config_path)
     _, rules = K.rules()
     rules_witness = dict(file=Path(rules['path']).name, sha256=rules['sha256'], bytes=rules['bytes'], rules=rules['rules'])
@@ -522,15 +576,10 @@ def meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=No
                               requested_tests=sum(len(i['requested_tests']) for i in items),
                               open_items=sum(len(i['open_items']) for i in items),
                               refused=sum(len(i['refused']) for i in items), not_discussed=len(not_discussed)),
-                  publication='retained; brain kind meeting has no writer yet (frankie_box_brain.py, Codex); '
-                              'immediate filing follows that edit',
+                  publication='retained; publication disposition is recorded in the receipt',
                   rule='coordination only; the seats\' records are the evidence; nothing open is dropped (role V2)')
     write_json(out_dir / 'meeting.json', record)
-    receipt = dict(schema=RECEIPT_SCHEMA, day=exchange.get('day'), status='complete',
-                   inputs=witness_file(out_dir / 'meeting-input.json'), record=witness_file(out_dir / 'meeting.json'),
-                   counts=record['counts'], model_calls=record['model_calls'], tokens=record['tokens'],
-                   publication=record['publication'], seconds=record['seconds'])
-    write_json(out_dir / 'receipt.json', receipt)
+    receipt = publish_meeting_record(exchange_path, out_dir, brain)
     log('meeting %s: %d items, %d coordinator turns, %d requested tests, %d model calls' % (
         exchange.get('day'), len(items), record['counts']['coordinator_turns'], record['counts']['requested_tests'],
         record['model_calls']))

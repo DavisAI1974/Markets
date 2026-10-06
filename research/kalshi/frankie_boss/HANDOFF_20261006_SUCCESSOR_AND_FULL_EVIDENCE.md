@@ -11,6 +11,10 @@ Steps #2/#3 remain open. Do not claim complete 99-layer computation or native mo
 
 ## Read first
 
+**Recovered Work integration (2026-10-06):** read `GRANITE_INTEGRATION_RECOVERY_20261006.md` for the
+restored Granite brain/queue/school/report and returned-record source wiring, exact verification limits,
+and the current ten-step checklist. AWS boxes remain stopped; no runtime/E2E result is claimed.
+
 **Latest source continuation (2026-10-06, after Codex setup `3fa9f592`):** read
 `PENDING_FEEDBACK_COMPLETION_20261006.md` alongside this handoff. The historical statement below that no
 pending-outcome transition exists is superseded by the explicit completion path described there. Runtime acceptance,

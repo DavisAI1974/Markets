@@ -21,7 +21,8 @@ and why), or a pointer (path, sha256, bytes; never read into the corpus) for any
   scientific_teacher  the FRANKIE_LESSONS_V1 of the day (per claim, per day counts; the disposition word orientation only,
                       R14) and its untested / cannot-test-yet lists;
   exchange            Frankie's view of the three-way exchange (the turns, the teachers' own findings scoped with their
-                      days named);
+                      days named), and the entire receipt-verified meeting discussion inline, without a size cutoff;
+                      its four categories remain separate and have no evidentiary authority;
   day_file            the 13-point day file by reference (name, sha256, bytes, path, S3 key).
 Kept out, each listed under withheld with the reason: the exhaustive grades (post-grade.json, external-post-grade.json)
 and the answer key's content (R10), Jev's claims (the lessons wall). Whatever is absent is listed under missing with the
@@ -206,8 +207,26 @@ def build(day, run, report_number, classroom, exchange_view, exchange_listed, le
     else:
         missing.append(dict(section='exchange', item='exchange_frankie_view', path=exchange_view,
                             reason=exchange_listed or 'the day\'s exchange is not there'))
-    import frankie_box_exchange_voice as V
-    missing.append(dict(section='exchange', item='discussion (voice)', reason=V.NOT_WIRED))
+    if view is not None:
+        from frankie_box_brain import read_meeting_for_exchange
+        meeting = read_meeting_for_exchange(exchange_view)
+    else:
+        meeting = dict(status='missing', record=None, path=None, receipt=None,
+                       reason=exchange_listed or "the day's Frankie exchange is not there")
+    if meeting['status'] == 'complete':
+        # Use the already verified record, not a second unverified file read. Keep every category and item intact.
+        pin = meeting['receipt']['record']
+        ex.items.append(dict(name='discussion (meeting)', author='the three code seats and Granite coordinator',
+                             path=meeting['path'], source_sha256=pin['sha256'], sha256=pin['sha256'],
+                             bytes=pin['bytes'], inline=True, content=meeting['record'],
+                             evidentiary_authority='none; discussion only; original code-seat evidence remains authoritative',
+                             category_rule='seat_statements, coordinator_turns, code_seat_answers, and '
+                                           'open_items/requested_tests stay separate; requested tests are not results'))
+    else:
+        missing.append(dict(section='exchange', item='discussion (meeting)', status=meeting['status'],
+                            path=meeting.get('path'), reason=meeting.get('reason') or
+                            'meeting %s; no completed discussion' % meeting['status'],
+                            refused_to_run=(meeting.get('record') or {}).get('refused_to_run') or []))
 
     # ---- the day file
     df = Section('day_file', 'the day file', missing)

@@ -509,7 +509,8 @@ def passed(run, stage, day):
     if stage == 'classroom':
         return r['status'] in ('done', 'reused')
     if stage == 'voice':
-        return r['status'] in X.FINISHED or bool(r.get('not_wired') and r['status'] == 'waiting')
+        return r['status'] in X.FINISHED or bool(r['status'] == 'waiting' and r.get('non_blocking')
+                                                and r.get('meeting_status') in ('refused', 'inputs_only'))
     if stage == 'reports' and run.reports_stale(dict(day=day)):
         return False
     return r['status'] in X.FINISHED
@@ -563,7 +564,7 @@ def class_day(entry, previous, school_day, code_root, commit, log):
 
     Canonical order (Greg, settled 2026-09-30; reconciled 2026-10-06):
       classroom immediately after the BOSS teacher read -> data export -> search -> batch scientific-teacher lessons
-      -> today's Frankie findings tested -> three-way exchange -> voice stub -> school -> reports.
+      -> today's Frankie findings tested -> three-way exchange -> bounded meeting -> school -> reports.
 
     The classroom is deliberately before search: Frankie first learns from ROOT + the BOSS teacher.  The later
     scientific-teacher pass tests his resulting claims against the causal search before the meeting.  Nothing here
@@ -583,7 +584,7 @@ def class_day(entry, previous, school_day, code_root, commit, log):
         receipt_key = receipt_key or day
         facts['stages'][stage] = dict(status=r['status'], reason=r.get('reason'),
                                       receipt=str(run.receipt_path(receipt_stage, receipt_key)))
-        if r['status'] == 'waiting':
+        if r['status'] == 'waiting' and not passed(run, receipt_stage, receipt_key):
             return 'waiting', '%s: %s' % (stage, r.get('reason'))
         if not passed(run, receipt_stage, receipt_key):
             if stage == 'classroom' and r['status'] == 'refused':
