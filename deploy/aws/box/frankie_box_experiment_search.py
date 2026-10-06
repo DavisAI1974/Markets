@@ -222,16 +222,23 @@ def known_time_rows(known_at):
     return valid, unavailable
 
 
-def asof_values(con, axis_t, known_at, values):
-    """The ONE alignment used for every series and by its leakage gate: for each axis time, the value of the source row
-    with the largest known_at <= that time (ties: the later row). Integer stamps remain exact;
-    None where nothing is known yet, and native values are retained without a float conversion."""
+def asof_source_rows(axis_t, known_at):
+    """Original source ordinals chosen by the existing timestamp alignment; -1 means no available row."""
     import numpy as np
     valid, _ = known_time_rows(known_at)
     order = sorted(valid, key=lambda i: known_at[i])  # stable ties: the last published row
     times = np.asarray([known_at[i] for i in order], dtype=np.int64)
     positions = np.searchsorted(times, np.asarray(axis_t, dtype=np.int64), side='right') - 1
-    return np.asarray([values[order[i]] if i >= 0 else None for i in positions], dtype=object)
+    for position in positions:
+        yield order[position] if position >= 0 else -1
+
+
+def asof_values(con, axis_t, known_at, values):
+    """The ONE alignment used for every series and by its leakage gate: for each axis time, the value of the source row
+    with the largest known_at <= that time (ties: the later row). Integer stamps remain exact;
+    None where nothing is known yet, and native values are retained without a float conversion."""
+    import numpy as np
+    return np.asarray([values[i] if i >= 0 else None for i in asof_source_rows(axis_t, known_at)], dtype=object)
 
 
 def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_manifest_sha256=None):
@@ -322,13 +329,32 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
                                   if placed else 'no journal rows placed; unsupported or incomplete source groups remain explicitly retained')))
 
     def asof(name, known_at, values_by_col):
-        """Place a source on the axis with asof_values; its leakage gate runs first, on its first numeric column."""
+        """Account for source-row selection, then place each numeric column through its existing leakage gate."""
         valid, unavailable = known_time_rows(known_at)
         if unavailable:
             notes.append(dict(source=name, source_rows=len(known_at), rows_with_integer_clock=len(valid),
                               unplaced_clock_ordinal_ranges=unavailable,
                               reason='missing or non-integer publication/receive clock; original rows retained in '
                                      'the named source; no guessed timestamp or placement; booleans are not clocks'))
+        selected = {int(i) for i in asof_source_rows(axis, known_at) if i >= 0}
+        unselected, unselected_count = [], 0
+        for ordinal in valid:
+            if ordinal in selected:
+                continue
+            unselected_count += 1
+            if unselected and unselected[-1][1] + 1 == ordinal:
+                unselected[-1][1] = ordinal
+            else:
+                unselected.append([ordinal, ordinal])
+        if unselected:
+            notes.append(dict(source=name, source_rows=len(known_at), rows_with_integer_clock=len(valid),
+                              selected_source_rows=len(selected), unselected_clocked_rows=unselected_count,
+                              unselected_clocked_ordinal_ranges=unselected,
+                              reason='existing timestamp-asof alignment selects no frame position for these '
+                                     'clocked source rows, including overwritten ties or rows between/after frame '
+                                     'times; original rows remain in the pinned source. Selection counts describe '
+                                     'this alias before per-field leakage gates, not exact ROOT membership, '
+                                     'valid observations or additional independent evidence'))
         for key, values in values_by_col.items():
             gate = leakage_gate(con, name + '.' + key, known_at, values)
             gates.append(gate)
@@ -345,6 +371,9 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
             continue
         num, text, other, count = columns(unpack_spool(path, pin), time_key)
         sources.append(dict(source=spool, path=str(path), rows=count, bytes=pin['bytes'], sha256=pin['sha256'],
+                            placement='legacy timestamp-asof alias; latest clock <= frame time, later row wins ties',
+                            identity_limit='not an exact INPUT/group or entity join; producer provenance and the '
+                                           'search adapter remain pending; no identity inferred from time or position',
                             numeric=sorted(num), text=sorted(text), not_searched=other))
         if not count:
             notes.append(dict(source=spool, rows=0, reason='empty retained source spool; no observations to place'))

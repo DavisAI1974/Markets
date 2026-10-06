@@ -1,5 +1,28 @@
 # Detailed continuation handoff: BOTH teachers' Dipole coverage — 2026-10-06
 
+## Latest reserved continuation — timestamp selection dispositions, after `1f8d64e1`
+
+Fetched integration `1f8d64e18c2389ced9f570a02a95da994bd7f085`; CCode still at `a9625ae2`,
+with no new source beyond the already integrated partial Slice A. His handoff-only commit remains
+unmerged; its overbroad closure claims still do not supersede the three assigned corrections.
+
+Following Greg's no-silent-optional-omission question, Codex traced the existing timestamp-asof
+selection in its reserved search module. Valid-clock rows can receive no frame position: an earlier
+tie loses to a later source row, or another source row arrives between that row and the next frame.
+Previously only unusable clocks were explicitly counted. `asof_source_rows` now supplies the same
+original source ordinal selection to `asof_values` (including leakage-gate calls) and the accounting.
+Manifest notes give exact inclusive unselected-clocked-row ranges, counts, source identity and reason;
+the existing disposition log surfaces the gap. Missing-clock ranges remain separate. These are
+alignment counts before per-field gates, not measured/valid observations or extra evidence.
+Price/structure source entries now explicitly identify their timestamp aliases and unresolved exact
+INPUT/group/entity joins. Their formulas, tie rule, axis and values are unchanged. Original evidence
+remains retained; this exposes an omission and does NOT supply the pending exact join or claim full
+computation. CCode's source-bound original INPUT-index/instrument producer is still required.
+
+Source/interface review, AST syntax and whitespace only; SOURCE-BUILT / RUNTIME-UNVERIFIED.
+Existing search code identity refuses incompatible pending arrays; completed results remain unchanged.
+No tests, synthetic examples, installs, project/model/data runs or AWS actions. Stop before #5.
+
 ## Latest Codex source continuation — selected export binding and optional-source visibility
 
 Started from fetched current `8bb4c0d33245972817e68e23c5e0218d986de08f`, preserving the newer

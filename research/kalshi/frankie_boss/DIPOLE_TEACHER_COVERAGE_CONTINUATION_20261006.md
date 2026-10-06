@@ -6,6 +6,23 @@ installs, runtime downloads, dispatch, AWS actions or E2E. Stop before workflow 
 
 ## Actual connections changed
 
+### Timestamp-alias selection accounting — after `1f8d64e1`
+
+`asof_source_rows` factors the existing stable-sort/rightmost-clock selection out of `asof_values`.
+The value projection and leakage gate both consume this same ordinal selection. `build_series`
+uses it to list every valid-clock source row not selected at any ROOT frame, as exact inclusive
+original ordinal ranges, with selected/unselected row counts. Unusable clocks keep their separate
+existing dispositions. Original values are unchanged, including the later-row tie policy and None
+before any available source row. Source rows are not grouped, averaged or given invented identities.
+The shared disposition log exposes the omission; full details remain in the manifest notes.
+
+Price/structure receipts explicitly label their timestamp-asof aliases and pending exact entity/group
+joins. This is truthful accounting, not a repair of those joins or proof that retained-but-unselected
+rows reached those computations. CCode still owns the producer provenance addition. Codex can wire
+the exact join only after that contract returns. Other teacher/native/historical work stays with CCode.
+Verification: source review, AST syntax without imports and whitespace only. No runtime work. Existing
+code/manifest recovery identity refuses incompatible pending arrays; no completed artifact is changed.
+
 ### Selected-export binding and optional-source dispositions — after `8bb4c0d`
 
 Generic search now checks the existing export stage/path, byte-count and SHA256 contract for every

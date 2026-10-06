@@ -1,5 +1,12 @@
 # CCode assignment — next pre-#5 source tasks
 
+Latest reserved continuation after `1f8d64e1`: Codex now records exact original source ordinal
+ranges that the unchanged timestamp-asof alias does not select, using the same selection function
+as the value reader and its leakage gate. Price/structure receipts explicitly say the exact
+INPUT/group/entity join is still missing. This reporting does not replace your producer task below
+or claim those omitted rows are computationally covered. Return original INPUT-index/instrument
+provenance and recovery bindings first when possible; Codex will handle the reserved search adapter.
+
 ## Latest Codex coordination — after fetched `8bb4c0d`
 
 The reserved generic-search export-binding repair is now source-built, runtime-unverified. Codex
