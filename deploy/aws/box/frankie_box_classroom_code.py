@@ -94,8 +94,12 @@ def _evidence(visible):
                                          'teacher shows them, transcribed')
     if mode != 'GUIDED':
         raise ModeNotAnswerable(f'classroom mode {mode} withholds the observations and asks for Frankie\'s independent '
-                                'claims; Frankie\'s code has no independent source for the 19 dimensions yet (not built), '
-                                'and it never answers from the host key')
+                                'claims; not answered from the host key. Independent route: the 19 dimensions are produced '
+                                'only by the pinned C15 teacher walk over the sealed journal (JournalTeacherR3.attach through '
+                                'parallel_teacher.parallel_attach, then dipole_classroom.snapshot_teacher_attachment); an '
+                                'independent current reading needs a second walk under Frankie\'s seat from the sealed '
+                                'journal at the binding\'s through_cursor/as_of (TEACHER_ONLY_CALL_MAP section 3: listed, '
+                                'Greg\'s call); not built')
     cached = _EVIDENCE_CACHE.get(pre.get('teacher_message_hash'))
     if cached is not None:
         return cached

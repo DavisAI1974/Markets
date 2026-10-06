@@ -39,13 +39,71 @@ class ModeNotAnswerable(ValueError):
     """The mode asks for independent claims the code has no source for (refused with the reason)."""
 
 
+INDEPENDENT_ROUTE_GAP = (
+    'the day file itself is readable independently of the key (independent_day_file_evidence: every known value, each '
+    'series\' facts, each table\'s known / not-yet-known row counts and the missing lists, through '
+    'operations/frankie_day_external.AsOfReader at the classroom cutoff), but the per-row alignment (state counts, '
+    'terminal state, direction, the runs) needs the Dipole rows\' own timestamps and every pair needs the Dipole '
+    'ledgers; those come only from the 19-dimension route, which has no independent producer yet (the pinned C15 teacher '
+    'walk is the only one; a second walk under Frankie\'s seat is listed as Greg\'s call)')
+
+
 def _pre(visible):
     pre = visible['pre_message']
     if pre['mode'] not in MODES_ANSWERED:
         raise ModeNotAnswerable(f'classroom mode {pre["mode"]} withholds the external evidence and asks for Frankie\'s '
-                                'independent claims; Frankie\'s code has no independent source for them yet (not built), and '
-                                'it never answers from the host key')
+                                f'independent claims; not answered from the host key. Independent route: {INDEPENDENT_ROUTE_GAP}')
     return pre
+
+
+def independent_day_file_evidence(pre):
+    """The external evidence Frankie's seat can read on its own in any mode: the day file named by the pre-message's
+    descriptor (path + sha256, checked), read through the existing as-of reader at the classroom cutoff. The same
+    reading half build_external_key uses, without the teacher's rows: per series its known values and facts (with the
+    table's not-yet-known count from the file), per point its tables' known / not-yet-known row counts, its series and
+    its missing entries, the absent series and the unassigned missing entries. What it cannot supply is listed: the
+    per-row alignment and every pair need the Dipole rows (see INDEPENDENT_ROUTE_GAP). Nothing here reads the key."""
+    EXT = _external_math()
+    descriptor = pre['day_file']
+    dx, reader, witness = EXT.open_day_external(descriptor['path'], descriptor['sha256'], int(pre['cutoff_ns']),
+                                                trading_day=pre['trading_day'])
+    body, open_ns, cutoff = reader.body, int(pre['open_ns']), int(pre['cutoff_ns'])
+    entries, absent = EXT.read_series(dx, reader)
+    series = []
+    for entry in entries:
+        series.append(dict(name=entry['name'],
+                           point_ids=[p['point_id'] for p in EXT.POINTS if EXT._matches(entry['name'], p['series'])],
+                           table=entry['table'], column=entry['column'], where=entry['where'],
+                           absent_reason=entry['absent_reason'], facts=EXT._facts(entry, open_ns),
+                           known_values=[dict(published_ns=k['published_ns'], state=k['state'], value=k['value'],
+                                              raw_value=k['raw_value'], reason=k['reason'], row=k['row'])
+                                         for k in entry['known']]))
+    names = [s['name'] for s in series]
+    tables = {}
+    for tname in body['points']:
+        if tname in EXT.DEFERRED['tables']:
+            continue
+        view = reader.until(tname, cutoff)
+        tables[tname] = dict(name=tname, rows_known=len(view['rows']), not_yet_known=view['not_yet_known'])
+    missing = list(body.get('missing') or ())
+    assigned = {id(m) for m in missing if EXT._matches(str(m.get('point')), EXT.DEFERRED['missing'])}
+    points = []
+    for p in EXT.POINTS:
+        mine = [m for m in missing if EXT._matches(str(m.get('point')), p['missing'])]
+        assigned.update(id(m) for m in mine)
+        points.append(dict(point_id=p['point_id'], name=p['name'],
+                           series=[n for n in names if EXT._matches(n, p['series'])],
+                           tables=[tables.get(t, dict(name=t, absent=True, reason='not in the day file (see missing)'))
+                                   for t in p['tables']],
+                           missing=mine))
+    return dict(schema='FRANKIE_BOX_INDEPENDENT_DAY_FILE_EVIDENCE_V1', author=AUTHOR, day_file=witness,
+                cutoff_ns=cutoff, open_ns=open_ns, series=series, series_absent=absent, points=points,
+                missing_not_assigned=[m for m in missing if id(m) not in assigned],
+                not_supplied=['alignment (state counts, terminal state, direction, runs per series): needs the Dipole '
+                              'rows\' timestamps', 'relationship pairs (series x Dipole, series x series): need the '
+                              'Dipole ledgers and the row alignment'],
+                rule='read from the day file at the cutoff, never from the teacher\'s key or rows (R09/R10); what is not '
+                     'readable here is listed, not filled in (R04)')
 
 
 def _external_math():
