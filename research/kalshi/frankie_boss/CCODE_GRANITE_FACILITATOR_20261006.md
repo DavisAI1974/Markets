@@ -42,8 +42,9 @@ against a real exchange). No model was downloaded, installed or called; no workf
 | `.github/workflows/frankie_granite_meeting.yml` | the free standard CPU runner hosting: `workflow_dispatch` only, never on push or schedule; takes a presigned GET of one day's `exchange-frankie.json` and an optional presigned PUT for the record; defaults to inputs-only; the model path refuses while pins are blank; the record is a run artifact |
 | `GRANITE_DISCUSSION_REPORT_20261006.md` | Greg's report, verbatim, with a filing note |
 
-Status of the route: **built, uncalled, unverified at runtime, unpublished.** The gate refuses the model today on seven
-counts (six blank pins, unconfirmed parameters), by design.
+Status of the route: **built, uncalled, unverified at runtime, unpublished.** The gate refused the model on seven counts
+(six blank pins, unconfirmed parameters) when this was written, by design; after the 2026-10-06 pin fill (decision 1) it
+refuses on one count only, the unconfirmed parameters.
 
 ## 3. How the role's rules are enforced in code, not prose
 
@@ -85,14 +86,19 @@ counts (six blank pins, unconfirmed parameters), by design.
 
 ## 5. Decisions still Greg's (documented, not chosen)
 
-1. The model pins: exact official GGUF repository/file/sha256 for Granite 4.2 3B Q4_K_M. The report names the identity,
-   not the artifact; nothing was guessed. huggingface.co is denied by this session's network policy (egress 403), so
-   the values could not be read from the source here: either allow that host for the environment (then the Hugging Face
-   tree API gives each file's sha256 without downloading weights) or paste the three values. The llama.cpp pins ARE
-   filled: release b11440, asset llama-b11440-bin-ubuntu-x64.tar.gz, sha256 5e6dcc91...1fb2b, fetched through the
-   session proxy and hashed in the scratchpad (contains llama-server, llama-cli, llama-completion); newer tags b11443
+1. The model pins: FILLED 2026-10-06 (follow-up session, after Greg admitted huggingface.co to the environment's
+   network policy). Source: the Hugging Face model API for the ibm-granite organisation, which lists an OFFICIAL GGUF
+   repository for the 3B (`ibm-granite/granite-4.2-3b-GGUF`, created 2026-08-12, not a community conversion); its file
+   tree (`/api/models/ibm-granite/granite-4.2-3b-GGUF/tree/main`, repository commit c40945d7, lastModified 2026-09-02)
+   gives the Q4_K_M entry as `granite-4.2-3b-Q4_K_M.gguf`, lfs.oid = sha256
+   `e0406663965846ae22a403456eb826ccce5f450840491f71952f18a7cb78e7d5`, 2,244,011,552 bytes; the resolve endpoint's
+   X-Linked-Etag and X-Linked-Size (a HEAD, no download) agree. Recorded as `pins.model_repository`, `pins.model_file`,
+   `pins.model_sha256` and `pins.model_pinned_by`. No weight was downloaded; nothing installed. The llama.cpp pins were
+   already filled: release b11440, asset llama-b11440-bin-ubuntu-x64.tar.gz, sha256 5e6dcc91...1fb2b, fetched through
+   the session proxy and hashed in the scratchpad (contains llama-server, llama-cli, llama-completion); newer tags b11443
    to b11445 had no Ubuntu x64 asset at the time. The 8B files already staged (ibm-granite/granite-4.2-8b at f8de16cd,
-   safetensors) are not a GGUF and are the escalation model, not this one.
+   safetensors) are not a GGUF and are the escalation model, not this one. The gate now refuses on ONE count only: the
+   unconfirmed runtime parameters (decision 2).
 2. The proposed runtime parameters (temperature, top_p, output tokens per turn, input cap, context, turns per item,
    meeting seconds, threads): confirm or change, then set `confirmed: true` and `confirmed_by`.
 3. Which host first for the E2E: the GitHub runner path needs the small exchange view presigned out and the record back;

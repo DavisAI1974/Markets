@@ -28,10 +28,11 @@
   "knowledge": "new legally available discussion knowledge is filed into Frankie's brain immediately after the meeting record is complete, never deferred to the school step (brain writer for kind 'meeting' is a named Codex edit; until it lands the record is retained and publication is reported pending)"
  },
  "pins": {
-  "note": "EXPLICIT BLANKS remain for the model: huggingface.co is denied by this session's network policy, so the official Granite 4.2 3B GGUF repository, file and sha256 could not be read from the source. The setup script and the launcher refuse while any pin is null. Nothing is guessed. The 8B files already staged (ibm-granite/granite-4.2-8b at f8de16cd, safetensors, GRANITE_ARTIFACT_STAGING_20260914.md) are not a GGUF and are the escalation model, not this one.",
-  "model_repository": null,
-  "model_file": null,
-  "model_sha256": null,
+  "note": "Model pins filled 2026-10-06 from the official ibm-granite organisation on Hugging Face (the session's network policy now admits huggingface.co; the file tree API gives each LFS file's sha256 as lfs.oid, so no weight was downloaded). The setup script and the launcher refuse while any pin is null. Nothing is guessed. The 8B files already staged (ibm-granite/granite-4.2-8b at f8de16cd, safetensors, GRANITE_ARTIFACT_STAGING_20260914.md) are not a GGUF and are the escalation model, not this one.",
+  "model_repository": "ibm-granite/granite-4.2-3b-GGUF",
+  "model_file": "granite-4.2-3b-Q4_K_M.gguf",
+  "model_sha256": "e0406663965846ae22a403456eb826ccce5f450840491f71952f18a7cb78e7d5",
+  "model_pinned_by": "CCode 2026-10-06: https://huggingface.co/api/models/ibm-granite/granite-4.2-3b-GGUF/tree/main (repository commit c40945d71cd90f249a56985e8155551a9188dc30, lastModified 2026-09-02); the Q4_K_M entry's lfs.oid is its sha256, cross-checked against the resolve endpoint's X-Linked-Etag; lfs.size 2,244,011,552 bytes. Official IBM GGUF repository (ibm-granite org, not a community conversion). Not downloaded, not installed anywhere.",
   "llama_cpp_release": "b11440",
   "llama_cpp_asset": "llama-b11440-bin-ubuntu-x64.tar.gz",
   "llama_cpp_sha256": "5e6dcc9178743c49de36e5e1b77f38453e820647782a738856b1e3fd73b1fb2b",
