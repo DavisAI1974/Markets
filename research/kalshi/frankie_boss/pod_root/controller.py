@@ -66,7 +66,7 @@ BOOT = ('apt-get update -q >/dev/null && apt-get install -y -q curl ca-certifica
         'curl -fsSL "https://raw.githubusercontent.com/DavisAI1974/Markets/$MARKETS_SHA/research/kalshi/frankie_boss/'
         'pod_root/pod_bootstrap.sh" -o /tmp/pod_bootstrap.sh && exec bash /tmp/pod_bootstrap.sh')
 FINISHED_FAILED = ('failed_setup', 'failed_inputs', 'failed_gate', 'refused')
-ACTIVE = ('accepted', 'setup', 'inputs', 'root', 'scratch', 'ship')
+ACTIVE = ('accepted', 'setup', 'inputs', 'root', 'finish', 'coordinate', 'scratch', 'ship')
 PRINT_LOCK = threading.Lock()
 
 
@@ -307,6 +307,7 @@ class Controller:
         st = c['state']
         attempt = st['attempt']
         self.event(worker=w.where, day=day, step='claim', result='claimed', attempt=attempt, role=st['role'], digest=st['digest'])
+        submission_attempted = False
         try:
             inputs, need = [], []
             for f in st['files']:
@@ -330,9 +331,9 @@ class Controller:
                                        source='box export'))
                 self.event(worker=w.where, day=day, step='export', files=len(need), bytes=sum(f['bytes'] for f in need),
                            seconds=round(time.time() - t0))
-            out = self.out_slots(attempt)
+            out = {} if w.kind == 'box' else self.out_slots(attempt)
             job = dict(schema='FRANKIE_POD_ROOT_JOB_V1', name=attempt, run=self.run, day=day, role=st['role'],
-                       digest=st['digest'], commit=self.commit, data_workers=self.a.data_workers,
+                       digest=st['digest'], commit=self.commit, data_workers=15 if w.kind == 'box' else self.a.data_workers,
                        ingest_dir=st['ingest_dir'], ingestion_receipt=st['ingestion_receipt'],
                        ingestion_receipt_sha256=st['ingestion_receipt_sha256'], day_external_sha256=st['day_external_sha256'],
                        frozen_survivors=st.get('frozen_survivors'),
@@ -340,10 +341,15 @@ class Controller:
                        out=out, where=w.where, created=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
                        controller_run=os.environ.get('GITHUB_RUN_ID'))
             if w.kind == 'box':
+                job.update(workflow='root-to-finish', plan=st['plan'], settings=st['settings'],
+                           mailbox=dict(request_put=self.sign.put(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/request.json'),
+                                        response_get=self.sign.get(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/response.json')))
+                job['settings'] = dict(job['settings'], data_workers=15, search_workers=15)
                 key = '%s/job.json' % self.prefix(attempt)
                 s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=key, Body=json.dumps(job).encode(),
                                                ServerSideEncryption='AES256')
                 job['_job_url'] = self.sign.get(TRANSFER_BUCKET, key)
+            submission_attempted = True
             job_id, why = w.submit(job)
             if not job_id:
                 raise RuntimeError('the worker refused the job: %s' % why)
@@ -352,6 +358,12 @@ class Controller:
             return True
         except Exception as e:  # noqa: BLE001
             self.event(worker=w.where, day=day, step='start', result='failed', error='%s: %s' % (type(e).__name__, str(e)[:400]))
+            if w.kind == 'box' and submission_attempted:
+                # An SSM timeout can occur after acceptance. Keep ownership and input slots until
+                # status establishes what happened; releasing here could dispatch the day twice.
+                self.event(worker=w.where, day=day, step='held', attempt=attempt,
+                           result='submission outcome requires same-box status/resume; claim and inputs retained')
+                return False
             self.release(w, day, attempt, 'the controller could not start the job: %s: %s' % (type(e).__name__, str(e)[:300]))
             self.delete_prefix(attempt)
             return False
@@ -399,6 +411,9 @@ class Controller:
                 self.event(worker=w.where, day=day, attempt=attempt, step='handle', result='gave up after 2 tries', state=state)
             return
         try:
+            if j.get('workflow') == 'root-to-finish':
+                self.event(worker=w.where, day=day, attempt=attempt, step='retained', result=state, detail=j.get('detail'))
+                return
             if state == 'uploaded':
                 self.import_job(w, j)
             elif state in ('failed_ship', 'interrupted'):
@@ -422,8 +437,22 @@ class Controller:
                     return d
             return None
 
+    def coordinate(self, w, job):
+        prefix = self.prefix(job['job_id']) + '/rpc'
+        response = box('coordinate', MAIN, 1800, CODE_ROOT=self.a.code_root,
+                       url_map=dict(rpc=dict(url=self.sign.get(TRANSFER_BUCKET, prefix + '/request.json')),
+                                    reply=dict(url=self.sign.put(TRANSFER_BUCKET, prefix + '/response.json'))))
+        self.event(worker=w.where, day=job['day'], step='coordinate', id=response.get('id'), error=response.get('error'))
+
+    def renew(self, w, job):
+        prefix = self.prefix(job['job_id']) + '/rpc'
+        return box('renew', w.target, 600, COMMIT=self.commit, JOB=job['job_id'],
+                   url_map=dict(mailbox=dict(request_put=self.sign.put(TRANSFER_BUCKET, prefix + '/request.json'),
+                                             response_get=self.sign.get(TRANSFER_BUCKET, prefix + '/response.json'))))
+
     def worker_loop(self, w):
         failures = 0
+        renewed = {}
         while time.time() < self.end:
             try:
                 st = w.status()
@@ -437,6 +466,20 @@ class Controller:
                 continue
             jobs = [j for j in st.get('jobs') or [] if j.get('run') == self.run]
             for j in jobs:
+                if j.get('workflow') == 'root-to-finish' and j.get('pid_alive') and \
+                        time.time() - renewed.get(j['job_id'], 0) > 900:
+                    try:
+                        self.renew(w, j)
+                        renewed[j['job_id']] = time.time()
+                    except Exception as error:
+                        self.event(worker=w.where, day=j['day'], step='renew', result='retry',
+                                   error=type(error).__name__)
+                if w.kind == 'box' and j.get('state') == 'coordinate':
+                    try:
+                        self.coordinate(w, j)
+                    except Exception as error:
+                        self.event(worker=w.where, day=j['day'], step='coordinate', result='retry',
+                                   error=type(error).__name__)
                 if j.get('state') not in ACTIVE + ('cleaned',):
                     self.handle(w, j)
             try:
@@ -446,6 +489,12 @@ class Controller:
                 time.sleep(self.a.poll_seconds)
                 continue
             active = [j for j in st.get('jobs') or [] if j.get('state') in ACTIVE]
+            retained = [j for j in st.get('jobs') or [] if j.get('workflow') == 'root-to-finish'
+                        and j.get('state') not in ACTIVE + ('day_complete',)]
+            if retained:
+                self.event(worker=w.where, step='held', result='failed/interrupted day requires same-box resume',
+                           days=[j['day'] for j in retained])
+                return
             free = int(st.get('slots') or 1) - len(active)
             if free > 0 and time.time() < self.stop_starting:
                 d = self.next_ready()
@@ -471,8 +520,8 @@ class Controller:
 
 def workers_of(a, commit):
     out = []
-    for pod in [p for p in (a.pods or '').split(',') if p]:
-        out.append(PodWorker(load_pod(pod)))
+    if a.pods:
+        raise ValueError('Pods are retired from the Frankie experiment; use AWS CPU boxes')
     for spec in [b for b in (a.boxes or '').split(',') if b]:
         out.append(BoxWorker(spec, commit))
     return out
@@ -562,6 +611,10 @@ def main():
     p.add_argument('--cost-ceiling', type=float, default=1.75)
     p.add_argument('--wait-minutes', type=int, default=40)
     a = p.parse_args()
+    if a.action == 'create' or a.pods:
+        raise SystemExit('Pods are retired from the Frankie experiment; no Pod creation or dispatch')
+    if a.action == 'loop' and (a.slots != 1 or a.boxes != 'i-0d17573dbce871520@us-east-1'):
+        raise SystemExit('remote workflow uses exactly one Linux lane: --boxes i-0d17573dbce871520@us-east-1 --slots 1')
     a.wait_for_days = a.wait_for_days == 'yes'
     if not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', a.run) or not a.code_root.startswith('/opt/frankie-box/code/'):
         raise SystemExit('--run [A-Za-z0-9_-] and --code-root /opt/frankie-box/code/... required')
@@ -584,7 +637,8 @@ def main():
     if a.action == 'plan':
         ready = [d for d in q['days'] if d['state'] == 'ready']
         say('%d ready day(s); %d worker(s) x %d slot(s) would start %d now; claim store active: %s' % (
-            len(ready), len((a.pods or '').split(',')) if a.pods else 0, a.slots, min(len(ready), (len(a.pods.split(',')) if a.pods else 0) * a.slots),
+            len(ready), len([b for b in a.boxes.split(',') if b]), a.slots,
+            min(len(ready), len([b for b in a.boxes.split(',') if b]) * a.slots),
             q.get('active')))
         return
     if a.action == 'create':
@@ -594,7 +648,7 @@ def main():
     say('claim store', r)
     workers = workers_of(a, ctl.commit)
     if not workers:
-        raise SystemExit('no workers: give --pods and/or --boxes')
+        raise SystemExit('no workers: give --boxes i-0d17573dbce871520@us-east-1')
     threads = [threading.Thread(target=ctl.worker_loop, args=(w,), name=w.where, daemon=True) for w in workers]
     for t in threads:
         t.start()

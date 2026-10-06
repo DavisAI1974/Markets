@@ -134,12 +134,12 @@ def day_state(run, plan, e, ignore_claim=False):
     runner = None
     if directory.name.startswith('ingest-%s-gh-' % day):
         runner = 'frankie/ingest/%s/%s/' % (day, directory.name[len('ingest-%s-' % day):])
-    return dict(day=day, state='ready', role=e['role'], digest='on' if e['classroom_arm'] else 'off',
+    return dict(day=day, state='ready', role=e['role'], digest='on',
                 ingest_dir=str(directory), ingestion_receipt=str(receipt), ingestion_receipt_sha256=files[0]['sha256'],
                 files=files, frozen_survivors=frozen and frozen['path'],
                 attempt='%s-%s-a%d' % (run, day, len(attempts) + 1), interrupted_attempts=[str(a) for a in attempts],
                 conformance=r.get('conformance'), conformed=(directory / 'conformance.json').is_file(),
-                runner_prefix=runner, day_external_sha256=day_sha)
+                runner_prefix=runner, day_external_sha256=day_sha, plan=plan, settings=(Q.entry_of('root', run, day) or {}).get('settings', Q.SETTINGS))
 
 
 def line_order(run, days):
@@ -315,6 +315,17 @@ def main():
     action = env.get('ACTION')
     if env.get('PROTOCOL') != PROTOCOL:
         raise SystemExit('protocol %s, this module speaks %s (script and staged checkout differ)' % (env.get('PROTOCOL'), PROTOCOL))
+    if action == 'coordinate':
+        import frankie_box_lane_state as LS
+        import urllib.request
+        urls = url_map()
+        body = json.loads(urllib.request.urlopen(urls['rpc']['url'], timeout=120).read())
+        try:
+            reply = LS.coordinate(body, env['CODE_ROOT'], env['CODE_COMMIT'])
+        except Exception as error:
+            reply = dict(id=body['id'], error='%s: %s' % (type(error).__name__, error))
+        urllib.request.urlopen(urllib.request.Request(urls['reply']['url'], json.dumps(reply).encode(), method='PUT'), timeout=120).close()
+        return result(action=action, id=body['id'], error=reply.get('error'))
     if action == 'enable':
         claims.enable()
         return result(action='enable', claims=str(claims.CLAIMS), active=claims.active())

@@ -602,16 +602,63 @@ def check_day_file(body):
     """The staging check: refuses a row without a stamp, a stamp that is not an integer, or one at/after the halt."""
     if body.get('schema') != SCHEMA:
         raise StagingRefused('not a %s document' % SCHEMA)
+    day = str(body.get('trading_day', ''))
+    if len(day) != 8 or not day.isdigit():
+        raise StagingRefused('trading_day YYYYMMDD required')
+    opened, halted = session(day)
+    if body.get('open_ns') != ns(opened) or body.get('halt_ns') != ns(halted):
+        raise StagingRefused('day bounds do not belong to trading_day %s' % day)
     halt = body['halt_ns']
     for name, t in body['points'].items():
+        if len(set(t['columns'])) != len(t['columns']):
+            raise StagingRefused('%s repeats a column name' % name)
         i = t['columns'].index(t['stamp_column'])
         for n, row in enumerate(t['rows']):
+            if len(row) != len(t['columns']):
+                raise StagingRefused('%s row %d has %d values for %d columns' % (
+                    name, n, len(row), len(t['columns'])))
             stamp = row[i]
             if not isinstance(stamp, int) or isinstance(stamp, bool):
                 raise StagingRefused('%s row %d has no integer publication stamp (%r)' % (name, n, stamp))
             if stamp >= halt:
                 raise StagingRefused('%s row %d is stamped %d, at or after the halt %d' % (name, n, stamp, halt))
     return True
+
+
+def computation_receipt(reader, day):
+    """Read every native row/field through the time guard; retain exact scoped counts and source identities.
+
+    Equal published values on adjacent days are legal. No value is changed to make days look different.
+    Row-order changes are descriptive counts, not evidence of a relationship between unrelated entities.
+    """
+    if reader.body['trading_day'] != day:
+        raise StagingRefused('external trading_day differs from the day being calculated')
+    points = {}
+    for name in reader.body['points']:
+        t = reader.point(name)
+        fields = {c: dict(values=0, null=0, numeric=0, text=0, structured=0,
+                          comparable_adjacent=0, changed=0, unchanged=0) for c in t['columns']}
+        previous = {}
+        stream = hashlib.sha256()
+        for row in t['rows']:
+            stream.update((json.dumps(row, sort_keys=True, ensure_ascii=False, separators=(',', ':')) + '\n').encode())
+            for column, value in zip(t['columns'], row):
+                f = fields[column]
+                f['values'] += 1
+                f['null' if value is None else 'numeric' if isinstance(value, (bool, int, float))
+                  else 'text' if isinstance(value, str) else 'structured'] += 1
+                if column in previous and value is not None and previous[column] is not None:
+                    f['comparable_adjacent'] += 1
+                    f['unchanged' if value == previous[column] else 'changed'] += 1
+                previous[column] = value
+        points[name] = dict(rows=len(t['rows']), fields=fields, rows_sha256=stream.hexdigest(),
+                            source=t.get('source'), vintage=t.get('vintage'),
+                            native_resolution=t.get('native_resolution'), after_halt=t.get('after_halt', 0))
+    return dict(schema='FRANKIE_DAY_EXTERNAL_COMPUTATION_V1', trading_day=day, cutoff_ns=reader.cutoff,
+                points=points, missing=reader.body.get('missing', []),
+                rows_read=sum(p['rows'] for p in points.values()),
+                values_read=sum(f['values'] for p in points.values() for f in p['fields'].values()),
+                rule='every native row and field read without limits, filling, averaging, smoothing or normalization')
 
 
 class AsOfReader:
@@ -697,8 +744,8 @@ def search_series(reader):
         rows = t['rows']
         if where:
             rows = [r for r in rows if all(r[cols.index(k)] == v for k, v in where.items())]
-        known = [float(r[i]) for r in rows]
-        vals = [float(r[j]) if isinstance(r[j], (int, float)) and not isinstance(r[j], bool) else float('nan') for r in rows]
+        known = [r[i] for r in rows]
+        vals = [r[j] if isinstance(r[j], (int, float)) and not isinstance(r[j], bool) else None for r in rows]
         if known:
             out[name] = (known, vals)
         else:
@@ -717,7 +764,7 @@ def search_series(reader):
             except (TypeError, ValueError):
                 continue
             by.setdefault(r[s], ([], []))
-            by[r[s]][0].append(float(r[i]))
+            by[r[s]][0].append(r[i])
             by[r[s]][1].append(v)
         for st, (known, vals) in sorted(by.items()):
             out['weather.tmpf.' + st] = (known, vals)

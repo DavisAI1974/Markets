@@ -24,7 +24,7 @@ export ACTION RUN="${RUN:-}" DAY="${DAY:-}" WHERE="${WHERE:-}" ATTEMPT="${ATTEMP
 export REASON="${REASON:-}" COMMIT="${COMMIT:-}" DISK_FLOOR_GB="${DISK_FLOOR_GB:-100}" JOB="${JOB:-}" VERIFIED="${VERIFIED:-}"
 case "$RUN$DAY$WHERE$ATTEMPT$FILES$JOB" in *..*|*/*) echo "no .. or / in RUN DAY WHERE ATTEMPT FILES JOB" >&2; exit 2;; esac
 case "$ACTION" in
-  enable|queue|claim|export|import|release|status)
+  enable|queue|claim|export|import|release|status|coordinate)
     : "${CODE_ROOT:?CODE_ROOT (a staged checkout under /opt/frankie-box/code) required}"
     case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
     [ -f "$CODE_ROOT/deploy/aws/box/frankie_box_pod_root.py" ] || { echo "$CODE_ROOT holds no frankie_box_pod_root.py: stage a commit that has it" >&2; exit 2; }
@@ -32,8 +32,8 @@ case "$ACTION" in
     echo "code root $CODE_ROOT at $(git -C "$CODE_ROOT" rev-parse HEAD)"
     export PYTHONPATH="$CODE_ROOT" CODE_COMMIT="$(git -C "$CODE_ROOT" rev-parse HEAD)"
     exec nice -n 5 "$PY" -B "$CODE_ROOT/deploy/aws/box/frankie_box_pod_root.py" ;;
-  work|jobs|clean|reupload)
-    : "${COMMIT:?COMMIT (the ROOT's full commit) required}"
+  work|jobs|clean|reupload|renew|resume)
+    : "${COMMIT:?COMMIT (full ROOT commit) required}"
     case "$COMMIT" in *[!0-9a-f]*) echo "COMMIT must be a full hex commit" >&2; exit 2;; esac
     [ "${#COMMIT}" -eq 40 ] || { echo "COMMIT must be 40 hex characters" >&2; exit 2; }
     CODE="$ROOT/code/$COMMIT-pod-1/markets"

@@ -1,8 +1,12 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+**Implementation checkpoint:** See `HANDOFF_20261006_CHAT_RESET.md` for exact source-built status and remaining work. The final operating interface and real E2E are not complete.
+
 Finish the existing AWS workflow, run one real ROOT-to-finish end-to-end day, fix actual failures, then run the 30-day experiment. Use three CPU lanes and deliver new legal knowledge to Frankie as soon as each stage produces it.
 
 This dated runbook carries the agreed three-lane plan forward. It is the build and operating sequence for Codex; implementation comes next. AWS launch requires Greg’s explicit go.
+
+**Latest operating clarification (Greg, 2026-10-06): Pods are retired.** Run on the three AWS CPU lanes only. Legacy `pod_root` filenames are reused controller/worker code, not Pod launch instructions. Jev's old Pod dispatch is disabled; his blind comparison needs a CPU transport before an arm day can finish. Settle Granite with Greg after core wiring and before the final workflow and real E2E.
 
 ## Starting point
 
@@ -38,6 +42,8 @@ Three lanes is the launch architecture. A fourth lane is outside this build. Git
 2. **Connect stage knowledge across boxes.** Add a small publish/pull path using the existing brain and receipt contracts. Publish new legal knowledge immediately after each knowledge-producing stage. Make it available to Frankie before the next dependent calculation or discussion step, and to other active lanes at their next legal boundary. Record which knowledge version each stage consumed. Preserve causal and answer-wall restrictions; later or forbidden information must not enter an earlier decision. Transfer the small knowledge updates and coordination state without moving the large ROOT artifacts or introducing a shared journal filesystem.
 
 3. **Complete the existing search surface.** Wire the surfaces identified as unfinished: per-event INPUT fields, cross-transform pairs beyond the two existing combinations, other cells, conditions, additional targets, Dipole on search-only days, and claims. Use existing inventories to cover the full applicable surface. Carry results into the survivor selection, freeze and confirmation paths in the order required by the current spec. Feed any new legal knowledge from these stages into Frankie immediately.
+
+   **New discovery remains central (Greg, 2026-10-06):** Keep symbolic equation discovery and its ability to discover new nonlinear/multivariable mathematical relationships, alongside causal search and Frankie's novel findings. Counts-based evidence and acceptance must preserve that capability. Greg's averaging restriction concerns collapsing outputs from multiple runs into an average; it does not authorize changing equation-fitting mathematics. Preserve existing discovery/fitting mathematics and objectives, and retain individual run findings. A fixed set of pairwise tests does not fulfill this requirement. Scientific discovery and judgment remain with code, never Granite.
 
    **Single-occurrence findings (Greg, 2026-10-06):** Double-check the mathematics, source evidence, causal timing and scientific work. A finding that still checks out after one occurrence receives the same validity, certainty, survivor, teaching and knowledge treatment as a checked multi-occurrence finding. No rarity-based uncertainty label, confidence discount or minimum-occurrence gate. Counts remain descriptive; actual errors, contradictions or incomplete checks are judged on their merits. A day with no relevant occurrence supplies no new test and does not downgrade a checked finding. This supersedes the older R06 one-appearance promotion prohibition.
 

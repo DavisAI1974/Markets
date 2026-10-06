@@ -732,6 +732,10 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print):
                     release()
                     code = 0 if x is None else 3
                     break
+                if (x.get('readiness') or {}).get('remote'):
+                    # The remote holder runs the class in its original lane; the main worker never takes it.
+                    release()
+                    return 0
                 mine = (x['state'] == 'running' and x['seq'] == current and
                         (x.get('attempts') or [{}])[-1].get('pid') == os.getpid())
                 if not mine:
@@ -945,7 +949,26 @@ def _finish_day(run, e, code_root, commit, log):
     else:
         facts['teacher'] = dict(status='rows present', rows=str(X.rows_of(e)[0]))
 
-    if e['classroom_arm']:
+    if e['classroom_arm'] and os.environ.get('FRANKIE_LANE_MAILBOX'):
+        import frankie_box_lane_state as LS
+        while True:
+            lease = LS.request('class_take', settings=settings_of(run.a))
+            if not lease['waiting']:
+                break
+            time.sleep(15)
+        for f in lease['files']:
+            LS.restore_file(f, [X.ROOTS])
+        entry = dict(run=run.plan['run'], day=e['day'], settings=settings_of(run.a),
+                     plan_sha256=X.plan_digest(run.plan), slot_booking=run.slot_booking)
+        state, why, class_facts = class_day(entry, lease['previous'], lease['school_day'], code_root, commit, log)
+        facts['frankie'] = dict(status=state, reason=why)
+        if state != 'done':
+            return False, facts
+        c = Path(class_facts['classroom'])
+        LS.request('class_done', classroom=str(c), files=[LS.pack_file(c / name) for name in
+                   ('completion.json', 'history.json', 'post-grade.json', 'external-history.json', 'external-post-grade.json')
+                   if (c / name).is_file()])
+    elif e['classroom_arm']:
         # Greg's settled order: Frankie learns from ROOT + BOSS teacher BEFORE the search tests his resulting claims.
         facts['class_line'] = _after_root(run, e, code_root, commit, log)
         while True:
@@ -1009,6 +1032,8 @@ def _needs_finish(x, plans):
     ran on a Pod, before the whole-day rule, or its finish failed (retried once per worker start)."""
     if x['state'] != 'done' or (x.get('finish') or {}).get('state') == 'finished':
         return False
+    if str(x.get('where') or '').startswith('worker:'):
+        return False
     if 'pod:' in str(x.get('done_by') or '') or str(x.get('where') or '').startswith('pod:'):
         return False                                # its ROOT ran on a Pod: the day finishes in its Pod (never a box slot)
     if x['run'] not in plans:
@@ -1047,6 +1072,8 @@ def _sync_root(doc, x, plans):
     its own place when its runner is gone. Returns the change or None."""
     import frankie_box_experiment as X
     import frankie_box_root_claims as claims
+    if str(x.get('where') or '').startswith('worker:'):
+        return None  # retained day ownership survives a controller interruption
     if x['run'] not in plans:
         plans[x['run']] = _plan_of(x['run'])
     e = next((d for d in plans[x['run']].get('days') or [] if d['day'] == x['day']), None)

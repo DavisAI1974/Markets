@@ -891,7 +891,7 @@ def entries_before(brain, cycle, day=None):
         entry_day, cyc = parsed
         label = (f'{entry_day}-{cyc}' if cyc in DAY_KINDS else
                  f'{entry_day}-cycle-{cyc}' if entry_day else f'cycle-{cyc} (day not recorded)')
-        found.append(((entry_day or '', DAY_KINDS.get(cyc) or int(cyc)), label, manifest, d))
+        found.append(((entry_day or '', DAY_KINDS[cyc] if cyc in DAY_KINDS else int(cyc)), label, manifest, d))
     return [(label, manifest, d) for _, label, manifest, d in sorted(found, key=lambda x: x[0])]
 
 

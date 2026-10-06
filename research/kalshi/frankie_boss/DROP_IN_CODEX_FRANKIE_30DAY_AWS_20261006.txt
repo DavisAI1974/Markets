@@ -1,32 +1,26 @@
-DROP-IN FOR CODEX — FINISH FRANKIE 30-DAY AWS WORKFLOW
+DROP-IN — CONTINUE FRANKIE AWS WORKFLOW FROM COMMITTED CHECKPOINT
 
 Repo: DavisAI1974/Markets
 Branch: chatgpt/frankie-30day-aws-workflow-20261006
-Starting handoff tip: 9d355fac22131a84646a9583c5ea18c1a2ee9589
+Fetch the latest branch, verify tip/working tree, and preserve newer work. Attachments are unnecessary.
 
-Use these repository files:
-- research/kalshi/frankie_boss/CODEX_HANDOFF_FRANKIE_30DAY_AWS_20261006.md
-- research/kalshi/frankie_boss/Frankie_30Day_AWS_Runbook_20261006.md
+Read research/kalshi/frankie_boss/HANDOFF_20261006_CHAT_RESET.md FIRST.
+Then read the original AWS handoff, canonical SPEC-experiment-orchestrator.md, .claude/skills/experiment-orchestrator/SKILL.md, the dated runbook, Granite role and CLASSROOM_RULES_V3.json named there.
+Use the local context-engineering agent skill to keep a compact constraint list and focused source context.
 
-Read the repository handoff, spec and skill first:
-1. research/kalshi/frankie_boss/HANDOFF_20261006_AWS_WORKFLOW.md
-2. research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md
-3. .claude/skills/experiment-orchestrator/SKILL.md
-Then read the repository Codex handoff/runbook and the Granite role/classroom rules named there. Verify the current branch/tip and preserve newer work.
+This is a PARTIAL implementation checkpoint, not a working or E2E-verified workflow.
+AWS CPU boxes ONLY; Pods are retired, including the old Jev Pod path.
+Exactly two main r7i.8xlarge 16-CPU lanes plus one Linux r7i.4xlarge 16-CPU lane; 15 workers plus coordinator. Same box/lane ROOT to finish. Keep large evidence local and reuse existing queues, claims, receipts and day runner.
 
-Build the actual workflow now. Reuse the existing CPU ledger, held slots, FIFO queues, claims, receipts and day runner. Three lanes: two 16-core lanes on main r7i.8xlarge and one on Linux r7i.4xlarge. A day stays on its SAME box/lane from ROOT to completion.
+SETTLED SCIENCE: Keep new nonlinear/multivariable discovery and the existing symbolic discovery/fitting mathematics unchanged. Greg's averaging restriction means averaging outputs across runs; do not reinterpret it to redesign fitting objectives. A checked single-occurrence finding receives equal validity, certainty, survivor and teaching treatment after its math/science/source/timing work holds on double-check. No rarity penalties, minimum occurrences/days or hypothesis-only downgrade because rare. Each day needs its own causal 13-point external file; consecutive days may legitimately match fields. Preserve all retained records/fields, Frankie inputs/calcs/planes/adapters/replay/Memory A, and causal/answer walls.
 
-Finish in order: remote Linux ROOT-to-finish runner; minimal cross-box small-state knowledge publish/pull; full existing search surface; survivor/freeze/confirmation wiring; small Granite facilitator loop; three-lane launch entry point and real operating commands.
+REMAINING, IN ORDER:
+1. Finish/review Linux ROOT-to-finish recovery and small-state wiring; connect imported legal findings to actual learner inputs, not just consumed-version receipts. Search knowledge still needs actual findings; reused teacher knowledge/carry state and ownership recovery need completion.
+2. Complete the full existing search surface and symbolic discovery: per-event/native fields, cross-transform pairs, cells/conditions, additional targets, Dipole, scoped claims. The new surface helper is not connected. Correct conditional lag spacing; preserve fixed lag/scope for confirmation.
+3. Wire candidate/survivor batches and scientific double-checks, one-time freeze, then untouched 2024–2025 confirmation with applicable maker/taker costs; discovery is October 2021–2023. Publish legal knowledge immediately after each producing stage.
+4. Discuss/settle Granite with Greg before final workflow/E2E, then wire the bounded post-class facilitator. Candidate 3B Q4_K_M on local/free standard GitHub CPU, then small AWS CPU. No critic/self-assessment/scientific seat. No Pod execution.
+5. Wire Jev blind comparison on CPU, sealed claims, tests and immediate tested-knowledge publication; his old Pod handoff now reports waiting. No fourth experimental lane.
+6. Finish the actual three-lane launch and discovery/freeze/confirmation dependencies plus real launch/status/resume/stop commands. Audit old Pod workflow paths before dispatch.
+7. Only after wiring/Granite and Greg's explicit AWS go, run ONE real ROOT-to-finish E2E, fix actual failures, then run the 30 days only when authorized.
 
-Frankie gets new legal knowledge immediately after EVERY knowledge-producing stage, before his next dependent step. Refresh other lanes at the next legal boundary. Preserve causal and answer-wall rules. Keep large ROOT artifacts on the assigned box.
-
-Granite is a bounded active post-class facilitator, with no critic/self-assessment role. Start with 3B Q4_K_M on local/free standard GitHub CPU if adequate, then small AWS CPU. 8B only if the real E2E exposes quality problems; paid GPU fallback only, no standing GPU.
-
-Use the connected Aws MCP. It has run_script/call_boto3, AWS documentation search, guided workflow skills, S3 transfer and task-polling tools. In run_script, import aws_mcp and use help(aws_mcp) plus await aws_mcp.search_functions(...) to discover higher-level workflow helpers. Search documentation with topic agent_skills before retrieve_skill, and copy returned skill names exactly. See the handoff for details.
-
-Preserve Frankie's inputs/calcs/planes/adapters/replay/Memory A. Every retained MBO record/field must reach computation. No silent drops, arbitrary limits, averaging, smoothing or normalization. No fourth-lane work, validator framework, test farm or broad A/B.
-
-Finish wiring first. One real ROOT-to-finish E2E after Greg's explicit AWS go; fix actual failures, then launch 30 days when authorized. Read-only AWS/GitHub investigation is fine. Do not start instances or dispatch compute without Greg's explicit go.
-
-The new runbook, Codex handoff and this drop-in are repository documents under research/kalshi/frankie_boss/. The workflow build and E2E remain to implement. Proceed with implementation; keep this focused and practical.
-
+No instance starts, stage dispatches or compute launch without Greg's explicit AWS go. Read-only AWS/GitHub investigation is allowed. Use connected GitHub/Aws MCP per handoff. No validator/test farm/broad A/B. Source syntax checks passed; no real run, model run or AWS compute was executed. Push with [skip ci]. Do not claim runtime completion from source checks.

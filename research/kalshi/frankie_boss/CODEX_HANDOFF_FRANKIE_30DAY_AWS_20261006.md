@@ -1,5 +1,7 @@
 # Codex Handoff for Frankie 30 Day AWS Workflow 20261006
 
+**Latest checkpoint:** Read `HANDOFF_20261006_CHAT_RESET.md` first. It records the partially built implementation, settled discovery/averaging/single-occurrence decisions, retirement of Pods, and all remaining work. This original planning handoff is retained below; its old unimplemented-session status and Pod fallback wording do not describe the checkpoint. Granite must be settled with Greg before final workflow wiring/E2E.
+
 Build the existing workflow to completion using `research/kalshi/frankie_boss/Frankie_30Day_AWS_Runbook_20261006.md`. Greg wants a working experiment with three lanes, immediate delivery of new legal knowledge, and one real end-to-end day after wiring. Keep the scope to that work.
 
 ## Repository and first reads

@@ -404,6 +404,15 @@ def attached_day_file(ingest_dir):
     have = sha256_file(path)
     if have != want:
         return None, None, 'DIFFERS: %s has sha256 %s, its receipt names %s' % (path, have, want)
+    body = json.loads(path.read_bytes())
+    ingest_receipt = Path(ingest_dir) / 'ingestion-receipt.json'
+    if ingest_receipt.is_file():
+        expected_day = json.loads(ingest_receipt.read_bytes()).get('trading_day')
+        if body.get('trading_day') != expected_day:
+            return None, None, 'DIFFERS: external file trading day %s, ingest trading day %s' % (
+                body.get('trading_day'), expected_day)
+    from research.kalshi.frankie_boss.operations.frankie_day_external import check_day_file
+    check_day_file(body)
     return path, have, None
 
 
@@ -492,6 +501,7 @@ class Run:
         self._cpu = {}                     # (stage, key) -> the CPU ledger's line for the child: booked, waiting, refused
         self._map = None
         self._attached = {}
+        self._knowledge = {}
         self.queue_previous = None       # the class worker: (PREVIOUS, None, from) taken from the class line
         self.school_day = None           # the class worker: the class line's school-day number = the report number N
         sys.path.insert(0, str(self.box))
@@ -535,6 +545,10 @@ class Run:
                 status, fields['reason'] = 'waiting', '; '.join(c['line'] for c in waits)
             elif refusals and status == 'failed':  # the sizing rule refused the booking: the rule is the reason
                 fields['reason'] = '; '.join(c['line'] for c in refusals)
+        if status in FINISHED and os.environ.get('FRANKIE_LANE_MAILBOX'):
+            import frankie_box_lane_state as LS
+            LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage)
+        fields['knowledge_consumed'] = self._knowledge.pop((stage, key), None)
         body = dict(schema='FRANKIE_EXPERIMENT_STEP_V1', run=self.plan['run'], stage=stage, key=key, status=status,
                     at=time.time(), commit=self.commit, plan_sha256=plan_digest(self.plan),
                     directive_sha256=(self.plan.get('directive') or {}).get('sha256'), **fields)
@@ -574,6 +588,8 @@ class Run:
         logs = self.dir / 'logs'
         logs.mkdir(parents=True, exist_ok=True)
         log_path = logs / ('%s-%s.log' % (key, stage))
+        import frankie_box_lane_state as LS
+        self._knowledge[(stage, key)] = LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage)
         full = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), **{k: str(v) for k, v in env.items()})
         command = ['sh' if script.endswith('ingest_block.sh') else 'bash', str(self.box / script)]
         if stage in self.cores.DAY_RUN_STAGES:  # exactly 16 CPUs booked, the step under taskset -c <them> (frankie_box_cores.py)
@@ -684,6 +700,8 @@ class Run:
         if calc:
             sources = [calc / 'calculations-receipt.json', calc / 'work' / 'derive.json',
                        calc / 'work' / 'derivation-digest-full.md']
+            if (calc / 'external-computation.json').is_file():
+                sources.append(calc / 'external-computation.json')
             brain_entry = self.brain_stage(e['day'], 'root', sources,
                                            summary=dict(calculations=str(calc), role=e['role']))
             return self.record('root', e['day'], 'reused', calculations=str(calc), interrupted_attempts=attempts,
@@ -716,7 +734,9 @@ class Run:
         self.claim_end(e, output, sha256_file(output / 'calculations-receipt.json'), None)
         brain_entry = self.brain_stage(e['day'], 'root',
                                        [output / 'calculations-receipt.json', output / 'work' / 'derive.json',
-                                        output / 'work' / 'derivation-digest-full.md'],
+                                        output / 'work' / 'derivation-digest-full.md'] +
+                                       ([output / 'external-computation.json']
+                                        if (output / 'external-computation.json').is_file() else []),
                                        summary=dict(calculations=str(output), role=e['role'],
                                                     root_status=calc.get('status'),
                                                     producer_failures=calc.get('failure_count')))
@@ -732,6 +752,8 @@ class Run:
     def claim_root(self, e, output):
         """None (no claim store), (True, None, claim) when this box took the claim, or (False, why, holder)."""
         import frankie_box_root_claims as claims
+        if os.environ.get('FRANKIE_LANE_MAILBOX'):
+            return True, None, {'where': os.environ['FRANKIE_LANE_OWNER']}
         if not claims.active():
             return None
         run, day, me = self.plan['run'], e['day'], claims.this_box()
@@ -748,6 +770,8 @@ class Run:
 
     def claim_end(self, e, output, receipt_sha256, failure):
         import frankie_box_root_claims as claims
+        if os.environ.get('FRANKIE_LANE_MAILBOX'):
+            return  # central claim remains held through the entire remote day, including failures
         if not claims.active():
             return
         run, day, me = self.plan['run'], e['day'], claims.this_box()
@@ -1318,38 +1342,9 @@ class Run:
         if not material.is_file():
             return self.record('jev', day, 'failed', reason='no Jev material at %s' % material)
         stamp = jev_stamp(self.plan, e)
-        relay = ('frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_relay.sh variables="ACTION=material STAMP=%s '
-                 'DAY=%s DAY_ROLE=discovery MATERIAL=%s" presign="putrange:%s/clm-sidecar/%s/material:8"'
-                 % (stamp, day, material, JEV_BUCKET, stamp))
-        try:                                                                  # his report is JEV REPORT #N of the day
-            number = self.report_number(e)
-        except Exception as error:        # listed; the dispatch then carries no number (jev_report takes the next free one)
-            number = None
-            self.log('jev %s: no report number (%s: %s)' % (day, type(error).__name__, error))
-        pod = 'frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_pod.sh variables="STAMP=%s DAY=%s%s"' % (
-            stamp, day, ' REPORT_NUMBER=%d' % number if isinstance(number, int) else '')
-        after = ('frankie_box_run.yml script=deploy/aws/box/frankie_box_jev_relay.sh variables="ACTION=frankie STAMP=%s '
-                 'DAY=%s SESSION=%s" presign="putrange:%s/clm-sidecar/%s/frankie:8" (after his claims are filed)'
-                 % (stamp, day, calc, JEV_BUCKET, stamp))
-        dispatches = dict(pod=pod, frankie_outputs=after, material_relay=relay)
-        previous = self.receipt('jev', day)
-        if previous and previous.get('material_sent'):
-            return self.record('jev', day, HANDED_OFF, material_sent=True, stamp=stamp, material=str(material),
-                               dispatches=dispatches, reason='material relayed earlier; the Jev Pod is its own dispatch')
-        url_map, why = self.url_map()
-        slots = sorted(k for k in (url_map or {}) if k.startswith('put:clm-sidecar/%s/material/' % stamp))
-        if not slots:
-            return self.record('jev', day, HANDED_OFF, material_sent=False, stamp=stamp, material=str(material),
-                               dispatches=dispatches, reason='no material slots for %s in this dispatch (%s): relay it with '
-                               'the material_relay dispatch, then the Pod' % (stamp, why or 'not presigned'))
-        code, log = self.child('jev', day, 'frankie_box_jev_relay.sh', dict(ACTION='material', STAMP=stamp, DAY=day,
-                                                                            DAY_ROLE='discovery', MATERIAL=material))
-        if code != 0:
-            return self.record('jev', day, 'failed', exit_code=code, log=log, stamp=stamp, material=str(material),
-                               dispatches=dispatches, reason='the material relay failed (its log names why)')
-        return self.record('jev', day, HANDED_OFF, material_sent=True, exit_code=code, log=log, stamp=stamp,
-                           material=str(material), dispatches=dispatches,
-                           reason='material relayed; the Jev Pod cannot be started from the box: dispatch it (dispatches.pod)')
+        return self.record('jev', day, 'waiting', stamp=stamp, material=str(material),
+                           reason='Pods are retired; wire Jev blind comparison on an authorized CPU transport, '
+                                  'then seal/test his claims before publishing tested knowledge')
 
     def teacher(self, batch_key, entries):
         todo = [e for e in entries if rows_of(e)[0] is None]

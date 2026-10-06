@@ -74,6 +74,19 @@ run Frankie classroom, meeting, school retention or Jev unless the plan explicit
   the evidence while retaining its original teaching/math role.
 - **Survivors are cross-day.** They update at batch boundaries from already-completed discovery evidence; they do not
   block every individual day and are never built using confirmation days.
+- **New discovery is central (Greg, 2026-10-06).** Preserve symbolic equation discovery, including new nonlinear and
+  multivariable relationships, alongside the existing causal search and learner-generated discoveries. Daily runs must
+  be able to discover new mathematical relationships; a fixed catalogue of pairwise tests is not a substitute.
+  Discovery generates candidates. Scientific checking and acceptance assess those candidates without narrowing the
+  discovery capability. Greg's averaging restriction concerns collapsing outputs from multiple runs into an average;
+  it does not authorize changing equation-fitting mathematics. Preserve the existing discovery/fitting mathematics,
+  including its objectives, and retain individual run findings. Granite does not generate, select or judge
+  scientific discoveries. This clarification does not authorize compute or change the required discovery/freeze/
+  confirmation order.
+- **Pods are retired (Greg, 2026-10-06).** This experiment executes on the three AWS CPU lanes only. Do not create,
+  dispatch or revive RunPods, including the historical Jev Pod path. Legacy `pod_root` filenames identify reused
+  controller/worker code, not permission to use Pods. Jev's blind comparison still needs a CPU transport wired;
+  mark that dependency waiting until implemented. Settle Granite with Greg before final workflow wiring and E2E.
 - **Single-occurrence findings receive equal treatment (Greg, 2026-10-06).** One occurrence is just as valid and
   certain as multiple occurrences when its mathematics and science check out after the work is double-checked.
   Double-check the actual calculation, source evidence, timing/leakage and scientific test for the stated claim.

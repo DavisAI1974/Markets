@@ -76,6 +76,7 @@ CATALOG = (
     ('root', 'calculation-pins.json', INCLUDE, 'the whole-day calculation pin'),
     ('root', 'source-binding.json', INCLUDE, 'the sealed journal the calculations read'),
     ('root', 'calculations-receipt.json', INCLUDE, 'the calculations receipt'),
+    ('root', 'external-computation.json', INCLUDE, 'exact row/field consumption of the date-bound external file'),
     ('root', 'progress.json', INCLUDE, 'progress probe'),
     ('root', 'checkpoints.json', INCLUDE, 'progress checkpoints'),
     # CONFIG: the trading-day preparation, the principal inputs, the host configuration

@@ -55,7 +55,7 @@ WORK = ROOT / 'work'
 ROOTS = WORK / 'experiment-roots'
 REPO = 'https://github.com/DavisAI1974/Markets.git'
 JOB_SCHEMA = 'FRANKIE_POD_ROOT_JOB_V1'
-ACTIVE = ('accepted', 'setup', 'inputs', 'root', 'scratch', 'ship')
+ACTIVE = ('accepted', 'setup', 'inputs', 'root', 'finish', 'coordinate', 'scratch', 'ship')
 CLEANABLE = ('uploaded', 'failed_setup', 'failed_inputs', 'failed_gate', 'failed_ship', 'interrupted', 'refused')
 PRODUCERS_BRANCH = 'ccode/frankie-receiver-feed-20260916'
 PRODUCERS_COMMIT = '2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134'
@@ -249,6 +249,10 @@ def validate(job):
     if job['role'] == 'confirmation' and 'frozen_survivors' not in roles:
         raise ValueError('a confirmation day needs the frozen survivor list')
     out = job.get('out') or {}
+    if job.get('workflow') == 'root-to-finish':
+        if not job.get('plan') or not job.get('mailbox') or job['data_workers'] != 15:
+            raise ValueError('held Linux day requires plan, mailbox and exactly 15 workers')
+        return
     if not out.get('chunk_urls') or not out.get('manifest_url'):
         raise ValueError('out.chunk_urls and out.manifest_url required')
 
@@ -291,6 +295,8 @@ def accept(job):
     busy = {}
     for d in JOBS.iterdir():
         s = state_of(d.name)
+        if s and read_json(d / 'job.json').get('workflow') == 'root-to-finish' and s.get('state') != 'day_complete':
+            return None, 'refused: held Linux day %s must finish/resume on this lane first' % d.name
         if s and s.get('state') in ACTIVE and job_alive(d.name, s):
             busy[s.get('slot')] = s
             if s.get('day') == job['day']:
@@ -324,6 +330,7 @@ def public(job):
     for f in j.get('inputs') or []:
         for p in f.get('parts') or []:
             p.pop('url', None)
+    j.pop('mailbox', None)
     j['out'] = dict(chunks=len((j.get('out') or {}).get('chunk_urls') or []))
     return j
 
@@ -368,6 +375,8 @@ def gate(job):
         return 'no day file beside the sealed ingest'
     want = read_json(receipt).get('sha256')
     have = T.sha256_file(path)
+    if read_json(path).get('day', read_json(path).get('trading_day')) != job['day']:
+        return 'the attached 13-point file belongs to a different trading day'
     if have != want or (job.get('day_external_sha256') and have != job['day_external_sha256']):
         return 'day-external.json sha256 %s, its receipt %s, the box %s' % (have, want, job.get('day_external_sha256'))
     receipt_path = Path(job['ingestion_receipt'])
@@ -400,6 +409,8 @@ def ship(job_id, job):
     """Pack the ROOT directory and the Pod's evidence, upload the chunks, then the manifest."""
     d = JOBS / job_id
     s = state_of(job_id)
+    if job.get('workflow') == 'root-to-finish':
+        raise ValueError('Linux day evidence remains on its assigned box; never shipped')
     output = ROOTS / job['name']
     evidence = d / 'pod'
     if evidence.exists():
@@ -464,6 +475,14 @@ def run_job(job_id):
         freed = remove(created)
         set_state(job_id, 'failed_inputs', detail='%s: %s' % (type(e).__name__, e), inputs_deleted=freed)
         return 1
+    if job.get('workflow') == 'root-to-finish':
+        # Retained Linux days use the common runner and never enter the legacy ship/clean path.
+        try:
+            return run_full_day(job_id, job, code)
+        except (Exception, SystemExit) as error:
+            set_state(job_id, 'failed_finish', detail='%s: %s; same-box claim retained for resume' % (
+                type(error).__name__, error))
+            return 1
     output = ROOTS / job['name']
     if output.exists():
         freed = remove(created)
@@ -504,6 +523,67 @@ def run_job(job_id):
     return 0
 
 
+def run_full_day(job_id, job, code):
+    """Linux worker: common Run/queue day runner, one CPU-ledger booking through the last applicable stage."""
+    import argparse
+    sys.path.insert(0, str(code / 'deploy/aws/box'))
+    import frankie_box_experiment as X
+    import frankie_box_frankie_queue as Q
+    import frankie_box_lane_state as LS
+    import frankie_box_cores as C
+    d = JOBS / job_id
+    mailbox = d / 'mailbox.json'
+    if not mailbox.exists():
+        write_json(mailbox, job['mailbox'], mode=0o600)
+    os.environ.update(FRANKIE_LANE_MAILBOX=str(mailbox), FRANKIE_LANE_OWNER=job['where'],
+                      FRANKIE_LANE_RUN=job['run'], FRANKIE_LANE_DAY=job['day'])
+    # Requests use the job state so the existing controller sees and services them.
+    raw_request = LS.request
+    def request(op, **payload):
+        set_state(job_id, 'coordinate', detail=op)
+        try:
+            return raw_request(op, **(dict(run=job['run'], where=job['where'], day=job['day']) | payload))
+        finally:
+            set_state(job_id, 'finish', detail='continuing on the held day lane')
+    LS.request = request
+    plan = job['plan']
+    plan_path = X.RUNS / job['run'] / 'plan.json'
+    if plan_path.exists() and json.loads(plan_path.read_bytes()) != plan:
+        raise ValueError('different retained plan; not overwritten')
+    plan_path.parent.mkdir(parents=True, exist_ok=True)
+    write_json(plan_path, plan)
+    e = next(e for e in plan['days'] if e['day'] == job['day'])
+    entry = dict(run=job['run'], day=job['day'], settings=job['settings'], plan_sha256=X.plan_digest(plan))
+    booking, reason = Q._book_slot(entry, 'remote-day', job['commit'])
+    if booking is None:
+        set_state(job_id, 'failed_finish', detail='CPU ledger: ' + str(reason))
+        return 1
+    set_state(job_id, 'finish', slot_booking=booking, cpus=C.held_booking(booking)[0]['cpus'])
+    try:
+        run = X.Run(argparse.Namespace(**dict(Q.SETTINGS, **job['settings'])), plan, code, job['commit'],
+                    log=lambda message: log(d, message))
+        run.slot_booking = booking
+        for stage in ('ingest', 'external', 'root'):
+            r = run.guarded(stage, e)
+            if not r or r['status'] not in X.FINISHED:
+                raise RuntimeError('%s: %s' % (stage, r))
+        ok, facts = Q._finish_day(run, e, code, job['commit'], run.log)
+        if not ok:
+            raise RuntimeError('day finish: %s' % facts)
+        root = run.receipt('root', job['day'])
+        LS.boundary(job['day'], 'complete')
+        LS.request('day_done', calculations=root['calculations'], receipt_sha256=root['receipt_sha256'],
+                   receipts=[LS.pack_file(p) for p in sorted(run.dir.glob('days/%s/*.json' % job['day']))])
+        set_state(job_id, 'day_complete', calculations=root['calculations'], facts=facts,
+                  detail='complete on original Linux box; ROOT and journal retained here')
+        return 0
+    except (Exception, SystemExit) as error:
+        set_state(job_id, 'failed_finish', detail='%s: %s; same-box claim retained for resume' % (type(error).__name__, error))
+        return 1
+    finally:
+        Q._release_slot(booking, 'remote day complete or stopped with retained receipts')
+
+
 def reupload(job_id, out):
     s = state_of(job_id)
     if not s or s.get('state') not in ('failed_ship', 'interrupted', 'uploaded'):
@@ -524,6 +604,9 @@ def reupload(job_id, out):
 
 
 def clean(job_id, verified):
+    if read_json(JOBS / job_id / 'job.json').get('workflow') == 'root-to-finish':
+        return 'refused: Linux day evidence stays on its assigned box'
+
     """After the box verified its import (or a failed job): the ROOT, the chunks and the evidence copy removed from this
     machine; the job's state and logs stay (small), its presigned URLs are dropped."""
     s = state_of(job_id)
@@ -552,10 +635,15 @@ def listing():
     out = []
     for d in sorted(JOBS.iterdir()) if JOBS.is_dir() else ():
         s = state_of(d.name) or {}
+        pending = d / 'rpc-pending.json'
+        rpc = read_json(pending) if pending.is_file() else {}
+        if rpc.get('waiting') and rpc.get('uploaded', True) and job_alive(d.name, s):
+            s = dict(s, state='coordinate')
         out.append({k: s.get(k) for k in ('job_id', 'day', 'run', 'state', 'updated', 'detail', 'slot', 'root_exit',
                                           'root_seconds', 'root_status', 'root_max_rss_kb', 'inputs_deleted', 'chunks',
-                                          'bytes', 'compressed', 'freed')}
-                   | dict(pid_alive=job_alive(d.name, s) if s.get('state') in ACTIVE else None))
+                                          'bytes', 'compressed', 'freed', 'calculations', 'slot_booking')}
+                   | dict(pid_alive=job_alive(d.name, s),
+                          workflow=read_json(d / 'job.json').get('workflow')))
     return out
 
 
@@ -665,8 +753,28 @@ def main():
     elif mode == 'reupload':
         m = json.loads(T.get_bytes(os.environ['MAP_URL']))
         print('POD_ROOT_RESULT ' + json.dumps(dict(action='reupload', result=reupload(os.environ['JOB'], m['out']))))
+    elif mode in ('renew', 'resume'):
+        job_id = os.environ['JOB']
+        d = JOBS / job_id
+        job = read_json(d / 'job.json')
+        if job.get('workflow') != 'root-to-finish':
+            raise SystemExit('renew/resume applies only to the Linux held-day workflow')
+        m = json.loads(T.get_bytes(os.environ['MAP_URL']))
+        write_json(d / 'mailbox.json', m['mailbox'], mode=0o600)
+        if mode == 'resume':
+            state = state_of(job_id) or {}
+            if job_alive(job_id, state) or state.get('state') == 'day_complete':
+                raise SystemExit('a live/completed day cannot be resumed')
+            for other in listing():
+                if other['job_id'] != job_id and other.get('pid_alive'):
+                    raise SystemExit('another day owns this Linux lane')
+            write_json(d / 'rpc-pending.json', dict(waiting=False))
+            pid = launch(job_id)
+        else:
+            pid = None
+        print('POD_ROOT_RESULT ' + json.dumps(dict(action=mode, job_id=job_id, renewed=True, pid=pid)))
     else:
-        raise SystemExit('mode serve | work | job <id> | jobs | clean | reupload')
+        raise SystemExit('mode serve | work | job <id> | jobs | clean | reupload | renew | resume')
 
 
 if __name__ == '__main__':

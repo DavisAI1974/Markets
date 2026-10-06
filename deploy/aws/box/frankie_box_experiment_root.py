@@ -93,14 +93,16 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
     container = dict(path=str(journal), bytes=receipt['journal_bytes'], sha256=receipt['journal_sha256'],
                      count=receipt['journal_count'], head=receipt['journal_hash'])
     # Frankie's 13 historical points attached beside the sealed ingest (FRANKIE_DAY_EXTERNAL_V1, Greg 2026-09-29):
-    # named with its sha256 in the binding and the calculations receipt; the ROOT does not read it (the search and the
-    # teachers do), and its absence is listed, never a reason to stop the day.
+    # read through the same as-of reader as the search/teachers, with every table field counted exactly.
     ext_path, ext_receipt = directory / 'day-external.json', directory / 'day-external-receipt.json'
     if ext_path.is_file() and ext_receipt.is_file():
         want = json.loads(ext_receipt.read_bytes())
         have = _sha256_file(ext_path)
         if have != want.get('sha256'):
             raise ValueError('day-external.json beside the ingest differs from its receipt')
+        from research.kalshi.frankie_boss.operations.frankie_day_external import AsOfReader, computation_receipt
+        body = json.loads(ext_path.read_bytes())
+        external_computation = computation_receipt(AsOfReader(body, body['halt_ns']), day)
         external = dict(status='attached', path=str(ext_path), sha256=have, bytes=ext_path.stat().st_size,
                         receipt=str(ext_receipt), receipt_sha256=_sha256_file(ext_receipt), s3_key=want.get('s3_key'),
                         missing=len(want.get('missing') or []))
@@ -127,6 +129,8 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
                    journal_hash=receipt['journal_hash'], day_role=day_role, partial_members=partial_members,
                    tail_members=tail_members, opening_book=opening_book, external=external)
     save_new(output / 'source-binding.json', binding)
+    if external['status'] == 'attached':
+        save_new(output / 'external-computation.json', external_computation)
     from frankie_box_boss_session import Session
     session = Session(output, day, '00', None)
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
@@ -146,6 +150,8 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
                 not_run=[dict(process=k, reason='switched off for the experiment (Greg, 2026-09-29)')
                          for k, v in (result.get('root_processes') or {}).items() if v == 'skipped'],
                 failure_count=failures, opening_book=opening_book, external=external,
+                external_computation=witness(output / 'external-computation.json')
+                if external['status'] == 'attached' else None,
                 failures_note=(None if not failures else 'records a producer could not use; each listed with its index '
                                'and error in derive.json / work/derived/.rows/failures.jsonl; every other record calculated'),
                 model_calls=0, source_replays=0, source_writes=0,

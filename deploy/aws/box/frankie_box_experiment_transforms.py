@@ -19,20 +19,25 @@ counted by `unclassified`, never filled in.
 These are orientation for the search; the finding stays counts per pair, cell, lag and day (D37).
 """
 import heapq
+import math
 
 import numpy as np
 
 
 def _steps(values):
     """First differences with NaN (unknown) kept as NaN."""
-    v = np.asarray(values, dtype=np.float64)
-    return np.diff(v)
+    v = np.asarray(values, dtype=object)
+    return np.asarray([b - a if finite(a) and finite(b) else None
+                       for a, b in zip(v[:-1], v[1:])], dtype=object)
+
+
+def finite(value):
+    return isinstance(value, (int, bool, np.integer)) or \
+        isinstance(value, (float, np.floating)) and math.isfinite(value)
 
 
 def _sign(d):
-    s = np.sign(d)
-    s[~np.isfinite(d)] = 0
-    return s.astype(np.int8)
+    return np.asarray([(1 if x > 0 else -1 if x < 0 else 0) if finite(x) else 0 for x in d], dtype=np.int8)
 
 
 class _RunningLowerMedian:
@@ -86,9 +91,9 @@ def magnitude_class(values):
     med = _RunningLowerMedian()
     for i in range(d.size):
         x = d[i]
-        if not np.isfinite(x) or x == 0:
+        if not finite(x) or x == 0:
             continue
-        a = abs(float(x))
+        a = abs(x)
         if len(med):
             m = med.median()
             out[i] = 1 if a > m else (-1 if a < m else 0)
@@ -101,15 +106,14 @@ def level_crossing(values):
     DOWN, 0 otherwise. The side of row j is the sign of (value[j] - median of the known values before row j); a crossing
     is a side that differs from the last non-zero side. Step i reports the crossing at row i+1; row 0 has no earlier
     value, so the first side is set at the first row with an earlier known value and no crossing is reported for it."""
-    v = np.asarray(values, dtype=np.float64)
+    v = np.asarray(values, dtype=object)
     out = np.zeros(max(v.size - 1, 0), dtype=np.int8)
     med = _RunningLowerMedian()
     last_side = 0
     for j in range(v.size):
         x = v[j]
-        if not np.isfinite(x):
+        if not finite(x):
             continue
-        x = float(x)
         if len(med):
             m = med.median()
             side = 1 if x > m else (-1 if x < m else 0)
@@ -127,7 +131,7 @@ def acceleration(values):
     d = _steps(values)
     out = np.zeros(d.size, dtype=np.int8)
     if d.size > 1:
-        out[1:] = _sign(np.diff(d))
+        out[1:] = _sign(_steps(d))
     return out
 
 
@@ -142,6 +146,6 @@ TRANSFORMS = {
 
 def unclassified(values, steps):
     """Steps a transform left at 0 because an input was unknown (NaN on either side): listed per series, never filled."""
-    v = np.asarray(values, dtype=np.float64)
-    unknown = ~(np.isfinite(v[:-1]) & np.isfinite(v[1:]))
+    v = np.asarray(values, dtype=object)
+    unknown = np.asarray([not (finite(a) and finite(b)) for a, b in zip(v[:-1], v[1:])], dtype=bool)
     return int(np.count_nonzero(unknown & (np.asarray(steps) == 0)))

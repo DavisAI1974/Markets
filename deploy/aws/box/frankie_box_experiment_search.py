@@ -87,30 +87,45 @@ def unpack_spool(path):
 
 
 def columns(rows, time_key):
-    """{column: list} for a spool, whole: numeric columns kept as float (None -> NaN), text columns kept as text,
-    anything else (lists, dicts) listed by name as not searched. Returns (numeric, text, other, count)."""
+    """Every scalar leaf of a spool, including all list positions; integers remain exact Python integers."""
     numeric, text, other, count = {}, {}, set(), 0
+    def flatten(value, prefix=''):
+        if isinstance(value, dict) and value:
+            for k, v in value.items():
+                yield from flatten(v, prefix + ('.' if prefix else '') + str(k))
+        elif isinstance(value, (list, tuple)) and value:
+            for i, v in enumerate(value):
+                yield from flatten(v, '%s[%d]' % (prefix, i))
+        elif isinstance(value, (bytes, bytearray)):
+            yield prefix + '.byte_length', len(value)
+            yield prefix + '.bytes_integer', int.from_bytes(value, 'big')
+        elif isinstance(value, (dict, list, tuple)):
+            yield prefix, json.dumps(value, sort_keys=True)
+        elif value is None or isinstance(value, (bool, int, float, str)):
+            yield prefix, value
+        else:
+            raise TypeError('unhandled retained field %s: %s' % (prefix, type(value).__name__))
     for row in rows:
+        leaves = list(flatten(row))
+        row = dict(leaves)
+        if len(row) != len(leaves):
+            raise ValueError('retained nested field names collide; no field may be silently overwritten')
         for key, value in row.items():
-            if isinstance(value, bool):
-                value = float(value)
             if isinstance(value, (int, float)) or value is None:
-                numeric.setdefault(key, [float('nan')] * count)
+                numeric.setdefault(key, [None] * count)
             elif isinstance(value, str):
                 text.setdefault(key, [None] * count)
             else:
-                other.add(key)
+                raise TypeError('unhandled field %s' % key)
         for key in numeric:
             v = row.get(key)
-            numeric[key].append(float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else
-                                (float(v) if isinstance(v, bool) else float('nan')))
+            numeric[key].append(v if isinstance(v, (int, float)) else None)
         for key in text:
             v = row.get(key)
             text[key].append(v if isinstance(v, str) else None)
         count += 1
-    for key in list(text):
-        if key in numeric:                      # a column seen with both kinds is kept as text, listed
-            other.add(key + ' (mixed numeric/text)')
+    for key in set(text) & set(numeric):
+        other.add(key + ' (mixed kinds: numeric and text channels both retained)')
     return numeric, text, sorted(other), count
 
 
@@ -124,18 +139,14 @@ def sha256_file(path):
 
 def asof_values(con, axis_t, known_at, values):
     """The ONE alignment used for every series and by its leakage gate: for each axis time, the value of the source row
-    with the largest known_at <= that time (ties: the later row), via DuckDB ASOF. NaN where nothing is known yet."""
+    with the largest known_at <= that time (ties: the later row). Integer stamps remain exact;
+    None where nothing is known yet, and native values are retained without a float conversion."""
     import numpy as np
-    import pyarrow as pa
-    known_at = np.asarray(known_at, dtype=np.float64)
-    order = np.argsort(known_at, kind='stable')
-    con.register('q', pa.table({'g': np.arange(len(axis_t), dtype=np.int64), 't': np.asarray(axis_t, dtype=np.float64)}))
-    con.register('src', pa.table({'k': known_at[order], 'r': np.arange(len(order), dtype=np.int64),
-                                  'v': np.asarray(values, dtype=np.float64)[order]}))
-    out = con.execute('SELECT src.v FROM q ASOF LEFT JOIN src ON q.t >= src.k ORDER BY q.g').fetchnumpy()
-    con.unregister('q')
-    con.unregister('src')
-    return np.asarray(out['v'], dtype=np.float64)
+    valid = [i for i, t in enumerate(known_at) if isinstance(t, (int, np.integer))]
+    order = sorted(valid, key=lambda i: known_at[i])  # stable ties: the last published row
+    times = np.asarray([known_at[i] for i in order], dtype=np.int64)
+    positions = np.searchsorted(times, np.asarray(axis_t, dtype=np.int64), side='right') - 1
+    return np.asarray([values[order[i]] if i >= 0 else None for i in positions], dtype=object)
 
 
 def build_series(day_dir, log):
@@ -151,11 +162,11 @@ def build_series(day_dir, log):
     f_num, f_text, f_other, n = columns(unpack_spool(frames_path), 'ts_recv_ns')
     sources.append(dict(source='frames', path=str(frames_path), rows=n, sha256=sha256_file(frames_path),
                         numeric=sorted(f_num), text=sorted(f_text), not_searched=f_other))
-    recv = np.asarray(f_num.pop('ts_recv_ns'), dtype=np.float64)
-    axis = np.fmax.accumulate(np.nan_to_num(recv, nan=-np.inf))        # the running maximum: clocks can go backwards
+    recv = np.asarray(f_num.pop('ts_recv_ns'), dtype=np.int64)
+    axis = np.maximum.accumulate(recv)  # exact nanoseconds; no loss of ordering above 2**53
     backwards = int(np.count_nonzero(np.diff(recv) < 0))
     notes.append(dict(axis='F_LAST group closes', groups=n, receive_clock_steps_backwards=backwards))
-    series = {'frames.' + k: np.asarray(v, dtype=np.float64) for k, v in f_num.items()}
+    series = {'frames.' + k: np.asarray(v, dtype=object) for k, v in f_num.items()}
     text_cols = {'frames.' + k: v for k, v in f_text.items()}
     con = duckdb.connect()
 
@@ -163,13 +174,12 @@ def build_series(day_dir, log):
 
     def asof(name, known_at, values_by_col):
         """Place a source on the axis with asof_values; its leakage gate runs first, on its first numeric column."""
-        first = next(iter(values_by_col))
-        gate = leakage_gate(con, name, known_at, values_by_col[first])
-        gates.append(gate)
-        if gate['passed'] is False:
-            notes.append(dict(source=name, excluded='failed the leakage gate; not placed, not searched'))
-            return
         for key, values in values_by_col.items():
+            gate = leakage_gate(con, name + '.' + key, known_at, values)
+            gates.append(gate)
+            if gate['passed'] is False:
+                notes.append(dict(source=name, field=key, excluded='failed the leakage gate'))
+                continue
             series[name + '.' + key] = asof_values(con, axis, known_at, values)
 
     for spool, time_key in (('structures', 'ts_recv_ns'), ('prices', 'ts_recv')):
@@ -180,11 +190,11 @@ def build_series(day_dir, log):
         num, text, other, count = columns(unpack_spool(path), time_key)
         sources.append(dict(source=spool, path=str(path), rows=count, sha256=sha256_file(path),
                             numeric=sorted(num), text=sorted(text), not_searched=other))
-        known = np.asarray(num.pop(time_key), dtype=np.float64)
+        known = num.pop(time_key)
         num.pop('ts_event_ns', None), num.pop('ts_event', None)
         asof(spool, known, num)
-        for k in text:
-            notes.append(dict(source=spool, text_column=k, placed='not placed as a cell (asof of text is the next step)'))
+        for k, values in text.items():
+            text_cols[spool + '.' + k] = asof_values(con, axis, known, values).tolist()
     inputs = sorted(rows_dir.glob('input-*.jsonl'))
     if len(inputs) > 1:
         raise SystemExit('%d INPUT spools in %s (%s): the same records twice would be counted twice (duplicate data '
@@ -205,7 +215,7 @@ def build_series(day_dir, log):
             if isinstance(flags, int) and flags & F_LAST:
                 for k in set(counts) | set(open_group):
                     counts.setdefault(k, [0.0] * groups).append(float(open_group.get(k, 0)))
-                known.append(float(record.get('ts_recv')) if record.get('ts_recv') is not None else float('nan'))
+                known.append(record.get('ts_recv'))
                 groups += 1
                 open_group = {}
         sources.append(dict(source='events', path=str(inputs[0]), rows=records, groups=groups, sha256=sha256_file(inputs[0]),
@@ -214,7 +224,7 @@ def build_series(day_dir, log):
                                                   note='records after the last F_LAST close belong to no closed group; counted here, not placed')))
         if groups:
             counts['total'] = [float(sum(counts[k][g] for k in counts if not k.endswith('_size'))) for g in range(groups)]
-            asof('events', np.asarray(known, dtype=np.float64), counts)
+            asof('events', known, counts)
     else:
         notes.append(dict(source='events', missing=str(rows_dir / 'input-*.jsonl')))
     dipole_paths = sorted((day_dir / 'run' / 'execution').glob('cycle-*/host-dipole-classroom-source*.json')) + \
@@ -232,21 +242,21 @@ def build_series(day_dir, log):
         states = {name: {} for name in names}
         known = []
         for row in rows:
-            known.append(float(row['ts_recv_ns']))
+            known.append(row['ts_recv_ns'])
             by_name = {c['name']: c for c in row.get('components') or ()}
             for name in names:
                 c = by_name.get(name) or {}
                 state = str(c.get('state'))
                 states[name][state] = states[name].get(state, 0) + 1
                 v = c.get('value')
-                values[name].append(float(v) if state == 'PRESENT' and isinstance(v, (int, float)) else float('nan'))
+                values[name].append(v if state == 'PRESENT' and isinstance(v, (int, float)) else None)
         sources.append(dict(source='dipole', path=str(dipole_paths[0]), rows=len(rows), sha256=hashlib.sha256(raw).hexdigest(),
                             schema=source.get('schema'), through_cursor=source.get('through_cursor'),
                             components=names, states_per_component=states,
                             note="the teacher's Dipole measurements (JournalTeacherR3), one row per context cursor; a value "
                                  'only where the state is PRESENT, the other states counted here'))
         if rows:
-            asof('dipole', np.asarray(known, dtype=np.float64), values)
+            asof('dipole', known, values)
     else:
         notes.append(dict(source='dipole', missing=str(day_dir / 'run' / 'execution' / 'cycle-*' / 'host-dipole-classroom-source*'),
                           reason='no launch ran for this day (only the classroom-arm days have the teacher\'s Dipole rows)'))
@@ -257,7 +267,7 @@ def build_series(day_dir, log):
         per = flow.get('per_second') or []
         sources.append(dict(source='legacy_native_signed_flow', path=str(flow_path), rows=len(per), sha256=sha256_file(flow_path)))
         if per:
-            known = np.asarray([(p['second'] + 1) * 1e9 for p in per], dtype=np.float64)   # second s known at s+1
+            known = [(p['second'] + 1) * 10**9 for p in per]   # second s known at s+1
             asof('signed_flow', known, {'buy': [p.get('buy') for p in per], 'sell': [p.get('sell') for p in per]})
     else:
         notes.append(dict(source='legacy_native_signed_flow', missing=str(flow_path)))
@@ -267,7 +277,7 @@ def build_series(day_dir, log):
         first = roll.get('first_second')
         sources.append(dict(source='legacy_per_second_roll20', path=str(roll_path), rows=len(values), sha256=sha256_file(roll_path)))
         if values and first is not None:
-            known = np.asarray([(first + i + 1) * 1e9 for i in range(len(values))], dtype=np.float64)
+            known = [(first + i + 1) * 10**9 for i in range(len(values))]
             asof('roll20', known, {'value': [float('nan') if v is None else v for v in values]})
     else:
         notes.append(dict(source='legacy_per_second_roll20', missing=str(roll_path)))
@@ -286,13 +296,13 @@ def build_series(day_dir, log):
                             receipt=str(external_receipt) if external_receipt.is_file() else None,
                             series=sorted(ext), absent=absent, missing=body.get('missing')))
         for name, (known, values) in sorted(ext.items()):
-            asof('external.' + name, np.asarray(known, dtype=np.float64), {'value': values})
+            asof('external.' + name, known, {'value': values})
     else:
         notes.append(dict(source='external', missing=str(external),
                           reason="no day file of Frankie's 13 points beside the ingest (frankie_box_day_external.sh)"))
     cells, unused = {}, []
     for k, v in text_cols.items():
-        (cells.__setitem__(k, v) if k.endswith(CELL_NAMES) else unused.append(k))
+        cells[k] = v
     notes.append(dict(cells_not_yet_used=unused))
     log('series: %d on %d groups (%d receive-clock steps backwards), %d cell columns' % (len(series), n, backwards, len(cells)))
     return axis, series, cells, sources, notes, gates
@@ -304,9 +314,10 @@ def leakage_gate(con, source, known_at, values):
     spread over the source, each the last row of its timestamp (rows known at the same instant are not "later")."""
     import numpy as np
     from odcore.leakage import assert_no_leakage
-    order = np.argsort(np.asarray(known_at, dtype=np.float64), kind='stable')
-    ts = np.asarray(known_at, dtype=np.float64)[order]
-    p = np.asarray(values, dtype=np.float64)[order]
+    valid = [i for i, t in enumerate(known_at) if isinstance(t, (int, np.integer))]
+    order = sorted(valid, key=lambda i: known_at[i])
+    ts = np.asarray([known_at[i] for i in order], dtype=np.int64)
+    p = np.asarray([values[i] for i in order], dtype=object)
     n = len(p)
     last_of_time = np.nonzero(np.append(ts[1:] != ts[:-1], True))[0]
     if n < 2 or last_of_time.size < 2:
@@ -315,7 +326,7 @@ def leakage_gate(con, source, known_at, values):
 
     def signal_at(i, ts_, p_, bv_, sv_):
         v = asof_values(con, [ts_[i]], bv_, p_)[0]
-        return None if np.isnan(v) else float(v)
+        return v
     passed, fails = assert_no_leakage(signal_at, ts, p, ts.copy(), np.zeros(n), idxs)
     return dict(source=source, passed=bool(passed), checked=len(idxs), fails=len(fails),
                 fail_rows=[dict(row=int(i), clean=a, scrambled=b) for i, a, b in fails])
@@ -376,7 +387,8 @@ def _step_job(args):
 
 def y_transforms(tx):
     """The y-side transforms paired with x under tx: the same transform, and the direction of y (sign_of_step)."""
-    return (tx,) if tx == 'sign_of_step' else (tx, 'sign_of_step')
+    import frankie_box_experiment_transforms as T
+    return tuple(T.TRANSFORMS)
 
 
 def _cell_job(args):
