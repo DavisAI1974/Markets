@@ -1,5 +1,113 @@
 # CCode assignment — next pre-#5 source tasks
 
+## Expanded assignment from Greg — latest ownership, after `7d10fa5`
+
+Greg: "give CCode as much as you can so we can preserve your usage" (2026-10-06).
+This section supersedes the older ownership allocations below for the named files/tasks.
+Fetch the CURRENT `ccr-5fce7de3-xa4hfg` HEAD; `7d10fa5` is the inspected base, not a reset target.
+Read `NEW_CHAT_HANDOFF_20261006_TEACHER_COVERAGE.md` first. Work on a separate branch from
+the refreshed tip, preserving newer commits. Return atomic `[skip ci]` commits for integration.
+This is an assignment prepared for Greg to pass to CCode, not a claim CCode has received or begun it.
+
+Codex retains only the immediate raw-placeholder projection repair in `frankie_box_experiment_dipole.py`,
+its description in `frankie_box_experiment_search.py`, and the current continuation/assignment documents.
+Do not edit those two modules concurrently. Read their latest V3 route before wiring consumers.
+CCode takes the remaining pre-#5 implementation queue below, including the shared caller files
+previously reserved for Codex. Codex will review/integrate the returned work instead of duplicating it.
+
+### A. Finish discovery-day delivery and BOTH-seat arithmetic first
+
+Own `deploy/aws/box/frankie_box_teacher_knowledge.py`, `frankie_box_experiment_exchange.py`,
+the existing scientific_teacher/candidate_claims modules, their launcher, and your Step #4 report.
+
+- In `teach_accumulated`, remove the blanket discovery-day candidate exclusion at the existing
+  origin-day check only after tracing its frozen-selection/retry contract. Let the existing reader
+  produce origin evidence from the owner's complete source-bound search parts. Preserve all original
+  claim IDs, part hashes, ordinals, raw-line hashes and already-frozen inputs. No artifact rewrite or rerun.
+- `e61a382` is integrated: do not repeat its exact-origin or origin-before-mirror repair.
+  Consume that current contract, including reversed discovery rows and explicit missing-origin entries.
+- Wire `origin_evidence` through `shared_count_accounting`, BOTH seats, exchange sidecars/citations
+  and the lawful Frankie reply. Reuse existing count arithmetic; keep origin accounting separately
+  labelled from `tests`, independent comparisons, findings and promotion. Do not make its presence
+  sufficient for joint confirmation or historical reproduction. Read `where` and `discovery_row`;
+  do not treat every origin-day row as the candidate's exact discovery row.
+- Preserve forward/reverse alias deduplication, exact transform/cell/lag scope, zero eligible results,
+  unsupported scopes, answer/Jev walls and per-day ownership. No invented minimum occurrence/day count.
+- Review mirror chance identity (`null_exclusion`, `beyond_chance`) against the current computation.
+  Fix concrete equivalence errors in the owned reader without choosing a new acceptance rule.
+- Audit the recovery/source digests for every changed caller/helper and publication retry. Old completed
+  lessons keep their original semantics; incompatible pending work must not silently reuse new semantics.
+
+### B. Build faithful historical calculation bindings and teacher rework capabilities
+
+Ownership is extended to `frankie_box_historical_claims.py` and narrowly required existing historical
+binding helpers. Preserve combined catalog/claims bytes; do not run their builders under this hold.
+
+- Trace original source calculations at each catalog's exact revision before adding bindings. Implement
+  adapters only where the existing source defines inputs, units, axes, arithmetic and output meaning.
+  A prose similarity, symbol match or forced pairwise crosswalk is not a faithful original calculation.
+- Extend the teachers' software paths for original-calculation reproduction and declared repair/reformulation
+  mechanisms. Wire lawful results to both seats using the existing lesson/exchange machinery. Keep
+  stored-count reassessment, actual future reproduction, attempted repair, and pending work distinct.
+- Retain every historical statement, rejected label, rationale, native reference and unsupported binding.
+  No narrowing to the 10 current crosswalk entries or 19 output columns. Do not change old evidence labels
+  into truth, fabricate outcomes, or claim a binding adapter itself has reproduced the research.
+- Where a missing mathematical definition blocks implementation, record the exact producer/consumer
+  contract and decision needed, then continue other defined work. Teachers perform the research later;
+  CCode builds capabilities and must not rerun or judge the research now.
+
+### C. Completed native evidence and actual existing consumers
+
+Extend work to narrowly required existing evidence-reader/consumer modules, excluding Codex's two
+reserved search modules. Start with `completed_native_evidence` and the exchange's current references.
+
+- Trace result.json, exact 4.2/4.4 products and FINALIZE rows into existing lawful arithmetic/model
+  consumers. Implement a missing connection only when the current contracts already define its meaning.
+- Packaging, hashing, citation and status counts are not semantic computation. Report each path as
+  computed by a named existing function, connected-but-unverified, or awaiting a precise definition.
+- Candidate-only accumulated lessons currently do not generate the current owner's native evidence:
+  repair that connection where the existing owner-local source pins and writer contract permit it.
+- Preserve post-stream availability, exact units/strata, source identity, alias handling and average
+  supplements. Do not backfill completed products onto earlier F_LAST frames or exclude exact products
+  merely because an averaged companion also exists.
+- Keep Greg's decisions open: which group owns a 4.4 pair completion, and whether/what step definition
+  a 4.2 two-point session summary has. Neither is authority to invent a series or statistic.
+
+### D. Remaining pre-#5 model, trajectory and knowledge-consumer gaps
+
+Read `ROOT_PLANE_COVERAGE_20261006.md`, `KNOWLEDGE_CONSUMER_COVERAGE_20261006.md`,
+`NATIVE_LEARNER_INTEGRATION_DECISIONS_20261006.md` and `PENDING_FEEDBACK_COMPLETION_20261006.md`.
+Inspect the original inventories/contracts first. Build only connections whose semantics are settled.
+
+- Trace identity-linked order/book/DState trajectories beyond positional slots. Repair existing identity
+  loss or disconnected established consumers; do not choose new lag units, session bridging or trajectories
+  by assumption. Return exact proposed interfaces for changes needed in the reserved search modules.
+- Trace native representation/TeacherHead/training consumers and accumulated knowledge into actual
+  computations. Repair unambiguous adapter/identity plumbing where possible. No new weights, outcome labels,
+  auxiliary-loss weight, optimizer ordering, checkpoint migration or model-state initialization.
+- Audit late-arriving knowledge at existing unfinished-work boundaries and repair concrete delivery/retry
+  drops within those contracts. Do not reopen completed days, replace frozen inputs or introduce a scheduler
+  policy. State precisely what remains blocked by the held late-scheduling decisions.
+- This queue does not authorize workflow #5 or work beyond its discussion boundary. Granite pins,
+  `threads: null`, principal catalog choice and claims-file split remain settled or held as recorded.
+
+### Delivery and execution limits
+
+Return separate commits for A, then each defined B/C/D slice, with exact parent/head, changed files,
+source contracts used, what now reaches arithmetic, remaining definitions and actual checks performed.
+Update your Step #4 report; Codex owns integration edits to the shared continuation documents.
+Greg also asks how close this leaves steps #1–#4. Include a short closure table using the existing
+contracts: step, actual consumer/function, source-built connection, remaining implementation or
+decision, and runtime verification still needed. Do not substitute a completion percentage, new gate
+or file/claim count for unresolved computational coverage. #1 stays source-built, not runtime-proven.
+Do not turn the assignment into another validator framework or a research run.
+Source/interface review, AST syntax without project imports, and whitespace checks ONLY.
+No tests, synthetic exercises, installs, model/data/scientific execution, AWS actions, starts, dispatch,
+canaries or E2E. Keep boxes stopped. STOP BEFORE #5. Preserve its unapplied draft and never apply
+discarded `9c19cc2`. Every result stays SOURCE-BUILT / RUNTIME-UNVERIFIED until separately authorized.
+
+## Earlier assignment and source history (ownership superseded above where named)
+
 Greg asked Codex to give CCode a few tasks while Codex continues separate evidence wiring.
 Start from the latest `ccr-5fce7de3-xa4hfg` tip, which includes `03f29be`, and preserve newer work.
 Use a separate branch. Read AGENTS.md and the latest successor/Step #4 handoffs first.

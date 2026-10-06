@@ -16,6 +16,40 @@ No agent task or partial implementation needs to be resumed from memory.
 
 **SOURCE-BUILT / RUNTIME-UNVERIFIED. STOP BEFORE WORKFLOW #5.**
 
+## Latest continuation after `7d10fa5`: raw availability repaired; expanded CCode ownership
+
+Current source fix: `frankie_box_experiment_dipole.py` V3 creates a numerical projection of each
+placed source row without mutating the original snapshot. Only raw component numeric `.value`
+leaves whose producer state is not an integer PRESENT become None. Both positional rows and
+entity closing aliases use that view. PRESENT zero, incomplete-but-PRESENT values, all other
+numeric metadata, original state/reason fields and DState remain available under existing semantics.
+There is no 19-component input whitelist and no target/mask/formula change.
+
+The source report's `raw_value_projection.unavailable` groups affected observations by component,
+producer state and reason, with paired inclusive source ordinal/cursor ranges. It counts each original
+observation once across aliases. Original values remain in the hash-bound snapshot. Unplaced rows
+retain the existing separate dispositions. The manifest notes point to that exact accounting.
+
+Recovery now binds V3/helper bytes and the producer State module in the existing search identity.
+Old pending prepared arrays are refused on identity mismatch; completed searches remain unchanged
+and are not rerun or declared repaired. Checks: direct source/interface review, AST parse without
+project imports, and git diff --check only. No behavioral or performance validation was performed.
+
+Greg asked to give CCode as much work as possible to conserve Codex usage. The NEW top section of
+`CCODE_NEXT_SOURCE_TASKS_20261006.md` transfers the remaining pre-#5 queue to CCode, including
+teacher_knowledge/exchange caller edits and historical binding support previously reserved for Codex.
+It also covers existing native semantic consumers, model/trajectory plumbing and late-delivery gaps
+only where current contracts define the semantics. CCode must preserve all held decisions and execution
+restrictions. Codex retains the two current search modules and shared handoffs, then reviews/integrates
+CCode returns. Older ownership statements below are historical where this assignment supersedes them.
+The task document is ready for Greg to pass along; this is not evidence CCode has started it.
+
+Step #1 remains source-built. Steps #2–#4 remain incomplete: the assigned work aims to close major
+delivery/computation gaps, but missing definitions, full original-calculation reproduction/repair
+capabilities, native model consumers and identity trajectories still require concrete resolution.
+No reliable completion percentage or runtime readiness is established. Require CCode's return to
+name each remaining blocker against the existing contracts, not infer completion from file counts.
+
 ## Non-negotiable instructions from Greg
 
 - Fix actual computational input coverage for BOTH BOSS and scientific teachers. Storage, catalog
@@ -195,7 +229,7 @@ Precise limits:
 
 ## Remaining work, prioritized and owned
 
-### Next Codex fix: generic search still treats raw placeholder zeros as numeric inputs
+### Raw placeholder projection: source-fixed by the latest continuation above
 
 Confirmed source path:
 `c15_teacher_r3._value` emits value=0 for non-PRESENT states ->
@@ -208,12 +242,12 @@ The governed `dipole.<target>` channels DO check component PRESENT, but the new 
 channels do not consult raw producer state. The final BOSS route fixes this for its own calculations,
 not for the generic search. Do NOT carry this mistake forward.
 
-Next minimal repair: preserve original raw bytes/state/reasons, but make numerical projection of a
+Implemented repair: preserve original raw bytes/state/reasons, but make numerical projection of a
 raw component.value honor the producer's declared absence; list affected source cursors/reasons.
 Do not mask independent numeric metadata just because its associated component has no value.
 Do not discard meaningful present values with incomplete annotations, invent zero fills or change
 formulas. Review both positional and closing-row projections and recovery identities. No tests/runs
-under the standing hold. This search fix is NOT implemented in this checkpoint.
+under the standing hold. The latest V3 continuation implements this repair; runtime verification remains open.
 
 ### CCode-owned follow-ups already recorded in his Git document
 
@@ -263,7 +297,7 @@ notification was sent to CCode. Do not overlap his scientific_teacher/candidate_
 |---|---|---|
 | 1 | Linux ownership and retained-day save/resume | Source-built; runtime unverified. |
 | 2 | Actual lawful knowledge delivery to learner computation | Partial; today's routes add coverage, not completion. |
-| 3 | Native-field search, transforms, conditions, targets, Dipole, symbolic discovery | Partial; raw placeholder projection, trajectories and semantic coverage remain open. |
+| 3 | Native-field search, transforms, conditions, targets, Dipole, symbolic discovery | Partial; raw placeholder projection source-fixed; trajectories and semantic coverage remain open. |
 | 4 | Candidate/survivor batches and scientific checks | CCode origin-reader fixes merged; discovery-day caller/consumer and actual rework gaps remain. |
 | 5 | Discuss freeze/evaluation with Greg | STOP boundary; preserved draft unapplied. |
 | 6 | Granite integration/decisions | Named source wiring built; host/transport execution, knowledge scope and runtime verification open. |
