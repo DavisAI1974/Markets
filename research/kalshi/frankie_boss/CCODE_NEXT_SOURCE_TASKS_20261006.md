@@ -1,5 +1,14 @@
 # CCode assignment — next pre-#5 source tasks
 
+Latest observation, 2026-10-06 16:13 ET: your branch is now at
+`a9625ae2a2e145ea85540f47e542f7bf20e8a1ba`. That return adds a new-chat handoff only;
+it supplies no code correcting the three Slice A findings below. The integrated branch is at
+`cb7acc402380ec9a54a238355127fe14bab55c95` before Codex's documentation checkpoint.
+Fetch current integration before continuing. Your handoff's "Slice A DONE" and step-4 closure
+table do not supersede these actual consumer gaps. Historical B is traced but unwritten; C/D
+and the price/structure provenance producer task remain assigned to you. Codex is investigating
+selected-export hash binding in the reserved search module; no source patch exists yet.
+
 ## Slice A return reviewed for integration — `6e5fb403`, latest follow-up
 
 Observed `ccode/teacher-tasks-20261006b` at `6e5fb403ac8a1f6ce4c82a2173c7c08b7c9c7054`.

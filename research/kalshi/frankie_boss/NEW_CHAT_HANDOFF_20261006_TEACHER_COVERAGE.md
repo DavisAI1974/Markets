@@ -4,10 +4,10 @@
 
 Repository: DavisAI1974/Markets
 Working branch: `ccr-5fce7de3-xa4hfg`
-Last verified remote base before this final source/handoff batch:
-`e75792b47244ce9f699bde2cb6bc9950a509e5c8` (latest CCode fix merge; preserves `54c75fb`).
+Last verified remote base before this documentation-only checkpoint:
+`cb7acc402380ec9a54a238355127fe14bab55c95` (CCode Slice A integration; preserves all search fixes).
 
-This handoff is committed with the final raw-retention/BOSS-input-count changes described below.
+This handoff checkpoint adds no source changes; the completed source changes are already pushed.
 Fetch the CURRENT branch first; its commit containing this handoff is newer than the base above.
 Preserve every newer commit, including CCode's. Do not reset to any older SHA in this document.
 Greg asked to finish the work underway, finish the stopped agent's work too, and leave a detailed
@@ -15,6 +15,51 @@ handoff before usage ran out. The bounded source work is finished; full coverage
 No agent task or partial implementation needs to be resumed from memory.
 
 **SOURCE-BUILT / RUNTIME-UNVERIFIED. STOP BEFORE WORKFLOW #5.**
+
+## New-chat checkpoint at Greg's request, 2026-10-06 16:13 ET
+
+Run using-agent-skills and context-engineering. Fetch current HEAD and preserve newer commits.
+Read this document, `CCODE_NEXT_SOURCE_TASKS_20261006.md`,
+`DIPOLE_TEACHER_COVERAGE_CONTINUATION_20261006.md`, then
+`CCODE_STEP4_SOURCE_ROUTE_20261006.md` (including section 7 and later addenda).
+
+Completed source commits: `57c2cb27` raw-placeholder projection; `bbe2d560` exact ROOT event
+membership; `59cca0d4` empty-spool/unknown-clock dispositions; `cb7acc40` CCode integration.
+No uncommitted source patch was left at this handoff. No tests or execution were performed.
+
+Latest observed CCode tip is `a9625ae2a2e145ea85540f47e542f7bf20e8a1ba` on
+`ccode/teacher-tasks-20261006b`. Its only change beyond the integrated source is
+`CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md`; that document has not been merged.
+It says historical slice B is traced but unwritten and slices C/D are not started. Its "Slice A
+DONE" and closure-table wording do not close the three concrete source defects recorded below
+and in the assignment. Read its historical trace as a reference, not proof of implemented bindings
+or scientific reproduction. It reports a Memory A retirement decision in CCode's separate chat;
+this checkpoint neither implements that reported decision nor restores any retired runtime route.
+
+Codex's next reserved investigation (source finding, NOT PATCHED): `build_series` hashes
+structures/prices, signed_flow, roll20 and external artifacts without consistently comparing them
+to the selected export manifest's bytes/hash pins. The export hard-links files; recording a current
+hash alone does not establish that it matches the selected export. Frame pin checks are conditional
+on the journal/event routes. Trace this narrow inconsistency and reuse existing binding contracts
+in the reserved search module; do not add a validator framework or run source/data examples.
+Check the existing source/recovery identity when fixing it. No changes to numerical formulas,
+evidence, availability policy or historical knowledge admission are authorized by this finding.
+
+The price/structure exact-identity adapter remains pending CCode's producer contract for original
+INPUT index and instrument. Do not guess timestamp or positional joins. Full timestamps already
+include the date; they do not uniquely identify records or groups. Codex reserves search/dipole
+and shared handoffs; CCode owns the expanded A/B/C/D and producer queue. Give him as much of the
+remaining implementation as possible rather than duplicating his work.
+
+Steps 2–4 remain incomplete: actual native learner/knowledge computation, identity-linked and
+completed-native semantic coverage, and historical reproduction/repair capabilities still have
+implementation or definition gaps. Runtime verification remains wholly open. Do not reduce their
+remaining work to verification alone or equate assigned work with completed work.
+
+Only source/interface review, AST syntax without project imports and whitespace checks are allowed.
+No tests, synthetic exercises, installs, project/model/data/scientific runs, AWS actions, starts,
+dispatch, canaries or E2E. Keep boxes stopped. Preserve the unapplied #5 draft and settled Granite
+pins, including `threads: null`. Use `[skip ci]`; never apply discarded `9c19cc2`.
 
 ## Latest CCode Slice A integration after `59cca0d4`
 
