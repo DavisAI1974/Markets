@@ -24,13 +24,26 @@ The companion control stream and the already-active `teacher_changes.py` path ca
 Source/code provenance hashes naturally identify the new code. No additional test suite or validators: syntax
 checks while wiring, then the one explicitly authorized real E2E and fixes for its actual failures.
 
-**Step #1 remains in progress.** The teacher raw-pass save hook now retains both stream states, running whole-day
-totals/cohorts, all completed rows and evidence hashes. A requested save drains outstanding parallel results,
-atomically writes the hash-bound state, and exits before taking the next input row; resume uses that saved cursor.
-The raw-pass completion is also saved so attachment work need not repeat that calculation pass. This is source-built,
-not runtime-verified. It does not yet establish exact recovery for abrupt process/machine loss or every other stage.
-Do not mark Linux complete-state recovery done from these hooks alone. Other Linux/ROOT/knowledge/search edits
-remain local drafts pending their own completion and publication.
+**Step #1 remains in progress.** ROOT and teacher continuation hooks are now source-built. ROOT retains the
+live adapter (including unfinished groups, caches and dictionary order), its canonical state, binner, previous book,
+next INPUT cursor and all output spools. INPUT extraction also saves its rows and journal position. The teacher
+retains both raw streams, whole-day totals/cohorts, complete rows, prepared normalizer chunks and each completed
+worker result. Requested saves drain submitted work and retain the next calculation position; completed calculations
+are reused. Teacher attachment/external-section publication can recover from an interrupted file pair.
+These changes have syntax/source checks only, no runtime verification. They do not claim that unsaved process memory
+survives an abrupt machine loss. A changed/unsaved spool is retained and refused rather than silently rewound.
+Linux ownership/stop integration, classroom phase recovery and search recovery are being integrated separately;
+other legal-knowledge/search changes remain working drafts until explicitly published.
+
+**Current ordered ten-step list supersedes numbering below:** (1) Linux ownership and complete-state recovery;
+(2) actual legal knowledge delivery; (3) complete existing discovery/search surfaces; (4) candidate/survivor promotion;
+(5) freeze and confirmation; (6) discuss then wire Granite; (7) Jev CPU blind comparison; (8) three-lane operating
+interface/dependencies; (9) Greg's explicit AWS go and one real ROOT-to-finish E2E; (10) separately authorized 30 days.
+Print the checkbox list after #1 is complete in source and identify runtime verification separately.
+**Greg requires a discussion before any work on #5 (freeze/confirmation).** Preserve existing local drafts but do not
+publish/finalize that step before the discussion. Granite also requires the separately stated discussion before wiring.
+Greg authorized parallel coding agents for #1 on 2026-10-06. Claude Code has a separate read-only AWS operating-path
+and stale-Pod audit assignment; do not assume its proposed fixes have been applied.
 
 Read-only AWS MCP investigation confirmed the two experiment boxes are stopped and neither has hibernation
 configured. Step Functions can preserve successful workflow steps on redrive; ElastiCache stores application-written

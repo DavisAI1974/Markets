@@ -23,7 +23,7 @@ from frankie_box_author_monday_launch import fresh, sync_directory
 PARENT = Path('/opt/frankie-box/work/monday-calculations')
 
 
-def load_retained_layers(session):
+def load_retained_layers(session, *, allow_failures=False):
     """The completed legacy layers and spools as ROOT retained them; no journal read, no recalculation. Shared by
     resume_legacy and the render-only step (frankie_box_render_digest.py)."""
     from frankie_box_digest_sources import _JSON
@@ -34,11 +34,17 @@ def load_retained_layers(session):
     if len(candidates) != 1:
         raise ValueError('one retained complete INPUT spool required')
     records = B.RowSpool.reopen(candidates[0])
-    if len(records) != session.source_binding['record_count']:
+    missing = []
+    if allow_failures:
+        receipt = json.loads((session.work / 'derive.json').read_bytes())
+        missing = receipt.get('rows', {}).get('inputs_without_observation') or []
+        if receipt.get('input_records') != len(records):
+            raise ValueError('retained INPUT spool differs from its derivation receipt')
+    if len(records) + len(missing) != session.source_binding['record_count']:
         raise ValueError('retained INPUT spool count differs')
     prices, frames, structures, failures = [B.RowSpool.reopen(derived / '.rows' / (n + '.jsonl'))
                                             for n in ('prices', 'frames', 'structures', 'failures')]
-    if len(failures):
+    if len(failures) and not allow_failures:
         raise ValueError('retained legacy stage has failures; cannot certify complete reuse')
     names = list(dict.fromkeys(['legacy_price', 'legacy_native_signed_flow', 'legacy_per_second_roll20',
         'legacy_book_imbalance', 'legacy_structure_observables'] + list(pin['registry_layers'])))
@@ -78,7 +84,8 @@ def write_retained_digest(session, receipt, layers, prices, frames, structures, 
     bedrock=False: no bedrock sources or tables (the render-only step; Granite's read stops at the bedrock heading)."""
     flow = layers['legacy_native_signed_flow']['per_second']
     roll_layer = layers['legacy_per_second_roll20']
-    session._work_probe.update('root-digest')
+    import frankie_box_progress
+    frankie_box_progress.for_session(session).update('root-digest')
     session._write_digest(receipt, layers, prices, frames, structures,
         [float('nan') if v is None else v for v in roll_layer['series']], roll_layer['first_second'],
         [r['buy'] for r in flow], [r['sell'] for r in flow], bedrock=bedrock)

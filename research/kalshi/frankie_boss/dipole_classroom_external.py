@@ -45,6 +45,7 @@ import hashlib
 import importlib.util
 import json
 import math
+import os
 import sys
 from pathlib import Path
 from typing import Any, Mapping
@@ -587,37 +588,77 @@ def verify_external_key(key: Mapping[str, Any]) -> dict:
 
 
 def ensure_external_section(directory, snapshot, day_file, day_file_sha256, *, trading_day, built_by, extra=None):
-    """The section, built ONCE per teacher rows directory: read and verified when it exists (same snapshot, same day
-    file), built and written otherwise. Returns (key, receipt)."""
+    """Build once, retaining the complete publication body before writing the section/receipt pair.
+
+    A valid retained section without its receipt can finish publication from that section;
+    source/day identities must still match. No relationship calculations are repeated.
+    """
+    from .parallel_teacher import _load_raw_state, _save_raw_state
     directory = Path(directory) / SECTION_DIR
     path, receipt_path = directory / SECTION_FILE, directory / SECTION_RECEIPT
+    publication_path = directory / 'publication-state.pkl'
+    retained = _load_raw_state(publication_path) if publication_path.exists() else None
+    reused = path.exists() or retained is not None
     if path.exists():
-        receipt = json.loads(receipt_path.read_bytes())
         raw = path.read_bytes()
-        if _sha256_bytes(raw) != receipt.get('section_sha256'):
-            raise ValueError(f'{path} differs from its receipt; refused')
-        if receipt.get('day_file_sha256') != day_file_sha256:
-            raise DayExternalRefused(f'{path} was built from day file {receipt.get("day_file_sha256")}, not {day_file_sha256}')
         key = verify_external_key(json.loads(raw))
-        if key['source_snapshot_hash'] != snapshot['source_snapshot_hash']:
-            raise ValueError(f'{path} was built from another Dipole snapshot; refused')
+        if retained is not None and key != retained['key']:
+            raise ValueError(f'{path} differs from retained publication; refused')
+    elif retained is not None:
+        key = verify_external_key(retained['key'])
+        raw = _canon(key).encode('utf-8')
+    else:
+        if receipt_path.exists():
+            raise ValueError(f'{receipt_path} has no retained section/publication body; refused')
+        key = build_external_key(snapshot, day_file, day_file_sha256, trading_day=trading_day)
+        raw = _canon(key).encode('utf-8')
+    if (key['source_snapshot_hash'] != snapshot['source_snapshot_hash'] or
+            key['teacher_attachment_hash'] != snapshot['teacher_attachment_hash'] or
+            key['cutoff_ns'] != int(snapshot['as_of'])):
+        raise ValueError(f'{path} was built from another Dipole snapshot or cutoff; refused')
+    if (str(key['trading_day']) != str(trading_day) or
+            key['day_file']['sha256'] != day_file_sha256):
+        raise DayExternalRefused(f'{path} was built from another trading day or day file; refused')
+    if reused:
+        # Validate current input bytes through the existing causal reader, without
+        # recomputing any saved relationships or changing the retained source path.
+        open_day_external(day_file, day_file_sha256, key['cutoff_ns'], trading_day=trading_day)
+    expected = dict(schema=SECTION_RECEIPT_SCHEMA, trading_day=str(trading_day),
+                    section_file=SECTION_FILE, section_sha256=_sha256_bytes(raw), section_bytes=len(raw),
+                    external_key_hash=key['external_key_hash'], source_snapshot_hash=key['source_snapshot_hash'],
+                    teacher_attachment_hash=key['teacher_attachment_hash'], day_file=key['day_file']['path'],
+                    day_file_sha256=day_file_sha256, cutoff_ns=key['cutoff_ns'], rows=key['rows'],
+                    series=key['series_count'], relationship_pairs=key['relationship_pairs_scanned'],
+                    missing_listed=sum(len(p['missing']) for p in key['points']) + len(key['missing_not_assigned']),
+                    series_absent=len(key['series_absent']))
+    receipt = (json.loads(receipt_path.read_bytes()) if receipt_path.exists() else
+               retained['receipt'] if retained is not None else dict(expected, built_by=built_by, **(extra or {})))
+    if any(receipt.get(k) != v for k, v in expected.items()):
+        raise ValueError(f'{receipt_path} differs from the retained section or input identity; refused')
+    if path.exists() and receipt_path.exists():
         return key, dict(receipt, reused=True)
-    key = build_external_key(snapshot, day_file, day_file_sha256, trading_day=trading_day)
     directory.mkdir(parents=True, exist_ok=True)
-    raw = _canon(key).encode('utf-8')
-    with path.open('xb') as f:
-        f.write(raw)
-    receipt = dict(schema=SECTION_RECEIPT_SCHEMA, trading_day=str(trading_day), built_by=built_by,
-                   section_file=SECTION_FILE, section_sha256=_sha256_bytes(raw), section_bytes=len(raw),
-                   external_key_hash=key['external_key_hash'], source_snapshot_hash=key['source_snapshot_hash'],
-                   teacher_attachment_hash=key['teacher_attachment_hash'], day_file=key['day_file']['path'],
-                   day_file_sha256=day_file_sha256, cutoff_ns=key['cutoff_ns'], rows=key['rows'],
-                   series=key['series_count'], relationship_pairs=key['relationship_pairs_scanned'],
-                   missing_listed=sum(len(p['missing']) for p in key['points']) + len(key['missing_not_assigned']),
-                   series_absent=len(key['series_absent']), **(extra or {}))
-    with receipt_path.open('x') as f:
-        f.write(json.dumps(receipt, indent=1, sort_keys=True))
-    return key, dict(receipt, reused=False)
+    if retained is None:
+        _save_raw_state(publication_path, dict(key=key, receipt=receipt))
+    def publish(target, data):
+        if target.exists():
+            if target.read_bytes() != data:
+                raise ValueError(f'{target} differs from retained publication; refused')
+            return
+        temporary = target.with_name(target.name + '.pending')
+        with temporary.open('wb') as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, target)
+    publish(path, raw)
+    publish(receipt_path, json.dumps(receipt, indent=1, sort_keys=True).encode('utf-8'))
+    directory_fd = os.open(directory, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+    return key, dict(receipt, reused=reused)
 
 
 # ---------------------------------------------------------------------------------------------- the pre-message

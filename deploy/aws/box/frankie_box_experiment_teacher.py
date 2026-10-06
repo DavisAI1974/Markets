@@ -58,6 +58,25 @@ def _sha256(path):
 
 
 def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None):
+    # Keep the cooperative handler through publication too: an orderly stop must not
+    # leave a completed attachment without its rows/external section/completion receipt.
+    import signal
+    requested = [False]
+    def request_save(*_):
+        requested[0] = True
+    def save_requested():
+        stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
+        return requested[0] or bool(stop_file and Path(stop_file).exists())
+    previous_signal = signal.signal(signal.SIGTERM, request_save)
+    try:
+        return _teach(day, receipt_path, receipt_sha256, workers, day_external,
+                      day_external_sha256, save_requested=save_requested)
+    finally:
+        signal.signal(signal.SIGTERM, previous_signal)
+
+
+def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None,
+           *, save_requested):
     receipt_path = Path(receipt_path)
     if _sha256(receipt_path) != receipt_sha256:
         raise SystemExit('the ingestion receipt differs from the sha256 given')
@@ -88,8 +107,27 @@ def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ext
     if journal.stat().st_size != rc['journal_bytes'] or _sha256(journal) != rc['journal_sha256']:
         raise SystemExit('the sealed journal differs from its ingestion receipt')
     out = OUT / day
+    retained_receipt_path = out / 'receipt.json'
+    retained_receipt = (json.loads(retained_receipt_path.read_bytes())
+                        if retained_receipt_path.exists() else None)
+    if retained_receipt is not None:
+        if (retained_receipt.get('schema') != 'FRANKIE_EXPERIMENT_TEACHER_ROWS_V1' or
+                retained_receipt.get('day') != day or
+                retained_receipt.get('ingestion_receipt', {}).get('sha256') != receipt_sha256):
+            raise ValueError('retained teacher receipt belongs to another day or ingestion; preserved')
+        old_external = retained_receipt.get('external_section', {})
+        old_sha = old_external.get('sha256') or old_external.get('sha256_expected')
+        current_sha = external.get('sha256') or external.get('sha256_expected')
+        if old_sha is not None and old_sha != current_sha:
+            raise ValueError('retained teacher external input identity changed; preserved')
     if (out / ROWS_FILE).exists():
-        raise SystemExit('%s already holds the Dipole rows of %s (duplicate data declines)' % (out, day))
+        status = (retained_receipt or {}).get('external_section', {}).get('status')
+        retry_publication = retained_receipt is None or status in ('failed', 'refused')
+        if not retry_publication:
+            raise SystemExit('%s already holds the Dipole rows of %s (duplicate data declines)' % (out, day))
+        if not ((out / 'teacher-raw-state.pkl').is_file() and
+                (out / 'teacher-attachment-state.pkl').is_file()):
+            raise ValueError('teacher publication is incomplete without its saved calculation state; preserved')
     out.mkdir(parents=True, exist_ok=True)
     os.environ['FRANKIE_WALK_CACHE'] = str(out / 'walk-cache')       # never inside the sealed ingest directory
     os.environ.setdefault('FRANKIE_TEACHER_CHANGES', '1')
@@ -125,38 +163,55 @@ def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ext
     h0 = T.evidence_hash
     T.evidence_hash = PJ._chain_hash_factory(h0)
     TC.apply()
-    import signal
-    save_requested = [False]
-    def request_save(*_):
-        save_requested[0] = True
-    previous_signal = signal.signal(signal.SIGTERM, request_save)
+    evidence = None
     try:
         evidence = PJ.parallel_journal_prefix(builder, through, None)
         rows, processed, hashes = PT.row_pass(teacher, evidence, as_of=bound, source_manifest_hash=rc['manifest_hash'],
             recovery_path=out / 'teacher-raw-state.pkl',
             recovery_identity=dict(receipt_sha256=receipt_sha256, journal_sha256=rc['journal_sha256'],
                                    journal_count=rc['journal_count'], journal_hash=rc['journal_hash'], through=through),
-            save_requested=lambda: save_requested[0])
-        if save_requested[0]:
+            save_requested=save_requested)
+        if save_requested():
             raise PT.TeacherSaved('teacher raw pass saved; attachment assembly has not started')
         walked = time.time() - started
         as_of = max(r[4] for r in rows)
         spec = [(cursor, True, h) for cursor, h in sorted(hashes.items())]
-        attachment = PT.finish(teacher, rows, processed, hashes, spec, source_manifest_hash=rc['manifest_hash'])
+        attachment = PT.finish(teacher, rows, processed, hashes, spec, source_manifest_hash=rc['manifest_hash'],
+                               recovery_path=out / 'teacher-attachment-state.pkl',
+                               save_requested=save_requested)
     finally:
-        signal.signal(signal.SIGTERM, previous_signal)
-        TC.restore()
-        T.evidence_hash = h0
-        PJ._ENTITY[0] = None
-        PJ._CANONICAL.clear()
-        PJ._SUBSETS.clear()
-        reader.close()
+        try:
+            # Closing a paused walk drains already submitted block workers and their
+            # existing durable caches before the journal reader/process is released.
+            if evidence is not None:
+                evidence.close()
+        finally:
+            TC.restore()
+            T.evidence_hash = h0
+            PJ._ENTITY[0] = None
+            PJ._CANONICAL.clear()
+            PJ._SUBSETS.clear()
+            reader.close()
     request_id = 'experiment-%s-cycle-00' % day
     source = DC.snapshot_teacher_attachment(attachment, request_id=request_id, cycle_index=0, cycle_count=1,
                                             source_hash=rc['source_prefix_hash'], as_of=as_of, through_cursor=through)
-    with (out / 'teacher-attachment.pkl').open('xb') as f:
-        pickle.dump(dict(attachment=attachment, request_id=request_id, source_hash=rc['source_prefix_hash'], as_of=as_of,
-                         through_cursor=through, entity=entity), f, protocol=pickle.HIGHEST_PROTOCOL)
+    attachment_path = out / 'teacher-attachment.pkl'
+    body = dict(attachment=attachment, request_id=request_id, source_hash=rc['source_prefix_hash'], as_of=as_of,
+                through_cursor=through, entity=entity)
+    if attachment_path.exists():
+        with attachment_path.open('rb') as f:
+            retained = pickle.load(f)
+        if any(retained[key] != body[key] for key in body if key != 'attachment') or \
+                DC.snapshot_teacher_attachment(retained['attachment'], request_id=request_id, cycle_index=0,
+                    cycle_count=1, source_hash=rc['source_prefix_hash'], as_of=as_of, through_cursor=through) != source:
+            raise ValueError('retained teacher attachment differs; publication preserved for recovery')
+    else:
+        temporary = attachment_path.with_name(attachment_path.name + '.pending')
+        with temporary.open('wb') as f:
+            pickle.dump(body, f, protocol=pickle.HIGHEST_PROTOCOL)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temporary, attachment_path)
     SE._save(out / ROWS_FILE, source)
     result = dict(schema='FRANKIE_EXPERIMENT_TEACHER_ROWS_V1', day=day, request_id=request_id, entity=list(entity),
                   ingestion_receipt=dict(path=str(receipt_path), sha256=receipt_sha256), rows=len(rows), processed=processed,
@@ -175,7 +230,17 @@ def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ext
             external.update(status='failed', error='%s: %s' % (type(error).__name__, error))
             code = 4
     result['external_section'] = external
-    (out / 'receipt.json').write_text(json.dumps(result, indent=1, sort_keys=True))
+    temporary = out / 'receipt.json.pending'
+    with temporary.open('w') as f:
+        json.dump(result, f, indent=1, sort_keys=True)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(temporary, out / 'receipt.json')
+    directory_fd = os.open(out, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
     print(json.dumps(result, sort_keys=True), flush=True)
     return code
 

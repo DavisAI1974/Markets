@@ -693,7 +693,8 @@ class Session:
             return None
 
     # ---- derive (the pin's producers on this cycle's rows) ------------------------------------------------
-    def derive(self, *, source=None, bedrock=True, digest=True, opening_adapter_state=None, opening_book=None):
+    def derive(self, *, source=None, bedrock=True, digest=True, opening_adapter_state=None, opening_book=None,
+               recovery=False, save_requested=None):
         """The ROOT's four processes on the sealed source: (1) the legacy pass (every INPUT record -> the five legacy layers
         and the row spools), (2) the bedrock traversal, (3) the bedrock projection, (4) the derivation digest.
         bedrock=False (Greg, 2026-09-29: no bedrock in the experiment) skips (2) and (3): the bedrock layers are recorded
@@ -705,17 +706,23 @@ class Session:
         opening_book is its descriptor, carried into derive.json. None = an empty book (every day before this switch)."""
         pin = self._pin() if source is not None else self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
-        moved = _box_module('frankie_box_bedrock')._move_aside(              # an earlier derivation is moved aside with a receipt, never overwritten
-            derived, siblings=[self.work / 'derive.json', self.work / 'derivation-digest-full.md', self.work / 'derive-only-measurement.json', self.work / 'digest-proof.json'],
-            schema='FRANKIE_BOX_DERIVED_SUPERSEDE_RECEIPT_V1',
-            reason='the layers are derived again (a pin change, a schema change or an operator restart): the legacy five, the bedrock projections and the derivation receipt, digest and measurement are kept whole')
-        if moved:
-            self.note(f'derive: the earlier derived files moved aside to {moved} (receipted)')
+        if recovery and bedrock:
+            raise ValueError('complete-state experiment recovery requires bedrock off')
+        if recovery and derived.exists():
+            if not (self.work / 'input-state.pkl').exists():
+                raise ValueError('retained ROOT has no saved input state; preserve it for recovery')
+        else:
+            moved = _box_module('frankie_box_bedrock')._move_aside(              # an earlier derivation is moved aside with a receipt, never overwritten
+                derived, siblings=[self.work / 'derive.json', self.work / 'derivation-digest-full.md', self.work / 'derive-only-measurement.json', self.work / 'digest-proof.json'],
+                schema='FRANKIE_BOX_DERIVED_SUPERSEDE_RECEIPT_V1',
+                reason='the layers are derived again (a pin change, a schema change or an operator restart): the legacy five, the bedrock projections and the derivation receipt, digest and measurement are kept whole')
+            if moved:
+                self.note(f'derive: the earlier derived files moved aside to {moved} (receipted)')
         derived.mkdir(exist_ok=True)
         status = {}
         rows_path = Path(source.container['path']) if source is not None else (
             Path(self.source_binding['container']['path']) if self.source_binding else ROOT / 'data' / f'prefix-{self.cycle}.sqlite')
-        records, container = self._input_records(rows_path)
+        records, container = self._input_records(rows_path, recovery=recovery, save_requested=save_requested)
         if self.source_binding:
             expected = self.source_binding
             if (any(container[k] != expected['container'][k] for k in ('path', 'bytes', 'sha256'))
@@ -733,6 +740,16 @@ class Session:
         from research.kalshi.frankie_raw_mbo_benchmark import native_roll20
         from research.kalshi.frankie_raw_mbo_benchmark.a_memory_member_first_recalculation_20260828 import (
             describe_structure, book_transition, BOOK_FIELDS)
+        import importlib
+        from research.kalshi.frankie_boss import mbo_resume_state
+        mbo_resume_state = importlib.reload(mbo_resume_state)
+        from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state, TeacherSaved
+        identity = dict(source=self.source_binding, pin=pin['pins_witness']['sha256'],
+                        producers=self._producer_witnesses(pin), opening_book=opening_book)
+        recovery_path = self.work / 'legacy-state.pkl'
+        saved = _load_raw_state(recovery_path) if recovery and recovery_path.exists() else None
+        if saved and saved['identity'] != identity:
+            raise ValueError('saved ROOT source, producers or opening book changed')
         adapter = V4MboAdapter()
         if opening_adapter_state is not None:
             import importlib
@@ -747,45 +764,76 @@ class Session:
                       f'({(opening_book or {}).get("resting_orders")} resting orders)')
         binner = native_roll20.SecondBinner(clock=native_roll20.RECV_CLOCK)
         B = _box_module('frankie_box_bedrock')
-        prices, frames, structures, failures = [B.RowSpool(derived / '.rows' / (name + '.jsonl'))
-                                               for name in ('prices', 'frames', 'structures', 'failures')]
-        for missing in container.get('inputs_without_observation') or []:     # listed, never passed over (no data dropped)
-            failures.append(dict(missing, error='INPUT entry carries no MBO record the producers can read'))
-        legacy_count = 0
-        previous_book = None
+        names = ('prices', 'frames', 'structures', 'failures')
+        next_record = 0
+        if saved:
+            # Match the existing parallel-ingest convention: canonical state checks identity; the live object
+            # retains dict/counter order, derived caches and aliases without reconstructing calculation state.
+            adapter = saved['adapter_live']
+            if mbo_resume_state.export_adapter_state(adapter, include_open_groups=True) != saved['adapter']:
+                raise ValueError('saved ROOT live adapter differs from its retained canonical state')
+            binner, previous_book = saved['binner'], saved['previous_book']
+            legacy_count, next_record = saved['legacy_count'], saved['next_record']
+            prices, frames, structures, failures = [B.RowSpool.resume(saved['spools'][name]) for name in names]
+        else:
+            prices, frames, structures, failures = [B.RowSpool(derived / '.rows' / (name + '.jsonl')) for name in names]
+            for missing in container.get('inputs_without_observation') or []:
+                failures.append(dict(missing, error='INPUT entry carries no MBO record the producers can read'))
+            legacy_count = 0
+            previous_book = None
+        def save_legacy(cursor):
+            _save_raw_state(recovery_path, dict(identity=identity, next_record=cursor,
+                adapter=mbo_resume_state.export_adapter_state(adapter, include_open_groups=True),
+                adapter_live=adapter,
+                binner=binner, previous_book=previous_book, legacy_count=legacy_count,
+                spools={name: rows.saved_position() for name, rows in zip(names, (prices, frames, structures, failures))}))
+        if not 0 <= next_record <= len(records):
+            raise ValueError('saved ROOT cursor is outside the retained input')
+        if recovery and save_requested and save_requested():
+            save_legacy(next_record)
+            raise TeacherSaved('ROOT saved before the next INPUT record')
         probe = _box_module('frankie_box_progress').for_session(self)
-        for index, record in enumerate(probe.track(records, len(records), 'root-legacy-records')):
+        from itertools import islice
+        remaining = islice(records, next_record, None)
+        for index, record in enumerate(probe.track(remaining, len(records) - next_record, 'root-legacy-records'), next_record):
             try:
-                frame, legacy_rows = adapter.apply(record)
-            except Exception as error:
-                failures.append(dict(index=index, error=f'{type(error).__name__}: {error}'))
-                continue
-            for row in legacy_rows:
-                legacy_count += 1
                 try:
-                    binner.observe(row)
+                    frame, legacy_rows = adapter.apply(record)
                 except Exception as error:
-                    failures.append(dict(index=index, legacy=True, error=f'{type(error).__name__}: {error}'))
-                if row.get('action') == native_roll20.TRADE_ACTION:
-                    prices.append(dict(ts_recv=row.get('ts_recv'), ts_event=row.get('ts_event'), price=row.get('price'), size=row.get('size'),
-                                       bid_px_00=row.get(native_roll20.BID_TOUCH_FIELD), ask_px_00=row.get(native_roll20.ASK_TOUCH_FIELD)))
-            if frame is not None:
-                book = frame.get('book') or {}
-                try:
-                    record_book = dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'))
-                    record_book.update({k: book.get(k) for k in ('best_bid', 'best_ask', 'mid', 'depth_imbalance_n')})
-                    transition = book_transition(previous_book, book)
-                    record_book.update(transition['after'])  # exact producer-returned full-depth fields
-                    record_book['transition'] = transition['sign_signature']
-                    frames.append(record_book)
-                except Exception as error:
-                    failures.append(dict(index=index, book=True, error=f'{type(error).__name__}: {error}'))
-                previous_book = book
-                try:
-                    structures.append(dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'),
-                                           **describe_structure(frame.get('raw_actions') or [])))
-                except Exception as error:
-                    failures.append(dict(index=index, structure=True, error=f'{type(error).__name__}: {error}'))
+                    failures.append(dict(index=index, error=f'{type(error).__name__}: {error}'))
+                    continue
+                for row in legacy_rows:
+                    legacy_count += 1
+                    try:
+                        binner.observe(row)
+                    except Exception as error:
+                        failures.append(dict(index=index, legacy=True, error=f'{type(error).__name__}: {error}'))
+                    if row.get('action') == native_roll20.TRADE_ACTION:
+                        prices.append(dict(ts_recv=row.get('ts_recv'), ts_event=row.get('ts_event'), price=row.get('price'), size=row.get('size'),
+                                           bid_px_00=row.get(native_roll20.BID_TOUCH_FIELD), ask_px_00=row.get(native_roll20.ASK_TOUCH_FIELD)))
+                if frame is not None:
+                    book = frame.get('book') or {}
+                    try:
+                        record_book = dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'))
+                        record_book.update({k: book.get(k) for k in ('best_bid', 'best_ask', 'mid', 'depth_imbalance_n')})
+                        transition = book_transition(previous_book, book)
+                        record_book.update(transition['after'])  # exact producer-returned full-depth fields
+                        record_book['transition'] = transition['sign_signature']
+                        frames.append(record_book)
+                    except Exception as error:
+                        failures.append(dict(index=index, book=True, error=f'{type(error).__name__}: {error}'))
+                    previous_book = book
+                    try:
+                        structures.append(dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'),
+                                               **describe_structure(frame.get('raw_actions') or [])))
+                    except Exception as error:
+                        failures.append(dict(index=index, structure=True, error=f'{type(error).__name__}: {error}'))
+            finally:
+                if recovery and save_requested and save_requested():
+                    save_legacy(index + 1)
+                    raise TeacherSaved('ROOT saved with all open groups and output rows; next INPUT %d' % (index + 1))
+        if recovery:
+            save_legacy(len(records))
         probe.update('root-legacy-finalize')
         for rows in (prices, frames, structures, failures):
             rows.close()
@@ -1019,7 +1067,7 @@ class Session:
             return True, 'the derivation does not carry this pin\'s bedrock'
         return False, 'current'
 
-    def _input_records(self, rows_path):
+    def _input_records(self, rows_path, *, recovery=False, save_requested=None):
         """The cycle's rows: either a compact container (blocks + seal; CompactReader) or the raw prefix snapshot
         (C15_JOURNAL_PREFIX_SNAPSHOT_V1, an `entries` table; VerifiedJournalReader), as restored to the box.
         prefix-00.sqlite is the first run's raw `actual-first-cutoff-capacity/prefix.sqlite` (run 35584495493 found
@@ -1045,12 +1093,32 @@ class Session:
         container = dict(path=str(rows_path), layout=layout, format=fmt, count=count, head=head, **witness(rows_path),
                          head_is_request_source_hash=(head == (((self.request or {}).get('attachment') or {}).get('feedback_contract') or {}).get('source_hash')))
         B = _box_module('frankie_box_bedrock')
-        records = B.RowSpool(self.work / 'derived' / '.rows' / ('input-' + uuid.uuid4().hex + '.jsonl'))
-        kinds = {}
-        # Greg, 2026-09-29 (no data is dropped): an INPUT entry whose record cannot be found, or a bytes-valued field the
-        # JSON spool cannot carry, is listed here (entry position and field name), never passed over silently; the
-        # caller counts listed entries beside the spooled ones and carries them as failures of the day, not a refusal
-        without_observation, bytes_fields = [], {}
+        from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state, TeacherSaved
+        state_path = self.work / 'input-state.pkl'
+        identity = dict(container=container, source=self.source_binding)
+        saved = _load_raw_state(state_path) if recovery and state_path.exists() else None
+        if saved and saved['identity'] != identity:
+            raise ValueError('saved INPUT extraction belongs to a different sealed source')
+        if saved and not 0 <= saved['consumed'] <= count:
+            raise ValueError('saved INPUT journal cursor is outside the sealed source')
+        if saved:
+            records = B.RowSpool.resume(saved['spool'])
+            kinds, without_observation, bytes_fields = saved['kinds'], saved['without_observation'], saved['bytes_fields']
+            consumed = saved['consumed']
+        else:
+            records = B.RowSpool(self.work / 'derived' / '.rows' / ('input-' + uuid.uuid4().hex + '.jsonl'))
+            kinds, without_observation, bytes_fields, consumed = {}, [], {}, 0
+        def save_input(complete=False):
+            _save_raw_state(state_path, dict(identity=identity, spool=records.saved_position(), kinds=kinds,
+                without_observation=without_observation, bytes_fields=bytes_fields, consumed=consumed, complete=complete))
+        def stop_input():
+            if recovery and save_requested and save_requested():
+                save_input(complete=bool(saved and saved['complete']))
+                raise TeacherSaved('ROOT saved all extracted INPUT rows at journal entry %d' % consumed)
+        if recovery and not saved:
+            save_input()
+        stop_input()
+        # Retained extraction resumes its journal position; source readers still verify the sealed prefix.
         def take(kind, payload):
             kinds[kind] = kinds.get(kind, 0) + 1
             if kind != 'INPUT':
@@ -1063,26 +1131,38 @@ class Session:
                 if isinstance(v, (bytes, bytearray)):
                     bytes_fields[k] = bytes_fields.get(k, 0) + 1
             records.append({k: v for k, v in observation.items() if not isinstance(v, (bytes, bytearray))})
-        probe = _box_module('frankie_box_progress').for_session(self)
-        if layout == 'compact' and self.source_binding:
-            # Metadata-only extraction after every canonical row is verified. The
-            # complete INPUT wire observation is passed to all producer stages.
-            from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader
-            with CompactConformanceReader(rows_path, expected_count=count, expected_head_hash=head,
-                    workers=self.source_binding.get('data_workers', 1)) as reader:
-                probe.reader_workers = dict(requested=self.source_binding.get('data_workers', 1),
-                                            effective=len(reader.worker_cpus))
-                for entry in probe.track(reader.entries(), count, 'source-journal-records'):
-                    take(entry['kind'], entry['payload'])
-        elif layout == 'compact':
-            with CompactReader(rows_path, expected_count=count, expected_head_hash=head) as reader:
-                for ordinal, kind, body, digest in probe.track(reader.rows(), count, 'source-journal-records'):
-                    entry = unpack(json.loads(body))
-                    take(kind, entry.get('payload', entry) if isinstance(entry, dict) else entry)
-        else:
-            with VerifiedJournalReader(rows_path, expected_count=count, expected_head_hash=head) as reader:
-                for envelope in reader.entries():
-                    take(envelope.get('kind'), envelope.get('payload', envelope))
+        seen = 0
+        def take_next(kind, payload):
+            nonlocal consumed, seen
+            seen += 1
+            if seen <= consumed:
+                return
+            take(kind, payload)
+            consumed = seen
+            stop_input()
+        if not (saved and saved['complete']):
+            probe = _box_module('frankie_box_progress').for_session(self)
+            if layout == 'compact' and self.source_binding:
+                # Metadata-only extraction after every canonical row is verified. The
+                # complete INPUT wire observation is passed to all producer stages.
+                from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader
+                with CompactConformanceReader(rows_path, expected_count=count, expected_head_hash=head,
+                        workers=self.source_binding.get('data_workers', 1)) as reader:
+                    probe.reader_workers = dict(requested=self.source_binding.get('data_workers', 1),
+                                                effective=len(reader.worker_cpus))
+                    for entry in probe.track(reader.entries(), count, 'source-journal-records'):
+                        take_next(entry['kind'], entry['payload'])
+            elif layout == 'compact':
+                with CompactReader(rows_path, expected_count=count, expected_head_hash=head) as reader:
+                    for ordinal, kind, body, digest in probe.track(reader.rows(), count, 'source-journal-records'):
+                        entry = unpack(json.loads(body))
+                        take_next(kind, entry.get('payload', entry) if isinstance(entry, dict) else entry)
+            else:
+                with VerifiedJournalReader(rows_path, expected_count=count, expected_head_hash=head) as reader:
+                    for envelope in reader.entries():
+                        take_next(envelope.get('kind'), envelope.get('payload', envelope))
+            if recovery:
+                save_input(complete=True)
         records.close()
         container['kinds'] = kinds
         container['inputs_without_observation'] = without_observation

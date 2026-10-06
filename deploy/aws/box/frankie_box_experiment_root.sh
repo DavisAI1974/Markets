@@ -14,5 +14,6 @@ case "$OUTPUT_ROOT" in /opt/frankie-box/work/experiment-roots/*) ;; *) echo "OUT
 set -- --commit "$MARKETS_SHA" --ingestion-receipt "$INGESTION_RECEIPT" --ingestion-receipt-sha256 "$INGESTION_RECEIPT_SHA256" \
   --day "$DAY" --day-role "$DAY_ROLE" --output-root "$OUTPUT_ROOT" --data-workers "${DATA_WORKERS:-1}" --digest "${DIGEST:-off}"
 [ -z "${FROZEN_SURVIVORS:-}" ] || set -- "$@" --frozen-survivors "$FROZEN_SURVIVORS"
+case "${RESUME:-off}" in on) set -- "$@" --resume;; off) ;; *) echo 'RESUME must be on or off' >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_root.py" "$@"

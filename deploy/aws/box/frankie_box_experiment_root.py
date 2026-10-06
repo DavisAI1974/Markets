@@ -17,12 +17,15 @@ data). A confirmation day is refused unless the frozen survivor list is given (R
 import argparse
 import hashlib
 import json
+import os
+import signal
+import uuid
 import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from frankie_box_prepare_trading_day import require_checkout, save_new, witness, safe_path  # noqa: E402
+from frankie_box_prepare_trading_day import require_checkout, witness, safe_path  # noqa: E402
 from frankie_box_author_monday_launch import fresh, sync_directory  # noqa: E402
 from frankie_box_monday_calculations import whole_day_pin_document  # noqa: E402
 
@@ -38,8 +41,41 @@ def _sha256_file(path):
     return h.hexdigest()
 
 
+def _save_new_complete(path, value):
+    """Publish complete JSON exclusively; an interrupted temporary stays for recovery."""
+    path = Path(path)
+    raw = json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
+    pending = path.with_name(path.name + '.pending-' + uuid.uuid4().hex)
+    with pending.open('xb') as stream:
+        stream.write(raw)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.link(pending, path)  # atomic, and refuses to replace an existing publication
+    sync_directory(path.parent)
+    pending.unlink()
+    sync_directory(path.parent)
+
+
 def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
-                  frozen_survivors=None):
+                  frozen_survivors=None, resume=False):
+    requested = [False]
+    previous_handler = signal.signal(signal.SIGTERM, lambda *_: requested.__setitem__(0, True))
+    stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    def save_requested():
+        return requested[0] or bool(stop_file and Path(stop_file).exists())
+    try:
+        result = _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers,
+                                digest, frozen_survivors, resume, save_requested=save_requested)
+        if save_requested():
+            from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
+            raise TeacherSaved('ROOT completion published; resume uses the completed receipt')
+        return result
+    finally:
+        signal.signal(signal.SIGTERM, previous_handler)
+
+
+def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
+                   frozen_survivors=None, resume=False, save_requested=None):
     require_checkout(commit)
     if day_role not in ('discovery', 'confirmation'):
         raise ValueError('day role discovery or confirmation required')
@@ -112,13 +148,21 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
     manifest = dict(manifest_hash=receipt['manifest_hash'],
                     note='the day manifest by hash; its members are in the ingestion receipt (the bedrock traversal, which '
                          'needs the whole manifest, is off in the experiment)')
-    output = fresh(output_root, PARENT)
+    output = safe_path(output_root) if resume else fresh(output_root, PARENT)
+    if resume and (output.parent != PARENT or not output.is_dir() or (output / 'calculations-receipt.json').exists()):
+        raise ValueError('resume requires this day\'s unfinished retained ROOT directory')
     PARENT.mkdir(parents=True, exist_ok=True)
-    output.mkdir(mode=0o700)
+    output.mkdir(mode=0o700, exist_ok=resume)
     sync_directory(PARENT)
+    def save_or_match(path, body):
+        if resume and path.exists():
+            if json.loads(path.read_bytes()) != body:
+                raise ValueError('retained ROOT source/pin differs: %s' % path)
+        else:
+            _save_new_complete(path, body)
     source = dict(trading_day=day, manifest_hash=receipt['manifest_hash'], container=container, completion=completion,
                   source_prefix_hash=receipt['source_prefix_hash'], record_count=receipt['record_count'])
-    save_new(output / 'calculation-pins.json', whole_day_pin_document(
+    save_or_match(output / 'calculation-pins.json', whole_day_pin_document(
         source, rule='One complete day delivery for the experiment; the complete registry; the bedrock groups are named '
                      'by the pin but not derived (bedrock off).'))
     binding = dict(schema='FRANKIE_EXPERIMENT_DAY_CALCULATION_SOURCE_V1', source=source, data_workers=data_workers,
@@ -128,15 +172,36 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
                    record_count=receipt['record_count'], journal_count=receipt['journal_count'],
                    journal_hash=receipt['journal_hash'], day_role=day_role, partial_members=partial_members,
                    tail_members=tail_members, opening_book=opening_book, external=external)
-    save_new(output / 'source-binding.json', binding)
+    save_or_match(output / 'source-binding.json', binding)
     if external['status'] == 'attached':
-        save_new(output / 'external-computation.json', external_computation)
+        save_or_match(output / 'external-computation.json', external_computation)
     from frankie_box_boss_session import Session
     session = Session(output, day, '00', None)
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
     session.phase('deriving', 'experiment ROOT: the legacy pass on the sealed day; bedrock off')
-    result = session.derive(source=SimpleNamespace(container=container), bedrock=False, digest=digest,
-                            opening_adapter_state=opening_state, opening_book=opening_book)
+    retained = session.work / 'derive.json'
+    if resume and retained.is_file():
+        # The existing legacy reader/render helpers recover the finished calculation stage without replaying it.
+        from frankie_box_monday_calculations import load_retained_layers, write_retained_digest
+        result = json.loads(retained.read_bytes())
+        if result.get('source_binding') != binding or result.get('pin_identity', {}).get('sha256') != \
+                witness(output / 'calculation-pins.json')['sha256']:
+            raise ValueError('saved derivation belongs to another source/pin')
+        if result.get('producers') != session._producer_witnesses(session._pin()):
+            raise ValueError('saved derivation producers changed')
+        for item in result['layers'].values():
+            if witness(Path(item['path'])) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
+                raise ValueError('saved calculation layer differs: %s' % item['path'])
+        _, _, _, prices, frames, structures, failures, layers, _ = load_retained_layers(session, allow_failures=True)
+        if len(failures) != result['failure_count']:
+            raise ValueError('saved failure spool differs from derivation')
+        if digest:
+            write_retained_digest(session, result, layers, prices, frames, structures, bedrock=False)
+        session.note('resumed from the saved derivation; no legacy calculation replay')
+    else:
+        result = session.derive(source=SimpleNamespace(container=container), bedrock=False, digest=digest,
+                                opening_adapter_state=opening_state, opening_book=opening_book,
+                                recovery=True, save_requested=save_requested)
     # Greg, 2026-09-29: no data is dropped even when it is not all complete; a calculation that cannot use a record
     # skips over it, the day is not skipped. Producer failures stay in derive.json (and the failures spool) with their
     # record index and error, and are named in the receipt; the day's calculations go on to the next steps.
@@ -156,7 +221,7 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
                                'and error in derive.json / work/derived/.rows/failures.jsonl; every other record calculated'),
                 model_calls=0, source_replays=0, source_writes=0,
                 status='calculations_retained' if not failures else 'calculations_retained_with_failures')
-    save_new(output / 'calculations-receipt.json', calc)
+    _save_new_complete(output / 'calculations-receipt.json', calc)
     session.phase('derived')
     return calc
 
@@ -172,9 +237,10 @@ def main():
     p.add_argument('--data-workers', type=int, default=1)
     p.add_argument('--digest', choices=('on', 'off'), default='off', help='on for a classroom-arm day (Frankie reads it)')
     p.add_argument('--frozen-survivors')
+    p.add_argument('--resume', action='store_true', help='reuse the source-bound unfinished ROOT directory')
     a = p.parse_args()
     print(json.dumps(calculate_day(a.commit, a.ingestion_receipt, a.ingestion_receipt_sha256, a.day, a.day_role,
-                                   a.output_root, a.data_workers, a.digest == 'on', a.frozen_survivors), sort_keys=True), flush=True)
+                                   a.output_root, a.data_workers, a.digest == 'on', a.frozen_survivors, a.resume), sort_keys=True), flush=True)
 
 
 if __name__ == '__main__':

@@ -1,8 +1,9 @@
 """Exact external snapshot/restore for the proven V4 native-MBO adapter.
 
 The scientific adapter remains unchanged.  This module serializes only the
-continuation state needed to resume after a completed F_LAST event group and
-reconstructs derived caches from authoritative orders/FIFO/activity state.
+continuation state needed to resume after a completed F_LAST event group (V1)
+or with unfinished event groups intact (V2), and reconstructs derived caches
+from authoritative orders/FIFO/activity state.
 """
 from __future__ import annotations
 
@@ -19,12 +20,15 @@ from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import (
     ACTIVITY_WINDOWS_S,
     ADAPTER_REVISION,
     InstrumentBook,
+    NormalizedMbo,
     RestingOrder,
     V4MboAdapter,
     _RollingActivityWindow,
 )
 
 SCHEMA = "NG_MBO_V4_EXACT_RESUME_STATE_V1"
+OPEN_SCHEMA = "NG_MBO_V4_EXACT_RESUME_STATE_V2"
+_OPEN_BOOK_KEYS = frozenset({"event_group", "legacy_group_rows", "legacy_group_book_before", "legacy_group_visible_add"})
 _BOOK_KEYS = frozenset({
     "instrument_id",
     "raw_symbol",
@@ -110,10 +114,10 @@ def _require_int(value: Any, label: str, *, minimum: int | None = None) -> int:
     return value
 
 
-def _book_state(book: InstrumentBook) -> dict[str, Any]:
-    if book.event_group:
+def _book_state(book: InstrumentBook, *, include_open_groups=False) -> dict[str, Any]:
+    if book.event_group and not include_open_groups:
         raise ResumeStateError("resume checkpoint requires an F_LAST-closed event group")
-    if book._legacy_group_rows or book._legacy_group_book_before is not None or book._legacy_group_visible_add:
+    if not include_open_groups and (book._legacy_group_rows or book._legacy_group_book_before is not None or book._legacy_group_visible_add):
         raise ResumeStateError("legacy event-group continuation state is not closed")
 
     orders = [asdict(book.orders[oid]) for oid in sorted(book.orders)]
@@ -125,7 +129,7 @@ def _book_state(book: InstrumentBook) -> dict[str, Any]:
             for price in prices
             if book.levels[side][price]
         ]
-    return {
+    result = {
         "instrument_id": int(book.instrument_id),
         "raw_symbol": book.raw_symbol,
         "last_sequence": book.last_sequence,
@@ -137,22 +141,30 @@ def _book_state(book: InstrumentBook) -> dict[str, Any]:
         "levels": levels,
         "activity": [dict(row) for row in book.activity],
     }
+    if include_open_groups:
+        from .c15_journal import pack
+        result.update(event_group=[asdict(row) for row in book.event_group],
+                      legacy_group_rows=pack(book._legacy_group_rows),
+                      legacy_group_book_before=pack(book._legacy_group_book_before),
+                      legacy_group_visible_add=book._legacy_group_visible_add)
+    return result
 
 
-def export_adapter_state(adapter: V4MboAdapter) -> dict[str, Any]:
+def export_adapter_state(adapter: V4MboAdapter, *, include_open_groups=False) -> dict[str, Any]:
     if not hasattr(adapter, "assert_groups_closed"):
         raise ResumeStateError("object is not a V4 MBO adapter")
     try:
-        adapter.assert_groups_closed()
+        if not include_open_groups:
+            adapter.assert_groups_closed()
     except RuntimeError as exc:
         raise ResumeStateError("resume checkpoint requires an F_LAST-closed event group") from exc
 
     state: dict[str, Any] = {
-        "schema": SCHEMA,
+        "schema": OPEN_SCHEMA if include_open_groups else SCHEMA,
         "adapter_revision": ADAPTER_REVISION,
         "record_count": int(adapter.record_count),
         "completed_event_group_count": int(adapter.completed_event_group_count),
-        "books": [_book_state(adapter.books[iid]) for iid in sorted(adapter.books)],
+        "books": [_book_state(adapter.books[iid], include_open_groups=include_open_groups) for iid in sorted(adapter.books)],
         "state_hash": "",
     }
     state["state_hash"] = adapter_state_hash(state)
@@ -178,7 +190,7 @@ def _validate_state(state: Mapping[str, Any]) -> None:
     state = _expect_exact_keys(state, _STATE_KEYS, "adapter state")
     if state["state_hash"] != adapter_state_hash(state):
         raise ResumeStateError("adapter state hash mismatch")
-    if state["schema"] != SCHEMA:
+    if state["schema"] not in (SCHEMA, OPEN_SCHEMA):
         raise ResumeStateError("unsupported adapter state schema")
     if state["adapter_revision"] != ADAPTER_REVISION:
         raise ResumeStateError("adapter revision mismatch")
@@ -191,11 +203,24 @@ def _validate_state(state: Mapping[str, Any]) -> None:
 
     seen_instruments: set[int] = set()
     for raw_book in state["books"]:
-        book = _expect_exact_keys(raw_book, _BOOK_KEYS, "book")
+        book = _expect_exact_keys(raw_book, _BOOK_KEYS | (_OPEN_BOOK_KEYS if state['schema'] == OPEN_SCHEMA else frozenset()), "book")
         iid = _require_int(book["instrument_id"], "instrument_id", minimum=1)
         if iid in seen_instruments:
             raise ResumeStateError("duplicate instrument book")
         seen_instruments.add(iid)
+        if state['schema'] == OPEN_SCHEMA:
+            from .c15_journal import unpack
+            if not isinstance(book['event_group'], list) or type(book['legacy_group_visible_add']) is not bool:
+                raise ResumeStateError('invalid open event-group state')
+            for row in book['event_group']:
+                msg = NormalizedMbo(**row)
+                if msg.instrument_id != iid:
+                    raise ResumeStateError('open event group belongs to another instrument')
+            if not isinstance(unpack(book['legacy_group_rows']), list):
+                raise ResumeStateError('legacy group rows must be a list')
+            before = unpack(book['legacy_group_book_before'])
+            if before is not None and not isinstance(before, tuple):
+                raise ResumeStateError('legacy group before-book must retain its tuple type')
         if book["raw_symbol"] is not None and not isinstance(book["raw_symbol"], str):
             raise ResumeStateError("raw_symbol must be string or null")
         for key in ("last_sequence", "last_recv_ns", "last_event_ns", "activity_last_now_ns"):
@@ -315,9 +340,15 @@ def restore_adapter_state(state: Mapping[str, Any]) -> V4MboAdapter:
         book._legacy_group_rows = []
         book._legacy_group_book_before = None
         book._legacy_group_visible_add = False
+        if state['schema'] == OPEN_SCHEMA:
+            from .c15_journal import unpack
+            book.event_group = [NormalizedMbo(**row) for row in raw_book['event_group']]
+            book._legacy_group_rows = unpack(raw_book['legacy_group_rows'])
+            book._legacy_group_book_before = unpack(raw_book['legacy_group_book_before'])
+            book._legacy_group_visible_add = raw_book['legacy_group_visible_add']
         adapter.books[iid] = book
 
-    restored = export_adapter_state(adapter)
+    restored = export_adapter_state(adapter, include_open_groups=state['schema'] == OPEN_SCHEMA)
     if restored != dict(state):
         raise ResumeStateError("restored adapter state does not round-trip exactly")
     return adapter

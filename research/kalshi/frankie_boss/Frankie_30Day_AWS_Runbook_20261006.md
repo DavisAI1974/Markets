@@ -2,6 +2,11 @@
 
 **Implementation checkpoint:** See `HANDOFF_20261006_CHAT_RESET.md` for exact source-built status and remaining work. The final operating interface and real E2E are not complete.
 
+**Greg's ordered work list, 2026-10-06:** Work through the agreed ten steps one at a time. Step #1 (Linux ownership
+and complete-state recovery) is still in progress. Print the checkbox list when it is complete, distinguishing source
+completion from runtime verification. **Pause and discuss with Greg before step #5 (freeze and confirmation)**;
+he has flagged that something looks wrong. Do not finalize or implement that step before the discussion.
+
 Finish the existing AWS workflow, run one real ROOT-to-finish end-to-end day, fix actual failures, then run the 30-day experiment. Use three CPU lanes and deliver new legal knowledge to Frankie as soon as each stage produces it.
 
 This dated runbook carries the agreed three-lane plan forward. It is the build and operating sequence for Codex; implementation comes next. AWS launch requires Greg’s explicit go.

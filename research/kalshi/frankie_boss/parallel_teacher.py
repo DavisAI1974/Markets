@@ -457,7 +457,8 @@ def context_spec(context):
     return [(item['cursor'], set(item) == SESSION_FIELDS, T.evidence_hash(item)) for item in context]
 
 
-def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash):
+def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
+           recovery_path=None, save_requested=None):
     """Steps 2-5: the exact-row check of the context against the rows the teacher read, then the normalizer, targets and
     receipts across the CPUs, exactly as before."""
     import torch  # noqa: F401  (attach imports it; the workers use it)
@@ -489,8 +490,42 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash):
     size = max(1, -(-len(rows) // (cpus * 2)))
     target_spec = dict(registry_id=f'boss/teacher/{T.CANDIDATE}:{candidate}', target_names=T.CONTROL_COLUMNS,
                        target_units=units, builder_code_sha=builder_sha)
-    jobs = []
-    for start in range(0, len(rows), size):
+    recovery_identity = dict(binding=self.binding, candidate=candidate, source=source_manifest_hash,
+                             processed=processed, context=hashlib.sha256(_canonical(spec)).hexdigest(),
+                             normalizer=self.normalizer.export())
+    saved = _load_raw_state(recovery_path) if recovery_path and Path(recovery_path).exists() else None
+    if saved and saved['identity'] != recovery_identity:
+        raise ValueError('saved teacher attachment source, context or normalizer changed')
+    jobs = saved['jobs'] if saved else []
+    # Preparation is saved once; each result gets its own immutable, hash-bound file.
+    # Rewriting all prior tensors after every chunk would turn recovery into quadratic I/O.
+    blobs = dict(enumerate(saved.get('blobs', ()))) if saved else {}
+    prepared = saved['prepared'] if saved else 0
+    size = saved.get('chunk_size', size) if saved else size
+    chunks_dir = Path(str(recovery_path) + '.chunks') if recovery_path else None
+    def chunk_path(index):
+        return chunks_dir / ('%08d.pkl' % index)
+    def keep_chunk(index, blob):
+        if recovery_path:
+            _save_raw_state(chunk_path(index), dict(identity=recovery_identity, index=index, blob=blob))
+        blobs[index] = blob
+    if recovery_path:
+        for index in range(len(jobs)):
+            path = chunk_path(index)
+            if path.exists():
+                retained = _load_raw_state(path)
+                if retained['identity'] != recovery_identity or retained['index'] != index:
+                    raise ValueError('saved teacher attachment chunk belongs to another source or position')
+                blobs[index] = retained['blob']
+            elif index in blobs:       # preserve results saved by the earlier combined-state format
+                keep_chunk(index, blobs[index])
+    if saved and not identity:
+        base = R.NormalizerR3.restore(config, saved['base'], saved['base_hash'])
+    def save_finish():
+        _save_raw_state(recovery_path, dict(identity=recovery_identity, jobs=jobs, chunk_size=size,
+            prepared=prepared, base=None if identity else base.export(),
+            base_hash=None if identity else base.state_hash))
+    for start in range(prepared, len(rows), size):
         chunk = rows[start:start + size]
         payload = state = None
         if not identity:
@@ -500,16 +535,46 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash):
                     for c, v in zip(T.CONTROL_COLUMNS, combined):
                         base.update(iid, c, v['value'], N.State(v['state']))
         jobs.append((identity, instrument_ids, config, payload, state, chunk, target_spec, source_manifest_hash))
+        prepared = start + len(chunk)
+        if recovery_path and save_requested and save_requested():
+            save_finish()
+            raise TeacherSaved('teacher saved all prepared attachment chunks and normalizer state')
+    if recovery_path and (saved is None or prepared != saved['prepared'] or 'blobs' in saved):
+        save_finish()
     # 3-4. the chunks across the CPUs, joined in order
     targets, receipts, fragments = [], [], []
     context_mp = multiprocessing.get_context('spawn')
     with ProcessPoolExecutor(max_workers=min(cpus, max(1, len(jobs))), mp_context=context_mp) as pool:
         import pickle
-        for blob in pool.map(_chunk, jobs):
-            for target, receipt, fragment in pickle.loads(blob):
-                targets.append(target)
-                receipts.append(receipt)
-                fragments.append(fragment)
+        pending = deque()
+        remaining = deque(index for index in range(len(jobs)) if index not in blobs)
+        failure = None
+        while remaining or pending:
+            stopping = recovery_path and save_requested and save_requested()
+            while not stopping and failure is None and remaining and len(pending) < cpus:
+                index = remaining.popleft()
+                pending.append((index, pool.submit(_chunk, jobs[index])))
+            if pending:
+                index, future = pending.popleft()
+                try:
+                    keep_chunk(index, future.result())
+                except Exception as error:
+                    # Drain and retain other work already in flight before propagating the failure.
+                    # Resume schedules only missing chunks, including a failed chunk between successes.
+                    failure = failure or error
+            elif failure is not None:
+                raise failure
+            elif stopping:
+                raise TeacherSaved('teacher saved every completed attachment chunk; no outstanding workers')
+        if failure is not None:
+            raise failure
+        if recovery_path and save_requested and save_requested():
+            raise TeacherSaved('teacher attachment calculations saved before publication')
+    for index in range(len(jobs)):
+        for target, receipt, fragment in pickle.loads(blobs[index]):
+            targets.append(target)
+            receipts.append(receipt)
+            fragments.append(fragment)
     raw_rows = [row[3] for row in rows if row[0]]
     if not processed or len(targets) != len(spec):
         raise ValueError('context cursor absent from complete prefix')

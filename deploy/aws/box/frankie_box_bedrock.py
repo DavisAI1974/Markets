@@ -118,6 +118,25 @@ class RowSpool(list):
     def __len__(self):
         return self._count
 
+    def saved_position(self):
+        """Durable position, including the complete rows and their type-preserving bytes."""
+        if not self._writer.closed:
+            self._writer.flush()
+            os.fsync(self._writer.fileno())
+        return dict(path=str(self.path), count=self._count, **witness(self.path))
+
+    @classmethod
+    def resume(cls, position):
+        path = Path(position['path'])
+        observed = witness(path)
+        if any(observed[key] != position[key] for key in ('bytes', 'sha256')):
+            raise ValueError('saved row spool changed; retained for recovery')
+        obj = cls.reopen(path)
+        if len(obj) != position['count']:
+            raise ValueError('saved row spool count differs')
+        obj._writer = path.open('a', encoding='utf-8', newline='\n')
+        return obj
+
     def append(self, value):
         from research.kalshi.frankie_boss.c15_journal import pack
         self._writer.write(json.dumps(pack(value), separators=(',', ':')) + '\n')
