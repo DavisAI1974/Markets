@@ -97,6 +97,17 @@ Do not build a test harness, extra validators or canary suite for this workflow.
 **one real ROOT-to-finish end-to-end run** on an already-ingested discovery day using the real receipts and lane logic.
 Fix actual failures as they appear and resume from retained receipts. After that succeeds, feed the 30-day pipeline.
 
+
+### Granite decision still open (2026-10-06)
+
+Do not treat an older Granite role as final for the 30-day workflow yet. The repository currently carries both:
+- `SPEC-decouple-granite.md`: Granite as the R3/R4 critic lane plus a labelled self-assessment; and
+- `knowledge/GRANITE_DISCUSSION_VOICE_ROLE_V1.md`: Granite as the constrained voice/coordinator of the post-class
+  three-seat discussion.
+
+Greg will settle the final experiment role before launch-ready status. Until that decision, Granite performs no
+calculation, search, grading, survivor selection, confirmation filtering or trading decision in this experiment.
+
 ## UPDATE 2026-09-29 (late): the teachers are tied and Granite is out of the classroom. This supersedes the text below.
 - **Granite** (`SPEC-decouple-granite.md`, DECISION and BUILT blocks): Granite is ONLY the B2 shadow critic (C21-C24) on
   the R4 Pod, plus one labelled self-assessment of how it performed as the critic. C35 is no longer a Granite role.
