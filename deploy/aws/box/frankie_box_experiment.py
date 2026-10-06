@@ -1550,8 +1550,11 @@ class Run:
             body['cutoff_ns'] = snapshot['as_of']
             body['through_cursor'] = snapshot['through_cursor']
             LS.write(path, body)
+        # The summary is part of the immutable entry bytes: it names the exact rows file, never the label of the path
+        # that found it ('plan' / 'teacher-only step'), so the same rows reached by another label reuse the entry
+        # instead of declining it as different knowledge. The label stays in the step receipt (days=[... source]).
         return self.brain_stage(day, 'teacher', [rows_path, path],
-                                summary=dict(rows=str(rows_path), source=source), inline_limit=path.stat().st_size)
+                                summary=dict(rows=str(rows_path)), inline_limit=path.stat().st_size)
 
     def data(self, e):
         remote = self.remote_stage('data', e['day'])
