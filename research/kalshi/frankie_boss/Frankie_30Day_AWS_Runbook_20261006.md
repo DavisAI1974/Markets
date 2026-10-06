@@ -1,5 +1,7 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+**Step #2 source checkpoint:** reused teachers, cumulative lesson exchange, cross-lane legal claim inputs and GUIDED readers are wired. SOCRATIC/VERIFY and remaining typed scientific consumers are still open. Follow `HANDOFF_20261006_STEP2_KNOWLEDGE.md`; no E2E has passed. Greg delegated the Granite discussion/report to another chat.
+
 **Knowledge stacking applies throughout:** the classroom, Frankie, both teachers and their exchanges must use applicable completed knowledge in their actual inputs/computations, regardless of trading date. Receipt-only availability is not consumption. Greg may consider repeated refinement passes over the same data after the initial 30 days; that remains undecided and outside the current build.
 
 **Greg, 2026-10-06 — all-30-day continuous learning:** remove both the chronological trading-date gate and the old

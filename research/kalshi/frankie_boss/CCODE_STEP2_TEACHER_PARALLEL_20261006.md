@@ -1,7 +1,9 @@
 # CCode parallel assignment — step 2 reused-teacher delivery
 
 **Delivered and integrated:** `89f94b26` then `ee2c554d` from `ccr-e9f0f4af-lqxmss`. The assignment below is retained
-as its scope record. Current CCode work is the bounded GUIDED reader extension documented in the step-2 handoff.
+as its scope record. The subsequent GUIDED reader extension `8b14182f` is also integrated, with Codex-owned runner
+connections completed. Withheld external table counts retain the existing correction path; visibility/grading unchanged.
+See the step-2 handoff for remaining independent-mode and typed-reader gaps.
 
 Run using-agent-skills, memory MCP and local context-engineering.
 Repo: `DavisAI1974/Markets`.

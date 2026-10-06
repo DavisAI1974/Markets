@@ -5,7 +5,7 @@ Branch: `chatgpt/frankie-30day-aws-workflow-20261006`
 
 **Step #2 progress:** After this handoff's reading order, read `HANDOFF_20261006_STEP2_KNOWLEDGE.md`.
 The learner-answer and previous-class carry slice is source-built; #2 remains open. It records the separate CCode
-teacher integration, cumulative teacher-exchange lesson inputs, unsupported readers and the ongoing CCode GUIDED extension. No real E2E has passed.
+teacher integration, cumulative teacher-exchange lesson inputs, remaining unsupported readers and the integrated GUIDED extension (source only). No real E2E has passed.
 Greg then removed chronological AND former discovery/confirmation knowledge gates: all 30 random-order days learn
 from completed stages at their next boundary, including 2024 teaching a later-running 2022 day. Preserve raw per-day
 timing and host-answer/Jev walls. R15 and new plan roles are amended; all years use the existing learning route.

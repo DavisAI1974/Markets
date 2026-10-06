@@ -215,11 +215,21 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
 
 
 def claims_of(doc):
-    """{claim_id: claim} re-read through the scientific teacher's own readers (only a claim's statement, series,
+    """{claim_id: claim} from the bound legal inputs, or legacy scientific teacher readers (only statement, series,
     direction, lag, cells and transforms; for Frankie only his novel findings: R09), bound to the lessons' claims_sha256;
     ({}, why) when the source is not readable or has changed."""
     import frankie_box_scientific_teacher as ST
     source, author = doc.get('claims_source'), doc.get('author')
+    if 'claim_inputs' in doc:
+        claims = doc['claim_inputs']
+        if sha256_bytes(json.dumps(claims, sort_keys=True).encode()) != doc.get('claim_inputs_sha256') or \
+                claims.get('schema') != 'FRANKIE_SCIENTIFIC_CLAIM_INPUTS_V1' or \
+                claims.get('author') != author or claims.get('claims_sha256') != doc.get('claims_sha256'):
+            raise ValueError('retained legal claim projection differs from the scientific lesson binding')
+        ids = [c['id'] for c in claims['claims']]
+        if len(ids) != len(set(ids)) or ids != [r['claim_id'] for r in doc['results']]:
+            raise ValueError('retained legal claims do not match the scientific lesson results in order')
+        return {c['id']: c for c in claims['claims']}, None
     if author == 'historical' and source and not Path(source).is_file() and 'research/' in source:
         # a committed file read from an earlier staged checkout: the same repo path in this one (claims_sha256 checks it)
         source = str(ROOT / source[source.index('research/'):])

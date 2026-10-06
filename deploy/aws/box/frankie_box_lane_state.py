@@ -147,22 +147,24 @@ def snapshot(brain=BRAIN, owner=None):
     for p in sorted(school.glob('*.json')):
         files.append(pack_file(p))
     version = digest(json.dumps(dict(files=[(f['path'], f['sha256']) for f in files],
-                                    pointers=pointers), sort_keys=True).encode())
-    return dict(owner=owner, version=version, files=files, large_source_pointers=pointers)
+                                    pointers=pointers, source_brain=str(brain)), sort_keys=True).encode())
+    return dict(owner=owner, version=version, source_brain=str(brain), files=files, large_source_pointers=pointers)
 
 
 def merge_snapshot(doc, brain=BRAIN):
     """Imported entries use their own namespace; owner's canonical brain entries are never overwritten."""
     owner = digest(doc['owner'].encode())
-    version = digest(json.dumps(dict(files=[(f['path'], f['sha256']) for f in doc['files']],
-                                    pointers=doc['large_source_pointers']), sort_keys=True).encode())
+    binding = dict(files=[(f['path'], f['sha256']) for f in doc['files']], pointers=doc['large_source_pointers'])
+    if 'source_brain' in doc:
+        binding['source_brain'] = doc['source_brain']
+    version = digest(json.dumps(binding, sort_keys=True).encode())
     if version != doc['version']:
         raise ValueError('knowledge version does not bind the published files/pointers')
     owner_root = STATE / 'knowledge' / owner
     root = owner_root / 'versions' / doc['version'] / 'brain'
     for f in doc['files']:
         original = Path(f['path'])
-        rel = original.relative_to(BRAIN)
+        rel = original.relative_to(Path(doc.get('source_brain') or BRAIN))
         local = root / rel
         restore_file(dict(f, path=str(local)), [root])
     write(owner_root / 'version.json',
@@ -243,17 +245,17 @@ def request(op, **payload):
         time.sleep(5)
 
 
-def boundary(day, stage, publish=True):
+def boundary(day, stage, publish=True, brain=BRAIN):
     """Before the next dependent step: publish own knowledge and pull peers' newest legal completed stages."""
     if os.environ.get('FRANKIE_LANE_MAILBOX'):
         result = request('sync', day=day, stage=stage,
-                         knowledge=snapshot() if publish else None,
+                         knowledge=snapshot(brain=brain) if publish else None,
                          run=os.environ['FRANKIE_LANE_RUN'], where=os.environ['FRANKIE_LANE_OWNER'])
         for doc in result.get('knowledge', []):
             if doc['owner'] != os.environ['FRANKIE_LANE_OWNER']:
-                merge_snapshot(doc)
+                merge_snapshot(doc, brain=brain)
     versions = knowledge_versions()
-    witness = dict(day=day, stage=stage, available_versions=versions, at=time.time(),
+    witness = dict(day=day, stage=stage, brain=str(brain), available_versions=versions, at=time.time(),
                    treatment='transport availability only; actual learner inputs are recorded by the reader')
     write(STATE / 'consumed' / day / (stage + '.json'), witness)
     return witness
@@ -369,7 +371,7 @@ def _coordinate(body, code_root, commit):
                 raise ValueError('knowledge owner differs from claim')
             merge_snapshot(doc)
             write(STATE / 'publications' / (where.replace(':', '_') + '.json'), doc)
-        result['knowledge'] = [snapshot(owner='main')] + [json.loads(p.read_bytes())
+        result['knowledge'] = [snapshot(brain=plan.get('brain') or BRAIN, owner='main')] + [json.loads(p.read_bytes())
                                  for p in sorted((STATE / 'publications').glob('*.json'))]
     elif op == 'class_take':
         x, why = Q.enqueue('class', run, day, commit, code_root, X.plan_digest(plan), body['settings'],

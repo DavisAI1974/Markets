@@ -26,11 +26,11 @@ explicitly calls for combining, extending and testing accumulated knowledge betw
 ## Ordered checklist
 
 - [x] 1. Linux ownership and retained-day save/resume — source-built, runtime unverified.
-- [ ] 2. Actual legal knowledge delivery — learner-answer/carry slice built here; reused teacher and cumulative lesson exchange built; GUIDED integration and remaining readers open.
+- [ ] 2. Actual legal knowledge delivery — learner-answer/carry slice built here; reused teacher and cumulative lesson exchange built; GUIDED integrated; independent modes and remaining readers open.
 - [ ] 3. Existing native-field search surfaces, cross-transform pairs, conditions/cells, targets, Dipole, scoped claims and unchanged symbolic discovery.
 - [ ] 4. Candidate/survivor batches and scientific double-checks, with equal checked single-occurrence treatment.
 - [ ] 5. Discuss remaining freeze/evaluation purpose and costs; Greg removed the old year-based holdout for these 30 days. No #5 implementation yet.
-- [ ] 6. Discuss Granite, then wire its bounded CPU post-class facilitator role.
+- [ ] 6. Granite discussion/report delegated by Greg to a separate chat; integrate that report before wiring its bounded CPU facilitator role.
 - [ ] 7. Discuss/finish Jev CPU blind comparison, claim sealing/testing and immediate tested-knowledge publication.
 - [ ] 8. Three-lane launch/status/resume/stop, dependencies, controller lifetime and Pod audit.
 - [ ] 9. After wiring/discussions and Greg's explicit AWS go: ONE real ROOT-to-finish E2E; fix actual failures.
@@ -72,12 +72,18 @@ explicitly calls for combining, extending and testing accumulated knowledge betw
    than the incidental lookup label. The later mode-aware filter explicitly reports expected withholding in GUIDED.
    CCode now owns `frankie_box_classroom_code.py` and `frankie_box_classroom_external_code.py` on a separate branch for
    lawful GUIDED recomputation from visible observations, under unchanged grading and with `learner_context` preserved.
-   No GUIDED result is integrated yet. Codex owns the runner, lane/brain, scientific teacher and exchange connections.
-2. The current code learner supports TEACH only. The existing curriculum can advance to GUIDED after mastered TEACH
-   classes. CCode is building GUIDED from its legally visible observations, including the external section.
-   GUIDED/SOCRATIC/VERIFY currently refuse; SOCRATIC/VERIFY still need a lawful independent evidence route.
-   This is a real launch limitation, not a reason to reset history, force TEACH, expose a host key or silently skip class.
-   The mode/advancement mathematics were not changed in this slice.
+   GUIDED commit `8b14182f` is now integrated. Codex supplies `dipole_visible` and `learner_context` to external answers,
+   updates refusal wording, and saves/restores the computed GUIDED evidence view through the existing phase mechanism.
+   CCode's two answer modules preserve the mastery rule, PREVIOUS history and existing scientific mathematics.
+   Integration review removed inference of total table rows from deduplicated selected-series contents: withheld
+   totals are unknown, so identical occurrences are never collapsed into an invented total. External/Dipole pairing
+   now checks the visible source binding, full component cursor roster and external segment boundaries.
+2. TEACH and GUIDED now have code readers. GUIDED recomputes terminal/direction and all 171 pairs from its visible
+   observations with the existing Dipole math, retaining accumulated learner context. Its external section uses visible
+   known values/runs plus the supplied legal Dipole observations. Withheld table counts remain unknown and enter the
+   existing correction path; no visibility or grading change was made. SOCRATIC/VERIFY still need a lawful independent
+   evidence route and explicitly refuse. This is a real launch limitation, not a reason to reset history, force TEACH,
+   expose a host key or silently skip class. No classroom progression has yet been runtime-verified.
 3. Actual classroom reproduction currently evaluates Dipole-bound stage findings and school novelty/teacher findings.
    Text-only documents, ROOT documents without claim bindings and unavailable giant source pointers are explicitly
    listed as not evaluated by this structured reader. Native lag/cell/equation claims still need their scientific engine
@@ -106,6 +112,21 @@ undecided and outside this build; no repeat pass is configured or authorized.
 - For non-TEACH classroom modes, current-day teacher knowledge is excluded because it contains the withheld current
   answers. This is the host-answer wall, not a chronological learning gate: other completed days remain eligible, and
   teacher/exchange stages can use today's completed measurements. The runner passes its actual mode into selection.
+
+**Cross-lane follow-up:** new scientific lessons carry the exact legal claim projection used by the scientific
+calculation, with its own hash and original author/source hash. The exchange uses that projection so direction, lag,
+cells, transforms, conditions and the original legal source claim do not disappear when the original claim file remains on another lane. Legacy lessons
+retain the original source-reader fallback; absent or changed sources stay explicitly unavailable. Projection hashes
+are distinct from original claims hashes; Frankie originals hash novel findings, while Jev/historical originals hash
+source bytes. No claim is reconstructed by guessing from its result counts.
+
+Lane boundary publication now uses the actual plan BRAIN, including the main controller's response. Snapshots bind
+that source root in their version and restore relative paths into the existing imported-owner namespace. Legacy
+snapshots retain their original binding. This closes the mismatch where a stage wrote to a custom brain but shared
+the default directory. Giant sources remain on their owner.
+
+Greg handed the Granite discussion/report to another chat. Await and reconcile that report; no Granite code or
+execution is authorized by that handoff alone.
 
 **Still open:** this exchange reader consumes completed scientific lessons; it does not turn arbitrary teacher/ROOT
 JSON, generic text, search candidates or fitted equations into new claim tests. Those typed consumers and native search

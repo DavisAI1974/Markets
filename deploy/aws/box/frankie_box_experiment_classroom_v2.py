@@ -27,9 +27,9 @@ Recovery retains the full package, learner inputs and each completed operation i
 the active operation, saves its result and returns 75; resume loads it without repeating its calculations. The final
 receipt is published after histories and the complete brain entry. completion.json alone is not a finished stage.
 
-THE SCHOOL (Greg, 2026-10-06): before answers, read completed discovery school files available at this workflow boundary,
+THE SCHOOL (Greg, 2026-10-06): before answers, read completed school files available at this workflow boundary,
 regardless of trading-date order. Each <brain>/school/<day>.json is checked against its index row (a missing or changed
-file is listed, never read), and Frankie's code checks each hypothesis filed there on today's TEACH evidence
+file is listed, never read), and Frankie's code checks each hypothesis filed there on today's lawful TEACH/GUIDED evidence
 (frankie_box_classroom_code.school_reproduction: his earlier novel findings and the teachers' own findings, per earlier
 day, counts only). The result travels in code-answers.json ("school") and the receipt ("school_knowledge"); it is not
 part of the model-visible request, so Jev's material never carries it.
@@ -198,7 +198,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                     '(it ran before V2); the external section starts without a prior correction')
     from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state, TeacherSaved
     rules, rules_witness = K.rules()
-    identity = dict(day=day, calculations=str(calculations), brain=str(Path(brain)),
+    identity = dict(day=day, calculations=str(calculations), brain=str(Path(brain)), runner_sha256=_sha256(__file__),
                     root_receipt=_sha256(calculations / 'calculations-receipt.json'),
                     teacher_receipt=_sha256(teacher_rows / 'receipt.json'), attachment=attachment_sha,
                     day_file=str(day_file), day_sha256=day_sha, previous=carried, previous_external=external_carried,
@@ -274,6 +274,11 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     knowledge_input, school, school_listed = phase('learner_inputs', learner_inputs)
     knowledge = knowledge_input['documents']
     try:
+        if mode == 'GUIDED':
+            # The derived view is a completed learner calculation, not a host answer. Save it once so
+            # resume can serve every remaining consumer without recalculating its 19 components/171 pairs.
+            evidence = phase('guided_evidence', lambda: K._evidence(visible))
+            K._EVIDENCE_CACHE[visible['pre_message']['teacher_message_hash']] = evidence
         # These inputs and their checks are retained before any answer. A resume uses this exact selection,
         # never a later peer knowledge version or a newly completed school day partway through the classroom.
         knowledge_reproduction = phase('knowledge_reproduction', lambda: K.stage_knowledge_reproduction(visible, knowledge))
@@ -283,10 +288,12 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)],
             learner_context=learner_context)) for n in names}
         summary = phase('summary', lambda: K.summary_answer(visible, outputs, learner_context=learner_context))
-        ext_ledgers = phase('external_answers', lambda: KX.answers(ext_visible))
+        ext_ledgers = phase('external_answers', lambda: KX.answers(
+            ext_visible, dipole_visible=visible, learner_context=learner_context))
     except (K.ModeNotAnswerable, KX.ModeNotAnswerable) as error:
         refusal = dict(schema=SCHEMA, day=day, status='refused', mode=mode, reason=str(error),
-                       listed='Frankie\'s code answers TEACH only; this classroom day is refused with the reason, the run goes on')
+                       listed='Frankie\'s code answers TEACH and GUIDED; SOCRATIC/VERIFY require a lawful independent '
+                              'evidence reader and remain refused with the reason')
         _dump(d / 'receipt.json', refusal)
         print(json.dumps(refusal), flush=True)
         return 3

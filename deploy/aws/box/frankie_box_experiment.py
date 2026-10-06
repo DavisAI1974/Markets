@@ -595,7 +595,7 @@ class Run:
                 fields['reason'] = '; '.join(c['line'] for c in refusals)
         if status in FINISHED and os.environ.get('FRANKIE_LANE_MAILBOX'):
             import frankie_box_lane_state as LS
-            LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage)
+            LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage, brain=self.plan.get('brain') or BRAIN)
         fields['knowledge_available'] = self._knowledge.pop((stage, key), None)
         body = dict(schema='FRANKIE_EXPERIMENT_STEP_V1', run=self.plan['run'], stage=stage, key=key, status=status,
                     at=time.time(), commit=self.commit, plan_sha256=plan_digest(self.plan),
@@ -640,7 +640,8 @@ class Run:
         logs.mkdir(parents=True, exist_ok=True)
         log_path = logs / ('%s-%s.log' % (key, stage))
         import frankie_box_lane_state as LS
-        self._knowledge[(stage, key)] = LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage)
+        self._knowledge[(stage, key)] = LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage,
+                                                 brain=self.plan.get('brain') or BRAIN)
         full = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), **{k: str(v) for k, v in env.items()})
         command = ['sh' if script.endswith('ingest_block.sh') else 'bash', str(self.box / script)]
         if stage in self.cores.DAY_RUN_STAGES:  # exactly 16 CPUs booked, the step under taskset -c <them> (frankie_box_cores.py)

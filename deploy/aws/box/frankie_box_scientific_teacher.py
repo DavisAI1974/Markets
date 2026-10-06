@@ -80,7 +80,8 @@ def jev_claims(path):
         raise SystemExit('%s is not a JEV_CLAIMS_V1' % path)
     claims = [dict(id=c['id'], statement=c.get('statement'), kind=c.get('kind'), series=list(c.get('series') or []),
                    direction=claimed_direction(c.get('direction')), direction_text=c.get('direction'),
-                   lag=claimed_lag(c.get('lag')), cells=list(c.get('cells') or []), day_made=doc.get('day'))
+                   lag=claimed_lag(c.get('lag')), cells=list(c.get('cells') or []), day_made=doc.get('day'),
+                   source_claim=c)
               for c in doc.get('claims') or []]
     return dict(author='jev', stamp=doc.get('stamp'), day=doc.get('day'), claims_sha256=sha256_bytes(raw),
                 source=str(path), claims=claims)
@@ -97,7 +98,8 @@ def historical_claims(path):
                    direction=c.get('direction') if c.get('direction') in ('same', 'opposite') else None,
                    direction_text=c.get('direction'), lag=claimed_lag(c.get('lag')), cells=list(c.get('cells') or []),
                    condition=c.get('condition'), x_transform=c.get('x_transform', 'sign_of_step'),
-                   y_transform=c.get('y_transform', 'sign_of_step'), source=c.get('source'), day_made=None)
+                   y_transform=c.get('y_transform', 'sign_of_step'), source=c.get('source'), day_made=None,
+                   source_claim=c)
               for c in doc.get('claims') or []]
     return dict(author='historical', stamp=doc['catalog_sha256'][:12], day=None, claims_sha256=sha256_bytes(raw),
                 source=str(path), claims=claims)
@@ -122,7 +124,7 @@ def frankie_claims(path, day):
         claims.append(dict(id=f.get('finding_id'), statement=premise, kind='novel_finding', series=series,
                            direction=direction, direction_text='step counts in the finding: same %s, opposite %s' % (
                                same.group(1) if same else '?', opposite.group(1) if opposite else '?'),
-                           lag=None, cells=[], day_made=day))
+                           lag=None, cells=[], day_made=day, source_claim=f))
     return dict(author='frankie', stamp=None, day=day, claims_sha256=sha256_bytes(json.dumps(findings, sort_keys=True).encode()),
                 source=str(path), source_note='only dipole_novel_findings read (R09)', claims=claims)
 
@@ -242,8 +244,15 @@ def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/
     schema = {'jev': 'JEV_LESSONS_V1', 'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1'}[doc['author']]
     if doc['author'] == 'historical':
         doc = dict(doc, day='-'.join(sorted(d['day'] for d in days)))      # the days tested, each still on its own
+    # Carry the exact legal claim projection used by test(), so another owning lane need not open private
+    # classroom ledgers or a giant source merely to recover the claim's direction, lag and construction.
+    claim_inputs = dict(schema='FRANKIE_SCIENTIFIC_CLAIM_INPUTS_V1', author=doc['author'],
+                        claims_sha256=doc['claims_sha256'], claims=doc['claims'],
+                        reader_sha256=sha256_bytes(Path(__file__).read_bytes()))
+    claim_inputs_sha256 = sha256_bytes(json.dumps(claim_inputs, sort_keys=True).encode())
     lessons = dict(schema=schema, author=doc['author'], day=doc['day'], stamp=doc['stamp'], claims_sha256=doc['claims_sha256'],
                    claims_source=doc['source'], written_by='scientific_teacher', at=time.time(),
+                   claim_inputs=claim_inputs, claim_inputs_sha256=claim_inputs_sha256,
                    searches=[dict(day=d['day'], cycle=d['cycle'], dir=str(d['dir']), manifest_sha256=d['manifest_sha256'])
                              for d in days],
                    results=results, model_calls=0,

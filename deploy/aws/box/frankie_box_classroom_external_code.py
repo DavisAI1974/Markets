@@ -17,7 +17,7 @@ code COMPUTES what that evidence determines with the external module's own funct
 same Pearson/co-movement/relation mathematics as the key), per series and per pair, never from the key. A series x
 Dipole pair needs the Dipole observations the V1 classroom shows in GUIDED: pass them as `dipole_visible`; without them
 those pairs are answered UNRESOLVED and listed as not measurable. What the GUIDED evidence cannot determine (a table's
-rows not yet known, a point table without a visible series) is answered as unknown and listed, never filled in (R04).
+total rows known or not yet known) is answered as unknown and listed, never filled in (R04).
 SOCRATIC and VERIFY withhold the evidence itself: refused with the reason, never answered from the host key.
 """
 from __future__ import annotations
@@ -138,8 +138,7 @@ def _point(p, absent_text):
         if t['rows_known'] is None:
             parts.append(f'{t["name"]}: {absent_text}')
         elif t['not_yet_known'] is None:
-            parts.append(f'{t["name"]}: {t["rows_known"]} distinct rows read through the visible series, not-yet-known '
-                         'count withheld in GUIDED (listed)')
+            parts.append(f'{t["name"]}: {t["rows_known"]} rows known, not-yet-known count unknown (listed)')
         else:
             parts.append(f'{t["name"]}: {t["rows_known"]} rows known, {t["not_yet_known"]} not yet known')
     missing = '; '.join(f'{m.get("point")}: {m.get("reason")}' for m in p['missing']) or 'none listed'
@@ -154,13 +153,15 @@ def _guided_series(EXT, np, pre, s):
     """One series' facts and alignment summary recomputed from what GUIDED shows: its known values and the runs of rows
     that saw each (the segments cover every row in order). Returns the TEACH-shaped series and its row ledger."""
     n, segments = int(pre['rows']), list(s['alignment']['segments'])
+    if int(s['alignment']['rows']) != n:
+        raise ValueError(f'{s["name"]}: the visible alignment has another row count')
     codes = np.full(n, EXT.MISSING, dtype=np.int8)
     values = np.full(n, np.nan, dtype=np.float64)
     nonpresent, position = {}, 0
     for seg in segments:
         k = int(seg['rows'])
-        if position + k > n:
-            raise ValueError(f'{s["name"]}: the visible runs cover more rows than the section has')
+        if k <= 0 or position + k > n:
+            raise ValueError(f'{s["name"]}: invalid visible segment row count')
         codes[position:position + k] = EXT.STATES.index(seg['state'])
         values[position:position + k] = seg['value'] if seg['value'] is not None else np.nan
         position += k
@@ -184,27 +185,41 @@ def _dipole_ledgers(EXT, np, pre, dipole_visible):
     observations (shown in TEACH and GUIDED), or (None, why) when they were not supplied or do not span the rows."""
     if dipole_visible is None:
         return None, NOT_SUPPLIED
-    out = {}
-    for comp in dipole_visible['pre_message']['components']:
+    out, roster = {}, None
+    components = dipole_visible['pre_message']['components']
+    if [c['name'] for c in components] != list(pre['dipole_columns']):
+        raise ValueError('the V1 and external Dipole component rosters differ')
+    for comp in components:
         obs = comp['observations']
-        if len(obs) != int(pre['rows']) or int(obs[0]['cursor']) != int(pre['first_cursor']) \
+        if not obs or len(obs) != int(pre['rows']) or int(obs[0]['cursor']) != int(pre['first_cursor']) \
                 or int(obs[-1]['cursor']) != int(pre['last_cursor']):
             return None, f'{comp["name"]}: the V1 observations do not span this section\'s rows'
+        cursors = [int(p['cursor']) for p in obs]
+        if any(a >= b for a, b in zip(cursors, cursors[1:])) or roster is not None and cursors != roster:
+            raise ValueError('the V1 observations do not share one ordered cursor roster')
+        roster = cursors
         codes = np.array([EXT.STATES.index(p['state']) for p in obs], dtype=np.int8)
         values = np.array([float(p['value']) if p['state'] == 'PRESENT' else np.nan for p in obs], dtype=np.float64)
         out[comp['name']] = (codes, values, EXT._direction(np, codes, values))
+    for series in pre['series']:
+        position = 0
+        for segment in series['alignment']['segments']:
+            end = position + int(segment['rows'])
+            if end <= position or end > len(roster) or int(segment['first_cursor']) != roster[position] or \
+                    int(segment['last_cursor']) != roster[end - 1]:
+                raise ValueError('external segment boundaries differ from the visible Dipole cursor roster')
+            position = end
+        if position != len(roster):
+            raise ValueError('external segments do not cover the visible Dipole cursor roster')
     return out, None
 
 
-def _guided_point(EXT, p, series):
-    """The point's tables from the module's own point definitions (code constants, not the key): a table read through a
-    visible series reports its distinct known rows; its not-yet-known count is withheld in GUIDED (None, listed)."""
+def _guided_point(EXT, p):
+    """Table names come from public definitions; withheld totals cannot be inferred from selected series rows."""
     spec = next((x for x in EXT.POINTS if x['point_id'] == p['point_id']), None)
     tables = []
     for name in (spec['tables'] if spec else ()):
-        readers = [s for s in series if s['table'] == name]
-        rows = {json.dumps(k['row'], sort_keys=True, default=str) for s in readers for k in s['known_values']}
-        tables.append(dict(name=name, rows_known=len(rows) if readers else None, not_yet_known=None))
+        tables.append(dict(name=name, rows_known=None, not_yet_known=None))
     return dict(p, tables=tables)
 
 
@@ -216,6 +231,11 @@ def _section(visible, dipole_visible):
                 [dict(p, day=pre['trading_day']) for p in pre['points']],
                 'not in the day file')
     EXT = _external_math()
+    if dipole_visible is not None:
+        binding, dipole_binding = visible['binding'], dipole_visible['binding']
+        if binding['v1_source_snapshot_hash'] != dipole_binding['source_snapshot_hash'] or \
+                binding['v1_classroom_binding_hash'] != dipole_binding['classroom_binding_hash']:
+            raise ValueError('the external section and visible Dipole evidence belong to different classroom sources')
     np = EXT._np()
     series, ledgers = [], {}
     for s in pre['series']:
@@ -236,11 +256,11 @@ def _section(visible, dipole_visible):
     if dipole is None:
         questions.append(f'GUIDED: the {sum(1 for p in review if p["kind"] == "EXTERNAL_DIPOLE")} series x Dipole pairs are '
                          f'answered UNRESOLVED: {why} (pass the V1 visible classroom as dipole_visible).')
-    questions.append('GUIDED: each table\'s not-yet-known row count and the tables of points without a visible series are '
-                     'withheld; answered as unknown and listed, never filled in (rule R04).')
-    points = [_guided_point(EXT, dict(p, day=pre['trading_day']), series) for p in pre['points']]
+    questions.append('GUIDED: each table\'s known and not-yet-known total row counts are withheld; answered as unknown '
+                     'and listed, never inferred by deduplicating visible series rows (rule R04).')
+    points = [_guided_point(EXT, dict(p, day=pre['trading_day'])) for p in pre['points']]
     return (series, review, 'relation computed by Frankie\'s code from the visible rows (withheld by the teacher in GUIDED)',
-            questions, points, 'no visible series reads it in GUIDED (table counts withheld; listed)')
+            questions, points, 'table counts withheld in GUIDED (unknown; not inferred from selected series)')
 
 
 def answers(visible, *, dipole_visible=None, learner_context=None):
