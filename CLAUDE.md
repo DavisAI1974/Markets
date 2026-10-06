@@ -4,6 +4,9 @@ Step #2 progress and parallel ownership: `research/kalshi/frankie_boss/HANDOFF_2
 `CCODE_STEP2_TEACHER_PARALLEL_20261006.md` in the same directory. Read after the step-1 handoff's canonical reading order.
 Step #2 is still open; actual learner-answer/carry code is source-built, not runtime-verified. Existing non-TEACH
 classroom modes lack independent readers; do not force TEACH or bypass them to claim a completed day.
+CCode's reused-teacher commits 89f94b26 and ee2c554d are integrated. CCode is assigned the bounded GUIDED
+answer-reader extension; Codex owns cumulative teacher/exchange wiring. Knowledge stacking applies throughout
+the classroom and both teachers. Repeated refinement passes after the initial 30 days remain undecided/deferred.
 Greg's final follow-up: ALL 30 days share completed knowledge regardless of market date or the old discovery/confirmation
 label. October 2024 may teach a later-running October 2022 day. Stage/school date AND role gates are removed; amended
 R15 and new plans route all 2021-2025 days through the existing learning path. Keep raw per-day timing and host-answer/Jev

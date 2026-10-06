@@ -1,7 +1,13 @@
 {
  "schema": "FRANKIE_EXPERIMENT_DIRECTIVE_V1",
  "set_by": "Greg Davis, 2026-09-29; continuous-learning mission clarified 2026-10-06",
- "applies_to": ["Frankie", "the BOSS teacher", "the scientific teacher (the search)", "the classroom", "Jev"],
+ "applies_to": [
+  "Frankie",
+  "the BOSS teacher",
+  "the scientific teacher (the search)",
+  "the classroom",
+  "Jev"
+ ],
  "directive": "Run all 30 days as one continuous, accumulating learning experiment. Keep Frankie updated after every knowledge-producing stage so he can build on his knowledge and find a tradable signal and strategy from exhaustion, Dipole, and anything else the calculations or teachers uncover. Trading-date chronology and the former discovery/confirmation labels have no bearing on using completed knowledge.",
  "greg_verbatim": [
   "We're trying to make correlations and the best trade signals we can.",
@@ -9,7 +15,8 @@
   "NO DATA IS DROPPED, even when incomplete: a calculation skips over the missing piece and lists it; never skip the day or the run for it.",
   "It should. Again, chron should have no bearing on knowledge use in this experiment",
   "YES! THAT'S WHY WE'RE DOING ALL OF THIS AND KEEPING FRANKIE UPDATED SO HE CAN BUILD OFF HIS KNOWLEDGE AND FIND A TRADABLE SIGNAL AND STRATEGY FROM EXHAUSTION AND DIPOLE AND ANYTHING ELSE THE CALCS OR TEACHERS FIND.",
-  "The hope is that 30 days is enough data for him to really find something when he stacks and builds off of all the knowledge he's going to gain. Every bit of new knowledge should hopefully be the part of the foundation for the next new knowledge"
+  "The hope is that 30 days is enough data for him to really find something when he stacks and builds off of all the knowledge he's going to gain. Every bit of new knowledge should hopefully be the part of the foundation for the next new knowledge",
+  "And the same knowledge stacking should be applied throughout the steps from the classroom to the teachers"
  ],
  "what_we_are_shooting_for": [
   "Correlations: which series move with which, at which lag, in which cell of the trading day, across the NG order book (every order event and book level of the front month), the Dipole measurements, the calculation layers, and Frankie's historical data points (positioning, weather observed and forecast, model disagreement, grid wind and gas burn, weekly storage and its estimate vs actual, the futures curve).",
@@ -17,7 +24,7 @@
   "Exhaustion and Dipole findings of any kind: direction, magnitude, timing, divergence and anything else the calculations or teachers uncover (D51); nothing is ruled out early (D52). Preserve new nonlinear and multivariable mathematical discovery."
  ],
  "how": [
-  "Cumulative discovery is the purpose: every new piece of knowledge becomes part of the foundation for subsequent knowledge. Combine, extend and test what has already been learned; these are not 30 isolated attempts. Make each producing stage's findings available before the next dependent stage, without waiting for day end. Retain source evidence, scope, contradictions and missing pieces so subsequent work can build accurately on the full record.",
+  "Cumulative discovery is the purpose: every new piece of knowledge becomes part of the foundation for subsequent knowledge. Combine, extend and test what has already been learned; these are not 30 isolated attempts. Make each producing stage's findings available before the next dependent stage, without waiting for day end. Retain source evidence, scope, contradictions and missing pieces so subsequent work can build accurately on the full record. This applies throughout the workflow: Frankie, the classroom, the BOSS teacher, the scientific teacher, and their exchanges must each consume applicable accumulated knowledge in their actual work, not merely record availability in a receipt.",
   "Every trading day is its own record (18:00 ET the prior day to the 17:00 ET halt); days are never pooled; midweek Tuesdays and Wednesdays are one class.",
   "Retain individual findings and fitted equations in their exact scope; do not average outputs across runs or pool per-day coefficients. Preserve the existing equation-discovery and fitting mathematics.",
   "Claims retain their authors (R11) and receive scientific double-checks. A checked single occurrence receives equal acceptance, certainty, teaching and knowledge treatment; no minimum-days or occurrence gate. Reusing evidence is not an independent check.",

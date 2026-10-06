@@ -1,5 +1,8 @@
 # CCode parallel assignment — step 2 reused-teacher delivery
 
+**Delivered and integrated:** `89f94b26` then `ee2c554d` from `ccr-e9f0f4af-lqxmss`. The assignment below is retained
+as its scope record. Current CCode work is the bounded GUIDED reader extension documented in the step-2 handoff.
+
 Run using-agent-skills, memory MCP and local context-engineering.
 Repo: `DavisAI1974/Markets`.
 Base: `chatgpt/frankie-30day-aws-workflow-20261006`; initial checkpoint `d303f84f87e67fff26ed6f6e011cbaf364d6a9cb`.

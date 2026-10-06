@@ -8,7 +8,8 @@
 # BRAIN (default /opt/frankie-box/brain).
 set -eu
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"
-: "${DAY:?YYYYMMDD required}"; : "${RUN:?the orchestrator run name required}"; : "${LESSONS:?lessons files required}"; : "${OUT_DIR:?output directory required}"
+: "${DAY:?YYYYMMDD required}"; : "${RUN:?the orchestrator run name required}"; : "${OUT_DIR:?output directory required}"
+LESSONS="${LESSONS:-}" # completed brain lessons may be the only exchange inputs
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
 case "$DAY" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "DAY must be YYYYMMDD" >&2; exit 2;; esac

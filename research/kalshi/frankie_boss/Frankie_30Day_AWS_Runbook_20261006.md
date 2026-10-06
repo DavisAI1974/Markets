@@ -1,5 +1,7 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+**Knowledge stacking applies throughout:** the classroom, Frankie, both teachers and their exchanges must use applicable completed knowledge in their actual inputs/computations, regardless of trading date. Receipt-only availability is not consumption. Greg may consider repeated refinement passes over the same data after the initial 30 days; that remains undecided and outside the current build.
+
 **Greg, 2026-10-06 — all-30-day continuous learning:** remove both the chronological trading-date gate and the old
 2021-2023 discovery / 2024-2025 confirmation knowledge separation. Stage/school knowledge becomes available when
 published at the next workflow boundary, including October 2024 teaching a later-running October 2022 day. Every

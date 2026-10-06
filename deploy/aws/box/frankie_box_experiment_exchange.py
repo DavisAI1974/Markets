@@ -142,6 +142,78 @@ def load_lessons(paths, day):
     return docs, listed
 
 
+def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_witness):
+    """Freeze the actual lesson inputs before any seat runs; never expose whole student brain documents to teachers."""
+    import frankie_box_lane_state as LS
+    import frankie_box_brain as BR
+    import frankie_box_scientific_teacher as ST
+    import frankie_box_classroom_code as K
+    from frankie_box_durable import write_json
+    from frankie_box_durable import witness
+    identity = dict(day=day, run=run,
+                    lessons=[dict(path=str(p), **witness(p)) for p in paths], brain=str(brain),
+                    teacher_rows=dict(path=str(rows_path), **witness(rows_path)) if rows_path else None,
+                    rules=rules_witness, producer_sha256=sha256_bytes(Path(__file__).read_bytes()),
+                    reader_sha256={m.__name__: sha256_bytes(Path(m.__file__).read_bytes()) for m in (LS, BR, ST, K)})
+    input_path = Path(input_path)
+    if input_path.is_file():
+        retained = json.loads(input_path.read_bytes())
+        if retained.get('identity') != identity:
+            raise ValueError('retained exchange learner inputs belong to another source selection or producer')
+        return retained
+    docs, listed = load_lessons(paths, day)
+    selected = LS.learner_knowledge(day, 'exchange', brain=brain)
+    school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'])
+    seen = {src['sha256'] for _, src in docs}
+
+    def take(doc, source, address=()):
+        if not isinstance(doc, dict):
+            return
+        schema = doc.get('schema')
+        if schema in LESSONS:
+            author = LESSONS[schema]
+            if doc.get('author') != author or not isinstance(doc.get('results'), list):
+                raise ValueError('accumulated scientific lesson schema/author/results differ')
+            if source['sha256'] in seen:
+                return
+            seen.add(source['sha256'])
+            docs.append((doc, dict(path=source['path'], sha256=source['sha256'], author=author, schema=schema,
+                day=doc.get('day'), stamp=doc.get('stamp'), days_tested=[s['day'] for s in doc.get('searches') or []],
+                claims_sha256=doc.get('claims_sha256'), claims_source=doc.get('claims_source'),
+                source_id='accumulated-lessons:' + source['sha256'], accumulated=True,
+                container_sha256=source.get('container_sha256', source['sha256']), address=list(address))))
+        elif schema == 'FRANKIE_STAGE_KNOWLEDGE_V1':
+            for i, member in enumerate(doc.get('sources') or []):
+                if member.get('inline') and isinstance(member.get('content'), dict):
+                    take(member['content'], dict(path=member['path'], sha256=member['sha256'],
+                         container_sha256=source['sha256']), address + ('sources', i, 'content'))
+        else:
+            listed.append(dict(path=source['path'], sha256=source['sha256'], schema=schema,
+                               reason='retained knowledge is not a scientific lesson result consumed by this exchange'))
+
+    for source in selected['documents']:
+        take(source['content'], source)
+    for row, doc in school:
+        # School also contains private student reasoning. Only its scientific-teacher lesson documents cross R09.
+        for i, item in enumerate((doc.get('sections', {}).get('scientific_teacher') or {}).get('items') or []):
+            content = item.get('content')
+            if item.get('inline') and isinstance(content, dict) and content.get('schema') in LESSONS:
+                take(content, dict(path=item.get('path') or str(row.get('file')), sha256=item['sha256'],
+                     container_sha256=row['sha256']), ('sections', 'scientific_teacher', 'items', i, 'content'))
+    claims_by_source = {}
+    for doc, source in docs:
+        claims, why = claims_of(doc)
+        claims_by_source[source['source_id']] = dict(claims=claims, listed=why)
+    retained = dict(schema='FRANKIE_EXCHANGE_KNOWLEDGE_INPUTS_V1', identity=identity,
+                    documents=docs, listed=listed, versions=selected['versions'],
+                    claims_by_source=claims_by_source,
+                    selection_listed=selected['listed'], school_listed=school_listed,
+                    rule='completed learning accumulates by availability; original days/scopes remain explicit; '
+                         'only scientific lesson results reach these teacher seats, never student decision traces')
+    write_json(input_path, retained)
+    return retained
+
+
 def claims_of(doc):
     """{claim_id: claim} re-read through the scientific teacher's own readers (only a claim's statement, series,
     direction, lag, cells and transforms; for Frankie only his novel findings: R09), bound to the lessons' claims_sha256;
@@ -158,7 +230,7 @@ def claims_of(doc):
             claims = ST.jev_claims(source)
         else:
             claims = ST.historical_claims(source)
-    except (OSError, ValueError, KeyError, SystemExit) as error:
+    except (OSError, ValueError, KeyError, TypeError, SystemExit) as error:
         return {}, 'the claims source %s could not be read (%s: %s); the claimed direction is listed unknown' % (
             source, type(error).__name__, error)
     if claims['claims_sha256'] != doc.get('claims_sha256'):
@@ -536,23 +608,43 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src)
 
 
 # ------------------------------------------------------------------------------------------------------------ the run
-def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print):
+def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, brain=None, input_path=None):
     from research.kalshi.frankie_boss import dipole_teacher_discussion as D
     from research.kalshi.frankie_boss import dipole_scientific_review as S
     import frankie_box_classroom_code as K
-    docs, listed = load_lessons(lessons_paths, day)
+    knowledge = None
+    if brain is not None:
+        if input_path is None:
+            raise ValueError('accumulated exchange knowledge requires a retained input path')
+        knowledge = accumulated_lessons(day, run, lessons_paths, brain, input_path, rows_path, rules_witness)
+        docs, listed = knowledge['documents'], list(knowledge['listed'])
+    else:
+        docs, listed = load_lessons(lessons_paths, day)
     if not docs:
-        raise SystemExit('no lessons of the given files tested %s: nothing for the exchange to discuss (%s)' % (day, listed))
+        listed.append(dict(reason='no current or accumulated scientific lessons are available; no claim turns produced'))
     measure, measure_why = teacher_rows(rows_path)
     rows_id = 'teacher-dipole-rows:%s' % day
     request = dict(shared_knowledge=dict(sources=[dict(source_id=rows_id)] + [dict(source_id=s['source_id']) for _, s in docs]))
-    items, findings, seen = [], [], set()
+    items, findings, seen, seen_results = [], [], set(), set()
     for doc, src in docs:
-        claims, claims_why = claims_of(doc)
+        if knowledge is None:
+            claims, claims_why = claims_of(doc)
+        else:
+            retained_claims = knowledge['claims_by_source'][src['source_id']]
+            claims, claims_why = retained_claims['claims'], retained_claims['listed']
         if claims_why:
             listed.append(dict(path=src['path'], reason=claims_why))
         for result in doc.get('results') or []:
+            result_hash = S.digest(finite(result))
+            result_identity = (src['author'], src.get('claims_sha256'), result_hash)
+            if result_identity in seen_results:
+                listed.append(dict(path=src['path'], sha256=src['sha256'], claim_id=result['claim_id'],
+                                   result_digest=result_hash, reason='identical source-bound lesson result already supplied'))
+                continue
+            seen_results.add(result_identity)
             item_id = '%s:%s' % (src['author'], result['claim_id'])
+            if src.get('accumulated'):
+                item_id += ':knowledge:' + src['sha256']
             if item_id in seen:
                 raise SystemExit('%s is answered by two lessons files for %s: duplicate data declines the exchange (R16)'
                                  % (item_id, day))
@@ -575,7 +667,8 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print):
                      dict(seat='scientific_teacher', author=D.CLASSROOM_ROLE, author_label=SCIENCE_AUTHOR,
                           text=science['reasoning'], lines=[c['check'] for c in science['evidence_checks']] + science['next_tests'],
                           cites=science_cites)]
-            if src['author'] == 'jev':
+            blind_jev = src['author'] == 'jev' and not src.get('accumulated')
+            if blind_jev:
                 turns.append(dict(turn=3, seat='frankie', author='frankie', withheld=True, reason=JEV_WALL))
             else:
                 final = D.final_turn(boss, science)
@@ -583,6 +676,34 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print):
                     item_id=item_id, author=src['author'], day=day, final=final,
                     joint=[f for f in found], day_text=side['day_text'], marks=side['counts_per_day'],
                     lessons_sha256=src['sha256'], proposed=[p['text'] for p in side['proposed_tests']])
+                if src.get('accumulated') and not side['counts_on_day']:
+                    # The unchanged seat calculation describes today's available checks. A missing new test
+                    # must not turn an already checked historical finding back into an untested hypothesis.
+                    retained_note = ('No scientific test of this claim was supplied for the current day. '
+                        'The retained lesson keeps its original scope and disposition %s with test days %s; '
+                        'today supplies no downgrade or additional confirmation.' %
+                        (result.get('disposition'), json.dumps(result.get('days_tested') or [])))
+                    reply['reasoning'] = reply['reasoning'].replace(
+                        'I keep it as a hypothesis with these counts named (R06).', retained_note)
+                    frankie_side['corrected_understanding'] = frankie_side['corrected_understanding'].replace(
+                        'I keep it as a hypothesis with these counts named (R06).', retained_note)
+                    for i, disagreement in enumerate(frankie_side['remaining_disagreements']):
+                        retained_disagreement = disagreement.replace(
+                            'and this stays open', 'without changing the retained disposition')
+                        frankie_side['remaining_disagreements'][i] = retained_disagreement
+                        reply['reasoning'] = reply['reasoning'].replace(disagreement, retained_disagreement)
+                    reply['learned'].append(retained_note)
+                    # Keep the existing resolution vocabulary for the new current-day retest. It never changes
+                    # the separately recorded status of the accumulated finding.
+                    frankie_side['resolution_scope'] = 'current_day_retest_only'
+                    frankie_side['current_test_status'] = 'NO_NEW_SCIENTIFIC_TEST'
+                    frankie_side['prior_finding_status'] = dict(disposition=result.get('disposition'), unchanged=True,
+                        days_tested=result.get('days_tested') or [], lesson_sha256=src['sha256'],
+                        result_digest=result_hash)
+                    for retained_day in result.get('days_tested') or []:
+                        cite = dict(value=str(retained_day), source_sha256=src['sha256'], what='retained lesson test day')
+                        if cite not in frankie_side['cites']:
+                            frankie_side['cites'].append(cite)
                 reply = D.parse_frankie(S.canonical(dict(reply, responds_to_hash=S.digest(final))).decode(),
                                         dict(item_id=item_id), final)
                 turns.append(dict(turn=3, seat='frankie', author='frankie', author_label=K.AUTHOR,
@@ -598,7 +719,11 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print):
                                          y_transform=(claim or {}).get('y_transform', 'sign_of_step'),
                                          series=claimed_names(prior), days_tested=prior.get('days_tested'),
                                          disposition=prior.get('disposition')),
-                              lessons=dict(path=src['path'], sha256=src['sha256'], result_digest=S.digest(prior)),
+                              lessons=dict(path=src['path'], sha256=src['sha256'], result_digest=result_hash,
+                                           accumulated=bool(src.get('accumulated')),
+                                           current_day_test_rows=len(side['counts_on_day']),
+                                           retained_test_days=sorted(side['counts_per_day'])),
+                              blind_jev=blind_jev,
                               turns=turns, voice_turns=voice))
     counts = dict(items=len(items), by_author={a: sum(i['author'] == a for i in items) for a in sorted(set(LESSONS.values()))},
                   boss_positions=tally(t['record']['position'] for i in items for t in i['turns'] if t['turn'] == 1),
@@ -615,11 +740,19 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print):
                 items=items, teachers_findings=findings, counts=counts, listed=listed, model_calls=0,
                 rule='each turn labelled with its author (R11); counts per day, never pooled or averaged (R04, R05); '
                      'the disposition word is orientation only (R14); no future-outcome claim (R02)')
+    if knowledge is not None:
+        full['knowledge_inputs'] = dict(path=str(input_path), sha256=sha256_bytes(Path(input_path).read_bytes()),
+            versions=knowledge['versions'], sources=[src for _, src in docs],
+            applied_to=['boss_turn', 'science_turn', 'frankie_exchange_reply'],
+            selection_listed=knowledge['selection_listed'], school_listed=knowledge['school_listed'],
+            rule='retained test counts remain on their original days; current teacher measurements are named separately; '
+                 'zero current-day tests means no new scientific test, not rejection of a previously checked finding')
     full['exchange_hash'] = S.digest(finite(full))
-    jev_items = [i for i in items if i['author'] == 'jev']
-    view = dict(full, view='frankie', items=[i for i in items if i['author'] != 'jev'],
-                teachers_findings=[f for f in findings if f['from_claim_author'] != 'jev'],
-                jev_withheld=dict(items=len(jev_items), findings=sum(f['from_claim_author'] == 'jev' for f in findings),
+    jev_items = [i for i in items if i['blind_jev']]
+    blind_items = {i['item_id'] for i in jev_items}
+    view = dict(full, view='frankie', items=[i for i in items if not i['blind_jev']],
+                teachers_findings=[f for f in findings if f['from_item'] not in blind_items],
+                jev_withheld=dict(items=len(jev_items), findings=sum(f['from_item'] in blind_items for f in findings),
                                   reason=JEV_WALL),
                 full_exchange_hash=full['exchange_hash'])
     view.pop('exchange_hash')
@@ -649,7 +782,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--day', required=True)
     p.add_argument('--run', required=True)
-    p.add_argument('--lessons', action='append', required=True, help='a lessons file that tested the day (repeat)')
+    p.add_argument('--lessons', action='append', default=[], help='a current-day lessons file (repeat); completed brain lessons also accumulate')
     p.add_argument('--teacher-rows', help='the BOSS teacher\'s Dipole rows of the day (host-dipole-classroom-source*.json)')
     p.add_argument('--out-dir', required=True, help='/opt/frankie-box/work/experiment/<run>/exchange/<day>')
     p.add_argument('--brain', default='/opt/frankie-box/brain')
@@ -661,9 +794,10 @@ def main():
     _, rules = K.rules()
     rules_witness = dict(file=Path(rules['path']).name, sha256=rules['sha256'], bytes=rules['bytes'], rules=rules['rules'])
     started = time.time()
-    full, view = exchange(a.day, a.run, a.lessons, a.teacher_rows, rules_witness)
     out = Path(a.out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    full, view = exchange(a.day, a.run, a.lessons, a.teacher_rows, rules_witness,
+                          brain=a.brain, input_path=out / 'learner-knowledge.json')
     written = {}
     for name, doc in (('exchange.json', full), ('exchange-frankie.json', view)):
         data = (json.dumps(doc, indent=1, sort_keys=True) + '\n').encode('utf-8')
@@ -682,6 +816,7 @@ def main():
                    exchange_hash=full['exchange_hash'], counts=full['counts'], listed=full['listed'],
                    teacher_rows=full['sources']['teacher_rows'], teacher_rows_listed=full['sources']['teacher_rows_listed'],
                    lessons=full['sources']['lessons'], jev_withheld=view['jev_withheld'], rules=rules_witness,
+                   knowledge_inputs=full.get('knowledge_inputs'),
                    seconds=round(time.time() - started, 1), at=time.time(), model_calls=0)
     tmp = out / 'receipt.pending'
     tmp.write_text(json.dumps(receipt, indent=1, sort_keys=True) + '\n', encoding='utf-8')

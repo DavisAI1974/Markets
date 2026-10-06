@@ -9,9 +9,8 @@ Takes, each labelled with its author (rule R11: claims, never truth):
   - Frankie's claims: ONLY the novel findings of his classroom ledgers (dipole_novel_findings). The rest of his ledgers,
     his analysis and his answers are his reasoning and are never read here (rule R09);
   - the historical Dipole claims: HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py, committed), author 'historical'.
-and the search's results for every DISCOVERY day given (frankie_box_experiment_search.py outputs; a confirmation day is
-refused: R15). A claim made on one day is tested on every discovery day given, and each day is reported on its own
-(never pooled).
+and every completed experiment search given (frankie_box_experiment_search.py outputs). Trading date and former
+discovery/confirmation labels do not gate knowledge use (Greg, 2026-10-06). Each day is reported on its own, never pooled.
 
 For each claim: its series names are matched to the search's series (normalized names; every match listed, an unmatched
 name listed as "not in the search"); for each matched pair and each day, the coupling rows (whole-day and every cell)
@@ -36,8 +35,7 @@ Writes, per author, one lessons file bound to the exact claims it answers (claim
                          <brain>/<day>-lessons/ (frankie_box_brain.write_lessons_entry), read by every later cycle.
   HISTORICAL_LESSONS_V1 -> kept under /opt/frankie-box/work/experiment-teacher/historical/<days>-<catalog sha12>.json,
                          the historical catalog's claims (frankie_box_historical_claims.py) tested on the days given;
-                         into nobody's brain here (which material carries it is the classroom step's).
-                         Neither ever carries the other's claims.
+                         published into each tested day's lessons entry with original author and scopes intact.
 """
 import argparse
 import hashlib
@@ -134,8 +132,8 @@ def load_searches(dirs):
     for d in dirs:
         d = Path(d)
         manifest = json.loads((d / 'MANIFEST.json').read_bytes())
-        if manifest.get('day_role') != 'discovery':
-            raise SystemExit('%s is a %s search: the teacher works on discovery days only (R15)' % (d, manifest.get('day_role')))
+        # Greg 2026-10-06: all 30 days contribute learned knowledge, regardless of the old year/role label.
+        # Exact search sources and separate per-day measurements remain bound below.
         days.append(dict(dir=d, day=manifest['day'], cycle=manifest['cycle'], lags=manifest['lags'],
                          series=manifest['series'], cells=[tuple(c) for c in manifest['cells']],
                          parts=[d / p['path'] for p in manifest['couplings']['parts']],
@@ -268,35 +266,59 @@ def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/
         request = urllib.request.Request(entries[key]['url'], data=data, method='PUT')
         with urllib.request.urlopen(request, timeout=300) as response:
             log('uploaded to Jev\'s brain: %s HTTP %d' % (key[4:], response.status))
-    if doc['author'] in ('frankie', 'jev'):
-        import sys
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import frankie_box_brain as brain
-        if doc['author'] == 'frankie':
-            m = brain.write_lessons_entry(brain_dir, doc['day'], path)
-            log('into Frankie\'s brain: %s (%d lessons files for %s)' % (Path(brain_dir) / (doc['day'] + '-lessons'),
-                                                                        len(m['entries']), doc['day']))
-        else:
-            # Jev stays blind until his own claim file is sealed. This function runs only after those claims are
-            # tested, so the tested result is now useful knowledge rather than information that could bias Jev.
-            m, reused = brain.write_stage_entry(
-                brain_dir, doc['day'], 'jev-tested', [path],
-                summary=dict(author='jev', claims_sha256=doc['claims_sha256'],
-                             searches=[d['day'] for d in days],
-                             dispositions={k: sum(r['disposition'] == k for r in results) for k in DISPOSITIONS}))
-            log('tested Jev knowledge into Frankie\'s brain: %s%s' %
-                (Path(brain_dir) / (doc['day'] + '-jev-tested'), ' (reused)' if reused else ''))
+    publish_lessons(path, brain_dir=brain_dir, log=log)
+
     return path
+
+
+
+def publish_lessons(path, brain_dir='/opt/frankie-box/brain', log=print):
+    """Publish completed test results, including recovery after the result file preceded brain publication.
+
+    This is exact-byte reuse of completed scientific work, never another test or an independent confirmation.
+    """
+    import frankie_box_brain as brain
+    path = Path(path)
+    raw = path.read_bytes()
+    lesson = json.loads(raw)
+    author = lesson.get('author')
+    schemas = {'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1', 'jev': 'JEV_LESSONS_V1'}
+    if author not in schemas or lesson.get('schema') != schemas[author] or lesson.get('written_by') != 'scientific_teacher':
+        raise ValueError('only completed scientific-teacher lessons may be published')
+    if author == 'jev':
+        _, reused = brain.write_stage_entry(
+            brain_dir, lesson['day'], 'jev-tested', [path],
+            summary=dict(author='jev', claims_sha256=lesson['claims_sha256'],
+                         searches=[d['day'] for d in lesson['searches']],
+                         dispositions={k: sum(r['disposition'] == k for r in lesson['results']) for k in DISPOSITIONS}))
+        log('tested Jev knowledge published%s' % (' (reused)' if reused else ''))
+        return
+    days = [lesson['day']] if author == 'frankie' else list(dict.fromkeys(d['day'] for d in lesson['searches']))
+    digest = sha256_bytes(raw)
+    for day in days:
+        entry = Path(brain_dir) / ('%s-lessons' % day)
+        manifest_path = entry / 'MANIFEST.json'
+        manifest = json.loads(manifest_path.read_bytes()) if manifest_path.is_file() else {}
+        existing = next((e for e in manifest.get('entries', []) if e.get('sha256') == digest), None)
+        if existing:
+            source = entry / existing['name']
+            if source.read_bytes() != raw:
+                raise ValueError('published scientific-teacher lessons differ from their source: %s' % source)
+            log('teacher knowledge %s (exact bytes reused)' % entry)
+        else:
+            brain.write_lessons_entry(brain_dir, day, path)
+            log('teacher knowledge published into %s' % entry)
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('--search', action='append', required=True, help='a discovery-day search directory (repeat per day)')
+    p.add_argument('--search', action='append', required=True, help='a completed experiment search directory (repeat per day)')
     p.add_argument('--jev-claims', help='a JEV_CLAIMS_V1 file (Jev\'s claims of one day)')
     p.add_argument('--jev-stamp', help='fetch clm-sidecar/<stamp>/jev/claims.json through MAP_URL (presign getprefix) instead')
     p.add_argument('--frankie-ledgers', help='Frankie\'s classroom ledgers.json of one day (only its novel findings are read)')
     p.add_argument('--frankie-day', help='the day of those ledgers (YYYYMMDD)')
     p.add_argument('--historical-claims', help='a HISTORICAL_CLAIMS_V1 file (frankie_box_historical_claims.py)')
+    p.add_argument('--brain', default='/opt/frankie-box/brain', help='the owning lane plan\'s knowledge directory')
     a = p.parse_args()
     if a.jev_stamp and not a.jev_claims:
         key = 'clm-sidecar/%s/jev/claims.json' % a.jev_stamp
@@ -317,7 +339,7 @@ def main():
     for doc in ([jev_claims(a.jev_claims)] if a.jev_claims else []) + \
                ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []) + \
                ([historical_claims(a.historical_claims)] if a.historical_claims else []):
-        write(doc, days, test(doc, days), ROOT, os.environ.get('MAP_URL'))
+        write(doc, days, test(doc, days), ROOT, os.environ.get('MAP_URL'), brain_dir=a.brain)
 
 
 if __name__ == '__main__':

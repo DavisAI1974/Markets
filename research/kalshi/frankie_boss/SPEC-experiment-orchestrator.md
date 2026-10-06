@@ -1,5 +1,7 @@
 # Spec: the 30-day experiment orchestrator
 
+**Knowledge stacking applies throughout:** the classroom, Frankie, both teachers and their exchanges must use applicable completed knowledge in their actual inputs/computations, regardless of trading date. Receipt-only availability is not consumption. Greg may consider repeated refinement passes over the same data after the initial 30 days; that remains undecided and outside the current build.
+
 **Mission:** one continuous, accumulating learning experiment across all 30 days. Keep Frankie updated after every
 knowledge-producing stage so he can build toward a tradable signal and strategy from exhaustion, Dipole and anything
 else the calculations or teachers discover. The actual learner/teacher directive is `knowledge/EXPERIMENT_DIRECTIVE_V1.json`.

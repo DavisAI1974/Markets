@@ -1047,6 +1047,18 @@ class Run:
             return self.record('classroom', day, 'waiting', reason=why)
         if previous and not (Path(previous) / 'completion.json').is_file():
             return self.record('classroom', day, 'waiting', reason='PREVIOUS %s holds no completion.json' % previous)
+        # The BOSS teacher's measured knowledge must be in the brain BEFORE Frankie's classroom reads it, whichever path
+        # brought the day here (a fresh teacher run, rows reused from an earlier run, or a ROOT found elsewhere that
+        # entered the class line without a teacher call). Idempotent: an identical entry is reused, not rewritten.
+        rows_path, why = self.rows_file(e)
+        if rows_path is None:
+            return self.record('classroom', day, 'waiting', reason=why)
+        try:
+            teacher_brain = self.teacher_knowledge(day, rows_path, rows_of(e)[1])
+        except (ValueError, FileNotFoundError) as error:
+            return self.record('classroom', day, 'refused', teacher_rows=str(rows_path),
+                               reason='the teacher knowledge of the day could not be published before the classroom: %s'
+                                      % error)
         if not self.disk_ok('classroom'):
             return None
         env = dict(DAY=day, CALCULATIONS=calc, TEACHER_ROWS=rows, BRAIN=self.plan.get('brain') or str(BRAIN))
@@ -1056,10 +1068,27 @@ class Run:
         with Q.class_running(self.log):              # exactly one class at a time on the box, queue or not
             code, log = self.child('classroom', day, 'frankie_box_experiment_classroom_v2.sh', env)
         r = json.loads((d / 'receipt.json').read_bytes()) if (d / 'receipt.json').is_file() else {}
+        # Delivery witness: the classroom's own learner-knowledge.json names every document its learner inputs read; the
+        # teacher entry counts as delivered only when that list carries its stage-knowledge.json sha256 (a receipt or a
+        # rows file alone proves nothing).
+        delivered, delivery_status, read = None, 'no_learner_receipt', d / 'learner-knowledge.json'
+        if read.is_file():
+            learner_read = json.loads(read.read_bytes())
+            documents = learner_read.get('documents') or []
+            delivered = any(doc.get('sha256') == teacher_brain['knowledge_sha256'] for doc in documents)
+            withheld = any(x.get('label') == day + '-teacher' and
+                           x.get('reason') == 'current-day teacher measurements contain answers withheld by this classroom mode'
+                           for x in learner_read.get('listed') or [])
+            delivery_status = 'delivered' if delivered else 'withheld_by_classroom_mode' if withheld else 'not_delivered'
+            if not delivered and not withheld:
+                self.log('classroom %s: the teacher entry %s is NOT among the %d learner documents read' % (
+                    day, teacher_brain['path'], len(documents)))
         fields = dict(exit_code=code, log=log, classroom=str(d), previous=previous, previous_from=previous_from,
                       school_day=self.school_day,
                       receipt_status=r.get('status'), external=(r.get('external') or {}).get('completion_hash'),
-                      brain_entry=r.get('brain_entry'), jev_material=r.get('jev_material'))
+                      brain_entry=r.get('brain_entry'), jev_material=r.get('jev_material'),
+                      teacher_brain_entry=teacher_brain, teacher_knowledge_delivered=delivered,
+                      teacher_knowledge_delivery_status=delivery_status)
         if code == 0 and self.classroom_ready(e)[0] == 'reused':
             return self.record('classroom', day, 'done', new_bytes=new_bytes(d), **fields)
         if code == 3 and r.get('status') == 'refused':
@@ -1334,9 +1363,7 @@ class Run:
             return self.record('exchange', day, 'waiting', reason='the day\'s search is %s' % ((search or {}).get('status')
                                                                                               or 'not run'))
         files, listed = self.lessons_files(e, lessons)
-        if not files:
-            return self.record('exchange', day, 'skipped', listed=listed,
-                               reason='no lessons file of the batch %s tested the day (listed)' % key)
+        # Completed accumulated lessons are also actual exchange inputs, even without a new lesson of this day.
         rows, rows_why = self.rows_file(e)
         env = dict(DAY=day, RUN=self.plan['run'], LESSONS=','.join(str(f) for f in files), OUT_DIR=target,
                    BRAIN=self.plan.get('brain') or str(BRAIN))
@@ -1532,8 +1559,11 @@ class Run:
             body['cutoff_ns'] = snapshot['as_of']
             body['through_cursor'] = snapshot['through_cursor']
             LS.write(path, body)
+        # The summary is part of the immutable entry bytes: it names the exact rows file, never the label of the path
+        # that found it ('plan' / 'teacher-only step'), so the same rows reached by another label reuse the entry
+        # instead of declining it as different knowledge. The label stays in the step receipt (days=[... source]).
         return self.brain_stage(day, 'teacher', [rows_path, path],
-                                summary=dict(rows=str(rows_path), source=source), inline_limit=path.stat().st_size)
+                                summary=dict(rows=str(rows_path)), inline_limit=path.stat().st_size)
 
     def data(self, e):
         remote = self.remote_stage('data', e['day'])
@@ -1671,10 +1701,13 @@ class Run:
         for name, env in calls:
             written = self.lessons_written(name, [e['day'] for e in searched])
             if written:                           # already taught: a second call would decline (duplicate data)
+                import frankie_box_scientific_teacher as ST
+                for path in written:
+                    ST.publish_lessons(path, brain_dir=self.plan.get('brain') or str(BRAIN), log=self.log)
                 results.append(dict(claims=name, exit_code=0, reused=[str(w) for w in written]))
                 continue
             code, log = self.child('lessons', '%s-%s' % (batch_key, name), 'frankie_box_scientific_teacher.sh',
-                                   dict(env, SEARCHES=searches))
+                                   dict(env, SEARCHES=searches, BRAIN=self.plan.get('brain') or str(BRAIN)))
             results.append(dict(claims=name, exit_code=code, log=log))
         bad = [r for r in results if r['exit_code'] != 0]
         return self.record('lessons', batch_key, 'failed' if bad else 'done', calls=results,

@@ -8,7 +8,10 @@ set -eu
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"; : "${SEARCHES:?search directories required}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
-set --
+BRAIN="${BRAIN:-/opt/frankie-box/brain}"
+case "$BRAIN" in /opt/frankie-box/*) ;; *) echo "BRAIN must be under /opt/frankie-box" >&2; exit 2;; esac
+case "$BRAIN" in *..*) echo "no .. in BRAIN" >&2; exit 2;; esac
+set -- --brain "$BRAIN"
 for d in $(echo "$SEARCHES" | tr ',' ' '); do
   case "$d" in /opt/frankie-box/work/experiment-search/*) set -- "$@" --search "$d";; *) echo "search directory under experiment-search required: $d" >&2; exit 2;; esac
 done

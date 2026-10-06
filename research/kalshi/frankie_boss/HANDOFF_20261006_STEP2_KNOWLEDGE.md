@@ -26,7 +26,7 @@ explicitly calls for combining, extending and testing accumulated knowledge betw
 ## Ordered checklist
 
 - [x] 1. Linux ownership and retained-day save/resume — source-built, runtime unverified.
-- [ ] 2. Actual legal knowledge delivery — learner-answer/carry slice built here; teacher reconciliation and remaining readers open.
+- [ ] 2. Actual legal knowledge delivery — learner-answer/carry slice built here; reused teacher and cumulative lesson exchange built; GUIDED integration and remaining readers open.
 - [ ] 3. Existing native-field search surfaces, cross-transform pairs, conditions/cells, targets, Dipole, scoped claims and unchanged symbolic discovery.
 - [ ] 4. Candidate/survivor batches and scientific double-checks, with equal checked single-occurrence treatment.
 - [ ] 5. Discuss remaining freeze/evaluation purpose and costs; Greg removed the old year-based holdout for these 30 days. No #5 implementation yet.
@@ -66,12 +66,16 @@ explicitly calls for combining, extending and testing accumulated knowledge betw
 
 ## Remaining step 2 work and limitations
 
-1. Greg requested external CCode work in parallel. Assignment: `CCODE_STEP2_TEACHER_PARALLEL_20261006.md`.
-   CCode owns `Run.teacher`, `Run.teacher_knowledge` and necessary teacher reuse/publication call sites on its own branch.
-   No CCode result has been integrated at this checkpoint. Reconcile its commit or concrete no-change trace before
-   claiming reused-teacher delivery complete. Codex changed only `Run.record` in the shared experiment module.
+1. CCode reused-teacher work is integrated: `89f94b26` then `ee2c554d` from `ccr-e9f0f4af-lqxmss`, preserving
+   the newer all-30-day changes. `Run.classroom` publishes teacher knowledge idempotently before the child and witnesses
+   actual delivery against the learner's document SHA. The immutable teacher summary uses the exact rows path rather
+   than the incidental lookup label. The later mode-aware filter explicitly reports expected withholding in GUIDED.
+   CCode now owns `frankie_box_classroom_code.py` and `frankie_box_classroom_external_code.py` on a separate branch for
+   lawful GUIDED recomputation from visible observations, under unchanged grading and with `learner_context` preserved.
+   No GUIDED result is integrated yet. Codex owns the runner, lane/brain, scientific teacher and exchange connections.
 2. The current code learner supports TEACH only. The existing curriculum can advance to GUIDED after mastered TEACH
-   classes, but the independent reader for the 19 dimensions is unbuilt; GUIDED/SOCRATIC/VERIFY explicitly refuse.
+   classes. CCode is building GUIDED from its legally visible observations, including the external section.
+   GUIDED/SOCRATIC/VERIFY currently refuse; SOCRATIC/VERIFY still need a lawful independent evidence route.
    This is a real launch limitation, not a reason to reset history, force TEACH, expose a host key or silently skip class.
    The mode/advancement mathematics were not changed in this slice.
 3. Actual classroom reproduction currently evaluates Dipole-bound stage findings and school novelty/teacher findings.
@@ -81,6 +85,33 @@ explicitly calls for combining, extending and testing accumulated knowledge betw
    consumption. Finish applicable evidence-reader connections before checking #2 off; preserve scientific mathematics.
 4. Saved classroom inputs remain stable during resume. The continuation identity now includes the lane/brain reader
    code hashes; changed scientific/input code is not silently mixed into an old in-flight phase state.
+
+## Teacher and exchange integration — 2026-10-06 follow-up
+
+Greg explicitly extended cumulative learning throughout the steps, from the classroom to both teachers. This is in
+R15 and the actual directive. Possible repeated refinement passes over the same data after the initial 30 days remain
+undecided and outside this build; no repeat pass is configured or authorized.
+
+- Completed scientific lesson documents now enter the existing BOSS/scientific/Frankie exchange calculations. Inputs
+  and legal claim projections are pinned before turns, with producer/source hashes and imported versions. Student
+  private reasoning does not cross into teacher inputs. Current BOSS measurements and previously tested per-day
+  counts stay separate; no-current-day test does not demote an already checked retained finding or confirm it again.
+- An exchange can consume accumulated lessons even without a new local lesson file. The existing teacher turns and
+  exchange reply run on the individual retained results; empty inputs are explicitly listed. Tested Jev lessons are
+  usable after testing, while raw/current blind claim handling remains unchanged. No Jev CPU transport is implemented.
+- Scientific lessons now publish to the plan's actual BRAIN. Retained lesson reuse repairs missing publication without
+  redoing scientific work. Historical test results also publish with original authors and per-day scopes retained.
+- The general brain school reader no longer excludes later trading dates. The scientific teacher accepts completed
+  search inputs regardless of the old role label. New plans still use the existing discovery execution route.
+- For non-TEACH classroom modes, current-day teacher knowledge is excluded because it contains the withheld current
+  answers. This is the host-answer wall, not a chronological learning gate: other completed days remain eligible, and
+  teacher/exchange stages can use today's completed measurements. The runner passes its actual mode into selection.
+
+**Still open:** this exchange reader consumes completed scientific lessons; it does not turn arbitrary teacher/ROOT
+JSON, generic text, search candidates or fitted equations into new claim tests. Those typed consumers and native search
+connections remain to finish. Imported beyond-chance candidates are not a substitute for the complete owner-local
+search rows (including null/contradictory results); cross-owner testing still needs the owning-stage path. BOSS raw row
+production remains the original measurement mathematics, not a learned alteration of its formulas. #2 stays unchecked.
 
 ## Verification and boundaries
 

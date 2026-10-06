@@ -532,6 +532,9 @@ def frankie_lessons(run, e):
         return run.record('frankie_lessons', day, 'skipped', reason='no ledgers.json in the day\'s classroom (%s)' % ledgers)
     written = run.lessons_written('frankie-%s' % day, [])
     if written:
+        import frankie_box_scientific_teacher as ST
+        for path in written:
+            ST.publish_lessons(path, brain_dir=run.plan.get('brain') or str(X.BRAIN), log=run.log)
         return run.record('frankie_lessons', day, 'reused', lessons=[str(w) for w in written])
     s = run.receipt('search', day)
     if not (s and s['status'] in X.FINISHED):
@@ -541,7 +544,8 @@ def frankie_lessons(run, e):
     searches = ','.join(str(X.SEARCH / d / ('cycle-' + X.CYCLE) / 'discovery') for d in searched)
     # a lessons call is a day-run step: run as stage 'lessons' so it books its 16 CPUs in the ledger like the batch calls
     code, log = run.child('lessons', day, 'frankie_box_scientific_teacher.sh',
-                          dict(FRANKIE_LEDGERS=ledgers, FRANKIE_DAY=day, SEARCHES=searches))
+                          dict(FRANKIE_LEDGERS=ledgers, FRANKIE_DAY=day, SEARCHES=searches,
+                               BRAIN=run.plan.get('brain') or str(X.BRAIN)))
     cpu = getattr(run, '_cpu', {}).pop(('lessons', day), None)
     written = run.lessons_written('frankie-%s' % day, [])
     if cpu and cpu['status'] == 'waiting' and not written:

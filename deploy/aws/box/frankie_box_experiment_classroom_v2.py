@@ -268,7 +268,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         _bytes(jev_path, jev_raw)
     names = [c['name'] for c in C.components(visible)]
     def learner_inputs():
-        selected = LS.learner_knowledge(day, 'classroom', brain=brain)
+        selected = LS.learner_knowledge(day, 'classroom', brain=brain, classroom_mode=mode)
         school, listed = LS.learner_school(day, brain=brain, versions=selected['versions'])
         return selected, school, listed
     knowledge_input, school, school_listed = phase('learner_inputs', learner_inputs)

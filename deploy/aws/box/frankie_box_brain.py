@@ -130,7 +130,7 @@ def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 *
 
 
 def write_lessons_entry(brain, day, lessons_path):
-    """The scientific teacher's lessons on Frankie's claims of one day (FRANKIE_LESSONS_V1, written by
+    """The scientific teacher's lessons on Frankie or historical claims (written by
     frankie_box_scientific_teacher.py) as the brain entry <brain>/<day>-lessons/ (Greg, 2026-09-29: "his lessons from
     the teacher while he's learning"). Read by every later cycle like any entry. Test results computed from the data,
     never a grade or an answer key (R10). A second lessons file for the same day is added beside the first (the manifest
@@ -138,13 +138,18 @@ def write_lessons_entry(brain, day, lessons_path):
     brain, source = Path(brain), Path(lessons_path)
     data = source.read_bytes()
     value = json.loads(data)
-    if value.get('schema') != 'FRANKIE_LESSONS_V1' or value.get('author') != 'frankie':
-        raise ValueError(f'{source} is not a FRANKIE_LESSONS_V1 of Frankie\'s claims')
+    author = value.get('author')
+    schemas = {'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1'}
+    if author not in schemas or value.get('schema') != schemas[author]:
+        raise ValueError(f'{source} is not scientific-teacher lessons of Frankie or historical claims')
+    days = [str(value.get('day'))] if author == 'frankie' else [str(x.get('day')) for x in value.get('searches', [])]
+    if str(day) not in days:
+        raise ValueError('lesson entry day is not bound by the scientific-teacher source')
     entry_dir = brain / f'{day}-lessons'
     manifest_path = entry_dir / 'MANIFEST.json'
     manifest = json.loads(manifest_path.read_bytes()) if manifest_path.is_file() else dict(
         schema=SCHEMA, cycle='lessons', day=str(day), entry_kind='teacher_lessons', entries=[], unavailable=[],
-        note="the scientific teacher's test results on Frankie's claims, per day, counts as the finding (R14)")
+        note="the scientific teacher's test results, original claim authors and per-day counts retained (R14)")
     digest = sha256_bytes(data)
     if any(e.get('sha256') == digest for e in manifest['entries']):
         raise ValueError(f'these lessons are already in {entry_dir} (duplicate data declines)')
@@ -152,7 +157,7 @@ def write_lessons_entry(brain, day, lessons_path):
     entry_dir.mkdir(parents=True, exist_ok=True)
     (entry_dir / name).write_bytes(data)
     manifest['entries'].append(dict(name=name, bytes=len(data), sha256=digest, source=str(source), include=True,
-                                    kind="the scientific teacher's lessons on Frankie's claims (counts, challenges, untested)"))
+                                    kind="the scientific teacher's lessons on %s claims (counts, challenges, untested)" % author))
     manifest['at'] = time.time()
     tmp = entry_dir / 'MANIFEST.json.tmp'
     tmp.write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
@@ -255,9 +260,12 @@ def write_school_day(brain, day, data, report_number, run, school_day=None):
 
 
 def school_rows(brain, before_day=None, pinned=None):
-    """([(row, document)], listed): every school day before before_day (None = every day) whose file matches its index
-    row, read whole; listed = the rows not read, each with its reason (include false, a later or the same day, a missing
-    or changed file). pinned: the rows a captured knowledge base holds (read instead of the live index)."""
+    """Read completed school records whole, hash-bound to their index rows, regardless of market-date order.
+
+    before_day is the legacy caller's current-day argument: exclude only that day's own school answers.
+    Greg's 2026-10-06 experiment has no chronological knowledge barrier. A captured base still supplies its
+    exact pinned rows instead of the live index; this does not widen a saved input selection on resume.
+    """
     loaded, listed = [], []
     try:
         rows = list(pinned) if pinned is not None else _school_index(brain)['rows']
@@ -265,8 +273,9 @@ def school_rows(brain, before_day=None, pinned=None):
         return loaded, [dict(row=None, reason=f'the school index could not be read ({type(error).__name__}: {error})')]
     for row in sorted(rows, key=lambda r: str(r.get('day'))):
         day = str(row.get('day'))
-        if before_day is not None and not day < str(before_day):
-            continue                     # the day being run and later days are never read (the causal wall)
+        if before_day is not None and day == str(before_day):
+            listed.append(dict(row=row, reason='this classroom cannot consume its own school answers'))
+            continue
         if not row.get('include', True):
             listed.append(dict(row=row, reason='excluded by its index row (include false)'))
             continue
@@ -935,8 +944,9 @@ SCHOOL_SECTIONS = ('frankie_classwork', 'boss_teacher', 'scientific_teacher', 'e
 
 
 def _school_for(brain, snapshot, day):
-    """The school days a cycle of `day` reads: every earlier day of the live index, or of the rows a captured base pinned
-    (a base captured before the school existed pins none). Without a day nothing is read (the wall needs the day)."""
+    """All completed other-day school records, regardless of trading date, or the exact captured selection.
+    A base captured before school existed pins none. Without a day nothing is read (own-answer exclusion needs it).
+    """
     if day is None:
         return [], []
     if snapshot:
