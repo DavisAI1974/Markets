@@ -16,6 +16,33 @@ No agent task or partial implementation needs to be resumed from memory.
 
 **SOURCE-BUILT / RUNTIME-UNVERIFIED. STOP BEFORE WORKFLOW #5.**
 
+## Latest CCode Slice A integration after `59cca0d4`
+
+Incoming branch `ccode/teacher-tasks-20261006b`, exact return
+`6e5fb403ac8a1f6ce4c82a2173c7c08b7c9c7054`, based on `bbe2d560`. The two-parent integration
+preserves its four exact file blobs and all newer search/clock changes from `59cca0d4`.
+Incoming files: teacher_knowledge.py, experiment_exchange.py, scientific_teacher.py and CCode's
+Step #4 report. No incoming source was rewritten or research executed during this integration.
+
+The blanket discovery-day candidate skip is removed. The existing reader retains exact origin
+part/ordinal/raw-line identities without counting origin rows as tests. The exchange now computes
+the existing movement-count complements for current-day origin rows and teaches those in the BOSS
+turn and lawful Frankie reply. Both seat sidecars retain the result. Test counts, findings, acceptance,
+historical reproduction and the Jev blind boundary remain separate. Mirror equivalence now names
+null_exclusion and beyond_chance. The existing changed-module digests refuse incompatible recovery.
+
+**Slice A remains partial:** the scientific teacher's actual record/voice only states origin row counts
+and whether the discovery row was found; full arithmetic is in its sidecar, outside `record=science`.
+CCode must connect the already-computed origin result to that turn before validation/hashing, without
+creating another measurement. Origin teaching also needs the shared route's transformed-zero/missing/
+unclassified limitation, and listed arithmetic failures must reach both actual turns. These exact
+follow-ups head `CCODE_NEXT_SOURCE_TASKS_20261006.md`. Do not cross off BOTH-seat coverage yet.
+
+Verification: direct caller/reader/arithmetic/recovery/answer-wall source review, AST parse of the
+three incoming Python modules without project imports, incoming and local whitespace checks, and
+disjoint-path/blob/parent verification. No tests, synthetic exercises, installs, runs or AWS actions.
+Steps #2–#4 remain open; stop before #5. CCode retains source ownership for these follow-ups and B/C/D.
+
 ## Latest reserved search review after `bbe2d560`: empty/unknown-clock source handling
 
 An empty prices/structures spool previously failed at `num.pop(time_key)`, despite the producer

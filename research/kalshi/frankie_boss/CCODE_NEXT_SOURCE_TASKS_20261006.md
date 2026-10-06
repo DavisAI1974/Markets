@@ -1,5 +1,36 @@
 # CCode assignment — next pre-#5 source tasks
 
+## Slice A return reviewed for integration — `6e5fb403`, latest follow-up
+
+Observed `ccode/teacher-tasks-20261006b` at `6e5fb403ac8a1f6ce4c82a2173c7c08b7c9c7054`.
+Its actual parent/base is `bbe2d560` (the report's `6cf36b3` is the earlier assignment checkpoint).
+Codex integrates these four exact file blobs with both histories preserved and newer `59cca0d4`
+search/clock work retained. SOURCE-BUILT / RUNTIME-UNVERIFIED. Slice A is PARTIAL, not complete.
+
+Source-reviewed improvements: discovery-day candidates reach the existing exact-origin reader;
+origin margins reach the BOSS turn and lawful Frankie reply, with original identities; both seat
+sidecars retain them; original tests/findings remain separate; mirror identity includes the two
+remaining chance fields. Existing reader/producer digests bind recovery. No research was run.
+
+Finish these corrections in your exchange file before declaring A complete:
+1. `science_turn` currently reads origin rows only for `day_text` row count/discovery-found and
+   `origin_on_day`. The full `origin_accounting` is attached OUTSIDE `record=science`; its arithmetic
+   never enters scientific `evidence_checks`, `reasoning`, `teaching_implications`, citations or voice
+   lines. Pass the already-computed source-bound origin result to this seat and consume its arithmetic
+   before `D.parse_teacher`/hashing. Reuse the same counts, explicitly not a second measurement; keep
+   checks unresolved and out of `compared`, findings, promotion and target masks. Sidecar storage is
+   not the required second-seat computational/teaching connection.
+2. `origin_evidence_accounting` uses the shared complement arithmetic but omits the shared route's
+   zero/unclassified qualification. Its prose must say these are nonzero transformed-step margins
+   at the retained circular shift, not known physical inactivity. Zero may be stationary, missing or
+   unclassified. Restore the same limitation and source/scope language without changing formulas.
+3. Surface `origin['listed']` reasons in both actual turns/voice where applicable, not only their
+   sidecars. Preserve the rejected source row/reason and distinguish identified discovery evidence
+   from arithmetic that cannot be performed. Do not invent a result or mark an unsupported row tested.
+
+Continue B/C/D and the price/structure producer task below. Fetch current integration before returning
+new edits; do not reapply already-integrated A or overwrite the reserved search module/shared handoffs.
+
 ## Expanded assignment from Greg — latest ownership, after `7d10fa5`
 
 Greg: "give CCode as much as you can so we can preserve your usage" (2026-10-06).
@@ -7,7 +38,7 @@ This section supersedes the older ownership allocations below for the named file
 Fetch the CURRENT `ccr-5fce7de3-xa4hfg` HEAD; `7d10fa5` is the inspected base, not a reset target.
 Read `NEW_CHAT_HANDOFF_20261006_TEACHER_COVERAGE.md` first. Work on a separate branch from
 the refreshed tip, preserving newer commits. Return atomic `[skip ci]` commits for integration.
-This is an assignment prepared for Greg to pass to CCode, not a claim CCode has received or begun it.
+The Slice A return is now observed as recorded above; the remaining queue is not claimed complete.
 
 Codex retains only the immediate raw-placeholder projection repair in `frankie_box_experiment_dipole.py`,
 its description in `frankie_box_experiment_search.py`, and the current continuation/assignment documents.

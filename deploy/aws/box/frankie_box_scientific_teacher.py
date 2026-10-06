@@ -424,7 +424,10 @@ def row_scope_reasons(claim, row, reverse=False):
     return reasons
 
 
-MIRROR_FIELDS = ('same_way', 'opposite', 'both_moving', 'steps', 'null_shifts', 'null_at_or_beyond', 'null_largest')
+MIRROR_FIELDS = ('same_way', 'opposite', 'both_moving', 'steps', 'null_shifts', 'null_at_or_beyond', 'null_largest',
+                 'null_exclusion', 'beyond_chance')   # the whole chance-check contract of couple(): exclusion = max(2L+1, m//10)
+                                                     # and beyond_chance = shifts > 0 and reached == 0 are functions of the
+                                                     # fields before them, so a true mirror carries them equal; named, not assumed
 
 
 def mirror_of(row, forward_rows):

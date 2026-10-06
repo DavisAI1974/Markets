@@ -536,6 +536,104 @@ def position_of(results):
 
 
 # ------------------------------------------------------------------------------------------------ turn 1: BOSS teacher
+def count_margins(row):
+    """The exact-integer checks and complements shared_count_accounting applies to one search row: (reasons, margins)
+    where margins = dict(steps, both, x, y, complements) when the row is well formed, else None."""
+    counts = row.get('counts')
+    reasons = []
+    for field in ('x', 'y', 'x_transform', 'y_transform', 'cell'):
+        if not isinstance(row.get(field), str) or not row[field]:
+            reasons.append('missing exact ' + field)
+    if 'cell_value' not in row or type(row.get('lag')) is not int:
+        reasons.append('missing exact cell value or integer lag')
+    names = ('same_way', 'opposite', 'both_moving', 'x_moves', 'y_moves')
+    margins = None
+    if (not isinstance(counts, dict) or type(row.get('steps')) is not int
+            or any(type(counts.get(name)) is not int for name in names)):
+        reasons.append('steps and movement counts must be integers, excluding booleans')
+    else:
+        steps, both = row['steps'], counts['both_moving']
+        x, y = counts['x_moves'], counts['y_moves']
+        if any(value < 0 for value in (steps, *(counts[name] for name in names))):
+            reasons.append('negative movement count or step count')
+        if counts['same_way'] + counts['opposite'] != both:
+            reasons.append('same-way plus opposite counts differ from both-moving')
+        if both > min(x, y) or max(x, y) > steps or x + y - both > steps:
+            reasons.append('movement margins do not form a partition of the supplied steps')
+        margins = dict(steps=steps, both=both, x=x, y=y,
+                       complements=dict(x_only=x - both, y_only=y - both, neither=steps - x - y + both))
+    return reasons, margins
+
+
+def origin_evidence_accounting(result, day, src):
+    """The candidate's own discovery rows on this day (the scientific reader's origin_evidence), accounted with the same
+    exact margins as the shared search counts and delivered to both seats: ORIGIN EVIDENCE, listed, never a test, never
+    an independent measurement, never a confirmation or an occurrence (R06; Greg, 2026-10-06). Each row keeps its exact
+    identity (where: part sha256, ordinal, raw-line sha256) and whether it IS the candidate's discovery row."""
+    said = Said()
+    schema = 'FRANKIE_ORIGIN_EVIDENCE_ACCOUNTING_V1'
+    rows = result.get('origin_evidence')
+    if rows is None:
+        rows = []
+    if not isinstance(rows, list):
+        return dict(schema=schema, rows=[], listed=[dict(reason='origin_evidence is not a row list')], teaching=[],
+                    cites=[], independent_measurements=0, counts_as_test=False, discovery_row_found=False)
+    entries, listed, teaching, found = [], [], [], False
+    for ordinal, row in enumerate(rows):
+        origin = dict(lesson_sha256=src['sha256'], source_id=src['source_id'], claim_id=result.get('claim_id'),
+                      origin_ordinal=ordinal,
+                      origin_sha256=sha256_bytes(json.dumps(finite(row), sort_keys=True, separators=(',', ':')).encode()))
+        if not isinstance(row, dict):
+            listed.append(dict(origin, reason='origin row is not an object', source_row=row))
+            continue
+        if row.get('day') != day:
+            listed.append(dict(origin, day=row.get('day'), reason='outside current day; original status unchanged'))
+            continue
+        reasons, margins = count_margins(row)
+        where = row.get('where') if isinstance(row.get('where'), dict) else None
+        if where is None:
+            reasons.append('no exact where record (part sha256, ordinal, raw-line sha256)')
+        if reasons:
+            listed.append(dict(origin, reason='; '.join(reasons), source_row=row))
+            continue
+        discovery = row.get('discovery_row') is True
+        found = found or discovery
+        scope = {key: row[key] for key in ('day', 'x', 'y', 'x_transform', 'y_transform', 'cell', 'cell_value', 'lag')}
+        scope_text = ('on %s, %s -> %s (%s / %s), cell %s=%s, lag %s' % tuple(
+            said.v(scope[key], src['sha256'], 'origin row ' + key)
+            for key in ('day', 'x', 'y', 'x_transform', 'y_transform', 'cell', 'cell_value', 'lag')))
+        c = margins['complements']
+        text = ('Origin evidence %s (%s; part %s row %s): the candidate\'s own discovery day; of %s steps, same way %s, '
+                'opposite %s, both %s, x alone %s, y alone %s, neither %s. Listed as the evidence the candidate was read '
+                'from: not a test, not an independent measurement, not another occurrence and not a confirmation.' % (
+                    scope_text,
+                    said.v('the exact discovery row' if discovery else
+                           ('the mirror of a discovery-day row' if row.get('mark') == 'origin_evidence_mirror'
+                            else 'a discovery-day row of the same pair, not the discovery row'),
+                           src['sha256'], 'origin row identity'),
+                    said.v(str(where.get('part_sha256'))[:12], src['sha256'], 'origin part sha256'),
+                    said.v(where.get('row'), src['sha256'], 'origin row ordinal'),
+                    said.v(margins['steps'], src['sha256'], 'origin steps'),
+                    said.v(row['counts']['same_way'], src['sha256'], 'origin same_way'),
+                    said.v(row['counts']['opposite'], src['sha256'], 'origin opposite'),
+                    said.v(margins['both'], src['sha256'], 'origin both_moving'),
+                    said.v(c['x_only'], src['sha256'], 'derived accounting: x_moves - both_moving'),
+                    said.v(c['y_only'], src['sha256'], 'derived accounting: y_moves - both_moving'),
+                    said.v(c['neither'], src['sha256'], 'derived accounting: steps - x_moves - y_moves + both_moving')))
+        entries.append(dict(origin, scope=scope, where=where, discovery_row=discovery, mark=row.get('mark'),
+                            mirror_of=row.get('mirror_of'), fields_equal=row.get('fields_equal'),
+                            origin_part_in_search=row.get('origin_part_in_search'),
+                            counts=dict(row['counts'], steps=margins['steps']), accounting=c,
+                            chance_check=row.get('chance_check'), beyond_chance=row.get('beyond_chance'),
+                            basis='origin_evidence', independent_measurement=False, counts_as_test=False,
+                            scientific_status_changed=False, teaching=text))
+        teaching.append(text)
+    return dict(schema=schema, rows=entries, listed=listed, teaching=teaching, cites=said.cites,
+                independent_measurements=0, counts_as_test=False, discovery_row_found=found,
+                rule='origin rows are read, never counted: the disposition, tests and days_tested cover other days only; '
+                     'no occurrence minimum, rarity label or promotion follows from them (R06)')
+
+
 def shared_count_accounting(result, day, src):
     """Exact complements of supplied search counts, never another scientific measurement.
 
@@ -565,25 +663,9 @@ def shared_count_accounting(result, day, src):
             listed.append(dict(origin, day=row.get('day'), reason='outside current day; original status unchanged'))
             continue
         counts = row.get('counts')
-        reasons = []
-        for field in ('x', 'y', 'x_transform', 'y_transform', 'cell'):
-            if not isinstance(row.get(field), str) or not row[field]:
-                reasons.append('missing exact ' + field)
-        if 'cell_value' not in row or type(row.get('lag')) is not int:
-            reasons.append('missing exact cell value or integer lag')
-        names = ('same_way', 'opposite', 'both_moving', 'x_moves', 'y_moves')
-        if (not isinstance(counts, dict) or type(row.get('steps')) is not int
-                or any(type(counts.get(name)) is not int for name in names)):
-            reasons.append('steps and movement counts must be integers, excluding booleans')
-        else:
-            steps, both = row['steps'], counts['both_moving']
-            x, y = counts['x_moves'], counts['y_moves']
-            if any(value < 0 for value in (steps, *(counts[name] for name in names))):
-                reasons.append('negative movement count or step count')
-            if counts['same_way'] + counts['opposite'] != both:
-                reasons.append('same-way plus opposite counts differ from both-moving')
-            if both > min(x, y) or max(x, y) > steps or x + y - both > steps:
-                reasons.append('movement margins do not form a partition of the supplied steps')
+        reasons, margins = count_margins(row)
+        if margins is not None:
+            steps, both, x, y = margins['steps'], margins['both'], margins['x'], margins['y']
         if reasons:
             listed.append(dict(origin, reason='; '.join(reasons), source_test=row))
             teaching.append('Shared count accounting is unavailable for a retained current-day search row: '
@@ -626,11 +708,12 @@ def shared_count_accounting(result, day, src):
                 proposals=proposals, cites=said.cites, independent_measurements=0)
 
 
-def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id, *, shared=None):
+def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id, *, shared=None, origin=None):
     """The BOSS teacher's turn on one scientific-teacher result, within its own role: its measurement, its masks and
     controls. Returns (the turn in the discussion schema, the measured pairs and components, the proposals, cites)."""
     said = Said()
     shared = shared if shared is not None else shared_count_accounting(result, day, src)
+    origin = origin if origin is not None else origin_evidence_accounting(result, day, src)
     rsha = measure['sha256'] if measure else None
     names = claimed_names(result)
     direction = claim.get('direction') if claim else None
@@ -754,13 +837,19 @@ def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id
     reasoning.extend(shared['teaching'])
     proposals.extend(shared['proposals'])
     said.cites.extend(c for c in shared['cites'] if c not in said.cites)
+    for text in origin['teaching']:
+        checks.append(dict(source_id=src['source_id'], claim='origin evidence of the candidate (listed, never a test)',
+                           check=text, result='unresolved'))
+    reasoning.extend(origin['teaching'])
+    said.cites.extend(c for c in origin['cites'] if c not in said.cites)
     turn = dict(item_id=item['item_id'], responds_to_hash=S.digest(item['prior']), position=own_position,
                 reasoning=' '.join(reasoning) or 'The BOSS teacher has nothing of its own to measure on this item.',
                 evidence_checks=checks,
                 build_forward=['the BOSS teacher\'s targets, masks and controls are unchanged by this exchange '
                                '(target_changes NONE); its proposals are tests for the search, listed, never applied here'],
                 teaching_implications=['Frankie is shown the teacher\'s own counts for the pairs of this claim on %s beside '
-                                       'the search\'s; nothing here grades him (R10)' % day] + shared['teaching'],
+                                       'the search\'s; nothing here grades him (R10)' % day] + shared['teaching']
+                                      + origin['teaching'],
                 proposed_training_experiments=[],
                 uncertainty=['one day, %s; the teacher\'s counts are over its own cursors, the search\'s over F_LAST group '
                              'closes at lags; agreement between the two is orientation, never predictive or economic '
@@ -792,6 +881,7 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src)
     said = Said()
     lsha = src['sha256']
     tests_day = [t for t in result.get('tests') or [] if t['day'] == day]
+    origin_day = [o for o in result.get('origin_evidence') or [] if isinstance(o, dict) and o.get('day') == day]
     marks = per_day_marks(result)
     tx = (claim or {}).get('x_transform', 'sign_of_step')
     ty = (claim or {}).get('y_transform', 'sign_of_step')
@@ -890,6 +980,12 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src)
         said.v(day, lsha, 'day'), said.v(day_count['tests'], lsha, 'rows on the day'), said.v(day_count['held'], lsha, 'held'),
         said.v(day_count['shown_otherwise'], lsha, 'shown_otherwise'), said.v(day_count['unresolved'], lsha, 'unresolved'),
         said.v(day_count.get('counts_only', 0), lsha, 'counts_only')))
+    if origin_day:
+        day_text += ('; origin evidence on this day: %s rows of the candidate\'s own discovery day (exact discovery row '
+                     'found: %s), listed and never counted as a test' % (
+                         said.v(len(origin_day), lsha, 'origin rows on the day'),
+                         said.v('yes' if any(o.get('discovery_row') is True for o in origin_day) else 'no', lsha,
+                                'exact discovery row found')))
     claim_result = ('unresolved' if not day_count['tests'] else
                     'supports' if day_count['held'] and not day_count['shown_otherwise'] else
                     'contradicts' if day_count['shown_otherwise'] and not day_count['held'] else 'unresolved')
@@ -938,7 +1034,7 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src)
         turn['next_tests'].append(HISTORICAL_REWORK)
     turn = D.parse_teacher(S.canonical(finite(turn)).decode(), item['request'], dict(item_id=item['item_id']), boss)
     side = dict(counts_on_day=tests_day, counts_per_day=marks, challenges_on_day=challenges, proposed_tests=proposed,
-                untested=untested, cannot_test_yet=cannot, day_text=day_text)
+                untested=untested, cannot_test_yet=cannot, day_text=day_text, origin_on_day=origin_day)
     return turn, side, findings, said.cites
 
 
@@ -995,8 +1091,9 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             item.update(retained_evidence=retained_evidence_counts(measure, claimed_names(prior)),
                         evidence_source_id=rows_id, lesson_sha256=src['sha256'])
             shared = shared_count_accounting(prior, day, src)
+            origin = origin_evidence_accounting(prior, day, src)
             boss, measured, components, proposals, boss_cites = boss_turn(D, S, item, prior, claim, measure, measure_why,
-                                                                          day, src, rows_id, shared=shared)
+                                                                          day, src, rows_id, shared=shared, origin=origin)
             science, side, found, science_cites = science_turn(D, S, item, prior, claim, boss, measured, proposals, day, src)
             rework = None
             if src['author'] == 'historical':
@@ -1016,9 +1113,10 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             turns = [dict(turn=1, seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR,
                           responds_to='the scientific teacher\'s lessons result on the claim', record=boss,
                           measured=finite(measured), components=components, proposals=proposals,
-                          shared_accounting=finite(shared), research_rework=rework),
+                          shared_accounting=finite(shared), origin_accounting=finite(origin), research_rework=rework),
                      dict(turn=2, seat='scientific_teacher', author=D.CLASSROOM_ROLE, author_label=SCIENCE_AUTHOR,
-                          responds_to='the BOSS teacher\'s turn', record=science, research_rework=rework, **finite(side))]
+                          responds_to='the BOSS teacher\'s turn', record=science, research_rework=rework,
+                          origin_accounting=finite(origin), **finite(side))]
             voice = [dict(seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR, text=boss['reasoning'],
                           lines=[c['check'] for c in boss['evidence_checks']] + boss['next_tests'], cites=boss_cites),
                      dict(seat='scientific_teacher', author=D.CLASSROOM_ROLE, author_label=SCIENCE_AUTHOR,
@@ -1054,6 +1152,16 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                         ('test_ordinal', 'test_sha256', 'lesson_sha256')} for value in shared['measurements']],
                     listed=shared['listed'], independent_measurements=0, scientific_status_changed=False)
                 frankie_side['cites'].extend(c for c in shared['cites'] if c not in frankie_side['cites'])
+                if origin['rows'] or origin['listed']:
+                    reply['learned'].extend(origin['teaching'])
+                    reply['learned'].append('Origin evidence is what a candidate was read from; reading it again is not '
+                                            'an independent check, another occurrence or a confirmation (R06).')
+                    frankie_side['origin_evidence'] = dict(schema=origin['schema'], lesson_sha256=src['sha256'],
+                        rows=[{key: value[key] for key in ('origin_ordinal', 'origin_sha256', 'where', 'discovery_row',
+                                                           'mark', 'scope')} for value in origin['rows']],
+                        listed=origin['listed'], discovery_row_found=origin['discovery_row_found'],
+                        independent_measurements=0, counts_as_test=False, scientific_status_changed=False)
+                    frankie_side['cites'].extend(c for c in origin['cites'] if c not in frankie_side['cites'])
                 if src.get('accumulated') and not side['counts_on_day']:
                     # The unchanged seat calculation describes today's available checks. A missing new test
                     # must not turn an already checked historical finding back into an untested hypothesis.
@@ -1100,6 +1208,7 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                               lessons=dict(path=src['path'], sha256=src['sha256'], result_digest=result_hash,
                                            accumulated=bool(src.get('accumulated')),
                                            current_day_test_rows=len(side['counts_on_day']),
+                                           origin_rows_on_day=len(side.get('origin_on_day') or []),
                                            retained_test_days=sorted(side['counts_per_day'])),
                               lesson_context=context,
                               retained_evidence=item['retained_evidence'],

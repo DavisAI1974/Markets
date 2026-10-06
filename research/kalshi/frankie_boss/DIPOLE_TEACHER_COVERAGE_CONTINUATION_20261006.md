@@ -6,6 +6,22 @@ installs, runtime downloads, dispatch, AWS actions or E2E. Stop before workflow 
 
 ## Actual connections changed
 
+### CCode Slice A return `6e5fb403` — partial source integration after `59cca0d4`
+
+The discovery-day caller now invokes the existing reader's exact-origin path rather than skipping
+those candidates. Original part/ordinal/raw-line identities remain attached. Origin rows never enter
+test counts or independent confirmations. Existing count complements now reach the BOSS turn and
+lawful Frankie reply; both seat sidecars retain them. Mirror equivalence additionally compares the
+declared null exclusion and beyond-chance fields. Existing source digests bind incompatible recovery.
+
+Both-seat arithmetic delivery is still incomplete: the scientific turn/voice receives only origin
+row-count/discovery-found text; the detailed arithmetic sits outside its validated record. CCode's
+follow-up must carry it into that turn, preserve transformed-zero limitations in the origin wording,
+and expose listed arithmetic failures to both actual turns. Source storage is not complete consumption.
+See the newest handoff and top of `CCODE_NEXT_SOURCE_TASKS_20261006.md` for exact corrections.
+The four incoming blobs are preserved in a two-parent integration; Codex did not edit CCode's source.
+Direct source review, AST syntax and whitespace only. No tests/runs/AWS; SOURCE-BUILT/RUNTIME-UNVERIFIED.
+
 ### Generic search raw-value availability — continuation after `7d10fa5`
 
 `experiment_dipole` V3 projects raw component numeric `.value` as None when its producer has not
