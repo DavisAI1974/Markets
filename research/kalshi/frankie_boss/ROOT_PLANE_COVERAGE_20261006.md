@@ -116,8 +116,9 @@ mapping nor consumption by the original native model and both teachers.
 - Full snapshots and original events are available to the existing positional search, but cross-group identity/lifecycle,
   family/D geometry, prebirth, ancestry and other full-capture projections still require the currently disabled producers.
   `native_full_capture_adapter._window_extras` is one such producer. No activation occurred.
-- Dipole states/reasons now reach cells, but timestamp as-of sampling can still omit intermediate/tied teacher rows.
-  Full `DState` is still not retained as its own surface. Six chain columns do not prove full-state consumption.
+- At the preceding checkpoint, timestamp as-of sampling could omit intermediate/tied teacher rows. The cursor-bound
+  continuation below supersedes that sampling path for exact journal-bound rows. Full `DState` is still not retained
+  as its own surface. Six chain columns do not prove full-state consumption.
 - The BOSS retains its 19-component target measurements and now also computes shared movement-count accounting from
   supplied scoped search results; those results reach Frankie's exchange reply. Broader original target/mask/control/
   representation responsibilities remain required. The historical joined reader is inactive, and complete normal
@@ -135,3 +136,42 @@ One real E2E only after wiring/discussions and AWS go; 30 days need separate aut
 
 Verification: direct source/interface and resume review, Python syntax compilation and `git diff --check` only.
 No tests, data/scientific execution, installation, AWS start, compute dispatch or E2E. SOURCE-BUILT / RUNTIME-UNVERIFIED.
+
+## Cursor-bound Dipole target rows — 2026-10-06 continuation
+
+`frankie_box_experiment_search.build_series()` now calls `frankie_box_experiment_dipole.read_columns()` using the
+already-read journal columns. The previous timestamp-only alignment selected the last teacher row at an equal receive
+stamp, which could place a later INPUT cursor's target on an earlier F_LAST frame. It also omitted intermediate rows
+from the sampled component channels.
+
+The helper verifies the exported snapshot bytes and snapshot hash, selected ingestion identity, target source manifest,
+and each consumed target's exact APPLIED cursor, receive stamp and terminal-prefix hash. Existing journal pairing/group
+checks supply the original frame membership. No additional ingest, teacher walk or book replay occurs.
+
+- Every exact group-bound original target row supplies all nested/list/scalar leaves through
+  `dipole.group.rows[position].*`. This includes intermediate component states/reasons, values, units, cursors and
+  target/source identities, preserving the original row order within each group.
+- Existing `dipole.<component>` and state/reason channels select the latest target cursor available at that frame's
+  exact source cursor. Equal timestamps cannot select a later cursor. Non-PRESENT values remain missing; a known
+  unplaced row does not cause an older target to be silently carried forward in its place.
+- Every teacher row has an explicit searched or unmatched ordinal disposition. Older ROOT exports without exact
+  journal group membership, and failed/unpaired/unclosed source groups, remain unsupported for this placement.
+  There is no timestamp fallback, synthetic target or tail backfill.
+- Group slots and current component channels are projections of the same targets, not independent observations.
+  The F_LAST axis, lag units, transforms, coupling statistic, chance check and governed targets/masks are unchanged.
+  Search continuation binds the new helper and journal codec; retained old preparation is not silently reused.
+
+This connects the existing target rows to actual search channels, including ties and intermediate states. It does not
+retain the teacher's complete internal `DState`, create persistent identity-linked trajectories, restore TeacherHead
+supervision, or establish complete 99-layer/native-model/both-teacher consumption.
+
+Post-stream native evidence remains a distinct semantic-consumer gap. Native FINALIZE rows retain their
+`post_stream_knowledge_only` disposition; `result.json` and sections 4.2/4.4 remain completed calculation evidence.
+The section contract supplies declared per-stratum book statistics, first/last books, mirror lifecycle dispositions and
+the matching rule. The active accumulated scientific reader accepts completed lesson claims; it has no existing
+adapter that makes these section products into such claims. The broader historical model-based joined discussion is
+inactive. Reading/hashing these products would not establish computation, and backfilling them into earlier frames
+would violate their availability. No claim adapter, new statistic, disabled producer or model route was invented here.
+
+Verification: source/interface/resume review, syntax compilation and `git diff --check` only. No tests, data/scientific
+run, training, AWS action or E2E. Steps #2/#3 remain open; SOURCE-BUILT / RUNTIME-UNVERIFIED.

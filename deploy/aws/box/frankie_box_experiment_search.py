@@ -40,7 +40,9 @@ the group close) and every column of every day-file table per native entity (ext
 series too; identities and clocks are listed. Equal values never make different entity columns aliases.
 V2 ROOT frames additionally carry full-depth/FIFO snapshots and every original group INPUT record, including bytes.
 Each input-record position is searched at its group close; this does not change lags to native-event units.
-Dipole component states and raw reasons supply categorical cells on the same as-of alignment as component values.
+Dipole current components use exact journal source-cursor availability at each frame, including tied timestamps.
+Every original target row additionally supplies dipole.group.rows[position].* numeric/categorical channels at its
+exact owning INPUT group. Ordered slots preserve intermediate states; they are not independent observations.
 The sealed ingest's complete INPUT/APPLIED envelopes additionally supply journal.group.entries[position].* at
 their exact existing ROOT group membership. Intermediate effects/order/rank fields are retained; missing full
 snapshots stay missing. Unknown/failed/unclosed/unmatched entries have explicit retained ordinal dispositions.
@@ -98,8 +100,8 @@ NOT_SEARCHED = (
      'hold another order next group. Old ROOT spools are not retrofilled; inspect sources[frames].frame_sections'),
     ("the D chain's own state",
      'c15_dstate.DState is computed inside the pinned teacher and retained only as the six chain columns. Dipole '
-     'component states and raw reasons now supply dipole.<column>.state/.reason cells using the same as-of alignment '
-     'as component values; this does not retain every intermediate DState or resolve timestamp-tie sampling'),
+     'component states/reasons use exact source cursors, and dipole.group.rows[position].* retains every target row '
+     'with exact journal group evidence, including tied/intermediate rows. Full internal DState remains unretained'),
     ('structure identity lists', 'structures.order_ids[i] and structures.fill_disposition.*_order_ids[i] are order '
      'identities flattened by position; they are searched as numeric series like every other leaf (listed here so the '
      'count of searched series is read correctly; an identity has no steps of its own)'),
@@ -361,35 +363,16 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
         raise SystemExit('%d Dipole classroom sources for one day (%s): duplicate data declines the run'
                          % (len(dipole_paths), ', '.join(str(p) for p in dipole_paths)))
     if dipole_paths:
-        from research.kalshi.frankie_boss.c15_journal import unpack
-        raw = dipole_paths[0].read_bytes()
-        source = unpack(json.loads(raw))
-        rows = source.get('rows') or ()
-        names = list(source.get('coverage_columns') or ())
-        values = {name: [] for name in names}
-        states = {name: {} for name in names}
-        categories = {name + suffix: [] for name in names for suffix in ('.state', '.reason')}
-        known = []
-        for row in rows:
-            known.append(row['ts_recv_ns'])
-            by_name = {c['name']: c for c in row.get('components') or ()}
-            for name in names:
-                c = by_name.get(name) or {}
-                state = str(c.get('state'))
-                states[name][state] = states[name].get(state, 0) + 1
-                categories[name + '.state'].append(state)
-                categories[name + '.reason'].append(c.get('raw_reason'))
-                v = c.get('value')
-                values[name].append(v if state == 'PRESENT' and isinstance(v, (int, float)) else None)
-        sources.append(dict(source='dipole', path=str(dipole_paths[0]), rows=len(rows), sha256=hashlib.sha256(raw).hexdigest(),
-                            schema=source.get('schema'), through_cursor=source.get('through_cursor'),
-                            components=names, states_per_component=states,
-                            note="the teacher's Dipole measurements (JournalTeacherR3), one row per context cursor; a value "
-                                 'only where the state is PRESENT; every state/reason also supplies an as-of cell'))
-        if rows:
-            asof('dipole', known, values)
-            for name, category in categories.items():
-                text_cols['dipole.' + name] = asof_values(con, axis, known, category).tolist()
+        import frankie_box_experiment_dipole as DIPOLE
+        dipole_numeric, dipole_text, dipole_sources, dipole_notes = DIPOLE.read_columns(
+            day_dir, dipole_paths[0], columns, journal_numeric, journal_text, recv)
+        series.update({name: np.asarray(values, dtype=object) for name, values in dipole_numeric.items()})
+        text_cols.update(dipole_text)
+        sources.extend(dipole_sources)
+        notes.extend(dipole_notes)
+        gates.append(dict(source='dipole', passed=True if dipole_sources[0]['searched_rows'] else None,
+                          reason='exact APPLIED cursor/prefix placement and source-cursor availability; '
+                                 'no receive-time tie selection or invented target'))
     else:
         notes.append(dict(source='dipole', missing=str(day_dir / 'run' / 'execution' / 'cycle-*' / 'host-dipole-classroom-source*'),
                           reason='no exported teacher-only or classroom Dipole source for this day'))
@@ -737,7 +720,8 @@ PLANE_COVERAGE = (
      'cells structures.mirror.orientation, structures.mirror.mirror_pair_key, structures.mirror.mirror_side_string', None),
     ("the D chain's reasons (CHAIN_BROKEN, NO_COMPLETED_STEP, DEGENERATE_STEP) and every column's state", 'dipole',
      'consumed_partial', 'dipole.<column>.state/.reason categorical cells plus state counts in the manifest',
-     'as-of sampling on F_LAST closes can omit an intermediate/tied teacher row; full DState is not retained'),
+     'all source-bound original target rows also enter dipole.group.rows[position].*; unmatched/unclosed source groups '
+     'remain explicit, and full internal DState is not retained'),
     ("the teacher's 19 Dipole columns", 'dipole', 'consumed', 'dipole.<column> for every column whose state is PRESENT', None),
     ('odcore.info_dipole divergence / exhaustion (signed_flow_features, divergence, cell_signal)', None, 'built_not_called',
      None, 'referenced only as the construction of historical claims H01/H02 (frankie_box_historical_claims.py); '
@@ -876,6 +860,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     import frankie_box_experiment_surface as SURFACE
     import frankie_box_experiment_native as NATIVE
     import frankie_box_experiment_journal as JOURNAL
+    import frankie_box_experiment_dipole as DIPOLE
     external_fields_mode = os.environ.get('SEARCH_EXTERNAL_FIELDS', 'all')
     if external_fields_mode not in ('all', 'aliases'):
         raise ValueError('SEARCH_EXTERNAL_FIELDS must be all or aliases')
@@ -910,7 +895,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     code_sha256=sha256_file(__file__), transform_sha256=sha256_file(T.__file__),
                     external_fields_mode=external_fields_mode, surface_sha256=sha256_file(SURFACE.__file__),
                     native_reader_sha256=sha256_file(NATIVE.__file__),
-                    journal_reader=JOURNAL.binding(),
+                    journal_reader=JOURNAL.binding(), dipole_reader=DIPOLE.binding(),
                     directive=directive_witness())
     identity_path = recovery / 'identity.pkl'
     if identity_path.is_file():
