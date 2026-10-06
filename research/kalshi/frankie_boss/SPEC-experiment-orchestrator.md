@@ -98,15 +98,28 @@ Do not build a test harness, extra validators or canary suite for this workflow.
 Fix actual failures as they appear and resume from retained receipts. After that succeeds, feed the 30-day pipeline.
 
 
-### Granite decision still open (2026-10-06)
+### Granite final experiment role (Greg 2026-10-06)
 
-Do not treat an older Granite role as final for the 30-day workflow yet. The repository currently carries both:
-- `SPEC-decouple-granite.md`: Granite as the R3/R4 critic lane plus a labelled self-assessment; and
-- `knowledge/GRANITE_DISCUSSION_VOICE_ROLE_V1.md`: Granite as the constrained voice/coordinator of the post-class
-  three-seat discussion.
+Granite 4.2 is the **bounded active coordinator/facilitator** of the post-class three-seat discussion. It is not merely
+a voice, but it is also not a scientific seat. Charter:
+`knowledge/GRANITE_DISCUSSION_COORDINATOR_ROLE_V2.md`; classroom rule R17:
+`knowledge/CLASSROOM_RULES_V3.json`.
 
-Greg will settle the final experiment role before launch-ready status. Until that decision, Granite performs no
-calculation, search, grading, survivor selection, confirmation filtering or trading decision in this experiment.
+Granite may ask bounded follow-up questions, surface scope disagreements, keep unresolved items and next tests organized,
+and request that a code seat perform/name the next test. It may never calculate, grade, select survivors, confirm a
+hypothesis, alter confirmation, forecast or trade. Any requested calculation runs in the appropriate code stage and
+returns source-bound evidence before the discussion continues. Useful discussion knowledge enters Frankie's brain
+immediately.
+
+The old B2 critic/self-assessment role remains historical/full-system code but is **not part of this 30-day experiment**.
+
+Hosting priority for this small coordinator role:
+1. local if practical;
+2. standard public-repo GitHub Actions CPU runner with official Granite 4.2 8B GGUF/llama.cpp if meeting latency is acceptable;
+3. an existing small AWS CPU box, started only for meetings;
+4. paid GPU only as a fallback.
+
+No standing Granite GPU/Pod is part of the experiment.
 
 ## UPDATE 2026-09-29 (late): the teachers are tied and Granite is out of the classroom. This supersedes the text below.
 - **Granite** (`SPEC-decouple-granite.md`, DECISION and BUILT blocks): Granite is ONLY the B2 shadow critic (C21-C24) on
