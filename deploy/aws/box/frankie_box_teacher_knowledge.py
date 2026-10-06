@@ -21,6 +21,8 @@ def teach_accumulated(day, search, brain, out_dir):
 
     Selection is captured once. Restart reads that selection even if publication has
     since added our own results to the brain. No search or claim synthesis occurs here.
+    Discovery-day candidates are scheduled like every other claim: the scientific reader
+    lists their origin evidence (never a test) from this owner's complete search parts.
     """
     import frankie_box_lane_state as LS
     import frankie_box_brain as BR
@@ -145,10 +147,11 @@ def teach_accumulated(day, search, brain, out_dir):
         lesson, claims = item['lesson'], []
         for claim in item['claims']:
             key = claim_key(lesson, claim)
-            if lesson['author'] == 'search' and str((claim.get('origin') or {}).get('day')) == day:
-                listed.append(dict(source=item['source'], claim_id=claim['id'],
-                                   reason='own discovery evidence retained; not an independent check or a closed claim'))
-            elif key in already_tested:
+            # A candidate discovered on this owning day is NOT skipped (CCode slice A, 2026-10-06): the reader's own
+            # origin path lists its discovery rows from this owner's complete, hash-checked search parts (origin_evidence,
+            # each row bound by part sha256 + ordinal + raw-line sha256, discovery_row true only on the exact row) and
+            # counts no origin row as a test; its tests/days_tested cover other days only. Nothing is rerun or rewritten.
+            if key in already_tested:
                 reused.append(dict(source=item['source'], claim_id=claim['id'], claim_sha256=key,
                                    reason='this native claim already tested on the exact current search manifest'))
             elif key in scheduled:

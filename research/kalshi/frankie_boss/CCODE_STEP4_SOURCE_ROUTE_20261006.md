@@ -263,3 +263,34 @@ What each piece is for, and what still needs a definition:
   post-stream knowledge, now read whole into the per-day completed-native file and carried in the lessons for both
   seats; never a search step.
 Nothing here was invented or run; storage, hashing and inventories were not counted as coverage.
+
+## 8. The expanded pre-#5 queue (CCODE_NEXT_SOURCE_TASKS top section), on `ccode/teacher-tasks-20261006b` from `6cf36b3`
+
+### Slice A: discovery-day delivery and BOTH-seat arithmetic (parent `6cf36b3`)
+
+Changed: `frankie_box_teacher_knowledge.py`, `frankie_box_experiment_exchange.py`, `frankie_box_scientific_teacher.py`.
+- `teach_accumulated`: the blanket discovery-day exclusion is removed. Traced first: the frozen selection (`inputs.json`,
+  identity = day + manifest witness + brain + this file's and the readers' sha256) is captured BEFORE the scheduling
+  loop, so removing the skip changes no selection; a changed reader/producer sha256 already refuses an older
+  `inputs.json` ("belongs to another search or reader"), so incompatible pending work cannot silently reuse the new
+  semantics; a scheduled discovery-day candidate reaches the existing `ST.test` with this owner's complete,
+  hash-checked search parts, whose origin path lists its rows (each bound by part sha256 + ordinal + raw-line sha256,
+  `discovery_row` true only on the exact row, reversed rows marked `origin_evidence_mirror`) and counts none as a test.
+  Result identity (`claim_inputs_sha256`) differs from a never-run earlier shape, so no retained result is overwritten.
+- exchange: `count_margins(row)` factors the exact-integer checks and complements out of `shared_count_accounting`
+  (its output unchanged); `origin_evidence_accounting(result, day, src)` applies the same margins to the reader's
+  `origin_evidence` rows of the current day, keeps `where`, `discovery_row`, `mark`, `mirror_of` and the chance check,
+  and says in every teaching line that an origin row is not a test, not an independent measurement, not another
+  occurrence and not a confirmation. `boss_turn` takes `origin=` and states it beside the shared accounting (checks,
+  reasoning, teaching_implications); `science_turn` extends `day_text` with the origin rows on the day and whether the
+  exact discovery row was found, and returns `origin_on_day` in its sidecar; both seats' turn records carry
+  `origin_accounting`; the lawful Frankie reply learns the origin lines plus the R06 sentence and its sidecar carries
+  `origin_evidence` (rows by identity, listed, `counts_as_test` false); each item's `lessons` names
+  `origin_rows_on_day`. Nothing enters `tests`, findings, joint confirmation, promotion or historical reproduction.
+- reader: `MIRROR_FIELDS` now names `null_exclusion` and `beyond_chance` (both functions of m, L and the null counts,
+  so a true mirror carries them equal); no acceptance rule chosen.
+- digests: `teach_accumulated` identity binds its own file and ST/EX/CC/LS/BR; `accumulated_lessons` identity binds the
+  exchange file and LS/BR/ST/K/SEARCH/DC; both change with these edits and refuse older pending inputs. Publication
+  retry is unchanged (same-bytes reuse, different-bytes refuse).
+Not done: `frankie_box_classroom_code.exchange_reply` is untouched (origin lines are added to the reply by the exchange).
+Checks: `ast.parse` without project imports, `git diff --check`. No run.
