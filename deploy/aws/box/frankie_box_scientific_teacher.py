@@ -8,7 +8,11 @@ Takes, each labelled with its author (rule R11: claims, never truth):
   - Jev's claims: JEV_CLAIMS_V1 (clm_sidecar/sit_in.py), each naming its series, direction, lag and cells;
   - Frankie's claims: ONLY the novel findings of his classroom ledgers (dipole_novel_findings). The rest of his ledgers,
     his analysis and his answers are his reasoning and are never read here (rule R09);
-  - the historical Dipole claims: HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py, committed), author 'historical'.
+  - the historical Dipole claims: HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py, committed), author 'historical';
+  - the search's own candidates: FRANKIE_SEARCH_FINDINGS_V1 (Run.search_knowledge: every beyond-chance row of one day's
+    search, with part/row provenance), projected by frankie_box_candidate_claims.py, author 'search' (CCode step #4).
+    Their series are matched exactly, and the rows of their own discovery day are listed as ORIGIN EVIDENCE, never
+    counted as a test: a second use of the same evidence is not another occurrence.
 and every completed experiment search given (frankie_box_experiment_search.py outputs). Trading date and former
 discovery/confirmation labels do not gate knowledge use (Greg, 2026-10-06). Each day is reported on its own, never pooled.
 
@@ -36,6 +40,12 @@ Writes, per author, one lessons file bound to the exact claims it answers (claim
   HISTORICAL_LESSONS_V1 -> kept under /opt/frankie-box/work/experiment-teacher/historical/<days>-<catalog sha12>.json,
                          the historical catalog's claims (frankie_box_historical_claims.py) tested on the days given;
                          published into each tested day's lessons entry with original author and scopes intact.
+  SEARCH_CANDIDATE_LESSONS_V1 -> kept under /opt/frankie-box/work/experiment-teacher/search/<day>-candidates-<sha12>.json,
+                         RETAINED ONLY: frankie_box_brain.write_lessons_entry admits the authors frankie/historical/jev,
+                         so these results are not published into any brain until that writer and the LESSONS maps of
+                         frankie_box_teacher_knowledge.py / frankie_box_experiment_exchange.py admit the author
+                         (Codex-owned files; named in CCODE_STEP4_SOURCE_ROUTE_20261006.md). Acceptance/survivor
+                         treatment of a tested candidate is not decided here (step #5 discussion).
 """
 import argparse
 import hashlib
@@ -225,7 +235,11 @@ def test(claims_doc, days):
     for c in claims_doc['claims']:
         matched, missing = {}, []
         for name in c['series']:
-            hits = sorted({s for d in days for s in match(name, d['series'])})
+            if c.get('series_exact'):
+                # a precisely named candidate (the search's own series name) is never broadened by the fuzzy matcher
+                hits = [name] if any(name in d['series'] for d in days) else []
+            else:
+                hits = sorted({s for d in days for s in match(name, d['series'])})
             (matched.__setitem__(name, hits) if hits else missing.append(name))
         pairs = sorted({(a, b) for i, x in enumerate(c['series']) for y in c['series'][i + 1:]
                         for a in matched.get(x, []) for b in matched.get(y, []) if a != b})
@@ -243,12 +257,34 @@ def test(claims_doc, days):
     results = []
     for c, matched, missing, pairs in per_claim:
         tests, verdicts, challenges = [], [], []
+        origin = c.get('origin') or {}
+        origin_evidence = []
+        source_row = c.get('source_claim') if origin else None
         for d in days:
             for a, b in pairs:
                 for x, y in ((a, b), (b, a)):
                     for r in rows.get((d['day'], x, y), []):
                         observed = 'same' if r['same_way'] > r['opposite'] else 'opposite' if r['opposite'] > r['same_way'] else 'even'
                         tx, ty = r.get('x_transform', r.get('transform', 'sign_of_step')), r.get('y_transform', 'sign_of_step')
+                        if origin and d['day'] == origin.get('day'):
+                            # the candidate's own discovery day: its rows are the evidence the candidate was read from.
+                            # Listed with their counts, never marked held/shown_otherwise, never counted as a test.
+                            same_row = bool(source_row) and all(
+                                r.get(k) == source_row.get(k) for k in ('x', 'y', 'cell', 'cell_value', 'transform',
+                                                                       'x_transform', 'y_transform', 'best_lag',
+                                                                       'same_way', 'opposite', 'both_moving', 'steps'))
+                            origin_evidence.append(dict(
+                                day=d['day'], x=x, y=y, cell=r['cell'], cell_value=r['cell_value'], transform=r['transform'],
+                                x_transform=tx, y_transform=ty, lag=r['best_lag'], steps=r['steps'],
+                                counts=dict(same_way=r['same_way'], opposite=r['opposite'], both_moving=r['both_moving'],
+                                            x_moves=r['x_moves'], y_moves=r['y_moves']),
+                                chance_check=dict(shifts=r['null_shifts'], reached=r['null_at_or_beyond'],
+                                                  largest=r['null_largest'], exclusion=r['null_exclusion']),
+                                beyond_chance=r['beyond_chance'], search_manifest_sha256=d['manifest_sha256'],
+                                discovery_row=same_row, mark='origin_evidence',
+                                reason='the discovery day: reading the discovery evidence again is not an independent '
+                                       'check and is not another occurrence'))
+                            continue
                         scope_reasons = row_scope_reasons(c, r, reverse=(x, y) == (b, a))
                         if scope_reasons:
                             mark = 'counts_only'  # retained observations, never evidence for an unapplied claim scope
@@ -290,20 +326,36 @@ def test(claims_doc, days):
         claimed = (c.get('x_transform', 'sign_of_step'), c.get('y_transform', 'sign_of_step'))
         if not any(t['x_transform'] == claimed[0] and t['y_transform'] == claimed[1] for t in tests):
             untested.append('no search row carries the claimed transform pair %s -> %s on the days given' % claimed)
-        results.append(dict(claim_id=c['id'], statement=c['statement'], author=claims_doc['author'], day_made=c['day_made'],
-                            series_matched=matched, cannot_test_yet=[dict(series=m, reason='not in the search (no series of this '
-                                                                         'name on any day given)') for m in missing],
-                            tests=tests, counts=dict(tests=len(tests), held=held, shown_otherwise=other,
-                                                     unresolved=verdicts.count('unresolved'),
-                                                     counts_only=verdicts.count('counts_only')),
-                            days_tested=sorted({t['day'] for t in tests}), disposition=disposition,
-                            disposition_note='orientation only (R14); the counts and days above are the finding',
-                            challenge=challenges, untested=untested))
+        if origin:
+            if origin.get('day') not in {d['day'] for d in days}:
+                untested.append('the origin day %s search was not among the searches given; its discovery row is bound by '
+                                'the candidate\'s own provenance, not re-read here' % origin.get('day'))
+            if not tests:
+                untested.append('no completed search of another day was given that carries this pair, cell and transform '
+                                'pair: the candidate has its origin evidence only; whether a scientifically checked single '
+                                'occurrence is accepted is the pending step #5 decision, not decided by this word')
+        result = dict(claim_id=c['id'], statement=c['statement'], author=claims_doc['author'], day_made=c['day_made'],
+                      series_matched=matched,
+                      cannot_test_yet=[dict(series=m, reason='not in the search (no series of this %sname on any day '
+                                                             'given)' % ('exact ' if c.get('series_exact') else ''))
+                                       for m in missing],
+                      tests=tests, counts=dict(tests=len(tests), held=held, shown_otherwise=other,
+                                               unresolved=verdicts.count('unresolved'),
+                                               counts_only=verdicts.count('counts_only')),
+                      days_tested=sorted({t['day'] for t in tests}), disposition=disposition,
+                      disposition_note='orientation only (R14); the counts and days above are the finding',
+                      challenge=challenges, untested=untested)
+        if origin:
+            result.update(origin=origin, origin_evidence=origin_evidence,
+                          origin_rule='origin-day rows are listed, never counted: the disposition and days_tested cover '
+                                      'the other days only; no occurrence minimum or rarity label is applied (R06)')
+        results.append(result)
     return results
 
 
 def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/frankie-box/brain'):
-    schema = {'jev': 'JEV_LESSONS_V1', 'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1'}[doc['author']]
+    schema = {'jev': 'JEV_LESSONS_V1', 'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1',
+              'search': 'SEARCH_CANDIDATE_LESSONS_V1'}[doc['author']]
     if doc['author'] == 'historical':
         doc = dict(doc, day='-'.join(sorted(d['day'] for d in days)))      # the days tested, each still on its own
     # Carry the exact legal claim projection used by test(), so another owning lane need not open private
@@ -319,6 +371,11 @@ def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/
                              for d in days],
                    results=results, model_calls=0,
                    rule='each day on its own, never pooled; counts are the finding, the disposition word is orientation')
+    if doc['author'] == 'search':
+        lessons.update(source_manifest_sha256=doc.get('source_manifest_sha256'),
+                       origin_rule='the candidates\' own discovery day is origin evidence, listed per claim and never '
+                                   'counted as a test; acceptance/survivor treatment is not decided by this file',
+                       publication='retained only; no brain writer admits author search yet')
     data = json.dumps(lessons, indent=1, sort_keys=True).encode()
     name = '%s-%s.json' % (doc['day'], doc['stamp'] or 'frankie')
     path = Path(out_dir) / doc['author'] / name
@@ -337,6 +394,11 @@ def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/
         request = urllib.request.Request(entries[key]['url'], data=data, method='PUT')
         with urllib.request.urlopen(request, timeout=300) as response:
             log('uploaded to Jev\'s brain: %s HTTP %d' % (key[4:], response.status))
+    if doc['author'] == 'search':
+        log('search candidate lessons retained, NOT published: frankie_box_brain.write_lessons_entry admits the authors '
+            'frankie/historical/jev only (its edit, and the LESSONS maps of frankie_box_teacher_knowledge.py and '
+            'frankie_box_experiment_exchange.py, are named for Codex in CCODE_STEP4_SOURCE_ROUTE_20261006.md) -> %s' % path)
+        return path
     publish_lessons(path, brain_dir=brain_dir, log=log)
 
     return path
@@ -353,9 +415,13 @@ def publish_lessons(path, brain_dir='/opt/frankie-box/brain', log=print):
     raw = path.read_bytes()
     lesson = json.loads(raw)
     author = lesson.get('author')
-    schemas = {'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1', 'jev': 'JEV_LESSONS_V1'}
+    schemas = {'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1', 'jev': 'JEV_LESSONS_V1',
+               'search': 'SEARCH_CANDIDATE_LESSONS_V1'}
     if author not in schemas or lesson.get('schema') != schemas[author] or lesson.get('written_by') != 'scientific_teacher':
         raise ValueError('only completed scientific-teacher lessons may be published')
+    if author == 'search':
+        raise ValueError('SEARCH_CANDIDATE_LESSONS_V1 has no brain writer: frankie_box_brain.write_lessons_entry admits the '
+                         'authors frankie/historical/jev only; the result file is retained, not published (%s)' % path)
     if author == 'jev' and not lesson.get('knowledge_retest'):
         _, reused = brain.write_stage_entry(
             brain_dir, lesson['day'], 'jev-tested', [path],
@@ -389,6 +455,9 @@ def main():
     p.add_argument('--frankie-ledgers', help='Frankie\'s classroom ledgers.json of one day (only its novel findings are read)')
     p.add_argument('--frankie-day', help='the day of those ledgers (YYYYMMDD)')
     p.add_argument('--historical-claims', help='a HISTORICAL_CLAIMS_V1 file (frankie_box_historical_claims.py)')
+    p.add_argument('--search-findings', help='a FRANKIE_SEARCH_FINDINGS_V1 file (knowledge-findings.json of one day\'s '
+                                             'search): its candidates tested on the OTHER searches given; the candidates\' '
+                                             'own day is listed as origin evidence, never as a test')
     p.add_argument('--brain', default='/opt/frankie-box/brain', help='the owning lane plan\'s knowledge directory')
     p.add_argument('--accumulated-day', help='test completed legal knowledge on this one owning day, without a classroom')
     p.add_argument('--accumulated-out', help='the retained accumulated-input/result directory; paired with --accumulated-day')
@@ -396,7 +465,7 @@ def main():
     if a.accumulated_day or a.accumulated_out:
         if (not a.accumulated_day or not re.fullmatch('[0-9]{8}', a.accumulated_day) or
                 not a.accumulated_out or len(a.search) != 1 or
-                any((a.jev_claims, a.jev_stamp, a.frankie_ledgers, a.frankie_day, a.historical_claims))):
+                any((a.jev_claims, a.jev_stamp, a.frankie_ledgers, a.frankie_day, a.historical_claims, a.search_findings))):
             p.error('accumulated mode requires one search, --accumulated-day YYYYMMDD and --accumulated-out only')
         import frankie_box_teacher_knowledge as TK
         from frankie_box_durable import write_json, witness
@@ -421,12 +490,19 @@ def main():
         a.jev_claims = str(target)
     if a.frankie_ledgers and not (a.frankie_day and len(a.frankie_day) == 8 and a.frankie_day.isdigit()):
         raise SystemExit('--frankie-day YYYYMMDD required with --frankie-ledgers')
-    if not (a.jev_claims or a.frankie_ledgers or a.historical_claims):
-        raise SystemExit('give --jev-claims / --jev-stamp, --frankie-ledgers and/or --historical-claims')
+    if not (a.jev_claims or a.frankie_ledgers or a.historical_claims or a.search_findings):
+        raise SystemExit('give --jev-claims / --jev-stamp, --frankie-ledgers, --historical-claims and/or --search-findings')
     days = load_searches(a.search)
+    candidates = []
+    if a.search_findings:
+        import frankie_box_candidate_claims as CC
+        candidates = [CC.candidate_claims(a.search_findings)]
+        if all(d['day'] == candidates[0]['day'] for d in days):
+            raise SystemExit('--search-findings needs at least one completed search of ANOTHER day: the candidates\' own '
+                             'day %s is origin evidence, not a test' % candidates[0]['day'])
     for doc in ([jev_claims(a.jev_claims)] if a.jev_claims else []) + \
                ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []) + \
-               ([historical_claims(a.historical_claims)] if a.historical_claims else []):
+               ([historical_claims(a.historical_claims)] if a.historical_claims else []) + candidates:
         write(doc, days, test(doc, days), ROOT, os.environ.get('MAP_URL'), brain_dir=a.brain)
 
 

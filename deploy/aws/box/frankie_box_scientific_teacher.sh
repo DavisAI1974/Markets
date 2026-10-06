@@ -23,6 +23,12 @@ if [ -n "${ACCUMULATED_DAY:-}" ] || [ -n "${ACCUMULATED_OUT:-}" ]; then
 fi
 [ -z "${JEV_STAMP:-}" ] || set -- "$@" --jev-stamp "$JEV_STAMP"
 [ -z "${FRANKIE_LEDGERS:-}" ] || set -- "$@" --frankie-ledgers "$FRANKIE_LEDGERS" --frankie-day "${FRANKIE_DAY:?FRANKIE_DAY required}"
+if [ -n "${SEARCH_FINDINGS:-}" ]; then
+  # one day's knowledge-findings.json (FRANKIE_SEARCH_FINDINGS_V1), beside its search MANIFEST; tested on the other searches
+  case "$SEARCH_FINDINGS" in /opt/frankie-box/work/experiment-search/*/knowledge-findings.json) ;; *) echo "SEARCH_FINDINGS must be a knowledge-findings.json under experiment-search" >&2; exit 2;; esac
+  case "$SEARCH_FINDINGS" in *..*) echo "no .. in SEARCH_FINDINGS" >&2; exit 2;; esac
+  set -- "$@" --search-findings "$SEARCH_FINDINGS"
+fi
 if [ -n "${HISTORICAL_CLAIMS:-}" ]; then
   case "$HISTORICAL_CLAIMS" in research/kalshi/frankie_boss/knowledge/HISTORICAL_CLAIMS_V1-*.json) ;; *) echo "HISTORICAL_CLAIMS must be a committed knowledge/HISTORICAL_CLAIMS_V1 file" >&2; exit 2;; esac
   set -- "$@" --historical-claims "$CODE_ROOT/$HISTORICAL_CLAIMS"
