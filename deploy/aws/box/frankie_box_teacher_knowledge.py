@@ -52,12 +52,18 @@ def teach_accumulated(day, search, brain, out_dir):
                     producer=witness(__file__), readers={m.__name__: witness(m.__file__)
                                                        for m in (LS, BR, ST, EX, CC, HC, HR)})
     input_path = out_dir / 'inputs.json'
+    late_knowledge = dict(listed=[], frozen=False,
+                          rule='knowledge published after this owner froze its selection is LISTED here, never consumed by '
+                               'the frozen selection: no completed or frozen day is reopened and no frozen input is '
+                               'replaced (the late-scheduling decision is held for Greg); it is available at a later '
+                               'owner boundary through the same learner_knowledge selection')
     if input_path.is_file():
         inputs = json.loads(input_path.read_bytes())
         if inputs.get('identity') != identity or inputs.get('schema') != 'FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1':
             raise ValueError('retained scientific knowledge belongs to another search or reader')
         if inputs.get('selection_sha256') != _digest(inputs['selection']):
             raise ValueError('retained scientific knowledge selection differs from its binding')
+        late_knowledge.update(frozen=True, listed=late_arrivals(day, brain, inputs['selection'], LS))
     else:
         selected = LS.learner_knowledge(day, 'exchange', brain=brain)
         school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'])
@@ -261,4 +267,23 @@ def teach_accumulated(day, search, brain, out_dir):
                           claim_ids=[c['id'] for c in claims]))
     return dict(inputs=dict(path=str(input_path), sha256=input_hash), files=files,
                 reused=reused, listed=listed, selection_listed=inputs['selection']['selection_listed'],
-                school_listed=inputs['selection']['school_listed'])
+                school_listed=inputs['selection']['school_listed'], late_knowledge=late_knowledge)
+
+
+def late_arrivals(day, brain, selection, LS):
+    """Completed brain documents the learner selection would include NOW that the frozen selection did not see: listed
+    (label, kind, day, path, sha256, schema), not consumed. A delivery drop made visible at the unfinished-work boundary;
+    the frozen selection, its identity and every retained result are untouched (CCode slice D, 2026-10-06)."""
+    seen = set()
+    for document in selection.get('documents') or []:
+        source = document.get('source') or {}
+        seen.update(x for x in (source.get('sha256'), source.get('container_sha256')) if x)
+    for item in selection.get('listed') or []:
+        source = item.get('source')
+        seen.update(x for x in ((source or {}).get('sha256') if isinstance(source, dict) else item.get('sha256'),
+                                item.get('sha256')) if x)
+    current = LS.learner_knowledge(day, 'exchange', brain=brain)
+    return [dict(label=d.get('label'), kind=d.get('kind'), day=d.get('day'), path=d.get('path'), sha256=d.get('sha256'),
+                 schema=(d.get('content') or {}).get('schema') if isinstance(d.get('content'), dict) else None,
+                 reason='published after this owner froze its scientific selection; not consumed by the frozen selection')
+            for d in current['documents'] if d.get('sha256') not in seen]

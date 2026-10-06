@@ -227,6 +227,16 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
         retained = json.loads(input_path.read_bytes())
         if retained.get('identity') != identity:
             raise ValueError('retained exchange learner inputs belong to another source selection or producer')
+        # Late-arriving knowledge at this frozen boundary: LISTED (not written into the frozen file, not consumed), so a
+        # restart shows what the frozen selection did not see; nothing is reopened (CCode slice D, 2026-10-06).
+        frozen = {src['sha256'] for _, src in retained['documents']} | {src.get('container_sha256') for _, src in retained['documents']}
+        frozen |= {item.get('sha256') for item in retained.get('listed') or []}
+        current = LS.learner_knowledge(day, 'exchange', brain=brain)
+        retained = dict(retained, late_knowledge=dict(frozen=True, listed=[
+            dict(label=d.get('label'), kind=d.get('kind'), day=d.get('day'), path=d.get('path'), sha256=d.get('sha256'),
+                 reason='published after this exchange froze its learner inputs; not consumed by the frozen selection')
+            for d in current['documents'] if d.get('sha256') not in frozen],
+            rule='listed, never consumed here: no reopening of a frozen selection; the late-scheduling decision is held'))
         return retained
     docs, listed = load_lessons(paths, day)
     selected = LS.learner_knowledge(day, 'exchange', brain=brain)
@@ -278,7 +288,7 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
                     rule='completed learning accumulates by availability; original days/scopes remain explicit; '
                          'only scientific lesson results reach these teacher seats, never student decision traces')
     write_json(input_path, retained)
-    return retained
+    return dict(retained, late_knowledge=dict(frozen=False, listed=[], rule='selection frozen in this call; nothing is late yet'))
 
 
 def claims_of(doc):
@@ -1113,7 +1123,10 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src,
 
 
 # ------------------------------------------------------------------------------------------------------------ the run
-def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, brain=None, input_path=None):
+def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, brain=None, input_path=None, notes=None):
+    """notes: an optional dict the caller owns; the late-knowledge listing of the frozen learner selection is put there
+    (for the receipt, which may change across restarts) and never into the exchange documents, whose bytes a restart must
+    reproduce exactly (write_once, R16)."""
     from research.kalshi.frankie_boss import dipole_teacher_discussion as D
     from research.kalshi.frankie_boss import dipole_scientific_review as S
     import frankie_box_classroom_code as K
@@ -1123,6 +1136,8 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             raise ValueError('accumulated exchange knowledge requires a retained input path')
         knowledge = accumulated_lessons(day, run, lessons_paths, brain, input_path, rows_path, rules_witness)
         docs, listed = knowledge['documents'], list(knowledge['listed'])
+        if notes is not None:
+            notes['late_knowledge'] = knowledge.get('late_knowledge')
     else:
         docs, listed = load_lessons(lessons_paths, day)
     if not docs:
@@ -1381,8 +1396,9 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     import frankie_box_teacher_knowledge as TK
     accumulated_claim_tests = TK.teach_accumulated(a.day, a.search, a.brain, out / 'scientific-knowledge')
+    notes = {}
     full, view = exchange(a.day, a.run, a.lessons, a.teacher_rows, rules_witness,
-                          brain=a.brain, input_path=out / 'learner-knowledge.json')
+                          brain=a.brain, input_path=out / 'learner-knowledge.json', notes=notes)
     written = {}
     for name, doc in (('exchange.json', full), ('exchange-frankie.json', view)):
         data = (json.dumps(doc, indent=1, sort_keys=True) + '\n').encode('utf-8')
@@ -1401,7 +1417,7 @@ def main():
                    exchange_hash=full['exchange_hash'], counts=full['counts'], listed=full['listed'],
                    teacher_rows=full['sources']['teacher_rows'], teacher_rows_listed=full['sources']['teacher_rows_listed'],
                    lessons=full['sources']['lessons'], jev_withheld=view['jev_withheld'], rules=rules_witness,
-                   knowledge_inputs=full.get('knowledge_inputs'),
+                   knowledge_inputs=full.get('knowledge_inputs'), late_knowledge=notes.get('late_knowledge'),
                    accumulated_claim_tests=accumulated_claim_tests,
                    seconds=round(time.time() - started, 1), at=time.time(), model_calls=0)
     tmp = out / 'receipt.pending'

@@ -400,3 +400,81 @@ day in BOTH seats, as they already do for lessons that carry one. No product is 
 reference lives in the retest lessons of the completed owner day. Older pending `inputs.json` refuse (producer sha changed).
 Decisions kept open (Greg): which group owns a 4.4 pair completion; whether a 4.2 two-point session summary has a step
 definition. Neither is authority to invent a series or statistic, and none was. Checks: `ast.parse`, `git diff --check`. No run.
+
+### Slice D: identity plumbing (the price/structure producer task), native-consumer trace, late-arriving knowledge
+
+Changed: `frankie_box_boss_session.py` (the producer task), `frankie_box_teacher_knowledge.py` and
+`frankie_box_experiment_exchange.py` (late knowledge listed at the frozen boundaries). Read first: `ROOT_PLANE_COVERAGE`,
+`KNOWLEDGE_CONSUMER_COVERAGE`, `NATIVE_LEARNER_INTEGRATION_DECISIONS`, `PENDING_FEEDBACK_COMPLETION` (all 2026-10-06).
+
+**The producer change (`Session.derive`), the exact new row contract for Codex's reserved search adapter:**
+
+`ROW_PROVENANCE_SCHEMA = 'FRANKIE_ROOT_ROW_PROVENANCE_V1'`. Both legacy spools keep every existing field and value
+(calculation outputs unchanged) and gain ONE nested key, `provenance`, built only from identity already in scope where the
+row is appended; nothing is inferred, no positional join is made, no timestamp is used as an identity.
+
+| spool | existing fields (unchanged) | `provenance` (new) | semantics |
+|---|---|---|---|
+| `prices.jsonl` | `ts_recv`, `ts_event`, `price`, `size`, `bid_px_00`, `ask_px_00` | `schema`; `input_index` (int); `instrument_id`; `legacy_row_ordinal` (int) | `input_index` = the original extracted INPUT index of the record whose application produced this legacy row (the loop index; the same units as `frames.input_cursor` and `frames.input_record_indices[i]`); `instrument_id` = that INPUT record's `instrument_id` as the record carries it (None stays None); `legacy_row_ordinal` = the row's ordinal among that record's legacy rows (one record can yield several trade rows), so (`input_index`, `legacy_row_ordinal`) is unique |
+| `structures.jsonl` | `ts_recv_ns`, `ts_event_ns`, every `describe_structure(...)` key | `schema`; `input_cursor` (int); `instrument_id`; `input_record_indices` ([int] or None) | `input_cursor` = the closing INPUT index (the record whose application closed this F_LAST group: equal to `frames.input_cursor` of the same close); `instrument_id` = `frame['instrument_id']`; `input_record_indices` = the group's member INPUT indices when the frame sections retain them (equal to `frames.input_record_indices` of the same close), else None (never reconstructed) |
+
+Joins the adapter can make exactly, without timestamps: a structures row <-> its frame by (`provenance.input_cursor`,
+`provenance.instrument_id`) == (`frames.input_cursor`, `frames.native_frame.instrument_id`) under ROOT's own membership
+(`experiment_journal._frame_index`); a prices row -> its group by `provenance.input_index` in that group's
+`frames.input_record_indices` (exact membership). A structure failure (a frame without a structures row) no longer
+shifts any join, because each row names its own close. Detection: the derivation receipt carries `row_provenance_schema` and
+`row_provenance_fields`; `layers.legacy_price.row_provenance` and `layers.legacy_structure_observables.row_provenance` name
+the fields with the rule "identity fields, not observations: never a searched series". A retained older spool has no
+`provenance`: explicit, unsupported for these joins; the old timestamp aliases are not exact identity.
+
+Bindings: the legacy recovery identity (`legacy-state.pkl`) and the completed-legacy-stage identity (`legacy-stage.json`)
+both carry `row_provenance_schema`, so an older saved state or completed stage refuses with the existing messages and is
+preserved, never resumed under the new semantics (the same mechanism `FRAME_SECTIONS_SCHEMA` V1 -> V2 used). A non-recovery
+rerun still moves an earlier derivation aside with its receipt. `load_retained_layers` reads rows as dicts (extra key fine);
+the digest writer already renders nested frame fields (`book`, `transition`), so a nested `provenance` is within its contract.
+Interim hazard, stated for Codex's adapter (change #1): `frankie_box_experiment_search.columns()` flattens every scalar
+leaf, so until the reserved search excludes `provenance.*` the way it lists `EVENT_IDENTITY_FIELDS`, a NEW ROOT's spools
+would present `prices.provenance.input_index`, `structures.provenance.input_cursor`, `...instrument_id`,
+`...input_record_indices[i]` and the text `...schema` as channels; the same already holds today for the frames'
+`input_cursor` / `input_record_indices` leaves, which this change mirrors. No search runs under the hold.
+`describe_structure` lives in the pinned producers checkout (`_producer_module`, not this tree); nesting under `provenance`
+keeps its keys untouched whatever they are.
+
+**Identity-linked trajectories beyond positional slots (trace; interfaces returned, no unit or bridging chosen):**
+- Identity-linked today: frames by (`input_cursor`, instrument) with exact member indices; journal entries per exact group
+  (`journal.group.entries[position].*`, Codex); dipole target rows per group and the closing aliases per entity
+  (`dipole.group_close.by_entity.<publisher>:<instrument>.*`, incl. `dstate.state.*`): a DState trajectory per entity across
+  that entity's closes IS identity-linked by (publisher_id, instrument_id) on the existing F_LAST positions
+  (`retained_evidence_counts` already reads it that way); events per exact group (Codex's fix); now prices/structures (above).
+- Not identity-linked (positional): `dipole.group.rows[slot]`, `frames.book.*_levels_full[i]`, `...fifo_queue[j]`, native
+  lifecycle `[slot]`s. A per-order or per-level trajectory needs an axis keyed by `order_id` / price level across closes:
+  the data is present (`fifo_queue[j].order_id`, `observation.*`), the DEFINITION (which key, which lag unit, session
+  bridging) is held; proposed interface only: `build_series` derives `order.<order_id>.<field>` from the retained
+  `fifo_queue` leaves at each close of the order's instrument, lag unit = that instrument's closes (the existing axis);
+  no such series is built here.
+**Native representation / TeacherHead / training consumers:** per the decisions document the three decisions (retained
+starting state; objective + auxiliary weight; cross-lane lineage) are open for Greg; `NativeForecastLearner.step` reports
+`teacher_optimized=False`; the experiment classroom records `model_calls=0`. No adapter or identity plumbing is unambiguous
+without those decisions, so none was built; nothing is relabelled as training. Blocked precisely by: decision 1 (locate or
+declare the retained state), decision 2 (objective/auxiliary combination and its versioned state migration), decision 3 (a
+versioned model lineage with queued updates across the three lanes).
+**Late-arriving knowledge (audit + repair within the contracts):** both unfinished-work boundaries freeze their selection
+once (`teach_accumulated` -> `inputs.json`; `accumulated_lessons` -> `learner-knowledge.json`) and a restart re-reads the
+frozen selection; knowledge published after the freeze was silently invisible. Now each restart LISTS it: `late_arrivals()`
+computes what `learner_knowledge(day, 'exchange')` would select now minus the frozen sha256s (documents and containers), and
+the listing goes to the RECEIPTS (`accumulated_claim_tests.late_knowledge`; the exchange receipt's `late_knowledge` via the
+new `notes=` argument), never into the frozen files or the hashed, write-once exchange documents (a restart must reproduce
+their bytes exactly). Nothing is consumed late, no completed or frozen day is reopened, no scheduler policy is introduced.
+Blocked by the held late-scheduling decision: whether, when and under which owner a later retest consumes listed late
+knowledge (today: at the next owner boundary that freezes after it, by the existing selection).
+Checks: `ast.parse` of the three modules without project imports; `git diff --check`. No run.
+
+## 9. Closure table after slices A-D (against the existing contracts; SOURCE-BUILT / RUNTIME-UNVERIFIED throughout)
+
+| step | actual consumer / function | source-built connection | remaining implementation or decision | runtime verification needed |
+|---|---|---|---|---|
+| 1 | lane save/resume (Codex) | built | none named for CCode | whole |
+| 2 | `teach_accumulated` -> `ST.test` -> brain writer -> exchange seats -> Frankie reply | A: discovery-day candidates and origin evidence to BOTH seats' records and the lawful reply, listed reasons voiced; C: the owner's completed-native reference in every accumulated result; D: late knowledge listed at both frozen boundaries; B: historical reproduction status read from hash-bound records | the three native-learner decisions and the late-scheduling decision (Greg); Codex's integration review | whole |
+| 3 | `experiment_search.build_series` + transforms/coupling (Codex) | D: price/structure rows carry exact INPUT/instrument provenance (contract above; Codex's adapter pending, incl. excluding `provenance.*` from channels) | conditions, transforms, windows, turn/entry definitions (REFORMULATIONS); 4.4 pair ownership and a 4.2 step definition (Greg) | whole |
+| 4 | `ST.test`, `candidate_claims_doc`, exchange, `frankie_box_historical_claims` bindings, `frankie_box_historical_reproduction` | A: exact origin identity + both-seat arithmetic; B: REPRODUCTIONS / REFORMULATIONS (3 bound, 1 not_bound), stage/plan/run/compare/record capability (never invoked), `research_rework` reads records; C: every completed-native consumer classed | survivor/acceptance rules (#5); the teachers' authorized execution of the bound reproductions (inputs for two bindings are off-repository) | whole |
+| 5 | discussion | STOP | Greg | n/a |

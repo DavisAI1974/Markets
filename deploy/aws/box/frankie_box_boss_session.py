@@ -74,6 +74,15 @@ MIN_SPLIT_BYTES = 1024     # a reading piece is split for regeneration down to t
 FRAME_SECTIONS = ('book', 'activity', 'integrity', 'native_frame', 'observation', 'input_records',
                   'input_record_indices')
 FRAME_SECTIONS_SCHEMA = 'FRANKIE_ROOT_FULL_DEPTH_GROUPS_V2'
+# Row provenance on the legacy price/structure spools (CCode slice D, 2026-10-06, the reserved-search review after bbe2d560):
+# every prices row and every structures row carries `provenance` = the ORIGINAL extracted INPUT index and the producer's
+# instrument identity already in scope where the row is appended, so equal timestamps and spool ordinals (which frame or
+# structure failures can shift) are never used as identities. Calculation outputs are unchanged. The identity keys of
+# the legacy recovery state and the derivation receipt name this schema; an older spool without `provenance` is explicit.
+ROW_PROVENANCE_SCHEMA = 'FRANKIE_ROOT_ROW_PROVENANCE_V1'
+ROW_PROVENANCE_FIELDS = dict(
+    prices=('provenance.input_index', 'provenance.instrument_id', 'provenance.legacy_row_ordinal'),
+    structures=('provenance.input_cursor', 'provenance.instrument_id', 'provenance.input_record_indices'))
 NATIVE_RECOVERY_SCHEMA = 'FRANKIE_ROOT_NATIVE_RECOVERY_V1'
 
 
@@ -715,7 +724,8 @@ class Session:
         pin = self._pin() if source is not None else self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
         identity = dict(source=self.source_binding, pin=pin['pins_witness']['sha256'],
-                        producers=self._producer_witnesses(pin), opening_book=opening_book)
+                        producers=self._producer_witnesses(pin), opening_book=opening_book,
+                        row_provenance_schema=ROW_PROVENANCE_SCHEMA)
         if retain_frame_sections:
             identity['frame_sections_schema'] = FRAME_SECTIONS_SCHEMA
         if recovery and bedrock:
@@ -841,15 +851,22 @@ class Session:
                 if retain_frame_sections:
                     instrument = int(record['instrument_id'])
                     pending_inputs.setdefault(instrument, []).append((index, record))
-                for row in legacy_rows:
+                record_instrument = record.get('instrument_id')      # as the INPUT record carries it; None stays None
+                for legacy_ordinal, row in enumerate(legacy_rows):
                     legacy_count += 1
                     try:
                         binner.observe(row)
                     except Exception as error:
                         failures.append(dict(index=index, legacy=True, error=f'{type(error).__name__}: {error}'))
                     if row.get('action') == native_roll20.TRADE_ACTION:
+                        # provenance (ROW_PROVENANCE_SCHEMA): the original extracted INPUT index of the record this legacy
+                        # row came from (the same units as frames.input_cursor / input_record_indices), the record's
+                        # instrument identity as the INPUT carries it (None stays None: nothing is inferred), and the
+                        # row's ordinal among that record's legacy rows (one record can yield several trade rows).
                         prices.append(dict(ts_recv=row.get('ts_recv'), ts_event=row.get('ts_event'), price=row.get('price'), size=row.get('size'),
-                                           bid_px_00=row.get(native_roll20.BID_TOUCH_FIELD), ask_px_00=row.get(native_roll20.ASK_TOUCH_FIELD)))
+                                           bid_px_00=row.get(native_roll20.BID_TOUCH_FIELD), ask_px_00=row.get(native_roll20.ASK_TOUCH_FIELD),
+                                           provenance=dict(schema=ROW_PROVENANCE_SCHEMA, input_index=index,
+                                                           instrument_id=record_instrument, legacy_row_ordinal=legacy_ordinal)))
                 if frame is not None:
                     book = frame.get('book') or {}
                     group_inputs = pending_inputs.pop(frame['instrument_id']) if retain_frame_sections else []
@@ -881,7 +898,14 @@ class Session:
                                              error=f'{type(error).__name__}: {error}'))
                     previous_book = book
                     try:
+                        # provenance (ROW_PROVENANCE_SCHEMA): the closing INPUT index (the record whose application closed
+                        # this F_LAST group: frames.input_cursor of the same close), the frame's instrument identity, and
+                        # the group's member INPUT indices when the frame sections retain them (else None: not inferred).
                         structures.append(dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'),
+                                               provenance=dict(schema=ROW_PROVENANCE_SCHEMA, input_cursor=index,
+                                                               instrument_id=frame.get('instrument_id'),
+                                                               input_record_indices=([item[0] for item in group_inputs]
+                                                                                     if retain_frame_sections else None)),
                                                **describe_structure(frame.get('raw_actions') or [])))
                     except Exception as error:
                         failures.append(dict(index=index, structure=True, error=f'{type(error).__name__}: {error}'))
@@ -898,7 +922,9 @@ class Session:
         roll = native_roll20.roll20(buys, sells)
         layers = {
             'legacy_price': dict(status='derived' if prices else 'could_not', producer='research/ng_exhaustion_mbo_v4_state_adapter_20260820.py (legacy control row projection)',
-                                 count=len(prices), first=prices[:1], last=prices[-1:], reason=None if prices else 'no trade rows in this cycle\'s prefix'),
+                                 count=len(prices), first=prices[:1], last=prices[-1:], reason=None if prices else 'no trade rows in this cycle\'s prefix',
+                                 row_provenance=dict(schema=ROW_PROVENANCE_SCHEMA, fields=list(ROW_PROVENANCE_FIELDS['prices']),
+                                                     rule='identity fields, not observations: never a searched series')),
             'legacy_native_signed_flow': dict(status='derived' if binner.trades_seen else 'could_not', producer='research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py SecondBinner (clock ts_recv)',
                                               summary=binner.summary(), per_second=[dict(second=first + i, buy=buys[i], sell=sells[i]) for i in range(len(buys))],
                                               reason=None if binner.trades_seen else 'no classified trades'),
@@ -908,7 +934,9 @@ class Session:
             'legacy_book_imbalance': dict(status='derived' if frames else 'could_not', producer='V4MboAdapter F_LAST book snapshot + a_memory_member_first_recalculation_20260828.book_values/book_transition',
                                           fields=list(BOOK_FIELDS), count=len(frames), frames=frames, reason=None if frames else 'no F_LAST frame closed'),
             'legacy_structure_observables': dict(status='derived' if structures else 'could_not', producer='a_memory_member_first_recalculation_20260828.describe_structure per F_LAST group (action string, side string, mirror, fill disposition, family candidate)',
-                                                 count=len(structures), groups=structures, reason=None if structures else 'no F_LAST group closed'),
+                                                 count=len(structures), groups=structures, reason=None if structures else 'no F_LAST group closed',
+                                                 row_provenance=dict(schema=ROW_PROVENANCE_SCHEMA, fields=list(ROW_PROVENANCE_FIELDS['structures']),
+                                                                     rule='identity fields, not observations: never a searched series')),
         }
         bedrock_off = set(pin.get('projection_layers') or pin.get('bedrock_layers') or []) if (pin.get('bedrock') and not bedrock) else set()
         for layer in pin['registry_layers']:
@@ -921,7 +949,8 @@ class Session:
                        source_binding=self.source_binding, rows=container, input_records=len(records), legacy_rows=legacy_count, adapter_records=adapter.record_count,
                        opening_book=opening_book if opening_adapter_state is not None else (opening_book or dict(status='empty', reason='the legacy pass starts from an empty book')),
                        f_last_groups=adapter.completed_event_group_count, failures=failures, failure_count=len(failures),
-                       producers=self._producer_witnesses(pin), layers={})
+                       producers=self._producer_witnesses(pin), layers={},
+                       row_provenance_schema=ROW_PROVENANCE_SCHEMA, row_provenance_fields=ROW_PROVENANCE_FIELDS)
         if retain_frame_sections:
             layers['legacy_book_imbalance']['frame_sections_schema'] = FRAME_SECTIONS_SCHEMA
             layers['legacy_book_imbalance']['frame_sections'] = list(FRAME_SECTIONS)
