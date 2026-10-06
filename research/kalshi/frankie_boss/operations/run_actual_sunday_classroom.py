@@ -237,8 +237,36 @@ class ClassroomActualHost(base.ActualHost):
         runtime.principal_adapter_class = self.principal_adapter_class
         return runtime
 
+    def pending_feedback_runtime(self, binding, cycle_directory, retained_plan):
+        """Restore native state without a new classroom, forecast or critic call.
+
+        The original learner still performs its governed context/teacher preparation
+        inside the checkpoint callback; this is not a new cache/replay policy.
+        """
+        if (not (self.directory/'training.sqlite').is_file()
+                or not (self.directory/'training-witnesses'/'state-00000000.c15.json').is_file()):
+            raise ValueError('pending completion requires retained model state and independent witnesses')
+        package = self._load_classroom_package(cycle_directory)
+        if package is None:
+            raise ValueError('pending completion requires the original retained classroom package')
+        self.source()
+        self.prefix(binding, cycle_directory)
+        if self.context is None:
+            # Existing constructor restores the independently pinned database;
+            # the presence requirement above prevents a fresh checkpoint here.
+            self._training()
+        return self.api.driver.PendingFeedbackRuntime(context=self.context, decoder=self.decoder,
+            optimizer=self.optimizer, checkpoint=self.checkpoint,
+            source_journal_path=self.source_journal_path, source_journal_checkpoint=self.source_checkpoint,
+            classroom_package=package, principal_adapter_class=self.principal_adapter_class,
+            learning_event=None if self.probe is None else lambda value: self.probe.call('training_event', value),
+            release=self.close_cache)
+
     async def run(self):
         c, h = self.config, self.host
+        if getattr(self, 'complete_pending_index', None) is not None:
+            if not all((self.directory/name).is_file() for name in ('cycles.sqlite', 'lessons.sqlite')):
+                raise ValueError('pending completion cannot create a new coordinator lineage')
         self._initialize_coordinator()
         from research.kalshi.frankie_boss.source_contract_runtime import principal_inputs
         principal = dict(
@@ -265,6 +293,11 @@ class ClassroomActualHost(base.ActualHost):
             agent_commit=c["receiver_commit"],
             state_defects_and_gaps_reported=h["state_defects_and_gaps_reported"],
         )
+        pending_index = getattr(self, 'complete_pending_index', None)
+        if pending_index is not None:
+            return (await runner.complete_pending_cycle(pending_index,
+                learning_cutoff_ns=self.pending_learning_cutoff_ns,
+                runtime_factory=self.pending_feedback_runtime),)
         result = await runner.run_remaining(cycles=getattr(self, 'cycle_limit', None))
         self.workflow_resolved('principal')
         self.workflow_resolved('principal_correction')
@@ -289,7 +322,15 @@ def main(host_class=ActualHost):
     parser.add_argument("--resume-wait-sha256")
     parser.add_argument("--cycles", type=int, default=None,
                         help="Run the first N scheduled cycles; resume the same run later.")
+    parser.add_argument('--complete-pending-cycle', type=int,
+                        help='Complete only this retained forecast with separately attested later outcomes; can train.')
+    parser.add_argument('--learning-cutoff-ns', type=int)
     args = parser.parse_args()
+    completing = args.complete_pending_cycle is not None
+    if completing != (args.learning_cutoff_ns is not None):
+        raise ValueError('pending completion requires both cycle index and learning cutoff')
+    if completing and (args.prepare_only or args.pending_return or args.resume_wait_sha256 or args.cycles is not None):
+        raise ValueError('pending completion is a separate explicit execution scope')
     configuration = json.loads(Path(args.configuration).read_bytes())
     if any(
         word in json.dumps(configuration).lower()
@@ -332,6 +373,10 @@ def main(host_class=ActualHost):
             host.cycle_limit = resume_limit if resume_limit is not None else (total_cycles if args.cycles is None else args.cycles)
             host.pending_return = args.pending_return
             host.resume_wait_sha256 = args.resume_wait_sha256
+            host.complete_pending_index = args.complete_pending_cycle
+            host.pending_learning_cutoff_ns = args.learning_cutoff_ns
+            if completing and not 0 <= host.complete_pending_index < total_cycles:
+                raise ValueError('pending cycle index must be within the verified schedule')
             if type(host.cycle_limit) is not int or not 1 <= host.cycle_limit <= total_cycles:
                 raise ValueError('cycles must be within the verified schedule')
             if args.pending_return and not args.resume_wait_sha256:
@@ -339,6 +384,11 @@ def main(host_class=ActualHost):
             host.principal_host_lock = host_lock
             try:
                 result = asyncio.run(host.run())
+                if completing:
+                    probe.advance('complete', completed=1, total=1, unit='pending cycles')
+                    print(json.dumps(dict(status='pending_cycle_completed',
+                        request_id=result[0]['request_id'], continuation_hash=result[0]['continuation_hash'])), flush=True)
+                    return 0
                 pending = [row for row in result if row.get("status") == "pending_target_outcomes"]
                 if pending:
                     probe.advance("awaiting_target_outcomes", completed=0, total=host.cycle_limit, unit="steps")
@@ -407,6 +457,10 @@ def main(host_class=ActualHost):
                 )
                 return 4
             except api.PrincipalPending:
+                if completing:
+                    print(json.dumps(dict(status='pending_target_outcomes',
+                        cycle_index=host.complete_pending_index, native_learning_performed=False)), flush=True)
+                    return 3
                 if host.pending_return:
                     try:
                         host.principal_pending()
@@ -426,8 +480,6 @@ def main(host_class=ActualHost):
             except api.IncompleteModelOutput as error:
                 print(json.dumps(base.incomplete_output_alert(error)), flush=True)
                 return 5
-            finally:
-                host.close()
     except Exception as error:
         # Type and code locations only (base.stop_frames): never a message, local or stdin. This
         # main, not base.main, is what run_actual_sunday_ec2 runs; run 35516396264 (2026-09-20)
@@ -435,6 +487,9 @@ def main(host_class=ActualHost):
         print(json.dumps(dict(status="stopped", error_type=type(error).__name__,
                               frames=base.stop_frames(error))), flush=True)
         return 1
+    finally:
+        if host is not None:
+            host.close()
 
 
 if __name__ == "__main__":

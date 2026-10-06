@@ -1,7 +1,23 @@
 # Native learner integration decisions — 2026-10-06
 
-Source review and the narrow publication fix below only. No model/data run, test suite, installation or AWS action. This document selects no new model,
+Source review and source implementation only. No model/data run, test suite, installation or AWS compute action. This document selects no new model,
 objective, update policy or execution date. Steps #2/#3 remain open; the preserved #5 draft remains unapplied.
+
+## Latest continuation — explicit pending completion is now source-built
+
+`PENDING_FEEDBACK_COMPLETION_20261006.md` supersedes the historical missing-transition statement below.
+The actual-response recorder now prepares and records separately attested later target outcomes;
+`SundayExecution.complete_pending_cycle` and `CycleCoordinator.complete_pending` bind them to the immutable
+original forecast and reuse the normal native checkpoint callback. Only the separate learning cutoff advances.
+The dedicated host entry requires existing model/coordinator state and independent witnesses; no replacement
+weights are initialized. The original objective is unchanged, and a no-op update refuses checkpoint publication.
+
+This is source-built, runtime-unverified. An old-code run needs a reviewed identity migration/supersession;
+none was performed. After AWS reconnection, the live historical S3 object size and stored SHA256 matched the
+restoration manifest; no fresh content hash/database inspection was performed. Both owning EC2 instances are
+stopped, with local disks uninspected. Its sequence-zero witness is not a trained successor. Retained Sunday labels do not
+match the Monday forecast's Tuesday target. The three integration decisions below therefore remain open;
+this source path does not enable native learning in the experiment's code-only classrooms.
 
 ## Settled mission and existing roles
 

@@ -519,6 +519,20 @@ class CycleCoordinator:
             fields = feedback['feedback']
             digest = evidence_hash(dict(schema='BOSS_FORECAST_CONTRACT_V1', kind='FrankieFeedback', fields=fields))
             learning = binding['learning']
+            continuation = self._load(previous, 'feedback_continuation')
+            if continuation is not None:
+                original = self._load(previous, 'principal_output')
+                outcome = self._load(previous, 'outcome_principal_output')
+                if (continuation != self._pending_continuation(previous, continuation['learning'])
+                        or outcome is None
+                        or feedback.get('continuation_hash') != evidence_hash(continuation)
+                        or complete.get('continuation_hash') != evidence_hash(continuation)
+                        or feedback['envelope_hash'] != evidence_hash(dict(outcome,
+                            lessons=tuple(original['lessons']) + tuple(outcome['lessons'])))):
+                    raise ValueError('knowledge origin feedback continuation changed')
+                learning = continuation['learning']
+            elif complete.get('continuation_hash') is not None or feedback.get('continuation_hash') is not None:
+                raise ValueError('knowledge origin feedback continuation disappeared')
             if (previous == request_id or binding['request_id'] != previous or complete['request_id'] != previous
                     or fields['request_id'] != previous
                     or fields['available_ns'] != record['available_ns']
@@ -677,40 +691,149 @@ class CycleCoordinator:
                     self._save(request_id, 'pending_feedback', pending)
                     self._observe('awaiting_target_outcomes', request_id)
                     return pending
-                if not isinstance(feedback, FrankieFeedback): raise ValueError('typed principal feedback required')
-                if (feedback.request_id != request_id or feedback.input_hash != learning_kwargs['input_hash']
-                        or feedback.source_hash != learning_kwargs['source_hash']
-                        or not learning_kwargs['as_of'] <= feedback.available_ns <= learning_kwargs['learning_cutoff_ns']):
-                    raise ValueError('principal feedback causal binding differs')
-                # Roster check precedes both the saved feedback and the training update so a
-                # rejected envelope never enters apply_completed and never poisons the checkpoint.
-                if (type(feedback.sessions) is not tuple or tuple(s.session_id for s in feedback.sessions)
-                        != _requested_session_ids(learning_kwargs['sessions'])):
-                    raise ValueError('principal feedback session roster differs from requested sessions in order')
-                self._save(request_id, 'feedback', dict(feedback=asdict(feedback), feedback_hash=feedback.digest,
-                    envelope_hash=evidence_hash(envelope)))
-                self._memory_unchanged()
-                self._observe('native_learning', request_id)
-                def update():
-                    learner = learner_factory()
-                    return learner.step(request_id=request_id, feedback=feedback,
-                        expected_feedback_hash=feedback.digest, **learning_kwargs)
+                return self._finish_feedback(request_id=request_id, result_hash=result_hash,
+                    feedback=feedback, envelope=envelope, checkpoint=checkpoint,
+                    learner_factory=learner_factory, learning_kwargs=learning_kwargs)
+
+    def _pending_continuation(self, request_id, learning_kwargs):
+        """Bind a later cutoff separately; every original forecast-stage byte stays fixed."""
+        binding = self._load(request_id, 'binding')
+        pending = self._load(request_id, 'pending_feedback')
+        original = self._load(request_id, 'principal_output')
+        result = self._load(request_id, 'controller')
+        exported = self._load(request_id, 'export')
+        if any(value is None for value in (binding, pending, original, result, exported)):
+            raise ValueError('retained pending forecast and principal evidence required')
+        learning = _plain(learning_kwargs)
+        cutoff = learning.get('learning_cutoff_ns')
+        if (binding.get('awaiting_target_outcomes') is not True
+                or binding['learning'].get('learning_cutoff_ns') is not None
+                or type(cutoff) is not int or cutoff < binding['learning']['as_of']
+                or evidence_hash(dict(learning, learning_cutoff_ns=None)) != evidence_hash(binding['learning'])):
+            raise ValueError('pending completion may only advance its learning cutoff')
+        if (binding['request_id'] != request_id or pending.get('request_id') != request_id
+                or result.get('request_id') != request_id or exported.get('request_id') != request_id
+                or pending.get('status') != 'pending_target_outcomes'
+                or pending.get('cycle_complete') is not False
+                or pending.get('native_learning_performed') is not False
+                or original.get('feedback') is not None
+                or original.get('feedback_status') != 'pending_target_outcomes'
+                or pending.get('controller_result_hash') != evidence_hash(result)
+                or pending.get('principal_receipt') != original.get('principal_receipt')
+                or pending.get('pending_feedback') != original.get('pending_feedback')):
+            raise ValueError('retained pending forecast identities differ')
+        return dict(schema='FRANKIE_PENDING_FEEDBACK_CONTINUATION_V1', request_id=request_id,
+            original_binding_hash=evidence_hash(binding), controller_result_hash=evidence_hash(result),
+            original_principal_output_hash=evidence_hash(original), pending_feedback_hash=evidence_hash(pending),
+            original_export_hash=evidence_hash(exported), learning=learning)
+
+    async def complete_pending(self, *, request_id, principal, checkpoint, learner_factory, learning_kwargs):
+        """Consume a separately host-attested outcome response, never rerun its forecast.
+
+        The principal owns the immutable continuation request/response and verifies
+        both that host attestation and the original pending session evidence. Missing
+        outcome responses remain pending; no label or new objective is selected here.
+        """
+        if type(request_id) is not str or not request_id or request_id == self.LINEAGE_REQUEST:
+            raise ValueError('pending cycle request ID required')
+        async with self._lock:
+            with _exclusive(str(self.path)+'.lock'):
                 self._knowledge_lineage_unchanged()
-                training = checkpoint.apply_completed(request_id, controller_result_hash=result_hash,
-                    training_cursor=learning_kwargs['through_cursor'], update=update)
-                self._save(request_id, 'training', training)
-                self._observe('checkpoint_readback', request_id)
-                lessons = self._save_lessons(request_id, feedback, envelope, training)
                 self._memory_unchanged()
-                completed = dict(schema='FRANKIE_BOSS_FEEDBACK_CYCLE_V1', request_id=request_id,
-                    controller_result_hash=result_hash, feedback_hash=feedback.digest, training=training, **lessons,
-                    **({'knowledge_mode':self.critic_priming['mode'], 'priming_hash':evidence_hash(self.critic_priming)}
-                       if self.critic_priming is not None else {}))
-                if self.learning_policy is not None:
-                    completed.update(learning_policy=self.learning_policy, knowledge_mode='knowledge_primed_learning_replay')
-                self._save(request_id, 'complete', completed)
-                self._observe('saved_completion', request_id)
-                return completed
+                continuation = self._pending_continuation(request_id, learning_kwargs)
+                binding = self._load(request_id, 'binding')
+                if checkpoint.identities != binding['training_identities']:
+                    raise ValueError('pending completion training identities differ')
+                from .native_forecast_refresh import session_registry_hash
+                if session_registry_hash(learning_kwargs['sessions']) != learning_kwargs['expected_sessions_hash']:
+                    raise ValueError('pending completion session registry differs')
+                saved = self._load(request_id, 'feedback_continuation')
+                if saved is not None and saved != continuation:
+                    raise ValueError('retained feedback continuation changed')
+                envelope = await asyncio.to_thread(principal.recover_pending_feedback, request_id, continuation)
+                feedback = principal.verify_pending_feedback(envelope, request_id=request_id,
+                    input_hash=learning_kwargs['input_hash'], source_hash=learning_kwargs['source_hash'],
+                    learning_cutoff_ns=learning_kwargs['learning_cutoff_ns'], continuation=continuation)
+                if not isinstance(feedback, FrankieFeedback):
+                    raise ValueError('typed attested outcome feedback required')
+                original = self._load(request_id, 'principal_output')
+                if type(envelope.get('lessons')) not in (list, tuple) or type(original.get('lessons')) not in (list, tuple):
+                    raise ValueError('original classroom and outcome lessons must remain explicit')
+                # Validate the existing labels before persisting completion intent. This
+                # pure check constructs no model and uses no alternative label semantics.
+                from types import SimpleNamespace
+                from .native_forecast_learning import NativeForecastLearner
+                validator = object.__new__(NativeForecastLearner)
+                validator.config = SimpleNamespace(session_weights=tuple(
+                    (session.session_id, 1.0) for _, session in learning_kwargs['sessions']))
+                validator._validate(learning_kwargs['sessions'], feedback,
+                    learning_kwargs['as_of'], learning_kwargs['learning_cutoff_ns'])
+                if (feedback.request_id != request_id or feedback.input_hash != learning_kwargs['input_hash']
+                        or feedback.source_hash != learning_kwargs['source_hash']):
+                    raise ValueError('later outcome feedback request/input/source differs')
+                self._save(request_id, 'feedback_continuation', continuation)
+                self._save(request_id, 'outcome_principal_output', envelope)
+                combined = dict(envelope, lessons=tuple(original['lessons']) + tuple(envelope['lessons']))
+                return self._finish_feedback(request_id=request_id,
+                    result_hash=continuation['controller_result_hash'], feedback=feedback, envelope=combined,
+                    checkpoint=checkpoint, learner_factory=learner_factory,
+                    learning_kwargs=learning_kwargs, continuation=continuation)
+
+    def _finish_feedback(self, *, request_id, result_hash, feedback, envelope, checkpoint,
+                         learner_factory, learning_kwargs, continuation=None):
+        if not isinstance(feedback, FrankieFeedback): raise ValueError('typed principal feedback required')
+        if (feedback.request_id != request_id or feedback.input_hash != learning_kwargs['input_hash']
+                or feedback.source_hash != learning_kwargs['source_hash']
+                or not learning_kwargs['as_of'] <= feedback.available_ns <= learning_kwargs['learning_cutoff_ns']):
+            raise ValueError('principal feedback causal binding differs')
+        # Roster check precedes both the saved feedback and the training update so a
+        # rejected envelope never enters apply_completed and never poisons the checkpoint.
+        if (type(feedback.sessions) is not tuple or tuple(s.session_id for s in feedback.sessions)
+                != _requested_session_ids(learning_kwargs['sessions'])):
+            raise ValueError('principal feedback session roster differs from requested sessions in order')
+        self._save(request_id, 'feedback', dict(feedback=asdict(feedback), feedback_hash=feedback.digest,
+            envelope_hash=evidence_hash(envelope),
+            **({'continuation_hash': evidence_hash(continuation)} if continuation is not None else {})))
+        completed = self._load(request_id, 'complete')
+        if completed is not None:
+            if (completed['feedback_hash'] != feedback.digest
+                    or completed.get('continuation_hash') !=
+                       (None if continuation is None else evidence_hash(continuation))):
+                raise ValueError('completed feedback continuation changed')
+            return completed
+        self._memory_unchanged()
+        self._observe('native_learning', request_id)
+        def update():
+            if continuation is not None:
+                pending = self._load(request_id, 'pending_feedback')
+                if checkpoint.checkpoint_hash != pending['checkpoint_hash']:
+                    raise ValueError('pending feedback requires its original model predecessor')
+            learner = learner_factory()
+            result = learner.step(request_id=request_id, feedback=feedback,
+                expected_feedback_hash=feedback.digest, **learning_kwargs)
+            if continuation is not None and result.get('updated') is not True:
+                raise ValueError('pending feedback has no active objective supervision; restore checkpoint before retry')
+            return result
+        self._knowledge_lineage_unchanged()
+        training = checkpoint.apply_completed(request_id, controller_result_hash=result_hash,
+            training_cursor=learning_kwargs['through_cursor'], update=update)
+        if continuation is not None and training['update_result'].get('feedback_hash') != feedback.digest:
+            raise ValueError('retained training update belongs to different outcome feedback')
+        self._save(request_id, 'training', training)
+        self._observe('checkpoint_readback', request_id)
+        lessons = self._save_lessons(request_id, feedback, envelope, training)
+        self._memory_unchanged()
+        completed = dict(schema='FRANKIE_BOSS_FEEDBACK_CYCLE_V1', request_id=request_id,
+            controller_result_hash=result_hash, feedback_hash=feedback.digest, training=training, **lessons,
+            **({'knowledge_mode':self.critic_priming['mode'], 'priming_hash':evidence_hash(self.critic_priming)}
+               if self.critic_priming is not None else {}))
+        if self.learning_policy is not None:
+            completed.update(learning_policy=self.learning_policy, knowledge_mode='knowledge_primed_learning_replay')
+        if continuation is not None:
+            completed['continuation_hash'] = evidence_hash(continuation)
+        self._save(request_id, 'complete', completed)
+        self._observe('saved_completion', request_id)
+        return completed
 
     def close(self):
         self.db.close(); self.lessons.close()

@@ -204,6 +204,21 @@ class _LazyPrincipal:
     def verify(self,envelope,**kwargs):return self._get().verify(envelope,**kwargs)
 
 
+@dataclass
+class PendingFeedbackRuntime:
+    """Restored native state and original source; no controller/critic factory."""
+    context: object
+    decoder: object
+    optimizer: object
+    checkpoint: object
+    source_journal_path: str
+    source_journal_checkpoint: dict
+    classroom_package: dict
+    principal_adapter_class: type
+    learning_event: Callable | None = None
+    release: Callable | None = None
+
+
 class SundayExecution:
     def __init__(self,*,directory,run_id,coordinator,contract_path,expected_contract_sha256,
                  schedule_path,expected_schedule_sha256,runtime_factory,principal_configuration,
@@ -251,6 +266,72 @@ class SundayExecution:
         self._lock=asyncio.Lock()
 
     def request_id(self,index):return f'{self.run_id}-cycle-{index:02d}'
+
+    async def complete_pending_cycle(self, index, *, learning_cutoff_ns, runtime_factory):
+        """Explicit later-outcome entry; never calls the forecast runtime factory.
+
+        The host must restore the retained native checkpoint and original source.
+        A missing host-attested response remains pending, with original evidence
+        unchanged. Calling this entry can train and requires execution authorization.
+        """
+        from .pending_target_feedback import PendingTargetFeedbackAdapter
+        if type(index) is not int or not 0 <= index < len(self.steps):
+            raise ValueError('valid pending cycle index required')
+        if type(learning_cutoff_ns) is not int:
+            raise ValueError('explicit later learning cutoff required')
+        request_id = self.request_id(index)
+        async with self._lock:
+            with _exclusive(self.directory/'execution.lock'):
+                binding = bind_cycle(self.contract_path, self.contract_hash, index, self.steps[index])
+                if binding.get('feedback_status') != 'pending_target_outcomes':
+                    raise ValueError('original authored pending target required')
+                directory = self.directory/f'cycle-{index:02d}'
+                plan = _load(directory/'request-plan.c15.json')
+                if (plan['request_id'] != request_id or plan['contract_sha256'] != self.contract_hash
+                        or plan['learning_kwargs']['learning_cutoff_ns'] is not None):
+                    raise ValueError('original pending request plan required')
+                learning = dict(plan['learning_kwargs'], sessions=binding['sessions'],
+                                learning_cutoff_ns=learning_cutoff_ns)
+                for key in ('as_of', 'through_cursor', 'source_hash', 'expected_sessions_hash'):
+                    if learning[key] != binding[key]:
+                        raise ValueError('pending request plan differs from source contract')
+                if (_plain(plan['learning_kwargs']['sessions']) != _plain(binding['sessions'])
+                        or learning['input_hash'] != plan['input_hash']):
+                    raise ValueError('pending request plan target/input identity differs')
+                # Validate the complete continuation before opening native state.
+                continuation = self.coordinator._pending_continuation(request_id, learning)
+                response = directory/'principal'/('pending-target-feedback-' + evidence_hash(continuation))/'response.c15.json'
+                if not response.is_file():
+                    from .frankie_principal_adapter import PrincipalPending
+                    raise PrincipalPending('prepare and record the separately attested outcome response before native completion')
+                runtime = runtime_factory(binding, directory, plan)
+                if not isinstance(runtime, PendingFeedbackRuntime):
+                    raise ValueError('explicit retained PendingFeedbackRuntime required')
+                try:
+                    if (runtime.source_journal_checkpoint != plan['source_journal_checkpoint']
+                            or str(Path(runtime.source_journal_path).resolve()) != plan['source_journal_path']
+                            or _adapter_identity(runtime.principal_adapter_class) != plan['principal_adapter_identity']
+                            or runtime.classroom_package['binding'].get('classroom_binding_hash') != plan['classroom_binding_hash']
+                            or runtime.classroom_package['binding'].get('request_id') != request_id):
+                        raise ValueError('pending runtime changed original source/classroom identity')
+                    config = learning_config(runtime.optimizer, binding['sessions'],
+                        **{key: binding[key] for key in ('timing_policy_hash', 'query_policy_hash', 'split_hash')})
+                    if config.digest != plan['learning_config_hash']:
+                        raise ValueError('pending completion changed the original learning objective')
+                    principal = _LazyPrincipal(dict(self.principal_configuration, session_executor=None),
+                                               binding, directory, runtime)._get()
+                    outcome = PendingTargetFeedbackAdapter(principal,
+                        original_envelope=self.coordinator._load(request_id, 'principal_output'),
+                        sessions=binding['sessions'], expected_sessions_hash=binding['expected_sessions_hash'])
+                    completed = await self.coordinator.complete_pending(request_id=request_id,
+                        principal=outcome, checkpoint=runtime.checkpoint, learning_kwargs=learning,
+                        learner_factory=lambda: NativeForecastLearner(runtime.context, runtime.decoder,
+                            runtime.optimizer, config, event=runtime.learning_event))
+                    _save(directory/'completion.c15.json', completed)
+                    return completed
+                finally:
+                    if runtime.release is not None:
+                        runtime.release()
 
     async def run_cycle(self,index):
         if type(index) is not int or not 0<=index<len(self.steps):raise ValueError('valid Sunday cycle index required')

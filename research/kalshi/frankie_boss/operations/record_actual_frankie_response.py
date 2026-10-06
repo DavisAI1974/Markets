@@ -146,13 +146,114 @@ def record_correction(adapter,principal,response,attestation,request_id):
         resolutions=len(ack['correction_resolutions']),remaining_disagreements=list(ack['remaining_disagreements']),mastered=grade.get('mastered'))
 
 
+def retained_outcome_coordinator(config, run):
+    """Reuse the actual host's exact lineage loading without constructing its runtime.
+
+    Requiring the existing lineage first prevents the coordinator constructor from
+    adopting or migrating a legacy database. No models, source readers or remote
+    services are constructed by the host's coordinator initialization method.
+    """
+    import sqlite3
+    from research.kalshi.frankie_boss.feedback_cycle import CycleCoordinator
+    from research.kalshi.frankie_boss.operations.run_actual_sunday import ActualHost
+    from research.kalshi.frankie_boss.sunday_execution import _load
+    run=Path(run)
+    if not all((run/name).is_file() for name in ('cycles.sqlite','lessons.sqlite')):
+        raise ValueError('outcome recording requires retained cycle and lessons databases')
+    db=sqlite3.connect((run/'cycles.sqlite').resolve().as_uri()+'?mode=ro',uri=True)
+    try:
+        saved=CycleCoordinator._load(SimpleNamespace(db=db),
+            CycleCoordinator.LINEAGE_REQUEST,CycleCoordinator.LINEAGE_STAGE)
+        if saved is None:
+            raise ValueError('outcome recording cannot initialize missing knowledge lineage')
+    finally:
+        db.close()
+    def verify_saved(name,body):
+        if _load(run/name)!=body:
+            raise ValueError('retained historical priming provenance differs')
+    # A minimal receiver for this one existing host method. Its create flag is
+    # necessarily false because both retained databases were required above.
+    host=SimpleNamespace(config=config,host=config['host_runtime'],directory=run,
+        api=SimpleNamespace(CycleCoordinator=CycleCoordinator),save=verify_saved,phase=None)
+    ActualHost._initialize_coordinator(host)
+    host.coordinator.db.execute('PRAGMA query_only=ON')
+    host.coordinator.lessons.execute('PRAGMA query_only=ON')
+    return host.coordinator
+
+
+def record_outcome(adapter,config,run,plan,binding,*,learning_cutoff_ns,
+                   prepare=False,response=None,attestation=None):
+    """Prepare or record only the later outcome turn under existing host locks."""
+    from research.kalshi.frankie_boss.feedback_cycle import _exclusive, _plain
+    from research.kalshi.frankie_boss.c15_journal import evidence_hash
+    from research.kalshi.frankie_boss.frankie_principal_adapter import PrincipalPending
+    from research.kalshi.frankie_boss.pending_target_feedback import PendingTargetFeedbackAdapter
+    from research.kalshi.frankie_boss.sunday_execution import _adapter_identity
+    if type(learning_cutoff_ns) is not int:
+        raise ValueError('outcome turn requires explicit integer learning cutoff')
+    if plan['principal_adapter_identity']!=_adapter_identity(type(adapter)):
+        raise ValueError('outcome recorder requires the original concrete principal adapter')
+    with _exclusive(str(Path(run)/'cycles.sqlite')+'.lock'):
+        coordinator=retained_outcome_coordinator(config,run)
+        try:
+            request_id=plan['request_id']
+            original=coordinator._load(request_id,'principal_output')
+            retained_binding=coordinator._load(request_id,'binding')
+            if original is None or retained_binding is None:
+                raise ValueError('original pending principal and learning binding required')
+            if evidence_hash(retained_binding['learning'])!=evidence_hash(plan['learning_kwargs']):
+                raise ValueError('retained request plan and learning binding differ')
+            learning=dict(retained_binding['learning'],sessions=binding['sessions'],
+                learning_cutoff_ns=learning_cutoff_ns)
+            continuation=coordinator._pending_continuation(request_id,learning)
+            saved=coordinator._load(request_id,'feedback_continuation')
+            if saved is not None and saved!=continuation:
+                raise ValueError('outcome continuation already has a different immutable identity')
+            if evidence_hash(dict(_plain(learning),learning_cutoff_ns=None))!=evidence_hash(plan['learning_kwargs']):
+                raise ValueError('outcome follow-up changed original request inputs or session roster')
+            outcome=PendingTargetFeedbackAdapter(adapter,original_envelope=original,
+                sessions=binding['sessions'],expected_sessions_hash=binding['expected_sessions_hash'])
+            if prepare:
+                try:
+                    envelope=outcome.recover_pending_feedback(request_id,continuation)
+                except PrincipalPending:
+                    envelope=None
+                request_path,_=outcome._paths(continuation)
+                return dict(status=('outcome_request_prepared' if envelope is None else 'outcome_response_already_recorded'),
+                    request_id=request_id,continuation_hash=evidence_hash(continuation),
+                    request_path=str(request_path),native_learning_performed=False)
+            envelope=outcome.record_pending_feedback_response(response,host_attestation=attestation,
+                request_id=request_id,continuation=continuation)
+            return dict(status='actual_outcome_response_recorded',request_id=request_id,
+                continuation_hash=evidence_hash(continuation),
+                principal_receipt_sha256=envelope['principal_receipt']['receipt_sha256'],
+                native_learning_performed=False)
+        finally:
+            coordinator.close()
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    for name in ('configuration','configuration-sha256','response','response-sha256','host-attestation','host-attestation-sha256'):
+    for name in ('configuration','configuration-sha256'):
         parser.add_argument('--'+name,required=True)
+    for name in ('response','response-sha256','host-attestation','host-attestation-sha256'):
+        parser.add_argument('--'+name)
     parser.add_argument('--cycle-index',type=int,required=True)
-    parser.add_argument('--turn',choices=('initial','correction'),default='initial')
+    parser.add_argument('--turn',choices=('initial','correction','outcome'),default='initial')
+    parser.add_argument('--learning-cutoff-ns',type=int)
+    parser.add_argument('--prepare-outcome',action='store_true')
     args=parser.parse_args()
+    response_args=(args.response,args.response_sha256,args.host_attestation,args.host_attestation_sha256)
+    if args.prepare_outcome and args.turn!='outcome':
+        parser.error('--prepare-outcome requires --turn outcome')
+    if args.turn=='outcome' and args.learning_cutoff_ns is None:
+        parser.error('--turn outcome requires --learning-cutoff-ns')
+    if args.turn!='outcome' and args.learning_cutoff_ns is not None:
+        parser.error('--learning-cutoff-ns is only valid for --turn outcome')
+    if args.prepare_outcome and any(value is not None for value in response_args):
+        parser.error('--prepare-outcome creates intent only; omit response and attestation arguments')
+    if not args.prepare_outcome and not all(response_args):
+        parser.error('recording requires response and host-attestation files and their independent SHA256 hashes')
     config=verified_json(args.configuration,args.configuration_sha256);h=config['host_runtime']
     sys.path.insert(0,h['repository'])
     from research.kalshi.frankie_boss.sunday_execution import _load
@@ -194,8 +295,16 @@ def main():
             **principal_inputs(config), python=sys.executable, directory=principal, session_executor=None,
             classroom_package=classroom_package,adapter_class=IntegratedDipoleClassroomPrincipalAdapter,
             shared_knowledge=shared_knowledge)
+        if args.prepare_outcome:
+            print(json.dumps(record_outcome(adapter,config,run,plan,binding,
+                learning_cutoff_ns=args.learning_cutoff_ns,prepare=True)))
+            return
         response=verified_json(args.response,args.response_sha256)
         attestation=verified_json(args.host_attestation,args.host_attestation_sha256)
+        if args.turn=='outcome':
+            print(json.dumps(record_outcome(adapter,config,run,plan,binding,
+                learning_cutoff_ns=args.learning_cutoff_ns,response=response,attestation=attestation)))
+            return
         if args.turn=='correction':
             result=record_correction(adapter,principal,response,attestation,request['request_id'])
             print(json.dumps(dict(status='actual_classroom_correction_recorded',**result)))
