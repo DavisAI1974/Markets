@@ -23,6 +23,12 @@ def teach_accumulated(day, search, brain, out_dir):
     since added our own results to the brain. No search or claim synthesis occurs here.
     Discovery-day candidates are scheduled like every other claim: the scientific reader
     lists their origin evidence (never a test) from this owner's complete search parts.
+    Every result of this owning day carries the OWNER's completed native evidence (the
+    receipt, result summaries, sections 4.2/4.4 and FINALIZE rows the owner's search pinned),
+    read whole and bytes-verified by the scientific reader into <out_dir>/native/ once (same
+    bytes reuse, different bytes refuse) and set as completed_native_evidence.by_day[day];
+    a retained lesson's references for OTHER days are carried unchanged (CCode slice C:
+    candidate-only lessons previously produced no native evidence for the owning day).
     """
     import frankie_box_lane_state as LS
     import frankie_box_brain as BR
@@ -144,7 +150,15 @@ def teach_accumulated(day, search, brain, out_dir):
                     already_tested.add(claim_key(lesson, claim))
 
     scheduled = set()
-    days = None
+    # The owning search's manifest (hash-checked above) names the days, series and parts; its evidence parts are
+    # hash-verified below before the first new test. The owner's completed native evidence is read once here so every
+    # result header of this day, new or reused, carries the same bytes-bound reference (post-stream knowledge of the
+    # completed owner day; never backfilled onto earlier frames: it is a reference in the retest lessons, not a series).
+    days = ST.load_searches([search])
+    if days[0]['manifest_sha256'] != manifest_witness['sha256']:
+        raise ValueError('owning search manifest changed after accumulated input selection')
+    native_ref, native_listed = ST.completed_native_evidence(days[0], out_dir)
+    parts_verified = False
     for item in documents:
         lesson, claims = item['lesson'], []
         for claim in item['claims']:
@@ -181,11 +195,27 @@ def teach_accumulated(day, search, brain, out_dir):
                                        manifest_sha256=manifest_witness['sha256'])],
                         knowledge_retest=result_identity, model_calls=0,
                         rule='prior findings retained unchanged; each new day measured separately, never pooled')
-        # Preserve the source collection's open work and completed post-stream
-        # references whole. Their original days and hashes are not this day's tests.
-        for field in ('reconsideration', 'completed_native_evidence'):
-            if field in lesson:
-                expected[field] = lesson[field]
+        # Preserve the source collection's open work whole. Its original days and hashes are not this day's tests.
+        if 'reconsideration' in lesson:
+            expected['reconsideration'] = lesson['reconsideration']
+        # Completed native evidence: the retained lesson's references for other days unchanged, plus THIS owner's
+        # (a candidate-only lesson carries none of its own; the owner's search pins are the only lawful source here).
+        carried = lesson.get('completed_native_evidence') or {}
+        by_day = dict(carried.get('by_day') or {})
+        if native_ref is not None:
+            if day in by_day and by_day[day] != native_ref:
+                raise ValueError('retained lesson carries a different completed-native reference for this owning day')
+            by_day[day] = native_ref
+        listed_native = list(carried.get('listed') or [])
+        listed_native += [x for x in native_listed if x not in listed_native]
+        expected['completed_native_evidence'] = dict(
+            by_day=by_day, listed=listed_native,
+            owner_day=dict(day=day, generated=native_ref is not None, search_manifest_sha256=manifest_witness['sha256'],
+                           reader='frankie_box_scientific_teacher.completed_native_evidence (owner-local, bytes-bound)'),
+            rule=carried.get('rule') or ('each searched day\'s completed native evidence (receipt, result summaries, sections '
+                                        '4.2/4.4, FINALIZE rows) read whole and bound by sha256 for both exchange seats; exact '
+                                        'numbers are evidence, averages are labelled supplements (D37); post-stream rows are '
+                                        'never search steps'))
         if path.is_file():
             result = json.loads(path.read_bytes())
             header = {k: v for k, v in result.items() if k not in ('results', 'results_sha256')}
@@ -194,7 +224,7 @@ def teach_accumulated(day, search, brain, out_dir):
                 raise ValueError('completed accumulated teaching differs from its exact retained inputs')
             reused.append(dict(path=str(path), reason='completed result reused; no scientific test repeated'))
         else:
-            if days is None:
+            if not parts_verified:
                 seen_parts = set()
                 for part in manifest['couplings']['parts']:
                     relative = Path(part['path'])
@@ -208,9 +238,7 @@ def teach_accumulated(day, search, brain, out_dir):
                     if actual['sha256'] != part['sha256'] or \
                             ('bytes' in part and actual['bytes'] != part['bytes']):
                         raise ValueError('owning search evidence differs from its manifest: %s' % source)
-                days = ST.load_searches([search])
-                if days[0]['manifest_sha256'] != manifest_witness['sha256']:
-                    raise ValueError('owning search manifest changed after accumulated input selection')
+                parts_verified = True
             results = ST.test(dict(author=lesson['author'], claims=claims), days)
             result = dict(expected, results=results, results_sha256=_digest(results))
             write_json(path, result)

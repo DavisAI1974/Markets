@@ -364,3 +364,39 @@ Consequence to note: a future `frankie_box_historical_claims.py --out` run would
 one only in `builder_sha256` and refuse to overwrite it ("move it aside first"); that is the builder's own guard, unchanged.
 Checks: `ast.parse` of the five modules without project imports; the 10 recorded-output regexes compile (`re.compile` over the
 string constants read by `ast`, no project import); `git diff --check`. No run, no test.
+
+### Slice C: completed native evidence, its actual existing consumers, and the candidate-only accumulated route
+
+Changed: `frankie_box_teacher_knowledge.py` only (the repair); the rest of this slice is the source trace below.
+
+Every existing consumer of the completed native products (the receipt, `result.json`, sections 4.2 / 4.4, the FINALIZE
+rows), traced by name, each classed as COMPUTED by a named existing function / CONNECTED but unverified (packaging,
+hashing, citation or presentation: not semantic computation) / AWAITING a precise definition:
+
+| product | existing consumer (function) | what it does with it | class |
+|---|---|---|---|
+| member and lifecycle GROUP_CLOSE rows (exact emission provenance) | `frankie_box_experiment_native.read_columns` -> `frankie_box_experiment_search.build_series` -> transforms / `couple` | placed on the F_LAST axis at the exact INPUT cursor + instrument + receive time; every scalar leaf becomes a searched series (`native.lifecycle.mirror.*` = the 4.4 GROUP_CLOSE offers) | COMPUTED (the search) |
+| receipt (verdict, failed gates, groups, records, span, warm-up, minimum) | `frankie_box_experiment_native.selected_files` (gate: bedrock policy, completion status, pins); `frankie_box_scientific_teacher.completed_native_evidence` (read whole); `frankie_box_experiment_exchange.context_checks` (cited, sha256-bound) | selection gate; packaging; citation | COMPUTED as a selection gate only; otherwise CONNECTED-unverified |
+| `result.json` `section_summaries` | `frankie_box_boss_session._reusable_projection` and `frankie_box_projection.project` (pinned into the projection plan spec); `frankie_box_bedrock.project_sections` (copied whole into the section files); the scientific reader; the exchange citation | identity / packaging / citation; no arithmetic reads a summary number | CONNECTED-unverified |
+| `result.json` `averaged_companions` rows | the same three, plus the digest tables `bedrock.companions.4.2` (`frankie_box_digest_sources` / `_parallel` / `_render`) | copied, rendered; labelled supplement (D37) | by design NO semantic consumer: averages are not evidence |
+| 4.2 `first_last_pairs` + `declarations` (`native_book_regime.BookRegimeCalculator`) | `frankie_box_bedrock.project_sections` / `frankie_box_projection.project` (filed as the section file); digest tables `bedrock.first_last.4.2`, `bedrock.declarations.4.2`; the scientific reader; the exchange citation | packaging, presentation, citation; the books themselves are already on the frame axis (searched as frames) | AWAITING a definition: the step series a two-point session summary is (Greg; a mathematical decision, not a connection) |
+| 4.4 `matching_rule` + STREAM_END rows (`native_mirror.MirrorMatcher`) | `frankie_box_bedrock.project_sections` (the `mirror` lifecycle rows copied whole); digest tables `bedrock.lifecycle.mirror`, `bedrock.matching_rule.4.4`; the scientific reader; the exchange citation | packaging, presentation, citation | AWAITING a definition for any per-group pair-completion series: which group close owns a 4.4 pair completion (Greg) |
+| FINALIZE rows (member and lifecycle ledgers) | `frankie_box_experiment_native.read_columns` (disposition `post_stream_knowledge_only`, exact ordinal ranges; refuses one that names a live group); `frankie_box_scientific_teacher._finalize_rows` (parsed only at those ordinals while the whole ledger is hashed against the pin); the exchange citation | never a search step (no axis position); read whole into the per-day completed-native file | CONNECTED-unverified; post-stream knowledge has no step, so its only lawful consumer today is the teachers' exchange as cited knowledge |
+
+Nothing above was re-described as semantic coverage: packaging, hashing, citation and status counts are not computation.
+No claim adapter, measurement, target, independence claim, enabled producer or model route was invented.
+
+The repair (owner-local, within the existing pins and writer contract): `teach_accumulated` previously copied a retained
+lesson's `completed_native_evidence` through unchanged, so a candidate-only lesson (built from the owner's
+`FRANKIE_SEARCH_FINDINGS_V1`, which carries no such key) produced results with NO native evidence for the owning day, and
+every other retained lesson carried only its original days' references. Now the owning search's manifest is read up front
+(hash-checked; the parts are still hash-verified before the first new test) and the scientific reader's own
+`completed_native_evidence(days[0], out_dir)` runs once for the owner (its pinned receipt / result / sections / ledgers,
+bytes verified, written once under `<out_dir>/native/`; same bytes reuse, different bytes refuse). Every result header of
+the day carries `completed_native_evidence.by_day[day]` = that reference beside the retained lesson's references for other
+days (unchanged; a conflicting reference for the same day refuses), the merged `listed`, and `owner_day` naming the owning
+manifest. The exchange's `lesson_context` / `context_checks` then cite the owner's completed-native reference for the current
+day in BOTH seats, as they already do for lessons that carry one. No product is backfilled onto an earlier frame: the
+reference lives in the retest lessons of the completed owner day. Older pending `inputs.json` refuse (producer sha changed).
+Decisions kept open (Greg): which group owns a 4.4 pair completion; whether a 4.2 two-point session summary has a step
+definition. Neither is authority to invent a series or statistic, and none was. Checks: `ast.parse`, `git diff --check`. No run.
