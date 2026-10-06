@@ -11,6 +11,11 @@ Steps #2/#3 remain open. Do not claim complete 99-layer computation or native mo
 
 ## Read first
 
+**Latest source continuation (2026-10-06, after Codex setup `3fa9f592`):** read
+`PENDING_FEEDBACK_COMPLETION_20261006.md` alongside this handoff. The historical statement below that no
+pending-outcome transition exists is superseded by the explicit completion path described there. Runtime acceptance,
+current retained model identity and matching later target outcomes remain unverified.
+
 1. This handoff.
 2. HANDOFF_20261006_STEP1_RECOVERY.md and its reading order.
 3. HANDOFF_20261006_STEP2_KNOWLEDGE.md, newest sections first.
@@ -24,6 +29,33 @@ Steps #2/#3 remain open. Do not claim complete 99-layer computation or native mo
 These paths are under research/kalshi/frankie_boss unless a source file says otherwise.
 Apply using-agent-skills and context-engineering when available; inspect existing code before building.
 Greg explicitly authorized agents. Divide independent source work and review with disjoint file ownership.
+
+## Latest source batch — pending outcomes, exact Dipole rows and CPU workflow
+
+- `PendingTargetFeedbackAdapter` and the existing actual-response recorder now prepare/record separately attested
+  later outcomes. The explicit `SundayExecution.complete_pending_cycle` entry restores retained state and reuses
+  the original native objective/checkpoint updater. Original forecast/pending evidence stays immutable; missing
+  outcomes remain pending. No-op feedback cannot publish a successor. See the completion document for interfaces,
+  retry limitations and the necessary reviewed migration for old-code pending state.
+- Search now consumes all source-bound Dipole state/reason rows through the already-read owner-local journal.
+  Placement uses exact cursor/prefix identities, including intermediate/tied rows, with explicit unplaced dispositions.
+  The old timestamp-only boundary lookup is replaced. This does not supply full DState, identity-linked trajectories,
+  post-stream semantic claims or native TeacherHead supervision. See the newest ROOT coverage addendum.
+- The legacy-named Linux controller workflow entry now routes CPU plan/status/loop/resume/stop without Pod arguments.
+  Main concurrency defaults to two days. Main-lane cooperative save/resume still needs queue ownership/attempt/CPU
+  retention and child acknowledgement; the existing drain-to-completion is not save/resume. See Step #1 and runbook.
+- AWS was reconnected and verified with STS. S3 manifest/HEAD reads confirmed that the historical database
+  object size and stored SHA256 match the restoration inventory. This is metadata agreement, not a fresh content
+  hash or proof of a trained successor. Both owning EC2 instances are stopped; their local disks were not inspected.
+  Historical Sunday timing feedback exists, but cannot replace the Monday forecast's Tuesday target.
+- Memory MCP remains blocked by the already-documented process identity failure. Codex registration is committed;
+  no successful MCP call was established.
+
+Verification is source/interface and independent agent review, in-memory Python syntax, YAML/shell parsing and
+whitespace checks only. No tests, model/data/scientific execution, AWS start/dispatch or E2E. Steps #2/#3 remain open.
+Remaining model objective/auxiliary weight and global optimizer ordering are decisions, not defaults to invent.
+Step #4 scientific/facilitator work stays with CCode; #5 and Jev CPU stay discussion-gated. The 99-registry mission,
+three held CPU lanes and original execution authorization boundaries below remain in force.
 
 ## Mission remains the full evidence/knowledge connection
 
