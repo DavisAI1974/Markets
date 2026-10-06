@@ -26,9 +26,13 @@ SCHEMA = 'FRANKIE_BOX_BRAIN_ENTRY_V1'
 # 20211003 Sunday entry on the box) is still read, labelled day unknown. A cycle reads EVERY entry written so far, from
 # every day and every cycle, except its own day+cycle (Greg: the cycles replay the day and restart earlier, so his
 # reasoning may carry later data; only the actual run data ahead of time is walled, and that is the cycle being run).
-ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*', '[0-9]' * 8 + '-lessons', '[0-9]' * 8 + '-exchange')
-# The day kinds that are not a cycle: read after that day's cycles, in this order (the lessons, then the exchange built on them)
-DAY_KINDS = {'lessons': 10 ** 6, 'exchange': 10 ** 6 + 1}
+ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*', '[0-9]' * 8 + '-teacher', '[0-9]' * 8 + '-search',
+               '[0-9]' * 8 + '-lessons', '[0-9]' * 8 + '-jev-tested', '[0-9]' * 8 + '-exchange',
+               '[0-9]' * 8 + '-survivors', '[0-9]' * 8 + '-confirmation')
+# Non-cycle knowledge entries, ordered inside one day. They become readable as soon as each stage writes them.
+DAY_KINDS = {'teacher': 10 ** 6 - 2, 'search': 10 ** 6 - 1, 'lessons': 10 ** 6,
+             'jev-tested': 10 ** 6 + 1, 'exchange': 10 ** 6 + 2, 'survivors': 10 ** 6 + 3,
+             'confirmation': 10 ** 6 + 4}
 
 
 def entry_name(day, cycle):
@@ -44,11 +48,64 @@ def parse_entry_name(name):
     """(day or None, cycle) of an entry directory name, or None when the name is not an entry. A day's lessons entry
     (<day>-lessons: the scientific teacher's test results on Frankie's claims) parses as (day, 'lessons'); a day's
     exchange entry (<day>-exchange: the three-way exchange of the two teachers and Frankie) as (day, 'exchange')."""
-    kind = re.fullmatch(r'([0-9]{8})-(lessons|exchange)', name)
+    kind = re.fullmatch(r'([0-9]{8})-(teacher|search|lessons|jev-tested|exchange|survivors|confirmation)', name)
     if kind:
         return kind.group(1), kind.group(2)
     match = re.fullmatch(r'(?:([0-9]{8})-)?cycle-([0-9]+)', name)
     return (match.group(1), match.group(2)) if match else None
+
+
+def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 * 1024 * 1024):
+    """Commit one knowledge-producing stage to Frankie's brain immediately.
+
+    The brain entry is <brain>/<day>-<stage>/stage-knowledge.json. Small JSON/text sources are carried inline; large
+    evidence stays at its retained path and is represented by exact bytes + sha256 + path, so no giant duplicate is
+    created and nothing is silently dropped. A repeat with identical bytes reuses the entry; different bytes decline.
+    """
+    allowed = {'teacher', 'search', 'jev-tested', 'survivors', 'confirmation'}
+    if stage not in allowed:
+        raise ValueError('stage knowledge must be one of %s' % sorted(allowed))
+    if not re.fullmatch('[0-9]{8}', str(day)):
+        raise ValueError('stage knowledge day must be YYYYMMDD')
+    brain = Path(brain)
+    records = []
+    for item in sources:
+        p = Path(item)
+        if not p.is_file():
+            raise FileNotFoundError('stage knowledge source missing: %s' % p)
+        raw = p.read_bytes()
+        rec = dict(path=str(p), bytes=len(raw), sha256=sha256_bytes(raw), inline=False)
+        if len(raw) <= inline_limit and p.suffix.lower() in ('.json', '.md', '.txt'):
+            try:
+                rec['content'] = json.loads(raw) if p.suffix.lower() == '.json' else raw.decode('utf-8')
+                rec['inline'] = True
+            except Exception:
+                rec['inline'] = False
+        records.append(rec)
+    body = dict(schema='FRANKIE_STAGE_KNOWLEDGE_V1', day=str(day), stage=stage,
+                summary=summary or {}, sources=records,
+                rule='knowledge is filed immediately when legally available; large evidence remains exact by path/bytes/sha256')
+    raw = (json.dumps(body, indent=1, sort_keys=True, ensure_ascii=False) + '\n').encode('utf-8')
+    entry_dir = brain / ('%s-%s' % (day, stage))
+    manifest_path = entry_dir / 'MANIFEST.json'
+    knowledge_path = entry_dir / 'stage-knowledge.json'
+    digest = sha256_bytes(raw)
+    if manifest_path.is_file() and knowledge_path.is_file():
+        have = knowledge_path.read_bytes()
+        if sha256_bytes(have) == digest:
+            return json.loads(manifest_path.read_bytes()), True
+        raise ValueError('%s already holds different stage knowledge; duplicate data declines (R16)' % entry_dir)
+    if entry_dir.exists():
+        raise ValueError('%s exists without a complete stage knowledge manifest; never overwritten' % entry_dir)
+    entry_dir.mkdir(parents=True)
+    knowledge_path.write_bytes(raw)
+    manifest = dict(schema=SCHEMA, cycle=stage, day=str(day), entry_kind='stage_knowledge', entries=[
+        dict(name='stage-knowledge.json', bytes=len(raw), sha256=digest, source='; '.join(r['path'] for r in records),
+             include=True, kind='immediate %s knowledge' % stage)
+    ], unavailable=[], knowledge_status='available_immediately',
+       note='stage knowledge committed before the workflow advances; exact large sources remain at the digest-bound paths')
+    manifest_path.write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    return manifest, False
 
 
 def write_lessons_entry(brain, day, lessons_path):
