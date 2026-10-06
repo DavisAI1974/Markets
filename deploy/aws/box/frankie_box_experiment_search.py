@@ -200,12 +200,26 @@ def sha256_file(path):
     return h.hexdigest()
 
 
+def known_time_rows(known_at):
+    """Exact integer-clock rows plus inclusive original-ordinal ranges that cannot be placed."""
+    import numpy as np
+    valid, unavailable = [], []
+    for ordinal, stamp in enumerate(known_at):
+        if isinstance(stamp, (int, np.integer)) and not isinstance(stamp, (bool, np.bool_)):
+            valid.append(ordinal)
+        elif unavailable and unavailable[-1][1] + 1 == ordinal:
+            unavailable[-1][1] = ordinal
+        else:
+            unavailable.append([ordinal, ordinal])
+    return valid, unavailable
+
+
 def asof_values(con, axis_t, known_at, values):
     """The ONE alignment used for every series and by its leakage gate: for each axis time, the value of the source row
     with the largest known_at <= that time (ties: the later row). Integer stamps remain exact;
     None where nothing is known yet, and native values are retained without a float conversion."""
     import numpy as np
-    valid = [i for i, t in enumerate(known_at) if isinstance(t, (int, np.integer))]
+    valid, _ = known_time_rows(known_at)
     order = sorted(valid, key=lambda i: known_at[i])  # stable ties: the last published row
     times = np.asarray([known_at[i] for i in order], dtype=np.int64)
     positions = np.searchsorted(times, np.asarray(axis_t, dtype=np.int64), side='right') - 1
@@ -264,6 +278,12 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
 
     def asof(name, known_at, values_by_col):
         """Place a source on the axis with asof_values; its leakage gate runs first, on its first numeric column."""
+        valid, unavailable = known_time_rows(known_at)
+        if unavailable:
+            notes.append(dict(source=name, source_rows=len(known_at), rows_with_integer_clock=len(valid),
+                              unplaced_clock_ordinal_ranges=unavailable,
+                              reason='missing or non-integer publication/receive clock; original rows retained in '
+                                     'the named source; no guessed timestamp or placement; booleans are not clocks'))
         for key, values in values_by_col.items():
             gate = leakage_gate(con, name + '.' + key, known_at, values)
             gates.append(gate)
@@ -280,7 +300,12 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
         num, text, other, count = columns(unpack_spool(path), time_key)
         sources.append(dict(source=spool, path=str(path), rows=count, sha256=sha256_file(path),
                             numeric=sorted(num), text=sorted(text), not_searched=other))
-        known = num.pop(time_key)
+        if not count:
+            notes.append(dict(source=spool, rows=0, reason='empty retained source spool; no observations to place'))
+            continue
+        # Missing/text clocks remain source evidence but cannot place a row. The
+        # common alignment reports every such ordinal rather than raising KeyError.
+        known = num.pop(time_key, [None] * count)
         num.pop('ts_event_ns', None), num.pop('ts_event', None)
         asof(spool, known, num)
         for k, values in text.items():
@@ -509,7 +534,7 @@ def leakage_gate(con, source, known_at, values):
     spread over the source, each the last row of its timestamp (rows known at the same instant are not "later")."""
     import numpy as np
     from odcore.leakage import assert_no_leakage
-    valid = [i for i, t in enumerate(known_at) if isinstance(t, (int, np.integer))]
+    valid, _ = known_time_rows(known_at)
     order = sorted(valid, key=lambda i: known_at[i])
     ts = np.asarray([known_at[i] for i in order], dtype=np.int64)
     p = np.asarray([values[i] for i in order], dtype=object)

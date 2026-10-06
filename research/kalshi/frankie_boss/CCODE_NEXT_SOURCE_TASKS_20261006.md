@@ -94,6 +94,25 @@ Inspect the original inventories/contracts first. Build only connections whose s
 - This queue does not authorize workflow #5 or work beyond its discussion boundary. Granite pins,
   `threads: null`, principal catalog choice and claims-file split remain settled or held as recorded.
 
+### Additional concrete producer task from reserved search review, after `bbe2d560`
+
+Own this narrow change in `frankie_box_boss_session.Session.derive` and its existing source/recovery
+bindings. Current `prices.append` retains receive/event timestamps and prices/sizes but no original
+INPUT index or instrument. `structures.append` retains frame timestamps and describe_structure output,
+but omits the original closing INPUT index and instrument. Equal full timestamps are not unique
+identities, and frame/structure failures can make spool ordinals differ. Do not infer a positional join.
+
+Carry the already-in-scope original extracted INPUT index and producer instrument identity into each
+new price/structure row, with explicit field names/semantics and unchanged calculation outputs. Bind
+the producer change to the existing recovery/source identities; preserve old pending/completed artifacts.
+Trace any existing source member/session identity needed to avoid merging distinct lifetimes. Do not
+invent missing historical provenance, rerun ROOT or change describe_structure/price calculations.
+Return the exact new row contract to Codex for the reserved search adapter. Codex will join group
+structures and within-group prices using established ROOT membership; the old timestamp aliases must
+not be described as exact source-identity or all-entity coverage in the meantime. Any retained older
+spool lacking the fields remains explicit. This is part of task D's existing identity plumbing, not
+a new axis, trajectory definition, transform or producer activation.
+
 ### Delivery and execution limits
 
 Return separate commits for A, then each defined B/C/D slice, with exact parent/head, changed files,

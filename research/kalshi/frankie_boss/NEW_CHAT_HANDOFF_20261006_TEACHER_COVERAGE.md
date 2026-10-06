@@ -16,6 +16,25 @@ No agent task or partial implementation needs to be resumed from memory.
 
 **SOURCE-BUILT / RUNTIME-UNVERIFIED. STOP BEFORE WORKFLOW #5.**
 
+## Latest reserved search review after `bbe2d560`: empty/unknown-clock source handling
+
+An empty prices/structures spool previously failed at `num.pop(time_key)`, despite the producer
+explicitly permitting no trade rows. Search now lists an empty spool and continues the other sources.
+Missing or nonnumeric clock columns use an unavailable alignment view; original rows/clock text remain
+in the retained spool. `known_time_rows` gives alignment and its existing leakage gate the same integer
+clock selection, excluding booleans. Every source passed through the as-of wrapper with unusable clocks
+gets exact inclusive original ordinal ranges in manifest notes. No timestamp is synthesized, and the
+remaining properly clocked rows still use the existing as-of policy. No statistic or gate was added.
+
+This does NOT fix price/structure timestamp ties or entity mixing. Source review found their producer
+spools lack original INPUT index and instrument identity. CCode's assignment now names the exact
+`Session.derive` append sites and the required source/recovery-bound provenance addition. Codex keeps
+the search-side adapter pending that returned contract; do not guess a join by row number or timestamp.
+This is another concrete #3 gap, so neither step completion nor full computation is claimed.
+
+Verification: direct producer/reader/alignment source review, AST syntax without project imports and
+whitespace checks only. No tests, synthetic exercises, project/data/model/scientific runs or AWS actions.
+
 ## Latest reserved search fix after `6cf36b3`: exact event-group membership
 
 Source review found that `events.*` action/side counts and size sums used one global open-group
