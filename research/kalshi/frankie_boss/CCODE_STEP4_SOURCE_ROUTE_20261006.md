@@ -223,18 +223,32 @@ gzip-json section products `bedrock_section_4_2` / `bedrock_section_4_4` from a 
 `read_columns` places GROUP_CLOSE ledger rows with exact emission provenance on the existing F_LAST axis (searched);
 FINALIZE rows get the retained disposition `post_stream_knowledge_only`; `result`, `receipt`, the legacy observable
 rows and both sections are listed as "completed calculation/section evidence; no whole-day summary backfill" and
-become no series. So they reach the search inputs as pinned files and dispositions, and no teacher computation
-consumes them. Which existing computation could, and what is missing:
-- 4.4 (mirror lifecycle pairs, `native_mirror.MirrorMatcher`, STREAM_END rows with their matching rule): a per-group
-  count of pair completions at the group close is the existing `events.<action>_<side>` series semantics; the missing
-  piece is the semantic definition (which group close a completed pair belongs to, by its later leg's exact group) in
-  the search's `build_series` (Codex); with it the existing coupling statistic and chance check apply unchanged.
+become no series. So they reached the search inputs as pinned files and dispositions, and no teacher computation
+consumed them. FIXED (Greg, 2026-10-06: "fix it so the correct place consuming them"): the correct consumer of post-
+stream, whole-day completed knowledge is the teachers' exchange, not the group-close search axis. The scientific
+teacher now reads each searched day's completed native evidence whole from the files the search pinned, bytes
+verified (`completed_native_evidence`): the receipt's verdict and gates; result.json's section summaries whole and its
+averaged companions labelled supplement-only (D37); section 4.2's exact first/last book of each day-segment-phase and
+its declarations, companion rows labelled averages; section 4.4's matching rule and its STREAM_END rows, with its
+GROUP_CLOSE offers cross-referenced to the already searched native.lifecycle.mirror.* series rather than duplicated;
+and every FINALIZE row of the exact member and lifecycle ledgers, parsed only at the ordinals the search listed
+post_stream_knowledge_only while the whole ledger is hashed against the search's pin. Written once per day to
+`<work>/native/<day>-completed-native.json` (same bytes reuse, different bytes refuse) and carried in EVERY lessons file
+as `completed_native_evidence.by_day[day]` (path, sha256, counts, receipt, matching rule) with `listed` for anything
+absent, so a search without native evidence is listed, never an error. Codex: `frankie_box_experiment_exchange.py`
+boss_turn and science_turn cite `lessons['completed_native_evidence']['by_day'][day]` (sha256-bound) in their
+evidence_checks, and `teacher_knowledge.teach_accumulated` carries the key through; nothing else changes.
+What each piece is for, and what still needs a definition:
+- 4.4 (mirror lifecycle pairs, `native_mirror.MirrorMatcher`): its GROUP_CLOSE offers are already searched as
+  native.lifecycle.mirror.* rows; its STREAM_END rows and matching rule are now consumed above. A per-group count of
+  pair completions as a searchable series would need the semantic definition (which group close a completed pair
+  belongs to, by its later leg's exact group) in the search's `build_series` (Codex, a mathematical decision).
 - 4.2 (first/last book of each day-session, `BookRegimeCalculator`): two points per session, so the step series the
   coupling needs (m >= 2 steps, far shifts beyond the exclusion) does not exist on this axis; a consumer needs a
   definition of what step series a session summary is, which is a mathematical decision, not a connection; listed.
 - `result.json` `averaged_companions` rows and section summaries: averages, which D37 keeps out of evidence; listed,
   never searched; no consumer should be built for them.
-- FINALIZE rows: no group, no axis position (the module refuses a FINALIZE row that names a live group); they stay
-  post-stream knowledge, readable by the exchange's BOSS seat as retained evidence only if Codex gives
-  `boss_turn` a reader for them; no computation consumes them today.
+- FINALIZE rows: no group, no axis position (the module refuses a FINALIZE row that names a live group); they are
+  post-stream knowledge, now read whole into the per-day completed-native file and carried in the lessons for both
+  seats; never a search step.
 Nothing here was invented or run; storage, hashing and inventories were not counted as coverage.

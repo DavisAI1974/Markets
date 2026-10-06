@@ -19,7 +19,10 @@ Takes, each labelled with its author (rule R11: claims, never truth):
     search, with part/row provenance), projected by frankie_box_candidate_claims.py, author 'search' (CCode step #4).
     Their series are matched exactly, and the rows of their own discovery day are listed as ORIGIN EVIDENCE, never
     counted as a test: a second use of the same evidence is not another occurrence.
-and every completed experiment search given (frankie_box_experiment_search.py outputs). Trading date and former
+and every completed experiment search given (frankie_box_experiment_search.py outputs), plus each searched day's
+COMPLETED NATIVE EVIDENCE the search pinned and did not search (receipt, result section summaries, sections 4.2 and
+4.4, every FINALIZE row), read whole and bound by sha256 (completed_native_evidence), written once per day under
+<work>/native/ and carried in every lessons file so both exchange seats cite it; averages are labelled supplements. Trading date and former
 discovery/confirmation labels do not gate knowledge use (Greg, 2026-10-06). Each day is reported on its own, never pooled.
 
 For each claim: its series names are matched to the search's series (normalized names; every match listed, an unmatched
@@ -57,6 +60,7 @@ Writes, per author, one lessons file bound to the exact claims it answers (claim
                          treatment of a tested candidate is not decided here (step #5 discussion).
 """
 import argparse
+import gzip
 import hashlib
 import json
 import os
@@ -249,10 +253,131 @@ def load_searches(dirs):
                          series=manifest['series'], cells=[tuple(c) for c in manifest['cells']],
                          parts=[d / p['path'] for p in manifest['couplings']['parts']],
                          part_pins={p['path']: p.get('sha256') for p in manifest['couplings']['parts']},
+                         native_retained=[x for x in manifest.get('notes') or [] if x.get('source') == 'native' and x.get('retained')],
+                         native_reports=[x for x in manifest.get('sources') or [] if str(x.get('source', '')).startswith('native.')],
                          manifest_sha256=sha256_bytes((d / 'MANIFEST.json').read_bytes())))
     if len({x['day'] for x in days}) != len(days):
         raise SystemExit('the same day was given twice (duplicate data declines the run)')
     return days
+
+
+# ------------------------------------------------------------------------------- completed native evidence, consumed
+def _read_pinned(path, sha256, nbytes):
+    data = Path(path).read_bytes()
+    if len(data) != nbytes or sha256_bytes(data) != sha256:
+        raise ValueError('retained native evidence differs from the search\'s pin: %s' % path)
+    return json.loads(gzip.decompress(data) if str(path).endswith('.gz') else data)
+
+
+def _finalize_rows(report):
+    """Every FINALIZE (post-stream) row of an exact ledger, whole, by emitting section; the ledger is hashed while it
+    streams and must equal the search's pin. Only the ordinals the search listed post_stream_knowledge_only are parsed."""
+    ranges = ((report.get('dispositions') or {}).get('post_stream_knowledge_only') or {}).get('ordinal_ranges') or []
+    wanted = []
+    for r in ranges:
+        lo, hi = (r[0], r[1]) if isinstance(r, (list, tuple)) else (r, r)
+        wanted.append((int(lo), int(hi)))
+    rows, hashed, size = {}, hashlib.sha256(), 0
+    with open(report['path'], 'rb') as handle:
+        for ordinal, raw in enumerate(handle):
+            hashed.update(raw)
+            size += len(raw)
+            if any(lo <= ordinal <= hi for lo, hi in wanted):
+                row = json.loads(raw)
+                if (row.get('frankie_emission') or {}).get('phase') != 'FINALIZE':
+                    raise ValueError('ordinal %d of %s is not a FINALIZE row the search listed post-stream' % (ordinal, report['path']))
+                rows.setdefault(str(row.get('emitting_section') or 'member'), []).append(dict(ordinal=ordinal, row=row))
+    if size != report.get('bytes') or hashed.hexdigest() != report.get('sha256'):
+        raise ValueError('exact ledger differs from the search\'s pin: %s' % report['path'])
+    return rows
+
+
+def completed_native_evidence(d, out_root):
+    """A searched day's completed native evidence, CONSUMED (Greg, 2026-10-06: not listed; read by the teachers): the
+    files the search pinned and did not search, read whole with their bytes verified, written once per day under
+    <out_root>/native/<day>-completed-native.json and carried in every lessons file for that day (both exchange seats
+    read lessons). Exact numbers are evidence; an average is a labelled supplement, never evidence (D37); nothing is
+    computed here. What is read: the receipt's verdict and gates; result.json's section summaries (the traversal's own
+    numbers, whole) and its averaged companions (supplement); section 4.2's exact first and last book of each
+    day-segment-phase and its declarations (its companion rows are averages: supplement); section 4.4's matching rule
+    and its STREAM_END rows (its GROUP_CLOSE offers are already searched as native.lifecycle.mirror.*: cross-referenced,
+    not duplicated); every FINALIZE row of the exact member and lifecycle ledgers, whole, by section (post-stream: no
+    group, no axis position, so never a search step). Returns (reference, listed): the file's identity and counts, or
+    what could not be read and why. A search with no native evidence is listed, not an error (older sources keep
+    their actual coverage)."""
+    listed = []
+    retained = {x['role']: x for x in d.get('native_retained') or []}
+    reports = {x['source']: x for x in d.get('native_reports') or []}
+    if not retained:
+        return None, [dict(day=d['day'], reason='the search carries no retained native evidence (none selected for this day)')]
+    doc = dict(schema='FRANKIE_COMPLETED_NATIVE_EVIDENCE_V1', day=d['day'], search_manifest_sha256=d['manifest_sha256'],
+               read_from={k: dict(path=v['retained'], sha256=v['sha256'], bytes=v['bytes']) for k, v in retained.items()},
+               rule='exact numbers are evidence, read whole and bound by sha256; averages are labelled supplements (D37); '
+                    'post-stream rows have no axis position and are never search steps; nothing is computed here')
+    def get(role):
+        x = retained.get(role)
+        if x is None:
+            listed.append(dict(day=d['day'], role=role, reason='not among the search\'s retained native files'))
+            return None
+        return _read_pinned(x['retained'], x['sha256'], x['bytes'])
+    receipt = get('receipt')
+    if receipt is not None:
+        doc['receipt'] = {k: receipt.get(k) for k in ('verdict', 'failed_gates', 'groups', 'records', 'span_seconds',
+                                                      'candidate_warmup_seconds', 'candidate_min_observations')}
+    result = get('result')
+    if result is not None:
+        layers = result.get('layers') or {}
+        summaries = (layers.get('exact_lifecycle_and_runway_ledger') or {}).get('section_summaries')
+        averages = layers.get('averaged_companions') or {}
+        doc['result'] = dict(layers=sorted(layers), section_summaries=summaries,
+                             section_summaries_rule='the traversal\'s own section numbers, whole; evidence where exact',
+                             averaged_companions=dict(rows=averages.get('rows'), key_alias_form=averages.get('key_alias_form'),
+                                                      rule='averages: a supplement only, never evidence (D37)'))
+    s42 = get('bedrock_section_4_2')
+    if s42 is not None:
+        doc['section_4_2'] = dict(first_last_pairs=s42.get('first_last_pairs'), declarations=s42.get('declarations'),
+                                  status=s42.get('status'), reason=s42.get('reason'), count=s42.get('count'),
+                                  companion_rows=dict(rows=s42.get('companion_rows'), rule='averages: supplement only (D37)'),
+                                  rule='the exact first and last book of each day-segment-phase: evidence; the books '
+                                       'themselves are already on the frame axis, so these are read, not re-searched')
+    s44 = get('bedrock_section_4_4')
+    if s44 is not None:
+        rows = s44.get('lifecycle_rows') or []
+        live = [r for r in rows if (r.get('frankie_emission') or {}).get('phase') == 'GROUP_CLOSE']
+        ended = [r for r in rows if (r.get('frankie_emission') or {}).get('phase') != 'GROUP_CLOSE']
+        doc['section_4_4'] = dict(matching_rule=s44.get('matching_rule'), status=s44.get('status'), reason=s44.get('reason'),
+                                  group_close_rows=len(live), stream_end_rows=ended,
+                                  rule='GROUP_CLOSE offers are searched as native.lifecycle.mirror.* (not duplicated '
+                                       'here); STREAM_END rows are post-stream knowledge, read whole')
+    finalize = {}
+    for name in ('native.member', 'native.lifecycle'):
+        report = reports.get(name)
+        if report is None:
+            listed.append(dict(day=d['day'], role=name, reason='no search report of this ledger'))
+            continue
+        try:
+            finalize[name] = _finalize_rows(report)
+        except FileNotFoundError:
+            listed.append(dict(day=d['day'], role=name, reason='the exact ledger is not at %s' % report.get('path')))
+    doc['finalize_rows'] = dict(by_ledger={k: {sec: len(v) for sec, v in rows.items()} for k, rows in finalize.items()},
+                                rows=finalize, rule='every FINALIZE row the search listed post_stream_knowledge_only, whole')
+    doc['listed'] = listed
+    data = (json.dumps(doc, indent=1, sort_keys=True) + '\n').encode()
+    path = Path(out_root) / 'native' / ('%s-completed-native.json' % d['day'])
+    if path.exists():
+        if path.read_bytes() != data:
+            raise ValueError('%s exists with different bytes: the pinned native evidence changed; move it aside first' % path)
+    else:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    reference = dict(path=str(path), sha256=sha256_bytes(data), bytes=len(data), day=d['day'],
+                     counts=dict(first_last_pairs=len((doc.get('section_4_2') or {}).get('first_last_pairs') or []),
+                                 stream_end_rows=len((doc.get('section_4_4') or {}).get('stream_end_rows') or []),
+                                 finalize_rows=doc['finalize_rows']['by_ledger'],
+                                 averaged_rows=len(((doc.get('result') or {}).get('averaged_companions') or {}).get('rows') or [])),
+                     receipt=doc.get('receipt'), matching_rule=(doc.get('section_4_4') or {}).get('matching_rule'),
+                     listed=listed)
+    return reference, listed
 
 
 def match(name, series):
@@ -472,7 +597,7 @@ def test(claims_doc, days):
     return results
 
 
-def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/frankie-box/brain'):
+def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/frankie-box/brain', native=None):
     schema = {'jev': 'JEV_LESSONS_V1', 'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1',
               'search': 'SEARCH_CANDIDATE_LESSONS_V1'}[doc['author']]
     if doc['author'] == 'historical':
@@ -492,6 +617,13 @@ def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/
                    rule='each day on its own, never pooled; counts are the finding, the disposition word is orientation')
     if doc.get('reconsideration') is not None:
         lessons['reconsideration'] = doc['reconsideration']
+    if native is not None:
+        lessons['completed_native_evidence'] = dict(
+            by_day={day: ref for day, (ref, _) in native.items() if ref is not None},
+            listed=[item for _, listed in native.values() for item in listed],
+            rule='each searched day\'s completed native evidence (receipt, result summaries, sections 4.2/4.4, FINALIZE '
+                 'rows) read whole and bound by sha256 for both exchange seats; exact numbers are evidence, averages '
+                 'are labelled supplements (D37); post-stream rows are never search steps')
     if doc['author'] == 'search':
         lessons.update(source_manifest_sha256=doc.get('source_manifest_sha256'),
                        origin_rule='the candidates\' own discovery day is origin evidence, listed per claim and never '
@@ -614,6 +746,10 @@ def main():
     if not (a.jev_claims or a.frankie_ledgers or a.historical_claims or a.search_findings):
         raise SystemExit('give --jev-claims / --jev-stamp, --frankie-ledgers, --historical-claims and/or --search-findings')
     days = load_searches(a.search)
+    native = {d['day']: completed_native_evidence(d, ROOT) for d in days}
+    for day, (ref, listed) in native.items():
+        print('completed native evidence %s: %s' % (day, 'read, %s' % json.dumps(ref['counts'], sort_keys=True) if ref
+                                                       else '; '.join(x['reason'] for x in listed)), flush=True)
     candidates = []
     if a.search_findings:
         import frankie_box_candidate_claims as CC
@@ -624,7 +760,7 @@ def main():
     for doc in ([jev_claims(a.jev_claims)] if a.jev_claims else []) + \
                ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []) + \
                ([historical_claims(a.historical_claims)] if a.historical_claims else []) + candidates:
-        write(doc, days, test(doc, days), ROOT, os.environ.get('MAP_URL'), brain_dir=a.brain)
+        write(doc, days, test(doc, days), ROOT, os.environ.get('MAP_URL'), brain_dir=a.brain, native=native)
 
 
 if __name__ == '__main__':
