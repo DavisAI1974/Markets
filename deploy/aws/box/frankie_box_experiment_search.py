@@ -40,6 +40,8 @@ the group close) and every column of every day-file table per native entity (ext
 series too; identities and clocks are listed. Equal values never make different entity columns aliases.
 V2 ROOT frames additionally carry full-depth/FIFO snapshots and every original group INPUT record, including bytes.
 Each input-record position is searched at its group close; this does not change lags to native-event units.
+Event counts, known-size sums and closing-record fields use ROOT's exact input_record_indices/input_cursor,
+not timestamp lookup or a global bucket across instruments. Unsupported old group membership is explicitly listed.
 Dipole current components use exact journal source-cursor availability at each frame, including tied timestamps.
 Every original target row additionally supplies dipole.group.rows[position].* numeric/categorical channels at its
 exact owning INPUT group. Ordered slots preserve intermediate states; they are not independent observations.
@@ -288,25 +290,50 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
         raise SystemExit('%d INPUT spools in %s (%s): the same records twice would be counted twice (duplicate data '
                          'declines the run)' % (len(inputs), rows_dir, ', '.join(p.name for p in inputs)))
     if inputs:
-        counts, known, records, groups, open_group, unknown = {}, [], 0, 0, {}, 0
-        # Closing-record quantities only, bound to the matching frame by F_LAST order AND receive stamp.
-        # A timestamp-only asof would let a later equal-time INPUT replace an earlier group's closing record.
-        # This does not wire the native event axis or claim that intermediate record values are searched.
-        event_fields, event_text, event_known, event_identities, event_other = {}, {}, [], set(), set()
+        input_sha256 = sha256_file(inputs[0])
+        exported = json.loads((day_dir / 'MANIFEST.json').read_bytes())['files']
+        for path, digest in ((inputs[0], input_sha256), (frames_path, sources[0]['sha256'])):
+            relative = str(path.relative_to(day_dir))
+            pins = [item for item in exported if str(Path(item['stage']) / item['path']) == relative]
+            if len(pins) != 1 or pins[0]['sha256'] != digest or pins[0]['bytes'] != path.stat().st_size:
+                raise ValueError('event INPUT/frame spool differs from the selected export: ' + relative)
+        # Reuse ROOT's actual per-instrument membership. A global F_LAST bucket
+        # mixes interleaved instruments; timestamp asof can select a later tie.
+        event_frames, event_owners = JOURNAL._frame_index(f_num, recv)
+        group_counts = [{} for _ in range(n)] if event_frames is not None else []
+        group_unknown = [0] * n if event_frames is not None else []
+        seen_members = [0] * n if event_frames is not None else []
+        records, unknown, unplaced = 0, 0, []
+        event_fields, event_text, event_identities, event_other = {}, {}, set(), set()
         event_closes = []
         for record in unpack_spool(inputs[0]):
+            index = records
             records += 1
             action, side = (v.decode('ascii') if isinstance(v, bytes) else str(v)
                             for v in (record.get('action'), record.get('side')))
             key = '%s_%s' % (action, side)
-            open_group[key] = open_group.get(key, 0) + 1
             size = record.get('size')
-            if isinstance(size, (int, float)) and not isinstance(size, bool):
-                open_group[key + '_size'] = open_group.get(key + '_size', 0) + size
-            else:
+            has_size = isinstance(size, (int, float)) and not isinstance(size, bool)
+            if not has_size:
                 unknown += 1
             stamp = record.get('ts_recv', record.get('ts_recv_ns'))
-            event_known.append(stamp)
+            position = event_owners.get(index) if event_owners is not None else None
+            if position is None:
+                JOURNAL._range_add(unplaced, index)
+            else:
+                frame = event_frames[position]
+                if type(record.get('instrument_id')) is not int or record['instrument_id'] != frame['instrument']:
+                    raise ValueError('event INPUT instrument differs from its exact ROOT group')
+                if index == frame['cursor'] and (stamp != frame['stamp']
+                        or type(record.get('flags')) is not int or not record['flags'] & F_LAST):
+                    raise ValueError('event closing INPUT differs from its exact ROOT frame')
+                counts = group_counts[position]
+                counts[key] = counts.get(key, 0) + 1
+                if has_size:
+                    counts[key + '_size'] = counts.get(key + '_size', 0) + size
+                else:
+                    group_unknown[position] += 1
+                seen_members[position] += 1
             for field, value in record.items():
                 if field in EVENT_IDENTITY_FIELDS:
                     event_identities.add(field)
@@ -328,37 +355,46 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15):
             flags = record.get('flags')
             if isinstance(flags, int) and flags & F_LAST:
                 event_closes.append(records - 1)
-                for k in set(counts) | set(open_group):
-                    counts.setdefault(k, [0.0] * groups).append(float(open_group.get(k, 0)))
-                known.append(record.get('ts_recv'))
-                groups += 1
-                open_group = {}
-        matched_closes = len(event_closes) == n and all(event_known[i] == recv[g] for g, i in enumerate(event_closes))
-        sources.append(dict(source='events', path=str(inputs[0]), rows=records, groups=groups, sha256=sha256_file(inputs[0]),
-                            numeric=sorted(counts), records_without_numeric_size=unknown,
+        matched_closes = event_frames is not None
+        if matched_closes and any(seen != len(frame['members']) for seen, frame in zip(seen_members, event_frames)):
+            raise ValueError('event INPUT spool does not cover every exact ROOT group member')
+        selected_closes = [frame['cursor'] for frame in event_frames] if matched_closes else []
+        keys = sorted({key for counts in group_counts for key in counts})
+        counts = {key: [group.get(key, 0) for group in group_counts] for key in keys}
+        if matched_closes:
+            counts['total'] = [sum(value for key, value in group.items() if not key.endswith('_size'))
+                               for group in group_counts]
+        sources.append(dict(source='events', path=str(inputs[0]), rows=records, groups=len(selected_closes), sha256=input_sha256,
+                            numeric=sorted(counts), records_without_numeric_size=unknown, raw_f_last_closes=len(event_closes),
+                            group_binding=dict(schema='FRANKIE_EVENT_GROUP_SEARCH_V2',
+                                frames_sha256=sources[0]['sha256'], implementation=JOURNAL.binding(),
+                                grouped_records=sum(seen_members), input_index_ranges_without_root_group=unplaced,
+                                records_without_numeric_size_per_group=group_unknown,
+                                rule='exact ROOT input_record_indices and closing input_cursor; no timestamp asof or '
+                                     'cross-instrument accumulator; integer counts/sizes remain exact; size sums include '
+                                     'only numeric sizes, with unknown-size counts retained separately; records without '
+                                     'ROOT membership remain in the pinned INPUT source, not assigned another close'),
                             per_event_fields=dict(numeric_fields=sorted(event_fields), text_fields=sorted(event_text),
                                                   placement='closing INPUT per matching F_LAST frame',
                                                   coverage_scope='events.last only; V2 frames.input_records separately carries all closed-group members',
                                                   frame_binding_matched=matched_closes,
-                                                  selected_records=len(event_closes) if matched_closes else 0,
-                                                  individually_unsearched_records=records - (len(event_closes) if matched_closes else 0),
+                                                  selected_records=len(selected_closes),
+                                                  individually_unsearched_records=records - len(selected_closes),
                                                   identities_and_clocks=sorted(event_identities),
                                                   not_searched=sorted(event_other)),
-                            after_last_close=dict(records=sum(v for k, v in open_group.items() if not k.endswith('_size')),
-                                                  note='records after the last F_LAST close belong to no closed group; counted here, not placed')))
-        if groups:
-            counts['total'] = [float(sum(counts[k][g] for k in counts if not k.endswith('_size'))) for g in range(groups)]
-            asof('events', known, counts)
+                            after_last_close=dict(records=records - (event_closes[-1] + 1 if event_closes else 0),
+                                                  note='tail after the last raw F_LAST; all unplaced INPUT indices are listed in group_binding')))
         if matched_closes:
+            series.update({'events.' + key: np.asarray(values, dtype=object) for key, values in counts.items()})
             for field, values in event_fields.items():
-                series['events.last.' + field] = np.asarray([values[i] for i in event_closes], dtype=object)
+                series['events.last.' + field] = np.asarray([values[i] for i in selected_closes], dtype=object)
             for field, values in event_text.items():
-                text_cols['events.last.' + field] = [values[i] for i in event_closes]
-            gates.append(dict(source='events.last', passed=True,
-                              reason='closing INPUT at its own frame; F_LAST count/order/receive stamps match the axis source'))
+                text_cols['events.last.' + field] = [values[i] for i in selected_closes]
+            gates.append(dict(source='events', passed=True,
+                              reason='exact ROOT INPUT membership and closing cursor/instrument/receive stamp; no asof tie selection'))
         else:
-            notes.append(dict(source='events.last', excluded='F_LAST closing records do not match the frame count/stamps; '
-                              'closing-record projection unavailable, original records preserved'))
+            notes.append(dict(source='events', excluded='ROOT lacks exact INPUT group membership; counts and closing-record '
+                              'projection unavailable, original records and index dispositions preserved'))
     else:
         notes.append(dict(source='events', missing=str(rows_dir / 'input-*.jsonl')))
     dipole_paths = sorted((day_dir / 'run' / 'execution').glob('cycle-*/host-dipole-classroom-source*.json')) + \

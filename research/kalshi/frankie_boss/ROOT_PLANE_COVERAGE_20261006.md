@@ -1,5 +1,23 @@
 # ROOT frame wiring and the full registry — 2026-10-06
 
+## Exact event-group search placement after `6cf36b3`
+
+The reserved search continuation repairs `events.*` aggregate and `events.last.*` placement using
+ROOT's existing `input_record_indices`/`input_cursor` through `experiment_journal._frame_index`.
+The former global F_LAST accumulator could mix interleaved instruments, and timestamp as-of could
+replace an earlier group's counts with a later equal-time close. Dates were never stripped from
+timestamps; equal full timestamps are not unique group identities.
+
+Every successful frame now receives only its exact recorded members and closing record. Both
+INPUT/frame spool hashes and sizes are checked against the selected export; membership, instrument,
+closing stamp/flag and source completeness are verified. Integer counts/size sums remain exact.
+Known numeric-size sums retain separate per-group unknown-size counts. Unplaced INPUT indices
+have inclusive retained ranges; older membership-free exports explicitly lack these aliases.
+There is no guessed placement, changed search axis, new transform/statistic or independent evidence.
+The existing search/helper source binding refuses incompatible pending preparation; old completed
+results retain their actual prior coverage. Direct source review, AST syntax and whitespace only;
+no tests/runs/AWS actions. Steps #2–#4 and runtime verification remain incomplete.
+
 ## Latest full Dipole state/raw continuation
 
 The post-`03f29be` slice in `DIPOLE_TEACHER_COVERAGE_CONTINUATION_20261006.md` supersedes statements below

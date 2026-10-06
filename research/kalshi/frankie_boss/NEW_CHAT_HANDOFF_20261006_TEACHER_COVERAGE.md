@@ -16,6 +16,35 @@ No agent task or partial implementation needs to be resumed from memory.
 
 **SOURCE-BUILT / RUNTIME-UNVERIFIED. STOP BEFORE WORKFLOW #5.**
 
+## Latest reserved search fix after `6cf36b3`: exact event-group membership
+
+Source review found that `events.*` action/side counts and size sums used one global open-group
+accumulator, then timestamp as-of placement. Interleaved instruments could share the wrong bucket;
+distinct closes with the same full nanosecond timestamp could select a later group's counts. The
+timestamp includes its date; it is simply not a unique group identity. `events.last.*` also relied
+on a global raw F_LAST sequence matching every successful ROOT frame.
+
+`experiment_search.build_series` now reuses `experiment_journal._frame_index` and ROOT's original
+`input_record_indices`/`input_cursor`. Only a frame's recorded members contribute to its counts and
+numeric-size sums, and its exact closing record supplies `events.last.*`. INPUT and frame spool
+bytes/hashes must match the selected export. Instrument, closing stamp/flag and complete membership
+are checked; there is no timestamp selection, second ingest, adapter replay or new trajectory definition.
+Integer counts and integer-size sums stay exact Python integers rather than passing through float.
+
+The existing numerical sum still includes only numeric sizes; per-group unknown-size counts now
+make incomplete sums explicit alongside the whole-source count. Original records remain retained.
+Source `group_binding` reports grouped records, exact inclusive unplaced INPUT-index ranges,
+frame hash and membership helper identity. Older exports without group membership are listed as
+unsupported for these aliases instead of guessed. Other existing projections remain as supplied.
+Raw F_LAST counts and tail diagnostics are distinct from successful ROOT group counts.
+
+Existing transforms, lag units, coupling/chance formulas, targets and masks are unchanged. Search
+continuation already binds this module and the journal helper, so incompatible pending arrays refuse;
+completed old results remain unchanged and are not rerun or claimed corrected. Verification was direct
+producer/consumer/recovery source review, AST syntax without imports, and whitespace only. No tests,
+synthetic exercises, model/data/scientific runs, installs or AWS actions occurred. Runtime remains open.
+CCode ownership is unchanged; this touches the reserved search module and shared documentation only.
+
 ## Latest continuation after `7d10fa5`: raw availability repaired; expanded CCode ownership
 
 Current source fix: `frankie_box_experiment_dipole.py` V3 creates a numerical projection of each

@@ -12,6 +12,9 @@ This is an assignment prepared for Greg to pass to CCode, not a claim CCode has 
 Codex retains only the immediate raw-placeholder projection repair in `frankie_box_experiment_dipole.py`,
 its description in `frankie_box_experiment_search.py`, and the current continuation/assignment documents.
 Do not edit those two modules concurrently. Read their latest V3 route before wiring consumers.
+The subsequent reserved search fix also places `events.*` and `events.last.*` using ROOT's exact
+INPUT membership, with source `group_binding` dispositions and unknown-size counts; see the newest
+new-chat handoff section. Existing old search results are unchanged, not retroactively repaired.
 CCode takes the remaining pre-#5 implementation queue below, including the shared caller files
 previously reserved for Codex. Codex will review/integrate the returned work instead of duplicating it.
 
