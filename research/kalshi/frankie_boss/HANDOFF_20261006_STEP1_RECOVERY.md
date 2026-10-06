@@ -1,5 +1,53 @@
 # Frankie AWS handoff — step 1 recovery, 2026-10-06
 
+## Latest CPU entry-point source update — 2026-10-06
+
+The stale A1 controller argument defect is corrected in source. `.github/workflows/frankie_box_run.yml` now routes
+its legacy `deploy/aws/box/frankie_box_pod_root_loop.sh` marker to the existing AWS CPU Linux controller with
+`ACTION=plan|status|loop|resume|stop`. Pod inputs are explicitly rejected, including when empty; the active controller
+step no longer passes Pod arguments or a Runpod credential. Unknown and duplicate controller inputs also refuse.
+`loop` and `resume` share the existing serialized controller concurrency group; status and cooperative save requests
+can reach the running controller independently. No new hosting/service choice was made.
+
+The accepted controller fields are `ACTION`, `RUN`, `CODE_ROOT`, `BOXES`, `SLOTS`, `DATA_WORKERS`, `BUDGET_MINUTES`
+and `JOB`. Use the exact Linux owner `BOXES=i-0d17573dbce871520@us-east-1` and `SLOTS=1`, including for plan/status.
+`JOB=<RUN>-YYYYMMDD-aN` is mandatory for resume/stop and refused for other actions. `DATA_WORKERS` defaults to 15;
+`BUDGET_MINUTES` remains 330. `CODE_ROOT` is the staged main checkout under `/opt/frankie-box/code/<dir>/markets`.
+This exposes already-built controller behavior; a successful command or E2E has not been observed.
+
+The main launcher `frankie_box_experiment.sh` and Python `--parallel-days` parser now both default to two main days.
+The existing CPU ledger still owns the actual 16-CPU reservations and 15-worker allocation. Main actions remain
+`plan|start|status`; no main `stop` or `resume` alias was added.
+
+### Main save/resume remains a real ownership gap
+
+A main-side stop cannot safely be wired by creating a Linux-style marker alone:
+
+- `Run.save_requested` reads a process-global environment marker, while main ROOT days run in concurrent threads and
+  the class worker is a separate process. Main has no day-bound marker delivery across those owners.
+- `_root_job` and `_finish_job` treat `SystemExit(75)` as failure and unconditionally release the held slot.
+  Queue failure/retry handling can clear ownership and start another attempt; it does not retain a saved main lane.
+- `_book_slot` can accept a retained CPU list, but the main queue does not persist that list in its day entry.
+  `Run.root` selects the existing interrupted attempt only on the Linux mailbox path; main ordinarily selects a new one.
+- The class worker does not acknowledge an orderly saved-child transition, and `await_roots` can re-kick a worker
+  without a run save check. Signal-based class shutdown must not be equated with completed child saving.
+
+The next main recovery implementation must propagate a day-bound stop marker, retain original owner/CPU/attempt
+identity, recognize the existing saved exit without release/requeue, and wait for class-child acknowledgement before
+its owner exits. Reuse existing continuation/checkpoint code. Do not implement only a parser alias or process kill.
+Existing ROOT-worker SIGTERM drains its running whole days; `handover` also starts a successor. Neither is a complete
+main cooperative save/resume interface, and Jev's unresolved completion dependency can prevent a drain finishing.
+
+Step #8 remains open: coordinated three-lane launch and main recovery, sustained controller lifetime beyond the
+bounded runner, saved-plan/claim-store prerequisites, and dependency completion still need work. The saved main
+`plan.json` must exist before the Linux controller's queue/claim route. No detached controller, new AWS service,
+Jev bypass, Granite decision, or workflow #5 implementation was introduced.
+
+Verification is shell/Python syntax and source/interface inspection only. No tests, AWS actions, installation,
+dispatch, training, model call, data/scientific run, or E2E occurred. AWS compute and the later thirty-day run still
+require their respective explicit authorization. Older A1-pending/interface descriptions below are historical and
+are superseded only by this narrow source update; their other open items remain open.
+
 **Latest full-depth continuation (from `166507b6`):** Greg explicitly requires all applicable full-depth MBO/FIFO
 and joint accumulated-knowledge computation. New experiment ROOTs retain every level/FIFO queue, the complete resting
 book observation and every original INPUT field in each successful closed group, including bytes. These enter the

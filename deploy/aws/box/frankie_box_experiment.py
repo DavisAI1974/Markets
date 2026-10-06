@@ -2000,8 +2000,8 @@ def main():
     p.add_argument('--data-workers', type=int, default=1, help='not used: ROOT runs 15 workers in its booked 16 CPUs')
     p.add_argument('--search-workers', type=int, default=8, help='not used: the search runs 15 workers in its booked 16')
     p.add_argument('--teacher-cpus', type=int, default=0, help='not used: the teacher splits its booked 16 CPUs')
-    p.add_argument('--parallel-days', type=int, default=4,
-                   help='days at once for the ingest, external, root and data steps (4 = two Tue/Wed pairs); each day-run '
+    p.add_argument('--parallel-days', type=int, default=2,
+                   help='days at once for the ingest, external, root and data steps (2 = the two main-box lanes); each day-run '
                         'step books 16 CPUs, so a day that cannot book them waits (32 CPUs = two at once)')
     p.add_argument('--external-history-run', help='the frankie_day_history GitHub run id whose S3 objects the day files '
                                                   'are built from (frankie/day_history/<id>/)')

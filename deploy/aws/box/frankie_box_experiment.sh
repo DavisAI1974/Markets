@@ -10,7 +10,7 @@
 # (repo-relative committed file), STAGES (comma list),
 # LAGS, TRANSFORMS, INGEST_WORKERS (31, a ceiling: each ingest day process books 8 CPUs and runs the most that fit), DATA_WORKERS /
 # SEARCH_WORKERS / TEACHER_CPUS (not used: every day-run step books exactly 16 CPUs in the box's ledger, frankie_box_cores.py,
-# and runs 15 workers; a step that cannot book 16 waits), PARALLEL_DAYS (4), DISK_FLOOR_GB (100),
+# and runs 15 workers; a step that cannot book 16 waits), PARALLEL_DAYS (2: the two main-box lanes), DISK_FLOOR_GB (100),
 # EXTERNAL_HISTORY_RUN (the day_history run id the day files are built from), EXTERNAL_HISTORY_EIA930_RUN (optional
 # second run id for the eia930 family), EXTERNAL_HISTORY_FAMILY_RUNS (optional family=<run id>,...), EXTERNAL_WAIT (on|off), BRAIN,
 # PREVIOUS_CLASSROOM (the run's first arm day), MAP_URL (the dispatch's presigned map: the partitions for fetch, the
@@ -54,7 +54,7 @@ case "${QUEUE_WORKER_SECONDS:-43200}${QUEUE_POLL_SECONDS:-60}" in *[!0-9]*) echo
 set -- "$@" --frankie-queue "${FRANKIE_QUEUE:-on}" --root-queue "${ROOT_QUEUE:-on}" \
   --queue-worker-seconds "${QUEUE_WORKER_SECONDS:-43200}" --queue-poll-seconds "${QUEUE_POLL_SECONDS:-60}"
 set -- "$@" --lags "${LAGS:-20}" --ingest-workers "${INGEST_WORKERS:-31}" --data-workers "${DATA_WORKERS:-1}" \
-  --search-workers "${SEARCH_WORKERS:-8}" --teacher-cpus "${TEACHER_CPUS:-0}" --parallel-days "${PARALLEL_DAYS:-4}" --disk-floor-gb "${DISK_FLOOR_GB:-100}"
+  --search-workers "${SEARCH_WORKERS:-8}" --teacher-cpus "${TEACHER_CPUS:-0}" --parallel-days "${PARALLEL_DAYS:-2}" --disk-floor-gb "${DISK_FLOOR_GB:-100}"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT" MAP_URL="${MAP_URL:-}"
 # DETACH=on (ACTION=start only; 2026-09-30, "never leave a job on a GitHub runner that can outlast its 6 h limit"): the
 # start runs as its own systemd unit, not under the SSM command, so the runner's 6 h end (and its cancel step) cannot stop
