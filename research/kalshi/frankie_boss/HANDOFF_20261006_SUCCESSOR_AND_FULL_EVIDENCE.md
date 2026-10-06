@@ -162,3 +162,44 @@ does not authorize AWS installation or compute.
 All prior code was committed and pushed at 205b302d, with a clean local tree confirmed then. At handoff time the old
 local execution workspace was unavailable; GitHub directly confirmed 205b302d as the branch tip. This handoff is saved
 through GitHub. Do not depend on old scratch paths or assume agents/checkouts persist into the new chat.
+
+
+### Post-drop-in memory repair diagnosis — 2026-10-06
+
+After printing the continuation drop-in, the authorized local repair attempt confirmed:
+- The official latest release remains v0.11.0. The retained portable executable SHA-256 is
+  ce11c141431aeadd788506c3a7e6942db8fd438dec369d0707a39ec9fd8c6510, matching the upstream release.
+  --version succeeds; this does not establish working MCP.
+- In a private local directory/cache, CLI list_projects exits 1 with
+  "secure CLI coordination could not be created (process-fingerprint)".
+  An actual stdio MCP initialize request also exits 1, with no protocol response:
+  "exact executable identity could not be verified (process-fingerprint)".
+- Same-process Python observation: getpid() = 3, /proc/self = 447, and /proc/3/exe returns EACCES.
+  Upstream v0.11.0 src/daemon/runtime.c opens /proc/<numeric process id>/exe for executable identity.
+  This supports a managed-environment process/proc-view incompatibility, not a stale graph diagnosis.
+- Upstream issue #1686's documented fix is already in this release and addresses other activation/owner
+  cases; it does not establish a fix for this observed process identity mismatch.
+- This session exposes no codebase-memory-mcp tool. Exact-provider plugin discovery found no matching
+  integration. No claim that a local install would automatically attach tools to ChatGPT.
+- No process identity spoofing, permission bypass, security-check removal, downgrade or AWS action.
+  No graph was indexed or queried successfully. Memory MCP remains BLOCKED in this environment.
+
+Next environment: check existing tool registration and binary first. A working setup needs a supported
+MCP client and a host whose numeric process IDs match its proc filesystem view. If the same identity failure
+recurs, the execution host needs correction; repeating downloads or editing Frankie source is not a repair.
+The shell here became accessible using explicit shell="bash", login=false and a valid workdir; the old
+Markets checkout did not reappear. Do not confuse shell recovery with MCP recovery.
+
+Repository configuration confirmed: commit edab9066c2887a7dc1e134810b9744d91ee3debf registered
+codebase-memory-mcp on this branch by copying trunk configuration, and is co-authored by Claude.
+.mcp.json launches $HOME/.local/bin/codebase-memory-mcp; .claude/settings.json includes it in
+enabledMcpjsonServers. This confirms Claude-side registration, not attachment to this ChatGPT session.
+The executable and per-host graph are separate from the committed MCP configuration.
+
+Follow-up inspection of upstream README, docs/CONFIGURATION.md, current main runtime.c, issues and
+pull requests found no documented remedy for this observed self-fingerprint failure. The documented
+CBM_RUNTIME_DIR relocation was attempted with a private runtime directory alongside the private cache:
+the same process-fingerprint error remained. PTY execution also reproduced the PID/proc mismatch.
+Current main retains the numeric /proc/<pid>/exe lookup. Another agent independently reviewed the
+upstream path and confirmed the sandbox peer-admission handling occurs after successful self-fingerprint
+capture, so it does not repair this earlier failure. No supported local repair was established.
