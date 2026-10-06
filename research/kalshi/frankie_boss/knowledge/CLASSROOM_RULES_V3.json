@@ -1,6 +1,6 @@
 {
  "schema": "FRANKIE_CLASSROOM_RULES_V3",
- "status": "CONFIRMED by Greg 2026-10-06: R17 amended for Granite as a bounded active post-class coordinator/facilitator, never a scientific seat or calculator; R06 clarified by Greg: double-checked single-occurrence findings receive the same validity, certainty and treatment as checked multi-occurrence findings, with no rarity handicap.",
+ "status": "CONFIRMED by Greg 2026-10-06: R15 now makes all 30 days one continuous-learning experiment, without chronological or year-based discovery/confirmation knowledge gates. R17 keeps Granite a bounded active post-class coordinator/facilitator, never a scientific seat or calculator. R06 gives double-checked single occurrences the same validity, certainty and treatment as checked multiple occurrences, with no rarity handicap.",
  "purpose": "The one place the classroom rules live. The classroom code is to load this file and hold every answer, teacher reading and correction to it; Frankie's analysis cites it. Each rule names where it came from.",
  "seats": {
   "frankie": "the learner: his code, calculations and brain; his findings are claims",
@@ -146,8 +146,8 @@
     "boss_teacher",
     "scientific_teacher"
    ],
-   "rule": "Discovery days only. The classroom and both teachers work on discovery days; confirmation days stay untouched by the classroom, the teachers and Frankie until the survivor list is frozen.",
-   "source": "SPEC-experiment-orchestrator.md, the classroom arm"
+   "rule": "For this 30-day experiment, all assigned October 2021-2025 days participate in continuous learning. A completed stage's knowledge may be used at the next applicable workflow boundary regardless of trading date or the former discovery/confirmation label; October 2024 findings may teach a later-running October 2022 day. No year-based holdout or chronological knowledge-use barrier. Preserve raw per-day causal timestamps, host-answer walls and Jev's blind claim boundary. Keep findings individually source-bound and do not count reused evidence as an independent check.",
+   "source": "Greg 2026-10-06: 'It should. Again, chron should have no bearing on knowledge use in this experiment', confirming October 2024 knowledge may teach a later-running October 2022 day; supersedes the former year-based R15 split."
   },
   {
    "id": "R16",

@@ -4,10 +4,11 @@ Step #2 progress and parallel ownership: `research/kalshi/frankie_boss/HANDOFF_2
 `CCODE_STEP2_TEACHER_PARALLEL_20261006.md` in the same directory. Read after the step-1 handoff's canonical reading order.
 Step #2 is still open; actual learner-answer/carry code is source-built, not runtime-verified. Existing non-TEACH
 classroom modes lack independent readers; do not force TEACH or bypass them to claim a completed day.
-Greg's follow-up: discovery knowledge follows completed workflow order, not chronological market dates. Later-date
-findings may teach the next boundary; stage and school date gates are removed for this random-order experiment.
-Keep raw per-day timing, host-answer/Jev walls and confirmation separation. New checked findings can teach later
-same-day work immediately; there is no remainder-of-day embargo.
+Greg's final follow-up: ALL 30 days share completed knowledge regardless of market date or the old discovery/confirmation
+label. October 2024 may teach a later-running October 2022 day. Stage/school date AND role gates are removed; amended
+R15 and new plans route all 2021-2025 days through the existing learning path. Keep raw per-day timing and host-answer/Jev
+walls. Checked findings teach subsequent same-day work immediately. Old year-split instructions below are superseded;
+remaining #5 design still needs discussion, with no compute/freeze implementation authorized by this decision.
 
 For branch `chatgpt/frankie-30day-aws-workflow-20261006`, read FIRST
 `research/kalshi/frankie_boss/HANDOFF_20261006_STEP1_RECOVERY.md`, then the canonical spec and current runbook.

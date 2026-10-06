@@ -1,23 +1,28 @@
 {
  "schema": "FRANKIE_EXPERIMENT_DIRECTIVE_V1",
- "set_by": "Greg Davis, 2026-09-29",
+ "set_by": "Greg Davis, 2026-09-29; continuous-learning mission clarified 2026-10-06",
  "applies_to": ["Frankie", "the BOSS teacher", "the scientific teacher (the search)", "the classroom", "Jev"],
- "directive": "We are trying to make correlations and the best trade signals we can.",
+ "directive": "Run all 30 days as one continuous, accumulating learning experiment. Keep Frankie updated after every knowledge-producing stage so he can build on his knowledge and find a tradable signal and strategy from exhaustion, Dipole, and anything else the calculations or teachers uncover. Trading-date chronology and the former discovery/confirmation labels have no bearing on using completed knowledge.",
  "greg_verbatim": [
   "We're trying to make correlations and the best trade signals we can.",
   "I don't want to limit it before we push the boundaries on the possibilities. I want to find out all sorts of new and amazing things about dipole.",
-  "NO DATA IS DROPPED, even when incomplete: a calculation skips over the missing piece and lists it; never skip the day or the run for it."
+  "NO DATA IS DROPPED, even when incomplete: a calculation skips over the missing piece and lists it; never skip the day or the run for it.",
+  "It should. Again, chron should have no bearing on knowledge use in this experiment",
+  "YES! THAT'S WHY WE'RE DOING ALL OF THIS AND KEEPING FRANKIE UPDATED SO HE CAN BUILD OFF HIS KNOWLEDGE AND FIND A TRADABLE SIGNAL AND STRATEGY FROM EXHAUSTION AND DIPOLE AND ANYTHING ELSE THE CALCS OR TEACHERS FIND.",
+  "The hope is that 30 days is enough data for him to really find something when he stacks and builds off of all the knowledge he's going to gain. Every bit of new knowledge should hopefully be the part of the foundation for the next new knowledge"
  ],
  "what_we_are_shooting_for": [
   "Correlations: which series move with which, at which lag, in which cell of the trading day, across the NG order book (every order event and book level of the front month), the Dipole measurements, the calculation layers, and Frankie's historical data points (positioning, weather observed and forecast, model disagreement, grid wind and gas burn, weekly storage and its estimate vs actual, the futures curve).",
-  "The best trade signals: relationships that lead the NG price and would pay per cell, net of fees at maker and taker, on days they were not found on.",
-  "New dipole findings of any kind: direction, magnitude, timing, exhaustion, divergence and anything else the dipole can carry (D51); nothing is ruled out early (D52)."
+  "Tradable signals and strategies: source-bound relationships that lead the NG price, with their cell, timing, opportunities and applicable maker/taker economics stated. Evaluate additional opportunities as days finish, without withholding completed knowledge by trading date.",
+  "Exhaustion and Dipole findings of any kind: direction, magnitude, timing, divergence and anything else the calculations or teachers uncover (D51); nothing is ruled out early (D52). Preserve new nonlinear and multivariable mathematical discovery."
  ],
  "how": [
+  "Cumulative discovery is the purpose: every new piece of knowledge becomes part of the foundation for subsequent knowledge. Combine, extend and test what has already been learned; these are not 30 isolated attempts. Make each producing stage's findings available before the next dependent stage, without waiting for day end. Retain source evidence, scope, contradictions and missing pieces so subsequent work can build accurately on the full record.",
   "Every trading day is its own record (18:00 ET the prior day to the 17:00 ET halt); days are never pooled; midweek Tuesdays and Wednesdays are one class.",
-  "Results are counts with the days named, never an average, a pooled coefficient or a fitted slope as the finding (D37).",
-  "Every claim is a hypothesis with its author (R11) until it is tested on other days; a relationship found on discovery days is confirmed only on days it was not found on.",
-  "Every value is used only from the moment it was public; nothing after a decision's cutoff reaches it.",
+  "Retain individual findings and fitted equations in their exact scope; do not average outputs across runs or pool per-day coefficients. Preserve the existing equation-discovery and fitting mathematics.",
+  "Claims retain their authors (R11) and receive scientific double-checks. A checked single occurrence receives equal acceptance, certainty, teaching and knowledge treatment; no minimum-days or occurrence gate. Reusing evidence is not an independent check.",
+  "All 30 days share new completed knowledge at the next applicable workflow boundary, even October 2024 teaching a later-running October 2022 day. No chronological or year-based discovery/confirmation knowledge gate; no wait until day end. Preserve host-answer and Jev blind-claim walls.",
+  "Within each day's raw-data calculations, every value is used only from its causal/public availability timestamp. This raw-source timing rule does not bar learned knowledge from a different trading date.",
   "A missing value is listed with its day and reason; the day still runs."
  ]
 }

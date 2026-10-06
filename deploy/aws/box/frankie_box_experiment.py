@@ -87,8 +87,9 @@ other day and step goes on. So a day's gap is recorded on that day's steps and t
     duplicate data); the ingest-only steps of every day go on. EXTERNAL_WAIT=off lets them run without it (listed).
 WALLS (rules, not data gaps; each listed with its reason). Days are never pooled and classes never mix: a day of
 another class than the run's is left out of this run (weekday: monday, midweek = Tue/Wed, thursday, friday; holidays
-not modelled). Discovery = October days of 2021-2023, confirmation = October days of 2024-2025 (R15); a day outside
-them is left out, and a confirmation day stays untouched until the frozen survivor list is given. Duplicate data
+not modelled). All October 2021-2025 days share the discovery/learning route (Greg 2026-10-06, amended R15);
+completed knowledge is usable in workflow order irrespective of market date. Days outside the assigned years/month
+are listed separately. The older saved-plan confirmation route remains historical, not the new experiment. Duplicate data
 declines the run: a day listed twice; two sealed ingests or two finished ROOTs of one day decline that day's step,
 naming both. No model call, no Granite, no Pod.
 
@@ -151,7 +152,9 @@ MONDAY_RECOVERY = '/opt/frankie-box/work/sealed-recovery-35796793428/recovery-re
 CYCLE = '00'
 BATCH = 5                                # the teacher's Dipole rows: 1 day in 5 (Greg, 2026-09-29)
 CLASS_OF_WEEKDAY = {0: 'monday', 1: 'midweek', 2: 'midweek', 3: 'thursday', 4: 'friday'}
-ROLE_OF_YEAR = {2021: 'discovery', 2022: 'discovery', 2023: 'discovery', 2024: 'confirmation', 2025: 'confirmation'}
+# Greg 2026-10-06: all 30 days continuously learn from completed stages; no year-based holdout.
+# Keep the existing discovery execution route and its mathematics for every assigned year.
+ROLE_OF_YEAR = {year: 'discovery' for year in range(2021, 2026)}
 INGESTION_SCHEMA = 'BOSS_BLOCK_INGESTION_RECEIPT_V1'
 OVERRIDES = ('ingest', 'calculations', 'launch', 'preparation', 'principal_inputs', 'host_config', 'run',
              'teacher_rows', 'jev_stamp', 'frankie_ledgers', 'opening_receipt', 'previous_classroom')
@@ -269,7 +272,7 @@ def load_plan(a, code_root):
             outs.append('a %s day in a %s run: classes never mix (left out of this run)' % (cls or 'weekend', klass))
         role = ROLE_OF_YEAR.get(date.year) if date.month == 10 else None
         if role is None:
-            outs.append('only October days of 2021-2023 (discovery) and 2024-2025 (confirmation) are assigned (R15); '
+            outs.append('only October days of 2021-2025 are assigned to this continuous-learning experiment (R15); '
                         'widening to other months is a plan change for Greg')
         if role == 'confirmation' and not a.frozen_survivors:
             outs.append('a confirmation day stays untouched until the survivor list is frozen (give FROZEN_SURVIVORS)')
@@ -304,6 +307,7 @@ def load_plan(a, code_root):
     order = {d: i for i, d in enumerate(d for role in ('discovery', 'confirmation') for u in units[role] for d in u['days'])}
     days.sort(key=lambda e: (order.get(e['day'], len(order)), e['day']))
     plan = dict(schema=SCHEMA, run=a.run, cls=klass, days=days, left_out=left_out, classroom_arm=arm, units=units,
+                knowledge_order='completed_workflow_stages_all_30_days_no_trading_date_or_year_holdout',
                 frozen_survivors=a.frozen_survivors or None, historical_claims=a.historical_claims or None,
                 lags=a.lags, transforms=a.transforms or None, batch=BATCH,
                 external_history_run=a.external_history_run or None, external_wait=a.external_wait != 'off',
@@ -433,7 +437,7 @@ def attached_day_file(ingest_dir):
 
 
 def latest_completed_classroom(day):
-    """The most recently completed other discovery classroom, regardless of trading-date order: (directory, day) or
+    """The most recently completed other classroom, regardless of trading-date order or old role: (directory, day) or
     (None, None). Two complete classrooms of that same day decline (duplicate data)."""
     found = {}
     for completion in ROOTS.glob('*/work/classroom/completion.json'):
@@ -443,8 +447,7 @@ def latest_completed_classroom(day):
         except (OSError, ValueError):
             continue
         source_day = str(r.get('day', ''))
-        if r.get('status') == 'complete' and source_day != day and \
-                not (day[:4] in ('2021', '2022', '2023') and source_day[:4] in ('2024', '2025')):
+        if r.get('status') == 'complete' and source_day != day:
             found.setdefault(str(r['day']), []).append(d)
     if not found:
         return None, None
@@ -984,7 +987,7 @@ class Run:
             return self.plan['previous_classroom'], None, 'plan (PREVIOUS_CLASSROOM)'
         found, found_day = latest_completed_classroom(e['day'])
         if found is None:
-            return None, None, 'none: no other complete discovery classroom on the box (history starts here)'
+            return None, None, 'none: no other complete classroom on the box (history starts here)'
         return str(found), None, 'the most recently completed classroom on the box (%s; trading-date order ignored)' % found_day
 
     def classroom_ready(self, e):

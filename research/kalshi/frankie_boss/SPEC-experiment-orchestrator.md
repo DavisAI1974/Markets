@@ -1,5 +1,21 @@
 # Spec: the 30-day experiment orchestrator
 
+**Mission:** one continuous, accumulating learning experiment across all 30 days. Keep Frankie updated after every
+knowledge-producing stage so he can build toward a tradable signal and strategy from exhaustion, Dipole and anything
+else the calculations or teachers discover. The actual learner/teacher directive is `knowledge/EXPERIMENT_DIRECTIVE_V1.json`.
+Every piece of new knowledge should become part of the foundation for the next: combine, extend and test accumulated
+findings throughout the experiment. Thirty days are successive learning opportunities, not isolated attempts.
+
+**LATEST R15 DECISION — Greg, 2026-10-06:** All 30 assigned October 2021-2025 days form one continuous-learning
+experiment. Chronology has no bearing on learned-knowledge use: October 5, 2024 findings can teach October 8, 2022
+when its work runs later. The former discovery/confirmation year split is removed for this experiment, including
+nested lessons, school files and prior-class carry. All assigned years use the existing `discovery` execution route;
+that is a compatibility name for learning, not a 2021-2023-only designation. Knowledge becomes usable at the next
+applicable workflow boundary after publication. Preserve per-day raw-source timing, answer walls, Jev blindness,
+individual evidence and scientific mathematics. These shared-knowledge results are learning results, not untouched
+holdout results. No freeze/confirmation implementation or compute launch is authorized by this amendment. Remaining
+step #5 evaluation/freeze design still needs discussion. Older year-split text below is superseded by this decision.
+
 **Step #2 implementation update:** See `HANDOFF_20261006_STEP2_KNOWLEDGE.md` for the source-built learner-answer/carry
 slice and remaining gaps. #2 remains unchecked. Actual learner documents/checks now precede answers; transport
 availability is labelled separately. No scientific mathematics or curriculum advancement rule changed and no E2E ran.
@@ -29,11 +45,11 @@ Greg, 2026-10-06:
 
 ## Immediate brain / live-learning rule
 
-**Random-order discovery clarification (Greg, 2026-10-06):** the 30 days and parallel ROOT lanes are not chronological.
-Remove the trading-date gate on learned discovery knowledge. A completed stage/class can teach later workflow work
+**Random-order learning clarification (Greg, 2026-10-06):** the 30 days and parallel ROOT lanes are not chronological.
+Remove trading-date and old year-role gates on learned knowledge. A completed stage/class can teach later workflow work
 even when its market date is later than the receiving day's. Stage and school readers use published availability at
 the workflow boundary, not `source_day < current_day`. Preserve causal timestamps inside each day's raw calculations,
-host-answer/Jev walls and the untouched discovery/confirmation split. Post-class checked findings become available
+host-answer/Jev walls. The former year-based discovery/confirmation separation is retired. Post-class checked findings become available
 immediately to subsequent same-day work; no remainder-of-day embargo. An earlier classroom cannot be credited with a
 finding produced afterward, and reuse of the same evidence is not an independent scientific check.
 
@@ -78,8 +94,8 @@ detail; where it conflicts with this table, this table wins.
 | 11 | Three-way meeting | After today's Frankie findings have been tested | Frankie + BOSS teacher + scientific teacher discuss the tested findings. Granite may only voice the three code-generated seats under R17; it does no calculation or decision. | Meeting is sequential in classroom order; voice transport not yet wired |
 | 12 | Frankie end of day | After meeting (or after the recorded voice-not-wired state) | Consolidates the brain/lessons/exchange already written during the day into school knowledge and numbered reports; **not the first knowledge write**. | Same held lane |
 | 13 | Jev blind comparison | Classroom-arm discovery days; governed material only | Jev receives the classroom material/survivors but never Frankie's answers before filing his own claims. His claims are labelled and feed later scientific-teacher testing. Prefer local/small CPU hosting if sufficient; no standing GPU Pod requirement. | Jev |
-| 14 | Freeze discovery survivors | After the discovery set is complete | Freeze the survivor list once; no confirmation data has been used to select it. | Cross-day code; NOT fully built |
-| 15 | Confirmation | Only after survivor freeze | Run the frozen relationships on untouched 2024-2025 confirmation days, per cell, including maker/taker/net-cost treatment where applicable. | CPU; NOT fully built |
+| 14 | Remaining freeze/evaluation design | Discuss at step #5 | The former year-based freeze barrier is retired for these 30 learning days. Any remaining freeze purpose must be settled with Greg. | Not wired or authorized to execute |
+| 15 | Separate confirmation, if later requested | Requires a separately defined design | These 30 shared-knowledge days are not an untouched holdout. No new confirmation set is selected here. | Not wired or authorized to execute |
 
 ### Non-classroom discovery days
 
@@ -92,7 +108,7 @@ run Frankie classroom, meeting, school retention or Jev unless the plan explicit
   earlier joined-teacher wording that made the BOSS teacher the search owner. The BOSS teacher consumes and discusses
   the evidence while retaining its original teaching/math role.
 - **Survivors are cross-day.** They update at batch boundaries from already-completed discovery evidence; they do not
-  block every individual day and are never built using confirmation days.
+  block every individual day. All 30 assigned days contribute in completed-workflow order under amended R15.
 - **New discovery is central (Greg, 2026-10-06).** Preserve symbolic equation discovery, including new nonlinear and
   multivariable relationships, alongside the existing causal search and learner-generated discoveries. Daily runs must
   be able to discover new mathematical relationships; a fixed catalogue of pairwise tests is not a substitute.
@@ -100,8 +116,7 @@ run Frankie classroom, meeting, school retention or Jev unless the plan explicit
   discovery capability. Greg's averaging restriction concerns collapsing outputs from multiple runs into an average;
   it does not authorize changing equation-fitting mathematics. Preserve the existing discovery/fitting mathematics,
   including its objectives, and retain individual run findings. Granite does not generate, select or judge
-  scientific discoveries. This clarification does not authorize compute or change the required discovery/freeze/
-  confirmation order.
+  scientific discoveries. This clarification does not authorize compute; amended R15 above governs knowledge order.
 - **Pods are retired (Greg, 2026-10-06).** This experiment executes on the three AWS CPU lanes only. Do not create,
   dispatch or revive RunPods, including the historical Jev Pod path. Legacy `pod_root` filenames identify reused
   controller/worker code, not permission to use Pods. Jev's blind comparison still needs a CPU transport wired;
@@ -115,13 +130,14 @@ run Frankie classroom, meeting, school retention or Jev unless the plan explicit
   scope of the checked result and list actual errors, contradictions or incomplete checks on their merits. A day
   without the relevant condition supplies no new test opportunity and does not downgrade an already checked finding.
   This explicitly supersedes the older R06 prohibition on promotion after one appearance. Existing causal, answer-wall
-  and discovery/confirmation ordering rules still apply; the double-check is part of scientific work, not a new test farm.
+  rules still apply; amended R15 removes the year-based knowledge separation. The double-check is scientific work, not a new test farm.
 - **No same-day circular teaching.** A classroom cannot be taught a survivor that depends on that same classroom day's
   findings. It may use only an earlier completed survivor set.
 - **Jev stays blind.** His governed input may be produced after Frankie's classroom files physically exist, but the
   relay must contain only the material Frankie was allowed to see, never Frankie's answers. Jev's claims are evidence
   for later scientific-teacher passes, not truth.
-- **Confirmation wall remains hard.** Confirmation days stay untouched until the discovery survivor list is frozen.
+- **All 30 days learn continuously.** No date/year-based holdout wall blocks completed knowledge. Retained historical
+  confirmation paths are not the selected route for this experiment.
 
 ### Lane and traffic-controller rule
 

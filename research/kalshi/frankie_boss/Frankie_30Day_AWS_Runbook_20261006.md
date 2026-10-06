@@ -1,10 +1,15 @@
 # Frankie 30 Day AWS Runbook 20261006
 
-**Greg, 2026-10-06 — random-order learning:** remove the chronological trading-date gate for this experiment's
-discovery knowledge. Stage/school knowledge becomes available when published at the next workflow boundary, including
-knowledge from a later market date. ROOT lanes run in parallel. Per-day raw-source timestamps, host-answer/Jev walls and
-discovery/confirmation separation remain. Same-day checked findings feed subsequent work immediately; do not withhold
+**Greg, 2026-10-06 — all-30-day continuous learning:** remove both the chronological trading-date gate and the old
+2021-2023 discovery / 2024-2025 confirmation knowledge separation. Stage/school knowledge becomes available when
+published at the next workflow boundary, including October 2024 teaching a later-running October 2022 day. Every
+assigned year uses the existing learning (`discovery`) route. ROOT lanes run in parallel. Per-day raw-source timestamps
+and host-answer/Jev walls remain. Same-day checked findings feed subsequent work immediately; do not withhold
 them for the rest of the day or count their reuse as an independent check.
+
+Generate the revised plan before authorized execution; do not overwrite/reinterpret a saved plan or its receipts.
+The year-role mapping and explicit knowledge-order policy change its identity. No plan was dispatched. Older references
+below to untouched 2024-2025 confirmation are superseded for these 30 learning days; remaining #5 design requires discussion.
 
 **Step #2 source update:** `HANDOFF_20261006_STEP2_KNOWLEDGE.md` records actual structured knowledge reaching learner
 answers, pinned versions and complete previous-class carry. #2 remains open for CCode teacher reconciliation and

@@ -5,14 +5,23 @@ Started from `d303f84f87e67fff26ed6f6e011cbaf364d6a9cb`, verified by GitHub MCP 
 Fetch latest and preserve newer work. This is **source-built, runtime-unverified** work within #2, not completion of #2.
 Read `HANDOFF_20261006_STEP1_RECOVERY.md` and follow its canonical reading order, then this update.
 
-**Greg's correction, 2026-10-06:** remove the chronological trading-date knowledge gate for this experiment. Thirty
-days run in random order and ROOT has parallel lanes. Newly completed discovery knowledge is eligible at the next
-workflow boundary even if its market date is later than the receiving day. This applies to stage knowledge, school
-knowledge and completed-class bootstrap selection. Preserve per-day raw-source as-of timing, host-answer/Jev walls,
-no circular survivor teaching and the discovery/confirmation separation. Do not reintroduce the removed date comparison
-under a nested lesson test-day check. The boundary pins actual available versions on resume. A finding checked after
+**Greg's final correction, 2026-10-06:** remove chronological trading-date AND old discovery/confirmation knowledge
+gates for this experiment. All 30 October 2021-2025 days learn continuously in execution order; October 5, 2024 knowledge
+can teach October 8, 2022 when its work runs later. ROOT has parallel lanes. Newly completed knowledge is eligible at
+the next applicable workflow boundary. This applies to stage knowledge, nested lessons, school knowledge and
+completed-class bootstrap selection. Preserve per-day raw-source as-of timing, host-answer/Jev walls and no circular
+evidence claims. Do not reintroduce the removed date/role comparison under a nested lesson test-day check.
+The boundary pins actual available versions on resume. A finding checked after
 class is immediately available to subsequent same-day work; the earlier classroom cannot be credited with consuming
 it before it existed. There is no remainder-of-day knowledge embargo.
+
+**Mission, reaffirmed by Greg:** keep Frankie continuously updated so he builds on his knowledge to find a tradable
+signal and strategy from exhaustion, Dipole and anything else the calculations or teachers find. This is now explicit
+in the actual learner/teacher directive `knowledge/EXPERIMENT_DIRECTIVE_V1.json`, not just this handoff. Its obsolete
+other-day-minimum/holdout wording is replaced with the settled equal-treatment and preserved-mathematics rules.
+Greg's further emphasis: the hope is that 30 days provide enough cumulative evidence to find something useful, with
+every bit of new knowledge forming the foundation for the next. These are not 30 isolated trials. The directive now
+explicitly calls for combining, extending and testing accumulated knowledge between stages, not waiting for day end.
 
 ## Ordered checklist
 
@@ -20,7 +29,7 @@ it before it existed. There is no remainder-of-day knowledge embargo.
 - [ ] 2. Actual legal knowledge delivery — learner-answer/carry slice built here; teacher reconciliation and remaining readers open.
 - [ ] 3. Existing native-field search surfaces, cross-transform pairs, conditions/cells, targets, Dipole, scoped claims and unchanged symbolic discovery.
 - [ ] 4. Candidate/survivor batches and scientific double-checks, with equal checked single-occurrence treatment.
-- [ ] 5. **Discuss with Greg first**, then settle/wire one-time freeze and untouched confirmation, including costs.
+- [ ] 5. Discuss remaining freeze/evaluation purpose and costs; Greg removed the old year-based holdout for these 30 days. No #5 implementation yet.
 - [ ] 6. Discuss Granite, then wire its bounded CPU post-class facilitator role.
 - [ ] 7. Discuss/finish Jev CPU blind comparison, claim sealing/testing and immediate tested-knowledge publication.
 - [ ] 8. Three-lane launch/status/resume/stop, dependencies, controller lifetime and Pod audit.
@@ -37,21 +46,23 @@ it before it existed. There is no remainder-of-day knowledge embargo.
   evidence and questions. A current measured pair/component is not misreported as scientific confirmation of the prior
   claim. Unsupported scopes/documents are explicitly listed; no rarity gates, output pooling or truncation were added.
 - `frankie_box_lane_state.py` selects lawful inputs with source byte/hash checks, lists exclusions, and pins school
-  reads to the same imported-version set. Completed later-date discovery documents and test results are eligible under
-  Greg's correction above; own classroom answers and later same-day stages remain excluded before class. Nested
-  `searches`, `tests`, `days_tested` and `counts_per_day` bindings identify confirmation evidence only, including embedded
-  school sources. A document mixing confirmation into discovery is withheld whole with its reason and retained unchanged.
+  reads to the same imported-version set. Completed documents and test results from all assigned years are eligible under
+  Greg's correction above; own classroom answers and later same-day stages remain excluded before class. The attempted
+  later-date/confirmation-content gates have been removed entirely, including embedded lessons and school sources.
 - Previous-class small transport now includes `receipt.json` with completion/history/grade and the complete V2 external
   pair. It no longer silently sends only whichever files happen to exist. Completion/history/grade bindings are checked
   on both ends; a partial external pair is not mistaken for an old V1 class. Grades stay host-side, and existing
   `prior_correction_summary` / `prior_external_summary` expose only governed correction IDs/count/mastery/hash to learners.
 - `frankie_box_frankie_queue.py` retains the selected predecessor on retry, including an explicit empty bootstrap.
   FIFO class order is unchanged, including its recorded later-trade-date predecessor metadata. Non-queue bootstrap now
-  selects the latest completed other discovery classroom rather than an earlier market date. The remote path uses the
+  selects the latest completed other classroom rather than an earlier market date or year role. The remote path uses the
   same complete carry files as local continuation.
 - Transport receipts now say `available_versions`; `Run.record` names their witness `knowledge_available`. These are
   transport availability, not proof of computation. The classroom's `learner-knowledge.json`, saved phases, answers and
   stage-knowledge receipt identify the actual structured inputs and answer consumers.
+- New plans map all assigned years 2021-2025 to the existing `discovery` learning route and record the continuous-learning
+  policy explicitly. R15 is amended in `CLASSROOM_RULES_V3.json`. Existing saved plans/receipts are not rewritten: prepare
+  the revised plan before an authorized run. The old confirmation implementation/draft is not activated or changed.
 
 ## Remaining step 2 work and limitations
 
@@ -73,8 +84,8 @@ it before it existed. There is no remainder-of-day knowledge embargo.
 
 ## Verification and boundaries
 
-Python syntax compilation of the five changed modules and `git diff --check` passed. Manual source review traced the
-answer consumers, prior-grade projections, remote/main carry and nested test-day bindings. No tests, new test/validator
+Python syntax compilation of changed modules, JSON parsing of amended R15 and `git diff --check` passed. Manual source
+review traced answer consumers, prior-grade projections, remote/main carry and removed date/role gates. No tests, new test/validator
 framework, E2E, model call, scientific run, dependency installation, AWS start or compute dispatch occurred.
 
 GitHub and AWS MCP calls succeeded. Read-only `DescribeInstances` found main `i-035994afa8bdf66a5` and Linux

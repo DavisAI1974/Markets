@@ -6,9 +6,9 @@ Base: `chatgpt/frankie-30day-aws-workflow-20261006`; initial checkpoint `d303f84
 Fetch latest and preserve newer work. Create a separate branch from the latest base; do not push to the shared base.
 Codex will integrate the resulting narrow commit.
 
-Greg's subsequent clarification: discovery days run in random order. Do not gate learned knowledge by market-date
-chronology; completed discovery findings are eligible at the next workflow boundary, including later-date findings.
-Keep per-day raw-source timing, host-answer/Jev walls and the discovery/confirmation split. Checked findings may teach
+Greg's final clarification: ALL 30 days run as continuous learning in random order. Do not gate learned knowledge by
+market date OR the old discovery/confirmation label; October 2024 findings may teach a later-running October 2022 day.
+All assigned years now use the existing learning route. Keep per-day raw-source timing and host-answer/Jev walls. Checked findings may teach
 subsequent same-day work immediately; no remainder-of-day embargo and no double-counted independent check.
 
 Read `HANDOFF_20261006_STEP1_RECOVERY.md` first and follow its reading order. Then read

@@ -259,36 +259,6 @@ def boundary(day, stage, publish=True):
     return witness
 
 
-def confirmation_test_days(value):
-    """Discovery must not ingest confirmation evidence hidden inside an older claim's lesson or school file."""
-    found = set()
-    def add(candidate):
-        candidate = str(candidate)
-        if len(candidate) == 8 and candidate.isdigit() and candidate[:4] in ('2024', '2025'):
-            found.add(candidate)
-    def walk(node):
-        if isinstance(node, dict):
-            for key in ('searches', 'tests', 'counts_per_day'):
-                rows = node.get(key)
-                if isinstance(rows, list):
-                    for row in rows:
-                        add(row.get('day') if isinstance(row, dict) else row)
-                elif isinstance(rows, dict):
-                    for date in rows:
-                        add(date)
-            dates = node.get('days_tested')
-            if isinstance(dates, list):
-                for date in dates:
-                    add(date)
-            for child in node.values():
-                walk(child)
-        elif isinstance(node, list):
-            for child in node:
-                walk(child)
-    walk(value)
-    return sorted(found)
-
-
 def learner_knowledge(day, stage, brain=BRAIN):
     """Pin legal structured learner documents and explicitly list material withheld or unavailable to this reader."""
     import frankie_box_brain as BR
@@ -305,8 +275,6 @@ def learner_knowledge(day, stage, brain=BRAIN):
             if eday == day and (BR.DAY_KINDS.get(kind, 0) > before or
                                   kind.isdigit() and before <= 0):
                 reason = 'this day classroom answers or later-stage findings are not available at this boundary'
-            elif (kind == 'confirmation' or (eday and eday[:4] in ('2024', '2025'))) and day[:4] in ('2021', '2022', '2023'):
-                reason = 'confirmation evidence cannot enter discovery learning'
             if reason:
                 listed.append(dict(label=label, path=str(d), reason=reason))
                 continue
@@ -327,12 +295,6 @@ def learner_knowledge(day, stage, brain=BRAIN):
                                        reason='retained text evidence; no structured learner calculation consumes this format'))
                     continue
                 content = json.loads(p.read_bytes())
-                confirmation = confirmation_test_days(content) if day[:4] in ('2021', '2022', '2023') else []
-                if confirmation:
-                    listed.append(dict(label=label, path=str(p), sha256=e['sha256'], test_days=confirmation,
-                                       reason='source depends on confirmation results; whole source withheld from discovery '
-                                              'because aggregate findings also depend on those tests'))
-                    continue
                 seen.add(e['sha256'])
                 out.append(dict(label=label, day=eday, kind=kind, path=str(p), sha256=e['sha256'], content=content))
     return dict(documents=out, listed=listed, versions=versions)
@@ -343,7 +305,7 @@ def visible_knowledge(day, stage, brain=BRAIN):
 
 
 def learner_school(day, brain=BRAIN, versions=None):
-    """Completed discovery classes are eligible in workflow order, regardless of trading-date order (Greg 2026-10-06)."""
+    """All completed experiment classes are eligible in workflow order, regardless of trading date or old role (Greg 2026-10-06)."""
     import frankie_box_brain as BR
     loaded, listed, seen = [], [], set()
     versions = knowledge_versions() if versions is None else versions
@@ -358,18 +320,11 @@ def learner_school(day, brain=BRAIN, versions=None):
             school_day = str(row.get('day'))
             if school_day == day:
                 listed.append(dict(row=row, reason='this classroom cannot consume its own end-of-day school answers'))
-            elif school_day[:4] in ('2024', '2025') and day[:4] in ('2021', '2022', '2023'):
-                listed.append(dict(row=row, reason='confirmation school knowledge cannot enter discovery'))
             else:
                 eligible.append(row)
         rows, missing = BR.school_rows(root, pinned=eligible)
         listed.extend(missing)
         for row, doc in rows:
-            confirmation = confirmation_test_days(doc) if day[:4] in ('2021', '2022', '2023') else []
-            if confirmation:
-                listed.append(dict(row=row, test_days=confirmation,
-                                   reason='school source contains confirmation results; withheld from discovery'))
-                continue
             if row['sha256'] not in seen:
                 seen.add(row['sha256'])
                 loaded.append((dict(row, owner_root=str(root)), doc))

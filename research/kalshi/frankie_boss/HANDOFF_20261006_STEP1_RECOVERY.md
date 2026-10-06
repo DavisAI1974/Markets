@@ -6,9 +6,11 @@ Branch: `chatgpt/frankie-30day-aws-workflow-20261006`
 **Step #2 progress:** After this handoff's reading order, read `HANDOFF_20261006_STEP2_KNOWLEDGE.md`.
 The learner-answer and previous-class carry slice is source-built; #2 remains open. It records the separate CCode
 teacher assignment, unsupported readers and the existing non-TEACH classroom limitation. No real E2E has passed.
-Greg then removed the chronological discovery-knowledge gate: random-order days learn from completed stages at their
-next workflow boundary, regardless of market-date order. Preserve each day's raw causal timing and answer/confirmation
-walls. Same-day checked knowledge is immediately available to subsequent work, not withheld until another day.
+Greg then removed chronological AND former discovery/confirmation knowledge gates: all 30 random-order days learn
+from completed stages at their next boundary, including 2024 teaching a later-running 2022 day. Preserve raw per-day
+timing and host-answer/Jev walls. R15 and new plan roles are amended; all years use the existing learning route.
+Same-day checked knowledge is immediately available to subsequent work. Old year-split instructions below are superseded;
+remaining #5 evaluation/freeze design still needs discussion, and no #5 implementation or compute has been authorized.
 
 Fetch the latest branch and preserve newer commits. This is a **partial workflow implementation**.
 Step #1 is complete in source for the retained Linux ROOT-to-finish day path. It has **not passed a real E2E**.
