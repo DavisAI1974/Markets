@@ -109,14 +109,17 @@ Current implementation:
 The September 29 build-status material below is retained for provenance. Do not use stale "NOT built" labels as
 present-tense execution authority.
 
-### Granite decision still open (2026-10-06)
+### Granite final experiment role (Greg 2026-10-06)
 
-Do not treat an older Granite role as final for the 30-day workflow yet. The repo contains both the September 29
-critic/self-assessment design (`SPEC-decouple-granite.md`) and the later post-class voice/coordinator charter
-(`knowledge/GRANITE_DISCUSSION_VOICE_ROLE_V1.md`). Greg will settle Granite's final experiment role before the workflow
-is declared launch-ready. Until then Granite performs no calculation, search, grading, survivor selection or trading
-decision in this experiment.
+Granite 4.2 is the bounded **active coordinator/facilitator** of the post-class discussion, not a scientific seat.
+It may ask clarifying/follow-up questions, surface scope disagreements, keep unresolved items and next tests organized,
+and request that the appropriate code seat run/name a test. It never calculates, grades, chooses survivors, confirms
+claims, changes confirmation, forecasts or trades. See
+`knowledge/GRANITE_DISCUSSION_COORDINATOR_ROLE_V2.md` and `knowledge/CLASSROOM_RULES_V3.json`.
 
+The old critic/self-assessment role is not part of this 30-day experiment. Prefer local/free standard GitHub CPU for the
+small coordinator job if latency is acceptable, then an existing small AWS CPU box; paid GPU is fallback only. No
+standing Granite Pod.
 
 ## 1. Historical pipeline/build inventory (September 29; provenance, not current execution authority)
 
