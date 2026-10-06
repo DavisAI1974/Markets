@@ -511,6 +511,17 @@ class Run:
     def finished(self, stage, key):
         return done_status(self.receipt(stage, key))
 
+    def brain_stage(self, day, stage, sources, summary=None):
+        """Immediately commit newly available stage knowledge to Frankie's brain before advancing."""
+        import frankie_box_brain as BR
+        brain = Path(self.plan.get('brain') or str(BRAIN))
+        manifest, reused = BR.write_stage_entry(brain, day, stage, sources, summary=summary)
+        entry = brain / ('%s-%s' % (day, stage))
+        self.log('brain %s %s: %s%s' % (stage, day, entry, ' (reused)' if reused else ''))
+        return dict(path=str(entry), reused=reused,
+                    manifest_sha256=sha256_file(entry / 'MANIFEST.json'),
+                    knowledge_sha256=sha256_file(entry / 'stage-knowledge.json'))
+
     def record(self, stage, key, status, **fields):
         path = self.receipt_path(stage, key)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -610,8 +621,10 @@ class Run:
         if why:
             return self.record('ingest', e['day'], 'refused', reason=why)
         if receipt:
+            brain_entry = self.brain_stage(e['day'], 'ingest', [receipt],
+                                           summary=dict(ingest=str(receipt.parent), receipt_sha256=sha256_file(receipt)))
             return self.record('ingest', e['day'], 'reused', ingest=str(receipt.parent), receipt=str(receipt),
-                               receipt_sha256=sha256_file(receipt))
+                               receipt_sha256=sha256_file(receipt), brain_entry=brain_entry)
         if e['day'] == MONDAY:
             return self.record('ingest', e['day'], 'refused', reason='Monday 20211004 is the gold standard: never re-ingested; '
                                                                      'name its sealed ingest directory in the plan')
@@ -643,8 +656,11 @@ class Run:
         if code != 0 or not receipt or why:
             return self.record('ingest', e['day'], 'failed', exit_code=code, log=log, directories=[str(p) for p in made],
                                reason=why or 'no sealed ingest of the day after the step (its directory is kept)')
+        brain_entry = self.brain_stage(e['day'], 'ingest', [receipt],
+                                       summary=dict(ingest=str(receipt.parent), receipt_sha256=sha256_file(receipt)))
         return self.record('ingest', e['day'], 'done', exit_code=code, log=log, ingest=str(receipt.parent),
-                           receipt=str(receipt), receipt_sha256=sha256_file(receipt), new_bytes=new_bytes(receipt.parent))
+                           receipt=str(receipt), receipt_sha256=sha256_file(receipt), new_bytes=new_bytes(receipt.parent),
+                           brain_entry=brain_entry)
 
     @staticmethod
     def resume_dir(e):
@@ -666,9 +682,14 @@ class Run:
     def root(self, e):
         calc, attempts = root_of(e, self.plan['run'])
         if calc:
+            sources = [calc / 'calculations-receipt.json', calc / 'work' / 'derive.json',
+                       calc / 'work' / 'derivation-digest-full.md']
+            brain_entry = self.brain_stage(e['day'], 'root', sources,
+                                           summary=dict(calculations=str(calc), role=e['role']))
             return self.record('root', e['day'], 'reused', calculations=str(calc), interrupted_attempts=attempts,
                                receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
-                               if (calc / 'calculations-receipt.json').is_file() else None)
+                               if (calc / 'calculations-receipt.json').is_file() else None,
+                               brain_entry=brain_entry)
         ing = self.receipt('ingest', e['day'])
         if not (ing and ing['status'] in FINISHED):
             return self.record('root', e['day'], 'waiting', reason='the day has no sealed ingest yet (stage ingest)')
@@ -683,7 +704,7 @@ class Run:
             return self.record('root', e['day'], 'waiting', reason=held[1], claim=held[2])
         env = dict(INGESTION_RECEIPT=ing['receipt'], INGESTION_RECEIPT_SHA256=ing['receipt_sha256'], DAY=e['day'],
                    DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=self.cores.DAY_RUN_CPUS - 1,
-                   DIGEST='on' if e['classroom_arm'] else 'off')
+                   DIGEST='on')
         if self.plan['frozen_survivors']:
             env['FROZEN_SURVIVORS'] = self.plan['frozen_survivors']
         code, log = self.child('root', e['day'], 'frankie_box_experiment_root.sh', env)
@@ -693,10 +714,17 @@ class Run:
                                interrupted_attempts=attempts, reason='no calculations-receipt.json (the attempt is kept)')
         calc = json.loads((output / 'calculations-receipt.json').read_bytes())
         self.claim_end(e, output, sha256_file(output / 'calculations-receipt.json'), None)
+        brain_entry = self.brain_stage(e['day'], 'root',
+                                       [output / 'calculations-receipt.json', output / 'work' / 'derive.json',
+                                        output / 'work' / 'derivation-digest-full.md'],
+                                       summary=dict(calculations=str(output), role=e['role'],
+                                                    root_status=calc.get('status'),
+                                                    producer_failures=calc.get('failure_count')))
         return self.record('root', e['day'], 'done', exit_code=code, log=log, calculations=str(output),
                            receipt_sha256=sha256_file(output / 'calculations-receipt.json'), new_bytes=new_bytes(output),
-                           interrupted_attempts=attempts, digest=e['classroom_arm'],
-                           root_status=calc.get('status'), producer_failures=calc.get('failure_count'))
+                           interrupted_attempts=attempts, digest=True,
+                           root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
+                           brain_entry=brain_entry)
 
     # The shared ROOT claim (frankie_box_root_claims.py; SPEC-pod-day-runner.md): the Pods, the worker boxes and this
     # orchestrator run the ROOT of a day only after claiming it once. Opt-in: while /opt/frankie-box/work/root-claims does
@@ -797,7 +825,11 @@ class Run:
         directory = Path(ing['ingest'])
         path, sha, why = attached_day_file(directory)
         if path is not None:
-            return self.record('external', day, 'reused', day_file=str(path), sha256=sha, ingest=str(directory))
+            day_receipt = directory / DAY_FILE_RECEIPT
+            brain_entry = self.brain_stage(day, 'day-file', [path, day_receipt],
+                                           summary=dict(day_file=str(path), sha256=sha))
+            return self.record('external', day, 'reused', day_file=str(path), sha256=sha, ingest=str(directory),
+                               brain_entry=brain_entry)
         if why.startswith('DIFFERS'):
             return self.record('external', day, 'refused', reason=why + ' (a day file is never overwritten; move it aside '
                                                                           'with a receipt first)')
@@ -833,10 +865,13 @@ class Run:
             return self.record('external', day, 'failed', exit_code=code, log=log, action=env['ACTION'], external_run=env['RUN'],
                                reason='no day file attached beside the sealed ingest after the step: %s' % why)
         self._attached[day] = (str(path), sha)
+        day_receipt = directory / DAY_FILE_RECEIPT
+        brain_entry = self.brain_stage(day, 'day-file', [path, day_receipt],
+                                       summary=dict(day_file=str(path), sha256=sha))
         return self.record('external', day, 'done', exit_code=code, log=log, action=env['ACTION'], external_run=env['RUN'],
                            day_file=str(path), sha256=sha, ingest=str(directory),
                            new_bytes=new_bytes(DAY_EXTERNAL / env['RUN']) if env['ACTION'] == 'build' else 0,
-                           upload_or_brain_exit_code=code)
+                           upload_or_brain_exit_code=code, brain_entry=brain_entry)
 
     # the classroom arm (V2: the 19/171 classroom plus the external section) and Jev's material
     def previous_of(self, e):
@@ -1342,9 +1377,17 @@ class Run:
         code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh',
                                dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts)))
         missing = [d for d, _ in receipts if rows_of(dict(day=d))[0] is None]
+        brain_entries = {}
+        for d, _ in receipts:
+            rows, source = rows_of(dict(day=d))
+            if rows is not None and str(rows).startswith(str(TEACHER_ROWS) + '/'):
+                rows = Path(rows)
+                brain_entries[d] = self.brain_stage(
+                    d, 'teacher', [rows / ROWS_FILE, rows / 'receipt.json'],
+                    summary=dict(rows=str(rows / ROWS_FILE), source=source))
         return self.record('teacher', batch_key, 'done' if code == 0 and not missing and not waiting else 'failed',
                            exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
-                           external_waiting=external_waiting,
+                           external_waiting=external_waiting, brain_entries=brain_entries,
                            new_bytes=sum(new_bytes(TEACHER_ROWS / d) for d, _ in receipts),
                            reason=None if code == 0 and not missing and not waiting else
                            'rows missing for %s, waiting on ingest %s (those days go on without Dipole rows, listed)'
@@ -1395,7 +1438,9 @@ class Run:
     def search(self, e):
         target = SEARCH / e['day'] / ('cycle-' + CYCLE) / e['role']
         if (target / 'MANIFEST.json').is_file():
-            return self.record('search', e['day'], 'reused', target=str(target))
+            brain_entry = self.brain_stage(e['day'], 'search', [target / 'MANIFEST.json'],
+                                           summary=dict(target=str(target), role=e['role']))
+            return self.record('search', e['day'], 'reused', target=str(target), brain_entry=brain_entry)
         d = self.receipt('data', e['day'])
         if not (d and d['status'] in FINISHED):
             return self.record('search', e['day'], 'waiting', reason='the day data is not exported yet')
@@ -1412,8 +1457,11 @@ class Run:
         code, log = self.child('search', e['day'], 'frankie_box_experiment_search.sh', env)
         if code != 0 or not (target / 'MANIFEST.json').is_file():
             return self.record('search', e['day'], 'failed', exit_code=code, log=log, reason='no search MANIFEST.json')
+        brain_entry = self.brain_stage(e['day'], 'search', [target / 'MANIFEST.json'],
+                                       summary=dict(target=str(target), role=e['role']))
         return self.record('search', e['day'], 'done', exit_code=code, log=log, target=str(target),
-                           manifest_sha256=sha256_file(target / 'MANIFEST.json'), new_bytes=new_bytes(target))
+                           manifest_sha256=sha256_file(target / 'MANIFEST.json'), new_bytes=new_bytes(target),
+                           brain_entry=brain_entry)
 
     def lessons(self, batch_key, entries):
         searched = [e for e in self.plan['days'] if e['role'] == 'discovery' and self.finished('search', e['day'])]
