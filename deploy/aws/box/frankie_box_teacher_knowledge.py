@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 LESSONS = {'FRANKIE_LESSONS_V1': 'frankie', 'JEV_LESSONS_V1': 'jev',
-           'HISTORICAL_LESSONS_V1': 'historical'}
+           'HISTORICAL_LESSONS_V1': 'historical', 'SEARCH_CANDIDATE_LESSONS_V1': 'search'}
 
 
 def _digest(value):
@@ -26,6 +26,7 @@ def teach_accumulated(day, search, brain, out_dir):
     import frankie_box_brain as BR
     import frankie_box_scientific_teacher as ST
     import frankie_box_experiment_exchange as EX
+    import frankie_box_candidate_claims as CC
     from frankie_box_durable import write_json, witness
 
     day, search, out_dir = str(day), Path(search), Path(out_dir)
@@ -39,7 +40,7 @@ def teach_accumulated(day, search, brain, out_dir):
         raise ValueError('accumulated claims must use this owning day search')
     identity = dict(day=day, search=str(search), manifest=manifest_witness, brain=str(brain),
                     producer=witness(__file__), readers={m.__name__: witness(m.__file__)
-                                                       for m in (LS, BR, ST, EX)})
+                                                       for m in (LS, BR, ST, EX, CC)})
     input_path = out_dir / 'inputs.json'
     if input_path.is_file():
         inputs = json.loads(input_path.read_bytes())
@@ -64,6 +65,20 @@ def teach_accumulated(day, search, brain, out_dir):
                     else:
                         listed.append(dict(source=member.get('path'), sha256=member.get('sha256'),
                                            reason='stage source has no transported structured claim content'))
+                return
+            if schema == CC.SCHEMA:
+                projected = CC.candidate_claims_doc(doc, claims_sha256=source['sha256'], source=source['path'])
+                content_hash = _digest(doc)
+                if content_hash in seen:
+                    listed.append(dict(source=source, reason='identical search candidates already retained'))
+                    return
+                seen.add(content_hash)
+                lesson = dict(schema='SEARCH_CANDIDATE_LESSONS_V1', author='search', day=projected['day'],
+                              stamp=projected['stamp'], claims_sha256=projected['claims_sha256'],
+                              claims_source=projected['source'], searches=[], results=[])
+                documents.append(dict(lesson=lesson, source=dict(source, address=list(address)),
+                                      claims=projected['claims'], claims_listed=None,
+                                      input_kind='candidates_not_completed_lessons'))
                 return
             if schema not in LESSONS:
                 listed.append(dict(source=source, schema=schema,
@@ -130,7 +145,10 @@ def teach_accumulated(day, search, brain, out_dir):
         lesson, claims = item['lesson'], []
         for claim in item['claims']:
             key = claim_key(lesson, claim)
-            if key in already_tested:
+            if lesson['author'] == 'search' and str((claim.get('origin') or {}).get('day')) == day:
+                listed.append(dict(source=item['source'], claim_id=claim['id'],
+                                   reason='own discovery evidence retained; not an independent check or a closed claim'))
+            elif key in already_tested:
                 reused.append(dict(source=item['source'], claim_id=claim['id'], claim_sha256=key,
                                    reason='this native claim already tested on the exact current search manifest'))
             elif key in scheduled:
@@ -187,7 +205,20 @@ def teach_accumulated(day, search, brain, out_dir):
             result = dict(expected, results=results, results_sha256=_digest(results))
             write_json(path, result)
         # Publication is repeatable, including recovery after the complete file was saved.
-        ST.publish_lessons(path, brain_dir=brain)
+        if lesson['author'] == 'search':
+            # The standalone CCode publisher still refuses this new author. Use the
+            # existing brain writer now that it admits completed owner-local checks.
+            entry = Path(brain) / ('%s-lessons' % day)
+            entry_manifest = entry / 'MANIFEST.json'
+            retained = json.loads(entry_manifest.read_bytes()) if entry_manifest.is_file() else {}
+            result_sha = witness(path)['sha256']
+            prior = next((e for e in retained.get('entries', []) if e.get('sha256') == result_sha), None)
+            if prior is None:
+                BR.write_lessons_entry(brain, day, path)
+            elif (entry / prior['name']).read_bytes() != path.read_bytes():
+                raise ValueError('published candidate lesson differs from its retained result')
+        else:
+            ST.publish_lessons(path, brain_dir=brain)
         files.append(dict(path=str(path), **witness(path), author=lesson['author'],
                           claim_ids=[c['id'] for c in claims]))
     return dict(inputs=dict(path=str(input_path), sha256=input_hash), files=files,

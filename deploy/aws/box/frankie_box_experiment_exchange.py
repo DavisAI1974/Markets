@@ -72,11 +72,13 @@ sys.path.insert(0, str(BOX))
 SCHEMA = 'FRANKIE_EXPERIMENT_EXCHANGE_V1'
 RECEIPT_SCHEMA = 'FRANKIE_EXPERIMENT_EXCHANGE_RECEIPT_V1'
 FINDING_SCHEMA = 'FRANKIE_TEACHERS_FINDING_V1'
-LESSONS = {'FRANKIE_LESSONS_V1': 'frankie', 'JEV_LESSONS_V1': 'jev', 'HISTORICAL_LESSONS_V1': 'historical'}
+LESSONS = {'FRANKIE_LESSONS_V1': 'frankie', 'JEV_LESSONS_V1': 'jev', 'HISTORICAL_LESSONS_V1': 'historical',
+           'SEARCH_CANDIDATE_LESSONS_V1': 'search'}
 AUTHOR_LABEL = {
     'frankie': "Frankie's claim (his novel finding; a claim, never truth: R11)",
     'jev': "Jev's claim (the blind outside student; a labelled claim, R11; he takes no seat)",
     'historical': "a historical Dipole claim (the committed catalog; a labelled claim, R11)",
+    'search': "the search's candidate (source-bound counts, a claim, never truth: R11)",
 }
 BOSS_AUTHOR = "the BOSS teacher's code (its own Dipole rows and accounting of shared search results; no model)"
 SCIENCE_AUTHOR = "the scientific teacher's code (the experiment's search counts; no model)"
@@ -135,7 +137,7 @@ def load_lessons(paths, day):
         doc = json.loads(raw)
         author = LESSONS.get(doc.get('schema'))
         if author is None or doc.get('author') != author:
-            raise SystemExit('%s is not a FRANKIE_, JEV_ or HISTORICAL_LESSONS_V1 of its author' % path)
+            raise SystemExit('%s is not a supported scientific lesson schema of its author' % path)
         tested = sorted(str(s.get('day')) for s in doc.get('searches') or [])
         if day not in tested:
             listed.append(dict(path=str(path), reason='these lessons did not test %s (days tested: %s)' % (day, tested)))
