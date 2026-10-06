@@ -109,6 +109,15 @@ Current implementation:
 The September 29 build-status material below is retained for provenance. Do not use stale "NOT built" labels as
 present-tense execution authority.
 
+### Granite decision still open (2026-10-06)
+
+Do not treat an older Granite role as final for the 30-day workflow yet. The repo contains both the September 29
+critic/self-assessment design (`SPEC-decouple-granite.md`) and the later post-class voice/coordinator charter
+(`knowledge/GRANITE_DISCUSSION_VOICE_ROLE_V1.md`). Greg will settle Granite's final experiment role before the workflow
+is declared launch-ready. Until then Granite performs no calculation, search, grading, survivor selection or trading
+decision in this experiment.
+
+
 ## 1. Historical pipeline/build inventory (September 29; provenance, not current execution authority)
 
 | # | Step | Piece | Status |
