@@ -145,3 +145,110 @@ No freeze/holdout/evaluation behaviour, no draft applied, no bedrock, no AWS, no
 validator framework, no E2E claimed. Scientific formulas, claim selection, source-scope checks, the raw-Jev wall and
 every existing caller's inputs and outputs are unchanged; the new behaviour is reached only by `series_exact`, `origin`,
 author `search` or `--search-findings`, none of which any existing producer emits.
+
+## 7. CCode tasks 1-3 of 2026-10-06 (the corrected assignment, CCODE_NEXT_SOURCE_TASKS_20261006.md)
+
+Branch `ccode/dipole-collection-20261006` on top of Codex's `21df8f1`. SOURCE-BUILT: py_compile, whitespace check,
+direct source tracing; no run, no test, no model, no research performed or judged by CCode.
+
+### Task 1: historical reconsideration wired (frankie_box_scientific_teacher.py)
+
+Traced: catalog (now the combined `DIPOLE_SHARED_CATALOG_20261006_COMBINED.json`, 1,538 sources) -> the committed
+claims file (`HISTORICAL_CLAIMS_V1-9dc79ca359e9.json`: 82,372 candidates, 10 crosswalk claims, 82,365 not_testable)
+-> `historical_claims()` read only `claims` and dropped the rest by reference in prose -> `test()` -> `write()` ->
+`HISTORICAL_LESSONS_V1` -> the exchange (`load_lessons`, one item per RESULT, both seats; Codex's `research_rework`
+of 3e0a6f0 per item) -> Frankie's reply. So both teachers saw exactly the 10 mapped claims and nothing of the 82,365
+open statements; the "no crosswalk entry" label worked as a silent filter. The BOSS teacher never reads the claims file
+itself; it meets historical claims only as exchange items, so the same filter applied to it.
+
+Built, all in the owned module:
+- `reconsideration(...)`: every historical claims document now carries `FRANKIE_HISTORICAL_RECONSIDERATION_V1`, bound to
+  the claims file by sha256, with the four statuses counted: `stored_evidence_reassessed` (the mapped claims, read
+  against stored search counts here; explicitly NOT a reproduction), `original_calculation_awaiting_teacher_reproduction`
+  (pending_teacher_work, per mapped claim with its construction), `teacher_repair_or_reformulation` (pending, performed
+  0; this file never marks it performed), `missing_inputs_or_unsupported_computation_open` (the not_testable count by
+  open class: awaiting_teacher_binding 81,655; code_source_constructions 710; missing_inputs; unsupported_computation),
+  plus `prior_labels` (each mapped claim's source evidence labels and the builder's own research_rework). `write()` puts
+  it in the lessons file top level, so the exchange's both seats can read it without opening the 53 MB claims file.
+- every historical result carries `research_rework` with the same four statuses for that claim, its construction, its
+  prior labels and the rule that a label never closes reconsideration (R11, R13, R14).
+Not built, on purpose: no heuristic that turns an unmapped statement into a testable claim. Putting a statement in
+testable form is a crosswalk entry (series the search carries, a pairwise step relation), which is research work the
+assignment forbids CCode; the crosswalk lives in Codex's builder. The 81,655 therefore stay explicitly pending, now
+counted and visible in every historical lessons file instead of invisible.
+
+Codex caller edits (both teachers):
+1. `frankie_box_experiment.py` plan `historical_claims`: name the combined file
+   `research/kalshi/frankie_boss/knowledge/HISTORICAL_CLAIMS_V1-9dc79ca359e9.json` (the launcher's pattern admits it).
+2. `frankie_box_experiment_exchange.py`: read `lessons['reconsideration']` once per historical lessons file and put
+   its `statuses` into BOTH seats' turns (`boss_turn` and `science_turn`: a line each stating mapped N of candidates M,
+   open by class, pending reproduction/repair counts), and into `research_rework` of every historical item as
+   `collection=` so a seat's item never implies the mapped subset is the collection; keep HISTORICAL_REWORK next_test.
+3. `frankie_box_experiment_teacher.py` (BOSS): no file input change is needed for the exchange route; if the BOSS
+   teacher is to compute on historical claims outside the exchange, give it the same `--historical-claims` file and
+   the same `reconsideration` carry (it reads only the directive today).
+4. `frankie_box_teacher_knowledge.teach_accumulated` / `frankie_box_lane_state.learner_knowledge`: carry
+   `reconsideration` through the accumulated-lessons selection unchanged (it is a top-level key of the lessons file).
+5. Growing the crosswalk (the only binding mechanism): a declared-table edit in `frankie_box_historical_claims.CROSSWALK`
+   per statement, Codex-owned; each new entry moves one statement from awaiting_teacher_binding to mapped, and nothing
+   else changes the counts.
+
+### Task 2: candidate reader and scientific reader defects
+
+Reviewed `frankie_box_candidate_claims.py` (identity: claim id = day + part sha12 + row; origin carries part, part
+sha256, row, row sha256; series exact; direction, lag and transforms are the row's own; cell label matches the reader's
+labels) and `frankie_box_scientific_teacher.test` / `row_scope_reasons`. Verified defects, fixed with the existing
+mathematics only:
+1. REVERSED ORIENTATION COUNTED TWICE. The search writes every ordered pair (`_cell_job` partners), and for (y, x) the
+   statistic is the (x, y) one read backwards: D_yx[k] = sum_t sy[t] sx[t+k] = D_xy[-k] (couple()). The reader read
+   both rows and appended two verdicts, so every held/shown_otherwise/unresolved count was doubled and `tests` reported
+   two tests of one measurement, at any lag including nonzero. Fix: `mirror_of()`; a reversed row whose forward row has
+   the same cell, swapped transform pair, negated best lag and identical counts and chance check is listed under the
+   result's `mirrored_rows` (mark `mirror`) and never counted; a reversed row with no forward counterpart (a survivor-
+   restricted search, or a tied lag the tie-break resolved to the other sign) is read on its own as before, with the
+   claim's transforms swapped and lag negated (`row_scope_reasons(reverse=True)`, unchanged and correct).
+2. ORIGIN ROW IDENTITY BY FIELD VALUES ONLY. `discovery_row` was true when a row's field values equalled the candidate's
+   `source_claim`; the part identity (origin `part_sha256`) was never compared with the given search's part pins. Fix:
+   `load_searches` carries `part_pins`; `discovery_row` requires both field equality and the origin part sha256 among
+   the given search's parts (`origin_part_in_search`); a mismatch is listed under `untested`.
+Reviewed and found correct: exact series matching (`series_exact`), transform scope in both orientations, cell scope
+(`col=value` and whole-day labels), the lag window, the condition rule, the origin-day never-a-test rule, the source
+counts travelling whole in `source_claim`. No acceptance or survivor rule chosen. `frankie_box_candidate_claims.py` is
+unchanged: its projection was not the defect.
+
+### Task 3: completed native evidence (result.json, sections 4.2/4.4, FINALIZE), interface review
+
+Route: `frankie_box_experiment_native.selected_files` pins `receipt.json`, `result.json`, the three ledgers and the
+gzip-json section products `bedrock_section_4_2` / `bedrock_section_4_4` from a completed, source-bound bedrock ROOT;
+`read_columns` places GROUP_CLOSE ledger rows with exact emission provenance on the existing F_LAST axis (searched);
+FINALIZE rows get the retained disposition `post_stream_knowledge_only`; `result`, `receipt`, the legacy observable
+rows and both sections are listed as "completed calculation/section evidence; no whole-day summary backfill" and
+become no series. So they reached the search inputs as pinned files and dispositions, and no teacher computation
+consumed them. FIXED (Greg, 2026-10-06: "fix it so the correct place consuming them"): the correct consumer of post-
+stream, whole-day completed knowledge is the teachers' exchange, not the group-close search axis. The scientific
+teacher now reads each searched day's completed native evidence whole from the files the search pinned, bytes
+verified (`completed_native_evidence`): the receipt's verdict and gates; result.json's section summaries whole and its
+averaged companions labelled supplement-only (D37); section 4.2's exact first/last book of each day-segment-phase and
+its declarations, companion rows labelled averages; section 4.4's matching rule and its STREAM_END rows, with its
+GROUP_CLOSE offers cross-referenced to the already searched native.lifecycle.mirror.* series rather than duplicated;
+and every FINALIZE row of the exact member and lifecycle ledgers, parsed only at the ordinals the search listed
+post_stream_knowledge_only while the whole ledger is hashed against the search's pin. Written once per day to
+`<work>/native/<day>-completed-native.json` (same bytes reuse, different bytes refuse) and carried in EVERY lessons file
+as `completed_native_evidence.by_day[day]` (path, sha256, counts, receipt, matching rule) with `listed` for anything
+absent, so a search without native evidence is listed, never an error. Codex: `frankie_box_experiment_exchange.py`
+boss_turn and science_turn cite `lessons['completed_native_evidence']['by_day'][day]` (sha256-bound) in their
+evidence_checks, and `teacher_knowledge.teach_accumulated` carries the key through; nothing else changes.
+What each piece is for, and what still needs a definition:
+- 4.4 (mirror lifecycle pairs, `native_mirror.MirrorMatcher`): its GROUP_CLOSE offers are already searched as
+  native.lifecycle.mirror.* rows; its STREAM_END rows and matching rule are now consumed above. A per-group count of
+  pair completions as a searchable series would need the semantic definition (which group close a completed pair
+  belongs to, by its later leg's exact group) in the search's `build_series` (Codex, a mathematical decision).
+- 4.2 (first/last book of each day-session, `BookRegimeCalculator`): two points per session, so the step series the
+  coupling needs (m >= 2 steps, far shifts beyond the exclusion) does not exist on this axis; a consumer needs a
+  definition of what step series a session summary is, which is a mathematical decision, not a connection; listed.
+- `result.json` `averaged_companions` rows and section summaries: averages, which D37 keeps out of evidence; listed,
+  never searched; no consumer should be built for them.
+- FINALIZE rows: no group, no axis position (the module refuses a FINALIZE row that names a live group); they are
+  post-stream knowledge, now read whole into the per-day completed-native file and carried in the lessons for both
+  seats; never a search step.
+Nothing here was invented or run; storage, hashing and inventories were not counted as coverage.
