@@ -1,5 +1,20 @@
 # CCode step #3: source-to-consumer map of the existing planes (2026-10-06)
 
+**Latest full-depth continuation (from `166507b6`):** Greg explicitly requires all applicable full-depth MBO/FIFO
+and joint accumulated-knowledge computation. New experiment ROOTs retain every level/FIFO queue, the complete resting
+book observation and every original INPUT field in each successful closed group, including bytes. These enter the
+existing positional group-close search; Dipole state/reason categories also reach cells. `FRANKIE_ROOT_FULL_DEPTH_GROUPS_V2`
+binds resume to this projection. This does not supply identity-linked lifecycle/disabled derived planes, every APPLIED
+envelope, or all BOSS/knowledge consumers. Read `ROOT_PLANE_COVERAGE_20261006.md` and
+`KNOWLEDGE_CONSUMER_COVERAGE_20261006.md`. #2/#3 remain open; source/syntax only, no E2E or AWS activity.
+
+The older producer descriptions/tables below describe their checkpoint. Their top-ten/FIFO/intermediate-field and
+Dipole-state-cell gaps are superseded to the exact extent described in the latest ROOT coverage file. The active
+search's `PLANE_COVERAGE` now names the V2 full-depth channels and remaining identity/history limits. Original APPLIED
+envelopes, DState, disabled derived producers and mathematical scope decisions remain open. The preserved draft is
+still unapplied and CCode's #4 ownership is unchanged.
+
+
 Branch `ccr-e9f0f4af-lqxmss`, rebased onto Codex checkpoint `4eec55ec` (base tip `440f9149`). SOURCE-BUILT /
 RUNTIME-UNVERIFIED: every statement below comes from reading producers, readers and callers in the checkout (and the
 pinned producer commit `2ebb8ce8` for the two modules not in this checkout); no search, teacher, ROOT, E2E or AWS action

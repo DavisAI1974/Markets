@@ -38,7 +38,9 @@ action and side at the close, the day file's text columns per entity); each dist
 Step #3 (2026-10-06): the per-event quantity fields of the INPUT spool (events.last.<field>, the last event's value at
 the group close) and every column of every day-file table per native entity (external.<table>.<column>.entity=...) are
 series too; identities and clocks are listed. Equal values never make different entity columns aliases.
-This is a group-close projection, not a lossless per-event search: intermediate events remain in the retained spool.
+V2 ROOT frames additionally carry full-depth/FIFO snapshots and every original group INPUT record, including bytes.
+Each input-record position is searched at its group close; this does not change lags to native-event units.
+Dipole component states and raw reasons supply categorical cells on the same as-of alignment as component values.
 
 LISTED, NOT SEARCHED (never dropped), each named in the MANIFEST's not_searched list with its reason: identity/clock
 fields, numeric-state conditions, new targets, the bedrock planes the experiment ROOT does not derive (bedrock off),
@@ -76,25 +78,25 @@ EVENT_IDENTITY_FIELDS = ('order_id', 'sequence', 'channel_id', 'instrument_id', 
 # Step #3 (2026-10-06, CCode): what is and is not searched, kept truthful per plane. The map behind it:
 # research/kalshi/frankie_boss/CCODE_STEP3_SOURCE_COVERAGE_20261006.md.
 NOT_SEARCHED = (
-    ('root/work/derived/.rows/input-*.jsonl identities', 'per-event identity and clock fields (%s) are listed, not searched; '
-     'events.last.<field> uses only the closing INPUT record of each matched F_LAST group; intermediate values remain '
-     'in the spool and are not individually searched. Existing per-group counts/sizes are retained' % ', '.join(EVENT_IDENTITY_FIELDS)),
+    ('root/work/derived/.rows/input-*.jsonl identities', 'in events.last only, identity and clock fields (%s) are listed rather than searched; '
+     'events.last.<field> uses only the closing INPUT record of each matched F_LAST group. New V2 frames also carry '
+     'every original record as frames.input_records[position].<field> at its own group close, including bytes; '
+     'positions are within groups, not a native-event lag axis. Existing per-group counts/sizes are retained' % ', '.join(EVENT_IDENTITY_FIELDS)),
     ('conditions beyond the text cells', 'conditioning on a numeric state (e.g. the sign of a book series at the decision row): '
      'frankie_box_experiment_surface.state_masks builds such masks but is not wired; which states condition the count is '
      'a design decision (every series x 3 signs would multiply the jobs by hundreds)'),
     ('targets', 'targets other than the series themselves (e.g. the mid N groups ahead, fills, exhaustion); a lagged series '
      'is already the y side at lag k, a fill count is already events.F_* per group; new target definitions are a '
      'mathematical decision'),
-    ('full FIFO/order identities and legacy exports without frame sections',
-     'new experiment ROOTs retain the original book/activity/integrity sections; their leaves enter frames.* directly '
-     'at the same F_LAST close. The pinned frame contains top-ten level summaries, not every resting order or FIFO '
-     'identity. Those observations remain unconnected to search. Older ROOT spools are preserved and may lack the '
-     'new sections; sources[frames].frame_sections lists the fields actually present, never assumed retrofilled'),
-    ("the D chain's own state and the Dipole rows' state reasons",
-     'c15_dstate.DState (anchor_dir, armed, broken, E, pull_depth, n_ext, m_last/m_prev, p_last/p_prev, g_E, age, '
-     'duration_last) is computed inside the pinned teacher and retained only as the six chain columns searched as '
-     'dipole.*; each row keeps every column\'s state (PRESENT/MISSING/INVALID/ABLATED) and raw_reason (CHAIN_BROKEN, '
-     'NO_COMPLETED_STEP, DEGENERATE_STEP, ...), which this search counts in the manifest and does not use as cells'),
+    ('full-depth identity/history interpretation and legacy exports',
+     'V2 experiment frames carry every level/FIFO order through book.*_levels_full, every resting-order field through '
+     'observation, and all original group INPUT records through input_records. Scalar leaves reach the existing search '
+     'at the group close. List-position channels are not an order-identity lifecycle calculation; the same rank may '
+     'hold another order next group. Old ROOT spools are not retrofilled; inspect sources[frames].frame_sections'),
+    ("the D chain's own state",
+     'c15_dstate.DState is computed inside the pinned teacher and retained only as the six chain columns. Dipole '
+     'component states and raw reasons now supply dipole.<column>.state/.reason cells using the same as-of alignment '
+     'as component values; this does not retain every intermediate DState or resolve timestamp-tie sampling'),
     ('structure identity lists', 'structures.order_ids[i] and structures.fill_disposition.*_order_ids[i] are order '
      'identities flattened by position; they are searched as numeric series like every other leaf (listed here so the '
      'count of searched series is read correctly; an identity has no steps of its own)'),
@@ -210,9 +212,10 @@ def build_series(day_dir, log, external_fields_mode=None):
     f_num, f_text, f_other, n = columns(unpack_spool(frames_path), 'ts_recv_ns')
     sources.append(dict(source='frames', path=str(frames_path), rows=n, sha256=sha256_file(frames_path),
                         numeric=sorted(f_num), text=sorted(f_text), not_searched=f_other,
-                        frame_sections={section: dict(numeric=sorted(k for k in f_num if k.startswith(section + '.')),
-                                                      text=sorted(k for k in f_text if k.startswith(section + '.')))
-                                        for section in ('book', 'activity', 'integrity')}))
+                        frame_sections={section: dict(numeric=sorted(k for k in f_num if k.startswith((section + '.', section + '['))),
+                                                      text=sorted(k for k in f_text if k.startswith((section + '.', section + '['))))
+                                        for section in ('book', 'activity', 'integrity', 'native_frame', 'observation',
+                                                        'input_records', 'input_record_indices')}))
     recv = np.asarray(f_num.pop('ts_recv_ns'), dtype=np.int64)
     axis = np.maximum.accumulate(recv)  # exact nanoseconds; no loss of ordering above 2**53
     backwards = int(np.count_nonzero(np.diff(recv) < 0))
@@ -259,7 +262,8 @@ def build_series(day_dir, log, external_fields_mode=None):
         event_closes = []
         for record in unpack_spool(inputs[0]):
             records += 1
-            action, side = str(record.get('action')), str(record.get('side'))
+            action, side = (v.decode('ascii') if isinstance(v, bytes) else str(v)
+                            for v in (record.get('action'), record.get('side')))
             key = '%s_%s' % (action, side)
             open_group[key] = open_group.get(key, 0) + 1
             size = record.get('size')
@@ -300,6 +304,7 @@ def build_series(day_dir, log, external_fields_mode=None):
                             numeric=sorted(counts), records_without_numeric_size=unknown,
                             per_event_fields=dict(numeric_fields=sorted(event_fields), text_fields=sorted(event_text),
                                                   placement='closing INPUT per matching F_LAST frame',
+                                                  coverage_scope='events.last only; V2 frames.input_records separately carries all closed-group members',
                                                   frame_binding_matched=matched_closes,
                                                   selected_records=len(event_closes) if matched_closes else 0,
                                                   individually_unsearched_records=records - (len(event_closes) if matched_closes else 0),
@@ -335,6 +340,7 @@ def build_series(day_dir, log, external_fields_mode=None):
         names = list(source.get('coverage_columns') or ())
         values = {name: [] for name in names}
         states = {name: {} for name in names}
+        categories = {name + suffix: [] for name in names for suffix in ('.state', '.reason')}
         known = []
         for row in rows:
             known.append(row['ts_recv_ns'])
@@ -343,15 +349,19 @@ def build_series(day_dir, log, external_fields_mode=None):
                 c = by_name.get(name) or {}
                 state = str(c.get('state'))
                 states[name][state] = states[name].get(state, 0) + 1
+                categories[name + '.state'].append(state)
+                categories[name + '.reason'].append(c.get('raw_reason'))
                 v = c.get('value')
                 values[name].append(v if state == 'PRESENT' and isinstance(v, (int, float)) else None)
         sources.append(dict(source='dipole', path=str(dipole_paths[0]), rows=len(rows), sha256=hashlib.sha256(raw).hexdigest(),
                             schema=source.get('schema'), through_cursor=source.get('through_cursor'),
                             components=names, states_per_component=states,
                             note="the teacher's Dipole measurements (JournalTeacherR3), one row per context cursor; a value "
-                                 'only where the state is PRESENT, the other states counted here'))
+                                 'only where the state is PRESENT; every state/reason also supplies an as-of cell'))
         if rows:
             asof('dipole', known, values)
+            for name, category in categories.items():
+                text_cols['dipole.' + name] = asof_values(con, axis, known, category).tolist()
     else:
         notes.append(dict(source='dipole', missing=str(day_dir / 'run' / 'execution' / 'cycle-*' / 'host-dipole-classroom-source*'),
                           reason='no exported teacher-only or classroom Dipole source for this day'))
@@ -655,21 +665,21 @@ PLANE_COVERAGE = (
     ('contract_session_roll_state', None, 'not_produced', None, 'bedrock traversal only'),
     # registry group: full-book FIFO queue (8)
     ('full_bid_ask_depth', 'frames', 'consumed_partial', 'frames.bid_depth_full, frames.ask_depth_full',
-     'new frames.book.bid_levels[i]/ask_levels[i] carry top-ten size summaries; all resting orders/deeper level rows remain unconnected'),
+     'V2 frames.book.*_levels_full[i] carry every level, including FIFO; legacy ROOTs are not retrofilled'),
     ('price_level_and_order_counts', 'frames', 'consumed_partial', 'frames.bid/ask_price_level_count_full, '
-     'frames.bid/ask_order_count_full; new frames.book.*_levels[i].order_count', 'per-level rows beyond the pinned frame top ten remain unconnected'),
-    ('fifo_queues', None, 'produced_not_carried', None, 'the FIFO order of every level is in the journal\'s APPLIED '
-     'observation (c15_observer.observe_book); the frame levels contain summaries, not FIFO ids; '
-     'the full observation is not spooled; the teacher consumes it internally'),
-    ('queue_age_and_survival', 'dipole', 'consumed_partial', 'the teacher\'s far_front_age_log, far_queue_age_p90_log, '
-     'far_identity_survival_64/1024, far_size_retention_64/1024 (far-side top-three cohort)',
-     'new frames.book.*_levels[i] carries front_order_age_s, queue_age_median_s, queue_age_p90_s for the pinned top ten; '
-     'full per-order history remains unconnected'),
-    ('queue_concentration', 'dipole', 'consumed_partial', 'the teacher\'s far_size_hhi',
-     'new frames.book.*_levels[i] carries largest_order_share/front_order_size for the pinned top ten; '
-     'deeper per-level/per-order rows remain unconnected'),
-    ('orders_and_volume_ahead', None, 'produced_not_carried', None, 'volume_ahead per resting order is derivable from the '
-     'APPLIED observation\'s FIFO ids and sizes; not spooled'),
+     'frames.bid/ask_order_count_full; V2 frames.book.*_levels_full[i].order_count', 'legacy ROOTs are not retrofilled'),
+    ('fifo_queues', 'frames', 'consumed_partial',
+     'V2 frames.book.*_levels_full[i].fifo_queue[j].* and observation.levels.*[i].order_ids[j]',
+     'rank-position channels preserve FIFO order, not an identity-linked lifecycle calculation; older ROOTs may lack them'),
+    ('queue_age_and_survival', 'frames', 'consumed_partial',
+     'V2 frames.book.*_levels_full[i] age summaries and fifo_queue[j].priority_age_s; teacher survival columns remain',
+     'all-level snapshots are not an across-group order-identity survival calculation'),
+    ('queue_concentration', 'frames', 'consumed_partial',
+     'V2 frames.book.*_levels_full[i].largest_order_share/front_order_size; teacher far_size_hhi unchanged',
+     'older ROOTs may lack full-depth fields'),
+    ('orders_and_volume_ahead', 'frames', 'consumed_partial',
+     'V2 frames.book.*_levels_full[i].fifo_queue[j].volume_ahead/size/order_id; observation.orders[i].*',
+     'queue index is the zero-based orders-ahead position; identity linking across groups remains separate'),
     ('spread_and_depth_imbalance', 'frames', 'consumed', 'frames.spread, frames.depth_imbalance_n, frames.depth_imbalance_full', None),
     ('complete_state_reset_bootstrap_receipts', 'events', 'consumed_partial', 'events.last.is_snapshot (the record flag)',
      'the bootstrap receipts (bedrock) are not produced'),
@@ -678,7 +688,7 @@ PLANE_COVERAGE = (
      'events.<action>_<side>; new frames.activity.<window>.* carries the original rolling activity values',
      'no complete per-order/per-level event history is inferred from window summaries'),
     ('aggressor_and_native_signed_flow', 'legacy_native_signed_flow', 'consumed_partial', 'signed_flow.buy/sell per second',
-     'new frames.activity.<window>.* carries trade aggressor quantities/imbalance; individual intermediate events remain unsearched'),
+     'V2 frames.input_records[i].* additionally carries each group member at its close; no event-axis lag search'),
     ('depletion_and_replenishment', 'dipole', 'consumed_partial', 'the teacher\'s far_replenish_log1p_64/1024, '
      'far_absorption_share_64/1024', 'the bedrock replenishment/absorption rows (native_replay_driver) are not produced'),
     ('resilience_and_recovery', 'dipole', 'consumed_partial', 'the teacher\'s far_identity_survival_64/1024, '
@@ -690,7 +700,7 @@ PLANE_COVERAGE = (
     ('missingness_and_integrity_flags', 'dipole', 'consumed_partial', 'the Dipole rows\' states are counted per column in '
      'the manifest (states_per_component); a value is used only where PRESENT',
      'new frames.integrity.* carries every produced integrity counter; the ROOT failures spool is not read; '
-     'the rows\' raw_reason categories are retained, not cells'),
+     'dipole.<column>.state/.reason now supply as-of categorical cells'),
     # categories the calculations find, beyond the registry names
     ('action-string families (CARRIED_NATIVE_ACTION_FAMILIES and every open-world candidate)', 'structures', 'consumed',
      'cells structures.action_string, structures.candidate_family_id, structures.carried_native_family, '
@@ -698,8 +708,8 @@ PLANE_COVERAGE = (
     ('mirror identity (canonical / mirror orientation, pair key)', 'structures', 'consumed',
      'cells structures.mirror.orientation, structures.mirror.mirror_pair_key, structures.mirror.mirror_side_string', None),
     ("the D chain's reasons (CHAIN_BROKEN, NO_COMPLETED_STEP, DEGENERATE_STEP) and every column's state", 'dipole',
-     'retained_not_searched', 'state counts in the manifest only; reasons remain in source rows', 'retained per row as state/raw_reason; not used as cells '
-     '(the exact change is named in the Step #3 map)'),
+     'consumed_partial', 'dipole.<column>.state/.reason categorical cells plus state counts in the manifest',
+     'as-of sampling on F_LAST closes can omit an intermediate/tied teacher row; full DState is not retained'),
     ("the teacher's 19 Dipole columns", 'dipole', 'consumed', 'dipole.<column> for every column whose state is PRESENT', None),
     ('odcore.info_dipole divergence / exhaustion (signed_flow_features, divergence, cell_signal)', None, 'built_not_called',
      None, 'referenced only as the construction of historical claims H01/H02 (frankie_box_historical_claims.py); '
@@ -710,7 +720,7 @@ PLANE_COVERAGE = (
      'identity/clock columns are listed; asof samples publication values at group closes; see actual channels/exclusions'),
     ('sealed journal INPUT entries (every record, every field)', 'events', 'consumed_partial',
      'events.* per-group counts and events.last.<field>; identities and clocks listed (EVENT_IDENTITY_FIELDS)',
-     'only each closing INPUT is in events.last; intermediate field values, identity/metadata and nested fields remain unsearched'),
+     'events.last is closing-only; V2 frames.input_records[i].* carries every group member/field. Full APPLIED envelope and event-axis search remain open'),
     ('sealed journal APPLIED entries (the V4 frame and the full-book observation)', None, 'produced_not_carried', None,
      'read whole by the BOSS teacher (JournalTeacherR3); frankie_box_experiment_surface.journal_axis reads them on the '
      'native ordinal and is not called (a change of axis); new ROOTs carry the frame book/activity/integrity sections, '

@@ -1,5 +1,14 @@
 # Frankie AWS — step 2 learner delivery checkpoint
 
+**Latest full-depth continuation (from `166507b6`):** Greg explicitly requires all applicable full-depth MBO/FIFO
+and joint accumulated-knowledge computation. New experiment ROOTs retain every level/FIFO queue, the complete resting
+book observation and every original INPUT field in each successful closed group, including bytes. These enter the
+existing positional group-close search; Dipole state/reason categories also reach cells. `FRANKIE_ROOT_FULL_DEPTH_GROUPS_V2`
+binds resume to this projection. This does not supply identity-linked lifecycle/disabled derived planes, every APPLIED
+envelope, or all BOSS/knowledge consumers. Read `ROOT_PLANE_COVERAGE_20261006.md` and
+`KNOWLEDGE_CONSUMER_COVERAGE_20261006.md`. #2/#3 remain open; source/syntax only, no E2E or AWS activity.
+
+
 Branch: `chatgpt/frankie-30day-aws-workflow-20261006`.
 Started from `d303f84f87e67fff26ed6f6e011cbaf364d6a9cb`, verified by GitHub MCP and git fetch.
 Fetch latest and preserve newer work. This is **source-built, runtime-unverified** work within #2, not completion of #2.

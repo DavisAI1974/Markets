@@ -1,7 +1,7 @@
 # ROOT frame wiring and the full registry — 2026-10-06
 
-Source-built, runtime-unverified. No AWS action, data/scientific run, installation, test suite or E2E. This continuation
-starts at `c75a805a`. CCode owns the separate Step #4 assignment; its scientific-teacher files are unchanged here.
+Source-built, runtime-unverified. No AWS action, data/scientific run, installation, test suite or E2E. The latest full-depth continuation
+starts at `166507b6`; the earlier frame-section slice started at `c75a805a`. CCode owns the separate Step #4 assignment; its scientific-teacher files are unchanged here.
 
 ## Direct answer to Greg's 99-plane question
 
@@ -33,50 +33,68 @@ accumulated knowledge, while preserving private trade-logic, host-answer and Jev
 broader original representation/target/mask/control/training role. A list, source read or retained file is not proof
 of consumption. This patch does not complete Step #2 or #3.
 
-## Verified gap and the source connection built here
+## Full-depth continuation from 166507b6
 
-The pinned adapter's `event_frame` already returns `book`, `activity` and `integrity`. `book_snapshot` is called with
-`depth_levels=10, include_full_depth=False, include_order_ids=False`. It supplies top-ten level summaries and aggregate
-full-depth quantities; it does not supply the full FIFO identity/order observation. The original scientific summaries,
-including queue-age quantiles and activity windows, are retained as produced; their mathematics are not changed.
+Greg explicitly requires all applicable full-depth evidence, including levels beyond ten, and no early elimination.
+New experiment ROOTs still use the same pinned adapter replay. `Session.derive(retain_frame_sections=True)` now calls
+its existing `InstrumentBook.book_snapshot(include_full_depth=True, include_order_ids=True)` on the live book at each
+successful F_LAST close. The returned `bid_levels_full` / `ask_levels_full` iterate every level, without a slice.
+The original top-ten summaries remain as the original defined statistics alongside the complete lists; they no longer
+limit the available book evidence. The teacher's defined far-side cohorts are also unchanged, not relabelled full-book
+statistics. No pinned producer, scientific formula, ingest, model call or bedrock switch was changed.
 
-`Session.derive(retain_frame_sections=True)` now carries those three original sections into each existing
-`.rows/frames.jsonl` row beside the unchanged legacy scalar/transition columns. The experiment's ROOT caller opts in;
-other Session callers keep the old default. There is no extra adapter/teacher pass, full-book reconstruction, new depth
-cap, new statistic or bedrock activation. Every leaf the selected sections actually contain is retained without a
-field whitelist, rounding, pooling or truncation. Legacy scalar aliases and nested values remain representations of
-the same evidence, not extra independent observations.
+| Evidence | Existing producer and new frame location | Search route |
+| --- | --- | --- |
+| Every price level and its summaries | Pinned `book_snapshot` -> `book.*_levels_full[i]` | All scalar leaves -> `frames.book.*_levels_full[i].*` |
+| FIFO sequence, size, volume ahead, priority timestamp/sequence/age | Pinned `_level(include_order_ids=True)` -> `book.*_levels_full[i].fifo_queue[j]` | Same group-close channels; queue position j is zero-based orders ahead |
+| Every resting-order field, complete level/order-ID lists and integrity | Existing `c15_observer.observe_book(live_book)` -> `observation` | `frames.observation.*` |
+| Original native frame metadata and every normalized raw action | Adapter frame -> `native_frame`, with original book/activity/integrity in their existing sections | `frames.native_frame.*`, `frames.activity.*`, `frames.integrity.*` |
+| Every original INPUT record/field in a successfully closed instrument group | Existing INPUT spool -> `input_records[i]`, with `input_record_indices` and closing `input_cursor` | `frames.input_records[i].*`, including nested and byte-valued leaves |
+| Dipole component states and reasons | Existing teacher rows -> `dipole.<column>.state` / `.reason` | Existing as-of placement and categorical cell jobs |
 
-The existing data export already includes `.rows/*.jsonl` and the five legacy layer files. The existing search
-`columns()` flattens all scalar/list/nested leaves; `frames.*` is placed directly on its own F_LAST frame axis, including
-equal receive timestamps. Those channels reach `_step_job` -> `_cell_job` -> `couple`, with unchanged transforms,
-cell rule, lag units and circular-shift statistic. No search-side re-read/recalculation was necessary. Frame receipts
-now list the numeric/text fields actually found in each section; old exports lacking them remain visible as such.
+These frame channels follow the existing `.rows/frames.jsonl` -> export -> `columns()` -> transforms -> `_step_job` ->
+`_cell_job` -> `couple` path. The F_LAST axis, transform formulas, cell statistic, lag units and chance check remain.
+A record position is a position within a group; a level/queue rank may contain another price/order at the next close.
+Numeric identity channels are not a substitute for identity-linked lifecycle calculations. Multiple projections of
+the same underlying evidence do not constitute extra occurrences or independent scientific confirmation.
 
-`FRANKIE_ROOT_FRAME_SECTIONS_V1` is pinned in the experiment source binding, unfinished legacy state identity, layer
-metadata and derivation/calculation receipts. Resume refuses a changed projection instead of mixing old and new row
-shapes. The finished-derivation resume path checks the same version before reuse. Existing completed ROOT artifacts
-are not rewritten or silently replayed; an older reused export does not gain these fields merely because code changed.
+The old INPUT extraction discarded byte-valued fields. The experiment now retains the complete original mapping with
+the journal codec and removes its four-level observation lookup limit. The source receipt reports retained byte-field
+counts. Other Session callers retain their prior defaults. Unknown/failed applications remain explicit failures with
+original records retained; failed frame projections retain the frame and group inputs in the failures spool. Incomplete
+end groups remain in INPUT and continuation state and are named in `unclosed_input_groups`; no artificial close is made.
+These exceptional records are not claimed as successfully searched frame evidence.
 
-## Still open
+`FRANKIE_ROOT_FULL_DEPTH_GROUPS_V2` replaces V1 in the experiment source binding, legacy continuation identity, layer
+metadata and calculation/derivation receipts. INPUT extraction also binds `FRANKIE_ROOT_ALL_INPUT_FIELDS_V1`.
+Pending original records are saved per instrument alongside live adapter/open-group state. Both unfinished ROOT and
+finished-derivation resume refuse the old projection; they do not overwrite/replay an old result. Existing completed
+ROOTs may still be reused by the orchestrator with their actual older coverage, never retroactively called full depth.
+Search continuation binds its source manifest, code and directive, preserving the corresponding prepared-array identity.
 
-- Every intermediate INPUT field, the complete APPLIED envelope, every resting order/FIFO identity and deeper per-level
-  rows are not all connected to the current search. The existing full-evidence/native-ordinal reader is built but the
-  preserved axis-changing draft remains unapplied. Frame summaries are not a replacement for that evidence.
-- Cross-group family/D geometry, prebirth, ancestry, identity/lifecycle and other full-capture projections require the
-  existing producers disabled by the current experiment's bedrock-off configuration. This patch does not activate them.
-  The pinned `native_full_capture_adapter._window_extras` belongs to that separate producer; its former classification
-  as an omitted ordinary V4 event-frame field was corrected to not-produced on this path.
-- Dipole row states/reasons are retained but not search cells; the pinned DState itself is not retained as a separate
-  surface. Existing six-column teacher projections do not prove full D-state consumption.
-- The 23 knowledge/control/arm layers still need their applicable current consumer reconciliation under Step #2.
-  No sealed answer, disabled shadow or private output is reclassified as public teacher evidence to inflate coverage.
-- CCode's Step #4 handles scientific candidate/check/survivor connections. Cross-owner coordination remains a separate
-  #4/#8 integration gap; giant evidence stays on the owning lane.
+## Still open — not waived by full-depth wiring
+
+- The complete original APPLIED envelope is not in this frame projection. It carries a current live-book observation,
+  not a claim to have read every journal envelope field. The full-evidence/native-ordinal helper remains uncalled and
+  the preserved axis-changing/freeze draft remains unapplied. Event-axis lag mathematics is not silently substituted.
+- Full snapshots and original events are available to the existing positional search, but cross-group identity/lifecycle,
+  family/D geometry, prebirth, ancestry and other full-capture projections still require the currently disabled producers.
+  `native_full_capture_adapter._window_extras` is one such producer. No activation occurred.
+- Dipole states/reasons now reach cells, but timestamp as-of sampling can still omit intermediate/tied teacher rows.
+  Full `DState` is still not retained as its own surface. Six chain columns do not prove full-state consumption.
+- The active BOSS exchange remains a 19-component pair reader; broader original targets/masks/controls/representation
+  responsibilities remain required. The original joined reader exists but has different delivery and alignment limits;
+  do not call source availability or a broad exchange prompt actual computation.
+- Read `KNOWLEDGE_CONSUMER_COVERAGE_20261006.md` for the 23 knowledge/control/arm identities. Current source readers
+  do not establish complete typed consumption of those layers. Legacy text/source pointers are explicitly listed.
+- Numeric-state conditions, target construction and active nonlinear/multivariable discovery connections remain #3/#4;
+  existing `odcore/symbolic.py` mathematics is unchanged. CCode owns its separate #4 scientific/candidate route.
+- The larger full-depth channel count increases local spool/array/search work; no runtime cost has been measured and
+  no arbitrary cap was introduced. The one authorized-after-go E2E must establish actual capacity and runtime behavior.
 
 AWS CPU only; exactly two main and one Linux held 16-CPU lanes, 15 workers plus coordinator; same owner ROOT through
-completion. No explicit AWS go. Stop and discuss before workflow #5; Granite is with another chat and Jev CPU remains
-discussion pending. One real E2E only after wiring/discussions and AWS go; 30 days need separate authorization.
+completion. No AWS go. Stop and discuss before #5; Granite is with another chat and Jev CPU remains discussion pending.
+One real E2E only after wiring/discussions and AWS go; 30 days need separate authorization. #2 and #3 remain open.
 
-Checks for this slice: Python syntax compilation of the changed modules and `git diff --check`, plus direct source
-review of the pinned producer, exporter, search consumer and both ROOT resume paths. No runtime verification.
+Verification: direct source/interface and resume review, Python syntax compilation and `git diff --check` only.
+No tests, data/scientific execution, installation, AWS start, compute dispatch or E2E. SOURCE-BUILT / RUNTIME-UNVERIFIED.

@@ -1,5 +1,14 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+**Latest full-depth continuation (from `166507b6`):** Greg explicitly requires all applicable full-depth MBO/FIFO
+and joint accumulated-knowledge computation. New experiment ROOTs retain every level/FIFO queue, the complete resting
+book observation and every original INPUT field in each successful closed group, including bytes. These enter the
+existing positional group-close search; Dipole state/reason categories also reach cells. `FRANKIE_ROOT_FULL_DEPTH_GROUPS_V2`
+binds resume to this projection. This does not supply identity-linked lifecycle/disabled derived planes, every APPLIED
+envelope, or all BOSS/knowledge consumers. Read `ROOT_PLANE_COVERAGE_20261006.md` and
+`KNOWLEDGE_CONSUMER_COVERAGE_20261006.md`. #2/#3 remain open; source/syntax only, no E2E or AWS activity.
+
+
 **ROOT frame sections, source-only continuation:** the experiment now retains existing book/activity/integrity values
 through the original frame spool/export/search, with a versioned resume binding. No extra producer pass or bedrock
 activation. This does not establish all-plane coverage. `ROOT_PLANE_COVERAGE_20261006.md` reconciles the 99-layer roster

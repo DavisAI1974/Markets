@@ -71,8 +71,9 @@ REGISTRY_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_r
 BYTES_PER_TOKEN = 1.6      # conservative for dense JSON evidence: the proven packet was 151 KB = 92,439 tokens
 CHUNK_BYTES = 140_000      # about 87k tokens at that rate, leaving the rest of the context to the BOSS's answer
 MIN_SPLIT_BYTES = 1024     # a reading piece is split for regeneration down to this size (Greg, 2026-09-28: every note complete)
-FRAME_SECTIONS = ('book', 'activity', 'integrity')
-FRAME_SECTIONS_SCHEMA = 'FRANKIE_ROOT_FRAME_SECTIONS_V1'
+FRAME_SECTIONS = ('book', 'activity', 'integrity', 'native_frame', 'observation', 'input_records',
+                  'input_record_indices')
+FRAME_SECTIONS_SCHEMA = 'FRANKIE_ROOT_FULL_DEPTH_GROUPS_V2'
 
 
 def _packs(text, limit):
@@ -706,8 +707,9 @@ class Session:
         from its sealed ingest (research/kalshi/frankie_boss/opening_book.py), restored into the pinned adapter with its
         counters zeroed, so the legacy pass replays the day's records onto the real book instead of an empty one;
         opening_book is its descriptor, carried into derive.json. None = an empty book (every day before this switch).
-        retain_frame_sections carries the pinned adapter's already-computed book/activity/integrity sections into the
-        existing frame spool for the experiment. It does not call another producer, change depth or alter formulas."""
+        retain_frame_sections carries all original frame fields and group INPUT records, plus the existing pinned
+        book_snapshot full-depth/FIFO projection and observe_book observation from the live book, into the existing
+        frame spool. No second replay or changed legacy/teacher formula; top-ten summaries remain alongside full depth."""
         pin = self._pin() if source is not None else self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
         if recovery and bedrock:
@@ -726,7 +728,8 @@ class Session:
         status = {}
         rows_path = Path(source.container['path']) if source is not None else (
             Path(self.source_binding['container']['path']) if self.source_binding else ROOT / 'data' / f'prefix-{self.cycle}.sqlite')
-        records, container = self._input_records(rows_path, recovery=recovery, save_requested=save_requested)
+        records, container = self._input_records(rows_path, recovery=recovery, save_requested=save_requested,
+                                                 retain_all_fields=retain_frame_sections)
         if self.source_binding:
             expected = self.source_binding
             if (any(container[k] != expected['container'][k] for k in ('path', 'bytes', 'sha256'))
@@ -746,6 +749,7 @@ class Session:
             describe_structure, book_transition, BOOK_FIELDS)
         import importlib
         from research.kalshi.frankie_boss import mbo_resume_state
+        from research.kalshi.frankie_boss.c15_observer import observe_book
         mbo_resume_state = importlib.reload(mbo_resume_state)
         from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state, TeacherSaved
         identity = dict(source=self.source_binding, pin=pin['pins_witness']['sha256'],
@@ -772,6 +776,7 @@ class Session:
         B = _box_module('frankie_box_bedrock')
         names = ('prices', 'frames', 'structures', 'failures')
         next_record = 0
+        pending_inputs = {}
         if saved:
             # Match the existing parallel-ingest convention: canonical state checks identity; the live object
             # retains dict/counter order, derived caches and aliases without reconstructing calculation state.
@@ -780,6 +785,8 @@ class Session:
                 raise ValueError('saved ROOT live adapter differs from its retained canonical state')
             binner, previous_book = saved['binner'], saved['previous_book']
             legacy_count, next_record = saved['legacy_count'], saved['next_record']
+            if retain_frame_sections:
+                pending_inputs = saved['pending_inputs']
             prices, frames, structures, failures = [B.RowSpool.resume(saved['spools'][name]) for name in names]
         else:
             prices, frames, structures, failures = [B.RowSpool(derived / '.rows' / (name + '.jsonl')) for name in names]
@@ -791,6 +798,7 @@ class Session:
             _save_raw_state(recovery_path, dict(identity=identity, next_record=cursor,
                 adapter=mbo_resume_state.export_adapter_state(adapter, include_open_groups=True),
                 adapter_live=adapter,
+                pending_inputs=pending_inputs,
                 binner=binner, previous_book=previous_book, legacy_count=legacy_count,
                 spools={name: rows.saved_position() for name, rows in zip(names, (prices, frames, structures, failures))}))
         if not 0 <= next_record <= len(records):
@@ -806,8 +814,11 @@ class Session:
                 try:
                     frame, legacy_rows = adapter.apply(record)
                 except Exception as error:
-                    failures.append(dict(index=index, error=f'{type(error).__name__}: {error}'))
+                    failures.append(dict(index=index, record=record, error=f'{type(error).__name__}: {error}'))
                     continue
+                if retain_frame_sections:
+                    instrument = int(record['instrument_id'])
+                    pending_inputs.setdefault(instrument, []).append((index, record))
                 for row in legacy_rows:
                     legacy_count += 1
                     try:
@@ -819,6 +830,7 @@ class Session:
                                            bid_px_00=row.get(native_roll20.BID_TOUCH_FIELD), ask_px_00=row.get(native_roll20.ASK_TOUCH_FIELD)))
                 if frame is not None:
                     book = frame.get('book') or {}
+                    group_inputs = pending_inputs.pop(frame['instrument_id']) if retain_frame_sections else []
                     try:
                         record_book = dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'))
                         record_book.update({k: book.get(k) for k in ('best_bid', 'best_ask', 'mid', 'depth_imbalance_n')})
@@ -826,14 +838,25 @@ class Session:
                         record_book.update(transition['after'])  # exact producer-returned full-depth fields
                         record_book['transition'] = transition['sign_signature']
                         if retain_frame_sections:
-                            # Original returned values, including nulls and empty lists; no top-N change or recomputation.
-                            # The legacy scalar columns remain at their original paths for existing consumers.
-                            for section in FRAME_SECTIONS:
-                                if section in frame:
-                                    record_book[section] = frame[section]
+                            live_book = adapter.books[frame['instrument_id']]
+                            # Reuse the producer's existing full-depth/FIFO routine on the book already replayed.
+                            # Its *_levels_full lists have no top-N slice. Keep the original top-ten quantities intact.
+                            full = live_book.book_snapshot(frame['ts_recv_ns'], include_full_depth=True,
+                                                           include_order_ids=True)
+                            record_book['book'] = dict(book, bid_levels_full=full['bid_levels_full'],
+                                                      ask_levels_full=full['ask_levels_full'])
+                            record_book['activity'] = frame.get('activity')
+                            record_book['integrity'] = frame.get('integrity')
+                            record_book['native_frame'] = {k: v for k, v in frame.items()
+                                                           if k not in ('book', 'activity', 'integrity')}
+                            record_book['observation'] = observe_book(live_book)
+                            record_book['input_records'] = [item[1] for item in group_inputs]
+                            record_book['input_record_indices'] = [item[0] for item in group_inputs]
+                            record_book['input_cursor'] = index
                         frames.append(record_book)
                     except Exception as error:
-                        failures.append(dict(index=index, book=True, error=f'{type(error).__name__}: {error}'))
+                        failures.append(dict(index=index, book=True, frame=frame, group_inputs=group_inputs,
+                                             error=f'{type(error).__name__}: {error}'))
                     previous_book = book
                     try:
                         structures.append(dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'),
@@ -882,6 +905,8 @@ class Session:
             layers['legacy_book_imbalance']['frame_sections'] = list(FRAME_SECTIONS)
             receipt['frame_sections_schema'] = FRAME_SECTIONS_SCHEMA
             receipt['frame_sections'] = list(FRAME_SECTIONS)
+            receipt['unclosed_input_groups'] = {str(i): [item[0] for item in rows]
+                                                for i, rows in pending_inputs.items()}
         for name, value in layers.items():
             path = derived / f'{name}.json'
             write_json(path, value)
@@ -1084,7 +1109,7 @@ class Session:
             return True, 'the derivation does not carry this pin\'s bedrock'
         return False, 'current'
 
-    def _input_records(self, rows_path, *, recovery=False, save_requested=None):
+    def _input_records(self, rows_path, *, recovery=False, save_requested=None, retain_all_fields=False):
         """The cycle's rows: either a compact container (blocks + seal; CompactReader) or the raw prefix snapshot
         (C15_JOURNAL_PREFIX_SNAPSHOT_V1, an `entries` table; VerifiedJournalReader), as restored to the box.
         prefix-00.sqlite is the first run's raw `actual-first-cutoff-capacity/prefix.sqlite` (run 35584495493 found
@@ -1113,6 +1138,8 @@ class Session:
         from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state, TeacherSaved
         state_path = self.work / 'input-state.pkl'
         identity = dict(container=container, source=self.source_binding)
+        if retain_all_fields:
+            identity['input_fields_schema'] = 'FRANKIE_ROOT_ALL_INPUT_FIELDS_V1'
         saved = _load_raw_state(state_path) if recovery and state_path.exists() else None
         if saved and saved['identity'] != identity:
             raise ValueError('saved INPUT extraction belongs to a different sealed source')
@@ -1140,14 +1167,15 @@ class Session:
             kinds[kind] = kinds.get(kind, 0) + 1
             if kind != 'INPUT':
                 return
-            observation = self._find_observation(payload)
+            observation = self._find_observation(payload, max_depth=None if retain_all_fields else 4)
             if observation is None:
                 without_observation.append(dict(input_entry=kinds[kind] - 1, cursor=(payload or {}).get('cursor') if isinstance(payload, dict) else None))
                 return
             for k, v in observation.items():
                 if isinstance(v, (bytes, bytearray)):
                     bytes_fields[k] = bytes_fields.get(k, 0) + 1
-            records.append({k: v for k, v in observation.items() if not isinstance(v, (bytes, bytearray))})
+            records.append(dict(observation) if retain_all_fields else
+                           {k: v for k, v in observation.items() if not isinstance(v, (bytes, bytearray))})
         seen = 0
         def take_next(kind, payload):
             nonlocal consumed, seen
@@ -1183,18 +1211,20 @@ class Session:
         records.close()
         container['kinds'] = kinds
         container['inputs_without_observation'] = without_observation
-        container['bytes_fields_not_spooled'] = bytes_fields
+        container['bytes_fields_not_spooled'] = {} if retain_all_fields else bytes_fields
+        if retain_all_fields:
+            container['bytes_fields_spooled'] = bytes_fields
         container['record_spool'] = dict(path=str(records.path), **witness(records.path))
         return records, container
 
     @staticmethod
-    def _find_observation(node, depth=0):
+    def _find_observation(node, depth=0, max_depth=4):
         if isinstance(node, dict):
             if 'ts_event' in node and 'action' in node and 'instrument_id' in node:
                 return node
-            if depth < 4:
+            if max_depth is None or depth < max_depth:
                 for value in node.values():
-                    found = Session._find_observation(value, depth + 1)
+                    found = Session._find_observation(value, depth + 1, max_depth)
                     if found is not None:
                         return found
         return None

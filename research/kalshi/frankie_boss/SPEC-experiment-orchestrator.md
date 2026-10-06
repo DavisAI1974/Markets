@@ -1,5 +1,14 @@
 # Spec: the 30-day experiment orchestrator
 
+**Latest full-depth continuation (from `166507b6`):** Greg explicitly requires all applicable full-depth MBO/FIFO
+and joint accumulated-knowledge computation. New experiment ROOTs retain every level/FIFO queue, the complete resting
+book observation and every original INPUT field in each successful closed group, including bytes. These enter the
+existing positional group-close search; Dipole state/reason categories also reach cells. `FRANKIE_ROOT_FULL_DEPTH_GROUPS_V2`
+binds resume to this projection. This does not supply identity-linked lifecycle/disabled derived planes, every APPLIED
+envelope, or all BOSS/knowledge consumers. Read `ROOT_PLANE_COVERAGE_20261006.md` and
+`KNOWLEDGE_CONSUMER_COVERAGE_20261006.md`. #2/#3 remain open; source/syntax only, no E2E or AWS activity.
+
+
 **External findings continuation:** existing external classroom discoveries now enter immediate brain publication,
 actual external-pair recognition and the existing scientific reader's explicitly labelled directional projection.
 Full source/scope is retained; old Dipole-only lessons cannot silently satisfy the expanded claim set. Source/syntax
