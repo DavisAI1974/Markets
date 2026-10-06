@@ -6,6 +6,37 @@ installs, runtime downloads, dispatch, AWS actions or E2E. Stop before workflow 
 
 ## Actual connections changed
 
+### Stable closing-row evidence and truthful classroom scope after `4c5b5ad`
+
+The positional `dipole.group.rows[slot]` projection fragments a closing DState/raw field across
+different series when the number of input rows per group changes. The existing consecutive-step
+transform cannot calculate a change across those different columns. `experiment_dipole` now also
+projects the complete exact closing row under `dipole.group_close.by_entity.<publisher>:<instrument>`.
+Every original row and target channel remains. All nested leaves participate in the existing generic
+numeric/categorical transforms and search, without a 19-column input whitelist. Closing-row aliases
+are explicitly the same evidence, never independent observations.
+
+Placement requires the exact APPLIED source cursor/prefix/time and publisher/instrument identity.
+DState identity and closure are checked: `c15_builder` enforces receipt/frame closure equivalence,
+the journal reader refuses earlier closes in a group, and `parallel_teacher` marks GROUP_STATE only
+for a receipt. The ROOT/F_LAST axis, original values, statistics and lag definitions are unchanged.
+Absent closes and other entities remain None; there is no fill or interpolation. Interleaved entities
+still create gaps in consecutive-step calculations, so this does not complete identity trajectories.
+The helper's V2 schema and source digest already participate in search continuation identity, refusing
+incompatible prepared state. Historical sources are not backfilled.
+
+An independent source review also found the classroom's emitted roles still described top-three
+cohorts and a 1,024-group long horizon despite the active all-level/whole-day teacher changes.
+Roles and behavior explanations now use selected-cohort and short/long-horizon wording. Every role
+states that depth, horizon and minimum-history rules belong to the bound source producer, not column
+suffixes. This is also truthful for older pinned-teacher snapshots; readable exact scope metadata is
+still absent. No calculation, target, label, acceptance rule or historical result was changed.
+
+Two agents supplied source-review findings before workspace credits blocked their completion.
+Codex completed the producer/interface review. Verification: source inspection, Python AST syntax
+parse without imports, and whitespace checks only. SOURCE-BUILT / RUNTIME-UNVERIFIED; full coverage
+for both teachers remains incomplete. No tests, installs, runs, AWS actions, dispatch or E2E.
+
 ### Parent annotation loss fixed after `21df8f1`
 
 Source tracing found a concrete drop in `parallel_teacher._RawStreams._resolve`: replacing a deferred

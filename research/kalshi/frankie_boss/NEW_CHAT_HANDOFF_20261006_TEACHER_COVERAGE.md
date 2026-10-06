@@ -14,6 +14,16 @@ retain their original handling. Raw/attachment recovery now binds this implement
 Read the parent-annotation section in `DIPOLE_TEACHER_COVERAGE_CONTINUATION_20261006.md`.
 This is SOURCE-BUILT / RUNTIME-UNVERIFIED; full both-teacher coverage remains incomplete.
 
+Next source slice builds on `4c5b5ad2d83dcd1934107ac0ef1994260619727a`: exact entity-scoped
+closing rows now expose stable field names across variable-size groups, alongside all positional
+rows. Classroom scope descriptions no longer incorrectly assert top-three/1,024-group limits.
+Read the stable-closing-row section of the continuation document for the gap, changes and limits.
+
+CCode's return has now arrived on `ccode/dipole-collection-20261006` at `b264f79`, based on
+`21df8f1`. Read `CCODE_HANDOFF_CODEX_DIPOLE_TEACHERS_20261006.md`, then the combined-collection
+document and section 7 of his step-4 route. Merge and shared-caller integration are the next work;
+this checkpoint does not yet include them. Keep both parent histories and all newer commits.
+
 Greg explicitly confirmed CCode is actively handling his assigned candidate work. Reread
 `CCODE_NEXT_SOURCE_TASKS_20261006.md` before selecting further work; await his caller requirements.
 An overlapping origin-evidence draft was set aside. Its commit object `9c19cc2` was never attached
@@ -48,7 +58,7 @@ Unperformed or unmapped work stays explicitly pending.
 CCode builds and repairs the teachers' capabilities. CCode must NOT personally rerun, rework,
 evaluate or judge the Dipole research. The teachers perform scientific work when execution is authorized.
 The corrected assignment was printed for Greg to copy; it was not sent through a messaging connector.
-No new CCode return has been received at this checkpoint.
+CCode's latest return is identified above; its shared-caller requests supersede awaiting his return.
 
 ## Completed source changes
 

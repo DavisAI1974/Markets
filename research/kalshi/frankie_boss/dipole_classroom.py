@@ -84,19 +84,19 @@ _NEXT_MODE = {
 # Curriculum descriptions of equations already implemented by c15_teacher,
 # c15_teacher_r3 and c15_dstate.  These are explanatory metadata, not features.
 ROLE_DEFINITIONS = {
-    "far_front_age_log": "Age of the front resting order in the selected far-side top-three cohort.",
-    "far_queue_age_p90_log": "Age threshold accounting for 90 percent of selected far-side top-three cohort size.",
-    "far_size_hhi": "Herfindahl concentration of displayed size across the selected far-side top-three cohort.",
-    "far_replenish_log1p_64": "64-group far-side top-three net addition-versus-removal geometry.",
-    "far_replenish_log1p_1024": "1024-group far-side top-three net addition-versus-removal geometry.",
-    "far_priority_loss_rate_64": "Share of 64-group far-side top-three modifications that lose queue priority.",
-    "far_priority_loss_rate_1024": "Share of 1024-group far-side top-three modifications that lose queue priority.",
-    "far_absorption_share_64": "64-group share of reconciled far-side removals attributable to fills.",
-    "far_absorption_share_1024": "1024-group share of reconciled far-side removals attributable to fills.",
-    "far_identity_survival_64": "Fraction of the original 64-group far-side cohort whose order identities survive.",
-    "far_identity_survival_1024": "Fraction of the original 1024-group far-side cohort whose order identities survive.",
-    "far_size_retention_64": "Fraction of original 64-group cohort quantity retained by those same orders.",
-    "far_size_retention_1024": "Fraction of original 1024-group cohort quantity retained by those same orders.",
+    "far_front_age_log": "Age of the front resting order in the selected far-side cohort.",
+    "far_queue_age_p90_log": "Age threshold accounting for 90 percent of selected far-side cohort size.",
+    "far_size_hhi": "Herfindahl concentration of displayed size across the selected far-side cohort.",
+    "far_replenish_log1p_64": "Short-horizon far-side net addition-versus-removal geometry.",
+    "far_replenish_log1p_1024": "Long-horizon far-side net addition-versus-removal geometry.",
+    "far_priority_loss_rate_64": "Share of short-horizon far-side modifications that lose queue priority.",
+    "far_priority_loss_rate_1024": "Share of long-horizon far-side modifications that lose queue priority.",
+    "far_absorption_share_64": "Short-horizon share of reconciled far-side removals attributable to fills.",
+    "far_absorption_share_1024": "Long-horizon share of reconciled far-side removals attributable to fills.",
+    "far_identity_survival_64": "Fraction of the original short-horizon far-side cohort whose order identities survive.",
+    "far_identity_survival_1024": "Fraction of the original long-horizon far-side cohort whose order identities survive.",
+    "far_size_retention_64": "Fraction of original short-horizon cohort quantity retained by those same orders.",
+    "far_size_retention_1024": "Fraction of original long-horizon cohort quantity retained by those same orders.",
     "unresolved_age_groups_log": "D-chain age of the current unresolved far-side extreme in instrument groups.",
     "extension_count_log": "D-chain count of completed far-side extensions in the current chain.",
     "step_ratio_log": "Log ratio of latest completed extension magnitude to the previous completed extension magnitude.",
@@ -107,10 +107,10 @@ ROLE_DEFINITIONS = {
 
 BEHAVIOR_BASIS = {
     "far_front_age_log": "FIFO/resting-order persistence at the visible far-side queue front.",
-    "far_queue_age_p90_log": "Full-book order-age structure behind most displayed far-side size.",
-    "far_size_hhi": "Full-book concentration versus dispersion of visible far-side resting size.",
-    "far_replenish_log1p_64": "Short-horizon add/remove behavior in the full far-side order cohort.",
-    "far_replenish_log1p_1024": "Long-horizon add/remove persistence in the full far-side order cohort.",
+    "far_queue_age_p90_log": "Order-age structure behind most displayed size in the selected far-side cohort.",
+    "far_size_hhi": "Concentration versus dispersion of visible resting size in the selected far-side cohort.",
+    "far_replenish_log1p_64": "Short-horizon add/remove behavior in the selected far-side order cohort.",
+    "far_replenish_log1p_1024": "Long-horizon add/remove persistence in the selected far-side order cohort.",
     "far_priority_loss_rate_64": "Short-horizon FIFO deterioration caused by modifications that surrender priority.",
     "far_priority_loss_rate_1024": "Long-horizon FIFO deterioration caused by modifications that surrender priority.",
     "far_absorption_share_64": "Short-horizon executed absorption separated from other disappearing displayed size.",
@@ -129,6 +129,14 @@ BEHAVIOR_BASIS = {
 
 if tuple(ROLE_DEFINITIONS) != tuple(COLUMNS) or tuple(BEHAVIOR_BASIS) != tuple(COLUMNS):
     raise RuntimeError("Dipole classroom curriculum must cover C15 columns exactly and in order")
+
+# Historical snapshots can use the pinned teachers; current preparation can use
+# teacher_changes. The candidate digest binds that producer, but is not a readable
+# scope declaration. Do not infer a snapshot's depth or horizon from today's code.
+CALCULATION_SCOPE_NOTE = (
+    "Cohort depth, horizon and minimum-history rules belong to the source's bound teacher producer. "
+    "Column-name suffixes alone do not establish those rules; exact scope is not declared by this description."
+)
 
 
 def _hex(value: Any, name: str) -> str:
@@ -354,7 +362,7 @@ def build_teacher_key(snapshot: Mapping[str, Any], previous_snapshot: Mapping[st
         ledger=_dimension_ledger(snapshot,index);ledgers[name]=ledger;direction=_direction(ledger);directions[name]=direction
         nonpresent=tuple({"cursor":p["cursor"],"state":p["state"],"reason":p["raw_reason"]} for p in ledger
             if p["state"] != TargetState.PRESENT.name)
-        dimensions.append({"name":name,"role":ROLE_DEFINITIONS[name],"behavior_basis":BEHAVIOR_BASIS[name],
+        dimensions.append({"name":name,"role":ROLE_DEFINITIONS[name]+" "+CALCULATION_SCOPE_NOTE,"behavior_basis":BEHAVIOR_BASIS[name],
             "unit":snapshot["rows"][0]["components"][index]["unit"],"observations":ledger,
             "state_counts":_state_counts(ledger),"nonpresent_explanations":nonpresent,
             "terminal_state":ledger[-1]["state"],"terminal_value":ledger[-1]["value"],

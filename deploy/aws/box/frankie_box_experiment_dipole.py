@@ -2,7 +2,8 @@
 
 Reuse the already-read, source-verified journal columns. A receive-time tie is
 not a source identity. Ordered row slots retain intermediate target states;
-the existing component channels use the last available source cursor.
+entity-scoped closing rows retain stable field names across variable-size groups.
+The existing component channels use the last available source cursor.
 """
 import bisect
 import hashlib
@@ -10,7 +11,7 @@ import json
 from pathlib import Path
 import re
 
-SCHEMA = 'FRANKIE_DIPOLE_GROUP_SEARCH_V1'
+SCHEMA = 'FRANKIE_DIPOLE_GROUP_SEARCH_V2'
 
 
 def binding():
@@ -69,7 +70,9 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
         prefix = key[:-4] + 'payload.'
         required = (journal_numeric.get(prefix + 'cursor'),
                     journal_numeric.get(prefix + 'normalized.ts_recv_ns'),
-                    journal_text.get(prefix + 'terminal_prefix_hash'))
+                    journal_text.get(prefix + 'terminal_prefix_hash'),
+                    journal_numeric.get(prefix + 'normalized.publisher_id'),
+                    journal_numeric.get(prefix + 'normalized.instrument_id'))
         if any(values is None for values in required):
             if 'APPLIED' in journal_text[key]:
                 raise ValueError('APPLIED target slot lacks source provenance')
@@ -80,8 +83,8 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
         for position, kind in enumerate(journal_text[key]):
             if kind != 'APPLIED':
                 continue
-            cursor, stamp, digest = (values[position] for values in required)
-            if type(cursor) is not int or type(stamp) is not int or not isinstance(digest, str):
+            cursor, stamp, digest, publisher, instrument = (values[position] for values in required)
+            if any(type(value) is not int for value in (cursor, stamp, publisher, instrument)) or not isinstance(digest, str):
                 raise ValueError('APPLIED target provenance is incomplete')
             if closes is not None and closes[position] is not None:
                 if boundaries[position] is not None or closes[position] != int(receive_times[position]):
@@ -90,12 +93,13 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
             if cursor in wanted:
                 if cursor in original:
                     raise ValueError('teacher cursor has duplicate APPLIED source identities')
-                original[cursor] = (position, stamp, digest)
+                original[cursor] = (position, stamp, digest, publisher, instrument)
     valid_boundaries = [value for value in boundaries if value is not None]
     if valid_boundaries != sorted(set(valid_boundaries)):
         raise ValueError('ROOT source cursor boundaries are not ordered')
 
     buckets, searched_rows, states, dispositions = {}, 0, {name: {} for name in names}, {}
+    closing_rows, closing_slots = {}, {}
     def disposition(reason, ordinal):
         item = dispositions.setdefault(reason, dict(rows=0, ordinal_ranges=[]))
         item['rows'] += 1
@@ -119,10 +123,25 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
         if entry is None:
             disposition('no_exact_applied_root_group', ordinal)
             continue
-        position, stamp, digest = entry
+        position, stamp, digest, publisher, instrument = entry
         if stamp != row['ts_recv_ns'] or digest != row['source_prefix_hash']:
             raise ValueError('Dipole target differs from its exact APPLIED source prefix')
+        state = row.get('dstate')
+        if state is not None:
+            expected = dict(cursor=row['cursor'], ts_recv_ns=stamp, source_prefix_hash=digest,
+                            publisher_id=publisher, instrument_id=instrument)
+            if (any(state.get(key) != value for key, value in expected.items())
+                    or (state.get('status') == 'GROUP_STATE') != (row['cursor'] == boundaries[position])):
+                raise ValueError('Dipole DState differs from its exact APPLIED entity or closing cursor')
         buckets.setdefault(position, []).append(row)
+        if row['cursor'] == boundaries[position]:
+            # A group's final row changes list position with group length. Give
+            # its unchanged fields stable names without replacing intermediate
+            # evidence, carrying state forward, or mixing entity identities.
+            entity = '%d:%d' % (publisher, instrument)
+            closing_rows[position] = {'by_entity': {entity: row}}
+            slot = len(buckets[position]) - 1
+            closing_slots[slot] = closing_slots.get(slot, 0) + 1
         searched_rows += 1
         disposition('searched', ordinal)
 
@@ -134,6 +153,14 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
     text.pop('', None)
     numeric = {'dipole.group.' + key: values for key, values in numeric.items()}
     text = {'dipole.group.' + key: values for key, values in text.items()}
+    closing_numeric, closing_text, closing_mixed, closing_count = columns(
+        (closing_rows.get(position, {}) for position in range(n)), '')
+    if closing_count != n:
+        raise ValueError('Dipole closing-row projection changed the ROOT axis length')
+    closing_numeric.pop('', None)
+    closing_text.pop('', None)
+    numeric.update({'dipole.group_close.' + key: values for key, values in closing_numeric.items()})
+    text.update({'dipole.group_close.' + key: values for key, values in closing_text.items()})
     current = [bisect.bisect_right(cursors, cursor) - 1 if cursor is not None else -1
                for cursor in boundaries]
     for index, name in enumerate(names):
@@ -151,7 +178,13 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
         mixed=mixed, unbound_root_frames=sum(cursor is None for cursor in boundaries),
         note='all exact original target rows on their INPUT group; current components select the latest source cursor '
              'available at each exact frame boundary; equal receive times never select a later cursor',
-        alias_rule='group rows and current component channels are projections of the same targets, not independent observations')
+        alias_rule='group rows, entity closing rows and current component channels project the same evidence; '
+                   'none is an independent observation or another occurrence')
+    report['group_close'] = dict(rows=len(closing_rows), absent_frames=n - len(closing_rows),
+        original_row_slots=closing_slots, numeric=sorted(closing_numeric), text=sorted(closing_text), mixed=closing_mixed,
+        channels='dipole.group_close.by_entity[publisher:instrument].*',
+        rule='only the exact APPLIED closing cursor; all original row leaves retained; no as-of fill or interpolation; '
+             'other entities and missing closing rows remain absent on the unchanged F_LAST axis')
     report['dstate'] = dict(retained_group_states=sum(
         row.get('dstate', {}).get('status') == 'GROUP_STATE' for row in rows),
         searched_group_states=sum(row['cursor'] in original and row.get('dstate', {}).get('status') == 'GROUP_STATE'
@@ -159,6 +192,7 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
         status='retained' if any('dstate' in row for row in rows) else 'not_retained_by_this_source',
         representation='exact numerator/denominator leaves for rational fields; no float reconstruction',
         channels='dipole.group.rows[position].dstate.*',
+        closing_channels='dipole.group_close.by_entity[publisher:instrument].dstate.*',
         note='same teacher updates as the six target columns; frozen states remain frozen; '
              'NOT_F_LAST rows supply no new state; no independent observation or old-source backfill')
     notes = [dict(source='dipole', reason='teacher rows without exact journal group evidence remain in the bound source; '
