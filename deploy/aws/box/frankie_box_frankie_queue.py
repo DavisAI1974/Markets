@@ -940,7 +940,8 @@ def _finish_day(run, e, code_root, commit, log):
 
     ROOT has already finished.  The BOSS teacher always reads next.  On classroom-arm days Frankie then enters the
     class line immediately; that worker runs classroom -> data/search -> scientific-teacher tests -> meeting/end while
-    staying inside this slot.  Non-classroom days continue directly through data/search and any batch lessons.
+    staying inside this slot. Non-classroom days run data/search, consume accumulated scientific claims on their
+    owning search and publish those lessons before any following batch work.
     Jev's blind material relay remains the final applicable handoff and never carries Frankie's answers.
     """
     import frankie_box_experiment as X
@@ -1005,7 +1006,7 @@ def _finish_day(run, e, code_root, commit, log):
             return False, facts
     else:
         # Search-only discovery days do not enter the class line.
-        for stage in ('data', 'search'):
+        for stage in ('data', 'search', 'accumulated_lessons'):
             r = run.guarded(stage, e) or {}
             facts[stage] = dict(status=r.get('status'), reason=r.get('reason'), target=r.get('target'), log=r.get('log'))
             if r.get('status') not in X.FINISHED:

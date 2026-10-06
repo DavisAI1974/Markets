@@ -360,7 +360,24 @@ def main():
     p.add_argument('--frankie-day', help='the day of those ledgers (YYYYMMDD)')
     p.add_argument('--historical-claims', help='a HISTORICAL_CLAIMS_V1 file (frankie_box_historical_claims.py)')
     p.add_argument('--brain', default='/opt/frankie-box/brain', help='the owning lane plan\'s knowledge directory')
+    p.add_argument('--accumulated-day', help='test completed legal knowledge on this one owning day, without a classroom')
+    p.add_argument('--accumulated-out', help='the retained accumulated-input/result directory; paired with --accumulated-day')
     a = p.parse_args()
+    if a.accumulated_day or a.accumulated_out:
+        if (not a.accumulated_day or not re.fullmatch('[0-9]{8}', a.accumulated_day) or
+                not a.accumulated_out or len(a.search) != 1 or
+                any((a.jev_claims, a.jev_stamp, a.frankie_ledgers, a.frankie_day, a.historical_claims))):
+            p.error('accumulated mode requires one search, --accumulated-day YYYYMMDD and --accumulated-out only')
+        import frankie_box_teacher_knowledge as TK
+        from frankie_box_durable import write_json, witness
+        out = Path(a.accumulated_out)
+        result = TK.teach_accumulated(a.accumulated_day, a.search[0], a.brain, out)
+        receipt = dict(schema='FRANKIE_ACCUMULATED_LESSONS_V1', day=a.accumulated_day, status='complete',
+                       search=witness(Path(a.search[0]) / 'MANIFEST.json'), accumulated_claim_tests=result,
+                       model_calls=0)
+        write_json(out / 'receipt.json', receipt)
+        print(json.dumps(receipt, sort_keys=True), flush=True)
+        return
     if a.jev_stamp and not a.jev_claims:
         key = 'clm-sidecar/%s/jev/claims.json' % a.jev_stamp
         entries = json.loads(urllib.request.urlopen(os.environ['MAP_URL'], timeout=60).read())

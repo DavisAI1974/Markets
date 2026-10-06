@@ -15,6 +15,12 @@ set -- --brain "$BRAIN"
 for d in $(echo "$SEARCHES" | tr ',' ' '); do
   case "$d" in /opt/frankie-box/work/experiment-search/*) set -- "$@" --search "$d";; *) echo "search directory under experiment-search required: $d" >&2; exit 2;; esac
 done
+if [ -n "${ACCUMULATED_DAY:-}" ] || [ -n "${ACCUMULATED_OUT:-}" ]; then
+  : "${ACCUMULATED_DAY:?owning day required}"; : "${ACCUMULATED_OUT:?retained accumulated result directory required}"
+  case "$ACCUMULATED_OUT" in /opt/frankie-box/work/experiment/*/scientific-knowledge/*) ;; *) echo "accumulated result must stay in the owning experiment" >&2; exit 2;; esac
+  case "$ACCUMULATED_OUT" in *..*) echo "no .. in accumulated result directory" >&2; exit 2;; esac
+  set -- "$@" --accumulated-day "$ACCUMULATED_DAY" --accumulated-out "$ACCUMULATED_OUT"
+fi
 [ -z "${JEV_STAMP:-}" ] || set -- "$@" --jev-stamp "$JEV_STAMP"
 [ -z "${FRANKIE_LEDGERS:-}" ] || set -- "$@" --frankie-ledgers "$FRANKIE_LEDGERS" --frankie-day "${FRANKIE_DAY:?FRANKIE_DAY required}"
 if [ -n "${HISTORICAL_CLAIMS:-}" ]; then

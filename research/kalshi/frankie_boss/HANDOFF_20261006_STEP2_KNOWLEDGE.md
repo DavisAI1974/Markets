@@ -57,8 +57,9 @@ that re-running the same mathematics independently validates the science, nor th
   Reconcile them with the active experiment before building anything else; absence from one route is not absence from
   the repository. No BOSS-role or training-path rewrite was made.
 
-**#2 remains open:** finish BOSS teaching-input integration, non-classroom-arm accumulated claim delivery, and applicable
-remaining typed consumers alongside #3/#4. No runtime/E2E success, measured added cost or discovered trading signal is
+**#2 remains open:** reconcile BOSS teaching-input integration with existing implementations and finish applicable
+remaining typed consumers/cross-owner coordination alongside #3/#4. Non-classroom accumulated claims are now source-wired
+as recorded below. No runtime/E2E success, measured added cost or discovered trading signal is
 claimed. No tests, installs, model calls, AWS starts or compute dispatch. Syntax/source review only. Exactly three held
 CPU lanes; no Pods. #5, Granite and Jev discussion boundaries remain; preserved search/confirmation draft is unapplied.
 
@@ -82,6 +83,35 @@ Next: reuse and connect existing components only after tracing their producers, 
 contracts. CCode's separate Step #3 assignment is `HANDOFF_20261006_CCODE_STEP3.md`; it owns search/source coverage,
 not the Step #2 classroom or teacher-knowledge files. This is a handoff for Greg to relay, not a claim that CCode was
 messaged or has started. Neither audit proves an E2E or a scientific improvement at runtime.
+
+### Non-classroom accumulated claims — next source slice
+
+The source audit found `frankie_box_teacher_knowledge.teach_accumulated` already implements owner-local retesting of
+completed legal native claims; only the classroom exchange called it. Reused it rather than building another reader:
+
+- `Run.accumulated_lessons` invokes the existing scientific-teacher launcher with the non-classroom day's completed
+  search and the plan's actual brain. The child runs as the existing `lessons` CPU stage in the same held slot. The
+  day-local receipt records actual claim inputs/results and the existing CPU/knowledge-boundary witnesses.
+- `_finish_day` now runs `data -> search -> accumulated_lessons -> existing batch work` on non-classroom days. The
+  non-queue lessons path also calls this reader for applicable non-classroom days. Classroom days retain the existing
+  exchange call, so this slice does not add a duplicate classroom calculation.
+- A narrow CLI mode in `frankie_box_scientific_teacher.py/.sh` calls the existing helper on exactly one owning search.
+  Its input selection and completed results use that helper's existing retained identities. Results publish through
+  the existing brain writer before subsequent work; exact claim/search reuse does not become new confirmation.
+  New mode refuses mixed raw-Jev/current-Frankie/historical input flags. Scientific formulas, claim selection,
+  source-scope checks and the separate raw-claim paths are unchanged.
+- Python compilation, shell syntax and diff whitespace checks passed. No tests, data runs, installs, AWS operations
+  or E2E. This is a source connection, not evidence that any non-classroom day has run successfully.
+
+Still open: batch cross-owner coordination currently waits when another owner's completed search is present; this
+slice does not silently restrict those batch tests to a subset or move giant evidence. Generic teacher/ROOT/search
+candidate/equation consumers and original BOSS teaching integration still require reconciliation with existing code
+and #3/#4. CCode owns the Step #3 search/source files; Codex has not edited them. The historical non-classroom-unwired
+statement farther below is superseded by this narrow connection, not by an all-30-day completion claim.
+
+Publication: the earlier learner-reader/audit checkpoint is `a86d440d1c21db5cabc41e7ed723a105f07dc8ee` on GitHub.
+It has exactly the source tree of local `93c7e27b9098c0896a64c14e0082f7a858a3eb7f`; connector publication succeeded
+after shell push authentication failed. The original local commit is retained on `checkpoint/frankie-local-93c7e27b`.
 
 ## Ordered checklist
 

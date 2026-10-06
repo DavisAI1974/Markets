@@ -1671,6 +1671,41 @@ class Run:
         return self.brain_stage(e['day'], 'search', [manifest_path, path],
                                 summary=dict(target=str(target), role=e['role']), inline_limit=len(raw))
 
+    def accumulated_lessons(self, e):
+        """Non-classroom days use the existing owner-local accumulated scientific reader too."""
+        day = e['day']
+        self.check_save()
+        remote = self.remote_stage('accumulated_lessons', day)
+        if remote is not None:
+            return remote
+        if e['classroom_arm']:
+            return self.record('accumulated_lessons', day, 'skipped',
+                               reason='the classroom exchange already consumes accumulated claims on this owning search')
+        search = self.receipt('search', day)
+        if not (search and search['status'] in FINISHED and search.get('target')):
+            return self.record('accumulated_lessons', day, 'waiting', reason='the owning day search is not complete')
+        target = self.dir / 'scientific-knowledge' / day
+        key = day + '-accumulated'
+        code, log = self.child('lessons', key, 'frankie_box_scientific_teacher.sh',
+                               dict(SEARCHES=search['target'], BRAIN=self.plan.get('brain') or str(BRAIN),
+                                    ACCUMULATED_DAY=day, ACCUMULATED_OUT=target))
+        # Retain the existing lesson CPU booking and knowledge boundary under this day-local receipt.
+        for retained in (self._cpu, self._knowledge):
+            if ('lessons', key) in retained:
+                retained[('accumulated_lessons', day)] = retained.pop(('lessons', key))
+        receipt = target / 'receipt.json'
+        if code != 0 or not receipt.is_file():
+            return self.record('accumulated_lessons', day, 'failed', exit_code=code, log=log,
+                               reason='no completed accumulated scientific lesson receipt after the call')
+        result = json.loads(receipt.read_bytes())
+        if (result.get('schema') != 'FRANKIE_ACCUMULATED_LESSONS_V1' or result.get('day') != day or
+                result.get('status') != 'complete' or
+                result['search']['sha256'] != sha256_file(Path(search['target']) / 'MANIFEST.json')):
+            raise ValueError('accumulated scientific lesson receipt differs from its owning day search')
+        return self.record('accumulated_lessons', day, 'done', exit_code=code, log=log,
+                           receipt=str(receipt), receipt_sha256=sha256_file(receipt),
+                           accumulated_claim_tests=result['accumulated_claim_tests'])
+
     def lessons(self, batch_key, entries):
         self.check_save()
         searched = [e for e in self.plan['days'] if e['role'] == 'discovery' and self.finished('search', e['day'])]
@@ -1827,6 +1862,10 @@ class Run:
                                 getattr(self, stage)(e)
                     for e in entries:
                         tick(stage, e['day'])
+            if 'lessons' in stages and not self.stopped:
+                for e in entries:
+                    if not e['classroom_arm'] and not self.finished('accumulated_lessons', e['day']):
+                        self.guarded('accumulated_lessons', e)
             if 'lessons' in stages and role == 'discovery' and not self.stopped and not self.finished('lessons', key):
                 self.lessons(key, entries)
             # after the lessons: the three-way exchange of each arm day, its voice (not wired), the school knowledge

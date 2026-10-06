@@ -1,5 +1,10 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+**Next step-2 slice:** non-classroom days now call the existing accumulated-claim scientific reader on their own
+completed search before following batch work. It reuses the lesson launcher/held lane and publishes results through
+the existing brain writer. Source/syntax checked only; no runtime verification. Cross-owner batch coordination,
+broader typed consumers and BOSS integration remain open. CCode's Step #3 source-coverage assignment is separate.
+
 **Latest continuation:** The step-2 handoff now records the authorized learner-owned journal read and wired external
 reader for SOCRATIC/VERIFY (source only), plus Greg's all-plane discovery mission and the R4 build-document BOSS role.
 The BOSS retains mathematics, representation supervision, targets, masks, controls and training responsibilities;
