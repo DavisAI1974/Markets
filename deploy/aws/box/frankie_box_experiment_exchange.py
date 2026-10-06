@@ -32,9 +32,10 @@ HISTORICAL_LESSONS_V1 written by frankie_box_scientific_teacher.py), one item, t
     orientation only (R06, R14).
   3 Frankie (his code, frankie_box_classroom_code.exchange_reply): per item resolved in his own words (R08) or kept as a
     hypothesis (R06), remaining disagreement stated explicitly, no future-outcome claim (R02). Jev's claims are labelled
-    claims (R11); Jev takes no seat, and Frankie gives no reply to them: the lessons wall ("neither ever carries the
-    other's claims") keeps Jev's claims out of Frankie's replies, his view and his brain; the teachers' turns on them stay
-    in the full exchange of this receipt.
+    claims (R11); Jev takes no seat, and Frankie gives no reply to the raw claims in this exchange. The blind wall keeps
+    Jev's untested claims out of Frankie's reply/view. After Jev's own claims are sealed and the scientific teacher tests
+    them, that tested result is filed separately into Frankie's brain as <day>-jev-tested (Greg, 2026-10-06: no knowledge
+    handicap after the independent claim is fixed). The teachers' turns on raw Jev claims stay in the full exchange.
 
 Every turn carries its author (R11) and a voice-ready turn list (voice_turns: seat, author, text, and every value the
 text cites with the sha256 of the file it came from), the input the later 'voice' stage is given
@@ -75,8 +76,9 @@ AUTHOR_LABEL = {
 BOSS_AUTHOR = "the BOSS teacher's code (its own Dipole rows of the day; no model)"
 SCIENCE_AUTHOR = "the scientific teacher's code (the experiment's search counts; no model)"
 WHOLE_DAY = 'whole-day'
-JEV_WALL = ("Jev's claims stay out of Frankie's replies, his view and his brain (the lessons wall: neither ever carries "
-            "the other's claims); the teachers' turns on them stay in the full exchange of the receipt")
+JEV_WALL = ("Jev's raw claims stay out of Frankie's replies and exchange view while Jev is blind; after Jev's own claim "
+            "is sealed and scientifically tested, the tested result may enter Frankie's brain separately as jev-tested; "
+            "the teachers' turns on raw Jev claims stay in the full exchange of the receipt")
 
 
 def sha256_bytes(data):
