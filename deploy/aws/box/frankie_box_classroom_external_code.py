@@ -368,12 +368,33 @@ def _section(visible, dipole_visible, independent_evidence=None):
             questions, points, 'table counts withheld in GUIDED (unknown; not inferred from selected series)')
 
 
-def answers(visible, *, dipole_visible=None, learner_context=None, independent_evidence=None):
+def answers(visible, *, dipole_visible=None, learner_context=None, independent_evidence=None,
+            knowledge=(), school=()):
     """All four external ledgers: TEACH transcribed from the shown evidence; GUIDED computed from the visible known
     values, row runs and (when supplied) the V1 classroom's Dipole observations. `learner_context` (the classroom's
-    legal-knowledge and school reproductions) is carried into the review text, never into the ledgers' facts."""
+    legal-knowledge and school reproductions) stays separate from current facts. External prior findings use the same
+    recognition calculation against this section's lawful current pairs and enter their interpretations."""
     pre = _pre(visible)
     series, review, basis, mode_questions, points, absent_text = _section(visible, dipole_visible, independent_evidence)
+    import frankie_box_classroom_code as K
+    sources, external_listed = list(knowledge), []
+    # Earlier school files already retain complete external answers. Project just their findings;
+    # do not rebuild the school or treat its other-day observations as today's evidence.
+    for row, doc in school:
+        for item in (doc.get('sections', {}).get('frankie_classwork') or {}).get('items') or []:
+            if item.get('name') == 'external_answers' and not item.get('inline'):
+                external_listed.append(dict(day=row['day'], source=item, school_sha256=row['sha256'],
+                    reason='external school answers are a retained pointer; finding bytes are not supplied here'))
+            content = item.get('content')
+            if item.get('inline') and isinstance(content, dict) and content.get('schema') == SCHEMA:
+                findings = (content.get('ledgers') or {}).get('external_novel_findings') or []
+                sources.append(dict(label='school external findings', day=row['day'], kind='school',
+                                    path=item.get('path') or row.get('file'), sha256=item['sha256'],
+                                    content=dict(findings=findings, school_sha256=row['sha256'])))
+    external_knowledge = K.stage_knowledge_reproduction(None, sources,
+        evidence=dict(components=[], relationship_review=review), relationship_kind='EXTERNAL_RELATIONSHIP')
+    external_knowledge['listed'].extend(external_listed)
+    prior_checks = K._knowledge_notes({'external': external_knowledge})
     by_relation, reported, not_reported = {}, 0, {}
     for p in review:
         by_relation[p['direction_relation']] = by_relation.get(p['direction_relation'], 0) + 1
@@ -414,6 +435,9 @@ def answers(visible, *, dipole_visible=None, learner_context=None, independent_e
         correlation_review += (f' Legal learner knowledge was applied before these answers ({checks} individual checks, '
                                f'{listed} inputs listed as not evaluated by the classroom check); it is bound to the Dipole '
                                'classroom\'s pairs and components and alters no external fact here.')
+    correlation_review += (' External accumulated-finding checks, each with its source and retained scope: '
+                           + json.dumps(dict(external_knowledge, checks=prior_checks), sort_keys=True, default=str)
+                           + '. These are current pattern comparisons, not new independent scientific confirmations.')
     teachback = dict(
         schema=TEACHBACK_SCHEMA, teacher_message_hash=pre['teacher_message_hash'],
         components=[_component(s, basis) for s in series],
@@ -428,5 +452,10 @@ def answers(visible, *, dipole_visible=None, learner_context=None, independent_e
         unresolved_questions=questions, relationship_pairs_considered=len(review), future_outcome_claimed=False)
     scan = [dict(left=p['left'], right=p['right'], direction_relation=p['direction_relation'],
                  correlation_interpretation=_pair_text(p, basis), developing_structure=None) for p in review]
+    for pair in scan:
+        checks = [c for c in prior_checks if set(c.get('pair') or []) == {pair['left'], pair['right']}]
+        if checks:
+            pair['correlation_interpretation'] += (' Prior findings applied to this pair: '
+                                                   + json.dumps(checks, sort_keys=True, default=str))
     return dict(external_teachback=teachback, external_value_review=[_values(s) for s in series],
                 external_relationship_scan=scan, external_novel_findings=findings)

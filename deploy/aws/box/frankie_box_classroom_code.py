@@ -620,13 +620,13 @@ def school_reproduction(visible, school):
                      'for scientific checking; checked single-occurrence findings receive equal treatment (R06)')
 
 
-def stage_knowledge_reproduction(visible, knowledge):
-    """Apply legally supplied stage findings to today's Dipole evidence; other scopes stay explicitly unmeasured.
+def stage_knowledge_reproduction(visible, knowledge, *, evidence=None, relationship_kind='DIPOLE_RELATIONSHIP'):
+    """Apply legal stage findings to current Dipole evidence or the caller's lawful external pair view.
 
     This learner check never substitutes for the scientific teacher's lag/condition/equation tests. Full source
     documents are input, not version-only witnesses. No prior claim is relabelled as today's observation.
     """
-    pre = _evidence(visible)
+    pre = _evidence(visible) if evidence is None else evidence
     review = {(p['left'], p['right']): p for p in pre.get('relationship_review') or []}
     components = {c['name']: c for c in pre['components']}
     checks, sources, listed = [], [], []
@@ -654,7 +654,7 @@ def stage_knowledge_reproduction(visible, knowledge):
             found = True
             binding = dict(source_label=source['label'], source_day=source['day'], source_kind=source['kind'],
                            source_sha256=source['sha256'], address=address, finding=finding)
-            refs = [r for r in finding.get('evidence_refs') or [] if r.get('kind') == 'DIPOLE_RELATIONSHIP']
+            refs = [r for r in finding.get('evidence_refs') or [] if r.get('kind') == relationship_kind]
             pairs = [(r.get('left'), r.get('right')) for r in refs]
             pair = (finding.get('scope') or {}).get('pair')
             component = (finding.get('scope') or {}).get('component')
@@ -670,7 +670,7 @@ def stage_knowledge_reproduction(visible, knowledge):
                 pairs.append((finding['x'], finding['y']))
             if not pairs and not component:
                 checks.append(dict(binding,
-                                   result='not_measurable', reason='the finding has no Dipole pair binding'))
+                                   result='not_measurable', reason='the finding has no %s pair binding' % relationship_kind))
             for left, right in pairs:
                 today = review.get((left, right)) or review.get((right, left))
                 measured = today is not None and today.get('co_movement') is not None

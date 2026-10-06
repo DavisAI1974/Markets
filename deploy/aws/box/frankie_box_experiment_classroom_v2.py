@@ -302,7 +302,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         summary = phase('summary', lambda: K.summary_answer(visible, outputs, learner_context=learner_context))
         ext_ledgers = phase('external_answers', lambda: KX.answers(
             ext_visible, dipole_visible=visible, learner_context=learner_context,
-            independent_evidence=independent_external))
+            independent_evidence=independent_external, knowledge=knowledge, school=school))
     except (K.ModeNotAnswerable, KX.ModeNotAnswerable) as error:
         refusal = dict(schema=SCHEMA, day=day, status='refused', mode=mode, reason=str(error),
                        listed='SOCRATIC/VERIFY require the learner-owned sealed-journal/day-file reader; '
@@ -325,10 +325,13 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                            school_documents=school, school_listed=school_listed,
                                            school_sources=reproduction['school_days_read'],
                                            learner_reading=learner_reading,
-                                           applied_to=['component_answer', 'summary_answer']))
+                                           applied_to=['component_answer', 'summary_answer', 'external_answers']))
     _dump(d / 'ledgers.json', built['ledgers'])
     _text(d / 'classroom.md', C.render_markdown(built['ledgers'], built['dropped_findings']))
     _dump(d / 'external-code-answers.json', dict(schema=KX.SCHEMA, rules=rules_witness, ledgers=ext_ledgers, model_calls=0))
+    _dump(d / 'external-novel-findings.json', dict(schema='FRANKIE_EXTERNAL_FINDINGS_V1', day=day,
+          findings=ext_ledgers['external_novel_findings'],
+          source=dict(path=str(d / 'external-code-answers.json'), sha256=_sha256(d / 'external-code-answers.json'))))
 
     # ---- the 19 components and 171 pairs: exactly the V1 arm's calls
     request_sha256 = digest(request)
@@ -381,6 +384,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         additions = [
             ('classroom-external.md', d / 'classroom-external.md'),
             ('classroom-findings.json', d / 'novel-findings.json'),
+            ('classroom-external-findings.json', d / 'external-novel-findings.json'),
             ('experiment-directive.json', DIRECTIVE_PATH)]
         if entry.exists():
             manifest, _ = BR._checked_entry(entry)
@@ -404,7 +408,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             manifest['entries'] = [e for e in manifest['entries'] if e['name'] != name]
             manifest['entries'].append(dict(name=name, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest(),
                 source=str(source), include=True, kind=('Frankie classroom claims, source-bound; scientific checking follows'
-                if name == 'classroom-findings.json' else "the experiment's directive (Greg): what we are shooting for")))
+                if name in ('classroom-findings.json', 'classroom-external-findings.json')
+                else "the experiment's directive (Greg): what we are shooting for")))
         _dump(manifest_path, manifest)
         for path in staging_entry.iterdir():
             if path.is_file():

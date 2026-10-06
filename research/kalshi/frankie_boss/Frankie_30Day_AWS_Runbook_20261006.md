@@ -1,5 +1,10 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+**External findings continuation:** existing external classroom discoveries now enter immediate brain publication,
+actual external-pair recognition and the existing scientific reader's explicitly labelled directional projection.
+Full source/scope is retained; old Dipole-only lessons cannot silently satisfy the expanded claim set. Source/syntax
+only, no E2E. See the step-2 handoff for the exact scientific limits and remaining gaps.
+
 **Next step-2 slice:** non-classroom days now call the existing accumulated-claim scientific reader on their own
 completed search before following batch work. It reuses the lesson launcher/held lane and publishes results through
 the existing brain writer. Source/syntax checked only; no runtime verification. Cross-owner batch coordination,

@@ -1737,7 +1737,8 @@ class Run:
                                                                        'Jev or Frankie claims for the days of this batch')
         results = []
         for name, env in calls:
-            written = self.lessons_written(name, [e['day'] for e in searched])
+            written = self.lessons_written(name, [e['day'] for e in searched],
+                                           frankie_ledgers=env.get('FRANKIE_LEDGERS'))
             if written:                           # already taught: a second call would decline (duplicate data)
                 import frankie_box_scientific_teacher as ST
                 for path in written:
@@ -1752,7 +1753,7 @@ class Run:
                            searched_days=[e['day'] for e in searched],
                            reason='%d teacher call(s) failed' % len(bad) if bad else None)
 
-    def lessons_written(self, name, searched_days):
+    def lessons_written(self, name, searched_days, *, frankie_ledgers=None):
         """The lessons files a call of this batch already wrote (the scientific teacher's own names), or []."""
         if name == 'historical':
             path = self.historical_lessons(searched_days)
@@ -1760,6 +1761,11 @@ class Run:
         kind, _, day = name.partition('-')
         if kind == 'frankie':
             path = LESSONS_ROOT / 'frankie' / ('%s-frankie.json' % day)
+            if path.is_file() and frankie_ledgers is not None:
+                import frankie_box_scientific_teacher as ST
+                current = ST.frankie_claims(frankie_ledgers, day)
+                if json.loads(path.read_bytes()).get('claims_sha256') != current['claims_sha256']:
+                    raise ValueError('retained Frankie lessons do not cover the current Dipole/external claim set; preserved')
             return [path] if path.is_file() else []
         return sorted((LESSONS_ROOT / 'jev').glob('%s-*.json' % day)) if kind == 'jev' else []
 

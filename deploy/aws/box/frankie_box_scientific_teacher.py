@@ -106,12 +106,31 @@ def historical_claims(path):
 
 
 def frankie_claims(path, day):
-    """Only the novel findings of Frankie's classroom ledgers (R09: nothing else of his is read)."""
+    """Only Dipole findings and the sibling source-bound external-finding projection cross R09."""
     raw = Path(path).read_bytes()
     ledgers = json.loads(raw)
     findings = ledgers.get('dipole_novel_findings') or []
+    external = []
+    projection_path = Path(path).with_name('external-novel-findings.json')
+    projection = None
+    source_path = Path(path).with_name('external-code-answers.json')
+    if projection_path.is_file() or source_path.is_file():
+        source_raw = source_path.read_bytes()
+        source_doc = json.loads(source_raw)
+        if source_doc.get('schema') != 'FRANKIE_BOX_CLASSROOM_EXTERNAL_CODE_V1':
+            raise ValueError('external classroom source schema differs')
+        external = source_doc['ledgers']['external_novel_findings']
+        if (not isinstance(external, list) or
+                any(f.get('schema') != 'FRANKIE_DIPOLE_EXTERNAL_NOVEL_FINDING_V1' for f in external)):
+            raise ValueError('external finding schema differs')
+        projection = dict(schema='FRANKIE_EXTERNAL_FINDINGS_V1', day=day, findings=external,
+                          source=dict(path=str(source_path), sha256=sha256_bytes(source_raw)))
+        # Earlier V2 classrooms already retained the findings in this source. Read the same
+        # legal subset in place when their separate projection file predates this wiring.
+        if projection_path.is_file() and json.loads(projection_path.read_bytes()) != projection:
+            raise ValueError('external finding projection differs from its retained source/day')
     claims = []
-    for f in findings:
+    for is_external, f in [(False, f) for f in findings] + [(True, f) for f in external]:
         refs = f.get('evidence_refs') or []
         series = [x for r in refs for x in (r.get('left'), r.get('right')) if x]
         premise = f.get('premise') or ''
@@ -121,12 +140,23 @@ def frankie_claims(path, day):
         if same and opposite:
             s, o = int(same.group(1)), int(opposite.group(1))
             direction = 'same' if s > o else 'opposite' if o > s else None
-        claims.append(dict(id=f.get('finding_id'), statement=premise, kind='novel_finding', series=series,
+        claim_id = 'external:' + f['finding_id'] if is_external else f.get('finding_id')
+        claims.append(dict(id=claim_id, statement=premise,
+                           kind='external_novel_finding' if is_external else 'novel_finding', series=series,
                            direction=direction, direction_text='step counts in the finding: same %s, opposite %s' % (
                                same.group(1) if same else '?', opposite.group(1) if opposite else '?'),
                            lag=None, cells=[], day_made=day, source_claim=f))
-    return dict(author='frankie', stamp=None, day=day, claims_sha256=sha256_bytes(json.dumps(findings, sort_keys=True).encode()),
-                source=str(path), source_note='only dipole_novel_findings read (R09)', claims=claims)
+        if is_external:
+            claims[-1].update(kind='external_finding_direction_projection',
+                statement='Directional projection only of the external finding: ' + premise,
+                projection_scope=dict(tested='claimed step direction against the existing scoped search counts',
+                    not_tested='the original endpoint-versus-step structure on the classroom axis; '
+                               'native search counts do not by themselves verify that complete structure'))
+    # Preserve the old Dipole-only identity when no external projection exists. A V2 claim set binds both.
+    bound = dict(dipole=findings, external=projection) if projection is not None else findings
+    return dict(author='frankie', stamp=None, day=day, claims_sha256=sha256_bytes(json.dumps(bound, sort_keys=True).encode()),
+                source=str(path), source_note='only novel findings; external IDs are namespaced; private answers excluded (R09)',
+                claims=claims)
 
 
 def load_searches(dirs):

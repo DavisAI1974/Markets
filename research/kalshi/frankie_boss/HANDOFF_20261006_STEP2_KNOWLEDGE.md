@@ -122,6 +122,36 @@ had published the right one. Existing day receipt packaging includes `days/<day>
 The first recovery handoff explicitly assigns cross-owner scientific batch scheduling to #4/#8; it remains there,
 with full owner-local evidence required. No duplicate scheduler, remote giant-file copy or silent subset was added.
 
+### External findings enter actual learner/scientific consumers
+
+Further source audit found an existing producer, not a need for another discovery algorithm:
+`frankie_box_classroom_external_code.answers` already emits `external_novel_findings` (endpoint-versus-step patterns).
+The reports and school retained them, but the immediate brain publication only carried the external Markdown, the
+learner reproduction selected Dipole relationship references, and `frankie_claims` extracted only Dipole findings.
+
+- The classroom now publishes a source-bound `external-novel-findings.json` projection and includes it whole in the
+  existing brain entry as `classroom-external-findings.json`. It carries the actual findings and their source hash,
+  not private trade reasoning or host grading. Existing saved-phase/publication identities remain in force.
+- External answers reuse `stage_knowledge_reproduction` and `_recognize_pattern` against their already computed lawful
+  external-pair review. Current evidence is computed once by the existing section reader. Actual prior findings reach
+  each pair's interpretation and the teachback with source/scope/check results; unavailable school pointers are listed.
+  Older school external answers can supply their retained findings directly. There is no extra event walk or model call.
+- `frankie_box_scientific_teacher.frankie_claims` reads this legal projection (or the identical subset of an older V2
+  external-answer file in place) alongside Dipole novelty. External IDs are namespaced. Both inputs bind the claims hash;
+  when no external source exists, the old Dipole-only hash remains unchanged. The existing native search/scientific
+  test and lesson publication carry these claims into completed knowledge and both teacher exchange seats.
+- Be precise about the tested scope: the existing scientific reader tests the directional projection on the native
+  search's rows. External projections are explicitly labelled as such, retaining the full original finding. That test
+  does not verify the original endpoint-versus-step structure on the different classroom axis. Current classroom
+  recognition evaluates that structure with the existing predicate; neither path is new independent confirmation.
+- Reuse now checks the current Dipole/external claim-set hash. Older Dipole-only lesson files cannot silently satisfy
+  a request for the expanded set. A mismatch refuses and preserves the original artifacts; this slice does not migrate
+  finished lessons or overwrite them. Prepare the revised code/plan before an authorized run.
+
+Python compilation and diff checks only; no data/runtime test. #2 remains open for the remaining typed consumers and
+full BOSS integration reconciliation. CCode's search/source files, search mathematics, original BOSS targets/masks,
+classroom grading/progression, Jev walls and the preserved draft were not changed by this slice.
+
 ## Ordered checklist
 
 - [x] 1. Linux ownership and retained-day save/resume — source-built, runtime unverified.

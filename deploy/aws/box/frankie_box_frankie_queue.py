@@ -530,7 +530,7 @@ def frankie_lessons(run, e):
     ledgers = Path(c['classroom']) / 'ledgers.json' if c and c.get('classroom') else None
     if ledgers is None or not ledgers.is_file():
         return run.record('frankie_lessons', day, 'skipped', reason='no ledgers.json in the day\'s classroom (%s)' % ledgers)
-    written = run.lessons_written('frankie-%s' % day, [])
+    written = run.lessons_written('frankie-%s' % day, [], frankie_ledgers=ledgers)
     if written:
         import frankie_box_scientific_teacher as ST
         for path in written:
@@ -547,7 +547,7 @@ def frankie_lessons(run, e):
                           dict(FRANKIE_LEDGERS=ledgers, FRANKIE_DAY=day, SEARCHES=searches,
                                BRAIN=run.plan.get('brain') or str(X.BRAIN)))
     cpu = getattr(run, '_cpu', {}).pop(('lessons', day), None)
-    written = run.lessons_written('frankie-%s' % day, [])
+    written = run.lessons_written('frankie-%s' % day, [], frankie_ledgers=ledgers)
     if cpu and cpu['status'] == 'waiting' and not written:
         return run.record('frankie_lessons', day, 'waiting', exit_code=code, log=log, cpu_booking=cpu, reason=cpu['line'])
     if code != 0 or not written:
