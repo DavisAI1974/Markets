@@ -23,6 +23,10 @@ attachment (name, sha256, bytes, path, S3 key; not copied into his corpus, the s
 Wednesday takes PREVIOUS = Tuesday's work/classroom: the V1 history and grade as the V1 arm does, and the external
 history and grade the same way (only the correction ids travel, rule R10).
 
+Recovery retains the full package, learner inputs and each completed operation in local phase files. A stop finishes
+the active operation, saves its result and returns 75; resume loads it without repeating its calculations. The final
+receipt is published after histories and the complete brain entry. completion.json alone is not a finished stage.
+
 THE SCHOOL (Greg, 2026-09-29): before the answers are filed, the classroom reads Frankie's school knowledge base, every
 EARLIER classroom day's <brain>/school/<day>.json checked against its index row (frankie_box_brain.school_rows; a missing
 or changed file is listed, never read), and Frankie's code checks each hypothesis filed there on today's TEACH evidence
@@ -34,6 +38,8 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
+import signal
 import pickle
 import sys
 import time
@@ -63,8 +69,20 @@ def _sha256(path):
     return h.hexdigest()
 
 
+def _bytes(path, raw):
+    path = Path(path)
+    if path.exists() and path.read_bytes() == raw:
+        return
+    from frankie_box_durable import write_bytes
+    write_bytes(path, raw)
+
+
+def _text(path, text):
+    _bytes(path, text.encode('utf-8'))
+
+
 def _dump(path, body):
-    Path(path).write_text(json.dumps(body, indent=1, sort_keys=True, default=str))
+    _text(path, json.dumps(body, indent=1, sort_keys=True, default=str))
 
 
 DIRECTIVE_PATH = ROOT / 'research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json'
@@ -86,23 +104,37 @@ def _attach_to_brain_entry(entry_dir, classroom_external_md, day_file, day_sha, 
     manifest = json.loads(manifest_path.read_bytes())
     data = Path(classroom_external_md).read_bytes()
     name = 'classroom-external.md'
-    with (Path(entry_dir) / name).open('xb') as f:
-        f.write(data)
+    _bytes(Path(entry_dir) / name, data)
+    manifest['entries'] = [e for e in manifest['entries'] if e['name'] != name]
     manifest['entries'].append(dict(name=name, bytes=len(data), sha256=hashlib.sha256(data).hexdigest(),
                                     source=str(classroom_external_md), include=True,
                                     kind="the Dipole classroom's external section: Frankie's own teach-back of his historical "
                                          "data points beside the 19 dimensions for this cycle"))
     receipt = json.loads(Path(day_receipt).read_bytes()) if day_receipt and Path(day_receipt).is_file() else {}
-    manifest.setdefault('attachments', []).append(dict(
+    manifest['attachments'] = [e for e in manifest.get('attachments', []) if e['name'] != 'day-external.json']
+    manifest['attachments'].append(dict(
         name='day-external.json', sha256=day_sha, bytes=Path(day_file).stat().st_size, path=str(day_file),
         s3_key=receipt.get('s3_key'), brain_attachment=f'{day}-external', schema='FRANKIE_DAY_EXTERNAL_V1', included=False,
         note='the day file of his historical data points, listed (not copied into his reading corpus); every reader of '
              'the ingest reads it through operations/frankie_day_external.AsOfReader at its own cutoff'))
-    manifest_path.write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    _dump(manifest_path, manifest)
     return manifest
 
 
 def run(day, calculations, teacher_rows, previous, brain, day_external, day_external_sha256):
+    requested = [False]
+    previous_handler = signal.signal(signal.SIGTERM, lambda *_: requested.__setitem__(0, True))
+    stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    def save_requested():
+        return requested[0] or bool(stop_file and Path(stop_file).exists())
+    try:
+        return _run(day, calculations, teacher_rows, previous, brain, day_external, day_external_sha256,
+                    save_requested=save_requested)
+    finally:
+        signal.signal(signal.SIGTERM, previous_handler)
+
+
+def _run(day, calculations, teacher_rows, previous, brain, day_external, day_external_sha256, *, save_requested):
     from research.kalshi.frankie_boss import dipole_classroom_final_review as F
     from research.kalshi.frankie_boss import dipole_classroom_session as S, dipole_classroom_resolution as R
     from research.kalshi.frankie_boss import dipole_classroom_external as EXT, dipole_classroom_v2 as V2
@@ -110,6 +142,7 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
     from research.kalshi.frankie_boss.frankie_principal_adapter import digest, json_form
     C, K, BR = _box('frankie_box_classroom'), _box('frankie_box_classroom_code'), _box('frankie_box_brain')
     KX = _box('frankie_box_classroom_external_code')
+    LS = _box('frankie_box_lane_state')
 
     calculations, teacher_rows = Path(calculations), Path(teacher_rows)
     work, out = calculations / 'work', calculations / 'out'
@@ -119,11 +152,10 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
     if not (work / 'derivation-digest-full.md').is_file():
         raise SystemExit('the day\'s ROOT ran without the digest; the classroom day needs DIGEST=on (the brain entry takes it)')
     d = work / 'classroom'
-    if (d / 'completion.json').exists():
-        raise SystemExit('%s already holds this day\'s classroom (duplicate data declines)' % d)
     entry = Path(brain) / BR.entry_name(day, '00')
-    if entry.exists():
-        raise SystemExit('the brain already holds %s (duplicate data declines, R16)' % entry)
+    state_path = d / 'phase-state.pkl'
+    if entry.exists() and not state_path.exists():
+        raise SystemExit('the brain already holds %s without this classroom continuation (duplicate data declines, R16)' % entry)
 
     # the day file: given (path + sha256) or beside the sealed ingest the teacher rows were walked from
     teacher_receipt = json.loads((teacher_rows / 'receipt.json').read_bytes())
@@ -161,13 +193,52 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
         else:
             external_carried = dict(directory=str(prev), listed='the previous classroom day has no external section '
                                     '(it ran before V2); the external section starts without a prior correction')
-    started = time.time()
+    from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state, TeacherSaved
+    rules, rules_witness = K.rules()
+    identity = dict(day=day, calculations=str(calculations), brain=str(Path(brain)),
+                    root_receipt=_sha256(calculations / 'calculations-receipt.json'),
+                    teacher_receipt=_sha256(teacher_rows / 'receipt.json'), attachment=attachment_sha,
+                    day_file=str(day_file), day_sha256=day_sha, previous=carried, previous_external=external_carried,
+                    directive=_sha256(DIRECTIVE_PATH), rules=rules_witness,
+                    producers={m.__name__: _sha256(m.__file__) for m in (F, S, R, EXT, V2, C, K, KX)})
+    state = _load_raw_state(state_path) if state_path.exists() else dict(identity=identity, started=time.time(), phases={})
+    phase_directory = d / 'saved-phases'
+    phase_directory.mkdir(exist_ok=True)
+    if state['identity'] != identity:
+        raise ValueError('saved classroom source, previous class, directive or destination changed')
+    def save():
+        _save_raw_state(state_path, state)
+    def stop():
+        if save_requested():
+            save()
+            raise TeacherSaved('classroom saved every completed operation and its full continuation state')
+    def phase(name, operation):
+        stop()
+        path = phase_directory / (hashlib.sha256(name.encode()).hexdigest() + '.pkl')
+        if path.exists():
+            retained = _load_raw_state(path)
+            if retained['name'] != name or retained['identity'] != identity:
+                raise ValueError('saved classroom operation belongs to another continuation')
+            value = retained['value']
+        else:
+            if name in state['phases']:
+                raise ValueError('saved classroom operation is missing; refuse recalculation')
+            value = operation()
+            _save_raw_state(path, dict(identity=identity, name=name, value=value))
+        if name not in state['phases']:
+            state['phases'][name] = path.name
+            save()
+        stop()
+        return value
+    save()
+    stop()
+    started = state['started']
     try:
-        pkg2 = V2.prepare_cycle_v2(p['attachment'], request_id=p['request_id'], cycle_index=0, cycle_count=1,
+        pkg2 = phase('package', lambda: V2.prepare_cycle_v2(p['attachment'], request_id=p['request_id'], cycle_index=0, cycle_count=1,
                                    source_hash=p['source_hash'], as_of=p['as_of'], through_cursor=p['through_cursor'],
                                    history=history, prior_grade=prior_grade, section_directory=teacher_rows,
                                    day_file=day_file, day_file_sha256=day_sha, trading_day=day,
-                                   prior_external_grade=prior_external_grade, built_by='classroom V2')
+                                   prior_external_grade=prior_external_grade, built_by='classroom V2'))
     except EXT.DayExternalRefused as error:
         raise SystemExit('the day file of the historical data points: %s' % error)
     pkg, ext = pkg2['v1'], pkg2['external']
@@ -191,33 +262,36 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
     if jev_path.exists() and jev_path.read_bytes() != jev_raw:
         raise SystemExit('%s exists with other bytes; refused' % jev_path)
     if not jev_path.exists():
-        jev_path.write_bytes(jev_raw)
-    rules, rules_witness = K.rules()
+        _bytes(jev_path, jev_raw)
     names = [c['name'] for c in C.components(visible)]
+    knowledge, school, school_listed = phase('learner_inputs', lambda: (
+        LS.visible_knowledge(day, 'classroom', brain=brain), *LS.learner_school(day, brain=brain)))
     try:
-        outputs = {n: K.component_answer(visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)])
-                   for n in names}
-        summary = K.summary_answer(visible, outputs)
-        ext_ledgers = KX.answers(ext_visible)
+        outputs = {n: phase('component:' + n, lambda n=n: K.component_answer(
+            visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)])) for n in names}
+        summary = phase('summary', lambda: K.summary_answer(visible, outputs))
+        knowledge_reproduction = phase('knowledge_reproduction', lambda: K.stage_knowledge_reproduction(visible, knowledge))
+        ext_ledgers = phase('external_answers', lambda: KX.answers(ext_visible))
     except (K.ModeNotAnswerable, KX.ModeNotAnswerable) as error:
         refusal = dict(schema=SCHEMA, day=day, status='refused', mode=mode, reason=str(error),
                        listed='Frankie\'s code answers TEACH only; this classroom day is refused with the reason, the run goes on')
         _dump(d / 'receipt.json', refusal)
         print(json.dumps(refusal), flush=True)
         return 3
-    school, school_listed = BR.school_rows(brain, before_day=day)
-    reproduction = K.school_reproduction(visible, school)
+    reproduction = phase('school_reproduction', lambda: K.school_reproduction(visible, school))
     school_witness = dict(read=reproduction['school_days_read'],
                           listed=[dict(day=(x.get('row') or {}).get('day'), reason=x['reason']) for x in school_listed],
                           counts_per_earlier_day=reproduction['counts_per_earlier_day'],
                           index=str(Path(brain) / BR.SCHOOL_DIR / 'index.json'))
-    built = C.assemble(visible, outputs, summary)
-    report = C.validate(visible, built['ledgers'])
-    ext_report = EXT.validate_external_ledgers(ext_ledgers, ext['pre_message'])
+    built = phase('assembly', lambda: C.assemble(visible, outputs, summary))
+    report = phase('answer_report', lambda: C.validate(visible, built['ledgers']))
+    ext_report = phase('external_report', lambda: EXT.validate_external_ledgers(ext_ledgers, ext['pre_message']))
     _dump(d / 'code-answers.json', dict(schema=K.SCHEMA, rules=rules_witness, outputs=outputs, summary=summary,
-                                        school=reproduction, model_calls=0))
+                                        school=reproduction, stage_knowledge=knowledge_reproduction, model_calls=0))
+    _dump(d / 'learner-knowledge.json', dict(day=day, stage='classroom', documents=knowledge,
+                                           school_sources=reproduction['school_days_read']))
     _dump(d / 'ledgers.json', built['ledgers'])
-    (d / 'classroom.md').write_text(C.render_markdown(built['ledgers'], built['dropped_findings']))
+    _text(d / 'classroom.md', C.render_markdown(built['ledgers'], built['dropped_findings']))
     _dump(d / 'external-code-answers.json', dict(schema=KX.SCHEMA, rules=rules_witness, ledgers=ext_ledgers, model_calls=0))
 
     # ---- the 19 components and 171 pairs: exactly the V1 arm's calls
@@ -226,30 +300,30 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
     session_id = 'experiment-%s-classroom' % day
     response = dict(built['ledgers'], request_sha256=request_sha256, session_id=session_id,
                     model_identity_as_reported_by_session=MODEL_IDENTITY)
-    teachback, grade = S.grade_initial_response(pkg, response)
-    grade = F.apply_relationship_view_crosscheck(grade, response)
-    novel = F.validate_novel_findings(response.get('dipole_novel_findings'), pkg['pre_message'])
-    novelty = F.investigate_novel_findings(pkg['teacher_key'], novel, mode=mode, learning_policy=pkg['binding'].get('learning_policy'))
-    correction = F.bind_final_resolution_requirement(F.build_final_correction_request(
+    teachback, initial_grade = phase('initial_grade', lambda: S.grade_initial_response(pkg, response))
+    grade = phase('relationship_grade', lambda: F.apply_relationship_view_crosscheck(initial_grade, response))
+    novel = phase('novel_findings', lambda: F.validate_novel_findings(response.get('dipole_novel_findings'), pkg['pre_message']))
+    novelty = phase('novelty_investigation', lambda: F.investigate_novel_findings(pkg['teacher_key'], novel, mode=mode, learning_policy=pkg['binding'].get('learning_policy')))
+    correction = phase('correction', lambda: F.bind_final_resolution_requirement(F.build_final_correction_request(
         original_request_sha256=request_sha256, response=response, grade=grade, key=pkg['teacher_key'], teachback=teachback,
-        novelty_investigation=novelty))
-    parsed = C.parse_correction(json.dumps(K.correction_answer(correction)), correction)
-    reply = C.correction_response(correction, parsed, session_id=session_id, model_identity=MODEL_IDENTITY)
-    base = S.validate_correction_response(correction=correction, response=reply, initial_response=response, grade=grade)
-    ack = R.validate_correction_resolutions(reply.get('dipole_acknowledgement'), grade, base)
-    completion = S.finish(pkg, teachback=teachback, grade=grade, acknowledgement=ack)
-    transcript = F.render_final_transcript(pkg['pre_message'], teachback, novel, correction, ack,
-                                           reply.get('dipole_scientific_exchange'))
+        novelty_investigation=novelty)))
+    parsed = phase('correction_answer', lambda: C.parse_correction(json.dumps(K.correction_answer(correction)), correction))
+    reply = phase('correction_reply', lambda: C.correction_response(correction, parsed, session_id=session_id, model_identity=MODEL_IDENTITY))
+    base = phase('correction_base', lambda: S.validate_correction_response(correction=correction, response=reply, initial_response=response, grade=grade))
+    ack = phase('acknowledgement', lambda: R.validate_correction_resolutions(reply.get('dipole_acknowledgement'), grade, base))
+    completion = phase('completion', lambda: S.finish(pkg, teachback=teachback, grade=grade, acknowledgement=ack))
+    transcript = phase('transcript', lambda: F.render_final_transcript(pkg['pre_message'], teachback, novel, correction, ack,
+                                           reply.get('dipole_scientific_exchange')))
 
     # ---- the external section: the host's exact grade and its correction turn
-    ext_grade = EXT.grade_external(ext['teacher_key'], ext_ledgers)
-    ext_correction = EXT.correction_request(original_request_sha256=request_v2_sha256, session_id=session_id,
-                                            model_identity=MODEL_IDENTITY, grade=ext_grade)
-    ext_parsed = C.parse_correction(json.dumps(K.correction_answer(ext_correction)), ext_correction)
-    ext_reply = C.correction_response(ext_correction, ext_parsed, session_id=session_id, model_identity=MODEL_IDENTITY)
-    ext_ack, ext_completion = EXT.finish_external(binding=ext['binding'], key=ext['teacher_key'], pre=ext['pre_message'],
+    ext_grade = phase('external_grade', lambda: EXT.grade_external(ext['teacher_key'], ext_ledgers))
+    ext_correction = phase('external_correction', lambda: EXT.correction_request(original_request_sha256=request_v2_sha256, session_id=session_id,
+                                            model_identity=MODEL_IDENTITY, grade=ext_grade))
+    ext_parsed = phase('external_correction_answer', lambda: C.parse_correction(json.dumps(K.correction_answer(ext_correction)), ext_correction))
+    ext_reply = phase('external_correction_reply', lambda: C.correction_response(ext_correction, ext_parsed, session_id=session_id, model_identity=MODEL_IDENTITY))
+    ext_ack, ext_completion = phase('external_finish', lambda: EXT.finish_external(binding=ext['binding'], key=ext['teacher_key'], pre=ext['pre_message'],
                                                   ledgers=ext_ledgers, grade=ext_grade, correction=ext_correction,
-                                                  reply=ext_reply, initial_session_id=session_id, model_identity=MODEL_IDENTITY)
+                                                  reply=ext_reply, initial_session_id=session_id, model_identity=MODEL_IDENTITY))
 
     files = dict(teachback=teachback, **{'post-grade': grade}, **{'novel-findings': list(novel)},
                  **{'novelty-investigation': novelty}, **{'correction-request': correction},
@@ -258,28 +332,67 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
                  **{'external-correction-response': ext_reply}, **{'external-acknowledgement': ext_ack},
                  **{'external-completion': ext_completion})
     for name, body in files.items():
-        (d / f'{name}.json').write_text(json.dumps(json_form(body), indent=1, sort_keys=True))
-    (d / 'transcript.md').write_text(transcript)
-    (d / 'classroom-external.md').write_text(EXT.render_markdown(ext_ledgers, ext_grade))
-    (d / 'history.json').write_text(json.dumps(json_form(list(history) + [completion]), indent=1, sort_keys=True))
-    (d / 'external-history.json').write_text(json.dumps(json_form(list(external_history) + [ext_completion]), indent=1,
-                                                        sort_keys=True))
+        _dump(d / f'{name}.json', json_form(body))
+    _text(d / 'transcript.md', transcript)
+    _text(d / 'classroom-external.md', EXT.render_markdown(ext_ledgers, ext_grade))
+    _dump(d / 'history.json', json_form(list(history) + [completion]))
+    _dump(d / 'external-history.json', json_form(list(external_history) + [ext_completion]))
 
-    manifest = BR.write_entry(work, out, brain, '00', day=day)
-    manifest = _attach_to_brain_entry(entry, d / 'classroom-external.md', day_file, day_sha, day_receipt, day)
-    directive_bytes = DIRECTIVE_PATH.read_bytes()
-    with (Path(entry) / 'experiment-directive.json').open('xb') as f:
-        f.write(directive_bytes)
-    manifest['entries'].append(dict(name='experiment-directive.json', bytes=len(directive_bytes),
-                                    sha256=hashlib.sha256(directive_bytes).hexdigest(), source=str(DIRECTIVE_PATH),
-                                    include=True, kind="the experiment's directive (Greg): what we are shooting for"))
-    (Path(entry) / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    def publish_brain():
+        from frankie_box_durable import sync_directory
+        staging_brain = Path(brain) / '.classroom-publication' / day
+        staging_entry = staging_brain / BR.entry_name(day, '00')
+        additions = [
+            ('classroom-external.md', d / 'classroom-external.md'),
+            ('classroom-findings.json', d / 'novel-findings.json'),
+            ('experiment-directive.json', DIRECTIVE_PATH)]
+        if entry.exists():
+            manifest, _ = BR._checked_entry(entry)
+            if manifest.get('day') != day or any((entry / name).read_bytes() != source.read_bytes()
+                                                for name, source in additions):
+                raise ValueError('published classroom brain entry differs from retained work')
+            return manifest
+        manifest_path = staging_entry / 'MANIFEST.json'
+        if manifest_path.exists():
+            try:
+                manifest, _ = BR._checked_entry(staging_entry)
+            except (ValueError, OSError):
+                # Retain an interrupted copy/manifest whole; rebuild only the publication from saved results.
+                manifest = BR.write_entry(work, out, staging_brain, '00', day=day)
+        else:
+            manifest = BR.write_entry(work, out, staging_brain, '00', day=day)
+        manifest = _attach_to_brain_entry(staging_entry, d / 'classroom-external.md', day_file, day_sha, day_receipt, day)
+        for name, source in additions[1:]:
+            raw = source.read_bytes()
+            _bytes(staging_entry / name, raw)
+            manifest['entries'] = [e for e in manifest['entries'] if e['name'] != name]
+            manifest['entries'].append(dict(name=name, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest(),
+                source=str(source), include=True, kind=('Frankie classroom claims, source-bound; scientific checking follows'
+                if name == 'classroom-findings.json' else "the experiment's directive (Greg): what we are shooting for")))
+        _dump(manifest_path, manifest)
+        for path in staging_entry.iterdir():
+            if path.is_file():
+                with path.open('rb') as stream:
+                    os.fsync(stream.fileno())
+        sync_directory(staging_entry)
+        entry.parent.mkdir(parents=True, exist_ok=True)
+        os.rename(staging_entry, entry)
+        sync_directory(entry.parent)
+        sync_directory(staging_brain)
+        return manifest
+    manifest = phase('brain_publication', publish_brain)
+    if not (entry / 'MANIFEST.json').is_file() or json.loads((entry / 'MANIFEST.json').read_bytes()) != manifest:
+        raise ValueError('published classroom brain manifest differs from its saved operation')
     key = ext['teacher_key']
     result = dict(schema=SCHEMA, day=day, status='complete', mode=mode, components=report['components'],
                   observations=report['observations'], pairs=report['pairs'], novel_findings=len(novel),
                   dropped_findings=len(built['dropped_findings']), correction_ids=len(correction.get('correction_ids') or ()),
                   teacher_complete=completion.get('teacher_complete'), completion_hash=completion.get('completion_hash'),
                   carried_from_previous=carried, school_knowledge=school_witness, classroom_rules=rules_witness,
+                  stage_knowledge=dict(path=str(d / 'learner-knowledge.json'),
+                                       sha256=_sha256(d / 'learner-knowledge.json'),
+                                       sources=knowledge_reproduction['sources'],
+                                       checks=len(knowledge_reproduction['checks']), listed=knowledge_reproduction['listed']),
                   teacher_rows=str(teacher_rows),
                   experiment_directive=directive_witness, v1_unchanged=pkg2['v1_unchanged'],
                   external=dict(day_file=dict(path=str(day_file), sha256=day_sha, found=day_source,
@@ -300,7 +413,9 @@ def run(day, calculations, teacher_rows, previous, brain, day_external, day_exte
                                      'V1 model-visible request (unchanged), the external correction names the digest of the '
                                      'V2 request'),
                   brain_entry=str(entry), brain_manifest=manifest, seconds=round(time.time() - started, 1), model_calls=0)
+    result = phase('receipt', lambda: result)
     _dump(d / 'receipt.json', result)
+    stop()
     print(json.dumps(dict((k, v) for k, v in result.items() if k != 'brain_manifest'), sort_keys=True, default=str), flush=True)
     return 0
 

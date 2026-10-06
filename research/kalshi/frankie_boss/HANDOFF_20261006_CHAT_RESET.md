@@ -1,5 +1,7 @@
 # Frankie AWS workflow — new-chat implementation checkpoint
 
+**Latest continuation:** Read `HANDOFF_20261006_STEP1_RECOVERY.md` first. Step #1 is source-built, not runtime-verified; the next step is #2. The earlier checkpoint descriptions below are historical. Pause before #5.
+
 Greg requested this checkpoint to end a drifting chat. Fetch the latest branch and continue from the commit containing this file. Attachments are unnecessary. This is a partially wired implementation, **not a completed or executed workflow**.
 
 Repository: `DavisAI1974/Markets`  

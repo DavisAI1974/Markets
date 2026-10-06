@@ -562,6 +562,7 @@ def class_day(entry, previous, school_day, code_root, commit, log):
     releases or re-books the day's slot.
     """
     run, e = _run_for(entry, code_root, commit, log)
+    run.check_save()
     day = e['day']
     if _slot_live(entry.get('slot_booking')):
         run.slot_booking = entry['slot_booking']
@@ -615,6 +616,7 @@ def class_day(entry, previous, school_day, code_root, commit, log):
     # 3. Test prior/historical/Jev claims on the searches available so far.
     key = run.batch_of(day)
     if key and key.startswith('discovery') and not run.finished('lessons', key):
+        run.check_save()
         batch = [d for d in run.plan['days'] if run.batch_of(d['day']) == key]
         r = run.lessons(key, batch) or {}
     else:
@@ -632,6 +634,7 @@ def class_day(entry, previous, school_day, code_root, commit, log):
     if passed(run, 'frankie_lessons', day):
         r = run.receipt('frankie_lessons', day)
     else:
+        run.check_save()
         r = frankie_lessons(run, e)
     state, why = keep('frankie_lessons', r)
     if state:
@@ -880,7 +883,8 @@ def _book_slot(x, stage, commit):
     re-books between steps, so no other day can take the CPUs while the day is between two steps. Returns (booking id,
     None) or (None, the ledger's waiting/refused reason)."""
     import frankie_box_cores as C
-    b, outcome = C.book('day-run', os.getpid(), dict(day=x['day'], run=x['run'], stage='day-slot-' + stage, commit=commit),
+    b, outcome = C.book('day-run', os.getpid(), dict(day=x['day'], run=x['run'], stage='day-slot-' + stage, commit=commit,
+                                                  cpus=x.get('cpus')),
                         1.0)
     return (b['booking'], None) if b else (None, outcome.get('reason'))
 
@@ -933,11 +937,13 @@ def _finish_day(run, e, code_root, commit, log):
     """
     import frankie_box_experiment as X
     facts = {}
+    run.check_save()
 
     # BOSS teacher: whole journal, every level, day-local rows.
     if X.rows_of(e)[0] is None:
         deadline = time.monotonic() + TEACHER_BOOK_WAIT
         while True:
+            run.check_save()
             t = run.teacher('day-%s' % e['day'], [e]) or {}
             if t.get('status') != 'waiting' or X.rows_of(e)[0] is not None or time.monotonic() > deadline:
                 break
@@ -947,17 +953,21 @@ def _finish_day(run, e, code_root, commit, log):
         if X.rows_of(e)[0] is None:
             return False, facts
     else:
-        facts['teacher'] = dict(status='rows present', rows=str(X.rows_of(e)[0]))
+        t = run.teacher('day-%s' % e['day'], [e])
+        facts['teacher'] = dict(status=t['status'], rows=str(X.rows_of(e)[0]),
+                                brain_entries=t.get('brain_entries'))
 
     if e['classroom_arm'] and os.environ.get('FRANKIE_LANE_MAILBOX'):
         import frankie_box_lane_state as LS
         while True:
+            run.check_save()
             lease = LS.request('class_take', settings=settings_of(run.a))
             if not lease['waiting']:
                 break
             time.sleep(15)
         for f in lease['files']:
             LS.restore_file(f, [X.ROOTS])
+        run.check_save()
         entry = dict(run=run.plan['run'], day=e['day'], settings=settings_of(run.a),
                      plan_sha256=X.plan_digest(run.plan), slot_booking=run.slot_booking)
         state, why, class_facts = class_day(entry, lease['previous'], lease['school_day'], code_root, commit, log)
@@ -972,6 +982,7 @@ def _finish_day(run, e, code_root, commit, log):
         # Greg's settled order: Frankie learns from ROOT + BOSS teacher BEFORE the search tests his resulting claims.
         facts['class_line'] = _after_root(run, e, code_root, commit, log)
         while True:
+            run.check_save()
             cl = entry_of('class', run.plan['run'], e['day'])
             state = (cl or {}).get('state')
             if state in ('done', 'failed') or (cl is None and run.finished('classroom', e['day'])):
@@ -995,6 +1006,7 @@ def _finish_day(run, e, code_root, commit, log):
                 return False, facts
         key = run.batch_of(e['day'])
         if key and key.startswith('discovery') and not run.finished('lessons', key):
+            run.check_save()
             batch = [d for d in run.plan['days'] if run.batch_of(d['day']) == key]
             r = run.lessons(key, batch) or {}
             facts['lessons'] = dict(batch=key, status=r.get('status'), reason=r.get('reason'))
@@ -1003,6 +1015,11 @@ def _finish_day(run, e, code_root, commit, log):
 
     # Jev remains blind: the relay gives him only the governed classroom material, never Frankie's answers.
     if not e['classroom_arm']:
+        for stage in ('classroom', 'jev', 'exchange', 'voice', 'school', 'reports'):
+            r = run.guarded(stage, e) or {}
+            facts[stage] = dict(status=r.get('status'), reason=r.get('reason'))
+            if r.get('status') != 'skipped':
+                return False, facts
         return True, facts
     j = run.guarded('jev', e) or {}
     facts['jev'] = dict(status=j.get('status'), reason=j.get('reason'), material_sent=j.get('material_sent'),
@@ -1073,7 +1090,13 @@ def _sync_root(doc, x, plans):
     import frankie_box_experiment as X
     import frankie_box_root_claims as claims
     if str(x.get('where') or '').startswith('worker:'):
-        return None  # retained day ownership survives a controller interruption
+        held = claims.holder(x['run'], x['day']) if claims.active() else None
+        if held or claims._path(x['run'], x['day']).with_name(x['day'] + '.done.json').exists() or x['state'] == 'done':
+            return None  # retained ownership survives interruption; only an explicit release requeues
+        old_owner = x.get('where')
+        _end_attempt(x, 'claim released', 'the remote owner has explicitly released its claim')
+        x.update(state='queued', where=None, reason='claim of %s released; back at the same queue position' % old_owner)
+        return 'queued'
     if x['run'] not in plans:
         plans[x['run']] = _plan_of(x['run'])
     e = next((d for d in plans[x['run']].get('days') or [] if d['day'] == x['day']), None)

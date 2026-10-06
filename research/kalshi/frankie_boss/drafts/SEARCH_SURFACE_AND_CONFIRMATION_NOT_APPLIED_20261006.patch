@@ -1,0 +1,345 @@
+--- a/deploy/aws/box/frankie_box_experiment_search.py
++++ b/deploy/aws/box/frankie_box_experiment_search.py
+@@ -64,15 +64,10 @@
+ CELL_NAMES = ('session_phase', 'continuity_segment', 'source_day', 'source_role')
+ F_LAST = 128                       # the exchange record flag that closes a group (the same close the frames spool marks)
+ NOT_SEARCHED = (
+-    ('root/work/derived/.rows/input-*.jsonl fields', 'per-event prices, order ids, queue positions, sequence gaps (only per-group '
+-     'counts and sizes by action and side are searched)'),
+-    ('transform pairs', 'x under transform T against y under a different transform other than sign_of_step (only T vs T '
+-     'and T vs sign_of_step are run); transforms not in frankie_box_experiment_transforms.TRANSFORMS'),
+-    ('conditions', 'conditioning on a state (e.g. book regime) before counting'),
++    ('compound conditions', 'joint predicates beyond the supplied individual categorical and numeric-sign states'),
+     ('targets', 'targets other than the series themselves (e.g. the mid N groups ahead, fills, exhaustion)'),
+-    ('dipole on search-only days', "the teacher's Dipole measurements exist only where a launch ran (the classroom-arm days); "
+-     'on other days they are listed missing (running the teacher alone on CPU is possible but not built)'),
+-    ('claims', "Frankie's and Jev's claims (the scientific teacher's turn tests them; built next)"),
++    ('symbolic discovery', 'existing odcore.symbolic fitting engine is preserved; its native-field experiment input is not yet wired'),
++    ('scoped claims', 'the scientific-teacher claim reader exists; exact claimed condition/lag/scope matching is unfinished'),
+ )
+ 
+ 
+@@ -155,11 +150,12 @@
+     return np.asarray([values[order[i]] if i >= 0 else None for i in positions], dtype=object)
+ 
+ 
+-def build_series(day_dir, log):
++def build_series(day_dir, log, workers=15):
+     """The axis and every series on it. Returns (axis_time, series {name: np.ndarray}, cells {name: list}, sources, notes)."""
+     import numpy as np
+     import pyarrow as pa
+     import duckdb
++    import frankie_box_experiment_surface as SURFACE
+     rows_dir = day_dir / 'root' / 'work' / 'derived' / '.rows'
+     sources, notes = [], []
+     frames_path = rows_dir / 'frames.jsonl'
+@@ -168,15 +164,22 @@
+     f_num, f_text, f_other, n = columns(unpack_spool(frames_path), 'ts_recv_ns')
+     sources.append(dict(source='frames', path=str(frames_path), rows=n, sha256=sha256_file(frames_path),
+                         numeric=sorted(f_num), text=sorted(f_text), not_searched=f_other))
+-    recv = np.asarray(f_num.pop('ts_recv_ns'), dtype=np.int64)
+-    axis = np.maximum.accumulate(recv)  # exact nanoseconds; no loss of ordering above 2**53
++    recv = np.asarray(f_num['ts_recv_ns'], dtype=np.int64)
++    axis, native_num, native_text, closes, trade_ordinals, native_source, kind_ordinals = \
++        SURFACE.journal_axis(day_dir, columns, workers=workers)
+     backwards = int(np.count_nonzero(np.diff(recv) < 0))
+-    notes.append(dict(axis='F_LAST group closes', groups=n, receive_clock_steps_backwards=backwards))
+-    series = {'frames.' + k: np.asarray(v, dtype=object) for k, v in f_num.items()}
+-    text_cols = {'frames.' + k: v for k, v in f_text.items()}
++    notes.append(dict(axis='native journal ordinal', entries=len(axis), groups=n,
++                      receive_clock_steps_backwards=backwards))
++    sources.append(native_source)
++    series = {'native.' + k: np.asarray(v, dtype=object) for k, v in native_num.items()}
++    text_cols = {'native.' + k: v for k, v in native_text.items()}
++    field_ordinals = {'native.' + k: kind_ordinals[k.split('.', 1)[0]] for k in native_num}
++    series.update({'frames.' + k: SURFACE.ordinal_values(len(axis), closes, v) for k, v in f_num.items()})
++    text_cols.update({'frames.' + k: SURFACE.ordinal_values(len(axis), closes, v).tolist() for k, v in f_text.items()})
+     con = duckdb.connect()
+ 
+-    gates = [dict(source='frames', passed=True, reason='the axis source itself: each value is its own group close')]
++    gates = [dict(source='journal', passed=True, reason='verified native ordinal; each field is its own retained entry'),
++             dict(source='frames', passed=True, reason='each computed result bound to its original APPLIED close ordinal')]
+ 
+     def asof(name, known_at, values_by_col):
+         """Place a source on the axis with asof_values; its leakage gate runs first, on its first numeric column."""
+@@ -197,10 +200,12 @@
+         sources.append(dict(source=spool, path=str(path), rows=count, sha256=sha256_file(path),
+                             numeric=sorted(num), text=sorted(text), not_searched=other))
+         known = num.pop(time_key)
+-        num.pop('ts_event_ns', None), num.pop('ts_event', None)
+-        asof(spool, known, num)
++        positions = closes if spool == 'structures' else trade_ordinals
++        num[time_key] = known
++        for k, values in num.items():
++            series[spool + '.' + k] = SURFACE.ordinal_values(len(axis), positions, values)
+         for k, values in text.items():
+-            text_cols[spool + '.' + k] = asof_values(con, axis, known, values).tolist()
++            text_cols[spool + '.' + k] = SURFACE.ordinal_values(len(axis), positions, values).tolist()
+     inputs = sorted(rows_dir.glob('input-*.jsonl'))
+     if len(inputs) > 1:
+         raise SystemExit('%d INPUT spools in %s (%s): the same records twice would be counted twice (duplicate data '
+@@ -220,7 +225,7 @@
+             flags = record.get('flags')
+             if isinstance(flags, int) and flags & F_LAST:
+                 for k in set(counts) | set(open_group):
+-                    counts.setdefault(k, [0.0] * groups).append(float(open_group.get(k, 0)))
++                    counts.setdefault(k, [0] * groups).append(open_group.get(k, 0))
+                 known.append(record.get('ts_recv'))
+                 groups += 1
+                 open_group = {}
+@@ -229,7 +234,7 @@
+                             after_last_close=dict(records=sum(v for k, v in open_group.items() if not k.endswith('_size')),
+                                                   note='records after the last F_LAST close belong to no closed group; counted here, not placed')))
+         if groups:
+-            counts['total'] = [float(sum(counts[k][g] for k in counts if not k.endswith('_size'))) for g in range(groups)]
++            counts['total'] = [sum(counts[k][g] for k in counts if not k.endswith('_size')) for g in range(groups)]
+             asof('events', known, counts)
+     else:
+         notes.append(dict(source='events', missing=str(rows_dir / 'input-*.jsonl')))
+@@ -303,6 +308,12 @@
+                             series=sorted(ext), absent=absent, missing=body.get('missing')))
+         for name, (known, values) in sorted(ext.items()):
+             asof('external.' + name, known, {'value': values})
++        for name, (known, values) in sorted(SURFACE.external_fields(reader).items()):
++            num, text, other, count = columns((dict(known_at=t, value=v) for t, v in zip(known, values)), 'known_at')
++            num.pop('known_at')
++            asof('external-field.' + name, known, num)
++            for key, col in text.items():
++                text_cols['external-field.' + name + '.' + key] = asof_values(con, axis, known, col).tolist()
+     else:
+         notes.append(dict(source='external', missing=str(external),
+                           reason="no day file of Frankie's 13 points beside the ingest (frankie_box_day_external.sh)"))
+@@ -310,8 +321,9 @@
+     for k, v in text_cols.items():
+         cells[k] = v
+     notes.append(dict(cells_not_yet_used=unused))
+-    log('series: %d on %d groups (%d receive-clock steps backwards), %d cell columns' % (len(series), n, backwards, len(cells)))
+-    return axis, series, cells, sources, notes, gates
++    log('series: %d on %d native entries (%d receive-clock steps backwards), %d cell columns' %
++        (len(series), len(axis), backwards, len(cells)))
++    return axis, series, cells, sources, notes, gates, field_ordinals
+ 
+ 
+ def leakage_gate(con, source, known_at, values):
+@@ -344,7 +356,7 @@
+     return dict(m=sx.size, moves=int(np.count_nonzero(sx)), s=np.fft.rfft(sx), a=np.fft.rfft(np.abs(sx)))
+ 
+ 
+-def couple(fx, fy, lags):
++def couple(fx, fy, lags, frozen_lag=None):
+     """The joined teacher's statistic (frankie_box_joined_teacher._pair_block), exactly: counts at the best lag and the
+     circular-shift chance check, from the cached transforms of the sign series of x and y (equal length m)."""
+     import numpy as np
+@@ -352,7 +364,10 @@
+     D = np.rint(np.fft.irfft(np.conj(fx['s']) * fy['s'], m)).astype(np.int64)      # D[k] = sum_t sx[t] * sy[t+k]
+     B = np.rint(np.fft.irfft(np.conj(fx['a']) * fy['a'], m)).astype(np.int64)      # both moving at shift k
+     span = min(lags, m - 1)
+-    lag_values = list(range(-span, span + 1))
++    if frozen_lag is not None and not -span <= frozen_lag <= span:
++        return dict(steps=int(m), beyond_chance=False, not_measurable='the frozen lag is outside this day\'s axis',
++                    best_lag=frozen_lag, lag_profile=[], lag_first=frozen_lag)
++    lag_values = [frozen_lag] if frozen_lag is not None else list(range(-span, span + 1))
+     window = [k % m for k in lag_values]
+     profile = [int(D[k]) for k in window]
+     best = max(range(len(window)), key=lambda i: (abs(profile[i]), -abs(lag_values[i]), lag_values[i]))
+@@ -365,16 +380,18 @@
+         a = np.abs(D).astype(np.float64)
+         try:
+             from scipy.ndimage import maximum_filter1d
+-            wmax = maximum_filter1d(a, size=2 * lags + 1, mode='wrap')
++            wmax = a if frozen_lag is not None else maximum_filter1d(a, size=2 * lags + 1, mode='wrap')
+         except ImportError:
+             wmax = a.copy()
+-            for j in range(1, lags + 1):
++            for j in range(1, 1 if frozen_lag is not None else lags + 1):
+                 wmax = np.maximum(wmax, np.maximum(np.roll(a, j), np.roll(a, -j)))
+         null = wmax[far]
+         null_total, null_reach, null_largest = int(null.size), int((null >= abs(d_best)).sum()), int(null.max())
+     return dict(steps=int(m), x_moves=fx['moves'], y_moves=fy['moves'], best_lag=k_best,
+                 same_way=int((b_best + d_best) // 2), opposite=int((b_best - d_best) // 2), both_moving=b_best,
+                 difference=d_best, lag_profile=profile, lag_first=lag_values[0], null_shifts=null_total,
++                both_moving_profile=[int(B[k]) for k in window],
++                null_at_or_beyond_profile=[int((null >= abs(d)).sum()) if far.any() else 0 for d in profile],
+                 null_at_or_beyond=null_reach, null_largest=null_largest, null_exclusion=exclusion,
+                 beyond_chance=bool(null_total > 0 and null_reach == 0))
+ 
+@@ -386,9 +403,11 @@
+     path = os.environ.get('FRANKIE_LANE_STOP_FILE')
+     return bool(path and Path(path).is_file())
+ 
++
+ def _save_state(path, body):
+     from research.kalshi.frankie_boss.parallel_teacher import _save_raw_state
+     _save_raw_state(Path(path), body)
++
+ 
+ def _load_state(path, identity):
+     from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state
+@@ -396,6 +415,7 @@
+     if state['identity'] != identity:
+         raise ValueError('saved search state belongs to different inputs or search code: %s' % path)
+     return state
++
+ 
+ def _run_pending(context, workers, function, jobs):
+     """Keep only the held lane's workers in flight; a stop drains each submitted operation."""
+@@ -414,6 +434,7 @@
+             yield job, result.get()
+             fill()
+ 
++
+ def _step_job(args):
+     identity = dict(search=_JOB['identity'], job=args)
+     path = _JOB['recovery'] / ('step-' + hashlib.sha256(json.dumps(args).encode()).hexdigest() + '.pkl')
+@@ -429,8 +450,19 @@
+     import frankie_box_experiment_transforms as T
+     name, tname = args
+     values = _JOB['series'][name]
+-    steps = T.TRANSFORMS[tname](values)
+-    return tname, name, steps, T.unclassified(values, steps)
++    positions = _JOB.get('field_ordinals', {}).get(name)
++    if positions is None:
++        steps = T.TRANSFORMS[tname](values)
++        return tname, name, steps, T.unclassified(values, steps)
++    import numpy as np
++    # A native field's consecutive applicable entries are transformed by the unchanged mathematics, then bound back
++    # to their arrival ordinals. Lag spacing remains the complete journal axis; no compressed conditional clock.
++    applicable = values[positions]
++    local = T.TRANSFORMS[tname](applicable)
++    steps = np.zeros(max(0, len(values) - 1), dtype=np.int8)
++    if len(positions) > 1:
++        steps[np.asarray(positions[1:]) - 1] = local
++    return tname, name, steps, T.unclassified(applicable, local)
+ 
+ 
+ def y_transforms(tx):
+@@ -459,37 +491,52 @@
+         _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=saved['sha256']))
+         return result
+     steps, idx = _JOB['steps'], _JOB['cells'][(cell_col, cell_value)]
+-    pick = (lambda v: v) if idx is None else (lambda v: v[idx])
++    import numpy as np
+     if saved:
+-        sx, fx = saved['sx'], saved['fx']
++        sx, fx, applicable = saved['sx'], saved['fx'], saved['applicable']
+         count, beyond, cursor = saved['count'], saved['beyond'], saved['cursor']
+         if not partial.is_file() or partial.stat().st_size != saved['bytes'] or sha256_file(partial) != saved['sha256']:
+             raise ValueError('unfinished search part differs from saved cursor: %s' % partial)
+     else:
+         if Path(part).exists() or partial.exists():
+             raise ValueError('search part has no matching continuation; retained for recovery: %s' % part)
+-        sx = pick(steps[tx][x])
+-        if sx.size < 2:
+-            result = (part, 0, 0, dict(cell=[cell_col, str(cell_value)], transform=tx, series=x, steps=int(sx.size),
+-                                     reason='fewer than 2 steps of this series in this cell: no step pair to count'))
++        mask = np.ones(steps[tx][x].size, dtype=bool) if idx is None else idx
++        sx = np.where(mask, steps[tx][x], 0)
++        applicable = int(mask.sum())
++        if sx.size == 0 or applicable == 0:
++            result = (part, 0, 0, dict(cell=[cell_col, str(cell_value)], transform=tx, series=x, steps=applicable,
++                                     reason='no applicable step on this original axis; no new test in this cell'))
+             _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=None))
+             return result
+         fx = transforms(sx)
+         count = beyond = cursor = 0
+-    partners = [(ty, y) for ty in y_transforms(tx) if ty in steps for y in sorted(steps[ty])
+-                if y != x and (survivors is None or (tx, x, ty, y, cell_col, cell_value) in survivors)]
++    partners = [(ty, y, lag) for ty in y_transforms(tx) if ty in steps for y in sorted(steps[ty])
++                if not (y == x and tx == ty)
++                and (survivors is None or (tx, x, ty, y, cell_col, cell_value) in survivors)
++                for lag in (survivors[(tx, x, ty, y, cell_col, cell_value)] if survivors is not None else [None])]
+     with partial.open('a' if saved else 'x') as out:
+         for partner_index in range(cursor, len(partners)):
+             if _stop_requested():
+                 out.flush()
+                 os.fsync(out.fileno())
+-                _save_state(state_path, dict(identity=identity, complete=False, sx=sx, fx=fx,
++                _save_state(state_path, dict(identity=identity, complete=False, sx=sx, fx=fx, applicable=applicable,
+                                             count=count, beyond=beyond, cursor=partner_index,
+                                             bytes=partial.stat().st_size, sha256=sha256_file(partial)))
+                 return None
+-            ty, y = partners[partner_index]
++            ty, y, lag = partners[partner_index]
++            stats = couple(fx, transforms(steps[ty][y]), lags, frozen_lag=lag)
++            if not stats.get('not_measurable'):
++                shifted = np.roll(steps[ty][y].astype(np.int64), -stats['best_lag'])
++                predictor = sx.astype(np.int64)
++                difference = int(np.dot(predictor, shifted))
++                both = int(np.dot(np.abs(predictor), np.abs(shifted)))
++                if (difference, both) != (stats['difference'], stats['both_moving']):
++                    raise ValueError('independent integer counts differ from the search FFT counts')
++                stats['double_check'] = dict(method='independent integer dot products on the same frozen axis/mask/lag',
++                                            difference=difference, both_moving=both, passed=True)
+             row = dict(header, x=x, y=y, cell=cell_col, cell_value=cell_value, transform=tx, x_transform=tx,
+-                       y_transform=ty, **couple(fx, transforms(pick(steps[ty][y])), lags))
++                       y_transform=ty, condition_at='predictor arrival ordinal', applicable_steps=applicable,
++                       **stats)
+             out.write(json.dumps(row, sort_keys=True) + '\n')
+             count += 1
+             beyond += row['beyond_chance']
+@@ -524,13 +571,20 @@
+     if day_role == 'confirmation':
+         if not frozen:
+             raise SystemExit('a confirmation day stays untouched until the survivor list is frozen: give --frozen-survivors')
+-        survivors = {(s.get('x_transform', 'sign_of_step'), s['x'], s.get('y_transform', 'sign_of_step'), s['y'],
+-                      s.get('cell', 'whole-day'), s.get('cell_value'))
+-                     for s in json.loads(Path(frozen).read_bytes())['survivors']}
++        survivors = {}
++        for s in json.loads(Path(frozen).read_bytes())['survivors']:
++            if s.get('condition') or s.get('target') not in (None, s.get('y')):
++                raise ValueError('frozen condition/target requires its exact evaluator; confirmation cannot broaden the scope')
++            if not isinstance(s.get('lag'), int):
++                raise ValueError('a frozen survivor must carry its tested integer lag; confirmation cannot select one')
++            key = (s.get('x_transform', 'sign_of_step'), s['x'], s.get('y_transform', 'sign_of_step'), s['y'],
++                   s.get('cell', 'whole-day'), s.get('cell_value'))
++            survivors.setdefault(key, []).append(s['lag'])
+         transform_names = sorted({k[0] for k in survivors} | {k[2] for k in survivors})
+     target = Path(root) / day / ('cycle-' + cycle) / day_role
+     if (target / 'MANIFEST.json').exists():
+         raise SystemExit('%s already searched: the same day is not searched twice (duplicate data declines the run)' % target)
++    import frankie_box_experiment_surface as SURFACE
+     staging = target.parent / (target.name + '.partial')
+     recovery = staging / 'recovery'
+     recovery.mkdir(parents=True, exist_ok=True)
+@@ -539,7 +593,7 @@
+                     data_manifest_sha256=sha256_file(day_dir / 'MANIFEST.json'), lags=lags,
+                     transforms=transform_names, frozen_sha256=sha256_file(frozen) if frozen else None,
+                     code_sha256=sha256_file(__file__), transform_sha256=sha256_file(T.__file__),
+-                    directive=directive_witness())
++                    surface_sha256=sha256_file(SURFACE.__file__), directive=directive_witness())
+     identity_path = recovery / 'identity.pkl'
+     if identity_path.is_file():
+         _load_state(identity_path, identity)
+@@ -557,16 +611,16 @@
+         if _stop_requested():
+             raise SystemExit(75)
+         # This existing source preparation is one operation. A requested stop lets it finish and retains every array.
+-        prepared = build_series(day_dir, log)
++        prepared = build_series(day_dir, log, workers=workers)
+         _save_state(prepared_path, dict(identity=identity, prepared=prepared))
+-    axis, series, cells, sources, notes, gates = prepared
++    axis, series, cells, sources, notes, gates, field_ordinals = prepared
+     if _stop_requested():
+         raise SystemExit(75)
+     names = sorted(series)
+     import multiprocessing
+     context = multiprocessing.get_context('fork')                # the workers share the arrays, no copy
+     _JOB.clear()
+-    _JOB.update(series=series, identity=identity, recovery=recovery)
++    _JOB.update(series=series, field_ordinals=field_ordinals, identity=identity, recovery=recovery)
+     steps, unclassified = {t: {} for t in transform_names}, {t: {} for t in transform_names}
+     step_jobs = [(n, t) for t in transform_names for n in names]
+     for _, result in _run_pending(context, workers, _step_job, step_jobs):
+@@ -579,11 +633,7 @@
+     if cells_path.is_file():
+         cell_index = _load_state(cells_path, identity)['cells']
+     else:
+-        cell_index = {('whole-day', None): None}
+-        for col, values in sorted(cells.items()):
+-            arrived = np.asarray(values[1:], dtype=object)          # a step belongs to the cell of the group it arrives at
+-            for value in sorted({v for v in arrived if v is not None}):
+-                cell_index[(col, value)] = np.nonzero(arrived == value)[0]
++        cell_index = SURFACE.state_masks(series, cells)
+         _save_state(cells_path, dict(identity=identity, cells=cell_index))
+     header = dict(day=day, cycle=cycle, day_role=day_role)
+     jobs = [(str(staging / 'couplings' / ('%04d-%s-%s.jsonl' % (c, tx, hashlib.sha256(x.encode()).hexdigest()[:16]))),

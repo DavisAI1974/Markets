@@ -175,11 +175,18 @@ def held_by(run, day, where, attempt):
     return doc
 
 
+def preparation_identity(state):
+    return {k: state[k] for k in ('day', 'role', 'digest', 'ingest_dir', 'ingestion_receipt',
+            'ingestion_receipt_sha256', 'files', 'frozen_survivors', 'day_external_sha256', 'plan', 'settings')}
+
+
 def act_export(run, plan, day, where, attempt, names):
-    held_by(run, day, where, attempt)
+    held = held_by(run, day, where, attempt)
     st = day_state(run, plan, entry_of(plan, day), ignore_claim=True)
     if st['state'] != 'ready':
         raise SystemExit('the day is no longer ready: %s' % st)
+    if held.get('preparation') and held['preparation'] != preparation_identity(st):
+        raise SystemExit('the retained claim source changed; no export or replacement')
     m = url_map()
     out = {}
     for f in st['files']:
@@ -192,7 +199,9 @@ def act_export(run, plan, day, where, attempt, names):
             if not slot:
                 raise SystemExit('no upload slot for %s' % key)
             started = time.time()
-            digest = T.put_range(slot['url'], f['path'], off, ln)
+            # Completed S3 PUTs are whole objects; the controller checked their byte counts.
+            # The worker still checks the complete file against the retained source SHA before use.
+            digest = None if slot.get('present_bytes') == ln else T.put_range(slot['url'], f['path'], off, ln)
             parts.append(dict(key=key, bytes=ln, sha256=digest, seconds=round(time.time() - started, 1)))
             print('exported %s part %d: %d bytes in %.0f s' % (f['name'], i, ln, parts[-1]['seconds']), flush=True)
         out[f['name']] = dict(path=f['path'], bytes=f['bytes'], sha256=f['sha256'], parts=parts)
@@ -359,11 +368,23 @@ def main():
         if not gate:
             return result(action='claim', claimed=False, state=dict(st, state=why.split(':')[0], reason=why))
         ok, doc = claims.claim(run, day, where, st['attempt'], env.get('COMMIT') or env.get('CODE_COMMIT'),
-                               by='frankie_box_pod_root.py')
+                               by='frankie_box_pod_root.py', preparation=preparation_identity(st))
         if ok:
             Q.root_claimed(run, day, where, st['attempt'], by='frankie_box_pod_root.py claim')
         return result(action='claim', claimed=ok, claim=doc, state=st, root_line=why)
     attempt = env.get('ATTEMPT') or ''
+    if action == 'prepare':
+        held = held_by(run, day, where, attempt)
+        if held.get('commit') != env.get('CODE_COMMIT'):
+            raise SystemExit('preparation must use the retained claim commit')
+        st = day_state(run, plan, entry_of(plan, day), ignore_claim=True)
+        if st['state'] != 'ready':
+            raise SystemExit('retained day is not ready for preparation: %s' % st)
+        if not held.get('preparation') or held['preparation'] != preparation_identity(st):
+            raise SystemExit('claim source binding is missing or changed; original claim retained, no replacement')
+        st['attempt'] = attempt
+        Q.root_claimed(run, day, where, attempt, by='retained Linux preparation')
+        return result(action=action, state=st, claim=held)
     if action == 'export':
         names = [n for n in (env.get('FILES') or '').split(',') if n]
         return result(action='export', files=act_export(run, plan, day, where, attempt, names))

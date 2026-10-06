@@ -29,6 +29,8 @@ mode 600, never served; state.json; agent.log; root.log):
              ACTION=import); only after that does the runner call clean, which deletes the ROOT from the Pod.
 Nothing here holds an AWS or Runpod credential. No model call, no GPU use (the ROOT is CPU code).
 """
+import contextlib
+import fcntl
 import hashlib
 import hmac
 import http.server
@@ -92,7 +94,65 @@ def write_json(path, doc, mode=0o644):
     fd = os.open(tmp, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, mode)
     with os.fdopen(fd, 'w', encoding='utf-8') as f:
         f.write(json.dumps(doc, indent=1, sort_keys=True, default=str) + '\n')
+        f.flush()
+        os.fsync(f.fileno())
     os.replace(tmp, path)
+    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def save_path(job_id):
+    return JOBS / job_id / 'save-request.json'
+
+
+def request_save(job_id):
+    """Request an orderly save; never kill a calculation or release its retained day."""
+    path = save_path(job_id)
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        return
+    with os.fdopen(fd, 'w') as handle:
+        handle.write(json.dumps(dict(job_id=job_id, requested=now())) + '\n')
+        handle.flush()
+        os.fsync(handle.fileno())
+    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def check_save():
+    path = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    if path and Path(path).exists():
+        raise SystemExit(75)
+
+
+def stop_job(job_id):
+    if not re.fullmatch(r'[A-Za-z0-9_-]{1,96}', job_id):
+        raise ValueError('invalid retained job identity')
+    with lane_lock():
+        job = read_json(JOBS / job_id / 'job.json')
+        if job.get('workflow') != 'root-to-finish':
+            raise ValueError('save applies only to the retained Linux AWS day')
+        state = state_of(job_id) or {}
+        if state.get('state') == 'day_complete':
+            return 'already complete'
+        request_save(job_id)
+        return 'save requested; current calculation retains its full state before stopping'
+
+
+@contextlib.contextmanager
+def lane_lock():
+    """Serialize Linux acceptance and resume, including the launcher handoff."""
+    AGENT.mkdir(parents=True, exist_ok=True)
+    with open(AGENT / 'lane.lock', 'a') as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        yield
 
 
 def read_json(path):
@@ -124,12 +184,30 @@ def alive(pid):
 
 def job_alive(job_id, s):
     """The job's own pid (state.json) or the pid its launcher recorded (the window before the job writes its state)."""
-    if alive(s.get('pid')):
-        return True
+    lock = JOBS / job_id / 'run.lock'
+    if lock.exists():
+        with open(lock, 'a') as handle:
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                return True
+            fcntl.flock(handle, fcntl.LOCK_UN)
+    candidates = [s.get('pid')]
     try:
-        return alive((JOBS / job_id / 'launcher.pid').read_text().strip())
+        candidates.append((JOBS / job_id / 'launcher.pid').read_text().strip())
     except OSError:
-        return False
+        pass
+    for pid in candidates:
+        if not alive(pid):
+            continue
+        try:
+            args = Path('/proc/%s/cmdline' % int(pid)).read_bytes().split(b'\0')
+            if any(Path(os.fsdecode(a)).name == 'pod_agent.py' for a in args) and \
+                    [b'job', job_id.encode()] == args[-3:-1]:
+                return True
+        except (OSError, ValueError):
+            pass
+    return False
 
 
 def git(*args, cwd=None, check=True):
@@ -217,6 +295,8 @@ def freeze_check(code):
 # -------------------------------------------------------------------------------------------------------- jobs
 
 def validate(job):
+    if job.get('workflow') != 'root-to-finish' or os.environ.get('RUNPOD_POD_ID'):
+        raise ValueError('Pods and legacy ROOT shipping are retired; use the held Linux AWS CPU day workflow')
     if job.get('schema') != JOB_SCHEMA:
         raise ValueError('schema %s required' % JOB_SCHEMA)
     name, day, run = job.get('name', ''), job.get('day', ''), job.get('run', '')
@@ -252,6 +332,8 @@ def validate(job):
     if job.get('workflow') == 'root-to-finish':
         if not job.get('plan') or not job.get('mailbox') or job['data_workers'] != 15:
             raise ValueError('held Linux day requires plan, mailbox and exactly 15 workers')
+        if job.get('where') != 'worker:i-0d17573dbce871520' or slots() != 1 or len(usable_cpus()) != 16:
+            raise ValueError('held workflow requires the single 16-CPU Linux AWS lane')
         return
     if not out.get('chunk_urls') or not out.get('manifest_url'):
         raise ValueError('out.chunk_urls and out.manifest_url required')
@@ -294,8 +376,10 @@ def accept(job):
         return None, 'refused: job %s exists' % job_id
     busy = {}
     for d in JOBS.iterdir():
+        if not d.is_dir() or d.name.startswith('.'):
+            continue
         s = state_of(d.name)
-        if s and read_json(d / 'job.json').get('workflow') == 'root-to-finish' and s.get('state') != 'day_complete':
+        if read_json(d / 'job.json').get('workflow') == 'root-to-finish' and (s or {}).get('state') != 'day_complete':
             return None, 'refused: held Linux day %s must finish/resume on this lane first' % d.name
         if s and s.get('state') in ACTIVE and job_alive(d.name, s):
             busy[s.get('slot')] = s
@@ -307,11 +391,20 @@ def accept(job):
     cpus = slot_cpus(free[0])
     # DATA_WORKERS is a cap, as on Monday's ROOT (48): the journal reader takes its workers from the process's CPU set
     # minus the first (frankie_journal_reader.worker_budget), so the ROOT pinned to N CPUs runs min(cap, N-1) readers
-    d = JOBS / job_id
-    d.mkdir()
+    d = JOBS / ('.accept-' + job_id)
+    d.mkdir(exist_ok=True)
     write_json(d / 'job.json', job, mode=0o600)
-    set_state(job_id, 'accepted', day=job['day'], run=job['run'], slot=free[0], cpus=cpus, detail=None,
-              reader_workers=min(job['data_workers'], max(1, len(cpus) - 1)))
+    stamp = now()
+    write_json(d / 'state.json', dict(job_id=job_id, state='accepted', day=job['day'], run=job['run'],
+               slot=free[0], cpus=cpus, detail=None, updated=stamp,
+               history=[dict(state='accepted', at=stamp, detail=None)],
+               reader_workers=min(job['data_workers'], max(1, len(cpus) - 1))))
+    os.rename(d, JOBS / job_id)
+    directory = os.open(JOBS, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
     return job_id, None
 
 
@@ -322,6 +415,38 @@ def launch(job_id):
                             stderr=subprocess.STDOUT, start_new_session=True, cwd=str(d))
     (d / 'launcher.pid').write_text(str(proc.pid))       # never state.json: the job itself writes that
     return proc.pid
+
+
+def renew_job(job_id, update, resume=False):
+    """Refresh transport only; the job's day, source hashes, commit and lane stay fixed."""
+    with lane_lock():
+        d = JOBS / job_id
+        job = read_json(d / 'job.json')
+        if job.get('workflow') != 'root-to-finish':
+            raise ValueError('renew/resume applies only to the Linux held-day workflow')
+        if 'inputs' in update:
+            old = job['inputs']
+            new = update['inputs']
+            def identity(inputs):
+                return [dict(f, parts=[{k: v for k, v in p.items() if k != 'url'} for p in f['parts']])
+                        for f in inputs]
+            if identity(old) != identity(new):
+                raise ValueError('renewal changed input identity; retained job not overwritten')
+            job['inputs'] = new
+            write_json(d / 'job.json', job, mode=0o600)
+        write_json(d / 'mailbox.json', update['mailbox'], mode=0o600)
+        if not resume:
+            return None
+        state = state_of(job_id) or {}
+        if job_alive(job_id, state) or state.get('state') == 'day_complete':
+            raise ValueError('a live/completed day cannot be resumed')
+        for other in listing():
+            if other['job_id'] != job_id and (other.get('pid_alive') or
+                    (other.get('workflow') == 'root-to-finish' and other.get('state') != 'day_complete')):
+                raise ValueError('another retained day owns this Linux lane')
+        validate(job)
+        save_path(job_id).unlink(missing_ok=True)
+        return launch(job_id)
 
 
 def public(job):
@@ -347,6 +472,7 @@ def fetch_inputs(job_id, job):
         created.append(str(ingest))
         set_state(job_id, 'inputs', created=created)
     for f in job['inputs']:
+        check_save()
         p = Path(f['path'])
         if p.exists():
             if p.stat().st_size != f['bytes'] or T.sha256_file(p) != f['sha256']:
@@ -450,6 +576,30 @@ def ship(job_id, job):
 
 
 def run_job(job_id):
+    # The lock also covers a launcher interrupted before launcher.pid was saved.
+    with open(JOBS / job_id / 'run.lock', 'a') as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return 1
+        if (state_of(job_id) or {}).get('state') == 'day_complete':
+            return 0
+        job = read_json(JOBS / job_id / 'job.json')
+        if job.get('workflow') == 'root-to-finish':
+            os.environ['FRANKIE_LANE_STOP_FILE'] = str(save_path(job_id))
+            for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+                signal.signal(sig, lambda *_: request_save(job_id))
+        try:
+            check_save()
+            return _run_job(job_id)
+        except SystemExit as error:
+            if error.code != 75:
+                raise
+            set_state(job_id, 'saved', detail='orderly save complete; original day, inputs and lane retained')
+            return 75
+
+
+def _run_job(job_id):
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)        # the server ignores SIGCHLD; a job must see its ROOT's exit code
     d = JOBS / job_id
     job = read_json(d / 'job.json')
@@ -457,7 +607,9 @@ def run_job(job_id):
     created = []
     try:
         code = ensure_code(job['commit'])
+        check_save()
         producers = ensure_producers()
+        check_save()
         write_json(d / 'setup.json', dict(code=str(code), commit=job['commit'], producers=producers,
                                           freeze=freeze_check(code), host=host_facts()))
     except Exception as e:  # noqa: BLE001
@@ -466,13 +618,14 @@ def run_job(job_id):
     set_state(job_id, 'inputs')
     try:
         created = fetch_inputs(job_id, job)
+        check_save()
         why = gate(job)
         if why:
-            freed = remove(created)
+            freed = 0 if job.get('workflow') == 'root-to-finish' else remove(created)
             set_state(job_id, 'failed_gate', detail=why, inputs_deleted=freed)
             return 1
     except Exception as e:  # noqa: BLE001
-        freed = remove(created)
+        freed = 0 if job.get('workflow') == 'root-to-finish' else remove(created)
         set_state(job_id, 'failed_inputs', detail='%s: %s' % (type(e).__name__, e), inputs_deleted=freed)
         return 1
     if job.get('workflow') == 'root-to-finish':
@@ -480,6 +633,8 @@ def run_job(job_id):
         try:
             return run_full_day(job_id, job, code)
         except (Exception, SystemExit) as error:
+            if isinstance(error, SystemExit) and error.code == 75:
+                raise
             set_state(job_id, 'failed_finish', detail='%s: %s; same-box claim retained for resume' % (
                 type(error).__name__, error))
             return 1
@@ -536,16 +691,25 @@ def run_full_day(job_id, job, code):
     if not mailbox.exists():
         write_json(mailbox, job['mailbox'], mode=0o600)
     os.environ.update(FRANKIE_LANE_MAILBOX=str(mailbox), FRANKIE_LANE_OWNER=job['where'],
-                      FRANKIE_LANE_RUN=job['run'], FRANKIE_LANE_DAY=job['day'])
+                      FRANKIE_LANE_RUN=job['run'], FRANKIE_LANE_DAY=job['day'],
+                      FRANKIE_LANE_ATTEMPT=job_id)
     # Requests use the job state so the existing controller sees and services them.
     raw_request = LS.request
     def request(op, **payload):
         set_state(job_id, 'coordinate', detail=op)
         try:
-            return raw_request(op, **(dict(run=job['run'], where=job['where'], day=job['day']) | payload))
+            return raw_request(op, **(dict(run=job['run'], where=job['where'], day=job['day'], attempt=job_id) | payload))
         finally:
             set_state(job_id, 'finish', detail='continuing on the held day lane')
     LS.request = request
+    recovered = LS.recover_request()
+    if recovered and recovered['op'] == 'day_done' and recovered['result'].get('done'):
+        set_state(job_id, 'day_complete', detail='recovered central completion; local artifacts retained')
+        return 0
+    lease = LS.request('day_resume')
+    if lease.get('done'):
+        set_state(job_id, 'day_complete', detail='central completion confirmed; local artifacts retained')
+        return 0
     plan = job['plan']
     plan_path = X.RUNS / job['run'] / 'plan.json'
     if plan_path.exists() and json.loads(plan_path.read_bytes()) != plan:
@@ -553,17 +717,23 @@ def run_full_day(job_id, job, code):
     plan_path.parent.mkdir(parents=True, exist_ok=True)
     write_json(plan_path, plan)
     e = next(e for e in plan['days'] if e['day'] == job['day'])
-    entry = dict(run=job['run'], day=job['day'], settings=job['settings'], plan_sha256=X.plan_digest(plan))
+    retained_cpus = (state_of(job_id) or {}).get('cpus')
+    if not retained_cpus or len(retained_cpus) != 16:
+        raise ValueError('retained 16-CPU lane identity is missing')
+    entry = dict(run=job['run'], day=job['day'], settings=job['settings'], plan_sha256=X.plan_digest(plan),
+                 cpus=retained_cpus)
     booking, reason = Q._book_slot(entry, 'remote-day', job['commit'])
     if booking is None:
         set_state(job_id, 'failed_finish', detail='CPU ledger: ' + str(reason))
         return 1
     set_state(job_id, 'finish', slot_booking=booking, cpus=C.held_booking(booking)[0]['cpus'])
     try:
+        check_save()
+        os.sched_setaffinity(0, retained_cpus)
         run = X.Run(argparse.Namespace(**dict(Q.SETTINGS, **job['settings'])), plan, code, job['commit'],
                     log=lambda message: log(d, message))
         run.slot_booking = booking
-        for stage in ('ingest', 'external', 'root'):
+        for stage in ('fetch', 'ingest', 'external', 'root'):
             r = run.guarded(stage, e)
             if not r or r['status'] not in X.FINISHED:
                 raise RuntimeError('%s: %s' % (stage, r))
@@ -571,13 +741,25 @@ def run_full_day(job_id, job, code):
         if not ok:
             raise RuntimeError('day finish: %s' % facts)
         root = run.receipt('root', job['day'])
+        run.check_save()
         LS.boundary(job['day'], 'complete')
+        receipts = sorted(run.dir.glob('days/%s/*.json' % job['day']))
+        teacher_receipt = run.receipt_path('teacher', 'day-' + job['day'])
+        if teacher_receipt.is_file():
+            receipts.append(teacher_receipt)
+        batch = run.batch_of(job['day'])
+        if batch and batch.startswith('discovery-'):
+            lessons_receipt = run.receipt_path('lessons', batch)
+            if lessons_receipt.is_file():
+                receipts.append(lessons_receipt)
         LS.request('day_done', calculations=root['calculations'], receipt_sha256=root['receipt_sha256'],
-                   receipts=[LS.pack_file(p) for p in sorted(run.dir.glob('days/%s/*.json' % job['day']))])
+                   receipts=[LS.pack_file(p) for p in receipts])
         set_state(job_id, 'day_complete', calculations=root['calculations'], facts=facts,
                   detail='complete on original Linux box; ROOT and journal retained here')
         return 0
     except (Exception, SystemExit) as error:
+        if isinstance(error, SystemExit) and error.code == 75:
+            raise
         set_state(job_id, 'failed_finish', detail='%s: %s; same-box claim retained for resume' % (type(error).__name__, error))
         return 1
     finally:
@@ -634,6 +816,8 @@ def clean(job_id, verified):
 def listing():
     out = []
     for d in sorted(JOBS.iterdir()) if JOBS.is_dir() else ():
+        if not d.is_dir() or d.name.startswith('.'):
+            continue
         s = state_of(d.name) or {}
         pending = d / 'rpc-pending.json'
         rpc = read_json(pending) if pending.is_file() else {}
@@ -642,13 +826,15 @@ def listing():
         out.append({k: s.get(k) for k in ('job_id', 'day', 'run', 'state', 'updated', 'detail', 'slot', 'root_exit',
                                           'root_seconds', 'root_status', 'root_max_rss_kb', 'inputs_deleted', 'chunks',
                                           'bytes', 'compressed', 'freed', 'calculations', 'slot_booking')}
-                   | dict(pid_alive=job_alive(d.name, s),
+                   | dict(pid_alive=job_alive(d.name, s), save_requested=save_path(d.name).exists(),
                           workflow=read_json(d / 'job.json').get('workflow')))
     return out
 
 
 def mark_interrupted():
     for d in JOBS.iterdir() if JOBS.is_dir() else ():
+        if not d.is_dir() or d.name.startswith('.'):
+            continue
         s = state_of(d.name)
         if s and s.get('state') in ACTIVE and not job_alive(d.name, s):
             set_state(d.name, 'interrupted', detail='the job process was gone at agent start (stage %s)' % s.get('state'))
@@ -699,10 +885,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         except ValueError:
             return self._send(400, dict(error='JSON body required'))
         if path == '/job':
-            job_id, why = accept(body)
-            if job_id is None:
-                return self._send(409, dict(error=why))
-            return self._send(200, dict(job_id=job_id, pid=launch(job_id), state=state_of(job_id)))
+            with lane_lock():
+                job_id, why = accept(body)
+                if job_id is None:
+                    return self._send(409, dict(error=why))
+                return self._send(200, dict(job_id=job_id, pid=launch(job_id), state=state_of(job_id)))
         if path == '/clean':
             return self._send(200, dict(result=clean(body.get('job_id', ''), body.get('verified'))))
         if path == '/reupload':
@@ -740,14 +927,15 @@ def main():
         print('POD_ROOT_RESULT ' + json.dumps(dict(action='jobs', jobs=listing(), host=host_facts()), sort_keys=True, default=str))
     elif mode == 'work':
         JOBS.mkdir(parents=True, exist_ok=True)
-        mark_interrupted()
         m = json.loads(T.get_bytes(os.environ['MAP_URL']))
         job = json.loads(T.get_bytes(m['job']['url']))
-        job_id, why = accept(job)
-        if job_id is None:
-            print('POD_ROOT_RESULT ' + json.dumps(dict(action='work', accepted=False, error=why)))
-            sys.exit(3)
-        print('POD_ROOT_RESULT ' + json.dumps(dict(action='work', accepted=True, job_id=job_id, pid=launch(job_id))))
+        with lane_lock():
+            mark_interrupted()
+            job_id, why = accept(job)
+            if job_id is None:
+                print('POD_ROOT_RESULT ' + json.dumps(dict(action='work', accepted=False, error=why)))
+                sys.exit(3)
+            print('POD_ROOT_RESULT ' + json.dumps(dict(action='work', accepted=True, job_id=job_id, pid=launch(job_id))))
     elif mode == 'clean':
         print('POD_ROOT_RESULT ' + json.dumps(dict(action='clean', result=clean(os.environ['JOB'], os.environ.get('VERIFIED')))))
     elif mode == 'reupload':
@@ -755,26 +943,14 @@ def main():
         print('POD_ROOT_RESULT ' + json.dumps(dict(action='reupload', result=reupload(os.environ['JOB'], m['out']))))
     elif mode in ('renew', 'resume'):
         job_id = os.environ['JOB']
-        d = JOBS / job_id
-        job = read_json(d / 'job.json')
-        if job.get('workflow') != 'root-to-finish':
-            raise SystemExit('renew/resume applies only to the Linux held-day workflow')
         m = json.loads(T.get_bytes(os.environ['MAP_URL']))
-        write_json(d / 'mailbox.json', m['mailbox'], mode=0o600)
-        if mode == 'resume':
-            state = state_of(job_id) or {}
-            if job_alive(job_id, state) or state.get('state') == 'day_complete':
-                raise SystemExit('a live/completed day cannot be resumed')
-            for other in listing():
-                if other['job_id'] != job_id and other.get('pid_alive'):
-                    raise SystemExit('another day owns this Linux lane')
-            write_json(d / 'rpc-pending.json', dict(waiting=False))
-            pid = launch(job_id)
-        else:
-            pid = None
+        pid = renew_job(job_id, m, resume=mode == 'resume')
         print('POD_ROOT_RESULT ' + json.dumps(dict(action=mode, job_id=job_id, renewed=True, pid=pid)))
+    elif mode == 'stop':
+        print('POD_ROOT_RESULT ' + json.dumps(dict(action=mode, job_id=os.environ['JOB'],
+                                                  result=stop_job(os.environ['JOB']))))
     else:
-        raise SystemExit('mode serve | work | job <id> | jobs | clean | reupload | renew | resume')
+        raise SystemExit('mode serve | work | job <id> | jobs | clean | reupload | renew | resume | stop')
 
 
 if __name__ == '__main__':

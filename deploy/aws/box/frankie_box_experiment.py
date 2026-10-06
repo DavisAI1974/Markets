@@ -115,6 +115,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -371,6 +372,11 @@ def ingest_of(entry):
 
 def root_of(entry, run):
     """(calculations directory, attempts listed) of the day's finished ROOT, or (None, attempts)."""
+    remote = RUNS / run / 'days' / entry['day'] / 'root.json'
+    if remote.is_file():
+        receipt = json.loads(remote.read_bytes())
+        if receipt.get('remote_calculations') and receipt.get('status') in FINISHED:
+            return Path(receipt['calculations']), []
     if entry.get('calculations'):
         return Path(entry['calculations']), []
     attempts = sorted(ROOTS.glob('%s-%s*' % (run, entry['day'])))
@@ -384,6 +390,16 @@ def rows_of(entry):
     """The day's Dipole rows: the plan's, a launch run's, or the teacher-only step's; (path, source) or (None, None)."""
     for base, source in ((entry.get('teacher_rows'), 'plan'), (TEACHER_ROWS / entry['day'], 'teacher-only step')):
         if base and (Path(base) / ROWS_FILE).is_file():
+            if Path(base).is_relative_to(TEACHER_ROWS):
+                receipt = Path(base) / 'receipt.json'
+                if not receipt.is_file():
+                    continue  # Rows are published before the complete teacher transaction.
+                saved = json.loads(receipt.read_bytes())
+                if saved.get('schema') != 'FRANKIE_EXPERIMENT_TEACHER_ROWS_V1' or saved.get('day') != entry['day']:
+                    raise ValueError('retained teacher publication does not match this day')
+                if not (Path(base) / 'teacher-attachment.pkl').is_file() or \
+                        (saved.get('external_section') or {}).get('status') not in ('built', 'reused', 'absent'):
+                    continue
             return Path(base), source
     if entry.get('run'):
         found = sorted(Path(entry['run']).glob('execution/cycle-*/host-dipole-classroom-source*.json'))
@@ -510,6 +526,15 @@ class Run:
         self.cores = frankie_box_cores     # the box's CPU booking ledger (DAY_RUN_CPUS, ingest_workers, WAITING_EXIT)
         self.probe = Probe(self.dir, request_sha256=plan_digest(plan), phase='experiment')
 
+    def save_requested(self):
+        marker = os.environ.get('FRANKIE_LANE_STOP_FILE')
+        return bool(marker and Path(marker).is_file())
+
+    def check_save(self):
+        if self.save_requested():
+            self.log('day saved on its assigned lane; resume the retained attempt')
+            raise SystemExit(75)
+
     # receipts
     def receipt_path(self, stage, key):
         return self.dir / ('batches' if stage in ('teacher', 'lessons') else 'days') / key / (stage + '.json')
@@ -521,11 +546,29 @@ class Run:
     def finished(self, stage, key):
         return done_status(self.receipt(stage, key))
 
-    def brain_stage(self, day, stage, sources, summary=None):
+    def remote_root(self, day):
+        receipt = self.receipt('root', day)
+        if receipt and receipt.get('remote_calculations') and receipt.get('status') in FINISHED:
+            return receipt
+        return None
+
+    def remote_stage(self, stage, day):
+        root = self.remote_root(day)
+        if root is None:
+            return None
+        key = 'day-' + day if stage == 'teacher' else day
+        receipt = self.receipt(stage, key)
+        if receipt and done_status(receipt) and (receipt.get('remote_owner') == root['owner'] or
+                                                 stage in ('fetch', 'ingest', 'external')):
+            return receipt
+        return self.record(stage, key, 'waiting', owner=root['owner'],
+                           reason='the owning AWS lane has not published a completed %s receipt; its artifacts stay there' % stage)
+
+    def brain_stage(self, day, stage, sources, summary=None, inline_limit=2 * 1024 * 1024):
         """Immediately commit newly available stage knowledge to Frankie's brain before advancing."""
         import frankie_box_brain as BR
         brain = Path(self.plan.get('brain') or str(BRAIN))
-        manifest, reused = BR.write_stage_entry(brain, day, stage, sources, summary=summary)
+        manifest, reused = BR.write_stage_entry(brain, day, stage, sources, summary=summary, inline_limit=inline_limit)
         entry = brain / ('%s-%s' % (day, stage))
         self.log('brain %s %s: %s%s' % (stage, day, entry, ' (reused)' if reused else ''))
         return dict(path=str(entry), reused=reused,
@@ -585,6 +628,9 @@ class Run:
     # children
     def child(self, stage, key, script, env):
         """One committed box script as a child; its whole output in <run>/logs/<key>-<stage>.log."""
+        self.check_save()
+        if self.remote_root(key[:8]):
+            raise ValueError('this day belongs to its remote AWS lane; no local stage dispatch')
         logs = self.dir / 'logs'
         logs.mkdir(parents=True, exist_ok=True)
         log_path = logs / ('%s-%s.log' % (key, stage))
@@ -602,6 +648,9 @@ class Run:
             out.flush()
             start = out.tell()
             code = subprocess.run(command, env=full, stdout=out, stderr=subprocess.STDOUT).returncode
+        # Children with continuation hooks observe the same durable stop marker. Other children finish their
+        # current retained operation. Never kill their workers or start a following stage after a save request.
+        self.check_save()
         with open(log_path, 'rb') as read:
             read.seek(start)
             lines = read.read().decode('utf-8', 'replace').splitlines()
@@ -696,14 +745,22 @@ class Run:
         return (e['opening_receipt'], None) if e.get('opening_receipt') else (None, None)
 
     def root(self, e):
+        remote = self.remote_root(e['day'])
+        if remote is not None:
+            return remote
         calc, attempts = root_of(e, self.plan['run'])
         if calc:
+            retained = json.loads((calc / 'calculations-receipt.json').read_bytes())
+            if retained.get('day') != e['day'] or retained.get('day_role') != e['role']:
+                raise ValueError('retained ROOT receipt belongs to another day/role')
             sources = [calc / 'calculations-receipt.json', calc / 'work' / 'derive.json',
                        calc / 'work' / 'derivation-digest-full.md']
             if (calc / 'external-computation.json').is_file():
                 sources.append(calc / 'external-computation.json')
             brain_entry = self.brain_stage(e['day'], 'root', sources,
-                                           summary=dict(calculations=str(calc), role=e['role']))
+                                           summary=dict(calculations=str(calc), role=e['role'],
+                                                        root_status=retained.get('status'),
+                                                        producer_failures=retained.get('failure_count')))
             return self.record('root', e['day'], 'reused', calculations=str(calc), interrupted_attempts=attempts,
                                receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
                                if (calc / 'calculations-receipt.json').is_file() else None,
@@ -717,12 +774,21 @@ class Run:
         if not self.disk_ok('root'):
             return None
         output = ROOTS / ('%s-%s-a%d' % (self.plan['run'], e['day'], len(attempts) + 1))
+        resume = False
+        if os.environ.get('FRANKIE_LANE_MAILBOX') and attempts:
+            # Keep the saved Linux work directory; the ROOT wrapper uses existing retained-stage recovery.
+            candidates = [Path(p) for p in attempts if re.fullmatch(
+                re.escape('%s-%s-a' % (self.plan['run'], e['day'])) + r'[0-9]+', Path(p).name)]
+            if not candidates:
+                raise ValueError('retained ROOT attempt cannot be identified safely')
+            output = max(candidates, key=lambda p: int(p.name.rsplit('-a', 1)[1]))
+            resume = True
         held = self.claim_root(e, output)          # None = no claim store on the box: exactly as before
         if held is not None and not held[0]:
             return self.record('root', e['day'], 'waiting', reason=held[1], claim=held[2])
         env = dict(INGESTION_RECEIPT=ing['receipt'], INGESTION_RECEIPT_SHA256=ing['receipt_sha256'], DAY=e['day'],
                    DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=self.cores.DAY_RUN_CPUS - 1,
-                   DIGEST='on')
+                   DIGEST='on', RESUME='on' if resume else 'off')
         if self.plan['frozen_survivors']:
             env['FROZEN_SURVIVORS'] = self.plan['frozen_survivors']
         code, log = self.child('root', e['day'], 'frankie_box_experiment_root.sh', env)
@@ -928,8 +994,20 @@ class Run:
             return 'waiting', 'the day has no ROOT yet (stage root)', {}
         calc = Path(root['calculations'])
         facts = dict(calc=calc, d=calc / 'work' / 'classroom')
-        if (facts['d'] / 'completion.json').is_file():
-            return 'reused', None, facts
+        if root.get('remote_calculations'):
+            classroom = self.receipt('classroom', e['day'])
+            if classroom and classroom.get('remote_owner') == root['owner'] and done_status(classroom):
+                return 'reused', None, facts
+            return 'waiting', 'classroom remains on the owning AWS lane ' + root['owner'], facts
+        receipt = facts['d'] / 'receipt.json'
+        if receipt.is_file():
+            saved = json.loads(receipt.read_bytes())
+            complete_files = ('completion.json', 'history.json', 'post-grade.json',
+                              'external-history.json', 'external-post-grade.json')
+            if saved.get('status') == 'complete' and saved.get('day') == e['day'] and \
+                    all((facts['d'] / name).is_file() for name in complete_files) and \
+                    (Path(saved.get('brain_entry') or '') / 'MANIFEST.json').is_file():
+                return 'reused', None, facts
         if not (calc / 'work' / 'derivation-digest-full.md').is_file():
             return 'refused', ('the ROOT %s ran without the digest; a classroom-arm day needs DIGEST=on (its brain entry '
                                'takes it)' % calc), facts
@@ -945,6 +1023,9 @@ class Run:
 
     def classroom(self, e):
         day = e['day']
+        remote = self.remote_stage('classroom', day)
+        if remote is not None:
+            return remote
         if not e['classroom_arm']:
             return self.record('classroom', day, 'skipped', reason='not a classroom-arm day')
         status, why, facts = self.classroom_ready(e)
@@ -974,7 +1055,7 @@ class Run:
                       school_day=self.school_day,
                       receipt_status=r.get('status'), external=(r.get('external') or {}).get('completion_hash'),
                       brain_entry=r.get('brain_entry'), jev_material=r.get('jev_material'))
-        if code == 0 and (d / 'completion.json').is_file():
+        if code == 0 and self.classroom_ready(e)[0] == 'reused':
             return self.record('classroom', day, 'done', new_bytes=new_bytes(d), **fields)
         if code == 3 and r.get('status') == 'refused':
             return self.record('classroom', day, 'refused', reason=r.get('reason'), **fields)
@@ -1159,6 +1240,10 @@ class Run:
         """A step after the lessons (exchange, voice, school, reports): an error is recorded as the step's failure with its
         reason (retried on the next start); it never stops the run or the other days."""
         try:
+            self.check_save()
+            remote = self.remote_stage(stage, e['day'])
+            if remote is not None:
+                return remote
             return getattr(self, stage)(e)
         except Exception as error:
             return self.record(stage, e['day'], 'failed', reason='%s: %s' % (type(error).__name__, error))
@@ -1331,6 +1416,9 @@ class Run:
 
     def jev(self, e):
         day = e['day']
+        remote = self.remote_stage('jev', day)
+        if remote is not None:
+            return remote
         if not e['classroom_arm']:
             return self.record('jev', day, 'skipped', reason='not a classroom-arm day (Jev sits in on the arm days only)')
         c = self.receipt('classroom', day)
@@ -1347,10 +1435,28 @@ class Run:
                                   'then seal/test his claims before publishing tested knowledge')
 
     def teacher(self, batch_key, entries):
-        todo = [e for e in entries if rows_of(e)[0] is None]
+        self.check_save()
+        remote = {e['day']: self.remote_stage('teacher', e['day']) for e in entries if self.remote_root(e['day'])}
+        if len(entries) == 1 and entries[0]['day'] in remote and batch_key == 'day-' + entries[0]['day']:
+            return remote[entries[0]['day']]
+        local = [e for e in entries if e['day'] not in remote]
+        remote_waiting = [day for day, r in remote.items() if not done_status(r)]
+        todo = [e for e in local if rows_of(e)[0] is None]
+        brain_entries = {}
+        for e in local:
+            rows, source = rows_of(e)
+            if rows is not None:
+                rows_path, why = self.rows_file(e)
+                if rows_path is None:
+                    raise ValueError(why)
+                brain_entries[e['day']] = self.teacher_knowledge(e['day'], rows_path, source)
         if not todo:
-            return self.record('teacher', batch_key, 'skipped', reason='every day of the batch has its Dipole rows',
-                               days=[dict(day=e['day'], rows=str(rows_of(e)[0]), source=rows_of(e)[1]) for e in entries])
+            return self.record('teacher', batch_key, 'waiting' if remote_waiting else 'skipped',
+                               reason='waiting for owning lane teacher receipts' if remote_waiting else
+                                      'each day has local rows or its owning lane completed teacher receipt',
+                               remote_days=remote, waiting=remote_waiting,
+                               brain_entries=brain_entries,
+                               days=[dict(day=e['day'], rows=str(rows_of(e)[0]), source=rows_of(e)[1]) for e in local])
         if not (self.box / 'frankie_box_experiment_teacher.sh').is_file():
             return self.record('teacher', batch_key, 'not_built', days=[e['day'] for e in todo],
                                reason='frankie_box_experiment_teacher.sh is not in the staged checkout yet')
@@ -1364,7 +1470,7 @@ class Run:
                 external_waiting[e['day']] = why          # the teacher builds the external section: it waits for the file
                 continue
             receipts.append((e['day'], ing['receipt']))
-        waiting = [e['day'] for e in todo if e['day'] not in dict(receipts)]
+        waiting = [e['day'] for e in todo if e['day'] not in dict(receipts)] + remote_waiting
         if not receipts:
             return self.record('teacher', batch_key, 'waiting', days=waiting, reason='no day of the batch has a sealed ingest yet')
         if not self.disk_ok('teacher'):
@@ -1372,23 +1478,62 @@ class Run:
         code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh',
                                dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts)))
         missing = [d for d, _ in receipts if rows_of(dict(day=d))[0] is None]
-        brain_entries = {}
         for d, _ in receipts:
             rows, source = rows_of(dict(day=d))
-            if rows is not None and str(rows).startswith(str(TEACHER_ROWS) + '/'):
+            if rows is not None:
                 rows = Path(rows)
-                brain_entries[d] = self.brain_stage(
-                    d, 'teacher', [rows / ROWS_FILE, rows / 'receipt.json'],
-                    summary=dict(rows=str(rows / ROWS_FILE), source=source))
+                brain_entries[d] = self.teacher_knowledge(d, rows / ROWS_FILE, source)
         return self.record('teacher', batch_key, 'done' if code == 0 and not missing and not waiting else 'failed',
                            exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
+                           remote_days=remote,
                            external_waiting=external_waiting, brain_entries=brain_entries,
                            new_bytes=sum(new_bytes(TEACHER_ROWS / d) for d, _ in receipts),
                            reason=None if code == 0 and not missing and not waiting else
                            'rows missing for %s, waiting on ingest %s (those days go on without Dipole rows, listed)'
                            % (missing, waiting))
 
+    def teacher_knowledge(self, day, rows_path, source):
+        """Publish every measured component/pair result; per-cursor teacher evidence stays on its owning box."""
+        from research.kalshi.frankie_boss import dipole_classroom as DC, dipole_classroom_integration as I
+        from research.kalshi.frankie_boss.c15_journal import unpack
+        from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
+        import frankie_box_lane_state as LS
+        rows_path = Path(rows_path)
+        source_sha = sha256_file(rows_path)
+        path = rows_path.parent / 'teacher-knowledge.json'
+        if path.exists():
+            body = json.loads(path.read_bytes())
+            if body['source']['sha256'] != source_sha or body['day'] != day:
+                raise ValueError('retained teacher knowledge belongs to another source/day')
+        else:
+            snapshot = unpack(json.loads(rows_path.read_bytes()))
+            key = I._repin_teacher_key_correlations(DC.build_teacher_key(snapshot))
+            findings = []
+            for dimension in key['dimensions']:
+                # These are the reviewed teacher's measured outputs, not a summary replacing the retained observations.
+                measured = {k: v for k, v in dimension.items() if k not in ('observations', 'nonpresent_explanations')}
+                findings.append(dict(finding_id='teacher-component:' + dimension['name'],
+                                     scope=dict(day=day, component=dimension['name']), measurement=measured))
+            for pair in key['relationship_scan']:
+                findings.append(dict(finding_id='teacher-pair:%s:%s' % (pair['left'], pair['right']),
+                                     scope=dict(day=day, pair=[pair['left'], pair['right']]), measurement=pair))
+            body = dict(schema='FRANKIE_TEACHER_KNOWLEDGE_V1', day=day, author='BOSS teacher',
+                        source=dict(path=str(rows_path), sha256=source_sha, bytes=rows_path.stat().st_size,
+                                    owner=os.environ.get('FRANKIE_LANE_OWNER', 'main'),
+                                    snapshot_hash=key['source_snapshot_hash']),
+                        findings=json_form(findings),
+                        rule='all component/pair measured outputs individually; every cursor/state/reason remains '
+                             'in the exact source, consumed by the teacher; no host grade or student decision process')
+            body['cutoff_ns'] = snapshot['as_of']
+            body['through_cursor'] = snapshot['through_cursor']
+            LS.write(path, body)
+        return self.brain_stage(day, 'teacher', [rows_path, path],
+                                summary=dict(rows=str(rows_path), source=source), inline_limit=path.stat().st_size)
+
     def data(self, e):
+        remote = self.remote_stage('data', e['day'])
+        if remote is not None:
+            return remote
         target = DATA / e['day'] / ('cycle-' + CYCLE)
         root = self.receipt('root', e['day'])
         if (target / 'MANIFEST.json').is_file():
@@ -1431,10 +1576,12 @@ class Run:
                            new_bytes=new_bytes(target))
 
     def search(self, e):
+        remote = self.remote_stage('search', e['day'])
+        if remote is not None:
+            return remote
         target = SEARCH / e['day'] / ('cycle-' + CYCLE) / e['role']
         if (target / 'MANIFEST.json').is_file():
-            brain_entry = self.brain_stage(e['day'], 'search', [target / 'MANIFEST.json'],
-                                           summary=dict(target=str(target), role=e['role']))
+            brain_entry = self.search_knowledge(e, target)
             return self.record('search', e['day'], 'reused', target=str(target), brain_entry=brain_entry)
         d = self.receipt('data', e['day'])
         if not (d and d['status'] in FINISHED):
@@ -1452,14 +1599,48 @@ class Run:
         code, log = self.child('search', e['day'], 'frankie_box_experiment_search.sh', env)
         if code != 0 or not (target / 'MANIFEST.json').is_file():
             return self.record('search', e['day'], 'failed', exit_code=code, log=log, reason='no search MANIFEST.json')
-        brain_entry = self.brain_stage(e['day'], 'search', [target / 'MANIFEST.json'],
-                                       summary=dict(target=str(target), role=e['role']))
+        brain_entry = self.search_knowledge(e, target)
         return self.record('search', e['day'], 'done', exit_code=code, log=log, target=str(target),
                            manifest_sha256=sha256_file(target / 'MANIFEST.json'), new_bytes=new_bytes(target),
                            brain_entry=brain_entry)
 
+    def search_knowledge(self, e, target):
+        """Carry actual search candidates, with exact part/row provenance; counts alone are not discoveries."""
+        manifest_path = target / 'MANIFEST.json'
+        manifest = json.loads(manifest_path.read_bytes())
+        findings = []
+        for pin in manifest['couplings']['parts']:
+            part = target / pin['path']
+            if not part.resolve().is_relative_to(target.resolve()) or sha256_file(part) != pin['sha256']:
+                raise ValueError('search part differs from its manifest: %s' % part)
+            with part.open() as handle:
+                for ordinal, raw in enumerate(handle):
+                    row = json.loads(raw)
+                    if row['beyond_chance']:
+                        findings.append(dict(content=row, part=pin['path'], part_sha256=pin['sha256'],
+                                             row=ordinal, row_sha256=hashlib.sha256(raw.encode()).hexdigest()))
+        body = dict(schema='FRANKIE_SEARCH_FINDINGS_V1', day=e['day'], role=e['role'], findings=findings,
+                    manifest_sha256=sha256_file(manifest_path),
+                    status='search candidates; scientific double-checks and survivor treatment occur in their code stages',
+                    rule='every beyond-chance row retained individually; no rarity gate or pooling; all counts remain in the parts')
+        path = target / 'knowledge-findings.json'
+        raw = (json.dumps(body, sort_keys=True, indent=1) + '\n').encode()
+        if path.exists() and path.read_bytes() != raw:
+            raise ValueError('retained search findings changed: %s' % path)
+        if not path.exists():
+            import frankie_box_lane_state as LS
+            LS.write(path, body)
+        return self.brain_stage(e['day'], 'search', [manifest_path, path],
+                                summary=dict(target=str(target), role=e['role']), inline_limit=len(raw))
+
     def lessons(self, batch_key, entries):
+        self.check_save()
         searched = [e for e in self.plan['days'] if e['role'] == 'discovery' and self.finished('search', e['day'])]
+        remote = [e['day'] for e in searched if self.remote_root(e['day'])]
+        if remote:
+            return self.record('lessons', batch_key, 'waiting', remote_days=remote,
+                               reason='shared batch claim testing must consume each owning lane result; '
+                                      'remote search receipts do not make worker-local artifacts readable here')
         if not searched:
             return self.record('lessons', batch_key, 'waiting', reason='no discovery-day search finished yet')
         searches = ','.join(str(SEARCH / e['day'] / ('cycle-' + CYCLE) / 'discovery') for e in searched)

@@ -5,6 +5,11 @@ description: Full run orchestrator - operator runbook for the Frankie/BOSS full 
 
 # Full run orchestrator
 
+**October 6 experiment override:** For `chatgpt/frankie-30day-aws-workflow-20261006`, the current handoff is
+`research/kalshi/frankie_boss/HANDOFF_20261006_STEP1_RECOVERY.md`. Its AWS CPU-only, three-lane, no-Pod, no-critic,
+one-E2E and explicit AWS-go rules override historical platform/role/validation instructions below. Source recovery
+is built, not runtime verified. Follow its ordered checklist and discussion stops.
+
 The FULL run (fetch -> ingest -> ROOT -> principal inputs -> cycle -> principal -> retain). The stripped-down experiment path has its own runbook, `experiment-orchestrator`. This is the procedure, not the state. **The current drop-in doc wins over this file** for every
 run id, path, sha and count. Values below marked (as of 2026-09-29) are there so you know what to
 look for, not to be dispatched blind. If this file and the drop-in disagree, say so to Greg

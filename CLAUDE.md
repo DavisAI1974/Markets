@@ -1,3 +1,12 @@
+# Current Frankie AWS continuation — 2026-10-06
+
+For branch `chatgpt/frankie-30day-aws-workflow-20261006`, read FIRST
+`research/kalshi/frankie_boss/HANDOFF_20261006_STEP1_RECOVERY.md`, then the canonical spec and current runbook.
+Step #1 is source-built, runtime unverified; continue #2. Pause before #5 and the pending Jev CPU decision.
+AWS CPU only, three held 16-CPU lanes, no Pods/critic role/dispatch from old instructions below.
+No additional test framework; one real E2E only after wiring and Greg's explicit AWS go. Older state notices below
+are retained history, not current launch authorization or current instance status.
+
 # CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-22 06:4xZ, Frankie/BOSS: THE MONDAY INGEST IS RUNNING on the box (run 35694087514, 5x faster: 1.77 ms/record, about an hour); the launch build behind it (schedule, host, box modules) is NOT built; no canary without Greg's word)
 
 **STATE 2026-09-29 ~12:00Z (Tue/Wed + Frankie's 13 data points; chat closed for speed):** READ FIRST `research/kalshi/frankie_boss/DROP_IN_20260929_TUEWED_DATAPOINTS.md`, then `HANDOFF_20260929_TUEWED_DATAPOINTS.md`. Tue 20211005 SEALED; Wed 20211006 and four more days (20211012/13, 20221004/05) ingesting on the box; their ROOT/teacher/classroom/Jev wait for the 13-point day files. Databento: 31 days DONE, Oct 2024+2025 running, Oct 2021-2023 and the 5-year MBO HELD. Disk ~258 GB free (old-run cleanup pending); CPUs: Greg wants a second box (ask which). Branch `claude/frankie-monday-cycle-0-urozez`.

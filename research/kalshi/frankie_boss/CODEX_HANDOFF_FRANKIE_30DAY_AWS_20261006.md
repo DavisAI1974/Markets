@@ -1,5 +1,10 @@
 # Codex Handoff for Frankie 30 Day AWS Workflow 20261006
 
+**Latest implementation:** Read `HANDOFF_20261006_STEP1_RECOVERY.md` before this historical planning handoff.
+Step #1 is source-built, not E2E-verified; continue #2. Pause before #5 freeze/confirmation and discuss Jev's pending
+CPU route/completion dependency. AWS CPU only; no Pods or GPU fallback, no dispatch without Greg's explicit AWS go.
+The new handoff carries the checklist, Claude audit disposition, actual recovery commands, saved drafts and limitations.
+
 **Latest checkpoint:** Read `HANDOFF_20261006_CHAT_RESET.md` first. It records the partially built implementation, settled discovery/averaging/single-occurrence decisions, retirement of Pods, and all remaining work. This original planning handoff is retained below; its old unimplemented-session status and Pod fallback wording do not describe the checkpoint. Granite must be settled with Greg before final workflow wiring/E2E.
 
 Build the existing workflow to completion using `research/kalshi/frankie_boss/Frankie_30Day_AWS_Runbook_20261006.md`. Greg wants a working experiment with three lanes, immediate delivery of new legal knowledge, and one real end-to-end day after wiring. Keep the scope to that work.
@@ -26,7 +31,7 @@ Use existing inventories, contracts and entry points before adding anything. Rep
 - A day stays on its same box and lane from ROOT through completion. Keep its slot between stages and its large ROOT artifacts local.
 - Frankie receives new legal knowledge immediately after every knowledge-producing stage, before the next dependent step. Other active lanes consume updates at their next legal boundary. Record consumed knowledge versions and preserve causal/answer-wall restrictions.
 - Granite is an active bounded post-class coordinator/facilitator: turn selection, clarification, bookkeeping and requests to code seats for the next test. No critic or self-assessment role.
-- Default Granite candidate: 3B `Q4_K_M`. Prefer local/free standard GitHub CPU if adequate, then small AWS CPU. Use 8B only if the real E2E exposes facilitator-quality problems. Paid GPU is a fallback; no standing GPU.
+- Default Granite candidate: 3B `Q4_K_M`. Prefer local/free standard GitHub CPU if adequate, then small AWS CPU. Use 8B only if the real E2E exposes facilitator-quality problems. AWS CPU only; the old paid GPU fallback is retired.
 - Preserve Frankie's existing inputs, calculations, planes, adapters, replay and Memory A. Every retained native MBO record and available field must reach computation. No silent dropping, arbitrary truncation, averaging, smoothing or normalization of raw evidence.
 - Do not pursue a fourth lane, a new discovery engine, a validator framework, a test farm or broad A/B work.
 

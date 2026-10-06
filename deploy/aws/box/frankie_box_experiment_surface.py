@@ -17,6 +17,7 @@ def journal_axis(day_dir, columns, workers=15):
         raise ValueError('external day file does not belong to this journal')
     journal = ingest / receipt['journal_file']
     axis, closed, trades, kinds, inputs = [], [], [], {}, 0
+    kind_ordinals = {}
     now = external['open_ns']
 
     def records(reader):
@@ -27,6 +28,7 @@ def journal_axis(day_dir, columns, workers=15):
                 raise ValueError('journal axis ordinal discontinuity')
             kind, payload = entry['kind'], entry.get('payload') or {}
             kinds[kind] = kinds.get(kind, 0) + 1
+            kind_ordinals.setdefault(kind, []).append(ordinal)
             record = payload.get('record') or payload.get('raw_record') or payload.get('normalized') or {}
             stamp = record.get('ts_recv')
             if isinstance(stamp, int):
@@ -41,7 +43,7 @@ def journal_axis(day_dir, columns, workers=15):
                     if row.get('action') in ('T', b'T', 84):
                         trades.append(ordinal)
             # Exact envelope leaves, including every original record field and all resting orders.
-            yield entry
+            yield {kind: entry}
 
     with FrankieCompactReader(journal, expected_count=receipt['journal_count'],
                               expected_head_hash=receipt['journal_hash'], workers=workers) as reader:
@@ -52,7 +54,7 @@ def journal_axis(day_dir, columns, workers=15):
                   rows=count, input_records=inputs, kinds=kinds, numeric=sorted(num), text=sorted(text),
                   listed=listed, ordering='native journal ordinal', groups=len(closed),
                   rule='full evidence reader; every entry/field; no re-ingest, replay, field cap or depth limit')
-    return np.asarray(axis, dtype=np.int64), num, text, closed, trades, source
+    return np.asarray(axis, dtype=np.int64), num, text, closed, trades, source, kind_ordinals
 
 
 def ordinal_values(length, positions, values):

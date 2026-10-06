@@ -2,8 +2,15 @@
 
 Status: **CANONICAL WORKFLOW RECONCILED 2026-10-06.** This replaces the conflicting September 29/30 workflow tables.
 The repository is brownfield: reuse the existing orchestrator, 16-CPU booking ledger, FIFO queues, receipts, ROOT,
-teacher, classroom, data/search and scientific-teacher pieces. Do not rebuild working machinery. Survivors,
-confirmation, the full search surface, and the remote worker's ROOT-to-finish path remain incomplete.
+teacher, classroom, data/search and scientific-teacher pieces. Do not rebuild working machinery.
+**Current source checkpoint:** `HANDOFF_20261006_STEP1_RECOVERY.md`: Linux ownership and retained-day recovery are
+source-built, not runtime-verified. Actual legal knowledge delivery, full search, survivor batches, frozen confirmation,
+Granite, Jev CPU and final launch remain unfinished. The ordered implementation list in that handoff is authoritative;
+its step #5 means freeze/confirmation (not stage 5 of the execution table below), and needs Greg's discussion first.
+Jev's pending CPU route/completion dependency also stays for Greg's discussion. Do not bypass it to call a day complete.
+All prior search/confirmation drafts are preserved as an unapplied patch; the active search only adds recovery at this
+checkpoint. One orderly save retains every completed result and active continuation state before stopping; unsupported
+hard-kill/machine-loss recovery must be reported honestly, not silently restarted or called verified.
 
 Greg, 2026-10-06:
 - One real end-to-end ROOT-to-finish test, then fix actual failures. Do not build a new validation/test framework.

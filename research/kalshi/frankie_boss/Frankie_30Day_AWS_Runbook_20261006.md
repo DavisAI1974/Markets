@@ -1,11 +1,15 @@
 # Frankie 30 Day AWS Runbook 20261006
 
-**Implementation checkpoint:** See `HANDOFF_20261006_CHAT_RESET.md` for exact source-built status and remaining work. The final operating interface and real E2E are not complete.
+**Current implementation checkpoint:** `HANDOFF_20261006_STEP1_RECOVERY.md` is the next-chat handoff. Step #1
+(Linux ownership and retained-day save/recovery) is source-built; runtime verification remains pending the one E2E.
+The complete ten-step checkbox list and exact current low-level status/stop/resume commands are in that handoff.
+Continue with #2, actual legal knowledge delivery. **Discuss with Greg before #5 (freeze/confirmation)** and before
+settling the pending Jev CPU route/completion dependency. Discuss Granite before wiring its final role.
 
-**Greg's ordered work list, 2026-10-06:** Work through the agreed ten steps one at a time. Step #1 (Linux ownership
-and complete-state recovery) is still in progress. Print the checkbox list when it is complete, distinguishing source
-completion from runtime verification. **Pause and discuss with Greg before step #5 (freeze and confirmation)**;
-he has flagged that something looks wrong. Do not finalize or implement that step before the discussion.
+The GitHub dispatch entry, main-lane stop interface, dependencies and long-lived controller service remain #8.
+Claude's `CLAUDE_AWS_WORKFLOW_AUDIT_20261006.md` is preserved unchanged; its post-fix disposition is in the new handoff.
+A save request preserves all completed results and active continuation state at the next operation boundary; it is
+not an assertion of arbitrary unsaved-RAM recovery after machine loss. Do not kill a worker process group to save it.
 
 Finish the existing AWS workflow, run one real ROOT-to-finish end-to-end day, fix actual failures, then run the 30-day experiment. Use three CPU lanes and deliver new legal knowledge to Frankie as soon as each stage produces it.
 
@@ -17,7 +21,7 @@ This dated runbook carries the agreed three-lane plan forward. It is the build a
 
 - Repository: `DavisAI1974/Markets`
 - Branch: `chatgpt/frankie-30day-aws-workflow-20261006`
-- Handoff tip: `9d355fac22131a84646a9583c5ea18c1a2ee9589`
+- Original planning tip: `9d355fac22131a84646a9583c5ea18c1a2ee9589`; fetch the latest branch for implementation.
 
 Read these existing instructions before implementing:
 
@@ -73,3 +77,11 @@ Once the end-to-end day succeeds and Greg’s explicit authorization covers the 
 Continue publishing and consuming legal knowledge after every knowledge-producing stage throughout the experiment. Do not wait for day-end to update Frankie’s brain. Keep learned findings available through the existing memory mechanism; do not fill memory with empty no-findings artifacts.
 
 Monitor the existing ledger, queues, claims, stage receipts and completion records. If a day fails, preserve its state and use the existing recovery path. At completion, report the completed days, actual failures and fixes, findings carried into memory, Granite’s operating placement, and the final run/output locations.
+
+## Source-built recovery and remaining launch order
+
+Use the new handoff's ten-step list. The final launch must first retain the main saved plan and claim store, then
+start two main lanes plus one Linux controller lane, with sustained controller service for every Linux boundary.
+The historical runner marker is not yet a finished two-dispatch operating interface. Before launch, finish A1/A8/B1/B2
+in Claude's audit and document exact authorized dispatches. No dependency installation, instance start or run occurred
+in this checkpoint. Resume itself starts compute and requires Greg's explicit AWS go.

@@ -297,23 +297,24 @@ class Controller:
                 return bucket, key
         return None
 
-    def start_day(self, w, st):
+    def start_day(self, w, st, retained=False):
         day = st['day']
-        c = box('claim', MAIN, 1800, CODE_ROOT=self.a.code_root, RUN=self.run, DAY=day, WHERE=w.where, COMMIT=self.commit)
-        if not c.get('claimed'):
-            self.event(worker=w.where, day=day, step='claim', result='not claimed', state=(c.get('state') or {}).get('state'),
-                       holder=(c.get('claim') or {}).get('where'))
-            return False
-        st = c['state']
+        if not retained:
+            c = box('claim', MAIN, 1800, CODE_ROOT=self.a.code_root, RUN=self.run, DAY=day, WHERE=w.where, COMMIT=self.commit)
+            if not c.get('claimed'):
+                self.event(worker=w.where, day=day, step='claim', result='not claimed', state=(c.get('state') or {}).get('state'),
+                           holder=(c.get('claim') or {}).get('where'))
+                return False
+            st = c['state']
         attempt = st['attempt']
         self.event(worker=w.where, day=day, step='claim', result='claimed', attempt=attempt, role=st['role'], digest=st['digest'])
-        submission_attempted = False
         try:
             inputs, need = [], []
             for f in st['files']:
                 src = self.s3_source(st, f)
                 if src:
-                    inputs.append(dict(f, parts=[dict(url=self.sign.get(*src), bytes=f['bytes'])], source='s3://%s/%s' % src))
+                    inputs.append(dict(f, parts=[dict(url=self.sign.get(*src), bytes=f['bytes'], bucket=src[0], key=src[1])],
+                                       source='s3://%s/%s' % src))
                 else:
                     need.append(f)
             if need:
@@ -321,13 +322,25 @@ class Controller:
                 for f in need:
                     for i, (off, ln) in enumerate(T.plan_parts(f['bytes'])):
                         key = '%s/in/%s.part-%04d' % (self.prefix(attempt), f['name'], i)
-                        slots['put:' + key] = dict(url=self.sign.put(TRANSFER_BUCKET, key))
+                        slot = dict(url=self.sign.put(TRANSFER_BUCKET, key))
+                        if retained:
+                            try:
+                                head = s3(TRANSFER_BUCKET).head_object(Bucket=TRANSFER_BUCKET, Key=key)
+                            except Exception as error:
+                                if getattr(error, 'response', {}).get('Error', {}).get('Code') not in ('404', 'NoSuchKey', 'NotFound'):
+                                    raise
+                            else:
+                                if head['ContentLength'] != ln:
+                                    raise ValueError('retained exported part has different size: %s' % key)
+                                slot['present_bytes'] = ln
+                        slots['put:' + key] = slot
                 t0 = time.time()
                 r = box('export', MAIN, 4 * 3600, url_map=slots, CODE_ROOT=self.a.code_root, RUN=self.run, DAY=day,
                         WHERE=w.where, ATTEMPT=attempt, FILES=','.join(f['name'] for f in need))
                 for f in need:
                     parts = r['files'][f['name']]['parts']
-                    inputs.append(dict(f, parts=[dict(url=self.sign.get(TRANSFER_BUCKET, p['key']), bytes=p['bytes']) for p in parts],
+                    inputs.append(dict(f, parts=[dict(url=self.sign.get(TRANSFER_BUCKET, p['key']), bytes=p['bytes'],
+                                                     bucket=TRANSFER_BUCKET, key=p['key']) for p in parts],
                                        source='box export'))
                 self.event(worker=w.where, day=day, step='export', files=len(need), bytes=sum(f['bytes'] for f in need),
                            seconds=round(time.time() - t0))
@@ -346,10 +359,22 @@ class Controller:
                                         response_get=self.sign.get(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/response.json')))
                 job['settings'] = dict(job['settings'], data_workers=15, search_workers=15)
                 key = '%s/job.json' % self.prefix(attempt)
-                s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=key, Body=json.dumps(job).encode(),
-                                               ServerSideEncryption='AES256')
+                try:
+                    s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=key, Body=json.dumps(job).encode(),
+                                                   ServerSideEncryption='AES256', IfNoneMatch='*')
+                except Exception as error:
+                    if getattr(error, 'response', {}).get('Error', {}).get('Code') not in ('PreconditionFailed', '412'):
+                        raise
+                    existing = json.loads(s3(TRANSFER_BUCKET).get_object(Bucket=TRANSFER_BUCKET, Key=key)['Body'].read())
+                    def identity(body):
+                        fields = {k: v for k, v in body.items() if k not in ('mailbox', 'created', 'controller_run')}
+                        fields['inputs'] = [dict(f, parts=[{k: v for k, v in p.items() if k != 'url'}
+                                                          for p in f['parts']]) for f in fields['inputs']]
+                        return fields
+                    if identity(existing) != identity(job):
+                        raise ValueError('retained job differs; S3 job not overwritten')
+                    job = existing
                 job['_job_url'] = self.sign.get(TRANSFER_BUCKET, key)
-            submission_attempted = True
             job_id, why = w.submit(job)
             if not job_id:
                 raise RuntimeError('the worker refused the job: %s' % why)
@@ -358,11 +383,11 @@ class Controller:
             return True
         except Exception as e:  # noqa: BLE001
             self.event(worker=w.where, day=day, step='start', result='failed', error='%s: %s' % (type(e).__name__, str(e)[:400]))
-            if w.kind == 'box' and submission_attempted:
+            if w.kind == 'box':
                 # An SSM timeout can occur after acceptance. Keep ownership and input slots until
                 # status establishes what happened; releasing here could dispatch the day twice.
                 self.event(worker=w.where, day=day, step='held', attempt=attempt,
-                           result='submission outcome requires same-box status/resume; claim and inputs retained')
+                           result='preparation/submission requires same-box status/resume; claim and inputs retained')
                 return False
             self.release(w, day, attempt, 'the controller could not start the job: %s: %s' % (type(e).__name__, str(e)[:300]))
             self.delete_prefix(attempt)
@@ -444,13 +469,43 @@ class Controller:
                                     reply=dict(url=self.sign.put(TRANSFER_BUCKET, prefix + '/response.json'))))
         self.event(worker=w.where, day=job['day'], step='coordinate', id=response.get('id'), error=response.get('error'))
 
-    def renew(self, w, job):
+    def renew(self, w, job, resume=False):
         prefix = self.prefix(job['job_id']) + '/rpc'
-        return box('renew', w.target, 600, COMMIT=self.commit, JOB=job['job_id'],
-                   url_map=dict(mailbox=dict(request_put=self.sign.put(TRANSFER_BUCKET, prefix + '/request.json'),
-                                             response_get=self.sign.get(TRANSFER_BUCKET, prefix + '/response.json'))))
+        update = dict(mailbox=dict(request_put=self.sign.put(TRANSFER_BUCKET, prefix + '/request.json'),
+                                   response_get=self.sign.get(TRANSFER_BUCKET, prefix + '/response.json')))
+        if resume:
+            key = self.prefix(job['job_id']) + '/job.json'
+            try:
+                saved = json.loads(s3(TRANSFER_BUCKET).get_object(Bucket=TRANSFER_BUCKET, Key=key)['Body'].read())
+            except Exception as error:
+                if getattr(error, 'response', {}).get('Error', {}).get('Code') not in ('404', 'NoSuchKey', 'NotFound'):
+                    raise
+                if any(j['job_id'] == job['job_id'] for j in w.status()['jobs']):
+                    raise ValueError('worker has this job but its stored source job is missing; retained files not overwritten')
+                day = job['job_id'][len(self.run) + 1:len(self.run) + 9]
+                prepared = box('prepare', MAIN, 1800, CODE_ROOT=self.a.code_root, RUN=self.run, DAY=day,
+                               WHERE=w.where, ATTEMPT=job['job_id'], COMMIT=self.commit)
+                if not self.start_day(w, prepared['state'], retained=True):
+                    raise RuntimeError('retained preparation did not complete; same claim and inputs kept')
+                return dict(job_id=job['job_id'], resumed_preparation=True)
+            if (saved['run'], saved['name'], saved['where'], saved['commit']) != \
+                    (self.run, job['job_id'], w.where, self.commit):
+                raise ValueError('resume must use the original job, owner and staged commit')
+            for f in saved['inputs']:
+                for part in f['parts']:
+                    part['url'] = self.sign.get(part['bucket'], part['key'])
+            saved['mailbox'] = update['mailbox']
+            update['inputs'] = saved['inputs']
+            s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=key, Body=json.dumps(saved).encode(),
+                                           ServerSideEncryption='AES256')
+            status = w.status()
+            if not any(j['job_id'] == job['job_id'] for j in status['jobs']):
+                # Acceptance never reached the box, or its SSM answer was lost: retry the SAME claimed job.
+                saved['_job_url'] = self.sign.get(TRANSFER_BUCKET, key)
+                return w.submit(saved)
+        return box('resume' if resume else 'renew', w.target, 600, COMMIT=self.commit, JOB=job['job_id'], url_map=update)
 
-    def worker_loop(self, w):
+    def worker_loop(self, w, only_job=None):
         failures = 0
         renewed = {}
         while time.time() < self.end:
@@ -465,6 +520,8 @@ class Controller:
                 time.sleep(self.a.poll_seconds)
                 continue
             jobs = [j for j in st.get('jobs') or [] if j.get('run') == self.run]
+            if only_job and any(j.get('job_id') == only_job and j.get('state') == 'day_complete' for j in jobs):
+                return
             for j in jobs:
                 if j.get('workflow') == 'root-to-finish' and j.get('pid_alive') and \
                         time.time() - renewed.get(j['job_id'], 0) > 900:
@@ -494,9 +551,19 @@ class Controller:
             if retained:
                 self.event(worker=w.where, step='held', result='failed/interrupted day requires same-box resume',
                            days=[j['day'] for j in retained])
-                return
+                time.sleep(self.a.poll_seconds)
+                continue
             free = int(st.get('slots') or 1) - len(active)
-            if free > 0 and time.time() < self.stop_starting:
+            if free > 0 and time.time() < self.stop_starting and not only_job:
+                # A claim can outlive an interrupted accept/launcher handoff. An empty worker listing
+                # does not free that lane or authorize assigning a second day to it.
+                held = [d for d in self.queue()['days'] if (d.get('claim') or {}).get('where') == w.where
+                        and not ((d['claim'].get('done') or {}).get('lane_complete'))]
+                if held:
+                    self.event(worker=w.where, step='held', result='original claim requires same-job resume',
+                               attempts=[d['claim']['attempt'] for d in held])
+                    time.sleep(self.a.poll_seconds)
+                    continue
                 d = self.next_ready()
                 if d is not None:
                     if self.start_day(w, d):
@@ -587,7 +654,8 @@ def create(a, commit):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('--action', required=True, choices=('plan', 'create', 'loop', 'status'))
+    p.add_argument('--action', required=True, choices=('plan', 'create', 'loop', 'status', 'resume', 'stop'))
+    p.add_argument('--job', help='original retained Linux job/attempt, required for resume/stop')
     p.add_argument('--run', required=True, help='the orchestrator run (its plan.json lists the days, roles and arm)')
     p.add_argument('--code-root', required=True, help='a staged clean checkout on the main box holding this code')
     p.add_argument('--pods', default='', help='comma list of registered Pod ids (pod-root/pods/<id>.json)')
@@ -613,7 +681,7 @@ def main():
     a = p.parse_args()
     if a.action == 'create' or a.pods:
         raise SystemExit('Pods are retired from the Frankie experiment; no Pod creation or dispatch')
-    if a.action == 'loop' and (a.slots != 1 or a.boxes != 'i-0d17573dbce871520@us-east-1'):
+    if a.action in ('loop', 'resume', 'stop') and (a.slots != 1 or a.boxes != 'i-0d17573dbce871520@us-east-1'):
         raise SystemExit('remote workflow uses exactly one Linux lane: --boxes i-0d17573dbce871520@us-east-1 --slots 1')
     a.wait_for_days = a.wait_for_days == 'yes'
     if not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', a.run) or not a.code_root.startswith('/opt/frankie-box/code/'):
@@ -631,6 +699,19 @@ def main():
                 say(w.where, 'unreachable:', e)
         return
     q = ctl.queue()
+    if a.action in ('resume', 'stop'):
+        if not a.job or not re.fullmatch(re.escape(a.run) + r'-[0-9]{8}-a[0-9]+', a.job):
+            raise SystemExit('--job must name the original run-day-attempt')
+        w = workers_of(a, ctl.commit)[0]
+        held = next((d.get('claim') for d in q['days'] if (d.get('claim') or {}).get('attempt') == a.job), None)
+        if not held or held['where'] != w.where:
+            raise SystemExit('the day must still be claimed by this Linux worker')
+        result = (box('stop', w.target, 600, COMMIT=ctl.commit, JOB=a.job) if a.action == 'stop'
+                  else ctl.renew(w, dict(job_id=a.job), resume=True))
+        say(json.dumps(result, sort_keys=True))
+        if a.action == 'resume':
+            ctl.worker_loop(w, only_job=a.job)
+        return
     say('queue of %s at %s: %s' % (a.run, q.get('code_commit'), q.get('counts')))
     for d in q['days']:
         say('  %s %s %s' % (d['day'], d['state'], d.get('attempt') or d.get('reason') or (d.get('claim') or {}).get('where') or ''))

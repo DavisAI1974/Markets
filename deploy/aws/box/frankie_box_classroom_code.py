@@ -402,3 +402,63 @@ def school_reproduction(visible, school):
                 counts_per_earlier_day=dict(sorted(per_day.items())), model_calls=0,
                 rule='each earlier day and each hypothesis on its own; counts, never pooled (R05); a hypothesis is tracked '
                      'for scientific checking; checked single-occurrence findings receive equal treatment (R06)')
+
+
+def stage_knowledge_reproduction(visible, knowledge):
+    """Apply legally supplied stage findings to today's Dipole evidence; other scopes stay explicitly unmeasured.
+
+    This learner check never substitutes for the scientific teacher's lag/condition/equation tests. Full source
+    documents are input, not version-only witnesses. No prior claim is relabelled as today's observation.
+    """
+    pre = _require_teach(visible)
+    review = {(p['left'], p['right']): p for p in pre.get('relationship_review') or []}
+    components = {c['name']: c for c in pre['components']}
+    checks, sources, listed = [], [], []
+
+    def claims(value, address=()):
+        if isinstance(value, dict):
+            if value.get('finding_id') or value.get('claim_id') or ('x' in value and 'y' in value):
+                yield address, value
+            else:
+                for key, item in value.items():
+                    yield from claims(item, address + (key,))
+        elif isinstance(value, list):
+            for i, item in enumerate(value):
+                yield from claims(item, address + (i,))
+
+    for source in knowledge:
+        sources.append({k: source[k] for k in ('label', 'day', 'kind', 'path', 'sha256')})
+        content = source['content']
+        for bound in content.get('sources', []) if isinstance(content, dict) else []:
+            if not bound.get('inline'):
+                listed.append(dict(label=source['label'], source=bound,
+                                   reason='retained source pointer; source bytes are not supplied to this learner check'))
+        for address, finding in claims(content):
+            refs = [r for r in finding.get('evidence_refs') or [] if r.get('kind') == 'DIPOLE_RELATIONSHIP']
+            pairs = [(r.get('left'), r.get('right')) for r in refs]
+            pair = (finding.get('scope') or {}).get('pair')
+            component = (finding.get('scope') or {}).get('component')
+            if component:
+                measured = components.get(component)
+                checks.append(dict(source_sha256=source['sha256'], address=address, finding=finding,
+                                   component=component, result='today_component_measured' if measured else 'not_measurable',
+                                   today_evidence=measured,
+                                   reason=None if measured else 'the exact component is not in today\'s Dipole curriculum'))
+            if pair and len(pair) == 2:
+                pairs.append(tuple(pair))
+            if 'x' in finding and 'y' in finding:
+                pairs.append((finding['x'], finding['y']))
+            if not pairs and not component:
+                checks.append(dict(source_sha256=source['sha256'], address=address, finding=finding,
+                                   result='not_measurable', reason='the finding has no Dipole pair binding'))
+            for left, right in pairs:
+                today = review.get((left, right)) or review.get((right, left))
+                measured = today is not None and today.get('co_movement') is not None
+                checks.append(dict(source_sha256=source['sha256'], address=address, finding=finding,
+                                   pair=[left, right], result='today_pair_measured' if measured else 'not_measurable',
+                                   today_evidence=today if measured else None,
+                                   reason=None if measured else 'the exact pair is not in today\'s Dipole review; '
+                                   'native search lag/condition/equation checks belong to the scientific teacher'))
+    return dict(schema='FRANKIE_STAGE_KNOWLEDGE_REPRODUCTION_V1', author=AUTHOR, sources=sources,
+                checks=checks, listed=listed, model_calls=0,
+                rule='apply source-bound findings individually; no occurrence gates, validity downgrade or pooled outputs')

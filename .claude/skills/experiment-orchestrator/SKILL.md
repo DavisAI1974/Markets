@@ -5,12 +5,20 @@ description: Canonical runbook for the Frankie 30-day experiment: retained inges
 
 # Experiment orchestrator
 
+**Current 2026-10-06 continuation:** Read `research/kalshi/frankie_boss/HANDOFF_20261006_STEP1_RECOVERY.md` first.
+Step #1 is source-built, runtime unverified; next is #2. Stop for Greg's discussion before implementation-list #5
+(freeze/confirmation) and before settling Jev CPU/completion changes. AWS CPU only; exactly three held lanes.
+Granite is only the bounded post-class facilitator after discussion, never critic/self-assessment/scientific judge.
+No additional tests/framework or AWS dispatch. The actual dispatch workflow is `frankie_box_run.yml`;
+`frankie_experiment.yml` does not exist. Final launch/main-stop routing is unfinished (#8).
+
+
 Greg: "a stripped down version of today's run." Its own workflow, calling ONLY the pieces of the
 full run the experiment needs (reused, never copied), with a new search engine attached behind
 it. Frankie's cycle (context, teacher, principal, Granite, classroom) is NOT called, except the
 teacher and the code classroom on the three classroom-arm days. Everything is code on the box's CPUs.
 
-**As of 2026-09-29 (late) - read before anything below:**
+**Historical September 29 provenance — superseded where it conflicts with October directives:**
 - **Granite is decoupled.** It is ONLY the full run's B2 shadow critic (C21-C24) on the Pod, plus one
   labelled self-assessment (`SPEC-decouple-granite.md`, DECISION + BUILT). **The experiment makes no
   Granite call anywhere**: not in the search, not over the survivors, not in the classroom arm. The
@@ -129,12 +137,12 @@ standing Granite Pod.
 | 2 | ingest | `frankie_box_ingest_block.sh ACTION=canary\|ingest\|status` - sealed compact journal + receipt | built (full run's) |
 | 3 | ROOT | the calculations root (`frankie_box_monday_calculations.py`) WITHOUT bedrock: `derive.json`, 5 legacy layers, row spools `work/derived/.rows/*.jsonl` (every INPUT record decoded), pin, source binding, receipt (Greg: "we forgot root in the experiment") | **switch built 2026-09-29, not run**: `Session.derive(bedrock=False, digest=False)`, `frankie_box_monday_calculations.sh BEDROCK=off DIGEST=off` skip ROOT processes 2+3 (traversal, projection) and 4 (digest); skipped layers recorded `not_derived` with the reason; the receipt's `root_processes` / `not_run` say what ran. For any other day: `frankie_box_experiment_root.sh INGESTION_RECEIPT INGESTION_RECEIPT_SHA256 DAY DAY_ROLE OUTPUT_ROOT [DIGEST=on for a classroom-arm day]` (built 2026-09-29, not run): the day's sealed ingest read in place (journal bytes + sha256 checked against the receipt), the same whole-day pin (shared `whole_day_pin_document`), `derive` with bedrock off, no authorship; output under `/opt/frankie-box/work/experiment-roots/`; confirmation days refused without a frozen survivor list. A bedrock-off receipt carries no bedrock result/ledgers, so the principal-inputs step (full run only) must not read one |
 | 4 | export (day data) | `frankie_box_experiment_data.sh ACTION=plan\|export DAY CYCLE CALCULATIONS [PREPARATION PRINCIPAL_INPUTS HOST_CONFIG RUN]`: every data JSON of the day from ROOT, CONFIG and CYCLE, hard-linked under `/opt/frankie-box/work/experiment-data/<day>/cycle-<NN>/`; MANIFEST lists files, excluded (R09, R10, bedrock, mixed, other models, each with reason), missing, unclaimed. The older calc-only export (`frankie_box_export_calcs.sh`, also from `brain_entry()`) remains and no longer leaks the two bedrock section files | **built 2026-09-29, not run** |
-| - | orchestrator | `frankie_box_experiment.py` + `frankie_experiment.yml` (`ACTION=start\|status\|stop`) | **NOT built** |
+| - | orchestrator | `frankie_box_experiment.py` + `frankie_box_run.yml` (final three-lane/start/status/stop integration pending) | **NOT built** |
 | 5 | series | one causal axis per day (F_LAST group closes, running-max receive time) from the exported day data: ROOT frame/structure/trade spools (decoded by the journal's codec, never re-derived) + per-second signed flow and roll20 (second s known at s+1), placed by DuckDB ASOF; leakage gate (odcore) on each source's REAL alignment | **first slice built 2026-09-29, not run** (`frankie_box_experiment_search.py`) |
 | 6 | search | first slice: sign-of-step couplings, every ordered pair x cell x lag -L..L, the joined teacher's statistic + circular-shift chance check, counts per pair/cell/lag/day; workers share the arrays by fork; parts under `experiment-search/<day>/cycle-<NN>/<role>/couplings/`. Transforms (2026-09-29, `frankie_box_experiment_transforms.py`): sign_of_step, run_length, magnitude_class, level_crossing, acceleration (causal, running lower medians, no caps); pairs = x under T vs y under T, and x under T vs y's sign_of_step; rows carry x_transform / y_transform; `TRANSFORMS=` picks a subset. Listed as NOT yet searched (in the MANIFEST): the INPUT spool's per-event fields, other transform pairs, conditions, targets | **first slice built, not run**: `frankie_box_experiment_search.sh DAY CYCLE DAY_ROLE [LAGS WORKERS FROZEN_SURVIVORS]` on the `box-experiment-*` lock; needs `frankie_box_venv_duckdb.sh ACTION=install` first (box change, Greg's go) |
 | 6b | scientific teacher | the search's classroom-facing turn: claims (Frankie's, labelled) -> tests -> counts + challenges + untested combinations, tied to the BOSS teacher | **built 2026-09-29, not run**: `frankie_box_scientific_teacher.sh SEARCHES=<discovery-day search dirs> [JEV_STAMP] [FRANKIE_LEDGERS FRANKIE_DAY] [HISTORICAL_CLAIMS=research/kalshi/frankie_boss/knowledge/HISTORICAL_CLAIMS_V1-9b2ca9849e4f.json]` (box-experiment lock). Marks only rows on the claim's own transform pair (others `counts_only`); a claim's condition is listed as untested. Historical claims (`frankie_box_historical_claims.py`, committed output): the Dipole catalog's 127 sources read at their revisions (sha256 checked, 0 unreadable), 4,806 candidate statements enumerated, 10 turned into testable claims by a declared, anchored crosswalk (H01-H10: info-dipole divergence/exhaustion, the NG brain's flow nowcast and book contrarian, Memory A's withdrawal/accumulation strata and absorption, far-side thinning as noise), every other candidate listed not_testable with its reason; HISTORICAL_LESSONS_V1 kept under experiment-teacher/historical/, into nobody's brain. Reads Jev's JEV_CLAIMS_V1 and ONLY Frankie's novel findings (R09); matches claim series to search series; per day: counts, held / shown_otherwise / unresolved, the challenge "the data is showing this instead", untested and cannot-test-yet listed; writes JEV_LESSONS_V1 (uploaded to Jev's brain) and FRANKIE_LESSONS_V1. Until the teacher's Dipole measurements are a search source, Dipole-component claims come back "not in the search" |
 | 7 | survivors | symbolic regression (`odcore/symbolic.py`); no Granite pass, no model | NOT built |
-| J | Jev | blind outside student (Qwen3-8B, his own Pod, classroom-arm days only): files labelled CLAIMS the search tests; never sees Frankie's answers first, never in the classroom | **built 2026-09-29, not run**: `clm_sidecar/sit_in.py`, `frankie_box_jev_relay.sh ACTION=material\|frankie`, `launch.py --jev`, `frankie_box_jev_pod.sh`, his brain on S3 `clm-sidecar/jev-brain/` (entries + the teacher's lessons, read whole on his next day; never Frankie's answers) (spec section "Jev"; dispatch order in `clm_sidecar/README.md`) |
+| J | Jev | blind outside student (CPU route pending Greg discussion, classroom-arm days only): files labelled CLAIMS the search tests; never sees Frankie's answers first, never in the classroom | **built 2026-09-29, not run**: `clm_sidecar/sit_in.py`, `frankie_box_jev_relay.sh ACTION=material\|frankie`, `launch.py --jev`, `frankie_box_jev_pod.sh`, his brain on S3 `clm-sidecar/jev-brain/` (entries + the teacher's lessons, read whole on his next day; never Frankie's answers) (spec section "Jev"; dispatch order in `clm_sidecar/README.md`) |
 | 8 | confirmation | frozen survivor list on confirmation days, per cell, net of fees maker AND taker | NOT built |
 | C | classroom arm | teacher + `prepare_integrated_cycle` + the principal's classroom stage answered by Frankie's code (no Granite) + the scientific teacher's turn (6b) | reuses the full run; waits on r10 showing the code classroom end to end |
 
@@ -182,15 +190,14 @@ standing Granite Pod.
   and Frankie until the survivor list is frozen. Never fetch-and-peek, never "just check one".
 - **Classroom arm: days 1 and 2 of every five discovery days** (Greg, 2026-09-29, revised: on 1-2, off 3-5, repeat;
   he may go to all five if their part is quick). Orchestrator `--classroom-arm-cycle 2/5` (default). Never on a
-  confirmation day (R15). The classroom itself is code and the launch is not called: no critic, no Granite. The only Pod
-  on these days is Jev's own.
+  confirmation day (R15). The classroom itself is code and the launch is not called: no critic, no Granite. Pods are retired; Jev's CPU route is pending.
 - **The loop (three seats)**: search survivors go to the BOSS teacher and the classroom as material.
   Frankie's findings come back as HYPOTHESES (claims, never truth, R11); the search, as the
   scientific teacher, tests them across every discovery day with the chance check and hands back
   counts; the BOSS teacher answers within its own role (R12). A survivor is reported as a scoped
   finding with its days named.
 - **Jev (Greg, 2026-09-29: "yes, include him")**: the blind outside student, NOT a classroom seat
-  (R17 stands). Qwen3-8B on his own Pod, classroom-arm days only. Sees what Frankie sees (classroom
+  (R17 stands). Jev CPU route pending Greg discussion, classroom-arm days only. Sees what Frankie sees (classroom
   package + survivors), never Frankie's answers before filing his own. Files labelled CLAIMS only;
   the search tests them like Frankie's and reports counts with his name and the days. Never touches
   Frankie's session, the teachers, grading or confirmation days. Keeps his seat by counts: his

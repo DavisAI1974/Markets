@@ -1,5 +1,10 @@
 # HANDOFF 2026-10-06 — 30-day AWS workflow reconstruction
 
+**Latest implementation:** Read `HANDOFF_20261006_STEP1_RECOVERY.md` before this historical planning handoff.
+Step #1 is source-built, not E2E-verified; continue #2. Pause before #5 freeze/confirmation and discuss Jev's pending
+CPU route/completion dependency. AWS CPU only; no Pods or GPU fallback, no dispatch without Greg's explicit AWS go.
+The new handoff carries the checklist, Claude audit disposition, actual recovery commands, saved drafts and limitations.
+
 Branch: `chatgpt/frankie-30day-aws-workflow-20261006`
 Tip at handoff creation: `1f63f76cf70c6e405e3eaebe958647a66526f74b`
 

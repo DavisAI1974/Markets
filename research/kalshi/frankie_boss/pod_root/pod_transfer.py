@@ -138,13 +138,17 @@ def get_bytes(url, retries=6, limit=None):
 def get_to_file(url, path, expect_bytes, retries=8):
     """GET a presigned object into path (via path.part, resumed by HTTP Range after a cut); returns (bytes, sha256)."""
     path = Path(path)
+    if path.exists():
+        if path.stat().st_size != expect_bytes:
+            raise IOError('%s: retained completed transfer has different bytes' % path)
+        return expect_bytes, sha256_file(path)
     part = path.with_name(path.name + '.part')
     error = None
     for attempt in range(retries):
+        _save_transfer_if_requested()
         have = part.stat().st_size if part.exists() else 0
         if have > expect_bytes:
-            part.unlink()
-            have = 0
+            raise IOError('%s: retained partial transfer exceeds expected bytes; not overwritten' % part)
         try:
             if have < expect_bytes or expect_bytes == 0:
                 conn, target = _connection(url)
@@ -156,16 +160,24 @@ def get_to_file(url, path, expect_bytes, retries=8):
                     if response.status in (403, 404):
                         break
                     raise IOError(error)
-                mode = 'ab' if (have and response.status == 206) else 'wb'
+                if have and (response.status != 206 or
+                             not response.getheader('Content-Range', '').startswith('bytes %d-' % have)):
+                    conn.close()
+                    raise IOError('server did not honor retained byte offset %d; prefix kept' % have)
+                mode = 'ab' if have else 'wb'
                 with open(part, mode) as out:
                     while block := response.read(BLOCK):
                         out.write(block)
+                        _save_transfer_if_requested(out)
+                    out.flush()
+                    os.fsync(out.fileno())
                 conn.close()
             got = part.stat().st_size
             if got != expect_bytes:
                 raise IOError('%s: %d bytes, %d expected' % (path, got, expect_bytes))
             digest = sha256_file(part)
             os.replace(part, path)
+            _sync_parent(path)
             return got, digest
         except (OSError, http.client.HTTPException) as e:
             error = '%s: %s' % (type(e).__name__, e)
@@ -173,25 +185,74 @@ def get_to_file(url, path, expect_bytes, retries=8):
     raise IOError('GET %s failed: %s' % (path, error))
 
 
+def _sync_parent(path):
+    directory = os.open(Path(path).parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def _save_transfer_if_requested(out=None):
+    marker = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    if marker and Path(marker).exists():
+        if out is not None:
+            out.flush()
+            os.fsync(out.fileno())
+            _sync_parent(out.name)
+        raise SystemExit(75)
+
+
 def get_parts_to_file(parts, path):
     """Several presigned part objects concatenated into one file, in order; returns (bytes, sha256 of the whole)."""
     path = Path(path)
     if len(parts) == 1:                              # one object (an S3 copy of the whole file): straight into place
         return get_to_file(parts[0]['url'], path, parts[0]['bytes'])
-    h, total = hashlib.sha256(), 0
     tmp = path.with_name(path.name + '.assembling')
-    with open(tmp, 'wb') as out:
+    binding = path.with_name(path.name + '.assembling-source.json')
+    source = [{k: v for k, v in p.items() if k != 'url'} | dict(
+        object=p.get('key') or urlsplit(p['url'])._replace(query='', fragment='').geturl()) for p in parts]
+    if binding.exists():
+        if json.loads(binding.read_bytes()) != source:
+            raise IOError('multipart source changed; retained transfer not overwritten')
+    else:
+        if tmp.exists():
+            raise IOError('retained multipart prefix lacks its source binding; not overwritten')
+        pending = binding.with_name(binding.name + '.pending')
+        with open(pending, 'w') as handle:
+            json.dump(source, handle, sort_keys=True)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(pending, binding)
+        _sync_parent(binding)
+    have = tmp.stat().st_size if tmp.exists() else 0
+    if have > sum(p['bytes'] for p in parts):
+        raise IOError('retained multipart prefix exceeds expected bytes; not overwritten')
+    offset = 0
+    with open(tmp, 'ab') as out:
         for i, p in enumerate(parts):
+            _save_transfer_if_requested(out)
+            end = offset + p['bytes']
+            if have >= end:
+                offset = end
+                continue
             piece = path.with_name('%s.piece-%04d' % (path.name, i))
-            n, _ = get_to_file(p['url'], piece, p['bytes'])
+            get_to_file(p['url'], piece, p['bytes'])
             with open(piece, 'rb') as f:
+                f.seek(max(0, have - offset))
                 while block := f.read(BLOCK):
                     out.write(block)
-                    h.update(block)
-            total += n
+                    _save_transfer_if_requested(out)
+            out.flush()
+            os.fsync(out.fileno())
+            _sync_parent(tmp)
+            have = end
+            offset = end
             piece.unlink()
+    digest = sha256_file(tmp)
     os.replace(tmp, path)
-    return total, h.hexdigest()
+    _sync_parent(path)
+    return have, digest
 
 
 def plan_parts(size, chunk=CHUNK_BYTES):

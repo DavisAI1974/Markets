@@ -373,7 +373,13 @@ def book_locked(kind, size, pid, meta, window):
                           booked_cpus=cpu_list(booked), in_use_unbooked=cpu_list(held), reaped=[r['booking'] for r in reaped],
                           reason='waiting: %d free of %d needed (booked by the ledger: %s; in use by Frankie processes not '
                                  'in the ledger: %s)' % (len(free), size, cpu_list(booked) or 'none', cpu_list(held) or 'none'))
-    cpus = sorted(free[:size] if kind == 'day-run' else free[-size:])
+    requested = meta.get('cpus')
+    if requested is not None:
+        if len(requested) != size or len(set(requested)) != size or not set(requested).issubset(online):
+            return None, dict(status='refused', reason='retained lane CPU set differs from this box')
+        if not set(requested).issubset(free):
+            return None, dict(status='waiting', reason='the retained lane CPU set is still occupied')
+    cpus = sorted(requested if requested is not None else (free[:size] if kind == 'day-run' else free[-size:]))
     stamp = time.time()
     booking = '%s-%s-%s-%d-%d' % (kind, re.sub('[^A-Za-z0-9_]', '_', meta.get('day') or 'box'),
                                   re.sub('[^A-Za-z0-9_]', '_', meta.get('stage') or kind), int(stamp), pid)

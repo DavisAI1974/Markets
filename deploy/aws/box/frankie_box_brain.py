@@ -97,15 +97,35 @@ def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 *
             return json.loads(manifest_path.read_bytes()), True
         raise ValueError('%s already holds different stage knowledge; duplicate data declines (R16)' % entry_dir)
     if entry_dir.exists():
-        raise ValueError('%s exists without a complete stage knowledge manifest; never overwritten' % entry_dir)
-    entry_dir.mkdir(parents=True)
-    knowledge_path.write_bytes(raw)
+        if (any(p.name not in ('stage-knowledge.json', 'stage-knowledge.json.pending', 'MANIFEST.json.pending')
+                for p in entry_dir.iterdir())
+                or knowledge_path.exists() and knowledge_path.read_bytes() != raw):
+            raise ValueError('%s holds different incomplete stage knowledge; never overwritten' % entry_dir)
+    else:
+        entry_dir.mkdir(parents=True)
+    if not knowledge_path.exists():
+        pending_knowledge = entry_dir / 'stage-knowledge.json.pending'
+        with pending_knowledge.open('wb') as handle:
+            handle.write(raw)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(pending_knowledge, knowledge_path)
     manifest = dict(schema=SCHEMA, cycle=stage, day=str(day), entry_kind='stage_knowledge', entries=[
         dict(name='stage-knowledge.json', bytes=len(raw), sha256=digest, source='; '.join(r['path'] for r in records),
              include=True, kind='immediate %s knowledge' % stage)
     ], unavailable=[], knowledge_status='available_immediately',
        note='stage knowledge committed before the workflow advances; exact large sources remain at the digest-bound paths')
-    manifest_path.write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    pending = entry_dir / 'MANIFEST.json.pending'
+    with pending.open('w', encoding='utf-8') as handle:
+        handle.write(json.dumps(manifest, indent=1, sort_keys=True) + '\n')
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(pending, manifest_path)
+    directory = os.open(entry_dir, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
     return manifest, False
 
 

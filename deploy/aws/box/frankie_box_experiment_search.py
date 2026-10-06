@@ -44,6 +44,12 @@ WALLS. The day must be declared a discovery day; a confirmation day is refused u
 (--frozen-survivors), and then only the pairs on it are run. One day per run; days are never pooled. A day already
 searched declines (duplicate data). Needs numpy, pyarrow and duckdb in the box venv (duckdb 1.5.5 with its bundled
 extensions; a box change on Greg's go).
+
+RECOVERY. FRANKIE_LANE_STOP_FILE requests an orderly save. Source preparation and a currently running transform finish
+their operation; prepared arrays and every completed transform are retained locally. Pair workers stop before their
+next partner and save all emitted rows, the exact next partner cursor, predictor FFTs and counts. Submitted workers
+drain before exit 75. Resume reuses these source/code-bound states in the same .partial directory. A hard-killed
+operation without matching state is retained and refused, never silently overwritten or represented as recovered.
 """
 import argparse
 import hashlib
@@ -376,7 +382,49 @@ def couple(fx, fy, lags):
 _JOB = {}
 
 
+def _stop_requested():
+    path = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    return bool(path and Path(path).is_file())
+
+def _save_state(path, body):
+    from research.kalshi.frankie_boss.parallel_teacher import _save_raw_state
+    _save_raw_state(Path(path), body)
+
+def _load_state(path, identity):
+    from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state
+    state = _load_raw_state(Path(path))
+    if state['identity'] != identity:
+        raise ValueError('saved search state belongs to different inputs or search code: %s' % path)
+    return state
+
+def _run_pending(context, workers, function, jobs):
+    """Keep only the held lane's workers in flight; a stop drains each submitted operation."""
+    from collections import deque
+    pending, source = deque(), iter(jobs)
+    with context.Pool(workers) as pool:
+        def fill():
+            while len(pending) < workers and not _stop_requested():
+                job = next(source, None)
+                if job is None:
+                    break
+                pending.append((job, pool.apply_async(function, (job,))))
+        fill()
+        while pending:
+            job, result = pending.popleft()
+            yield job, result.get()
+            fill()
+
 def _step_job(args):
+    identity = dict(search=_JOB['identity'], job=args)
+    path = _JOB['recovery'] / ('step-' + hashlib.sha256(json.dumps(args).encode()).hexdigest() + '.pkl')
+    if path.is_file():
+        return _load_state(path, identity)['result']
+    result = _step_job_compute(args)
+    _save_state(path, dict(identity=identity, result=result))
+    return result
+
+
+def _step_job_compute(args):
     """One series under one transform: its step series and the steps it could not classify (an unknown value)."""
     import frankie_box_experiment_transforms as T
     name, tname = args
@@ -392,30 +440,70 @@ def y_transforms(tx):
 
 
 def _cell_job(args):
-    """One cell and one x series under one transform against every other series: its own part file (counts only)."""
+    """One cell/x job; retain its exact next partner and all completed candidate rows on save."""
     part, cell_col, cell_value, tx, x, lags, survivors, header = args
+    identity = dict(search=_JOB['identity'], job=args)
+    state_path, partial = Path(part + '.state.pkl'), Path(part + '.tmp')
+    saved = _load_state(state_path, identity) if state_path.is_file() else None
+    if saved and saved.get('complete'):
+        if saved['sha256'] is not None and (not Path(part).is_file() or sha256_file(part) != saved['sha256']):
+            raise ValueError('completed search part changed: %s' % part)
+        return saved['result']
+    if saved and saved.get('ready_to_publish'):
+        source = partial if partial.is_file() else Path(part)
+        if not source.is_file() or source.stat().st_size != saved['bytes'] or sha256_file(source) != saved['sha256']:
+            raise ValueError('search part differs from its retained result: %s' % source)
+        if source == partial:
+            os.replace(partial, part)
+        result = (part, saved['count'], saved['beyond'], None)
+        _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=saved['sha256']))
+        return result
     steps, idx = _JOB['steps'], _JOB['cells'][(cell_col, cell_value)]
     pick = (lambda v: v) if idx is None else (lambda v: v[idx])
-    sx = pick(steps[tx][x])
-    if sx.size < 2:     # listed in the MANIFEST (cells_not_counted), never passed over silently (Greg, 2026-09-29)
-        return part, 0, 0, dict(cell=[cell_col, str(cell_value)], transform=tx, series=x, steps=int(sx.size),
-                                reason='fewer than 2 steps of this series in this cell: no step pair to count')
-    fx = transforms(sx)
-    count = beyond = 0
-    with open(part + '.tmp', 'w') as out:
-        for ty in y_transforms(tx):
-            if ty not in steps:
-                continue
-            for y in sorted(steps[ty]):
-                if y == x or (survivors is not None and (tx, x, ty, y, cell_col, cell_value) not in survivors):
-                    continue
-                row = dict(header, x=x, y=y, cell=cell_col, cell_value=cell_value, transform=tx, x_transform=tx,
-                           y_transform=ty, **couple(fx, transforms(pick(steps[ty][y])), lags))
-                out.write(json.dumps(row, sort_keys=True) + '\n')
-                count += 1
-                beyond += row['beyond_chance']
-    os.replace(part + '.tmp', part)
-    return part, count, beyond, None
+    if saved:
+        sx, fx = saved['sx'], saved['fx']
+        count, beyond, cursor = saved['count'], saved['beyond'], saved['cursor']
+        if not partial.is_file() or partial.stat().st_size != saved['bytes'] or sha256_file(partial) != saved['sha256']:
+            raise ValueError('unfinished search part differs from saved cursor: %s' % partial)
+    else:
+        if Path(part).exists() or partial.exists():
+            raise ValueError('search part has no matching continuation; retained for recovery: %s' % part)
+        sx = pick(steps[tx][x])
+        if sx.size < 2:
+            result = (part, 0, 0, dict(cell=[cell_col, str(cell_value)], transform=tx, series=x, steps=int(sx.size),
+                                     reason='fewer than 2 steps of this series in this cell: no step pair to count'))
+            _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=None))
+            return result
+        fx = transforms(sx)
+        count = beyond = cursor = 0
+    partners = [(ty, y) for ty in y_transforms(tx) if ty in steps for y in sorted(steps[ty])
+                if y != x and (survivors is None or (tx, x, ty, y, cell_col, cell_value) in survivors)]
+    with partial.open('a' if saved else 'x') as out:
+        for partner_index in range(cursor, len(partners)):
+            if _stop_requested():
+                out.flush()
+                os.fsync(out.fileno())
+                _save_state(state_path, dict(identity=identity, complete=False, sx=sx, fx=fx,
+                                            count=count, beyond=beyond, cursor=partner_index,
+                                            bytes=partial.stat().st_size, sha256=sha256_file(partial)))
+                return None
+            ty, y = partners[partner_index]
+            row = dict(header, x=x, y=y, cell=cell_col, cell_value=cell_value, transform=tx, x_transform=tx,
+                       y_transform=ty, **couple(fx, transforms(pick(steps[ty][y])), lags))
+            out.write(json.dumps(row, sort_keys=True) + '\n')
+            count += 1
+            beyond += row['beyond_chance']
+        out.flush()
+        os.fsync(out.fileno())
+    # Save the completed result before publication. A stop never requires redoing these pair calculations.
+    result = (part, count, beyond, None)
+    digest = sha256_file(partial)
+    _save_state(state_path, dict(identity=identity, complete=False,
+                                count=count, beyond=beyond, cursor=len(partners),
+                                bytes=partial.stat().st_size, sha256=digest, ready_to_publish=True))
+    os.replace(partial, part)
+    _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=digest))
+    return result
 
 
 def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, workers=8, transform_names=None):
@@ -443,38 +531,87 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     target = Path(root) / day / ('cycle-' + cycle) / day_role
     if (target / 'MANIFEST.json').exists():
         raise SystemExit('%s already searched: the same day is not searched twice (duplicate data declines the run)' % target)
-    axis, series, cells, sources, notes, gates = build_series(day_dir, log)
+    staging = target.parent / (target.name + '.partial')
+    recovery = staging / 'recovery'
+    recovery.mkdir(parents=True, exist_ok=True)
+    (staging / 'couplings').mkdir(parents=True, exist_ok=True)
+    identity = dict(schema='FRANKIE_SEARCH_CONTINUATION_V1', day=day, cycle=cycle, role=day_role,
+                    data_manifest_sha256=sha256_file(day_dir / 'MANIFEST.json'), lags=lags,
+                    transforms=transform_names, frozen_sha256=sha256_file(frozen) if frozen else None,
+                    code_sha256=sha256_file(__file__), transform_sha256=sha256_file(T.__file__),
+                    directive=directive_witness())
+    identity_path = recovery / 'identity.pkl'
+    if identity_path.is_file():
+        _load_state(identity_path, identity)
+    else:
+        _save_state(identity_path, dict(identity=identity))
+    # A publication interrupted after its final manifest resumes without reopening any scientific operation.
+    if (staging / 'MANIFEST.json').is_file():
+        manifest = json.loads((staging / 'MANIFEST.json').read_bytes())
+        os.replace(staging, target)
+        return manifest
+    prepared_path = recovery / 'prepared.pkl'
+    if prepared_path.is_file():
+        prepared = _load_state(prepared_path, identity)['prepared']
+    else:
+        if _stop_requested():
+            raise SystemExit(75)
+        # This existing source preparation is one operation. A requested stop lets it finish and retains every array.
+        prepared = build_series(day_dir, log)
+        _save_state(prepared_path, dict(identity=identity, prepared=prepared))
+    axis, series, cells, sources, notes, gates = prepared
+    if _stop_requested():
+        raise SystemExit(75)
     names = sorted(series)
     import multiprocessing
     context = multiprocessing.get_context('fork')                # the workers share the arrays, no copy
-    _JOB.update(series=series)
+    _JOB.clear()
+    _JOB.update(series=series, identity=identity, recovery=recovery)
     steps, unclassified = {t: {} for t in transform_names}, {t: {} for t in transform_names}
-    with context.Pool(workers) as pool:
-        for tname, name, st, n_unknown in pool.imap_unordered(_step_job, [(n, t) for t in transform_names for n in names]):
-            steps[tname][name] = st
-            unclassified[tname][name] = n_unknown
-    cell_index = {('whole-day', None): None}
-    for col, values in sorted(cells.items()):
-        arrived = np.asarray(values[1:], dtype=object)          # a step belongs to the cell of the group it arrives at
-        for value in sorted({v for v in arrived if v is not None}):
-            cell_index[(col, value)] = np.nonzero(arrived == value)[0]
-    staging = target.parent / (target.name + '.partial')
-    (staging / 'couplings').mkdir(parents=True, exist_ok=True)
+    step_jobs = [(n, t) for t in transform_names for n in names]
+    for _, result in _run_pending(context, workers, _step_job, step_jobs):
+        tname, name, st, n_unknown = result
+        steps[tname][name] = st
+        unclassified[tname][name] = n_unknown
+    if _stop_requested():
+        raise SystemExit(75)       # all submitted transforms have drained and saved their full results
+    cells_path = recovery / 'cells.pkl'
+    if cells_path.is_file():
+        cell_index = _load_state(cells_path, identity)['cells']
+    else:
+        cell_index = {('whole-day', None): None}
+        for col, values in sorted(cells.items()):
+            arrived = np.asarray(values[1:], dtype=object)          # a step belongs to the cell of the group it arrives at
+            for value in sorted({v for v in arrived if v is not None}):
+                cell_index[(col, value)] = np.nonzero(arrived == value)[0]
+        _save_state(cells_path, dict(identity=identity, cells=cell_index))
     header = dict(day=day, cycle=cycle, day_role=day_role)
     jobs = [(str(staging / 'couplings' / ('%04d-%s-%s.jsonl' % (c, tx, hashlib.sha256(x.encode()).hexdigest()[:16]))),
              col, value, tx, x, lags, survivors, header)
             for c, (col, value) in enumerate(sorted(cell_index, key=lambda k: (k[0] != 'whole-day', k[0], str(k[1]))))
             for tx in transform_names for x in names]
+    jobs_path = recovery / 'jobs.pkl'
+    if jobs_path.is_file():
+        if _load_state(jobs_path, identity)['jobs'] != jobs:
+            raise ValueError('saved search job order changed')
+    else:
+        _save_state(jobs_path, dict(identity=identity, jobs=jobs))
     _JOB.update(steps=steps, cells=cell_index)
     started = time.time()
     parts, count, beyond, not_counted = [], 0, 0, []
-    with context.Pool(workers) as pool:
-        for part, n_rows, n_beyond, short in pool.imap_unordered(_cell_job, jobs):
-            if short:
-                not_counted.append(short)
-            parts.append(part)
-            count += n_rows
-            beyond += n_beyond
+    for _, result in _run_pending(context, workers, _cell_job, jobs):
+        if result is None:
+            continue                # this worker saved its exact next pair on the cooperative stop
+        part, n_rows, n_beyond, short = result
+        if short:
+            not_counted.append(short)
+        parts.append(part)
+        count += n_rows
+        beyond += n_beyond
+    if _stop_requested():
+        raise SystemExit(75)         # every submitted pair worker has saved; no child is left running
+    if len(parts) != len(jobs):
+        raise ValueError('search workers stopped before every job was retained; resume with the stop request cleared')
     part_pins = [dict(path=str(Path(p).relative_to(staging)), rows=None, sha256=sha256_file(p)) for p in sorted(parts)
                  if Path(p).exists()]
     cell_specs = [(c, v, None) for c, v in cell_index]
@@ -492,7 +629,12 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     rule='counts per pair, cell, lag and day; never pooled across days; never a coefficient or an average '
                          'as the finding (D37); a confirmation day runs only the frozen survivor list',
                     frozen_survivors=str(frozen) if frozen else None, model_calls=0)
-    (staging / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    manifest_path = staging / 'MANIFEST.json'
+    with manifest_path.with_suffix('.json.pending').open('w', encoding='utf-8') as handle:
+        handle.write(json.dumps(manifest, indent=1, sort_keys=True) + '\n')
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(manifest_path.with_suffix('.json.pending'), manifest_path)
     os.replace(staging, target)
     log('search: %d series x %d transforms (%d sources failed the leakage gate, listed), %d cells, %d pair rows, %d '
         'beyond chance (a count, not a finding by itself) in %.0f s' % (
