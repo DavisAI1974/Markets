@@ -29,6 +29,8 @@ def teach_accumulated(day, search, brain, out_dir):
     import frankie_box_scientific_teacher as ST
     import frankie_box_experiment_exchange as EX
     import frankie_box_candidate_claims as CC
+    import frankie_box_historical_claims as HC
+    import frankie_box_historical_reproduction as HR
     from frankie_box_durable import write_json, witness
 
     day, search, out_dir = str(day), Path(search), Path(out_dir)
@@ -42,7 +44,7 @@ def teach_accumulated(day, search, brain, out_dir):
         raise ValueError('accumulated claims must use this owning day search')
     identity = dict(day=day, search=str(search), manifest=manifest_witness, brain=str(brain),
                     producer=witness(__file__), readers={m.__name__: witness(m.__file__)
-                                                       for m in (LS, BR, ST, EX, CC)})
+                                                       for m in (LS, BR, ST, EX, CC, HC, HR)})
     input_path = out_dir / 'inputs.json'
     if input_path.is_file():
         inputs = json.loads(input_path.read_bytes())

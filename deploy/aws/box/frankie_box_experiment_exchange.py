@@ -1174,16 +1174,32 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             if src['author'] == 'historical':
                 # Scoped measurements remain evidence. Neither seat may turn an
                 # inherited rejection (or a counts-only reassessment) into closure.
-                rework = dict(result.get('research_rework') or {}, status='OPEN_REWORK_REQUIRED', closed=False,
+                # A PERFORMED reproduction status the reader took from a hash-bound HISTORICAL_REPRODUCTION_V1 record
+                # (performed_matched / performed_differs, with the record listed) is kept, never overwritten by this
+                # exchange, which itself establishes nothing; any other value is not established here (slice B).
+                prior_rework = result.get('research_rework') or {}
+                reproduction = prior_rework.get('original_calculation_reproduction')
+                records = (prior_rework.get('reproduction_records') or {}).get('records') or []
+                performed = (isinstance(reproduction, str) and reproduction.startswith('performed_')
+                             and any(isinstance(r, dict) and r.get('record_sha256') and r.get('status') == reproduction
+                                     for r in records))
+                rework = dict(prior_rework, status='OPEN_REWORK_REQUIRED', closed=False,
                     claim_id=result['claim_id'], lesson_sha256=src['sha256'],
                     collection=context.get('reconsideration'),
                     prior_disposition=result.get('disposition'),
-                    original_calculation_reproduction='not_established_by_this_exchange',
+                    original_calculation_reproduction=reproduction if performed else 'not_established_by_this_exchange',
+                    reproduction_status_source=('the reader\'s hash-bound HISTORICAL_REPRODUCTION_V1 record(s), kept as read'
+                                                if performed else 'none: no performed record was read by the lessons'),
                     repair_or_reformulation='not_established_by_this_exchange',
                     note='existing search counts may reassess a mapped claim; they do not establish '
-                         'reproduction or repair of the original discarded research')
-                side['untested'].append('Original research reproduction and repair/reformulation remain open; '
-                                        'the current count comparison does not establish their completion.')
+                         'reproduction or repair of the original discarded research; a performed reproduction is the '
+                         'teachers\' own recorded execution and is reported, not re-established, here')
+                side['untested'].append(
+                    ('Original research reproduction is recorded by the teachers\' own execution (%s, hash-bound record); '
+                     'repair/reformulation remains open; the current count comparison establishes neither.' % reproduction)
+                    if performed else
+                    'Original research reproduction and repair/reformulation remain open; '
+                    'the current count comparison does not establish their completion.')
             findings += found
             turns = [dict(turn=1, seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR,
                           responds_to='the scientific teacher\'s lessons result on the claim', record=boss,

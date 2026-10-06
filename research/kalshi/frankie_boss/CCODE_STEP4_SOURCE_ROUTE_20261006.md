@@ -294,3 +294,73 @@ Changed: `frankie_box_teacher_knowledge.py`, `frankie_box_experiment_exchange.py
   retry is unchanged (same-bytes reuse, different-bytes refuse).
 Not done: `frankie_box_classroom_code.exchange_reply` is untouched (origin lines are added to the reply by the exchange).
 Checks: `ast.parse` without project imports, `git diff --check`. No run.
+
+### Slice A follow-ups 1-3 (parent `ef12b0eb` on Codex's `59cca0d4`; commit `9e456888`)
+
+Changed: `frankie_box_experiment_exchange.py` only.
+- (1) `science_turn(..., origin=)` takes the ONE computed `origin_evidence_accounting` object (the BOSS seat's) and consumes
+  its teaching lines in its own `evidence_checks` (result unresolved), `reasoning`, `teaching_implications` and cites before
+  `D.parse_teacher` / hashing: the same counts, explicitly not a second measurement; never in `compared`, findings,
+  promotion or target masks. `day_text` names the origin rows with margins stated and those listed without arithmetic;
+  sidecar `origin_accounting_consumed`. `exchange()` passes the object to both seats.
+- (2) the origin prose carries the shared route's qualification verbatim in meaning: nonzero transformed-step margins at the
+  retained circular shift, not PRESENT masks or known physical inactivity (zero may be stationary, missing or unclassified);
+  `formulas` and `alignment` recorded per row; the formulas are `count_margins`, unchanged.
+- (3) `origin['listed']` reasons are taught: a current-day origin row whose arithmetic cannot be performed keeps its source
+  row and reason, is named as identified discovery evidence (exact row / mirror / fields-equal / same pair) or as not
+  identifiable, and is never marked tested; the lines reach the BOSS turn, the scientific turn and the lawful Frankie reply.
+Slice A is now complete on CCode's side pending Codex's integration review. Checks: `ast.parse`, `git diff --check`. No run.
+
+### Slice B: faithful historical calculation bindings and the teachers' reproduction capability
+
+Changed: `frankie_box_historical_claims.py` (tables + accessors; `build()` output unchanged except `builder_sha256`),
+NEW `frankie_box_historical_reproduction.py` (the capability; never invoked), `frankie_box_scientific_teacher.py`,
+`frankie_box_experiment_exchange.py`, `frankie_box_teacher_knowledge.py` (identity binds the two new readers).
+The committed claims file `HISTORICAL_CLAIMS_V1-9dc79ca359e9.json` is byte-identical; the builder was not run.
+
+Traced first (every pin computed from git history here, verified byte-equal to the handoff's; none recomputed on the box):
+
+| binding | claims | original calculation (entry) | sources @ revision (catalog id) | inputs | recorded outputs | status |
+|---|---|---|---|---|---|---|
+| `crypto_trend_flip` | H01 H02 | `_info_dipole_trend_flip.py` main: `signed_flow_features` over the 30-min pre-entry window of 1-min bars per winner onset; confirm/diverge split; the aligned <= -0.2 gate; the 2-factor gate with `odcore.info_dipole.divergence` | `odcore/info_dipole.py` (review.091), `_info_dipole_trend_flip.py` (review.112), `_info_dipole_flow_detrend.py` (review.107, cited negative) @ `bb28b35e` | 6 `fingerprint_dataset/test_bars/*.json` + `fingerprint_dataset/onsets/winner_onsets.json` (1,560), all committed @ `bb28b35e` | 10 printed patterns (POOLED 1560 / 50 / 38 / +12; temporal +4 / +18; gate ~65 tol 1; per cell 100 / 84; 2-factor 317 / 64 / 58 / 52 / 49) + 2 prose (early 70 / late 62; "neutral") | defined |
+| `crypto_harness` | H01 H02 | `_info_dipole_harness.py` main: same timing trigger, champion OFI filter vs challenger `divergence()`, ZigZag theta 20 bps, OOS 40 percent | `_info_dipole_harness.py` (review.095), `_info_dipole_swing_backtest.py` (review.111), `odcore/info_dipole.py`, `_info_dipole_harness_results.json` (review.096) | `realbins/*_bins.json`: not in the repository at any revision | the results json, leaf by leaf (`config`, `per_venue`) | missing_inputs |
+| `ng_leg_fingerprints` | H03 H04 H05 H09 H10 | `characterize_turns.py <days>` -> `month_characterize.characterize_day("NG", day, "s3")`: legs by `lag_join.scan_moves` (TRIG 0.015); per leg `dipole_pieces` (dip_imb_level), `depth_pieces` (imb_R, aligned_imb_R, book), `turn_pieces` (turn_far_thinning), `move_path` (dir, continuation) | `month_characterize.py`, `event_move_baseline.py`, `characterize_turns.py`, `lag_join.py`, `forward_curve.py`, `nws_temp_feed.py` @ `21df8f14` (three swept catalog ids; the rest pinned here), `odcore/info_dipole.py` @ `bb28b35e`, `renders/ng_refine_s95/fingerprints.json` @ `21df8f14` (NOT in the catalog: bound by path + revision + sha256), `ng_brain.json` @ `bb28b35e` | NG MBP-10 day tapes on S3 (`nymex_mbp10/`) + local regime caches: not in the repository | `fingerprints.json` per leg, per claim field set; ng_brain prose (1,537 legs / 87.6 percent AND the brain's own recount 2,459/3,697 = 0.665; book_contrarian confidence 0.5 / UNCLEAR; turn_far_thinning demotion "held legs ~half negative"), each declared not comparable by code | missing_inputs |
+| `memory_a_retired` | H06 H07 H08 | Memory A exact native MBO closes (Oct 4 / Oct 5 2021) | the two catalog sources (positive knowledge doc, member-first receipt) @ `b4f364f0`, sha256 from the catalog (that revision is not in this clone); the recalculation script is in neither the catalog nor this repository's history | the A-memory ledger: not bound | preserved as evidence; not compared | not_bound: "Memory A retired by Greg 2026-10-06; original evidence preserved" |
+
+Built:
+- `frankie_box_historical_claims.REPRODUCTIONS` (the table above, every source with path, revision, sha256, role and catalog
+  id where one exists; entry point with cwd/script/argv/produced files; inputs with where they live; recorded outputs typed
+  `printed` / `json_file` / `prose`), `REFORMULATIONS` (per claim what a declared repair or reformulation NEEDS: H01 a
+  derived `aligned_flow` series, a threshold state and a pre-entry window; H02 a windowed `|imbalance| falling` transform
+  (none of `TRANSFORMS` is one); H03 the construction transfer roll20 vs Lee-Ready ~300 s, the |x| >= 0.15 state and a
+  LEG/SIDE definition; H04/H05 a numeric flat-flow bar the source never states, an entry definition, and n vs 10 levels;
+  H09/H10 a turn definition (the favourable peak within POST_S) and an entry-to-peak depth change; H06-H08 not_bound), the
+  accessors `reproduction_of`, `reformulation_of`, `binding_tables_sha256`. `frankie_box_experiment_surface.state_masks`
+  (sign states, built, unwired) and `frankie_box_experiment_transforms.TRANSFORMS` are named as the places; the decisions
+  are Greg's (mathematical), none is taken.
+- `frankie_box_historical_reproduction.py`: `stage` (git show at the pin, sha verified, into `<out>/tree/<path>`; on the box
+  everything is listed, nothing staged), `plan` (`HISTORICAL_REPRODUCTION_PLAN_V1`, executable yes/no), `run` (refuses
+  without the exact `AUTHORIZATION` literal or with missing inputs: `not_run` with the inputs named; never a stand-in),
+  `compare` (printed regex fields with the recorded tolerance only where the record says "~"; produced json vs the pinned
+  recorded file leaf by leaf over the declared fields; prose declared not comparable), `record`
+  (`HISTORICAL_REPRODUCTION_V1`: performed_matched / performed_differs / not_run, pins, `record_sha256`; written once under
+  `<work>/reproduction/`), `records_for` (hash-bound read: record sha holds AND pins equal the declared table's, else
+  listed), `status_of`. Nothing calls it today.
+- `frankie_box_scientific_teacher.py`: `historical_claims()` attaches `reproduction` and `reformulation` per claim (so they
+  freeze into `claim_inputs`); `test()`'s `research_rework` READS the status from the hash-bound records under
+  `REPRODUCTION_DIR` (`performed_matched` / `performed_differs` / `not_run`), else `pending_teacher_work`, or `not_bound`
+  for H06-H08; it carries `reproduction_binding` (pins, missing inputs), `reproduction_records` (records + listed),
+  `repair_or_reformulation` (`not_bound` / `pending_teacher_work`) and `reformulation_needs`; `reconsideration` counts
+  bindings by status, records by status (and the listed ones), reformulation needs by status, and says the bindings cover
+  the mapped claims only: every not_testable statement has none and stays open.
+- `frankie_box_experiment_exchange.py`: the historical item's `rework` keeps a `performed_*` reproduction status when the
+  reader reports a hash-bound record of that status (`reproduction_status_source` says so) and otherwise writes
+  `not_established_by_this_exchange` as before; the untested line says which. Repair/reformulation stays not established.
+- `teach_accumulated` identity binds `frankie_box_historical_claims` and `frankie_box_historical_reproduction` beside the
+  other readers (older pending `inputs.json` refuse the new semantics; completed results keep theirs).
+Not done, on purpose: no reproduction, repair or reformulation was run or judged; no condition, transform, window, turn
+or entry definition was chosen; the not_testable 82,365 have no binding (a binding needs a crosswalk entry first).
+Consequence to note: a future `frankie_box_historical_claims.py --out` run would produce a file differing from the committed
+one only in `builder_sha256` and refuse to overwrite it ("move it aside first"); that is the builder's own guard, unchanged.
+Checks: `ast.parse` of the five modules without project imports; the 10 recorded-output regexes compile (`re.compile` over the
+string constants read by `ast`, no project import); `git diff --check`. No run, no test.
