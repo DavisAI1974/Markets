@@ -12,6 +12,31 @@ Greg, 2026-10-06:
 - The current 30-day ingests and retained progress are evidence: never re-ingest, delete, move or overwrite them casually.
 - The expensive AWS boxes are execution engines, not development environments. Settle and wire the workflow before
   starting paid compute.
+- **Immediate brain:** whenever a stage produces new legally available knowledge/calculations, commit it to Frankie's
+  brain before the workflow advances. End-of-day retention is consolidation, not the first brain update. This
+  supersedes any older deferred/no-auto-teaching behavior for this 30-day experiment.
+
+## Immediate brain / live-learning rule
+
+The experiment is not testing Frankie by withholding knowledge. It is trying to make Frankie as capable as possible
+while the evidence arrives. Therefore:
+
+- ROOT calculation findings enter his brain immediately after ROOT.
+- The BOSS teacher's measured knowledge enters immediately after its read; the classroom may then use the same source
+  directly without waiting for an end-of-day merge.
+- Classroom findings/corrections enter immediately when the classroom closes (already implemented).
+- Search/coupling discoveries enter immediately after the search.
+- Scientific-teacher test results on Frankie's claims enter immediately (already implemented as <day>-lessons).
+- The three-way exchange and teachers' findings enter immediately (already implemented as <day>-exchange).
+- Jev remains independent only until his own claim file is sealed. Once Jev's claims have been tested, those tested
+  results may enter Frankie immediately; the blind wall is not an indefinite knowledge handicap.
+- Every survivor/candidate update and later confirmation finding enters immediately when produced.
+
+The exact large evidence files do not need to be duplicated into the brain. A brain entry may hold a digest-bound
+knowledge record pointing to the complete retained source where the source is too large, while the active workflow
+continues to read the exact source directly. Nothing is silently summarized away or dropped.
+
+Causal/future leakage remains forbidden. "Immediate" means as soon as knowledge is legally available, never before.
 
 ## 0. Canonical experiment workflow
 
@@ -23,16 +48,16 @@ detail; where it conflicts with this table, this table wins.
 | 0 | Preflight / resume reconciliation | Before paid execution; existing checks only | Pin commit and plan, find existing receipts/progress, confirm day ownership, 16 CPUs, disk floor and no duplicate active day. This is not a new validator project. | Existing controller/ledger/receipts |
 | 1 | Fetch + ingest | Already complete for retained days; only for a genuinely missing day | Produces the sealed causal journal and receipt. Never redo a finished ingest. | Existing ingest code |
 | 2 | Day file | Before ROOT/teacher/search when causally available | Attaches the stamped historical/external data once beside the ingest for every permitted reader. | Existing day-file code |
-| 3 | ROOT | Start of the held day lane | Frankie's whole-day calculations, bedrock/model calls off; row spools and governed calculation surfaces retained. | 16 CPUs, 15 workers + coordinator |
-| 4 | BOSS teacher read | Immediately after ROOT | JournalTeacherR3 reads the whole retained ingest/book and writes the teacher/Dipole rows. It keeps the original math/representation/targets/masks/controls role. | Same held 16-CPU lane |
-| 5 | Frankie classroom | **Immediately after BOSS teacher** on classroom-arm discovery days | Frankie learns from ROOT + BOSS teacher, covers the governed classroom components, is graded/corrected, and files new findings as claims. | Same held lane; class order remains sequential |
+| 3 | ROOT | Start of the held day lane | Frankie's whole-day calculations, bedrock/model calls off; row spools and governed calculation surfaces retained; **brain commit before advancing**. | 16 CPUs, 15 workers + coordinator |
+| 4 | BOSS teacher read | Immediately after ROOT | JournalTeacherR3 reads the whole retained ingest/book and writes the teacher/Dipole rows; **measured teacher knowledge enters Frankie's brain before classroom**. It keeps the original math/representation/targets/masks/controls role. | Same held 16-CPU lane |
+| 5 | Frankie classroom | **Immediately after BOSS teacher** on classroom-arm discovery days | Frankie learns from ROOT + BOSS teacher, covers the governed classroom components, is graded/corrected, files new findings as claims, and **commits the classroom brain entry immediately**. | Same held lane; class order remains sequential |
 | 6 | Data export | After teacher; after classroom on classroom-arm days | Exposes the permitted ROOT/day/teacher material with a manifest while withholding Frankie's private decision process and graded answer key. | Same held lane |
-| 7 | Causal series + search | After data export | Builds the per-day causal axis and tests relationships per cell/lag/transform with the leakage gate and each test's circular-shift chance check. Counts/days are the findings; coefficients stay scoped, never pooled. | **Scientific teacher's evidence engine**, same held lane |
+| 7 | Causal series + search | After data export | Builds the per-day causal axis and tests relationships per cell/lag/transform with the leakage gate and each test's circular-shift chance check. Counts/days are the findings; coefficients stay scoped, never pooled; **search knowledge commits immediately**. | **Scientific teacher's evidence engine**, same held lane |
 | 8 | Scientific teacher: carried claims | After the day's search | Tests historical claims and causally prior Frankie/Jev claims against all discovery searches available so far; reports counts, scoped support/contradiction/unresolved states and proposed tests. | Same held lane |
 | 9 | Scientific teacher: today's Frankie findings | After classroom + search, before the meeting | Tests today's new/novel Frankie claims against the searches available so far. | Same held lane |
 | 10 | Survivor/candidate update | **Batch/cross-day boundary, not a per-day lane blocker** | Builds scoped candidate/survivor relationships from completed discovery evidence. A day's classroom may consume only survivors completed before that classroom; no same-day circular promotion. | Cross-day code; NOT fully built |
 | 11 | Three-way meeting | After today's Frankie findings have been tested | Frankie + BOSS teacher + scientific teacher discuss the tested findings. Granite may only voice the three code-generated seats under R17; it does no calculation or decision. | Meeting is sequential in classroom order; voice transport not yet wired |
-| 12 | Frankie end of day | After meeting (or after the recorded voice-not-wired state) | Retains brain entry, school knowledge, corrections/lessons and numbered reports for the next classroom day. | Same held lane |
+| 12 | Frankie end of day | After meeting (or after the recorded voice-not-wired state) | Consolidates the brain/lessons/exchange already written during the day into school knowledge and numbered reports; **not the first knowledge write**. | Same held lane |
 | 13 | Jev blind comparison | Classroom-arm discovery days; governed material only | Jev receives the classroom material/survivors but never Frankie's answers before filing his own claims. His claims are labelled and feed later scientific-teacher testing. Prefer local/small CPU hosting if sufficient; no standing GPU Pod requirement. | Jev |
 | 14 | Freeze discovery survivors | After the discovery set is complete | Freeze the survivor list once; no confirmation data has been used to select it. | Cross-day code; NOT fully built |
 | 15 | Confirmation | Only after survivor freeze | Run the frozen relationships on untouched 2024-2025 confirmation days, per cell, including maker/taker/net-cost treatment where applicable. | CPU; NOT fully built |
