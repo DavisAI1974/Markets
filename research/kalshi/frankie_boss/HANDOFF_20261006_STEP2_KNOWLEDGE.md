@@ -113,6 +113,15 @@ Publication: the earlier learner-reader/audit checkpoint is `a86d440d1c21db5cabc
 It has exactly the source tree of local `93c7e27b9098c0896a64c14e0082f7a858a3eb7f`; connector publication succeeded
 after shell push authentication failed. The original local commit is retained on `checkpoint/frankie-local-93c7e27b`.
 
+**Final Linux sync follow-up:** traced the actual Linux finish caller in the reused
+`pod_root/pod_agent.py` (historical filename, not permission to use Pods). Its final `LS.boundary(..., 'complete')`
+still selected the default brain, unlike preceding `Run.child`/`Run.record` boundaries. It now passes the plan's actual
+brain too. Otherwise a custom-brain plan could publish the wrong owner snapshot at completion after earlier stages
+had published the right one. Existing day receipt packaging includes `days/<day>/*.json`, so the new day-local
+`accumulated_lessons.json` follows that existing completion route without a second transport. Source/syntax only.
+The first recovery handoff explicitly assigns cross-owner scientific batch scheduling to #4/#8; it remains there,
+with full owner-local evidence required. No duplicate scheduler, remote giant-file copy or silent subset was added.
+
 ## Ordered checklist
 
 - [x] 1. Linux ownership and retained-day save/resume — source-built, runtime unverified.

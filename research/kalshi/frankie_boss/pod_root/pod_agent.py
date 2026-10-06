@@ -742,7 +742,7 @@ def run_full_day(job_id, job, code):
             raise RuntimeError('day finish: %s' % facts)
         root = run.receipt('root', job['day'])
         run.check_save()
-        LS.boundary(job['day'], 'complete')
+        LS.boundary(job['day'], 'complete', brain=plan.get('brain') or X.BRAIN)
         receipts = sorted(run.dir.glob('days/%s/*.json' % job['day']))
         teacher_receipt = run.receipt_path('teacher', 'day-' + job['day'])
         if teacher_receipt.is_file():
