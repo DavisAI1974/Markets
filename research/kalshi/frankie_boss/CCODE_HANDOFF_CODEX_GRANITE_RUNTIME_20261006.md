@@ -56,6 +56,17 @@ item is about 10 minutes, so about 5 such items are reached. Treat it as a canar
   the setup script's verification block (run on the scratchpad set, not the script) passes and refuses the tampered
   copy; the count path through a stubbed transport records both numbers. No server was started.
 
+## 1c. Codex's third finding, fixed (setup script only; Codex's e0c6bb9 integration is untouched)
+
+`frankie_box_granite_meeting_setup.sh` now verifies the cached archive against `llama_cpp_sha256` on every run before
+extraction, verifies the GGUF against `model_sha256` on every run whether downloaded or cached, keeps the manifest
+check, and emits `LLAMA_SERVER` / `GGUF_MODEL` plus `provenance.json` (now with the model path and pin) only after
+every check passed. A differing retained file is refused by name with both hashes and left in place; extraction only
+into an absent top directory, so an existing extraction is verified or refused, never overwritten. Eight scratchpad
+scenarios (fake code root, real pins, 4 KiB stand-in model, dead proxy) cover the cached, mismatched, tampered,
+partial, absent and blank-pin paths; see the facilitator report decision 7. The workflow step that calls the script
+needs no change: it still reads the two emitted lines.
+
 ## 2. What changed in `deploy/aws/box/frankie_box_granite_meeting.py` at ddbb6ab (parameters) and after
 
 - `gate`: a confirmed set must satisfy `input_token_cap_per_call + max_output_tokens_per_turn <= context_size`.

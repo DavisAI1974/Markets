@@ -141,6 +141,20 @@ scratchpad to hash its contents.
    read of the pinned bytes (strings, readelf; nothing executed): `/apply-template`, `/tokenize`, `add_special`,
    `json_schema`, `response_format`, `/v1/chat/completions`, `--no-context-shift` are all present in b11440, which
    answers decision 4 as far as bytes can; running it remains the E2E's.
+7. (Codex's third review, fixed by CCode 2026-10-06, setup script only.) CACHED-FILE VERIFICATION: the archive hash check
+   sat inside the download-only branch, so a cached archive reached extraction unverified; a cached GGUF was hashed
+   and printed but never compared with `model_sha256`. Now `frankie_box_granite_meeting_setup.sh` verifies the archive
+   against `llama_cpp_sha256` on EVERY invocation before anything is extracted, verifies the GGUF against
+   `model_sha256` on EVERY invocation whether downloaded or cached, keeps the extracted-file manifest check, and emits
+   `LLAMA_SERVER` / `GGUF_MODEL` and the provenance receipt (now carrying the model path and pin) only after every
+   check passed. A retained file that differs is refused by name with both hashes and LEFT IN PLACE, never replaced or
+   re-downloaded over; extraction happens only into an absent top directory, so an existing extraction, complete,
+   partial or tampered, is verified or refused, never overwritten. Exercised in the session scratchpad against a fake
+   code root carrying the real pins except a 4 KiB stand-in model, with a dead proxy so no network could be reached:
+   all-cached first run extracts and emits; a second run verifies without re-extracting; a corrupted cached archive is
+   refused before extraction and left in place; a mismatched cached model is refused with no provenance and nothing
+   emitted; a tampered and a partial retained extraction are refused and not re-extracted; an absent model fails at
+   the (dead) download with nothing emitted; a blank pin refuses first. Not run anywhere real; no install.
 5. Whether accumulated knowledge should be more than a label/sha index to the coordinator (role V2 says "applicable
    accumulated knowledge"; the 3B context argues for names only, with a code answer on request as a later addition).
 
