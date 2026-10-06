@@ -6,6 +6,72 @@ installs, runtime downloads, dispatch, AWS actions or E2E. Stop before workflow 
 
 ## Actual connections changed
 
+### Latest CCode reader return reconciled before final handoff
+
+CCode returned `e61a382b4cd1c60454013092ee0ef8a9009e782e`, based on `42239c0`, changing only
+scientific_teacher.py and his step-4 report. Codex source-reviewed the exact diff and merged it
+at `e75792b47244ce9f699bde2cb6bc9950a509e5c8` with `54c75fb` as first parent, preserving newer
+shared integration. Origin discovery now requires exact part hash, ordinal and raw-line hash;
+reversed origin-day mirrors are retained before non-origin mirror deduplication. These two reader
+findings are source-fixed, not runtime-verified. Older descriptions of them below record the prior
+checkpoint. Discovery-day caller skipping, origin-count delivery and native semantic computation
+remain open; the new BOSS retained-input route below does not claim to fix those separate paths.
+
+### Raw snapshot retention independent of DState after `54c75fb`
+
+Source review found `snapshot_teacher_attachment` only added `raw_components` inside its optional
+`dstate_rows` branch. Raw values and annotations exist independently of DState: the ordinary
+`parallel_attach` route calls `row_pass` without opting in to DState capture. The raw-components
+loop now runs for every validated attachment. Full original raw mappings, precision, reasons,
+incomplete counters and unknown-side metadata therefore remain available to the existing search
+projection even when no DState was captured. No DState is invented and no target or formula changes.
+
+For attachments already carrying DState, snapshot content is unchanged. Newly materialized snapshots
+without DState gain raw_components and a different content hash. Existing serialized snapshots are
+not rewritten or backfilled and remain readable. The experiment teacher already requests DState,
+so its completed/retry snapshot shape is unchanged. General classroom runtime recovery was not
+verified; old source bindings must not be re-pinned or silently replaced.
+
+Verification: agent source review, Codex diff/interface review, AST syntax and whitespace only.
+The separate BOSS reviewer hit the workspace-credit limit before editing. Greg then asked Codex to
+finish that work too; the implementation below is Codex's, informed by both agents' source reviews.
+
+### BOSS measurements over retained inputs beyond the 19 targets
+
+`experiment_exchange.teacher_rows` now retains the hash-checked snapshot rows alongside its unchanged
+target ledgers. `retained_evidence_counts` resolves only exact
+`dipole.group_close.by_entity.<publisher>:<instrument>.raw_components.*` or `.dstate.state.*`
+requests. It checks the ordered causal cursor sequence, DState schema, exact row cursor/time/prefix,
+entity and closing-state shape. Missing DState identity cannot be guessed from an old source.
+
+The existing generic scalar projection supplies the exact leaf. Finite numeric values reach the
+existing classroom direction and co-movement calculations. A raw component's `value` requires the
+producer's PRESENT state; non-PRESENT placeholder zeros do not become measured values. Extra raw
+numeric metadata keeps its own availability, so a missing component value does not discard its
+incomplete/unknown-side counts. Temporary arithmetic-ledger presence means numeric availability,
+not a governed target mask. Output uses availability terminology and makes no new validity rule.
+
+Only fields for the same entity are paired. Both seats receive the exact BOSS counts as unresolved
+descriptive evidence checks before turn hashing; the scientific seat reading those counts is not
+another test. Frankie's non-blind reply and sidecar retain the accounting and source citations.
+No retained-input result enters target-mask proposals, existing empirical joint findings or survivor
+promotion. The target ledgers/calculations remain unchanged. No coefficients or averages are added.
+
+Limits remain explicit: the existing teacher calculation bridges unavailable rows by comparing
+successive available observations; search requires adjacent available F_LAST cells. These are not
+the same axis, lag or condition. This is whole retained-snapshot descriptive accounting, not a test
+of a search cell/transform/lag claim. Numerator and denominator leaves stay separate quantities;
+target normalized units are not inherited. Categorical/boolean/state/mask/group-identity fields,
+text, absent/nonfinite leaves, cross-entity pairs, positional aliases and mixed target/raw pairs
+are listed rather than given invented numerical meanings. Ledger caching is per claim only.
+The result pins the arithmetic/projection module digests; accumulated-exchange recovery also binds
+those modules, so retained input selection is refused if those implementations change.
+
+This completes the bounded BOSS input-count route, not full native-model training, historical
+original-calculation reproduction/repair, or all-input semantic coverage. Raw placeholder zeros
+still pass verbatim through the separate generic Dipole search projection; that confirmed source
+gap is an explicit next fix, with no search results or runtime measurements claimed here.
+
 ### CCode collection merge and shared callers after `2135bc1`
 
 Merged CCode's exact `b264f7946b78200c9d47f7810ea6d325640b37ad` in `42239c0`, preserving

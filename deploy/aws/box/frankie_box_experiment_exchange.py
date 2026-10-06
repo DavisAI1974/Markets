@@ -212,13 +212,16 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
     import frankie_box_brain as BR
     import frankie_box_scientific_teacher as ST
     import frankie_box_classroom_code as K
+    import frankie_box_experiment_search as SEARCH
+    from research.kalshi.frankie_boss import dipole_classroom as DC
     from frankie_box_durable import write_json
     from frankie_box_durable import witness
     identity = dict(day=day, run=run,
                     lessons=[dict(path=str(p), **witness(p)) for p in paths], brain=str(brain),
                     teacher_rows=dict(path=str(rows_path), **witness(rows_path)) if rows_path else None,
                     rules=rules_witness, producer_sha256=sha256_bytes(Path(__file__).read_bytes()),
-                    reader_sha256={m.__name__: sha256_bytes(Path(m.__file__).read_bytes()) for m in (LS, BR, ST, K)})
+                    reader_sha256={m.__name__: sha256_bytes(Path(m.__file__).read_bytes())
+                                   for m in (LS, BR, ST, K, SEARCH, DC)})
     input_path = Path(input_path)
     if input_path.is_file():
         retained = json.loads(input_path.read_bytes())
@@ -336,7 +339,140 @@ def teacher_rows(path):
         return None, '%s could not be read (%s: %s)' % (path, type(error).__name__, error)
     return dict(path=str(path), sha256=sha256_bytes(raw), bytes=len(raw), rows=len(snapshot['rows']),
                 source_snapshot_hash=snapshot['source_snapshot_hash'], as_of=snapshot['as_of'],
-                through_cursor=snapshot['through_cursor'], ledgers=ledgers, columns=tuple(COLUMNS)), None
+                through_cursor=snapshot['through_cursor'], ledgers=ledgers, columns=tuple(COLUMNS),
+                retained_rows=snapshot['rows']), None
+
+
+def retained_evidence_counts(measure, names):
+    """Existing teacher count arithmetic on exactly named retained numeric leaves.
+
+    This is a separate descriptive route. PRESENT in the temporary arithmetic
+    ledger means a numeric value exists, never a governed target validity mask.
+    No coefficient, new transform, claim verdict or independent test is produced.
+    """
+    from research.kalshi.frankie_boss import dipole_classroom as DC
+    from research.kalshi.frankie_boss.c15_normalizer import State
+    import frankie_box_experiment_search as SEARCH
+
+    out = dict(schema='FRANKIE_RETAINED_DIPOLE_COUNTS_V1', fields=[], pairs=[], listed=[],
+               source_sha256=measure['sha256'] if measure else None,
+               source_snapshot_hash=measure['source_snapshot_hash'] if measure else None,
+               as_of=measure['as_of'] if measure else None,
+               through_cursor=measure['through_cursor'] if measure else None,
+               axis='successive available observations on the retained teacher cursor sequence; '
+                    'missing rows are bridged by the existing teacher co-movement calculation, '
+                    'unlike adjacent F_LAST cells in search; no axis equivalence is claimed',
+               units='original retained scalar representation; target normalized units are not inherited; '
+                     'numerator/denominator leaves are separate quantities, not the fraction',
+               rule='descriptive source-bound counts only; no target mask, independent confirmation, '
+                    'joint finding, survivor promotion or original-research reproduction')
+    if measure is None:
+        out['listed'].append(dict(reason='no retained teacher snapshot available'))
+        return out
+    if '_retained_evidence_producers' not in measure:
+        measure['_retained_evidence_producers'] = {
+            m.__name__: sha256_bytes(Path(m.__file__).read_bytes()) for m in (DC, SEARCH)}
+    out['arithmetic_sources'] = measure['_retained_evidence_producers']
+    retained = measure['retained_rows']
+    cursors = [row['cursor'] for row in retained]
+    if (any(type(c) is not int or not 0 <= c <= measure['through_cursor'] for c in cursors)
+            or cursors != sorted(set(cursors))
+            or any(type(row['ts_recv_ns']) is not int or row['ts_recv_ns'] > measure['as_of'] for row in retained)):
+        raise ValueError('retained teacher numeric evidence is not an ordered causal cursor sequence')
+    cache = {}  # Per claim only: do not retain a whole-day ledger for every discovered field.
+    selected = {}
+    for name in dict.fromkeys(names):
+        if not str(name).startswith('dipole.group'):
+            continue  # The unchanged target/non-Dipole paths account for other names.
+        match = re.fullmatch(r'dipole\.group_close\.by_entity\.(-?\d+):(-?\d+)\.(raw_components\..+|dstate\.state\..+)', str(name))
+        if match is None:
+            out['listed'].append(dict(series=name, reason='no exact entity-scoped closing-row numeric binding; '
+                                     'positional rows and other field roles are not silently aliased'))
+            continue
+        entity = (int(match[1]), int(match[2]))
+        leaf = match[3]
+        if ('%d:%d' % entity) != '%s:%s' % (match[1], match[2]):
+            out['listed'].append(dict(series=name, reason='entity spelling differs from the exact search field'))
+            continue
+        parts = leaf.split('.')
+        if (leaf in ('dstate.state.anchor_dir', 'dstate.state.armed', 'dstate.state.broken',
+                     'dstate.state.g_E', 'dstate.state.g_E_prev')
+                or parts[0] == 'raw_components' and len(parts) == 3 and parts[-1] in ('state', 'mask')):
+            out['listed'].append(dict(series=name, reason='retained categorical/flag/group-identity field; '
+                                     'a numerical scientific meaning has not been declared'))
+            continue
+        if name not in cache:
+            ledger, reasons = [], {}
+            for row in retained:
+                state = row.get('dstate')
+                value, why = None, None
+                if state is None:
+                    why = 'source has no DState identity/closure binding'
+                else:
+                    if (state.get('schema') != 'FRANKIE_TEACHER_DSTATE_ROWS_V1'
+                            or any(state.get(k) != row[k] for k in ('cursor', 'source_prefix_hash', 'ts_recv_ns'))
+                            or any(type(state.get(k)) is not int for k in ('publisher_id', 'instrument_id'))
+                            or state.get('status') not in ('GROUP_STATE', 'NOT_F_LAST')
+                            or (state['status'] == 'GROUP_STATE') != isinstance(state.get('state'), dict)):
+                        raise ValueError('retained teacher evidence has inconsistent row/entity/closure identity')
+                    if (state['publisher_id'], state['instrument_id']) != entity:
+                        why = 'another entity'
+                    elif state['status'] != 'GROUP_STATE':
+                        why = 'not a closing-row observation'
+                    else:
+                        nums, texts, _, _ = SEARCH.columns((row,), '')
+                        value = nums.get(leaf, [None])[0]
+                        if parts[0] == 'raw_components' and len(parts) == 3 and parts[-1] == 'value':
+                            raw = (row.get('raw_components') or {}).get(parts[1]) or {}
+                            if type(raw.get('state')) is not int or raw['state'] != int(State.PRESENT):
+                                why = 'producer value unavailable (state=%s, reason=%s); placeholder not measured' % (
+                                    raw.get('state'), raw.get('reason'))
+                        if why is None and (type(value) not in (int, float)
+                                            or type(value) is float and not math.isfinite(value)):
+                            why = ('text field, not a numeric measurement' if leaf in texts and texts[leaf][0] is not None
+                                   else 'absent, boolean or nonfinite numeric leaf')
+                if why is not None:
+                    reasons[why] = reasons.get(why, 0) + 1
+                ledger.append(dict(cursor=row['cursor'], value=value if why is None else None,
+                                   state='PRESENT' if why is None else 'MISSING'))
+            available = sum(p['state'] == 'PRESENT' for p in ledger)
+            summary = dict(series=name, entity=list(entity), leaf=leaf, rows=len(ledger), available=available,
+                           unavailable=reasons, direction=DC._direction(ledger),
+                           representation='retained numeric scalar; units not inferred from target names')
+            cache[name] = (ledger, summary)
+        ledger, summary = cache[name]
+        out['fields'].append(summary)
+        if summary['available']:
+            selected[name] = (ledger, summary)
+        else:
+            out['listed'].append(dict(series=name, reason='no available numeric observation for this exact field'))
+    for i, (left, (la, a)) in enumerate(selected.items()):
+        for right, (lb, b) in list(selected.items())[i + 1:]:
+            if a['entity'] != b['entity']:
+                out['listed'].append(dict(pair=[left, right], reason='different entities; no cross-entity pairing defined'))
+                continue
+            co = DC._co_movement(la, lb)
+            out['pairs'].append(dict(pair=[left, right], entity=a['entity'],
+                aligned_cursors=co['aligned_cursors'], both_available=co['both_present'],
+                steps_between_successive_available=co['steps_between_consecutive_both_present'], steps=co['steps'],
+                availability_pairs={k.replace('PRESENT', 'NUMERIC').replace('MISSING', 'UNAVAILABLE'): v
+                                    for k, v in co['state_pairs'].items()},
+                direction_relation=DC._direction_relation(a['direction'], b['direction'])))
+    if selected and not out['pairs']:
+        out['listed'].append(dict(reason='no pair of available exact numeric fields for the same entity; '
+                                 'governed targets are not implicitly mixed with this evidence axis'))
+    return out
+
+
+def retained_evidence_checks(item, said):
+    evidence = item.get('retained_evidence')
+    if not evidence or not (evidence['fields'] or evidence['listed']):
+        return [], []
+    text = 'BOSS retained-input accounting (the scientific seat reads the same measurement, not another test): ' + said.v(
+        json.dumps(evidence, sort_keys=True), evidence['source_sha256'] or item['lesson_sha256'],
+        'source-bound retained Dipole numeric counts and limits')
+    return [dict(source_id=item['evidence_source_id'], claim='retained Dipole input measurements',
+                 check=text, result='unresolved')], [text]
 
 
 def component_of(name, columns):
@@ -524,8 +660,9 @@ def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id
                    if outside else 'both names are the same component %s' % ca)
             checks.append(dict(source_id=rows_id, claim='%s: %s / %s' % (label, a, b), result='unresolved',
                                check='no teacher measurement of the pair on %s: %s' % (day, why)))
-            reasoning.append('On the pair %s / %s the BOSS teacher has no measurement of its own: %s; the scientific '
-                             'teacher\'s counts stand alone there.' % (said.v(a, src['sha256'], 'claimed series'),
+            reasoning.append('On the pair %s / %s the BOSS target-ledger comparison has no measurement: %s; '
+                             'retained-input accounting, where supported, is stated separately from the scientific '
+                             'teacher\'s counts.' % (said.v(a, src['sha256'], 'claimed series'),
                                                                      said.v(b, src['sha256'], 'claimed series'), why))
             continue
         m = measure_pair(measure, ca, cb)
@@ -605,6 +742,9 @@ def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id
                      said.v(steps, rsha, 'consecutive both-PRESENT steps'))))
     # Shared accounting cannot turn agreement into another empirical check.
     own_position = position_of([c['result'] for c in checks])
+    retained_checks, retained_words = retained_evidence_checks(item, said)
+    checks.extend(retained_checks)
+    reasoning.extend(retained_words)
     context_evidence, context_words = context_checks(item, day, src, said)
     checks.extend(context_evidence)
     reasoning.extend(context_words)
@@ -770,6 +910,9 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src)
                 for p in proposals]
     untested = list(result.get('untested') or [])
     cannot = list(result.get('cannot_test_yet') or [])
+    retained_checks, retained_words = retained_evidence_checks(item, said)
+    checks.extend(retained_checks)
+    reasoning.extend(retained_words)
     context_evidence, context_words = context_checks(item, day, src, said)
     checks.extend(context_evidence)
     reasoning.extend(context_words)
@@ -849,6 +992,8 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             claim = claims.get(result['claim_id'])
             item = dict(item_id=item_id, author=src['author'], claim_id=result['claim_id'], prior=prior, request=request,
                         rows_sha256=measure['sha256'] if measure else None, lesson_context=context)
+            item.update(retained_evidence=retained_evidence_counts(measure, claimed_names(prior)),
+                        evidence_source_id=rows_id, lesson_sha256=src['sha256'])
             shared = shared_count_accounting(prior, day, src)
             boss, measured, components, proposals, boss_cites = boss_turn(D, S, item, prior, claim, measure, measure_why,
                                                                           day, src, rows_id, shared=shared)
@@ -892,6 +1037,11 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                 # only. Deliver the BOSS's actual shared arithmetic and limitations
                 # to this learner turn without changing its scientific resolution.
                 reply['learned'].extend(shared['teaching'])
+                retained_said = Said()
+                _, retained_words = retained_evidence_checks(item, retained_said)
+                reply['learned'].extend(retained_words)
+                frankie_side['retained_evidence'] = item['retained_evidence']
+                frankie_side['cites'].extend(c for c in retained_said.cites if c not in frankie_side['cites'])
                 if rework is not None:
                     frankie_side['research_rework'] = rework
                     reply['learned'].append('Historical conclusions are source-scoped claims, not final truth. '
@@ -952,6 +1102,7 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                                            current_day_test_rows=len(side['counts_on_day']),
                                            retained_test_days=sorted(side['counts_per_day'])),
                               lesson_context=context,
+                              retained_evidence=item['retained_evidence'],
                               blind_jev=blind_jev,
                               turns=turns, voice_turns=voice))
     counts = dict(items=len(items), by_author={a: sum(i['author'] == a for i in items) for a in sorted(set(LESSONS.values()))},

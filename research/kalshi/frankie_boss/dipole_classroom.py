@@ -243,10 +243,11 @@ def snapshot_teacher_attachment(teacher: Mapping[str, Any], *, request_id: str, 
                     or (state['status'] == 'GROUP_STATE') != isinstance(state.get('state'), dict)):
                 raise ValueError('teacher DState differs from its exact target source row')
             row['dstate'] = state
-        # Keep the original precision and every carried reason/incomplete count.
-        # These are inputs to search, not extra target columns or new measurements.
-        for row, raw in zip(rows, raw_rows):
-            row['raw_components'] = {name: dict(value) for name, value in zip(COLUMNS, raw)}
+    # Raw evidence exists independently of optional DState capture. Keep its
+    # original precision and every carried reason/incomplete count for all sources.
+    # These are inputs to search, not extra target columns or new measurements.
+    for row, raw in zip(rows, raw_rows):
+        row['raw_components'] = {name: dict(value) for name, value in zip(COLUMNS, raw)}
     if any(row["as_of_ts_recv_ns"] > as_of or row["ts_recv_ns"] > as_of for row in rows):
         raise ValueError("classroom target exceeds causal cutoff")
     if any(row["source_manifest_hash"] != rows[0]["source_manifest_hash"] for row in rows):

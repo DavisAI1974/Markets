@@ -6,6 +6,14 @@ Use a separate branch. Read AGENTS.md and the latest successor/Step #4 handoffs 
 
 ## Return received and follow-up source defects — after `42239c0`
 
+**Latest return reconciled:** `e61a382b4cd1c60454013092ee0ef8a9009e782e` fixes the exact
+origin-row binding and origin-before-mirror findings below. Merged with both parents at
+`e75792b47244ce9f699bde2cb6bc9950a509e5c8`, preserving Codex `54c75fb` shared callers.
+Those two reader defects are SOURCE-FIXED / RUNTIME-UNVERIFIED, not still assigned for repair.
+The discovery-day caller/consumer route and native semantic coverage remain open. Codex also
+finished the separate BOSS retained-input count route documented in the new-chat handoff; that
+route is not origin-evidence integration. Fetch latest source before further work.
+
 Your `b264f7946b78200c9d47f7810ea6d325640b37ad` collection branch is merged with both histories
 preserved at `42239c098090763d1688b2b37e0fe1a2634c22a7`. Codex's `2135bc1` adds stable exact
 entity-scoped closing-row search fields and corrects stale classroom scope wording. Fetch the latest
@@ -13,12 +21,12 @@ branch before working. Codex is integrating your requested plan/lesson/exchange 
 
 Source review of your return found these remaining owned-reader issues; fix the code, do not run research:
 
-1. `test()` reads rows without retaining their part or row ordinal. `origin_part_bound` only checks
+1. FIXED by `e61a382`. Original finding: `test()` read rows without retaining their part or row ordinal. `origin_part_bound` only checked
    whether the declared hash is anywhere in `d['part_pins'].values()`, while `same_row` compares a
    selected field subset. Therefore a matching row from a different part/ordinal can be marked the
    discovery row. Bind the actual read row to the candidate's exact part hash, row ordinal and
    canonical row hash using the adapter's existing conventions; retain zero/mismatched matches explicitly.
-2. Mirror filtering runs before the origin-day branch. A candidate discovered in the reversed
+2. FIXED by `e61a382` for origin ordering. Original finding: mirror filtering ran before the origin-day branch. A candidate discovered in the reversed
    orientation can have its exact origin row moved into `mirrored_rows` and skipped before
    `origin_evidence` records it. Preserve exact origin identity while still counting no origin row
    as an independent test. Review the mirror identity's omitted `null_exclusion` and `beyond_chance`
