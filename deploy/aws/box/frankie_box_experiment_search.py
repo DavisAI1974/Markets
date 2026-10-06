@@ -30,15 +30,20 @@ teacher builder, dfe08ca7). Results are COUNTS per pair, cell, lag and day, neve
 A pair is "beyond chance" only when shifts > 0 and none reached it; that label is orientation, the counts are the result.
 TRANSFORMS (frankie_box_experiment_transforms.TRANSFORMS): every series is turned into a step series by each chosen
 transform (sign_of_step, run_length, magnitude_class, level_crossing, acceleration; all causal, -1/0/+1, same length).
-Pairs: x under transform T against y under the same T, and x under T against y's sign_of_step (does T of x lead the
-direction of y). The statistic and the chance check are the same for every transform; each row names x_transform and
-y_transform. Steps a transform could not classify (an unknown value) are counted per series and transform, never filled.
-Cells: whole-day, plus every text column whose name ends in session_phase / continuity_segment / source_day /
-source_role (the joined teacher's cell names); every other text column is listed as a cell not yet used.
+Pairs: x under transform T against y under EVERY transform (all T x T' combinations; y_transforms). The statistic and the
+chance check are the same for every pair of transforms; each row names x_transform and y_transform. Steps a transform
+could not classify (an unknown value) are counted per series and transform, never filled.
+Cells: whole-day, plus every text column of every source placed on the axis (the spools' text fields, the last event's
+action and side at the close, the day file's text columns per entity); each distinct value is a cell.
+Step #3 (2026-10-06): the per-event quantity fields of the INPUT spool (events.last.<field>, the last event's value at
+the group close) and every column of every day-file table per native entity (external.<table>.<column>.entity=...) are
+series too; identities and clocks are listed, not searched; a column equal to one of the thirteen aliases is covered.
 
-LISTED, NOT YET SEARCHED (never dropped): the INPUT record spool (every record), transform pairs other than the two
-above, other cells, conditions, targets beyond the series themselves, the teacher's Dipole source, claims
-(Frankie's and Jev's) - each named in the MANIFEST's not_searched list.
+LISTED, NOT SEARCHED (never dropped), each named in the MANIFEST's not_searched list with its reason: identity/clock
+fields, numeric-state conditions, new targets, the bedrock planes the experiment ROOT does not derive (bedrock off),
+the native journal ordinal axis (the surface helper, unwired), the teacher's Dipole rows where the teacher has not run,
+and claims (tested by the scientific teacher on these counts). The MANIFEST's `planes` entry says, per plane of the
+existing inventory, whether this search consumed it, listed it, or whether no producer runs for it in the experiment.
 
 WALLS. The day must be declared a discovery day; a confirmation day is refused unless a frozen survivor list is given
 (--frozen-survivors), and then only the pairs on it are run. One day per run; days are never pooled. A day already
@@ -63,16 +68,34 @@ SCHEMA = 'FRANKIE_EXPERIMENT_SEARCH_V1'
 ROOT = Path('/opt/frankie-box/work/experiment-search')
 CELL_NAMES = ('session_phase', 'continuity_segment', 'source_day', 'source_role')
 F_LAST = 128                       # the exchange record flag that closes a group (the same close the frames spool marks)
+# Identity and clock fields of a raw MBO record: an order id, a sequence number or a timestamp is not a quantity whose
+# steps mean anything, so they are listed, never searched (every quantity field of the record is searched, below).
+EVENT_IDENTITY_FIELDS = ('order_id', 'sequence', 'channel_id', 'instrument_id', 'publisher_id', 'ts_recv_ns', 'ts_event_ns',
+                         'ts_in_delta_ns', 'ts_recv', 'ts_event', 'rtype', 'hd')
+# Step #3 (2026-10-06, CCode): what is and is not searched, kept truthful per plane. The map behind it:
+# research/kalshi/frankie_boss/CCODE_STEP3_SOURCE_COVERAGE_20261006.md.
 NOT_SEARCHED = (
-    ('root/work/derived/.rows/input-*.jsonl fields', 'per-event prices, order ids, queue positions, sequence gaps (only per-group '
-     'counts and sizes by action and side are searched)'),
-    ('transform pairs', 'x under transform T against y under a different transform other than sign_of_step (only T vs T '
-     'and T vs sign_of_step are run); transforms not in frankie_box_experiment_transforms.TRANSFORMS'),
-    ('conditions', 'conditioning on a state (e.g. book regime) before counting'),
-    ('targets', 'targets other than the series themselves (e.g. the mid N groups ahead, fills, exhaustion)'),
-    ('dipole on search-only days', "the teacher's Dipole measurements exist only where a launch ran (the classroom-arm days); "
-     'on other days they are listed missing (running the teacher alone on CPU is possible but not built)'),
-    ('claims', "Frankie's and Jev's claims (the scientific teacher's turn tests them; built next)"),
+    ('root/work/derived/.rows/input-*.jsonl identities', 'per-event identity and clock fields (%s) are listed, not searched; '
+     'every quantity field of each record is searched as events.last.<field> (its value at the group close) beside the '
+     'per-group counts and sizes by action and side' % ', '.join(EVENT_IDENTITY_FIELDS)),
+    ('conditions beyond the text cells', 'conditioning on a numeric state (e.g. the sign of a book series at the decision row): '
+     'frankie_box_experiment_surface.state_masks builds such masks but is not wired; which states condition the count is '
+     'a design decision (every series x 3 signs would multiply the jobs by hundreds)'),
+    ('targets', 'targets other than the series themselves (e.g. the mid N groups ahead, fills, exhaustion); a lagged series '
+     'is already the y side at lag k, a fill count is already events.F_* per group; new target definitions are a '
+     'mathematical decision'),
+    ('bedrock planes', 'order lifecycle, full-book/FIFO queue, microstructure mechanics, D family geometry, dipole state, '
+     'pre-birth and causal-clock layers (the 44 registry layers beyond the five legacy ones) are not derived by the '
+     'experiment ROOT (bedrock off, Greg 2026-09-29) and are excluded from the export (BEDROCK); re-enabling them is a '
+     'producer-activation decision, not a search change'),
+    ('native journal ordinal axis', 'frankie_box_experiment_surface.journal_axis reads every INPUT/APPLIED entry of the sealed '
+     'journal (full book, FIFO order ids, APPLIED frame fields) on the native ordinal; it is not wired: it materializes '
+     'every entry whole (the full-book observation per APPLIED entry) and changes the axis from group closes to entries, '
+     'which is a mathematical decision on step counts, lags and the chance check'),
+    ('dipole where the teacher has not run', "the teacher's Dipole rows (the per-day teacher step, or a launch's) are searched "
+     'when exported; a day whose teacher rows are not exported yet is listed missing, never searched without them'),
+    ('claims', "Frankie's, Jev's and the historical claims are not searched here: frankie_box_scientific_teacher.py tests "
+     'them on these counts (its lessons files)'),
 )
 
 
@@ -207,6 +230,10 @@ def build_series(day_dir, log):
                          'declines the run)' % (len(inputs), rows_dir, ', '.join(p.name for p in inputs)))
     if inputs:
         counts, known, records, groups, open_group, unknown = {}, [], 0, 0, {}, 0
+        # Step #3: every quantity field of every INPUT record (price, size, flags, ...) is a series too, placed as of its
+        # own receive time, so the group close reads the last event's value (the asof rule every source follows).
+        # Identity and clock fields are listed (EVENT_IDENTITY_FIELDS); text fields (action, side) become cells.
+        event_fields, event_text, event_known, event_identities, event_other = {}, {}, [], set(), set()
         for record in unpack_spool(inputs[0]):
             records += 1
             action, side = str(record.get('action')), str(record.get('side'))
@@ -217,6 +244,26 @@ def build_series(day_dir, log):
                 open_group[key + '_size'] = open_group.get(key + '_size', 0) + size
             else:
                 unknown += 1
+            stamp = record.get('ts_recv', record.get('ts_recv_ns'))
+            event_known.append(stamp)
+            for field, value in record.items():
+                if field in EVENT_IDENTITY_FIELDS:
+                    event_identities.add(field)
+                    continue
+                if isinstance(value, bool):
+                    value = int(value)
+                if isinstance(value, (int, float)):
+                    event_fields.setdefault(field, [None] * (records - 1)).append(value)
+                elif isinstance(value, str):
+                    event_text.setdefault(field, [None] * (records - 1)).append(value)
+                elif value is not None:
+                    event_other.add(field)
+            for field, values in event_fields.items():
+                if len(values) < records:
+                    values.append(None)
+            for field, values in event_text.items():
+                if len(values) < records:
+                    values.append(None)
             flags = record.get('flags')
             if isinstance(flags, int) and flags & F_LAST:
                 for k in set(counts) | set(open_group):
@@ -226,11 +273,19 @@ def build_series(day_dir, log):
                 open_group = {}
         sources.append(dict(source='events', path=str(inputs[0]), rows=records, groups=groups, sha256=sha256_file(inputs[0]),
                             numeric=sorted(counts), records_without_numeric_size=unknown,
+                            per_event_fields=dict(searched=['events.last.' + f for f in sorted(event_fields)],
+                                                  cells=['events.last.' + f for f in sorted(event_text)],
+                                                  identities_and_clocks=sorted(event_identities),
+                                                  not_searched=sorted(event_other)),
                             after_last_close=dict(records=sum(v for k, v in open_group.items() if not k.endswith('_size')),
                                                   note='records after the last F_LAST close belong to no closed group; counted here, not placed')))
         if groups:
             counts['total'] = [float(sum(counts[k][g] for k in counts if not k.endswith('_size'))) for g in range(groups)]
             asof('events', known, counts)
+        if records and event_fields:
+            asof('events.last', event_known, event_fields)
+        for field, values in event_text.items():
+            text_cols['events.last.' + field] = asof_values(con, axis, event_known, values).tolist()
     else:
         notes.append(dict(source='events', missing=str(rows_dir / 'input-*.jsonl')))
     dipole_paths = sorted((day_dir / 'run' / 'execution').glob('cycle-*/host-dipole-classroom-source*.json')) + \
@@ -298,11 +353,43 @@ def build_series(day_dir, log):
         body = json.loads(external.read_bytes())
         reader = AsOfReader.open(external, body['halt_ns'], external_receipt if external_receipt.is_file() else None)
         ext, absent = search_series(reader)
-        sources.append(dict(source='external', path=str(external), sha256=sha256_file(external), schema=body.get('schema'),
-                            receipt=str(external_receipt) if external_receipt.is_file() else None,
-                            series=sorted(ext), absent=absent, missing=body.get('missing')))
         for name, (known, values) in sorted(ext.items()):
             asof('external.' + name, known, {'value': values})
+        # Step #3: every other column of every table of the day file, per native entity (station, model, contract, ...),
+        # at its own publication stamp (frankie_box_experiment_surface.external_fields, built 2026-10-06, uncalled until
+        # now). A column whose stamps and values are exactly an alias series above is covered by it (never searched
+        # twice); the stamp column and the entity identities are clocks/identities, listed; text columns become cells.
+        # SEARCH_EXTERNAL_FIELDS=aliases keeps the thirteen aliases only (a runtime decision, recorded in the manifest).
+        mode = os.environ.get('SEARCH_EXTERNAL_FIELDS', 'all')
+        covered, text_fields, mixed, searched_fields, identity_fields = [], [], [], [], []
+        if mode == 'all':
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import frankie_box_experiment_surface as SURFACE
+            alias_arrays = {(tuple(k), tuple(v)) for k, v in ext.values()}
+            identity_columns = {'model', 'station', 'respondent', 'raw_symbol', 'symbol', 'instrument_id', 'publisher_id',
+                                'horizon_days', 'rank', 'target_day', 'contract'}
+            for key, (stamps, values) in sorted(SURFACE.external_fields(reader).items()):
+                column = key.split('.entity=')[0].rsplit('.', 1)[-1]
+                if column == 'published_ns' or column in identity_columns:
+                    identity_fields.append(key)
+                    continue
+                if (tuple(stamps), tuple(values)) in alias_arrays:
+                    covered.append(key)
+                    continue
+                kinds = {type(v) for v in values if v is not None and not isinstance(v, bool)}
+                if kinds and kinds <= {int, float}:
+                    asof('external.' + key, stamps, {'value': values})
+                    searched_fields.append(key)
+                elif kinds <= {str}:
+                    text_cols['external.' + key] = asof_values(con, axis, stamps, values).tolist()
+                    text_fields.append(key)
+                else:
+                    mixed.append(dict(field=key, kinds=sorted(k.__name__ for k in kinds)))
+        sources.append(dict(source='external', path=str(external), sha256=sha256_file(external), schema=body.get('schema'),
+                            receipt=str(external_receipt) if external_receipt.is_file() else None,
+                            series=sorted(ext), absent=absent, missing=body.get('missing'),
+                            all_fields=dict(mode=mode, searched=searched_fields, cells=text_fields, covered_by_alias=covered,
+                                            identities_and_clocks=identity_fields, not_searched_mixed_or_nested=mixed)))
     else:
         notes.append(dict(source='external', missing=str(external),
                           reason="no day file of Frankie's 13 points beside the ingest (frankie_box_day_external.sh)"))
@@ -434,9 +521,40 @@ def _step_job_compute(args):
 
 
 def y_transforms(tx):
-    """The y-side transforms paired with x under tx: the same transform, and the direction of y (sign_of_step)."""
+    """The y-side transforms paired with x under tx: every transform (all T x T' pairs are run; the manifest's
+    transforms.pairs records exactly this roster)."""
     import frankie_box_experiment_transforms as T
     return tuple(T.TRANSFORMS)
+
+
+def plane_summary(sources, notes):
+    """Per plane of the existing inventory: consumed here, listed, or not produced by the experiment path. Read from this
+    search's own sources and notes, so the receipt says what this run actually read (never a claim of coverage)."""
+    read = {s['source'] for s in sources}
+    missing = {n['source'] for n in notes if 'missing' in n}
+
+    def status(key, consumed_by):
+        return ('consumed' if key in read else 'listed_missing' if key in missing else 'not_in_this_export',
+                consumed_by)
+    planes = {
+        'sealed journal (every event, every book level)': ('read_elsewhere', 'read by the BOSS teacher (JournalTeacherR3, '
+                                                           'pinned) and the ROOT legacy pass; this search reads the ROOT '
+                                                           'spools of it, not the journal itself (native ordinal axis '
+                                                           'listed, not wired)'),
+        'INPUT records (per-event fields)': status('events', 'events.* per-group counts and events.last.* fields'),
+        'book frames at F_LAST (best, mid, depth imbalance, full-depth transition fields)': status('frames', 'frames.* series; the axis'),
+        'group structure (actions by side)': status('structures', 'structures.* series'),
+        'trades (price, size, touch)': status('prices', 'prices.* series'),
+        'legacy signed flow (per second)': status('legacy_native_signed_flow', 'signed_flow.buy/sell'),
+        'legacy roll20 (per second)': status('legacy_per_second_roll20', 'roll20.value'),
+        "the teacher's Dipole rows (19 columns)": status('dipole', 'dipole.<column> series'),
+        "Frankie's 13 historical points (aliases)": status('external', 'external.<alias>.value'),
+        'day-file tables, every column per entity': status('external', 'external.<table>.<column>.entity=... (SEARCH_EXTERNAL_FIELDS)'),
+        'order lifecycle / full-book FIFO queue / microstructure mechanics / D family geometry / dipole state / pre-birth / '
+        'causal clocks (44 registry layers)': ('not_produced', 'the experiment ROOT runs with bedrock off and the export '
+                                               'excludes BEDROCK paths (Greg 2026-09-29); producer activation is a decision'),
+    }
+    return {name: dict(status=value[0], consumed_by=value[1]) for name, value in planes.items()}
 
 
 def _cell_job(args):
@@ -626,6 +744,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     couplings=dict(parts=part_pins, rows=count, beyond_chance=beyond, jobs=len(jobs), workers=workers),
                     cells_not_counted=sorted(not_counted, key=lambda d: (d['cell'], d['transform'], d['series'])),
                     not_searched=[dict(item=a, what=b) for a, b in NOT_SEARCHED],
+                    planes=plane_summary(sources, notes),
                     rule='counts per pair, cell, lag and day; never pooled across days; never a coefficient or an average '
                          'as the finding (D37); a confirmation day runs only the frozen survivor list',
                     frozen_survivors=str(frozen) if frozen else None, model_calls=0)
