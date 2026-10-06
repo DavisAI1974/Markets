@@ -2,6 +2,30 @@
 
 Source review only; runtime-unverified. Steps #2/#3 remain open. This report does not activate a producer, change mathematics, establish full 99-layer computation, or authorize AWS execution.
 
+## Source-built recovery foundation (inactive in the workflow)
+
+The experiment ROOT now has an explicit `--bedrock on` source route, default **off**. The queue/orchestrator does not
+select it yet. It reuses the pinned traversal and existing exact local ledgers/compressed projections; a requested legacy
+digest excludes giant bedrock tables. No run, installation on AWS, test suite or model call occurred.
+
+- The ROOT binds the complete committed day manifest and checks its scope/member counts against the sealed completion.
+- Both legacy and native calculations receive the same original opening-book state/provenance. FullCaptureAdapter's
+  existing restored-book route preserves unavailable prior activity anchors as unknown; it does not fabricate history.
+- `FRANKIE_ROOT_NATIVE_RECOVERY_V1` binds the opt-in policy. Native checkpoints also bind exact opening state/provenance.
+- `legacy-stage.json` seals completed legacy files/spools. Native continuation reuses these without replay or recalculation.
+- Native recovery selects the sole checkpoint-generation leaf by verified parent ancestry, not timestamp or largest cursor.
+  Forks, changed identities and nonempty work without recoverable full state are refused with evidence retained.
+- Cooperative stops save complete state only when every instrument group is closed. A pre-finalization checkpoint retains
+  processed records; a terminal checkpoint retains completed calculations. Finalization finishes before honoring a stop.
+- `native-stage.json` binds completed result/receipt/ledgers. Projection continuation reuses those original paths so its
+  existing plan/fragments remain reusable. Finished ROOT resume verifies native evidence as well as layer projections.
+
+This resolves the source-level recovery/opening-book foundation below; those table entries record the inspected starting
+gaps. It does not resolve consumer coverage or activate the workflow. Native input count must still satisfy the producer's
+complete-source contract; unreadable INPUT records cannot be silently fabricated or relabeled as complete native coverage.
+Syntax compilation of the five changed modules, direct source/API review by a second agent and `git diff --check` passed.
+All runtime behavior remains unverified. No new scientific formula, acceptance threshold, test or validator was added.
+
 ## Current direction
 
 Greg's latest instruction requires bedrock information and supersedes the earlier experiment exclusion of that information. The giant table is not required. Working assumption: retain every exact owner-local evidence row and necessary calculation state, omit giant rendered tables and avoid redundant expanded copies. Removing scientific evidence is not part of this change.
@@ -36,15 +60,15 @@ Publish each result on its original availability boundary. `_advance_candidates`
 
 Full book/FIFO state, queues, anchored accumulators, candidate/episode state, lineage and unresolved horizons remain necessary. Streaming storage does not prove bounded scientific memory or adequate live latency. Preserve native row identity, order, units, masks, missing/censored reasons, clock basis, denominators and scientific treatment of single occurrences. The 99 union registry includes controls, sealed answers and outputs; it is not 99 interchangeable numeric live columns.
 
-## Concrete gaps before activation
+## Starting gaps and remaining consumer work
 
 | Gap | Required connection |
 | --- | --- |
-| `Session.derive` explicitly rejects `recovery=True, bedrock=True` | Integrate complete native stage recovery before removing this guard. |
-| `_derive_bedrock` receives a checkpoint only if its caller sets `native_resume_checkpoint`; Monday does, experiment ROOT does not | Bind and discover the exact owning-run checkpoint; distinguish unfinished traversal, finalized native output, projection and published derivation. Preserve previous artifacts. |
-| Experiment save requests reach legacy recovery but not the native traversal's cooperative stop path | Route them through the existing complete-state save at a lawful closed-group boundary. Do not stop with undocumented open-group state or replace continuation with replay. |
-| Experiment ROOT provides opening-book state only to its legacy pass; `bedrock.run` currently constructs the driver with a fresh default adapter | Give the native path the same lawful initial book and explicit provenance. Preserve the distinction between known book state and unknown prior activity anchors. |
-| Experiment source binding carries abbreviated manifest information because bedrock was off | Supply the complete day manifest/count identity required by the native runner. |
+| Original `Session.derive` rejected `recovery=True, bedrock=True` | Source-wired through separate completed legacy/native stages; runtime-unverified. |
+| Native checkpoint selection was supplied only by external callers | Source-wired automatic verified generation ancestry; completed native evidence reused separately. |
+| Native traversal lacked the experiment save callback | Source-wired complete closed-group save and pre-final/terminal boundaries; no hard-crash or runtime claim. |
+| Opening book reached only the legacy pass | Source-wired same state/provenance through pinned FullCaptureAdapter.from_restored; unknown prior activity remains explicit. |
+| Native runner requires the complete source manifest | The opt-in route now binds the existing committed manifest, scope and member counts. The default-off route retains its prior binding. |
 | `frankie_box_experiment_data.py` explicitly excludes native bedrock artifacts | Replace obsolete blanket exclusion with lawful shared surfaces while retaining sealed-answer/private-output boundaries. |
 | Current search/teacher connections do not establish every native row/section's consumption | Reuse the existing full-evidence reader where its identity/axis contract applies, and connect each applicable learner/teacher consumer. The preserved axis-changing draft remains unapplied; no event-axis lag substitution is implied. A manifest or retained file is not consumption. Coordinate scientific candidate/check routes with CCode's Step #4 owner. |
 | Segment receipts/readback and finalization/projection expect consolidated ledger paths | Retain exact local JSONL for the first connection slice. Eliminating consolidated files requires a separate segmented-reader/finalizer/projection change. |
@@ -61,3 +85,25 @@ This report adds no validator framework or tests. Source changes, once made, rem
 ## Memory MCP status
 
 The user explicitly authorized a local codebase-memory-mcp installation during this continuation. The installer/CLI was blocked by its process-fingerprint check because `getpid` and `/proc` identities did not match in this environment. No memory graph review occurred. Findings in this report come from direct source inspection; this installation authorization is not AWS compute authorization.
+
+## Consumer timing and actual native-learning decisions still open
+
+The existing `native_causal_stream.CausalGroupStream` and `lifecycle_availability` preserve dictionaries and ledger
+provenance, but lifecycle availability is stamped with receive time alone. Tied F_LAST timestamps and finalization can
+therefore expose later-produced evidence too early if attached using timestamp-as-of alone. Member rows have group indices;
+lifecycle emission needs exact producing group/native cursor and finalization provenance before equivalent placement can
+be claimed. Keep the existing F_LAST statistic/lag units; do not apply the preserved axis-changing draft. Read exact member
+and lifecycle ledgers once, with compressed projections used for registry aliases/section products, not duplicate occurrences.
+
+The native learner exists, but is not called by this code-only experiment. Its initializer explicitly creates an untrained
+candidate and must not replace retained trained weights silently. ActualHost's existing training.sqlite/witness restoration
+route needs the current checkpoint identity/location (the historical retained checkpoint is outside Git). NativeForecastLearner
+updates forecast objectives and explicitly reports teacher_optimized=False; TeacherHead's auxiliary loss is a separate missing
+connection. The old five-arm harness and its objective weight are not an agreed production objective for this experiment.
+
+Before activating native weight learning, settle the retained checkpoint, BOSS objective/checkpoint migration and execution-order
+model-update lineage across three lanes. No chronological gate, weight averaging or fresh initialization is chosen here.
+The current Monday context author uses the whole declared day record count; a generic context_rows mechanism is not evidence
+of an active fixed 4,096-row cap. Original typed DipoleTarget attachments can be reused; prose/classroom exchanges cannot
+substitute for same-forward representation supervision. These are source findings requiring integration decisions, not a
+request to launch a separate evaluation or to change the scientific mathematics.

@@ -1,5 +1,21 @@
 # Frankie AWS — step 2 learner delivery checkpoint
 
+## New source slice — native recovery foundation, workflow still off
+
+`frankie_box_experiment_root.py --bedrock on` is now an explicit default-off source route. It binds the complete day
+manifest and original opening book, calls the existing native calculation/recovery path, retains exact ledgers and
+compressed projections, and omits giant rendered bedrock tables. The orchestrator still does not select it: shared
+consumers and lawful lifecycle emission timing remain open. Read `BEDROCK_SHARED_STREAM_ROUTE_20261006.md`.
+
+Completed legacy/native stage receipts prevent replay of those completed stages during projection continuation. Native
+save/resume verifies full-state generation ancestry and opening provenance. These are source-built only: syntax/source
+review and diff check, no tests or runtime/E2E. Old bedrock-off roots are not retroactively full-coverage roots.
+
+A further genuine design boundary is now explicit: this experiment's active classroom/discovery is code-only; it does
+not call the original native model-training path. Restore the intended trained checkpoint, governed BOSS objective and
+execution-order update lineage before claiming learned live recognition. Do not silently initialize fresh weights, import
+old multi-arm harness choices or average model weights. This is separate from CCode's small facilitator model.
+
 ## Parallel owner clarification — CCode smaller-model work
 
 Greg says the other chat's report supports the smaller model and intends CCode to implement that work. Keep model

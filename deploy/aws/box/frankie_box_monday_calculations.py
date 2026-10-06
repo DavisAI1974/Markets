@@ -23,7 +23,7 @@ from frankie_box_author_monday_launch import fresh, sync_directory
 PARENT = Path('/opt/frankie-box/work/monday-calculations')
 
 
-def load_retained_layers(session, *, allow_failures=False):
+def load_retained_layers(session, *, allow_failures=False, receipt=None):
     """The completed legacy layers and spools as ROOT retained them; no journal read, no recalculation. Shared by
     resume_legacy and the render-only step (frankie_box_render_digest.py)."""
     from frankie_box_digest_sources import _JSON
@@ -36,7 +36,8 @@ def load_retained_layers(session, *, allow_failures=False):
     records = B.RowSpool.reopen(candidates[0])
     missing = []
     if allow_failures:
-        receipt = json.loads((session.work / 'derive.json').read_bytes())
+        if receipt is None:
+            receipt = json.loads((session.work / 'derive.json').read_bytes())
         missing = receipt.get('rows', {}).get('inputs_without_observation') or []
         if receipt.get('input_records') != len(records):
             raise ValueError('retained INPUT spool differs from its derivation receipt')

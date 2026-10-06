@@ -6,9 +6,11 @@ descriptor; neither exists for another day, and the experiment forecasts nothing
 no authorship. This ROOT starts from the day's own sealed ingest (BOSS_BLOCK_INGESTION_RECEIPT_V1, written by
 frankie_box_ingest_block.sh ACTION=ingest), pins it (receipt sha256 given by the caller; the journal's bytes and sha256
 checked against the receipt), builds the SAME whole-day calculation pin (whole_day_pin_document, shared with the Monday
-ROOT), and runs the SAME Session.derive with bedrock OFF: ROOT process 1 (the legacy pass: every INPUT record, the five
+ROOT), and runs the SAME Session.derive with bedrock OFF by default: ROOT process 1 (the legacy pass: every INPUT record, the five
 legacy layers and the row spools) always, process 4 (the Markdown digest) only when asked (classroom-arm days, where
-Frankie reads it), processes 2 and 3 (the bedrock traversal and projection) never.
+Frankie reads it). The explicit --bedrock on source route additionally runs the existing native traversal and compressed
+projection, with opening state and complete recovery; it does not render the giant bedrock tables. The orchestrator
+does not select this route until the remaining shared consumer connections are settled.
 Nothing is re-ingested: the sealed journal is read in place, read-only. Incomplete data never stops the day: a
 partial member (the trading-day cut) is carried, producer failures are listed in the receipt and every other record is
 calculated (status calculations_retained_with_failures). A day already calculated declines (duplicate
@@ -57,7 +59,7 @@ def _save_new_complete(path, value):
 
 
 def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
-                  frozen_survivors=None, resume=False):
+                  frozen_survivors=None, resume=False, *, bedrock=False):
     requested = [False]
     previous_handler = signal.signal(signal.SIGTERM, lambda *_: requested.__setitem__(0, True))
     stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
@@ -65,7 +67,7 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
         return requested[0] or bool(stop_file and Path(stop_file).exists())
     try:
         result = _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers,
-                                digest, frozen_survivors, resume, save_requested=save_requested)
+                                digest, frozen_survivors, resume, save_requested=save_requested, bedrock=bedrock)
         if save_requested():
             from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
             raise TeacherSaved('ROOT completion published; resume uses the completed receipt')
@@ -75,7 +77,7 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
 
 
 def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
-                   frozen_survivors=None, resume=False, save_requested=None):
+                   frozen_survivors=None, resume=False, save_requested=None, bedrock=False):
     require_checkout(commit)
     if day_role not in ('discovery', 'confirmation'):
         raise ValueError('day role discovery or confirmation required')
@@ -148,6 +150,18 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     manifest = dict(manifest_hash=receipt['manifest_hash'],
                     note='the day manifest by hash; its members are in the ingestion receipt (the bedrock traversal, which '
                          'needs the whole manifest, is off in the experiment)')
+    manifest_pin = None
+    if bedrock:
+        from research.kalshi.frankie_boss.opening_book import _manifest_by_hash
+        from research.kalshi.frankie_boss.block_source_scope import block_source_scope
+        manifest_path, manifest = _manifest_by_hash(receipt['manifest_hash'])
+        scope = block_source_scope(manifest, expected_manifest_hash=receipt['manifest_hash'])
+        if (manifest.get('trading_day') != day
+                or manifest.get('total_mbo_records') != receipt['record_count']
+                or scope.genesis_hash() != completion['scope_hash']
+                or [member.mbo_records for member in scope.members] != list(completion['member_counts'])):
+            raise ValueError('native calculation manifest differs from the sealed day completion')
+        manifest_pin = witness(manifest_path)
     output = safe_path(output_root) if resume else fresh(output_root, PARENT)
     if resume and (output.parent != PARENT or not output.is_dir() or (output / 'calculations-receipt.json').exists()):
         raise ValueError('resume requires this day\'s unfinished retained ROOT directory')
@@ -162,10 +176,12 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             _save_new_complete(path, body)
     source = dict(trading_day=day, manifest_hash=receipt['manifest_hash'], container=container, completion=completion,
                   source_prefix_hash=receipt['source_prefix_hash'], record_count=receipt['record_count'])
-    save_or_match(output / 'calculation-pins.json', whole_day_pin_document(
-        source, rule='One complete day delivery for the experiment; the complete registry; the bedrock groups are named '
-                     'by the pin but not derived (bedrock off).'))
-    from frankie_box_boss_session import Session, FRAME_SECTIONS_SCHEMA
+    rule = ('One complete day delivery for the experiment; existing native calculators and exact local evidence; '
+            'compressed projections retained, giant bedrock rendering omitted. Source route only; consumer coverage separate.'
+            if bedrock else 'One complete day delivery for the experiment; the complete registry; the bedrock groups '
+            'are named by the pin but not derived (bedrock off).')
+    save_or_match(output / 'calculation-pins.json', whole_day_pin_document(source, rule=rule))
+    from frankie_box_boss_session import Session, FRAME_SECTIONS_SCHEMA, NATIVE_RECOVERY_SCHEMA
     binding = dict(schema='FRANKIE_EXPERIMENT_DAY_CALCULATION_SOURCE_V1', source=source, data_workers=data_workers,
                    frame_sections_schema=FRAME_SECTIONS_SCHEMA,
                    authorship=None, authorship_note='the experiment forecasts nothing through the full pipeline; no launch '
@@ -174,12 +190,17 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                    record_count=receipt['record_count'], journal_count=receipt['journal_count'],
                    journal_hash=receipt['journal_hash'], day_role=day_role, partial_members=partial_members,
                    tail_members=tail_members, opening_book=opening_book, external=external)
+    if bedrock:
+        binding['native_calculation_policy'] = dict(schema=NATIVE_RECOVERY_SCHEMA,
+            producer='existing_pinned_native_traversal', bedrock=True, source_manifest=manifest_pin,
+            representation='exact_local_ledgers_and_existing_compressed_projections', digest_bedrock=False)
     save_or_match(output / 'source-binding.json', binding)
     if external['status'] == 'attached':
         save_or_match(output / 'external-computation.json', external_computation)
     session = Session(output, day, '00', None)
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
-    session.phase('deriving', 'experiment ROOT: the legacy pass on the sealed day; bedrock off')
+    session.phase('deriving', 'experiment ROOT: sealed day, legacy and native calculations; no giant bedrock digest'
+                  if bedrock else 'experiment ROOT: the legacy pass on the sealed day; bedrock off')
     retained = session.work / 'derive.json'
     if resume and retained.is_file():
         # The existing legacy reader/render helpers recover the finished calculation stage without replaying it.
@@ -192,6 +213,14 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             raise ValueError('saved derivation producers changed')
         if result.get('frame_sections_schema') != FRAME_SECTIONS_SCHEMA:
             raise ValueError('saved derivation has another frame projection; retained outputs preserved')
+        if bedrock and (result.get('native_recovery_schema') != NATIVE_RECOVERY_SCHEMA
+                        or not result.get('bedrock') or result['bedrock'].get('skipped')):
+            raise ValueError('saved derivation lacks completed native calculations; retained outputs preserved')
+        if bedrock:
+            native = result['bedrock']
+            for item in [native['receipt'], native['result'], *native['ledgers'].values()]:
+                if witness(Path(item['path'])) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
+                    raise ValueError('saved native evidence differs: ' + item['path'])
         for item in result['layers'].values():
             if witness(Path(item['path'])) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
                 raise ValueError('saved calculation layer differs: %s' % item['path'])
@@ -202,9 +231,10 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             write_retained_digest(session, result, layers, prices, frames, structures, bedrock=False)
         session.note('resumed from the saved derivation; no legacy calculation replay')
     else:
-        result = session.derive(source=SimpleNamespace(container=container), bedrock=False, digest=digest,
+        result = session.derive(source=SimpleNamespace(container=container), bedrock=bedrock, digest=digest,
                                 opening_adapter_state=opening_state, opening_book=opening_book,
-                                recovery=True, save_requested=save_requested, retain_frame_sections=True)
+                                recovery=True, save_requested=save_requested, retain_frame_sections=True,
+                                digest_bedrock=False)
     # Greg, 2026-09-29: no data is dropped even when it is not all complete; a calculation that cannot use a record
     # skips over it, the day is not skipped. Producer failures stay in derive.json (and the failures spool) with their
     # record index and error, and are named in the receipt; the day's calculations go on to the next steps.
@@ -215,8 +245,9 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                 derivation=witness(session.work / 'derive.json'),
                 digest=witness(session.work / 'derivation-digest-full.md') if digest else None,
                 root_processes=result.get('root_processes'),
+                native_calculation_policy=binding.get('native_calculation_policy'),
                 frame_sections_schema=result.get('frame_sections_schema'), frame_sections=result.get('frame_sections'),
-                not_run=[dict(process=k, reason='switched off for the experiment (Greg, 2026-09-29)')
+                not_run=[dict(process=k, reason='not selected by this source-bound ROOT configuration')
                          for k, v in (result.get('root_processes') or {}).items() if v == 'skipped'],
                 failure_count=failures, opening_book=opening_book, external=external,
                 external_computation=witness(output / 'external-computation.json')
@@ -242,9 +273,12 @@ def main():
     p.add_argument('--digest', choices=('on', 'off'), default='off', help='on for a classroom-arm day (Frankie reads it)')
     p.add_argument('--frozen-survivors')
     p.add_argument('--resume', action='store_true', help='reuse the source-bound unfinished ROOT directory')
+    p.add_argument('--bedrock', choices=('on', 'off'), default='off',
+                   help='explicit native calculation source route; does not establish downstream consumer coverage')
     a = p.parse_args()
     print(json.dumps(calculate_day(a.commit, a.ingestion_receipt, a.ingestion_receipt_sha256, a.day, a.day_role,
-                                   a.output_root, a.data_workers, a.digest == 'on', a.frozen_survivors, a.resume), sort_keys=True), flush=True)
+                                   a.output_root, a.data_workers, a.digest == 'on', a.frozen_survivors, a.resume,
+                                   bedrock=a.bedrock == 'on'), sort_keys=True), flush=True)
 
 
 if __name__ == '__main__':

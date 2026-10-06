@@ -355,11 +355,91 @@ def _move_aside(out_dir, siblings=(), schema='FRANKIE_BOX_BEDROCK_SUPERSEDE_RECE
     return str(target)
 
 
-def run(records, container, out_dir, producers, cycle, code_commit, day, *, progress=None, source_manifest=None, resume_checkpoint=None, reconstruct_missing=False):
+def recovery_checkpoint(out_dir):
+    """Select one verified generation leaf, never a timestamp or largest cursor.
+
+    Call after load_producers. Empty/unpublished generations remain untouched;
+    every published generation must belong to one unambiguous parent chain.
+    """
+    from research.kalshi.frankie_raw_mbo_benchmark import periodic_checkpointer as P
+    from frankie_box_native_checkpoint import SCHEMA
+    from frankie_box_prepare_trading_day import safe_path
+    root = Path(out_dir)
+    directories = [root / 'checkpoints', *sorted(root.glob('recovery-*/checkpoints'))]
+    generations = {}
+    lineage_identity = None
+    for directory in directories:
+        if not directory.is_dir() or not any(directory.glob(P.CHECKPOINT_GLOB)):
+            continue
+        chain = P.load_chain(directory)
+        parent = None
+        for index, checkpoint in enumerate(chain):
+            if checkpoint['controller_state_hash'] is None:
+                raise ValueError('automatic native recovery requires full-state checkpoints')
+            descriptor = json.loads(safe_path(P.controller_state_path(directory, checkpoint['sequence'])).read_bytes())
+            if (P.canonical_hash(descriptor) != checkpoint['controller_state_hash']
+                    or descriptor.get('schema') != SCHEMA
+                    or descriptor.get('finalized') != checkpoint['locked']
+                    or descriptor.get('completed_mbo_records') != checkpoint['completed_mbo_records']):
+                raise ValueError('native recovery generation descriptor differs from its checkpoint')
+            bound = dict(driver=descriptor['driver_identity'], opening=descriptor.get('continuation_binding'))
+            if lineage_identity is not None and bound != lineage_identity:
+                raise ValueError('native recovery generations disagree on source, producer or opening identity')
+            lineage_identity = bound
+            candidate = descriptor.get('parent_checkpoint')
+            if index and candidate != parent:
+                raise ValueError('native recovery generation changed its parent')
+            parent = candidate
+        latest = chain[-1]
+        checkpoint_path = safe_path(P.checkpoint_path(directory, latest['sequence'])).resolve()
+        state = descriptor['driver_state']
+        if dict(witness(safe_path(state['path'])), path=state['path']) != state:
+            raise ValueError('native recovery leaf state bytes differ')
+        generations[str(checkpoint_path)] = dict(parent=parent)
+    if not generations:
+        return None
+    children = {path: [] for path in generations}
+    for path, generation in generations.items():
+        parent = generation['parent']
+        if parent is None:
+            continue
+        if not isinstance(parent, dict) or set(parent) != {'path', 'bytes', 'sha256'}:
+            raise ValueError('native recovery parent witness is malformed')
+        parent_path = safe_path(parent['path']).resolve()
+        if dict(witness(parent_path), path=parent['path']) != parent:
+            raise ValueError('native recovery parent checkpoint bytes changed')
+        if str(parent_path) not in generations:
+            raise ValueError('native recovery parent is outside this run or is no longer its generation tip')
+        generation['parent_path'] = str(parent_path)
+        children[str(parent_path)].append(path)
+    roots = [path for path, value in generations.items() if value['parent'] is None]
+    leaves = [path for path in generations if not children[path]]
+    if len(roots) != 1 or len(leaves) != 1 or any(len(value) > 1 for value in children.values()):
+        raise ValueError('native recovery has competing generation roots, leaves or forks')
+    visited, cursor = set(), leaves[0]
+    while cursor is not None and cursor not in visited:
+        visited.add(cursor)
+        cursor = generations[cursor].get('parent_path')
+    if cursor is not None or visited != set(generations):
+        raise ValueError('native recovery generation ancestry is cyclic or disconnected')
+    return leaves[0]
+
+
+def run(records, container, out_dir, producers, cycle, code_commit, day, *, progress=None, source_manifest=None,
+        resume_checkpoint=None, reconstruct_missing=False, opening_adapter_state=None, opening_book=None,
+        save_requested=None, recovery=False):
     """The pinned traversal on this cycle's rows: identity -> NativeCalculationRun (the launcher's canonical arguments) ->
     NativeReplayDriver(ExchangeSessionRule, NeverInvoke, LedgerSinks) -> consume -> finalize -> reconcile (a mismatch
     raises: a ledger that does not match its counter is not evidence). Files result.json (the exact rows live in the
-    ledgers) and receipt.json under out_dir; returns the receipt."""
+    ledgers) and receipt.json under out_dir; returns the receipt.
+
+    opening_adapter_state/opening_book optionally bind the same initial book and provenance as the legacy ROOT.
+    Both must be supplied together (or an explicit absent-book descriptor alone) and repeated unchanged on resume.
+    save_requested is a cooperative callback:
+    save complete state at the next closed-group boundary, then raise the caller's existing TeacherSaved contract.
+    A locked native checkpoint reuses its completed calculation result without scientific replay.
+    recovery=True discovers that checkpoint by verified parent ancestry and refuses to restart a nonempty run
+    without recoverable full state. recovery=False keeps the historical explicit-resume/supersede behavior."""
     if not hasattr(records, '__len__'):
         raise ValueError('bedrock input must be counted and replayable before traversal')
     if not records:
@@ -372,16 +452,53 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         FLOW_RESPONSE, FULL_BOOK_RESPONSE, PRICE_RESPONSE, QUEUE_RESPONSE, horizons_for_version)
     from research.kalshi.frankie_raw_mbo_benchmark.native_row_sink import LedgerSinks
     from research.kalshi.frankie_raw_mbo_benchmark import native_a_arm_launch, periodic_checkpointer, native_staging
+    opening_binding = None
+    opening_adapter = None
+    if opening_adapter_state is None and opening_book is not None:
+        if not isinstance(opening_book, dict) or opening_book.get('status') != 'absent':
+            raise ValueError('an opening book without state must explicitly declare absence')
+        opening_binding = dict(schema='FRANKIE_NATIVE_OPENING_BOOK_V1', adapter_state_sha256=None,
+                               provenance=json.loads(json.dumps(opening_book, sort_keys=True, allow_nan=False)))
+    if opening_adapter_state is not None:
+        if not isinstance(opening_book, dict) or not opening_book or opening_book.get('status') == 'absent':
+            raise ValueError('opening adapter state requires explicit non-absent opening-book provenance')
+        import importlib
+        from research.kalshi.frankie_boss import mbo_resume_state
+        from research.kalshi.frankie_raw_mbo_benchmark.native_full_capture_adapter import FullCaptureAdapter
+        mbo_resume_state = importlib.reload(mbo_resume_state)
+        if mbo_resume_state.V4MboAdapter is not FullCaptureAdapter.__mro__[1]:
+            raise ValueError('opening book restore and native capture use different pinned adapters')
+        opening_adapter = mbo_resume_state.restore_adapter_state(opening_adapter_state)
+        opening_adapter.assert_groups_closed()
+        opening_hash = mbo_resume_state.adapter_state_hash(opening_adapter_state)
+        exported = mbo_resume_state.export_adapter_state(opening_adapter,
+            include_open_groups=opening_adapter_state.get('schema') == mbo_resume_state.OPEN_SCHEMA)
+        if mbo_resume_state.adapter_state_hash(exported) != opening_hash:
+            raise ValueError('native opening book does not round-trip exactly')
+        opening_binding = dict(schema='FRANKIE_NATIVE_OPENING_BOOK_V1', adapter_state_sha256=opening_hash,
+                               provenance=json.loads(json.dumps(opening_book, sort_keys=True, allow_nan=False)))
+        opening_adapter.record_count = 0
+        opening_adapter.completed_event_group_count = 0
+        # This pinned wrapper keeps the exact resting book while honestly marking
+        # unavailable preceding activity anchors UNKNOWN_SINCE_RESUME.
+        opening_adapter = FullCaptureAdapter.from_restored(opening_adapter)
     modules = loaded_modules(producers, native_replay_driver, native_calculation_runner, native_row_sink,
                              native_response, native_a_arm_launch, periodic_checkpointer, native_staging)
     out_dir = Path(out_dir)
     original_out_dir = out_dir
+    if recovery:
+        discovered = recovery_checkpoint(out_dir)
+        if resume_checkpoint is not None and (discovered is None or Path(resume_checkpoint).resolve() != Path(discovered)):
+            raise ValueError('explicit native checkpoint differs from the sole recovery generation leaf')
+        resume_checkpoint = discovered
+        if resume_checkpoint is None and out_dir.exists() and any(out_dir.iterdir()):
+            raise ValueError('retained native run has no recoverable full checkpoint; preserve it without replay')
     if resume_checkpoint:
         # A new ledger generation preserves every byte of the failed attempt.
         out_dir = out_dir / ('recovery-' + uuid.uuid4().hex)
         superseded = None
     else:
-        superseded = _move_aside(out_dir)
+        superseded = None if recovery else _move_aside(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     stamped = iter_driver_records(records, container, day)
     ident = identity(producers, container, len(records), cycle, code_commit)
@@ -427,7 +544,8 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
 
     checkpoint = descriptor = None
     if resume_checkpoint:
-        checkpoint, descriptor = read_checkpoint(resume_checkpoint, asdict(ident))
+        checkpoint, descriptor = read_checkpoint(resume_checkpoint, asdict(ident),
+                                                  continuation_binding=opening_binding)
         if descriptor is None and not reconstruct_missing:
             raise ValueError('adapter-only checkpoint requires explicit reconstruction authorization')
         if checkpoint['total_mbo_records'] != len(records):
@@ -438,6 +556,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         source_manifest_hash=ident.source_manifest_hash, total_mbo_records=len(records),
         checkpoint_dir=checkpoint_dir, phase='RT_NATIVE_TRAVERSAL',
         driver_identity=asdict(ident), progress=progress,
+        continuation_binding=opening_binding, save_requested=save_requested,
         parent_checkpoint=witness(Path(resume_checkpoint)) | {'path': str(resume_checkpoint)} if resume_checkpoint else None)
     evidence = dict(run_id=ident.run_id, arm=ident.arm, mission_sha256=ident.mission_sha256,
         calculation_contract_sha256=ident.calculation_contract_sha256,
@@ -452,6 +571,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     stager = native_staging.SpawnStager(out_dir=out_dir / 'spawn_requests', arm=ident.arm,
                                         role='REAL_TIME_FRANKIE', evidence=evidence)
     driver = NativeReplayDriver(identity=ident, session_rule=ExchangeSessionRule(), cadence=NeverInvoke(), run=calculation,
+                                adapter=opening_adapter,
                                 sinks=sinks, emit_change_points=True, checkpointer=checkpointer, stage_spawn=stager.stage)
     if descriptor is not None:
         driver = restore_driver(descriptor, checkpointer, sinks, stager.stage)
@@ -468,8 +588,9 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     if descriptor is None:
         checkpointer.seal_start(driver.adapter)
     elif not descriptor['finalized']:
-        checkpointer._write(driver.adapter, completed_mbo_records=driver.counters.records_seen,
-                            event_group_open=False, controller_state=None, locked=False)
+        checkpointer.save_boundary()
+    if not (descriptor and descriptor['finalized']) and not (checkpoint and descriptor is None):
+        checkpointer.raise_if_requested()
     if not (descriptor and descriptor['finalized']):
         parallel = RuntimeSections(driver, producers)
         checkpointer.parallel = parallel
@@ -480,6 +601,10 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         finally:
             parallel.close()
             checkpointer.parallel = None
+        # A complete pre-finalization state prevents source-record replay if a
+        # terminal calculation or subsequent publication is interrupted.
+        checkpointer.save_boundary()
+        checkpointer.raise_if_requested()
     if progress is not None:
         progress.update('root-native-finalize')
     # All old prefix/append files stay retained. Publish the complete canonical
@@ -531,6 +656,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                    checkpoints=dict(directory=str(checkpoint_dir), count=len(checkpointer.saved_checkpoints),
                                     final=checkpointer.saved_checkpoints[-1], readback_verified=True),
                    identity=asdict(ident), identity_inputs=dict(mission=MISSION_PATH, contract=CONTRACT_PATH, knowledge_manifest=KNOWLEDGE_MANIFEST_PATH),
+                   opening_book=opening_binding,
                    recovery=dict(parent_checkpoint=str(resume_checkpoint) if resume_checkpoint else None,
                        restored_state_records=checkpoint['completed_mbo_records'] if descriptor else 0,
                        authorized_reconstruction_records=checkpoint['completed_mbo_records'] if checkpoint and descriptor is None else 0),
@@ -555,6 +681,9 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                    sections_fed=result['traversal']['sections_fed'], reconciliation=result['ledger_retention'],
                    ledgers=ledgers, result=result_witness, superseded=superseded)
     write_json(out_dir / 'receipt.json', receipt)
+    # If the request arrived during finalization/publication, the locked state
+    # and completed receipt are available for the caller's resume path.
+    checkpointer.raise_if_requested()
     return receipt
 
 

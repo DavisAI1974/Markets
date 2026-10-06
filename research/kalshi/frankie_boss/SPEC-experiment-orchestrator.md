@@ -1,5 +1,13 @@
 # Spec: the 30-day experiment orchestrator
 
+**Native recovery source slice, 2026-10-06:** bedrock information is required. An explicit default-off ROOT option now
+connects complete manifest/opening state, full native checkpoints and completed-stage reuse while omitting giant rendered
+bedrock tables. The queue does not activate it yet; exact lifecycle availability and actual shared consumers remain open.
+Read `BEDROCK_SHARED_STREAM_ROUTE_20261006.md`. The original native model-learning/representation path also needs its
+retained checkpoint, governed BOSS objective and cross-lane update lineage settled; current code discovery is not proof
+of learned live recognition. CCode may own smaller-model facilitator integration separately. No AWS go or E2E.
+
+
 **Latest full-depth continuation (from `166507b6`):** Greg explicitly requires all applicable full-depth MBO/FIFO
 and joint accumulated-knowledge computation. New experiment ROOTs retain every level/FIFO queue, the complete resting
 book observation and every original INPUT field in each successful closed group, including bytes. These enter the

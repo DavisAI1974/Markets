@@ -74,6 +74,7 @@ MIN_SPLIT_BYTES = 1024     # a reading piece is split for regeneration down to t
 FRAME_SECTIONS = ('book', 'activity', 'integrity', 'native_frame', 'observation', 'input_records',
                   'input_record_indices')
 FRAME_SECTIONS_SCHEMA = 'FRANKIE_ROOT_FULL_DEPTH_GROUPS_V2'
+NATIVE_RECOVERY_SCHEMA = 'FRANKIE_ROOT_NATIVE_RECOVERY_V1'
 
 
 def _packs(text, limit):
@@ -697,7 +698,7 @@ class Session:
 
     # ---- derive (the pin's producers on this cycle's rows) ------------------------------------------------
     def derive(self, *, source=None, bedrock=True, digest=True, opening_adapter_state=None, opening_book=None,
-               recovery=False, save_requested=None, retain_frame_sections=False):
+               recovery=False, save_requested=None, retain_frame_sections=False, digest_bedrock=None):
         """The ROOT's four processes on the sealed source: (1) the legacy pass (every INPUT record -> the five legacy layers
         and the row spools), (2) the bedrock traversal, (3) the bedrock projection, (4) the derivation digest.
         bedrock=False (Greg, 2026-09-29: no bedrock in the experiment) skips (2) and (3): the bedrock layers are recorded
@@ -709,11 +710,36 @@ class Session:
         opening_book is its descriptor, carried into derive.json. None = an empty book (every day before this switch).
         retain_frame_sections carries all original frame fields and group INPUT records, plus the existing pinned
         book_snapshot full-depth/FIFO projection and observe_book observation from the live book, into the existing
-        frame spool. No second replay or changed legacy/teacher formula; top-ten summaries remain alongside full depth."""
+        frame spool. No second replay or changed legacy/teacher formula; top-ten summaries remain alongside full depth.
+        digest_bedrock=False keeps exact native ledgers/projections while omitting the giant rendered bedrock tables."""
         pin = self._pin() if source is not None else self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
+        identity = dict(source=self.source_binding, pin=pin['pins_witness']['sha256'],
+                        producers=self._producer_witnesses(pin), opening_book=opening_book)
+        if retain_frame_sections:
+            identity['frame_sections_schema'] = FRAME_SECTIONS_SCHEMA
         if recovery and bedrock:
-            raise ValueError('complete-state experiment recovery requires bedrock off')
+            from research.kalshi.frankie_boss.c15_journal import evidence_hash
+            identity.update(native_recovery_schema=NATIVE_RECOVERY_SCHEMA,
+                            opening_adapter_state_hash=evidence_hash(opening_adapter_state))
+            stage = self.work / 'legacy-stage.json'
+            if stage.is_file():
+                saved_stage = load_json(stage)
+                if saved_stage.get('identity') != identity:
+                    raise ValueError('completed legacy stage belongs to another native source/policy; retained')
+                for item in saved_stage['artifacts']:
+                    if witness(Path(item['path'])) != {k: item[k] for k in ('bytes', 'sha256')}:
+                        raise ValueError('completed legacy stage artifact changed: ' + item['path'])
+                from frankie_box_monday_calculations import load_retained_layers
+                receipt = saved_stage['receipt']
+                _, _, records, prices, frames, structures, failures, layers, _ = load_retained_layers(
+                    self, allow_failures=True, receipt=receipt)
+                if len(failures) != receipt['failure_count']:
+                    raise ValueError('completed legacy stage failure count differs')
+                self.note('native continuation: completed legacy outputs reused without replay or calculation')
+                return self._complete_native_derivation(pin, derived, receipt, layers, records, prices, frames,
+                    structures, opening_adapter_state=opening_adapter_state, opening_book=opening_book,
+                    save_requested=save_requested, digest=digest, digest_bedrock=digest_bedrock)
         if recovery and derived.exists():
             if not (self.work / 'input-state.pkl').exists():
                 raise ValueError('retained ROOT has no saved input state; preserve it for recovery')
@@ -752,10 +778,6 @@ class Session:
         from research.kalshi.frankie_boss.c15_observer import observe_book
         mbo_resume_state = importlib.reload(mbo_resume_state)
         from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state, _save_raw_state, TeacherSaved
-        identity = dict(source=self.source_binding, pin=pin['pins_witness']['sha256'],
-                        producers=self._producer_witnesses(pin), opening_book=opening_book)
-        if retain_frame_sections:
-            identity['frame_sections_schema'] = FRAME_SECTIONS_SCHEMA
         recovery_path = self.work / 'legacy-state.pkl'
         saved = _load_raw_state(recovery_path) if recovery and recovery_path.exists() else None
         if saved and saved['identity'] != identity:
@@ -911,10 +933,24 @@ class Session:
             path = derived / f'{name}.json'
             write_json(path, value)
             receipt['layers'][name] = dict(status=value['status'], producer=value.get('producer'), reason=value.get('reason'), **witness(path), path=str(path))
+        if recovery and bedrock:
+            # A separately published legacy completion lets interrupted native traversal/projection
+            # continue without replaying or recalculating the already completed legacy stage.
+            artifacts = [dict(path=str(rows.path), **witness(rows.path))
+                         for rows in (records, prices, frames, structures, failures)]
+            artifacts.extend({k: item[k] for k in ('path', 'bytes', 'sha256')}
+                             for item in receipt['layers'].values())
+            write_json(self.work / 'legacy-stage.json', dict(schema=NATIVE_RECOVERY_SCHEMA,
+                       identity=identity, receipt=receipt, artifacts=artifacts))
+            return self._complete_native_derivation(pin, derived, receipt, layers, records, prices, frames,
+                structures, opening_adapter_state=opening_adapter_state, opening_book=opening_book,
+                save_requested=save_requested, digest=digest, digest_bedrock=digest_bedrock)
         # THE BEDROCK rides beside the legacy five (never through them): the pinned traversal on the same records, the
         # twenty layers projected by the producers' own crosswalk into the same work/derived/ (frankie_box_bedrock.py).
         if pin.get('bedrock') and bedrock:
-            receipt['bedrock'] = self._derive_bedrock(records, container, pin, derived, receipt['layers'])
+            receipt['bedrock'] = self._derive_bedrock(records, container, pin, derived, receipt['layers'],
+                opening_adapter_state=opening_adapter_state, opening_book=opening_book,
+                save_requested=save_requested)
         elif pin.get('bedrock'):
             receipt['bedrock'] = dict(schema='FRANKIE_BOX_DERIVE_BEDROCK_V1', skipped=True, layers=[], not_derived=sorted(bedrock_off),
                                       reason='bedrock off: ROOT processes 2 and 3 skipped for the experiment (Greg, 2026-09-29)')
@@ -929,11 +965,35 @@ class Session:
         write_json(self.work / 'derive.json', receipt)
         if digest:
             probe.update('root-digest')
-            self._write_digest(receipt, layers, prices, frames, structures, roll, first, buys, sells)
+            self._write_digest(receipt, layers, prices, frames, structures, roll, first, buys, sells,
+                               bedrock=True if digest_bedrock is None else digest_bedrock)
         else:
             self.note('digest off: ROOT process 4 skipped (the experiment reads the JSON layer files and row spools)')
         probe.update('root-derived', state='complete', failed=len(failures))
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
+        return receipt
+
+    def _complete_native_derivation(self, pin, derived, receipt, layers, records, prices, frames, structures, *,
+                                    opening_adapter_state, opening_book, save_requested, digest, digest_bedrock):
+        """Continue native stages from exact completed legacy evidence; never declare a partial stage finished."""
+        if not pin.get('bedrock'):
+            raise ValueError('native recovery requires the existing bedrock producer pin')
+        receipt['bedrock'] = self._derive_bedrock(records, receipt['rows'], pin, derived, receipt['layers'],
+            opening_adapter_state=opening_adapter_state, opening_book=opening_book,
+            save_requested=save_requested, recovery=True)
+        receipt['native_recovery_schema'] = NATIVE_RECOVERY_SCHEMA
+        receipt['root_processes'] = dict(legacy='run', bedrock_traversal='run', bedrock_projection='run',
+                                         digest='run' if digest else 'skipped')
+        receipt['digest_bedrock'] = True if digest_bedrock is None else digest_bedrock
+        receipt['pin_identity'] = dict(sha256=pin['pins_witness']['sha256'], cycle_index=pin['cycle_index'],
+                                      group=pin['group'], bedrock_layers=list(pin.get('bedrock_layers') or []))
+        write_json(self.work / 'derive.json', receipt)
+        if digest:
+            from frankie_box_monday_calculations import write_retained_digest
+            write_retained_digest(self, receipt, layers, prices, frames, structures,
+                                  bedrock=receipt['digest_bedrock'])
+        _box_module('frankie_box_progress').for_session(self).update(
+            'root-derived', state='complete', failed=receipt['failure_count'])
         return receipt
 
     def _write_digest(self, receipt, layers, prices, frames, structures, roll, first, buys, sells, bedrock=True):
@@ -1004,17 +1064,45 @@ class Session:
             raise ValueError(problem)
         return pin
 
-    def _derive_bedrock(self, records, container, pin, derived, receipt_layers):
+    def _derive_bedrock(self, records, container, pin, derived, receipt_layers, *, opening_adapter_state=None,
+                        opening_book=None, save_requested=None, recovery=False):
         """The pinned traversal, the projection and their receipts; the layer entries go into receipt_layers."""
         B = _box_module('frankie_box_bedrock')
         layers = list(pin.get('projection_layers') or pin['bedrock_layers'])
         code_commit = B.producers_commit(PRODUCERS)
         self.note(f'bedrock: the pinned traversal ({code_commit[:8]}) on {len(records)} INPUT records for {len(layers)} layers')
         probe = _box_module('frankie_box_progress').for_session(self)
-        run = B.run(records, container, self.work / 'bedrock', PRODUCERS, self.cycle, code_commit, self.day, progress=probe,
-                    source_manifest=self.source_binding['manifest'] if self.source_binding else None,
-                    resume_checkpoint=getattr(self, 'native_resume_checkpoint', None),
-                    reconstruct_missing=getattr(self, 'native_reconstruct_missing', False))
+        native_stage = self.work / 'native-stage.json'
+        from research.kalshi.frankie_boss.c15_journal import evidence_hash
+        stage_identity = dict(schema=NATIVE_RECOVERY_SCHEMA, source=self.source_binding,
+            pin=pin['pins_witness']['sha256'], producers=self._producer_witnesses(pin),
+            wrapper=witness(Path(B.__file__)), opening_book=opening_book,
+            opening_adapter_state_hash=evidence_hash(opening_adapter_state))
+        if recovery and native_stage.is_file():
+            saved = load_json(native_stage)
+            if saved.get('identity') != stage_identity:
+                raise ValueError('completed native stage source or implementation changed; retained outputs preserved')
+            for item in saved['artifacts']:
+                if witness(Path(item['path'])) != {k: item[k] for k in ('bytes', 'sha256')}:
+                    raise ValueError('completed native stage artifact changed: ' + item['path'])
+            run = saved['run']
+            self.note('bedrock: completed native results reused in place; no traversal or finalization replay')
+        else:
+            run = B.run(records, container, self.work / 'bedrock', PRODUCERS, self.cycle, code_commit, self.day, progress=probe,
+                        source_manifest=self.source_binding['manifest'] if self.source_binding else None,
+                        resume_checkpoint=getattr(self, 'native_resume_checkpoint', None),
+                        reconstruct_missing=getattr(self, 'native_reconstruct_missing', False),
+                        opening_adapter_state=opening_adapter_state, opening_book=opening_book,
+                        save_requested=save_requested, recovery=recovery)
+            if recovery:
+                receipt_path = Path(run['result']['path']).parent / 'receipt.json'
+                artifacts = [dict(path=str(receipt_path), **witness(receipt_path)), run['result']]
+                artifacts.extend(run['ledgers'].values())
+                write_json(native_stage, dict(identity=stage_identity, run=run,
+                    artifacts=[{k: item[k] for k in ('path', 'bytes', 'sha256')} for item in artifacts]))
+        if save_requested and save_requested():
+            from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
+            raise TeacherSaved('native calculation completion retained; projection remains to be resumed')
         probe.update('root-projection')
         crosswalk = B.crosswalk_records(PRODUCERS, layers)
         native_directory = Path(run['result']['path']).parent

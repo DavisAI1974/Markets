@@ -8,7 +8,7 @@ starts at `166507b6`; the earlier frame-section slice started at `c75a805a`. CCo
 Greg now explicitly requires the bedrock information for Frankie and both teachers, without requiring its giant rendered
 table. The older exclusion is superseded as a requirement; source activation remains pending complete recovery and actual
 consumer wiring. `BEDROCK_SHARED_STREAM_ROUTE_20261006.md` traces the existing incremental calculators, exact local ledgers,
-shared readers and historical/live learning routes. No producer switch was flipped. The original scientific formulas and
+shared readers and historical/live learning routes. An explicit default-off native ROOT option now has source-built opening-book/recovery wiring; the workflow producer switch remains off. Shared consumers are still open. The original scientific formulas and
 lawful availability times remain mandatory; omitting table rendering cannot mean dropping evidence.
 
 ## Direct answer to Greg's 99-plane question

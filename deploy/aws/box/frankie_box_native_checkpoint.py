@@ -69,19 +69,24 @@ class StateUnpickler(pickle.Unpickler):
 
 
 class FullCheckpointer(P.PeriodicCheckpointer):
-    def __init__(self, *, driver_identity, progress=None, parent_checkpoint=None, **kwargs):
+    def __init__(self, *, driver_identity, progress=None, parent_checkpoint=None,
+                 continuation_binding=None, save_requested=None, **kwargs):
         super().__init__(**kwargs)
         self.driver = None
         self.driver_identity = driver_identity
         self.progress = progress
         self.parent_checkpoint = parent_checkpoint
+        self.continuation_binding = continuation_binding
+        self.save_requested = save_requested
+        self.stop_checkpoint = None
         self.low_space_stop = False
         self.last_state_bytes = 0
 
     def externals(self):
         return dict(sinks=self.driver.sinks, checkpointer=self, stage_spawn=self.driver.stage_spawn)
 
-    def _write(self, adapter, *, completed_mbo_records, event_group_open, controller_state, locked):
+    def _write(self, adapter, *, completed_mbo_records, event_group_open, controller_state, locked,
+               interval_save=True):
         if self.driver is None or self.driver.counters.records_seen != completed_mbo_records:
             raise ValueError('full driver and checkpoint cursor differ')
         adapter.assert_groups_closed()
@@ -94,7 +99,7 @@ class FullCheckpointer(P.PeriodicCheckpointer):
         ledgers = ledger_state(self.driver.sinks)
         # The pinned driver increments this counter just AFTER maybe_save returns.
         # Serialize the continuation value without changing the running calculation.
-        interval_save = completed_mbo_records > 0 and not locked and self.sequence >= 0
+        interval_save = interval_save and completed_mbo_records > 0 and not locked and self.sequence >= 0
         if interval_save:
             self.driver.counters.save_points += 1
         try:
@@ -114,6 +119,8 @@ class FullCheckpointer(P.PeriodicCheckpointer):
             driver_identity=self.driver_identity, driver_state=state_pin,
             ledgers=ledgers, completed_mbo_records=completed_mbo_records,
             finalized=locked, parent_checkpoint=self.parent_checkpoint)
+        if self.continuation_binding is not None:
+            descriptor['continuation_binding'] = self.continuation_binding
         checkpoint = super()._write(adapter, completed_mbo_records=completed_mbo_records,
             event_group_open=event_group_open, controller_state=descriptor, locked=locked)
         # Durable readback verifies the adapter chain, controller descriptor and full
@@ -134,14 +141,38 @@ class FullCheckpointer(P.PeriodicCheckpointer):
         return checkpoint
 
     def maybe_save(self, adapter, **kwargs):
+        # One instrument's F_LAST can leave another instrument's group open.
+        # Neither a periodic nor a requested save may serialize that boundary.
+        if kwargs.get('event_group_open') or any(book.event_group for book in adapter.books.values()):
+            return None
         reserve = max(32 << 30, 3 * self.last_state_bytes)
         if shutil.disk_usage(self.checkpoint_dir).free < reserve:
             self._last_saved_at = 0  # Save the next closed group before stopping.
             self.low_space_stop = True
+        requested = (self.save_requested is not None and self.save_requested()
+                     and getattr(self.driver, '_frankie_reconstruction_checkpoint', None) is None)
+        if requested:
+            arguments = dict(kwargs)
+            arguments.setdefault('controller_state', None)
+            arguments.setdefault('event_group_open', False)
+            saved = self._write(adapter, **arguments, locked=False)
+            self.stop_checkpoint = saved
+            return saved
         return super().maybe_save(adapter, **kwargs)
 
+    def save_boundary(self):
+        """Coordinator-owned save; the driver will not increment its counter afterward."""
+        return self._write(self.driver.adapter, completed_mbo_records=self.driver.counters.records_seen,
+                           event_group_open=False, controller_state=None, locked=False,
+                           interval_save=False)
 
-def read_checkpoint(path, identity):
+    def raise_if_requested(self):
+        if self.save_requested is not None and self.save_requested():
+            from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
+            raise TeacherSaved('native ROOT saved at %s' % self.checkpoint_dir)
+
+
+def read_checkpoint(path, identity, *, continuation_binding=None):
     path = safe_path(path)
     latest = P.load_chain(path.parent)[-1]
     if path != P.checkpoint_path(path.parent, latest['sequence']) :
@@ -157,6 +188,8 @@ def read_checkpoint(path, identity):
         descriptor = json.loads(P.controller_state_path(path.parent, latest['sequence']).read_bytes())
         if P.canonical_hash(descriptor) != latest['controller_state_hash']:
             raise ValueError('checkpoint controller state is corrupt')
+        if descriptor.get('continuation_binding') != continuation_binding:
+            raise ValueError('checkpoint opening state or provenance differs')
         current_runtime = runtime_identity()
         predecessor_runtime = dict(current_runtime)
         predecessor_runtime.pop('ledger_storage_sha256')
@@ -168,7 +201,10 @@ def read_checkpoint(path, identity):
         deployed_runtime.pop('finalization_sha256')
         deployed_runtime['serializer_sha256'] = '629b1355de7539e84fb8142343b182dc06cfe5033aaa3f6bf837962317a5cf76'
         deployed_runtime['ledger_storage_sha256'] = 'b66361659495d787329a6097384df10bf4f27fc3056b511ee46f53bb7119c760'
-        accepted_runtime = descriptor['runtime'] in (current_runtime, predecessor_runtime, deployed_runtime)
+        pre_opening_runtime = dict(current_runtime)
+        pre_opening_runtime['serializer_sha256'] = 'e2ff73c9d6e6a76fb6ae1e3d712c337adf72c2845dbc15d41e94dc2d957f3cac'
+        accepted_runtime = descriptor['runtime'] in (current_runtime, predecessor_runtime, deployed_runtime,
+                                                     pre_opening_runtime)
         if (descriptor.get('schema') != SCHEMA or descriptor['driver_identity'] != identity or
                 not accepted_runtime or descriptor['finalized'] != latest['locked']):
             raise ValueError('full checkpoint runtime or producer identity differs')
@@ -176,6 +212,8 @@ def read_checkpoint(path, identity):
             raise ValueError('full checkpoint bytes differ')
     if latest['locked'] and descriptor is None:
         raise ValueError('terminal adapter-only checkpoint lacks finalized calculations')
+    if descriptor is None and continuation_binding is not None:
+        raise ValueError('adapter-only checkpoint does not bind the required opening state')
     return latest, descriptor
 
 
@@ -249,6 +287,11 @@ def consume_recovery(driver, records, total, progress, checkpoint=None, descript
             done += 1
             if target is not None and done == target:
                 confirm_reconstruction()
+            if driver.checkpointer.stop_checkpoint is not None:
+                # _on_group has returned, including its saved-point increment;
+                # the durable state and this cursor now describe the same boundary.
+                from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
+                raise TeacherSaved('native ROOT saved at %s' % driver.checkpointer.checkpoint_dir)
             stage = 'root-native-reconstruct' if target is not None and done < target else 'root-native-records'
             if progress:
                 progress.update(stage, done, total, force=False)
