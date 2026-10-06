@@ -11,20 +11,31 @@
    "free standard GitHub Actions CPU runner (.github/workflows/frankie_granite_meeting.yml, dispatch only)",
    "the existing small AWS CPU box, started only while a meeting runs"
   ],
-  "not_permitted": ["Pod", "standing GPU", "L40S service", "retained vLLM", "131k principal context", "B2 critic", "self-assessment", "separate model-evaluation project", "A/B program"],
+  "not_permitted": [
+   "Pod",
+   "standing GPU",
+   "L40S service",
+   "retained vLLM",
+   "131k principal context",
+   "B2 critic",
+   "self-assessment",
+   "separate model-evaluation project",
+   "A/B program"
+  ],
   "lifecycle": "ephemeral: the server starts when a post-class discussion is ready and stops when the record is written",
   "upgrade_model": "IBM Granite 4.2 8B GGUF Q4_K_M",
   "upgrade_trigger": "a demonstrated facilitator-quality failure in the one authorized real E2E (repeated inability to stay in role, keep attribution, keep open items intact, distinguish seats, track state, route a requested calculation, or produce a stable structured record); 'sounds smarter' is not a trigger",
   "knowledge": "new legally available discussion knowledge is filed into Frankie's brain immediately after the meeting record is complete, never deferred to the school step (brain writer for kind 'meeting' is a named Codex edit; until it lands the record is retained and publication is reported pending)"
  },
  "pins": {
-  "note": "EXPLICIT BLANKS: the setup script and the launcher refuse to fetch or run anything while a pin is null. Greg or the integrating session fills the exact repository, file name and sha256 of the official GGUF and of the llama.cpp release actually used. Nothing here is guessed.",
+  "note": "EXPLICIT BLANKS remain for the model: huggingface.co is denied by this session's network policy, so the official Granite 4.2 3B GGUF repository, file and sha256 could not be read from the source. The setup script and the launcher refuse while any pin is null. Nothing is guessed. The 8B files already staged (ibm-granite/granite-4.2-8b at f8de16cd, safetensors, GRANITE_ARTIFACT_STAGING_20260914.md) are not a GGUF and are the escalation model, not this one.",
   "model_repository": null,
   "model_file": null,
   "model_sha256": null,
-  "llama_cpp_release": null,
-  "llama_cpp_asset": null,
-  "llama_cpp_sha256": null
+  "llama_cpp_release": "b11440",
+  "llama_cpp_asset": "llama-b11440-bin-ubuntu-x64.tar.gz",
+  "llama_cpp_sha256": "5e6dcc9178743c49de36e5e1b77f38453e820647782a738856b1e3fd73b1fb2b",
+  "llama_cpp_pinned_by": "CCode 2026-10-06: github.com/ggml-org/llama.cpp release b11440, asset fetched through the session proxy and hashed in the scratchpad (17,693,628 bytes); newer tags b11443-b11445 carried no Ubuntu x64 asset yet. Not installed anywhere."
  },
  "proposed_runtime_parameters": {
   "note": "The report lists these as not locked. They are PROPOSED starting values for Greg's confirmation; the launcher refuses to call the model until confirmed is true and confirmed_by names who confirmed them.",
@@ -41,6 +52,11 @@
  },
  "record": {
   "schema": "FRANKIE_GRANITE_MEETING_V1",
-  "categories": ["seat_statements (source-backed, from the exchange)", "coordinator_turns (Granite; coordination only, never evidence)", "code_seat_answers (a seat's own retained record; no new calculation)", "open_items and requested_tests (never silently dropped)"]
+  "categories": [
+   "seat_statements (source-backed, from the exchange)",
+   "coordinator_turns (Granite; coordination only, never evidence)",
+   "code_seat_answers (a seat's own retained record; no new calculation)",
+   "open_items and requested_tests (never silently dropped)"
+  ]
  }
 }

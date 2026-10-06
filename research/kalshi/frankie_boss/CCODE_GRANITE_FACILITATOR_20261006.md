@@ -85,8 +85,14 @@ counts (six blank pins, unconfirmed parameters), by design.
 
 ## 5. Decisions still Greg's (documented, not chosen)
 
-1. The six pins: exact official GGUF repository/file/sha256 for Granite 4.2 3B Q4_K_M and the llama.cpp release asset and
-   sha256. The report names the identity, not the artifact; nothing was guessed.
+1. The model pins: exact official GGUF repository/file/sha256 for Granite 4.2 3B Q4_K_M. The report names the identity,
+   not the artifact; nothing was guessed. huggingface.co is denied by this session's network policy (egress 403), so
+   the values could not be read from the source here: either allow that host for the environment (then the Hugging Face
+   tree API gives each file's sha256 without downloading weights) or paste the three values. The llama.cpp pins ARE
+   filled: release b11440, asset llama-b11440-bin-ubuntu-x64.tar.gz, sha256 5e6dcc91...1fb2b, fetched through the
+   session proxy and hashed in the scratchpad (contains llama-server, llama-cli, llama-completion); newer tags b11443
+   to b11445 had no Ubuntu x64 asset at the time. The 8B files already staged (ibm-granite/granite-4.2-8b at f8de16cd,
+   safetensors) are not a GGUF and are the escalation model, not this one.
 2. The proposed runtime parameters (temperature, top_p, output tokens per turn, input cap, context, turns per item,
    meeting seconds, threads): confirm or change, then set `confirmed: true` and `confirmed_by`.
 3. Which host first for the E2E: the GitHub runner path needs the small exchange view presigned out and the record back;
