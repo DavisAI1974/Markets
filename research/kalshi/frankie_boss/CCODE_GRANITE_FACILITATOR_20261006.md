@@ -44,7 +44,8 @@ against a real exchange). No model was downloaded, installed or called; no workf
 
 Status of the route: **built, uncalled, unverified at runtime, unpublished.** The gate refused the model on seven counts
 (six blank pins, unconfirmed parameters) when this was written, by design; after the 2026-10-06 pin fill (decision 1) it
-refuses on one count only, the unconfirmed parameters.
+refused on one count only, the unconfirmed parameters; after Greg's confirmation of the parameters (decision 2) the gate
+returns `[]` on the committed configuration. Nothing has been fetched, installed, dispatched or called.
 
 ## 3. How the role's rules are enforced in code, not prose
 
@@ -99,8 +100,20 @@ refuses on one count only, the unconfirmed parameters.
    to b11445 had no Ubuntu x64 asset at the time. The 8B files already staged (ibm-granite/granite-4.2-8b at f8de16cd,
    safetensors) are not a GGUF and are the escalation model, not this one. The gate now refuses on ONE count only: the
    unconfirmed runtime parameters (decision 2).
-2. The proposed runtime parameters (temperature, top_p, output tokens per turn, input cap, context, turns per item,
-   meeting seconds, threads): confirm or change, then set `confirmed: true` and `confirmed_by`.
+2. The runtime parameters: CONFIRMED by Greg 2026-10-06 (in chat, "They looked fine to me", to CCode's recommended
+   set after a review of the proposal). Set: temperature 0.0 (was 0.2; greedy decoding so a turn, and any facilitator
+   failure in the one E2E, reproduces), top_p 0.9, 400 output tokens per turn, input cap 8,192 per call, context 16,384,
+   6 coordinator turns per item, meeting 3,000 s (was 1,800; fits the workflow's 60-minute timeout with the pinned
+   fetches; on 2 cores a worst-case 6-turn item is about 10 minutes, so about 5 such items are reached and the rest are
+   listed open), threads null = the host's online CPU count at launch (was a fixed 8, which would oversubscribe a GitHub
+   standard runner's 2 cores for a private repository; an integer is clamped to the host count; the value used is
+   written to the record's `runtime.effective`). Two code edits in CCode's module came with the confirmation: the
+   input cap was declared but enforced nowhere, so each call's input is now counted with the server's own `/tokenize`
+   and an over-cap item is left open by code with the count (never truncated by the server's context shift, which
+   would drop seat material silently); and the gate refuses a confirmed set whose cap plus output tokens do not fit the
+   context. Structural exercise with a stub server: over-cap at round 1 makes no call and lists the item open with the
+   count; an under-cap LEAVE_OPEN runs as before; the gate still refuses an unconfirmed set and now refuses a cap that
+   does not fit. The gate on the committed configuration returns `[]`. All values are unmeasured until the E2E.
 3. Which host first for the E2E: the GitHub runner path needs the small exchange view presigned out and the record back;
    the small AWS CPU box path needs the box started for the meeting and the setup script run there (an install, so a go).
 4. The `json_schema` response format and `/v1/chat/completions` are llama.cpp server features; whether the pinned release

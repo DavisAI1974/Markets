@@ -102,6 +102,11 @@ def gate(config, binary=None, model=None):
     params = config.get('proposed_runtime_parameters') or {}
     if not params.get('confirmed') or not params.get('confirmed_by'):
         reasons.append('the runtime parameters are proposed, not confirmed (confirmed/confirmed_by)')
+    else:
+        cap, ctx, out = params.get('input_token_cap_per_call'), params.get('context_size'), params.get('max_output_tokens_per_turn')
+        if not all(isinstance(v, int) and v > 0 for v in (cap, ctx, out)) or cap + out > ctx:
+            reasons.append('input_token_cap_per_call + max_output_tokens_per_turn must fit inside context_size '
+                           '(%r + %r vs %r): otherwise the server would shift context and drop seat material' % (cap, out, ctx))
     if binary is not None:
         if not Path(binary).is_file():
             reasons.append('llama-server binary is not at %s' % binary)
@@ -262,19 +267,28 @@ def seat_answer(seat, item):
 
 
 # ------------------------------------------------------------------------------------------ the model transport
+def resolve_threads(params):
+    """threads null = the host's online CPU count at launch; an integer is clamped to it (never oversubscribe a 2-core
+    runner with a fixed 8). The value used is recorded, never assumed."""
+    host = os.cpu_count() or 1
+    wanted = params.get('threads')
+    return host if wanted in (None, '') else max(1, min(int(wanted), host)), host
+
+
 class LlamaServer:
     """An ephemeral llama.cpp server: started for the meeting, stopped after it. Source-built, never run here."""
 
     def __init__(self, binary, model, params, log=print):
         self.binary, self.model, self.params, self.log = str(binary), str(model), params, log
         self.process, self.port, self.calls, self.tokens = None, None, 0, dict(prompt=0, completion=0)
+        self.threads, self.host_cpus = resolve_threads(params)
 
     def start(self, wait_seconds=600):
         with socket.socket() as s:
             s.bind(('127.0.0.1', 0))
             self.port = s.getsockname()[1]
         command = [self.binary, '-m', self.model, '--host', '127.0.0.1', '--port', str(self.port),
-                   '--ctx-size', str(int(self.params['context_size'])), '--threads', str(int(self.params['threads'])),
+                   '--ctx-size', str(int(self.params['context_size'])), '--threads', str(self.threads),
                    '--parallel', '1', '--log-disable']
         self.process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         deadline = time.monotonic() + wait_seconds
@@ -290,6 +304,15 @@ class LlamaServer:
             time.sleep(2)
         self.stop()
         raise RuntimeError('llama-server did not report healthy within %d s' % wait_seconds)
+
+    def count_tokens(self, messages):
+        """The input's token count by the server's own tokenizer (/tokenize on the message contents; the chat template
+        adds a few dozen tokens on top, so this is a close lower bound, used against the per-call cap)."""
+        content = '\n'.join(m['content'] for m in messages)
+        request = urllib.request.Request('http://127.0.0.1:%d/tokenize' % self.port, data=json.dumps(dict(content=content)).encode(),
+                                         method='POST', headers={'Content-Type': 'application/json'})
+        with urllib.request.urlopen(request, timeout=600) as response:
+            return len(json.loads(response.read())['tokens'])
 
     def chat(self, messages, schema):
         body = dict(messages=messages, temperature=self.params['temperature'], top_p=self.params['top_p'],
@@ -341,7 +364,12 @@ def discuss_item(server, item, system, params, log):
                                                                                         'open_items')},
                                                             instruction='Begin with this item. One action per reply.'),
                                                        sort_keys=True))]
+    cap, over_cap = int(params['input_token_cap_per_call']), None
     for round_number in range(1, int(params['max_coordinator_turns_per_item']) + 1):
+        counted = server.count_tokens(transcript)
+        if counted > cap:
+            over_cap = dict(round=round_number, input_tokens=counted, cap=cap)
+            break
         raw = server.chat(transcript, ACTION_SCHEMA)
         try:
             value = json.loads(raw)
@@ -376,7 +404,13 @@ def discuss_item(server, item, system, params, log):
             outcome = action['action']
             break
     open_items = list(item['open_items'])
-    if outcome is None:
+    if over_cap is not None:
+        outcome = 'LEFT_OPEN_BY_CODE'
+        open_items.append(dict(kind='input_cap', seat=None, binds_to=None,
+                               text='round %d input of %d tokens exceeds the per-call cap of %d; nothing was truncated and '
+                                    'no call was made for it; the item stays open by code' % (
+                                        over_cap['round'], over_cap['input_tokens'], over_cap['cap'])))
+    elif outcome is None:
         outcome = 'LEFT_OPEN_BY_CODE'
         open_items.append(dict(kind='turn_budget', seat=None, binds_to=None,
                                text='the coordinator turn budget of %d was spent without LEAVE_OPEN/RESOLVED; the item stays '
@@ -442,7 +476,8 @@ def meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=No
     finally:
         server.stop()
     record = dict(base, status='complete', items=items, not_discussed=not_discussed,
-                  runtime=dict(binary=witness_file(binary), model=witness_file(model), parameters=params),
+                  runtime=dict(binary=witness_file(binary), model=witness_file(model), parameters=params,
+                               effective=dict(threads=server.threads, host_cpus=server.host_cpus)),
                   model_calls=server.calls, tokens=server.tokens, seconds=round(time.time() - started, 1),
                   counts=dict(items=len(items), coordinator_turns=sum(len(i['coordinator_turns']) for i in items),
                               code_seat_answers=sum(len(i['code_seat_answers']) for i in items),

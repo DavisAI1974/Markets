@@ -39,17 +39,18 @@
   "llama_cpp_pinned_by": "CCode 2026-10-06: github.com/ggml-org/llama.cpp release b11440, asset fetched through the session proxy and hashed in the scratchpad (17,693,628 bytes); newer tags b11443-b11445 carried no Ubuntu x64 asset yet. Not installed anywhere."
  },
  "proposed_runtime_parameters": {
-  "note": "The report lists these as not locked. They are PROPOSED starting values for Greg's confirmation; the launcher refuses to call the model until confirmed is true and confirmed_by names who confirmed them.",
-  "confirmed": false,
-  "confirmed_by": null,
-  "temperature": 0.2,
+  "note": "CONFIRMED by Greg 2026-10-06 (in chat, 'They looked fine to me', to CCode's recommended set after the proposed values were reviewed). Changes from the proposal: temperature 0.2 -> 0.0 (greedy decoding, so a turn and any facilitator failure in the one E2E reproduce); max_meeting_seconds 1800 -> 3000 (fits the workflow's 60-minute timeout with the pinned fetches; on 2 cores a worst-case 6-turn item is about 10 minutes, so about 5 such items are reached, the rest listed open); threads 8 -> null = the host's online CPU count read at launch (a GitHub standard runner for a private repository has 2; a fixed 8 would oversubscribe it), recorded in the meeting record; input_token_cap_per_call is now ENFORCED in code (each call's input is counted with the server's /tokenize; an over-cap item is left open by code with the count, never truncated by the server's context shift). Unchanged: top_p (moot at temperature 0), 400 output tokens per turn, 16384 context, 6 coordinator turns per item. All unmeasured until the one authorized E2E.",
+  "confirmed": true,
+  "confirmed_by": "Greg Davis, 2026-10-06, in chat to CCode",
+  "temperature": 0.0,
   "top_p": 0.9,
   "max_output_tokens_per_turn": 400,
   "input_token_cap_per_call": 8192,
   "context_size": 16384,
   "max_coordinator_turns_per_item": 6,
-  "max_meeting_seconds": 1800,
-  "threads": 8
+  "max_meeting_seconds": 3000,
+  "threads": null,
+  "threads_rule": "null = the host's online CPU count at launch (os.cpu_count()); an integer is clamped to that count; the value used is written to the record's runtime.effective"
  },
  "record": {
   "schema": "FRANKIE_GRANITE_MEETING_V1",
