@@ -18,6 +18,7 @@
 
 ## Evidence and successor work
 
+- Greg's latest market-research rule (2026-10-06): market signals come from underlying market conditions. IDs, dates and days of week can be search conditions/cells that group those signals for forecasting; they are not numerical signals or targets themselves. Keep dates/weekdays associated with the original data. Predictions must be attributed to the underlying conditions, not to their date/day/ID labels. Exclude trade costs, commissions, fee/slippage assumptions, P&L objectives and non-market bookkeeping from signal calculations. Preserve actual market prices/spreads, flow, depth, FIFO rank/age, elapsed market durations and geometry. Keep identity/missingness bindings without treating their codes as measurements. Historical cost-tuned results must be identified and reworked, not merely stripped of final fee columns or silently admitted as cost-free evidence.
 - Preserve Frankie's inputs, calculations, planes, adapters, replay and Memory A, plus the BOSS's original targets, masks, controls, representation and training role.
 - Every applicable retained record/field and knowledge source must reach actual computation. Receipts, lists and storage alone are insufficient. Exclude private trade-decision logic from teacher evidence.
 - No silent dropping, arbitrary truncation, output pooling or averaging across runs. Preserve raw causal availability and answer walls; do not impose a market-date gate on completed knowledge.

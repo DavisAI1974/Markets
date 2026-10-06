@@ -14,8 +14,9 @@ on the axis AS OF the moment it was knowable, never later information:
   per-second  (legacy_native_signed_flow, legacy_per_second_roll20)  buy, sell and roll20 of second s, known at the
               start of second s+1.
   external    (ingest/day-external.json, FRANKIE_DAY_EXTERNAL_V1)  Frankie's 13 historical points (COT, MOS per cycle,
-              EIA-930 hourly, observed weather, storage, the calendar count, the futures curve per settlement and per
+              EIA-930 hourly, observed weather, storage, the futures curve per settlement and per
               trade), each known from its own publication stamp, read through the file's as-of reader at the halt.
+              Calendar counts, dates/weekdays and entity IDs are categorical search conditions, not x/y signals.
 Receive clocks can run backwards, so the axis time is the running maximum of the frames' ts_recv_ns (order is the
 spool's order, which is the ROOT's ordinal order). Alignment is a DuckDB ASOF join (value known_at <= axis time).
 Every series passes odcore.leakage.assert_no_leakage in its own row order before it is searched: its value as of a
@@ -33,8 +34,11 @@ transform (sign_of_step, run_length, magnitude_class, level_crossing, accelerati
 Pairs: x under transform T against y under EVERY transform (all T x T' combinations; y_transforms). The statistic and the
 chance check are the same for every pair of transforms; each row names x_transform and y_transform. Steps a transform
 could not classify (an unknown value) are counted per series and transform, never filled.
-Cells: whole-day, plus every text column of every source placed on the axis (the spools' text fields, the last event's
-action and side at the close, the day file's text columns per entity); each distinct value is a cell.
+Cells: whole-day, market text categories and ID/calendar context placed on the axis; each distinct value is a cell.
+Bookkeeping/availability/encoding metadata and execution costs/profit are excluded from series and cells, with exact
+channel dispositions. Dates/weekdays/IDs group actual market signals for forecasting; the underlying market conditions
+supply the prediction, not the grouping labels. The original source dates and timestamps remain associated with every
+record; availability clocks and missingness masks still govern placement. Context is not an independent observation.
 Step #3 (2026-10-06): the per-event quantity fields of the INPUT spool (events.last.<field>, the last event's value at
 the group close) and every column of every day-file table per native entity (external.<table>.<column>.entity=...) are
 series too; identities and clocks are listed. Equal values never make different entity columns aliases.
@@ -77,6 +81,7 @@ journal route is available. Spools are hashed as decoded; JSON and the optional 
 bytes. Prepared arrays are saved only after those checks finish and remain bound to the manifest and this source.
 """
 import argparse
+from datetime import date
 import hashlib
 import json
 import os
@@ -90,10 +95,74 @@ ROOT = Path('/opt/frankie-box/work/experiment-search')
 CELL_NAMES = ('session_phase', 'continuity_segment', 'source_day', 'source_role')
 F_LAST = 128                       # the exchange record flag that closes a group (the same close the frames spool marks)
 ROW_PROVENANCE_SCHEMA = 'FRANKIE_ROOT_ROW_PROVENANCE_V1'
-# Identity/metadata and absolute clocks are listed. ts_in_delta_ns is an interval, not an absolute clock;
-# it remains a quantity in the group-close projection. Identity relationships need their own lawful consumer.
+# Identity/metadata and absolute clocks are listed; latency provenance is not a market quantity.
+# Identity relationships continue to support their existing lawful consumers.
 EVENT_IDENTITY_FIELDS = ('order_id', 'sequence', 'channel_id', 'instrument_id', 'publisher_id', 'ts_recv_ns', 'ts_event_ns',
                          'ts_recv', 'ts_event', 'rtype', 'hd')
+# Greg, 2026-10-06: market conditions only. Identity/clock/availability metadata still binds and places evidence;
+# it is not a market quantity. IDs/dates can group market signals as search conditions. These are explicit source
+# roles, not substring guesses about price, spread, flow, age, duration, market counts or net market positioning.
+NON_MARKET_IDENTITIES = frozenset(EVENT_IDENTITY_FIELDS) | frozenset((
+    'cursor', 'input_cursor', 'input_index', 'input_record_indices', 'input_ordinal', 'ordinal', 'group_ordinal',
+    'group_index', 'source_member_index', 'legacy_row_ordinal', 'session_id', 'request_id', 'cycle_index', 'cycle_count',
+    'order_ids', 'fill_order_ids', 'unresolved_order_ids', 'matched_order_ids', 'member_id', 'run_id',
+    'source_day', 'source_role', 'schema', 'hash', 'sha256', 'digest', 'flags', 'is_last', 'is_snapshot',
+    'byte_length', 'bytes_integer',
+    'ts_in_delta_ns', 'ts_in_delta', 'independent_clocks',
+))
+NON_MARKET_CALENDAR = frozenset((
+    'weekday', 'day_of_week', 'dayofweek', 'day_of_month', 'day_of_year', 'calendar_day', 'trading_day',
+    'session_phase', 'continuity_segment', 'sessions_since_prompt_expiry', 'last_prompt_expiry',
+    'date', 'day', 'year', 'month', 'week', 'day_name', 'is_weekend', 'holiday', 'is_holiday', 'expiry_date',
+))
+NON_MARKET_EXECUTION = frozenset((
+    'fee', 'fees', 'fee_rt', 'fee_maker', 'fee_rt_bps', 'fee_per_quantity', 'maker_fee', 'taker_fee',
+    'commission', 'commissions', 'slippage', 'max_slippage', 'transaction_cost', 'transaction_costs',
+    'trading_cost', 'trading_costs', 'execution_cost', 'execution_costs', 'net_oos', 'net_oos_maker',
+    'pnl', 'net_pnl', 'gross_pnl', 'realized_pnl', 'unrealized_pnl',
+))
+SEARCH_CONTEXT_IDENTITIES = frozenset((
+    'order_id', 'order_ids', 'fill_order_ids', 'unresolved_order_ids', 'matched_order_ids',
+    'instrument_id', 'publisher_id', 'channel_id', 'member_id', 'session_id', 'source_day', 'source_role',
+    'raw_symbol', 'symbol', 'contract', 'trading_weekday',
+))
+
+
+def non_market_reason(name):
+    """Known excluded role, 'context_only' grouping role, or None for a market channel; after joins/masks."""
+    # External entity values may contain dots. The column's role precedes .entity=, not within its identity label.
+    field_path = name.split('.entity=', 1)[0] if name.startswith('external.') else name
+    parts = re.sub(r'\[[^\]]*\]', '', field_path).split('.')
+    fields = set(parts)
+    if fields & NON_MARKET_EXECUTION:
+        return 'execution costs/profit accounting are not market conditions'
+    if fields & {'provenance', 'frankie_emission'}:
+        return 'source/emission provenance binds evidence; it is not a market condition'
+    if name.startswith('journal.group.') and (fields & {'receipt', 'boundary'}
+            or re.fullmatch(r'journal\.group\.entries\[\d+\]\.payload\.(record_count|group_count)', name)):
+        return 'journal receipts, source boundaries and adapter progress counters are bookkeeping'
+    if (fields & (NON_MARKET_CALENDAR | SEARCH_CONTEXT_IDENTITIES) or name.startswith('external.calendar.')
+            or any(p.endswith('_order_ids') for p in parts)):
+        return 'context_only'  # dates/weekdays/IDs group signals; never transformed or used as numerical x/y
+    if fields & NON_MARKET_IDENTITIES or any(p.endswith(('_hash', '_sha256')) for p in parts):
+        return 'record identity, source bookkeeping or encoded bytes are not market quantities'
+    if any(p in ('as_of', 'known_at', 'published_ns', 'event_time', 'ingest_time', 'as_of_ts_recv_ns', 'emitted_at_recv_ns',
+                 'first_lawful_availability_ns') or p.startswith(('ts_recv', 'ts_event')) for p in parts):
+        return 'absolute availability/event clocks place evidence; elapsed market durations remain quantities'
+    if 'integrity' in fields or 'book_integrity' in fields:
+        return 'source/book integrity diagnostics govern usability, not market conditions'
+    if name.startswith('journal.group.') and parts[-1] == 'kind':
+        return 'journal envelope type is source bookkeeping'
+    if name.startswith('dipole.'):
+        if parts[-1] in ('reason', 'raw_reason', 'unit', 'name', 'status'):
+            return 'Dipole component descriptions and availability diagnostics are not market conditions'
+        if parts[-1] == 'state' and 'dstate' not in fields:
+            return 'Dipole PRESENT/MISSING state is an availability mask, not a market condition'
+        if 'dstate' in fields and parts[-1] in ('g_E', 'g_E_prev'):
+            return 'DState absolute group references support geometry; age/duration remain market quantities'
+    return None
+
+
 # Step #3 (2026-10-06, CCode): what is and is not searched, kept truthful per plane. The map behind it:
 # research/kalshi/frankie_boss/CCODE_STEP3_SOURCE_COVERAGE_20261006.md.
 NOT_SEARCHED = (
@@ -117,9 +186,12 @@ NOT_SEARCHED = (
      'dipole.group.rows[position].dstate.*, including exact rational numerator/denominator leaves. '
      'The source report states actual retained/searched coverage; older teacher sources are not backfilled. '
      'This is the same teacher evidence, not another observation or native model supervision'),
-    ('structure identity lists', 'structures.order_ids[i] and structures.fill_disposition.*_order_ids[i] are order '
-     'identities flattened by position; they are searched as numeric series like every other leaf (listed here so the '
-     'count of searched series is read correctly; an identity has no steps of its own)'),
+    ('non-market fields', 'bookkeeping/hash/clock/availability/encoding and execution-cost/profit fields are removed '
+     'from series AND cells after lawful binding/placement/mask use. Dates/weekdays/entity IDs remain categorical '
+     'search conditions grouping market signals, never numerical x/y signals themselves. Each excluded or moved '
+     'channel is listed in notes; original evidence is unchanged. Market price/spread, FIFO rank/age, '
+     'flow/depth, derived geometry and market positioning remain quantities; action/side and structure labels remain '
+     'market categories. Context can condition the search without becoming a measured market quantity'),
     ('price/structure row provenance', 'provenance.* is retained identity metadata, not a numerical series or cell. '
      'structures.group.* requires the selected derive receipt schema and exact ROOT closing INPUT, instrument and '
      'full member list. Every unsupported original spool ordinal has a disposition. Price V1 original INPUT identity '
@@ -179,8 +251,11 @@ def columns(rows, time_key):
             for i, v in enumerate(value):
                 yield from flatten(v, '%s[%d]' % (prefix, i))
         elif isinstance(value, (bytes, bytearray)):
-            yield prefix + '.byte_length', len(value)
-            yield prefix + '.bytes_integer', int.from_bytes(value, 'big')
+            if prefix.rsplit('.', 1)[-1] in ('action', 'side'):
+                yield prefix, bytes(value).decode('ascii')  # market category, not its arbitrary byte encoding
+            else:
+                yield prefix + '.byte_length', len(value)
+                yield prefix + '.bytes_integer', int.from_bytes(value, 'big')
         elif isinstance(value, (dict, list, tuple)):
             yield prefix, json.dumps(value, sort_keys=True)
         elif value is None or isinstance(value, (bool, int, float, str)):
@@ -363,7 +438,8 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
     if data_manifest_sha256 is not None and manifest_sha256 != data_manifest_sha256:
         raise ValueError('selected export manifest differs from the search continuation')
     exported = {}
-    for item in json.loads(manifest_raw)['files']:
+    export_manifest = json.loads(manifest_raw)
+    for item in export_manifest['files']:
         stage, relative = Path(item['stage']), Path(item['path'])
         if (stage.is_absolute() or len(stage.parts) != 1 or '..' in stage.parts
                 or relative.is_absolute() or '..' in relative.parts):
@@ -762,6 +838,48 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
     else:
         notes.append(dict(source='external', missing=str(external),
                           reason="no day file of Frankie's 13 points beside the ingest (frankie_box_day_external.sh)"))
+    # The declared trading date is the source's session label, not an invented UTC date from a receive timestamp.
+    # Date/weekday condition the same market observations; they are never another signal or independent evidence.
+    trading_date = date.fromisoformat(export_manifest['day'])
+    text_cols['context.trading_day'] = [export_manifest['day']] * n
+    text_cols['context.trading_weekday'] = [('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+                                           'Sunday')[trading_date.weekday()]] * n
+    sources.append(dict(source='context', path=str(day_dir / 'MANIFEST.json'), sha256=manifest_sha256,
+        trading_day=export_manifest['day'], date_basis='export-declared trading/session date, not per-record UTC date',
+        rule='dates and weekdays are categorical search conditions on the same market signals, not x/y quantities; '
+             'each run is still one day and these cells do not provide independent evidence'))
+    # Readers have finished identity/clock/mask use. Remove non-market signals before transforms/pair work;
+    # keep lawful context as cells. JSON scalar labels distinguish an integer ID from a similarly spelled string.
+    excluded_channels = {}
+    context_channels = []
+    for channel_kind, mapping in (('series', series), ('cells', text_cols)):
+        for name in list(mapping):
+            reason = non_market_reason(name)
+            if reason == 'context_only':
+                if channel_kind == 'series':
+                    old = text_cols.get(name, [None] * len(mapping[name]))
+                    merged = []
+                    for number, label in zip(mapping[name], old):
+                        if number is not None and label is not None:
+                            raise ValueError('numeric and text context channels overlap: ' + name)
+                        value = number if number is not None else label
+                        merged.append(None if value is None else json.dumps(value, ensure_ascii=False, allow_nan=False))
+                    text_cols[name] = merged
+                    context_channels.append(name)
+                    del mapping[name]
+                continue
+            if reason is not None:
+                source = ('journal.group' if name.startswith('journal.group.') else
+                          '.'.join(name.split('.')[:2]) if name.startswith('native.') else name.split('.')[0])
+                item = excluded_channels.setdefault((source, reason), dict(source=source, excluded=reason,
+                    series=[], cells=[], disposition='non_market_context_only',
+                    retained='original pinned source; identities/clocks still support exact joins and causal masks'))
+                item[channel_kind].append(name)
+                del mapping[name]
+    notes.extend(excluded_channels[key] for key in sorted(excluded_channels))
+    notes.append(dict(source='context', moved_from_series_to_cells=sorted(context_channels),
+        reason='IDs/calendar labels are search conditions grouping actual market signals; no numerical transforms/targets',
+        numeric_label_encoding='JSON scalar, preserving original scalar type; existing text-only labels unchanged'))
     cells, unused = {}, []
     for k, v in text_cols.items():
         cells[k] = v

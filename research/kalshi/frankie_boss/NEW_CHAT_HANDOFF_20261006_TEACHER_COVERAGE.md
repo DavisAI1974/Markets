@@ -1,5 +1,42 @@
 # Detailed continuation handoff: BOTH teachers' Dipole coverage — 2026-10-06
 
+## Latest clarification — market conditions vs context (Greg, 2026-10-06)
+
+Greg excludes trading costs and non-market bookkeeping from research/Dipole signals.
+His clarified distinction: IDs, dates and weekdays CAN be search conditions/cells grouping
+actual market signals to obtain forecasts. They are not numerical signals/targets.
+Dates/timestamps/weekdays stay associated with the records. Predictions come from the
+underlying market conditions; their day/date/ID labels group those conditions, not cause them.
+
+Reserved search removes bookkeeping hashes/cursors, schema/encoded bytes, absolute clocks,
+feed latency provenance, availability/integrity diagnostics and execution-cost/P&L fields
+from series/cells before transforms/pair jobs. Numeric IDs and calendar/session labels
+(including the external calendar count) move into categorical cells; existing text context
+remains searchable. Explicit date/weekday cells use the export-declared trading date, not
+a guessed per-record UTC date. These cells group the same observations and supply no new
+independent evidence. Every excluded/moved channel is named in the existing manifest
+notes/source exclusions. Joins, chronology and masks happen first; original pinned records and all
+date/weekday associations remain intact. Raw action/side bytes are decoded as market
+categories instead of being searched as their arbitrary integer encodings.
+Market price/spread, flow/depth, FIFO rank/age, market durations, geometry, meaningful
+market family classifications and net market positioning remain applicable evidence.
+This is a source-role correction, not permission to drop raw data or all similarly named fields.
+
+The historical harness is concretely contaminated before its final report: the exact
+pinned `_info_dipole_harness.py` selects parameters by fee-adjusted net profit.
+Removing its fee columns alone does not remove that dependency. CCode's NEW TOP
+assignment B7/C2 in `CCODE_NEXT_SOURCE_TASKS_20261006.md` covers historical capability/
+record admission and the actual teacher/native/external consumer paths. Keep old sources
+intact as identified audit context; their cost-based conclusions do not decide market
+research. Cost-free selection/turn definitions not already settled remain explicit choices,
+not invented replacements. D1 price provenance and the earlier review corrections remain open.
+
+Source/interface review, AST syntax without project imports and whitespace only.
+SOURCE-BUILT / RUNTIME-UNVERIFIED. No tests, installs, research/model/data runs or AWS
+actions; nothing started. Steps 2–4 incomplete. STOP before #5; draft/pins untouched.
+Fetched integration remained `b06e0a1888aaa1566fe2856dd2f806c0f506adb4` and CCode
+`fea2e165a3cf721760db0ac2932cf2c4ab0be859` at the start of this slice; fetch latest again.
+
 ## Latest integration review — CCode A–D and the provenance handshake (2026-10-06 late)
 
 CCode return `fea2e165a3cf721760db0ac2932cf2c4ab0be859` is retained atop integration

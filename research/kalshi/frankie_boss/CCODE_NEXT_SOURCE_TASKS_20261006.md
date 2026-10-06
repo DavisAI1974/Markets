@@ -1,5 +1,81 @@
 # CCode assignment — next pre-#5 source tasks
 
+## Greg's latest priority — market conditions only; temporal context retained (2026-10-06)
+
+This clarification supersedes older instructions to use every scalar as a feature:
+trade costs and non-market bookkeeping must not become market signals. Greg clarified:
+IDs, dates and day-of-week CAN be search conditions/cells grouping actual market signals
+to get forecasts. They are not numerical signals/targets themselves. The underlying
+market conditions produce the prediction; date/day/ID labels group those conditions.
+Keep dates, timestamps and day-of-week associated with the data and preserve causal
+alignment. Do not turn identifiers/calendar numbers/availability codes into measured
+market quantities, or use execution costs/profit as tuning objectives or scientific verdicts.
+Retain market prices and bid/ask spread, signed flow, depth, FIFO rank/age, elapsed market
+durations, market-positioning quantities and derived market geometry. Cost exclusion is
+not a reason to remove a real market spread, or COT net positioning.
+
+Codex's reserved search removes known bookkeeping/cost channels from series/cells, and
+moves numeric IDs/calendar labels into categorical search cells after exact identity
+placement/masks and before transforms/pair calculations. Date/weekday context cells use
+the export-declared trading date, not an invented UTC day. Every excluded or moved
+channel is named in manifest notes and source exclusions. Original pinned
+records, timestamps, dates, hashes and weekday context remain untouched. Action/side bytes
+become exact categorical values rather than arbitrary byte-number signals. Other encoded
+bytes are context, not quantities. These changes do not settle every native/model consumer.
+
+### B7 — remove cost contamination from the historical research path (priority alongside D1)
+
+Confirmed source: `_info_dipole_harness.py`, SHA256
+`c0adfc40dcc07e2e296daa26b5da9c4e20c7d00a6b34445df5ca1687e3222dda`
+(the exact pinned historical driver, not a guessed successor).
+`run_calls` subtracts the fee for each leg. `tune_and_score` selects its
+`best` parameters by that fee-adjusted in-sample net, then computes OOS counts/timing
+at those selected parameters. `SWING_THETA` is described as a tradable fee-floor
+choice; `net_oos` and `net_oos_maker` enter the new `crypto_harness`
+binding's `per_venue` comparison. Simply excluding those two output fields or
+setting the fee to zero leaves a trading-profit selection objective and does not
+establish independent market-condition research.
+
+CCode owns historical_claims/reproduction and teacher consumers: remove this driver's
+cost/profit-selected outputs from admissible market/Dipole research, including indirect
+use of its selected params/counts as an independent market verdict. Keep the original
+pinned source/results intact as explicitly identified historical context so we can explain
+and rework the prior conclusions. No historical rewrite/rebuild, no rerun under the hold.
+Revise the declared capability/record admission and both teachers' actual evidence use
+accordingly. A byte-matched old cost-based run is not an admissible market-condition
+reproduction. Already-existing rejected conclusions remain open for reproduction/rework;
+their execution economics cannot be used to dismiss the market relation.
+
+Trace linked drivers and their selection/labeling dependencies, not just the final fee
+columns. Build only a source-traced market-only route using settled calculations. If a
+cost-free research target/threshold/selection rule needs an undecided mathematical choice,
+name that exact choice and leave it pending. Do not choose a gross-profit objective,
+invent a turn/threshold, or silently relabel a modified calculation as the historical one.
+The original whole-artifact evidence may be retained for audit without entering calculations.
+
+### C2 — carry the same distinction through owned teacher/native/external consumers
+
+Extend your current consumer review to non-market inputs: reference hashes, IDs, source
+cursors, schema/receipt/transport metadata, availability/integrity codes, calendar/session
+labels, trade fees/commissions/slippage assumptions and account/profit objectives.
+Preserve their binding, mask and chronological functions. IDs/date/day CAN group actual
+market signals as search conditions for forecasting; they cannot become signals/targets
+themselves. Make that distinction in actual arithmetic and BOTH teachers' explanations,
+not only in report prose. Dates/weekdays remain attached and searchable as context.
+Attribute a forecast to the underlying market conditions identified within the group;
+association with a weekday or ID does not make the label its scientific explanation.
+Keep market-derived family classifications, actual price spreads and event durations;
+never exclude a market value merely because a field contains `net`, `spread`,
+`state`, `count` or `cost` in an unrelated domain such as energy production.
+The external calendar source `calendar.sessions_since_prompt_expiry` is explicitly
+calendar context; the reserved search moves numeric aliases into categorical cells while
+retaining its original source. Trace the equivalent classroom/teacher route in your owned modules.
+Return exact remaining classifications/interfaces; do not create a new validator framework.
+
+All earlier A4/B1–B6/C1/D1 corrections and all execution holds below still apply.
+No tests or runtime actions. Preserve the original claims artifact and Granite pins;
+STOP before #5. Codex still owns experiment_search.py, experiment_dipole.py and shared handoffs.
+
 ## Codex integration review of A–D — 2026-10-06 late (supersedes closure claims below)
 
 Reviewed CCode tip `fea2e165a3cf721760db0ac2932cf2c4ab0be859` on integration base
