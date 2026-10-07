@@ -57,7 +57,25 @@ LOG="/opt/frankie-box/logs/cpu-controller-$RUN.log"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 set -- --run "$RUN" --code-root "$CODE_ROOT" --host main --state-dir "$STATE" --boxes "$BOXES" --slots "$SLOTS" \
   --data-workers "${DATA_WORKERS:-15}" --poll-seconds "${POLL_SECONDS:-60}" --stop-wait-minutes "${STOP_WAIT_MINUTES:-30}"
-alive_pids() { pgrep -f -- "controller.py --action loop --run $RUN " 2>/dev/null; pgrep -f -- "controller.py --action resume --run $RUN " 2>/dev/null; }
+# A live controller holds $STATE/controller.lock for its lifetime (fcntl); its pid is in controller.json. Liveness is the
+# lock, never a command-line pattern.
+alive_pids() {
+  [ -e "$STATE/controller.lock" ] || return 0
+  "$PY" - "$STATE" <<'PYEOF' 2>/dev/null
+import fcntl, json, sys
+from pathlib import Path
+state = Path(sys.argv[1])
+with open(state / 'controller.lock', 'a') as handle:
+    try:
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(handle, fcntl.LOCK_UN)
+    except OSError:
+        try:
+            print(json.loads((state / 'controller.json').read_bytes()).get('pid') or 'held')
+        except (OSError, ValueError):
+            print('held')
+PYEOF
+}
 case "$ACTION" in
   preflight)
     exec "$PY" -B "$CONTROLLER" --action preflight --commit "$MARKETS_SHA" "$@" ;;
@@ -111,23 +129,36 @@ case "$ACTION" in
     PIDS="$(alive_pids | tr '\n' ' ')"
     [ -z "$PIDS" ] || { echo "a controller of $RUN is alive on this host (pids $PIDS); not started twice" >&2; exit 3; }
     mkdir -p "$STATE" /opt/frankie-box/logs
+    STAMP="$(date +%s)"
     if [ -e "$STATE/stop-request.json" ]; then
       if [ -e "$STATE/stop-ack.json" ]; then
-        STAMP="$(date +%s)"
         mv "$STATE/stop-request.json" "$STATE/stop-request-$STAMP.json"; mv "$STATE/stop-ack.json" "$STATE/stop-ack-$STAMP.json"
         echo "the acknowledged stop of a previous start archived as stop-request-$STAMP.json / stop-ack-$STAMP.json"
       else
         echo "an unacknowledged stop request stands ($STATE/stop-request.json): its controller died before acknowledging; read it, then ACTION=clear_stop; nothing started" >&2; exit 3
       fi
+    elif [ -e "$STATE/stop-ack.json" ]; then
+      mv "$STATE/stop-ack.json" "$STATE/stop-ack-$STAMP.json"
+      echo "an acknowledgment without its request (orphan) archived as stop-ack-$STAMP.json"
     fi
+    [ ! -e "$STATE/resume-request.json" ] || { echo "an unanswered resume request stands ($STATE/resume-request.json): read it; move it aside by hand (nothing here deletes it); nothing started" >&2; exit 3; }
     "$PY" -B "$CONTROLLER" --action preflight --commit "$MARKETS_SHA" "$@" || { echo "preflight refused activation (above); nothing started" >&2; exit 2; }
-    UNIT="frankie-cpu-controller-$RUN-$(date +%s)"
+    UNIT="frankie-cpu-controller-$RUN-$STAMP"
+    MARK="$STATE/.start-$STAMP"; : > "$MARK"
     systemd-run --unit "$UNIT" --collect -p StandardOutput=append:"$LOG" -p StandardError=append:"$LOG" \
       -E HOME="$HOME" -E PYTHONDONTWRITEBYTECODE=1 -E PYTHONNOUSERSITE=1 -E PYTHONPATH="$CODE_ROOT" -E CPU_CONTROLLER_UNIT="$UNIT" \
       "$PY" -B "$CONTROLLER" --action loop --commit "$MARKETS_SHA" --budget-minutes 0 "$@"
     echo "controller of $RUN started as unit $UNIT, log $LOG, state $STATE"
     sleep 10
-    systemctl is-active "$UNIT" || { echo "the unit is not active 10 s after start; log tail:"; tail -n 40 "$LOG"; exit 3; }
+    if ! systemctl is-active "$UNIT"; then
+      ENDED="$(find "$STATE" -maxdepth 1 -name 'outcome-*.json' -newer "$MARK" | head -n 1)"
+      rm -f "$MARK"
+      if [ -n "$ENDED" ]; then
+        echo "the controller ended on its own within 10 s; its outcome $ENDED:"; cat "$ENDED"; tail -n 20 "$LOG"; exit 0
+      fi
+      echo "the unit is not active 10 s after start and wrote no outcome; log tail:"; tail -n 40 "$LOG"; exit 3
+    fi
+    rm -f "$MARK"
     tail -n 20 "$LOG"
     [ ! -f "$STATE/controller.json" ] || cat "$STATE/controller.json"
     exit 0 ;;

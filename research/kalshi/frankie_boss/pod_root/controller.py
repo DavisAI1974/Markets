@@ -92,34 +92,77 @@ def utc():
     return time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 
 
+CLIENTS = {}
+CLIENT_LOCK = threading.Lock()
+
+
 def s3(bucket):
+    """One S3 client per bucket, created under a lock (the heartbeat and the worker thread both call this; a client is
+    safe to share, its creation from the default session is not)."""
     region = 'us-east-1' if bucket.endswith('us-east-1') else 'us-east-2'
-    return boto3.client('s3', region_name=region, endpoint_url='https://s3.%s.amazonaws.com' % region,
-                        config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}))
+    with CLIENT_LOCK:
+        if ('s3', bucket) not in CLIENTS:
+            CLIENTS[('s3', bucket)] = boto3.client('s3', region_name=region, endpoint_url='https://s3.%s.amazonaws.com' % region,
+                                                   config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}))
+        return CLIENTS[('s3', bucket)]
+
+
+def ssm_client(region):
+    with CLIENT_LOCK:
+        if ('ssm', region) not in CLIENTS:
+            CLIENTS[('ssm', region)] = boto3.client('ssm', region_name=region)
+        return CLIENTS[('ssm', region)]
+
+
+def signing_window():
+    """Seconds the current credentials stay valid, or None when they do not expire (the runner's static keys). On the
+    main host the credentials are the instance profile's session: a presigned URL dies with them, whatever its ExpiresIn,
+    so the signer asks for fresh credentials first (botocore refreshes inside its advisory window) and bounds ExpiresIn
+    to what remains."""
+    try:
+        credentials = boto3.DEFAULT_SESSION.get_credentials() if boto3.DEFAULT_SESSION else boto3.Session().get_credentials()
+        if credentials is None:
+            return None
+        credentials.get_frozen_credentials()
+        expiry = getattr(credentials, '_expiry_time', None)
+        if expiry is None:
+            return None
+        return max(0, int(expiry.timestamp() - time.time()))
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def controller_id():
-    """The journal name of this controller process: the GitHub run on the runner, main-<start epoch> on the main box."""
+    """The journal name of this controller process: the GitHub run on the runner, main-<start epoch> on the main box
+    (the start epoch is the unit's, so the unit name, controller.json, the outcome and the journal name one start)."""
     if os.environ.get('GITHUB_RUN_ID'):
         return os.environ['GITHUB_RUN_ID']
     return '%s-%d' % (HOST['host'], int(HOST.get('started') or time.time()))
 
 
+def start_epoch():
+    """The unit's epoch (frankie-cpu-controller-<run>-<epoch>) when the launcher gave it; the clock otherwise."""
+    unit = os.environ.get('CPU_CONTROLLER_UNIT') or ''
+    tail = unit.rpartition('-')[2]
+    return int(tail) if tail.isdigit() else int(time.time())
+
+
 class Presigner:
     def __init__(self, hours):
         self.expires = int(hours * 3600)
-        self.clients = {}
 
     def _c(self, bucket):
-        if bucket not in self.clients:
-            self.clients[bucket] = s3(bucket)
-        return self.clients[bucket]
+        return s3(bucket)
+
+    def _expires(self):
+        window = signing_window() if HOST['host'] == 'main' else None
+        return self.expires if window is None else max(60, min(self.expires, window - 60))
 
     def get(self, bucket, key):
-        return self._c(bucket).generate_presigned_url('get_object', Params=dict(Bucket=bucket, Key=key), ExpiresIn=self.expires)
+        return self._c(bucket).generate_presigned_url('get_object', Params=dict(Bucket=bucket, Key=key), ExpiresIn=self._expires())
 
     def put(self, bucket, key):
-        return self._c(bucket).generate_presigned_url('put_object', Params=dict(Bucket=bucket, Key=key), ExpiresIn=self.expires)
+        return self._c(bucket).generate_presigned_url('put_object', Params=dict(Bucket=bucket, Key=key), ExpiresIn=self._expires())
 
 
 # ------------------------------------------------------------------------------------------ the retained state (host main)
@@ -136,7 +179,7 @@ def write_json(path, doc, create_only=False):
             f.flush()
             os.fsync(f.fileno())
         return
-    tmp = path.with_name(path.name + '.pending')
+    tmp = path.with_name('%s.%d-%d.pending' % (path.name, os.getpid(), threading.get_ident()))
     with open(tmp, 'w', encoding='utf-8') as f:
         f.write(body)
         f.flush()
@@ -144,11 +187,16 @@ def write_json(path, doc, create_only=False):
     os.replace(tmp, path)
 
 
-def read_json(path):
+def read_json(path, tolerant=False):
+    """The document, None when absent; with tolerant, an unreadable file is reported as a document, never raised."""
     try:
         return json.loads(Path(path).read_bytes())
     except FileNotFoundError:
         return None
+    except (OSError, ValueError) as error:
+        if tolerant:
+            return dict(unreadable=str(path), error='%s: %s' % (type(error).__name__, str(error)[:200]))
+        raise
 
 
 class State:
@@ -242,6 +290,7 @@ def _local_box(action, timeout, pairs):
     literal preamble as over SSM, under /bin/sh as the SSM document runs it; its whole stdout and stderr kept in calls/."""
     state = HOST['state']
     path = state.call_path(action)
+    state.calls.mkdir(parents=True, exist_ok=True)
     script = ssm_run_sh.preamble(pairs) + BOX_SCRIPT.read_text(encoding='utf-8')
     try:
         proc = subprocess.run(['/bin/sh', '-c', script], capture_output=True, timeout=timeout, check=False)
@@ -253,6 +302,8 @@ def _local_box(action, timeout, pairs):
         raise BoxError('%s on this host: local timeout after %d s (output kept at %s.out)' % (action, timeout, path))
     out = proc.stdout.decode('utf-8', 'replace')
     err = proc.stderr.decode('utf-8', 'replace')
+    if action == 'queue' and proc.returncode == 0:
+        path = state.calls / 'queue-latest'            # a poll every minute: only the latest successful one is kept
     Path(str(path) + '.out').write_text(out, encoding='utf-8')
     Path(str(path) + '.err').write_text(err, encoding='utf-8')
     return _result(action, 'this host (exit %d, %s.out)' % (proc.returncode, path), 'Success' if proc.returncode == 0 else
@@ -275,7 +326,7 @@ def box(action, target=MAIN, timeout=1800, url_map=None, **variables):
         pairs = ['ACTION=%s' % action] + ['%s=%s' % (k, v) for k, v in variables.items() if v not in (None, '')]
         if HOST['host'] == 'main' and target['instance'] == MAIN['instance']:
             return _local_box(action, timeout, pairs)
-        ssm = boto3.client('ssm', region_name=target['region'])
+        ssm = ssm_client(target['region'])
         path = '%s/%s.out' % (ssm_run_sh.OUTPUT_DIR, secrets.token_hex(16))
         script = ssm_run_sh.kept_whole(ssm_run_sh.preamble(pairs) + BOX_SCRIPT.read_text(encoding='utf-8'), path)
         command = ssm_run_sh.run(ssm, target['instance'], script, timeout, 'pod-root %s' % action)
@@ -344,7 +395,7 @@ class Controller:
     def __init__(self, a):
         self.a = a
         self.run = a.run
-        self.started = time.time()
+        self.started = float(HOST.get('started') or time.time())
         self.open_ended = a.budget_minutes == 0
         self.stop_starting = None if self.open_ended else self.started + (a.budget_minutes - a.stop_starting_minutes) * 60
         self.end = None if self.open_ended else self.started + a.budget_minutes * 60
@@ -364,6 +415,10 @@ class Controller:
         self.last_worker = None
         self.lease_identity = dict(host=HOST['host'], pid=os.getpid(), started_epoch=int(self.started),
                                    unit=os.environ.get('CPU_CONTROLLER_UNIT'), controller=controller_id())
+        self.lease_etag = None
+        self.lease_lock = threading.Lock()
+        self.lease_lost = False
+        self.heartbeat_thread = None
         self.finished = threading.Event()
 
     # ---- records
@@ -395,17 +450,29 @@ class Controller:
 
     def queue(self):
         q = box('queue', MAIN, 1800, CODE_ROOT=self.a.code_root, RUN=self.run)
-        if self.commit and q.get('code_commit') != self.commit:
-            raise SystemExit('the staged checkout %s is at %s, the controller was given --commit %s: run/code identity '
-                             'differs; nothing claimed' % (self.a.code_root, q.get('code_commit'), self.commit))
-        self.commit = self.commit or q.get('code_commit')
+        if self.a.commit and q.get('code_commit') != self.a.commit:
+            if self.a.action in ('loop', 'resume', 'stop'):
+                raise SystemExit('the staged checkout %s is at %s, the controller was given --commit %s: run/code identity '
+                                 'differs; nothing claimed' % (self.a.code_root, q.get('code_commit'), self.a.commit))
+            say('NOTE: the staged checkout is at %s, this dispatch is %s (read-only action; the staged commit is used)'
+                % (q.get('code_commit'), self.a.commit))
+        self.commit = q.get('code_commit')
         self.queue_state = q
         return q
 
     # ---- the lease (one controller per run, across hosts)
 
     def take_lease(self):
-        lease = read_lease(self.run)
+        """Create-only first (S3 refuses a second creator); an existing lease is taken over only when stale or released,
+        conditionally on its ETag, so two takers of one stale lease cannot both win."""
+        try:
+            self.write_lease(IfNoneMatch='*')
+            return
+        except Exception as error:  # noqa: BLE001
+            if getattr(error, 'response', {}).get('Error', {}).get('Code') not in ('PreconditionFailed', '412'):
+                raise
+        obj = s3(TRANSFER_BUCKET).get_object(Bucket=TRANSFER_BUCKET, Key=lease_key(self.run))
+        lease, etag = json.loads(obj['Body'].read()), obj['ETag']
         if lease_alive(lease) and {k: lease.get(k) for k in ('host', 'pid', 'started_epoch')} != \
                 {k: self.lease_identity[k] for k in ('host', 'pid', 'started_epoch')}:
             raise SystemExit('run %s is served by another controller (host %s, pid %s, unit %s, controller %s, heartbeat %s): '
@@ -413,23 +480,47 @@ class Controller:
                              'frankie_box_cpu_controller.sh ACTION=stop|resume; a runner loop ends with its budget' % (
                                  self.run, lease.get('host'), lease.get('pid'), lease.get('unit'), lease.get('controller'),
                                  lease.get('heartbeat_utc')))
-        self.write_lease()
+        try:
+            self.write_lease(IfMatch=etag, taken_over=dict(previous={k: lease.get(k) for k in ('host', 'pid', 'unit', 'heartbeat_utc',
+                                                                                                'released_utc')}))
+        except Exception as error:  # noqa: BLE001
+            if getattr(error, 'response', {}).get('Error', {}).get('Code') in ('PreconditionFailed', '412'):
+                raise SystemExit('the stale lease of %s was taken by another controller meanwhile; not a second one' % self.run)
+            raise
 
-    def write_lease(self, **fields):
+    def write_lease(self, IfNoneMatch=None, IfMatch=None, **fields):
+        """Every write after the first is conditional on the ETag this controller last wrote: a lease taken over by
+        another controller (after a heartbeat gap longer than its freshness) is lost, never overwritten."""
         doc = dict(self.lease_identity, schema=STATE_SCHEMA + '_LEASE', run=self.run, action=self.a.action,
                    state_dir=str(self.state.dir) if self.state else None, heartbeat_epoch=time.time(), heartbeat_utc=utc(),
                    **fields)
-        s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=lease_key(self.run), Body=json.dumps(doc, sort_keys=True).encode(),
-                                       ServerSideEncryption='AES256', ContentType='application/json')
+        conditions = {}
+        if IfNoneMatch:
+            conditions['IfNoneMatch'] = IfNoneMatch
+        elif IfMatch or self.lease_etag:
+            conditions['IfMatch'] = IfMatch or self.lease_etag
+        else:
+            raise RuntimeError('no lease held: an unconditional lease write is never made')
+        with self.lease_lock:
+            r = s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=lease_key(self.run), Body=json.dumps(doc, sort_keys=True).encode(),
+                                               ServerSideEncryption='AES256', ContentType='application/json', **conditions)
+            self.lease_etag = r.get('ETag')
 
     def heartbeat(self):
         while not self.finished.wait(HEARTBEAT_SECONDS):
             try:
                 self.write_lease()
             except Exception as error:  # noqa: BLE001
+                if getattr(error, 'response', {}).get('Error', {}).get('Code') in ('PreconditionFailed', '412'):
+                    self.lease_lost = True
+                    self.event(step='lease', result='lost', detail='another controller holds the lease now; this one ends '
+                               'without touching the worker or any claim')
+                    return
                 self.event(step='lease', result='heartbeat failed', error='%s: %s' % (type(error).__name__, str(error)[:200]))
 
     def release_lease(self):
+        if self.lease_etag is None or self.lease_lost:
+            return                                   # never held, or held by another controller now: nothing to release
         try:
             self.write_lease(released_utc=utc(), outcome=self.outcome)
         except Exception as error:  # noqa: BLE001
@@ -443,8 +534,9 @@ class Controller:
         request = self.state.stop_request()
         if request is None:
             return
-        if self.state.stop_ack() is not None:
-            return                                   # an older, already acknowledged request (archived by the launcher)
+        ack = self.state.stop_ack()
+        if ack is not None and (ack.get('request') or {}).get('requested_epoch') == request.get('requested_epoch'):
+            return                                   # this request was acknowledged already (the launcher archives both)
         self.stop = dict(request, source='stop-request.json')
         self.stop_seen = time.time()
         self.event(step='stop', result='requested', save=request.get('save'), requested=request.get('requested_utc'))
@@ -738,17 +830,19 @@ class Controller:
         """What keeps an open-ended controller alive: a day the Linux lane could still take or is holding, or a worker job
         of this run that is not complete. Empty = the run's Linux lane has nothing left (which says nothing about the two
         main lanes or about any day's scientific completion)."""
-        reasons = []
+        reasons, blocked = [], []
         for d in q['days']:
             claim = d.get('claim') or {}
-            if d['state'] in ('ready', 'waiting_ingest', 'waiting_day_file', 'behind_in_root_line', 'not_in_root_line'):
+            if d['state'] == 'ready' and self.start_failures.get(d['day'], 0) >= 2:
+                blocked.append('%s ready but not started after 2 failed starts' % d['day'])
+            elif d['state'] in ('ready', 'waiting_ingest', 'waiting_day_file', 'behind_in_root_line', 'not_in_root_line'):
                 reasons.append('%s %s' % (d['day'], d['state']))
             elif claim.get('where') == w.where and not ((claim.get('done') or {}).get('lane_complete')):
                 reasons.append('%s held by this lane (%s)' % (d['day'], claim.get('attempt')))
         for j in jobs:
             if j.get('run') == self.run and j.get('state') not in ('day_complete', 'cleaned'):
                 reasons.append('job %s %s' % (j.get('job_id'), j.get('state')))
-        return reasons
+        return reasons, blocked
 
     def worker_loop(self, w, only_job=None):
         """The thread of one worker; any failure of the loop itself is recorded as the outcome, never lost in the thread."""
@@ -765,6 +859,11 @@ class Controller:
         failures = 0
         renewed = {}
         while True:
+            if self.lease_lost:
+                self.outcome = self.outcome or dict(outcome='lease_lost', complete=False,
+                                                    note='another controller took the lease; the worker keeps its job and claim')
+                self.snapshot()
+                return
             self.check_stop()
             try:
                 st = w.status()
@@ -862,13 +961,20 @@ class Controller:
                     with self.lock:
                         self.start_failures[d['day']] = self.start_failures.get(d['day'], 0) + 1
                 if not active and self.open_ended:
-                    remaining = self.remaining_work(self.queue_state, jobs, w)
+                    remaining, blocked = self.remaining_work(self.queue_state, jobs, w)
                     if not remaining:
-                        self.outcome = dict(outcome='no_remaining_work', complete=False,
-                                            counts=(self.queue_state or {}).get('counts'),
-                                            note='no day the Linux lane could take or is holding and no worker job of the run '
-                                                 'left incomplete; the main lanes and scientific completion are not judged here')
-                        self.event(worker=w.where, step='idle', result='no remaining work for the Linux lane; the service ends')
+                        if blocked:
+                            self.outcome = dict(outcome='blocked_by_start_failures', complete=False, blocked=blocked,
+                                                counts=(self.queue_state or {}).get('counts'),
+                                                note='the only remaining Linux-lane work is days whose start failed twice '
+                                                     '(events name why); the service ends so the cause can be read and fixed')
+                        else:
+                            self.outcome = dict(outcome='no_remaining_work', complete=False,
+                                                counts=(self.queue_state or {}).get('counts'),
+                                                note='no day the Linux lane could take or is holding and no worker job of the '
+                                                     'run left incomplete; the main lanes and scientific completion are not '
+                                                     'judged here')
+                        self.event(worker=w.where, step='idle', result=self.outcome['outcome'] + '; the service ends')
                         self.snapshot(w, st)
                         return
                 elif not active and not self.a.wait_for_days:
@@ -939,11 +1045,14 @@ def preflight(a):
           lambda: dict(keys=s3(INGEST_BUCKET).list_objects_v2(Bucket=INGEST_BUCKET, Prefix='frankie/ingest/', MaxKeys=1).get('KeyCount')))
     check('worker over SSM', 'ssm:DescribeInstanceInformation now; ssm:SendCommand and ssm:GetCommandInvocation on %s for every '
           'worker call (exercised by the first status poll, not here)' % worker,
-          lambda: dict(ping=[(x['PingStatus'], x.get('PlatformName')) for x in boto3.client(
-              'ssm', region_name=a.boxes.partition('@')[2] or 'us-east-1').describe_instance_information(
+          lambda: dict(ping=[(x['PingStatus'], x.get('PlatformName')) for x in ssm_client(
+              a.boxes.partition('@')[2] or 'us-east-1').describe_instance_information(
               Filters=[{'Key': 'InstanceIds', 'Values': [worker]}])['InstanceInformationList']]))
-    check('lease', 'no live controller of %s (s3:GetObject on %s)' % (a.run, lease_key(a.run)),
-          lambda: dict(lease=read_lease(a.run), alive=lease_alive(read_lease(a.run))))
+    def lease_state():
+        lease = read_lease(a.run)
+        return dict(lease=lease, alive=lease_alive(lease))
+
+    check('lease', 'no live controller of %s (s3:GetObject on %s)' % (a.run, lease_key(a.run)), lease_state)
     missing = [c for c in checks if not c['established']]
     worker_online = next((c for c in checks if c['prerequisite'] == 'worker over SSM'), {})
     if worker_online.get('established') and not any(p[0] == 'Online' for p in worker_online['detail']['ping']):
@@ -961,7 +1070,7 @@ def retained(a):
     """The retained state directory and the run's claims, no AWS call. The controller process and the worker's last-seen
     job are reported distinctly (the worker's live state needs --action status)."""
     state = Path(a.state_dir)
-    identity = read_json(state / 'controller.json') or {}
+    identity = read_json(state / 'controller.json', tolerant=True) or {}
     alive = False
     if identity.get('pid'):
         try:
@@ -977,7 +1086,7 @@ def retained(a):
                 fcntl.flock(handle, fcntl.LOCK_UN)
             except OSError:
                 lock_held = True
-    status = read_json(state / 'status.json') or {}
+    status = read_json(state / 'status.json', tolerant=True) or {}
     outcomes = sorted(p.name for p in state.glob('outcome-*.json'))
     claims = []
     for p in sorted(Path(CLAIMS_PARENT, a.run).glob('*.json')) if Path(CLAIMS_PARENT, a.run).is_dir() else ():
@@ -989,8 +1098,9 @@ def retained(a):
     return dict(schema=STATE_SCHEMA + '_RETAINED', run=a.run, state_dir=str(state),
                 controller=dict(identity=identity, process_alive=alive, lock_held=lock_held, status_at=status.get('at'),
                                 outcome=(status.get('controller') or {}).get('outcome'), outcomes=outcomes,
-                                stop_request=read_json(state / 'stop-request.json'), stop_ack=read_json(state / 'stop-ack.json'),
-                                resume_request=read_json(state / 'resume-request.json'),
+                                stop_request=read_json(state / 'stop-request.json', tolerant=True),
+                                stop_ack=read_json(state / 'stop-ack.json', tolerant=True),
+                                resume_request=read_json(state / 'resume-request.json', tolerant=True),
                                 resume_acks=sorted(p.name for p in state.glob('resume-ack-*.json'))),
                 worker=dict(last_seen=status.get('worker'), held=status.get('held'),
                             note='the worker\'s last snapshot by the controller; --action status asks the worker itself'),
@@ -1037,7 +1147,7 @@ def main():
     if a.budget_minutes < 0 or a.stop_wait_minutes < 1 or a.poll_seconds < 5:
         raise SystemExit('--budget-minutes >= 0, --stop-wait-minutes >= 1, --poll-seconds >= 5')
     if a.host == 'main':
-        if not a.state_dir.startswith(STATE_PARENT + '/') or a.state_dir != '%s/%s' % (STATE_PARENT, a.run):
+        if a.state_dir != '%s/%s' % (STATE_PARENT, a.run):
             raise SystemExit('host main requires --state-dir %s/%s' % (STATE_PARENT, a.run))
         if a.action in ('loop', 'resume', 'preflight') and not a.commit:
             raise SystemExit('host main requires --commit (the staged checkout\'s commit)')
@@ -1059,7 +1169,7 @@ def main():
         say(json.dumps(retained(a), indent=1, sort_keys=True, default=str))
         return
     if a.host == 'main':
-        HOST.update(host='main', state=State(a.state_dir, a.run), started=time.time())
+        HOST.update(host='main', state=State(a.state_dir, a.run), started=start_epoch())
         if a.action in ('loop', 'resume'):
             HOST['state'].acquire()
     ctl = Controller(a)
@@ -1105,7 +1215,25 @@ def main():
 def run_serving(a, ctl, workers, only_job=None):
     """loop / resume: the lease taken, the identity recorded, the claim store enabled, the worker served, the outcome and
     journal written; the lease released on the way out (also on SIGTERM, with the outcome 'terminated_by_signal')."""
-    ctl.take_lease()
+    try:
+        ctl.take_lease()
+    except (Exception, SystemExit) as error:
+        ctl.outcome = dict(outcome='refused' if isinstance(error, SystemExit) else 'failed', complete=False,
+                           error='%s: %s' % (type(error).__name__, str(error)[:600]), note='no lease taken; nothing served')
+        ctl.event(step='lease', result=ctl.outcome['outcome'], error=ctl.outcome['error'][:300])
+        finish(a, ctl)
+        raise
+
+    def on_term(signum, frame):
+        ctl.outcome = ctl.outcome or dict(outcome='terminated_by_signal', signal=signum, complete=False,
+                                          note='the process was signalled; the worker keeps its job and claim; the state '
+                                               'directory shows the last poll; this was not the cooperative stop route')
+        ctl.event(step='signal', result='received', signal=signum)
+        finish(a, ctl)
+        os._exit(143)
+    signal.signal(signal.SIGTERM, on_term)
+    ctl.heartbeat_thread = threading.Thread(target=ctl.heartbeat, name='lease-heartbeat', daemon=True)
+    ctl.heartbeat_thread.start()
     try:
         if ctl.state:
             ctl.state.identity(dict(ctl.lease_identity, schema=STATE_SCHEMA, run=a.run, action=a.action, job=only_job,
@@ -1128,17 +1256,6 @@ def run_serving(a, ctl, workers, only_job=None):
         ctl.event(step=a.action, result=ctl.outcome['outcome'], error=ctl.outcome['error'][:300])
         finish(a, ctl)
         raise
-
-    def on_term(signum, frame):
-        ctl.outcome = ctl.outcome or dict(outcome='terminated_by_signal', signal=signum, complete=False,
-                                          note='the process was signalled; the worker keeps its job and claim; the state '
-                                               'directory shows the last poll; this was not the cooperative stop route')
-        ctl.event(step='signal', result='received', signal=signum)
-        finish(a, ctl)
-        os._exit(143)
-    signal.signal(signal.SIGTERM, on_term)
-    heartbeat = threading.Thread(target=ctl.heartbeat, name='lease-heartbeat', daemon=True)
-    heartbeat.start()
     threads = [threading.Thread(target=ctl.worker_loop, args=(w,), kwargs=dict(only_job=only_job), name=w.where, daemon=True)
                for w in workers]
     for t in threads:
@@ -1155,6 +1272,8 @@ def finish(a, ctl):
     if ctl.finished.is_set():
         return
     ctl.finished.set()
+    if ctl.heartbeat_thread is not None and ctl.heartbeat_thread is not threading.current_thread():
+        ctl.heartbeat_thread.join(HEARTBEAT_SECONDS)       # no heartbeat lands after the release below
     ctl.outcome = ctl.outcome or dict(outcome='ended', complete=False)
     out = ctl.summary()
     body = json.dumps(dict(out, events=ctl.events), indent=1, sort_keys=True, default=str)
