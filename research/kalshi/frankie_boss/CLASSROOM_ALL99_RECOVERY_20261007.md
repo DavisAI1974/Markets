@@ -406,3 +406,41 @@ Attributed to every one of the six whose carrier holds the levels (book_full: pr
 derived_price_flow_book_paths, derived_v4_mechanics_fifo_features).
 
 2026-10-07: Frankie can say in his own report whether he wants the per-level queue lengths kept or changed.
+
+### 2026-10-07 night, session 2 (continued): review G-2, G-3 and the G-1 sizing for 20231018
+
+- **G-2 (fixed):** `native_entries_compact` keeps counts only: per entry use / form / series and pair counts, relation
+  counts, Pearson reported, unavailable carriers; `read.events_after_last_dipole_row` as (series, events); identities as
+  (instruments, changes). No series name in received, the receipt or the all-99 list; `names_at` points to the pinned
+  `native-entry-arithmetic.json`, which keeps every name, pair, cell and identity. The reporter's NATIVE_ENTRY_KEYS
+  projects only keys that are present, so it reads the smaller view unchanged.
+- **G-3 (fixed):** `instrument_id` and `raw_symbol` are identities (`IDENTITY_LEAVES`, `IDENTITY_RULE`): recorded per
+  instrument with first / last value and every change (cursor, before, after) in the file; never a numeric series or a cell.
+- **Pairs on the lane's CPUs (small, safe):** per-series materialization and the 19 pairs run in a thread pool sized to
+  the classroom's own affinity (at most 16; `pair_threads` recorded). Series are independent and read-only; `pool.map`
+  keeps the sorted order; values are identical to the single-thread computation; nothing leaves the lane.
+
+**G-1 sizing (counts read 2026-10-07, read-only, from S3 `frankie/ingest/20231018/gh-36571235912-1/` receipts and
+`opening-book.c15.json`, and `blocks/BLOCK_20231018_SOURCE_MANIFEST.json`; one `ListObjectsV2` and three `GetObject`,
+us-east-2; the 8.8 GB journal was not read):**
+- record_count 771,787; group_count 583,688, so about 583,688 native member rows (one per GROUP_CLOSE);
+- instruments with rows: 1 (both partitions are single-instrument; the opening book holds instrument 150611 only);
+- level depth at the open: 190 bid, 217 ask (790 resting orders). The intraday maximum was not measured. The projection
+  uses D up to 400 per side.
+- Dipole rows: not recorded in reach; bounded by 583,688 to 771,787.
+
+**Projection (one instrument; estimated, not measured):**
+- Series: about 500 scalar leaves (activity_full / activity_since: 5 windows x about 36 fields each; book_full, book_regime,
+  capture_observations, integrity_delta, structure.price_raw_*) plus 2 x D queue levels plus the top-10 levels: about 930
+  to 1,320 numeric series, plus about 5 count series and about 5 categories.
+- Pairs: 19 x series, about 17,700 to 25,100.
+- Seconds: hot path (inside the pass, sequential by source order) about 1.5 to 2.5 ms per member row, so about 15 to 25
+  minutes; row closing about 5 minutes; pairs about 5 to 12 minutes single-threaded, about 1 to 2 minutes on the lane's
+  threads. Total added: about 25 to 35 minutes.
+- Peak memory: change arrays at most series x Dipole rows x 17 bytes, at worst about 1,320 x 771,787 x 17 = about 17 GB
+  (every series changing on every row); expected well under that. Plus about 1 GB of thread temporaries. Below 32 GB.
+- File: about 0.6 KB per pair, so about 11 to 16 MB for `native-entry-arithmetic.json`; the saved phase holds the same.
+- Within the 32 GB / 1 hour bounds: no limit is proposed. If the one-day run shows the hot path too long, the structural
+  option (not built) is to read the ROOT's native member ledger in a second process beside the pass, keyed by ledger
+  ordinal and GROUP_CLOSE cursor, with the source order unchanged; that would use the idle second lane once it is booked
+  through the CPU ledger (ccode_step8's booking, not this piece).

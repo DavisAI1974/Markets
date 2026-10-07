@@ -667,6 +667,13 @@ def _queue_levels(node, prefix, out):
                 out['%s[L%d].fifo_queue#len' % (prefix, position)] = ('n', float(len(queue)))
 
 
+# Identifiers among the carriers (review G-3): constant per instrument, so a series of them is degenerate. They are kept as
+# identities per instrument (first / last value with cursors, every change with its cursor), as the search routes them.
+IDENTITY_LEAVES = ('instrument_id', 'raw_symbol')
+IDENTITY_RULE = ('instrument_id and raw_symbol are identities, not signals: recorded per instrument with first / last value '
+                 'and every change (cursor, before, after) in native-entry-arithmetic.json; no numeric series or cell')
+
+
 class _NumSeries:
     __slots__ = ('code', 'value', 'reason', 'rec', 'rows', 'codes', 'values', 'reasons', 'fresh', 'known', 'first', 'last',
                  'low', 'high', 'nonpresent', 'nulls')
@@ -717,9 +724,10 @@ class _NativeEntryArithmetic:
             for section in sections:
                 self.section_entries.setdefault(section, []).append(entry)
         self.heads = sorted(self.head_entries)
+        self.identity_heads = [leaf for leaf in IDENTITY_LEAVES if leaf in self.head_entries]
         self.num, self.cat, self.cnt = {}, {}, {}
         self.dirty, self.cat_dirty, self.interval, self.after_last = set(), set(), {}, {}
-        self.member_keys, self.scopes = {}, {}
+        self.member_keys, self.scopes, self.identities = {}, {}, {}
         self.unplaced = {}
         self.member_rows, self.lifecycle_rows, self.reset_inputs = 0, 0, 0
         self.lifecycle_other_sections = 0
@@ -842,6 +850,10 @@ class _NativeEntryArithmetic:
             if found:
                 _flatten(node, head, leaves)
                 _queue_levels(node, head, leaves)       # per-level FIFO queue lengths beside the list's own length
+        for leaf in self.identity_heads:
+            # an identifier is not a signal (review G-3): recorded per instrument with its changes, never a numeric series
+            if leaves.pop(leaf, None) is not None or leaf in row:
+                self._identity(instrument, leaf, row.get(leaf))
         seen = self.member_keys.setdefault(instrument, set())
         for leaf in seen - leaves.keys():
             key = ('native.member.row.' + leaf, instrument)
@@ -866,6 +878,18 @@ class _NativeEntryArithmetic:
                 if key not in self.num and key not in self.cat:
                     self.unplaced['null_leaf_before_any_value'] = self.unplaced.get('null_leaf_before_any_value', 0) + 1
         seen.update(leaves)
+
+    def _identity(self, instrument, leaf, value):
+        slot = self.identities.setdefault(instrument, {}).get(leaf)
+        if slot is None:
+            self.identities[instrument][leaf] = dict(first=[self.at_cursor, value], last=[self.at_cursor, value],
+                                                     changes=0, rows=1)
+            return
+        slot['rows'] += 1
+        if slot['last'][1] != value:
+            slot['changes'] += 1
+            slot.setdefault('change_cursors', []).append([self.at_cursor, slot['last'][1], value])
+        slot['last'] = [self.at_cursor, value]
 
     def _close_row(self):
         k = self.k
@@ -930,6 +954,7 @@ class _NativeEntryArithmetic:
                    **result)
         out['seconds'] = round(time.monotonic() - started, 3)
         out['hot_path_seconds'] = round(self.note_seconds, 3)
+        out['pair_threads'] = getattr(self, 'pair_threads', None)
         out['queue_level_cost'] = QUEUE_LEVEL_COST
         out['timing'] = ('hot_path_seconds: note() inside the classroom\'s one ordered pass (part of read.seconds); seconds: '
                          'the per-series materialization and the pairs after the pass')
@@ -963,7 +988,7 @@ class _NativeEntryArithmetic:
                         terminal_value=(float(values[last]) if int(codes[last]) == 0 else None),
                         first_to_last_present_direction=direction, pairs=pairs, **extra)
 
-        for key in sorted(self.num, key=lambda k: (k[0], str(k[1]))):
+        def member_series(key):
             s = self.num[key]
             change_rows = np.frombuffer(s.rows, dtype=np.int64) if len(s.rows) else np.zeros(0, np.int64)
             position = np.searchsorted(change_rows, rows, side='right') - 1
@@ -981,15 +1006,16 @@ class _NativeEntryArithmetic:
             before = int(np.sum(~seen))
             if before:
                 reasons['NO_VALUE_AT_OR_BEFORE_THIS_ROW'] = before
-            series.append(numeric(name_of(key), 'member_value', codes, values, dict(
+            return numeric(name_of(key), 'member_value', codes, values, dict(
                 facts=dict(values_known=s.known, first=s.first, last=s.last, lowest=s.low, highest=s.high,
                            nonpresent_updates=dict(sorted(s.nonpresent.items())),
                            # a row whose interval held an update of this series (a new member row, PRESENT or not)
                            # versus a row that carries the value of an earlier interval forward (never shown as new)
                            rows_with_an_update_in_their_interval=s.fresh, rows_carried_forward=int(np.sum(seen)) - s.fresh,
                            runs=len(s.rows)),
-                nonpresent_rows_by_reason=dict(sorted(reasons.items())))))
-        for key in sorted(self.cnt, key=lambda k: (k[0], str(k[1]))):
+                nonpresent_rows_by_reason=dict(sorted(reasons.items()))))
+
+        def count_series(key):
             slot = self.cnt[key]
             values = np.zeros(n, dtype=np.float64)       # zero = no event in the interval over the exhausted source
             event_rows = np.frombuffer(slot['rows'], dtype=np.int64) if len(slot['rows']) else np.zeros(0, np.int64)
@@ -997,11 +1023,23 @@ class _NativeEntryArithmetic:
             values[event_rows] = event_counts
             codes = np.zeros(n, dtype=np.int8)
             busiest = int(np.argmax(event_counts)) if event_counts.size else None    # the first interval with the most
-            series.append(numeric(name_of(key), 'events_per_dipole_interval', codes, values, dict(facts=dict(
+            return numeric(name_of(key), 'events_per_dipole_interval', codes, values, dict(facts=dict(
                 events=slot['total'], first_event_cursor=slot['first'], last_event_cursor=slot['last'],
                 intervals_with_events=int(event_rows.size), after_last_dipole_row=self.after_last.get(key, 0),
                 largest_interval=(dict(row_cursor=int(cursors[event_rows[busiest]]), events=int(event_counts[busiest]))
-                                  if busiest is not None else None)))))
+                                  if busiest is not None else None))))
+
+        # Every series is independent and read-only over the pass's state, so the materialization and the 19 pairs per
+        # series run on the lane's CPUs in threads (numpy releases the GIL inside its array loops). Results are kept in the
+        # sorted series order (pool.map preserves it); every value is computed exactly as one thread would. Greg,
+        # 2026-10-07: use the spare capacity; this stays inside the classroom's own lane affinity.
+        import os
+        from concurrent.futures import ThreadPoolExecutor
+        jobs = ([(member_series, key) for key in sorted(self.num, key=lambda k: (k[0], str(k[1])))]
+                + [(count_series, key) for key in sorted(self.cnt, key=lambda k: (k[0], str(k[1])))])
+        self.pair_threads = max(1, min(len(os.sched_getaffinity(0)), 16, len(jobs) or 1))
+        with ThreadPoolExecutor(max_workers=self.pair_threads) as pool:
+            series.extend(pool.map(lambda job: job[0](job[1]), jobs))
         for key in sorted(self.cat, key=lambda k: (k[0], str(k[1]))):
             slot = self.cat[key]
             changes = slot['changes']
@@ -1077,8 +1115,15 @@ class _NativeEntryArithmetic:
                                   unavailable=missing or None,
                                   picture_carriers={c: PICTURE_SERIES_TEXT[c] for c in PICTURE_CARRIERS.get(entry, ())} or None,
                                   reason=None if form else '; '.join(m['reason'] for m in missing))
+        for entry in NATIVE_SIX:
+            leaves = [leaf for leaf in IDENTITY_LEAVES if leaf in self.carriers[entry]['heads']]
+            if leaves:
+                entries[entry]['identities'] = dict(leaves=leaves, instruments=sum(
+                    1 for item in self.identities.values() if any(leaf in item for leaf in leaves)),
+                    rule=IDENTITY_RULE)
         return dict(series=series, entries=entries, series_count=len(series),
-                    pair_count=sum(len(s.get('pairs') or ()) for s in series))
+                    pair_count=sum(len(s.get('pairs') or ()) for s in series),
+                    identities={str(k): v for k, v in sorted(self.identities.items(), key=lambda kv: str(kv[0]))})
 
 
 def _native_unavailable_entries(status, reason):
@@ -1107,13 +1152,25 @@ def native_entries_compact(result):
             for p in by_name.get(name, {}).get('pairs') or ():
                 relations[p['direction_relation']] = relations.get(p['direction_relation'], 0) + 1
                 pearson += (p.get('correlation') or {}).get('pearson') is not None
+        # counts only (review G-2: the compact view lands three times on the receipt and must stay small); every series
+        # name, pair and cell is in the pinned native-entry-arithmetic.json
         entries[entry] = dict({k: v for k, v in item.items() if k not in ('own_series', 'thin_series')},
                               own_series=len(item.get('own_series') or ()), thin_series=len(item.get('thin_series') or ()),
-                              series_names=(item.get('own_series') or []) + (item.get('thin_series') or []),
                               relations=dict(sorted(relations.items())), pearson_reported=pearson)
-    return dict({k: v for k, v in result.items() if k not in ('series', 'entries')}, entries=entries,
-                series_kinds={kind: sum(1 for s in result.get('series') or () if s['kind'] == kind)
-                              for kind in ('member_value', 'events_per_dipole_interval', 'category')})
+    out = dict({k: v for k, v in result.items() if k not in ('series', 'entries', 'identities')}, entries=entries,
+               series_kinds={kind: sum(1 for s in result.get('series') or () if s['kind'] == kind)
+                             for kind in ('member_value', 'events_per_dipole_interval', 'category')},
+               names_at='native-entry-arithmetic.json (every series name, pair, cell and identity; pinned on the receipt)')
+    read = dict(out.get('read') or {})
+    after = read.pop('events_after_last_dipole_row', None)
+    if after is not None:
+        read['events_after_last_dipole_row'] = dict(series=len(after), events=sum(after.values()))
+    out['read'] = read
+    identities = result.get('identities')
+    if identities is not None:
+        out['identities'] = dict(instruments=len(identities), changes=sum(
+            leaf.get('changes', 0) for item in identities.values() for leaf in item.values()))
+    return out
 
 
 def native_entries_for_component(result, component):
