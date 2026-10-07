@@ -48,6 +48,7 @@ import os
 from pathlib import Path
 import struct
 import sys
+import time
 
 GUARD_EVERY = 50_000
 FULL_HASH_CHECK_RECEIPTS = 2_000   # up to this many receipts the attachment hash is also recomputed whole (a check, no cap)

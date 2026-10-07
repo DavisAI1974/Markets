@@ -87,6 +87,50 @@ def _dump(path, body):
     _text(path, json.dumps(body, indent=1, sort_keys=True, default=str))
 
 
+# Function-level identities of the code the classroom invokes from other files (drop-in session 5, open item 5; the
+# native identities' pattern in eac32a0: frankie_box_bedrock.code_identity of declared definitions, each hashed as its
+# syntax tree without positions). A saved classroom then survives unrelated edits of those files (a comment, another
+# function, a move) and still refuses any change to the code its saved values came from. The lists are the transitive
+# closure, inside each file, of what the classroom calls: frankie_box_classroom_code.exhaustion_d_facts calls
+# frankie_box_teach.facts and frankie_box_bedrock.producers_commit / load_producers (and _sections_of calls
+# crosswalk_records); the native entry arithmetic reuses frankie_box_joined_teacher._flatten and CATEGORY_LIMIT. A new
+# definition those call is added here. Not covered (as before): frankie_box_digest_sources._JSON, which teach._stream_layer
+# imports, and the pinned producers checkout, whose commit the facts check themselves.
+EXHAUSTION_D_CODE = (
+    ('frankie_box_teach.py', ('FACTS_SCHEMA', 'FROZEN_LAYERS', 'FROZEN_DIR', 'CLOCK_RULE', 'sha256_bytes', '_load',
+                              '_stream_layer', 'lineage_vocabulary', '_sections_rows', '_each_member', '_job_sections',
+                              '_job_clock', '_job_evaluated', '_job_families', '_job_actions', '_streams', 'facts')),
+    ('frankie_box_bedrock.py', ('PIN_COMMIT', 'V4_ADAPTER', 'V4_ADAPTER_MODULE', 'sha256_file', 'witness',
+                                'producers_commit', 'loaded_modules', 'load_producers', 'crosswalk_records')))
+NATIVE_ENTRY_CODE = (('frankie_box_joined_teacher.py', ('CATEGORY_LIMIT', '_flatten')),)
+
+
+def _code_identities(declared):
+    """{file: FRANKIE_NATIVE_CODE_IDENTITY_V1 of its declared definitions} (frankie_box_bedrock.code_identity; a missing
+    name raises: never computed from less)."""
+    from frankie_box_bedrock import code_identity
+    return {name: code_identity(BOX / name, names) for name, names in declared}
+
+
+def _whole_file_identities(declared):
+    """The earlier form, {file: sha256 of its whole bytes} (saves made before the function-level identities)."""
+    return {name: _sha256(BOX / name) for name, _ in declared}
+
+
+def identity_acceptance(saved, current):
+    """Why a saved classroom identity is accepted for `current`, or None (refused). 'code': equal. The compatibility rule
+    (as the native identities, eac32a0): a save whose exhaustion_d_code / native_entry_code are the earlier whole-file
+    sha256 values is accepted only while those whole files are byte-identical now and every other field is equal
+    ('whole_file_unchanged'); the saved identity then stays the identity, so its saved phases load unchanged."""
+    if saved == current:
+        return 'code'
+    whole = dict(current, exhaustion_d_code=_whole_file_identities(EXHAUSTION_D_CODE),
+                 native_entry_code=_whole_file_identities(NATIVE_ENTRY_CODE))
+    if saved == whole:
+        return 'whole_file_unchanged'
+    return None
+
+
 DIRECTIVE_PATH = ROOT / 'research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json'
 
 
@@ -254,9 +298,26 @@ class _SideTask:
             self.record['outcome'] = 'stopped_with_the_classroom'
 
 
+def _owner_sigterm(requested, owner):
+    """The classroom's SIGTERM handler, bound to the process that installed it (Greg, 2026-10-07 night: never stop, never
+    hang). In the classroom process itself a SIGTERM only marks a save request, exactly as before. A process FORKED from
+    it (a side task, a frankie_box_lane_pin.ordered_map pool worker, the 171-pair ProcessPoolExecutor) inherits this
+    handler; there it restores the default action and re-raises the signal on itself, so a pool's terminate() ends the
+    worker. Without this a forked worker caught terminate() as a save mark and kept running, and the pool's unbounded
+    join() after terminate() waited forever: the shard exit hang a2's ROOT hit at its 22:32Z save (LegacyFrameShards._stop,
+    E2E_ONE_DAY_20231018.md session 4). No value, order or byte depends on it."""
+    def handler(signum, frame):
+        if os.getpid() == owner:
+            requested[0] = True
+            return
+        signal.signal(signum, signal.SIG_DFL)
+        os.kill(os.getpid(), signum)
+    return handler
+
+
 def run(day, calculations, teacher_rows, previous, brain, day_external, day_external_sha256):
     requested = [False]
-    previous_handler = signal.signal(signal.SIGTERM, lambda *_: requested.__setitem__(0, True))
+    previous_handler = signal.signal(signal.SIGTERM, _owner_sigterm(requested, os.getpid()))
     stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
     # Efficiency (Greg, 2026-10-07): the stop file is polled at most once per STOP_POLL_SECONDS, not once per
     # picture (one stat call per picture is millions of syscalls on a big day); SIGTERM is immediate. A stop is
@@ -343,7 +404,11 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     teacher_receipt = json.loads((teacher_rows / 'receipt.json').read_bytes())
     if teacher_receipt.get('day') != day:
         raise SystemExit('the teacher rows are for day %s, not %s' % (teacher_receipt.get('day'), day))
-    attachment_sha = _sha256(teacher_rows / 'teacher-attachment.pkl')
+    # Read ONCE (the September 29 pattern: every file read and hashed once and shared across sub-steps): the attachment's
+    # bytes are hashed in memory, checked against the teacher receipt, and the same bytes are unpickled below (the
+    # former code streamed the file for its sha256 and then read it whole again). Same check, same bytes, same object.
+    attachment_raw = (teacher_rows / 'teacher-attachment.pkl').read_bytes()
+    attachment_sha = hashlib.sha256(attachment_raw).hexdigest()
     if attachment_sha != teacher_receipt['attachment_file']['sha256']:
         raise SystemExit('teacher-attachment.pkl differs from its teacher rows receipt; refused')
     try:
@@ -415,7 +480,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
 
     d.mkdir(parents=True, exist_ok=True)
     out.mkdir(parents=True, exist_ok=True)
-    p = pickle.loads((teacher_rows / 'teacher-attachment.pkl').read_bytes())
+    p = pickle.loads(attachment_raw)          # the bytes hashed and checked above (no second read)
+    attachment_bytes = len(attachment_raw)
+    del attachment_raw
     history, prior_grade, carried = [], None, None
     external_history, prior_external_grade, external_carried = [], None, None
     if previous:
@@ -445,10 +512,11 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                     directive=_sha256(DIRECTIVE_PATH), rules=rules_witness,
                     producers={m.__name__: _sha256(m.__file__) for m in (F, S, R, EXT, V2, C, K, KX, LS, BR, KR)},
                     learner_reading_producers=KR.producer_hashes(),
-                    # the existing exhaustion/D computation this classroom now invokes, and its producers loader
-                    exhaustion_d_code={name: _sha256(BOX / name) for name in ('frankie_box_teach.py', 'frankie_box_bedrock.py')},
+                    # the existing exhaustion/D computation this classroom now invokes, and its producers loader:
+                    # function-level (EXHAUSTION_D_CODE; a whole-file save is accepted while byte-identical)
+                    exhaustion_d_code=_code_identities(EXHAUSTION_D_CODE),
                     # the leaf rule the native entry arithmetic reuses (frankie_box_joined_teacher._flatten / CATEGORY_LIMIT)
-                    native_entry_code={name: _sha256(BOX / name) for name in ('frankie_box_joined_teacher.py',)})
+                    native_entry_code=_code_identities(NATIVE_ENTRY_CODE))
     if market is not None:
         identity['shared_market'] = market.identity
     # Inspection (Greg, 2026-10-07): every input this piece received, with path, bytes, sha256, the whole-day
@@ -466,7 +534,10 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         journal_witness=journal_witness, shared_market_disposition=shared_market_disposition,
         teacher_shared_read=teacher_shared_read,
         stop_polling=dict(signal='SIGTERM immediate', stop_file=os.environ.get('FRANKIE_LANE_STOP_FILE'),
-                          poll_seconds=STOP_POLL_SECONDS),
+                          poll_seconds=STOP_POLL_SECONDS,
+                          forked_children=('SIGTERM ends a process forked from the classroom (side tasks, pinned pool '
+                                           'workers): a pool terminate() is never caught as a save mark, so no join '
+                                           'after terminate() can wait forever (_owner_sigterm)')),
         schema='FRANKIE_CLASSROOM_RECEIVED_V1', day=day, calculations=str(calculations), teacher_rows=str(teacher_rows),
         brain=str(Path(brain)),
         root_receipt=dict(path=str(calculations / 'calculations-receipt.json'), sha256=identity['root_receipt']),
@@ -477,7 +548,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         ingestion_receipt=teacher_receipt.get('ingestion_receipt'),
         teacher_receipt=dict(path=str(teacher_rows / 'receipt.json'), sha256=identity['teacher_receipt']),
         teacher_attachment=dict(path=str(teacher_rows / 'teacher-attachment.pkl'), sha256=attachment_sha,
-                                bytes=(teacher_rows / 'teacher-attachment.pkl').stat().st_size),
+                                bytes=attachment_bytes, read='once: hashed in memory and unpickled from the same bytes'),
         binding=dict(request_id=p.get('request_id'), source_hash=p.get('source_hash'), as_of=p.get('as_of'),
                      through_cursor=p.get('through_cursor'), cycle_index=0, cycle_count=1,
                      note='through_cursor = record_count - 1 names the sealed day and its whole-day causal cutoff; '
@@ -486,15 +557,23 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         previous=carried, previous_external=external_carried,
         directive=dict(path=str(DIRECTIVE_PATH), sha256=identity['directive']), rules=rules_witness,
         producers=identity['producers'], learner_reading_producers=identity['learner_reading_producers'],
-        exhaustion_d_code=identity['exhaustion_d_code'], native_entry_code=identity['native_entry_code'],
+        # the files' whole bytes as before (the receipt field keeps its meaning); the identity binds the function-level
+        # form beside it (received.identity_acceptance.current_code)
+        exhaustion_d_code=_whole_file_identities(EXHAUSTION_D_CODE), native_entry_code=_whole_file_identities(NATIVE_ENTRY_CODE),
         shared_market_identity=market.identity if market is not None else None,
         shared_market_external=shared_external,
         teacher_shared_market_arithmetic=teacher_receipt.get('shared_market_arithmetic'))
     state = _load_raw_state(state_path) if state_path.exists() else dict(identity=identity, started=time.time(), phases={})
     phase_directory = d / 'saved-phases'
     phase_directory.mkdir(exist_ok=True)
-    if state['identity'] != identity:
+    acceptance = identity_acceptance(state['identity'], identity)
+    if acceptance is None:
         raise ValueError('saved classroom source, previous class, directive or destination changed')
+    # recorded on the receipt (received.identity_acceptance): 'code' (equal), or 'whole_file_unchanged' (a save made
+    # before the function-level code identities, accepted while those files are byte-identical; its identity is kept)
+    received['identity_acceptance'] = dict(rule=acceptance, current_code=dict(
+        exhaustion_d_code=identity['exhaustion_d_code'], native_entry_code=identity['native_entry_code']))
+    identity = state['identity']
     # Where the classroom's time goes, per saved operation (Greg, 2026-10-07: show where a run spends its
     # time): seconds of each operation when it was computed (kept across resumes from the saved state), or
     # `restored` with no seconds when a phase file predates this field. Diagnostic only; never an input to
@@ -630,15 +709,25 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         # the ROOT's bedrock files only, never the shared pictures, so they run on their own process beside the full
         # ordered read (off the read's consumer core) and the phase below takes their value; computed in order here
         # when the read is already saved, the facts are saved, or no fork can be taken.
-        side_exhaustion = None
-        if (market is not None and not phase_path('shared_market_context').exists()
-                and not phase_path('exhaustion_d_facts').exists()):
+        # The two learner checks (stage knowledge, school) read only the visible classroom and the knowledge/school
+        # documents already retained in the learner_inputs phase, never the shared pictures, so they run side by side
+        # with the read too (the September 29 pattern item 1: independent pieces side by side). Each value comes back
+        # through the same pickle its saved phase uses; a resume already hands every later consumer that unpickled
+        # value, so the answers are the same bytes. Each is computed in order here when its phase is saved, the read
+        # is saved, or no fork can be taken; a dead side process is redone in order (_SideTask.result).
+        side = {}
+        if market is not None and not phase_path('shared_market_context').exists():
             lane = K.lane_cpus()
             consumer, siblings, _ = K._lane_pin().consumer_core(lane)
             off_consumer = [c for c in lane if c != consumer and c not in siblings] or lane
-            side_exhaustion = _SideTask('exhaustion_d_facts', lambda: K.exhaustion_d_facts(calculations, brain), d,
-                                        off_consumer).start(K._fork_ready(wait=2.0))
-            received['side_by_side'] = dict(exhaustion_d_facts=side_exhaustion.record)
+            ready = K._fork_ready(wait=2.0)
+            for name, function in (('exhaustion_d_facts', lambda: K.exhaustion_d_facts(calculations, brain)),
+                                   ('knowledge_reproduction', lambda: K.stage_knowledge_reproduction(visible, knowledge)),
+                                   ('school_reproduction', lambda: K.school_reproduction(visible, school))):
+                if not phase_path(name).exists():
+                    side[name] = _SideTask(name, function, d, off_consumer).start(ready)
+            received['side_by_side'] = {name: task.record for name, task in side.items()}
+        side_exhaustion = side.get('exhaustion_d_facts')
         if market is not None:
             market_reading = phase('shared_market_context', lambda: K.market_context(
                 visible, market, save_requested=save_requested, native_limits=native_limits))
@@ -678,8 +767,11 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         received['exhaustion_d'] = K._exhaustion_d_receipt(exhaustion_d)
         # These inputs and their checks are retained before any answer. A resume uses this exact selection,
         # never a later peer knowledge version or a newly completed school day partway through the classroom.
-        knowledge_reproduction = phase('knowledge_reproduction', lambda: K.stage_knowledge_reproduction(visible, knowledge))
-        reproduction = phase('school_reproduction', lambda: K.school_reproduction(visible, school))
+        knowledge_reproduction = phase('knowledge_reproduction', side['knowledge_reproduction'].result
+                                       if 'knowledge_reproduction' in side else
+                                       lambda: K.stage_knowledge_reproduction(visible, knowledge))
+        reproduction = phase('school_reproduction', side['school_reproduction'].result if 'school_reproduction' in side
+                             else lambda: K.school_reproduction(visible, school))
         learner_context = dict(stage_knowledge=knowledge_reproduction, school=reproduction)
         # All-99 (Greg, 2026-10-07: the 99 layers combined for Frankie FIRST): every registry entry routed to the
         # picture element the component answers compute beside, or to its own consumer here, or named sealed /

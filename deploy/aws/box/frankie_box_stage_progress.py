@@ -26,6 +26,19 @@ child (Linux /proc of the child's process tree, its log file) or read from what 
 It never changes a child's inputs, outputs, environment beyond FRANKIE_STAGE_PROGRESS, scheduling or exit; a sampling
 failure is written on the line (`sample_error`) and never raised. Not knowledge, not evidence, not a gate.
 
+Stacks pass (2026-10-07 night, session 5; additive, every earlier field and line kept): the work probes are found for
+EVERY stage, not only where the caller names a directory: besides probe_dirs and the open-file directories, the
+heartbeat looks in every absolute directory the child's environment or command line names (OUTPUT_ROOT, OUT_DIR,
+CLASSROOM, TEACHER_ROWS, --out-dir ..., a file's own directory) and in each process's working directory, and in their
+immediate subdirectories (native-overlap/, <line>-worker/); work_probes is on every line (an empty list = none found).
+Each work probe carries its own completed_per_min, units_unchanged_s, stalled (report-only, STALL_SECONDS) and the
+CPU ranges of its writer (cpu_ranges: the writer's Cpus_allowed_list, or the probe's own cpus/cpu_ranges field when it
+records one); the line carries the stage tree root's cpu_ranges. A FRANKIE_WORK_PROBE_V1 file written by any writer is
+accepted (the frankie_box_progress.Probe fields, plus optional units / unit / cpus / cpu_ranges / workers); missing
+fields read as None, never zero. run_probes(run_dir) reads the probes outside any stage child: the Run's own
+<run>/progress.json and the queue line workers (frankie-queue/<line>-worker/progress.json) with the kick receipt's
+run_settings (FA-6).
+
 Read: frankie_box_progress.py --run-dir <run> --day <day> (frankie_box_progress.sh RUN_DIR=... DAY=...), read-only,
 on the box-progress lock: per stage the last heartbeat's age, rate, units, bytes and rss, STALE when the last line is
 older than 3 intervals while not final.
@@ -45,6 +58,47 @@ STALL_SECONDS = 600                # the probe flags a running stage whose units
 ENV = 'FRANKIE_STAGE_PROGRESS'     # the child's own phase file (report_phase), set by Run.child
 WORK_PROBE = 'FRANKIE_WORK_PROBE_V1'
 LOG_TAIL = 4096                    # bytes read from the end of the log for the last line (phase text fallback)
+WORK_ROOT = '/opt/frankie-box/work/'   # where a process-named directory may hold a work probe (stacks pass)
+MAX_PROBE_DIRS = 256               # directories checked per sample (one small read each)
+QUEUE_DIR = Path('/opt/frankie-box/work/frankie-queue')
+
+
+def cpu_list_of(pid):
+    """The process's Cpus_allowed_list ('0-31', '8-15,24-31'), or None."""
+    for line in (_read('/proc/%d/status' % pid) or '').splitlines():
+        if line.startswith('Cpus_allowed_list:'):
+            return line.split(':', 1)[1].strip() or None
+    return None
+
+
+def _ranges(cpus):
+    runs = []
+    for cpu in sorted(set(int(c) for c in cpus)):
+        if runs and cpu == runs[-1][1] + 1:
+            runs[-1][1] = cpu
+        else:
+            runs.append([cpu, cpu])
+    return ','.join(str(a) if a == b else '%d-%d' % (a, b) for a, b in runs)
+
+
+def probe_item(value, directory):
+    """One FRANKIE_WORK_PROBE_V1 file as a work-probe item, whichever writer wrote it: the Probe fields, plus any of
+    units / unit / workers / cpus / cpu_ranges a writer records; cpu_ranges falls back to the writer's
+    Cpus_allowed_list. Missing fields are None, never zero."""
+    item = dict(dir=str(directory), stage=value.get('stage'), completed=value.get('completed'),
+                total=value.get('total'), state=value.get('state'), probe_at=value.get('at'),
+                reader_workers=value.get('reader_workers'), pid=value.get('pid'), failed=value.get('failed'),
+                in_flight=value.get('in_flight'), unit=value.get('unit'), workers=value.get('workers'))
+    ranges = value.get('cpu_ranges')
+    if ranges is None and isinstance(value.get('cpus'), list):
+        try:
+            ranges = _ranges(value['cpus'])
+        except (TypeError, ValueError):
+            ranges = None
+    if ranges is None and isinstance(value.get('pid'), int):
+        ranges = cpu_list_of(value['pid'])
+    item['cpu_ranges'] = ranges
+    return item
 
 
 def progress_dir(run_dir, key):
@@ -160,6 +214,8 @@ class Heartbeat:
         self.named_dirs = [str(d) for d in (probe_dirs or ()) if d]   # the caller's known probe directories, checked first
         self.probe_previous = {}        # probe directory -> (monotonic, completed) for each work probe's own rate
         self.units_moved = None         # (monotonic, units_done) when the units last changed (the stall watch)
+        self.probe_moved = {}           # probe directory -> (monotonic, (stage, completed)) when that probe last moved
+        self.seen_processes = {}        # (pid, start ticks) -> [absolute directories its environ/argv/cwd name]
         self.previous = None            # (monotonic, bytes_out, units_done) of the last line, for the rates
         self.stop_event = threading.Event()
         self.thread = None
@@ -205,43 +261,89 @@ class Heartbeat:
         except OSError:
             pass
 
-    def _named_probes(self, pids, mono):
-        """The live work probes in the named directories and their immediate subdirectories (FA-4: the ROOT writes its
-        FRANKIE_WORK_PROBE_V1 progress.json at experiment-roots/<attempt>/, the forked native pass at
-        <attempt>/native-overlap/; neither is beside a file the tree holds open). Each with its own completed_per_min."""
-        live, found = {pid for pid, _ in pids}, []
-        for named in self.named_dirs:
-            candidates = [Path(named)]
+    def _process_dirs(self, pids):
+        """Absolute directories each process of the tree names (stacks pass, read once per process): every environment
+        value and command-line argument that is an absolute path (a directory itself, or a file's own directory), and
+        its working directory. Under /opt/frankie-box/work only (never the code checkout, venv or system paths)."""
+        out = []
+        for pid, ticks in pids:
+            key = (pid, ticks)
+            if key not in self.seen_processes:
+                names = []
+                try:
+                    with open('/proc/%d/environ' % pid, 'rb') as handle:
+                        names += [x.split(b'=', 1)[1] for x in handle.read().split(b'\0') if b'=' in x]
+                except OSError:
+                    pass
+                try:
+                    with open('/proc/%d/cmdline' % pid, 'rb') as handle:
+                        names += handle.read().split(b'\0')
+                except OSError:
+                    pass
+                found = []
+                try:
+                    found.append(os.readlink('/proc/%d/cwd' % pid))
+                except OSError:
+                    pass
+                for raw in names:
+                    for part in raw.decode('utf-8', 'replace').split(','):
+                        if part.startswith(WORK_ROOT):
+                            found.append(part if os.path.isdir(part) else os.path.dirname(part))
+                self.seen_processes[key] = [d for d in dict.fromkeys(found)
+                                            if d.startswith(WORK_ROOT) and d.rstrip('/') != WORK_ROOT.rstrip('/')]
+            out += self.seen_processes[key]
+        return out
+
+    def _candidates(self, pids):
+        """Every directory a work probe of this stage may be in, in a fixed order: the caller's named directories, the
+        directories the tree's environment / command lines / working directories name, the open-file directories; each
+        followed by its immediate subdirectories (named and named-by-process only). At most MAX_PROBE_DIRS."""
+        out = []
+        for base in self.named_dirs + self._process_dirs(pids):
+            out.append(Path(base))
             try:
-                candidates += sorted(p for p in Path(named).iterdir() if p.is_dir() and not p.is_symlink())
+                out += sorted(p for p in Path(base).iterdir() if p.is_dir() and not p.is_symlink())
             except OSError:
                 pass
-            for directory in candidates:
-                text = _read(directory / 'progress.json')
-                if not text:
-                    continue
-                try:
-                    value = json.loads(text)
-                except ValueError:
-                    continue
-                if not (isinstance(value, dict) and value.get('schema') == WORK_PROBE and value.get('pid') in live):
-                    continue
-                item = dict(dir=str(directory), stage=value.get('stage'), completed=value.get('completed'),
-                            total=value.get('total'), state=value.get('state'), probe_at=value.get('at'),
-                            reader_workers=value.get('reader_workers'))
-                done, before = value.get('completed'), self.probe_previous.get(str(directory))
-                if isinstance(done, int) and before is not None and before[2] == value.get('stage') \
-                        and mono - before[0] > 0:
-                    item['completed_per_min'] = round((done - before[1]) / ((mono - before[0]) / 60.0), 3)
-                if isinstance(done, int):
-                    self.probe_previous[str(directory)] = (mono, done, value.get('stage'))
-                found.append(item)
+        out += [Path(d) for d in self.probe_dirs]
+        return list(dict.fromkeys(out))[:MAX_PROBE_DIRS]
+
+    def _named_probes(self, pids, mono):
+        """The live work probes of the stage (FA-4 for every stage: the ROOT writes its FRANKIE_WORK_PROBE_V1
+        progress.json at experiment-roots/<attempt>/, the forked native pass at <attempt>/native-overlap/; the other
+        pieces wherever their process names a directory, see _candidates). Each with its own completed_per_min,
+        units_unchanged_s, stalled and cpu_ranges."""
+        live, found = {pid for pid, _ in pids}, []
+        for directory in self._candidates(pids):
+            text = _read(directory / 'progress.json')
+            if not text:
+                continue
+            try:
+                value = json.loads(text)
+            except ValueError:
+                continue
+            if not (isinstance(value, dict) and value.get('schema') == WORK_PROBE and value.get('pid') in live):
+                continue
+            item = probe_item(value, directory)
+            done, before = value.get('completed'), self.probe_previous.get(str(directory))
+            if isinstance(done, int) and before is not None and before[2] == value.get('stage') \
+                    and mono - before[0] > 0:
+                item['completed_per_min'] = round((done - before[1]) / ((mono - before[0]) / 60.0), 3)
+            if isinstance(done, int):
+                self.probe_previous[str(directory)] = (mono, done, value.get('stage'))
+                marker = (value.get('stage'), done)
+                moved = self.probe_moved.get(str(directory))
+                if moved is None or moved[1] != marker:
+                    self.probe_moved[str(directory)] = moved = (mono, marker)
+                item['units_unchanged_s'] = round(mono - moved[0], 1)
+                item['stalled'] = item['units_unchanged_s'] >= STALL_SECONDS and value.get('state') == 'running'
+            found.append(item)
         return found
 
     def _units_from_probe(self, pids):
         """An existing FRANKIE_WORK_PROBE_V1 progress.json of a process in the tree (its stage, completed, total)."""
         live = {pid for pid, _ in pids}
-        for directory in self.named_dirs + [d for d in self.probe_dirs if d not in self.named_dirs]:
+        for directory in self._candidates(pids):
             text = _read(Path(directory) / 'progress.json')
             if not text:
                 continue
@@ -311,11 +413,12 @@ class Heartbeat:
                              units_total=value.get('units_total'), unit=value.get('unit'), source='stage phase file')
         except ValueError:
             units = None
-        if self.named_dirs:
-            try:
-                line['work_probes'] = self._named_probes(getattr(self, '_pids', None) or [], mono)
-            except Exception as error:  # noqa: BLE001 - a failed sample is written, never raised
-                line['work_probes_error'] = '%s: %s' % (type(error).__name__, error)
+        try:                            # every stage (stacks pass): an empty list = no live work probe found
+            line['work_probes'] = self._named_probes(getattr(self, '_pids', None) or [], mono)
+        except Exception as error:  # noqa: BLE001 - a failed sample is written, never raised
+            line['work_probes_error'] = '%s: %s' % (type(error).__name__, error)
+        if self.pid:
+            line['cpu_ranges'] = cpu_list_of(self.pid)
         if units is None:
             units = self._units_from_probe(getattr(self, '_pids', None) or [])
         if self.log_path:
@@ -396,6 +499,59 @@ def stages_summary(run_dir, day=None):
                             bytes_out_per_min=line.get('bytes_out_per_min'), files_out=line.get('files_out'),
                             rss_bytes=line.get('rss_bytes'), processes=line.get('processes'),
                             exit_code=line.get('exit_code'), units_unchanged_s=line.get('units_unchanged_s'),
-                            stalled=line.get('stalled'), work_probes=line.get('work_probes'), file=str(path)))
+                            stalled=line.get('stalled'), work_probes=line.get('work_probes'), file=str(path),
+                            units_source=(line.get('sources') or {}).get('units'), cpu_ranges=line.get('cpu_ranges'),
+                            work_probes_error=line.get('work_probes_error'), sample_error=line.get('sample_error')))
     return dict(schema=SCHEMA + '_SUMMARY', run_dir=str(run_dir), day=day, at=now, stale_after_intervals=STALE_INTERVALS,
-                stalled_after_seconds=STALL_SECONDS, stages=out)
+                stalled_after_seconds=STALL_SECONDS, stages=out, run_probes=run_probes(run_dir))
+
+
+def _probe_file(directory, now):
+    """One FRANKIE_WORK_PROBE_V1 progress.json read on its own (outside a stage heartbeat): the item, its age, whether
+    its writer is the same live process (pid + start ticks), or a status naming why it is not readable."""
+    text = _read(Path(directory) / 'progress.json')
+    if text is None:
+        return dict(dir=str(directory), status='absent')
+    try:
+        value = json.loads(text)
+    except ValueError:
+        return dict(dir=str(directory), status='unreadable JSON')
+    if not isinstance(value, dict) or value.get('schema') != WORK_PROBE:
+        return dict(dir=str(directory), status='not a %s file' % WORK_PROBE)
+    item = probe_item(value, directory)
+    try:
+        item['age_s'] = round(now - float(value.get('at')), 1)
+    except (TypeError, ValueError):
+        item['age_s'] = None
+    pid, token = value.get('pid'), value.get('process_token')
+    alive = None
+    if isinstance(pid, int) and pid > 0 and token:
+        stat = _read('/proc/%d/stat' % pid)
+        boot = (_read('/proc/sys/kernel/random/boot_id') or '').strip()
+        try:
+            fields = stat.rsplit(')', 1)[1].split() if stat else None
+            alive = bool(fields) and fields[0] not in ('Z', 'X') and '%s:%s' % (boot, fields[19]) == token
+        except IndexError:
+            alive = False
+    item['process_alive'] = alive
+    item['status'] = 'read'
+    return item
+
+
+def run_probes(run_dir, queue_dir=None):
+    """The work probes outside any stage child (stacks pass, read-only): the Run's own <run>/progress.json and the queue
+    line workers' <line>-worker/progress.json with each line's kick receipt run_settings (FA-6). Absent = 'absent'."""
+    now, queue_dir = time.time(), Path(queue_dir or QUEUE_DIR)
+    out = [dict(_probe_file(run_dir, now), probe='run')]
+    for line in ('root', 'class'):
+        item = dict(_probe_file(queue_dir / ('%s-worker' % line), now), probe='%s line worker' % line)
+        text = _read(queue_dir / ('%s-kick.json' % line))
+        try:
+            kick = json.loads(text) if text else None
+        except ValueError:
+            kick = 'unreadable JSON'
+        item['kick'] = (dict(at_utc=kick.get('at_utc'), by=kick.get('by'), scope=kick.get('scope'),
+                             run_settings=kick.get('run_settings'), how=kick.get('how'))
+                        if isinstance(kick, dict) else kick if kick else 'absent')
+        out.append(item)
+    return out

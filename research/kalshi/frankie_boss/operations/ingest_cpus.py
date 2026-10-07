@@ -24,13 +24,44 @@ The ingest day process runs under `taskset -c <its booking>` (frankie_box_cores.
   record()         the CPU map for the progress stream (never the receipt: the receipts' fields are unchanged).
 
 Placement changes WHERE work runs, never what it computes: no value, order, byte, hash or identity depends on it.
+
+TEMPLATE (session 5, Greg: every ingest pool goes through the shared pin helper deploy/aws/box/frankie_box_lane_pin.py,
+which frankie_box_day_external.py already imports; no private copy): lane(), core_order(), placement(), pin_thread()
+and record() are now frankie_box_lane_pin.lane_cpus / core_order / placement / pin_thread / record, with the ingest's
+one extra rule kept here: never more workers than booked CPUs less the parent (lane_pin.placement cycles past the lane,
+which the ingest refuses, so it is called with at most len(lane) - 1). lane_pin has no submit/get pool that survives a
+dead worker (its pinned_pool raises on a death; its ordered_map is a generator over one job list, while pass 2/3 and
+CompactBuildJournal(executor=) submit block by block), so pinned_pool() keeps frankie_box_boss_session._PinnedPool (the
+same never-stop rule) and the record says so; the cross-owner request is in STACKS_PASS_20261007_INGEST.md.
+end_pool() is new: every pool stop is bounded (Greg, a2's shard exit hang: terminate() then an unbounded join()): the
+workers are given `grace` seconds to end, then SIGKILLed by pid, and the stop is noted with what was done.
 """
 import contextlib
 import os
+import threading
+import time
 
 _LANE = None
 _HELPER = None
 _HELPER_WHY = None
+_LP = None
+_LP_WHY = None
+
+
+def _lane_pin():
+    """frankie_box_lane_pin (the shared pin helper), or None with the reason kept for record()."""
+    global _LP, _LP_WHY
+    if _LP is None and _LP_WHY is None:
+        try:
+            from deploy.aws.box import frankie_box_lane_pin as LP
+        except Exception as error:  # noqa: BLE001 - placement is never a reason to stop an ingest
+            try:
+                import frankie_box_lane_pin as LP          # flat import (the box's deploy/aws/box on sys.path)
+            except Exception:  # noqa: BLE001
+                _LP_WHY = 'shared pin helper unavailable (%s: %s); local placement' % (type(error).__name__, error)
+                return None
+        _LP = LP
+    return _LP
 
 
 def _session():
@@ -60,9 +91,12 @@ def lane():
     """The booked CPUs, sorted; cached on the first call of the process."""
     global _LANE
     if _LANE is None:
-        S = _session()
+        LP, S = _lane_pin(), _session()
         try:
-            _LANE = list(S.lane_cpus()) if S is not None else _affinity()
+            if LP is not None:
+                _LANE = list(LP.lane_cpus())
+            else:
+                _LANE = list(S.lane_cpus()) if S is not None else _affinity()
         except Exception:  # noqa: BLE001
             _LANE = _affinity()
     return list(_LANE)
@@ -71,6 +105,13 @@ def lane():
 def core_order(cpus):
     """(cpus one hardware thread per physical core first, then the siblings; basis)."""
     cpus = sorted(cpus)
+    LP = _lane_pin()
+    if LP is not None:
+        try:
+            order, basis = LP.core_order(cpus)
+            return list(order), 'frankie_box_lane_pin.core_order: ' + basis
+        except Exception:  # noqa: BLE001 - the local order below
+            pass
     S = _session()
     if S is None:
         return cpus, _HELPER_WHY
@@ -91,6 +132,16 @@ def placement(workers=None):
     """dict(parent, workers, lane, basis): the parent on the lowest booked CPU, at most len(lane) - 1 workers."""
     cpus = lane()
     parent = cpus[0]
+    LP = _lane_pin()
+    limit = len(cpus) - 1 if workers is None else max(0, min(int(workers), len(cpus) - 1))
+    if LP is not None and limit > 0:
+        try:
+            coordinator, chosen, basis = LP.placement(limit, cpus)
+            if coordinator == parent and parent not in chosen and len(set(chosen)) == len(chosen) == limit:
+                return dict(parent=parent, workers=list(chosen), lane=cpus,
+                            basis='frankie_box_lane_pin.placement: ' + basis)
+        except Exception:  # noqa: BLE001 - the local placement below (same rule)
+            pass
     order, basis = core_order(cpus)
     sibling = set()
     S = _session()
@@ -203,7 +254,14 @@ def pinned_pool(cpus, label, note=None):
 
 
 def pin_thread(cpu):
-    """Pin the calling thread to one CPU (placement only; left as it was when refused)."""
+    """Pin the calling thread to one CPU (placement only; the lane when refused, else left as it was)."""
+    LP = _lane_pin()
+    if LP is not None:
+        try:
+            LP.pin_thread(cpu, lane())
+            return
+        except Exception:  # noqa: BLE001
+            pass
     try:
         os.sched_setaffinity(0, {cpu})
     except (AttributeError, OSError, ValueError):
@@ -236,8 +294,75 @@ def resilient(call, workers, note=None, *, label='pool', retries_at_one=2):
 def record(workers=None):
     """The CPU map of this ingest process for the progress stream."""
     p = placement(workers)
-    return dict(phase='cpu_placement', lane=_ranges(p['lane']), lane_cpus=len(p['lane']), parent_cpu=p['parent'],
+    LP = _lane_pin()
+    shared = None
+    if LP is not None and p['workers']:
+        try:
+            shared = LP.record(len(p['workers']), p['lane'], what='trading-day ingest')
+        except Exception as error:  # noqa: BLE001
+            shared = dict(error='%s: %s' % (type(error).__name__, error))
+    return dict(phase='cpu_placement', lane_placement=shared, pin_helper='frankie_box_lane_pin' if LP is not None else _LP_WHY,
+                pool_helper='frankie_box_boss_session._PinnedPool' if _session() is not None else _HELPER_WHY, lane=_ranges(p['lane']), lane_cpus=len(p['lane']), parent_cpu=p['parent'],
                 worker_cpus=p['workers'], worker_cpu_list=_ranges(p['workers']) if p['workers'] else '', basis=p['basis'],
                 booking=os.environ.get('FRANKIE_CPU_BOOKING'),
                 rule='the parent keeps the lowest booked CPU (the reader reserves it for its ordered consumer); each pool '
                      'worker is pinned to one CPU of the booking, one thread per physical core first; placement only')
+
+
+def _workers_of(pool):
+    """The worker processes of a pool (ingest_cpus.pinned_pool's, a multiprocessing.Pool, a ProcessPoolExecutor)."""
+    inner = getattr(pool, 'pool', pool)
+    for name in ('_pool', '_processes'):
+        held = getattr(inner, name, None)
+        if held is None:
+            continue
+        try:
+            return list(held.values()) if isinstance(held, dict) else list(held)
+        except Exception:  # noqa: BLE001
+            return []
+    return []
+
+
+def end_pool(pool, *, normal=True, grace=60.0, note=None, label='pool'):
+    """Stop a pool with a BOUND (Greg, a2's shard exit hang: terminate() caught by an inherited SIGTERM handler, then an
+    unbounded join()). normal=True: close() (the workers end after their queued work), else terminate(); either runs in
+    a helper thread for at most `grace` seconds; a worker still alive after it is SIGKILLed by pid (a pool's workers
+    hold no output of their own: every result the caller kept is already in the caller), then the helper gets `grace`
+    more seconds. Never raises; returns (and notes) what was done."""
+    import signal
+    if pool is None:
+        return dict(label=label, outcome='no pool')
+    started = time.monotonic()
+    workers = _workers_of(pool)
+    how = 'close' if normal else 'terminate'
+    errors = []
+
+    def stop():
+        try:
+            getattr(pool, how)()
+        except Exception as error:  # noqa: BLE001 - recorded; the stop is still bounded below
+            errors.append('%s: %s' % (type(error).__name__, str(error)[:200]))
+    helper = threading.Thread(target=stop, name='end-pool-%s' % label, daemon=True)
+    helper.start()
+    helper.join(grace)
+    killed = []
+    if helper.is_alive():
+        for process in workers + [w for w in _workers_of(pool) if w not in workers]:
+            pid = getattr(process, 'pid', None)
+            try:
+                if pid and process.exitcode is None:
+                    os.kill(pid, signal.SIGKILL)
+                    killed.append(pid)
+            except (OSError, AttributeError, ValueError):
+                pass
+        helper.join(grace)
+    outcome = dict(phase='pool_stopped', label=label, how=how, seconds=round(time.monotonic() - started, 3),
+                   bounded_at_s=grace, killed_pids=killed, helper_ended=not helper.is_alive(), errors=errors,
+                   rule='every pool stop is bounded: close/terminate gets the grace, then the workers still alive are '
+                        'SIGKILLed by pid; nothing the caller holds is lost')
+    if (killed or errors or helper.is_alive()) and note is not None:
+        try:
+            note(outcome)
+        except Exception:  # noqa: BLE001
+            pass
+    return outcome

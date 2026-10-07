@@ -31,6 +31,19 @@ def read(path, default=''):
         return default
 
 
+def sub_probes(session, snapshot):
+    """{subdirectory name: its FRANKIE_WORK_PROBE_V1 snapshot} for every immediate subdirectory holding a progress.json."""
+    out = {}
+    try:
+        children = sorted(p for p in Path(session).iterdir() if p.is_dir() and not p.is_symlink())
+    except OSError:
+        return out
+    for child in children:
+        if (child / 'progress.json').is_file():
+            out[child.name] = snapshot(child)
+    return out
+
+
 def token():
     import boto3
     try:
@@ -96,6 +109,9 @@ def main():
         beat = dict(schema='ROOT_PROGRESS_V1', cycle_index=a.cycle, request_sha256=read(session / 'request_sha256', ''),
                     phase=phase, at=now, note=read(session / 'note', '')[:400], host='frankie-box i-035994afa8bdf66a5')
         beat['work'] = snapshot(session, beat['request_sha256'], phase)
+        # additive (stacks pass, FA-4): every other live work probe one level below the session (the forked native
+        # pass at <session>/native-overlap/), each read on its own; the note and 'work' are unchanged
+        beat['work_probes'] = sub_probes(session, snapshot)
         beat['note'] = (highlight(beat['work']) + ' | ' + beat['note'])[:400]
         line = json.dumps(beat, sort_keys=True)
         if s3_ok:

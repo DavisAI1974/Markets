@@ -277,41 +277,34 @@ def _decoded_lines(path, workers):
             from deploy.aws.box import frankie_box_lane_pin as LP
         ranges = _line_ranges(path, size, NATIVE_RANGE_BYTES)
         count = min(workers, len(ranges))
-        hashed, state, stop = hashlib.sha256(), dict(bytes=0), threading.Event()
-
-        def hash_file():
-            try:
-                with path.open('rb') as handle:
-                    for block in iter(lambda: handle.read(1 << 24), b''):
-                        if stop.is_set():
-                            return
-                        hashed.update(block)
-                        state['bytes'] += len(block)
-            except BaseException as error:  # noqa: BLE001 - re-raised after the join
-                state['error'] = error
-        hasher = threading.Thread(target=hash_file, name='native-ledger-sha256')
+        try:
+            from frankie_box_experiment_search import FrontierHasher
+        except ImportError:
+            from deploy.aws.box.frankie_box_experiment_search import FrontierHasher
+        # the search's shared hasher (stacks pass): the hash reads the pages the decode workers read (one disk pass),
+        # and an early stop is bounded (no wait on the rest of the ledger after a failure)
+        window = count * NATIVE_WINDOW_PER_WORKER
+        hasher = FrontierHasher(path, window * max(b - a for _, a, b in ranges), name='native-ledger-sha256')
         ordinal, finished, recovery = 0, False, dict(worker_deaths=[], redone=[])
         try:
             # pinned, in file order, at most NATIVE_WINDOW_PER_WORKER ranges per worker in flight; the hasher starts
             # after the fork; a dead worker's range is decoded again, never a hang (frankie_box_lane_pin.ordered_map)
-            for _, (rows, error) in LP.ordered_map(_decode_range, ranges, count,
-                                                    context=multiprocessing.get_context('fork'),
-                                                    window=count * NATIVE_WINDOW_PER_WORKER,
-                                                    on_start=lambda pool: hasher.start(), report=recovery):
+            for job, (rows, error) in LP.ordered_map(_decode_range, ranges, count,
+                                                      context=multiprocessing.get_context('fork'),
+                                                      window=window, on_start=hasher.start, report=recovery):
                 for row in rows:
                     yield ordinal, row
                     ordinal += 1
                 if error is not None:
                     raise error
+                hasher.advance(job[2])
             finished = True
         finally:
             if not finished:
-                stop.set()
-            if hasher.ident is not None:
-                hasher.join()
-        if state.get('error') is not None:
-            raise state['error']
-        done.update(bytes=state['bytes'], sha256=hashed.hexdigest(), mode='fork_pool_line_ranges', workers=count,
+                recovery['hasher_ended_after_stop'] = hasher.stop()
+        hashed_bytes, digest = hasher.finish()
+        state = dict(bytes=hashed_bytes)
+        done.update(bytes=state['bytes'], sha256=digest, mode='fork_pool_line_ranges', workers=count, hashing=hasher.report(),
                     ranges=len(ranges), pool_recovery=recovery,
                     cpu_placement=LP.record(count, what='native ledger decode workers'))
 

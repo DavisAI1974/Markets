@@ -382,6 +382,88 @@ def _spool_ranges(path, size, pieces):
     return [(path, a, b) for a, b in zip(cuts, cuts[1:]) if b > a]
 
 
+class FrontierHasher:
+    """sha256 of one file in file order on a daemon thread, at most `lead` bytes past the decode frontier (stacks pass,
+    2026-10-07 night: every spool read ONCE). The decode workers read the in-flight ranges just past the frontier; the
+    hasher reads the same pages within that window, so one of the two reads comes from the disk and the other from the
+    page cache instead of the hasher racing the whole file ahead (a second disk pass on a spool larger than the cache,
+    e.g. the ~430 GB frames spool of 20231018). The digest is of every byte in file order, exactly hashlib.sha256 of
+    the file: placement of the reads changes nothing hashed. Stops are bounded: stop() wakes the thread, which returns
+    within one block read, and is joined with a timeout (a still-running hasher is reported, never waited on forever;
+    the shard exit hang of a2 came from an unbounded join). The digest is compared only after the last range."""
+    BLOCK = 16 << 20
+
+    def __init__(self, path, lead, name='spool-sha256'):
+        import threading
+        self.path, self.lead = str(path), max(self.BLOCK, int(lead))
+        self.sha256, self.bytes, self.error, self.frontier = hashlib.sha256(), 0, None, 0
+        self.stopped, self.throttle_waits, self.started_at, self.seconds = False, 0, None, None
+        self.condition = threading.Condition()
+        self.thread = threading.Thread(target=self._run, name=name, daemon=True)
+
+    def _run(self):
+        self.started_at = time.time()
+        try:
+            with open(self.path, 'rb', buffering=0) as handle:
+                while True:
+                    with self.condition:
+                        while not self.stopped and self.bytes >= self.frontier + self.lead:
+                            self.throttle_waits += 1
+                            self.condition.wait(1.0)
+                        if self.stopped:
+                            return
+                    block = handle.read(self.BLOCK)
+                    if not block:
+                        return
+                    self.sha256.update(block)
+                    self.bytes += len(block)
+        except BaseException as error:  # noqa: BLE001 - re-raised by finish()
+            self.error = error
+        finally:
+            self.seconds = round(time.time() - self.started_at, 3)
+
+    def start(self, *_):
+        self.thread.start()
+
+    def advance(self, offset):
+        """The decode frontier moved to byte `offset` (the end of the last range consumed in file order)."""
+        with self.condition:
+            if offset > self.frontier:
+                self.frontier = offset
+                self.condition.notify_all()
+
+    def stop(self, timeout=60.0):
+        """Abort (an error or an early close upstream): bounded; True when the thread has ended."""
+        with self.condition:
+            self.stopped = True
+            self.condition.notify_all()
+        if self.thread.ident is not None:
+            self.thread.join(timeout)
+        return not self.thread.is_alive()
+
+    def finish(self):
+        """Let the hasher read to the end, then (bytes, hexdigest); its own read error is raised here."""
+        self.advance(float('inf'))
+        if self.thread.ident is not None:
+            self.thread.join()
+        if self.error is not None:
+            raise self.error
+        return self.bytes, self.sha256.hexdigest()
+
+    def report(self):
+        return dict(mode='frontier-throttled thread (the decode and the hash share one disk read via the page cache)',
+                    lead_bytes=self.lead, throttle_waits=self.throttle_waits, seconds=self.seconds,
+                    stopped_early=self.stopped)
+
+
+# The column spools are cut into ranges of about SPOOL_COLUMN_RANGE_BYTES (at least SPOOL_RANGES_PER_WORKER per
+# worker) with at most two ranges per worker in flight, so the decode reads a bounded window just past the frontier
+# and the hasher reads the same pages (FrontierHasher). The cut count never changes the joined columns (parts are
+# joined in file order with columns()'s rules; proven by the toy self-test in the stacks-pass record).
+SPOOL_COLUMN_RANGE_BYTES = 256 << 20
+SPOOL_WINDOW_PER_WORKER = 2
+
+
 def spool_columns(path, pin, time_key, workers=1, report=None):
     """columns(unpack_spool(path, pin), time_key) with the decode on the lane's workers (see above)."""
     started = time.time()
@@ -389,54 +471,53 @@ def spool_columns(path, pin, time_key, workers=1, report=None):
     if workers <= 1 or size < SPOOL_PARALLEL_MIN_BYTES:
         result = columns(unpack_spool(path, pin), time_key)
         if report is not None:
-            report.update(mode='serial', workers=1, ranges=1, bytes=size, seconds=round(time.time() - started, 3))
+            report.update(mode='serial', workers=1, ranges=1, bytes=size, seconds=round(time.time() - started, 3),
+                          reason=('one worker' if workers <= 1 else
+                                  'spool below SPOOL_PARALLEL_MIN_BYTES (%d): the serial call itself' % SPOOL_PARALLEL_MIN_BYTES))
         return result
     import multiprocessing
-    import threading
-    ranges = _spool_ranges(str(path), size, workers * SPOOL_RANGES_PER_WORKER)
-    hashed = dict(sha256=hashlib.sha256(), bytes=0)
-
-    def hash_file():
-        try:
-            with open(path, 'rb') as handle:
-                for block in iter(lambda: handle.read(1 << 24), b''):
-                    hashed['sha256'].update(block)
-                    hashed['bytes'] += len(block)
-        except BaseException as error:  # noqa: BLE001 - re-raised in the caller after the join
-            hashed['error'] = error
-    hasher = threading.Thread(target=hash_file, name='spool-sha256')
-    numeric, text, count = {}, {}, 0
+    ranges = _spool_ranges(str(path), size, max(workers * SPOOL_RANGES_PER_WORKER, size // SPOOL_COLUMN_RANGE_BYTES + 1))
+    count = min(workers, len(ranges))
+    window = count * SPOOL_WINDOW_PER_WORKER
+    hasher = FrontierHasher(path, window * max(b - a for _, a, b in ranges), name='spool-sha256')
+    numeric, text, rows, done, finished = {}, {}, 0, 0, False
     try:
         # in file order; pinned; hasher started after the workers are forked (no thread is copied into them); a dead
         # worker's range is decoded again, never a hang (frankie_box_lane_pin.ordered_map)
-        for _, (part_numeric, part_text, part_count) in _lane_pin().ordered_map(
-                _spool_range_columns, ranges, min(workers, len(ranges)), context=multiprocessing.get_context('fork'),
-                cpus=lane_cpus(), window=len(ranges), on_start=lambda pool: hasher.start(), report=POOL_RECOVERY):
+        for job, (part_numeric, part_text, part_count) in _lane_pin().ordered_map(
+                _spool_range_columns, ranges, count, context=multiprocessing.get_context('fork'),
+                cpus=lane_cpus(), window=window, on_start=hasher.start, report=POOL_RECOVERY):
             for merged, part in ((numeric, part_numeric), (text, part_text)):
                 for key, values in part.items():
                     if key in merged:
                         merged[key].extend(values)
                     else:                      # first seen in this range: None for every earlier row, as columns()
-                        merged[key] = [None] * count
+                        merged[key] = [None] * rows
                         merged[key].extend(values)
                 for key, values in merged.items():
                     if key not in part:
                         values.extend([None] * part_count)
-            count += part_count
+            rows += part_count
+            done += 1
+            hasher.advance(job[2])
+            _progress('search: decode %s' % Path(path).name, done, len(ranges), 'byte ranges', bytes_done=job[2],
+                      bytes_total=size, rows=rows)
+        finished = True
     finally:
-        if hasher.ident is not None:
-            hasher.join()
-    if hashed.get('error') is not None:
-        raise hashed['error']
-    if hashed['bytes'] != pin['bytes'] or hashed['sha256'].hexdigest() != pin['sha256']:
+        if not finished:
+            ended = hasher.stop()
+            if report is not None:
+                report.update(aborted=True, hasher_ended=ended)
+    hashed_bytes, digest = hasher.finish()
+    if hashed_bytes != pin['bytes'] or digest != pin['sha256']:
         raise ValueError('search spool differs from the selected export: ' + str(path))
     other = sorted(key + ' (mixed kinds: numeric and text channels both retained)' for key in set(text) & set(numeric))
     if report is not None:
-        report.update(mode='fork_pool_line_ranges', workers=min(workers, len(ranges)), ranges=len(ranges), bytes=size,
-                      seconds=round(time.time() - started, 3),
+        report.update(mode='fork_pool_line_ranges', workers=count, ranges=len(ranges), window=window, bytes=size,
+                      seconds=round(time.time() - started, 3), hashing=hasher.report(),
                       basis='ordered byte ranges cut at line starts; parts joined in file order with columns() rules; '
                             'bytes hashed in file order and checked against the pin')
-    return numeric, text, other, count
+    return numeric, text, other, rows
 
 
 # ---- the INPUT spool read on the held lane (the Sept 29 pattern, item 3: batch decode, every per-record check kept) ---
@@ -481,47 +562,56 @@ def decoded_spool(path, pin, workers=1, report=None):
             report.update(mode='serial', workers=1, ranges=1, bytes=size, seconds=round(time.time() - started, 3))
         return
     import multiprocessing
-    import threading
     ranges = _spool_ranges(str(path), size, max(workers * SPOOL_RANGES_PER_WORKER, size // SPOOL_RANGE_BYTES + 1))
     count = min(workers, len(ranges))
-    hashed, stop = dict(sha256=hashlib.sha256(), bytes=0), threading.Event()
-
-    def hash_file():
-        try:
-            with open(path, 'rb') as handle:
-                for block in iter(lambda: handle.read(1 << 24), b''):
-                    if stop.is_set():
-                        return
-                    hashed['sha256'].update(block)
-                    hashed['bytes'] += len(block)
-        except BaseException as error:  # noqa: BLE001 - re-raised after the join
-            hashed['error'] = error
-    hasher = threading.Thread(target=hash_file, name='input-spool-sha256', daemon=True)
+    hasher = FrontierHasher(path, count * 2 * max(b - a for _, a, b in ranges), name='input-spool-sha256')
     decoded = _lane_pin().ordered_map(_spool_range_rows, ranges, count, context=multiprocessing.get_context('fork'),
-                                      cpus=lane_cpus(), window=count * 2, on_start=lambda pool: hasher.start(),
+                                      cpus=lane_cpus(), window=count * 2, on_start=hasher.start,
                                       report=POOL_RECOVERY)
-    finished = False
+    finished, done = False, 0
     try:
-        for _, (records, error) in decoded:
+        for job, (records, error) in decoded:
             yield from records
             if error is not None:
                 raise error
+            done += 1
+            hasher.advance(job[2])
+            _progress('search: decode %s' % Path(path).name, done, len(ranges), 'byte ranges', bytes_done=job[2],
+                      bytes_total=size)
         finished = True
     finally:
         decoded.close()                    # an early check failure in the consumer stops the workers now
         if not finished:
-            stop.set()
-        if hasher.ident is not None:
-            hasher.join()
-    if hashed.get('error') is not None:
-        raise hashed['error']
-    if hashed['bytes'] != pin['bytes'] or hashed['sha256'].hexdigest() != pin['sha256']:
+            ended = hasher.stop()          # bounded: never waits on the rest of the file after a failure
+            if report is not None:
+                report.update(aborted=True, hasher_ended=ended)
+    hashed_bytes, digest = hasher.finish()
+    if hashed_bytes != pin['bytes'] or digest != pin['sha256']:
         raise ValueError('search spool differs from the selected export: ' + str(path))
     if report is not None:
         report.update(mode='fork_pool_line_ranges', workers=count, ranges=len(ranges), bytes=size,
-                      seconds=round(time.time() - started, 3),
+                      seconds=round(time.time() - started, 3), hashing=hasher.report(),
                       basis='ordered line ranges decoded by pinned workers; every per-record check on the coordinator '
                             'in spool order; bytes hashed in file order against the pin')
+
+
+# ---- probes (FRANKIE_STAGE_PHASE_V1 via frankie_box_stage_progress.report_phase; the heartbeat adds units/min and the
+# 600 s stall flag on the reader side). A probe never changes the stage; a probe write that fails is COUNTED here and
+# the count lands on the MANIFEST (cpu_placement.probe_failures), so nothing is swallowed quietly.
+PROBE_FAILURES = dict(count=0, last=None)
+
+
+def _progress(phase, done=None, total=None, unit=None, every=10, **extra):
+    try:
+        try:
+            import frankie_box_stage_progress as SP
+        except ImportError:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import frankie_box_stage_progress as SP
+        SP.report_phase(phase, units_done=done, units_total=total, unit=unit, every=every, **extra)
+    except Exception as error:  # noqa: BLE001 - counted, recorded on the manifest
+        PROBE_FAILURES['count'] += 1
+        PROBE_FAILURES['last'] = '%s: %s' % (type(error).__name__, str(error)[:200])
 
 
 def sha256_file(path):
@@ -1459,6 +1549,20 @@ def _run_pending(context, workers, function, jobs):
 
 # Dead pool workers and the jobs redone for them, over every pool of this search (manifest cpu_placement.pool_recovery)
 POOL_RECOVERY = dict(worker_deaths=[], redone=[])
+PART_DIGESTS = {}         # coupling part -> sha256 its job recorded for the bytes it wrote (the part's pin)
+PART_READS = {}           # coupling part -> (bytes, sha256) of the discovery read of it (an integrity cross-check)
+
+
+def _part_digest(part):
+    """The sha256 a finished coupling job recorded in its saved state (complete=True): the fsynced bytes it renamed to
+    `part`, or the file it re-hashed and compared on a resume. None when the job wrote no part (fewer than 2 steps) or
+    the state is not readable (then the part is hashed at publication, listed)."""
+    try:
+        from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state
+        state = _load_raw_state(Path(part + '.state.pkl'))
+    except Exception:  # noqa: BLE001 - the part is hashed at publication instead (listed in source_passes)
+        return None
+    return state.get('sha256') if state.get('complete') else None
 
 
 def _cell_retry(args):
@@ -1867,8 +1971,13 @@ def _part_nominations(args):
     has always done, one part per call)."""
     part, staging = args
     path, found, read = Path(part), [], 0
-    with path.open('r', encoding='utf-8') as handle:
+    hashed, size = hashlib.sha256(), 0
+    # read as bytes, every line hashed as read (the part's one read also checks its pin); json.loads decodes UTF-8
+    # bytes exactly as the text read did (json.dumps lines carry no carriage return, so no newline translation applied)
+    with path.open('rb') as handle:
         for ordinal, line in enumerate(handle):
+            hashed.update(line)
+            size += len(line)
             read += 1
             row = json.loads(line)
             lag = row.get('best_lag')
@@ -1878,7 +1987,7 @@ def _part_nominations(args):
                 part=str(path.relative_to(staging)), row=ordinal, x_transform=row.get('x_transform'),
                 y_transform=row.get('y_transform'), same_way=row.get('same_way'), opposite=row.get('opposite'),
                 both_moving=row.get('both_moving'), null_shifts=row.get('null_shifts'))))
-    return read, found
+    return read, found, (size, hashed.hexdigest())
 
 
 def discovery_nominations(parts, staging, workers=1, context=None):
@@ -1895,8 +2004,9 @@ def discovery_nominations(parts, staging, workers=1, context=None):
     else:
         started, count = None, 1
         results = ((job, _part_nominations(job)) for job in jobs)
-    for _, (rows, found) in results:
+    for job, (rows, found, pinned) in results:
         read += rows
+        PART_READS[job[0]] = pinned
         for key, feature, provenance in found:
             out.setdefault(key, {}).setdefault(feature, []).append(provenance)
     if started is not None:
@@ -2083,11 +2193,7 @@ def discovery(day, cycle, day_role, staging, parts, context, workers, log):
         results = []
         for _, result in _run_pending(context, workers, _discovery_job, jobs):
             results.append(result)
-            try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
-                import frankie_box_stage_progress as _SP
-                _SP.report_phase('search: discovery problems', units_done=len(results), units_total=len(jobs), unit='problems', every=10)
-            except Exception:  # noqa: BLE001
-                pass
+            _progress('search: discovery problems', done=len(results), total=len(jobs), unit='problems', every=10)   # heartbeat; failures counted
 
         if _stop_requested():
             raise SystemExit(75)          # every submitted problem saved its result; resume reuses them
@@ -2213,11 +2319,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         now = time.time()
         phases[name] = round(phases.get(name, 0.0) + now - phase_started[0], 3)
         phase_started[0] = now
-        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
-            import frankie_box_stage_progress as _SP
-            _SP.report_phase('search: %s done' % name, units_done=len(phases), unit='phases')
-        except Exception:  # noqa: BLE001
-            pass
+        _progress('search: %s done' % name, done=len(phases), unit='phases', every=None)   # heartbeat; failures counted
     import numpy as np
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import frankie_box_experiment_transforms as T
@@ -2294,6 +2396,15 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     # where each parallel source pass ran (the spool parses also sit on their sources' `parse`); a preparation loaded
     # from recovery lists only the passes after it
     cpu_placement['source_passes'] = SOURCE_PASSES
+    # visibility (stacks pass): the SIGTERM disposition every pool worker inherits by fork (a caught SIGTERM is what hung
+    # a2's shard stop: terminate() then an unbounded join); default here, recorded so a change shows on day 1
+    import signal
+    handler = signal.getsignal(signal.SIGTERM)
+    cpu_placement['sigterm_inherited_by_workers'] = ('default' if handler == signal.SIG_DFL else
+                                                     'ignored' if handler == signal.SIG_IGN else
+                                                     'handler %s (a pool terminate() could be caught)' % getattr(
+                                                         handler, '__qualname__', repr(handler)))
+    cpu_placement['probe_failures'] = PROBE_FAILURES
     names = sorted(series)
     import multiprocessing
     context = multiprocessing.get_context('fork')                # the workers share the arrays, no copy
@@ -2305,6 +2416,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         tname, name, st, n_unknown = result
         steps[tname][name] = st
         unclassified[tname][name] = n_unknown
+        _progress('search: transform steps', sum(len(v) for v in steps.values()), len(step_jobs), 'series x transform')
     if _stop_requested():
         raise SystemExit(75)       # all submitted transforms have drained and saved their full results
     phase('transform_steps')
@@ -2359,13 +2471,10 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         if short:
             not_counted.append(short)
         parts.append(part)
+        PART_DIGESTS[part] = _part_digest(part)
         count += n_rows
         beyond += n_beyond
-        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
-            import frankie_box_stage_progress as _SP
-            _SP.report_phase('search: coupling cells', units_done=len(parts), units_total=len(jobs), unit='cell jobs', every=10, rows=count)
-        except Exception:  # noqa: BLE001
-            pass
+        _progress('search: coupling cells', done=len(parts), total=len(jobs), unit='cell jobs', every=10, rows=count)   # heartbeat; failures counted
     if _stop_requested():
         raise SystemExit(75)         # every submitted pair worker has saved; no child is left running
     if len(parts) != len(jobs):
@@ -2383,14 +2492,25 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     phase('discovery')
     pinned_parts = [p for p in sorted(parts) if Path(p).exists()]
     hashing_started = time.time()
-    # the parts hashed side by side on pinned threads (hashlib releases the GIL), pins listed in part order as before
-    with _lane_pin().executor('thread', max(1, min(workers, len(pinned_parts) or 1)), lane_cpus()) as hashers:
-        part_digests = list(hashers.map(sha256_file, pinned_parts))
-    part_pins = [dict(path=str(Path(p).relative_to(staging)), rows=None, sha256=digest)
-                 for p, digest in zip(pinned_parts, part_digests)]
+    # Every part is read and hashed ONCE (stacks pass): the worker that wrote it hashed the fsynced bytes before the
+    # rename (a resumed job re-hashed the file and compared it to that digest), and that digest is its pin; when
+    # discovery read the part it hashed the same bytes and must agree (a disagreement is a hard error, both named).
+    # A part with no recorded digest (none expected) is hashed here on pinned threads, listed.
+    rehash = [p for p in pinned_parts if not PART_DIGESTS.get(p)]
+    if rehash:
+        with _lane_pin().executor('thread', max(1, min(workers, len(rehash))), lane_cpus()) as hashers:
+            PART_DIGESTS.update(zip(rehash, hashers.map(sha256_file, rehash)))
+    for p in pinned_parts:
+        read = PART_READS.get(p)
+        if read is not None and read[1] != PART_DIGESTS[p]:
+            raise ValueError('coupling part bytes changed after its worker pinned them: %s (worker %s, discovery read %s)'
+                             % (p, PART_DIGESTS[p], read[1]))
+    part_pins = [dict(path=str(Path(p).relative_to(staging)), rows=None, sha256=PART_DIGESTS[p]) for p in pinned_parts]
     SOURCE_PASSES.append(dict(what='coupling part pins (sha256)', parts=len(pinned_parts),
-                              workers=max(1, min(workers, len(pinned_parts) or 1)), kind='pinned threads',
-                              seconds=round(time.time() - hashing_started, 3)))
+                              kind='write-time digests of the jobs (one read per part); re-hashed here: %d; checked '
+                                   'against the discovery read: %d' % (len(rehash), sum(1 for p in pinned_parts
+                                                                                      if p in PART_READS)),
+                              rehashed=rehash, seconds=round(time.time() - hashing_started, 3)))
     cell_specs = [(c, v, None) for c, v in cell_index]
     if sha256_file(day_dir / 'MANIFEST.json') != identity['data_manifest_sha256']:
         raise ValueError('selected export manifest changed before search publication')

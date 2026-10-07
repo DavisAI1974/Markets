@@ -1301,7 +1301,13 @@ class LegacyFrameShards:
         then join up to STOP_JOIN_SECONDS in all, then kill() for any shard still alive, recorded in stop_kills and
         noted. A shard writes nothing durable (its only output is its pipe; every row reaches a spool through the
         replay, and anything still unread in a pipe is a look-ahead row the replay never wrote), so a killed shard
-        loses nothing; the rows, their order and the lockstep checks are unchanged."""
+        loses nothing; the rows, their order and the lockstep checks are unchanged.
+        The rule is frankie_box_lane_pin's dead-worker rule (ordered_map / wait_result / check_alive: "a dead pool
+        worker must never stop a stage or hang it"), mirrored here, not imported: lane_pin imports this module (for
+        cpu_topology) and its helpers drive a multiprocessing.Pool, while the shards are plain forked Processes on
+        pipes. As there: every wait is bounded (_receive polls LEGACY_SHARD_POLL_SECONDS and reports an exited shard;
+        this join is bounded), a dead or stuck worker is recorded in the shape of ordered_map's report['worker_deaths']
+        (pids, at), never waited for, and the lost row is redone (result(): built in the replay, one fewer shard)."""
         workers, self.workers = self.workers, []
         for process, _, _ in workers:
             if process.exitcode is None:
@@ -1315,7 +1321,7 @@ class LegacyFrameShards:
             if process.exitcode is None:
                 process.kill()
                 process.join(self.STOP_JOIN_SECONDS)
-                killed.append(dict(cpu=cpu, pid=process.pid, exit_code=process.exitcode))
+                killed.append(dict(pids=[process.pid], cpu=cpu, at=round(time.time(), 3), exit_code=process.exitcode))
         if killed:
             self.stop_kills.extend(killed)
             if self.note is not None:

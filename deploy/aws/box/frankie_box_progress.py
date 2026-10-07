@@ -17,6 +17,16 @@ def process_token(pid):
         return None
 
 
+def _ranges(cpus):
+    runs = []
+    for cpu in sorted(set(cpus)):
+        if runs and cpu == runs[-1][1] + 1:
+            runs[-1][1] = cpu
+        else:
+            runs.append([cpu, cpu])
+    return ','.join(str(a) if a == b else '%d-%d' % (a, b) for a, b in runs)
+
+
 class Probe:
     def __init__(self, directory, request_sha256=None, phase=None):
         self.directory = Path(directory)
@@ -43,6 +53,13 @@ class Probe:
                          pid=self.pid, process_token=self.token)
             if hasattr(self, 'reader_workers'):
                 value['reader_workers'] = self.reader_workers
+            # optional, additive (stacks pass): a writer that sets probe.cpus (its pool's CPU list) and/or
+            # probe.workers gets them on the file with cpu_ranges ('8-15,24-31'); readers take missing as None
+            if getattr(self, 'cpus', None) is not None:
+                value['cpus'] = sorted(int(c) for c in self.cpus)
+                value['cpu_ranges'] = _ranges(value['cpus'])
+            if getattr(self, 'workers', None) is not None:
+                value['workers'] = self.workers
             self.directory.mkdir(parents=True, exist_ok=True)
             path = self.directory / 'progress.json'
             temporary = path.with_suffix('.pending')
@@ -144,7 +161,9 @@ if __name__ == '__main__':
                       item['stage'], item['key'], item['status'], item['age_s'], item['elapsed_s'], item['units_done'],
                       item['units_total'], item['unit'] or '', item['units_per_min'], item.get('units_unchanged_s'),
                       item['bytes_out'], item['bytes_out_per_min'], item['files_out'], item['rss_bytes'],
-                      item['processes'], (item['phase'] or '')[:100]))
+                      item['processes'], (item['phase'] or '')[:100])
+                  # additive (stacks pass): where the units came from and the stage's CPUs, after every earlier field
+                  + ' units_from=%s cpus=%s' % ((item.get('units_source') or 'none')[:80], item.get('cpu_ranges')))
             # FA-4: each live work probe of the stage (the ROOT's legacy pass at experiment-roots/<attempt>/, its forked
             # native pass at <attempt>/native-overlap/), with its own rate; records/s = completed_per_min / 60
             for probe in item.get('work_probes') or ():
@@ -152,7 +171,16 @@ if __name__ == '__main__':
                 print('%-10s   work probe %-26s %s/%s rate=%s/min (%s/s) state=%s readers=%s dir=%s' % (
                     '', probe.get('stage'), probe.get('completed'), probe.get('total'), per_min,
                     None if per_min is None else round(per_min / 60.0, 1), probe.get('state'),
-                    probe.get('reader_workers'), probe.get('dir')))
+                    probe.get('reader_workers'), probe.get('dir'))
+                    # additive (stacks pass): the probe's own stall watch and CPUs
+                    + ' unchanged=%ss%s cpus=%s' % (probe.get('units_unchanged_s'),
+                                                   ' STALLED' if probe.get('stalled') else '', probe.get('cpu_ranges')))
+        # the probes outside any stage child: the Run itself and the queue line workers with their kick run_settings
+        for probe in summary.get('run_probes') or ():
+            print('%-10s %-22s %s %s/%s age=%ss alive=%s state=%s cpus=%s dir=%s%s' % (
+                'probe', probe.get('probe'), probe.get('status'), probe.get('completed'), probe.get('total'),
+                probe.get('age_s'), probe.get('process_alive'), probe.get('state'), probe.get('cpu_ranges'),
+                probe.get('dir'), '' if 'kick' not in probe else ' kick=%s' % json.dumps(probe['kick'], sort_keys=True)))
         print(json.dumps(summary, sort_keys=True))
     elif args.directory:
         print(json.dumps(snapshot(args.directory), sort_keys=True))

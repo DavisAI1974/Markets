@@ -365,13 +365,18 @@ def execute(request_path):
         raise ValueError('Jev CPU is only the authorized discovery classroom-arm route')
     if type(request['report_number']) is not int or request['report_number'] <= 0:
         raise ValueError('Jev needs the existing positive day report number')
-    if (request['host'] != os.uname().nodename or len(request['cpus']) != 16
-            or len(set(request['cpus'])) != 16 or not str(request['day']).isdigit()
+    import frankie_box_cores as C
+    # the held lane is one of the day-run sizes (frankie_box_cores.DAY_RUN_SIZES: 16, or 32 on a 32-CPU day, the size
+    # Run.jev already admits and binds as request['cpus']); the former fixed 16 refused every 32-CPU day (stacks pass
+    # 2026-10-07 night, DAY_CPUS=32)
+    sizes = tuple(getattr(C, 'DAY_RUN_SIZES', (16,)))
+    if (request['host'] != os.uname().nodename or len(request['cpus']) not in sizes
+            or len(set(request['cpus'])) != len(request['cpus']) or not str(request['day']).isdigit()
             or len(request['day']) != 8 or not request['attempt'] or not request['stamp']):
-        raise ValueError('Jev request lacks the original host/day/attempt/exact 16 CPUs')
+        raise ValueError('Jev request lacks the original host/day/attempt/exact held lane CPUs (%s distinct CPUs)'
+                         % '/'.join(str(n) for n in sizes))
     if any('/' in request[k] or request[k] in ('.', '..') for k in ('run', 'stamp', 'attempt')):
         raise ValueError('Jev run/stamp/attempt must be path-free identities')
-    import frankie_box_cores as C
     booking, why = C.held_booking(request['slot_booking'])
     if (booking is None or booking['run'] != request['run'] or booking['day'] != request['day']
             or booking['cpus'] != request['cpus'] or booking['commit'] != request['source']['commit']):

@@ -273,18 +273,27 @@ class CompactBuildJournal:
         self.writer.seal(expected_count=self.count, expected_head_hash=self.head_hash)
         self._end_pool()
 
+    END_GRACE_SECONDS = 60.0
+
     def _end_pool(self):
-        """The encoders end with the seal (nothing is appended after it): their CPUs are free for the reader."""
+        """The encoders end with the seal (nothing is appended after it): their CPUs are free for the reader. The stop
+        is BOUNDED (session 5; a2's shard exit hang was an unbounded join after terminate): shutdown gets
+        END_GRACE_SECONDS, then any encoder still alive is SIGKILLed by pid (an idle encoder holds nothing: every block
+        was collected and inserted before the seal) and the stop is noted."""
         if self._pool is not None:
-            self._pool.shutdown(wait=True)
-            self._pool = None
+            pool, self._pool = self._pool, None
+            outcome = _bounded_shutdown(pool, self.END_GRACE_SECONDS)
+            if outcome['killed_pids'] or not outcome['ended']:
+                self.encoder_stop = outcome
+                if self.note is not None:
+                    self.note(dict(phase='encoder_pool_stop_bounded', **outcome))
         self._close_handout()
 
     def _close_handout(self):
         handout, self._handout = getattr(self, '_handout', None), None
         if handout is not None:
             handout.close()
-            handout.join_thread()
+            handout.cancel_join_thread()  # CPUs a replacement never took: nothing waits to flush them (a bounded stop)
 
     def rows(self):
         """Every committed row in order with the block chain re-checked; pending rows are flushed first."""
@@ -331,6 +340,32 @@ class CompactBuildJournal:
         finally:
             self._end_pool()
             self.writer.db.close()
+
+
+def _bounded_shutdown(pool, grace):
+    """ProcessPoolExecutor.shutdown(wait=True) for at most `grace` seconds in a helper thread; encoders still alive
+    after it are SIGKILLed by pid, then `grace` more seconds. Placement/lifetime only: nothing written depends on it."""
+    import os
+    import signal
+    import threading
+    started = time.monotonic()
+    processes = list((getattr(pool, '_processes', None) or {}).values())
+    helper = threading.Thread(target=lambda: pool.shutdown(wait=True), name='encoder-pool-stop', daemon=True)
+    helper.start()
+    helper.join(grace)
+    killed = []
+    if helper.is_alive():
+        for process in processes:
+            try:
+                if process.exitcode is None:
+                    os.kill(process.pid, signal.SIGKILL)
+                    killed.append(process.pid)
+            except (OSError, AttributeError, ValueError):
+                pass
+        helper.join(grace)
+    return dict(seconds=round(time.monotonic() - started, 3), bounded_at_s=grace, killed_pids=killed,
+                ended=not helper.is_alive(),
+                rule='the encoder pool stop is bounded: shutdown gets the grace, then live encoders are SIGKILLed')
 
 
 def _pin_encoder(handout, fallback):

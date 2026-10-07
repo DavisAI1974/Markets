@@ -517,12 +517,15 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
                 event(dict(phase='parallel_pass3', segment=k, entries=journal.count))
         journal.seal()
         worker_cpu += journal.worker_cpu_seconds
-        pool.close()
+        # every stop bounded (session 5; a2's shard exit hang was terminate() + an unbounded join()): the pool gets 60 s
+        # to end, then its live workers are SIGKILLed by pid (they hold nothing: every spool is done and every block is
+        # in the sealed container); what was done is an event (ingest_cpus.end_pool)
+        ingest_cpus.end_pool(pool, normal=True, note=event, label='parallel ingest workers')
         closed = True
     finally:
         journal.close()
         if not closed:
-            pool.terminate()
+            ingest_cpus.end_pool(pool, normal=False, grace=30.0, note=event, label='parallel ingest workers (error path)')
         _SHARED.clear()
         gc.unfreeze()
     del records

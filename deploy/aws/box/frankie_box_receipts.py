@@ -66,9 +66,28 @@ def provider_invocations(work, exclude_prefixes=()):
 
     # every job directory read and its result hashed on its own thread (hashlib and file reads release the GIL), in the
     # same order as the serial walk (Greg, 2026-09-28: about a thousand results of up to MBs each, one after another)
-    from concurrent.futures import ThreadPoolExecutor
-    with ThreadPoolExecutor(max(1, min(16, len(jobs)))) as pool:
+    # Stacks pass (2026-10-07 night): the pool is sized from the booked lane (frankie_box_lane_pin.lane_cpus, never a
+    # fixed 16) and its threads pinned one per lane CPU, physical cores first (lane_pin.executor); pool.map keeps the
+    # serial order, so the packet bytes are unchanged. Without the pin helper: an unpinned pool of the same size.
+    with _pool(len(jobs)) as pool:
         return [item for item in pool.map(one, jobs) if item is not None]
+
+
+def _pool(jobs):
+    try:
+        try:
+            import frankie_box_lane_pin as LP
+        except ImportError:
+            from deploy.aws.box import frankie_box_lane_pin as LP
+        return LP.executor('thread', max(1, min(len(LP.lane_cpus()), jobs)))
+    except Exception:  # noqa: BLE001 - placement is never a reason to stop; the same work runs unpinned
+        import os
+        from concurrent.futures import ThreadPoolExecutor
+        try:
+            lane = len(os.sched_getaffinity(0))
+        except (AttributeError, OSError):
+            lane = os.cpu_count() or 1
+        return ThreadPoolExecutor(max(1, min(lane, jobs)))
 
 
 def knowledge_retrieval(work, reading_ledger=None):

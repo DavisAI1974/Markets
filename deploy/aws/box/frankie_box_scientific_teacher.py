@@ -474,59 +474,35 @@ def _line_at(segment, start):
     return segment[start:end], end
 
 
-def _lane_order():
-    """(the lane's CPUs ordered one hardware thread of every physical core first, then the sibling threads; how). The
-    lane is FRANKIE_LANE_CPUS / FRANKIE_BOOKED_CPUS within this process's affinity (frankie_box_boss_session.lane_cpus,
-    cpu_topology, core_groups, reused; the box: 16 cores, siblings N and N+16). Plain affinity order when the helpers or
-    the topology cannot be read, named in `how`."""
+def _lane_pin():
+    """The shared pin helper (frankie_box_lane_pin: lane_cpus, core_order, placement, ordered_map, record), imported the
+    way the box imports its modules, or from the repository package."""
     try:
-        import frankie_box_boss_session as BS
-        cpus = BS.lane_cpus()
-        topology = BS.cpu_topology(cpus)
-        if topology is None:
-            return list(cpus), 'lane %s, topology not readable: lane order' % BS.cpu_ranges(cpus)
-        groups = BS.core_groups(cpus, topology)
-        depth = max(len(g) for g in groups)
-        order = [g[i] for i in range(depth) for g in groups if i < len(g)]
-        return order, 'lane %s, %d physical cores first then siblings' % (BS.cpu_ranges(cpus), len(groups))
+        import frankie_box_lane_pin as LP
+    except ImportError:
+        from deploy.aws.box import frankie_box_lane_pin as LP
+    return LP
+
+
+def _lane_order():
+    """(the lane's CPUs ordered one hardware thread of every physical core first, then the sibling threads; how):
+    frankie_box_lane_pin.core_order over lane_cpus() (FRANKIE_LANE_CPUS / FRANKIE_BOOKED_CPUS within this process's
+    affinity; the box: 16 cores, siblings N and N+16). Plain affinity order when the helper cannot be read, named."""
+    try:
+        LP = _lane_pin()
+        order, how = LP.core_order(LP.lane_cpus())
+        return list(order), 'lane %s: %s' % (','.join(map(str, sorted(order))), how)
     except Exception as error:  # noqa: BLE001 - the lane order is placement only, never the result
         cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else [0]
-        return cpus, 'lane helpers not read (%s: %s): affinity order' % (type(error).__name__, error)
+        return cpus, 'lane helper not read (%s: %s): affinity order' % (type(error).__name__, error)
 
 
-POOL_NOTES = []        # every pool _pinned_map ran in this process, in order: placement, mode, fallbacks, losses, redo
-POOL_POLL_SECONDS = 1.0  # a wait on one item's result looks at the pool this often (a dead worker is noticed within it)
-
-
-def _pin_pool_worker(order, counter, slots):
-    """A pool process takes the next CPU of `order` (a shared counter, no queue feeder thread before the fork), records
-    its pid at that slot (so a lost worker's CPU can be named and released) and pins itself to it (Greg, 2026-10-07:
-    every pool worker pinned to its share of the booked lane). SIGTERM goes back to its default action: a worker forked
-    from a parent that handles SIGTERM must still end when its pool ends it (the a2 shard exit hang, 2026-10-07: an
-    inherited SIGTERM handler swallowed terminate() and the join waited forever). OPENBLAS/OMP/MKL threads are one per
-    worker (nothing here uses them; the setting keeps a worker from fanning out over its siblings). L-2: a failed pin
-    keeps the lane affinity inherited from the parent (taskset of the booking); the work itself is unchanged either way."""
-    import signal
-    for name in ('OPENBLAS_NUM_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS'):
-        os.environ[name] = '1'
-    try:
-        signal.signal(signal.SIGTERM, signal.SIG_DFL)
-    except (ValueError, OSError):  # placement/stop hygiene only
-        pass
-    try:
-        with counter.get_lock():
-            index = counter.value
-            counter.value += 1
-        if index < len(slots):
-            slots[index] = os.getpid()
-        os.sched_setaffinity(0, {order[index % len(order)]})
-    except Exception:  # noqa: BLE001 - placement only
-        pass
+POOL_NOTES = []        # every pool _pinned_map ran in this process, in order: CPU map, mode, worker deaths, redone tasks
 
 
 def _report_units(label, done, total):
-    """The stage heartbeat's units (frankie_box_stage_progress.report_phase, FRANKIE_WORK_PROBE pattern: units, the
-    heartbeat derives units/min and its report-only stall flag at 600 s). A no-op outside a Run.child stage; never raises."""
+    """The stage heartbeat's units (frankie_box_stage_progress.report_phase: the heartbeat derives units/min and its
+    report-only stall flag at 600 s). A no-op outside a Run.child stage; never raises."""
     try:
         import frankie_box_stage_progress as SP
         SP.report_phase(label, units_done=done, units_total=total, unit='items', every=15)
@@ -534,62 +510,45 @@ def _report_units(label, done, total):
         pass
 
 
-def _lost_cpus(processes, slots, cpus):
-    """The CPUs of the workers that died on their own (an exit code other than the executor's own SIGTERM), from the pid
-    each worker recorded at its slot; [] when none can be named (the caller then releases the last CPU of the order)."""
+def _default_sigterm(job):
+    """A pool task: SIGTERM back to its default action in the worker first (a worker forked from a parent that handles
+    SIGTERM, e.g. an in-process caller of this module, must still end when the pool is terminated: the a2 shard exit
+    hang of 2026-10-07 was an inherited handler swallowing terminate() before an unbounded join), and one BLAS/OpenMP
+    thread per worker; then the task itself, unchanged."""
     import signal
-    dead = {p.pid for p in processes if p.exitcode is not None and p.exitcode != -signal.SIGTERM}
-    return [cpus[i] for i, pid in enumerate(slots[:len(cpus)]) if pid in dead]
-
-
-def _end_pool(pool, processes):
-    """End a pool without an unbounded wait: SIGKILL every worker process still alive (each has SIGTERM at its default,
-    so this is only for one stuck in a system call), join each for at most 5 s, then shut the executor down without
-    waiting for anything still queued. Returns the pids that would not end (listed by the caller, never waited on)."""
-    stuck = []
-    for p in processes:
+    fn, arg = job
+    if signal.getsignal(signal.SIGTERM) is not signal.SIG_DFL:
         try:
-            if p.exitcode is None:
-                p.kill()
-        except Exception:  # noqa: BLE001
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        except (ValueError, OSError):
             pass
-    for p in processes:
-        try:
-            p.join(5)
-            if p.exitcode is None:
-                stuck.append(p.pid)
-        except Exception:  # noqa: BLE001
-            pass
-    try:
-        pool.shutdown(wait=not stuck, cancel_futures=True)
-    except Exception:  # noqa: BLE001
-        pass
-    return stuck
+    for name in ('OPENBLAS_NUM_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS'):
+        os.environ[name] = '1'
+    return fn(arg)
 
 
 def _pinned_map(fn, args, label):
-    """[fn(a) for a in args], in order, on a fork pool whose processes are each pinned to one lane CPU (physical cores
-    first; the pool is sized from the booked lane, FRANKIE_LANE_CPUS / FRANKIE_BOOKED_CPUS: one worker per lane CPU but
-    one, the parent's). One CPU, one item or a threaded caller (never fork a threaded process): in this process, as
-    before. A pool that loses a worker (killed: OOM, signal) never stops, hangs or waits on it (Greg, 2026-10-07): the
-    items already returned are kept, every item not returned is re-run with the same arguments at the same slot on a new
-    pool with one fewer worker per loss (the dead worker's CPU is released, never refilled), and with every worker lost
-    the rest run in this process, in order. Each pool end is bounded (_end_pool). An exception of fn itself propagates
-    exactly as in the serial loop: items are collected in order, so the first raising item in order raises, after every
-    earlier item was computed. Results are fn's own return values in args order, so they are the serial loop's.
-    Every pool is noted in POOL_NOTES (the receipt's `pools`: mode, CPUs, losses, items redone, reasons) and its units
-    reach the stage heartbeat; the placement line also goes to stderr (the last stdout line stays the step's receipt)."""
+    """[fn(a) for a in args], in order, on the shared pinned fork pool (frankie_box_lane_pin.ordered_map): sized from the
+    booked lane (one worker per lane CPU but the coordinator's, never more than the items), each worker pinned to its
+    placement CPU (physical cores first, the coordinator's sibling last), at most two tasks per worker in flight, results
+    in args order. A dead worker never stops, hangs or is waited on: its lost task is redone with the same arguments at
+    the same slot and the window shrinks by one per death (Greg, 2026-10-07: "continue but with just one less worker");
+    after the helper's tries the task runs in this process. An exception raised BY fn propagates at its own place in
+    order, exactly as in the serial loop. One CPU, one item or a threaded caller (never fork a threaded process): in
+    this process, as before. Every pool is noted in POOL_NOTES (the receipt's `pools`: the lane_pin.record CPU map,
+    mode, reason, worker deaths and redone tasks, seconds) and its units reach the stage heartbeat; the placement line
+    also goes to stderr (the last stdout line stays the step's receipt)."""
     import sys
     import threading
     args = list(args)
     order, how = _lane_order()
     workers = max(1, min(len(args), len(order) - 1))
-    note = dict(label=label, items=len(args), lane=how, lane_cpus=len(order))
+    note = dict(label=label, items=len(args), lane=how)
     POOL_NOTES.append(note)
     started = time.time()
     if workers <= 1 or threading.active_count() > 1:
         note.update(mode='in_process', reason=('nothing to run' if not args else 'one item' if len(args) == 1 else
-                                               'one lane CPU' if len(order) <= 2 else
+                                               'one lane CPU for workers' if len(order) <= 2 else
                                                'a threaded caller: a threaded process is never forked'))
         out = []
         for i, a in enumerate(args):
@@ -598,69 +557,27 @@ def _pinned_map(fn, args, label):
         note['seconds'] = round(time.time() - started, 3)
         return out
     import multiprocessing
-    from concurrent.futures import ProcessPoolExecutor
-    from concurrent.futures.process import BrokenProcessPool
-    context = multiprocessing.get_context('fork')
-    cpus = list(order[:workers])
-    note.update(mode='pool', workers_started=workers, cpus=','.join(map(str, cpus)), workers_lost=0, items_redone=0,
-                losses=[], stuck_pids=[])
-    print('%s: %d pinned workers on CPUs %s (%s)' % (label, workers, note['cpus'], how), file=sys.stderr, flush=True)
-    results, done, completed = [None] * len(args), [False] * len(args), 0
-    while True:
-        pending = [i for i in range(len(args)) if not done[i]]
-        if not pending:
-            break
-        if not cpus:
-            note['losses'].append(dict(at=round(time.time() - started, 3), items_left=len(pending),
-                                       reason='every worker lost: the remaining items run in this process, in order'))
-            for i in pending:
-                results[i], done[i] = fn(args[i]), True
-                completed += 1
-                _report_units(label, completed, len(args))
-            break
-        size = min(len(cpus), len(pending))
-        counter, slots = context.Value('i', 0), context.Array('i', size)
-        pool = ProcessPoolExecutor(size, mp_context=context, initializer=_pin_pool_worker,
-                                   initargs=(cpus[:size], counter, slots))
-        processes, lost = [], None
-        try:
-            futures = [(i, pool.submit(fn, args[i])) for i in pending]
-            processes = list(getattr(pool, '_processes', {}).values())   # the workers (fork: all started at first submit)
-            for position, (i, future) in enumerate(futures):
-                try:
-                    results[i] = future.result()
-                except BrokenProcessPool as error:
-                    lost = (position, error)
-                    break
-                done[i] = True
-                completed += 1
-                _report_units(label, completed, len(args))
-            if lost is not None:
-                for i, future in futures[lost[0] + 1:]:     # items another worker finished before the loss are kept
-                    if future.done() and not future.cancelled() and future.exception() is None:
-                        results[i], done[i] = future.result(), True
-                        completed += 1
-        except BaseException:
-            note['stuck_pids'] += _end_pool(pool, processes)
-            raise
-        if lost is None:
-            pool.shutdown(wait=True)
-            continue
-        named = _lost_cpus(processes, slots, cpus[:size])
-        released = named or cpus[-1:]
-        note['stuck_pids'] += _end_pool(pool, processes)
-        redo = sum(1 for i in pending if not done[i])
-        cpus = [c for c in cpus if c not in released]
-        note['workers_lost'] += len(released)
-        note['items_redone'] += redo
-        note['losses'].append(dict(at=round(time.time() - started, 3), error='%s: %s' % (type(lost[1]).__name__, lost[1]),
-                                   released_cpus=released, named_by=('the lost worker\'s own slot' if named else
-                                                                     'not named by the executor: the last CPU of the order'),
-                                   items_redone=redo, workers_after=len(cpus)))
-        print('%s: worker lost (%s); %d items re-run with the same arguments at the same slots on %d workers'
-              % (label, lost[1], redo, len(cpus)), file=sys.stderr, flush=True)
-    note['seconds'] = round(time.time() - started, 3)
-    return results
+    LP = _lane_pin()
+    recovery = {}
+    try:
+        note.update(mode='ordered_map', cpu_map=LP.record(workers, order, what=label))
+    except Exception as error:  # noqa: BLE001 - the CPU map is a receipt field, never the work
+        note.update(mode='ordered_map', cpu_map=None, cpu_map_error='%s: %s' % (type(error).__name__, error))
+    print('%s: %d pinned workers (%s)' % (label, workers, how), file=sys.stderr, flush=True)
+    out = []
+    try:
+        for _, value in LP.ordered_map(_default_sigterm, [(fn, a) for a in args], workers,
+                                       context=multiprocessing.get_context('fork'), cpus=order, window=2 * workers,
+                                       report=recovery):
+            out.append(value)
+            _report_units(label, len(out), len(args))
+    finally:
+        note.update(worker_deaths=recovery.get('worker_deaths') or [], redone=recovery.get('redone') or [],
+                    completed=len(out), seconds=round(time.time() - started, 3))
+        if recovery.get('worker_deaths'):
+            print('%s: %d worker death(s), %d task(s) redone with one fewer worker each'
+                  % (label, len(recovery['worker_deaths']), len(recovery.get('redone') or [])), file=sys.stderr, flush=True)
+    return out
 
 
 def _scan_part(args):
@@ -800,6 +717,40 @@ def _scan_part_shared(args):
     return [(digest, size, lines, parsed, selected) for parsed, selected in out]
 
 
+def _shared_plan(claims_docs, days, minimum=2):
+    """(members, plans, jobs) of a shared read of the search parts for these claim documents, or None when fewer than
+    `minimum` documents have a read to share (shared_scan: 2; pre_read: 1, so even one document's scan runs side by side
+    with the native evidence reads). members = the documents whose read is over the same parts and pins."""
+    plans = []
+    for doc in claims_docs:
+        try:
+            _, wanted, needles, needle_filter, jobs = _read_plan(doc, days)
+        except Exception:  # noqa: BLE001 - the document's own test() raises it at its own point
+            plans.append(None)
+            continue
+        plans.append((wanted, needles, needle_filter, jobs) if jobs else None)
+    if sum(p is not None for p in plans) < minimum:
+        return None
+    jobs = next(p for p in plans if p is not None)[3]
+    members = [i for i, p in enumerate(plans) if p is not None and p[3] == jobs]   # the same parts and pins (same searches)
+    if len(members) < minimum:
+        return None
+    return members, plans, jobs
+
+
+def _shared_specs(members, plans):
+    return tuple((frozenset(plans[i][0]), tuple(plans[i][1]), bool(plans[i][2])) for i in members)
+
+
+def _shared_prepared(members, plans, jobs, per_part, count):
+    """The per-document prepared reads (test(..., scanned=...)) from the per-part shared scan results."""
+    prepared = [None] * count
+    for k, i in enumerate(members):
+        wanted, needles, needle_filter, _ = plans[i]
+        prepared[i] = dict(key=_plan_key(wanted, needles, needle_filter, jobs), parts=[part[k] for part in per_part])
+    return prepared
+
+
 def shared_scan(claims_docs, days):
     """Read the search parts ONCE for several claim documents tested on the same searches (Greg, 2026-10-07: the Sept 29
     pattern for the remaining serial walks; every test() call re-read and re-hashed every byte of every part, once per
@@ -809,26 +760,16 @@ def shared_scan(claims_docs, days):
     (the digest is computed once and checked per document); each document's rows, ordinals, raw-line hashes and read
     report are those of its own scan.
     Fewer than two documents with a read to share: all None (nothing to share). A plan that cannot be made, or any error
-    or broken worker during the shared read: every entry None, so each test() reads its parts itself and any error is
-    raised by that test() at exactly the point it is raised without the shared read (L-2: nothing waits on a dead worker
-    and no document's result depends on the shared read having worked)."""
+    during the shared read: every entry None, so each test() reads its parts itself and any error is raised by that
+    test() at exactly the point it is raised without the shared read (L-2: a lost worker's parts are re-read on one fewer
+    worker by _pinned_map, and no document's result depends on the shared read having worked)."""
     global _SHARED_SPECS
     import sys
-    plans = []
-    for doc in claims_docs:
-        try:
-            _, wanted, needles, needle_filter, jobs = _read_plan(doc, days)
-        except Exception:  # noqa: BLE001 - the document's own test() raises it at its own point
-            plans.append(None)
-            continue
-        plans.append((wanted, needles, needle_filter, jobs) if jobs else None)
-    if sum(p is not None for p in plans) < 2:
+    plan = _shared_plan(claims_docs, days)
+    if plan is None:
         return [None] * len(claims_docs)
-    jobs = next(p for p in plans if p is not None)[3]
-    members = [i for i, p in enumerate(plans) if p is not None and p[3] == jobs]   # the same parts and pins (same searches)
-    if len(members) < 2:
-        return [None] * len(claims_docs)
-    _SHARED_SPECS = tuple((frozenset(plans[i][0]), tuple(plans[i][1]), bool(plans[i][2])) for i in members)
+    members, plans, jobs = plan
+    _SHARED_SPECS = _shared_specs(members, plans)
     try:
         per_part = _pinned_map(_scan_part_shared, [(path, rel, pin) for _, path, rel, pin, _ in jobs],
                                'shared scientific scan of %d search parts for %d claim documents' % (len(jobs), len(members)))
@@ -838,11 +779,63 @@ def shared_scan(claims_docs, days):
         return [None] * len(claims_docs)
     finally:
         _SHARED_SPECS = ()
-    prepared = [None] * len(claims_docs)
-    for k, i in enumerate(members):
-        wanted, needles, needle_filter, _ = plans[i]
-        prepared[i] = dict(key=_plan_key(wanted, needles, needle_filter, jobs), parts=[part[k] for part in per_part])
-    return prepared
+    return _shared_prepared(members, plans, jobs, per_part, len(claims_docs))
+
+
+def _pre_read_task(task):
+    """One item of pre_read's single pool: ('native', a completed-native read) -> _native_read_kept's ('ok'|'error', v);
+    ('scan', a part) -> ('ok', _scan_part_shared's tuples) or ('error', text) (the documents then scan on their own)."""
+    kind, payload = task
+    if kind == 'native':
+        return _native_read_kept(payload)
+    try:
+        return 'ok', _scan_part_shared(payload)
+    except Exception as error:  # noqa: BLE001 - each document then reads its own parts and raises there
+        return 'error', '%s: %s' % (type(error).__name__, error)
+
+
+def pre_read(days, claims_docs, out_root):
+    """Every searched day's completed native evidence AND the search-part scan of every claim document to be tested, on
+    ONE pinned lane pool side by side (Greg, 2026-10-07: sub-steps of a piece run side by side where independent; the
+    native reads of every day and the claim scan read different files and never depend on each other). Returns
+    (native, prepared, note): native = completed_native_evidence_many(days, out_root)'s own [(reference, listed)] (each
+    day assembled and written in this process in the serial order, a read that raised re-run here at its own place);
+    prepared = shared_scan's per-document entries, one document already enough (its scan is the shared scan of one
+    spec, whose rows, ordinals, raw-line hashes and counts are _scan_part's own); note = what the read did, for the
+    receipt. Any scan error: prepared all None (each test() scans itself and raises at its own point). The combined pool
+    failing in any other way: the native reads run as completed_native_evidence_many and prepared is all None."""
+    global _SHARED_SPECS
+    import sys
+    started = time.time()
+    tasks, plans = _native_tasks(days)
+    plan = _shared_plan(claims_docs, days, minimum=1)
+    parts = [] if plan is None else [(path, rel, pin) for _, path, rel, pin, _ in plan[2]]
+    note = dict(native_reads=len(tasks), scan_parts=len(parts), documents=len(claims_docs),
+                scan_documents=0 if plan is None else len(plan[0]), side_by_side=bool(tasks and parts))
+    if plan is not None:
+        _SHARED_SPECS = _shared_specs(plan[0], plan[1])
+    try:
+        out = _pinned_map(_pre_read_task, [('native', t) for t in tasks] + [('scan', p) for p in parts],
+                          'scientific pre-read: %d native evidence reads of %d days and %d search parts for %d claim '
+                          'documents, side by side' % (len(tasks), len(days), len(parts), note['scan_documents']))
+    except Exception as error:  # noqa: BLE001 - the serial route below reads everything itself
+        print('scientific pre-read not used (%s: %s); native evidence and parts read on their own'
+              % (type(error).__name__, error), file=sys.stderr, flush=True)
+        note.update(used=False, reason='%s: %s' % (type(error).__name__, error), seconds=round(time.time() - started, 3))
+        return completed_native_evidence_many(days, out_root), [None] * len(claims_docs), note
+    finally:
+        _SHARED_SPECS = ()
+    reads, scans = out[:len(tasks)], out[len(tasks):]
+    native = [_native_document(d, retained, reports, tasks, reads, index, out_root) for d, retained, reports, index in plans]
+    failed = [text for status, text in scans if status == 'error']
+    if plan is None or failed:
+        prepared = [None] * len(claims_docs)
+        if failed:
+            note['scan_listed'] = 'a part scan raised (%s): every document reads its own parts' % failed[0]
+    else:
+        prepared = _shared_prepared(plan[0], plan[1], plan[2], [value for _, value in scans], len(claims_docs))
+    note.update(used=True, prepared=sum(p is not None for p in prepared), seconds=round(time.time() - started, 3))
+    return native, prepared, note
 
 
 def load_searches(dirs):
@@ -1032,6 +1025,18 @@ def completed_native_evidence_many(days, out_root):
     assembled in this process in exactly the serial order (receipt, result, 4.2, 4.4, member, lifecycle), with the same
     listed entries in the same order and the same bytes written; a read that raised in a worker is re-run here at its own
     place, so the first error in that order is raised as before. A broken pool re-reads everything here, in order (L-2)."""
+    tasks, plans = _native_tasks(days)
+    reads = _pinned_map(_native_read_kept, tasks, 'completed native evidence: %d reads of %d searched days'
+                        % (len(tasks), len(days))) if tasks else []
+    out = []
+    for d, retained, reports, index in plans:
+        out.append(_native_document(d, retained, reports, tasks, reads, index, out_root))
+    return out
+
+
+def _native_tasks(days):
+    """(tasks, plans) of completed_native_evidence_many: every file read of every day in the serial order, and per day
+    (d, retained, reports, index of its first read)."""
     tasks, plans = [], []
     for d in days:
         retained = {x['role']: x for x in d.get('native_retained') or []}
@@ -1041,12 +1046,7 @@ def completed_native_evidence_many(days, out_root):
             tasks += [('file', role, retained[role]) for role in NATIVE_ROLES if role in retained]
             tasks += [('ledger', name, reports[name]) for name in NATIVE_LEDGERS if name in reports]
         plans.append((d, retained, reports, index))
-    reads = _pinned_map(_native_read_kept, tasks, 'completed native evidence: %d reads of %d searched days'
-                        % (len(tasks), len(days))) if tasks else []
-    out = []
-    for d, retained, reports, index in plans:
-        out.append(_native_document(d, retained, reports, tasks, reads, index, out_root))
-    return out
+    return tasks, plans
 
 
 def _native_document(d, retained, reports, tasks, reads, index, out_root):
