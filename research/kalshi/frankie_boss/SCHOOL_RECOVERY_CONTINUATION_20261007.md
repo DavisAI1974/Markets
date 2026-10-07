@@ -197,3 +197,59 @@ UNVERIFIED: the full Step 8 review was not performed in this pass; no edit was m
 `python3 -I -c "import ast,sys; [ast.parse(open(p).read(), p) for p in sys.argv[1:]]"` on the five Python files: OK.
 `git diff --check` on deploy/aws/box: clean; the three new files checked for trailing whitespace and tabs: clean;
 `sh -n` on the wrapper: OK. No tests, no runs, no installs, no dispatch, no model or data call, no account write.
+
+## 2026-10-07 (late): the confirmation clock from stage 10 (clock_prospective_discovery_confirmation)
+
+Greg's bounded change, relayed by the parent: fill the registry entry `clock_prospective_discovery_confirmation` from
+stage 10's confirmation event. The pinned native producer (`native_recognition.record_call`) records discovery only and
+computes no confirmation time (SAME_SESSION_CORRECTION_CONSUMER_20261007.md, newest section); in the experiment the
+confirmation is the batch boundary marking a candidate `survivor_scoped` because it held on a day other than its own.
+
+### Contract (FRANKIE_DISCOVERY_CONFIRMATION_CLOCK_V1)
+
+One record per (survivor_scoped candidate, held test row on a market day other than day_made), at
+`survivors.json candidates[i].confirmations[j]`: `confirmation_id` (digest of candidate, day, part sha256, row,
+raw-line sha256), `claim` (candidate, claim_id, author, day_made, statement sha256), `discovery` (day; an observed instant
+only when the claim, its source claim or its origin carries one of `DISCOVERY_CLOCK_FIELDS`, else `absent` with the
+author's reason; the origin row identity; the native record named as not linked), `confirming_test` (lessons sha256 and
+path, result index, part, part sha256, row ordinal, raw-line sha256, mark held, pair, cell, lag, transforms, counts,
+chance check), `confirming_day` (day, `market_order` later/earlier market date or unknown, the search the lessons file
+names, the market read: search manifest verified against that pin, frames spool pin, axis note,
+`through_group_close_ordinal`; the axis end clock listed absent with its reason), `boundary` (day, batch days,
+sequence), `committed_in` (the `<boundary>-survivors` entry; the pin is on the receipt), `clock` (event
+`stage10_batch_boundary`, `stamped_at_boundary`, `new_at_this_boundary`, `first_stamped`, `previously_stamped`).
+Every candidate carries `confirmation_clock` (`stamped_at_boundary` or `discovery_only_no_confirmation` with its status).
+The document's `confirmation_clock` index lists stamped and not-stamped candidates and every earlier stamp no longer
+reproduced (`withdrawn_since_previous`, never relabelled). The receipt's `confirmation_clock` (also at
+`workflow_report.outputs.confirmation_clock`) adds `committed`, the entry and the survivors pin; a declined publication
+reads `stamped_not_committed`. Nothing pooled or averaged; one confirming day counts; own-day, origin and duplicate rows
+never confirm; nothing backfilled. The search-manifest reads are frozen with the selection (`search_markets`); a
+selection frozen earlier captures them after the freeze and says so.
+
+### Causality and consumers
+
+Committed at the boundary in `<brain>/<boundary>-survivors`. Read through `frankie_box_lane_state.learner_knowledge` by
+the classroom (`frankie_box_experiment_classroom_v2`, stage classroom), the exchange (`frankie_box_experiment_exchange`,
+`frankie_box_teacher_knowledge`, stage exchange) and the meeting voice (`frankie_box_granite_meeting`, stage voice) of any
+day other than the boundary day that runs after the entry is written; the boundary day's own stages never (DAY_KINDS
+survivors 50 > classroom 0, exchange/voice 40). The next survivor update reads it as previously stamped.
+
+Open (not this role's file): a NON-boundary day of the same batch whose exchange or voice runs after the boundary would
+see the entry under the cross-day rule (`learner_knowledge` excludes by entry day only), including records whose
+confirming row is that day's own. Request to the `frankie_box_lane_state.learner_knowledge` owner: exclude a
+`FRANKIE_SURVIVOR_UPDATE_V1` entry for any day listed in its `boundary.batch_days`, listed with the reason.
+
+### All-99 request (to workflow_reports, owner of frankie_box_all99_coverage.py)
+
+For `clock_prospective_discovery_confirmation` on the survivor_update stage: `stamped_at_boundary` with the survivors
+entry pin when the survivor update receipt's `confirmation_clock.status == 'stamped_at_boundary'` and `committed` is true
+(pin: receipt `confirmation_clock.survivors` and `confirmation_clock.entry_manifest`; records at
+`survivors.json candidates[i].confirmations[j]`, counts at `confirmation_clock.counts`); otherwise `discovery only, no
+confirmation yet` with `confirmation_clock.reason` (or `stamped_not_committed` with its reason). Path: receipt
+`<experiment-survivors>/<run>/<boundary>/receipt.json` key `confirmation_clock`.
+
+### Checks
+
+`python3 -I` ast.parse on frankie_box_survivor_update.py and frankie_box_scientific_teacher.py: OK; `sh -n` on
+frankie_box_survivor_update.sh: OK; `git diff --check` on the two survivor files: clean. frankie_box_scientific_teacher.py
+unchanged. SOURCE-BUILT / RUNTIME-UNVERIFIED; nothing ran. A fresh independent review is required before integration.

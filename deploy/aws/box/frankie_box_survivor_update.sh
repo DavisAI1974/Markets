@@ -1,6 +1,8 @@
 # Stage 10: the survivor/candidate update at a cross-day batch boundary (frankie_box_survivor_update.py; Greg, 2026-10-07).
 # Every tested claim one candidate, every test listed with its provenance, days named per mark, nothing averaged; filed
 # immediately as the brain entry <BRAIN>/<BOUNDARY_DAY>-survivors for LATER classrooms only. Code only; no model call.
+# It also stamps the confirmation clock (clock_prospective_discovery_confirmation): one FRANKIE_DISCOVERY_CONFIRMATION_CLOCK_V1
+# record per held row on another day of each survivor_scoped candidate, committed in the same entry (receipt: confirmation_clock).
 # Inputs: CODE_ROOT (staged checkout), RUN, BOUNDARY_DAY (the batch's last day), BATCH_DAYS (comma list, one or more days,
 # the boundary day among them), BRAIN (default /opt/frankie-box/brain), OUT (default /opt/frankie-box/work/experiment-survivors),
 # SEARCHES (optional: comma list of DAY=DIR completed search directories; default experiment-search/<day>/cycle-00/discovery).
