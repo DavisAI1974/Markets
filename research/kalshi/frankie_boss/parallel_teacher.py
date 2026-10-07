@@ -847,7 +847,13 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
                     if breaks[index] > RAW_POOL_MAX_CONSECUTIVE_BREAKS:
                         failure = failure or error
                         continue
-                    lost = [index] + [other for other, _ in pending]
+                    lost = [index]
+                    for other, other_future in pending:
+                        if (other_future.done() and not other_future.cancelled()
+                                and other_future.exception() is None):
+                            keep_chunk(other, other_future.result())       # finished before the pool broke: kept
+                        else:
+                            lost.append(other)
                     pending.clear()
                     pool.shutdown(wait=True, cancel_futures=True)
                     workers = max(1, workers - 1)

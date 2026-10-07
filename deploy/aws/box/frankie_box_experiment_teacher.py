@@ -533,11 +533,94 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             cpu_pinning.update(outcome='waiting', reason=None)
         else:
             cpu_pinning.update(reason='a lane of %d CPU(s) on one core: nothing to separate; placement unchanged' % len(lane))
+    # The per-row canonical bytes of the shared path across the CPUs (parallel_teacher.EvidencePrecompute: the legacy
+    # walk's fast path, the same values registered right before each payload is yielded; a row not registered is
+    # computed the original way by the consumer). Its spawn workers take the raw-batch workers' CPUs, one each.
+    precompute = dict(outcome='not_used', reason='legacy no-policy walk: its reader workers already compute these bytes'
+                      if market is None else None)
+
     def shared_evidence():
+        from collections import deque
+        from research.kalshi.frankie_boss import c15_journal as J
         pictures = market.iter_applied()
         expected = 0
+        pre = None
         try:
-            for item in pictures:
+            pre = PT.EvidencePrecompute(raw_cpus if cpu_pinning['outcome'] == 'waiting' else None, PJ.CONTEXT_FIELDS)
+            precompute.update(outcome='used', workers=pre.workers)
+        except Exception as error:  # noqa: BLE001 - speed only: without it every row is encoded here, as before
+            precompute.update(outcome='not_used', reason='the pool could not start (%s: %s)' % (type(error).__name__, error))
+        limit = 2 * pre.workers * PT.EVIDENCE_BATCH if pre is not None else 1
+        ahead, batch, slots, done, last = deque(), [], [], [False], [None]
+        whole = tuple(entity) if entity is not None else None
+
+        def flush():
+            if batch:
+                handle = pre.submit(list(batch))
+                for entry in slots:
+                    entry[1] = handle
+                batch.clear()
+                slots.clear()
+
+        def fill():
+            # read ahead in source order (the timeline's own order; nothing is reordered or dropped) so the workers
+            # encode upcoming payloads while the consumer runs the pinned loop
+            while not done[0] and len(ahead) < limit:
+                item = next(pictures, None)
+                if item is None:
+                    done[0] = True
+                    break
+                entry = [item, None, None]
+                e = item['evidence']
+                if pre is not None and item['arithmetic']['status'] == 'present' and type(e) is dict:
+                    m = e.get('normalized')
+                    entity_row = whole is None or (type(m) is dict and (m.get('publisher_id'), m.get('instrument_id')) == whole)
+                    entry[2] = len(batch)
+                    batch.append((e, entity_row))
+                    slots.append(entry)
+                    if len(batch) >= PT.EVIDENCE_BATCH:
+                        flush()
+                ahead.append(entry)
+            if done[0] and pre is not None:
+                flush()
+
+        def register(entry):
+            # the previous payload has been hashed by now (the pinned loop hashes a row before asking for the next);
+            # anything of it left (a resume's skipped prefix) is dropped, never kept alive
+            if last[0] is not None:
+                PJ._CANONICAL.pop(last[0][0], None)
+                if last[0][1] is not None:
+                    PJ._SUBSETS.pop(last[0][1], None)
+                last[0] = None
+            if entry[2] is None:
+                return
+            if entry[1] is None:
+                flush()
+            values = pre.values(entry[1])
+            if values is None:
+                return
+            body, subset = values[entry[2]]
+            e = entry[0]['evidence']
+            if entry[2] == 0:
+                # guard: the first row of every batch is encoded the original way here and must be equal
+                PT.PRECOMPUTE_RECORD['guard_checked'] += 1
+                if body != J.canonical_bytes(J.pack(e)) or (
+                        subset is not None and subset != h0({k: e[k] for k in PJ.CONTEXT_FIELDS})):
+                    raise ValueError('parallel teacher evidence bytes differ from the original encoding; run stopped')
+            PJ._CANONICAL[id(e)] = (e, body)
+            key = None
+            if subset is not None:
+                key = ('teacher', e['cursor'])
+                PJ._SUBSETS[key] = (subset, id(e['raw_record']))
+            last[0] = (id(e), key)
+        try:
+            while True:
+                if len(ahead) * 2 <= limit:
+                    fill()
+                if not ahead:
+                    break
+                entry = ahead.popleft()
+                item = entry[0]
                 if cpu_pinning['outcome'] == 'waiting':
                     started_streams = LP.generators_started(getattr(market, 'streams', None) or ())
                     if started_streams is None:
@@ -574,9 +657,14 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 teacher.market_picture = item['picture']
                 teacher.control.market_picture = item['picture']
                 teacher.raw_teacher.market_picture = item['picture']
+                register(entry)
                 yield item['evidence']
         finally:
             try:
+                if pre is not None:
+                    pre.close()
+                    precompute.update(record=dict(PT.PRECOMPUTE_RECORD))
+                ahead.clear()
                 pictures.close()
                 PT._save_raw_state(market_state, dict(market.report, equation=dict(equation)))
             finally:
