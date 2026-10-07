@@ -487,11 +487,13 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
         files.append(dict(path=str(path), **witness(path), author=lesson['author'],
                           claim_ids=[c['id'] for c in claims]))
     # C1: the actual scope of this call: a loop that reuses every claim emits no new result file and says so.
-    scope = dict(new_result_files=len(files), reused=len(reused), inputs_listed=len(listed),
+    scope = dict(new_result_files=created_files, completed_result_files=len(files),
+                 reused=len(reused), inputs_listed=len(listed),
                  claims_scheduled=len(scheduled), claims_already_tested=len(already_tested),
-                 all_reused=not files, owner_native_evidence=native_ref is not None,
+                 all_reused=created_files == 0, owner_native_evidence=native_ref is not None,
                  rule='new_result_files counts the result headers this call wrote; none means every claim was already '
-                      'tested on this exact manifest or reused: no new result exists, nothing was computed')
+                      'tested on this exact manifest or reused: no new scientific result was written. '
+                      'completed_result_files includes exact reuses available for publication')
     result = dict(inputs=dict(path=str(input_path), **witness(input_path)), files=files,
                 reused=reused, listed=listed, selection_listed=inputs['selection']['selection_listed'],
                 school_listed=inputs['selection']['school_listed'], late_knowledge=late_knowledge, scope=scope)

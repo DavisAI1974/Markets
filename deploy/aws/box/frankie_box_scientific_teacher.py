@@ -475,30 +475,46 @@ def _finalize_rows(report):
     """Every FINALIZE (post-stream) row of an exact ledger, whole, by emitting section; the ledger is hashed while it
     streams and must equal the search's pin. Only the ordinals the search listed post_stream_knowledge_only are parsed."""
     ranges = ((report.get('dispositions') or {}).get('post_stream_knowledge_only') or {}).get('ordinal_ranges') or []
-    wanted = []
+    wanted, previous_end = [], -1
     for r in ranges:
-        lo, hi = (r[0], r[1]) if isinstance(r, (list, tuple)) else (r, r)
-        wanted.append((int(lo), int(hi)))
-    rows, hashed, size = {}, hashlib.sha256(), 0
+        if isinstance(r, (list, tuple)):
+            if len(r) != 2:
+                raise ValueError('FINALIZE ordinal range must name an inclusive start and end')
+            lo, hi = r
+        else:
+            lo = hi = r
+        if type(lo) is not int or type(hi) is not int or not previous_end < lo <= hi:
+            raise ValueError('FINALIZE ordinal ranges must be exact, ordered and disjoint')
+        wanted.append((lo, hi))
+        previous_end = hi
+    rows, hashed, size, selection, selected = {}, hashlib.sha256(), 0, 0, 0
     with open(report['path'], 'rb') as handle:
         for ordinal, raw in enumerate(handle):
             hashed.update(raw)
             size += len(raw)
-            if any(lo <= ordinal <= hi for lo, hi in wanted):
+            # Search emits ordered inclusive ranges. Advance through them once;
+            # still hash every original row, including rows not selected here.
+            while selection < len(wanted) and ordinal > wanted[selection][1]:
+                selection += 1
+            if selection < len(wanted) and wanted[selection][0] <= ordinal:
                 row = json.loads(raw)
                 if (row.get('frankie_emission') or {}).get('phase') != 'FINALIZE':
                     raise ValueError('ordinal %d of %s is not a FINALIZE row the search listed post-stream' % (ordinal, report['path']))
                 rows.setdefault(str(row.get('emitting_section') or 'member'), []).append(dict(ordinal=ordinal, row=row))
+                selected += 1
     if size != report.get('bytes') or hashed.hexdigest() != report.get('sha256'):
         raise ValueError('exact ledger differs from the search\'s pin: %s' % report['path'])
+    if selected != sum(hi - lo + 1 for lo, hi in wanted):
+        raise ValueError('FINALIZE ordinal selection extends beyond its pinned ledger')
     return rows
 
 
 def completed_native_evidence(d, out_root):
-    """A searched day's completed native evidence, CONSUMED (Greg, 2026-10-06: not listed; read by the teachers): the
+    """Read and materialize a searched day's selected completed native evidence: the
     files the search pinned and did not search, read whole with their bytes verified, written once per day under
-    <out_root>/native/<day>-completed-native.json and carried in every lessons file for that day (both exchange seats
-    read lessons). Exact numbers are evidence; an average is a labelled supplement, never evidence (D37); nothing is
+    <out_root>/native/<day>-completed-native.json and referenced in every lessons file for that day (both exchange seats
+    read the references, not these source rows). This is not semantic calculation consumption. Exact numbers are
+    evidence; an average is a labelled supplement, never evidence (D37); nothing is
     computed here. What is read: the receipt's verdict and gates; result.json's section summaries (the traversal's own
     numbers, whole) and its averaged companions (supplement); section 4.2's exact first and last book of each
     day-segment-phase and its declarations (its companion rows are averages: supplement); section 4.4's matching rule
