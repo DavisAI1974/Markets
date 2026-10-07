@@ -178,3 +178,49 @@ a2's teacher stage gets none of this unless the work-branch tip is restaged BEFO
 The teacher-knowledge producer identity (frankie_box_experiment.py:4077-4087) and the classroom reader's producer hashes
 (frankie_box_classroom_reader.py:28-37) include frankie_box_experiment_teacher.py / parallel_teacher.py, so every stage
 of a2 after ROOT must run on the same restaged tip. Never stage an intermediate WIP snapshot.
+
+## Follow-up (parent's go while a2's teacher stage is held): R3 and the retained-identity check
+
+### R3 (school owner): one shared pre-read in teach_accumulated (frankie_box_teacher_knowledge.py)
+- Before: `ST.completed_native_evidence(days[0], out_dir)` (was :338), then one `ST.test(...)` per document (was :453),
+  each scanning and hashing every search part again (dedupe F1 (b) in STACKS_PASS_20261007_SCHOOL.md).
+- After (teach_accumulated, ~:333-395 and ~:480-492):
+  - phase 1: the claim scheduling of every document, in the same order and with the same keys; each item's reuse
+    entries are kept and appended at that item's own place in the loop, so `reused` keeps its exact order;
+  - `result_plan(item, claims)`: the claim_inputs / result_identity / result path block moved verbatim into one pure
+    function, called once in phase 1 (to skip documents whose result file already exists) and once in the loop;
+  - `measured_doc(item, claims)`: the exact dict ST.test receives (the successor's affected subset);
+  - `ST.pre_read(days, [measured docs], out_dir)` once: this owner day's completed native evidence AND the part scan
+    of every document still to be measured, side by side on the school owner's pinned pool; `native_ref, native_listed`
+    from it; each `ST.test(..., scanned=prepared)`; test() uses a prepared scan only when its key equals its own read
+    plan, and its `report` (evidence_read, written into the result file) is filled identically either way;
+  - fallback: no `ST.pre_read` (an older scientific teacher) -> the old reads, listed;
+  - receipt: new top-level `pre_read` (the note pre_read returns, or the fallback reason); additive.
+- Bytes: the native reference, rows, ordinals, raw-line hashes, counts and the read report are pre_read's / test's own
+  (the school owner's toy: pre_read 1 doc identical=True; shared_scan 3 docs identical). Toy here
+  (`scratchpad/teacher/toy_tk_order.py`): the restructured scheduling vs the original single loop on 12 synthetic
+  documents (already-tested claims, cross-document duplicates, two existing result files): identical `reused` order
+  (13 entries), measured documents (8) and scheduled count -> True.
+- One behaviour difference, error path only: a ValueError raised while building a result identity ("original
+  historical collection lacks its unchanged claims binding") is now raised in phase 1, before any document of the
+  call is written or published, instead of after the earlier documents. No value changes.
+- RUNTIME-UNVERIFIED: teach_accumulated itself was not run (it needs a brain, a search and retained lessons).
+
+### Retained-receipt identity through content_rebinds (frankie_box_experiment_teacher.py)
+- `_identity_matches(saved, built, out, what)` (ET.py ~:126-157): equal -> accepted; otherwise
+  frankie_box_experiment_root.content_rebinds; checkout-prefix moves with equal bytes and sha256 accepted and recorded in
+  `<out>/checkout-rebinds/<ns>.json` and on the receipt (`identity_rebinds`, and as `rebind` / `refusal` events in
+  workflow_report.use.stacks); anything else refuses as before; nothing retained is rewritten.
+- Used at the retained receipt's `shared_market_identity` check (was a plain `!=`) and at the saved shared read's
+  identity check after the raw pass (was `shared_read.get('identity') != market.identity`), which otherwise would have
+  refused a resume from another checkout even after parallel_teacher accepted its raw state.
+- Toy (`scratchpad/teacher/toy_rebind.py`, real content_rebinds): equal True; checkout move with equal bytes/sha256
+  True (recorded, one file written); changed sha256 False; a path outside the checkout False.
+- Save/restore table item 4 for the teacher: now DONE (raw state, attachment state, retained receipt, saved shared read).
+
+### Still recorded as requests (not built, per the parent)
+- Anchor-pictures hand-off to the classroom (classroom owner).
+- sunday_execution.py:45-69 `_save` returning the digest of the bytes it holds.
+
+### Checks
+py_compile + ast.parse on every owned .py, bash -n on the owned .sh, git diff --check: clean.

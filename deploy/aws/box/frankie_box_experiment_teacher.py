@@ -123,6 +123,37 @@ def _work_probe(out, rc):
     return report
 
 
+# Checkout moves accepted on retained teacher documents in this process (receipt field identity_rebinds).
+IDENTITY_REBINDS = []
+
+
+def _identity_matches(saved, built, out, what):
+    """Identity is content, not location (ROOT's rule, frankie_box_experiment_root.content_rebinds): True when the retained
+    identity equals the one this checkout builds, or differs ONLY by checkout-prefix moves of file witnesses with equal
+    bytes and sha256 (recorded under <out>/checkout-rebinds/<ns>.json and in IDENTITY_REBINDS); False otherwise (the
+    caller refuses as before). Nothing retained is rewritten."""
+    if saved == built:
+        return True
+    if not (isinstance(saved, dict) and isinstance(built, dict)):
+        return False
+    try:
+        moves = _box_module('frankie_box_experiment_root').content_rebinds(saved, built)
+    except Exception as error:  # noqa: BLE001 - no rebind helper here: the plain comparison stands (refused)
+        IDENTITY_REBINDS.append(dict(what=what, accepted=False, reason='content_rebinds unavailable (%s: %s)'
+                                                                       % (type(error).__name__, error)))
+        return False
+    if not moves:
+        return False
+    where = Path(out) / 'checkout-rebinds'
+    where.mkdir(parents=True, exist_ok=True)
+    note = where / ('%d.json' % time.time_ns())
+    note.write_text(json.dumps(dict(schema='FRANKIE_TEACHER_CHECKOUT_REBINDS_V1', what=what, moves=moves,
+                                    rule='checkout-prefix moves with equal bytes and sha256 only; nothing retained is '
+                                         'rewritten'), indent=1, sort_keys=True, default=str))
+    IDENTITY_REBINDS.append(dict(what=what, accepted=True, moves=len(moves), file=str(note)))
+    return True
+
+
 def _sha256(path):
     h = hashlib.sha256()
     with open(path, 'rb') as f:
@@ -266,6 +297,10 @@ def stack_events(result):
     prefetch = result.get('journal_prefetch') or {}
     if prefetch.get('outcome') not in ('measured', None):
         add('fallback', 'journal prefetch', prefetch.get('reason') or prefetch.get('outcome'))
+    for rebind in result.get('identity_rebinds') or []:
+        add('rebind' if rebind.get('accepted') else 'refusal', rebind.get('what'),
+            ('checkout moves accepted (%s), recorded in %s' % (rebind.get('moves'), rebind.get('file'))
+             if rebind.get('accepted') else rebind.get('reason')))
     for name, value in sorted((result.get('run_defaults') or {}).items()):
         add('default', 'run setting', '%s = %s' % (name, value))
     return dict(schema='FRANKIE_TEACHER_STACK_EVENTS_V1', events=events,
@@ -446,6 +481,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
            *, save_requested, learner_binding=None, learner_directory=None,
            calculations=None, shared_market_policy=None):
     receipt_path = Path(receipt_path)
+    IDENTITY_REBINDS.clear()
     # Where the time goes (Greg, 2026-10-07: keep the instrumentation that shows it): seconds per phase of this
     # step, recorded in the receipt as phase_timings. Diagnostic only; never an identity, never a gate.
     phases, phase_started = {}, [time.time()]
@@ -528,7 +564,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         if (retained_receipt.get('schema') != 'FRANKIE_EXPERIMENT_TEACHER_ROWS_V1' or
                 retained_receipt.get('day') != day or
                 retained_receipt.get('learner_binding') != learner_binding or
-                retained_receipt.get('shared_market_identity') != (market.identity if market else None) or
+                not _identity_matches(retained_receipt.get('shared_market_identity'),
+                                      market.identity if market else None, out, 'retained receipt shared_market_identity') or
                 retained_receipt.get('ingestion_receipt', {}).get('sha256') != receipt_sha256):
             raise ValueError('retained teacher receipt belongs to another day or ingestion; preserved')
         old_external = retained_receipt.get('external_section', {})
@@ -811,7 +848,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             # A completed raw recovery may reuse its saved read. Never describe an
             # unstarted current iterator as a fresh complete evidence delivery.
             shared_read = PT._load_raw_state(market_state) if market_state.exists() else None
-            if not shared_read or shared_read.get('identity') != market.identity or not shared_read.get('complete'):
+            if not shared_read or not shared_read.get('complete') or not _identity_matches(
+                    shared_read.get('identity'), market.identity, out, 'saved shared read identity'):
                 raise ValueError('completed teacher raw state lacks its matching complete shared read; preserved')
         if save_requested():
             raise PT.TeacherSaved('teacher raw pass saved; attachment assembly has not started')
@@ -879,7 +917,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                       external_section=dict(external, listed='no external section built: the rows it aligns to were not computed'),
                       external_points=external_points_summary(None, status='not_built', reason='no external section built: the rows it aligns to were not computed'),
                       cpu_pinning=cpu_pinning, raw_saves=raw_saves, journal_prefetch=dict(PREFETCH),
-                      run_defaults=dict(RUN_DEFAULTS))
+                      run_defaults=dict(RUN_DEFAULTS), identity_rebinds=list(IDENTITY_REBINDS))
         if market is not None:
             result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
                           shared_market_arithmetic=shared_read.get('equation'),
@@ -952,7 +990,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                   attachment_file=dict(file='teacher-attachment.pkl', sha256=attachment_sha[0]),
                   model_calls=0, caveat='whole-day context: the exact-row check in finish compares the rows with themselves',
                   experiment_directive=directive_witness(), phase_timings=phases, cpu_pinning=cpu_pinning,
-                  raw_saves=raw_saves, journal_prefetch=dict(PREFETCH), run_defaults=dict(RUN_DEFAULTS))
+                  raw_saves=raw_saves, journal_prefetch=dict(PREFETCH), run_defaults=dict(RUN_DEFAULTS),
+                  identity_rebinds=list(IDENTITY_REBINDS))
     if market is not None:
         result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
                       shared_market_arithmetic=shared_read.get('equation'),

@@ -729,6 +729,64 @@ def _decode_text(blob, rows, present, dense, _big_bytes=0):
     return out
 
 
+# OPTION A (Greg, 2026-10-07 night: "use some of Frankie's memory ideas"): each channel's values of a chunk as ONE
+# DIGEST_V10 table (frankie_box_digest_render.render_table / parse_table, the existing writer and reader: per-column
+# power-of-ten scales, ^k/=k/?k runs, fractions, X exact cells, the dictionary where it pays), one column per table so a
+# channel is read without parsing the others. The column is named `group_index` (the grammar's integer-delta column)
+# when that rendering parses back exactly, else `v`; the write refuses unless one of them parses back to the same values
+# with the same types and float bits (the verifier: render, parse, compare, every segment). OPTION B: the typed binary
+# segments above. FRANKIE_SEARCH_COLUMN_CODEC picks one (typed by default until the canary decides); both share the
+# chunks, the index, the save points and the readers.
+COLUMN_CODEC_ENV = 'FRANKIE_SEARCH_COLUMN_CODEC'          # typed (option B, default) | digest_v10 (option A)
+COLUMN_CODECS = ('typed', 'digest_v10')
+
+
+def column_codec():
+    codec = os.environ.get(COLUMN_CODEC_ENV, 'typed')
+    if codec not in COLUMN_CODECS:
+        raise ValueError('%s must be one of %s' % (COLUMN_CODEC_ENV, COLUMN_CODECS))
+    return codec
+
+
+def _typed_key(v):
+    """A value's exact identity: its type and, for a float, its IEEE bits (1 == 1.0 == True never compare equal here)."""
+    import struct
+    if type(v) is float:
+        return ('float', struct.pack('<d', v))
+    return (type(v).__name__, v)
+
+
+def _digest_render():
+    try:
+        import frankie_box_digest_render as R
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_digest_render as R
+    return R
+
+
+def _encode_digest(values):
+    R = _digest_render()
+    expected = [_typed_key(v) for v in values]
+    for variant, key in ((1, 'group_index'), (0, 'v')):
+        try:
+            text = R.render_table('c', [{key: v} for v in values])
+            _, back = R.parse_table(text)
+        except Exception:  # noqa: BLE001 - this rendering cannot carry the column: try the next, else refuse below
+            continue
+        if len(back) == len(values) and [_typed_key(r.get(key)) for r in back] == expected:
+            return text.encode('utf-8', 'surrogatepass'), sum(v is not None for v in values), False, variant
+    raise ValueError('no DIGEST_V10 rendering of this column parses back exactly; the chunk is refused, nothing written')
+
+
+def _decode_digest(blob, rows, _present, _dense, variant):
+    _, back = _digest_render().parse_table(blob.decode('utf-8', 'surrogatepass'))
+    if len(back) != rows:
+        raise ValueError('DIGEST_V10 column segment row count differs')
+    key = 'group_index' if variant == 1 else 'v'
+    return [r.get(key) for r in back]
+
+
 def _max_rss_bytes():
     try:
         import resource
@@ -742,14 +800,17 @@ def _disk_chunk(args):
     range, each channel's values as one typed segment. Returns the chunk's rows, its channel names in first-appearance
     order with each segment's place, the chunk's bytes and sha256 as written, and this worker's peak RSS."""
     _worker_default_sigterm()
-    path, start, end, chunk_path = args
+    path, start, end, chunk_path = args[:4]
+    codec = args[4] if len(args) > 4 else 'typed'
     numeric, text, _, count = _spool_range_columns((path, start, end))
     if count >= 1 << 32:
         raise ValueError('a chunk of more than 2**32 rows cannot use uint32 positions')
     hashed, offset, segments = hashlib.sha256(), 0, []
     pending = chunk_path + '.tmp'
     with open(pending, 'wb') as out:
-        for kind, mapping, encode in (('n', numeric, _encode_numeric), ('t', text, _encode_text)):
+        encoders = ((('n', numeric, _encode_numeric), ('t', text, _encode_text)) if codec == 'typed' else
+                    (('n', numeric, _encode_digest), ('t', text, _encode_digest)))
+        for kind, mapping, encode in encoders:
             for name, values in mapping.items():
                 blob, present, dense, big = encode(values)
                 out.write(blob)
@@ -771,17 +832,18 @@ class FrameColumnStore:
     """The on-disk columns of one spool (built by disk_spool_columns): channel order and segments in memory, values on
     disk. column(kind, name) is the exact list columns() would have built for that channel."""
 
-    def __init__(self, directory, rows, chunks, order, segments):
+    def __init__(self, directory, rows, chunks, order, segments, codec='typed'):
         self.directory, self.rows, self.chunks = str(directory), rows, chunks   # chunks: [(file, rows, bytes, sha256)]
         self.order = order            # {'n': [names], 't': [names]} first-appearance order
         self.segments = segments      # {(kind, name): [(chunk number, offset, length, present, dense, big)]}
+        self.codec = codec
 
     def __getstate__(self):
         return dict(directory=self.directory, rows=self.rows, chunks=self.chunks, order=self.order,
-                    segments=self.segments)
+                    segments=self.segments, codec=self.codec)
 
     def __setstate__(self, state):
-        self.__dict__.update(state)
+        self.__dict__.update(dict(codec='typed'), **state)
 
     def column(self, kind, name):
         key = (self.directory, kind, name)
@@ -789,7 +851,7 @@ class FrameColumnStore:
         if hit is not None:
             _COLUMN_CACHE[key] = _COLUMN_CACHE.pop(key)          # most recent last
             return hit
-        decode = _decode_numeric if kind == 'n' else _decode_text
+        decode = _decode_digest if self.codec == 'digest_v10' else _decode_numeric if kind == 'n' else _decode_text
         out, segs, k = [], self.segments.get((kind, name)) or [], 0
         handles = {}
         try:
@@ -905,11 +967,13 @@ def _values_of(value):
     return value.values() if isinstance(value, ColumnRef) else value
 
 
-def disk_spool_columns(path, pin, time_key, workers, report, directory, identity, *, save_every=None):
+def disk_spool_columns(path, pin, time_key, workers, report, directory, identity, *, save_every=None, codec=None):
     """spool_columns' result (numeric, text, mixed-kinds list, rows) with numeric/text as FrameColumns over on-disk
     chunks (see the section note); resumable from its own saves under `directory`."""
     import multiprocessing
     started = time.time()
+    codec = codec or column_codec()
+    identity = dict(identity=identity, codec=codec, schema=DISK_COLUMNS_SCHEMA)
     path, directory = Path(path), Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     size = path.stat().st_size
@@ -943,7 +1007,8 @@ def disk_spool_columns(path, pin, time_key, workers, report, directory, identity
     if saved is not None:
         ranges = [tuple(r) for r in saved['ranges']]
     else:
-        ranges = _spool_ranges(str(path), size, max(workers * SPOOL_RANGES_PER_WORKER, size // SPOOL_COLUMN_RANGE_BYTES + 1))
+        ranges = (_spool_ranges(str(path), size, max(workers * SPOOL_RANGES_PER_WORKER, size // SPOOL_COLUMN_RANGE_BYTES + 1))
+                  if size else [])
     first = len(saved['chunks']) if saved is not None else 0
     chunks = list(saved['chunks']) if saved is not None else []
     order = saved['order'] if saved is not None else dict(n=[], t=[])
@@ -953,7 +1018,8 @@ def disk_spool_columns(path, pin, time_key, workers, report, directory, identity
     peak_rss, chunk_bytes = (saved or {}).get('peak_rss') or 0, sum(c[2] for c in chunks)
     count = max(1, min(workers, len(ranges) - first)) if len(ranges) > first else 1
     window = count * SPOOL_WINDOW_PER_WORKER
-    hasher = FrontierHasher(path, window * max(b - a for _, a, b in ranges), name='frame-columns-sha256',
+    largest = max((b - a for _, a, b in ranges), default=0)
+    hasher = FrontierHasher(path, window * largest, name='frame-columns-sha256',
                             resumable=True, resume=saved['hash_snapshot'] if saved is not None else None)
     hasher.advance(ranges[first - 1][2] if first else 0)
     observed = path.stat()
@@ -970,7 +1036,7 @@ def disk_spool_columns(path, pin, time_key, workers, report, directory, identity
         last_save[0] = time.time()
         saves[0] += 1
 
-    jobs = [(str(path), a, b, str(directory / ('chunk-%06d.bin' % k))) for k, (_, a, b) in enumerate(ranges)][first:]
+    jobs = [(str(path), a, b, str(directory / ('chunk-%06d.bin' % k)), codec) for k, (_, a, b) in enumerate(ranges)][first:]
     finished, stopped = False, False
     try:
         if jobs:
@@ -1008,7 +1074,7 @@ def disk_spool_columns(path, pin, time_key, workers, report, directory, identity
     hashed_bytes, digest = hasher.finish()
     if hashed_bytes != pin['bytes'] or digest != pin['sha256']:
         raise ValueError('search spool differs from the selected export: ' + str(path))
-    store = FrameColumnStore(directory, rows, chunks, order, segments)
+    store = FrameColumnStore(directory, rows, chunks, order, segments, codec)
     store.check_files()
     save_index()
     numeric, text = FrameColumns(store, 'n'), FrameColumns(store, 't')
@@ -1017,15 +1083,16 @@ def disk_spool_columns(path, pin, time_key, workers, report, directory, identity
     if report is not None:
         report.update(mode='disk_columns_fork_pool_line_ranges', workers=count, ranges=len(ranges), window=window,
                       bytes=size, rows=rows, seconds=round(time.time() - started, 3), hashing=hasher.report(),
-                      store=dict(schema=DISK_COLUMNS_SCHEMA, directory=str(directory), chunks=len(chunks),
+                      store=dict(schema=DISK_COLUMNS_SCHEMA, codec=codec, directory=str(directory), chunks=len(chunks),
                                  chunk_bytes=chunk_bytes, numeric_channels=len(order['n']), text_channels=len(order['t']),
                                  saves=saves[0], save_every_chunks=every, save_every_seconds=FRAME_SAVE_SECONDS,
                                  resumed=resumed),
-                      memory=dict(per_worker_peak_rss_bytes=peak_rss, range_bytes=max(b - a for _, a, b in ranges),
+                      memory=dict(per_worker_peak_rss_bytes=peak_rss, range_bytes=largest,
                                   in_flight_ranges=window, reader_cache_columns=COLUMN_CACHE_ENTRIES,
                                   reader_bound='one channel materialized at a time: rows x (8-byte slot + its value '
                                                'object), at most %d channels cached per process' % COLUMN_CACHE_ENTRIES,
-                                  basis='a writer holds one range\'s columns() (its peak RSS measured above); the '
+                                  basis='a writer holds one range\'s columns() (its peak RSS measured above, which '
+                                        'includes the pages it shares with the coordinator from the fork); the '
                                         'coordinator holds the channel order and segment lists only'),
                       basis='ordered byte ranges cut at line starts; typed segments per channel per range; channel order '
                             'by first appearance (spool_columns\' merge rule); bytes hashed in file order against the pin')

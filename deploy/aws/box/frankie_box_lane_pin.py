@@ -189,7 +189,10 @@ def reset_worker_sigterm():
     fork; the ROOT's save handler only sets a flag, so a worker blocked in a pipe write resumed it after terminate()
     and the unbounded join hung: a2, 2026-10-07 22:36Z). Returns what was done: 'reset' (a handler or SIG_IGN was in
     place), 'default' (nothing to do) or 'kept (<why>)' (not the main thread: end_pool's bounded join and SIGKILL still
-    end the worker). Never raises; the parent's own handler is untouched (a different process)."""
+    end the worker). Never raises; the parent's own handler is untouched (a different process). The window it cannot
+    close: a worker still between its fork and this initializer when terminate() arrives holds the parent's handler for
+    those milliseconds and swallows the SIGTERM (seen once in the session-5 test, a pool ended ~1 ms after its start);
+    end_pool's bound and SIGKILL cover it, recorded in report['stop_kills']."""
     try:
         if signal.getsignal(signal.SIGTERM) is signal.SIG_DFL:
             return 'default'

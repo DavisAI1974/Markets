@@ -1099,7 +1099,7 @@ def _piece_job(job):
 
 def _prefetch(ctx, lane):
     """Read every step receipt's named artifacts once (threads; the read cache only, no ledger request counted)."""
-    paths = []
+    paths, ledger = [], dict(_READ_LEDGER)      # artifact_paths may read (a fetch receipt): not a request here
     for path, stage in ctx['records']:
         value = _READ_CACHE.get(str(path))
         if isinstance(value, tuple) and value[0].get('plan_sha256') == ctx['saved_plan_sha256'] \
@@ -1107,6 +1107,8 @@ def _prefetch(ctx, lane):
             for piece, _, stages in PIECES:
                 if stage in stages:
                     paths += artifact_paths(dict(value[0], _inspection_day=ctx['day']), piece)
+    _READ_LEDGER.clear()
+    _READ_LEDGER.update(ledger)
     paths = [p for p in dict.fromkeys(paths) if str(p) not in _READ_CACHE]
 
     def one(path):

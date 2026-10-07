@@ -237,3 +237,71 @@ from the piece's own probe or phase file, which continue from the cursor when th
 - Inspection pieces rendered side by side with a pre-read (section 3 rank 1); `collect_all99` / JSON_FILES reads on an
   ordered thread map (ranks 3-4).
 - Greg's call (c) on stat-skip re-hash (receipts `_witness`).
+
+## 11. Addendum: X2 landed (granted narrowly) and the inspection pieces side by side
+
+### X2: `frankie_box_native_checkpoint.py` binds finalization by its function-level identity
+
+Granted by the parent for this one change. Nothing else in that file was touched.
+- `runtime_identity` 31-45: new saves record BOTH `finalization_sha256` (whole bytes, the earlier meaning) and
+  `finalization_code` (`frankie_box_finalization.native_code_identity()`).
+- New `_finalization_normalized` 47-71. A saved finalization is accepted when:
+  - the save carries `finalization_code` and it equals the current code identity (the whole bytes may differ); or
+  - the save carries no `finalization_code` (every save before this pass, V2 and V1 forms) and
+    `finalization.accepts_whole_file(saved['finalization_sha256'])` holds (the same bytes, or 15164b45 with
+    NATIVE_VALUE_CODE unchanged).
+  An accepted save has its finalization fields replaced by the current ones. The EXISTING rules then compare every
+  other field unchanged: code, persistent-id serializer 65006dc9, whole_file_unchanged and the named predecessors.
+- `runtime_acceptance` 88-91 does this once. The label is recorded with the resume, for example
+  `serializer_persistent_id_65006dc9; finalization whole_file_15164b45_code_unchanged`.
+- `runtime_identity`, `runtime_acceptance` and the new helper are outside that file's NATIVE_VALUE_CODE. Its
+  serializer_code is unchanged: code_identity is f445ba3f... both at 2f39ddc and now.
+- V1 whole-file saves already bound native_checkpoint.py's whole bytes, so any edit there affected them. The
+  current tip writes V2 only.
+
+Toy `t_ckpt.py` ran the real module, stubbed only for imports: prepare_trading_day (witness, safe_path),
+segmented_ledger (a constant code id, `__file__`), bedrock.code_identity (extracted verbatim), and an empty
+periodic_checkpointer base class. Exact output:
+```
+new runtime keys: ['cloudpickle', 'finalization_code', 'finalization_sha256', 'ledger_storage_code', 'python', 'schema', 'serializer_code']
+a2-shape (persistent id, old finalization whole sha): serializer_persistent_id_65006dc9; finalization whole_file_15164b45_code_unchanged
+V2 current serializer, old finalization sha: code; finalization whole_file_15164b45_code_unchanged
+new-shape save (current): code
+new-shape save, other finalization whole bytes, same code: code; finalization finalization_code
+new-shape save, changed finalization code: None
+old-shape save, unknown finalization whole sha: None
+old-shape save, changed python: None
+changed finalization function, a2-shape save: None
+changed finalization function, new-shape save recorded before the change: None
+```
+The "changed finalization function" cases point the module at a copy of frankie_box_finalization.py whose
+`restore_closed` differs by one character.
+
+Result: the restage blocker in section 5 is resolved in source. a2's native checkpoints (000005 and later,
+runtime = V2 with persistent-id serializer and finalization 15164b45) restore on a tip carrying both files.
+This is RUNTIME-UNVERIFIED on the box: the real bedrock/segmented_ledger imports, the real a2 descriptor.
+
+### Inspection pieces side by side (section 3 rank 1, now BUILT)
+
+`frankie_box_workflow_inspection.py`:
+- `render_piece`: main's per-piece loop body, moved verbatim, with locals taken from ctx.
+- `_PRINT`: emit prints unless held inside a worker.
+- `_piece_job`: the worker; returns the piece's lines and its read-ledger delta.
+- `_prefetch`: the coordinator reads every artifact the step receipts name ONCE, on a lane-sized thread pool, into
+  the read cache, before the fork (it counts no ledger request).
+- `render_pieces`: `lane_pin.ordered_map` over PIECES on pinned fork workers. Ordered hand-off; a dead worker's piece
+  is redone. The coordinator prints and writes the pieces in PIECES order. If the pool fails, the remaining pieces
+  render in-process (listed).
+- `main` uses `render_pieces`. index.md gains a "Rendering" block: mode, reason, prefetched count, cpu_placement
+  (lane_pin.record), pool_recovery.
+- `FRANKIE_INSPECTION_SIDE_BY_SIDE=off` gives the earlier in-process path.
+
+Toys:
+- `t_insp_par.py`: off vs on gives the same stdout sha256 (cdbac44e...), all 16 piece files identical, and an
+  identical read ledger (18 files, 24 requests, 6 served from an earlier read).
+- `t_insp_dead.py`: the school piece's worker `os._exit(9)` on its first try. Same stdout sha256, school.md
+  144a5197... equal to the serial run, and index.md lists `worker_deaths` and `redone` for the school job.
+- `t_insp.py`: all earlier assertions still hold.
+- py_compile and git diff --check: clean.
+
+Still open from section 3: ranks 3-4 (`collect_all99` and JSON_FILES reads on an ordered thread map).
