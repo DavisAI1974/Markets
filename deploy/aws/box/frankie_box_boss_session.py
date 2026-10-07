@@ -2105,7 +2105,7 @@ class Session:
     def knowledge_correction(self, request_path, request_sha256):
         """Consume checked knowledge in the original code learner session; no forecast rerun."""
         from research.kalshi.frankie_boss.frankie_principal_adapter import (
-            digest, knowledge_correction_response, json_form)
+            digest, knowledge_correction_response, consume_knowledge_correction, json_form)
         request = load_json(Path(request_path))
         original = load_json(self.request_directory / 'session-request.json')
         initial = load_json(self.out / 'response.json')
@@ -2118,7 +2118,7 @@ class Session:
                 or any(original_host.get(k) != initial.get(k)
                        for k in ('session_id', 'model_identity_as_reported_by_session'))):
             raise ValueError('follow-up must bind the original retained learner request, response and host')
-        reply = json_form(knowledge_correction_response(request, initial))
+        scope_reply = json_form(knowledge_correction_response(request, initial))
         directory = self.out / 'knowledge-corrections' / request_sha256
         directory.mkdir(parents=True, exist_ok=True)
         def retain(name, body):
@@ -2130,6 +2130,17 @@ class Session:
                 write_json(path, body)
             return path
         retain('request.json', request)
+        if 'learner_consumer' in request:
+            scope_path = retain('scope-comparison.json', scope_reply)
+            # This is the later reader: consume the retained checked overlay with
+            # the unchanged original request's lawful visible evidence. It does
+            # not re-enter classroom assembly, writing, labels or native training.
+            checked = load_json(scope_path)
+            if checked != scope_reply:
+                raise ValueError('checked correction overlay changed before analytical consumption')
+            reply = json_form(consume_knowledge_correction(request, checked, original))
+        else:
+            reply = scope_reply
         response_path = retain('response.json', reply)
         host = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION',
             request_sha256=request_sha256, response_sha256=digest(reply), session_id=reply['session_id'],
@@ -2142,8 +2153,9 @@ class Session:
                                            'session_id', 'model_identity_as_reported_by_session')}
         attestation['host_record'] = dict(path=str(host_path), **witness(host_path))
         retain('host-attestation.json', attestation)
-        # The full corrected lesson is consumed above, and retained in the reply's
-        # correction_consumption ledger. No historical output or pending label changes.
+        # The original scope ledger alone is not downstream consumption. New
+        # requests carry the existing analytical reader's separately bound output;
+        # unsupported predicates remain listed, never promoted to native learning.
         self.note('checked knowledge follow-up ready for its original host: ' + str(directory))
         return directory
 

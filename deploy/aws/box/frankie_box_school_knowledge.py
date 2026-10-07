@@ -272,6 +272,15 @@ def _successor_projection(before, records, meeting=None):
                 continue
             pin = links[-1]['replacement']
             doc = json.loads(R._read_pin(pin))
+            if not item.get('inline') and (section, item['name']) in (
+                    ('scientific_teacher', 'frankie_lessons'), ('exchange', 'exchange_frankie_view')):
+                if item['sha256'] != links[0]['original']['sha256']:
+                    raise ValueError('school pointer differs from its checked original source')
+                item.update(path=links[-1]['body']['replacement']['path'], source_sha256=pin['sha256'],
+                            sha256=pin['sha256'], bytes=pin['bytes'])
+                if section == 'exchange':
+                    changed_exchange = (links[0]['original'], pin, doc)
+                continue
             if item.get('inline') and 'holds' not in item:
                 if item['sha256'] != links[0]['original']['sha256']:
                     raise ValueError('school copied source differs from its correction identity')

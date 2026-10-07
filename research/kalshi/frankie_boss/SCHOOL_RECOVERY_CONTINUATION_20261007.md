@@ -18,8 +18,9 @@ school-dependent dispatch complete until that integration is returned and review
 - Only checked copied scientific/exchange sources change. The existing BOSS exchange-measurement
   subset and scientific `untested` subset are recomputed from their checked replacements.
   Unaffected sections, classroom answers, author labels, rules, missing/withheld lists, order
-  and multiplicity remain unchanged. Unsupported affected projections or pointers refuse;
-  they do not silently disappear.
+  and multiplicity remain unchanged. Existing whole lesson/exchange pointers keep their pointer
+  status and update only to the exact checked source pin; giant sources are not copied into
+  the corpus. Unsupported affected projections refuse; they do not silently disappear.
 - A school containing a discussion of a replaced exchange requires the actual completed,
   receipt-verified successor meeting. The old discussion remains in the immutable original;
   the new school carries the entire new discussion with its existing zero evidentiary authority.

@@ -334,19 +334,21 @@ def _write(path, body):
 
 KNOWLEDGE_CORRECTION_REQUEST = 'FRANKIE_KNOWLEDGE_CORRECTION_FOLLOWUP_REQUEST_V1'
 KNOWLEDGE_CORRECTION_RESPONSE = 'FRANKIE_KNOWLEDGE_CORRECTION_FOLLOWUP_RESPONSE_V1'
+KNOWLEDGE_CORRECTION_CONSUMER = 'FRANKIE_ORIGINAL_SESSION_KNOWLEDGE_REPRODUCTION_V1'
 
 
 def knowledge_correction_response(request, initial_response):
     """Compare checked scopes and retain corrected knowledge for the original session.
 
-    This is a code-computed correction ledger, not native learning. Later learner
-    computations do not yet read this retained overlay. No forecast or training runs.
+    This scope ledger is input to consume_knowledge_correction. It is not, by
+    itself, evidence that a later learner computation used the corrected lesson.
     """
     from deploy.aws.box import frankie_box_experiment_review as REVIEW
     if request.get('schema') != KNOWLEDGE_CORRECTION_REQUEST:
         raise ValueError('checked knowledge correction follow-up required')
     if (request['original_response_sha256'] != digest(initial_response)
             or request['original_request_sha256'] != initial_response.get('request_sha256')
+            or request['original_pending_feedback'] != initial_response.get('pending_feedback')
             or any(request[k] != initial_response.get(k) for k in
                    ('session_id', 'model_identity_as_reported_by_session'))):
         raise ValueError('knowledge correction must use the unchanged original learner session')
@@ -377,6 +379,79 @@ def knowledge_correction_response(request, initial_response):
         model_identity_as_reported_by_session=request['model_identity_as_reported_by_session'],
         correction_consumption=ledger, feedback=None, native_learning_performed=False,
         forecast_replaced=False, pending_feedback_preserved=True)
+
+
+def knowledge_correction_consumer():
+    """Pin the existing analytical reader without selecting new learning mathematics."""
+    reader = Path(__file__).resolve().parents[3] / 'deploy/aws/box/frankie_box_classroom_code.py'
+    return dict(schema=KNOWLEDGE_CORRECTION_CONSUMER,
+                adapter_sha256=file_witness(__file__)['sha256'],
+                reader_sha256=file_witness(reader)['sha256'])
+
+
+def consume_knowledge_correction(request, scope_response, original_request):
+    """Use a checked overlay in the original session's existing analytical predicates.
+
+    No classroom answers, predictions, outcome labels or model weights are produced.
+    Historical V1 follow-ups without a consumer pin retain their original response.
+    """
+    if 'learner_consumer' not in request:
+        return scope_response
+    from deploy.aws.box import frankie_box_classroom as CLASSROOM
+    from deploy.aws.box import frankie_box_classroom_code as CODE
+    from deploy.aws.box import frankie_box_experiment_review as REVIEW
+    if (request['learner_consumer'] != knowledge_correction_consumer()
+            or digest(original_request) != request['original_request_sha256']
+            or original_request['request_id'] != request['request_id']
+            or original_request['attachment']['feedback_contract'] != request['original_feedback_contract']
+            or original_request['attachment'].get('knowledge_base') != request['knowledge_base']
+            or scope_response['request_sha256'] != digest(request)):
+        raise ValueError('analytical correction consumer differs from its pinned original request or reader')
+    # The caller supplies a verified scope response, read back by the Session from
+    # its retained ledger. Resolve whole checked documents, never arbitrary fields
+    # in derived results; a stale container requires its scientific owner's successor.
+    records = {}
+    for carried, consumed in zip(request['corrections'], scope_response['correction_consumption']):
+        if carried['record']['sha256'] != consumed['correction_sha256']:
+            raise ValueError('analytical reader received a different checked correction ledger')
+        body = json.loads(base64.b64decode(carried['record']['base64'], validate=True))
+        record = dict(record=carried['record'], original=carried['original'],
+                      replacement=carried['replacement'], body=body,
+                      content=consumed['corrected_knowledge'])
+        previous = records.setdefault(consumed['original_sha256'], record)
+        if previous != record:
+            raise ValueError('multiple replacements for one original knowledge document')
+    if len(request['corrections']) != len(scope_response['correction_consumption']):
+        raise ValueError('analytical reader needs the complete checked correction ledger')
+    effective = []
+    for selected in request['selected_knowledge']:
+        document = dict(selected)
+        visited = set()
+        while document['sha256'] in records:
+            if document['sha256'] in visited:
+                raise ValueError('analytical correction chain cycles')
+            visited.add(document['sha256'])
+            replacement = records[document['sha256']]
+            document = dict({k: replacement['replacement'][k] for k in ('path', 'bytes', 'sha256')},
+                            content=replacement['content'])
+        effective.append(document)
+    REVIEW.require_current(effective, records)
+    visible = CLASSROOM.visible_of(original_request)
+    REVIEW.require_current([dict(path='original-request:attachment.dipole_classroom',
+                                 sha256=digest(visible), content=visible)], records)
+    knowledge = [dict(document, label='original-selection:' + document['sha256'],
+                      day=document['content'].get('day') if isinstance(document['content'], dict) else None,
+                      kind='original-session-checked-knowledge') for document in effective]
+    reproduction = CODE.stage_knowledge_reproduction(visible, knowledge)
+    consumption = dict(schema=KNOWLEDGE_CORRECTION_CONSUMER,
+        original_request_sha256=request['original_request_sha256'],
+        original_response_sha256=request['original_response_sha256'],
+        checked_overlay_sha256=digest(scope_response), visible_evidence_sha256=digest(visible),
+        selected_knowledge=effective, reproduction=reproduction,
+        scope='existing pair/component predicates on the original lawful visible evidence',
+        native_learning_performed=False, independent_scientific_verification=False,
+        all_knowledge_consumed=False, pending_feedback_preserved=True)
+    return dict(scope_response, learner_consumption=consumption)
 
 
 def _checked_receipt(path):
@@ -1168,11 +1243,30 @@ class FrankiePrincipalAdapter:
             original_feedback_contract=original['attachment']['feedback_contract'],
             original_pending_feedback=response.get('pending_feedback'), knowledge_base=selection['base_pin'],
             selected_knowledge=selection['selected'], corrections=carried,
+            learner_consumer=knowledge_correction_consumer(),
             instruction='Apply each checked correction to retained knowledge in this same learner session. '
                         'Consume every declared scope and complete replacement lesson. Preserve the original forecast, '
                         'request/input/source/target/session identities and pending outcome feedback. '
                         'Do not rerun a forecast, invent labels or perform native training.')
         knowledge_correction_response(request, response)  # Check the complete carried scope before publication.
+        # An additive reader pin must not mint another dispatch for the same
+        # retained correction. Preserve the original request and its unknown or
+        # completed outcome even when it predates this reader or pins older code.
+        intent = json_form({k: v for k, v in request.items() if k != 'learner_consumer'})
+        matches = []
+        for existing_path in sorted((self.directory / 'knowledge-corrections').glob('*/request.json')):
+            if existing_path.is_symlink() or existing_path.parent.is_symlink():
+                raise ValueError('retained correction request must be owner-local, not a symlink')
+            existing = json.loads(existing_path.read_bytes())
+            if digest(existing) != existing_path.parent.name:
+                raise ValueError('retained correction request differs from its content-addressed identity')
+            if {k: v for k, v in existing.items() if k != 'learner_consumer'} == intent:
+                matches.append(existing)
+        if len(matches) > 1:
+            raise ValueError('multiple retained requests for the same correction intent; explicit reconciliation required')
+        if matches:
+            knowledge_correction_response(matches[0], response)
+            return matches[0]
         path, _ = self._knowledge_correction_paths(digest(request))
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.exists():
@@ -1206,9 +1300,11 @@ class FrankiePrincipalAdapter:
         path, response_path = self._knowledge_correction_paths(request_sha256)
         request = json.loads(path.read_bytes())
         original, retained = self._knowledge_correction_original()
+        expected = consume_knowledge_correction(request,
+            json_form(knowledge_correction_response(request, retained['response'])), original)
         if (digest(request) != request_sha256 or digest(original) != request['original_request_sha256']
                 or digest(retained['host_attestation']) != request['original_host_attestation_sha256']
-                or response != json_form(knowledge_correction_response(request, retained['response']))):
+                or response != json_form(expected)):
             raise ValueError('knowledge follow-up differs from original session or full corrected-scope consumption')
         self._attest_host(response, host_attestation, request)
         host = json.loads(Path(host_attestation['host_record']['path']).read_bytes())
@@ -1231,11 +1327,14 @@ class FrankiePrincipalAdapter:
         value = json.loads(path.read_bytes())
         self.record_knowledge_correction_response(value['response'], host_attestation=value['host_attestation'],
                                                   request_sha256=request_sha256)
-        return dict(schema='FRANKIE_KNOWLEDGE_CORRECTION_FOLLOWUP_RECEIPT_V1',
+        receipt = dict(schema='FRANKIE_KNOWLEDGE_CORRECTION_FOLLOWUP_RECEIPT_V1',
             request_sha256=request_sha256, response_sha256=digest(value['response']),
             session_id=value['response']['session_id'], correction_consumption=value['response']['correction_consumption'],
             host_attestation_sha256=digest(value['host_attestation']), native_learning_performed=False,
             pending_feedback_preserved=True)
+        if 'learner_consumption' in value['response']:
+            receipt['learner_consumption'] = value['response']['learner_consumption']
+        return receipt
 
     def _attest_host(self, response, host_attestation, request):
         if (not isinstance(response, dict) or not isinstance(host_attestation, dict) or
