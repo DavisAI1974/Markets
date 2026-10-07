@@ -251,6 +251,13 @@ def market_context(visible, timeline, *, save_requested):
                                       for name, value in chosen.items()}
         wanted.update(value[0] for value in chosen.values())
     pictures, statuses, counts = {}, {}, {}
+    # Where the classroom's own pass spends its time (Greg, 2026-10-07: make it run faster, measure first):
+    # pictures seen, when the last wanted anchor was retained, and how many pictures followed it. The pass
+    # still reads to the end (the published guarantee: one full ordered read, the exhaustion seen by this
+    # consumer itself); these numbers let the one-day test say whether that tail is where the time goes.
+    import time
+    started = time.monotonic()
+    seen, last_anchor_seen_at = 0, None
     iterator = timeline.iter_pictures()
     try:
         for item in iterator:
@@ -258,8 +265,11 @@ def market_context(visible, timeline, *, save_requested):
                 raise TeacherSaved('shared classroom picture read interrupted; no completed reading claimed')
             picture = item['picture']
             status = picture['source_status']
-            key = json.dumps(status, sort_keys=True)
+            # The core yields a plain status string (applied, failed, unpaired_...); a structured status is
+            # keyed by its sorted JSON. No per-picture JSON encoding on the hot path for the common case.
+            key = status if isinstance(status, str) else json.dumps(status, sort_keys=True)
             counts[key] = counts.get(key, 0) + 1
+            seen += 1
             cursor = picture['at']['adapter_cursor']
             if cursor in wanted:
                 if cursor in pictures:
@@ -269,8 +279,18 @@ def market_context(visible, timeline, *, save_requested):
                 statuses[cursor] = dict(source_status=status, applied_evidence=item['evidence'] is not None,
                                         unpaired_outcomes=picture.get('unpaired_outcomes'),
                                         thinner=copy.deepcopy(picture.get('coverage')))
+                if len(pictures) == len(wanted):
+                    last_anchor_seen_at = seen
     finally:
         iterator.close()
+    read = dict(seconds=round(time.monotonic() - started, 3), pictures_seen=seen, workers=15,
+                wanted_anchor_cursors=len(wanted), max_wanted_adapter_cursor=(max(wanted) if wanted else None),
+                last_anchor_retained_at_picture=last_anchor_seen_at,
+                pictures_after_last_anchor=(seen - last_anchor_seen_at if last_anchor_seen_at is not None else None),
+                read_to_end=True,
+                note='one full ordered read; the tail after the last anchor serves source_status_counts and this '
+                     'consumer\'s own view of exhaustion. Measured here so the one-day test can show where the '
+                     'classroom\'s time goes before any shortening is considered; no shortening is applied.')
     # Reaching here means the iterator ended without an integrity/identity exception. The core's
     # own exhaustion flag is read beside that fact, never used to reject a thinner day.
     report = copy.deepcopy(timeline.report)
@@ -296,7 +316,7 @@ def market_context(visible, timeline, *, save_requested):
                 identity=timeline.identity, reader=dict(module='frankie_box_market_timeline',
                     interface='SharedMarketTimeline.iter_pictures', workers=15),
                 anchors=anchors, pictures=pictures, report=report,
-                source_status_counts=counts, coverage=coverage,
+                source_status_counts=counts, coverage=coverage, read=read,
                 anchor_pictures=dict(wanted=len(wanted), retained=len(pictures), unavailable=unavailable),
                 use='full ordered source read to its end; first/last/min/max PRESENT anchor pictures, each with its source '
                     'status or listed unavailable, supplement unchanged Dipole mathematics',
@@ -337,6 +357,8 @@ class ClassroomMarketContext:
                     use=self.retained['use'], limit=self.retained['limit'])
 
     def summary(self):
+        # `read` (wall-clock timing of the pass) is deliberately not here: summary() enters the summary answer
+        # text, and a timing is not evidence. It travels through use() for the inspection report only.
         return {key: self.retained.get(key) for key in ('reader', 'identity', 'report', 'source_status_counts', 'coverage',
                                                         'anchor_pictures', 'use', 'limit')}
 
@@ -350,7 +372,10 @@ class ClassroomMarketContext:
                     received=dict(reader=self.retained['reader'], identity=self.retained['identity'],
                                   source_exhausted=coverage.get('source_exhausted'),
                                   source_status_counts=self.retained.get('source_status_counts'),
-                                  anchor_pictures=self.retained.get('anchor_pictures')),
+                                  anchor_pictures=self.retained.get('anchor_pictures'),
+                                  # where the classroom's own full pass spent its time (None on a reading saved
+                                  # before this field existed)
+                                  read=self.retained.get('read')),
                     entered=dict(component_answer=['evidence'], summary_answer=['cycle_summary']),
                     arithmetic='state counts, terminal state, first-to-last direction, Pearson and co-movement use the '
                                'teacher rows only; no shared-picture field is an operand of any Dipole equation',
@@ -563,6 +588,9 @@ def component_answer(visible, comp, rights, *, learner_context=None, shared_mark
     result['state_explanations'] = {s: f'{name}: {STATE_MEANING[s]}' + (f' (unit {comp["unit"]})' if s == 'PRESENT' and comp.get('unit') else '')
                                     for s in occurring}
     by_right = {p['right']: p for p in _pairs(visible, name)}
+    # Every prior check once per component, not once per pair (the same list filtered 18 times gave the
+    # same notes; the recognized set per pair is unchanged).
+    all_notes = _knowledge_notes(learner_context)
     pairs = []
     for right in rights:
         p = by_right[right]
@@ -577,7 +605,7 @@ def component_answer(visible, comp, rights, *, learner_context=None, shared_mark
         pair = dict(right=right, developing_structure=None, correlation_interpretation=(
             f'{AUTHOR}: {_basis(visible)} {p["direction_relation"]}; {coefficient}; {moves_text}. Descriptive for this pair and '
             'window only; no causation or outcome claimed (rules R01, R02, R05).'))
-        recognized = [note for note in _knowledge_notes(learner_context)
+        recognized = [note for note in all_notes
                       if note.get('result') in ('pattern_again', 'same_teacher_steps_today') and
                       set(note.get('pair') or [note.get('left'), note.get('right')]) == {name, right}]
         if recognized:
