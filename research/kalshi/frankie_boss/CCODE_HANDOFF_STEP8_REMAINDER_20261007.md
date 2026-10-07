@@ -45,6 +45,10 @@ in the assignment. Do not copy their unfinished files from a historical branch.
    before wiring its call; include the exact non-reentrant `waiting_school` owner recovery
    and finished/report currentness checks. The assignment grants only that narrow dispatcher
    invocation branch in addition to your `Run` methods.
+   The 02:35 ET addendum in section 4 also assigns the shared-market ROOT policy and Jev
+   CPU caller integrations; Codex owns the producer/helper implementations and independent
+   review. Read their final published contracts, preserve old retained identities, and
+   report pending setup truthfully. Do not mark either route complete from this summary.
 5. Review your full diff and source interfaces, commit/push `[skip ci]`, and return the
    exact tip plus `CCODE_STEP8_REMAINDER_RETURN_20261007.md`. Codex's independent reviewer
    checks the actual completed return; do not claim integration or runtime success yourself.

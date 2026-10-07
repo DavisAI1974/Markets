@@ -90,6 +90,47 @@ same exact scope through the Linux controller route where applicable. No second 
 
 ## 4. Small shared-runner integrations
 
+### Addendum — shared market timeline and Jev CPU callers (02:35 ET)
+
+Greg explicitly authorized building a synchronized market input on 2026-10-07. Raw and
+derived calculations may execute out of order; Frankie, both teachers and other advisers
+must receive applicable evidence together on its faithful causal timeline, within existing
+role/private/answer boundaries. Preserve original input order, exact event/receive clocks
+and the actual availability of later calculations. Do not backfill future-dependent results
+into earlier live state. The existing separate processing is useful; this adds the fullest
+coherent picture. A registry reference or a stored file is not proof of that presentation.
+
+Codex's timeline agent owns `frankie_box_market_timeline.py`, the journal/native/search
+readers and the narrow `frankie_box_experiment_root.py` / `.sh` policy forwarding. Its source
+implementation is underway, not yet a published or verified all-99 consumer. CCode keeps
+the `Run.root` / plan caller. The agreed interface is
+`SHARED_MARKET_POLICY=FRANKIE_SHARED_MARKET_TIMELINE_V1`, forwarded by the ROOT wrapper as
+`--shared-market-policy` and `--bedrock on`. Persist the requested policy with the original
+plan/attempt and carry it through local and Linux dispatch/recovery. Fetch the completed
+source contract before wiring or acknowledging completion. Check it before every retained
+ROOT fast path: a legacy bedrock-off result does not satisfy a new shared-policy request.
+Preserve old artifacts/attempts; use explicit compatible successor handling, never silently
+change an old request or recompute completed science. An omitted legacy policy keeps its
+actual legacy coverage and must not be presented as the new shared view. This narrow,
+explicitly requested source wiring supersedes the prior no-producer-activation instruction
+only for this named route; no runtime start or general scientific change is authorized.
+
+Codex's Step 7 owner has also drafted `frankie_box_jev_cpu.py` / `.sh`; independent review is
+underway. Read the final published `STEP7_CPU_CONTINUATION_20261007.md` and caller supplement
+before integration. `Run.jev` must retain `JEV_CPU_REQUEST_V1` before calling the child with
+`JEV_REQUEST`; add `jev` to `cores.DAY_RUN_STAGES` so it inherits the exact existing 16-CPU
+booking. It uses a required explicit worker subset of that lane, not another host/booking.
+Preserve original run/day/discovery-role/attempt/owner/source/plan/marker and exact input
+pins. Do not substitute an orchestrator step receipt for the classroom producer receipt.
+The child returns 0 only with its exact `JEV_CPU_RECEIPT_V1`; 5 is waiting/unknown and 75
+requires a checked `JEV_CPU_STATUS_V1` save acknowledgment with current marker/child/owner
+bindings. A missing runtime choice is waiting, never skipped or done. Exact runtime/model
+pins and budgets are still pending setup, not values to borrow from Granite. Checked peer
+Jev knowledge may enter via pinned owner-local `prior_brain` entries/lessons; do not assume
+a foreign lane's absolute path is shared. Final source may refine details during review.
+
+### Previously assigned caller integrations
+
 - `Run.previous_of`: persist non-queue predecessor selection (including explicit none) in
   the existing continuation before first child dispatch; retries must not repick a newer
   classroom and invalidate the original request. Existing queue pinning stays intact.

@@ -14,6 +14,8 @@ your unmerged 954f3f3 Step 8A return. Read AGENTS.md, then research/kalshi/frank
 Fix the three 8A review findings, finish main/class save-resume with exact retained
 ownership and child acknowledgments, enforce authorized run/day queue scope, and
 complete the named shared-runner integrations. Codex works on the other modules.
+Read assignment section 4's 02:35 ET shared-timeline/ROOT and Jev CPU caller addendum;
+Codex is building those helpers. Fetch final contracts before wiring their Run callers.
 Source-only AST/interface/whitespace checks; no tests, installs, runtime or AWS actions.
 Push [skip ci], return exact tip and CCODE_STEP8_REMAINDER_RETURN_20261007.md.
 An independent Codex review agent will review your completed return before integration.

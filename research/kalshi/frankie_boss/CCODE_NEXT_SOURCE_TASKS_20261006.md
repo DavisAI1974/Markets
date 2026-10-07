@@ -20,6 +20,10 @@ Handoff: `CCODE_HANDOFF_STEP8_REMAINDER_20261007.md`.
 School integration supplement: read `SCHOOL_RECOVERY_CONTINUATION_20261007.md` and the
 updated assignment section 4 for the exact `waiting_school`/non-reentrant voice-school
 caller contract. Its narrow dispatcher invocation branch is included in CCode ownership.
+**02:35 ET addendum:** assignment section 4 now includes the synchronized shared-market
+policy and Jev CPU caller boundaries. Codex is building/reviewing those producers; CCode
+owns their `Run.root`/plan and `Run.jev`/held-day wrappers. Fetch their completed contracts
+before integrating; neither pending source nor legacy retained results establish completion.
 The previous assignment follows as history; its protected-file allocation is superseded
 only by the exact expanded ownership in the new assignment.
 
