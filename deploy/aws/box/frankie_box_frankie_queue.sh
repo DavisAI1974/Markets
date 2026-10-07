@@ -13,12 +13,18 @@
 #   kick    LINE                 starts the line's worker detached (systemd-run) unless one runs [MAX_SECONDS=43200]
 #   handover LINE=root           the running worker stops taking work and ends after its running days; a new worker at
 #                                this commit (every day runs its whole day in its slot) waits on the lock and takes over
-# LINE is root or class. MARKETS_SHA (the dispatched commit) is required for every action but show.
+#   save    RUN DAY              the day-bound save of a running owned day: its marker written; the owner stops at its
+#                                next boundary (a class in progress acknowledges first); acknowledgment pending = status
+#   status  RUN DAY              read-only: the owner binding, marker, class acknowledgment, ledger booking (live /
+#                                retained / released), both line entries and the worker, distinctly
+#   resume  RUN DAY              a saved/unknown owned day back in line with the SAME owner (attempt, CPUs, marker
+#                                archived); then kick LINE=root (SCOPE=RUN:DAY) so the next admission takes it
+# LINE is root or class. MARKETS_SHA (the dispatched commit) is required for every action but show and status.
 set -eu
 export HOME="${HOME:-/root}"
 : "${CODE_ROOT:?staged checkout required}"
 ACTION="${ACTION:-show}"
-case "$ACTION" in show|enqueue|worker|kick|handover) ;; *) echo "ACTION must be show, enqueue, worker, kick or handover" >&2; exit 2;; esac
+case "$ACTION" in show|enqueue|worker|kick|handover|save|status|resume) ;; *) echo "ACTION must be show, enqueue, worker, kick, handover, save, status or resume" >&2; exit 2;; esac
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 case "$CODE_ROOT" in *..*) echo "no .. in CODE_ROOT" >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
@@ -28,6 +34,16 @@ if [ "$ACTION" = show ]; then
   case "${EVENTS:-50}" in all) ;; ""|*[!0-9]*) echo "EVENTS must be a number or all" >&2; exit 2;; esac
   exec "$PY" -B "$SCRIPT" --action show --events "${EVENTS:-50}"
 fi
+case "$ACTION" in save|status|resume)
+  : "${RUN:?the orchestrator run name required}"; : "${DAY:?YYYYMMDD required}"
+  case "$RUN" in ""|*[!A-Za-z0-9_-]*) echo "RUN: letters, digits, _ and - only" >&2; exit 2;; esac
+  case "$DAY" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "DAY must be YYYYMMDD" >&2; exit 2;; esac
+  if [ "$ACTION" != status ]; then
+    : "${MARKETS_SHA:?full dispatched commit required}"
+    [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+  fi
+  exec "$PY" -B "$SCRIPT" --action "$ACTION" --run "$RUN" --day "$DAY" ;;
+esac
 : "${MARKETS_SHA:?full dispatched commit required}"
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
 case "${LINE:-}" in root|class) ;; *) echo "LINE must be root or class" >&2; exit 2;; esac

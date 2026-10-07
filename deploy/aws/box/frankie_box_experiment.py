@@ -524,14 +524,28 @@ class Run:
         self._knowledge = {}
         self.queue_previous = None       # the class worker: (PREVIOUS, None, from) taken from the class line
         self.school_day = None           # the class worker: the class line's school-day number = the report number N
+        # THE OWNER BINDING (Step 8, 2026-10-07): a queue day carries its owner (run, day, host, attempt, commit, code root,
+        # exact CPU set, booking, day-specific save marker), bound by the queue BEFORE dispatch. This Run reads the save
+        # request from ITS OWN marker (never a process-global environment variable: the two main lanes are threads of one
+        # process) and hands that marker to its children only. The Linux lane's agent sets the same variable per job.
+        self.owner = None
+        self.owned_attempt = None        # the main queue's exact ROOT attempt name (the Linux lane's is FRANKIE_LANE_ATTEMPT)
+        self.stop_marker = os.environ.get('FRANKIE_LANE_STOP_FILE')
         sys.path.insert(0, str(self.box))
         from frankie_box_progress import Probe
         import frankie_box_cores
         self.cores = frankie_box_cores     # the box's CPU booking ledger (DAY_RUN_CPUS, ingest_workers, WAITING_EXIT)
         self.probe = Probe(self.dir, request_sha256=plan_digest(plan), phase='experiment')
 
+    def bind_owner(self, owner):
+        """The queue's owner binding for this Run: its attempt, its marker (its children inherit exactly that one)."""
+        self.owner = owner
+        if owner:
+            self.owned_attempt = owner.get('attempt')
+            self.stop_marker = owner.get('marker') or self.stop_marker
+
     def save_requested(self):
-        marker = os.environ.get('FRANKIE_LANE_STOP_FILE')
+        marker = self.stop_marker
         return bool(marker and Path(marker).is_file())
 
     def successors(self, day):
@@ -661,6 +675,10 @@ class Run:
         if stage in ('voice', 'school', 'reports') and not successor:
             self.require_current_exchange(key[:8], env)
         full = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), **{k: str(v) for k, v in env.items()})
+        # the day's own save marker reaches the child, and only the day's: a sibling lane's marker never leaks across threads
+        full.pop('FRANKIE_LANE_STOP_FILE', None)
+        if self.stop_marker:
+            full['FRANKIE_LANE_STOP_FILE'] = str(self.stop_marker)
         command = ['sh' if script.endswith('ingest_block.sh') else 'bash', str(self.box / script)]
         if stage in self.cores.DAY_RUN_STAGES:  # exactly 16 CPUs booked, the step under taskset -c <them> (frankie_box_cores.py)
             inside = getattr(self, 'slot_booking', None)   # the day's held slot (ROOT line): its steps never re-book
@@ -785,6 +803,18 @@ class Run:
                 raise ValueError('completed ROOT differs from the claimed attempt; preserved')
             if owned_output.exists() and not owned_output.is_dir():
                 raise ValueError('claimed ROOT output is not a retained directory')
+        elif self.owned_attempt:
+            # the main queue's owner binding: the exact attempt bound before dispatch, first dispatch and resume alike;
+            # earlier interrupted attempts of the day may exist beside it (they are listed, never resumed as this one)
+            attempt = self.owned_attempt
+            if not re.fullmatch(re.escape('%s-%s-a' % (self.plan['run'], e['day'])) + r'[0-9]+', attempt):
+                raise ValueError('the owner binding names no run/day/attempt of this day: %s' % attempt)
+            owned_output = ROOTS / attempt
+            if owned_output.is_symlink() or (owned_output.exists() and not owned_output.is_dir()):
+                raise ValueError('the owned ROOT output is not a retained directory: %s' % owned_output)
+            if calc is not None and calc != owned_output:
+                raise ValueError('a completed ROOT %s differs from the owned attempt %s; preserved, not substituted'
+                                 % (calc, owned_output))
         if calc:
             retained = json.loads((calc / 'calculations-receipt.json').read_bytes())
             if retained.get('day') != e['day'] or retained.get('day_role') != e['role']:
