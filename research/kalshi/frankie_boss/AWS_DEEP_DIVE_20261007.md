@@ -83,3 +83,14 @@ aws-messaging-and-streaming, aws-observability, aws-transform, troubleshooting-e
 ## Account calls (read-only)
 ec2 DescribeInstanceTypes (us-east-1, 29 types); ec2 DescribeInstanceTypeOfferings (us-east-1 and us-east-2). A
 second script (pricing GetProducts, DescribeSpotPriceHistory) failed when the connector signed out. No writes.
+
+## Addendum (Greg: "use what we already have too; stack as many as possible")
+Keep and stack everything already built: SSM-driven boxes and frankie_box_run.yml; the r7i boxes (main 8xlarge,
+second 16xlarge); DAY_CPUS=32 for the one-day run (16 per day for the N-day run); lane pinning (now by physical core,
+the replay on a whole core); the parallel writers (ingest, digest_parallel, projection); the parallel ranged S3 pull
+and presigned parallel transfers (archive_day, pod_transfer); gp3 2 TB; the token stacks; the lossless zstd pack.
+New pieces stack on top (section above). Real conflicts, chosen per run, never globally:
+1. DAY_CPUS=32 vs PARALLEL_DAYS=2 on one 8xlarge: one-day run 32; N-day run 16 per day (32 per day for 31 days
+   would need 992 vCPU, over the requested 640).
+2. Local NVMe vs save/stop/resume: the main box keeps spools on gp3; killed-after clones use NVMe.
+3. Spot vs ROOT: excluded for ROOT.
