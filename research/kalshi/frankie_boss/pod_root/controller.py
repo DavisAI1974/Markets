@@ -316,6 +316,10 @@ class BoxError(RuntimeError):
     pass
 
 
+class LeaseNotEstablished(RuntimeError):
+    """Raised BEFORE any transport when lease ownership cannot be established at an effect boundary: nothing was sent."""
+
+
 def _result(action, target, status, text, err):
     lines = [l for l in text.splitlines() if l.startswith('POD_ROOT_RESULT ')]
     if status != 'Success' or not lines:
@@ -654,6 +658,13 @@ class Controller:
             return
         try:
             result = self.renew(w, dict(job_id=job_id), resume=True)
+        except LeaseNotEstablished as error:
+            # refused before any transport: the lease could not be established, nothing was sent or rewritten
+            ack.update(resumed=False, refused='%s: %s' % (type(error).__name__, str(error)[:400]),
+                       note='refused before any renewal or transport; original claim, job files and inputs untouched')
+            self.event(worker=w.where, step='resume', attempt=job_id, result='refused', error=ack['refused'][:300])
+            self.state.resume_acknowledge(ack)
+            return
         except (Exception, SystemExit) as error:  # noqa: BLE001
             # the renewal/transport step failed or timed out AFTER it may have rewritten transport metadata or launched
             # the job: the outcome is UNKNOWN until the worker's own status settles it; the request stays as evidence
@@ -706,7 +717,7 @@ class Controller:
             if j.get('workflow') == 'root-to-finish' and j.get('pid_alive'):
                 try:
                     if not self.lease_established('stop relay'):
-                        raise RuntimeError('lease ownership not established; the save is not relayed')
+                        raise LeaseNotEstablished('lease ownership not established; the save is not relayed')
                     r = box('stop', w.target, 600, COMMIT=self.commit, JOB=j['job_id'])
                     self.stop_relayed[j['job_id']] = r.get('result')
                 except Exception as error:  # noqa: BLE001
@@ -818,8 +829,8 @@ class Controller:
                 self.event(worker=w.where, day=day, step='export', file=f['name'], bytes=f['bytes'], parts=len(parts),
                            seconds=round(time.time() - t0))
             if not self.lease_established('submit'):
-                raise RuntimeError('lease ownership not established after the export; the job is not submitted (the claim '
-                                   'and the exported parts are retained for the owner that holds the lease)')
+                raise LeaseNotEstablished('lease ownership not established after the export; the job is not submitted (the '
+                                          'claim and the exported parts are retained for the owner that holds the lease)')
             self.resign(inputs)
             job = dict(schema='FRANKIE_POD_ROOT_JOB_V1', name=attempt, run=self.run, day=day, role=st['role'],
                        digest=st['digest'], commit=self.commit, data_workers=15,
@@ -920,7 +931,7 @@ class Controller:
 
     def coordinate(self, w, job):
         if not self.lease_established('coordinate'):
-            raise RuntimeError('lease ownership not established; the coordination request is left for the lease holder')
+            raise LeaseNotEstablished('lease ownership not established; the coordination request is left for the lease holder')
         prefix = self.prefix(job['job_id']) + '/rpc'
         response = box('coordinate', MAIN, 1800, CODE_ROOT=self.a.code_root,
                        url_map=dict(rpc=dict(url=self.sign.get(TRANSFER_BUCKET, prefix + '/request.json')),
@@ -929,7 +940,7 @@ class Controller:
 
     def renew(self, w, job, resume=False):
         if not self.lease_established('resume' if resume else 'renew'):
-            raise RuntimeError('lease ownership not established; the %s is not made' % ('resume' if resume else 'renewal'))
+            raise LeaseNotEstablished('lease ownership not established; the %s is not made' % ('resume' if resume else 'renewal'))
         prefix = self.prefix(job['job_id']) + '/rpc'
         update = dict(mailbox=dict(request_put=self.sign.put(TRANSFER_BUCKET, prefix + '/request.json'),
                                    response_get=self.sign.get(TRANSFER_BUCKET, prefix + '/response.json')))

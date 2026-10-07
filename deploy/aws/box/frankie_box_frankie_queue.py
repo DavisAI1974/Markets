@@ -111,8 +111,10 @@ OWNER_STATES = ('saved', 'unknown')
 # authorization). A kick without a scope is refused; a restart carries its own scope and never expands it.
 
 def parse_scope(text):
-    """'RUN:D1,D2' -> {'run': RUN, 'days': {D1, D2}}; refuses anything else."""
+    """'RUN:D1,D2' (or a parsed scope) -> {'run': RUN, 'days': {D1, D2}, 'text': ...}; refuses anything else."""
     import re
+    if isinstance(text, dict):
+        text = text.get('text')
     run, sep, days = (text or '').partition(':')
     if not sep or not re.fullmatch('[A-Za-z0-9_-]{1,64}', run):
         raise SystemExit('--scope RUN:YYYYMMDD,... required (the authorized run and days)')
@@ -364,7 +366,7 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
             event(line, 'kick_refused_no_scope', by=by)
         log('%s worker not kicked by %s: no scope given (RUN:days); the line waits for a scoped kick' % (line, by))
         return dict(started=False, reason='no scope given: a worker is started only for an authorized RUN:days')
-    scope = parse_scope(scope['text'] if isinstance(scope, dict) else scope)
+    scope = parse_scope(scope)
     QUEUE.mkdir(parents=True, exist_ok=True)
     probe = _take_worker_lock(line)
     if probe is None:
@@ -406,7 +408,7 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print, scop
     only stops it TAKING new work (its running days finish in their slots, then it ends and releases its lock); a new
     worker at this commit starts detached now and waits on the lock, so it takes over the moment the old one ends. The
     new worker carries the given scope (never the old worker's, never wider)."""
-    scope = parse_scope(scope['text'] if isinstance(scope, dict) else scope)
+    scope = parse_scope(scope)
     if line != 'root':
         raise SystemExit('handover is for the root line')
     status, held = worker_state(line)
@@ -779,15 +781,11 @@ def _write_ack(marker, ack):
     """The class child's acknowledgment beside the marker, create-only (<marker>.class-ack.json); never overwritten."""
     if not marker:
         return
-    path = Path(str(marker) + '.class-ack.json')
+    import frankie_box_cores as C
     try:
-        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+        C.write_json(Path(str(marker) + '.class-ack.json'), ack, exclusive=True)
     except FileExistsError:
         return
-    with os.fdopen(fd, 'w', encoding='utf-8') as f:
-        f.write(json.dumps(ack, indent=1, sort_keys=True, default=str) + '\n')
-        f.flush()
-        os.fsync(f.fileno())
 
 
 def _end_attempt(x, result, reason=None):
@@ -824,7 +822,7 @@ def _take_class(doc, x, commit):
 
 def class_worker(code_root, commit, max_seconds, poll_seconds, log=print, scope=None):
     """The one class worker: the front of the class line, one day at a time, polled while it waits; FOR its scope only."""
-    scope = parse_scope(scope['text'] if isinstance(scope, dict) else scope)
+    scope = parse_scope(scope)
     lock = _take_worker_lock('class')
     if lock is None:
         status, _ = worker_state('class')
@@ -1420,6 +1418,15 @@ def _sync_root(doc, x, plans):
         return 'queued'
     if x['state'] in OWNER_STATES:
         return None                                  # its owner's; reconciled only by ACTION=resume
+    finish = x.get('finish') or {}
+    if x['state'] == 'done' and finish.get('state') == 'running' and x.get('owner') and finish.get('pid') \
+            and not Path('/proc/%d' % int(finish['pid'])).exists():
+        # the finish's holder is gone without a saved result: unknown, like a ROOT-phase holder; retained, never re-admitted
+        x['finish'] = dict(finish, state='unknown', ended_utc=utc(),
+                           reason='its holder (pid %s) is gone without a saved result; attempt %s and its CPUs are retained; '
+                                  'ACTION=resume reconciles it' % (finish.get('pid'), x['owner'].get('attempt')))
+        _retain_quietly(x)
+        return 'unknown'
     if x['run'] not in plans:
         plans[x['run']] = _plan_of(x['run'])
     e = next((d for d in plans[x['run']].get('days') or [] if d['day'] == x['day']), None)
@@ -1470,6 +1477,17 @@ def _sync_root(doc, x, plans):
     return None
 
 
+def _release_owner(x, why):
+    """A failed (never saved) day gives its owner binding up: kept as history, so the once-per-worker retry binds afresh
+    (the next attempt number, any free 16 CPUs) exactly as before the contract. The booking itself was released by the
+    thread's end. Never for a saved/unknown day."""
+    owner = x.get('owner')
+    if owner is None:
+        return
+    x.setdefault('owner_history', []).append(dict(owner, released_utc=utc(), released_why=why))
+    x['owner'] = None
+
+
 def _retain_quietly(x):
     """The ledger told that the owner's booking is retained (a dead-holder booking would be reaped otherwise)."""
     import frankie_box_cores as C
@@ -1487,7 +1505,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
     never starts a ROOT after its bound or a stop signal, and waits for the ROOTs it started (their receipts are theirs).
     Each box-slot day runs its whole day in the slot (ROOT, its teacher, the class line); days whose ROOT is done but
     whose day is not take free slots first. Everything it reconciles, admits or receipts is inside its scope."""
-    scope = parse_scope(scope['text'] if isinstance(scope, dict) else scope)
+    scope = parse_scope(scope)
     lock = _take_worker_lock('root', wait=wait_lock)
     if lock is None:
         status, _ = worker_state('root')
@@ -1518,6 +1536,8 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                                        'finished' if result == 'finished' else 'failed',
                                        reason=reason, ended_utc=utc(), facts=facts,
                                        retained_booking=job['holder'].get('retained'), child=facts.get('child'))
+                    if y['finish']['state'] == 'failed':
+                        _release_owner(y, 'finish failed: a retry books any free slot; the owner binding is history')
                     event('root', 'finish_end', seq=seq, day=y['day'], run=y['run'], result=result, reason=reason, facts=facts)
                     log('FINISH seq %d %s (%s): %s%s' % (seq, y['day'], y['run'], result, (': %s' % reason) if reason else ''))
                     continue
@@ -1545,6 +1565,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     y.update(state='queued', where=None, reason='back in line at its own place: %s' % reason)
                 else:
                     y.update(state='failed', where=None, reason=reason)
+                    _release_owner(y, 'failed: the attempt is kept as evidence; a retry mints the next attempt on free CPUs')
                 event('root', 'slot_end', seq=seq, day=y['day'], run=y['run'], result=result, reason=reason, facts=facts)
                 log('ROOT seq %d %s (%s): %s%s' % (seq, y['day'], y['run'], result, (': %s' % reason) if reason else ''))
             for x in ordered(doc):
@@ -1683,7 +1704,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                                else stop.get('reason'), front=about, pending=len(pending))
                 event('root', 'worker_end', state=end[0], reason=stop.get('reason'), front=about, pending=len(pending),
                       scope=scope['text'])
-                probe.update('root:' + end[0], n_done, len(doc['entries']) or None,
+                probe.update('root:' + end[0], n_done, len(mine) or None,
                              state='waiting' if end[0] in ('waiting_owner', 'waiting_out_of_scope') else 'complete' if end[1] == 0 else 'failed')
                 fcntl.flock(lock, fcntl.LOCK_UN)            # released under the queue lock: an enqueue now gets a new kick
                 lock.close()
@@ -1714,7 +1735,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                           reason='%s: %s' % (type(error).__name__, error))
         _worker_status('root', state='running', commit=commit, running=sorted(running), stop=stop.get('reason'),
                        pending=len(pending), scope=scope['text'])
-        probe.update('root:running %d' % len(running), n_done, len(doc['entries']) or None, in_flight=len(running))
+        probe.update('root:running %d' % len(running), n_done, len(mine) or None, in_flight=len(running))
         time.sleep(poll_seconds)
     return code
 
@@ -1737,18 +1758,14 @@ def request_save(run, day, by):
         if not active:
             raise SystemExit('%s %s is %s (finish %s): a save applies to a running owner only' % (
                 run, day, x['state'], (x.get('finish') or {}).get('state')))
+        import frankie_box_cores as C
         marker = Path(owner['marker'])
-        marker.parent.mkdir(parents=True, exist_ok=True)
         body = dict(schema='FRANKIE_QUEUE_SAVE_REQUEST_V1', run=run, day=day, attempt=owner['attempt'], booking=owner.get('booking'),
                     cpus=owner.get('cpus'), requested_at=time.time(), requested_utc=utc(), by=by)
         try:
-            fd = os.open(marker, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+            C.write_json(marker, body, exclusive=True)
         except FileExistsError:
             raise SystemExit('a save request stands already: %s' % marker)
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(body, indent=1, sort_keys=True) + '\n')
-            f.flush()
-            os.fsync(f.fileno())
         x['save_request'] = body
         save('root', doc)
         event('root', 'save_requested', seq=x['seq'], day=day, run=run, marker=str(marker), by=by)
@@ -1900,7 +1917,7 @@ def main():
     print(json.dumps(r, indent=1, sort_keys=True, default=str))
     if (r or {}).get('status') == 'queued' and a.kick == 'on':
         print(json.dumps(kick(a.line, a.code_root, a.commit, SETTINGS['queue_worker_seconds'], a.poll_seconds,
-                              by='dispatch enqueue', scope='%s:%s' % (a.run, a.day)), sort_keys=True))
+                              by='dispatch enqueue', scope=run.scope_text()), sort_keys=True))
     return 0 if (r or {}).get('status') in ('queued', 'done', 'reused') else 3
 
 

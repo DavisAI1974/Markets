@@ -1069,19 +1069,13 @@ class Run:
 
     def previous_keep(self, day, selection):
         """The selection written once (create-only) BEFORE the first child dispatch; a selection kept meanwhile wins."""
-        path = self.previous_path(day)
-        path.parent.mkdir(parents=True, exist_ok=True)
         body = dict(schema='FRANKIE_PREVIOUS_SELECTION_V1', run=self.plan['run'], day=day, classroom=selection[0],
                     **{'from': selection[2]}, selected_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
                     selected_by_commit=self.commit)
         try:
-            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+            self.cores.write_json(self.previous_path(day), body, exclusive=True)
         except FileExistsError:
             return
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(body, indent=1, sort_keys=True) + '\n')
-            f.flush()
-            os.fsync(f.fileno())
 
     def classroom_ready(self, e):
         """The classroom step's readiness checks, in its order: (None, None, facts) when the day may take its class now;
@@ -1686,6 +1680,7 @@ class Run:
                                   'then seal/test his claims before publishing tested knowledge')
 
     def teacher(self, batch_key, entries):
+        refused = {}                                     # day -> why its retained teacher knowledge is not taught again
         self.check_save()
         remote = {e['day']: self.remote_stage('teacher', e['day']) for e in entries if self.remote_root(e['day'])}
         if len(entries) == 1 and entries[0]['day'] in remote and batch_key == 'day-' + entries[0]['day']:
@@ -1703,8 +1698,11 @@ class Run:
                 try:
                     brain_entries[e['day']] = self.teacher_knowledge(e['day'], rows_path, source)
                 except ValueError as error:
-                    return self.record('teacher', batch_key, 'refused', day=e['day'], teacher_rows=str(rows_path),
-                                       reason='the teacher knowledge of %s is not taught again: %s' % (e['day'], error))
+                    refused[e['day']] = str(error)     # the other days of the batch are not held back by this one
+        if refused and not todo:
+            return self.record('teacher', batch_key, 'refused', brain_entries=brain_entries, refused_days=refused,
+                               reason='teacher knowledge not taught again for %s: %s' % (
+                                   sorted(refused), '; '.join('%s: %s' % kv for kv in sorted(refused.items()))[:1500]))
         if not todo:
             return self.record('teacher', batch_key, 'waiting' if remote_waiting else 'skipped',
                                reason='waiting for owning lane teacher receipts' if remote_waiting else
@@ -1740,8 +1738,13 @@ class Run:
                 try:
                     brain_entries[d] = self.teacher_knowledge(d, rows / ROWS_FILE, source)
                 except ValueError as error:
-                    return self.record('teacher', batch_key, 'refused', exit_code=code, log=log, day=d,
-                                       reason='the teacher knowledge of %s is not taught again: %s' % (d, error))
+                    refused[d] = str(error)             # recorded per day; the batch's other entries stay
+        if refused:
+            return self.record('teacher', batch_key, 'refused', exit_code=code, log=log, days=[d for d, _ in receipts],
+                               rows_missing=missing, waiting=waiting, remote_days=remote, brain_entries=brain_entries,
+                               refused_days=refused,
+                               reason='teacher knowledge not taught again for %s (explicit checked successor required): %s' % (
+                                   sorted(refused), '; '.join('%s: %s' % kv for kv in sorted(refused.items()))[:1500]))
         return self.record('teacher', batch_key, 'done' if code == 0 and not missing and not waiting else 'failed',
                            exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
                            remote_days=remote,

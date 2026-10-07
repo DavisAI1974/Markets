@@ -41,13 +41,14 @@ inside the booking, and every unpinned child inherits it), adds the job's pid to
 that dies without its release is reaped: a booking whose pids are all gone is released with a receipt (book reaps first).
 
 RETAINED BOOKINGS (Step 8, 2026-10-07: a saved main day keeps its exact 16 CPUs). A day-run booking that its owner marks
-`retained` (retain --booking ID --run R --day D --reason TEXT), and a day-run booking naming its run and day whose pids
-are all gone (its holder died: reaping RETAINS it for that owner instead of releasing it), keeps its CPUs booked with
+`retained` (retain --booking ID --run R --day D --reason TEXT), and a queue day's whole-day slot booking (stage
+day-slot-*) whose pids are all gone (its holder died: reaping RETAINS it for that owner instead of releasing it; a
+single step's booking is reaped as before), keeps its CPUs booked with
 no live process: no other day can take them. Only its owner takes them back: a `book` with --cpus naming exactly that
 set and --run/--day equal to the retained owner's takes the retained booking over IN PLACE (same id, the new holder
 pid, the retention kept as history); any other request for those CPUs waits. An operator releases a retained booking
 only with `release` and the explicit reason; nothing releases it on its own. `show` lists retained bookings with
-their owner. A day-run booking from before this rule whose holder is gone is retained too and needs that release.
+their owner. A day-slot booking from before this rule whose holder is gone is retained too and needs that release.
 
 OPERATIONS
   book     --kind K [--day D --run R --stage S --commit C --workers W --verify V --pid P]: book for pid P (default the
@@ -332,7 +333,8 @@ def reap_locked():
     for b in live_bookings():
         if b['_alive'] or b['_retained']:
             continue
-        if b.get('kind') == 'day-run' and b.get('run') and b.get('day'):
+        if b.get('kind') == 'day-run' and b.get('run') and b.get('day') and str(b.get('stage') or '').startswith('day-slot-'):
+            # a queue day's whole-day slot (frankie_box_frankie_queue._book_slot): its owner's, never freed by its death
             _retain_locked(b, b['run'], b['day'], attempt=None,
                            reason='reaped: every pid of the booking is gone without a release; retained for its owner (unknown)')
             continue
@@ -406,11 +408,6 @@ def book_locked(kind, size, pid, meta, window):
     free = [c for c in online if c not in booked and c not in held]
     if size > len(online):
         return None, dict(status='refused', reason='%d CPUs asked, the box has %d' % (size, len(online)))
-    if len(free) < size:
-        return None, dict(status='waiting', free=len(free), needed=size, free_cpus=cpu_list(free),
-                          booked_cpus=cpu_list(booked), in_use_unbooked=cpu_list(held), reaped=[r['booking'] for r in reaped],
-                          reason='waiting: %d free of %d needed (booked by the ledger: %s; in use by Frankie processes not '
-                                 'in the ledger: %s)' % (len(free), size, cpu_list(booked) or 'none', cpu_list(held) or 'none'))
     requested = meta.get('cpus')
     if requested is not None:
         if len(requested) != size or len(set(requested)) != size or not set(requested).issubset(online):
@@ -437,6 +434,11 @@ def book_locked(kind, size, pid, meta, window):
             write_json(b['_path'], b)
             return b, dict(status='booked', booking=b['booking'], cpus=cpu_list(b['cpus']), parent_cpu=b['parent_cpu'],
                            resumed_from=b['booking'])
+    if len(free) < size:
+        return None, dict(status='waiting', free=len(free), needed=size, free_cpus=cpu_list(free),
+                          booked_cpus=cpu_list(booked), in_use_unbooked=cpu_list(held), reaped=[r['booking'] for r in reaped],
+                          reason='waiting: %d free of %d needed (booked by the ledger: %s; in use by Frankie processes not '
+                                 'in the ledger: %s)' % (len(free), size, cpu_list(booked) or 'none', cpu_list(held) or 'none'))
     cpus = sorted(requested if requested is not None else (free[:size] if kind == 'day-run' else free[-size:]))
     stamp = time.time()
     booking = '%s-%s-%s-%d-%d' % (kind, re.sub('[^A-Za-z0-9_]', '_', meta.get('day') or 'box'),
