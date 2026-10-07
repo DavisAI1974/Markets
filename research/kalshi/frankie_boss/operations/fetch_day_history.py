@@ -62,7 +62,18 @@ WAYBACK_PAGES = {                               # the pages STORAGE_CONSENSUS_NO
     'investing_mx': 'mx.investing.com/economic-calendar/natural-gas-storage-386',
     'eia_wngsr': 'ir.eia.gov/ngs/ngs.html',            # the as-printed actual (storage_vintage.py's source)
     'eia_wngsr_json': 'ir.eia.gov/ngs/wngsr.json',      # EIA's machine summary with its revision flags
+    # 2026-10-07 (Greg: no point left missing): more archived copies of the same calendars; a calendar page lists the
+    # recent prints with their estimate, so a capture weeks after a print still carries it (CALENDAR_AFTER_DAYS)
+    'investing_uk': 'uk.investing.com/economic-calendar/natural-gas-storage-386',
+    'investing_in': 'in.investing.com/economic-calendar/natural-gas-storage-386',
+    'investing_ca': 'ca.investing.com/economic-calendar/natural-gas-storage-386',
+    'investing_au': 'au.investing.com/economic-calendar/natural-gas-storage-386',
 }
+CALENDAR_AFTER_DAYS = 42        # calendar pages: captures up to six weeks after a print (the history rows carry it)
+REPORT_AFTER_DAYS = 8           # EIA's own report pages: the next week's release replaces the page
+SNAPS_PER_PRINT = 8             # at most this many captures per page and print (earliest first); one capture is enough
+# investing.com's public chart feed of event 386 (actual and forecast of every print it shows), read live
+INVESTING_CHART_FEED = 'https://sbcharts.investing.com/events_charts/us/386.json'
 
 
 def days_selected():
@@ -330,10 +341,16 @@ def fetch_consensus(out):
     rec = Receipt(out, 'consensus')
     prints = sorted({p['release_et'][:10] for d in days_selected() for p in storage_prints_around(d)})
     rec.body['prints'] = prints
+    try:
+        _, raw = http_get_retry(INVESTING_CHART_FEED, timeout=90, what='investing chart feed 386', budget='archive')
+        rec.save('live/investing_chart_386.json', raw, url=INVESTING_CHART_FEED)
+    except Exception as exc:
+        rec.gap('all', f'investing chart feed 386: {exc!r}')
     for name, page in WAYBACK_PAGES.items():
+        after = REPORT_AFTER_DAYS if name.startswith('eia_') else CALENDAR_AFTER_DAYS
         for pr in prints:
             p = dt.date.fromisoformat(pr)
-            lo, hi = (p - dt.timedelta(days=6)).strftime('%Y%m%d'), (p + dt.timedelta(days=8)).strftime('%Y%m%d')
+            lo, hi = (p - dt.timedelta(days=6)).strftime('%Y%m%d'), (p + dt.timedelta(days=after)).strftime('%Y%m%d')
             url = 'https://web.archive.org/cdx/search/cdx'
             try:
                 _, raw = http_get_retry(url, {'url': page, 'from': lo, 'to': hi, 'output': 'json',
@@ -347,9 +364,7 @@ def fetch_consensus(out):
             rec.save(f'cdx/{name}/{pr}.json', snaps, url=f'{url}?url={page}&from={lo}&to={hi}')
             if not snaps:
                 rec.gap(pr, f'{name}: no Wayback snapshot {lo}..{hi}')
-            for s in snaps:
-                if s.get('statuscode') != '200':
-                    continue
+            for s in [x for x in snaps if x.get('statuscode') == '200'][:SNAPS_PER_PRINT]:
                 raw_url = f"https://web.archive.org/web/{s['timestamp']}id_/{s['original']}"
                 try:
                     _, html = http_get_retry(raw_url, timeout=90, what=f"snapshot {name} {s['timestamp']}", budget='archive')
@@ -362,7 +377,7 @@ def fetch_consensus(out):
 def fetch_weather_obs(out):
     import nws_temp_feed as ntf
     rec = Receipt(out, 'weather_obs')
-    months = sorted({(d - dt.timedelta(days=k)).strftime('%Y-%m') for d in days_selected() for k in (0, 1, 2)})
+    months = sorted({(d - dt.timedelta(days=k)).strftime('%Y-%m') for d in days_selected() for k in range(0, 13)})  # the builder reads 12 days back
     for ym in months:
         y, m = int(ym[:4]), int(ym[5:])
         start = f'{ym}-01'
@@ -433,7 +448,27 @@ FETCH = dict(calendar=fetch_calendar, cot=fetch_cot, storage=fetch_storage, cons
 AS_PRINTED_SCHEMA = 'FRANKIE_STORAGE_AS_PRINTED_V1'
 HOUSE_NAMES = dict(tradingeconomics='TradingEconomics (tradingeconomics.com/united-states/natural-gas-stocks-change)',
                    investing_www='investing.com event 386', investing_es='es.investing.com event 386',
-                   investing_mx='mx.investing.com event 386', eia_wngsr='EIA WNGSR (ir.eia.gov/ngs/ngs.html)')
+                   investing_mx='mx.investing.com event 386', eia_wngsr='EIA WNGSR (ir.eia.gov/ngs/ngs.html)',
+                   investing_uk='uk.investing.com event 386', investing_in='in.investing.com event 386',
+                   investing_ca='ca.investing.com event 386', investing_au='au.investing.com event 386')
+
+
+def parse_chart_feed(raw):
+    """investing.com's event-386 chart feed -> {print date (ET): {'actual', 'estimate'}}. The feed lists each print it shows
+    with its release time (epoch ms) and the actual/forecast as displayed; a field it does not carry is None."""
+    try:
+        doc = json.loads(raw)
+    except ValueError:
+        return {}
+    out = {}
+    for a in (doc.get('attr') or []) if isinstance(doc, dict) else []:
+        ts = a.get('timestamp')
+        if ts is None:
+            continue
+        d = dt.datetime.fromtimestamp(int(ts) / 1000, UTC).astimezone(ET).date().isoformat()
+        num = lambda v: v if isinstance(v, (int, float)) else _bcf(str(v)) if v not in (None, '') else None
+        out[d] = dict(actual=num(a.get('actual')), estimate=num(a.get('forecast')))
+    return out
 
 
 def _html_text(raw):
@@ -521,6 +556,14 @@ def as_printed(src, runs, out):
         raw = path.read_bytes()
         rec.body['requests'].append(dict(key=key, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()))
         return json.loads(raw)
+    feed = {}
+    for run in runs:
+        for path in sorted(glob.glob(str(src / f'frankie/day_history/{run}/consensus/live/investing_chart_386.json'))):
+            raw = Path(path).read_bytes()
+            key = str(Path(path).relative_to(src))
+            rec.body['requests'].append(dict(key=key, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()))
+            for d, v in parse_chart_feed(raw).items():
+                feed.setdefault(d, dict(v, key=key))
     vint = (load('storage_vintage/storage_vintage.json') or {}).get('reports', {})
     cons = {r['print_date']: r for r in (load('consensus/storage_consensus.json') or {}).get('reports', [])}
     reports, estimates, missing = {}, {}, []
@@ -573,9 +616,15 @@ def as_printed(src, runs, out):
             estimates[pr] = dict(week_ending=week, print_datetime_et=at, estimate_bcf=x['estimate'], actual_bcf=actual,
                                  source='street estimate: %s calendar row (archived page, capture %s UTC); actual: %s'
                                  % (HOUSE_NAMES[x['house']], x['capture_utc'], reports[week]['source']))
+        elif feed.get(pr, {}).get('estimate') is not None and actual is not None:
+            f = feed[pr]
+            estimates[pr] = dict(week_ending=week, print_datetime_et=at, estimate_bcf=f['estimate'], actual_bcf=actual,
+                                 source='street estimate: investing.com event 386 chart feed forecast (%s, retrieved by the '
+                                 'day_history run; feed actual %s); actual: %s' % (f['key'], f['actual'],
+                                                                                   reports[week]['source']))
         else:
             missing.append(dict(print_date=pr, field='estimate',
-                                reason='no archived calendar page with the street estimate for this print is held'))
+                                reason='no archived calendar page or chart-feed row with the street estimate for this print'))
     doc = dict(schema=AS_PRINTED_SCHEMA, built_utc=dt.datetime.now(UTC).isoformat(), prints=prints, runs=list(runs),
                reports=reports, estimates=estimates, missing=missing,
                rule='values as published at the time, read off the archived pages; each value names its page; a print '

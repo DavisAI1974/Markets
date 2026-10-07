@@ -675,8 +675,8 @@ class Build:
         self.points['curve.traded_shape'] = table(cols, traded, source='curve.trades (last trade per month)',
                                                   vintage='exchange', native_resolution='per trade that changes the shape',
                                                   note=note)
-        self.lack('squeeze_watch.calendar_front_next_spread_chg_3d', 'needs the settlements of three prior sessions; the '
-                  'pull holds the two UTC partitions of the day (the spread itself is in curve.settled_shape)')
+        # Greg 2026-10-07: the squeeze 3-day calendar-front spread change is dropped from the research (not one of the 13;
+        # point 6 stays); it is not listed as missing. The front/next spread itself is in curve.settled_shape.
 
     # every gap the fetch recorded that touches the day: listed as missing with the fetch's own reason (Greg: no data
     # dropped, missing is LISTED, the day is never skipped)
@@ -685,6 +685,8 @@ class Build:
         from fetch_day_history import storage_prints_around
         prints = {p['release_et'][:10] for p in storage_prints_around(self.date)}
         months = {(self.date - dt.timedelta(days=k)).strftime('%Y-%m') for k in range(0, 12)}
+        # a print after the trading day cannot touch it (its gap is the later day's, never this day's missing item)
+        prints = {p for p in prints if p <= self.date.isoformat()}
         touching = {self.date.isoformat(), 'all', str(self.date.year)} | prints | months
         for fam in self.FAMILIES:
             prefix = self.fam[fam]
