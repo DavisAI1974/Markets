@@ -63,5 +63,17 @@
   },
   "enabledMcpjsonServers": [
     "codebase-memory-mcp"
-  ]
+  ],
+  "extraKnownMarketplaces": {
+    "addy-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "addyosmani/agent-skills",
+        "ref": "0.6.8"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "agent-skills@addy-agent-skills": true
+  }
 }
