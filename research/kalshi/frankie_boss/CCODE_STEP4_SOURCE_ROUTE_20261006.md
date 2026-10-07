@@ -480,15 +480,106 @@ Blocked by the held late-scheduling decision: whether, when and under which owne
 knowledge (today: at the next owner boundary that freezes after it, by the existing selection).
 Checks: `ast.parse` of the three modules without project imports; `git diff --check`. No run.
 
+### Corrections after Codex's integration review (2026-10-07; CCODE_NEXT_SOURCE_TASKS top section, in its order)
+
+Four `[skip ci]` commits on `ccode/teacher-tasks-20261006b` atop Codex's `61264cac`: `f2a43e80` D1 | `3d7f1640` B7/C2 |
+`130742ff` B2-B5 | `a3651234` B1/B6/A4/C1. SOURCE-BUILT / RUNTIME-UNVERIFIED (`ast.parse` without project imports,
+`git diff --check`); nothing run, no reproduction called, the claims file untouched, Codex's two modules untouched.
+Greg, 2026-10-07, recorded verbatim in `MARKET_ROLE_RULE`: "We never have transaction costs in market conditions work."
+
+**D1 (`frankie_box_boss_session.py`): the corrected price row contract for Codex's exact price adapter.** Codex's trace
+holds: `InstrumentBook.apply` accumulates each T action's control row in `_legacy_group_rows` and returns the list only at
+the instrument's F_LAST close, so V1 stamped the closing index on earlier trades. The correction stays in `Session.derive`
+(no producer file changed: the producer is loaded from the pinned checkout and its open-group state is already the
+retained state `mbo_resume_state` exports): before every `apply` the derive reads the instrument's open-group row count and
+checks it against its own attribution (`ValueError` on any drift); after a non-closing `apply` (and after a failed one)
+the rows the producer appended are attributed to THIS input; at the close the returned list is zipped with those
+attributions. Values and row order unchanged. No timestamp or spool-position join; nothing inferred.
+
+| field (`prices.provenance.*`) | unit / meaning |
+|---|---|
+| `schema` | `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (prices only; structures keep `FRANKIE_ROOT_ROW_PROVENANCE_V1` unchanged, the name Codex's structure adapter pins) |
+| `input_index` | the ORIGINAL extracted INPUT index whose application appended the row: the loop index over the sealed source's records, the same units as `frames.input_cursor` / `frames.input_record_indices[i]`; `None` for a row the opening adapter state carried in (`origin` says so) |
+| `legacy_row_ordinal` | 0-based ordinal among the legacy rows THAT input's application appended; (`input_index`, `legacy_row_ordinal`) unique within the source |
+| `instrument_id` | as the originating INPUT record carries it (None stays None); the book's instrument for an opening-state row |
+| `group_close_input_index` | the INPUT whose application closed the emitting group (= that group's `frames.input_cursor`): the V1 `input_index`, named for what it is |
+| `group_row_ordinal` | 0-based ordinal within the emitted group's legacy rows (the V1 `legacy_row_ordinal`) |
+| `row_kind` | `trade` (a T action's control row) or `projection_at_event_group_end` (the producer's projection of the last A/C/M (else last non-F/N) member, appended by the closing input; the projected member's own index is NOT carried by the producer and is not guessed) |
+| `origin` | `this_source`, `this_source_apply_failed` (appended before the producer raised on that input, which is in `failures`), `open_group_before_this_source` |
+
+Joins: a prices row -> its group by `group_close_input_index` == `frames.input_cursor` (same instrument); its originating
+member by `input_index` in that group's `frames.input_record_indices` (exact membership, V2 frames). Bindings: the legacy
+recovery identity (`legacy-state.pkl`, which now also carries `pending_legacy_rows`) and the completed-stage identity carry
+`price_row_provenance_schema`, so older saved state refuses; the derivation receipt carries `row_provenance_schema` (V1,
+structures, unchanged for Codex), `price_row_provenance_schema`, `row_provenance_schemas` per spool and
+`unclosed_legacy_rows`; `layers.legacy_price.row_provenance` names V2 and marks V1 `superseded`. A spool whose rows carry
+V1 (or no `provenance`) is never read as originating identity: the adapter should keep listing those ordinals pending.
+No new event axis, price-slot trajectory or lag definition.
+
+**B7 / C2 (`frankie_box_historical_claims.py`, `frankie_box_scientific_teacher.py`, `frankie_box_experiment_exchange.py`).**
+`MARKET_ADMISSION` per binding, traced in the pinned sources: `crypto_harness` = `cost_selected_historical_context`
+(`run_calls` subtracts the fee per leg; `tune_and_score` selects (R, W, T) by fee-adjusted in-sample net; `SWING_THETA` is
+the fee-floor swing that DEFINES the true turns, so FN/TP/recall are against a cost-defined truth; every `per_venue` field
+is downstream); admissible only as identified audit context, never as market evidence or a verdict on H01/H02; the
+cost-free selection rule and turn definition are named as Greg's choices, none taken. `crypto_trend_flip` is cost-free
+(counts). `ng_leg_fingerprints` is cost-free arithmetic under a fee-JUSTIFIED trigger value (`TRIG["NG"] = 0.015`,
+`month_characterize` line 43), the open H03 LEG/threshold need. The original bytes, recorded outputs and comparisons are
+unchanged; `binding_tables_sha256` covers the new table (no records exist). In the arithmetic: `ST.test` classifies every
+tested and origin row's x/y with the reserved search's own `non_market_reason` (`series_role`): a context label or a
+cost/bookkeeping/clock/diagnostic channel makes the row `counts_only` with its reason (so the verdict counts exclude it);
+claimed series of those roles are named in `untested`; every result carries `market_context` (roles, counts, the cell
+rule). `research_rework` carries `market_admission` with what the reproduction word may mean and
+`reproduction_admissible_as_market_evidence`; `reconsideration` counts admissions. Both seats voice the distinction and
+the admission through `context_checks`; a cost-selected binding adds an untested line in the historical item. Dates,
+days and IDs stay attached to every row (`day`, `cell`, `where`). Not a validator framework: one classifier, reused.
+
+**B2-B5 (`frankie_box_historical_reproduction.py` V2 schemas; the teacher, the knowledge replay, the exchange).**
+B2: recorded references (`role` starting `recorded output`) are staged under `<out>/recorded/`, never in the tree the
+driver runs in; `compare` takes a COMPLETED run only (status `run`, returncode 0, not timed out; else `performed_failed`
+with the facts), re-reads produced files against the hashes the run captured and the reference at its pin, and compares
+within a declared scope: the NG 108-day file on the six argv days only, legs aligned by `entry_idx` (`_NG_SCOPE`), never
+by position; unaligned members and unequal lists are listed. B3: `run` refuses, BEFORE dispatch, a plan that differs from
+the written `plan.json`, a staging that is not the plan's, staged bytes that changed, an `executable` flag that does not
+follow from the facts, a `run.json` of another plan and a `dispatch.json` without `run.json` (no implicit retry); a
+completed `run.json` of the exact plan is returned, never rerun; `dispatch.json` is written before the subprocess. B4:
+`pins_of` = sources AND committed inputs; `record` keeps `performed_not_comparable` / `performed_failed` as statuses and
+binds the operation evidence (plan/run paths + file and canonical hashes), the tables and the admission; `records_for`
+admits only on the full declared binding (entry, claims, status, pins, tables) and, for a performed status, retained
+consistent operation evidence on a `defined` binding (a `not_bound` entry can never acquire a performed status); every
+rejected record is listed with identity and reason; `status_of` precedence is explicit (differs first); `status_summary`
+keeps every record's status beside the word; older `HISTORICAL_REPRODUCTION_V1` files are listed as superseded. B5:
+`record_selection(dir)` freezes the owner's record files; `teach_accumulated` freezes `<out_dir>/reproduction/` into
+`inputs.json` with the other scientific inputs (`claim_inputs` binds its digest and the binding tables, so result identity
+changes with them); `ST.test` / `reconsideration` / `historical_claims` take `records_dir` + `records_selection`, read only
+the frozen files bytes-verified, and list later arrivals apart (also in the receipt's `late_knowledge.reproduction_records`).
+The CLI route (`ST.main`) still reads `REPRODUCTION_DIR` live, stated in the result (`selection_frozen` false).
+
+**B1 / B6 / A4 / C1.** B1: `run` writes `stdout.bin` / `stderr.bin` with every original byte (write-once, hash-bound in
+the run document) and keeps the decoded text whole; `_compare_json` keeps every differing, missing and produced-only leaf.
+B6: `plan.input_supply` states the exact gap: no settled interface supplies an input that is not in the repository
+(realbins/, S3 NG MBP-10, regime caches); the receipt contract such an interface needs is named beside the nearest
+existing contracts (the derive `source_binding` container pin, the search manifest parts, `witness`); nothing built,
+fetched or activated; a `missing_inputs` binding never claims runnable reproduction. A4: `discovery_row_found` is set from
+the reader's authenticated `discovery_row` on the current day BEFORE the arithmetic-unavailable path lists the row;
+`discovery_row_margins_stated` / `discovery_row_listed_without_arithmetic` say which case holds. C1: the completed-native
+reference carries `identity` (day, owning manifest, sha256, bytes, `read_from`) apart from `path`;
+`native_evidence_identity` compares identities (same bytes under another output root = same evidence, listed; different
+evidence for the same owner refuses); a carried same-day reference of another manifest never stands in when the owner has
+none (listed with its provenance, left out of `by_day`); `teach_accumulated` returns `scope` (new result files, reuses,
+`all_reused`).
+
+Still open after these corrections (unchanged decisions): everything in section 5 and the Claude handoff; the exact
+price adapter (Codex, on the V2 contract above); runtime verification of all of it.
+
 ## 9. Closure table after slices A-D (against the existing contracts; SOURCE-BUILT / RUNTIME-UNVERIFIED throughout)
 
 **Current correction status (supersedes the original closure table below):**
 
-| Step | Still open after review of `d3945e13` |
+| Step | After the 2026-10-07 corrections (`a3651234`); SOURCE-BUILT / RUNTIME-UNVERIFIED |
 |---|---|
-| 2 | A4 discovery identity, C1 owner-native content identity, C2 both-teacher market/context consumption, B4/B5 record admission and frozen selection; native-learner and late-scheduling decisions. |
-| 3 | D1 actual originating trade INPUT provenance, then Codex's exact price adapter; C2 consumer classification; existing held trajectory/4.2/4.4 definitions. Exact structures are source-built. |
-| 4 | B1-B7 evidence preservation, execution/recovery/reference separation, admission/status, frozen selection, original-input supply and historical cost/profit rework; reproduction/reformulation open for BOTH teachers. |
+| 2 | A4, C1, C2, B4/B5 source-corrected (section 8, Corrections). Open: native-learner and late-scheduling decisions (Greg); Codex's integration review of the corrections; runtime verification. |
+| 3 | D1 source-corrected: `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (contract in section 8). Open: Codex's exact price adapter on it; the held trajectory/4.2/4.4 definitions. Exact structures unchanged (V1). |
+| 4 | B1-B7 source-corrected. Open: the input-supply interface (B6: named, not built; Greg's authorization); the cost-free selection/turn choices (B7, Greg); reproduction/reformulation open for BOTH teachers; nothing run. |
 | 5 | STOP; draft unapplied, decisions held. |
 
 No correction above was delivered by the new documentation commit. The older table records

@@ -4,7 +4,34 @@ This is the Claude-side handoff. The Codex-facing record is separate: `CCODE_STE
 `CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md` (top section) and `CCODE_DROP_IN_20261006_NEXT_CHAT.md`. Do not merge the
 two channels: Codex integrates from the CCODE documents; a Claude session starts from `DROP_IN_CLAUDE_20261007.md`.
 
-## Where things stand
+## Where things stand (updated 2026-10-07, third session: the correction queue returned)
+
+Codex's integration review of A-D landed as an ORDERED correction queue at the top of `CCODE_NEXT_SOURCE_TASKS_20261006.md`
+(D1; B7/C2; B2-B5; B1/B6/A4/C1), in Codex's `61264cac`. This session rebased clean onto it and returned one `[skip ci]` commit
+per group: `f2a43e80` D1, `3d7f1640` B7/C2, `130742ff` B2-B5, `a3651234` B1/B6/A4/C1, then the docs commit. Everything
+SOURCE-BUILT / RUNTIME-UNVERIFIED (`ast.parse` without project imports, `git diff --check`, the codebase-memory CLI index);
+nothing run, no reproduction called, the claims file byte-identical, Codex's two modules untouched, STOP before #5 kept.
+The per-finding record (what each correction does, the D1 field/unit table for Codex's price adapter, what stays open) is
+the step-4 report section 8 "Corrections after Codex's integration review" + the section 9 table; the Codex-facing summary
+is the new top section of `CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md`. Greg, mid-session: "We never have transaction
+costs in market conditions work" (recorded verbatim in `frankie_box_historical_claims.MARKET_ROLE_RULE`).
+
+Design choices a next session should know (so they are not re-litigated):
+- D1 was fixed in `Session.derive`, not in the producer file: the producer is loaded from the PINNED checkout (`_producer_module`)
+  so an in-tree edit would not run on the box without moving the pin, and its open-group row list is already the retained
+  state `mbo_resume_state` exports. The derive reads that state before/after each `apply` and refuses on any drift.
+- Prices got their OWN schema (`FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2`); structures stay V1 because Codex's structure adapter
+  compares `provenance.schema` and the receipt's `row_provenance_schema` against the V1 literal. Do not bump V1.
+- C2's classifier is the reserved search's `non_market_reason`, imported (not copied) by `frankie_box_scientific_teacher.series_role`.
+- The reproduction module's schemas moved to V2 (`PLAN`, `RUN`, `STAGING`, `RECORD`); `records_for` lists V1 records as superseded.
+  `record()` gained a required `operation_dir` argument; nothing calls it.
+- The owner-local records directory is `<accumulated out_dir>/reproduction/` (frozen into `inputs.json`); the CLI route still
+  reads `ST.REPRODUCTION_DIR` live and says so.
+
+What a next Claude session does: Codex's review of these four commits lands in the same task doc; fix what it names, one
+commit per group, same boundaries; nothing else is assigned.
+
+## Where things stand (as of the second session, 2026-10-07 early; superseded above)
 
 Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's `80a0e279` (ccr-5fce7de3-xa4hfg), pushed; tip `fea2e165`.
 Commits above Codex's tip, oldest first: `b2dbc51f` (the prior chat's handoff), `c31cad06` A follow-ups, `7cb2ce52` B,

@@ -34,7 +34,7 @@ eight sources that exist only at their catalog revision would read as unreadable
 committed file from its staged checkout (HISTORICAL_CLAIMS in frankie_box_scientific_teacher.sh). Idempotent by
 content: the same catalog, crosswalk and builder give the same bytes (no clock in the document).
 
-REPRODUCTIONS / REFORMULATIONS (CCode slice B, 2026-10-06, below the crosswalk): declared tables the scientific teacher
+REPRODUCTIONS / REFORMULATIONS / MARKET_ADMISSION (CCode slice B, 2026-10-06; B7 2026-10-07): declared tables the scientific teacher
 attaches at read time by claim id (frankie_box_scientific_teacher.historical_claims); they are not part of build()'s
 output. build() is unchanged by them except builder_sha256, which names the builder that built the committed file; the
 committed file is not rebuilt under the hold and stays byte-identical.
