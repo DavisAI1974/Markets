@@ -493,13 +493,31 @@ def heartbeat_block(run_dir, day, stages):
     cpu_use_row(uses)
 
 
+def _compact_cpus(value):
+    """CPU lists as ranges ('1-15,17-31') for the CPU use row only (readability; the maps above keep the lists)."""
+    if isinstance(value, list) and len(value) > 3 and all(type(x) is int for x in value):
+        runs = []
+        for cpu in value:
+            if runs and cpu == runs[-1][1] + 1:
+                runs[-1][1] = cpu
+            else:
+                runs.append([cpu, cpu])
+        return ','.join(str(a) if a == b else '%d-%d' % (a, b) for a, b in runs) + ' (%d CPUs, hand-out order kept)' % len(value) \
+            if value == sorted(value) else value
+    if isinstance(value, dict):
+        return {k: _compact_cpus(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_compact_cpus(v) for v in value]
+    return value
+
+
 def cpu_use_row(uses):
     """The piece's CPU use row (Greg, 2026-10-07: day 1 shows where CPUs sat idle in every piece): per stage heartbeat
     the booked CPUs, the CPU-equivalents that did work and the idle stretches by phase, beside every CPU map the piece's
     receipts record (frankie_box_lane_pin.record and the pieces' cpu_placement / pool_recovery)."""
     emit('#### CPU use (booked CPUs, CPUs that did work, idle stretches by sub-step, recorded CPU maps)\n')
     json_block(dict(heartbeats=[dict(file=str(path), **use) for path, use in uses],
-                    cpu_maps=[dict(source=label, at=path, map=value) for label, path, value in _PIECE_MAPS],
+                    cpu_maps=[dict(source=label, at=path, map=_compact_cpus(value)) for label, path, value in _PIECE_MAPS],
                     absent=None if (uses or _PIECE_MAPS) else 'no heartbeat and no CPU map recorded for this piece: '
                                                             'its CPU use is unknown, never zero'))
 

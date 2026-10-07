@@ -245,27 +245,35 @@ def _bounded_shutdown(pool, record=None, grace=None):
     except Exception as error:  # noqa: BLE001 - listed; the processes are still stopped below
         if record is not None:
             record.setdefault('stops', []).append(dict(shutdown_error='%s: %s' % (type(error).__name__, error)))
-    deadline = time.monotonic() + grace
-    for process in processes:
+    began = time.monotonic()
+    deadline = began + grace
+
+    def alive(process):
         try:
-            process.join(max(0.0, deadline - time.monotonic()))
-        except Exception:  # noqa: BLE001 - a process object that cannot be joined is handled below
-            pass
+            return process.is_alive()
+        except Exception:  # noqa: BLE001 - not a child we can poll (never started): nothing to stop
+            return False
+    # poll every 50 ms until every worker has exited or the grace is over (a worker that is exiting is never counted
+    # as running: only one still alive at the deadline is terminated)
+    while any(alive(process) for process in processes) and time.monotonic() < deadline:
+        time.sleep(0.05)
     stopped = []
     for process in processes:
+        if not alive(process):
+            continue
         try:
+            process.terminate()
+            process.join(5)
             if process.is_alive():
-                process.terminate()
+                process.kill()
                 process.join(5)
-                if process.is_alive():
-                    process.kill()
-                    process.join(5)
-                stopped.append(process.pid)
-        except Exception:  # noqa: BLE001
-            stopped.append(getattr(process, 'pid', None))
+        except Exception:  # noqa: BLE001 - listed below; nothing else can be done for it here
+            pass
+        stopped.append(getattr(process, 'pid', None))
     if stopped and record is not None:
         record.setdefault('stops', []).append(dict(terminated_pids=stopped, grace_seconds=grace,
-                                                   reason='still running %.0f s after the pool was asked to stop' % grace))
+                                                   waited_seconds=round(time.monotonic() - began, 3),
+                                                   reason='still alive when the %.0f s stop grace ended' % grace))
     return stopped
 
 
@@ -754,7 +762,7 @@ def _dstate_row(e, control):
 # Periodic exact save of the raw pass (stacks pass, session 5; the Sept-29 item 2 rule: exact state at a group-closed
 # point, a resume continues from it; Greg: a crash must not lose the raw pass). With a recovery path, once
 # SAVE_EVERY_SECONDS have passed since the last save, the raw pass saves at the next row that closes its group (the row
-# carries its F_LAST receipt): the raw streams are drained first (every placeholder resolved, as the stop-save does),
+# carries its F_LAST receipt) and ends a raw batch exactly: the raw streams are drained first (every placeholder resolved, as the stop-save does),
 # then the same state the stop-save writes (complete False) and the walk CONTINUES. A resume loads it exactly as it loads
 # a stop-save. Env FRANKIE_TEACHER_SAVE_EVERY_S overrides (0 = off). Every save is listed in SAVE_RECORD (receipt only).
 # RESUME_SKIP[0]: the rows a loaded save already holds (the caller's evidence generator may skip precomputing them).
@@ -841,7 +849,11 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
                 _progress('teacher_raw_rows', processed)
                 if every is not None and not due and time.monotonic() - last_save >= every:
                     due = True                       # saved at the next row that closes its group
-            if due and rows[-1][1]:
+            if due and rows[-1][1] and not streams.batch:
+                # a row that closes its group AND ends a raw batch exactly (no recorded call waiting for the next
+                # submit): draining here moves no batch boundary, so every worker result is unpickled from the very
+                # batch it would have been in without the save (the attachment pickle's object sharing, hence its
+                # bytes, unchanged; a resume from it starts on the same boundary)
                 due, began = False, time.monotonic()
                 streams.finish()                     # every placeholder resolved; the pool stays up for the next rows
                 save(False)
