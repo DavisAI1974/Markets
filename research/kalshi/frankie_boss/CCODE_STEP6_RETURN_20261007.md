@@ -133,3 +133,78 @@ Older lessons stay available; age retires nothing; conflicting knowledge about t
 kept while unresolved; partial replacement keeps unaffected knowledge. Nothing in this return deletes or ranks lessons by
 recency; the step-5 supersession of a historical BINDING (`b5d0fe74`, now `73288615`) is a demonstrated source correction of
 a declared table, not a lesson replacement.
+
+## 8. Codex's review round (task doc "ACTIVE review of fourth-session return", 2026-10-07): 6R1-6R3, B2-R, B4-R, BIND-R
+
+**Codex review after return `3667b289`:** integrated, source-only. 6R1 is addressed;
+6R2-F interrupted-attempt discovery and 6R3-F read-deadline/partial-failure handling remain
+open. Historical B2-R is addressed; B4-F command/inventory and BIND-F JSON/per-entry identity
+remain open. Exact findings and ownership are in the current task-doc top section. The
+publication trace is received, with changed claim-input identity still a Codex interface gap.
+No runtime or training result is established.
+
+Rebased onto Codex's `3bc72da8` (which lands the shared correction reader, `STEP5_CORRECTION_DELIVERY_20261007.md`, and
+Greg's 22:46 ET ownership update: the step-5 reader hooks in `teach_accumulated`, `accumulated_lessons`, direct lesson
+loading and the two `learner_school(stage='exchange')` call sites are Codex's; none was built here). Six commits, one
+per finding: `588c9c7f` 6R1 | `1d9a1cbf` 6R2 | `d52237d3` 6R3 | `6837875a` B2-R | `bf8f87a5` B4-R | `0cb6868b` BIND-R.
+The codebase-memory index was rebuilt on this tree first (generation 02:41:28Z; the first retry aborted when the rebase
+changed files under it) and used for the callers of every function changed: all inside the owned modules.
+SOURCE-BUILT / RUNTIME-UNVERIFIED: `ast.parse` without project imports, `git diff --check`; nothing run.
+
+- **6R1** (`discuss_item`): a terminal LEAVE_OPEN/RESOLVED is saved in ONE durable write with its completed round and
+  the item's result, and the function returns from it; on recovery a retained terminal outcome or a retained over-cap
+  count is consumed before any request; the over-cap fact is saved before anything else.
+- **6R2** (`LlamaServer`, `_meeting`): evidence files are content-addressed (`<sha256>-<label>.bin`, equal bytes = the same
+  file; a later attempt can never renumber or overwrite); stderr is one exclusively-opened file per attempt
+  (`llama-server-stderr-<attempt>.log`); each attempt writes an immutable `evidence/attempts/<attempt>.json` (stderr
+  witness, evidence list, calls and tokens of that attempt) and the complete record lists every retained attempt oldest
+  first. `_meeting` computes the input bytes with the durable writer's own encoding and validates the retained binding
+  against them BEFORE `meeting-input.json` is touched: a changed-input retry refuses without mutating any retained file.
+- **6R3** (`LlamaServer._post`, `_read_bounded`, `chat`, `count_tokens`, `start`; the record's counts): `_post` returns
+  (parsed, raw) and validates each endpoint's required shape (`_expect_template` / `_expect_tokens` / `_expect_chat`)
+  with the original bytes retained whole on any unusable shape, so no KeyError/TypeError escapes the meeting's own failure
+  path; every chat reply's raw bytes are retained per round; bodies (success and HTTP-error) are read in chunks under the
+  ABSOLUTE remaining deadline and the partial bytes are retained on expiry; the health wait parses defensively and releases
+  the process on expiry; `model_calls` is derived from the retained rounds of all attempts, with `calls.this_attempt`,
+  `calls_sent_without_recorded_reply` and the tokens' scope stated apart.
+- **B2-R** (`aggregate_status`, `compare`): the whole-output status follows the coverage of EVERY declared comparable
+  output: a declared printed/json output that could not be compared at all is a gap and the status is
+  `performed_incomplete` (differs still wins; none compared is `performed_not_comparable`); `coverage` (declared,
+  compared, uncovered with reasons, complete) is recorded beside the matched scope; prose stays outside comparison.
+- **B4-R** (`read_dispatch`, `coherence`, `record`, `_admit`): the dispatch marker is PARSED and must name this entry,
+  this plan hash, the run's argv/cwd/start, an explicit authorization and the run's capability; the plan must carry the
+  CURRENT entry's command, recorded outputs, declared inventory, binding status/calculation, pins and tables; the run's
+  command must be the plan's; run/plan/record name one capability revision; the comparison status is recomputed from
+  its retained outputs. `record()` refuses an incoherent operation; `_admit()` re-checks on read.
+- **BIND-R** (`binding_identity`, `binding_identities_differ`, `current_binding`, the lesson projection; the exchange's
+  `binding_correction`, `context_checks`, the rework): identity schema `FRANKIE_BINDING_IDENTITY_V2` = status, entry ids,
+  source pins, input pins (with status), each entry's command, recorded outputs and calculation; the teacher's
+  `reproduction_binding` now carries it, so lessons freeze the complete identity. An older projection (flat sources)
+  yields `complete=False` with the unestablished parts named; consumers record `superseded` on a real difference and
+  `equivalence_not_established` otherwise, never inferring equality; a performed status is carried only when the retained
+  identity is complete and equal; both seats and Frankie's rework say which case holds. No lesson is retired by age.
+
+### The scientific-owner publication / successor interface (traced; nothing built, nothing labelled a correction)
+
+Where a scientific owner COMPLETES a lesson today (the only points that could carry a checked decision into
+`frankie_box_experiment_review.record_correction`):
+1. `frankie_box_scientific_teacher.write()` -> `publish_lessons()` -> `frankie_box_brain.write_lessons_entry` (the CLI
+   route: one lessons file per author/day, then the immutable brain entry).
+2. `frankie_box_teacher_knowledge.teach_accumulated()` -> per result file `ST.publish_lessons` (authors
+   frankie/historical/jev) or `BR.write_lessons_entry` (author search) -> the owner's `receipt.json`.
+Neither computes a correction decision, and neither should: a newer or contradictory lesson is a new lesson, not a
+correction (the knowledge rule). The decision exists only when an owner supplies it explicitly. The exact interface still
+missing, returned as a request (the runner's scheduling is Codex's; the publication call site is mine once it exists):
+- an explicit owner-supplied decision input to the publication step: `{original: {path, bytes, sha256}, scopes:
+  [JSON addresses], decision: partial|full, reason, evidence: [witnesses]}` (a `--correction FILE` on `ST.main` /
+  `teach_accumulated`), consumed ONLY when present; the successor lesson is the result just computed by the same owner
+  against the corrected tables/inputs (not a copy with values edited);
+- the successor OPERATION: a corrected retest of an already-frozen owner day needs a new accumulated out_dir
+  (`require_current_selection` refuses the frozen one; `claim_inputs` binds the tables, so the result identity differs):
+  `teach_accumulated(day, search, brain, out_dir_successor, successor_of=<frozen inputs.json witness>)` is the shape;
+  WHO schedules it and WHEN (the next owner boundary; which lane) is the step-5 completion gap 3 and is Codex's;
+- `record_correction(brain, original, replacement, scopes, decision, reason, evidence, publication_day)` is then called
+  from the publication step with the owner's decision and the successor's witness, after `write_lessons_entry`
+  succeeded (both complete objects retained by the reader).
+Partial replacements keep every unaffected value (the reader enforces identical values outside the scopes); full
+replacement is the explicit `decision`. No recency winner, no automatic labelling, no training.

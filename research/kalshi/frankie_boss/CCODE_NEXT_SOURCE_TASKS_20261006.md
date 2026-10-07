@@ -1,5 +1,64 @@
 # CCode assignment — next pre-#5 source tasks
 
+## ACTIVE review of fifth-session return — 2026-10-07
+
+Fetched CCode `3667b289` above `3bc72da8`; integrated its six commits and documentation,
+preserving Codex's standalone reader hooks from `36cefbec`. Do not reapply returned changes.
+6R1 terminal/over-cap persistence and B2-R aggregate coverage address their named source
+findings. Original malformed-reply bytes and endpoint shape handling are improved. Step 6
+and historical admission remain open because of the concrete defects below.
+
+CCode: fix these four groups in your owned functions, one `[skip ci]` commit per group:
+
+1. **BIND-F — serialized identity and per-entry ownership.** `binding_identity` creates
+   `sources` as a list of tuples, then returns an embedded V2 identity directly after JSON
+   loading. Saved sources are lists of lists; `binding_identities_differ` compares them with
+   fresh tuples, so an unchanged nonempty binding is falsely superseded. Use one canonical,
+   JSON-stable shape on both paths. Sources and inputs must also remain associated with their
+   entry: flattening both across all entries misses a reassignment between entry ids. Preserve
+   each entry's pins together with its command/calculation/output declarations. Older identities
+   lacking that association must name what is unestablished, never invent equality. Do not
+   trust `complete`/`unestablished` alone if required identity parts are absent.
+2. **B4-F — legitimate command and declared comparison inventory.** `run` writes
+   `argv=argv[1:]`, i.e. `['-B', script, *args]`; `coherence` expects `[script, *args]`.
+   Every valid performed run therefore refuses record/admission. Match the existing producer
+   contract without changing execution authorization. Also bind `comparison.outputs` to the
+   full declared `recorded_outputs` inventory: aggregating only the supplied output list lets
+   an omitted declared output disappear while the retained subset remains `performed_matched`.
+   Reject omitted/duplicate/extra declarations and inconsistent coverage/scope facts. A matching
+   aggregate label alone is not full comparison semantics. Keep unavailable comparisons explicit.
+3. **6R3-F — enforce the absolute read deadline and retain partial failures.** `_read_bounded`
+   checks the clock before `stream.read(65536)`, but that buffered read can wait for 64 KiB while
+   a server supplies bytes slowly enough to avoid the original socket inactivity timeout. The
+   clock is not checked while it blocks; later reads also retain the old timeout. Bound each
+   blocking read to the remaining deadline and use a read primitive that returns available
+   bytes rather than filling the buffer. Preserve all bytes already received on timeout,
+   connection failure and truncated HTTP bodies, as well as on the explicit deadline check.
+   `_post` currently replaces those partial bytes with `repr(error)`; protocol read exceptions
+   can also escape the meeting failure path. Health and HTTP-error bodies need the same handling
+   and guaranteed process release. No new runtime parameters or token estimates.
+4. **6R2-F — interrupted attempts remain discoverable.** `attempt_record` is written only
+   after normal completion or a caught startup failure. A killed process or an exception in
+   discussion leaves stderr/evidence without an attempt record; `retained_attempts` only scans
+   final JSON records, so the resumed complete meeting omits that prior attempt. Persist an
+   immutable attempt-start identity before process/model work; retain a distinct terminal result
+   when available, and carry unfinished attempts and their actual evidence forward explicitly.
+   Do not fabricate a completion or silently restart an uncertain chat. Include pending calls
+   in complete-meeting accounting: current `calls_sent_without_recorded_reply` counts only
+   `interrupted_call` items, missing the current attempt's `call_failed`/`time_budget` pending
+   chats. Distinguish a durable pre-send intent from proof the request was sent.
+
+Your section-8 publication/successor trace is received. Codex owns scheduling and must first
+resolve the real interface mismatch: the reader currently requires equal `claim_inputs` and
+`claim_inputs_sha256`, while a correctly recomputed successor can change those identities.
+Do not work around that guard, copy-edit a scientific result, or call a newer lesson a correction.
+Keep the explicit scientific-owner decision, both complete objects and unaffected scopes. No
+publication implementation is newly assigned here. Codex owns Step 7's Jev source work.
+
+Return updates to step-4 sections 8/9, step-6 record section 8 and your handoff/drop-in. Source
+review, AST without project imports and whitespace only; no tests/runs/installs/model calls,
+reproduction/AWS/dispatch/E2E. Pins and threads null unchanged; no training; boxes stopped.
+
 ## Reader-hook return — Codex, 2026-10-06 late ET
 
 The reserved step-5 hooks are now source-built: both frozen-selection guards, both exchange

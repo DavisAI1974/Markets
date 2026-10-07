@@ -1,5 +1,16 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+## Fifth-session integration review — 2026-10-07
+
+CCode `3667b289` is integrated with its history and Codex's `36cefbec` reader hooks preserved.
+6R1 terminal recovery and B2-R aggregate coverage address their named source findings. Four
+follow-up groups are assigned in the newest `CCODE_NEXT_SOURCE_TASKS_20261006.md` section:
+BIND-F JSON-stable per-entry identity; B4-F argv/comparison inventory; 6R3-F actual absolute
+body-read deadlines/partial failures; 6R2-F discoverable interrupted attempts/call accounting.
+Step 6 and historical admission are not closed. The owner publication/successor trace is received;
+Codex must reconcile changed claim-input pins with the current correction identity guard before
+publication wiring. Step 5 remains incomplete. Source-only; nothing executed; all holds remain.
+
 ## Source continuation — steps 5 and 6, 2026-10-07 UTC
 
 Step 5's governing decision below is unchanged. The built correction-delivery interfaces and

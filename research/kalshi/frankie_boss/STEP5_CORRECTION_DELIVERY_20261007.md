@@ -60,7 +60,11 @@ The remaining gaps are:
 1. Scientific owners must explicitly supply a checked decision and successor after research or
    correction. No producer currently calls `record_correction` automatically; an ordinary newer
    or contradictory lesson must NEVER trigger it. There is no newly invented adjudication rule.
-2. Scheduling corrected successor operations for already-frozen/completed work is not complete.
+2. The fifth-session owner trace identifies a concrete contract gap: a recomputed successor
+   can change `claim_inputs`/`claim_inputs_sha256`, but the current correction guard requires
+   them equal. Codex must bind that explicit identity transition without relaxing scientific
+   ownership or unaffected-scope checks; publication is not ready to wire around the guard.
+   Scheduling corrected successor operations for already-frozen/completed work is not complete.
    The current runner refuses stale dependencies; it does not yet build every replacement
    operation. Existing immutable request identities and pending feedback must be carried forward
    by their owner, without an implicit scientific rerun or reopening unrelated completed days.

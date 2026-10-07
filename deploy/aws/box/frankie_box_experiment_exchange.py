@@ -184,17 +184,24 @@ def binding_correction(result):
     import frankie_box_scientific_teacher as ST
     current = HC.reproduction_of(result.get('claim_id'))
     retained = rework.get('reproduction_binding') or {}
+    current_identity = ST.binding_identity(current)          # the tables' shape: every part established
     current_view = dict(status=current['status'], entry_ids=current.get('entry_ids') or [], reason=current.get('reason'),
                         sources=[dict(path=s['path'], revision=s['revision'], sha256=s['sha256'], catalog_id=s.get('catalog_id'))
                                  for e in current.get('entries') or [] for s in e.get('sources') or []],
                         inputs_missing=[i.get('path') for e in current.get('entries') or []
                                         for i in e.get('inputs') or [] if i.get('status') != 'committed'],
-                        rule='a declared binding; not a reproduction')
-    superseded = bool(retained) and ST.binding_identity(retained) != ST.binding_identity(current_view)
-    return dict(superseded=superseded, retained=retained if superseded else None, current=current_view,
+                        identity=current_identity, rule='a declared binding; not a reproduction')
+    # BIND-R: the complete identity (status, entry ids, source AND input pins, commands, comparison declarations,
+    # calculations) decides; an older projection without `identity` establishes only part of it and says so
+    differs, unestablished = (ST.binding_identities_differ(ST.binding_identity(retained), current_identity)
+                              if retained else (False, []))
+    superseded = bool(retained) and differs
+    return dict(superseded=superseded, retained=retained if (superseded or unestablished) else None, current=current_view,
+                unestablished=unestablished if retained and not superseded else [],
                 binding_tables_sha256=HC.binding_tables_sha256(),
                 rule='the current declared tables decide; a binding frozen in a lesson that differs is superseded and '
-                     'not used by either seat or by Frankie; the lesson bytes stay as evidence')
+                     'not used by either seat or by Frankie; a retained identity that cannot establish every part is '
+                     'equivalence-not-established (the parts named), never inferred equal; the lesson bytes stay as evidence')
 
 
 def context_checks(item, day, src, said):
@@ -252,6 +259,11 @@ def context_checks(item, day, src, said):
                      'rows are read with that limitation; no market finding is attributed to a label.')
     if item['author'] == 'historical':
         correction = binding_correction(prior)
+        if correction and not correction['superseded'] and correction.get('unestablished'):
+            words.append('Historical binding identity: the binding this lesson froze establishes only part of its identity '
+                         '(unestablished: %s); equivalence with the declared tables is NOT inferred; the current binding is '
+                         'used and no reproduction status read against the retained one is established.' % (
+                             said.v(', '.join(correction['unestablished']), src['sha256'], 'unestablished binding parts')))
         if correction and correction['superseded']:
             words.append('Historical binding correction: the reproduction binding this lesson froze (%s) is superseded by '
                          'the declared tables now (%s; tables %s). Neither seat uses the retained binding; any reproduction '
@@ -1269,12 +1281,15 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                 performed = (isinstance(reproduction, str) and reproduction.startswith('performed_')
                              and any(isinstance(r, dict) and r.get('record_sha256') and r.get('status') == reproduction
                                      for r in records)
-                             and not correction.get('superseded'))   # a status read against a superseded binding is not established
+                             and not correction.get('superseded')      # read against a superseded binding: not established
+                             and not correction.get('unestablished'))  # BIND-R: an incomplete retained identity establishes nothing
                 rework = dict(prior_rework, status='OPEN_REWORK_REQUIRED', closed=False,
                     claim_id=result['claim_id'], lesson_sha256=src['sha256'],
                     reproduction_binding=correction.get('current', prior_rework.get('reproduction_binding')),
                     binding_superseded=(dict(retained=correction['retained'], binding_tables_sha256=correction['binding_tables_sha256'],
                                              rule=correction['rule']) if correction.get('superseded') else None),
+                    binding_identity_unestablished=(dict(parts=correction['unestablished'], retained=correction['retained'],
+                                                         rule=correction['rule']) if correction.get('unestablished') else None),
                     collection=context.get('reconsideration'),
                     prior_disposition=result.get('disposition'),
                     original_calculation_reproduction=reproduction if performed else 'not_established_by_this_exchange',
@@ -1297,6 +1312,11 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                         'The reproduction binding this lesson froze is superseded by the declared tables now; neither seat '
                         'uses it, and a reproduction status read against it is not established (corrected at the source, '
                         'propagated here; the lesson bytes stay as evidence).')
+                elif correction.get('unestablished'):
+                    side['untested'].append(
+                        'The reproduction binding this lesson froze establishes only part of its identity (%s not established): '
+                        'equivalence with the declared tables is not inferred; the current binding is used and no reproduction '
+                        'status read against the retained one is established.' % ', '.join(correction['unestablished']))
             findings += found
             turns = [dict(turn=1, seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR,
                           responds_to='the scientific teacher\'s lessons result on the claim', record=boss,

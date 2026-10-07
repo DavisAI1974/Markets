@@ -3,11 +3,13 @@
 Paste this box into the new Claude Code session. It is separate from the Codex-facing `CCODE_DROP_IN_20261006_NEXT_CHAT.md`.
 
 ```
-CCode queue, CLAUDE session, 2026-10-07. STEP 6 (Granite meeting recovery path) + B2-B5 follow-ups are RETURNED (e922a6e2,
-b3fb5a26, 2f1d6630 + docs); this session picks up Codex's review of them. HOLD stands. Read CCODE_STEP6_RETURN_20261007.md.
+CCode queue, CLAUDE session, 2026-10-07. Codex's review round on step 6 (6R1-6R3) and the follow-ups (B2-R, B4-R, BIND-R)
+is RETURNED (588c9c7f 1d9a1cbf d52237d3 6837875a bf8f87a5 0cb6868b + docs); this session picks up Codex's next review.
+HOLD stands. Read CCODE_STEP6_RETURN_20261007.md section 8. The step-5 reader hooks are CODEX's (Greg 22:46 ET): never build them.
 FIRST, in this order:
 1. /run using-agent-skills (the Skill tool). Greg's rules and the boundaries below win where they differ from a skill.
-2. #run memory mcp: the MCP index_repository call times out at 60 s; run the CLI (minutes; background it and verify):
+2. #run memory mcp BEFORE any code change (Greg): the MCP call times out at 60 s; run the CLI (minutes; background it; it
+   ABORTS if files change while it runs, so fetch/rebase first, then index, then verify with index_status/check_index_coverage):
      echo '{"repo_path":"/home/user/Markets","mode":"full"}' | codebase-memory-mcp cli --quiet --json index_repository
      echo '{"project":"home-user-Markets","query":"<symbol>","limit":5}' | codebase-memory-mcp cli --quiet --json search_graph
    The session-start warning that the NG data plane is not restored is expected: nothing here needs data/ or S3.
@@ -15,7 +17,7 @@ FIRST, in this order:
      git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
      git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
      git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -10
-   The tip must be 11a433a7 or later (the step-6 docs commit above 2f1d6630) on Codex's 6c033cd5 or later. Expect a clean rebase; if Codex edited
+   The tip must be 31006105 or later (the docs commit above 0cb6868b, BIND-R) on Codex's 3bc72da8 or later. Expect a clean rebase; if Codex edited
    frankie_box_boss_session.py / frankie_box_experiment_exchange.py / frankie_box_scientific_teacher.py /
    frankie_box_teacher_knowledge.py / frankie_box_historical_*.py, read its diff before touching that module.
 READ, in order (research/kalshi/frankie_boss/):

@@ -335,7 +335,10 @@ class LlamaServer:
         self.last_usage = {}
         self.deadline = deadline
         self.evidence_dir = Path(evidence_dir) if evidence_dir else None
-        self.stderr_path, self._stderr_handle, self._evidence_count = None, None, 0
+        # 6R2: every process is an ATTEMPT with its own id; its stderr file and attempt record are named by it, so a retry
+        # never appends to or renames a file an earlier witness pinned
+        self.attempt = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()) + '-' + str(os.getpid())
+        self.stderr_path, self._stderr_handle = None, None
         self.evidence = []
 
     def remaining(self):
@@ -351,21 +354,58 @@ class LlamaServer:
         return max(0.001, min(float(ceiling), remaining))
 
     def retain(self, label, data):
-        """Durable file witness of whole bytes (no truncation): <evidence_dir>/<n>-<label>.bin."""
+        """Durable file witness of whole bytes (no truncation), CONTENT-ADDRESSED (6R2): <evidence_dir>/<sha256>-<label>.bin,
+        so a later attempt can never overwrite or renumber what an earlier witness pinned (equal bytes = the same file)."""
         from frankie_box_durable import write_bytes
+        digest = sha256_bytes(data)
         if self.evidence_dir is None:
-            return dict(label=label, bytes=len(data), sha256=sha256_bytes(data), path=None)
-        self._evidence_count += 1
-        path = self.evidence_dir / ('%03d-%s.bin' % (self._evidence_count, re.sub(r'[^A-Za-z0-9._-]', '_', label)[:120]))
-        witness = write_bytes(path, data)
-        item = dict(label=label, path=str(path), bytes=witness['bytes'], sha256=witness['sha256'])
+            return dict(label=label, bytes=len(data), sha256=digest, path=None, attempt=self.attempt)
+        path = self.evidence_dir / ('%s-%s.bin' % (digest, re.sub(r'[^A-Za-z0-9._-]', '_', label)[:100]))
+        if path.is_file():
+            if sha256_bytes(path.read_bytes()) != digest:
+                raise ValueError('evidence file %s does not carry the bytes its name declares' % path)
+            witness = dict(bytes=len(data), sha256=digest)
+        else:
+            witness = write_bytes(path, data)
+        item = dict(label=label, path=str(path), bytes=witness['bytes'], sha256=witness['sha256'], attempt=self.attempt)
         self.evidence.append(item)
         return item
 
     def stderr_witness(self):
         if self.stderr_path is None or not Path(self.stderr_path).is_file():
             return None
-        return witness_file(self.stderr_path)
+        if self._stderr_handle is not None:
+            self._stderr_handle.flush()
+        return dict(witness_file(self.stderr_path), attempt=self.attempt)
+
+    def attempt_record(self, status, **facts):
+        """The immutable record of THIS attempt (6R2): <evidence_dir>/attempts/<attempt>.json, write-once; a complete
+        meeting lists every attempt's record so no earlier witness is lost when a later attempt finishes the meeting."""
+        from frankie_box_durable import write_bytes
+        doc = dict(schema='FRANKIE_GRANITE_MEETING_ATTEMPT_V1', attempt=self.attempt, status=status,
+                   server_stderr=self.stderr_witness(), evidence=list(self.evidence), calls_this_attempt=self.calls,
+                   tokens_this_attempt=dict(self.tokens), **facts)
+        if self.evidence_dir is None:
+            return doc
+        path = self.evidence_dir / 'attempts' / (self.attempt + '.json')
+        data = (json.dumps(doc, indent=1, sort_keys=True, default=str) + '\n').encode()
+        if path.is_file():
+            if path.read_bytes() != data:
+                raise ValueError('attempt record %s already exists with other bytes' % path)
+        else:
+            write_bytes(path, data)
+        return dict(doc, path=str(path))
+
+    @staticmethod
+    def retained_attempts(evidence_dir):
+        """Every attempt record under <evidence_dir>/attempts/, oldest first, each with its own file witness."""
+        directory = Path(evidence_dir) / 'attempts'
+        out = []
+        if directory.is_dir():
+            for path in sorted(directory.glob('*.json')):
+                raw = path.read_bytes()
+                out.append(dict(json.loads(raw), path=str(path), file_sha256=sha256_bytes(raw), file_bytes=len(raw)))
+        return out
 
     def start(self, wait_seconds=600):
         with socket.socket() as s:
@@ -377,10 +417,10 @@ class LlamaServer:
         # the server's stderr goes to a FILE, whole (never a pipe that nobody drains; never sliced)
         if self.evidence_dir is not None:
             self.evidence_dir.mkdir(parents=True, exist_ok=True)
-            self.stderr_path = self.evidence_dir / 'llama-server-stderr.log'
-            if self.stderr_path.is_symlink():
-                raise ValueError('server stderr path is a symbolic link')
-            self._stderr_handle = self.stderr_path.open('ab')
+            self.stderr_path = self.evidence_dir / ('llama-server-stderr-%s.log' % self.attempt)   # per attempt, never appended across attempts
+            if self.stderr_path.is_symlink() or self.stderr_path.exists():
+                raise ValueError('server stderr path for this attempt already exists or is a symbolic link: %s' % self.stderr_path)
+            self._stderr_handle = self.stderr_path.open('xb')
             stderr = self._stderr_handle
         else:
             stderr = subprocess.DEVNULL
@@ -403,9 +443,13 @@ class LlamaServer:
                                         % (code, json.dumps(self.stderr_witness(), sort_keys=True)), evidence=self.stderr_witness())
             try:
                 with urllib.request.urlopen('http://127.0.0.1:%d/health' % self.port, timeout=min(5.0, max(0.001, deadline - time.monotonic()))) as response:
-                    if json.loads(response.read()).get('status') == 'ok':
+                    health = json.loads(self._read_bounded(response, 'health'))
+                    if isinstance(health, dict) and health.get('status') == 'ok':
                         return
-            except (urllib.error.URLError, TimeoutError, ValueError, ConnectionError, OSError):
+            except MeetingBudgetExpired:
+                self.stop()
+                raise
+            except (urllib.error.URLError, TimeoutError, ValueError, ConnectionError, OSError, AttributeError, TypeError):
                 pass
             time.sleep(min(2.0, max(0.0, deadline - time.monotonic())))
         self.stop()
@@ -415,15 +459,39 @@ class LlamaServer:
         raise MeetingCallFailed('llama-server did not report healthy within %s s; stderr retained at %s'
                                 % (round(wait, 1), json.dumps(self.stderr_witness(), sort_keys=True)), evidence=self.stderr_witness())
 
-    def _post(self, route, body, label='request'):
+    def _read_bounded(self, stream, label):
+        """6R3: read a response body whole while the ABSOLUTE meeting deadline stays effective (the socket timeout is an
+        inactivity timeout, not a total-read bound); on expiry the partial bytes are retained and named, never dropped."""
+        chunks = []
+        while True:
+            remaining = self.remaining()
+            if remaining is not None and remaining <= 0:
+                partial = b''.join(chunks)
+                evidence = self.retain('%s-partial-body-at-deadline' % label, partial)
+                raise MeetingBudgetExpired('meeting time budget spent while reading the %s reply body (%d bytes received and '
+                                           'retained: %s)' % (label, len(partial), json.dumps(evidence, sort_keys=True)))
+            chunk = stream.read(65536)
+            if not chunk:
+                return b''.join(chunks)
+            chunks.append(chunk)
+
+    def _post(self, route, body, label='request', expect=None):
+        """POST and return (parsed, raw): the ORIGINAL bytes are kept beside the parsed value (6R3); `expect(parsed)` returns
+        a reason the shape is unusable or None, and an unusable shape retains the raw bytes whole and raises
+        MeetingCallFailed, never a KeyError/TypeError outside the meeting's own failure path."""
         timeout = self._bounded(600)          # MeetingBudgetExpired here means: no request was sent
         request = urllib.request.Request('http://127.0.0.1:%d%s' % (self.port, route), data=json.dumps(body).encode(),
                                          method='POST', headers={'Content-Type': 'application/json'})
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
-                raw = response.read()
+                raw = self._read_bounded(response, label)
         except urllib.error.HTTPError as error:
-            payload = error.read() if hasattr(error, 'read') else b''
+            try:
+                payload = self._read_bounded(error, label + '-http-%s' % error.code) if hasattr(error, 'read') else b''
+            except MeetingBudgetExpired:
+                raise
+            except OSError as inner:
+                payload = repr(inner).encode()
             evidence = self.retain('%s-http-%s' % (label, error.code), payload)
             if error.code == 404:
                 raise MeetingCallFailed('the pinned llama-server has no %s route; the token count cannot be exact, so the meeting '
@@ -439,42 +507,72 @@ class LlamaServer:
             raise MeetingCallFailed('%s failed with no reply: %r (retained: %s)' % (route, error, json.dumps(evidence, sort_keys=True)),
                                     evidence=evidence)
         try:
-            return json.loads(raw)
+            parsed = json.loads(raw)
         except ValueError as error:
             evidence = self.retain('%s-not-json' % label, raw)
             raise MeetingCallFailed('%s replied with bytes that are not JSON (%s); retained whole: %s'
                                     % (route, error, json.dumps(evidence, sort_keys=True)), evidence=evidence)
+        why = expect(parsed) if expect is not None else None
+        if why:
+            evidence = self.retain('%s-unusable-shape' % label, raw)
+            raise MeetingCallFailed('%s replied with an unusable shape (%s); the original bytes are retained whole: %s'
+                                    % (route, why, json.dumps(evidence, sort_keys=True)), evidence=evidence)
+        return parsed, raw
+
+    @staticmethod
+    def _expect_template(value):
+        if not isinstance(value, dict) or not isinstance(value.get('prompt'), str):
+            return 'expected an object with a text prompt'
+        return None
+
+    @staticmethod
+    def _expect_tokens(value):
+        if not isinstance(value, dict) or not isinstance(value.get('tokens'), list):
+            return 'expected an object with a tokens list'
+        return None
+
+    @staticmethod
+    def _expect_chat(value):
+        if not isinstance(value, dict):
+            return 'expected an object'
+        choices = value.get('choices')
+        if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+            return 'expected a non-empty choices list of objects'
+        message = choices[0].get('message')
+        if not isinstance(message, dict) or not isinstance(message.get('content'), str):
+            return 'expected choices[0].message.content as text'
+        usage = value.get('usage')
+        if usage is not None:
+            if not isinstance(usage, dict):
+                return 'usage is not an object'
+            for key in ('prompt_tokens', 'completion_tokens'):
+                if usage.get(key) is not None and (isinstance(usage.get(key), bool) or not isinstance(usage.get(key), int)):
+                    return 'usage.%s is not an integer' % key
+        return None
 
     def count_tokens(self, messages, label='count'):
         """The input's exact token count as the server will see it: the chat template applied by the server itself
         (/apply-template), then its tokenizer with the special tokens (/tokenize add_special, the chat route's own
         setting). Reconciled against usage.prompt_tokens after each call (discuss_item records both). Both requests are
         side-effect free: an interruption here can be repeated without duplicating any model work."""
-        prompt = self._post('/apply-template', dict(messages=messages), label + '-apply-template')['prompt']
-        return len(self._post('/tokenize', dict(content=prompt, add_special=True, parse_special=True), label + '-tokenize')['tokens'])
+        template, _ = self._post('/apply-template', dict(messages=messages), label + '-apply-template', expect=self._expect_template)
+        tokens, _ = self._post('/tokenize', dict(content=template['prompt'], add_special=True, parse_special=True),
+                               label + '-tokenize', expect=self._expect_tokens)
+        return len(tokens['tokens'])
 
     def chat(self, messages, schema, label='chat'):
+        """One coordinator call; returns (content, raw reply bytes). The shape is validated with the original bytes kept."""
         body = dict(messages=messages, temperature=self.params['temperature'], top_p=self.params['top_p'],
                     max_tokens=int(self.params['max_output_tokens_per_turn']),
                     response_format=dict(type='json_schema', json_schema=dict(name='coordinator_turn', schema=schema)),
                     stream=False)
-        reply = self._post('/v1/chat/completions', body, label)
+        reply, raw = self._post('/v1/chat/completions', body, label, expect=self._expect_chat)
         self.calls += 1
         usage = reply.get('usage') or {}
         self.last_usage = usage
         self.tokens['prompt'] += int(usage.get('prompt_tokens') or 0)
         self.tokens['completion'] += int(usage.get('completion_tokens') or 0)
-        try:
-            content = reply['choices'][0]['message']['content']
-        except (KeyError, IndexError, TypeError):
-            evidence = self.retain(label + '-malformed-reply', json.dumps(reply, sort_keys=True).encode())
-            raise MeetingCallFailed('the chat reply carries no choices[0].message.content; retained whole: %s'
-                                    % json.dumps(evidence, sort_keys=True), evidence=evidence)
-        if not isinstance(content, str):
-            evidence = self.retain(label + '-malformed-reply', json.dumps(reply, sort_keys=True).encode())
-            raise MeetingCallFailed('the chat reply content is not text; retained whole: %s' % json.dumps(evidence, sort_keys=True),
-                                    evidence=evidence)
-        return content
+        return reply['choices'][0]['message']['content'], raw
 
     def alive(self):
         return self.process is not None and self.process.poll() is None
@@ -516,6 +614,13 @@ def system_prompt(charter_text, rules_ids):
             'you write must appear in a seat\'s turn and be listed in cites with that file\'s sha256. You never calculate, '
             'pool, average, forecast, trade, grade, confirm, promote or select. Classroom rules in force: %s.'
             % (list(ACTIONS), ', '.join(rules_ids)))
+
+
+def _durable_json_bytes(value):
+    """The exact bytes frankie_box_durable.write_json would publish for value (same encoder settings), so a binding can
+    name an input's sha256 before the file is written."""
+    encoder = json.JSONEncoder(indent=1, sort_keys=True, default=str)
+    return ''.join(encoder.iterencode(value)).encode('utf-8') + b'\n'
 
 
 def _safe_name(item_id):
@@ -605,20 +710,32 @@ def discuss_item(server, item, system, params, log, progress=None):
     cap = int(params['input_token_cap_per_call'])
     outcome, open_item = None, None
     label = _safe_name(item['item_id'])
+    # 6R1: a retained terminal disposition (LEAVE_OPEN/RESOLVED recorded with its round) or a retained over-cap count is
+    # consumed BEFORE any request: completed work whose disposition is already retained is never repeated
+    if state.get('outcome') in ('LEAVE_OPEN', 'RESOLVED'):
+        outcome = state['outcome']
+        log('item %s: retained terminal outcome %s consumed; no call' % (item['item_id'], outcome))
+    elif state.get('over_cap') is not None:
+        log('item %s: retained over-cap count consumed; no call' % item['item_id'])
     try:
-        for round_number in range(int(state['rounds_completed']) + 1, int(params['max_coordinator_turns_per_item']) + 1):
+        for round_number in (range(int(state['rounds_completed']) + 1, int(params['max_coordinator_turns_per_item']) + 1)
+                             if outcome is None and state.get('over_cap') is None else ()):
             counted = server.count_tokens(transcript, label='%s-r%d' % (label, round_number))
             if counted > cap:
                 state['over_cap'] = dict(round=round_number, input_tokens=counted, cap=cap)
+                if progress is not None:
+                    progress.save(state)       # the over-cap fact is retained before anything else happens
                 break
             # the only non-idempotent request: marked pending BEFORE it is sent (finding 2)
             state['pending_call'] = dict(round=round_number, kind='chat', started_at=time.time(),
                                          transcript_sha256=sha256_bytes(json.dumps(transcript, sort_keys=True).encode()))
             if progress is not None:
                 progress.save(state)
-            raw = server.chat(transcript, ACTION_SCHEMA, label='%s-r%d' % (label, round_number))
+            raw, reply_bytes = server.chat(transcript, ACTION_SCHEMA, label='%s-r%d' % (label, round_number))
             state['token_counts'].append(dict(round=round_number, counted_before_call=counted,
-                                              prompt_tokens_used=(getattr(server, 'last_usage', None) or {}).get('prompt_tokens')))
+                                              prompt_tokens_used=(getattr(server, 'last_usage', None) or {}).get('prompt_tokens'),
+                                              reply=server.retain('%s-r%d-reply' % (label, round_number), reply_bytes),
+                                              attempt=server.attempt))
             try:
                 value = json.loads(raw)
             except ValueError as error:
@@ -659,10 +776,16 @@ def discuss_item(server, item, system, params, log, progress=None):
             else:
                 outcome = action['action']
             state['pending_call'], state['rounds_completed'] = None, round_number
+            if outcome is not None:
+                # 6R1: the terminal disposition is saved IN THE SAME WRITE as its completed round, with the result,
+                # so an interruption after this round can only resume into the retained result, never into another chat
+                result = _close_item(item, state, outcome, None)
+                state = dict(state, status='complete', outcome=outcome, result=result)
+                if progress is not None:
+                    progress.save(state)
+                return result
             if progress is not None:
                 progress.save(state)
-            if outcome is not None:
-                break
     except MeetingBudgetExpired as error:
         # the item keeps its completed rounds; the pending marker (if a chat was sent) stays as the fact it is
         outcome = 'LEFT_OPEN_BY_CODE'
@@ -773,7 +896,24 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         knowledge_index = [{k: d[k] for k in ('label', 'day', 'kind', 'path', 'sha256')} for d in selected['documents']]
     given = meeting_input(exchange, knowledge_index)
     out_dir.mkdir(parents=True, exist_ok=True)
-    write_json(out_dir / 'meeting-input.json', given)
+    # 6R2: the input bytes are computed first (the durable writer's own encoding) and the retained binding is validated
+    # against them BEFORE meeting-input.json is touched: a changed-input retry refuses without mutating the file the old
+    # binding names; equal bytes are written (or found) once
+    input_bytes = _durable_json_bytes(given)
+    input_path = out_dir / 'meeting-input.json'
+    binding_path = out_dir / 'meeting-binding.json'
+    if binding_path.is_file() and json.loads(binding_path.read_bytes()).get('input', {}).get('sha256') != sha256_bytes(input_bytes):
+        raise ValueError('retained meeting progress under %s belongs to other inputs (the binding names another input); move it '
+                         'aside, nothing is reused across inputs and nothing retained is changed' % out_dir)
+    if input_path.is_file() and input_path.read_bytes() != input_bytes:
+        if binding_path.is_file():
+            raise ValueError('retained meeting-input.json under %s differs from this input while a binding is retained; move it '
+                             'aside, nothing retained is changed' % out_dir)
+        from frankie_box_durable import write_bytes
+        write_bytes(input_path, input_bytes)      # an inputs-only or refused run's file, no binding: replaced durably (old bytes retained beside)
+    elif not input_path.is_file():
+        from frankie_box_durable import write_bytes
+        write_bytes(input_path, input_bytes)
     started = time.time()
     base = dict(schema=SCHEMA, day=exchange.get('day'), run=exchange.get('run'),
                 exchange=dict(path=str(exchange_path), sha256=sha256_bytes(raw), exchange_hash=exchange.get('exchange_hash')),
@@ -802,7 +942,6 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                    parameters=params, binary=witness_file(binary), model=witness_file(model),
                    rule='every model call of this meeting is bound to these inputs; progress files name this binding')
     binding_bytes = (json.dumps(binding, indent=1, sort_keys=True) + '\n').encode()
-    binding_path = out_dir / 'meeting-binding.json'
     if binding_path.is_file():
         if binding_path.read_bytes() != binding_bytes:
             raise ValueError('retained meeting progress under %s belongs to other inputs (binding differs); move it aside, '
@@ -822,9 +961,11 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
     except (MeetingCallFailed, MeetingBudgetExpired) as error:
         # finding 3: the process is already released by start(); the partial state (inputs, binding) stays; the receipt
         # says what happened with the whole stderr witnessed; no meeting.json (nothing was discussed)
+        attempt = server.attempt_record('runtime_failed', error=str(error), seconds=round(time.time() - started, 1))
         receipt = dict(schema=RECEIPT_SCHEMA, day=exchange.get('day'), status='runtime_failed',
                        refused_to_run=['the coordinator runtime did not start: %s' % error],
-                       evidence=dict(server_stderr=server.stderr_witness(), retained=server.evidence),
+                       evidence=dict(server_stderr=server.stderr_witness(), retained=server.evidence, attempt=attempt,
+                                     attempts=LlamaServer.retained_attempts(evidence_dir)),
                        inputs=witness_file(out_dir / 'meeting-input.json'), binding=witness_file(binding_path),
                        model_calls=0, seconds=round(time.time() - started, 1))
         write_json(out_dir / 'receipt.json', receipt)
@@ -854,16 +995,33 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
             items.append(result)
     finally:
         server.stop()
+    attempt = server.attempt_record('complete', seconds=round(time.time() - started, 1), items_discussed_this_attempt=len(items) - len(reused),
+                                    items_reused=list(reused))
+    attempts = LlamaServer.retained_attempts(evidence_dir)
     record = dict(base, status='complete', items=items, not_discussed=not_discussed,
                   runtime=dict(binary=witness_file(binary), model=witness_file(model), parameters=params,
                                provenance=runtime_provenance(config.get('pins') or {}, binary),
                                effective=dict(threads=server.threads, host_cpus=server.host_cpus),
                                budget_seconds=params['max_meeting_seconds'],
                                budget_left_seconds=None if server.remaining() is None else round(server.remaining(), 1),
-                               server_stderr=server.stderr_witness(), evidence=server.evidence),
+                               server_stderr=server.stderr_witness(), evidence=server.evidence,
+                               attempt=attempt['attempt'],
+                               attempts=attempts,
+                               attempts_rule='every attempt of this meeting with its own stderr and evidence witnesses, oldest first; '
+                                             'nothing an earlier attempt pinned is renamed, appended to or dropped'),
                   binding=dict(path=str(binding_path), sha256=binding_sha),
                   progress=dict(directory=str(out_dir / 'progress'), reused_items=reused),
-                  model_calls=server.calls, tokens=server.tokens, seconds=round(time.time() - started, 1),
+                  # 6R3: counts of the COMPLETE meeting are derived from the retained rounds (every completed chat across all
+                  # attempts), apart from this attempt's own counters; zero calls in this attempt never means no model work
+                  model_calls=sum(len(i.get('token_counts') or []) for i in items),
+                  calls=dict(completed_chat_calls_all_attempts=sum(len(i.get('token_counts') or []) for i in items),
+                             this_attempt=server.calls, attempt=server.attempt,
+                             calls_sent_without_recorded_reply=sum(1 for i in items for o in i.get('open_items') or []
+                                                                   if o.get('kind') == 'interrupted_call'),
+                             rule='model_calls counts completed coordinator calls of the whole meeting (all attempts, from the '
+                                  'retained rounds); this_attempt is this process alone'),
+                  tokens=dict(server.tokens, scope='this attempt only; per-round prompt_tokens_used across attempts are in items[].token_counts'),
+                  seconds=round(time.time() - started, 1),
                   counts=dict(items=len(items), coordinator_turns=sum(len(i['coordinator_turns']) for i in items),
                               code_seat_answers=sum(len(i['code_seat_answers']) for i in items),
                               requested_tests=sum(len(i['requested_tests']) for i in items),

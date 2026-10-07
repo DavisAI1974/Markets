@@ -4,6 +4,28 @@ This is the Claude-side handoff. The Codex-facing record is separate: `CCODE_STE
 `CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md` (top section) and `CCODE_DROP_IN_20261006_NEXT_CHAT.md`. Do not merge the
 two channels: Codex integrates from the CCODE documents; a Claude session starts from `DROP_IN_CLAUDE_20261007.md`.
 
+## Where things stand (updated 2026-10-07, fifth session: Codex's review round returned)
+
+Codex reviewed the step-6 return (task doc "ACTIVE review of fourth-session return") and landed the step-5 correction
+reader (`97405c29`, `3bc72da8`) with Greg's 22:46 ET ownership update: the reader hooks in `teach_accumulated`,
+`accumulated_lessons`, direct lesson loading and both `learner_school(stage='exchange')` call sites are CODEX's now; do
+not build them. This branch was rebased onto `3bc72da8` and returned six commits, one per finding: `588c9c7f` 6R1,
+`1d9a1cbf` 6R2, `d52237d3` 6R3, `6837875a` B2-R, `bf8f87a5` B4-R, `0cb6868b` BIND-R, then this documentation. Record:
+`CCODE_STEP6_RETURN_20261007.md` section 8 (including the scientific-owner publication/successor interface trace Codex
+asked for; nothing built, no lesson labelled a correction). Greg's instruction this session: run the codebase-memory index
+BEFORE any code change; done (the first retry aborted under the rebase; the second published generation 02:41:28Z and
+was used for the callers of every changed function). Boundaries unchanged; nothing run; pins and threads null untouched.
+
+Design choices of this round: evidence is content-addressed and per-attempt (`evidence/<sha256>-<label>.bin`,
+`llama-server-stderr-<attempt>.log`, `evidence/attempts/<attempt>.json`); the binding is checked against the computed
+input bytes before `meeting-input.json` is touched; `_post` returns (parsed, raw) with per-endpoint shape validators;
+`aggregate_status` is the one place a comparison status comes from; the dispatch marker is parsed in `coherence`;
+`binding_identity` is V2 and `binding_identities_differ` never infers equality from an incomplete identity.
+
+What a next Claude session does: Codex's review of these six commits lands in the task doc; fix what it names, one
+commit per group; the reader hooks stay Codex's; the publication/successor interface is a request until Codex schedules
+successors; weight learning stays Greg's decision.
+
 ## Where things stand (updated 2026-10-07, fourth session: step 6 and the B2-B5 follow-ups returned)
 
 Greg assigned CCode STEP 6 (the bounded Granite meeting source/recovery path) plus B2-B5 follow-ups (task doc, "ACTIVE

@@ -628,6 +628,28 @@ the status to the run facts (a failed or timed-out run is only `performed_failed
 is retained. B5: a selected frozen record that is gone or changed now RAISES in `records_for` (preparation and reuse refuse
 through `ST.test` / `teach_accumulated`), never listed as an absence; unselected late arrivals stay listed apart.
 
+**Codex integration review of fifth-session return `3667b289` (2026-10-07).** The return is
+integrated with the completed standalone hooks preserved. B2-R's aggregate coverage addresses
+its named finding. B4-R still rejects the runner's valid `-B` argv and does not bind the retained
+comparison-output inventory to every declared output; BIND-R compares JSON lists with fresh
+Python tuples and loses source/input ownership across entries. These are open CCode corrections,
+not closed source work. See the newest task-doc section. Step 5's publication/successor trace is
+received; its changed `claim_inputs` conflicts with the current same-identity correction guard,
+so Codex must settle that interface before CCode wires publication. No correction or run occurred.
+
+**Codex's review round on the follow-ups (`6837875a` B2-R, `bf8f87a5` B4-R, `0cb6868b` BIND-R; 2026-10-07).** B2-R:
+`aggregate_status()` makes the whole-output status follow the coverage of every declared comparable output (a declared
+printed/json output not compared at all is a gap: `performed_incomplete`, never matched); `compare()` records
+`coverage`. B4-R: `coherence()` parses the dispatch marker (`read_dispatch`) and binds it to the entry, the plan hash,
+the run's argv/cwd/start, an explicit authorization and the capability; the plan is bound to the CURRENT entry's
+command, recorded outputs, declared inventory, status/calculation, pins and tables; the comparison status is recomputed
+from its retained outputs; `record()` and `_admit()` both apply it. BIND-R: `binding_identity` is the complete
+per-entry identity (`FRANKIE_BINDING_IDENTITY_V2`: inputs, commands, recorded outputs, calculations beside status,
+entry ids, sources), carried in the lesson's `reproduction_binding.identity`; an older projection names its
+unestablished parts and is `equivalence_not_established`, never inferred equal, in `current_binding` and the exchange's
+`binding_correction`; a performed status is carried only on a complete, equal identity. Detail:
+`CCODE_STEP6_RETURN_20261007.md` section 8.
+
 Still open after these corrections (unchanged decisions): everything in section 5 and the Claude handoff; the exact
 price adapter (Codex, on the V2 contract above); runtime verification of all of it.
 
@@ -645,8 +667,8 @@ step 6; neither authorizes execution. See the new section 8 integration note and
 |---|---|
 | 2 | A4, C1, C2, B4/B5 source-corrected (section 8, Corrections). Open: native-learner and late-scheduling decisions (Greg); Codex's integration review of the corrections; runtime verification. |
 | 3 | D1 source-corrected: `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (contract in section 8). Codex's exact price adapter is source-built. Open: the held trajectory/4.2/4.4 definitions. Exact structures unchanged (V1). |
-| 4 | B1-B7 source-corrected (B7 by deletion); B2-B5 follow-ups source-corrected (`2f1d6630`: coverage apart from matched scope, the complete plan and inventory bound to the entry, the record chain coheres, a broken frozen record refuses). Open: the input-supply interface (B6: named, not built; Greg's authorization); reproduction/reformulation open for BOTH teachers; nothing run. |
-| 5 | Authorized source work: scoped correction delivery and stale-input refusal built. Standalone hooks are also built. Open: scientific-owner publication and corrected-successor scheduling. Old draft unapplied. |
+| 4 | B1-B7 and follow-ups returned; fifth-session B2-R aggregate coverage accepted at source review. B4-R command/inventory admission and BIND-R serialized identity still need the follow-ups in the current task doc. Input supply and reproduction/reformulation for BOTH teachers remain open; nothing run. |
+| 5 | Authorized source work: scoped correction delivery, stale-input refusal and standalone hooks built. Open: scientific-owner publication and corrected-successor scheduling, including changed claim-input identity. Old draft unapplied. |
 
 The table distinguishes source implementation from the remaining review and workflow gaps. The older table records
 what A-D attempted to connect; it does not waive implementation defects or reduce remaining
