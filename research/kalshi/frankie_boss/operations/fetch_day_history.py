@@ -631,6 +631,17 @@ def as_printed(src, runs, out):
             missing.append(dict(print_date=pr, field='report_level',
                                 reason='no archived copy of the EIA report for this print (level and five-year average are '
                                        'the EIA series)'))
+        elif feed.get(pr, {}).get('actual') is not None:
+            # Greg 2026-10-07 (nothing missing): no archived report or calendar row, the investing.com chart feed's own
+            # actual for the print (the net change as investing.com recorded it at release); its estimate follows below
+            f = feed[pr]
+            reports[week] = dict(print_date=pr, print_datetime_et=at, level_bcf=None, net_change_bcf=f['actual'],
+                                 five_year_avg_bcf=None, year_ago_bcf=None,
+                                 source='net change as printed: investing.com event 386 chart feed actual (%s, retrieved '
+                                 'by the day_history run); level: no archived report held' % f['key'])
+            missing.append(dict(print_date=pr, field='report_level',
+                                reason='no archived copy of the EIA report for this print (level and five-year average are '
+                                       'the EIA series)'))
         else:
             missing.append(dict(print_date=pr, field='report',
                                 reason='no archived copy of the EIA report or a calendar row for this print'))
