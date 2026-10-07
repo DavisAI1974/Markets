@@ -370,10 +370,17 @@ def ordered_map(function, jobs, workers, *, context=None, cpus=None, window=None
             submit(entry)
             pending.append(entry)
 
-    def recover():
+    def drain():
+        # every loop turn, not only on a poll: a full pipe would make a starting worker wait for the next poll
         while not started.empty():
             token, pid = started.get()
             where[token] = pid
+        live = {e[0] for e in pending}
+        for token in [t for t in where if t not in live]:
+            del where[token]                        # yielded or superseded by a redo: its record is no longer needed
+
+    def recover():
+        drain()
         now = _pids(pool)
         if now is None:
             return
@@ -412,6 +419,7 @@ def ordered_map(function, jobs, workers, *, context=None, cpus=None, window=None
             on_start(pool)
         fill()
         while pending:
+            drain()
             entry = pending[0]
             while not entry[2].ready():
                 entry[2].wait(poll)
