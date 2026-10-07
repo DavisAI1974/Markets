@@ -1,4 +1,5 @@
-"""The experiment's classroom arm V2 for ONE day: the classroom arm (frankie_box_experiment_classroom.py, unchanged) plus
+"""The experiment's classroom arm V2 for one day of a run of any length (1, 2, 3 or N days are configured identically; the
+run's day count is the plan's and is never assumed here): the classroom arm (frankie_box_experiment_classroom.py, unchanged) plus
 Frankie's historical data points (Greg, 2026-09-29: "we should be able to unlock classroom and teachers for today. We're
 the ones who made the locks"). Swap, not edit: every pinned file keeps its bytes; the V1 script stays as it was.
 
@@ -51,6 +52,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(BOX))
 SCHEMA = 'FRANKIE_EXPERIMENT_CLASSROOM_RECEIPT_V2'
 MODEL_IDENTITY = "Frankie's code (computed; no model)"
+STOP_POLL_SECONDS = 1.0   # the lane stop file is polled at most this often (SIGTERM is immediate)
+BRAIN_PUBLICATION_SCHEMA = 'FRANKIE_CLASSROOM_BRAIN_PUBLICATION_V1'
 
 
 def _box(name):
@@ -109,31 +112,99 @@ def _attach_to_brain_entry(entry_dir, classroom_external_md, day_file, day_sha, 
                                     source=str(classroom_external_md), include=True,
                                     kind="the Dipole classroom's external section: Frankie's own teach-back of his historical "
                                          "data points beside the 19 dimensions for this cycle"))
-    receipt = json.loads(Path(day_receipt).read_bytes()) if day_receipt and Path(day_receipt).is_file() else {}
+    has_receipt = bool(day_receipt) and Path(day_receipt).is_file()
+    receipt = json.loads(Path(day_receipt).read_bytes()) if has_receipt else {}
     manifest['attachments'] = [e for e in manifest.get('attachments', []) if e['name'] != 'day-external.json']
     manifest['attachments'].append(dict(
         name='day-external.json', sha256=day_sha, bytes=Path(day_file).stat().st_size, path=str(day_file),
         s3_key=receipt.get('s3_key'), brain_attachment=f'{day}-external', schema='FRANKIE_DAY_EXTERNAL_V1', included=False,
+        # a missing day-external-receipt.json leaves s3_key unknown: said here, never a silent None
+        s3_key_basis=('day-external-receipt.json beside the day file' if has_receipt else
+                      'unknown: no day-external-receipt.json beside the day file; the S3 key was not recorded'),
         note='the day file of his historical data points, listed (not copied into his reading corpus); every reader of '
              'the ingest reads it through operations/frankie_day_external.AsOfReader at its own cutoff'))
     _dump(manifest_path, manifest)
     return manifest
 
 
+def _pin_outputs(directory, names):
+    """{name: pin} for the produced files on disk, and the names that are not (listed, never pinned)."""
+    pinned, listed = {}, []
+    for name in names:
+        path = Path(directory) / name
+        if path.is_file():
+            pinned[name] = dict(path=str(path), bytes=path.stat().st_size, sha256=_sha256(path))
+        else:
+            listed.append(dict(name=name, reason='not on disk after the classroom wrote its files'))
+    return pinned, listed
+
+
+def _failure_receipt(attempt, day, status, error, exit_code):
+    """Nothing fails silently (Greg, 2026-10-07): an uncaught refusal or failure lands on receipt.json with its
+    reason and the operations that were saved, before the error propagates. A complete receipt is never
+    overwritten; when the work directory is not known yet the record goes to stdout only."""
+    record = dict(schema=SCHEMA, day=day, status=status, error_type=type(error).__name__, reason=str(error),
+                  exit_code=exit_code, saved_phases=sorted(attempt.get('phases') or {}),
+                  phase_timings=dict(attempt.get('timings') or {}), received=attempt.get('received'),
+                  listed='the classroom stopped on this error; every saved operation is retained and a resume reuses it; '
+                         'no answer, grade or brain entry was written by this attempt beyond the saved phases',
+                  stage_reached=attempt.get('stage'))
+    directory = attempt.get('directory')
+    if directory is not None:
+        path = Path(directory) / 'receipt.json'
+        try:
+            existing = json.loads(path.read_bytes()) if path.is_file() else {}
+        except ValueError:
+            existing = {}
+        if existing.get('status') == 'complete':
+            record['listed'] = 'a complete receipt already stands in this directory and is preserved; this failure is printed only'
+        else:
+            try:
+                Path(directory).mkdir(parents=True, exist_ok=True)
+                _dump(path, record)
+            except OSError as write_error:
+                record['receipt_not_written'] = str(write_error)
+    print(json.dumps(dict((k, v) for k, v in record.items() if k != 'received'), sort_keys=True, default=str), flush=True)
+
+
 def run(day, calculations, teacher_rows, previous, brain, day_external, day_external_sha256):
     requested = [False]
     previous_handler = signal.signal(signal.SIGTERM, lambda *_: requested.__setitem__(0, True))
     stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    # Efficiency (Greg, 2026-10-07): the stop file is polled at most once per STOP_POLL_SECONDS, not once per
+    # picture (one stat call per picture is millions of syscalls on a big day); SIGTERM is immediate. A stop is
+    # honoured within one poll interval plus the operation in hand. Recorded on the receipt (received.stop_polling).
+    polled = [float('-inf'), False]
     def save_requested():
-        return requested[0] or bool(stop_file and Path(stop_file).exists())
+        if requested[0]:
+            return True
+        if not stop_file:
+            return False
+        now = time.monotonic()
+        if now - polled[0] >= STOP_POLL_SECONDS:
+            polled[0], polled[1] = now, Path(stop_file).exists()
+        return polled[1]
+    attempt = dict(directory=None, received=None, timings=None, phases=None, stage='opening', progress=None)
     try:
         return _run(day, calculations, teacher_rows, previous, brain, day_external, day_external_sha256,
-                    save_requested=save_requested)
+                    save_requested=save_requested, attempt=attempt)
+    except SystemExit as error:
+        if error.code == 75:
+            # TeacherSaved: every completed operation and the continuation state are on disk; say so where the
+            # inspection reads it (phase-progress.json last_event), then exit 75 as before.
+            if attempt.get('progress') is not None:
+                attempt['progress']('saved: ' + str(getattr(error, 'args', [''])[0] or 'stop requested'))
+        elif error.code != 3:                     # 3 = the refusal receipt was already written by _run
+            _failure_receipt(attempt, day, 'refused' if isinstance(error.code, str) else 'failed', error, error.code)
+        raise
+    except BaseException as error:               # every other failure: on the receipt, then propagate unchanged
+        _failure_receipt(attempt, day, 'failed', error, 1)
+        raise
     finally:
         signal.signal(signal.SIGTERM, previous_handler)
 
 
-def _run(day, calculations, teacher_rows, previous, brain, day_external, day_external_sha256, *, save_requested):
+def _run(day, calculations, teacher_rows, previous, brain, day_external, day_external_sha256, *, save_requested, attempt):
     from research.kalshi.frankie_boss import dipole_classroom_final_review as F
     from research.kalshi.frankie_boss import dipole_classroom_session as S, dipole_classroom_resolution as R
     from research.kalshi.frankie_boss import dipole_classroom_external as EXT, dipole_classroom_v2 as V2
@@ -151,10 +222,29 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         raise SystemExit('the calculations are for day %s, not %s' % (receipt.get('day'), day))
     source = json.loads((calculations / 'source-binding.json').read_bytes())
     shared_policy = source.get('shared_market_policy')
-    market = _box('frankie_box_market_timeline').SharedMarketTimeline(calculations, day=day, workers=15) if shared_policy else None
+    d = work / 'classroom'
+    attempt['directory'] = d
+    # Efficiency (Greg, 2026-10-07; the core's retained fast path): the sealed journal (tens of GB on a big day) is
+    # measured ONCE in this process by frankie_box_filehash.witness (streamed, per-process cache keyed on
+    # path/device/inode/size/mtime/ctime, a file that changes while hashed is refused) on a daemon thread that
+    # overlaps the cheap identity checks below, and handed to the core as input_witness so its open does not
+    # re-hash the same bytes; the learner walk (SOCRATIC/VERIFY) and the full reader then hit the same cache.
+    # The core still compares the witness to its pin and raises on a mismatch: pin, identity and chained head
+    # hash unchanged. A daemon thread never delays a refusal that happens before the join.
+    journal_pin = (source.get('container') or {}) if isinstance(shared_policy, dict) else {}
+    measured_witness, witness_thread, witness_clock = {}, None, time.monotonic()
+    if journal_pin.get('path'):
+        import threading
+        from frankie_box_filehash import witness as measured
+        def measure():
+            try:
+                measured_witness['value'] = measured(journal_pin['path'])
+            except Exception as error:       # surfaced after the join, never swallowed
+                measured_witness['error'] = error
+        witness_thread = threading.Thread(target=measure, name='classroom-journal-witness', daemon=True)
+        witness_thread.start()
     if not (work / 'derivation-digest-full.md').is_file():
         raise SystemExit('the day\'s ROOT ran without the digest; the classroom day needs DIGEST=on (the brain entry takes it)')
-    d = work / 'classroom'
     entry = Path(brain) / BR.entry_name(day, '00')
     state_path = d / 'phase-state.pkl'
     if entry.exists() and not state_path.exists():
@@ -164,6 +254,36 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     teacher_receipt = json.loads((teacher_rows / 'receipt.json').read_bytes())
     if teacher_receipt.get('day') != day:
         raise SystemExit('the teacher rows are for day %s, not %s' % (teacher_receipt.get('day'), day))
+    attachment_sha = _sha256(teacher_rows / 'teacher-attachment.pkl')
+    if attachment_sha != teacher_receipt['attachment_file']['sha256']:
+        raise SystemExit('teacher-attachment.pkl differs from its teacher rows receipt; refused')
+    try:
+        day_file, day_sha, day_source = EXT.resolve_day_file(day_external, day_external_sha256,
+                                                             teacher_receipt['ingestion_receipt']['path'])
+    except EXT.DayExternalRefused as error:
+        raise SystemExit('the day file of the historical data points: %s' % error)
+    if _sha256(day_file) != day_sha:
+        raise SystemExit('the day file %s differs from the sha256 %s (%s); refused' % (day_file, day_sha, day_source))
+    # the shared market source, opened after the cheap checks with the journal witness measured above
+    journal_witness, market = None, None
+    if witness_thread is not None:
+        witness_thread.join()
+        if 'error' in measured_witness:
+            raise measured_witness['error']
+        journal_witness = dict(path=journal_pin['path'], **measured_witness['value'],
+                               basis='frankie_box_filehash.witness: streamed sha256 in this process, cached per unchanged file',
+                               seconds=round(time.monotonic() - witness_clock, 3),
+                               overlapped_with=['teacher receipt and attachment hash', 'day file resolution and hash'],
+                               equals_pin=({k: measured_witness['value'].get(k) for k in ('bytes', 'sha256')}
+                                           == {k: journal_pin.get(k) for k in ('bytes', 'sha256')}))
+    if shared_policy:
+        market = _box('frankie_box_market_timeline').SharedMarketTimeline(
+            calculations, day=day, workers=15,
+            input_witness=({k: journal_witness[k] for k in ('bytes', 'sha256')} if journal_witness else None))
+    shared_market_disposition = ('read: the ROOT carries the shared market policy; one full ordered read follows' if market is not None else
+                                 'legacy no-policy source: source-binding.json carries no shared_market_policy; the classroom reads '
+                                 'no shared picture and the external section reads the checked day file directly (listed, not refused)')
+    teacher_shared_read = None
     if market is not None:
         shared_read = teacher_receipt.get('shared_market_read') or {}
         if (teacher_receipt.get('shared_market_identity') != market.identity
@@ -178,16 +298,13 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                   record_count=market.source.get('record_count')):
             raise ValueError('the shared teacher reading did not reach the end of its source; an unfinished read is not '
                              'this day\'s shared reading (this is not a missing-layer or failed-input check)')
-    attachment_sha = _sha256(teacher_rows / 'teacher-attachment.pkl')
-    if attachment_sha != teacher_receipt['attachment_file']['sha256']:
-        raise SystemExit('teacher-attachment.pkl differs from its teacher rows receipt; refused')
-    try:
-        day_file, day_sha, day_source = EXT.resolve_day_file(day_external, day_external_sha256,
-                                                             teacher_receipt['ingestion_receipt']['path'])
-    except EXT.DayExternalRefused as error:
-        raise SystemExit('the day file of the historical data points: %s' % error)
-    if _sha256(day_file) != day_sha:
-        raise SystemExit('the day file %s differs from the sha256 %s (%s); refused' % (day_file, day_sha, day_source))
+        teacher_shared_read = dict(
+            exhausted=True,
+            basis=('the teacher read\'s complete / source_exhausted flag' if (shared_read.get('complete') is True or
+                   shared_read.get('source_exhausted') is True) else 'journal accounting equal to the sealed envelope and INPUT counts'),
+            core_report_complete=shared_read.get('complete'),
+            absent_layers=(shared_read.get('identity') or {}).get('absent_layers'),
+            note='an exhaustion check only; absent layers or failed inputs in the teacher read thin the picture and never refuse')
     shared_external = None
     if market is not None:
         external = market.source.get('external') or {}
@@ -242,7 +359,16 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     # binding (as_of / through_cursor / source hash) and the source binding, recorded in the receipt itself so
     # the reporter shows them from receipt.json alone. Recorded, not re-verified here; the checks above are the
     # verification and they refuse on a mismatch.
+    cpus = sorted(os.sched_getaffinity(0))
     received = dict(
+        # the lane (same day, same lane: the Run books it; recorded here, refused only by the learner walk)
+        lane=dict(cpus=cpus, count=len(cpus), expected=16,
+                  note=('held 16-CPU lane' if len(cpus) == 16 else
+                        'affinity is not a 16-CPU lane: recorded, not refused here (the SOCRATIC/VERIFY learner walk refuses)')),
+        journal_witness=journal_witness, shared_market_disposition=shared_market_disposition,
+        teacher_shared_read=teacher_shared_read,
+        stop_polling=dict(signal='SIGTERM immediate', stop_file=os.environ.get('FRANKIE_LANE_STOP_FILE'),
+                          poll_seconds=STOP_POLL_SECONDS),
         schema='FRANKIE_CLASSROOM_RECEIVED_V1', day=day, calculations=str(calculations), teacher_rows=str(teacher_rows),
         brain=str(Path(brain)),
         root_receipt=dict(path=str(calculations / 'calculations-receipt.json'), sha256=identity['root_receipt']),
@@ -275,17 +401,25 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     # `restored` with no seconds when a phase file predates this field. Diagnostic only; never an input to
     # any answer.
     timings = state.setdefault('timings', {})
-    def save():
+    attempt.update(received=received, timings=timings, phases=state['phases'], stage='phases')
+    def save(event='saved_state'):
         _save_raw_state(state_path, state)
         # Inspection-readable progress beside the pickle (Greg, 2026-10-07: every piece reports what it
-        # received/used/produced): which operations are saved, so a stop/wait is visible without unpickling.
+        # received/used/produced): which operations are saved and the last event (a save, a stop, a wait),
+        # so a stop/wait is visible without unpickling.
         _dump(d / 'phase-progress.json', dict(schema='FRANKIE_CLASSROOM_PHASE_PROGRESS_V1', day=day,
                                               saved_phases=list(state['phases']), started=state['started'],
                                               saved_at=time.time(), stop_requested=bool(save_requested()),
-                                              timings=timings))
+                                              last_event=event, timings=timings))
+    def progress(event):
+        # the last event written beside the saved state (run() calls this on a TeacherSaved raised inside an operation)
+        _dump(d / 'phase-progress.json', dict(schema='FRANKIE_CLASSROOM_PHASE_PROGRESS_V1', day=day,
+                                              saved_phases=list(state['phases']), started=state['started'],
+                                              saved_at=time.time(), stop_requested=True, last_event=event, timings=timings))
+    attempt['progress'] = progress
     def stop():
         if save_requested():
-            save()
+            save('saved: stop requested; every completed operation and the continuation state retained')
             raise TeacherSaved('classroom saved every completed operation and its full continuation state')
     def phase(name, operation):
         stop()
@@ -348,6 +482,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         return selected, school, listed
     knowledge_input, school, school_listed = phase('learner_inputs', learner_inputs)
     knowledge = knowledge_input['documents']
+    all99 = None
     # Ordinary new knowledge waits for the next boundary, but a checked correction
     # cannot leave a known error active in a saved classroom. Keep every retained
     # input/answer intact and require an explicit successor instead of repicking.
@@ -384,6 +519,21 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         knowledge_reproduction = phase('knowledge_reproduction', lambda: K.stage_knowledge_reproduction(visible, knowledge))
         reproduction = phase('school_reproduction', lambda: K.school_reproduction(visible, school))
         learner_context = dict(stage_knowledge=knowledge_reproduction, school=reproduction)
+        # All-99 (Greg, 2026-10-07: the 99 layers combined for Frankie FIRST): every registry entry routed to the
+        # picture element the component answers compute beside, or to its own consumer here, or named sealed /
+        # disabled / output / retired, with this day's arrivals; on the receipt and in the inspection markdown.
+        consumers = dict(
+            directive=directive_witness, rules=rules_witness,
+            policy=dict(shared_market_policy=(shared_policy.get('schema') if isinstance(shared_policy, dict) else shared_policy),
+                        native_calculation_policy=source.get('native_calculation_policy')),
+            knowledge=dict(documents=[{k: doc.get(k) for k in ('label', 'day', 'kind', 'sha256')} for doc in knowledge],
+                           versions=knowledge_input['versions'], selection_listed=len(knowledge_input['listed']),
+                           school_days_read=reproduction['school_days_read'], school_listed=len(school_listed),
+                           stage_knowledge_checks=len(knowledge_reproduction['checks']),
+                           school_checks=len(reproduction['checks'])),
+            carry=dict(previous=carried, previous_external=external_carried),
+            binding=received['binding'], mode=mode, dipole_components=len(names))
+        all99 = phase('all99_coverage', lambda: K.all99_coverage(market_reading, consumers, repo_root=ROOT))
         outputs = {n: phase('component:' + n, lambda n=n: K.component_answer(
             visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)],
             learner_context=learner_context, shared_market=shared_market)) for n in names}
@@ -393,13 +543,21 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             ext_visible, dipole_visible=visible, learner_context=learner_context,
             independent_evidence=independent_external, knowledge=knowledge, school=school))
     except (K.ModeNotAnswerable, KX.ModeNotAnswerable) as error:
+        pinned, listed = _pin_outputs(d, ['package.external.pre_message.json', 'package.external.binding.json']
+                                      + [f'package.{part}.c15.json' for part in ('source', 'teacher_key', 'pre_message', 'binding')])
+        received['all99'] = all99
         refusal = dict(schema=SCHEMA, day=day, status='refused', mode=mode, reason=str(error),
                        listed='SOCRATIC/VERIFY require the learner-owned sealed-journal/day-file reader; '
                               'missing evidence never falls back to the host key',
                        teacher_rows=str(teacher_rows), shared_market_external=shared_external,
                        shared_market=shared_market.summary() if shared_market is not None else None,
+                       shared_market_use=shared_market.use() if shared_market is not None else None,
+                       all99_coverage=all99,
                        external=dict(day_file=dict(path=str(day_file), sha256=day_sha, found=day_source)),
-                       received=received, phase_timings=dict(timings), jev_material=dict(
+                       received=received, phase_timings=dict(timings), saved_phases=list(state['phases']),
+                       outputs=dict(schema='FRANKIE_CLASSROOM_OUTPUTS_V1', directory=str(d), pinned=pinned, listed=listed,
+                                    brain_entry=None, note='refused before any answer; the package files are the only products'),
+                       jev_material=dict(
                            path=str(jev_path), sha256=hashlib.sha256(jev_raw).hexdigest(), bytes=len(jev_raw)))
         _dump(d / 'receipt.json', refusal)
         print(json.dumps(refusal), flush=True)
@@ -415,7 +573,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                         school=reproduction, stage_knowledge=knowledge_reproduction,
                                         learner_reading=learner_reading, model_calls=0,
                                         shared_market=shared_market.summary() if shared_market is not None else None,
-                                        shared_market_external=shared_external))
+                                        shared_market_external=shared_external, all99_coverage=all99))
     _dump(d / 'learner-knowledge.json', dict(day=day, stage='classroom', documents=knowledge,
                                            versions=knowledge_input['versions'], listed=knowledge_input['listed'],
                                            school_documents=school, school_listed=school_listed,
@@ -482,18 +640,24 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             ('classroom-findings.json', d / 'novel-findings.json'),
             ('classroom-external-findings.json', d / 'external-novel-findings.json'),
             ('experiment-directive.json', DIRECTIVE_PATH)]
+        rebuilt = None
         if entry.exists():
             manifest, _ = BR._checked_entry(entry)
             if manifest.get('day') != day or any((entry / name).read_bytes() != source.read_bytes()
                                                 for name, source in additions):
                 raise ValueError('published classroom brain entry differs from retained work')
-            return manifest
+            return dict(schema=BRAIN_PUBLICATION_SCHEMA, manifest=manifest, rebuilt=None,
+                        basis='the brain already held this exact entry; reused, not rewritten')
         manifest_path = staging_entry / 'MANIFEST.json'
         if manifest_path.exists():
             try:
                 manifest, _ = BR._checked_entry(staging_entry)
-            except (ValueError, OSError):
+            except (ValueError, OSError) as error:
                 # Retain an interrupted copy/manifest whole; rebuild only the publication from saved results.
+                # The swallowed error is recorded (nothing silent, Greg 2026-10-07).
+                rebuilt = dict(error_type=type(error).__name__, error=str(error),
+                               disposition='an interrupted staging entry was found and retained whole; the publication '
+                                           'was rebuilt from the saved results')
                 manifest = BR.write_entry(work, out, staging_brain, '00', day=day)
         else:
             manifest = BR.write_entry(work, out, staging_brain, '00', day=day)
@@ -516,8 +680,16 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         os.rename(staging_entry, entry)
         sync_directory(entry.parent)
         sync_directory(staging_brain)
-        return manifest
-    manifest = phase('brain_publication', publish_brain)
+        return dict(schema=BRAIN_PUBLICATION_SCHEMA, manifest=manifest, rebuilt=rebuilt, basis='published by this classroom')
+    published = phase('brain_publication', publish_brain)
+    if isinstance(published, dict) and published.get('schema') == BRAIN_PUBLICATION_SCHEMA:
+        manifest = published['manifest']
+        brain_publication = dict(basis=published.get('basis'), rebuilt_from_interrupted_staging=published.get('rebuilt'))
+    else:
+        # a phase file saved before this field existed holds the manifest alone
+        manifest = published
+        brain_publication = dict(basis='restored from a phase saved before the publication record existed',
+                                 rebuilt_from_interrupted_staging='not recorded')
     if not (entry / 'MANIFEST.json').is_file() or json.loads((entry / 'MANIFEST.json').read_bytes()) != manifest:
         raise ValueError('published classroom brain manifest differs from its saved operation')
     # Inspection (Greg, 2026-10-07): what this piece produced, each file with its pin. receipt.json cannot pin
@@ -528,13 +700,13 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                        'package.external.pre_message.json', 'package.external.binding.json']
                       + [f'package.{part}.c15.json' for part in ('source', 'teacher_key', 'pre_message', 'binding')]
                       + [f'{name}.json' for name in files])
-    outputs_pinned, outputs_listed = {}, []
-    for name in produced_names:
-        path = d / name
-        if path.is_file():
-            outputs_pinned[name] = dict(path=str(path), bytes=path.stat().st_size, sha256=_sha256(path))
-        else:
-            outputs_listed.append(dict(name=name, reason='not on disk after the classroom wrote its files'))
+    outputs_pinned, outputs_listed = _pin_outputs(d, produced_names)
+    # the all-99 output analogues get their pins now that the files exist (receipt.json cannot pin itself)
+    for item in (all99 or {}).get('entries') or []:
+        if item.get('outputs'):
+            item['output_pins'] = {name: (outputs_pinned.get(name) or ('this receipt' if name == 'receipt.json' else 'not on disk'))
+                                   for name in item['outputs']}
+    received['all99'] = all99
     key = ext['teacher_key']
     result = dict(schema=SCHEMA, day=day, status='complete', mode=mode, components=report['components'],
                   observations=report['observations'], pairs=report['pairs'], novel_findings=len(novel),
@@ -548,6 +720,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                   # it entered its answer, with partial/missing/completed-only dispositions; read by
                   # frankie_box_workflow_inspection's classroom projection.
                   shared_market_use=shared_market.use() if shared_market is not None else None,
+                  # All-99 (Greg, 2026-10-07): every registry entry's route and this day's disposition (also under
+                  # received.all99, which the reporter projects whole, and in code-answers.json)
+                  all99_coverage=all99,
                   # The core teacher's own listing of which instants its pinned equation computed on and which it
                   # listed absent (revised core; None on a d6af990 teacher receipt). Carried, not reinterpreted.
                   teacher_shared_market_arithmetic=teacher_receipt.get('shared_market_arithmetic'),
@@ -583,7 +758,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                   # Inspection (Greg, 2026-10-07): received with pins, produced with pins, where the time went.
                   received=received,
                   outputs=dict(schema='FRANKIE_CLASSROOM_OUTPUTS_V1', directory=str(d), pinned=outputs_pinned,
-                               listed=outputs_listed,
+                               listed=outputs_listed, brain_publication=brain_publication,
                                brain_entry=dict(path=str(entry), manifest_entries=[
                                    dict(name=e.get('name'), bytes=e.get('bytes'), sha256=e.get('sha256'), include=e.get('include'))
                                    for e in manifest.get('entries', [])])),

@@ -1,4 +1,8 @@
-# The experiment's classroom arm V2 for one day (frankie_box_experiment_classroom_v2.py): the V1 arm's package, Frankie's
+# The experiment's classroom arm V2 for one day of a run of any length (frankie_box_experiment_classroom_v2.py; the run's
+# day count is the plan's, never assumed here): the V1 arm's package, Frankie's
+# Exit codes: 0 complete (receipt.json status complete); 3 refused with receipt.json status refused; 75 saved on a stop
+# (phase-progress.json last_event saved; every completed operation retained); any other failure writes receipt.json status
+# failed/refused with the reason before the error propagates (nothing fails silently, Greg 2026-10-07).
 # code answers, the host's grade and correction, the completion and Frankie's brain entry, exactly as V1, PLUS Frankie's
 # historical data points (the BOSS teacher's external section, its answers, grade, correction and completion; Jev's
 # material carries it). No model, no Pod, no Granite. Inputs: CODE_ROOT (staged checkout), DAY (YYYYMMDD), CALCULATIONS

@@ -138,8 +138,10 @@ _D6AF990_STREAMS = ('root.frames', 'root.prices', 'root.structures', 'native.mem
 _COVERAGE_READ_KEYS = {'identity', 'complete', 'source_exhausted', 'presented_inputs', 'interpretation', 'completed_native',
                        'journal', 'sources', 'external_publications', 'completed_sources',
                        'closed_source_without_root_frame', 'unplaceable_input_clocks',
-                       # the core author's revised reader (in progress beside this slice)
-                       'coverage', 'completeness', 'arithmetic', 'layers', 'absent_layers'}
+                       # the core's revised reader (eff34d5): coverage, completeness, arithmetic, the iterator's own
+                       # outputs accounting, whose journal measurement stood, and the two visible stop/failure records
+                       'coverage', 'completeness', 'arithmetic', 'layers', 'absent_layers',
+                       'outputs', 'input_verification', 'stopped', 'integrity_failure'}
 
 
 def source_exhausted(report, *, journal_count=None, record_count=None):
@@ -206,6 +208,14 @@ def coverage_disposition(report, *, journal_count=None, record_count=None):
                 core_coverage=copy.deepcopy(report.get('coverage')),
                 core_absent_layers=copy.deepcopy(identity.get('absent_layers')),
                 core_arithmetic=copy.deepcopy(report.get('arithmetic')),
+                core_completeness=copy.deepcopy(report.get('completeness')),
+                # the iterator's own counts (pictures yielded, exact/unclocked/unreadable placements, updates,
+                # publications, cursor domains); whose journal hash stood (caller witness or the reader's own read);
+                # a consumer stop or an integrity failure as the core recorded it (None when none happened)
+                core_outputs=copy.deepcopy(report.get('outputs')),
+                core_input_verification=copy.deepcopy(report.get('input_verification')),
+                core_stopped=copy.deepcopy(report.get('stopped')),
+                core_integrity_failure=copy.deepcopy(report.get('integrity_failure')),
                 external=external_layer,
                 completed_only=[dict(role=item.get('role'), disposition=item.get('disposition'))
                                 for item in (report.get('completed_sources') or [])],
@@ -258,6 +268,11 @@ def market_context(visible, timeline, *, save_requested):
     import time
     started = time.monotonic()
     seen, last_anchor_seen_at = 0, None
+    # All-99 arrivals (Greg, 2026-10-07: the 99 layers combined for Frankie first): what each picture of this
+    # one pass carried, counted per registry route (actions, clocks, invalidations, layer updates, frame
+    # sections, price row kinds, top-level fields seen). Counts of what was yielded, never of what any
+    # equation used; the all-99 list is built from them by all99_coverage().
+    arrivals = _Arrivals()
     iterator = timeline.iter_pictures()
     try:
         for item in iterator:
@@ -270,6 +285,7 @@ def market_context(visible, timeline, *, save_requested):
             key = status if isinstance(status, str) else json.dumps(status, sort_keys=True)
             counts[key] = counts.get(key, 0) + 1
             seen += 1
+            arrivals.note(picture, item['evidence'])
             cursor = picture['at']['adapter_cursor']
             if cursor in wanted:
                 if cursor in pictures:
@@ -288,6 +304,9 @@ def market_context(visible, timeline, *, save_requested):
                 last_anchor_retained_at_picture=last_anchor_seen_at,
                 pictures_after_last_anchor=(seen - last_anchor_seen_at if last_anchor_seen_at is not None else None),
                 read_to_end=True,
+                hot_path='per picture: status key, anchor membership test, arrivals.note (a few dict increments; '
+                         'per update: source name, frame section presence, top-level field names); deepcopy only '
+                         'at wanted anchors. The core\'s decode dominates; measure on the one-to-two-minute canary.',
                 note='one full ordered read; the tail after the last anchor serves source_status_counts and this '
                      'consumer\'s own view of exhaustion. Measured here so the one-day test can show where the '
                      'classroom\'s time goes before any shortening is considered; no shortening is applied.')
@@ -312,11 +331,18 @@ def market_context(visible, timeline, *, save_requested):
                 anchor.update(picture='unavailable',
                               reason='no original INPUT of the exhausted shared source carries this adapter cursor; the '
                                      'Dipole value stands on the teacher rows and the market picture at this instant is thinner')
+    opening = source.get('opening_book') if isinstance(source.get('opening_book'), dict) else None
     return dict(schema='FRANKIE_CLASSROOM_SHARED_MARKET_V1', classroom_binding_hash=visible['binding']['classroom_binding_hash'],
                 identity=timeline.identity, reader=dict(module='frankie_box_market_timeline',
                     interface='SharedMarketTimeline.iter_pictures', workers=15),
                 anchors=anchors, pictures=pictures, report=report,
                 source_status_counts=counts, coverage=coverage, read=read,
+                arrivals=arrivals.record(),
+                # the predecessor bootstrap as the ingestion receipt recorded it (seeded / absent / none recorded);
+                # the core yields no opening-state picture element (named as a request to the core author)
+                opening_book=(dict(status=opening.get('status'), listed=opening.get('listed'))
+                              if opening is not None else dict(status='not_recorded_in_ingestion_receipt')),
+                journal_witness=getattr(timeline, 'input_verification', None),
                 anchor_pictures=dict(wanted=len(wanted), retained=len(pictures), unavailable=unavailable),
                 use='full ordered source read to its end; first/last/min/max PRESENT anchor pictures, each with its source '
                     'status or listed unavailable, supplement unchanged Dipole mathematics',
@@ -331,7 +357,15 @@ class ClassroomMarketContext:
 
     def iter_pictures(self):
         from frankie_box_market_timeline import SharedMarketTimeline
-        reader = SharedMarketTimeline(self.calculations, day=self.day, workers=15)
+        # Efficiency (Greg, 2026-10-07): the sealed journal is measured in THIS process by the per-process,
+        # changed-file-aware witness (frankie_box_filehash: one streamed sha256 per unchanged file, keyed on
+        # path/device/inode/size/mtime/ctime), so a second reader open in the same process does not re-hash
+        # tens of GB. The core still compares the witness to its pin and raises on a mismatch; the pin, the
+        # identity and the chained head hash check are unchanged.
+        from frankie_box_filehash import witness as measured
+        journal = (self.retained.get('identity') or {}).get('journal') or {}
+        witness = measured(journal['path']) if journal.get('path') else None
+        reader = SharedMarketTimeline(self.calculations, day=self.day, workers=15, input_witness=witness)
         if reader.identity != self.retained['identity']:
             raise ValueError('classroom full market reader changed from its retained selection')
         yield from reader.iter_pictures()
@@ -375,7 +409,14 @@ class ClassroomMarketContext:
                                   anchor_pictures=self.retained.get('anchor_pictures'),
                                   # where the classroom's own full pass spent its time (None on a reading saved
                                   # before this field existed)
-                                  read=self.retained.get('read')),
+                                  read=self.retained.get('read'),
+                                  # whose measurement of the sealed journal stood at the core's open (None on a
+                                  # reading saved before this field existed)
+                                  journal_witness=self.retained.get('journal_witness'),
+                                  opening_book=self.retained.get('opening_book'),
+                                  # per-day arrivals of the pass (actions, clocks, layer updates, frame sections,
+                                  # price row kinds, fields seen); the all-99 list is derived from these
+                                  arrivals=self.retained.get('arrivals')),
                     entered=dict(component_answer=['evidence'], summary_answer=['cycle_summary']),
                     arithmetic='state counts, terminal state, first-to-last direction, Pearson and co-movement use the '
                                'teacher rows only; no shared-picture field is an operand of any Dipole equation',
@@ -390,6 +431,436 @@ class ClassroomMarketContext:
                                             'previously observed state, never presented as a new observation'),
                     completed_only=coverage.get('completed_only'),
                     limit=self.retained['limit'])
+
+
+class _Arrivals:
+    """Per-day counts of what the shared pictures carried, per all-99 route (one pass, hot path).
+
+    Counts are of yielded evidence only: an update counted here reached the picture; whether any
+    equation used it is the consumer's own receipt (the classroom's Dipole arithmetic uses the
+    teacher rows only). Field names are top-level keys of each layer's rows, capped per layer so a
+    pathological row cannot grow the receipt; the overflow is counted, never dropped silently.
+    """
+    FRAME_SECTIONS = ('book', 'activity', 'integrity', 'native_frame', 'observation', 'input_records', 'input_record_indices')
+    FIELD_CAP = 256
+
+    def __init__(self):
+        self.pictures = 0
+        self.exact_clocks = 0
+        self.readable_record = 0
+        self.normalized = 0
+        self.actions = {}
+        self.action_not_normalized = 0
+        self.invalidations = {}
+        self.updates = {}
+        self.updates_with_known_at = 0
+        self.availability_basis = {}
+        self.frame_sections = {name: 0 for name in self.FRAME_SECTIONS}
+        self.frame_book_full_depth = 0
+        self.frame_fifo_queue = 0
+        self.price_row_kinds = {}
+        self.price_origins = {}
+        self.publications = 0
+        self.fields_seen = {}
+        self.fields_overflow = {}
+        self.pictures_with_updates = 0
+
+    def note(self, picture, evidence):
+        self.pictures += 1
+        thinner = picture.get('coverage') or {}
+        if thinner.get('exact_clocks'):
+            self.exact_clocks += 1
+        if thinner.get('readable_record'):
+            self.readable_record += 1
+        normalized = evidence.get('normalized') if isinstance(evidence, dict) else None
+        if normalized:
+            self.normalized += 1
+            action = normalized.get('action')
+            action = action.decode('ascii', 'replace') if isinstance(action, bytes) else str(action)
+            self.actions[action] = self.actions.get(action, 0) + 1
+        else:
+            self.action_not_normalized += 1
+        for item in picture.get('invalidated_state') or ():
+            reason = str(item.get('reason'))
+            self.invalidations[reason] = self.invalidations.get(reason, 0) + 1
+        updates = picture.get('updates') or ()
+        if updates:
+            self.pictures_with_updates += 1
+        for update in updates:
+            source = str(update.get('source'))
+            if source.startswith('external.'):
+                self.publications += 1
+                source = 'external'
+            self.updates[source] = self.updates.get(source, 0) + 1
+            if update.get('known_at_ns') is not None:
+                self.updates_with_known_at += 1
+            basis = str(update.get('availability_basis'))
+            self.availability_basis[basis] = self.availability_basis.get(basis, 0) + 1
+            value = update.get('value')
+            if not isinstance(value, dict):
+                continue
+            seen = self.fields_seen.setdefault(source, {})
+            for name in value:
+                name = str(name)
+                if name in seen:
+                    seen[name] += 1
+                elif len(seen) < self.FIELD_CAP:
+                    seen[name] = 1
+                else:
+                    self.fields_overflow[source] = self.fields_overflow.get(source, 0) + 1
+            if source == 'root.frames':
+                for name in self.FRAME_SECTIONS:
+                    if value.get(name) is not None:
+                        self.frame_sections[name] += 1
+                book = value.get('book')
+                if isinstance(book, dict):
+                    full = book.get('bid_levels_full') or book.get('ask_levels_full')
+                    if full is not None:
+                        self.frame_book_full_depth += 1
+                        first = full[0] if isinstance(full, list) and full else None
+                        if isinstance(first, dict) and 'fifo_queue' in first:
+                            self.frame_fifo_queue += 1
+            elif source == 'root.prices':
+                provenance = value.get('provenance') or {}
+                kind, origin = str(provenance.get('row_kind')), str(provenance.get('origin'))
+                self.price_row_kinds[kind] = self.price_row_kinds.get(kind, 0) + 1
+                self.price_origins[origin] = self.price_origins.get(origin, 0) + 1
+
+    def record(self):
+        return dict(schema='FRANKIE_CLASSROOM_ARRIVALS_V1', pictures=self.pictures, exact_clocks=self.exact_clocks,
+                    readable_record=self.readable_record, normalized=self.normalized, actions=dict(self.actions),
+                    action_not_normalized=self.action_not_normalized, invalidations=dict(self.invalidations),
+                    updates=dict(self.updates), pictures_with_updates=self.pictures_with_updates,
+                    updates_with_known_at=self.updates_with_known_at, availability_basis=dict(self.availability_basis),
+                    frame_sections=dict(self.frame_sections), frame_book_full_depth=self.frame_book_full_depth,
+                    frame_fifo_queue=self.frame_fifo_queue, price_row_kinds=dict(self.price_row_kinds),
+                    price_origins=dict(self.price_origins), publications=self.publications,
+                    fields_seen={k: dict(v) for k, v in self.fields_seen.items()},
+                    fields_overflow=dict(self.fields_overflow), field_cap=self.FIELD_CAP,
+                    basis='counts of evidence the shared pictures yielded on this one full pass; not proof that an '
+                          'equation consumed a field; absence of an event is a measurement over the exhausted source')
+
+
+# ------------------------------------------------------------------- the all-99 registry routed into the classroom
+# Greg, 2026-10-07: the 99 layers are combined for Frankie FIRST. The retained registry (99 union layers; content
+# identity 239a1480...) is named by the retained crosswalk below, pinned in knowledge/CYCLE_CALCULATION_PINS.json.
+# Every entry is routed to the picture element of SharedMarketTimeline.iter_pictures() that carries it (and so to the
+# component answers through the untrimmed anchor pictures and the full reader), or to its own consumer in this piece
+# (controls, knowledge, carry), or named sealed / disabled / output. Roles are not interchangeable numeric layers.
+ALL99_SCHEMA = 'FRANKIE_CLASSROOM_ALL99_COVERAGE_V1'
+ALL99_REGISTRY = dict(path='research/kalshi/frankie_boss/audits/CROSSWALK_SUNDAY_CYCLE0_FEED_33746436209_20260916.json',
+                      bytes=112545, sha256='ece9c624d9969166e81876e7705d0c47054e46b6aa3e5485803a218648184de9',
+                      registry_sha256='239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1',
+                      pinned_in='research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json')
+ALL99_ROLES = {'canonical_raw_dbn_mbo': 'raw',
+               'order_lifecycle': 'calculation_clock', 'full_book_fifo_queue': 'calculation_clock',
+               'microstructure_mechanics': 'calculation_clock', 'legacy_observable_crosswalk': 'calculation_clock',
+               'derived_geometry': 'calculation_clock', 'prebirth_opportunity': 'calculation_clock',
+               'causal_clocks': 'calculation_clock',
+               'binding_common_controls': 'control_knowledge_arm', 'a_clean_overlay': 'control_knowledge_arm',
+               'a_memory_overlay': 'control_knowledge_arm', 'current_brain_runtime': 'control_knowledge_arm',
+               'frozen_learned_structure': 'control_knowledge_arm', 'corrected_extra_agent_carryforward': 'control_knowledge_arm',
+               'sealed_target_timing': 'sealed_answer', 'sealed_step1_answer': 'sealed_answer',
+               'provisional_shadow': 'disabled_shadow', 'append_only_outputs': 'append_only_output'}
+ALL99_DISPOSITIONS = ('arrived', 'arrived_no_event', 'thin', 'absent', 'completed_only', 'stamped', 'knowledge_consumer',
+                      'control_of_orchestrator', 'not_read_by_this_piece', 'retired', 'sealed', 'disabled',
+                      'output_analogue', 'output_not_produced_here')
+_NATIVE_ABSENT = 'the native member/lifecycle ledgers are the only producer of this layer; they are absent from this ROOT ' \
+                 '(experiment ROOT runs with bedrock off: a disabled producer is never activated silently)'
+# layer_id -> (group_id, route). route kinds:
+#   picture: via = picture element; layer = core layer that carries it (None = the INPUT envelope itself); probe = an
+#            arrivals counter; thin_via/thin_layer = a partial carrier used when the named layer is absent
+#   consumer / control / not_read / retired / stamped / completed / sealed / disabled / output
+def _p(group, via, probe, layer=None, note=None, thin_via=None, thin_layer=None):
+    return group, dict(kind='picture', via=via, probe=probe, layer=layer, note=note, thin_via=thin_via, thin_layer=thin_layer)
+
+
+ALL99_ROUTES = {
+    # raw (6)
+    'canonical_sep_nov_2021_dbn_mbo_objects': _p('canonical_raw_dbn_mbo', 'identity.journal (the sealed container pin) and source_binding.source (the DBN partitions)', 'pictures'),
+    'october_first_source_window': _p('canonical_raw_dbn_mbo', 'source_binding trading_day / record_count; coverage.journal counts over the exhausted source', 'pictures'),
+    'canonical_predecessor_bootstrap_objects': _p('canonical_raw_dbn_mbo', 'ingestion receipt opening_book; root.prices rows with provenance.origin=open_group_before_this_source', 'opening', layer='root.prices',
+                                                  note='the core yields no opening-state picture element; the opening status is read from the ingestion receipt (request to the core author)'),
+    'native_acmrtfn_messages': _p('canonical_raw_dbn_mbo', 'every INPUT picture: original_input (the sealed record) and original_applied.normalized.action', 'actions'),
+    'snapshot_bootstrap_reset_messages': _p('canonical_raw_dbn_mbo', 'action R inputs: invalidated_state reason=reset at the picture; actions.R', 'invalidations.reset'),
+    'raw_source_identity_provenance_clocks_integrity': _p('canonical_raw_dbn_mbo', 'at.ts_event_ns / ts_recv_ns / raw clocks, identity pins, coverage.exact_clocks; root.frames.integrity', 'exact_clocks'),
+    # order lifecycle (9)
+    'order_lifecycle_adds': _p('order_lifecycle', 'actions.A at INPUT pictures; root.frames.observation (every resting order) and book at each group close', 'actions.A', layer='root.frames', thin_via='actions.A only (frame spool absent)'),
+    'order_lifecycle_cancels': _p('order_lifecycle', 'actions.C at INPUT pictures; root.frames.observation / book at each group close', 'actions.C', layer='root.frames', thin_via='actions.C only (frame spool absent)'),
+    'order_lifecycle_modifies': _p('order_lifecycle', 'actions.M at INPUT pictures; root.frames.observation / book at each group close', 'actions.M', layer='root.frames', thin_via='actions.M only (frame spool absent)'),
+    'order_lifecycle_replaces': _p('order_lifecycle', 'actions.M (the pinned producer folds replace into _modify); root.frames.observation / book', 'actions.M', layer='root.frames', thin_via='actions.M only (frame spool absent)'),
+    'order_lifecycle_trades': _p('order_lifecycle', 'actions.T at INPUT pictures; root.prices rows row_kind=trade (the legacy control row of a T)', 'actions.T', layer='root.prices', thin_via='actions.T only (price spool absent)'),
+    'order_lifecycle_fills': _p('order_lifecycle', 'actions.F at INPUT pictures; the fill_disposition recalculation is native', 'actions.F', layer='native.member', thin_via='actions.F at INPUT pictures and root.frames.observation', thin_layer='root.frames'),
+    'order_lifecycle_clears': _p('order_lifecycle', 'actions.R / invalidated_state reason=reset; the clear observation is native', 'invalidations.reset', layer='native.member', thin_via='invalidated_state reason=reset and root.frames.integrity', thin_layer='root.frames'),
+    'order_identity_transitions': _p('order_lifecycle', 'root.structures rows (describe_structure at each group close)', 'updates.root.structures', layer='root.structures'),
+    'contract_session_roll_state': _p('order_lifecycle', 'at.session_id / source_member_index and invalidated_state reason=source_scope_changed; ExchangeSessionRule rows are native', 'invalidations.source_scope_changed', layer='native.member', thin_via='at.session_id / source_member_index on every picture and source_scope_changed invalidations', thin_layer=None),
+    # full book / FIFO (8)
+    'full_bid_ask_depth': _p('full_book_fifo_queue', 'root.frames.book.bid_levels_full / ask_levels_full at each group close', 'frame_book_full_depth', layer='root.frames'),
+    'price_level_and_order_counts': _p('full_book_fifo_queue', 'root.frames.book (*_price_level_count_full, *_order_count_full, bid/ask_levels)', 'frame_sections.book', layer='root.frames'),
+    'fifo_queues': _p('full_book_fifo_queue', 'root.frames.book.*_levels_full[i].fifo_queue[j]', 'frame_fifo_queue', layer='root.frames'),
+    'queue_age_and_survival': _p('full_book_fifo_queue', 'root.frames.book.*_levels_full[i].fifo_queue[j] (priority stamp / age) and observation', 'frame_fifo_queue', layer='root.frames'),
+    'queue_concentration': _p('full_book_fifo_queue', 'root.frames.book.*_levels_full[i].fifo_queue[j]', 'frame_fifo_queue', layer='root.frames'),
+    'orders_and_volume_ahead': _p('full_book_fifo_queue', 'root.frames.book.*_levels_full[i].fifo_queue[j] (orders / volume ahead)', 'frame_fifo_queue', layer='root.frames'),
+    'spread_and_depth_imbalance': _p('full_book_fifo_queue', 'root.frames.book (spread, mid, depth_imbalance_n / _full, bid/ask_depth_full)', 'frame_sections.book', layer='root.frames'),
+    'complete_state_reset_bootstrap_receipts': _p('full_book_fifo_queue', 'invalidated_state reason=reset and root.frames.integrity; the enriched receipts are native', 'invalidations.reset', layer='native.member', thin_via='invalidated_state reason=reset and root.frames.integrity', thin_layer='root.frames'),
+    # microstructure (7)
+    'mechanics_actions_by_side_and_level': _p('microstructure_mechanics', 'root.frames.activity (the rolling activity window at each group close)', 'frame_sections.activity', layer='root.frames'),
+    'aggressor_and_native_signed_flow': _p('microstructure_mechanics', 'root.frames.activity (signed flow in the rolling window)', 'frame_sections.activity', layer='root.frames'),
+    'depletion_and_replenishment': _p('microstructure_mechanics', 'native replay driver replenishment rows', 'updates.native.member', layer='native.member', thin_via='root.frames.activity / book', thin_layer='root.frames'),
+    'resilience_and_recovery': _p('microstructure_mechanics', 'native replay driver absorption rows', 'updates.native.member', layer='native.member', thin_via='root.frames.activity / book', thin_layer='root.frames'),
+    'churn_and_queue_turnover': _p('microstructure_mechanics', 'root.frames.activity (rolling window)', 'frame_sections.activity', layer='root.frames'),
+    'price_and_book_path': _p('microstructure_mechanics', 'native book regime rows', 'updates.native.member', layer='native.member', thin_via='root.prices rows and root.frames.book at each group close', thin_layer='root.prices'),
+    'missingness_and_integrity_flags': _p('microstructure_mechanics', 'root.frames.integrity and the core\'s coverage dispositions on every picture', 'frame_sections.integrity', layer='root.frames'),
+    # legacy crosswalk (5)
+    'legacy_price': _p('legacy_observable_crosswalk', 'root.prices rows (row_kind trade / projection_at_event_group_end, V2 provenance)', 'updates.root.prices', layer='root.prices'),
+    'legacy_native_signed_flow': ('legacy_observable_crosswalk', dict(kind='completed', via='derive.json layer legacy_native_signed_flow (completed_sources): post-stream aggregate', note='no exact contributing-cursor provenance under reversing clocks; explicitly completed-only until it exists')),
+    'legacy_per_second_roll20': ('legacy_observable_crosswalk', dict(kind='completed', via='derive.json layer legacy_per_second_roll20 (completed_sources): post-stream aggregate', note='no exact contributing-cursor provenance under reversing clocks; explicitly completed-only until it exists')),
+    'legacy_book_imbalance': _p('legacy_observable_crosswalk', 'root.prices rows (the legacy control row carries the book imbalance fields; see fields_seen[root.prices])', 'updates.root.prices', layer='root.prices'),
+    'legacy_structure_observables': _p('legacy_observable_crosswalk', 'root.structures rows (describe_structure)', 'updates.root.structures', layer='root.structures'),
+    # derived geometry (8)
+    'derived_roll20_and_dipole_state': ('derived_geometry', dict(kind='dipole', via='the teacher rows: the Dipole component observations the classroom computes on (every component, every cursor); roll20 itself is completed-only', note='the classroom\'s own curriculum; the one all-99 layer that is the target arithmetic\'s operand')),
+    'derived_d_family_geometry': _p('derived_geometry', 'root.structures rows (describe_structure)', 'updates.root.structures', layer='root.structures'),
+    'derived_open_world_predecessor_state': _p('derived_geometry', 'root.structures rows (describe_structure)', 'updates.root.structures', layer='root.structures'),
+    'derived_ancestry_gaps': _p('derived_geometry', 'native lifecycle rows (LineageGraph)', 'updates.native.lifecycle', layer='native.lifecycle'),
+    'derived_unresolved_age_chain_trajectory': _p('derived_geometry', 'native lifecycle rows (episode retention)', 'updates.native.lifecycle', layer='native.lifecycle'),
+    'derived_price_flow_book_paths': _p('derived_geometry', 'native book regime rows', 'updates.native.member', layer='native.member', thin_via='root.prices rows and root.frames.book / activity', thin_layer='root.prices'),
+    'derived_v4_mechanics_fifo_features': _p('derived_geometry', 'native window extras', 'updates.native.member', layer='native.member', thin_via='root.frames.activity and fifo_queue', thin_layer='root.frames'),
+    'derived_feature_availability_timestamps': _p('derived_geometry', 'every update\'s known_at_ns / availability_basis; the native member clock row is absent', 'updates_with_known_at', layer=None, note='carried on every update of every present layer'),
+    # prebirth (5)
+    'prebirth_predecessor_at_risk_state': _p('prebirth_opportunity', 'native replay driver candidate rows', 'updates.native.member', layer='native.member'),
+    'prebirth_unresolved_chain_extension_state': _p('prebirth_opportunity', 'native lifecycle rows (LineageGraph)', 'updates.native.lifecycle', layer='native.lifecycle'),
+    'prebirth_ancestry_successor_opportunity': _p('prebirth_opportunity', 'native lifecycle rows (lineage signature)', 'updates.native.lifecycle', layer='native.lifecycle'),
+    'prebirth_stopped_chain_false_context_controls': _p('prebirth_opportunity', 'native recognition rows', 'updates.native.lifecycle', layer='native.lifecycle'),
+    'prebirth_negative_opportunity_cases': _p('prebirth_opportunity', 'native recognition rows', 'updates.native.lifecycle', layer='native.lifecycle'),
+    # causal clocks (7)
+    'clock_event_time': _p('causal_clocks', 'at.ts_event_ns and raw_event_clock on every picture', 'exact_clocks'),
+    'clock_receive_time': _p('causal_clocks', 'at.ts_recv_ns and raw_receive_clock on every picture', 'exact_clocks'),
+    'clock_event_known_by': _p('causal_clocks', 'at.publication_frontier_ns (running max receive clock) on every picture', 'exact_clocks'),
+    'clock_feature_availability': _p('causal_clocks', 'every update\'s known_at_ns and availability_basis', 'updates_with_known_at', layer=None),
+    'clock_prospective_discovery_confirmation': _p('causal_clocks', 'native recognition call records', 'updates.native.lifecycle', layer='native.lifecycle'),
+    'clock_model_evaluation': _p('causal_clocks', 'native member clock row', 'updates.native.member', layer='native.member'),
+    'clock_lock_time': ('causal_clocks', dict(kind='stamped', via='the classroom binding: as_of and through_cursor (the whole-day causal cutoff) stamped by this piece', note='PRINCIPAL_STAMPED in the registry; here the cutoff is the sealed day\'s record_count - 1')),
+    # binding controls (4)
+    'controlling_rt_mission': ('binding_common_controls', dict(kind='consumer', via='the experiment directive (EXPERIMENT_DIRECTIVE_V1) loaded whole and witnessed', consumer='directive')),
+    'native_calculation_contract': ('binding_common_controls', dict(kind='consumer', via='source_binding.shared_market_policy and the ROOT\'s native_calculation_policy (identity-checked at open)', consumer='policy')),
+    'anchored_knowledge_manifest': ('binding_common_controls', dict(kind='consumer', via='learner-knowledge.json: the documents and versions this classroom selected at its boundary', consumer='knowledge')),
+    'selected_same_arm_profile': ('binding_common_controls', dict(kind='control', via='the orchestrator plan names the classroom-arm day; this piece records the classroom mode and binding it was given')),
+    # overlays (4): Memory A retired (Greg, 2026-09-27); A-clean NOT_APPLICABLE in the registry
+    'a_clean_promoted_positive_capsule': ('a_clean_overlay', dict(kind='retired', via='A-clean overlay: NOT_APPLICABLE in the registry; Memory A / A-clean retired (Greg, 2026-09-27)')),
+    'a_memory_promoted_positive_capsule': ('a_memory_overlay', dict(kind='retired', via='Memory A retired (Greg, 2026-09-27); H06-H08 historical / not_bound')),
+    'a_memory_prior_lessons_package': ('a_memory_overlay', dict(kind='retired', via='Memory A retired (Greg, 2026-09-27)')),
+    'a_memory_prior_package_proof': ('a_memory_overlay', dict(kind='retired', via='Memory A retired (Greg, 2026-09-27); DEGENERATE_PROOF_SAME_AS_SUBJECT in the registry')),
+    # current brain runtime (5)
+    'authoritative_s135_construction': ('current_brain_runtime', dict(kind='not_read', via='native A-arm knowledge delivery; no experiment classroom consumer. The lawful knowledge read today is listed in learner-knowledge.json')),
+    'complete_s105_9_brain': ('current_brain_runtime', dict(kind='not_read', via='the Kalshi NG brain is not an input of the experiment classroom (Frankie\'s brain entries under /opt/frankie-box/brain are)')),
+    'doctrine_reasoning_play_index_evidence': ('current_brain_runtime', dict(kind='not_read', via='native A-arm knowledge delivery; no experiment classroom consumer')),
+    'lawful_prior_session_carry': ('current_brain_runtime', dict(kind='consumer', via='PREVIOUS classroom carry (history.json / post-grade.json pins; correction ids only, R10) and the brain entries before this boundary', consumer='carry')),
+    'october_outcome_wall_enforcement': ('current_brain_runtime', dict(kind='consumer', via='rules R02 (no outcome after the cutoff), the binding through_cursor, the day file AsOfReader cutoff; same-day teacher/school answers listed excluded by lane_state', consumer='rules')),
+    # frozen learned structure (9) and carry-forward (1): the registry's files are not read; the experiment's learned
+    # structures are the learner documents and school files, checked by stage_knowledge_reproduction / school_reproduction
+    'learned_d_structures_and_families': ('frozen_learned_structure', dict(kind='not_read', via='registry file not read; analogue consumer: stage_knowledge_reproduction / school_reproduction over the listed documents', consumer='knowledge')),
+    'learned_dipoles_and_geometry': ('frozen_learned_structure', dict(kind='not_read', via='registry file not read; analogue consumer: stage_knowledge_reproduction / school_reproduction', consumer='knowledge')),
+    'learned_pair_triplet_recurrence': ('frozen_learned_structure', dict(kind='not_read', via='registry file not read; analogue consumer: stage_knowledge_reproduction / school_reproduction', consumer='knowledge')),
+    'learned_chains_extensions_reappearances_ancestry': ('frozen_learned_structure', dict(kind='not_read', via='registry file not read; analogue consumer: stage_knowledge_reproduction / school_reproduction', consumer='knowledge')),
+    'phase1_discoveries_structural_falsifiers': ('frozen_learned_structure', dict(kind='not_read', via='registry file not read; analogue consumer: stage_knowledge_reproduction / school_reproduction', consumer='knowledge')),
+    'phase2_findings_modules_timing_pox_negatives': ('frozen_learned_structure', dict(kind='not_read', via='registry file not read; analogue consumer: stage_knowledge_reproduction / school_reproduction', consumer='knowledge')),
+    'predecessor_ancestry_unresolved_chain_state': ('frozen_learned_structure', dict(kind='not_read', via='registry file not read; analogue consumer: stage_knowledge_reproduction / school_reproduction', consumer='knowledge')),
+    'historical_timing_lifespan_context': ('frozen_learned_structure', dict(kind='not_read', via='registry file not read; analogue consumer: stage_knowledge_reproduction / school_reproduction', consumer='knowledge')),
+    'learned_structure_proposal_index_material': ('frozen_learned_structure', dict(kind='not_read', via='registry file not read; analogue consumer: stage_knowledge_reproduction / school_reproduction', consumer='knowledge')),
+    'extra_agent_corrected_information_and_gap_diagnoses': ('corrected_extra_agent_carryforward', dict(kind='not_read', via='registry file not read; the experiment\'s checked corrections reach this classroom through frankie_box_experiment_review.require_current (a stale input refuses visibly)', consumer='knowledge')),
+    # sealed (9)
+    'later_outcome_reveal': ('sealed_target_timing', dict(kind='sealed', via='never read; no timeline path; R02')),
+    'target_ground_truth_onset_time': ('sealed_target_timing', dict(kind='sealed', via='never read; no timeline path; R02')),
+    'step1_existing_october_seconds': ('sealed_step1_answer', dict(kind='sealed', via='never read; the classroom\'s own answer wall is the host key, never read by this code')),
+    'step1_populations': ('sealed_step1_answer', dict(kind='sealed', via='never read')),
+    'step1_crosswalks': ('sealed_step1_answer', dict(kind='sealed', via='never read')),
+    'step1_target_membership_receipts': ('sealed_step1_answer', dict(kind='sealed', via='never read')),
+    'step1_labels_and_classifications': ('sealed_step1_answer', dict(kind='sealed', via='never read')),
+    'step1_result_prefixes': ('sealed_step1_answer', dict(kind='sealed', via='never read')),
+    'step1_reconciliation_outputs': ('sealed_step1_answer', dict(kind='sealed', via='never read')),
+    # disabled shadows (2)
+    's137_cognitive_shadow_runtime': ('provisional_shadow', dict(kind='disabled', via='disabled by the existing policy; not activated')),
+    'hipporag_associative_retrieval': ('provisional_shadow', dict(kind='disabled', via='disabled by the existing policy; not activated')),
+    # append-only outputs (10): the native principal's outputs; this piece's analogue output is named where one exists
+    'output_state_and_state_delta_movie': ('append_only_outputs', dict(kind='output', via='native principal output; this piece produces no state movie')),
+    'output_frankie_reasoning_movie': ('append_only_outputs', dict(kind='output', via='native principal output; this piece is code with no model and no reasoning movie; private reasoning is withheld (R09)')),
+    'output_probability_movie': ('append_only_outputs', dict(kind='output', via='native principal output; this piece produces no probabilities')),
+    'output_candidate_discoveries': ('append_only_outputs', dict(kind='output', via='analogue: the classroom\'s novel findings', outputs=('novel-findings.json', 'external-novel-findings.json'))),
+    'output_first_locks_and_no_locks': ('append_only_outputs', dict(kind='output', via='native principal output; this piece locks nothing')),
+    'output_negative_sparse_inconclusive_ledger': ('append_only_outputs', dict(kind='output', via='analogue: non-PRESENT observations and UNRESOLVED pairs in the component answers', outputs=('code-answers.json',))),
+    'output_knowledge_retrieval_receipts': ('append_only_outputs', dict(kind='output', via='analogue: the learner knowledge selection', outputs=('learner-knowledge.json',))),
+    'output_provider_invocation_response_receipts': ('append_only_outputs', dict(kind='output', via='no provider: model_calls=0 on this piece')),
+    'output_answer_wall_access_receipts': ('append_only_outputs', dict(kind='output', via='analogue: the receipt records that the host key is never read (independent_scientific_verification=False; grading is the host\'s)', outputs=('receipt.json',))),
+    'output_source_state_manifest_code_model_run_hashes': ('append_only_outputs', dict(kind='output', via='analogue: the receipt\'s received pins, producers and brain manifest', outputs=('receipt.json',))),
+}
+
+
+def _probe(arrivals, name):
+    """An arrivals counter: `counter` or `table.key` (the key may itself contain dots, e.g. updates.root.frames).
+
+    None when no arrivals record exists; 0 when the record exists and holds no such key (no event of that
+    kind was yielded on the exhausted source: a measurement, not a filled-in zero)."""
+    if not isinstance(arrivals, dict):
+        return None
+    head, _, rest = name.partition('.')
+    node = arrivals.get(head)
+    if not rest:
+        if isinstance(node, dict):          # a table probe (e.g. actions): every event of the table
+            return sum(v for v in node.values() if isinstance(v, int))
+        return node if isinstance(node, int) else (0 if node is None else None)
+    if not isinstance(node, dict):
+        return None
+    value = node.get(rest)
+    return value if isinstance(value, int) else (0 if value is None else None)
+
+
+def all99_coverage(shared, consumers, *, repo_root):
+    """The per-day all-99 list: every registry entry with its role, route and disposition on this day.
+
+    `shared` is market_context's retained reading (None on a legacy no-policy source); `consumers` names
+    this piece's own knowledge/control inputs (directive, rules, policy, knowledge documents, carry,
+    binding, mode, dipole components). Nothing here is an operand: it is the account of what reached
+    the pictures the component answers compute beside, what reached its own consumer, and what did not.
+    """
+    registry_path = Path(repo_root) / ALL99_REGISTRY['path']
+    registry = dict(ALL99_REGISTRY, status='absent', layers_in_file=None)
+    file_layers = {}
+    if registry_path.is_file():
+        raw = registry_path.read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
+        registry.update(status=('pinned' if (len(raw), digest) == (ALL99_REGISTRY['bytes'], ALL99_REGISTRY['sha256'])
+                                else 'integrity: retained crosswalk bytes differ from their pin (separate visible failure; '
+                                     'the route table below is this code\'s own)'),
+                        measured=dict(bytes=len(raw), sha256=digest))
+        try:
+            body = json.loads(raw)
+            file_layers = {x['layer_id']: x for x in body.get('layers') or [] if isinstance(x, dict) and x.get('layer_id')}
+            registry.update(layers_in_file=len(file_layers), file_registry_sha256=body.get('registry_sha256'),
+                            registry_matches=(body.get('registry_sha256') == ALL99_REGISTRY['registry_sha256']))
+        except ValueError as error:
+            registry.update(status='unreadable: ' + str(error))
+    coverage = (shared or {}).get('coverage') or {}
+    present = set(coverage.get('layers') or {})                      # streams the core opened on this read
+    if (coverage.get('external') or {}).get('status') == 'attached':
+        present.add('external')
+    core_reasons = (coverage.get('core_coverage') or {}).get('layers') or {}   # the core's own absent reasons
+    core_layers = {}
+    for name in ('root.frames', 'root.prices', 'root.structures', 'native.member', 'native.lifecycle', 'external'):
+        if shared is None:
+            core_layers[name] = dict(status='absent', reason='no shared market policy on this ROOT; the classroom read no shared picture')
+        elif name in present:
+            core_layers[name] = dict(status='present')
+        else:
+            recorded = core_reasons.get(name) if isinstance(core_reasons.get(name), dict) else {}
+            core_layers[name] = dict(status='absent', reason=recorded.get('reason') or (
+                _NATIVE_ABSENT if name.startswith('native.') else 'the core listed this layer absent (no pinned spool / no day file)'))
+    arrivals = (shared or {}).get('arrivals') if shared else None
+    entries, counts, requests = [], {}, []
+    for layer_id, (group, route) in ALL99_ROUTES.items():
+        role = ALL99_ROLES[group]
+        entry = dict(layer=layer_id, group=group, role=role, route=route['via'],
+                     registry_status=(file_layers.get(layer_id) or {}).get('status'),
+                     registry_policy=(file_layers.get(layer_id) or {}).get('policy'))
+        kind = route['kind']
+        if kind == 'picture':
+            carrier = route.get('layer')
+            if shared is None:
+                entry.update(disposition='absent', reason='no shared market policy on this ROOT; no picture was read',
+                             consumer='component_answer evidence (anchor pictures) / full reader')
+            elif route['probe'] == 'opening':
+                # the predecessor bootstrap: read from the ingestion receipt (the core yields no opening element) plus
+                # any price rows the opening state carried in; judged before the price-spool presence check
+                opening = (shared.get('opening_book') or {})
+                rows = _probe(arrivals, 'price_origins.open_group_before_this_source')
+                if opening.get('status') == 'seeded' or (rows or 0) > 0:
+                    entry.update(disposition='arrived', count=rows, opening_book=opening)
+                elif opening.get('status') == 'absent':
+                    entry.update(disposition='thin', reason=opening.get('listed') or 'the ingest had no opening book',
+                                 opening_book=opening, count=rows)
+                else:
+                    entry.update(disposition='thin', reason='opening state not recorded in the ingestion receipt',
+                                 opening_book=opening, count=rows)
+                entry['consumer'] = 'component_answer evidence (anchor pictures) / full reader'
+            elif carrier is not None and core_layers[carrier]['status'] == 'absent':
+                thin_layer = route.get('thin_layer')
+                if route.get('thin_via') and (thin_layer is None or core_layers[thin_layer]['status'] == 'present'):
+                    count = _probe(arrivals, route['probe'])
+                    entry.update(disposition='thin', reason=core_layers[carrier]['reason'],
+                                 thin_carrier=route['thin_via'], count=count)
+                else:
+                    entry.update(disposition='absent', reason=core_layers[carrier]['reason'])
+                entry['consumer'] = 'component_answer evidence (anchor pictures) / full reader'
+            else:
+                count = _probe(arrivals, route['probe'])
+                if count is None:
+                    entry.update(disposition='absent', reason='the retained reading carries no arrivals record for this probe (reading saved before this field existed)')
+                elif count > 0:
+                    entry.update(disposition='arrived', count=count)
+                else:
+                    entry.update(disposition='arrived_no_event', count=0,
+                                 reason='carrier present; no event of this kind in the exhausted source on this day (a measurement, not a zero filled in)')
+                entry['consumer'] = 'component_answer evidence (anchor pictures) / full reader'
+            if route.get('note'):
+                entry['note'] = route['note']
+        elif kind == 'completed':
+            listed = [item for item in ((shared or {}).get('coverage') or {}).get('completed_only') or [] if item.get('role') == layer_id]
+            entry.update(disposition='completed_only', note=route['note'], listed=listed or None,
+                         consumer='summary_answer (completed_sources dispositions only; values not yielded)')
+        elif kind == 'dipole':
+            entry.update(disposition='arrived', count=consumers.get('dipole_components'), note=route['note'],
+                         consumer='component_answer / summary_answer (the Dipole arithmetic: state counts, direction, Pearson, co-movement)')
+        elif kind == 'stamped':
+            entry.update(disposition='stamped', binding=consumers.get('binding'), note=route['note'], consumer='every answer (the causal cutoff)')
+        elif kind == 'consumer':
+            entry.update(disposition='knowledge_consumer', consumer=route['consumer'], detail=consumers.get(route['consumer']))
+        elif kind == 'control':
+            entry.update(disposition='control_of_orchestrator', mode=consumers.get('mode'), binding=consumers.get('binding'))
+        elif kind == 'not_read':
+            entry.update(disposition='not_read_by_this_piece', consumer=route.get('consumer'),
+                         detail=consumers.get(route['consumer']) if route.get('consumer') else None)
+        elif kind == 'retired':
+            entry.update(disposition='retired')
+        elif kind == 'sealed':
+            entry.update(disposition='sealed')
+        elif kind == 'disabled':
+            entry.update(disposition='disabled')
+        elif kind == 'output':
+            entry.update(disposition='output_analogue' if route.get('outputs') else 'output_not_produced_here',
+                         outputs=list(route.get('outputs') or ()))
+        else:
+            raise ValueError('unknown all-99 route kind ' + kind)
+        if entry['disposition'] not in ALL99_DISPOSITIONS:
+            raise ValueError('unknown all-99 disposition ' + entry['disposition'])
+        counts[entry['disposition']] = counts.get(entry['disposition'], 0) + 1
+        entries.append(entry)
+    by_role = {}
+    for entry in entries:
+        by_role.setdefault(entry['role'], {})
+        by_role[entry['role']][entry['disposition']] = by_role[entry['role']].get(entry['disposition'], 0) + 1
+    # Entries the core does not yield (requests to the core author, workflow_reports); never filled in here.
+    requests.append(dict(file='deploy/aws/box/frankie_box_market_timeline.py', function='SharedMarketTimeline.__init__ / iter_pictures',
+                         entry='canonical_predecessor_bootstrap_objects',
+                         what='yield the opening adapter state (opening-book pin, seeded / absent) as an identity element and the initial '
+                              'last_observed_state disposition, so the predecessor bootstrap is a picture element rather than an ingestion-receipt field read here'))
+    requests.append(dict(file='deploy/aws/box/frankie_box_market_timeline.py', function='SharedMarketTimeline.iter_pictures',
+                         entry='legacy_native_signed_flow / legacy_per_second_roll20',
+                         what='the per-second aggregates are yielded as completed_sources metadata only; their values could enter the '
+                              'picture once an exact contributing-cursor provenance exists (blocked on provenance, not on the reader)'))
+    native_absent = [e['layer'] for e in entries if e.get('disposition') in ('absent', 'thin') and
+                     (ALL99_ROUTES[e['layer']][1].get('layer') or '').startswith('native.')]
+    unrouted = sorted(set(file_layers) - set(ALL99_ROUTES))
+    unlisted = sorted(set(ALL99_ROUTES) - set(file_layers)) if file_layers else None
+    return dict(schema=ALL99_SCHEMA, registry=registry, routed=len(entries), counts=counts, by_role=by_role,
+                core_layers=core_layers, entries=entries, requests=requests,
+                native_layers_absent_or_thin=native_absent,
+                unrouted_in_file=unrouted, routed_not_in_file=unlisted,
+                decision_open=('%d layers are carried only by the native member/lifecycle ledgers, which the experiment ROOT does not '
+                               'produce (bedrock off). Their instants stay in the picture, thinner; producing them is a plan/policy '
+                               'decision for Greg, never a silent activation here.' % len(native_absent)),
+                rule='every entry listed with a disposition; missing coverage thins the day and never rejects it; roles are not '
+                     'interchangeable numeric layers; sealed answers stay sealed; nothing is fabricated to make an entry arrive',
+                limit='a counted arrival is evidence yielded to the pictures beside the component answers (and to the full reader), '
+                      'not proof that a Dipole equation used it; the Dipole arithmetic uses the teacher rows only')
 
 
 def _exact_market_text(value):

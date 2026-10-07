@@ -74,13 +74,15 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
     identity = dict(day=day, source_binding_sha256=sha256(source_path), learner_binding=own,
                     day_file=str(day_file), day_sha256=day_sha256)
     pin = directory / 'input-state.pkl'
+    pin_created = not pin.exists()
     if pin.exists():
         if _load_raw_state(pin) != identity:
             raise ValueError('retained learner reading belongs to different inputs/code')
     else:
         _save_raw_state(pin, identity)
     result_path = directory / 'receipt.json'
-    if not result_path.exists():
+    walked_now = not result_path.exists()
+    if walked_now:
         environment = {k: os.environ.get(k) for k in ('FRANKIE_WALK_CACHE', 'FRANKIE_TEACHER_CHANGES')}
         try:
             code = T._teach(day, receipt_path, ingest['sha256'], 15, day_file, day_sha256,
@@ -122,6 +124,10 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
         shared_market_read=shared_read, shared_market_use=result.get('shared_market_use'),
         shared_market_arithmetic=result.get('shared_market_arithmetic'),
         coverage=coverage,
+        # the lane this reading ran on (the walk refuses above unless it is a held 16-CPU lane) and whether the
+        # walk was computed now or a retained receipt was reused; both for the one-day inspection report
+        lane=dict(cpus=cpus, count=len(cpus), expected=16),
+        walked_now=walked_now, retained_receipt_reused=not walked_now, identity_pin_created_now=pin_created,
         independent_scientific_verification=False,
         purpose='current evidence for accumulated-knowledge recognition before host grading')
     return snapshot, witness
