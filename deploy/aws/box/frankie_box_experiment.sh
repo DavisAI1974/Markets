@@ -78,6 +78,8 @@ set -- "$@" --external-wait "${EXTERNAL_WAIT:-on}" --brain "${BRAIN:-/opt/franki
 # frankie_box_granite_meeting_setup.sh (Run.jev binds to it; no second install, no second pin set)
 [ -z "${JEV_RUNTIME:-}" ] || { echo "JEV_RUNTIME is retired: Jev binds to the one pinned runtime shared with the Granite meeting (GRANITE_MEETING_RUNTIME_V1, /opt/frankie-box/granite); no separate Jev runtime" >&2; exit 2; }
 [ -z "${JEV_BRAIN:-}" ] || set -- "$@" --jev-brain "$JEV_BRAIN"
+# the day slot size (Greg, 2026-10-07): DAY_CPUS=32 books both main-box lanes as one booking for the day; unset = 16
+case "${DAY_CPUS:-}" in ''|16|32) [ -z "${DAY_CPUS:-}" ] || set -- "$@" --day-cpus "$DAY_CPUS" ;; *) echo "DAY_CPUS must be 16 or 32" >&2; exit 2;; esac
 # the classroom's native-entry cutoff, saved with the plan at its first start when given (unset = the classroom defaults)
 [ -z "${NATIVE_CUTOFF_SECONDS:-}" ] || set -- "$@" --native-cutoff-seconds "$NATIVE_CUTOFF_SECONDS"
 [ -z "${NATIVE_CUTOFF_RSS_GB:-}" ] || set -- "$@" --native-cutoff-rss-gb "$NATIVE_CUTOFF_RSS_GB"

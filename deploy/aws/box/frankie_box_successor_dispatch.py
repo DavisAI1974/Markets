@@ -574,7 +574,7 @@ def execute(path, phase):
             or X.plan_digest(plan) != identity['plan_sha256']
             or str(plan.get('brain') or X.BRAIN) != identity['brain']
             or not held or held.get('run') != identity['run'] or held.get('day') != identity['day']
-            or held.get('kind') != 'day-run' or len(held.get('cpus') or []) != 16):
+            or held.get('kind') != 'day-run' or len(held.get('cpus') or []) not in C.DAY_RUN_SIZES):
         raise ValueError('successor child lacks its exact staged plan/code/held owner lane')
     # An orphaned child may still finish after its parent dies. A second child waits for
     # that operation, then reads its exact completed receipt rather than rewriting it.
@@ -658,7 +658,7 @@ def drain(run, day):
             while True:
                 held, why = run.cores.held_booking(getattr(run, 'slot_booking', None)) if getattr(run, 'slot_booking', None) else (None, 'no held day booking')
                 if (not held or held.get('run') != identity['run'] or held.get('day') != day
-                        or held.get('kind') != 'day-run' or len(held.get('cpus') or []) != 16):
+                        or held.get('kind') != 'day-run' or len(held.get('cpus') or []) not in run.cores.DAY_RUN_SIZES):
                     raise ValueError('successor requires its original held day lane: ' + str(why))
                 state_path = target / 'state.json'
                 def state(status, **facts):

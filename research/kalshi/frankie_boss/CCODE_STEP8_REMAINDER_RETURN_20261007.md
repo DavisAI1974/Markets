@@ -1461,3 +1461,38 @@ Uncommitted; source only. Files: `deploy/aws/box/frankie_box_frankie_queue.py`, 
   - Bookings, ROOT directories, receipts and brain entries are untouched.
 
 Checks: AST parse, `bash -n`, `git diff --check` clean.
+
+## 25. A 32-CPU day (Greg, 2026-10-07: "Give the day 32 CPUs and that many workers")
+
+Uncommitted; source only.
+
+- **`frankie_box_cores.py`.**
+  - `DAY_RUN_SIZES = (16, 32)`. `size_of('day-run', size=...)` accepts 16 (default) or 32 and refuses anything else.
+  - `book()` passes `meta['size']`. A retained set's resume books exactly its own size.
+  - The booking's `demand` is the size; the `--size` CLI flag is new.
+  - With 32 on the 32-CPU main box, the day books CPUs 0-31 as ONE booking (`free[:size]`). It never splits: with
+    fewer than 32 free it waits.
+  - `FRANKIE_LANE_CPUS` / `FRANKIE_BOOKED_CPUS` carry the booking's whole list (section 23), so every pool that reads
+    the lane or its affinity scales to 32.
+  - STAGE_SLOTS (Granite, Jev) still claim one worker CPU of the slot.
+- **`frankie_box_experiment.py`.**
+  - Plan key `day_cpus`, saved only when not 16, so older plans keep their fingerprint. A saved plan's value stands
+    on restart. CLI `--day-cpus {16,32}`; wrapper `DAY_CPUS`.
+  - `Run.day_cpus()` drives ROOT `DATA_WORKERS`, data `DATA_WORKERS` and search `WORKERS` (= day_cpus - 1).
+  - `Run.child` passes `--size` to a fresh booking.
+  - Jev's held-booking check accepts either size.
+- **`frankie_box_frankie_queue._book_slot`.** Books the run's plan `day_cpus`.
+- **`frankie_box_successor_dispatch.py`.** The two held-lane checks (`execute`, `drain`) accept either size; they
+  required exactly 16.
+- **Already scaling.** The teacher splits its affinity (31 workers for one day). ROOT/boss_session read
+  `FRANKIE_LANE_CPUS`.
+- **Requests, not my files.**
+  - main_recovery: `frankie_box_experiment_classroom_v2.py:283` and `frankie_box_classroom_code.py:378`
+    (`SharedMarketTimeline(..., workers=15)`) should use `len(os.sched_getaffinity(0)) - 1`.
+  - main_recovery: `frankie_box_classroom_reader.py:65` refuses a lane that is not exactly 16 CPUs (the SOCRATIC/VERIFY
+    learner walk); accept 32.
+  - `classroom_v2.py:375`'s note text says 16.
+  - workflow_reports: confirm the search, timeline and ROOT pools take their counts from WORKERS/DATA_WORKERS or the
+    lane, never a literal 15/16.
+
+Checks: AST parse, `bash -n`, `git diff --check` clean.

@@ -96,6 +96,10 @@ RELEASED = LEDGER / 'released'
 WAITING = LEDGER / 'waiting'
 SCHEMA = 'FRANKIE_BOX_CPU_BOOKING_V1'
 DAY_RUN_CPUS = 16                       # every day-run step, exactly (Greg, 2026-09-29: "Correct 16")
+# Greg, 2026-10-07: "Give the day 32 CPUs and that many workers." A run may set its day slot size (plan day_cpus):
+# 16 (the default, one lane) or 32 (both lanes of the main box, CPUs 0-31, ONE booking held by the day for all its
+# stages). A 32 slot is never split: it waits until all 32 are free.
+DAY_RUN_SIZES = (16, 32)
 INGEST_CPUS = 8                         # every ingest / canary / conform day process
 WAITING_EXIT = 75                       # EX_TEMPFAIL: not started, a later dispatch retries
 REFUSED_EXIT = 2
@@ -133,10 +137,15 @@ def ingest_workers(verify, kind='ingest'):
     return max(w for w in range(0, INGEST_CPUS) if ingest_demand(kind, w, verify) <= INGEST_CPUS)
 
 
-def size_of(kind, workers=None, verify=None):
-    """(cpus to book, None) or (None, the refusal): the hard sizes."""
+def size_of(kind, workers=None, verify=None, size=None):
+    """(cpus to book, None) or (None, the refusal): the hard sizes. A day-run is DAY_RUN_CPUS unless the run set its day
+    slot size (one of DAY_RUN_SIZES)."""
     if kind == 'day-run':
-        return DAY_RUN_CPUS, None
+        if size in (None, DAY_RUN_CPUS):
+            return DAY_RUN_CPUS, None
+        if size not in DAY_RUN_SIZES:
+            return None, 'a day-run slot is one of %s CPUs (asked %s)' % (DAY_RUN_SIZES, size)
+        return size, None
     if kind not in KINDS:
         return None, 'kind must be one of %s' % ', '.join(KINDS)
     if verify not in ('inline', 'deferred') and kind != 'conform':
@@ -480,7 +489,7 @@ def book_locked(kind, size, pid, meta, window):
                 commit=meta.get('commit'), cpus=cpus, cpu_list=cpu_list(cpus), parent_cpu=cpus[0], owns_cpu0=cpus[0] == 0,
                 worker_cpus=cpus[1:], size=size, workers=meta.get('workers'), verify=meta.get('verify'),
                 rule=DAY_RUN_RULE if kind == 'day-run' else INGEST_RULE,
-                demand=(DAY_RUN_CPUS if kind == 'day-run' else ingest_demand(kind, meta.get('workers') or 0, meta.get('verify'))),
+                demand=(size if kind == 'day-run' else ingest_demand(kind, meta.get('workers') or 0, meta.get('verify'))),
                 pids=[dict(pid=pid, start=start, role='booking holder')], started=now_iso(), started_at=stamp,
                 nproc=len(online), free_before=len(free), booked_before=cpu_list(booked), in_use_unbooked_before=cpu_list(held),
                 reaped_before=[r['booking'] for r in reaped], host=os.uname().nodename)
@@ -502,7 +511,11 @@ def record_waiting(kind, meta, outcome):
 
 
 def book(kind, pid, meta, window):
-    size, why = size_of(kind, meta.get('workers'), meta.get('verify'))
+    size, why = size_of(kind, meta.get('workers'), meta.get('verify'), meta.get('size'))
+    if not why and kind == 'day-run' and meta.get('cpus') and len(meta['cpus']) != size:
+        # a saved day's resume books exactly its retained set: its size is that set's size
+        size, why = (len(meta['cpus']), None) if len(meta['cpus']) in DAY_RUN_SIZES else (
+            None, 'a retained day-run set of %d CPUs is not one of %s' % (len(meta['cpus']), DAY_RUN_SIZES))
     if why:
         return None, dict(status='refused', reason=why)
     with Lock():
@@ -568,7 +581,8 @@ def release(booking, reason, exit_code=None):
 # -------------------------------------------------------------------------------------------------------- commands
 
 def meta_of(a):
-    meta = dict(day=a.day, run=a.run, stage=a.stage, commit=a.commit, workers=a.workers, verify=a.verify)
+    meta = dict(day=a.day, run=a.run, stage=a.stage, commit=a.commit, workers=a.workers, verify=a.verify,
+                size=getattr(a, 'size', None))
     if getattr(a, 'cpus', None):
         meta['cpus'] = parse_list(a.cpus)       # the retained lane CPU set, exactly (a saved day's resume)
     return meta
@@ -935,6 +949,8 @@ def main():
         s.add_argument('--window', type=float, default=1.0, help='seconds between the two /proc samples')
         s.add_argument('--outcome', help='write the booking outcome (booked | waiting | refused) as JSON here')
         s.add_argument('--cpus', help='a saved day\'s resume: exactly its retained CPU list (comma list / ranges)')
+        s.add_argument('--size', type=int, help='day-run slot size: one of %s (default %d; the run\'s plan day_cpus)'
+                                                % (DAY_RUN_SIZES, DAY_RUN_CPUS))
         if name == 'book':
             s.add_argument('--pid', type=int, help='the process that holds the booking (default: the caller\'s parent)')
         else:

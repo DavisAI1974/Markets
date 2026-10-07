@@ -416,6 +416,9 @@ def load_plan(a, code_root):
     for key in NATIVE_CUTOFF_PLAN_KEYS:
         if getattr(a, key, None) is not None:
             plan[key] = getattr(a, key)
+    # the day slot size: saved only when not the default 16, so every older plan keeps its fingerprint
+    if getattr(a, 'day_cpus', None) not in (None, 16):
+        plan['day_cpus'] = int(a.day_cpus)
     inspection = getattr(a, 'inspection', None)
     if inspection is not None:
         plan['inspection'] = ('one_day' if len(days) == 1 else 'off') if inspection == 'auto' else inspection
@@ -1277,7 +1280,8 @@ class Run:
         if stage in self.cores.DAY_RUN_STAGES:  # exactly 16 CPUs booked, the step under taskset -c <them> (frankie_box_cores.py)
             inside = getattr(self, 'slot_booking', None)   # the day's held slot (ROOT line): its steps never re-book
             command = [sys.executable, '-B', str(self.box / 'frankie_box_cores.py'), 'run', '--kind', 'day-run', '--day', key,
-                       '--run', self.plan['run'], '--stage', stage, '--commit', self.commit] + \
+                       '--run', self.plan['run'], '--stage', stage, '--commit', self.commit,
+                       '--size', str(self.day_cpus())] + \
                 (['--inside', inside] if inside else []) + ['--'] + command
         # the stage heartbeat (Greg, 2026-10-07: probes on every step; frankie_box_stage_progress): one JSON line about
         # every 30 s to <run>/days/<day>/progress/<stage>.jsonl, measured from outside the child (its /proc tree and log)
@@ -1523,7 +1527,7 @@ class Run:
         if held is not None and not held[0]:
             return self.record('root', e['day'], 'waiting', reason=held[1], claim=held[2])
         env = dict(INGESTION_RECEIPT=ing['receipt'], INGESTION_RECEIPT_SHA256=ing['receipt_sha256'], DAY=e['day'],
-                   DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=self.cores.DAY_RUN_CPUS - 1,
+                   DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=self.day_cpus() - 1,
                    DIGEST='on', RESUME='on' if resume else 'off')
         if self.plan['frozen_survivors']:
             env['FROZEN_SURVIVORS'] = self.plan['frozen_survivors']
@@ -2383,6 +2387,12 @@ class Run:
             return self.record(stage, e['day'], 'failed', reason='%s: %s' % (type(error).__name__, error))
 
     INSPECTION_SECONDS = 900          # the reporter reads recorded metadata only (8 MiB ceiling per file); never a long job
+
+    def day_cpus(self):
+        """The run's day slot size (Greg, 2026-10-07: "Give the day 32 CPUs and that many workers"): plan day_cpus (32 =
+        both main-box lanes as one booking), else the ledger's DAY_RUN_CPUS (16). Every worker count the orchestrator
+        hands a stage is this minus one coordinator; the stages that read their affinity or FRANKIE_LANE_CPUS scale too."""
+        return int(self.plan.get('day_cpus') or self.cores.DAY_RUN_CPUS)
 
     def inspection_on(self):
         """True only when the saved plan is the one-day test (plan['inspection'] == 'one_day', decided once at plan time;
@@ -3495,8 +3505,10 @@ class Run:
                                                              'FRANKIE_LANE_STOP_FILE): Jev binds the exact marker')
         booking = getattr(self, 'slot_booking', None)
         held, why = self.cores.held_booking(booking) if booking else (None, 'no held day booking on this Run')
-        if held is None or held.get('run') != self.plan['run'] or held.get('day') != day or len(held.get('cpus') or []) != 16:
-            return self.record('jev', day, 'waiting', reason='Jev needs the day\'s live held 16-CPU booking: %s' % why)
+        if held is None or held.get('run') != self.plan['run'] or held.get('day') != day or \
+                len(held.get('cpus') or []) not in self.cores.DAY_RUN_SIZES:
+            return self.record('jev', day, 'waiting', reason='Jev needs the day\'s live held day-run booking (%s CPUs): %s' % (
+                '/'.join(str(n) for n in self.cores.DAY_RUN_SIZES), why))
         attempt = self.owned_attempt or os.environ.get('FRANKIE_LANE_ATTEMPT') or ''
         if not attempt:
             root = self.receipt('root', day) or {}
@@ -4134,7 +4146,7 @@ class Run:
         # DATA_WORKERS: the export pins its hashing in a largest-first process pool (workflow_reports, 2026-10-07); the
         # 15 workers of the held 16-CPU lane, as ROOT and search; without it the export hashes serially
         env = dict(ACTION='export', DAY=e['day'], CYCLE=CYCLE, CALCULATIONS=root['calculations'], INGEST=ing['ingest'],
-                   DATA_WORKERS=self.cores.DAY_RUN_CPUS - 1)
+                   DATA_WORKERS=self.day_cpus() - 1)
         for key, var in (('launch', 'LAUNCH'), ('preparation', 'PREPARATION'), ('principal_inputs', 'PRINCIPAL_INPUTS'),
                          ('host_config', 'HOST_CONFIG'), ('run', 'RUN')):
             if e.get(key):
@@ -4182,7 +4194,7 @@ class Run:
                                           if pin else ''))
         if not self.disk_ok('search'):
             return None
-        env = dict(DAY=e['day'], CYCLE=CYCLE, DAY_ROLE=e['role'], LAGS=self.plan['lags'], WORKERS=self.cores.DAY_RUN_CPUS - 1)
+        env = dict(DAY=e['day'], CYCLE=CYCLE, DAY_ROLE=e['role'], LAGS=self.plan['lags'], WORKERS=self.day_cpus() - 1)
         if self.plan['transforms']:
             env['TRANSFORMS'] = self.plan['transforms']
         if e['role'] == 'confirmation':
@@ -4777,6 +4789,9 @@ def main():
                    '(saved with the plan; default unset = 48)')
     p.add_argument('--native-cutoff-check-every', type=int, help='check the cutoff every N pictures (saved with the plan; '
                    'default unset = 10000)')
+    p.add_argument('--day-cpus', type=int, choices=(16, 32),
+                   help='the day slot size, saved with the plan at the first start: 16 (default, one lane) or 32 (Greg, '
+                        '2026-10-07: both main-box lanes, CPUs 0-31, ONE booking the day holds across all its stages)')
     p.add_argument('--inspection', choices=('auto', 'one_day', 'off'), default='auto',
                    help='the per-piece status reports (frankie_box_workflow_inspection, Greg 2026-10-07: the ONE-day run '
                         'only), saved with the plan at the first start: auto = one_day when the plan holds exactly one '
@@ -4854,6 +4869,8 @@ def main():
     if a.action in ('plan', 'start') and (run_dir / 'plan.json').is_file():
         # a run keeps one plan: the saved cutoff values stand when none is given (absent stays absent)
         saved_cutoff = json.loads((run_dir / 'plan.json').read_bytes())
+        if getattr(a, 'day_cpus', None) is None:
+            a.day_cpus = saved_cutoff.get('day_cpus')
         for key in NATIVE_CUTOFF_PLAN_KEYS:
             if getattr(a, key, None) is None:
                 setattr(a, key, saved_cutoff.get(key))

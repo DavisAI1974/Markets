@@ -1144,8 +1144,10 @@ def _book_slot(x, stage, commit):
     nobody else. Returns (booking id, cpus, None) or (None, None, the ledger's waiting/refused reason)."""
     import frankie_box_cores as C
     cpus = (x.get('owner') or {}).get('cpus') or x.get('cpus')
+    # the run's day slot size (plan day_cpus: 32 = both main-box lanes as one booking; default 16)
+    size = int(_plan_of(x['run']).get('day_cpus') or C.DAY_RUN_CPUS)
     b, outcome = C.book('day-run', os.getpid(), dict(day=x['day'], run=x['run'], stage='day-slot-' + stage, commit=commit,
-                                                  cpus=cpus), 1.0)
+                                                  cpus=cpus, size=size), 1.0)
     return (b['booking'], b['cpus'], None) if b else (None, None, outcome.get('reason'))
 
 
