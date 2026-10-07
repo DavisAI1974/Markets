@@ -49,6 +49,25 @@ are REPORT_NUMBER=N and a small receipt JSON (the number, each file and its sha2
 takes REPORT_NUMBER=N so his report is JEV REPORT #N (research/kalshi/frankie_boss/clm_sidecar/jev_report.py).
 No model call or Pod. A receipt-verified completed Granite discussion is translated only in the Frankie report;
 it has no evidentiary authority, and requested tests remain requests, not results.
+
+THE SCHOOL FILE (2026-10-07, stage 12 of SPEC-experiment-orchestrator section 0: the end of day consolidates the brain,
+lessons and exchange already written during the day into school knowledge AND the numbered reports; never the first
+knowledge write). The orchestrator runs the school step before this one and gives the day's FRANKIE_SCHOOL_KNOWLEDGE_V1
+file as --school (<brain>/school/<day>.json, or a retained checked successor <brain>/school/successors/<day>/<op>/
+school.json) or --school-listed, the reason there is none. The FRANKIE report then carries "The school file": per section
+its author and items (how each was carried: inline, a stated subset, or a pointer with its reason), and every item the
+school listed missing or withheld with its recorded reason. Fixed templates, nothing interpreted. The file is read once
+and hashed once; an indexed original is checked against its index row, a successor against its receipt. A mismatch is an
+INTEGRITY failure (stated in the report, on the receipt and in the exit code), never a missing-data disposition; a day
+without a school file is a thinner picture, reported as such. The school file's sha256 is part of the reports' source
+(a report built before it is superseded by a revision with the same N). The reports are never knowledge.
+
+THE RECEIPT FILE and the one-day inspection (Greg, 2026-10-07: every input received, how it was used, what was produced,
+and nothing silent). Besides the last stdout line, run() writes the same receipt to <reports-dir>/receipts/<run>/<day>.json
+(the path frankie_box_workflow_inspection.artifact_paths reads for the 'school' piece): every file read with its path,
+bytes and sha256 (inputs), every absent or unreadable file with its reason, the exchange/meeting/school dispositions, the
+reuse decision and why, the problems, the phase timings (seconds; receipt only, so the report bytes stay deterministic),
+and a FRANKIE_PIECE_WORKFLOW_REPORT_V1 (inputs / use / outputs). The receipt is diagnostic and never knowledge.
 """
 import argparse
 import datetime as dt
@@ -63,6 +82,9 @@ from pathlib import Path
 
 SCHEMA = 'FRANKIE_EXPERIMENT_DAY_REPORTS_RECEIPT_V1'
 INDEX_SCHEMA = 'FRANKIE_EXPERIMENT_DAY_REPORTS_INDEX_V1'
+SCHOOL_SCHEMA = 'FRANKIE_SCHOOL_KNOWLEDGE_V1'              # frankie_box_school_knowledge.SCHEMA (read, never written here)
+SCHOOL_INDEX_SCHEMA = 'FRANKIE_SCHOOL_INDEX_V1'             # frankie_box_brain.SCHOOL_INDEX_SCHEMA
+PIECE_WORKFLOW_REPORT = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'  # the one-day inspection record (frankie_box_workflow_inspection)
 REPORTS = Path('/opt/frankie-box/work/experiment-reports')
 KINDS = ('classroom', 'frankie')
 FILE_RE = re.compile(r'^(classroom|frankie)-report-(\d{4,})(?:-r(\d+))?\.md$')
@@ -241,15 +263,17 @@ def ref_text(ref):
 class Day:
     """What the reports translate, read from the classroom directory (and the brain entry its receipt names)."""
 
-    def __init__(self, day, classroom, refused_reason, exchange=None, exchange_listed=None):
+    def __init__(self, day, classroom, refused_reason, exchange=None, exchange_listed=None, school=None,
+                 school_listed=None):
         self.day, self.dir = day, Path(classroom)
         self.docs, self.absent = {}, []
+        self.inputs = []                        # every file this step read: kind, path, bytes, sha256 (read once, hashed once)
         self.exchange, self.exchange_sha256, self.exchange_path = None, None, exchange
         self.exchange_listed = exchange_listed
         self.meeting = dict(status='missing', record=None, path=None, receipt=None,
                             reason=exchange_listed or 'no Frankie exchange was given for this day')
         if exchange:
-            raw = Path(exchange).read_bytes()
+            raw = self._read('exchange', exchange)
             self.exchange, self.exchange_sha256 = json.loads(raw), sha256_bytes(raw)
             if str(self.exchange.get('day')) != str(day):
                 raise SystemExit('the exchange %s is for day %s, not %s' % (exchange, self.exchange.get('day'), day))
@@ -261,7 +285,7 @@ class Day:
                 if not frankie_path.is_file():
                     self.meeting['reason'] = 'the supplied full exchange has no sibling exchange-frankie.json'
                 else:
-                    frankie_view = json.loads(frankie_path.read_bytes())
+                    frankie_view = json.loads(self._read('exchange-frankie view', frankie_path))
                     if (self.exchange.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1'
                             or frankie_view.get('view') != 'frankie'
                             or not self.exchange.get('run') or not self.exchange.get('exchange_hash')
@@ -271,9 +295,13 @@ class Day:
                     from frankie_box_brain import read_meeting_for_exchange
                     self.meeting = read_meeting_for_exchange(frankie_path)
         self.meeting_sha256 = ((self.meeting.get('receipt') or {}).get('record') or {}).get('sha256')
+        if self.meeting.get('path'):            # read by frankie_box_brain.read_meeting_for_exchange; witnessed from its receipt
+            self.inputs.append(dict(kind='meeting record', path=self.meeting['path'], bytes=None, sha256=self.meeting_sha256,
+                                    read_by='frankie_box_brain.read_meeting_for_exchange (receipt-verified)'))
+        self._school(school, school_listed)
         receipt_path = self.dir / 'receipt.json'
         if receipt_path.is_file():
-            raw = receipt_path.read_bytes()
+            raw = self._read('classroom receipt', receipt_path)
             self.receipt = json.loads(raw)
             self.source = dict(kind='classroom receipt', path=str(receipt_path), sha256=sha256_bytes(raw))
             if str(self.receipt.get('day')) != str(day):
@@ -297,12 +325,86 @@ class Day:
                 self.absent.append((name, 'the file is not in the classroom directory'))
                 continue
             try:
-                self.docs[name] = json.loads(path.read_bytes())
+                self.docs[name] = json.loads(self._read(name, path))
             except ValueError as error:
                 self.docs[name] = None
                 self.absent.append((name, 'the file is not readable JSON (%s)' % error))
         self.dropped = self._dropped_from_markdown()
         self.brain, self.brain_why = self._brain()
+
+    def _read(self, kind, path):
+        """Read a file ONCE and witness it (bytes, sha256) in self.inputs; the caller parses the same bytes."""
+        raw = Path(path).read_bytes()
+        self.inputs.append(dict(kind=kind, path=str(path), bytes=len(raw), sha256=sha256_bytes(raw)))
+        return raw
+
+    def _school(self, school, school_listed):
+        """The day's FRANKIE_SCHOOL_KNOWLEDGE_V1 file: read once, hashed once, checked against its index row (an indexed
+        original) or its receipt (a retained checked successor). Status: 'read', 'not given' (a thinner picture, with the
+        orchestrator's reason), 'unreadable' or 'integrity_mismatch' (visible failures, never a missing-data disposition;
+        the content is not consolidated into the report)."""
+        self.school, self.school_path, self.school_sha256, self.school_bytes = None, school, None, None
+        self.school_status, self.school_listed, self.school_row, self.school_receipt = 'not given', None, None, None
+        self.school_kind, self.school_problems = None, []
+        if not school:
+            self.school_listed = school_listed or 'no school file was given for this day'
+            return
+        path = Path(school)
+        self.school_kind = 'retained checked successor' if 'successors' in path.parts else 'indexed original'
+        try:
+            raw = self._read('school file', path)
+        except OSError as error:
+            self.school_status, self.school_listed = 'unreadable', '%s: %s' % (type(error).__name__, error)
+            self.school_problems.append('the school file %s could not be read: %s' % (path, self.school_listed))
+            return
+        self.school_sha256, self.school_bytes = sha256_bytes(raw), len(raw)
+        try:
+            doc = json.loads(raw)
+        except ValueError as error:
+            self.school_status, self.school_listed = 'unreadable', 'the school file is not readable JSON (%s)' % error
+            self.school_problems.append('the school file %s is not readable JSON' % path)
+            return
+        if not isinstance(doc, dict) or doc.get('schema') != SCHOOL_SCHEMA or str(doc.get('day')) != str(self.day):
+            self.school_status = 'integrity_mismatch'
+            self.school_listed = 'the file is not a %s of day %s (schema %s, day %s)' % (
+                SCHOOL_SCHEMA, self.day, (doc or {}).get('schema') if isinstance(doc, dict) else type(doc).__name__,
+                (doc or {}).get('day') if isinstance(doc, dict) else None)
+            self.school_problems.append('school file integrity: ' + self.school_listed)
+            return
+        if self.school_kind == 'indexed original':
+            index_path = path.with_name('index.json')
+            if index_path.is_file():
+                try:
+                    index = json.loads(self._read('school index', index_path))
+                    rows = [r for r in (index.get('rows') or []) if str(r.get('day')) == str(self.day)] \
+                        if index.get('schema') == SCHOOL_INDEX_SCHEMA else None
+                except ValueError as error:
+                    index, rows = None, None
+                    self.school_problems.append('the school index %s is not readable JSON (%s)' % (index_path, error))
+                if rows is None and index is not None:
+                    self.school_problems.append('the school index %s is not a %s' % (index_path, SCHOOL_INDEX_SCHEMA))
+                elif rows:
+                    self.school_row = rows[-1]
+                    if self.school_row.get('sha256') != self.school_sha256:
+                        self.school_status = 'integrity_mismatch'
+                        self.school_listed = ('the school index row records sha256 %s for day %s; the file read has %s'
+                                              % (self.school_row.get('sha256'), self.day, self.school_sha256))
+                        self.school_problems.append('school file integrity: ' + self.school_listed)
+                        return
+                else:
+                    self.school_listed = 'the school index has no row for the day (the file is carried unindexed)'
+            else:
+                self.school_listed = 'no school index beside the file (the file is carried unindexed)'
+        else:
+            receipt_path = path.with_name('receipt.json')
+            if receipt_path.is_file():
+                try:
+                    self.school_receipt = json.loads(self._read('school successor receipt', receipt_path))
+                except ValueError as error:
+                    self.school_problems.append('the successor receipt %s is not readable JSON (%s)' % (receipt_path, error))
+            else:
+                self.school_listed = 'no receipt beside the successor school file (carried unverified)'
+        self.school, self.school_status = doc, 'read'
 
     def doc(self, name):
         return self.docs.get(name)
@@ -318,7 +420,7 @@ class Day:
                                                 'findings\' reasons)'))
             return None
         out, inside = [], False
-        for line in path.read_text(encoding='utf-8', errors='replace').splitlines():
+        for line in self._read('classroom.md', path).decode('utf-8', errors='replace').splitlines():
             if line.startswith('## '):
                 inside = line.startswith('## Novel findings NOT filed')
                 continue
@@ -333,7 +435,8 @@ class Day:
         path = Path(entry) / 'MANIFEST.json'
         if path.is_file():
             try:
-                return dict(path=str(entry), manifest=json.loads(path.read_bytes()), manifest_sha256=sha256_file(path),
+                raw = self._read('brain MANIFEST', path)
+                return dict(path=str(entry), manifest=json.loads(raw), manifest_sha256=sha256_bytes(raw),
                             source='the entry\'s MANIFEST.json'), None
             except ValueError as error:
                 return None, '%s is not readable JSON (%s)' % (path, error)
@@ -712,7 +815,7 @@ def frankie_report(d, number, revision, run, cls, classroom_file):
     title = '# FRANKIE REPORT #%d%s' % (number, '' if revision == 1 else ' (revision %d)' % revision)
     L = header(title, d, run, cls, 'CLASSROOM REPORT #%d' % number, classroom_file)
     if d.status != 'complete':
-        return L + refused_lines(d) + exchange_lines(d, True) + glossary_lines() + evidence(d, True)
+        return L + refused_lines(d) + school_lines(d, number) + exchange_lines(d, True) + glossary_lines() + evidence(d, True)
     comps = component_facts(d)
     pairs, wrong_pairs, _ = pair_facts(d)
     ext_series = external_series_facts(d)
@@ -860,8 +963,64 @@ def frankie_report(d, number, revision, run, cls, classroom_file):
                 '%s: %s' % (k, v) for k, v in sorted(u.items())) if isinstance(u, dict) else u))
         if m.get('unavailable'):
             L.append('')
-    L += exchange_lines(d, True)
+    L += school_lines(d, number) + exchange_lines(d, True)
     return L + glossary_lines() + evidence(d, True)
+
+
+# ---------------------------------------------------------------------------------------------- the school section
+def school_lines(d, number):
+    """The school file translated field by field (the FRANKIE report only: it is his knowledge base). Per section the
+    recorded author and items, how each item was carried, and every item the school listed missing or withheld with its
+    recorded reason. Paths and hashes appear only in the Evidence section."""
+    L = ['## The school file (what the day consolidated)', '',
+         'The school file is Frankie\'s knowledge base for this day, written by the school step before these reports. '
+         'This section translates what it recorded; these reports are never knowledge.', '']
+    if d.school_status == 'not given':
+        return L + ['Not recorded: %s.' % d.school_listed, '']
+    if d.school_status != 'read':
+        return L + ['INTEGRITY FAILURE (recorded; this is not a missing-data disposition and the file\'s content is not '
+                    'consolidated here): %s. Recorded status: %s.' % (d.school_listed, d.school_status), '']
+    doc = d.school
+    sections = doc.get('sections') or {}
+    if not isinstance(sections, dict):
+        sections = {}
+    missing, withheld = doc.get('missing') or [], doc.get('withheld') or []
+    items = sum(len(v.get('items') or []) for v in sections.values() if isinstance(v, dict))
+    L += ['Kind: %s. The file records: run %s, report number %s (this report: #%d), classroom status %s, written by %s. '
+          'Sections: %d. Items: %d. Items listed missing: %d. Items listed withheld: %d. Model calls recorded: %s.' % (
+              d.school_kind, rec(doc.get('run')), rec(doc.get('report_number')), number, rec(doc.get('classroom_status')),
+              rec(doc.get('written_by')), len(sections), items, len(missing), len(withheld), rec(doc.get('model_calls'))), '']
+    if d.school_listed:
+        L += ['Noted: %s.' % d.school_listed, '']
+    if d.school_kind == 'retained checked successor':
+        r = d.school_receipt or {}
+        L += ['Successor receipt (recorded): status %s; owner operation %s; source corrections applied (recorded count): '
+              '%d; scientific retests recorded: %s.' % (rec(r.get('status')), rec(r.get('operation_sha256')),
+                                                       len(r.get('source_corrections') or []), rec(r.get('scientific_retests'))), '']
+    L += table(['section', 'author (recorded)', 'items'],
+               [(name, rec((v or {}).get('author_label') or (v or {}).get('author')), len((v or {}).get('items') or []))
+                for name, v in sorted(sections.items()) if isinstance(v, dict)]) + ['']
+    for name, v in sorted(sections.items()):
+        if not isinstance(v, dict):
+            continue
+        for item in v.get('items') or []:
+            if item.get('inline') and item.get('holds'):
+                how = 'a stated subset, inline; holds: %s' % item['holds']
+            elif item.get('inline'):
+                how = 'the whole file, inline'
+            else:
+                how = 'a pointer (recorded reason: %s)' % rec(item.get('pointer_reason'))
+            L.append('- %s / %s (author recorded: %s): %s; bytes recorded: %s.' % (
+                name, rec(item.get('name')), rec(item.get('author')), how, rec(item.get('bytes'))))
+    if any(isinstance(v, dict) and v.get('items') for v in sections.values()):
+        L.append('')
+    L += ['### Listed missing in the school file', '']
+    L += ['- %s / %s. Recorded reason: %s.' % (rec(m.get('section')), rec(m.get('item')), rec(m.get('reason')))
+          for m in missing if isinstance(m, dict)] or ['None listed.']
+    L += ['', '### Listed withheld in the school file', '']
+    L += ['- %s / %s. Recorded reason: %s.' % (rec(w.get('section')), rec(w.get('item')), rec(w.get('reason')))
+          for w in withheld if isinstance(w, dict)] or ['None listed.']
+    return L + ['']
 
 
 # ------------------------------------------------------------------------------------------------- the exchange section
@@ -987,6 +1146,16 @@ def evidence(d, with_frankie=False):
     if with_frankie and d.meeting.get('path'):
         L.append('- the discussion record (%s): %s, sha256 %s; verified against its receipt and Frankie exchange' % (
             d.meeting['status'], d.meeting['path'], d.meeting_sha256))
+    if d.school_path:
+        L.append('- the school file (%s, status %s): %s, sha256 %s, bytes %s' % (
+            d.school_kind, d.school_status, d.school_path, d.school_sha256, d.school_bytes))
+        if d.school_row:
+            L.append('- the school index row: file %s, sha256 %s, bytes %s, report number %s' % (
+                d.school_row.get('file'), d.school_row.get('sha256'), d.school_row.get('bytes'),
+                d.school_row.get('report_number')))
+    else:
+        L.append('- no school file was given: %s' % d.school_listed)
+    L.append('- files read by this step: %d (each with bytes and sha256 on the step\'s receipt)' % len(d.inputs))
     if d.absent:
         L += ['- files not found or not readable (each section above states what is not recorded):']
         L += ['  - %s: %s' % (name, why) for name, why in d.absent]
@@ -1079,10 +1248,14 @@ def write_new(path, raw):
         return False, '%s: %s' % (type(error).__name__, error)
 
 
-def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, exchange_listed=None, *, return_receipt=False):
-    d = Day(day, classroom, refused_reason, exchange, exchange_listed)
+def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, exchange_listed=None, *, return_receipt=False,
+        school=None, school_listed=None):
+    started = time.monotonic()
+    d = Day(day, classroom, refused_reason, exchange, exchange_listed, school, school_listed)
+    timings = dict(read_inputs=round(time.monotonic() - started, 6))
     reports.mkdir(parents=True, exist_ok=True)
-    out, printed, problems = [], [], []
+    out, printed, problems = [], [], list(d.school_problems)
+    reuse_why = None
     with open(reports / '.lock', 'a+') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         index = read_index(reports)
@@ -1094,10 +1267,18 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
         mine = {k: [r for r in index['reports'] if r['run'] == run_name and r['day'] == day and r['kind'] == k]
                 for k in KINDS}
         latest = {k: (mine[k][-1] if mine[k] else None) for k in KINDS}
-        reuse = all(latest[k] and latest[k]['source_sha256'] == d.source['sha256']
-                    and latest[k].get('exchange_sha256') == d.exchange_sha256
-                    and latest[k].get('meeting_sha256') == d.meeting_sha256
-                    and latest[k].get('meeting_status') == d.meeting['status'] for k in KINDS)
+        match = {k: dict(source=bool(latest[k]) and latest[k]['source_sha256'] == d.source['sha256'],
+                         exchange=bool(latest[k]) and latest[k].get('exchange_sha256') == d.exchange_sha256,
+                         meeting=bool(latest[k]) and latest[k].get('meeting_sha256') == d.meeting_sha256
+                                 and latest[k].get('meeting_status') == d.meeting['status'],
+                         school=bool(latest[k]) and latest[k].get('school_sha256') == d.school_sha256
+                                and latest[k].get('school_status', 'not given') == d.school_status)
+                 for k in KINDS}
+        reuse = all(all(m.values()) for m in match.values())
+        reuse_why = ('the existing reports were built from the same classroom receipt, exchange, meeting and school file'
+                     if reuse else 'no earlier reports for this run and day' if not any(latest.values()) else
+                     'rebuilt as a revision: changed since the last build: ' + listing(
+                         sorted({name for m in match.values() for name, same in m.items() if not same})))
         if reuse:
             for k in KINDS:
                 path = Path(latest[k]['file'])
@@ -1140,12 +1321,14 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                              bytes=len(raw), source=d.source['kind'], source_sha256=d.source['sha256'],
                              classroom=str(d.dir), classroom_status=d.status, supersedes=superseded, at=time.time(),
                              commit=os.environ.get('MARKETS_SHA'), exchange_sha256=d.exchange_sha256,
-                             meeting_sha256=d.meeting_sha256, meeting_status=d.meeting['status'])
+                             meeting_sha256=d.meeting_sha256, meeting_status=d.meeting['status'],
+                             school=d.school_path, school_sha256=d.school_sha256, school_status=d.school_status)
                 index['reports'].append(entry)
                 printed.append((k, raw.decode('utf-8')))
                 out.append(dict(kind=k, number=number, revision=revision, file=str(central), classroom_copy=copy,
                                 sha256=entry['sha256'], bytes=len(raw), existing=False, supersedes=superseded))
         write_index(reports, index)
+        timings['build_and_write'] = round(time.monotonic() - started - timings['read_inputs'], 6)
     for k, text in printed:
         print('=' * 100)
         print(text, end='' if text.endswith('\n') else '\n')
@@ -1154,11 +1337,83 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                    classroom=str(d.dir), classroom_status=d.status, built_from=d.source, reports=out,
                    exchange=dict(path=d.exchange_path, sha256=d.exchange_sha256) if d.exchange is not None else
                    dict(listed=d.exchange_listed),
-                   meeting=dict(status=d.meeting['status'], path=d.meeting.get('path'), sha256=d.meeting_sha256),
+                   exchange_sha256=d.exchange_sha256,
+                   meeting=dict(status=d.meeting['status'], path=d.meeting.get('path'), sha256=d.meeting_sha256,
+                                reason=d.meeting.get('reason')),
+                   meeting_status=d.meeting['status'], meeting_sha256=d.meeting_sha256,
+                   school=d.school_path, school_sha256=d.school_sha256, school_status=d.school_status,
+                   school_listed=d.school_listed, school_kind=d.school_kind, school_row=d.school_row,
+                   school_successor_receipt_status=(d.school_receipt or {}).get('status') if d.school_receipt else None,
+                   absent=[dict(file=name, reason=why) for name, why in d.absent],
+                   inputs=d.inputs, reused=bool(out) and all(o.get('existing') for o in out), reuse_why=reuse_why,
                    index=str(reports / 'index.json'), problems=problems, model_calls=0)
+    receipt['workflow_report'] = workflow_report(d, receipt)
+    receipt_path = reports / 'receipts' / run_name / (day + '.json')
+    receipt['receipt_path'] = str(receipt_path)
+    try:
+        receipt_path.parent.mkdir(parents=True, exist_ok=True)
+        previous = sha256_file(receipt_path) if receipt_path.is_file() else None
+        receipt['previous_receipt_sha256'] = previous        # the index keeps every build; the receipt file is the latest
+        timings['total'] = round(time.monotonic() - started, 6)
+        receipt['timings_seconds'] = timings
+        tmp = receipt_path.with_name(receipt_path.name + '.pending')
+        tmp.write_text(json.dumps(receipt, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+        os.replace(tmp, receipt_path)
+    except OSError as error:
+        problems.append('the receipt file %s could not be written: %s: %s' % (receipt_path, type(error).__name__, error))
+        receipt['timings_seconds'] = dict(timings, total=round(time.monotonic() - started, 6))
     print('REPORT_NUMBER=%d' % number)
     print(json.dumps(receipt, sort_keys=True), flush=True)
     return receipt if return_receipt else (1 if problems else 0)
+
+
+def workflow_report(d, receipt):
+    """FRANKIE_PIECE_WORKFLOW_REPORT_V1 for the one-day inspection: what this step received, how it used it and what it
+    produced, from the receipt's own values only. A receipt records what was read and written; it is not proof that a
+    reader consumed the reports, and the reports are never knowledge."""
+    sections_from = {
+        'classroom report: counts, teacher, grade, corrections, acknowledgement, novel/dropped, carried, external':
+            ['classroom receipt'] + list(JSON_FILES) + ['classroom.md'],
+        'frankie report: his answers, corrections, acknowledgement, external, novel, brain entry':
+            ['classroom receipt', 'code-answers.json', 'ledgers.json', 'post-grade.json', 'correction-request.json',
+             'correction-response.json', 'acknowledgement.json', 'completion.json', 'external-code-answers.json',
+             'external-post-grade.json', 'external-correction-request.json', 'external-correction-response.json',
+             'external-acknowledgement.json', 'external-completion.json', 'novel-findings.json', 'brain MANIFEST'],
+        'both: the three-way exchange': ['exchange', 'exchange-frankie view'],
+        'frankie report: the discussion (meeting)': ['meeting record'],
+        'frankie report: the school file': ['school file', 'school index', 'school successor receipt']}
+    read = {i['kind'] for i in d.inputs}
+    dispositions = [dict(input=name, disposition='absent or unreadable', reason=why) for name, why in d.absent]
+    if d.exchange is None:
+        dispositions.append(dict(input='exchange', disposition='not given', reason=d.exchange_listed))
+    if d.meeting['status'] != 'complete':
+        dispositions.append(dict(input='meeting record', disposition=d.meeting['status'], reason=d.meeting.get('reason')))
+    if d.school_status != 'read':
+        dispositions.append(dict(input='school file', disposition=d.school_status, reason=d.school_listed,
+                                 integrity_failure=d.school_status in ('integrity_mismatch', 'unreadable')))
+    elif d.school_listed:
+        dispositions.append(dict(input='school file', disposition='read with a note', reason=d.school_listed))
+    if d.status != 'complete':
+        dispositions.append(dict(input='classroom outputs', disposition='not read',
+                                 reason='the classroom was %s: %s' % (d.status, d.receipt.get('reason'))))
+    return dict(
+        schema=PIECE_WORKFLOW_REPORT, piece='day_reports',
+        inputs=dict(files=d.inputs, built_from=d.source, exchange_sha256=d.exchange_sha256, meeting_sha256=d.meeting_sha256,
+                    school_sha256=d.school_sha256, school_row=d.school_row),
+        use=dict(sections_from={k: sorted(set(v) & read) for k, v in sections_from.items()},
+                 not_read={k: sorted(set(v) - read) for k, v in sections_from.items() if set(v) - read},
+                 dispositions=dispositions, reuse=receipt['reused'], reuse_why=receipt['reuse_why'],
+                 withheld=['the answer key\'s content and the exhaustive grade are never in the reports (R10); hashes and '
+                           'paths appear only in the Evidence section; the meeting appears only in the Frankie report'],
+                 rule='fixed templates per recorded field; no interpretation, ranking, average or pooled value (D37); '
+                      'absent reads as not recorded with its reason, never as zero; an integrity failure is stated as '
+                      'such, never as a thinner picture'),
+        outputs=dict(reports=receipt['reports'], report_number=receipt['report_number'],
+                     number_assigned_now=receipt['number_assigned_now'], index=receipt['index'],
+                     problems=receipt['problems'], refusals=[], waits=[], model_calls=0,
+                     exit_code=1 if receipt['problems'] else 0),
+        rule='temporary operator review of one day; the reports and this receipt are diagnostic and never knowledge; a '
+             'recorded write is not proof any reader consumed it')
 
 
 def main():
@@ -1173,6 +1428,9 @@ def main():
     ap.add_argument('--exchange', help='the day\'s exchange.json (FRANKIE_EXPERIMENT_EXCHANGE_V1, the orchestrator\'s exchange '
                                        'stage)')
     ap.add_argument('--exchange-listed', help='why there is no exchange for the day (the orchestrator\'s reason)')
+    ap.add_argument('--school', help='the day\'s %s file the school step wrote (<brain>/school/<day>.json or a retained '
+                                     'checked successor <brain>/school/successors/<day>/<op>/school.json)' % SCHOOL_SCHEMA)
+    ap.add_argument('--school-listed', help='why there is no school file for the day (the orchestrator\'s reason)')
     a = ap.parse_args()
     if not re.fullmatch('[0-9]{8}', a.day):
         ap.error('--day must be YYYYMMDD')
@@ -1180,7 +1438,8 @@ def main():
         ap.error('--run: letters, digits, _ and - only')
     cls = a.day_class or CLASS_OF_WEEKDAY.get(dt.date(int(a.day[:4]), int(a.day[4:6]), int(a.day[6:])).weekday(),
                                                'weekend')
-    return run(a.day, a.classroom, a.run, Path(a.reports_dir), cls, a.refused_reason, a.exchange, a.exchange_listed)
+    return run(a.day, a.classroom, a.run, Path(a.reports_dir), cls, a.refused_reason, a.exchange, a.exchange_listed,
+               school=a.school, school_listed=a.school_listed)
 
 
 if __name__ == '__main__':

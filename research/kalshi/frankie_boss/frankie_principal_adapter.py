@@ -479,7 +479,17 @@ def consume_knowledge_correction(request, scope_response, original_request):
                      reproduction_fields=sorted(reproduction) if isinstance(reproduction, dict) else
                      type(reproduction).__name__,
                      all_knowledge_consumed=False, native_learning_performed=False,
-                     independent_scientific_verification=False, waits=[]),
+                     independent_scientific_verification=False, waits=[], refusals=[], integrity_failures=[]),
+        # Missing coverage (Greg, 2026-10-07) never refuses here: a thinner original visible picture is consumed as
+        # it is, and the existing predicates list what they could not measure. What DOES refuse, before this record
+        # is built, is a binding or integrity failure (a different reader pin, a changed overlay, a stale container
+        # whose owner has no successor, a chain cycle); the host writes that refusal with its reason beside the
+        # request (frankie_box_boss_session.knowledge_correction) so no refusal is silent.
+        dispositions=dict(missing_coverage='the original visible evidence is consumed as retained; absent layers, '
+                                           'cursors or operands stay listed by the existing predicates, never '
+                                           'fabricated and never a reason to refuse the day',
+                          integrity='a changed pin, overlay, chain or stale container refuses visibly (ValueError '
+                                    'recorded by the host as a refusal), never relabelled as a thinner picture'),
         rule='recorded inputs, use and outputs for the one-day review; an analytical reproduction is not native '
              'learning or scientific confirmation; unsupported predicates stay listed, never promoted; missing '
              'evidence means unknown, never zero')

@@ -2103,9 +2103,38 @@ class Session:
         return ledgers
 
     def knowledge_correction(self, request_path, request_sha256):
-        """Consume checked knowledge in the original code learner session; no forecast rerun."""
+        """Consume checked knowledge in the original code learner session; no forecast rerun.
+
+        Nothing refuses silently (Greg, 2026-10-07): a binding or integrity refusal (a different original request,
+        response or host; a changed overlay; a stale container without its owner's successor; a chain cycle) is
+        written as knowledge-corrections/<request_sha256>/refusal-<reason digest>.json with its reason before the
+        error propagates. It is an integrity failure, distinct from missing coverage, which never refuses here.
+        Timings go to the session log only: the retained request/response/host bodies hold no clock."""
         from research.kalshi.frankie_boss.frankie_principal_adapter import (
-            digest, knowledge_correction_response, consume_knowledge_correction, json_form)
+            digest, knowledge_correction_response, consume_knowledge_correction, json_form, PIECE_WORKFLOW_REPORT)
+        started = time.monotonic()
+        directory = self.out / 'knowledge-corrections' / request_sha256
+        try:
+            return self._knowledge_correction(request_path, request_sha256, directory, started, digest,
+                                              knowledge_correction_response, consume_knowledge_correction, json_form)
+        except (ValueError, KeyError, TypeError) as error:      # binding, integrity or a malformed request: never silent
+            reason = '%s: %s' % (type(error).__name__, error)
+            directory.mkdir(parents=True, exist_ok=True)
+            refusal = dict(schema=PIECE_WORKFLOW_REPORT, piece='knowledge_correction_consumer', request_sha256=request_sha256,
+                           inputs=dict(request_path=str(request_path)),
+                           use=dict(dispositions=dict(kind='integrity_or_binding_refusal',
+                                                      rule='not missing coverage: a thinner original picture never refuses; '
+                                                           'a changed pin, overlay, chain or stale container does')),
+                           outputs=dict(refusals=[reason], waits=[], effective_documents=None, model_calls=0),
+                           rule='recorded so the one-day inspection shows the refusal and its reason; nothing consumed')
+            path = directory / ('refusal-' + digest(dict(reason=reason))[:16] + '.json')
+            if not path.exists():
+                write_json(path, refusal)
+            self.note('knowledge correction REFUSED (%.3fs): %s; recorded %s' % (time.monotonic() - started, reason, path))
+            raise
+
+    def _knowledge_correction(self, request_path, request_sha256, directory, started, digest,
+                              knowledge_correction_response, consume_knowledge_correction, json_form):
         request = load_json(Path(request_path))
         original = load_json(self.request_directory / 'session-request.json')
         initial = load_json(self.out / 'response.json')
@@ -2118,8 +2147,8 @@ class Session:
                 or any(original_host.get(k) != initial.get(k)
                        for k in ('session_id', 'model_identity_as_reported_by_session'))):
             raise ValueError('follow-up must bind the original retained learner request, response and host')
+        read_seconds = time.monotonic() - started
         scope_reply = json_form(knowledge_correction_response(request, initial))
-        directory = self.out / 'knowledge-corrections' / request_sha256
         directory.mkdir(parents=True, exist_ok=True)
         def retain(name, body):
             path = directory / name
@@ -2138,9 +2167,11 @@ class Session:
             checked = load_json(scope_path)
             if checked != scope_reply:
                 raise ValueError('checked correction overlay changed before analytical consumption')
+            consume_started = time.monotonic()
             reply = json_form(consume_knowledge_correction(request, checked, original))
+            consume_seconds = time.monotonic() - consume_started
         else:
-            reply = scope_reply
+            reply, consume_seconds = scope_reply, 0.0
         response_path = retain('response.json', reply)
         host = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION',
             request_sha256=request_sha256, response_sha256=digest(reply), session_id=reply['session_id'],
@@ -2157,6 +2188,10 @@ class Session:
         # requests carry the existing analytical reader's separately bound output;
         # unsupported predicates remain listed, never promoted to native learning.
         self.note('checked knowledge follow-up ready for its original host: ' + str(directory))
+        self.note('knowledge correction timings: read %.3fs, consume %.3fs, retain %.3fs, total %.3fs (log only; the '
+                  'retained bodies hold no clock)' % (read_seconds, consume_seconds,
+                                                      time.monotonic() - started - read_seconds - consume_seconds,
+                                                      time.monotonic() - started))
         return directory
 
     def correction(self):
