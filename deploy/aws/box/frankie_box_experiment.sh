@@ -78,6 +78,12 @@ set -- "$@" --external-wait "${EXTERNAL_WAIT:-on}" --brain "${BRAIN:-/opt/franki
 # frankie_box_granite_meeting_setup.sh (Run.jev binds to it; no second install, no second pin set)
 [ -z "${JEV_RUNTIME:-}" ] || { echo "JEV_RUNTIME is retired: Jev binds to the one pinned runtime shared with the Granite meeting (GRANITE_MEETING_RUNTIME_V1, /opt/frankie-box/granite); no separate Jev runtime" >&2; exit 2; }
 [ -z "${JEV_BRAIN:-}" ] || set -- "$@" --jev-brain "$JEV_BRAIN"
+# the per-piece status reports (Greg, 2026-10-07: the ONE-day run only), saved with the plan at its first start: auto
+# (default: one_day when the plan holds exactly one day, else off), one_day or off; an existing run keeps its saved value
+case "${INSPECTION:-auto}" in
+  auto|one_day|off) set -- "$@" --inspection "${INSPECTION:-auto}" ;;
+  *) echo "INSPECTION must be auto, one_day or off" >&2; exit 2;;
+esac
 # the bounded meeting's host route (Step 6 caller), saved with the plan at its first start: local (default) or github
 case "${VOICE_ROUTE:-local}" in
   local) ;;

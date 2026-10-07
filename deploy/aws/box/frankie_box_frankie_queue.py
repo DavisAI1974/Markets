@@ -1255,8 +1255,12 @@ def _finish_day(run, e, code_root, commit, log):
 
 
 def _inspect(run, day, outcome, log):
-    """The reporter after the day's last step on this lane; never raises, never fails the day."""
+    """The reporter after the day's last step on this lane; never raises, never fails the day. Only for the one-day
+    test plan (Run.inspection_on: plan['inspection'] == 'one_day'; Greg 2026-10-07); otherwise None (the skip is logged
+    once by the Run, nothing per day)."""
     try:
+        if not run.inspection_on():
+            return None
         return run.inspect_day(day, 'queue line: the day ended %s on its held slot' % outcome)
     except BaseException as error:  # noqa: BLE001 - the reporter is operator review, never the day's outcome
         if isinstance(error, (KeyboardInterrupt, SystemExit)):

@@ -304,6 +304,10 @@ def classroom_projection(receipt, path):
                  # anchor was retained, the tail after it) and seconds per saved operation; diagnostic only
                  shared_read_timing=(use.get('received') or {}).get('read'),
                  phase_timings=receipt.get('phase_timings'),
+                 # the six native entries' arithmetic on the same pass (18 of 18; the receipt's compact view, its whole
+                 # result pinned in native-entry-arithmetic.json): status, reason, per entry its use / form / series /
+                 # pairs / unavailable carriers, the file pin and the timings, as recorded
+                 native_entries=_native_entries_projection(receipt.get('native_entries')),
                  limit=use.get('limit') or shared.get('limit')),
         outputs=dict(
             # every file the classroom produced, with its pin, and the brain entry's manifest entries
@@ -329,6 +333,28 @@ def classroom_projection(receipt, path):
         disposition='temporary operator review; a listed anchor, input or layer disposition is what the classroom '
                     'recorded for a thinner instant, not a verdict on the day; nothing here is knowledge or a gate'))
     all99_section(receipt.get('all99_coverage'), 'classroom all-99 coverage (receipt.json all99_coverage)')
+
+
+NATIVE_ENTRY_KEYS = ('use', 'form', 'reason', 'own_series', 'thin_series', 'series_names', 'relations', 'pearson_reported',
+                     'pairs', 'unavailable', 'carriers', 'disposition')
+
+
+def _native_entries_projection(native):
+    """The classroom receipt's native_entries (frankie_box_classroom_code.native_entries_compact) as recorded: status,
+    reason, per entry NATIVE_ENTRY_KEYS, the file pin and every recorded timing (a key naming seconds); None = the receipt
+    carries no such section (written before it existed): unknown, never zero."""
+    if not isinstance(native, dict):
+        return None
+    entries = native.get('entries') if isinstance(native.get('entries'), dict) else {}
+    return dict(schema=native.get('schema'), status=native.get('status'), reason=native.get('reason'),
+                file=native.get('file'),
+                entries={name: {k: item.get(k) for k in NATIVE_ENTRY_KEYS if k in item}
+                         for name, item in sorted(entries.items()) if isinstance(item, dict)},
+                series_kinds=native.get('series_kinds'), read=native.get('read'),
+                timings={k: v for k, v in native.items() if 'seconds' in k or k in ('timings', 'phase_timings')},
+                other_fields_retained_at_source=sorted(k for k in native if k not in (
+                    'schema', 'status', 'reason', 'file', 'entries', 'series_kinds', 'read', 'timings', 'phase_timings')
+                    and 'seconds' not in k))
 
 
 def _phase_progress(receipt_path):

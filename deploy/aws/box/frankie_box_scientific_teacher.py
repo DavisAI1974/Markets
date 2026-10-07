@@ -1416,8 +1416,10 @@ def publish_lessons(path, brain_dir='/opt/frankie-box/brain', log=print):
     if author not in schemas or lesson.get('schema') != schemas[author] or lesson.get('written_by') != 'scientific_teacher':
         raise ValueError('only completed scientific-teacher lessons may be published')
     if author == 'search':
-        raise ValueError('SEARCH_CANDIDATE_LESSONS_V1 has no brain writer: frankie_box_brain.write_lessons_entry admits the '
-                         'authors frankie/historical/jev only; the result file is retained, not published (%s)' % path)
+        raise ValueError('SEARCH_CANDIDATE_LESSONS_V1 is not published by this standalone publisher: the search author\'s '
+                         'completed owner-local candidate checks are published by frankie_box_teacher_knowledge through '
+                         'frankie_box_brain.write_lessons_entry (which admits author search with knowledge_retest); the '
+                         'result file is retained here, not published (%s)' % path)
     if author == 'jev' and not lesson.get('knowledge_retest'):
         _, reused = brain.write_stage_entry(
             brain_dir, lesson['day'], 'jev-tested', [path],

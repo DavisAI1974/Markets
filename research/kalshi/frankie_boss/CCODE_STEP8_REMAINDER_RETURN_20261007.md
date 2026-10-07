@@ -991,3 +991,41 @@ Open, named and not built here:
 - Re-admitting a closed day to the queue is a scheduler decision for the parent; this pass did not widen the queue.
 
 Checks: AST parse and `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.
+
+## 17. Status reports for the one-day run only (Greg's decision, session 2), and fetch/ingest/external inspection records
+
+Uncommitted; source only; nothing ran; no account call. `frankie_box_classroom_code.py` is not touched (its author is
+editing it).
+
+- **The gate.** The plan carries an explicit persisted flag `inspection` (`one_day` | `off`), decided once at plan time
+  (`load_plan`). New CLI `--inspection {auto,one_day,off}` (default auto) and wrapper variable `INSPECTION`.
+  - `auto` means `one_day` exactly when the plan holds one day, else `off`; `one_day` / `off` are explicit overrides.
+  - A run with a saved plan keeps the saved value. An older saved plan without the key keeps its digest and reads as off.
+  - `Run.inspection_on()` reads only the saved flag; it never infers from the day count at call time.
+  - Gated off: the skip is logged once per Run and nothing is written per day (no reporter, no inspection receipt). Both
+    call sites are gated: `Run.start` (after the batch loop, and at the disk-floor stop) and the queue's `_inspect`, which
+    returns None.
+  - The reporter module is unchanged.
+- **fetch, ingest and external step receipts** now carry `inspection` (inputs / use / outputs), which the reporter already
+  projects (`inspection` is in FIELDS).
+  - fetch: the committed manifest pinned, whether a presigned map was given (the URL is never recorded), what was done or
+    why not, the exit code and the log pin; a skipped fetch pins the sealed ingest receipt.
+  - ingest: inputs are the manifest pin, the opening receipt pin (or why none), the resume directory and the writer
+    settings. Outputs are the receipt pin and the receipt's own recorded facts (`INGEST_RECEIPT_FACTS`: record/journal
+    counts, the journal pin as recorded, tail/partial members, opening book), the directory and new bytes. The journal
+    itself is never re-read.
+  - external: inputs are the ingest directory, the history runs, the action and the external run. Outputs (via
+    `Run.external_outputs`) are the day file and its receipt pinned, plus per point: rows, stamp column, 99 entries,
+    mapping, event-time basis and whether `event_time_ns` is carried; the file's own `missing` is carried too. Waiting,
+    refused and failed paths record what they had and why.
+  - New helpers: `pin_or_listed(path)` (a pin, or `{path, unavailable}`) and `ingest_receipt_facts(receipt)`.
+- **`frankie_box_workflow_inspection.py`, classroom projection.** Under `use`, the receipt's `native_entries` is projected
+  (`_native_entries_projection`): status, reason, file pin, per-entry use / form / series / pairs / relations /
+  unavailable carriers (`NATIVE_ENTRY_KEYS`), series kinds, read counts and every recorded timing. Unprojected keys are
+  named under `other_fields_retained_at_source`; an absent section is None (unknown, never zero).
+- **`frankie_box_scientific_teacher.py`, about line 1419.** Message only: the search author's checks are published by
+  `frankie_box_teacher_knowledge` through `frankie_box_brain.write_lessons_entry` (which now admits it); this standalone
+  publisher still retains, not publishes. Behaviour unchanged.
+
+Checks: AST parse clean (four .py files); `bash -n` clean on the wrapper; `git diff --check` clean.
+SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.

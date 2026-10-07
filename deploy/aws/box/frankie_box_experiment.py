@@ -186,6 +186,32 @@ def file_pin(path):
     return dict(path=str(path), bytes=path.stat().st_size, sha256=sha256_file(path))
 
 
+def pin_or_listed(path):
+    """file_pin(path), or {path, unavailable: why} when the file cannot be read now (never raises; None for no path).
+    For small metadata files only (manifests, receipts, the day file); a journal is pinned from its receipt instead."""
+    if not path:
+        return None
+    try:
+        return file_pin(path)
+    except OSError as error:
+        return dict(path=str(path), unavailable='%s: %s' % (type(error).__name__, error))
+
+
+INGEST_RECEIPT_FACTS = ('schema', 'trading_day', 'record_count', 'journal_count', 'journal_file', 'journal_bytes',
+                        'journal_sha256', 'partial_members', 'tail_members', 'opening_book', 'adapter_records',
+                        'f_last_groups')
+
+
+def ingest_receipt_facts(receipt):
+    """The sealed ingest receipt's own recorded facts (INGEST_RECEIPT_FACTS: counts, the journal's pin as recorded, the
+    tail/partial members, the opening book), for the one-day inspection; the journal itself is never re-read."""
+    try:
+        body = json.loads(Path(receipt).read_bytes())
+    except (OSError, ValueError) as error:
+        return dict(unavailable='%s: %s' % (type(error).__name__, error))
+    return {k: body.get(k) for k in INGEST_RECEIPT_FACTS if k in body}
+
+
 def sha256_file(path):
     h = hashlib.sha256()
     with open(path, 'rb') as f:
@@ -343,6 +369,13 @@ def load_plan(a, code_root):
                                    # stays in it, recorded as superseded by Run.jev, never used)
         if getattr(a, key, None):
             plan[key] = str(Path(getattr(a, key)))
+    # the per-piece status reports (Greg, 2026-10-07 session 2: for the ONE-day run only; an N-day run neither produces
+    # nor keeps them): an explicit persisted flag, decided here once and saved with the plan, never inferred at call time.
+    # 'auto' = one_day when the plan holds exactly one day, else off; one_day / off = the operator's explicit override.
+    # None (a saved plan from before the flag) keeps the plan without the key, read as off by Run.inspection_on
+    inspection = getattr(a, 'inspection', None)
+    if inspection is not None:
+        plan['inspection'] = ('one_day' if len(days) == 1 else 'off') if inspection == 'auto' else inspection
     if getattr(a, 'shared_market_policy', None):              # a NEW request's policy, saved with the plan at its first
         plan['shared_market_policy'] = a.shared_market_policy   # start (a run keeps one plan: a legacy plan stays legacy)
     if getattr(a, 'voice_route', None) and a.voice_route != 'local':   # the meeting's host route (Step 6 caller): saved at
@@ -1218,21 +1251,39 @@ class Run:
         return code, str(log_path)
 
     # stages
+    def fetch_inspection(self, e, use, outputs):
+        """The fetch step's one-day inspection record: inputs (the day's committed manifest pinned, whether a presigned map
+        was given: its URL is never recorded), how it was used, what it produced."""
+        manifest = (Path(self.code_root) / e['manifest']) if e.get('manifest') else None
+        return dict(inputs=dict(manifest=pin_or_listed(manifest) if manifest else dict(absent=e.get('manifest_gap')),
+                                map_url_given=bool(os.environ.get('MAP_URL'))),
+                    use=use, outputs=outputs)
+
     def fetch(self, e):
         receipt, why = ingest_of(e)
         if receipt or why:
             return self.record('fetch', e['day'], 'skipped' if receipt else 'refused',
-                               reason='the day is ingested already: %s' % receipt.parent if receipt else why)
+                               reason='the day is ingested already: %s' % receipt.parent if receipt else why,
+                               inspection=self.fetch_inspection(
+                                   e, 'not fetched: %s' % ('the day has a sealed ingest (its partitions are not needed)'
+                                                           if receipt else why),
+                                   dict(sealed_ingest_receipt=pin_or_listed(receipt)) if receipt else {}))
         if not e['manifest']:
-            return self.record('fetch', e['day'], 'waiting', reason=e['manifest_gap'])
+            return self.record('fetch', e['day'], 'waiting', reason=e['manifest_gap'],
+                               inspection=self.fetch_inspection(e, 'waiting: no committed per-day manifest', {}))
         if not os.environ.get('MAP_URL'):
             return self.record('fetch', e['day'], 'refused', reason='MAP_URL not set: dispatch with presign=<bucket>/<key> '
-                                                                    'for every partition of the days')
+                                                                    'for every partition of the days',
+                               inspection=self.fetch_inspection(e, 'refused: no presigned map', {}))
         if not self.disk_ok('fetch'):
             return None
         code, log = self.child('fetch', e['day'], 'frankie_box_ingest_block.sh', dict(ACTION='fetch', MANIFEST=e['manifest']))
         return self.record('fetch', e['day'], 'done' if code == 0 else 'failed', exit_code=code, log=log,
-                           reason=None if code == 0 else 'the fetch refused or failed a partition (its receipt is in the log)')
+                           reason=None if code == 0 else 'the fetch refused or failed a partition (its receipt is in the log)',
+                           inspection=self.fetch_inspection(
+                               e, 'every manifest partition fetched through the presigned map, sha256 and size verified '
+                                  'by frankie_box_ingest_block.sh ACTION=fetch (per-partition receipts in the log)',
+                               dict(exit_code=code, log=pin_or_listed(log))))
 
     def ingest(self, e):
         receipt, why = ingest_of(e)
@@ -1242,7 +1293,11 @@ class Run:
             brain_entry = self.brain_stage(e['day'], 'ingest', [receipt],
                                            summary=dict(ingest=str(receipt.parent), receipt_sha256=sha256_file(receipt)))
             return self.record('ingest', e['day'], 'reused', ingest=str(receipt.parent), receipt=str(receipt),
-                               receipt_sha256=sha256_file(receipt), brain_entry=brain_entry)
+                               receipt_sha256=sha256_file(receipt), brain_entry=brain_entry,
+                               inspection=dict(inputs=dict(sealed_ingest=str(receipt.parent)),
+                                               use='reused: the day\'s sealed ingest stands (never re-ingested)',
+                                               outputs=dict(receipt=pin_or_listed(receipt),
+                                                            recorded=ingest_receipt_facts(receipt))))
         if e['day'] == MONDAY:
             return self.record('ingest', e['day'], 'refused', reason='Monday 20211004 is the gold standard: never re-ingested; '
                                                                      'name its sealed ingest directory in the plan')
@@ -1267,18 +1322,31 @@ class Run:
                 env['OPENING_RECEIPT'] = str(opening)
         if not self.disk_ok('ingest'):
             return None
+        inputs = dict(manifest=pin_or_listed(Path(self.code_root) / e['manifest']),
+                      opening_receipt=pin_or_listed(env.get('OPENING_RECEIPT')) if env.get('OPENING_RECEIPT') else
+                      dict(absent='no prior-day receipt named: the day warms its own book from its tail partition'),
+                      resume_dir=env.get('RESUME_DIR'),
+                      settings={k: env[k] for k in ('WORKERS', 'MODE', 'OBSERVATION', 'VERIFY')})
         before = set(WORK.glob('ingest-*'))
         code, log = self.child('ingest', e['day'], 'frankie_box_ingest_block.sh', env)
         made = sorted(set(WORK.glob('ingest-*')) - before)
         receipt, why = ingest_of(e)
         if code != 0 or not receipt or why:
             return self.record('ingest', e['day'], 'failed', exit_code=code, log=log, directories=[str(p) for p in made],
-                               reason=why or 'no sealed ingest of the day after the step (its directory is kept)')
+                               reason=why or 'no sealed ingest of the day after the step (its directory is kept)',
+                               inspection=dict(inputs=inputs, use='the ingest did not seal (kept for resume)',
+                                               outputs=dict(exit_code=code, directories=[str(p) for p in made])))
         brain_entry = self.brain_stage(e['day'], 'ingest', [receipt],
                                        summary=dict(ingest=str(receipt.parent), receipt_sha256=sha256_file(receipt)))
         return self.record('ingest', e['day'], 'done', exit_code=code, log=log, ingest=str(receipt.parent),
                            receipt=str(receipt), receipt_sha256=sha256_file(receipt), new_bytes=new_bytes(receipt.parent),
-                           brain_entry=brain_entry)
+                           brain_entry=brain_entry,
+                           inspection=dict(inputs=inputs,
+                                           use='every manifest member decoded and journaled by the parallel writer '
+                                               '(frankie_box_ingest_block.sh ACTION=ingest); %s' % (
+                                                   'resumed from %s' % env['RESUME_DIR'] if env.get('RESUME_DIR') else 'a fresh ingest'),
+                                           outputs=dict(receipt=pin_or_listed(receipt), recorded=ingest_receipt_facts(receipt),
+                                                        directory=str(receipt.parent), new_bytes=new_bytes(receipt.parent))))
 
     @staticmethod
     def resume_dir(e):
@@ -1551,10 +1619,16 @@ class Run:
             brain_entry = self.brain_stage(day, 'day-file', [path, day_receipt],
                                            summary=dict(day_file=str(path), sha256=sha))
             return self.record('external', day, 'reused', day_file=str(path), sha256=sha, ingest=str(directory),
-                               brain_entry=brain_entry)
+                               brain_entry=brain_entry,
+                               inspection=dict(inputs=dict(ingest=str(directory)),
+                                               use='reused: the day file is attached beside the sealed ingest (never '
+                                                   'rebuilt or overwritten)',
+                                               outputs=self.external_outputs(path, day_receipt)))
         if why.startswith('DIFFERS'):
             return self.record('external', day, 'refused', reason=why + ' (a day file is never overwritten; move it aside '
-                                                                          'with a receipt first)')
+                                                                          'with a receipt first)',
+                               inspection=dict(inputs=dict(ingest=str(directory)), use='refused: %s' % why,
+                                               outputs={}))
         history = self.plan.get('external_history_run')
         if not history:
             return self.record('external', day, 'waiting', reason='no EXTERNAL_HISTORY_RUN given (the day_history run '
@@ -1576,6 +1650,9 @@ class Run:
                                            self.plan.get('external_family_history_runs'))
             if lacking:
                 return self.record('external', day, 'waiting', lacking=lacking,
+                                   inspection=dict(inputs=dict(ingest=str(directory), history_run=history,
+                                                               keys_lacking=lacking),
+                                                   use='waiting: the day\'s history is not all presigned', outputs={}),
                                    reason='the day\'s history is not on S3 yet or not presigned (%d keys lacking); the day '
                                           'waits, never skipped, and no day file is built without its pieces' % len(lacking))
             if not self.disk_ok('external'):
@@ -1583,9 +1660,15 @@ class Run:
             env.update(ACTION='build', RUN='%s-ext-%s-a%d' % (self.plan['run'], day, len(attempts) + 1))
         code, log = self.child('external', day, 'frankie_box_day_external.sh', env)
         path, sha, why = attached_day_file(directory)
+        history_inputs = dict(ingest=str(directory), history_run=history,
+                              eia930_history_run=self.plan.get('external_eia930_history_run'),
+                              family_history_runs=self.plan.get('external_family_history_runs'),
+                              action=env['ACTION'], external_run=env['RUN'])
         if path is None:
             return self.record('external', day, 'failed', exit_code=code, log=log, action=env['ACTION'], external_run=env['RUN'],
-                               reason='no day file attached beside the sealed ingest after the step: %s' % why)
+                               reason='no day file attached beside the sealed ingest after the step: %s' % why,
+                               inspection=dict(inputs=history_inputs, use='no day file attached: %s' % why,
+                                               outputs=dict(exit_code=code)))
         self._attached[day] = (str(path), sha)
         day_receipt = directory / DAY_FILE_RECEIPT
         brain_entry = self.brain_stage(day, 'day-file', [path, day_receipt],
@@ -1593,7 +1676,32 @@ class Run:
         return self.record('external', day, 'done', exit_code=code, log=log, action=env['ACTION'], external_run=env['RUN'],
                            day_file=str(path), sha256=sha, ingest=str(directory),
                            new_bytes=new_bytes(DAY_EXTERNAL / env['RUN']) if env['ACTION'] == 'build' else 0,
-                           upload_or_brain_exit_code=code, brain_entry=brain_entry)
+                           upload_or_brain_exit_code=code, brain_entry=brain_entry,
+                           inspection=dict(inputs=history_inputs,
+                                           use=('built from the presigned day history (frankie_box_day_external.sh '
+                                                'ACTION=build), then attached beside the sealed ingest'
+                                                if env['ACTION'] == 'build' else
+                                                'an earlier build of this run attached (ACTION=link; never rebuilt)'),
+                                           outputs=self.external_outputs(path, day_receipt)))
+
+    @staticmethod
+    def external_outputs(path, day_receipt):
+        """The attached day file and its receipt pinned, plus the file's stamp shape and per-point mapping as recorded in
+        it (the 13 points: rows, 99 entry, mapping, event-time basis); missing/stale dispositions are the file's own."""
+        out = dict(day_file=pin_or_listed(path), day_receipt=pin_or_listed(day_receipt))
+        try:
+            body = json.loads(Path(path).read_bytes())
+            points = body.get('points') or {}
+            out['points'] = {name: dict(rows=len(t.get('rows') or []), stamp_column=t.get('stamp_column'),
+                                        registry_entries=t.get('registry_entries') or t.get('registry_entry'),
+                                        mapping=t.get('registry_mapping') or t.get('mapping'),
+                                        event_time_basis=t.get('event_time_basis'),
+                                        has_event_time='event_time_ns' in (t.get('columns') or ()))
+                             for name, t in sorted(points.items()) if isinstance(t, dict)}
+            out['missing'] = body.get('missing')
+        except (OSError, ValueError) as error:
+            out['points_unavailable'] = '%s: %s' % (type(error).__name__, error)
+        return out
 
     # the classroom arm (V2: the 19/171 classroom plus the external section) and Jev's material
     def previous_of(self, e):
@@ -1998,6 +2106,18 @@ class Run:
             return self.record(stage, e['day'], 'failed', reason='%s: %s' % (type(error).__name__, error))
 
     INSPECTION_SECONDS = 900          # the reporter reads recorded metadata only (8 MiB ceiling per file); never a long job
+
+    def inspection_on(self):
+        """True only when the saved plan is the one-day test (plan['inspection'] == 'one_day', decided once at plan time;
+        Greg 2026-10-07: the per-piece status reports are for the ONE-day run only). Otherwise the skip is logged ONCE per
+        Run and nothing is written per day (no reporter, no inspection receipt)."""
+        if self.plan.get('inspection') == 'one_day':
+            return True
+        if not getattr(self, '_inspection_skip_logged', False):
+            self._inspection_skip_logged = True
+            self.log('inspection: off for run %s (plan inspection=%s; the per-piece status reports are for the one-day run '
+                     'only); no per-day reports are written' % (self.plan['run'], self.plan.get('inspection') or 'absent'))
+        return False
 
     def inspect_day(self, day, trigger):
         """The one-day inspection reporter (frankie_box_workflow_inspection.py --run-dir <run> --day <day> --write) after
@@ -4171,10 +4291,10 @@ class Run:
             # every piece's record of what it received, used and produced, whatever the day's outcome; never a gate
             if {'reports', 'lessons'} & set(stages) and not self.stopped:
                 for e in entries:
-                    if not self.queue_owned(e):
+                    if not self.queue_owned(e) and self.inspection_on():
                         self.inspect_day(e['day'], 'start: after the batch %s last stage loop' % key)
                         inspected.add(e['day'])
-        if self.stopped:
+        if self.stopped and self.inspection_on():
             # F3 (second review): the disk floor stopped this start; every day it owns still gets its inspection, the
             # trigger naming the stop (the reporter writes small markdown only; its own failure is on its receipt)
             for e in days:
@@ -4354,6 +4474,10 @@ def main():
                         '(default); github = the standard CPU runner workflow, dispatched BY HAND against the immutable '
                         'intent Run.voice writes first and admitted for that exact GitHub run (voice-dispatched / '
                         'voice-returned); saved with the plan at the first start')
+    p.add_argument('--inspection', choices=('auto', 'one_day', 'off'), default='auto',
+                   help='the per-piece status reports (frankie_box_workflow_inspection, Greg 2026-10-07: the ONE-day run '
+                        'only), saved with the plan at the first start: auto = one_day when the plan holds exactly one '
+                        'day, else off; one_day / off = explicit override; an existing run keeps its saved value')
     p.add_argument('--disk-floor-gb', type=float, default=100.0)
     p.add_argument('--frankie-queue', choices=('on', 'off'), default='on',
                    help='on: classroom-arm days enter Frankie\'s class line (arrival FIFO, one class at a time, the class '
@@ -4424,6 +4548,9 @@ def main():
                               successors=S.status(run_dir),
                               free_bytes=shutil.disk_usage(BOX_ROOT).free), indent=1, sort_keys=True))
         return
+    if a.action in ('plan', 'start') and getattr(a, 'inspection', 'auto') == 'auto' and (run_dir / 'plan.json').is_file():
+        # a run keeps one plan: its saved inspection flag stands (absent in an older saved plan stays absent = off)
+        a.inspection = json.loads((run_dir / 'plan.json').read_bytes()).get('inspection')
     if a.action in ('plan', 'start') and getattr(a, 'shared_market_policy', None) is None:
         # Greg, 2026-10-07: every NEW request selects the shared market timeline with the native pass ON (bedrock on) for
         # every day, so the ROOT produces native.member/native.lifecycle (the only carriers of 18 of the 99 entries). A run
