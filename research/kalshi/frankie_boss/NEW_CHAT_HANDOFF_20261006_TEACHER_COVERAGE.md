@@ -1,5 +1,13 @@
 # Detailed continuation handoff: BOTH teachers' Dipole coverage — 2026-10-06
 
+## Restart checkpoint — 2026-10-06 23:15 ET
+
+Source checkpoint `73bb234e`; handoff and drop-in updated for a new chat. Read
+`CODEX_HANDOFF_20261006_NIGHT.md` from its new top section, then `STEP7_JEV_CPU_ROUTE_20261007.md`.
+Step 7 client preservation/recovery is built; CPU runtime/allocation and owner-local teacher,
+publication and completion wiring remain open. CCode `3667b289` is integrated; four follow-ups
+are in the task doc. Step 5 successor identity/publication remains open. Source-only, boxes stopped.
+
 ## Fifth-session integration review — 2026-10-07
 
 CCode `3667b289` is integrated with its history and Codex's `36cefbec` reader hooks preserved.

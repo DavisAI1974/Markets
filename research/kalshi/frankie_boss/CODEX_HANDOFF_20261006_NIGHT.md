@@ -1,5 +1,94 @@
 # Codex restart handoff — 2026-10-06 night (America/New_York)
 
+## NEW CHAT START HERE — 2026-10-06 23:15 ET / 2026-10-07 UTC
+
+Greg requested a new-chat checkpoint. Latest verified SOURCE tip before this documentation:
+`73bb234e7c354d3e52aaf335d1828ebb73dece19` on `ccr-5fce7de3-xa4hfg`.
+Fetch current branch heads and preserve newer commits. CCode was last fetched at
+`3667b289a50077681db35380c8177c92433e87dc`; that entire return is already integrated.
+This documentation is a later commit. Do not reset to the source checkpoint or reapply a return.
+Greg reported at 23:18 ET that CCode is preparing to push the four follow-ups. That new return
+is pending review: the next chat must fetch it first and compare it with the assigned findings.
+
+Start with using-agent-skills, then context-engineering. Read this top section, then:
+1. `STEP7_JEV_CPU_ROUTE_20261007.md` — current active work and exact remaining interfaces.
+2. `CCODE_NEXT_SOURCE_TASKS_20261006.md` — top ACTIVE fifth-session review, four CCode groups.
+3. `CCODE_STEP6_RETURN_20261007.md` section 8 — returned implementation and publication trace.
+4. `STEP5_CORRECTION_DELIVERY_20261007.md` — remaining scientific-owner/successor gap.
+5. Newest sections of `NEW_CHAT_HANDOFF_20261006_TEACHER_COVERAGE.md`,
+   `DIPOLE_TEACHER_COVERAGE_CONTINUATION_20261006.md`, and `CCODE_STEP4_SOURCE_ROUTE_20261006.md` sections 8–9.
+6. Runbook: `Frankie_30Day_AWS_Runbook_20261006.md`; build/spec: `SPEC-experiment-orchestrator.md`.
+   The canonical ten-step implementation list is in `HANDOFF_20261006_STEP1_RECOVERY.md`.
+   Its #7 is Jev CPU blind comparison/testing/publication, not pipeline stage 7 (search).
+
+### Active continuation and ownership
+
+- **Codex Step 7:** `f69101a8` preserves every selected Jev lesson and full objects;
+  `73bb234e` makes client progress durable, binds actual selected contents, records request
+  intent and whole replies, reconstructs completed packs without another model call, and
+  prepares exact claim/comparison bytes before PUT. A local seal check precedes reading Frankie.
+  Unknown/failed calls and malformed/legacy/mismatched state refuse automatic restart, never reset.
+  This is source-built client work, not a CPU launcher or a finished scientific day.
+- **Next Step 7 work:** settle the CPU runtime/model artifact, exact token budget and CPU subset;
+  wire owner-local material/claim artifacts, scientific-teacher verification against the seal,
+  immediate tested-knowledge publication, and completion/recovery/reporting on the owning lane.
+  Existing character-based token estimates and 900-second socket timeout are not a pinned CPU
+  runtime or an overall deadline. A remote PUT acknowledgment is not consumer-side seal readback.
+  The client now requires the repository's shared durable writer; do not reuse the old standalone
+  Pod bootstrap. `Run.jev` remains waiting. Unknown-call successor/disposition is not built.
+- **Hosting discussion:** Pods are permanently eliminated. Greg asked why Jev could not use the
+  existing 16-CPU lane and noted he would not need all CPUs. These are CPUs, not GPUs. Codex
+  recommends a subset of the owning day's already-held lane, sequential with other day compute,
+  without another booking or host. Exact allocation/model/runtime remain to settle; no number
+  or quantization was chosen. Existing small AWS/local/GitHub options were explored only in docs.
+- **CCode Step 6/historical:** integration `5e216265` preserves `3667b289` plus the independent
+  reader hooks. 6R1 terminal persistence and B2-R aggregate coverage address their named findings.
+  Four follow-ups are assigned: BIND-F (JSON-stable per-entry identity), B4-F (runner's `-B` argv
+  plus complete comparison inventory), 6R3-F (absolute body deadline and partial-read failures),
+  6R2-F (discoverable interrupted attempts and pending-call accounting). Greg will relay the task
+  doc; no direct message was sent. Refetch/review newer returns before touching their functions.
+- **Codex Step 5:** scoped correction delivery and standalone teacher/exchange hooks are built.
+  Scientific publication and successor scheduling remain incomplete. The returned interface trace
+  exposes a real mismatch: recomputed successors can change `claim_inputs`/`claim_inputs_sha256`,
+  but the current correction guard requires equality. Design the explicit owner-bound transition;
+  do not bypass the guard or copy-edit a scientific result. CCode has not been assigned publication
+  implementation until that contract is settled. Ordinary new/conflicting lessons are not corrections.
+
+### Nonnegotiable continuation rules
+
+Source/interface review, `ast.parse` WITHOUT project imports, and `git diff --check` ONLY.
+No tests, synthetic exercises, installs, project/data/model runs, reproduction calls, AWS
+inspection/actions, starts, dispatch, canaries or E2E. Keep boxes stopped. Three held 16-CPU
+lanes only. `[skip ci]` on pushes. Granite pins and `threads: null` stay unchanged; its weights
+remain inference-only, with no training authorized. Never apply `9c19cc2` or the old step-5 draft.
+The old STOP-before-5 wording is superseded by Greg's source authorizations for steps 5, 6 and 7;
+it does NOT authorize execution or settle other mathematical choices.
+
+Dates/weekdays/IDs group underlying market signals for forecasting; they are not numerical
+signals/targets. Preserve date/time associations and actual market prices/spreads. Transaction
+costs, maker/taker fees and profit objectives do not belong in market/Dipole research. The deleted
+historical binding stays deleted. Older lessons remain available regardless of age. Research
+conflicts about the SAME thing; retain both accounts/circumstances until checked partial or full
+replacement is established, preserving unaffected knowledge. Correct actual errors at source.
+
+Steps 2–7 are not globally closed; 19 outputs do not cap applicable evidence. Historical
+reproduction/rework remains open for BOTH teachers. Memory A is retired; H06–H08 historical/
+not_bound. Native-learner decisions, 4.2 step definition, 4.4 pair owner, reformulation mathematics,
+late scheduling, claims-file and principal-input catalog decisions remain open as already listed.
+
+### Workspace and publication notes
+
+This session's repository is `/workspace/scratch/054968701fca/Markets` (sparse checkout); a new
+session may use a different path. A tracked file absent on disk can be read with `git show HEAD:path`.
+Use explicit refspecs for BOTH branch tracking refs; the configured default fetch only covers
+CCode. No active uncommitted source is required from this workspace; all changes are in git.
+The local pre-integration Step-7 stash is already incorporated; do not reapply it.
+Memory MCP/CLI was unavailable on this host; direct source review was used, no install. Do not
+mistake CCode's successful index on its host for availability here.
+CLI push lacked credentials; GitHub app Git-object APIs published the commits, with exact local
+and remote tree equality and `update_ref(expected_sha=...)` leases. Preserve both integration and
+CCode ancestry. Check actual remote HEAD before any push. No secret/credential workaround.
+
 ## Step 7 source checkpoint — 2026-10-06 late ET
 
 Jev now retains all selected teacher lessons and full entry/lesson contents. Its client uses the
