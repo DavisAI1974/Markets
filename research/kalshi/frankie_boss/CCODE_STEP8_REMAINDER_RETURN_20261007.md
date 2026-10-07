@@ -966,3 +966,28 @@ Uncommitted; source only; nothing ran; no account call. Both files below are ass
 
 Checks: AST parse and `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED; a fresh independent
 review is required before integration.
+
+## 16. F-1 (follow-up review): the cross-day part of R-A stays off other days' lanes (2026-10-07 night, session 2)
+
+Uncommitted; source only; nothing ran; no account call.
+
+`Run.survivors`, after a done boundary, now renders nothing for another day and never calls `guarded()` for one, so no
+other day's successor drain runs from this slot. For each classroom-arm day of the batch whose reports step is done:
+- **An unacknowledged correction** (new `Run.unacknowledged_corrections(day)`: a request under `successors/<day>/requests`
+  with no `work/<name>/ack.json`; read only, no lock): the day is skipped; its own drain revises its reports.
+- **Otherwise** the read-only `reports_stale(entry)` runs. A `changed` join is recorded on that day's reports step as
+  `late_pieces` by `Run.reports_late_pieces`. That write is the at-checked rewrite from section 14 (N-1). It never
+  changes the step's status, so a finished reports step is never re-recorded as failed.
+- **A check that raises** is listed as `not_checked`, never on the day's step.
+
+The per-day outcomes (skipped / stale_recorded / current / not_checked, with reasons) are logged and recorded on the
+survivors receipt as `reports_late_pieces`.
+
+Open, named and not built here:
+- A day still in flight revises at its own finish (`_finish_steps`, after Jev: R-A).
+- A day whose finish already closed has no automatic re-admission: its recorded `late_pieces` (outcome `changed`) waits
+  for the next finish/start on its own lane, or an operator start. The routes that re-render: the stage loop of a
+  non-queue start, the class worker's `passed()`, the drain's waiting_school branch.
+- Re-admitting a closed day to the queue is a scheduler decision for the parent; this pass did not widen the queue.
+
+Checks: AST parse and `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.

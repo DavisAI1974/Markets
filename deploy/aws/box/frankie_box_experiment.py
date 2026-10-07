@@ -2150,6 +2150,13 @@ class Run:
                     return True
         return self.reports_late_pieces(day, r) == 'changed'
 
+    def unacknowledged_corrections(self, day):
+        """The day's successor requests (successors/<day>/requests/*.json) without an acknowledgment
+        (work/<name>/ack.json), by name; read only, no lock, no drain."""
+        directory = self.dir / 'successors' / day
+        requests = sorted((directory / 'requests').glob('*.json')) if (directory / 'requests').is_dir() else []
+        return [p.name for p in requests if not (directory / 'work' / p.stem / 'ack.json').is_file()]
+
     def reports_late_pieces(self, day, step=None):
         """late_pieces_changed (correction_consumer's contract, FRANKIE_DAY_REPORTS_LATE_PIECES_V1) on the day reports
         receipt <REPORTS>/receipts/<run>/<day>.json with `current` built from reports_invocation (every INVOCATION_KEYS
@@ -3962,18 +3969,35 @@ class Run:
                                listed_count=receipt.get('listed'), integrity_failures=receipt.get('integrity_failures'),
                                late_knowledge=receipt.get('late_knowledge'), all99_coverage=receipt.get('all99_coverage'),
                                workflow_report=receipt.get('workflow_report'), **fields)
-            # R-A (fresh review): the candidates receipt is a late piece of the batch's arm days whose reports are already
-            # done; each gets its revision under the same number when the join's inputs changed (reports_stale). Only a
-            # done reports step is revised (a day still rendering renders on the current inputs itself); a revision's
-            # failure is that day's reports receipt, never this boundary's
+            # R-A (fresh review) with F-1 (follow-up review): the candidates receipt is a late piece of the batch's arm days
+            # whose reports are done. Nothing is rendered from this boundary slot (a day stays on its own lane; guarded()
+            # would run that day's successor drain here, which refuses off its held lane): a day with an unacknowledged
+            # correction is skipped (its own drain revises it); for the others the read-only check (reports_stale) runs and
+            # a 'changed' outcome is recorded on that day's reports step as late_pieces (Run.reports_late_pieces), so that
+            # day's own lane revises it at its next finish/start. A finished reports step is never re-recorded here.
+            notes = []
             for entry in entries:
-                if entry.get('classroom_arm') and (self.receipt('reports', entry['day']) or {}).get('status') == 'done':
-                    try:
-                        if self.reports_stale(entry):
-                            self.guarded('reports', entry)
-                    except Exception as error:  # noqa: BLE001 - never this stage's outcome; named in the log
-                        self.log('survivors %s: report revision of %s not made (%s: %s)' % (
-                            batch_key, entry['day'], type(error).__name__, error))
+                if not entry.get('classroom_arm') or (self.receipt('reports', entry['day']) or {}).get('status') != 'done':
+                    continue
+                pending = self.unacknowledged_corrections(entry['day'])
+                if pending:
+                    notes.append(dict(day=entry['day'], disposition='skipped', reason='unacknowledged correction(s) %s: '
+                                      'the day\'s own drain revises its reports' % ', '.join(pending)))
+                    continue
+                try:
+                    stale = self.reports_stale(entry)
+                    notes.append(dict(day=entry['day'], disposition='stale_recorded' if stale else 'current',
+                                      reason='revised on the day\'s own lane at its next finish/start' if stale else None))
+                except Exception as error:  # noqa: BLE001 - never this stage's outcome and never the day's reports step
+                    notes.append(dict(day=entry['day'], disposition='not_checked', reason='%s: %s' % (type(error).__name__, error)))
+            if notes:
+                self.log('survivors %s: reports of the batch\'s arm days: %s' % (batch_key, json.dumps(notes, sort_keys=True)))
+                try:
+                    from frankie_box_durable import write_json
+                    write_json(self.receipt_path('survivors', batch_key), dict(done, reports_late_pieces=notes))
+                    done = dict(done, reports_late_pieces=notes)
+                except Exception as error:  # noqa: BLE001 - accounting only; logged
+                    self.log('survivors %s: the reports note could not be recorded (%s: %s)' % (batch_key, type(error).__name__, error))
             return done
         return self.record('survivors', batch_key, 'failed', reason='no survivor update receipt bound to this boundary after the '
                                                                     'step (exit %s; its log names why)' % code, **fields)
