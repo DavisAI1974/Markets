@@ -248,49 +248,80 @@ def unpack_spool(path, pin):
         raise ValueError('search spool differs from the selected export: ' + str(path))
 
 
-def columns(rows, time_key):
-    """Every scalar leaf of a spool, including all list positions; integers remain exact Python integers."""
-    numeric, text, other, count = {}, {}, set(), 0
-    def flatten(value, prefix=''):
-        if isinstance(value, dict) and value:
-            for k, v in value.items():
-                yield from flatten(v, prefix + ('.' if prefix else '') + str(k))
-        elif isinstance(value, (list, tuple)) and value:
-            for i, v in enumerate(value):
-                yield from flatten(v, '%s[%d]' % (prefix, i))
-        elif isinstance(value, (bytes, bytearray)):
-            if prefix.rsplit('.', 1)[-1] in ('action', 'side'):
-                yield prefix, bytes(value).decode('ascii')  # market category, not its arbitrary byte encoding
-            else:
-                yield prefix + '.byte_length', len(value)
-                yield prefix + '.bytes_integer', int.from_bytes(value, 'big')
-        elif isinstance(value, (dict, list, tuple)):
-            yield prefix, json.dumps(value, sort_keys=True)
-        elif value is None or isinstance(value, (bool, int, float, str)):
-            yield prefix, value
+def _flatten(value, prefix, out):
+    """Append every (leaf name, scalar) of `value` to `out`, depth first in mapping/list order (the leaves columns()
+    has always produced, built by appending instead of nested generators)."""
+    if isinstance(value, dict) and value:
+        for k, v in value.items():
+            _flatten(v, prefix + ('.' if prefix else '') + str(k), out)
+    elif isinstance(value, (list, tuple)) and value:
+        for i, v in enumerate(value):
+            _flatten(v, '%s[%d]' % (prefix, i), out)
+    elif isinstance(value, (bytes, bytearray)):
+        if prefix.rsplit('.', 1)[-1] in ('action', 'side'):
+            out.append((prefix, bytes(value).decode('ascii')))  # market category, not its arbitrary byte encoding
         else:
-            raise TypeError('unhandled retained field %s: %s' % (prefix, type(value).__name__))
+            out.append((prefix + '.byte_length', len(value)))
+            out.append((prefix + '.bytes_integer', int.from_bytes(value, 'big')))
+    elif isinstance(value, (dict, list, tuple)):
+        out.append((prefix, json.dumps(value, sort_keys=True)))
+    elif value is None or isinstance(value, (bool, int, float, str)):
+        out.append((prefix, value))
+    else:
+        raise TypeError('unhandled retained field %s: %s' % (prefix, type(value).__name__))
+
+
+def columns(rows, time_key):
+    """Every scalar leaf of a spool, including all list positions; integers remain exact Python integers.
+
+    Result per channel: one entry per row, the row's value where the row carries the channel in its kind (numeric:
+    int/float/bool or None; text: str), None otherwise; channels in first-appearance order. Accumulated per channel
+    as it appears (rows and values), so the work is the leaves the rows carry rather than rows x every channel seen
+    so far (the positional full-depth/FIFO and envelope slots made that product the search's largest serial cost);
+    a channel present in every row from its first appearance stays one plain list. Same lists, values and order."""
+    numeric_at, text_at, count = {}, {}, 0          # key -> [first row, values, rows or None while contiguous]
     for row in rows:
-        leaves = list(flatten(row))
+        leaves = []
+        _flatten(row, '', leaves)
         row = dict(leaves)
         if len(row) != len(leaves):
             raise ValueError('retained nested field names collide; no field may be silently overwritten')
         for key, value in row.items():
             if isinstance(value, (int, float)) or value is None:
-                numeric.setdefault(key, [None] * count)
+                slots = numeric_at
             elif isinstance(value, str):
-                text.setdefault(key, [None] * count)
+                slots = text_at
             else:
                 raise TypeError('unhandled field %s' % key)
-        for key in numeric:
-            v = row.get(key)
-            numeric[key].append(v if isinstance(v, (int, float)) else None)
-        for key in text:
-            v = row.get(key)
-            text[key].append(v if isinstance(v, str) else None)
+            slot = slots.get(key)
+            if slot is None:
+                slots[key] = [count, [value], None]
+                continue
+            values, at = slot[1], slot[2]
+            if at is None:
+                if slot[0] + len(values) != count:  # a gap: from here on the rows are listed
+                    slot[2] = at = list(range(slot[0], slot[0] + len(values)))
+                    at.append(count)
+                values.append(value)
+            else:
+                at.append(count)
+                values.append(value)
         count += 1
-    for key in set(text) & set(numeric):
-        other.add(key + ' (mixed kinds: numeric and text channels both retained)')
+
+    def materialize(slots):
+        out = {}
+        for key, (first, values, at) in slots.items():
+            if at is None:
+                tail = count - first - len(values)
+                out[key] = values if not first and not tail else [None] * first + values + [None] * tail
+            else:
+                column = [None] * count
+                for position, value in zip(at, values):
+                    column[position] = value
+                out[key] = column
+        return out
+    numeric, text = materialize(numeric_at), materialize(text_at)
+    other = {key + ' (mixed kinds: numeric and text channels both retained)' for key in set(text) & set(numeric)}
     return numeric, text, sorted(other), count
 
 
@@ -395,6 +426,91 @@ def spool_columns(path, pin, time_key, workers=1, report=None):
                       basis='ordered byte ranges cut at line starts; parts joined in file order with columns() rules; '
                             'bytes hashed in file order and checked against the pin')
     return numeric, text, other, count
+
+
+# ---- the INPUT spool read on the held lane (the Sept 29 pattern, item 3: batch decode, every per-record check kept) ---
+# unpack_spool decodes one record at a time (json + c15_journal.unpack) on the coordinator, and the INPUT spool carries
+# every source record of the day. Its records are independent until the consumer's per-record checks, so above
+# SPOOL_PARALLEL_MIN_BYTES the file is cut at line starts into ordered ranges of about SPOOL_RANGE_BYTES; pinned forked
+# workers decode the ranges (the same json.loads + unpack of the same bytes) and the coordinator receives the records
+# range by range IN FILE ORDER and runs every check of its loop unchanged and in order. A line that does not decode
+# ends its range's records there; the records before it are consumed first, then the same error is raised (the serial
+# point of failure). The bytes are hashed in file order beside the workers and checked against the pin after the last
+# record, as unpack_spool does. At most two ranges per worker are in flight (bounded memory). A dead worker's range is
+# decoded again (frankie_box_lane_pin.ordered_map). One worker or a small spool: unpack_spool itself.
+SPOOL_RANGE_BYTES = 16 << 20
+
+
+def _spool_range_rows(args):
+    """(the range's records decoded in order, the first decode error or None)."""
+    path, start, end = args
+    from research.kalshi.frankie_boss.c15_journal import unpack
+    out, position = [], start
+    with open(path, 'rb') as handle:
+        handle.seek(start)
+        for line in handle:
+            if position >= end:
+                break
+            position += len(line)
+            try:
+                out.append(unpack(json.loads(line.decode('utf-8'))))
+            except Exception as error:  # noqa: BLE001 - re-raised by the coordinator after the records before it
+                return out, error
+    return out, None
+
+
+def decoded_spool(path, pin, workers=1, report=None):
+    """unpack_spool(path, pin) with the decode on the lane's workers (see above): the same records in the same order,
+    the same pin check after the last one."""
+    started = time.time()
+    size = Path(path).stat().st_size
+    if workers <= 1 or size < SPOOL_PARALLEL_MIN_BYTES:
+        yield from unpack_spool(path, pin)
+        if report is not None:
+            report.update(mode='serial', workers=1, ranges=1, bytes=size, seconds=round(time.time() - started, 3))
+        return
+    import multiprocessing
+    import threading
+    ranges = _spool_ranges(str(path), size, max(workers * SPOOL_RANGES_PER_WORKER, size // SPOOL_RANGE_BYTES + 1))
+    count = min(workers, len(ranges))
+    hashed, stop = dict(sha256=hashlib.sha256(), bytes=0), threading.Event()
+
+    def hash_file():
+        try:
+            with open(path, 'rb') as handle:
+                for block in iter(lambda: handle.read(1 << 24), b''):
+                    if stop.is_set():
+                        return
+                    hashed['sha256'].update(block)
+                    hashed['bytes'] += len(block)
+        except BaseException as error:  # noqa: BLE001 - re-raised after the join
+            hashed['error'] = error
+    hasher = threading.Thread(target=hash_file, name='input-spool-sha256', daemon=True)
+    decoded = _lane_pin().ordered_map(_spool_range_rows, ranges, count, context=multiprocessing.get_context('fork'),
+                                      cpus=lane_cpus(), window=count * 2, on_start=lambda pool: hasher.start(),
+                                      report=POOL_RECOVERY)
+    finished = False
+    try:
+        for _, (records, error) in decoded:
+            yield from records
+            if error is not None:
+                raise error
+        finished = True
+    finally:
+        decoded.close()                    # an early check failure in the consumer stops the workers now
+        if not finished:
+            stop.set()
+        if hasher.ident is not None:
+            hasher.join()
+    if hashed.get('error') is not None:
+        raise hashed['error']
+    if hashed['bytes'] != pin['bytes'] or hashed['sha256'].hexdigest() != pin['sha256']:
+        raise ValueError('search spool differs from the selected export: ' + str(path))
+    if report is not None:
+        report.update(mode='fork_pool_line_ranges', workers=count, ranges=len(ranges), bytes=size,
+                      seconds=round(time.time() - started, 3),
+                      basis='ordered line ranges decoded by pinned workers; every per-record check on the coordinator '
+                            'in spool order; bytes hashed in file order against the pin')
 
 
 def sha256_file(path):
@@ -654,9 +770,10 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         gates.append(dict(source=journal_source['source'], passed=True if placed else None,
                           reason=('exact journal INPUT pairing and existing group membership; no timestamp-asof or invented intermediate state'
                                   if placed else 'no journal rows placed; unsupported or incomplete source groups remain explicitly retained')))
-    # DuckDB's connection (and its thread pool) opens only now: the frame, native and journal readers above fork their
-    # pinned workers first, so no DuckDB thread exists in the process they fork from. Same threads, same queries.
-    con = duckdb.connect(config=dict(threads=len(lane_cpus())))      # the lane's CPUs, not DuckDB's host-count default
+    # No DuckDB connection is opened: no query of this preparation runs on one (the alignment is asof_source_rows, the
+    # numpy as-of; asof_values and leakage_gate accept a connection argument and never use it). The connection used to
+    # open here started a lane-sized thread pool that served nothing and sat in every process the leakage-gate pools
+    # below fork from. duckdb stays imported above, so a venv without it still stops at the same point.
 
     def asof(name, known_at, values_by_col):
         """Account for source-row selection, then place each numeric column through its existing leakage gate."""
@@ -689,13 +806,14 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
                                      'times; original rows remain in the pinned source. Selection counts describe '
                                      'this alias before per-field leakage gates, not exact ROOT membership, '
                                      'valid observations or additional independent evidence'))
-        for key, values in values_by_col.items():
-            gate = leakage_gate(con, name + '.' + key, known_at, values)
+        # every field's gate (independent of the others; the same gate, results in field order) on the lane's workers
+        for (key, values), gate in zip(values_by_col.items(), leakage_gates(name, known_at, values_by_col, workers)):
             gates.append(gate)
             if gate['passed'] is False:
                 notes.append(dict(source=name, field=key, excluded='failed the leakage gate'))
                 continue
             series[name + '.' + key] = np.asarray([values[i] if i >= 0 else None for i in source_rows], dtype=object)
+        return source_rows
 
     root_frames, root_owners = JOURNAL._frame_index(f_num, recv)
     derive_path = day_dir / 'root' / 'work' / 'derive.json'
@@ -744,9 +862,9 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         # common alignment reports every such ordinal rather than raising KeyError.
         known = num.pop(time_key, [None] * count)
         num.pop('ts_event_ns', None), num.pop('ts_event', None)
-        asof(spool, known, num)
-        for k, values in text.items():
-            text_cols[spool + '.' + k] = asof_values(con, axis, known, values).tolist()
+        rows = asof(spool, known, num)
+        for k, values in text.items():            # the same alignment rows as asof_values(con, axis, known, values)
+            text_cols[spool + '.' + k] = np.asarray([values[i] if i >= 0 else None for i in rows], dtype=object).tolist()
     # Include selected-but-missing INPUTs so disappearance cannot turn into an optional-source absence.
     inputs = sorted(set(rows_dir.glob('input-*.jsonl')) | {
         day_dir / relative for relative in exported
@@ -767,7 +885,8 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         records, unknown, unplaced = 0, 0, []
         event_fields, event_text, event_identities, event_other = {}, {}, set(), set()
         event_closes = []
-        for record in unpack_spool(inputs[0], input_pin):
+        input_parse = {}
+        for record in decoded_spool(inputs[0], input_pin, workers, input_parse):
             index = records
             records += 1
             action, side = (v.decode('ascii') if isinstance(v, bytes) else str(v)
@@ -826,7 +945,7 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
             counts['total'] = [sum(value for key, value in group.items() if not key.endswith('_size'))
                                for group in group_counts]
         sources.append(dict(source='events', path=str(inputs[0]), rows=records, groups=len(selected_closes),
-                            bytes=input_pin['bytes'], sha256=input_sha256,
+                            bytes=input_pin['bytes'], sha256=input_sha256, parse=input_parse,
                             numeric=sorted(counts), records_without_numeric_size=unknown, raw_f_last_closes=len(event_closes),
                             group_binding=dict(schema='FRANKIE_EVENT_GROUP_SEARCH_V2',
                                 frames_sha256=sources[0]['sha256'], implementation=JOURNAL.binding(),
@@ -978,12 +1097,13 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
                     identity_fields.append(key)
                     continue
                 numeric, text, listed, _ = columns(({'value': value} for value in values), '')
-                asof('external.' + key, stamps, numeric)
+                rows = asof('external.' + key, stamps, numeric)
                 searched_fields.extend('external.' + key + '.' + leaf for leaf in numeric
                                        if 'external.' + key + '.' + leaf in series)
                 for leaf, leaf_values in text.items():
                     name = 'external.' + key + '.' + leaf
-                    text_cols[name] = asof_values(con, axis, stamps, leaf_values).tolist()
+                    # the same alignment rows as asof_values(con, axis, stamps, leaf_values)
+                    text_cols[name] = np.asarray([leaf_values[i] if i >= 0 else None for i in rows], dtype=object).tolist()
                     text_fields.append(name)
                 mixed.extend(dict(field=key, note=item) for item in listed)
         # the registry entries each point declares it feeds (frankie_box_all99_coverage.external_point_entries); a name
@@ -1094,6 +1214,38 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         series, cells = market_view.series, market_view.cells
         sources.append(market_view.report)
     return axis, series, cells, sources, notes, gates
+
+
+# The leakage gates of one source's fields are independent of each other (each runs odcore.leakage on its own field
+# with its own fixed seed), so a source with many fields over many rows runs them on pinned forked workers, results in
+# field order (the Sept 29 pattern, item 4: independent pieces side by side). Below GATE_PARALLEL_MIN_CELLS
+# (rows x fields), with one field or one worker, they run in the coordinator. The gate itself is unchanged; a dead
+# worker's field is gated again (frankie_box_lane_pin.ordered_map).
+GATE_PARALLEL_MIN_CELLS = 1 << 16
+_GATE = {}
+SOURCE_PASSES = []        # where the parallel source passes ran (MANIFEST cpu_placement.source_passes); diagnostic only
+
+
+def _gate_job(key):
+    return leakage_gate(None, _GATE['name'] + '.' + key, _GATE['known_at'], _GATE['values'][key])
+
+
+def leakage_gates(name, known_at, values_by_col, workers=1):
+    """[leakage_gate(..., name + '.' + key, known_at, values) for each key of values_by_col], in key order."""
+    keys = list(values_by_col)
+    if workers <= 1 or len(keys) < 2 or len(known_at) * len(keys) < GATE_PARALLEL_MIN_CELLS:
+        return [leakage_gate(None, name + '.' + key, known_at, values_by_col[key]) for key in keys]
+    import multiprocessing
+    started, count = time.time(), min(workers, len(keys))
+    _GATE.update(name=name, known_at=known_at, values=values_by_col)
+    try:
+        gates = [gate for _, gate in _lane_pin().ordered_map(
+            _gate_job, keys, count, context=multiprocessing.get_context('fork'), cpus=lane_cpus(), report=POOL_RECOVERY)]
+    finally:
+        _GATE.clear()
+    SOURCE_PASSES.append(dict(what='leakage gates', source=name, fields=len(keys), rows=len(known_at), workers=count,
+                              seconds=round(time.time() - started, 3)))
+    return gates
 
 
 def leakage_gate(con, source, known_at, values):

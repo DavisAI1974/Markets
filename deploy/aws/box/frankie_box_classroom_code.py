@@ -792,8 +792,24 @@ def native_cutoff_limits(environ=None):
 
 
 def _rss_bytes():
-    """(resident bytes of this process now, basis): /proc/self/statm, else the peak from getrusage."""
+    """(resident bytes of this process now, basis): /proc/self/statm, else the peak from getrusage. In a forked native
+    series worker: the coordinator's resident bytes plus this worker's private pages (a forked worker maps the
+    coordinator's pages shared, so its own statm would count them again); the classroom's footprint the limit guards."""
     import os
+    coordinator = _RSS_COORDINATOR[0] if _RSS_COORDINATOR else None
+    if coordinator is not None and coordinator != os.getpid():
+        try:
+            with open('/proc/%d/statm' % coordinator) as handle:
+                resident = int(handle.read().split()[1]) * os.sysconf('SC_PAGE_SIZE')
+            own = 0
+            with open('/proc/self/smaps_rollup') as handle:
+                for line in handle:
+                    if line.startswith(('Private_Clean:', 'Private_Dirty:')):
+                        own += int(line.split()[1]) * 1024
+            return resident + own, ('coordinator resident (/proc/%d/statm) plus this worker\'s private pages '
+                                    '(/proc/self/smaps_rollup)' % coordinator)
+        except (OSError, ValueError, IndexError):
+            pass
     try:
         with open('/proc/self/statm') as handle:
             return int(handle.read().split()[1]) * os.sysconf('SC_PAGE_SIZE'), 'current resident (/proc/self/statm)'
@@ -1228,49 +1244,14 @@ class _NativeEntryArithmetic:
                 largest_interval=(dict(row_cursor=int(cursors[event_rows[busiest]]), events=int(event_counts[busiest]))
                                   if busiest is not None else None))))
 
-        # Every series is independent and read-only over the pass's state, so the materialization and the 19 pairs per
-        # series run on the lane's CPUs in threads (numpy releases the GIL inside its array loops). Results are kept in the
-        # sorted series order (pool.map preserves it); every value is computed exactly as one thread would. Greg,
-        # 2026-10-07: use the spare capacity; this stays inside the classroom's own lane affinity.
-        import os
-        from concurrent.futures import ThreadPoolExecutor
-        def not_computed(key, kind):
-            return dict(name=name_of(key), kind=kind, status='unavailable',
-                        reason='cutoff: %s' % self.reason if self.status == 'cutoff' else 'no Dipole row was closed')
-
-        def run(job):
-            function, key, kind = job
-            if n == 0 or self._check('pairs'):
-                return not_computed(key, kind)          # listed, never zero and never done
-            return function(key)
-
-        jobs = ([(member_series, key, 'member_value') for key in sorted(self.num, key=lambda k: (k[0], str(k[1])))]
-                + [(count_series, key, 'events_per_dipole_interval')
-                   for key in sorted(self.cnt, key=lambda k: (k[0], str(k[1])))])
-        self.pair_threads = max(1, min(len(lane_cpus()), len(jobs) or 1))     # the booked CPUs (16 or 32)
-        # each thread pinned to its own lane CPU, one thread per physical core first (frankie_box_lane_pin.executor;
-        # a refused pin falls back to the lane). pool.map keeps the sorted series order; threads do not die mid-task.
-        LP = _lane_pin()
-        PINNING_RECORD['native_series_threads'] = LP.record(self.pair_threads, lane_cpus(),
-                                                            what='classroom native series threads (_compute)')
-        # the pairs' dot products carry the bits of exactly 32 OpenBLAS threads on every lane, settled once here before
-        # the threads start (EXT.blas_reduction: one OpenBLAS thread per caller + the proven 32-thread reduction order,
-        # or 32 threads as they are when the self-check fails); received.cpu_pinning.blas_reduction
-        PINNING_RECORD['blas_reduction'] = EXT.blas_reduction()
-        with LP.executor('thread', self.pair_threads, lane_cpus()) as pool:
-            series.extend(pool.map(run, jobs))
-        for key in sorted(self.cat, key=lambda k: (k[0], str(k[1]))):
-            if n == 0 or self._check('categories'):
-                series.append(not_computed(key, 'category'))
-                continue
+        def category_series(key):
             slot = self.cat[key]
             changes = slot['changes']
             item = dict(name=name_of(key), kind='category', values_known=slot['known'], distinct=len(slot['distinct']),
                         runs=len(changes))
             if not changes:
                 item.update(rows_before_first_value=n, segments=[], cells=[])
-                series.append(item)
-                continue
+                return item
             starts = [k for k, _ in changes]
             ends = starts[1:] + [n]
             segments = [dict(value=v, first_cursor=int(cursors[a]), last_cursor=int(cursors[b - 1]), rows=b - a)
@@ -1281,8 +1262,7 @@ class _NativeEntryArithmetic:
                 item.update(identifier=True, cells=[], segments=dict(count=len(segments), first=segments[0], last=segments[-1]),
                             reason='more than %d distinct values: an identifier, not a cell (joined teacher CATEGORY_LIMIT)'
                                    % CATEGORY_LIMIT)
-                series.append(item)
-                continue
+                return item
             label = np.full(n, -1, dtype=np.int64)
             names = sorted({v for _, v in changes if v is not None})
             index = {v: i for i, v in enumerate(names)}
@@ -1298,7 +1278,54 @@ class _NativeEntryArithmetic:
                                                     first_to_last_present_direction=EXT._direction(np, sub_codes, sub_values))
                 cells.append(cell)
             item.update(segments=segments, cells=cells)
-            series.append(item)
+            return item
+
+        def not_computed(key, kind):
+            return dict(name=name_of(key), kind=kind, status='unavailable',
+                        reason='cutoff: %s' % self.reason if self.status == 'cutoff' else 'no Dipole row was closed')
+
+        def run(job):
+            """One series, or the NOT_COMPUTED marker (the parent names it with the one cutoff reason at the end)."""
+            function, key, kind, phase = job
+            if n == 0 or self._check(phase):
+                return _NOT_COMPUTED
+            return function(key)
+
+        # Every series is independent and read-only over the pass's state (numeric members, event counts, categories,
+        # the per-level FIFO queue series among them). Greg, 2026-10-07 night ("CPU calls for multiple processes, not
+        # one process with threads"; the September 29 pattern: spread workers, a dead worker never stops or hangs a
+        # stage): the series run on a pinned FORK pool over the booked CPUs (frankie_box_lane_pin.ordered_map: one
+        # worker per CPU, physical cores first; ordered results; a dead worker's chunk is redone and the window shrinks
+        # by one), the pass's state shared copy-on-write (gc.freeze, so a child's collector never touches the parent's
+        # pages), each chunk of series computed by the SAME functions in sorted series order and placed back in that
+        # order, so every series is the one a single thread computes. Fork is taken only on Linux while this process
+        # runs one thread (a bounded wait for the reader's finished helper threads); otherwise the former pinned thread
+        # pool runs (recorded). The cutoff: a worker that reaches it sets a shared flag (the others stop feeding) and
+        # hands its record back; the coordinator adopts the first one, and every series left uncomputed is named
+        # unavailable: cutoff with that one reason, as before.
+        jobs = ([(member_series, key, 'member_value', 'pairs') for key in sorted(self.num, key=lambda k: (k[0], str(k[1])))]
+                + [(count_series, key, 'events_per_dipole_interval', 'pairs')
+                   for key in sorted(self.cnt, key=lambda k: (k[0], str(k[1])))]
+                + [(category_series, key, 'category', 'categories')
+                   for key in sorted(self.cat, key=lambda k: (k[0], str(k[1])))])
+        lane = lane_cpus()
+        self.pair_threads = max(1, min(len(lane), len(jobs) or 1))     # the booked CPUs (16 or 32)
+        LP = _lane_pin()
+        # the pairs' dot products carry the bits of exactly 32 OpenBLAS threads on every lane, settled once here before
+        # any worker starts (EXT.blas_reduction: one OpenBLAS thread per caller + the proven 32-thread reduction order,
+        # or 32 threads as they are when the self-check fails; a fork inherits the setting); received.cpu_pinning
+        PINNING_RECORD['blas_reduction'] = EXT.blas_reduction()
+        results = _native_series_parallel(self, run, jobs, lane, LP) if jobs else []
+        if any(_is_not_computed(value) for value in results) and self.status != 'cutoff' and n > 0:
+            # a worker reached the cutoff but its record was lost with it: the coordinator's own check names the limit
+            if not self._check('pairs'):
+                self.cutoff = dict(limit='reported_by_a_lost_worker', phase='pairs', cursor_reached=self.last_cursor,
+                                   dipole_rows_closed=self.k, dipole_rows=self.n, pictures_fed=self.pictures,
+                                   limits={k: self.limits[k] for k in ('seconds', 'rss_gb', 'check_every')})
+                self.status, self.reason = 'cutoff', ('cutoff reached by a worker that was lost before handing its record '
+                                                      'back; a named limit, not an integrity failure')
+        series.extend(not_computed(job[1], job[2]) if _is_not_computed(value) else value
+                      for job, value in zip(jobs, results))
         # attribution: a series belongs to every one of the six whose own carrier it is
         entries = {}
         # after a cutoff in the pass, an absence is measured only over the pictures fed before it
@@ -1365,6 +1392,106 @@ class _NativeEntryArithmetic:
                     series_not_computed=sum(1 for s in series if s.get('status') == 'unavailable'),
                     rows_covered=n, pair_count=sum(len(s.get('pairs') or ()) for s in series),
                     identities={str(k): v for k, v in sorted(self.identities.items(), key=lambda kv: str(kv[0]))})
+
+
+# ---- the native series on pinned processes (Greg, 2026-10-07 night: the September 29 pattern for every serial walk) --
+# A series job returns its dict, or this marker when the cutoff stopped it (a string: it survives the trip back from a
+# worker; no series dict ever equals it). The coordinator names every marked series unavailable: cutoff with the one
+# reason it adopted.
+_NOT_COMPUTED = '__frankie_native_series_not_computed__'
+_NATIVE_SHARED = {}
+_RSS_COORDINATOR = []        # [coordinator pid] while forked series workers run (their memory reading, _rss_bytes)
+FORK_READY_WAIT_SECONDS = 10.0
+
+
+def _is_not_computed(value):
+    return isinstance(value, str) and value == _NOT_COMPUTED
+
+
+def _fork_ready(wait=FORK_READY_WAIT_SECONDS):
+    """(True, seconds waited, None) when this Linux process runs one thread, after waiting up to `wait` seconds for the
+    helper threads a finished reader is still closing (a queue feeder, a pool handler); else (False, waited, why). A
+    fork is never taken beside a live thread (it can inherit a held lock)."""
+    import threading
+    import time
+    if not sys.platform.startswith('linux'):
+        return False, 0.0, 'not Linux'
+    started = time.monotonic()
+    while threading.active_count() > 1 and time.monotonic() - started < wait:
+        time.sleep(0.05)
+    waited = round(time.monotonic() - started, 3)
+    if threading.active_count() > 1:
+        return False, waited, 'live threads after %.1f s: %s' % (waited, sorted(
+            t.name for t in threading.enumerate() if t is not threading.current_thread()))
+    return True, waited, None
+
+
+def _native_chunk(span):
+    """Worker side: the series jobs[span[0]:span[1]] in order, by the coordinator's own `run` (inherited by fork).
+    Returns (values, cutoff record or None). A worker that reaches the cutoff raises the shared flag so the others stop
+    feeding; a worker that sees the flag marks its remaining series without computing them."""
+    shared = _NATIVE_SHARED
+    native, run, jobs, flag = shared['native'], shared['run'], shared['jobs'], shared['flag']
+    values = []
+    for index in range(span[0], span[1]):
+        if flag.value and native.cutoff is None:
+            values.append(_NOT_COMPUTED)
+            continue
+        values.append(run(jobs[index]))
+        if native.cutoff is not None and not flag.value:
+            flag.value = 1
+    record = (dict(cutoff=native.cutoff, status=native.status, reason=native.reason)
+              if native.cutoff is not None else None)
+    return values, record
+
+
+def _native_series_parallel(native, run, jobs, lane, LP):
+    """Every series job in order: a pinned fork pool (frankie_box_lane_pin.ordered_map) on the booked CPUs, or the former
+    pinned thread pool when no fork can be taken. Values in job order; the placement goes on PINNING_RECORD."""
+    import gc
+    import multiprocessing
+    import os
+    import time
+    started = time.monotonic()
+    workers = native.pair_threads
+    forkable, waited, why = _fork_ready() if workers > 1 else (False, 0.0, 'one CPU booked')
+    if not forkable:
+        PINNING_RECORD['native_series_threads'] = dict(
+            LP.record(workers, lane, what='classroom native series threads (_compute; no fork: %s)' % why),
+            waited_for_threads_s=waited)
+        with LP.executor('thread', workers, lane) as pool:
+            values = list(pool.map(run, jobs))
+        PINNING_RECORD['native_series_threads']['seconds'] = round(time.monotonic() - started, 3)
+        return values
+    # chunks small enough to balance (about eight per worker), large enough that the hand-back is not per series
+    size = max(1, -(-len(jobs) // (workers * 8)))
+    spans = [(a, min(a + size, len(jobs))) for a in range(0, len(jobs), size)]
+    workers = min(workers, len(spans))
+    context = multiprocessing.get_context('fork')
+    flag = context.Value('i', 0, lock=False)
+    report, values = {}, [None] * len(jobs)
+    _NATIVE_SHARED.update(native=native, run=run, jobs=jobs, flag=flag)
+    _RSS_COORDINATOR[:] = [os.getpid()]
+    gc.freeze()               # the pass's state stays shared: a worker's collector never writes the coordinator's pages
+    try:
+        for span, (chunk, record) in LP.ordered_map(_native_chunk, spans, workers, context=context, cpus=lane,
+                                                    window=workers * 2, poll=5.0, report=report):
+            values[span[0]:span[1]] = chunk
+            if record is not None and native.cutoff is None:
+                native.cutoff, native.status, native.reason = record['cutoff'], record['status'], record['reason']
+    finally:
+        gc.unfreeze()
+        _NATIVE_SHARED.clear()
+        _RSS_COORDINATOR[:] = []
+    PINNING_RECORD['native_series_processes'] = dict(
+        LP.record(workers, lane, what='classroom native series processes (_compute: member values, event counts, '
+                                      'categories, per-level FIFO queues; fork pool, ordered_map)'),
+        jobs=len(jobs), chunks=len(spans), series_per_chunk=size, window=workers * 2, waited_for_threads_s=waited,
+        worker_deaths=report.get('worker_deaths'), redone=report.get('redone'),
+        seconds=round(time.monotonic() - started, 3),
+        rule='same functions, sorted series order, values placed back by job index: the series a single thread computes; '
+             'a dead worker\'s chunk is redone and the window shrinks by one; it never stops or hangs the classroom')
+    return values
 
 
 def _native_unavailable_entries(status, reason):

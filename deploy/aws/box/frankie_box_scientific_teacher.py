@@ -828,60 +828,127 @@ def completed_native_evidence(d, out_root):
     group, no axis position, so never a search step). Returns (reference, listed): the file's identity and counts, or
     what could not be read and why. A search with no native evidence is listed, not an error (older sources keep
     their actual coverage)."""
+    return completed_native_evidence_many([d], out_root)[0]
+
+
+NATIVE_ROLES = ('receipt', 'result', 'bedrock_section_4_2', 'bedrock_section_4_4')
+NATIVE_LEDGERS = ('native.member', 'native.lifecycle')
+_LEDGER_ABSENT = ('__ledger_absent__',)
+
+
+def _native_projection(role, value):
+    """The doc fragment of one retained native file (completed_native_evidence's own projections, unchanged); None when
+    the file's JSON is null (the fragment is then absent, as before)."""
+    if value is None:
+        return None
+    if role == 'receipt':
+        return {k: value.get(k) for k in ('verdict', 'failed_gates', 'groups', 'records', 'span_seconds',
+                                          'candidate_warmup_seconds', 'candidate_min_observations')}
+    if role == 'result':
+        layers = value.get('layers') or {}
+        summaries = (layers.get('exact_lifecycle_and_runway_ledger') or {}).get('section_summaries')
+        averages = layers.get('averaged_companions') or {}
+        return dict(layers=sorted(layers), section_summaries=summaries,
+                    section_summaries_rule='the traversal\'s own section numbers, whole; evidence where exact',
+                    averaged_companions=dict(rows=averages.get('rows'), key_alias_form=averages.get('key_alias_form'),
+                                             rule='averages: a supplement only, never evidence (D37)'))
+    if role == 'bedrock_section_4_2':
+        return dict(first_last_pairs=value.get('first_last_pairs'), declarations=value.get('declarations'),
+                    status=value.get('status'), reason=value.get('reason'), count=value.get('count'),
+                    companion_rows=dict(rows=value.get('companion_rows'), rule='averages: supplement only (D37)'),
+                    rule='the exact first and last book of each day-segment-phase: evidence; the books '
+                         'themselves are already on the frame axis, so these are read, not re-searched')
+    rows = value.get('lifecycle_rows') or []
+    live = [r for r in rows if (r.get('frankie_emission') or {}).get('phase') == 'GROUP_CLOSE']
+    ended = [r for r in rows if (r.get('frankie_emission') or {}).get('phase') != 'GROUP_CLOSE']
+    return dict(matching_rule=value.get('matching_rule'), status=value.get('status'), reason=value.get('reason'),
+                group_close_rows=len(live), stream_end_rows=ended,
+                rule='GROUP_CLOSE offers are searched as native.lifecycle.mirror.* (not duplicated '
+                     'here); STREAM_END rows are post-stream knowledge, read whole')
+
+
+def _native_read(task):
+    """One read of completed_native_evidence: ('file', role, retained pin) -> the role's fragment (bytes verified against
+    the pin, then projected); ('ledger', name, report) -> the ledger's FINALIZE rows by section, or _LEDGER_ABSENT when
+    the exact ledger is not at its path (FileNotFoundError, listed by the caller as before)."""
+    kind, role, payload = task
+    if kind == 'ledger':
+        try:
+            return _finalize_rows(payload)
+        except FileNotFoundError:
+            return _LEDGER_ABSENT
+    return _native_projection(role, _read_pinned(payload['retained'], payload['sha256'], payload['bytes']))
+
+
+def _native_read_kept(task):
+    """_native_read in a pool worker: ('ok', value), or ('error', text) when it raised. The caller re-runs an errored read
+    in its own process at that read's place in the original order, so the exception (its type and message, unpickled
+    never) is raised exactly where the serial code raised it, after everything before it was assembled."""
+    try:
+        return 'ok', _native_read(task)
+    except Exception as error:  # noqa: BLE001 - re-raised by the caller's in-process re-run
+        return 'error', '%s: %s' % (type(error).__name__, error)
+
+
+def completed_native_evidence_many(days, out_root):
+    """completed_native_evidence for every searched day, [(reference, listed)] in the days' order. Every file read of
+    every day (the four retained files and the two exact ledgers, each hashed against its pin) is an independent read: all
+    of them run side by side on pinned lane workers (physical cores first; Greg, 2026-10-07: the Sept 29 pattern; a
+    one-day run read its six files one after another, the two whole-ledger hashes in series). Each day's document is then
+    assembled in this process in exactly the serial order (receipt, result, 4.2, 4.4, member, lifecycle), with the same
+    listed entries in the same order and the same bytes written; a read that raised in a worker is re-run here at its own
+    place, so the first error in that order is raised as before. A broken pool re-reads everything here, in order (L-2)."""
+    tasks, plans = [], []
+    for d in days:
+        retained = {x['role']: x for x in d.get('native_retained') or []}
+        reports = {x['source']: x for x in d.get('native_reports') or []}
+        index = len(tasks)
+        if retained:
+            tasks += [('file', role, retained[role]) for role in NATIVE_ROLES if role in retained]
+            tasks += [('ledger', name, reports[name]) for name in NATIVE_LEDGERS if name in reports]
+        plans.append((d, retained, reports, index))
+    reads = _pinned_map(_native_read_kept, tasks, 'completed native evidence: %d reads of %d searched days'
+                        % (len(tasks), len(days))) if tasks else []
+    out = []
+    for d, retained, reports, index in plans:
+        out.append(_native_document(d, retained, reports, tasks, reads, index, out_root))
+    return out
+
+
+def _native_document(d, retained, reports, tasks, reads, index, out_root):
+    """Assemble and write one day's FRANKIE_COMPLETED_NATIVE_EVIDENCE_V1 from its reads (completed_native_evidence's
+    document, listed entries and reference, unchanged)."""
     listed = []
-    retained = {x['role']: x for x in d.get('native_retained') or []}
-    reports = {x['source']: x for x in d.get('native_reports') or []}
     if not retained:
         return None, [dict(day=d['day'], reason='the search carries no retained native evidence (none selected for this day)')]
     doc = dict(schema='FRANKIE_COMPLETED_NATIVE_EVIDENCE_V1', day=d['day'], search_manifest_sha256=d['manifest_sha256'],
                read_from={k: dict(path=v['retained'], sha256=v['sha256'], bytes=v['bytes']) for k, v in retained.items()},
                rule='exact numbers are evidence, read whole and bound by sha256; averages are labelled supplements (D37); '
                     'post-stream rows have no axis position and are never search steps; nothing is computed here')
-    def get(role):
-        x = retained.get(role)
-        if x is None:
+    def take():
+        nonlocal index
+        status, value = reads[index]
+        task = tasks[index]
+        index += 1
+        return _native_read(task) if status == 'error' else value
+    for role, key in zip(NATIVE_ROLES, ('receipt', 'result', 'section_4_2', 'section_4_4')):
+        if role not in retained:
             listed.append(dict(day=d['day'], role=role, reason='not among the search\'s retained native files'))
-            return None
-        return _read_pinned(x['retained'], x['sha256'], x['bytes'])
-    receipt = get('receipt')
-    if receipt is not None:
-        doc['receipt'] = {k: receipt.get(k) for k in ('verdict', 'failed_gates', 'groups', 'records', 'span_seconds',
-                                                      'candidate_warmup_seconds', 'candidate_min_observations')}
-    result = get('result')
-    if result is not None:
-        layers = result.get('layers') or {}
-        summaries = (layers.get('exact_lifecycle_and_runway_ledger') or {}).get('section_summaries')
-        averages = layers.get('averaged_companions') or {}
-        doc['result'] = dict(layers=sorted(layers), section_summaries=summaries,
-                             section_summaries_rule='the traversal\'s own section numbers, whole; evidence where exact',
-                             averaged_companions=dict(rows=averages.get('rows'), key_alias_form=averages.get('key_alias_form'),
-                                                      rule='averages: a supplement only, never evidence (D37)'))
-    s42 = get('bedrock_section_4_2')
-    if s42 is not None:
-        doc['section_4_2'] = dict(first_last_pairs=s42.get('first_last_pairs'), declarations=s42.get('declarations'),
-                                  status=s42.get('status'), reason=s42.get('reason'), count=s42.get('count'),
-                                  companion_rows=dict(rows=s42.get('companion_rows'), rule='averages: supplement only (D37)'),
-                                  rule='the exact first and last book of each day-segment-phase: evidence; the books '
-                                       'themselves are already on the frame axis, so these are read, not re-searched')
-    s44 = get('bedrock_section_4_4')
-    if s44 is not None:
-        rows = s44.get('lifecycle_rows') or []
-        live = [r for r in rows if (r.get('frankie_emission') or {}).get('phase') == 'GROUP_CLOSE']
-        ended = [r for r in rows if (r.get('frankie_emission') or {}).get('phase') != 'GROUP_CLOSE']
-        doc['section_4_4'] = dict(matching_rule=s44.get('matching_rule'), status=s44.get('status'), reason=s44.get('reason'),
-                                  group_close_rows=len(live), stream_end_rows=ended,
-                                  rule='GROUP_CLOSE offers are searched as native.lifecycle.mirror.* (not duplicated '
-                                       'here); STREAM_END rows are post-stream knowledge, read whole')
+            continue
+        fragment = take()
+        if fragment is not None:
+            doc[key] = fragment
     finalize = {}
-    for name in ('native.member', 'native.lifecycle'):
+    for name in NATIVE_LEDGERS:
         report = reports.get(name)
         if report is None:
             listed.append(dict(day=d['day'], role=name, reason='no search report of this ledger'))
             continue
-        try:
-            finalize[name] = _finalize_rows(report)
-        except FileNotFoundError:
+        rows = take()
+        if rows == _LEDGER_ABSENT:
             listed.append(dict(day=d['day'], role=name, reason='the exact ledger is not at %s' % report.get('path')))
+        else:
+            finalize[name] = rows
     doc['finalize_rows'] = dict(by_ledger={k: {sec: len(v) for sec, v in rows.items()} for k, rows in finalize.items()},
                                 rows=finalize, rule='every FINALIZE row the search listed post_stream_knowledge_only, whole')
     doc['listed'] = listed
@@ -907,11 +974,6 @@ def completed_native_evidence(d, out_root):
                      receipt=doc.get('receipt'), matching_rule=(doc.get('section_4_4') or {}).get('matching_rule'),
                      listed=listed)
     return reference, listed
-
-
-def _completed_native_of(args):
-    """completed_native_evidence(day, out_root) for one (day, out_root) pair: a top-level pool target."""
-    return completed_native_evidence(*args)
 
 
 def native_evidence_identity(reference):
@@ -1038,7 +1100,6 @@ def _read_plan(claims_doc, days):
         for a, b in pairs:
             wanted[(a, b)] = wanted[(b, a)] = True
         per_claim.append((c, matched, missing, pairs))
-    rows = {}
     # Efficiency (Greg, 2026-10-07; performance-optimization: the data shape first): a part carries every ordered pair x
     # cell x transform pair of the day and a claim names two or three series, so nearly every line is a row of other
     # series. Every byte is still hashed (the manifest pin is verified on exactly the bytes consumed); a line that does
@@ -1085,6 +1146,7 @@ def test(claims_doc, days, records_dir=None, records_selection=None, report=None
     needles, filter mode, parts and pins), so the rows, ordinals, raw-line hashes, counts and every verification below are
     exactly those of the call's own scan; None, or a read made for another plan, and the parts are scanned here as before."""
     per_claim, wanted, needles, needle_filter, jobs = _read_plan(claims_doc, days)
+    rows = {}
     hashed_rows = parsed_rows = selected_rows = parts_read = 0
     # Efficiency (Greg, 2026-10-07; performance-optimization): the parts are independent files, each hashed and filtered
     # on its own; they are scanned by the step's lane workers (a fork pool over the CPUs this child was given, the day's
@@ -1805,11 +1867,10 @@ def main():
     if not (a.jev_claims or a.frankie_ledgers or a.historical_claims or a.search_findings):
         raise SystemExit('give --jev-claims / --jev-stamp, --frankie-ledgers, --historical-claims and/or --search-findings')
     days = load_searches(a.search)
-    # every searched day's completed native evidence is its own files and its own output file (days are distinct, checked
-    # above): read concurrently on pinned lane workers, collected in the searched-day order (Greg, 2026-10-07)
-    native = dict(zip([d['day'] for d in days],
-                      _pinned_map(_completed_native_of, [(d, Path(a.out_dir)) for d in days],
-                                  'completed native evidence of %d searched days' % len(days))))
+    # every searched day's completed native evidence: all of its file reads (the retained files and the two exact ledgers,
+    # every day's) side by side on pinned lane workers, each day assembled and written in the searched-day order with the
+    # serial code's bytes and listed entries (completed_native_evidence_many; Greg, 2026-10-07)
+    native = dict(zip([d['day'] for d in days], completed_native_evidence_many(days, Path(a.out_dir))))
     for day, (ref, listed) in native.items():
         print('completed native evidence %s: %s' % (day, 'read, %s' % json.dumps(ref['counts'], sort_keys=True) if ref
                                                        else '; '.join(x['reason'] for x in listed)), flush=True)
