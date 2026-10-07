@@ -104,16 +104,26 @@ def _json(pin):
     return json.loads(raw)
 
 
-def _rows(pin, *, packed):
-    """Check the exact consumed bytes; caller must exhaust before claiming completion."""
+def _rows(pin, *, packed, timing=None):
+    """Check the exact consumed bytes; caller must exhaust before claiming completion. `timing` (optional dict)
+    accumulates the seconds spent reading, hashing and decoding rows: an inspection measurement, never a value."""
     from research.kalshi.frankie_boss.c15_journal import unpack
+    from time import perf_counter
     hashed, size = hashlib.sha256(), 0
+    spent = 0.0
     with _local(pin['path']).open('rb') as stream:
+        mark = perf_counter()
         for ordinal, raw in enumerate(stream):
             hashed.update(raw)
             size += len(raw)
             row = json.loads(raw)
-            yield ordinal, unpack(row) if packed else row
+            row = unpack(row) if packed else row
+            if timing is not None:
+                now = perf_counter()
+                spent += now - mark
+                timing['decode_seconds'] = round(spent, 3)
+            yield ordinal, row
+            mark = perf_counter()
     if size != pin['bytes'] or hashed.hexdigest() != pin['sha256']:
         raise ValueError('shared market rows differ from their source pin: ' + pin['path'])
 
@@ -122,7 +132,8 @@ class _Changes:
     """One existing ordered producer stream; no completion-order merge or row cap."""
     def __init__(self, name, pin, *, kind, state):
         self.name, self.pin, self.kind, self.state = name, pin, kind, state
-        self.rows = _rows(pin, packed=kind in ('frame', 'price', 'structure'))
+        self.timing = dict(decode_seconds=0.0)
+        self.rows = _rows(pin, packed=kind in ('frame', 'price', 'structure'), timing=self.timing)
         self.pending = None
         self.previous = -1
         self.finished = False
@@ -766,6 +777,14 @@ class SharedMarketTimeline:
             updates_presented=0, invalidations=0, publications_presented=0, publication_frontier_ns=None,
             cursor_domains=dict(source_input_index=None, input_cursor=None, adapter_cursor=None, input_journal_ordinal=None),
             basis='what the iterator yielded; a yielded picture is not proof that a consumer used it'))
+        # Where the read's time goes (observability for the one-day canary; never an input to a picture): seconds inside
+        # this iterator (journal decode on the reader's workers, layer-row decode, placement) against seconds the
+        # consumer held each yielded picture. Per-stream decode seconds are in report['sources'][name]['timing'].
+        from time import perf_counter
+        clock = dict(started=perf_counter(), inside=0.0)
+        clock['mark'] = clock['started']
+        timing = self.report.setdefault('timing', dict(
+            reader_workers=self.workers, basis='perf_counter seconds of this process; inspection only, never a value'))
         def extent(name, value):
             if type(value) is int:
                 current = outputs['cursor_domains'][name]
@@ -865,7 +884,10 @@ class SharedMarketTimeline:
                     outputs['publication_frontier_ns'] = frontier
                     for name in ('source_input_index', 'input_cursor', 'adapter_cursor', 'input_journal_ordinal'):
                         extent(name, point[name])
+                    clock['inside'] += perf_counter() - clock['mark']
+                    clock['mark'] = None                    # the consumer holds the picture: not this reader's time
                     yield dict(evidence=evidence, picture=picture)
+                    clock['mark'] = perf_counter()
             for stream in self.streams:
                 stream.finish()
             if self.publications is not None:
@@ -901,8 +923,15 @@ class SharedMarketTimeline:
                                                     disposition='separate visible failure; not missing coverage')
             raise
         finally:
+            if clock['mark'] is not None:
+                clock['inside'] += perf_counter() - clock['mark']
+            wall = perf_counter() - clock['started']
+            timing.update(wall_seconds=round(wall, 3), inside_iterator_seconds=round(clock['inside'], 3),
+                          consumer_seconds=round(wall - clock['inside'], 3),
+                          layer_decode_seconds=round(sum(stream.timing['decode_seconds'] for stream in self.streams), 3))
             self.report['sources'] = {stream.name: dict(source=stream.pin, counts=dict(stream.counts),
-                                                       dispositions=stream.dispositions) for stream in self.streams}
+                                                       dispositions=stream.dispositions, timing=dict(stream.timing))
+                                      for stream in self.streams}
             for stream in self.streams:
                 stream.close()
             if self.report.get('complete'):

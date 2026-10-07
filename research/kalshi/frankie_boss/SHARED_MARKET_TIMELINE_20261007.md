@@ -214,3 +214,44 @@ arrival, N1, N7.
   `frankie_box_experiment_classroom_v2.py` should pass `path` in its `input_witness`; experiment.py
   `all99_admission` should build its field with `ALL99.field` (step8).
 - A fresh independent review is required before integration.
+
+## 2026-10-07 night (session 2): the lane and the AWS skills on the ROOT, the core and the search (source-built, runtime unverified, review required)
+Greg: every piece uses the lane's CPUs and the AWS efficiency/data-processing skills before the one-day E2E. Values,
+event order, cursors, pins, hashes, counts and decoded entries are unchanged by every item below.
+- ROOT process 2 beside process 1 (`frankie_box_boss_session.py`). On the recovery route with the native pass on (the
+  experiment ROOT), `Session.derive` starts the unchanged native stage (`_native_stage`: `B.run`, then
+  `native-stage.json`) in one forked child right after the sealed INPUT spool is complete, and runs the legacy pass in
+  the parent pinned to the lane's first CPU (the coordinator CPU the native core plan leaves); the native pass places its
+  own workers on the other 15 lane CPUs as before. `_derive_bedrock` joins the child, then the existing witness-checked
+  reuse of `native-stage.json` continues to the projection. A save request reaches both (the parent forwards SIGTERM; the
+  child saves at its next closed group); any exit before the join stops and joins the child. An exclusive flock
+  (`work/native-stage.lock`) held by whichever process runs the traversal refuses a second traversal beside an earlier
+  attempt's still-running one. `work/native-overlap.json` (FRANKIE_ROOT_NATIVE_OVERLAP_V1) records intent before the fork,
+  the child pid, CPUs, seconds, the legacy pass's wait and the outcome (completed / saved / failed with its error);
+  the native probe is `<root>/native-overlap/progress.json`. `FRANKIE_ROOT_NATIVE_OVERLAP=off` keeps the serial order.
+  `derive.json` is built by the same code from the same `run`; on the overlap route `run` is the one read back from
+  `native-stage.json`, exactly as the existing resume route already does.
+- The sealed journal's sha256 is measured once per ROOT process: `frankie_box_experiment_root.py` checks the receipt
+  through the stat-keyed `frankie_box_filehash` cache that `Session._input_records` witnesses the container with.
+  `calculations-receipt.json` gains `root_execution` (the overlap record pin or its absence, the journal sha256 reads,
+  `data_workers`).
+- Search (`frankie_box_experiment_search.py`): `spool_columns` decodes the frame, price and structure spools on the lane's
+  fork pool in ordered line-aligned byte ranges with the unchanged `columns()`, joins the parts in file order with
+  `columns()`'s own rules, and checks the file-order sha256 against the pin after every row decoded; under 64 MiB or with
+  one worker it is the serial call. `sources[frames].parse` and a `notes` entry per spool record mode, workers, ranges,
+  bytes and seconds. PySR stays `parallelism="serial"`, `deterministic=True` (multithreading would change the fits); the
+  discovery problems already run one per lane worker.
+- Core (`frankie_box_market_timeline.py`): `report['timing']` (wall, seconds inside the iterator, seconds the consumer
+  held pictures, total layer-row decode) and `report['sources'][name]['timing']['decode_seconds']`: a measurement for the
+  canary deciding whether layer-row decode is worth moving onto workers (the journal decode already runs on the reader's
+  workers). Inspection only, never a value. The file's bytes changed, so `binding()['implementation_sha256']` changed: a
+  ROOT built under the earlier binding is refused and needs a successor ROOT (none exists; nothing ran).
+- Inspection: `root_execution`, `native_overlap`, `timing`, `parse` in FIELDS; `work/native-overlap.json` in the ROOT
+  piece's artifact paths.
+- AWS (connector, read only this pass): the main box is r7i.8xlarge (16 cores x 2 threads) with one gp3 volume of
+  1000 MB/s and 16000 IOPS, so concurrent spool reads and writes are not disk-bound at these rates; the 20231018 journal
+  object is 8,824,270,848 bytes in 1,052 multipart parts (the committed ranged pull uses 16 MiB, part-aligned ranges);
+  the bucket has no S3 Metadata configuration and the day prefix holds 7 objects, so list/head is not at scale here.
+- Open: the legacy digest tables could be written during the parent's wait for the native child (their save points are
+  per scratch directory today); the native/journal readers' placement-coupled `columns()` calls stay serial; the
+  measured split of legacy vs native seconds comes from the first canary. A fresh independent review is required.

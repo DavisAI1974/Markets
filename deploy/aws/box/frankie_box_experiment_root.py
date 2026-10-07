@@ -144,7 +144,12 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                             listed='this day opens at the prior halt and its ingest had no opening book; the legacy pass '
                                    'starts from an empty book')
     journal = directory / receipt['journal_file']
-    if journal.stat().st_size != receipt['journal_bytes'] or _sha256_file(journal) != receipt['journal_sha256']:
+    # Hashed once per ROOT process: the stat-keyed cache (frankie_box_filehash) is the one Session.derive's input
+    # reader witnesses the same container with, so the multi-GB journal is read for its sha256 once, not twice. Same
+    # bytes, same sha256, same refusal on any difference.
+    import frankie_box_filehash
+    journal_witness = frankie_box_filehash.witness(journal)
+    if journal_witness != dict(bytes=receipt['journal_bytes'], sha256=receipt['journal_sha256']):
         raise ValueError('the sealed journal differs from its ingestion receipt (bytes or sha256)')
     completion_path = directory / 'completion.json'
     completion = json.loads(completion_path.read_bytes())
@@ -291,6 +296,16 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                                'and error in derive.json / work/derived/.rows/failures.jsonl; every other record calculated'),
                 model_calls=0, source_replays=0, source_writes=0,
                 status='calculations_retained' if not failures else 'calculations_retained_with_failures')
+    # How the ROOT used its lane (operator inspection only; never an input to a calculation): the native stage beside
+    # the legacy pass (work/native-overlap.json, FRANKIE_ROOT_NATIVE_OVERLAP_V1: child pid, CPUs, seconds, outcome) or
+    # the serial order when it is absent, and the journal sha256 passes this process made.
+    overlap_path = session.work / 'native-overlap.json'
+    calc['root_execution'] = dict(
+        native_overlap=witness(overlap_path) if overlap_path.is_file() else dict(
+            status='absent', reason='serial order (FRANKIE_ROOT_NATIVE_OVERLAP=off, native pass off, a resumed '
+                                    'completed native stage, or a saved derivation reused)'),
+        journal_sha256_reads=dict(count=1, basis='frankie_box_filehash stat-keyed cache shared with Session.derive'),
+        data_workers=data_workers)
     if shared_market_policy is not None:
         # Pin existing spools at publication; a reader must never invent a new
         # source identity by hashing whatever happens to be at an old pathname.

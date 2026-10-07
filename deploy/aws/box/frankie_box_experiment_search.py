@@ -289,6 +289,107 @@ def columns(rows, time_key):
     return numeric, text, sorted(other), count
 
 
+# ---- the spool parse on the held lane (Greg, 2026-10-07: every piece uses the lane's CPUs) --------------------------
+# columns(unpack_spool(...)) decodes and flattens one row at a time on one CPU; the frame spool carries full-depth books,
+# observations and the group's INPUT records per F_LAST close, so it is the largest decode of the search. The rows are
+# independent: the file is cut at line boundaries into ordered byte ranges, each range is decoded and flattened by the
+# unchanged columns() in a forked worker, and the parts are joined in file order with exactly columns()'s rules (a key's
+# list starts with None for every earlier row; a row without the key appends None; first-appearance key order). The
+# bytes are hashed in file order beside the workers and checked against the pin after every row decoded, as
+# unpack_spool does. Same channels, same values, same order, same errors; below SPOOL_PARALLEL_MIN_BYTES or with one
+# worker it is the serial call itself.
+SPOOL_PARALLEL_MIN_BYTES = 64 << 20
+SPOOL_RANGES_PER_WORKER = 4          # several ranges per worker: a dense range does not trail a drained pool
+
+
+def _spool_range_columns(args):
+    path, start, end = args
+    from research.kalshi.frankie_boss.c15_journal import unpack
+    def rows():
+        position = start
+        with open(path, 'rb') as handle:
+            handle.seek(start)
+            for line in handle:
+                if position >= end:
+                    break
+                position += len(line)
+                yield unpack(json.loads(line.decode('utf-8')))
+    numeric, text, _, count = columns(rows(), None)
+    return numeric, text, count
+
+
+def _spool_ranges(path, size, pieces):
+    """Ordered [start, end) byte ranges of the file, each starting at a line start."""
+    cuts = [0]
+    with open(path, 'rb') as handle:
+        for k in range(1, pieces):
+            nominal = size * k // pieces
+            if nominal <= cuts[-1]:
+                continue
+            handle.seek(nominal - 1)
+            handle.readline()                      # ends just after the newline at or after byte nominal - 1
+            cut = handle.tell()
+            if cuts[-1] < cut < size:
+                cuts.append(cut)
+    cuts.append(size)
+    return [(path, a, b) for a, b in zip(cuts, cuts[1:]) if b > a]
+
+
+def spool_columns(path, pin, time_key, workers=1, report=None):
+    """columns(unpack_spool(path, pin), time_key) with the decode on the lane's workers (see above)."""
+    started = time.time()
+    size = Path(path).stat().st_size
+    if workers <= 1 or size < SPOOL_PARALLEL_MIN_BYTES:
+        result = columns(unpack_spool(path, pin), time_key)
+        if report is not None:
+            report.update(mode='serial', workers=1, ranges=1, bytes=size, seconds=round(time.time() - started, 3))
+        return result
+    import multiprocessing
+    import threading
+    ranges = _spool_ranges(str(path), size, workers * SPOOL_RANGES_PER_WORKER)
+    hashed = dict(sha256=hashlib.sha256(), bytes=0)
+
+    def hash_file():
+        try:
+            with open(path, 'rb') as handle:
+                for block in iter(lambda: handle.read(1 << 24), b''):
+                    hashed['sha256'].update(block)
+                    hashed['bytes'] += len(block)
+        except BaseException as error:  # noqa: BLE001 - re-raised in the caller after the join
+            hashed['error'] = error
+    hasher = threading.Thread(target=hash_file, name='spool-sha256')
+    numeric, text, count = {}, {}, 0
+    try:
+        with multiprocessing.get_context('fork').Pool(min(workers, len(ranges))) as pool:
+            hasher.start()                         # after the workers are forked: no thread is copied into them
+            for part_numeric, part_text, part_count in pool.imap(_spool_range_columns, ranges):
+                for merged, part in ((numeric, part_numeric), (text, part_text)):
+                    for key, values in part.items():
+                        if key in merged:
+                            merged[key].extend(values)
+                        else:                      # first seen in this range: None for every earlier row, as columns()
+                            merged[key] = [None] * count
+                            merged[key].extend(values)
+                    for key, values in merged.items():
+                        if key not in part:
+                            values.extend([None] * part_count)
+                count += part_count
+    finally:
+        if hasher.ident is not None:
+            hasher.join()
+    if hashed.get('error') is not None:
+        raise hashed['error']
+    if hashed['bytes'] != pin['bytes'] or hashed['sha256'].hexdigest() != pin['sha256']:
+        raise ValueError('search spool differs from the selected export: ' + str(path))
+    other = sorted(key + ' (mixed kinds: numeric and text channels both retained)' for key in set(text) & set(numeric))
+    if report is not None:
+        report.update(mode='fork_pool_line_ranges', workers=min(workers, len(ranges)), ranges=len(ranges), bytes=size,
+                      seconds=round(time.time() - started, 3),
+                      basis='ordered byte ranges cut at line starts; parts joined in file order with columns() rules; '
+                            'bytes hashed in file order and checked against the pin')
+    return numeric, text, other, count
+
+
 def sha256_file(path):
     h = hashlib.sha256()
     with open(path, 'rb') as f:
@@ -506,8 +607,9 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
     frames_pin = source_pin(frames_path)
     if frames_pin is None:
         raise SystemExit('no book-frame spool at %s: the ROOT legacy pass did not run for this day' % frames_path)
-    f_num, f_text, f_other, n = columns(unpack_spool(frames_path, frames_pin), 'ts_recv_ns')
-    sources.append(dict(source='frames', path=str(frames_path), rows=n,
+    frames_parse = {}
+    f_num, f_text, f_other, n = spool_columns(frames_path, frames_pin, 'ts_recv_ns', workers, frames_parse)
+    sources.append(dict(source='frames', path=str(frames_path), rows=n, parse=frames_parse,
                         bytes=frames_pin['bytes'], sha256=frames_pin['sha256'],
                         numeric=sorted(f_num), text=sorted(f_text), not_searched=f_other,
                         frame_sections={section: dict(numeric=sorted(k for k in f_num if k.startswith((section + '.', section + '['))),
@@ -596,7 +698,9 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         if pin is None:
             notes.append(dict(source=spool, missing=str(path)))
             continue
-        num, text, other, count = columns(unpack_spool(path, pin), time_key)
+        parse = {}
+        num, text, other, count = spool_columns(path, pin, time_key, workers, parse)
+        notes.append(dict(source=spool, parse=parse))
         group_numeric, group_text, group_report = root_row_columns(
             spool, num, text, count, root_frames, root_owners, n,
             derive.get('price_row_provenance_schema' if spool == 'prices' else 'row_provenance_schema'))

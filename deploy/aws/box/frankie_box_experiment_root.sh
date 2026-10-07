@@ -29,5 +29,10 @@ esac
 case "$BEDROCK" in on|off) set -- "$@" --bedrock "$BEDROCK" ;; *) echo 'BEDROCK must be on or off' >&2; exit 2;; esac
 [ -z "${FROZEN_SURVIVORS:-}" ] || set -- "$@" --frozen-survivors "$FROZEN_SURVIVORS"
 case "${RESUME:-off}" in on) set -- "$@" --resume;; off) ;; *) echo 'RESUME must be on or off' >&2; exit 2;; esac
+# FRANKIE_ROOT_NATIVE_OVERLAP (on | off, default on): with the native pass on, ROOT process 2 (native traversal) runs in a
+# forked child beside process 1 (legacy pass) inside this held lane; off keeps the serial order. Outputs are the same files
+# by the same calls either way; work/native-overlap.json records the child, its CPUs, seconds and outcome.
+case "${FRANKIE_ROOT_NATIVE_OVERLAP:-on}" in on|off) export FRANKIE_ROOT_NATIVE_OVERLAP="${FRANKIE_ROOT_NATIVE_OVERLAP:-on}";;
+  *) echo 'FRANKIE_ROOT_NATIVE_OVERLAP must be on or off' >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_root.py" "$@"

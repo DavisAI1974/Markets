@@ -38,6 +38,7 @@ reason to <session>/note and exits nonzero so the heartbeat shows it.
     ... --stage preflight        (engine reach only; starts nothing)
 """
 import argparse
+import contextlib
 import hashlib
 import json
 import math
@@ -762,9 +763,170 @@ class Session:
             return None
 
     # ---- derive (the pin's producers on this cycle's rows) ------------------------------------------------
-    def derive(self, *, source=None, bedrock=True, digest=True, opening_adapter_state=None, opening_book=None,
-               recovery=False, save_requested=None, retain_frame_sections=False, digest_bedrock=None,
-               bedrock_off_cause=None):
+    def derive(self, **arguments):
+        """The ROOT's four processes (see _derive). On the recovery route with the native pass on, ROOT process 2 (the
+        native traversal) runs beside process 1 (the legacy pass) in one forked child of this ROOT process, inside the
+        same held lane (_start_native_overlap): both read the same sealed INPUT record spool and neither reads the
+        other's outputs. Any exit before the join asks that child to save at its next closed group and waits for it, so
+        no native stage outlives the ROOT that started it."""
+        try:
+            return self._derive(**arguments)
+        except BaseException:
+            self._stop_native_overlap('the ROOT legacy/native derivation stopped before the native stage was joined')
+            raise
+
+    # ---- ROOT process 2 beside process 1 (Greg, 2026-10-07: every piece uses the lane's CPUs) ------------------
+    NATIVE_OVERLAP_SCHEMA = 'FRANKIE_ROOT_NATIVE_OVERLAP_V1'
+    NATIVE_OVERLAP_SAVED = 75      # the child's exit when it saved at a closed group (TeacherSaved)
+
+    def _native_overlap_mode(self):
+        """FRANKIE_ROOT_NATIVE_OVERLAP: on (default) or off (the serial order: legacy, then native)."""
+        mode = os.environ.get('FRANKIE_ROOT_NATIVE_OVERLAP', 'on')
+        if mode not in ('on', 'off'):
+            raise ValueError('FRANKIE_ROOT_NATIVE_OVERLAP must be on or off')
+        return mode
+
+    def _native_overlap_record(self, **fields):
+        path = self.work / 'native-overlap.json'
+        body = load_json(path) if path.is_file() else dict(schema=self.NATIVE_OVERLAP_SCHEMA, attempts=[])
+        if fields.get('attempt') is not None:
+            body['attempts'].append(fields.pop('attempt'))
+        elif body['attempts']:
+            body['attempts'][-1].update(fields)
+        write_json(path, body)
+        return body
+
+    @contextlib.contextmanager
+    def _native_stage_lock(self, blocking=False):
+        """One native traversal per ROOT directory: an exclusive flock on work/native-stage.lock. It is held by the
+        process running B.run (the forked child inherits the open description, so the lock lives exactly as long as the
+        child); an earlier attempt's native stage that still runs (an orphan of a killed ROOT) makes this refuse."""
+        import fcntl
+        handle = open(self.work / 'native-stage.lock', 'a+b')
+        try:
+            try:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
+            except BlockingIOError:
+                raise ValueError('a native stage of an earlier attempt of this ROOT still runs (work/native-stage.lock '
+                                 'held); resume after it ends, never a second traversal beside it')
+            yield handle
+        finally:
+            handle.close()
+
+    def _start_native_overlap(self, records, container, pin, *, opening_adapter_state, opening_book, save_requested):
+        """Start ROOT process 2 (the unchanged _native_stage: B.run, then native-stage.json) in a forked child while this
+        process runs the legacy pass. Same records, same arguments, same output directory as the serial order; the
+        native pass places its own workers by its core plan on the lane's cores after the first, and this process pins
+        its single-threaded legacy pass to the lane's first CPU (the coordinator CPU the core plan leaves) until the
+        join. Returns without starting when the mode is off or the native stage already completed."""
+        if self._native_overlap_mode() == 'off' or (self.work / 'native-stage.json').is_file():
+            return None
+        import multiprocessing
+        import signal
+        lock = self._native_stage_lock()
+        handle = lock.__enter__()          # held by this process until the child owns the same open description
+        lane = sorted(os.sched_getaffinity(0))
+        session = self
+
+        def child():
+            # A forked child of the ROOT: its own stop flag (the lane signals the ROOT; the ROOT forwards SIGTERM here),
+            # its own probe directory (the parent's progress.json stays the legacy pass's), never the parent's stack.
+            stop = [False]
+            signal.signal(signal.SIGTERM, lambda *_: stop.__setitem__(0, True))
+            def child_save_requested():
+                return stop[0] or bool(save_requested and save_requested())
+            probe = _box_module('frankie_box_progress').Probe(session.dir / 'native-overlap')
+            probe.request_sha256 = session.request_sha256
+            session._work_probe = probe
+            from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
+            try:
+                session._native_stage(records, container, pin, opening_adapter_state=opening_adapter_state,
+                                      opening_book=opening_book, save_requested=child_save_requested, recovery=True)
+            except TeacherSaved:
+                os._exit(self.NATIVE_OVERLAP_SAVED)
+            except BaseException as error:  # noqa: BLE001 - recorded whole; the parent's serial route meets it again
+                import traceback
+                write_json(session.dir / 'native-overlap' / ('error-%d.json' % os.getpid()),
+                           dict(error_type=type(error).__name__, error=str(error), traceback=traceback.format_exc()))
+                os._exit(1)
+            os._exit(0)
+
+        legacy_cpu = lane[0] if len(lane) > 1 else None
+        process = multiprocessing.get_context('fork').Process(target=child, name='root-native-stage', daemon=False)
+        try:
+            # the intent before the fork: a crash between the two leaves this attempt with outcome unknown (the lock,
+            # not this record, keeps a second traversal out)
+            self._native_overlap_record(attempt=dict(
+                mode='on', intent_at=time.time(), child_pid=None, outcome='unknown', lane_cpus=lane,
+                legacy_pass_cpu=legacy_cpu, native_probe=str(self.dir / 'native-overlap' / 'progress.json'),
+                rule='ROOT process 2 (native traversal) beside process 1 (legacy pass) on the same sealed INPUT spool; '
+                     'identical calls and outputs to the serial order; native-stage.json is witness-checked at the join'))
+            process.start()
+        finally:
+            lock.__exit__(None, None, None)   # this process's copy closes; the child's copy keeps the flock
+        self._native_overlap = dict(process=process, lane=lane, started=time.time())   # from here every exit joins it
+        if legacy_cpu is not None:
+            os.sched_setaffinity(0, {legacy_cpu})
+        self._native_overlap_record(child_pid=process.pid, started_at=self._native_overlap['started'])
+        self.note(f'native stage started beside the legacy pass (child {process.pid}; legacy on CPU {legacy_cpu}, '
+                  f'native workers by the core plan on {len(lane) - 1} lane CPUs)')
+        del handle
+        return process
+
+    def _join_native_overlap(self, process, outcome_note):
+        process.join()
+        overlap = getattr(self, '_native_overlap', None) or {}
+        lane = overlap.get('lane')
+        if lane:
+            os.sched_setaffinity(0, set(lane))
+        code = process.exitcode
+        outcome = ('native_stage_completed' if code == 0 else 'native_stage_saved' if code == self.NATIVE_OVERLAP_SAVED
+                   else 'native_stage_failed')
+        error = self.dir / 'native-overlap' / ('error-%d.json' % process.pid)
+        self._native_overlap_record(finished_at=time.time(), exit_code=code, outcome=outcome, note=outcome_note,
+                                    seconds=round(time.time() - overlap.get('started', time.time()), 3),
+                                    error=load_json(error) if (code not in (0, self.NATIVE_OVERLAP_SAVED)
+                                                               and error.is_file()) else None)
+        self._native_overlap = None
+        return outcome
+
+    def _await_native_overlap(self, save_requested):
+        """Join the native stage started beside the legacy pass. While it runs, a save request is forwarded (SIGTERM:
+        the child saves at its next closed group) and this ROOT then saves too. A failed child is recorded; the serial
+        route that follows meets the same native state (a checkpoint resumes; an unrecoverable one refuses, visibly)."""
+        overlap = getattr(self, '_native_overlap', None)
+        if not overlap:
+            return None
+        import signal
+        process = overlap['process']
+        waited = time.time()
+        while process.is_alive():
+            process.join(timeout=5)
+            if process.is_alive() and save_requested and save_requested():
+                os.kill(process.pid, signal.SIGTERM)
+                self._join_native_overlap(process, 'a save request reached the ROOT while the native stage ran')
+                from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
+                raise TeacherSaved('ROOT legacy stage complete; the native stage saved at a closed group')
+        self._native_overlap_record(legacy_waited_for_native_seconds=round(time.time() - waited, 3))
+        outcome = self._join_native_overlap(process, 'joined after the legacy pass')
+        if outcome != 'native_stage_completed':
+            self.note(f'native stage beside the legacy pass ended {outcome}; the serial native route continues from '
+                      f'its retained state')
+        return outcome
+
+    def _stop_native_overlap(self, reason):
+        overlap = getattr(self, '_native_overlap', None)
+        if not overlap:
+            return
+        import signal
+        process = overlap['process']
+        if process.is_alive():
+            os.kill(process.pid, signal.SIGTERM)       # the child saves at its next closed group, then exits
+        self._join_native_overlap(process, reason)
+
+    def _derive(self, *, source=None, bedrock=True, digest=True, opening_adapter_state=None, opening_book=None,
+                recovery=False, save_requested=None, retain_frame_sections=False, digest_bedrock=None,
+                bedrock_off_cause=None):
         """The ROOT's four processes on the sealed source: (1) the legacy pass (every INPUT record -> the five legacy layers
         and the row spools), (2) the bedrock traversal, (3) the bedrock projection, (4) the derivation digest.
         The native pass (2)+(3) is this method's default and the default of every NEW experiment request (the shared
@@ -844,6 +1006,11 @@ class Session:
             raise ValueError('source calculations require an independently pinned source binding')
         status['rows'] = container
         self.note(f'deriving: {len(records)} INPUT records from prefix-{self.cycle} ({container.get("count")} entries)')
+        if recovery and bedrock and pin.get('bedrock'):
+            # ROOT process 2 needs only the sealed INPUT spool just completed above: it runs beside process 1 below and
+            # is joined by _derive_bedrock (via _complete_native_derivation) after the legacy stage is published.
+            self._start_native_overlap(records, container, pin, opening_adapter_state=opening_adapter_state,
+                                       opening_book=opening_book, save_requested=save_requested)
         V4MboAdapter = self._producer_module('research/ng_exhaustion_mbo_v4_state_adapter_20260820.py',
                                              'research.ng_exhaustion_mbo_v4_state_adapter_20260820').V4MboAdapter
         from research.kalshi.frankie_raw_mbo_benchmark import native_roll20
@@ -1379,6 +1546,25 @@ class Session:
     def _derive_bedrock(self, records, container, pin, derived, receipt_layers, *, opening_adapter_state=None,
                         opening_book=None, save_requested=None, recovery=False):
         """The pinned traversal, the projection and their receipts; the layer entries go into receipt_layers."""
+        if recovery:
+            # A native stage started beside the legacy pass (_start_native_overlap) is joined here; its completed
+            # native-stage.json is then reused below by the unchanged witness-checked path. Without one, the lock
+            # refuses to run a second traversal while an earlier attempt's native stage still runs.
+            self._await_native_overlap(save_requested)
+        with (self._native_stage_lock() if recovery else contextlib.nullcontext()):
+            B, layers, code_commit, run = self._native_stage(
+                records, container, pin, opening_adapter_state=opening_adapter_state, opening_book=opening_book,
+                save_requested=save_requested, recovery=recovery)
+        if save_requested and save_requested():
+            from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
+            raise TeacherSaved('native calculation completion retained; projection remains to be resumed')
+        return self._native_projection(B, layers, code_commit, run, pin, derived, receipt_layers)
+
+    def _native_stage(self, records, container, pin, *, opening_adapter_state=None, opening_book=None,
+                      save_requested=None, recovery=False):
+        """ROOT process 2: the pinned traversal (B.run) and, on the recovery route, native-stage.json; a completed
+        native-stage.json is reused after every artifact is witnessed. Shared by the serial route and by the native
+        stage run beside the legacy pass (_start_native_overlap): the same call, the same arguments, the same files."""
         B = _box_module('frankie_box_bedrock')
         layers = list(pin.get('projection_layers') or pin['bedrock_layers'])
         code_commit = B.producers_commit(PRODUCERS)
@@ -1418,9 +1604,11 @@ class Session:
                 artifacts.extend(run['ledgers'].values())
                 write_json(native_stage, dict(identity=stage_identity, run=run,
                     artifacts=[{k: item[k] for k in ('path', 'bytes', 'sha256')} for item in artifacts]))
-        if save_requested and save_requested():
-            from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
-            raise TeacherSaved('native calculation completion retained; projection remains to be resumed')
+        return B, layers, code_commit, run
+
+    def _native_projection(self, B, layers, code_commit, run, pin, derived, receipt_layers):
+        """ROOT process 3: the producers' crosswalk projection of a completed native run (unchanged)."""
+        probe = _box_module('frankie_box_progress').for_session(self)
         probe.update('root-projection')
         crosswalk = B.crosswalk_records(PRODUCERS, layers)
         self._native_layer_crosswalk = crosswalk     # read by _write_native_layer_records only; never serialized into derive.json

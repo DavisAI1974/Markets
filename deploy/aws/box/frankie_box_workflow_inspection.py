@@ -110,6 +110,7 @@ same_pair_candidates native_pass native_entries native_carriers opening_state la
 batch_days shared_runtime superseded_jev_runtime route_integrity shared_field
 exhaustion_d native_only_ingestion model_clock use_counts registry_entries registry_mapping registry_entry_findings
 confirmation_clock external_points
+root_execution native_overlap timing parse
 '''.split())
 WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the pieces' own inputs / use / outputs record
 # The successor chain (school and corrections pieces): recorded pins {path, bytes, sha256} followed one by one from the
@@ -522,7 +523,8 @@ def artifact_paths(record, piece):
     if root and piece == 'root':
         out += [root / 'calculations-receipt.json', root / 'source-binding.json',
                 root / 'work/derive.json', root / 'external-computation.json',
-                root / 'work/native-layer-records.json']      # per native layer status (second review F4)
+                root / 'work/native-layer-records.json',      # per native layer status (second review F4)
+                root / 'work/native-overlap.json']            # ROOT process 2 beside process 1: child, CPUs, seconds, outcome
     target = absolute(record.get('target'))
     if target and piece in ('data', 'search'):
         out.append(target / 'MANIFEST.json')
