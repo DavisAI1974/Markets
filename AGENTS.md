@@ -3,9 +3,9 @@
 ## Start here
 
 - Apply using-agent-skills, then context-engineering when available. Locate missing named skills before proceeding.
-- Read research/kalshi/frankie_boss/HANDOFF_20261006_SUCCESSOR_AND_FULL_EVIDENCE.md first, including its newest addenda, and follow its reading order. It is the current continuation pointer for this branch.
+- Read research/kalshi/frankie_boss/CODEX_HANDOFF_20261006_NIGHT.md first and follow its reading order. It is the current restart pointer; HANDOFF_20261006_SUCCESSOR_AND_FULL_EVIDENCE.md remains earlier background.
 - Consult CLAUDE.md for shared project context; its older session notes and startup hooks do not supersede the current handoff or Greg's current instructions.
-- Verify the actual branch tip and preserve newer work. Current work branch: chatgpt/frankie-30day-aws-workflow-20261006. Do not reset to the handoff checkpoint.
+- Verify the actual branch tip and preserve newer work. Current integration branch: ccr-5fce7de3-xa4hfg. CCode returns on ccode/teacher-tasks-20261006b. Do not reset to the handoff checkpoint.
 - Inspect existing implementations, inventories and contracts before building. Coordinate disjoint ownership with other agents; CCode owns the Step #4 scientific/candidate files and separate smaller-model facilitator work.
 
 ## Current execution boundaries
@@ -19,7 +19,7 @@
 ## Evidence and successor work
 
 - Greg's latest market-research rule (2026-10-06): market signals come from underlying market conditions. IDs, dates and days of week can be search conditions/cells that group those signals for forecasting; they are not numerical signals or targets themselves. Keep dates/weekdays associated with the original data. Predictions must be attributed to the underlying conditions, not to their date/day/ID labels. Exclude trade costs, commissions, fee/slippage assumptions, P&L objectives and non-market bookkeeping from signal calculations. Preserve actual market prices/spreads, flow, depth, FIFO rank/age, elapsed market durations and geometry. Keep identity/missingness bindings without treating their codes as measurements. Historical cost-tuned results must be identified and reworked, not merely stripped of final fee columns or silently admitted as cost-free evidence.
-- Preserve Frankie's inputs, calculations, planes, adapters, replay and Memory A, plus the BOSS's original targets, masks, controls, representation and training role.
+- Preserve Frankie's applicable inputs, calculations, planes, adapters and replay, plus the BOSS's original targets, masks, controls, representation and training role. Greg retired Memory A; H06–H08 remain historical/not_bound as the current handoff specifies.
 - Every applicable retained record/field and knowledge source must reach actual computation. Receipts, lists and storage alone are insufficient. Exclude private trade-decision logic from teacher evidence.
 - No silent dropping, arbitrary truncation, output pooling or averaging across runs. Preserve raw causal availability and answer walls; do not impose a market-date gate on completed knowledge.
 - Reuse existing owner-local shared calculations and the normal checkpoint updater.

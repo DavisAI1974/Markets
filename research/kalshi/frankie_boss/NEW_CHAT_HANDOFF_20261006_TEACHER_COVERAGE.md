@@ -1,5 +1,13 @@
 # Detailed continuation handoff: BOTH teachers' Dipole coverage — 2026-10-06
 
+## Restart checkpoint — 2026-10-06 night
+
+Read `CODEX_HANDOFF_20261006_NIGHT.md` first for the closed-chat state, reading order,
+ownership, outstanding corrections and execution holds. Implementation is pushed through
+`109c3a3a7616c3ccc7b322abac7af2acbe5d80a1`; this pointer is a later documentation commit.
+Refetched CCode remains `fea2e165`. All code was committed; the worktree was clean before
+this documentation closeout. Fetch current refs and preserve newer work.
+
 ## Latest clarification — market conditions vs context (Greg, 2026-10-06)
 
 Greg excludes trading costs and non-market bookkeeping from research/Dipole signals.
