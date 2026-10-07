@@ -322,6 +322,17 @@ def cpu_topology(cpus):
         return None
 
 
+def cpu_ranges(cpus):
+    """'8-15,24-31' for [8..15, 24..31]: the exact CPU set as contiguous runs (a note only; first-last hid the gaps)."""
+    runs = []
+    for cpu in sorted(cpus):
+        if runs and cpu == runs[-1][1] + 1:
+            runs[-1][1] = cpu
+        else:
+            runs.append([cpu, cpu])
+    return ','.join(str(a) if a == b else '%d-%d' % (a, b) for a, b in runs)
+
+
 def core_groups(cpus, topology):
     """The CPUs grouped by physical core (both hardware threads together), cores in the order of their first CPU."""
     groups = {}
@@ -1223,7 +1234,7 @@ class Session:
         os.environ['FRANKIE_LANE_CPUS'] = os.environ['FRANKIE_BOOKED_CPUS'] = ','.join(map(str, legacy_cpus))
         self._native_overlap_record(child_pid=process.pid, started_at=self._native_overlap['started'])
         self.note(f'native stage started beside the legacy pass (child {process.pid}; native on CPUs '
-                  f'{native_cpus[0]}-{native_cpus[-1]}, legacy on {legacy_cpus[0]}-{legacy_cpus[-1]})')
+                  f'{cpu_ranges(native_cpus)}, legacy on {cpu_ranges(legacy_cpus)}; {split_basis})')
         del handle
         return process
 
@@ -1464,7 +1475,8 @@ class Session:
             prices_out, structures_out, failures_out = (_QueuedSpool(prices, writer), _QueuedSpool(structures, writer),
                                                         _QueuedSpool(failures, writer))
             self.note(f'legacy pass: replay on CPU {replay_cpu}, frame rows encoded on {writer.workers} pinned lane CPUs '
-                      f'{encoder_cpus[0]}-{encoder_cpus[-1]}, written in the serial order')
+                      f'{cpu_ranges(encoder_cpus)} (replay core siblings idle: {cpu_ranges(replay_core[1:]) or "none"}), '
+                      f'written in the serial order')
         else:
             prices_out, structures_out, failures_out = prices, structures, failures
         def append_frame(record_book, frame, group_inputs, index):
