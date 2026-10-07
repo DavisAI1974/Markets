@@ -184,9 +184,11 @@ def _validate_identity(identity):
     """`complete`/`unestablished` are never trusted alone: the parts actually present decide (BIND-F)."""
     missing = []
     entries = identity.get('entries')
-    if not isinstance(entries, dict) or not entries:
+    if not isinstance(entries, dict):
         missing.append('entries (per-entry association of sources)')
-    else:
+    elif not entries and list(identity.get('entry_ids') or []):
+        missing.append('entries (per-entry association of sources)')
+    else:                        # an empty entries dict with no entry ids (an unmapped claim) establishes everything: nothing to bind
         for entry_id, parts in entries.items():
             for part in _ENTRY_PARTS:
                 if not isinstance(parts, dict) or part not in parts:
@@ -208,14 +210,24 @@ def binding_identities_differ(retained, current):
     unestablished = list(retained.get('unestablished') or [])
     if retained.get('status') != current.get('status') or retained.get('entry_ids') != current.get('entry_ids'):
         return True, unestablished
-    if not retained.get('complete'):
-        # the established parts of an older projection: status, entry ids and the flat source pins against the
-        # current flat source pins; nothing else is compared, and equality of those parts establishes nothing more
+    if not isinstance(retained.get('entries'), dict):
+        # an older flat projection: status, entry ids and the flat source pins are its only established parts; they are
+        # compared against the current flat pins and equality of those parts establishes nothing more
         current_flat = sorted(src for parts in (current.get('entries') or {}).values() for src in parts.get('sources') or [])
         if retained.get('flat_sources') is not None and retained['flat_sources'] != current_flat:
             return True, unestablished
         return False, unestablished
-    return retained.get('entries') != current.get('entries'), unestablished
+    # per entry: every part PRESENT on both sides is compared (a difference there is a real difference, complete or
+    # not); a part absent on the retained side stays unestablished
+    current_entries = current.get('entries') or {}
+    for entry_id, parts in retained['entries'].items():
+        other = current_entries.get(entry_id)
+        if not isinstance(other, dict) or not isinstance(parts, dict):
+            return True, unestablished
+        for part in _ENTRY_PARTS:
+            if part in parts and part in other and parts[part] != other[part]:
+                return True, unestablished
+    return False, unestablished
 
 
 def current_binding(claim, HC):

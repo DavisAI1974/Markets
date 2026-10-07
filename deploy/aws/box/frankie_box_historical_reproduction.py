@@ -485,9 +485,7 @@ def compare(entry, run_doc, staging):
     references = {s['path']: s for s in staging.get('recorded') or []}
     argv = (entry.get('entry') or {}).get('argv') or []
     for rec in entry.get('recorded_outputs') or []:
-        item = dict(kind=rec['kind'], what=rec.get('what'), claims=rec.get('claims', entry['claims']),
-                    produced=rec.get('produced'), recorded=rec.get('recorded'), pattern=rec.get('pattern'),
-                    recorded_in=rec.get('recorded_in'))
+        item = output_declaration_key(dict(rec, claims=rec.get('claims', entry['claims'])))
         if rec['kind'] == 'printed':
             m = re.search(rec['pattern'], run_doc.get('stdout') or '', re.M)
             if m is None:
@@ -538,19 +536,26 @@ def command_argv(command):
     return ['-B', command.get('script')] + list(command.get('argv') or [])
 
 
+DECLARATION_FIELDS = ('kind', 'what', 'claims', 'produced', 'recorded', 'pattern', 'recorded_in')   # one definition, both sides
+
+
 def output_declaration_key(rec):
-    """What identifies one declared comparison (recorded output) beside its kind: enough to detect an omitted, duplicated
-    or foreign output in a retained comparison."""
-    return json.loads(json.dumps(dict(kind=rec.get('kind'), what=rec.get('what'), claims=rec.get('claims'),
-                                      produced=rec.get('produced'), recorded=rec.get('recorded'), pattern=rec.get('pattern'),
-                                      recorded_in=rec.get('recorded_in')), sort_keys=True))
+    """What identifies one declared comparison (recorded output): the DECLARATION_FIELDS, enough to detect an omitted,
+    duplicated or foreign output in a retained comparison. compare() writes exactly these fields on every output."""
+    return json.loads(json.dumps({k: rec.get(k) for k in DECLARATION_FIELDS}, sort_keys=True))
 
 
 def inventory_of_outputs(entry, outputs):
-    """B4-F: the reasons a retained outputs list is not the entry's full declared comparison inventory, else []."""
+    """B4-F: the reasons a retained outputs list is not the entry's full declared comparison inventory, else []. An
+    output that retains no declaration fields beyond kind/what/claims (an older comparison) cannot establish the
+    inventory and says so, rather than being read as a foreign output."""
     declared = [output_declaration_key(dict(r, claims=r.get('claims', entry['claims']))) for r in entry.get('recorded_outputs') or []]
     if not isinstance(outputs, list):
         return ['comparison outputs are not a list']
+    for i, o in enumerate(outputs):
+        if isinstance(o, dict) and not any(k in o for k in DECLARATION_FIELDS[3:]):
+            return ['comparison output %d retains no declaration fields (an older comparison): the declared inventory cannot '
+                    'be established from it' % i]
     got = [output_declaration_key(o) if isinstance(o, dict) else None for o in outputs]
     reasons = []
     if len(got) != len(declared):
@@ -688,8 +693,6 @@ def coherence(entry, plan_doc, run_doc, comparison, status, dispatch_doc=None, d
                 reasons.append('comparison status %r does not follow its retained outputs (%r)' % (comparison.get('status'), derived))
             if json.loads(json.dumps(comparison.get('coverage'), sort_keys=True)) != json.loads(json.dumps(coverage, sort_keys=True)):
                 reasons.append('comparison coverage facts differ from what its retained outputs derive')
-        if comparison.get('returncode') != run_doc.get('returncode') or comparison.get('timed_out') != run_doc.get('timed_out'):
-            reasons.append('comparison run facts (returncode/timed_out) differ from the run document')
         failed = bool(run_doc.get('timed_out')) or run_doc.get('returncode') != 0
         if failed and status != 'performed_failed':
             reasons.append('status %s on a run that did not complete (returncode %s, timed_out %s)'
