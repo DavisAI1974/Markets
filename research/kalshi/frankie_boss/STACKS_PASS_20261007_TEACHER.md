@@ -4,7 +4,7 @@ Owner: teacher-stage agent. Branch ccr-d2f8f826-iefeah-frankie at 2f39ddc. SOURC
 Owned files: deploy/aws/box/frankie_box_experiment_teacher.py (ET.py), frankie_box_experiment_teacher.sh (ET.sh),
 frankie_box_teacher_knowledge.py, frankie_box_joined_teacher.py/.sh, frankie_box_teach.py, frankie_box_teacher_discussion.py,
 frankie_box_teacher_successor.sh. The teacher's pools themselves live in research/kalshi/frankie_boss/parallel_teacher.py
-(PT.py, NOT in the owned list: read-only here; cross-owner requests below) and the shared reader in
+(PT.py; added to this owner's files mid-pass by the parent, 2026-10-07 ~23:40Z) and the shared reader in
 frankie_box_market_timeline.py (hashed into a2's ROOT binding: untouchable during a2).
 
 ## Interim audit (state at 2f39ddc, before any edit of this pass)
@@ -46,3 +46,135 @@ exchange): N/A for CPU stacks, audited for D only.
 
 Missing or partial today, in fix order: A8/A4 (cross-owner only), A1 default, A9 thread caps, A7 publication tail,
 A5 attachment hash as written, B2 unit probes (raw pass and finish), D (stack events into workflow_report).
+
+## After the pass (uncommitted edits; line numbers are of the edited files)
+
+| Item | Before | After | Where now |
+|---|---|---|---|
+| A1 pools sized from booking | DONE, default literal 8 | DONE | ET.py:1001-1030 main(): `--workers` default = lane_pin.lane_cpus() minus one, listed in run_defaults |
+| A2 pinned workers / whole-core consumer | DONE (shared path) | DONE, every PT pool through lane_pin.executor | PT.py:205-236 `_spawn_pool` (lane_pin.executor('process', n, cpus=plan, spawn); record() placement on each pool record); used by `_RawStreams._new_pool` PT.py:~430, `EvidencePrecompute._new_pool` PT.py:~655, `finish.new_pool` PT.py:~1050 |
+| A3 ordered hand-off | DONE | DONE (unchanged) | |
+| A4 dead worker redo one fewer | DONE | DONE, plus a redo submit that meets a broken pool no longer escapes | PT.py:280-292 `_submit` (Future holding BrokenProcessPool), used in `_RawStreams._result` |
+| A5 read/hash once | PARTIAL | DONE in owned files | ET.py:134-143 `_HashingWriter` (attachment hashed as written; no read-back) |
+| A7 sub-steps side by side | PARTIAL | PARTIAL+ | ET.py:~900-960: rows-file sha256 (and a retained attachment's) on threads while the external section builds; joined at `hash_publications` phase |
+| A8 every stop bounded | PARTIAL | DONE in PT | PT.py:238-278 `_bounded_shutdown` (cancel queued, poll alive 50 ms up to STOP_GRACE_SECONDS=60, then terminate, kill after 5 s, listed as `stops`); every former `pool.shutdown(wait=True, ...)` replaced (raw rebuild/exit, precompute rebuild/close, finish rebuild/finally). The shared reader's Pool remains cross-owner (below) |
+| A9 thread env fixed | MISSING | DONE (CLI path) | ET.py:1016-1022: OMP/OPENBLAS/MKL/NUMEXPR_NUM_THREADS=1 when unset, before any torch/numpy import; an operator value stands; listed in run_defaults |
+| A10 toy byte-identity | per 42c4e89 | re-proved for this pass | below |
+| B2 unit heartbeat + stall | PARTIAL | DONE | PT.py:297-317 `PROGRESS`/`_progress` (every 15 s; raw rows every 1,024, finish per chunk); ET.py:101-124 `_work_probe` writes FRANKIE_WORK_PROBE_V1 `<out>/progress.json` (frankie_box_progress.Probe) and the stage heartbeat's phase file (report_phase units_done/units_total/unit), so units/min and the 600 s stall flag now move with real work; ET.py:632 wired, reset in the walk's finally |
+| B3 FA-6 env | DONE | DONE | |
+| C S3 transport | N/A | N/A | local files only |
+| D visibility | PARTIAL | DONE | ET.py:222-281 `stack_events` -> workflow_report.use.stacks (FRANKIE_TEACHER_STACK_EVENTS_V1): placement outcome, pool rebuilds, bounded stops, not-registered batches, resume skips, periodic saves, resumes, probe write errors, prefetch errors, every default taken. New receipt fields (additive): `raw_saves`, `journal_prefetch`, `run_defaults`, `cpu_pinning.*.placement/stops` |
+| E science | DONE | DONE | additive only; see "Why bytes are unchanged" |
+| F1 compute dedupe | see table F | | |
+| Save/restore | stop-save only | ROOT-shaped (section below) | |
+
+## F: dedupe, per sub-step (Greg: "Did we dedup in every step too?")
+
+| Sub-step | Read / computed more than once today | Done |
+|---|---|---|
+| ingestion receipt | hashed by ET.sh (`sha256sum`, ET.sh:61) and by ET.py `_teach` (ET.py:~465); small file | left (the wrapper's sha is the given witness the step checks; a few KB) |
+| sealed journal | hashed once per process (prefetch thread -> filehash cache -> witness handed to the shared reader, ET.py:70-92, ~490-505) | DONE; across processes (classroom, export, school) it is re-hashed: that is Greg's open call (c), skip-by-stat, not applied |
+| first INPUT entity | a second CompactReader opened on the journal head (ET.py:~555) | left: reads the first block only |
+| shared picture | read once (iter_applied) | DONE |
+| canonical bytes of each payload | once (EvidencePrecompute on workers, registered, consumer only hashes) | DONE |
+| resume of the raw pass | the saved prefix is read again by the reader (no start-at-cursor) and WAS encoded again by the precompute | encoding of the skipped prefix removed (ET.py:666-690 `present_seen` vs PT.RESUME_SKIP); the re-read stays (cross-owner: start-at-cursor in market_timeline) |
+| attachment | written, then read back for sha256 | hashed as written (ET.py `_HashingWriter`) |
+| rows file | written (SE._save canonical bytes), then read back for sha256 | read-back moved onto a thread beside the external section; SE.\_save is not owned (it holds the bytes in memory: a returned digest would remove the read: cross-owner, sunday_execution.py:45-69) |
+| F2 pass dedupe | raw pass and finish are one pass each over the rows; the 19-column observe is per chunk once | nothing to collapse |
+| F3 content dedupe | the teacher makes no model call (model_calls 0); its rows file and attachment are code-read, pinned formats hashed by every consumer | N/A: changing their encoding would change science bytes; no model-read text is produced here |
+
+## Additional CPU spots (teacher stage end to end, 32-CPU lane, one day)
+
+Wall-time shares are estimates from the code shape (the teacher stage has never run on 20231018 under the shared
+policy; a1's teacher did not run): UNMEASURED.
+
+| Rank | Stretch (file:line) | Serial today? | Share (est.) | Byte-safe parallel/overlap? | State |
+|---|---|---|---|---|---|
+| 1 | Shared reader decode + timeline merge (frankie_box_market_timeline.py:203-258 and its streams) feeding the raw loop | decode on lane[1:] workers; merge serial in the consumer | large (unmeasured) | yes (placement) | cross-owner, frozen during a2; plus the dead-worker hang (below) |
+| 2 | The pinned raw loop c15_teacher_r3._paired_raw (stateful group history, chains, DChain machines) in PT.row_pass | serial by construction (state carried row to row) | the long pole | only the pure window functions are offloaded (done); the stateful part is the pinned equation: segment replay would need exact group-closed state snapshots of both raw teachers (the Sept-29 pass-2 pattern) | not built: needs a design for snapshotting JournalTeacher/RawJournalTeacherR3 continuation per segment (pinned files c15_teacher*.py unchanged); listed |
+| 3 | Consumer's sibling hyperthread | the consumer is pinned to its whole core (consumer + sibling, ET.py:~590); the sibling hosts the executor manager/feeder threads and the precompute/read-ahead bookkeeping on purpose | n/a | the ROOT-equivalent of 16/17/24 idle: yes, deliberate (a worker there would steal cycles from the serial loop, the stage's limit) | kept |
+| 4 | Finish (normalizer observe, targets, receipts) PT.finish | chunks on 31 workers, in-order join | medium | done | DONE |
+| 5 | Normalizer update() replay to build chunk-start states (PT.finish "for start in range(prepared, ...)") | serial in the parent before the pool starts | small-medium for NormalizerR3 (identity normalizer: none, the a2 case) | could pipeline: submit chunk k as soon as its start state exists instead of after all are prepared | not built (identity normalizer on a2 makes it free); listed |
+| 6 | Snapshot of the attachment (DC.snapshot_teacher_attachment) + SE._save canonical encoding of the rows (pure Python, GIL) | serial | medium on a full day | an encode on workers needs a split of pack/canonical_bytes per row (exact concatenation) in dipole_classroom/sunday_execution | cross-owner (dipole_classroom.py, sunday_execution.py) |
+| 7 | pickle.dump of the attachment | serial, GIL-bound | medium | a forked writer beside SE._save would overlap it byte-identically, but forking a process that holds reader threads risks a lock held at fork | not built (risk), listed |
+| 8 | External section (EXT.ensure_external_section) | serial | small | overlapped with the two publication hashes now | DONE (overlap) |
+| 9 | Several days at once | ET.sh splits the booking over the days (SPARE split) | n/a | done | DONE |
+
+## Save/restore vs ROOT (Greg's directive items 1-7)
+
+| # | ROOT contract | Teacher | Where |
+|---|---|---|---|
+| 1 | save route: SIGTERM marks, runs to the next save point, exit 75; workers do not inherit the mark-only handler | DONE: teach() installs the mark-only handler (ET.py:425-443), row_pass/finish save and raise TeacherSaved (exit 75, PT.py:757-762). Every teacher pool is spawn (a Python handler is not inherited across exec) and lane_pin.executor's initializer now also resets SIGTERM (lane_pin owner's reset_worker_sigterm). The classroom's request (ET.py:436 teach(): forked pools inherit the handler): there is no fork pool in the teacher; the shared reader's Pool is spawn too | |
+| 2 | periodic exact saves at group-closed points | BUILT: PT.py:820-845 SAVE_EVERY_SECONDS=1800 (env FRANKIE_TEACHER_SAVE_EVERY_S, 0 = off); due -> saved at the next row that closes its group (F_LAST receipt) AND ends a raw batch exactly (PT.py:~914), raw streams drained, the same state the stop-save writes (complete False), walk continues; SAVE_RECORD on the receipt (`raw_saves`). The finish already saves each chunk as it completes | |
+| 3 | spool/file positions without re-read | N/A for writes (the teacher appends no spool); PARTIAL for reads: a resume re-reads the shared picture from instant 0 (no start-at-cursor in the reader); the encoding of the skipped prefix is now skipped | cross-owner: market_timeline start-at-cursor (queued request 3) |
+| 4 | identity is content: content_rebinds | BUILT: PT.py:344-373 `_identity_accepted`: equal -> resume; else frankie_box_experiment_root.content_rebinds on the saved vs built identity; checkout moves recorded in `<recovery>.checkout-rebinds/<ns>.json`; the saved identity stays the identity (row_pass and finish adopt it). ET.py's retained-receipt check (shared_market_identity equality, ET.py:~525) still compares by equality: PARTIAL | |
+| 5 | function-level code identity | BUILT: PT.py:322-341 ROW_PASS_CODE / FINISH_CODE through frankie_box_bedrock.code_identity (whole-file sha256 fallback when bedrock is not importable); old whole-file saves accepted while the file is byte-identical (toy) | |
+| 6 | additive; old saves load; probe continues from the cursor | DONE: the old-shape save loads while byte-identical (toy); `_progress('teacher_raw_rows', processed)` starts at the resumed cursor. Note: a save written by the c9bf631 PT (whole-file sha of the OLD bytes) refuses on the new file: that is the rule (byte-identical only); a2's teacher has written no save | |
+| 7 | seal check | DONE in substance: every process (fresh or resumed) re-measures the sealed journal against the ingestion receipt (the saved claim) before the walk and refuses a difference (ET.py:~495-505) | |
+
+## Why bytes are unchanged
+
+- Placement (lane_pin.executor vs the private initializer) only changes WHERE a pure function runs.
+- `_bounded_shutdown` runs only after every needed result is collected (or when the step is already failing/rebuilding);
+  a rebuild resubmits the same blobs in order, as before.
+- The periodic save drains the raw streams only at a row that ends a batch exactly, so no batch boundary moves: every
+  worker result is unpickled from the same batch, so even the in-memory object sharing (which the attachment pickle
+  records) is the reference run's. Toy: pickle sha256 of the rows equal with periodic saves.
+- A resume (from a periodic save OR the existing stop-save) gives equal VALUES; its rows' pickle object-sharing differs
+  from an uninterrupted run (the loaded prefix's strings are other objects), so teacher-attachment.pkl bytes after a
+  resume can differ while every value, the rows file's canonical bytes and the attachment hash are equal. This is the
+  pre-existing behaviour of the stop-save, not introduced here; listed.
+- `_HashingWriter` gives pickle the same file and records the digest of exactly the bytes written (toy: bytes equal, digest
+  equal to the file sha256).
+- Thread caps: torch only builds tensors in PT._chunk (no reduction), so a BLAS/OpenMP thread count cannot change a value.
+
+## Tests run (scratchpad /tmp/claude-0/-home-user-Markets/2248cf40-1f2f-560c-b5b2-bc0289b3f56b/scratchpad/teacher/)
+
+- `toy/run_toy.py`: a verbatim copy of the edited parallel_teacher.py in a toy package with a fake stateful raw loop
+  (c15_teacher_r3 stand-in: three pure window functions on spawn workers through lane_pin.executor, a continuation dict),
+  3,000 rows, RAW_BATCH_CALLS 64, 4 CPUs. Output (toy_output.json):
+  reference pickle sha afdeddc6...; periodic saves (2 saves, at cursors 1279 and 2239) afdeddc6... (equal);
+  crash at row 1777 after the save at 1280, resume from it: values equal (value digest 615bbf23... both), pickle differs
+  (see above); a raw worker killed (os._exit) mid-walk: one rebuild to 3 workers, 8 batches redone, afdeddc6... (equal);
+  old-shape save (whole-file sha of the same file) loads, values equal, note listed; old-shape save of another file
+  refused ("saved teacher source, code or causal bound differs"); placement record lane [0-3], workers on [1,2,3];
+  progress samples 0/1024/2048/...; ALL True.
+- `toy/probe_stop.py`: `_bounded_shutdown` of a healthy and of a broken pool: 0.02 s / 0.0 s, nothing terminated.
+- `toy_et.py`: `_HashingWriter` bytes equal and digest == file sha256; `stack_events` on a synthetic receipt: 9 events
+  (bounded_stop, default, fallback, placement, resume, retry, save, skip); empty receipt -> [] and placement None.
+- py_compile + ast.parse on the five .py files and parallel_teacher.py; bash -n on the three .sh; git diff --check clean.
+- NOT run: the real teacher (torch is not installed in this container; the box venv has it), the shared reader, any
+  journal, ET._teach end to end, content_rebinds with a real checkout move.
+
+## RUNTIME-UNVERIFIED
+
+Everything above on the box: the lane_pin.executor placement on the 32-CPU lane, the bounded stops, the periodic save's
+cost on a full day (each save pickles every row so far; estimated tens of seconds per save at 30 min intervals), the
+resume path on a real journal, the unit probes as read by frankie_box_stage_progress, the thread caps, the publication
+overlap, the identity changes (code_identity) on real saves.
+
+## Cross-owner requests
+
+1. frankie_box_market_timeline.py:212-258 `_rows_parallel` (frozen in a2's ROOT binding; after a2): `pool.apply_async(...).get()`
+   on a multiprocessing.Pool with no timeout: a dead decode worker is replaced silently and its task never completes,
+   so the teacher (and every shared-policy reader) waits forever while the heartbeat shows the stall. Use
+   lane_pin.ordered_map (or wait_result) over the ranges; and add start-at-cursor so a resumed teacher does not re-read
+   the saved prefix. `pool.terminate(); pool.join()` at :257-258 is the unbounded-join shape too (lane_pin.end_pool).
+2. sunday_execution.py:45-69 `_save`: return the sha256 of `raw` (it holds the bytes) so the rows file is not read back.
+3. dipole_classroom.snapshot_teacher_attachment + sunday_execution pack/canonical_bytes: a per-row split of the canonical
+   encoding would let the snapshot encode on workers (exact concatenation) - the largest serial tail after the walk.
+4. frankie_box_experiment.py:1318-1319 Run.child: name `experiment-teacher-rows/<day>` as a probe_dir for the teacher
+   stage (the phase file already carries the units; this adds the work-probe lines with completed_per_min).
+5. frankie_box_lane_pin.py: when `end_executor` lands, parallel_teacher._bounded_shutdown (PT.py:238) should call it
+   (one shared rule); today it is a local equivalent with the same bound-then-kill shape.
+6. Pending from the school owner (R3): frankie_box_teacher_knowledge.py:338 and :453 should call
+   ST.pre_read(days, docs, out_dir) once and pass scanned= to each ST.test(...). NOT done in this pass (time); additive.
+7. Pending from the classroom owner: hand the full read's anchor pictures to the classroom so its second pass goes away
+   (needs a published picture artifact from the teacher and a reader in classroom_reader): not built, listed.
+
+## a2
+
+a2's teacher stage gets none of this unless the work-branch tip is restaged BEFORE the teacher stage starts (after ROOT).
+The teacher-knowledge producer identity (frankie_box_experiment.py:4077-4087) and the classroom reader's producer hashes
+(frankie_box_classroom_reader.py:28-37) include frankie_box_experiment_teacher.py / parallel_teacher.py, so every stage
+of a2 after ROOT must run on the same restaged tip. Never stage an intermediate WIP snapshot.
