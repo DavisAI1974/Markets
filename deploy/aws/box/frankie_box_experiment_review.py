@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 
 SCHEMA = 'FRANKIE_KNOWLEDGE_CORRECTION_V1'
+TRANSITION_SCHEMA = 'FRANKIE_CORRECTION_OWNER_TRANSITION_V1'
 
 
 def digest(raw):
@@ -41,6 +42,93 @@ def _outside(value, scopes, address=()):
     return value
 
 
+def _lesson_digest(value):
+    # The scientific teacher's existing content encoding, distinct from record addressing.
+    return digest(json.dumps(value, sort_keys=True, allow_nan=False).encode())
+
+
+def _transition_operation(pin, lesson):
+    """Read the actual frozen accumulated-teacher operation; never manufacture a successor."""
+    inputs = json.loads(_read_pin(pin))
+    if inputs.get('schema') != 'FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1':
+        raise ValueError('correction transition requires accumulated-teacher frozen inputs')
+    selection = inputs['selection']
+    if inputs.get('selection_sha256') != _lesson_digest(selection):
+        raise ValueError('correction transition selection differs from its binding')
+    retest = lesson.get('knowledge_retest') or {}
+    sources = [d for d in selection['documents']
+               if d['source']['sha256'] == retest.get('source_lesson_sha256')
+               and _lesson_digest(d['lesson']) == retest.get('source_lesson_content_sha256')]
+    if len(sources) != 1:
+        raise ValueError('correction result does not name one exact frozen source lesson')
+    source = sources[0]
+    claims = lesson['claim_inputs']['claims']
+    ids = [c['id'] for c in claims]
+    if (len(set(ids)) != len(ids) or not ids
+            or [c for c in source['claims'] if c['id'] in set(ids)] != claims
+            or any(source['lesson'].get(key) != lesson.get(key) for key in ('schema', 'author', 'claims_sha256'))
+            or retest.get('original_claim_day') != source['lesson'].get('original_claim_day', source['lesson'].get('day'))):
+        raise ValueError('correction claim projection differs from its exact selected source')
+    records = selection.get('reproduction_records')
+    if not isinstance(records, dict) or not records.get('binding_tables_sha256'):
+        raise ValueError('correction operation lacks its frozen reproduction binding')
+    return dict(inputs={k: pin[k] for k in ('path', 'bytes', 'sha256')},
+                identity=inputs['identity'], selection_sha256=inputs['selection_sha256'],
+                source_lesson_sha256=retest['source_lesson_sha256'],
+                source_lesson_content_sha256=retest['source_lesson_content_sha256'],
+                reproduction_records_selection_sha256=_lesson_digest(records),
+                historical_binding_tables_sha256=records['binding_tables_sha256'])
+
+
+def _validate_transition(transition, before, after, publication):
+    """Check the transported owner binding without exposing private frozen selections."""
+    if (not isinstance(transition, dict) or transition.get('schema') != TRANSITION_SCHEMA
+            or transition.get('owner') != 'frankie_box_teacher_knowledge.teach_accumulated'):
+        raise ValueError('changed claim inputs require an explicit supported scientific-owner transition')
+    operations = []
+    for name, lesson in (('original', before), ('replacement', after)):
+        operation = transition[name]
+        pin, identity = operation['inputs'], operation['identity']
+        if (not isinstance(pin.get('path'), str) or not pin['path'] or type(pin.get('bytes')) is not int
+                or pin['bytes'] < 0 or not re.fullmatch('[0-9a-f]{64}', str(pin.get('sha256')))):
+            raise ValueError('correction transition lacks an exact frozen-input witness')
+        claims = lesson.get('claim_inputs')
+        if (not isinstance(claims, dict) or claims.get('schema') != 'FRANKIE_SCIENTIFIC_CLAIM_INPUTS_V1'
+                or lesson.get('claim_inputs_sha256') != _lesson_digest(claims)
+                or claims.get('author') != lesson['author']
+                or claims.get('claims_sha256') != lesson['claims_sha256']
+                or [c['id'] for c in claims['claims']] != [r['claim_id'] for r in lesson['results']]):
+            raise ValueError('correction transition has an inconsistent complete claim projection')
+        retest = lesson.get('knowledge_retest') or {}
+        expected = dict(input_sha256=pin['sha256'], claim_inputs_sha256=lesson['claim_inputs_sha256'],
+                        search_manifest_sha256=identity['manifest']['sha256'],
+                        source_lesson_sha256=operation['source_lesson_sha256'],
+                        source_lesson_content_sha256=operation['source_lesson_content_sha256'])
+        if any(retest.get(key) != value for key, value in expected.items()):
+            raise ValueError('correction transition differs from its completed result operation')
+        for key in ('selection_sha256', 'source_lesson_sha256', 'source_lesson_content_sha256',
+                    'reproduction_records_selection_sha256', 'historical_binding_tables_sha256'):
+            if not re.fullmatch('[0-9a-f]{64}', str(operation.get(key))):
+                raise ValueError('correction transition lacks its complete operation binding: ' + key)
+        if (claims.get('reader_sha256') != identity['readers']['frankie_box_scientific_teacher']['sha256']
+                or any(claims.get(key) != operation[key] for key in
+                       ('reproduction_records_selection_sha256', 'historical_binding_tables_sha256'))
+                or identity.get('day') != lesson['day'] or not identity.get('brain')
+                or not identity.get('search') or lesson.get('results_sha256') != _lesson_digest(lesson['results'])):
+            raise ValueError('correction result differs from its scientific-owner input binding')
+        searches = lesson.get('searches') or []
+        if (len(searches) != 1 or searches[0].get('day') != identity['day']
+                or searches[0].get('dir') != identity['search']
+                or searches[0].get('manifest_sha256') != identity['manifest']['sha256']):
+            raise ValueError('correction transition must name the actual owning search')
+        operations.append(operation)
+    if (operations[0]['identity']['brain'] != operations[1]['identity']['brain']
+            or operations[1]['identity']['day'] != publication['day']
+            or operations[0]['inputs']['sha256'] == operations[1]['inputs']['sha256']
+            or operations[0]['inputs']['path'] == operations[1]['inputs']['path']):
+        raise ValueError('correction successor needs a distinct retained operation on the same owner day/brain')
+
+
 def _validate_correction(body, before, after):
     """Validate a declared scientific-owner decision, not decide whether the science is true."""
     decisions = ('demonstrated_source_error', 'researched_partial_replacement', 'researched_full_replacement')
@@ -68,9 +156,13 @@ def _validate_correction(body, before, after):
     if before.get('schema') != schemas.get(before.get('author')) or before.get('schema') is None:
         raise ValueError('correction accepts only the existing scientific lesson schemas')
     # Exactly the same subject, not text similarity, a newer date or a loosely matching pair.
-    for key in ('schema', 'author', 'day', 'claims_sha256', 'claim_inputs', 'claim_inputs_sha256'):
+    for key in ('schema', 'author', 'day', 'claims_sha256'):
         if before.get(key) != after.get(key):
             raise ValueError('correction changes the original lesson subject: ' + key)
+    transition = body.get('owner_transition')
+    changed_inputs = any(before.get(key) != after.get(key) for key in ('claim_inputs', 'claim_inputs_sha256'))
+    if changed_inputs or transition is not None:
+        _validate_transition(transition, before, after, publication)
     if not before.get('claims_sha256') or before.get('written_by') != 'scientific_teacher' or after.get('written_by') != 'scientific_teacher':
         raise ValueError('correction needs a claim-bound scientific lesson')
     if [r['claim_id'] for r in before['results']] != [r['claim_id'] for r in after['results']]:
@@ -104,7 +196,8 @@ def _save_object(brain, raw):
     return dict(path=str(path), bytes=len(raw), sha256=digest(raw))
 
 
-def record_correction(brain, *, original, replacement, scopes, decision, reason, evidence, publication_day):
+def record_correction(brain, *, original, replacement, scopes, decision, reason, evidence, publication_day,
+                      owner_transition=None):
     """Publish the scientific owner's completed decision. This performs no research or retest.
 
     Arguments are exact path/bytes/sha256 witnesses. The original must already be legal brain
@@ -112,12 +205,16 @@ def record_correction(brain, *, original, replacement, scopes, decision, reason,
     Evidence stays at its exact owner path; it is not copied into learner-visible knowledge.
     Publication day names the owning workflow day whose lessons stage completed this correction,
     independently of the older lesson's dates. It preserves the existing own-day answer wall.
+    Changed accumulated-teacher claim inputs require owner_transition with original_inputs and
+    replacement_inputs witnesses. Both actual frozen selections are checked here; transport retains
+    their bindings, not their private contents. No scheduling or scientific execution occurs here.
     """
     import fcntl
     import frankie_box_brain as BR
     from frankie_box_durable import write_json, witness
     brain = Path(brain)
     raw_before, raw_after = _read_pin(original), _read_pin(replacement)
+    before, after = json.loads(raw_before), json.loads(raw_after)
     for pin in evidence:
         _read_pin(pin)
     body = dict(schema=SCHEMA, written_by='scientific_teacher',
@@ -125,7 +222,15 @@ def record_correction(brain, *, original, replacement, scopes, decision, reason,
                 replacement={k: replacement[k] for k in ('path', 'bytes', 'sha256')},
                 scopes=scopes, decision=decision, reason=reason, evidence=evidence,
                 publication=dict(day=str(publication_day), stage='lessons'))
-    _validate_correction(body, json.loads(raw_before), json.loads(raw_after))
+    if owner_transition is not None:
+        body['owner_transition'] = dict(schema=TRANSITION_SCHEMA,
+            owner='frankie_box_teacher_knowledge.teach_accumulated',
+            original=_transition_operation(owner_transition['original_inputs'], before),
+            replacement=_transition_operation(owner_transition['replacement_inputs'], after))
+        if any(Path(body['owner_transition'][name]['identity']['brain']).resolve() != brain.resolve()
+               for name in ('original', 'replacement')):
+            raise ValueError('correction transition belongs to another publishing brain')
+    _validate_correction(body, before, after)
     # Serialize competing owner publications; readers also refuse any competing transported heads.
     directory = brain / 'corrections'
     directory.mkdir(parents=True, exist_ok=True)

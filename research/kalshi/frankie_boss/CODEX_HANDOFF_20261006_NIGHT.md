@@ -1,5 +1,24 @@
 # Codex restart handoff — 2026-10-06 night (America/New_York)
 
+## Current continuation — owner-bound correction transition, 2026-10-07
+
+Fetched integration `c816bc56540f4ed84fae12633e6c96ae7a0b3f71` and CCode
+`3667b289a50077681db35380c8177c92433e87dc`; no newer correction return at that check.
+Preserve later commits and refetch CCode before review. His four follow-ups remain untouched.
+
+Codex added an explicit accumulated-teacher `owner_transition` to `record_correction`:
+both frozen input witnesses, complete result/claim bindings, same owner day/brain, exact
+selected source claims, and unchanged subject/unaffected-scope guards. The detailed interface
+and limits are in the newest section of `STEP5_CORRECTION_DELIVERY_20261007.md`.
+Changed-input standalone CLI corrections still refuse; no producer or scheduler was enabled.
+The successor scheduler must also address `teach_accumulated.already_tested`: same claim/search
+deduplication currently ignores changed reader/table/reproduction pins, so a fresh directory
+alone can yield no retest. Preserve ordinary deduplication; bind explicit affected successor work.
+
+Step 7 remains the active Jev CPU task; host/count/runtime/model choices remain unsettled.
+Source-only: no tests, imports, installs, computation, model calls or AWS inspection/actions.
+All older-knowledge, market-only, answer-wall and stopped-execution rules below remain current.
+
 ## NEW CHAT START HERE — 2026-10-06 23:15 ET / 2026-10-07 UTC
 
 Greg requested a new-chat checkpoint. Latest verified SOURCE tip before this documentation:

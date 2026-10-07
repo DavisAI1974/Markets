@@ -3,6 +3,36 @@
 Greg authorized this source work on 2026-10-06 ET. SOURCE-BUILT / RUNTIME-UNVERIFIED.
 No tests, project imports, scientific/data/model runs, reproduction calls or AWS actions.
 
+## Owner-bound claim-input transition — 2026-10-07 source continuation
+
+The accumulated-teacher transition is now source-built in `record_correction(...,
+owner_transition={original_inputs: witness, replacement_inputs: witness})`. Each witness is
+the actual frozen `inputs.json` path/bytes/SHA256. This is an explicit owner argument, never
+inferred from a newer lesson. The function reads both selected operations before publication,
+checks their selection hashes, exact source lessons and ordered consumed claim projections,
+then binds their owner day/brain, search manifest, scientific reader, historical binding tables
+and reproduction selection to each complete result's `knowledge_retest` and claim/result hashes.
+The successor needs a distinct input file/hash on the same owner day and publishing brain.
+
+`FRANKIE_CORRECTION_OWNER_TRANSITION_V1` is retained inside the correction record. Transported
+readers recheck those operation bindings against both full lesson objects without opening or
+copying the private frozen selections. This is owner-declared operation evidence, not independent
+proof that the research ran or that its conclusion is scientifically correct.
+
+The original schema, author, lesson day, claims-file hash and ordered claim IDs still must match.
+Changed `claim_inputs` or their hash refuse without this transition. Partial replacement still
+requires explicit addresses for EVERY changed field, including operation metadata and changed
+input/hash fields; there is no metadata exemption from unaffected-value equality. Unchanged-input
+corrections retain their existing interface. Standalone scientific CLI results without accumulated
+operation bindings remain unsupported for changed-input corrections, explicitly refused.
+
+This does not schedule a retest or wire a producer's publication. A second concrete scheduling
+gap is now traced: `teach_accumulated` builds `already_tested` from claim contents plus the search
+manifest, without the reader/table/reproduction-selection identity. A new output directory alone
+can therefore skip the requested correction on an unchanged search. The explicit successor must
+select the affected original claims and changed operation pins without reusing that old result
+or reopening unrelated work. Do not remove the ordinary deduplication guard globally.
+
 ## Governing knowledge rule
 
 Keep older lessons available. Age alone never makes knowledge obsolete. Only conflicting
@@ -19,7 +49,8 @@ decision, not a judgment inferred from a date or a contradictory result. It take
 original/replacement path/bytes/SHA256 witnesses, exact JSON-address scopes, decision, reason,
 evidence witnesses and `publication_day` (the owning workflow day whose lessons stage completed
 the correction). Both complete lesson objects are retained. It requires the same original
-author/schema/claim identity and identical values outside the declared scopes. Partial replacement
+author/schema/claim identity (with the explicit operation transition above for changed input pins)
+and identical values outside the declared scopes. Partial replacement
 cannot use the whole-document address. The original must already be published learner knowledge.
 
 `FRANKIE_KNOWLEDGE_CORRECTION_V1` records live at `brain/corrections/<content-hash>.json`;
@@ -60,11 +91,9 @@ The remaining gaps are:
 1. Scientific owners must explicitly supply a checked decision and successor after research or
    correction. No producer currently calls `record_correction` automatically; an ordinary newer
    or contradictory lesson must NEVER trigger it. There is no newly invented adjudication rule.
-2. The fifth-session owner trace identifies a concrete contract gap: a recomputed successor
-   can change `claim_inputs`/`claim_inputs_sha256`, but the current correction guard requires
-   them equal. Codex must bind that explicit identity transition without relaxing scientific
-   ownership or unaffected-scope checks; publication is not ready to wire around the guard.
-   Scheduling corrected successor operations for already-frozen/completed work is not complete.
+2. The accumulated-teacher identity transition is source-built as described above; standalone
+   CLI operation binding and corrected-successor scheduling remain incomplete. In particular,
+   a fresh directory alone does not overcome the existing same-claim/same-search reuse rule.
    The current runner refuses stale dependencies; it does not yet build every replacement
    operation. Existing immutable request identities and pending feedback must be carried forward
    by their owner, without an implicit scientific rerun or reopening unrelated completed days.

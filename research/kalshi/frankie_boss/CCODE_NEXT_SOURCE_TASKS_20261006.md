@@ -1,5 +1,23 @@
 # CCode assignment — next pre-#5 source tasks
 
+## Codex owner-transition handshake — 2026-10-07
+
+Both branches were freshly fetched: integration `c816bc56`, CCode `3667b289`; no newer
+four-group correction return was available at this check. Do not reapply the integrated return.
+The four owned follow-ups below remain CCode's; Codex has not edited their functions.
+
+Codex added the narrow accumulated-teacher contract in `frankie_box_experiment_review`:
+`record_correction(..., owner_transition={original_inputs: witness, replacement_inputs: witness})`.
+Read the newest section of `STEP5_CORRECTION_DELIVERY_20261007.md`. Changed claim-input pins
+require both actual frozen inputs and matching completed results; the original claims identity
+and unaffected-scope equality stay mandatory. No result is copy-edited or implicitly corrected.
+
+Publication implementation is still not newly assigned: the scheduler must explicitly select
+the affected successor claims. The existing `teach_accumulated.already_tested` logic can skip
+them on the same search even in a fresh directory after reader/table pins change. Standalone
+CLI changed-input results also still lack this operation binding. This is a precise source
+handoff, not a performed retest or complete Step 5. All source-only holds remain.
+
 ## ACTIVE review of fifth-session return — 2026-10-07
 
 Fetched CCode `3667b289` above `3bc72da8`; integrated its six commits and documentation,
