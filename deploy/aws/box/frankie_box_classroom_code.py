@@ -748,6 +748,8 @@ class _NativeEntryArithmetic:
         self.status, self.reason = None, None
         self.limits = limits or native_cutoff_limits({})
         self.cutoff, self.pictures, self.finish_clock = None, 0, None
+        import threading
+        self._probe_lock, self._probe_at = threading.Lock(), float('-inf')    # the stage-progress probe (_check)
         self.components = [(c['name'], c['observations']) for c in components]
         roster = [int(p['cursor']) for p in (self.components[0][1] if self.components else ())]
         for name, observations in self.components:
@@ -940,6 +942,19 @@ class _NativeEntryArithmetic:
             return True
         elapsed = self.note_seconds + (time.monotonic() - self.finish_clock if self.finish_clock is not None else 0.0)
         rss, basis = _rss_bytes()
+        # Greg's probes on every step: the stage's own phase for the parent's heartbeat. _check also runs in the pair
+        # threads (before every series), so the report is throttled to one per second under a lock (one writer of the
+        # pid's pending file at a time). A probe never changes the pass.
+        with self._probe_lock:
+            now = time.monotonic()
+            if now - self._probe_at >= 1.0:
+                self._probe_at = now
+                try:
+                    import frankie_box_stage_progress as SP
+                    SP.report_phase('classroom native entries: %s' % phase, units_done=self.pictures, unit='pictures',
+                                    rss_bytes=rss, native_elapsed_s=round(elapsed, 1))
+                except Exception:  # noqa: BLE001 - a probe never changes the pass
+                    pass
         hit = ('wall_time' if elapsed >= self.limits['seconds'] else
                'resident_memory' if rss >= self.limits['rss_bytes'] else None)
         if hit is None:
