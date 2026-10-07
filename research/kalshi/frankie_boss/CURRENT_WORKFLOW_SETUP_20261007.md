@@ -1,0 +1,89 @@
+# Current workflow setup — 2026-10-07
+
+SOURCE-BUILT / RUNTIME-UNVERIFIED. This is the current overview; older checkpoint
+timestamps and next-action statements remain historical. Preserve the actual branch
+tip and other agents' unfinished files. The ten steps are a checklist, not the full
+producer/consumer workflow in `SPEC-experiment-orchestrator.md`, section 0.
+
+## Required shared market picture — active implementation
+
+Calculations may execute in parallel or out of order. Immediately before/as evidence
+enters Frankie, applicable raw and derived layer changes and as-of states must form
+one faithful market timeline: exact timestamps, original causal order and actual
+availability. Preserve event and receive clocks separately; late arrivals cannot be
+replayed backward merely by sorting event time. Future-dependent results must not be
+backfilled onto earlier observations. Sparse changes and retained as-of states do
+not require dense rows for empty nanoseconds. Existing separate calculations remain
+useful; the required addition is their fullest coherent evidence picture.
+
+Frankie, both teachers and anyone influencing Frankie must use that same synchronized
+market evidence within existing role, private-decision and answer boundaries. Passing
+references alone does not satisfy this requirement, and receiving a richer input does
+not establish that every field changed an existing target calculation.
+
+The shared-reader agent owns `frankie_box_market_timeline.py` and its ROOT, journal,
+native, search, teacher and classroom integrations. Source work is active. The versioned
+policy `FRANKIE_SHARED_MARKET_TIMELINE_V1` requires native calculations for explicitly
+selected new requests. ROOT binds the policy/source implementation and exact retained
+spools; CCode owns `Run.root`/plan propagation. Legacy results keep their original
+policy, source and request identities. The author is resolving initial review findings
+on exact native row/emission identity and availability checks, complete-spool/as-of-state
+integration and actual teacher/classroom consumers. Final source return and independent
+review remain pending. No shared-picture end-to-end completion is claimed.
+
+## Current source and remaining ownership
+
+| Area | Implemented or published | Pending |
+|---|---|---|
+| Step 5 corrections | `944c354`: original-session checked overlay reaches the existing code analytical reproduction reader; unique same-intent requests preserve their exact body/hash across additive reader changes; ambiguous matches refuse. | Unsupported knowledge predicates and native learning are not completed by this reader. Original forecasts, source/session identities and pending feedback stay intact. |
+| Step 5 school | Checked owner-bound school successors preserve unaffected contents and whole-source pointer form. Retained school readers and dependent invalidation recognize successors. | CCode's non-reentrant held-lane voice/school recovery callback, returned-school currentness and report integration. `waiting_school` intentionally remains pending until genuine recovery. |
+| Step 5 scientific successors | Published `2c332df` after independent source review: affected-only standalone successor against the original frozen operation/search scope, preserving untouched claims/results and per-claim provenance through the existing held-lane checking/publication pipeline. | No scientific run performed; wider school/runner dependencies remain as above. |
+| Step 6 Granite | CPU-only/affinity-fit transport, exact retained state/archive intake and retryable existing-owner import passed independent source review. The local configured owner route already exists; model/runtime pins remain as confirmed. See `STEP6_COMPLETION_20261007.md`. | Fresh GitHub compute admission lacks a durable exact owner/run contract, so remote new model work refuses. Runtime installation/execution and caller admission remain pending; retained recovery/import do not establish fresh admission or live success. |
+| Step 7 Jev | Published `523336f` after independent source review: owner-local CPU continuation, blind seal before comparison, frozen science, both lesson readbacks, typed Jev-only peer transport and CPU-only shared runtime handling. See `STEP7_CPU_CONTINUATION_20261007.md`. Host policy is settled: a chosen worker subset of the same held 16-CPU day lane, sequentially. | Exact binary/model/quantization pins, worker subset, context/output/chunk/time budgets and completion policy; CCode `Run.jev`, day-stage and caller/save integration. No separate host or fourth lane. |
+| Step 8 CCode | Assignment and caller addendum published at `2f0d452`. | CCode owns remainder plus 8A review defects, main/class save-resume, exact dispatch scope, controller/workflow and assigned ROOT/Jev/school callers. His earlier `954f3f3` return is not integrated; await completed return before independent integration review. |
+| Temporary inspection | `0b36d15` added owner-aware one-time workflow inspection reports. | Execute only after explicit authorization. Reports are diagnostic, not Frankie knowledge or scientific evidence. |
+
+Authoritative CCode handoff: `CCODE_HANDOFF_STEP8_REMAINDER_20261007.md` and section 4
+of `CCODE_STEP8_REMAINDER_ASSIGNMENT_20261007.md`. Finish bounded Steps 5/6/7 work while
+CCode completes Step 8; do not wait for or duplicate his protected runner source.
+
+## Evidence and knowledge limits
+
+The 99-entry registry contains **6 raw, 49 calculation, 23 control, 9 sealed knowledge,
+2 disabled and 10 output** entries. These are different roles, not 99 interchangeable
+numerical inputs. The legacy normal ROOT launcher omitted `--bedrock` and defaulted it
+off; native `selected_files` returns no selections unless the bound source policy has
+`bedrock: true`. The new explicit shared policy is source wiring for new requests,
+not evidence that past results included those producers or that execution occurred.
+
+Some completed native evidence is materialized or referenced without an applicable
+scientific consumer. Historical knowledge reaches selected typed predicates; arbitrary
+prose, all learned structures and all native fields are not thereby interpreted.
+Same-session analytical correction is code consumption, not native checkpoint learning
+or independent scientific confirmation. See `REMAINING_CONSUMER_REVIEW_20261007.md` and
+`SAME_SESSION_CORRECTION_CONSUMER_20261007.md`. No all-99 ingestion/consumption or live
+ingestion claim is established.
+
+Remaining scientific decisions include conditional lag units and conditioning/null
+semantics, frozen confirmation lag/scope, lawful completed-native field/condition/
+trajectory mappings, broader historical knowledge consumers and native model/update
+lineage. Existing targets, masks, controls, numerical methods and market-only objectives
+are preserved. Both teachers still need historical rework. Memory A stays retired;
+H06–H08 remain historical/not_bound. No outcome labels or replacement weights are invented.
+
+## Verification and next execution gate
+
+Review is source/interface inspection, AST parsing without project imports and scoped
+`git diff --check`; each active source slice still needs its author's final return and
+review. No tests, validator framework, scientific/data/model runs, installs, starts or
+dispatch occurred. AWS workflow discovery previously required reauthentication; the
+later documentation-only lookup stalled and was interrupted. No new successful AWS
+research/account operation is claimed. Existing documented efficiency guidance is reused;
+there is no measured acceleration claim.
+
+Exactly three held 16-CPU lanes, two main and one Linux, each with 15 workers plus
+coordinator; no Pods. Keep giant evidence on its owner and reuse the normal checkpoint
+and recovery writers. Source authorization is not execution authorization. After wiring
+and unresolved discussions, explicit AWS go permits the agreed E2E, then ONE day with
+temporary per-piece input/use/output inspection, review/adjustments, then THREE days.
+Thirty days require a separate decision. Publish with `[skip ci]`.

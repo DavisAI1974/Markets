@@ -131,6 +131,29 @@ a foreign lane's absolute path is shared. Final source may refine details during
 
 ### Previously assigned caller integrations
 
+The reviewed Step 7 helper and full `CCODE_STEP7_CALLER_SUPPLEMENT_20261007.md` are now
+published at `523336f`. Its Jev-only peer namespace uses the existing snapshot transport;
+run the normal knowledge boundary before selection and after completed local delivery,
+including a delivery whose comparison disposition still leaves Jev waiting. Step 5's
+standalone affected-only correction owner is published at `2c332df`; preserve its new
+dispatcher branches when adding your narrow non-reentrant `waiting_school` callback.
+
+**Granite remote admission caller:** read `STEP6_COMPLETION_20261007.md` when published.
+The retained runner intake/return is being completed, but a fresh GitHub dispatch can
+otherwise duplicate an unresolved meeting. Complete the existing `Run.voice` owner
+boundary: persist original exchange/source/config/run/day/owner and predecessor archive
+intent before dispatch, retain/reconcile the exact original GitHub run identity, and
+admit that exact run before model setup/start. Unknown dispatch is reconciled, never
+resent under a new identity. A predecessor's complete state and stopped process must
+be established before admitting continuation. Return through the existing owner importer.
+Coordinate the exact acknowledgment interface with the Granite runner owner; do not
+invent a new scheduler, S3/Git lock service or different hosting policy. Until this
+contract is wired, the remote workflow allows inputs-only and verified completed-record
+replay, and refuses new model calls. Existing configured owner-local meeting recovery
+remains available. This is an open caller dependency, not completed Step 6 or execution
+authorization. Source ownership includes these narrow `Run.voice` integrations; Codex
+owns the matching Granite runner helper/workflow changes and will review the interface.
+
 - `Run.previous_of`: persist non-queue predecessor selection (including explicit none) in
   the existing continuation before first child dispatch; retries must not repick a newer
   classroom and invalidate the original request. Existing queue pinning stays intact.

@@ -1,5 +1,36 @@
 # Module and processing review checkpoint — 2026-10-07
 
+## Current continuation (supersedes older checkpoint status below)
+
+Read `CURRENT_WORKFLOW_SETUP_20261007.md` for the active source/ownership overview.
+Published `944c354` connects checked same-session knowledge to the existing analytical
+reader while preserving original correction intent/body/hash and legacy receipt shape.
+School successor pointers preserve their whole-source form. These are code-level source
+changes, not native training, complete knowledge interpretation or runtime proof.
+
+Steps 5/6/7 remain the immediate priority. The independently reviewed affected-only
+scientific successor was published at `2c332df`, and same-held-lane Jev CPU source at
+`523336f`. Jev's exact runtime/model pins and allocation/budgets remain pending. Granite
+retained state/archive recovery and import passed independent source review; fresh GitHub model
+work must refuse pending a durable exact owner/run admission contract. CCode owns
+remaining Step 8 and the ROOT/Jev/school callers assigned in the published `2f0d452`
+addendum; see `CCODE_HANDOFF_STEP8_REMAINDER_20261007.md`. `waiting_school` must stay
+pending until his non-reentrant owner callback returns real completed successors.
+
+Shared-market picture implementation is active: calculations may run out of order, but
+Frankie, both teachers and other influencing readers require the same fullest coherent
+raw/derived market picture with exact causal order and availability within role/answer
+walls. Its author is resolving exact identity/availability checks, spool/as-of integration
+and actual teacher/classroom consumers before final independent review. New explicit
+`FRANKIE_SHARED_MARKET_TIMELINE_V1` source policy does not relabel old ROOTs or authorize
+execution. No all-99 or full-consumer completion is established:
+the registry mixes raw/calculation/control/knowledge/disabled/output roles, legacy ROOT
+defaults bedrock off, and some completed native/historical evidence lacks typed consumers.
+
+AWS discovery remains unavailable (reauthentication required; later lookup interrupted).
+Only source review, AST without imports and whitespace checks are authorized here. Older
+verification counts and branch references below describe their own historical checkpoint.
+
 SOURCE-BUILT / RUNTIME-UNVERIFIED. Continued from verified pushed `4e416e18`; changed-input
 and partial-claim work was published as `439cb0bf71968f30f94b696b85acfaa00dccc3c1` before
 the further integration in this checkpoint. Preserve the actual latest branch tip.

@@ -1,5 +1,55 @@
 # New-chat handoff — complete the remaining workflow pieces
 
+## Current continuation — read before the historical checkpoint
+
+`CURRENT_WORKFLOW_SETUP_20261007.md` is the current implemented/pending overview.
+Published `944c354` completes the bounded original-session code analytical correction
+consumer and unique retained-intent reuse, including exact legacy response shape. It does
+not establish native learning or interpretation of every knowledge source. School owner
+successors preserve immutable originals, unaffected content and whole-source pointers;
+the non-reentrant held-lane `waiting_school` callback still belongs to CCode.
+
+Finish remaining Steps 5/6/7 work while CCode continues Step 8. Step 5's affected-only
+standalone scientific successor was independently reviewed and published at `2c332df`;
+Step 7's Jev CPU continuation was independently reviewed and published at `523336f`.
+Step 6's exact retained state/archive intake and owner import passed independent source review;
+fresh GitHub model work must refuse until a durable exact owner/run admission contract
+exists. The configured local owner route already exists; recovery receipts do not supply
+fresh compute admission. Jev's host policy is settled: a selected worker subset of the
+same held 16-CPU day lane, sequentially.
+Exact runtime/model/quantization pins, CPU count and budgets remain pending. CCode owns
+runner, queue, cores, controller/workflow and the assigned school/ROOT/Jev caller changes.
+See `CCODE_HANDOFF_STEP8_REMAINDER_20261007.md` and assignment section 4, including the
+published `2f0d452` addendum. His earlier `954f3f3` return remains unintegrated; wait for
+his completed remainder before independent integration review, not before other work.
+
+Greg explicitly authorized building one shared synchronized market picture. Calculations
+may run in parallel or out of order, but immediately before/as evidence enters Frankie,
+applicable raw and derived changes and as-of states must form the fullest coherent
+timeline with exact event/receive clocks, original causal order and actual availability.
+No future-dependent backfill or dense empty-nanosecond rows. Both teachers and anyone
+influencing Frankie use this same evidence within existing role/privacy/answer boundaries.
+The shared-reader agent is implementing actual consumers and the versioned native producer
+policy `FRANKIE_SHARED_MARKET_TIMELINE_V1` for explicit new requests, resolving review
+findings on exact row identity/availability, complete spools/as-of states and actual
+teacher/classroom readers before final independent review. Older retained
+policies/identities remain untouched. This source authorization permits neither launches
+nor arbitrary producer activation; wiring and independent review are still underway.
+
+No all-99/live ingestion claim: the registry's 99 entries comprise raw 6, calculation 49,
+control 23, sealed knowledge 9, disabled 2 and outputs 10. Legacy normal ROOT defaults
+bedrock off; native selection requires source-bound `bedrock: true`. Some completed native
+evidence remains materialized/referenced only; historical knowledge has selected typed
+consumers. Shared input receipt is not proof every field altered target mathematics.
+Scientific lag/conditioning/scope, native mappings/lineage and both teachers' historical
+rework remain open as detailed in `REMAINING_CONSUMER_REVIEW_20261007.md`.
+
+AWS discovery was blocked by reauthentication, and the later documentation lookup stalled
+and was interrupted; do not repeat or claim successful fresh research. Source/interface
+review, AST without imports and scoped diff checks only. No tests, model/data/science runs,
+installations or AWS actions. The rollout sequence below remains unchanged and unexecuted.
+Older workspace, clean-tree, inactive-agent and exact-tip notes below are historical.
+
 Greg requested this checkpoint at **2026-10-07 00:54 ET** because the chat was getting buggy.
 Read this first. It supersedes older next-action and rollout wording where they conflict.
 

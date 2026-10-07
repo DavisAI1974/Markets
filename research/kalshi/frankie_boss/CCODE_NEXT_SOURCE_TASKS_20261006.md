@@ -24,6 +24,10 @@ caller contract. Its narrow dispatcher invocation branch is included in CCode ow
 policy and Jev CPU caller boundaries. Codex is building/reviewing those producers; CCode
 owns their `Run.root`/plan and `Run.jev`/held-day wrappers. Fetch their completed contracts
 before integrating; neither pending source nor legacy retained results establish completion.
+The Jev helper/caller supplement is published at `523336f`; standalone Step 5 corrections
+at `2c332df`. Section 4 now also names the exact remaining `Run.voice` Granite remote
+admission boundary. Fresh remote model work stays held until that original-run handshake
+exists; retained state and unknown dispatch must not become a new meeting attempt.
 The previous assignment follows as history; its protected-file allocation is superseded
 only by the exact expanded ownership in the new assignment.
 

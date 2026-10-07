@@ -9,24 +9,38 @@ name: Frankie Granite meeting (post-class coordinator on a standard CPU runner; 
 # names; this workflow returns the bytes only (artifact, optional presigned PUT). Nothing here dispatches that import,
 # downloads an artifact onto a lane or chooses the first E2E host. Workflow inputs reach the shell only through environment
 # variables (never interpolated into shell source; Codex finding 4, 2026-10-06).
+# Current source gate: inputs-only and verified complete replay/return are available.
+# Model setup/start is held until the owning Run.voice durably admits this exact GitHub run;
+# a fresh workflow dispatch is not proof that prior remote model work never happened.
 on:
   workflow_dispatch:
     inputs:
       exchange_get_url:
         description: "presigned GET URL of the day's exchange-frankie.json (FRANKIE_EXPERIMENT_EXCHANGE_V1, view frankie)"
         required: true
+      exchange_sha256:
+        description: 'Exact SHA256 of the owner exchange; also serializes dispatches for that exchange'
+        required: true
+      prior_state_get_url:
+        description: 'Resume: HTTPS URL of the complete prior runner-state.zip; never restart unknown work without it'
+        required: false
+        default: ''
+      prior_state_sha256:
+        description: 'Resume: archive SHA256 from prior runner-state.json'
+        required: false
+        default: ''
       record_put_url:
         description: 'presigned PUT URL for meeting.json (optional; the record is always kept as a run artifact)'
         required: false
         default: ''
       inputs_only:
-        description: 'true = write what Granite would be given and stop; zero model calls'
+        description: 'true = inputs only; false = retained-complete replay only until exact owner dispatch admission is wired'
         required: false
         default: 'true'
 permissions:
   contents: read
 concurrency:
-  group: frankie-granite-meeting
+  group: frankie-granite-meeting-${{ inputs.exchange_sha256 }}
   cancel-in-progress: false
 jobs:
   meeting:
@@ -36,6 +50,9 @@ jobs:
     env:
       INPUTS_ONLY: ${{ inputs.inputs_only }}
       EXCHANGE_GET_URL: ${{ inputs.exchange_get_url }}
+      EXCHANGE_SHA256: ${{ inputs.exchange_sha256 }}
+      PRIOR_STATE_GET_URL: ${{ inputs.prior_state_get_url }}
+      PRIOR_STATE_SHA256: ${{ inputs.prior_state_sha256 }}
       RECORD_PUT_URL: ${{ inputs.record_put_url }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -49,22 +66,33 @@ jobs:
           mkdir -p work/meeting
           case "$EXCHANGE_GET_URL" in https://*) ;; *) echo "exchange_get_url must be an https URL" >&2; exit 2;; esac
           curl -fsSL -o work/meeting/exchange-frankie.json "$EXCHANGE_GET_URL"
-          python3 -c "import json; d=json.load(open('work/meeting/exchange-frankie.json')); assert d.get('schema')=='FRANKIE_EXPERIMENT_EXCHANGE_V1' and d.get('view')=='frankie', 'not the Frankie view'"
-      - name: Pinned llama.cpp and Granite GGUF (refuses while any pin is blank)
-        if: inputs.inputs_only != 'true'
-        run: CODE_ROOT="$PWD" GRANITE_DIR="$PWD/work/granite" sh deploy/aws/box/frankie_box_granite_meeting_setup.sh | tee work/meeting/setup.txt
-      - name: The meeting (inputs only, or the ephemeral coordinator when pinned and confirmed)
+      - name: Bind owner and restore complete prior state before setup or model work
+        id: intake
+        run: |
+          set -- prepare --exchange work/meeting/exchange-frankie.json --exchange-sha256 "$EXCHANGE_SHA256" --commit "$GITHUB_SHA" --out work/meeting/out --attempt "$GITHUB_RUN_ATTEMPT"
+          if [ -n "$PRIOR_STATE_GET_URL" ]; then
+            case "$PRIOR_STATE_GET_URL" in https://*) ;; *) echo "prior_state_get_url must be HTTPS" >&2; exit 2;; esac
+            [ -n "$PRIOR_STATE_SHA256" ] || { echo "prior archive SHA256 required" >&2; exit 2; }
+            curl -fsSL -o work/meeting/prior-state.zip "$PRIOR_STATE_GET_URL"
+            set -- "$@" --archive work/meeting/prior-state.zip --archive-sha256 "$PRIOR_STATE_SHA256"
+          elif [ -n "$PRIOR_STATE_SHA256" ]; then
+            echo "prior archive URL required with SHA256" >&2; exit 2
+          fi
+          python3 deploy/aws/box/frankie_box_granite_runner.py "$@"
+      - name: Inputs or exact completed replay (fresh remote model work awaits owner admission)
         run: |
           if [ "$INPUTS_ONLY" = "true" ]; then
             python3 deploy/aws/box/frankie_box_granite_meeting.py --exchange work/meeting/exchange-frankie.json --out-dir work/meeting/out --inputs-only
           else
-            SERVER="$(sed -n 's/^LLAMA_SERVER=//p' work/meeting/setup.txt)"; MODEL="$(sed -n 's/^GGUF_MODEL=//p' work/meeting/setup.txt)"
-            python3 deploy/aws/box/frankie_box_granite_meeting.py --exchange work/meeting/exchange-frankie.json --out-dir work/meeting/out --binary "$SERVER" --model "$MODEL"
+            python3 deploy/aws/box/frankie_box_granite_runner.py replay-complete --exchange work/meeting/exchange-frankie.json --out work/meeting/out
           fi
       - name: Return witness (the record's bytes and sha256 by name; the owner import to run by hand)
-        if: always()
+        if: always() && steps.intake.outcome == 'success'
         run: |
           python3 deploy/aws/box/frankie_box_granite_meeting.py --exchange work/meeting/exchange-frankie.json --out-dir work/meeting/out --return-witness
+      - name: Seal all owner state, progress and evidence for exact retry
+        if: always() && steps.intake.outcome == 'success'
+        run: python3 deploy/aws/box/frankie_box_granite_runner.py seal --out work/meeting/out --archive work/meeting/runner-state.zip
       - name: Return the record (optional presigned PUT of the same bytes; the artifact below is always kept)
         if: inputs.record_put_url != ''
         run: |
@@ -73,6 +101,9 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: granite-meeting-record
-          path: work/meeting/out/
+          name: granite-meeting-record-${{ github.run_attempt }}
+          path: |
+            work/meeting/out/
+            work/meeting/runner-state.zip
+            work/meeting/runner-state.json
           if-no-files-found: error
