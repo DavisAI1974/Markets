@@ -1275,6 +1275,19 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
     if not docs:
         listed.append(dict(reason='no current or accumulated scientific lessons are available; no claim turns produced'))
     measure, measure_why = teacher_rows(rows_path)
+    # The shared market picture at the teacher's own explicit cutoff (source_hash/as_of/through_cursor):
+    # one complete picture for the whole exchange, never a day serialized per item, never a Frankie
+    # target selection. A legacy teacher (no shared identity) leaves every exchange byte unchanged.
+    import frankie_box_adviser_market as AM
+    if rows_path:
+        shared_market, shared_market_why = AM.from_teacher(rows_path, day, measure,
+            retain=(Path(input_path).parent / 'shared-market-context.json') if input_path is not None else None)
+    else:
+        shared_market, shared_market_why = None, measure_why
+    market_reference = AM.reference(shared_market) if shared_market is not None else None
+    market_turn = {} if market_reference is None else dict(market_context=market_reference)
+    if notes is not None:
+        notes['shared_market_context_listed'] = shared_market_why
     rows_id = 'teacher-dipole-rows:%s' % day
     request = dict(shared_knowledge=dict(sources=[dict(source_id=rows_id)] + [dict(source_id=s['source_id']) for _, s in docs]))
     items, findings, seen, seen_results = [], [], set(), set()
@@ -1372,13 +1385,16 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                         'equivalence with the declared tables is not inferred; the current binding is used and no reproduction '
                         'status read against the retained one is established.' % ', '.join(correction['unestablished']))
             findings += found
+            # market_context (only when a shared context exists): the exact reference to the common
+            # picture both code seats stood under; the seat records and their vocabulary are unchanged.
             turns = [dict(turn=1, seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR,
                           responds_to='the scientific teacher\'s lessons result on the claim', record=boss,
                           measured=finite(measured), components=components, proposals=proposals,
-                          shared_accounting=finite(shared), origin_accounting=finite(origin), research_rework=rework),
+                          shared_accounting=finite(shared), origin_accounting=finite(origin), research_rework=rework,
+                          **market_turn),
                      dict(turn=2, seat='scientific_teacher', author=D.CLASSROOM_ROLE, author_label=SCIENCE_AUTHOR,
                           responds_to='the BOSS teacher\'s turn', record=science, research_rework=rework,
-                          origin_accounting=finite(origin), **finite(side))]
+                          origin_accounting=finite(origin), **finite(side), **market_turn)]
             voice = [dict(seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR, text=boss['reasoning'],
                           lines=[c['check'] for c in boss['evidence_checks']] + boss['next_tests'], cites=boss_cites),
                      dict(seat='scientific_teacher', author=D.CLASSROOM_ROLE, author_label=SCIENCE_AUTHOR,
@@ -1491,7 +1507,8 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
     full = dict(schema=SCHEMA, view='full', run=run, day=day, day_role='discovery', rules=rules_witness,
                 roles=dict(boss_teacher=D.BOSS_ROLE, scientific_teacher=D.CLASSROOM_ROLE, frankie='frankie'),
                 positions=list(D.POSITIONS), dispositions=list(S.DISPOSITIONS),
-                sources=dict(lessons=[s for _, s in docs], teacher_rows=rows_source, teacher_rows_listed=measure_why),
+                sources=dict(lessons=[s for _, s in docs], teacher_rows=rows_source, teacher_rows_listed=measure_why,
+                             **({} if shared_market is None else dict(shared_market_context=shared_market))),
                 items=items, lesson_contexts=lesson_contexts,
                 teachers_findings=findings, counts=counts, listed=listed, model_calls=0,
                 rule='each turn labelled with its author (R11); counts per day, never pooled or averaged (R04, R05); '
@@ -1738,6 +1755,30 @@ def main():
     brain_reused = any(e.get('sha256') == written['exchange-frankie.json']['sha256'] for e in have.get('entries') or [])
     if not brain_reused:
         BR.write_exchange_entry(a.brain, a.day, out / 'exchange-frankie.json')
+    import frankie_box_adviser_market as AM
+    shared_market = full['sources'].get('shared_market_context')
+    context_path = out / 'shared-market-context.json'
+    shared_market_pin = (dict(path=str(context_path), bytes=context_path.stat().st_size,
+                              sha256=sha256_bytes(context_path.read_bytes()))
+                         if shared_market is not None and context_path.is_file() else None)
+    workflow_report = AM.workflow_report('exchange', context=shared_market,
+        inputs=dict(teacher_rows=full['sources']['teacher_rows'], teacher_rows_listed=full['sources']['teacher_rows_listed'],
+                    lessons=[dict(source_id=s.get('source_id'), author=s.get('author'), sha256=s.get('sha256'),
+                                  accumulated=bool(s.get('accumulated'))) for s in full['sources']['lessons']],
+                    search=a.search, brain=a.brain, rules=rules_witness,
+                    shared_market_context_listed=notes.get('shared_market_context_listed'),
+                    shared_market_context_retained=shared_market_pin,
+                    cutoff_origin='the teacher receipt\'s own as_of/through_cursor (explicit source scope)'),
+        use=dict(seats=['boss_teacher (code)', 'scientific_teacher (code)', 'frankie (code reply)'],
+                 transport=('none: legacy teacher without a shared identity' if shared_market is None else
+                            'sources.shared_market_context carries the complete typed picture once; turns 1 and 2 of '
+                            'every item carry the exact market_context reference (scope, clocks, hash, dispositions); '
+                            'the seat records and their validated vocabulary are unchanged'),
+                 withheld=['Jev raw items from Frankie\'s view (JEV_WALL)', 'teacher answers, grades and private reasoning'],
+                 caps='none: code seats, no model call', model_calls=0, items=full['counts']['items']),
+        outputs=dict(exchange=written['exchange.json'], frankie_view=written['exchange-frankie.json'],
+                     brain_entry=str(entry), brain_reused=brain_reused, exchange_hash=full['exchange_hash'],
+                     counts=full['counts'], listed=len(full['listed']), waits=[]))
     receipt = dict(schema=RECEIPT_SCHEMA, run=a.run, day=a.day, status='complete', exchange=written['exchange.json'],
                    frankie_view=written['exchange-frankie.json'], brain_entry=str(entry), brain_reused=brain_reused,
                    exchange_hash=full['exchange_hash'], counts=full['counts'], listed=full['listed'],
@@ -1745,6 +1786,9 @@ def main():
                    lessons=full['sources']['lessons'], jev_withheld=view['jev_withheld'], rules=rules_witness,
                    knowledge_inputs=full.get('knowledge_inputs'), late_knowledge=notes.get('late_knowledge'),
                    accumulated_claim_tests=accumulated_claim_tests,
+                   shared_market_context=shared_market_pin,
+                   shared_market_context_listed=notes.get('shared_market_context_listed'),
+                   workflow_report=workflow_report,
                    seconds=round(time.time() - started, 1), at=time.time(), model_calls=0)
     tmp = out / 'receipt.pending'
     tmp.write_text(json.dumps(receipt, indent=1, sort_keys=True) + '\n', encoding='utf-8')
