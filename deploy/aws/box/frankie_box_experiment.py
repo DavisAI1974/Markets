@@ -1598,18 +1598,40 @@ class Run:
         return receipt.parent if receipt else None
 
     def external_ready(self, e):
-        """(True, None) when the day file is attached beside the sealed ingest (or EXTERNAL_WAIT=off), else (False, why)."""
+        """(True, None) when THIS run's external step has settled the day file (or EXTERNAL_WAIT=off), else (False, why).
+        E-1 (fifth follow-up review): an attached file is not enough, since it may be older than the verified S3 file. The
+        step receipt must be finished AND say which file: the verified S3 file swapped in (action s3) or confirmed equal
+        (s3.same_as_attached), or S3 holds none (s3.status absent: the attached or rebuilt file stands), or this run's
+        ROOT/teacher/classroom already used the attached file (the recorded s3_day_file_differs_after_use finding). And
+        the attached file's sha256 must be the one the step recorded. A waiting, refused or failed step, an S3 state
+        present/integrity/unknown without that outcome, or a receipt from before the S3 check: waits, with the reason."""
         if not self.plan.get('external_wait', True):
             return True, None
-        if e['day'] in self._attached:
+        day = e['day']
+        step = self.receipt('external', day) or {}
+        if step.get('status') not in FINISHED:
+            return False, 'the day file is not settled by this run\'s external step (%s%s)' % (
+                step.get('status') or 'not run', (': ' + str(step['reason'])) if step.get('reason') else '')
+        s3 = step.get('s3') if isinstance(step.get('s3'), dict) else {}
+        settled = (step.get('action') == 's3' or s3.get('same_as_attached') is True or s3.get('status') == 'absent'
+                   or any(isinstance(f, dict) and f.get('kind') == 's3_day_file_differs_after_use'
+                          for f in step.get('findings') or []))
+        if not settled:
+            return False, ('this run\'s external step (%s) does not show the attached file is the verified S3 file or that '
+                           'S3 holds none (S3 %s); it is run again on a dispatch carrying the day\'s S3 listing' % (
+                               step.get('status'), s3.get('status') or 'not checked'))
+        if day in self._attached and self._attached[day][1] == step.get('sha256'):
             return True, None
         directory = self.ingest_dir(e)
         if directory is None:
             return False, 'the day has no sealed ingest yet, so no day file beside it (stages ingest, external)'
         path, sha, why = attached_day_file(directory)
         if path is None:
-            return False, 'the day file of the historical data points is not attached yet (stage external): %s' % why
-        self._attached[e['day']] = (str(path), sha)
+            return False, 'the day file of the historical data points is not attached (stage external): %s' % why
+        if sha != step.get('sha256'):
+            return False, ('the attached day file (sha256 %s) is not the one this run\'s external step settled (%s); the '
+                           'external step runs again' % (sha, step.get('sha256')))
+        self._attached[day] = (str(path), sha)
         return True, None
 
     def url_map(self):
@@ -1672,6 +1694,15 @@ class Run:
                                                outputs={}))
         if s3['status'] == 'present':
             return self.external_from_s3(day, directory, s3)
+        if s3['status'] == 'unknown':
+            # E-1 (fifth follow-up review): an unknown S3 state never lets the day proceed on whatever is attached (it
+            # may be an older file than the verified one on S3): the step waits with the reason, retried on a dispatch
+            # whose presigned map carries the day's frankie/day_external/<day>/ listing (ACTION=plan's presign string)
+            return self.record('external', day, 'waiting', s3=s3,
+                               reason='the S3 state of the day file is unknown (%s); the day waits rather than use an '
+                                      'attached file that may be older than S3\'s verified one' % s3['reason'],
+                               inspection=dict(inputs=dict(ingest=str(directory), s3=s3),
+                                               use='waiting: S3 state unknown', outputs={}))
         path, sha, why = attached_day_file(directory)
         if path is not None:
             day_receipt = directory / DAY_FILE_RECEIPT
@@ -1735,7 +1766,7 @@ class Run:
         return self.record('external', day, 'done', exit_code=code, log=log, action=env['ACTION'], external_run=env['RUN'],
                            day_file=str(path), sha256=sha, ingest=str(directory),
                            new_bytes=new_bytes(DAY_EXTERNAL / env['RUN']) if env['ACTION'] == 'build' else 0,
-                           upload_or_brain_exit_code=code, brain_entry=brain_entry,
+                           upload_or_brain_exit_code=code, brain_entry=brain_entry, s3=s3,
                            inspection=dict(inputs=history_inputs,
                                            use=('built from the presigned day history (frankie_box_day_external.sh '
                                                 'ACTION=build), then attached beside the sealed ingest'
@@ -1874,9 +1905,12 @@ class Run:
             brain_entry = self.brain_stage(day, 'day-file', [path, directory / DAY_FILE_RECEIPT],
                                            summary=dict(day_file=str(path), sha256=sha))
         except ValueError as error:
-            # the brain holds the replaced file's day-file knowledge: moved aside (never deleted; outside ENTRY_GLOBS),
-            # then the verified file's entry filed
+            # E-5: ONLY the brain's own refusal "already holds different stage knowledge" (frankie_box_brain.
+            # write_stage_entry, R16) moves the replaced file's entry aside (never deleted; outside ENTRY_GLOBS) so the
+            # verified file's entry is filed; any other error is the step's own, raised unchanged
             entry = Path(self.plan.get('brain') or str(BRAIN)) / ('%s-day-file' % day)
+            if 'already holds different stage knowledge' not in str(error) or not entry.is_dir():
+                raise
             brain_moved = dict(entry=str(entry), moved_to=str(entry) + '.superseded-%s' % stamp, why=str(error))
             os.rename(entry, brain_moved['moved_to'])
             brain_entry = self.brain_stage(day, 'day-file', [path, directory / DAY_FILE_RECEIPT],
@@ -4415,7 +4449,10 @@ class Run:
             self.probe.update('%s:%s' % (stage, key), min(done[0], total) if total else 0, total or None)
 
         def per_day(stage, fn, parallel):
-            todo = [e for e in days if not self.finished(stage, e['day'])]
+            # E-1: a finished external step that has not settled the day file (an older receipt without the S3 check,
+            # or one recorded on a dispatch without the S3 listing) runs again; the rest of the day waits on it
+            todo = [e for e in days if not self.finished(stage, e['day'])
+                    or (stage == 'external' and not self.external_ready(e)[0])]
             for e in days:
                 if e not in todo:
                     tick(stage, e['day'])

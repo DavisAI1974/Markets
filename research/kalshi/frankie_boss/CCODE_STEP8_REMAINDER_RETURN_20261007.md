@@ -1305,3 +1305,38 @@ Checks: AST parse and `git diff --check` clean.
     as recorded.
 
 Checks: AST parse and `git diff --check` clean.
+
+## 21. E-1 and E-5 (fifth follow-up review): the day never runs on an older attached day file
+
+Uncommitted; source only; nothing ran; no account call. File: `deploy/aws/box/frankie_box_experiment.py`.
+
+- **E-1, `Run.external_ready`.** This gates ROOT, the teacher and the classroom (every existing caller). It now reads
+  THIS run's external step receipt instead of only checking that some file is attached. Ready only when the step is
+  finished AND its receipt shows one of:
+  - the verified S3 file was swapped in (`action == 's3'`);
+  - the attached file is confirmed equal to S3's (`s3.same_as_attached`);
+  - S3 holds no day file (`s3.status == 'absent'`: the attached or rebuilt file stands, the rebuild fallback kept);
+  - this run's ROOT/teacher/classroom had already used the attached file (the recorded
+    `s3_day_file_differs_after_use` finding).
+
+  Also, the attached file's sha256 must equal the sha256 the step recorded. Anything else waits with the reason: a
+  waiting / refused / failed step, a step without that outcome, or a receipt from before the S3 check.
+- **E-1, `Run.external`.** An `unknown` S3 state (no map, or a map without the day's `frankie/day_external/<day>/`
+  listing) is now recorded `waiting` with the reason. It no longer reuses the attached file. The build/link route
+  records `s3` on its receipt too.
+- **E-1, `start()`.** The external stage runs again for a day whose external step is finished but not settled, so an
+  older receipt is re-examined on the next dispatch carrying the listing. Queue days wait at their ROOT/teacher/class
+  gate until then.
+- **Integrity and fetch failures.** An S3 integrity refusal or a failed S3 fetch leaves the external step `refused` or
+  `waiting`, so ROOT, teacher and classroom wait, named. A day file that failed integrity on S3 stops the day's
+  dependent stages.
+- **E-5, `external_from_s3`.** The brain day-file entry is moved aside ONLY on `frankie_box_brain.write_stage_entry`'s
+  "already holds different stage knowledge" refusal, and only when that entry directory exists. Any other error is
+  raised unchanged as the step's own.
+- **Operator note (from the review).** Dispatch with the presign string `ACTION=plan` prints at this commit (it carries
+  the day's getprefix). Confirm the external receipt reads `done`, `action=s3`, sha256 = the S3 receipt's, before any
+  teacher result.
+- **Not mine, open: E-2.** Point 12 on 20231018 holds no 2023 estimate; that is the day-file agent's item and Greg's
+  call.
+
+Checks: AST parse and `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.
