@@ -131,19 +131,116 @@ def independent_evidence(visible, snapshot, witness):
     return dict(classroom_binding_hash=binding['classroom_binding_hash'], witness=witness, evidence=evidence)
 
 
+COVERAGE_SCHEMA = 'FRANKIE_CLASSROOM_COVERAGE_V1'
+# The producer streams the d6af990 core opens for every shared read. A stream not in a later
+# read is listed "not in this read"; that is a thinner picture, never a rejected day.
+_D6AF990_STREAMS = ('root.frames', 'root.prices', 'root.structures', 'native.member', 'native.lifecycle')
+_COVERAGE_READ_KEYS = {'identity', 'complete', 'source_exhausted', 'presented_inputs', 'interpretation', 'completed_native',
+                       'journal', 'sources', 'external_publications', 'completed_sources',
+                       'closed_source_without_root_frame', 'unplaceable_input_clocks',
+                       # the core author's revised reader (in progress beside this slice)
+                       'coverage', 'completeness', 'arithmetic', 'layers', 'absent_layers'}
+
+
+def source_exhausted(report, *, journal_count=None, record_count=None):
+    """Whether one shared read reached the end of its source. Exhaustion is not layer coverage.
+
+    d6af990 records exhaustion as report['complete'], set only after the iterator, the byte/hash/
+    count checks and every producer finish ran. The core author is revising report semantics for
+    the missing-coverage rule; a later explicit `source_exhausted` flag, or the journal accounting
+    equalling the sealed envelope/INPUT counts, is accepted the same way. A missing layer or a
+    failed input never reads as non-exhaustion here, and exhaustion never reads as full coverage.
+    """
+    if not isinstance(report, dict):
+        return False
+    if report.get('complete') is True or report.get('source_exhausted') is True:
+        return True
+    journal = report.get('journal') or {}
+    return (journal_count is not None and record_count is not None
+            and journal.get('entries') == journal_count and journal.get('inputs') == record_count)
+
+
+def _span_counts(ranges):
+    return {reason: sum(int(hi) - int(lo) + 1 for lo, hi in spans) for reason, spans in (ranges or {}).items()}
+
+
+def coverage_disposition(report, *, journal_count=None, record_count=None):
+    """Two separate readings of one shared read: was the whole source read, and what was present.
+
+    Missing-coverage rule (Greg, 2026-10-07): a day or instant is never rejected for missing
+    layers, clocks, derived updates or publications; it stays in with a thinner picture whose
+    missing/unavailable/stale parts are named. This disposition names them from the core's
+    report as it is, counts only. It claims neither that every field entered a target equation
+    nor that an absent layer does not exist. Integrity/identity failures raise inside the core
+    and the classroom; they never appear here relabelled as coverage.
+    """
+    if not isinstance(report, dict):
+        return dict(schema=COVERAGE_SCHEMA, source_exhausted=False, reason='no shared read report was supplied')
+    identity = report.get('identity') or {}
+    journal = report.get('journal') or {}
+    layers = {name: dict(counts=dict(stream.get('counts') or {}), dispositions=_span_counts(stream.get('dispositions')))
+              for name, stream in (report.get('sources') or {}).items()}
+    external = identity.get('external') or {}
+    publications = report.get('external_publications')
+    if external.get('status') == 'attached' and isinstance(publications, dict):
+        external_layer = dict(status='attached', presented=publications.get('presented'), rows=publications.get('rows'),
+                              not_yet_public={k: len(v) for k, v in (publications.get('not_yet_public') or {}).items()},
+                              missing=publications.get('missing'), after_halt=publications.get('after_halt'))
+    else:
+        external_layer = dict(status=external.get('status'), disposition='external_layer_absent_in_shared_source',
+                              listed='no external publication reached any picture of this read')
+    return dict(schema=COVERAGE_SCHEMA,
+                source_exhausted=source_exhausted(report, journal_count=journal_count, record_count=record_count),
+                core_report_complete=report.get('complete'),
+                presented_inputs=report.get('presented_inputs'),
+                journal=dict(entries=journal.get('entries'), inputs=journal.get('inputs'), extracted=journal.get('extracted'),
+                             sealed_journal_count=journal_count, sealed_record_count=record_count,
+                             input_dispositions=_span_counts(journal.get('dispositions')),
+                             unclosed_instruments=len(journal.get('unclosed_instruments') or [])),
+                layers=layers,
+                layers_not_in_read=[name for name in _D6AF990_STREAMS if name not in layers],
+                # The core author's revised reader records its own dispositions: report['coverage']
+                # (layers, absent_layers, present_layers, inputs, all_layers_present), identity
+                # ['absent_layers'] and, on an iter_applied read, report['arithmetic'] (present/absent
+                # operands by status). They travel verbatim when present; None on a d6af990 report.
+                core_coverage=copy.deepcopy(report.get('coverage')),
+                core_absent_layers=copy.deepcopy(identity.get('absent_layers')),
+                core_arithmetic=copy.deepcopy(report.get('arithmetic')),
+                external=external_layer,
+                completed_only=[dict(role=item.get('role'), disposition=item.get('disposition'))
+                                for item in (report.get('completed_sources') or [])],
+                closed_source_without_root_frame=len(report.get('closed_source_without_root_frame') or []),
+                unplaceable_input_clocks=len(report.get('unplaceable_input_clocks') or []),
+                not_interpreted=sorted(key for key in report if key not in _COVERAGE_READ_KEYS),
+                interpretation=('source_exhausted: every original envelope of the sealed source was read; layers/external: '
+                                'which producer rows and publications were present, counted from the read; neither is a claim '
+                                'that every field entered a target equation; a previously observed state is last-observed, '
+                                'not a new observation; integrity and identity failures raise separately'))
+
+
 def market_context(visible, timeline, *, save_requested):
-    """Read the complete shared view once; retain full pictures for existing evidence anchors."""
+    """Read the complete shared view once; retain full pictures at existing evidence anchors.
+
+    Missing-coverage rule (Greg, 2026-10-07): the read exhausts the ordered source, and whatever
+    picture the source holds at an anchor's original adapter cursor is retained with its source
+    status (applied, failed, unpaired...). An anchor whose cursor has no picture is listed
+    `unavailable`; its Dipole value from the teacher rows stands and the market picture at that
+    instant is thinner. Nothing is fabricated for it. Exhaustion, layer coverage and integrity are
+    reported separately. Same-day identity mismatches still refuse; they are not coverage.
+    """
     from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
     ingest = timeline.source['ingestion_receipt']
     raw = Path(ingest['path']).read_bytes()
     if hashlib.sha256(raw).hexdigest() != ingest['sha256']:
-        raise ValueError('shared classroom ingestion receipt differs from its retained source')
+        raise ValueError('identity: shared classroom ingestion receipt differs from its retained source')
     source = json.loads(raw)
     binding = visible['binding']
     if (source['source_prefix_hash'] != binding['source_hash']
             or source['record_count'] - 1 != binding['through_cursor']
             or binding['cycle_index'] != 0 or binding['cycle_count'] != 1):
-        raise ValueError('shared classroom context requires the same complete sealed-day source and cursor scope')
+        # The sealed day's INPUT count includes failed inputs; this is the causal cutoff and
+        # source identity of the classroom, not a requirement that every input applied.
+        raise ValueError('identity: shared classroom context and the sealed day do not name the same source and whole-day cutoff')
     anchors, wanted = {}, set()
     for component in _evidence(visible)['components']:
         present = [(int(p['cursor']), float(p['value'])) for p in component['observations'] if p['state'] == 'PRESENT']
@@ -153,7 +250,7 @@ def market_context(visible, timeline, *, save_requested):
         anchors[component['name']] = {name: dict(adapter_cursor=value[0], value=value[1])
                                       for name, value in chosen.items()}
         wanted.update(value[0] for value in chosen.values())
-    pictures, counts = {}, {}
+    pictures, statuses, counts = {}, {}, {}
     iterator = timeline.iter_pictures()
     try:
         for item in iterator:
@@ -164,21 +261,47 @@ def market_context(visible, timeline, *, save_requested):
             key = json.dumps(status, sort_keys=True)
             counts[key] = counts.get(key, 0) + 1
             cursor = picture['at']['adapter_cursor']
-            if item['evidence'] is not None and cursor in wanted:
+            if cursor in wanted:
                 if cursor in pictures:
-                    raise ValueError('shared market has ambiguous APPLIED pictures for classroom adapter cursor')
+                    raise ValueError('identity: shared market holds two original INPUT pictures for one classroom adapter cursor')
                 pictures[cursor] = copy.deepcopy(picture)
+                # The core's per-instant thinner dict (absent layers, exact clocks, readable record) when present.
+                statuses[cursor] = dict(source_status=status, applied_evidence=item['evidence'] is not None,
+                                        unpaired_outcomes=picture.get('unpaired_outcomes'),
+                                        thinner=copy.deepcopy(picture.get('coverage')))
     finally:
         iterator.close()
-    if not timeline.report['complete'] or wanted != set(pictures):
-        raise ValueError('shared market reading lacks complete source or exact PRESENT anchor pictures')
+    # Reaching here means the iterator ended without an integrity/identity exception. The core's
+    # own exhaustion flag is read beside that fact, never used to reject a thinner day.
+    report = copy.deepcopy(timeline.report)
+    coverage = coverage_disposition(report, journal_count=timeline.source.get('journal_count'),
+                                    record_count=timeline.source.get('record_count'))
+    coverage['classroom_iterator_ended'] = True
+    if coverage.get('core_coverage') is None:
+        # A reader between d6af990 and the core's revised report: carry its layer attributes as read, never inferred.
+        for attribute in ('layers', 'absent_layers'):
+            if getattr(timeline, attribute, None) is not None:
+                coverage['core_' + attribute] = copy.deepcopy(getattr(timeline, attribute))
+    unavailable = sorted(wanted - set(pictures))
+    for selected in anchors.values():
+        for anchor in selected.values():
+            cursor = anchor['adapter_cursor']
+            if cursor in pictures:
+                anchor.update(picture='retained', **statuses[cursor])
+            else:
+                anchor.update(picture='unavailable',
+                              reason='no original INPUT of the exhausted shared source carries this adapter cursor; the '
+                                     'Dipole value stands on the teacher rows and the market picture at this instant is thinner')
     return dict(schema='FRANKIE_CLASSROOM_SHARED_MARKET_V1', classroom_binding_hash=visible['binding']['classroom_binding_hash'],
                 identity=timeline.identity, reader=dict(module='frankie_box_market_timeline',
                     interface='SharedMarketTimeline.iter_pictures', workers=15),
-                anchors=anchors, pictures=pictures, report=copy.deepcopy(timeline.report),
-                source_status_counts=counts,
-                use='full ordered source read; complete first/last/min/max PRESENT pictures supplement unchanged Dipole mathematics',
-                limit='no claim that every market field changes a target or is interpreted; no native training')
+                anchors=anchors, pictures=pictures, report=report,
+                source_status_counts=counts, coverage=coverage,
+                anchor_pictures=dict(wanted=len(wanted), retained=len(pictures), unavailable=unavailable),
+                use='full ordered source read to its end; first/last/min/max PRESENT anchor pictures, each with its source '
+                    'status or listed unavailable, supplement unchanged Dipole mathematics',
+                limit='no claim that every market field changes a target or is interpreted; no claim that every layer was '
+                      'present; no native training')
 
 
 class ClassroomMarketContext:
@@ -197,12 +320,25 @@ class ClassroomMarketContext:
         if self.retained['classroom_binding_hash'] != visible['binding']['classroom_binding_hash']:
             raise ValueError('shared market answer context belongs to another classroom')
         selected = self.retained['anchors'][name]
-        return dict(reader=self.retained['reader'], identity=self.retained['identity'], anchors=selected,
-                    pictures={str(p['adapter_cursor']): self.retained['pictures'][p['adapter_cursor']]
-                              for p in selected.values()}, use=self.retained['use'], limit=self.retained['limit'])
+        pictures = {}
+        for anchor in selected.values():
+            cursor = anchor['adapter_cursor']
+            picture = self.retained['pictures'].get(cursor)
+            # An anchor without a picture stays an anchor: its disposition travels, nothing is filled in.
+            pictures[str(cursor)] = picture if picture is not None else dict(
+                picture='unavailable', adapter_cursor=cursor, reason=anchor.get('reason'))
+        coverage = self.retained.get('coverage') or {}
+        return dict(reader=self.retained['reader'], identity=self.retained['identity'], anchors=selected, pictures=pictures,
+                    coverage=dict(source_exhausted=coverage.get('source_exhausted'),
+                                  layers_present=sorted(coverage.get('layers') or {}),
+                                  layers_not_in_read=coverage.get('layers_not_in_read'),
+                                  core_absent_layers=coverage.get('core_absent_layers'),
+                                  external=(coverage.get('external') or {}).get('status')),
+                    use=self.retained['use'], limit=self.retained['limit'])
 
     def summary(self):
-        return {key: self.retained[key] for key in ('reader', 'identity', 'report', 'source_status_counts', 'use', 'limit')}
+        return {key: self.retained.get(key) for key in ('reader', 'identity', 'report', 'source_status_counts', 'coverage',
+                                                        'anchor_pictures', 'use', 'limit')}
 
 
 def _exact_market_text(value):
@@ -391,10 +527,12 @@ def component_answer(visible, comp, rights, *, learner_context=None, shared_mark
                      'known or claimed (rule R02).'),
     )
     if shared_market is not None:
-        result['evidence'] += (' Complete shared market pictures at these original PRESENT anchors, including exact '
-            'clocks, all updates and last-observed states: ' + _exact_market_text(shared_market.component(visible, name))
-            + '. These anchors supplement the complete ordered source accessible through the answer context; '
-            'the Dipole values and target equations are unchanged.')
+        result['evidence'] += (' Shared market pictures retained at these original PRESENT anchors, each with its source '
+            'status (exact clocks, the updates present at that boundary, last-observed states) or listed unavailable: '
+            + _exact_market_text(shared_market.component(visible, name))
+            + '. These anchors supplement the full ordered source accessible through the answer context; an absent '
+            'layer or picture makes the instant thinner, never removes it; the Dipole values and target equations '
+            'are unchanged.')
     occurring = [s for s in STATES if any(p['state'] == s for p in comp['observations'])]
     result['state_explanations'] = {s: f'{name}: {STATE_MEANING[s]}' + (f' (unit {comp["unit"]})' if s == 'PRESENT' and comp.get('unit') else '')
                                     for s in occurring}
@@ -483,11 +621,12 @@ def summary_answer(visible, outputs, *, learner_context=None, shared_market=None
                      + '; '.join(f'{k} {len(v)} ({", ".join(v)})' for k, v in sorted(by_direction.items()))
                      + '. Terminal state: ' + '; '.join(f'{k} {len(v)} ({", ".join(v)})' for k, v in sorted(by_terminal.items())) + '.')
     if shared_market is not None:
-        cycle_summary += (' Shared ordered market source and complete-read dispositions used by this review: '
-            + _exact_market_text(shared_market.summary())
-            + '. Complete component anchor pictures are carried in the component evidence; they do not replace '
-            'access to the full ordered view. Unsupported/failed/unpaired inputs remain source dispositions, '
-            'not invented Dipole measurements or claims of native training.')
+        cycle_summary += (' Shared ordered market source, its source-exhaustion and layer-coverage dispositions used by '
+            'this review: ' + _exact_market_text(shared_market.summary())
+            + '. Component anchor pictures are carried in the component evidence; they do not replace access to the '
+            'full ordered view. Unsupported/failed/unpaired inputs, absent layers and unavailable anchor pictures '
+            'remain source dispositions of a thinner instant, not invented Dipole measurements, not a rejected day, '
+            'and not claims of native training.')
     correlation_review = (f'{AUTHOR}: {len(review)} pairs ({pre["evidence_source"]}). Relation: {json.dumps(relations, sort_keys=True)}. Pearson reported '
                           f'on {reported} pairs; not reported on {len(review) - reported} ({json.dumps(not_reported, sort_keys=True)}). '
                           f'{len(disagreements)} pairs whose first-to-last relation and step-by-step co-movement counts point different '

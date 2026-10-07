@@ -167,10 +167,17 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     if market is not None:
         shared_read = teacher_receipt.get('shared_market_read') or {}
         if (teacher_receipt.get('shared_market_identity') != market.identity
-                or shared_read.get('identity') != market.identity or shared_read.get('complete') is not True
+                or shared_read.get('identity') != market.identity
                 or teacher_receipt.get('ingestion_receipt') != {
                     key: market.source['ingestion_receipt'][key] for key in ('path', 'sha256')}):
-            raise ValueError('shared classroom requires its exact completed shared teacher source, not another same-day reading')
+            raise ValueError('identity: shared classroom requires its exact shared teacher source, not another same-day reading')
+        # Missing-coverage rule (Greg, 2026-10-07): what the teacher's read must have done is reach the
+        # end of the same source. Absent layers, failed inputs or unavailable pictures in that read are
+        # a thinner picture and do not refuse the classroom day; an unfinished read is not this day's reading.
+        if not K.source_exhausted(shared_read, journal_count=market.source.get('journal_count'),
+                                  record_count=market.source.get('record_count')):
+            raise ValueError('the shared teacher reading did not reach the end of its source; an unfinished read is not '
+                             'this day\'s shared reading (this is not a missing-layer or failed-input check)')
     attachment_sha = _sha256(teacher_rows / 'teacher-attachment.pkl')
     if attachment_sha != teacher_receipt['attachment_file']['sha256']:
         raise SystemExit('teacher-attachment.pkl differs from its teacher rows receipt; refused')
@@ -181,10 +188,20 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         raise SystemExit('the day file of the historical data points: %s' % error)
     if _sha256(day_file) != day_sha:
         raise SystemExit('the day file %s differs from the sha256 %s (%s); refused' % (day_file, day_sha, day_source))
+    shared_external = None
     if market is not None:
         external = market.source.get('external') or {}
-        if external.get('status') != 'attached' or external.get('sha256') != day_sha:
-            raise ValueError('classroom external day file is outside the exact shared ROOT publication source')
+        if external.get('status') == 'attached':
+            if external.get('sha256') != day_sha:
+                raise ValueError('identity: the shared ROOT attached another external day file than the classroom\'s; irreconcilable')
+            shared_external = dict(status='attached', sha256=day_sha)
+        else:
+            # The shared pictures carry no external publications (the ROOT ran without a day file). The
+            # external section still reads its own checked day file; the day stays in, thinner.
+            shared_external = dict(status=external.get('status'), disposition='external_layer_absent_in_shared_source',
+                                   recorded={k: v for k, v in external.items() if k != 'rows'},
+                                   listed='no external publication enters the shared market pictures of this day; the '
+                                          'classroom external section reads the checked day file directly')
     day_receipt = Path(day_file).parent / 'day-external-receipt.json'
 
     d.mkdir(parents=True, exist_ok=True)
@@ -351,7 +368,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     _dump(d / 'code-answers.json', dict(schema=K.SCHEMA, rules=rules_witness, outputs=outputs, summary=summary,
                                         school=reproduction, stage_knowledge=knowledge_reproduction,
                                         learner_reading=learner_reading, model_calls=0,
-                                        shared_market=shared_market.summary() if shared_market is not None else None))
+                                        shared_market=shared_market.summary() if shared_market is not None else None,
+                                        shared_market_external=shared_external))
     _dump(d / 'learner-knowledge.json', dict(day=day, stage='classroom', documents=knowledge,
                                            versions=knowledge_input['versions'], listed=knowledge_input['listed'],
                                            school_documents=school, school_listed=school_listed,
@@ -464,6 +482,10 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                   carried_from_previous=carried, school_knowledge=school_witness, classroom_rules=rules_witness,
                   learner_reading=learner_reading,
                   shared_market=shared_market.summary() if shared_market is not None else None,
+                  shared_market_external=shared_external,
+                  # The core teacher's own listing of which instants its pinned equation computed on and which it
+                  # listed absent (revised core; None on a d6af990 teacher receipt). Carried, not reinterpreted.
+                  teacher_shared_market_arithmetic=teacher_receipt.get('shared_market_arithmetic'),
                   stage_knowledge=dict(path=str(d / 'learner-knowledge.json'),
                                        sha256=_sha256(d / 'learner-knowledge.json'),
                                        versions=knowledge_input['versions'],
