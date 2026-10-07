@@ -1,4 +1,4 @@
-# Claude handoff: AWS MCP, agents, and the Step 8 agent review (2026-10-07)
+# Claude handoff: AWS MCP, agents, and Step 8 STOPPED (2026-10-07)
 
 Session `session_01RXFR8bwkmbcs3qnHquGbXz`. Configuration and agent definitions only. Nothing ran: no
 agent, no test, no AWS account call, no dispatch, no data/model/scientific run. HOLD stands.
@@ -6,20 +6,17 @@ agent, no test, no AWS account call, no dispatch, no data/model/scientific run. 
 ## Drop-in box (paste into the new session)
 
 ```
-NEW SESSION -- Frankie Step 8 agent review (Greg, 2026-10-07: "We'll have the agents go over step 8")
-1. Start ON branch ccr-d2f8f826-iefeah-frankie (tip 5c6f1622 or newer). It carries
+NEW SESSION -- Frankie (Greg, 2026-10-07: STEP 8 IS STOPPED)
+1. Start ON branch ccr-d2f8f826-iefeah-frankie (tip 82c20e15 or newer). It carries
    the aws-mcp server, the agent-skills plugin and the 9 agents.
    git fetch origin ccr-d2f8f826-iefeah-frankie && git checkout -B ccr-d2f8f826-iefeah-frankie origin/ccr-d2f8f826-iefeah-frankie
 2. Verify tools: /mcp shows aws-mcp (read-only: search/read docs, retrieve_skill, regions,
-   tasks); the Agent tool lists frankie-ccode-review, frankie-school-recovery and the rest.
-   If either is missing, stop and fix config first. Do NOT run agents on a broken toolset.
-3. Read research/kalshi/frankie_boss/CLAUDE_HANDOFF_20261007_AGENTS_STEP8_REVIEW.md (this file).
-4. Fetch ccode/teacher-tasks-20261006b. Its tip was 8f242402 (seventh review pass). If newer
-   commits landed in the last hour, another CCode session may be live: coordinate, never collide.
-5. Spawn IN PARALLEL, read-only: frankie-ccode-review (the whole Step 8 diff) and
-   frankie-school-recovery (the school/waiting_school slice). The prompt states Greg's request.
-6. Fix confirmed findings on ccode/teacher-tasks-20261006b (CCode-owned files only), source
-   checks only, then a FRESH re-review. Push with [skip ci]. Never rewrite history.
+   tasks); the Agent tool lists the frankie-* and aws-* agents. If either is missing, fix
+   config first.
+3. Read research/kalshi/frankie_boss/CLAUDE_HANDOFF_20261007_AGENTS_STEP8_REVIEW.md.
+4. STEP 8 IS STOPPED by Greg. ccode/teacher-tasks-20261006b is frozen at 8f242402. Do NOT
+   review, fix, rebase or push Step 8, and do NOT spawn agents on it, until Greg restarts it.
+5. Ask Greg what the agents work on next. Run no agent without his go.
 Source-only. No tests, installs, AWS inspection/actions, dispatch or E2E. HOLD.
 ```
 
@@ -54,7 +51,13 @@ Source-only. No tests, installs, AWS inspection/actions, dispatch or E2E. HOLD.
      role), its disjoint file ownership, the missing-coverage rule, the source-only boundary, return-never-publish
      (no commit/push), one bounded AWS lookup per need.
 
-## Step 8: what the agents review
+## Step 8: STOPPED (Greg, 2026-10-07)
+
+Greg stopped Step 8 at close. The CCode session that ran the Step 8 review passes
+("Ccode queue review and rebase") was idle and has been interrupted; no routine is scheduled.
+`ccode/teacher-tasks-20261006b` is frozen at `8f242402`. Nothing below runs until Greg restarts
+Step 8; it is kept only as the reference for that restart.
+
 
 CCode's Step 8 remainder return: `research/kalshi/frankie_boss/CCODE_STEP8_REMAINDER_RETURN_20261007.md` on
 `ccode/teacher-tasks-20261006b`. Assignment: `CCODE_STEP8_REMAINDER_ASSIGNMENT_20261007.md` (section 4 and its
