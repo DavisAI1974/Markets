@@ -58,6 +58,13 @@ def _upload(path, sha, size):
         import boto3
         from boto3.s3.transfer import TransferConfig
         s3 = boto3.client('s3', region_name=region)
+        configs = [TransferConfig(multipart_chunksize=128 * 1024 * 1024, max_concurrency=16)]
+        try:
+            import awscrt  # noqa: F401
+            configs.insert(0, TransferConfig(preferred_transfer_client='crt', multipart_chunksize=128 * 1024 * 1024,
+                                             max_concurrency=16))
+        except Exception:             # noqa: BLE001 - no awscrt or an older boto3: the classic client only
+            pass
     except Exception as error:        # noqa: BLE001 - the push never fails on the offload copy
         result['error'] = '%s: %s' % (type(error).__name__, str(error)[:200])
         return result
@@ -73,8 +80,14 @@ def _upload(path, sha, size):
                     return result
             except Exception:         # noqa: BLE001 - absent or not readable: upload
                 pass
-            s3.upload_file(str(path), bucket, key, ExtraArgs={'Metadata': {'sha256': sha}},
-                           Config=TransferConfig(multipart_chunksize=128 * 1024 * 1024, max_concurrency=16))
+            # the CRT transfer client first where awscrt is installed (box venv, 2026-10-07), the classic one after
+            for number, config in enumerate(configs):
+                try:
+                    s3.upload_file(str(path), bucket, key, ExtraArgs={'Metadata': {'sha256': sha}}, Config=config)
+                    break
+                except Exception:     # noqa: BLE001 - the next transfer client; the last one's error is recorded
+                    if number == len(configs) - 1:
+                        raise
             result.update(key=key, uploaded=True)
             return result
         except Exception as error:    # noqa: BLE001

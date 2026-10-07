@@ -141,6 +141,37 @@ def sha(p):
     return h.hexdigest()
 def ok_url(u):
     return isinstance(u, str) and u.startswith('https://') and '.amazonaws.com/' in u.split('?', 1)[0]
+# A partition above RANGED_ABOVE is pulled as concurrent byte-range GETs of the same presigned URL (aws-storage skill, S3
+# byte-range fetches: 8-16 MB ranges, ~15 streams fill a 12.5 Gb/s NIC; the journal pull's pattern) written at their
+# offsets into <dest>.part; smaller ones keep the one curl stream. The bytes and sha256 check below are unchanged.
+RANGE_BYTES = 16 << 20; RANGED_ABOVE = 64 << 20; RANGE_STREAMS = int(os.environ.get('RANGE_STREAMS') or 15)
+def ranged(url, part, size):
+    import urllib.request
+    from concurrent.futures import ThreadPoolExecutor
+    fd = os.open(part, os.O_RDWR | os.O_CREAT, 0o644)
+    try:
+        os.ftruncate(fd, size)
+        def one(i):
+            start, end = i * RANGE_BYTES, min(size, (i + 1) * RANGE_BYTES) - 1
+            for attempt in range(6):
+                try:
+                    req = urllib.request.Request(url, headers={'Range': 'bytes=%d-%d' % (start, end)})
+                    with urllib.request.urlopen(req, timeout=120) as r:
+                        if r.status != 206:
+                            return False
+                        data = r.read()
+                    if len(data) == end - start + 1:
+                        os.pwrite(fd, data, start); return True
+                except OSError as e:
+                    print('   retry %d range %d of %s: %s' % (attempt + 1, i, os.path.basename(part), e))
+                time.sleep(min(60, 5 * (attempt + 1)))
+            return False
+        with ThreadPoolExecutor(max(1, RANGE_STREAMS)) as pool:
+            ok = all(pool.map(one, range((size + RANGE_BYTES - 1) // RANGE_BYTES)))
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    return 0 if ok else 1
 receipt = dict(schema='FRANKIE_BOX_INGEST_FETCH_RECEIPT_V1', at=time.time(), block=manifest['block'], manifest_hash=manifest['manifest_hash'],
                markets_sha=os.environ['MARKETS_SHA'], files=[], refused=[])
 for member in scope.members:
@@ -171,9 +202,12 @@ for member in scope.members:
     if not ok_url(m[key].get('url')):
         receipt['refused'].append(dict(member_key=member.member_key, reason='the map entry is not an https amazonaws URL')); print('REFUSED (url):', member.member_key); continue
     part = dest + '.part'; t0 = time.time()
-    r = subprocess.run(['curl', '-fsS', '--proto', '=https', '-L', '--retry', '5', '--retry-delay', '5', '-C', '-', '-o', part, '--url', m[key]['url']])
-    if r.returncode != 0:
-        receipt['refused'].append(dict(member_key=member.member_key, reason='download failed', returncode=r.returncode)); print('REFUSED (download):', member.member_key); continue
+    if member.size_bytes > RANGED_ABOVE and RANGE_STREAMS > 1:
+        returncode = ranged(m[key]['url'], part, member.size_bytes)
+    else:
+        returncode = subprocess.run(['curl', '-fsS', '--proto', '=https', '-L', '--retry', '5', '--retry-delay', '5', '-C', '-', '-o', part, '--url', m[key]['url']]).returncode
+    if returncode != 0:
+        receipt['refused'].append(dict(member_key=member.member_key, reason='download failed', returncode=returncode)); print('REFUSED (download):', member.member_key); continue
     got = sha(part)
     if os.path.getsize(part) != member.size_bytes or got != member.sha256:
         os.replace(part, part + f'.rejected-{int(time.time())}')
@@ -181,7 +215,8 @@ for member in scope.members:
     if os.path.exists(dest):   # something landed at the destination during the download: never overwritten
         os.replace(part, part + f'.late-{int(time.time())}')
         receipt['refused'].append(dict(member_key=member.member_key, reason='a file appeared at the destination during the download; not overwritten (the download is kept aside as .part.late-<ts>)')); print('REFUSED (late):', member.member_key); continue
-    os.replace(part, dest); receipt['files'].append(dict(member_key=member.member_key, status='restored', sha256=got, seconds=round(time.time() - t0, 1)))
+    os.replace(part, dest); receipt['files'].append(dict(member_key=member.member_key, status='restored', sha256=got, seconds=round(time.time() - t0, 1),
+                                    transport='ranged-%d' % RANGE_STREAMS if member.size_bytes > RANGED_ABOVE and RANGE_STREAMS > 1 else 'curl'))
     print('restored', dest, member.size_bytes, f'{time.time()-t0:.0f}s')
 name = os.path.join(os.environ['ROOT'], 'receipts', f'ingest-fetch-{manifest["block"]}-{int(time.time())}.json')
 with open(name, 'x') as f: json.dump(receipt, f, indent=1, sort_keys=True)
