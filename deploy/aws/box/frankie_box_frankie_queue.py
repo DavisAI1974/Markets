@@ -396,7 +396,7 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
             '--code-root', str(code_root), '--commit', commit, '--max-seconds', str(int(max_seconds)),
             '--poll-seconds', str(int(poll_seconds)), '--scope', scope['text']]
     env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
-               MARKETS_SHA=commit, CODE_ROOT=str(code_root))
+               MARKETS_SHA=commit, CODE_ROOT=str(code_root), **_root_overlap_env())
     how = None
     if shutil.which('systemd-run'):
         unit = 'frankie-queue-%s-%d' % (line, int(time.time()))
@@ -473,7 +473,7 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print, scop
             '--code-root', str(code_root), '--commit', commit, '--max-seconds', str(int(max_seconds)),
             '--poll-seconds', str(int(poll_seconds)), '--wait-lock', '--scope', scope['text']]
     env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
-               MARKETS_SHA=commit, CODE_ROOT=str(code_root))
+               MARKETS_SHA=commit, CODE_ROOT=str(code_root), **_root_overlap_env())
     unit = 'frankie-queue-%s-handover-%d' % (line, int(time.time()))
     cmd = ['systemd-run', '--unit', unit, '--collect', '-p', 'StandardOutput=append:%s' % log_path,
            '-p', 'StandardError=append:%s' % log_path] + [x for k, v in sorted(env.items()) for x in ('-E', '%s=%s' % (k, v))] + argv
@@ -483,6 +483,13 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print, scop
               commit=commit, scope=scope['text'])
     return dict(old_worker=old, signalled=signalled, superseded_waiting=superseded, new_unit=unit, systemd_run_exit=code, log=str(log_path),
                 note='the old worker finishes the days in its slots and ends; the new one waits on the lock, then runs')
+
+
+def _root_overlap_env():
+    """FRANKIE_ROOT_NATIVE_OVERLAP (on | off) of the kicking process reaches the worker it starts and so the ROOT it runs
+    (frankie_box_experiment_root.sh reads it; Greg, 2026-10-07: the relaunch runs with it off). Anything else is not passed."""
+    value = os.environ.get('FRANKIE_ROOT_NATIVE_OVERLAP')
+    return {'FRANKIE_ROOT_NATIVE_OVERLAP': value} if value in ('on', 'off') else {}
 
 
 def _source_wait(entry, code_root, commit):

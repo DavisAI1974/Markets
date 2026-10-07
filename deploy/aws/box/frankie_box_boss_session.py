@@ -287,6 +287,165 @@ class NativeInputView:
             yield record
 
 
+def lane_cpus():
+    """The held lane's CPUs, never the host count: FRANKIE_LANE_CPUS or FRANKIE_BOOKED_CPUS (frankie_box_cores cpu_list,
+    e.g. '0-15') intersected with this process's affinity (taskset by the booking); the affinity alone when neither is
+    set or the intersection is empty."""
+    affinity = set(os.sched_getaffinity(0))
+    for name in ('FRANKIE_LANE_CPUS', 'FRANKIE_BOOKED_CPUS'):
+        text = os.environ.get(name) or ''
+        listed = set()
+        try:
+            for part in text.split(','):
+                part = part.strip()
+                if not part:
+                    continue
+                low, _, high = part.partition('-')
+                listed.update(range(int(low), int(high or low) + 1))
+        except ValueError:
+            continue
+        if listed & affinity:
+            return sorted(listed & affinity)
+    return sorted(affinity)
+
+
+def _encode_frame(payload):
+    """A frame op's row line from its snapshot (pickled at the serial append point; see OrderedRowWriter)."""
+    import pickle
+    return _encode_row(pickle.loads(payload)[0])
+
+
+def _encode_row(value):
+    """RowSpool.append's exact line (frankie_box_bedrock.RowSpool.append: json.dumps(pack(value)) with compact
+    separators, newline). The value arrives pickled (dict order, ints, floats, str, bytes and tuples exact), so pack sees
+    the same object graph the serial append would."""
+    from research.kalshi.frankie_boss.c15_journal import pack
+    return json.dumps(pack(value), separators=(',', ':')) + '\n'
+
+
+def _encoder_pin(cpus):
+    """Each encoder process takes one lane CPU of its own and is pinned to it (Greg, 2026-10-07: CPUs pinned to the jobs)."""
+    os.sched_setaffinity(0, {cpus.get()})
+
+
+class OrderedRowWriter:
+    """The legacy pass's spool appends in the serial order, with the frame rows encoded on pinned lane workers.
+
+    Profile (from the code; the canary measures it): per record the serial pass does the adapter replay (adapter.apply,
+    legacy-row attribution, binner; the ingest's whole causal replay measured 1.77 ms/record), then per closed group the
+    frame row: book_snapshot(include_full_depth, include_order_ids) and observe_book copy every resting order and level
+    (state-bound: they read the live book, so they stay in the replay process), and RowSpool.append runs pack() over that
+    whole tree (one tagged list per node, recursive Python, about twice the nodes the snapshot built) and json.dumps
+    (~366 KB of frames per record measured on 20231018). The encoding is pure per row: it moves to the workers. The
+    replay process keeps the replay, the snapshot building and one C pickle per frame.
+
+    Ops are queued in program order and written strictly in that order, so every spool receives exactly the lines, in
+    exactly the order, the serial `spool.append(value)` calls would write (RowSpool's own line, count and first/last
+    bookkeeping). A frame whose encoding raised writes, at its own slot, the failure row the serial except clause would
+    have written. The in-flight window is fixed (window_per_worker x workers frames). drain() writes everything queued;
+    it runs before every save point (a saved spool position always has every earlier row on disk, so a resume reopens
+    the spools at exactly those byte offsets) and before the spools are closed."""
+
+    def __init__(self, cpus, window_per_worker=4):
+        import collections
+        import multiprocessing
+        context = multiprocessing.get_context('fork')
+        handout = context.Queue()
+        for cpu in cpus:
+            handout.put(cpu)
+        self.cpus = list(cpus)
+        self.workers = len(self.cpus)
+        self.queue = collections.deque()
+        self.window = self.workers * window_per_worker
+        self.pool = context.Pool(self.workers, initializer=_encoder_pin, initargs=(handout,))
+        self.frames_encoded = 0
+        self.wait_seconds = 0.0
+
+    def append(self, spool, value):
+        """A small row (prices, structures, failures): encoded here, now, exactly as RowSpool.append would."""
+        self.queue.append((spool, value, _encode_row(value), None))
+        self._write_ready()
+
+    def append_frame(self, spool, failures, value, index, frame, group_inputs):
+        """The frame row. Its value, the closing frame and the group's INPUTs are pickled NOW (one pickle: shared
+        objects once), so the worker encodes exactly what the serial append would have encoded at this point and the
+        failure row, if encoding raises, carries the frame as it was here. A value that will not pickle takes the serial
+        append in place (it raises there exactly as before)."""
+        import pickle
+        try:
+            payload = pickle.dumps((value, frame, group_inputs), protocol=pickle.HIGHEST_PROTOCOL)
+        except Exception:  # noqa: BLE001 - the serial path decides, unchanged
+            self.append(spool, value)
+            return
+        self.queue.append((spool, value, self.pool.apply_async(_encode_frame, (payload,)), (failures, payload, index)))
+        while len(self.queue) > self.window:
+            self._write_one()
+        self._write_ready()
+
+    def _write_ready(self):
+        while self.queue:
+            encoded = self.queue[0][2]
+            if not isinstance(encoded, str) and not encoded.ready():
+                return
+            self._write_one()
+
+    def _write_one(self):
+        spool, value, encoded, failed = self.queue.popleft()
+        if not isinstance(encoded, str):
+            started = time.time()
+            try:
+                encoded = encoded.get()
+                self.frames_encoded += 1
+            except Exception as error:
+                # the serial except clause's failure row, at this frame's own slot in the failures spool
+                import pickle
+                failures, payload, index = failed
+                _, frame, group_inputs = pickle.loads(payload)
+                row = dict(index=index, book=True, frame=frame, group_inputs=group_inputs,
+                           error=f'{type(error).__name__}: {error}')
+                self._write(failures, _encode_row(row), row)
+                return
+            finally:
+                self.wait_seconds += time.time() - started
+        self._write(spool, encoded, value)
+
+    @staticmethod
+    def _write(spool, encoded, value):
+        # RowSpool.append's bookkeeping, unchanged: the line, the count, the first/last value
+        spool._writer.write(encoded)
+        spool._count += 1
+        if not spool._ends:
+            spool._ends = [value, value]
+        else:
+            spool._ends[1] = value
+
+    def drain(self):
+        while self.queue:
+            self._write_one()
+
+    def close(self):
+        try:
+            self.drain()
+        finally:
+            self.pool.close()
+            self.pool.join()
+
+    def terminate(self):
+        self.queue.clear()
+        self.pool.terminate()
+        self.pool.join()
+
+
+class _QueuedSpool:
+    """A RowSpool whose appends go through the OrderedRowWriter (the RowSpool.append call shape)."""
+
+    def __init__(self, spool, writer):
+        self.spool, self.writer = spool, writer
+
+    def append(self, value):
+        self.writer.append(self.spool, value)
+
+
 def _pin_worker(cpus):
     """A fan-out thread takes the next CPU in turn and is pinned to it (Greg, 2026-09-28: pin workers to CPUs so none sit
     idle); the prompt building and tokenizing each thread does before its model call run on its own CPU."""
@@ -798,6 +957,12 @@ class Session:
         try:
             return self._derive(**arguments)
         except BaseException:
+            writer = getattr(self, '_row_writer', None)
+            if writer is not None:
+                # a save point drained every row before it was recorded; anything still queued was never saved, and a
+                # resume reopens each spool at its saved byte offset
+                self._row_writer = None
+                writer.terminate()
             self._stop_native_overlap('the ROOT legacy/native derivation stopped before the native stage was joined')
             raise
 
@@ -1092,7 +1257,33 @@ class Session:
                                               origin='open_group_before_this_source')
                                          for k in range(len(book._legacy_group_rows))]
                               for iid, book in adapter.books.items() if book.event_group and book._legacy_group_rows}
+        # The frame rows (full-depth books with order ids, observations, the group's INPUT records) dominate the pass's
+        # bytes and time; with the frame sections retained, the replay stays serial on the lane's first CPU and the rows
+        # are encoded on encoders pinned one per remaining lane CPU, every spool line still written in the serial order
+        # (OrderedRowWriter). Same lines, same order, same byte offsets at every save point.
+        writer, replay_cpu, lane = None, None, lane_cpus()
+        encoder_cpus = lane[1:1 + max(0, int((self.source_binding or {}).get('data_workers') or 1))]
+        if retain_frame_sections and encoder_cpus:
+            for rows in (prices, frames, structures, failures):
+                rows._writer.flush()              # nothing buffered is copied into the forked encoders
+            writer = OrderedRowWriter(encoder_cpus)
+            self._row_writer = writer
+            replay_cpu = lane[0]
+            os.sched_setaffinity(0, {replay_cpu})
+            prices_out, structures_out, failures_out = (_QueuedSpool(prices, writer), _QueuedSpool(structures, writer),
+                                                        _QueuedSpool(failures, writer))
+            self.note(f'legacy pass: replay on CPU {replay_cpu}, frame rows encoded on {writer.workers} pinned lane CPUs '
+                      f'{encoder_cpus[0]}-{encoder_cpus[-1]}, written in the serial order')
+        else:
+            prices_out, structures_out, failures_out = prices, structures, failures
+        def append_frame(record_book, frame, group_inputs, index):
+            if writer is None:
+                frames.append(record_book)
+            else:
+                writer.append_frame(frames, failures, record_book, index, frame, group_inputs)
         def save_legacy(cursor):
+            if writer is not None:
+                writer.drain()                    # every queued row on disk before its spool position is saved
             _save_raw_state(recovery_path, dict(identity=identity, next_record=cursor,
                 adapter=mbo_resume_state.export_adapter_state(adapter, include_open_groups=True),
                 adapter_live=adapter,
@@ -1137,7 +1328,7 @@ class Session:
                 try:
                     frame, legacy_rows = adapter.apply(record)
                 except Exception as error:
-                    failures.append(dict(index=index, record=record, error=f'{type(error).__name__}: {error}'))
+                    failures_out.append(dict(index=index, record=record, error=f'{type(error).__name__}: {error}'))
                     attribute_open_rows('this_source_apply_failed')   # a row appended before the producer raised stays attributed
                     continue
                 if retain_frame_sections:
@@ -1152,7 +1343,7 @@ class Session:
                     try:
                         binner.observe(row)
                     except Exception as error:
-                        failures.append(dict(index=index, legacy=True, error=f'{type(error).__name__}: {error}'))
+                        failures_out.append(dict(index=index, legacy=True, error=f'{type(error).__name__}: {error}'))
                     if row.get('action') == native_roll20.TRADE_ACTION:
                         # provenance (PRICE_ROW_PROVENANCE_SCHEMA, D1): the ORIGINAL INPUT whose application appended this
                         # row (an earlier member of the group: from the attribution made when that INPUT was applied; a row
@@ -1162,7 +1353,7 @@ class Session:
                         source = opened[group_ordinal] if group_ordinal < open_before else dict(
                             input_index=index, legacy_row_ordinal=group_ordinal - open_before,
                             instrument_id=record_instrument, origin='this_source')
-                        prices.append(dict(ts_recv=row.get('ts_recv'), ts_event=row.get('ts_event'), price=row.get('price'), size=row.get('size'),
+                        prices_out.append(dict(ts_recv=row.get('ts_recv'), ts_event=row.get('ts_event'), price=row.get('price'), size=row.get('size'),
                                            bid_px_00=row.get(native_roll20.BID_TOUCH_FIELD), ask_px_00=row.get(native_roll20.ASK_TOUCH_FIELD),
                                            provenance=dict(schema=PRICE_ROW_PROVENANCE_SCHEMA,
                                                            input_index=source['input_index'],
@@ -1197,27 +1388,33 @@ class Session:
                             record_book['input_records'] = [item[1] for item in group_inputs]
                             record_book['input_record_indices'] = [item[0] for item in group_inputs]
                             record_book['input_cursor'] = index
-                        frames.append(record_book)
+                        append_frame(record_book, frame, group_inputs, index)
                     except Exception as error:
-                        failures.append(dict(index=index, book=True, frame=frame, group_inputs=group_inputs,
+                        failures_out.append(dict(index=index, book=True, frame=frame, group_inputs=group_inputs,
                                              error=f'{type(error).__name__}: {error}'))
                     previous_book = book
                     try:
                         # provenance (ROW_PROVENANCE_SCHEMA): the closing INPUT index (the record whose application closed
                         # this F_LAST group: frames.input_cursor of the same close), the frame's instrument identity, and
                         # the group's member INPUT indices when the frame sections retain them (else None: not inferred).
-                        structures.append(dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'),
+                        structures_out.append(dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'),
                                                provenance=dict(schema=ROW_PROVENANCE_SCHEMA, input_cursor=index,
                                                                instrument_id=frame.get('instrument_id'),
                                                                input_record_indices=([item[0] for item in group_inputs]
                                                                                      if retain_frame_sections else None)),
                                                **describe_structure(frame.get('raw_actions') or [])))
                     except Exception as error:
-                        failures.append(dict(index=index, structure=True, error=f'{type(error).__name__}: {error}'))
+                        failures_out.append(dict(index=index, structure=True, error=f'{type(error).__name__}: {error}'))
             finally:
                 if recovery and save_requested and save_requested():
                     save_legacy(index + 1)
                     raise TeacherSaved('ROOT saved with all open groups and output rows; next INPUT %d' % (index + 1))
+        if writer is not None:
+            writer.close()                        # drains every queued row, then the encoders end
+            self._row_writer = None
+            os.sched_setaffinity(0, set(lane))
+            self.note(f'legacy pass: {writer.frames_encoded} frame rows encoded on {writer.workers} pinned lane CPUs; '
+                      f'the replay waited {writer.wait_seconds:.1f} s on encoders')
         if recovery:
             save_legacy(len(records))
         probe.update('root-legacy-finalize')
