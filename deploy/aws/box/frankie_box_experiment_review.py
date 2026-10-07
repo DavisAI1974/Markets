@@ -176,6 +176,44 @@ def _validate_transition(transition, before, after, publication):
                                                        after['claim_inputs']['claims'], before['results'], after['results']):
             if old_claim['id'] not in affected and (old_claim != claim or old_result != result):
                 raise ValueError('standalone correction changed an unaffected claim/result')
+        request = operations[1]['identity'].get('successor')
+        if request is not None:
+            if (request['original_inputs'] != operations[0]['inputs']
+                    or operations[1]['identity'].get('owner_day') != publication['day']
+                    or request.get('affected_claim_ids', ids) != affected):
+                raise ValueError('standalone successor changed its original request or owning publication day')
+            if [s['day'] for s in operations[0]['searches']] != [s['day'] for s in operations[1]['searches']]:
+                raise ValueError('standalone successor must preserve its original ordered search scope')
+            for old_search, search in zip(operations[0]['searches'], operations[1]['searches']):
+                replacement_search = request.get('replacement_search')
+                if old_search != search and (search['day'] != publication['day'] or not replacement_search
+                        or search['manifest'] != replacement_search
+                        or Path(search['dir']) / 'MANIFEST.json' != Path(replacement_search['path'])):
+                    raise ValueError('standalone successor changed a search outside its explicit owner replacement')
+            if operations[0]['reproduction_records'] != operations[1]['reproduction_records']:
+                raise ValueError('standalone successor changed its frozen reproduction selection')
+            if before.get('reconsideration') != after.get('reconsideration'):
+                raise ValueError('standalone successor changed original historical collection context')
+            origin = (before.get('knowledge_retest') or {}).get('reconsideration_origin')
+            if before.get('reconsideration') is not None and before['claims_sha256'] != after['claims_sha256'] and origin is None:
+                collection = before['reconsideration']
+                if collection['claims_file_sha256'] != before['claims_sha256']:
+                    raise ValueError('original standalone collection lacks its claims binding')
+                origin = dict(claims_sha256=collection['claims_file_sha256'], result=request['original_result'])
+            if (after.get('knowledge_retest') or {}).get('reconsideration_origin') != origin:
+                raise ValueError('standalone successor changed original historical collection provenance')
+            projection = request.get('replacement_claims')
+            if (before['claim_inputs']['claims'] != after['claim_inputs']['claims']
+                    or before['claims_sha256'] != after['claims_sha256']):
+                if projection is None or operations[1]['source'] != projection:
+                    raise ValueError('standalone changed claims need the exact explicit replacement projection')
+            elif operations[0]['source'] != operations[1]['source'] and projection is None:
+                raise ValueError('standalone successor changed its original claim source silently')
+            expected = {i: (dict(input_sha256=operations[1]['inputs']['sha256'], searches=after['searches']) if i in affected else
+                           dict(inputs=request['original_inputs'], result=request['original_result'],
+                                searches=claim_searches(before, i))) for i in ids}
+            if (after.get('knowledge_retest') or {}).get('claim_operations') != expected:
+                raise ValueError('standalone successor lost exact recomputed/preserved claim provenance')
         return
     if any(o.get('kind') == 'standalone' for o in operations):
         raise ValueError('mixed standalone/accumulated correction owners are not interchangeable')

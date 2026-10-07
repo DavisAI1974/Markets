@@ -991,6 +991,163 @@ def publish_standalone_correction(brain, *, original, replacement, original_inpu
                               affected_claim_ids=affected_claim_ids))
 
 
+def standalone_successor_inputs(day, search, brain, request):
+    """Resolve one explicit standalone correction without testing or choosing a scientific decision."""
+    import frankie_box_brain as BR
+    import frankie_box_experiment_review as R
+    required = {'original_inputs', 'original_result', 'reason', 'evidence'}
+    if (not required <= set(request) or set(request) - required - {
+            'affected_claim_ids', 'replacement_claims', 'replacement_search', 'learner_requests'}
+            or not isinstance(request['reason'], str) or not request['reason'].strip()
+            or not isinstance(request['evidence'], list) or not request['evidence']):
+        raise ValueError('standalone successor needs exact original witnesses, reason and evidence')
+    for pin in (request['original_inputs'], request['original_result'], *request['evidence']):
+        R._read_pin(pin)
+    for target in request.get('learner_requests', []):
+        if set(target) != {'request', 'response'}:
+            raise ValueError('standalone learner target needs its original session witnesses')
+        for pin in target.values():
+            R._read_pin(pin)
+        if (Path(target['request']['path']).name != 'session-request.json'
+                or Path(target['response']['path']).name != 'session-response.json'
+                or Path(target['request']['path']).resolve().parent != Path(target['response']['path']).resolve().parent):
+            raise ValueError('standalone correction must retain its original native session')
+    before = json.loads(R._read_pin(request['original_result']))
+    old = json.loads(R._read_pin(request['original_inputs']))
+    operation = R._transition_operation(request['original_inputs'], before)
+    R._validate_operation(operation, before)
+    if operation.get('kind') != 'standalone' or Path(operation['identity']['brain']).resolve() != Path(brain).resolve():
+        raise ValueError('standalone correction belongs to another scientific owner')
+    selected = json.loads(json.dumps(old['selection']))
+    owning = [s for s in selected['searches'] if s['day'] == day]
+    if len(owning) != 1:
+        raise ValueError('standalone correction day must be one exact search in its frozen operation')
+    if request.get('replacement_search') is not None:
+        pin = request['replacement_search']
+        manifest = json.loads(R._read_pin(pin))
+        if manifest.get('day') != day or Path(pin['path']).resolve() != (Path(search) / 'MANIFEST.json').resolve():
+            raise ValueError('standalone replacement search must be the completed owner day manifest')
+        owning[0].update(dir=str(search), cycle=manifest['cycle'], manifest=pin)
+    if Path(owning[0]['dir']).resolve() != Path(search).resolve():
+        raise ValueError('standalone correction cannot select another owning search implicitly')
+    for source in selected['searches']:
+        R._read_pin(source['manifest'])
+    R._read_pin(selected['source'])
+    for pin in selected['reproduction_records']['files']:
+        R._read_pin(pin)
+    ids = [c['id'] for c in before['claim_inputs']['claims']]
+    affected = request.get('affected_claim_ids', ids)
+    if (not isinstance(affected, list) or not affected or len(set(affected)) != len(affected)
+            or [i for i in ids if i in affected] != affected):
+        raise ValueError('standalone affected claims must be an ordered nonempty original subset')
+    if request.get('replacement_claims') is not None:
+        pin = request['replacement_claims']
+        projection = json.loads(R._read_pin(pin))
+        if (projection.get('schema') != 'FRANKIE_SCIENTIFIC_CLAIM_INPUTS_V1'
+                or projection.get('author') != before['author'] or not projection.get('claims_sha256')
+                or [c['id'] for c in projection['claims']] != ids
+                or any(a != b for a, b in zip(before['claim_inputs']['claims'], projection['claims'])
+                       if a['id'] not in affected)):
+            raise ValueError('standalone replacement must retain all identities and unaffected claims')
+        selected['doc'].update(claims=projection['claims'], claims_sha256=projection['claims_sha256'], source=pin['path'])
+        selected['source'] = pin
+    records = R.corrections([brain])
+    legal = {e.get('sha256') for _, manifest, _ in BR.entries_before(brain, 'snapshot')
+             for e in manifest.get('entries', []) if e.get('include')}
+    legal.update(r['replacement']['sha256'] for r in records.values())
+    if request['original_result']['sha256'] not in legal or request['original_result']['sha256'] in records:
+        raise ValueError('standalone successor must explicitly select current published learner knowledge')
+    return before, old, selected, affected
+
+
+def teach_standalone_successor(day, search, brain, out_dir, *, request):
+    """Recompute only affected claims using the frozen original search scope; retain the rest exactly."""
+    import frankie_box_experiment_review as R
+    import frankie_box_historical_claims as HC
+    import frankie_box_historical_reproduction as HR
+    import frankie_box_experiment_search as SEARCH
+    from frankie_box_successor_dispatch import lock, once, pin, read
+    out = Path(out_dir)
+    with lock(out / 'successor.lock'):
+        receipt_path = out / 'successor-receipt.json'
+        if receipt_path.exists():
+            completed = read(pin(receipt_path))
+            if (completed.get('schema') != 'FRANKIE_TEACHER_SUCCESSOR_RECEIPT_V1'
+                    or completed['successor_request'] != request or completed['publication_day'] != day):
+                raise ValueError('standalone successor receipt belongs to another operation')
+            for source in [completed['inputs'], *completed['files']]:
+                read(source)
+            return completed
+        before, old, selected, affected = standalone_successor_inputs(day, search, brain, request)
+        if selected['reproduction_records']['binding_tables_sha256'] != HC.binding_tables_sha256():
+            raise ValueError('standalone correction cannot silently change its frozen reproduction binding')
+        identity = dict(old['identity'], brain=str(brain), reader_sha256=pin(__file__)['sha256'],
+                        readers={m.__name__: pin(m.__file__) for m in (HC, HR, SEARCH, R)},
+                        successor=request, owner_day=day)
+        frozen = dict(schema='FRANKIE_STANDALONE_TEACHER_INPUTS_V1', identity=identity,
+                      selection=selected, selection_sha256=R._lesson_digest(selected))
+        inputs = once(out / 'inputs.json', frozen)
+        if Path(request['original_inputs']['path']).resolve() == Path(inputs['path']).resolve():
+            raise ValueError('standalone successor cannot overwrite its original operation')
+        result_path = out / 'result.json'
+        if result_path.exists():
+            after = read(pin(result_path))
+        else:
+            days = load_searches([s['dir'] for s in selected['searches']])
+            if any(d['manifest_sha256'] != s['manifest']['sha256'] for d, s in zip(days, selected['searches'])):
+                raise ValueError('standalone search changed after its successor selection was frozen')
+            measured = dict(selected['doc'], claims=[c for c in selected['doc']['claims'] if c['id'] in affected])
+            records = selected['reproduction_records']
+            results = test(measured, days, records_dir=Path(records['directory']), records_selection=records['files'])
+            if [r['claim_id'] for r in results] != affected:
+                raise ValueError('standalone retest changed its affected claim identities')
+            by_id = {r['claim_id']: r for r in results}
+            claims = dict(before['claim_inputs'], claims=selected['doc']['claims'],
+                          claims_sha256=selected['doc']['claims_sha256'], reader_sha256=identity['reader_sha256'])
+            searches = [dict(day=s['day'], cycle=s['cycle'], dir=s['dir'], manifest_sha256=s['manifest']['sha256'])
+                        for s in selected['searches']]
+            # Complete retained successor, preserving original metadata and every unaffected result.
+            after = dict(before, claims_source=selected['doc']['source'], claims_sha256=claims['claims_sha256'],
+                         claim_inputs=claims, claim_inputs_sha256=R._lesson_digest(claims), searches=searches,
+                         results=[by_id.get(r['claim_id'], r) for r in before['results']],
+                         scientific_operation=dict(inputs=inputs, selection_sha256=frozen['selection_sha256']))
+            after['results_sha256'] = R._lesson_digest(after['results'])
+            after['knowledge_retest'] = dict(before.get('knowledge_retest') or {}, claim_operations={
+                c['id']: (dict(input_sha256=inputs['sha256'], searches=searches) if c['id'] in affected else
+                          dict(inputs=request['original_inputs'], result=request['original_result'],
+                               searches=R.claim_searches(before, c['id']))) for c in claims['claims']})
+            collection = before.get('reconsideration')
+            if collection is not None and before['claims_sha256'] != after['claims_sha256']:
+                origin = (before.get('knowledge_retest') or {}).get('reconsideration_origin')
+                if origin is None:
+                    if collection['claims_file_sha256'] != before['claims_sha256']:
+                        raise ValueError('original standalone collection lacks its claim binding')
+                    origin = dict(claims_sha256=collection['claims_file_sha256'], result=request['original_result'])
+                after['knowledge_retest']['reconsideration_origin'] = origin
+            if request.get('replacement_search') is not None:
+                native = before.get('completed_native_evidence') or {}
+                replacement, listed = completed_native_evidence(next(d for d in days if d['day'] == day), out)
+                by_day = dict(native.get('by_day') or {})
+                previous = by_day.pop(day, None)
+                if replacement is not None:
+                    by_day[day] = replacement
+                after['completed_native_evidence'] = dict(native, by_day=by_day,
+                    listed=list(native.get('listed') or []) + listed + ([dict(day=day, retained_original=previous,
+                        reason='original native evidence preserved; explicit corrected owner search selected')] if previous else []))
+            once(result_path, after)
+        transition = dict(schema=R.TRANSITION_SCHEMA, owner='frankie_box_scientific_teacher',
+                          original=R._transition_operation(request['original_inputs'], before),
+                          replacement=R._transition_operation(inputs, after), affected_claim_ids=affected)
+        R._validate_transition(transition, before, after, dict(day=day, stage='lessons'))
+        completed = dict(schema='FRANKIE_TEACHER_SUCCESSOR_RECEIPT_V1', status='complete',
+                         publication='awaiting_checked_owner_decision', publication_day=day,
+                         successor_request=request, inputs=inputs, files=[pin(result_path)],
+                         owner_transition=dict(original_inputs=request['original_inputs'], replacement_inputs=inputs,
+                                               affected_claim_ids=affected), model_calls=0)
+        once(receipt_path, completed)
+        return completed
+
+
 def freeze_operation(doc, days, out_dir, brain_dir):
     """Pin standalone scientific inputs before testing; never infer an old operation later."""
     if doc['author'] == 'jev' and not doc.get('blind_seal'):

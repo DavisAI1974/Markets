@@ -64,13 +64,21 @@ def enqueue(run, day, request):
     """File an explicit owner request, idempotently. No scientific work or worker launch."""
     identity = owner(run, day)
     original = read(request['original_inputs'])
-    if (original['identity']['day'] != day or original['identity']['brain'] != identity['brain']):
+    standalone = original.get('schema') == 'FRANKIE_STANDALONE_TEACHER_INPUTS_V1'
+    if original['identity']['brain'] != identity['brain'] or (not standalone and original['identity']['day'] != day):
         raise ValueError('successor request belongs to another scientific owner')
     search = run.receipt('search', day) or {}
     replacement_search = request.get('replacement_search')
-    selected_search = str(Path(replacement_search['path']).parent) if replacement_search else original['identity']['search']
-    selected_manifest = ({k: replacement_search[k] for k in ('bytes', 'sha256')} if replacement_search
-                         else original['identity']['manifest'])
+    if standalone:
+        owning = [s for s in original['selection']['searches'] if s['day'] == day]
+        if len(owning) != 1:
+            raise ValueError('standalone successor must name one of its exact original search days')
+        original_search = owning[0]['dir']
+        original_manifest = {k: owning[0]['manifest'][k] for k in ('bytes', 'sha256')}
+    else:
+        original_search, original_manifest = original['identity']['search'], original['identity']['manifest']
+    selected_search = str(Path(replacement_search['path']).parent) if replacement_search else original_search
+    selected_manifest = ({k: replacement_search[k] for k in ('bytes', 'sha256')} if replacement_search else original_manifest)
     if (search.get('status') not in ('done', 'reused') or search.get('target') != selected_search
             or D.witness(Path(search['target']) / 'MANIFEST.json') != selected_manifest):
         raise ValueError('successor request must use this run/day completed owning search')
@@ -89,8 +97,12 @@ def enqueue(run, day, request):
             # remain reusable even after their correction has replaced the original.
             import frankie_box_teacher_knowledge as TK
             import frankie_box_brain as BR
-            TK._successor_document(request, dict(original['identity'], search=selected_search, manifest=selected_manifest),
-                                   directory / 'intake' / 'inputs.json', R, BR)
+            if standalone:
+                import frankie_box_scientific_teacher as ST
+                ST.standalone_successor_inputs(day, selected_search, identity['brain'], request)
+            else:
+                TK._successor_document(request, dict(original['identity'], search=selected_search, manifest=selected_manifest),
+                                       directory / 'intake' / 'inputs.json', R, BR)
         return dict(id=key, operation=once(path, body))
 
 
@@ -117,9 +129,14 @@ def submit_decision(run, day, key, decision):
     if completed['successor_request'] != value['request']:
         raise ValueError('checked decision names another successor request')
     before, after = read(value['request']['original_result']), read(completed['files'][0])
-    transition = dict(schema=R.TRANSITION_SCHEMA, owner='frankie_box_teacher_knowledge.teach_accumulated',
-                      original=R._transition_operation(completed['owner_transition']['original_inputs'], before),
+    original_operation = R._transition_operation(completed['owner_transition']['original_inputs'], before)
+    standalone = original_operation.get('kind') == 'standalone'
+    transition = dict(schema=R.TRANSITION_SCHEMA,
+                      owner='frankie_box_scientific_teacher' if standalone else 'frankie_box_teacher_knowledge.teach_accumulated',
+                      original=original_operation,
                       replacement=R._transition_operation(completed['owner_transition']['replacement_inputs'], after))
+    if standalone:
+        transition['affected_claim_ids'] = completed['owner_transition']['affected_claim_ids']
     for witness in decision['evidence']:
         R._read_pin(witness)
     R._validate_correction(dict(schema=R.SCHEMA, written_by='scientific_teacher',
@@ -559,13 +576,27 @@ def execute(path, phase):
                 for result in saved['files']:
                     read(result)
                 return
-            TK.teach_successor(identity['day'], value['search'], identity['brain'], target, request=value['request'])
+            if read(value['request']['original_inputs']).get('schema') == 'FRANKIE_STANDALONE_TEACHER_INPUTS_V1':
+                import frankie_box_scientific_teacher as ST
+                ST.teach_standalone_successor(identity['day'], value['search'], identity['brain'], target, request=value['request'])
+            else:
+                TK.teach_successor(identity['day'], value['search'], identity['brain'], target, request=value['request'])
         elif phase == 'publish':
             decision_pin = pin(directory / 'decisions' / path.name)
             decision = read(decision_pin)
             if read(decision['receipt'])['successor_request'] != value['request']:
                 raise ValueError('publication decision belongs to another request')
-            record = TK.publish_successor(identity['brain'], **decision)
+            completed = read(decision['receipt'])
+            if read(value['request']['original_inputs']).get('schema') == 'FRANKIE_STANDALONE_TEACHER_INPUTS_V1':
+                import frankie_box_scientific_teacher as ST
+                if (completed.get('publication_day') != identity['day']
+                        or read(completed['inputs'])['identity'].get('successor') != value['request']):
+                    raise ValueError('standalone publication differs from its frozen successor owner')
+                record = ST.publish_standalone_correction(identity['brain'], original=value['request']['original_result'],
+                    replacement=completed['files'][0], **completed['owner_transition'], publication_day=identity['day'],
+                    **{k: decision[k] for k in ('scopes', 'decision', 'reason', 'evidence')})
+            else:
+                record = TK.publish_successor(identity['brain'], **decision)
             once(target / 'publication.json', dict(operation=pin(path), decision=decision_pin, correction=record))
         elif phase == 'dependencies':
             intent_pin = pin(target / 'dependents-intent.json')
