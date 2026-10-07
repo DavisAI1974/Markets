@@ -170,6 +170,9 @@ SessionStart hook. `using-agent-skills` is the router. Proven on Codex; Greg: "a
   (`release_book_signal.py`, `kalshi_score.py`, `kalshi_weather_forecast.py`), findings `*.md`.
 - **`KALSHI_BUILD_SCOPE.md`** — the build scope / thesis.
 - **`odcore/`** — the OD toolkit (below).
+- **`.claude/agents/`** — subagents with the aws-mcp skill/doc tools: `aws-skills-guide`, `aws-infra-reviewer`,
+  `aws-operator` (read-only), plus the seven Frankie roles from `CCODE_STOPPED_AGENTS_HANDOFF_20261007.md`
+  (`frankie-*`; source-only, return-never-publish, run only after Greg resumes them).
 - **`.claude/skills/`** — session rituals: `kalshi-session-start` (branch/data/accrual checks),
   `kalshi-backtest` (the mandatory evaluation discipline), `kalshi-roll` (Pyth front-month roll).
 - Shared: `news_ingest_rss.py`, `news_coupling_research.py`, `regime_classifier.py`.
