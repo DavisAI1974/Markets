@@ -208,3 +208,55 @@ missing, returned as a request (the runner's scheduling is Codex's; the publicat
   succeeded (both complete objects retained by the reader).
 Partial replacements keep every unaffected value (the reader enforces identical values outside the scopes); full
 replacement is the explicit `decision`. No recency winner, no automatic labelling, no training.
+
+## 9. Codex's review of the fifth-session return (task doc "ACTIVE review of fifth-session return", 2026-10-07): BIND-F, B4-F, 6R3-F, 6R2-F, then two adversarial review passes
+
+**Later direct Codex source fixes (Greg's instruction):** the four findings in the review
+below are now addressed in source: one spawn-terminal owner; partial-send uncertainty;
+raw-read absolute deadlines, framing/health-byte retention and response release; complete
+comparison declarations and detailed fact/status coherence. No runtime verification.
+CCode's next assignment is Step 8A in the task document, not another round on these functions.
+
+
+**Codex review of sixth return `31832bf2`: source progress integrated, not closed.**
+The task doc's newest ACTIVE review names 6R2-S (duplicate spawn-terminal write),
+6SEND-S (partial sends misclassified), 6R3-S (framing/deadline/health evidence/release),
+and B4-S (per-output semantics). BIND-F's JSON/per-entry identity and B4-F's argv/list
+inventory improvements are retained. Source-only; no tests or runtime proof.
+
+
+Rebased onto Codex's `5e216265`. One commit per finding, then two review-correction commits from the code-review skill run
+adversarially over the whole range (Greg: this has to be the last correction): `12258b3b` BIND-F | `7dd8b9a4` B4-F |
+`34dab141` 6R3-F | `4b5a8eba` 6R2-F | `62eb55e3` review pass 1 | `6c804bd2` review pass 2. SOURCE-BUILT / RUNTIME-UNVERIFIED:
+`ast.parse` without project imports, a static check that every dotted module used in the three modules is imported,
+`git diff --check`; nothing run. The codebase-memory index was rebuilt on the rebased tree before any code change.
+
+- **BIND-F** (`frankie_box_scientific_teacher.py`): `FRANKIE_BINDING_IDENTITY_V3`, one JSON-stable identity
+  (`_json_stable`: sorted keys, no floats-by-repr drift) built PER ENTRY (status, sources, inputs, command,
+  recorded_outputs, calculation; tables' shape per entry). `_validate_identity` names the parts present; a retained V2
+  identity is converted (flat sources/inputs, `converted_from`, association unestablished) rather than dropped; an
+  unmapped claim's empty entry set is a complete identity. `binding_identities_differ` compares the parts both sides
+  establish and reports `equivalence_not_established` when neither side establishes a part; `current_binding` records
+  `superseded` or `equivalence_not_established`, never equality by default. The exchange voices the unestablished case.
+- **B4-F** (`frankie_box_historical_reproduction.py`): `command_argv(command)` is the producer's own contract
+  (`['-B', script, *argv]`), checked against the run record's argv[1:]; `DECLARATION_FIELDS` has one definition;
+  `inventory_of_outputs` requires the retained outputs to be the FULL declared comparison inventory by position, and
+  an older comparison without declaration fields is reported as inventory-not-establishable, not as complete.
+- **6R3-F** (`frankie_box_granite_meeting.py`): transport is `http.client.HTTPConnection` owned by the meeting; every
+  blocking read (`_read_bounded`, `response.read1` under `sock.settimeout`) is bounded by the ABSOLUTE remaining
+  deadline and additionally by a per-call `ceiling` (health polls 5 s, chat 600 s); partial bytes are retained on every
+  failure; the socket reference is taken before `getresponse` so a Connection-close reply still releases it;
+  `MeetingBudgetExpired`/`MeetingCallFailed` carry `sent` (False = the request never reached the socket) and
+  `discuss_item` clears `pending_call` on a never-sent request instead of leaving a phantom interrupted call.
+- **6R2-F** (`frankie_box_granite_meeting.py`): the attempt record `evidence/attempts/<attempt>-start.json` is written
+  BEFORE Popen (a spawn failure is `MeetingCallFailed`, recorded as `failed_in_discussion`/`spawn_failed`); records
+  carry no clock and are write-once, so a retry is idempotent; `retained_attempts` discovers attempts from records,
+  orphaned stderr files and evidence directories, lists unreadable records, and marks `finished`; `_meeting` carries
+  `runtime.attempts`, `unfinished_attempts` and `calls.pre_send_intents_unresolved` apart from `model_calls`
+  (completed chat calls across attempts); `_record_quietly` never masks the original error.
+- **Review pass 1** (`62eb55e3`, 10 findings; the gravest: the 6R3-F edit had built the `import http.client` line and
+  never applied it, a NameError on every request) and **pass 2** (`6c804bd2`, 10 findings: per-call ceiling, health
+  partial bodies not retained, `sent` flag, `return_witness` walks the evidence tree with rglob, spawn failure,
+  clock-free attempt records, unreadable record stems, V2 conversion, duplicate-declaration check removed, coverage
+  equality via `canonical()`). Both passes are recorded here so the next session does not re-find them.
+- **Still Codex's**: the reader hooks, scheduling of successors, the claim-input identity mismatch at the step-5 reader.

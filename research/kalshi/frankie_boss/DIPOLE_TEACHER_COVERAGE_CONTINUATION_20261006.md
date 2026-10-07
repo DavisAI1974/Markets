@@ -1,5 +1,37 @@
 # Dipole coverage and both-teacher continuation — 2026-10-06
 
+## Current checkpoint — Codex corrections complete; CCode assigned Step 8A
+
+Greg authorized Codex to fix the remaining sixth-return findings directly and then assign
+CCode Step 8 work. CCode `31832bf2` is integrated with ancestry, Codex's Step 7 client and
+`dd0ae0f2` owner transition preserved. Codex corrected spawn-terminal ownership, partial-send
+accounting, absolute HTTP read/framing/health-evidence handling and per-output comparison
+admission. Source review/AST without imports/whitespace only; no runtime result is claimed.
+
+The TOP ACTIVE section of `CCODE_NEXT_SOURCE_TASKS_20261006.md` now assigns CCode Step 8A:
+existing CPU controller lifetime, launch/status/resume/stop routing, prerequisite bindings
+and reachable Pod-route refusal. It names exclusive files and the requested return report.
+Do not redo the prior correction queue. Codex retains Jev/Step 7 and shared runner/queue,
+main save/resume, brain/lane state and Step 5 successor scheduling. Jev's owner-local seal,
+CPU runtime/count, testing/publication/completion are still pending; `Run.jev` still waits.
+No tests, installs, project/data/model runs or AWS inspection/actions occurred. Execution
+stays stopped; steps 2–8 remain globally incomplete. Step 8A source work is now authorized;
+this is not E2E or 30-day authorization. Granite pins/threads null remain unchanged.
+
+
+## Sixth-return integration review — 2026-10-07
+
+CCode `31832bf2` is integrated with its ancestry, Codex's Step 7 client and `dd0ae0f2`
+owner-transition contract preserved. Read the top ACTIVE review in
+`CCODE_NEXT_SOURCE_TASKS_20261006.md`: JSON/per-entry binding, argv and output inventory
+are improved; spawn-terminal collision, partial-send accounting, HTTP deadline/body retention
+and per-output comparison semantics still require the named CCode corrections. No owned
+functions were patched by Codex. Steps 4/6 remain open; source integration is not runtime approval.
+Step 5 successor scheduling remains open (a fresh directory alone can reuse same-search work).
+Step 7 CPU runtime/count and owner-local seal/testing/publication/completion remain open.
+Source review, AST without project imports and whitespace only; no tests or AWS activity.
+
+
 ## Restart checkpoint — 2026-10-06 23:15 ET
 
 Source checkpoint `73bb234e`; handoff and drop-in updated for a new chat. Read

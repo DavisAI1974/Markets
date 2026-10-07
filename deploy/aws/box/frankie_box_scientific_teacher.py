@@ -134,51 +134,120 @@ def open_class(reason):
     return 'open_other', 'listed by the claims builder with its own reason'
 
 
-BINDING_IDENTITY_SCHEMA = 'FRANKIE_BINDING_IDENTITY_V2'
-_IDENTITY_PARTS = ('status', 'entry_ids', 'sources', 'inputs', 'commands', 'recorded_outputs', 'calculations')
+BINDING_IDENTITY_SCHEMA = 'FRANKIE_BINDING_IDENTITY_V3'
+_ENTRY_PARTS = ('status', 'sources', 'inputs', 'command', 'recorded_outputs', 'calculation')
+
+
+def _json_stable(value):
+    """One canonical, JSON-stable shape (lists, dicts, strings, numbers, None) so an identity computed now equals the
+    same identity after a JSON round trip (BIND-F: tuples became lists on reload and falsely differed)."""
+    return json.loads(json.dumps(value, sort_keys=True, default=str))
 
 
 def binding_identity(binding):
-    """The COMPLETE semantic identity of a reproduction binding (BIND-R): status, entry ids, source pins, INPUT pins
-    (committed with revision/sha256, others by path and status), each entry's command (entry point) and its comparison
-    declarations (recorded outputs) and calculation. From the tables' shape (entries) every part is established; a
-    lessons' projection carrying `identity` (this schema) is read as it is; an OLDER projection (flat sources only)
-    yields an identity that SAYS which parts are unestablished (complete=False) so no consumer infers equivalence from
-    the parts that happen to be present."""
+    """The COMPLETE semantic identity of a reproduction binding (BIND-F), PER ENTRY: for each entry id its status,
+    source pins, input pins (committed with revision/sha256, others by path and status), command (entry point), comparison
+    declarations (recorded outputs) and calculation, kept together so a reassignment of a pin between entries differs.
+    From the tables' shape (entries) every part is established. A lessons' projection carrying `identity` of THIS schema
+    is read as it is, re-validated. An OLDER projection (flat sources, or an earlier identity schema) yields an identity
+    that names the parts it cannot establish (per-entry association included) so no consumer infers equality."""
     if not isinstance(binding, dict):
         return None
-    if isinstance(binding.get('identity'), dict) and binding['identity'].get('schema') == BINDING_IDENTITY_SCHEMA:
-        return binding['identity']
+    embedded = binding.get('identity')
+    if isinstance(embedded, dict) and embedded.get('schema') == BINDING_IDENTITY_SCHEMA:
+        return _validate_identity(_json_stable(embedded))
+    if isinstance(embedded, dict) and embedded.get('schema') == 'FRANKIE_BINDING_IDENTITY_V2':
+        # the earlier schema established per-entry commands, declarations and calculations, and FLAT source/input pins
+        # (no per-entry association): converted, with exactly those associations named unestablished, never dropped
+        v2 = _json_stable(embedded)
+        per_entry = {}
+        for entry_id in v2.get('entry_ids') or []:
+            per_entry[str(entry_id)] = dict(command=(v2.get('commands') or {}).get(str(entry_id)),
+                                            recorded_outputs=(v2.get('recorded_outputs') or {}).get(str(entry_id)),
+                                            calculation=(v2.get('calculations') or {}).get(str(entry_id)))
+        identity = dict(schema=BINDING_IDENTITY_SCHEMA, status=v2.get('status'),
+                        entry_ids=sorted(str(x) for x in v2.get('entry_ids') or []), entries=per_entry,
+                        flat_sources=sorted(list(x) for x in v2.get('sources') or []),
+                        flat_inputs=v2.get('inputs'), converted_from='FRANKIE_BINDING_IDENTITY_V2',
+                        unestablished=['per-entry association of sources and inputs (V2 kept them flat)'], complete=False)
+        return _validate_identity(_json_stable(identity))
     entries = binding.get('entries')
-    if isinstance(entries, list):
-        sources = [s for e in entries for s in e.get('sources') or []]
-        inputs = [dict(path=str(i.get('path')), status=str(i.get('status')), revision=i.get('revision'), sha256=i.get('sha256'))
-                  for e in entries for i in e.get('inputs') or []]
-        commands = {str(e.get('id')): e.get('entry') for e in entries}
-        recorded = {str(e.get('id')): e.get('recorded_outputs') or [] for e in entries}
-        calculations = {str(e.get('id')): e.get('calculation') for e in entries}
-        unestablished = []
-    else:
-        sources = list(binding.get('sources') or [])
-        inputs, commands, recorded, calculations = None, None, None, None
-        unestablished = ['inputs', 'commands', 'recorded_outputs', 'calculations']
-    identity = dict(schema=BINDING_IDENTITY_SCHEMA, status=binding.get('status'), entry_ids=sorted(binding.get('entry_ids') or []),
-                    sources=sorted((str(s.get('path')), str(s.get('revision')), str(s.get('sha256'))) for s in sources),
-                    inputs=sorted(inputs, key=lambda d: (d['path'], d['status'], str(d['revision']), str(d['sha256']))) if inputs is not None else None,
-                    commands=commands, recorded_outputs=recorded, calculations=calculations,
-                    complete=not unestablished, unestablished=unestablished)
-    return identity
+    if isinstance(entries, list) and all(isinstance(e, dict) for e in entries):
+        per_entry = {}
+        for e in entries:
+            per_entry[str(e.get('id'))] = dict(
+                status=e.get('status'),
+                sources=sorted([str(x.get('path')), str(x.get('revision')), str(x.get('sha256'))] for x in e.get('sources') or []),
+                inputs=sorted([str(i.get('path')), str(i.get('status')), str(i.get('revision')), str(i.get('sha256'))]
+                              for i in e.get('inputs') or []),
+                command=e.get('entry'), recorded_outputs=e.get('recorded_outputs') or [], calculation=e.get('calculation'))
+        identity = dict(schema=BINDING_IDENTITY_SCHEMA, status=binding.get('status'),
+                        entry_ids=sorted(str(x) for x in binding.get('entry_ids') or []), entries=per_entry,
+                        unestablished=[], complete=True)
+        return _validate_identity(_json_stable(identity))
+    # an older projection: flat sources with no entry association and no inputs/commands/declarations
+    flat = sorted([str(x.get('path')), str(x.get('revision')), str(x.get('sha256'))] for x in binding.get('sources') or [])
+    identity = dict(schema=BINDING_IDENTITY_SCHEMA, status=binding.get('status'),
+                    entry_ids=sorted(str(x) for x in binding.get('entry_ids') or []),
+                    entries=None, flat_sources=flat,
+                    unestablished=['entries (per-entry association of sources)', 'inputs', 'command', 'recorded_outputs', 'calculation'],
+                    complete=False)
+    return _validate_identity(_json_stable(identity))
+
+
+def _validate_identity(identity):
+    """`complete`/`unestablished` are never trusted alone: the parts actually present decide (BIND-F)."""
+    missing = []
+    entries = identity.get('entries')
+    if not isinstance(entries, dict):
+        missing.append('entries (per-entry association of sources)')
+    elif not entries and list(identity.get('entry_ids') or []):
+        missing.append('entries (per-entry association of sources)')
+    else:                        # an empty entries dict with no entry ids (an unmapped claim) establishes everything: nothing to bind
+        for entry_id, parts in entries.items():
+            for part in _ENTRY_PARTS:
+                if not isinstance(parts, dict) or part not in parts:
+                    missing.append('%s.%s' % (entry_id, part))
+        if sorted(entries) != list(identity.get('entry_ids') or []):
+            missing.append('entry_ids do not match the entries recorded')
+    declared = list(identity.get('unestablished') or [])
+    unestablished = sorted(set(declared) | set(missing))
+    return dict(identity, unestablished=unestablished, complete=not unestablished)
 
 
 def binding_identities_differ(retained, current):
-    """(differs, unestablished): differs when every established part of both identities is compared and any differs;
-    unestablished names the parts the retained identity cannot establish (an older projection), which are NOT inferred
-    equal: a consumer treats an unestablished identity as 'equivalence not established', never as equal."""
+    """(differs, unestablished): compares only the parts the RETAINED identity establishes; everything it cannot
+    establish is named and never inferred equal. With the per-entry shape, differing means any entry's status, pins,
+    command, declarations or calculation differs, or the entry set differs."""
     if retained is None or current is None:
-        return True, list(_IDENTITY_PARTS)
+        return True, ['identity']
+    retained, current = _json_stable(retained), _json_stable(current)
     unestablished = list(retained.get('unestablished') or [])
-    differs = any(retained.get(part) != current.get(part) for part in _IDENTITY_PARTS if part not in unestablished)
-    return differs, unestablished
+    if retained.get('status') != current.get('status') or retained.get('entry_ids') != current.get('entry_ids'):
+        return True, unestablished
+    if not isinstance(retained.get('entries'), dict):
+        # an older flat projection: status, entry ids and the flat source pins are its only established parts; they are
+        # compared against the current flat pins and equality of those parts establishes nothing more
+        current_flat = sorted(src for parts in (current.get('entries') or {}).values() for src in parts.get('sources') or [])
+        if retained.get('flat_sources') is not None and retained['flat_sources'] != current_flat:
+            return True, unestablished
+        return False, unestablished
+    # per entry: every part PRESENT on both sides is compared (a difference there is a real difference, complete or
+    # not); a part absent on the retained side stays unestablished; flat pins a converted identity carries are compared
+    # against the current flat pins
+    current_entries = current.get('entries') or {}
+    if retained.get('flat_sources') is not None:
+        current_flat = sorted(src for parts in current_entries.values() for src in parts.get('sources') or [])
+        if retained['flat_sources'] != current_flat:
+            return True, unestablished
+    for entry_id, parts in retained['entries'].items():
+        other = current_entries.get(entry_id)
+        if not isinstance(other, dict) or not isinstance(parts, dict):
+            return True, unestablished
+        for part in _ENTRY_PARTS:
+            if part in parts and part in other and parts[part] != other[part]:
+                return True, unestablished
+    return False, unestablished
 
 
 def current_binding(claim, HC):

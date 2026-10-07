@@ -1,5 +1,15 @@
 # Spec: the 30-day experiment orchestrator
 
+## Step 8A source ownership — 2026-10-06 23:33 ET
+
+Greg assigned CCode a disjoint Step 8 source slice after Codex fixes the sixth-return issues.
+The active contract is the top of `CCODE_NEXT_SOURCE_TASKS_20261006.md`: CPU controller
+lifetime/routing, saved-plan and claim prerequisites, and retired Pod execution refusal.
+Codex retains Jev and the shared main runner/queue save/resume and correction scheduling.
+No controller/worker is launched; no tests or AWS inspection/actions are authorized. This
+assignment does not close unfinished steps or waive the separate E2E/30-day authorizations.
+
+
 ## Step #5 decision — Greg, 2026-10-06 21:53 ET: check, correct and teach
 
 The step-5 discussion has settled its purpose: get the research right and fix errors through

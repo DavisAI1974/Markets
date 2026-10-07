@@ -1,5 +1,48 @@
 # CCode new-chat handoff: the expanded pre-#5 queue, slice A done, slice B next, 2026-10-06
 
+## STATE AFTER THE SIXTH CHAT (2026-10-07): Codex's fifth-return review BIND-F, B4-F, 6R3-F, 6R2-F RETURNED, plus two adversarial review passes
+
+Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's `5e216265` (ccr-5fce7de3-xa4hfg), pushed, tip `889120af`
+(docs). One `[skip ci]` commit per finding, in the task doc's order, then the review passes: `12258b3b` BIND-F | `7dd8b9a4` B4-F |
+`34dab141` 6R3-F | `4b5a8eba` 6R2-F | `62eb55e3` review pass 1 (10 corrections) | `6c804bd2` review pass 2 (10 corrections) |
+`889120af` docs. Codex's integration tip moved to `c816bc56` (step seven) after this branch was rebased; the next CCode chat
+rebases onto it first. Owned files only (`frankie_box_granite_meeting.py`, `frankie_box_scientific_teacher.py`,
+`frankie_box_historical_reproduction.py`, `frankie_box_experiment_exchange.py` outside the reader hooks). SOURCE-BUILT /
+RUNTIME-UNVERIFIED: `ast.parse` without project imports, a static check that every dotted module used is imported,
+`git diff --check`; nothing run, no model call, no AWS, no dispatch; `run()` never called; claims file byte-identical;
+STOP before #5; `9c19cc2` never applied; pins and threads null untouched; no cost reference anywhere.
+
+Per finding (detail: `CCODE_STEP6_RETURN_20261007.md` section 9; step-4 report section 8 paragraph and section 9 row 4):
+- BIND-F: `FRANKIE_BINDING_IDENTITY_V3`, one JSON-stable identity built per entry (status, sources, inputs, command,
+  recorded_outputs, calculation; tables' shape per entry), validated by the parts present; a retained V2 identity is
+  converted with its association marked unestablished, never dropped; `binding_identities_differ` reports
+  `equivalence_not_established` rather than inferring equality; the exchange voices it.
+- B4-F: `command_argv(command)` is the producer's own contract (`['-B', script, *argv]`) checked against the run record's
+  argv; one `DECLARATION_FIELDS`; the retained outputs must be the full declared comparison inventory by position; an older
+  comparison without declaration fields reports inventory-not-establishable.
+- 6R3-F: `http.client.HTTPConnection` owned by the meeting; every blocking read bounded by the absolute remaining deadline and
+  a per-call ceiling (health 5 s, chat 600 s); partial bytes retained on every failure; `sent` on both meeting exceptions
+  distinguishes a request that never reached the socket, and such a request clears `pending_call` instead of reading as
+  an interrupted call.
+- 6R2-F: `evidence/attempts/<attempt>-start.json` is written before Popen (spawn failure = `MeetingCallFailed`, recorded);
+  attempt records are clock-free and write-once; `retained_attempts` discovers attempts from records, orphaned stderr files
+  and evidence directories; the complete record carries `runtime.attempts`, `unfinished_attempts`,
+  `calls.pre_send_intents_unresolved` apart from `model_calls`.
+- Review passes (Greg: "this has to be the last correction"): the code-review skill run adversarially over the whole range at
+  high effort, twice; the gravest finding was an `import http.client` line the 6R3-F edit script built and never applied.
+  A third pass was not run (Greg: commit and push); the next CCode chat runs one before any push.
+
+What Codex picks up:
+1. Integration review of the seven commits; anything it names comes back to CCode the same way, one commit per group.
+2. Still Codex's: the step-5 reader hooks (`teach_accumulated`, `accumulated_lessons`, direct lesson loading, both
+   `learner_school(stage='exchange')` call sites), scheduling of scientific-owner successors, and the claim-input identity
+   mismatch at the step-5 reader (step-6 return sections 6 and 8).
+3. Nothing else is assigned to CCode. Greg's decisions stay open as listed in the prior sections; weight learning stays
+   inference-only until Greg decides feedback, objective, pin policy and host.
+
+---
+
+
 ## STATE AFTER THE THIRD CHAT (2026-10-07): Codex's correction queue D1, B7/C2, B2-B5, B1/B6/A4/C1 RETURNED
 
 Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's `19f72f47` (ccr-5fce7de3-xa4hfg), pushed. One `[skip ci]`

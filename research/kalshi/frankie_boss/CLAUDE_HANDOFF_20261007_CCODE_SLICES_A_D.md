@@ -4,6 +4,24 @@ This is the Claude-side handoff. The Codex-facing record is separate: `CCODE_STE
 `CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md` (top section) and `CCODE_DROP_IN_20261006_NEXT_CHAT.md`. Do not merge the
 two channels: Codex integrates from the CCODE documents; a Claude session starts from `DROP_IN_CLAUDE_20261007.md`.
 
+## Where things stand (updated 2026-10-07, sixth session: Codex's fifth-return review corrected; two review passes)
+
+Codex reviewed the fifth return (task doc "ACTIVE review of fifth-session return": BIND-F, B4-F, 6R3-F, 6R2-F) and
+landed `5e216265`. This branch was rebased onto it and returned, one commit per finding: `12258b3b` BIND-F,
+`7dd8b9a4` B4-F, `34dab141` 6R3-F, `4b5a8eba` 6R2-F. Greg: "this has to be the last correction", so the code-review
+skill was run adversarially over the whole range at high effort, twice; its 20 findings are fixed in `62eb55e3` and
+`6c804bd2` (the gravest was an `import http.client` line built by the 6R3-F edit script and never applied). Record:
+`CCODE_STEP6_RETURN_20261007.md` section 9; step-4 report sections 8/9. A third pass was not run (Greg: commit and push). Pushed as `889120af`; Codex's integration tip moved to `c816bc56` (step seven) meanwhile, so the next session rebases first.
+Checks: `ast.parse`, a static check that every dotted module used is imported, `git diff --check`; nothing run.
+Boundaries unchanged: reader hooks Codex's, pins and threads null untouched, `9c19cc2` never applied, no cost reference.
+
+Design choices of this round, not to re-litigate: identity V3 is per entry and JSON-stable, with V2 converted and
+equivalence reported as unestablished rather than inferred; a request that never reached the socket is not a pending
+call; attempt records are clock-free and write-once; evidence is content-addressed per attempt.
+
+What a next Claude session does: Codex's review of these commits lands in the task doc; fix what it names, one commit
+per group, and run the code-review skill over the range before pushing; nothing else is assigned.
+
 ## Where things stand (updated 2026-10-07, fifth session: Codex's review round returned)
 
 Codex reviewed the step-6 return (task doc "ACTIVE review of fourth-session return") and landed the step-5 correction

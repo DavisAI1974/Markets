@@ -35,6 +35,8 @@ parameters are unconfirmed. `--inputs-only` writes what Granite would be given, 
 """
 import argparse
 import hashlib
+import http.client
+import io
 import json
 import os
 import re
@@ -42,8 +44,6 @@ import socket
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.request
 from pathlib import Path
 
 BOX = Path(__file__).resolve().parent
@@ -311,15 +311,67 @@ def resolve_threads(params):
 
 
 class MeetingBudgetExpired(RuntimeError):
-    """The meeting's time budget (max_meeting_seconds, settled) is spent: no further request is made."""
+    """The meeting's time budget (max_meeting_seconds, settled) is spent: no further request is made.
+    sent: False = no send attempted; True = a send was attempted (possibly partial); None = outside a request."""
+
+    def __init__(self, message, sent=None):
+        super().__init__(message)
+        self.sent = sent
 
 
 class MeetingCallFailed(RuntimeError):
-    """A request to the ephemeral server failed or returned no usable reply; the whole evidence is retained by file."""
+    """A request to the ephemeral server failed or returned no usable reply; the whole evidence is retained by file.
+    sent: False = no send was attempted; True = a send was attempted and transmission/completion may be unknown;
+    None = not a transport question. A partial send must never be classified as never sent."""
 
-    def __init__(self, message, evidence=None):
+    def __init__(self, message, evidence=None, sent=None):
         super().__init__(message)
         self.evidence = evidence
+        self.sent = sent
+
+
+class _DeadlineReader(io.RawIOBase):
+    """Bound each actual socket read, including HTTP headers/chunk framing, and keep wire bytes."""
+
+    def __init__(self, sock, timeout, chunks, transport):
+        super().__init__()
+        self.sock, self.timeout, self.chunks = sock, timeout, chunks
+        self.transport = transport
+        # SocketIO keeps the fd alive if HTTPConnection closes its socket on Connection: close.
+        self.source = sock.makefile('rb', buffering=0)
+
+    def readable(self):
+        return True
+
+    def readinto(self, buffer):
+        self.sock.settimeout(self.timeout())
+        count = self.source.readinto(buffer)
+        if count is None:
+            raise OSError('blocking HTTP socket returned no read result')
+        if count:
+            self.chunks.append(bytes(memoryview(buffer)[:count]))
+        else:
+            self.transport['eof'] = True
+        return count
+
+    def close(self):
+        try:
+            self.source.close()
+        finally:
+            super().close()
+
+
+class _ResponseSocket:
+    """Only the makefile boundary used by HTTPResponse; no replacement HTTP parser."""
+
+    def __init__(self, sock, timeout, chunks, transport):
+        self.sock, self.timeout, self.chunks = sock, timeout, chunks
+        self.transport = transport
+
+    def makefile(self, mode):
+        if mode != 'rb':
+            raise ValueError('unexpected HTTP response stream mode')
+        return io.BufferedReader(_DeadlineReader(self.sock, self.timeout, self.chunks, self.transport))
 
 
 class LlamaServer:
@@ -354,13 +406,15 @@ class LlamaServer:
         return max(0.001, min(float(ceiling), remaining))
 
     def retain(self, label, data):
-        """Durable file witness of whole bytes (no truncation), CONTENT-ADDRESSED (6R2): <evidence_dir>/<sha256>-<label>.bin,
-        so a later attempt can never overwrite or renumber what an earlier witness pinned (equal bytes = the same file)."""
+        """Durable file witness of whole bytes (no truncation): <evidence_dir>/<attempt>/<sha256>-<label>.bin, content-addressed
+        WITHIN the attempt's own directory (6R2-F): a later attempt can never overwrite or renumber what an earlier witness
+        pinned, and equal bytes retained by two attempts are two files, each attributable to its attempt."""
         from frankie_box_durable import write_bytes
         digest = sha256_bytes(data)
         if self.evidence_dir is None:
             return dict(label=label, bytes=len(data), sha256=digest, path=None, attempt=self.attempt)
-        path = self.evidence_dir / ('%s-%s.bin' % (digest, re.sub(r'[^A-Za-z0-9._-]', '_', label)[:100]))
+        # per-attempt directory (6R2-F): an unfinished attempt's evidence stays attributable without a final record
+        path = self.evidence_dir / self.attempt / ('%s-%s.bin' % (digest, re.sub(r'[^A-Za-z0-9._-]', '_', label)[:100]))
         if path.is_file():
             if sha256_bytes(path.read_bytes()) != digest:
                 raise ValueError('evidence file %s does not carry the bytes its name declares' % path)
@@ -378,16 +432,17 @@ class LlamaServer:
             self._stderr_handle.flush()
         return dict(witness_file(self.stderr_path), attempt=self.attempt)
 
-    def attempt_record(self, status, **facts):
-        """The immutable record of THIS attempt (6R2): <evidence_dir>/attempts/<attempt>.json, write-once; a complete
-        meeting lists every attempt's record so no earlier witness is lost when a later attempt finishes the meeting."""
+    def attempt_record(self, phase, status, **facts):
+        """The immutable record of THIS attempt (6R2-F): <evidence_dir>/attempts/<attempt>-<phase>.json, write-once;
+        phase 'start' is written BEFORE any process or model work (so a killed attempt is still discoverable) and
+        phase 'end' carries the terminal result when one exists. A complete meeting lists every attempt, finished or not."""
         from frankie_box_durable import write_bytes
-        doc = dict(schema='FRANKIE_GRANITE_MEETING_ATTEMPT_V1', attempt=self.attempt, status=status,
+        doc = dict(schema='FRANKIE_GRANITE_MEETING_ATTEMPT_V1', attempt=self.attempt, phase=phase, status=status,
                    server_stderr=self.stderr_witness(), evidence=list(self.evidence), calls_this_attempt=self.calls,
-                   tokens_this_attempt=dict(self.tokens), **facts)
+                   tokens_this_attempt=dict(self.tokens), **facts)   # no clock inside: equal facts rewrite nothing
         if self.evidence_dir is None:
             return doc
-        path = self.evidence_dir / 'attempts' / (self.attempt + '.json')
+        path = self.evidence_dir / 'attempts' / ('%s-%s.json' % (self.attempt, phase))
         data = (json.dumps(doc, indent=1, sort_keys=True, default=str) + '\n').encode()
         if path.is_file():
             if path.read_bytes() != data:
@@ -396,18 +451,79 @@ class LlamaServer:
             write_bytes(path, data)
         return dict(doc, path=str(path))
 
+    def _record_quietly(self, phase, status, **facts):
+        """An attempt record written on a failure path: its own failure is logged, never allowed to replace the original
+        error being raised (review finding, 2026-10-07)."""
+        try:
+            return self.attempt_record(phase, status, **facts)
+        except Exception as error:
+            self.log('attempt record %s/%s could not be written: %r' % (self.attempt, phase, error))
+            return None
+
     @staticmethod
     def retained_attempts(evidence_dir):
-        """Every attempt record under <evidence_dir>/attempts/, oldest first, each with its own file witness."""
-        directory = Path(evidence_dir) / 'attempts'
-        out = []
+        """Every attempt under <evidence_dir>/attempts/, oldest first, finished or not (6R2-F): its start record, its
+        end record when one exists, its stderr file witness by name and the evidence files of its own directory (by
+        content hash), so an attempt that died without a terminal record is carried forward with what it left."""
+        root = Path(evidence_dir)
+        directory = root / 'attempts'
+        attempts = {}
+
+        def entry_for(attempt):
+            return attempts.setdefault(str(attempt), dict(attempt=str(attempt), start=None, end=None, unreadable_records=[]))
         if directory.is_dir():
             for path in sorted(directory.glob('*.json')):
                 raw = path.read_bytes()
-                out.append(dict(json.loads(raw), path=str(path), file_sha256=sha256_bytes(raw), file_bytes=len(raw)))
+                try:
+                    doc = json.loads(raw)
+                except ValueError as error:
+                    # a record truncated by a kill still names its attempt in the file name: listed, never skipped
+                    stem = path.stem
+                    attempt_id = stem[:-len('-start')] if stem.endswith('-start') else stem[:-len('-end')] if stem.endswith('-end') else stem
+                    entry_for(attempt_id)['unreadable_records'].append(
+                        dict(path=str(path), file_sha256=sha256_bytes(raw), file_bytes=len(raw), reason='not JSON: %s' % error))
+                    continue
+                entry = entry_for(doc.get('attempt'))
+                entry[doc.get('phase') if doc.get('phase') in ('start', 'end') else 'end'] = dict(
+                    doc, path=str(path), file_sha256=sha256_bytes(raw), file_bytes=len(raw))
+        if root.is_dir():
+            # an attempt that died before its start record was written still left its stderr file or evidence directory
+            for path in sorted(root.glob('llama-server-stderr-*.log')):
+                entry_for(path.name[len('llama-server-stderr-'):-len('.log')])
+            for path in sorted(root.iterdir()):
+                if path.is_dir() and path.name != 'attempts':
+                    entry_for(path.name)
+        out = []
+        for attempt in sorted(attempts):
+            entry = attempts[attempt]
+            stderr = root / ('llama-server-stderr-%s.log' % attempt)
+            files = []
+            if (root / attempt).is_dir():
+                for path in sorted((root / attempt).iterdir()):
+                    if path.is_file():
+                        files.append(dict(path=str(path), bytes=path.stat().st_size, sha256_by_name=path.name.split('-', 1)[0]))
+            entry.update(finished=entry['end'] is not None,
+                         server_stderr=witness_file(stderr) if stderr.is_file() else None,
+                         evidence_files=files,
+                         rule=('finished: its end record is the terminal result' if entry['end'] is not None else
+                               'UNFINISHED: no terminal record exists' + ('' if entry['start'] is not None else
+                               ' and no readable start record either (it died before or while writing it)') +
+                               '; what it left (stderr, evidence, progress files marked pending) is carried as it is; '
+                               'nothing is fabricated or re-sent on its behalf'))
+            out.append(entry)
         return out
 
     def start(self, wait_seconds=600):
+        try:
+            return self._start(wait_seconds)
+        except BaseException:
+            try:
+                self.stop()
+            except Exception as error:
+                self.log('server release after startup failure raised %r' % error)
+            raise
+
+    def _start(self, wait_seconds):
         with socket.socket() as s:
             s.bind(('127.0.0.1', 0))
             self.port = s.getsockname()[1]
@@ -425,10 +541,17 @@ class LlamaServer:
         else:
             stderr = subprocess.DEVNULL
         try:
-            self.process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=stderr)
+            self.attempt_record('start', 'starting', command=command, port=self.port, threads=self.threads)   # before any process work (6R2-F)
         except Exception:
             self._close_stderr()
             raise
+        try:
+            self.process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=stderr)
+        except Exception as error:
+            self._close_stderr()
+            # _meeting owns the single terminal write and the bound runtime_failed receipt.
+            raise MeetingCallFailed('llama-server could not be spawned (%r); stderr file: %s'
+                                    % (error, json.dumps(self.stderr_witness(), sort_keys=True)), evidence=self.stderr_witness()) from error
         try:
             wait = self._bounded(wait_seconds)
         except MeetingBudgetExpired:
@@ -442,15 +565,22 @@ class LlamaServer:
                 raise MeetingCallFailed('llama-server exited while starting (returncode %s); its whole stderr is retained at %s'
                                         % (code, json.dumps(self.stderr_witness(), sort_keys=True)), evidence=self.stderr_witness())
             try:
-                with urllib.request.urlopen('http://127.0.0.1:%d/health' % self.port, timeout=min(5.0, max(0.001, deadline - time.monotonic()))) as response:
-                    health = json.loads(self._read_bounded(response, 'health'))
-                    if isinstance(health, dict) and health.get('status') == 'ok':
-                        return
+                status, raw = self._request('GET', '/health', None, 'health', retain_transport_errors=False,
+                                            ceiling=min(5.0, max(0.001, deadline - time.monotonic())))
+                try:
+                    health = json.loads(raw) if status < 400 else None
+                except ValueError:
+                    self.retain('health-malformed', raw)
+                    raise
+                if isinstance(health, dict) and health.get('status') == 'ok':
+                    return
+                if raw:
+                    self.retain('health-unavailable-http-%s' % status, raw)
             except MeetingBudgetExpired:
                 self.stop()
                 raise
-            except (urllib.error.URLError, TimeoutError, ValueError, ConnectionError, OSError, AttributeError, TypeError):
-                pass
+            except (MeetingCallFailed, ValueError, AttributeError, TypeError):
+                pass          # not healthy yet; the loop re-checks the clock and the process
             time.sleep(min(2.0, max(0.0, deadline - time.monotonic())))
         self.stop()
         if self.remaining() is not None and self.remaining() <= 0:
@@ -459,52 +589,123 @@ class LlamaServer:
         raise MeetingCallFailed('llama-server did not report healthy within %s s; stderr retained at %s'
                                 % (round(wait, 1), json.dumps(self.stderr_witness(), sort_keys=True)), evidence=self.stderr_witness())
 
-    def _read_bounded(self, stream, label):
-        """6R3: read a response body whole while the ABSOLUTE meeting deadline stays effective (the socket timeout is an
-        inactivity timeout, not a total-read bound); on expiry the partial bytes are retained and named, never dropped."""
+    def _read_bounded(self, response, label, timeout, transport):
+        """6R3-F: read a response body whole under the ABSOLUTE meeting deadline. Every blocking read is bounded by the
+        remaining budget through the connection's own socket timeout (the connection is ours: http.client), and read1
+        returns the bytes available rather than filling a buffer. Bytes already received are retained on the deadline,
+        on a timeout, on a connection failure and on a truncated body, never replaced by an error string."""
         chunks = []
-        while True:
-            remaining = self.remaining()
-            if remaining is not None and remaining <= 0:
-                partial = b''.join(chunks)
-                evidence = self.retain('%s-partial-body-at-deadline' % label, partial)
+        try:
+            while True:
+                remaining = self.remaining()
+                if remaining is not None and remaining <= 0:
+                    raise socket.timeout('meeting deadline')
+                timeout()  # Check buffered reads too; the raw reader sets the timeout before each recv.
+                chunk = response.read1(65536)
+                if not chunk:
+                    if response.length not in (None, 0) or (response.chunked and transport['eof']):
+                        raise http.client.IncompleteRead(b'', response.length)
+                    return b''.join(chunks)
+                chunks.append(chunk)
+        except (socket.timeout, TimeoutError, ConnectionError, OSError, http.client.HTTPException, ValueError) as error:
+            partial = b''.join(chunks) + (error.partial if isinstance(error, http.client.IncompleteRead) else b'')
+            evidence = dict(self.retain('%s-partial-body' % label, partial), error=repr(error))
+            if self.remaining() is not None and self.remaining() <= 0:
                 raise MeetingBudgetExpired('meeting time budget spent while reading the %s reply body (%d bytes received and '
-                                           'retained: %s)' % (label, len(partial), json.dumps(evidence, sort_keys=True)))
-            chunk = stream.read(65536)
-            if not chunk:
-                return b''.join(chunks)
-            chunks.append(chunk)
+                                           'retained: %s)' % (label, len(partial), json.dumps(evidence, sort_keys=True)), sent=True)
+            raise MeetingCallFailed('reading the %s reply body failed after %d bytes (%r); the received bytes are retained: %s'
+                                    % (label, len(partial), error, json.dumps(evidence, sort_keys=True)), evidence=evidence, sent=True)
+
+    def _request(self, method, route, body, label, retain_transport_errors=True, ceiling=600.0):
+        """One HTTP exchange on a connection this meeting owns: (status, body bytes). Connect, send, headers and body
+        are each bounded by the remaining budget; any transport or protocol failure is a MeetingCallFailed (or a
+        MeetingBudgetExpired when the budget is spent) with whatever was received retained; the socket is always closed.
+        The socket object is kept by reference: http.client drops conn.sock on a Connection: close reply while the
+        response still reads from it, and the per-read deadline must keep holding there.
+        retain_transport_errors=False (the health wait only): a refused connection while the server is still loading is
+        expected and is not written as evidence on every poll."""
+        # ceiling: the per-request transport ceiling (600 s for a model call; the health wait passes its own short one);
+        # the remaining meeting budget always bounds below it
+        try:
+            timeout = self._bounded(ceiling)      # MeetingBudgetExpired here means: no request was sent
+        except MeetingBudgetExpired as error:
+            error.sent = False
+            raise
+        request_deadline = time.monotonic() + timeout
+        if self.deadline is not None:
+            request_deadline = min(request_deadline, self.deadline)
+
+        def remaining_timeout():
+            remaining = request_deadline - time.monotonic()
+            if remaining <= 0:
+                raise socket.timeout('absolute HTTP request deadline')
+            return remaining
+
+        conn = http.client.HTTPConnection('127.0.0.1', self.port, timeout=timeout)
+        sock, sent, response = None, False, None
+        wire = []
+        transport = dict(eof=False)
+        original_send = conn.send
+
+        def send(data):
+            nonlocal sent
+            sock.settimeout(remaining_timeout())
+            sent = True   # set BEFORE sendall: an exception can follow a partial transmission
+            original_send(data)
+
+        conn.send = send
+        conn.response_class = lambda source, *args, **kwargs: http.client.HTTPResponse(
+            _ResponseSocket(source, remaining_timeout, wire, transport), *args, **kwargs)
+        try:
+            try:
+                encoded = None if body is None else json.dumps(body).encode()
+                conn.timeout = remaining_timeout()
+                conn.connect()
+                sock = conn.sock
+                sock.settimeout(remaining_timeout())
+                conn.request(method, route, body=encoded,
+                             headers={'Content-Type': 'application/json'} if body is not None else {})
+                sock.settimeout(remaining_timeout())
+                response = conn.getresponse()
+            except MeetingBudgetExpired as error:
+                error.sent = sent
+                raise
+            except (socket.timeout, TimeoutError, ConnectionError, OSError, http.client.HTTPException, ValueError) as error:
+                evidence = (self.retain('%s-transport-error' % label, repr(error).encode()) if retain_transport_errors
+                            else dict(label=label, error=repr(error), retained=False))
+                if self.remaining() is not None and self.remaining() <= 0:
+                    raise MeetingBudgetExpired('meeting time budget spent during %s (request sent: %s; %s)'
+                                               % (route, sent, json.dumps(evidence, sort_keys=True)), sent=sent)
+                raise MeetingCallFailed('%s failed with no reply (request sent: %s): %r (%s)'
+                                        % (route, sent, error, json.dumps(evidence, sort_keys=True)), evidence=evidence, sent=sent)
+            raw = self._read_bounded(response, label if response.status < 400 else '%s-http-%s' % (label, response.status),
+                                     timeout=remaining_timeout, transport=transport)
+            return response.status, raw
+        finally:
+            try:
+                # Includes status/headers/framing received before a parsing error. Health connect
+                # refusals have no wire bytes; received evidence is never suppressed with them.
+                if wire:
+                    self.retain('%s-http-wire' % label, b''.join(wire))
+            finally:
+                try:
+                    if response is not None:
+                        response.close()
+                finally:
+                    conn.close()
 
     def _post(self, route, body, label='request', expect=None):
         """POST and return (parsed, raw): the ORIGINAL bytes are kept beside the parsed value (6R3); `expect(parsed)` returns
         a reason the shape is unusable or None, and an unusable shape retains the raw bytes whole and raises
         MeetingCallFailed, never a KeyError/TypeError outside the meeting's own failure path."""
-        timeout = self._bounded(600)          # MeetingBudgetExpired here means: no request was sent
-        request = urllib.request.Request('http://127.0.0.1:%d%s' % (self.port, route), data=json.dumps(body).encode(),
-                                         method='POST', headers={'Content-Type': 'application/json'})
-        try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                raw = self._read_bounded(response, label)
-        except urllib.error.HTTPError as error:
-            try:
-                payload = self._read_bounded(error, label + '-http-%s' % error.code) if hasattr(error, 'read') else b''
-            except MeetingBudgetExpired:
-                raise
-            except OSError as inner:
-                payload = repr(inner).encode()
-            evidence = self.retain('%s-http-%s' % (label, error.code), payload)
-            if error.code == 404:
+        status, raw = self._request('POST', route, body, label)
+        if status >= 400:
+            evidence = self.retain('%s-http-%s' % (label, status), raw)
+            if status == 404:
                 raise MeetingCallFailed('the pinned llama-server has no %s route; the token count cannot be exact, so the meeting '
                                         'refuses rather than guess (reply retained: %s)' % (route, json.dumps(evidence, sort_keys=True)),
                                         evidence=evidence)
-            raise MeetingCallFailed('%s returned HTTP %s (reply retained whole: %s)' % (route, error.code, json.dumps(evidence, sort_keys=True)),
-                                    evidence=evidence)
-        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError, socket.timeout) as error:
-            evidence = self.retain('%s-transport-error' % label, repr(error).encode())
-            if self.remaining() is not None and self.remaining() <= 0:
-                raise MeetingBudgetExpired('meeting time budget spent during %s (no reply received; %s)'
-                                           % (route, json.dumps(evidence, sort_keys=True)))
-            raise MeetingCallFailed('%s failed with no reply: %r (retained: %s)' % (route, error, json.dumps(evidence, sort_keys=True)),
+            raise MeetingCallFailed('%s returned HTTP %s (reply retained whole: %s)' % (route, status, json.dumps(evidence, sort_keys=True)),
                                     evidence=evidence)
         try:
             parsed = json.loads(raw)
@@ -665,6 +866,7 @@ def _close_item(item, state, outcome, open_item):
                 coordinator_turns=state['coordinator'], code_seat_answers=state['answers'], notes=state['notes'],
                 requested_tests=state['requests'], open_items=open_items, refused=state['refused'], outcome=outcome,
                 token_counts=state['token_counts'], rounds_completed=state['rounds_completed'],
+                pending_call_intent=state.get('pending_call'),
                 rule='four categories kept apart; agreement among voices is never confirmation (R17)')
 
 
@@ -694,7 +896,8 @@ def discuss_item(server, item, system, params, log, progress=None):
         result = _close_item(item, state, 'LEFT_OPEN_BY_CODE', dict(
             kind='interrupted_call', seat=None, binds_to=None, round=pending.get('round'),
             transcript_sha256=pending.get('transcript_sha256'), started_at=pending.get('started_at'),
-            text='the coordinator call of round %s was sent before an interruption and its completion is unknown (no '
+            text='the coordinator call of round %s had a durable pre-send intent before an interruption; transmission '
+                 'and completion are unknown (no '
                  'reply was recorded); the %d completed rounds are kept, the call is not repeated and no answer is '
                  'invented; the item stays open by code' % (pending.get('round'), int(state.get('rounds_completed') or 0))))
         state = dict(state, status='complete', outcome='LEFT_OPEN_BY_CODE', result=result, pending_call=None,
@@ -787,13 +990,18 @@ def discuss_item(server, item, system, params, log, progress=None):
             if progress is not None:
                 progress.save(state)
     except MeetingBudgetExpired as error:
-        # the item keeps its completed rounds; the pending marker (if a chat was sent) stays as the fact it is
+        # the item keeps its completed rounds; the pending marker stays only when the request may have reached the
+        # server (completion unknown); a request that provably never left this process is no pending call
+        if getattr(error, 'sent', None) is False:
+            state['pending_call'] = None
         outcome = 'LEFT_OPEN_BY_CODE'
         open_item = dict(kind='time_budget', seat=None, binds_to=None, rounds_completed=int(state['rounds_completed']),
                          text='the meeting time budget of %s s was spent on this item after %d completed rounds (%s); the '
                               'completed work is kept and the item stays open by code' % (
                                   params['max_meeting_seconds'], int(state['rounds_completed']), error))
     except MeetingCallFailed as error:
+        if getattr(error, 'sent', None) is False:
+            state['pending_call'] = None      # never reached the socket: nothing to duplicate, not an unknown completion
         outcome = 'LEFT_OPEN_BY_CODE'
         open_item = dict(kind='call_failed', seat=None, binds_to=None, rounds_completed=int(state['rounds_completed']),
                          evidence=error.evidence, text='a request to the coordinator runtime failed after %d completed rounds: %s; '
@@ -961,7 +1169,7 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
     except (MeetingCallFailed, MeetingBudgetExpired) as error:
         # finding 3: the process is already released by start(); the partial state (inputs, binding) stays; the receipt
         # says what happened with the whole stderr witnessed; no meeting.json (nothing was discussed)
-        attempt = server.attempt_record('runtime_failed', error=str(error), seconds=round(time.time() - started, 1))
+        attempt = server.attempt_record('end', 'runtime_failed', error=str(error), seconds=round(time.time() - started, 1))
         receipt = dict(schema=RECEIPT_SCHEMA, day=exchange.get('day'), status='runtime_failed',
                        refused_to_run=['the coordinator runtime did not start: %s' % error],
                        evidence=dict(server_stderr=server.stderr_witness(), retained=server.evidence, attempt=attempt,
@@ -993,10 +1201,21 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
             if result.get('reused_from_progress'):
                 reused.append(item['item_id'])
             items.append(result)
+    except BaseException as error:
+        # 6R2-F: an attempt that dies in discussion leaves a terminal record naming the failure; its stderr, evidence
+        # and progress files (pending calls marked) stay as they are for the next attempt to carry forward; neither the
+        # process release nor the record write may replace the original error
+        try:
+            server.stop()
+        except Exception as inner:
+            log('server release after a discussion failure raised %r' % inner)
+        server._record_quietly('end', 'failed_in_discussion', error=repr(error), items_completed_this_attempt=len(items),
+                               seconds=round(time.time() - started, 1))
+        raise
     finally:
         server.stop()
-    attempt = server.attempt_record('complete', seconds=round(time.time() - started, 1), items_discussed_this_attempt=len(items) - len(reused),
-                                    items_reused=list(reused))
+    attempt = server.attempt_record('end', 'complete', seconds=round(time.time() - started, 1),
+                                    items_discussed_this_attempt=len(items) - len(reused), items_reused=list(reused))
     attempts = LlamaServer.retained_attempts(evidence_dir)
     record = dict(base, status='complete', items=items, not_discussed=not_discussed,
                   runtime=dict(binary=witness_file(binary), model=witness_file(model), parameters=params,
@@ -1007,8 +1226,10 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                                server_stderr=server.stderr_witness(), evidence=server.evidence,
                                attempt=attempt['attempt'],
                                attempts=attempts,
-                               attempts_rule='every attempt of this meeting with its own stderr and evidence witnesses, oldest first; '
-                                             'nothing an earlier attempt pinned is renamed, appended to or dropped'),
+                               unfinished_attempts=[a['attempt'] for a in attempts if not a['finished']],
+                               attempts_rule='every attempt of this meeting, finished or not, with its own stderr and evidence '
+                                             'witnesses, oldest first; nothing an earlier attempt pinned is renamed, appended to '
+                                             'or dropped; an unfinished attempt is carried with what it left'),
                   binding=dict(path=str(binding_path), sha256=binding_sha),
                   progress=dict(directory=str(out_dir / 'progress'), reused_items=reused),
                   # 6R3: counts of the COMPLETE meeting are derived from the retained rounds (every completed chat across all
@@ -1016,10 +1237,13 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                   model_calls=sum(len(i.get('token_counts') or []) for i in items),
                   calls=dict(completed_chat_calls_all_attempts=sum(len(i.get('token_counts') or []) for i in items),
                              this_attempt=server.calls, attempt=server.attempt,
-                             calls_sent_without_recorded_reply=sum(1 for i in items for o in i.get('open_items') or []
-                                                                   if o.get('kind') == 'interrupted_call'),
+                             pre_send_intents_unresolved=sum(1 for i in items if i.get('pending_call_intent')),
+                             interrupted_call_items=sum(1 for i in items for o in i.get('open_items') or []
+                                                        if o.get('kind') == 'interrupted_call'),
                              rule='model_calls counts completed coordinator calls of the whole meeting (all attempts, from the '
-                                  'retained rounds); this_attempt is this process alone'),
+                                  'retained rounds); this_attempt is this process alone; pre_send_intents_unresolved counts items '
+                                  'whose durable pre-send intent never got a recorded reply (any attempt, any closing kind): an '
+                                  'intent recorded before sending is not proof the request reached the server'),
                   tokens=dict(server.tokens, scope='this attempt only; per-round prompt_tokens_used across attempts are in items[].token_counts'),
                   seconds=round(time.time() - started, 1),
                   counts=dict(items=len(items), coordinator_turns=sum(len(i['coordinator_turns']) for i in items),
@@ -1047,7 +1271,7 @@ def return_witness(out_dir):
     doc = dict(schema=RETURN_SCHEMA, record=witness_file(record_path) if record_path.is_file() else None,
                receipt=witness_file(receipt_path) if receipt_path.is_file() else None,
                progress=sorted(str(p) for p in (out_dir / 'progress').glob('*.json')) if (out_dir / 'progress').is_dir() else [],
-               evidence=sorted(str(p) for p in (out_dir / 'evidence').iterdir()) if (out_dir / 'evidence').is_dir() else [],
+               evidence=sorted(str(p) for p in (out_dir / 'evidence').rglob('*') if p.is_file()) if (out_dir / 'evidence').is_dir() else [],
                owner_import=('python deploy/aws/box/frankie_box_lane_state.py --import-meeting <meeting.json as returned> '
                              '--record-sha256 <record.sha256 above> --exchange /opt/frankie-box/work/experiment/<run>/exchange/'
                              '<day>/exchange-frankie.json  (run by hand on the owning lane; nothing here dispatches it)'),

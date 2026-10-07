@@ -466,6 +466,21 @@ def _compare_json(produced, recorded, fields, scope=None, argv=None):
                               gaps={k: v for k, v in gaps.items() if v}))
 
 
+def _printed_comparison(rec, stdout):
+    """The existing printed comparison arithmetic, shared by production and admission."""
+    match = re.search(rec['pattern'], stdout, re.M)
+    if match is None:
+        return dict(status='not_found', reason='the pattern did not match the run\'s stdout')
+    fields = []
+    for name, expected in rec['expected'].items():
+        actual = int(match.group(name))
+        tolerance = (rec.get('tolerance') or {}).get(name, 0)
+        fields.append(dict(field=name, expected=expected, actual=actual, tolerance=tolerance,
+                           status='matched' if abs(actual - expected) <= tolerance else 'differs'))
+    return dict(status='differs' if any(f['status'] == 'differs' for f in fields) else 'matched',
+                fields=fields, also_printed={k: v for k, v in match.groupdict().items() if k not in rec['expected']})
+
+
 def compare(entry, run_doc, staging):
     """Field by field against the recorded outputs, from a COMPLETED run only (B2): the produced files are read back and
     must still hash to the bytes the run captured; the recorded reference is read from the staging's recorded/ at its pin.
@@ -485,20 +500,10 @@ def compare(entry, run_doc, staging):
     references = {s['path']: s for s in staging.get('recorded') or []}
     argv = (entry.get('entry') or {}).get('argv') or []
     for rec in entry.get('recorded_outputs') or []:
-        item = dict(kind=rec['kind'], what=rec.get('what'), claims=rec.get('claims', entry['claims']))
+        declaration = output_declaration_key(dict(rec, claims=rec.get('claims', entry['claims'])))
+        item = dict(declaration, declaration=declaration)
         if rec['kind'] == 'printed':
-            m = re.search(rec['pattern'], run_doc.get('stdout') or '', re.M)
-            if m is None:
-                item.update(status='not_found', reason='the pattern did not match the run\'s stdout')
-            else:
-                fields = []
-                for name, expected in rec['expected'].items():
-                    actual = int(m.group(name))
-                    tol = (rec.get('tolerance') or {}).get(name, 0)
-                    fields.append(dict(field=name, expected=expected, actual=actual, tolerance=tol,
-                                       status='matched' if abs(actual - expected) <= tol else 'differs'))
-                item.update(status='differs' if any(f['status'] == 'differs' for f in fields) else 'matched',
-                            fields=fields, also_printed={k: v for k, v in m.groupdict().items() if k not in rec['expected']})
+            item.update(_printed_comparison(rec, run_doc.get('stdout') or ''))
         elif rec['kind'] == 'json_file':
             produced_entry = captured.get(rec['produced'])
             reference = next((references[p] for p in references if p.endswith(rec['recorded'])), None)
@@ -529,6 +534,98 @@ def compare(entry, run_doc, staging):
     return dict(status=status, outputs=outputs, coverage=coverage, **facts,
                 rule='a match reproduces the recorded numbers on the original inputs; it is not a verdict on the claim; '
                      'a difference is evidence with its fields named, not a rejection (R11, R14)')
+
+
+def command_argv(command):
+    """The argv run() records for a declared command: [sys.executable, '-B', script, *argv][1:] (the producer contract)."""
+    return ['-B', command.get('script')] + list(command.get('argv') or [])
+
+
+DECLARATION_FIELDS = ('kind', 'what', 'claims', 'produced', 'recorded', 'pattern', 'recorded_in',
+                      'fields', 'scope', 'expected', 'tolerance', 'note')   # one definition, both sides
+
+
+def output_declaration_key(rec):
+    """What identifies one declared comparison (recorded output): the DECLARATION_FIELDS, enough to detect an omitted,
+    duplicated or foreign output in a retained comparison. compare() writes exactly these fields on every output."""
+    return json.loads(json.dumps({k: rec.get(k) for k in DECLARATION_FIELDS}, sort_keys=True))
+
+
+def inventory_of_outputs(entry, outputs):
+    """B4-F: the reasons a retained outputs list is not the entry's full declared comparison inventory, else []. An
+    output that retains no declaration fields beyond kind/what/claims (an older comparison) cannot establish the
+    inventory and says so, rather than being read as a foreign output."""
+    declared = [output_declaration_key(dict(r, claims=r.get('claims', entry['claims']))) for r in entry.get('recorded_outputs') or []]
+    if not isinstance(outputs, list):
+        return ['comparison outputs are not a list']
+    for i, o in enumerate(outputs):
+        if isinstance(o, dict) and not isinstance(o.get('declaration'), dict):
+            return ['comparison output %d retains no complete declaration (an older comparison): the declared inventory cannot '
+                    'be established from it' % i]
+    got = [o.get('declaration') if isinstance(o, dict) else None for o in outputs]
+    reasons = []
+    if len(got) != len(declared):
+        reasons.append('comparison retains %d outputs for %d declared comparisons' % (len(got), len(declared)))
+    for i, (g, d) in enumerate(zip(got, declared)):
+        if canonical(g) != canonical(d) or any(outputs[i].get(k) != d[k] for k in ('kind', 'what', 'claims')):
+            reasons.append('comparison output %d is not declared comparison %d' % (i, i))
+    # same count and the declared key at every position: an omitted, duplicated, extra or foreign output is a mismatch
+    # at some position or in the count; a declaration the entry itself repeats is legitimately repeated
+    return reasons
+
+
+def output_semantics(entry, outputs, run_doc):
+    """Check retained comparison facts; no historical driver, source calculation or model runs."""
+    reasons = []
+    for index, (rec, output) in enumerate(zip(entry.get('recorded_outputs') or [], outputs)):
+        try:
+            if rec['kind'] == 'printed':
+                expected = _printed_comparison(rec, run_doc.get('stdout') or '')
+                facts = {k: output[k] for k in ('status', 'fields', 'also_printed', 'reason')
+                         if output.get(k) is not None}
+                if canonical(facts) != canonical(expected):
+                    raise ValueError('printed fields/status differ from the declared pattern and retained stdout')
+            elif rec['kind'] == 'json_file':
+                if 'leaves_recorded' not in output:
+                    if output.get('status') not in ('not_found', 'not_comparable') or not output.get('reason'):
+                        raise ValueError('JSON comparison lacks detailed facts or an explicit unavailable reason')
+                    continue
+                for key in ('leaves_recorded', 'matched', 'differs_count', 'not_found_count', 'produced_only_leaves'):
+                    if type(output.get(key)) is not int or output[key] < 0:
+                        raise ValueError('JSON comparison count missing or invalid: ' + key)
+                differs, absent, extra = output['differs'], output['not_found'], output['produced_only']
+                if not all(isinstance(v, list) for v in (differs, absent, extra)):
+                    raise ValueError('JSON comparison details are not complete lists')
+                if (output['differs_count'] != len(differs) or output['not_found_count'] != len(absent)
+                        or output['produced_only_leaves'] != len(extra)
+                        or output['leaves_recorded'] != output['matched'] + len(differs) + len(absent)):
+                    raise ValueError('JSON comparison counts differ from retained details')
+                names = [d['field'] for d in differs] + absent
+                if (len(set(names)) != len(names) or len(set(extra)) != len(extra)
+                        or set(names) & set(extra)
+                        or any(d['recorded'] == d['produced'] for d in differs)
+                        or any(not _selected(k, rec.get('fields')) for k in names + extra)):
+                    raise ValueError('JSON comparison fields contradict their declared selection or differences')
+                alignment = output['alignment']
+                gaps = {k: alignment[k] for k in
+                        ('unaligned_members', 'not_comparable_lists', 'argv_keys_absent_from_recorded')}
+                if any(not isinstance(v, list) for v in gaps.values()):
+                    raise ValueError('JSON alignment gaps must be complete lists')
+                gaps['produced_only'] = extra
+                complete = not any(gaps.values())
+                expected_coverage = dict(complete=complete,
+                    compared_scope='the aligned members and selected fields only',
+                    gaps={k: v for k, v in gaps.items() if v})
+                expected_status = ('differs' if differs or absent else 'not_comparable' if not output['matched']
+                                   else 'incomplete' if not complete else 'matched')
+                if (output.get('scope') != rec.get('scope') or output.get('coverage') != expected_coverage
+                        or output.get('status') != expected_status):
+                    raise ValueError('JSON status/coverage/scope differs from retained comparison facts')
+            elif output.get('status') != 'declared_not_comparable_by_code':
+                raise ValueError('prose declaration cannot claim a numerical comparison')
+        except (KeyError, TypeError, ValueError, AttributeError) as error:
+            reasons.append('comparison output %d semantics not established: %s' % (index, error))
+    return reasons
 
 
 def aggregate_status(outputs):
@@ -638,17 +735,25 @@ def coherence(entry, plan_doc, run_doc, comparison, status, dispatch_doc=None, d
             if dispatch_doc.get('capability_sha256') != run_doc.get('capability_sha256'):
                 reasons.append('dispatch marker names another capability revision than the run')
         command = plan_doc.get('command') or {}
-        expected_argv = [command.get('script')] + list(command.get('argv') or []) if command else None
-        if expected_argv is not None and run_doc.get('argv') != expected_argv:
+        # B4-F: the producer contract is run()'s own: argv recorded = [sys.executable, '-B', script, *args][1:]
+        expected_argv = command_argv(command) if command else None
+        if expected_argv is not None and list(run_doc.get('argv') or []) != expected_argv:
             reasons.append('the run\'s command differs from the plan\'s declared entry point')
         if comparison.get('returncode') != run_doc.get('returncode') or comparison.get('timed_out') != run_doc.get('timed_out'):
             reasons.append('comparison run facts (returncode/timed_out) differ from the run document')
         if comparison.get('status') in PERFORMED and comparison.get('status') != 'performed_failed':
-            derived, _ = aggregate_status(comparison.get('outputs') or [])
-            if derived != comparison.get('status'):
-                reasons.append('comparison status %r does not follow its retained outputs (%r)' % (comparison.get('status'), derived))
-        if comparison.get('returncode') != run_doc.get('returncode') or comparison.get('timed_out') != run_doc.get('timed_out'):
-            reasons.append('comparison run facts (returncode/timed_out) differ from the run document')
+            # B4-F: the retained outputs must be the FULL declared comparison inventory, in order, no omission,
+            # duplicate or extra, and the retained coverage/status must be what those outputs derive
+            output_problems = inventory_of_outputs(entry, comparison.get('outputs'))
+            if not output_problems:
+                output_problems = output_semantics(entry, comparison['outputs'], run_doc)
+            reasons.extend(output_problems)
+            if not output_problems:
+                derived, coverage = aggregate_status(comparison['outputs'])
+                if derived != comparison.get('status'):
+                    reasons.append('comparison status does not follow its retained output facts')
+                if canonical(comparison.get('coverage')) != canonical(coverage):
+                    reasons.append('comparison coverage facts differ from its retained output facts')
         failed = bool(run_doc.get('timed_out')) or run_doc.get('returncode') != 0
         if failed and status != 'performed_failed':
             reasons.append('status %s on a run that did not complete (returncode %s, timed_out %s)'

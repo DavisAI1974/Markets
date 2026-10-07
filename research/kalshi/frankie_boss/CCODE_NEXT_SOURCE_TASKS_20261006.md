@@ -1,5 +1,155 @@
 # CCode assignment — next pre-#5 source tasks
 
+## ACTIVE CCODE ASSIGNMENT — Step 8A CPU controller lifetime and launch routing
+
+Greg, 2026-10-06 23:30–23:33 ET: Codex should fix the sixth-return defects directly,
+then assign Step 8 or part of it to CCode here. **Those named source fixes are now built
+by Codex; do not redo them.** Fetch CURRENT `ccr-5fce7de3-xa4hfg` and preserve its integration
+of CCode `31832bf2`, the Step 5 owner-transition contract and all Step 7 changes. CCode's
+next work is the disjoint Step 8A slice below. This authorizes source work, never execution.
+
+### Your concrete slice
+
+Finish the existing Linux controller's CPU-only launch/status/resume/stop route and its
+lifetime beyond a bounded GitHub runner. Use the current controller and existing host/process
+mechanisms; do not build a second scheduler. Exactly two main lanes and one Linux lane, each
+16 CPUs, remain the whole booking. No fourth lane, new paid host or Pod fallback.
+
+1. **Trace first, then fix the active route.** Read `HANDOFF_20261006_STEP1_RECOVERY.md`
+   (opening launch/main-recovery section and ordered checklist), the CURRENT runbook/spec,
+   `pod_root/controller.py`, and `.github/workflows/frankie_box_run.yml`'s CPU-controller
+   block. The legacy filename is still `frankie_box_pod_root_loop.sh`. Return an exact
+   action-to-entrypoint/owner/receipt map; old directory names do not authorize Pods.
+2. **Source-build the controller lifetime.** The workflow currently runs `controller.py`
+   on the GitHub runner with a 330-minute budget; the Linux worker may retain a longer day
+   that needs renewal/coordination/import afterward. Reuse the main box's EXISTING staged
+   checkout and systemd launch pattern (`frankie_box_experiment.sh` is the reference) for a
+   run-bound controller process, with stable ownership and retained status/progress. A
+   runner exit must not orphan its coordination duties or release/reassign the worker's
+   held day. No new AWS service or additional booking. Check source dependencies/credential
+   flow; if an existing host prerequisite cannot be established from source, name that exact
+   prerequisite and refuse activation rather than silently installing/provisioning anything.
+   Do not turn a finite budget exit into success or an automatic new scientific attempt.
+3. **Bind launch prerequisites and controls.** Require the saved main `plan.json`, correct
+   run/code identity and existing claim-store route before claiming/starting Linux work.
+   Reuse its retained same-owner job/attempt for resume. A stop requests cooperative saving
+   and reports acknowledgment/pending state; it must not kill the box, clear the claim or
+   fabricate a completed day. Status must report the controller and retained worker job
+   distinctly. Ensure repeated starts do not create a second controller for the same run;
+   preserve the original receipt/claim on interrupted handoff and refused/mismatched resume.
+4. **Close reachable Pod routes in this workflow.** Add explicit CPU-only refusal for
+   retired Jev/CLM/ROOT Pod launch inputs before any provider call, including error/always
+   cleanup branches. The current workflow still contains Jev/CLM Pod launch AND always-cleanup
+   blocks. Reject old provider inputs even when empty. Audit the controller's direct CLI
+   route as well as the workflow router; do not rely solely on its wrapper. Keep historical
+   source/evidence; do not delete prior artifacts or contact a provider. Inventory any
+   unrelated direct Pod entrypoint that needs a separate owner rather than silently calling it.
+
+### Owned files and protected boundaries
+
+CCode owns `research/kalshi/frankie_boss/pod_root/controller.py`, the CPU controller routing
+and retired Pod refusal/cleanup gates in `.github/workflows/frankie_box_run.yml`, the existing
+`deploy/aws/box/frankie_box_pod_root_loop.sh` marker, and a small dedicated CPU controller
+launcher/helper if needed under `deploy/aws/box/`. Add your report as
+`CCODE_STEP8_CPU_CONTROLLER_20261007.md`; update your Codex-facing return/handoff/drop-in.
+The main experiment shell launcher is a pattern to read, not blanket ownership of its flow.
+
+Codex keeps `frankie_box_experiment.py`, `frankie_box_frankie_queue.py`, lane-state/brain/review,
+search/dipole, `clm_sidecar/sit_in.py`, Jev seal/testing/publication/completion and Step 5
+successor scheduling. **Main day-bound save/resume and class-child acknowledgments remain
+open:** trace the interfaces you need there and return exact requests; do not patch these
+shared owners or claim Step 8 complete through controller-only work. Do not change Jev or
+Granite runtime/model/core choices, settled math or scientific acceptance. Source-built
+controller readiness cannot bypass unfinished Steps 2–7.
+
+### Verification and return
+
+Source/interface review, AST without project imports, and `git diff --check` ONLY. No tests,
+synthetic streams/exercises, installs, project/model/data runs, historical reproduction,
+AWS inspection/actions, starts, dispatch, canaries or E2E. Keep boxes stopped. No credential
+workarounds. `[skip ci]` on every commit/push. Review your complete change and error paths before
+returning; distinguish source-built from runtime-unverified. Return exact commits, the action
+map, controller/worker recovery ownership, dependencies still missing and the narrow requests
+for Codex-owned functions. This slice does not close all Step 8 or authorize Steps 9/10.
+
+## Sixth-return corrections completed directly by Codex — source only
+
+Greg's direct instruction supersedes the earlier assignment back to CCode below. The integrated
+`31832bf2` return plus these fixes preserves both histories. 6R2-S: `_meeting` alone writes the
+startup terminal result/receipt; `start` releases the process on any startup exception. 6SEND-S:
+possible-send is set at the actual send boundary before transmission, and interrupted-call prose
+reports intent rather than proof of sending. 6R3-S: the raw SocketIO reader enforces the absolute
+remaining deadline across headers/body/chunk framing; early Content-Length/chunked EOF refuses;
+received wire/body bytes (including health failures) are retained, and response/connection close
+in `finally`. A completed Connection-close reader is never given another socket timeout update.
+B4-S: complete declarations carry fields/scope/expected/tolerance, printed comparison logic is
+shared with admission, and JSON leaf counts/details/coverage/scope must agree before aggregate
+admission. Older comparisons lacking the complete declaration are explicitly unestablished.
+
+These source findings are addressed, not runtime-proven. Historical reproduction/rework for BOTH
+teachers, Step 5 successor scheduling, full Step 6 integration/runtime and Step 7 remain open.
+The reviewed defects below remain as the rationale, not a second CCode correction assignment.
+
+
+## Prior sixth-return review — findings addressed in source above — 2026-10-07
+
+Reviewed CCode `31832bf24b2e4e4c9ff911a69a6dd9f5496e4c4d`, whose new source commits
+start at `12258b3b` above the already-integrated `5e216265`. Preserve all returned ancestry;
+do not reapply the fifth return or Codex's reader hooks. BIND-F's JSON-stable per-entry shape
+and B4-F's `-B` argv/full output-list identity address those named defects. Attempt-start
+records and carried unresolved-intent counts are present. This is integration of source
+progress, not runtime acceptance or closure of Steps 4/6. Required findings remain below.
+
+CCode retains these owned functions. Codex has not patched them or sent an external message.
+One coherent source commit per group; read the COMPLETE error path before claiming it closed:
+
+1. **6R2-S — one terminal writer on spawn failure.** `LlamaServer.start` writes
+   `<attempt>-end.json` with `failed_to_spawn`, then raises `MeetingCallFailed`. `_meeting`
+   catches it and calls `attempt_record('end', 'runtime_failed', ...)` on the SAME immutable
+   path with different bytes. `attempt_record` raises `ValueError`, so the intended bound
+   `runtime_failed` receipt is never written. Let one layer own the terminal record, or reuse
+   the exact existing terminal record after checking its identity; never overwrite it or
+   swallow the missing receipt. Keep the spawn failure explicit.
+2. **6SEND-S — partial transmission is uncertain, not never sent.** `_request` sets
+   `sent=True` only AFTER `conn.request` returns. That call sends headers/body internally;
+   an exception during sending can follow transmitted bytes. The catch then reports
+   `sent=False`, and `discuss_item` clears the durable pending intent. Mark the request as
+   potentially sent before the first send (after local body encoding/connection preparation),
+   and reserve never-sent for a proven pre-send failure. Also change the interrupted-call
+   prose claiming the request "was sent": a pre-send intent alone does not establish that.
+3. **6R3-S — complete transport deadline/body/release semantics.** `_read_bounded` treats
+   every empty `read1` result as a complete body. CPython's `HTTPResponse.read1` returns empty
+   on early EOF without raising when Content-Length still has bytes outstanding, so a
+   prematurely closed but parseable JSON prefix can be accepted. Refuse incomplete framing,
+   preserve received bytes, and include any `IncompleteRead.partial` bytes in failure evidence.
+   `_request.getresponse()` reads status/headers through buffered readline; chunked `read1`
+   reads chunk framing/trailers internally. A socket inactivity timeout set outside those
+   internal loops does not enforce the absolute deadline for slow progress. Cover those
+   blocking phases too, without truncation or new runtime parameters. The health call passes
+   `retain_transport_errors=False` into BODY retention, so received health partial bytes are
+   replaced by a hash/length and discarded. Suppress only empty expected connect refusals;
+   retain actual received bodies/malformed health replies. Finally close the response itself
+   in `finally`: `HTTPConnection` releases ownership on Connection-close responses, so
+   `conn.close()` alone does not own their remaining buffered reader. Source confirmation used
+   the local Python 3.12 stdlib `http/client.py` (`read1`, `_read1_chunked`, `begin`, `close`);
+   no HTTP call, synthetic stream or project import was executed.
+4. **B4-S — per-output semantics still unchecked.** `inventory_of_outputs` now checks the
+   whole declared list, but `aggregate_status` trusts each output's `status`; it ignores
+   JSON `coverage.gaps`, `differs`, `not_found`, counts and scope/alignment, and printed
+   per-field actual/expected/tolerance facts. `coherence` therefore can accept a retained
+   `matched` label beside contradictory detailed facts as long as its top aggregate matches.
+   Its declaration key also omits declared JSON fields/scope and printed expected/tolerance.
+   Bind those declarations and check the retained per-output facts with the existing comparison
+   semantics before admission. Missing older facts mean equivalence unestablished; do not
+   rerun reproduction, invent numerical values or add a new scientific criterion.
+
+Review outcome: additional source corrections required; no runtime readiness claim. All
+source-only holds, Granite pins/threads null and ownership remain. Step 5's narrow explicit
+owner transition is published at `dd0ae0f2`; its successor scheduling and same-search reuse
+gap remain Codex's. Step 7 remains Codex's Jev task. The older STOP-before-5 text in returned
+handoffs is historical; Greg authorized source steps 5–7, never execution.
+
+
 ## Codex owner-transition handshake — 2026-10-07
 
 Both branches were freshly fetched: integration `c816bc56`, CCode `3667b289`; no newer

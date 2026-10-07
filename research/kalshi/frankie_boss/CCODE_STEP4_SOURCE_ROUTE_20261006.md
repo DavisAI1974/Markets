@@ -637,6 +637,15 @@ not closed source work. See the newest task-doc section. Step 5's publication/su
 received; its changed `claim_inputs` conflicts with the current same-identity correction guard,
 so Codex must settle that interface before CCode wires publication. No correction or run occurred.
 
+**Codex's review of the fifth-session return (BIND-F, B4-F, 6R3-F, 6R2-F; 2026-10-07), on Codex's `5e216265`.**
+`12258b3b` BIND-F: `FRANKIE_BINDING_IDENTITY_V3`, JSON-stable, per entry, validated by the parts present, V2 converted
+not dropped. `7dd8b9a4` B4-F: `command_argv` is the producer's contract checked against the run's argv; the retained
+outputs must be the full declared comparison inventory. `34dab141` 6R3-F: every blocking read bounded to the remaining
+deadline on a meeting-owned `http.client` connection, partial bytes retained, `sent` distinguishes a never-sent request.
+`4b5a8eba` 6R2-F: the attempt is recorded before any process work and carried forward when unfinished. `62eb55e3` and
+`6c804bd2`: two adversarial code-review passes, 20 corrections (the missing `http.client` import among them). Detail:
+`CCODE_STEP6_RETURN_20261007.md` section 9. Nothing run.
+
 **Codex's review round on the follow-ups (`6837875a` B2-R, `bf8f87a5` B4-R, `0cb6868b` BIND-R; 2026-10-07).** B2-R:
 `aggregate_status()` makes the whole-output status follow the coverage of every declared comparable output (a declared
 printed/json output not compared at all is a gap: `performed_incomplete`, never matched); `compare()` records
@@ -655,6 +664,20 @@ price adapter (Codex, on the V2 contract above); runtime verification of all of 
 
 ## 9. Closure table after slices A-D (against the existing contracts; SOURCE-BUILT / RUNTIME-UNVERIFIED throughout)
 
+**Later direct Codex source fixes (Greg's instruction):** the four findings in the review
+below are now addressed in source: one spawn-terminal owner; partial-send uncertainty;
+raw-read absolute deadlines, framing/health-byte retention and response release; complete
+comparison declarations and detailed fact/status coherence. No runtime verification.
+CCode's next assignment is Step 8A in the task document, not another round on these functions.
+
+
+**Codex review of sixth return `31832bf2`: source progress integrated, not closed.**
+The task doc's newest ACTIVE review names 6R2-S (duplicate spawn-terminal write),
+6SEND-S (partial sends misclassified), 6R3-S (framing/deadline/health evidence/release),
+and B4-S (per-output semantics). BIND-F's JSON/per-entry identity and B4-F's argv/list
+inventory improvements are retained. Source-only; no tests or runtime proof.
+
+
 **Codex fourth-session return review, 2026-10-07:** CCode through `276d6073` is integrated.
 The current task doc assigns B2-R/B4-R/BIND-R and step-6 recovery corrections; B3/B5's named
 source findings are addressed. B6 input supply remains open. D1 V2 and the exact-price adapter
@@ -667,7 +690,7 @@ step 6; neither authorizes execution. See the new section 8 integration note and
 |---|---|
 | 2 | A4, C1, C2, B4/B5 source-corrected (section 8, Corrections). Open: native-learner and late-scheduling decisions (Greg); Codex's integration review of the corrections; runtime verification. |
 | 3 | D1 source-corrected: `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (contract in section 8). Codex's exact price adapter is source-built. Open: the held trajectory/4.2/4.4 definitions. Exact structures unchanged (V1). |
-| 4 | B1-B7 and follow-ups returned; fifth-session B2-R aggregate coverage accepted at source review. B4-R command/inventory admission and BIND-R serialized identity still need the follow-ups in the current task doc. Input supply and reproduction/reformulation for BOTH teachers remain open; nothing run. |
+| 4 | B1-B7 and follow-ups returned; B2-R accepted; B4-F (command contract, full inventory) and BIND-F (V3 per-entry JSON-stable identity) returned `7dd8b9a4` / `12258b3b` for Codex's review. Input supply and reproduction/reformulation for BOTH teachers remain open; nothing run. |
 | 5 | Authorized source work: scoped correction delivery, stale-input refusal and standalone hooks built. Open: scientific-owner publication and corrected-successor scheduling, including changed claim-input identity. Old draft unapplied. |
 
 The table distinguishes source implementation from the remaining review and workflow gaps. The older table records
