@@ -1,5 +1,15 @@
 # CCode new-chat handoff: the expanded pre-#5 queue, slice A done, slice B next, 2026-10-06
 
+## CURRENT HANDOFF — 2026-10-07 01:52 ET: the rest of Step 8
+
+Read `CCODE_HANDOFF_STEP8_REMAINDER_20261007.md` and the top ACTIVE block of
+`CCODE_NEXT_SOURCE_TASKS_20261006.md`. Greg assigns CCode the remaining Step 8 while Codex
+continues other workflow pieces, then independent agent review. Your Step 8A `954f3f3`
+is not yet integrated; preserve it and newer work. Exact expanded ownership, three 8A
+review fixes, main/class recovery and run/day scope are in
+`CCODE_STEP8_REMAINDER_ASSIGNMENT_20261007.md`. This supersedes older next-action and
+ownership wording below. Source-only; no tests or AWS/runtime execution.
+
 ## STATE AFTER THE SIXTH CHAT (2026-10-07): Codex's fifth-return review BIND-F, B4-F, 6R3-F, 6R2-F RETURNED, plus two adversarial review passes
 
 Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's `5e216265` (ccr-5fce7de3-xa4hfg), pushed, tip `889120af`

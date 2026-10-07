@@ -1,5 +1,25 @@
 # CCode assignment — next pre-#5 source tasks
 
+## ACTIVE — remaining Step 8, Greg's 2026-10-07 01:50–01:52 ET assignment
+
+**Read `CCODE_STEP8_REMAINDER_ASSIGNMENT_20261007.md` first.** Greg clarified that CCode
+returned only Step 8A and now assigns him the rest of Step 8 while Codex continues the other
+workflow pieces. This supersedes the Step 8A-only ownership block below. Main recovery's
+Codex agent stopped before editing; the experiment runner, queue and CPU ledger are now
+CCode's for this assignment. His `954f3f3` return is preserved but not yet integrated.
+
+Required: fix the three independently reviewed 8A defects (expired lease effects, ambiguous
+resume falsely called refused, unsuccessful outcomes exiting zero); complete coherent
+main/class saved ownership and child acknowledgments; bind every queue admission/recovery
+path to the authorized run/day scope; finish the narrow runner integrations named in the
+assignment. Fetch actual current integration and preserve both branches. Return exact
+commits and `CCODE_STEP8_REMAINDER_RETURN_20261007.md` for independent agent review before
+integration. Source-only checks and `[skip ci]`; no execution or scientific choices.
+
+Handoff: `CCODE_HANDOFF_STEP8_REMAINDER_20261007.md`.
+The previous assignment follows as history; its protected-file allocation is superseded
+only by the exact expanded ownership in the new assignment.
+
 ## ACTIVE CCODE ASSIGNMENT — Step 8A CPU controller lifetime and launch routing
 
 Greg, 2026-10-06 23:30–23:33 ET: Codex should fix the sixth-return defects directly,

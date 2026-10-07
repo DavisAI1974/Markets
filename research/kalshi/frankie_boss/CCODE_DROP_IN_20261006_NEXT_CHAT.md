@@ -1,5 +1,26 @@
 # CCODE drop-in for the next chat (2026-10-06, late)
 
+## CURRENT DROP-IN — remaining Step 8 (2026-10-07 01:52 ET)
+
+```text
+Continue DavisAI1974/Markets, CCode branch ccode/teacher-tasks-20261006b.
+Greg assigns you the rest of Step 8; your previous return covered Step 8A only.
+#run using-agent-skills, context-engineering, API and Interface Design.
+Fetch actual current ccr-5fce7de3-xa4hfg and your branch; preserve all newer work and
+your unmerged 954f3f3 Step 8A return. Read AGENTS.md, then research/kalshi/frankie_boss/:
+  CCODE_HANDOFF_STEP8_REMAINDER_20261007.md
+  CCODE_NEXT_SOURCE_TASKS_20261006.md (TOP ACTIVE block)
+  CCODE_STEP8_REMAINDER_ASSIGNMENT_20261007.md
+Fix the three 8A review findings, finish main/class save-resume with exact retained
+ownership and child acknowledgments, enforce authorized run/day queue scope, and
+complete the named shared-runner integrations. Codex works on the other modules.
+Source-only AST/interface/whitespace checks; no tests, installs, runtime or AWS actions.
+Push [skip ci], return exact tip and CCODE_STEP8_REMAINDER_RETURN_20261007.md.
+An independent Codex review agent will review your completed return before integration.
+```
+
+The older drop-ins below are history, not the current assignment.
+
 ```
 CCODE DROP-IN (new chat, 2026-10-07, sixth): Codex's fifth-return review BIND-F/B4-F/6R3-F/6R2-F RETURNED + two review passes
 #run using-agent-skills
