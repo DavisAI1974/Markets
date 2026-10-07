@@ -1,5 +1,19 @@
 # KALSHI TRADING — file index
 
+## 2026-10-07 - The AWS CPU Linux lane controller: one controller, two hosts (Step 8A, source only)
+- `research/kalshi/frankie_boss/pod_root/controller.py` - the Linux lane controller (CCode's): on the GitHub runner a bounded
+  job (plan | status | loop | resume | stop; a budget end is `budget_expired`, never completion); on the main box a run-bound
+  systemd unit (`--host main --budget-minutes 0`) with its retained state under `/opt/frankie-box/work/cpu-controller/<run>/`
+  and an ETag-conditional S3 lease (one controller per run). Pods: no provider code left; retired flags refused before parsing.
+- `deploy/aws/box/frankie_box_cpu_controller.sh` - the main-box launcher (the experiment launcher's DETACH pattern):
+  preflight (prerequisites named, nothing provisioned) | start (GO required) | status (controller and worker's last-seen job,
+  distinctly) | stop (a request; acknowledgment pending) | resume JOB (a request to the running service) | clear_stop.
+- `deploy/aws/box/frankie_box_pod_root_loop.sh` - the legacy-named marker routing `frankie_box_run.yml` to the runner-hosted
+  controller; `.github/workflows/frankie_box_run.yml` refuses the retired Jev/CLM Pod scripts before any step and its
+  always-cleanup branch carries no provider call. Record: `research/kalshi/frankie_boss/CCODE_STEP8_CPU_CONTROLLER_20261007.md`.
+  Not run. Superseded (routes refused, files kept as evidence): `deploy/aws/box/frankie_box_jev_pod.sh`,
+  `frankie_box_clm_sidecar_pod.sh`; the Pod-creation path that `controller.py` carried until `8936c260`.
+
 ## 2026-09-29 — Frankie's 13 historical points attached to each trading day
 - `research/kalshi/frankie_boss/operations/frankie_day_external.py` - FRANKIE_DAY_EXTERNAL_V1: the day file builder, the
   staging check and THE as-of reader (`AsOfReader`, refuses past its cutoff); `search_series` for the search.

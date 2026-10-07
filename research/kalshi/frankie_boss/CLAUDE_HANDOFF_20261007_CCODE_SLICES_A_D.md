@@ -4,6 +4,34 @@ This is the Claude-side handoff. The Codex-facing record is separate: `CCODE_STE
 `CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md` (top section) and `CCODE_DROP_IN_20261006_NEXT_CHAT.md`. Do not merge the
 two channels: Codex integrates from the CCODE documents; a Claude session starts from `DROP_IN_CLAUDE_20261007.md`.
 
+## Where things stand (updated 2026-10-07, seventh session: Step 8A returned)
+
+Greg, at the start of the session: "Don't mess with old work. Just focus on step 8. Just do step 8A." Codex had fixed the
+sixth-return findings directly and landed `3a1416b7` with the Step 8A assignment (task doc top section). This branch was
+rebased onto it (every earlier commit was already integrated, so the rebase left nothing above Codex's tip), the index was
+rebuilt, and the slice was returned: `8936c260` the controller's lifetime on the main box plus launch prerequisites and
+controls (`pod_root/controller.py`, new `deploy/aws/box/frankie_box_cpu_controller.sh`) | `6048de03` the reachable Pod routes
+of `frankie_box_run.yml` closed, the marker refreshed | `8cfed7cc`, `d091e734` the two code-review passes (17 + 10 findings)
+| the docs commit (tip). Record: `CCODE_STEP8_CPU_CONTROLLER_20261007.md`; pointer in the step-6 return section 10.
+Checks: `ast.parse`, `compile`, the static import and call checks, `sh/dash/bash -n`, `yaml.safe_load`, `git diff --check`;
+nothing run, no AWS, no dispatch. The four step-6/historical modules untouched; boundaries unchanged.
+
+Design choices of this round, not to re-litigate: one controller, two hosts (the runner bounded, the main box a run-bound
+systemd unit with `--budget-minutes 0`); main-box actions run locally under `/bin/sh` with the SSM preamble, the worker over
+SSM; the state directory is the controller's record (write-once identity per start, per-poll status, an event journal,
+request/acknowledgment pairs for stop and resume, an outcome per start, never 'complete'); one controller per run by a
+host lock and an ETag-conditional S3 lease, a lost lease ends the loop; a stop is a request that relays the worker's save
+and acknowledges the pending state, claims untouched; a resume under a live service is a request to the service; a day
+that failed to start twice ends the service as `blocked_by_start_failures`; exports go one file per call and inputs are
+re-signed on every renewal because the main host signs with the instance profile's session (the worker does not refresh
+URLs mid-fetch: a limit, named, with the retained-bytes resume behind it); the provider path left the controller and the
+workflow refuses the Pod scripts before any step; the instance profile's permissions are named, checked by preflight and
+never provisioned.
+
+What a next Claude session does: Codex's review of these commits lands in the task doc; fix what it names in the owned
+files, one commit per group, the code-review skill over the range before every push; nothing else is assigned (the main
+lanes' save/resume, Jev, the reader hooks and scheduling are Codex's; the instance profile is Greg's decision).
+
 ## Where things stand (updated 2026-10-07, sixth session: Codex's fifth-return review corrected; two review passes)
 
 Codex reviewed the fifth return (task doc "ACTIVE review of fifth-session return": BIND-F, B4-F, 6R3-F, 6R2-F) and

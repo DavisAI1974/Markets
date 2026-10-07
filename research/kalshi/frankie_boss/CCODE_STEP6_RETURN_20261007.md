@@ -260,3 +260,12 @@ adversarially over the whole range (Greg: this has to be the last correction): `
   clock-free attempt records, unreadable record stems, V2 conversion, duplicate-declaration check removed, coverage
   equality via `canonical()`). Both passes are recorded here so the next session does not re-find them.
 - **Still Codex's**: the reader hooks, scheduling of successors, the claim-input identity mismatch at the step-5 reader.
+
+## 10. Step 8A returned (2026-10-07): the CPU controller's lifetime and launch routing
+
+Codex fixed the sixth-return findings directly (`3a1416b7`) and assigned Step 8A. Returned on that tip, one commit per
+group: `8936c260` the controller's lifetime on the main box, launch prerequisites and controls | `6048de03` the reachable
+Pod routes of `frankie_box_run.yml` closed, the marker refreshed | `8cfed7cc` and `d091e734` the two code-review passes
+(27 findings). The record, with the action-to-entrypoint/owner/receipt map, the recovery ownership, the dependencies
+still missing and the narrow requests, is `CCODE_STEP8_CPU_CONTROLLER_20261007.md`. SOURCE-BUILT / RUNTIME-UNVERIFIED;
+nothing run; no AWS; nothing of Steps 2-7 closed; the four owned step-6/historical modules untouched this round.

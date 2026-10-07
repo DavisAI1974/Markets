@@ -1,5 +1,39 @@
 # DROP-IN (Claude): the CCode pre-#5 queue after Codex's correction queue was returned (2026-10-07, end of the third session)
 
+Current box (2026-10-07, after the seventh session: Step 8A returned). The earlier boxes below are kept for their reading order and boundaries.
+
+```
+CCode queue, CLAUDE session, 2026-10-07. Step 8A (the CPU controller's lifetime and launch routing) is RETURNED on Codex's
+3a1416b7: 8936c260 lifetime/prerequisites/controls | 6048de03 Pod routes closed | 8cfed7cc d091e734 two code-review passes |
+the docs commit = tip. HOLD stands. Greg: do not mess with old work; Step 8A only.
+FIRST, in this order:
+1. /run using-agent-skills (the Skill tool). Greg's rules and the boundaries below win where they differ from a skill.
+2. Branch (the harness branch is never the work). Exactly:
+     git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
+     git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
+     git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -10
+   If Codex edited pod_root/controller.py, frankie_box_run.yml, frankie_box_cpu_controller.sh or frankie_box_pod_root_loop.sh,
+   read its diff before touching that file.
+3. #run memory mcp BEFORE any code change (Greg): CLI, after the rebase, tree quiescent (it aborts if files change):
+     echo '{"repo_path":"/home/user/Markets","mode":"full"}' | codebase-memory-mcp cli --quiet --json index_repository
+READ, in order (research/kalshi/frankie_boss/):
+   CCODE_STEP8_CPU_CONTROLLER_20261007.md                the 8A record: action map, ownership, dependencies, requests, review
+   CLAUDE_HANDOFF_20261007_CCODE_SLICES_A_D.md (top)     the Claude-side state, design choices not to re-litigate
+   CCODE_NEXT_SOURCE_TASKS_20261006.md (top section)     Codex's review of the five commits lands HERE
+BOUNDARIES: source/interface review, ast.parse without project imports, the static import check, sh -n, git diff --check
+ONLY. No tests, runs, installs, model calls, AWS, dispatch, canaries, E2E; boxes stopped. Owned: pod_root/controller.py, the
+controller routing and Pod gates of frankie_box_run.yml, frankie_box_pod_root_loop.sh, frankie_box_cpu_controller.sh. Never
+edit Codex's files (experiment runner, frankie_queue, lane_state, brain, review, search, dipole, clm_sidecar, Jev, the step-5
+reader hooks, shared assignment/handoff docs) or the unowned box side (frankie_box_pod_root.sh/.py, pod_agent.py): return
+exact interface requests. Never call frankie_box_historical_reproduction.run(); never rebuild the claims file. Granite
+pins/threads null settled. STOP before #5; never apply 9c19cc2. H06-H08 historical, bind nothing. NO cost references, ever.
+NEXT: (1) fix what Codex's review names, one [skip ci] commit per finding group; (2) run the code-review skill over
+origin/ccr-5fce7de3-xa4hfg..HEAD at high effort BEFORE every push and fix what it finds; (3) nothing else is assigned: the
+main lanes' save/resume, Jev, the reader hooks and scheduling are Codex's; the instance profile is Greg's decision. Update
+the step-8 record, the step-6 return section 10, both handoffs (Claude + CCODE) and both drop-ins; push --force-with-lease -u;
+report exact tips. Nothing on the scratchpad.
+```
+
 Paste this box into the new Claude Code session. It is separate from the Codex-facing `CCODE_DROP_IN_20261006_NEXT_CHAT.md`.
 
 ```

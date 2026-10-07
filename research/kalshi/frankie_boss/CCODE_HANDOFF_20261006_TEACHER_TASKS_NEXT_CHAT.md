@@ -9,6 +9,37 @@ is not yet integrated; preserve it and newer work. Exact expanded ownership, thr
 review fixes, main/class recovery and run/day scope are in
 `CCODE_STEP8_REMAINDER_ASSIGNMENT_20261007.md`. This supersedes older next-action and
 ownership wording below. Source-only; no tests or AWS/runtime execution.
+## STATE AFTER THE SEVENTH CHAT (2026-10-07): Step 8A RETURNED (the CPU controller's lifetime and launch routing)
+
+Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's `3a1416b7` (ccr-5fce7de3-xa4hfg; it integrated the sixth
+return `31832bf2`, fixed the sixth-return findings directly and assigned Step 8A), pushed. One `[skip ci]` commit per group:
+`8936c260` the controller's lifetime, prerequisites and controls (`pod_root/controller.py` + the new launcher
+`deploy/aws/box/frankie_box_cpu_controller.sh`) | `6048de03` the reachable Pod routes closed (`frankie_box_run.yml` + the
+marker `frankie_box_pod_root_loop.sh`) | `8cfed7cc` review pass 1 (17 findings) | `d091e734` review pass 2 (10) | the docs
+commit (tip). The record is `CCODE_STEP8_CPU_CONTROLLER_20261007.md`: the action map (section 1), the recovery ownership
+(2), one controller per run (3), the dependencies still missing (4, above all the main box's instance profile, which cannot
+be established from source and is Greg's decision), the Pod closure and the inventory of unrelated Pod entrypoints (5),
+the narrow requests to Codex-owned functions (6), what the review passes fixed and kept (7), what remains of Step 8 (8).
+Owned files only; the four step-6/historical modules untouched this round. SOURCE-BUILT / RUNTIME-UNVERIFIED: `ast.parse`,
+`compile`, the static import and call checks, `sh/dash/bash -n`, `yaml.safe_load`, `git diff --check`; nothing run, no
+AWS, no dispatch; pins and threads null untouched; STOP before #5; `9c19cc2` never applied; no cost reference anywhere.
+
+In one paragraph: the SAME controller now runs on two hosts. On the runner it stays a bounded job (plan, status, resume,
+stop, a loop whose budget end is `budget_expired`, never completion). On the main box it is a run-bound systemd unit from
+the staged checkout (`--host main --budget-minutes 0`), the experiment launcher's DETACH pattern, serving every Linux
+boundary of the run until the Linux lane has no remaining work or a cooperative stop is acknowledged; its state is retained
+under `/opt/frankie-box/work/cpu-controller/<run>/`; an S3 lease (create-only, ETag-conditional) keeps a runner loop and a
+box service off one run; a stop relays the worker's save and acknowledges with what is pending, claims untouched; a resume
+reuses the original job, claim and inputs or is refused with the reason; `preflight` names each prerequisite beyond source
+and refuses activation. The Jev/CLM Pod scripts are refused by the workflow before any step; the always-cleanup branch has
+no provider call or key; the provider path is gone from the controller.
+
+What Codex picks up:
+1. Integration review of the five commits; anything it names comes back to CCode the same way, one commit per group.
+2. The requests of the report's section 6: the main day-bound save/resume and class-child acknowledgment interface, the
+   coordination gap tolerance, the worker's input-URL refresh, new queue state words.
+3. Still Codex's: the step-5 reader hooks and successor scheduling, the claim-input identity mismatch, Jev's step 7, the
+   shared runner/queue and main save/resume.
 
 ## STATE AFTER THE SIXTH CHAT (2026-10-07): Codex's fifth-return review BIND-F, B4-F, 6R3-F, 6R2-F RETURNED, plus two adversarial review passes
 
