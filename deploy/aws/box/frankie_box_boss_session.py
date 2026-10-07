@@ -904,6 +904,19 @@ def _spool_records_from(path, start):
             yield unpack(json.loads(line))
 
 
+def _counted_spool_rows(spool, start):
+    """_spool_records_from(spool.path, start) with RowSpool.__iter__'s end check: the rows seen (skipped + decoded) must
+    equal the spool's count."""
+    if not spool._writer.closed:
+        spool._writer.flush()
+    seen = start
+    for row in _spool_records_from(spool.path, start):
+        seen += 1
+        yield row
+    if seen != len(spool):
+        raise ValueError('retained row spool count changed')
+
+
 def _legacy_shard_worker(slot, count, cpu, connection, others, records_path, start, base, state, advance):
     """A replica shard (forked from the replay): pinned to its CPU, it replays the INPUT rows from `start` and sends,
     in order, (ordinal, check, kind, line, value-of-a-failure-row) for every closed group whose ordinal (from `base`)
@@ -2093,8 +2106,10 @@ class Session:
                 flush=lambda: [rows._writer.flush() for rows in (prices, frames, structures, failures)])
             self._frame_shards = shards
         probe = _box_module('frankie_box_progress').for_session(self)
-        from itertools import islice
-        remaining = islice(records, next_record, None)
+        # From the saved cursor on: the rows before it are skipped as raw lines, never decoded again (a resumed legacy
+        # pass no longer re-decodes the INPUT spool's prefix); each later row is decoded exactly as RowSpool.__iter__
+        # does, and the spool's own count is still required at the end (RowSpool's 'count changed' refusal).
+        remaining = _counted_spool_rows(records, next_record)
         for index, record in enumerate(probe.track(remaining, len(records) - next_record, 'root-legacy-records'), next_record):
             try:
                 record_instrument = record.get('instrument_id')      # as the INPUT record carries it; None stays None
