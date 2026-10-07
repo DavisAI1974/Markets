@@ -14,11 +14,18 @@ open, never invented). Rows Granite does not carry are DERIVED from Granite's ow
 never pinned separately. So any change to Granite's setup changes Jev automatically; there is no Jev proposal, approval
 or runtime file. The only visible refusal is the shared runtime being absent or its pins/files not matching.
 
-Placement (Greg, 2026-10-07: "Jev is set up just like the rest of the workflow"): an ordinary stage of the day on that
-day's held lane, on ONE worker CPU (never the coordinator), claimed in the CPU ledger when the stage runs and released
-when it ends (frankie_box_cores.STAGE_CPUS / claim_step); threads = 1 on that CPU. No separate box, host, lane or block
-of workers. Jev's walls are unchanged: blind before any Frankie output, claims sealed before comparison, private peer
-namespace. Nothing here keys on how many days a run holds.
+Placement (Greg, 2026-10-07 night: "Give jev more"; "Should be 32. We are going from 16 to 32"; "just have jev operate in
+that box like everyone else so he'll have plenty of cpus"): an ordinary stage of the day, run --inside the day's held
+booking like teacher, classroom, search and the exchange, under taskset of the WHOLE held lane (frankie_box_cores
+cmd_run_inside: 16 CPUs, or 32 on a 32-CPU day). The llama-server threads come from ONE setting, JEV_THREADS (default 32,
+Greg's number), clamped to the lane's CPU count (lane_threads); LlamaServer pins the server to that many CPUs of the lane
+in physical-core order (one hardware thread per core first, then the siblings), so 16 threads would be one per physical
+core and 32 take both threads of every core of a 32-CPU lane. The CPUs, the threads, the setting, the physical-core count
+and the server's own placement are on the receipt and the workflow report. Thread count may change the model's output
+text at the rounding level (the CPU flash-attention decode path splits the KV range across threads; see lane_threads), so
+the effective count is part of the owner identity. No separate box, host or lane. Jev's walls are unchanged: blind before
+any Frankie output, claims sealed before comparison, private peer namespace. Nothing here keys on how many days a run
+holds.
 """
 import argparse
 import fcntl
@@ -33,8 +40,8 @@ import urllib.parse
 from frankie_box_durable import witness, write_bytes, write_json
 
 SHARED_RUNTIME = 'frankie_box_granite_meeting.local_runtime'     # the ONE runtime definition Jev binds to (Greg, 2026-10-07)
-JEV_CPUS = 1          # Greg, 2026-10-07: one worker CPU of the day's held lane while the stage runs (frankie_box_cores.STAGE_CPUS)
-JEV_THREADS = 1       # one thread on that one CPU (Greg's placement decision; the only runtime row not read from Granite)
+JEV_THREADS = 32      # THE one setting for Jev's llama-server threads (Greg, 2026-10-07 night: "Should be 32"); clamped
+                      # to the held lane's CPU count at run time (lane_threads). The only runtime row not read from Granite.
 PIECE_CHARS_PER_TOKEN = 2   # derived row: piece_chars = Granite's input_token_cap_per_call x 2 (below the client's 3-chars-
                             # per-token hint, so a piece plus its instruction fits under the cap; the exact tokenizer decides)
 COMPLETION = dict(comparison='required', unparsed='listed')   # Granite's: what cannot complete stays listed open, the
@@ -46,12 +53,47 @@ def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':')).encode()
 
 
-def bind_runtime(config_path, transport, shared=None):
+def physical_cores(cpus):
+    """(number of physical cores the CPUs span, basis), from the same topology reader the lane pin uses
+    (frankie_box_lane_pin -> frankie_box_boss_session.cpu_topology / core_groups); (None, why) when unreadable."""
+    try:
+        import frankie_box_lane_pin as LP
+        S = LP._session()
+        topology = S.cpu_topology(sorted(cpus))
+        if topology is None:
+            return None, 'topology unreadable'
+        return len(S.core_groups(sorted(cpus), topology)), 'sysfs topology (physical_package_id, core_id)'
+    except Exception as error:  # noqa: BLE001 - a record field, never a reason to stop
+        return None, 'topology helper unavailable (%s)' % type(error).__name__
+
+
+def lane_threads(lane):
+    """The llama-server thread count for Jev on `lane` (the held lane's CPUs, his whole affinity): JEV_THREADS clamped to
+    the lane's CPU count, with the record of how it was chosen. DETERMINISM NOTE (llama.cpp b11440, read from its source
+    2026-10-07): with flash attention on (llama-server's default 'auto' resolves it on for the CPU backend) a one-token
+    decode step with a KV length of 512 or more and an f16 KV cache takes the split-KV path of
+    ggml_compute_forward_flash_attn_ext_f16 (ops.cpp): the KV range is cut into ceil(n_kv / n_threads) chunks whose softmax
+    partials are combined in floating point (ggml_flash_attn_ext_reduce_partials), so the attention output differs at the
+    rounding level between thread counts; under greedy decoding a near-tie between the top two tokens can then pick another
+    token and the text diverges from there. The same thread count gives the same chunking and the same reduction order, so
+    a run is reproducible at a fixed count. The effective count is therefore bound into the owner identity."""
+    cpus = sorted(lane)
+    threads = max(1, min(int(JEV_THREADS), len(cpus))) if cpus else int(JEV_THREADS)
+    cores, basis = physical_cores(cpus) if cpus else (None, 'no lane CPUs given')
+    return threads, dict(setting=JEV_THREADS, threads=threads, lane_cpus=cpus, lane_cpu_count=len(cpus),
+                         physical_cores=cores, physical_cores_basis=basis,
+                         rule='threads = JEV_THREADS clamped to the held lane\'s CPU count; the server is pinned to that many '
+                              'lane CPUs in physical-core order (LlamaServer._server_cpus / _pin_child)',
+                         hyperthreads=(None if cores is None else max(0, threads - cores)))
+
+
+def bind_runtime(config_path, transport, shared=None, lane=None):
     """(runtime, refusals): every runtime row from the shared Granite definition the meeting uses. `config_path` is the
     request's pinned GRANITE_MEETING_RUNTIME_V1.json (the staged one the meeting reads); `shared` the request's
     shared_runtime binding (binary/model it was dispatched with). Refusals: the definition unreadable or not the staged
     one, the shared runtime's gate (blank pin, unconfirmed parameters, a missing or differing binary/model/extracted
-    file), or a request naming another binary/model. Nothing else refuses; nothing is installed or started here."""
+    file), or a request naming another binary/model. Nothing else refuses; nothing is installed or started here.
+    `lane` (Jev's held-lane CPUs, his affinity) sets the thread count (lane_threads); absent = the JEV_THREADS setting."""
     try:
         config, config_pin = transport.load_config(config_path)
     except (OSError, ValueError) as error:
@@ -69,15 +111,20 @@ def bind_runtime(config_path, transport, shared=None):
     if refusals:
         return None, refusals
     params = local['parameters']
+    threads, thread_record = lane_threads(lane or [])
     cap, ctx, out = (int(params['input_token_cap_per_call']), int(params['context_size']),
                      int(params['max_output_tokens_per_turn']))
     runtime = dict(
         definition=SHARED_RUNTIME, config=config_pin, release=local['release'], pins_sha256=local['pins_sha256'],
         model_identity=local['model_identity'], quantization=local['quantization'], binary=local['binary'],
         model=local['model'], setup_provenance=local['setup_provenance'], granite_parameters=params,
-        # the transport gets Granite's parameter rows verbatim; threads is Greg's one-CPU placement (JEV_THREADS)
-        server_params=dict(params, threads=JEV_THREADS, cpu_only=True),
-        threads=JEV_THREADS, temperature=params['temperature'], top_p=params['top_p'], context_size=ctx,
+        # the transport gets Granite's parameter rows verbatim; threads is Jev's lane placement (JEV_THREADS, clamped to
+        # the held lane): an integer, so LlamaServer.threads_resolution records it as given and never falls to its
+        # null rule (the meeting's one-CPU slot)
+        server_params=dict(params, threads=threads, cpu_only=True,
+                           threads_source='frankie_box_jev_cpu.JEV_THREADS=%d clamped to the held lane (%d CPUs)'
+                                          % (JEV_THREADS, len(lane or []))),
+        threads=threads, thread_record=thread_record, temperature=params['temperature'], top_p=params['top_p'], context_size=ctx,
         max_output_tokens=out, input_token_cap=cap,
         min_output_tokens=out,                 # derived: Granite always reserves its full per-call output
         token_margin=ctx - cap - out,          # derived: the Jev client's room rule then refuses any prompt over Granite's cap
@@ -92,8 +139,8 @@ def bind_runtime(config_path, transport, shared=None):
             derived=dict(min_output_tokens='= max_output_tokens_per_turn',
                          token_margin='= context_size - input_token_cap_per_call - max_output_tokens_per_turn',
                          piece_chars='= input_token_cap_per_call x %d' % PIECE_CHARS_PER_TOKEN),
-            placement=dict(cpus='%d worker CPU of the day\'s held lane (cores STAGE_CPUS claim)' % JEV_CPUS,
-                           threads=JEV_THREADS)))
+            placement=dict(cpus='every CPU of the day\'s held lane (cores run --inside, like every other day stage)',
+                           threads=threads, setting=JEV_THREADS)))
     return runtime, []
 
 
@@ -329,19 +376,14 @@ def execute(request_path):
     if (booking is None or booking['run'] != request['run'] or booking['day'] != request['day']
             or booking['cpus'] != request['cpus'] or booking['commit'] != request['source']['commit']):
         raise ValueError('Jev requires its exact live held day booking: ' + str(why))
-    # Greg, 2026-10-07: Jev is an ordinary stage of the day: ONE worker CPU of the day's held lane, claimed in the ledger
-    # for this step (frankie_box_cores.cmd_run_step), never the coordinator (parent) CPU, never a CPU outside the lane
+    # Greg, 2026-10-07 night: Jev is an ordinary stage of the day on the WHOLE held lane, like every other stage
+    # (frankie_box_cores.cmd_run_inside: taskset of the booking's CPUs, FRANKIE_CPU_BOOKING = the booking); never a CPU
+    # outside the lane, never a slot claim of his own
     affinity = sorted(os.sched_getaffinity(0))
-    # the claim this wrapper made for this process (FRANKIE_STEP_CLAIM); its pid is recorded right after the spawn, so it
-    # is either not yet written or this process
-    claims = [c for c in booking.get('steps') or [] if c.get('stage') == 'jev' and sorted(c.get('cpus') or []) == affinity
-              and c.get('claim_id') == os.environ.get('FRANKIE_STEP_CLAIM')
-              and (c.get('pid') is None or c['pid'].get('pid') == os.getpid())]
-    if (len(affinity) != JEV_CPUS or not set(affinity) <= set(request['cpus']) or booking['parent_cpu'] in affinity
-            or len(claims) != 1):
-        raise ValueError('Jev must enter through its stage claim of %d worker CPU of the held day lane (cores run --inside '
-                         '--stage jev); affinity %s, lane %s, parent %s, claims %d'
-                         % (JEV_CPUS, affinity, request['cpus'], booking['parent_cpu'], len(claims)))
+    if affinity != sorted(request['cpus']) or os.environ.get('FRANKIE_CPU_BOOKING') != request['slot_booking']:
+        raise ValueError('Jev must enter inside his day\'s held lane (cores run --inside %s --stage jev): affinity %s, lane %s, '
+                         'FRANKIE_CPU_BOOKING %r' % (request['slot_booking'], affinity, sorted(request['cpus']),
+                                                     os.environ.get('FRANKIE_CPU_BOOKING')))
     if (os.environ.get('MARKETS_SHA') != request['source']['commit']
             or Path(os.environ.get('CODE_ROOT', '')).resolve() != Path(request['source']['code_root']).resolve()):
         raise ValueError('Jev must run from its retained staged source')
@@ -363,7 +405,8 @@ def _run(request, request_path, out, brain, jev_brain):
     import frankie_box_experiment_review as REVIEW
     import frankie_box_lane_state as LS
     runtime_path = pinned(request['runtime'])
-    runtime, refusals = bind_runtime(runtime_path, transport, request.get('shared_runtime'))
+    cpus = sorted(os.sched_getaffinity(0))        # the day's whole held lane (checked in execute)
+    runtime, refusals = bind_runtime(runtime_path, transport, request.get('shared_runtime'), lane=cpus)
     if refusals:
         model_clock(out, request, call_id='runtime-refused', model=None, runtime=dict(config=pin(runtime_path)), cutoff=None,
                     wall_start=time.time(), wall_end=time.time(), outcome='not_called',
@@ -372,7 +415,6 @@ def _run(request, request_path, out, brain, jev_brain):
         # runs past it; there is no Jev-specific approval
         raise ValueError('Jev runtime refused (shared Granite runtime): ' + '; '.join(refusals))
     binary, model = Path(runtime['binary']), Path(runtime['model'])
-    cpus = sorted(os.sched_getaffinity(0))        # the stage claim's one worker CPU (checked in execute)
     chain = request_chain(request_path, request)
     classroom_path = pinned(request['classroom_receipt'])
     classroom = json.loads(classroom_path.read_bytes())
@@ -448,8 +490,8 @@ def _run(request, request_path, out, brain, jev_brain):
             if shared_context is None:
                 shared_context = adviser.read(check_save=check_save)
                 shared_market_source = 'read by this Jev piece from the owner-local shared reader'
-        # the reader on this one claimed CPU: one reader worker (no pool oversubscribing the slot), the pin checks on
-        # threads of that CPU (frankie_box_adviser_market.reader_plan / _witness_all)
+        # the reader on the held lane: its consumer on a whole physical core, its decode workers on the other lane CPUs
+        # (frankie_box_adviser_market.reader_plan / _witness_all); it restores this thread's affinity when done
         placement['shared_reader'] = adviser.placement
         AM.retain_context(context_path, shared_context)
         # the owner identity carries the retained context PIN (stable across attempts); where the bytes came from on
@@ -468,8 +510,15 @@ def _run(request, request_path, out, brain, jev_brain):
         check_save()
         if server is None:
             # The SAME transport as the meeting (frankie_box_granite_meeting.LlamaServer) with Granite's parameter rows
-            # verbatim (context, caps, sampling, ceilings), the shared binary and model, on the stage claim's one worker
-            # CPU (the inherited affinity; no new booking) with one thread, under Granite's per-process ceiling.
+            # verbatim (context, caps, sampling, ceilings), the shared binary and model, on the day's held lane (the
+            # inherited affinity; no new booking) with runtime['threads'] threads pinned in physical-core order
+            # (LlamaServer._server_cpus / _pin_child), under Granite's per-process ceiling. The calling thread's affinity is
+            # set back to the whole lane first (the shared reader narrows and restores it; a missed restore would leave the
+            # server fewer CPUs than its threads and the start would refuse), recorded when refused (L-2).
+            try:
+                os.sched_setaffinity(0, set(cpus))
+            except OSError as error:
+                placement['lane_affinity_reset'] = 'refused: %r (the server inherits the current affinity)' % error
             server = transport.LlamaServer(binary, model, runtime['server_params'],
                 deadline=time.monotonic() + runtime['process_seconds'], evidence_dir=out / 'runtime-evidence')
             server.start()
@@ -717,6 +766,10 @@ def _run(request, request_path, out, brain, jev_brain):
                            rule='a prompt over Granite\'s per-call input cap is never sent: it is regenerated from halves; '
                                 'nothing is cut to fit'),
                  model_calls=client.get('call_accounting'), cpus=cpus, threads=runtime['threads'],
+                 # the lane placement (Greg, 2026-10-07 night: Jev on the whole held lane): the setting, the effective
+                 # threads, the lane CPUs, its physical cores, and how the server resolved and pinned them
+                 lane_threads=dict(runtime['thread_record'], server_threads=(server.threads_resolution if server is not None
+                                                                              else 'no server started on this attempt')),
                  placement=dict(placement, server=(server.placement if server is not None else None)),
                  host_cpu=transport.host_cpu(), timings=timings,
                  picture_tokens=(client_report.get('use') or {}).get('picture_tokens'),
@@ -727,7 +780,9 @@ def _run(request, request_path, out, brain, jev_brain):
                      scientific_result=pin(result_path), deliveries=deliveries, report=report,
                      waits=pending, status='waiting' if pending else 'done'))
     receipt = dict(schema='JEV_CPU_RECEIPT_V1', status='waiting' if pending else 'done', owner=identity,
-                   request_chain=chain, rebook_resume=rebook, runtime_cpus=cpus,
+                   request_chain=chain, rebook_resume=rebook, runtime_cpus=cpus, runtime_threads=runtime['threads'],
+                   lane_threads=dict(runtime['thread_record'], server_threads=(server.threads_resolution if server is not None
+                                                                                else 'no server started on this attempt')),
                    placement=dict(placement, server=(server.placement if server is not None else None)),
                    claims_seal=pin(seal_path), scientific_result=pin(result_path), deliveries=deliveries,
                    client_receipt=pin(out / 'client-receipt.json'), report=report,

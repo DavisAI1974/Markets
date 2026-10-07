@@ -27,8 +27,9 @@ the committed box script, run as a child with its own inputs, its output kept in
            The day's report number N is reserved right after its classroom step (done, reused or refused), where the
            reports used to run, so the numbering is unchanged (frankie_box_experiment_day_reports.reserve_number)
   jev      frankie_box_jev_cpu.sh JEV_REQUEST=...     (classroom-arm discovery days: an ordinary stage of the day on the
-           day's held lane, on the ONE worker CPU it shares with the meeting (frankie_box_cores.STAGE_SLOTS 'adviser',
-           threads=1), every runtime row from Granite's shared definition; no box, host, Pod or relay of its own. Older
+           day's WHOLE held lane like every other stage (Greg, 2026-10-07 night; 32 CPUs on a 32-CPU day), llama-server
+           threads from frankie_box_jev_cpu.JEV_THREADS (32, clamped to the lane), every other runtime row from Granite's
+           shared definition; no box, host, Pod or relay of its own. Older
            receipts of the retired relay (waiting_for_pod) are read as they are and stay pending)
   data     frankie_box_experiment_data.sh ACTION=export
   search   frankie_box_experiment_search.sh
@@ -2857,8 +2858,9 @@ class Run:
         if not reused and self.plan.get('voice_route') == 'github':
             return self.voice_remote(e, x, target, brain, inputs)
         if not reused and not getattr(self, 'slot_booking', None):
-            # Greg, 2026-10-07: the meeting is an ordinary stage of the day on the day's held lane, on the ONE worker CPU it
-            # shares with Jev (frankie_box_cores.STAGE_SLOTS 'adviser'); a Run that holds no day slot (the --root-queue off
+            # Greg, 2026-10-07: the meeting is an ordinary stage of the day on the day's held lane, on ONE worker CPU of it
+            # (frankie_box_cores.STAGE_SLOTS 'adviser'; Jev no longer shares it: he runs on the whole lane); a Run that
+            # holds no day slot (the --root-queue off
             # batch path) has no lane to place it on: waiting, non-blocking, named; never a booking of its own
             return self.record('voice', day, 'waiting', non_blocking=True,
                                reason='the meeting runs on the day\'s held lane (the shared adviser CPU); this Run holds no '
@@ -3446,10 +3448,11 @@ class Run:
             self._school_recovery.discard(day)
 
     def jev(self, e):
-        """Jev's day: an ordinary stage of the day on the day's held lane (Greg, 2026-10-07), on the ONE worker CPU he shares
-        with the meeting (frankie_box_cores.STAGE_SLOTS 'adviser': claimed when the stage runs, released when it ends; the
-        other stage waits while it is busy, the wait on this receipt), threads=1, every other runtime row from Granite's
-        shared definition (frankie_box_jev_cpu.bind_runtime); no box, host, lane or block of workers of his own. The
+        """Jev's day: an ordinary stage of the day, run inside the day's held booking on the WHOLE lane like teacher,
+        classroom, search and the exchange (Greg, 2026-10-07 night: "just have jev operate in that box like everyone else";
+        32 CPUs on a 32-CPU day), llama-server threads from frankie_box_jev_cpu.JEV_THREADS (32, clamped to the lane, pinned
+        in physical-core order), every other runtime row from Granite's shared definition (frankie_box_jev_cpu.bind_runtime);
+        no box, host or lane of his own; the lane's CPU line and the threads are on this record (cpu_booking, lane_threads). The
         immutable JEV_CPU_REQUEST_V1 is persisted under the day BEFORE the first dispatch and reused byte for byte (a retained
         request that binds another identity is refused, never re-minted; a REBOOK'd day runs the explicit successor chain);
         the child runs inside the day's held booking with the day's own save marker; its receipt or status is checked
@@ -3532,8 +3535,8 @@ class Run:
                                    marker=str(marker), lane_owner=os.environ.get('FRANKIE_LANE_OWNER'))
         request = dict(schema='JEV_CPU_REQUEST_V1', run=self.plan['run'], day=day, day_role='discovery', stamp=stamp,
                        attempt=attempt, owner=owner, host=os.uname().nodename, plan_sha256=plan_digest(self.plan),
-                       slot_booking=booking, cpus=list(held['cpus']),      # the day's lane (identity); Jev runs on its
-                       # shared adviser CPU, claimed by the child wrapper (frankie_box_cores cmd_run_step)
+                       slot_booking=booking, cpus=list(held['cpus']),      # the day's lane (identity); Jev runs on all of
+                       # it (frankie_box_cores cmd_run_inside: taskset of the held booking)
                        source=dict(commit=self.commit, code_root=str(self.code_root)), save_marker=str(marker),
                        output=str(out), brain=str(brain), jev_brain=str(jev_brain), report_number=number,
                        classroom_receipt=file_pin(producer), search=file_pin(manifest), runtime=file_pin(Path(runtime)),
@@ -3609,9 +3612,12 @@ class Run:
         code, log = self.child('jev', day, 'frankie_box_jev_cpu.sh', dict(JEV_REQUEST=path, LLAMA_SERVER=shared['binary'],
                                                                            GGUF_MODEL=shared['model']))
         receipt, status = read(receipt_path), read(status_path)
-        slot = self._cpu.get(('jev', day))        # the shared adviser CPU claim line (cpu, seconds waited, holder)
+        slot = self._cpu.get(('jev', day))        # the ledger's CPU_BOOKING line: inside the held lane, its CPUs
+        lane_threads = (receipt or {}).get('lane_threads') if bound_receipt(receipt) else None
         fields = dict(exit_code=code, log=log, request=str(path), stamp=stamp, output=str(out), report_number=number,
-                      request_pins=request_pins, rebook=request.get('rebook'), adviser_slot=slot,
+                      request_pins=request_pins, rebook=request.get('rebook'), cpu_booking=slot,
+                      lane_cpus=list(held['cpus']), lane_threads=lane_threads or
+                      'not recorded: no receipt bound to the request on this attempt (the helper writes it with its receipt)',
                       # the one-day inspection (frankie_box_workflow_inspection.py): what this caller gave the helper, how
                       # the answer was bound, what came back; operator review only, never knowledge or a gate
                       inspection=dict(inputs=dict(request=request_pins, classroom_receipt=request['classroom_receipt'],
@@ -3622,7 +3628,9 @@ class Run:
                                                   'not supplied: the exchange has not retained its read yet (the helper reads)',
                                                   shared_market_context_read=context_read),
                                       use=dict(exit_code=code, receipt_bound=bound_receipt(receipt), status_bound=bound_status(status),
-                                               adviser_slot=(slot or {}).get('line') or 'no claim line (the child did not reach the ledger)',
+                                               cpu_booking=(slot or {}).get('line') or 'no booking line (the child did not reach the ledger)',
+                                               lane_cpus=list(held['cpus']),
+                                               lane_threads=lane_threads or 'not recorded (no bound receipt on this attempt)',
                                                binding='a receipt counts only with owner.request_pin in request_pins; a status '
                                                        'only with request in request_pins; an exit code alone is nothing'),
                                       outputs=dict(receipt=str(receipt_path) if receipt_path.is_file() else None,
