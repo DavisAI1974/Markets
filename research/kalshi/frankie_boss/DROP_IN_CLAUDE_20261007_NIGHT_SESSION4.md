@@ -101,3 +101,10 @@ run; knowledge reports plus Frankie's own report for the N-day run.
 
 ## Session-end state
 (appended by the parent below)
+- a2 SAVED (run agent, 20:05:24Z): attempt e2e-20231018-a2-20231018-a1 logged "ROOT saved all extracted INPUT rows at
+  journal entry 1468220" (of 1,543,574; still in source-journal-records, before the legacy/native split). No frankie
+  process running. Booking day-run-20231018-day_slot_root-1791402822-3111 (CPUs 0-31) RETAINED on its owner until
+  ACTION=resume. Box i-035994afa8bdf66a5 RUNNING, KeepRunning=true (re-set 20:07Z after the worker cleared it).
+  Nothing else started. Resume with `frankie_box_frankie_queue.sh ACTION=resume RUN=e2e-20231018-a2 DAY=20231018`
+  after the AWS-for-ROOT changes are pushed and staged (plus handover/kick to the new code, overlap on).
+- AWS-apply agent: stopped before any change (no account call, no file edit). All ROOT AWS items remain open.
