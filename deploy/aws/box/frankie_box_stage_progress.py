@@ -12,8 +12,13 @@ and one final line (final True) with outcome and exit_code when the child ends. 
 child (Linux /proc of the child's process tree, its log file) or read from what the child itself already publishes:
   - units / phase: the child's own phase file (report_phase below, env FRANKIE_STAGE_PROGRESS) when it writes one, else
     an existing FRANKIE_WORK_PROBE_V1 progress.json (frankie_box_progress.Probe: the ROOT/boss_session, the classroom
-    publication) of a process in the tree, found beside the files the tree holds open, else the last log line as phase
-    text and units unknown (None, never zero);
+    publication) of a process in the tree: first in the directories the caller names (probe_dirs: the ROOT's own
+    attempt directory, experiment-roots/<attempt>, and its immediate subdirectories such as native-overlap/), then
+    beside the files the tree holds open, else the last log line as phase text and units unknown (None, never zero);
+  - work_probes (FA-4): every live work probe found in the named directories, each with its own stage, completed, total
+    and completed_per_min (the ROOT's legacy pass and its forked native pass side by side);
+  - stall (L-2 watch): units_unchanged_s = seconds the units have not moved while the heartbeat keeps writing, and
+    stalled True once that reaches STALL_SECONDS (a hung pool or worker shows here; a probe never stops the stage);
   - bytes_out: /proc/<pid>/io write_bytes summed over every process of the tree ever sampled (the largest value seen per
     process; a child that lived and exited between two samples is not seen: a LOWER BOUND, labelled);
   - files_out: distinct regular files the tree was seen holding open for writing at the samples (a lower bound);
@@ -36,6 +41,7 @@ SCHEMA = 'FRANKIE_STAGE_HEARTBEAT_V1'
 PHASE_SCHEMA = 'FRANKIE_STAGE_PHASE_V1'
 INTERVAL = 30                      # seconds between heartbeat lines (the contract asks 30-60 s)
 STALE_INTERVALS = 3                # the probe flags a running stage whose last line is older than this many intervals
+STALL_SECONDS = 600                # the probe flags a running stage whose units have not moved for this long (L-2 watch)
 ENV = 'FRANKIE_STAGE_PROGRESS'     # the child's own phase file (report_phase), set by Run.child
 WORK_PROBE = 'FRANKIE_WORK_PROBE_V1'
 LOG_TAIL = 4096                    # bytes read from the end of the log for the last line (phase text fallback)
@@ -143,7 +149,7 @@ class Heartbeat:
     """The orchestrator-side heartbeat of ONE stage child (see the module contract). start(pid) after the child is
     started; stop(outcome, exit_code) after it ends (writes the final line). Never raises out of either."""
 
-    def __init__(self, run_dir, key, stage, log_path=None, interval=INTERVAL):
+    def __init__(self, run_dir, key, stage, log_path=None, interval=INTERVAL, probe_dirs=()):
         self.path = progress_path(run_dir, key, stage)
         self.phase_file = self.path.with_name('%s.phase.json' % stage)
         self.stage, self.key, self.log_path, self.interval = stage, str(key), log_path, interval
@@ -151,6 +157,9 @@ class Heartbeat:
         self.peak_write = {}            # (pid, start ticks) -> the largest write_bytes seen
         self.written_files = set()
         self.probe_dirs = {}            # directory -> last checked (FRANKIE_WORK_PROBE_V1 progress.json beside open files)
+        self.named_dirs = [str(d) for d in (probe_dirs or ()) if d]   # the caller's known probe directories, checked first
+        self.probe_previous = {}        # probe directory -> (monotonic, completed) for each work probe's own rate
+        self.units_moved = None         # (monotonic, units_done) when the units last changed (the stall watch)
         self.previous = None            # (monotonic, bytes_out, units_done) of the last line, for the rates
         self.stop_event = threading.Event()
         self.thread = None
@@ -196,10 +205,43 @@ class Heartbeat:
         except OSError:
             pass
 
+    def _named_probes(self, pids, mono):
+        """The live work probes in the named directories and their immediate subdirectories (FA-4: the ROOT writes its
+        FRANKIE_WORK_PROBE_V1 progress.json at experiment-roots/<attempt>/, the forked native pass at
+        <attempt>/native-overlap/; neither is beside a file the tree holds open). Each with its own completed_per_min."""
+        live, found = {pid for pid, _ in pids}, []
+        for named in self.named_dirs:
+            candidates = [Path(named)]
+            try:
+                candidates += sorted(p for p in Path(named).iterdir() if p.is_dir() and not p.is_symlink())
+            except OSError:
+                pass
+            for directory in candidates:
+                text = _read(directory / 'progress.json')
+                if not text:
+                    continue
+                try:
+                    value = json.loads(text)
+                except ValueError:
+                    continue
+                if not (isinstance(value, dict) and value.get('schema') == WORK_PROBE and value.get('pid') in live):
+                    continue
+                item = dict(dir=str(directory), stage=value.get('stage'), completed=value.get('completed'),
+                            total=value.get('total'), state=value.get('state'), probe_at=value.get('at'),
+                            reader_workers=value.get('reader_workers'))
+                done, before = value.get('completed'), self.probe_previous.get(str(directory))
+                if isinstance(done, int) and before is not None and before[2] == value.get('stage') \
+                        and mono - before[0] > 0:
+                    item['completed_per_min'] = round((done - before[1]) / ((mono - before[0]) / 60.0), 3)
+                if isinstance(done, int):
+                    self.probe_previous[str(directory)] = (mono, done, value.get('stage'))
+                found.append(item)
+        return found
+
     def _units_from_probe(self, pids):
         """An existing FRANKIE_WORK_PROBE_V1 progress.json of a process in the tree (its stage, completed, total)."""
         live = {pid for pid, _ in pids}
-        for directory in list(self.probe_dirs):
+        for directory in self.named_dirs + [d for d in self.probe_dirs if d not in self.named_dirs]:
             text = _read(Path(directory) / 'progress.json')
             if not text:
                 continue
@@ -269,6 +311,11 @@ class Heartbeat:
                              units_total=value.get('units_total'), unit=value.get('unit'), source='stage phase file')
         except ValueError:
             units = None
+        if self.named_dirs:
+            try:
+                line['work_probes'] = self._named_probes(getattr(self, '_pids', None) or [], mono)
+            except Exception as error:  # noqa: BLE001 - a failed sample is written, never raised
+                line['work_probes_error'] = '%s: %s' % (type(error).__name__, error)
         if units is None:
             units = self._units_from_probe(getattr(self, '_pids', None) or [])
         if self.log_path:
@@ -295,6 +342,14 @@ class Heartbeat:
                 if isinstance(line.get('units_done'), (int, float)) and isinstance(self.previous[2], (int, float)):
                     line['units_per_min'] = round((line['units_done'] - self.previous[2]) / span, 3)
         self.previous = (mono, line.get('bytes_out'), line.get('units_done'))
+        # the stall watch (L-2): units that do not move while this heartbeat keeps writing; None while units are unknown
+        done = line.get('units_done')
+        if isinstance(done, (int, float)):
+            marker = (line.get('phase'), done)
+            if self.units_moved is None or self.units_moved[1] != marker:
+                self.units_moved = (mono, marker)
+            line['units_unchanged_s'] = round(mono - self.units_moved[0], 1)
+            line['stalled'] = (not final) and line['units_unchanged_s'] >= STALL_SECONDS
         return line
 
 
@@ -332,13 +387,15 @@ def stages_summary(run_dir, day=None):
             age = round(now - float(line.get('at') or 0), 1)
             interval = line.get('interval_s') or INTERVAL
             status = ('final: %s' % line.get('outcome') if line.get('final') else
-                      'STALE' if age > STALE_INTERVALS * interval else 'running')
+                      'STALE' if age > STALE_INTERVALS * interval else
+                      'STALLED' if line.get('stalled') else 'running')
             out.append(dict(stage=line.get('stage'), key=line.get('key'), status=status, age_s=age, pid=line.get('pid'),
                             elapsed_s=line.get('elapsed_s'), phase=line.get('phase'), units_done=line.get('units_done'),
                             units_total=line.get('units_total'), unit=line.get('unit'),
                             units_per_min=line.get('units_per_min'), bytes_out=line.get('bytes_out'),
                             bytes_out_per_min=line.get('bytes_out_per_min'), files_out=line.get('files_out'),
                             rss_bytes=line.get('rss_bytes'), processes=line.get('processes'),
-                            exit_code=line.get('exit_code'), file=str(path)))
+                            exit_code=line.get('exit_code'), units_unchanged_s=line.get('units_unchanged_s'),
+                            stalled=line.get('stalled'), work_probes=line.get('work_probes'), file=str(path)))
     return dict(schema=SCHEMA + '_SUMMARY', run_dir=str(run_dir), day=day, at=now, stale_after_intervals=STALE_INTERVALS,
-                stages=out)
+                stalled_after_seconds=STALL_SECONDS, stages=out)

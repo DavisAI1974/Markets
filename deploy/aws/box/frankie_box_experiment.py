@@ -1290,7 +1290,10 @@ class Run:
         heartbeat = None
         try:
             import frankie_box_stage_progress as SP
-            heartbeat = SP.Heartbeat(self.dir, key, stage, log_path=log_path)
+            # FA-4: a stage that names its output directory (the ROOT: OUTPUT_ROOT = experiment-roots/<attempt>) has its
+            # FRANKIE_WORK_PROBE_V1 progress.json there; the heartbeat reads it (and its native-overlap/ beside it)
+            heartbeat = SP.Heartbeat(self.dir, key, stage, log_path=log_path,
+                                     probe_dirs=[str(env['OUTPUT_ROOT'])] if env.get('OUTPUT_ROOT') else ())
             full.update(heartbeat.env())
         except Exception as error:  # noqa: BLE001 - the probe is never the stage's outcome
             self.log('%s %s: no stage heartbeat (%s: %s)' % (stage, key, type(error).__name__, error))

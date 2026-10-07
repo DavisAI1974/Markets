@@ -115,6 +115,21 @@ set -- "$@" --frankie-queue "${FRANKIE_QUEUE:-on}" --root-queue "${ROOT_QUEUE:-o
 set -- "$@" --lags "${LAGS:-20}" --ingest-workers "${INGEST_WORKERS:-31}" --data-workers "${DATA_WORKERS:-1}" \
   --search-workers "${SEARCH_WORKERS:-8}" --teacher-cpus "${TEACHER_CPUS:-0}" --parallel-days "${PARALLEL_DAYS:-2}" --disk-floor-gb "${DISK_FLOOR_GB:-100}"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT" MAP_URL="${MAP_URL:-}"
+# FA-6 (2026-10-07): the operator's FRANKIE_* run settings (e.g. FRANKIE_ROOT_NATIVE_OVERLAP=off given as a dispatch
+# variable, which ssm_run_sh.py sets as a plain shell variable) are exported, so the orchestrator, its queue kick and the
+# stages see them. Never: per-process lane/booking/claim identity, anything named like a credential, a multi-line value.
+NL='
+'
+RUN_SETTINGS=''
+for NAME in $(set | sed -n 's/^\(FRANKIE_[A-Za-z0-9_]*\)=.*/\1/p' | sort -u); do
+  case "$NAME" in FRANKIE_LANE_*|FRANKIE_BOOKED_CPUS|FRANKIE_CPU_BOOKING|FRANKIE_STEP_CLAIM|FRANKIE_STAGE_PROGRESS) continue;; esac
+  case "$NAME" in *TOKEN*|*SECRET*|*PASSWORD*|*CREDENTIAL*|*_KEY|*_KEY_*) continue;; esac
+  eval "[ -n \"\${$NAME+x}\" ]" || continue
+  eval "VALUE=\${$NAME}"
+  case "$VALUE" in *"$NL"*) continue;; esac
+  export "$NAME"
+  RUN_SETTINGS="$RUN_SETTINGS $NAME"
+done
 # DETACH=on (ACTION=start only; 2026-09-30, "never leave a job on a GitHub runner that can outlast its 6 h limit"): the
 # start runs as its own systemd unit, not under the SSM command, so the runner's 6 h end (and its cancel step) cannot stop
 # it; the dispatch returns once the unit is up. Refused while any start of the same RUN is alive (never two orchestrators
@@ -130,13 +145,56 @@ if [ "${DETACH:-off}" = on ]; then
   fi
   mkdir -p /opt/frankie-box/logs
   LOG="/opt/frankie-box/logs/experiment-$RUN.log"; UNIT="frankie-experiment-$RUN-$(date +%s)"
-  set -- -E HOME="$HOME" -E PYTHONDONTWRITEBYTECODE=1 -E PYTHONNOUSERSITE=1 -E PYTHONPATH="$CODE_ROOT" -E MAP_URL="$MAP_URL" \
-    /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment.py" "$@"
+  # FA-6: the operator's FRANKIE_* run settings (exported above) reach the detached unit and, through its queue kick
+  # (frankie_box_frankie_queue._run_settings_env, recorded in the kick receipt), the line workers and their stages
+  set -- /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment.py" "$@"
+  for NAME in $RUN_SETTINGS; do eval "VALUE=\${$NAME}"; set -- -E "$NAME=$VALUE" "$@"; done
+  [ -z "$RUN_SETTINGS" ] || echo "run settings passed to the unit: $RUN_SETTINGS"
+  set -- -E HOME="$HOME" -E PYTHONDONTWRITEBYTECODE=1 -E PYTHONNOUSERSITE=1 -E PYTHONPATH="$CODE_ROOT" -E MAP_URL="$MAP_URL" "$@"
   systemd-run --unit "$UNIT" --collect -p StandardOutput=append:"$LOG" -p StandardError=append:"$LOG" "$@"
   echo "orchestrator $RUN started detached: unit $UNIT, log $LOG"
   sleep 10
-  systemctl is-active "$UNIT" || { echo "the unit is not active 10 s after start; log tail:"; tail -n 40 "$LOG"; exit 3; }
-  tail -n 20 "$LOG"
-  exit 0
+  if systemctl is-active --quiet "$UNIT"; then
+    echo "unit $UNIT active"; tail -n 20 "$LOG"; exit 0
+  fi
+  # FA-2 (2026-10-07): a start that hands its days to the queue line workers (the root-line route) returns early and the
+  # unit ends; that is the start working, not a failure. The unit's own exit (journal) and the line workers' state
+  # decide: exit 0 = started; exit 3 (days unfinished) while a line worker holds its lock for THIS run = handed over;
+  # anything else (another exit, no exit found, no worker of this run) = a real failure, exit 3 with the log tail.
+  VERDICT=$(journalctl -u "$UNIT" -o cat --no-pager 2>/dev/null | /opt/frankie-box/venv/bin/python -I -S -B -c '
+import fcntl, json, os, re, sys
+run, text = sys.argv[1], sys.stdin.read()
+codes = re.findall(r"Main process exited, code=exited, status=([0-9]+)", text)
+code = int(codes[-1]) if codes else (0 if re.search(r"Deactivated successfully|: Succeeded\.|^Succeeded\.", text, re.M) else None)
+queue, held_for = "/opt/frankie-box/work/frankie-queue", []
+for line in ("root", "class"):
+    lock, scopes = os.path.join(queue, line + "-worker.lock"), []
+    for name in (line + "-worker.json", line + "-kick.json"):
+        try:
+            scopes.append(str(json.load(open(os.path.join(queue, name))).get("scope") or ""))
+        except (OSError, ValueError, AttributeError):
+            pass
+    if not os.path.isfile(lock) or not any(s.partition(":")[0] == run for s in scopes):
+        continue
+    fd = os.open(lock, os.O_RDONLY)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_SH | fcntl.LOCK_NB)
+        fcntl.flock(fd, fcntl.LOCK_UN)
+    except BlockingIOError:
+        held_for.append(line)
+    finally:
+        os.close(fd)
+if code == 0:
+    print("ok exit 0: the start finished")
+elif code == 3 and held_for:
+    print("ok exit 3 (days unfinished): handed to the %s line worker(s) holding their lock for run %s" % (",".join(held_for), run))
+else:
+    print("fail exit %s; line workers holding a lock for run %s: %s" % ("unknown (not in the journal)" if code is None else code, run, ",".join(held_for) or "none"))
+' "$RUN" 2>&1) || VERDICT="fail: the start check itself failed ($VERDICT)"
+  echo "unit $UNIT ended within 10 s: $VERDICT"
+  case "$VERDICT" in
+    ok*) tail -n 20 "$LOG"; exit 0 ;;
+    *) echo "log tail:"; tail -n 40 "$LOG"; exit 3 ;;
+  esac
 fi
 exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment.py" "$@"

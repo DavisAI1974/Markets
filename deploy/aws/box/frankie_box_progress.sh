@@ -1,7 +1,9 @@
 # Read existing progress, optionally sample ROOT resource counters. No process control or source write.
 # RUN_DIR=/opt/frankie-box/work/experiment/<run> [DAY=YYYYMMDD]: every stage heartbeat of the run (or of one day)
 # (frankie_box_stage_progress, FRANKIE_STAGE_HEARTBEAT_V1): last heartbeat age, rate, units, bytes out, files out, rss
-# and phase per stage, STALE when a running stage's last line is older than 3 intervals. Read-only; box-progress lock.
+# and phase per stage, STALE when a running stage's last line is older than 3 intervals, STALLED when its units have not
+# moved for 600 s while it still writes (a report only; nothing is stopped), and per live work probe (the ROOT's legacy
+# pass and its native pass) its own completed count and rate. Read-only; box-progress lock.
 set -eu
 : "${CODE_ROOT:?existing inactive staged checkout required}"
 if [ -n "${RUN_DIR:-}" ]; then

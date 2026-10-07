@@ -38,6 +38,20 @@ case "$ACTION" in show|enqueue|worker|kick|handover|save|status|resume|retire) ;
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 case "$CODE_ROOT" in *..*) echo "no .. in CODE_ROOT" >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
+# FA-6 (2026-10-07): the operator's FRANKIE_* run settings (e.g. FRANKIE_ROOT_NATIVE_OVERLAP=off as a dispatch variable,
+# a plain shell variable under ssm_run_sh.py) are exported, so a kick/handover passes them to the worker it starts
+# (frankie_box_frankie_queue._run_settings_env, recorded in the kick receipt). Never: per-process lane/booking/claim
+# identity, anything named like a credential, a multi-line value.
+NL='
+'
+for NAME in $(set | sed -n 's/^\(FRANKIE_[A-Za-z0-9_]*\)=.*/\1/p' | sort -u); do
+  case "$NAME" in FRANKIE_LANE_*|FRANKIE_BOOKED_CPUS|FRANKIE_CPU_BOOKING|FRANKIE_STEP_CLAIM|FRANKIE_STAGE_PROGRESS) continue;; esac
+  case "$NAME" in *TOKEN*|*SECRET*|*PASSWORD*|*CREDENTIAL*|*_KEY|*_KEY_*) continue;; esac
+  eval "[ -n \"\${$NAME+x}\" ]" || continue
+  eval "VALUE=\${$NAME}"
+  case "$VALUE" in *"$NL"*) continue;; esac
+  export "$NAME"
+done
 PY=/opt/frankie-box/venv/bin/python
 SCRIPT="$CODE_ROOT/deploy/aws/box/frankie_box_frankie_queue.py"
 if [ "$ACTION" = show ]; then

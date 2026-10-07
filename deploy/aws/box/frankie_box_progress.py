@@ -139,12 +139,20 @@ if __name__ == '__main__':
             if 'stage' not in item:
                 print('%s: %s' % (item.get('file'), item.get('status')))
                 continue
-            print('%-10s %-22s %-10s age=%ss elapsed=%ss units=%s/%s %s rate=%s/min bytes_out=%s (%s/min) files_out=%s '
-                  'rss=%s procs=%s phase=%s' % (
+            print('%-10s %-22s %-10s age=%ss elapsed=%ss units=%s/%s %s rate=%s/min unchanged=%ss bytes_out=%s (%s/min) '
+                  'files_out=%s rss=%s procs=%s phase=%s' % (
                       item['stage'], item['key'], item['status'], item['age_s'], item['elapsed_s'], item['units_done'],
-                      item['units_total'], item['unit'] or '', item['units_per_min'], item['bytes_out'],
-                      item['bytes_out_per_min'], item['files_out'], item['rss_bytes'], item['processes'],
-                      (item['phase'] or '')[:100]))
+                      item['units_total'], item['unit'] or '', item['units_per_min'], item.get('units_unchanged_s'),
+                      item['bytes_out'], item['bytes_out_per_min'], item['files_out'], item['rss_bytes'],
+                      item['processes'], (item['phase'] or '')[:100]))
+            # FA-4: each live work probe of the stage (the ROOT's legacy pass at experiment-roots/<attempt>/, its forked
+            # native pass at <attempt>/native-overlap/), with its own rate; records/s = completed_per_min / 60
+            for probe in item.get('work_probes') or ():
+                per_min = probe.get('completed_per_min')
+                print('%-10s   work probe %-26s %s/%s rate=%s/min (%s/s) state=%s readers=%s dir=%s' % (
+                    '', probe.get('stage'), probe.get('completed'), probe.get('total'), per_min,
+                    None if per_min is None else round(per_min / 60.0, 1), probe.get('state'),
+                    probe.get('reader_workers'), probe.get('dir')))
         print(json.dumps(summary, sort_keys=True))
     elif args.directory:
         print(json.dumps(snapshot(args.directory), sort_keys=True))

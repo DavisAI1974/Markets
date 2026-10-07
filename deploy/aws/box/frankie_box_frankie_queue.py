@@ -82,6 +82,7 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import shutil
 import signal
 import socket
@@ -396,7 +397,7 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
             '--code-root', str(code_root), '--commit', commit, '--max-seconds', str(int(max_seconds)),
             '--poll-seconds', str(int(poll_seconds)), '--scope', scope['text']]
     env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
-               MARKETS_SHA=commit, CODE_ROOT=str(code_root), **_root_overlap_env())
+               MARKETS_SHA=commit, CODE_ROOT=str(code_root), **_run_settings_env())
     how = None
     if shutil.which('systemd-run'):
         unit = 'frankie-queue-%s-%d' % (line, int(time.time()))
@@ -414,8 +415,9 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
     # kicked worker is still importing; a worker that has not taken its lock in time is named, and the kick marker keeps
     # the box in use for KICK_GRACE_SECONDS
     import frankie_box_cores as C
+    settings = _run_settings_env()
     C.write_json(QUEUE / ('%s-kick.json' % line), dict(schema='FRANKIE_QUEUE_KICK_V1', line=line, at=time.time(), at_utc=utc(),
-                                                       by=by, scope=scope['text'], how=how))
+                                                       by=by, scope=scope['text'], how=how, run_settings=settings))
     deadline, held = time.time() + KICK_LOCK_WAIT_SECONDS, False
     while time.time() < deadline:
         _, held = worker_state(line)
@@ -424,10 +426,11 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
         time.sleep(1.0)
     with locked():
         event(line, 'kick', by=by, commit=commit, code_root=str(code_root), max_seconds=max_seconds, how=how, log=str(log_path),
-              scope=scope['text'], worker_lock_held=bool(held))
+              scope=scope['text'], worker_lock_held=bool(held), run_settings=settings)
     log('%s worker started for %s (%s); log %s; worker lock %s' % (line, scope['text'], how, log_path,
                                                                   'held' if held else 'NOT yet held after %d s' % KICK_LOCK_WAIT_SECONDS))
-    return dict(started=True, how=how, log=str(log_path), scope=scope['text'], worker_lock_held=bool(held))
+    return dict(started=True, how=how, log=str(log_path), scope=scope['text'], worker_lock_held=bool(held),
+                run_settings=settings)
 
 
 def handover(line, code_root, commit, max_seconds, poll_seconds, log=print, scope=None):
@@ -473,23 +476,42 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print, scop
             '--code-root', str(code_root), '--commit', commit, '--max-seconds', str(int(max_seconds)),
             '--poll-seconds', str(int(poll_seconds)), '--wait-lock', '--scope', scope['text']]
     env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
-               MARKETS_SHA=commit, CODE_ROOT=str(code_root), **_root_overlap_env())
+               MARKETS_SHA=commit, CODE_ROOT=str(code_root), **_run_settings_env())
     unit = 'frankie-queue-%s-handover-%d' % (line, int(time.time()))
     cmd = ['systemd-run', '--unit', unit, '--collect', '-p', 'StandardOutput=append:%s' % log_path,
            '-p', 'StandardError=append:%s' % log_path] + [x for k, v in sorted(env.items()) for x in ('-E', '%s=%s' % (k, v))] + argv
     code = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).returncode
     with locked():
         event(line, 'handover', old_pid=old, signalled=signalled, superseded=superseded, unit=unit, exit_code=code,
-              commit=commit, scope=scope['text'])
+              commit=commit, scope=scope['text'], run_settings=_run_settings_env())
     return dict(old_worker=old, signalled=signalled, superseded_waiting=superseded, new_unit=unit, systemd_run_exit=code, log=str(log_path),
                 note='the old worker finishes the days in its slots and ends; the new one waits on the lock, then runs')
 
 
-def _root_overlap_env():
-    """FRANKIE_ROOT_NATIVE_OVERLAP (on | off) of the kicking process reaches the worker it starts and so the ROOT it runs
-    (frankie_box_experiment_root.sh reads it; Greg, 2026-10-07: the relaunch runs with it off). Anything else is not passed."""
-    value = os.environ.get('FRANKIE_ROOT_NATIVE_OVERLAP')
-    return {'FRANKIE_ROOT_NATIVE_OVERLAP': value} if value in ('on', 'off') else {}
+# FA-6 (2026-10-07): the run settings of the kicking process (every FRANKIE_* variable, e.g.
+# FRANKIE_ROOT_NATIVE_OVERLAP) reach the worker it starts and so the stages it runs; recorded in the kick receipt. Never
+# passed: the per-process identity a parent sets for its own child (lane, booking, claim, heartbeat file), which a worker
+# must take from its own claim, and anything named like a credential.
+RUN_SETTING_PREFIX = 'FRANKIE_'
+RUN_SETTING_IDENTITY = ('FRANKIE_LANE_', 'FRANKIE_BOOKED_CPUS', 'FRANKIE_CPU_BOOKING', 'FRANKIE_STEP_CLAIM',
+                        'FRANKIE_STAGE_PROGRESS')
+RUN_SETTING_SECRET = re.compile(r'TOKEN|SECRET|PASSWORD|CREDENTIAL|(^|_)KEY($|_)')
+
+
+def _run_settings_env():
+    """{name: value} of the kicking process's FRANKIE_* run settings (see RUN_SETTING_*). FRANKIE_ROOT_NATIVE_OVERLAP
+    is passed only as on | off (frankie_box_experiment_root.sh refuses anything else); a value holding a newline or NUL is
+    never passed (systemd-run -E cannot carry it)."""
+    out = {}
+    for name, value in sorted(os.environ.items()):
+        if not name.startswith(RUN_SETTING_PREFIX) or name.startswith(RUN_SETTING_IDENTITY) or RUN_SETTING_SECRET.search(name):
+            continue
+        if '\n' in value or '\0' in value:
+            continue
+        if name == 'FRANKIE_ROOT_NATIVE_OVERLAP' and value not in ('on', 'off'):
+            continue
+        out[name] = value
+    return out
 
 
 def _entry_running(entry):
