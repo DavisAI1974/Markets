@@ -1029,3 +1029,97 @@ editing it).
 
 Checks: AST parse clean (four .py files); `bash -n` clean on the wrapper; `git diff --check` clean.
 SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.
+
+## 18. Probes on every step: one stage-heartbeat contract (Greg, 2026-10-07 session 2; CLAUDE.md "ALWAYS HAVE PROBES ATTACHED")
+
+Uncommitted; source only; nothing ran; no account call. `frankie_box_classroom_code.py` is not touched.
+
+### 18.1 Inventory before this pass (from source reading; what each one-day stage emitted live)
+
+| Stage | Live progress before | Read by the probe |
+|---|---|---|
+| fetch / ingest (skipped on the one-day run: sealed ingest reused) | ingest: the parallel writer's own progress; fetch: log lines | ingest only via DIRECTORY |
+| external (`frankie_box_day_external.py`) | log lines per day ("### N objects to fetch") and one JSON line per object | no |
+| ROOT (`boss_session` + `experiment_root`; native pass, digest) | `progress.json` (FRANKIE_WORK_PROBE_V1, Probe: phase, completed/total, 15 s throttle when tracking records), `phase` and `note` files, timestamped log notes | yes: `frankie_box_progress.sh DIRECTORY=<root dir>`; `RESOURCE_METRICS=1` samples /proc of the recorded pid |
+| teacher | phase timings in the receipt only (written at the end) | no |
+| classroom | `phase-progress.json` (saved phases, stop_requested; written per saved operation), the Probe `classroom-published` at the end | phase-progress only via the one-day reporter, not live |
+| data | none live | no |
+| search / discovery | phase timings in the manifest at the end; log lines | no |
+| lessons (scientific teacher) | final JSON line | no |
+| exchange | final receipt | no |
+| voice (Granite meeting) | phase timings in its receipt; one model-clock record per call (`model-clock.jsonl`) | no |
+| Jev | phase timings; one model-clock record per call; its status file at boundaries | no |
+| school, reports | final receipt | no |
+| inspection | one log line per run | no |
+| queue / Linux lane | `frankie_box_frankie_queue.sh ACTION=show` (entries, states, events); `frankie_box_cpu_controller.sh ACTION=status` (Linux lane jobs) | these show entry states, not stage rates |
+
+### 18.2 The contract (FRANKIE_STAGE_HEARTBEAT_V1, new `deploy/aws/box/frankie_box_stage_progress.py`)
+
+- **Attached at the one choke point.** Every stage child starts in `Run.child` (fetch, ingest, external, root, teacher,
+  classroom, data, search, lessons, survivors, exchange, voice, school, reports, jev, successor phases), and
+  `Run.inspect_day` starts the reporter. Both now start the child with Popen and attach a `Heartbeat`, keeping
+  subprocess.run's kill-on-interrupt (and the reporter's 900 s timeout).
+- **Where and when.** One JSON line about every 30 s is appended to `<run>/days/<day>/progress/<stage>.jsonl` (a key
+  without a day: `<run>/batches/<key>/progress/<stage>.jsonl`), and one final line on exit (`final`, `outcome`,
+  `exit_code`).
+- **Fields per line:** stage, key, pid, utc/at, elapsed_s, interval_s, phase, units_done, unit, units_total, bytes_out,
+  bytes_out_per_min, units_per_min, files_out, rss_bytes, processes, log_bytes, sources (where each value came from),
+  final.
+- **Measured from outside the child,** no code in the child, so no output or identity changes:
+  - rss: VmRSS summed over the child's live process tree.
+  - bytes_out: /proc io write_bytes, the largest value seen per process of the tree, summed. A lower bound (a process
+    that lived only between samples is missed).
+  - files_out: distinct regular files seen open for writing. Also a lower bound.
+  - log_bytes: the log's size.
+- **Units and phase.** In this order: the child's own phase file, then an existing FRANKIE_WORK_PROBE_V1
+  `progress.json` of a process in the tree (the ROOT's Probe, found beside the files the tree holds open), then the
+  last log line as phase text with units unknown (None, never zero).
+- **Child side, optional.** `report_phase(phase, units_done, units_total, unit)` writes the phase file named by
+  `FRANKIE_STAGE_PROGRESS`, the one environment variable added to a child. Jev's `phase()` now calls it.
+- **Failure handling.** Nothing raises: a probe that cannot start is logged once and the stage runs without it, and a
+  failed sample is written as `sample_error`. Cost: one /proc scan, plus the fds of the tree's processes, every 30 s.
+  Off the child's hot path.
+
+### 18.3 The probe
+
+`frankie_box_progress.sh RUN_DIR=/opt/frankie-box/work/experiment/<run> [DAY=YYYYMMDD]` is read-only, under the existing
+box-progress concurrency group. It goes through `frankie_box_progress.py --run-dir/--day` and prints one line per stage
+plus the JSON summary: status (running / STALE when the last line is older than 3 intervals and not final / final:
+outcome), age, elapsed, units/total and unit, units per minute, bytes_out and its rate, files_out, rss, process count,
+phase. The `DIRECTORY` mode is unchanged.
+
+### 18.4 Not wired, named
+
+- **Units for most stages:** they publish no units yet, so they show the log's last line as phase and units unknown.
+  Each owner can add one `report_phase(...)` call in its existing phase function: teacher
+  (`frankie_box_experiment_teacher` `phase`), search (`frankie_box_experiment_search.search` `phase`), classroom
+  (`frankie_box_experiment_classroom_v2` `phase`; the classroom author), meeting (`frankie_box_granite_meeting`
+  `phase`), external (`frankie_box_day_external` per-object loop), and exchange / school / reports (one call at each
+  boundary). Requests through the parent.
+- **The Linux lane:** its stages run on the worker box. Their heartbeat files land there and the main-box probe cannot
+  read them; `frankie_box_cpu_controller.sh ACTION=status` does not relay them.
+- **`frankie_box_frankie_queue.sh ACTION=show`:** not extended. The new probe mode is the one read.
+
+Checks: AST parse clean; `bash -n` clean on the probe wrapper; `git diff --check` clean.
+SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED; heartbeat cost and accuracy are unmeasured until the one-day run.
+
+### 18.5 The classroom cutoff, wired from the plan (the classroom author's request, same pass)
+
+- **Plan keys and wrapper.** `frankie_box_experiment.py` adds `--native-cutoff-seconds`, `--native-cutoff-rss-gb` and
+  `--native-cutoff-check-every` (wrapper: `NATIVE_CUTOFF_SECONDS`, `NATIVE_CUTOFF_RSS_GB`, `NATIVE_CUTOFF_CHECK_EVERY`).
+  - The keys `native_cutoff_*` are saved in the plan only when given, so an older plan without them keeps its digest.
+  - A run with a saved plan takes the saved values when none is given.
+- **Classroom env.** The classroom step passes `FRANKIE_NATIVE_CUTOFF_SECONDS` / `_RSS_GB` / `_CHECK_EVERY` only when the
+  plan carries them. Otherwise they stay unset and the classroom's defaults apply (3600 s, 48 GB, every 10000 pictures).
+- **Inspection projection.** `frankie_box_workflow_inspection._native_entries_projection` adds `cutoff` and
+  `cutoff_limits`; `NATIVE_ENTRY_KEYS` gains `not_computed` and `rows_covered`; the classroom projection adds
+  `received.native_cutoff`.
+- **Heartbeat in the native-entry pass.** This is a request to the classroom author; I did not edit
+  `frankie_box_classroom_code.py`.
+  - Where: `_NativeEntryArithmetic._check(phase)`, right after `rss, basis = _rss_bytes()`. It runs every check_every
+    pictures and before every series.
+  - The exact call:
+    `SP.report_phase('classroom native entries: %s' % phase, units_done=self.pictures, unit='pictures', rss_bytes=rss, native_elapsed_s=round(elapsed, 1))`
+  - How: wrap it in `try: import frankie_box_stage_progress as SP ... except Exception: pass`. It writes only the stage's
+    phase file, never the arithmetic.
+  - Optionally one `SP.report_phase(name)` in `frankie_box_experiment_classroom_v2`'s `phase()`.

@@ -78,6 +78,10 @@ set -- "$@" --external-wait "${EXTERNAL_WAIT:-on}" --brain "${BRAIN:-/opt/franki
 # frankie_box_granite_meeting_setup.sh (Run.jev binds to it; no second install, no second pin set)
 [ -z "${JEV_RUNTIME:-}" ] || { echo "JEV_RUNTIME is retired: Jev binds to the one pinned runtime shared with the Granite meeting (GRANITE_MEETING_RUNTIME_V1, /opt/frankie-box/granite); no separate Jev runtime" >&2; exit 2; }
 [ -z "${JEV_BRAIN:-}" ] || set -- "$@" --jev-brain "$JEV_BRAIN"
+# the classroom's native-entry cutoff, saved with the plan at its first start when given (unset = the classroom defaults)
+[ -z "${NATIVE_CUTOFF_SECONDS:-}" ] || set -- "$@" --native-cutoff-seconds "$NATIVE_CUTOFF_SECONDS"
+[ -z "${NATIVE_CUTOFF_RSS_GB:-}" ] || set -- "$@" --native-cutoff-rss-gb "$NATIVE_CUTOFF_RSS_GB"
+[ -z "${NATIVE_CUTOFF_CHECK_EVERY:-}" ] || set -- "$@" --native-cutoff-check-every "$NATIVE_CUTOFF_CHECK_EVERY"
 # the per-piece status reports (Greg, 2026-10-07: the ONE-day run only), saved with the plan at its first start: auto
 # (default: one_day when the plan holds exactly one day, else off), one_day or off; an existing run keeps its saved value
 case "${INSPECTION:-auto}" in

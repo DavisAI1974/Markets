@@ -1,6 +1,19 @@
 # Read existing progress, optionally sample ROOT resource counters. No process control or source write.
+# RUN_DIR=/opt/frankie-box/work/experiment/<run> [DAY=YYYYMMDD]: every stage heartbeat of the run (or of one day)
+# (frankie_box_stage_progress, FRANKIE_STAGE_HEARTBEAT_V1): last heartbeat age, rate, units, bytes out, files out, rss
+# and phase per stage, STALE when a running stage's last line is older than 3 intervals. Read-only; box-progress lock.
 set -eu
 : "${CODE_ROOT:?existing inactive staged checkout required}"
+if [ -n "${RUN_DIR:-}" ]; then
+  case "$CODE_ROOT" in /opt/frankie-box/code/*/markets) ;; *) echo "inactive staged checkout required" >&2; exit 2;; esac
+  case "$RUN_DIR" in /opt/frankie-box/work/experiment/*) ;; *) echo "RUN_DIR must be under /opt/frankie-box/work/experiment" >&2; exit 2;; esac
+  case "$RUN_DIR/" in *"/../"*|*"/./"*) echo "normalized paths required" >&2; exit 2;; esac
+  case "${DAY:-}" in ''|[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "DAY must be YYYYMMDD" >&2; exit 2;; esac
+  export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1
+  set -- --run-dir "$RUN_DIR"
+  [ -z "${DAY:-}" ] || set -- "$@" --day "$DAY"
+  exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_progress.py" "$@"
+fi
 : "${DIRECTORY:?existing work-probe directory required}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*/markets) ;; *) echo "inactive staged checkout required" >&2; exit 2;; esac
 case "$DIRECTORY" in /opt/frankie-box/work/*) ;; *) echo "work probe must be under the box work root" >&2; exit 2;; esac

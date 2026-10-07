@@ -125,6 +125,28 @@ def highlight(value):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--directory', required=True)
+    parser.add_argument('--directory')
+    parser.add_argument('--run-dir', help='an experiment run directory: print every stage heartbeat (read-only; '
+                                          'frankie_box_stage_progress.stages_summary)')
+    parser.add_argument('--day', help='with --run-dir: one day (YYYYMMDD); default every day and batch')
     args = parser.parse_args()
-    print(json.dumps(snapshot(args.directory), sort_keys=True))
+    if args.run_dir:
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_stage_progress as SP
+        summary = SP.stages_summary(args.run_dir, args.day)
+        for item in summary['stages']:
+            if 'stage' not in item:
+                print('%s: %s' % (item.get('file'), item.get('status')))
+                continue
+            print('%-10s %-22s %-10s age=%ss elapsed=%ss units=%s/%s %s rate=%s/min bytes_out=%s (%s/min) files_out=%s '
+                  'rss=%s procs=%s phase=%s' % (
+                      item['stage'], item['key'], item['status'], item['age_s'], item['elapsed_s'], item['units_done'],
+                      item['units_total'], item['unit'] or '', item['units_per_min'], item['bytes_out'],
+                      item['bytes_out_per_min'], item['files_out'], item['rss_bytes'], item['processes'],
+                      (item['phase'] or '')[:100]))
+        print(json.dumps(summary, sort_keys=True))
+    elif args.directory:
+        print(json.dumps(snapshot(args.directory), sort_keys=True))
+    else:
+        parser.error('--directory or --run-dir required')

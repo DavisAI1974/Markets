@@ -402,6 +402,11 @@ def _run(request, request_path, out, brain, jev_brain):
         now = time.time()
         timings[name] = round(now - phase_started, 3)
         phase_started = now
+        try:                                     # the stage heartbeat's phase text (frankie_box_stage_progress)
+            import frankie_box_stage_progress as SP
+            SP.report_phase('jev: %s done' % name, units_done=len(timings), unit='phases')
+        except Exception:  # noqa: BLE001 - a probe never changes Jev's outcome
+            pass
     stopped = []
     signal.signal(signal.SIGTERM, lambda *_: stopped.append('signal'))
     def check_save():

@@ -186,6 +186,13 @@ def file_pin(path):
     return dict(path=str(path), bytes=path.stat().st_size, sha256=sha256_file(path))
 
 
+# plan key -> the classroom child's environment variable (frankie_box_classroom_code.NATIVE_CUTOFF_ENV)
+NATIVE_CUTOFF_ENV = dict(native_cutoff_seconds='FRANKIE_NATIVE_CUTOFF_SECONDS',
+                         native_cutoff_rss_gb='FRANKIE_NATIVE_CUTOFF_RSS_GB',
+                         native_cutoff_check_every='FRANKIE_NATIVE_CUTOFF_CHECK_EVERY')
+NATIVE_CUTOFF_PLAN_KEYS = tuple(NATIVE_CUTOFF_ENV)
+
+
 def pin_or_listed(path):
     """file_pin(path), or {path, unavailable: why} when the file cannot be read now (never raises; None for no path).
     For small metadata files only (manifests, receipts, the day file); a journal is pinned from its receipt instead."""
@@ -373,6 +380,12 @@ def load_plan(a, code_root):
     # nor keeps them): an explicit persisted flag, decided here once and saved with the plan, never inferred at call time.
     # 'auto' = one_day when the plan holds exactly one day, else off; one_day / off = the operator's explicit override.
     # None (a saved plan from before the flag) keeps the plan without the key, read as off by Run.inspection_on
+    # the classroom's native-entry cutoff (Greg, 2026-10-07 night; frankie_box_classroom_code.native_cutoff_limits): saved
+    # only when given, so an older plan without the keys keeps its digest; absent = the classroom's defaults (3600 s,
+    # 48 GB, every 10000 pictures)
+    for key in NATIVE_CUTOFF_PLAN_KEYS:
+        if getattr(a, key, None) is not None:
+            plan[key] = getattr(a, key)
     inspection = getattr(a, 'inspection', None)
     if inspection is not None:
         plan['inspection'] = ('one_day' if len(days) == 1 else 'off') if inspection == 'auto' else inspection
@@ -1229,11 +1242,34 @@ class Run:
             command = [sys.executable, '-B', str(self.box / 'frankie_box_cores.py'), 'run', '--kind', 'day-run', '--day', key,
                        '--run', self.plan['run'], '--stage', stage, '--commit', self.commit] + \
                 (['--inside', inside] if inside else []) + ['--'] + command
+        # the stage heartbeat (Greg, 2026-10-07: probes on every step; frankie_box_stage_progress): one JSON line about
+        # every 30 s to <run>/days/<day>/progress/<stage>.jsonl, measured from outside the child (its /proc tree and log)
+        # plus what the child itself publishes; a final line with the exit code. It never changes the child, its
+        # inputs, outputs or exit; a probe that cannot start is logged once and the stage runs without it
+        heartbeat = None
+        try:
+            import frankie_box_stage_progress as SP
+            heartbeat = SP.Heartbeat(self.dir, key, stage, log_path=log_path)
+            full.update(heartbeat.env())
+        except Exception as error:  # noqa: BLE001 - the probe is never the stage's outcome
+            self.log('%s %s: no stage heartbeat (%s: %s)' % (stage, key, type(error).__name__, error))
         with open(log_path, 'ab') as out:
             out.write(('\n### %s %s %s at %s\n' % (stage, key, script, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))).encode())
             out.flush()
             start = out.tell()
-            code = subprocess.run(command, env=full, stdout=out, stderr=subprocess.STDOUT).returncode
+            code = None
+            try:
+                with subprocess.Popen(command, env=full, stdout=out, stderr=subprocess.STDOUT) as proc:
+                    if heartbeat is not None:
+                        heartbeat.start(proc.pid)
+                    try:
+                        code = proc.wait()
+                    except BaseException:
+                        proc.kill()               # subprocess.run's own behaviour on an interrupted wait, unchanged
+                        raise
+            finally:
+                if heartbeat is not None:
+                    heartbeat.stop('exited' if code is not None else 'not started or interrupted', code)
         # Children with continuation hooks observe the same durable stop marker. Other children finish their
         # current retained operation. Never kill their workers or start a following stage after a save request.
         self.check_save()
@@ -1852,6 +1888,8 @@ class Run:
         env = dict(DAY=day, CALCULATIONS=calc, TEACHER_ROWS=rows, BRAIN=self.plan.get('brain') or str(BRAIN))
         if previous:
             env['PREVIOUS'] = previous
+        # the plan's native-entry cutoff, only when the plan carries it (else unset: the classroom's defaults apply)
+        env.update({var: self.plan[key] for key, var in NATIVE_CUTOFF_ENV.items() if self.plan.get(key) is not None})
         import frankie_box_frankie_queue as Q
         with Q.class_running(self.log):              # exactly one class at a time on the box, queue or not
             code, log = self.child('classroom', day, 'frankie_box_experiment_classroom_v2.sh', env)
@@ -2172,8 +2210,25 @@ class Run:
                 out.write(('\n### inspection %s at %s (%s)\n' % (day, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
                                                                  trigger)).encode())
                 out.flush()
-                code = subprocess.run(command, stdout=out, stderr=subprocess.STDOUT, timeout=self.INSPECTION_SECONDS,
-                                      start_new_session=True).returncode
+                # the reporter's own heartbeat (stage 'inspection'), the same contract as Run.child
+                heartbeat = None
+                try:
+                    import frankie_box_stage_progress as SP
+                    heartbeat = SP.Heartbeat(self.dir, day, 'inspection', log_path=log_path)
+                except Exception:  # noqa: BLE001 - the probe is never the reporter's outcome
+                    heartbeat = None
+                with subprocess.Popen(command, stdout=out, stderr=subprocess.STDOUT, start_new_session=True,
+                                      env=dict(os.environ, **(heartbeat.env() if heartbeat else {}))) as proc:
+                    if heartbeat is not None:
+                        heartbeat.start(proc.pid)
+                    try:
+                        code = proc.wait(timeout=self.INSPECTION_SECONDS)
+                    except BaseException:
+                        proc.kill()               # subprocess.run's behaviour on a timeout or an interrupted wait
+                        raise
+                    finally:
+                        if heartbeat is not None:
+                            heartbeat.stop('exited' if code is not None else 'stopped (timeout or interrupted)', code)
         except subprocess.TimeoutExpired:
             reason = 'the reporter exceeded %d s and was stopped; the files written so far stand' % self.INSPECTION_SECONDS
         except OSError as error:
@@ -4474,6 +4529,12 @@ def main():
                         '(default); github = the standard CPU runner workflow, dispatched BY HAND against the immutable '
                         'intent Run.voice writes first and admitted for that exact GitHub run (voice-dispatched / '
                         'voice-returned); saved with the plan at the first start')
+    p.add_argument('--native-cutoff-seconds', type=float, help='the classroom native-entry pass wall-time cutoff (saved with '
+                   'the plan; default unset = the classroom\'s 3600 s)')
+    p.add_argument('--native-cutoff-rss-gb', type=float, help='the classroom native-entry pass resident-memory cutoff in GB '
+                   '(saved with the plan; default unset = 48)')
+    p.add_argument('--native-cutoff-check-every', type=int, help='check the cutoff every N pictures (saved with the plan; '
+                   'default unset = 10000)')
     p.add_argument('--inspection', choices=('auto', 'one_day', 'off'), default='auto',
                    help='the per-piece status reports (frankie_box_workflow_inspection, Greg 2026-10-07: the ONE-day run '
                         'only), saved with the plan at the first start: auto = one_day when the plan holds exactly one '
@@ -4548,6 +4609,12 @@ def main():
                               successors=S.status(run_dir),
                               free_bytes=shutil.disk_usage(BOX_ROOT).free), indent=1, sort_keys=True))
         return
+    if a.action in ('plan', 'start') and (run_dir / 'plan.json').is_file():
+        # a run keeps one plan: the saved cutoff values stand when none is given (absent stays absent)
+        saved_cutoff = json.loads((run_dir / 'plan.json').read_bytes())
+        for key in NATIVE_CUTOFF_PLAN_KEYS:
+            if getattr(a, key, None) is None:
+                setattr(a, key, saved_cutoff.get(key))
     if a.action in ('plan', 'start') and getattr(a, 'inspection', 'auto') == 'auto' and (run_dir / 'plan.json').is_file():
         # a run keeps one plan: its saved inspection flag stands (absent in an older saved plan stays absent = off)
         a.inspection = json.loads((run_dir / 'plan.json').read_bytes()).get('inspection')

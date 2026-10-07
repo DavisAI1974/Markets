@@ -308,6 +308,8 @@ def classroom_projection(receipt, path):
                  # result pinned in native-entry-arithmetic.json): status, reason, per entry its use / form / series /
                  # pairs / unavailable carriers, the file pin and the timings, as recorded
                  native_entries=_native_entries_projection(receipt.get('native_entries')),
+                 # the cutoff limits the classroom received (env or defaults, each with its source)
+                 native_cutoff=(receipt.get('received') or {}).get('native_cutoff'),
                  limit=use.get('limit') or shared.get('limit')),
         outputs=dict(
             # every file the classroom produced, with its pin, and the brain entry's manifest entries
@@ -336,7 +338,7 @@ def classroom_projection(receipt, path):
 
 
 NATIVE_ENTRY_KEYS = ('use', 'form', 'reason', 'own_series', 'thin_series', 'series_names', 'relations', 'pearson_reported',
-                     'pairs', 'unavailable', 'carriers', 'disposition')
+                     'pairs', 'unavailable', 'carriers', 'disposition', 'not_computed', 'rows_covered')
 
 
 def _native_entries_projection(native):
@@ -348,12 +350,15 @@ def _native_entries_projection(native):
     entries = native.get('entries') if isinstance(native.get('entries'), dict) else {}
     return dict(schema=native.get('schema'), status=native.get('status'), reason=native.get('reason'),
                 file=native.get('file'),
+                # the cutoff (None = no limit reached) and the limits it ran under (frankie_box_classroom_code)
+                cutoff=native.get('cutoff'), cutoff_limits=native.get('cutoff_limits'),
                 entries={name: {k: item.get(k) for k in NATIVE_ENTRY_KEYS if k in item}
                          for name, item in sorted(entries.items()) if isinstance(item, dict)},
                 series_kinds=native.get('series_kinds'), read=native.get('read'),
                 timings={k: v for k, v in native.items() if 'seconds' in k or k in ('timings', 'phase_timings')},
                 other_fields_retained_at_source=sorted(k for k in native if k not in (
-                    'schema', 'status', 'reason', 'file', 'entries', 'series_kinds', 'read', 'timings', 'phase_timings')
+                    'schema', 'status', 'reason', 'file', 'entries', 'series_kinds', 'read', 'timings', 'phase_timings',
+                    'cutoff', 'cutoff_limits')
                     and 'seconds' not in k))
 
 
