@@ -344,19 +344,33 @@ class Build:
         doc = self.as_printed()
         if not doc:
             return self.lack('storage.estimate', 'no as_printed file (see as_printed)')
+        # one row per EIA print of the as_printed document (review E-2): a print whose estimate was not found keeps its row
+        # with estimate_bcf None and the reason, so a reader sees the latest print as missing, never an older print's value
+        reasons = {m['print_date']: m['reason'] for m in doc.get('missing') or [] if m.get('field') == 'estimate'}
+        ests = doc.get('estimates') or {}
         rows = []
-        for pr, e in sorted((doc.get('estimates') or {}).items()):
-            t = ns(dt.datetime.fromisoformat(e['print_datetime_et']).astimezone(UTC))
-            est, act = e.get('estimate_bcf'), e.get('actual_bcf')
-            rows.append([t, t, pr, e.get('week_ending'), est, act,
-                         None if est is None or act is None else round(act - est, 1), e.get('source')])
+        for pr in sorted(set(doc.get('prints') or []) | set(ests)):
+            e = ests.get(pr)
+            p = dt.date.fromisoformat(pr)
+            at = e['print_datetime_et'] if e else dt.datetime(p.year, p.month, p.day, 10, 30, tzinfo=ET).isoformat()
+            t = ns(dt.datetime.fromisoformat(at).astimezone(UTC))
+            if e:
+                est, act = e.get('estimate_bcf'), e.get('actual_bcf')
+                rows.append([t, t, pr, e.get('week_ending'), est, act,
+                             None if est is None or act is None else round(act - est, 1), e.get('source'), None])
+            else:
+                rows.append([t, t, pr, (p - dt.timedelta(days=6)).isoformat(), None, None, None, None,
+                             reasons.get(pr, 'no street estimate found for this print')])
         kept, later = self.keep(rows)
         self.points['storage.estimate'] = table(
-            ['published_ns', 'print_ns', 'print_date', 'week_ending', 'estimate_bcf', 'actual_bcf', 'surprise_bcf', 'source'],
-            kept, source='street estimate (TradingEconomics consensus / investing.com forecast, archived calendar pages) '
-            'and the printed actual (EIA report as printed)', vintage='as published', native_resolution='per weekly print',
+            ['published_ns', 'print_ns', 'print_date', 'week_ending', 'estimate_bcf', 'actual_bcf', 'surprise_bcf', 'source',
+             'missing_reason'],
+            kept, source='street estimate (TradingEconomics consensus / investing.com forecast, archived calendar pages and '
+            'the investing.com event-386 chart feed) and the printed actual (EIA report as printed)', vintage='as published',
+            native_resolution='per weekly print (one row per print, found or not)',
             after_halt=later, note='a print\'s estimate is public before the print; the row is placed at the print '
-                                   '(10:30 ET Thursday); surprise = actual minus estimate')
+                                   '(10:30 ET Thursday); surprise = actual minus estimate; estimate_bcf None with '
+                                   'missing_reason = the estimate of that print was not found (never filled from another print)')
         recent = (self.date - dt.timedelta(days=8)).isoformat()
         for m in doc.get('missing') or []:       # the prints of this day's week that the archive does not hold
             if m.get('print_date') and recent <= m['print_date'] <= self.date.isoformat():
