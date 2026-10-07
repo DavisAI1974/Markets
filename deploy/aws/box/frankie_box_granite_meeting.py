@@ -443,9 +443,13 @@ class LlamaServer:
                                         % (code, json.dumps(self.stderr_witness(), sort_keys=True)), evidence=self.stderr_witness())
             try:
                 with urllib.request.urlopen('http://127.0.0.1:%d/health' % self.port, timeout=min(5.0, max(0.001, deadline - time.monotonic()))) as response:
-                    if json.loads(response.read()).get('status') == 'ok':
+                    health = json.loads(self._read_bounded(response, 'health'))
+                    if isinstance(health, dict) and health.get('status') == 'ok':
                         return
-            except (urllib.error.URLError, TimeoutError, ValueError, ConnectionError, OSError):
+            except MeetingBudgetExpired:
+                self.stop()
+                raise
+            except (urllib.error.URLError, TimeoutError, ValueError, ConnectionError, OSError, AttributeError, TypeError):
                 pass
             time.sleep(min(2.0, max(0.0, deadline - time.monotonic())))
         self.stop()
@@ -455,15 +459,39 @@ class LlamaServer:
         raise MeetingCallFailed('llama-server did not report healthy within %s s; stderr retained at %s'
                                 % (round(wait, 1), json.dumps(self.stderr_witness(), sort_keys=True)), evidence=self.stderr_witness())
 
-    def _post(self, route, body, label='request'):
+    def _read_bounded(self, stream, label):
+        """6R3: read a response body whole while the ABSOLUTE meeting deadline stays effective (the socket timeout is an
+        inactivity timeout, not a total-read bound); on expiry the partial bytes are retained and named, never dropped."""
+        chunks = []
+        while True:
+            remaining = self.remaining()
+            if remaining is not None and remaining <= 0:
+                partial = b''.join(chunks)
+                evidence = self.retain('%s-partial-body-at-deadline' % label, partial)
+                raise MeetingBudgetExpired('meeting time budget spent while reading the %s reply body (%d bytes received and '
+                                           'retained: %s)' % (label, len(partial), json.dumps(evidence, sort_keys=True)))
+            chunk = stream.read(65536)
+            if not chunk:
+                return b''.join(chunks)
+            chunks.append(chunk)
+
+    def _post(self, route, body, label='request', expect=None):
+        """POST and return (parsed, raw): the ORIGINAL bytes are kept beside the parsed value (6R3); `expect(parsed)` returns
+        a reason the shape is unusable or None, and an unusable shape retains the raw bytes whole and raises
+        MeetingCallFailed, never a KeyError/TypeError outside the meeting's own failure path."""
         timeout = self._bounded(600)          # MeetingBudgetExpired here means: no request was sent
         request = urllib.request.Request('http://127.0.0.1:%d%s' % (self.port, route), data=json.dumps(body).encode(),
                                          method='POST', headers={'Content-Type': 'application/json'})
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
-                raw = response.read()
+                raw = self._read_bounded(response, label)
         except urllib.error.HTTPError as error:
-            payload = error.read() if hasattr(error, 'read') else b''
+            try:
+                payload = self._read_bounded(error, label + '-http-%s' % error.code) if hasattr(error, 'read') else b''
+            except MeetingBudgetExpired:
+                raise
+            except OSError as inner:
+                payload = repr(inner).encode()
             evidence = self.retain('%s-http-%s' % (label, error.code), payload)
             if error.code == 404:
                 raise MeetingCallFailed('the pinned llama-server has no %s route; the token count cannot be exact, so the meeting '
@@ -479,42 +507,72 @@ class LlamaServer:
             raise MeetingCallFailed('%s failed with no reply: %r (retained: %s)' % (route, error, json.dumps(evidence, sort_keys=True)),
                                     evidence=evidence)
         try:
-            return json.loads(raw)
+            parsed = json.loads(raw)
         except ValueError as error:
             evidence = self.retain('%s-not-json' % label, raw)
             raise MeetingCallFailed('%s replied with bytes that are not JSON (%s); retained whole: %s'
                                     % (route, error, json.dumps(evidence, sort_keys=True)), evidence=evidence)
+        why = expect(parsed) if expect is not None else None
+        if why:
+            evidence = self.retain('%s-unusable-shape' % label, raw)
+            raise MeetingCallFailed('%s replied with an unusable shape (%s); the original bytes are retained whole: %s'
+                                    % (route, why, json.dumps(evidence, sort_keys=True)), evidence=evidence)
+        return parsed, raw
+
+    @staticmethod
+    def _expect_template(value):
+        if not isinstance(value, dict) or not isinstance(value.get('prompt'), str):
+            return 'expected an object with a text prompt'
+        return None
+
+    @staticmethod
+    def _expect_tokens(value):
+        if not isinstance(value, dict) or not isinstance(value.get('tokens'), list):
+            return 'expected an object with a tokens list'
+        return None
+
+    @staticmethod
+    def _expect_chat(value):
+        if not isinstance(value, dict):
+            return 'expected an object'
+        choices = value.get('choices')
+        if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+            return 'expected a non-empty choices list of objects'
+        message = choices[0].get('message')
+        if not isinstance(message, dict) or not isinstance(message.get('content'), str):
+            return 'expected choices[0].message.content as text'
+        usage = value.get('usage')
+        if usage is not None:
+            if not isinstance(usage, dict):
+                return 'usage is not an object'
+            for key in ('prompt_tokens', 'completion_tokens'):
+                if usage.get(key) is not None and (isinstance(usage.get(key), bool) or not isinstance(usage.get(key), int)):
+                    return 'usage.%s is not an integer' % key
+        return None
 
     def count_tokens(self, messages, label='count'):
         """The input's exact token count as the server will see it: the chat template applied by the server itself
         (/apply-template), then its tokenizer with the special tokens (/tokenize add_special, the chat route's own
         setting). Reconciled against usage.prompt_tokens after each call (discuss_item records both). Both requests are
         side-effect free: an interruption here can be repeated without duplicating any model work."""
-        prompt = self._post('/apply-template', dict(messages=messages), label + '-apply-template')['prompt']
-        return len(self._post('/tokenize', dict(content=prompt, add_special=True, parse_special=True), label + '-tokenize')['tokens'])
+        template, _ = self._post('/apply-template', dict(messages=messages), label + '-apply-template', expect=self._expect_template)
+        tokens, _ = self._post('/tokenize', dict(content=template['prompt'], add_special=True, parse_special=True),
+                               label + '-tokenize', expect=self._expect_tokens)
+        return len(tokens['tokens'])
 
     def chat(self, messages, schema, label='chat'):
+        """One coordinator call; returns (content, raw reply bytes). The shape is validated with the original bytes kept."""
         body = dict(messages=messages, temperature=self.params['temperature'], top_p=self.params['top_p'],
                     max_tokens=int(self.params['max_output_tokens_per_turn']),
                     response_format=dict(type='json_schema', json_schema=dict(name='coordinator_turn', schema=schema)),
                     stream=False)
-        reply = self._post('/v1/chat/completions', body, label)
+        reply, raw = self._post('/v1/chat/completions', body, label, expect=self._expect_chat)
         self.calls += 1
         usage = reply.get('usage') or {}
         self.last_usage = usage
         self.tokens['prompt'] += int(usage.get('prompt_tokens') or 0)
         self.tokens['completion'] += int(usage.get('completion_tokens') or 0)
-        try:
-            content = reply['choices'][0]['message']['content']
-        except (KeyError, IndexError, TypeError):
-            evidence = self.retain(label + '-malformed-reply', json.dumps(reply, sort_keys=True).encode())
-            raise MeetingCallFailed('the chat reply carries no choices[0].message.content; retained whole: %s'
-                                    % json.dumps(evidence, sort_keys=True), evidence=evidence)
-        if not isinstance(content, str):
-            evidence = self.retain(label + '-malformed-reply', json.dumps(reply, sort_keys=True).encode())
-            raise MeetingCallFailed('the chat reply content is not text; retained whole: %s' % json.dumps(evidence, sort_keys=True),
-                                    evidence=evidence)
-        return content
+        return reply['choices'][0]['message']['content'], raw
 
     def alive(self):
         return self.process is not None and self.process.poll() is None
@@ -673,9 +731,11 @@ def discuss_item(server, item, system, params, log, progress=None):
                                          transcript_sha256=sha256_bytes(json.dumps(transcript, sort_keys=True).encode()))
             if progress is not None:
                 progress.save(state)
-            raw = server.chat(transcript, ACTION_SCHEMA, label='%s-r%d' % (label, round_number))
+            raw, reply_bytes = server.chat(transcript, ACTION_SCHEMA, label='%s-r%d' % (label, round_number))
             state['token_counts'].append(dict(round=round_number, counted_before_call=counted,
-                                              prompt_tokens_used=(getattr(server, 'last_usage', None) or {}).get('prompt_tokens')))
+                                              prompt_tokens_used=(getattr(server, 'last_usage', None) or {}).get('prompt_tokens'),
+                                              reply=server.retain('%s-r%d-reply' % (label, round_number), reply_bytes),
+                                              attempt=server.attempt))
             try:
                 value = json.loads(raw)
             except ValueError as error:
@@ -951,7 +1011,17 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                                              'nothing an earlier attempt pinned is renamed, appended to or dropped'),
                   binding=dict(path=str(binding_path), sha256=binding_sha),
                   progress=dict(directory=str(out_dir / 'progress'), reused_items=reused),
-                  model_calls=server.calls, tokens=server.tokens, seconds=round(time.time() - started, 1),
+                  # 6R3: counts of the COMPLETE meeting are derived from the retained rounds (every completed chat across all
+                  # attempts), apart from this attempt's own counters; zero calls in this attempt never means no model work
+                  model_calls=sum(len(i.get('token_counts') or []) for i in items),
+                  calls=dict(completed_chat_calls_all_attempts=sum(len(i.get('token_counts') or []) for i in items),
+                             this_attempt=server.calls, attempt=server.attempt,
+                             calls_sent_without_recorded_reply=sum(1 for i in items for o in i.get('open_items') or []
+                                                                   if o.get('kind') == 'interrupted_call'),
+                             rule='model_calls counts completed coordinator calls of the whole meeting (all attempts, from the '
+                                  'retained rounds); this_attempt is this process alone'),
+                  tokens=dict(server.tokens, scope='this attempt only; per-round prompt_tokens_used across attempts are in items[].token_counts'),
+                  seconds=round(time.time() - started, 1),
                   counts=dict(items=len(items), coordinator_turns=sum(len(i['coordinator_turns']) for i in items),
                               code_seat_answers=sum(len(i['code_seat_answers']) for i in items),
                               requested_tests=sum(len(i['requested_tests']) for i in items),
