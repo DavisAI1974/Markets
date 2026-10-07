@@ -59,7 +59,8 @@ NEW SESSION -- Frankie (Greg, 2026-10-07 night). THE AGENTS ARE THE ONLY WAY WOR
   - Frankie may keep only his own report in his brain: the knowledge he gained, how he was able to use it, and what he
     thinks should be added or taken away.
   - Frankie takes the other data-generating pieces and makes a full horizon analysis of them.
-  - Greg still wants the per-piece status reports in the N-day run, out of curiosity.
+  - The per-piece STATUS reports are for the one-day run ONLY. After that day they are done; the N-day run does not
+    produce or keep them (Greg, correcting the line above).
 
 ## What landed (work branch, all SOURCE-BUILT / RUNTIME-UNVERIFIED)
 9a2cf53 stage 12 | eff34d5 stages 4/6/7 | eca308a stage 5 | 7211b0d stages 8/9/10/14 (stage 10 built) |
