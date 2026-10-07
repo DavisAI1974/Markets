@@ -1,7 +1,11 @@
 """Opt-in, stdout-only one-day inspection of retained workflow metadata.
 
 Run manually on the owning lane after/between authorized workflow pieces. This module
-imports no project code, writes nothing, launches nothing and supplies no knowledge.
+imports no project code, launches nothing and supplies no knowledge. By default it writes
+nothing; with --write it also writes one markdown file per canonical piece under
+<run-dir>/days/<day>/inspection/ plus index.md (Greg, 2026-10-07: after the one-day test
+every piece reports what it received, how it used it and what it produced). Those files
+are temporary operator review only, never knowledge, evidence or a gate.
 It reports recorded processing evidence, never infers consumption from availability.
 Large journals, model state, row spools and scientific result parts are not opened.
 Use --artifact PIECE=PATH for additional exact JSON metadata or an existing report;
@@ -70,15 +74,20 @@ identity calculations as_of through_cursor record_count journal_count journal_ha
 journal_sha256 manifest_sha256 data_manifest_sha256 shared_market_identity shared_market_policy learner_binding
 day_external day_role partial_members tail_members opening_book input_sources claim_inputs claim_inputs_sha256
 searches searched_days requested_search_days frozen_survivors entity binding source commit plan_sha256
+teacher_rows shared_market_external teacher_shared_market_arithmetic learner_reading carried_from_previous
+school_knowledge stage_knowledge classroom_rules experiment_directive
 '''.split())
 USED = set('''coverage completeness arithmetic equation shared_market_arithmetic shared_market_use root_processes not_run
 layers dispositions frame_dispositions pairing exclusions leakage lags transforms cells_not_counted not_searched
 missing excluded withheld listed reason caveat rule interpretation limitation view absent_layers unclosed_instruments
 closed_source_without_root_frame unplaceable_input_clocks completed_sources stopped
+shared_market anchor_pictures source_status_counts applied_to
 '''.split())
 PRODUCED = set('''outputs rows entity_rows rows_file attachment_file failure_count status shared_market_sources
 presented_inputs external_publications integrity_failure placed_series placed_cells couplings series cells planes
 results reports brain_entry brain_entries external_section external_computation frame_sections files
+mode components observations pairs novel_findings novel_finding_ids dropped_findings correction_ids
+teacher_complete completion_hash external_novel_finding_ids jev_material saved_phases stop_requested
 '''.split())
 
 _OUT = []          # the current piece's markdown; stdout when no --write directory is given
@@ -137,6 +146,61 @@ def metadata(path, label):
     return body
 
 
+def classroom_projection(receipt, path):
+    """The classroom's shared-picture inputs / use / outputs, from its own receipt.json only.
+
+    What the classroom received from the shared source (identity, exhaustion, layers), how each
+    component used it (which anchor pictures entered which answer field; which anchors, inputs,
+    layers were partial/missing/unavailable; which legacy aggregates stayed completed-only and
+    why), and what it produced (answers, claims, corrections, a refusal, saved operations).
+    Recorded dispositions only; nothing here is inferred, filled in, knowledge or a gate.
+    """
+    if receipt.get('schema') != 'FRANKIE_EXPERIMENT_CLASSROOM_RECEIPT_V2' or path.name != 'receipt.json':
+        return
+    shared = receipt.get('shared_market') or {}
+    coverage = shared.get('coverage') or {}
+    use = receipt.get('shared_market_use') or {}
+    learner = receipt.get('learner_reading') or {}
+    emit('#### classroom shared picture: inputs / use / outputs (recorded in receipt.json; not computation proof)\n')
+    json_block(dict(
+        status=receipt.get('status'), mode=receipt.get('mode'),
+        inputs=dict(
+            shared_source_identity=shared.get('identity'),
+            shared_source_read=dict(source_exhausted=coverage.get('source_exhausted'),
+                                    core_report_complete=coverage.get('core_report_complete'),
+                                    journal=coverage.get('journal'), layers_present=sorted(coverage.get('layers') or {}),
+                                    layers_not_in_read=coverage.get('layers_not_in_read'),
+                                    core_absent_layers=coverage.get('core_absent_layers'),
+                                    core_coverage=coverage.get('core_coverage'), external=coverage.get('external'),
+                                    source_status_counts=shared.get('source_status_counts')),
+            anchor_pictures=shared.get('anchor_pictures'),
+            shared_market_external=receipt.get('shared_market_external'),
+            teacher_shared_market_arithmetic=receipt.get('teacher_shared_market_arithmetic'),
+            learner_reading=dict(ingestion_receipt=learner.get('ingestion_receipt'), coverage=learner.get('coverage'),
+                                 shared_market_arithmetic=learner.get('shared_market_arithmetic')),
+            external_day_file=(receipt.get('external') or {}).get('day_file')),
+        use=dict(entered=use.get('entered'), arithmetic=use.get('arithmetic'), components=use.get('components'),
+                 partial_missing_stale=use.get('partial_missing_stale'), completed_only=use.get('completed_only'),
+                 knowledge_applied_to=(receipt.get('stage_knowledge') or {}).get('applied_to'),
+                 limit=use.get('limit') or shared.get('limit')),
+        outputs=dict(
+            components=receipt.get('components'), observations=receipt.get('observations'), pairs=receipt.get('pairs'),
+            novel_finding_ids=receipt.get('novel_finding_ids'), dropped_findings=receipt.get('dropped_findings'),
+            correction_ids=receipt.get('correction_ids'), teacher_complete=receipt.get('teacher_complete'),
+            completion_hash=receipt.get('completion_hash'),
+            external={k: (receipt.get('external') or {}).get(k) for k in (
+                'correction_ids', 'mastered', 'teacher_complete', 'completion_hash', 'series_absent',
+                'missing_not_assigned', 'deferred')},
+            external_novel_finding_ids=receipt.get('external_novel_finding_ids'),
+            brain_entry=receipt.get('brain_entry'), jev_material=receipt.get('jev_material'),
+            refusal=(dict(reason=receipt.get('reason'), listed=receipt.get('listed'))
+                     if receipt.get('status') == 'refused' else None),
+            waits='phase-progress.json (saved_phases, stop_requested) shows a saved or waiting classroom; '
+                  'status complete means every operation finished on this lane'),
+        disposition='temporary operator review; a listed anchor, input or layer disposition is what the classroom '
+                    'recorded for a thinner instant, not a verdict on the day; nothing here is knowledge or a gate'))
+
+
 def write_piece(directory, piece, text):
     """One markdown file per piece; temporary operator review, never knowledge or a gate."""
     directory.mkdir(parents=True, exist_ok=True)
@@ -188,7 +252,7 @@ def artifact_paths(record, piece):
     classroom = absolute(record.get('classroom'))
     if classroom and piece == 'classroom':
         out += [classroom / name for name in ('receipt.json', 'learner-knowledge.json',
-                'completion.json', 'external-completion.json')]
+                'completion.json', 'external-completion.json', 'phase-progress.json')]
     for item in record.get('days') or []:
         if isinstance(item, dict) and item.get('day') == record.get('_inspection_day'):
             rows = absolute(item.get('rows'))
@@ -296,7 +360,9 @@ def main():
             for artifact in artifact_paths(dict(body, _inspection_day=args.day), piece):
                 if artifact not in seen:
                     seen.add(artifact)
-                    metadata(artifact, 'Retained producer/consumer metadata (recorded scope only)')
+                    retained = metadata(artifact, 'Retained producer/consumer metadata (recorded scope only)')
+                    if piece == 'classroom' and isinstance(retained, dict):
+                        classroom_projection(retained, artifact)
             # Reuse numbered reports as references: never regenerate, modify or substitute them.
             for report in body.get('reports') or []:
                 if isinstance(report, dict):
