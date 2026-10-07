@@ -461,3 +461,15 @@ us-east-2; the 8.8 GB journal was not read):**
   computed, with `rows_covered` and the cutoff on its computation. An entry with none reads unavailable: cutoff.
 - A cutoff is a named limit, not an integrity failure. The Dipole values, the other twelve entries' use, the answers and
   the external points are unaffected.
+
+### 2026-10-07 night, session 2 (continued): point 6 is read (Greg's ruling)
+
+Greg: the only dropped item is the squeeze 3-day calendar-front spread, which is not one of the 13. Point 6 ("sessions
+since prompt expiry") is now in `dipole_classroom_external.POINTS`. Its table is `calendar.sessions_since_prompt_expiry`,
+with day-file columns published_ns, sessions_since_prompt_expiry, last_prompt_symbol and last_prompt_expiry, plus
+event_time_ns (builder `operations/frankie_day_external.py`). Its series is `calendar.sessions_since_prompt_expiry`
+(SEARCH_SERIES). `DEFERRED` keeps no point, series or table. It names only the dropped spread (`dropped`), and a
+missing-list entry naming the spread is listed there. The external key, its hash and the external lesson change; no run
+has used them. In `external_points_use`, point 6 is used like the others (computed when published at or before a Dipole
+row) and the dropped spread is named beside the points, never as a point. The earlier line above, "6 (squeeze) is
+absent, deferred by Greg", is superseded.

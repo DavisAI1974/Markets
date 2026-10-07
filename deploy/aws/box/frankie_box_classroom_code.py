@@ -2349,14 +2349,16 @@ def external_points_use(ext_ledgers, day_file, day_file_sha256, *, cutoff_ns=Non
                            closest_existing_consumer=(None if use == 'computed' else
                                                       'the external section arithmetic (when a value is published) and the '
                                                       'scientific search\'s external.<alias> series')))
-    for p in EXT.DEFERRED['points']:
+    # No point is deferred (Greg, 2026-10-07 night: point 6 is one of the 13 and is read like the others; the only dropped
+    # item is the squeeze 3-day calendar-front spread, not a point). A point still listed in DEFERRED by an older section
+    # module reads absent with that module's reason; the dropped spread is named once beside the points, never as a point.
+    for p in EXT.DEFERRED.get('points') or ():
         tie = tie_of(p['tables'])
         points.append(dict(point_id=p['point_id'], name=p['name'], use='absent', computation=None, series=[],
                            tables=list(p['tables']), feeds_entries=tie['entries'], mapping=tie['mapping'],
                            mapping_reason=tie['mapping_reason'], event_time_basis=tie['event_time_basis'], note=tie['note'],
-                           reason='deferred by Greg, not read: ' + EXT.DEFERRED['reason'],
-                           closest_existing_consumer='the scientific search reads the calendar table; the classroom does '
-                                                     'not until Greg lifts the deferral'))
+                           reason='not read by the external section module: ' + EXT.DEFERRED['reason'],
+                           closest_existing_consumer='the scientific search reads its table'))
     feeds = {}
     for item in points:
         for entry in item['feeds_entries']:
@@ -2367,6 +2369,8 @@ def external_points_use(ext_ledgers, day_file, day_file_sha256, *, cutoff_ns=Non
         counts[item['use']] = counts.get(item['use'], 0) + 1
     return dict(schema=EXTERNAL_POINTS_SCHEMA, points=points, counts=counts, entries_fed=feeds, findings=findings,
                 computation=EXTERNAL_COMPUTATION, as_of=EXTERNAL_AS_OF,
+                # Greg, 2026-10-07 night: all 13 points are used; the only dropped item is not a point
+                dropped=[{k: d.get(k) for k in ('name', 'reason')} for d in EXT.DEFERRED.get('dropped') or ()] or None,
                 rule='a point is computed only when a value of its series was published at or before a Dipole row and '
                      'entered the external section arithmetic; never before its publication time; a point the day file '
                      'ties to no registry entry is listed outside the 99, never mapped here')

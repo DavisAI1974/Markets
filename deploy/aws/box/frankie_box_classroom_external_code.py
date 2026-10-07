@@ -446,8 +446,9 @@ def answers(visible, *, dipole_visible=None, learner_context=None, independent_e
                        f'(cursors {pre["first_cursor"]}..{pre["last_cursor"]}), day file {pre["day_file"]["sha256"]} read at '
                        f'cutoff {pre["cutoff_ns"]}, mode {pre["mode"]}. First-to-last PRESENT direction: '
                        + '; '.join(f'{k} {len(v)}' for k, v in sorted(by_direction.items()))
-                       + f'. Series absent from the day file: {len(pre["series_absent"])}. Deferred by Greg: '
-                       f'{", ".join(d["name"] for d in deferred.get("points", [])) or "none"}.'),
+                       + f'. Series absent from the day file: {len(pre["series_absent"])}. Points deferred: '
+                       f'{", ".join(d["name"] for d in deferred.get("points", [])) or "none (all 13 read)"}. Dropped by '
+                       f'Greg (not one of the 13): {", ".join(d["name"] for d in deferred.get("dropped", [])) or "none"}.'),
         correlation_review=correlation_review,
         unresolved_questions=questions, relationship_pairs_considered=len(review), future_outcome_claimed=False)
     scan = [dict(left=p['left'], right=p['right'], direction_relation=p['direction_relation'],

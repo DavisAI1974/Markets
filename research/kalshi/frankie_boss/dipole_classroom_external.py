@@ -15,8 +15,9 @@ LATEST value stamped at or before the row's own ts_recv_ns (np.searchsorted over
 cutoff); every aligned value's stamp is checked against its row's time and a later stamp is a hard error.
 
 WHAT THE SECTION HOLDS (the teacher key; the TEACH pre-message shows all of it):
-  - per point (Greg's 13 in his order, less point 6: the squeeze points are DEFERRED by Greg, listed under `deferred`,
-    not missing): its day-file tables (rows known at the cutoff, rows not yet known, source,
+  - per point (Greg's 13 in his order, point 6 included; Greg 2026-10-07: the only dropped item is the squeeze 3-day
+    calendar-front spread, which is not one of the 13, listed under `deferred.dropped`): its day-file tables
+    (rows known at the cutoff, rows not yet known, source,
     vintage, native resolution, the file's own note) and every missing entry of the day file that names it (listed with
     the day and reason, never a reason to skip);
   - per series (the search's own series list, operations/frankie_day_external.SEARCH_SERIES, plus the hourly station
@@ -89,7 +90,8 @@ FACT_FIELDS = ('values_known', 'known_before_open', 'published_in_day', 'not_yet
                'first_in_day', 'last_in_day', 'lowest_in_day', 'highest_in_day', 'publication_times_in_day',
                'known_state_counts')
 
-# Greg's 13, in his order, less point 6 (deferred, below) (FRANKIE_DATA_WISHLIST_20260929.md; the day-file table names of HISTORICAL_DATA_PLAN section 7).
+# Greg's 13, in his order (FRANKIE_DATA_WISHLIST_20260929.md; the day-file table names of HISTORICAL_DATA_PLAN section 7).
+# Point 6 is read like every other point (Greg, 2026-10-07 night: it is one of the 13; only the squeeze spread was dropped).
 # series: names from frankie_day_external.SEARCH_SERIES (a trailing * takes every series with that prefix).
 # missing: the day file's missing-list names that concern the point (a trailing * is a prefix).
 POINTS = (
@@ -103,6 +105,11 @@ POINTS = (
          series=('cot.managed_money_net_pctile_3y',), missing=('cot', 'cot.023651')),
     dict(point_id=5, name='grid_stack.bas.US48.wind_mwh', tables=('eia930.us48', 'eia930.hourly'),
          series=('eia930.US48.wind_mwh',), missing=('eia930', 'eia930.*')),
+    # the day file's calendar table: columns published_ns, sessions_since_prompt_expiry, last_prompt_symbol,
+    # last_prompt_expiry (+ event_time_ns); operations/frankie_day_external.py, one row per day; SEARCH_SERIES names the series
+    dict(point_id=6, name='squeeze_watch.sessions_since_prompt_expiry', tables=('calendar.sessions_since_prompt_expiry',),
+         series=('calendar.sessions_since_prompt_expiry',),
+         missing=('calendar', 'calendar.*', 'squeeze_watch.sessions_since_prompt_expiry')),
     dict(point_id=7, name='grid_stack.bas.US48.est_gas_burn_bcfd', tables=('eia930.us48', 'eia930.hourly'),
          series=('eia930.US48.est_gas_burn_bcfd_rate',), missing=('eia930', 'eia930.*')),
     dict(point_id=8, name='cot.ice.ld1.managed_money_net_pctile_1y', tables=('cot.023391',),
@@ -121,17 +128,17 @@ POINTS = (
          tables=('curve.definitions', 'curve.statistics', 'curve.trades', 'curve.settled_shape', 'curve.traded_shape'),
          series=('curve.settled.*', 'curve.traded.*'), missing=('curve', 'curve.*')),
 )
-# DEFERRED by Greg (2026-09-29: "Right now we're not worried about squeeze. We can do that later."): the squeeze_watch
-# points are left out of this section for now, not missing. Point 6 (squeeze_watch.sessions_since_prompt_expiry, the day
-# file's calendar table) and the front-next spread change (squeeze_watch.calendar_front_next_spread_chg_3d) are not read;
-# the key lists them under `deferred` with Greg's words, and a missing-list entry that concerns only them is listed there.
+# DROPPED by Greg (2026-10-07 night): the ONLY dropped item is the squeeze 3-day calendar-front spread change
+# (squeeze_watch.calendar_front_next_spread_chg_3d). It is not one of the 13 points, has no day-file table and no series;
+# it is named under the key's `deferred.dropped`, and a missing-list entry naming it (older day files) is listed there.
+# No point is deferred any more: `points`, `series` and `tables` are empty and every point's table is read.
 DEFERRED = dict(
-    reason="Greg, 2026-09-29: \"Right now we're not worried about squeeze. We can do that later.\"",
-    points=(dict(point_id=6, name='squeeze_watch.sessions_since_prompt_expiry',
-                 tables=('calendar.sessions_since_prompt_expiry',)),
-            dict(point_id=None, name='squeeze_watch.calendar_front_next_spread_chg_3d', tables=())),
-    series=('calendar.sessions_since_prompt_expiry',), tables=('calendar.sessions_since_prompt_expiry',),
-    missing=('calendar', 'calendar.*', 'squeeze_watch.*'))
+    reason='Greg, 2026-10-07 night: the only dropped item is the squeeze 3-day calendar-front spread, not one of the 13 '
+           'points; point 6 (sessions since prompt expiry) is one of the 13 and is read',
+    points=(), series=(), tables=(),
+    missing=('squeeze_watch.calendar_front_next_spread_chg_3d',),
+    dropped=(dict(name='squeeze_watch.calendar_front_next_spread_chg_3d', point_id=None, tables=(),
+                  reason='not one of the 13 points; dropped by Greg (2026-10-07 night)'),))
 # point 12's rows are carried whole in its point entry: the current table (values per print) and, for a superseded day
 # file, the old captures table (no numeric series; context only)
 ROWS_CARRIED_WHOLE = ('storage.estimate', 'storage.estimate_captures')
@@ -328,7 +335,7 @@ def read_series(dx, reader) -> tuple[list, list]:
     series, absent = [], []
     for name, point, column, where in dx.SEARCH_SERIES:
         if _matches(name, DEFERRED['series']):
-            continue                                   # deferred by Greg (squeeze), listed under key['deferred']
+            continue                                   # none deferred today (DEFERRED['series'] is empty)
         entry = dict(name=name, table=point, column=column, where=where, known=[], not_yet_known_in_table=None,
                      absent_reason=None)
         if point not in body['points']:
@@ -555,7 +562,7 @@ def build_external_key(snapshot: Mapping[str, Any], day_file, day_file_sha256, *
     tables = {}
     for tname, t in body['points'].items():
         if tname in DEFERRED['tables']:
-            continue                                   # deferred by Greg (squeeze): not read
+            continue                                   # none deferred today (DEFERRED['tables'] is empty)
         view = reader.until(tname, cutoff)
         i = view['columns'].index('published_ns')
         stamps = [r[i] for r in view['rows']]
@@ -593,7 +600,8 @@ def build_external_key(snapshot: Mapping[str, Any], day_file, day_file_sha256, *
         deferred=dict(reason=DEFERRED['reason'], points=[dict(p, tables=list(p['tables'])) for p in DEFERRED['points']],
                       series=list(DEFERRED['series']), tables_not_read=[t for t in DEFERRED['tables'] if t in body['points']],
                       missing_entries_listed_here=deferred_missing,
-                      note='left out of the classroom and the teacher\'s external section for now; not missing'),
+                      dropped=[dict(d, tables=list(d['tables'])) for d in DEFERRED['dropped']],
+                      note='no point is deferred; the dropped spread is not one of the 13 and is not missing'),
         tables_not_in_a_point=sorted(t for t in tables if not any(t in p['tables'] for p in POINTS)),
         series_absent=absent, series_not_in_a_point=unassigned_series,
         series=out_series, series_count=len(out_series), dipole_directions=dipole_dirs,
@@ -740,13 +748,12 @@ def build_external_pre_message(key, *, mode, prior_grade=None):
         relationship_pairs_required=key['relationship_pairs_scanned'],
         relationship_review=key['relationship_scan'] if teach else None,
         prior_cycle_correction=prior_external_summary(prior_grade), as_of_rule=key['as_of_rule'],
-        teacher_opening=('Beside the 19 Dipole dimensions, this section teaches Frankie\'s historical data points (Greg\'s 13, the squeeze '
-                         'points deferred) for '
+        teacher_opening=('Beside the 19 Dipole dimensions, this section teaches Frankie\'s historical data points (Greg\'s 13) for '
                          'this trading day: every value known at this classroom\'s cutoff with the time it became public, '
                          'the value each Dipole row saw at its own time, and how each series relates to each Dipole column '
                          'and to every other series. A value not yet published at a row\'s time is MISSING for that row. '
-                         'Missing values are listed with their reason; nothing is dropped. The squeeze points are deferred by Greg '
-                         '(listed under deferred), not missing.'),
+                         'Missing values are listed with their reason; nothing is dropped. The squeeze 3-day calendar-front '
+                         'spread, not one of the 13, was dropped by Greg (listed under deferred.dropped).'),
         relationship_instruction=(f'Consider all {key["relationship_pairs_scanned"]} external pairs ({key["external_dipole_pairs"]} '
                                   f'series x Dipole, {key["external_external_pairs"]} series x series). Pearson is reported only '
                                   f'with at least {MIN_PEARSON_PRESENT_OVERLAP} rows where both are PRESENT and nonzero variance; '
@@ -772,7 +779,7 @@ def build_external_binding(key, pre, *, v1_binding):
 
 def model_visible_external(binding, pre):
     value = dict(schema=VISIBLE_SCHEMA, binding=binding, pre_message=pre, audit_key_object_withheld=True,
-                 coverage_invariant='EVERY_POINT_BUT_THE_DEFERRED_SQUEEZE_POINTS_EVERY_SERIES_EVERY_EXTERNAL_PAIR',
+                 coverage_invariant='EVERY_POINT_EVERY_SERIES_EVERY_EXTERNAL_PAIR',
                  required_response_ledgers=dict(
                      external_teachback='EVERY_SERIES_WITH_ITS_FACTS_AND_THE_POINT_REVIEW',
                      external_value_review='EVERY_KNOWN_VALUE_OF_EVERY_SERIES',
@@ -796,7 +803,7 @@ def _text(value, label):
 
 def validate_external_ledgers(ledgers, pre):
     """Shape of Frankie's external answers against the pre-message: every series in order, every known value, every
-    pair in canonical order, every point of the section (Greg's 13 less the deferred point 6). Raises ValueError."""
+    pair in canonical order, every point of the section (Greg's 13). Raises ValueError."""
     if type(ledgers) is not dict or set(ledgers) != set(LEDGERS):
         raise ValueError('the external ledgers differ from the contract')
     tb = ledgers['external_teachback']
@@ -1004,7 +1011,7 @@ def render_markdown(ledgers, grade=None):
              '## Cycle summary', '', tb['cycle_summary'], '', '## Correlation review', '', tb['correlation_review'], '',
              '## Unresolved questions', '']
     lines += [f'- {cell(q)}' for q in tb['unresolved_questions']] or ['- none']
-    lines += ['', '## The points (Greg\'s 13; point 6 and the squeeze spread change deferred by Greg)', '']
+    lines += ['', '## The points (Greg\'s 13; the squeeze 3-day spread, not one of them, dropped by Greg)', '']
     for p in tb['point_review']:
         lines += [f'### {p["point_id"]}. {cell(p["name"])}', '', cell(p['review']), '']
     lines += ['## Series', '']
