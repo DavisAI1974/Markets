@@ -595,3 +595,103 @@ G-1 sizing).
 
 Checks: AST parse without imports passes on `frankie_box_classroom_code.py` at d8eb215. `git diff --check
 0035f80..d8eb215` is clean. Nothing executed.
+
+## Fourth follow-up, 2026-10-07 night (session 2): `d8eb215..2666e17`
+
+Reviewer: ccode_review, under the same go. This pass is READ-ONLY: no fixes, no git writes, no account calls, NO RUNS.
+The only write is this section.
+
+Commits reviewed:
+- 4d5e585: the classroom native-entry cutoff;
+- dc6ac77: the stage heartbeat at Run.child, the probe's RUN_DIR mode and the cutoff plan keys;
+- eef5a7c: the classroom heartbeat in `_check`;
+- 2666e17: `report_phase` in every stage;
+- 03dca1d and b83888e: the key redaction.
+
+### Verdict: APPROVED for integration (source only). Nothing blocks the one-day E2E.
+
+**Probes cannot change a stage's outputs, identities, order or exit code.**
+- `Heartbeat` runs in the orchestrator. It reads only `/proc` (the child's tree: stat, status, io, fd, fdinfo) and the
+  child's log tail. It writes only `<run>/days/<day>/progress/<stage>.jsonl` and removes its own `<stage>.phase.json`.
+- Nothing reads those files except `stages_summary` and the probe. `new_bytes` walks ingest, ROOT and day-file
+  directories, never the run directory. The day-level `*.json` globs do not descend into `progress/`.
+- The child gains one environment variable, `FRANKIE_STAGE_PROGRESS`. No stage records its environment; the
+  `os.environ.items()` sites found pass it on and never store it.
+- `report_phase` writes only that phase file.
+
+**Every probe call is fail-safe.**
+- Heartbeat construction and `env()` sit in try/except, and the stage runs without them.
+- `start`, `stop`, `_write` and `sample` catch everything; a sampling failure goes on the line as `sample_error`.
+- Every `report_phase` call site is wrapped in `try/except Exception`. That also covers an ImportError in a child whose
+  `sys.path` lacks the box directory.
+- `report_phase` itself swallows errors. Its write is atomic (`.pending` named per pid, then `os.replace`).
+
+**The Popen change keeps `subprocess.run`'s semantics.**
+- `Run.child`:
+  - `proc.wait()` returns the same return code;
+  - on any BaseException the child is killed and the error re-raised, which is run()'s own handler;
+  - `Popen.__exit__` reaps the child;
+  - the command (the `frankie_box_cores.py run --inside` wrapper, which applies taskset) is unchanged, so the
+    affinity is unchanged;
+  - an `OSError` from Popen propagates as before.
+- The reporter:
+  - `proc.wait(timeout=900)`, then on `TimeoutExpired` kill and re-raise into the existing `TimeoutExpired` handler;
+  - `start_new_session` is kept, and the `taskset -c` prefix is kept in the command;
+  - the environment is `os.environ` plus the one variable, as before;
+  - `code` was already initialised to None before the try.
+
+**The cutoff never mislabels.**
+- It is a named state, `status='cutoff'`, and never `integrity_failure`.
+- A cutoff in the pass stops feeding at a picture boundary. Rows `[0, k)` are complete: a row closes only once the
+  source has passed its cursor. The computed series cover exactly those rows, `rows_covered` is recorded beside `rows`,
+  and the remaining rows are listed as `unavailable: cutoff`.
+- A cutoff after the pass keeps every series already computed. The rest are `status='unavailable'` with the reason:
+  never zero and never done.
+- Carriers left uncomputed by a cutoff are kept out of the measured-absence text. An absence measured before a pass
+  cutoff says "measured only up to the cutoff".
+- Integrity paths are unchanged: an out-of-order cursor or a roster mismatch still sets `integrity_failure`.
+- When no limit is reached, `n == self.k == self.n`, so the values are identical to d8eb215.
+- The rest of the classroom only reads the result. An empty `rows_covered` is guarded (no `codes[-1]` on empty arrays,
+  and `_direction` handles empty arrays).
+
+**Older saved plans keep their fingerprint.**
+- The cutoff keys are saved only when given. A saved plan's values are adopted when none are given, and absent stays
+  absent.
+- New values on an existing run are refused by "a run keeps one plan". That refusal is visible.
+- The environment reaches the classroom only when the plan carries the keys.
+
+**Hot-path cost.**
+- The pass: a modulo test per picture, and every 10,000 pictures one `/proc/self/statm` read plus a `report_phase`
+  throttled to once per second.
+- The pairs: one statm read per series, about 1,300 in all.
+- Other stages: `report_phase` at phase boundaries, or with `every=10` in loops.
+- The heartbeat: one `/proc` scan per stage every 30 s, in the orchestrator.
+- All of this is negligible.
+
+**Key redaction.**
+- Both pinned `HISTORICAL_CLAIMS_V1-*.json` files are byte-identical at d8eb215 and 2666e17:
+  - `9dc79ca359e9`: sha256 14ae935f...;
+  - `9b2ca9849e4f`: ea95a2e7....
+- The historical-claims reader reads its sources at the catalog's git revision first. The redacted working-tree docs
+  therefore change no claim; most of them already differed from their catalog revision.
+
+### Non-blocking
+
+- **H-1.** After a cutoff in the pass, a member series' `facts` (values_known, first/last/lowest/highest, nonpresent
+  updates) can include values noted in the not-yet-closed interval, beyond `rows_covered`.
+  - Each fact carries its own cursor, and `cursor_reached` is recorded, so nothing is false.
+  - Restricting the facts to the closed rows would be cleaner.
+- **H-2.** The resident-memory limit measures the whole classroom process (reader and pictures included), not the native
+  work alone. A cutoff by memory could therefore be caused by the rest of the classroom. The reason names the resident
+  GB, so the cause is visible.
+- **H-3.** A cutoff's outcome depends on time, memory and, in the pairs phase, thread timing. It is not reproducible
+  across a fresh recompute. A resume reuses the saved phase, and the limits and the reached point are recorded.
+- **H-4 (UNVERIFIED, predates this range).** The pinned Granite install's `provenance.json` (50 files) was built at
+  5f11188. Whether its gate binds `frankie_box_granite_meeting.py` bytes, which changed here and before, should be
+  re-checked when the box stages the integrated commit.
+
+Checks:
+- AST parse without imports: the 14 changed `.py` files at 2666e17 parse.
+- `bash -n`: ok on `frankie_box_progress.sh` and `frankie_box_experiment.sh`.
+- `git diff --check d8eb215..2666e17`: clean.
+- Nothing executed.
