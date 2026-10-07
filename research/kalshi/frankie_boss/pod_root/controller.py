@@ -1,47 +1,58 @@
-"""The Pod ROOT loop's controller, on the GitHub runner (frankie_box_run.yml script=deploy/aws/box/frankie_box_pod_root_loop.sh,
-its runner step "Pod ROOT loop"; SPEC-pod-day-runner.md).
+"""The AWS CPU Linux lane controller (SPEC-experiment-orchestrator.md; Frankie_30Day_AWS_Runbook_20261006.md "Three lane
+layout": two held 16-CPU lanes on the main box plus ONE held 16-CPU Linux worker lane, i-0d17573dbce871520). Pods are
+retired (Greg, 2026-10-06): nothing here creates, registers, reaches or deletes a Pod, and every retired Pod argument is
+refused before parsing. The same code runs on two hosts:
 
-Greg, 2026-09-29: "Agent work immediately, then A100s immediately after to start running ROOT; when that day is done, clean
-up after the day by deleting garbage and moving data to the big box to be read by other processes"; "Just the pod
-results. The pod stays and brings the next people in, and as space frees up on other boxes they do the same."
+  runner  frankie_box_run.yml script=deploy/aws/box/frankie_box_pod_root_loop.sh (a legacy marker filename; the runner
+          step "AWS CPU Linux lane controller"): a bounded GitHub job (--budget-minutes, 330) for plan, status, resume,
+          stop and a bounded loop. The runner holds the AWS keys. A budget end is recorded as budget_expired with what was
+          still pending; it is never completion and never starts a new scientific attempt.
+  main    deploy/aws/box/frankie_box_cpu_controller.sh ACTION=start: a run-bound systemd unit on the main box, from the
+          staged checkout (--host main --state-dir /opt/frankie-box/work/cpu-controller/<run> --budget-minutes 0), serving
+          every Linux boundary of the run (claims, exports, mailbox renewal, coordination, retained-day accounting) until
+          the run's Linux lane has no remaining work or a cooperative stop request is acknowledged. Main-box actions run
+          locally (the same committed box script, the same preamble as over SSM); the worker is reached over SSM; S3 holds
+          the job, the mailbox and the lease. The box's instance profile must therefore carry what the runner's keys carried
+          (--action preflight names each prerequisite and refuses activation when one is absent; nothing is provisioned).
 
-The runner holds the keys (AWS for S3 presigning and SSM; RUNPOD_API_KEY for Pod creation), the Pods and the box hold
-none. The state lives where it is durable, so the controller is stateless and may be re-dispatched at any time (a GitHub
-job lasts at most 6 h; a running ROOT does not care):
+The state lives where it is durable, so the controller may be re-dispatched or restarted at any time:
   the claims on the main box (/opt/frankie-box/work/root-claims/<run>/<day>.json, frankie_box_root_claims.py);
-  the jobs on each Pod / worker (/opt/frankie-box/pod-agent/jobs/<attempt>/state.json, pod_agent.py);
-  the bytes in transit in s3://frankie-granite42-568968024170-us-east-1/pod-root/<run>/<attempt>/{in,out}/ (deleted as
-  soon as the box import verified every file);
-  the Pod registry s3://.../pod-root/pods/<pod>.json (id and agent token; never printed).
+  the jobs on the worker (/opt/frankie-box/pod-agent/jobs/<attempt>/state.json, pod_agent.py);
+  the bytes in transit in s3://frankie-granite42-568968024170-us-east-1/pod-root/<run>/<attempt>/{in,out,rpc,job.json};
+  the controller's lease and journals in s3://.../pod-root/<run>/controller/ (lease.json: one controller per run);
+  on the main host, the state directory: controller.json (identity, write-once per start), status.json (every poll),
+  events.jsonl (every event), calls/ (every local box call's whole output), stop-request.json / stop-ack.json (the
+  cooperative stop and its acknowledgment), resume-request.json / resume-ack.json (a retained job's same-owner resume,
+  served by the running service, which holds the lane), outcome-<start>.json (how a start ended; never 'complete').
 
 Actions:
-  plan    read-only: the run's queue from the main box (each day's state; ready = sealed ingest + day file attached +
-          no ROOT + no claim), the registered Pods' status, what a loop would start.
-  create  N new A100 SXM 80GB Pods (secure cloud, in-stock data centers, ubuntu:24.04, a persistent volume at
-          /opt/frankie-box, port 8081/http); each boots pod_bootstrap.sh at the staged commit. Needs --confirm
-          CREATE_<N>_PODS. Never stops or deletes anything.
-  loop    the queue worked until the budget ends: every poll, per worker (Pod or worker box), finished jobs are imported
-          into the main box and verified, then cleaned from the worker; free slots take the next ready day
-          (claim -> inputs -> job). Nothing is started after --stop-starting-minutes before the budget ends; running
-          ROOTs keep running after the controller exits and the next dispatch imports them.
-  status  read-only: claims and imports on the box, every worker's jobs.
-Rules kept: the day-file gate (a day is ready only with its day file attached beside its sealed ingest; the Pod re-checks
-it before any calculation); one claim per day; the same committed ROOT script, commit and receipts as the box; zero data
-dropped (the whole ROOT directory moves, an unfinished attempt is kept like the orchestrator keeps one); counts, not
-averages; no Pod stopped or deleted here.
+  plan       read-only: the run's queue from the main box (each day's state; ready = sealed ingest + day file attached +
+             no ROOT + no claim), what a loop would start.
+  status     read-only: claims and imports on the main box, the worker's jobs (live).
+  loop       the queue worked: every poll, finished jobs are handled, retained days are held, a free slot takes the next
+             ready day (claim -> inputs -> job); the held job's mailbox is renewed; coordination requests are answered.
+  resume     one retained job (--job) renewed and resumed on its original owner; the controller serves that job only.
+  stop       a cooperative save requested of one retained job (--job) on the worker; never a machine stop.
+  preflight  (host main) the credential and reachability prerequisites checked read-only; refuses with the exact one.
+  retained   (host main) the retained state directory and the run's claims, no AWS call: the controller process and the
+             worker's last-seen job reported distinctly.
+Rules kept: the day-file gate; one claim per day; the same committed ROOT script, commit and receipts as the box; zero
+data dropped; counts, not averages; a claim is never cleared here; an interrupted or refused handoff keeps the original
+claim and inputs; exactly one Linux lane (SLOTS=1); no new AWS service, booking or host.
 """
 import argparse
-import http.client
+import fcntl
 import json
 import os
 import re
 import secrets
+import signal
+import subprocess
 import sys
 import threading
 import time
 import traceback
 from pathlib import Path
-from urllib.parse import urlencode
 
 import boto3
 from botocore.config import Config
@@ -57,17 +68,19 @@ TRANSFER_BUCKET = 'frankie-granite42-568968024170-us-east-1'
 INGEST_BUCKET = 'bento-568968024170-us-east-2-an'
 PREFIX = 'pod-root'
 MAIN = dict(instance='i-035994afa8bdf66a5', region='us-east-1')
+LINUX_LANE = 'i-0d17573dbce871520@us-east-1'            # the one Linux worker lane; SLOTS=1
 BOX_SCRIPT = REPO / 'deploy' / 'aws' / 'box' / 'frankie_box_pod_root.sh'
-GPU = 'NVIDIA A100-SXM4-80GB'
-MIN_VCPU, MIN_RAM = 16, 125          # the A100 SXM secure listing (operations/pod_prepare.py)
-IMAGE = 'ubuntu:24.04'
-PORT = 8081
-BOOT = ('apt-get update -q >/dev/null && apt-get install -y -q curl ca-certificates >/dev/null && '
-        'curl -fsSL "https://raw.githubusercontent.com/DavisAI1974/Markets/$MARKETS_SHA/research/kalshi/frankie_boss/'
-        'pod_root/pod_bootstrap.sh" -o /tmp/pod_bootstrap.sh && exec bash /tmp/pod_bootstrap.sh')
+STATE_PARENT = '/opt/frankie-box/work/cpu-controller'    # host main: <STATE_PARENT>/<run>
+PLAN_PARENT = '/opt/frankie-box/work/experiment'          # the main's saved plan: <PLAN_PARENT>/<run>/plan.json
+CLAIMS_PARENT = '/opt/frankie-box/work/root-claims'       # the claim store (frankie_box_root_claims.py)
 FINISHED_FAILED = ('failed_setup', 'failed_inputs', 'failed_gate', 'refused')
 ACTIVE = ('accepted', 'setup', 'inputs', 'root', 'finish', 'coordinate', 'scratch', 'ship')
+LEASE_FRESH_SECONDS = 600                                 # a lease whose heartbeat is older than this is stale
+HEARTBEAT_SECONDS = 60
+RETIRED_POD_FLAGS = ('--pods', '--count', '--confirm', '--data-centers', '--volume-gb', '--container-gb', '--wait-minutes')
+STATE_SCHEMA = 'FRANKIE_CPU_CONTROLLER_V1'
 PRINT_LOCK = threading.Lock()
+HOST = dict(host='runner', state=None)                    # set once in main(); read by box()
 
 
 def say(*parts):
@@ -75,10 +88,21 @@ def say(*parts):
         print(time.strftime('%H:%M:%SZ', time.gmtime()), *parts, flush=True)
 
 
+def utc():
+    return time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+
+
 def s3(bucket):
     region = 'us-east-1' if bucket.endswith('us-east-1') else 'us-east-2'
     return boto3.client('s3', region_name=region, endpoint_url='https://s3.%s.amazonaws.com' % region,
                         config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}))
+
+
+def controller_id():
+    """The journal name of this controller process: the GitHub run on the runner, main-<start epoch> on the main box."""
+    if os.environ.get('GITHUB_RUN_ID'):
+        return os.environ['GITHUB_RUN_ID']
+    return '%s-%d' % (HOST['host'], int(HOST.get('started') or time.time()))
 
 
 class Presigner:
@@ -98,26 +122,160 @@ class Presigner:
         return self._c(bucket).generate_presigned_url('put_object', Params=dict(Bucket=bucket, Key=key), ExpiresIn=self.expires)
 
 
+# ------------------------------------------------------------------------------------------ the retained state (host main)
+
+def write_json(path, doc, create_only=False):
+    """One JSON document; atomic replace, or create-only (a write-once record is never overwritten)."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    body = json.dumps(doc, indent=1, sort_keys=True, default=str) + '\n'
+    if create_only:
+        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write(body)
+            f.flush()
+            os.fsync(f.fileno())
+        return
+    tmp = path.with_name(path.name + '.pending')
+    with open(tmp, 'w', encoding='utf-8') as f:
+        f.write(body)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+
+def read_json(path):
+    try:
+        return json.loads(Path(path).read_bytes())
+    except FileNotFoundError:
+        return None
+
+
+class State:
+    """The state directory of a controller hosted on the main box: a lock held for the process lifetime (a second start
+    of the same run is refused), the write-once identity, the per-poll status, the event journal, every local box call's
+    whole output, the stop request and its acknowledgment, and the outcome of each start."""
+
+    def __init__(self, directory, run):
+        self.dir = Path(directory)
+        self.run = run
+        self.calls = self.dir / 'calls'
+        self.seq = 0
+        self.lock = threading.Lock()
+        self.handle = None
+        self.dir.mkdir(parents=True, exist_ok=True)
+        self.calls.mkdir(exist_ok=True)
+
+    def acquire(self):
+        self.handle = open(self.dir / 'controller.lock', 'a')
+        try:
+            fcntl.flock(self.handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            holder = read_json(self.dir / 'controller.json') or {}
+            raise SystemExit('a controller of %s holds %s (pid %s, unit %s, started %s): not started twice' % (
+                self.run, self.dir / 'controller.lock', holder.get('pid'), holder.get('unit'), holder.get('started_utc')))
+
+    def identity(self, doc):
+        """controller.json: the running start's identity (replaced only by a start that holds the lock); the previous
+        identity is kept as controller-<its start>.json."""
+        previous = read_json(self.dir / 'controller.json')
+        if previous and previous.get('started_epoch'):
+            kept = self.dir / ('controller-%d.json' % int(previous['started_epoch']))
+            if not kept.exists():
+                write_json(kept, previous, create_only=True)
+        write_json(self.dir / 'controller.json', doc)
+
+    def status(self, doc):
+        write_json(self.dir / 'status.json', dict(doc, schema=STATE_SCHEMA + '_STATUS', at=utc()))
+
+    def event(self, fields):
+        with self.lock:
+            with open(self.dir / 'events.jsonl', 'a', encoding='utf-8') as f:
+                f.write(json.dumps(fields, sort_keys=True, default=str) + '\n')
+
+    def call_path(self, action):
+        with self.lock:
+            self.seq += 1
+            return self.calls / ('%s-%04d-%s' % (time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()), self.seq, action))
+
+    def stop_request(self):
+        return read_json(self.dir / 'stop-request.json')
+
+    def stop_ack(self):
+        return read_json(self.dir / 'stop-ack.json')
+
+    def resume_request(self):
+        return read_json(self.dir / 'resume-request.json')
+
+    def resume_acknowledge(self, doc):
+        """The request archived beside its acknowledgment (both kept; a request is consumed exactly once)."""
+        stamp = int(time.time())
+        write_json(self.dir / ('resume-ack-%d.json' % stamp), dict(doc, schema=STATE_SCHEMA + '_RESUME_ACK', acknowledged_utc=utc()),
+                   create_only=True)
+        os.rename(self.dir / 'resume-request.json', self.dir / ('resume-request-%d.json' % stamp))
+
+    def acknowledge(self, doc):
+        write_json(self.dir / 'stop-ack.json', dict(doc, schema=STATE_SCHEMA + '_STOP_ACK', acknowledged_utc=utc()), create_only=True)
+
+    def outcome(self, started_epoch, doc):
+        path = self.dir / ('outcome-%d.json' % int(started_epoch))
+        if path.exists():
+            return
+        write_json(path, dict(doc, schema=STATE_SCHEMA + '_OUTCOME', at=utc()), create_only=True)
+
+
 # ------------------------------------------------------------------------------------------------------ the box
 
 class BoxError(RuntimeError):
     pass
 
 
+def _result(action, target, status, text, err):
+    lines = [l for l in text.splitlines() if l.startswith('POD_ROOT_RESULT ')]
+    if status != 'Success' or not lines:
+        raise BoxError('%s on %s: %s; stdout tail: %s; stderr tail: %s' % (action, target, status, text[-1500:], err[-1500:]))
+    return json.loads(lines[-1][len('POD_ROOT_RESULT '):])
+
+
+def _local_box(action, timeout, pairs):
+    """The box script run on THIS machine (the controller hosted on the main box): the same committed script and the same
+    literal preamble as over SSM, under /bin/sh as the SSM document runs it; its whole stdout and stderr kept in calls/."""
+    state = HOST['state']
+    path = state.call_path(action)
+    script = ssm_run_sh.preamble(pairs) + BOX_SCRIPT.read_text(encoding='utf-8')
+    try:
+        proc = subprocess.run(['/bin/sh', '-c', script], capture_output=True, timeout=timeout, check=False)
+    except subprocess.TimeoutExpired as error:
+        out = (error.stdout or b'').decode('utf-8', 'replace')
+        err = (error.stderr or b'').decode('utf-8', 'replace')
+        Path(str(path) + '.out').write_text(out, encoding='utf-8')
+        Path(str(path) + '.err').write_text(err, encoding='utf-8')
+        raise BoxError('%s on this host: local timeout after %d s (output kept at %s.out)' % (action, timeout, path))
+    out = proc.stdout.decode('utf-8', 'replace')
+    err = proc.stderr.decode('utf-8', 'replace')
+    Path(str(path) + '.out').write_text(out, encoding='utf-8')
+    Path(str(path) + '.err').write_text(err, encoding='utf-8')
+    return _result(action, 'this host (exit %d, %s.out)' % (proc.returncode, path), 'Success' if proc.returncode == 0 else
+                   'exit %d' % proc.returncode, out, err)
+
+
 def box(action, target=MAIN, timeout=1800, url_map=None, **variables):
-    """frankie_box_pod_root.sh over SSM on an instance; returns its POD_ROOT_RESULT (dict). A presigned map travels as a
-    private S3 object whose presigned GET is MAP_URL (as frankie_box_run.yml does); the map object is deleted after."""
+    """frankie_box_pod_root.sh on an instance; returns its POD_ROOT_RESULT (dict). Over SSM, except that a controller
+    hosted on the main box runs main-box actions locally. A presigned map travels as a private S3 object whose presigned
+    GET is MAP_URL (as frankie_box_run.yml does); the map object is deleted after."""
     client = s3(TRANSFER_BUCKET)
     map_key = None
     if url_map is not None:
-        map_key = 'box-runs/pod-root-%s-%s/presigned-map.json' % (os.environ.get('GITHUB_RUN_ID', 'local'), secrets.token_hex(6))
+        map_key = 'box-runs/pod-root-%s-%s/presigned-map.json' % (controller_id(), secrets.token_hex(6))
         client.put_object(Bucket=TRANSFER_BUCKET, Key=map_key, Body=json.dumps(url_map).encode(),
                           ServerSideEncryption='AES256', ContentType='application/json')
         variables['MAP_URL'] = client.generate_presigned_url('get_object', Params=dict(Bucket=TRANSFER_BUCKET, Key=map_key),
                                                              ExpiresIn=timeout + 3600)
     try:
-        ssm = boto3.client('ssm', region_name=target['region'])
         pairs = ['ACTION=%s' % action] + ['%s=%s' % (k, v) for k, v in variables.items() if v not in (None, '')]
+        if HOST['host'] == 'main' and target['instance'] == MAIN['instance']:
+            return _local_box(action, timeout, pairs)
+        ssm = boto3.client('ssm', region_name=target['region'])
         path = '%s/%s.out' % (ssm_run_sh.OUTPUT_DIR, secrets.token_hex(16))
         script = ssm_run_sh.kept_whole(ssm_run_sh.preamble(pairs) + BOX_SCRIPT.read_text(encoding='utf-8'), path)
         command = ssm_run_sh.run(ssm, target['instance'], script, timeout, 'pod-root %s' % action)
@@ -125,85 +283,17 @@ def box(action, target=MAIN, timeout=1800, url_map=None, **variables):
         text = inv.get('StandardOutputContent', '')
         if len(text) >= ssm_run_sh.PART:
             text = ''.join(t for n, t in ssm_run_sh.parts(ssm, target['instance'], path) if n is not None)
-        lines = [l for l in text.splitlines() if l.startswith('POD_ROOT_RESULT ')]
-        if status != 'Success' or not lines:
-            raise BoxError('%s on %s: SSM %s; stdout tail: %s; stderr tail: %s' % (
-                action, target['instance'], status, text[-1500:], inv.get('StandardErrorContent', '')[-1500:]))
-        return json.loads(lines[-1][len('POD_ROOT_RESULT '):])
+        return _result(action, target['instance'], 'SSM ' + status if status != 'Success' else status, text,
+                       inv.get('StandardErrorContent', ''))
     finally:
         if map_key:
             client.delete_object(Bucket=TRANSFER_BUCKET, Key=map_key)
 
 
-# -------------------------------------------------------------------------------------------------- Runpod API
-
-def runpod(method, path, body=None):
-    connection = http.client.HTTPSConnection('api.runpod.io', timeout=30)
-    try:
-        connection.request(method, path, None if body is None else json.dumps(body).encode(),
-                           {'Authorization': 'Bearer ' + os.environ['RUNPOD_API_KEY'], 'Accept': 'application/json',
-                            'Content-Type': 'application/json'})
-        response = connection.getresponse()
-        return response.status, response.read(2000000)
-    finally:
-        connection.close()
-
-
-def a100_centers():
-    status, data = runpod('GET', '/v2/catalog/gpus?' + urlencode(dict(include='AVAILABILITY', product='POD', count=1, cloud='SECURE')))
-    if status == 402:
-        raise SystemExit('Runpod HTTP 402: the balance is empty; tell Greg')
-    if status != 200:
-        raise SystemExit('catalog -> HTTP %d: %s' % (status, data[:400]))
-    for g in json.loads(data)['gpus']:
-        if g['id'] == GPU:
-            centers = [dc['id'] for dc in g.get('dataCenters') or [] if dc.get('availability') not in (None, 'NONE')]
-            return centers, g.get('availability')
-    return [], None
-
-
 # ------------------------------------------------------------------------------------------------------ workers
 
-class PodWorker:
-    """A Runpod Pod running pod_agent.py serve, reached through the Runpod HTTPS proxy with its bearer token."""
-    kind = 'pod'
-
-    def __init__(self, reg):
-        self.id, self.token = reg['pod'], reg['token']
-        self.where = 'pod:' + self.id
-        self.host = '%s-%d.proxy.runpod.net' % (self.id, PORT)
-
-    def _call(self, method, path, body=None, timeout=90):
-        c = http.client.HTTPSConnection(self.host, timeout=timeout)
-        try:
-            c.request(method, path, None if body is None else json.dumps(body).encode(),
-                      {'Authorization': 'Bearer ' + self.token, 'Content-Type': 'application/json'})
-            r = c.getresponse()
-            data = r.read()
-            if r.status not in (200, 409):
-                # 503 = the Pod's bootstrap failed and serves its own report (failing step + log tail): printed whole
-                raise RuntimeError('%s %s -> HTTP %d %s' % (method, path, r.status,
-                                                            data.decode('utf-8', 'replace') if r.status == 503 else data[:300]))
-            return json.loads(data)
-        finally:
-            c.close()
-
-    def status(self):
-        return self._call('GET', '/status')
-
-    def submit(self, job):
-        r = self._call('POST', '/job', job, timeout=120)
-        return (r.get('job_id'), r.get('error'))
-
-    def clean(self, job_id, verified):
-        return self._call('POST', '/clean', dict(job_id=job_id, verified=verified)).get('result')
-
-    def reupload(self, job_id, out):
-        return self._call('POST', '/reupload', dict(job_id=job_id, out=out)).get('result')
-
-
 class BoxWorker:
-    """A worker box (the twin, i-08cee) running pod_agent.py jobs detached, driven over SSM."""
+    """The Linux worker box running pod_agent.py jobs detached, driven over SSM."""
     kind = 'box'
 
     def __init__(self, spec, commit):
@@ -227,13 +317,25 @@ class BoxWorker:
         return box('reupload', self.target, 6 * 3600, url_map=dict(out=out), COMMIT=self.commit, JOB=job_id).get('result')
 
 
-def registry_key(pod):
-    return '%s/pods/%s.json' % (PREFIX, pod)
+# -------------------------------------------------------------------------------------------------------- the lease
+
+def lease_key(run):
+    return '%s/%s/controller/lease.json' % (PREFIX, run)
 
 
-def load_pod(pod):
-    raw = s3(TRANSFER_BUCKET).get_object(Bucket=TRANSFER_BUCKET, Key=registry_key(pod))['Body'].read()
+def read_lease(run):
+    try:
+        raw = s3(TRANSFER_BUCKET).get_object(Bucket=TRANSFER_BUCKET, Key=lease_key(run))['Body'].read()
+    except Exception as error:  # noqa: BLE001
+        if getattr(error, 'response', {}).get('Error', {}).get('Code') in ('404', 'NoSuchKey', 'NotFound'):
+            return None
+        raise
     return json.loads(raw)
+
+
+def lease_alive(lease):
+    """A lease is alive while its holder's heartbeat is fresh and it was not released."""
+    return bool(lease) and not lease.get('released_utc') and time.time() - float(lease.get('heartbeat_epoch') or 0) < LEASE_FRESH_SECONDS
 
 
 # ---------------------------------------------------------------------------------------------------- the loop
@@ -243,28 +345,176 @@ class Controller:
         self.a = a
         self.run = a.run
         self.started = time.time()
-        self.stop_starting = self.started + (a.budget_minutes - a.stop_starting_minutes) * 60
-        self.end = self.started + a.budget_minutes * 60
+        self.open_ended = a.budget_minutes == 0
+        self.stop_starting = None if self.open_ended else self.started + (a.budget_minutes - a.stop_starting_minutes) * 60
+        self.end = None if self.open_ended else self.started + a.budget_minutes * 60
         self.sign = Presigner(a.url_hours)
         self.lock = threading.Lock()
         self.events = []
         self.force_box = set()
         self.start_failures = {}
         self.tries = {}
-        self.commit = None
+        self.commit = a.commit
         self.queue_state = None
+        self.state = HOST['state']
+        self.stop = None                 # the stop request once seen (host main) or the signal received
+        self.stop_relayed = None         # {job_id: worker reply} once the cooperative save was relayed
+        self.stop_seen = None
+        self.outcome = None
+        self.last_worker = None
+        self.lease_identity = dict(host=HOST['host'], pid=os.getpid(), started_epoch=int(self.started),
+                                   unit=os.environ.get('CPU_CONTROLLER_UNIT'), controller=controller_id())
+        self.finished = threading.Event()
+
+    # ---- records
 
     def event(self, **fields):
-        fields['at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+        fields['at'] = utc()
         with self.lock:
             self.events.append(fields)
+        if self.state:
+            self.state.event(fields)
         say(' '.join('%s=%s' % (k, v) for k, v in fields.items() if k != 'at'))
+
+    def snapshot(self, w=None, worker_status=None, held=None):
+        if not self.state:
+            return
+        worker = None
+        if w is not None:
+            worker = dict(where=w.where, at=utc(), jobs=worker_status.get('jobs') if worker_status else None,
+                          unreachable=worker_status is None)
+            self.last_worker = worker
+        q = self.queue_state or {}
+        self.state.status(dict(run=self.run, controller=dict(self.lease_identity, action=self.a.action, commit=self.commit,
+                                                            code_root=self.a.code_root, budget_minutes=self.a.budget_minutes,
+                                                            open_ended=self.open_ended, stop=self.stop,
+                                                            stop_relayed=self.stop_relayed, outcome=self.outcome),
+                               queue=dict(counts=q.get('counts'), code_commit=q.get('code_commit'), active=q.get('active'),
+                                          free_bytes=q.get('free_bytes')),
+                               worker=worker or self.last_worker, held=held))
 
     def queue(self):
         q = box('queue', MAIN, 1800, CODE_ROOT=self.a.code_root, RUN=self.run)
+        if self.commit and q.get('code_commit') != self.commit:
+            raise SystemExit('the staged checkout %s is at %s, the controller was given --commit %s: run/code identity '
+                             'differs; nothing claimed' % (self.a.code_root, q.get('code_commit'), self.commit))
         self.commit = self.commit or q.get('code_commit')
         self.queue_state = q
         return q
+
+    # ---- the lease (one controller per run, across hosts)
+
+    def take_lease(self):
+        lease = read_lease(self.run)
+        if lease_alive(lease) and {k: lease.get(k) for k in ('host', 'pid', 'started_epoch')} != \
+                {k: self.lease_identity[k] for k in ('host', 'pid', 'started_epoch')}:
+            raise SystemExit('run %s is served by another controller (host %s, pid %s, unit %s, controller %s, heartbeat %s): '
+                             'not a second one; a main-box service takes stop and resume requests through '
+                             'frankie_box_cpu_controller.sh ACTION=stop|resume; a runner loop ends with its budget' % (
+                                 self.run, lease.get('host'), lease.get('pid'), lease.get('unit'), lease.get('controller'),
+                                 lease.get('heartbeat_utc')))
+        self.write_lease()
+
+    def write_lease(self, **fields):
+        doc = dict(self.lease_identity, schema=STATE_SCHEMA + '_LEASE', run=self.run, action=self.a.action,
+                   state_dir=str(self.state.dir) if self.state else None, heartbeat_epoch=time.time(), heartbeat_utc=utc(),
+                   **fields)
+        s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=lease_key(self.run), Body=json.dumps(doc, sort_keys=True).encode(),
+                                       ServerSideEncryption='AES256', ContentType='application/json')
+
+    def heartbeat(self):
+        while not self.finished.wait(HEARTBEAT_SECONDS):
+            try:
+                self.write_lease()
+            except Exception as error:  # noqa: BLE001
+                self.event(step='lease', result='heartbeat failed', error='%s: %s' % (type(error).__name__, str(error)[:200]))
+
+    def release_lease(self):
+        try:
+            self.write_lease(released_utc=utc(), outcome=self.outcome)
+        except Exception as error:  # noqa: BLE001
+            self.event(step='lease', result='release failed', error='%s: %s' % (type(error).__name__, str(error)[:200]))
+
+    # ---- the cooperative stop (host main: stop-request.json; any host: SIGTERM)
+
+    def check_stop(self):
+        if self.stop is not None or not self.state:
+            return
+        request = self.state.stop_request()
+        if request is None:
+            return
+        if self.state.stop_ack() is not None:
+            return                                   # an older, already acknowledged request (archived by the launcher)
+        self.stop = dict(request, source='stop-request.json')
+        self.stop_seen = time.time()
+        self.event(step='stop', result='requested', save=request.get('save'), requested=request.get('requested_utc'))
+
+    def check_resume(self, w, jobs):
+        """A retained job's same-owner resume requested through the state directory, served once by the running service:
+        the original job, claim and inputs (renew with resume), never a new attempt; refused with the reason otherwise."""
+        if not self.state:
+            return
+        request = self.state.resume_request()
+        if request is None:
+            return
+        job_id = str(request.get('job_id') or '')
+        ack = dict(run=self.run, request=request, controller=self.lease_identity)
+        try:
+            if self.stop is not None:
+                raise ValueError('a stop is pending; no resume while stopping')
+            if not re.fullmatch(re.escape(self.run) + r'-[0-9]{8}-a[0-9]+', job_id):
+                raise ValueError('job_id must name the original run-day-attempt')
+            q = self.queue()
+            held = next((d.get('claim') for d in q['days'] if (d.get('claim') or {}).get('attempt') == job_id), None)
+            if not held or held.get('where') != w.where:
+                raise ValueError('the day must still be claimed by this Linux worker (original claim untouched)')
+            live = [j for j in jobs if j.get('job_id') == job_id]
+            if live and (live[0].get('pid_alive') or live[0].get('state') == 'day_complete'):
+                raise ValueError('the job is %s (pid alive %s): a live or completed day is not resumed' % (
+                    live[0].get('state'), live[0].get('pid_alive')))
+            result = self.renew(w, dict(job_id=job_id), resume=True)
+            ack.update(resumed=True, result=result)
+            self.event(worker=w.where, step='resume', attempt=job_id, result='resumed', detail=result)
+        except (Exception, SystemExit) as error:  # noqa: BLE001
+            ack.update(resumed=False, refused='%s: %s' % (type(error).__name__, str(error)[:400]),
+                       note='original claim, job files and inputs untouched')
+            self.event(worker=w.where, step='resume', attempt=job_id, result='refused', error=ack['refused'][:300])
+        self.state.resume_acknowledge(ack)
+
+    def relay_save(self, w, jobs):
+        """Once: the cooperative save requested of every live retained job of this run on the worker."""
+        if self.stop_relayed is not None:
+            return
+        self.stop_relayed = {}
+        if not self.stop.get('save'):
+            return
+        for j in jobs:
+            if j.get('workflow') == 'root-to-finish' and j.get('pid_alive'):
+                try:
+                    r = box('stop', w.target, 600, COMMIT=self.commit, JOB=j['job_id'])
+                    self.stop_relayed[j['job_id']] = r.get('result')
+                except Exception as error:  # noqa: BLE001
+                    self.stop_relayed[j['job_id']] = 'relay failed: %s: %s' % (type(error).__name__, str(error)[:300])
+                self.event(worker=w.where, day=j.get('day'), step='stop', attempt=j['job_id'], result=self.stop_relayed[j['job_id']])
+
+    def stop_settled(self, jobs):
+        """True once no relayed job is still active, or the stop wait elapsed (the job then continues unattended; said so)."""
+        waiting = [j for j in jobs if j.get('job_id') in (self.stop_relayed or {}) and j.get('state') in ACTIVE and j.get('pid_alive')]
+        return not waiting or time.time() - self.stop_seen > self.a.stop_wait_minutes * 60
+
+    def acknowledge_stop(self, w, jobs):
+        pending = [dict(job_id=j.get('job_id'), day=j.get('day'), state=j.get('state'), pid_alive=j.get('pid_alive'),
+                        save_requested=j.get('save_requested'))
+                   for j in jobs if j.get('run') == self.run and j.get('state') not in ('day_complete', 'cleaned')]
+        unattended = [p for p in pending if p['pid_alive']]
+        self.outcome = dict(outcome='stop_acknowledged', request=self.stop, relayed=self.stop_relayed, pending=pending,
+                            jobs_continue_unattended=unattended, claims_untouched=True, complete=False)
+        if self.state:
+            self.state.acknowledge(dict(run=self.run, request=self.stop, relayed=self.stop_relayed, pending=pending,
+                                        jobs_continue_unattended=unattended, controller=self.lease_identity))
+        self.event(worker=w.where, step='stop', result='acknowledged', pending=len(pending), unattended=len(unattended))
+
+    # ---- the days
 
     def prefix(self, attempt):
         return '%s/%s/%s' % (PREFIX, self.run, attempt)
@@ -280,7 +530,7 @@ class Controller:
 
     def s3_source(self, st, f):
         """An S3 copy of an input with the same size (the runner ingest's own objects; the day file's S3 key), so the
-        box need not upload it; the Pod checks the sha256 either way."""
+        box need not upload it; the worker checks the sha256 either way."""
         if st['day'] in self.force_box:
             return None
         keys = []
@@ -296,6 +546,14 @@ class Controller:
             if head['ContentLength'] == f['bytes']:
                 return bucket, key
         return None
+
+    def resign(self, inputs):
+        """Every input part's GET re-signed now (an export can take hours; a URL signed before it would be the older one;
+        on the main host the signing credentials are the instance profile's session, so URLs are signed as late as possible)."""
+        for f in inputs:
+            for part in f['parts']:
+                part['url'] = self.sign.get(part['bucket'], part['key'])
+        return inputs
 
     def start_day(self, w, st, retained=False):
         day = st['day']
@@ -313,68 +571,65 @@ class Controller:
             for f in st['files']:
                 src = self.s3_source(st, f)
                 if src:
-                    inputs.append(dict(f, parts=[dict(url=self.sign.get(*src), bytes=f['bytes'], bucket=src[0], key=src[1])],
+                    inputs.append(dict(f, parts=[dict(url=None, bytes=f['bytes'], bucket=src[0], key=src[1])],
                                        source='s3://%s/%s' % src))
                 else:
                     need.append(f)
-            if need:
+            for f in need:
+                # one file per export call, its PUT slots signed just before the call: a slot is never older than one
+                # file's upload (on the main host the signing session is the instance profile's, bounded)
                 slots = {}
-                for f in need:
-                    for i, (off, ln) in enumerate(T.plan_parts(f['bytes'])):
-                        key = '%s/in/%s.part-%04d' % (self.prefix(attempt), f['name'], i)
-                        slot = dict(url=self.sign.put(TRANSFER_BUCKET, key))
-                        if retained:
-                            try:
-                                head = s3(TRANSFER_BUCKET).head_object(Bucket=TRANSFER_BUCKET, Key=key)
-                            except Exception as error:
-                                if getattr(error, 'response', {}).get('Error', {}).get('Code') not in ('404', 'NoSuchKey', 'NotFound'):
-                                    raise
-                            else:
-                                if head['ContentLength'] != ln:
-                                    raise ValueError('retained exported part has different size: %s' % key)
-                                slot['present_bytes'] = ln
-                        slots['put:' + key] = slot
+                for i, (off, ln) in enumerate(T.plan_parts(f['bytes'])):
+                    key = '%s/in/%s.part-%04d' % (self.prefix(attempt), f['name'], i)
+                    slot = dict(url=self.sign.put(TRANSFER_BUCKET, key))
+                    if retained:
+                        try:
+                            head = s3(TRANSFER_BUCKET).head_object(Bucket=TRANSFER_BUCKET, Key=key)
+                        except Exception as error:
+                            if getattr(error, 'response', {}).get('Error', {}).get('Code') not in ('404', 'NoSuchKey', 'NotFound'):
+                                raise
+                        else:
+                            if head['ContentLength'] != ln:
+                                raise ValueError('retained exported part has different size: %s' % key)
+                            slot['present_bytes'] = ln
+                    slots['put:' + key] = slot
                 t0 = time.time()
                 r = box('export', MAIN, 4 * 3600, url_map=slots, CODE_ROOT=self.a.code_root, RUN=self.run, DAY=day,
-                        WHERE=w.where, ATTEMPT=attempt, FILES=','.join(f['name'] for f in need))
-                for f in need:
-                    parts = r['files'][f['name']]['parts']
-                    inputs.append(dict(f, parts=[dict(url=self.sign.get(TRANSFER_BUCKET, p['key']), bytes=p['bytes'],
-                                                     bucket=TRANSFER_BUCKET, key=p['key']) for p in parts],
-                                       source='box export'))
-                self.event(worker=w.where, day=day, step='export', files=len(need), bytes=sum(f['bytes'] for f in need),
+                        WHERE=w.where, ATTEMPT=attempt, FILES=f['name'])
+                parts = r['files'][f['name']]['parts']
+                inputs.append(dict(f, parts=[dict(url=None, bytes=p['bytes'], bucket=TRANSFER_BUCKET, key=p['key']) for p in parts],
+                                   source='box export'))
+                self.event(worker=w.where, day=day, step='export', file=f['name'], bytes=f['bytes'], parts=len(parts),
                            seconds=round(time.time() - t0))
-            out = {} if w.kind == 'box' else self.out_slots(attempt)
+            self.resign(inputs)
             job = dict(schema='FRANKIE_POD_ROOT_JOB_V1', name=attempt, run=self.run, day=day, role=st['role'],
-                       digest=st['digest'], commit=self.commit, data_workers=15 if w.kind == 'box' else self.a.data_workers,
+                       digest=st['digest'], commit=self.commit, data_workers=15,
                        ingest_dir=st['ingest_dir'], ingestion_receipt=st['ingestion_receipt'],
                        ingestion_receipt_sha256=st['ingestion_receipt_sha256'], day_external_sha256=st['day_external_sha256'],
                        frozen_survivors=st.get('frozen_survivors'),
                        inputs=[{k: f[k] for k in ('role', 'path', 'name', 'bytes', 'sha256', 'parts', 'source')} for f in inputs],
-                       out=out, where=w.where, created=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
-                       controller_run=os.environ.get('GITHUB_RUN_ID'))
-            if w.kind == 'box':
-                job.update(workflow='root-to-finish', plan=st['plan'], settings=st['settings'],
-                           mailbox=dict(request_put=self.sign.put(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/request.json'),
-                                        response_get=self.sign.get(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/response.json')))
-                job['settings'] = dict(job['settings'], data_workers=15, search_workers=15)
-                key = '%s/job.json' % self.prefix(attempt)
-                try:
-                    s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=key, Body=json.dumps(job).encode(),
-                                                   ServerSideEncryption='AES256', IfNoneMatch='*')
-                except Exception as error:
-                    if getattr(error, 'response', {}).get('Error', {}).get('Code') not in ('PreconditionFailed', '412'):
-                        raise
-                    existing = json.loads(s3(TRANSFER_BUCKET).get_object(Bucket=TRANSFER_BUCKET, Key=key)['Body'].read())
-                    def identity(body):
-                        fields = {k: v for k, v in body.items() if k not in ('mailbox', 'created', 'controller_run')}
-                        fields['inputs'] = [dict(f, parts=[{k: v for k, v in p.items() if k != 'url'}
-                                                          for p in f['parts']]) for f in fields['inputs']]
-                        return fields
-                    if identity(existing) != identity(job):
-                        raise ValueError('retained job differs; S3 job not overwritten')
-                    job = existing
-                job['_job_url'] = self.sign.get(TRANSFER_BUCKET, key)
+                       out={}, where=w.where, created=utc(), controller_run=controller_id(),
+                       workflow='root-to-finish', plan=st['plan'], settings=dict(st['settings'], data_workers=15, search_workers=15),
+                       mailbox=dict(request_put=self.sign.put(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/request.json'),
+                                    response_get=self.sign.get(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/response.json')))
+            key = '%s/job.json' % self.prefix(attempt)
+            try:
+                s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=key, Body=json.dumps(job).encode(),
+                                               ServerSideEncryption='AES256', IfNoneMatch='*')
+            except Exception as error:
+                if getattr(error, 'response', {}).get('Error', {}).get('Code') not in ('PreconditionFailed', '412'):
+                    raise
+                existing = json.loads(s3(TRANSFER_BUCKET).get_object(Bucket=TRANSFER_BUCKET, Key=key)['Body'].read())
+
+                def identity(body):
+                    fields = {k: v for k, v in body.items() if k not in ('mailbox', 'created', 'controller_run')}
+                    fields['inputs'] = [dict(f, parts=[{k: v for k, v in p.items() if k != 'url'}
+                                                      for p in f['parts']]) for f in fields['inputs']]
+                    return fields
+                if identity(existing) != identity(job):
+                    raise ValueError('retained job differs; S3 job not overwritten')
+                job = existing
+            job['_job_url'] = self.sign.get(TRANSFER_BUCKET, key)
             job_id, why = w.submit(job)
             if not job_id:
                 raise RuntimeError('the worker refused the job: %s' % why)
@@ -383,21 +638,11 @@ class Controller:
             return True
         except Exception as e:  # noqa: BLE001
             self.event(worker=w.where, day=day, step='start', result='failed', error='%s: %s' % (type(e).__name__, str(e)[:400]))
-            if w.kind == 'box':
-                # An SSM timeout can occur after acceptance. Keep ownership and input slots until
-                # status establishes what happened; releasing here could dispatch the day twice.
-                self.event(worker=w.where, day=day, step='held', attempt=attempt,
-                           result='preparation/submission requires same-box status/resume; claim and inputs retained')
-                return False
-            self.release(w, day, attempt, 'the controller could not start the job: %s: %s' % (type(e).__name__, str(e)[:300]))
-            self.delete_prefix(attempt)
+            # An SSM timeout can occur after acceptance. Keep ownership and input slots until status establishes what
+            # happened; releasing here could dispatch the day twice.
+            self.event(worker=w.where, day=day, step='held', attempt=attempt,
+                       result='preparation/submission requires same-box status/resume; claim and inputs retained')
             return False
-
-    def out_slots(self, attempt):
-        return dict(chunk_urls=[self.sign.put(TRANSFER_BUCKET, '%s/out/chunk-%04d' % (self.prefix(attempt), i))
-                                for i in range(self.a.out_chunks)],
-                    manifest_url=self.sign.put(TRANSFER_BUCKET, '%s/out/manifest.json' % self.prefix(attempt)),
-                    chunk_bytes=T.CHUNK_BYTES)
 
     def release(self, w, day, attempt, reason):
         try:
@@ -407,27 +652,9 @@ class Controller:
         except BoxError as e:
             self.event(worker=w.where, day=day, step='release', attempt=attempt, result='failed', error=str(e)[:300])
 
-    def import_job(self, w, j):
-        attempt, day = j['job_id'], j['day']
-        client = s3(TRANSFER_BUCKET)
-        manifest = json.loads(client.get_object(Bucket=TRANSFER_BUCKET, Key='%s/out/manifest.json' % self.prefix(attempt))['Body'].read())
-        url_map = dict(manifest=dict(url=self.sign.get(TRANSFER_BUCKET, '%s/out/manifest.json' % self.prefix(attempt))),
-                       chunks=[dict(url=self.sign.get(TRANSFER_BUCKET, '%s/out/chunk-%04d' % (self.prefix(attempt), c['index'])))
-                               for c in manifest['chunks']])
-        t0 = time.time()
-        r = box('import', MAIN, 6 * 3600, url_map=url_map, CODE_ROOT=self.a.code_root, RUN=self.run, DAY=day, WHERE=w.where,
-                ATTEMPT=attempt, DISK_FLOOR_GB=self.a.disk_floor_gb)
-        receipt = r['receipt']
-        self.event(worker=w.where, day=day, step='import', attempt=attempt, status=receipt.get('status'),
-                   files=receipt.get('files'), bytes=receipt.get('bytes'), compressed=receipt.get('compressed_bytes'),
-                   seconds=round(time.time() - t0), root_exit=receipt.get('root_exit'),
-                   verified=receipt['verification']['files_checked'], problems=receipt['verification']['problem_count'])
-        cleaned = w.clean(attempt, receipt['manifest_sha256'])
-        deleted = self.delete_prefix(attempt)
-        self.event(worker=w.where, day=day, step='clean', attempt=attempt, worker_result=cleaned, s3_objects_deleted=deleted)
-
     def handle(self, w, j):
-        """One finished job of this run on a worker: import, release, reupload or clean."""
+        """One finished job of this run on the worker: a retained day is reported and held; a legacy shipping state is
+        released and cleaned (no legacy job is started any more; an old one found on the worker is still accounted for)."""
         state, attempt, day = j.get('state'), j.get('job_id'), j.get('day')
         key = (w.where, attempt, state)
         self.tries[key] = self.tries.get(key, 0) + 1
@@ -439,17 +666,15 @@ class Controller:
             if j.get('workflow') == 'root-to-finish':
                 self.event(worker=w.where, day=day, attempt=attempt, step='retained', result=state, detail=j.get('detail'))
                 return
-            if state == 'uploaded':
-                self.import_job(w, j)
-            elif state in ('failed_ship', 'interrupted'):
-                r = w.reupload(attempt, self.out_slots(attempt))
-                self.event(worker=w.where, day=day, attempt=attempt, step='reupload', result=r, state=state)
-            elif state in FINISHED_FAILED:
+            if state in FINISHED_FAILED:
                 if state == 'failed_inputs':
                     self.force_box.add(day)                  # the next attempt takes every input from the box itself
                 self.release(w, day, attempt, 'the worker job ended %s: %s' % (state, j.get('detail')))
                 self.event(worker=w.where, day=day, attempt=attempt, step='clean', worker_result=w.clean(attempt, None),
                            s3_objects_deleted=self.delete_prefix(attempt))
+            else:
+                self.event(worker=w.where, day=day, attempt=attempt, step='legacy', result=state,
+                           detail='a legacy shipping job state; no import or reupload route exists any more; left as found')
         except Exception as e:  # noqa: BLE001
             self.event(worker=w.where, day=day, attempt=attempt, step='handle %s' % state, result='failed',
                        error='%s: %s' % (type(e).__name__, str(e)[:500]))
@@ -473,13 +698,15 @@ class Controller:
         prefix = self.prefix(job['job_id']) + '/rpc'
         update = dict(mailbox=dict(request_put=self.sign.put(TRANSFER_BUCKET, prefix + '/request.json'),
                                    response_get=self.sign.get(TRANSFER_BUCKET, prefix + '/response.json')))
+        key = self.prefix(job['job_id']) + '/job.json'
+        try:
+            saved = json.loads(s3(TRANSFER_BUCKET).get_object(Bucket=TRANSFER_BUCKET, Key=key)['Body'].read())
+        except Exception as error:
+            if getattr(error, 'response', {}).get('Error', {}).get('Code') not in ('404', 'NoSuchKey', 'NotFound'):
+                raise
+            saved = None
         if resume:
-            key = self.prefix(job['job_id']) + '/job.json'
-            try:
-                saved = json.loads(s3(TRANSFER_BUCKET).get_object(Bucket=TRANSFER_BUCKET, Key=key)['Body'].read())
-            except Exception as error:
-                if getattr(error, 'response', {}).get('Error', {}).get('Code') not in ('404', 'NoSuchKey', 'NotFound'):
-                    raise
+            if saved is None:
                 if any(j['job_id'] == job['job_id'] for j in w.status()['jobs']):
                     raise ValueError('worker has this job but its stored source job is missing; retained files not overwritten')
                 day = job['job_id'][len(self.run) + 1:len(self.run) + 9]
@@ -491,13 +718,15 @@ class Controller:
             if (saved['run'], saved['name'], saved['where'], saved['commit']) != \
                     (self.run, job['job_id'], w.where, self.commit):
                 raise ValueError('resume must use the original job, owner and staged commit')
-            for f in saved['inputs']:
-                for part in f['parts']:
-                    part['url'] = self.sign.get(part['bucket'], part['key'])
+        if saved is not None:
+            # the inputs' GETs re-signed with the renewal (same bucket/key identity, which the worker checks), so a job
+            # whose input stage outlives the signing session keeps readable sources
+            saved['inputs'] = self.resign(saved['inputs'])
             saved['mailbox'] = update['mailbox']
             update['inputs'] = saved['inputs']
             s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=key, Body=json.dumps(saved).encode(),
                                            ServerSideEncryption='AES256')
+        if resume:
             status = w.status()
             if not any(j['job_id'] == job['job_id'] for j in status['jobs']):
                 # Acceptance never reached the box, or its SSM answer was lost: retry the SAME claimed job.
@@ -505,22 +734,63 @@ class Controller:
                 return w.submit(saved)
         return box('resume' if resume else 'renew', w.target, 600, COMMIT=self.commit, JOB=job['job_id'], url_map=update)
 
+    def remaining_work(self, q, jobs, w):
+        """What keeps an open-ended controller alive: a day the Linux lane could still take or is holding, or a worker job
+        of this run that is not complete. Empty = the run's Linux lane has nothing left (which says nothing about the two
+        main lanes or about any day's scientific completion)."""
+        reasons = []
+        for d in q['days']:
+            claim = d.get('claim') or {}
+            if d['state'] in ('ready', 'waiting_ingest', 'waiting_day_file', 'behind_in_root_line', 'not_in_root_line'):
+                reasons.append('%s %s' % (d['day'], d['state']))
+            elif claim.get('where') == w.where and not ((claim.get('done') or {}).get('lane_complete')):
+                reasons.append('%s held by this lane (%s)' % (d['day'], claim.get('attempt')))
+        for j in jobs:
+            if j.get('run') == self.run and j.get('state') not in ('day_complete', 'cleaned'):
+                reasons.append('job %s %s' % (j.get('job_id'), j.get('state')))
+        return reasons
+
     def worker_loop(self, w, only_job=None):
+        """The thread of one worker; any failure of the loop itself is recorded as the outcome, never lost in the thread."""
+        try:
+            self._worker_loop(w, only_job)
+        except (Exception, SystemExit) as error:  # noqa: BLE001
+            self.outcome = self.outcome or dict(outcome='failed', error='%s: %s' % (type(error).__name__, str(error)[:600]),
+                                                complete=False, note='the controller loop failed; the worker keeps its job '
+                                                'and claim; nothing was released')
+            self.event(worker=w.where, step='loop', result='failed', error='%s: %s' % (type(error).__name__, str(error)[:400]))
+            self.snapshot()
+
+    def _worker_loop(self, w, only_job):
         failures = 0
         renewed = {}
-        while time.time() < self.end:
+        while True:
+            self.check_stop()
             try:
                 st = w.status()
                 failures = 0
             except Exception as e:  # noqa: BLE001
                 failures += 1
                 self.event(worker=w.where, step='status', result='unreachable', error=str(e)[:200], failures=failures)
+                self.snapshot(w, None)
                 if failures >= 10:
+                    self.outcome = self.outcome or dict(outcome='worker_unreachable', failures=failures, complete=False)
                     return
                 time.sleep(self.a.poll_seconds)
                 continue
             jobs = [j for j in st.get('jobs') or [] if j.get('run') == self.run]
+            if only_job is None:
+                self.check_resume(w, jobs)
+            if self.stop is not None:
+                self.relay_save(w, jobs)
+                if self.stop_settled(jobs):
+                    self.acknowledge_stop(w, jobs)
+                    self.snapshot(w, st)
+                    return
             if only_job and any(j.get('job_id') == only_job and j.get('state') == 'day_complete' for j in jobs):
+                self.outcome = dict(outcome='resumed_job_complete', job=only_job, complete=False,
+                                    note='the resumed job reports day_complete; the run itself is not judged here')
+                self.snapshot(w, st)
                 return
             for j in jobs:
                 if j.get('workflow') == 'root-to-finish' and j.get('pid_alive') and \
@@ -531,7 +801,7 @@ class Controller:
                     except Exception as error:
                         self.event(worker=w.where, day=j['day'], step='renew', result='retry',
                                    error=type(error).__name__)
-                if w.kind == 'box' and j.get('state') == 'coordinate':
+                if j.get('state') == 'coordinate':
                     try:
                         self.coordinate(w, j)
                     except Exception as error:
@@ -539,41 +809,74 @@ class Controller:
                                    error=type(error).__name__)
                 if j.get('state') not in ACTIVE + ('cleaned',):
                     self.handle(w, j)
+            if self.end is not None and time.time() >= self.end:
+                self.outcome = dict(outcome='budget_expired', budget_minutes=self.a.budget_minutes, complete=False,
+                                    pending=[dict(job_id=j.get('job_id'), state=j.get('state')) for j in jobs
+                                             if j.get('state') not in ('day_complete', 'cleaned')],
+                                    note='a finite budget ended; the worker keeps its job and claim; a later loop or the '
+                                         'main-box controller service continues the coordination')
+                self.snapshot(w, st)
+                return
             try:
                 st = w.status()
             except Exception as e:  # noqa: BLE001
                 self.event(worker=w.where, step='status', result='unreachable', error=str(e)[:200])
+                self.snapshot(w, None)
                 time.sleep(self.a.poll_seconds)
                 continue
-            active = [j for j in st.get('jobs') or [] if j.get('state') in ACTIVE]
-            retained = [j for j in st.get('jobs') or [] if j.get('workflow') == 'root-to-finish'
-                        and j.get('state') not in ACTIVE + ('day_complete',)]
+            jobs = [j for j in st.get('jobs') or []]
+            active = [j for j in jobs if j.get('state') in ACTIVE]
+            retained = [j for j in jobs if j.get('workflow') == 'root-to-finish' and j.get('state') not in ACTIVE + ('day_complete',)]
+            held = None
             if retained:
                 self.event(worker=w.where, step='held', result='failed/interrupted day requires same-box resume',
                            days=[j['day'] for j in retained])
+                self.snapshot(w, st, held=[j['job_id'] for j in retained])
+                if only_job and any(j.get('job_id') == only_job for j in retained):
+                    state = next(j.get('state') for j in retained if j.get('job_id') == only_job)
+                    self.outcome = dict(outcome='resumed_job_retained', job=only_job, state=state, complete=False,
+                                        note='the resumed job left its active stages without day_complete; its files, '
+                                             'claim and lane are retained for a later same-job resume')
+                    return
                 time.sleep(self.a.poll_seconds)
                 continue
             free = int(st.get('slots') or 1) - len(active)
-            if free > 0 and time.time() < self.stop_starting and not only_job:
+            may_start = self.stop is None and not only_job and (self.stop_starting is None or time.time() < self.stop_starting)
+            if free > 0 and may_start:
                 # A claim can outlive an interrupted accept/launcher handoff. An empty worker listing
                 # does not free that lane or authorize assigning a second day to it.
-                held = [d for d in self.queue()['days'] if (d.get('claim') or {}).get('where') == w.where
+                q = self.queue()
+                held = [d for d in q['days'] if (d.get('claim') or {}).get('where') == w.where
                         and not ((d['claim'].get('done') or {}).get('lane_complete'))]
                 if held:
                     self.event(worker=w.where, step='held', result='original claim requires same-job resume',
                                attempts=[d['claim']['attempt'] for d in held])
+                    self.snapshot(w, st, held=[d['claim']['attempt'] for d in held])
                     time.sleep(self.a.poll_seconds)
                     continue
                 d = self.next_ready()
                 if d is not None:
                     if self.start_day(w, d):
+                        self.snapshot(w, st)
                         continue
                     with self.lock:
                         self.start_failures[d['day']] = self.start_failures.get(d['day'], 0) + 1
-                if not active and not self.a.wait_for_days:
-                    self.event(worker=w.where, step='idle', result='no ready day and nothing running: this worker is idle '
-                               '(the Pod keeps billing until it is stopped)')
+                if not active and self.open_ended:
+                    remaining = self.remaining_work(self.queue_state, jobs, w)
+                    if not remaining:
+                        self.outcome = dict(outcome='no_remaining_work', complete=False,
+                                            counts=(self.queue_state or {}).get('counts'),
+                                            note='no day the Linux lane could take or is holding and no worker job of the run '
+                                                 'left incomplete; the main lanes and scientific completion are not judged here')
+                        self.event(worker=w.where, step='idle', result='no remaining work for the Linux lane; the service ends')
+                        self.snapshot(w, st)
+                        return
+                elif not active and not self.a.wait_for_days:
+                    self.event(worker=w.where, step='idle', result='no ready day and nothing running: this worker is idle')
+                    self.outcome = dict(outcome='idle', complete=False)
+                    self.snapshot(w, st)
                     return
+            self.snapshot(w, st, held=held)
             time.sleep(self.a.poll_seconds)
 
     def summary(self):
@@ -581,117 +884,189 @@ class Controller:
         for e in self.events:
             k = '%s:%s' % (e.get('step'), e.get('result') or e.get('status') or '')
             counts[k] = counts.get(k, 0) + 1
-        return dict(run=self.run, commit=self.commit, minutes=round((time.time() - self.started) / 60, 1),
-                    event_counts=counts, queue_counts=(self.queue_state or {}).get('counts'))
+        return dict(run=self.run, commit=self.commit, host=HOST['host'], minutes=round((time.time() - self.started) / 60, 1),
+                    event_counts=counts, queue_counts=(self.queue_state or {}).get('counts'), outcome=self.outcome,
+                    complete=False)
 
 
 def workers_of(a, commit):
-    out = []
-    if a.pods:
-        raise ValueError('Pods are retired from the Frankie experiment; use AWS CPU boxes')
-    for spec in [b for b in (a.boxes or '').split(',') if b]:
-        out.append(BoxWorker(spec, commit))
-    return out
+    return [BoxWorker(spec, commit) for spec in [b for b in (a.boxes or '').split(',') if b]]
 
 
-def create(a, commit):
-    if a.confirm != 'CREATE_%d_PODS' % a.count:
-        raise SystemExit('create needs --confirm CREATE_%d_PODS (the parent asks Greg first)' % a.count)
-    centers, level = a100_centers()
-    if a.data_centers:
-        centers = [c for c in a.data_centers.split(',') if c]
-    if not centers:
-        raise SystemExit('no data center reports %s stock (overall %s)' % (GPU, level))
-    say('A100 SXM stock', level, 'data centers', centers)
-    made = []
-    for i in range(a.count):
-        token = secrets.token_urlsafe(32)
-        name = 'frankie-root-%s-%d' % (time.strftime('%m%d%H%M', time.gmtime()), i + 1)
-        body = dict(name=name, image=IMAGE, cloud='SECURE',
-                    gpu=dict(id=GPU, count=1, minRamPerGpu=MIN_RAM, minVcpuCountPerGpu=MIN_VCPU), dataCenterIds=centers,
-                    disk=a.container_gb, mounts=dict(persistent=dict(path='/opt/frankie-box', size=a.volume_gb)),
-                    ports=['%d/http' % PORT], env=dict(MARKETS_SHA=commit, POD_TOKEN=token, POD_SLOTS=str(a.slots)),
-                    entrypoint=['bash', '-c', BOOT], startSsh=False, startJupyter=False)
-        status, data = runpod('POST', '/v2/pods', body)
-        if status == 402:
-            raise SystemExit('Runpod HTTP 402: the balance is empty; tell Greg (%d Pod(s) created before)' % len(made))
-        if status not in (200, 201):
-            raise SystemExit('create -> HTTP %d: %s' % (status, data[:600].decode('utf-8', 'replace')))
-        pod = json.loads(data)
-        cost = {k: v for k, v in pod.items() if 'cost' in k.lower()}
-        s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=registry_key(pod['id']), ServerSideEncryption='AES256',
-                                       Body=json.dumps(dict(pod=pod['id'], name=name, token=token, commit=commit, gpu=GPU,
-                                                            image=IMAGE, volume_gb=a.volume_gb, slots=a.slots, cost=cost,
-                                                            data_centers=centers, created=time.time())).encode())
-        made.append(pod['id'])
-        say('POD %s created (%s) cost %s' % (pod['id'], name, cost))
-        if cost and any(isinstance(v, (int, float)) and v > a.cost_ceiling for v in cost.values()):
-            say('WARNING: Pod %s is priced above the ceiling %.2f/h; it is left as created (stop it with '
-                'frankie_pod_control.yml if Greg says so)' % (pod['id'], a.cost_ceiling))
-    say('watching the agents come up (bootstrap: apt, Python 3.13.15, 75 pins, checkouts): up to %d min' % a.wait_minutes)
-    deadline = time.time() + a.wait_minutes * 60
-    up = set()
-    while time.time() < deadline and len(up) < len(made):
-        time.sleep(60)
-        for pod in made:
-            if pod in up:
-                continue
+# ------------------------------------------------------------------------------------------- host main: preflight
+
+def preflight(a):
+    """The prerequisites a controller hosted on the main box needs beyond its source, checked read-only, each named with
+    the exact permission or path it stands for. Nothing is created, installed or provisioned; a missing one refuses."""
+    worker = a.boxes.partition('@')[0]
+    checks = []
+
+    def check(name, needs, call):
+        try:
+            detail = call()
+            checks.append(dict(prerequisite=name, needs=needs, established=True, detail=detail))
+        except Exception as error:  # noqa: BLE001
+            checks.append(dict(prerequisite=name, needs=needs, established=False,
+                               error='%s: %s' % (type(error).__name__, str(error)[:300])))
+
+    def saved_plan():
+        path = Path(PLAN_PARENT, a.run, 'plan.json')
+        if not path.is_file():
+            raise FileNotFoundError(str(path))
+        return dict(bytes=path.stat().st_size)
+
+    def staged():
+        head = subprocess.run(['git', '-C', a.code_root, 'rev-parse', 'HEAD'], capture_output=True, text=True, check=True).stdout.strip()
+        dirty = subprocess.run(['git', '-C', a.code_root, 'status', '--porcelain', '--untracked-files=no'], capture_output=True,
+                               text=True, check=True).stdout
+        if head != a.commit or dirty:
+            raise ValueError('HEAD %s (--commit %s), tracked changes: %s' % (head, a.commit, bool(dirty)))
+        return dict(head=head, clean=True)
+
+    check('saved main plan', '%s/%s/plan.json written by the main orchestrator\'s first start of this run' % (PLAN_PARENT, a.run),
+          saved_plan)
+    check('claim store route', '%s (frankie_box_root_claims.py; ACTION=enable creates it, which the loop does)' % CLAIMS_PARENT,
+          lambda: dict(active=Path(CLAIMS_PARENT).is_dir()))
+    check('staged checkout', '%s at --commit %s, tracked tree clean' % (a.code_root, a.commit), staged)
+    check('box script', str(BOX_SCRIPT), lambda: dict(bytes=BOX_SCRIPT.stat().st_size))
+    check('credentials', 'an AWS credential chain on this host (the instance profile): sts:GetCallerIdentity',
+          lambda: dict(arn=boto3.client('sts', region_name=MAIN['region']).get_caller_identity().get('Arn')))
+    check('transfer bucket', 's3:ListBucket on %s under %s/%s/ (and GetObject, PutObject, DeleteObject there and under '
+          'box-runs/, which only the loop exercises)' % (TRANSFER_BUCKET, PREFIX, a.run),
+          lambda: dict(keys=s3(TRANSFER_BUCKET).list_objects_v2(Bucket=TRANSFER_BUCKET, Prefix='%s/%s/' % (PREFIX, a.run),
+                                                                MaxKeys=1).get('KeyCount')))
+    check('ingest bucket', 's3:ListBucket on %s under frankie/ingest/ (HeadObject on runner ingests and day files)' % INGEST_BUCKET,
+          lambda: dict(keys=s3(INGEST_BUCKET).list_objects_v2(Bucket=INGEST_BUCKET, Prefix='frankie/ingest/', MaxKeys=1).get('KeyCount')))
+    check('worker over SSM', 'ssm:DescribeInstanceInformation now; ssm:SendCommand and ssm:GetCommandInvocation on %s for every '
+          'worker call (exercised by the first status poll, not here)' % worker,
+          lambda: dict(ping=[(x['PingStatus'], x.get('PlatformName')) for x in boto3.client(
+              'ssm', region_name=a.boxes.partition('@')[2] or 'us-east-1').describe_instance_information(
+              Filters=[{'Key': 'InstanceIds', 'Values': [worker]}])['InstanceInformationList']]))
+    check('lease', 'no live controller of %s (s3:GetObject on %s)' % (a.run, lease_key(a.run)),
+          lambda: dict(lease=read_lease(a.run), alive=lease_alive(read_lease(a.run))))
+    missing = [c for c in checks if not c['established']]
+    worker_online = next((c for c in checks if c['prerequisite'] == 'worker over SSM'), {})
+    if worker_online.get('established') and not any(p[0] == 'Online' for p in worker_online['detail']['ping']):
+        missing.append(dict(prerequisite='worker Online', needs='%s Online in SSM' % worker, established=False,
+                            error='ping %s' % worker_online['detail']['ping']))
+    lease = next((c for c in checks if c['prerequisite'] == 'lease'), {})
+    if lease.get('established') and lease['detail']['alive']:
+        missing.append(dict(prerequisite='lease', needs='no live controller of the run', established=False,
+                            error='a live lease: %s' % lease['detail']['lease']))
+    return dict(schema=STATE_SCHEMA + '_PREFLIGHT', run=a.run, host='main', checks=checks, missing=missing,
+                activation='refused' if missing else 'prerequisites established (SendCommand/PutObject are proven only by use)')
+
+
+def retained(a):
+    """The retained state directory and the run's claims, no AWS call. The controller process and the worker's last-seen
+    job are reported distinctly (the worker's live state needs --action status)."""
+    state = Path(a.state_dir)
+    identity = read_json(state / 'controller.json') or {}
+    alive = False
+    if identity.get('pid'):
+        try:
+            argv = Path('/proc/%s/cmdline' % identity['pid']).read_bytes().split(b'\0')
+            alive = any(x.endswith(b'controller.py') for x in argv) and a.run.encode() in argv
+        except OSError:
+            alive = False
+    lock_held = False
+    if (state / 'controller.lock').exists():
+        with open(state / 'controller.lock', 'a') as handle:
             try:
-                s = PodWorker(load_pod(pod)).status()
-                up.add(pod)
-                say('POD %s agent up: %s cpus (affinity %s), %s GB RAM, disk free %s GB' % (
-                    pod, s['host'].get('cpus'), s['host'].get('affinity'), round((s['host'].get('mem_total_kb') or 0) / 1e6),
-                    round(s['host'].get('disk_free', 0) / 1e9)))
-            except Exception as e:  # noqa: BLE001
-                code, info = runpod('GET', '/v2/pods/' + pod)
-                info = json.loads(info) if code == 200 else {}
-                say('POD %s not up yet (%s); desired %s runtime %s' % (pod, str(e)[:80], info.get('desiredStatus'),
-                                                                       'up' if info.get('runtime') else 'none'))
-    say('CREATED %s; agents up %s; never started %s (left as they are: stop or terminate only on Greg\'s word)'
-        % (made, sorted(up), sorted(set(made) - up)))
-    return made
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.flock(handle, fcntl.LOCK_UN)
+            except OSError:
+                lock_held = True
+    status = read_json(state / 'status.json') or {}
+    outcomes = sorted(p.name for p in state.glob('outcome-*.json'))
+    claims = []
+    for p in sorted(Path(CLAIMS_PARENT, a.run).glob('*.json')) if Path(CLAIMS_PARENT, a.run).is_dir() else ():
+        if p.name.endswith('.reason.json'):
+            continue
+        doc = read_json(p) or {}
+        claims.append(dict(file=p.name, where=doc.get('where'), attempt=doc.get('attempt'), started_utc=doc.get('started_utc'),
+                           done=p.name.endswith('.done.json'), released='.released-' in p.name))
+    return dict(schema=STATE_SCHEMA + '_RETAINED', run=a.run, state_dir=str(state),
+                controller=dict(identity=identity, process_alive=alive, lock_held=lock_held, status_at=status.get('at'),
+                                outcome=(status.get('controller') or {}).get('outcome'), outcomes=outcomes,
+                                stop_request=read_json(state / 'stop-request.json'), stop_ack=read_json(state / 'stop-ack.json'),
+                                resume_request=read_json(state / 'resume-request.json'),
+                                resume_acks=sorted(p.name for p in state.glob('resume-ack-*.json'))),
+                worker=dict(last_seen=status.get('worker'), held=status.get('held'),
+                            note='the worker\'s last snapshot by the controller; --action status asks the worker itself'),
+                queue=status.get('queue'), claims=claims)
 
+
+# ---------------------------------------------------------------------------------------------------------- main
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('--action', required=True, choices=('plan', 'create', 'loop', 'status', 'resume', 'stop'))
+    p.add_argument('--action', required=True, choices=('plan', 'loop', 'status', 'resume', 'stop', 'preflight', 'retained'))
+    p.add_argument('--host', choices=('runner', 'main'), default='runner',
+                   help='runner: a bounded GitHub job; main: a run-bound service on the main box (--state-dir, --commit)')
+    p.add_argument('--state-dir', default='', help='host main: %s/<run>' % STATE_PARENT)
+    p.add_argument('--commit', default='', help='the staged checkout\'s full commit; the queue\'s code_commit must equal it')
     p.add_argument('--job', help='original retained Linux job/attempt, required for resume/stop')
     p.add_argument('--run', required=True, help='the orchestrator run (its plan.json lists the days, roles and arm)')
     p.add_argument('--code-root', required=True, help='a staged clean checkout on the main box holding this code')
-    p.add_argument('--pods', default='', help='comma list of registered Pod ids (pod-root/pods/<id>.json)')
-    p.add_argument('--boxes', default='', help='comma list of worker boxes instance@region (set up by frankie_box_worker_setup.sh)')
-    p.add_argument('--count', type=int, default=0)
-    p.add_argument('--confirm', default='')
-    p.add_argument('--slots', type=int, default=1,
-                   help='days at once per Pod (Greg, 2026-09-29: one day per Pod, the day gets every CPU)')
-    p.add_argument('--data-workers', type=int, default=48,
-                   help='the ROOT reader worker cap, as Monday\'s ROOT (48): the reader runs min(cap, CPUs-1) workers')
-    p.add_argument('--budget-minutes', type=int, default=330)
+    p.add_argument('--boxes', default='', help='the worker box instance@region (set up by frankie_box_worker_setup.sh)')
+    p.add_argument('--slots', type=int, default=1, help='days at once on the worker: exactly 1 (one held 16-CPU lane)')
+    p.add_argument('--data-workers', type=int, default=15, help='recorded only: the held lane runs 15 workers (the CPU ledger)')
+    p.add_argument('--budget-minutes', type=int, default=330, help='0 = open-ended (host main only): until no remaining work or a stop')
     p.add_argument('--stop-starting-minutes', type=int, default=20)
+    p.add_argument('--stop-wait-minutes', type=int, default=30, help='host main: how long a stop waits for the relayed save')
     p.add_argument('--poll-seconds', type=int, default=60)
     p.add_argument('--url-hours', type=float, default=72.0)
-    p.add_argument('--out-chunks', type=int, default=64, help='4 GiB upload slots per day (64 = 256 GiB compressed)')
     p.add_argument('--disk-floor-gb', type=float, default=100.0)
     p.add_argument('--wait-for-days', choices=('yes', 'no'), default='yes')
-    p.add_argument('--volume-gb', type=int, default=500)
-    p.add_argument('--container-gb', type=int, default=50)
-    p.add_argument('--data-centers', default='')
-    p.add_argument('--cost-ceiling', type=float, default=1.75)
-    p.add_argument('--wait-minutes', type=int, default=40)
-    a = p.parse_args()
-    if a.action == 'create' or a.pods:
-        raise SystemExit('Pods are retired from the Frankie experiment; no Pod creation or dispatch')
-    if a.action in ('loop', 'resume', 'stop') and (a.slots != 1 or a.boxes != 'i-0d17573dbce871520@us-east-1'):
-        raise SystemExit('remote workflow uses exactly one Linux lane: --boxes i-0d17573dbce871520@us-east-1 --slots 1')
+    a, extra = p.parse_known_args()
+    if extra:
+        retired = [x for x in extra if x.split('=', 1)[0] in RETIRED_POD_FLAGS]
+        if retired:
+            raise SystemExit('Pods are retired from the Frankie experiment; retired Pod argument(s) refused: %s' % retired)
+        raise SystemExit('unsupported argument(s) refused: %s' % extra)
     a.wait_for_days = a.wait_for_days == 'yes'
     if not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', a.run) or not a.code_root.startswith('/opt/frankie-box/code/'):
         raise SystemExit('--run [A-Za-z0-9_-] and --code-root /opt/frankie-box/code/... required')
+    if a.commit and not re.fullmatch(r'[0-9a-f]{40}', a.commit):
+        raise SystemExit('--commit must be the full 40-hex commit')
+    if a.action in ('loop', 'resume', 'stop', 'preflight') and (a.slots != 1 or a.boxes != LINUX_LANE):
+        raise SystemExit('the experiment uses exactly one Linux lane: --boxes %s --slots 1' % LINUX_LANE)
     if a.url_hours > 168:
         raise SystemExit('presigned URLs live at most 168 h')
+    if a.budget_minutes < 0 or a.stop_wait_minutes < 1 or a.poll_seconds < 5:
+        raise SystemExit('--budget-minutes >= 0, --stop-wait-minutes >= 1, --poll-seconds >= 5')
+    if a.host == 'main':
+        if not a.state_dir.startswith(STATE_PARENT + '/') or a.state_dir != '%s/%s' % (STATE_PARENT, a.run):
+            raise SystemExit('host main requires --state-dir %s/%s' % (STATE_PARENT, a.run))
+        if a.action in ('loop', 'resume', 'preflight') and not a.commit:
+            raise SystemExit('host main requires --commit (the staged checkout\'s commit)')
+        if a.action in ('loop', 'resume') and not Path(PLAN_PARENT, a.run, 'plan.json').is_file():
+            raise SystemExit('no saved main plan %s/%s/plan.json: the main orchestrator saves it at its first start of this '
+                             'run; nothing claimed or started' % (PLAN_PARENT, a.run))
+        if a.url_hours > 1:
+            a.url_hours = 1.0           # signed with the instance profile's session: short, and renewed by the loop
+    else:
+        if a.state_dir or a.action in ('preflight', 'retained'):
+            raise SystemExit('--state-dir, preflight and retained are for --host main')
+        if a.budget_minutes == 0:
+            raise SystemExit('a GitHub runner job is bounded: --budget-minutes >= 1 (0 is the main-box service)')
+    if a.action == 'preflight':
+        doc = preflight(a)
+        say(json.dumps(doc, indent=1, sort_keys=True, default=str))
+        raise SystemExit(0 if not doc['missing'] else 2)
+    if a.action == 'retained':
+        say(json.dumps(retained(a), indent=1, sort_keys=True, default=str))
+        return
+    if a.host == 'main':
+        HOST.update(host='main', state=State(a.state_dir, a.run), started=time.time())
+        if a.action in ('loop', 'resume'):
+            HOST['state'].acquire()
     ctl = Controller(a)
     if a.action == 'status':
         say(json.dumps(box('status', MAIN, 600, CODE_ROOT=a.code_root, RUN=a.run), indent=1, sort_keys=True))
-        q = ctl.queue()
+        ctl.queue()
+        say('lease', json.dumps(read_lease(a.run), sort_keys=True, default=str))
         for w in workers_of(a, ctl.commit):
             try:
                 say(w.where, json.dumps(w.status(), indent=1, sort_keys=True, default=str))
@@ -705,44 +1080,96 @@ def main():
         w = workers_of(a, ctl.commit)[0]
         held = next((d.get('claim') for d in q['days'] if (d.get('claim') or {}).get('attempt') == a.job), None)
         if not held or held['where'] != w.where:
-            raise SystemExit('the day must still be claimed by this Linux worker')
-        result = (box('stop', w.target, 600, COMMIT=ctl.commit, JOB=a.job) if a.action == 'stop'
-                  else ctl.renew(w, dict(job_id=a.job), resume=True))
-        say(json.dumps(result, sort_keys=True))
-        if a.action == 'resume':
-            ctl.worker_loop(w, only_job=a.job)
+            raise SystemExit('the day must still be claimed by this Linux worker (original claim untouched)')
+        if a.action == 'stop':
+            say(json.dumps(box('stop', w.target, 600, COMMIT=ctl.commit, JOB=a.job), sort_keys=True))
+            return
+        run_serving(a, ctl, [w], only_job=a.job)
         return
     say('queue of %s at %s: %s' % (a.run, q.get('code_commit'), q.get('counts')))
     for d in q['days']:
         say('  %s %s %s' % (d['day'], d['state'], d.get('attempt') or d.get('reason') or (d.get('claim') or {}).get('where') or ''))
     if a.action == 'plan':
         ready = [d for d in q['days'] if d['state'] == 'ready']
-        say('%d ready day(s); %d worker(s) x %d slot(s) would start %d now; claim store active: %s' % (
+        say('%d ready day(s); %d worker(s) x %d slot(s) would start %d now; claim store active: %s; lease: %s' % (
             len(ready), len([b for b in a.boxes.split(',') if b]), a.slots,
-            min(len(ready), len([b for b in a.boxes.split(',') if b]) * a.slots),
-            q.get('active')))
+            min(len(ready), len([b for b in a.boxes.split(',') if b]) * a.slots), q.get('active'),
+            json.dumps(read_lease(a.run), sort_keys=True, default=str)))
         return
-    if a.action == 'create':
-        create(a, ctl.commit)
-        return
-    r = box('enable', MAIN, 600, CODE_ROOT=a.code_root)
-    say('claim store', r)
     workers = workers_of(a, ctl.commit)
     if not workers:
-        raise SystemExit('no workers: give --boxes i-0d17573dbce871520@us-east-1')
-    threads = [threading.Thread(target=ctl.worker_loop, args=(w,), name=w.where, daemon=True) for w in workers]
+        raise SystemExit('no workers: give --boxes %s' % LINUX_LANE)
+    run_serving(a, ctl, workers)
+
+
+def run_serving(a, ctl, workers, only_job=None):
+    """loop / resume: the lease taken, the identity recorded, the claim store enabled, the worker served, the outcome and
+    journal written; the lease released on the way out (also on SIGTERM, with the outcome 'terminated_by_signal')."""
+    ctl.take_lease()
+    try:
+        if ctl.state:
+            ctl.state.identity(dict(ctl.lease_identity, schema=STATE_SCHEMA, run=a.run, action=a.action, job=only_job,
+                                    commit=ctl.commit, code_root=a.code_root, boxes=a.boxes, slots=a.slots,
+                                    budget_minutes=a.budget_minutes, open_ended=ctl.open_ended, started_utc=utc(),
+                                    state_dir=a.state_dir, lease_key=lease_key(a.run)))
+        if only_job is None:
+            r = box('enable', MAIN, 600, CODE_ROOT=a.code_root)
+            say('claim store', r)
+            if not r.get('active'):
+                raise SystemExit('the claim store is not active after enable: %s' % r)
+        else:
+            w = workers[0]
+            result = ctl.renew(w, dict(job_id=only_job), resume=True)
+            say(json.dumps(result, sort_keys=True))
+    except (Exception, SystemExit) as error:
+        ctl.outcome = dict(outcome='refused' if isinstance(error, SystemExit) else 'failed', complete=False,
+                           error='%s: %s' % (type(error).__name__, str(error)[:600]),
+                           note='nothing served; the worker keeps any job and claim it has')
+        ctl.event(step=a.action, result=ctl.outcome['outcome'], error=ctl.outcome['error'][:300])
+        finish(a, ctl)
+        raise
+
+    def on_term(signum, frame):
+        ctl.outcome = ctl.outcome or dict(outcome='terminated_by_signal', signal=signum, complete=False,
+                                          note='the process was signalled; the worker keeps its job and claim; the state '
+                                               'directory shows the last poll; this was not the cooperative stop route')
+        ctl.event(step='signal', result='received', signal=signum)
+        finish(a, ctl)
+        os._exit(143)
+    signal.signal(signal.SIGTERM, on_term)
+    heartbeat = threading.Thread(target=ctl.heartbeat, name='lease-heartbeat', daemon=True)
+    heartbeat.start()
+    threads = [threading.Thread(target=ctl.worker_loop, args=(w,), kwargs=dict(only_job=only_job), name=w.where, daemon=True)
+               for w in workers]
     for t in threads:
         t.start()
     for t in threads:
-        t.join(max(1, ctl.end - time.time() + 60))
+        while t.is_alive():
+            t.join(60)
+    finish(a, ctl)
+    if (ctl.outcome or {}).get('outcome') in ('worker_unreachable',):
+        raise SystemExit(1)
+
+
+def finish(a, ctl):
+    if ctl.finished.is_set():
+        return
+    ctl.finished.set()
+    ctl.outcome = ctl.outcome or dict(outcome='ended', complete=False)
     out = ctl.summary()
     body = json.dumps(dict(out, events=ctl.events), indent=1, sort_keys=True, default=str)
     try:
         s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, ServerSideEncryption='AES256', Body=body.encode(),
-                                       Key='%s/%s/controller/%s.json' % (PREFIX, a.run, os.environ.get('GITHUB_RUN_ID', int(time.time()))))
+                                       Key='%s/%s/controller/%s.json' % (PREFIX, a.run, controller_id()))
     except Exception as e:  # noqa: BLE001
         say('controller journal not written to S3:', e)
-    Path('pod-root-controller.json').write_text(body)
+    if ctl.state:
+        ctl.state.outcome(ctl.started, dict(ctl.outcome, run=a.run, controller=ctl.lease_identity, summary=out))
+        Path(ctl.state.dir, 'journal-%s.json' % controller_id()).write_text(body, encoding='utf-8')
+        ctl.snapshot()
+    else:
+        Path('pod-root-controller.json').write_text(body)
+    ctl.release_lease()
     say('SUMMARY', json.dumps(out, sort_keys=True))
 
 
