@@ -406,6 +406,151 @@ class _RawStreams:
         return False
 
 
+# ---- the shared path's per-row canonical bytes across the CPUs (Greg, 2026-10-07 night: "stack every optimizer we
+# already have that applies to the teacher's data path"; mimic how ROOT and the legacy walk process data) ---------------
+# The pinned R3 raw loop chains content = evidence_hash(dict(previous=content, evidence=e)) over EVERY row and the row
+# pass hashes the entity's 7-field row: two pure-Python canonical encodings of the full APPLIED payload (every book level)
+# per row, on the serial consumer. The legacy walk (parallel_journal) already computes both in its reader workers and the
+# consumer only runs the sha256 (parallel_journal._CANONICAL / _SUBSETS, consumed by _chain_hash_factory, the first 64 of
+# each also checked the original way there). The shared timeline yields the same payloads without those bytes, so on the
+# shared path they were computed serially again. EvidencePrecompute is that legacy fast path for the shared path: the
+# consumer reads ahead, ships each present payload (pickled: exact for the journal's plain types) in ordered batches to
+# spawn workers pinned one per CPU of the plan, which return canonical_bytes(pack(e)) and, for an entity row, the
+# 7-field evidence_hash; the consumer registers them right before it yields that very object. Guard: the first item of
+# every batch is also encoded the original way in the consumer and must be equal, or the run stops. A dead worker never
+# stops the walk: the pool is rebuilt with one worker fewer and every unfinished batch is submitted again, in order; a
+# batch that cannot be pickled, keeps breaking the pool or raises in the worker is simply not registered, and the
+# consumer computes those rows the original way at the original place (the same value, or the same error there).
+EVIDENCE_BATCH = 256
+PRECOMPUTE_RECORD = {}
+
+
+def _evidence_batch(blob):
+    """One ordered batch: (canonical_bytes(pack(e)), the 7-field evidence_hash or None) per payload."""
+    import pickle
+    from . import c15_journal as J
+    fields, items = pickle.loads(blob)
+    out = []
+    for e, subset in items:
+        out.append((J.canonical_bytes(J.pack(e)), J.evidence_hash({k: e[k] for k in fields}) if subset else None))
+    return pickle.dumps(out, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+class _EvidenceBatch:
+    __slots__ = ('blob', 'future', 'values', 'resolved')
+
+    def __init__(self, blob):
+        self.blob, self.future, self.values, self.resolved = blob, None, None, False
+
+
+class EvidencePrecompute:
+    """Ordered batches of payloads -> their canonical bytes (and entity 7-field hashes) on pinned spawn workers. One
+    owner thread; values(batch) blocks for that batch only. Placement and speed only: a registered value is exactly the
+    value the consumer would compute, a missing one is computed there the original way."""
+
+    def __init__(self, cpus, fields, workers=None):
+        self.planned = tuple(cpus or ())
+        self.workers = max(1, int(workers or len(self.planned) or _cpus()))
+        self.fields = tuple(fields)
+        self.breaks, self.open = 0, []
+        PRECOMPUTE_RECORD.clear()
+        PRECOMPUTE_RECORD.update(workers=self.workers, cpus=list(self.planned) or None, batch=EVIDENCE_BATCH, batches=0,
+                                 rows=0, not_registered_batches=[], rebuilds=[], guard_checked=0,
+                                 basis=('each spawn worker pinned to one CPU of the plan' if self.planned else
+                                        'unpinned spawn workers on the parent\'s mask (no plan given)'),
+                                 rule='placement and speed only: the consumer computes any row not registered here the '
+                                      'original way; the first row of every batch is also checked the original way')
+        self.pool = self._new_pool(self.workers)
+
+    def _new_pool(self, workers):
+        context = multiprocessing.get_context('spawn')
+        if self.planned:
+            return ProcessPoolExecutor(max_workers=workers, mp_context=context, initializer=_pin_raw_worker,
+                                       initargs=(self.planned, context.Value('l', 0)))
+        return ProcessPoolExecutor(max_workers=workers, mp_context=context)
+
+    def submit(self, items):
+        """Queue one ordered batch [(payload, entity_row)...]; returns its handle."""
+        import pickle
+        PRECOMPUTE_RECORD['batches'] += 1
+        PRECOMPUTE_RECORD['rows'] += len(items)
+        try:
+            batch = _EvidenceBatch(pickle.dumps((self.fields, items), protocol=pickle.HIGHEST_PROTOCOL))
+        except Exception as error:  # noqa: BLE001 - not registered; the consumer computes these rows itself
+            batch = _EvidenceBatch(None)
+            self._skip(batch, 'not picklable (%s)' % type(error).__name__)
+            return batch
+        self._send(batch)
+        self.open.append(batch)
+        return batch
+
+    def _send(self, batch):
+        try:
+            batch.future = self.pool.submit(_evidence_batch, batch.blob)
+        except Exception as error:  # noqa: BLE001 - a broken pool at submit: rebuilt on the next wait
+            batch.future = None
+            batch.values = error
+
+    def _skip(self, batch, why):
+        batch.values, batch.resolved, batch.blob = None, True, None
+        if len(PRECOMPUTE_RECORD['not_registered_batches']) < 100:
+            PRECOMPUTE_RECORD['not_registered_batches'].append(why)
+
+    def values(self, batch):
+        """The batch's [(bytes, hash or None)...], or None (not registered: compute those rows the original way)."""
+        import pickle
+        from concurrent.futures.process import BrokenProcessPool
+        while not batch.resolved:
+            try:
+                if batch.future is None:
+                    raise BrokenProcessPool(str(batch.values))
+                result = batch.future.result()
+            except BrokenProcessPool as error:
+                self.breaks += 1
+                if self.breaks > RAW_POOL_MAX_CONSECUTIVE_BREAKS:
+                    self._skip(batch, 'the pool broke %d times on this batch: %s' % (self.breaks, error))
+                    self.breaks = 0
+                    break
+                # a dead worker: one fewer, every unfinished batch again in order (the pure encoding gives the same)
+                self.pool.shutdown(wait=True, cancel_futures=True)
+                self.workers = max(1, self.workers - 1)
+                self.pool = self._new_pool(self.workers)
+                again = 0
+                for other in self.open:
+                    if other.resolved or (other.future is not None and other.future.done()
+                                          and not other.future.cancelled() and other.future.exception() is None):
+                        continue
+                    self._send(other)
+                    again += 1
+                PRECOMPUTE_RECORD['rebuilds'].append(dict(workers=self.workers, batches_again=again,
+                                                          error='%s: %s' % (type(error).__name__, error)))
+                continue
+            except Exception as error:  # noqa: BLE001 - the worker raised: the original place raises it again
+                self._skip(batch, 'worker error %s' % type(error).__name__)
+                break
+            self.breaks = 0
+            batch.values, batch.resolved, batch.blob, batch.future = pickle.loads(result), True, None, None
+        while self.open and self.open[0].resolved:
+            self.open.pop(0)
+        if batch in self.open:
+            self.open.remove(batch)
+        return batch.values
+
+    def close(self):
+        for batch in self.open:
+            if batch.future is not None:
+                batch.future.cancel()
+        self.open = []
+        self.pool.shutdown(wait=True, cancel_futures=True)
+
+
+# The attachment pool's CPUs (finish, steps 3-4): set by the caller like RAW_WORKER_CPUS (one spawn worker per CPU, in
+# hand-out order) and reset to None after; None = unchanged (_cpus() unpinned workers). FINISH_POOL_RECORD: receipt-only.
+FINISH_WORKER_CPUS = None
+FINISH_POOL_RECORD = {}
+FINISH_CHUNKS_PER_WORKER = 4
+
+
 def _cpus():
     try:
         return max(1, len(os.sched_getaffinity(0)) - 1)
@@ -587,13 +732,16 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
               'share', 'share', 'share', 'share', 'share', 'share', 'log_groups', 'log_count', 'log_ratio',
               'log_ticks', 'log_groups', 'log_ticks') if identity else ('z_score',) * 19)
     candidate = _candidate(self, T)
-    cpus = _cpus()
+    planned = tuple(FINISH_WORKER_CPUS or ())
+    cpus = len(planned) or _cpus()
     # 2. chunk-start states: attach's own restored copy, update() only
     config = self.normalizer.config
     instrument_ids = self.normalizer.config.instrument_ids
     base = (R.IdentityNormalizerR3(instrument_ids) if identity else
             R.NormalizerR3.restore(config, self.normalizer.export(), self.normalizer.state_hash))
-    size = max(1, -(-len(rows) // (cpus * 2)))
+    # chunk granularity only (each chunk restores its own exact start state, so no value depends on it): several
+    # chunks per worker keep every CPU busy to the end of the pass (sibling threads, a redone chunk)
+    size = max(1, -(-len(rows) // (cpus * FINISH_CHUNKS_PER_WORKER)))
     target_spec = dict(registry_id=f'boss/teacher/{T.CANDIDATE}:{candidate}', target_names=T.CONTROL_COLUMNS,
                        target_units=units, builder_code_sha=builder_sha)
     recovery_identity = dict(binding=self.binding, candidate=candidate, source=source_manifest_hash,
@@ -650,27 +798,70 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
             raise TeacherSaved('teacher saved all prepared attachment chunks and normalizer state')
     if recovery_path and (saved is None or prepared != saved['prepared'] or 'blobs' in saved):
         save_finish()
-    # 3-4. the chunks across the CPUs, joined in order
+    # 3-4. the chunks across the CPUs, joined in order. Each worker pinned to one CPU of the plan (physical cores first,
+    # set by the caller); a dead worker never stops the pass (Greg, 2026-10-07): the pool is rebuilt with one worker
+    # fewer and every chunk in flight goes back to the front of the queue, in order (each chunk is a pure function of
+    # its job); only the same chunk breaking the pool repeatedly is raised. The finished prefix of chunks is unpickled
+    # and joined in order while later chunks still run (the same lists, the same order as joining at the end).
+    import pickle
+    from concurrent.futures.process import BrokenProcessPool
     targets, receipts, fragments = [], [], []
     context_mp = multiprocessing.get_context('spawn')
-    with ProcessPoolExecutor(max_workers=min(cpus, max(1, len(jobs))), mp_context=context_mp) as pool:
-        import pickle
+
+    def new_pool(workers):
+        if planned:
+            return ProcessPoolExecutor(max_workers=workers, mp_context=context_mp, initializer=_pin_raw_worker,
+                                       initargs=(planned, context_mp.Value('l', 0)))
+        return ProcessPoolExecutor(max_workers=workers, mp_context=context_mp)
+    workers = min(cpus, max(1, len(jobs)))
+    FINISH_POOL_RECORD.clear()
+    FINISH_POOL_RECORD.update(workers=workers, cpus=list(planned) or None, chunks=len(jobs), chunk_rows=size,
+                              reused_chunks=len(blobs), rebuilds=[],
+                              basis=('each spawn worker pinned to one CPU of the plan' if planned else
+                                     'unpinned spawn workers on the parent\'s mask (no plan given)'))
+    joined = [0]
+
+    def join_ready():
+        while joined[0] < len(jobs) and joined[0] in blobs:
+            for target, receipt, fragment in pickle.loads(blobs.pop(joined[0])):
+                targets.append(target)
+                receipts.append(receipt)
+                fragments.append(fragment)
+            joined[0] += 1
+    pool = new_pool(workers)
+    try:
         pending = deque()
         remaining = deque(index for index in range(len(jobs)) if index not in blobs)
-        failure = None
+        failure, breaks = None, {}
         while remaining or pending:
             stopping = recovery_path and save_requested and save_requested()
-            while not stopping and failure is None and remaining and len(pending) < cpus:
+            while not stopping and failure is None and remaining and len(pending) < workers:
                 index = remaining.popleft()
                 pending.append((index, pool.submit(_chunk, jobs[index])))
             if pending:
                 index, future = pending.popleft()
                 try:
                     keep_chunk(index, future.result())
+                except BrokenProcessPool as error:
+                    breaks[index] = breaks.get(index, 0) + 1
+                    if breaks[index] > RAW_POOL_MAX_CONSECUTIVE_BREAKS:
+                        failure = failure or error
+                        continue
+                    lost = [index] + [other for other, _ in pending]
+                    pending.clear()
+                    pool.shutdown(wait=True, cancel_futures=True)
+                    workers = max(1, workers - 1)
+                    pool = new_pool(workers)
+                    remaining.extendleft(reversed(lost))
+                    FINISH_POOL_RECORD['rebuilds'].append(dict(workers=workers, chunks_again=len(lost),
+                                                               error='%s: %s' % (type(error).__name__, error)))
+                    continue
                 except Exception as error:
                     # Drain and retain other work already in flight before propagating the failure.
                     # Resume schedules only missing chunks, including a failed chunk between successes.
                     failure = failure or error
+                if failure is None:
+                    join_ready()
             elif failure is not None:
                 raise failure
             elif stopping:
@@ -679,11 +870,11 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
             raise failure
         if recovery_path and save_requested and save_requested():
             raise TeacherSaved('teacher attachment calculations saved before publication')
-    for index in range(len(jobs)):
-        for target, receipt, fragment in pickle.loads(blobs[index]):
-            targets.append(target)
-            receipts.append(receipt)
-            fragments.append(fragment)
+    finally:
+        pool.shutdown(wait=True, cancel_futures=True)
+    join_ready()
+    if joined[0] != len(jobs):
+        raise ValueError('parallel teacher attachment chunk missing at join; run stopped')
     raw_rows = [row[3] for row in rows if row[0]]
     if not processed or len(targets) != len(spec):
         raise ValueError('context cursor absent from complete prefix')
