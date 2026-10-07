@@ -544,3 +544,54 @@ past the reporter's 8 MiB metadata ceiling.**
 - Skills: carried from this session's pass (`api-and-interface-design`, `code-review-and-quality`,
   `doubt-driven-development` in its reduced self-check form).
 - UNVERIFIED: the instrument and member-row counts of 20231018 (G-1), and the actual receipt size (G-2).
+
+## Third follow-up, 2026-10-07 night (session 2): `0035f80..d8eb215`
+
+Reviewer: ccode_review, under the same go. This pass is READ-ONLY: no fixes, no git writes, no account calls, NO RUNS.
+The only write is this section. Scope: d8eb215 (main_recovery: classroom G-2, G-3, a thread pool for the pairs, and the
+G-1 sizing).
+
+### Verdict: APPROVED for integration (source only). Nothing blocks the one-day E2E from the code side.
+
+1. **G-2: FIXED.**
+   - `native_entries_compact` now carries counts only. Each entry is reduced to use, form, series counts, pair counts,
+     relation counts, Pearson reported, the unavailable carriers and `identities` (leaves, instrument count, rule).
+     `read.events_after_last_dipole_row` becomes (series, events). Identities become (instruments, changes).
+   - `received.native_entries`, the receipt's top-level `native_entries` and the all-99 list's `native_entries` are all
+     built from `native_entries_status()`, which is the compact view. No series name remains in any of the three.
+   - The reporter's `_native_entries_projection` projects only the keys that are present, so it renders the smaller view
+     unchanged.
+   - The summary text and `_classroom_use` read the counts. Every name, pair, cell and identity stays in the pinned
+     `native-entry-arithmetic.json`.
+2. **G-3: FIXED.**
+   - `instrument_id` and `raw_symbol` are popped from the member leaves before any series or category is made, and before
+     `seen` is updated. They therefore never become a numeric series or a cell, and never produce a "missing from latest
+     row" MISSING.
+   - They are kept per instrument: first and last value with their cursors, and every change (cursor, before, after).
+     They are named on `contract_session_roll_state` as `identities`.
+3. **Thread pool in `_compute`: SOUND.**
+   - Each job reads `self.num` / `self.cnt` (frozen after the pass), the shared `rows` and `cursors` arrays and the
+     `dipole` tuples. All of these are read only.
+   - The jobs build their own arrays and return new dicts. `EXT._direction` / `_pair` / `_pearson` / `_co_movement` are
+     pure functions with no module state, and `_external_math()` is loaded once before the pool.
+   - `pool.map` keeps the sorted job order, member series first and then count series, exactly as the loop did.
+     Categories stay sequential after it. The values are identical to the single-thread result.
+   - On the GIL: the per-pair work is numpy masking, extraction, sums and Pearson over Dipole-row-long arrays (about 0.6
+     to 0.8 million rows on 20231018). Numpy releases the GIL inside those loops, so threads give a real speed-up; the
+     Python bookkeeping per pair is small beside it.
+   - The pool is bounded by the process affinity (at most 16), so it stays inside the lane. `pair_threads` is recorded.
+     It is harmless even where it would not help.
+4. **The G-1 projection is plausible in order of magnitude, with two caveats.**
+   - The counts read from the S3 receipts support a single-instrument day: 583,688 group closes, 771,787 records, and an
+     opening book of one instrument.
+   - About 1,000 to 1,300 series and about 18,000 to 25,000 pairs follow from it.
+   - Caveat (a): the row-closing loop walks every dirtied key on each Dipole row, about 1,000 keys x about 0.58 to 0.77
+     million rows. In pure Python that is nearer 5 to 10 minutes than 5, so the total may be nearer 30 to 45 minutes.
+   - Caveat (b): the 17 GB worst case counts 17 bytes per change. A non-PRESENT change also adds a `reasons` dict entry,
+     about 70 to 100 bytes. Deep queue levels that flicker in and out of the book (MISSING / PRESENT) could add several GB
+     above the stated bound. It probably still fits under 32 GB, but it is not proven.
+   - Neither caveat blocks. The one-day run itself records `hot_path_seconds`, `seconds` and `pair_threads`. Watch the
+     classroom process's peak memory on the box probe during the pass, and treat the projection as unmeasured until then.
+
+Checks: AST parse without imports passes on `frankie_box_classroom_code.py` at d8eb215. `git diff --check
+0035f80..d8eb215` is clean. Nothing executed.
