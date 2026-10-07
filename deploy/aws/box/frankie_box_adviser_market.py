@@ -1515,6 +1515,16 @@ _POOL_SHARED = None     # the fork-inherited read-only input of a PinnedMap pool
 
 
 def _pool_task(function, index, argument):
+    # A worker never keeps a caught SIGTERM inherited across the fork (Jev's save handler, a stage's own): the pool's
+    # terminate() must end it. With the inherited handler a busy worker ignored terminate() and Pool.join() waited
+    # forever (the a2 shard exit hang's shape, reproduced in the stacks-pass toy). Default action restored per task
+    # (idempotent, the worker's main thread); the parent's own handler is untouched.
+    try:
+        import signal as _signal
+        if _signal.getsignal(_signal.SIGTERM) not in (_signal.SIG_DFL, None):
+            _signal.signal(_signal.SIGTERM, _signal.SIG_DFL)
+    except (ValueError, OSError):
+        pass
     try:
         return index, True, function(_POOL_SHARED, argument)
     except BaseException as error:  # noqa: BLE001 - the parent recomputes in-process so the same error raises in order
@@ -1638,13 +1648,55 @@ class PinnedMap:
                 self.record['fallbacks'].append(dict(task=i, reason='worker raised %s; recomputed in-process' % value[:300]))
             return ('value', (ok, value))
 
+    CLOSE_SECONDS = 30.0      # bound on terminate()+join() before the remaining workers are SIGKILLed (never unbounded)
+
     def close(self):
         global _POOL_SHARED
         if self.pool is not None:
-            self.pool.terminate()
-            self.pool.join()
+            self.record.setdefault('closes', []).append(bounded_pool_close(self.pool, self.CLOSE_SECONDS))
             self.pool = None
         _POOL_SHARED = None
+
+
+def bounded_pool_close(pool, seconds=30.0):
+    """End a multiprocessing pool without an unbounded wait (the a2 shard exit hang: terminate() caught by an inherited
+    SIGTERM handler, then join() forever). terminate()+join() run on a daemon thread bounded by `seconds`; a worker
+    still alive then is SIGKILLed (it holds no result the caller still needs: close runs after results() or after the
+    pool was abandoned) and the join is given `seconds` more. Returns the record of what happened (receipt only)."""
+    import os as _os
+    import signal as _signal
+    import threading
+    import time as _time
+    started = _time.monotonic()
+    workers = [p for p in list(getattr(pool, '_pool', []) or [])]
+    done = threading.Event()
+
+    def end():
+        try:
+            pool.terminate()
+            pool.join()
+        except Exception:  # noqa: BLE001 - recorded below through the alive count
+            pass
+        finally:
+            done.set()
+    thread = threading.Thread(target=end, name='pinned-pool-close', daemon=True)
+    thread.start()
+    record = dict(mode='terminate_join', bound_seconds=seconds, workers=len(workers))
+    if not done.wait(seconds):
+        alive = []
+        for worker in workers:
+            try:
+                if worker.is_alive():
+                    _os.kill(worker.pid, _signal.SIGKILL)
+                    alive.append(worker.pid)
+            except (OSError, ValueError, AssertionError):
+                pass
+        record.update(mode='sigkill_after_bound', killed=alive)
+        if not done.wait(seconds):
+            record.update(mode='left_running_after_bound', reason='terminate/join still not returned %s s after the '
+                          'SIGKILL; the close thread is a daemon and the stage continues' % seconds)
+    record['seconds'] = round(_time.monotonic() - started, 3)
+    return record
 
 
 _JOURNAL = ' journal'        # the hasher's key for the sealed journal (no layer name starts with a space)

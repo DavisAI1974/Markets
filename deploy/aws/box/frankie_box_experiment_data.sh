@@ -23,10 +23,21 @@ set -- --day "$DAY" --cycle "$CYCLE" --calculations "$CALCULATIONS"
 [ -z "${HOST_CONFIG:-}" ] || set -- "$@" --host-config "$HOST_CONFIG"
 [ -z "${RUN:-}" ] || set -- "$@" --run "$RUN"
 [ -z "${TEACHER:-}" ] || set -- "$@" --teacher "$TEACHER"
-# WORKERS (default 1; DATA_WORKERS accepted as the orchestrator's name for it): processes hashing the linked files side
+# WORKERS (default: the held lane size minus 1; DATA_WORKERS accepted as the orchestrator's name for it): processes hashing the linked files side
 # by side; the orchestrator starts this step under its booked 16 CPUs and may give 15. The pins (bytes, sha256) are
 # identical whatever the count.
-WORKERS="${WORKERS:-${DATA_WORKERS:-1}}"
+# Unset: sized from the held lane (stacks pass: never a fixed count): FRANKIE_LANE_CPUS / FRANKIE_BOOKED_CPUS, else
+# this process's affinity (nproc), minus the coordinator's CPU; at least 1. The orchestrator passes day_cpus - 1.
+lane_size() {
+  for spec in "${FRANKIE_LANE_CPUS:-}" "${FRANKIE_BOOKED_CPUS:-}"; do
+    [ -n "$spec" ] || continue
+    n=0; IFS=,; for part in $spec; do lo=${part%-*}; hi=${part#*-}; n=$((n + hi - lo + 1)); done; unset IFS
+    echo "$n"; return
+  done
+  nproc
+}
+LANE_WORKERS=$(( $(lane_size) - 1 )); [ "$LANE_WORKERS" -ge 1 ] || LANE_WORKERS=1
+WORKERS="${WORKERS:-${DATA_WORKERS:-$LANE_WORKERS}}"
 case "$WORKERS" in *[!0-9]*|0) echo "WORKERS must be a positive integer" >&2; exit 2;; esac
 set -- "$@" --workers "$WORKERS"
 case "$ACTION" in plan) set -- "$@" --plan-only;; export) ;; *) echo "ACTION must be plan or export" >&2; exit 2;; esac

@@ -198,8 +198,8 @@ fetch() {   # FETCH_PIN (optional) = "taskset -c <cpus>": the fetch runs inside 
   cd "$ROOT/tmp" || return 2
   MAPF="ingest-map-$$-$BLOCK.json"     # per dispatch and day: dispatches and fetch-aheads never share or delete each other's map
   curl -fsS --proto =https -m 60 --retry 3 -o "$MAPF" --url "$MAP_URL" || { echo "map download failed"; return 2; }
-  MAPF="$MAPF" M="$M" DATA="$DATA" ROOT="$ROOT" MK="$MK" MARKETS_SHA="$MARKETS_SHA" ${FETCH_PIN:-} "$PY" - <<'PYEOF'
-import glob, hashlib, json, os, subprocess, sys, threading, time
+  MAPF="$MAPF" M="$M" DATA="$DATA" ROOT="$ROOT" MK="$MK" MARKETS_SHA="$MARKETS_SHA" FETCH_PIN="${FETCH_PIN:-}" ${FETCH_PIN:-} "$PY" - <<'PYEOF'
+import glob, hashlib, json, os, sys, threading, time
 from concurrent.futures import ThreadPoolExecutor
 sys.path.insert(0, os.environ['MK'])
 from research.kalshi.frankie_boss.block_source_scope import block_source_scope     # the tool's own validation, before any path is built
@@ -218,38 +218,29 @@ def ok_url(u):
 # The members run side by side (MEMBER_STREAMS, default every member up to 4; Greg, 2026-10-07 night "anything using a
 # cpu"): ONE shared pool of RANGE_STREAMS range GETs serves all of them (the NIC budget is not multiplied), and a member is
 # hashed the moment it lands while the others still download. The receipt lists the members in manifest order.
-RANGE_BYTES = 16 << 20; RANGED_ABOVE = 64 << 20; RANGE_STREAMS = int(os.environ.get('RANGE_STREAMS') or 15)
+# The transfer itself is the ONE shared transport (deploy/aws/box/frankie_box_s3_transport.fetch_url, session 5): above
+# 64 MiB, RANGE_STREAMS concurrent 16 MiB byte-range GETs from the shared pool; at or below, one stream with range resume;
+# the sha256 is computed IN ORDER WHILE THE BYTES LAND (the partition is never re-read to hash it: COMPUTE dedupe), every
+# retry and any report-only stall is on the transport receipt, every read has a 120 s socket timeout and bounded tries
+# (the old one-stream curl had no stall bound). The bytes and sha256 check against the manifest is unchanged.
+sys.path.insert(0, os.path.join(os.environ['MK'], 'deploy', 'aws', 'box'))
+import frankie_box_s3_transport as T
+RANGE_STREAMS = int(os.environ.get('RANGE_STREAMS') or 15)
 MEMBER_STREAMS = int(os.environ.get('MEMBER_STREAMS') or min(4, max(1, len(scope.members))))
 RANGES = ThreadPoolExecutor(max(1, RANGE_STREAMS), thread_name_prefix='range')
 SAY = threading.Lock()
 def say(*a):
     with SAY:
         print(*a, flush=True)
-def ranged(url, part, size):
-    import urllib.request
-    fd = os.open(part, os.O_RDWR | os.O_CREAT, 0o644)
-    try:
-        os.ftruncate(fd, size)
-        def one(i):
-            start, end = i * RANGE_BYTES, min(size, (i + 1) * RANGE_BYTES) - 1
-            for attempt in range(6):
-                try:
-                    req = urllib.request.Request(url, headers={'Range': 'bytes=%d-%d' % (start, end)})
-                    with urllib.request.urlopen(req, timeout=120) as r:
-                        if r.status != 206:
-                            return False
-                        data = r.read()
-                    if len(data) == end - start + 1:
-                        os.pwrite(fd, data, start); return True
-                except OSError as e:
-                    say('   retry %d range %d of %s: %s' % (attempt + 1, i, os.path.basename(part), e))
-                time.sleep(min(60, 5 * (attempt + 1)))
-            return False
-        ok = all(RANGES.map(one, range((size + RANGE_BYTES - 1) // RANGE_BYTES)))
-        os.fsync(fd)
-    finally:
-        os.close(fd)
-    return 0 if ok else 1
+# one FRANKIE_WORK_PROBE_V1 progress.json for the block's fetch (bytes of the members still to download), beside the
+# partitions (the stage heartbeat finds a probe beside the files the tree holds open)
+TO_FETCH = sum(mm.size_bytes for mm in scope.members if not os.path.exists(os.path.join(data, mm.member_key)))
+PROBE = T.WorkProbe(data, 'fetch:block_' + str(manifest['block']), TO_FETCH)
+LANDED = [0]; LANDED_LOCK = threading.Lock()
+def landed(n):
+    with LANDED_LOCK:
+        LANDED[0] += n
+        PROBE.update(LANDED[0])
 def member_one(member):
     """(kind, entry): kind 'files' or 'refused', exactly the entries the one-at-a-time loop wrote."""
     dest = os.path.realpath(os.path.join(data, member.member_key))
@@ -276,32 +267,28 @@ def member_one(member):
         say('REFUSED (bytes):', member.member_key); return 'refused', dict(member_key=member.member_key, reason='bytes differ from the manifest', have=m[key].get('bytes'))
     if not ok_url(m[key].get('url')):
         say('REFUSED (url):', member.member_key); return 'refused', dict(member_key=member.member_key, reason='the map entry is not an https amazonaws URL')
-    part = dest + '.part'; t0 = time.time()
-    if member.size_bytes > RANGED_ABOVE and RANGE_STREAMS > 1:
-        returncode = ranged(m[key]['url'], part, member.size_bytes)
-    else:
-        returncode = subprocess.run(['curl', '-fsS', '--proto', '=https', '-L', '--retry', '5', '--retry-delay', '5', '-C', '-', '-o', part, '--url', m[key]['url']]).returncode
-    if returncode != 0:
-        say('REFUSED (download):', member.member_key); return 'refused', dict(member_key=member.member_key, reason='download failed', returncode=returncode)
-    got = sha(part)
-    if os.path.getsize(part) != member.size_bytes or got != member.sha256:
-        os.replace(part, part + f'.rejected-{int(time.time())}')
-        say('REFUSED (digest):', member.member_key); return 'refused', dict(member_key=member.member_key, reason='digest differs from the manifest; the bytes are kept aside as .part.rejected-<ts>', sha256=got)
-    if os.path.exists(dest):   # something landed at the destination during the download: never overwritten
-        os.replace(part, part + f'.late-{int(time.time())}')
-        say('REFUSED (late):', member.member_key); return 'refused', dict(member_key=member.member_key, reason='a file appeared at the destination during the download; not overwritten (the download is kept aside as .part.late-<ts>)')
-    os.replace(part, dest)
-    say('restored', dest, member.size_bytes, f'{time.time()-t0:.0f}s')
-    return 'files', dict(member_key=member.member_key, status='restored', sha256=got, seconds=round(time.time() - t0, 1),
-                         transport='ranged-%d' % RANGE_STREAMS if member.size_bytes > RANGED_ABOVE and RANGE_STREAMS > 1 else 'curl')
+    t0 = time.time()
+    tr = T.fetch_url(m[key]['url'], dest, expected_bytes=member.size_bytes, expected_sha256=member.sha256,
+                     range_streams=RANGE_STREAMS, ranges=RANGES, say=say, on_bytes=landed)
+    if tr['status'] != 'restored':     # the same refusals as before (download / digest / late), the reason from the transport
+        return 'refused', dict(member_key=member.member_key, reason=tr.get('reason'), sha256=tr.get('sha256'),
+                               kept_aside=tr.get('kept_aside'), transport=tr.get('transport'), transport_receipt=tr)
+    say('restored', dest, member.size_bytes, f'{time.time()-t0:.0f}s', tr['transport'], '%d retries' % len(tr['retries']))
+    return 'files', dict(member_key=member.member_key, status='restored', sha256=tr['sha256'], seconds=round(time.time() - t0, 1),
+                         transport=tr['transport'], hash_pass=tr['hash_pass'], retries=len(tr['retries']),
+                         stalls=len(tr['stalls']), transport_receipt=tr)
 receipt = dict(schema='FRANKIE_BOX_INGEST_FETCH_RECEIPT_V1', at=time.time(), block=manifest['block'], manifest_hash=manifest['manifest_hash'],
-               markets_sha=os.environ['MARKETS_SHA'], files=[], refused=[], member_streams=MEMBER_STREAMS, range_streams=RANGE_STREAMS)
+               markets_sha=os.environ['MARKETS_SHA'], files=[], refused=[], member_streams=MEMBER_STREAMS, range_streams=RANGE_STREAMS,
+               transport_module=T.SCHEMA, fetch_pin=os.environ.get('FETCH_PIN') or None, bytes_to_fetch=TO_FETCH,
+               rehash_rule='a partition already present is hashed again in full (no skip by stat: Greg\'s open call (c))')
 try:
     with ThreadPoolExecutor(max(1, MEMBER_STREAMS), thread_name_prefix='member') as members:
         for kind, entry in members.map(member_one, scope.members):    # manifest order
             receipt[kind].append(entry)
 finally:
-    RANGES.shutdown(wait=True)
+    RANGES.shutdown(wait=True)        # bounded: every range read has a socket timeout and bounded tries
+    PROBE.update(LANDED[0], state='complete' if not receipt['refused'] else 'refused', force=True)
+receipt['bytes_fetched'] = LANDED[0]
 name = os.path.join(os.environ['ROOT'], 'receipts', f'ingest-fetch-{manifest["block"]}-{int(time.time())}-{os.getpid()}.json')
 with open(name, 'x') as f: json.dump(receipt, f, indent=1, sort_keys=True)
 print('RECEIPT', name)

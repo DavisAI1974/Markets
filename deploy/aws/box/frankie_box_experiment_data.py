@@ -131,7 +131,52 @@ def _pin(path):
     return size, digest, round(time.time() - started, 3)
 
 
-def _pin_all(paths, workers):
+PROBE_FAILURES = dict(count=0, last=None)    # probe writes that failed (on the MANIFEST hashing record; never silent)
+REUSE_PINS_ENV = 'FRANKIE_EXPORT_REUSE_PINS'  # Greg's open call (c): off unless he says so
+
+
+def _progress(phase, done=None, total=None, unit=None, every=10, **extra):
+    """The stage heartbeat (FRANKIE_STAGE_PHASE_V1 through frankie_box_stage_progress.report_phase; the reader adds
+    units/min and the 600 s stall flag). Never changes the export; a failed write is counted on the MANIFEST."""
+    try:
+        try:
+            import frankie_box_stage_progress as SP
+        except ImportError:
+            from deploy.aws.box import frankie_box_stage_progress as SP
+        SP.report_phase(phase, units_done=done, units_total=total, unit=unit, every=every, **extra)
+    except Exception as error:  # noqa: BLE001 - counted, recorded
+        PROBE_FAILURES['count'] += 1
+        PROBE_FAILURES['last'] = '%s: %s' % (type(error).__name__, str(error)[:200])
+
+
+def _stat_key(path):
+    s = os.stat(path)
+    return [s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns]   # no ctime: the export's own hard link changes it
+
+
+def _pins_progress(progress_path, paths, reuse):
+    """The export's save point: every measured pin is appended to <target>.pins-progress.jsonl as it lands (source,
+    stat key, bytes, sha256), so an interrupted export has its finished files on record. REUSING a recorded pin on a
+    rerun skips a re-hash by stat alone, which is Greg's open call (c): only with FRANKIE_EXPORT_REUSE_PINS=on, and
+    then only for an identical (device, inode, size, mtime_ns); default off, every file re-hashed."""
+    saved = {}
+    if progress_path is not None and Path(progress_path).is_file():
+        for line in Path(progress_path).read_bytes().splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue                       # a torn last line of a killed export: ignored, listed by count
+            saved[row['path']] = row
+    reused = {}
+    if reuse:
+        for p in paths:
+            row = saved.get(str(p))
+            if row is not None and row.get('stat') == _stat_key(p):
+                reused[str(p)] = (row['bytes'], row['sha256'], 0.0)
+    return saved, reused
+
+
+def _pin_all(paths, workers, progress_path=None):
     """Pin every linked file. The export's wall time is the hashing (the sealed journal alone is ~23.7 GB, the
     V2 frame spool several GB); files are independent, so the held lane's workers hash them side by side, the
     largest first so one long file does not trail a drained pool. The identities are the same bytes and the same
@@ -141,8 +186,27 @@ def _pin_all(paths, workers):
     was the wall). Recorded in MANIFEST.hashing for the one-day canary."""
     paths = sorted(paths, key=lambda p: Path(p).stat().st_size, reverse=True)
     started, placed = time.time(), None
-    if workers <= 1 or len(paths) <= 1:
-        measured = {str(p): _pin(p) for p in paths}
+    reuse = os.environ.get(REUSE_PINS_ENV) == 'on'
+    saved, reused = _pins_progress(progress_path, paths, reuse)
+    todo = [p for p in paths if str(p) not in reused]
+    total_bytes_todo, done_bytes, done_files = sum(Path(p).stat().st_size for p in todo), [0], [0]
+    log = open(progress_path, 'a', encoding='utf-8') if progress_path is not None else None
+
+    def landed(path, result):
+        done_files[0] += 1
+        done_bytes[0] += result[0]
+        if log is not None:
+            log.write(json.dumps(dict(path=str(path), stat=_stat_key(path), bytes=result[0], sha256=result[1],
+                                      seconds=result[2]), sort_keys=True) + '\n')
+            log.flush()
+        _progress('data: hashing linked files', done_files[0], len(todo), 'files', bytes_done=done_bytes[0],
+                  bytes_total=total_bytes_todo)
+    _progress('data: hashing linked files', 0, len(todo), 'files', every=None, bytes_done=0, bytes_total=total_bytes_todo)
+    measured = dict(reused)
+    if workers <= 1 or len(todo) <= 1:
+        for p in todo:
+            measured[str(p)] = _pin(p)
+            landed(p, measured[str(p)])
         mode = 'serial'
     else:
         # each hashing process pinned to its own lane CPU, physical cores first (frankie_box_lane_pin; Greg, 2026-10-07
@@ -151,18 +215,29 @@ def _pin_all(paths, workers):
             import frankie_box_lane_pin as LP
         except ImportError:
             from deploy.aws.box import frankie_box_lane_pin as LP
-        placed = LP.record(min(workers, len(paths)), what='export hashing processes (largest file first)')
+        placed = LP.record(min(workers, len(todo)), what='export hashing processes (largest file first)')
         placed['pool_recovery'] = dict(worker_deaths=[], redone=[])
         # ordered, pinned; a dead hashing worker's file is hashed again, never a hang or a stopped export
-        measured = {str(p): result for p, result in LP.ordered_map(_pin, paths, min(workers, len(paths)),
-                                                                   report=placed['pool_recovery'])}
-        measured = {str(p): measured[str(p)] for p in paths}
+        for p, result in LP.ordered_map(_pin, todo, min(workers, len(todo)), report=placed['pool_recovery']):
+            measured[str(p)] = result
+            landed(p, result)
         mode = 'process_pool'
+    if log is not None:
+        log.close()
+    measured = {str(p): measured[str(p)] for p in paths}
     pins = {path: (size, digest) for path, (size, digest, _) in measured.items()}
     slowest = sorted(((seconds, size, path) for path, (size, _, seconds) in measured.items()), reverse=True)[:5]
     wall = round(time.time() - started, 3)
     total_bytes = sum(size for size, _ in pins.values())
-    return pins, dict(mode=mode, workers=min(workers, len(paths)) if mode == 'process_pool' else 1,
+    return pins, dict(mode=mode, workers=min(workers, len(todo)) if mode == 'process_pool' else 1,
+                      mode_reason=(None if mode == 'process_pool' else
+                                   'one worker given' if workers <= 1 else 'at most one file to hash'),
+                      save_point=dict(path=str(progress_path) if progress_path else None, recorded_before=len(saved),
+                                      reused=sorted(reused), reuse_switch='%s=%s' % (REUSE_PINS_ENV, 'on' if reuse else 'off'),
+                                      rule="every pin is appended as it lands; a recorded pin is reused only with the "
+                                           "switch on (Greg's open call (c): skip re-hash on an unchanged stat), "
+                                           "otherwise every file is hashed again"),
+                      probe_failures=PROBE_FAILURES,
                       files=len(paths), bytes=total_bytes, seconds=wall,
                       bytes_per_second=round(total_bytes / wall) if wall > 0 else None,
                       largest_file_bytes=max((size for size, _ in pins.values()), default=0),
@@ -343,13 +418,15 @@ def export(day, cycle, dirs, root=ROOT, workers=1):
                     and type(rc.get('journal_bytes')) is int and rc.get('journal_sha256')):
                 item['expected'] = dict(bytes=rc['journal_bytes'], sha256=rc['journal_sha256'])
                 item['expected_from'] = 'ingestion-receipt.json (BOSS_BLOCK_INGESTION_RECEIPT_V1 journal pin)'
-    pins, hashing = _pin_all([item['destination'] for item in files], workers)
+    pins, hashing = _pin_all([item['destination'] for item in files], workers,
+                             progress_path=target.parent / (target.name + '.pins-progress.jsonl'))
     # the native selection checks plan() ran (frankie_box_experiment_native.selected_files: the large ledgers and
     # section products witnessed side by side on pinned threads before their pins are compared); diagnostic only
     try:
         import frankie_box_experiment_native as _NATIVE
-    except ImportError:
+    except ImportError as error:
         _NATIVE = None
+        hashing['native_selection_check_unavailable'] = 'frankie_box_experiment_native not importable here (%s)' % error
     hashing['native_selection_check'] = (dict(_NATIVE.LAST_SELECTION_CHECK)
                                          if _NATIVE is not None and getattr(_NATIVE, 'LAST_SELECTION_CHECK', None) else None)
     for item in files:

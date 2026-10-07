@@ -270,7 +270,6 @@ def _decoded_lines(path, workers):
 
     def parallel():
         import multiprocessing
-        import threading
         try:
             import frankie_box_lane_pin as LP
         except ImportError:

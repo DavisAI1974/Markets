@@ -193,6 +193,117 @@ RAW_POOL_RECORD = {}
 RAW_POOL_MAX_CONSECUTIVE_BREAKS = 3
 
 
+# ---- one pool rule for every teacher pool (stacks pass, 2026-10-07 night session 5; Greg: "use the lane_pin
+# primitives, do not write your own pool"). Every spawn pool of this module is built by _spawn_pool: the shared
+# frankie_box_lane_pin.executor('process', ...) (one worker per CPU of the plan in its physical-core order, a refused pin
+# falls back to the lane, never off it, a respawned worker takes the next CPU instead of blocking), spawn because the
+# parent already runs reader threads. Without the box module (another host layout) the previous private pinning is
+# used, listed in the pool record. Every stop is bounded (_bounded_shutdown): cancel what has not started, give the
+# running workers STOP_GRACE_SECONDS, then terminate and kill what is still alive; a wedged worker can never hang the
+# stage the way the a2 legacy shards did (spawn workers do not inherit the parent's SIGTERM handler either).
+# Placement and teardown only: no value, order, hash or identity depends on them.
+STOP_GRACE_SECONDS = 60.0
+
+
+def _lane_pin():
+    """frankie_box_lane_pin (the box module), or None when it is not importable here."""
+    import importlib
+    for name in ('frankie_box_lane_pin', 'deploy.aws.box.frankie_box_lane_pin'):
+        try:
+            return importlib.import_module(name)
+        except ImportError:
+            continue
+    return None
+
+
+def _spawn_pool(workers, planned, record=None):
+    """A spawn ProcessPoolExecutor of `workers`, pinned over `planned` (the CPUs of the plan) through the shared lane_pin
+    executor; unpinned on the parent's mask when there is no plan. `record` (a dict) gets the placement used."""
+    context = multiprocessing.get_context('spawn')
+    workers = max(1, int(workers))
+    LP = _lane_pin() if planned else None
+    if LP is not None:
+        if record is not None:
+            record['placement'] = LP.record(workers, list(planned), what='teacher spawn pool')
+        return LP.executor('process', workers, cpus=list(planned), mp_context=context)
+    if planned:
+        if record is not None:
+            record['placement'] = dict(basis='frankie_box_lane_pin not importable: private pinning, one CPU of the plan '
+                                             'per worker in plan order', worker_cpus=list(planned[:workers]))
+        return ProcessPoolExecutor(max_workers=workers, mp_context=context, initializer=_pin_raw_worker,
+                                   initargs=(tuple(planned), context.Value('l', 0)))
+    return ProcessPoolExecutor(max_workers=workers, mp_context=context)
+
+
+def _bounded_shutdown(pool, record=None, grace=None):
+    """Stop `pool` without an unbounded wait: queued work cancelled, running workers given `grace` seconds to finish,
+    then terminated (and killed after 5 s more). What had to be terminated is listed in record['stops']."""
+    grace = STOP_GRACE_SECONDS if grace is None else grace
+    processes = list((getattr(pool, '_processes', None) or {}).values())
+    try:
+        pool.shutdown(wait=False, cancel_futures=True)
+    except Exception as error:  # noqa: BLE001 - listed; the processes are still stopped below
+        if record is not None:
+            record.setdefault('stops', []).append(dict(shutdown_error='%s: %s' % (type(error).__name__, error)))
+    deadline = time.monotonic() + grace
+    for process in processes:
+        try:
+            process.join(max(0.0, deadline - time.monotonic()))
+        except Exception:  # noqa: BLE001 - a process object that cannot be joined is handled below
+            pass
+    stopped = []
+    for process in processes:
+        try:
+            if process.is_alive():
+                process.terminate()
+                process.join(5)
+                if process.is_alive():
+                    process.kill()
+                    process.join(5)
+                stopped.append(process.pid)
+        except Exception:  # noqa: BLE001
+            stopped.append(getattr(process, 'pid', None))
+    if stopped and record is not None:
+        record.setdefault('stops', []).append(dict(terminated_pids=stopped, grace_seconds=grace,
+                                                   reason='still running %.0f s after the pool was asked to stop' % grace))
+    return stopped
+
+
+def _submit(pool, function, argument):
+    """pool.submit, or a Future already holding BrokenProcessPool when the pool broke at submit (the caller's redo
+    handles it like a result that broke)."""
+    try:
+        return pool.submit(function, argument)
+    except Exception as error:  # noqa: BLE001
+        from concurrent.futures import Future
+        from concurrent.futures.process import BrokenProcessPool
+        future = Future()
+        future.set_exception(error if isinstance(error, BrokenProcessPool) else BrokenProcessPool(str(error)))
+        return future
+
+
+# Unit progress (FRANKIE_WORK_PROBE_V1 / the stage heartbeat; Greg: "never report running without a probe reading"): a
+# caller sets PROGRESS to a function(stage, completed, total) and the row pass / finish call it at most every
+# PROGRESS_EVERY_SECONDS (the row pass checks the clock every 1,024 rows). Report-only: an error in it is swallowed and
+# counted in PROGRESS_ERRORS, never changes a row; None = no reporting (the previous behaviour).
+PROGRESS = None
+PROGRESS_EVERY_SECONDS = 15.0
+PROGRESS_ERRORS = [0]
+
+
+def _progress(stage, completed, total=None, force=False, _last={}):
+    if PROGRESS is None:
+        return
+    now = time.monotonic()
+    if not force and now - _last.get(stage, 0.0) < PROGRESS_EVERY_SECONDS:
+        return
+    _last[stage] = now
+    try:
+        PROGRESS(stage, completed, total)
+    except Exception:  # noqa: BLE001 - a probe is never the stage's outcome
+        PROGRESS_ERRORS[0] += 1
+
+
 def _pin_raw_worker(cpus, counter):
     """Spawn-worker initializer: the next CPU of the plan (a shared counter, so a respawned worker never blocks on an
     emptied hand-out); a refused pin keeps the inherited mask."""
@@ -309,11 +420,7 @@ class _RawStreams:
         return self
 
     def _new_pool(self, workers):
-        context = multiprocessing.get_context('spawn')
-        if self.planned:
-            return ProcessPoolExecutor(max_workers=workers, mp_context=context, initializer=_pin_raw_worker,
-                                       initargs=(self.planned[:workers] or self.planned, context.Value('l', 0)))
-        return ProcessPoolExecutor(max_workers=workers, mp_context=context)
+        return _spawn_pool(workers, self.planned, RAW_POOL_RECORD)
 
     def _submit(self):
         import pickle
@@ -346,15 +453,15 @@ class _RawStreams:
                 self.breaks += 1
                 if self.breaks > RAW_POOL_MAX_CONSECUTIVE_BREAKS:
                     raise
-                self.pool.shutdown(wait=True, cancel_futures=True)
+                _bounded_shutdown(self.pool, RAW_POOL_RECORD)
                 self.cpus = max(1, self.cpus - 1)
                 self.pool = self._new_pool(self.cpus)
                 again = 0
                 for index, (other, other_future) in enumerate(self.pending):
                     if not (other_future.done() and not other_future.cancelled() and other_future.exception() is None):
-                        self.pending[index] = (other, self.pool.submit(_raw_batch, other))
+                        self.pending[index] = (other, _submit(self.pool, _raw_batch, other))
                         again += 1
-                future = self.pool.submit(_raw_batch, blob)
+                future = _submit(self.pool, _raw_batch, blob)
                 RAW_POOL_RECORD['rebuilds'].append(dict(workers=self.cpus, batches_again=again + 1,
                                                         error='%s: %s' % (type(error).__name__, error)))
 
@@ -414,7 +521,7 @@ class _RawStreams:
         T._absorption, T._cohort = self.original[1], self.original[2]
         for _, future in self.pending:
             future.cancel()
-        self.pool.shutdown(wait=True, cancel_futures=True)
+        _bounded_shutdown(self.pool, RAW_POOL_RECORD)
         return False
 
 
@@ -475,11 +582,7 @@ class EvidencePrecompute:
         self.pool = self._new_pool(self.workers)
 
     def _new_pool(self, workers):
-        context = multiprocessing.get_context('spawn')
-        if self.planned:
-            return ProcessPoolExecutor(max_workers=workers, mp_context=context, initializer=_pin_raw_worker,
-                                       initargs=(self.planned, context.Value('l', 0)))
-        return ProcessPoolExecutor(max_workers=workers, mp_context=context)
+        return _spawn_pool(workers, self.planned, PRECOMPUTE_RECORD)
 
     def submit(self, items):
         """Queue one ordered batch [(payload, entity_row)...]; returns its handle."""
@@ -524,7 +627,7 @@ class EvidencePrecompute:
                     self.breaks = 0
                     break
                 # a dead worker: one fewer, every unfinished batch again in order (the pure encoding gives the same)
-                self.pool.shutdown(wait=True, cancel_futures=True)
+                _bounded_shutdown(self.pool, PRECOMPUTE_RECORD)
                 self.workers = max(1, self.workers - 1)
                 self.pool = self._new_pool(self.workers)
                 again = 0
@@ -553,7 +656,7 @@ class EvidencePrecompute:
             if batch.future is not None:
                 batch.future.cancel()
         self.open = []
-        self.pool.shutdown(wait=True, cancel_futures=True)
+        _bounded_shutdown(self.pool, PRECOMPUTE_RECORD)
 
 
 # The attachment pool's CPUs (finish, steps 3-4): set by the caller like RAW_WORKER_CPUS (one spawn worker per CPU, in
@@ -648,6 +751,29 @@ def _dstate_row(e, control):
                 tick_raw=machine._tick_raw, state=state)
 
 
+# Periodic exact save of the raw pass (stacks pass, session 5; the Sept-29 item 2 rule: exact state at a group-closed
+# point, a resume continues from it; Greg: a crash must not lose the raw pass). With a recovery path, once
+# SAVE_EVERY_SECONDS have passed since the last save, the raw pass saves at the next row that closes its group (the row
+# carries its F_LAST receipt): the raw streams are drained first (every placeholder resolved, as the stop-save does),
+# then the same state the stop-save writes (complete False) and the walk CONTINUES. A resume loads it exactly as it loads
+# a stop-save. Env FRANKIE_TEACHER_SAVE_EVERY_S overrides (0 = off). Every save is listed in SAVE_RECORD (receipt only).
+# RESUME_SKIP[0]: the rows a loaded save already holds (the caller's evidence generator may skip precomputing them).
+SAVE_EVERY_SECONDS = 1800.0
+SAVE_RECORD = {}
+RESUME_SKIP = [0]
+
+
+def _save_every():
+    text = os.environ.get('FRANKIE_TEACHER_SAVE_EVERY_S')
+    if text is None:
+        return SAVE_EVERY_SECONDS, 'default'
+    try:
+        value = float(text)
+    except ValueError:
+        return SAVE_EVERY_SECONDS, 'default (FRANKIE_TEACHER_SAVE_EVERY_S=%r is not a number)' % text[:40]
+    return (value if value > 0 else None), 'FRANKIE_TEACHER_SAVE_EVERY_S'
+
+
 def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
              recovery_identity=None, save_requested=None, retain_dstate=False):
     """Step 1 on its own (the teacher reading the journal): the raw streams over every entry, in order, with the window
@@ -660,6 +786,12 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
         raise ValueError('nonnegative as_of required')
     entity = _ENTITY[0]
     rows, processed, entity_hashes = [], 0, {}
+    RESUME_SKIP[0] = 0
+    every, every_basis = _save_every() if recovery_path else (None, 'no recovery path')
+    SAVE_RECORD.clear()
+    SAVE_RECORD.update(every_seconds=every, basis=every_basis, saves=[], resumed_from=None,
+                       rule='exact state at a row that closes its group (F_LAST receipt), raw streams drained first; '
+                            'the walk continues; a resume loads it as it loads a stop-save')
     continuation = {} if recovery_path or retain_dstate else None
     identity = dict(binding=self.binding, source_manifest_hash=source_manifest_hash,
                     entity=entity, source=recovery_identity,
@@ -676,13 +808,17 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
         if len(rows) != processed or (processed and (
                 continuation['control']['processed'] != processed or continuation['raw']['next_cursor'] != processed)):
             raise ValueError('saved teacher streams and rows do not share one cursor')
+        SAVE_RECORD['resumed_from'] = dict(processed=processed, complete=bool(saved['complete']))
         if saved['complete']:
             return rows, processed, entity_hashes
+        RESUME_SKIP[0] = processed
         from itertools import islice
         evidence = islice(evidence, processed, None)
     def save(complete):
         _save_raw_state(recovery_path, dict(identity=identity, as_of=as_of, rows=rows, processed=processed,
             entity_hashes=entity_hashes, continuation=continuation, complete=complete))
+    last_save, due = time.monotonic(), False
+    _progress('teacher_raw_rows', processed, None, force=True)
     with _RawStreams(T, _cpus()) as streams:
         for e, old, six in T._paired_raw(self.control, self.raw_teacher, evidence, as_of=as_of,
                                          source_manifest_hash=source_manifest_hash, continuation=continuation):
@@ -701,7 +837,21 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
                 streams.finish()
                 save(False)
                 raise TeacherSaved('teacher saved after cursor %d; resume continues at %d' % (processed - 1, processed))
+            if not processed & 1023:
+                _progress('teacher_raw_rows', processed)
+                if every is not None and not due and time.monotonic() - last_save >= every:
+                    due = True                       # saved at the next row that closes its group
+            if due and rows[-1][1]:
+                due = False
+                if True:
+                    began = time.monotonic()
+                    streams.finish()                 # every placeholder resolved; the pool stays up for the next rows
+                    save(False)
+                    last_save = time.monotonic()
+                    SAVE_RECORD['saves'].append(dict(processed=processed, cursor=e['cursor'],
+                                                     seconds=round(last_save - began, 3), at=round(time.time(), 3)))
         streams.finish()
+    _progress('teacher_raw_rows', processed, None, force=True)
     if any(type(v['reason']) is str and v['reason'].startswith(RAW_MARK) for row in rows for v in row[3]):
         raise ValueError('parallel teacher raw placeholder left unresolved; run stopped')
     if recovery_path:
@@ -818,13 +968,9 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
     import pickle
     from concurrent.futures.process import BrokenProcessPool
     targets, receipts, fragments = [], [], []
-    context_mp = multiprocessing.get_context('spawn')
 
     def new_pool(workers):
-        if planned:
-            return ProcessPoolExecutor(max_workers=workers, mp_context=context_mp, initializer=_pin_raw_worker,
-                                       initargs=(planned, context_mp.Value('l', 0)))
-        return ProcessPoolExecutor(max_workers=workers, mp_context=context_mp)
+        return _spawn_pool(workers, planned, FINISH_POOL_RECORD)
     workers = min(cpus, max(1, len(jobs)))
     FINISH_POOL_RECORD.clear()
     FINISH_POOL_RECORD.update(workers=workers, cpus=list(planned) or None, chunks=len(jobs), chunk_rows=size,
@@ -854,7 +1000,7 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
                 else:
                     lost.append(other)
             pending.clear()
-            pool.shutdown(wait=True, cancel_futures=True)
+            _bounded_shutdown(pool, FINISH_POOL_RECORD)
             workers = max(1, workers - 1)
             pool = new_pool(workers)
             remaining.extendleft(reversed(sorted(set(lost))))
@@ -877,6 +1023,7 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
                 index, future = pending.popleft()
                 try:
                     keep_chunk(index, future.result())
+                    _progress('teacher_attachment_chunks', len(jobs) - len(remaining) - len(pending), len(jobs))
                 except BrokenProcessPool as error:
                     breaks[index] = breaks.get(index, 0) + 1
                     if breaks[index] > RAW_POOL_MAX_CONSECUTIVE_BREAKS:
@@ -899,7 +1046,8 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
         if recovery_path and save_requested and save_requested():
             raise TeacherSaved('teacher attachment calculations saved before publication')
     finally:
-        pool.shutdown(wait=True, cancel_futures=True)
+        _bounded_shutdown(pool, FINISH_POOL_RECORD)
+    _progress('teacher_attachment_chunks', len(jobs), len(jobs), force=True)
     join_ready()
     if joined[0] != len(jobs):
         raise ValueError('parallel teacher attachment chunk missing at join; run stopped')

@@ -3221,14 +3221,17 @@ class Session:
         if saved and not 0 <= saved['consumed'] <= count:
             raise ValueError('saved INPUT journal cursor is outside the sealed source')
         if saved:
-            records = B.RowSpool.resume(saved['spool'])
+            # session 5: the INPUT spool reopens as the legacy spools do (_resume_row_spool: no full read when unchanged
+            # and saved with a `resume` block, else one pass instead of RowSpool.resume's two; the same refusals)
+            records, how = _resume_row_spool(B.RowSpool, saved['spool'])
+            self.note(f'INPUT extraction resume: spool reopened ({how})')
             kinds, without_observation, bytes_fields = saved['kinds'], saved['without_observation'], saved['bytes_fields']
             consumed = saved['consumed']
         else:
             records = B.RowSpool(self.work / 'derived' / '.rows' / ('input-' + uuid.uuid4().hex + '.jsonl'))
             kinds, without_observation, bytes_fields, consumed = {}, [], {}, 0
         def save_input(complete=False):
-            _save_raw_state(state_path, dict(identity=identity, spool=records.saved_position(), kinds=kinds,
+            _save_raw_state(state_path, dict(identity=identity, spool=_saved_spool_position(records), kinds=kinds,
                 without_observation=without_observation, bytes_fields=bytes_fields, consumed=consumed, complete=complete))
         def stop_input():
             if recovery and save_requested and save_requested():

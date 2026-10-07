@@ -475,23 +475,65 @@ def _ledger_task(snapshot, index):
     return DC._dimension_ledger(snapshot, index)
 
 
+# PASS DEDUPE (Greg, 2026-10-07 night: "Did we dedup in every step too?"): the 19 per-component ledgers were 19 separate
+# passes over every retained row (one per column, on a fork pool whose results were pickled back). They are built in ONE
+# pass with one accumulator per column, the exact dict per point dipole_classroom._dimension_ledger builds, in the same
+# row order. Bound to that function's own source: when its text differs from the one this pass mirrors, or the one pass
+# raises anything, the serial per-column comprehension runs instead (the same values, or the same error at the same
+# place: the first column that raises, as before). Values, order and errors unchanged; placement/record only.
+DIMENSION_LEDGER_SOURCE_SHA256 = 'e14080f5d945a550c7e9b8a2b3116fa12642fd1e38a65c4159e71daf418a8a72'
+
+
+def _ledgers_one_pass(snapshot, columns):
+    """{column: tuple(points)} in ONE pass over the rows, each point exactly dipole_classroom._dimension_ledger's."""
+    columns = tuple(columns)
+    acc = [[] for _ in columns]
+    for row in snapshot["rows"]:
+        components = row["components"]
+        cursor, ts_recv_ns, target_hash = row["cursor"], row["ts_recv_ns"], row["target_hash"]
+        for index, name in enumerate(columns):
+            component = components[index]
+            if component["name"] != name:
+                raise ValueError("teacher row column order changed")
+            acc[index].append({"cursor": cursor, "ts_recv_ns": ts_recv_ns, "target_hash": target_hash,
+                               "state": component["state"], "value": component["value"],
+                               "raw_reason": component["raw_reason"]})
+    return {name: tuple(points) for name, points in zip(columns, acc)}
+
+
 def _ledgers(snapshot, columns):
-    """{column: ledger} exactly as the serial comprehension built them, the 19 columns side by side on an ordered pinned
-    pool (the Sept-29 pattern, item 4; each ledger is a separate pass over every retained row). Assembled in column
-    order; a worker failure (or no pool: one CPU, other threads) is computed in-process at its column's turn, so the
-    first column that raises raises the same error at the same place. Values unchanged."""
+    """{column: ledger} exactly as the serial comprehension {c: DC._dimension_ledger(snapshot, i)} built them: one pass
+    with per-column accumulators (_ledgers_one_pass) when dipole_classroom._dimension_ledger is the function it mirrors
+    (source sha256 DIMENSION_LEDGER_SOURCE_SHA256) and the columns are its COLUMNS; otherwise, or on any error in the one
+    pass, the serial per-column passes (the same values, the same first error). The record says which ran and why."""
+    import hashlib
+    import inspect
+    import time as _time
     from research.kalshi.frankie_boss import dipole_classroom as DC
-    import frankie_box_adviser_market as AM
-    pool = AM.PinnedMap(_ledger_task, snapshot, list(range(len(columns))), label='teacher Dipole component ledgers')
+    started = _time.perf_counter()
+    record = dict(label='teacher Dipole component ledgers', tasks=len(columns), lane=None, workers=1, cpus=None,
+                  rule='values, order and errors are the serial per-column ones')
     try:
-        done = pool.results()
-    finally:
-        pool.close()
-    LEDGER_POOLS.append(pool.record)
-    out = {}
-    for index, name in enumerate(columns):
-        ok, value = done[index]
-        out[name] = value if ok else DC._dimension_ledger(snapshot, index)
+        source = hashlib.sha256(inspect.getsource(DC._dimension_ledger).encode()).hexdigest()
+    except (OSError, TypeError) as error:
+        source = 'unreadable (%s)' % type(error).__name__
+    why = None
+    if source != DIMENSION_LEDGER_SOURCE_SHA256:
+        why = 'dipole_classroom._dimension_ledger source %s is not the mirrored %s' % (source, DIMENSION_LEDGER_SOURCE_SHA256)
+    elif tuple(columns) != tuple(getattr(DC, 'COLUMNS', ())):
+        why = 'the columns are not dipole_classroom.COLUMNS'
+    out = None
+    if why is None:
+        try:
+            out = _ledgers_one_pass(snapshot, columns)
+            record.update(mode='one_pass', passes=1, former_passes=len(columns))
+        except Exception as error:  # noqa: BLE001 - the serial passes below raise the serial error in its order
+            why = 'the one pass raised %s; the serial passes decide' % type(error).__name__
+    if out is None:
+        out = {name: DC._dimension_ledger(snapshot, index) for index, name in enumerate(columns)}
+        record.update(mode='serial_per_column', passes=len(columns), reason=why)
+    record['seconds'] = round(_time.perf_counter() - started, 3)
+    LEDGER_POOLS.append(record)
     return out
 
 

@@ -28,17 +28,27 @@ SCHEMA = 'FRANKIE_OFFLOADED_FILE_V1'
 CACHE = Path('/opt/frankie-box/work/offload-cache')
 
 
+_BASIS = {}
+
+
 def _sha256(path):
-    """sha256 of a file, cached by (device, inode, size, mtime) so repeated pushes of the same file hash it once."""
+    """sha256 of a file, cached by (device, inode, size, mtime) so repeated pushes of the same file hash it once.
+    NOTE (session 5): this is a skip-by-stat across processes, the shape of Greg's OPEN call (c); it predates the call
+    and is kept unchanged, but every pointer now says which way its sha256 was obtained (sha256_basis: 'hashed' or
+    'stat_cache:<tag>'), so a cached value is never silent. Removing the cache is one line once Greg decides."""
     info = path.stat()
     tag = '%d-%d-%d-%d' % (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)
     cached = CACHE / (tag + '.json')
     try:
-        return json.loads(cached.read_text())['sha256']
+        value = json.loads(cached.read_text())['sha256']
+        _BASIS[str(path)] = 'stat_cache:' + tag
+        return value
     except (OSError, ValueError, KeyError):
         pass
+    _BASIS[str(path)] = 'hashed'
+
     with path.open('rb') as handle:
-        digest = hashlib.file_digest(handle, 'sha256').hexdigest()
+        digest = hashlib.file_digest(handle, 'sha256').hexdigest()       # 4 MiB-class buffered sequential read
     if path.stat().st_mtime_ns != info.st_mtime_ns or path.stat().st_size != info.st_size:
         raise ValueError('file changed while hashing: %s' % path)
     try:
@@ -49,6 +59,15 @@ def _sha256(path):
     return digest
 
 
+def _transport():
+    """frankie_box_s3_transport beside this file (the ONE shared transport: CRT first, classic after, reason recorded)."""
+    here = str(Path(__file__).resolve().parent)
+    if here not in sys.path:
+        sys.path.insert(0, here)
+    import frankie_box_s3_transport
+    return frankie_box_s3_transport
+
+
 def _upload(path, sha, size):
     bucket = os.environ.get('OFFLOAD_BUCKET', 'frankie-granite42-568968024170-us-east-1')
     region = os.environ.get('OFFLOAD_REGION', 'us-east-1')
@@ -56,21 +75,15 @@ def _upload(path, sha, size):
     result = dict(bucket=bucket, region=region, uploaded=False)
     try:
         import boto3
-        from boto3.s3.transfer import TransferConfig
         s3 = boto3.client('s3', region_name=region)
-        configs = [TransferConfig(multipart_chunksize=128 * 1024 * 1024, max_concurrency=16)]
-        try:
-            import awscrt  # noqa: F401
-            configs.insert(0, TransferConfig(preferred_transfer_client='crt', multipart_chunksize=128 * 1024 * 1024,
-                                             max_concurrency=16))
-        except Exception:             # noqa: BLE001 - no awscrt or an older boto3: the classic client only
-            pass
+        T = _transport()
     except Exception as error:        # noqa: BLE001 - the push never fails on the offload copy
         result['error'] = '%s: %s' % (type(error).__name__, str(error)[:200])
         return result
-    errors = []
+    errors, attempts = [], []
     # The box role writes host-deliveries/<day>/principal-response/cycle-<NN>/progress/ (heartbeats); the brain-files
-    # prefix is tried first, the progress prefix second.
+    # prefix is tried first, the progress prefix second. The upload is frankie_box_s3_transport.upload (CRT first,
+    # 128 MiB parts x 16, classic after it; transport and the fallback reason land on the pointer: Day-1 visibility).
     for key in ('%s/brain-files/%s' % (base, sha), '%s/progress/brain-files/%s' % (base, sha)):
         try:
             try:
@@ -80,26 +93,26 @@ def _upload(path, sha, size):
                     return result
             except Exception:         # noqa: BLE001 - absent or not readable: upload
                 pass
-            # the CRT transfer client first where awscrt is installed (box venv, 2026-10-07), the classic one after
-            for number, config in enumerate(configs):
-                try:
-                    s3.upload_file(str(path), bucket, key, ExtraArgs={'Metadata': {'sha256': sha}}, Config=config)
-                    break
-                except Exception:     # noqa: BLE001 - the next transfer client; the last one's error is recorded
-                    if number == len(configs) - 1:
-                        raise
-            result.update(key=key, uploaded=True)
-            return result
+            r = T.upload(str(path), bucket, key, region=region, sha256=sha, extra_args={'Metadata': {'sha256': sha}},
+                         client=s3)
+            attempts.append({k: r.get(k) for k in ('key', 'status', 'transport', 'transport_fallback', 'seconds',
+                                                    'bytes_per_second', 'reason')})
+            if r['status'] == 'uploaded':
+                result.update(key=key, uploaded=True, transport=r['transport'],
+                              transport_fallback=r['transport_fallback'], transport_attempts=attempts)
+                return result
+            errors.append('%s: %s (%s)' % (key, r.get('reason'), r.get('transport_fallback')))
         except Exception as error:    # noqa: BLE001
             errors.append('%s: %s' % (key, str(error)[:200]))
-    result['error'] = ' | '.join(errors)
+    result.update(error=' | '.join(errors), transport_attempts=attempts)
     return result
 
 
 def _pointer(source, target, box_path):
     size = source.stat().st_size
     sha = _sha256(source)
-    pointer = dict(schema=SCHEMA, name=target.name, bytes=size, sha256=sha, box_path=box_path, **_upload(source, sha, size))
+    pointer = dict(schema=SCHEMA, name=target.name, bytes=size, sha256=sha, sha256_basis=_BASIS.get(str(source)),
+                   box_path=box_path, **_upload(source, sha, size))
     out = target.with_name(target.name + '.s3.json')
     out.write_text(json.dumps(pointer, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     print('offloaded (%d bytes, sha256 %s): %s -> %s; s3 %s' % (

@@ -36,10 +36,12 @@ import frankie_box_all99_coverage as ALL99  # noqa: E402
 
 def lane_cpus():
     """The CPUs booked for this day (Greg, 2026-10-07: a day gets all 32, or the 16 of a lane): FRANKIE_LANE_CPUS as
-    the CPU ledger hands it (a comma list; a-b ranges accepted), else this process's affinity mask. Every classroom
-    pool sizes from this one list."""
+    the CPU ledger hands it (a comma list; a-b ranges accepted), else FRANKIE_BOOKED_CPUS (frankie_box_cores sets both
+    from the booking's cpu_list; the stacks pass 2026-10-07 added this fallback, the order frankie_box_lane_pin reads
+    them in), else this process's affinity mask. Every classroom pool sizes from this one list. The list is not
+    intersected with the affinity: the SOCRATIC/VERIFY learner walk compares the two and refuses a difference."""
     import os
-    text = os.environ.get('FRANKIE_LANE_CPUS') or ''
+    text = os.environ.get('FRANKIE_LANE_CPUS') or os.environ.get('FRANKIE_BOOKED_CPUS') or ''
     cpus = set()
     for part in text.split(','):
         part = part.strip()
@@ -79,6 +81,23 @@ def pinning_record():
         out['blas_reduction'] = (EXT.blas_reduction() if EXT is not None and getattr(EXT, '_BLAS', None) else
                                  dict(mode='NOT_RUN', threads=32, reason='no Pearson dot product ran in this process'))
     return out
+
+# The stage heartbeat from inside the classroom's long sub-steps (FA-4 pattern; frankie_box_stage_progress.report_phase,
+# read by the parent's Heartbeat: units, units/min and the report-only stall flag at 600 s). report_phase never raises;
+# an import failure of the probe module is the one error left, and it is listed here (receipt: received.probe_errors in
+# classroom V2), never swallowed quietly. A probe never changes a value, an order or a byte.
+PROBE_ERRORS = {}
+
+
+def heartbeat(phase, done, total=None, unit=None, every=None, **extra):
+    try:
+        import frankie_box_stage_progress as SP
+    except Exception as error:  # noqa: BLE001 - listed, the stage goes on
+        PROBE_ERRORS.setdefault('%s: %s' % (type(error).__name__, error), 0)
+        PROBE_ERRORS['%s: %s' % (type(error).__name__, error)] += 1
+        return
+    SP.report_phase(phase, units_done=done, units_total=total, unit=unit, every=every, **extra)
+
 
 SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'
 # V3 = V2 with R17 amended for Granite's active bounded post-class facilitator role (Greg, 2026-10-06)
@@ -1098,16 +1117,22 @@ class _NativeEntryArithmetic:
         # Greg's probes on every step: the stage's own phase for the parent's heartbeat. _check also runs in the pair
         # threads (before every series), so the report is throttled to one per second under a lock (one writer of the
         # pid's pending file at a time). A probe never changes the pass.
+        # Stacks pass (2026-10-07): only the coordinator writes it (a forked series worker's own count would alternate
+        # with the coordinator's and hide a stall), and after the pass the units are the series completed, not the
+        # pictures fed (constant then, so a 10-minute series phase read as STALLED).
+        import os
+        coordinator = _RSS_COORDINATOR[0] if _RSS_COORDINATOR else os.getpid()
         with self._probe_lock:
             now = time.monotonic()
-            if now - self._probe_at >= 1.0:
+            if now - self._probe_at >= 1.0 and os.getpid() == coordinator:
                 self._probe_at = now
-                try:
-                    import frankie_box_stage_progress as SP
-                    SP.report_phase('classroom native entries: %s' % phase, units_done=self.pictures, unit='pictures',
-                                    rss_bytes=rss, native_elapsed_s=round(elapsed, 1))
-                except Exception:  # noqa: BLE001 - a probe never changes the pass
-                    pass
+                if phase == 'pass':
+                    heartbeat('classroom native entries: pass', self.pictures, unit='pictures', rss_bytes=rss,
+                           native_elapsed_s=round(elapsed, 1))
+                else:
+                    heartbeat('classroom native entries: series', getattr(self, 'series_done', 0),
+                           getattr(self, 'series_total', None), unit='series', rss_bytes=rss,
+                           native_elapsed_s=round(elapsed, 1))
         hit = ('wall_time' if elapsed >= self.limits['seconds'] else
                'resident_memory' if rss >= self.limits['rss_bytes'] else None)
         if hit is None:
@@ -1484,8 +1509,17 @@ def _native_series_parallel(native, run, jobs, lane, LP):
         PINNING_RECORD['native_series_threads'] = dict(
             LP.record(workers, lane, what='classroom native series threads (_compute; no fork: %s)' % why),
             waited_for_threads_s=waited)
+        import threading
+        lock = threading.Lock()
+        native.series_done, native.series_total = 0, len(jobs)
+
+        def counted(job):                # the same run(job), counted for the heartbeat (map keeps job order)
+            value = run(job)
+            with lock:
+                native.series_done += 1
+            return value
         with LP.executor('thread', workers, lane) as pool:
-            values = list(pool.map(run, jobs))
+            values = list(pool.map(counted, jobs))
         PINNING_RECORD['native_series_threads']['seconds'] = round(time.monotonic() - started, 3)
         return values
     # chunks small enough to balance (about eight per worker), large enough that the hand-back is not per series
@@ -1497,11 +1531,15 @@ def _native_series_parallel(native, run, jobs, lane, LP):
     report, values = {}, [None] * len(jobs)
     _NATIVE_SHARED.update(native=native, run=run, jobs=jobs, flag=flag)
     _RSS_COORDINATOR[:] = [os.getpid()]
+    native.series_done, native.series_total = 0, len(jobs)
     gc.freeze()               # the pass's state stays shared: a worker's collector never writes the coordinator's pages
     try:
         for span, (chunk, record) in LP.ordered_map(_native_chunk, spans, workers, context=context, cpus=lane,
                                                     window=workers * 2, poll=5.0, report=report):
             values[span[0]:span[1]] = chunk
+            native.series_done = span[1]          # chunks arrive in job order: every series before span[1] is back
+            heartbeat('classroom native entries: series', native.series_done, len(jobs), unit='series',
+                                every=1.0, chunk_workers=workers)
             if record is not None and native.cutoff is None:
                 native.cutoff, native.status, native.reason = record['cutoff'], record['status'], record['reason']
     finally:

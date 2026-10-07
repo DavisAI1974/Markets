@@ -479,53 +479,104 @@ def compare_raw_and_compact(raw_path, compact_path, *, expected_count, expected_
     return compared
 
 
-def fetch_sources(manifest, sources_dir, *, env_file):
+def _transport():
+    """deploy/aws/box/frankie_box_s3_transport (the ONE shared transport: CRT first, classic fallback, reason recorded)."""
+    box = str(ROOT / 'deploy' / 'aws' / 'box')
+    if box not in sys.path:
+        sys.path.insert(0, box)
+    import frankie_box_s3_transport
+    return frankie_box_s3_transport
+
+
+def fetch_sources(manifest, sources_dir, *, env_file, emit=None):
+    """--fetch: the members missing (or different) under sources_dir downloaded from the manifest bucket, side by side,
+    through frankie_box_s3_transport.download (the CRT transfer client first where awscrt imports, 128 MiB parts x 16;
+    the classic multipart client after it; the reason for any fallback on the transport receipt). A member already
+    present is hashed again in full (no skip by stat: Greg's open call (c)). Each transport receipt is an event
+    (progress.jsonl) and fetch-receipts.json in sources_dir lists them all. The sha256 check is unchanged."""
     if Path(env_file).is_file():
         load_env_file(env_file)
     import boto3
-    from boto3.s3.transfer import TransferConfig
     from concurrent.futures import ThreadPoolExecutor
+    T = _transport()
     s3 = boto3.client('s3', region_name='us-east-2')
-    # S3 byte-range GETs (aws-storage skill: 8-16 MB ranges, ~15 streams fill a 12.5 Gb/s NIC): the CRT transfer client
-    # first where awscrt is installed (the box venv, 2026-10-07; this path signs its own requests), the classic
-    # multipart download after; the members side by side, each hashed as soon as it lands. The sha256 check is unchanged.
-    configs = [TransferConfig(multipart_threshold=64 << 20, multipart_chunksize=16 << 20, max_concurrency=15)]
-    try:
-        import awscrt  # noqa: F401
-        configs.insert(0, TransferConfig(preferred_transfer_client='crt', multipart_threshold=64 << 20,
-                                         multipart_chunksize=16 << 20, max_concurrency=15))
-    except Exception:  # noqa: BLE001 - no awscrt or an older boto3: the classic client only
-        pass
+    receipts = []
 
     def one(member):
         target = Path(sources_dir) / member['member_key']
         if target.is_file() and target.stat().st_size == member['size_bytes'] and sha256_file(target) == member['sha256']:
-            return None
+            return None, dict(member_key=member['member_key'], status='present', sha256=member['sha256'])
+        if target.exists():
+            return ('a different file is already at ' + member['member_key'] + '; not overwritten'), dict(
+                member_key=member['member_key'], status='refused', reason='different file present')
         key = manifest['prefix'] + '/' + member['member_key']
         target.parent.mkdir(parents=True, exist_ok=True)
-        for number, config in enumerate(configs):
-            try:
-                s3.download_file(manifest['bucket'], key, str(target), Config=config)
-                break
-            except Exception:  # noqa: BLE001 - the next transfer client; the last one's error stands
-                if number == len(configs) - 1:
-                    raise
-        if sha256_file(target) != member['sha256']:
-            return 'downloaded member differs from the manifest: ' + member['member_key']
-        return None
+        r = T.download(manifest['bucket'], key, str(target), region='us-east-2', expected_bytes=member['size_bytes'],
+                       expected_sha256=member['sha256'], client=s3)
+        r['member_key'] = member['member_key']
+        if r['status'] != 'restored':
+            return 'downloaded member refused (%s): %s' % (r.get('reason'), member['member_key']), r
+        return None, r
     with ThreadPoolExecutor(max_workers=max(1, min(4, len(manifest['sources'])))) as pool:
-        refused = [why for why in pool.map(one, manifest['sources']) if why]
+        outcomes = list(pool.map(one, manifest['sources']))
+    for why, r in outcomes:
+        receipts.append(r)
+        if emit is not None:
+            emit(dict(phase='fetch_member', **{k: v for k, v in r.items() if k not in ('schema',)}))
+    try:
+        (Path(sources_dir) / ('fetch-receipts-%d.json' % int(time.time()))).write_text(
+            json.dumps(dict(schema='BOSS_BLOCK_FETCH_RECEIPTS_V1', manifest_hash=manifest['manifest_hash'],
+                            members=receipts), indent=1, sort_keys=True, default=str))
+    except OSError:
+        pass
+    refused = [why for why, _ in outcomes if why]
     if refused:
         raise SystemExit('; '.join(refused))
 
 
+_PROBE_STAGES = {'ingestion': 'ingest records', 'parallel_pass1': 'pass 1 records', 'opening_book_warm': 'opening book warm',
+                 'parallel_pass2': 'pass 2 segments', 'parallel_pass3': 'pass 3 entries', 'source_verification': 'seal + conformance',
+                 'source_saved': 'saved'}
+
+
 def _emitter(output):
+    """Every event is a progress.jsonl line (as before) and, for the counted phases, a FRANKIE_WORK_PROBE_V1 progress.json
+    beside the journal (session 5, FA-4 pattern: the stage heartbeat frankie_box_stage_progress finds a work probe beside
+    the files the tree holds open and computes units/min and its report-only 600 s stall flag). The probe counts are
+    stage-local: records for decode / pass 1 / ingest, segments for pass 2, entries for pass 3. A probe that cannot be
+    written never changes the ingest (report-only)."""
+    probe = [None]
+
+    def work_probe(value):
+        stage = _PROBE_STAGES.get(value.get('phase'))
+        if stage is None:
+            return
+        try:
+            if probe[0] is None:
+                box = str(ROOT / 'deploy' / 'aws' / 'box')
+                if box not in sys.path:
+                    sys.path.insert(0, box)
+                import frankie_box_progress
+                probe[0] = frankie_box_progress.Probe(output, phase='ingest')
+            if value.get('phase') == 'parallel_pass2':
+                done, total = value.get('segment', 0) + 1, None
+            elif value.get('phase') == 'parallel_pass3':
+                done, total = value.get('entries', 0), None
+            else:
+                done, total = value.get('records', 0), value.get('total_records')
+            if type(done) is int and (total is None or (type(total) is int and total >= done)):
+                probe[0].update(stage, done, total, force=value.get('phase') in ('source_verification', 'source_saved'),
+                                state='complete' if value.get('phase') == 'source_saved' else 'running')
+        except Exception:  # noqa: BLE001 - the probe never changes the ingest
+            pass
+
     def emit(value):
         value = dict(value, unix=round(time.time(), 3))
-        line = json.dumps(value, sort_keys=True)
+        line = json.dumps(value, sort_keys=True, default=str)
         print(line, flush=True)
         with (output / 'progress.jsonl').open('a', encoding='utf-8') as stream:
             stream.write(line + '\n')
+        work_probe(value)
     return emit
 
 
@@ -627,7 +678,7 @@ def main():
         manifest = json.loads(Path(args.manifest).read_bytes())
         scope = block_source_scope(manifest, expected_manifest_hash=manifest['manifest_hash'])
         if args.fetch:
-            fetch_sources(manifest, args.sources_dir, env_file=args.env_file)
+            fetch_sources(manifest, args.sources_dir, env_file=args.env_file, emit=emit)
         paths = tuple(Path(args.sources_dir) / member.member_key for member in scope.members)
         halt = manifest['halt_utc_hour']
         source_label = dict(scope='block', block=manifest['block'], bucket=manifest['bucket'], prefix=manifest['prefix'],

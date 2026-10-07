@@ -1982,6 +1982,10 @@ def main():
                        search=witness(Path(a.search[0]) / 'MANIFEST.json'), accumulated_claim_tests=result,
                        model_calls=0)
         receipt.update(_accumulated_report(a, result, out, started))
+        # added field (Day-1 visibility): every pinned pool this call ran (CPU map, mode or in-process reason, worker
+        # deaths, tasks redone, seconds); the result files and their bytes are untouched
+        receipt['pools'] = list(POOL_NOTES)
+        receipt['workflow_report'].setdefault('use', {})['pools'] = list(POOL_NOTES)
         write_json(out / 'receipt.json', receipt)
         print(json.dumps(receipt, sort_keys=True), flush=True)
         return
@@ -2001,48 +2005,63 @@ def main():
     if not (a.jev_claims or a.frankie_ledgers or a.historical_claims or a.search_findings):
         raise SystemExit('give --jev-claims / --jev-stamp, --frankie-ledgers, --historical-claims and/or --search-findings')
     days = load_searches(a.search)
-    # every searched day's completed native evidence: all of its file reads (the retained files and the two exact ledgers,
-    # every day's) side by side on pinned lane workers, each day assembled and written in the searched-day order with the
-    # serial code's bytes and listed entries (completed_native_evidence_many; Greg, 2026-10-07)
-    native = dict(zip([d['day'] for d in days], completed_native_evidence_many(days, Path(a.out_dir))))
-    for day, (ref, listed) in native.items():
+    # The claim documents are read first (pure reads: nothing is written before the native evidence, as before), so the
+    # native evidence of every day and the search-part scan of every document to be tested run side by side on ONE pinned
+    # lane pool (pre_read; Greg, 2026-10-07: sub-steps side by side, every part read and hashed once per stage). The
+    # printed lines, the native files written and any error keep the serial order: native evidence first (a native read
+    # that raised re-raises at its own place), then the candidates' line, then a claims-document error at its own place.
+    candidates, listed, candidate_lines, docs, docs_error = [], [], [], None, None
+    try:
+        if a.search_findings:
+            import frankie_box_candidate_claims as CC
+            candidates = [CC.candidate_claims(a.search_findings)]
+            if all(d['day'] == candidates[0]['day'] for d in days):
+                # Day-quantity agnostic (Greg, 2026-10-07): a run of one day has no other completed search yet. The
+                # candidates are still taught: their own day is listed as origin evidence, every claim comes back
+                # INSUFFICIENT_EVIDENCE with the reason in its untested list, and the next day's search tests them.
+                listed.append(dict(what='search_findings', day=candidates[0]['day'],
+                                   reason='no completed search of another day was given: the candidates\' own day is origin '
+                                          'evidence, not a test; the claims are retained with their origin evidence only'))
+                candidate_lines.append('search candidates of %s: no other searched day yet; origin evidence listed, no test '
+                                       '(the day stays)' % candidates[0]['day'])
+        docs = ([jev_claims(a.jev_claims, a.jev_seal)] if a.jev_claims else []) + \
+               ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []) + \
+               ([historical_claims(a.historical_claims, records_selection=[])] if a.historical_claims else []) + candidates
+    except (Exception, SystemExit) as error:  # noqa: BLE001 - re-raised below, after the native evidence, as before
+        docs_error = error
+    shared_started = time.time()
+    # One read of the search parts for every document this call will test (Greg, 2026-10-07, the Sept 29 pattern): a
+    # document whose result file already exists is reused below and reads nothing, so it is left out (the document
+    # boundary is this stage's save point: a restart reuses every document already written and tests the rest). The
+    # claims read are the given documents' own; freeze_operation refuses any frozen document whose claims differ, and
+    # test() uses a prepared read only when it is exactly its own plan. The loop below is unchanged: each document is
+    # still frozen, tested, written and published in this order (brain publication order kept), and any document
+    # without a prepared read scans its parts itself.
+    to_test = [] if docs_error is not None else [
+        index for index, doc in enumerate(docs)
+        if not (Path(a.out_dir) / doc['author'] / ('%s-%s.json' % (
+            '-'.join(sorted(d['day'] for d in days)) if doc['author'] == 'historical' else doc['day'],
+            doc['stamp'] or 'frankie'))).exists()]
+    native_list, prepared_list, pre_note = pre_read(days, [docs[index] for index in to_test], Path(a.out_dir))
+    native = dict(zip([d['day'] for d in days], native_list))
+    for day, (ref, native_listed) in native.items():
         print('completed native evidence %s: %s' % (day, 'read, %s' % json.dumps(ref['counts'], sort_keys=True) if ref
-                                                       else '; '.join(x['reason'] for x in listed)), flush=True)
-    candidates, listed = [], []
-    if a.search_findings:
-        import frankie_box_candidate_claims as CC
-        candidates = [CC.candidate_claims(a.search_findings)]
-        if all(d['day'] == candidates[0]['day'] for d in days):
-            # Day-quantity agnostic (Greg, 2026-10-07): a run of one day has no other completed search yet. The
-            # candidates are still taught: their own day is listed as origin evidence, every claim comes back
-            # INSUFFICIENT_EVIDENCE with the reason in its untested list, and the next day's search tests them.
-            listed.append(dict(what='search_findings', day=candidates[0]['day'],
-                               reason='no completed search of another day was given: the candidates\' own day is origin '
-                                      'evidence, not a test; the claims are retained with their origin evidence only'))
-            print('search candidates of %s: no other searched day yet; origin evidence listed, no test (the day stays)'
-                  % candidates[0]['day'], flush=True)
+                                                       else '; '.join(x['reason'] for x in native_listed)), flush=True)
+    for line in candidate_lines:
+        print(line, flush=True)
+    if docs_error is not None:
+        raise docs_error
     operations = []
     code_root = os.environ.get('CODE_ROOT')
-    docs = ([jev_claims(a.jev_claims, a.jev_seal)] if a.jev_claims else []) + \
-           ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []) + \
-           ([historical_claims(a.historical_claims, records_selection=[])] if a.historical_claims else []) + candidates
-    # One read of the search parts for every document this call will test (Greg, 2026-10-07, the Sept 29 pattern): a
-    # document whose result file already exists is reused below and reads nothing, so it is left out. The claims read
-    # are the given documents' own; freeze_operation refuses any frozen document whose claims differ, and test() uses a
-    # prepared read only when it is exactly its own plan. The loop below is unchanged: each document is still frozen,
-    # tested, written and published in this order (brain publication order kept), and any document without a prepared
-    # read scans its parts itself.
-    shared_started = time.time()
-    to_test = [index for index, doc in enumerate(docs)
-               if not (Path(a.out_dir) / doc['author'] / ('%s-%s.json' % (
-                   '-'.join(sorted(d['day'] for d in days)) if doc['author'] == 'historical' else doc['day'],
-                   doc['stamp'] or 'frankie'))).exists()]
-    prepared = dict(zip(to_test, shared_scan([docs[index] for index in to_test], days)))
+    prepared = dict(zip(to_test, prepared_list))
     shared = dict(documents=len(to_test), prepared=sum(v is not None for v in prepared.values()),
                   parts=sum(len(d['parts']) for d in days), seconds=round(time.time() - shared_started, 3),
+                  pre_read=pre_note, documents_resumed=len(docs) - len(to_test),
                   rule='the search parts read once for every document tested here (each part hashed once, each needle '
-                       'searched once per block); every document\'s rows, ordinals, raw-line hashes, pin checks and read '
-                       'report are its own scan\'s; prepared 0 = each document read its own parts')
+                       'searched once per block), side by side with every day\'s native evidence reads; every '
+                       'document\'s rows, ordinals, raw-line hashes, pin checks and read report are its own scan\'s; '
+                       'prepared 0 = each document read its own parts; documents_resumed = result files already written '
+                       '(reused below, nothing re-tested)')
     for index, doc in enumerate(docs):
         started = time.time()
         operation, frozen = freeze_operation(doc, days, a.out_dir, a.brain)
@@ -2202,7 +2221,7 @@ def _write_teacher_receipt(a, days, native, operations, listed, code_root, share
                                   all99_coverage={day: pin.get('summary') for day, pin in ((o.get('all99_coverage') or {}).get('by_day') or {}).items()})
                              for o in operations],
                  listed=listed + [item for _, items in native.values() for item in items],
-                 shared_read=shared_read,
+                 shared_read=shared_read, pools=list(POOL_NOTES),
                  rule='an operation reused repeated no test; the all-99 list per searched day names which registry entries '
                       'its tests read; listed items are dispositions, never dropped evidence'),
         outputs=dict(lessons=[dict(author=o['author'], day=o['day'], **o['lessons']) for o in operations],
@@ -2213,6 +2232,7 @@ def _write_teacher_receipt(a, days, native, operations, listed, code_root, share
                    operations=operations, listed=listed, workflow_report=report, model_calls=0, code_root=code_root)
     if shared_read is not None:
         receipt['shared_read'] = shared_read      # added field (how the parts were read); absent on a caller without it
+    receipt['pools'] = list(POOL_NOTES)           # added field: every pinned pool of this call (CPU map, deaths, redo)
     data = (json.dumps(receipt, indent=1, sort_keys=True, default=str) + '\n').encode()
     path = Path(a.out_dir) / 'receipts' / (sha256_bytes(data) + '.json')
     if not path.exists():
