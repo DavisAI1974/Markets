@@ -57,6 +57,22 @@ def lane_workers():
     """Workers beside the coordinator: the booked CPUs minus one (15 on a 16-CPU lane, 31 on the 32-CPU day)."""
     return max(1, len(lane_cpus()) - 1)
 
+
+# Where this process's classroom work ran (Greg, 2026-10-07: every pool and thread pinned to the booked lane, physical
+# cores first; frankie_box_lane_pin). Filled by the pass consumer, the native series threads and the 171-pair fork pool
+# when they run in this process; receipt-only (classroom V2 received.cpu_pinning), never an input to an answer.
+PINNING_RECORD = {}
+
+
+def _lane_pin():
+    import frankie_box_lane_pin as LP     # the one shared placement helper (same box directory; sys.path set above)
+    return LP
+
+
+def pinning_record():
+    """Receipt view of PINNING_RECORD (per pool: its CPU map and outcome)."""
+    return {name: dict(item) for name, item in PINNING_RECORD.items()}
+
 SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'
 # V3 = V2 with R17 amended for Granite's active bounded post-class facilitator role (Greg, 2026-10-06)
 RULES_PATH = Path(__file__).resolve().parents[3] / 'research/kalshi/frankie_boss/knowledge/CLASSROOM_RULES_V3.json'
@@ -313,10 +329,35 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
     except Exception as error:  # noqa: BLE001 - blocks only the native entry arithmetic; recorded, never a measurement
         native, native_setup = None, 'setting up: %s: %s' % (type(error).__name__, error)
     iterator = timeline.iter_pictures()
+    # The pass consumer on its own CPU (Greg, 2026-10-07: pin every step; research item: the full-read consumer on a
+    # whole core). lane[0] is the CPU the readers leave free (frankie_journal_reader.worker_budget and the timeline's
+    # decode take lane[1:]). The timeline sizes its decode pools from THIS thread's affinity when each stream starts,
+    # so the pin waits until every stream generator has started, and the original mask is restored when the pass
+    # ends, before the native series and pair pools are sized. The sibling thread of lane[0] stays in the readers'
+    # list (that list is the ROOT-bound timeline's and the journal reader's; a whole idle core needs a change there).
+    LP = _lane_pin()
+    consumer, siblings, topology_basis = LP.consumer_core(lane_cpus())
+    original_mask = LP.current_mask()
+    consumer_pin = dict(cpu=consumer, sibling_threads=siblings, mask=sorted({consumer, *siblings}) if consumer is not None
+                        else None, topology=topology_basis, outcome='waiting',
+                        siblings_note='the consumer\'s whole core (its CPU and sibling threads); the sibling threads also '
+                                      'stay in the reader/decode worker lists (ROOT-bound timeline and journal reader)')
+    PINNING_RECORD['pass_consumer'] = consumer_pin
+    waiting = consumer is not None
     try:
         for item in iterator:
             if save_requested():
                 raise TeacherSaved('shared classroom picture read interrupted; no completed reading claimed')
+            if waiting:
+                streams = getattr(timeline, 'streams', None)
+                started_streams = LP.generators_started(streams) if streams is not None else None
+                if started_streams is None:
+                    waiting = False
+                    consumer_pin.update(outcome='not_pinned', reason='cannot tell whether the reader sized its pools; '
+                                        'the consumer keeps the lane mask')
+                elif started_streams:
+                    waiting = False
+                    consumer_pin.update(LP.pin_core(consumer_pin['mask']), at_picture=seen + 1)
             picture = item['picture']
             status = picture['source_status']
             # The core yields a plain status string (applied, failed, unpaired_...); a structured status is
@@ -345,8 +386,15 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
                 if len(pictures) == len(wanted):
                     last_anchor_seen_at = seen
     finally:
-        iterator.close()
+        try:
+            iterator.close()
+        finally:
+            if consumer_pin.get('outcome') in ('pinned', 'fallback'):
+                consumer_pin['restored'] = LP.restore_mask(original_mask)
+            elif consumer_pin.get('outcome') == 'waiting':
+                consumer_pin.update(outcome='not_pinned', reason='the reader streams never all started in this pass')
     read = dict(seconds=round(time.monotonic() - started, 3), pictures_seen=seen, workers=lane_workers(),
+                consumer_pin=dict(consumer_pin),
                 wanted_anchor_cursors=len(wanted), max_wanted_adapter_cursor=(max(wanted) if wanted else None),
                 last_anchor_retained_at_picture=last_anchor_seen_at,
                 pictures_after_last_anchor=(seen - last_anchor_seen_at if last_anchor_seen_at is not None else None),
@@ -1193,7 +1241,12 @@ class _NativeEntryArithmetic:
                 + [(count_series, key, 'events_per_dipole_interval')
                    for key in sorted(self.cnt, key=lambda k: (k[0], str(k[1])))])
         self.pair_threads = max(1, min(len(lane_cpus()), len(jobs) or 1))     # the booked CPUs (16 or 32)
-        with ThreadPoolExecutor(max_workers=self.pair_threads) as pool:
+        # each thread pinned to its own lane CPU, one thread per physical core first (frankie_box_lane_pin.executor;
+        # a refused pin falls back to the lane). pool.map keeps the sorted series order; threads do not die mid-task.
+        LP = _lane_pin()
+        PINNING_RECORD['native_series_threads'] = LP.record(self.pair_threads, lane_cpus(),
+                                                            what='classroom native series threads (_compute)')
+        with LP.executor('thread', self.pair_threads, lane_cpus()) as pool:
             series.extend(pool.map(run, jobs))
         for key in sorted(self.cat, key=lambda k: (k[0], str(k[1]))):
             if n == 0 or self._check('categories'):
@@ -2496,14 +2549,52 @@ def _pair_measures(math, ledgers, order):
     use_fork = sys.platform.startswith('linux') and threading.active_count() == 1 and workers > 1
     if use_fork:
         import multiprocessing
-        from concurrent.futures import ProcessPoolExecutor
+        from concurrent.futures.process import BrokenProcessPool
         _PAIR_SHARED.update(math=math, ledgers=ledgers, order=order)
+        context = multiprocessing.get_context('fork')
+        LP = _lane_pin()
+        lane = lane_cpus()
+        # Every worker pinned to its own lane CPU, physical cores first (frankie_box_lane_pin.executor; a refused pin
+        # falls back to the lane). A dead worker never stops or hangs the classroom (Greg, 2026-10-07): the pool reports
+        # it (BrokenProcessPool), every pair already measured is kept, and the pairs it lost are measured again by a
+        # new pool with one worker fewer; with one worker left (or a live thread beside, where no fork is taken) they
+        # run in this process. Same functions, results placed by pair index: the values are the serial loop's.
+        measured, live, rounds = [None] * len(order), workers, []
         try:
-            with ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context('fork')) as pool:
-                measured = list(pool.map(_pair_job, range(len(order)), chunksize=max(1, len(order) // (workers * 4))))
+            while any(m is None for m in measured):
+                remaining = [i for i, m in enumerate(measured) if m is None]
+                if live <= 1 or threading.active_count() > 1:
+                    for i in remaining:
+                        measured[i] = _pair_job(i)
+                    rounds.append(dict(workers=1, pairs=len(remaining), where='this process (serial)'))
+                    break
+                futures, broken = [], None
+                try:
+                    with LP.executor('process', live, lane, mp_context=context) as pool:
+                        futures = [(i, pool.submit(_pair_job, i)) for i in remaining]
+                        for i, future in futures:
+                            try:
+                                measured[i] = future.result()
+                            except BrokenProcessPool as error:
+                                broken = error
+                                break
+                except BrokenProcessPool as error:
+                    broken = broken or error
+                if broken is None:
+                    rounds.append(dict(workers=live, pairs=len(remaining), cpu_map=LP.record(live, lane)))
+                    break
+                for i, future in futures:          # keep every pair a worker finished before the pool broke
+                    if measured[i] is None and future.done() and not future.cancelled() and future.exception() is None:
+                        measured[i] = future.result()
+                rounds.append(dict(workers=live, pairs=len(remaining), lost=sum(m is None for m in measured),
+                                   broken='%s: %s' % (type(broken).__name__, broken)))
+                live -= 1
         finally:
             _PAIR_SHARED.clear()
-        basis = 'fork pool (%d workers, the lane affinity); same functions, pair order kept' % workers
+        PINNING_RECORD['dipole_pair_processes'] = dict(workers=workers, rounds=rounds)
+        basis = ('fork pool (%d workers, each pinned to one lane CPU, physical cores first%s); same functions, pair order '
+                 'kept' % (workers, '' if len(rounds) == 1 else '; a dead worker\'s pairs measured again with one worker '
+                                                               'fewer (rounds in received.cpu_pinning)'))
     else:
         measured = [(math._pearson(ledgers[a], ledgers[b]), math._co_movement(ledgers[a], ledgers[b])) for a, b in order]
         basis = ('serial: %s' % ('more than one live thread (no fork beside threads)' if threading.active_count() > 1

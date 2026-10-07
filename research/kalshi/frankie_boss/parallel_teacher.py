@@ -178,6 +178,27 @@ def _chunk(job):
 
 _WORKER_CHANGED = [False]
 
+# The raw-batch workers' CPUs (Greg, 2026-10-07 night: every pool pinned to its share of the booked lane). A caller that
+# pins the parent's raw loop sets this to the CPUs the workers take, in hand-out order (one worker each), and resets it
+# to None after the walk (frankie_box_experiment_teacher). None = unchanged: _cpus() workers on the parent's mask.
+# Placement only: every batch result is the pinned functions' value, resolved by token; no value depends on it.
+RAW_WORKER_CPUS = None
+# What the last raw pool did (workers, CPUs, rebuilds after a dead worker); receipt-only, never an input to a row.
+RAW_POOL_RECORD = {}
+RAW_POOL_MAX_CONSECUTIVE_BREAKS = 3
+
+
+def _pin_raw_worker(cpus, counter):
+    """Spawn-worker initializer: the next CPU of the plan (a shared counter, so a respawned worker never blocks on an
+    emptied hand-out); a refused pin keeps the inherited mask."""
+    with counter.get_lock():
+        turn = counter.value
+        counter.value += 1
+    try:
+        os.sched_setaffinity(0, {cpus[turn % len(cpus)]})
+    except (OSError, AttributeError):
+        pass
+
 
 def _changes_applied():
     import sys
@@ -269,25 +290,65 @@ class _RawStreams:
         def record_cohort(start, groups, side):
             return record('cohort', 'r3', groups, side, start, 2)
 
-        import multiprocessing
-        self.pool = ProcessPoolExecutor(max_workers=self.cpus, mp_context=multiprocessing.get_context('spawn'))
+        self.planned = tuple(RAW_WORKER_CPUS or ())
+        if self.planned:
+            self.cpus = len(self.planned)
+        RAW_POOL_RECORD.clear()
+        RAW_POOL_RECORD.update(workers=self.cpus, cpus=list(self.planned) or None, rebuilds=[],
+                               basis=('each spawn worker pinned to one CPU of the plan' if self.planned else
+                                      'unpinned spawn workers on the parent\'s mask (no plan given)'))
+        self.breaks = 0
+        self.pool = self._new_pool(self.cpus)
         T.JournalTeacher._dynamics = staticmethod(record_dynamics)
         T._absorption, T._cohort = record_absorption, record_cohort
         return self
+
+    def _new_pool(self, workers):
+        context = multiprocessing.get_context('spawn')
+        if self.planned:
+            return ProcessPoolExecutor(max_workers=workers, mp_context=context, initializer=_pin_raw_worker,
+                                       initargs=(self.planned[:workers] or self.planned, context.Value('l', 0)))
+        return ProcessPoolExecutor(max_workers=workers, mp_context=context)
 
     def _submit(self):
         import pickle
         if not self.batch:
             return
         blob = pickle.dumps((self.tables, self.batch, _changes_applied()), protocol=pickle.HIGHEST_PROTOCOL)
-        self.pending.append(self.pool.submit(_raw_batch, blob))
+        self.pending.append((blob, self.pool.submit(_raw_batch, blob)))
         self._new_batch()
         while len(self.pending) > 2 * self.cpus:          # bounded: never the whole day's windows in flight
-            self._collect(self.pending.popleft())
+            self._collect(*self.pending.popleft())
 
-    def _collect(self, future):
+    def _result(self, blob, future):
+        """The batch's result. A dead worker never stops or hangs the walk (Greg, 2026-10-07): on BrokenProcessPool a new
+        pool with one worker fewer (at least one) takes this batch and every unfinished pending batch again, in order;
+        the pure functions give the same values. Only the same batch breaking the pool repeatedly is raised."""
+        from concurrent.futures.process import BrokenProcessPool
+        while True:
+            try:
+                result = future.result()
+                self.breaks = 0
+                return result
+            except BrokenProcessPool as error:
+                self.breaks += 1
+                if self.breaks > RAW_POOL_MAX_CONSECUTIVE_BREAKS:
+                    raise
+                self.pool.shutdown(wait=True, cancel_futures=True)
+                self.cpus = max(1, self.cpus - 1)
+                self.pool = self._new_pool(self.cpus)
+                again = 0
+                for index, (other, other_future) in enumerate(self.pending):
+                    if not (other_future.done() and not other_future.cancelled() and other_future.exception() is None):
+                        self.pending[index] = (other, self.pool.submit(_raw_batch, other))
+                        again += 1
+                future = self.pool.submit(_raw_batch, blob)
+                RAW_POOL_RECORD['rebuilds'].append(dict(workers=self.cpus, batches_again=again + 1,
+                                                        error='%s: %s' % (type(error).__name__, error)))
+
+    def _collect(self, blob, future):
         import pickle
-        for token, value in pickle.loads(future.result()):
+        for token, value in pickle.loads(self._result(blob, future)):
             if token in self.expected:
                 expected = self.expected.pop(token)
                 if expected != value or (type(value) is dict and list(expected) != list(value)) or (
@@ -331,7 +392,7 @@ class _RawStreams:
     def finish(self):
         self._submit()
         while self.pending:
-            self._collect(self.pending.popleft())
+            self._collect(*self.pending.popleft())
         if self.expected or self.where or self.early or self.resolved != self.calls:
             raise ValueError('parallel teacher raw call unresolved; run stopped')
 
@@ -339,7 +400,7 @@ class _RawStreams:
         T = self.T
         T.JournalTeacher._dynamics = self.original[0]
         T._absorption, T._cohort = self.original[1], self.original[2]
-        for future in self.pending:
+        for _, future in self.pending:
             future.cancel()
         self.pool.shutdown(wait=True, cancel_futures=True)
         return False

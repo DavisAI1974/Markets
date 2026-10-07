@@ -555,6 +555,13 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                                  bytes=native_path.stat().st_size, sha256=_sha256(native_path))
                 native_entries = dict(native_entries, file=shared_market.native_file)
         received['native_entries'] = native_entries
+        # Where this process's classroom work ran (Greg, 2026-10-07: every pool and thread pinned to the booked lane,
+        # physical cores first): the pass consumer, the native series threads and the 171-pair processes, per pool its
+        # plan, outcomes and fallbacks; empty pools were restored from saved phases (not computed in this process).
+        # The math libraries' thread caps the runner was started with (frankie_box_experiment_classroom_v2.sh).
+        received['cpu_pinning'] = dict(K.pinning_record(), thread_caps={
+            name: os.environ.get(name) for name in ('OPENBLAS_NUM_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS')},
+            basis=('recorded where it ran; a pool absent here was restored from a saved phase or not reached'))
         # The 99 INGESTED, not only seen (Greg, 2026-10-07): the existing exhaustion/D classroom computation
         # (frankie_box_teach.facts, code only, no model; built 2026-09-21, not invoked on the experiment path until now)
         # runs on the ROOT's completed whole-day bedrock layers. A ROOT without a native pass, a missing input or a

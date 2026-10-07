@@ -111,6 +111,7 @@ batch_days shared_runtime superseded_jev_runtime route_integrity shared_field
 exhaustion_d native_only_ingestion model_clock use_counts registry_entries registry_mapping registry_entry_findings
 confirmation_clock external_points
 root_execution native_overlap timing parse
+cpu_placement pool_recovery
 '''.split())
 WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the pieces' own inputs / use / outputs record
 # The successor chain (school and corrections pieces): recorded pins {path, bytes, sha256} followed one by one from the
@@ -147,6 +148,8 @@ school_listed problems number_assigned_now meeting_status school_status
 rows_missing rows_refused rows_waiting external_waiting refused_days root_waiting dipole_missing retries waited_seconds
 all99 all99_coverage all99_boundary evidence_read missing_listed withheld_listed candidates_by_status same_pair_candidates
 native_pass native_entries native_carriers opening_state layer_entries shared_runtime
+cpu_pinning
+cpu_placement pool_recovery
 '''.split())
 PRODUCED = set('''outputs rows entity_rows rows_file attachment_file failure_count status shared_market_sources
 presented_inputs external_publications integrity_failure placed_series placed_cells couplings series cells planes

@@ -55,6 +55,36 @@ def directive_witness():
     data = path.read_bytes()
     return dict(path=str(path), sha256=hashlib.sha256(data).hexdigest(), directive=json.loads(data))
 
+def _box_module(name):
+    """A deploy/aws/box module by name (the box directory is this script's own; imported as a package otherwise)."""
+    import importlib
+    here = str(Path(__file__).resolve().parent)
+    if here not in sys.path:
+        sys.path.append(here)
+    try:
+        return importlib.import_module(name)
+    except ImportError:
+        return importlib.import_module('deploy.aws.box.' + name)
+
+
+def _journal_prefetch(receipt_path):
+    """Start the sealed journal's sha256 (tens of GB on a big day) on a thread while the cheap checks run (Greg,
+    2026-10-07: overlap the serial hash with other preparation). It fills the process's file-hash cache
+    (frankie_box_filehash.witness: keyed on path/device/inode/size/mtime/ctime, a file that changes while hashed is
+    refused); the walk then reads the same value at its original place, after joining. Any error here is ignored: the
+    original place measures again and raises in the original order."""
+    import threading
+    def measure():
+        try:
+            rc = json.loads(Path(receipt_path).read_bytes())
+            _box_module('frankie_box_filehash').witness(Path(receipt_path).parent / rc['journal_file'])
+        except Exception:  # noqa: BLE001 - re-measured and raised at the original place
+            pass
+    thread = threading.Thread(target=measure, name='teacher-journal-sha256', daemon=True)
+    thread.start()
+    return thread
+
+
 def _sha256(path):
     h = hashlib.sha256()
     with open(path, 'rb') as f:
@@ -322,6 +352,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             pass
     if _sha256(receipt_path) != receipt_sha256:
         raise SystemExit('the ingestion receipt differs from the sha256 given')
+    journal_prefetch = _journal_prefetch(receipt_path)
     phase('verify_ingestion_receipt')
     from research.kalshi.frankie_boss import dipole_classroom_external as EXT
     try:
@@ -347,7 +378,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     # the day is not refused: the step publishes an equation_not_run receipt below, after the retained-receipt checks.
     journal = receipt_path.parent / rc['journal_file']
     journal_stat = journal.stat()
-    journal_witness = dict(bytes=journal_stat.st_size, sha256=_sha256(journal))
+    journal_prefetch.join()        # the overlapped measurement (same bytes, same sha256; a changed file is re-measured)
+    journal_witness = dict(bytes=journal_stat.st_size, sha256=_box_module('frankie_box_filehash').witness(journal)['sha256'])
     if journal_witness != dict(bytes=rc['journal_bytes'], sha256=rc['journal_sha256']):
         raise SystemExit('the sealed journal differs from its ingestion receipt')
     phase('verify_sealed_journal')
@@ -479,11 +511,40 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     # removes the instant from the shared picture other consumers read.
     equation = dict(rows=0, through_applied_cursor=None, absent=[], ended_at=None,
                     rule='existing equation on its original contiguous operands only; no derived substitute')
+    # CPU placement of the walk (Greg, 2026-10-07 night: every process/pool/thread pinned to its share of the lane,
+    # physical cores first). The serial raw loop (this thread) goes on a whole core: lane[0], the CPU the journal
+    # reader and the shared timeline's decode leave free (they take lane[1:]), plus its sibling threads, which the
+    # raw-batch workers leave out (the pool's manager and feeder threads, started after the pin, land there). The
+    # raw-batch spawn workers take every other CPU, one each, physical cores first (parallel_teacher.RAW_WORKER_CPUS).
+    # The timeline sizes its decode pools from THIS thread's affinity when each stream starts, so the pin waits until
+    # every stream generator has started and is undone when the walk's evidence ends, before finish sizes its pool.
+    # Shared path only; the legacy no-policy walk is unchanged. Placement only: no row, hash or identity depends on it.
+    LP = _box_module('frankie_box_lane_pin')
+    cpu_pinning = dict(schema='FRANKIE_TEACHER_CPU_PINNING_V1', outcome='not_pinned',
+                       reason='legacy no-policy walk: placement unchanged' if market is None else None)
+    if market is not None:
+        lane = sorted(os.sched_getaffinity(0))          # this walk's own slice (teacher.sh taskset, or the classroom lane)
+        consumer, siblings, topology_basis = LP.consumer_core(lane)
+        raw_cpus = [c for c in LP.core_order(lane)[0] if c != consumer and c not in siblings]
+        cpu_pinning.update(lane=lane, consumer=consumer, consumer_mask=sorted({consumer, *siblings}) if consumer is not None
+                           else None, raw_worker_cpus=raw_cpus, topology=topology_basis, original_mask=LP.current_mask())
+        if consumer is not None and raw_cpus:
+            PT.RAW_WORKER_CPUS = tuple(raw_cpus)
+            cpu_pinning.update(outcome='waiting', reason=None)
+        else:
+            cpu_pinning.update(reason='a lane of %d CPU(s) on one core: nothing to separate; placement unchanged' % len(lane))
     def shared_evidence():
         pictures = market.iter_applied()
         expected = 0
         try:
             for item in pictures:
+                if cpu_pinning['outcome'] == 'waiting':
+                    started_streams = LP.generators_started(getattr(market, 'streams', None) or ())
+                    if started_streams is None:
+                        cpu_pinning.update(outcome='not_pinned', reason='cannot tell whether the reader sized its pools')
+                    elif started_streams:
+                        cpu_pinning.update(LP.pin_core(cpu_pinning['consumer_mask']), at_instant=equation['rows'] + len(
+                            equation['absent']) + 1)
                 at = item['picture']['at']
                 if item['arithmetic']['status'] != 'present':
                     equation['absent'].append(dict(input_journal_ordinal=at['input_journal_ordinal'],
@@ -515,8 +576,12 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 teacher.raw_teacher.market_picture = item['picture']
                 yield item['evidence']
         finally:
-            pictures.close()
-            PT._save_raw_state(market_state, dict(market.report, equation=dict(equation)))
+            try:
+                pictures.close()
+                PT._save_raw_state(market_state, dict(market.report, equation=dict(equation)))
+            finally:
+                if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
+                    cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])
     try:
         evidence = shared_evidence() if market else PJ.parallel_journal_prefix(builder, through, None)
         rows, processed, hashes = PT.row_pass(teacher, evidence, as_of=bound, source_manifest_hash=rc['manifest_hash'],
@@ -526,6 +591,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                    **({'learner_binding': learner_binding} if learner_binding is not None else {}),
                                    **({'shared_market_identity': market.identity} if market is not None else {})),
             save_requested=save_requested, retain_dstate=True)
+        if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
+            cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])     # before finish sizes its pool
         if market is not None:
             # A completed raw recovery may reuse its saved read. Never describe an
             # unstarted current iterator as a fresh complete evidence delivery.
@@ -562,6 +629,14 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             if evidence is not None:
                 evidence.close()
         finally:
+            PT.RAW_WORKER_CPUS = None
+            if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
+                cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])
+            cpu_pinning['raw_pool'] = dict(PT.RAW_POOL_RECORD)
+            if cpu_pinning.get('original_mask') is not None:
+                cpu_pinning['original_mask'] = sorted(cpu_pinning['original_mask'])
+            if cpu_pinning['outcome'] == 'waiting':
+                cpu_pinning.update(outcome='not_pinned', reason='the reader streams never all started in this walk')
             TC.restore()
             T.evidence_hash = h0
             PJ._ENTITY[0] = None
@@ -577,7 +652,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                       seconds=round(time.time() - started, 1), model_calls=0, experiment_directive=directive_witness(),
                       phase_timings=phases,
                       external_section=dict(external, listed='no external section built: the rows it aligns to were not computed'),
-                      external_points=external_points_summary(None, status='not_built', reason='no external section built: the rows it aligns to were not computed'))
+                      external_points=external_points_summary(None, status='not_built', reason='no external section built: the rows it aligns to were not computed'),
+                      cpu_pinning=cpu_pinning)
         if market is not None:
             result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
                           shared_market_arithmetic=shared_read.get('equation'),
@@ -620,7 +696,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                   seconds=round(time.time() - started, 1), rows_file=dict(file=ROWS_FILE, sha256=_sha256(out / ROWS_FILE)),
                   attachment_file=dict(file='teacher-attachment.pkl', sha256=_sha256(out / 'teacher-attachment.pkl')),
                   model_calls=0, caveat='whole-day context: the exact-row check in finish compares the rows with themselves',
-                  experiment_directive=directive_witness(), phase_timings=phases)
+                  experiment_directive=directive_witness(), phase_timings=phases, cpu_pinning=cpu_pinning)
     if market is not None:
         result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
                       shared_market_arithmetic=shared_read.get('equation'),
