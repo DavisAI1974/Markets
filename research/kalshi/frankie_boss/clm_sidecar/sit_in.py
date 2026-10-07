@@ -407,19 +407,41 @@ def material_text(material):
     return '\n\n'.join(text for _, text in material_parts(material))
 
 
-def material_use(material, student_text, brain_chars):
+def material_use(material, student_text, brain_chars, picture_tokens=None):
     """What reached Jev's student prompt, by section and size (one-day review record; no prompt content)."""
     parts = material_parts(material)
     shared = material['material'].get('shared_market_context')
+    render = None
+    if shared is not None:
+        import frankie_box_adviser_market as AM
+        render = AM.render_summary(shared)
     return dict(sections=[dict(section=label, chars=len(text)) for label, text in parts],
                 brain_chars=brain_chars, student_text_chars=len(student_text), note_packs=len(pieces(student_text)),
                 shared_market_picture=(None if shared is None else dict(
                     scope=shared.get('scope'), at=shared.get('at'), picture_sha256=shared.get('picture_sha256'),
                     dispositions=dict(coverage=shared.get('coverage'), read=shared.get('read')),
-                    delivered='whole typed picture text with its scope, read and coverage dispositions, in the '
+                    render=render, all_99_counts=(shared.get('all_99') or {}).get('counts'),
+                    tokens=picture_tokens,
+                    delivered='whole picture (the proven token-stacked spelling of the exact typed picture, re-proven by '
+                              'parse-back before the read) with its scope, read, coverage and all-99 counts, in the '
                               'student material; never answers, grades, claims or private reasoning')),
                 withheld=['Frankie classroom outputs until the blind seal', 'the comparison from the brain entry'],
                 rule='the whole material is read in note packs; nothing is cut; a prompt without output room refuses')
+
+
+def all_99_for_jev(material, brain_pins):
+    """The per-day all-99 coverage list with this piece's own consumer rows (Jev reads his own brain and the governed
+    directive; never Frankie's brain, lessons or the comparison before the seal)."""
+    import frankie_box_adviser_market as AM
+    shared = material['material'].get('shared_market_context')
+    consumer = dict(piece='jev_sit_in',
+                    brain=('Jev-only entries and teacher lessons: %d files' % len(brain_pins)) if brain_pins else None,
+                    knowledge=None, lessons=None, carry=None,
+                    directive=('experiment_directive in the governed material'
+                               if material['material'].get('experiment_directive') is not None else None),
+                    walls='claims filed and sealed before any Frankie output is read; the comparison never enters his brain',
+                    outputs=dict(claims='JEV_CLAIMS_V1', comparison='JEV_COMPARISON_V1', brain_entry='JEV_BRAIN_ENTRY_V1'))
+    return AM.all_99_with_consumer((shared or {}).get('all_99') if shared is not None else None, consumer)
 
 
 def load_brain(config, day):
@@ -590,6 +612,20 @@ def main(config=None):
         chat_endpoint=destination(os.environ.get('JEV_CHAT_URL', 'http://127.0.0.1:8091/v1/chat/completions')),
         model=JEV_MODEL, context=JEV_CONTEXT, piece_chars=JEV_PIECE_CHARS, prompt_chars=JEV_PROMPT_CHARS))
 
+    # The canary measurement of the token stacks (Greg, 2026-10-07): the shared market picture section alone, counted
+    # once with the server's own tokenizer on the CPU route, kept in the durable state so a replay never recounts.
+    shared = material['material'].get('shared_market_context')
+    if LOCAL is not None and shared is not None and state.get('picture_tokens') is None:
+        import frankie_box_adviser_market as AM
+        section = AM.text(shared)
+        render = AM.render_summary(shared)
+        state['picture_tokens'] = dict(stacked_chars=len(section), stacked_tokens=LOCAL['count_tokens']([dict(role='user', content=section)]),
+                                       source_chars=render.get('source_chars'), grammar=render.get('grammar'),
+                                       counted_by='the Jev server tokenizer (/apply-template + /tokenize), once, retained',
+                                       rule='the stacks\' effect is stacked_tokens against the exact typed text\'s own count, '
+                                            'which is not paid for here; chars are the proxy')
+        save_state(state)
+
     # 2-3. STUDENT, then FILE the claims before anything of Frankie's is read
     if 'prepared_claims' not in state:
         if state.get('claims_filed'):
@@ -722,7 +758,9 @@ def main(config=None):
                     material_sections=[label for label, _ in material_parts(material)],
                     unavailable=material.get('unavailable') or [], brain_files=len(brain_pins),
                     shared_market_picture=(material['material'].get('shared_market_context') or {}).get('scope')),
-        use=dict(material_text=material_use(material, student_text, len(brain_text)),
+        use=dict(material_text=material_use(material, student_text, len(brain_text), state.get('picture_tokens')),
+                 picture_tokens=state.get('picture_tokens'),
+                 all_99_coverage=all_99_for_jev(material, brain_pins),
                  model=JEV_MODEL, context=JEV_CONTEXT, piece_chars=JEV_PIECE_CHARS, prompt_chars=JEV_PROMPT_CHARS,
                  local_cpu=LOCAL is not None, model_calls=receipt['call_accounting'],
                  comparison=dict(available=bool(comparison.get('available')), reason=comparison.get('reason'),

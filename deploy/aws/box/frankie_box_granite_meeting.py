@@ -32,6 +32,18 @@ releases the process and keeps the partial state. return.json names the record's
 Runtime: llama.cpp llama-server, ephemeral, started here and stopped here; model/release pins and the runtime parameters
 live in knowledge/GRANITE_MEETING_RUNTIME_V1.json and the gate refuses to call the model while a pin is null or the
 parameters are unconfirmed. `--inputs-only` writes what Granite would be given, with zero model calls.
+
+Greg, 2026-10-07 (WORKFLOW_COVERAGE_PLAN_20261007.md): Granite sees the WHOLE shared market picture of the day's
+exchange (the complete typed picture at the teachers' original cutoff, spelled through the proven token stacks),
+unless the per-call token cap refuses, which it does VISIBLY: the system prompt is counted once with the server's own
+tokenizer before any call; over the cap, every item is left open by code with the count on the receipt and the
+one-day inspection markdown; nothing is trimmed. The number rule is unchanged: a coordinator turn may voice only
+numbers that are in a seat's turn; the picture is context, never a source of new empirical content (role V2).
+Hosting: the meeting is a CHILD on the owning box's held lane, CPU only, under the ONE shared runtime definition
+(`local_runtime`: llama.cpp b11440 llama-server + Granite 4.2 3B Q4_K_M, pinned in GRANITE_MEETING_RUNTIME_V1.json);
+`voice_route=local` is the default; the GitHub route stays listed as the unused fallback. Jev's CPU turn binds to the
+same `local_runtime` (Greg: "same weight code and setup as Granite so that way it can automatically improve").
+Nothing here keys on how many days a run holds.
 """
 import argparse
 import hashlib
@@ -60,6 +72,11 @@ PROGRESS_SCHEMA = 'FRANKIE_GRANITE_MEETING_ITEM_PROGRESS_V1'   # per-item durabl
 RETURN_SCHEMA = 'FRANKIE_GRANITE_MEETING_RETURN_V1'      # what a runner hands back: the record's bytes and hash, by name
 CONFIG = REPO / 'research/kalshi/frankie_boss/knowledge/GRANITE_MEETING_RUNTIME_V1.json'
 CHARTER = REPO / 'research/kalshi/frankie_boss/knowledge/GRANITE_DISCUSSION_COORDINATOR_ROLE_V2.md'
+GRANITE_ROOT = Path('/opt/frankie-box/granite')      # the box's install root (the wrapper admits paths under it only)
+VOICE_ROUTES = ('local', 'github')                    # local = a child on the owning box's lane (default); github = listed fallback
+DEFAULT_VOICE_ROUTE = 'local'
+SHARED_RUNTIME_SCHEMA = 'FRANKIE_GRANITE_SHARED_RUNTIME_V1'   # the one runtime definition the meeting and Jev both bind to
+CALL_CEILING_SECONDS = 600.0                          # per-request transport ceiling of a coordinator call (params may raise it)
 SEATS = ('boss_teacher', 'scientific_teacher', 'frankie')
 ACTIONS = ('ASK', 'REQUEST_TEST', 'NOTE_AGREEMENT', 'NOTE_DISAGREEMENT', 'NOTE_SCOPE_MISMATCH', 'LEAVE_OPEN', 'RESOLVED')
 COORDINATOR_LABEL = 'Granite (coordinator; coordination only, never evidence)'
@@ -163,6 +180,89 @@ def runtime_provenance(pins, binary):
                 release=pins.get('llama_cpp_release'), asset=pins.get('llama_cpp_asset'))
 
 
+def local_runtime(config=None, *, binary=None, model=None):
+    """THE shared runtime definition (Greg, 2026-10-07): the pinned llama.cpp release and Granite 4.2 3B Q4_K_M
+    weights of GRANITE_MEETING_RUNTIME_V1.json, the canonical install paths on the owning box, the thread rule and
+    the exact install the box needs. The meeting and Jev both bind to this one definition, so a change to the
+    Granite setup (pins, paths, threads, caps) carries to Jev automatically. `reasons` is the gate on the paths
+    given (or the canonical ones): [] = the runtime may start; otherwise every reason names exactly what is missing.
+    Never installs, downloads or starts anything."""
+    if config is None:
+        config, _ = load_config()
+    pins = config.get('pins') or {}
+    release = pins.get('llama_cpp_release') or '<llama_cpp_release pin blank>'
+    model_file = pins.get('model_file') or '<model_file pin blank>'
+    provenance = None
+    if not binary:
+        # The setup script extracts the pinned archive into ITS top directory under GRANITE_ROOT and writes
+        # provenance.json beside llama-server after every verification passed; that receipt names the binary.
+        # Without it the path is the unextracted placeholder and the gate refuses by name.
+        for candidate in sorted(GRANITE_ROOT.glob('*/provenance.json')) if GRANITE_ROOT.is_dir() else []:
+            try:
+                body = json.loads(candidate.read_bytes())
+            except (OSError, ValueError):
+                continue
+            if (body.get('schema') == 'FRANKIE_GRANITE_RUNTIME_PROVENANCE_V1' and body.get('release') == release
+                    and body.get('server_sha256') == pins.get('llama_server_sha256') and body.get('server')):
+                binary, provenance = body['server'], witness_file(candidate)
+                break
+    binary = Path(binary) if binary else GRANITE_ROOT / ('<top directory of ' + str(pins.get('llama_cpp_asset') or 'the pinned asset') + '>') / 'llama-server'
+    model = Path(model) if model else GRANITE_ROOT / str(model_file)
+    reasons = gate(config, str(binary), str(model))
+    if provenance is None and not Path(binary).is_file():
+        reasons.append('the setup script (frankie_box_granite_meeting_setup.sh) has not written a provenance.json for release %s '
+                       'under %s: the pinned archive is not extracted on this box' % (release, GRANITE_ROOT))
+    host = os.cpu_count() or 1
+    affinity = sorted(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else None
+    requirements = [
+        dict(item='llama.cpp llama-server', release=release, asset=pins.get('llama_cpp_asset'),
+             archive_sha256=pins.get('llama_cpp_sha256'), path=str(binary), binary_sha256=pins.get('llama_server_sha256'),
+             extracted_files_beside_it=len(pins.get('llama_cpp_files') or {}),
+             rule='the archive is fetched and sha256-verified by the setup script; the gate verifies llama-server and every '
+                  'extracted file beside it against llama_cpp_files; libssl.so.3/libcrypto.so.3 come from the host'),
+        dict(item='Granite GGUF weights', repository=pins.get('model_repository'), file=model_file, path=str(model),
+             sha256=pins.get('model_sha256'), quantization=(config.get('settled') or {}).get('quantization')),
+        dict(item='threads', rule=(config.get('proposed_runtime_parameters') or {}).get('threads_rule'),
+             configured=(config.get('proposed_runtime_parameters') or {}).get('threads'), host_cpus=host,
+             affinity_cpus=(len(affinity) if affinity is not None else None),
+             note='a child inherits the owning lane\'s affinity; threads above the affinity count refuse at start'),
+        dict(item='wrapper environment', LLAMA_SERVER=str(binary), GGUF_MODEL=str(model),
+             rule='frankie_box_granite_meeting.sh passes --binary/--model from these; unset today means --inputs-only '
+                  '(request to the wrapper owner: pass --route local instead so the gate refuses visibly)'),
+        dict(item='CPU backend', expected='libggml-cpu-sapphirerapids.so on r7i (Sapphire Rapids; EC2 DescribeInstances '
+                                           '2026-10-07: r7i.8xlarge main 16c/32t, r7i.4xlarge Linux 8c/16t)',
+             recorded_at_run='runtime.effective.host_cpu (model name and the avx512/amx flags) in the meeting record'),
+    ]
+    return dict(schema=SHARED_RUNTIME_SCHEMA, route=DEFAULT_VOICE_ROUTE, routes=list(VOICE_ROUTES),
+                binary=str(binary), model=str(model), setup_provenance=provenance,
+                model_identity=(config.get('settled') or {}).get('model_identity'),
+                quantization=(config.get('settled') or {}).get('quantization'), release=release,
+                pins_sha256=sha256_bytes(json.dumps(pins, sort_keys=True).encode()),
+                parameters=config.get('proposed_runtime_parameters'), requirements=requirements,
+                installed=dict(binary=Path(binary).is_file(), model=Path(model).is_file()),
+                reasons=reasons, status='ready' if not reasons else 'refused',
+                rule='one shared runtime definition for the meeting and Jev; a blank pin, a missing or differing file '
+                     'refuses visibly; nothing is installed or started here')
+
+
+def host_cpu():
+    """The host CPU as the kernel reports it (model name, the vector/matrix flags llama.cpp selects a backend by);
+    recorded so the one-day run shows which CPU backend the pinned build could use. Unknown stays unknown."""
+    try:
+        text = Path('/proc/cpuinfo').read_text(encoding='utf-8', errors='replace')
+    except OSError as error:
+        return dict(available=False, reason=repr(error))
+    model_name, flags = None, []
+    for line in text.split('\n'):
+        if model_name is None and line.startswith('model name'):
+            model_name = line.split(':', 1)[1].strip()
+        if not flags and line.startswith('flags'):
+            flags = line.split(':', 1)[1].split()
+    wanted = ('avx2', 'avx512f', 'avx512_vnni', 'avx512_bf16', 'amx_tile', 'amx_int8', 'amx_bf16')
+    return dict(available=True, model_name=model_name, flags={f: (f in flags) for f in wanted},
+                online_cpus=os.cpu_count(), affinity_cpus=(len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else None))
+
+
 # ------------------------------------------------------------------------------------------ what Granite is given
 def _turn_fields(turn):
     """The seat's retained record fields a code answer may quote back (no private process, no grades: R09/R10)."""
@@ -229,14 +329,24 @@ def meeting_input(exchange, knowledge_index=None):
     sources = exchange.get('sources') if isinstance(exchange.get('sources'), dict) else {}
     shared = sources.get('shared_market_context')
     if shared is not None:
-        # Bounded by role V2: the coordinator gets the exact reference (scope, clocks, hash, dispositions)
-        # to the picture the code seats stood under, never the picture body, which is evidence. The
-        # complete typed picture stays in the exchange document this meeting is bound to. A legacy
-        # exchange without the context leaves the meeting input bytes unchanged.
+        # Greg, 2026-10-07: the coordinator sees the WHOLE shared market picture the code seats stood under
+        # (the complete typed picture at the teachers' original cutoff, spelled through the proven token stacks
+        # and re-proven here), beside its exact reference (scope, clocks, hash, dispositions). The only accepted
+        # cut is the per-call token cap, which refuses visibly in _meeting; nothing is trimmed. The number rule
+        # stands: a coordinator turn may voice only numbers in a seat's turn (validate_action). A legacy exchange
+        # without the context leaves the meeting input bytes unchanged.
         import frankie_box_adviser_market as AM
+        picture_text = AM.text(shared)
         given['shared_market'] = dict(AM.reference(shared),
-            role='reference only: the seats measured under this picture; Granite coordinates and cites seat values '
-                 'only; the picture body is withheld from the coordinator (role V2: never evidence)')
+            role='the seats measured under this picture; Granite reads the whole picture as context and cites seat '
+                 'values only; it adds no empirical content of its own (role V2)')
+        given['shared_market_picture'] = dict(
+            text=picture_text, sha256=sha256_bytes(picture_text.encode()), chars=len(picture_text),
+            picture_sha256=shared.get('picture_sha256'), render=AM.render_summary(shared),
+            delivery='whole: the complete typed picture at the original cutoff with its scope, read, coverage and all-99 '
+                     'counts, as the system prompt section SHARED MARKET PICTURE; the per-call token cap is the only '
+                     'accepted refusal and it is counted before any call',
+            rule='context for coordination; numbers in a coordinator turn must still come from a seat\'s turn')
     return given
 
 
@@ -739,8 +849,11 @@ class LlamaServer:
     def _post(self, route, body, label='request', expect=None):
         """POST and return (parsed, raw): the ORIGINAL bytes are kept beside the parsed value (6R3); `expect(parsed)` returns
         a reason the shape is unusable or None, and an unusable shape retains the raw bytes whole and raises
-        MeetingCallFailed, never a KeyError/TypeError outside the meeting's own failure path."""
-        status, raw = self._request('POST', route, body, label)
+        MeetingCallFailed, never a KeyError/TypeError outside the meeting's own failure path. The per-request transport
+        ceiling is params['call_ceiling_seconds'] (default CALL_CEILING_SECONDS; Jev's long CPU calls raise it from its
+        approved runtime); the remaining meeting/process budget always bounds below it."""
+        ceiling = float(self.params.get('call_ceiling_seconds') or CALL_CEILING_SECONDS)
+        status, raw = self._request('POST', route, body, label, ceiling=ceiling)
         if status >= 400:
             evidence = self.retain('%s-http-%s' % (label, status), raw)
             if status == 404:
@@ -1077,9 +1190,12 @@ def discuss_item(server, item, system, params, log, progress=None):
     return result
 
 
-def meeting_workflow_report(out_dir, given, record, *, status, params=None, refusals=None):
+def meeting_workflow_report(out_dir, given, record, *, status, params=None, refusals=None, context=None, route=None):
     """One-day review record (Greg, 2026-10-07): what the meeting received, how the prompt used it, what it
-    produced. Recorded facts only; the coordinator transcript's content is not copied here."""
+    produced, every refusal and wait, the local-route requirements, the server-counted size of the whole-picture
+    system prompt against the cap, and the all-99 coverage list with this piece's consumer rows. Recorded facts
+    only; the coordinator transcript's content is not copied here. `context` is the exchange's full shared market
+    context when the caller has it (the per-entry all-99 rows live there); `given['shared_market']` is its reference."""
     import frankie_box_adviser_market as AM
     out_dir = Path(out_dir)
     items = (record or {}).get('items') or []
@@ -1087,34 +1203,66 @@ def meeting_workflow_report(out_dir, given, record, *, status, params=None, refu
     interrupted = [i['item_id'] for i in items if any((o or {}).get('kind') == 'interrupted_call' for o in i.get('open_items') or [])]
     runtime = (record or {}).get('runtime') or {}
     shared = (given or {}).get('shared_market')
-    return AM.workflow_report('meeting', context=shared,
+    picture = (given or {}).get('shared_market_picture')
+    system_count = (record or {}).get('system_prompt_tokens')
+    not_discussed = (record or {}).get('not_discussed') or []
+    return AM.workflow_report('meeting', context=(context if context is not None else shared),
+        consumer=dict(knowledge=('knowledge_index: %d documents by label and hash' % len((given or {}).get('knowledge_index') or []))
+                                if (given or {}).get('knowledge_index') else None,
+                      lessons=('teachers_findings: %d' % len((given or {}).get('teachers_findings') or []))
+                              if (given or {}).get('teachers_findings') else None,
+                      directive=(given or {}).get('charter'), brain=(record or {}).get('brain'),
+                      carry=None,
+                      walls='Jev raw items withheld (the lessons wall); seat private process and grades never given (R09/R10); '
+                            'numbers only from seat turns (validate_action)',
+                      outputs=dict(record='meeting.json', categories=['seat_statements', 'coordinator_turns',
+                                                                        'code_seat_answers', 'open_items/requested_tests'])),
         inputs=dict(exchange=(record or {}).get('exchange'), charter=(given or {}).get('charter'),
                     meeting_input=witness_file(out_dir / 'meeting-input.json') if (out_dir / 'meeting-input.json').is_file() else None,
                     items=len((given or {}).get('items') or []), knowledge_index=len((given or {}).get('knowledge_index') or []),
                     teachers_findings=len((given or {}).get('teachers_findings') or []),
                     shared_market_context=('absent: the exchange carries no shared market context (legacy teacher)'
-                                           if shared is None else 'present as an exact reference in the meeting input')),
-        use=dict(prompt=dict(system='charter, output contract, retained meeting context: knowledge_index, '
-                                    'teachers_findings' + (', shared_market reference' if shared is not None else ''),
+                                           if shared is None else 'present: the exact reference and the WHOLE picture text in the meeting input'),
+                    shared_market_picture_text=(None if picture is None else
+                                                dict(chars=picture['chars'], sha256=picture['sha256'], render=picture.get('render'))),
+                    route=route or (record or {}).get('route')),
+        use=dict(prompt=dict(system='charter, output contract, retained meeting context (knowledge_index, teachers_findings'
+                                    + (', shared_market reference) and the section SHARED MARKET PICTURE (the whole picture text)'
+                                       if picture is not None else ')'),
+                             system_prompt_tokens=system_count,
                              per_item='item_id, author, claim, voiced seat turns, retained seat records, code-seeded open items'),
-                 withheld=['the shared market picture body (reference only; role V2: the coordinator is never evidence)',
-                           'Jev raw items (the lessons wall)', 'seat private process and grades (R09/R10)'],
+                 picture_delivery=(None if picture is None else dict(
+                     delivered=picture['delivery'], chars=picture['chars'],
+                     tokens=dict(system_prompt_counted=system_count, cap=(params or {}).get('input_token_cap_per_call'),
+                                 rule='counted once with the server tokenizer before any call; the whole picture is in that count; '
+                                      'an over-cap system prompt leaves EVERY item open by code (input_cap_system_prompt), no call, nothing trimmed'),
+                     canary=dict(source_chars=((picture.get('render') or {}).get('source_chars')),
+                                 stacked_chars=picture['chars'], stacked_tokens=system_count,
+                                 rule='the token stacks\' effect is this count against the exact typed text; measured at the one-day run'))),
+                 withheld=['Jev raw items (the lessons wall)', 'seat private process and grades (R09/R10)',
+                           'nothing of the shared market picture is withheld (Greg, 2026-10-07); the cap refuses visibly instead'],
                  caps=dict(input_token_cap_per_call=(params or {}).get('input_token_cap_per_call'),
                            context_size=(params or {}).get('context_size'),
                            max_output_tokens_per_turn=(params or {}).get('max_output_tokens_per_turn'),
                            max_coordinator_turns_per_item=(params or {}).get('max_coordinator_turns_per_item'),
                            max_meeting_seconds=(params or {}).get('max_meeting_seconds'),
+                           call_ceiling_seconds=(params or {}).get('call_ceiling_seconds') or CALL_CEILING_SECONDS,
                            refused_over_cap_items=over_cap,
+                           refused_over_cap_system_prompt=[n.get('item_id') for n in not_discussed
+                                                           if n.get('kind') == 'input_cap_system_prompt'],
                            refused_turns=sum(len(i.get('refused') or []) for i in items),
                            rule='an over-cap input makes no call and leaves the item open; nothing is truncated'),
                  model_calls=(record or {}).get('model_calls', 0), calls=(record or {}).get('calls'),
                  refused_to_run=refusals or [], interrupted_call_items=interrupted,
-                 budget=dict(seconds=runtime.get('budget_seconds'), left=runtime.get('budget_left_seconds'))),
+                 local_route=(record or {}).get('local_route'),
+                 host_cpu=(runtime.get('effective') or {}).get('host_cpu'),
+                 budget=dict(seconds=runtime.get('budget_seconds'), left=runtime.get('budget_left_seconds'),
+                             phases=(record or {}).get('timings'))),
         outputs=dict(status=status, record=witness_file(out_dir / 'meeting.json') if (out_dir / 'meeting.json').is_file() else None,
                      binding=(record or {}).get('binding'), counts=(record or {}).get('counts'),
-                     not_discussed=[n.get('item_id') for n in (record or {}).get('not_discussed') or []],
+                     not_discussed=[n.get('item_id') for n in not_discussed],
                      publication=(record or {}).get('publication'),
-                     waits=[n.get('reason') for n in (record or {}).get('not_discussed') or []]))
+                     waits=[n.get('reason') for n in not_discussed]))
 
 
 def publish_meeting_record(exchange_path, out_dir, brain=None, *, include_inputs=True):
@@ -1147,8 +1295,14 @@ def publish_meeting_record(exchange_path, out_dir, brain=None, *, include_inputs
     if include_inputs and inputs.is_file():
         receipt['inputs'] = witness_file(inputs)
     given = json.loads(inputs.read_bytes()) if inputs.is_file() else None
+    try:
+        exchange_sources = json.loads(Path(exchange_path).read_bytes()).get('sources') or {}
+        context = exchange_sources.get('shared_market_context') if isinstance(exchange_sources, dict) else None
+    except (OSError, ValueError):
+        context = None
     receipt['workflow_report'] = meeting_workflow_report(out_dir, given, record, status='complete',
-                                                         params=(record.get('runtime') or {}).get('parameters'))
+                                                         params=(record.get('runtime') or {}).get('parameters'),
+                                                         context=context, route=record.get('route'))
     write_json(out_dir / 'receipt.json', receipt)
     return receipt
 
@@ -1169,14 +1323,24 @@ def meeting(exchange_path, out_dir, **kwargs):
 
 
 def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=None, brain=None, inputs_only=False,
-            log=print):
+            log=print, route=DEFAULT_VOICE_ROUTE):
     import frankie_box_classroom_code as K
     from frankie_box_durable import write_json
     exchange_path, out_dir = Path(exchange_path), Path(out_dir)
+    if route not in VOICE_ROUTES:
+        raise ValueError('unknown voice route %r (routes: %s)' % (route, ', '.join(VOICE_ROUTES)))
+    timings = {}            # where the meeting's time went, per phase (Greg, 2026-10-07: show where a run spends its time)
+    phase_started = time.time()
+    def phase(name):
+        nonlocal phase_started
+        now = time.time()
+        timings[name] = round(now - phase_started, 3)
+        phase_started = now
     raw = exchange_path.read_bytes()
     exchange = json.loads(raw)
     if exchange.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1' or exchange.get('view') != 'frankie':
         raise SystemExit('the meeting is given Frankie\'s view of the exchange only (view frankie)')
+    shared_context = (exchange.get('sources') or {}).get('shared_market_context') if isinstance(exchange.get('sources'), dict) else None
     retained = out_dir / 'meeting.json'
     if retained.is_file():
         import frankie_box_brain as BR
@@ -1184,6 +1348,11 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         if previous['status'] == 'complete':
             return publish_meeting_record(exchange_path, out_dir, brain)
     config, config_witness = load_config(config_path)
+    # The one shared runtime definition (local route): the canonical paths stand in for absent --binary/--model so
+    # the gate names exactly what the box lacks instead of a silent inputs-only run.
+    shared_runtime = local_runtime(config, binary=binary, model=model)
+    if route == 'local' and not inputs_only:
+        binary, model = shared_runtime['binary'], shared_runtime['model']
     _, rules = K.rules()
     rules_witness = dict(file=Path(rules['path']).name, sha256=rules['sha256'], bytes=rules['bytes'], rules=rules['rules'])
     knowledge_index = []
@@ -1192,6 +1361,7 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         selected = LS.learner_knowledge(str(exchange['day']), 'voice', brain=brain)
         knowledge_index = [{k: d[k] for k in ('label', 'day', 'kind', 'path', 'sha256')} for d in selected['documents']]
     given = meeting_input(exchange, knowledge_index)
+    phase('inputs')
     out_dir.mkdir(parents=True, exist_ok=True)
     # 6R2: the input bytes are computed first (the durable writer's own encoding) and the retained binding is validated
     # against them BEFORE meeting-input.json is touched: a changed-input retry refuses without mutating the file the old
@@ -1212,23 +1382,30 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         from frankie_box_durable import write_bytes
         write_bytes(input_path, input_bytes)
     started = time.time()
+    local_route = dict(shared_runtime, requested_route=route,
+                       github_route='listed fallback (frankie_granite_meeting.yml), unused on the local route')
     base = dict(schema=SCHEMA, day=exchange.get('day'), run=exchange.get('run'),
                 exchange=dict(path=str(exchange_path), sha256=sha256_bytes(raw), exchange_hash=exchange.get('exchange_hash')),
                 charter=given['charter'], rules=rules_witness, runtime_config=config_witness,
                 coordinator=dict(label=COORDINATOR_LABEL, model_identity=config['settled']['model_identity'],
                                  quantization=config['settled']['quantization'], runtime=config['settled']['runtime']),
-                knowledge_index=knowledge_index)
-    refusals = gate(config, binary, model)
+                knowledge_index=knowledge_index, route=route, local_route=local_route, brain=brain,
+                shared_market_picture=(None if 'shared_market_picture' not in given else
+                                       {k: given['shared_market_picture'][k] for k in ('sha256', 'chars', 'picture_sha256', 'delivery')}))
+    refusals = gate(config, binary, model) if not inputs_only else []
     if inputs_only or refusals:
+        if inputs_only and local_route['reasons']:
+            # the local route's requirements are named on an inputs-only receipt too (what the box still needs)
+            refusals = ['inputs only; the local runtime would refuse: ' + r for r in local_route['reasons']]
         record = dict(base, status='inputs_only' if inputs_only else 'refused', refused_to_run=refusals,
-                      items=[], model_calls=0, publication='none')
+                      items=[], model_calls=0, publication='none', timings=timings)
         write_json(out_dir / 'meeting.json', record)
         receipt = dict(schema=RECEIPT_SCHEMA, day=exchange.get('day'), status=record['status'], refused_to_run=refusals,
                        inputs=witness_file(out_dir / 'meeting-input.json'), record=witness_file(out_dir / 'meeting.json'),
-                       model_calls=0, seconds=round(time.time() - started, 1),
+                       model_calls=0, seconds=round(time.time() - started, 1), route=route, local_route=local_route,
                        workflow_report=meeting_workflow_report(out_dir, given, record, status=record['status'],
                                                               params=config.get('proposed_runtime_parameters'),
-                                                              refusals=refusals))
+                                                              refusals=refusals, context=shared_context, route=route))
         write_json(out_dir / 'receipt.json', receipt)
         log('meeting %s: %s (%s)' % (exchange.get('day'), record['status'], '; '.join(refusals) or 'inputs written'))
         return receipt
@@ -1268,20 +1445,46 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                        evidence=dict(server_stderr=server.stderr_witness(), retained=server.evidence, attempt=attempt,
                                      attempts=LlamaServer.retained_attempts(evidence_dir)),
                        inputs=witness_file(out_dir / 'meeting-input.json'), binding=witness_file(binding_path),
-                       model_calls=0, seconds=round(time.time() - started, 1),
-                       workflow_report=meeting_workflow_report(out_dir, given, None, status='runtime_failed', params=params,
+                       model_calls=0, seconds=round(time.time() - started, 1), route=route, local_route=local_route,
+                       workflow_report=meeting_workflow_report(out_dir, given, dict(base, timings=timings), status='runtime_failed',
+                                                              params=params, context=shared_context, route=route,
                                                               refusals=['the coordinator runtime did not start: %s' % error]))
         write_json(out_dir / 'receipt.json', receipt)
         log('meeting %s: runtime failed to start (%s)' % (exchange.get('day'), error))
         raise
+    phase('server_start')
+    system_tokens, system_over_cap = None, None
     try:
         system = system_prompt(CHARTER.read_text(encoding='utf-8'), rules_witness['rules'])
         context_keys = ('knowledge_index', 'teachers_findings') + (('shared_market',) if 'shared_market' in given else ())
         system += ('\n\n## Retained meeting context (labels and findings summaries, not new evidence)\n'
                    + json.dumps({key: given[key] for key in context_keys}, sort_keys=True))
+        if 'shared_market_picture' in given:
+            # Greg, 2026-10-07: the whole shared market picture, in the system prompt, once for every item. Its
+            # numbers are context: a coordinator turn may still voice only numbers from a seat's turn.
+            system += ('\n\n## SHARED MARKET PICTURE (the whole picture the code seats stood under, at the teachers\' original '
+                       'cutoff; context for coordination, never a source of new numbers for your turns; sha256 of the exact '
+                       'typed picture %s)\n' % given['shared_market_picture']['picture_sha256']
+                       + given['shared_market_picture']['text'])
+        # The cap is counted ONCE on the system prompt with the server's own tokenizer, before any call (the picture
+        # is the bulk of it). Over the cap: every item is left open by code with the count; no call; nothing trimmed.
+        system_tokens = server.count_tokens([dict(role='system', content=system)], label='system-prompt')
+        cap = int(params['input_token_cap_per_call'])
+        system_over_cap = system_tokens > cap
+        phase('system_prompt_count')
+        log('meeting %s: system prompt %d tokens against the per-call cap %d%s' % (
+            exchange.get('day'), system_tokens, cap, ' (OVER: every item left open by code, no call)' if system_over_cap else ''))
         for item in given['items']:
             progress = ItemProgress(out_dir, item['item_id'], binding_sha)
             retained = progress.load()
+            if system_over_cap and (retained is None or retained.get('status') not in ('complete', 'interrupted')):
+                not_discussed.append(dict(item_id=item['item_id'], kind='input_cap_system_prompt',
+                                          reason='the system prompt (charter, context and the whole shared market picture) is %d '
+                                                 'tokens, over the per-call cap of %d; no call was made and nothing was trimmed; '
+                                                 'the item keeps its code-seeded open items (the cap is the only accepted reason '
+                                                 'Granite does not see the whole picture, and it refuses visibly)' % (system_tokens, cap),
+                                          open_items=item['open_items']))
+                continue
             if retained is None or retained.get('status') not in ('complete', 'interrupted'):
                 remaining = server.remaining()
                 if remaining is not None and remaining <= 0:
@@ -1312,13 +1515,16 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         raise
     finally:
         server.stop()
+    phase('discussion')
     attempt = server.attempt_record('end', 'complete', seconds=round(time.time() - started, 1),
                                     items_discussed_this_attempt=len(items) - len(reused), items_reused=list(reused))
     attempts = LlamaServer.retained_attempts(evidence_dir)
-    record = dict(base, status='complete', items=items, not_discussed=not_discussed,
+    record = dict(base, status='complete', items=items, not_discussed=not_discussed, timings=timings,
+                  system_prompt_tokens=system_tokens, system_prompt_over_cap=system_over_cap,
                   runtime=dict(binary=witness_file(binary), model=witness_file(model), parameters=params,
                                provenance=runtime_provenance(config.get('pins') or {}, binary),
-                               effective=dict(threads=server.threads, host_cpus=server.host_cpus),
+                               effective=dict(threads=server.threads, host_cpus=server.host_cpus, host_cpu=host_cpu(),
+                                              call_ceiling_seconds=float(params.get('call_ceiling_seconds') or CALL_CEILING_SECONDS)),
                                budget_seconds=params['max_meeting_seconds'],
                                budget_left_seconds=None if server.remaining() is None else round(server.remaining(), 1),
                                server_stderr=server.stderr_witness(), evidence=server.evidence,
@@ -1384,20 +1590,30 @@ def main():
     p.add_argument('--exchange', required=True, help='exchange-frankie.json of the day (FRANKIE_EXPERIMENT_EXCHANGE_V1, view frankie)')
     p.add_argument('--out-dir', required=True)
     p.add_argument('--config', default=str(CONFIG))
-    p.add_argument('--binary', help='llama-server binary (pinned by sha256 in the config)')
-    p.add_argument('--model', help='the Granite GGUF file (pinned by sha256 in the config)')
+    p.add_argument('--binary', help='llama-server binary (pinned by sha256 in the config); absent on the local route = the '
+                                    'canonical install path under /opt/frankie-box/granite, refused visibly by the gate when missing')
+    p.add_argument('--model', help='the Granite GGUF file (pinned by sha256 in the config); absent = the canonical path, as --binary')
     p.add_argument('--brain', help='the plan brain: accumulated knowledge is listed by label and hash for the coordinator')
+    p.add_argument('--route', choices=list(VOICE_ROUTES), default=DEFAULT_VOICE_ROUTE,
+                   help='local (default): a child on the owning box\'s lane under the shared runtime definition; github: the listed '
+                        'fallback (dispatched by the Run, never from here)')
     p.add_argument('--inputs-only', action='store_true', help='write what Granite would be given; zero model calls')
     p.add_argument('--return-witness', action='store_true',
                    help='write return.json beside the record (its bytes and sha256 by name, the owner import to run); no meeting')
+    p.add_argument('--local-runtime', action='store_true',
+                   help='print the shared local runtime definition (paths, pins, requirements, gate reasons) and exit; nothing runs')
     a = p.parse_args()
     if a.return_witness:
         print(json.dumps(return_witness(a.out_dir), sort_keys=True), flush=True)
         return 0
-    if not a.inputs_only and not (a.binary and a.model):
-        p.error('--binary and --model are required unless --inputs-only')
+    if a.local_runtime:
+        config, _ = load_config(a.config)
+        print(json.dumps(local_runtime(config, binary=a.binary, model=a.model), sort_keys=True, indent=1), flush=True)
+        return 0
+    if a.route == 'github' and not a.inputs_only:
+        p.error('the github route is dispatched by the Run (voice_remote); here it is inputs-only')
     receipt = meeting(a.exchange, a.out_dir, config_path=a.config, binary=a.binary, model=a.model, brain=a.brain,
-                      inputs_only=a.inputs_only)
+                      inputs_only=a.inputs_only, route=a.route)
     print(json.dumps(receipt, sort_keys=True), flush=True)
     return 0
 

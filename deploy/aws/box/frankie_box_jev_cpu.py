@@ -2,6 +2,17 @@
 
 One held day lane owns material, blind seal, scientific result and both deliveries.
 Call through the existing day child boundary; stdout and receipt.json are stage evidence.
+
+Runtime (Greg, 2026-10-07: "Use the same weight code and setup as Granite so that way it can automatically improve"):
+Jev binds to THE shared runtime definition of the meeting, `frankie_box_granite_meeting.local_runtime` (llama.cpp
+b11440 llama-server + IBM Granite 4.2 3B Q4_K_M, pinned in GRANITE_MEETING_RUNTIME_V1.json, installed once on the
+owning box, CPU only, the same LlamaServer transport). Nothing here forks a second runtime definition: a change to
+the Granite setup (pins, paths, threads, caps) carries to Jev automatically. Jev's blind/seal walls and his private
+peer namespace are unchanged. What is NOT decided and stays a PROPOSAL Greg must approve (PROPOSED_JEV_CPU_RUNTIME_V1
+below): the worker subset of the held lane, the context size, the output budgets, the chunk size for feeding
+pictures, the time budgets per call and per day, and the completion policy. The code refuses to run until the
+runtime file carries Greg's approval bound to the exact proposed values (`approval_sha256`). Nothing here keys on how
+many days a run holds.
 """
 import argparse
 import fcntl
@@ -15,9 +26,111 @@ import urllib.parse
 
 from frankie_box_durable import witness, write_bytes, write_json
 
+RUNTIME_SCHEMA = 'JEV_CPU_RUNTIME_V1'
+RUNTIME_ENGINE = 'llama.cpp-cpu'
+SHARED_RUNTIME = 'frankie_box_granite_meeting.local_runtime'     # the ONE runtime definition Jev binds to (Greg, 2026-10-07)
+DECIDED = dict(   # decided by Greg, 2026-10-07; carried from the shared definition, never re-pinned here
+    weights='IBM Granite 4.2 3B GGUF Q4_K_M (GRANITE_MEETING_RUNTIME_V1.json pins.model_file / model_sha256)',
+    build='llama.cpp b11440 llama-server (pins.llama_cpp_release / llama_server_sha256 / llama_cpp_files)',
+    runtime_path='frankie_box_granite_meeting.local_runtime + LlamaServer (the retained Granite runner, local route, '
+                 'a child on the owning box, CPU only, same binary and model paths, same install)')
+# The fields Greg must approve. Every value is a proposal with its one-line reason; none is a measurement.
+PROPOSED_FIELDS = ('cpus', 'threads', 'context_size', 'max_output_tokens', 'min_output_tokens', 'token_margin',
+                   'piece_chars', 'call_seconds', 'process_seconds', 'completion')
+PROPOSED_JEV_CPU_RUNTIME_V1 = dict(
+    schema=RUNTIME_SCHEMA, engine=RUNTIME_ENGINE, shared_runtime=SHARED_RUNTIME, decided=DECIDED,
+    status='PROPOSED, UNAPPROVED: Greg supplies yes/no per row; the code refuses to run without approval',
+    cpus=dict(kind='lane_workers', count=15),
+    threads=8,
+    context_size=32768,
+    max_output_tokens=4096,
+    min_output_tokens=1024,
+    token_margin=512,
+    piece_chars=54000,
+    call_seconds=1800,
+    process_seconds=14400,
+    completion=dict(comparison='required', unparsed='listed'),
+    reasons=dict(
+        cpus='all 15 worker vCPUs of the held 16-CPU lane (request cpus[1:]), the coordinator CPU excluded; Jev runs sequentially, '
+             'nothing else uses the workers during his turn, so a smaller subset only idles cores',
+        threads='the lane is 8 physical cores with 2 threads each (EC2 DescribeInstances 2026-10-07: r7i.8xlarge 16c/32t, '
+                'r7i.4xlarge 8c/16t); llama.cpp matmul gains nothing from SMT siblings, so 8 threads pinned to the 15 workers',
+        context_size='the legacy Jev client context (sit_in.JEV_CONTEXT); Granite 4.2 supports it; a larger context slows CPU prompt eval',
+        max_output_tokens='one JSON claims answer per note pack; 4096 leaves room for many claims; a length-stopped reply '
+                          'is regenerated from halves (nothing cut)',
+        min_output_tokens='the legacy floor below which a prompt refuses (Incomplete) rather than answer short',
+        token_margin='template/special-token slack between the exact counted prompt and the context',
+        piece_chars='the legacy chunk (about 18k tokens) for feeding material and pictures in note packs; a smaller piece means more '
+                    'CPU calls, a larger one less output room',
+        call_seconds='per-call transport ceiling: a 3B model on 8 Sapphire Rapids threads reading about 18k tokens and writing up to '
+                     '4096 is minutes, not the meeting\'s 600 s; UNMEASURED until the one-day canary',
+        process_seconds='the whole Jev turn (notes, claims, comparison) on the lane: 4 h ceiling; the day waits rather than '
+                        'runs past it; UNMEASURED',
+        completion='the comparison must complete; unparsed answers are retained whole and LISTED on the report (the day completes '
+                   'and the listing is visible); requires_review would hold the day on the owner instead'),
+    rule='decided rows come from the shared Granite runtime; the proposed rows are explicit choices for Greg; nothing is measured')
+
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':')).encode()
+
+
+def approval_sha256(runtime):
+    """The hash Greg's approval binds to: the decided rows and every proposed field as written in the runtime file."""
+    return hashlib.sha256(canonical(dict(decided=DECIDED, shared_runtime=SHARED_RUNTIME,
+                                         **{k: runtime.get(k) for k in PROPOSED_FIELDS}))).hexdigest()
+
+
+def runtime_check(runtime, request_cpus, transport):
+    """(resolved runtime, refusals): the shared Granite runtime definition bound, Greg's approval bound to the exact
+    proposed values, the worker subset resolved from the held lane. Every refusal names what is missing."""
+    refusals = []
+    if runtime.get('schema') != RUNTIME_SCHEMA or runtime.get('engine') != RUNTIME_ENGINE:
+        refusals.append('Jev needs an explicitly pinned CPU runtime (%s / %s), not legacy Pod/model labels' % (RUNTIME_SCHEMA, RUNTIME_ENGINE))
+    for key in PROPOSED_FIELDS:
+        if key not in runtime:
+            refusals.append('Jev runtime choice is unset: ' + key)
+    if refusals:
+        return None, refusals
+    approval = runtime.get('approved') or {}
+    expected = approval_sha256(runtime)
+    if not isinstance(approval, dict) or 'Greg' not in str(approval.get('by') or '') or not approval.get('at'):
+        refusals.append('Jev runtime is PROPOSED, UNAPPROVED: approved={by: "Greg Davis", at: <date>, approval_sha256: %s} is required' % expected)
+    elif approval.get('approval_sha256') != expected:
+        refusals.append('Jev runtime values changed since Greg approved them (approval_sha256 %s, now %s); re-approval required'
+                        % (str(approval.get('approval_sha256'))[:12], expected[:12]))
+    shared = transport.local_runtime()
+    for key in ('binary', 'model'):
+        own = runtime.get(key)
+        if own is not None and str((own or {}).get('path') if isinstance(own, dict) else own) != shared[key]:
+            refusals.append('Jev runtime names another %s than the shared Granite runtime (%s); one definition only' % (key, SHARED_RUNTIME))
+    refusals.extend('shared Granite runtime: ' + r for r in shared['reasons'])
+    cpus = runtime['cpus']
+    workers = list(request_cpus[1:])
+    if isinstance(cpus, dict):
+        if cpus.get('kind') != 'lane_workers' or type(cpus.get('count')) is not int or not 1 <= cpus['count'] <= len(workers):
+            refusals.append('Jev cpus must be an explicit list or {kind: lane_workers, count: 1..%d}' % len(workers))
+            cpus = []
+        else:
+            cpus = workers[:cpus['count']]
+    if (not cpus or len(set(cpus)) != len(cpus) or not set(cpus) <= set(workers)):
+        refusals.append('Jev runtime CPUs must be an explicit worker subset of the held day lane (never the coordinator CPU)')
+    for key in ('context_size', 'max_output_tokens', 'min_output_tokens', 'token_margin', 'piece_chars', 'call_seconds',
+                'process_seconds', 'threads'):
+        if type(runtime.get(key)) is not int or runtime[key] <= 0:
+            refusals.append('positive explicit Jev runtime value required: ' + key)
+    if not refusals and runtime['max_output_tokens'] < runtime['min_output_tokens']:
+        refusals.append('Jev output budgets disagree')
+    if not refusals and runtime['threads'] > len(cpus):
+        refusals.append('Jev threads %d exceed the %d worker CPUs of the subset' % (runtime['threads'], len(cpus)))
+    if runtime.get('completion') not in (dict(comparison='required', unparsed='requires_review'),
+                                         dict(comparison='required', unparsed='listed')):
+        refusals.append('explicit Jev completion policy required; comparison must complete')
+    if refusals:
+        return None, refusals
+    return dict(runtime, cpus=cpus, binary=shared['binary'], model=shared['model'], shared=shared,
+                model_name=shared.get('model_identity') or runtime.get('model_name') or 'Granite 4.2 3B',
+                approval_sha256=expected), []
 
 
 def pinned(pin):
@@ -182,26 +295,14 @@ def _run(request, request_path, out, brain, jev_brain):
     import frankie_box_experiment_review as REVIEW
     import frankie_box_lane_state as LS
     runtime_path = pinned(request['runtime'])
-    runtime = json.loads(runtime_path.read_bytes())
-    if runtime.get('schema') != 'JEV_CPU_RUNTIME_V1' or runtime.get('engine') != 'llama.cpp-cpu':
-        raise ValueError('Jev needs an explicitly pinned CPU runtime, not legacy Pod/model labels')
-    for key in ('binary', 'model', 'model_name', 'cpus', 'context_size', 'max_output_tokens',
-                'min_output_tokens', 'token_margin', 'piece_chars', 'process_seconds', 'completion'):
-        if key not in runtime:
-            raise ValueError('Jev runtime choice is unset: ' + key)
-    binary, model = pinned(runtime['binary']), pinned(runtime['model'])
+    runtime, refusals = runtime_check(json.loads(runtime_path.read_bytes()), request['cpus'], transport)
+    if refusals:
+        # visible on status.json through main(): the day waits on Greg's approval / the box install, never runs past it
+        raise ValueError('Jev runtime refused: ' + '; '.join(refusals))
+    binary, model = Path(runtime['binary']), Path(runtime['model'])
     cpus = runtime['cpus']
-    if (not cpus or len(set(cpus)) != len(cpus) or not set(cpus) <= set(request['cpus'][1:])
-            or not set(cpus) <= os.sched_getaffinity(0)):
-        raise ValueError('Jev runtime CPUs must be an explicit worker subset of the held day lane')
-    for key in ('context_size', 'max_output_tokens', 'min_output_tokens', 'token_margin', 'piece_chars', 'process_seconds'):
-        if type(runtime[key]) is not int or runtime[key] <= 0:
-            raise ValueError('positive explicit Jev runtime value required: ' + key)
-    if runtime['max_output_tokens'] < runtime['min_output_tokens']:
-        raise ValueError('Jev output budgets disagree')
-    if runtime['completion'] not in (dict(comparison='required', unparsed='requires_review'),
-                                      dict(comparison='required', unparsed='listed')):
-        raise ValueError('explicit Jev completion policy required; comparison must complete')
+    if not set(cpus) <= os.sched_getaffinity(0):
+        raise ValueError('Jev runtime CPUs are outside the held day lane affinity of this child')
     classroom_path = pinned(request['classroom_receipt'])
     classroom = json.loads(classroom_path.read_bytes())
     if classroom.get('day') != request['day'] or classroom.get('status') not in ('done', 'complete'):
@@ -218,13 +319,24 @@ def _run(request, request_path, out, brain, jev_brain):
     if search_manifest.get('day') != request['day']:
         raise ValueError('Jev science must use this owning day search')
     identity = dict(request, request_pin=pin(request_path), client=pin(SI.__file__), helper=pin(__file__),
-                    transport=pin(transport.__file__), classroom_session=classroom.get('stand_ins'))
+                    transport=pin(transport.__file__), classroom_session=classroom.get('stand_ins'),
+                    shared_runtime=dict(definition=SHARED_RUNTIME, binary=runtime['binary'], model=runtime['model'],
+                                        pins_sha256=runtime['shared']['pins_sha256'], release=runtime['shared']['release'],
+                                        model_identity=runtime['model_name'], approval_sha256=runtime['approval_sha256'],
+                                        cpus=cpus, threads=runtime['threads']))
+    timings = {}
+    phase_started = time.time()
+    def phase(name):
+        nonlocal phase_started
+        now = time.time()
+        timings[name] = round(now - phase_started, 3)
+        phase_started = now
     stopped = []
     signal.signal(signal.SIGTERM, lambda *_: stopped.append('signal'))
     def check_save():
         if stopped or Path(request['save_marker']).is_file():
             raise SystemExit(75)
-    shared_context, shared_market_source = None, None
+    shared_context, shared_market_source, reuse_listed = None, None, None
     if classroom.get('shared_market') is not None:
         # The cutoff is the classroom's own explicit teacher binding (source_hash/as_of/through_cursor),
         # never a Frankie target selection. Any disposition at that instant is carried, thinner.
@@ -234,6 +346,11 @@ def _run(request, request_path, out, brain, jev_brain):
             source_hash=bound['source_hash'], as_of=bound['as_of'], through_cursor=bound['through_cursor'])
         context_path = out / 'shared-market-context.json'
         supplied = request.get('shared_market_context')   # optional: an earlier piece's retained read of the same cutoff
+        # Reuse before re-reading (efficiency, 2026-10-07): the day's exchange retained its read of the same source at
+        # the teachers' cutoff (<run>/exchange/<day>/shared-market-context.json); when its identity and scope are this
+        # cutoff's, one full ordered walk of the day is saved. A different scope or an unreadable file falls through
+        # to a fresh read, and the reason is recorded; nothing is assumed.
+        exchange_retained = out.parents[2] / 'exchange' / request['day'] / 'shared-market-context.json'
         if context_path.is_file():
             shared_context = AM.load_context(context_path, identity=adviser.reader.identity, scope=adviser.scope)
             shared_market_source = 'retained in this Jev output'
@@ -241,13 +358,26 @@ def _run(request, request_path, out, brain, jev_brain):
             shared_context = AM.load_context(pinned(supplied), identity=adviser.reader.identity, scope=adviser.scope)
             shared_market_source = 'supplied retained read of the same source and cutoff: ' + supplied['path']
         else:
-            shared_context = adviser.read(check_save=check_save)
-            shared_market_source = 'read by this Jev piece from the owner-local shared reader'
+            shared_context = None
+            if exchange_retained.is_file():
+                try:
+                    shared_context = AM.load_context(exchange_retained, identity=adviser.reader.identity, scope=adviser.scope)
+                    shared_market_source = 'reused the exchange\'s retained read of the same source and cutoff: ' + str(exchange_retained)
+                except ValueError as error:
+                    reuse_listed = 'exchange retained context not reusable (%s); fresh read' % error
+            else:
+                reuse_listed = 'no exchange retained context at %s; fresh read' % exchange_retained
+            if shared_context is None:
+                shared_context = adviser.read(check_save=check_save)
+                shared_market_source = 'read by this Jev piece from the owner-local shared reader'
         AM.retain_context(context_path, shared_context)
+        # the owner identity carries the retained context PIN (stable across attempts); where the bytes came from on
+        # this attempt (fresh read, exchange reuse, retained) is receipt information, never identity
         identity.update(shared_market_context=pin(context_path), adviser_market_reader=pin(AM.__file__))
     else:
         shared_market_source = ('classroom receipt carries no shared market summary (legacy source); '
                                 'Jev material bytes unchanged')
+    phase('shared_market_context')
     retain_json(out / 'owner.json', identity)
     state_path = out / 'state.json'
     seal_path, claims_path = out / 'claims-seal.json', out / 'claims.json'
@@ -257,15 +387,19 @@ def _run(request, request_path, out, brain, jev_brain):
         nonlocal server
         check_save()
         if server is None:
-            # The reusable transport inherits this exact worker-only affinity; no new booking.
+            # The reusable transport inherits this exact worker-only affinity; no new booking. The SAME transport as
+            # the meeting (frankie_box_granite_meeting.LlamaServer), the shared binary and model, the approved thread
+            # count (physical cores of the lane), the approved per-call ceiling and the Jev process budget.
             os.sched_setaffinity(0, set(cpus))
             for name in ('OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS'):
-                os.environ[name] = str(len(cpus))
+                os.environ[name] = str(runtime['threads'])
             server = transport.LlamaServer(binary, model,
-                dict(threads=len(cpus), context_size=runtime['context_size'], max_meeting_seconds=runtime['process_seconds'],
+                dict(threads=runtime['threads'], context_size=runtime['context_size'],
+                     max_meeting_seconds=runtime['process_seconds'], call_ceiling_seconds=runtime['call_seconds'],
                      cpu_only=True),
                 deadline=time.monotonic() + runtime['process_seconds'], evidence_dir=out / 'runtime-evidence')
             server.start()
+            phase('server_start')
         return server
     def local_put(url, data):
         parsed = urllib.parse.urlsplit(url)
@@ -358,6 +492,7 @@ def _run(request, request_path, out, brain, jev_brain):
                     chat=lambda body: start_server()._post('/v1/chat/completions', json.loads(body), 'jev-chat')[1],
                     **{k: runtime[k] for k in ('max_output_tokens', 'min_output_tokens', 'token_margin')})
     os.environ.update(DAY=request['day'], STAMP=request['stamp'])
+    phase('inputs')
     try:
         check_save()
         client = SI.main(config)
@@ -366,6 +501,7 @@ def _run(request, request_path, out, brain, jev_brain):
             server.stop()
             server.attempt_record('end', 'stopped', role='Jev CPU transport; not a Granite meeting')
         os.sched_setaffinity(0, owner_affinity)  # scientific teacher returns to the original 15+1 lane
+    phase('student_claims_and_comparison')
     check_save()
     retained_state = json.loads(state_path.read_bytes())
     if (out / 'comparison.json').read_bytes() != retained_state['prepared_comparison']['text'].encode():
@@ -422,13 +558,24 @@ def _run(request, request_path, out, brain, jev_brain):
                  json.dumps(dict(result=pin(result_path), deliveries=deliveries), sort_keys=True, indent=2) +
                  '\n```\n').encode()
     report = retain(out / ('jev-report-%04d.md' % request['report_number']), numbered)
+    phase('science_and_delivery')
     import frankie_box_adviser_market as AM
     client_report = client.get('workflow_report') or {}
     workflow_report = AM.workflow_report('jev', context=shared_context,
+        consumer=dict(brain='Jev-only peer knowledge and prior entries/lessons: %d sources (never Frankie\'s brain)' % len(config['brain'])
+                            if config['brain'] else None,
+                      knowledge=None, lessons=None, carry=None,
+                      directive=('experiment_directive attachment of the governed material'
+                                 if attachment.get('experiment_directive') is not None else None),
+                      walls='blind seal before any Frankie output (JEV_WALL); comparison never in his brain; no Frankie answers, '
+                            'grades or private reasoning in the material',
+                      outputs=dict(claims='claims.json (sealed)', comparison='comparison.json', scientific_result=str(result_path),
+                                   report=report.get('path'))),
         inputs=dict(material=pin(material_file), material_source='governed classroom request',
                     attachments=sorted(attachment), classroom_receipt=pin(classroom_path),
                     search_manifest=pin(search_path), runtime=pin(runtime_path),
-                    shared_market_context_source=shared_market_source,
+                    shared_runtime=identity['shared_runtime'],
+                    shared_market_context_source=shared_market_source, shared_market_reuse_listed=reuse_listed if classroom.get('shared_market') is not None else None,
                     brain_sources=len(config['brain']), cutoff_origin='classroom teacher binding (source_hash/as_of/through_cursor)'),
         use=dict(material_text=client_report.get('use'),
                  withheld=['Frankie classroom outputs until the blind seal (JEV_WALL)',
@@ -436,9 +583,12 @@ def _run(request, request_path, out, brain, jev_brain):
                            'teacher answers, grades, claims and private reasoning (never in the picture)'],
                  caps=dict(context_size=runtime['context_size'], max_output_tokens=runtime['max_output_tokens'],
                            min_output_tokens=runtime['min_output_tokens'], token_margin=runtime['token_margin'],
-                           piece_chars=runtime['piece_chars'],
-                           rule='a prompt without output room refuses (Incomplete); nothing is cut to fit'),
-                 model_calls=client.get('call_accounting'), cpus=cpus),
+                           piece_chars=runtime['piece_chars'], call_seconds=runtime['call_seconds'],
+                           process_seconds=runtime['process_seconds'], completion=runtime['completion'],
+                           rule='a prompt without output room refuses (Incomplete) and is regenerated from halves; nothing is cut to fit'),
+                 model_calls=client.get('call_accounting'), cpus=cpus, threads=runtime['threads'],
+                 host_cpu=transport.host_cpu(), timings=timings,
+                 picture_tokens=(client_report.get('use') or {}).get('picture_tokens')),
         outputs=dict(claims_seal=pin(seal_path), claims=pin(claims_path), comparison=pin(out / 'comparison.json'),
                      scientific_result=pin(result_path), deliveries=deliveries, report=report,
                      waits=pending, status='waiting' if pending else 'done'))
@@ -454,8 +604,19 @@ def _run(request, request_path, out, brain, jev_brain):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--request', type=Path, required=True)
+    parser.add_argument('--request', type=Path, help='the immutable JEV_CPU_REQUEST_V1 of the day')
+    parser.add_argument('--propose', action='store_true',
+                        help='print PROPOSED_JEV_CPU_RUNTIME_V1 (the decided rows from the shared Granite runtime, the proposed '
+                             'rows with their reasons and the approval_sha256 Greg\'s approval must carry); nothing runs')
     args = parser.parse_args()
+    if args.propose:
+        proposal = dict(PROPOSED_JEV_CPU_RUNTIME_V1, approval_sha256_to_sign=approval_sha256(PROPOSED_JEV_CPU_RUNTIME_V1),
+                        approved_example=dict(by='Greg Davis', at='<YYYY-MM-DD>',
+                                              approval_sha256=approval_sha256(PROPOSED_JEV_CPU_RUNTIME_V1)))
+        print(json.dumps(proposal, sort_keys=True, indent=1), flush=True)
+        raise SystemExit(0)
+    if args.request is None:
+        parser.error('--request is required (or --propose)')
     try:
         result = execute(args.request)
     except (Exception, SystemExit) as error:

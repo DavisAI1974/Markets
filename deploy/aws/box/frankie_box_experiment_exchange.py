@@ -1761,7 +1761,20 @@ def main():
     shared_market_pin = (dict(path=str(context_path), bytes=context_path.stat().st_size,
                               sha256=sha256_bytes(context_path.read_bytes()))
                          if shared_market is not None and context_path.is_file() else None)
+    lesson_sources = full['sources']['lessons']
     workflow_report = AM.workflow_report('exchange', context=shared_market,
+        consumer=dict(lessons=('%d lesson documents (%s)' % (len(lesson_sources), ', '.join(sorted({str(s.get('author')) for s in lesson_sources}))))
+                              if lesson_sources else None,
+                      knowledge=('accumulated learner knowledge: ' + str((full.get('knowledge_inputs') or {}).get('sha256'))
+                                 if full.get('knowledge_inputs') else None),
+                      brain=a.brain,
+                      carry=('late knowledge listed: %d' % len(notes.get('late_knowledge') or []))
+                            if notes.get('late_knowledge') is not None else None,
+                      directive='classroom rules ' + str(rules_witness.get('file')),
+                      walls='Jev raw items withheld from Frankie\'s view (JEV_WALL); teacher answers, grades and private '
+                            'reasoning never in the exchange (R09/R10); no future-outcome claim (R02)',
+                      outputs=dict(exchange=written['exchange.json']['path'], frankie_view=written['exchange-frankie.json']['path'],
+                                   brain_entry=str(entry))),
         inputs=dict(teacher_rows=full['sources']['teacher_rows'], teacher_rows_listed=full['sources']['teacher_rows_listed'],
                     lessons=[dict(source_id=s.get('source_id'), author=s.get('author'), sha256=s.get('sha256'),
                                   accumulated=bool(s.get('accumulated'))) for s in full['sources']['lessons']],
