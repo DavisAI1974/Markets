@@ -616,8 +616,12 @@ def _coordinate(body, code_root, commit):
                 doc['next_done_seq'] += 1
                 Q.save('class', doc)
         result = dict(done=True)
+        # The kick carries the exact authorized scope (Step 8): this run's saved plan days, the same scope the run's own
+        # orchestrator kicks with (Run.scope_text); a kick without one is refused. A remote class completion therefore
+        # lets this run's class line advance and never admits another run's pending days (FIFO holds within the scope).
         Q.kick('class', code_root, commit, Q.SETTINGS['queue_worker_seconds'],
-               Q.SETTINGS['queue_poll_seconds'], by='remote class completed')
+               Q.SETTINGS['queue_poll_seconds'], by='remote class completed %s %s' % (run, day),
+               scope='%s:%s' % (run, ','.join(e['day'] for e in plan['days'])))
     elif op == 'day_done':
         # Exact small stage receipts, never ROOT spools or journal transfers.
         discovery_days = [e['day'] for e in plan['days'] if e['role'] == 'discovery']
