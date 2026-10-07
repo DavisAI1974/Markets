@@ -774,3 +774,17 @@ Everything above is source-built only. Jev's and the meeting's 400-output-token,
 untested for Jev's claims answers (halving, more calls); the native pass's added time per day is unmeasured; the shared
 adviser slot's wait has never been observed; the worker-tag clear needs CreateTags; the 8A dependencies and the remote
 voice acknowledgment stay as named in sections 5 and 9. A fresh independent review is required before integration.
+
+### 10.7 The model-evaluation clock from Jev's real calls (Greg approved; late addendum)
+
+`frankie_box_jev_cpu.py`: `model_clock` (one `FRANKIE_MODEL_EVALUATION_CLOCK_V1` record per real call, through
+remaining_consumers' `frankie_box_model_clock.record_call(run_dir, day, record)` into `<run-dir>/days/<day>/model-clock.jsonl`;
+the module was NOT on disk at this pass, so the call is coded against that name and the parent reconciles the exact
+signature; until then, or on any helper failure, the same record lands in `<out>/model-clock-unrecorded.jsonl` with the
+reason, never silent). Recorded in `_run`: every chat (`chat`: answered with the reply sha256, or failed with the reason
+and whether it was sent), every token count over Granite's input cap (`counted`: refused_over_cap with the count; the
+client then halves the input), a failed count/server start (failed), and a refused shared runtime (not_called). Each
+record: piece jev, call id (sha256 of the request body or messages), model/runtime pins (release, pins sha256, model
+identity, quantization, config pin, threads, CPU), the exact market cutoff of the material (the classroom teacher
+binding: source_hash, as_of, through_cursor; listed when absent), wall start/end, outcome, run/day/lane. A replayed
+recorded reply is not a call and is not recorded. AST and diff-check clean.

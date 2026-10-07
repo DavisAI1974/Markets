@@ -161,6 +161,35 @@ def bind_owner(out, identity, chain):
     return identity, None
 
 
+MODEL_CLOCK_SCHEMA = 'FRANKIE_MODEL_EVALUATION_CLOCK_V1'   # remaining_consumers' module frankie_box_model_clock (Greg approved
+                            # filling the clock_model_evaluation entry of the 99 from the experiment's REAL model calls)
+
+
+def model_clock(out, request, **fields):
+    """One FRANKIE_MODEL_EVALUATION_CLOCK_V1 record per REAL Jev model call (and per refusal / failure / not-called
+    decision), appended to <run-dir>/days/<day>/model-clock.jsonl through remaining_consumers' helper
+    (frankie_box_model_clock.record_call; its exact signature is reconciled by the parent). Nothing silent: when the
+    helper is absent or raises, the same record is appended to <out>/model-clock-unrecorded.jsonl with the reason. Never
+    raises (the clock is accounting, never the call's outcome)."""
+    out = Path(out)
+    record = dict(schema=MODEL_CLOCK_SCHEMA, piece='jev', run=request.get('run'), day=request.get('day'),
+                  lane=dict(host=request.get('host'), booking=request.get('slot_booking'), attempt=request.get('attempt')),
+                  **fields)
+    run_dir = out.parents[3] if len(out.parents) > 3 else out
+    try:
+        import frankie_box_model_clock as MC
+        MC.record_call(run_dir, request.get('day'), record)
+        return dict(recorded=True)
+    except Exception as error:  # noqa: BLE001 - the helper's absence or failure is listed beside the output, never hidden
+        try:
+            with open(out / 'model-clock-unrecorded.jsonl', 'a', encoding='utf-8') as handle:
+                handle.write(json.dumps(dict(record, unrecorded_reason='%s: %s' % (type(error).__name__, str(error)[:300])),
+                                        sort_keys=True, default=str) + '\n')
+        except OSError:
+            pass
+        return dict(recorded=False, reason='%s: %s' % (type(error).__name__, error))
+
+
 def pinned(pin):
     path = Path(pin['path'])
     if not path.is_absolute() or any(p.is_symlink() for p in (path, *path.parents)):
@@ -336,6 +365,9 @@ def _run(request, request_path, out, brain, jev_brain):
     runtime_path = pinned(request['runtime'])
     runtime, refusals = bind_runtime(runtime_path, transport, request.get('shared_runtime'))
     if refusals:
+        model_clock(out, request, call_id='runtime-refused', model=None, runtime=dict(config=pin(runtime_path)), cutoff=None,
+                    wall_start=time.time(), wall_end=time.time(), outcome='not_called',
+                    reason='the shared Granite runtime refused: ' + '; '.join(refusals)[:900])
         # visible on status.json through main(): the day waits on the shared runtime (absent / pins differing), never
         # runs past it; there is no Jev-specific approval
         raise ValueError('Jev runtime refused (shared Granite runtime): ' + '; '.join(refusals))
@@ -520,11 +552,53 @@ def _run(request, request_path, out, brain, jev_brain):
     SI.STATE_PATH, SI.JEV_MODEL = str(state_path), runtime['model_identity'] or 'Granite 4.2 3B'
     SI.JEV_CONTEXT, SI.JEV_PIECE_CHARS = runtime['context_size'], runtime['piece_chars']
     SI.JEV_PROMPT_CHARS = runtime['context_size'] * 16  # splitting hint only; exact tokenizer always controls room
+    # the model-evaluation clock (clock_model_evaluation of the 99, from REAL calls only): the pins of the one runtime, the
+    # exact market cutoff of the material every call reads (the classroom teacher binding), the lane
+    clock_pins = dict(definition=SHARED_RUNTIME, release=runtime['release'], pins_sha256=runtime['pins_sha256'],
+                      model_identity=runtime['model_identity'], quantization=runtime['quantization'],
+                      config=runtime['config'], threads=runtime['threads'], cpus=cpus)
+    binding_cut = (attachment.get('dipole_classroom') or {}).get('binding') or {}
+    clock_cutoff = ({k: binding_cut.get(k) for k in ('source_hash', 'as_of', 'through_cursor')} if binding_cut else
+                    dict(listed='the governed material carries no teacher binding cutoff (legacy source)'))
+
+    def counted(messages):
+        key = hashlib.sha256(canonical(messages)).hexdigest()
+        started = time.time()
+        try:
+            count = start_server().count_tokens(messages)
+        except BaseException as error:
+            model_clock(out, request, call_id='count-' + key, model=clock_pins, cutoff=clock_cutoff, wall_start=started,
+                        wall_end=time.time(), outcome='failed', reason='token count (server start or /tokenize): %s: %s'
+                        % (type(error).__name__, str(error)[:300]))
+            raise
+        if count > runtime['input_token_cap']:
+            # the client refuses this prompt before any chat (no output room under Granite's cap): a refusal, recorded
+            model_clock(out, request, call_id='count-' + key, model=clock_pins, cutoff=clock_cutoff, wall_start=started,
+                        wall_end=time.time(), outcome='refused_over_cap', input_tokens=count, cap=runtime['input_token_cap'],
+                        reason='input of %d tokens over Granite\'s per-call cap %d: not sent, regenerated from halves'
+                               % (count, runtime['input_token_cap']))
+        return count
+
+    def chat(body):
+        call_id = hashlib.sha256(body if isinstance(body, bytes) else str(body).encode()).hexdigest()
+        started = time.time()
+        try:
+            raw = start_server()._post('/v1/chat/completions', dict(
+                json.loads(body), temperature=runtime['temperature'], top_p=runtime['top_p']), 'jev-chat')[1]
+        except BaseException as error:
+            model_clock(out, request, call_id=call_id, model=clock_pins, cutoff=clock_cutoff, wall_start=started,
+                        wall_end=time.time(), outcome='failed', reason='%s: %s' % (type(error).__name__, str(error)[:300]),
+                        sent=getattr(error, 'sent', None))
+            raise
+        model_clock(out, request, call_id=call_id, model=clock_pins, cutoff=clock_cutoff, wall_start=started,
+                    wall_end=time.time(), outcome='answered', reply_sha256=hashlib.sha256(
+                        raw if isinstance(raw, bytes) else str(raw).encode()).hexdigest())
+        return raw
+
     SI.LOCAL = dict(identity=identity, put=local_put, seal=seal_claims, frankie=frankie_bundle, check_save=check_save,
-                    count_tokens=lambda messages: start_server().count_tokens(messages),
+                    count_tokens=counted,
                     # Granite's sampling rows on every call (temperature, top_p); the client's body otherwise as recorded
-                    chat=lambda body: start_server()._post('/v1/chat/completions', dict(
-                        json.loads(body), temperature=runtime['temperature'], top_p=runtime['top_p']), 'jev-chat')[1],
+                    chat=chat,
                     **{k: runtime[k] for k in ('max_output_tokens', 'min_output_tokens', 'token_margin')})
     os.environ.update(DAY=request['day'], STAMP=request['stamp'])
     phase('inputs')
