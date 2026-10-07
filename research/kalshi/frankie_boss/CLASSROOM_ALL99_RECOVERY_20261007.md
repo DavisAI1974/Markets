@@ -330,3 +330,61 @@ handling (listed, not raised) is unchanged.
 2. Owner of `frankie_box_granite_meeting.py` (the voice path, about line 1429): it calls `learner_knowledge(..., 'voice')`
    and keeps only `documents`. Record `selected['listed']` on its receipt so the same-batch survivor exclusion is visible
    there, as the exchange and teacher-knowledge already do.
+
+## 2026-10-07 night, session 2: 18 of 18 (the six context entries computed)
+
+Greg (relayed): "Why is he only reading 12 of 18? We want 18 of 18." Settles open call 5(a). SOURCE-BUILT /
+RUNTIME-UNVERIFIED / UNREVIEWED. Nothing ran. No AWS call. Skills: `api-and-interface-design` (first),
+`context-engineering`, `experiment-orchestrator`, `incremental-implementation`.
+
+### The computation: `native_entry_arithmetic` (FRANKIE_CLASSROOM_NATIVE_ENTRY_ARITHMETIC_V1)
+
+No new equation. The operands are the native producers' own per-group values; the equations are the classroom's
+existing external-section arithmetic (`dipole_classroom_external`: value in force per Dipole row, `_direction`, `_pair`).
+- Where: inside the classroom's own one full ordered pass (`market_context`), class `_NativeEntryArithmetic`. The shared
+  reader already yields every native member row (and lifecycle row) at its GROUP_CLOSE emission cursor; `note()` takes
+  the six entries' carrier fields there, in source order. No extra file pass, no re-sort.
+- Member rows: the entry's carrier heads (the core's `native_carriers`, i.e. the ROOT projection plan's crosswalk, else
+  `frankie_box_all99_coverage.NATIVE_SERIES`), flattened by the joined teacher's leaf rule (`frankie_box_joined_teacher._flatten`:
+  mapping by dotted key, number/boolean kept, string = category, list = its length). Per instrument (never pooled).
+- Lifecycle rows of the entry's sections (ladder, flow_substrate, queue): rows counted per Dipole interval (the joined
+  teacher's count-of-rows-in-the-window form); their fields stay in the pictures.
+- INPUT-envelope carriers (every day, native pass or not; form `thin_carrier`): R actions per Dipole interval
+  (clears, reset receipts); (source_member_index, session_id) changes per Dipole interval and session_id /
+  source_member_index as categories (contract/session roll).
+- Per numeric series: value in force at each Dipole row (from its own cursor on, never backfilled; a leaf missing from
+  the instrument's latest member row reads MISSING; rows carried forward counted apart from rows with an update), state
+  counts, terminal state, first-to-last direction, facts (first/last/lowest/highest with cursors), and against each of the
+  19 Dipole components: relation, Pearson over both-PRESENT rows, co-movement counts. Per category: runs over the
+  Dipole rows and per value a cell with each component's rows, PRESENT count and direction inside the cell
+  (identifiers above the joined teacher's CATEGORY_LIMIT get runs only).
+
+| Entry | Own rows (native present) | Thin carrier (every day) |
+|---|---|---|
+| order_lifecycle_clears | capture_observations, integrity_delta, raw_actions (#len) | picture.reset_inputs |
+| contract_session_roll_state | session_phase, continuity_segment, raw_symbol (categories), instrument_id | picture.session_scope_changes, picture.at.session_id, picture.at.source_member_index |
+| complete_state_reset_bootstrap_receipts | integrity_delta, capture_observations, snapshot_bootstrap_only | picture.reset_inputs |
+| price_and_book_path | book_full, book_regime, structure.price_raw_min/max/span; lifecycle ladder count | none |
+| derived_price_flow_book_paths | book_regime, book_full; lifecycle flow_substrate and ladder counts | none |
+| derived_v4_mechanics_fifo_features | activity_full, activity_since, book_full, capture_observations; lifecycle queue count | none |
+
+Use record: each of the six reads `computed` with computation `native_entry_arithmetic`, form `own_rows` or
+`thin_carrier`, its series and pair counts, relation counts and the unavailable carriers with reasons. Missing
+operands: native ledger absent, no Dipole row, an integrity finding (adapter cursor backwards, Dipole rosters differ)
+or a failure each block only this computation, named; the instant and the day stay. Integrity stays `integrity_failure`.
+
+Limits said in the record: a list carrier (FIFO queues, levels, raw actions) enters as its length, not entry by entry;
+lifecycle rows enter as counts; numbers are float64 in the arithmetic (an integer above 2**53 is not exact there);
+descriptive only, no outcome, no fees, no P&L.
+
+Outputs: `native-entry-arithmetic.json` (every series, pair and cell; pinned in outputs), `received.native_entries`,
+`receipt.native_entries`, the refusal receipt and code-answers.json (compact + pin), the all-99 list
+(`native_entries`, per-entry computations), the summary answer (per-entry counts + pin) and each component answer
+(per-entry relation counts against that component). Timing: `native_entries.hot_path_seconds` (inside the pass) and
+`native_entries.seconds` (pairs after it), for the one-day canary. Identity pins `frankie_box_joined_teacher.py`
+(`native_entry_code`).
+
+Requests: workflow_reports, `frankie_box_workflow_inspection.py` classroom FIELDS: project `native_entries` (status,
+reason, per-entry use/form/series/pairs/unavailable, file pin, timings); today it reaches the markdown via `received`.
+
+Fresh independent review (frankie-school-recovery or frankie-ccode-review) required before integration.

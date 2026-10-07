@@ -359,7 +359,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                     producers={m.__name__: _sha256(m.__file__) for m in (F, S, R, EXT, V2, C, K, KX, LS, BR, KR)},
                     learner_reading_producers=KR.producer_hashes(),
                     # the existing exhaustion/D computation this classroom now invokes, and its producers loader
-                    exhaustion_d_code={name: _sha256(BOX / name) for name in ('frankie_box_teach.py', 'frankie_box_bedrock.py')})
+                    exhaustion_d_code={name: _sha256(BOX / name) for name in ('frankie_box_teach.py', 'frankie_box_bedrock.py')},
+                    # the leaf rule the native entry arithmetic reuses (frankie_box_joined_teacher._flatten / CATEGORY_LIMIT)
+                    native_entry_code={name: _sha256(BOX / name) for name in ('frankie_box_joined_teacher.py',)})
     if market is not None:
         identity['shared_market'] = market.identity
     # Inspection (Greg, 2026-10-07): every input this piece received, with path, bytes, sha256, the whole-day
@@ -395,7 +397,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         previous=carried, previous_external=external_carried,
         directive=dict(path=str(DIRECTIVE_PATH), sha256=identity['directive']), rules=rules_witness,
         producers=identity['producers'], learner_reading_producers=identity['learner_reading_producers'],
-        exhaustion_d_code=identity['exhaustion_d_code'],
+        exhaustion_d_code=identity['exhaustion_d_code'], native_entry_code=identity['native_entry_code'],
         shared_market_identity=market.identity if market is not None else None,
         shared_market_external=shared_external,
         teacher_shared_market_arithmetic=teacher_receipt.get('shared_market_arithmetic'))
@@ -490,7 +492,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         return selected, school, listed
     knowledge_input, school, school_listed = phase('learner_inputs', learner_inputs)
     knowledge = knowledge_input['documents']
-    all99, exhaustion_d, consumers, market_reading = None, None, None, None
+    all99, exhaustion_d, consumers, market_reading, native_entries = None, None, None, None, None
     # Ordinary new knowledge waits for the next boundary, but a checked correction
     # cannot leave a known error active in a saved classroom. Keep every retained
     # input/answer intact and require an explicit successor instead of repicking.
@@ -516,12 +518,26 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             K._EVIDENCE_CACHE[visible['pre_message']['teacher_message_hash']] = evidence
         shared_market = None
         market_reading = None
+        native_entries = dict(schema=K.NATIVE_ENTRY_SCHEMA, status='unavailable',
+                              reason='no shared market policy on this ROOT: no picture was read, so no native value was placed')
         if market is not None:
             market_reading = phase('shared_market_context', lambda: K.market_context(
                 visible, market, save_requested=save_requested))
             if market_reading['identity'] != market.identity:
                 raise ValueError('retained classroom market reading differs from its original source')
             shared_market = K.ClassroomMarketContext(calculations, day, market_reading)
+            # 18 of 18 (Greg, 2026-10-07 night): the six native entries that were context are operands of the native entry
+            # arithmetic computed on the same pass (each series against every Dipole component). Whole in its own pinned
+            # file; the receipt, the all-99 list and the answers carry the compact view and the pin.
+            native_whole = shared_market.native_entries()
+            native_entries = shared_market.native_entries_status()
+            if native_whole is not None:
+                native_path = d / 'native-entry-arithmetic.json'
+                _dump(native_path, native_whole)
+                shared_market.native_file = dict(name=native_path.name, path=str(native_path),
+                                                 bytes=native_path.stat().st_size, sha256=_sha256(native_path))
+                native_entries = dict(native_entries, file=shared_market.native_file)
+        received['native_entries'] = native_entries
         # The 99 INGESTED, not only seen (Greg, 2026-10-07): the existing exhaustion/D classroom computation
         # (frankie_box_teach.facts, code only, no model; built 2026-09-21, not invoked on the experiment path until now)
         # runs on the ROOT's completed whole-day bedrock layers. A ROOT without a native pass, a missing input or a
@@ -553,7 +569,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             carry=dict(previous=carried, previous_external=external_carried),
             binding=received['binding'], mode=mode, dipole_components=len(names),
             # what the Dipole arithmetic takes per component today, and what the exhaustion/D facts took per entry
-            dipole_operands=K.dipole_operands(visible), exhaustion_d=exhaustion_d)
+            dipole_operands=K.dipole_operands(visible), exhaustion_d=exhaustion_d,
+            # the six native entries' arithmetic (None when no shared market was read: each reads absent with the reason)
+            native_entries=native_entries)
         outputs = {n: phase('component:' + n, lambda n=n: K.component_answer(
             visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)],
             learner_context=learner_context, shared_market=shared_market, exhaustion_d=exhaustion_d)) for n in names}
@@ -585,6 +603,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                        shared_market=shared_market.summary() if shared_market is not None else None,
                        shared_market_use=shared_market.use() if shared_market is not None else None,
                        all99_coverage=all99, exhaustion_d=K._exhaustion_d_receipt(exhaustion_d),
+                       native_entries=native_entries,
                        external=dict(day_file=dict(path=str(day_file), sha256=day_sha, found=day_source)),
                        received=received, phase_timings=dict(timings), saved_phases=list(state['phases']),
                        outputs=dict(schema='FRANKIE_CLASSROOM_OUTPUTS_V1', directory=str(d), pinned=pinned, listed=listed,
@@ -606,7 +625,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                         learner_reading=learner_reading, model_calls=0,
                                         shared_market=shared_market.summary() if shared_market is not None else None,
                                         shared_market_external=shared_external, all99_coverage=all99,
-                                        exhaustion_d=K._exhaustion_d_receipt(exhaustion_d)))
+                                        exhaustion_d=K._exhaustion_d_receipt(exhaustion_d),
+                                        native_entries=native_entries))
     _dump(d / 'learner-knowledge.json', dict(day=day, stage='classroom', documents=knowledge,
                                            versions=knowledge_input['versions'], listed=knowledge_input['listed'],
                                            school_documents=school, school_listed=school_listed,
@@ -732,7 +752,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                        'classroom-external.md', 'history.json', 'external-history.json',
                        'package.external.pre_message.json', 'package.external.binding.json',
                        # the whole exhaustion/D facts (listed, not pinned, on a day they were not computed)
-                       'exhaustion-d-facts.json']
+                       'exhaustion-d-facts.json',
+                       # the six native entries' whole arithmetic (listed when no shared market was read)
+                       'native-entry-arithmetic.json']
                       + [f'package.{part}.c15.json' for part in ('source', 'teacher_key', 'pre_message', 'binding')]
                       + [f'{name}.json' for name in files])
     outputs_pinned, outputs_listed = _pin_outputs(d, produced_names)
@@ -762,6 +784,11 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                   # per-entry attribution and the pinned whole facts file (exhaustion-d-facts.json); the facts themselves
                   # stay in that file. Also under received.exhaustion_d.
                   exhaustion_d=K._exhaustion_d_receipt(exhaustion_d),
+                  # The six native entries that were context, now operands of the native entry arithmetic (Greg,
+                  # 2026-10-07 night: 18 of 18): per entry use / form / series / pairs / relation counts / unavailable
+                  # carriers, and the pin of native-entry-arithmetic.json (every series, pair and cell whole). Also
+                  # under received.native_entries.
+                  native_entries=native_entries,
                   # The core teacher's own listing of which instants its pinned equation computed on and which it
                   # listed absent (revised core; None on a d6af990 teacher receipt). Carried, not reinterpreted.
                   teacher_shared_market_arithmetic=teacher_receipt.get('shared_market_arithmetic'),

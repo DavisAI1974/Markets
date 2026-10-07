@@ -279,6 +279,13 @@ def market_context(visible, timeline, *, save_requested):
     # sections, price row kinds, top-level fields seen). Counts of what was yielded, never of what any
     # equation used; the all-99 list is built from them by all99_coverage().
     arrivals = _Arrivals()
+    # The six native entries as operands (Greg, 2026-10-07 night: "We want 18 of 18"): their values are taken on this
+    # same pass, in source order, at their own cursors; computed against the Dipole rows after the pass (finish()).
+    try:
+        native, native_setup = _NativeEntryArithmetic(_evidence(visible)['components'], getattr(timeline, 'native_carriers', None),
+                                                      getattr(timeline, 'layers', None) or {}), None
+    except Exception as error:  # noqa: BLE001 - blocks only the native entry arithmetic; recorded, never a measurement
+        native, native_setup = None, 'setting up: %s: %s' % (type(error).__name__, error)
     iterator = timeline.iter_pictures()
     try:
         for item in iterator:
@@ -292,6 +299,14 @@ def market_context(visible, timeline, *, save_requested):
             counts[key] = counts.get(key, 0) + 1
             seen += 1
             arrivals.note(picture, item['evidence'])
+            if native is not None and native.status is None:
+                try:
+                    clock = time.perf_counter()
+                    native.note(picture, item['evidence'])
+                    native.note_seconds += time.perf_counter() - clock
+                except Exception as error:  # noqa: BLE001 - blocks only this computation; recorded, never a measurement
+                    native.status, native.reason = 'failed', 'at adapter cursor %s: %s: %s' % (
+                        picture['at'].get('adapter_cursor'), type(error).__name__, error)
             cursor = picture['at']['adapter_cursor']
             if cursor in wanted:
                 if cursor in pictures:
@@ -311,11 +326,21 @@ def market_context(visible, timeline, *, save_requested):
                 pictures_after_last_anchor=(seen - last_anchor_seen_at if last_anchor_seen_at is not None else None),
                 read_to_end=True,
                 hot_path='per picture: status key, anchor membership test, arrivals.note (a few dict increments; '
-                         'per update: source name, frame section presence, top-level field names); deepcopy only '
-                         'at wanted anchors. The core\'s decode dominates; measure on the one-to-two-minute canary.',
+                         'per update: source name, frame section presence, top-level field names); native.note (the six '
+                         'native entries: per native member row the carrier leaves, per lifecycle row a count; its own '
+                         'time is native_entries.hot_path_seconds); deepcopy only at wanted anchors. The core\'s decode '
+                         'dominates; measure on the one-to-two-minute canary.',
                 note='one full ordered read; the tail after the last anchor serves source_status_counts and this '
                      'consumer\'s own view of exhaustion. Measured here so the one-day test can show where the '
                      'classroom\'s time goes before any shortening is considered; no shortening is applied.')
+    if native is None:
+        native_entries = native_entries_failed(native_setup)
+    else:
+        try:
+            native_entries = native.finish()
+        except Exception as error:  # noqa: BLE001 - blocks only the native entry arithmetic; the classroom and the day go on
+            native.status, native.reason = 'failed', 'computing the series: %s: %s' % (type(error).__name__, error)
+            native_entries = native.finish()
     # Reaching here means the iterator ended without an integrity/identity exception. The core's
     # own exhaustion flag is read beside that fact, never used to reject a thinner day.
     report = copy.deepcopy(timeline.report)
@@ -350,10 +375,13 @@ def market_context(visible, timeline, *, save_requested):
                               if opening is not None else dict(status='not_recorded_in_ingestion_receipt')),
                 journal_witness=getattr(timeline, 'input_verification', None),
                 anchor_pictures=dict(wanted=len(wanted), retained=len(pictures), unavailable=unavailable),
+                # the six native entries' operands, computed against the Dipole rows (FRANKIE_CLASSROOM_NATIVE_ENTRY_ARITHMETIC_V1)
+                native_entries=native_entries,
                 use='full ordered source read to its end; first/last/min/max PRESENT anchor pictures, each with its source '
-                    'status or listed unavailable, supplement unchanged Dipole mathematics',
+                    'status or listed unavailable, supplement unchanged Dipole mathematics; the six native entries\' own '
+                    'values on the same pass are operands of the native entry arithmetic (native_entries)',
                 limit='no claim that every market field changes a target or is interpreted; no claim that every layer was '
-                      'present; no native training')
+                      'present; no native training; the Dipole values and target equations are unchanged')
 
 
 class ClassroomMarketContext:
@@ -400,6 +428,18 @@ class ClassroomMarketContext:
                                   external=(coverage.get('external') or {}).get('status')),
                     use=self.retained['use'], limit=self.retained['limit'])
 
+    def native_entries(self):
+        """The six native entries' arithmetic, whole (every series, pair and cell), or None on a reading saved before it
+        existed (named by native_entries_status)."""
+        return self.retained.get('native_entries')
+
+    def native_entries_status(self):
+        result = self.retained.get('native_entries')
+        if result is None:
+            return dict(schema=NATIVE_ENTRY_SCHEMA, status='unavailable',
+                        reason='the retained market reading was saved before the native entry arithmetic existed')
+        return native_entries_compact(result)
+
     def summary(self):
         # `read` (wall-clock timing of the pass) is deliberately not here: summary() enters the summary answer
         # text, and a timing is not evidence. It travels through use() for the inspection report only.
@@ -428,8 +468,11 @@ class ClassroomMarketContext:
                                   # price row kinds, fields seen); the all-99 list is derived from these
                                   arrivals=self.retained.get('arrivals')),
                     entered=dict(component_answer=['evidence'], summary_answer=['cycle_summary']),
-                    arithmetic='state counts, terminal state, first-to-last direction, Pearson and co-movement use the '
-                               'teacher rows only; no shared-picture field is an operand of any Dipole equation',
+                    arithmetic='the Dipole state counts, terminal state, first-to-last direction, Pearson and co-movement '
+                               'use the teacher rows only; the six native entries\' own values read on this pass are the '
+                               'operands of the native entry arithmetic (each series against every Dipole component, '
+                               'dipole_classroom_external\'s equations); the Dipole values are not changed by them',
+                    native_entries=self.native_entries_status(),
                     components={name: copy.deepcopy(selected) for name, selected in self.retained['anchors'].items()},
                     partial_missing_stale=dict(
                         input_dispositions=(coverage.get('journal') or {}).get('input_dispositions'),
@@ -549,6 +592,529 @@ class _Arrivals:
                     fields_overflow=dict(self.fields_overflow), field_cap=self.FIELD_CAP,
                     basis='counts of evidence the shared pictures yielded on this one full pass; not proof that an '
                           'equation consumed a field; absence of an event is a measurement over the exhausted source')
+
+
+# ------------------------------------------- the six native entries as operands (Greg, 2026-10-07 night: "18 of 18")
+# "Why is he only reading 12 of 18? We want 18 of 18." The six native-only entries that were context only now enter the
+# classroom's arithmetic. Nothing new is invented: the operands are the native producers' own per-group values (the
+# native member rows the shared reader yields at their GROUP_CLOSE emission, flattened by the joined teacher's leaf rule,
+# frankie_box_joined_teacher._flatten: a mapping is walked by dotted key, a number or boolean is kept, a string is a
+# category, a list is its length and stays whole in the picture), the native lifecycle rows of the entry's own sections
+# (counted per Dipole interval, the joined teacher's count-of-rows-in-the-window form), and the INPUT envelope's reset
+# and session-scope carriers. The equations are the classroom's existing external-section arithmetic
+# (dipole_classroom_external: the value in force at each Dipole row, _direction, _pair = relation, Pearson, co-movement),
+# so each series is computed the way an external series is, against every Dipole component.
+NATIVE_SIX = ('order_lifecycle_clears', 'contract_session_roll_state', 'complete_state_reset_bootstrap_receipts',
+              'price_and_book_path', 'derived_price_flow_book_paths', 'derived_v4_mechanics_fifo_features')
+NATIVE_ENTRY_SCHEMA = 'FRANKIE_CLASSROOM_NATIVE_ENTRY_ARITHMETIC_V1'
+NATIVE_ENTRY_COMPUTATION = 'native_entry_arithmetic'
+# the INPUT envelope's own carriers of three of the six (present on every picture, native pass or not): the thinner form
+PICTURE_CARRIERS = {
+    'order_lifecycle_clears': ('picture.reset_inputs',),
+    'complete_state_reset_bootstrap_receipts': ('picture.reset_inputs',),
+    'contract_session_roll_state': ('picture.session_scope_changes', 'picture.at.session_id', 'picture.at.source_member_index'),
+}
+PICTURE_SERIES_TEXT = {
+    'picture.reset_inputs': 'INPUT pictures whose normalized action is R (the book clear / reset message), counted per '
+                            'Dipole interval, per instrument',
+    'picture.session_scope_changes': 'changes of (source_member_index, session_id) per instrument (the core\'s own '
+                                     'source_scope_changed rule), counted per Dipole interval',
+    'picture.at.session_id': 'the session_id in force per instrument at each Dipole row (a category: runs and cells)',
+    'picture.at.source_member_index': 'the source member (DBN partition) index in force per instrument at each Dipole row '
+                                      '(a category: runs and cells)',
+}
+NATIVE_ENTRY_RULE = ('a member value is placed at the INPUT cursor of its GROUP_CLOSE emission and is in force at every later '
+                     'Dipole row until that instrument\'s next member row (the value in force, never backfilled; rows '
+                     'carried forward are counted apart from rows with a new observation); a leaf missing from an '
+                     'instrument\'s latest member row reads MISSING, never its older value; a lifecycle or envelope event '
+                     'counts in the interval of the first Dipole row at or after its cursor (zero = measured none over the '
+                     'exhausted source while the carrier was present); every series is per instrument (never pooled across '
+                     'contracts); FINALIZE / unplaceable rows are counted and never placed; nothing averaged')
+
+
+class _NumSeries:
+    __slots__ = ('code', 'value', 'reason', 'rec', 'rows', 'codes', 'values', 'reasons', 'fresh', 'known', 'first', 'last',
+                 'low', 'high', 'nonpresent', 'nulls')
+
+    def __init__(self):
+        from array import array
+        self.code, self.value, self.reason, self.rec = None, None, None, None
+        self.rows, self.codes, self.values, self.reasons = array('q'), array('b'), array('d'), {}
+        self.fresh, self.known, self.first, self.last, self.low, self.high = 0, 0, None, None, None, None
+        self.nonpresent, self.nulls = {}, 0
+
+
+class _NativeEntryArithmetic:
+    """One pass, inside the classroom's own full ordered read (market_context): the six entries' operands per Dipole row.
+
+    `components`: the Dipole evidence (every component's observations, one shared adapter-cursor roster); `carriers`: the
+    core's native carriers per entry (the ROOT projection plan's producers' crosswalk, else the retained carrier text);
+    `layers`: the core's layer record (native.member / native.lifecycle present or absent, with the core's reason).
+    Hot path: note() per picture is a few dict reads unless the picture carries a native update, an R action or a scope
+    change. The per-row ledgers are stored as changes only (array-backed), materialized one series at a time at finish().
+    """
+
+    def __init__(self, components, carriers, layers):
+        self.status, self.reason = None, None
+        self.components = [(c['name'], c['observations']) for c in components]
+        roster = [int(p['cursor']) for p in (self.components[0][1] if self.components else ())]
+        for name, observations in self.components:
+            if [int(p['cursor']) for p in observations] != roster:
+                self.status, self.reason = 'integrity_failure', ('the Dipole components do not share one cursor roster '
+                                                                 '(%s differs); no row to align the native series on' % name)
+        if self.status is None and any(a >= b for a, b in zip(roster, roster[1:])):
+            self.status, self.reason = 'integrity_failure', 'the Dipole cursor roster is not strictly increasing'
+        if self.status is None and not roster:
+            self.status, self.reason = 'unavailable', 'no Dipole row on this day: no row to place a native value at'
+        self.cursors, self.n, self.k, self.last_cursor, self.at_cursor = roster, len(roster), 0, None, None
+        self.layers = {name: dict(status=(layers.get(name) or {}).get('status', 'absent'),
+                                  reason=(layers.get(name) or {}).get('reason')) for name in ('native.member', 'native.lifecycle')}
+        self.carriers = {}
+        self.head_entries, self.section_entries = {}, {}
+        for entry in NATIVE_SIX:
+            spec = (carriers or {}).get(entry) or ALL99.NATIVE_SERIES.get(entry) or {}
+            heads = sorted({ALL99._member_head(p) for p in spec.get('member') or ()})
+            sections = sorted(set(spec.get('sections') or ()))
+            self.carriers[entry] = dict(member=list(spec.get('member') or ()), heads=heads, sections=sections,
+                                        source=spec.get('source') or 'frankie_box_all99_coverage.NATIVE_SERIES')
+            for head in heads:
+                self.head_entries.setdefault(head, []).append(entry)
+            for section in sections:
+                self.section_entries.setdefault(section, []).append(entry)
+        self.heads = sorted(self.head_entries)
+        self.num, self.cat, self.cnt = {}, {}, {}
+        self.dirty, self.cat_dirty, self.interval, self.after_last = set(), set(), {}, {}
+        self.member_keys, self.scopes = {}, {}
+        self.unplaced = {}
+        self.member_rows, self.lifecycle_rows, self.reset_inputs = 0, 0, 0
+        self.lifecycle_other_sections = 0
+        self.note_seconds = 0.0          # hot-path time inside the classroom's pass (measured on the one-day canary)
+        import math
+        from frankie_box_joined_teacher import _flatten     # the joined teacher's leaf rule, reused (never restated)
+        self._flatten, self._isfinite = _flatten, math.isfinite
+
+    # ---- hot path
+    def note(self, picture, evidence):
+        if self.status is not None:
+            return
+        at = picture.get('at') or {}
+        cursor = at.get('adapter_cursor')
+        self.at_cursor = cursor if type(cursor) is int else None     # facts name the picture's own cursor (None: none)
+        if type(cursor) is int:
+            if self.last_cursor is not None and cursor < self.last_cursor:
+                self.status, self.reason = 'integrity_failure', ('adapter cursor %d follows %d in the ordered source; '
+                                                                 'native series are never re-sorted' % (cursor, self.last_cursor))
+                return
+            self.last_cursor = cursor
+            while self.k < self.n and self.cursors[self.k] < cursor:
+                self._close_row()
+        instrument = at.get('instrument_id')
+        # the envelope carriers on exact pictures only (the core's own rule for reset / source_scope_changed)
+        if type(instrument) is int and (picture.get('coverage') or {}).get('exact_clocks'):
+            normalized = evidence.get('normalized') if isinstance(evidence, dict) else None
+            action = normalized.get('action') if normalized else None
+            if action in ('R', b'R'):
+                self.reset_inputs += 1
+                self._count(('picture.reset_inputs', instrument))
+            scope = (at.get('source_member_index'), at.get('session_id'))
+            previous = self.scopes.get(instrument)
+            if previous is not None and previous != scope:
+                self._count(('picture.session_scope_changes', instrument))
+            self.scopes[instrument] = scope
+            for field in ('session_id', 'source_member_index'):
+                if at.get(field) is not None:        # not carried on this INPUT is not a change of state
+                    self._category(('picture.at.' + field, instrument), at.get(field))
+        for update in picture.get('updates') or ():
+            source = update.get('source')
+            if source not in ('native.member', 'native.lifecycle'):
+                continue
+            if update.get('placement'):
+                self.unplaced[source] = self.unplaced.get(source, 0) + 1
+                continue
+            row, owner = update.get('value') or {}, update.get('instrument_id')
+            if source == 'native.member':
+                self.member_rows += 1
+                self._member(row, owner)
+            else:
+                self.lifecycle_rows += 1
+                section = row.get('emitting_section')
+                if section in self.section_entries:
+                    self._count(('native.lifecycle.' + str(section), owner))
+                else:
+                    self.lifecycle_other_sections += 1
+        if type(cursor) is int and self.k < self.n and self.cursors[self.k] == cursor:
+            self._close_row()
+
+    def _count(self, key):
+        if self.k >= self.n:
+            self.after_last[key] = self.after_last.get(key, 0) + 1
+        else:
+            self.interval[key] = self.interval.get(key, 0) + 1
+        slot = self.cnt.get(key)
+        if slot is None:
+            from array import array
+            slot = self.cnt[key] = dict(total=0, first=None, last=None, rows=array('q'), counts=array('q'))
+        slot['total'] += 1
+        cursor = self.at_cursor
+        if slot['first'] is None:
+            slot['first'] = cursor
+        slot['last'] = cursor
+
+    def _category(self, key, value):
+        value = None if value is None else str(value)
+        slot = self.cat.get(key)
+        if slot is None:
+            if value is None:
+                return
+            slot = self.cat[key] = dict(current=None, rec=None, changes=[], distinct=set(), known=0)
+        if value is not None:
+            slot['known'] += 1
+            slot['distinct'].add(value)
+        if value != slot['current']:
+            slot['current'] = value
+            self.cat_dirty.add(key)
+
+    def _numeric(self, key, code, value, reason):
+        s = self.num.get(key)
+        if s is None:
+            s = self.num[key] = _NumSeries()
+        s.code, s.value, s.reason = code, value, reason
+        self.dirty.add(key)
+        if code == 0:
+            s.known += 1
+            point = (self.at_cursor, value)
+            if s.first is None:
+                s.first = point
+            s.last = point
+            if s.low is None or value < s.low[1]:
+                s.low = point
+            if s.high is None or value > s.high[1]:
+                s.high = point
+        else:
+            s.nonpresent[reason] = s.nonpresent.get(reason, 0) + 1
+
+    def _member(self, row, instrument):
+        _flatten, isfinite = self._flatten, self._isfinite
+        leaves = {}
+        for head in self.heads:
+            node, found = row, True
+            for part in head.split('.'):
+                if isinstance(node, dict) and part in node:
+                    node = node[part]
+                else:
+                    found = False
+                    break
+            if found:
+                _flatten(node, head, leaves)
+        seen = self.member_keys.setdefault(instrument, set())
+        for leaf in seen - leaves.keys():
+            key = ('native.member.row.' + leaf, instrument)
+            if key in self.num:
+                self._numeric(key, 1, None, 'NOT_IN_THIS_INSTRUMENT_LATEST_MEMBER_ROW')
+            if key in self.cat:
+                self._category(key, None)
+        for leaf, (kind, value) in leaves.items():
+            key = ('native.member.row.' + leaf, instrument)
+            if kind == 'n':
+                if isfinite(value):
+                    self._numeric(key, 0, value, None)
+                else:
+                    self._numeric(key, 2, None, 'NOT_FINITE: %r' % value)
+            elif kind == 's':
+                self._category(key, value)
+            else:                                        # a null leaf: MISSING where a series exists, else counted
+                if key in self.num:
+                    self._numeric(key, 1, None, 'VALUE_IS_NULL_IN_MEMBER_ROW')
+                if key in self.cat:
+                    self._category(key, None)
+                if key not in self.num and key not in self.cat:
+                    self.unplaced['null_leaf_before_any_value'] = self.unplaced.get('null_leaf_before_any_value', 0) + 1
+        seen.update(leaves)
+
+    def _close_row(self):
+        k = self.k
+        for key in self.dirty:
+            s = self.num[key]
+            s.fresh += 1
+            state = (s.code, s.value, s.reason)
+            if state != s.rec:
+                s.rows.append(k)
+                s.codes.append(s.code)
+                s.values.append(s.value if s.code == 0 else float('nan'))
+                if s.code != 0:
+                    s.reasons[len(s.rows) - 1] = s.reason
+                s.rec = state
+        self.dirty.clear()
+        for key in self.cat_dirty:
+            slot = self.cat[key]
+            if slot['current'] != slot['rec']:
+                slot['changes'].append((k, slot['current']))
+                slot['rec'] = slot['current']
+        self.cat_dirty.clear()
+        for key, count in self.interval.items():
+            slot = self.cnt[key]
+            slot['rows'].append(k)
+            slot['counts'].append(count)
+        self.interval.clear()
+        self.k += 1
+
+    # ---- after the pass
+    def finish(self):
+        """Close the rows no picture reached (lawful: every picture had a smaller cursor), then compute."""
+        import time
+        started = time.monotonic()
+        if self.status is None:
+            while self.k < self.n:
+                self._close_row()
+        result = self._compute() if self.status is None else _native_unavailable_entries(self.status, self.reason)
+        out = dict(schema=NATIVE_ENTRY_SCHEMA, computation=NATIVE_ENTRY_COMPUTATION, author=AUTHOR, model_calls=0,
+                   status=self.status or 'computed', reason=self.reason, entries_computed=list(NATIVE_SIX),
+                   dipole_rows=self.n, dipole_components=[name for name, _ in self.components],
+                   layers=self.layers, carriers=self.carriers,
+                   read=dict(member_rows=self.member_rows, lifecycle_rows=self.lifecycle_rows,
+                             lifecycle_rows_of_other_sections=self.lifecycle_other_sections,
+                             reset_inputs=self.reset_inputs, unplaced=dict(self.unplaced),
+                             events_after_last_dipole_row={'%s@instrument=%s' % k: v for k, v in sorted(
+                                 self.after_last.items(), key=lambda kv: (kv[0][0], str(kv[0][1])))}),
+                   rule=NATIVE_ENTRY_RULE,
+                   equations=('dipole_classroom_external (the external section\'s own functions): the value in force at '
+                              'each Dipole row; state counts, terminal state, first-to-last PRESENT direction (_direction); '
+                              'per series x Dipole component: direction relation, Pearson over both-PRESENT rows, '
+                              'co-movement counts (_pair). Categories: runs over the Dipole rows and, per value (a cell), '
+                              'each Dipole component\'s rows, PRESENT count and first-to-last direction inside the cell'),
+                   leaf_rule=('frankie_box_joined_teacher._flatten: mapping walked by dotted key; number / boolean kept; '
+                              'string = category; list = its length (#len), the list itself stays whole in the picture'),
+                   limit=('descriptive for this day\'s window; no causation or outcome claimed (R01, R02); a list carrier '
+                          '(FIFO queues, levels, raw actions) enters as its length, not entry by entry; lifecycle rows '
+                          'enter as their count per Dipole interval, their fields stay in the pictures; the leaf rule '
+                          'carries numbers as float64, so an integer above 2**53 (a ns clock, an id) is not exact in the '
+                          'arithmetic (it stays exact in the picture and the ledger)'),
+                   **result)
+        out['seconds'] = round(time.monotonic() - started, 3)
+        out['hot_path_seconds'] = round(self.note_seconds, 3)
+        out['timing'] = ('hot_path_seconds: note() inside the classroom\'s one ordered pass (part of read.seconds); seconds: '
+                         'the per-series materialization and the pairs after the pass')
+        return out
+
+    def _compute(self):
+        import frankie_box_classroom_external_code as KX
+        from frankie_box_joined_teacher import CATEGORY_LIMIT
+        EXT = KX._external_math()
+        np = EXT._np()
+        n = self.n
+        dipole = {}
+        for name, observations in self.components:
+            codes = np.array([STATES.index(p['state']) for p in observations], dtype=np.int8)
+            values = np.array([float(p['value']) if p['state'] == 'PRESENT' else np.nan for p in observations], dtype=np.float64)
+            dipole[name] = (codes, values, EXT._direction(np, codes, values))
+        cursors = np.array(self.cursors, dtype=np.int64)
+        rows = np.arange(n)
+        series = []
+
+        def name_of(key):
+            return '%s@instrument=%s' % key
+
+        def numeric(name, kind, codes, values, extra):
+            direction = EXT._direction(np, codes, values)
+            counts = {state: int(np.sum(codes == i)) for i, state in enumerate(STATES)}
+            last = int(n - 1)
+            pairs = [EXT._pair(np, name, comp, 'NATIVE_ENTRY_DIPOLE', (codes, values, direction), dipole[comp])
+                     for comp, _ in self.components]
+            return dict(name=name, kind=kind, state_counts=counts, terminal_state=STATES[int(codes[last])],
+                        terminal_value=(float(values[last]) if int(codes[last]) == 0 else None),
+                        first_to_last_present_direction=direction, pairs=pairs, **extra)
+
+        for key in sorted(self.num, key=lambda k: (k[0], str(k[1]))):
+            s = self.num[key]
+            change_rows = np.frombuffer(s.rows, dtype=np.int64) if len(s.rows) else np.zeros(0, np.int64)
+            position = np.searchsorted(change_rows, rows, side='right') - 1
+            seen = position >= 0
+            codes = np.full(n, 1, dtype=np.int8)
+            values = np.full(n, np.nan, dtype=np.float64)
+            if len(s.rows):
+                codes[seen] = np.frombuffer(s.codes, dtype=np.int8)[position[seen]]
+                values[seen] = np.frombuffer(s.values, dtype=np.float64)[position[seen]]
+            reasons = {}
+            for index, reason in s.reasons.items():
+                start = int(s.rows[index])
+                end = int(s.rows[index + 1]) if index + 1 < len(s.rows) else n
+                reasons[reason] = reasons.get(reason, 0) + end - start
+            before = int(np.sum(~seen))
+            if before:
+                reasons['NO_VALUE_AT_OR_BEFORE_THIS_ROW'] = before
+            series.append(numeric(name_of(key), 'member_value', codes, values, dict(
+                facts=dict(values_known=s.known, first=s.first, last=s.last, lowest=s.low, highest=s.high,
+                           nonpresent_updates=dict(sorted(s.nonpresent.items())),
+                           # a row whose interval held an update of this series (a new member row, PRESENT or not)
+                           # versus a row that carries the value of an earlier interval forward (never shown as new)
+                           rows_with_an_update_in_their_interval=s.fresh, rows_carried_forward=int(np.sum(seen)) - s.fresh,
+                           runs=len(s.rows)),
+                nonpresent_rows_by_reason=dict(sorted(reasons.items())))))
+        for key in sorted(self.cnt, key=lambda k: (k[0], str(k[1]))):
+            slot = self.cnt[key]
+            values = np.zeros(n, dtype=np.float64)       # zero = no event in the interval over the exhausted source
+            event_rows = np.frombuffer(slot['rows'], dtype=np.int64) if len(slot['rows']) else np.zeros(0, np.int64)
+            event_counts = np.frombuffer(slot['counts'], dtype=np.int64) if len(slot['counts']) else np.zeros(0, np.int64)
+            values[event_rows] = event_counts
+            codes = np.zeros(n, dtype=np.int8)
+            busiest = int(np.argmax(event_counts)) if event_counts.size else None    # the first interval with the most
+            series.append(numeric(name_of(key), 'events_per_dipole_interval', codes, values, dict(facts=dict(
+                events=slot['total'], first_event_cursor=slot['first'], last_event_cursor=slot['last'],
+                intervals_with_events=int(event_rows.size), after_last_dipole_row=self.after_last.get(key, 0),
+                largest_interval=(dict(row_cursor=int(cursors[event_rows[busiest]]), events=int(event_counts[busiest]))
+                                  if busiest is not None else None)))))
+        for key in sorted(self.cat, key=lambda k: (k[0], str(k[1]))):
+            slot = self.cat[key]
+            changes = slot['changes']
+            item = dict(name=name_of(key), kind='category', values_known=slot['known'], distinct=len(slot['distinct']),
+                        runs=len(changes))
+            if not changes:
+                item.update(rows_before_first_value=n, segments=[], cells=[])
+                series.append(item)
+                continue
+            starts = [k for k, _ in changes]
+            ends = starts[1:] + [n]
+            segments = [dict(value=v, first_cursor=int(cursors[a]), last_cursor=int(cursors[b - 1]), rows=b - a)
+                        for (a, v), b in zip(changes, ends)]
+            item['rows_before_first_value'] = starts[0]
+            if len(slot['distinct']) > CATEGORY_LIMIT:
+                # the joined teacher's rule: more distinct values than its limit is an identifier, not a cell
+                item.update(identifier=True, cells=[], segments=dict(count=len(segments), first=segments[0], last=segments[-1]),
+                            reason='more than %d distinct values: an identifier, not a cell (joined teacher CATEGORY_LIMIT)'
+                                   % CATEGORY_LIMIT)
+                series.append(item)
+                continue
+            label = np.full(n, -1, dtype=np.int64)
+            names = sorted({v for _, v in changes if v is not None})
+            index = {v: i for i, v in enumerate(names)}
+            for (a, v), b in zip(changes, ends):
+                label[a:b] = index[v] if v is not None else -1
+            cells = []
+            for v in names:
+                mask = label == index[v]
+                cell = dict(value=v, rows=int(np.sum(mask)), components={})
+                for comp, (codes, values, _) in dipole.items():
+                    sub_codes, sub_values = codes[mask], values[mask]
+                    cell['components'][comp] = dict(rows=int(mask.sum()), present=int(np.sum(sub_codes == 0)),
+                                                    first_to_last_present_direction=EXT._direction(np, sub_codes, sub_values))
+                cells.append(cell)
+            item.update(segments=segments, cells=cells)
+            series.append(item)
+        # attribution: a series belongs to every one of the six whose own carrier it is
+        entries = {}
+        for entry in NATIVE_SIX:
+            spec = self.carriers[entry]
+            own, thin = [], []
+            for s in series:
+                base = s['name'].split('@', 1)[0]
+                if base.startswith('native.member.row.'):
+                    leaf = base[len('native.member.row.'):]
+                    if any(leaf == h or leaf.startswith(h + '.') or leaf.startswith(h + '#') for h in spec['heads']):
+                        own.append(s['name'])
+                elif base.startswith('native.lifecycle.'):
+                    if base[len('native.lifecycle.'):] in spec['sections']:
+                        own.append(s['name'])
+                elif base in PICTURE_CARRIERS.get(entry, ()):
+                    thin.append(s['name'])
+            missing, mine = [], set(own + thin)
+            if spec['heads'] and not any(x.startswith('native.member.') for x in own):
+                missing.append(dict(carrier='native.member ' + ', '.join(spec['heads']), reason=(
+                    'the native member ledger is absent on this ROOT: %s' % self.layers['native.member']['reason']
+                    if self.layers['native.member']['status'] != 'present' else
+                    'no member row of this day carried these fields (a measurement over the exhausted ledger)')))
+            if spec['sections'] and not any(x.startswith('native.lifecycle.') for x in own):
+                missing.append(dict(carrier='native.lifecycle ' + ', '.join(spec['sections']), reason=(
+                    'the native lifecycle ledger is absent on this ROOT: %s' % self.layers['native.lifecycle']['reason']
+                    if self.layers['native.lifecycle']['status'] != 'present' else
+                    'no lifecycle row of these sections was placed on this day (a measurement)')))
+            for carrier in PICTURE_CARRIERS.get(entry, ()):
+                if not any(x.split('@', 1)[0] == carrier for x in thin):
+                    missing.append(dict(carrier=carrier, reason='no such event or value on this day\'s INPUT pictures (a measurement)'))
+            form = 'own_rows' if own else ('thin_carrier' if thin else None)
+            entries[entry] = dict(use='computed' if form else 'unavailable', form=form,
+                                  own_series=own, thin_series=thin, series=len(own) + len(thin),
+                                  pairs=sum(len(s.get('pairs') or ()) for s in series if s['name'] in mine),
+                                  unavailable=missing or None,
+                                  picture_carriers={c: PICTURE_SERIES_TEXT[c] for c in PICTURE_CARRIERS.get(entry, ())} or None,
+                                  reason=None if form else '; '.join(m['reason'] for m in missing))
+        return dict(series=series, entries=entries, series_count=len(series),
+                    pair_count=sum(len(s.get('pairs') or ()) for s in series))
+
+
+def _native_unavailable_entries(status, reason):
+    return dict(series=[], series_count=0, pair_count=0, entries={
+        entry: dict(use='unavailable', form=None, own_series=[], thin_series=[], series=0, pairs=0, unavailable=None,
+                    reason='%s: %s' % (status, reason)) for entry in NATIVE_SIX})
+
+
+def native_entries_failed(reason):
+    """The native entry arithmetic's record when it could not even be set up (only it is missing; the day goes on)."""
+    return dict(schema=NATIVE_ENTRY_SCHEMA, computation=NATIVE_ENTRY_COMPUTATION, author=AUTHOR, model_calls=0,
+                status='failed', reason=reason, entries_computed=list(NATIVE_SIX), rule=NATIVE_ENTRY_RULE,
+                **_native_unavailable_entries('failed', reason))
+
+
+def native_entries_compact(result):
+    """The receipt-sized view of the native entry arithmetic: per entry its use, form, series and pair counts, its
+    unavailable carriers with the reason; per series its kind and relation counts (no pair bodies, no cells)."""
+    if not result:
+        return None
+    entries = {}
+    by_name = {s['name']: s for s in result.get('series') or ()}
+    for entry, item in (result.get('entries') or {}).items():
+        relations, pearson = {}, 0
+        for name in (item.get('own_series') or []) + (item.get('thin_series') or []):
+            for p in by_name.get(name, {}).get('pairs') or ():
+                relations[p['direction_relation']] = relations.get(p['direction_relation'], 0) + 1
+                pearson += (p.get('correlation') or {}).get('pearson') is not None
+        entries[entry] = dict({k: v for k, v in item.items() if k not in ('own_series', 'thin_series')},
+                              own_series=len(item.get('own_series') or ()), thin_series=len(item.get('thin_series') or ()),
+                              series_names=(item.get('own_series') or []) + (item.get('thin_series') or []),
+                              relations=dict(sorted(relations.items())), pearson_reported=pearson)
+    return dict({k: v for k, v in result.items() if k not in ('series', 'entries')}, entries=entries,
+                series_kinds={kind: sum(1 for s in result.get('series') or () if s['kind'] == kind)
+                              for kind in ('member_value', 'events_per_dipole_interval', 'category')})
+
+
+def native_entries_for_component(result, component):
+    """Per one Dipole component: each of the six's series paired with it (relation counts, Pearson reported count)."""
+    if not result or result.get('status') != 'computed':
+        return None
+    by_name = {s['name']: s for s in result.get('series') or ()}
+    out = {}
+    for entry, item in (result.get('entries') or {}).items():
+        relations, pearson, paired = {}, 0, 0
+        for name in (item.get('own_series') or []) + (item.get('thin_series') or []):
+            for p in by_name.get(name, {}).get('pairs') or ():
+                if p['right'] == component:
+                    paired += 1
+                    relations[p['direction_relation']] = relations.get(p['direction_relation'], 0) + 1
+                    pearson += (p.get('correlation') or {}).get('pearson') is not None
+        if paired:
+            out[entry] = dict(form=item.get('form'), series_paired=paired, relations=dict(sorted(relations.items())),
+                              pearson_reported=pearson)
+    return out or None
+
+
+def _native_file_text(shared_market):
+    pinned = getattr(shared_market, 'native_file', None) or {}
+    return '%s (sha256 %s)' % (pinned.get('name', 'native-entry-arithmetic.json'), pinned.get('sha256'))
+
+
+def native_entries_text(shared_market):
+    """The six native entries' arithmetic as the summary answer carries it (or why it was not computed)."""
+    compact = shared_market.native_entries_status()
+    if compact.get('status') != 'computed':
+        return ('Native entry arithmetic (the six native entries that were context) was not computed on this day: %s (%s). '
+                'Their instants stay in the pictures; nothing is filled in.' % (compact.get('status'), compact.get('reason')))
+    per_entry = {entry: {k: item.get(k) for k in ('use', 'form', 'own_series', 'thin_series', 'pairs', 'relations',
+                                                   'pearson_reported', 'reason')}
+                 for entry, item in compact['entries'].items()}
+    return ('Native entry arithmetic computed by Frankie\'s code (no model) on the six native entries that were context, '
+            'against the %d Dipole rows: %s. Series kinds %s. Every series, pair and cell is whole in %s. Values are in '
+            'force from their own cursor on, never backfilled; per instrument, never pooled; descriptive, no outcome '
+            'claimed (R02).' % (compact.get('dipole_rows') or 0, json.dumps(per_entry, sort_keys=True, default=str),
+                                json.dumps(compact.get('series_kinds'), sort_keys=True), _native_file_text(shared_market)))
 
 
 # ------------------------------------------------------------------- the all-99 registry routed into the classroom
@@ -920,6 +1486,7 @@ def all99_coverage(shared, consumers, *, repo_root):
                 use_counts=use_counts, use_vocabulary=dict(USE_VOCABULARY),
                 computations=dict(CLASSROOM_COMPUTATIONS),
                 native_only_ingestion=_native_only_ingestion(entries),
+                native_entries=consumers.get('native_entries'),
                 exhaustion_d=_exhaustion_d_receipt(consumers.get('exhaustion_d')),
                 external_points=consumers.get('external_points') or dict(
                     status='not_computed', reason='the external answers were not reached before this list was built'),
@@ -932,7 +1499,8 @@ def all99_coverage(shared, consumers, *, repo_root):
                 limit='a counted arrival is evidence yielded to the pictures beside the component answers (and to the full reader), '
                       'not proof that a Dipole equation used it. `use` says what entered arithmetic: the Dipole arithmetic uses the '
                       'teacher rows only (an entry whose teacher form is a Dipole component is computed in that partial form); the '
-                      'exhaustion/D facts (frankie_box_teach.facts) use the completed whole-day bedrock rows named per entry. A '
+                      'exhaustion/D facts (frankie_box_teach.facts) use the completed whole-day bedrock rows named per entry; the '
+                      'native entry arithmetic uses the six entries\' own member / lifecycle / envelope series named per entry. A '
                       'computed entry is not a claim that every field of it entered a target equation')
 
 
@@ -945,7 +1513,8 @@ def all99_coverage(shared, consumers, *, repo_root):
 USE_VOCABULARY = {
     'computed': 'entered an operand of a named computation of this piece (each computation, its operand and its form named: '
                 'own_rows = the entry\'s own rows; teacher_form = the partial form the teacher computes for the entry; '
-                'section_counts = the traversal\'s count of the entry\'s section rows, not the rows)',
+                'section_counts = the traversal\'s count of the entry\'s section rows, not the rows; thin_carrier = the '
+                'INPUT envelope\'s own carrier of the entry (reset actions, session scope), not the native rows)',
     'context': 'reached this piece (market pictures, the full reader, received inputs, rules, cutoff); no computation of this '
                'piece reads it as an operand',
     'absent': 'did not reach this piece on this day, with the reason (missing coverage, no event, withheld by role, retired, '
@@ -962,6 +1531,15 @@ CLASSROOM_COMPUTATIONS = {
                           'layer files named by derive.json and derive.json\'s bedrock block',
     'learner_check': 'stage_knowledge_reproduction / school_reproduction: each lawful prior finding checked against today\'s '
                      'Dipole pair review; operands: the selected knowledge documents / completed school files and today\'s pairs',
+    NATIVE_ENTRY_COMPUTATION: 'the classroom\'s external-section arithmetic (dipole_classroom_external) applied to the six '
+                              'native entries that were context (order_lifecycle_clears, contract_session_roll_state, '
+                              'complete_state_reset_bootstrap_receipts, price_and_book_path, derived_price_flow_book_paths, '
+                              'derived_v4_mechanics_fifo_features): per series the value in force at each Dipole row, state '
+                              'counts, terminal state, first-to-last direction, and per Dipole component the relation, Pearson '
+                              'and co-movement counts; categories as runs and per-value cells of each Dipole component; '
+                              'operands: the native member rows\' own fields (joined-teacher leaf rule), the lifecycle rows of '
+                              'the entry\'s sections counted per Dipole interval, the INPUT envelope\'s reset and session-scope '
+                              'carriers; per instrument, never pooled',
 }
 _CHAIN = ('unresolved_age_groups_log', 'extension_count_log', 'step_ratio_log', 'pullback_ticks_last_log',
           'step_duration_groups_log', 'pullback_ticks_prev_log')
@@ -1008,24 +1586,24 @@ NATIVE_ONLY_CLOSEST = {
                              'classroom computation (their teacher form far_absorption_share_64/1024 is). Closest existing '
                              'consumers of the rows: frankie_box_experiment_search (structures.fill_disposition.* series and cells, '
                              'the ROOT legacy form) and frankie_box_joined_teacher couplings over every numeric leaf of the layer',
-    'order_lifecycle_clears': 'native_full_capture_adapter._observe_before rows (capture_observations, integrity_delta, '
-                              'book_effect): no classroom computation. Closest: SharedMarketTimeline\'s reset invalidation '
-                              '(invalidated_state reason=reset, counted in this piece\'s arrivals) and the joined-teacher couplings',
-    'contract_session_roll_state': 'ExchangeSessionRule rows (session_phase, continuity_segment): no classroom computation. Closest: '
-                                   'SharedMarketTimeline\'s source_scope_changed invalidation (on the INPUT envelope\'s session_id / '
-                                   'source_member_index, not this layer) and frankie_box_joined_teacher CELL_NAMES (session_phase, '
-                                   'continuity_segment as coupling cells)',
-    'complete_state_reset_bootstrap_receipts': 'native_full_capture_adapter._enrich rows (integrity_delta, capture_observations, '
-                                               'snapshot_bootstrap_only): no classroom computation. Closest: the timeline\'s reset '
-                                               'invalidation and opening_state, and the joined-teacher couplings',
-    'price_and_book_path': 'native_book_regime.observe_snapshot rows (book_full / book_regime best bid/ask, mid, depth): no '
-                           'classroom computation. Closest: bedrock_section_4_2 (the book-regime companion, a completed product per '
-                           'frankie_box_experiment_native.evidence_contract) and the search\'s prices/frames axis',
-    'derived_price_flow_book_paths': 'book_regime and flow_substrate rows: no classroom computation. Closest: '
-                                     'frankie_box_joined_teacher (flow_substrate is one of its dipole series) and the search',
-    'derived_v4_mechanics_fifo_features': 'native_full_capture_adapter._window_extras rows (activity_since.*, fifo_queue): no '
-                                          'classroom computation. Closest: the search (its plane table names the V4 frame '
-                                          'book/activity sections as related inputs) and the joined-teacher couplings',
+    # The six below are computed since 2026-10-07 night by native_entry_arithmetic (Greg: "18 of 18"). This text is shown
+    # only on a day where their own rows did not enter it (the native ledger absent or a failure, named with the reason).
+    'order_lifecycle_clears': 'own rows (capture_observations, integrity_delta, raw_actions) enter native_entry_arithmetic when '
+                              'the native member ledger is present; the INPUT envelope\'s R actions (picture.reset_inputs) '
+                              'enter it on every day (thin_carrier)',
+    'contract_session_roll_state': 'own rows (session_phase, continuity_segment, raw_symbol, instrument_id) enter '
+                                   'native_entry_arithmetic when the native member ledger is present; the INPUT envelope\'s '
+                                   'session_id / source_member_index and their scope changes enter it on every day (thin_carrier)',
+    'complete_state_reset_bootstrap_receipts': 'own rows (integrity_delta, capture_observations, snapshot_bootstrap_only) '
+                                               'enter native_entry_arithmetic when the native member ledger is present; the '
+                                               'INPUT envelope\'s R actions enter it on every day (thin_carrier)',
+    'price_and_book_path': 'own rows (book_full, book_regime, structure.price_raw_*) and the lifecycle ladder rows enter '
+                           'native_entry_arithmetic when the native ledgers are present; no thinner carrier is computed here',
+    'derived_price_flow_book_paths': 'own rows (book_regime, book_full) and the lifecycle flow_substrate / ladder rows enter '
+                                     'native_entry_arithmetic when the native ledgers are present; no thinner carrier here',
+    'derived_v4_mechanics_fifo_features': 'own rows (activity_full, activity_since, book_full, capture_observations) and the '
+                                          'lifecycle queue rows enter native_entry_arithmetic when the native ledgers are '
+                                          'present; no thinner carrier here',
 }
 EXHAUSTION_D_SCHEMA = 'FRANKIE_CLASSROOM_EXHAUSTION_D_FACTS_V1'
 # What frankie_box_teach.facts takes from each lifecycle section and each member layer (its own code: _job_sections reads
@@ -1293,6 +1871,18 @@ def _classroom_use(entry, consumers):
         computations.append(dict(computation='external_section_arithmetic', form='own_rows' if exact else 'external_closest',
                                  points=[dict(point_id=p['point_id'], mapping=p.get('mapping'), note=p.get('note'))
                                          for p in fed], as_of=EXTERNAL_AS_OF))
+    native_record = consumers.get('native_entries')
+    native = ((native_record or {}).get('entries') or {}).get(name)
+    if native is None and name in NATIVE_SIX and native_record is not None:
+        native = dict(use='unavailable', reason='%s: %s' % (native_record.get('status'), native_record.get('reason')))
+    if native and native.get('use') == 'computed':
+        # the six native entries (Greg, 2026-10-07 night: 18 of 18): their own series entered the native entry arithmetic
+        computations.append(dict(computation=NATIVE_ENTRY_COMPUTATION, form=native['form'],
+                                 series=native.get('series'), own_series=native.get('own_series'),
+                                 thin_series=native.get('thin_series'), pairs=native.get('pairs'),
+                                 relations=native.get('relations'), pearson_reported=native.get('pearson_reported'),
+                                 unavailable=native.get('unavailable'),
+                                 file=(consumers.get('native_entries') or {}).get('file')))
     knowledge = consumers.get('knowledge') or {}
     if name == 'anchored_knowledge_manifest' and knowledge.get('stage_knowledge_checks'):
         computations.append(dict(computation='learner_check', form='own_rows', function='stage_knowledge_reproduction',
@@ -1315,7 +1905,9 @@ def _classroom_use(entry, consumers):
         if disposition in ('arrived', 'thin'):
             return dict(use='context', computations=[], shared_word='exposed' if disposition == 'arrived' else 'thin',
                         use_reason='in the market pictures (the anchor pictures in the component evidence and the full reader), '
-                                   'counted on the pass; no computation of this piece reads it as an operand')
+                                   'counted on the pass; no computation of this piece reads it as an operand' + (
+                                       '; %s not computed: %s' % (NATIVE_ENTRY_COMPUTATION, native.get('reason'))
+                                       if native else ''))
         if disposition == 'arrived_no_event':
             return dict(use='absent', computations=[], shared_word='exposed',
                         use_reason='carrier present; no event of this kind in the exhausted source on this day (a measurement, '
@@ -1323,6 +1915,9 @@ def _classroom_use(entry, consumers):
         if facts:
             return dict(use='absent', computations=[], shared_word=None,
                         use_reason='%s; %s' % (entry.get('reason') or disposition, facts.get('reason')))
+        if native:
+            return dict(use='absent', computations=[], shared_word=None,
+                        use_reason='%s; %s: %s' % (entry.get('reason') or disposition, NATIVE_ENTRY_COMPUTATION, native.get('reason')))
         return dict(use='absent', computations=[], shared_word=None, use_reason=entry.get('reason') or disposition)
     reasons = {
         'completed': 'completed-only: its values are never yielded into a picture; only its completed-source disposition is '
@@ -1363,9 +1958,10 @@ def _native_only_ingestion(entries):
                             'the episode / candidate / detector_coverage rows themselves are read by frankie_box_joined_teacher '
                             'couplings and the search, not by the classroom' % e.get('use_reason')))))
     return dict(entries=out, searched=NATIVE_SEARCHED,
-                rule='an entry is computed only when an existing computation of this piece took its rows (own_rows) or its '
-                     'recorded teacher form (teacher_form); where none exists here no equation is invented: the closest existing '
-                     'consumer is named for Greg to decide')
+                rule='an entry is computed only when an existing computation of this piece took its rows (own_rows), its '
+                     'recorded teacher form (teacher_form) or its INPUT-envelope carrier (thin_carrier); the six that were '
+                     'context enter native_entry_arithmetic (the external-section equations against the Dipole rows, Greg '
+                     '2026-10-07 night: 18 of 18); where an entry\'s own rows are absent the reason is named')
 
 
 # ------------------------------------------------ the 13 external points (Greg via Frankie, 2026-10-07: tie them to the 99)
@@ -1735,6 +2331,13 @@ def component_answer(visible, comp, rights, *, learner_context=None, shared_mark
             + '. These anchors supplement the full ordered source accessible through the answer context; an absent '
             'layer or picture makes the instant thinner, never removes it; the Dipole values and target equations '
             'are unchanged.')
+        paired = native_entries_for_component(shared_market.native_entries(), name)
+        if paired:
+            # 18 of 18 (Greg, 2026-10-07 night): the six native entries' own series computed against this component
+            result['evidence'] += (' Native entry arithmetic against this component (each series of the six native entries '
+                'that were context, per instrument, with the external-section equations: relation, Pearson, co-movement): '
+                + json.dumps(paired, sort_keys=True) + '. Every pair is whole in %s; descriptive for this window only, no '
+                'causation or outcome claimed (rules R01, R02, R05).' % _native_file_text(shared_market))
     native = _facts_for_component(exhaustion_d, name)
     if native:
         # The registry entries whose teacher form is this component also had their own native rows computed by
@@ -1842,6 +2445,8 @@ def summary_answer(visible, outputs, *, learner_context=None, shared_market=None
     facts_text = exhaustion_d_text(exhaustion_d)
     if facts_text:
         cycle_summary += ' ' + facts_text
+    if shared_market is not None:
+        cycle_summary += ' ' + native_entries_text(shared_market)
     correlation_review =(f'{AUTHOR}: {len(review)} pairs ({pre["evidence_source"]}). Relation: {json.dumps(relations, sort_keys=True)}. Pearson reported '
                           f'on {reported} pairs; not reported on {len(review) - reported} ({json.dumps(not_reported, sort_keys=True)}). '
                           f'{len(disagreements)} pairs whose first-to-last relation and step-by-step co-movement counts point different '
