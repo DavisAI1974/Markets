@@ -56,6 +56,66 @@ def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def _hash_file(path, cpu):
+    """sha256 hex of a whole file in 64 MB blocks (Section.pointer's own loop, same digest). The calling thread pins
+    itself to `cpu` first (Linux: the affinity of pid 0 is the calling thread's only); a failed pin keeps the lane
+    affinity (L-2). hashlib and the reads release the GIL, so two files hash at once beside the rest of the build."""
+    import os
+    if cpu is not None:
+        try:
+            os.sched_setaffinity(0, {cpu})
+        except (OSError, AttributeError, ValueError):
+            pass
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for block in iter(lambda: f.read(64 * 1024 * 1024), b''):
+            h.update(block)
+    return h.hexdigest()
+
+
+def _lane_physical_first():
+    """The lane's CPUs, one hardware thread of every physical core first (frankie_box_boss_session's lane_cpus,
+    cpu_topology and core_groups, reused); [] when they cannot be read (the hashing threads then keep the lane affinity)."""
+    try:
+        import frankie_box_boss_session as BS
+        cpus = BS.lane_cpus()
+        topology = BS.cpu_topology(cpus)
+        if topology is None:
+            return list(cpus)
+        groups = BS.core_groups(cpus, topology)
+        return [g[i] for i in range(max(len(g) for g in groups)) for g in groups if i < len(g)]
+    except Exception:  # noqa: BLE001 - placement only
+        return []
+
+
+def prefetch_pointer_digests(classroom, teacher_rows):
+    """Start hashing the school's two large pointer files (the teacher's Dipole rows of the day and the classroom
+    receipt's day file) now, each on a thread pinned to its own physical core of the lane, so the serial whole-file
+    hashes overlap the corrections read and the rest of the build (Greg, 2026-10-07: run that hash concurrently with
+    other school work; reusing the teacher's recorded hash instead is Greg's trust call and is NOT done: every byte is
+    still hashed here). Returns (executor or None, {str(path): future}); Section.pointer takes a path's digest from its
+    future (an error re-raises there, where the inline hash would have raised). Only files present now are started;
+    anything else is hashed (or listed missing) by pointer exactly as before."""
+    paths = []
+    if teacher_rows:
+        paths.append(Path(teacher_rows) / TEACHER_ROWS_FILE)
+    try:
+        receipt = json.loads((Path(classroom) / 'receipt.json').read_bytes())
+        day_file = ((receipt.get('external') or {}).get('day_file') or {}).get('path')
+        if day_file:
+            paths.append(Path(day_file))
+    except (OSError, ValueError, AttributeError):
+        pass                    # build() reads the receipt itself and lists what is missing; nothing is prefetched
+    paths = [p for p in dict.fromkeys(paths) if p.is_file()]
+    if not paths:
+        return None, {}
+    from concurrent.futures import ThreadPoolExecutor
+    order = _lane_physical_first()
+    pool = ThreadPoolExecutor(max_workers=len(paths), thread_name_prefix='school-hash')
+    return pool, {str(p): pool.submit(_hash_file, p, order[i % len(order)] if order else None)
+                  for i, p in enumerate(paths)}
+
+
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), default=str).encode('utf-8')
 
@@ -90,18 +150,16 @@ class Section:
                                sha256=sha256_bytes(canonical(content)), bytes=len(canonical(content)),
                                inline=True, holds=holds, content=content))
 
-    def pointer(self, name, path, why, *, author=None, extra=None):
+    def pointer(self, name, path, why, *, author=None, extra=None, digests=None):
         path = Path(path) if path else None
         if path is None or not path.is_file():
             self.missing.append(dict(section=self.name, item=name, path=str(path) if path else None,
                                      reason='the file is not there (%s)' % path))
             return
-        h = hashlib.sha256()
-        with open(path, 'rb') as f:
-            for block in iter(lambda: f.read(64 * 1024 * 1024), b''):
-                h.update(block)
-        self.items.append(dict(name=name, author=author or self.author, path=str(path), sha256=h.hexdigest(),
-                               source_sha256=h.hexdigest(), bytes=path.stat().st_size, inline=False, pointer_reason=why,
+        future = (digests or {}).get(str(path))
+        digest = future.result() if future is not None else _hash_file(path, None)   # prefetched on its own core, or here
+        self.items.append(dict(name=name, author=author or self.author, path=str(path), sha256=digest,
+                               source_sha256=digest, bytes=path.stat().st_size, inline=False, pointer_reason=why,
                                **(extra or {})))
 
     def body(self, label):
@@ -117,7 +175,9 @@ def corrections(value):
                 root_cause_groups=list(value.get('root_cause_groups') or []))
 
 
-def build(day, run, report_number, classroom, exchange_view, exchange_listed, lessons, teacher_rows, rules_witness):
+def build(day, run, report_number, classroom, exchange_view, exchange_listed, lessons, teacher_rows, rules_witness, *,
+          digests=None):
+    """digests (optional): prefetch_pointer_digests' futures by path; the document is the same with or without them."""
     missing, withheld = [], []
     classroom = Path(classroom)
     receipt_path = classroom / 'receipt.json'
@@ -159,7 +219,8 @@ def build(day, run, report_number, classroom, exchange_view, exchange_listed, le
     bt = Section('boss_teacher', 'boss_teacher', missing)
     rows_dir = Path(teacher_rows) if teacher_rows else None
     bt.pointer('dipole_rows', rows_dir / TEACHER_ROWS_FILE if rows_dir else None,
-               'the teacher\'s Dipole rows of the day (large; read by the teachers and the search, never copied)')
+               'the teacher\'s Dipole rows of the day (large; read by the teachers and the search, never copied)',
+               digests=digests)
     bt.whole('teacher_rows_receipt', rows_dir / 'receipt.json' if rows_dir else None)
     key_path = classroom / 'package.teacher_key.c15.json'
     if key_path.is_file():
@@ -238,7 +299,8 @@ def build(day, run, report_number, classroom, exchange_view, exchange_listed, le
             s3 = json.loads(Path(day_file['receipt']).read_bytes()).get('s3_key')
         df.pointer('day_external', day_file['path'], 'the day file is read through its as-of reader at a cutoff, never '
                                                      'copied into the corpus', extra=dict(s3_key=s3,
-                                                                                          recorded_sha256=day_file.get('sha256')))
+                                                                                          recorded_sha256=day_file.get('sha256')),
+                   digests=digests)
     else:
         missing.append(dict(section='day_file', item='day_external', reason='the classroom receipt names no day file '
                                                                             '(classroom %s)' % (status or 'not run')))
@@ -481,6 +543,8 @@ def main():
     else:
         import frankie_box_experiment_review as R
         import frankie_box_lane_state as LS
+        # the two large pointer files hash on pinned threads while the corrections are read and the build runs
+        hashing, digests = prefetch_pointer_digests(a.classroom, a.teacher_rows)
         records = R.corrections(LS.knowledge_roots(a.brain))
         currentness['records_consulted'] = len(records)
         lessons = a.lessons
@@ -491,8 +555,12 @@ def main():
             currentness.update(lessons_delivered=dict(path=delivered['path'], sha256=delivered['sha256'], bytes=delivered.get('bytes')),
                                lessons_corrections_applied=delivered.get('corrections_applied') or [])
             lessons = delivered['path']
-        doc = build(a.day, a.run, a.report_number, a.classroom, a.exchange_view, a.exchange_listed, lessons,
-                    a.teacher_rows, rules_witness)
+        try:
+            doc = build(a.day, a.run, a.report_number, a.classroom, a.exchange_view, a.exchange_listed, lessons,
+                        a.teacher_rows, rules_witness, digests=digests)
+        finally:
+            if hashing is not None:
+                hashing.shutdown(wait=True)
         data = (json.dumps(doc, indent=1, sort_keys=True, default=str) + '\n').encode('utf-8')
         R.current_document(dict(path=str(Path(a.brain) / 'school' / (a.day + '.json')),
             bytes=len(data), sha256=sha256_bytes(data), content=doc), records, a.brain, day=a.day, stage='school')

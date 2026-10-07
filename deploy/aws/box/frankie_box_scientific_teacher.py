@@ -438,12 +438,138 @@ def frankie_claims(path, day):
                 claims=claims)
 
 
+SCAN_BLOCK = 16 * 1024 * 1024   # one read: hashed whole, then split at its last newline (the box's read-ahead is 4 MB)
+
+
+def _segments(path, hashed):
+    """Yield (segment, first_ordinal, lines) over a file read in SCAN_BLOCK blocks: each segment is a run of whole lines in
+    file order (b'\\n' ends a line, exactly as binary-mode line iteration splits; only a final line at EOF may lack it).
+    Every byte read is hashed exactly once, in file order, and every byte lands in exactly one segment, so the segment
+    lengths sum to the file size and the ordinals are the binary line iterator's own (Greg, 2026-10-07: faster, same
+    bytes; the per-line Python loop over lines no claim can use was the scan's cost)."""
+    ordinal, carry = 0, b''
+    with open(path, 'rb', buffering=0) as handle:
+        while True:
+            block = handle.read(SCAN_BLOCK)
+            if not block:
+                break
+            hashed.update(block)
+            data = carry + block if carry else block
+            cut = data.rfind(b'\n') + 1
+            if not cut:
+                carry = data
+                continue
+            segment, carry = data[:cut], data[cut:]
+            count = segment.count(b'\n')
+            yield segment, ordinal, count
+            ordinal += count
+    if carry:
+        yield carry, ordinal, 1
+
+
+def _line_at(segment, start):
+    """(the raw line starting at offset `start` of a segment, newline included when present; the next line's offset)."""
+    end = segment.find(b'\n', start)
+    end = len(segment) if end < 0 else end + 1
+    return segment[start:end], end
+
+
+def _lane_order():
+    """(the lane's CPUs ordered one hardware thread of every physical core first, then the sibling threads; how). The
+    lane is FRANKIE_LANE_CPUS / FRANKIE_BOOKED_CPUS within this process's affinity (frankie_box_boss_session.lane_cpus,
+    cpu_topology, core_groups, reused; the box: 16 cores, siblings N and N+16). Plain affinity order when the helpers or
+    the topology cannot be read, named in `how`."""
+    try:
+        import frankie_box_boss_session as BS
+        cpus = BS.lane_cpus()
+        topology = BS.cpu_topology(cpus)
+        if topology is None:
+            return list(cpus), 'lane %s, topology not readable: lane order' % BS.cpu_ranges(cpus)
+        groups = BS.core_groups(cpus, topology)
+        depth = max(len(g) for g in groups)
+        order = [g[i] for i in range(depth) for g in groups if i < len(g)]
+        return order, 'lane %s, %d physical cores first then siblings' % (BS.cpu_ranges(cpus), len(groups))
+    except Exception as error:  # noqa: BLE001 - the lane order is placement only, never the result
+        cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else [0]
+        return cpus, 'lane helpers not read (%s: %s): affinity order' % (type(error).__name__, error)
+
+
+def _pin_pool_worker(order, counter):
+    """A pool process takes the next CPU of `order` (a shared counter, no queue feeder thread before the fork) and pins
+    itself to it (Greg, 2026-10-07: every pool worker pinned to its share of the booked lane). L-2: a failed pin keeps the
+    lane affinity inherited from the parent (taskset of the booking); the work itself is unchanged either way."""
+    try:
+        with counter.get_lock():
+            index = counter.value
+            counter.value += 1
+        os.sched_setaffinity(0, {order[index % len(order)]})
+    except Exception:  # noqa: BLE001 - placement only
+        pass
+
+
+def _pinned_map(fn, args, label):
+    """[fn(a) for a in args], in order, on a fork pool whose processes are each pinned to one lane CPU (physical cores
+    first). One CPU, one item or a threaded caller (never fork a threaded process): in this process, as before. A pool
+    that breaks (a worker killed: OOM, signal) raises BrokenProcessPool instead of hanging, and the same items then run in
+    this process, in order (L-2). An exception of fn itself propagates exactly as in the serial loop. The placement note
+    goes to stderr (the last stdout line stays the step's receipt)."""
+    import sys
+    import threading
+    order, how = _lane_order()
+    workers = max(1, min(len(args), len(order) - 1))
+    if workers <= 1 or threading.active_count() > 1:
+        return [fn(a) for a in args]
+    import multiprocessing
+    from concurrent.futures import ProcessPoolExecutor
+    from concurrent.futures.process import BrokenProcessPool
+    context = multiprocessing.get_context('fork')
+    counter = context.Value('i', 0)
+    print('%s: %d pinned workers on CPUs %s (%s)' % (label, workers, ','.join(map(str, order[:workers])), how),
+          file=sys.stderr, flush=True)
+    try:
+        with ProcessPoolExecutor(workers, mp_context=context, initializer=_pin_pool_worker,
+                                 initargs=(order[:workers], counter)) as pool:
+            return list(pool.map(fn, args))
+    except BrokenProcessPool as error:
+        print('%s: pool broken (%s); the same %d items run in this process, in order' % (label, error, len(args)),
+              file=sys.stderr, flush=True)
+        return [fn(a) for a in args]
+
+
 def _scan_part(args):
     """One search coupling part: (sha256 hex of every byte read, bytes, lines hashed, lines parsed, the selected rows in
     line order, each with its exact identity _where). Verify exactly the bytes consumed, in the same pass as parsing;
-    text-mode newline normalization never changes a row's raw-line hash. A top-level function (the fork pool's target)."""
+    text-mode newline normalization never changes a row's raw-line hash. A top-level function (the fork pool's target).
+    With the needle filter the part is read in blocks (_segments): every block hashed whole, the needles found by C-level
+    search, and only the lines holding one are cut out and parsed, with their ordinal counted from the newlines before
+    them; the lines parsed, rows selected, ordinals and raw-line hashes are the line loop's own (a needle is a JSON string
+    and never holds a raw newline, so a hit always lies inside one line)."""
     path, rel, pin, wanted, needles, needle_filter = args
     hashed, size, lines, parsed, selected = hashlib.sha256(), 0, 0, 0, []
+    if needle_filter:
+        for segment, base, count in _segments(path, hashed):
+            size += len(segment)
+            lines += count
+            starts = set()
+            for needle in needles:
+                position = segment.find(needle)
+                while position >= 0:
+                    starts.add(segment.rfind(b'\n', 0, position) + 1)
+                    end = segment.find(b'\n', position)
+                    if end < 0:
+                        break
+                    position = segment.find(needle, end + 1)
+            ordinal, previous = base, 0
+            for start in sorted(starts):
+                ordinal += segment.count(b'\n', previous, start)
+                previous = start
+                line, _ = _line_at(segment, start)
+                r = json.loads(line)
+                parsed += 1
+                if (r['x'], r['y']) in wanted:
+                    r['_where'] = dict(part=rel, part_sha256=pin, row=ordinal, row_sha256=sha256_bytes(line))
+                    selected.append(r)
+        return hashed.hexdigest(), size, lines, parsed, selected
     with open(path, 'rb') as handle:
         for ordinal, line in enumerate(handle):
             hashed.update(line)
@@ -531,20 +657,32 @@ def _finalize_rows(report):
         wanted.append((lo, hi))
         previous_end = hi
     rows, hashed, size, selection, selected = {}, hashlib.sha256(), 0, 0, 0
-    with open(report['path'], 'rb') as handle:
-        for ordinal, raw in enumerate(handle):
-            hashed.update(raw)
-            size += len(raw)
-            # Search emits ordered inclusive ranges. Advance through them once;
-            # still hash every original row, including rows not selected here.
-            while selection < len(wanted) and ordinal > wanted[selection][1]:
-                selection += 1
-            if selection < len(wanted) and wanted[selection][0] <= ordinal:
+    # Read in blocks (_segments; Greg, 2026-10-07: faster, same bytes): every byte hashed whole in file order; a block with
+    # no listed ordinal is only counted (C-level newline count); inside a block holding listed ordinals the lines are
+    # walked to them and exactly those raw lines parsed, in order, with the line iterator's ordinals. The search emits
+    # ordered inclusive ranges; each is advanced through once; every original row is still hashed.
+    for segment, base, count in _segments(report['path'], hashed):
+        size += len(segment)
+        stop = base + count                       # this segment's lines are ordinals base .. stop - 1
+        while selection < len(wanted) and wanted[selection][1] < base:
+            selection += 1
+        ordinal, offset = base, 0
+        while selection < len(wanted) and wanted[selection][0] < stop:
+            lo, hi = wanted[selection]
+            while ordinal < lo:                   # lo < stop: every line stepped over ends with its newline
+                offset = segment.find(b'\n', offset) + 1
+                ordinal += 1
+            while ordinal <= hi and ordinal < stop:
+                raw, offset = _line_at(segment, offset)
                 row = json.loads(raw)
                 if (row.get('frankie_emission') or {}).get('phase') != 'FINALIZE':
                     raise ValueError('ordinal %d of %s is not a FINALIZE row the search listed post-stream' % (ordinal, report['path']))
                 rows.setdefault(str(row.get('emitting_section') or 'member'), []).append(dict(ordinal=ordinal, row=row))
                 selected += 1
+                ordinal += 1
+            if hi >= stop:
+                break                             # the range continues in the next segment
+            selection += 1
     if size != report.get('bytes') or hashed.hexdigest() != report.get('sha256'):
         raise ValueError('exact ledger differs from the search\'s pin: %s' % report['path'])
     if selected != sum(hi - lo + 1 for lo, hi in wanted):
@@ -645,6 +783,11 @@ def completed_native_evidence(d, out_root):
                      receipt=doc.get('receipt'), matching_rule=(doc.get('section_4_4') or {}).get('matching_rule'),
                      listed=listed)
     return reference, listed
+
+
+def _completed_native_of(args):
+    """completed_native_evidence(day, out_root) for one (day, out_root) pair: a top-level pool target."""
+    return completed_native_evidence(*args)
 
 
 def native_evidence_identity(reference):
@@ -805,17 +948,10 @@ def test(claims_doc, days, records_dir=None, records_selection=None, report=None
     # on its own; they are scanned by the step's lane workers (a fork pool over the CPUs this child was given, the day's
     # held lane) and merged in the original order (day, part, line), so the selected rows, their ordinals, raw-line hashes
     # and every verification are exactly the one-process result. One part or one CPU: in this process.
-    import threading
-    workers = max(1, min(len(jobs), len(os.sched_getaffinity(0)) - 1 if hasattr(os, 'sched_getaffinity') else 1))
-    if threading.active_count() > 1:
-        workers = 1          # never fork a threaded process (a caller with threads scans in-process, as before)
+    # Each pool process is pinned to one lane CPU, physical cores first (_pinned_map; Greg, 2026-10-07); a threaded caller
+    # still scans in-process (never fork a threaded process), and a broken pool rescans in-process, in order.
     scan_args = [(path, rel, pin, frozenset(wanted), needles, needle_filter) for _, path, rel, pin, _ in jobs]
-    if workers > 1:
-        import multiprocessing
-        with multiprocessing.get_context('fork').Pool(workers) as pool:
-            scanned = pool.map(_scan_part, scan_args, chunksize=1)
-    else:
-        scanned = [_scan_part(a) for a in scan_args]
+    scanned = _pinned_map(_scan_part, scan_args, 'scientific scan of %d search parts' % len(scan_args))
     for (day_of, path, rel, pin, expected_size), (digest, size, hashed, parsed, selected) in zip(jobs, scanned):
         parts_read += 1
         hashed_rows += hashed
@@ -1524,7 +1660,11 @@ def main():
     if not (a.jev_claims or a.frankie_ledgers or a.historical_claims or a.search_findings):
         raise SystemExit('give --jev-claims / --jev-stamp, --frankie-ledgers, --historical-claims and/or --search-findings')
     days = load_searches(a.search)
-    native = {d['day']: completed_native_evidence(d, Path(a.out_dir)) for d in days}
+    # every searched day's completed native evidence is its own files and its own output file (days are distinct, checked
+    # above): read concurrently on pinned lane workers, collected in the searched-day order (Greg, 2026-10-07)
+    native = dict(zip([d['day'] for d in days],
+                      _pinned_map(_completed_native_of, [(d, Path(a.out_dir)) for d in days],
+                                  'completed native evidence of %d searched days' % len(days))))
     for day, (ref, listed) in native.items():
         print('completed native evidence %s: %s' % (day, 'read, %s' % json.dumps(ref['counts'], sort_keys=True) if ref
                                                        else '; '.join(x['reason'] for x in listed)), flush=True)
