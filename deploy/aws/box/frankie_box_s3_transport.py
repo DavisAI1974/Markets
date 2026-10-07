@@ -231,7 +231,7 @@ def fetch_url(url, dest, *, expected_bytes, expected_sha256=None, range_streams=
     try:
         ranged = expected_bytes > ranged_above and range_streams > 1
         if ranged:
-            receipt['transport'] = 'ranged-%dx%dMiB' % (range_streams, range_bytes >> 20)
+            receipt['transport'] = 'ranged-%dx%s' % (range_streams, ('%dMiB' % (range_bytes >> 20)) if range_bytes % (1 << 20) == 0 else ('%dB' % range_bytes))
             ok, sha = _ranged(url, part, expected_bytes, range_bytes, range_streams, ranges, window, attempts,
                               receipt, watch, say, name)
         else:

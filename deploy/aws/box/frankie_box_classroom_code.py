@@ -391,6 +391,10 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
             key = status if isinstance(status, str) else json.dumps(status, sort_keys=True)
             counts[key] = counts.get(key, 0) + 1
             seen += 1
+            if not seen & 4095 and (native is None or native.status is not None):
+                # the heartbeat while the native entries do not report the pass themselves (absent, failed, cut off)
+                heartbeat('classroom: shared market read', seen, unit='pictures', every=1.0,
+                          source_records=timeline.source.get('record_count'))
             arrivals.note(picture, item['evidence'])
             if native is not None and native.status is None:
                 try:
@@ -2768,6 +2772,7 @@ def picture_texts(pictures):
             for cursor, text in LP.ordered_map(_picture_text_job, cursors, workers, cpus=lane,
                                                context=multiprocessing.get_context('fork'), poll=5.0, report=report):
                 texts[id(pictures[cursor])] = (pictures[cursor], text)
+                heartbeat('classroom: anchor picture texts', len(texts), len(cursors), unit='pictures', every=1.0)
         finally:
             gc.unfreeze()
             _PICTURE_SHARED.clear()
@@ -2869,6 +2874,8 @@ def _pair_measures(math, ledgers, order):
                             except BrokenProcessPool as error:
                                 broken = error
                                 break
+                            heartbeat('classroom: dipole pairs', sum(m is not None for m in measured), len(order),
+                                      unit='pairs', every=1.0)
                 except BrokenProcessPool as error:
                     broken = broken or error
                 if broken is None:

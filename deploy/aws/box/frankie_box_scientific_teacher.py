@@ -441,19 +441,26 @@ def frankie_claims(path, day):
 SCAN_BLOCK = 16 * 1024 * 1024   # one read: hashed whole, then split at its last newline (the box's read-ahead is 4 MB)
 
 
-def _segments(path, hashed):
+def _segments(path, hashed, start=0, end=None):
     """Yield (segment, first_ordinal, lines) over a file read in SCAN_BLOCK blocks: each segment is a run of whole lines in
     file order (b'\\n' ends a line, exactly as binary-mode line iteration splits; only a final line at EOF may lack it).
     Every byte read is hashed exactly once, in file order, and every byte lands in exactly one segment, so the segment
     lengths sum to the file size and the ordinals are the binary line iterator's own (Greg, 2026-10-07: faster, same
-    bytes; the per-line Python loop over lines no claim can use was the scan's cost)."""
-    ordinal, carry = 0, b''
+    bytes; the per-line Python loop over lines no claim can use was the scan's cost). start/end (a line-start byte range,
+    _part_ranges): only those bytes, ordinals counted from the range's first line; hashed None: not hashed here (the
+    part's whole-file hash is its own task, in file order)."""
+    ordinal, carry, left = 0, b'', None if end is None else end - start
     with open(path, 'rb', buffering=0) as handle:
-        while True:
-            block = handle.read(SCAN_BLOCK)
+        if start:
+            handle.seek(start)
+        while left is None or left > 0:
+            block = handle.read(SCAN_BLOCK if left is None else min(SCAN_BLOCK, left))
             if not block:
                 break
-            hashed.update(block)
+            if left is not None:
+                left -= len(block)
+            if hashed is not None:
+                hashed.update(block)
             data = carry + block if carry else block
             cut = data.rfind(b'\n') + 1
             if not cut:
@@ -465,6 +472,85 @@ def _segments(path, hashed):
             ordinal += count
     if carry:
         yield carry, ordinal, 1
+
+
+# A part above SCAN_RANGE_MIN_BYTES is scanned as ordered line-start ranges by several pinned workers (the decoded_spool
+# pattern of frankie_box_experiment_search.py: ranges cut at line starts, results joined in file order, the bytes hashed
+# whole in file order by their own task and checked against the pin exactly as before). Ordinals are the range's own
+# plus the lines of every earlier range, so every row's ordinal, raw-line sha256 and selection are the whole-part scan's.
+SCAN_RANGE_MIN_BYTES = 64 << 20
+SCAN_RANGE_BYTES = 32 << 20
+
+
+def _part_ranges(path, size, pieces):
+    """Ordered [start, end) byte ranges of the file, each starting at a line start (frankie_box_experiment_search
+    _spool_ranges, copied: that module is not imported by the teacher)."""
+    cuts = [0]
+    with open(path, 'rb') as handle:
+        for k in range(1, pieces):
+            nominal = size * k // pieces
+            if nominal <= cuts[-1]:
+                continue
+            handle.seek(nominal - 1)
+            handle.readline()                      # ends just after the newline at or after byte nominal - 1
+            cut = handle.tell()
+            if cuts[-1] < cut < size:
+                cuts.append(cut)
+    cuts.append(size)
+    return [(a, b) for a, b in zip(cuts, cuts[1:]) if b > a]
+
+
+def _hash_part(path):
+    """(sha256 hex, bytes) of a whole part in file order, SCAN_BLOCK reads (the range scans' verification)."""
+    hashed, size = hashlib.sha256(), 0
+    with open(path, 'rb', buffering=0) as handle:
+        for block in iter(lambda: handle.read(SCAN_BLOCK), b''):
+            hashed.update(block)
+            size += len(block)
+    return hashed.hexdigest(), size
+
+
+def _part_tasks(parts):
+    """(tasks, layout) for the shared scan of parts [(path, rel, pin)]: a part below SCAN_RANGE_MIN_BYTES (or one whose
+    size cannot be read: its own task then raises where the whole scan would) is one ('scan', part) task; a larger part
+    is one ('hash', path) task and its ('range', (path, rel, pin, start, end)) tasks. layout[i] = the task indexes of
+    part i (one index, or the hash index then its range indexes in file order)."""
+    tasks, layout = [], []
+    for path, rel, pin in parts:
+        try:
+            size = os.stat(path).st_size
+        except OSError:
+            size = 0
+        if size < SCAN_RANGE_MIN_BYTES:
+            layout.append([len(tasks)])
+            tasks.append(('scan', (path, rel, pin)))
+            continue
+        ranges = _part_ranges(path, size, size // SCAN_RANGE_BYTES + 1)
+        layout.append(list(range(len(tasks), len(tasks) + 1 + len(ranges))))
+        tasks.append(('hash', path))
+        tasks += [('range', (path, rel, pin, a, b)) for a, b in ranges]
+    return tasks, layout
+
+
+def _merge_part(indexes, values):
+    """One part's per-document tuples from its task values: the whole-part scan's own, or the hash then the ranges joined
+    in file order (sizes and line counts summed, each range's ordinals moved past the lines of the ranges before it)."""
+    if len(indexes) == 1:
+        return values[indexes[0]]
+    digest, _ = values[indexes[0]]
+    merged, size, lines = None, 0, 0
+    for index in indexes[1:]:
+        per_doc = values[index]
+        if merged is None:
+            merged = [[0, []] for _ in per_doc]
+        for k, (_, part_size, part_lines, parsed, selected) in enumerate(per_doc):
+            merged[k][0] += parsed
+            for r in selected:
+                r['_where']['row'] += lines
+                merged[k][1].append(r)
+        size += per_doc[0][1] if per_doc else 0
+        lines += per_doc[0][2] if per_doc else 0
+    return [(digest, size, lines, parsed, selected) for parsed, selected in merged or []]
 
 
 def _line_at(segment, start):
@@ -654,13 +740,14 @@ def _scan_part_shared(args):
     json.loads per line however many documents admit it). Each document counts every line its own filter admits as parsed
     and receives its own row object for every line it selects (never one object in two documents' results), so its parsed
     count, selection, ordinals and _where are those of its own scan. A top-level function (the fork pool's target)."""
-    path, rel, pin = args
+    path, rel, pin = args[:3]
+    start, end = args[3:5] if len(args) == 5 else (0, None)   # a range of a large part (_part_tasks): not hashed here
     specs = _SHARED_SPECS
-    hashed, size, lines = hashlib.sha256(), 0, 0
+    hashed, size, lines = (hashlib.sha256() if end is None else None), 0, 0
     out = [[0, []] for _ in specs]
     distinct = sorted({n for _, needles, flag in specs if flag for n in needles})
     parse_all = [i for i, (_, _, flag) in enumerate(specs) if not flag]
-    for segment, base, count in _segments(path, hashed):
+    for segment, base, count in _segments(path, hashed, start, end):
         size += len(segment)
         lines += count
         hits = {}
@@ -713,7 +800,7 @@ def _scan_part_shared(args):
                         r = json.loads(line_at(start))   # a second document selecting the line gets its own row object
                     r['_where'] = dict(part=rel, part_sha256=pin, row=ordinal_of[start], row_sha256=line_sha(start))
                     out[i][1].append(r)
-    digest = hashed.hexdigest()
+    digest = hashed.hexdigest() if hashed is not None else None
     return [(digest, size, lines, parsed, selected) for parsed, selected in out]
 
 
@@ -770,16 +857,23 @@ def shared_scan(claims_docs, days):
         return [None] * len(claims_docs)
     members, plans, jobs = plan
     _SHARED_SPECS = _shared_specs(members, plans)
+    tasks, layout = _part_tasks([(path, rel, pin) for _, path, rel, pin, _ in jobs])
     try:
-        per_part = _pinned_map(_scan_part_shared, [(path, rel, pin) for _, path, rel, pin, _ in jobs],
-                               'shared scientific scan of %d search parts for %d claim documents' % (len(jobs), len(members)))
+        out = _pinned_map(_pre_read_task, tasks, 'shared scientific scan of %d search parts (%d tasks) for %d claim '
+                                                 'documents' % (len(jobs), len(tasks), len(members)))
     except Exception as error:  # noqa: BLE001 - every document then reads its own parts (its error raised there)
         print('shared scientific scan not used (%s: %s); each document reads its own parts' % (type(error).__name__, error),
               file=sys.stderr, flush=True)
         return [None] * len(claims_docs)
     finally:
         _SHARED_SPECS = ()
-    return _shared_prepared(members, plans, jobs, per_part, len(claims_docs))
+    failed = [text for status, text in out if status == 'error']
+    if failed:
+        print('shared scientific scan not used (%s); each document reads its own parts' % failed[0], file=sys.stderr,
+              flush=True)
+        return [None] * len(claims_docs)
+    values = [value for _, value in out]
+    return _shared_prepared(members, plans, jobs, [_merge_part(ix, values) for ix in layout], len(claims_docs))
 
 
 def _pre_read_task(task):
@@ -789,7 +883,7 @@ def _pre_read_task(task):
     if kind == 'native':
         return _native_read_kept(payload)
     try:
-        return 'ok', _scan_part_shared(payload)
+        return 'ok', (_hash_part(payload) if kind == 'hash' else _scan_part_shared(payload))
     except Exception as error:  # noqa: BLE001 - each document then reads its own parts and raises there
         return 'error', '%s: %s' % (type(error).__name__, error)
 
@@ -810,12 +904,14 @@ def pre_read(days, claims_docs, out_root):
     tasks, plans = _native_tasks(days)
     plan = _shared_plan(claims_docs, days, minimum=1)
     parts = [] if plan is None else [(path, rel, pin) for _, path, rel, pin, _ in plan[2]]
-    note = dict(native_reads=len(tasks), scan_parts=len(parts), documents=len(claims_docs),
+    part_tasks, layout = _part_tasks(parts)
+    note = dict(native_reads=len(tasks), scan_parts=len(parts), scan_tasks=len(part_tasks),
+                ranged_parts=sum(1 for ix in layout if len(ix) > 1), documents=len(claims_docs),
                 scan_documents=0 if plan is None else len(plan[0]), side_by_side=bool(tasks and parts))
     if plan is not None:
         _SHARED_SPECS = _shared_specs(plan[0], plan[1])
     try:
-        out = _pinned_map(_pre_read_task, [('native', t) for t in tasks] + [('scan', p) for p in parts],
+        out = _pinned_map(_pre_read_task, [('native', t) for t in tasks] + part_tasks,
                           'scientific pre-read: %d native evidence reads of %d days and %d search parts for %d claim '
                           'documents, side by side' % (len(tasks), len(days), len(parts), note['scan_documents']))
     except Exception as error:  # noqa: BLE001 - the serial route below reads everything itself
@@ -833,7 +929,9 @@ def pre_read(days, claims_docs, out_root):
         if failed:
             note['scan_listed'] = 'a part scan raised (%s): every document reads its own parts' % failed[0]
     else:
-        prepared = _shared_prepared(plan[0], plan[1], plan[2], [value for _, value in scans], len(claims_docs))
+        values = [value for _, value in scans]
+        prepared = _shared_prepared(plan[0], plan[1], plan[2], [_merge_part(ix, values) for ix in layout],
+                                    len(claims_docs))
     note.update(used=True, prepared=sum(p is not None for p in prepared), seconds=round(time.time() - started, 3))
     return native, prepared, note
 

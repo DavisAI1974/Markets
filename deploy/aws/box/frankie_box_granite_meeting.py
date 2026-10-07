@@ -1223,8 +1223,10 @@ def discuss_item(server, item, system, params, log, progress=None, clock=None):
     """One item: rounds of coordinator turn -> code validation -> code seat answer, until LEAVE_OPEN/RESOLVED, the turn
     budget, the input cap, the MEETING time budget (every request bounded; finding 1) or a failed request (finding 3).
     Completed rounds are durable per item (finding 2): a retained complete item is reused without a call; a retained
-    pending call (interrupted with unknown completion) closes the item open by code, naming the round, and is never
-    repeated; completed rounds of an interrupted item are kept and resumed from.
+    pending call (interrupted with unknown completion) is stamped unknown_completion, listed in the item's
+    interrupted_calls and RE-DONE from the retained transcript (Greg, 2026-10-07 night: "re-done, never skipped");
+    completed rounds of an interrupted item are kept and resumed from (an 'interrupted' item gets the caller's budget,
+    liveness and cap checks like any item that will call).
 
     clock(call_key, outcome, wall_start, wall_end, **fields) (the meeting's model-evaluation clock, Greg 2026-10-07):
     every would-be coordinator call of a round is stamped once: answered (reply sha256, BEFORE the round's progress
@@ -1249,26 +1251,29 @@ def discuss_item(server, item, system, params, log, progress=None, clock=None):
         log('item %s: retained complete; reused without a model call' % item['item_id'])
         return dict(state['result'], reused_from_progress=True)
     if state is not None and state.get('pending_call'):
+        # Greg, 2026-10-07 night (stacks pass): "a model call that was interrupted is re-done, never skipped". The
+        # durable pre-send intent of the interrupted round is stamped unknown_completion (kept, never erased) and listed
+        # on the item's progress (interrupted_calls); the round is then sent again from the SAME retained transcript (the
+        # interrupted round was never appended to it), on this attempt's server. The completed rounds are reused as they
+        # are. Formerly the item was closed LEFT_OPEN_BY_CODE without the call.
         pending = state['pending_call']
-        log('item %s: a chat call of round %s was pending when the meeting was interrupted; closed open, not repeated'
-            % (item['item_id'], pending.get('round')))
+        log('item %s: a chat call of round %s was pending when the meeting was interrupted; stamped unknown_completion and '
+            're-done from the retained transcript' % (item['item_id'], pending.get('round')))
         stamp(int(pending.get('round') or 0), 'unknown_completion',
               pending.get('started_at') if isinstance(pending.get('started_at'), (int, float)) else time.time(), None,
               reason='a durable pre-send intent of this round was found on restart with no recorded reply; transmission '
-                     'and completion are unknown and the call is never repeated',
+                     'and completion are unknown; the round is re-done from the retained transcript (never skipped)',
               transcript_sha256=pending.get('transcript_sha256'))
-        result = _close_item(item, state, 'LEFT_OPEN_BY_CODE', dict(
-            kind='interrupted_call', seat=None, binds_to=None, round=pending.get('round'),
-            transcript_sha256=pending.get('transcript_sha256'), started_at=pending.get('started_at'),
-            text='the coordinator call of round %s had a durable pre-send intent before an interruption; transmission '
-                 'and completion are unknown (no '
-                 'reply was recorded); the %d completed rounds are kept, the call is not repeated and no answer is '
-                 'invented; the item stays open by code' % (pending.get('round'), int(state.get('rounds_completed') or 0))))
-        state = dict(state, status='complete', outcome='LEFT_OPEN_BY_CODE', result=result, pending_call=None,
-                     interrupted_call=pending)
+        retained_transcript = sha256_bytes(json.dumps(state.get('transcript', []), sort_keys=True).encode())
+        if pending.get('transcript_sha256') not in (None, retained_transcript):
+            raise ValueError('item %s: the interrupted round\'s transcript sha256 %s differs from the retained transcript '
+                             '%s; the round cannot be re-done from it (explicit owner recovery)'
+                             % (item['item_id'], pending.get('transcript_sha256'), retained_transcript))
+        state = dict(state, status='in_progress', outcome=None, result=None, pending_call=None,
+                     interrupted_calls=list(state.get('interrupted_calls') or []) + [dict(pending, redone=True)])
+        state.pop('interrupted_call', None)
         if progress is not None:
             progress.save(state)
-        return result
     if state is None:
         state = fresh
         if progress is not None:
@@ -1418,7 +1423,7 @@ def discuss_item(server, item, system, params, log, progress=None, clock=None):
     result = _close_item(item, state, outcome, open_item)
     if state.get('pending_call'):
         # a chat was sent and no reply was recorded (budget or failure): the fact stays in the progress file, so a later
-        # restart of an incomplete meeting closes this item as interrupted_call rather than calling again
+        # restart of an incomplete meeting stamps it unknown_completion and re-does the round (never skipped)
         state = dict(state, status='interrupted', outcome=outcome, result=result)
     else:
         state = dict(state, status='complete', outcome=outcome, result=result)
@@ -1831,7 +1836,7 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         for item in given['items']:
             progress = ItemProgress(out_dir, item['item_id'], binding_sha)
             retained = progress.load()
-            if system_over_cap and (retained is None or retained.get('status') not in ('complete', 'interrupted')):
+            if system_over_cap and (retained is None or retained.get('status') != 'complete'):
                 now = time.time()
                 clock('%s:r%d' % (_safe_name(item['item_id']), int((retained or {}).get('rounds_completed') or 0) + 1),
                       'refused_over_cap', now, now, input_tokens=system_tokens, cap=cap,
@@ -1844,11 +1849,11 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                                                  'Granite does not see the whole picture, and it refuses visibly)' % (system_tokens, cap),
                                           open_items=item['open_items']))
                 continue
-            if (retained is None or retained.get('status') not in ('complete', 'interrupted')) and 'message_render' in item:
+            if (retained is None or retained.get('status') != 'complete') and 'message_render' in item:
                 # the item's first message, every layer, counted before its rounds (recorded, never gating)
                 material_tokens['items'][item['item_id']] = _layer_counts(server, item_message(item, keep_texts=True)[2],
                                                                           'item-%s' % _safe_name(item['item_id']))
-            if retained is None or retained.get('status') not in ('complete', 'interrupted'):
+            if retained is None or retained.get('status') != 'complete':
                 remaining = server.remaining()
                 next_call = '%s:r%d' % (_safe_name(item['item_id']), int((retained or {}).get('rounds_completed') or 0) + 1)
                 if remaining is not None and remaining <= 0:

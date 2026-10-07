@@ -215,11 +215,17 @@ def _side_main(function, path, cpus):
     """A side task's process: on its CPUs, compute, write the value whole (pickle, then rename), exit. SIGTERM ends it
     (the classroom's own handler, inherited by the fork, only marks a save request)."""
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    pin = 'no CPU list: the classroom\'s mask'
     if cpus:
         try:
             os.sched_setaffinity(0, set(cpus))
-        except OSError:
-            pass
+            pin = 'pinned'
+        except OSError as error:            # listed (side record), the computation goes on with the inherited mask
+            pin = 'fallback: the OS refused (%s); the inherited mask was kept' % error
+    try:
+        Path(str(path) + '.pin').write_text(pin, encoding='utf-8')
+    except OSError:
+        pass
     value = function()
     pending = Path(str(path) + '.%d.pending' % os.getpid())
     with pending.open('wb') as stream:
@@ -248,7 +254,7 @@ class _SideTask:
         if not forkable:
             self.record.update(outcome='computed_in_order', reason='no fork: %s' % why)
             return self
-        for stale in [self.path] + list(self.path.parent.glob(self.path.name + '.*.pending')):
+        for stale in [self.path, Path(str(self.path) + '.pin')] + list(self.path.parent.glob(self.path.name + '.*.pending')):
             try:
                 stale.unlink()                        # a value left by an earlier, stopped attempt is never read
             except OSError:
@@ -268,6 +274,12 @@ class _SideTask:
         self.process.join()
         self.record.update(parent_waited_s=round(time.monotonic() - clock, 3),
                            side_seconds=round(time.monotonic() - self.started, 3), exitcode=self.process.exitcode)
+        pin_path = Path(str(self.path) + '.pin')
+        try:
+            self.record['pin'] = pin_path.read_text(encoding='utf-8')
+            pin_path.unlink()
+        except OSError:
+            self.record['pin'] = 'not recorded (the side process wrote no pin note)'
         value, error = None, None
         if self.process.exitcode == 0 and self.path.is_file():
             try:
@@ -603,11 +615,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         return phase_directory / (hashlib.sha256(name.encode()).hexdigest() + '.pkl')
     def phase(name, operation):
         stop()
-        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
-            import frankie_box_stage_progress as _SP
-            _SP.report_phase('classroom: %s' % name, units_done=len(state['phases']), unit='saved operations')
-        except Exception:  # noqa: BLE001
-            pass
+        # the stage heartbeat (frankie_box_stage_progress); never changes the stage; a probe import failure is listed on
+        # the receipt (received.probe_errors), not swallowed
+        K.heartbeat('classroom: %s' % name, len(state['phases']), unit='saved operations')
         path = phase_path(name)
         if path.exists():
             retained = _load_raw_state(path)
@@ -822,6 +832,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             # refused before the list: it still accounts for what was read (no external answers, said so in the list)
             all99 = K.all99_coverage(market_reading, consumers, repo_root=ROOT)
         received['all99'] = all99
+        received['probe_errors'] = dict(K.PROBE_ERRORS)
         refusal = dict(schema=SCHEMA, day=day, status='refused', mode=mode, reason=str(error),
                        listed='SOCRATIC/VERIFY require the learner-owned sealed-journal/day-file reader; '
                               'missing evidence never falls back to the host key',
@@ -992,6 +1003,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     received['all99'] = all99
     # every pool that ran in this process, including those after the market read (the anchor picture texts)
     received['cpu_pinning'] = dict(received.get('cpu_pinning') or {}, **K.pinning_record())
+    # a heartbeat that could not be written (the probe module failed to import), counted per error; {} = none
+    received['probe_errors'] = dict(K.PROBE_ERRORS)
     key = ext['teacher_key']
     result = dict(schema=SCHEMA, day=day, status='complete', mode=mode, components=report['components'],
                   observations=report['observations'], pairs=report['pairs'], novel_findings=len(novel),

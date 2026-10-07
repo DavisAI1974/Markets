@@ -75,14 +75,52 @@ def _journal_prefetch(receipt_path):
     original place measures again and raises in the original order."""
     import threading
     def measure():
+        began = time.monotonic()
         try:
             rc = json.loads(Path(receipt_path).read_bytes())
             _box_module('frankie_box_filehash').witness(Path(receipt_path).parent / rc['journal_file'])
-        except Exception:  # noqa: BLE001 - re-measured and raised at the original place
-            pass
+            PREFETCH.update(outcome='measured', seconds=round(time.monotonic() - began, 3))
+        except Exception as error:  # noqa: BLE001 - re-measured and raised at the original place
+            PREFETCH.update(outcome='error', seconds=round(time.monotonic() - began, 3),
+                            reason='%s: %s; the original place measured again' % (type(error).__name__, error))
+    PREFETCH.clear()
+    PREFETCH.update(outcome='started')
     thread = threading.Thread(target=measure, name='teacher-journal-sha256', daemon=True)
     thread.start()
     return thread
+
+
+# What the overlapped journal measurement did (receipt and workflow_report only; never an identity or a gate).
+PREFETCH = {}
+# The defaults this process took when started from the command line (main): the worker count when --workers is not
+# given and the thread caps for the spawn workers; listed on the receipt and in the workflow report (Day-1 visibility).
+RUN_DEFAULTS = {}
+THREAD_CAPS = ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')
+
+
+def _work_probe(out, rc):
+    """The walk's unit progress (FRANKIE_WORK_PROBE_V1 progress.json in the day's output directory, read by
+    frankie_box_progress.sh DIRECTORY=<out>, and the stage heartbeat's phase file through report_phase): a function for
+    parallel_teacher.PROGRESS. Report-only; None when the probe module is not importable."""
+    try:
+        probe = _box_module('frankie_box_progress').Probe(out, request_sha256=rc.get('journal_sha256'), phase='teacher')
+    except Exception:  # noqa: BLE001 - the stage runs without its own probe file; the heartbeat still samples /proc
+        probe = None
+    totals = dict(teacher_raw_rows=int(rc['record_count']))
+    units = dict(teacher_raw_rows='APPLIED rows (total = the day\'s INPUT records, an upper bound)',
+                 teacher_attachment_chunks='attachment chunks')
+
+    def report(stage, completed, total):
+        total = total if total is not None else totals.get(stage)
+        if probe is not None:
+            probe.update(stage, int(completed), int(total) if total is not None and total >= completed else None,
+                         force=True)
+        try:
+            import frankie_box_stage_progress as _SP
+            _SP.report_phase('teacher: %s' % stage, units_done=int(completed), units_total=total, unit=units.get(stage))
+        except Exception:  # noqa: BLE001
+            pass
+    return report
 
 
 def _sha256(path):

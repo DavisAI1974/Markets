@@ -842,14 +842,12 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
                 if every is not None and not due and time.monotonic() - last_save >= every:
                     due = True                       # saved at the next row that closes its group
             if due and rows[-1][1]:
-                due = False
-                if True:
-                    began = time.monotonic()
-                    streams.finish()                 # every placeholder resolved; the pool stays up for the next rows
-                    save(False)
-                    last_save = time.monotonic()
-                    SAVE_RECORD['saves'].append(dict(processed=processed, cursor=e['cursor'],
-                                                     seconds=round(last_save - began, 3), at=round(time.time(), 3)))
+                due, began = False, time.monotonic()
+                streams.finish()                     # every placeholder resolved; the pool stays up for the next rows
+                save(False)
+                last_save = time.monotonic()
+                SAVE_RECORD['saves'].append(dict(processed=processed, cursor=e['cursor'],
+                                                 seconds=round(last_save - began, 3), at=round(time.time(), 3)))
         streams.finish()
     _progress('teacher_raw_rows', processed, None, force=True)
     if any(type(v['reason']) is str and v['reason'].startswith(RAW_MARK) for row in rows for v in row[3]):

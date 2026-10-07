@@ -19,11 +19,28 @@ known paths, recorded scope only. The teacher receipt, the data export MANIFEST 
 own FRANKIE_PIECE_WORKFLOW_REPORT_V1 (workflow_report), projected whole. The search also writes workflow-report.json
 beside its MANIFEST (FRANKIE_SEARCH_WORKFLOW_REPORT_FILE_V1: the same report with every long list named by its count
 and exact MANIFEST location), read here so the search piece reports even when its MANIFEST exceeds the ceiling.
+
+Stacks pass (2026-10-07 night, session 5; additive sections, every earlier section kept):
+- Day-1 visibility: every metadata object read gets a "visibility" table: each key, at any depth (bounded), whose
+  name says skip / wait / refusal / fallback / cap / retry / missing / stale / absent / swallowed exception / default /
+  error / problem / listed / not run / deferred / withheld / excluded / worker death / redo / recovery / lost / timeout /
+  stop / limit / transport / dedupe, with its value (long values cut with their full size, the original kept at source);
+  empty ones are counted, never hidden.
+- CPU map: every FRANKIE_LANE_PLACEMENT_V1 (frankie_box_lane_pin.record) and cpu_placement / cpu_pinning /
+  pool_recovery object of a piece is rendered as one row per map (lane, coordinator, workers, worker CPUs, basis).
+- Stage heartbeats: per piece, the first and last FRANKIE_STAGE_HEARTBEAT_V1 line of each of its stages
+  (<run>/days/<day>/progress/<stage>.jsonl and the batch progress files that name the day): units, rate, elapsed,
+  bytes out, rss, stalled, the stage CPUs and every live work probe with its own rate and CPUs.
+- Kick receipts: the queue's <line>-kick.json with the FA-6 run_settings, in the preflight piece.
+- Compute dedupe: each metadata file is read and hashed ONCE per reporter process and the same bytes serve every piece
+  that names it; index.md carries the read ledger (files read once, requests served from that one read) and, per
+  piece, the dedupe rows the pieces themselves record.
 """
 import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
 
 # Owner-local lane records (known metadata contracts of frankie_box_frankie_queue.py, frankie_box_cores.py and
 # pod_root/controller.py); read only, projected to the run/day asked for. Absent = reported absent, never zero.
@@ -115,6 +132,7 @@ confirmation_clock external_points
 root_execution native_overlap timing parse
 cpu_placement pool_recovery
 workflow_report_file leakage_failed source_passes native_selection_check journal_witness
+run_settings transport worker_deaths redone cpu_pinning fallbacks caps retries skipped refusals waits dedupe
 '''.split())
 WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the pieces' own inputs / use / outputs record
 # The successor chain (school and corrections pieces): recorded pins {path, bytes, sha256} followed one by one from the
@@ -166,6 +184,20 @@ workflow_report_file
 '''.split())
 
 _OUT = []          # the current piece's markdown; stdout when no --write directory is given
+_READ_CACHE = {}   # compute dedupe: str(path) -> (body, pin) or the error, one read per reporter process
+_READ_LEDGER = {}  # str(path) -> requests served (1 = read once and used once)
+
+# Day-1 visibility (Greg, 2026-10-07): key names that record a skip, wait, refusal, fallback, cap, retry, missing or
+# stale input, swallowed exception, default taken, error, redo or dedupe; matched on the key name at any depth.
+VISIBILITY = re.compile(r'(skip|wait|refus|fallback|(^|_)caps?($|_)|capped|retr(y|ies)|missing|stale|absent|swallow|'
+                        r'default|error|problem|listed|not_run|deferred|withheld|exclu|worker_death|redone|redo|'
+                        r'recover|lost|timeout|stopped|stop_|limit|transport|dedupe|read_once|repeated|unavailable)',
+                        re.IGNORECASE)
+VISIBILITY_DEPTH = 8
+VISIBILITY_ROWS = 400
+VISIBILITY_VALUE_CHARS = 600
+PLACEMENT_SCHEMA = 'FRANKIE_LANE_PLACEMENT_V1'
+CPU_KEYS = ('cpu_placement', 'cpu_pinning', 'pool_recovery', 'cpu_booking', 'cpus')
 
 
 def emit(text):
@@ -192,6 +224,22 @@ def received_used_produced(body, label):
 
 
 def read_object(path):
+    """One read of a metadata file per reporter process (compute dedupe): later requests for the same path are served
+    from the same bytes and pin; an error is cached the same way. The ledger counts the requests."""
+    key = str(path)
+    _READ_LEDGER[key] = _READ_LEDGER.get(key, 0) + 1
+    if key not in _READ_CACHE:
+        try:
+            _READ_CACHE[key] = _read_object_once(path)
+        except (OSError, ValueError) as error:
+            _READ_CACHE[key] = error
+    value = _READ_CACHE[key]
+    if isinstance(value, Exception):
+        raise value
+    return value
+
+
+def _read_object_once(path):
     size = path.stat().st_size
     if size > METADATA_BYTE_LIMIT:
         raise ValueError('not-inspected-too-large: %d bytes exceeds metadata ceiling %d; '
@@ -220,7 +268,158 @@ def metadata(path, label):
     received_used_produced(body, path.name)
     workflow_report_block(body, path.name)
     nested_workflow_reports(body, path.name)
+    cpu_map_block(body, path.name)
+    visibility_block(body, path.name)
     return body
+
+
+def _short(value):
+    text = json.dumps(value, sort_keys=True, ensure_ascii=False, default=str)
+    if len(text) <= VISIBILITY_VALUE_CHARS:
+        return text
+    return '%s ... (%d chars in all; the full value is retained at source)' % (text[:VISIBILITY_VALUE_CHARS], len(text))
+
+
+def _walk(value, path, depth, visit):
+    if depth > VISIBILITY_DEPTH:
+        return
+    if isinstance(value, dict):
+        for key in sorted(value, key=str):
+            child = path + '.' + str(key) if path else str(key)
+            if visit(str(key), child, value[key]):
+                continue
+            _walk(value[key], child, depth + 1, visit)
+    elif isinstance(value, list):
+        for index, item in enumerate(value[:200]):
+            if isinstance(item, (dict, list)):
+                _walk(item, '%s[%d]' % (path, index), depth + 1, visit)
+
+
+def visibility_rows(body):
+    """(rows [(key path, value text)], empty key paths) of every visibility key (VISIBILITY) at any depth."""
+    rows, empty = [], []
+
+    def visit(key, path, value):
+        if not VISIBILITY.search(key):
+            return False
+        if value in (None, [], {}, '', False):
+            empty.append(path)
+        else:
+            rows.append((path, _short(value)))
+        return True                              # the value is shown whole (or cut with its size); not walked again
+    _walk(body, '', 0, visit)
+    return rows, empty
+
+
+def visibility_block(body, label):
+    """Day-1 visibility: every skip, wait, refusal, fallback, cap, retry, missing or stale input, swallowed exception,
+    default, error, redo and dedupe the object records, with its value; empty ones counted. Recorded fields only."""
+    rows, empty = visibility_rows(body)
+    emit('#### ' + label + ': day-1 visibility (every skip / wait / refusal / fallback / cap / retry / missing / stale / '
+         'exception / default / redo / dedupe recorded here)\n')
+    if not rows:
+        emit('No non-empty visibility field is recorded in this object (%d empty: %s).\n'
+             % (len(empty), ', '.join(empty[:40]) + (' ...' if len(empty) > 40 else '') if empty else 'none'))
+        return
+    emit('| recorded at | value |\n|---|---|')
+    for path, text in rows[:VISIBILITY_ROWS]:
+        emit('| %s | %s |' % (path.replace('|', '/'), text.replace('|', '/').replace('\n', ' ')))
+    emit('')
+    if len(rows) > VISIBILITY_ROWS:
+        emit('%d more visibility fields are retained at source (first %d shown).\n' % (len(rows) - VISIBILITY_ROWS,
+                                                                                        VISIBILITY_ROWS))
+    emit('Empty visibility fields (nothing recorded there): %d%s\n' % (
+        len(empty), (': ' + ', '.join(empty[:40]) + (' ...' if len(empty) > 40 else '')) if empty else ''))
+
+
+def cpu_map_rows(body):
+    """Every CPU map the object records: FRANKIE_LANE_PLACEMENT_V1 (frankie_box_lane_pin.record) at any depth, and the
+    cpu_placement / cpu_pinning / pool_recovery / cpu_booking / cpus objects, each with its key path."""
+    rows = []
+
+    def visit(key, path, value):
+        if isinstance(value, dict) and value.get('schema') == PLACEMENT_SCHEMA:
+            rows.append((path, dict(lane=value.get('lane'), coordinator=value.get('coordinator'),
+                                    workers=value.get('workers'), worker_cpus=value.get('worker_cpus'),
+                                    basis=value.get('basis'), what=value.get('what'))))
+            return True
+        if key in CPU_KEYS and value not in (None, [], {}):
+            rows.append((path, value))
+            return True
+        return False
+    _walk(body, '', 0, visit)
+    return rows
+
+
+def cpu_map_block(body, label):
+    rows = cpu_map_rows(body)
+    if not rows:
+        return
+    emit('#### ' + label + ': CPU map (lane, coordinator, workers, pool recovery; placement only, never a value)\n')
+    emit('| recorded at | map |\n|---|---|')
+    for path, value in rows:
+        emit('| %s | %s |' % (path.replace('|', '/'), _short(value).replace('|', '/')))
+    emit('')
+
+
+def _jsonl_ends(path, limit=65536):
+    """(first JSON line, last JSON line, line count) of a jsonl file; reads its head and tail only."""
+    try:
+        with open(path, 'rb') as handle:
+            head = handle.read(limit)
+            handle.seek(0, 2)
+            size = handle.tell()
+            handle.seek(max(0, size - limit))
+            tail = handle.read()
+        count = None
+        if size <= limit:
+            count = sum(1 for x in head.splitlines() if x.strip())
+    except OSError as error:
+        return None, None, str(error)
+
+    def parse(lines):
+        for text in lines:
+            try:
+                return json.loads(text)
+            except ValueError:
+                continue
+        return None
+    first = parse([x for x in head.decode('utf-8', 'replace').splitlines() if x.strip()])
+    last = parse(reversed([x for x in tail.decode('utf-8', 'replace').splitlines() if x.strip()]))
+    return first, last, count
+
+
+HEARTBEAT_KEYS = ('utc', 'final', 'outcome', 'exit_code', 'elapsed_s', 'phase', 'units_done', 'units_total', 'unit',
+                  'units_per_min', 'units_unchanged_s', 'stalled', 'bytes_out', 'bytes_out_per_min', 'files_out',
+                  'rss_bytes', 'processes', 'cpu_ranges', 'sample_error', 'work_probes_error')
+
+
+def heartbeat_block(run_dir, day, stages):
+    """The stage heartbeats of a piece (frankie_box_stage_progress, FRANKIE_STAGE_HEARTBEAT_V1): per stage file the
+    first and last line, the units source and every work probe of the last line. Absent = no heartbeat recorded."""
+    files = []
+    for stage in stages:
+        files.append(run_dir / 'days' / day / 'progress' / ('%s.jsonl' % stage))
+        files += sorted(run_dir.glob('batches/*/progress/%s.jsonl' % stage))
+    files = [f for f in dict.fromkeys(files) if f.is_file()]
+    emit('#### stage heartbeats (FRANKIE_STAGE_HEARTBEAT_V1; where time went; a probe never changes a stage)\n')
+    if not files:
+        emit('No stage heartbeat file for %s (none recorded: unknown, never zero).\n' % ', '.join(stages or ('this piece',)))
+        return
+    for path in files:
+        first, last, count = _jsonl_ends(path)
+        if not isinstance(last, dict):
+            json_block(dict(file=str(path), unavailable=count if isinstance(count, str) else 'no JSON line'))
+            continue
+        if last.get('key') not in (None, day, 'day-' + day) and not str(last.get('key')).startswith(day) \
+                and path.parent.parent.parent.name == 'batches':
+            pass                                  # a batch heartbeat: shown with its own key (its scope is the batch)
+        json_block(dict(file=str(path), lines=count, key=last.get('key'), stage=last.get('stage'),
+                        first={k: (first or {}).get(k) for k in ('utc', 'phase', 'units_done', 'units_total')},
+                        last={k: last.get(k) for k in HEARTBEAT_KEYS},
+                        units_source=(last.get('sources') or {}).get('units'),
+                        work_probes=last.get('work_probes')))
+
 
 
 def nested_workflow_reports(body, label):
@@ -475,6 +674,9 @@ def lane_records(run_dir, run, day):
                         absent='no %s-line entry names this run/day' % line if not mine else None))
     for path in (QUEUE_DIR / 'root-worker.json', QUEUE_DIR / 'class-worker.json'):
         metadata(path, 'Line worker last status (its authorized scope)')
+    for path in (QUEUE_DIR / 'root-kick.json', QUEUE_DIR / 'class-kick.json'):
+        # FRANKIE_QUEUE_KICK_V1: when, by, scope, how and the FA-6 run_settings the kicked worker received
+        metadata(path, 'Line kick receipt (FA-6 run_settings; the last kick of the line, any run)')
     marker = QUEUE_DIR / 'save' / ('%s-%s.save-request.json' % (run, day))
     for path, label in ((marker, 'Day-bound save marker (standing now)'),
                         (Path(str(marker) + '.class-ack.json'), 'Class child acknowledgment (standing now)')):
@@ -740,6 +942,8 @@ def main():
             for report in body.get('reports') or []:
                 if isinstance(report, dict):
                     json_block(dict(existing_report=report, disposition='reuse this normal report; not regenerated'))
+        if stages:
+            heartbeat_block(args.run_dir, args.day, stages)
         for path in extra[piece]:
             if path.suffix.lower() == '.json':
                 metadata(path, 'Operator-supplied metadata (identity/consumption not independently verified)')
@@ -757,6 +961,12 @@ def main():
                  'one-day test. Temporary operator review only: not knowledge, not scientific evidence, not a '
                  'completion gate; the brain and the teachers never read these files.\n']
         index += ['- [%s](%s): %s' % (piece, path.name, title) for piece, title, path in written]
+        index += ['', '## Read ledger (compute dedupe: each metadata file read and hashed once by this reporter)', '',
+                  'files read: %d; requests: %d; requests served from an earlier read: %d' % (
+                      len(_READ_LEDGER), sum(_READ_LEDGER.values()),
+                      sum(n - 1 for n in _READ_LEDGER.values())), '',
+                  '| file | requests (1 read) |', '|---|---|']
+        index += ['| %s | %d |' % (k.replace('|', '/'), n) for k, n in sorted(_READ_LEDGER.items()) if n > 1]
         write_piece(inspection_dir, 'index', '\n'.join(index) + '\n')
         print('inspection written: %s (%d pieces + index.md)' % (inspection_dir, len(written)))
 
