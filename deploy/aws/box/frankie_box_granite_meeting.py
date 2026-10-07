@@ -605,11 +605,21 @@ def discuss_item(server, item, system, params, log, progress=None):
     cap = int(params['input_token_cap_per_call'])
     outcome, open_item = None, None
     label = _safe_name(item['item_id'])
+    # 6R1: a retained terminal disposition (LEAVE_OPEN/RESOLVED recorded with its round) or a retained over-cap count is
+    # consumed BEFORE any request: completed work whose disposition is already retained is never repeated
+    if state.get('outcome') in ('LEAVE_OPEN', 'RESOLVED'):
+        outcome = state['outcome']
+        log('item %s: retained terminal outcome %s consumed; no call' % (item['item_id'], outcome))
+    elif state.get('over_cap') is not None:
+        log('item %s: retained over-cap count consumed; no call' % item['item_id'])
     try:
-        for round_number in range(int(state['rounds_completed']) + 1, int(params['max_coordinator_turns_per_item']) + 1):
+        for round_number in (range(int(state['rounds_completed']) + 1, int(params['max_coordinator_turns_per_item']) + 1)
+                             if outcome is None and state.get('over_cap') is None else ()):
             counted = server.count_tokens(transcript, label='%s-r%d' % (label, round_number))
             if counted > cap:
                 state['over_cap'] = dict(round=round_number, input_tokens=counted, cap=cap)
+                if progress is not None:
+                    progress.save(state)       # the over-cap fact is retained before anything else happens
                 break
             # the only non-idempotent request: marked pending BEFORE it is sent (finding 2)
             state['pending_call'] = dict(round=round_number, kind='chat', started_at=time.time(),
@@ -659,10 +669,16 @@ def discuss_item(server, item, system, params, log, progress=None):
             else:
                 outcome = action['action']
             state['pending_call'], state['rounds_completed'] = None, round_number
+            if outcome is not None:
+                # 6R1: the terminal disposition is saved IN THE SAME WRITE as its completed round, with the result,
+                # so an interruption after this round can only resume into the retained result, never into another chat
+                result = _close_item(item, state, outcome, None)
+                state = dict(state, status='complete', outcome=outcome, result=result)
+                if progress is not None:
+                    progress.save(state)
+                return result
             if progress is not None:
                 progress.save(state)
-            if outcome is not None:
-                break
     except MeetingBudgetExpired as error:
         # the item keeps its completed rounds; the pending marker (if a chat was sent) stays as the fact it is
         outcome = 'LEFT_OPEN_BY_CODE'
