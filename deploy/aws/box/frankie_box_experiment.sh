@@ -58,6 +58,12 @@ set -- "$@" --external-wait "${EXTERNAL_WAIT:-on}" --brain "${BRAIN:-/opt/franki
 # Jev's CPU runtime configuration (JEV_CPU_RUNTIME_V1) and brain, saved in the plan when given at the first start (Step 7)
 [ -z "${JEV_RUNTIME:-}" ] || set -- "$@" --jev-runtime "$JEV_RUNTIME"
 [ -z "${JEV_BRAIN:-}" ] || set -- "$@" --jev-brain "$JEV_BRAIN"
+# the synchronized shared market input of a NEW run (Greg, 2026-10-07), saved with the plan at its first start
+case "${SHARED_MARKET_POLICY:-}" in
+  '') ;;
+  FRANKIE_SHARED_MARKET_TIMELINE_V1) set -- "$@" --shared-market-policy "$SHARED_MARKET_POLICY" ;;
+  *) echo "unknown SHARED_MARKET_POLICY" >&2; exit 2;;
+esac
 case "${BRAIN:-/opt/frankie-box/brain}${PREVIOUS_CLASSROOM:-}${JEV_RUNTIME:-}${JEV_BRAIN:-}" in *..*) echo "no .. in BRAIN, PREVIOUS_CLASSROOM, JEV_RUNTIME or JEV_BRAIN" >&2; exit 2;; esac
 for v in "${JEV_RUNTIME:-}" "${JEV_BRAIN:-}"; do
   case "$v" in ""|/opt/frankie-box/*) ;; *) echo "JEV_RUNTIME and JEV_BRAIN must be absolute paths under /opt/frankie-box" >&2; exit 2;; esac

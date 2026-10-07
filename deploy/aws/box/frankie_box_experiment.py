@@ -142,6 +142,8 @@ ROWS_FILE = 'host-dipole-classroom-source.c15.json'
 DAY_EXTERNAL = WORK / 'day-external'
 DAY_FILE, DAY_FILE_RECEIPT = 'day-external.json', 'day-external-receipt.json'
 BRAIN = BOX_ROOT / 'brain'
+SHARED_MARKET_POLICY = 'FRANKIE_SHARED_MARKET_TIMELINE_V1'   # the one shared-market policy a NEW plan may select (Codex's
+                                                             # frankie_box_market_timeline; ROOT and teacher wrappers forward it)
 JEV_BRAIN = BOX_ROOT / 'jev-brain'          # Jev's own brain on the box (plan jev_brain overrides; the S3 lineage is clm-sidecar/jev-brain)
 S3_BUCKET = 'bento-568968024170-us-east-2-an'
 JEV_BUCKET = 'frankie-granite42-568968024170-us-east-1'
@@ -321,6 +323,8 @@ def load_plan(a, code_root):
     for key in ('jev_runtime', 'jev_brain'):                  # only when given: earlier plans keep their digest
         if getattr(a, key, None):
             plan[key] = str(Path(getattr(a, key)))
+    if getattr(a, 'shared_market_policy', None):              # a NEW request's policy, saved with the plan at its first
+        plan['shared_market_policy'] = a.shared_market_policy   # start (a run keeps one plan: a legacy plan stays legacy)
     if getattr(a, 'external_eia930_history_run', None):       # only when given: earlier plans keep their digest
         plan['external_eia930_history_run'] = a.external_eia930_history_run
     if getattr(a, 'external_family_history_runs', None):      # family=<run id>,... (the gap-only fetch chunks)
@@ -864,10 +868,18 @@ class Run:
             owned_output = ROOTS / attempt
             if owned_output.is_symlink() or (owned_output.exists() and not owned_output.is_dir()):
                 raise ValueError('the owned ROOT output is not a retained directory: %s' % owned_output)
+        policy = self.plan.get('shared_market_policy')
         if calc:
             retained = json.loads((calc / 'calculations-receipt.json').read_bytes())
             if retained.get('day') != e['day'] or retained.get('day_role') != e['role']:
                 raise ValueError('retained ROOT receipt belongs to another day/role')
+            if policy and (retained.get('shared_market_policy') or {}).get('schema') != policy:
+                # a legacy (or other-policy) completed ROOT never satisfies a shared-policy plan: preserved as it is,
+                # never recomputed or relabelled here; one finished ROOT per day (root_of), so the successor is explicit
+                return self.record('root', e['day'], 'refused', calculations=str(calc), interrupted_attempts=attempts,
+                                   retained_policy=retained.get('shared_market_policy'), plan_policy=policy,
+                                   reason='the completed ROOT %s was computed without the plan\'s shared market policy %s; '
+                                          'it is preserved and an explicit compatible successor is required' % (calc, policy))
             sources = [calc / 'calculations-receipt.json', calc / 'work' / 'derive.json',
                        calc / 'work' / 'derivation-digest-full.md']
             if (calc / 'external-computation.json').is_file():
@@ -879,6 +891,7 @@ class Run:
             return self.record('root', e['day'], 'reused', calculations=str(calc), interrupted_attempts=attempts,
                                receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
                                if (calc / 'calculations-receipt.json').is_file() else None,
+                               shared_market_policy=retained.get('shared_market_policy'), plan_policy=policy,
                                brain_entry=brain_entry)
         ing = self.receipt('ingest', e['day'])
         if not (ing and ing['status'] in FINISHED):
@@ -899,6 +912,9 @@ class Run:
                    DIGEST='on', RESUME='on' if resume else 'off')
         if self.plan['frozen_survivors']:
             env['FROZEN_SURVIVORS'] = self.plan['frozen_survivors']
+        if policy:
+            env['SHARED_MARKET_POLICY'] = policy     # the wrapper forwards --bedrock on --shared-market-policy; the same
+                                                    # saved plan reaches the Linux lane's job, so its ROOT runs under it too
         code, log = self.child('root', e['day'], 'frankie_box_experiment_root.sh', env)
         if code != 0 or not (output / 'calculations-receipt.json').is_file():
             self.claim_end(e, output, None, 'the box ROOT attempt ended without calculations-receipt.json (exit %s)' % code)
@@ -916,7 +932,8 @@ class Run:
                                                     producer_failures=calc.get('failure_count')))
         return self.record('root', e['day'], 'done', exit_code=code, log=log, calculations=str(output),
                            receipt_sha256=sha256_file(output / 'calculations-receipt.json'), new_bytes=new_bytes(output),
-                           interrupted_attempts=attempts, digest=True,
+                           interrupted_attempts=attempts, digest=True, plan_policy=policy,
+                           shared_market_policy=calc.get('shared_market_policy'),
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
                            brain_entry=brain_entry)
 
@@ -1923,12 +1940,18 @@ class Run:
         remote_waiting = [day for day, r in remote.items() if not done_status(r)]
         todo = [e for e in local if rows_of(e)[0] is None]
         brain_entries = {}
+        policy = self.plan.get('shared_market_policy')
         for e in local:
             rows, source = rows_of(e)
             if rows is not None:
                 rows_path, why = self.rows_file(e)
                 if rows_path is None:
                     raise ValueError(why)
+                if policy:
+                    ok, why = self.shared_teacher_compatible(e, rows, source)
+                    if not ok:
+                        refused[e['day']] = why        # a legacy or other-source teacher result never satisfies the policy
+                        continue
                 try:
                     brain_entries[e['day']] = self.teacher_knowledge(e['day'], rows_path, source)
                 except ValueError as error:
@@ -1937,14 +1960,16 @@ class Run:
             return self.record('teacher', batch_key, 'waiting' if remote_waiting else 'skipped',
                                reason='waiting for owning lane teacher receipts' if remote_waiting else
                                       'each day has local rows or its owning lane completed teacher receipt',
-                               remote_days=remote, waiting=remote_waiting,
-                               brain_entries=brain_entries,
+                               remote_days=remote, waiting=remote_waiting, refused_days=refused or None,
+                               shared_market_policy=policy, brain_entries=brain_entries,
                                days=[dict(day=e['day'], rows=str(rows_of(e)[0]), source=rows_of(e)[1]) for e in local])
         if not (self.box / 'frankie_box_experiment_teacher.sh').is_file():
             return self.record('teacher', batch_key, 'not_built', days=[e['day'] for e in todo],
                                reason='frankie_box_experiment_teacher.sh is not in the staged checkout yet')
-        receipts, external_waiting = [], {}
+        receipts, external_waiting, roots, root_waiting = [], {}, {}, {}
         for e in todo:
+            if e['day'] in refused:
+                continue                                  # its retained result is preserved; no re-run beside it
             ing = self.receipt('ingest', e['day'])
             if not (ing and ing['status'] in FINISHED):
                 continue                                  # that day waits on its ingest; the rest of the batch runs
@@ -1952,14 +1977,30 @@ class Run:
             if not ready:
                 external_waiting[e['day']] = why          # the teacher builds the external section: it waits for the file
                 continue
+            if policy:
+                # the shared policy: the teacher reads the day's completed OWNER-LOCAL ROOT under the same policy (the
+                # wrapper forwards --calculations ROOT --shared-market-policy per day); a day without it waits, a ROOT
+                # computed under another policy refuses the day (preserved; explicit compatible successor)
+                root, why = self.shared_root_of(e)
+                if root is None:
+                    (refused if why.startswith('refused') else root_waiting)[e['day']] = why
+                    continue
+                roots[e['day']] = root
             receipts.append((e['day'], ing['receipt']))
-        waiting = [e['day'] for e in todo if e['day'] not in dict(receipts)] + remote_waiting
+        waiting = [e['day'] for e in todo if e['day'] not in dict(receipts) and e['day'] not in refused] + remote_waiting
         if not receipts:
-            return self.record('teacher', batch_key, 'waiting', days=waiting, reason='no day of the batch has a sealed ingest yet')
+            return self.record('teacher', batch_key, 'waiting' if waiting else 'failed', days=waiting,
+                               refused_days=refused or None, root_waiting=root_waiting or None,
+                               external_waiting=external_waiting or None,
+                               reason='no day of the batch is ready for its teacher (sealed ingest, day file%s)'
+                                      % (', completed shared-policy ROOT' if policy else '') if waiting else
+                                      'every day of the batch is refused: %s' % '; '.join('%s: %s' % kv for kv in sorted(refused.items()))[:1500])
         if not self.disk_ok('teacher'):
             return None
-        code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh',
-                               dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts)))
+        env = dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts))
+        if policy:
+            env.update(SHARED_MARKET_POLICY=policy, CALCULATION_ROOTS=','.join(roots[d] for d, _ in receipts))
+        code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh', env)
         missing = [d for d, _ in receipts if rows_of(dict(day=d))[0] is None]
         for d, _ in receipts:
             rows, source = rows_of(dict(day=d))
@@ -1976,7 +2017,8 @@ class Run:
         # batch's other days are not held back by it (the batch status is the child's and the rows', as before)
         return self.record('teacher', batch_key, 'done' if code == 0 and not missing and not waiting else 'failed',
                            exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
-                           remote_days=remote, refused_days=refused or None,
+                           remote_days=remote, refused_days=refused or None, shared_market_policy=policy,
+                           calculation_roots=roots or None, root_waiting=root_waiting or None,
                            external_waiting=external_waiting, brain_entries=brain_entries,
                            new_bytes=sum(new_bytes(TEACHER_ROWS / d) for d, _ in receipts),
                            reason=None if code == 0 and not missing and not waiting else
@@ -1993,6 +2035,61 @@ class Run:
         teacher key from the rows and of the teacher step that wrote the rows. The commit is recorded beside it, not
         compared: a commit that leaves these modules byte-identical is the same producer."""
         return dict(modules={name: sha256_file(self.code_root / name) for name in self.TEACHER_KNOWLEDGE_PRODUCERS})
+
+    def shared_root_of(self, e):
+        """(the day's completed owner-local ROOT directory under the plan's shared market policy, None) or (None, why):
+        'waiting ...' while the ROOT is not complete here; 'refused ...' when it is complete under another policy (it is
+        preserved; never recomputed or relabelled). A remote owner's ROOT is that lane's, never a caller-local alias."""
+        policy = self.plan.get('shared_market_policy')
+        r = self.receipt('root', e['day']) or {}
+        if r.get('remote_calculations'):
+            return None, 'refused: the day\'s ROOT belongs to its remote owner %s; its teacher runs there' % r.get('owner')
+        if r.get('status') not in ('done', 'reused') or not r.get('calculations'):
+            return None, 'waiting for the day\'s completed ROOT under the shared market policy (root is %s)' % (r.get('status') or 'not run')
+        calc = Path(r['calculations'])
+        receipt = calc / 'calculations-receipt.json'
+        if not receipt.is_file():
+            return None, 'waiting: the ROOT %s has no calculations-receipt.json' % calc
+        if (json.loads(receipt.read_bytes()).get('shared_market_policy') or {}).get('schema') != policy:
+            return None, ('refused: the completed ROOT %s was computed without the plan\'s shared market policy %s; preserved, '
+                          'an explicit compatible successor is required' % (calc, policy))
+        return str(calc), None
+
+    def shared_teacher_compatible(self, e, rows, source):
+        """(True, None) when the day's retained teacher result was produced under the plan's shared market policy on the
+        day's completed ROOT, with its complete shared read: the rows receipt's shared_market_identity (schema, day, the
+        exact calculations-receipt witness of that ROOT) and shared_market_read (same identity, complete), the same
+        ingestion receipt and the same external publication; (False, why) otherwise: a legacy teacher receipt, the plan's
+        rows or a launch run's never satisfy the policy (preserved; an explicit compatible successor is required)."""
+        policy = self.plan.get('shared_market_policy')
+        day = e['day']
+        if source != 'teacher-only step':
+            return False, 'refused: the %s rows carry no shared-market teacher receipt; the plan selects %s' % (source, policy)
+        saved = json.loads((Path(rows) / 'receipt.json').read_bytes())
+        identity, read = saved.get('shared_market_identity') or {}, saved.get('shared_market_read') or {}
+        if not identity:
+            return False, 'refused: a legacy teacher receipt (no shared_market_identity) never satisfies the plan\'s %s' % policy
+        if identity.get('schema') != policy or identity.get('day') != day:
+            return False, 'refused: the teacher receipt\'s shared identity is %s for %s, not %s' % (identity.get('schema'), identity.get('day'), policy)
+        root, why = self.shared_root_of(e)
+        if root is None:
+            return False, why if why.startswith('refused') else 'refused: ' + why
+        want = file_pin(Path(root) / 'calculations-receipt.json')
+        have = identity.get('calculations') or {}
+        if (have.get('sha256'), have.get('bytes')) != (want['sha256'], want['bytes']):
+            return False, 'refused: the teacher receipt binds another ROOT witness (%s) than the day\'s completed ROOT (%s)' % (have.get('sha256'), want['sha256'])
+        if read.get('identity') != identity or not read.get('complete'):
+            return False, 'refused: the teacher\'s shared read is not the complete read of its identity'
+        ing = self.receipt('ingest', day) or {}
+        if (saved.get('ingestion_receipt') or {}).get('sha256') != ing.get('receipt_sha256'):
+            return False, 'refused: the teacher receipt binds another ingestion receipt than the day\'s'
+        ready, _ = self.external_ready(e)
+        attached = (self._attached.get(day) or (None, None))[1] if ready else None
+        section = saved.get('external_section') or {}
+        if (section.get('sha256') or section.get('sha256_expected')) != attached:
+            return False, 'refused: the teacher receipt\'s external publication (%s) differs from the attached day file (%s)' % (
+                section.get('sha256') or section.get('sha256_expected'), attached)
+        return True, None
 
     def teacher_knowledge(self, day, rows_path, source):
         """Publish every measured component/pair result; per-cursor teacher evidence stays on its owning box. A new summary
@@ -2565,6 +2662,10 @@ def main():
                                          'CPUs of the held lane, budgets, completion policy); saved in the plan when given at '
                                          'the first start, else <run>/jev-runtime.json is read; absent = Jev waits')
     p.add_argument('--jev-brain', help='Jev\'s brain directory on the box (default %s)' % JEV_BRAIN)
+    p.add_argument('--shared-market-policy', choices=(SHARED_MARKET_POLICY,),
+                   help='the synchronized shared market input of a NEW run (Greg, 2026-10-07): saved with the plan at its '
+                        'first start; every ROOT runs --bedrock on under it and every teacher reads it; a completed legacy '
+                        'ROOT or teacher result never satisfies it (preserved; an explicit compatible successor is required)')
     p.add_argument('--previous-classroom', help='the run\'s first arm day: PREVIOUS = this <root>/work/classroom '
                                                 '(default: the latest earlier classroom day on the box)')
     p.add_argument('--disk-floor-gb', type=float, default=100.0)
