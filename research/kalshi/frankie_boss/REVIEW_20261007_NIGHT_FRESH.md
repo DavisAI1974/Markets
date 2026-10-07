@@ -695,3 +695,112 @@ Checks:
 - `bash -n`: ok on `frankie_box_progress.sh` and `frankie_box_experiment.sh`.
 - `git diff --check d8eb215..2666e17`: clean.
 - Nothing executed.
+
+## Fifth follow-up, 2026-10-07 night (session 2): `0bb2698..e243b87`
+
+Reviewer: ccode_review, under the same go. This pass is READ-ONLY: no fixes, no git writes, NO RUNS. The account calls
+were read-only:
+- `get_presigned_url` x2: the 20231018 day file and its receipt on S3, fetched with curl, checked locally, then deleted.
+
+The only file write is this section.
+
+### Verdict
+
+**APPROVED for integration (source only).** Nothing here breaks an existing contract.
+
+**The one-day E2E on 20231018 should NOT start until E-1 and E-2 are resolved.**
+- E-1 is a small code item.
+- E-2 is Greg's own precondition for the day files and is unmet on 20231018.
+
+### Required before the E2E
+
+**E-1 (owner ccode_step8). The ROOT can start on the OLD attached day file when the S3 swap does not complete.**
+- The happy path is clean:
+  - `external_then_line` runs `Run.external` synchronously before `root_enqueue`;
+  - with S3 `present`, `external_from_s3` fetches the receipt and the file, checks sha256, bytes, trading day and
+    `check_day_file`;
+  - it moves the attached pair aside (never deleted), hard-links the S3 pair in, resets `_attached` and
+    `_day_file_sha`, and moves the brain's `20231018-day-file` entry aside;
+  - nothing of this run has used the old file yet, so `used` is empty.
+  - The ROOT, teacher and classroom then all read bfce6229.
+- Where it fails: `root_enqueue` is called whatever `external` returned, and `Run.external_ready` only checks that SOME
+  file is attached beside the ingest. The box still has fed74484 attached.
+- Failure paths: any of these three lets the ROOT enter the line on fed74484:
+  - (a) a transient S3 fetch failure (`waiting`);
+  - (b) an integrity refusal of the S3 file;
+  - (c) a dispatch whose presigned map lacks the new `getprefix:.../frankie/day_external/20231018/` listing, which
+    gives `s3.status == 'unknown'` and makes the step simply reuse the attached file.
+- Consequences:
+  - The teacher and classroom then use fed74484.
+  - A later external retry finds the ROOT finished, keeps the old file and records `s3_day_file_differs_after_use`.
+  - Visible, but the day runs on the superseded file.
+  - In case (b), a day file that failed integrity on S3 never stops the day.
+- Minimal fix: `external_ready` returns `(False, why)` while this run's own external step receipt for the day is
+  `waiting`, `refused` or `failed`, or carries `s3.status in ('present', 'integrity')` without `action == 's3'` or
+  `same_as_attached`.
+- Operator check for this dispatch: use the presign string `ACTION=plan` prints at e243b87 (it carries the new
+  `getprefix`). Before any teacher result, confirm that the external receipt reads `done`, `action=s3`, sha256 bfce6229.
+
+**E-2 (owner: the day-file agent; Greg decides). Point 12 is missing on 20231018, an ingested day, which Greg's rule
+forbids ("no point on any INGESTED day may be missing; fill it before the run").**
+- Checked on S3 (`frankie/day_external/20231018/`):
+  - the file is 35,131,703 bytes, sha256 bfce6229...;
+  - the receipt's sha256 and bytes match the object;
+  - all 20 tables carry the 99 mapping and `event_time_ns`;
+  - no read time is earlier than its event time, none is at or after the halt, no row without an event time sits
+    before 14:00 ET, and read times are non-decreasing;
+  - storage.weekly is as printed through the 2023-10-12 release.
+- But `storage.estimate` holds no 2023 row at all. Its seven rows are the October 2021 and 2022 prints. `missing` names
+  `storage.estimate: 2023-10-12: no archived calendar page with the street estimate`.
+- So the classroom's external section and the teacher read point 12 ("storage estimate vs actual") as the value in
+  force from the 2022-10-13 print, about one year old, as PRESENT. They then report point 12 as `computed` / `used`.
+- That is a stale value presented as the day's point. The publication time is in the key, but no staleness is marked
+  on the point. The day reports would say the point was used.
+- Minimal resolution, either:
+  - fill the 2023 estimates (the refused workflow dispatch, or another archived source) and rebuild the day file;
+  - or Greg accepts point 12 as missing for 2023. In that case the point-12 series should read MISSING when the latest
+    print is not the day's own week's print, with the reason; never a year-old value in force.
+
+### Judged and found sound
+
+- **No PUT over a verified S3 file.**
+  - The workflow presigns a day's two PUT slots only when S3 holds NEITHER object.
+  - Only a definite 404, NoSuchKey or NotFound counts as absent. Any other error presigns nothing for the day and says
+    so.
+  - The pair is never half replaced.
+  - `s3_day_file` reads one object without the other as `integrity`.
+- **HISTORY_FAMILIES** now equals the builder's FAMILIES (as_printed in, consensus out), and run ids are alphanumeric. A
+  named as_printed family must be presigned whole.
+- **Per-point rows in the 99-layer join.**
+  - Each piece's own per-point record is joined: the shared reader, the BOSS teacher's new `external_points`, the
+    classroom, the search, and `not_reported` for the pieces that have no per-point record.
+  - They enter the one `join_inputs` formula, which `late_pieces_changed` uses as well.
+  - The point declaration comes from the day file receipt beside the file the classroom recorded, else the builder
+    constant, with that basis named.
+- **The teacher's `external_points`** is derived from the external section key it built or reused, never recomputed.
+  Without a key it reads `not_built` with the reason, never zeros.
+- **Point 6 is read.** It moved from DEFERRED into POINTS. Only the squeeze 3-day spread is named, under
+  `deferred.dropped`. The S3 file's `missing` still lists that spread, and the dropped pattern routes it to `dropped`,
+  not to a missing point. Point 6's single row sits at 14:00 ET (`default_1400`), so earlier Dipole rows read it
+  MISSING as not yet published.
+- **Plan fingerprint.** The presign items are not part of the plan, so the digest is unchanged.
+
+### Non-blocking
+
+- **E-3.** The S3 file was built from a working tree, not from HEAD:
+  - its receipt reads `markets_sha=worktree-on-af168c2d`;
+  - its `frankie_day_external.py` sha256 is 404e536d, which predates 767346a.
+  HEAD's builder would no longer list the squeeze spread, nor the fetch gap keyed 2023-10-19 (after the day; a listed
+  gap, not a leak). The file is not reproducible byte for byte from HEAD. Rebuild under a commit when convenient.
+- **E-4.** A saved plan whose `external_family_history_runs` names `consensus` now fails `load_plan` (SystemExit). This
+  only matters for resuming an older run that used it.
+- **E-5.** In `external_from_s3`, the brain move-aside triggers on ANY ValueError from `brain_stage`. If the entry
+  directory is absent, `os.rename` raises an uncaught `FileNotFoundError`, which surfaces as the step's exception.
+  Narrow it to the "already holds different stage knowledge" case.
+
+Checks:
+- AST parse without imports: the 10 changed `.py` files at e243b87 parse.
+- `bash -n deploy/aws/box/frankie_box_experiment.sh`: ok.
+- `frankie_box_run.yml`: parses as YAML.
+- `git diff --check 0bb2698..e243b87`: clean.
+- The S3 checks above, read-only.
