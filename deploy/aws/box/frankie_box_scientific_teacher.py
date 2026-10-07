@@ -134,14 +134,51 @@ def open_class(reason):
     return 'open_other', 'listed by the claims builder with its own reason'
 
 
+BINDING_IDENTITY_SCHEMA = 'FRANKIE_BINDING_IDENTITY_V2'
+_IDENTITY_PARTS = ('status', 'entry_ids', 'sources', 'inputs', 'commands', 'recorded_outputs', 'calculations')
+
+
 def binding_identity(binding):
-    """What makes a reproduction binding the same binding: its status, entry ids and source pins (path, revision,
-    sha256), whether it is the tables' shape (entries with sources) or a lessons' projection (a flat sources list)."""
+    """The COMPLETE semantic identity of a reproduction binding (BIND-R): status, entry ids, source pins, INPUT pins
+    (committed with revision/sha256, others by path and status), each entry's command (entry point) and its comparison
+    declarations (recorded outputs) and calculation. From the tables' shape (entries) every part is established; a
+    lessons' projection carrying `identity` (this schema) is read as it is; an OLDER projection (flat sources only)
+    yields an identity that SAYS which parts are unestablished (complete=False) so no consumer infers equivalence from
+    the parts that happen to be present."""
     if not isinstance(binding, dict):
         return None
-    sources = [s for e in binding.get('entries') or [] for s in e.get('sources') or []] or list(binding.get('sources') or [])
-    return dict(status=binding.get('status'), entry_ids=sorted(binding.get('entry_ids') or []),
-                sources=sorted((str(s.get('path')), str(s.get('revision')), str(s.get('sha256'))) for s in sources))
+    if isinstance(binding.get('identity'), dict) and binding['identity'].get('schema') == BINDING_IDENTITY_SCHEMA:
+        return binding['identity']
+    entries = binding.get('entries')
+    if isinstance(entries, list):
+        sources = [s for e in entries for s in e.get('sources') or []]
+        inputs = [dict(path=str(i.get('path')), status=str(i.get('status')), revision=i.get('revision'), sha256=i.get('sha256'))
+                  for e in entries for i in e.get('inputs') or []]
+        commands = {str(e.get('id')): e.get('entry') for e in entries}
+        recorded = {str(e.get('id')): e.get('recorded_outputs') or [] for e in entries}
+        calculations = {str(e.get('id')): e.get('calculation') for e in entries}
+        unestablished = []
+    else:
+        sources = list(binding.get('sources') or [])
+        inputs, commands, recorded, calculations = None, None, None, None
+        unestablished = ['inputs', 'commands', 'recorded_outputs', 'calculations']
+    identity = dict(schema=BINDING_IDENTITY_SCHEMA, status=binding.get('status'), entry_ids=sorted(binding.get('entry_ids') or []),
+                    sources=sorted((str(s.get('path')), str(s.get('revision')), str(s.get('sha256'))) for s in sources),
+                    inputs=sorted(inputs, key=lambda d: (d['path'], d['status'], str(d['revision']), str(d['sha256']))) if inputs is not None else None,
+                    commands=commands, recorded_outputs=recorded, calculations=calculations,
+                    complete=not unestablished, unestablished=unestablished)
+    return identity
+
+
+def binding_identities_differ(retained, current):
+    """(differs, unestablished): differs when every established part of both identities is compared and any differs;
+    unestablished names the parts the retained identity cannot establish (an older projection), which are NOT inferred
+    equal: a consumer treats an unestablished identity as 'equivalence not established', never as equal."""
+    if retained is None or current is None:
+        return True, list(_IDENTITY_PARTS)
+    unestablished = list(retained.get('unestablished') or [])
+    differs = any(retained.get(part) != current.get(part) for part in _IDENTITY_PARTS if part not in unestablished)
+    return differs, unestablished
 
 
 def current_binding(claim, HC):
@@ -151,8 +188,17 @@ def current_binding(claim, HC):
     binding, reform = HC.reproduction_of(claim['id']), HC.reformulation_of(claim['id'])
     superseded = {}
     retained = claim.get('reproduction')
-    if retained is not None and binding_identity(retained) != binding_identity(binding):
-        superseded['reproduction'] = dict(retained=binding_identity(retained), current=binding_identity(binding))
+    if retained is not None:
+        differs, unestablished = binding_identities_differ(binding_identity(retained), binding_identity(binding))
+        if differs:
+            superseded['reproduction'] = dict(status='superseded', retained=binding_identity(retained),
+                                              current=binding_identity(binding))
+        elif unestablished:
+            superseded['reproduction'] = dict(status='equivalence_not_established', unestablished=unestablished,
+                                              retained=binding_identity(retained), current=binding_identity(binding),
+                                              rule='the retained binding identity is incomplete (an older projection): the '
+                                                   'established parts agree, the rest is not inferred; the current binding '
+                                                   'is used and nothing read against the retained one is established')
     retained_reform = claim.get('reformulation')
     if retained_reform is not None and retained_reform != reform:
         superseded['reformulation'] = dict(retained=retained_reform, current=reform)
@@ -758,7 +804,7 @@ def test(claims_doc, days, records_dir=None, records_selection=None):
                 original_calculation_reproduction=reproduction,
                 binding_tables_sha256=HC.binding_tables_sha256(), retained_binding_superseded=superseded,
                 reproduction_binding=dict(status=binding['status'], entry_ids=binding.get('entry_ids') or [],
-                                          reason=binding.get('reason'),
+                                          reason=binding.get('reason'), identity=binding_identity(binding),
                                           sources=[dict(path=s['path'], revision=s['revision'], sha256=s['sha256'],
                                                         catalog_id=s.get('catalog_id'))
                                                    for e in binding.get('entries') or [] for s in e.get('sources') or []],
