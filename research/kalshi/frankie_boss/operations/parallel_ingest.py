@@ -52,6 +52,7 @@ from research.kalshi.frankie_boss.compact_conformance_reader import CompactConfo
 from research.kalshi.frankie_boss.mbo_resume_state import export_adapter_state, restore_adapter_state
 from research.kalshi.frankie_boss.source_conformance import SourceCompletion, SourceConformanceDriver
 from research.kalshi.frankie_boss.verified_journal_reader import canonical_tagged_bytes
+from research.kalshi.frankie_boss.operations import ingest_cpus
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import ADAPTER_REVISION, InstrumentBook, V4MboAdapter
 
 PLACEHOLDER = 'f' * 64
@@ -124,6 +125,55 @@ def _state(chain, adapter, sessions, cursor, pickles):
                 sessions=[[iid, session] for iid, session in sessions.items()])
 
 
+def prepared_sources(paths, members, pin, dbn, zstd, stack, *, event=None):
+    """[(stream, metadata)] in member order, the stream decompressed and positioned after its DBN metadata, exactly as
+    the serial preparation (mbo_source._verified_copy, _decompressed, _metadata per member, one member after another)
+    leaves them. The members are prepared side by side on threads, each pinned to its own worker CPU of the booking
+    (Greg, 2026-10-07 night: "anything using a cpu"; the copy, sha256 and zstd stream release the GIL), and every
+    member is verified (bytes and sha256 against the manifest) and decompressed BEFORE this returns: no record of any
+    member is read before every member is proven, as before. mbo_source.py (the pinned extractor) is not edited; its
+    own functions do the work. The first failure in member order is raised after every thread ended and every
+    temporary file was closed."""
+    from concurrent.futures import ThreadPoolExecutor
+    members = list(members)
+    cpus = ingest_cpus.placement()['workers'] or ingest_cpus.lane()
+    started = time.perf_counter()
+
+    def one(index):
+        ingest_cpus.pin_thread(cpus[index % len(cpus)])
+        own = ExitStack()
+        try:
+            snapshot = mbo_source._verified_copy(paths[index], members[index], own)
+            stream = mbo_source._decompressed(snapshot, zstd, own)
+            metadata = mbo_source._metadata(stream, pin, dbn)
+        except BaseException:
+            own.close()
+            raise
+        return own, stream, metadata
+
+    with ThreadPoolExecutor(max_workers=max(1, len(members)), thread_name_prefix='ingest-source') as pool:
+        futures = [pool.submit(one, index) for index in range(len(members))]
+    outcomes, first_error = [], None
+    for future in futures:
+        try:
+            outcomes.append(future.result())
+        except BaseException as error:  # noqa: BLE001 - re-raised below after every member's files are closed
+            outcomes.append(None)
+            first_error = first_error or error
+    if first_error is not None:
+        for outcome in outcomes:
+            if outcome is not None:
+                outcome[0].close()
+        raise first_error
+    for own, _, _ in outcomes:
+        stack.enter_context(own)
+    if event is not None:
+        event(dict(phase='sources_prepared', members=len(members), seconds=round(time.perf_counter() - started, 3),
+                   threads=len(members), cpus=[cpus[i % len(cpus)] for i in range(len(members))],
+                   rule='every member verified (bytes, sha256) and decompressed side by side before any record is read'))
+    return [(stream, metadata) for _, stream, metadata in outcomes]
+
+
 def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_names, evolve=True,
              segment_records=SEGMENT_RECORDS, event=None, opening_descriptor=None):
     """The decoded records of the trading day, in order, plus (evolve) the saved states. Cuts the day exactly as
@@ -138,9 +188,9 @@ def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_
     chain, sessions, opening_result = RecordPrefixChain(scope), {}, None
     started, since = time.perf_counter(), 0
     with ExitStack() as stack:
-        snapshots = [mbo_source._verified_copy(path, member, stack) for path, member in zip(paths, scope.members)]
-        streams = [mbo_source._decompressed(snapshot, zstd, stack) for snapshot in snapshots]
-        metadata = [mbo_source._metadata(stream, pin, dbn) for stream in streams]
+        prepared = prepared_sources(paths, scope.members, pin, dbn, zstd, stack, event=event)
+        ingest_cpus.pin_parent()          # the causal pass on the parent CPU (the prep threads ran on the worker CPUs)
+        streams, metadata = [p[0] for p in prepared], [p[1] for p in prepared]
         for index, (stream, (_, ts_out), member) in enumerate(zip(streams, metadata, scope.members)):
             name = source_names[index]
             iterator = fast_mbo_decode.records(stream, pin, ts_out, dbn)

@@ -17,8 +17,8 @@ The ingest day process runs under `taskset -c <its booking>` (frankie_box_cores.
                    calling thread's affinity at construction, so it is built inside this context and the parent is
                    pinned back after;
   pinned_pool()    a fork pool pinned one worker per CPU that redoes a dead worker's task and continues with one worker
-                   fewer (frankie_box_boss_session._PinnedPool, imported); None when the helper cannot be imported (the
-                   caller keeps its plain pool, with the reason noted);
+                   fewer (frankie_box_boss_session._PinnedPool, imported); a plain fork pool with the reason when the
+                   helper cannot be imported;
   resilient()      a call retried with one worker fewer when its process pool broke (BrokenProcessPool: a worker died);
                    for pure, re-runnable calls only (the conformance drains: the same inputs, the same claim).
   record()         the CPU map for the progress stream (never the receipt: the receipts' fields are unchanged).
@@ -148,14 +148,66 @@ def lane_affinity():
             pass
 
 
+class _PlainTask:
+    __slots__ = ('result',)
+
+    def __init__(self, result):
+        self.result = result
+
+    def ready(self):
+        return self.result.ready()
+
+
+class _PlainPool:
+    """The fallback when the pinned pool helper cannot be imported: a fork pool on the inherited affinity (the booking),
+    the same submit / get / ready interface, no recovery (the reason is noted by the caller)."""
+
+    def __init__(self, cpus, label, note=None):
+        import multiprocessing
+        self.label, self.workers_lost, self.tasks_redone = label, 0, 0
+        self.started_workers = max(1, len(cpus))
+        self.pool = multiprocessing.get_context('fork').Pool(self.started_workers)
+
+    @property
+    def workers(self):
+        return self.started_workers
+
+    def submit(self, fn, args):
+        return _PlainTask(self.pool.apply_async(fn, (args,)))
+
+    def get(self, task):
+        return task.result.get()
+
+    def close(self):
+        self.pool.close()
+        self.pool.join()
+
+    def terminate(self):
+        self.pool.terminate()
+        self.pool.join()
+
+
 def pinned_pool(cpus, label, note=None):
     """A fork pool pinned one worker per CPU with dead-worker recovery (frankie_box_boss_session._PinnedPool: a lost task
     is submitted again with its own arguments, the pool continues with one worker fewer, the last tasks run in the
-    caller), or None when the helper is unavailable. submit(fn, arg) -> task; get(task) -> fn(arg)'s result."""
+    caller). submit(fn, arg) -> task; task.ready(); get(task) -> fn(arg)'s result; close(); workers. When the helper
+    cannot be imported, the plain fork pool on the booking (no recovery), with `fallback` set to the reason."""
     S = _session()
-    if S is None or not hasattr(S, '_PinnedPool') or not cpus:
-        return None
-    return S._PinnedPool(list(cpus), label, note=note)
+    if S is not None and hasattr(S, '_PinnedPool') and cpus:
+        pool = S._PinnedPool(list(cpus), label, note=note)
+        pool.fallback = None
+        return pool
+    pool = _PlainPool(list(cpus), label, note=note)
+    pool.fallback = _HELPER_WHY or 'no pinned pool helper; plain fork pool on the booking'
+    return pool
+
+
+def pin_thread(cpu):
+    """Pin the calling thread to one CPU (placement only; left as it was when refused)."""
+    try:
+        os.sched_setaffinity(0, {cpu})
+    except (AttributeError, OSError, ValueError):
+        pass
 
 
 def resilient(call, workers, note=None, *, label='pool', retries_at_one=2):

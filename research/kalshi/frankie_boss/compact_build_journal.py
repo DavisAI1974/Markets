@@ -57,7 +57,8 @@ class CompactBuildJournal:
     the trees already in hand, inserted and read back the way the first run's journal stack did.
     """
 
-    def __init__(self, path, *, block_bytes=MAX_BYTES // 2, workers=0, block_rows=MAX_ROWS, cpus=None, note=None):
+    def __init__(self, path, *, block_bytes=MAX_BYTES // 2, workers=0, block_rows=MAX_ROWS, cpus=None, note=None,
+                 executor=None):
         """workers > 0 encodes blocks (order dedup, gzip) on that many spawned processes while the
         parent stays on the causal sequence; blocks are inserted in order and read back, as the
         first run's journal stack did. workers == 0 encodes inline. A box is cut at `block_rows`
@@ -72,7 +73,13 @@ class CompactBuildJournal:
         not yet inserted is encoded again from its own rows (encode_block is pure: the same blob),
         then inserted in the same order; with no encoder left the blocks are encoded inline.
         `note(dict)` hears each loss. The pool ends at the seal (no append after it), so the
-        conformance reader that follows never shares the CPUs with an idle encoder pool."""
+        conformance reader that follows never shares the CPUs with an idle encoder pool.
+
+        `executor`: a pool the caller owns (submit(fn, arg) -> task, task.ready(), get(task), workers;
+        operations/ingest_cpus.pinned_pool), used instead of a pool of this journal's own: the
+        parallel writer's pass 3 encodes its blocks on the same pinned workers that replay the
+        segments, so no CPU idles between the passes. Its recovery is its own; blocks are still
+        inserted strictly in submission order. The caller closes it."""
         if type(block_rows) is not int or not 0 < block_rows <= MAX_ROWS:
             raise ValueError(f'rows per box must be an integer in 1..{MAX_ROWS}')
         self.path = Path(path)
@@ -80,7 +87,8 @@ class CompactBuildJournal:
         self.block_bytes, self.block_rows = block_bytes, block_rows
         self.appends = 0
         self._rows, self._trees, self._pending_bytes, self._pending_previous = [], [], 0, GENESIS_HASH
-        self.workers = int(workers)
+        self.executor = executor
+        self.workers = int(workers) if executor is None else 0
         self.note = note
         self.encoder_cpus = list(cpus or [])[:self.workers] if self.workers > 0 else []
         self.workers_started, self.workers_lost, self.blocks_redone = self.workers, 0, 0
@@ -121,7 +129,13 @@ class CompactBuildJournal:
                            rule='a dead encoder never stops the ingest: the blocks not yet inserted are encoded again '
                                 'from their own rows and inserted in order (same blobs); no encoder left: inline'))
 
+    @property
+    def _width(self):
+        return self.executor.workers if self.executor is not None else self.workers
+
     def _submit(self, rows):
+        if self.executor is not None:
+            return self.executor.submit(_encode_rows, rows)
         if self._pool is None:
             done = Future()
             done.set_result(_encode_rows(rows))
@@ -222,12 +236,13 @@ class CompactBuildJournal:
     def _collect(self, *, all_of_them):
         """Insert finished worker blocks in submission order; the queue holds at most 2 x workers."""
         while self._inflight:
-            limit = 0 if all_of_them else 2 * max(1, self.workers)
+            limit = 0 if all_of_them else 2 * max(1, self._width)
             entry = self._inflight[0]
-            if not (len(self._inflight) > limit or entry[0].done()):
+            ready = entry[0].done() if isinstance(entry[0], Future) else entry[0].ready()
+            if not (len(self._inflight) > limit or ready):
                 return
             try:
-                blob, cpu = entry[0].result()
+                blob, cpu = entry[0].result() if isinstance(entry[0], Future) else self.executor.get(entry[0])
             except BrokenProcessPool as error:
                 self._recover(error)            # every in-flight block (this one included) submitted again, in order
                 continue
@@ -240,7 +255,7 @@ class CompactBuildJournal:
         if not self._rows:
             return
         start, count, head = self._rows[0][0], len(self._rows), self._rows[-1][3]
-        if self._pool is None:
+        if self._pool is None and self.executor is None:
             self._collect(all_of_them=True)      # blocks still in flight from a pool that lost every worker go first, in order
             trees = self._trees if all(tree is not None for tree in self._trees) else None    # a spliced row: the encoder parses the body
             self._insert(start, count, encode_block(self._rows, trees), self._pending_previous, head)
