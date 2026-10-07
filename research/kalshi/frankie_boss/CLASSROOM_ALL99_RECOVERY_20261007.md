@@ -444,3 +444,20 @@ us-east-2; the 8.8 GB journal was not read):**
   option (not built) is to read the ROOT's native member ledger in a second process beside the pass, keyed by ledger
   ordinal and GROUP_CLOSE cursor, with the source order unchanged; that would use the idle second lane once it is booked
   through the CPU ledger (ccode_step8's booking, not this piece).
+
+### 2026-10-07 night, session 2 (continued): the cutoff on the native entry arithmetic (Greg, binding for the one-day run)
+
+- Limits: wall time 60 minutes of native entry work (its own time inside the pass, closing the rows, the pairs) and 48 GB
+  resident on the classroom process. Defaults in `NATIVE_CUTOFF_DEFAULTS`; settable by `FRANKIE_NATIVE_CUTOFF_SECONDS`,
+  `FRANKIE_NATIVE_CUTOFF_RSS_GB`, `FRANKIE_NATIVE_CUTOFF_CHECK_EVERY` (the plan sets them for the step). A value that is
+  not a positive number leaves the default and is listed. Recorded in `received.native_cutoff` and
+  `native_entries.cutoff_limits`, reached or not.
+- Checked every 10,000 pictures in the pass (`/proc/self/statm` plus the accumulated time) and before every series
+  after it.
+- When reached: feeding stops. What it holds is computed over the Dipole rows it closed. `native_entries.status = 'cutoff'`
+  with `native_entries.cutoff`: which limit, the phase, elapsed seconds, resident bytes, the adapter cursor reached and
+  the Dipole rows closed. Every series not computed is listed `unavailable: cutoff` (names in the pinned file, counts
+  on the receipt), as are the rows not covered. Nothing is zero and nothing is reported done. An entry with computed series reads
+  computed, with `rows_covered` and the cutoff on its computation. An entry with none reads unavailable: cutoff.
+- A cutoff is a named limit, not an integrity failure. The Dipole values, the other twelve entries' use, the answers and
+  the external points are unaffected.

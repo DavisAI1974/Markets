@@ -234,7 +234,7 @@ def coverage_disposition(report, *, journal_count=None, record_count=None):
                                 'not a new observation; integrity and identity failures raise separately'))
 
 
-def market_context(visible, timeline, *, save_requested):
+def market_context(visible, timeline, *, save_requested, native_limits=None):
     """Read the complete shared view once; retain full pictures at existing evidence anchors.
 
     Missing-coverage rule (Greg, 2026-10-07): the read exhausts the ordered source, and whatever
@@ -282,8 +282,9 @@ def market_context(visible, timeline, *, save_requested):
     # The six native entries as operands (Greg, 2026-10-07 night: "We want 18 of 18"): their values are taken on this
     # same pass, in source order, at their own cursors; computed against the Dipole rows after the pass (finish()).
     try:
+        # native_limits: the cutoff (native_cutoff_limits; None = the defaults), recorded on the result
         native, native_setup = _NativeEntryArithmetic(_evidence(visible)['components'], getattr(timeline, 'native_carriers', None),
-                                                      getattr(timeline, 'layers', None) or {}), None
+                                                      getattr(timeline, 'layers', None) or {}, limits=native_limits), None
     except Exception as error:  # noqa: BLE001 - blocks only the native entry arithmetic; recorded, never a measurement
         native, native_setup = None, 'setting up: %s: %s' % (type(error).__name__, error)
     iterator = timeline.iter_pictures()
@@ -674,6 +675,53 @@ IDENTITY_RULE = ('instrument_id and raw_symbol are identities, not signals: reco
                  'and every change (cursor, before, after) in native-entry-arithmetic.json; no numeric series or cell')
 
 
+# The cutoff (Greg, 2026-10-07 night, binding for the one-day run): the native entry arithmetic stops at a wall-time or a
+# resident-memory limit, keeps what it completed, and lists the rest unavailable: cutoff. A named limit, never an integrity
+# failure; the rest of the classroom is not affected. Settable through the environment (the plan sets it for the step).
+NATIVE_CUTOFF_DEFAULTS = dict(seconds=3600.0, rss_gb=48.0, check_every=10000)
+NATIVE_CUTOFF_ENV = dict(seconds='FRANKIE_NATIVE_CUTOFF_SECONDS', rss_gb='FRANKIE_NATIVE_CUTOFF_RSS_GB',
+                         check_every='FRANKIE_NATIVE_CUTOFF_CHECK_EVERY')
+NATIVE_CUTOFF_RULE = ('the native entry work (its own time inside the pass, closing the rows and the pairs after it) is '
+                      'checked every check_every pictures in the pass and before every series after it: at the wall-time '
+                      'or resident-memory limit it stops feeding, computes what it holds over the Dipole rows it closed, '
+                      'and lists every series not computed as unavailable: cutoff (never zero, never done)')
+
+
+def native_cutoff_limits(environ=None):
+    """The cutoff limits from the environment (NATIVE_CUTOFF_ENV), else NATIVE_CUTOFF_DEFAULTS; each with its source. A
+    value that is not a positive number is not used: the default stands and the given value is listed."""
+    environ = environ or {}
+    out, listed = dict(rule=NATIVE_CUTOFF_RULE, env=dict(NATIVE_CUTOFF_ENV), source={}), []
+    for key, default in NATIVE_CUTOFF_DEFAULTS.items():
+        raw = environ.get(NATIVE_CUTOFF_ENV[key])
+        value, source = default, 'default'
+        if raw not in (None, ''):
+            try:
+                given = float(raw)
+            except ValueError:
+                given = None
+            if given is not None and given > 0:
+                value, source = (int(given) if key == 'check_every' else given), 'env ' + NATIVE_CUTOFF_ENV[key]
+            else:
+                listed.append(dict(env=NATIVE_CUTOFF_ENV[key], given=raw, reason='not a positive number; the default stands'))
+        out[key], out['source'][key] = value, source
+    out['check_every'] = max(1, int(out['check_every']))
+    out['rss_bytes'] = int(out['rss_gb'] * 2 ** 30)
+    out['listed'] = listed or None
+    return out
+
+
+def _rss_bytes():
+    """(resident bytes of this process now, basis): /proc/self/statm, else the peak from getrusage."""
+    import os
+    try:
+        with open('/proc/self/statm') as handle:
+            return int(handle.read().split()[1]) * os.sysconf('SC_PAGE_SIZE'), 'current resident (/proc/self/statm)'
+    except (OSError, ValueError, IndexError):
+        import resource
+        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024, 'peak resident (getrusage ru_maxrss)'
+
+
 class _NumSeries:
     __slots__ = ('code', 'value', 'reason', 'rec', 'rows', 'codes', 'values', 'reasons', 'fresh', 'known', 'first', 'last',
                  'low', 'high', 'nonpresent', 'nulls')
@@ -696,8 +744,10 @@ class _NativeEntryArithmetic:
     change. The per-row ledgers are stored as changes only (array-backed), materialized one series at a time at finish().
     """
 
-    def __init__(self, components, carriers, layers):
+    def __init__(self, components, carriers, layers, limits=None):
         self.status, self.reason = None, None
+        self.limits = limits or native_cutoff_limits({})
+        self.cutoff, self.pictures, self.finish_clock = None, 0, None
         self.components = [(c['name'], c['observations']) for c in components]
         roster = [int(p['cursor']) for p in (self.components[0][1] if self.components else ())]
         for name, observations in self.components:
@@ -740,6 +790,9 @@ class _NativeEntryArithmetic:
     def note(self, picture, evidence):
         if self.status is not None:
             return
+        self.pictures += 1
+        if self.pictures % self.limits['check_every'] == 0 and self._check('pass'):
+            return                                      # cutoff: stop feeding; what was closed is computed at finish()
         at = picture.get('at') or {}
         cursor = at.get('adapter_cursor')
         self.at_cursor = cursor if type(cursor) is int else None     # facts name the picture's own cursor (None: none)
@@ -879,6 +932,27 @@ class _NativeEntryArithmetic:
                     self.unplaced['null_leaf_before_any_value'] = self.unplaced.get('null_leaf_before_any_value', 0) + 1
         seen.update(leaves)
 
+    def _check(self, phase):
+        """True when the cutoff is (or was already) reached; records which limit, the elapsed native work, the memory and
+        the cursor reached. Elapsed = this work's own time in the pass plus the time since finish() began."""
+        import time
+        if self.cutoff is not None:
+            return True
+        elapsed = self.note_seconds + (time.monotonic() - self.finish_clock if self.finish_clock is not None else 0.0)
+        rss, basis = _rss_bytes()
+        hit = ('wall_time' if elapsed >= self.limits['seconds'] else
+               'resident_memory' if rss >= self.limits['rss_bytes'] else None)
+        if hit is None:
+            return False
+        self.cutoff = dict(limit=hit, phase=phase, elapsed_seconds=round(elapsed, 3), rss_bytes=rss, rss_basis=basis,
+                           cursor_reached=self.last_cursor, dipole_rows_closed=self.k, dipole_rows=self.n,
+                           pictures_fed=self.pictures, limits={k: self.limits[k] for k in ('seconds', 'rss_gb', 'check_every')})
+        self.status = 'cutoff'
+        self.reason = ('cutoff (%s) in the %s after %.1f s of native work at %.2f GB resident; adapter cursor reached %s, '
+                       '%d of %d Dipole rows closed; a named limit, not an integrity failure'
+                       % (hit, phase, elapsed, rss / 2 ** 30, self.last_cursor, self.k, self.n))
+        return True
+
     def _identity(self, instrument, leaf, value):
         slot = self.identities.setdefault(instrument, {}).get(leaf)
         if slot is None:
@@ -922,11 +996,13 @@ class _NativeEntryArithmetic:
     def finish(self):
         """Close the rows no picture reached (lawful: every picture had a smaller cursor), then compute."""
         import time
-        started = time.monotonic()
+        started = self.finish_clock = time.monotonic()
         if self.status is None:
             while self.k < self.n:
                 self._close_row()
-        result = self._compute() if self.status is None else _native_unavailable_entries(self.status, self.reason)
+        # a cutoff in the pass computes what it holds over the rows it closed; a cutoff after it keeps what is done
+        result = (self._compute() if self.status in (None, 'cutoff')
+                  else _native_unavailable_entries(self.status, self.reason))
         out = dict(schema=NATIVE_ENTRY_SCHEMA, computation=NATIVE_ENTRY_COMPUTATION, author=AUTHOR, model_calls=0,
                    status=self.status or 'computed', reason=self.reason, entries_computed=list(NATIVE_SIX),
                    dipole_rows=self.n, dipole_components=[name for name, _ in self.components],
@@ -956,6 +1032,10 @@ class _NativeEntryArithmetic:
         out['hot_path_seconds'] = round(self.note_seconds, 3)
         out['pair_threads'] = getattr(self, 'pair_threads', None)
         out['queue_level_cost'] = QUEUE_LEVEL_COST
+        out['cutoff'] = self.cutoff                     # None = no limit reached
+        out['cutoff_limits'] = self.limits
+        out['status'] = self.status or 'computed'       # a cutoff reached after the pass shows here too
+        out['reason'] = self.reason
         out['timing'] = ('hot_path_seconds: note() inside the classroom\'s one ordered pass (part of read.seconds); seconds: '
                          'the per-series materialization and the pairs after the pass')
         return out
@@ -965,13 +1045,14 @@ class _NativeEntryArithmetic:
         from frankie_box_joined_teacher import CATEGORY_LIMIT
         EXT = KX._external_math()
         np = EXT._np()
-        n = self.n
+        n = self.k              # the Dipole rows closed: all of them, or those before a cutoff in the pass
         dipole = {}
         for name, observations in self.components:
+            observations = observations[:n]
             codes = np.array([STATES.index(p['state']) for p in observations], dtype=np.int8)
             values = np.array([float(p['value']) if p['state'] == 'PRESENT' else np.nan for p in observations], dtype=np.float64)
             dipole[name] = (codes, values, EXT._direction(np, codes, values))
-        cursors = np.array(self.cursors, dtype=np.int64)
+        cursors = np.array(self.cursors[:n], dtype=np.int64)
         rows = np.arange(n)
         series = []
 
@@ -1035,12 +1116,26 @@ class _NativeEntryArithmetic:
         # 2026-10-07: use the spare capacity; this stays inside the classroom's own lane affinity.
         import os
         from concurrent.futures import ThreadPoolExecutor
-        jobs = ([(member_series, key) for key in sorted(self.num, key=lambda k: (k[0], str(k[1])))]
-                + [(count_series, key) for key in sorted(self.cnt, key=lambda k: (k[0], str(k[1])))])
+        def not_computed(key, kind):
+            return dict(name=name_of(key), kind=kind, status='unavailable',
+                        reason='cutoff: %s' % self.reason if self.status == 'cutoff' else 'no Dipole row was closed')
+
+        def run(job):
+            function, key, kind = job
+            if n == 0 or self._check('pairs'):
+                return not_computed(key, kind)          # listed, never zero and never done
+            return function(key)
+
+        jobs = ([(member_series, key, 'member_value') for key in sorted(self.num, key=lambda k: (k[0], str(k[1])))]
+                + [(count_series, key, 'events_per_dipole_interval')
+                   for key in sorted(self.cnt, key=lambda k: (k[0], str(k[1])))])
         self.pair_threads = max(1, min(len(os.sched_getaffinity(0)), 16, len(jobs) or 1))
         with ThreadPoolExecutor(max_workers=self.pair_threads) as pool:
-            series.extend(pool.map(lambda job: job[0](job[1]), jobs))
+            series.extend(pool.map(run, jobs))
         for key in sorted(self.cat, key=lambda k: (k[0], str(k[1]))):
+            if n == 0 or self._check('categories'):
+                series.append(not_computed(key, 'category'))
+                continue
             slot = self.cat[key]
             changes = slot['changes']
             item = dict(name=name_of(key), kind='category', values_known=slot['known'], distinct=len(slot['distinct']),
@@ -1079,38 +1174,55 @@ class _NativeEntryArithmetic:
             series.append(item)
         # attribution: a series belongs to every one of the six whose own carrier it is
         entries = {}
+        # after a cutoff in the pass, an absence is measured only over the pictures fed before it
+        partial = ('' if not (self.status == 'cutoff' and (self.cutoff or {}).get('phase') == 'pass') else
+                   '; measured only up to the cutoff (adapter cursor %s), not over the whole day' % self.last_cursor)
         for entry in NATIVE_SIX:
             spec = self.carriers[entry]
-            own, thin = [], []
+            own, thin, stopped = [], [], []
             for s in series:
                 base = s['name'].split('@', 1)[0]
+                if s.get('status') == 'unavailable':
+                    target = stopped                   # a series the cutoff left uncomputed (named in the file)
+                else:
+                    target = None
                 if base.startswith('native.member.row.'):
                     leaf = base[len('native.member.row.'):]
                     if any(leaf == h or leaf.startswith(h + '.') or leaf.startswith(h + '#') or leaf.startswith(h + '[')
                            for h in spec['heads']):
-                        own.append(s['name'])
+                        (target if target is not None else own).append(s['name'])
                 elif base.startswith('native.lifecycle.'):
                     if base[len('native.lifecycle.'):] in spec['sections']:
-                        own.append(s['name'])
+                        (target if target is not None else own).append(s['name'])
                 elif base in PICTURE_CARRIERS.get(entry, ()):
-                    thin.append(s['name'])
+                    (target if target is not None else thin).append(s['name'])
             missing, mine = [], set(own + thin)
-            if spec['heads'] and not any(x.startswith('native.member.') for x in own):
+            # a series the cutoff left uncomputed is not a measured absence: those carriers are listed as cutoff below
+            if spec['heads'] and not any(x.startswith('native.member.') for x in own + stopped):
                 missing.append(dict(carrier='native.member ' + ', '.join(spec['heads']), reason=(
                     'the native member ledger is absent on this ROOT: %s' % self.layers['native.member']['reason']
                     if self.layers['native.member']['status'] != 'present' else
-                    'no member row of this day carried these fields (a measurement over the exhausted ledger)')))
-            if spec['sections'] and not any(x.startswith('native.lifecycle.') for x in own):
+                    'no member row of this day carried these fields (a measurement over the exhausted ledger)' + partial)))
+            if spec['sections'] and not any(x.startswith('native.lifecycle.') for x in own + stopped):
                 missing.append(dict(carrier='native.lifecycle ' + ', '.join(spec['sections']), reason=(
                     'the native lifecycle ledger is absent on this ROOT: %s' % self.layers['native.lifecycle']['reason']
                     if self.layers['native.lifecycle']['status'] != 'present' else
-                    'no lifecycle row of these sections was placed on this day (a measurement)')))
+                    'no lifecycle row of these sections was placed on this day (a measurement)' + partial)))
             for carrier in PICTURE_CARRIERS.get(entry, ()):
-                if not any(x.split('@', 1)[0] == carrier for x in thin):
-                    missing.append(dict(carrier=carrier, reason='no such event or value on this day\'s INPUT pictures (a measurement)'))
+                if not any(x.split('@', 1)[0] == carrier for x in thin + stopped):
+                    missing.append(dict(carrier=carrier, reason='no such event or value on this day\'s INPUT pictures (a measurement)'
+                                        + partial))
+            if stopped:
+                missing.append(dict(carrier='%d series of this entry' % len(stopped), reason='unavailable: cutoff (%s)' % (
+                    (self.cutoff or {}).get('limit') or self.reason)))
+            if self.status == 'cutoff' and n < self.n:
+                missing.append(dict(carrier='Dipole rows %d to %d' % (n, self.n - 1), reason='unavailable: cutoff (%s); the '
+                                    'computed series cover the first %d rows only' % ((self.cutoff or {}).get('limit'), n)))
             form = 'own_rows' if own else ('thin_carrier' if thin else None)
             entries[entry] = dict(use='computed' if form else 'unavailable', form=form,
                                   own_series=own, thin_series=thin, series=len(own) + len(thin),
+                                  not_computed_series=stopped, not_computed=len(stopped),
+                                  rows_covered=n, rows=self.n,
                                   pairs=sum(len(s.get('pairs') or ()) for s in series if s['name'] in mine),
                                   unavailable=missing or None,
                                   picture_carriers={c: PICTURE_SERIES_TEXT[c] for c in PICTURE_CARRIERS.get(entry, ())} or None,
@@ -1121,8 +1233,10 @@ class _NativeEntryArithmetic:
                 entries[entry]['identities'] = dict(leaves=leaves, instruments=sum(
                     1 for item in self.identities.values() if any(leaf in item for leaf in leaves)),
                     rule=IDENTITY_RULE)
-        return dict(series=series, entries=entries, series_count=len(series),
-                    pair_count=sum(len(s.get('pairs') or ()) for s in series),
+        return dict(series=series, entries=entries,
+                    series_count=sum(1 for s in series if s.get('status') != 'unavailable'),
+                    series_not_computed=sum(1 for s in series if s.get('status') == 'unavailable'),
+                    rows_covered=n, pair_count=sum(len(s.get('pairs') or ()) for s in series),
                     identities={str(k): v for k, v in sorted(self.identities.items(), key=lambda kv: str(kv[0]))})
 
 
@@ -1154,11 +1268,11 @@ def native_entries_compact(result):
                 pearson += (p.get('correlation') or {}).get('pearson') is not None
         # counts only (review G-2: the compact view lands three times on the receipt and must stay small); every series
         # name, pair and cell is in the pinned native-entry-arithmetic.json
-        entries[entry] = dict({k: v for k, v in item.items() if k not in ('own_series', 'thin_series')},
+        entries[entry] = dict({k: v for k, v in item.items() if k not in ('own_series', 'thin_series', 'not_computed_series')},
                               own_series=len(item.get('own_series') or ()), thin_series=len(item.get('thin_series') or ()),
                               relations=dict(sorted(relations.items())), pearson_reported=pearson)
     out = dict({k: v for k, v in result.items() if k not in ('series', 'entries', 'identities')}, entries=entries,
-               series_kinds={kind: sum(1 for s in result.get('series') or () if s['kind'] == kind)
+               series_kinds={kind: sum(1 for s in result.get('series') or () if s['kind'] == kind and s.get('status') != 'unavailable')
                              for kind in ('member_value', 'events_per_dipole_interval', 'category')},
                names_at='native-entry-arithmetic.json (every series name, pair, cell and identity; pinned on the receipt)')
     read = dict(out.get('read') or {})
@@ -1175,7 +1289,7 @@ def native_entries_compact(result):
 
 def native_entries_for_component(result, component):
     """Per one Dipole component: each of the six's series paired with it (relation counts, Pearson reported count)."""
-    if not result or result.get('status') != 'computed':
+    if not result or result.get('status') not in ('computed', 'cutoff'):
         return None
     by_name = {s['name']: s for s in result.get('series') or ()}
     out = {}
@@ -1201,17 +1315,21 @@ def _native_file_text(shared_market):
 def native_entries_text(shared_market):
     """The six native entries' arithmetic as the summary answer carries it (or why it was not computed)."""
     compact = shared_market.native_entries_status()
-    if compact.get('status') != 'computed':
+    if compact.get('status') not in ('computed', 'cutoff'):
         return ('Native entry arithmetic (the six native entries that were context) was not computed on this day: %s (%s). '
                 'Their instants stay in the pictures; nothing is filled in.' % (compact.get('status'), compact.get('reason')))
     per_entry = {entry: {k: item.get(k) for k in ('use', 'form', 'own_series', 'thin_series', 'pairs', 'relations',
-                                                   'pearson_reported', 'reason')}
+                                                   'pearson_reported', 'not_computed', 'rows_covered', 'reason')}
                  for entry, item in compact['entries'].items()}
+    stopped = ('' if compact.get('status') != 'cutoff' else
+               ' CUTOFF (a named limit, not an integrity failure): %s. What was not computed is listed unavailable: cutoff, '
+               'never zero and never done.' % json.dumps(compact.get('cutoff'), sort_keys=True, default=str))
     return ('Native entry arithmetic computed by Frankie\'s code (no model) on the six native entries that were context, '
             'against the %d Dipole rows: %s. Series kinds %s. Every series, pair and cell is whole in %s. Values are in '
             'force from their own cursor on, never backfilled; per instrument, never pooled; descriptive, no outcome '
             'claimed (R02).' % (compact.get('dipole_rows') or 0, json.dumps(per_entry, sort_keys=True, default=str),
-                                json.dumps(compact.get('series_kinds'), sort_keys=True), _native_file_text(shared_market)))
+                                json.dumps(compact.get('series_kinds'), sort_keys=True), _native_file_text(shared_market))
+            + stopped)
 
 
 # ------------------------------------------------------------------- the all-99 registry routed into the classroom
@@ -1979,7 +2097,9 @@ def _classroom_use(entry, consumers):
                                  series=native.get('series'), own_series=native.get('own_series'),
                                  thin_series=native.get('thin_series'), pairs=native.get('pairs'),
                                  relations=native.get('relations'), pearson_reported=native.get('pearson_reported'),
-                                 unavailable=native.get('unavailable'),
+                                 unavailable=native.get('unavailable'), not_computed=native.get('not_computed'),
+                                 rows_covered=native.get('rows_covered'), rows=native.get('rows'),
+                                 cutoff=(native_record or {}).get('cutoff'),
                                  file=(consumers.get('native_entries') or {}).get('file')))
     knowledge = consumers.get('knowledge') or {}
     if name == 'anchored_knowledge_manifest' and knowledge.get('stage_knowledge_checks'):

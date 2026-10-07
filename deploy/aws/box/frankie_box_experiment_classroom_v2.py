@@ -520,9 +520,15 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         market_reading = None
         native_entries = dict(schema=K.NATIVE_ENTRY_SCHEMA, status='unavailable',
                               reason='no shared market policy on this ROOT: no picture was read, so no native value was placed')
+        # The cutoff of the native entry arithmetic (Greg, 2026-10-07 night, binding for the one-day run): wall time and
+        # resident memory, from the environment the plan sets for this step, else the defaults (60 min, 48 GB); recorded
+        # here whether or not it is reached. A reached cutoff keeps what was computed and lists the rest; the rest of
+        # the classroom is not affected.
+        native_limits = K.native_cutoff_limits(os.environ)
+        received['native_cutoff'] = native_limits
         if market is not None:
             market_reading = phase('shared_market_context', lambda: K.market_context(
-                visible, market, save_requested=save_requested))
+                visible, market, save_requested=save_requested, native_limits=native_limits))
             if market_reading['identity'] != market.identity:
                 raise ValueError('retained classroom market reading differs from its original source')
             shared_market = K.ClassroomMarketContext(calculations, day, market_reading)
