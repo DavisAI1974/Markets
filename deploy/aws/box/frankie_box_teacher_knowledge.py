@@ -530,13 +530,14 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
                  reused=len(reused), inputs_listed=len(listed),
                  claims_scheduled=len(scheduled), claims_already_tested=len(already_tested),
                  all_reused=created_files == 0, owner_native_evidence=native_ref is not None,
-                 pre_read=pre_read_note,
                  rule='new_result_files counts the result headers this call wrote; none means every claim was already '
                       'tested on this exact manifest or reused: no new scientific result was written. '
                       'completed_result_files includes exact reuses available for publication')
     result = dict(inputs=dict(path=str(input_path), **witness(input_path)), files=files,
                 reused=reused, listed=listed, selection_listed=inputs['selection']['selection_listed'],
-                school_listed=inputs['selection']['school_listed'], late_knowledge=late_knowledge, scope=scope)
+                school_listed=inputs['selection']['school_listed'], late_knowledge=late_knowledge, scope=scope,
+                # what the one shared pre-read did (or why the reads ran on their own); receipt only, additive
+                pre_read=pre_read_note)
     if _successor is not None:
         result.update(schema='FRANKIE_TEACHER_SUCCESSOR_RECEIPT_V1',
                       successor_request=_successor, publication='awaiting_checked_owner_decision',
