@@ -433,6 +433,11 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             raise TeacherSaved('classroom saved every completed operation and its full continuation state')
     def phase(name, operation):
         stop()
+        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+            import frankie_box_stage_progress as _SP
+            _SP.report_phase('classroom: %s' % name, units_done=len(state['phases']), unit='saved operations')
+        except Exception:  # noqa: BLE001
+            pass
         path = phase_directory / (hashlib.sha256(name.encode()).hexdigest() + '.pkl')
         if path.exists():
             retained = _load_raw_state(path)

@@ -499,6 +499,12 @@ def main():
         currentness['school_checked'] = True
         row, reused = BR.write_school_day(a.brain, a.day, data, a.report_number, a.run, school_day=a.school_day)
         file = str(Path(a.brain) / 'school' / row['file'])
+        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+            import frankie_box_stage_progress as _SP
+            _SP.report_phase('school: school file built and filed', units_done=1, units_total=1, unit='school files')
+        except Exception:  # noqa: BLE001
+            pass
+
     receipt = dict(schema=RECEIPT_SCHEMA, run=a.run, day=a.day, status='complete', file=file,
                    index=str(Path(a.brain) / 'school' / 'index.json'), row=row, reused=reused,
                    sections={k: len(v['items']) for k, v in doc['sections'].items()}, missing=len(doc['missing']),

@@ -120,7 +120,12 @@ def wanted_keys(day, keys, history_prefix, prints, eia930_prefix=None, overrides
 
 
 def fetch(keys, url_map, src, listing):
-    for k in keys:
+    for i, k in enumerate(keys):
+        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+            import frankie_box_stage_progress as _SP
+            _SP.report_phase('external: fetching day-history objects', units_done=i, units_total=len(keys), unit='objects', every=10)
+        except Exception:  # noqa: BLE001
+            pass
         dest = src / k
         entry = url_map[k]
         if dest.is_file() and dest.stat().st_size == entry.get('bytes'):
@@ -318,6 +323,12 @@ def main():
             for r in pool.map(build_day, jobs):
                 record['built'].append(r)
                 print(json.dumps(r), flush=True)
+                try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+                    import frankie_box_stage_progress as _SP
+                    _SP.report_phase('external: day files built', units_done=len(record['built']), units_total=len(jobs), unit='days')
+                except Exception:  # noqa: BLE001
+                    pass
+
     elif not run_dir.is_dir():
         raise SystemExit('%s is not an existing run' % run_dir)
     for day in days:

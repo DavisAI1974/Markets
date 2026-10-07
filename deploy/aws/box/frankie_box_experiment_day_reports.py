@@ -2021,6 +2021,11 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
     d.all99 = all99_join(day, d.all99_sources, d.all99_problems, d.all99_lessons_source)
     d.all99_sha256 = d.all99['join_sha256']
     timings['all99_join'] = round(time.monotonic() - started - timings['read_inputs'], 6)
+    try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+        import frankie_box_stage_progress as _SP
+        _SP.report_phase('reports: inputs read and 99-layer join built', units_done=1, units_total=2, unit='boundaries')
+    except Exception:  # noqa: BLE001
+        pass
     reports.mkdir(parents=True, exist_ok=True)
     out, printed, problems = [], [], list(d.school_problems)
     reuse_why = None
@@ -2100,6 +2105,12 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                                 sha256=entry['sha256'], bytes=len(raw), existing=False, supersedes=superseded))
         write_index(reports, index)
         timings['build_and_write'] = round(time.monotonic() - started - timings['read_inputs'] - timings['all99_join'], 6)
+        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+            import frankie_box_stage_progress as _SP
+            _SP.report_phase('reports: reports built and written', units_done=2, units_total=2, unit='boundaries', reports=len(out))
+        except Exception:  # noqa: BLE001
+            pass
+
     for k, text in printed:
         print('=' * 100)
         print(text, end='' if text.endswith('\n') else '\n')

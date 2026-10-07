@@ -1410,6 +1410,11 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         now = time.time()
         timings[name] = round(now - phase_started, 3)
         phase_started = now
+        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+            import frankie_box_stage_progress as _SP
+            _SP.report_phase('meeting: %s done' % name, units_done=len(timings), unit='phases')
+        except Exception:  # noqa: BLE001
+            pass
     raw = exchange_path.read_bytes()
     exchange = json.loads(raw)
     if exchange.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1' or exchange.get('view') != 'frankie':
@@ -1648,6 +1653,12 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
             if result.get('reused_from_progress'):
                 reused.append(item['item_id'])
             items.append(result)
+            try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+                import frankie_box_stage_progress as _SP
+                _SP.report_phase('meeting: items discussed', units_done=len(items) + len(not_discussed), units_total=len(given['items']), unit='items', rounds=result.get('rounds_completed'))
+            except Exception:  # noqa: BLE001
+                pass
+
     except BaseException as error:
         # 6R2-F: an attempt that dies in discussion leaves a terminal record naming the failure; its stderr, evidence
         # and progress files (pending calls marked) stay as they are for the next attempt to carry forward; neither the

@@ -1689,7 +1689,15 @@ def discovery(day, cycle, day_role, staging, parts, context, workers, log):
             jobs.append((problem_id, cell_col, cell_value, y, ordered, seeds, DISCOVERY_NITERATIONS, DISCOVERY_MAXSIZE))
         provenance = {problem_id: {'%s@%d' % f: nominations[(cell, value, y)][f] for f in feats}
                       for problem_id, cell, value, y, feats, _, _, _ in jobs}
-        results = [result for _, result in _run_pending(context, workers, _discovery_job, jobs)]
+        results = []
+        for _, result in _run_pending(context, workers, _discovery_job, jobs):
+            results.append(result)
+            try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+                import frankie_box_stage_progress as _SP
+                _SP.report_phase('search: discovery problems', units_done=len(results), units_total=len(jobs), unit='problems', every=10)
+            except Exception:  # noqa: BLE001
+                pass
+
         if _stop_requested():
             raise SystemExit(75)          # every submitted problem saved its result; resume reuses them
         if len(results) != len(jobs):
@@ -1796,6 +1804,11 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         now = time.time()
         phases[name] = round(phases.get(name, 0.0) + now - phase_started[0], 3)
         phase_started[0] = now
+        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+            import frankie_box_stage_progress as _SP
+            _SP.report_phase('search: %s done' % name, units_done=len(phases), unit='phases')
+        except Exception:  # noqa: BLE001
+            pass
     import numpy as np
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import frankie_box_experiment_transforms as T
@@ -1923,6 +1936,11 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         parts.append(part)
         count += n_rows
         beyond += n_beyond
+        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+            import frankie_box_stage_progress as _SP
+            _SP.report_phase('search: coupling cells', units_done=len(parts), units_total=len(jobs), unit='cell jobs', every=10, rows=count)
+        except Exception:  # noqa: BLE001
+            pass
     if _stop_requested():
         raise SystemExit(75)         # every submitted pair worker has saved; no child is left running
     if len(parts) != len(jobs):

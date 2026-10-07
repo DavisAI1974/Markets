@@ -267,6 +267,11 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         now = time.time()
         phases[name] = round(phases.get(name, 0.0) + now - phase_started[0], 3)
         phase_started[0] = now
+        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+            import frankie_box_stage_progress as _SP
+            _SP.report_phase('teacher: %s done' % name, units_done=len(phases), unit='phases')
+        except Exception:  # noqa: BLE001
+            pass
     if _sha256(receipt_path) != receipt_sha256:
         raise SystemExit('the ingestion receipt differs from the sha256 given')
     phase('verify_ingestion_receipt')

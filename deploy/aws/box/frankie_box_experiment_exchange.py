@@ -1739,6 +1739,11 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     import frankie_box_teacher_knowledge as TK
     accumulated_claim_tests = TK.teach_accumulated(a.day, a.search, a.brain, out / 'scientific-knowledge')
+    try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+        import frankie_box_stage_progress as _SP
+        _SP.report_phase('exchange: accumulated claims tested', units_done=1, units_total=3, unit='boundaries')
+    except Exception:  # noqa: BLE001
+        pass
     notes = {}
     full, view = exchange(a.day, a.run, a.lessons, a.teacher_rows, rules_witness,
                           brain=a.brain, input_path=out / 'learner-knowledge.json', notes=notes)
@@ -1749,12 +1754,22 @@ def main():
         if not ok:
             raise SystemExit(why)
         written[name] = dict(path=str(out / name), sha256=sha256_bytes(data), bytes=len(data), existing=bool(why))
+    try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+        import frankie_box_stage_progress as _SP
+        _SP.report_phase('exchange: exchange and Frankie view written', units_done=2, units_total=3, unit='boundaries')
+    except Exception:  # noqa: BLE001
+        pass
     entry = Path(a.brain) / ('%s-exchange' % a.day)
     manifest_path = entry / 'MANIFEST.json'
     have = json.loads(manifest_path.read_bytes()) if manifest_path.is_file() else {}
     brain_reused = any(e.get('sha256') == written['exchange-frankie.json']['sha256'] for e in have.get('entries') or [])
     if not brain_reused:
         BR.write_exchange_entry(a.brain, a.day, out / 'exchange-frankie.json')
+    try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+        import frankie_box_stage_progress as _SP
+        _SP.report_phase('exchange: brain entry filed', units_done=3, units_total=3, unit='boundaries')
+    except Exception:  # noqa: BLE001
+        pass
     import frankie_box_adviser_market as AM
     shared_market = full['sources'].get('shared_market_context')
     context_path = out / 'shared-market-context.json'

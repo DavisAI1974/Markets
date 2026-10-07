@@ -55,13 +55,21 @@ def progress_path(run_dir, key, stage):
     return progress_dir(run_dir, key) / ('%s.jsonl' % stage)
 
 
-def report_phase(phase, units_done=None, units_total=None, unit=None, **extra):
+_LAST_WRITE = [0.0]
+
+
+def report_phase(phase, units_done=None, units_total=None, unit=None, every=None, **extra):
     """Child side, optional: the stage's own phase and units, written atomically to $FRANKIE_STAGE_PROGRESS (the parent's
     heartbeat reads it on its next line). A no-op outside a Run.child stage; never raises (a probe is never the stage's
-    outcome). Call it at phase boundaries, never per record."""
+    outcome). Call it at phase boundaries, never per record. every=N (seconds): inside a loop, skip the write when the
+    last one is younger than N s, except the last unit (units_done == units_total)."""
     path = os.environ.get(ENV)
     if not path:
         return
+    now = time.monotonic()
+    if every and now - _LAST_WRITE[0] < every and not (units_total is not None and units_done == units_total):
+        return
+    _LAST_WRITE[0] = now
     try:
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)

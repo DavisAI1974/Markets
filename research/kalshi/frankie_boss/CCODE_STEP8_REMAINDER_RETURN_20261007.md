@@ -1123,3 +1123,27 @@ SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED; heartbeat cost and accuracy are 
   - How: wrap it in `try: import frankie_box_stage_progress as SP ... except Exception: pass`. It writes only the stage's
     phase file, never the arithmetic.
   - Optionally one `SP.report_phase(name)` in `frankie_box_experiment_classroom_v2`'s `phase()`.
+
+### 18.6 Units on every stage (the units gap closed)
+
+Each call below is wrapped as `try: import frankie_box_stage_progress as _SP; _SP.report_phase(...) except Exception:
+pass`. It writes only the stage's phase file; a probe never changes a stage. Every stage script runs as
+`python -B <box>/<script>.py`, so the box directory is on its path. In the orchestrator process (day_reports.run called
+in-process by lane_state) the call is a no-op, because no `FRANKIE_STAGE_PROGRESS` is set there.
+
+| Stage | Where | Units |
+|---|---|---|
+| teacher | `frankie_box_experiment_teacher` `phase()` | phases done, the phase name |
+| search | `phase()`; the coupling loop; the discovery loop (the list comprehension became the same loop) | phases; cell jobs done of `len(jobs)` plus rows (every 10 s); discovery problems done of `len(jobs)` (every 10 s) |
+| Granite meeting | `phase()`; after each discussed item | phases; items (discussed + not discussed) of `len(given['items'])`, rounds of the item |
+| external | `fetch()` per object; after each day built | objects of `len(keys)` (every 10 s); days built of `len(jobs)` |
+| exchange | three boundaries: accumulated claims tested, exchange and view written, brain entry filed | boundaries 1-3 of 3 |
+| school | after the school file is built and filed | 1 of 1 |
+| reports | after the 99-layer join; after the reports are written | boundaries 1-2 of 2, reports written |
+| classroom | `frankie_box_experiment_classroom_v2` `phase()` on entry | saved operations done, the operation name |
+| classroom native-entry pass | `frankie_box_classroom_code._check` (the classroom author's call, 18.5) | pictures |
+| Jev | `phase()` (18.2) | phases |
+
+`report_phase` gained `every=N` seconds: inside a loop it skips a write younger than N s, except the last unit.
+
+Checks: AST parse and `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.
