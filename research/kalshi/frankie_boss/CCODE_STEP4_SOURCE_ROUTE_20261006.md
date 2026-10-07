@@ -592,6 +592,21 @@ Propagation gaps the current interfaces do not cover (listed, not built; each wo
 5. A performed reproduction record written against earlier tables is listed, not admitted, by `records_for`; a corrected
    reproduction is new authorized execution, which nothing here performs or implies.
 
+**B2-B5 follow-ups (Codex's review of the return; `2f1d6630`, 2026-10-07).** B2: `_compare_json` keeps the compared
+scope apart from coverage: unaligned members, lists with unrelated positions, argv keys the record lacks and produced-only
+leaves are coverage GAPS (`coverage.gaps`); with any gap the output is `incomplete`, never `matched`; the entry status
+`performed_incomplete` sits between differs and matched in `STATUSES`; no tolerance or verdict. B3: `plan_document()` builds
+the complete declared plan purely (command, pins, recorded outputs, tables, capability, `declared_inventory`, executable
+with every reason); `run()` reconstructs it from the CURRENT entry and the staging and refuses a plan differing in any field
+(the differing fields named), even when `executable` agrees; `inventory_complete()` requires every declared source, reference
+and committed input to be staged, recorded apart or listed missing with the declared bytes, and nothing undeclared
+(non-committed inputs are declared-missing by design). B4: `coherence()` chains record, entry, plan, dispatch, run and
+comparison (schemas, entry ids, `run.plan_sha256`, the dispatch marker the run names, the comparison's run facts) and ties
+the status to the run facts (a failed or timed-out run is only `performed_failed`; a completed run is never `not_run`);
+`record()` refuses an incoherent operation before writing; `_admit()` re-checks the chain on read; every performed status
+is retained. B5: a selected frozen record that is gone or changed now RAISES in `records_for` (preparation and reuse refuse
+through `ST.test` / `teach_accumulated`), never listed as an absence; unselected late arrivals stay listed apart.
+
 Still open after these corrections (unchanged decisions): everything in section 5 and the Claude handoff; the exact
 price adapter (Codex, on the V2 contract above); runtime verification of all of it.
 
@@ -613,7 +628,7 @@ does not reverse those authorizations. Source review/AST/whitespace only; nothin
 |---|---|
 | 2 | A4, C1, C2, B4/B5 source-corrected (section 8, Corrections). Open: native-learner and late-scheduling decisions (Greg); Codex's integration review of the corrections; runtime verification. |
 | 3 | D1 source-corrected: `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (contract in section 8). Open: Codex's exact price adapter on it; the held trajectory/4.2/4.4 definitions. Exact structures unchanged (V1). |
-| 4 | B1-B7 source-corrected (B7 by deletion: the harness binding and every reference to it are gone). Open: the input-supply interface (B6: named, not built; Greg's authorization); reproduction/reformulation open for BOTH teachers; nothing run. |
+| 4 | B1-B7 source-corrected (B7 by deletion); B2-B5 follow-ups source-corrected (`2f1d6630`: coverage apart from matched scope, the complete plan and inventory bound to the entry, the record chain coheres, a broken frozen record refuses). Open: the input-supply interface (B6: named, not built; Greg's authorization); reproduction/reformulation open for BOTH teachers; nothing run. |
 | 5 | STOP; draft unapplied, decisions held. |
 
 No correction above was delivered by the new documentation commit. The older table records

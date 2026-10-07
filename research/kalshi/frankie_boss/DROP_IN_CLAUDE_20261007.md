@@ -3,8 +3,8 @@
 Paste this box into the new Claude Code session. It is separate from the Codex-facing `CCODE_DROP_IN_20261006_NEXT_CHAT.md`.
 
 ```
-CCode pre-#5 queue, CLAUDE session, 2026-10-07. Codex's correction queue (D1, B7/C2, B2-B5, B1/B6/A4/C1) is RETURNED; this
-session picks up Codex's review of it. HOLD stands.
+CCode queue, CLAUDE session, 2026-10-07. STEP 6 (Granite meeting recovery path) + B2-B5 follow-ups are RETURNED (e922a6e2,
+b3fb5a26, 2f1d6630 + docs); this session picks up Codex's review of them. HOLD stands. Read CCODE_STEP6_RETURN_20261007.md.
 FIRST, in this order:
 1. /run using-agent-skills (the Skill tool). Greg's rules and the boundaries below win where they differ from a skill.
 2. #run memory mcp: the MCP index_repository call times out at 60 s; run the CLI (minutes; background it and verify):
@@ -15,11 +15,12 @@ FIRST, in this order:
      git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
      git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
      git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -10
-   The tip must be the docs commit above b5d0fe74 on Codex's 19f72f47 or later. Expect a clean rebase; if Codex edited
+   The tip must be the docs commit above 2f1d6630 on Codex's 6c033cd5 or later. Expect a clean rebase; if Codex edited
    frankie_box_boss_session.py / frankie_box_experiment_exchange.py / frankie_box_scientific_teacher.py /
    frankie_box_teacher_knowledge.py / frankie_box_historical_*.py, read its diff before touching that module.
 READ, in order (research/kalshi/frankie_boss/):
    CLAUDE_HANDOFF_20261007_CCODE_SLICES_A_D.md          top section: the Claude-side state, the design choices not to re-litigate
+   CCODE_STEP6_RETURN_20261007.md                       step 6: what was built, the weight-learning answer, interface requests
    CCODE_NEXT_SOURCE_TASKS_20261006.md (top section)    Codex's review of the correction commits lands HERE
    NEW_CHAT_HANDOFF_20261006_TEACHER_COVERAGE.md        newest sections only (Codex's reserved search continuation)
    CCODE_STEP4_SOURCE_ROUTE_20261006.md section 8 "Corrections after Codex's integration review" + section 9 table

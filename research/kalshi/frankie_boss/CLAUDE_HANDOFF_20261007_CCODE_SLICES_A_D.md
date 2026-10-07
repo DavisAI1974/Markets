@@ -4,6 +4,29 @@ This is the Claude-side handoff. The Codex-facing record is separate: `CCODE_STE
 `CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md` (top section) and `CCODE_DROP_IN_20261006_NEXT_CHAT.md`. Do not merge the
 two channels: Codex integrates from the CCODE documents; a Claude session starts from `DROP_IN_CLAUDE_20261007.md`.
 
+## Where things stand (updated 2026-10-07, fourth session: step 6 and the B2-B5 follow-ups returned)
+
+Greg assigned CCode STEP 6 (the bounded Granite meeting source/recovery path) plus B2-B5 follow-ups (task doc, "ACTIVE
+assignment, Greg 2026-10-06 22:11 ET"); Codex continues step 5 and the exact-price adapter. This branch was rebased onto Codex's
+integration `6c033cd5` (which integrated the return through the pre-rebase `ecd8720e`); the two newer commits (step-5
+direction `73288615`, docs `cb458a0d`) stayed above it. Returned, one commit per group: `e922a6e2` step 6 findings 1-3
+(deadline through every request, durable per-item progress with explicit interrupted calls, whole evidence and process
+release), `b3fb5a26` finding 4 (workflow inputs as environment variables, return.json witness, the owner import named),
+`2f1d6630` B2-B5 follow-ups, then this documentation. The step-6 record, the weight-learning answer (inference-only; the
+smallest concrete path and the decisions it needs) and the interface requests to Codex-owned files are in
+`CCODE_STEP6_RETURN_20261007.md`. Boundaries kept: source only, nothing run, pins and threads null unchanged, `9c19cc2`
+never applied, the deleted historical binding deleted, H06-H08 not_bound.
+
+Design choices of this session: the meeting's recovery state is `meeting-binding.json` (write-once) + `progress/<item>.json`
+(durable, every completed round, a pending chat marked before it is sent) + `evidence/` (whole stderr and every failed or
+malformed reply); `meeting.json` is written only when the meeting completes, so Codex's `read_meeting_record` is untouched;
+the new receipt status `runtime_failed` and the open-item kinds `time_budget`, `interrupted_call`, `call_failed` are the
+only new words consumers meet (requests 1, 2 and 5 of the return). `plan()` is now `plan_document()` + a write; `record()`
+refuses an incoherent operation; a broken frozen record raises.
+
+What a next Claude session does: Codex's review of these commits lands in the task doc; fix what it names, one commit per
+group, same boundaries. The weight-learning decisions are Greg's; do not implement training or touch the hash gate.
+
 ## Where things stand (updated 2026-10-07, third session: the correction queue returned)
 
 Codex's integration review of A-D landed as an ORDERED correction queue at the top of `CCODE_NEXT_SOURCE_TASKS_20261006.md`
