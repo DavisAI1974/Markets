@@ -224,15 +224,27 @@ def recover_sync(brain):
 
 
 def close_day(run, day):
-    """Serialize final acknowledgment with intake; late requests cannot reopen a completed day."""
+    """Serialize final acknowledgment with intake; late requests cannot reopen a completed day.
+
+    One drain, then the inbox is read under its lock: every request acknowledged = the day closed (the closed.json pin,
+    as before). A request still unacknowledged when the drain returns (the waiting_school branch breaks out of a
+    waiting owner school recovery; a request admitted during the drain) is NOT looped on here: the result is
+    {'status': 'waiting', 'pending': [...], ...} naming them, and the caller (the queue's _finish_day) records the day
+    waiting and lets its slot go; the next worker start drains again (CCode, Step 8, on the parent's assignment of
+    2026-10-07: the previous loop re-entered the drain without a pause, holding the finish thread). The drain's own
+    in-request waits (a failed child awaiting its named retry, a candidate awaiting the scientific-owner decision, a
+    save) are unchanged: they poll inside drain with their state recorded on the day's successors receipt."""
     directory = run.dir / 'successors' / day
-    while True:
-        completed = drain(run, day)
-        with lock(directory / 'inbox.lock'):
-            requests = sorted((directory / 'requests').glob('*.json'))
-            if len(completed) != len(requests):
-                continue
-            return once(directory / 'closed.json', dict(owner=owner(run, day), acknowledgments=completed))
+    completed = drain(run, day)
+    with lock(directory / 'inbox.lock'):
+        requests = sorted((directory / 'requests').glob('*.json'))
+        pending = [p.name for p in requests if not (directory / 'work' / p.stem / 'ack.json').is_file()]
+        if pending or len(completed) != len(requests):
+            return dict(status='waiting', acknowledged=len(completed), requests=len(requests), pending=pending,
+                        reason='%d of %d successor request(s) of the day unacknowledged after this drain (%s); the day is '
+                               'not closed; drained again at the next start' % (
+                                   len(pending), len(requests), ', '.join(pending) or 'the inbox changed during the drain'))
+        return once(directory / 'closed.json', dict(owner=owner(run, day), acknowledgments=completed))
 
 
 def prepare_dependents(run, day, value, target, correction):
@@ -720,6 +732,36 @@ def drain(run, day):
                             item = retained.pop(('lessons', day + '-successor-' + key), None)
                             if item is not None:
                                 retained[('successors', day)] = item
+                        continue
+                    if downstream['status'] == 'waiting_school':
+                        # CCode (Step 8): the owner's own voice then school on this held lane, the nested inbox drain
+                        # skipped for exactly this recovery (this drain holds the lock); then rebuild_dependents again
+                        # verifies the checked chain. Never a second drain, scheduler or model runtime.
+                        recovered = run.recover_school(day, downstream['recovery_intent'])
+                        if recovered.get('status') == 'complete':
+                            # the recovered school (file, row sha256, status) reaches the day reports on this held lane
+                            # (correction_consumer, stage 12): a revision under the same number when the reports were
+                            # rendered on the replaced school (Run.reports_stale reads the school receipt). The nested
+                            # drain is skipped for exactly this call (this drain holds the inbox lock; re-entering it
+                            # would block on its own flock); a report failure is the reports step's own receipt
+                            entry = next((x for x in run.plan['days'] if x['day'] == day), None)
+                            run._school_recovery.add(day)
+                            try:
+                                if entry is not None and run.reports_stale(entry):
+                                    recovered['reports'] = {k: (run.guarded('reports', entry) or {}).get(k) for k in ('status', 'reason', 'report_number')}
+                                else:
+                                    recovered['reports'] = dict(status='current', reason='the reports already carry this school')
+                            finally:
+                                run._school_recovery.discard(day)
+                        state('waiting', **dict({k: v for k, v in downstream.items() if k != 'status'}, recovery=recovered))
+                        if recovered.get('status') != 'complete':
+                            # the operation stays unacknowledged (its state carries the recovery's stage, inputs, use and
+                            # outputs; a failed stage is the day's own failed receipt, retried by the ordinary path);
+                            # the next boundary's drain tries it once more. The ordinary poll interval first: close_day
+                            # loops on drain until every request is acknowledged, and recover_school dispatches nothing
+                            # twice, so without it that loop would spin hot on reads and receipt rewrites.
+                            time.sleep(5)
+                            break
                         continue
                     if downstream['status'] != 'complete':
                         state('waiting', **{k: v for k, v in downstream.items() if k != 'status'})

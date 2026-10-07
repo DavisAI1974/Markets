@@ -9,9 +9,11 @@ name: Frankie Granite meeting (post-class coordinator on a standard CPU runner; 
 # names; this workflow returns the bytes only (artifact, optional presigned PUT). Nothing here dispatches that import,
 # downloads an artifact onto a lane or chooses the first E2E host. Workflow inputs reach the shell only through environment
 # variables (never interpolated into shell source; Codex finding 4, 2026-10-06).
-# Current source gate: inputs-only and verified complete replay/return are available.
-# Model setup/start is held until the owning Run.voice durably admits this exact GitHub run;
-# a fresh workflow dispatch is not proof that prior remote model work never happened.
+# Current source gate: inputs-only and verified complete replay/return are available without admission.
+# Model setup/start runs ONLY after the owning lane's admission of this exact GitHub run is fetched (admission_get_url)
+# and verified by frankie_box_granite_runner.py admit (run id, attempt, exchange sha256, commit, predecessor archive);
+# a fresh workflow dispatch is not proof that prior remote model work never happened. The owner writes the admission
+# with frankie_box_experiment.sh ACTION=voice-dispatched after dispatching by hand (CCode, Step 6 caller, 2026-10-07).
 on:
   workflow_dispatch:
     inputs:
@@ -34,9 +36,17 @@ on:
         required: false
         default: ''
       inputs_only:
-        description: 'true = inputs only; false = retained-complete replay only until exact owner dispatch admission is wired'
+        description: 'true = inputs only; false = the admitted meeting (admission_get_url required), else retained-complete replay only'
         required: false
         default: 'true'
+      admission_get_url:
+        description: 'presigned GET of the owning lane admission.json for THIS run (voice-dispatched writes it); empty = no model work'
+        required: false
+        default: ''
+      admission_wait_minutes:
+        description: 'how long to wait for the admission to be served before refusing (bounded; default 30)'
+        required: false
+        default: '30'
 permissions:
   contents: read
 concurrency:
@@ -54,6 +64,8 @@ jobs:
       PRIOR_STATE_GET_URL: ${{ inputs.prior_state_get_url }}
       PRIOR_STATE_SHA256: ${{ inputs.prior_state_sha256 }}
       RECORD_PUT_URL: ${{ inputs.record_put_url }}
+      ADMISSION_GET_URL: ${{ inputs.admission_get_url }}
+      ADMISSION_WAIT_MINUTES: ${{ inputs.admission_wait_minutes }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -79,11 +91,35 @@ jobs:
             echo "prior archive URL required with SHA256" >&2; exit 2
           fi
           python3 deploy/aws/box/frankie_box_granite_runner.py "$@"
-      - name: Inputs or exact completed replay (fresh remote model work awaits owner admission)
+      - name: Owner admission of this exact run (fetched and verified BEFORE any model setup or call)
+        id: admission
+        if: inputs.inputs_only != 'true' && inputs.admission_get_url != ''
+        run: |
+          case "$ADMISSION_GET_URL" in https://*) ;; *) echo "admission_get_url must be HTTPS" >&2; exit 2;; esac
+          case "$ADMISSION_WAIT_MINUTES" in ''|*[!0-9]*) echo "admission_wait_minutes must be whole minutes" >&2; exit 2;; esac
+          deadline=$(( $(date +%s) + ADMISSION_WAIT_MINUTES * 60 ))
+          until curl -fsSL -o work/meeting/admission.json "$ADMISSION_GET_URL"; do
+            [ "$(date +%s)" -lt "$deadline" ] || { echo "refused: no admission served within $ADMISSION_WAIT_MINUTES min; no model work (an unknown dispatch is reconciled by the owner, never resent)" >&2; exit 3; }
+            sleep 30
+          done
+          set -- admit --out work/meeting/out --admission work/meeting/admission.json --github-run-id "$GITHUB_RUN_ID" --github-run-attempt "$GITHUB_RUN_ATTEMPT" --exchange-sha256 "$EXCHANGE_SHA256" --commit "$GITHUB_SHA"
+          [ -z "$PRIOR_STATE_SHA256" ] || set -- "$@" --prior-state-sha256 "$PRIOR_STATE_SHA256"
+          python3 deploy/aws/box/frankie_box_granite_runner.py "$@"
+      - name: Pinned runtime setup (only after admission; refuses on any blank or differing pin)
+        id: setup
+        if: steps.admission.outcome == 'success'
+        run: |
+          set -o pipefail
+          CODE_ROOT="$GITHUB_WORKSPACE" GRANITE_DIR="$RUNNER_TEMP/granite" bash deploy/aws/box/frankie_box_granite_meeting_setup.sh | tee work/meeting/setup.log
+          grep -E '^(LLAMA_SERVER|GGUF_MODEL)=' work/meeting/setup.log >> "$GITHUB_ENV"
+      - name: The admitted meeting, inputs only, or exact completed replay
         run: |
           if [ "$INPUTS_ONLY" = "true" ]; then
             python3 deploy/aws/box/frankie_box_granite_meeting.py --exchange work/meeting/exchange-frankie.json --out-dir work/meeting/out --inputs-only
+          elif [ -f work/meeting/out/admission.json ] && [ -n "${LLAMA_SERVER:-}" ] && [ -n "${GGUF_MODEL:-}" ]; then
+            python3 deploy/aws/box/frankie_box_granite_meeting.py --exchange work/meeting/exchange-frankie.json --out-dir work/meeting/out --binary "$LLAMA_SERVER" --model "$GGUF_MODEL"
           else
+            echo "no admission for this run: retained-complete replay only (no model call)"
             python3 deploy/aws/box/frankie_box_granite_runner.py replay-complete --exchange work/meeting/exchange-frankie.json --out work/meeting/out
           fi
       - name: Return witness (the record's bytes and sha256 by name; the owner import to run by hand)

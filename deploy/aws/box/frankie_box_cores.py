@@ -40,13 +40,28 @@ LAUNCH INSIDE THE BOOKING. `run` books, starts the job under `taskset -c <booked
 inside the booking, and every unpinned child inherits it), adds the job's pid to the booking, waits, and releases. A job
 that dies without its release is reaped: a booking whose pids are all gone is released with a receipt (book reaps first).
 
+RETAINED BOOKINGS (Step 8, 2026-10-07: a saved main day keeps its exact 16 CPUs). A day-run booking that its owner marks
+`retained` (retain --booking ID --run R --day D --reason TEXT), and a booking marked OWNED by a queue day (own
+--booking ID --run R --day D --attempt A, the queue's owner binding) whose pids are all gone (its holder died: reaping
+RETAINS it for that owner instead of releasing it; any other booking is reaped as before), keeps its CPUs booked with
+no live process: no other day can take them. Only its owner takes them back: a `book` with --cpus naming exactly that
+set and --run/--day equal to the retained owner's takes the retained booking over IN PLACE (same id, the new holder
+pid, the retention kept as history); any other request for those CPUs waits. An operator releases a retained booking
+only with `release` and the explicit reason; nothing releases it on its own. `show` lists retained bookings with
+their owner. A retained set in use by an unbooked Frankie process (an orphan of the dead holder) is not taken over
+while that process runs.
+
 OPERATIONS
   book     --kind K [--day D --run R --stage S --commit C --workers W --verify V --pid P]: book for pid P (default the
            caller's parent); prints the booking; exit 75 = waiting, 2 = refused
   run      the same, then `-- <command...>` under taskset in the booking; exit = the command's (75 waiting, 2 refused);
            --outcome FILE writes the booking outcome as JSON for the caller
   release  --booking ID [--reason TEXT]
-  reap     release every booking whose pids are all gone
+  reap     release every booking whose pids are all gone (a retained booking is never reaped)
+  own      --booking ID --run R --day D [--attempt A]: mark a live day-run booking owned by a queue day (its death
+           retains it for that owner instead of reaping it)
+  retain   --booking ID --run R --day D [--attempt A --reason TEXT]: mark a live day-run booking retained by its owner
+           (a saved day): its CPUs stay booked after its pids end, until the owner resumes or an operator releases
   show     READ-ONLY: every CPU -> its owner (booking or unbooked Frankie process) and its live use, the free count, what
            can be booked now; --json for the raw record
   allowed  --pid P: READ-ONLY, the CPUs the workers of P's job may use (its booking less the parent CPU; for a job not in
@@ -77,7 +92,8 @@ WAITING_EXIT = 75                       # EX_TEMPFAIL: not started, a later disp
 REFUSED_EXIT = 2
 BUSY_FRACTION = 0.05                    # an unpinned Frankie thread above this share of one CPU holds the CPU it runs on
 KINDS = ('day-run', 'ingest', 'canary', 'conform')
-DAY_RUN_STAGES = ('root', 'teacher', 'classroom', 'data', 'search', 'lessons', 'exchange', 'voice', 'school', 'reports')
+DAY_RUN_STAGES = ('root', 'teacher', 'classroom', 'data', 'search', 'lessons', 'exchange', 'voice', 'school', 'reports',
+                  'jev')                # jev (Step 7): inside the SAME held day lane, a worker subset of its 16 CPUs
 INGEST_RULE = ('an ingest or canary with VERIFY=inline runs its encode pool and its conformance-reader pool at the same '
                'time: WORKERS x 2 + 1 CPUs (the parent included); VERIFY=deferred and a conform run one pool: WORKERS + 1; '
                'the day process books %d CPUs and a demand above %d is refused' % (INGEST_CPUS, INGEST_CPUS))
@@ -267,6 +283,7 @@ def live_bookings():
         if b.get('schema') == SCHEMA:
             b['_path'] = str(path)
             b['_alive'] = any(alive(p) for p in b.get('pids') or [])
+            b['_retained'] = bool(b.get('retained'))
             out.append(b)
     return out
 
@@ -313,8 +330,36 @@ def release_one(b, reason, exit_code=None):
 
 
 def reap_locked():
-    return [release_one(b, 'reaped: every pid of the booking is gone (the job ended without its release)')
-            for b in live_bookings() if not b['_alive']]
+    """Release every booking whose pids are all gone, except: a retained one (a saved day's CPUs stay its owner's), and a
+    day-run booking that names its run and day, which is RETAINED for that owner instead of released (its holder died
+    without a saved result: the day is unknown, its CPUs stay its own until the owner resumes or an operator releases)."""
+    out = []
+    for b in live_bookings():
+        if b['_alive'] or b['_retained']:
+            continue
+        if b.get('owner'):
+            # a queue day's slot that its owner marked owned (frankie_box_frankie_queue._bind_owner): never freed by the
+            # holder's death; retained for that owner (the day is unknown until its ACTION=resume)
+            _retain_locked(b, b['owner']['run'], b['owner']['day'], attempt=b['owner'].get('attempt'),
+                           reason='reaped: every pid of the booking is gone without a release; retained for its owner (unknown)')
+            continue
+        out.append(release_one(b, 'reaped: every pid of the booking is gone (the job ended without its release)'))
+    return out
+
+
+def _retain_locked(b, run, day, attempt=None, reason=None):
+    """Under the lock: the booking marked retained; its pids are moved aside (a retained booking has no live process by
+    definition: its day's steps ended), so it reads as not alive everywhere while its CPUs stay booked."""
+    if b.get('retained') and (b['retained'].get('run'), b['retained'].get('day')) != (run, day):
+        raise ValueError('booking %s is retained by %s %s already' % (b['booking'], b['retained'].get('run'), b['retained'].get('day')))
+    if not b.get('retained'):
+        b['retained'] = dict(run=run, day=day, attempt=attempt, reason=reason, at=now_iso(), at_epoch=time.time(),
+                             by_pid=os.getpid(), pids_at_retain=b.get('pids') or [])
+        b['pids'] = []
+    elif attempt and not b['retained'].get('attempt'):
+        b['retained']['attempt'] = attempt
+    write_json(b['_path'] if '_path' in b else LEDGER / (b['booking'] + '.json'), b)
+    return b
 
 
 def attribution(procs, bookings):
@@ -335,7 +380,7 @@ def usage(window, exclude=()):
     sampled Frankie thread with its owner (booking id or None)."""
     online = frozenset(online_cpus())
     procs = processes()
-    bookings = [b for b in live_bookings() if b['_alive']]
+    bookings = [b for b in live_bookings() if b['_alive'] or b['_retained']]   # a retained booking holds its CPUs
     owner = attribution(procs, bookings)
     frankie = descendants(procs, [pid for pid, info in procs.items() if is_frankie(info)])
     frankie |= set(owner)
@@ -368,17 +413,42 @@ def book_locked(kind, size, pid, meta, window):
     free = [c for c in online if c not in booked and c not in held]
     if size > len(online):
         return None, dict(status='refused', reason='%d CPUs asked, the box has %d' % (size, len(online)))
-    if len(free) < size:
-        return None, dict(status='waiting', free=len(free), needed=size, free_cpus=cpu_list(free),
-                          booked_cpus=cpu_list(booked), in_use_unbooked=cpu_list(held), reaped=[r['booking'] for r in reaped],
-                          reason='waiting: %d free of %d needed (booked by the ledger: %s; in use by Frankie processes not '
-                                 'in the ledger: %s)' % (len(free), size, cpu_list(booked) or 'none', cpu_list(held) or 'none'))
     requested = meta.get('cpus')
     if requested is not None:
         if len(requested) != size or len(set(requested)) != size or not set(requested).issubset(online):
             return None, dict(status='refused', reason='retained lane CPU set differs from this box')
         if not set(requested).issubset(free):
-            return None, dict(status='waiting', reason='the retained lane CPU set is still occupied')
+            # the owner of a RETAINED booking of exactly this set takes it back IN PLACE (one record replaced, never a
+            # moment with the CPUs free or double booked): the same booking id, the new holder pid, the retention kept
+            # as its history; anyone else waits
+            mine = [b for b in bookings if b['_retained'] and sorted(b['cpus']) == sorted(requested)
+                    and (b.get('retained') or {}).get('run') == meta.get('run')
+                    and (b.get('retained') or {}).get('day') == meta.get('day')]
+            if not mine:
+                return None, dict(status='waiting', reason='the retained lane CPU set is still occupied')
+            orphan = sorted(c for c in requested if c in held)
+            if orphan:
+                return None, dict(status='waiting', in_use_unbooked=cpu_list(orphan),
+                                  reason='the retained lane CPU set is in use by a Frankie process not in the ledger (CPUs %s; '
+                                         'an orphan of the dead holder?): not taken over while it runs' % cpu_list(orphan))
+            start = start_time(pid)
+            if start is None:
+                return None, dict(status='refused', reason='pid %d is not running' % pid)
+            b = mine[0]
+            b['resumed'] = (b.get('resumed') or []) + [dict(retained=b.pop('retained'), at=now_iso(), at_epoch=time.time(),
+                                                           stage=meta.get('stage'), commit=meta.get('commit'), pid=pid)]
+            b['_retained'] = False
+            b['pids'] = [dict(pid=pid, start=start, role='booking holder')]
+            b['stage'] = meta.get('stage')
+            b['commit'] = meta.get('commit') or b.get('commit')
+            write_json(b['_path'], b)
+            return b, dict(status='booked', booking=b['booking'], cpus=cpu_list(b['cpus']), parent_cpu=b['parent_cpu'],
+                           resumed_from=b['booking'])
+    if len(free) < size:
+        return None, dict(status='waiting', free=len(free), needed=size, free_cpus=cpu_list(free),
+                          booked_cpus=cpu_list(booked), in_use_unbooked=cpu_list(held), reaped=[r['booking'] for r in reaped],
+                          reason='waiting: %d free of %d needed (booked by the ledger: %s; in use by Frankie processes not '
+                                 'in the ledger: %s)' % (len(free), size, cpu_list(booked) or 'none', cpu_list(held) or 'none'))
     cpus = sorted(requested if requested is not None else (free[:size] if kind == 'day-run' else free[-size:]))
     stamp = time.time()
     booking = '%s-%s-%s-%d-%d' % (kind, re.sub('[^A-Za-z0-9_]', '_', meta.get('day') or 'box'),
@@ -432,6 +502,39 @@ def attach(booking, pid, role):
             write_json(path, b)
 
 
+def own(booking, run, day, attempt):
+    """Mark a live day-run booking OWNED by a queue day (run, day, attempt): from now on its death retains it for that
+    owner instead of reaping it. Returns the booking."""
+    with Lock():
+        path = LEDGER / (booking + '.json')
+        if not path.is_file():
+            raise ValueError('booking %s is not in the ledger (released or never made)' % booking)
+        b = json.loads(path.read_bytes())
+        if b.get('kind') != 'day-run':
+            raise ValueError('only a day-run booking is owned (%s is %s)' % (booking, b.get('kind')))
+        if b.get('owner') and (b['owner'].get('run'), b['owner'].get('day')) != (run, day):
+            raise ValueError('booking %s is owned by %s %s already' % (booking, b['owner'].get('run'), b['owner'].get('day')))
+        b['owner'] = dict(run=run, day=day, attempt=attempt, at=now_iso())
+        write_json(path, b)
+        return b
+
+
+def retain(booking, run, day, attempt=None, reason=None):
+    """Mark a day-run booking retained by its owner (run, day): it survives its pids and reaping; only the owner's
+    resume (a book of exactly its CPUs for the same run/day) or an explicit release ends it. Returns the booking."""
+    with Lock():
+        path = LEDGER / (booking + '.json')
+        if not path.is_file():
+            raise ValueError('booking %s is not in the ledger (released or never made)' % booking)
+        b = json.loads(path.read_bytes())
+        b['_path'] = str(path)
+        if b.get('kind') != 'day-run':
+            raise ValueError('only a day-run booking is retained (%s is %s)' % (booking, b.get('kind')))
+        if b.get('run') not in (None, run) or b.get('day') not in (None, day):
+            raise ValueError('booking %s belongs to %s %s, not %s %s' % (booking, b.get('run'), b.get('day'), run, day))
+        return _retain_locked(b, run, day, attempt=attempt, reason=reason)
+
+
 def release(booking, reason, exit_code=None):
     with Lock():
         path = LEDGER / (booking + '.json')
@@ -445,7 +548,10 @@ def release(booking, reason, exit_code=None):
 # -------------------------------------------------------------------------------------------------------- commands
 
 def meta_of(a):
-    return dict(day=a.day, run=a.run, stage=a.stage, commit=a.commit, workers=a.workers, verify=a.verify)
+    meta = dict(day=a.day, run=a.run, stage=a.stage, commit=a.commit, workers=a.workers, verify=a.verify)
+    if getattr(a, 'cpus', None):
+        meta['cpus'] = parse_list(a.cpus)       # the retained lane CPU set, exactly (a saved day's resume)
+    return meta
 
 
 def emit_outcome(a, outcome):
@@ -473,6 +579,9 @@ def held_booking(booking):
         if not path.is_file():
             return None, 'booking %s is not in the ledger (released or never made)' % booking
         b = json.loads(path.read_bytes())
+        if b.get('retained'):
+            return None, 'booking %s is retained by its owner %s %s (no live step; ACTION=resume brings it back)' % (
+                booking, b['retained'].get('run'), b['retained'].get('day'))
         if not any(alive(p) for p in b.get('pids') or []):
             return None, 'booking %s has no live pid (its holder is gone)' % booking
         return b, None
@@ -549,6 +658,18 @@ def cmd_run(a):
     return code
 
 
+def cmd_own(a):
+    b = own(a.booking, a.run, a.day, a.attempt)
+    print(json.dumps({k: v for k, v in b.items() if not k.startswith('_')}, indent=1, sort_keys=True))
+    return 0
+
+
+def cmd_retain(a):
+    b = retain(a.booking, a.run, a.day, attempt=a.attempt, reason=a.reason or 'retained by its owner (a saved day)')
+    print(json.dumps({k: v for k, v in b.items() if not k.startswith('_')}, indent=1, sort_keys=True))
+    return 0
+
+
 def cmd_release(a):
     r = release(a.booking, a.reason or 'released by hand')
     print(json.dumps({k: v for k, v in (r or {}).items() if not k.startswith('_')} or dict(missing=a.booking),
@@ -583,7 +704,8 @@ def cmd_show(a):
     me = os.getpid()
     procs_now = processes()
     all_bookings = live_bookings()
-    stale = [b for b in all_bookings if not b['_alive']]
+    stale = [b for b in all_bookings if not b['_alive'] and not b['_retained']]
+    retained = [b for b in all_bookings if b['_retained']]
     held, rows, procs, bookings = usage(a.window, exclude=ancestors(procs_now, me) | {me})
     online = online_cpus()
     by_cpu = {}
@@ -612,9 +734,10 @@ def cmd_show(a):
             who = 'DOUBLE BOOKED: ' + ', '.join(b['booking'] for b in owners)
         elif owners:
             b = owners[0]
-            who = 'booking %s (%s%s, day %s, run %s)%s' % (b['booking'], b['kind'], ' ' + b['stage'] if b.get('stage') and
-                                                          b['stage'] != b['kind'] else '', b.get('day'), b.get('run'),
-                                                          ' PARENT' if c == b['parent_cpu'] else '')
+            who = 'booking %s (%s%s, day %s, run %s)%s%s' % (b['booking'], b['kind'], ' ' + b['stage'] if b.get('stage') and
+                                                            b['stage'] != b['kind'] else '', b.get('day'), b.get('run'),
+                                                            ' PARENT' if c == b['parent_cpu'] else '',
+                                                            ' RETAINED' if b['_retained'] and not b['_alive'] else '')
         elif c in held:
             h = held[c][0]
             who = 'IN USE, not in the ledger: pid %d (%s) %s%s' % (h['pid'], h['command'][:70], h['why'],
@@ -631,6 +754,12 @@ def cmd_show(a):
     for b in stale:
         lines.append('STALE booking %s (CPUs %s): every pid gone; the next book or ACTION=reap releases it'
                      % (b['booking'], b['cpu_list']))
+    for b in retained:
+        r = b.get('retained') or {}
+        lines.append('RETAINED booking %s (CPUs %s) by %s %s attempt %s since %s (%s): %s; only its owner\'s resume or an '
+                     'explicit release ends it' % (b['booking'], b['cpu_list'], r.get('run'), r.get('day'), r.get('attempt'),
+                                                   r.get('at'), r.get('reason'), 'its holder is alive' if b['_alive']
+                                                   else 'every pid gone, the CPUs stay booked'))
     for r in outside:
         lines.append('OUTSIDE ITS BOOKING: pid %d/%d of %s on CPU %d, affinity %s, booked %s'
                      % (r['pid'], r['tid'], r['booking'], r['cpu'], r['affinity'], r['booked']))
@@ -638,7 +767,8 @@ def cmd_show(a):
     print('\n'.join(lines))
     if a.json:
         print(json.dumps(dict(bookings=[{k: v for k, v in b.items() if not k.startswith('_')} for b in bookings],
-                              stale=[b['booking'] for b in stale], in_use_unbooked={str(k): v for k, v in held.items()},
+                              stale=[b['booking'] for b in stale], retained=[b['booking'] for b in retained],
+                              in_use_unbooked={str(k): v for k, v in held.items()},
                               free=free, outside=outside, threads=rows), indent=1, sort_keys=True))
     return 0
 
@@ -657,6 +787,7 @@ def main():
         s.add_argument('--verify', choices=('inline', 'deferred'))
         s.add_argument('--window', type=float, default=1.0, help='seconds between the two /proc samples')
         s.add_argument('--outcome', help='write the booking outcome (booked | waiting | refused) as JSON here')
+        s.add_argument('--cpus', help='a saved day\'s resume: exactly its retained CPU list (comma list / ranges)')
         if name == 'book':
             s.add_argument('--pid', type=int, help='the process that holds the booking (default: the caller\'s parent)')
         else:
@@ -666,6 +797,14 @@ def main():
     s = sub.add_parser('release')
     s.add_argument('--booking', required=True)
     s.add_argument('--reason')
+    for name in ('retain', 'own'):
+        s = sub.add_parser(name)
+        s.add_argument('--booking', required=True)
+        s.add_argument('--run', required=True)
+        s.add_argument('--day', required=True)
+        s.add_argument('--attempt')
+        if name == 'retain':
+            s.add_argument('--reason')
     sub.add_parser('reap')
     s = sub.add_parser('show')
     s.add_argument('--window', type=float, default=2.0)
@@ -677,7 +816,13 @@ def main():
         raise SystemExit('--booking: a booking id from the ledger')
     if getattr(a, 'inside', None) and not re.fullmatch('[A-Za-z0-9_.-]{1,160}', a.inside):
         raise SystemExit('--inside: a booking id from the ledger')
-    return dict(book=cmd_book, run=cmd_run, release=cmd_release, reap=cmd_reap, show=cmd_show, allowed=cmd_allowed)[a.action](a)
+    if getattr(a, 'cpus', None):
+        try:
+            parse_list(a.cpus)
+        except (ValueError, TypeError):
+            raise SystemExit('--cpus: a comma list of CPUs / ranges')
+    return dict(book=cmd_book, run=cmd_run, release=cmd_release, retain=cmd_retain, own=cmd_own, reap=cmd_reap, show=cmd_show,
+                allowed=cmd_allowed)[a.action](a)
 
 
 if __name__ == '__main__':

@@ -106,6 +106,48 @@ def seal(out, target):
     return result
 
 
+ADMISSION_SCHEMA = 'FRANKIE_VOICE_ADMISSION_V1'
+
+
+def admit(out, admission, github_run_id, github_run_attempt, expected_sha, commit, prior_state_sha=None):
+    """The owning lane's admission of THIS exact GitHub run, verified before any model setup or call (Step 6 caller
+    contract, item 3; CCode's Run.voice_dispatched writes it). Every binding must hold: schema, run/day equal to the
+    retained runner-owner.json, exchange sha256 and dispatched commit equal to this run's, github_run_id and
+    github_run_attempt equal to GITHUB_RUN_ID / GITHUB_RUN_ATTEMPT, and the predecessor: an admission naming one requires
+    the same prior archive sha256 this run restored (a continuation), an admission naming none requires no prior state (a
+    fresh run). A durable copy lands in the output tree (sealed with it). Any mismatch raises: the workflow fails before
+    setup. GITHUB_RUN_ATTEMPT or concurrency alone never admit."""
+    out = Path(out)
+    raw = Path(admission).read_bytes()
+    value = json.loads(raw)
+    owner = json.loads((out / 'runner-owner.json').read_bytes())
+    checks = [
+        ('schema', value.get('schema'), ADMISSION_SCHEMA),
+        ('run', value.get('run'), owner['run']),
+        ('day', value.get('day'), owner['day']),
+        ('exchange_sha256', value.get('exchange_sha256'), expected_sha),
+        ('commit', value.get('commit'), commit),
+        ('github_run_id', str(value.get('github_run_id')), str(github_run_id)),
+        ('github_run_attempt', str(value.get('github_run_attempt')), str(github_run_attempt)),
+    ]
+    failed = ['%s: admission %r, this run %r' % (name, got, want) for name, got, want in checks if got != want]
+    predecessor = value.get('predecessor')
+    if prior_state_sha:
+        bound = ((predecessor or {}).get('archive') or {}).get('sha256')
+        if bound != prior_state_sha:
+            failed.append('predecessor: admission binds archive %r, this run restored %r' % (bound, prior_state_sha))
+    elif predecessor is not None:
+        failed.append('predecessor: the admission names attempt %r, this run restored no prior state (a fresh run is not '
+                      'that continuation)' % predecessor.get('attempt'))
+    if failed:
+        raise ValueError('owner admission does not admit this exact GitHub run: ' + '; '.join(failed))
+    write_bytes(out / 'admission.json', raw)
+    return dict(schema=ADMISSION_SCHEMA, admitted=True, github_run_id=str(github_run_id),
+                github_run_attempt=str(github_run_attempt), exchange_sha256=expected_sha, commit=commit,
+                predecessor=predecessor, admission=witness_file(out / 'admission.json'),
+                rule='admitted for this exact run only; model setup/start may follow; nothing here calls a model')
+
+
 def completed_record(out, exchange):
     """Check recorded config/binding witnesses, not actual execution of a remote host."""
     from frankie_box_brain import read_meeting_record
@@ -134,7 +176,7 @@ def completed_record(out, exchange):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('action', choices=['prepare', 'seal', 'import', 'replay-complete'])
+    p.add_argument('action', choices=['prepare', 'seal', 'import', 'replay-complete', 'admit'])
     p.add_argument('--out', required=True)
     p.add_argument('--exchange')
     p.add_argument('--exchange-sha256')
@@ -142,8 +184,17 @@ def main():
     p.add_argument('--archive')
     p.add_argument('--archive-sha256')
     p.add_argument('--attempt', type=int, default=1)
+    p.add_argument('--admission', help='admit: the owning lane\'s FRANKIE_VOICE_ADMISSION_V1 file fetched for this run')
+    p.add_argument('--github-run-id', help='admit: this run\'s GITHUB_RUN_ID')
+    p.add_argument('--github-run-attempt', help='admit: this run\'s GITHUB_RUN_ATTEMPT')
+    p.add_argument('--prior-state-sha256', help='admit: the prior archive sha256 this run restored (a continuation)')
     a = p.parse_args()
-    if a.action == 'replay-complete':
+    if a.action == 'admit':
+        if not (a.admission and a.github_run_id and a.github_run_attempt and a.exchange_sha256 and a.commit):
+            p.error('admit requires --admission, --github-run-id, --github-run-attempt, --exchange-sha256 and --commit')
+        result = admit(a.out, a.admission, a.github_run_id, a.github_run_attempt, a.exchange_sha256, a.commit,
+                       prior_state_sha=a.prior_state_sha256 or None)
+    elif a.action == 'replay-complete':
         record = Path(a.out) / 'meeting.json'
         if not record.is_file() or json.loads(record.read_bytes()).get('status') != 'complete':
             p.error('remote model work requires durable owner admission for this exact GitHub run; '

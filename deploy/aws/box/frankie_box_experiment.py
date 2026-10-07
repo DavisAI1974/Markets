@@ -125,7 +125,8 @@ from pathlib import Path
 SCHEMA = 'FRANKIE_EXPERIMENT_RUN_V1'
 STAGES = ('fetch', 'ingest', 'external', 'root', 'teacher', 'classroom', 'jev', 'data', 'search', 'lessons', 'exchange',
           'voice', 'school', 'reports')
-FINISHED = ('done', 'reused', 'skipped')
+FINISHED = ('done', 'reused', 'skipped', 'not_run')   # not_run: a listed outcome (the step's equation had no operand on
+                                                       # this day: a search with no causal axis); the day goes on
 HANDED_OFF = 'waiting_for_pod'           # the jev step's end on the box: material relayed, the Pod is its own dispatch
 BOX_ROOT = Path('/opt/frankie-box')
 WORK = BOX_ROOT / 'work'
@@ -142,6 +143,39 @@ ROWS_FILE = 'host-dipole-classroom-source.c15.json'
 DAY_EXTERNAL = WORK / 'day-external'
 DAY_FILE, DAY_FILE_RECEIPT = 'day-external.json', 'day-external-receipt.json'
 BRAIN = BOX_ROOT / 'brain'
+ROWS_ROUTE = ('put right only by moving the retained publication under %s aside with a receipt (the teacher rows are '
+              'not run-scoped; no run name and no code mints a replacement)')   # a refused teacher publication's one route
+SHARED_MARKET_POLICY = 'FRANKIE_SHARED_MARKET_TIMELINE_V1'   # the one shared-market policy a NEW plan may select (Codex's
+                                                             # frankie_box_market_timeline; ROOT and teacher wrappers forward it)
+JEV_BRAIN = BOX_ROOT / 'jev-brain'          # Jev's own brain on the box (plan jev_brain overrides; the S3 lineage is clm-sidecar/jev-brain)
+# THE ONE PINNED MODEL RUNTIME ON THE BOX (Greg, 2026-10-07): Granite 4.2 3B Q4_K_M under llama.cpp b11440, installed once by
+# frankie_box_granite_meeting_setup.sh under GRANITE_DIR at the paths the meeting's runtime gate expects; the meeting
+# (voice_route=local) AND Jev bind to that same definition (no second install, no second pin set; Jev improves with it)
+GRANITE_DIR = BOX_ROOT / 'granite'
+GRANITE_PROVENANCE_SCHEMA = 'FRANKIE_GRANITE_RUNTIME_PROVENANCE_V1'   # written by the setup script after every pin check passed
+SHARED_RUNTIME_SCHEMA = 'FRANKIE_SHARED_MODEL_RUNTIME_V1'
+# THE 99 LAYERS COMBINED FOR FRANKIE (Greg, 2026-10-07: "the biggest thing ... is making sure the 99 layers are combined for
+# Frankie first"): the retained 99-entry crosswalk (6 raw, 49 calculation/clock, 23 control/knowledge/arm, 9 sealed
+# answers, 2 disabled shadows, 10 append-only outputs; ROOT_PLANE_COVERAGE_20261006.md) pinned by CYCLE_CALCULATION_PINS.
+# Every ROOT records, per entry, whether the day PRODUCED it, whether it is ADMITTED into the shared market timeline
+# picture, or why it is absent (thinner picture; the day stays), retired, sealed, disabled or an output (all99_admission).
+CROSSWALK = 'research/kalshi/frankie_boss/audits/CROSSWALK_SUNDAY_CYCLE0_FEED_33746436209_20260916.json'
+CYCLE_PINS = 'research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json'
+ALL99_SCHEMA = 'FRANKIE_ALL99_ADMISSION_V1'
+ALL99_GROUPS = {                 # registry group -> (role, how the day's evidence carries it into the shared picture)
+    'canonical_raw_dbn_mbo': ('raw', 'journal'),
+    'order_lifecycle': ('calculation', 'native'), 'full_book_fifo_queue': ('calculation', 'native'),
+    'microstructure_mechanics': ('calculation', 'native'), 'legacy_observable_crosswalk': ('calculation', 'legacy'),
+    'derived_geometry': ('calculation', 'native'), 'prebirth_opportunity': ('calculation', 'native'),
+    'causal_clocks': ('calculation', 'native'),
+    'binding_common_controls': ('control', 'brain'), 'current_brain_runtime': ('knowledge', 'brain'),
+    'frozen_learned_structure': ('knowledge', 'brain'), 'corrected_extra_agent_carryforward': ('knowledge', 'brain'),
+    'a_memory_overlay': ('arm', 'retired'), 'a_clean_overlay': ('arm', 'retired'),
+    'sealed_step1_answer': ('sealed', 'boundary'), 'sealed_target_timing': ('sealed', 'boundary'),
+    'provisional_shadow': ('shadow', 'disabled'), 'append_only_outputs': ('output', 'stages')}
+LEGACY_CARRIER = {'legacy_price': 'root.prices', 'legacy_book_imbalance': 'root.frames',
+                  'legacy_structure_observables': 'root.structures',
+                  'legacy_native_signed_flow': 'completed_sources', 'legacy_per_second_roll20': 'completed_sources'}
 S3_BUCKET = 'bento-568968024170-us-east-2-an'
 JEV_BUCKET = 'frankie-granite42-568968024170-us-east-1'
 CURVE_PREFIX = 'nymex/ng_fut_parent_v0'
@@ -156,6 +190,12 @@ ROLE_OF_YEAR = {year: 'discovery' for year in range(2021, 2026)}
 INGESTION_SCHEMA = 'BOSS_BLOCK_INGESTION_RECEIPT_V1'
 OVERRIDES = ('ingest', 'calculations', 'launch', 'preparation', 'principal_inputs', 'host_config', 'run',
              'teacher_rows', 'jev_stamp', 'frankie_ledgers', 'opening_receipt', 'previous_classroom')
+
+
+def file_pin(path):
+    """The {path, bytes, sha256} witness of a file as it is now (the Jev request's pins; frankie_box_jev_cpu re-reads them)."""
+    path = Path(path)
+    return dict(path=str(path), bytes=path.stat().st_size, sha256=sha256_file(path))
 
 
 def sha256_file(path):
@@ -311,6 +351,13 @@ def load_plan(a, code_root):
                 lags=a.lags, transforms=a.transforms or None, batch=BATCH,
                 external_history_run=a.external_history_run or None, external_wait=a.external_wait != 'off',
                 brain=a.brain, previous_classroom=a.previous_classroom or None, directive=directive_of(code_root))
+    for key in ('jev_runtime', 'jev_brain'):                  # only when given: earlier plans keep their digest
+        if getattr(a, key, None):
+            plan[key] = str(Path(getattr(a, key)))
+    if getattr(a, 'shared_market_policy', None):              # a NEW request's policy, saved with the plan at its first
+        plan['shared_market_policy'] = a.shared_market_policy   # start (a run keeps one plan: a legacy plan stays legacy)
+    if getattr(a, 'voice_route', None) and a.voice_route != 'local':   # the meeting's host route (Step 6 caller): saved at
+        plan['voice_route'] = a.voice_route                            # the first start; absent = the local configured child
     if getattr(a, 'external_eia930_history_run', None):       # only when given: earlier plans keep their digest
         plan['external_eia930_history_run'] = a.external_eia930_history_run
     if getattr(a, 'external_family_history_runs', None):      # family=<run id>,... (the gap-only fetch chunks)
@@ -507,8 +554,285 @@ def presign_items(plan, code_root):
 # --------------------------------------------------------------------------------------------------------------- run
 
 def done_status(r):
-    """A step is finished when done, reused or skipped; a retired Pod handoff is still pending."""
+    """A step is finished when done, reused, skipped or not_run (a listed outcome: the step's equation had no operand on
+    this day, e.g. a search with no causal axis; nothing to retry, the day goes on); a retired Pod handoff is still pending."""
     return bool(r and r['status'] in FINISHED)
+
+
+KEEP_RUNNING_SCHEMA = 'FRANKIE_KEEP_RUNNING_V1'
+
+
+def this_instance():
+    """(instance id, region) of this box from IMDSv2 (a token PUT, then the identity document); (None, why) off a box."""
+    import urllib.request
+    try:
+        req = urllib.request.Request('http://169.254.169.254/latest/api/token', method='PUT',
+                                     headers={'X-aws-ec2-metadata-token-ttl-seconds': '60'})
+        token = urllib.request.urlopen(req, timeout=2).read().decode()
+        req = urllib.request.Request('http://169.254.169.254/latest/dynamic/instance-identity/document',
+                                     headers={'X-aws-ec2-metadata-token': token})
+        doc = json.loads(urllib.request.urlopen(req, timeout=2).read())
+        return doc.get('instanceId'), doc.get('region')
+    except Exception as error:  # noqa: BLE001 - not on a box, or IMDS unreachable: named
+        return None, '%s: %s' % (type(error).__name__, str(error)[:200])
+
+
+def box_in_use(run_name=None):
+    """What keeps THIS box in use besides the caller: orchestrator starts alive (any run), a queue line worker holding its
+    lock, a CPU controller holding its lock; [] when nothing. Read-only."""
+    busy = []
+    try:
+        import subprocess as sp
+        pids = sp.run(['pgrep', '-f', 'frankie_box_experiment.py --action start --run '], capture_output=True, text=True).stdout.split()
+        pids = [x for x in pids if x != str(os.getpid())]
+        if pids:
+            busy.append('orchestrator start(s) alive: pids %s' % ' '.join(pids))
+    except Exception as error:  # noqa: BLE001
+        busy.append('pgrep unavailable (%s): assumed in use' % type(error).__name__)
+    try:
+        import frankie_box_frankie_queue as Q
+        for line in Q.LINES:
+            status, held = Q.worker_state(line)
+            if held and (status or {}).get('pid') != os.getpid():
+                busy.append('%s line worker holds its lock (pid %s)' % (line, (status or {}).get('pid')))
+    except Exception as error:  # noqa: BLE001
+        busy.append('queue state unreadable (%s): assumed in use' % type(error).__name__)
+    parent = WORK / 'cpu-controller'
+    for lock in sorted(parent.glob('*/controller.lock')) if parent.is_dir() else ():
+        try:
+            import fcntl
+            with open(lock, 'a') as handle:
+                try:
+                    fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    fcntl.flock(handle, fcntl.LOCK_UN)
+                except OSError:
+                    busy.append('CPU controller of %s holds its lock' % lock.parent.name)
+        except OSError:
+            busy.append('CPU controller lock %s unreadable: assumed in use' % lock)
+    return busy
+
+
+def keep_running(run_name, value, reason, by, log=print):
+    """This box's KeepRunning tag (Greg, 2026-10-07: "keep running only when in use"): 'true' at a run's start, 'false' at
+    the end of the run's last worker on this box when nothing else is in use (box_in_use lists what is); never silent:
+    every call appends its record (the tag value asked, what was done, the reason, or the failure) to
+    <run>/keep-running.json (FRANKIE_KEEP_RUNNING_V1) and prints it. The idle guard (deploy/aws/idle_instance_guard.py)
+    stops a box whose tag is not 'true' and that holds no fresh lane lease. ec2:CreateTags on this instance is the one
+    permission (the instance profile; a missing permission is recorded, never raised)."""
+    instance, region = this_instance()
+    doc = dict(schema=KEEP_RUNNING_SCHEMA, run=run_name, asked='true' if value else 'false', reason=reason, by=by, at=time.time(),
+               instance=instance, region=region)
+    if instance is None:
+        doc.update(tagged=False, error='no instance identity: %s' % region)
+    else:
+        busy = [] if value else box_in_use(run_name)
+        if busy:
+            doc.update(tagged=False, kept='true', busy=busy, note='not cleared: the box is still in use by the above')
+        else:
+            try:
+                import boto3
+                boto3.client('ec2', region_name=region).create_tags(
+                    Resources=[instance], Tags=[dict(Key='KeepRunning', Value=doc['asked']),
+                                                dict(Key='KeepRunningReason', Value=('%s: %s' % (by, reason))[:255])])
+                doc['tagged'] = True
+            except Exception as error:  # noqa: BLE001 - a cost guard, never the run's outcome; named
+                doc.update(tagged=False, error='%s: %s' % (type(error).__name__, str(error)[:300]))
+    try:
+        path = RUNS / run_name / 'keep-running.json'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        events = json.loads(path.read_bytes()) if path.is_file() else []
+        events.append(doc)
+        tmp = path.with_suffix('.pending')
+        tmp.write_text(json.dumps(events, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+        os.replace(tmp, path)
+    except (OSError, ValueError) as error:
+        doc['record_error'] = '%s: %s' % (type(error).__name__, error)
+    log('keep-running %s: %s' % (run_name, json.dumps(doc, sort_keys=True)))
+    return doc
+
+
+def all99_crosswalk(code_root):
+    """The pinned 99-entry crosswalk from the staged checkout: (entries, pin) where pin records the file's witness and
+    whether it equals the sha256 CYCLE_CALCULATION_PINS.json binds it to. A mismatch or an unreadable file is a SEPARATE
+    VISIBLE integrity failure (never relabelled as missing coverage): the entries are still listed when readable, the
+    pin says 'differs'/'unreadable', and the caller's list carries it."""
+    path = Path(code_root) / CROSSWALK
+    pin = dict(path=str(path), expected_sha256=None, actual_sha256=None, integrity='unverified')
+    try:
+        pins = json.loads((Path(code_root) / CYCLE_PINS).read_bytes())
+        pin['expected_sha256'] = (pins.get('crosswalk') or {}).get('sha256')
+        pin['registry_sha256'] = pins.get('registry_sha256')
+    except (OSError, ValueError) as error:
+        pin['pins_error'] = '%s: %s' % (type(error).__name__, error)
+    try:
+        raw = path.read_bytes()
+        doc = json.loads(raw)
+        entries = doc.get('layers') or []
+        pin['actual_sha256'] = hashlib.sha256(raw).hexdigest()
+        pin['bytes'] = len(raw)
+        pin['crosswalk_sha256'] = doc.get('crosswalk_sha256')
+        pin['registry_sha256_in_crosswalk'] = doc.get('registry_sha256')
+        pin['integrity'] = ('verified' if pin['expected_sha256'] and pin['actual_sha256'] == pin['expected_sha256']
+                            else 'unpinned' if not pin['expected_sha256'] else 'differs')
+        if doc.get('schema') != 'FRANKIE_NATIVE_RAW_MBO_LAYER_CROSSWALK_V1' or len(entries) != 99:
+            pin['integrity'] = 'differs'
+            pin['shape'] = 'schema %s, %d entries (99 expected)' % (doc.get('schema'), len(entries))
+        return entries, pin
+    except (OSError, ValueError) as error:
+        pin['integrity'] = 'unreadable'
+        pin['error'] = '%s: %s' % (type(error).__name__, error)
+        return [], pin
+
+
+def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch, ingest, brain):
+    """Per day: every one of the 99 crosswalk entries with its disposition for THIS ROOT (ALL99_SCHEMA):
+      produced   the ROOT derived it (derive.json layers[<id>].status == 'derived'; the sealed journal for the raw six)
+      admitted   produced AND carried into the shared market timeline picture: the ROOT is under the plan's policy and the
+                 carrying timeline layer is present (root.frames/prices/structures from the ROOT's spool pins; native.member
+                 and native.lifecycle from the completed native ledgers; completed_sources for the two post-stream aggregates)
+      absent     not produced (bedrock off, no producer, a producer failure) or produced but not in the picture (a legacy
+                 ROOT, an absent carrier): the picture is THINNER here, the day stays (Greg's missing-coverage rule)
+      knowledge  a control/knowledge input carried by the brain, not a numeric timeline layer (its consumers are the
+                 learner/teacher readers); 'brain' names whether the brain root exists
+      retired    Memory A / A-clean overlays: retired by Greg (H06-H08 historical/not_bound); not an input
+      sealed     a Step-1/timing answer boundary: preserved, never exposed as a live discovery input
+      disabled   a provisional shadow producer: listed, never silently activated
+      output     an append-only output: filed by its own later stage (classroom, search, Jev, reports), pending at ROOT
+      integrity  the carrier's evidence could not be verified (selected_files raised): a separate visible failure
+    Reads the ROOT's derive.json layer records and spool pins; it instantiates no timeline reader (no spool is read).
+    Producers in Codex-owned code are named per entry (producer.file) so a request can name file and entry."""
+    entries, pin = all99_crosswalk(code_root)
+    out = dict(schema=ALL99_SCHEMA, day=day, crosswalk=pin, plan_policy=plan_policy, entries=[], counts={},
+               rule='no entry rejects the timeline or the day: an absent layer thins the picture with its reason; '
+                    'disabled producers are listed, never activated; integrity failures stay separate and visible')
+    calc = calc or {}
+    derive, derive_why = {}, None
+    try:
+        dpath = (calc.get('derivation') or {}).get('path')
+        derive = json.loads(Path(dpath).read_bytes()) if dpath else {}
+        if not dpath:
+            derive_why = 'the ROOT receipt names no derivation'
+    except (OSError, ValueError) as error:
+        derive_why = 'derive.json unreadable: %s: %s' % (type(error).__name__, error)
+    layers = derive.get('layers') or {}
+    bedrock = derive.get('bedrock') if isinstance(derive.get('bedrock'), dict) else {}
+    failures = derive.get('failure_count')
+    # the timeline's carrying layers, as frankie_box_market_timeline.SharedMarketTimeline establishes them at open
+    carriers = {}
+    for role in ('frames', 'prices', 'structures'):
+        spool = (calc.get('shared_market_sources') or {}).get(role)
+        if not plan_policy:
+            carriers['root.' + role] = dict(status='absent', reason='a legacy plan: no shared market policy, no spool pin')
+        elif spool is None:
+            carriers['root.' + role] = dict(status='absent', reason='the completed ROOT recorded no %s spool pin' % role)
+        elif isinstance(spool, dict) and spool.get('status') == 'absent':
+            carriers['root.' + role] = dict(status='absent', reason=spool.get('reason') or 'the ROOT published no %s spool' % role)
+        else:
+            carriers['root.' + role] = dict(status='present', pin={k: spool.get(k) for k in ('path', 'bytes', 'sha256')} if isinstance(spool, dict) else spool)
+    native_status = 'absent'
+    try:
+        from frankie_box_experiment_native import selected_files
+        selected = {item['native_role']: item for item in selected_files(calc_dir, str(day))} if calc_dir else {}
+        for role, name in (('exact_member_rows.jsonl', 'native.member'), ('exact_lifecycle_rows.jsonl', 'native.lifecycle')):
+            item = selected.get(role)
+            carriers[name] = (dict(status='present', pin=dict(path=item['source'], **item['expected'])) if item else
+                              dict(status='absent', reason='no completed native calculation in this ROOT (bedrock off)'
+                                   if not selected else 'native ledger not selected'))
+        native_status = 'present' if all(carriers[n]['status'] == 'present' for n in ('native.member', 'native.lifecycle')) else 'absent'
+    except Exception as error:  # noqa: BLE001 - altered or incomplete native evidence is an integrity failure, listed as such
+        native_status = 'integrity'
+        for name in ('native.member', 'native.lifecycle'):
+            carriers[name] = dict(status='integrity', reason='%s: %s' % (type(error).__name__, str(error)[:300]))
+    external = calc.get('external') or {}
+    carriers['external'] = (dict(status='present') if external.get('status') == 'attached' else
+                            dict(status='absent', reason=external.get('reason') or 'no day file attached to this ROOT'))
+    carriers['completed_sources'] = dict(status='present' if any(k in layers for k in ('legacy_native_signed_flow', 'legacy_per_second_roll20'))
+                                         and plan_policy else 'absent',
+                                         note='post_stream_only: the aggregate has no exact contributor cursor provenance (the timeline lists it so)')
+    in_picture = bool(plan_policy) and not policy_mismatch
+    picture_why = (None if in_picture else 'a legacy plan (no shared market policy): produced layers are not in the shared picture'
+                   if not plan_policy else 'the ROOT is refused under the plan\'s policy: %s' % policy_mismatch)
+    brain_present = bool(brain) and Path(brain).is_dir()
+    counts = {}
+    for entry in entries:
+        layer, group = entry.get('layer_id'), entry.get('group_id')
+        role, carrier = ALL99_GROUPS.get(group, ('unknown', 'unknown'))
+        producer = entry.get('producer') or {}
+        row = dict(entry=layer, group=group, role=role, policy=entry.get('policy'),
+                   producer=dict(file=producer.get('file'), symbol=producer.get('symbol'), kind=producer.get('kind')),
+                   historical_status=entry.get('status'))
+        record = layers.get(layer) if isinstance(layers, dict) else None
+        if role == 'raw':
+            if ingest and ingest.get('status') in FINISHED:
+                row.update(produced=True, source=dict(ingest=ingest.get('ingest'), receipt_sha256=ingest.get('receipt_sha256')),
+                           carrier='journal')
+                row.update(disposition='admitted' if in_picture else 'absent',
+                           reason='the sealed journal is the timeline\'s input' if in_picture else picture_why)
+            else:
+                row.update(produced=False, disposition='absent', reason='no sealed ingest of the day on this box')
+        elif role == 'calculation':
+            if record is None:
+                row.update(produced=False, disposition='absent',
+                           reason=derive_why or 'the ROOT derivation lists no record for this layer (not in the pin)')
+            elif record.get('status') == 'derived':
+                name = LEGACY_CARRIER.get(layer, 'native') if carrier == 'legacy' else 'native'
+                if name == 'native':
+                    present = native_status
+                    where = 'native.member+native.lifecycle'
+                else:
+                    present = carriers.get(name, {}).get('status', 'absent')
+                    where = name
+                row.update(produced=True, producer_record=dict(producer=record.get('producer'), sha256=record.get('sha256')),
+                           carrier=where)
+                if present == 'integrity':
+                    row.update(disposition='integrity', reason=carriers['native.member'].get('reason'))
+                elif in_picture and present == 'present':
+                    row.update(disposition='admitted', reason=None)
+                else:
+                    row.update(disposition='absent', reason=picture_why or 'produced, but its carrying timeline layer %s is absent: %s'
+                               % (where, carriers.get(name if name != 'native' else 'native.member', {}).get('reason')))
+            else:
+                row.update(produced=False, disposition='absent', carrier='native' if carrier == 'native' else LEGACY_CARRIER.get(layer),
+                           reason='%s: %s' % (record.get('status'), record.get('reason') or 'no reason recorded'))
+        elif carrier == 'brain':
+            row.update(produced=None, disposition='knowledge', carrier='brain', brain=dict(path=str(brain), present=brain_present),
+                       reason='a control/knowledge input of the learner and teacher readers, not a numeric timeline layer; '
+                              'its consumption is each reader\'s own receipt')
+        elif carrier == 'retired':
+            row.update(produced=False, disposition='retired', reason='Memory A is retired (Greg); H06-H08 stay historical/not_bound')
+        elif carrier == 'boundary':
+            row.update(produced=None, disposition='sealed', reason='a lawful answer boundary: preserved, never a live discovery input')
+        elif carrier == 'disabled':
+            row.update(produced=False, disposition='disabled', reason='a provisional shadow producer, disabled by the existing '
+                                                                      'policy: listed here, never silently activated')
+        elif carrier == 'stages':
+            row.update(produced=None, disposition='output', reason='an append-only output filed by its own later stage; pending '
+                                                                   'at ROOT; not a teacher input')
+        else:
+            row.update(produced=None, disposition='absent', reason='unknown registry group %s' % group)
+        counts[row['disposition']] = counts.get(row['disposition'], 0) + 1
+        out['entries'].append(row)
+    out.update(counts=counts, listed=len(out['entries']), carriers=carriers, in_picture=in_picture, picture_why=picture_why,
+               derivation=dict(path=(calc.get('derivation') or {}).get('path'), failure_count=failures, read_error=derive_why,
+                               bedrock=('skipped: %s' % bedrock.get('reason')) if bedrock.get('skipped') else
+                               ('derived %d layer(s)' % len(bedrock.get('layers') or [])) if bedrock else 'none recorded'),
+               absent=[dict(entry=r['entry'], reason=r['reason']) for r in out['entries'] if r['disposition'] == 'absent'],
+               disabled=[r['entry'] for r in out['entries'] if r['disposition'] == 'disabled'],
+               integrity=[dict(entry=r['entry'], reason=r['reason']) for r in out['entries'] if r['disposition'] == 'integrity'],
+               requests=sorted({r['producer']['file'] for r in out['entries'] if r['disposition'] == 'absent' and r['produced'] is False
+                                and r['producer'].get('file')}))
+    return out
+
+
+def all99_summary(doc):
+    """The one-day inspection's projection of an all-99 list: counts, the absent/disabled/integrity entries, the pin."""
+    if not doc:
+        return None
+    return dict(counts=doc.get('counts'), listed=doc.get('listed'), in_picture=doc.get('in_picture'), picture_why=doc.get('picture_why'),
+                absent=doc.get('absent'), disabled=doc.get('disabled'), integrity=doc.get('integrity'),
+                crosswalk=dict(integrity=(doc.get('crosswalk') or {}).get('integrity'),
+                               sha256=(doc.get('crosswalk') or {}).get('actual_sha256')),
+                carriers={k: v.get('status') for k, v in (doc.get('carriers') or {}).items()})
 
 
 class Run:
@@ -524,18 +848,39 @@ class Run:
         self._knowledge = {}
         self.queue_previous = None       # the class worker: (PREVIOUS, None, from) taken from the class line
         self.school_day = None           # the class worker: the class line's school-day number = the report number N
+        self._school_recovery = set()    # recover_school: the days whose own successor drain holds the inbox (no nested drain)
+        self._day_file_sha = {}          # (day, ingest dir) -> (the attached day file's sha256, why absent), read once (day_rows)
+        # THE OWNER BINDING (Step 8, 2026-10-07): a queue day carries its owner (run, day, host, attempt, commit, code root,
+        # exact CPU set, booking, day-specific save marker), bound by the queue BEFORE dispatch. This Run reads the save
+        # request from ITS OWN marker (never a process-global environment variable: the two main lanes are threads of one
+        # process) and hands that marker to its children only. The Linux lane's agent sets the same variable per job.
+        self.owner = None
+        self.owned_attempt = None        # the main queue's exact ROOT attempt name (the Linux lane's is FRANKIE_LANE_ATTEMPT)
+        self.stop_marker = os.environ.get('FRANKIE_LANE_STOP_FILE')
         sys.path.insert(0, str(self.box))
         from frankie_box_progress import Probe
         import frankie_box_cores
         self.cores = frankie_box_cores     # the box's CPU booking ledger (DAY_RUN_CPUS, ingest_workers, WAITING_EXIT)
         self.probe = Probe(self.dir, request_sha256=plan_digest(plan), phase='experiment')
 
+    def bind_owner(self, owner):
+        """The queue's owner binding for this Run: its attempt, its marker (its children inherit exactly that one)."""
+        self.owner = owner
+        if owner:
+            self.owned_attempt = owner.get('attempt')
+            self.stop_marker = owner.get('marker') or self.stop_marker
+
     def save_requested(self):
-        marker = os.environ.get('FRANKIE_LANE_STOP_FILE')
+        marker = self.stop_marker
         return bool(marker and Path(marker).is_file())
 
     def successors(self, day):
         """Explicit owner corrections finish before this day's next dependent operation."""
+        if day in self._school_recovery:
+            # inside the day's own drain (recover_school, called by successor_dispatch.drain under its lock): the inbox
+            # is held by that caller and re-entering it here would deadlock on the drain lock. Only the one recovery
+            # bound to its operation skips it; nothing else does.
+            return []
         import frankie_box_successor_dispatch as S
         completed = S.drain(self, day)
         if completed and (self.receipt('successors', day) or {}).get('acknowledgments') != completed:
@@ -559,7 +904,50 @@ class Run:
         done = done_status(self.receipt(stage, key))
         if done and stage in ('exchange', 'voice', 'school', 'reports'):
             self.require_current_teacher_inputs(key)
+        if done and stage in ('school', 'reports') and not self.school_current(key, stage)[0]:
+            return False               # a checked school successor stands: the stage runs again on it (old artifacts stay)
+        if done and stage == 'reports' and self.reports_school_stale(key):
+            return False               # the reports were rendered on a school the school stage has since replaced
         return done
+
+    def reports_school_stale(self, day):
+        """The reports receipt records the school it was rendered on (sha256); once the school stage has re-recorded a
+        different checked school, those reports are stale and get their revision under the same number. A reports receipt
+        from before that field is not judged by it."""
+        r, s = self.receipt('reports', day) or {}, self.receipt('school', day) or {}
+        current = s.get('school_sha256') or (s.get('row') or {}).get('sha256')
+        if s.get('status') not in ('done', 'reused') or not current:
+            return False
+        # what the reports were actually rendered with: the day-reports receipt's school_sha256 (the step's own file,
+        # <reports-dir>/receipts/<run>/<day>.json; correction_consumer, 2026-10-07), else this run's recorded school
+        step = Run.reports_receipt(None, day=day, run=self.plan['run']) or {}
+        if 'school_sha256' in step or step.get('school_status') not in (None, 'not given'):
+            rendered = step.get('school_sha256')
+            return rendered != current             # none rendered (school not given then) while a school stands now: stale
+        rendered = (r.get('school') or {}).get('sha256')
+        return bool(rendered and rendered != current)
+
+    def school_current(self, day, stage='school'):
+        """(current, why) of the day's recorded school against the brain's checked school chain (Codex's
+        frankie_box_school_knowledge.retained_school: the indexed original and its explicit checked successors). A
+        done/reused school whose file is no longer the latest checked complete school is superseded: the school stage
+        runs again through the owner operation and the reports get their revision under the same number; the old
+        artifacts stay. A chain that still requires a successor supersedes the school stage only (the reports wait on
+        the school stage's own run, never re-rendered on a stale school meanwhile). A corrupt chain raises; it is never
+        read as absence."""
+        s = self.receipt('school', day) or {}
+        if s.get('status') not in ('done', 'reused'):
+            return True, None
+        import frankie_box_school_knowledge as SK
+        retained = SK.retained_school(str(self.plan.get('brain') or BRAIN), day)
+        if retained is None:
+            return True, None              # nothing indexed for the day: nothing supersedes the recorded file
+        if retained['status'] != 'complete':
+            return stage != 'school', 'the school chain requires a checked successor of %s' % retained['original']['sha256'][:12]
+        recorded = s.get('school_sha256') or (s.get('row') or {}).get('sha256')
+        if recorded and recorded != retained['original']['sha256']:
+            return False, 'superseded by the checked school successor %s' % retained['original']['sha256'][:12]
+        return True, None
 
     def remote_root(self, day):
         receipt = self.receipt('root', day)
@@ -605,7 +993,8 @@ class Run:
                 fields['reason'] = '; '.join(c['line'] for c in refusals)
         # Successor completion already includes its checked publication/sync acknowledgment;
         # do not create another mailbox operation after that durable acknowledgment.
-        if status in FINISHED and stage != 'successors' and os.environ.get('FRANKIE_LANE_MAILBOX'):
+        # (the inspection reporter's receipt is operator review, not a stage knowledge boundary)
+        if status in FINISHED and stage not in ('successors', 'inspection') and os.environ.get('FRANKIE_LANE_MAILBOX'):
             import frankie_box_lane_state as LS
             LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage, brain=self.plan.get('brain') or BRAIN)
         fields['knowledge_available'] = self._knowledge.pop((stage, key), None)
@@ -661,6 +1050,10 @@ class Run:
         if stage in ('voice', 'school', 'reports') and not successor:
             self.require_current_exchange(key[:8], env)
         full = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), **{k: str(v) for k, v in env.items()})
+        # the day's own save marker reaches the child, and only the day's: a sibling lane's marker never leaks across threads
+        full.pop('FRANKIE_LANE_STOP_FILE', None)
+        if self.stop_marker:
+            full['FRANKIE_LANE_STOP_FILE'] = str(self.stop_marker)
         command = ['sh' if script.endswith('ingest_block.sh') else 'bash', str(self.box / script)]
         if stage in self.cores.DAY_RUN_STAGES:  # exactly 16 CPUs booked, the step under taskset -c <them> (frankie_box_cores.py)
             inside = getattr(self, 'slot_booking', None)   # the day's held slot (ROOT line): its steps never re-book
@@ -785,10 +1178,36 @@ class Run:
                 raise ValueError('completed ROOT differs from the claimed attempt; preserved')
             if owned_output.exists() and not owned_output.is_dir():
                 raise ValueError('claimed ROOT output is not a retained directory')
+        elif self.owned_attempt and calc is None:
+            # the main queue's owner binding: the exact attempt bound before dispatch, first dispatch and resume alike;
+            # earlier interrupted attempts of the day may exist beside it (they are listed, never resumed as this one);
+            # a completed ROOT is reused below whatever its name (the binding then records it, informationally)
+            attempt = self.owned_attempt
+            if not re.fullmatch(re.escape('%s-%s-a' % (self.plan['run'], e['day'])) + r'[0-9]+', attempt):
+                raise ValueError('the owner binding names no run/day/attempt of this day: %s' % attempt)
+            owned_output = ROOTS / attempt
+            if owned_output.is_symlink() or (owned_output.exists() and not owned_output.is_dir()):
+                raise ValueError('the owned ROOT output is not a retained directory: %s' % owned_output)
+        policy = self.plan.get('shared_market_policy')
         if calc:
             retained = json.loads((calc / 'calculations-receipt.json').read_bytes())
             if retained.get('day') != e['day'] or retained.get('day_role') != e['role']:
                 raise ValueError('retained ROOT receipt belongs to another day/role')
+            mismatch = self.shared_policy_mismatch(retained.get('shared_market_policy')) if policy else None
+            prior = self.receipt('root', e['day']) or {}
+            if mismatch and prior.get('status') == 'refused' and prior.get('calculations') == str(calc) \
+                    and prior.get('plan_policy') == policy and prior.get('mismatch') == mismatch:
+                return prior                         # refused already for exactly this; not re-recorded on every call
+            if mismatch:
+                # a legacy (or other-implementation) completed ROOT never satisfies a shared-policy plan: preserved as
+                # it is, never recomputed or relabelled here; one finished ROOT per day (root_of) and one plan per run,
+                # so the compatible successor is a NEW run name
+                all99 = self.all99(e['day'], calc, retained, policy, mismatch)
+                return self.record('root', e['day'], 'refused', calculations=str(calc), interrupted_attempts=attempts,
+                                   retained_policy=retained.get('shared_market_policy'), plan_policy=policy, mismatch=mismatch,
+                                   all99=all99, inspection=dict(outputs=dict(all99=all99_summary(all99))),
+                                   reason='the completed ROOT %s does not carry the plan\'s shared market policy (%s); it is '
+                                          'preserved; the compatible successor is a new run name' % (calc, mismatch))
             sources = [calc / 'calculations-receipt.json', calc / 'work' / 'derive.json',
                        calc / 'work' / 'derivation-digest-full.md']
             if (calc / 'external-computation.json').is_file():
@@ -797,10 +1216,21 @@ class Run:
                                            summary=dict(calculations=str(calc), role=e['role'],
                                                         root_status=retained.get('status'),
                                                         producer_failures=retained.get('failure_count')))
+            all99 = self.all99(e['day'], calc, retained, policy, None)
             return self.record('root', e['day'], 'reused', calculations=str(calc), interrupted_attempts=attempts,
                                receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
                                if (calc / 'calculations-receipt.json').is_file() else None,
-                               brain_entry=brain_entry)
+                               shared_market_policy=retained.get('shared_market_policy'), plan_policy=policy,
+                               brain_entry=brain_entry, all99=all99,
+                               # the one-day inspection: a reused ROOT received the retained receipt and produced the
+                               # same all-99 list; operator review only
+                               inspection=dict(inputs=dict(calculations=str(calc), receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
+                                                           if (calc / 'calculations-receipt.json').is_file() else None),
+                                               use=dict(reused=True, plan_policy=policy or 'none (legacy plan: bedrock off)',
+                                                        interrupted_attempts=attempts),
+                                               outputs=dict(root_status=retained.get('status'), producer_failures=retained.get('failure_count'),
+                                                            shared_market_policy=retained.get('shared_market_policy'),
+                                                            all99=all99_summary(all99))))
         ing = self.receipt('ingest', e['day'])
         if not (ing and ing['status'] in FINISHED):
             return self.record('root', e['day'], 'waiting', reason='the day has no sealed ingest yet (stage ingest)')
@@ -820,6 +1250,9 @@ class Run:
                    DIGEST='on', RESUME='on' if resume else 'off')
         if self.plan['frozen_survivors']:
             env['FROZEN_SURVIVORS'] = self.plan['frozen_survivors']
+        if policy:
+            env['SHARED_MARKET_POLICY'] = policy     # the wrapper forwards --bedrock on --shared-market-policy; the same
+                                                    # saved plan reaches the Linux lane's job, so its ROOT runs under it too
         code, log = self.child('root', e['day'], 'frankie_box_experiment_root.sh', env)
         if code != 0 or not (output / 'calculations-receipt.json').is_file():
             self.claim_end(e, output, None, 'the box ROOT attempt ended without calculations-receipt.json (exit %s)' % code)
@@ -827,6 +1260,9 @@ class Run:
                                interrupted_attempts=attempts, reason='no calculations-receipt.json (the attempt is kept)')
         calc = json.loads((output / 'calculations-receipt.json').read_bytes())
         self.claim_end(e, output, sha256_file(output / 'calculations-receipt.json'), None)
+        # the 99 layers combined for Frankie: per entry produced / admitted / absent (thinner picture, the day stays) /
+        # knowledge / retired / sealed / disabled / output, on this receipt and in the one-day inspection (Greg, 2026-10-07)
+        all99 = self.all99(e['day'], output, calc, policy, self.shared_policy_mismatch(calc.get('shared_market_policy')) if policy else None)
         brain_entry = self.brain_stage(e['day'], 'root',
                                        [output / 'calculations-receipt.json', output / 'work' / 'derive.json',
                                         output / 'work' / 'derivation-digest-full.md'] +
@@ -837,9 +1273,32 @@ class Run:
                                                     producer_failures=calc.get('failure_count')))
         return self.record('root', e['day'], 'done', exit_code=code, log=log, calculations=str(output),
                            receipt_sha256=sha256_file(output / 'calculations-receipt.json'), new_bytes=new_bytes(output),
-                           interrupted_attempts=attempts, digest=True,
+                           interrupted_attempts=attempts, digest=True, plan_policy=policy,
+                           shared_market_policy=calc.get('shared_market_policy'),
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
-                           brain_entry=brain_entry)
+                           brain_entry=brain_entry, owner_binding=self.owner, all99=all99,
+                           # the one-day inspection (frankie_box_workflow_inspection.py): what the ROOT child received,
+                           # how this caller used it, what it produced; operator review only, never knowledge or a gate
+                           inspection=dict(inputs=dict(ingestion_receipt=dict(path=ing['receipt'], sha256=ing['receipt_sha256']),
+                                                       env={k: str(v) for k, v in env.items()}, owned_attempt=self.owned_attempt),
+                                           use=dict(resume=resume, plan_policy=policy or 'none (legacy plan: bedrock off)',
+                                                    interrupted_attempts=attempts, claim=held[2] if held else 'no claim store'),
+                                           outputs=dict(calculations=str(output), exit_code=code,
+                                                        receipt_sha256=sha256_file(output / 'calculations-receipt.json'),
+                                                        root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
+                                                        shared_market_policy=calc.get('shared_market_policy'),
+                                                        all99=all99_summary(all99))))
+
+    def all99(self, day, calc_dir, calc, policy, mismatch):
+        """The day's all-99 production/admission list (all99_admission), never raising out of the ROOT step: a failure
+        to build the list is itself listed (schema, error) so the receipt shows it instead of a missing field."""
+        try:
+            return all99_admission(self.code_root, day, calc_dir, calc, policy, mismatch, self.receipt('ingest', day),
+                                   self.plan.get('brain') or str(BRAIN))
+        except Exception as error:  # noqa: BLE001 - the list is operator-visible accounting; its failure is recorded, not hidden
+            self.log('all99 %s: the list could not be built (%s: %s)' % (day, type(error).__name__, error))
+            return dict(schema=ALL99_SCHEMA, day=day, listed=0, counts={}, entries=[],
+                        error='%s: %s' % (type(error).__name__, error), rule='the list could not be built; nothing is inferred')
 
     # The shared ROOT claim (frankie_box_root_claims.py; SPEC-pod-day-runner.md): the Pods, the worker boxes and this
     # orchestrator run the ROOT of a day only after claiming it once. Opt-in: while /opt/frankie-box/work/root-claims does
@@ -994,31 +1453,68 @@ class Run:
 
     # the classroom arm (V2: the 19/171 classroom plus the external section) and Jev's material
     def previous_of(self, e):
-        """(PREVIOUS classroom directory or None, why it waits or None, where it came from)."""
+        """(PREVIOUS classroom directory or None, why it waits or None, where it came from). The class line pins the
+        selection in its entry; outside the line the selection is PERSISTED in the day's continuation
+        (days/<day>/previous.json, create-only) the first time it is made, explicit none included, so a retry after a
+        save or a failure carries the same PREVIOUS and never repicks a newer classroom."""
         if self.queue_previous is not None:        # the class worker: class k carries class k-1 of the class line
             return self.queue_previous
+        kept = self.previous_kept(e['day'])
+        if kept is not None:
+            return kept['classroom'], None, kept['from'] + ' (kept from %s)' % kept['selected_utc']
+        selection = None
         if e.get('previous_classroom'):
-            return e['previous_classroom'], None, 'plan (the day)'
-        arm_days = [x for x in self.plan['days'] if x['classroom_arm']]
-        i = [x['day'] for x in arm_days].index(e['day'])
-        if i > 0:
-            prev = arm_days[i - 1]['day']
-            r = self.receipt('classroom', prev)
-            if not (r and r['status'] in ('done', 'reused') and r.get('classroom')):
-                return None, 'the previous arm day %s has no complete classroom yet (its history is carried in)' % prev, None
-            return r['classroom'], None, 'the previous arm day of this run (%s)' % prev
-        if self.plan.get('previous_classroom'):
-            return self.plan['previous_classroom'], None, 'plan (PREVIOUS_CLASSROOM)'
-        found, found_day = latest_completed_classroom(e['day'])
-        if found is None:
-            return None, None, 'none: no other complete classroom on the box (history starts here)'
-        return str(found), None, 'the most recently completed classroom on the box (%s; trading-date order ignored)' % found_day
+            selection = e['previous_classroom'], None, 'plan (the day)'
+        else:
+            arm_days = [x for x in self.plan['days'] if x['classroom_arm']]
+            i = [x['day'] for x in arm_days].index(e['day'])
+            if i > 0:
+                prev = arm_days[i - 1]['day']
+                r = self.receipt('classroom', prev)
+                if not (r and r['status'] in ('done', 'reused') and r.get('classroom')):
+                    return None, 'the previous arm day %s has no complete classroom yet (its history is carried in)' % prev, None
+                selection = r['classroom'], None, 'the previous arm day of this run (%s)' % prev
+            elif self.plan.get('previous_classroom'):
+                selection = self.plan['previous_classroom'], None, 'plan (PREVIOUS_CLASSROOM)'
+            else:
+                found, found_day = latest_completed_classroom(e['day'])
+                if found is None:
+                    selection = None, None, 'none: no other complete classroom on the box (history starts here)'
+                else:
+                    selection = str(found), None, ('the most recently completed classroom on the box (%s; trading-date order '
+                                                   'ignored)' % found_day)
+        self.previous_keep(e['day'], selection)
+        return selection
+
+    def previous_path(self, day):
+        return self.dir / 'days' / day / 'previous.json'
+
+    def previous_kept(self, day):
+        path = self.previous_path(day)
+        if not path.is_file():
+            return None
+        kept = json.loads(path.read_bytes())
+        if kept.get('schema') != 'FRANKIE_PREVIOUS_SELECTION_V1' or kept.get('day') != day or kept.get('run') != self.plan['run']:
+            raise ValueError('%s is not this run/day\'s previous-classroom selection' % path)
+        return kept
+
+    def previous_keep(self, day, selection):
+        """The selection written once (create-only) BEFORE the first child dispatch; a selection kept meanwhile wins."""
+        body = dict(schema='FRANKIE_PREVIOUS_SELECTION_V1', run=self.plan['run'], day=day, classroom=selection[0],
+                    **{'from': selection[2]}, selected_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                    selected_by_commit=self.commit)
+        try:
+            self.cores.write_json(self.previous_path(day), body, exclusive=True)
+        except FileExistsError:
+            return
 
     def classroom_ready(self, e):
         """The classroom step's readiness checks, in its order: (None, None, facts) when the day may take its class now;
         ('reused', None, facts) when its classroom is complete already; else (status, reason, facts). facts carry calc,
         the classroom directory d and the teacher rows once known. Used by the step and by the class line's enqueue."""
         root = self.receipt('root', e['day'])
+        if root and root.get('status') == 'refused' and 'retained_policy' in root:
+            return 'refused', 'refused: the day\'s ROOT is refused under the plan\'s shared market policy: %s' % root.get('reason'), {}
         if not (root and root['status'] in FINISHED and root.get('calculations')):
             return 'waiting', 'the day has no ROOT yet (stage root)', {}
         calc = Path(root['calculations'])
@@ -1054,10 +1550,12 @@ class Run:
         if not (calc / 'work' / 'derivation-digest-full.md').is_file():
             return 'refused', ('the ROOT %s ran without the digest; a classroom-arm day needs DIGEST=on (its brain entry '
                                'takes it)' % calc), facts
-        rows, source = rows_of(e)
+        rows, source, why = self.day_rows(e)
+        if rows is None and why and why.startswith('refused'):
+            return 'refused', why, facts          # a legacy teacher result under the plan's shared policy (preserved)
         if rows is None or not str(rows).startswith(str(TEACHER_ROWS) + '/'):
-            return 'waiting', 'no teacher-only Dipole rows under %s yet (stage teacher; found: %s)' % (TEACHER_ROWS,
-                                                                                                    source), facts
+            return 'waiting', why or 'no teacher-only Dipole rows under %s yet (stage teacher; found: %s)' % (
+                TEACHER_ROWS, source), facts
         facts['rows'] = rows
         ready, why = self.external_ready(e)
         if not ready:
@@ -1092,7 +1590,7 @@ class Run:
         if rows_path is None:
             return self.record('classroom', day, 'waiting', reason=why)
         try:
-            teacher_brain = self.teacher_knowledge(day, rows_path, rows_of(e)[1])
+            teacher_brain = self.teacher_knowledge(day, rows_path, self.day_rows(e)[1])
         except (ValueError, FileNotFoundError) as error:
             return self.record('classroom', day, 'refused', teacher_rows=str(rows_path),
                                reason='the teacher knowledge of the day could not be published before the classroom: %s'
@@ -1160,6 +1658,11 @@ class Run:
             return self.classroom(e)                 # complete before the line existed: recorded reused, as before
         if status == 'waiting':
             return self.record('classroom', day, status, reason='%s (the class line takes the day once it is ready)' % why)
+        if status == 'refused' and str(why).startswith('refused'):
+            # the plan's shared market policy refuses the day's ROOT or teacher rows (day_rows / a refused ROOT): recorded
+            # here, NOT enqueued (the line would stop at a day no run of this code can put right); the reason names
+            # what puts it right
+            return self.record('classroom', day, 'refused', reason=why)
         # a refused day (a ROOT without the digest) enters the line too: never skipped, its class step refuses there with
         # the reason, its reports print it, and the line stops at it until the day is put right
         entry, outcome = Q.enqueue('class', self.plan['run'], day, self.commit, self.code_root, plan_digest(self.plan),
@@ -1185,7 +1688,7 @@ class Run:
             return prior                             # finished (its measured bytes kept) or in the line already
         calc, attempts = root_of(e, self.plan['run'])
         if calc:
-            return self.root(e)
+            return self.root(e)                      # a refused ROOT: root() re-evaluates and returns the prior refusal
         ing = self.receipt('ingest', day)
         if not (ing and ing['status'] in FINISHED):
             return self.record('root', day, 'waiting', reason='the day has no sealed ingest yet (stage ingest); it enters '
@@ -1208,13 +1711,17 @@ class Run:
                            reason='in the ROOT line at seq %d (%s, %s): it runs in arrival order in the next free day-run '
                                   'slot (box or Pod)' % (entry['seq'], outcome, entry['state']))
 
+    def scope_text(self):
+        """The authorized scope of this run: its saved plan's days, exactly (a one-day plan is a one-day scope)."""
+        return '%s:%s' % (self.plan['run'], ','.join(e['day'] for e in self.plan['days']))
+
     def kick(self, line):
         self.check_save()
         import frankie_box_frankie_queue as Q
         try:
             return Q.kick(line, self.code_root, self.commit, self.a.queue_worker_seconds, self.a.queue_poll_seconds,
-                          by='frankie_box_experiment.py %s' % self.plan['run'], log=self.log)
-        except Exception as error:                   # listed; the next start kicks again
+                          by='frankie_box_experiment.py %s' % self.plan['run'], log=self.log, scope=self.scope_text())
+        except (Exception, SystemExit) as error:     # listed (a scope refusal included); the next start kicks again
             self.log('the %s worker could not be kicked (%s: %s)' % (line, type(error).__name__, error))
             return None
 
@@ -1251,8 +1758,19 @@ class Run:
     # the day reports (Greg, 2026-09-29: "make sure classroom is printing out an analysis after every day has gone through
     # it, and same with Frankie, and have them number their reports")
     @staticmethod
-    def reports_receipt(log):
-        """The day reports step's receipt: the last line of its log, or None."""
+    def reports_receipt(log, day=None, run=None):
+        """The day reports step's receipt: the file the step writes at <reports-dir>/receipts/<run>/<day>.json (its
+        fields school, school_sha256, school_status, school_listed among them; correction_consumer, 2026-10-07) when
+        given a day and run, else the last line of its log, or None."""
+        if day and run:
+            try:
+                r = json.loads((REPORTS / 'receipts' / run / ('%s.json' % day)).read_bytes())
+                if isinstance(r, dict) and r.get('schema') == REPORTS_SCHEMA and str(r.get('day')) == str(day):
+                    return r
+            except (OSError, ValueError):
+                pass
+        if log is None:
+            return None
         try:
             lines = [x for x in Path(log).read_text(encoding='utf-8', errors='replace').splitlines() if x.strip()]
             r = json.loads(lines[-1]) if lines else None
@@ -1291,20 +1809,51 @@ class Run:
             else:
                 env['EXCHANGE_LISTED'] = 'the day\'s exchange stage is %s%s' % (
                     (x or {}).get('status') or 'not run', (': ' + x['reason']) if (x or {}).get('reason') else '')
+            # the school file (correction_consumer, stage 12, 2026-10-07): the day's FRANKIE_SCHOOL_KNOWLEDGE_V1 file when
+            # the school stage is done/reused (the wrapper passes --school), else why there is none (--school-listed);
+            # without it the FRANKIE report's school section reads "not given"
+            school = self.receipt('school', day) or {}
+            if school.get('status') in ('done', 'reused') and school.get('file'):
+                env['SCHOOL'] = school['file']
+            else:
+                env['SCHOOL_LISTED'] = 'the day\'s school stage is %s%s' % (
+                    school.get('status') or 'not run', (': ' + school['reason']) if school.get('reason') else '')
             code, log = self.child('reports', day, 'frankie_box_experiment_day_reports.sh', env)
-            r = self.reports_receipt(log)
+            r = self.reports_receipt(log, day=day, run=self.plan['run'])
             for item in (r or {}).get('reports') or []:
                 try:
                     self.log(Path(item['file']).read_text(encoding='utf-8', errors='replace'))
                 except OSError as error:
                     self.log('reports %s: %s could not be read back (%s)' % (day, item.get('file'), error))
+            school = self.receipt('school', day) or {}
             fields = dict(exit_code=code, log=log, classroom=classroom, classroom_status=c['status'],
                           exchange_status=(x or {}).get('status'), exchange=env.get('EXCHANGE'),
                           meeting=(r or {}).get('meeting'),
+                          school=dict(status=school.get('status'), file=school.get('file'),
+                                      sha256=school.get('school_sha256') or (school.get('row') or {}).get('sha256')),
                           report_number=(r or {}).get('report_number'),
                           reports=[{k: item.get(k) for k in ('kind', 'number', 'revision', 'file', 'sha256', 'existing')}
                                    for item in (r or {}).get('reports') or []],
-                          problems=(r or {}).get('problems'))
+                          problems=(r or {}).get('problems'),
+                          # the one-day inspection (frankie_box_workflow_inspection.py): what the report step received,
+                          # what the reports carry (and do not), what it produced; operator review only, never a gate
+                          inspection=dict(inputs=dict(env={k: str(v) for k, v in env.items()},
+                                                      classroom=dict(path=classroom, status=c['status']),
+                                                      exchange=dict(status=(x or {}).get('status'), path=env.get('EXCHANGE'),
+                                                                    sha256=(x or {}).get('exchange_sha256'),
+                                                                    listed=env.get('EXCHANGE_LISTED')),
+                                                      school=dict(status=school.get('status'), file=school.get('file'),
+                                                                  sha256=school.get('school_sha256') or (school.get('row') or {}).get('sha256'))),
+                                          use=dict(carried='the classroom directory, the exchange and its meeting (read by the '
+                                                           'report step itself)',
+                                                   school='recorded for currentness only: the reports do not read the school '
+                                                          'file; a later checked school successor gets a revision under '
+                                                          'the same number (reports_school_stale)',
+                                                   meeting_status=((r or {}).get('meeting') or {}).get('status')),
+                                          outputs=dict(report_number=(r or {}).get('report_number'),
+                                                       reports=[{k: item.get(k) for k in ('kind', 'number', 'revision', 'file', 'sha256')}
+                                                                for item in (r or {}).get('reports') or []],
+                                                       exit_code=code)))
             if code == 0 and r:
                 return self.record('reports', day, 'done', **fields)
             return self.record('reports', day, 'failed', reason='the report step exited %d%s (its log names why)' % (
@@ -1325,6 +1874,70 @@ class Run:
         except Exception as error:
             return self.record(stage, e['day'], 'failed', reason='%s: %s' % (type(error).__name__, error))
 
+    INSPECTION_SECONDS = 900          # the reporter reads recorded metadata only (8 MiB ceiling per file); never a long job
+
+    def inspect_day(self, day, trigger):
+        """The one-day inspection reporter (frankie_box_workflow_inspection.py --run-dir <run> --day <day> --write) after
+        the day's last step on its lane: one markdown per canonical workflow piece under days/<day>/inspection plus
+        index.md, from recorded receipts and known metadata contracts only (Greg, 2026-10-07: after the ONE-day test every
+        piece shows what it received, how it used it and what it produced, before the THREE-day run). Temporary operator
+        review: not knowledge, not evidence, not a gate, never read by a step. A previous inspection directory is moved
+        aside (inspection.<utc>), never overwritten, so a retried day keeps what its earlier end showed. The reporter runs
+        pinned to the day's held CPUs when they are known, under the same interpreter, -I (no project imports, by its own
+        contract). Its failure, timeout or partial write is recorded on the day's 'inspection' receipt with the log;
+        it never fails, waits or requeues the day. Returns the receipt."""
+        script = self.box / 'frankie_box_workflow_inspection.py'
+        out_dir = self.dir / 'days' / day / 'inspection'
+        logs = self.dir / 'logs'
+        logs.mkdir(parents=True, exist_ok=True)
+        log_path = logs / ('%s-inspection.log' % day)
+        moved_aside = None
+        if out_dir.is_dir():
+            moved_aside = str(out_dir) + '.' + time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
+            try:
+                os.rename(out_dir, moved_aside)
+            except OSError as error:
+                moved_aside = 'not moved aside (%s: %s); the reporter replaces the files in place' % (type(error).__name__, error)
+        cpus, cpus_why = None, None
+        booking = getattr(self, 'slot_booking', None)
+        if booking:
+            try:
+                held, why = self.cores.held_booking(booking)
+                cpus = sorted(held['cpus']) if held and held.get('cpus') else None
+                cpus_why = None if cpus else 'held booking %s not live: %s; unpinned' % (booking, why)
+            except Exception as error:  # noqa: BLE001 - the pin is a courtesy to the lane rule, named when it is not possible
+                cpus_why = 'ledger not read (%s: %s); unpinned' % (type(error).__name__, error)
+        elif self.owner and self.owner.get('cpus'):
+            cpus = sorted(self.owner['cpus'])
+        else:
+            cpus_why = 'no held booking or owner CPU set known to this Run; unpinned'
+        command = [sys.executable, '-I', '-B', str(script), '--run-dir', str(self.dir), '--day', day, '--write']
+        pre = (lambda: os.sched_setaffinity(0, cpus)) if cpus else None
+        code, reason = None, None
+        started = time.time()
+        try:
+            with open(log_path, 'ab') as out:
+                out.write(('\n### inspection %s at %s (%s)\n' % (day, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                                                                 trigger)).encode())
+                out.flush()
+                code = subprocess.run(command, stdout=out, stderr=subprocess.STDOUT, timeout=self.INSPECTION_SECONDS,
+                                      preexec_fn=pre).returncode
+        except subprocess.TimeoutExpired:
+            reason = 'the reporter exceeded %d s and was stopped; the files written so far stand' % self.INSPECTION_SECONDS
+        except OSError as error:
+            reason = 'the reporter could not be started: %s: %s' % (type(error).__name__, error)
+        written = sorted(p.name for p in out_dir.glob('*.md')) if out_dir.is_dir() else []
+        if reason is None and code != 0:
+            reason = 'the reporter exited %s (its log names why); the files written so far stand' % code
+        elif reason is None and 'index.md' not in written:
+            reason = 'the reporter exited 0 without writing index.md under %s' % out_dir
+        status = 'done' if reason is None else 'failed'
+        return self.record('inspection', day, status, trigger=trigger, exit_code=code, log=str(log_path),
+                           directory=str(out_dir), written=written, pieces_written=len([w for w in written if w != 'index.md']),
+                           moved_aside=moved_aside, cpus=cpus, cpus_note=cpus_why, seconds=round(time.time() - started, 1),
+                           reason=reason, rule='temporary operator review; not knowledge, not a gate; a reporter failure '
+                                               'never fails the day')
+
     def reports_stale(self, e):
         """A newly returned meeting or exchange gets a report revision under the existing number."""
         r, x = self.receipt('reports', e['day']), self.receipt('exchange', e['day'])
@@ -1332,6 +1945,8 @@ class Run:
             return False
         if r.get('exchange_status') not in ('done', 'reused'):
             return True
+        if not self.school_current(e['day'], 'reports')[0] or self.reports_school_stale(e['day']):
+            return True                    # the reports were rendered on a school that a checked successor replaced
         if x.get('frankie_view'):
             import frankie_box_brain as BR
             meeting = BR.read_meeting_for_exchange(x['frankie_view'])
@@ -1360,9 +1975,9 @@ class Run:
     # The three-way exchange, its bounded coordinator meeting and the school knowledge base.
     def rows_file(self, e):
         """(the BOSS teacher's Dipole rows file of the day, None) or (None, why)."""
-        base, source = rows_of(e)
+        base, source, why = self.day_rows(e)
         if base is None:
-            return None, 'no Dipole rows of the day (teacher batch: %s)' % (
+            return None, why or 'no Dipole rows of the day (teacher batch: %s)' % (
                 (self.receipt('teacher', self.batch_of(e['day'])) or {}).get('status') or 'not run')
         if source == 'launch run':
             found = sorted(Path(base).glob('execution/cycle-*/host-dipole-classroom-source*.json'))
@@ -1476,6 +2091,8 @@ class Run:
         files = corrected_files
         # Completed accumulated lessons are also actual exchange inputs, even without a new lesson of this day.
         rows, rows_why = self.rows_file(e)
+        if rows is None and rows_why and rows_why.startswith(('refused', 'waiting')):
+            return self.record('exchange', day, rows_why.split(':')[0], reason=rows_why)
         env = dict(DAY=day, RUN=self.plan['run'], LESSONS=','.join(str(f) for f in files), OUT_DIR=target,
                    BRAIN=self.plan.get('brain') or str(BRAIN),
                    SEARCH_DIR=SEARCH / day / ('cycle-' + CYCLE) / 'discovery')
@@ -1494,13 +2111,28 @@ class Run:
                            new_bytes=new_bytes(target))
 
     def voice(self, e):
-        """Run or reuse the bounded meeting; a recorded runtime refusal never blocks school/reports."""
+        """Run or reuse the bounded meeting; a recorded runtime refusal never blocks school/reports.
+
+        One meeting child per DECISION, never per call: the main stage loop (every start), the owner school recovery
+        (every drain) and the class worker all reach this step. A standing non-blocking receipt (waiting, non_blocking,
+        the meeting refused / inputs_only) bound to the current exchange and to the same retained meeting record is
+        returned as it is while the decision that refused it stands (standing_voice); the class worker's passed('voice')
+        already treats it as passed. A voice receipt the day's own successor drain wrote during this call (recover_school
+        -> voice) is this call's result, never followed by a second dispatch. The step's receipt carries inspection=
+        {inputs, use, outputs} for the one-day report."""
         import frankie_box_brain as BR
         import frankie_box_granite_meeting as GM
         day = e['day']
         if not e['classroom_arm']:
             return self.record('voice', day, 'skipped', reason='not a classroom-arm day')
+        own_receipt = self.receipt_path('voice', day)
+        before = own_receipt.read_bytes() if own_receipt.is_file() else None
         self.successors(day)
+        after = own_receipt.read_bytes() if own_receipt.is_file() else None
+        if after is not None and after != before:
+            self.log('voice %s: recorded by the day\'s successor drain (the owner school recovery) during this call; '
+                     'not dispatched again' % day)
+            return json.loads(after)
         self.check_save()
         x = self.receipt('exchange', day)
         if not (x and x['status'] in ('done', 'reused') and x.get('frankie_view')):
@@ -1511,36 +2143,387 @@ class Run:
         brain = self.plan.get('brain') or str(BRAIN)
         existing = target / 'meeting.json'
         reused, code, log = False, 0, None
+        use = 'the meeting child dispatched (no retained meeting record for this exchange)'
+        inputs = dict(exchange_view=x['frankie_view'], exchange_sha256=x.get('exchange_sha256'), brain=brain,
+                      meeting_directory=str(target), retained_record=None, runtime_config=None)
         if existing.is_file():
             record = BR.read_meeting_record(existing, exchange_path=x['frankie_view'], complete=False)
+            inputs.update(retained_record=dict(path=str(existing), sha256=sha256_file(existing), status=record['status']),
+                          runtime_config=record.get('runtime_config'))
             if record['status'] == 'complete':
                 GM.publish_meeting_record(x['frankie_view'], target, brain)
                 reused = True
+                use = 'the retained complete meeting record of this exchange published again; no child'
+            else:
+                standing, why = self.standing_voice(day, existing, record)
+                if standing is not None:
+                    self.log('voice %s: standing %s meeting kept (%s); not dispatched again' % (day, record['status'], why))
+                    return standing
+                use = 'the meeting child dispatched (the retained record is %s and the decision that left it so has changed: %s)' % (
+                    record['status'], why)
+        if not reused and self.plan.get('voice_route') == 'github':
+            return self.voice_remote(e, x, target, brain, inputs)
         if not reused:
             receipt_path = target / 'receipt.json'
             prior_receipt = receipt_path.read_bytes() if receipt_path.is_file() else None
             env = dict(EXCHANGE_VIEW=x['frankie_view'], OUT_DIR=target, BRAIN=brain)
+            # the one pinned runtime on the box (shared_runtime): its paths reach the wrapper as LLAMA_SERVER/GGUF_MODEL
+            # only when the gate is ready; otherwise the wrapper runs inputs-only and the refusal's reasons are on this
+            # receipt (nothing silent; the day goes on, the meeting is non-blocking)
+            runtime = self.shared_runtime()
+            if runtime['status'] == 'ready':
+                env.update(LLAMA_SERVER=runtime['binary'], GGUF_MODEL=runtime['model'])
+            inputs['env'] = {k: str(v) for k, v in env.items()}
+            inputs['runtime_binary_and_model_set'] = runtime['status'] == 'ready'
+            inputs['shared_runtime'] = dict(status=runtime['status'], reasons=runtime['reasons'], binary=runtime['binary'],
+                                            model=runtime['model'], provenance=runtime['provenance'])
             code, log = self.child('voice', day, 'frankie_box_granite_meeting.sh', env)
             if code != 0:
                 current = receipt_path.read_bytes() if receipt_path.is_file() else None
                 if (current is None or current == prior_receipt
                         or json.loads(current).get('status') != 'runtime_failed'):
                     return self.record('voice', day, 'failed', exit_code=code, log=log,
-                                       reason='meeting child failed; retained artifacts are kept for recovery')
+                                       reason='meeting child failed; retained artifacts are kept for recovery',
+                                       inspection=dict(inputs=inputs, use=use,
+                                                       outputs=dict(exit_code=code, meeting_receipt_changed=current != prior_receipt)))
         result = BR.read_meeting_for_exchange(x['frankie_view'], owner_dir=self.dir)
         if result['status'] == 'missing':
-            return self.record('voice', day, 'failed', exit_code=code, log=log, reason=result['reason'])
+            return self.record('voice', day, 'failed', exit_code=code, log=log, reason=result['reason'],
+                               inspection=dict(inputs=inputs, use=use, outputs=dict(exit_code=code, meeting='missing')))
         r = result['receipt']
         fields = dict(exit_code=code, log=log, meeting_status=result['status'], meeting=result['path'],
                       meeting_sha256=(r.get('record') or {}).get('sha256'), model_calls=r.get('model_calls', 0),
                       publication=r.get('publication'), brain_entry=r.get('brain_entry'),
                       counts=r.get('counts'), receipt=str(target / 'receipt.json'),
                       runtime_evidence=r.get('evidence'), binding=r.get('binding'))
+        outputs = dict(meeting_status=result['status'], meeting=result['path'], model_calls=r.get('model_calls', 0),
+                       counts=r.get('counts'), refused_to_run=r.get('refused_to_run'), publication=r.get('publication'),
+                       brain_entry=r.get('brain_entry'), seconds=r.get('seconds'))
         if result['status'] == 'complete':
-            return self.record('voice', day, 'reused' if reused else 'done', **fields)
+            return self.record('voice', day, 'reused' if reused else 'done', inspection=dict(inputs=inputs, use=use, outputs=outputs),
+                               **fields)
         return self.record('voice', day, 'waiting', non_blocking=True,
                            refused_to_run=r.get('refused_to_run') or [result['reason']],
-                           reason=result['reason'] or 'the runtime gate refused the meeting', **fields)
+                           reason=result['reason'] or 'the runtime gate refused the meeting',
+                           inspection=dict(inputs=inputs, use=use, outputs=outputs,
+                                           standing_rule='kept as it is on later calls while the refusing decision stands '
+                                                         '(runtime config gate / LLAMA_SERVER+GGUF_MODEL); see standing_voice'),
+                           **fields)
+
+    def standing_voice(self, day, existing, record):
+        """(the standing voice receipt, why it stands) when the meeting is NOT to be dispatched again, else (None, why).
+        It stands when the day's voice receipt is waiting + non_blocking with meeting_status equal to the retained
+        record's (refused / inputs_only), names this meeting record (its path and the sha256 of its bytes now; the record
+        itself binds the current exchange, read_meeting_record raised otherwise), and the decision that refused it still
+        stands: for 'refused', frankie_box_granite_meeting.gate on the current runtime config still names a reason (or
+        the config cannot be read); for 'inputs_only', LLAMA_SERVER / GGUF_MODEL are still not both set in this process
+        (the wrapper runs inputs-only without them). A record refused only for a missing binary/model file passes the
+        config gate and is dispatched again at the next call (the child's own gate refuses it again without a model
+        call): bounded to one child per start, named here. The receipt is not rewritten while it stands."""
+        import frankie_box_granite_meeting as GM
+        v = self.receipt('voice', day) or {}
+        if not (v.get('status') == 'waiting' and v.get('non_blocking') and v.get('meeting_status') == record['status']
+                and v.get('meeting') == str(existing) and v.get('meeting_sha256') == sha256_file(existing)):
+            return None, 'no standing non-blocking voice receipt bound to this %s record' % record['status']
+        if record['status'] == 'refused':
+            try:
+                config, witness = GM.load_config()
+                reasons = GM.gate(config)
+                stands = ('the runtime config %s (sha256 %s) still refuses: %s' % (witness['path'], witness['sha256'][:12],
+                                                                                  '; '.join(reasons))) if reasons else None
+                changed = 'the runtime config %s (sha256 %s) no longer refuses by itself' % (witness['path'], witness['sha256'][:12])
+            except (OSError, ValueError) as error:
+                stands, changed = 'the runtime config cannot be read (%s: %s)' % (type(error).__name__, error), None
+        elif record['status'] == 'inputs_only':
+            runtime = self.shared_runtime()               # the one pinned runtime on the box, gated once per Run
+            stands = None if runtime['status'] == 'ready' else ('the shared model runtime is still refused: %s: the wrapper would '
+                                                                 'run inputs-only again' % '; '.join(runtime['reasons'])[:600])
+            changed = 'the shared model runtime is ready now (%s)' % runtime['binary']
+        else:
+            return None, 'the retained record is %s: not a standing refusal' % record['status']
+        if stands is None:
+            return None, changed
+        return dict(v, standing=dict(kept=True, because=stands, at=time.time())), stands
+
+    # The remote (GitHub standard CPU runner) meeting route: the Step 6 caller contract (STEP6_COMPLETION_20261007.md,
+    # "Exact remaining caller contract"). The owner writes an IMMUTABLE dispatch intent before any dispatch; the dispatch
+    # itself is the operator's (workflow_dispatch of frankie_granite_meeting.yml by hand, with the presigned exchange GET,
+    # inputs_only=false and a presigned GET of this owner's admission file); the operator records the exact GitHub run
+    # (voice-dispatched), which writes the admission the runner must receive and verify BEFORE model setup/start (the
+    # runner helper's `admit`); the return archive is recorded (voice-returned) and imported through the existing owner
+    # importer (frankie_box_granite_runner.py import); an unknown outcome is reconciled to its attempt, never resent under
+    # a new identity; a continuation binds its complete predecessor archive. No scheduler, lock service, token or GitHub
+    # API call lives here: nothing in this file dispatches a workflow.
+    VOICE_INTENT_SCHEMA = 'FRANKIE_VOICE_DISPATCH_INTENT_V1'
+    VOICE_DISPATCH_SCHEMA = 'FRANKIE_VOICE_DISPATCH_V1'
+    VOICE_ADMISSION_SCHEMA = 'FRANKIE_VOICE_ADMISSION_V1'
+    VOICE_RETURN_SCHEMA = 'FRANKIE_VOICE_RETURN_V1'
+
+    def voice_dispatch_dir(self, day, exchange_sha256):
+        return self.dir / 'days' / day / 'voice-dispatch' / exchange_sha256
+
+    def voice_attempts(self, base):
+        """The attempt directories a1, a2, ... in order, each with what it has recorded (dispatched / admission / returned)."""
+        out = []
+        if not (base / 'attempts').is_dir():
+            return out
+        for d in sorted((base / 'attempts').glob('a[0-9]*'), key=lambda q: int(q.name[1:])):
+            rec = dict(name=d.name, directory=str(d))
+            for name in ('dispatched', 'admission', 'returned'):
+                path = d / (name + '.json')
+                rec[name] = json.loads(path.read_bytes()) if path.is_file() else None
+                rec[name + '_pin'] = file_pin(path) if path.is_file() else None
+            out.append(rec)
+        return out
+
+    def voice_intent(self, e, x, target, brain, write=True):
+        """The immutable dispatch intent of the current exchange (create-only; a retained intent whose bound fields differ is
+        refused, never rewritten): the exchange bytes/source/hash, run/day/owner, the meeting directory, the dispatched
+        source commit and code root, the runtime config and classroom rules witnesses, the meeting-input witness the
+        runner will compute from the same exchange (brain=None on the runner: no knowledge index, as frankie_box_granite_
+        meeting._meeting does without --brain), the workflow's expected inputs. Returns (intent, pin, refusal)."""
+        import frankie_box_granite_meeting as GM
+        import frankie_box_classroom_code as K
+        day = e['day']
+        view = Path(x['frankie_view'])
+        raw = view.read_bytes()
+        sha = hashlib.sha256(raw).hexdigest()
+        if x.get('exchange_sha256') and x['exchange_sha256'] != sha:
+            return None, None, 'refused: the exchange receipt\'s sha256 (%s) differs from the bytes of %s (%s)' % (
+                x['exchange_sha256'], view, sha)
+        exchange = json.loads(raw)
+        try:
+            config, config_witness = GM.load_config()
+        except (OSError, ValueError) as error:
+            return None, None, ('waiting: the meeting runtime config cannot be read (%s: %s); no dispatch intent is written '
+                                'without its witness' % (type(error).__name__, error))
+        _, rules = K.rules()
+        given = GM.meeting_input(exchange, [])
+        input_bytes = GM._durable_json_bytes(given)
+        owner = self.owner or dict(schema='FRANKIE_LANE_OWNER_V1', host=os.uname().nodename,
+                                   attempt=self.owned_attempt or os.environ.get('FRANKIE_LANE_ATTEMPT'),
+                                   marker=self.stop_marker, lane_owner=os.environ.get('FRANKIE_LANE_OWNER'))
+        intent = dict(schema=self.VOICE_INTENT_SCHEMA, run=self.plan['run'], day=day, plan_sha256=plan_digest(self.plan),
+                      owner=owner, host=os.uname().nodename,
+                      exchange=dict(path=str(view), bytes=len(raw), sha256=sha, exchange_hash=exchange.get('exchange_hash')),
+                      meeting_directory=str(target), brain=str(brain),
+                      source=dict(commit=self.commit, code_root=str(self.code_root)),
+                      runtime_config=config_witness,
+                      rules=dict(file=Path(rules['path']).name, sha256=rules['sha256'], bytes=rules['bytes']),
+                      meeting_input=dict(bytes=len(input_bytes), sha256=hashlib.sha256(input_bytes).hexdigest(),
+                                         knowledge_index=[], note='what the runner computes from the same exchange without a brain'),
+                      workflow=dict(file='.github/workflows/frankie_granite_meeting.yml',
+                                    inputs=dict(exchange_sha256=sha, inputs_only='false', commit_must_equal=self.commit,
+                                                admission_get_url='a presigned GET of the attempt\'s admission.json (voice-dispatched writes it)',
+                                                prior_state='the predecessor attempt\'s returned archive URL and sha256, for a continuation')),
+                      rule='written before any dispatch, create-only; the dispatch is the operator\'s by hand; an unknown '
+                           'outcome is reconciled to its attempt (voice-returned), never resent under a new identity')
+        base = self.voice_dispatch_dir(day, sha)
+        path = base / 'intent.json'
+        bound = ('schema', 'run', 'day', 'plan_sha256', 'exchange', 'meeting_directory', 'source', 'runtime_config', 'rules',
+                 'meeting_input')
+        if path.is_file():
+            retained = json.loads(path.read_bytes())
+            differ = [k for k in bound if retained.get(k) != intent.get(k)]
+            if differ:
+                return None, file_pin(path), ('refused: the retained dispatch intent %s binds another %s; it is never '
+                                              'rewritten (a changed source/config/exchange is a new intent under a new '
+                                              'exchange, or an explicit owner decision)' % (path, ', '.join(differ)))
+            return retained, file_pin(path), None
+        if not write:
+            return None, None, None
+        self.cores.write_json(path, intent, exclusive=True)
+        return intent, file_pin(path), None
+
+    def voice_remote(self, e, x, target, brain, inputs):
+        """The remote route's state, read from the intent and its attempts; the only write here is the intent itself
+        (before any dispatch). Every state is a visible receipt: waiting + non_blocking + meeting_status 'remote_pending'
+        names exactly what the operator does next (dispatch, record the run, record the return, import), or refused
+        with the reason. The day's school/reports go on (the class worker's passed('voice') passes remote_pending; the
+        reports are rebuilt once the meeting returns: reports_stale)."""
+        day = e['day']
+        intent, intent_pin, refusal = self.voice_intent(e, x, target, brain)
+        if refusal and refusal.startswith('waiting'):
+            return self.record('voice', day, 'waiting', non_blocking=True, meeting_status='remote_pending', route='github',
+                               reason=refusal, refused_to_run=[refusal], model_calls=0,
+                               inspection=dict(inputs=inputs, use='remote route: no intent yet (its witness is missing)', outputs=dict(waiting=refusal)))
+        if refusal:
+            # an integrity mismatch (a retained intent binding other bytes, an exchange receipt whose sha differs from its
+            # bytes): a visible refusal that holds the day's class side, never relabelled a wait
+            return self.record('voice', day, 'refused', route='github', reason=refusal, intent=intent_pin,
+                               inspection=dict(inputs=inputs, use='remote route: no intent, no dispatch', outputs=dict(refused=refusal)))
+        base = self.voice_dispatch_dir(day, intent['exchange']['sha256'])
+        attempts = self.voice_attempts(base)
+        latest = attempts[-1] if attempts else None
+        common = dict(route='github', intent=intent_pin, exchange_sha256=intent['exchange']['sha256'],
+                      attempts=[dict(name=a['name'], github_run=(a['dispatched'] or {}).get('github_run_id'),
+                                     admitted=bool(a['admission']), returned=(a['returned'] or {}).get('conclusion'))
+                                for a in attempts],
+                      operator_dispatch=dict(workflow=intent['workflow']['file'], inputs=intent['workflow']['inputs'],
+                                             exchange_file=intent['exchange']['path'],
+                                             then='frankie_box_experiment.sh ACTION=voice-dispatched RUN=%s VOICE_DAY=%s '
+                                                  'VOICE_GITHUB_RUN=<id> [VOICE_GITHUB_ATTEMPT=<n>]' % (self.plan['run'], day)))
+        use = 'remote route: the intent stands (%s); the dispatch, admission and return are recorded per attempt' % intent_pin['sha256'][:12]
+        def pending(reason, **more):
+            return self.record('voice', day, 'waiting', non_blocking=True, meeting_status='remote_pending', reason=reason,
+                               refused_to_run=[reason], model_calls=0,
+                               inspection=dict(inputs=dict(inputs, intent=intent_pin), use=use,
+                                               outputs=dict(attempts=common['attempts'], next=reason)), **common, **more)
+        if latest is None:
+            return pending('no dispatch recorded for this intent: dispatch the workflow by hand with exchange_sha256=%s, '
+                           'inputs_only=false, at commit %s, then record the exact GitHub run (voice-dispatched); the runner holds '
+                           'before any model setup until that admission is served to it' % (intent['exchange']['sha256'][:12], self.commit))
+        if latest['dispatched'] and not latest['admission']:
+            return pending('attempt %s records GitHub run %s without its admission (an interrupted record): run voice-dispatched '
+                           'again with the same run id (create-only; another id is refused)' % (
+                               latest['name'], latest['dispatched'].get('github_run_id')))
+        if latest['admission'] and not latest['returned']:
+            return pending('attempt %s: GitHub run %s attempt %s admitted (%s); its return is not recorded: an unknown outcome '
+                           'is reconciled, never resent (no new attempt until voice-returned records this one: the archive, its '
+                           'sha256 and the run\'s conclusion)' % (latest['name'], latest['admission']['github_run_id'],
+                                                                 latest['admission']['github_run_attempt'],
+                                                                 latest['admission_pin']['sha256'][:12]),
+                           admission=latest['admission_pin'])
+        returned = latest['returned'] or {}
+        if returned.get('conclusion') == 'success':
+            return pending('attempt %s returned success (archive %s); the complete record is not under %s yet: import it on '
+                           'this lane with frankie_box_granite_runner.py import --exchange %s --exchange-sha256 %s --commit %s '
+                           '--archive %s --archive-sha256 %s --out <intake dir>; the next start reuses the imported complete '
+                           'meeting' % (latest['name'], (returned.get('archive') or {}).get('sha256', '')[:12], target,
+                                        intent['exchange']['path'], intent['exchange']['sha256'], intent['source']['commit'],
+                                        (returned.get('archive') or {}).get('path'), (returned.get('archive') or {}).get('sha256')),
+                           returned=latest['returned_pin'])
+        return pending('attempt %s returned %s (archive %s, concluded): a continuation is a new attempt under this intent, '
+                       'dispatched by hand with prior_state_get_url/prior_state_sha256 = that archive, then voice-dispatched; '
+                       'its admission binds that predecessor' % (latest['name'], returned.get('conclusion'),
+                                                                  (returned.get('archive') or {}).get('sha256', 'none')[:12]),
+                       returned=latest['returned_pin'])
+
+    def voice_dispatched(self, day, github_run_id, github_run_attempt, by):
+        """The operator's record of the exact GitHub run dispatched for the standing intent: the attempt's dispatched.json
+        and the ADMISSION the runner must receive before model setup/start, both create-only. Refused when no intent stands
+        (the day's voice step writes it before any dispatch), when the latest attempt is not returned (an unknown outcome
+        is never followed by a new identity), or when the predecessor's return is not concluded. The same run id again
+        returns the existing record; another id for the same open attempt is refused."""
+        e = next((d for d in self.plan['days'] if d['day'] == day), None)
+        if e is None or not e.get('classroom_arm'):
+            return dict(status='refused', reason='no classroom-arm day %s in the plan' % day)
+        if not (str(github_run_id).isdigit() and str(github_run_attempt).isdigit()):
+            return dict(status='refused', reason='the GitHub run id and attempt are digits')
+        x = self.receipt('exchange', day) or {}
+        if not (x.get('status') in ('done', 'reused') and x.get('frankie_view')):
+            return dict(status='refused', reason='the day\'s exchange is %s; no meeting to dispatch' % (x.get('status') or 'not run'))
+        import frankie_box_brain as BR
+        target = BR.meeting_directory(x['frankie_view'], owner_dir=self.dir)
+        intent, intent_pin, refusal = self.voice_intent(e, x, target, self.plan.get('brain') or str(BRAIN), write=False)
+        if refusal:
+            return dict(status='refused', reason=refusal)
+        if intent is None:
+            return dict(status='refused', reason='no dispatch intent stands for the current exchange: run the day to its voice '
+                                                 'step first (the intent is written before any dispatch); nothing is admitted '
+                                                 'for a dispatch made before it')
+        base = self.voice_dispatch_dir(day, intent['exchange']['sha256'])
+        attempts = self.voice_attempts(base)
+        latest = attempts[-1] if attempts else None
+        predecessor = None
+
+        def predecessor_of(prior):
+            returned = prior['returned'] or {}
+            if not (returned.get('concluded') and (returned.get('archive') or {}).get('sha256')):
+                return None, ('the predecessor attempt %s is returned without a concluded conclusion and archive witness; a '
+                              'continuation needs both' % prior['name'])
+            return dict(attempt=prior['name'], github_run_id=returned.get('github_run_id'),
+                        github_run_attempt=returned.get('github_run_attempt'), conclusion=returned['conclusion'],
+                        archive=returned['archive'], returned=prior['returned_pin']), None
+        if latest is not None:
+            if latest['dispatched'] and str(latest['dispatched'].get('github_run_id')) == str(github_run_id) \
+                    and str(latest['dispatched'].get('github_run_attempt')) == str(github_run_attempt):
+                if latest['admission']:
+                    return dict(status='recorded', attempt=latest['name'], dispatched=latest['dispatched_pin'],
+                                admission=latest['admission_pin'], reason='already recorded; nothing rewritten')
+                attempt_dir = Path(latest['directory'])   # an interrupted record: the admission is written now, bound to
+                if len(attempts) > 1:                     # the same predecessor its dispatch had (the attempt before it)
+                    predecessor, why = predecessor_of(attempts[-2])
+                    if why:
+                        return dict(status='refused', reason=why)
+            elif not latest['returned']:
+                return dict(status='refused', attempt=latest['name'],
+                            reason='attempt %s (GitHub run %s) is not returned: an unknown outcome is reconciled with '
+                                   'voice-returned, never resent under a new identity' % (
+                                       latest['name'], (latest['dispatched'] or {}).get('github_run_id')))
+            else:
+                predecessor, why = predecessor_of(latest)
+                if why:
+                    return dict(status='refused', reason=why)
+                attempt_dir = base / 'attempts' / ('a%d' % (len(attempts) + 1))
+        else:
+            attempt_dir = base / 'attempts' / 'a1'
+        dispatched = dict(schema=self.VOICE_DISPATCH_SCHEMA, intent=intent_pin, run=self.plan['run'], day=day,
+                          github_run_id=str(github_run_id), github_run_attempt=str(github_run_attempt),
+                          workflow=intent['workflow']['file'], dispatched_by=by, recorded_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+        if not (attempt_dir / 'dispatched.json').is_file():
+            self.cores.write_json(attempt_dir / 'dispatched.json', dispatched, exclusive=True)
+        admission = dict(schema=self.VOICE_ADMISSION_SCHEMA, intent=intent_pin, run=self.plan['run'], day=day,
+                         owner=intent['owner'], host=intent['host'], exchange_sha256=intent['exchange']['sha256'],
+                         exchange_hash=intent['exchange']['exchange_hash'], commit=intent['source']['commit'],
+                         meeting_input_sha256=intent['meeting_input']['sha256'],
+                         github_run_id=str(github_run_id), github_run_attempt=str(github_run_attempt),
+                         predecessor=predecessor, attempt=attempt_dir.name, admitted_by=by,
+                         admitted_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                         rule='the runner (frankie_box_granite_runner.py admit) verifies run id, attempt, exchange sha256, '
+                              'commit and predecessor against its own GITHUB_RUN_ID / GITHUB_RUN_ATTEMPT / GITHUB_SHA / '
+                              'prior_state_sha256 before any model setup or call')
+        self.cores.write_json(attempt_dir / 'admission.json', admission, exclusive=True)
+        return dict(status='recorded', attempt=attempt_dir.name, dispatched=file_pin(attempt_dir / 'dispatched.json'),
+                    admission=file_pin(attempt_dir / 'admission.json'), predecessor=predecessor,
+                    next='serve %s to the runner as the workflow\'s admission_get_url (a presigned GET); the runner verifies '
+                         'it before model setup; after the run, record its return with voice-returned' % (attempt_dir / 'admission.json'))
+
+    def voice_returned(self, day, archive, archive_sha256, conclusion, by):
+        """The operator's record of an admitted attempt's return: the downloaded runner-state.zip witness (its sha256 must
+        equal the given one and the file must be owner-local), the GitHub run's conclusion and concluded=True. Create-only;
+        a different return for the same attempt is refused. The import of a successful archive is the existing owner
+        importer (named in the result); this records only."""
+        e = next((d for d in self.plan['days'] if d['day'] == day), None)
+        if e is None or not e.get('classroom_arm'):
+            return dict(status='refused', reason='no classroom-arm day %s in the plan' % day)
+        x = self.receipt('exchange', day) or {}
+        if not (x.get('status') in ('done', 'reused') and x.get('frankie_view')):
+            return dict(status='refused', reason='the day\'s exchange is %s' % (x.get('status') or 'not run'))
+        sha = x.get('exchange_sha256') or sha256_file(Path(x['frankie_view']))
+        base = self.voice_dispatch_dir(day, sha)
+        attempts = self.voice_attempts(base)
+        latest = attempts[-1] if attempts else None
+        if latest is None or not latest['admission']:
+            return dict(status='refused', reason='no admitted attempt stands under %s; nothing to return' % base)
+        archive = Path(archive)
+        if not archive.is_absolute() or not archive.is_file() or any(q.is_symlink() for q in (archive, *archive.parents)):
+            return dict(status='refused', reason='the archive must be an existing owner-local absolute, symlink-free file: %s' % archive)
+        if not str(archive).startswith(str(RUNS) + '/'):
+            return dict(status='refused', reason='the archive must be downloaded under %s (owner-local evidence)' % RUNS)
+        witness = file_pin(archive)
+        if not re.fullmatch('[0-9a-f]{64}', str(archive_sha256)) or witness['sha256'] != archive_sha256:
+            return dict(status='refused', reason='the archive sha256 %s differs from the given %s (the run\'s runner-state.json '
+                                                 'names the exact one)' % (witness['sha256'], archive_sha256))
+        record = dict(schema=self.VOICE_RETURN_SCHEMA, intent=latest['admission']['intent'], run=self.plan['run'], day=day,
+                      attempt=latest['name'], admission=latest['admission_pin'],
+                      github_run_id=latest['admission']['github_run_id'], github_run_attempt=latest['admission']['github_run_attempt'],
+                      conclusion=conclusion, concluded=True, archive=witness, returned_by=by,
+                      recorded_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+        path = Path(latest['directory']) / 'returned.json'
+        if path.is_file():
+            retained = json.loads(path.read_bytes())
+            if any(retained.get(k) != record.get(k) for k in ('attempt', 'github_run_id', 'github_run_attempt', 'conclusion', 'archive')):
+                return dict(status='refused', reason='attempt %s already records another return (%s, archive %s); never rewritten' % (
+                    latest['name'], retained.get('conclusion'), (retained.get('archive') or {}).get('sha256', '')[:12]))
+            return dict(status='recorded', attempt=latest['name'], returned=file_pin(path), reason='already recorded')
+        self.cores.write_json(path, record, exclusive=True)
+        importer = ('python deploy/aws/box/frankie_box_granite_runner.py import --exchange %s --exchange-sha256 %s --commit %s '
+                    '--archive %s --archive-sha256 %s --out %s' % (x['frankie_view'], sha, latest['admission']['commit'], archive,
+                                                                   archive_sha256, Path(latest['directory']) / 'intake'))
+        return dict(status='recorded', attempt=latest['name'], returned=file_pin(path), conclusion=conclusion,
+                    next=importer if conclusion == 'success' else
+                    'a continuation is a new attempt: dispatch by hand with prior_state = this archive, then voice-dispatched')
 
     def school(self, e):
         day = e['day']
@@ -1550,11 +2533,38 @@ class Run:
             return self.record('school', day, 'skipped', reason='Monday 20211004 is out of the school (it starts with the '
                                                                 'first school day)')
         brain = Path(self.plan.get('brain') or str(BRAIN))
-        index = brain / 'school' / 'index.json'
-        rows = [r for r in (json.loads(index.read_bytes()).get('rows') or [])
-                if r.get('day') == day] if index.is_file() else []
-        if rows:
-            return self.record('school', day, 'reused', file=str(brain / 'school' / rows[-1]['file']), row=rows[-1])
+        # the checked school chain (Codex's frankie_box_school_knowledge.retained_school): the indexed original and its
+        # explicit checked successors; a corrupt chain raises (never read as absence). A complete chain of THIS run is
+        # reused as its latest checked school; one that requires a successor goes through the school child, whose CLI
+        # runs the owner operation (the original index row is never rewritten here); another run's same-day school
+        # is never reused
+        import frankie_box_school_knowledge as SK
+        retained = SK.retained_school(str(brain), day)
+        if retained is not None and retained['content'].get('run') != self.plan['run']:
+            return self.record('school', day, 'refused', school_sha256=retained['original']['sha256'],
+                               reason='the day\'s indexed school belongs to run %s, not this run; another run\'s same-day '
+                                      'school is never reused' % retained['content'].get('run'))
+        if retained is not None and retained['status'] == 'complete':
+            return self.record('school', day, 'reused', file=retained['original']['path'],
+                               row=dict(retained['row'], **retained['original']), school_sha256=retained['original']['sha256'],
+                               corrections=retained['corrections'],
+                               # the one-day inspection (frankie_box_workflow_inspection.py): what this reuse received
+                               # (the indexed original row and the chain), what it reused and what it recorded
+                               inspection=dict(inputs=dict(brain=str(brain), index_row=retained['row'],
+                                                           indexed_original=dict(path=str(brain / 'school' / retained['row']['file']),
+                                                                                 bytes=retained['row'].get('bytes'),
+                                                                                 sha256=retained['row'].get('sha256')),
+                                                           chain='retained_school: the indexed original and its explicit checked '
+                                                                 'successors (school_transition records only)'),
+                                               use=dict(reused='the latest checked complete school of the chain',
+                                                        superseded_links=len(retained['corrections']),
+                                                        superseded=[c.get('sha256') for c in retained['corrections']],
+                                                        corrections_carried=len(retained['corrections']),
+                                                        not_run='no school child, no model call, no index row rewritten'),
+                                               outputs=dict(file=retained['original']['path'], school_sha256=retained['original']['sha256'],
+                                                            bytes=retained['original'].get('bytes'),
+                                                            report_number=retained['row'].get('report_number'),
+                                                            school_day=retained['row'].get('school_day'))))
         c = self.receipt('classroom', day)
         if not (c and c['status'] in ('done', 'reused', 'refused')):
             return self.record('school', day, 'waiting', reason='the day\'s classroom step is %s' % (
@@ -1563,11 +2573,32 @@ class Run:
         if not (x and x['status'] in ('done', 'reused', 'skipped')):
             return self.record('school', day, 'waiting', reason='the day\'s exchange is %s (the school file is written '
                                                                 'once, with it)' % ((x or {}).get('status') or 'not run'))
+        if retained is not None:
+            # requires_successor: the owner operation needs the completed corrected meeting when the school's discussion
+            # is bound to a replaced exchange (frankie_box_school_knowledge._successor_projection); until the day's voice
+            # is done or reused on the current exchange the successor waits, never a failed child
+            import frankie_box_experiment_review as REVIEW
+            import frankie_box_lane_state as LS
+            records = REVIEW.corrections(LS.knowledge_roots(str(brain)))
+            meetings = [i for i in retained['content']['sections']['exchange']['items'] if i['name'] == 'discussion (meeting)']
+            needs_meeting = any(((i.get('content') or {}).get('exchange') or {}).get('sha256') in records for i in meetings)
+            v = self.receipt('voice', day) or {}
+            if needs_meeting and v.get('status') not in ('done', 'reused'):
+                return self.record('school', day, 'waiting', school_sha256=retained['original']['sha256'],
+                                   reason='the checked school successor awaits the completed corrected meeting; the day\'s '
+                                          'voice is %s' % (v.get('status') or 'not run'))
         classroom = c.get('classroom') or (str(Path(self.receipt('root', day)['calculations']) / 'work' / 'classroom')
                                            if (self.receipt('root', day) or {}).get('calculations') else None)
         if not classroom:
             return self.record('school', day, 'failed', reason='no classroom directory named for the day')
-        env = dict(DAY=day, RUN=self.plan['run'], REPORT_NUMBER=self.report_number(e), CLASSROOM=classroom, BRAIN=brain)
+        try:
+            number = self.report_number(e)
+        except SystemExit as error:     # the numbering rule refused (reserve_number: a day is never renumbered, a number
+            if error.code == 75:        # never given to two days): the step's own refusal, visible on its receipt; never an
+                raise                   # exit that escapes guarded() and the successor drain (both catch Exception only)
+            return self.record('school', day, 'refused', reason='the day\'s report number could not be reserved as its '
+                                                                'school day: %s' % error)
+        env = dict(DAY=day, RUN=self.plan['run'], REPORT_NUMBER=number, CLASSROOM=classroom, BRAIN=brain)
         if self.school_day is not None:
             env['SCHOOL_DAY'] = self.school_day        # the class line's school-day number (= REPORT_NUMBER), in the row
         if x['status'] in ('done', 'reused'):
@@ -1577,7 +2608,9 @@ class Run:
         mine = LESSONS_ROOT / 'frankie' / ('%s-frankie.json' % day)
         if mine.is_file():
             env['LESSONS'] = mine
-        base, source = rows_of(e)
+        base, source, why = self.day_rows(e)
+        if base is None and why:
+            return self.record('school', day, 'refused' if why.startswith('refused') else 'waiting', reason=why)
         if base is not None and source != 'launch run':
             env['TEACHER_ROWS'] = base
         code, log = self.child('school', day, 'frankie_box_school_knowledge.sh', env)
@@ -1590,29 +2623,330 @@ class Run:
             return self.record('school', day, 'failed', exit_code=code, log=log, reason='no school receipt after the step '
                                                                                         '(its log names why)')
         return self.record('school', day, 'done', exit_code=code, log=log, file=r['file'], row=r['row'],
-                           sections=r.get('sections'), missing=r.get('missing'), withheld=r.get('withheld'))
+                           school_sha256=(r.get('row') or {}).get('sha256'), reused_by_child=r.get('reused'),
+                           sections=r.get('sections'), missing=r.get('missing'), withheld=r.get('withheld'),
+                           successor=r.get('successor'), correction=r.get('correction'), corrections=r.get('corrections'),
+                           # the one-day inspection (frankie_box_workflow_inspection.py): what the school child received,
+                           # how it used it (a new school, the owner successor operation, or the child's own reuse) and what
+                           # it produced; operator review only, never knowledge or a gate
+                           inspection=dict(inputs=dict(env={k: str(v) for k, v in env.items()},
+                                                       teacher_rows=dict(path=str(base) if base else None, source=source, listed=why),
+                                                       exchange=dict(status=x['status'], view=x.get('frankie_view'),
+                                                                     sha256=x.get('exchange_sha256')),
+                                                       lessons=str(mine) if mine.is_file() else 'none: no FRANKIE_LESSONS_V1 of the day',
+                                                       chain=('requires_successor: the indexed school %s has a replaced source' %
+                                                              retained['original']['sha256'][:12]) if retained else
+                                                             'none indexed: a new school is written once'),
+                                           use=dict(school=('the owner successor operation (frankie_box_school_knowledge.'
+                                                            'rebuild_successor): only checked copied sources and their '
+                                                            'projections change; the original file and index row stay')
+                                                           if r.get('successor') else
+                                                           ('the child reused the indexed school (same bytes)' if r.get('reused')
+                                                            else 'a new school written and indexed'),
+                                                    corrections_carried=len(r.get('corrections') or []),
+                                                    sections=r.get('sections'), missing=r.get('missing'), withheld=r.get('withheld')),
+                                           outputs=dict(file=r['file'], school_sha256=(r.get('row') or {}).get('sha256'),
+                                                        bytes=(r.get('row') or {}).get('bytes'), report_number=number,
+                                                        school_day=self.school_day, successor=r.get('successor'),
+                                                        correction=r.get('correction'), exit_code=code)))
+
+    def recover_school(self, day, recovery_intent):
+        """The owner's recovery of a day's school under a checked source successor (successor_dispatch.rebuild_dependents
+        -> 'waiting_school', called from its drain under the drain lock, on this same owner/day/held lane): the existing
+        voice then school steps, with the nested successor drain skipped for exactly this recovery (the caller holds the
+        inbox). Save, currentness and held-slot checks stay the steps' own. 'complete' only when the school stage ended
+        done/reused on the checked successor; a refused or still-pending meeting leaves it 'waiting' (never a completed
+        school, requeue or invented discussion); a failed voice/school child or a raised error is 'failed' = the stage's
+        own failed receipt (visible, separate from a wait, retried by the ordinary path, never the operation's
+        failure.json). Returns status, stage, recovery_intent, reason and inspection={inputs, use, outputs} (receipt
+        paths and statuses only, never receipt bodies). No second drain, scheduler or model runtime."""
+        e = next((x for x in self.plan['days'] if x['day'] == day), None)
+        if e is None or not e.get('classroom_arm'):
+            return dict(status='refused', reason='no classroom-arm day %s in the plan' % day, recovery_intent=recovery_intent)
+        if self.save_requested():
+            return dict(status='saved', reason='save requested on the owner; the recovery resumes with the day',
+                        recovery_intent=recovery_intent)
+        self._school_recovery.add(day)
+        # Every drain of the day calls this (child boundaries, the class worker's keep(), close_day's loop), so a child
+        # is dispatched here AT MOST ONCE PER INVALIDATION, never once per call: only an absent voice or the
+        # invalidation's own blocking wait runs the meeting child; a failed voice or school (any child failure) is the
+        # step's own failure, retried by the ordinary path (guarded() on the next start, the class worker's next poll),
+        # and a non-blocking refused meeting is the owner's decision. Re-dispatching per call is the unbounded
+        # model-child dispatch the fifth pass closed; close_day's drain loop would reach it again.
+        use = dict(voice='not dispatched here', school='not dispatched here')
+        paths = dict(voice=self.receipt_path('voice', day).as_posix(), school=self.receipt_path('school', day).as_posix())
+        stage = 'voice'
+        try:
+            v = self.receipt('voice', day) or {}
+            if not v or (v.get('status') == 'waiting' and not v.get('non_blocking')):
+                use['voice'] = 'the meeting child dispatched (voice was %s)' % (v.get('status') or 'absent')
+                v = self.voice(e) or {}
+            elif v.get('status') == 'failed':
+                use['voice'] = 'failed voice not re-dispatched by the recovery; the next start or class poll retries it'
+            elif v.get('status') == 'waiting':
+                use['voice'] = 'non-blocking refused meeting not re-dispatched; the owner\'s decision changes it'
+            else:
+                use['voice'] = 'the %s meeting used as it is' % v.get('status')
+            if v.get('status') not in ('done', 'reused', 'skipped'):
+                return dict(status='failed' if v.get('status') == 'failed' else 'waiting', stage='voice',
+                            inspection=dict(inputs=dict(recovery_intent=recovery_intent, **paths), use=use,
+                                            outputs=dict(voice_status=v.get('status'),
+                                                         school_status=(self.receipt('school', day) or {}).get('status'))),
+                            recovery_intent=recovery_intent, voice_status=v.get('status'),
+                            reason='the corrected meeting is %s: %s' % (v.get('status'), v.get('reason')))
+            stage = 'school'
+            s = self.receipt('school', day) or {}
+            if s.get('status') == 'failed':
+                use['school'] = 'failed school not re-dispatched by the recovery; the next start or class poll retries it'
+                return dict(status='failed', stage='school',
+                            inspection=dict(inputs=dict(recovery_intent=recovery_intent, **paths), use=use,
+                                            outputs=dict(voice_status=v.get('status'), school_status='failed')),
+                            recovery_intent=recovery_intent, school_status='failed',
+                            reason='the school step failed: %s' % s.get('reason'))
+            use['school'] = 'the school step run on the checked chain (school was %s)' % (s.get('status') or 'absent')
+            s = self.school(e) or {}
+            return dict(status='complete' if done_status(s) else (s.get('status') or 'waiting'), stage='school',
+                        inspection=dict(inputs=dict(recovery_intent=recovery_intent, **paths), use=use,
+                                        outputs=dict(voice_status=v.get('status'), school_status=s.get('status'),
+                                                     school_sha256=s.get('school_sha256'), successor=s.get('successor'),
+                                                     correction=s.get('correction'), corrections=s.get('corrections'))),
+                        recovery_intent=recovery_intent, school_status=s.get('status'), reason=s.get('reason'))
+        except Exception as error:      # noqa: BLE001 - the stage's own failure, recorded as guarded() records it:
+            # visible on the day's receipt and separate from a wait (a corrupt school chain, a changed exchange at the
+            # child boundary); never the operation's failure.json and never relabelled as waiting
+            r = self.record(stage, day, 'failed', reason='%s: %s (in the owner school recovery)' % (type(error).__name__, error))
+            return dict(status='failed', stage=stage,
+                        inspection=dict(inputs=dict(recovery_intent=recovery_intent, **paths), use=use,
+                                        outputs={stage + '_status': 'failed'}),
+                        recovery_intent=recovery_intent, reason=r['reason'])
+        finally:
+            self._school_recovery.discard(day)
 
     def jev(self, e):
+        """Jev's day on the held CPU lane (Step 7, Codex's frankie_box_jev_cpu.py/.sh; Greg: a worker subset of the SAME
+        held 16-CPU day lane, sequentially; no other host, booking or lane). The immutable JEV_CPU_REQUEST_V1 is persisted
+        under the day BEFORE the first dispatch and reused byte for byte (a retained request that binds another identity
+        is refused, never re-minted); the child runs inside the day's held booking ('jev' in cores.DAY_RUN_STAGES) with
+        the day's own save marker; its receipt or status is checked against the request before any status is recorded
+        (an exit code alone is nothing). Missing runtime configuration is waiting, never skipped or done. The existing
+        knowledge boundary runs before the dispatch (child) and again once both local deliveries are read back."""
         day = e['day']
         remote = self.remote_stage('jev', day)
         if remote is not None:
             return remote
         if not e['classroom_arm']:
             return self.record('jev', day, 'skipped', reason='not a classroom-arm day (Jev sits in on the arm days only)')
+        if e.get('role') != 'discovery':
+            return self.record('jev', day, 'waiting', reason='a %s day has no authorized Jev route (the CPU route takes '
+                                                             'discovery classroom-arm days only)' % e.get('role'))
         c = self.receipt('classroom', day)
         if not (c and c['status'] in ('done', 'reused') and c.get('classroom')):
             return self.record('jev', day, 'waiting', reason='the day\'s classroom is not complete yet (its material is '
                                                              'written by the classroom step)')
-        calc = Path(c['classroom']).parent.parent
-        material = calc / 'jev-material' / 'classroom-request.json'
-        if not material.is_file():
-            return self.record('jev', day, 'failed', reason='no Jev material at %s' % material)
+        producer = Path(c['classroom']) / 'receipt.json'      # the classroom PRODUCER's receipt, never this step's record
+        if not producer.is_file():
+            return self.record('jev', day, 'failed', reason='no classroom producer receipt at %s' % producer)
+        s = self.receipt('search', day) or {}
+        manifest = Path(s['target']) / 'MANIFEST.json' if s.get('status') in ('done', 'reused') and s.get('target') else None
+        if manifest is None or not manifest.is_file():
+            return self.record('jev', day, 'waiting', reason='the owning day\'s search is %s (Jev tests his claims on it)'
+                               % (s.get('status') or 'not run'))
+        # Greg, 2026-10-07: Jev uses the SAME weights, code and setup as Granite (one pinned runtime on the box: Granite 4.2
+        # 3B Q4_K_M under llama.cpp b11440 at the paths the meeting's gate expects), so he improves with it. Run.jev passes
+        # no separate binary/model: the request binds the shared runtime definition (the staged GRANITE_MEETING_RUNTIME_V1
+        # config, the install's provenance, the gated paths); a plan's older jev_runtime (JEV_CPU_RUNTIME_V1) is recorded
+        # as superseded and NOT used. The helper's own binding to this definition is Codex's (remaining_consumers).
+        shared = self.shared_runtime()
+        superseded = self.plan.get('jev_runtime') or (str(self.dir / 'jev-runtime.json') if (self.dir / 'jev-runtime.json').is_file() else None)
+        if shared['status'] != 'ready':
+            return self.record('jev', day, 'waiting', shared_runtime=shared, superseded_jev_runtime=superseded,
+                               reason='the one pinned model runtime (Granite 4.2 3B Q4_K_M under llama.cpp b11440, shared with the '
+                                      'meeting) is not ready on this box: %s; a missing runtime is waiting, never skipped or borrowed'
+                                      % '; '.join(shared['reasons'])[:900])
+        runtime = (shared['config'] or {}).get('path')
+        jev_brain = Path(self.plan.get('jev_brain') or str(JEV_BRAIN))
+        for label, p in (('runtime config', Path(runtime)), ('binary', Path(shared['binary'])), ('model', Path(shared['model'])),
+                         ('jev_brain', jev_brain)):
+            if not p.is_absolute() or any(q.is_symlink() for q in (p, *p.parents)):
+                # the helper refuses a relative or symlinked path, and the request is written once: refused BEFORE it
+                # is written (a corrected install is the setup script's; a corrected brain path is a new run)
+                return self.record('jev', day, 'refused', reason='Jev\'s %s path must be absolute and symlink-free: %s' % (label, p))
+        marker = self.stop_marker
+        if not marker:
+            return self.record('jev', day, 'waiting', reason='no day-bound save marker on this Run (the owner binding or '
+                                                             'FRANKIE_LANE_STOP_FILE): Jev binds the exact marker')
+        booking = getattr(self, 'slot_booking', None)
+        held, why = self.cores.held_booking(booking) if booking else (None, 'no held day booking on this Run')
+        if held is None or held.get('run') != self.plan['run'] or held.get('day') != day or len(held.get('cpus') or []) != 16:
+            return self.record('jev', day, 'waiting', reason='Jev needs the day\'s live held 16-CPU booking: %s' % why)
+        attempt = self.owned_attempt or os.environ.get('FRANKIE_LANE_ATTEMPT') or ''
+        if not attempt:
+            root = self.receipt('root', day) or {}
+            attempt = Path(root['calculations']).name if root.get('calculations') else ''
+        if not re.fullmatch(re.escape('%s-%s-a' % (self.plan['run'], day)) + r'[0-9]+', attempt):
+            return self.record('jev', day, 'waiting', reason='the original ROOT attempt of the day is not established on '
+                                                             'this Run (%r)' % attempt)
         stamp = jev_stamp(self.plan, e)
-        return self.record('jev', day, 'waiting', stamp=stamp, material=str(material),
-                           reason='Pods are retired; wire Jev blind comparison on an authorized CPU transport, '
-                                  'then seal/test his claims before publishing tested knowledge')
+        number = self.report_number(e)
+        brain = Path(self.plan.get('brain') or str(BRAIN))
+        out = self.dir / 'days' / day / 'jev' / stamp
+        owner = self.owner or dict(schema='FRANKIE_LANE_OWNER_V1', host=os.uname().nodename, attempt=attempt,
+                                   marker=str(marker), lane_owner=os.environ.get('FRANKIE_LANE_OWNER'))
+        request = dict(schema='JEV_CPU_REQUEST_V1', run=self.plan['run'], day=day, day_role='discovery', stamp=stamp,
+                       attempt=attempt, owner=owner, host=os.uname().nodename, plan_sha256=plan_digest(self.plan),
+                       slot_booking=booking, cpus=list(held['cpus']),
+                       source=dict(commit=self.commit, code_root=str(self.code_root)), save_marker=str(marker),
+                       output=str(out), brain=str(brain), jev_brain=str(jev_brain), report_number=number,
+                       classroom_receipt=file_pin(producer), search=file_pin(manifest), runtime=file_pin(Path(runtime)),
+                       # the shared runtime definition Jev binds to (the same install the meeting runs on): the config
+                       # pin above, the install's provenance pin, the gated binary/model paths; no separate pin set
+                       shared_runtime=dict(schema=SHARED_RUNTIME_SCHEMA, provenance=shared['provenance'], binary=shared['binary'],
+                                           model=shared['model'], superseded_jev_runtime=superseded))
+        path = self.dir / 'days' / day / ('jev-request-%s.json' % stamp)
+        if path.is_file():
+            retained = json.loads(path.read_bytes())
+            bound = ('schema', 'run', 'day', 'day_role', 'stamp', 'attempt', 'host', 'plan_sha256', 'source', 'output',
+                     'brain', 'jev_brain', 'report_number', 'slot_booking', 'cpus')
+            differ = [k for k in bound if retained.get(k) != request.get(k)]
+            if differ:
+                # a REBOOK'd day (ACTION=resume REBOOK=on: the same attempt on another free 16-CPU booking) runs its Jev
+                # on the explicit rebook successor of the retained request; anything else differing is refused as before
+                successor, why = self.jev_rebooked(path, request, differ)
+                if successor is None:
+                    return self.record('jev', day, 'refused', request=str(path), differs=differ, rebook=why,
+                                       reason='the retained Jev request binds another %s; the same request resumes byte for '
+                                              'byte or an explicit owner recovery decides (never re-minted); REBOOK successor: %s'
+                                              % (', '.join(differ), why))
+                path, request = successor
+                out = Path(request['output'])
+        else:
+            self.cores.write_json(path, request, exclusive=True)      # create-only: the request is written once
+        # the helper pins the request as given (status.json) and resolved (owner.json / receipt.json): both are this file
+        request_pins = [file_pin(path)] + ([file_pin(path.resolve())] if path.resolve() != path else [])
+        status_path, receipt_path = out / 'status.json', out / 'receipt.json'
+
+        def read(p):
+            try:
+                return json.loads(p.read_bytes()) if p.is_file() else None
+            except ValueError:
+                return None
+
+        def bound_receipt(doc):
+            return isinstance(doc, dict) and doc.get('schema') == 'JEV_CPU_RECEIPT_V1' and \
+                (doc.get('owner') or {}).get('request_pin') in request_pins
+
+        def bound_status(doc):
+            return isinstance(doc, dict) and doc.get('schema') == 'JEV_CPU_STATUS_V1' and doc.get('request') in request_pins
+        status, receipt = read(status_path), read(receipt_path)
+        if bound_receipt(receipt) and receipt.get('status') != 'done' and receipt.get('pending'):
+            # a complete receipt whose dispositions await the owner: nothing but that decision changes it; not re-run
+            return self.record('jev', day, 'waiting', request=str(path), receipt=str(receipt_path), stamp=stamp,
+                               pending=receipt.get('pending'), report=receipt.get('report'),
+                               reason='Jev\'s receipt awaits the owner\'s disposition: %s' % '; '.join(receipt.get('pending') or []))
+        if not receipt_path.is_file() and bound_status(status) and status.get('unresolved_calls'):
+            # status_file, never 'status': record() takes the stage status positionally (a duplicate keyword raised)
+            return self.record('jev', day, 'waiting', request=str(path), status_file=str(status_path), stamp=stamp,
+                               unresolved_calls=status['unresolved_calls'], request_pins=request_pins,
+                               reason='Jev\'s retained state lists unresolved model calls; none is retried or erased, the '
+                                      'owner\'s review resolves them (frankie_box_jev_cpu status.json)')
+        # the same LLAMA_SERVER / GGUF_MODEL the meeting child gets: one runtime, one install (the helper reads the request's
+        # shared_runtime binding; the environment names the same paths for its wrapper)
+        code, log = self.child('jev', day, 'frankie_box_jev_cpu.sh', dict(JEV_REQUEST=path, LLAMA_SERVER=shared['binary'],
+                                                                           GGUF_MODEL=shared['model']))
+        receipt, status = read(receipt_path), read(status_path)
+        fields = dict(exit_code=code, log=log, request=str(path), stamp=stamp, output=str(out), report_number=number,
+                      request_pins=request_pins, rebook=request.get('rebook'),
+                      # the one-day inspection (frankie_box_workflow_inspection.py): what this caller gave the helper, how
+                      # the answer was bound, what came back; operator review only, never knowledge or a gate
+                      inspection=dict(inputs=dict(request=request_pins, classroom_receipt=request['classroom_receipt'],
+                                                  search_manifest=request['search'], runtime=request['runtime'],
+                                                  attempt=attempt, booking=booking, cpus=request['cpus'], marker=str(marker),
+                                                  brain=str(brain), jev_brain=str(jev_brain), report_number=number),
+                                      use=dict(exit_code=code, receipt_bound=bound_receipt(receipt), status_bound=bound_status(status),
+                                               binding='a receipt counts only with owner.request_pin in request_pins; a status '
+                                                       'only with request in request_pins; an exit code alone is nothing'),
+                                      outputs=dict(receipt=str(receipt_path) if receipt_path.is_file() else None,
+                                                   status_file=str(status_path) if status_path.is_file() else None,
+                                                   receipt_status=(receipt or {}).get('status') if bound_receipt(receipt) else None,
+                                                   child_status=(status or {}).get('status') if bound_status(status) else None)))
+        if bound_receipt(receipt):
+            fields.update(receipt=str(receipt_path), receipt_status=receipt.get('status'), claims_seal=receipt.get('claims_seal'),
+                          scientific_result=receipt.get('scientific_result'), deliveries=receipt.get('deliveries'),
+                          report=receipt.get('report'), client_receipt=receipt.get('client_receipt'),
+                          pending=receipt.get('pending'), unparsed=receipt.get('unparsed'))
+            if receipt.get('deliveries'):
+                # both local deliveries read back (Jev's lesson reader, Frankie's jev-tested publication): the existing
+                # knowledge boundary runs now whatever the comparison disposition; a pending one keeps the stage waiting
+                # and never erases the delivered evidence
+                import frankie_box_lane_state as LS
+                fields['knowledge_after_delivery'] = LS.boundary(day, 'jev', brain=str(brain))
+            if code == 0 and receipt.get('status') == 'done':
+                return self.record('jev', day, 'done', **fields)
+            return self.record('jev', day, 'waiting', reason='Jev\'s receipt is %s (exit %d): %s' % (
+                receipt.get('status'), code, '; '.join(receipt.get('pending') or []) or 'see the receipt'), **fields)
+        if bound_status(status):
+            # status_file, never 'status': record() takes the stage status positionally (a duplicate keyword raised
+            # TypeError here, which classed the day failed instead of waiting)
+            fields.update(status_file=str(status_path), child=status.get('child'), unresolved_calls=status.get('unresolved_calls'),
+                          child_reason=status.get('reason'))
+            # exit 75 on the day's standing marker never reaches here: child() raised SystemExit(75) on it and the day's
+            # own save classifies the thread (_thread_end); a 75 without a standing marker (the helper's signal path) is
+            # waiting with the child's reason, never recorded as saved
+            return self.record('jev', day, 'waiting' if code in (5, 75) else 'failed',
+                               reason='Jev\'s status is %s (exit %d): %s' % (status.get('status'), code, status.get('reason')),
+                               **fields)
+        return self.record('jev', day, 'waiting' if code in (5, 75) else 'failed',
+                           reason='exit %d without a receipt or status bound to the request %s' % (code, path), **fields)
+
+    def jev_rebooked(self, original, request, differ):
+        """The explicit REBOOK successor of a retained Jev request: ((path, request) to run, None) or (None, why).
+        ACTION=resume REBOOK=on records on the owner binding the booking/CPUs it replaced (frankie_box_frankie_queue.
+        resume_owner: owner.rebooked). The ORIGINAL request is never changed. The chain is jev-request-<stamp>.json, then
+        .rebook1.json, .rebook2.json ...; the successor for the live booking is reused when it stands; else one is minted
+        create-only ONLY when the retained request differs in booking/CPUs alone, the rebook decision names exactly the
+        booking/CPUs the newest retained request bound, and the newest request's output holds no Jev progress (its
+        state, claims, seal, status, receipt or runtime evidence): then nothing is duplicated and the successor binds the
+        new booking/CPUs, a new output beside the old one (<output>.rebook<n>) and the chain. Retained progress is named
+        and refused here: resuming it under another booking is the helper's resume (Codex, frankie_box_jev_cpu.execute,
+        which binds owner.json to the request pin), never a second start that could repeat model calls."""
+        if set(differ) - {'slot_booking', 'cpus'}:
+            return None, 'the request differs in %s, not in the booking/CPUs alone' % ', '.join(differ)
+        decision = (self.owner or {}).get('rebooked')
+        if not decision:
+            return None, 'no REBOOK decision on the owner binding (ACTION=resume REBOOK=on records one); the retained booking is required'
+        chain = [original] + sorted((q for q in original.parent.glob(original.stem + '.rebook*.json')
+                                     if re.fullmatch(re.escape(original.stem) + r'\.rebook[0-9]+\.json', q.name)),
+                                    key=lambda q: int(re.search(r'\.rebook([0-9]+)\.json$', q.name).group(1)))
+        newest_path = chain[-1]
+        newest = json.loads(newest_path.read_bytes())
+        if newest.get('slot_booking') == request['slot_booking'] and newest.get('cpus') == request['cpus']:
+            return (newest_path, newest), None           # the successor for this booking stands already (reused byte for byte)
+        if (decision.get('previous_booking'), decision.get('previous_cpus')) != (newest.get('slot_booking'), newest.get('cpus')):
+            return None, ('the REBOOK decision replaced booking %s (CPUs %s), not the newest retained request\'s %s (%s); the '
+                          'chain is broken, an explicit owner decision is required' % (
+                              decision.get('previous_booking'), decision.get('previous_cpus'), newest.get('slot_booking'), newest.get('cpus')))
+        previous_out = Path(newest['output'])
+        progress = [name for name in ('state.json', 'claims.json', 'claims-seal.json', 'status.json', 'receipt.json', 'runtime-evidence')
+                    if (previous_out / name).exists()]
+        if progress:
+            return None, ('retained Jev progress under %s (%s): resuming it under another booking is the helper\'s resume '
+                          '(request to Codex: frankie_box_jev_cpu.execute accepting a rebook successor chain bound to its '
+                          'retained owner.json), never a second start here; nothing is duplicated, the day waits on that' % (
+                              previous_out, ', '.join(progress)))
+        n = len(chain)
+        successor = dict(newest, slot_booking=request['slot_booking'], cpus=request['cpus'],
+                         output='%s.rebook%d' % (newest['output'], n),
+                         rebook=dict(n=n, of=file_pin(newest_path), previous_booking=newest.get('slot_booking'),
+                                     previous_cpus=newest.get('cpus'), decision=decision,
+                                     rule='the original request stands unchanged; this successor binds the rebooked lane'))
+        path = original.with_name('%s.rebook%d.json' % (original.stem, n))
+        self.cores.write_json(path, successor, exclusive=True)
+        self.log('jev %s: REBOOK successor %s minted for booking %s (the original %s stands unchanged)' % (
+            request['day'], path.name, request['slot_booking'], original.name))
+        return (path, successor), None
 
     def teacher(self, batch_key, entries):
+        refused = {}                                     # day -> why its retained teacher knowledge is not taught again
         self.check_save()
         remote = {e['day']: self.remote_stage('teacher', e['day']) for e in entries if self.remote_root(e['day'])}
         if len(entries) == 1 and entries[0]['day'] in remote and batch_key == 'day-' + entries[0]['day']:
@@ -1621,25 +2955,45 @@ class Run:
         remote_waiting = [day for day, r in remote.items() if not done_status(r)]
         todo = [e for e in local if rows_of(e)[0] is None]
         brain_entries = {}
+        policy = self.plan.get('shared_market_policy')
+        root_waiting = {}                                # day -> why its retained or new teacher waits under the policy
         for e in local:
             rows, source = rows_of(e)
             if rows is not None:
+                if policy:
+                    state, why = self.shared_teacher_compatible(e, rows, source)
+                    if state == 'refused':
+                        refused[e['day']] = why        # a legacy or other-source teacher result never satisfies the policy
+                        continue
+                    if state == 'waiting':
+                        root_waiting[e['day']] = why   # its ROOT or ingest is not complete here yet: not judged, not reused
+                        continue
                 rows_path, why = self.rows_file(e)
                 if rows_path is None:
                     raise ValueError(why)
-                brain_entries[e['day']] = self.teacher_knowledge(e['day'], rows_path, source)
+                try:
+                    brain_entries[e['day']] = self.teacher_knowledge(e['day'], rows_path, source)
+                except ValueError as error:
+                    refused[e['day']] = str(error)     # the other days of the batch are not held back by this one
         if not todo:
-            return self.record('teacher', batch_key, 'waiting' if remote_waiting else 'skipped',
-                               reason='waiting for owning lane teacher receipts' if remote_waiting else
+            policy_refused = {d: w for d, w in refused.items() if str(w).startswith('refused')}
+            status = ('refused' if policy_refused else 'waiting' if remote_waiting or root_waiting else 'skipped')
+            return self.record('teacher', batch_key, status,
+                               reason=('retained teacher results refused under the plan\'s shared market policy (preserved): %s'
+                                       % '; '.join('%s: %s' % kv for kv in sorted(policy_refused.items()))[:1500])
+                                      if policy_refused else 'waiting for owning lane teacher receipts' if remote_waiting else
+                                      'waiting for the days\' completed shared-policy ROOTs' if root_waiting else
                                       'each day has local rows or its owning lane completed teacher receipt',
-                               remote_days=remote, waiting=remote_waiting,
-                               brain_entries=brain_entries,
+                               remote_days=remote, waiting=remote_waiting + sorted(root_waiting), refused_days=refused or None,
+                               root_waiting=root_waiting or None, shared_market_policy=policy, brain_entries=brain_entries,
                                days=[dict(day=e['day'], rows=str(rows_of(e)[0]), source=rows_of(e)[1]) for e in local])
         if not (self.box / 'frankie_box_experiment_teacher.sh').is_file():
             return self.record('teacher', batch_key, 'not_built', days=[e['day'] for e in todo],
                                reason='frankie_box_experiment_teacher.sh is not in the staged checkout yet')
-        receipts, external_waiting = [], {}
+        receipts, external_waiting, roots = [], {}, {}
         for e in todo:
+            if e['day'] in refused:
+                continue                                  # its retained result is preserved; no re-run beside it
             ing = self.receipt('ingest', e['day'])
             if not (ing and ing['status'] in FINISHED):
                 continue                                  # that day waits on its ingest; the rest of the batch runs
@@ -1647,31 +3001,281 @@ class Run:
             if not ready:
                 external_waiting[e['day']] = why          # the teacher builds the external section: it waits for the file
                 continue
+            if policy:
+                # the shared policy: the teacher reads the day's completed OWNER-LOCAL ROOT under the same policy (the
+                # wrapper forwards --calculations ROOT --shared-market-policy per day); a day without it waits, a ROOT
+                # computed under another policy refuses the day (preserved; explicit compatible successor)
+                root, why = self.shared_root_of(e)
+                if root is None:
+                    (refused if why.startswith('refused') else root_waiting)[e['day']] = why
+                    continue
+                stale_path = TEACHER_ROWS / e['day'] / 'receipt.json'
+                if stale_path.is_file():
+                    # a retained teacher publication the rows reader does not accept (partial or failed): the producer
+                    # would refuse it after reading the whole journal unless it binds exactly this ROOT and ingest;
+                    # judged here on the same witnesses, before any dispatch; unreadable = refused, never raised
+                    try:
+                        stale = json.loads(stale_path.read_bytes())
+                    except (OSError, ValueError) as error:
+                        refused[e['day']] = 'refused: unreadable retained teacher publication at %s (%s); %s' % (
+                            stale_path, error, ROWS_ROUTE % stale_path.parent)
+                        continue
+                    identity = stale.get('shared_market_identity') or {}
+                    if (identity.get('schema') != policy or identity.get('day') != e['day']
+                            or (identity.get('calculations') or {}).get('sha256') != sha256_file(Path(root) / 'calculations-receipt.json')
+                            or (stale.get('ingestion_receipt') or {}).get('sha256') != ing['receipt_sha256']):
+                        refused[e['day']] = ('refused: a retained teacher publication that does not bind this ROOT and ingest under the '
+                                             'plan\'s shared identity stands at %s; preserved; %s' % (stale_path, ROWS_ROUTE % stale_path.parent))
+                        continue
+                roots[e['day']] = root
             receipts.append((e['day'], ing['receipt']))
-        waiting = [e['day'] for e in todo if e['day'] not in dict(receipts)] + remote_waiting
+        waiting = sorted(set(e['day'] for e in todo if e['day'] not in dict(receipts) and e['day'] not in refused)
+                         | set(remote_waiting) | set(root_waiting))
         if not receipts:
-            return self.record('teacher', batch_key, 'waiting', days=waiting, reason='no day of the batch has a sealed ingest yet')
+            return self.record('teacher', batch_key, 'waiting' if waiting else 'refused', days=waiting,
+                               refused_days=refused or None, root_waiting=root_waiting or None,
+                               external_waiting=external_waiting or None,
+                               reason='no day of the batch is ready for its teacher (sealed ingest, day file%s)'
+                                      % (', completed shared-policy ROOT' if policy else '') if waiting else
+                                      'every day of the batch is refused: %s' % '; '.join('%s: %s' % kv for kv in sorted(refused.items()))[:1500])
         if not self.disk_ok('teacher'):
             return None
-        code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh',
-                               dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts)))
-        missing = [d for d, _ in receipts if rows_of(dict(day=d))[0] is None]
+        env = dict(DAYS=','.join(d for d, _ in receipts), INGESTION_RECEIPTS=','.join(r for _, r in receipts))
+        if policy:
+            env.update(SHARED_MARKET_POLICY=policy, CALCULATION_ROOTS=','.join(roots[d] for d, _ in receipts))
+        code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh', env)
+        by_day = {e['day']: e for e in todo}
+        # the teacher step's LISTED outcomes (workflow_reports, 2026-10-07): a day whose experiment-teacher-rows/<day>/
+        # receipt.json says equation_not_run (exit 5: no operand for the pinned equation on this day, no rows file) is a
+        # listed day WITHOUT Dipole rows, not a failed batch; exit 4 (rows published, external section listed) is listed
+        # too; the step exits 3 only on a failed day. missing = days with neither accepted rows nor such a receipt
+        listed = {}
         for d, _ in receipts:
-            rows, source = rows_of(dict(day=d))
+            if self.day_rows(by_day[d])[0] is not None:
+                continue
+            try:
+                published = json.loads((TEACHER_ROWS / d / 'receipt.json').read_bytes())
+            except (OSError, ValueError):
+                published = None
+            if isinstance(published, dict) and published.get('day') == d and published.get('status') == 'equation_not_run':
+                listed[d] = dict(status='equation_not_run', reason=(published.get('equation_not_run') or {}).get('reason'),
+                                 operand=(published.get('equation_not_run') or {}).get('operand'))
+        missing = [d for d, _ in receipts if self.day_rows(by_day[d])[0] is None and d not in listed]   # the gate: accepted rows only
+        if listed:
+            self.log('teacher %s: no Dipole rows for %s (equation_not_run: listed, the days go on without them)' % (batch_key, sorted(listed)))
+        for d, _ in receipts:
+            rows, source, _ = self.day_rows(by_day[d])
             if rows is not None:
                 rows = Path(rows)
-                brain_entries[d] = self.teacher_knowledge(d, rows / ROWS_FILE, source)
-        return self.record('teacher', batch_key, 'done' if code == 0 and not missing and not waiting else 'failed',
+                try:
+                    brain_entries[d] = self.teacher_knowledge(d, rows / ROWS_FILE, source)
+                except ValueError as error:
+                    refused[d] = str(error)             # recorded per day; the batch's other entries stay
+        if refused:
+            self.log('teacher %s: knowledge not taught again for %s (explicit checked successor required): %s' % (
+                batch_key, sorted(refused), '; '.join('%s: %s' % kv for kv in sorted(refused.items()))[:1500]))
+        # a day refused by teacher_knowledge (producer identity) is recorded on the batch (refused_days) and refuses its
+        # own classroom with the same reason; the batch's other days are not held back by it (the batch status is the
+        # child's and the rows', as before). A day refused by the plan's SHARED MARKET POLICY (why starts with 'refused')
+        # makes the batch refused: never FINISHED, its other days ran
+        status = 'done' if code == 0 and not missing and not waiting else 'failed'
+        if status == 'done' and any(str(w).startswith('refused') for w in refused.values()):
+            status = 'refused'
+        return self.record('teacher', batch_key, status,
                            exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
-                           remote_days=remote,
+                           rows_listed=listed or None,
+                           remote_days=remote, refused_days=refused or None, shared_market_policy=policy,
+                           calculation_roots=roots or None, root_waiting=root_waiting or None,
                            external_waiting=external_waiting, brain_entries=brain_entries,
                            new_bytes=sum(new_bytes(TEACHER_ROWS / d) for d, _ in receipts),
+                           # the one-day inspection (frankie_box_workflow_inspection.py): per day what the teacher child
+                           # received, every disposition this caller applied, and what came back; operator review only
+                           inspection=dict(inputs=dict(env=env, days={d: dict(ingestion_receipt=r, calculation_root=roots.get(d))
+                                                                     for d, r in receipts}),
+                                           use=dict(policy=policy or 'none (legacy plan)', refused=refused or None,
+                                                    root_waiting=root_waiting or None, external_waiting=external_waiting or None,
+                                                    rows_missing=missing, rows_listed=listed or None, waiting=waiting,
+                                                    skipped_days=sorted(set(by_day) - set(dict(receipts)))),
+                                           outputs=dict(exit_code=code, rows={d: str(self.day_rows(by_day[d])[0]) for d, _ in receipts},
+                                                        brain_entries=sorted(brain_entries))),
                            reason=None if code == 0 and not missing and not waiting else
                            'rows missing for %s, waiting on ingest %s (those days go on without Dipole rows, listed)'
                            % (missing, waiting))
 
+    def shared_runtime(self):
+        """THE ONE pinned model runtime on the box (Greg, 2026-10-07: Jev uses the same weights, code and setup as Granite):
+        {status: ready|refused, config, provenance, binary, model, reasons, rule} built once per Run from the staged
+        knowledge/GRANITE_MEETING_RUNTIME_V1.json (frankie_box_granite_meeting.load_config), the setup script's provenance
+        receipt under GRANITE_DIR (exactly one FRANKIE_GRANITE_RUNTIME_PROVENANCE_V1 names llama-server and the GGUF)
+        and the meeting's own runtime gate on those paths (binary and every extracted file against llama_cpp_files, the
+        model against model_sha256). 'refused' names every reason VISIBLY until the pinned install exists; nothing is
+        installed, guessed or borrowed. The meeting child (LLAMA_SERVER/GGUF_MODEL) and Jev bind to this same result."""
+        cached = getattr(self, '_shared_runtime', None)
+        if cached is not None:
+            return cached
+        started = time.time()
+        out = dict(schema=SHARED_RUNTIME_SCHEMA, status='refused', config=None, provenance=None, binary=None, model=None, reasons=[],
+                   rule='one pinned runtime (Granite 4.2 3B Q4_K_M, llama.cpp b11440) for the meeting and Jev; refused visibly '
+                        'until frankie_box_granite_meeting_setup.sh installed it under %s' % GRANITE_DIR)
+        try:
+            import frankie_box_granite_meeting as GM
+            config, witness = GM.load_config()
+            out['config'] = witness
+            found = sorted(p for p in GRANITE_DIR.glob('*/provenance.json') if not p.is_symlink()) if GRANITE_DIR.is_dir() else []
+            docs = []
+            for p in found:
+                try:
+                    doc = json.loads(p.read_bytes())
+                except (OSError, ValueError) as error:
+                    out['reasons'].append('unreadable provenance %s (%s: %s)' % (p, type(error).__name__, error))
+                    continue
+                if doc.get('schema') == GRANITE_PROVENANCE_SCHEMA:
+                    docs.append((p, doc))
+            if not docs:
+                out['reasons'].append('no %s under %s: the pinned runtime is not installed on this box (the setup script '
+                                      'writes it after every pin check passed)' % (GRANITE_PROVENANCE_SCHEMA, GRANITE_DIR))
+            elif len(docs) > 1:
+                out['reasons'].append('%d provenance receipts under %s (%s): exactly one pinned runtime is expected; none chosen'
+                                      % (len(docs), GRANITE_DIR, ', '.join(str(p) for p, _ in docs)))
+            else:
+                p, doc = docs[0]
+                binary, model = doc.get('server'), doc.get('model')
+                out.update(provenance=file_pin(p), binary=binary, model=model)
+                pins = config.get('pins') or {}
+                for key, have in (('release', 'llama_cpp_release'), ('asset', 'llama_cpp_asset'), ('server_sha256', 'llama_server_sha256'),
+                                  ('model_sha256', 'model_sha256')):
+                    if doc.get(key) != pins.get(have):
+                        out['reasons'].append('provenance %s %s differs from the staged pin %s %s' % (key, doc.get(key), have, pins.get(have)))
+                if not binary or not str(binary).startswith(str(GRANITE_DIR) + '/') or not model or not str(model).startswith(str(GRANITE_DIR) + '/'):
+                    out['reasons'].append('provenance names a server/model outside %s (%s, %s)' % (GRANITE_DIR, binary, model))
+                else:
+                    out['reasons'].extend(GM.gate(config, binary=binary, model=model))   # the meeting's own gate: binary, files, model sha256
+        except Exception as error:  # noqa: BLE001 - an unreadable config or gate is a visible refusal, never a silent inputs-only
+            out['reasons'].append('%s: %s' % (type(error).__name__, str(error)[:300]))
+        out['status'] = 'ready' if not out['reasons'] else 'refused'
+        out['seconds'] = round(time.time() - started, 1)
+        self._shared_runtime = out
+        self.log('shared model runtime: %s%s (%.1f s)' % (out['status'], ('' if out['status'] == 'ready' else ': ' + '; '.join(out['reasons'])[:600]),
+                                                          out['seconds']))
+        return out
+
+    TEACHER_KNOWLEDGE_PRODUCERS = ('research/kalshi/frankie_boss/dipole_classroom.py',
+                                   'research/kalshi/frankie_boss/dipole_classroom_integration.py',
+                                   'research/kalshi/frankie_boss/c15_journal.py',
+                                   'deploy/aws/box/frankie_box_experiment_teacher.py')
+
+    def teacher_producer_identity(self):
+        """The exact producers a teacher-knowledge summary is bound to: the sha256 of the modules that compute the
+        teacher key from the rows and of the teacher step that wrote the rows. The commit is recorded beside it, not
+        compared: a commit that leaves these modules byte-identical is the same producer."""
+        return dict(modules={name: sha256_file(self.code_root / name) for name in self.TEACHER_KNOWLEDGE_PRODUCERS})
+
+    def shared_policy_mismatch(self, retained):
+        """None when a ROOT's retained shared_market_policy is exactly the staged timeline module's binding (schema AND
+        implementation, Codex's frankie_box_market_timeline.binding(): the reader refuses any other), else why."""
+        import frankie_box_market_timeline as MT
+        want = MT.binding()
+        if not isinstance(retained, dict) or not retained:
+            return 'no shared market policy (a legacy ROOT)'
+        differ = sorted(k for k in set(want) | set(retained) if want.get(k) != retained.get(k))
+        return ('the retained policy differs from the staged %s in %s' % (want['schema'], ', '.join(differ))) if differ else None
+
+    def shared_root_of(self, e):
+        """(the day's completed owner-local ROOT directory under the plan's shared market policy, None) or (None, why):
+        'waiting ...' while the ROOT is not complete here; 'refused ...' when it is refused or complete under another
+        policy or implementation (preserved; never recomputed or relabelled; the compatible successor is a new run
+        name). A remote owner's ROOT is that lane's, never a caller-local alias."""
+        r = self.receipt('root', e['day']) or {}
+        if r.get('remote_calculations'):
+            return None, 'refused: the day\'s ROOT belongs to its remote owner %s; its teacher runs there' % r.get('owner')
+        if r.get('status') == 'refused' and 'retained_policy' in r:
+            return None, 'refused: the day\'s ROOT is refused under the plan\'s shared market policy: %s' % r.get('reason')
+        if r.get('status') not in ('done', 'reused') or not r.get('calculations'):
+            return None, 'waiting for the day\'s completed ROOT under the shared market policy (root is %s)' % (r.get('status') or 'not run')
+        calc = Path(r['calculations'])
+        receipt = calc / 'calculations-receipt.json'
+        if not receipt.is_file():
+            return None, 'waiting: the ROOT %s has no calculations-receipt.json' % calc
+        mismatch = self.shared_policy_mismatch(json.loads(receipt.read_bytes()).get('shared_market_policy'))
+        if mismatch:
+            return None, ('refused: the completed ROOT %s does not carry the plan\'s shared market policy (%s); preserved; the '
+                          'compatible successor is a new run name' % (calc, mismatch))
+        return str(calc), None
+
+    def day_rows(self, e):
+        """The ONE gate every consumer of the day's teacher rows passes (rows_file, classroom_ready, the classroom's
+        knowledge publication, school, data): (rows, source, None), or (None, None, why) when there are none, or when the
+        plan's shared market policy does not accept them (why starts with 'waiting' or 'refused')."""
+        base, source = rows_of(e)
+        if base is None:
+            return None, None, None
+        if self.plan.get('shared_market_policy'):
+            state, why = self.shared_teacher_compatible(e, base, source)
+            if state != 'ok':
+                return None, None, why
+        return base, source, None
+
+    def shared_teacher_compatible(self, e, rows, source):
+        """('ok', None) when the day's retained teacher result was produced under the plan's shared market policy on the
+        day's completed ROOT, with its complete shared read: the rows receipt's shared_market_identity (schema, day, the
+        exact calculations-receipt witness of that ROOT, whose own policy is the staged binding), its shared_market_read
+        (same identity, complete), the same ingestion receipt and the same external publication as the day file beside
+        the sealed ingest; ('waiting', why) while the day's ROOT or ingest is not complete here (not judged, not reused);
+        ('refused', why) otherwise: a legacy teacher receipt, the plan's rows or a launch run's never satisfy the policy
+        (preserved; the compatible successor is a new run name)."""
+        policy = self.plan.get('shared_market_policy')
+        day = e['day']
+        if source != 'teacher-only step':
+            return 'refused', 'refused: the %s rows carry no shared-market teacher receipt; the plan selects %s' % (source, policy)
+        try:
+            saved = json.loads((Path(rows) / 'receipt.json').read_bytes())
+        except (OSError, ValueError) as error:
+            return 'refused', 'refused: unreadable teacher receipt under %s (%s); %s' % (rows, error, ROWS_ROUTE % rows)
+        identity, read = saved.get('shared_market_identity') or {}, saved.get('shared_market_read') or {}
+        if not identity:
+            return 'refused', 'refused: a legacy teacher receipt (no shared_market_identity) never satisfies the plan\'s %s; %s' % (
+                policy, ROWS_ROUTE % rows)
+        if identity.get('schema') != policy or identity.get('day') != day:
+            return 'refused', 'refused: the teacher receipt\'s shared identity is %s for %s, not %s' % (identity.get('schema'), identity.get('day'), policy)
+        root, why = self.shared_root_of(e)
+        if root is None:
+            return ('refused' if why.startswith('refused') else 'waiting'), why
+        want = file_pin(Path(root) / 'calculations-receipt.json')
+        have = identity.get('calculations') or {}
+        if (have.get('sha256'), have.get('bytes')) != (want['sha256'], want['bytes']):
+            return 'refused', 'refused: the teacher receipt binds another ROOT witness (%s) than the day\'s completed ROOT (%s); %s' % (
+                have.get('sha256'), want['sha256'], ROWS_ROUTE % rows)
+        if read.get('identity') != identity or not read.get('complete'):
+            return 'refused', 'refused: the teacher\'s shared read is not the complete read of its identity'
+        ing = self.receipt('ingest', day) or {}
+        if ing.get('status') not in FINISHED or not ing.get('receipt_sha256'):
+            return 'waiting', 'waiting: the day\'s ingest is %s here; its teacher result is not judged until it is sealed' % (ing.get('status') or 'not run')
+        if (saved.get('ingestion_receipt') or {}).get('sha256') != ing['receipt_sha256']:
+            return 'refused', 'refused: the teacher receipt binds another ingestion receipt than the day\'s'
+        directory = self.ingest_dir(e)
+        key = (day, str(directory))
+        if key not in self._day_file_sha:                 # read once per Run: what the ROOT and the teacher both saw
+            try:
+                self._day_file_sha[key] = attached_day_file(directory)[1:] if directory is not None else (None, None)
+            except Exception as error:              # noqa: BLE001 - a witness that cannot be read is not judged
+                return 'waiting', 'waiting: the day file beside the sealed ingest could not be read (%s: %s)' % (type(error).__name__, error)
+        attached, absent = self._day_file_sha[key]
+        section = saved.get('external_section') or {}
+        bound = section.get('sha256') or section.get('sha256_expected')
+        if attached is None and bound and absent and not absent.startswith('DIFFERS'):
+            # the witness is MISSING now (not an integrity mismatch): a missing witness is carried as missing, never
+            # relabelled a differing publication; the retained result is not judged until the file is readable again
+            return 'waiting', 'waiting: the day file beside the sealed ingest is missing (%s) while the teacher receipt binds %s; not judged by it' % (absent, bound)
+        if bound != attached:
+            return 'refused', 'refused: the teacher receipt\'s external publication (%s) differs from the day file beside the sealed ingest (%s)' % (
+                section.get('sha256') or section.get('sha256_expected'), attached)
+        return 'ok', None
+
     def teacher_knowledge(self, day, rows_path, source):
-        """Publish every measured component/pair result; per-cursor teacher evidence stays on its owning box."""
+        """Publish every measured component/pair result; per-cursor teacher evidence stays on its owning box. A new summary
+        is bound to the exact producer identities that made it; a retained summary whose producer identity differs from
+        the current one, or is not established (an older summary without one), is NOT reused and NOT regenerated here: the
+        old result is preserved and an explicit checked successor (the correction route) is required."""
         from research.kalshi.frankie_boss import dipole_classroom as DC, dipole_classroom_integration as I
         from research.kalshi.frankie_boss.c15_journal import unpack
         from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
@@ -1679,10 +3283,21 @@ class Run:
         rows_path = Path(rows_path)
         source_sha = sha256_file(rows_path)
         path = rows_path.parent / 'teacher-knowledge.json'
+        producer = self.teacher_producer_identity()
         if path.exists():
             body = json.loads(path.read_bytes())
             if body['source']['sha256'] != source_sha or body['day'] != day:
                 raise ValueError('retained teacher knowledge belongs to another source/day')
+            retained = body.get('producer')
+            if retained is None:
+                raise ValueError('retained teacher knowledge %s carries no producer identity (unestablished): the old result '
+                                 'is preserved; an explicit checked successor is required before it is taught again' % path)
+            if retained.get('modules') != producer['modules']:
+                changed = sorted(k for k in set(retained.get('modules') or {}) | set(producer['modules'])
+                                 if (retained.get('modules') or {}).get(k) != producer['modules'].get(k))
+                raise ValueError('retained teacher knowledge %s was produced by another producer identity (made at commit '
+                                 '%s; modules changed: %s): the old result is preserved, nothing is regenerated here; an '
+                                 'explicit checked successor is required' % (path, body.get('made_at_commit'), changed))
         else:
             snapshot = unpack(json.loads(rows_path.read_bytes()))
             key = I._repin_teacher_key_correlations(DC.build_teacher_key(snapshot))
@@ -1699,6 +3314,7 @@ class Run:
                         source=dict(path=str(rows_path), sha256=source_sha, bytes=rows_path.stat().st_size,
                                     owner=os.environ.get('FRANKIE_LANE_OWNER', 'main'),
                                     snapshot_hash=key['source_snapshot_hash']),
+                        producer=producer, made_at_commit=self.commit,
                         findings=json_form(findings),
                         rule='all component/pair measured outputs individually; every cursor/state/reason remains '
                              'in the exact source, consumed by the teacher; no host grade or student decision process')
@@ -1729,18 +3345,26 @@ class Run:
             return self.record('data', e['day'], 'reused', target=str(target), exported_from=made_from,
                                manifest_sha256=sha256_file(target / 'MANIFEST.json'))
         ing = self.receipt('ingest', e['day'])
+        if root and root.get('status') == 'refused' and 'retained_policy' in root:
+            return self.record('data', e['day'], 'refused', reason='refused: the day\'s ROOT is refused under the plan\'s '
+                                                                   'shared market policy: %s' % root.get('reason'))
         if not (root and root['status'] in FINISHED and ing and ing['status'] in FINISHED):
             return self.record('data', e['day'], 'waiting', reason='the day has no ROOT or no sealed ingest yet')
         ready, why = self.external_ready(e)
         if not ready:
             return self.record('data', e['day'], 'waiting', reason=why)
-        rows, source = rows_of(e)
+        rows, source, why = self.day_rows(e)
+        if rows is None and why:
+            return self.record('data', e['day'], 'refused' if why.startswith('refused') else 'waiting', reason=why)
         dipole_missing = None
         if rows is None:
             dipole_missing = ('no Dipole rows for the day (teacher batch: %s); exported and searched without them, listed '
                               'missing; a later search with the rows would be a second search of the day (declined)'
                               % ((self.receipt('teacher', self.batch_of(e['day'])) or {}).get('status') or 'not run'))
-        env = dict(ACTION='export', DAY=e['day'], CYCLE=CYCLE, CALCULATIONS=root['calculations'], INGEST=ing['ingest'])
+        # DATA_WORKERS: the export pins its hashing in a largest-first process pool (workflow_reports, 2026-10-07); the
+        # 15 workers of the held 16-CPU lane, as ROOT and search; without it the export hashes serially
+        env = dict(ACTION='export', DAY=e['day'], CYCLE=CYCLE, CALCULATIONS=root['calculations'], INGEST=ing['ingest'],
+                   DATA_WORKERS=self.cores.DAY_RUN_CPUS - 1)
         for key, var in (('launch', 'LAUNCH'), ('preparation', 'PREPARATION'), ('principal_inputs', 'PRINCIPAL_INPUTS'),
                          ('host_config', 'HOST_CONFIG'), ('run', 'RUN')):
             if e.get(key):
@@ -1770,6 +3394,22 @@ class Run:
         ready, why = self.external_ready(e)
         if not ready:
             return self.record('search', e['day'], 'waiting', reason=why)
+        # no causal axis: a day whose ROOT published no book-frame spool (frames.jsonl under work/derived/.rows) has no
+        # per-day causal axis, and the search refuses before its manifest (build_series: frames_pin None, SystemExit).
+        # Under the missing-coverage rule that is a listed outcome of THIS step, never the day's failure: not_run with
+        # the reason, the day goes on (Jev and the lessons name it when they need the search)
+        root = self.receipt('root', e['day']) or {}
+        calc = Path(root['calculations']) if root.get('calculations') else None
+        frames = (calc / 'work' / 'derived' / '.rows' / 'frames.jsonl') if calc else None
+        if frames is None or not frames.is_file() or frames.stat().st_size == 0:
+            pin = ((root.get('all99') or {}).get('carriers') or {}).get('root.frames') or {}
+            return self.record('search', e['day'], 'not_run', target=str(target), calculations=str(calc) if calc else None,
+                               frames_spool=str(frames) if frames else None,
+                               reason='no causal axis: the day\'s ROOT published no book-frame spool (%s%s); the search has no '
+                                      'per-day axis and is not run; the day goes on without a search (listed)' % (
+                                          frames if frames else 'no ROOT calculations named',
+                                          ('; the ROOT lists root.frames ' + pin.get('status') + ': ' + str(pin.get('reason')))
+                                          if pin else ''))
         if not self.disk_ok('search'):
             return None
         env = dict(DAY=e['day'], CYCLE=CYCLE, DAY_ROLE=e['role'], LAGS=self.plan['lags'], WORKERS=self.cores.DAY_RUN_CPUS - 1)
@@ -1859,7 +3499,13 @@ class Run:
 
     def lessons(self, batch_key, entries):
         self.check_save()
-        searched = [e for e in self.plan['days'] if e['role'] == 'discovery' and self.finished('search', e['day'])]
+        # the searched days: a finished search WITH a manifest; a not_run search (no causal axis) is finished for the day
+        # but supplies no search to test claims on: listed, never passed as a path to the teacher
+        searched = [e for e in self.plan['days'] if e['role'] == 'discovery' and self.finished('search', e['day'])
+                    and (self.receipt('search', e['day']) or {}).get('status') != 'not_run']
+        not_run = [e['day'] for e in self.plan['days'] if (self.receipt('search', e['day']) or {}).get('status') == 'not_run']
+        if not_run:
+            self.log('lessons %s: no search to test on for %s (search not_run: no causal axis); listed' % (batch_key, not_run))
         remote = [e['day'] for e in searched if self.remote_root(e['day'])]
         if remote:
             return self.record('lessons', batch_key, 'waiting', remote_days=remote,
@@ -2073,6 +3719,12 @@ class Run:
                                                                              (stage == 'reports' and self.reports_stale(e))):
                             self.guarded(stage, e)       # a class-line day's class side is the class worker's
                         tick(stage, e['day'])
+            # the one-day inspection after the batch's last stage loop (the ROOT line writes its own after _finish_day):
+            # every piece's record of what it received, used and produced, whatever the day's outcome; never a gate
+            if {'reports', 'lessons'} & set(stages) and not self.stopped:
+                for e in entries:
+                    if not self.queue_owned(e):
+                        self.inspect_day(e['day'], 'start: after the batch %s last stage loop' % key)
         # every start kicks the workers of lines that hold days not done (a waiting day resumes without a dispatch)
         import frankie_box_frankie_queue as Q
         for line, on in (('root', getattr(self.a, 'root_queue', 'off')), ('class', getattr(self.a, 'frankie_queue', 'off'))):
@@ -2175,7 +3827,15 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--action', required=True, choices=('plan', 'start', 'status', 'successor-request',
                                                       'successor-decision', 'successor-retry', 'successor-save',
-                                                      'successor-resume'))
+                                                      'successor-resume', 'voice-dispatched', 'voice-returned'))
+    p.add_argument('--voice-day', help='the classroom-arm day of a remote (GitHub) meeting dispatch record')
+    p.add_argument('--voice-github-run', help='voice-dispatched: the GitHub run id the operator dispatched for the standing intent')
+    p.add_argument('--voice-github-attempt', default='1', help='voice-dispatched: that run\'s attempt number (default 1)')
+    p.add_argument('--voice-archive', help='voice-returned: the downloaded runner-state.zip (owner-local absolute path)')
+    p.add_argument('--voice-archive-sha256', help='voice-returned: its SHA256 from the run\'s runner-state.json')
+    p.add_argument('--voice-conclusion', choices=('success', 'failure', 'cancelled', 'timed_out', 'lost'),
+                   help='voice-returned: the GitHub run\'s conclusion as read by the operator (lost = expired/unreadable state)')
+    p.add_argument('--voice-by', default='operator', help='who records the dispatch/return')
     p.add_argument('--successor-day', help='existing owner day for explicit successor intake')
     p.add_argument('--successor-file', help='JSON request, decision, or exact failure witness; no execution at intake')
     p.add_argument('--successor-id', help='content-addressed request id for decision/retry')
@@ -2222,8 +3882,21 @@ def main():
     p.add_argument('--external-wait', choices=('on', 'off'), default='on',
                    help='on: a day\'s root, teacher, classroom, data and search wait for its day file (default)')
     p.add_argument('--brain', default=str(BRAIN), help='Frankie\'s brain (the classroom and day-file entries)')
+    p.add_argument('--jev-runtime', help='Jev\'s CPU runtime configuration file (JEV_CPU_RUNTIME_V1: binary, model, worker '
+                                         'CPUs of the held lane, budgets, completion policy); saved in the plan when given at '
+                                         'the first start, else <run>/jev-runtime.json is read; absent = Jev waits')
+    p.add_argument('--jev-brain', help='Jev\'s brain directory on the box (default %s)' % JEV_BRAIN)
+    p.add_argument('--shared-market-policy', choices=(SHARED_MARKET_POLICY,),
+                   help='the synchronized shared market input of a NEW run (Greg, 2026-10-07): saved with the plan at its '
+                        'first start; every ROOT runs --bedrock on under it and every teacher reads it; a completed legacy '
+                        'ROOT or teacher result never satisfies it (preserved; an explicit compatible successor is required)')
     p.add_argument('--previous-classroom', help='the run\'s first arm day: PREVIOUS = this <root>/work/classroom '
                                                 '(default: the latest earlier classroom day on the box)')
+    p.add_argument('--voice-route', choices=('local', 'github'), default='local',
+                   help='the bounded meeting\'s host (Step 6): local = the configured meeting child on the owning lane '
+                        '(default); github = the standard CPU runner workflow, dispatched BY HAND against the immutable '
+                        'intent Run.voice writes first and admitted for that exact GitHub run (voice-dispatched / '
+                        'voice-returned); saved with the plan at the first start')
     p.add_argument('--disk-floor-gb', type=float, default=100.0)
     p.add_argument('--frankie-queue', choices=('on', 'off'), default='on',
                    help='on: classroom-arm days enter Frankie\'s class line (arrival FIFO, one class at a time, the class '
@@ -2243,6 +3916,23 @@ def main():
     if unknown:
         raise SystemExit('unknown stages %s' % sorted(unknown))
     run_dir = RUNS / a.run
+    if a.action.startswith('voice-'):
+        if not a.voice_day:
+            p.error('%s needs --voice-day' % a.action)
+        saved_plan = json.loads((run_dir / 'plan.json').read_bytes())
+        run = Run(a, saved_plan, a.code_root, a.commit)
+        if a.action == 'voice-dispatched':
+            if not a.voice_github_run:
+                p.error('voice-dispatched needs --voice-github-run')
+            result = run.voice_dispatched(a.voice_day, a.voice_github_run, a.voice_github_attempt, a.voice_by)
+        else:
+            if not (a.voice_archive and a.voice_archive_sha256 and a.voice_conclusion):
+                p.error('voice-returned needs --voice-archive, --voice-archive-sha256 and --voice-conclusion')
+            result = run.voice_returned(a.voice_day, a.voice_archive, a.voice_archive_sha256, a.voice_conclusion, a.voice_by)
+        print(json.dumps(result, indent=1, sort_keys=True))
+        if result.get('status') == 'refused':
+            raise SystemExit(3)
+        return
     if a.action.startswith('successor-'):
         if not a.successor_day:
             p.error('successor intake needs --successor-day')
@@ -2298,7 +3988,16 @@ def main():
         run_dir.mkdir(parents=True, exist_ok=True)
         saved.write_text(json.dumps(plan, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     run = Run(a, plan, a.code_root, a.commit, log=lambda text: print(text, flush=True))
-    summary = run.start(stages)
+    # this box is IN USE from the run's start (KeepRunning=true, Greg 2026-10-07); the run's work continues in the
+    # detached queue line workers after start() returns, so the clear is theirs (frankie_box_frankie_queue worker end:
+    # cleared only when no orchestrator start, line worker or CPU controller is alive on the box; else kept, named)
+    keep_running(a.run, True, 'orchestrator start of run %s (stages %s)' % (a.run, ','.join(stages)), 'frankie_box_experiment.py start',
+                 log=lambda text: print(text, flush=True))
+    try:
+        summary = run.start(stages)
+    finally:
+        keep_running(a.run, False, 'orchestrator start of run %s ended (the line workers keep the box while they run)' % a.run,
+                     'frankie_box_experiment.py start', log=lambda text: print(text, flush=True))
     print(json.dumps(summary, indent=1, sort_keys=True))
     if summary['stopped']:
         raise SystemExit(4)

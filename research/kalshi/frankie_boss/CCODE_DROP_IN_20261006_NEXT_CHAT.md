@@ -1,5 +1,37 @@
 # CCODE drop-in for the next chat (2026-10-06, late)
 
+```
+CCODE DROP-IN (new chat, 2026-10-07, eighth): the Step 8 remainder RETURNED (owner contract, scope, callers) + five review passes
+#run using-agent-skills
+Repo: DavisAI1974/Markets. Branch ccode/teacher-tasks-20261006b on Codex's d6af990c (the assignment is 1a3e1024 + the 02:35 ET
+addendum 2f0d4522); the docs commit = tip. Commits above the six 8A ones: 456a006a 8A findings | 23e3afae owner contract | 4272f949 scope |
+8af0a0b8 previous_of + producer identity | d8ec096b 2634e5ee 157c84ff 83081b64 review passes | bfae4460 school consumer +
+waiting_school recovery + Jev CPU caller | b4c60a4d ack identity + kick scope | df51afb0 review pass | cf1f1f2c the
+shared-market policy on Run.root/plan and Run.teacher | 24df7810 35718474 its two review passes | the docs commits = tip.
+First commands:
+  git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
+  git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
+  git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -20   (if Codex edited an owned file, read its diff first:
+  frankie_box_experiment.py/.sh, frankie_box_frankie_queue.py/.sh, frankie_box_cores.py, pod_root/controller.py,
+  frankie_box_cpu_controller.sh, frankie_box_run.yml, the drain branch of frankie_box_successor_dispatch.py)
+#run memory mcp AFTER the rebase, tree quiescent (the CLI aborts if files change under it):
+  echo '{"repo_path":"/home/user/Markets","mode":"full"}' | codebase-memory-mcp cli --quiet --json index_repository
+Read, in order (research/kalshi/frankie_boss/):
+  CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md   top section = state after the eighth chat
+  CCODE_STEP8_REMAINDER_RETURN_20261007.md            the record: protocol, scope, callers, what is NOT wired (section 5), review
+  CCODE_NEXT_SOURCE_TASKS_20261006.md top section     Codex's independent review of the return lands HERE
+NEXT: (1) fix every source defect Codex's review names in the owned files, one [skip ci] commit per finding group; do not
+reapply what Codex integrated. (2) Wire the one held caller ONLY once its contract is published on Codex's tip: the
+Granite runner's admission acknowledgment into Run.voice (return section 5); until then it stays a named dependency.
+(3) Run the code-review skill over origin/ccr-5fce7de3-xa4hfg..HEAD at high effort BEFORE every push and fix what it finds.
+Update the return record, both handoffs and both drop-ins; push --force-with-lease -u. Boundaries unchanged: source only;
+owned files only (never Codex's: school owner, review, successor dispatcher beyond the drain branch, principal adapter,
+BOSS session, scientific teacher, teacher knowledge, readers, lane_state, Jev's helper); never call run(); never rebuild
+the claims file; pins and threads null settled; STOP before #5; never apply 9c19cc2; H06-H08 bind nothing; NO cost
+references, ever; no AWS, no dispatch, boxes stopped. Nothing left on the scratchpad.
+```
+
+
 ## CURRENT DROP-IN — remaining Step 8 (2026-10-07 01:52 ET)
 
 ```text
@@ -22,6 +54,31 @@ An independent Codex review agent will review your completed return before integ
 ```
 
 The older drop-ins below are history, not the current assignment.
+
+```
+CCODE DROP-IN (new chat, 2026-10-07, seventh): Step 8A RETURNED (the CPU controller's lifetime and launch routing) + two review passes
+#run using-agent-skills
+Repo: DavisAI1974/Markets. Branch ccode/teacher-tasks-20261006b on Codex's 439cb0bf (the 8A assignment is 3a1416b7); commits bc178ff3 lifetime/prerequisites/
+controls | bd28796e Pod routes closed | bdf7122b cdeb61ce code-review passes (27 corrections) | the docs commit = tip. First commands:
+  git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
+  git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
+  git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -10   (if Codex edited pod_root/controller.py, frankie_box_run.yml,
+  frankie_box_cpu_controller.sh or frankie_box_pod_root_loop.sh, read its diff first)
+#run memory mcp AFTER the rebase, tree quiescent (the CLI aborts if files change under it):
+  echo '{"repo_path":"/home/user/Markets","mode":"full"}' | codebase-memory-mcp cli --quiet --json index_repository
+Read, in order (research/kalshi/frankie_boss/):
+  CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md   top section = state after the seventh chat
+  CCODE_STEP8_CPU_CONTROLLER_20261007.md              the 8A record: action map, ownership, dependencies, requests, review
+  CCODE_NEXT_SOURCE_TASKS_20261006.md top section     Codex's review of the five commits lands HERE
+NEXT: (1) fix every source defect Codex names in the owned files (controller.py, the launcher, the workflow's controller
+routing and Pod gates, the marker), one [skip ci] commit per finding group; do not reapply what Codex integrated. (2) Run the
+code-review skill over origin/ccr-5fce7de3-xa4hfg..HEAD at high effort BEFORE every push and fix what it finds. (3) Nothing
+else is assigned; the main lanes' save/resume, Jev, the reader hooks and successor scheduling are Codex's; the instance
+profile is Greg's decision. Update the step-8 record, the step-6 return section 10, both handoffs and both drop-ins; push
+--force-with-lease -u. Boundaries unchanged (below): source only; never edit Codex's files; never call run(); never rebuild
+the claims file; pins and threads null settled; STOP before #5; never apply 9c19cc2; H06-H08 bind nothing; NO cost
+references, ever; no AWS, no dispatch, boxes stopped. Nothing left on the scratchpad.
+```
 
 ```
 CCODE DROP-IN (new chat, 2026-10-07, sixth): Codex's fifth-return review BIND-F/B4-F/6R3-F/6R2-F RETURNED + two review passes

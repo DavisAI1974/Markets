@@ -1,5 +1,34 @@
 # CCode new-chat handoff: the expanded pre-#5 queue, slice A done, slice B next, 2026-10-06
 
+## STATE AFTER THE EIGHTH CHAT (2026-10-07): the Step 8 remainder RETURNED (Codex's CURRENT HANDOFF block below assigned it)
+
+Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's CURRENT `d6af990c` (ccr-5fce7de3-xa4hfg; its eight
+commits since the assignment touch no owned file), pushed, tip = the docs commit (reported in chat). The six 8A commits preserved above the base
+(`40cbc1d0` .. `373f58ed`); then one `[skip ci]` commit per group: `456a006a` the three 8A integration findings |
+`23e3afae` the main/class save-resume owner contract | `4272f949` the run/day scope on every worker, kick, handover and the
+controller's `--days` | `8af0a0b8` `previous_of` persisted, teacher knowledge bound to its producer identities | `d8ec096b`
+`2634e5ee` `157c84ff` `83081b64` four review passes (46 findings) | `bfae4460` the addendum callers: the school consumer on
+`retained_school`, the non-reentrant `waiting_school` recovery, Jev's day on the held CPU lane | `b4c60a4d` the class
+acknowledgment bound to the save request's identity, the kick's scope comparison | `df51afb0` the review pass over the
+two addendum commits | `cf1f1f2c` the shared-market policy of a NEW run on `Run.root`/plan and `Run.teacher` (Codex's
+producer `d6af990c`) | `24df7810` `35718474` its two review passes | the docs commits (tip). The record is `CCODE_STEP8_REMAINDER_RETURN_20261007.md`: the owner and save
+protocol (section 2), the scoped-dispatch contract (3), the callers (4, the shared-market policy included), what is
+NOT wired by name (5: the remote voice admission, whose acknowledgment interface does not exist yet; Jev's runtime
+configuration; the lane_state kick scope), the checks (6), the review passes (7). SOURCE-BUILT / RUNTIME-UNVERIFIED:
+`ast.parse`, `sh/bash -n`, `yaml.safe_load`, `git diff --check`; nothing run, no AWS, no dispatch; pins and threads null
+untouched; STOP before #5; `9c19cc2` never applied; no cost reference anywhere. Integration is not claimed: Codex's
+independent reviewer checks the actual diff.
+
+What Codex picks up:
+1. The independent review of the returned diff (`d6af990c..HEAD`); anything it names comes back to CCode the same way,
+   one commit per group.
+2. The requests of the return's section 5: the Granite runner's admission acknowledgment shape (then CCode wires
+   `Run.voice`); the classroom's own detection of a shared-policy ROOT (the timeline report's item 4); the scope on
+   `frankie_box_lane_state.py:619`'s kick; Jev's runtime configuration (a setup decision).
+3. Still Codex's: the school owner, experiment review, successor dispatcher (outside the one granted branch), principal
+   adapter, BOSS session, scientific teacher, teacher knowledge, the readers, lane_state, Jev's helper; the instance profile
+   is Greg's decision.
+
 ## CURRENT HANDOFF — 2026-10-07 01:52 ET: the rest of Step 8
 
 Read `CCODE_HANDOFF_STEP8_REMAINDER_20261007.md` and the top ACTIVE block of
@@ -9,6 +38,37 @@ is not yet integrated; preserve it and newer work. Exact expanded ownership, thr
 review fixes, main/class recovery and run/day scope are in
 `CCODE_STEP8_REMAINDER_ASSIGNMENT_20261007.md`. This supersedes older next-action and
 ownership wording below. Source-only; no tests or AWS/runtime execution.
+## STATE AFTER THE SEVENTH CHAT (2026-10-07): Step 8A RETURNED (the CPU controller's lifetime and launch routing)
+
+Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's CURRENT `439cb0bf` (ccr-5fce7de3-xa4hfg; the 8A assignment
+is `3a1416b7`, which integrated the sixth return `31832bf2`; Codex's three later step-5 commits touch no 8A file), pushed. One `[skip ci]` commit per group:
+`bc178ff3` the controller's lifetime, prerequisites and controls (`pod_root/controller.py` + the new launcher
+`deploy/aws/box/frankie_box_cpu_controller.sh`) | `bd28796e` the reachable Pod routes closed (`frankie_box_run.yml` + the
+marker `frankie_box_pod_root_loop.sh`) | `bdf7122b` review pass 1 (17 findings) | `cdeb61ce` review pass 2 (10) | the docs
+commit (tip). The record is `CCODE_STEP8_CPU_CONTROLLER_20261007.md`: the action map (section 1), the recovery ownership
+(2), one controller per run (3), the dependencies still missing (4, above all the main box's instance profile, which cannot
+be established from source and is Greg's decision), the Pod closure and the inventory of unrelated Pod entrypoints (5),
+the narrow requests to Codex-owned functions (6), what the review passes fixed and kept (7), what remains of Step 8 (8).
+Owned files only; the four step-6/historical modules untouched this round. SOURCE-BUILT / RUNTIME-UNVERIFIED: `ast.parse`,
+`compile`, the static import and call checks, `sh/dash/bash -n`, `yaml.safe_load`, `git diff --check`; nothing run, no
+AWS, no dispatch; pins and threads null untouched; STOP before #5; `9c19cc2` never applied; no cost reference anywhere.
+
+In one paragraph: the SAME controller now runs on two hosts. On the runner it stays a bounded job (plan, status, resume,
+stop, a loop whose budget end is `budget_expired`, never completion). On the main box it is a run-bound systemd unit from
+the staged checkout (`--host main --budget-minutes 0`), the experiment launcher's DETACH pattern, serving every Linux
+boundary of the run until the Linux lane has no remaining work or a cooperative stop is acknowledged; its state is retained
+under `/opt/frankie-box/work/cpu-controller/<run>/`; an S3 lease (create-only, ETag-conditional) keeps a runner loop and a
+box service off one run; a stop relays the worker's save and acknowledges with what is pending, claims untouched; a resume
+reuses the original job, claim and inputs or is refused with the reason; `preflight` names each prerequisite beyond source
+and refuses activation. The Jev/CLM Pod scripts are refused by the workflow before any step; the always-cleanup branch has
+no provider call or key; the provider path is gone from the controller.
+
+What Codex picks up:
+1. Integration review of the five commits; anything it names comes back to CCode the same way, one commit per group.
+2. The requests of the report's section 6: the main day-bound save/resume and class-child acknowledgment interface, the
+   coordination gap tolerance, the worker's input-URL refresh, new queue state words.
+3. Still Codex's: the step-5 reader hooks and successor scheduling, the claim-input identity mismatch, Jev's step 7, the
+   shared runner/queue and main save/resume.
 
 ## STATE AFTER THE SIXTH CHAT (2026-10-07): Codex's fifth-return review BIND-F, B4-F, 6R3-F, 6R2-F RETURNED, plus two adversarial review passes
 

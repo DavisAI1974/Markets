@@ -1,5 +1,40 @@
 # KALSHI TRADING — file index
 
+## 2026-10-07 - The main/class owner contract, the scoped queue, the school and Jev callers (Step 8 remainder, source only)
+- `deploy/aws/box/frankie_box_frankie_queue.py` / `.sh` - the owner contract (CCode's now): a ROOT-line day bound to its
+  owner (attempt, source, exact 16 CPUs, booking, day-bound marker `frankie-queue/save/<run>-<day>.save-request.json`)
+  before its thread starts; states `saved` and `unknown`; `ACTION=save | status | resume RUN DAY [REBOOK=on]`; the class
+  child's acknowledgment bound to the marker, booking, attempt and the save request's identity; `SCOPE=RUN:D1,D2` required
+  for worker / kick / handover (a worker touches nothing outside it; a kick without one starts nothing).
+- `deploy/aws/box/frankie_box_cores.py` - the ledger retains an owned booking whose holder died (`own`, `retain`); only its
+  owner takes it back in place (`book --cpus` of exactly that set); `jev` is a day-run stage (inside the held lane).
+- `deploy/aws/box/frankie_box_experiment.py` / `.sh` - `Run.bind_owner` / `owned_attempt` / the per-Run marker; `scope_text`;
+  `previous_of` persisted (`days/<day>/previous.json`); teacher knowledge bound to its producer identities; `Run.school` on
+  the checked school chain (`retained_school`), `Run.recover_school` (the `waiting_school` callback), `school_current`;
+  `Run.jev` on Codex's `frankie_box_jev_cpu.sh` (`JEV_CPU_REQUEST_V1` persisted once under the day; `--jev-runtime` /
+  `--jev-brain`, `JEV_RUNTIME` / `JEV_BRAIN` at the first start, or `<run>/jev-runtime.json`; absent = waiting);
+  `--shared-market-policy` / `SHARED_MARKET_POLICY` (a NEW run's `FRANKIE_SHARED_MARKET_TIMELINE_V1`, saved with the plan):
+  every ROOT under it, every teacher on the day's completed owner-local ROOT (`CALCULATION_ROOTS`); a legacy ROOT or
+  teacher result is refused and preserved (`shared_root_of`, `shared_teacher_compatible`).
+- `deploy/aws/box/frankie_box_successor_dispatch.py` - ONLY the `waiting_school` branch of `drain` is CCode's (the rest Codex's).
+- `research/kalshi/frankie_boss/pod_root/controller.py` - the three 8A findings: ownership established at every effect
+  boundary, the durable unknown resume reconciled through the worker, every unsuccessful outcome nonzero; `--days`.
+  Record: `research/kalshi/frankie_boss/CCODE_STEP8_REMAINDER_RETURN_20261007.md`. Not run.
+
+## 2026-10-07 - The AWS CPU Linux lane controller: one controller, two hosts (Step 8A, source only)
+- `research/kalshi/frankie_boss/pod_root/controller.py` - the Linux lane controller (CCode's): on the GitHub runner a bounded
+  job (plan | status | loop | resume | stop; a budget end is `budget_expired`, never completion); on the main box a run-bound
+  systemd unit (`--host main --budget-minutes 0`) with its retained state under `/opt/frankie-box/work/cpu-controller/<run>/`
+  and an ETag-conditional S3 lease (one controller per run). Pods: no provider code left; retired flags refused before parsing.
+- `deploy/aws/box/frankie_box_cpu_controller.sh` - the main-box launcher (the experiment launcher's DETACH pattern):
+  preflight (prerequisites named, nothing provisioned) | start (GO required) | status (controller and worker's last-seen job,
+  distinctly) | stop (a request; acknowledgment pending) | resume JOB (a request to the running service) | clear_stop.
+- `deploy/aws/box/frankie_box_pod_root_loop.sh` - the legacy-named marker routing `frankie_box_run.yml` to the runner-hosted
+  controller; `.github/workflows/frankie_box_run.yml` refuses the retired Jev/CLM Pod scripts before any step and its
+  always-cleanup branch carries no provider call. Record: `research/kalshi/frankie_boss/CCODE_STEP8_CPU_CONTROLLER_20261007.md`.
+  Not run. Superseded (routes refused, files kept as evidence): `deploy/aws/box/frankie_box_jev_pod.sh`,
+  `frankie_box_clm_sidecar_pod.sh`; the Pod-creation path that `controller.py` carried until `bc178ff3`.
+
 ## 2026-09-29 — Frankie's 13 historical points attached to each trading day
 - `research/kalshi/frankie_boss/operations/frankie_day_external.py` - FRANKIE_DAY_EXTERNAL_V1: the day file builder, the
   staging check and THE as-of reader (`AsOfReader`, refuses past its cutoff); `search_series` for the search.

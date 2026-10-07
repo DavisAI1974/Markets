@@ -4,6 +4,71 @@ This is the Claude-side handoff. The Codex-facing record is separate: `CCODE_STE
 `CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md` (top section) and `CCODE_DROP_IN_20261006_NEXT_CHAT.md`. Do not merge the
 two channels: Codex integrates from the CCODE documents; a Claude session starts from `DROP_IN_CLAUDE_20261007.md`.
 
+## Where things stand (updated 2026-10-07, eighth session: the Step 8 remainder returned)
+
+Greg (through Codex's `1a3e1024`, then the 02:35 ET addendum `2f0d4522`): CCode owns the rest of Step 8 and, with it, the
+runner, the queue and the ledger, plus the assigned school/ROOT/Jev/voice callers. This branch was rebased onto Codex's
+`78f5563d`, then `7f08d76e`, and at the end onto its current `d6af990c` (no owned file touched by Codex meanwhile). Returned, one commit per
+group (the record: `CCODE_STEP8_REMAINDER_RETURN_20261007.md`): `456a006a` the three 8A findings (lease freshness at every
+effect boundary, the durable unknown resume reconciled through the worker, every unsuccessful outcome nonzero) | `23e3afae`
+the owner contract (one binding per day: attempt, source, exact CPUs, booking, day-bound marker; the class child's
+acknowledgment; the ledger retains an owned booking on reap; save/status/resume through the queue) | `4272f949` the
+run/day scope on every worker, kick and handover and the controller's `--days` | `8af0a0b8` `previous_of` persisted,
+teacher knowledge bound to its producer identities | four review passes (46 findings) | `bfae4460` the school consumer on
+Codex's `retained_school`, the non-reentrant `waiting_school` recovery (the one granted branch of `successor_dispatch.drain`),
+Jev's day on the held CPU lane (`JEV_CPU_REQUEST_V1` persisted before dispatch, `jev` a day-run stage, receipt/status bound
+to the request) | `b4c60a4d` the acknowledgment bound to the save request's identity, the kick's scope comparison |
+`df51afb0` the review pass over the addendum commits | `cf1f1f2c` the shared-market policy of a NEW run on `Run.root`/plan
+and `Run.teacher` (Codex published the producer at `d6af990c` while this session ran) | `24df7810` `35718474` its two
+review passes | the docs commits (tip = the docs commit (reported in chat)). Checks: `ast.parse`, `sh/bash
+-n`, `yaml.safe_load`, `git diff --check`; nothing run, no AWS, no dispatch.
+
+Design choices of this round, not to re-litigate: the owner binding is written by the queue BEFORE the day's thread starts
+and the Run reads its own marker (never a process-global variable); exit 75 is saved only on the day's own standing
+marker, with the class child's written acknowledgment (a SIGTERM path, a vanished child or a missing receipt is unknown,
+never saved); the ledger RETAINS an owned booking whose holder died instead of releasing it, and only the owner takes it
+back in place (an orphan on the CPUs refuses the takeover); a failed (never saved) day gives its binding up so the
+once-per-worker retry is what it was; a kick without a scope starts nothing; a worker never touches an entry outside its
+scope and never starts an out-of-scope predecessor (the eligible day waits); the Jev request is written once and reused
+byte for byte, a differing retained request is refused, never re-minted; the school consumer reads the checked chain and
+never the bare index row, and a successor that needs its corrected meeting waits rather than failing the child; the
+shared-market policy is a NEW run's plan field (a run keeps one plan; a legacy ROOT or teacher result is refused and
+preserved under it, never recomputed or relabelled); the one caller whose contract is not published (the remote voice
+admission) is a named dependency, not a guess.
+
+What a next Claude session does: Codex's review of these commits lands in the task doc; fix what it names in the owned
+files, one commit per group, the code-review skill over the range before every push; wire the remote voice admission only
+once its contract is on Codex's tip; nothing else is assigned.
+
+## Where things stand (updated 2026-10-07, seventh session: Step 8A returned)
+
+Greg, at the start of the session: "Don't mess with old work. Just focus on step 8. Just do step 8A." Codex had fixed the
+sixth-return findings directly and landed `3a1416b7` with the Step 8A assignment (task doc top section). This branch was
+rebased onto it (every earlier commit was already integrated, so the rebase left nothing above Codex's tip), the index was
+rebuilt, and the slice was returned, then rebased once more onto Codex's current `439cb0bf` (three step-5 commits, no 8A
+file touched): `bc178ff3` the controller's lifetime on the main box plus launch prerequisites and
+controls (`pod_root/controller.py`, new `deploy/aws/box/frankie_box_cpu_controller.sh`) | `bd28796e` the reachable Pod routes
+of `frankie_box_run.yml` closed, the marker refreshed | `bdf7122b`, `cdeb61ce` the two code-review passes (17 + 10 findings)
+| the docs commit (tip). Record: `CCODE_STEP8_CPU_CONTROLLER_20261007.md`; pointer in the step-6 return section 10.
+Checks: `ast.parse`, `compile`, the static import and call checks, `sh/dash/bash -n`, `yaml.safe_load`, `git diff --check`;
+nothing run, no AWS, no dispatch. The four step-6/historical modules untouched; boundaries unchanged.
+
+Design choices of this round, not to re-litigate: one controller, two hosts (the runner bounded, the main box a run-bound
+systemd unit with `--budget-minutes 0`); main-box actions run locally under `/bin/sh` with the SSM preamble, the worker over
+SSM; the state directory is the controller's record (write-once identity per start, per-poll status, an event journal,
+request/acknowledgment pairs for stop and resume, an outcome per start, never 'complete'); one controller per run by a
+host lock and an ETag-conditional S3 lease, a lost lease ends the loop; a stop is a request that relays the worker's save
+and acknowledges the pending state, claims untouched; a resume under a live service is a request to the service; a day
+that failed to start twice ends the service as `blocked_by_start_failures`; exports go one file per call and inputs are
+re-signed on every renewal because the main host signs with the instance profile's session (the worker does not refresh
+URLs mid-fetch: a limit, named, with the retained-bytes resume behind it); the provider path left the controller and the
+workflow refuses the Pod scripts before any step; the instance profile's permissions are named, checked by preflight and
+never provisioned.
+
+What a next Claude session does: Codex's review of these commits lands in the task doc; fix what it names in the owned
+files, one commit per group, the code-review skill over the range before every push; nothing else is assigned (the main
+lanes' save/resume, Jev, the reader hooks and scheduling are Codex's; the instance profile is Greg's decision).
+
 ## Where things stand (updated 2026-10-07, sixth session: Codex's fifth-return review corrected; two review passes)
 
 Codex reviewed the fifth return (task doc "ACTIVE review of fifth-session return": BIND-F, B4-F, 6R3-F, 6R2-F) and

@@ -24,7 +24,7 @@ set -eu
 export HOME="${HOME:-/root}"   # SSM runs without HOME; DuckDB refuses to load extensions without a home directory (2026-09-29)
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"; : "${RUN:?run name required}"
 ACTION="${ACTION:-plan}"
-case "$ACTION" in plan|start|status|successor-request|successor-decision|successor-retry|successor-save|successor-resume) ;; *) echo "unknown experiment ACTION" >&2; exit 2;; esac
+case "$ACTION" in plan|start|status|successor-request|successor-decision|successor-retry|successor-save|successor-resume|voice-dispatched|voice-returned) ;; *) echo "unknown experiment ACTION" >&2; exit 2;; esac
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
 set -- --action "$ACTION" --run "$RUN" --commit "$MARKETS_SHA" --code-root "$CODE_ROOT"
@@ -37,6 +37,24 @@ case "$ACTION" in successor-*)
     set -- "$@" --successor-file "$SUCCESSOR_FILE"
   fi
   [ -z "${SUCCESSOR_ID:-}" ] || set -- "$@" --successor-id "$SUCCESSOR_ID"
+;; esac
+# the remote (GitHub) meeting route's owner records (Step 6 caller): the exact dispatched run, then its return; nothing
+# here dispatches a workflow or calls GitHub
+case "$ACTION" in voice-*)
+  : "${VOICE_DAY:?classroom-arm day required}"
+  case "$VOICE_DAY" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "VOICE_DAY must be YYYYMMDD" >&2; exit 2;; esac
+  set -- "$@" --voice-day "$VOICE_DAY" --voice-by "${VOICE_BY:-operator}"
+  if [ "$ACTION" = voice-dispatched ]; then
+    case "${VOICE_GITHUB_RUN:-}" in ""|*[!0-9]*) echo "VOICE_GITHUB_RUN must be the numeric GitHub run id" >&2; exit 2;; esac
+    case "${VOICE_GITHUB_ATTEMPT:-1}" in *[!0-9]*) echo "VOICE_GITHUB_ATTEMPT must be numeric" >&2; exit 2;; esac
+    set -- "$@" --voice-github-run "$VOICE_GITHUB_RUN" --voice-github-attempt "${VOICE_GITHUB_ATTEMPT:-1}"
+  else
+    case "${VOICE_ARCHIVE:-}" in /opt/frankie-box/work/experiment/*) ;; *) echo "VOICE_ARCHIVE must be the downloaded runner-state.zip under /opt/frankie-box/work/experiment" >&2; exit 2;; esac
+    case "$VOICE_ARCHIVE" in *..*) exit 2;; esac
+    case "${VOICE_ARCHIVE_SHA256:-}" in [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]*) ;; *) echo "VOICE_ARCHIVE_SHA256 required (hex)" >&2; exit 2;; esac
+    case "${VOICE_CONCLUSION:-}" in success|failure|cancelled|timed_out|lost) ;; *) echo "VOICE_CONCLUSION must be success|failure|cancelled|timed_out|lost" >&2; exit 2;; esac
+    set -- "$@" --voice-archive "$VOICE_ARCHIVE" --voice-archive-sha256 "$VOICE_ARCHIVE_SHA256" --voice-conclusion "$VOICE_CONCLUSION"
+  fi
 ;; esac
 [ -z "${PLAN:-}" ] || set -- "$@" --plan "$PLAN"
 [ -z "${DAYS:-}" ] || set -- "$@" --days "$DAYS"
@@ -55,7 +73,25 @@ case "${EXTERNAL_HISTORY_FAMILY_RUNS:-}" in *[!a-z0-9_=,]*) echo "EXTERNAL_HISTO
 [ -z "${EXTERNAL_HISTORY_FAMILY_RUNS:-}" ] || set -- "$@" --external-family-history-runs "$EXTERNAL_HISTORY_FAMILY_RUNS"
 case "${EXTERNAL_WAIT:-on}" in on|off) ;; *) echo "EXTERNAL_WAIT must be on or off" >&2; exit 2;; esac
 set -- "$@" --external-wait "${EXTERNAL_WAIT:-on}" --brain "${BRAIN:-/opt/frankie-box/brain}"
-case "${BRAIN:-/opt/frankie-box/brain}${PREVIOUS_CLASSROOM:-}" in *..*) echo "no .. in BRAIN or PREVIOUS_CLASSROOM" >&2; exit 2;; esac
+# Jev's brain, saved in the plan when given at the first start (Step 7). JEV_RUNTIME is REFUSED (Greg, 2026-10-07): Jev
+# uses the same weights, code and setup as the Granite meeting, the ONE pinned runtime installed on the box by
+# frankie_box_granite_meeting_setup.sh (Run.jev binds to it; no second install, no second pin set)
+[ -z "${JEV_RUNTIME:-}" ] || { echo "JEV_RUNTIME is retired: Jev binds to the one pinned runtime shared with the Granite meeting (GRANITE_MEETING_RUNTIME_V1, /opt/frankie-box/granite); no separate Jev runtime" >&2; exit 2; }
+[ -z "${JEV_BRAIN:-}" ] || set -- "$@" --jev-brain "$JEV_BRAIN"
+# the bounded meeting's host route (Step 6 caller), saved with the plan at its first start: local (default) or github
+case "${VOICE_ROUTE:-local}" in
+  local) ;;
+  github) set -- "$@" --voice-route github ;;
+  *) echo "VOICE_ROUTE must be local or github" >&2; exit 2;;
+esac
+# the synchronized shared market input of a NEW run (Greg, 2026-10-07), saved with the plan at its first start
+case "${SHARED_MARKET_POLICY:-}" in
+  '') ;;
+  FRANKIE_SHARED_MARKET_TIMELINE_V1) set -- "$@" --shared-market-policy "$SHARED_MARKET_POLICY" ;;
+  *) echo "unknown SHARED_MARKET_POLICY" >&2; exit 2;;
+esac
+case "${BRAIN:-/opt/frankie-box/brain}${PREVIOUS_CLASSROOM:-}${JEV_BRAIN:-}" in *..*) echo "no .. in BRAIN, PREVIOUS_CLASSROOM or JEV_BRAIN" >&2; exit 2;; esac
+case "${JEV_BRAIN:-}" in ""|/opt/frankie-box/*) ;; *) echo "JEV_BRAIN must be an absolute path under /opt/frankie-box" >&2; exit 2;; esac
 case "${BRAIN:-/opt/frankie-box/brain}" in /opt/frankie-box/*) ;; *) echo "BRAIN must be under /opt/frankie-box" >&2; exit 2;; esac
 case "${PREVIOUS_CLASSROOM:-}" in ""|/opt/frankie-box/work/experiment-roots/*/work/classroom) ;; *) echo "PREVIOUS_CLASSROOM must be an experiment root's work/classroom" >&2; exit 2;; esac
 [ -z "${PREVIOUS_CLASSROOM:-}" ] || set -- "$@" --previous-classroom "$PREVIOUS_CLASSROOM"
