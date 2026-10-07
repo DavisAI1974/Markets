@@ -621,25 +621,42 @@ class SharedFrameView:
     def __init__(self, frame_numeric, receive_times, series, cells, *, policy, sources):
         if policy != binding():
             raise ValueError('search shared-market implementation differs from the selected ROOT')
+        # Exact membership (input_cursor, native_frame.instrument_id, input_record_indices[*]) is a layer of
+        # the frame spool. A spool without it (an older legacy pass) thins the view: the axis is still the
+        # spool's F_LAST closes in their original order and the search runs on it; the exact per-group
+        # membership is listed absent, never guessed from timestamps. A spool WITH contradictory membership
+        # raises inside frame_index: that is corruption, not missing coverage (Greg, 2026-10-07).
         self.frames, _ = frame_index(frame_numeric, receive_times)
-        if self.frames is None:
-            raise ValueError('shared search requires exact original ROOT group membership')
-        if any(len(values) != len(self.frames) for values in (*series.values(), *cells.values())):
+        self.count = len(receive_times)
+        if self.frames is not None and len(self.frames) != self.count:
+            raise ValueError('shared search membership does not cover the frame axis')
+        if any(len(values) != self.count for values in (*series.values(), *cells.values())):
             raise ValueError('shared search channels do not share the exact group axis')
         self.series, self.cells = series, cells
         self.event_times = frame_numeric.get('ts_event_ns')
+        self.receive_times = receive_times
         self.sources = sources
+        self.exact_membership = (dict(status='present', basis='ROOT input_cursor / instrument / input_record_indices columns')
+                                 if self.frames is not None else
+                                 dict(status='absent', reason='the frame spool carries no exact ROOT group membership columns; '
+                                      'the F_LAST axis stands in spool order with its receive clocks, the per-group INPUT '
+                                      'membership is not available to this view (thinner picture, not a rejected day)'))
         self.report = dict(source='shared_market', schema=SCHEMA, policy=policy,
             view='existing exact F_LAST projection; original source cursor and ties retained',
-            frames=len(self.frames), numeric_channels=len(series), cell_channels=len(cells),
+            frames=self.count, numeric_channels=len(series), cell_channels=len(cells),
+            exact_membership=self.exact_membership,
             consumer='actual shared series/cell mappings returned to search transforms and couplings',
-            limitation='fixed target axis; unclosed/failed source records and completed-only products retain source dispositions')
+            limitation='fixed target axis; unclosed/failed source records and completed-only products retain source dispositions',
+            rule=MISSING_COVERAGE_RULE)
 
     def iter_pictures(self):
-        for position, frame in enumerate(self.frames):
-            yield dict(schema=SCHEMA, at=dict(input_cursor=frame['cursor'],
-                instrument_id=frame['instrument'], ts_recv_ns=frame['stamp'],
+        for position in range(self.count):
+            frame = self.frames[position] if self.frames is not None else None
+            yield dict(schema=SCHEMA, at=dict(input_cursor=frame['cursor'] if frame else None,
+                instrument_id=frame['instrument'] if frame else None,
+                ts_recv_ns=frame['stamp'] if frame else int(self.receive_times[position]),
                 ts_event_ns=self.event_times[position] if self.event_times is not None else None),
-                input_record_indices=sorted(frame['members']),
+                input_record_indices=sorted(frame['members']) if frame else None,
+                membership=self.exact_membership['status'],
                 values={name: values[position] for name, values in self.series.items()},
                 cells={name: values[position] for name, values in self.cells.items()})
