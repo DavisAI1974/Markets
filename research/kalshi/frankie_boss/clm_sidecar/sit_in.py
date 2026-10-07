@@ -373,30 +373,53 @@ def wait_bundle(slots, schema, seconds, poll):
         time.sleep(poll)
 
 
-def material_text(material):
-    parts = ['===== CLASSROOM PACKAGE (%s, %s, sha256 %s) =====\n%s' % (
+def material_parts(material):
+    """The material's labelled sections, whole, in the order Jev reads them. Nothing is cut or summarized."""
+    parts = [('classroom_package', '===== CLASSROOM PACKAGE (%s, %s, sha256 %s) =====\n%s' % (
         material['material'].get('source'), material['material'].get('path'), material['material'].get('sha256'),
-        json.dumps(material['material'].get('dipole_classroom'), sort_keys=True))]
+        json.dumps(material['material'].get('dipole_classroom'), sort_keys=True)))]
     if material['material'].get('dipole_external') is not None:
-        parts.append('===== EXTERNAL SECTION: THE HISTORICAL DATA POINTS BESIDE THE 19 DIPOLE COLUMNS (same material, '
-                     'sha256 %s) =====\n%s' % (material['material'].get('sha256'),
-                                                json.dumps(material['material']['dipole_external'], sort_keys=True)))
+        parts.append(('external_section',
+                      '===== EXTERNAL SECTION: THE HISTORICAL DATA POINTS BESIDE THE 19 DIPOLE COLUMNS (same material, '
+                      'sha256 %s) =====\n%s' % (material['material'].get('sha256'),
+                                                 json.dumps(material['material']['dipole_external'], sort_keys=True))))
     if material['material'].get('experiment_directive') is not None:
-        parts.append('===== GOVERNED EXPERIMENT DIRECTIVE =====\n' +
-                     json.dumps(material['material']['experiment_directive'], sort_keys=True))
+        parts.append(('experiment_directive', '===== GOVERNED EXPERIMENT DIRECTIVE =====\n' +
+                      json.dumps(material['material']['experiment_directive'], sort_keys=True)))
     if material['material'].get('shared_market_context') is not None:
         if LOCAL is None:
             raise ValueError('shared raw market context requires its governed owner-local CPU source binding')
         import frankie_box_adviser_market as AM
-        parts.append('===== SHARED MARKET PICTURE AT THE ORIGINAL CUTOFF (NO ANSWERS OR GRADES) =====\n'
-                     + AM.text(material['material']['shared_market_context']))
+        parts.append(('shared_market_picture_at_original_cutoff',
+                      '===== SHARED MARKET PICTURE AT THE ORIGINAL CUTOFF (NO ANSWERS OR GRADES) =====\n'
+                      + AM.text(material['material']['shared_market_context'])))
     if material.get('survivors'):
-        parts.append('===== SEARCH SURVIVORS SO FAR (%s, sha256 %s) =====\n%s' % (
+        parts.append(('search_survivors', '===== SEARCH SURVIVORS SO FAR (%s, sha256 %s) =====\n%s' % (
             material['survivors'].get('path'), material['survivors'].get('sha256'),
-            json.dumps(material['survivors'].get('list'), sort_keys=True)))
+            json.dumps(material['survivors'].get('list'), sort_keys=True))))
     for item in material.get('unavailable') or []:
-        parts.append('===== NOT AVAILABLE: %s (%s) =====' % (item.get('item'), item.get('reason')))
-    return '\n\n'.join(parts)
+        parts.append(('not_available:' + str(item.get('item')),
+                      '===== NOT AVAILABLE: %s (%s) =====' % (item.get('item'), item.get('reason'))))
+    return parts
+
+
+def material_text(material):
+    return '\n\n'.join(text for _, text in material_parts(material))
+
+
+def material_use(material, student_text, brain_chars):
+    """What reached Jev's student prompt, by section and size (one-day review record; no prompt content)."""
+    parts = material_parts(material)
+    shared = material['material'].get('shared_market_context')
+    return dict(sections=[dict(section=label, chars=len(text)) for label, text in parts],
+                brain_chars=brain_chars, student_text_chars=len(student_text), note_packs=len(pieces(student_text)),
+                shared_market_picture=(None if shared is None else dict(
+                    scope=shared.get('scope'), at=shared.get('at'), picture_sha256=shared.get('picture_sha256'),
+                    dispositions=dict(coverage=shared.get('coverage'), read=shared.get('read')),
+                    delivered='whole typed picture text with its scope, read and coverage dispositions, in the '
+                              'student material; never answers, grades, claims or private reasoning')),
+                withheld=['Frankie classroom outputs until the blind seal', 'the comparison from the brain entry'],
+                rule='the whole material is read in note packs; nothing is cut; a prompt without output room refuses')
 
 
 def load_brain(config, day):
@@ -691,6 +714,26 @@ def main(config=None):
                    claims_count=len(claims), unparsed=len(state.get('unparsed') or []),
                    comparison_available=bool(comparison.get('available')),
                    report=dict(bytes=len(report.encode()), sha256=sha(report.encode())), status='done')
+    # One-day review record (Greg, 2026-10-07): what this piece received, how it used it, what it produced.
+    student_text = material_text(material) + ('\n\n' + brain_text if brain_text else '')
+    receipt['workflow_report'] = dict(
+        schema='FRANKIE_PIECE_WORKFLOW_REPORT_V1', piece='jev_sit_in',
+        inputs=dict(material=dict((k, material['material'].get(k)) for k in ('path', 'bytes', 'sha256', 'source')),
+                    material_sections=[label for label, _ in material_parts(material)],
+                    unavailable=material.get('unavailable') or [], brain_files=len(brain_pins),
+                    shared_market_picture=(material['material'].get('shared_market_context') or {}).get('scope')),
+        use=dict(material_text=material_use(material, student_text, len(brain_text)),
+                 model=JEV_MODEL, context=JEV_CONTEXT, piece_chars=JEV_PIECE_CHARS, prompt_chars=JEV_PROMPT_CHARS,
+                 local_cpu=LOCAL is not None, model_calls=receipt['call_accounting'],
+                 comparison=dict(available=bool(comparison.get('available')), reason=comparison.get('reason'),
+                                 read_after_seal=bool(state.get('frankie_read_at'))),
+                 caps='no output room or a length-stopped reply raises Incomplete and is retained; nothing is cut'),
+        outputs=dict(claims=state['claims_filed'], claims_count=len(claims), unparsed=len(state.get('unparsed') or []),
+                     report=receipt['report'], transcript='put to the configured transcript target',
+                     comparison_prepared='prepared_comparison' in state, brain_entry='written below',
+                     waits=[] if comparison.get('available') else ['comparison unavailable: ' + str(comparison.get('reason'))]),
+        rule='recorded inputs, use and outputs for the one-day review; reaching the prompt is not proof of learning; '
+             'missing evidence means unknown, never zero')
     # 6. BRAIN: this day's entry, his claims whole, never the comparison (the blind wall)
     if not state.get('brain_written'):
         entry = dict(schema='JEV_BRAIN_ENTRY_V1', stamp=stamp, day=day, author='jev', model=JEV_MODEL, include=True,

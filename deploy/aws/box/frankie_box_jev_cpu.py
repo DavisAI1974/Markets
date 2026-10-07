@@ -422,11 +422,32 @@ def _run(request, request_path, out, brain, jev_brain):
                  json.dumps(dict(result=pin(result_path), deliveries=deliveries), sort_keys=True, indent=2) +
                  '\n```\n').encode()
     report = retain(out / ('jev-report-%04d.md' % request['report_number']), numbered)
+    import frankie_box_adviser_market as AM
+    client_report = client.get('workflow_report') or {}
+    workflow_report = AM.workflow_report('jev', context=shared_context,
+        inputs=dict(material=pin(material_file), material_source='governed classroom request',
+                    attachments=sorted(attachment), classroom_receipt=pin(classroom_path),
+                    search_manifest=pin(search_path), runtime=pin(runtime_path),
+                    shared_market_context_source=shared_market_source,
+                    brain_sources=len(config['brain']), cutoff_origin='classroom teacher binding (source_hash/as_of/through_cursor)'),
+        use=dict(material_text=client_report.get('use'),
+                 withheld=['Frankie classroom outputs until the blind seal (JEV_WALL)',
+                           'search survivors (only survivors already in the governed material apply)',
+                           'teacher answers, grades, claims and private reasoning (never in the picture)'],
+                 caps=dict(context_size=runtime['context_size'], max_output_tokens=runtime['max_output_tokens'],
+                           min_output_tokens=runtime['min_output_tokens'], token_margin=runtime['token_margin'],
+                           piece_chars=runtime['piece_chars'],
+                           rule='a prompt without output room refuses (Incomplete); nothing is cut to fit'),
+                 model_calls=client.get('call_accounting'), cpus=cpus),
+        outputs=dict(claims_seal=pin(seal_path), claims=pin(claims_path), comparison=pin(out / 'comparison.json'),
+                     scientific_result=pin(result_path), deliveries=deliveries, report=report,
+                     waits=pending, status='waiting' if pending else 'done'))
     receipt = dict(schema='JEV_CPU_RECEIPT_V1', status='waiting' if pending else 'done', owner=identity,
                    claims_seal=pin(seal_path), scientific_result=pin(result_path), deliveries=deliveries,
                    client_receipt=pin(out / 'client-receipt.json'), report=report,
                    report_number=request['report_number'], pending=pending,
-                   unparsed=dict(claims=client['unparsed'], comparison=len(comparison.get('unparsed') or [])))
+                   unparsed=dict(claims=client['unparsed'], comparison=len(comparison.get('unparsed') or [])),
+                   workflow_report=workflow_report)
     write_json(out / 'receipt.json', receipt)
     return receipt
 
