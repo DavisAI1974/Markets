@@ -1073,6 +1073,10 @@ class Session:
         try:
             return self._derive(**arguments)
         except BaseException:
+            book = getattr(self, '_parallel_book', None)
+            if book is not None:
+                self._parallel_book = None
+                book.close()                     # restores InstrumentBook's original methods in this process
             writer = getattr(self, '_row_writer', None)
             if writer is not None:
                 # a save point drained every row before it was recorded; anything still queued was never saved, and a
@@ -1132,7 +1136,12 @@ class Session:
         import signal
         lock = self._native_stage_lock()
         handle = lock.__enter__()          # held by this process until the child owns the same open description
-        lane = sorted(os.sched_getaffinity(0))
+        # Greg, 2026-10-07: side by side, the booked CPUs split in halves, never shared: the native child takes the first
+        # half (its core plan reads FRANKIE_LANE_CPUS), the legacy pass the second (replay, ParallelBook workers and
+        # encoders split inside it). Both lists come from the booking; recorded in native-overlap.json.
+        lane = lane_cpus()
+        half = len(lane) // 2
+        native_cpus, legacy_cpus = (lane[:half], lane[half:]) if half else (lane, lane)
         session = self
 
         def child():
@@ -1140,6 +1149,8 @@ class Session:
             # its own probe directory (the parent's progress.json stays the legacy pass's), never the parent's stack.
             stop = [False]
             signal.signal(signal.SIGTERM, lambda *_: stop.__setitem__(0, True))
+            os.sched_setaffinity(0, set(native_cpus))
+            os.environ['FRANKIE_LANE_CPUS'] = os.environ['FRANKIE_BOOKED_CPUS'] = ','.join(map(str, native_cpus))
             def child_save_requested():
                 return stop[0] or bool(save_requested and save_requested())
             probe = _box_module('frankie_box_progress').Probe(session.dir / 'native-overlap')
@@ -1158,25 +1169,29 @@ class Session:
                 os._exit(1)
             os._exit(0)
 
-        legacy_cpu = lane[0] if len(lane) > 1 else None
+        legacy_cpu = legacy_cpus[0]
         process = multiprocessing.get_context('fork').Process(target=child, name='root-native-stage', daemon=False)
         try:
             # the intent before the fork: a crash between the two leaves this attempt with outcome unknown (the lock,
             # not this record, keeps a second traversal out)
             self._native_overlap_record(attempt=dict(
                 mode='on', intent_at=time.time(), child_pid=None, outcome='unknown', lane_cpus=lane,
-                legacy_pass_cpu=legacy_cpu, native_probe=str(self.dir / 'native-overlap' / 'progress.json'),
+                native_cpus=native_cpus, legacy_cpus=legacy_cpus, legacy_pass_cpu=legacy_cpu,
+                split='booked list in halves: native the first, legacy the second; no CPU in both',
+                native_probe=str(self.dir / 'native-overlap' / 'progress.json'),
                 rule='ROOT process 2 (native traversal) beside process 1 (legacy pass) on the same sealed INPUT spool; '
                      'identical calls and outputs to the serial order; native-stage.json is witness-checked at the join'))
             process.start()
         finally:
             lock.__exit__(None, None, None)   # this process's copy closes; the child's copy keeps the flock
-        self._native_overlap = dict(process=process, lane=lane, started=time.time())   # from here every exit joins it
-        if legacy_cpu is not None:
-            os.sched_setaffinity(0, {legacy_cpu})
+        self._native_overlap = dict(process=process, lane=lane, started=time.time(),
+                                    environment={k: os.environ.get(k) for k in ('FRANKIE_LANE_CPUS', 'FRANKIE_BOOKED_CPUS')})
+        # from here every exit joins it; the legacy pass (and the layer writes after it) see only the second half
+        os.sched_setaffinity(0, set(legacy_cpus))
+        os.environ['FRANKIE_LANE_CPUS'] = os.environ['FRANKIE_BOOKED_CPUS'] = ','.join(map(str, legacy_cpus))
         self._native_overlap_record(child_pid=process.pid, started_at=self._native_overlap['started'])
-        self.note(f'native stage started beside the legacy pass (child {process.pid}; legacy on CPU {legacy_cpu}, '
-                  f'native workers by the core plan on {len(lane) - 1} lane CPUs)')
+        self.note(f'native stage started beside the legacy pass (child {process.pid}; native on CPUs '
+                  f'{native_cpus[0]}-{native_cpus[-1]}, legacy on {legacy_cpus[0]}-{legacy_cpus[-1]})')
         del handle
         return process
 
@@ -1186,6 +1201,11 @@ class Session:
         lane = overlap.get('lane')
         if lane:
             os.sched_setaffinity(0, set(lane))
+        for key, value in (overlap.get('environment') or {}).items():   # the whole booking again after the join
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
         code = process.exitcode
         outcome = ('native_stage_completed' if code == 0 else 'native_stage_saved' if code == self.NATIVE_OVERLAP_SAVED
                    else 'native_stage_failed')
@@ -1377,15 +1397,32 @@ class Session:
         # bytes and time; with the frame sections retained, the replay stays serial on the lane's first CPU and the rows
         # are encoded on encoders pinned one per remaining lane CPU, every spool line still written in the serial order
         # (OrderedRowWriter). Same lines, same order, same byte offsets at every save point.
-        writer, replay_cpu, lane = None, None, lane_cpus()
-        encoder_cpus = lane[1:1 + max(0, int((self.source_binding or {}).get('data_workers') or 1))]
+        # The full-depth book snapshot each frame takes (book_snapshot(include_full_depth=True, include_order_ids=True))
+        # goes through the native pass's own ParallelBook (frankie_box_native_auxiliary): per-level work on pinned book
+        # workers, the original pinned assembly and arithmetic on the exact per-level results, every level joined
+        # before the next INPUT, so the replay order and the values are the serial ones. The booked CPUs after the
+        # replay's are split once, never double-pinned: book workers first, encoders after (recorded in
+        # work/legacy-cpu-split.json). observe_book stays in the replay (a copy of the live book; no existing worker).
+        writer, replay_cpu, lane, parallel_book = None, None, lane_cpus(), None
+        helpers = lane[1:1 + max(0, int((self.source_binding or {}).get('data_workers') or 1))]
+        book_cpus = helpers[:min(16, len(helpers) // 2)] if retain_frame_sections else []
+        encoder_cpus = helpers[len(book_cpus):]
         if retain_frame_sections and encoder_cpus:
             for rows in (prices, frames, structures, failures):
                 rows._writer.flush()              # nothing buffered is copied into the forked encoders
             writer = OrderedRowWriter(encoder_cpus)
             self._row_writer = writer
+            if book_cpus:
+                sys.path.insert(0, str(Path(__file__).resolve().parent))
+                from frankie_box_native_auxiliary import ParallelBook
+                parallel_book = ParallelBook(PRODUCERS, book_cpus)     # spawned after the forked encoders
+                self._parallel_book = parallel_book
             replay_cpu = lane[0]
             os.sched_setaffinity(0, {replay_cpu})
+            write_json(self.work / 'legacy-cpu-split.json', dict(
+                schema='FRANKIE_ROOT_LEGACY_CPUS_V1', at=time.time(), booked=lane, replay=replay_cpu,
+                book_workers=book_cpus, encoders=encoder_cpus,
+                rule='one CPU per process, none shared: the replay, the ParallelBook level workers, the frame encoders'))
             prices_out, structures_out, failures_out = (_QueuedSpool(prices, writer), _QueuedSpool(structures, writer),
                                                         _QueuedSpool(failures, writer))
             self.note(f'legacy pass: replay on CPU {replay_cpu}, frame rows encoded on {writer.workers} pinned lane CPUs '
@@ -1400,6 +1437,9 @@ class Session:
         def save_legacy(cursor):
             if writer is not None:
                 writer.drain()                    # every queued row on disk before its spool position is saved
+            with (parallel_book.materialized() if parallel_book is not None else contextlib.nullcontext()):
+                save_legacy_state(cursor)         # the class's original methods while the live adapter is pickled
+        def save_legacy_state(cursor):
             _save_raw_state(recovery_path, dict(identity=identity, next_record=cursor,
                 adapter=mbo_resume_state.export_adapter_state(adapter, include_open_groups=True),
                 adapter_live=adapter,
@@ -1525,6 +1565,12 @@ class Session:
                 if recovery and save_requested and save_requested():
                     save_legacy(index + 1)
                     raise TeacherSaved('ROOT saved with all open groups and output rows; next INPUT %d' % (index + 1))
+        if parallel_book is not None:
+            book_metrics = dict(calls=parallel_book.calls, levels=parallel_book.levels,
+                                seconds=round(parallel_book.seconds, 3), workers=len(book_cpus))
+            parallel_book.close()                 # the original InstrumentBook methods again, before the native pass
+            self._parallel_book = None
+            self.note('legacy pass: full-depth snapshots on %d pinned book workers: %s' % (len(book_cpus), book_metrics))
         if writer is not None:
             writer.close()                        # drains every queued row, then the encoders end
             self._row_writer = None
@@ -2040,8 +2086,9 @@ class Session:
             return True, 'no derivation digest'
         with digest_path.open(encoding='utf-8', errors='replace') as source:
             digest_header = source.read(400)
-        if ('# Derivation digest ' + DG.SCHEMA + ' ') not in digest_header:
-            return True, 'the digest is not ' + DG.SCHEMA
+        if not any(('# Derivation digest ' + schema + ' ') in digest_header
+                   for schema in getattr(DG, 'READABLE_SCHEMAS', (DG.SCHEMA,))):
+            return True, 'the digest is not ' + ' or '.join(getattr(DG, 'READABLE_SCHEMAS', (DG.SCHEMA,)))
         if not (self.work / 'derive.json').exists():
             return True, 'no derive.json'
         recorded = load_json(self.work / 'derive.json')

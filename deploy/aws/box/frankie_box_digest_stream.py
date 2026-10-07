@@ -24,6 +24,8 @@ def _pack(value):
         return ['dict', [[k, _pack(v)] for k, v in value.items()]]
     if isinstance(value, (list, tuple)):
         return ['tuple' if isinstance(value, tuple) else 'list', [_pack(v) for v in value]]
+    if isinstance(value, (bytes, bytearray)):           # DIGEST_V10: bytes reach the private spool exactly
+        return ['bytearray' if isinstance(value, bytearray) else 'bytes', bytes(value).hex()]
     return ['scalar', value]
 
 
@@ -34,6 +36,10 @@ def _unpack(value):
     if kind in ('list', 'tuple'):
         items = [_unpack(v) for v in payload]
         return tuple(items) if kind == 'tuple' else items
+    if kind == 'bytes':
+        return bytes.fromhex(payload)
+    if kind == 'bytearray':
+        return bytearray.fromhex(payload)
     return payload
 
 

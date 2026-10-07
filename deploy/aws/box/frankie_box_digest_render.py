@@ -29,8 +29,9 @@ import math
 import re
 from fractions import Fraction
 
-SCHEMA = 'DIGEST_V9'   # V9: `L` lists with `*k` runs, `*k` runs in `I` lists, dictionary entries spelled as cells, `"k` ditto cells, `$d` trailing-number deltas of strings, `~d` integer deltas inside keys-once objects, `O` packed digits with outliers apart (Greg, 2026-09-28, the reducer stacks on top of the 6-hour run's); V8: the table grammar below (Greg, 2026-09-28, every token stack that works, all additive); V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
-TABLE_GRAMMAR = 'DIGEST_V9'   # the table block grammar. V9: `L` lists, `*k` item runs, dictionary entries as cells. V7: `?k` runs of absent cells; deltas on every integer column whose name ends in
+SCHEMA = 'DIGEST_V10'  # V10: `X` exact cells for values the other cells cannot carry exactly (bytes, bytearray, a tuple inside a list / mapping / tuple; Greg 2026-10-07: "Add bytes to the format"); a DIGEST_V9 digest reads unchanged (READABLE_SCHEMAS). V9: `L` lists with `*k` runs, `*k` runs in `I` lists, dictionary entries spelled as cells, `"k` ditto cells, `$d` trailing-number deltas of strings, `~d` integer deltas inside keys-once objects, `O` packed digits with outliers apart (Greg, 2026-09-28, the reducer stacks on top of the 6-hour run's); V8: the table grammar below (Greg, 2026-09-28, every token stack that works, all additive); V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
+READABLE_SCHEMAS = ('DIGEST_V9', 'DIGEST_V10')   # V10 only adds the `X` cell, so every V9 table is a V10 table
+TABLE_GRAMMAR = 'DIGEST_V10'  # V10: `X` exact cells (see SCHEMA). The table block grammar. V9: `L` lists, `*k` item runs, dictionary entries as cells. V7: `?k` runs of absent cells; deltas on every integer column whose name ends in
                               # recv_ns / event_ns and on group_index. V8 on top: keys-once objects (`shapes:`, `R` cells), packed digit
                               # lists (`P`), same-row integer references (`<i`), count columns derived as list lengths (`lengths:`), columns
                               # ordered by presence, and the dictionary only where it pays
@@ -224,7 +225,7 @@ def _flatten(row, prefix=''):
     out = {}
     for k, v in row.items():
         key = f'{prefix}{k}'
-        if isinstance(v, dict):
+        if isinstance(v, dict) and v:      # DIGEST_V10: an EMPTY mapping is a value (a `J{}` cell), never a vanished column
             out.update(_flatten(v, key + '.'))
         else:
             out[key] = v
@@ -679,6 +680,70 @@ def _list_start(first, column, prev_lists):
     return prev_lists[column] + int(first) if first[:1] in '+-' and _is_int(prev_lists.get(column)) else int(first)
 
 
+# ---- DIGEST_V10 `X` exact cells ---------------------------------------------------------------------------------------
+# A value the other cells cannot carry exactly: bytes / bytearray anywhere in it, or a tuple anywhere inside a list,
+# mapping or tuple (the JSON cell would make it a list; the U cell holds one flat tuple). Spelled `X` + compact JSON of a
+# tagged tree: every container is an array whose first item names it ("l" list, "t" tuple, "d" mapping with its keys in
+# order, "x" bytes as hex, "y" bytearray as hex); a scalar (int, float, str, bool, None) stays a JSON scalar, so no scalar
+# can be read as a container. Exact both ways: _exact_value(json.loads(text)) gives back the same types and values,
+# -0.0 and nan included (json writes NaN/-0.0 and reads them back). A mapping key that is not a string has no cell.
+
+def _needs_exact(v, inside=False):
+    if isinstance(v, (bytes, bytearray)):
+        return True
+    if isinstance(v, tuple):
+        return inside or any(_needs_exact(x, True) for x in v)
+    if isinstance(v, list):
+        return any(_needs_exact(x, True) for x in v)
+    if isinstance(v, dict):
+        return any(_needs_exact(x, True) for x in v.values())
+    return False
+
+
+def _exact_tree(v):
+    if isinstance(v, bytes):
+        return ['x', v.hex()]
+    if isinstance(v, bytearray):
+        return ['y', bytes(v).hex()]
+    if isinstance(v, tuple):
+        return ['t'] + [_exact_tree(x) for x in v]
+    if isinstance(v, list):
+        return ['l'] + [_exact_tree(x) for x in v]
+    if isinstance(v, dict):
+        if any(type(k) is not str for k in v):
+            raise ValueError('a mapping with a non-string key has no exact cell')
+        return ['d', {k: _exact_tree(x) for k, x in v.items()}]
+    if v is None or isinstance(v, (bool, int, float, str)):
+        return v
+    raise ValueError('a %s value has no exact cell' % type(v).__name__)
+
+
+def _exact_value(tree):
+    if not isinstance(tree, list):
+        return tree
+    tag = tree[0] if tree else None
+    if tag == 'x':
+        return bytes.fromhex(tree[1])
+    if tag == 'y':
+        return bytearray.fromhex(tree[1])
+    if tag == 't':
+        return tuple(_exact_value(x) for x in tree[1:])
+    if tag == 'l':
+        return [_exact_value(x) for x in tree[1:]]
+    if tag == 'd':
+        return {k: _exact_value(x) for k, x in tree[1].items()}
+    raise ValueError('exact cell with an unknown container tag')
+
+
+def exact_text(v):
+    """The `X` spelling (cell or header constant) of a value that needs it."""
+    return 'X' + json.dumps(_exact_tree(v), separators=(',', ':'))
+
+
+def from_exact_text(text):
+    return _exact_value(json.loads(text[1:]))
+
+
 def _literal(v, column, r, prev_lists, shape=None, prev_value=None):
     """The inline text of a value that is neither derived, repeated from the previous row, nor a delta:
     (kind, text) with kind 'lit' (final), 'str' (a string; dictionary candidate) or 'json' (a JSON cell; candidate)."""
@@ -694,6 +759,8 @@ def _literal(v, column, r, prev_lists, shape=None, prev_value=None):
         return 'lit', 'nan' if math.isnan(v) else _float_text(v)
     if isinstance(v, str):
         return 'str', v
+    if _needs_exact(v):
+        return 'lit', exact_text(v)          # DIGEST_V10: carried whole and exact, never reduced
     if isinstance(v, tuple):
         if not _no_tuples(list(v)):
             raise ValueError('a tuple nested in a tuple has no exact cell')     # render_layers / the caller leaves such a value as it was
@@ -848,6 +915,8 @@ def finish_row(cells, kept, columns, scales, number):
 
 
 def _constant_text(value):
+    if _needs_exact(value):
+        return exact_text(value)           # DIGEST_V10 (a JSON constant never starts with X)
     return ('U' + json.dumps(list(value), separators=(',', ':'), sort_keys=True)) if isinstance(value, tuple) \
         else json.dumps(value, separators=(',', ':'), sort_keys=True)   # a tuple constant keeps its U mark
 
@@ -925,7 +994,8 @@ class Header:
                 for item in text.split('\t'):
                     k, _, value = item.partition('=')
                     if prefix == 'constants: ':
-                        into[k] = tuple(json.loads(value[1:])) if value.startswith('U') else json.loads(value)
+                        into[k] = (tuple(json.loads(value[1:])) if value.startswith('U') else
+                                   from_exact_text(value) if value.startswith('X') else json.loads(value))
                     elif prefix == 'scales: ':
                         into[k] = int(value)
                     elif prefix == 'shapes: ':
@@ -1020,6 +1090,8 @@ class RowDecoder:
                 continue
             elif cell.startswith('U'):
                 v = tuple(json.loads(cell[1:]))
+            elif cell.startswith('X'):
+                v = from_exact_text(cell)          # DIGEST_V10 exact cell
             elif cell.startswith('I'):
                 parts = cell[1:].split(',')
                 v = [_list_start(parts[0], c, prev_lists)]
