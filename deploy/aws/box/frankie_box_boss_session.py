@@ -436,6 +436,122 @@ class OrderedRowWriter:
         self.pool.join()
 
 
+LAYER_SPOOL_PARALLEL_MIN_BYTES = 64 << 20
+LAYER_RANGE_BYTES = 32 << 20
+
+
+def _layer_encoder():
+    # frankie_box_durable.write_json's encoder, exactly: indent=1, sort_keys, default=str (indent selects json's
+    # pure-Python iterencode, the same code path for the whole document and for one element)
+    return json.JSONEncoder(indent=1, sort_keys=True, default=str)
+
+
+def _layer_range_text(args):
+    """One ordered byte range of a RowSpool file: each row decoded exactly as RowSpool.__iter__ does
+    (unpack(json.loads(line))) and encoded exactly as it appears as an element of a top-level list inside the layer
+    document: json's element text at level 0 with every newline followed by two more spaces (the element sits at
+    indent level 2; JSON strings never contain a raw newline, so every newline in the text is an indentation newline).
+    Elements are joined by json's item separator at that level (',' + newline + two spaces)."""
+    path, start, end = args
+    from research.kalshi.frankie_boss.c15_journal import unpack
+    encoder = _layer_encoder()
+    pieces = []
+    with open(path, 'rb') as handle:
+        handle.seek(start)
+        position = start
+        for line in handle:
+            if position >= end:
+                break
+            position += len(line)
+            pieces.append(''.join(encoder.iterencode(unpack(json.loads(line.decode('utf-8'))))).replace('\n', '\n  '))
+    return ',\n  '.join(pieces), len(pieces)
+
+
+def _spool_line_ranges(path, size, step):
+    """Ordered [start, end) byte ranges of about `step` bytes, each starting at a line start."""
+    cuts = [0]
+    with open(path, 'rb') as handle:
+        while cuts[-1] + step < size:
+            handle.seek(cuts[-1] + step - 1)
+            handle.readline()                      # ends just after the newline at or after that byte
+            cut = handle.tell()
+            if cut >= size:
+                break
+            cuts.append(cut)
+    cuts.append(size)
+    return [(str(path), a, b) for a, b in zip(cuts, cuts[1:]) if b > a]
+
+
+def write_layer_json(path, value, cpus, window_per_worker=2):
+    """frankie_box_durable.write_json(path, value), byte for byte, with every top-level RowSpool value of the layer
+    (legacy_book_imbalance.frames, legacy_structure_observables.groups) decoded and encoded on encoders pinned one per
+    CPU in `cpus`, read straight from the spool file in ordered line-aligned ranges (streamed; never held whole). The
+    rest of the document is encoded by the same encoder with a placeholder string in each spool's place, and the
+    spool's list text is joined in at the placeholder: '[', newline + two spaces, the elements, newline + one space,
+    ']' (json's list form at that level; '[]' when empty). The rows decoded must equal the spool's count, as
+    RowSpool.__iter__ requires. With no CPUs, no spool or a small spool it is write_json itself."""
+    B = _box_module('frankie_box_bedrock')
+    durable = _box_module('frankie_box_durable')
+    spools = {key: spool for key, spool in value.items()
+              if isinstance(spool, B.RowSpool) and len(spool)
+              and spool.path.stat().st_size >= LAYER_SPOOL_PARALLEL_MIN_BYTES}
+    if not cpus or not spools:
+        return durable.write_json(path, value)
+    for spool in spools.values():
+        if not spool._writer.closed:
+            raise ValueError('a layer spool must be closed before its layer is written')
+    marks = {key: '@@FRANKIE-LAYER-SPOOL-%s-%s@@' % (key, uuid.uuid4().hex) for key in spools}
+    text = ''.join(_layer_encoder().iterencode(dict(value, **marks)))
+    order, parts, rest = [], [], text
+    for key, mark in sorted(marks.items(), key=lambda kv: text.index(json.dumps(kv[1]))):
+        encoded = json.dumps(mark)
+        if text.count(encoded) != 1:
+            raise ValueError('layer placeholder is not unique in the document')
+        head, rest = rest.split(encoded, 1)
+        parts.append(head)
+        order.append(key)
+    parts.append(rest)
+    import collections
+    import multiprocessing
+    context = multiprocessing.get_context('fork')
+    handout = context.Queue()
+    for cpu in cpus:
+        handout.put(cpu)
+
+    def chunks(pool):
+        for i, key in enumerate(order):
+            yield parts[i].encode('utf-8')
+            spool = spools[key]
+            ranges = _spool_line_ranges(spool.path, spool.path.stat().st_size, LAYER_RANGE_BYTES)
+            pending, total, first = collections.deque(), 0, True
+            submitted = iter(ranges)
+            for item in submitted:
+                pending.append(pool.apply_async(_layer_range_text, (item,)))
+                if len(pending) >= len(cpus) * window_per_worker:
+                    break
+            yield b'[\n  '
+            while pending:
+                piece, count = pending.popleft().get()
+                nxt = next(submitted, None)
+                if nxt is not None:
+                    pending.append(pool.apply_async(_layer_range_text, (nxt,)))
+                if not count:
+                    continue
+                if not first:
+                    yield b',\n  '
+                first = False
+                total += count
+                yield piece.encode('utf-8')
+            if total != len(spool):
+                raise ValueError('retained row spool count changed')
+            yield b'\n ]'
+        yield parts[-1].encode('utf-8')
+        yield b'\n'
+
+    with context.Pool(len(cpus), initializer=_encoder_pin, initargs=(handout,)) as pool:
+        return durable.write_chunks(path, chunks(pool))
+
+
 class _QueuedSpool:
     """A RowSpool whose appends go through the OrderedRowWriter (the RowSpool.append call shape)."""
 
@@ -1467,10 +1583,23 @@ class Session:
             receipt['frame_sections'] = list(FRAME_SECTIONS)
             receipt['unclosed_input_groups'] = {str(i): [item[0] for item in rows]
                                                 for i, rows in pending_inputs.items()}
+        # The layer files carrying a whole spool (legacy_book_imbalance.frames, legacy_structure_observables.groups) are
+        # re-encoded on the lane's pinned encoders, byte for byte the serial write_json (write_layer_json); the writer
+        # itself (join, sha256, write) stays on the lane's first CPU.
+        layer_cpus = lane[1:1 + max(0, int((self.source_binding or {}).get('data_workers') or 1))] \
+            if retain_frame_sections else []
+        if layer_cpus:
+            os.sched_setaffinity(0, {lane[0]})
         for name, value in layers.items():
             path = derived / f'{name}.json'
-            write_json(path, value)
+            started = time.time()
+            write_layer_json(path, value, layer_cpus)
+            if layer_cpus and any(isinstance(v, B.RowSpool) for v in value.values()):
+                self.note(f'layer {name}.json written in {time.time() - started:.1f} s (spools encoded on pinned lane '
+                          f'CPUs {layer_cpus[0]}-{layer_cpus[-1]})')
             receipt['layers'][name] = dict(status=value['status'], producer=value.get('producer'), reason=value.get('reason'), **witness(path), path=str(path))
+        if layer_cpus:
+            os.sched_setaffinity(0, set(lane))
         if recovery and bedrock:
             # A separately published legacy completion lets interrupted native traversal/projection
             # continue without replaying or recalculating the already completed legacy stage.
