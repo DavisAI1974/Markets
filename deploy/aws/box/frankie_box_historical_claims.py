@@ -265,6 +265,9 @@ NG_INPUTS = [
          where='local caches of the research tree, not committed', status='not_in_repository'),
 ]
 NG_PRODUCED = 'renders/ng_refine_s95/fingerprints.json'
+# B2: the recorded file holds 108 days; the driver runs six. Compare on the argv days only; legs aligned by entry_idx
+# (never by list position); members present on one side only are listed, not matched.
+_NG_SCOPE = dict(top_level='argv', member_key='entry_idx')
 
 REPRODUCTIONS = (
     dict(id='crypto_trend_flip', claims=['H01', 'H02'], status='defined',
@@ -360,19 +363,19 @@ REPRODUCTIONS = (
          entry=dict(cwd='research/kalshi', script='characterize_turns.py',
                     argv=['20250916', '20250925', '20250929', '20251008', '20251016', '20251020'],
                     produces=[NG_PRODUCED],
-                    note='the driver MERGES into an existing fingerprints.json; a reproduction stages an empty renders/ dir so '
-                         'the produced file holds only the days run'),
+                    note='the driver MERGES into an existing fingerprints.json; the recorded file is staged APART (never in '
+                         'the tree), so the produced file holds only the days run; compared on those days only (scope)'),
          sources=NG_SOURCES, inputs=NG_INPUTS,
          recorded_outputs=[
              dict(kind='json_file', what='H03: per leg dip_imb_level and dir', produced=NG_PRODUCED,
                   recorded='research/kalshi/renders/ng_refine_s95/fingerprints.json', claims=['H03'],
-                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.dip_imb_level']),
+                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.dip_imb_level'], scope=_NG_SCOPE),
              dict(kind='json_file', what='H04/H05: per leg imb_R, aligned_imb_R, book and dir', produced=NG_PRODUCED,
                   recorded='research/kalshi/renders/ng_refine_s95/fingerprints.json', claims=['H04', 'H05'],
-                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.imb_R', '*.*.aligned_imb_R', '*.*.book']),
+                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.imb_R', '*.*.aligned_imb_R', '*.*.book'], scope=_NG_SCOPE),
              dict(kind='json_file', what='H09/H10: per leg turn_far_thinning and continuation', produced=NG_PRODUCED,
                   recorded='research/kalshi/renders/ng_refine_s95/fingerprints.json', claims=['H09', 'H10'],
-                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.turn_far_thinning', '*.*.continuation']),
+                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.turn_far_thinning', '*.*.continuation'], scope=_NG_SCOPE),
              dict(kind='prose', claims=['H03'], what='1,537 legs cleared |dip_imb_level| >= 0.15; sign matched realized leg '
                                                       'direction on 87.6 percent',
                   recorded_in='ng_brain.json plays/0/instances/0 (what_the_state_said, what_the_day_did)',

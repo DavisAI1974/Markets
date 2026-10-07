@@ -1216,9 +1216,10 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             if src['author'] == 'historical':
                 # Scoped measurements remain evidence. Neither seat may turn an
                 # inherited rejection (or a counts-only reassessment) into closure.
-                # A PERFORMED reproduction status the reader took from a hash-bound HISTORICAL_REPRODUCTION_V1 record
-                # (performed_matched / performed_differs, with the record listed) is kept, never overwritten by this
-                # exchange, which itself establishes nothing; any other value is not established here (slice B).
+                # A PERFORMED reproduction status the reader took from an admitted hash-bound HISTORICAL_REPRODUCTION
+                # record (performed_matched / performed_differs / performed_not_comparable / performed_failed, with the
+                # record listed) is kept as read, never overwritten or folded, by this exchange, which itself establishes
+                # nothing; any other value is not established here (slice B; B4: every performed fact is preserved).
                 prior_rework = result.get('research_rework') or {}
                 reproduction = prior_rework.get('original_calculation_reproduction')
                 records = (prior_rework.get('reproduction_records') or {}).get('records') or []
@@ -1234,8 +1235,10 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                     market_admission=admission or dict(status='undeclared_by_the_lessons'),
                     reproduction_is_market_evidence=bool(performed and admission and not cost_selected),
                     original_calculation_reproduction=reproduction if performed else 'not_established_by_this_exchange',
-                    reproduction_status_source=('the reader\'s hash-bound HISTORICAL_REPRODUCTION_V1 record(s), kept as read'
+                    reproduction_status_source=('the reader\'s admitted hash-bound HISTORICAL_REPRODUCTION record(s), kept as read'
                                                 if performed else 'none: no performed record was read by the lessons'),
+                    reproduction_record_statuses=(prior_rework.get('reproduction_records') or {}).get('summary'),
+                    reproduction_records_listed=(prior_rework.get('reproduction_records') or {}).get('listed'),
                     repair_or_reformulation='not_established_by_this_exchange',
                     note='existing search counts may reassess a mapped claim; they do not establish '
                          'reproduction or repair of the original discarded research; a performed reproduction is the '

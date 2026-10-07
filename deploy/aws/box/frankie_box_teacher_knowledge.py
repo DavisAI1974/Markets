@@ -52,7 +52,10 @@ def teach_accumulated(day, search, brain, out_dir):
                     producer=witness(__file__), readers={m.__name__: witness(m.__file__)
                                                        for m in (LS, BR, ST, EX, CC, HC, HR)})
     input_path = out_dir / 'inputs.json'
-    late_knowledge = dict(listed=[], frozen=False,
+    # B5: the OWNER's reproduction records live beside its other outputs; the selection of its files is frozen with the
+    # scientific inputs (below) and consumed by every test of this owner; later arrivals are listed in the receipt only.
+    records_dir = out_dir / 'reproduction'
+    late_knowledge = dict(listed=[], frozen=False, reproduction_records=[],
                           rule='knowledge published after this owner froze its selection is LISTED here, never consumed by '
                                'the frozen selection: no completed or frozen day is reopened and no frozen input is '
                                'replaced (the late-scheduling decision is held for Greg); it is available at a later '
@@ -63,7 +66,11 @@ def teach_accumulated(day, search, brain, out_dir):
             raise ValueError('retained scientific knowledge belongs to another search or reader')
         if inputs.get('selection_sha256') != _digest(inputs['selection']):
             raise ValueError('retained scientific knowledge selection differs from its binding')
-        late_knowledge.update(frozen=True, listed=late_arrivals(day, brain, inputs['selection'], LS))
+        frozen_records = {r['path'] for r in inputs['selection'].get('reproduction_records', {}).get('files') or []}
+        late_knowledge.update(frozen=True, listed=late_arrivals(day, brain, inputs['selection'], LS),
+                              reproduction_records=[dict(r, reason='arrived after this owner froze its record selection; '
+                                                                   'not consumed by the frozen selection')
+                                                    for r in HR.record_selection(records_dir) if r['path'] not in frozen_records])
     else:
         selected = LS.learner_knowledge(day, 'exchange', brain=brain)
         school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'])
@@ -129,12 +136,18 @@ def teach_accumulated(day, search, brain, out_dir):
                     listed.append(dict(source=item.get('path'), sha256=item.get('sha256'),
                                        reason='school scientific item has no transported structured claim content'))
         selection = dict(documents=documents, listed=listed, versions=selected['versions'],
-                         selection_listed=selected['listed'], school_listed=school_listed)
+                         selection_listed=selected['listed'], school_listed=school_listed,
+                         reproduction_records=dict(directory=str(records_dir), files=HR.record_selection(records_dir),
+                                                   binding_tables_sha256=HC.binding_tables_sha256(),
+                                                   rule='the owner-local HISTORICAL_REPRODUCTION records as they were at '
+                                                        'this freeze (path, bytes, sha256): the only ones any test of this '
+                                                        'owner reads; later files are listed in the receipt, never read'))
         inputs = dict(schema='FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1', identity=identity,
                       selection=selection, selection_sha256=_digest(selection))
         write_json(input_path, inputs)
 
     input_hash = witness(input_path)['sha256']
+    records_selection = inputs['selection'].get('reproduction_records') or dict(directory=str(records_dir), files=[])
     documents = inputs['selection']['documents']
     listed = list(inputs['selection']['listed'])
     reused, files = [], []
@@ -186,7 +199,10 @@ def teach_accumulated(day, search, brain, out_dir):
             continue
         claim_inputs = dict(schema='FRANKIE_SCIENTIFIC_CLAIM_INPUTS_V1', author=lesson['author'],
                             claims_sha256=lesson['claims_sha256'], claims=claims,
-                            reader_sha256=identity['readers'][ST.__name__]['sha256'])
+                            reader_sha256=identity['readers'][ST.__name__]['sha256'],
+                            # B5: the frozen record selection and the binding tables are part of what the test consumed
+                            reproduction_records_selection_sha256=_digest(records_selection),
+                            historical_binding_tables_sha256=HC.binding_tables_sha256())
         claim_inputs_sha = _digest(claim_inputs)
         result_identity = dict(input_sha256=input_hash, source_lesson_sha256=item['source']['sha256'],
                                source_lesson_content_sha256=_digest(lesson), original_claim_day=lesson.get('original_claim_day', lesson.get('day')),
@@ -245,7 +261,8 @@ def teach_accumulated(day, search, brain, out_dir):
                             ('bytes' in part and actual['bytes'] != part['bytes']):
                         raise ValueError('owning search evidence differs from its manifest: %s' % source)
                 parts_verified = True
-            results = ST.test(dict(author=lesson['author'], claims=claims), days)
+            results = ST.test(dict(author=lesson['author'], claims=claims), days,
+                              records_dir=Path(records_selection['directory']), records_selection=records_selection['files'])
             result = dict(expected, results=results, results_sha256=_digest(results))
             write_json(path, result)
         # Publication is repeatable, including recovery after the complete file was saved.

@@ -134,7 +134,7 @@ def open_class(reason):
     return 'open_other', 'listed by the claims builder with its own reason'
 
 
-def reconsideration(doc, path, raw, claims, records_dir=None):
+def reconsideration(doc, path, raw, claims, records_dir=None, records_selection=None):
     """The historical collection's standing, carried with every lessons file so neither teacher reads a mapped subset
     as the collection, nor a prior rejection label as closure (R11, R13). Four statuses, each counted and bound to the
     claims file by sha256; the full not_testable list stays in that file (path:line, catalog id, statement, reason).
@@ -152,7 +152,8 @@ def reconsideration(doc, path, raw, claims, records_dir=None):
         admissions[admission] = admissions.get(admission, 0) + 1
         reform = c.get('reformulation') or HC.reformulation_of(c['id'])
         reforms[reform['status']] = reforms.get(reform['status'], 0) + 1
-        records, listed = HR.records_for(c['id'], records_dir if records_dir is not None else REPRODUCTION_DIR)
+        records, listed = HR.records_for(c['id'], records_dir if records_dir is not None else REPRODUCTION_DIR,
+                                         selection=records_selection)
         records_listed.extend(listed)
         word = HR.status_of(records)
         performed[word] = performed.get(word, 0) + 1
@@ -186,6 +187,7 @@ def reconsideration(doc, path, raw, claims, records_dir=None):
                                               'market verdict; ' + HC.MARKET_ROLE_RULE,
                         records_listed=records_listed, binding_tables_sha256=HC.binding_tables_sha256(),
                         records_dir=str(records_dir if records_dir is not None else REPRODUCTION_DIR),
+                        records_selection_frozen=records_selection is not None,
                         what='each mapped claim\'s original calculation is traced to code at its exact revision '
                              '(REPRODUCTIONS: sources with sha256, entry point, inputs, recorded outputs); `records` counts '
                              'the hash-bound HISTORICAL_REPRODUCTION_V1 records a teacher\'s authorized execution wrote, by '
@@ -206,7 +208,7 @@ def reconsideration(doc, path, raw, claims, records_dir=None):
                      'closed by a disposition word (R14)')
 
 
-def historical_claims(path, records_dir=None):
+def historical_claims(path, records_dir=None, records_selection=None):
     """HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py): the catalog's claims, author 'historical'. Its claims
     are tested; its not_testable list travels with the lessons by reference, counted by open status (reconsideration).
     Each claim carries `reproduction` (its declared binding: frankie_box_historical_claims.reproduction_of) and
@@ -227,7 +229,8 @@ def historical_claims(path, records_dir=None):
               for c in doc.get('claims') or []]
     return dict(author='historical', stamp=doc['catalog_sha256'][:12], day=None, claims_sha256=sha256_bytes(raw),
                 source=str(path), claims=claims,
-                reconsideration=reconsideration(doc, path, raw, claims, records_dir=records_dir))
+                reconsideration=reconsideration(doc, path, raw, claims, records_dir=records_dir,
+                                                records_selection=records_selection))
 
 
 def frankie_claims(path, day):
@@ -511,7 +514,12 @@ def mirror_of(row, forward_rows):
     return None
 
 
-def test(claims_doc, days):
+def test(claims_doc, days, records_dir=None, records_selection=None):
+    """records_dir / records_selection (B5): the OWNER's reproduction records directory and the selection of its files
+    the owner froze with its other inputs (frankie_box_historical_reproduction.record_selection at the freeze); without
+    them the module default REPRODUCTION_DIR is read live (the CLI route). With a frozen selection only those files are
+    read, bytes-verified, and later arrivals are listed apart, so a restart of the same frozen operation reads the same
+    records and a new file never changes a result across claims."""
     wanted = {}
     per_claim = []
     for c in claims_doc['claims']:
@@ -697,7 +705,8 @@ def test(claims_doc, days):
             binding = c.get('reproduction') or HC.reproduction_of(c['id'])
             reform = c.get('reformulation') or HC.reformulation_of(c['id'])
             admission = c.get('market_admission') or HC.market_admission_of(c['id'])
-            records, records_listed = HR.records_for(c['id'], REPRODUCTION_DIR)
+            directory = records_dir if records_dir is not None else REPRODUCTION_DIR
+            records, records_listed = HR.records_for(c['id'], directory, selection=records_selection)
             reproduction = HR.status_of(records)
             if reproduction == 'pending_teacher_work' and binding['status'] == 'not_bound':
                 reproduction = 'not_bound'
@@ -723,7 +732,11 @@ def test(claims_doc, days):
                                           inputs_missing=[i.get('path') for e in binding.get('entries') or []
                                                           for i in e.get('inputs') or [] if i.get('status') != 'committed'],
                                           rule='a declared binding; not a reproduction'),
-                reproduction_records=dict(records=records, listed=records_listed, directory=str(REPRODUCTION_DIR)),
+                reproduction_records=dict(records=records, listed=records_listed, directory=str(directory),
+                                          selection_frozen=records_selection is not None,
+                                          summary=HR.status_summary(records),
+                                          rule='every admitted record\'s own status is kept beside the one-word summary; '
+                                               'listed records are named with their reason, never dropped'),
                 repair_or_reformulation='not_bound' if reform['status'] == 'not_bound' else 'pending_teacher_work',
                 cost_free_route=(['pending_greg: ' + str(a.get('pending_choice')) for a in admission['entries'].values()
                                   if a.get('status') == 'cost_selected_historical_context'] or None),
