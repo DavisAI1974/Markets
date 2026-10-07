@@ -558,14 +558,21 @@ def auxiliary_policies(book_workers):
     # another on NG's power-of-two tick grid). Placement never changes a level's value (InstrumentBook._level
     # reads only its own level), so a saved V4 policy of the deployment that had the old placement (helper
     # code 81092be5, commits 275367f/1e0a893) is accepted on a verified full-state resume, recorded.
-    policy = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V5',
-        book_placement='ParallelBook._slot: golden-ratio hash of (side, price) modulo the worker count',
+    # V6 (2026-10-07 night, native levers): the second copy of a level used by both the top-N and the full-depth
+    # list is made by an exact pickle round trip instead of copy.deepcopy (frankie_box_native_auxiliary._exact_copy:
+    # equal values, types and float bits, no aliasing, as before). The V5 deployment (helper code 7ecfa33a, commits
+    # 5493732 .. c9bf631) is accepted on a verified full-state resume, recorded, as V4 already was.
+    placement = 'ParallelBook._slot: golden-ratio hash of (side, price) modulo the worker count'
+    policy = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V6', book_placement=placement,
+        level_copy='exact pickle round trip of the second use of a level (equal to copy.deepcopy)',
         helper_code=auxiliary.native_code_identity()['sha256'])
+    golden_ratio = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V5', book_placement=placement,
+        helper_code='7ecfa33a70dd6321afa75ac697b569ba08778b4e56fecb7d2748879a98b3d40a')
     price_modulo = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V4',
         helper_code='81092be52fd103e586013440640a923f4a89f832d5e1fe9c48fa9995a0ab4103')
     whole_file = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V3', book_workers=book_workers,
         helper_sha256=hashlib.sha256(Path(auxiliary.__file__).read_bytes()).hexdigest())
-    return policy, (predecessor, whole_file, price_modulo)
+    return policy, (predecessor, whole_file, price_modulo, golden_ratio)
 
 
 class RuntimeSections(ParallelSections):

@@ -7,6 +7,7 @@ from pathlib import Path
 import pickle
 import shutil
 import sys
+import threading
 import time
 
 import cloudpickle
@@ -17,11 +18,13 @@ import frankie_box_finalization as finalization
 
 SCHEMA = 'FRANKIE_NATIVE_FULL_STATE_V1'
 RUNTIME_SCHEMA = 'FRANKIE_NATIVE_RUNTIME_CODE_V2'
+PERSISTENT_ID_SERIALIZER_CODE = '65006dc9fe85f13be67adcf24e65a021983deb9c986c84e6b0f9442639a33f61'
 # What a saved full state depends on in THIS file: the pickled object graph and its runtime bindings, the descriptor
 # and ledger state written, the restore and the record skip on continuation. The save policy (maybe_save: when, disk
 # reserve), raise_if_requested, runtime_identity and read_checkpoint (the acceptance rules) may change without
 # refusing a saved checkpoint.
-NATIVE_VALUE_CODE = ('SCHEMA', 'sink_items', 'ledger_state', 'copy_ledger_prefixes', 'StatePickler', 'StateUnpickler',
+NATIVE_VALUE_CODE = ('SCHEMA', 'sink_items', 'ledger_state', 'copy_ledger_prefixes', '_runtime_binding', 'StatePickler',
+                     'StateUnpickler',
                      'FullCheckpointer.externals', 'FullCheckpointer._write', 'FullCheckpointer.save_boundary',
                      'restore_driver', 'compare_reconstructed_prefix', 'consume_recovery')
 
@@ -50,8 +53,13 @@ def runtime_acceptance(saved):
     Compatibility rule (Greg, 2026-10-07), recorded with the resume: a V1 whole-file runtime is accepted only while
     those whole files are byte-identical ('whole_file_unchanged'); the three exact earlier deployments named below
     keep their existing rules, each still requiring the same Python, cloudpickle and remaining file bytes."""
-    if saved == runtime_identity():
+    current = runtime_identity()
+    if saved == current:
         return 'code'
+    # The persistent-id serializer (serializer_code 65006dc9, commits up to c9bf631; e2e a2's saves): its states load
+    # through the unchanged persistent_load, and every other runtime field must still be equal.
+    if saved == dict(current, serializer_code=PERSISTENT_ID_SERIALIZER_CODE):
+        return 'serializer_persistent_id_65006dc9'
     current_runtime = whole_file_runtime_identity()
     if saved == current_runtime:
         return 'whole_file_unchanged'
@@ -96,14 +104,36 @@ def copy_ledger_prefixes(saved, sinks):
     ledger_storage.restore_prefixes(saved, sinks)
 
 
+_RESTORING = threading.local()
+
+
+def _runtime_binding(key):
+    """A runtime binding (sinks, checkpointer, stage_spawn) inside a full state: resolved only by the StateUnpickler
+    that is loading it, to that restore's own objects."""
+    externals = getattr(_RESTORING, 'externals', None)
+    if externals is None:
+        raise ValueError('runtime binding outside a full-state restore')
+    return externals[key]
+
+
 class StatePickler(cloudpickle.CloudPickler):
+    """The driver's full state with its three runtime bindings by reference. Since 2026-10-07 night (native levers) a
+    binding is found by reducer_override, which the C pickler consults only for objects that are not atoms or builtin
+    containers, instead of persistent_id, which it called for every object (on a2's checkpoints ~17-34 s per save,
+    most of it a Python call per int of every calculator's Random state). The object graph is unchanged; a binding
+    is written as _runtime_binding(key) and memoized like any reduced object, so every reference restores to the same
+    restore-time object, exactly as the persistent id did. Saves of the persistent-id form still restore
+    (StateUnpickler.persistent_load)."""
+
     def __init__(self, stream, externals):
         super().__init__(stream, protocol=5)
         self.externals = {id(value): key for key, value in externals.items() if value is not None}
 
-    def persistent_id(self, value):
+    def reducer_override(self, value):
         key = self.externals.get(id(value))
-        return ('frankie-runtime', key) if key else None
+        if key:
+            return _runtime_binding, (key,)
+        return super().reducer_override(value)
 
 
 class StateUnpickler(pickle.Unpickler):
@@ -115,6 +145,14 @@ class StateUnpickler(pickle.Unpickler):
         if not isinstance(identity, tuple) or len(identity) != 2 or identity[0] != 'frankie-runtime':
             raise ValueError('unknown runtime binding in checkpoint')
         return self.externals[identity[1]]
+
+    def load(self):
+        previous = getattr(_RESTORING, 'externals', None)
+        _RESTORING.externals = self.externals
+        try:
+            return super().load()
+        finally:
+            _RESTORING.externals = previous
 
 
 class FullCheckpointer(P.PeriodicCheckpointer):

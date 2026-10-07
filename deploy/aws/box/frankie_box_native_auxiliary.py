@@ -3,6 +3,7 @@ from contextlib import contextmanager
 import copy
 import io
 import multiprocessing
+import pickle
 import os
 import time
 import traceback
@@ -18,8 +19,9 @@ import cloudpickle
 # placement (ParallelBook._slot: which worker computes a level) and close may change without refusing a saved
 # checkpoint: a level's result reads only its own level and orders (InstrumentBook._level), so it does not depend on
 # which or how many workers compute it.
-NATIVE_VALUE_CODE = ('_serve', 'ParallelCensus', '_BookView', 'ParallelBook._wrap', 'ParallelBook._reseed',
-                     'ParallelBook.snapshot', 'ParallelBook._snapshot', 'ParallelBook.materialized')
+NATIVE_VALUE_CODE = ('_serve', 'ParallelCensus', '_BookView', '_exact_copy', 'ParallelBook._wrap',
+                     'ParallelBook._reseed', 'ParallelBook.snapshot', 'ParallelBook._snapshot',
+                     'ParallelBook.materialized')
 
 
 def native_code_identity():
@@ -101,6 +103,17 @@ def _serve(connection, producers, cpu, kind, state):
             ('ok', (result, time.perf_counter()-started)), protocol=5))
 
 
+def _transport_bytes(message):
+    """Transport only (never a value): the standard C pickler, which reduces the book's RestingOrder instances (an
+    importable pinned class, registered by load_producers in every worker) without cloudpickle's per-instance Python
+    reducer_override call; cloudpickle when the standard pickler refuses. The worker reads both with cloudpickle.loads
+    (the same format), into equal objects."""
+    try:
+        return pickle.dumps(message, protocol=5)
+    except (pickle.PicklingError, TypeError, AttributeError):
+        return cloudpickle.dumps(message, protocol=5)
+
+
 class NativeWorker:
     def __init__(self, producers, cpu, kind, state=None, metrics=None):
         context = multiprocessing.get_context('spawn')
@@ -127,7 +140,7 @@ class NativeWorker:
         if self.pending:
             raise RuntimeError('native auxiliary work is already pending')
         started = time.perf_counter()
-        payload = cloudpickle.dumps((command,value),protocol=5)
+        payload = _transport_bytes((command,value))
         self.connection.send_bytes(payload)
         self.pending = True
         self.metrics['messages'] += 1
@@ -245,9 +258,21 @@ class _BookView:
         # The original snapshot computes separate objects for top-N and full-depth.
         # Preserve that lack of aliasing when a level occurs in both.
         if key in self.used:
-            return copy.deepcopy(result)
+            return _exact_copy(result)
         self.used.add(key)
         return result
+
+
+def _exact_copy(value):
+    """An independent copy equal to copy.deepcopy(value), at C speed (2026-10-07 night: the top-N levels of every
+    full-depth snapshot were deep-copied in Python, ~24% of ROOT's toy traversal). A level (InstrumentBook._level) is a
+    dict of str/int/float/None/bool with a list of such dicts (fifo_queue); a pickle round trip (protocol 5) rebuilds
+    every container fresh, keeps every type and every float bit for bit, and memoizes shared sub-objects exactly as
+    deepcopy does. Anything pickle refuses falls back to copy.deepcopy itself."""
+    try:
+        return pickle.loads(pickle.dumps(value, protocol=5))
+    except (pickle.PicklingError, TypeError, AttributeError):
+        return copy.deepcopy(value)
 
 
 class ParallelBook:
