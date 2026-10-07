@@ -11,7 +11,7 @@ controller's `--days` | `8af0a0b8` `previous_of` persisted, teacher knowledge bo
 `retained_school`, the non-reentrant `waiting_school` recovery, Jev's day on the held CPU lane | `b4c60a4d` the class
 acknowledgment bound to the save request's identity, the kick's scope comparison | `df51afb0` the review pass over the
 two addendum commits | `cf1f1f2c` the shared-market policy of a NEW run on `Run.root`/plan and `Run.teacher` (Codex's
-producer `d6af990c`) | `24df7810` its review pass | the docs commit (tip). The record is `CCODE_STEP8_REMAINDER_RETURN_20261007.md`: the owner and save
+producer `d6af990c`) | `24df7810` `35718474` its two review passes | the docs commits (tip). The record is `CCODE_STEP8_REMAINDER_RETURN_20261007.md`: the owner and save
 protocol (section 2), the scoped-dispatch contract (3), the callers (4, the shared-market policy included), what is
 NOT wired by name (5: the remote voice admission, whose acknowledgment interface does not exist yet; Jev's runtime
 configuration; the lane_state kick scope), the checks (6), the review passes (7). SOURCE-BUILT / RUNTIME-UNVERIFIED:

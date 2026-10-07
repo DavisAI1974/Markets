@@ -7,7 +7,7 @@ Repo: DavisAI1974/Markets. Branch ccode/teacher-tasks-20261006b on Codex's d6af9
 addendum 2f0d4522); the docs commit = tip. Commits above the six 8A ones: 456a006a 8A findings | 23e3afae owner contract | 4272f949 scope |
 8af0a0b8 previous_of + producer identity | d8ec096b 2634e5ee 157c84ff 83081b64 review passes | bfae4460 school consumer +
 waiting_school recovery + Jev CPU caller | b4c60a4d ack identity + kick scope | df51afb0 review pass | cf1f1f2c the
-shared-market policy on Run.root/plan and Run.teacher | 24df7810 its review pass | the docs commit = tip.
+shared-market policy on Run.root/plan and Run.teacher | 24df7810 35718474 its two review passes | the docs commits = tip.
 First commands:
   git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
   git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b

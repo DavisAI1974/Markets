@@ -19,8 +19,8 @@ Codex's `retained_school`, the non-reentrant `waiting_school` recovery (the one 
 Jev's day on the held CPU lane (`JEV_CPU_REQUEST_V1` persisted before dispatch, `jev` a day-run stage, receipt/status bound
 to the request) | `b4c60a4d` the acknowledgment bound to the save request's identity, the kick's scope comparison |
 `df51afb0` the review pass over the addendum commits | `cf1f1f2c` the shared-market policy of a NEW run on `Run.root`/plan
-and `Run.teacher` (Codex published the producer at `d6af990c` while this session ran) | `24df7810` its review pass |
-the docs commit (tip = the docs commit (reported in chat)). Checks: `ast.parse`, `sh/bash
+and `Run.teacher` (Codex published the producer at `d6af990c` while this session ran) | `24df7810` `35718474` its two
+review passes | the docs commits (tip = the docs commit (reported in chat)). Checks: `ast.parse`, `sh/bash
 -n`, `yaml.safe_load`, `git diff --check`; nothing run, no AWS, no dispatch.
 
 Design choices of this round, not to re-litigate: the owner binding is written by the queue BEFORE the day's thread starts
