@@ -587,6 +587,130 @@ def _scan_part(args):
     return hashed.hexdigest(), size, lines, parsed, selected
 
 
+_SHARED_SPECS = ()     # set by shared_scan before its pool forks (inherited, never pickled per part); () otherwise
+
+
+def _line_starts(segment):
+    """Every line start of a segment in order (b'\\n' ends a line, exactly as binary line iteration splits)."""
+    starts, position = [], 0
+    while position < len(segment):
+        starts.append(position)
+        end = segment.find(b'\n', position)
+        if end < 0:
+            break
+        position = end + 1
+    return starts
+
+
+def _scan_part_shared(args):
+    """One search part read ONCE for every claim document in _SHARED_SPECS: [(digest, bytes, lines hashed, lines parsed,
+    selected rows) per document], each tuple exactly _scan_part's own for that document's (wanted, needles, filter). The
+    part is hashed once (the cost every per-document scan repeated); each distinct needle is searched once per block and
+    its hits shared by every document naming it; a line's ordinal and raw-line sha256 are computed once. Each document
+    parses its own lines into its own row objects (never one object shared between two documents' results), so its parsed
+    count, selection, ordinals and _where are those of its own scan. A top-level function (the fork pool's target)."""
+    path, rel, pin = args
+    specs = _SHARED_SPECS
+    hashed, size, lines = hashlib.sha256(), 0, 0
+    out = [[0, []] for _ in specs]
+    distinct = sorted({n for _, needles, flag in specs if flag for n in needles})
+    parse_all = [i for i, (_, _, flag) in enumerate(specs) if not flag]
+    for segment, base, count in _segments(path, hashed):
+        size += len(segment)
+        lines += count
+        hits = {}
+        for needle in distinct:
+            starts = set()
+            position = segment.find(needle)
+            while position >= 0:
+                starts.add(segment.rfind(b'\n', 0, position) + 1)
+                end = segment.find(b'\n', position)
+                if end < 0:
+                    break
+                position = segment.find(needle, end + 1)
+            hits[needle] = starts
+        ordinal_of, raw_of = {}, {}
+        if parse_all:
+            every = _line_starts(segment)
+            ordinal_of = {start: base + k for k, start in enumerate(every)}
+        else:
+            ordinal, previous = base, 0
+            for start in sorted(set().union(*hits.values()) if hits else ()):
+                ordinal += segment.count(b'\n', previous, start)
+                previous = start
+                ordinal_of[start] = ordinal
+        def line_at(start):
+            if start not in raw_of:
+                line, _ = _line_at(segment, start)
+                raw_of[start] = (line, None)
+            return raw_of[start][0]
+        def line_sha(start):
+            line, digest = raw_of[start]
+            if digest is None:
+                digest = sha256_bytes(line)
+                raw_of[start] = (line, digest)
+            return digest
+        for i, (wanted, needles, flag) in enumerate(specs):
+            if flag:
+                starts = sorted(set().union(*(hits[n] for n in needles)) if needles else ())
+            else:
+                starts = every
+            for start in starts:
+                line = line_at(start)
+                r = json.loads(line)
+                out[i][0] += 1
+                if (r['x'], r['y']) in wanted:
+                    r['_where'] = dict(part=rel, part_sha256=pin, row=ordinal_of[start], row_sha256=line_sha(start))
+                    out[i][1].append(r)
+    digest = hashed.hexdigest()
+    return [(digest, size, lines, parsed, selected) for parsed, selected in out]
+
+
+def shared_scan(claims_docs, days):
+    """Read the search parts ONCE for several claim documents tested on the same searches (Greg, 2026-10-07: the Sept 29
+    pattern for the remaining serial walks; every test() call re-read and re-hashed every byte of every part, once per
+    document). Returns a list aligned with claims_docs: per document None (test() then scans on its own, exactly as before)
+    or its prepared read for test(..., scanned=...), keyed by its read plan so test() uses it only when it is exactly its
+    own read. Nothing is skipped: every byte of every part is still hashed and verified against its pin by each test()
+    (the digest is computed once and checked per document); each document's rows, ordinals, raw-line hashes and read
+    report are those of its own scan.
+    Fewer than two documents with a read to share: all None (nothing to share). A plan that cannot be made, or any error
+    or broken worker during the shared read: every entry None, so each test() reads its parts itself and any error is
+    raised by that test() at exactly the point it is raised without the shared read (L-2: nothing waits on a dead worker
+    and no document's result depends on the shared read having worked)."""
+    global _SHARED_SPECS
+    import sys
+    plans = []
+    for doc in claims_docs:
+        try:
+            _, wanted, needles, needle_filter, jobs = _read_plan(doc, days)
+        except Exception:  # noqa: BLE001 - the document's own test() raises it at its own point
+            plans.append(None)
+            continue
+        plans.append((wanted, needles, needle_filter, jobs) if jobs else None)
+    if sum(p is not None for p in plans) < 2:
+        return [None] * len(claims_docs)
+    jobs = next(p for p in plans if p is not None)[3]
+    members = [i for i, p in enumerate(plans) if p is not None and p[3] == jobs]   # the same parts and pins (same searches)
+    if len(members) < 2:
+        return [None] * len(claims_docs)
+    _SHARED_SPECS = tuple((frozenset(plans[i][0]), tuple(plans[i][1]), bool(plans[i][2])) for i in members)
+    try:
+        per_part = _pinned_map(_scan_part_shared, [(path, rel, pin) for _, path, rel, pin, _ in jobs],
+                               'shared scientific scan of %d search parts for %d claim documents' % (len(jobs), len(members)))
+    except Exception as error:  # noqa: BLE001 - every document then reads its own parts (its error raised there)
+        print('shared scientific scan not used (%s: %s); each document reads its own parts' % (type(error).__name__, error),
+              file=sys.stderr, flush=True)
+        return [None] * len(claims_docs)
+    finally:
+        _SHARED_SPECS = ()
+    prepared = [None] * len(claims_docs)
+    for k, i in enumerate(members):
+        wanted, needles, needle_filter, _ = plans[i]
+        prepared[i] = dict(key=_plan_key(wanted, needles, needle_filter, jobs), parts=[part[k] for part in per_part])
+    return prepared
+
+
 def load_searches(dirs):
     days = []
     for d in dirs:
@@ -894,14 +1018,10 @@ NEEDLE_LIMIT = 64   # the row filter below: with at most this many distinct clai
                     # than parsing every row; above it every row is parsed as before (the same rows are selected either way)
 
 
-def test(claims_doc, days, records_dir=None, records_selection=None, report=None):
-    """records_dir / records_selection (B5): the OWNER's reproduction records directory and the selection of its files
-    the owner froze with its other inputs (frankie_box_historical_reproduction.record_selection at the freeze); without
-    them the module default REPRODUCTION_DIR is read live (the CLI route). With a frozen selection only those files are
-    read, bytes-verified, and later arrivals are listed apart, so a restart of the same frozen operation reads the same
-    records and a new file never changes a result across claims.
-    report (optional dict): filled with what the read did (row_filter, parts_read, rows_hashed, rows_parsed,
-    rows_selected) for the operation's receipt; it changes nothing the function computes."""
+def _read_plan(claims_doc, days):
+    """(per_claim, wanted, needles, needle_filter, jobs): what test() reads for these claims on these searches. A pure
+    function of the claims and the searches' manifests (no file of a part is opened), so shared_scan can prepare the read
+    of several claim documents before any of them is tested and test() can prove a prepared read is its own."""
     wanted = {}
     per_claim = []
     for c in claims_doc['claims']:
@@ -929,7 +1049,6 @@ def test(claims_doc, days, records_dir=None, records_selection=None, report=None
     needles = sorted({json.dumps(name, ensure_ascii=flag).encode('utf-8') for pair in wanted for name in pair
                       for flag in (True, False)})
     needle_filter = 0 < len(needles) <= 2 * NEEDLE_LIMIT
-    hashed_rows = parsed_rows = selected_rows = parts_read = 0
     jobs = []
     for d in days:
         seen_parts = set()
@@ -944,14 +1063,40 @@ def test(claims_doc, days, records_dir=None, records_selection=None, report=None
             if not isinstance(pin, str) or not re.fullmatch('[0-9a-f]{64}', pin):
                 raise ValueError('search evidence part lacks its exact sha256: %s' % part)
             jobs.append((d['day'], str(part), rel, pin, (d.get('part_bytes') or {}).get(rel)))
+    return per_claim, wanted, needles, needle_filter, jobs
+
+
+def _plan_key(wanted, needles, needle_filter, jobs):
+    """The identity of one read: the (x, y) pairs it selects, its needles and filter mode, and every part it reads with
+    the part's pin. Two reads with equal keys select exactly the same rows from exactly the same verified bytes."""
+    return (frozenset(wanted), tuple(needles), bool(needle_filter), tuple((p, rel, pin) for _, p, rel, pin, _ in jobs))
+
+
+def test(claims_doc, days, records_dir=None, records_selection=None, report=None, scanned=None):
+    """records_dir / records_selection (B5): the OWNER's reproduction records directory and the selection of its files
+    the owner froze with its other inputs (frankie_box_historical_reproduction.record_selection at the freeze); without
+    them the module default REPRODUCTION_DIR is read live (the CLI route). With a frozen selection only those files are
+    read, bytes-verified, and later arrivals are listed apart, so a restart of the same frozen operation reads the same
+    records and a new file never changes a result across claims.
+    report (optional dict): filled with what the read did (row_filter, parts_read, rows_hashed, rows_parsed,
+    rows_selected) for the operation's receipt; it changes nothing the function computes.
+    scanned (optional): this document's entry of shared_scan(...), the per-part read already done for several claim
+    documents in one pass over the same parts. Used only when its key equals this call's own read plan (the same pairs,
+    needles, filter mode, parts and pins), so the rows, ordinals, raw-line hashes, counts and every verification below are
+    exactly those of the call's own scan; None, or a read made for another plan, and the parts are scanned here as before."""
+    per_claim, wanted, needles, needle_filter, jobs = _read_plan(claims_doc, days)
+    hashed_rows = parsed_rows = selected_rows = parts_read = 0
     # Efficiency (Greg, 2026-10-07; performance-optimization): the parts are independent files, each hashed and filtered
     # on its own; they are scanned by the step's lane workers (a fork pool over the CPUs this child was given, the day's
     # held lane) and merged in the original order (day, part, line), so the selected rows, their ordinals, raw-line hashes
     # and every verification are exactly the one-process result. One part or one CPU: in this process.
     # Each pool process is pinned to one lane CPU, physical cores first (_pinned_map; Greg, 2026-10-07); a threaded caller
     # still scans in-process (never fork a threaded process), and a broken pool rescans in-process, in order.
-    scan_args = [(path, rel, pin, frozenset(wanted), needles, needle_filter) for _, path, rel, pin, _ in jobs]
-    scanned = _pinned_map(_scan_part, scan_args, 'scientific scan of %d search parts' % len(scan_args))
+    if isinstance(scanned, dict) and scanned.get('key') == _plan_key(wanted, needles, needle_filter, jobs):
+        scanned = scanned['parts']
+    else:
+        scan_args = [(path, rel, pin, frozenset(wanted), needles, needle_filter) for _, path, rel, pin, _ in jobs]
+        scanned = _pinned_map(_scan_part, scan_args, 'scientific scan of %d search parts' % len(scan_args))
     for (day_of, path, rel, pin, expected_size), (digest, size, hashed, parsed, selected) in zip(jobs, scanned):
         parts_read += 1
         hashed_rows += hashed
@@ -1683,9 +1828,27 @@ def main():
                   % candidates[0]['day'], flush=True)
     operations = []
     code_root = os.environ.get('CODE_ROOT')
-    for doc in ([jev_claims(a.jev_claims, a.jev_seal)] if a.jev_claims else []) + \
-               ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []) + \
-               ([historical_claims(a.historical_claims, records_selection=[])] if a.historical_claims else []) + candidates:
+    docs = ([jev_claims(a.jev_claims, a.jev_seal)] if a.jev_claims else []) + \
+           ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []) + \
+           ([historical_claims(a.historical_claims, records_selection=[])] if a.historical_claims else []) + candidates
+    # One read of the search parts for every document this call will test (Greg, 2026-10-07, the Sept 29 pattern): a
+    # document whose result file already exists is reused below and reads nothing, so it is left out. The claims read
+    # are the given documents' own; freeze_operation refuses any frozen document whose claims differ, and test() uses a
+    # prepared read only when it is exactly its own plan. The loop below is unchanged: each document is still frozen,
+    # tested, written and published in this order (brain publication order kept), and any document without a prepared
+    # read scans its parts itself.
+    shared_started = time.time()
+    to_test = [index for index, doc in enumerate(docs)
+               if not (Path(a.out_dir) / doc['author'] / ('%s-%s.json' % (
+                   '-'.join(sorted(d['day'] for d in days)) if doc['author'] == 'historical' else doc['day'],
+                   doc['stamp'] or 'frankie'))).exists()]
+    prepared = dict(zip(to_test, shared_scan([docs[index] for index in to_test], days)))
+    shared = dict(documents=len(to_test), prepared=sum(v is not None for v in prepared.values()),
+                  parts=sum(len(d['parts']) for d in days), seconds=round(time.time() - shared_started, 3),
+                  rule='the search parts read once for every document tested here (each part hashed once, each needle '
+                       'searched once per block); every document\'s rows, ordinals, raw-line hashes, pin checks and read '
+                       'report are its own scan\'s; prepared 0 = each document read its own parts')
+    for index, doc in enumerate(docs):
         started = time.time()
         operation, frozen = freeze_operation(doc, days, a.out_dir, a.brain)
         doc = frozen['selection']['doc']
@@ -1718,7 +1881,8 @@ def main():
             operations.append(record)
             continue
         read_report = {}
-        results = test(doc, days, records_dir=Path(records['directory']), records_selection=records['files'], report=read_report)
+        results = test(doc, days, records_dir=Path(records['directory']), records_selection=records['files'], report=read_report,
+                       scanned=prepared.pop(index, None))
         historical = doc.get('reconsideration')
         knowledge_inputs = dict(
             historical=(dict(mapped_claims=historical.get('mapped_claims'), not_testable=historical.get('not_testable'),
@@ -1751,7 +1915,7 @@ def main():
                                   cannot_test_yet=sum(len(r.get('cannot_test_yet') or []) for r in results)),
                       all99_coverage=all99, evidence_read=read_report, seconds=round(time.time() - started, 3))
         operations.append(record)
-    _write_teacher_receipt(a, days, native, operations, listed, code_root)
+    _write_teacher_receipt(a, days, native, operations, listed, code_root, shared_read=shared)
 
 
 def _knowledge_inputs_of(documents):
@@ -1820,7 +1984,7 @@ def _accumulated_report(a, result, out, started):
     return dict(all99_coverage=all99, workflow_report=report)
 
 
-def _write_teacher_receipt(a, days, native, operations, listed, code_root):
+def _write_teacher_receipt(a, days, native, operations, listed, code_root, shared_read=None):
     """The standalone call's receipt (FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1): every operation of this call (written or
     reused), its lessons pin, dispositions, the all-99 coverage pins per searched day, what the read did, and the
     FRANKIE_PIECE_WORKFLOW_REPORT_V1 for the one-day reporter. Printed as the last line (the caller records it) and
@@ -1843,6 +2007,7 @@ def _write_teacher_receipt(a, days, native, operations, listed, code_root):
                                   all99_coverage={day: pin.get('summary') for day, pin in ((o.get('all99_coverage') or {}).get('by_day') or {}).items()})
                              for o in operations],
                  listed=listed + [item for _, items in native.values() for item in items],
+                 shared_read=shared_read,
                  rule='an operation reused repeated no test; the all-99 list per searched day names which registry entries '
                       'its tests read; listed items are dispositions, never dropped evidence'),
         outputs=dict(lessons=[dict(author=o['author'], day=o['day'], **o['lessons']) for o in operations],
@@ -1851,6 +2016,8 @@ def _write_teacher_receipt(a, days, native, operations, listed, code_root):
         model_calls=0)
     receipt = dict(schema='FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1', status='complete', searched_days=[d['day'] for d in days],
                    operations=operations, listed=listed, workflow_report=report, model_calls=0, code_root=code_root)
+    if shared_read is not None:
+        receipt['shared_read'] = shared_read      # added field (how the parts were read); absent on a caller without it
     data = (json.dumps(receipt, indent=1, sort_keys=True, default=str) + '\n').encode()
     path = Path(a.out_dir) / 'receipts' / (sha256_bytes(data) + '.json')
     if not path.exists():

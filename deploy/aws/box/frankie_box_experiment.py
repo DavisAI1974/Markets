@@ -44,7 +44,9 @@ the committed box script, run as a child with its own inputs, its output kept in
            filed, scoped, day named. Receipt and files under <run>/exchange/<day>/; Frankie's view into his brain as
            <day>-exchange. Code only)
   voice    frankie_box_granite_meeting.sh: the bounded CPU post-class coordinator (role V2), with immediate brain
-           publication. A missing/refused runtime is recorded as non-blocking; completed records are reused.
+           publication, inside the day's held booking on the WHOLE lane like Jev (Greg, 2026-10-07 night), llama-server
+           threads from MEETING_THREADS (default the lane size). A missing/refused runtime is recorded as non-blocking;
+           completed records are reused.
   school   frankie_box_school_knowledge.sh            (classroom-arm days after the exchange; never Monday 20211004):
            Frankie's SCHOOL KNOWLEDGE BASE, ONE file <brain>/school/<day>.json (FRANKIE_SCHOOL_KNOWLEDGE_V1) and its row
            in <brain>/school/index.json (day, file, sha256, bytes, report number N); the brain loader and the next
@@ -100,7 +102,16 @@ until 16 are available"). Every day-run step (root, teacher, classroom, data, se
 reports) runs through frankie_box_cores.py: it books EXACTLY 16 CPUs in the box's ledger and starts the step under
 taskset -c <those 16>, so every worker it pins lands inside them; its workers = 15 (root DATA_WORKERS, search WORKERS; the
 teacher splits its own 16). Fewer than 16 free: the step does not start and is recorded 'waiting: N free of 16 needed'
-(a later start retries it). The ingest books its own 8 per day process in frankie_box_ingest_block.sh (the same waiting).
+(a later start retries it). The ingest books its own per day process in frankie_box_ingest_block.sh (the same waiting).
+A plan day_cpus of 32 (Greg, 2026-10-07: "Give the day 32 CPUs and that many workers"; night: "day 1 gets ALL 32 CPUs for
+every step") makes the day's one held booking 32 CPUs and every stage of the day runs inside it on the whole lane: workers
+31 (root DATA_WORKERS, data DATA_WORKERS, search WORKERS), the teacher's one day on all 32, the classroom, lessons, exchange
+and its Jev context read on the lane's pinned pools, Jev and the meeting (voice) with llama-server threads from their one
+setting each (JEV_THREADS, MEETING_THREADS; default the lane size). The ingest of a lone day takes the plan's day size
+(Run.ingest_size; days side by side share the box), never the old fixed WORKERS=7 / 8 CPUs. Within a day the stages
+still run one after another on the booking: every later stage reads an earlier one's output or the brain an earlier one
+publishes into, and the one data-independent pair (the classroom and the data export) is held apart by the settled order
+("build/search the causal evidence only after Frankie's classroom work exists"); nothing runs side by side without that.
 
 RESUME. A receipt per day and step (per batch for teacher and lessons) under /opt/frankie-box/work/experiment/<run>/.
 A restart with the same plan skips every step whose receipt says done or reused and runs the rest; a different plan
@@ -156,6 +167,14 @@ JEV_BRAIN = BOX_ROOT / 'jev-brain'          # Jev's own brain on the box (plan j
 # frankie_box_granite_meeting_setup.sh under GRANITE_DIR at the paths the meeting's runtime gate expects; the meeting
 # (voice_route=local) AND Jev bind to that same definition (no second install, no second pin set; Jev improves with it)
 GRANITE_DIR = BOX_ROOT / 'granite'
+# THE ONE SETTING for the meeting's (voice) llama-server threads (Greg, 2026-10-07 night: "day 1 gets ALL 32 CPUs for every
+# step"; the meeting runs inside the day's held booking on the whole lane, like Jev). None = the day's lane size
+# (Run.day_cpus(): 32 on a 32-CPU day, 16 on a 16-CPU lane); an integer = that many. The meeting clamps it to its owning
+# affinity and pins the server to that many lane CPUs in physical-core order (frankie_box_granite_meeting.threads_resolution,
+# _server_cpus). The thread count is bound into the meeting's binding and record: it CAN change the meeting's text at the
+# rounding level (llama.cpp's CPU flash-attention splits the KV range across threads; the same caveat as Jev's,
+# frankie_box_jev_cpu.lane_threads), so a meeting at another thread count is another meeting, never compared as the same.
+MEETING_THREADS = None
 GRANITE_PROVENANCE_SCHEMA = 'FRANKIE_GRANITE_RUNTIME_PROVENANCE_V1'   # written by the setup script after every pin check passed
 SHARED_RUNTIME_SCHEMA = 'FRANKIE_SHARED_MODEL_RUNTIME_V1'
 # THE 99 LAYERS COMBINED FOR FRANKIE (Greg, 2026-10-07: "the biggest thing ... is making sure the 99 layers are combined for
@@ -1387,11 +1406,15 @@ class Run:
         # Greg, 2026-09-29 ("Do 1-5 now"): the experiment's journal is ingested by the parallel writer (saved passes, so a
         # stopped day resumes), with no full-book copy at a group close and the conformance drain deferred; days run side
         # by side (--parallel-days)
-        # CPU booking: each day process books its own 8 CPUs, so WORKERS is per day process, never split: the most the 8
-        # fit (inline verify 3, deferred 7; frankie_box_cores.INGEST_RULE), capped by --ingest-workers
-        share = max(1, min(self.a.ingest_workers, self.cores.ingest_workers(self.a.ingest_verify)))
-        env = dict(ACTION='ingest', MANIFEST=e['manifest'], WORKERS=share, MODE=self.a.ingest_mode,
+        # CPU booking (Greg, 2026-10-07 night: "day 1 gets ALL 32 CPUs for every step", the ingest included): each day
+        # process books its own DAY_CPUS in the ledger (frankie_box_ingest_block.sh; it was a fixed WORKERS=7, which
+        # pinned every ingest to 8 CPUs). ingest_size says how many; WORKERS = DAY_CPUS - 1 there (one pool at a time,
+        # frankie_box_cores.INGEST_RULE) unless --ingest-workers is a lower ceiling. The output never depends on the count
+        size, workers, sizing = self.ingest_size()
+        env = dict(ACTION='ingest', MANIFEST=e['manifest'], DAY_CPUS=size, MODE=self.a.ingest_mode,
                    OBSERVATION=self.a.ingest_observation, VERIFY=self.a.ingest_verify)
+        if workers is not None:
+            env['WORKERS'] = workers
         resume = self.resume_dir(e)
         if resume:
             env['RESUME_DIR'] = str(resume)
@@ -1407,11 +1430,19 @@ class Run:
                       opening_receipt=pin_or_listed(env.get('OPENING_RECEIPT')) if env.get('OPENING_RECEIPT') else
                       dict(absent='no prior-day receipt named: the day warms its own book from its tail partition'),
                       resume_dir=env.get('RESUME_DIR'),
-                      settings={k: env[k] for k in ('WORKERS', 'MODE', 'OBSERVATION', 'VERIFY')})
+                      settings={k: env.get(k, 'DAY_CPUS - 1 (the wrapper\'s default)') for k in
+                                ('DAY_CPUS', 'WORKERS', 'MODE', 'OBSERVATION', 'VERIFY')}, cpu_sizing=sizing)
         before = set(WORK.glob('ingest-*'))
         code, log = self.child('ingest', e['day'], 'frankie_box_ingest_block.sh', env)
         made = sorted(set(WORK.glob('ingest-*')) - before)
         receipt, why = ingest_of(e)
+        cpu = self._cpu.get(('ingest', e['day']))     # the ledger's own line of this dispatch (booked / waiting / refused)
+        if code == self.cores.WAITING_EXIT and (cpu or {}).get('status') == 'waiting' and not receipt:
+            # not started: the day's CPUs were not free (a ROOT or another day holds them); visible, retried on a later
+            # start, never a failure (the ledger's waiting line names the free and needed counts)
+            return self.record('ingest', e['day'], 'waiting', exit_code=code, log=log, cpu_booking=cpu,
+                               reason=cpu['line'], inspection=dict(inputs=inputs, use='waiting for its CPU booking: %s'
+                                                                   % cpu['line'], outputs=dict(exit_code=code)))
         if code != 0 or not receipt or why:
             return self.record('ingest', e['day'], 'failed', exit_code=code, log=log, directories=[str(p) for p in made],
                                reason=why or 'no sealed ingest of the day after the step (its directory is kept)',
@@ -2398,6 +2429,41 @@ class Run:
         hands a stage is this minus one coordinator; the stages that read their affinity or FRANKIE_LANE_CPUS scale too."""
         return int(self.plan.get('day_cpus') or self.cores.DAY_RUN_CPUS)
 
+    def ingest_size(self):
+        """(DAY_CPUS, WORKERS or None, how) for one ingest day process (frankie_box_ingest_block.sh). A plan with a day
+        slot size (plan day_cpus, the one-day run's 32) gives each ingest that size when it runs alone; days ingesting side
+        by side (--parallel-days, the days of the plan not yet ingested) share the box: the largest ledger size (8/16/24/32)
+        within its CPUs divided by them, so two days never ask the same CPUs and wait on each other. Alone without a plan
+        size: 'auto' (the wrapper sizes from the ledger's free CPUs at its start). WORKERS is given only when
+        --ingest-workers is a lower ceiling than DAY_CPUS - 1 (then the smallest size that fits it, the wrapper's rule)."""
+        sizes = self.cores.INGEST_SIZES
+        pending = [x for x in self.plan['days'] if not self.finished('ingest', x['day'])]
+        at_once = max(1, min(int(self.a.parallel_days or 1), len(pending) or 1))
+        online = len(self.cores.online_cpus()) or (os.cpu_count() or sizes[0])
+        ceiling = int(self.a.ingest_workers)
+        if ceiling + 1 < max(sizes) and ceiling + 1 <= online // at_once:
+            size = min(s for s in sizes if s >= ceiling + 1)
+            return size, max(1, ceiling), ('--ingest-workers %d is a ceiling below the box: the smallest size that fits it '
+                                           '(%d CPUs, WORKERS + 1)' % (ceiling, size))
+        if at_once == 1:
+            if self.plan.get('day_cpus'):
+                size = int(self.plan['day_cpus'])
+                return size, None, ('the plan\'s day slot size %d (one ingest at a time: the day gets all of it; WORKERS = '
+                                    '%d)' % (size, size - 1))
+            return 'auto', None, ('one ingest at a time, no plan day size: DAY_CPUS=auto (the free CPUs at the wrapper\'s '
+                                  'start, rounded down to %s)' % '/'.join(map(str, sizes)))
+        share = max([s for s in sizes if s <= online // at_once] or [sizes[0]])
+        return share, None, ('%d days ingesting side by side on %d CPUs: %d each (WORKERS = %d)'
+                             % (at_once, online, share, share - 1))
+
+    def meeting_threads(self):
+        """(the meeting's llama-server threads, how): MEETING_THREADS, else the day's lane size (day_cpus). The meeting
+        clamps it to its owning affinity (the claimed lane) and pins in physical-core order; a count above the lane never
+        starts a server on CPUs outside it."""
+        if MEETING_THREADS:
+            return int(MEETING_THREADS), 'MEETING_THREADS=%d (the one setting), clamped by the meeting to the lane' % int(MEETING_THREADS)
+        return self.day_cpus(), 'MEETING_THREADS None: the day\'s lane size (%d CPUs held for the day)' % self.day_cpus()
+
     def inspection_on(self):
         """True only when the saved plan is the one-day test (plan['inspection'] == 'one_day', decided once at plan time;
         Greg 2026-10-07: the per-piece status reports are for the ONE-day run only). Otherwise the skip is logged ONCE per
@@ -2858,21 +2924,29 @@ class Run:
         if not reused and self.plan.get('voice_route') == 'github':
             return self.voice_remote(e, x, target, brain, inputs)
         if not reused and not getattr(self, 'slot_booking', None):
-            # Greg, 2026-10-07: the meeting is an ordinary stage of the day on the day's held lane, on ONE worker CPU of it
-            # (frankie_box_cores.STAGE_SLOTS 'adviser'; Jev no longer shares it: he runs on the whole lane); a Run that
-            # holds no day slot (the --root-queue off
+            # Greg, 2026-10-07: the meeting is an ordinary stage of the day on the day's held lane (frankie_box_cores
+            # STAGE_SLOTS 'adviser', now the WHOLE lane: Greg, 2026-10-07 night, every step gets the day's CPUs; the claim
+            # keeps two meeting children of one day from running at once); a Run that holds no day slot (the --root-queue off
             # batch path) has no lane to place it on: waiting, non-blocking, named; never a booking of its own
             return self.record('voice', day, 'waiting', non_blocking=True,
-                               reason='the meeting runs on the day\'s held lane (the shared adviser CPU); this Run holds no '
+                               reason='the meeting runs on the day\'s held lane (the adviser slot: the whole lane); this Run holds no '
                                       'day slot (the ROOT line or the class line runs it)',
                                inspection=dict(inputs=inputs, use='not dispatched: no held day lane on this Run',
                                                outputs=dict(meeting_status=None)))
         if not reused:
             receipt_path = target / 'receipt.json'
             prior_receipt = receipt_path.read_bytes() if receipt_path.is_file() else None
-            # MEETING_THREADS=1: the meeting's llama-server on the shared adviser CPU of the lane at one thread (every other
-            # runtime row from Granite's definition); the CPU is claimed by the child wrapper (cores cmd_run_step)
-            env = dict(EXCHANGE_VIEW=x['frankie_view'], OUT_DIR=target, BRAIN=brain, MEETING_THREADS=1)
+            # MEETING_THREADS: the meeting's llama-server threads from the one setting (default the day's lane size: 32 on
+            # a 32-CPU day; every other runtime row from Granite's definition), on the whole held lane claimed by the child
+            # wrapper (cores cmd_run_step, the 'adviser' slot = every CPU of the booking). The count is bound into the
+            # meeting's binding and can change its text at the rounding level (as with Jev): recorded, never assumed
+            threads, threads_basis = self.meeting_threads()
+            env = dict(EXCHANGE_VIEW=x['frankie_view'], OUT_DIR=target, BRAIN=brain, MEETING_THREADS=threads)
+            inputs['meeting_threads'] = dict(
+                threads=threads, basis=threads_basis, setting=MEETING_THREADS, lane_size=self.day_cpus(),
+                text_caveat='the llama-server thread count can change the meeting\'s text at the rounding level (CPU '
+                            'flash-attention splits the KV range across threads, as with Jev); it is bound into the meeting '
+                            'binding and record, so a meeting at another count is another meeting')
             # the one pinned runtime on the box (shared_runtime): its paths reach the wrapper as LLAMA_SERVER/GGUF_MODEL
             # when the gate is ready; otherwise the wrapper runs the local route on the canonical paths and the meeting's
             # gate REFUSES visibly (a refused record; the reasons also on this receipt; the day goes on, non-blocking)
@@ -2885,6 +2959,7 @@ class Run:
                                             model=runtime['model'], provenance=runtime['provenance'])
             code, log = self.child('voice', day, 'frankie_box_granite_meeting.sh', env)
             inputs['adviser_slot'] = (self._cpu.get(('voice', day)) or {}).get('line') or 'no claim line (the child did not reach the ledger)'
+            inputs['adviser_slot_cpus'] = 'the whole held lane (frankie_box_cores.SLOT_CPUS adviser=None)'
             if code != 0:
                 current = receipt_path.read_bytes() if receipt_path.is_file() else None
                 if (current is None or current == prior_receipt
