@@ -445,6 +445,18 @@ class SharedMarketTimeline:
         reader = FrankieCompactReader(self.input_pin['path'], expected_count=self.source['journal_count'],
                                       expected_head_hash=self.source['journal_hash'], workers=self.workers)
         states, scopes, open_groups, frontier = {}, {}, {}, None
+        # Inspection accounting (Greg, 2026-10-07: every piece reports what it received, how it
+        # used it and what it produced). Counts and extents only; no evidence is copied here.
+        outputs = self.report.setdefault('outputs', dict(
+            pictures_yielded=0, exact_placed=0, extracted_without_exact_clock=0, envelopes_without_record=0,
+            updates_presented=0, invalidations=0, publications_presented=0, publication_frontier_ns=None,
+            cursor_domains=dict(source_input_index=None, input_cursor=None, adapter_cursor=None, input_journal_ordinal=None),
+            basis='what the iterator yielded; a yielded picture is not proof that a consumer used it'))
+        def extent(name, value):
+            if type(value) is int:
+                current = outputs['cursor_domains'][name]
+                outputs['cursor_domains'][name] = ([value, value] if current is None
+                                                   else [min(current[0], value), max(current[1], value)])
         try:
             with reader:
                 for source in self._inputs(reader):
@@ -511,6 +523,15 @@ class SharedMarketTimeline:
                                    original_outcomes=source['outcomes'], original_applied=evidence, coverage=thinner)
                     if source['source_input_index'] is not None:
                         self.report['presented_inputs'] += 1
+                    outputs['pictures_yielded'] += 1
+                    outputs[('exact_placed' if exact else 'extracted_without_exact_clock' if cursor is not None
+                             else 'envelopes_without_record')] += 1
+                    outputs['updates_presented'] += sum(1 for update in updates if not update['source'].startswith('external.'))
+                    outputs['publications_presented'] += sum(1 for update in updates if update['source'].startswith('external.'))
+                    outputs['invalidations'] += len(invalidated)
+                    outputs['publication_frontier_ns'] = frontier
+                    for name in ('source_input_index', 'input_cursor', 'adapter_cursor', 'input_journal_ordinal'):
+                        extent(name, point[name])
                     yield dict(evidence=evidence, picture=picture)
             for stream in self.streams:
                 stream.finish()
@@ -535,6 +556,17 @@ class SharedMarketTimeline:
             # Exhaustion only. Thinner coverage above never withholds this flag; a pin,
             # count or identity contradiction raised instead and leaves it False.
             self.report['complete'] = True
+        except GeneratorExit:
+            self.report['stopped'] = dict(reason='consumer closed the iterator before exhaustion',
+                                          pictures_yielded=outputs['pictures_yielded'])
+            raise
+        except Exception as error:
+            # Integrity corruption and contradictions stay visible in the report, distinct
+            # from the missing-coverage listings above; they are never relabelled.
+            self.report['integrity_failure'] = dict(error_type=type(error).__name__, error=str(error),
+                                                    pictures_yielded_before_failure=outputs['pictures_yielded'],
+                                                    disposition='separate visible failure; not missing coverage')
+            raise
         finally:
             self.report['sources'] = {stream.name: dict(source=stream.pin, counts=dict(stream.counts),
                                                        dispositions=stream.dispositions) for stream in self.streams}

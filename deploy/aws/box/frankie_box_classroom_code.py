@@ -340,6 +340,32 @@ class ClassroomMarketContext:
         return {key: self.retained.get(key) for key in ('reader', 'identity', 'report', 'source_status_counts', 'coverage',
                                                         'anchor_pictures', 'use', 'limit')}
 
+    def use(self):
+        """For the one-day inspection report (Greg, 2026-10-07): what this context received, how each
+        component used it, and what stayed partial, missing, stale or completed-only. Receipt-sized: the
+        anchors with their dispositions, not the pictures themselves (those sit in the saved reading and
+        in each component's evidence text)."""
+        coverage = self.retained.get('coverage') or {}
+        return dict(schema='FRANKIE_CLASSROOM_SHARED_MARKET_USE_V1',
+                    received=dict(reader=self.retained['reader'], identity=self.retained['identity'],
+                                  source_exhausted=coverage.get('source_exhausted'),
+                                  source_status_counts=self.retained.get('source_status_counts'),
+                                  anchor_pictures=self.retained.get('anchor_pictures')),
+                    entered=dict(component_answer=['evidence'], summary_answer=['cycle_summary']),
+                    arithmetic='state counts, terminal state, first-to-last direction, Pearson and co-movement use the '
+                               'teacher rows only; no shared-picture field is an operand of any Dipole equation',
+                    components={name: copy.deepcopy(selected) for name, selected in self.retained['anchors'].items()},
+                    partial_missing_stale=dict(
+                        input_dispositions=(coverage.get('journal') or {}).get('input_dispositions'),
+                        layers_not_in_read=coverage.get('layers_not_in_read'),
+                        core_absent_layers=coverage.get('core_absent_layers'),
+                        external=coverage.get('external'),
+                        unavailable_anchor_cursors=(self.retained.get('anchor_pictures') or {}).get('unavailable'),
+                        last_observed_state='each picture\'s last_observed_state keeps its original cursor/clock; it is a '
+                                            'previously observed state, never presented as a new observation'),
+                    completed_only=coverage.get('completed_only'),
+                    limit=self.retained['limit'])
+
 
 def _exact_market_text(value):
     """Carry all original fields, bytes and float bits; never numpy/repr truncation."""

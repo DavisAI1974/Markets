@@ -245,6 +245,11 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         raise ValueError('saved classroom source, previous class, directive or destination changed')
     def save():
         _save_raw_state(state_path, state)
+        # Inspection-readable progress beside the pickle (Greg, 2026-10-07: every piece reports what it
+        # received/used/produced): which operations are saved, so a stop/wait is visible without unpickling.
+        _dump(d / 'phase-progress.json', dict(schema='FRANKIE_CLASSROOM_PHASE_PROGRESS_V1', day=day,
+                                              saved_phases=list(state['phases']), started=state['started'],
+                                              saved_at=time.time(), stop_requested=bool(save_requested())))
     def stop():
         if save_requested():
             save()
@@ -354,7 +359,10 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     except (K.ModeNotAnswerable, KX.ModeNotAnswerable) as error:
         refusal = dict(schema=SCHEMA, day=day, status='refused', mode=mode, reason=str(error),
                        listed='SOCRATIC/VERIFY require the learner-owned sealed-journal/day-file reader; '
-                              'missing evidence never falls back to the host key')
+                              'missing evidence never falls back to the host key',
+                       teacher_rows=str(teacher_rows), shared_market_external=shared_external,
+                       shared_market=shared_market.summary() if shared_market is not None else None,
+                       external=dict(day_file=dict(path=str(day_file), sha256=day_sha, found=day_source)))
         _dump(d / 'receipt.json', refusal)
         print(json.dumps(refusal), flush=True)
         return 3
@@ -483,9 +491,15 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                   learner_reading=learner_reading,
                   shared_market=shared_market.summary() if shared_market is not None else None,
                   shared_market_external=shared_external,
+                  # Inspection (Greg, 2026-10-07): what each component received from the shared picture and where
+                  # it entered its answer, with partial/missing/completed-only dispositions; read by
+                  # frankie_box_workflow_inspection's classroom projection.
+                  shared_market_use=shared_market.use() if shared_market is not None else None,
                   # The core teacher's own listing of which instants its pinned equation computed on and which it
                   # listed absent (revised core; None on a d6af990 teacher receipt). Carried, not reinterpreted.
                   teacher_shared_market_arithmetic=teacher_receipt.get('shared_market_arithmetic'),
+                  novel_finding_ids=[f.get('finding_id') for f in novel],
+                  external_novel_finding_ids=[f.get('finding_id') for f in ext_ledgers['external_novel_findings']],
                   stage_knowledge=dict(path=str(d / 'learner-knowledge.json'),
                                        sha256=_sha256(d / 'learner-knowledge.json'),
                                        versions=knowledge_input['versions'],
