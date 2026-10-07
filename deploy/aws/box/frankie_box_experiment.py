@@ -803,18 +803,16 @@ class Run:
                 raise ValueError('completed ROOT differs from the claimed attempt; preserved')
             if owned_output.exists() and not owned_output.is_dir():
                 raise ValueError('claimed ROOT output is not a retained directory')
-        elif self.owned_attempt:
+        elif self.owned_attempt and calc is None:
             # the main queue's owner binding: the exact attempt bound before dispatch, first dispatch and resume alike;
-            # earlier interrupted attempts of the day may exist beside it (they are listed, never resumed as this one)
+            # earlier interrupted attempts of the day may exist beside it (they are listed, never resumed as this one);
+            # a completed ROOT is reused below whatever its name (the binding then records it, informationally)
             attempt = self.owned_attempt
             if not re.fullmatch(re.escape('%s-%s-a' % (self.plan['run'], e['day'])) + r'[0-9]+', attempt):
                 raise ValueError('the owner binding names no run/day/attempt of this day: %s' % attempt)
             owned_output = ROOTS / attempt
             if owned_output.is_symlink() or (owned_output.exists() and not owned_output.is_dir()):
                 raise ValueError('the owned ROOT output is not a retained directory: %s' % owned_output)
-            if calc is not None and calc != owned_output:
-                raise ValueError('a completed ROOT %s differs from the owned attempt %s; preserved, not substituted'
-                                 % (calc, owned_output))
         if calc:
             retained = json.loads((calc / 'calculations-receipt.json').read_bytes())
             if retained.get('day') != e['day'] or retained.get('day_role') != e['role']:
@@ -1702,7 +1700,11 @@ class Run:
                 rows_path, why = self.rows_file(e)
                 if rows_path is None:
                     raise ValueError(why)
-                brain_entries[e['day']] = self.teacher_knowledge(e['day'], rows_path, source)
+                try:
+                    brain_entries[e['day']] = self.teacher_knowledge(e['day'], rows_path, source)
+                except ValueError as error:
+                    return self.record('teacher', batch_key, 'refused', day=e['day'], teacher_rows=str(rows_path),
+                                       reason='the teacher knowledge of %s is not taught again: %s' % (e['day'], error))
         if not todo:
             return self.record('teacher', batch_key, 'waiting' if remote_waiting else 'skipped',
                                reason='waiting for owning lane teacher receipts' if remote_waiting else
@@ -1735,7 +1737,11 @@ class Run:
             rows, source = rows_of(dict(day=d))
             if rows is not None:
                 rows = Path(rows)
-                brain_entries[d] = self.teacher_knowledge(d, rows / ROWS_FILE, source)
+                try:
+                    brain_entries[d] = self.teacher_knowledge(d, rows / ROWS_FILE, source)
+                except ValueError as error:
+                    return self.record('teacher', batch_key, 'refused', exit_code=code, log=log, day=d,
+                                       reason='the teacher knowledge of %s is not taught again: %s' % (d, error))
         return self.record('teacher', batch_key, 'done' if code == 0 and not missing and not waiting else 'failed',
                            exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
                            remote_days=remote,
@@ -1751,9 +1757,10 @@ class Run:
                                    'deploy/aws/box/frankie_box_experiment_teacher.py')
 
     def teacher_producer_identity(self):
-        """The exact producers a teacher-knowledge summary is bound to: the staged commit and the sha256 of the modules
-        that compute the teacher key from the rows (and the teacher step that wrote the rows)."""
-        return dict(commit=self.commit, modules={name: sha256_file(self.code_root / name) for name in self.TEACHER_KNOWLEDGE_PRODUCERS})
+        """The exact producers a teacher-knowledge summary is bound to: the sha256 of the modules that compute the
+        teacher key from the rows and of the teacher step that wrote the rows. The commit is recorded beside it, not
+        compared: a commit that leaves these modules byte-identical is the same producer."""
+        return dict(modules={name: sha256_file(self.code_root / name) for name in self.TEACHER_KNOWLEDGE_PRODUCERS})
 
     def teacher_knowledge(self, day, rows_path, source):
         """Publish every measured component/pair result; per-cursor teacher evidence stays on its owning box. A new summary
@@ -1776,13 +1783,12 @@ class Run:
             if retained is None:
                 raise ValueError('retained teacher knowledge %s carries no producer identity (unestablished): the old result '
                                  'is preserved; an explicit checked successor is required before it is taught again' % path)
-            if retained != producer:
+            if retained.get('modules') != producer['modules']:
                 changed = sorted(k for k in set(retained.get('modules') or {}) | set(producer['modules'])
                                  if (retained.get('modules') or {}).get(k) != producer['modules'].get(k))
-                raise ValueError('retained teacher knowledge %s was produced by another producer identity (commit %s vs %s; '
-                                 'modules changed: %s): the old result is preserved, nothing is regenerated here; an '
-                                 'explicit checked successor is required' % (path, retained.get('commit'), producer['commit'],
-                                                                             changed or 'none'))
+                raise ValueError('retained teacher knowledge %s was produced by another producer identity (made at commit '
+                                 '%s; modules changed: %s): the old result is preserved, nothing is regenerated here; an '
+                                 'explicit checked successor is required' % (path, body.get('made_at_commit'), changed))
         else:
             snapshot = unpack(json.loads(rows_path.read_bytes()))
             key = I._repin_teacher_key_correlations(DC.build_teacher_key(snapshot))
@@ -1799,7 +1805,7 @@ class Run:
                         source=dict(path=str(rows_path), sha256=source_sha, bytes=rows_path.stat().st_size,
                                     owner=os.environ.get('FRANKIE_LANE_OWNER', 'main'),
                                     snapshot_hash=key['source_snapshot_hash']),
-                        producer=producer,
+                        producer=producer, made_at_commit=self.commit,
                         findings=json_form(findings),
                         rule='all component/pair measured outputs individually; every cursor/state/reason remains '
                              'in the exact source, consumed by the teacher; no host grade or student decision process')

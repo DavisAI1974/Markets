@@ -132,7 +132,11 @@ case "$ACTION" in
       mv "$STATE/stop-ack.json" "$STATE/stop-ack-$STAMP.json"
       echo "an acknowledgment without its request (orphan) archived as stop-ack-$STAMP.json"
     fi
-    [ ! -e "$STATE/resume-request.json" ] || { echo "an unanswered resume request stands ($STATE/resume-request.json): read it; move it aside by hand (nothing here deletes it); nothing started" >&2; exit 3; }
+    if [ -e "$STATE/resume-request.json" ] && [ ! -e "$STATE/resume-pending.json" ]; then
+      echo "a resume request stands that no controller took ($STATE/resume-request.json): read it; move it aside by hand (nothing here deletes it); nothing started" >&2; exit 3
+    fi
+    [ ! -e "$STATE/resume-pending.json" ] || echo "a resume is pending from a previous controller ($STATE/resume-pending.json): the new controller reconciles it through the worker status; it is never re-sent"
+
     "$PY" -B "$CONTROLLER" --action preflight --commit "$MARKETS_SHA" "$@" || { echo "preflight refused activation (above); nothing started" >&2; exit 2; }
     UNIT="frankie-cpu-controller-$RUN-$STAMP"
     MARK="$STATE/.start-$STAMP"; : > "$MARK"

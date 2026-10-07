@@ -358,6 +358,12 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
     """Start the line's worker detached (systemd-run, else a new session) unless one runs, FOR the authorized scope
     (RUN:days; refused without one). The kicked worker is bounded by max_seconds like a dispatched one. A running worker
     keeps its own scope: a day outside it waits for the next kick after that worker ends. Returns what happened."""
+    if scope is None:
+        # a kick without an authorization starts nothing (never an unscoped worker): the day waits for a scoped kick
+        with locked():
+            event(line, 'kick_refused_no_scope', by=by)
+        log('%s worker not kicked by %s: no scope given (RUN:days); the line waits for a scoped kick' % (line, by))
+        return dict(started=False, reason='no scope given: a worker is started only for an authorized RUN:days')
     scope = parse_scope(scope['text'] if isinstance(scope, dict) else scope)
     QUEUE.mkdir(parents=True, exist_ok=True)
     probe = _take_worker_lock(line)
@@ -1080,7 +1086,7 @@ def _bind_owner(x, slot, cpus, code_root, commit):
     if owner is None:
         plan = _plan_of(x['run'])
         e = next((d for d in plan.get('days') or [] if d['day'] == x['day']), None)
-        calc, attempts = X.root_of(e, x['run']) if e is not None else (None, [])
+        calc, attempts = X.root_of(e, x['run']) if e is not None else (None, [])   # a refusal is the caller's to record
         attempt = calc.name if calc is not None else '%s-%s-a%d' % (x['run'], x['day'], len(attempts) + 1)
         owner = dict(schema='FRANKIE_QUEUE_OWNER_V1', run=x['run'], day=x['day'], host=socket.gethostname(),
                      attempt=attempt, commit=commit, code_root=str(Path(code_root).resolve()),
@@ -1588,7 +1594,13 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     break                                   # no free slot: the days behind wait
                 holder = dict(slot=slot)
                 _bind_source(x, code_root, commit)
-                _bind_owner(x, slot, cpus, code_root, commit)   # the owner binding is durable BEFORE the thread starts
+                try:
+                    _bind_owner(x, slot, cpus, code_root, commit)   # the owner binding is durable BEFORE the thread starts
+                except (Exception, SystemExit) as error:            # a refusal of the day, never the worker's end
+                    _release_slot(slot, 'the owner binding of %s %s was refused: %s' % (x['run'], x['day'], error))
+                    x['finish'] = dict(x.get('finish') or {}, state='failed', reason='owner binding refused: %s' % error)
+                    event('root', 'finish_refused', seq=x['seq'], day=x['day'], run=x['run'], reason=str(error))
+                    continue
                 x['finish'] = dict(state='running', started_utc=utc(), pid=os.getpid(), commit=commit, slot_booking=slot)
                 save('root', doc)                            # retain source before the child thread can do work
                 t = threading.Thread(target=_finish_job, args=(dict(x), code_root, commit, log, holder), daemon=True)
@@ -1624,7 +1636,13 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     break                                   # no free slot: everything behind the front waits
                 holder = dict(slot=slot)
                 _bind_source(x, code_root, commit)
-                owner = _bind_owner(x, slot, cpus, code_root, commit)   # durable BEFORE the thread: attempt, CPUs, marker
+                try:
+                    owner = _bind_owner(x, slot, cpus, code_root, commit)   # durable BEFORE the thread: attempt, CPUs, marker
+                except (Exception, SystemExit) as error:                    # a refusal of the day, never the worker's end
+                    _release_slot(slot, 'the owner binding of %s %s was refused: %s' % (x['run'], x['day'], error))
+                    x.update(state='failed', where=None, reason='owner binding refused: %s' % error)
+                    event('root', 'take_refused', seq=x['seq'], day=x['day'], run=x['run'], reason=str(error))
+                    continue
                 x.setdefault('attempts', []).append(dict(where='box-slot', pid=os.getpid(), commit=commit,
                                                          started=time.time(), started_utc=utc(), slot_booking=slot,
                                                          attempt=owner['attempt'], cpus=owner['cpus']))
@@ -1635,10 +1653,11 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 t.start()
                 event('root', 'take', seq=x['seq'], day=x['day'], run=x['run'], where='box-slot', slot_booking=slot)
             save('root', doc)
-            pending = [x for x in doc['entries'] if in_scope(x, scope) and (x['state'] != 'done' or
-                       (x.get('finish') or {}).get('state') not in ('finished', 'failed') and _needs_finish(x, plans))]
+            mine = [x for x in doc['entries'] if in_scope(x, scope)]
+            pending = [x for x in mine if x['state'] != 'done' or (x.get('finish') or {}).get('state') in OWNER_STATES or
+                       ((x.get('finish') or {}).get('state') not in ('finished', 'failed') and _needs_finish(x, plans))]
             owned = [x for x in pending if x['state'] in OWNER_STATES or (x.get('finish') or {}).get('state') in OWNER_STATES]
-            n_done = len(doc['entries']) - len(pending)
+            n_done = len(mine) - len(pending)
             end = None
             if not running and owner_waiting and not after:
                 blocked = owner_waiting[0]

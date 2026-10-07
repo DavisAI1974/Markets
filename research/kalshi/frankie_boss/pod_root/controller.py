@@ -282,6 +282,17 @@ class State:
     def resume_request(self):
         return read_json(self.dir / 'resume-request.json', tolerant=True)
 
+    def resume_pending(self):
+        return read_json(self.dir / 'resume-pending.json', tolerant=True)
+
+    def resume_pend(self, doc):
+        write_json(self.dir / 'resume-pending.json', dict(doc, schema=STATE_SCHEMA + '_RESUME_PENDING'))
+
+    def resume_settled(self):
+        path = self.dir / 'resume-pending.json'
+        if path.exists():
+            os.rename(path, self.dir / ('resume-pending-%d.json' % int(time.time())))
+
     def resume_acknowledge(self, doc):
         """The request archived beside its acknowledgment (both kept; a request is consumed exactly once)."""
         stamp = int(time.time())
@@ -449,6 +460,7 @@ class Controller:
         self.lease_lost = False
         self.lease_fresh_at = None       # epoch of the last SUCCESSFUL conditional lease write; ownership is established
         self.resume_pending = None       # a resume whose outcome is unknown until the worker's status settles it
+        self.scope_noted = set()         # out-of-scope days already named once in the events
         self.heartbeat_thread = None
         self.finished = threading.Event()
 
@@ -608,6 +620,12 @@ class Controller:
         request = self.state.resume_request()
         if request is None:
             return
+        if self.resume_pending is None and self.state.resume_pending():
+            # a previous controller left a resume unresolved (durable): reconciled, never re-sent
+            self.resume_pending = self.state.resume_pending()
+            self.event(step='resume', attempt=self.resume_pending.get('job_id'), result='pending from a previous controller',
+                       detail='reconciled through the worker status; not redispatched')
+            return
         if self.resume_pending is not None:
             return                                   # one request at a time; the pending one is reconciled first
         job_id = str(request.get('job_id') or '')
@@ -641,6 +659,7 @@ class Controller:
             # the job: the outcome is UNKNOWN until the worker's own status settles it; the request stays as evidence
             self.resume_pending = dict(job_id=job_id, since=time.time(), request=request, before=before,
                                        error='%s: %s' % (type(error).__name__, str(error)[:400]))
+            self.state.resume_pend(self.resume_pending)
             self.event(worker=w.where, step='resume', attempt=job_id, result='unknown', error=self.resume_pending['error'][:300],
                        detail='reconciled through the worker status before any definite acknowledgment; no redispatch')
             self.snapshot()
@@ -673,6 +692,7 @@ class Controller:
         else:
             return
         self.resume_pending = None
+        self.state.resume_settled()
         self.state.resume_acknowledge(ack)
 
     def relay_save(self, w, jobs):
@@ -753,9 +773,6 @@ class Controller:
 
     def start_day(self, w, st, retained=False):
         day = st['day']
-        if not self.lease_established('claim'):
-            self.event(worker=w.where, day=day, step='claim', result='not made', detail='lease ownership not established')
-            return False
         if not retained:
             c = box('claim', MAIN, 1800, CODE_ROOT=self.a.code_root, RUN=self.run, DAY=day, WHERE=w.where, COMMIT=self.commit)
             if not c.get('claimed'):
@@ -892,8 +909,10 @@ class Controller:
             q = self.queue()
             for d in q['days']:
                 if d['state'] == 'ready' and not self.authorized(d['day']):
-                    self.event(day=d['day'], step='scope', result='out of scope ahead',
-                               detail='not claimed by this controller; the eligible days behind it wait (FIFO)')
+                    if d['day'] not in self.scope_noted:
+                        self.scope_noted.add(d['day'])
+                        self.event(day=d['day'], step='scope', result='out of scope ahead',
+                                   detail='not claimed by this controller; the eligible days behind it wait (FIFO)')
                     return None
                 if d['state'] == 'ready' and self.start_failures.get(d['day'], 0) < 2:
                     return d
@@ -1090,6 +1109,14 @@ class Controller:
                     continue
                 d = self.next_ready()
                 if d is not None:
+                    if not self.lease_established('claim'):
+                        # ownership not established: no claim is made and the day is NOT counted a failed start; the
+                        # loop entrance ends the service on the next iteration if the lease stays unestablished
+                        self.event(worker=w.where, day=d['day'], step='claim', result='not made',
+                                   detail='lease ownership not established')
+                        self.snapshot(w, st)
+                        time.sleep(self.a.poll_seconds)
+                        continue
                     if self.start_day(w, d):
                         self.snapshot(w, st)
                         continue
@@ -1222,6 +1249,7 @@ def retained(a):
                                 stop_request=read_json(state / 'stop-request.json', tolerant=True),
                                 stop_ack=read_json(state / 'stop-ack.json', tolerant=True),
                                 resume_request=read_json(state / 'resume-request.json', tolerant=True),
+                                resume_pending=read_json(state / 'resume-pending.json', tolerant=True),
                                 resume_acks=sorted(p.name for p in state.glob('resume-ack-*.json'))),
                 worker=dict(last_seen=status.get('worker'), held=status.get('held'),
                             note='the worker\'s last snapshot by the controller; --action status asks the worker itself'),
@@ -1312,7 +1340,9 @@ def main():
                 ctl.outcome = dict(outcome='refused', complete=False, error='SystemExit: %s' % str(error)[:600], note='nothing served')
                 ctl.event(step=a.action, result='refused', error=ctl.outcome['error'][:300])
                 finish(a, ctl)
-            raise SystemExit(error.code if isinstance(error.code, int) and error.code != 0 else 1)
+            if error.code in (None, 0):
+                raise SystemExit(1)
+            raise                                    # the refusal's own message and nonzero status
         except Exception as error:  # noqa: BLE001
             if not ctl.finished.is_set():
                 ctl.outcome = dict(outcome='failed', complete=False, error='%s: %s' % (type(error).__name__, str(error)[:600]),
