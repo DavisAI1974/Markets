@@ -107,6 +107,38 @@ ROW_PROVENANCE_FIELDS = dict(
             'provenance.group_close_input_index', 'provenance.group_row_ordinal', 'provenance.row_kind', 'provenance.origin'),
     structures=('provenance.input_cursor', 'provenance.instrument_id', 'provenance.input_record_indices'))
 NATIVE_RECOVERY_SCHEMA = 'FRANKIE_ROOT_NATIVE_RECOVERY_V1'
+# ADDITIVE (2026-10-07, ccode_step8's request for the ROOT's all-99 admission list): one record per NATIVE registry layer
+# (the 44 calculation/clock layers outside legacy_observable_crosswalk) with its crosswalk id, status and reason, absent
+# and not-derived ones included, written beside derive.json AFTER it (work/native-layer-records.json, bound to derive.json's
+# bytes). derive.json, the layer files, the row spools and the digest are untouched (byte-identical); nothing is derived
+# for it: statuses are the derivation's own records, the crosswalk record is the pinned producers' own.
+NATIVE_LAYER_RECORDS = 'native-layer-records.json'
+NATIVE_LAYER_RECORDS_SCHEMA = 'FRANKIE_ROOT_NATIVE_LAYER_RECORDS_V1'
+# Greg, 2026-10-07: the 18 registry entries whose ONLY carrier is the native member/lifecycle ledgers must be produced and
+# reach Frankie and the teachers. Every one has a producer inside the pinned traversal frankie_box_bedrock.run already runs
+# (NativeReplayDriver with FullCaptureAdapter, ExchangeSessionRule and NativeCalculationRun's sections: book regime 4.2,
+# queue 4.6, replenishment 4.7, absorption 4.8, ladder 4.9, episode 4.10, recognition 4.11, lineage 4.13, recurrence 4.14,
+# detector coverage 4.0b, clocks), named per entry by the pinned crosswalk (native_layer_crosswalk.LAYER_PRODUCERS); the
+# native pass produces them whenever it runs (bedrock on), nothing is added here. The list only NAMES them so the
+# per-layer records state each one's status, producer and carrier.
+NATIVE_ONLY_ENTRIES = (
+    'order_lifecycle_fills', 'order_lifecycle_clears', 'contract_session_roll_state', 'complete_state_reset_bootstrap_receipts',
+    'depletion_and_replenishment', 'resilience_and_recovery', 'price_and_book_path', 'derived_ancestry_gaps',
+    'derived_unresolved_age_chain_trajectory', 'derived_price_flow_book_paths', 'derived_v4_mechanics_fifo_features',
+    'prebirth_predecessor_at_risk_state', 'prebirth_unresolved_chain_extension_state', 'prebirth_ancestry_successor_opportunity',
+    'prebirth_stopped_chain_false_context_controls', 'prebirth_negative_opportunity_cases',
+    'clock_prospective_discovery_confirmation', 'clock_model_evaluation')
+# What the native pass on the experiment path does NOT produce for two of them, by design (named, never filled in):
+NATIVE_ONLY_LIMITS = {
+    'clock_model_evaluation': 'the member clock row carries causal_clocks.clock_model_evaluation on every group, with value '
+                              'null and basis NO_INVOCATION_AT_THIS_CUTOFF under the NeverInvoke cadence (native_clocks.'
+                              'stamp_model_evaluation): an observed evaluation instant exists only when the principal model '
+                              'is invoked inside the traversal, which the experiment path never does (no model call; an '
+                              'invoking cadence would be a silently activated producer)',
+    'clock_prospective_discovery_confirmation': 'discovery only (recognized_recv_ns on episode rows, available_second on '
+                                                'candidate rows, the per-cutoff confirmations on the member clock row); the '
+                                                'pinned producers compute no distinct confirmation time (crosswalk note)',
+}
 
 
 def _packs(text, limit):
@@ -734,9 +766,11 @@ class Session:
                recovery=False, save_requested=None, retain_frame_sections=False, digest_bedrock=None):
         """The ROOT's four processes on the sealed source: (1) the legacy pass (every INPUT record -> the five legacy layers
         and the row spools), (2) the bedrock traversal, (3) the bedrock projection, (4) the derivation digest.
-        bedrock=False (Greg, 2026-09-29: no bedrock in the experiment) skips (2) and (3): the bedrock layers are recorded
-        as not_derived with that reason, never as a producer failure. digest=False skips (4) (the experiment reads the
-        JSON, not Frankie's Markdown digest). Frankie's cycle keeps both on (the defaults).
+        The native pass (2)+(3) is ON for the experiment and for Frankie's cycle (Greg reversed the 2026-09-29 no-bedrock
+        decision; the native-only registry entries must be produced and reach Frankie and the teachers). bedrock=False
+        remains only as an EXPLICIT caller override, never a default: it skips (2) and (3), records the bedrock layers as
+        not_derived with the override as the reason (never as a producer failure) and marks the receipt's bedrock block
+        override=True. digest=False skips (4) (the experiment reads the JSON, not Frankie's Markdown digest).
         opening_adapter_state (Greg, 2026-09-29, a day that opens at the prior day's halt): the prior day's closing book
         from its sealed ingest (research/kalshi/frankie_boss/opening_book.py), restored into the pinned adapter with its
         counters zeroed, so the legacy pass replays the day's records onto the real book instead of an empty one;
@@ -780,7 +814,8 @@ class Session:
                 raise ValueError('retained ROOT has no saved input state; preserve it for recovery')
         else:
             moved = _box_module('frankie_box_bedrock')._move_aside(              # an earlier derivation is moved aside with a receipt, never overwritten
-                derived, siblings=[self.work / 'derive.json', self.work / 'derivation-digest-full.md', self.work / 'derive-only-measurement.json', self.work / 'digest-proof.json'],
+                derived, siblings=[self.work / 'derive.json', self.work / 'derivation-digest-full.md', self.work / 'derive-only-measurement.json', self.work / 'digest-proof.json',
+                                   self.work / NATIVE_LAYER_RECORDS],
                 schema='FRANKIE_BOX_DERIVED_SUPERSEDE_RECEIPT_V1',
                 reason='the layers are derived again (a pin change, a schema change or an operator restart): the legacy five, the bedrock projections and the derivation receipt, digest and measurement are kept whole')
             if moved:
@@ -1015,8 +1050,10 @@ class Session:
         for layer in pin['registry_layers']:
             if layer in bedrock_off:
                 layers.setdefault(layer, dict(status='not_derived', producer=None,
-                                              reason='bedrock off: ROOT processes 2 (traversal) and 3 (projection) skipped for the '
-                                                     'experiment (Greg, 2026-09-29); not a producer failure'))
+                                              reason='native pass explicitly overridden off by the caller (bedrock=False): ROOT '
+                                                     'processes 2 (traversal) and 3 (projection) not run; not a producer '
+                                                     'failure; the default is the native pass ON (Greg reversed the '
+                                                     '2026-09-29 no-bedrock decision)'))
             layers.setdefault(layer, dict(status='could_not', reason='no producer in the pin derives this layer; NO_PRODUCER_FOUND', producer=None))
         receipt = dict(schema='FRANKIE_BOX_DERIVATION_RECEIPT_V1', at=time.time(), cycle=self.cycle, pin_group=pin['group'],
                        source_binding=self.source_binding, rows=container, input_records=len(records), legacy_rows=legacy_count, adapter_records=adapter.record_count,
@@ -1058,8 +1095,12 @@ class Session:
                 save_requested=save_requested)
         elif pin.get('bedrock'):
             receipt['bedrock'] = dict(schema='FRANKIE_BOX_DERIVE_BEDROCK_V1', skipped=True, layers=[], not_derived=sorted(bedrock_off),
-                                      reason='bedrock off: ROOT processes 2 and 3 skipped for the experiment (Greg, 2026-09-29)')
-            self.note(f'bedrock off: {len(bedrock_off)} bedrock layers not derived (traversal and projection skipped)')
+                                      override=True,
+                                      reason='native pass explicitly overridden off by the caller (bedrock=False): ROOT '
+                                             'processes 2 and 3 not run; the default is the native pass ON (Greg reversed '
+                                             'the 2026-09-29 no-bedrock decision)')
+            self.note(f'native pass overridden off by the caller (bedrock=False): {len(bedrock_off)} bedrock layers not '
+                      f'derived (traversal and projection not run)')
         else:
             receipt['bedrock'] = None
         receipt['root_processes'] = dict(legacy='run', bedrock_traversal='run' if (pin.get('bedrock') and bedrock) else 'skipped',
@@ -1068,6 +1109,7 @@ class Session:
         receipt['pin_identity'] = dict(sha256=pin['pins_witness']['sha256'], cycle_index=pin['cycle_index'], group=pin['group'],
                                        bedrock_layers=list(pin.get('bedrock_layers') or []))
         write_json(self.work / 'derive.json', receipt)
+        self._write_native_layer_records(pin, receipt)       # additive sidecar; derive.json above is unchanged
         if digest:
             probe.update('root-digest')
             self._write_digest(receipt, layers, prices, frames, structures, roll, first, buys, sells,
@@ -1077,6 +1119,121 @@ class Session:
         probe.update('root-derived', state='complete', failed=len(failures))
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
         return receipt
+
+    def _write_native_layer_records(self, pin, receipt):
+        """work/native-layer-records.json (NATIVE_LAYER_RECORDS_SCHEMA): one record per native registry layer, so the
+        ROOT's all-99 admission list names each native entry instead of the native block. Per layer: the registry
+        (crosswalk) id and group; status and reason as the derivation recorded them (derived / could_not / not_derived),
+        or 'absent' with the reason when this pin's derivation holds no record of it; the projection pin (path, bytes,
+        sha256, count, partial) of a projected layer; the pinned producers' crosswalk record (kind, carrier, member_paths,
+        lifecycle_sections, ...) when the native pass ran, else the reason it is not there. Bound to derive.json's bytes
+        and the native receipt/ledger pins. Day-quantity agnostic and additive: written AFTER derive.json, never read by
+        the derivation; a failure to build it writes a could_not_build record and never stops the derivation."""
+        path = self.work / NATIVE_LAYER_RECORDS
+        try:
+            from research.kalshi.frankie_boss.frankie_principal_adapter import REGISTRY_CALCULATION_SET
+            native = [(group, layer) for group, layers in REGISTRY_CALCULATION_SET
+                      if group != 'legacy_observable_crosswalk' for layer in layers]
+            bedrock = receipt.get('bedrock') if isinstance(receipt.get('bedrock'), dict) else None
+            ran = bool(bedrock) and not bedrock.get('skipped')
+            projected = list(pin.get('projection_layers') or pin.get('bedrock_layers') or [])
+            crosswalk = (getattr(self, '_native_layer_crosswalk', None) or {}) if ran else {}
+            if ran and not crosswalk and projected:
+                # a retained derivation (no traversal in this process): the pinned producers' own crosswalk records
+                crosswalk = _box_module('frankie_box_bedrock').crosswalk_records(PRODUCERS, projected)
+            if ran:
+                native_state = 'the native pass ran (traversal and projection) under this pin'
+            elif bedrock and bedrock.get('skipped'):
+                native_state = ('the native pass did not run (%s): %s' % (
+                    'an explicit caller override' if bedrock.get('override') else 'recorded skipped', bedrock.get('reason')))
+            else:
+                native_state = 'this pin carries no native (bedrock) producer group; the native pass is not part of it'
+            records, counts = [], {}
+            for group, layer in native:
+                entry = (receipt.get('layers') or {}).get(layer)
+                row = dict(entry=layer, crosswalk_id=layer, group=group, projected_by_pin=layer in projected)
+                if entry is None:
+                    row.update(status='absent', producer=None,
+                               reason=('not projected by this pin (pin group %s; projection layers: %d): %s'
+                                       % (pin.get('group'), len(projected), native_state)))
+                else:
+                    row.update(status=entry.get('status'), reason=entry.get('reason'), producer=entry.get('producer'))
+                    if entry.get('bedrock'):
+                        row['projection'] = {k: entry.get(k) for k in ('path', 'bytes', 'sha256', 'count', 'partial')}
+                record = crosswalk.get(layer)
+                if record is not None:
+                    row['crosswalk'] = record
+                    row['producer_named_by_crosswalk'] = '%s.%s' % (record.get('module'), record.get('symbol'))
+                else:
+                    row['crosswalk_listed'] = (native_state if not ran else
+                                               'the pinned crosswalk was read for the projected layers only; this layer '
+                                               'is not among them')
+                if layer in NATIVE_ONLY_ENTRIES:
+                    row['native_only'] = True
+                    if layer in NATIVE_ONLY_LIMITS:
+                        row['native_limit'] = NATIVE_ONLY_LIMITS[layer]
+                counts[row['status']] = counts.get(row['status'], 0) + 1
+                records.append(row)
+            by_name = {r['entry']: r for r in records}
+            native_only = [dict(entry=name, status=by_name[name]['status'], reason=by_name[name].get('reason'),
+                                producer=by_name[name].get('producer_named_by_crosswalk'),
+                                member_paths=list((by_name[name].get('crosswalk') or {}).get('member_paths') or []),
+                                lifecycle_sections=list((by_name[name].get('crosswalk') or {}).get('lifecycle_sections') or []),
+                                fixture_dependent_sections=list((by_name[name].get('crosswalk') or {}).get(
+                                    'fixture_dependent_sections') or []),
+                                limit=NATIVE_ONLY_LIMITS.get(name))
+                           for name in NATIVE_ONLY_ENTRIES if name in by_name]
+            derive_path = self.work / 'derive.json'
+            doc = dict(schema=NATIVE_LAYER_RECORDS_SCHEMA, status='built', cycle=self.cycle, day=getattr(self, 'day', None),
+                       derive=dict(path=str(derive_path), **witness(derive_path)),
+                       pin=dict(sha256=pin['pins_witness']['sha256'], group=pin.get('group'),
+                                bedrock_groups=pin_groups(pin), projection_layers=len(projected)),
+                       native_pass=dict(ran=ran, state=native_state,
+                                        receipt=(bedrock or {}).get('receipt') if ran else None,
+                                        ledgers=(bedrock or {}).get('ledgers') if ran else None,
+                                        result=(bedrock or {}).get('result') if ran else None,
+                                        producers_commit=(bedrock or {}).get('producers_commit') if ran else None,
+                                        crosswalk_file=(bedrock or {}).get('crosswalk') if ran else None),
+                       layers=len(records), counts=counts, records=records,
+                       native_only=native_only,
+                       native_only_rule='the native-only entries (Greg, 2026-10-07): carried only by the native member/'
+                                        'lifecycle ledgers; produced by the pinned traversal whenever the native pass '
+                                        'runs; status as derived; a candidate-dependent section (episode, candidate) is '
+                                        'could_not with the measured reason when the candidate lane did not fire on the day',
+                       rule='one record per native registry layer; statuses copied from derive.json\'s own layer records; '
+                            'absent = no record in this derivation (a thinner picture, never a rejected day); a disabled '
+                            'producer is never activated here; nothing is derived for this file')
+        except Exception as error:  # noqa: BLE001 - additive accounting: its failure is recorded, the derivation stands
+            doc = dict(schema=NATIVE_LAYER_RECORDS_SCHEMA, status='could_not_build', cycle=self.cycle,
+                       error='%s: %s' % (type(error).__name__, error),
+                       rule='the per-layer native records could not be built; derive.json is the record; nothing inferred')
+        try:
+            write_json(path, doc)
+        except Exception:  # noqa: BLE001 - never stops the derivation; the admission list reads the file as absent
+            pass
+        return doc
+
+    def native_layer_records(self):
+        """The per-layer native records of a RETAINED derivation (a caller that resumed from work/derive.json without
+        deriving, e.g. frankie_box_experiment_root's resume branch): returns the existing NATIVE_LAYER_RECORDS file when it
+        is bound to the current derive.json bytes, else writes it from derive.json and this session's pin. Reads only
+        derive.json, the pin and the pinned crosswalk; derives nothing; never raises for the records themselves."""
+        path, derive_path = self.work / NATIVE_LAYER_RECORDS, self.work / 'derive.json'
+        if not derive_path.is_file():
+            return dict(schema=NATIVE_LAYER_RECORDS_SCHEMA, status='no_derivation', reason='%s is absent' % derive_path)
+        if path.is_file():
+            try:
+                existing = load_json(path)
+                if existing.get('status') == 'built' and (existing.get('derive') or {}).get('sha256') == witness(derive_path)['sha256']:
+                    return existing
+            except ValueError:
+                pass
+        try:
+            pin, receipt = self._pin(), load_json(derive_path)
+        except Exception as error:  # noqa: BLE001 - the records are accounting; their failure is stated, never raised
+            return dict(schema=NATIVE_LAYER_RECORDS_SCHEMA, status='could_not_build',
+                        error='%s: %s' % (type(error).__name__, error))
+        return self._write_native_layer_records(pin, receipt)
 
     def _complete_native_derivation(self, pin, derived, receipt, layers, records, prices, frames, structures, *,
                                     opening_adapter_state, opening_book, save_requested, digest, digest_bedrock):
@@ -1093,6 +1250,7 @@ class Session:
         receipt['pin_identity'] = dict(sha256=pin['pins_witness']['sha256'], cycle_index=pin['cycle_index'],
                                       group=pin['group'], bedrock_layers=list(pin.get('bedrock_layers') or []))
         write_json(self.work / 'derive.json', receipt)
+        self._write_native_layer_records(pin, receipt)       # additive sidecar; derive.json above is unchanged
         if digest:
             from frankie_box_monday_calculations import write_retained_digest
             write_retained_digest(self, receipt, layers, prices, frames, structures,
@@ -1216,6 +1374,7 @@ class Session:
             raise TeacherSaved('native calculation completion retained; projection remains to be resumed')
         probe.update('root-projection')
         crosswalk = B.crosswalk_records(PRODUCERS, layers)
+        self._native_layer_crosswalk = crosswalk     # read by _write_native_layer_records only; never serialized into derive.json
         native_directory = Path(run['result']['path']).parent
         import frankie_box_projection as projection
         reused = _reusable_projection(projection, run, layers, crosswalk, derived, list(B.SECTION_FILES))

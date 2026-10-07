@@ -217,3 +217,70 @@ box's EBS, no S3 read or write (the day file reaches the school file by referenc
 - `waiting_school` drain (CCode) and genuine returned-school/report currentness remain CCode's.
 - Nothing has run: SOURCE-BUILT / RUNTIME-UNVERIFIED; AST parse without project imports and `git diff --check`
   only. A fresh independent review is required before integration.
+
+## 2026-10-07 (later): the 99 layers in the FRANKIE report, per-layer native records, the native-only 18
+
+Greg resumed the role ("respawn and finish"; relayed by the parent). Source only; nothing ran. Skills used:
+`api-and-interface-design` (first), `context-engineering`, `experiment-orchestrator`. No AWS account call (the
+stage-12 survey stands). SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.
+
+### The 99 layers (what reached Frankie today): `frankie_box_experiment_day_reports.py`
+- `collect_all99` reads each piece's own recorded all-99 list ONCE (pinned lists checked against their pin;
+  a lessons file the school already inlined whole is taken from the school copy, not re-read): ROOT
+  (`days/<day>/root.json` field `all99`, FRANKIE_ALL99_ADMISSION_V1), classroom (`receipt.json`
+  `all99_coverage`), scientific teacher per lessons file the exchange consumed (`all99_coverage.by_day[<day>]`
+  -> the pinned FRANKIE_ALL99_COVERAGE_V1 file), carried claims (accumulated-lessons receipt
+  `workflow_report.outputs.all99_coverage_files[<day>]`), candidates (survivor update receipt at a boundary day
+  or given), exchange / meeting / Jev / Jev sit-in (`workflow_report.use.all_99_coverage`). The shared field is
+  preferred wherever a piece carries it (the list itself, or its nested `shared_field`) and is validated at
+  this boundary by `frankie_box_all99_coverage.validate`.
+- `all99_join` joins them over the ONE registry (`frankie_box_all99_coverage.REGISTRY`, imported) into one
+  per-day table: per entry the word each piece recorded, its class (the row's own class, else the shared
+  `CLASS_OF`; only `REACH_REFINE` splits consumer / rule / ROOT admission out of the shared 'arrived'), the
+  final for Frankie (classroom / classroom_thin / other_computation / consumer / exposed_only / nothing /
+  unknown), every entry no Frankie piece recorded in a computation with every piece's reason, and
+  disagreements under fixed rules (group, lawful_role, picture_admitted_not_arrived,
+  picture_arrived_not_admitted, summary_vs_list). A piece without a list is "not reported by <piece>" (unknown,
+  never zero); integrity findings stay separate. ROOT and Jev are listed, never decide the final.
+- The FRANKIE report carries the section (`all99_lines`), its receipt carries the full join (`all99`,
+  FRANKIE_DAY_REPORTS_ALL99_JOIN_V1) and the workflow report its summary; the join's sha256 is part of the
+  reports' reuse key (a changed list gives a revision with the same N). Diagnostic only, never knowledge.
+- New optional inputs: `--run-dir`, `--piece-receipt candidates|carried_claims|jev=PATH`; the wrapper takes
+  `RUN_DIR`, `CANDIDATES_RECEIPT`, `CARRIED_CLAIMS_RECEIPT`, `JEV_RECEIPT`.
+- Day-quantity agnostic: numbering is 1 + the highest number held (N=1 for a one-day run), reuse is per
+  (run, day); no one-day or three-day gate exists in the owned files.
+
+### Per-layer native records and the native-only 18: `frankie_box_boss_session.py`
+- `Session._write_native_layer_records` writes `work/native-layer-records.json`
+  (FRANKIE_ROOT_NATIVE_LAYER_RECORDS_V1) AFTER derive.json, in `derive` and `_complete_native_derivation`: one
+  record per native registry layer (44) with its crosswalk id, group, status and reason as derive.json
+  recorded them (or `absent` with the reason), the projection pin, and the pinned crosswalk record; bound to
+  derive.json's bytes. `Session.native_layer_records()` rebuilds it for a retained derivation. derive.json, the
+  layer files and the digest are unchanged by it; the file moves aside with the derivation.
+- The 18 native-only entries (`NATIVE_ONLY_ENTRIES`) are each named in `native_only` with status, producer and
+  carrier. Each has a producer inside the pinned traversal `frankie_box_bedrock.run` already runs when the native
+  pass is on (no new equation, no new invocation): fills `a_memory_member_first_recalculation_20260828.
+  fill_disposition`; clears and reset/bootstrap receipts `native_full_capture_adapter._observe_before` /
+  `_enrich`; roll state `native_replay_driver.ExchangeSessionRule`; depletion `replenishment` (4.7);
+  resilience `absorption` (4.8); price/book path and price/flow/book paths `native_book_regime.
+  observe_snapshot`; ancestry gaps and unresolved chain extension `LineageGraph`; chain trajectory
+  `_retain_episode_rows`; V4 FIFO features `native_full_capture_adapter._window_extras`; predecessor at risk
+  `_open_candidate`; successor opportunity `LINEAGE_SIGNATURE`; stopped-chain controls `native_recognition.
+  note_failed_state`; negative cases `mark_missed`; discovery `record_call`; model evaluation `native_clocks.
+  member_clock_row`. Limits named, never filled in: `clock_model_evaluation` is a declared null
+  (NO_INVOCATION_AT_THIS_CUTOFF) under NeverInvoke (an observed evaluation time needs a model call inside the
+  traversal); `clock_prospective_discovery_confirmation` is discovery only; the episode/candidate sections exist
+  only when the candidate lane fires (900 s warmup, 600 observations), else `could_not` with the measured reason.
+- The 2026-09-29 no-bedrock rule is retired in this file: the `derive` docstring states the native pass is ON
+  by default and `bedrock=False` is only an explicit, recorded caller override (`override=True` on the skipped
+  bedrock block; the not_derived reason says so). This changes derive.json text only for an override run.
+
+### Still open
+- The ROOT's admission list (`frankie_box_experiment.all99_admission`, ccode_step8) must read
+  `native-layer-records.json` to name each native entry; the experiment ROOT's resume branch
+  (`frankie_box_experiment_root.py`) should call `Session.native_layer_records()`.
+- The orchestrator's `Run.reports` should pass `RUN_DIR` (the default already matches) and the candidate update
+  receipt of the batch boundary covering the day.
+- The data export lists `work/native-layer-records.json` as unclaimed until its catalog includes it.
+- Nothing has run; AST parse without project imports, `bash -n` and `git diff --check` only. A fresh
+  independent review is required before integration.

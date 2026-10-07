@@ -68,6 +68,21 @@ and nothing silent). Besides the last stdout line, run() writes the same receipt
 bytes and sha256 (inputs), every absent or unreadable file with its reason, the exchange/meeting/school dispositions, the
 reuse decision and why, the problems, the phase timings (seconds; receipt only, so the report bytes stay deterministic),
 and a FRANKIE_PIECE_WORKFLOW_REPORT_V1 (inputs / use / outputs). The receipt is diagnostic and never knowledge.
+
+THE 99 LAYERS (2026-10-07, Greg: "the 99 layers combined for Frankie FIRST"). The FRANKIE report carries "The 99 layers
+(what reached Frankie today)": ONE per-day table of the 99 entries of the shared registry (frankie_box_all99_coverage,
+imported, never copied), joined from the list every piece already records (ALL99_PIECES: the ROOT's admission list on its
+step receipt, the classroom receipt's all99_coverage, the pinned FRANKIE_ALL99_COVERAGE_V1 lists the scientific teacher's
+lessons / the carried claims / the candidate update name, the exchange / meeting / Jev workflow_report.use.all_99_coverage).
+Each list is read once (a pinned list is checked against its pin; the school file's whole inline copy of a lessons file is
+used instead of a re-read); nothing is recomputed. Per entry: the word each piece recorded, the final disposition for Frankie
+(FINALS: classroom / classroom_thin / other_computation / consumer / nothing / unknown), every entry no Frankie piece
+recorded in a computation with every piece's recorded reason, and every disagreement between pieces under fixed rules
+(JOIN_RULES). A piece without a list reads "not reported by <piece>" with its reason (unknown, never zero); integrity
+failures stay separate. The ROOT and Jev's pieces are listed and never decide what reached Frankie. The full join is
+receipt['all99'] (ALL99_JOIN_SCHEMA); its sha256 over the pieces' inputs is part of the reports' source (a changed list
+gives a revision with the same N). Diagnostic only, never knowledge. Nothing here keys on how many days a run holds: the
+numbering is 1 + the highest number held (N=1 for a one-day run, any N after) and reuse is per (run, day).
 """
 import argparse
 import datetime as dt
@@ -86,6 +101,60 @@ SCHOOL_SCHEMA = 'FRANKIE_SCHOOL_KNOWLEDGE_V1'              # frankie_box_school_
 SCHOOL_INDEX_SCHEMA = 'FRANKIE_SCHOOL_INDEX_V1'             # frankie_box_brain.SCHOOL_INDEX_SCHEMA
 PIECE_WORKFLOW_REPORT = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'  # the one-day inspection record (frankie_box_workflow_inspection)
 REPORTS = Path('/opt/frankie-box/work/experiment-reports')
+# THE 99 LAYERS (Greg, 2026-10-07: "the 99 layers combined for Frankie FIRST"): the join of every piece's own all-99 list
+ALL99_JOIN_SCHEMA = 'FRANKIE_DAY_REPORTS_ALL99_JOIN_V1'
+STEP_SCHEMA = 'FRANKIE_EXPERIMENT_STEP_V1'                # frankie_box_experiment.Run.record (read, never written here)
+RUNS = Path('/opt/frankie-box/work/experiment')           # frankie_box_experiment.RUNS: <run>/days/<day>/<stage>.json
+SURVIVORS = Path('/opt/frankie-box/work/experiment-survivors')   # frankie_box_survivor_update.ROOT: <run>/<boundary>/receipt.json
+LESSONS_ROOT = Path('/opt/frankie-box/work/experiment-teacher')  # frankie_box_experiment.LESSONS_ROOT
+# (piece, reaches Frankie?, where its list is read). Every piece is read once, from what it recorded; nothing is recomputed.
+ALL99_PIECES = (
+    ('root', False, 'the ROOT step receipt <run-dir>/days/<day>/root.json, field all99 (FRANKIE_ALL99_ADMISSION_V1): what '
+                    'the ROOT produced and admitted into the shared picture (a producer, not a consumer)'),
+    ('classroom', True, 'the classroom receipt.json, field all99_coverage (FRANKIE_CLASSROOM_ALL99_COVERAGE_V1)'),
+    ('scientific_teacher[frankie]', True, 'Frankie\'s lessons file the exchange consumed, field all99_coverage.by_day[<day>]: '
+                                          'the pinned FRANKIE_ALL99_COVERAGE_V1 list'),
+    ('scientific_teacher[historical]', True, 'the historical lessons file the exchange consumed, field '
+                                             'all99_coverage.by_day[<day>]: the pinned FRANKIE_ALL99_COVERAGE_V1 list'),
+    ('scientific_teacher[jev]', False, 'Jev\'s lessons file the exchange consumed, field all99_coverage.by_day[<day>]: the '
+                                       'pinned FRANKIE_ALL99_COVERAGE_V1 list (Jev\'s claims; Frankie\'s view withholds them)'),
+    ('carried_claims', True, 'the accumulated-lessons step receipt <run-dir>/days/<day>/accumulated_lessons.json names its '
+                             'receipt; workflow_report.outputs.all99_coverage_files[<day>]: the pinned list'),
+    ('candidates', True, 'the survivor/candidate update receipt (<survivors>/<run>/<day>/receipt.json at a boundary day, or '
+                         'given): workflow_report.outputs.all99_coverage_files[<day>]: the pinned list'),
+    ('exchange', True, 'the exchange receipt.json beside exchange.json, workflow_report.use.all_99_coverage'),
+    ('meeting', True, 'the meeting receipt (read once by frankie_box_brain.read_meeting_for_exchange), '
+                      'workflow_report.use.all_99_coverage'),
+    ('jev', False, 'the Jev step receipt <run-dir>/days/<day>/jev.json names JEV_CPU_RECEIPT_V1: '
+                   'workflow_report.use.all_99_coverage'),
+    ('jev_sit_in', False, 'the Jev client receipt pinned by JEV_CPU_RECEIPT_V1: workflow_report.use.all_99_coverage'),
+)
+PICTURE_READERS = ('classroom', 'exchange', 'meeting', 'jev', 'jev_sit_in')     # pieces that read the shared picture
+# How a recorded word is read: the row's own `class`, else the shared registry's CLASS_OF (frankie_box_all99_coverage; the
+# ONE classification, never copied here), then only these refinements of its 'arrived' class (so a consumer or a rule is
+# not counted as a computation) and of its thin / completed-only classes; the recorded word is always shown beside it:
+#   computation / computation_thin   reached what the piece computes on, wholly / partially (thin, completed-only)
+#   consumer / governs               reached the piece's own consumer / a rule the piece enforces; not a computation
+#   picture                          ROOT only: admitted into the shared picture (producer side)
+#   exposed / absent / not_this_piece / withheld / disabled / retired / output / unmapped   the shared classes as named
+#   integrity / unclassified         the ROOT's integrity word / a word the shared CLASS_OF does not class
+REACH_REFINE = {'knowledge_consumer': 'consumer', 'arrived_at_consumer': 'consumer', 'enforced_by_rule': 'governs',
+                'admitted': 'picture'}
+REACHED = ('computation', 'computation_thin', 'consumer', 'governs')
+
+
+def reach_of(word, row_class, class_of):
+    """The reach group of one recorded word (see REACH_REFINE): the row's class, else the shared CLASS_OF."""
+    if word == 'integrity':
+        return 'integrity'
+    klass = row_class or (class_of or {}).get(word)
+    if klass is None or klass == 'unclassified':
+        return 'unclassified'
+    if klass == 'arrived':
+        return REACH_REFINE.get(word, 'computation')
+    if klass in ('thin', 'completed_only'):
+        return 'computation_thin'
+    return klass
 KINDS = ('classroom', 'frankie')
 FILE_RE = re.compile(r'^(classroom|frankie)-report-(\d{4,})(?:-r(\d+))?\.md$')
 CLASS_OF_WEEKDAY = {0: 'monday', 1: 'midweek', 2: 'midweek', 3: 'thursday', 4: 'friday'}   # the orchestrator's classes
@@ -815,12 +884,14 @@ def frankie_report(d, number, revision, run, cls, classroom_file):
     title = '# FRANKIE REPORT #%d%s' % (number, '' if revision == 1 else ' (revision %d)' % revision)
     L = header(title, d, run, cls, 'CLASSROOM REPORT #%d' % number, classroom_file)
     if d.status != 'complete':
-        return L + refused_lines(d) + school_lines(d, number) + exchange_lines(d, True) + glossary_lines() + evidence(d, True)
+        return (L + refused_lines(d) + all99_lines(d) + school_lines(d, number) + exchange_lines(d, True) + glossary_lines()
+                + evidence(d, True))
     comps = component_facts(d)
     pairs, wrong_pairs, _ = pair_facts(d)
     ext_series = external_series_facts(d)
     ext_points = point_facts(d)
     L += frankie_counts(d, comps, wrong_pairs, pairs, ext_series, ext_points)
+    L += all99_lines(d)
     code = d.doc('code-answers.json') or {}
     rules = code.get('rules') or {}
     L += ['## The rules his code answered under', '',
@@ -1023,6 +1094,569 @@ def school_lines(d, number):
     return L + ['']
 
 
+# ----------------------------------------------------------------------------- the 99 layers (what reached Frankie today)
+# Greg, 2026-10-07: "the 99 layers combined for Frankie FIRST". Every piece already records its own all-99 list (the ROOT's
+# admission list, the classroom's routes, the scientific teacher's / carried claims' / candidates' coverage files, the
+# adviser pieces' rows). This step READS each list once, from the file the piece wrote (pinned files are checked against
+# their pin), and joins them into ONE per-day table of the 99 entries of the shared registry (frankie_box_all99_coverage,
+# imported, never copied): per entry, which pieces carried it and the word each recorded, the final disposition for
+# Frankie, every entry that reached no computation with every piece's recorded reason, and every disagreement between
+# pieces under fixed rules. Nothing is recomputed, nothing is inferred from a file read; a piece without a list is "not
+# reported by <piece>" with the reason; an absent list is unknown, never zero; integrity failures stay separate.
+FINALS = (
+    ('classroom', 'the classroom recorded it reaching its pictures/computation (arrived, arrived with no event, stamped)'),
+    ('classroom_thin', 'the classroom recorded it reaching its pictures partially (thin, completed-only)'),
+    ('other_computation', 'another Frankie piece recorded it reaching what that piece computes on (the scientific '
+                          'teacher\'s test rows, the exchange or meeting picture); the classroom did not'),
+    ('consumer', 'a Frankie piece recorded it at its own consumer (knowledge, carry, teacher seat) or as a rule it '
+                 'enforces; no Frankie piece recorded it in a computation'),
+    ('exposed_only', 'a Frankie piece recorded it present in what it received and not used by its computation '
+                     '(exposed); none recorded it in a computation or at a consumer'),
+    ('nothing', 'every Frankie piece that listed it recorded it absent, withheld, disabled, retired, an output or not '
+                'evaluated (each reason below)'),
+    ('unknown', 'no Frankie piece reported a list that names it (not reported is unknown, never zero)'),
+)
+JOIN_RULES = ('the shared registry (frankie_box_all99_coverage.REGISTRY) is the list of the 99 entries; a piece row whose '
+              'id is not in it is listed as unregistered, a repeated id as a duplicate (both integrity), never dropped '
+              'silently; each piece\'s recorded word is shown as recorded and grouped by the row\'s own class, else the shared '
+              'CLASS_OF, refined only by REACH_REFINE; '
+              'different words from different pieces are not a disagreement (the pieces compute on different things). '
+              'Disagreement rules: group (a piece lists the entry under another registry group than the shared '
+              'registry); lawful_role (one piece records it withheld/disabled/retired while another records it '
+              'reaching a computation, consumer or rule); picture_admitted_not_arrived (the ROOT admitted a raw or '
+              'calculation entry into the shared picture and every picture-reading piece that listed it recorded it '
+              'absent); picture_arrived_not_admitted (the ROOT recorded it absent and a picture-reading piece recorded '
+              'it arrived); summary_vs_list (a lessons file\'s carried summary counts differ from the counts of the '
+              'pinned list it names). Jev\'s pieces and the ROOT are listed but never decide what reached Frankie.')
+
+
+def _shared_registry():
+    """The shared 99-entry registry module (frankie_box_all99_coverage, the single registry): (module, None) or (None,
+    why). A missing module is stated in the report, never replaced by a local copy of the registry."""
+    try:
+        import frankie_box_all99_coverage as A99
+    except Exception as error:  # noqa: BLE001 - stated, never replaced
+        return None, 'the shared registry module frankie_box_all99_coverage could not be imported (%s: %s)' % (
+            type(error).__name__, error)
+    if not getattr(A99, 'REGISTRY', None) or not isinstance(getattr(A99, 'GROUP_ROLES', None), dict):
+        return None, 'the shared registry module exposes no REGISTRY / GROUP_ROLES at this checkout'
+    return A99, None
+
+
+def _json_once(d, kind, path):
+    """One read of a JSON file, witnessed in d.inputs: (doc, witness, None) or (None, None, why)."""
+    try:
+        raw = d._read(kind, path)
+    except OSError as error:
+        return None, None, '%s could not be read (%s: %s)' % (path, type(error).__name__, error)
+    try:
+        return json.loads(raw), d.inputs[-1], None
+    except ValueError as error:
+        return None, d.inputs[-1], '%s is not readable JSON (%s)' % (path, error)
+
+
+def _pinned_once(d, kind, pin):
+    """A file named by a pin {path, bytes, sha256}, read once: (doc, witness, why, integrity). Absent -> why (a thinner
+    picture); bytes that differ from the pin or unreadable JSON -> integrity (a separate visible failure)."""
+    path = pin.get('path') if isinstance(pin, dict) else None
+    if not path:
+        return None, None, 'no pin names the file', None
+    if not Path(path).is_file():
+        return None, None, 'the pinned file %s is not on this disk' % path, None
+    doc, seen, why = _json_once(d, kind, path)
+    if seen is None:
+        return None, None, why, None
+    differ = {k: (pin.get(k), seen.get(k)) for k in ('bytes', 'sha256') if pin.get(k) is not None and pin.get(k) != seen.get(k)}
+    if differ:
+        return None, seen, None, '%s differs from its pin: %s' % (path, listing('%s recorded %s, read %s' % (k, a, b)
+                                                                              for k, (a, b) in sorted(differ.items())))
+    if why:
+        return None, seen, None, why
+    return doc, seen, None, None
+
+
+def _step(d, run_dir, run_name, stage):
+    """The orchestrator's step receipt of the day for one stage: (doc, witness, why, integrity)."""
+    path = Path(run_dir) / 'days' / d.day / (stage + '.json')
+    if not path.is_file():
+        return None, None, 'no %s step receipt for the day (%s)' % (stage, path), None
+    doc, seen, why = _json_once(d, '%s step receipt' % stage, path)
+    if doc is None:
+        return None, seen, None, why
+    if (doc.get('schema') != STEP_SCHEMA or doc.get('run') != run_name or doc.get('stage') != stage
+            or str(doc.get('key')) != str(d.day)):
+        return None, seen, None, '%s is not the %s step receipt of run %s day %s (schema %s, run %s, stage %s, key %s)' % (
+            path, stage, run_name, d.day, doc.get('schema'), doc.get('run'), doc.get('stage'), doc.get('key'))
+    return doc, seen, None, None
+
+
+def _use_all99(receipt):
+    """A piece's workflow_report.use.all_99_coverage (the adviser pieces' recorded field), or None."""
+    report = receipt.get('workflow_report') if isinstance(receipt, dict) else None
+    use = report.get('use') if isinstance(report, dict) else None
+    return use.get('all_99_coverage') if isinstance(use, dict) else None
+
+
+def collect_all99(d, run_name, run_dir, piece_receipts):
+    """Read every piece's recorded all-99 list for the day, once each. Sets d.all99_sources: one dict per piece
+    (piece, for_frankie, status read / not_reported / integrity, reason, file, sha256, doc, summary)."""
+    frankie_of = {p: f for p, f, _ in ALL99_PIECES}
+    sources, problems = [], []
+
+    def src(piece, status, reason=None, doc=None, seen=None, summary=None, for_frankie=None):
+        sources.append(dict(piece=piece, for_frankie=frankie_of.get(piece, True) if for_frankie is None else for_frankie,
+                            status=status, reason=reason, doc=doc, summary=summary,
+                            file=(seen or {}).get('path'), sha256=(seen or {}).get('sha256')))
+
+    def from_step(piece, stage, field):
+        doc, seen, why, bad = _step(d, run_dir, run_name, stage)
+        if bad:
+            return src(piece, 'integrity', bad, seen=seen)
+        if doc is None:
+            return src(piece, 'not_reported', why)
+        if not isinstance(doc.get(field), dict):
+            return src(piece, 'not_reported', 'the %s step receipt (status %s) carries no %s list%s' % (
+                stage, doc.get('status'), field, (': ' + str(doc['reason'])) if doc.get('reason') else ''), seen=seen)
+        return src(piece, 'read', doc=doc[field], seen=seen)
+
+    def coverage_file(piece, receipt_kind, receipt_doc, receipt_seen):
+        """workflow_report.outputs.all99_coverage_files[<day>] of a scientific receipt: the pinned list, read once."""
+        files = (((receipt_doc or {}).get('workflow_report') or {}).get('outputs') or {}).get('all99_coverage_files') or {}
+        pin = files.get(d.day) if isinstance(files, dict) else None
+        if pin is None:
+            return src(piece, 'not_reported', 'the %s names no all-99 list for day %s (its lists: %s)' % (
+                receipt_kind, d.day, listing(sorted(files)) if isinstance(files, dict) else 'none'), seen=receipt_seen)
+        doc, seen, why, bad = _pinned_once(d, '%s all-99 list' % piece, pin)
+        if bad:
+            return src(piece, 'integrity', bad, seen=seen)
+        if doc is None:
+            return src(piece, 'not_reported', why)
+        summary = ((receipt_doc.get('workflow_report') or {}).get('use') or {}).get('all99_coverage')
+        return src(piece, 'read', doc=doc, seen=seen, summary=(summary or {}).get(d.day) if isinstance(summary, dict) else None)
+
+    # the ROOT (producer side: what it produced and admitted into the shared picture)
+    from_step('root', 'root', 'all99')
+    # the classroom (its receipt was read once by Day; a refused classroom records its list too)
+    if d.source.get('kind') != 'classroom receipt':
+        src('classroom', 'not_reported', 'the classroom wrote no receipt: %s' % d.receipt.get('reason'))
+    elif not isinstance(d.receipt.get('all99_coverage'), dict):
+        src('classroom', 'not_reported', 'the classroom receipt (status %s) carries no all99_coverage (recorded before the '
+                                         'list existed)' % d.status,
+            seen=dict(path=d.source.get('path'), sha256=d.source.get('sha256')))
+    else:
+        src('classroom', 'read', doc=d.receipt['all99_coverage'],
+            seen=dict(path=d.source.get('path'), sha256=d.source.get('sha256')))
+    # the scientific teacher: every lessons file the exchange consumed (the current, corrected documents), each read once
+    # (the school file's whole inline copy is used when it carries that path: the bytes the school read, not a re-read)
+    xstep, _, xwhy, xbad = _step(d, run_dir, run_name, 'exchange')
+    if xbad:
+        problems.append('exchange step receipt integrity: ' + xbad)
+    paths = [str(p) for p in ((xstep or {}).get('lessons') or [])]
+    origin = 'the exchange step receipt\'s lessons list'
+    if not paths:
+        mine = LESSONS_ROOT / 'frankie' / ('%s-frankie.json' % d.day)
+        if mine.is_file():
+            paths, origin = [str(mine)], 'the conventional path of Frankie\'s lessons (no exchange lessons list: %s)' % (
+                xwhy or (xstep or {}).get('status'))
+    inline = {}
+    if d.school_status == 'read':
+        for item in ((d.school.get('sections') or {}).get('scientific_teacher') or {}).get('items') or []:
+            if isinstance(item, dict) and item.get('inline') and 'holds' not in item and item.get('path') \
+                    and isinstance(item.get('content'), dict):
+                inline[item['path']] = item
+    seen_authors = set()
+    for path in paths:
+        if path in inline:
+            lesson = inline[path]['content']
+            d.inputs.append(dict(kind='lessons file (the school file\'s whole inline copy)', path=path,
+                                 bytes=inline[path].get('bytes'), sha256=inline[path].get('source_sha256')
+                                 or inline[path].get('sha256'), read_by='the school file read once above'))
+            lseen = d.inputs[-1]
+        else:
+            lesson, lseen, why = _json_once(d, 'lessons file', path)
+            if lesson is None:
+                problems.append('lessons file %s: %s' % (path, why))
+                continue
+        if not isinstance(lesson, dict):
+            problems.append('lessons file %s is a %s, not a lessons document' % (path, type(lesson).__name__))
+            continue
+        author = str(lesson.get('author') or Path(path).parent.name)
+        piece = 'scientific_teacher[%s]' % author
+        same = sum(1 for s in sources if s['piece'] == piece or s['piece'].startswith(piece + ' #'))
+        if same:                                    # a second lessons file of the same author (two Jev stamps): its own column
+            piece = '%s #%d' % (piece, same + 1)
+        seen_authors.add(author)
+        by_day = (lesson.get('all99_coverage') or {}).get('by_day') if isinstance(lesson.get('all99_coverage'), dict) else None
+        pin = (by_day or {}).get(d.day) if isinstance(by_day, dict) else None
+        if pin is None:
+            src(piece, 'not_reported', 'the lessons file (%s) carries no all-99 list for day %s%s' % (
+                lesson.get('schema'), d.day, '' if by_day else ' (lessons written before the list existed)'),
+                seen=lseen, for_frankie=author != 'jev')
+            continue
+        doc, seen, why, bad = _pinned_once(d, '%s all-99 list' % piece, pin)
+        if bad:
+            src(piece, 'integrity', bad, seen=seen, for_frankie=author != 'jev')
+        elif doc is None:
+            src(piece, 'not_reported', why, for_frankie=author != 'jev')
+        else:
+            src(piece, 'read', doc=doc, seen=seen, summary=pin.get('summary'), for_frankie=author != 'jev')
+    for author in ('frankie', 'historical', 'jev'):
+        if author not in seen_authors:
+            src('scientific_teacher[%s]' % author, 'not_reported',
+                'no %s lessons file among %s (%s)' % (author, origin, listing(paths) if paths else 'none named'))
+    # carried claims (the accumulated-lessons step; on a classroom-arm day the exchange carries them, listed there)
+    given = piece_receipts.get('carried_claims')
+    if given:
+        doc, seen, why = _json_once(d, 'carried claims receipt', given)
+        if doc is None:
+            src('carried_claims', 'integrity' if seen else 'not_reported', why, seen=seen)
+        else:
+            coverage_file('carried_claims', 'carried claims receipt', doc, seen)
+    else:
+        step, sseen, why, bad = _step(d, run_dir, run_name, 'accumulated_lessons')
+        if bad:
+            src('carried_claims', 'integrity', bad, seen=sseen)
+        elif step is None or not step.get('receipt'):
+            src('carried_claims', 'not_reported', why or 'the accumulated-lessons step (status %s) names no receipt%s' % (
+                step.get('status'), (': ' + str(step['reason'])) if step.get('reason') else ''))
+        else:
+            doc, seen, why, bad = _pinned_once(d, 'carried claims receipt', dict(path=step['receipt'],
+                                                                                  sha256=step.get('receipt_sha256')))
+            if bad:
+                src('carried_claims', 'integrity', bad, seen=seen)
+            elif doc is None:
+                src('carried_claims', 'not_reported', why)
+            else:
+                coverage_file('carried_claims', 'carried claims receipt', doc, seen)
+    # the survivor/candidate update (a cross-day boundary piece: present when this day is a boundary or one is given)
+    given = piece_receipts.get('candidates') or (SURVIVORS / run_name / d.day / 'receipt.json')
+    if not Path(given).is_file():
+        src('candidates', 'not_reported', 'no survivor/candidate update receipt for this day (%s): the update runs at a '
+                                          'cross-day batch boundary and none was given' % given)
+    else:
+        doc, seen, why = _json_once(d, 'candidates receipt', given)
+        if doc is None:
+            src('candidates', 'integrity' if seen else 'not_reported', why, seen=seen)
+        else:
+            coverage_file('candidates', 'candidate update receipt', doc, seen)
+    # the exchange: its receipt beside exchange.json (the exchange given to this step, else the step's own path)
+    exchange_path = d.exchange_path or (xstep or {}).get('exchange')
+    if not exchange_path:
+        src('exchange', 'not_reported', d.exchange_listed or 'no exchange for the day')
+    else:
+        doc, seen, why = _json_once(d, 'exchange receipt', Path(exchange_path).with_name('receipt.json'))
+        if doc is None:
+            src('exchange', 'integrity' if seen else 'not_reported', why, seen=seen)
+        elif str(doc.get('day')) != str(d.day):
+            src('exchange', 'integrity', 'the exchange receipt is for day %s, not %s' % (doc.get('day'), d.day), seen=seen)
+        elif not isinstance(_use_all99(doc), dict):
+            src('exchange', 'not_reported', 'the exchange receipt carries no workflow_report.use.all_99_coverage', seen=seen)
+        else:
+            src('exchange', 'read', doc=_use_all99(doc), seen=seen)
+    # the meeting: the receipt frankie_box_brain.read_meeting_for_exchange already read and verified
+    meeting_receipt = d.meeting.get('receipt') if isinstance(d.meeting.get('receipt'), dict) else None
+    mseen = dict(path=str(Path(d.meeting['path']).with_name('receipt.json')) if d.meeting.get('path') else None,
+                 sha256=None)
+    if meeting_receipt is None:
+        src('meeting', 'not_reported', 'no meeting receipt (%s: %s)' % (d.meeting.get('status'), d.meeting.get('reason')))
+    elif not isinstance(_use_all99(meeting_receipt), dict):
+        src('meeting', 'not_reported', 'the meeting receipt (status %s) carries no workflow_report.use.all_99_coverage'
+            % meeting_receipt.get('status'), seen=mseen)
+    else:
+        src('meeting', 'read', doc=_use_all99(meeting_receipt), seen=mseen)
+    # Jev (listed; never decides what reached Frankie): his CPU receipt and the client receipt it pins
+    given, jev, jseen, jwhy, jbad = piece_receipts.get('jev'), None, None, None, None
+    if not given:
+        step, jseen, jwhy, jbad = _step(d, run_dir, run_name, 'jev')
+        if step is not None and step.get('receipt'):
+            given = step['receipt']
+        elif step is not None:
+            jwhy = 'the Jev step (status %s) names no receipt%s' % (step.get('status'),
+                                                                  (': ' + str(step['reason'])) if step.get('reason') else '')
+    if given and not jbad:
+        jev, jseen, jwhy = _json_once(d, 'Jev receipt', given)
+        if jev is None and jseen is not None:
+            jbad = jwhy
+    if jbad:
+        src('jev', 'integrity', jbad, seen=jseen)
+        src('jev_sit_in', 'not_reported', 'the Jev receipt that pins the client receipt failed its integrity check')
+    elif jev is None:
+        src('jev', 'not_reported', jwhy, seen=jseen)
+        src('jev_sit_in', 'not_reported', 'no Jev receipt to name the client receipt (%s)' % jwhy)
+    else:
+        src('jev', 'read', doc=_use_all99(jev), seen=jseen) if isinstance(_use_all99(jev), dict) else \
+            src('jev', 'not_reported', 'the Jev receipt (status %s) carries no workflow_report.use.all_99_coverage'
+                % jev.get('status'), seen=jseen)
+        client, cseen, cwhy, cbad = _pinned_once(d, 'Jev client receipt', jev.get('client_receipt'))
+        if cbad:
+            src('jev_sit_in', 'integrity', cbad, seen=cseen)
+        elif client is None:
+            src('jev_sit_in', 'not_reported', cwhy)
+        elif not isinstance(_use_all99(client), dict):
+            src('jev_sit_in', 'not_reported', 'the Jev client receipt carries no workflow_report.use.all_99_coverage',
+                seen=cseen)
+        else:
+            src('jev_sit_in', 'read', doc=_use_all99(client), seen=cseen)
+    order = {p: i for i, (p, _, _) in enumerate(ALL99_PIECES)}
+    sources.sort(key=lambda s: (order.get(s['piece'].split(' #')[0], len(order)), s['piece']))
+    d.all99_sources, d.all99_problems = sources, problems
+
+
+def _rows(doc, shared_schema):
+    """(rows, None, used) from a piece's recorded list, or (None, why, used). The shared field FRANKIE_ALL99_COVERAGE_V1
+    is preferred: the document itself when it is one, else its nested `shared_field` (the pieces carry both); otherwise
+    the piece's own shape (entries[] of the ROOT and the classroom, rows[] of the adviser pieces). `used` names the shared
+    field read (dict(where, doc)) or None. Fields are taken as recorded."""
+    if not isinstance(doc, dict):
+        return None, 'the recorded list is not a mapping', None
+    used = None
+    if shared_schema and doc.get('schema') == shared_schema:
+        used = dict(where='the list itself (%s)' % shared_schema, doc=doc)
+    elif shared_schema and isinstance(doc.get('shared_field'), dict) and doc['shared_field'].get('schema') == shared_schema:
+        used = dict(where='its shared_field (%s)' % shared_schema, doc=doc['shared_field'])
+        doc = doc['shared_field']
+    if doc.get('present') is False:
+        return None, 'the piece recorded no per-entry rows: %s (counts recorded: %s)' % (
+            rec(doc.get('reason')), json.dumps(doc.get('counts'), sort_keys=True)), used
+    items = doc['entries'] if isinstance(doc.get('entries'), list) else doc['rows'] if isinstance(doc.get('rows'), list) else None
+    if not items and doc.get('error'):
+        return None, 'the piece recorded that its list could not be built: %s' % doc['error'], used
+    if items is None:
+        return None, 'the recorded list (schema %s) carries no entries[] or rows[]' % rec(doc.get('schema')), used
+    return [dict(entry=item.get('entry') or item.get('layer'), group=item.get('group'), disposition=item.get('disposition'),
+                 reason=item.get('reason'), consumer=item.get('consumer'), count=item.get('count'), **{'class': item.get('class')})
+            if isinstance(item, dict) else dict(entry=None) for item in items], None, used
+
+
+def all99_join(day, sources, problems):
+    """The ONE per-day table of the 99 entries from the pieces' recorded lists (ALL99_JOIN_SCHEMA). Returns the join
+    document; its sha256 over the inputs (piece, status, file, sha256, reason) binds the reports' reuse."""
+    A99, registry_why = _shared_registry()
+    inputs = [dict(piece=s['piece'], status=s['status'], file=s['file'], sha256=s['sha256'], reason=s['reason'])
+              for s in sources]
+    join_sha256 = sha256_bytes(json.dumps(inputs, sort_keys=True).encode())
+    pieces, per, integrity = [], {}, [dict(kind='problem', detail=p) for p in problems]
+    known = {layer: group for layer, group, _ in A99.REGISTRY} if A99 else {}
+    class_of = getattr(A99, 'CLASS_OF', None) or {}
+    validate = getattr(A99, 'validate', None)
+    for s in sources:
+        if s['status'] == 'read' and not isinstance(s['doc'], dict):
+            s = dict(s, status='integrity', reason='the recorded list is a %s, not a JSON object' % type(s['doc']).__name__)
+        summary = dict(piece=s['piece'], for_frankie=s['for_frankie'], status=s['status'], reason=s['reason'],
+                       file=s['file'], sha256=s['sha256'], schema=s['doc'].get('schema') if isinstance(s['doc'], dict) else None)
+        if s['status'] == 'integrity':
+            integrity.append(dict(kind='piece', piece=s['piece'], detail=s['reason']))
+        if s['status'] == 'read':
+            # the registry pin each piece recorded on its own list (the ROOT's crosswalk integrity, the classroom's registry
+            # status, the shared lists' registry_integrity): a difference stays a visible integrity finding
+            pin_state = ((s['doc'].get('crosswalk') or {}).get('integrity') if isinstance(s['doc'].get('crosswalk'), dict) else None,
+                         (s['doc'].get('registry') or {}).get('status') if isinstance(s['doc'].get('registry'), dict) else None)
+            if pin_state[0] in ('differs', 'unreadable') or str(pin_state[1] or '').startswith(('integrity', 'unreadable')):
+                integrity.append(dict(kind='registry', piece=s['piece'], detail='the piece recorded its registry pin as %s'
+                                      % listing(x for x in pin_state if x)))
+            found = [x for x in s['doc'].get('registry_integrity') or []
+                     if not (isinstance(x, dict) and x.get('kind') == 'crosswalk_not_in_checkout')]   # listed, not a failure
+            if found:
+                integrity.append(dict(kind='registry', piece=s['piece'], detail='registry_integrity recorded: %s'
+                                      % json.dumps(found, sort_keys=True)))
+        if s['status'] == 'read' and A99:
+            rows, why, used = _rows(s['doc'], getattr(A99, 'SCHEMA', None))
+            if used is not None:
+                summary['read_from'] = used['where']
+                # validated at this boundary by the one registry module (frankie_box_all99_coverage.validate) and the
+                # piece's own recorded build findings carried: both visible integrity findings, never relabelled
+                findings = list(validate(used['doc'])) if callable(validate) else []
+                recorded = used['doc'].get('integrity') if isinstance(used['doc'].get('integrity'), list) else []
+                for label, values in (('the shared validator found', findings), ('the piece recorded', recorded)):
+                    if values:
+                        integrity.append(dict(kind='field', piece=s['piece'], detail='%s %d finding(s): %s' % (
+                            label, len(values), listing('%s %s' % (f.get('kind'), f.get('entry') or '') if isinstance(f, dict)
+                                                        else str(f) for f in values))))
+            if rows is None:
+                summary.update(status='not_reported', reason=why)
+            else:
+                by, duplicates, unregistered, unknown_words, malformed = {}, [], [], set(), 0
+                for r in rows:
+                    if not r.get('entry'):
+                        malformed += 1
+                    elif r['entry'] not in known:
+                        unregistered.append(r['entry'])
+                    elif r['entry'] in by:
+                        duplicates.append(r['entry'])
+                    else:
+                        if reach_of(str(r['disposition']), r.get('class'), class_of) == 'unclassified':
+                            unknown_words.add(str(r['disposition']))
+                        by[r['entry']] = r
+                counts = {}
+                for r in by.values():
+                    counts[str(r['disposition'])] = counts.get(str(r['disposition']), 0) + 1
+                per[s['piece']] = by
+                summary.update(listed=len(by), counts=counts, not_listed=[e for e in known if e not in by],
+                               unregistered=unregistered, duplicates=duplicates, unknown_words=sorted(unknown_words),
+                               malformed_rows=malformed, limit=s['doc'].get('limit'))
+                for kind, values in (('unregistered entries', unregistered), ('duplicate entries', duplicates)):
+                    if values:
+                        integrity.append(dict(kind='piece', piece=s['piece'], detail='%s: %s' % (kind, listing(values))))
+                if malformed:
+                    integrity.append(dict(kind='piece', piece=s['piece'], detail='%d rows carry no entry id' % malformed))
+                recorded = (s.get('summary') or {}).get('counts') if isinstance(s.get('summary'), dict) else None
+                if isinstance(recorded, dict) and {k: v for k, v in recorded.items() if v} != counts:
+                    summary['summary_vs_list'] = dict(carried_summary=recorded, list=counts)
+        pieces.append(summary)
+    doc = dict(schema=ALL99_JOIN_SCHEMA, day=str(day), join_sha256=join_sha256, inputs=inputs, pieces=pieces,
+               rules=JOIN_RULES, finals_meaning=dict(FINALS), reach_refine=REACH_REFINE,
+               class_source='row class, else frankie_box_all99_coverage.CLASS_OF',
+               rule='diagnostic only, never knowledge: a recorded arrival is what the piece recorded, not proof that a '
+                    'particular equation used the entry; missing lists read as unknown, never zero')
+    if A99 is None:
+        doc.update(status='not_built', reason=registry_why, entries=[], finals={}, no_computation=[], disagreements=[],
+                   integrity=integrity)
+        return doc
+    roles = A99.GROUP_ROLES
+    entries, finals, disagreements = [], {}, []
+    for n, (entry, group, policy) in enumerate(A99.REGISTRY, 1):
+        role = roles.get(group)
+        carried, not_listed = [], []
+        for s in pieces:
+            if s['piece'] not in per:
+                continue
+            r = per[s['piece']].get(entry)
+            if r is None:
+                not_listed.append(s['piece'])
+                continue
+            word = str(r['disposition'])
+            carried.append(dict(piece=s['piece'], for_frankie=s['for_frankie'], disposition=word,
+                                reach=reach_of(word, r.get('class'), class_of), klass=r.get('class') or class_of.get(word),
+                                reason=r.get('reason'),
+                                consumer=r.get('consumer'), count=r.get('count'), group=r.get('group')))
+        frankie = [c for c in carried if c['for_frankie']]
+        classroom = next((c for c in frankie if c['piece'] == 'classroom'), None)
+        if classroom and classroom['reach'] == 'computation':
+            final = 'classroom'
+        elif classroom and classroom['reach'] == 'computation_thin':
+            final = 'classroom_thin'
+        elif any(c['reach'] in ('computation', 'computation_thin') for c in frankie):
+            final = 'other_computation'
+        elif any(c['reach'] in REACHED for c in frankie):
+            final = 'consumer'
+        elif any(c['reach'] == 'exposed' for c in frankie):
+            final = 'exposed_only'
+        elif frankie:
+            final = 'nothing'
+        else:
+            final = 'unknown'
+        finals[final] = finals.get(final, 0) + 1
+        row = dict(n=n, entry=entry, group=group, policy=policy, role=role, carried=carried, not_listed_by=not_listed,
+                   final=final, reached_by=['%s=%s' % (c['piece'], c['disposition']) for c in frankie if c['reach'] in REACHED],
+                   computation=any(c['reach'] in ('computation', 'computation_thin') for c in frankie))
+        for c in carried:
+            if c['reach'] == 'integrity':
+                integrity.append(dict(kind='entry', entry=entry, piece=c['piece'], detail=c['reason']))
+        found = []
+        other_groups = sorted({str(c['group']) for c in carried if c.get('group') and c['group'] != group})
+        if other_groups:
+            found.append(dict(rule='group', detail='%s list it under %s; the shared registry: %s' % (
+                listing(c['piece'] for c in carried if c.get('group') and c['group'] != group), listing(other_groups), group)))
+        lawful = [c for c in carried if c['reach'] in ('withheld', 'disabled', 'retired')]
+        reached = [c for c in carried if c['reach'] in REACHED]
+        if lawful and reached:
+            found.append(dict(rule='lawful_role', detail='%s; while %s' % (
+                listing('%s records %s' % (c['piece'], c['disposition']) for c in lawful),
+                listing('%s records %s' % (c['piece'], c['disposition']) for c in reached))))
+        if role in ('raw', 'calculation', 'clock'):
+            root = next((c for c in carried if c['piece'] == 'root'), None)
+            readers = [c for c in carried if c['piece'] in PICTURE_READERS]
+            if root and root['reach'] == 'picture' and readers and all(c['reach'] == 'absent' for c in readers):
+                found.append(dict(rule='picture_admitted_not_arrived', detail='the ROOT recorded %s; %s' % (
+                    root['disposition'], listing('%s records %s' % (c['piece'], c['disposition']) for c in readers))))
+            if root and root['reach'] == 'absent' and any(c['reach'] == 'computation' for c in readers):
+                found.append(dict(rule='picture_arrived_not_admitted', detail='the ROOT recorded %s (%s); %s' % (
+                    root['disposition'], rec(root['reason']), listing('%s records %s' % (c['piece'], c['disposition'])
+                                                                     for c in readers if c['reach'] == 'computation'))))
+        for f in found:
+            disagreements.append(dict(entry=entry, **f))
+        row['disagreements'] = found
+        entries.append(row)
+    for s in pieces:
+        if s.get('summary_vs_list'):
+            disagreements.append(dict(entry=None, rule='summary_vs_list', piece=s['piece'], detail='carried summary %s; '
+                                      'the pinned list %s' % (json.dumps(s['summary_vs_list']['carried_summary'], sort_keys=True),
+                                                              json.dumps(s['summary_vs_list']['list'], sort_keys=True))))
+    doc.update(status='built', registry=dict(module='frankie_box_all99_coverage', schema=getattr(A99, 'SCHEMA', None),
+                                             registry_sha256=getattr(A99, 'REGISTRY_SHA256', None),
+                                             crosswalk_sha256=getattr(A99, 'CROSSWALK_SHA256', None),
+                                             entries=len(A99.REGISTRY)),
+               entries=entries, finals=finals, no_computation=[e['entry'] for e in entries if not e['computation']],
+               disagreements=disagreements, integrity=integrity)
+    return doc
+
+
+def all99_summary(join):
+    """The compact projection the receipt's workflow report carries (the full join is receipt['all99'])."""
+    return dict(schema=ALL99_JOIN_SCHEMA + '_SUMMARY', status=join.get('status'), join_sha256=join.get('join_sha256'),
+                pieces={p['piece']: dict(status=p['status'], listed=p.get('listed'), reason=p['reason'] if p['status'] != 'read' else None)
+                        for p in join.get('pieces') or []},
+                finals=join.get('finals'), no_computation=len(join.get('no_computation') or []),
+                disagreements=len(join.get('disagreements') or []), integrity=len(join.get('integrity') or []))
+
+
+def all99_lines(d):
+    """The FRANKIE report's section: fixed templates over the join; paths and hashes stay in the Evidence section."""
+    j = d.all99
+    L = ['## The 99 layers (what reached Frankie today)', '',
+         'Every one of the 99 registry entries, joined from each piece\'s own recorded all-99 list (each list read once, '
+         'never recomputed). Diagnostic only; never knowledge. A recorded arrival is what the piece recorded; it is not '
+         'proof that a particular equation used the entry. A piece that recorded no list is "not reported" (unknown, '
+         'never zero).', '']
+    L += table(['piece', 'reaches Frankie', 'status', 'entries listed', 'words recorded (counts as recorded)'],
+               [(p['piece'], 'yes' if p['for_frankie'] else 'no (listed only)', p['status'], rec(p.get('listed')),
+                 listing('%s %s' % (k, v) for k, v in sorted((p.get('counts') or {}).items())) if p.get('counts') else '-')
+                for p in j['pieces']]) + ['']
+    for p in j['pieces']:
+        if p['status'] == 'not_reported':
+            L.append('- Not reported by %s: %s.' % (p['piece'], rec(p['reason'])))
+        elif p['status'] == 'integrity':
+            L.append('- INTEGRITY FAILURE at %s (separate, visible; not a missing-data disposition): %s.' % (p['piece'], rec(p['reason'])))
+        elif p.get('not_listed'):
+            L.append('- %s listed %s of the 99 entries; not listed by it: %s.' % (p['piece'], rec(p.get('listed')),
+                                                                                 listing(p['not_listed'])))
+        if p.get('unknown_words'):
+            L.append('- %s recorded words this report\'s table does not group (shown as recorded, grouped unclassified): %s.'
+                     % (p['piece'], listing(p['unknown_words'])))
+    L.append('')
+    for p in j['pieces']:
+        if p.get('limit'):
+            L += ['The %s recorded this limit on its list: %s' % (p['piece'], p['limit']), '']
+    if j.get('status') != 'built':
+        return L + ['The per-entry join is not built: %s.' % rec(j.get('reason')), '']
+    L += ['Final for Frankie (counts of entries): %s.' % listing('%s %d' % (k, j['finals'].get(k, 0)) for k, _ in FINALS), '']
+    L += ['- %s: %s.' % (k, meaning) for k, meaning in FINALS] + ['']
+    read = [p['piece'] for p in j['pieces'] if p['status'] == 'read' and p.get('counts') is not None]
+    rows = []
+    for e in j['entries']:
+        words = {c['piece']: c['disposition'] for c in e['carried']}
+        rows.append([e['n'], e['entry'], rec(e['role'])] + [words.get(p, 'not listed') for p in read]
+                    + [e['final'], listing(e['reached_by'])])
+    L += ['### The 99 entries', '']
+    L += table(['#', 'entry', 'role'] + read + ['final for Frankie', 'reached (Frankie pieces)'], rows) + ['']
+    L += ['### Entries that reached no computation (every piece\'s recorded word and reason)', '',
+          'Entries no Frankie piece recorded in a computation: %d.' % len(j['no_computation']), '']
+    for e in j['entries']:
+        if e['computation']:
+            continue
+        parts = ['%s: %s (%s)%s' % (c['piece'], c['disposition'], c['reach'],
+                                    (': ' + str(c['reason'])) if c.get('reason') else '') for c in e['carried']]
+        L.append('- %s (%s; final %s). %s%s' % (
+            e['entry'], rec(e['role']), e['final'], '; '.join(parts) if parts else 'No piece listed it',
+            ('. Not listed by: ' + listing(e['not_listed_by'])) if e['not_listed_by'] else ''))
+    L += ['', '### Disagreements between pieces', '', 'Recorded under the fixed rules: %d.' % len(j['disagreements']), '']
+    L += ['- %s%s: %s.' % (x['rule'], (' (entry %s)' % x['entry']) if x.get('entry') else (' (piece %s)' % x.get('piece')),
+                          x['detail']) for x in j['disagreements']]
+    L += ['', '### Integrity (separate visible failures)', '']
+    L += ['- %s: %s.' % (x.get('piece') or x.get('entry') or x['kind'], x['detail']) for x in j['integrity']] or ['None recorded.']
+    return L + ['', 'The join rules (fixed text): %s.' % JOIN_RULES, '']
+
+
 # ------------------------------------------------------------------------------------------------- the exchange section
 def exchange_lines(d, with_frankie):
     """The three-way exchange, translated field by field (both reports; the FRANKIE report adds his turn per item)."""
@@ -1155,6 +1789,12 @@ def evidence(d, with_frankie=False):
                 d.school_row.get('report_number')))
     else:
         L.append('- no school file was given: %s' % d.school_listed)
+    if with_frankie and getattr(d, 'all99', None):
+        L.append('- the 99-layer join: %d piece lists named, %d read; join sha256 %s' % (
+            len(d.all99.get('pieces') or []), sum(1 for p in d.all99.get('pieces') or [] if p['status'] == 'read'),
+            d.all99_sha256))
+        L += ['  - %s: %s, sha256 %s' % (p['piece'], p['file'], p['sha256'])
+              for p in d.all99.get('pieces') or [] if p.get('file')]
     L.append('- files read by this step: %d (each with bytes and sha256 on the step\'s receipt)' % len(d.inputs))
     if d.absent:
         L += ['- files not found or not readable (each section above states what is not recorded):']
@@ -1249,10 +1889,15 @@ def write_new(path, raw):
 
 
 def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, exchange_listed=None, *, return_receipt=False,
-        school=None, school_listed=None):
+        school=None, school_listed=None, run_dir=None, piece_receipts=None):
     started = time.monotonic()
     d = Day(day, classroom, refused_reason, exchange, exchange_listed, school, school_listed)
     timings = dict(read_inputs=round(time.monotonic() - started, 6))
+    # the 99 layers: every piece's recorded list read once (pinned files checked), then joined; no recomputation
+    collect_all99(d, run_name, Path(run_dir) if run_dir else RUNS / run_name, dict(piece_receipts or {}))
+    d.all99 = all99_join(day, d.all99_sources, d.all99_problems)
+    d.all99_sha256 = d.all99['join_sha256']
+    timings['all99_join'] = round(time.monotonic() - started - timings['read_inputs'], 6)
     reports.mkdir(parents=True, exist_ok=True)
     out, printed, problems = [], [], list(d.school_problems)
     reuse_why = None
@@ -1272,10 +1917,12 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                          meeting=bool(latest[k]) and latest[k].get('meeting_sha256') == d.meeting_sha256
                                  and latest[k].get('meeting_status') == d.meeting['status'],
                          school=bool(latest[k]) and latest[k].get('school_sha256') == d.school_sha256
-                                and latest[k].get('school_status', 'not given') == d.school_status)
+                                and latest[k].get('school_status', 'not given') == d.school_status,
+                         all99=bool(latest[k]) and latest[k].get('all99_sha256') == d.all99_sha256)
                  for k in KINDS}
         reuse = all(all(m.values()) for m in match.values())
-        reuse_why = ('the existing reports were built from the same classroom receipt, exchange, meeting and school file'
+        reuse_why = ('the existing reports were built from the same classroom receipt, exchange, meeting, school file and '
+                     'pieces\' all-99 lists'
                      if reuse else 'no earlier reports for this run and day' if not any(latest.values()) else
                      'rebuilt as a revision: changed since the last build: ' + listing(
                          sorted({name for m in match.values() for name, same in m.items() if not same})))
@@ -1322,13 +1969,14 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                              classroom=str(d.dir), classroom_status=d.status, supersedes=superseded, at=time.time(),
                              commit=os.environ.get('MARKETS_SHA'), exchange_sha256=d.exchange_sha256,
                              meeting_sha256=d.meeting_sha256, meeting_status=d.meeting['status'],
-                             school=d.school_path, school_sha256=d.school_sha256, school_status=d.school_status)
+                             school=d.school_path, school_sha256=d.school_sha256, school_status=d.school_status,
+                             all99_sha256=d.all99_sha256)
                 index['reports'].append(entry)
                 printed.append((k, raw.decode('utf-8')))
                 out.append(dict(kind=k, number=number, revision=revision, file=str(central), classroom_copy=copy,
                                 sha256=entry['sha256'], bytes=len(raw), existing=False, supersedes=superseded))
         write_index(reports, index)
-        timings['build_and_write'] = round(time.monotonic() - started - timings['read_inputs'], 6)
+        timings['build_and_write'] = round(time.monotonic() - started - timings['read_inputs'] - timings['all99_join'], 6)
     for k, text in printed:
         print('=' * 100)
         print(text, end='' if text.endswith('\n') else '\n')
@@ -1346,7 +1994,9 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                    school_successor_receipt_status=(d.school_receipt or {}).get('status') if d.school_receipt else None,
                    absent=[dict(file=name, reason=why) for name, why in d.absent],
                    inputs=d.inputs, reused=bool(out) and all(o.get('existing') for o in out), reuse_why=reuse_why,
-                   index=str(reports / 'index.json'), problems=problems, model_calls=0)
+                   index=str(reports / 'index.json'), problems=problems, model_calls=0,
+                   # the 99 layers joined for the FRANKIE report (diagnostic, never knowledge): the full per-entry join
+                   all99=d.all99, all99_sha256=d.all99_sha256)
     receipt['workflow_report'] = workflow_report(d, receipt)
     receipt_path = reports / 'receipts' / run_name / (day + '.json')
     receipt['receipt_path'] = str(receipt_path)
@@ -1381,7 +2031,12 @@ def workflow_report(d, receipt):
              'external-acknowledgement.json', 'external-completion.json', 'novel-findings.json', 'brain MANIFEST'],
         'both: the three-way exchange': ['exchange', 'exchange-frankie view'],
         'frankie report: the discussion (meeting)': ['meeting record'],
-        'frankie report: the school file': ['school file', 'school index', 'school successor receipt']}
+        'frankie report: the school file': ['school file', 'school index', 'school successor receipt'],
+        'frankie report: the 99 layers (what reached Frankie today)':
+            ['root step receipt', 'classroom receipt', 'exchange step receipt', 'lessons file',
+             'lessons file (the school file\'s whole inline copy)'] + ['%s all-99 list' % p for p, _, _ in ALL99_PIECES]
+            + ['accumulated_lessons step receipt', 'carried claims receipt', 'candidates receipt', 'exchange receipt',
+               'jev step receipt', 'Jev receipt', 'Jev client receipt', 'meeting record']}
     read = {i['kind'] for i in d.inputs}
     dispositions = [dict(input=name, disposition='absent or unreadable', reason=why) for name, why in d.absent]
     if d.exchange is None:
@@ -1396,6 +2051,10 @@ def workflow_report(d, receipt):
     if d.status != 'complete':
         dispositions.append(dict(input='classroom outputs', disposition='not read',
                                  reason='the classroom was %s: %s' % (d.status, d.receipt.get('reason'))))
+    for p in d.all99.get('pieces') or []:
+        if p['status'] != 'read':
+            dispositions.append(dict(input='all-99 list of %s' % p['piece'], disposition=p['status'], reason=p['reason'],
+                                     integrity_failure=p['status'] == 'integrity'))
     return dict(
         schema=PIECE_WORKFLOW_REPORT, piece='day_reports',
         inputs=dict(files=d.inputs, built_from=d.source, exchange_sha256=d.exchange_sha256, meeting_sha256=d.meeting_sha256,
@@ -1403,6 +2062,7 @@ def workflow_report(d, receipt):
         use=dict(sections_from={k: sorted(set(v) & read) for k, v in sections_from.items()},
                  not_read={k: sorted(set(v) - read) for k, v in sections_from.items() if set(v) - read},
                  dispositions=dispositions, reuse=receipt['reused'], reuse_why=receipt['reuse_why'],
+                 all99=all99_summary(d.all99),
                  withheld=['the answer key\'s content and the exhaustive grade are never in the reports (R10); hashes and '
                            'paths appear only in the Evidence section; the meeting appears only in the Frankie report'],
                  rule='fixed templates per recorded field; no interpretation, ranking, average or pooled value (D37); '
@@ -1431,15 +2091,30 @@ def main():
     ap.add_argument('--school', help='the day\'s %s file the school step wrote (<brain>/school/<day>.json or a retained '
                                      'checked successor <brain>/school/successors/<day>/<op>/school.json)' % SCHOOL_SCHEMA)
     ap.add_argument('--school-listed', help='why there is no school file for the day (the orchestrator\'s reason)')
+    ap.add_argument('--run-dir', help='the orchestrator run directory whose days/<day>/<stage>.json step receipts name the '
+                                      'pieces\' all-99 lists (default %s/<run>)' % RUNS)
+    ap.add_argument('--piece-receipt', action='append', default=[], metavar='PIECE=PATH',
+                    help='a piece receipt given directly for the 99-layer join: candidates=<survivor update receipt.json> '
+                         '(a boundary day other than this one), carried_claims=<accumulated lessons receipt.json>, '
+                         'jev=<JEV_CPU_RECEIPT_V1 receipt.json>')
     a = ap.parse_args()
     if not re.fullmatch('[0-9]{8}', a.day):
         ap.error('--day must be YYYYMMDD')
     if not re.fullmatch('[A-Za-z0-9_-]{1,64}', a.run):
         ap.error('--run: letters, digits, _ and - only')
+    piece_receipts = {}
+    for item in a.piece_receipt:
+        piece, sep, path = item.partition('=')
+        if not sep or piece not in ('candidates', 'carried_claims', 'jev') or not Path(path).is_absolute() \
+                or '..' in Path(path).parts or piece in piece_receipts:
+            ap.error('--piece-receipt needs one PIECE=ABSOLUTE_PATH per piece, PIECE one of candidates, carried_claims, jev')
+        piece_receipts[piece] = path
+    if a.run_dir and (not Path(a.run_dir).is_absolute() or '..' in Path(a.run_dir).parts):
+        ap.error('--run-dir must be an absolute path without ..')
     cls = a.day_class or CLASS_OF_WEEKDAY.get(dt.date(int(a.day[:4]), int(a.day[4:6]), int(a.day[6:])).weekday(),
                                                'weekend')
     return run(a.day, a.classroom, a.run, Path(a.reports_dir), cls, a.refused_reason, a.exchange, a.exchange_listed,
-               school=a.school, school_listed=a.school_listed)
+               school=a.school, school_listed=a.school_listed, run_dir=a.run_dir, piece_receipts=piece_receipts)
 
 
 if __name__ == '__main__':
