@@ -56,6 +56,12 @@ STATE_PATH = os.environ.get('SIT_IN_STATE', '/workspace/jev-sit-in/state.json')
 CLAIM_KINDS = ('mechanism', 'novel_finding', 'test_next')
 PROGRESS = None                  # required before model work; the current durable phase and replay cursor
 LOCAL = None                    # explicit owner-local CPU adapter; absent preserves retained client behavior
+# The material stacks (Greg, 2026-10-07: every existing lossless token stack on everything Jev reads, layered, each
+# proven by parse-back; frankie_box_adviser_market.render_material). 'stacked' for a new day; 'legacy' for a state
+# retained before the stacks, so its bound inputs, prompts and recorded request identities replay byte for byte.
+ENCODING = 'legacy'
+STACKED, LEGACY = 'stacked', 'legacy'
+BLOCK_MARKERS = ('\n[block ', '\n[material ', '\n=====')   # stacked pieces cut between self-contained blocks
 
 
 class Incomplete(Exception):
@@ -195,18 +201,55 @@ def parse_json(text):
 
 
 def pieces(text, size=None):
-    """The whole text in pieces a little under the limit, cut on a line boundary where one is near."""
+    """The whole text in pieces a little under the limit, cut on a line boundary where one is near. With the material
+    stacks a piece is cut before a block, material or section line where one lies in its last three quarters, so a
+    piece holds whole self-contained blocks (their keys, columns and dictionaries); the legacy cut is unchanged."""
     size = JEV_PIECE_CHARS if size is None else size
     out, start = [], 0
     while start < len(text):
         end = min(len(text), start + size)
         if end < len(text):
-            cut = text.rfind('\n', start + size // 2, end)
+            cut = -1
+            if ENCODING == STACKED:
+                cut = max(text.rfind(marker, start + size // 4, end) for marker in BLOCK_MARKERS)
+            if cut <= start:
+                cut = text.rfind('\n', start + size // 2, end)
             if cut > start:
                 end = cut + 1
         out.append(text[start:end])
         start = end
     return out or ['']
+
+
+def _AM():
+    """frankie_box_adviser_market (the material stacks and the picture reader) on either import path."""
+    try:
+        import frankie_box_adviser_market as AM
+    except ImportError:
+        from deploy.aws.box import frankie_box_adviser_market as AM
+    return AM
+
+
+def _legend(whole):
+    """The material grammar, once per prompt, when the material the prompt reads from (`whole`, of which the prompt
+    holds all or a piece) carries a stacked block; '' otherwise and always for the legacy encoding (its prompts stay
+    byte-identical). A prompt never pays for a grammar its material does not use."""
+    stacked = ENCODING == STACKED and (whole.startswith('[material ') or '\n[material ' in whole)
+    return _AM().MATERIAL_LEGEND + '\n\n' if stacked else ''
+
+
+def _body(value, label, encoding=None, renders=None):
+    """One material value as the prompt carries it: json.dumps(sort_keys) (legacy) or every existing lossless stack,
+    layered and proven by parse-back, as self-contained blocks of at most one Jev piece (stacked). renders: a list
+    that collects (label, render with every layer's text) for the token measurement."""
+    legacy = json.dumps(value, sort_keys=True)
+    if (encoding or ENCODING) != STACKED:
+        return legacy
+    render = _AM().render_material(value, label=label, legacy_text=legacy, max_chars=JEV_PIECE_CHARS,
+                                   keep_texts=renders is not None)
+    if renders is not None:
+        renders.append((label, render))
+    return render['text']
 
 
 def complete(make_prompt, piece, ask=None, depth=0):
@@ -235,8 +278,8 @@ def notes(material, purpose):
     for number, piece in enumerate(parts, 1):
         for k, note in enumerate(complete(lambda p: (
                 'You are Jev. Read piece %d of %d of the material below for this purpose: %s\nWrite notes that keep '
-                'every number, name and relation that bears on it, in full; say what the piece covers.\n\nPIECE:\n%s'
-                % (number, len(parts), purpose, p)), piece)):
+                'every number, name and relation that bears on it, in full; say what the piece covers.\n\n%sPIECE:\n%s'
+                % (number, len(parts), purpose, _legend(text), p)), piece)):
             written.append('[note on piece %d/%d%s]\n%s' % (number, len(parts), '' if k == 0 else ', continued %d' % k, note))
     packs, current = [], ''
     for note in written:
@@ -441,19 +484,21 @@ def wait_bundle(slots, schema, seconds, poll):
         time.sleep(poll)
 
 
-def material_parts(material):
-    """The material's labelled sections, whole, in the order Jev reads them. Nothing is cut or summarized."""
+def material_parts(material, encoding=None, renders=None):
+    """The material's labelled sections, whole, in the order Jev reads them. Nothing is cut or summarized. encoding:
+    LEGACY or STACKED (default: the day's ENCODING); renders collects the stacked renders for the token measurement."""
     parts = [('classroom_package', '===== CLASSROOM PACKAGE (%s, %s, sha256 %s) =====\n%s' % (
         material['material'].get('source'), material['material'].get('path'), material['material'].get('sha256'),
-        json.dumps(material['material'].get('dipole_classroom'), sort_keys=True)))]
+        _body(material['material'].get('dipole_classroom'), 'classroom package', encoding, renders)))]
     if material['material'].get('dipole_external') is not None:
         parts.append(('external_section',
                       '===== EXTERNAL SECTION: THE HISTORICAL DATA POINTS BESIDE THE 19 DIPOLE COLUMNS (same material, '
                       'sha256 %s) =====\n%s' % (material['material'].get('sha256'),
-                                                 json.dumps(material['material']['dipole_external'], sort_keys=True))))
+                                                 _body(material['material']['dipole_external'], 'external section',
+                                                       encoding, renders))))
     if material['material'].get('experiment_directive') is not None:
         parts.append(('experiment_directive', '===== GOVERNED EXPERIMENT DIRECTIVE =====\n' +
-                      json.dumps(material['material']['experiment_directive'], sort_keys=True)))
+                      _body(material['material']['experiment_directive'], 'experiment directive', encoding, renders)))
     if material['material'].get('shared_market_context') is not None:
         if LOCAL is None:
             raise ValueError('shared raw market context requires its governed owner-local CPU source binding')
@@ -464,20 +509,21 @@ def material_parts(material):
     if material.get('survivors'):
         parts.append(('search_survivors', '===== SEARCH SURVIVORS SO FAR (%s, sha256 %s) =====\n%s' % (
             material['survivors'].get('path'), material['survivors'].get('sha256'),
-            json.dumps(material['survivors'].get('list'), sort_keys=True))))
+            _body(material['survivors'].get('list'), 'search survivors', encoding, renders))))
     for item in material.get('unavailable') or []:
         parts.append(('not_available:' + str(item.get('item')),
                       '===== NOT AVAILABLE: %s (%s) =====' % (item.get('item'), item.get('reason'))))
     return parts
 
 
-def material_text(material):
-    return '\n\n'.join(text for _, text in material_parts(material))
+def material_text(material, encoding=None, renders=None):
+    return '\n\n'.join(text for _, text in material_parts(material, encoding, renders))
 
 
-def material_use(material, student_text, brain_chars, picture_tokens=None):
-    """What reached Jev's student prompt, by section and size (one-day review record; no prompt content)."""
-    parts = material_parts(material)
+def material_use(material, student_text, brain_chars, picture_tokens=None, parts=None):
+    """What reached Jev's student prompt, by section and size (one-day review record; no prompt content). parts: the
+    sections already built (material_parts), so the stacks are not rendered again for the report."""
+    parts = material_parts(material) if parts is None else parts
     shared = material['material'].get('shared_market_context')
     render = None
     if shared is not None:
@@ -512,8 +558,13 @@ def all_99_for_jev(material, brain_pins):
     return AM.all_99_with_consumer((shared or {}).get('all_99') if shared is not None else None, consumer)
 
 
-def load_brain(config, day):
+def load_brain(config, day, encoding=None, renders=None):
     """Every selected entry and teacher lesson, whole; return actual consumed-byte witnesses.
+
+    With the material stacks (encoding STACKED, the day's default) every entry and lesson is written through the
+    proven layered stacks, and the brain dedupe applies (frankie_box_brain.load's rule): a document whose content
+    equals an earlier one's is carried by a one-line reference to it, never repeated and never dropped. The legacy
+    encoding writes the blocks byte for byte as before.
 
     More than one lesson may concern the same claims under different circumstances. Preserve
     all of them; neither arrival order nor age chooses a winning lesson. The config's optional
@@ -542,19 +593,34 @@ def load_brain(config, day):
         else:
             raise ValueError('unknown Jev brain kind: %s' % item['kind'])
     blocks = []
+    stacked = (encoding or ENCODING) == STACKED
+    first = {}
+    if stacked:
+        # the brain dedupe across whole documents: identical content is read once
+        for label, _, earlier, _ in _AM().dedupe_documents([(s['key'], s['content']) for s in entries + lessons]):
+            if earlier is not None:
+                first[label] = earlier
+
+    def body(saved, kind):
+        if not stacked:
+            return json.dumps(saved['content'], sort_keys=True)
+        if saved['key'] in first:
+            return ('(the same content as %s, sha256 %s of its sorted JSON; carried once above, not repeated: the brain '
+                    'dedupe)' % (first[saved['key']], sha(json.dumps(saved['content'], sort_keys=True,
+                                                                     separators=(',', ':')).encode())))
+        return _body(saved['content'], '%s %s' % (kind, saved['key']), STACKED, renders)
     for saved in entries:
         entry = saved['content']
         taught = [t['key'] for t in lessons if t['content'].get('claims_sha256') == entry.get('claims_sha256')]
         blocks.append('===== YOUR ENTRY %s; matching teacher lessons: %s =====\n%s' % (
-            saved['key'], json.dumps(taught) if taught else 'pending (not supplied)',
-            json.dumps(entry, sort_keys=True)))
+            saved['key'], json.dumps(taught) if taught else 'pending (not supplied)', body(saved, 'entry')))
     entry_hashes = {e['content'].get('claims_sha256') for e in entries}
     for saved in lessons:
         lesson = saved['content']
         matched = lesson.get('claims_sha256') in entry_hashes
         blocks.append('===== TEACHER LESSON %s; matching carried entry: %s =====\n%s' % (
             saved['key'], 'present' if matched else 'not supplied; lesson retained with its own claims binding',
-            json.dumps(lesson, sort_keys=True)))
+            body(saved, 'lesson')))
     if not blocks:
         return '', pins
     return ('===== YOUR BRAIN: your own claims and their scientific-teacher lessons; every selected lesson retained. '
@@ -582,7 +648,7 @@ def student_claims(day, text):
         '"when it applies", "lag": "the lead or lag, or null", "target": "what it predicts or explains", "direction": '
         '"the sign or relation claimed", "evidence": ["the numbers from the material it rests on, quoted"]}]}.\n'
         'Every claim must name its series and quote its numbers. A claim about a later outcome is a test_next, never a '
-        'fact.\n\nMATERIAL:\n%s' % (day, number, len(packs), p)), pack, ask)]
+        'fact.\n\n%sMATERIAL:\n%s' % (day, number, len(packs), _legend(text if len(text) <= JEV_PIECE_CHARS else ''), p)), pack, ask)]
     claims, unparsed, seen = [], [], {}
     for pack_number, answer in enumerate(answers, 1):
         if 'raw' in answer and len(answer) == 1:
@@ -607,14 +673,39 @@ def student_claims(day, text):
     return claims, unparsed, raw
 
 
+def compare_text(claims, frankie, encoding=None, renders=None):
+    """Jev's filed claims beside Frankie's classroom files, whole. Legacy: as before, byte for byte. Stacked: the claims
+    and every file through the proven layered stacks (a JSON file read as its JSON value in its exact layout; any other
+    text as it is), and the brain dedupe across files (identical file bytes are read once)."""
+    files = frankie.get('files') or {}
+    listed = [dict(id=c['id'], kind=c['kind'], statement=c['statement'], series=c.get('series'),
+                   direction=c.get('direction')) for c in claims]
+    if (encoding or ENCODING) != STACKED:
+        return 'JEV CLAIMS (filed before Frankie was read):\n%s\n\nFRANKIE (his code classroom: ledgers, receipt, analysis):\n%s' % (
+            json.dumps(listed, sort_keys=True),
+            '\n\n'.join('===== %s (%s, sha256 %s) =====\n%s' % (name, f.get('path'), f.get('sha256'), f.get('text'))
+                        for name, f in sorted(files.items())))
+    AM = _AM()
+    ordered = sorted(files.items())
+    earlier = {label: first for label, _, first, _ in AM.dedupe_documents([(n, f.get('text') or '') for n, f in ordered])}
+    sections = []
+    for name, f in ordered:
+        if earlier.get(name) is not None:
+            body = '(the same bytes as %s; carried once above, not repeated: the brain dedupe)' % earlier[name]
+        else:
+            render = AM.render_material(f.get('text') or '', label='frankie %s' % name, max_chars=JEV_PIECE_CHARS,
+                                        keep_texts=renders is not None)
+            if renders is not None:
+                renders.append(('frankie %s' % name, render))
+            body = render['text']
+        sections.append('===== %s (%s, sha256 %s) =====\n%s' % (name, f.get('path'), f.get('sha256'), body))
+    return 'JEV CLAIMS (filed before Frankie was read):\n%s\n\nFRANKIE (his code classroom: ledgers, receipt, analysis):\n%s' % (
+        _body(listed, 'jev claims', STACKED, renders), '\n\n'.join(sections))
+
+
 def compare(day, claims, frankie):
     """After the claims are filed: where Jev's claims and Frankie's code findings agree, differ or contradict."""
-    files = frankie.get('files') or {}
-    text = 'JEV CLAIMS (filed before Frankie was read):\n%s\n\nFRANKIE (his code classroom: ledgers, receipt, analysis):\n%s' % (
-        json.dumps([dict(id=c['id'], kind=c['kind'], statement=c['statement'], series=c.get('series'),
-                         direction=c.get('direction')) for c in claims], sort_keys=True),
-        '\n\n'.join('===== %s (%s, sha256 %s) =====\n%s' % (name, f.get('path'), f.get('sha256'), f.get('text'))
-                    for name, f in sorted(files.items())))
+    text = compare_text(claims, frankie)
     packs = notes(text, 'comparing Jev\'s claims with Frankie\'s classroom findings for the trading day %s' % day)
     ask, raw = json_asker()
     verdicts = [v for pack in packs for v in complete(lambda p: (
@@ -622,12 +713,43 @@ def compare(day, claims, frankie):
         'one pack of notes read from every piece). This is orientation for a scientist who will test both; it is not a '
         'verdict. Return JSON only: {"agree": [{"jev_claim_id": "..", "frankie": "the ledger entry or line", "why": ".."}], '
         '"differ": [{"jev_claim_id": "..", "frankie": "..", "how": ".."}], "contradict": [{"jev_claim_id": "..", '
-        '"frankie": "..", "values": ["the numbers on each side"]}], "only_jev": [".."], "only_frankie": [".."]}.\n\n%s'
-        % p), pack, ask)]
+        '"frankie": "..", "values": ["the numbers on each side"]}], "only_jev": [".."], "only_frankie": [".."]}.\n\n%s%s'
+        % (_legend(text if len(text) <= JEV_PIECE_CHARS else ''), p)), pack, ask)]
     return verdicts, raw
 
 
+def measure_material(legacy_text, stacked_text, renders):
+    """The stacks' token measurement (Greg, 2026-10-07: before and after, the count after each layer): the whole text
+    in its legacy and stacked encodings and every layer of every stacked section, counted once with the server's own
+    tokenizer through the owner's measure hook (side-effect free, no model call, never a refusal record). Without the
+    hook (remote route) the characters are recorded and the tokens are named as not measured, never guessed."""
+    AM = _AM()
+    measure = (LOCAL or {}).get('measure_tokens')
+    if measure is None:
+        count, reason = None, 'no owner measure_tokens hook (remote route or older owner): characters only'
+    else:
+        count, reason = (lambda text: measure([dict(role='user', content=text)])), None
+
+    def whole(text):
+        row = dict(chars=len(text))
+        if count is not None:
+            try:
+                row['tokens'] = count(text)
+            except Exception as error:  # noqa: BLE001 - recorded, never guessed
+                row.update(tokens=None, reason='%s: %s' % (type(error).__name__, str(error)[:200]))
+        return row
+    return dict(measured=count is not None, reason=reason, legacy=whole(legacy_text), stacked=whole(stacked_text),
+                sections=[dict(label=label, encoding=render['encoding'], source=render['source'], refused=render['refused'],
+                               layers=(AM.measure_layers(render, count) if count is not None else
+                                       [dict(layer=l['layer'], chars=l.get('chars'), adopted=l.get('adopted'),
+                                             reason=l.get('reason')) for l in render['layers']]))
+                          for label, render in renders],
+                rule='each layer\'s text counted alone as one user message (its chat template included); the stacked whole '
+                     'text is what the prompts carry, the legacy whole text is the same material before the stacks')
+
+
 def main(config=None):
+    global ENCODING
     config = get_json(os.environ['CONFIG_URL']) if config is None else config
     stamp, day = os.environ.get('STAMP', ''), os.environ['DAY']
     wait, poll = int(os.environ.get('WAIT_SECONDS', '21600')), int(os.environ.get('POLL_SECONDS', '60'))
@@ -638,6 +760,10 @@ def main(config=None):
     if retained is not None and (state.get('stamp') != stamp or state.get('day') != day):
         raise ValueError('retained Jev progress belongs to another day/stamp; refused, never reset')
     state.update(schema='JEV_SIT_IN_PROGRESS_V2', stamp=stamp, day=day)
+    # the material encoding: a state retained before the material stacks keeps the legacy encoding (its bound inputs,
+    # prompts and recorded requests replay byte for byte); a new day reads everything through the stacks
+    ENCODING = state.get('material_encoding') or (LEGACY if retained is not None else STACKED)
+    state['material_encoding'] = ENCODING
     calls = lambda: sum(c['status'] == 'replied' for records in state.get('calls', {}).values() for c in records)
 
     if LOCAL is not None:
@@ -650,7 +776,8 @@ def main(config=None):
         LOCAL['check_save']()
 
     # 0. BRAIN: his earlier days and the teacher's lessons on them, whole (never Frankie's)
-    brain_text, brain_pins = load_brain(config, day)
+    brain_renders = []
+    brain_text, brain_pins = load_brain(config, day, renders=brain_renders if ENCODING == STACKED else None)
     log('brain: %d files carried (%d chars)' % (len(brain_pins), len(brain_text)))
 
     # 1. MATERIAL (never Frankie's)
@@ -687,11 +814,32 @@ def main(config=None):
         import frankie_box_adviser_market as AM
         section = AM.text(shared)
         render = AM.render_summary(shared)
-        state['picture_tokens'] = dict(stacked_chars=len(section), stacked_tokens=LOCAL['count_tokens']([dict(role='user', content=section)]),
+        counter = LOCAL.get('measure_tokens') or LOCAL['count_tokens']
+        state['picture_tokens'] = dict(stacked_chars=len(section), stacked_tokens=counter([dict(role='user', content=section)]),
                                        source_chars=render.get('source_chars'), grammar=render.get('grammar'),
                                        counted_by='the Jev server tokenizer (/apply-template + /tokenize), once, retained',
                                        rule='the stacks\' effect is stacked_tokens against the exact typed text\'s own count, '
                                             'which is not paid for here; chars are the proxy')
+        save_state(state)
+
+    # The material stacks' measurement (Greg, 2026-10-07), once, retained so a replay never recounts: the student text
+    # before (legacy) and after (stacked) and the count after every layer of every stacked section
+    built = {}           # the material sections, rendered once for the prompts, the measurement and the report
+
+    def parts_of(renders=None):
+        if 'parts' not in built:
+            built['parts'] = material_parts(material, None, renders)
+        return built['parts']
+
+    def student_of():
+        return '\n\n'.join(text for _, text in parts_of()) + ('\n\n' + brain_text if brain_text else '')
+    if ENCODING == STACKED and state.get('material_tokens') is None:
+        renders = []
+        parts_of(renders)
+        stacked_text = student_of()
+        legacy_brain, _ = load_brain(config, day, encoding=LEGACY)
+        legacy_text = material_text(material, LEGACY) + ('\n\n' + legacy_brain if legacy_brain else '')
+        state['material_tokens'] = measure_material(legacy_text, stacked_text, renders + brain_renders)
         save_state(state)
 
     # 2-3. STUDENT, then FILE the claims before anything of Frankie's is read
@@ -699,8 +847,7 @@ def main(config=None):
         if state.get('claims_filed'):
             raise ValueError('claims were filed without their retained exact bytes; refused')
         begin_phase(state, 'student')
-        text = material_text(material) + ('\n\n' + brain_text if brain_text else '')
-        claims, unparsed, raw = student_claims(day, text)
+        claims, unparsed, raw = student_claims(day, student_of())
         end_phase()
         filed_at = time.time()
         document = dict(schema='JEV_CLAIMS_V1', stamp=stamp, day=day, author='jev', model=JEV_MODEL, filed_at=filed_at,
@@ -753,6 +900,11 @@ def main(config=None):
                 state['frankie_read_at'] = time.time()
                 save_state(state)
             frankie_read_at = state['frankie_read_at']
+            if ENCODING == STACKED and state.get('compare_tokens') is None:
+                renders = []
+                stacked_compare = compare_text(claims, frankie, STACKED, renders)
+                state['compare_tokens'] = measure_material(compare_text(claims, frankie, LEGACY), stacked_compare, renders)
+                save_state(state)
             begin_phase(state, 'comparison')
             verdicts, raw = compare(day, claims, frankie)
             end_phase()
@@ -819,15 +971,22 @@ def main(config=None):
                    comparison_available=bool(comparison.get('available')),
                    report=dict(bytes=len(report.encode()), sha256=sha(report.encode())), status='done')
     # One-day review record (Greg, 2026-10-07): what this piece received, how it used it, what it produced.
-    student_text = material_text(material) + ('\n\n' + brain_text if brain_text else '')
+    student_text = student_of()
     receipt['workflow_report'] = dict(
         schema='FRANKIE_PIECE_WORKFLOW_REPORT_V1', piece='jev_sit_in',
         inputs=dict(material=dict((k, material['material'].get(k)) for k in ('path', 'bytes', 'sha256', 'source')),
-                    material_sections=[label for label, _ in material_parts(material)],
+                    material_sections=[label for label, _ in parts_of()],
                     unavailable=material.get('unavailable') or [], brain_files=len(brain_pins),
                     shared_market_picture=(material['material'].get('shared_market_context') or {}).get('scope')),
-        use=dict(material_text=material_use(material, student_text, len(brain_text), state.get('picture_tokens')),
+        use=dict(material_text=material_use(material, student_text, len(brain_text), state.get('picture_tokens'),
+                                            parts=parts_of()),
                  picture_tokens=state.get('picture_tokens'),
+                 material_stacks=dict(encoding=ENCODING, student=state.get('material_tokens'),
+                                      comparison=state.get('compare_tokens'),
+                                      rule=('every existing lossless stack, layered where each still shortens, each proven by '
+                                            'parse-back; the counts before, after and after each layer' if ENCODING == STACKED
+                                            else 'legacy encoding: a state retained before the material stacks replays its '
+                                                 'bound inputs and requests byte for byte')),
                  all_99_coverage=all_99_for_jev(material, brain_pins),
                  model=JEV_MODEL, context=JEV_CONTEXT, piece_chars=JEV_PIECE_CHARS, prompt_chars=JEV_PROMPT_CHARS,
                  local_cpu=LOCAL is not None, model_calls=receipt['call_accounting'],

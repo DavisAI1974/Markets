@@ -584,6 +584,12 @@ def _run(request, request_path, out, brain, jev_brain):
                                % (count, runtime['input_token_cap']))
         return count
 
+    def measured(messages):
+        # the material stacks' measurement (Greg, 2026-10-07: token counts before, after and after each layer): the
+        # server's own count of a text that is NOT a prompt (a layer, the legacy material); no chat, no refusal record,
+        # never a gate. A save request still stops here (check_save in start_server).
+        return start_server().count_tokens(messages, label='jev-measure')
+
     def chat(body):
         call_id = hashlib.sha256(body if isinstance(body, bytes) else str(body).encode()).hexdigest()
         started = time.time()
@@ -608,7 +614,7 @@ def _run(request, request_path, out, brain, jev_brain):
                                                 decided_by='sit_in client (no output room)'))
 
     SI.LOCAL = dict(identity=identity, put=local_put, seal=seal_claims, frankie=frankie_bundle, check_save=check_save,
-                    count_tokens=counted, model_clock=client_clock,
+                    count_tokens=counted, model_clock=client_clock, measure_tokens=measured,
                     # Granite's sampling rows on every call (temperature, top_p); the client's body otherwise as recorded
                     chat=chat,
                     **{k: runtime[k] for k in ('max_output_tokens', 'min_output_tokens', 'token_margin')})
@@ -708,7 +714,10 @@ def _run(request, request_path, out, brain, jev_brain):
                                 'nothing is cut to fit'),
                  model_calls=client.get('call_accounting'), cpus=cpus, threads=runtime['threads'],
                  host_cpu=transport.host_cpu(), timings=timings,
-                 picture_tokens=(client_report.get('use') or {}).get('picture_tokens')),
+                 picture_tokens=(client_report.get('use') or {}).get('picture_tokens'),
+                 # every existing lossless stack on the non-picture material (frankie_box_adviser_market.render_material):
+                 # the encoding, the sizes and server token counts before, after and after each layer, as the client recorded
+                 material_stacks=(client_report.get('use') or {}).get('material_stacks')),
         outputs=dict(claims_seal=pin(seal_path), claims=pin(claims_path), comparison=pin(out / 'comparison.json'),
                      scientific_result=pin(result_path), deliveries=deliveries, report=report,
                      waits=pending, status='waiting' if pending else 'done'))

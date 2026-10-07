@@ -11,6 +11,10 @@ Contract (FRANKIE_ADVISER_MARKET_CONTEXT_V1)
   exact typed bytes; Greg, 2026-09-28: every stack that works gets used); an `all_99` block (every
   entry of the pinned 99-layer registry with its route into this picture and its disposition at this
   instant; Greg, 2026-10-07: the 99 layers are combined for Frankie first, nothing silent).
+  Material (FRANKIE_ADVISER_MATERIAL_RENDER_V1, render_material / unstack_material_text): everything else an adviser
+  reads (exchange items, seat records, findings, the classroom package, Jev's brain, the comparison material) through
+  every existing lossless stack, layered where each still shortens, each layer proven by parse-back, the size after
+  every layer recorded for the consumer's server token counts; nothing dropped, truncated or summarized.
   Errors, one way: ValueError for contradictions of identity, pinned bytes or scope. Those are
   integrity failures and stay visible. Missing layers, a failed/unpaired/unknown outcome at the
   cutoff, an unavailable clock or an absent external day file never raise: the instant stays in,
@@ -24,6 +28,7 @@ on how many days a run holds: one instant of one day, whatever the run's length.
 import copy
 import hashlib
 import json
+import re
 import struct
 import sys
 from pathlib import Path
@@ -134,7 +139,11 @@ def _float_bits(value):
 
 
 class _Stacker:
-    """Typed picture tree -> stacked tree, choosing at every sequence the candidate that spells shortest."""
+    """Typed picture tree -> stacked tree, choosing at every sequence the candidate that spells shortest.
+    RECIPES / DIGEST (both True for the picture, unchanged): whether the N integer-recipe and DIGEST table candidates
+    are offered; the material stacks below turn them on layer by layer and measure each."""
+    RECIPES = True
+    DIGEST = True
 
     def __init__(self):
         import frankie_box_stacked_text as ST
@@ -181,14 +190,14 @@ class _Stacker:
                 indexes.append(seen[spelling])
             if len(dictionary) < len(items):
                 choices.append(('Q', ['Q', kind, dictionary, self._integers(indexes)]))
-            if all(v[0] == 'int' for v in items):
+            if all(v[0] == 'int' for v in items) and self.RECIPES:
                 choices.append(('N', ['N', kind, self._integers([v[1] for v in items])]))
             if all(v[0] == 'mapping' and v[1] and all(k[0] == 'str' for k, _ in v[1]) for v in items):
                 keys = [k[1] for k, _ in items[0][1]]
                 if keys and all([k[1] for k, _ in v[1]] == keys for v in items):
                     columns = [self.sequence([v[1][j][1] for v in items], 'L') for j in range(len(keys))]
                     choices.append(('C', ['C', kind, [_esc(k) for k in keys], columns]))
-                    digest = self.digest_table(items, keys, kind)
+                    digest = self.digest_table(items, keys, kind) if self.DIGEST else None
                     if digest is not None:
                         choices.append(('digest', digest))
         label, best = min(choices, key=lambda choice: self._length(choice[1]))
@@ -253,10 +262,22 @@ def _unstack(node):
         raise ValueError('stacked literal of an unexpected type')
     if tag == 'H':
         return ['float64', node[1]]
+    if tag == 'F':
+        # material stacks only: a float written as its shortest round-trip decimal (float(repr(x)) == x)
+        return ['float64', _float_bits(float(node[1]))]
     if tag == 'X':
         return ['bytes', node[1]]
     if tag == 'M':
         keys, values = node[1], node[2]
+        if keys == ['$json_text', '$value']:
+            # material stacks only (L2): a text that is exactly this JSON value in the named layout
+            return ['jsontext', values[0][1], _unstack(values[1])]
+        if keys == ['$concat']:
+            # material stacks only (L5): one string written as the concatenation of its parts
+            parts = [_unstack(part) for part in values[0][1]]
+            if any(part[0] != 'str' for part in parts):
+                raise ValueError('a $concat part is not a string')
+            return ['str', ''.join(part[1] for part in parts)]
         if keys == ['$keyed']:
             pairs = _unstack(values[0])
             return ['mapping', [[k, v] for k, v in (pair[1] for pair in pairs[1])]]
@@ -305,9 +326,13 @@ def _unstack(node):
     raise ValueError('stacked node %r has no typed inverse here' % tag)
 
 
-def _dedup(tree, canonical):
+def _dedup(tree, canonical, forced=None):
     """L3 of the reading render on the stacked tree: a subtree spelled identically more than once is kept once
-    under $dictionary and referenced where it recurs, only where the arithmetic says it saves characters."""
+    under $dictionary and referenced where it recurs, only where the arithmetic says it saves characters.
+    forced {name: ['V', text]} (the material stacks' L5 containment only; None for the picture, unchanged): those
+    strings are dictionary entries already referenced by $concat parts; every literal occurrence becomes a reference."""
+    forced = dict(forced or {})
+    forced_key = {_sha256(canonical(node).encode()): name for name, node in forced.items()}
     counts, length = {}, {}
     def visit(node):
         if node[0] in ('V', 'H', 'X'):
@@ -324,6 +349,11 @@ def _dedup(tree, canonical):
     def replace(node):
         nonlocal refs
         if node[0] in ('V', 'H', 'X'):
+            if forced_key and node[0] == 'V' and type(node[1]) is str:
+                name = forced_key.get(_sha256(canonical(node).encode()))
+                if name is not None:
+                    refs += 1
+                    return ['M', ['$ref'], [['V', name]]]
             return node
         key = _sha256(canonical(node).encode())
         count, size = counts[key], length[key]
@@ -338,6 +368,10 @@ def _dedup(tree, canonical):
             container[i] = replace(container[i])
         return node
     tree = replace(tree)
+    for name, node in forced.items():
+        if name not in dictionary:
+            dictionary[name] = node
+            order.append(name)
     if not dictionary:
         return tree, 0, 0
     return (['M', ['$dictionary', '$value'], [['M', order, [dictionary[name] for name in order]], tree]],
@@ -425,6 +459,559 @@ def verify_render(context):
             or unstack_text(render['text']) != context['picture_text']):
         raise ValueError('retained picture render does not parse back to its exact typed picture')
     return render
+
+
+# ------------------------------------------------------------------------------------ the material stacks
+# Contract FRANKIE_ADVISER_MATERIAL_RENDER_V1 (Greg, 2026-09-28 "every token stack that works gets used"; 2026-10-07
+# the optimizers restored on every workflow piece, "use what we already have too, try to stack as many as possible",
+# "do not secretly shrink back down to top 10 or drop any data whatsoever"). Everything Granite and Jev read BESIDE
+# the picture (exchange items, seat records, findings, the knowledge index, the classroom package, the directive,
+# Jev's brain entries and lessons, the comparison material) goes through every existing lossless stack, layered on
+# top of each other wherever each still shortens, each layer proven by parse-back to the exact source before it may
+# be adopted, and its size recorded (render_material(...)['layers']; the consumer adds the server token count of
+# every layer's text):
+#   L0  legacy: the consumer's own text (json.dumps(sort_keys) or the file text), the baseline;
+#   L1  compact JSON (the reading render's compact separators), json.loads equal to L0;
+#   L2+L9  STACKED_TEXT_V1 with keys once: an ordered map writes its keys once (M), a list of same-keyed maps is a
+#       column table (C), a repeated node is written once with its count (S), a list with repeated items writes each
+#       distinct item once and the order as an index recipe (Q) (the _Stacker candidates); the reading render's L2
+#       nested decoding: a text that is exactly a JSON value in a known layout is that value, its layout recorded;
+#   R   value recipes (the stacked context's codec): integer sequences as I/D/R/E recipes with *k scales and #w digit
+#       packing (N), a float written as its IEEE bits (H) where that is shorter than its decimal (F);
+#   L10 DIGEST_V10 table blocks (frankie_box_digest_render) for flat same-keyed rows where they spell shorter, each
+#       parsed back to the identical rows, float bits included, before it is a candidate;
+#   L3  content-addressed dedup of repeated subtrees under $dictionary (the repeated-content dedupe);
+#   L5  containment: a long string that contains another long string of the same block writes that span as a
+#       reference to it.
+# The brain dedupe (frankie_box_brain.load: identical bytes written once, later copies a one-line reference) is
+# applied by the consumer across documents with dedupe_documents. Not applicable here, each for a recorded reason:
+# L1 c15 unpack and L4 tensors (no c15 values or decoder tensors in this material), L6 cross-cycle ledger and L8
+# known files (the model holds no earlier cycle and opens no file: the content would leave its view); L7 ranges are
+# subsumed by the R integer recipes (a consecutive run is a D/E recipe). A layer that does not prove or does not
+# shorten is not adopted and the reason is listed. Nothing is dropped, truncated, sampled or summarized.
+MATERIAL_SCHEMA = 'FRANKIE_ADVISER_MATERIAL_RENDER_V1'
+MATERIAL_ENCODING = 'STACKED_TEXT_V1_MATERIAL'
+MATERIAL_DIGEST_GRAMMAR = 'DIGEST_V10'     # frankie_box_digest_render.TABLE_GRAMMAR (V9 tables read unchanged)
+MATERIAL_LEGEND = (
+    'MATERIAL GRAMMAR (' + STACK_GRAMMAR + '; every [material ...] text below parses back byte-exact to the JSON or '
+    'text it replaces): V literal (null, true, false, integer or string; a string is bare or JSON-quoted); F float as '
+    'its decimal; H float64 as IEEE-754 hex bits; M n keys values = map, keys written once; L n nodes = list; C L n '
+    'fields columns = table, row i takes item i of every column, field names written once; S L count node = node '
+    'repeated count times; Q L n nodes recipe = the n distinct items once, then the order as an index recipe; N L '
+    'recipe = integers. Recipes: I literal values, D seed then deltas, R value/count runs, E seed then delta/count '
+    'runs; *k = every value written divided by 10^k (multiply back); #w = values packed as one string of w-digit '
+    'numbers. A map {$dictionary, $value} holds shared subtrees once, each referenced where it recurs by M 1 $ref V '
+    'r<hash>; M 1 $concat L n parts = one string written as its parts in order (a part may be a $ref); M 2 $json_text '
+    '$value = a text that is exactly that JSON value written in the named layout; a map {$digest, $keys, $kind} holds '
+    'a ' + MATERIAL_DIGEST_GRAMMAR + ' table block of the same rows (header once, ^ = the cell above, deltas, @n dictionary, as '
+    'its own header says); a key written $$x is the key $x. A [block k/n path=P rows=R] line starts part k: the value '
+    'at path P (rows R = items R[0]..R[1]-1 of the list at P). Nothing is sampled, rounded or omitted.')
+JSON_TEXT_MIN = 64           # L2: a text at least this long may be a JSON value in a known layout
+CONTAIN_MIN = 256            # L5: a string at least this long may be written as a reference inside a longer one
+CONTAIN_MAX_CANDIDATES = 4000   # L5 is O(n^2) in long strings; above this count it is not attempted (listed, lossless)
+STACKED_LAYERS = (           # (layer, integer/float recipes offered, DIGEST tables offered), applied cumulatively
+    ('L2_L9_keys_once_STACKED_TEXT_V1', False, False),
+    ('R_value_recipes', True, False),
+    ('L10_' + MATERIAL_DIGEST_GRAMMAR + '_tables', True, True))
+_JSON_LAYOUTS = (           # (name, json.dumps keywords); a trailing newline is the '+nl' form of each
+    ('sorted_indent1', dict(indent=1, sort_keys=True)), ('sorted_indent2', dict(indent=2, sort_keys=True)),
+    ('sorted', dict(sort_keys=True)), ('sorted_compact', dict(sort_keys=True, separators=(',', ':'))),
+    ('indent1', dict(indent=1)), ('indent2', dict(indent=2)), ('plain', {}), ('compact', dict(separators=(',', ':'))))
+_LAYOUTS = dict(_JSON_LAYOUTS)
+
+
+def _compact(value):
+    return json.dumps(value, separators=(',', ':'))
+
+
+def _layout_dump(value, layout):
+    name, newline = (layout[:-3], '\n') if layout.endswith('+nl') else (layout, '')
+    return json.dumps(value, **_LAYOUTS[name]) + newline
+
+
+def _json_text(text, minimum=JSON_TEXT_MIN):
+    """L2: ['jsontext', layout, typed] when text is exactly a JSON object/list in one of the known layouts; else None."""
+    if len(text) < minimum or text.lstrip()[:1] not in ('{', '['):
+        return None
+    try:
+        value = json.loads(text)
+    except (ValueError, RecursionError):
+        return None
+    if not isinstance(value, (dict, list)):
+        return None
+    for name, keywords in _JSON_LAYOUTS:
+        try:
+            spelled = json.dumps(value, **keywords)
+        except (ValueError, TypeError):
+            return None
+        for layout, candidate in ((name, spelled), (name + '+nl', spelled + '\n')):
+            if candidate == text:
+                return ['jsontext', layout, _material_typed(value)]
+    return None
+
+
+def _material_typed(value):
+    """A JSON value (as json.loads gives it: key order kept) -> the typed tree the stacker reads."""
+    if isinstance(value, dict):
+        return ['mapping', [[['str', key], _material_typed(item)] for key, item in value.items()]]
+    if isinstance(value, list):
+        return ['list', [_material_typed(item) for item in value]]
+    if value is None:
+        return ['null']
+    if value is True or value is False:
+        return ['bool', value]
+    if type(value) is int:
+        return ['int', value]
+    if type(value) is float:
+        return ['float64', _float_bits(value)]
+    if type(value) is str:
+        found = _json_text(value)
+        return found if found is not None else ['str', value]
+    raise ValueError('material carries a non-JSON value of type %s' % type(value).__name__)
+
+
+def _material_plain(typed):
+    """The typed tree -> the JSON value it stands for (L2 nodes re-encoded to their exact text)."""
+    tag = typed[0]
+    if tag == 'mapping':
+        out = {}
+        for key, item in typed[1]:
+            if key[0] != 'str':
+                raise ValueError('material map key is not a string')
+            out[key[1]] = _material_plain(item)
+        return out
+    if tag in ('list', 'tuple'):
+        return [_material_plain(item) for item in typed[1]]
+    if tag in ('int', 'str', 'bool'):
+        return typed[1]
+    if tag == 'null':
+        return None
+    if tag == 'float64':
+        return struct.unpack('>d', bytes.fromhex(typed[1]))[0]
+    if tag == 'jsontext':
+        return _layout_dump(_material_plain(typed[2]), typed[1])
+    raise ValueError('material typed node %r has no JSON value' % tag)
+
+
+class _MaterialStacker(_Stacker):
+    """The picture stacker's candidates on material: keys once, tables, repeats, dictionaries always; the value
+    recipes (N, H) and DIGEST tables only when their layer is on (STACKED_LAYERS)."""
+
+    def __init__(self, recipes, digest):
+        super().__init__()
+        self.RECIPES, self.DIGEST = recipes, digest
+
+    def stack(self, node):
+        tag = node[0]
+        if tag == 'float64':
+            decimal = repr(struct.unpack('>d', bytes.fromhex(node[1]))[0])
+            return ['H', node[1]] if self.RECIPES and len(node[1]) < len(decimal) else ['F', decimal]
+        if tag == 'jsontext':
+            self.counts['json_texts'] = self.counts.get('json_texts', 0) + 1
+            return ['M', ['$json_text', '$value'], [['V', node[1]], self.stack(node[2])]]
+        return super().stack(node)
+
+
+def _contain(tree, canonical):
+    """L5 on a stacked tree, in place: a long V string that contains another long V string of the same tree writes
+    that span as a $ref (the contained string becomes a forced dictionary entry). Returns (forced, contained, note)."""
+    strings = {}
+    def table(node):
+        # a DIGEST table node's block text is read whole by its own parser: never a containment candidate or target
+        return node[0] == 'M' and node[1] == ['$digest', '$keys', '$kind']
+
+    def collect(node):
+        if node[0] == 'V':
+            if type(node[1]) is str and len(node[1]) >= CONTAIN_MIN:
+                strings.setdefault(node[1], None)
+            return
+        if table(node):
+            return
+        for container, i in _slots(node):
+            collect(container[i])
+    collect(tree)
+    if len(strings) > CONTAIN_MAX_CANDIDATES:
+        return {}, 0, 'L5 not attempted: %d long strings (budget %d; O(n^2)); written as they are' % (
+            len(strings), CONTAIN_MAX_CANDIDATES)
+    ordered = sorted(strings, key=len, reverse=True)
+    inner = {}
+    for s in ordered:
+        for t in ordered:
+            if len(t) < len(s) and t in s:
+                inner[s] = t                   # the longest long string it contains (the reading render takes one)
+                break
+    if not inner:
+        return {}, 0, None
+    targets = set(inner.values())     # a contained string stays one literal V (its occurrences become references)
+    forced, contained = {}, 0
+    def replace(node):
+        nonlocal contained
+        if node[0] == 'V':
+            t = inner.get(node[1]) if type(node[1]) is str and node[1] not in targets else None
+            if t is None:
+                return node
+            name = 'r' + _sha256(canonical(['V', t]).encode())[:20]
+            forced[name] = ['V', t]
+            parts = []
+            for k, piece in enumerate(node[1].split(t)):
+                if k:
+                    parts.append(['M', ['$ref'], [['V', name]]])
+                if piece:
+                    parts.append(['V', piece])
+            contained += 1
+            return ['M', ['$concat'], [['L', parts]]]
+        if table(node):
+            return node
+        for container, i in _slots(node):
+            container[i] = replace(container[i])
+        return node
+    tree[:] = replace(tree)
+    return forced, contained, None
+
+
+def _material_tree_text(text):
+    """A stacked material block -> the JSON value it spells (resolving $dictionary references)."""
+    import frankie_box_stacked_text as ST
+    tree = ST.parse(text)
+    if tree[0] == 'M' and tree[1] == ['$dictionary', '$value']:
+        entries = tree[2][0]
+        tree = _resolve(tree[2][1], dict(zip(entries[1], entries[2])))
+    return _material_plain(_unstack(tree))
+
+
+def _layered(value):
+    """Every stacked layer on one JSON value, cumulative: (best, trace). best = (text, facts) of the shortest proven
+    spelling (None when no stacked layer proved); trace = one row per layer {layer, chars, adopted, reason, text}.
+    A layer is adopted when it parses back to the exact value AND spells shorter than the layer before it."""
+    import frankie_box_stacked_text as ST
+    exact = _compact(value)
+    typed = _material_typed(value)
+    trace, best = [], None             # best: (tree, text, facts)
+
+    def consider(layer, tree, facts):
+        nonlocal best
+        row = dict(layer=layer)
+        try:
+            text = ST.spell(tree)
+            if ST.canonical(ST.parse(text)) != ST.canonical(tree):
+                raise ValueError('the text does not parse back to its stacked tree')
+            if _compact(_material_tree_text(text)) != exact:
+                raise ValueError('the text does not parse back to the exact value')
+        except (ValueError, RecursionError, KeyError, IndexError, TypeError) as error:
+            row.update(chars=None, adopted=False, reason='parse-back refused: %s: %s' % (type(error).__name__, str(error)[:160]))
+            trace.append(row)
+            return
+        adopted = best is None or len(text) < len(best[1])
+        row.update(chars=len(text), adopted=adopted, text=text,
+                   reason=None if adopted else 'not shorter than the layer before it (%d chars); not adopted' % len(best[1]))
+        trace.append(row)
+        if adopted:
+            best = (tree, text, dict(facts, layers=[r['layer'] for r in trace if r['adopted']]))
+
+    for layer, recipes, digest in STACKED_LAYERS:
+        stacker = _MaterialStacker(recipes, digest)
+        tree = stacker.stack(typed)
+        consider(layer, tree, dict(counts=dict(stacker.counts), dedup_entries=0, dedup_refs=0, contained=0))
+    if best is None:
+        return None, trace
+    base_tree, base_facts = best[0], best[2]
+    deduped, entries, refs = _dedup(copy.deepcopy(base_tree), ST.canonical)
+    if entries:
+        consider('L3_dedup', deduped, dict(base_facts, dedup_entries=entries, dedup_refs=refs))
+    else:
+        trace.append(dict(layer='L3_dedup', chars=None, adopted=False, reason='no repeated subtree saves characters'))
+    contained_tree = copy.deepcopy(base_tree)
+    forced, contained, note = _contain(contained_tree, ST.canonical)
+    if contained:
+        both, entries, refs = _dedup(contained_tree, ST.canonical, forced=forced)
+        consider('L5_containment', both, dict(base_facts, dedup_entries=entries, dedup_refs=refs, contained=contained))
+    else:
+        trace.append(dict(layer='L5_containment', chars=None, adopted=False,
+                          reason=note or 'no long string contains another long string'))
+    return (best[1], best[2]), trace
+
+
+def _best_body(value, layered=None):
+    """(body, encoding, facts, compact chars): the shorter of the value's best proven stacked text and compact JSON.
+    layered: an already computed _layered(value) (the whole material's, reused for its first block)."""
+    compact = _compact(value)
+    try:
+        best, trace = layered if layered is not None else _layered(value)
+    except (ValueError, RecursionError) as error:
+        return compact, 'json', dict(refused='%s: %s' % (type(error).__name__, str(error)[:200])), len(compact)
+    if best is not None and len(best[0]) < len(compact):
+        return best[0].rstrip('\n'), 'stacked', best[1], len(compact)
+    return compact, 'json', dict(not_shorter=True, trace=[{k: v for k, v in r.items() if k != 'text'} for r in trace]), len(compact)
+
+
+def _splittable(value):
+    """A map or list that can be written as more than one self-contained block."""
+    if not isinstance(value, (dict, list)) or not value:
+        return False
+    if len(value) >= 2:
+        return True
+    only = next(iter(value.values())) if isinstance(value, dict) else value[0]
+    return _splittable(only)
+
+
+def _split_blocks(value, path, max_chars, out, layered=None):
+    """Self-contained blocks of at most max_chars each (Jev reads material in pieces: every block keeps its own keys,
+    columns and dictionary, so no block holds a reference into another). A map splits by key, a list by row ranges,
+    one item too large for a block recurses into it; a scalar that alone is larger stays one block (cut by the
+    reader's pieces exactly as before). Each block is the shorter of its best proven stacked text and compact JSON."""
+    body, encoding, facts, json_chars = _best_body(value, layered)
+    if max_chars is None or len(body) <= max_chars or not _splittable(value):
+        out.append(dict(path=path, rows=None, encoding=encoding, body=body, facts=facts, json_chars=json_chars))
+        return
+    if isinstance(value, dict):
+        for key, item in value.items():
+            _split_blocks(item, path + [key], max_chars, out)
+        return
+    start, size = 0, len(value)
+    while start < len(value):
+        end = min(len(value), start + max(1, 2 * size))      # the last range's size doubled: no re-spelling from the end
+        while True:
+            found = _best_body(value[start:end])
+            if len(found[0]) <= max_chars or end - start == 1:
+                break
+            end = start + max(1, (end - start) // 2)
+        size = end - start
+        if len(found[0]) > max_chars and _splittable(value[start]):
+            _split_blocks(value[start], path + [start], max_chars, out)     # one item too large: its own blocks
+        else:
+            out.append(dict(path=path, rows=[start, end], encoding=found[1], body=found[0], facts=found[2],
+                            json_chars=found[3]))
+        start = end
+
+
+def _assemble(blocks):
+    """The JSON value the ordered blocks spell (the inverse of _split_blocks); raises on any inconsistency."""
+    root = {'v': None}
+    def container(path):
+        node, key = root, 'v'
+        for part in path:
+            if node[key] is None:
+                node[key] = [] if type(part) is int else {}
+            parent = node[key]
+            if type(part) is int:
+                if not isinstance(parent, list) or part > len(parent):
+                    raise ValueError('material block path skips a list position')
+                if part == len(parent):
+                    parent.append(None)
+            elif not isinstance(parent, dict):
+                raise ValueError('material block path names a key inside a list')
+            elif part not in parent:
+                parent[part] = None
+            node, key = parent, part
+        return node, key
+    for block in blocks:
+        node, key = container(block['path'])
+        if block['rows'] is None:
+            if node[key] is not None:
+                raise ValueError('material block sets a value twice')
+            node[key] = block['value']
+        else:
+            first, last = block['rows']
+            if node[key] is None:
+                node[key] = []
+            if not isinstance(node[key], list) or len(node[key]) != first or len(block['value']) != last - first:
+                raise ValueError('material row block out of order')
+            node[key].extend(block['value'])
+    return root['v']
+
+
+def _material_header(label, kind, source_chars, source_sha, blocks, layout):
+    return ('[material %s %s: %d block(s) for %d chars of %s%s, sha256 %s; parse-back proven byte-exact]' % (
+        json.dumps(str(label)), MATERIAL_ENCODING, blocks, source_chars, kind,
+        (' (JSON text, layout %s)' % layout) if layout else '', source_sha))
+
+
+def _block_header(k, n, path, rows, encoding):
+    return '[block %d/%d path=%s rows=%s enc=%s]' % (k, n, json.dumps(path, separators=(',', ':')),
+                                                    json.dumps(rows, separators=(',', ':')), encoding)
+
+
+_BLOCK_LINE = re.compile(r'^\[block (\d+)/(\d+) path=(.*) rows=(\S*) enc=(stacked|json)\]$')
+_MATERIAL_LINE = re.compile(r'^\[material (".*") ' + MATERIAL_ENCODING + r': (\d+) block\(s\) for (\d+) chars of (json|text)'
+                            r'(?: \(JSON text, layout ([a-z0-9_+]+)\))?, sha256 ([0-9a-f]{64}); parse-back proven byte-exact\]$')
+
+
+def _material_text(label, kind, source, layout, blocks):
+    parts = [_material_header(label, kind, len(source), _sha256(source.encode()), len(blocks), layout)]
+    for k, block in enumerate(blocks, 1):
+        parts += [_block_header(k, len(blocks), block['path'], block['rows'], block['encoding']), block['body']]
+    return '\n'.join(parts) + '\n'
+
+
+def unstack_material_text(text):
+    """The exact source the stacked material text spells: the compact JSON text (keys as given) for kind json, the
+    original text for kind text. The reader for every consumer and the proof; raises on a malformed or inconsistent
+    text."""
+    lines = text.split('\n')
+    head = _MATERIAL_LINE.match(lines[0])
+    if head is None:
+        raise ValueError('material text has no [material ...] line')
+    count, kind, layout = int(head.group(2)), head.group(4), head.group(5)
+    blocks, current = [], None
+    for line in lines[1:]:
+        match = _BLOCK_LINE.match(line)
+        if match is not None and len(blocks) < count:
+            current = dict(k=int(match.group(1)), n=int(match.group(2)), path=json.loads(match.group(3)),
+                           rows=json.loads(match.group(4)), encoding=match.group(5), lines=[])
+            blocks.append(current)
+            continue
+        if current is None:
+            raise ValueError('material text carries content before its first block line')
+        current['lines'].append(line)
+    if len(blocks) != count or any(b['k'] != i + 1 or b['n'] != count for i, b in enumerate(blocks)):
+        raise ValueError('material blocks are not numbered 1..%d' % count)
+    for block in blocks:
+        body = '\n'.join(block['lines'])
+        block['value'] = _material_tree_text(body) if block['encoding'] == 'stacked' else json.loads(body)
+    value = _assemble(blocks)
+    if kind == 'text':
+        if layout is None:
+            raise ValueError('a stacked text material names no JSON layout')
+        return _layout_dump(value, layout)
+    return _compact(value)
+
+
+def render_material(value, *, label, legacy_text=None, max_chars=None, keep_texts=False):
+    """Every existing lossless stack on one piece of non-picture material, layered and PROVEN (see the section head).
+
+    value: the JSON value the consumer serialized (kind json), or a str the consumer wrote as raw text (kind text: a
+    file's text; a text that is exactly a JSON value in a known layout is stacked as that value, any other text stays
+    as it is). legacy_text: the exact text the consumer wrote before the stacks (default json.dumps(value,
+    sort_keys=True), or the text itself). max_chars: the reader's piece size (Jev): the material is then written as
+    self-contained blocks of at most that size; None = one block (Granite reads the whole prompt or refuses it over
+    the cap). keep_texts: also return every layer's text (`layer_texts`) so the consumer can count each with the
+    server tokenizer; the texts are never retained in a summary.
+    Returns {schema, label, encoding: stacked|compact_json|legacy, text, sha256, chars, legacy, source, layers, blocks,
+    refused, proof}; `text` is what the prompt carries. A layer that does not prove is never used (its reason in
+    `layers`/`refused`); the result is always lossless."""
+    import frankie_box_stacked_text as ST  # noqa: F401  (fail here, not mid-render, when the grammar is absent)
+    refused = []
+    if isinstance(value, str):
+        kind, source = 'text', value
+        legacy = value if legacy_text is None else legacy_text
+        decoded = _json_text(value, minimum=1)
+        layout = decoded[1] if decoded is not None else None
+        normalized = _material_plain(decoded[2]) if decoded is not None else None
+        if decoded is None:
+            refused.append('L2: the text is not exactly a JSON value in a known layout; written as it is (no stack applies)')
+        compact = None
+    else:
+        kind, layout = 'json', None
+        normalized = json.loads(json.dumps(value, sort_keys=True))     # the consumer's value as its sorted JSON reads back
+        source = _compact(normalized)
+        legacy = json.dumps(value, sort_keys=True) if legacy_text is None else legacy_text
+        compact = source
+    source_sha = _sha256(source.encode())
+    layers = [dict(layer='L0_legacy', chars=len(legacy), adopted=True, reason='the consumer\'s own text (baseline)')]
+    texts = [('L0_legacy', legacy)]
+    candidates = [('legacy', legacy)]
+    if compact is not None:
+        if json.loads(compact) != json.loads(legacy):
+            layers.append(dict(layer='L1_compact_json', chars=len(compact), adopted=False,
+                               reason='does not read back equal to the legacy JSON; not used'))
+        else:
+            adopted = len(compact) < len(legacy)
+            layers.append(dict(layer='L1_compact_json', chars=len(compact), adopted=adopted,
+                               reason=None if adopted else 'not shorter than L0'))
+            texts.append(('L1_compact_json', compact))
+            if adopted:
+                candidates.append(('compact_json', compact))
+    blocks = []
+    if normalized is not None:
+        try:
+            # every stacked layer on the whole material as one block: the per-layer record and the texts to count
+            layered = _layered(normalized)
+            for row in layered[1]:
+                if row.get('text') is not None:
+                    full = _material_text(label, kind, source, layout,
+                                          [dict(path=[], rows=None, encoding='stacked', body=row['text'].rstrip('\n'))])
+                    texts.append((row['layer'], full))
+                    layers.append(dict({k: v for k, v in row.items() if k != 'text'}, chars=len(full),
+                                       scope='whole material as one block, with its header'))
+                else:
+                    layers.append(dict(row, scope='whole material as one block'))
+            _split_blocks(normalized, [], None if max_chars is None else max(256, max_chars - 200), blocks, layered)
+            stacked = _material_text(label, kind, source, layout, blocks)
+            if unstack_material_text(stacked) != source:
+                raise ValueError('the stacked material does not parse back to the exact source')
+            candidates.append(('stacked', stacked))
+        except (ValueError, RecursionError, KeyError, IndexError, TypeError) as error:
+            blocks = []
+            refused.append('stacked: refused, not used: %s: %s' % (type(error).__name__, str(error)[:200]))
+    encoding, text = min(candidates, key=lambda c: len(c[1]))
+    if encoding != 'stacked' and 'stacked' in dict(candidates):
+        refused.append('the stacked spelling (%d chars) is not shorter than %s (%d chars); not used' % (
+            len(dict(candidates)['stacked']), encoding, len(text)))
+    layers.append(dict(layer='delivered', chars=len(text), adopted=True, encoding=encoding,
+                       scope=('%d self-contained block(s) of at most %s chars' % (len(blocks), max_chars)
+                              if encoding == 'stacked' else 'the consumer\'s text' if encoding == 'legacy' else 'compact JSON')))
+    texts.append(('delivered', text))
+    facts = [b.get('facts') or {} for b in blocks] if encoding == 'stacked' else []
+    result = dict(
+        schema=MATERIAL_SCHEMA, label=label, encoding=encoding, text=text, sha256=_sha256(text.encode()), chars=len(text),
+        legacy=dict(chars=len(legacy), sha256=_sha256(legacy.encode())),
+        source=dict(kind=kind, chars=len(source), sha256=source_sha, layout=layout),
+        layers=layers,
+        blocks=[dict(path=b['path'], rows=b['rows'], encoding=b['encoding'], chars=len(b['body']), json_chars=b['json_chars'],
+                     layers=(b.get('facts') or {}).get('layers')) for b in blocks] if encoding == 'stacked' else [],
+        counts=dict(dedup_entries=sum(f.get('dedup_entries') or 0 for f in facts),
+                    dedup_refs=sum(f.get('dedup_refs') or 0 for f in facts),
+                    contained=sum(f.get('contained') or 0 for f in facts),
+                    **{name: sum((f.get('counts') or {}).get(name, 0) for f in facts)
+                       for name in ('json_texts', 'tables', 'repeats', 'dictionaries', 'integer_sequences', 'digest_tables',
+                                    'digest_refused')}),
+        not_applicable=['L1 c15 unpack and L4 tensors: no c15 values or decoder tensors in this material',
+                        'L6 cross-cycle ledger and L8 known files: the model holds no earlier cycle and opens no file, so '
+                        'the content would leave its view',
+                        'L7 ranges: subsumed by the R integer recipes (a consecutive run is a D/E recipe)',
+                        'brain dedupe: applied by the consumer across documents (dedupe_documents)'],
+        refused=refused,
+        proof=dict(parse_back='byte_exact', reader='frankie_box_adviser_market.unstack_material_text',
+                   rule='every stacked layer: its text parses back to the exact value before it may be adopted; the delivered '
+                        'stacked text: unstack_material_text(text) == the exact source; compact_json: json.loads equal to '
+                        'the legacy JSON; legacy: the consumer\'s own text; nothing dropped, rounded or summarized'),
+        tokens=dict(measured_here=False, rule='the consuming piece counts every layer text with the server tokenizer '
+                                              '(layer_texts) and records the count after each layer'))
+    if keep_texts:
+        result['layer_texts'] = texts
+    return result
+
+
+def material_summary(render):
+    """The render's facts without its texts (for inputs, receipts and reports)."""
+    return {k: v for k, v in render.items() if k not in ('text', 'layer_texts')}
+
+
+def dedupe_documents(documents):
+    """The brain dedupe (frankie_box_brain.load, Greg 2026-09-28: identical bytes are read by the model once) across
+    whole documents: [(label, value)] -> [(label, value, first_label_or_None, sha256)]; a document whose canonical JSON
+    (or text) equals an earlier one's is carried by reference to the first, never repeated, never dropped."""
+    seen, out = {}, []
+    for label, value in documents:
+        digest = _sha256((value if isinstance(value, str) else json.dumps(value, sort_keys=True, separators=(',', ':'))).encode())
+        first = seen.get(digest)
+        if first is None:
+            seen[digest] = label
+        out.append((label, value, first, digest))
+    return out
+
+
+def measure_layers(render, count):
+    """The server token count after each layer: count(text) -> int for every layer text of a keep_texts render.
+    A failed count is recorded as such (None with its reason), never guessed; returns one row per layer."""
+    rows = []
+    for layer, text in render.get('layer_texts') or []:
+        try:
+            tokens, reason = count(text), None
+        except Exception as error:  # noqa: BLE001 - a measurement never changes what the prompt carries
+            tokens, reason = None, '%s: %s' % (type(error).__name__, str(error)[:200])
+        rows.append(dict(layer=layer, chars=len(text), tokens=tokens, **({'reason': reason} if reason else {})))
+    return rows
 
 
 # ------------------------------------------------------------------------------------ the 99 registry entries

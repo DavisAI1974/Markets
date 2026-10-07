@@ -312,9 +312,101 @@ def open_items_of(item, turns, side):
     return out
 
 
-def meeting_input(exchange, knowledge_index=None):
+MATERIAL_STACKS = 'FRANKIE_ADVISER_MATERIAL_RENDER_V1'   # the layered material stacks (frankie_box_adviser_market.render_material)
+ITEM_KEYS = ('item_id', 'author', 'author_label', 'claim', 'voiced', 'records', 'open_items')
+ITEM_INSTRUCTION = 'Begin with this item. One action per reply.'
+
+
+def _legacy_message(value):
+    """The exact text a transcript message carried before the material stacks (json.dumps, sorted keys)."""
+    return json.dumps(value, sort_keys=True)
+
+
+def message_text(value, label, stacked, keep_texts=False):
+    """(text, summary, render) of one message value: every existing lossless stack, layered where each still shortens
+    and each proven by parse-back (frankie_box_adviser_market.render_material; Greg, 2026-10-07: every stack that works
+    is used on everything Granite reads), when the meeting input carries them; else the legacy JSON bytes unchanged
+    (a meeting bound to a legacy input keeps its exact prompts). The citation rule is untouched: the numbers a turn may
+    voice are the ones in the seats' turn texts, lines and cites, all strings, which no stack rewrites."""
+    if not stacked:
+        return _legacy_message(value), None, None
+    import frankie_box_adviser_market as AM
+    render = AM.render_material(value, label=label, legacy_text=_legacy_message(value), keep_texts=keep_texts)
+    return render['text'], AM.material_summary(render), (render if keep_texts else None)
+
+
+def item_message(item, keep_texts=False):
+    """The first user message of an item (the item's turns, records and open items, and the instruction)."""
+    value = dict(item={k: item[k] for k in ITEM_KEYS}, instruction=ITEM_INSTRUCTION)
+    return message_text(value, 'item %s' % item['item_id'], 'message_render' in item, keep_texts)
+
+
+def context_text(given, keep_texts=False):
+    """(text, summary, render) of the system prompt's retained meeting context section."""
+    keys = ('knowledge_index', 'teachers_findings') + (('shared_market',) if 'shared_market' in given else ())
+    return message_text({key: given[key] for key in keys}, 'retained meeting context', 'material_stacks' in given,
+                        keep_texts)
+
+
+def system_prompts(given, rules_ids):
+    """(system prompt sent, the legacy system prompt): the charter and output contract, the retained meeting context
+    (stacked when the input carries the material stacks, with the material legend once), and the whole shared market
+    picture. The legacy prompt is byte-identical to the prompt before the material stacks (the before measurement)."""
+    base = system_prompt(CHARTER.read_text(encoding='utf-8'), rules_ids)
+    keys = ('knowledge_index', 'teachers_findings') + (('shared_market',) if 'shared_market' in given else ())
+    picture = ''
+    if 'shared_market_picture' in given:
+        # Greg, 2026-10-07: the whole shared market picture, in the system prompt, once for every item. Its
+        # numbers are context: a coordinator turn may still voice only numbers from a seat's turn.
+        picture = ('\n\n## SHARED MARKET PICTURE (the whole picture the code seats stood under, at the teachers\' original '
+                   'cutoff; context for coordination, never a source of new numbers for your turns; sha256 of the exact '
+                   'typed picture %s)\n' % given['shared_market_picture']['picture_sha256']
+                   + given['shared_market_picture']['text'])
+    head = '\n\n## Retained meeting context (labels and findings summaries, not new evidence)\n'
+    legacy = base + head + _legacy_message({key: given[key] for key in keys}) + picture
+    if 'material_stacks' not in given:
+        return legacy, legacy
+    import frankie_box_adviser_market as AM
+    return base + '\n\n' + AM.MATERIAL_LEGEND + head + context_text(given)[0] + picture, legacy
+
+
+def _measure(server, messages, label):
+    """{tokens} by the server tokenizer, or {tokens: None, reason}: a measurement, never a gate."""
+    try:
+        return dict(tokens=server.count_tokens(messages, label=label))
+    except Exception as error:  # noqa: BLE001 - MeetingCallFailed / MeetingBudgetExpired are recorded, never raised here
+        return dict(tokens=None, reason='%s: %s' % (type(error).__name__, str(error)[:200]))
+
+
+def _layer_counts(server, render, label):
+    """The server token count after each material layer (frankie_box_adviser_market.measure_layers)."""
+    import frankie_box_adviser_market as AM
+    if render is None:
+        return None
+    return AM.measure_layers(render, lambda text: server.count_tokens([dict(role='user', content=text)], label=label + '-layer'))
+
+
+def material_record(given, basis, tokens):
+    """The meeting's material-stack record: the encoding, why, every message's render summary (sizes before/after,
+    layers adopted and refused, proof) and the server token counts (None before any server)."""
+    stacks = given.get('material_stacks')
+    return dict(schema=MATERIAL_STACKS, encoding=(stacks or {}).get('encoding') or 'legacy_json', basis=basis,
+                context=(stacks or {}).get('context'),
+                items={i['item_id']: i.get('message_render') for i in given.get('items') or []},
+                legend=(None if stacks is None else dict(sha256=stacks.get('legend_sha256'), chars=stacks.get('legend_chars'))),
+                tokens=tokens,
+                rule='every existing lossless stack layered where each still shortens, each proven by parse-back to the exact '
+                     'source; adoption is by characters at input time, the server token count of every layer is recorded '
+                     'here at the meeting; nothing dropped, truncated or summarized')
+
+
+def meeting_input(exchange, knowledge_index=None, *, stacks=True):
     """Per item of Frankie's view: the three seats' voiced turns (text, lines, cites), their retained record fields,
-    the code-seeded open items. Accumulated knowledge is listed by label and hash only (names, not content)."""
+    the code-seeded open items. Accumulated knowledge is listed by label and hash only (names, not content).
+    stacks (default): the non-picture material is written through every proven layered stack (render_material); the
+    input names the encoding and every message's render summary (sha256, chars before/after, layers), so the binding
+    pins what each prompt carries. stacks=False: the legacy input, byte-identical to the input before the stacks (a
+    retained binding of that input keeps its prompts and request identities)."""
     import frankie_box_exchange_voice as V
     voiced = {i['item_id']: i for i in V.voice_input(exchange)['items']}
     items = []
@@ -353,6 +445,21 @@ def meeting_input(exchange, knowledge_index=None):
                      'counts, as the system prompt section SHARED MARKET PICTURE; the per-call token cap is the only '
                      'accepted refusal and it is counted before any call',
             rule='context for coordination; numbers in a coordinator turn must still come from a seat\'s turn')
+    if stacks:
+        import frankie_box_adviser_market as AM
+        given['material_stacks'] = dict(
+            schema=MATERIAL_STACKS, encoding=AM.MATERIAL_ENCODING,
+            legend_sha256=sha256_bytes(AM.MATERIAL_LEGEND.encode()), legend_chars=len(AM.MATERIAL_LEGEND),
+            rule='the system prompt context and every transcript message (the item, a code seat answer, a recorded '
+                 'request) are written through every existing lossless stack, layered where each still shortens, each '
+                 'layer proven by parse-back to the exact source before it is adopted; each message is the shortest of '
+                 'legacy JSON, compact JSON and the stacked text; the numbers a coordinator turn may voice are in the '
+                 'seats\' turn texts, lines and cites (strings, never rewritten by a stack); nothing is dropped, '
+                 'truncated or summarized')
+        given['material_stacks']['context'] = context_text(given)[1]
+        for item in items:
+            item['message_render'] = None          # marks the item stacked; its summary is filled below
+            item['message_render'] = item_message(item)[1]
     return given
 
 
@@ -1068,14 +1175,15 @@ def discuss_item(server, item, system, params, log, progress=None, clock=None):
         if clock is not None:
             clock('%s:r%d' % (_safe_name(item['item_id']), round_number), outcome, wall_start, wall_end, **fields)
     turns_by_seat = {t['seat']: t for t in item['voiced']}
+    # the item's messages in the encoding its meeting input names (the proven material stacks, or the legacy JSON of
+    # an input bound before them); a stacked item's first message must be the one its input summary pins
+    stacked = 'message_render' in item
+    first_message, first_render, _ = item_message(item)
+    if stacked and (first_render or {}).get('sha256') != (item.get('message_render') or {}).get('sha256'):
+        raise ValueError('item %s: the stacked first message differs from the one its meeting input pins' % item['item_id'])
     fresh = dict(status='in_progress', rounds_completed=0, coordinator=[], answers=[], requests=[], notes=[], refused=[],
                  token_counts=[], over_cap=None, outcome=None, pending_call=None, result=None,
-                 transcript=[dict(role='system', content=system),
-                             dict(role='user', content=json.dumps(dict(item={k: item[k] for k in ('item_id', 'author', 'author_label',
-                                                                                                   'claim', 'voiced', 'records',
-                                                                                                   'open_items')},
-                                                                       instruction='Begin with this item. One action per reply.'),
-                                                                  sort_keys=True))])
+                 transcript=[dict(role='system', content=system), dict(role='user', content=first_message)])
     state = progress.load() if progress is not None else None
     if state is not None and state.get('status') == 'complete' and isinstance(state.get('result'), dict):
         log('item %s: retained complete; reused without a model call' % item['item_id'])
@@ -1179,13 +1287,15 @@ def discuss_item(server, item, system, params, log, progress=None, clock=None):
                 answer = seat_answer(action['seat'], item)
                 answer['round'] = round_number
                 state['answers'].append(answer)
-                transcript.append(dict(role='user', content=json.dumps(dict(code_seat_answer=answer), sort_keys=True)))
+                transcript.append(dict(role='user', content=message_text(
+                    dict(code_seat_answer=answer), 'item %s round %d code seat answer' % (item['item_id'], round_number), stacked)[0]))
             elif action['action'] == 'REQUEST_TEST':
                 request = dict(schema=REQUEST_SCHEMA, item_id=item['item_id'], round=round_number, seat='scientific_teacher',
                                binds_to=action['binds_to'], text=action['text'], status='requested_not_run',
                                rule='executed only by the proper code stage; Granite never fabricates the answer')
                 state['requests'].append(request)
-                transcript.append(dict(role='user', content=json.dumps(dict(recorded=request), sort_keys=True)))
+                transcript.append(dict(role='user', content=message_text(
+                    dict(recorded=request), 'item %s round %d recorded request' % (item['item_id'], round_number), stacked)[0]))
             elif action['action'].startswith('NOTE_'):
                 state['notes'].append(dict(round=round_number, kind=action['action'], text=action['text'], cites=action['cites']))
                 transcript.append(dict(role='user', content='Recorded (coordination only, never evidence). Continue.'))
@@ -1298,6 +1408,7 @@ def meeting_workflow_report(out_dir, given, record, *, status, params=None, refu
                                        if picture is not None else ')'),
                              system_prompt_tokens=system_count,
                              per_item='item_id, author, claim, voiced seat turns, retained seat records, code-seeded open items'),
+                 material_stacks=_material_report(given, record),
                  picture_delivery=(None if picture is None else dict(
                      delivered=picture['delivery'], chars=picture['chars'],
                      tokens=dict(system_prompt_counted=system_count, cap=(params or {}).get('input_token_cap_per_call'),
@@ -1336,6 +1447,26 @@ def meeting_workflow_report(out_dir, given, record, *, status, params=None, refu
                      threads=((runtime.get('effective') or {}).get('threads_resolution'))))
 
 
+def _material_report(given, record):
+    """The one-day review's view of the material stacks: what was stacked, the sizes before and after every layer, the
+    server token counts before and after each layer, and what was refused and why (recorded facts only)."""
+    material = (record or {}).get('material')
+    if material is None:
+        stacks = (given or {}).get('material_stacks')
+        return dict(encoding=(stacks or {}).get('encoding') or 'legacy_json', recorded=False,
+                    reason='the meeting record carries no material block (an earlier record format)')
+    def sizes(summary):
+        if not summary:
+            return None
+        return dict(encoding=summary.get('encoding'), legacy_chars=(summary.get('legacy') or {}).get('chars'),
+                    delivered_chars=summary.get('chars'), source=summary.get('source'),
+                    layers=[{k: r.get(k) for k in ('layer', 'chars', 'adopted', 'reason')} for r in summary.get('layers') or []],
+                    refused=summary.get('refused'), counts=summary.get('counts'))
+    return dict(encoding=material.get('encoding'), basis=material.get('basis'), context=sizes(material.get('context')),
+                items={k: sizes(v) for k, v in (material.get('items') or {}).items()},
+                tokens=material.get('tokens'), legend=material.get('legend'), rule=material.get('rule'))
+
+
 def publish_meeting_record(exchange_path, out_dir, brain=None, *, include_inputs=True):
     """Finish publication from retained complete bytes, including after an interrupted receipt write."""
     import frankie_box_brain as BR
@@ -1364,7 +1495,9 @@ def publish_meeting_record(exchange_path, out_dir, brain=None, *, include_inputs
                    publication=publication, brain_entry=brain_entry, seconds=record.get('seconds'),
                    # the thread resolution (null = the claimed slot, 1) and the model clock of this meeting, as recorded
                    threads=((record.get('runtime') or {}).get('effective') or {}).get('threads_resolution'),
-                   model_clock=record.get('model_clock'))
+                   model_clock=record.get('model_clock'),
+                   # the material stacks: encoding, per-message sizes before/after each layer, server token counts
+                   material=record.get('material'))
     inputs = out_dir / 'meeting-input.json'
     if include_inputs and inputs.is_file():
         receipt['inputs'] = witness_file(inputs)
@@ -1443,7 +1576,6 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         # meeting record, never silently dropped; not part of the meeting input (its identity is unchanged)
         knowledge_listed = list(selected.get('listed') or [])
     given = meeting_input(exchange, knowledge_index)
-    phase('inputs')
     out_dir.mkdir(parents=True, exist_ok=True)
     # 6R2: the input bytes are computed first (the durable writer's own encoding) and the retained binding is validated
     # against them BEFORE meeting-input.json is touched: a changed-input retry refuses without mutating the file the old
@@ -1451,6 +1583,17 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
     input_bytes = _durable_json_bytes(given)
     input_path = out_dir / 'meeting-input.json'
     binding_path = out_dir / 'meeting-binding.json'
+    material_basis = 'the proven material stacks (meeting input names material_stacks)'
+    if binding_path.is_file() and json.loads(binding_path.read_bytes()).get('input', {}).get('sha256') != sha256_bytes(input_bytes):
+        # a meeting bound BEFORE the material stacks keeps its exact input, prompts and request identities: when the
+        # retained binding names the legacy input of this same exchange, that input is used unchanged
+        legacy = meeting_input(exchange, knowledge_index, stacks=False)
+        legacy_bytes = _durable_json_bytes(legacy)
+        if json.loads(binding_path.read_bytes()).get('input', {}).get('sha256') == sha256_bytes(legacy_bytes):
+            given, input_bytes = legacy, legacy_bytes
+            material_basis = ('legacy: the retained binding names the input written before the material stacks; its '
+                              'prompts and request identities are kept unchanged')
+    phase('inputs')
     if binding_path.is_file() and json.loads(binding_path.read_bytes()).get('input', {}).get('sha256') != sha256_bytes(input_bytes):
         raise ValueError('retained meeting progress under %s belongs to other inputs (the binding names another input); move it '
                          'aside, nothing is reused across inputs and nothing retained is changed' % out_dir)
@@ -1472,7 +1615,7 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                 coordinator=dict(label=COORDINATOR_LABEL, model_identity=config['settled']['model_identity'],
                                  quantization=config['settled']['quantization'], runtime=config['settled']['runtime']),
                 knowledge_index=knowledge_index, knowledge_listed=knowledge_listed, route=route, local_route=local_route,
-                brain=brain,
+                brain=brain, material=material_record(given, material_basis, None),
                 shared_market_picture=(None if 'shared_market_picture' not in given else
                                        {k: given['shared_market_picture'][k] for k in ('sha256', 'chars', 'picture_sha256', 'delivery')}))
     # The model-evaluation clock (FRANKIE_MODEL_EVALUATION_CLOCK_V1, frankie_box_model_clock; Greg, 2026-10-07): one
@@ -1528,7 +1671,7 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         receipt = dict(schema=RECEIPT_SCHEMA, day=exchange.get('day'), status=record['status'], refused_to_run=refusals,
                        inputs=witness_file(out_dir / 'meeting-input.json'), record=witness_file(out_dir / 'meeting.json'),
                        model_calls=0, seconds=round(time.time() - started, 1), route=route, local_route=local_route,
-                       model_clock=record['model_clock'],
+                       model_clock=record['model_clock'], material=record.get('material'),
                        workflow_report=meeting_workflow_report(out_dir, given, record, status=record['status'],
                                                               params=config.get('proposed_runtime_parameters'),
                                                               refusals=refusals, context=shared_context, route=route))
@@ -1593,24 +1736,26 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         raise
     phase('server_start')
     system_tokens, system_over_cap = None, None
+    material_tokens = dict(items={}, rule='server tokenizer counts (/apply-template + /tokenize) of the legacy and stacked '
+                                          'system prompt and of every material layer\'s text alone (one message, its chat '
+                                          'template included); a count never changes what a prompt carries')
     try:
-        system = system_prompt(CHARTER.read_text(encoding='utf-8'), rules_witness['rules'])
-        context_keys = ('knowledge_index', 'teachers_findings') + (('shared_market',) if 'shared_market' in given else ())
-        system += ('\n\n## Retained meeting context (labels and findings summaries, not new evidence)\n'
-                   + json.dumps({key: given[key] for key in context_keys}, sort_keys=True))
-        if 'shared_market_picture' in given:
-            # Greg, 2026-10-07: the whole shared market picture, in the system prompt, once for every item. Its
-            # numbers are context: a coordinator turn may still voice only numbers from a seat's turn.
-            system += ('\n\n## SHARED MARKET PICTURE (the whole picture the code seats stood under, at the teachers\' original '
-                       'cutoff; context for coordination, never a source of new numbers for your turns; sha256 of the exact '
-                       'typed picture %s)\n' % given['shared_market_picture']['picture_sha256']
-                       + given['shared_market_picture']['text'])
+        system, system_legacy = system_prompts(given, rules_witness['rules'])
         # The cap is counted ONCE on the system prompt with the server's own tokenizer, before any call (the picture
         # is the bulk of it). Over the cap: every item is left open by code with the count; no call; nothing trimmed.
         system_tokens = server.count_tokens([dict(role='system', content=system)], label='system-prompt')
         cap = int(params['input_token_cap_per_call'])
         system_over_cap = system_tokens > cap
         phase('system_prompt_count')
+        # the stacks' measurement (Greg, 2026-10-07: token counts before and after, after each layer): the legacy system
+        # prompt and every layer of the context section, counted with the server tokenizer; side-effect free requests
+        # that never change what the prompt carries; a failed count is recorded, never guessed
+        material_tokens['system_prompt'] = dict(stacked=dict(tokens=system_tokens),
+                                                encoding=('stacked' if system != system_legacy else 'legacy'))
+        if 'material_stacks' in given:
+            material_tokens['system_prompt']['legacy'] = _measure(server, [dict(role='system', content=system_legacy)], 'system-legacy')
+            material_tokens['context_layers'] = _layer_counts(server, context_text(given, keep_texts=True)[2], 'context')
+        phase('material_token_counts')
         log('meeting %s: system prompt %d tokens against the per-call cap %d%s' % (
             exchange.get('day'), system_tokens, cap, ' (OVER: every item left open by code, no call)' if system_over_cap else ''))
         for item in given['items']:
@@ -1629,6 +1774,10 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                                                  'Granite does not see the whole picture, and it refuses visibly)' % (system_tokens, cap),
                                           open_items=item['open_items']))
                 continue
+            if (retained is None or retained.get('status') not in ('complete', 'interrupted')) and 'message_render' in item:
+                # the item's first message, every layer, counted before its rounds (recorded, never gating)
+                material_tokens['items'][item['item_id']] = _layer_counts(server, item_message(item, keep_texts=True)[2],
+                                                                          'item-%s' % _safe_name(item['item_id']))
             if retained is None or retained.get('status') not in ('complete', 'interrupted'):
                 remaining = server.remaining()
                 next_call = '%s:r%d' % (_safe_name(item['item_id']), int((retained or {}).get('rounds_completed') or 0) + 1)
@@ -1683,6 +1832,7 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
     attempts = LlamaServer.retained_attempts(evidence_dir)
     record = dict(base, status='complete', items=items, not_discussed=not_discussed, timings=timings,
                   system_prompt_tokens=system_tokens, system_prompt_over_cap=system_over_cap,
+                  material=material_record(given, material_basis, material_tokens),
                   runtime=dict(binary=witness_file(binary), model=witness_file(model), parameters=params,
                                provenance=runtime_provenance(config.get('pins') or {}, binary),
                                effective=dict(threads=server.threads, host_cpus=server.host_cpus, host_cpu=host_cpu(),
