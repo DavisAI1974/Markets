@@ -15,7 +15,7 @@ FIRST, in this order:
      git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
      git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
      git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -10
-   The tip must be the docs commit above 2f1d6630 on Codex's 6c033cd5 or later. Expect a clean rebase; if Codex edited
+   The tip must be 11a433a7 or later (the step-6 docs commit above 2f1d6630) on Codex's 6c033cd5 or later. Expect a clean rebase; if Codex edited
    frankie_box_boss_session.py / frankie_box_experiment_exchange.py / frankie_box_scientific_teacher.py /
    frankie_box_teacher_knowledge.py / frankie_box_historical_*.py, read its diff before touching that module.
 READ, in order (research/kalshi/frankie_boss/):
