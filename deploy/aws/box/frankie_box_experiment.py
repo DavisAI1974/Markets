@@ -109,9 +109,12 @@ every step") makes the day's one held booking 32 CPUs and every stage of the day
 and its Jev context read on the lane's pinned pools, Jev and the meeting (voice) with llama-server threads from their one
 setting each (JEV_THREADS, MEETING_THREADS; default the lane size). The ingest of a lone day takes the plan's day size
 (Run.ingest_size; days side by side share the box), never the old fixed WORKERS=7 / 8 CPUs. Within a day the stages
-still run one after another on the booking: every later stage reads an earlier one's output or the brain an earlier one
-publishes into, and the one data-independent pair (the classroom and the data export) is held apart by the settled order
-("build/search the causal evidence only after Frankie's classroom work exists"); nothing runs side by side without that.
+still run one after another on the booking. Most later stages read an earlier one's output or the brain an earlier one
+publishes into. Two pairs are data-independent: the classroom and the data export (held apart by the settled order,
+"build/search the causal evidence only after Frankie's classroom work exists"), and the exchange's shared-market read
+(jev_context_read's EXCHANGE_CONTEXT_ONLY read) and the lessons. Every member of both pairs is a pinned pool
+sized to the whole lane, so side by side they would either share the same 32 CPUs (no measured gain) or split them into
+disjoint halves (each step below the day's 32); neither runs side by side until a canary measures a gain.
 
 RESUME. A receipt per day and step (per batch for teacher and lessons) under /opt/frankie-box/work/experiment/<run>/.
 A restart with the same plan skips every step whose receipt says done or reused and runs the rest; a different plan
@@ -4877,8 +4880,9 @@ def main():
     p.add_argument('--lags', type=int, default=20)
     p.add_argument('--transforms', help='the search transforms (comma list; default all)')
     p.add_argument('--ingest-workers', type=int, default=31,
-                   help='a ceiling on the WORKERS of each ingest day process; each books 8 CPUs, so the most that fit is used '
-                        '(inline verify 3, deferred 7)')
+                   help='a ceiling on the WORKERS of each ingest day process; a lone day books the plan\'s day size (32 on a '
+                        '--day-cpus 32 run) or auto, days side by side share the box (Run.ingest_size); WORKERS = its CPUs '
+                        'less one unless this ceiling is lower')
     # full + sequential until observation_replay feeds the teacher's walk: the Dipole teacher reads the stored observation
     # (a none-mode day would get no Dipole rows); the parallel writer is none-mode only (--ingest-mode parallel then)
     p.add_argument('--ingest-mode', choices=('sequential', 'parallel'), default='sequential')
