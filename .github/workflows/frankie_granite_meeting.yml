@@ -4,7 +4,11 @@ name: Frankie Granite meeting (post-class coordinator on a standard CPU runner; 
 # dispatched by hand with a presigned GET of one day's exchange-frankie.json (small) and a presigned PUT for the record.
 # It refuses while a pin in knowledge/GRANITE_MEETING_RUNTIME_V1.json is an explicit blank or the runtime parameters are
 # unconfirmed (the setup and the Python gate both check). Never scheduled, never on push. No Pod, no GPU, no AWS action.
-# The record's return to the owning lane's brain (kind meeting) is a named Codex edit; the artifact here is the record.
+# The record's return to the owning lane's brain is the explicit owner-side import (frankie_box_lane_state.py
+# --import-meeting RECORD --record-sha256 SHA --exchange ...), run by hand on the owning lane with the hash that return.json
+# names; this workflow returns the bytes only (artifact, optional presigned PUT). Nothing here dispatches that import,
+# downloads an artifact onto a lane or chooses the first E2E host. Workflow inputs reach the shell only through environment
+# variables (never interpolated into shell source; Codex finding 4, 2026-10-06).
 on:
   workflow_dispatch:
     inputs:
@@ -31,6 +35,8 @@ jobs:
     timeout-minutes: 60
     env:
       INPUTS_ONLY: ${{ inputs.inputs_only }}
+      EXCHANGE_GET_URL: ${{ inputs.exchange_get_url }}
+      RECORD_PUT_URL: ${{ inputs.record_put_url }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -41,7 +47,8 @@ jobs:
       - name: Fetch the exchange view (small; Jev raw items already withheld by the exchange)
         run: |
           mkdir -p work/meeting
-          curl -fsSL -o work/meeting/exchange-frankie.json "${{ inputs.exchange_get_url }}"
+          case "$EXCHANGE_GET_URL" in https://*) ;; *) echo "exchange_get_url must be an https URL" >&2; exit 2;; esac
+          curl -fsSL -o work/meeting/exchange-frankie.json "$EXCHANGE_GET_URL"
           python3 -c "import json; d=json.load(open('work/meeting/exchange-frankie.json')); assert d.get('schema')=='FRANKIE_EXPERIMENT_EXCHANGE_V1' and d.get('view')=='frankie', 'not the Frankie view'"
       - name: Pinned llama.cpp and Granite GGUF (refuses while any pin is blank)
         if: inputs.inputs_only != 'true'
@@ -54,11 +61,17 @@ jobs:
             SERVER="$(sed -n 's/^LLAMA_SERVER=//p' work/meeting/setup.txt)"; MODEL="$(sed -n 's/^GGUF_MODEL=//p' work/meeting/setup.txt)"
             python3 deploy/aws/box/frankie_box_granite_meeting.py --exchange work/meeting/exchange-frankie.json --out-dir work/meeting/out --binary "$SERVER" --model "$MODEL"
           fi
-      - name: Return the record (optional presigned PUT)
+      - name: Return witness (the record's bytes and sha256 by name; the owner import to run by hand)
+        if: always()
+        run: |
+          python3 deploy/aws/box/frankie_box_granite_meeting.py --exchange work/meeting/exchange-frankie.json --out-dir work/meeting/out --return-witness
+      - name: Return the record (optional presigned PUT of the same bytes; the artifact below is always kept)
         if: inputs.record_put_url != ''
         run: |
-          curl -fsSL -X PUT -H 'Content-Type: application/json' --data-binary @work/meeting/out/meeting.json "${{ inputs.record_put_url }}"
+          case "$RECORD_PUT_URL" in https://*) ;; *) echo "record_put_url must be an https URL" >&2; exit 2;; esac
+          curl -fsSL -X PUT -H 'Content-Type: application/json' --data-binary @work/meeting/out/meeting.json "$RECORD_PUT_URL"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
         with:
           name: granite-meeting-record
           path: work/meeting/out/
