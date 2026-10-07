@@ -34,6 +34,10 @@ order, on the pinned code. Queued calls go to spawn workers in batches: each bat
 same groups. Each row's placeholders are replaced by the results as they arrive. Guard: the first two calls of every batch
 and every RAW_GUARD_EVERY-th call are also computed in the parent at call time with the pinned function and must equal
 the worker's result, or the run stops.
+Shared-path payload encodings (EvidencePrecompute, 2026-10-07 night): the canonical bytes of each yielded payload and the
+entity's 7-field row hash, computed on pinned workers and registered for parallel_journal._chain_hash_factory exactly as
+the legacy walk's reader workers do (section note below). Finish (steps 3-4): pinned workers (FINISH_WORKER_CPUS), a
+dead worker redone with one fewer, the finished prefix of chunks joined in order while later chunks run.
 Pinned files unchanged: c15_teacher_r3.py, c15_teacher.py, c15_normalizer.py, c15_normalizer_r3.py, dipole_target.py.
 """
 from concurrent.futures import ProcessPoolExecutor
