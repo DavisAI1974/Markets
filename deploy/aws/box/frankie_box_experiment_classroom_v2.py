@@ -280,7 +280,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                            == {k: journal_pin.get(k) for k in ('bytes', 'sha256')}))
     if shared_policy:
         market = _box('frankie_box_market_timeline').SharedMarketTimeline(
-            calculations, day=day, workers=15,
+            calculations, day=day, workers=K.lane_workers(),
             # review N1: the witness names the file it measured (path, device, inode); the core accepts it only when that
             # is THE pinned file of the same size, else it hashes the journal itself (never a weaker check)
             input_witness=(dict({k: journal_witness[k] for k in ('bytes', 'sha256')}, path=journal_witness['path'],
@@ -371,9 +371,11 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     cpus = sorted(os.sched_getaffinity(0))
     received = dict(
         # the lane (same day, same lane: the Run books it; recorded here, refused only by the learner walk)
-        lane=dict(cpus=cpus, count=len(cpus), expected=16,
-                  note=('held 16-CPU lane' if len(cpus) == 16 else
-                        'affinity is not a 16-CPU lane: recorded, not refused here (the SOCRATIC/VERIFY learner walk refuses)')),
+        lane=dict(cpus=cpus, count=len(cpus), booked=K.lane_cpus(), expected=len(K.lane_cpus()),
+                  note=('held booking of %d CPUs (the day\'s 32 or a 16-CPU lane)' % len(cpus)
+                        if cpus == K.lane_cpus() else
+                        'affinity differs from the booked CPU list: recorded, not refused here (the SOCRATIC/VERIFY '
+                        'learner walk refuses)')),
         journal_witness=journal_witness, shared_market_disposition=shared_market_disposition,
         teacher_shared_read=teacher_shared_read,
         stop_polling=dict(signal='SIGTERM immediate', stop_file=os.environ.get('FRANKIE_LANE_STOP_FILE'),

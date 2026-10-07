@@ -62,8 +62,12 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
         raise ValueError('identity: learner source and classroom do not name the same sealed day and whole-day cutoff')
     # The existing whole-day route is exact. Do not silently trim to a guessed prefix.
     cpus = sorted(os.sched_getaffinity(0))
-    if len(cpus) != 16:
-        raise ValueError('lane: learner walk requires its owning held 16-CPU lane')
+    import frankie_box_classroom_code as K
+    booked = K.lane_cpus()
+    # the booked length (the day's 32 CPUs, or a 16-CPU lane): the walk runs on its own held booking, nothing smaller
+    if len(cpus) not in (16, 32) or cpus != booked:
+        raise ValueError('lane: learner walk requires its owning held booking (16 or 32 CPUs, the affinity equal to '
+                         'the booked list); affinity %d CPUs, booked %d' % (len(cpus), len(booked)))
     own = {k: binding[k] for k in ('source_hash', 'as_of', 'through_cursor', 'request_id',
                                   'cycle_index', 'cycle_count')}
     if own['cycle_index'] != 0 or own['cycle_count'] != 1:
@@ -85,7 +89,7 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
     if walked_now:
         environment = {k: os.environ.get(k) for k in ('FRANKIE_WALK_CACHE', 'FRANKIE_TEACHER_CHANGES')}
         try:
-            code = T._teach(day, receipt_path, ingest['sha256'], 15, day_file, day_sha256,
+            code = T._teach(day, receipt_path, ingest['sha256'], max(1, len(booked) - 1), day_file, day_sha256,
                             save_requested=save_requested, learner_binding=own, learner_directory=directory,
                             calculations=calculations if source.get('shared_market_policy') else None,
                             shared_market_policy=(source.get('shared_market_policy') or {}).get('schema'))
@@ -124,9 +128,9 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
         shared_market_read=shared_read, shared_market_use=result.get('shared_market_use'),
         shared_market_arithmetic=result.get('shared_market_arithmetic'),
         coverage=coverage,
-        # the lane this reading ran on (the walk refuses above unless it is a held 16-CPU lane) and whether the
+        # the lane this reading ran on (the walk refuses above unless it is its held 16- or 32-CPU booking) and whether the
         # walk was computed now or a retained receipt was reused; both for the one-day inspection report
-        lane=dict(cpus=cpus, count=len(cpus), expected=16),
+        lane=dict(cpus=cpus, count=len(cpus), expected=len(booked)),
         walked_now=walked_now, retained_receipt_reused=not walked_now, identity_pin_created_now=pin_created,
         independent_scientific_verification=False,
         purpose='current evidence for accumulated-knowledge recognition before host grading')

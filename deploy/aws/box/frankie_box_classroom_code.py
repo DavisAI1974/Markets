@@ -33,6 +33,30 @@ if str(Path(__file__).resolve().parent) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 import frankie_box_all99_coverage as ALL99  # noqa: E402
 
+
+def lane_cpus():
+    """The CPUs booked for this day (Greg, 2026-10-07: a day gets all 32, or the 16 of a lane): FRANKIE_LANE_CPUS as
+    the CPU ledger hands it (a comma list; a-b ranges accepted), else this process's affinity mask. Every classroom
+    pool sizes from this one list."""
+    import os
+    text = os.environ.get('FRANKIE_LANE_CPUS') or ''
+    cpus = set()
+    for part in text.split(','):
+        part = part.strip()
+        if not part:
+            continue
+        low, _, high = part.partition('-')
+        if low.isdigit() and (not high or high.isdigit()):
+            cpus.update(range(int(low), int(high or low) + 1))
+    if not cpus and hasattr(os, 'sched_getaffinity'):
+        cpus = set(os.sched_getaffinity(0))
+    return sorted(cpus) or [0]
+
+
+def lane_workers():
+    """Workers beside the coordinator: the booked CPUs minus one (15 on a 16-CPU lane, 31 on the 32-CPU day)."""
+    return max(1, len(lane_cpus()) - 1)
+
 SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'
 # V3 = V2 with R17 amended for Granite's active bounded post-class facilitator role (Greg, 2026-10-06)
 RULES_PATH = Path(__file__).resolve().parents[3] / 'research/kalshi/frankie_boss/knowledge/CLASSROOM_RULES_V3.json'
@@ -322,7 +346,7 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
                     last_anchor_seen_at = seen
     finally:
         iterator.close()
-    read = dict(seconds=round(time.monotonic() - started, 3), pictures_seen=seen, workers=15,
+    read = dict(seconds=round(time.monotonic() - started, 3), pictures_seen=seen, workers=lane_workers(),
                 wanted_anchor_cursors=len(wanted), max_wanted_adapter_cursor=(max(wanted) if wanted else None),
                 last_anchor_retained_at_picture=last_anchor_seen_at,
                 pictures_after_last_anchor=(seen - last_anchor_seen_at if last_anchor_seen_at is not None else None),
@@ -367,7 +391,7 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
     opening = source.get('opening_book') if isinstance(source.get('opening_book'), dict) else None
     return dict(schema='FRANKIE_CLASSROOM_SHARED_MARKET_V1', classroom_binding_hash=visible['binding']['classroom_binding_hash'],
                 identity=timeline.identity, reader=dict(module='frankie_box_market_timeline',
-                    interface='SharedMarketTimeline.iter_pictures', workers=15),
+                    interface='SharedMarketTimeline.iter_pictures', workers=lane_workers()),
                 anchors=anchors, pictures=pictures, report=report,
                 source_status_counts=counts, coverage=coverage, read=read,
                 arrivals=arrivals.record(),
@@ -405,7 +429,7 @@ class ClassroomMarketContext:
             # bound to the measured file (review N1): the core accepts a caller's witness only for its pinned file
             stat = Path(journal['path']).stat()
             witness = dict(measured(journal['path']), path=journal['path'], dev=stat.st_dev, ino=stat.st_ino)
-        reader = SharedMarketTimeline(self.calculations, day=self.day, workers=15, input_witness=witness)
+        reader = SharedMarketTimeline(self.calculations, day=self.day, workers=lane_workers(), input_witness=witness)
         if reader.identity != self.retained['identity']:
             raise ValueError('classroom full market reader changed from its retained selection')
         yield from reader.iter_pictures()
@@ -1168,7 +1192,7 @@ class _NativeEntryArithmetic:
         jobs = ([(member_series, key, 'member_value') for key in sorted(self.num, key=lambda k: (k[0], str(k[1])))]
                 + [(count_series, key, 'events_per_dipole_interval')
                    for key in sorted(self.cnt, key=lambda k: (k[0], str(k[1])))])
-        self.pair_threads = max(1, min(len(os.sched_getaffinity(0)), 16, len(jobs) or 1))
+        self.pair_threads = max(1, min(len(lane_cpus()), len(jobs) or 1))     # the booked CPUs (16 or 32)
         with ThreadPoolExecutor(max_workers=self.pair_threads) as pool:
             series.extend(pool.map(run, jobs))
         for key in sorted(self.cat, key=lambda k: (k[0], str(k[1]))):
@@ -2468,7 +2492,7 @@ def _pair_measures(math, ledgers, order):
     import threading
     import time
     started = time.monotonic()
-    workers = min(len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else 1, 16, len(order))
+    workers = min(len(lane_cpus()), len(order))         # the booked CPUs (16 or 32)
     use_fork = sys.platform.startswith('linux') and threading.active_count() == 1 and workers > 1
     if use_fork:
         import multiprocessing
