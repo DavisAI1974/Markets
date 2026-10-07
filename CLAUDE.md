@@ -1,16 +1,15 @@
-# Claude session drop-in — 2026-10-07: STEP 8 IS STOPPED (Greg); THE AGENTS ARE THE ONLY WAY WORK RUNS
+# Claude session drop-in — 2026-10-07 evening: THE AGENTS ARE THE ONLY WAY WORK RUNS (Greg)
 
-Branch `ccr-d2f8f826-iefeah-frankie` carries the aws-mcp server (read-only), the agent-skills plugin and
-ten agents in `.claude/agents/` (seven `frankie-*` roles, the tenth being `frankie-ccode-step8`, CCode's
-Step 8 remainder role, plus three `aws-*`). Greg stopped Step 8: `ccode/teacher-tasks-20261006b` is frozen
-at `8f242402`; do not review, fix or push it, and run no agent, until Greg restarts it. READ FIRST
-`research/kalshi/frankie_boss/CLAUDE_HANDOFF_20261007_AGENTS_STEP8_REVIEW.md` (drop-in box at its top).
-**Greg, 2026-10-07 (standing): from here on the work runs ONLY through these agents.** The session is the
-parent: it relays Greg's go, assigns a role, and never does a role's work itself. Every role starts with
-the `api-and-interface-design` skill and uses the aws connector (aws-mcp) for the AWS tool skills
-(`aws-compute`, `aws-storage` and the others named in each agent's shared block, verified resolving
-2026-10-07). The codex checkpoint `codex/stopped-wip-20261007` (fd42dfd) is already in this branch.
-Source-only; HOLD.
+READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007_AGENTS_PASS.md` (the box at its top, then
+the open list), then `WORKFLOW_COVERAGE_PLAN_20261007.md` (the plan and Greg's decisions). Work branch
+`ccr-d2f8f826-iefeah-frankie` (tip `c838c7b3`); Step 8 corrections on
+`ccode/teacher-tasks-20261006b-step8-corrections` (`5f111885` over CCode's `8f242402`, history untouched).
+Ten agents in `.claude/agents/` (seven `frankie-*`, three `aws-*`), one shared block: `api-and-interface-design`
+first, the AWS connector read AND write (binds at session start), efficiency and data-processing skills, the
+one-day inspection reports, the missing-coverage rule. **Greg (standing): the session is the parent only; it
+relays Greg's go, assigns a role, commits returns, never does a role's work.** Everything from 2026-10-07 is
+SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED; some stage-pass edits are UNFINISHED (see the drop-in). No E2E,
+dispatch, model/data run or install without Greg's explicit go. Greg is low on weekly usage: no re-passes.
 
 # Latest assignment — CCode Step 8A, 2026-10-07 source only
 
