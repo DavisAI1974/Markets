@@ -43,3 +43,19 @@ to integration. Then, on Greg's go in a session with the live AWS connector: the
 the authorized E2E, ONE day with the per-piece inspection reports, review with Greg and Frankie,
 THREE days. Thirty days is a separate decision. Jev runtime pins and the Granite picture-body call
 wait on Greg.
+
+## Decisions from Greg during this pass (2026-10-07)
+- The ONE-day run is configured exactly as the THREE-day run will be: same lanes, same routes, no
+  local shortcuts. The Jev runtime pins and the Granite hosting are settled before day 1.
+- Optimize as much as the science allows before the one-day run; it is a check that the workflow
+  runs the way Greg wants, not a benchmark. Keep the instrumentation so it shows where time went.
+- Day 1 must surface every problem: nothing in any piece goes wrong quietly; every skip, wait,
+  refusal, fallback, cap, retry, missing or stale input, swallowed exception and default taken
+  lands on the receipt and in the piece's inspection markdown with its reason.
+- Granite sees the whole shared market picture unless there is a good reason; the only accepted
+  reason is the per-call token cap, which refuses visibly.
+- Granite hosting: AWS, uniform with the lanes (the spec's "local if practical"): the meeting runs
+  as a child on the owning box, CPU only, pinned Granite 4.2 3B Q4_K_M under llama.cpp b11440;
+  plan `voice_route=local`. The GitHub route stays in the code as the listed fallback, unused.
+  Installing the pinned binary and model on the box is a day-1 setup step for the next session
+  with the live connector, on Greg's go.
