@@ -1752,6 +1752,11 @@ class Session:
         def child():
             # A forked child of the ROOT: its own stop flag (the lane signals the ROOT; the ROOT forwards SIGTERM here),
             # its own probe directory (the parent's progress.json stays the legacy pass's), never the parent's stack.
+            # Everything inherited from the ROOT at the fork is frozen first: this child's collector never walks it, so
+            # it never writes (copies) the parent's pages nor spends its collections on them. Value-neutral: reference
+            # counting is unchanged; only when inherited cyclic garbage would be reclaimed changes (never, here).
+            import gc
+            gc.freeze()
             stop = [False]
             signal.signal(signal.SIGTERM, lambda *_: stop.__setitem__(0, True))
             os.sched_setaffinity(0, set(native_cpus))
