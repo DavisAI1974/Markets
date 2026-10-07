@@ -504,6 +504,8 @@ def passed(run, stage, day):
     """True when the step's receipt lets the next class-side step run."""
     import frankie_box_experiment as X
     r = run.receipt(stage, day)
+    if r and stage in ('exchange', 'voice', 'school', 'reports'):
+        run.require_current_teacher_inputs(day)
     if not r:
         return False
     if stage == 'classroom':
@@ -571,15 +573,17 @@ def class_day(entry, previous, school_day, code_root, commit, log):
     releases or re-books the day's slot.
     """
     run, e = _run_for(entry, code_root, commit, log)
-    run.check_save()
     day = e['day']
     if _slot_live(entry.get('slot_booking')):
         run.slot_booking = entry['slot_booking']
+    run.successors(day)
+    run.check_save()
     run.school_day = school_day
     run.queue_previous = previous[:3]
     facts = dict(stages={})
 
     def keep(stage, r, receipt_stage=None, receipt_key=None):
+        run.successors(day)
         receipt_stage = receipt_stage or stage
         receipt_key = receipt_key or day
         facts['stages'][stage] = dict(status=r['status'], reason=r.get('reason'),
@@ -947,6 +951,7 @@ def _finish_day(run, e, code_root, commit, log):
     """
     import frankie_box_experiment as X
     facts = {}
+    run.successors(e['day'])
     run.check_save()
 
     # BOSS teacher: whole journal, every level, day-local rows.
@@ -1028,11 +1033,17 @@ def _finish_day(run, e, code_root, commit, log):
             facts[stage] = dict(status=r.get('status'), reason=r.get('reason'))
             if r.get('status') != 'skipped':
                 return False, facts
+        import frankie_box_successor_dispatch as S
+        facts['successors'] = S.close_day(run, e['day'])
         return True, facts
     j = run.guarded('jev', e) or {}
     facts['jev'] = dict(status=j.get('status'), reason=j.get('reason'), material_sent=j.get('material_sent'),
                         dispatches=j.get('dispatches'))
-    return j.get('status') in X.FINISHED + (X.HANDED_OFF,), facts
+    finished = j.get('status') in X.FINISHED + (X.HANDED_OFF,)
+    if finished:
+        import frankie_box_successor_dispatch as S
+        facts['successors'] = S.close_day(run, e['day'])
+    return finished, facts
 
 
 def _finish_job(entry, code_root, commit, log, holder):

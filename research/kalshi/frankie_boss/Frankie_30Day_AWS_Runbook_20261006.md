@@ -1,5 +1,22 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+## Current checkpoint — Step 5 successor loop dispatch/recovery source-built
+
+Greg requested wiring the owner loop so this source item can be checked off. See
+`STEP5_SUCCESSOR_DISPATCH_20261007.md`: explicit request/decision intake, existing held-lane
+child dispatch, candidate/publication reuse, cooperative save/resume, failure-specific retry,
+knowledge-sync recovery and checked completion acknowledgment are now wired into ROOT/class
+boundaries. No scientific decision is inferred. Completed days cannot silently reopen, and
+stale dependent exchanges/requests still require their own checked successors.
+
+API and Interface Design plus the AWS EC2/Systems Manager workflow skill were applied to each
+module in this slice. Greg asks for the same reviews across the other steps next. CCode's
+Step 8A files remain his. General main/class save recovery, broader Step 5 transitions and
+Jev Step 7 remain open. This checks off only the accumulated-successor dispatch/recovery SOURCE
+item; runtime verification remains held. AST without imports and whitespace/source review only.
+No tests, installs, model/data/reproduction runs or AWS account inspection/actions occurred.
+AWS plugin calls retrieved skill documentation only. All execution remains stopped.
+
 ## Current Codex source slice — explicit Step 5 successor operation
 
 After integration `3a1416b7`, Codex added `teach_successor` and `publish_successor` in

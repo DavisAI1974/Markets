@@ -24,10 +24,20 @@ set -eu
 export HOME="${HOME:-/root}"   # SSM runs without HOME; DuckDB refuses to load extensions without a home directory (2026-09-29)
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"; : "${RUN:?run name required}"
 ACTION="${ACTION:-plan}"
-case "$ACTION" in plan|start|status) ;; *) echo "ACTION must be plan, start or status" >&2; exit 2;; esac
+case "$ACTION" in plan|start|status|successor-request|successor-decision|successor-retry|successor-save|successor-resume) ;; *) echo "unknown experiment ACTION" >&2; exit 2;; esac
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
 set -- --action "$ACTION" --run "$RUN" --commit "$MARKETS_SHA" --code-root "$CODE_ROOT"
+case "$ACTION" in successor-*)
+  : "${SUCCESSOR_DAY:?owning day required}"
+  set -- "$@" --successor-day "$SUCCESSOR_DAY"
+  if [ -n "${SUCCESSOR_FILE:-}" ]; then
+    case "$SUCCESSOR_FILE" in /opt/frankie-box/work/experiment/*) ;; *) echo "SUCCESSOR_FILE must be owner-local" >&2; exit 2;; esac
+    case "$SUCCESSOR_FILE" in *..*) exit 2;; esac
+    set -- "$@" --successor-file "$SUCCESSOR_FILE"
+  fi
+  [ -z "${SUCCESSOR_ID:-}" ] || set -- "$@" --successor-id "$SUCCESSOR_ID"
+;; esac
 [ -z "${PLAN:-}" ] || set -- "$@" --plan "$PLAN"
 [ -z "${DAYS:-}" ] || set -- "$@" --days "$DAYS"
 [ -z "${DAY_CLASS:-}" ] || set -- "$@" --day-class "$DAY_CLASS"

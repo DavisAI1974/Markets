@@ -533,6 +533,14 @@ class Run:
         marker = os.environ.get('FRANKIE_LANE_STOP_FILE')
         return bool(marker and Path(marker).is_file())
 
+    def successors(self, day):
+        """Explicit owner corrections finish before this day's next dependent operation."""
+        import frankie_box_successor_dispatch as S
+        completed = S.drain(self, day)
+        if completed and (self.receipt('successors', day) or {}).get('acknowledgments') != completed:
+            self.record('successors', day, 'done', acknowledgments=completed)
+        return completed
+
     def check_save(self):
         if self.save_requested():
             self.log('day saved on its assigned lane; resume the retained attempt')
@@ -547,7 +555,10 @@ class Run:
         return json.loads(path.read_bytes()) if path.is_file() else None
 
     def finished(self, stage, key):
-        return done_status(self.receipt(stage, key))
+        done = done_status(self.receipt(stage, key))
+        if done and stage in ('exchange', 'voice', 'school', 'reports'):
+            self.require_current_teacher_inputs(key)
+        return done
 
     def remote_root(self, day):
         receipt = self.receipt('root', day)
@@ -591,7 +602,9 @@ class Run:
                 status, fields['reason'] = 'waiting', '; '.join(c['line'] for c in waits)
             elif refusals and status == 'failed':  # the sizing rule refused the booking: the rule is the reason
                 fields['reason'] = '; '.join(c['line'] for c in refusals)
-        if status in FINISHED and os.environ.get('FRANKIE_LANE_MAILBOX'):
+        # Successor completion already includes its checked publication/sync acknowledgment;
+        # do not create another mailbox operation after that durable acknowledgment.
+        if status in FINISHED and stage != 'successors' and os.environ.get('FRANKIE_LANE_MAILBOX'):
             import frankie_box_lane_state as LS
             LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage, brain=self.plan.get('brain') or BRAIN)
         fields['knowledge_available'] = self._knowledge.pop((stage, key), None)
@@ -601,9 +614,8 @@ class Run:
         if previous:
             body['previous_attempts'] = (previous.get('previous_attempts') or []) + [
                 {k: previous.get(k) for k in ('status', 'at', 'reason', 'exit_code')}]
-        tmp = path.with_suffix('.pending')
-        tmp.write_text(json.dumps(body, indent=1, sort_keys=True) + '\n', encoding='utf-8')
-        os.replace(tmp, path)
+        from frankie_box_durable import write_json
+        write_json(path, body)
         self.log('%s %s: %s%s' % (stage, key, status, (' (%s)' % fields['reason']) if fields.get('reason') else ''))
         return body
 
@@ -631,6 +643,9 @@ class Run:
     # children
     def child(self, stage, key, script, env):
         """One committed box script as a child; its whole output in <run>/logs/<key>-<stage>.log."""
+        successor = script == 'frankie_box_teacher_successor.sh'
+        if not successor and any(e['day'] == key[:8] for e in self.plan['days']):
+            self.successors(key[:8])
         self.check_save()
         if self.remote_root(key[:8]):
             raise ValueError('this day belongs to its remote AWS lane; no local stage dispatch')
@@ -640,7 +655,7 @@ class Run:
         import frankie_box_lane_state as LS
         self._knowledge[(stage, key)] = LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage,
                                                  brain=self.plan.get('brain') or BRAIN)
-        if stage in ('lessons', 'exchange'):
+        if stage in ('lessons', 'exchange') and not successor:
             self.require_current_teacher_inputs(key[:8])
         full = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), **{k: str(v) for k, v in env.items()})
         command = ['sh' if script.endswith('ingest_block.sh') else 'bash', str(self.box / script)]
@@ -1276,6 +1291,7 @@ class Run:
         """A step after the lessons (exchange, voice, school, reports): an error is recorded as the step's failure with its
         reason (retried on the next start); it never stops the run or the other days."""
         try:
+            self.successors(e['day'])
             self.check_save()
             remote = self.remote_stage(stage, e['day'])
             if remote is not None:
@@ -1982,6 +1998,8 @@ class Run:
         return out
 
     def summary(self, stages):
+        import frankie_box_successor_dispatch as S
+        successors = S.status(self.dir)
         rows = {}
         for e in self.plan['days']:
             rows[e['day']] = {s: (self.receipt(s, e['day']) or {}).get('status') for s in stages if s not in ('teacher', 'lessons')}
@@ -1992,11 +2010,12 @@ class Run:
         unfinished = sorted({(k, s) for k, v in rows.items() for s, st in v.items()
                              if not done_status(self.receipt(s, k)) and not (self.receipt(s, k) or {}).get('not_wired')
                              and not (s == 'voice' and (self.receipt(s, k) or {}).get('non_blocking'))})
+        unfinished = sorted(set(unfinished) | {(r['day'], 'successors') for r in successors if r['status'] != 'done'})
         not_wired = sorted({(k, s) for k, v in rows.items() for s, st in v.items()
                             if (self.receipt(s, k) or {}).get('not_wired') and not done_status(self.receipt(s, k))})
         handed_off = sorted(k for k in rows if (self.receipt('jev', k) or {}).get('status') == HANDED_OFF)
         out = dict(schema=SCHEMA, run=self.plan['run'], plan_sha256=plan_digest(self.plan), stages=list(stages), days=rows,
-                   left_out=self.plan['left_out'],
+                   left_out=self.plan['left_out'], successors=successors,
                    batches=batches, stopped=self.stopped, free_bytes=shutil.disk_usage(BOX_ROOT).free,
                    unfinished=[dict(day=k, stage=s) for k, s in unfinished],
                    not_wired=[dict(day=k, stage=s, reason=(self.receipt(s, k) or {}).get('reason')) for k, s in not_wired],
@@ -2045,7 +2064,12 @@ def preview(plan):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('--action', required=True, choices=('plan', 'start', 'status'))
+    p.add_argument('--action', required=True, choices=('plan', 'start', 'status', 'successor-request',
+                                                      'successor-decision', 'successor-retry', 'successor-save',
+                                                      'successor-resume'))
+    p.add_argument('--successor-day', help='existing owner day for explicit successor intake')
+    p.add_argument('--successor-file', help='JSON request, decision, or exact failure witness; no execution at intake')
+    p.add_argument('--successor-id', help='content-addressed request id for decision/retry')
     p.add_argument('--run', required=True, help='the run name: /opt/frankie-box/work/experiment/<run>')
     p.add_argument('--commit', required=True)
     p.add_argument('--code-root', required=True)
@@ -2110,14 +2134,37 @@ def main():
     if unknown:
         raise SystemExit('unknown stages %s' % sorted(unknown))
     run_dir = RUNS / a.run
+    if a.action.startswith('successor-'):
+        if not a.successor_day:
+            p.error('successor intake needs --successor-day')
+        import frankie_box_successor_dispatch as S
+        saved_plan = json.loads((run_dir / 'plan.json').read_bytes())
+        run = Run(a, saved_plan, a.code_root, a.commit)
+        if a.action in ('successor-save', 'successor-resume'):
+            print(json.dumps(S.control(run, a.successor_day, a.action == 'successor-save'), sort_keys=True))
+            return
+        if not a.successor_file:
+            p.error('successor request/decision/retry needs --successor-file')
+        value = json.loads(Path(a.successor_file).read_bytes())
+        if a.action == 'successor-request':
+            result = S.enqueue(run, a.successor_day, value)
+        elif a.action == 'successor-decision':
+            result = S.submit_decision(run, a.successor_day, a.successor_id, value)
+        else:
+            result = S.retry(run, a.successor_day, a.successor_id, value)
+        print(json.dumps(result, sort_keys=True))
+        return
     if a.action == 'status':
         summary = run_dir / 'summary.json'
         if not run_dir.is_dir():
             raise SystemExit('no run %s' % run_dir)
-        steps = sorted(str(q.relative_to(run_dir)) + ': ' + json.loads(q.read_bytes())['status']
-                       for q in run_dir.glob('*/*/*.json'))
+        steps = sorted(str(q.relative_to(run_dir)) + ': ' + r['status']
+                       for q in run_dir.glob('*/*/*.json') for r in [json.loads(q.read_bytes())]
+                       if r.get('schema') == 'FRANKIE_EXPERIMENT_STEP_V1')
+        import frankie_box_successor_dispatch as S
         print(json.dumps(dict(run=a.run, plan=json.loads((run_dir / 'plan.json').read_bytes()) if (run_dir / 'plan.json').is_file() else None,
                               steps=steps, summary=json.loads(summary.read_bytes()) if summary.is_file() else None,
+                              successors=S.status(run_dir),
                               free_bytes=shutil.disk_usage(BOX_ROOT).free), indent=1, sort_keys=True))
         return
     plan, refused = load_plan(a, a.code_root)

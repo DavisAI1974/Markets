@@ -64,9 +64,10 @@ original. The retest entrypoint explicitly refuses an already-replaced original.
 Scope is deliberately precise: this supports operation-reader/binding/reproduction changes for
 one accumulated result's unchanged claims and search. Changed claim content, changed search
 inputs, a smaller affected subset within a multi-claim result, dependent exchange/request
-successors and main/worker dispatch/acknowledgment are not wired by this slice. No CLI or run
-loop invokes it automatically, no scientific decision is manufactured, and no actual retest or
-publication was performed. SOURCE-BUILT / RUNTIME-UNVERIFIED.
+successors remain outside that primitive. The subsequent owner-loop slice is now source-built in
+`STEP5_SUCCESSOR_DISPATCH_20261007.md`: explicit intake, held-lane dispatch, checked-decision
+publication, recovery and acknowledgment. No scientific decision is manufactured, and no actual
+retest or publication was performed. SOURCE-BUILT / RUNTIME-UNVERIFIED.
 
 ## Governing knowledge rule
 
@@ -129,7 +130,8 @@ The remaining gaps are:
 2. The accumulated-teacher identity transition is source-built as described above; standalone
    CLI operation binding and full corrected-successor scheduling remain incomplete. The explicit
    accumulated-owner interface above overcomes same-search reuse only for its pinned original result;
-   the normal run loop still needs owner request/decision delivery and completion acknowledgment.
+   the owner-loop request/decision dispatch and completion acknowledgment are now source-built
+   (`STEP5_SUCCESSOR_DISPATCH_20261007.md`), with runtime verification still held.
    The current runner refuses stale dependencies; it does not yet build every replacement
    operation. Existing immutable request identities and pending feedback must be carried forward
    by their owner, without an implicit scientific rerun or reopening unrelated completed days.
