@@ -167,6 +167,92 @@ def _failure_receipt(attempt, day, status, error, exit_code):
     print(json.dumps(dict((k, v) for k, v in record.items() if k != 'received'), sort_keys=True, default=str), flush=True)
 
 
+def _side_main(function, path, cpus):
+    """A side task's process: on its CPUs, compute, write the value whole (pickle, then rename), exit. SIGTERM ends it
+    (the classroom's own handler, inherited by the fork, only marks a save request)."""
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    if cpus:
+        try:
+            os.sched_setaffinity(0, set(cpus))
+        except OSError:
+            pass
+    value = function()
+    pending = Path(str(path) + '.%d.pending' % os.getpid())
+    with pending.open('wb') as stream:
+        pickle.dump(value, stream, protocol=pickle.HIGHEST_PROTOCOL)
+    os.replace(pending, path)
+
+
+class _SideTask:
+    """One independent classroom operation on its own forked process beside the shared market read (Greg, 2026-10-07
+    night; the September 29 pattern item 4: independent pieces side by side). The parent's phase() still saves, times
+    and orders it exactly as before; result() hands it the side process's value, or computes it here (the same call)
+    when the side process could not be started, died or failed: a dead side process never stops or hangs the stage.
+    The side process is stopped when the classroom exits first (a stop, a refusal, a failure)."""
+
+    def __init__(self, name, function, directory, cpus):
+        self.name, self.function, self.cpus = name, function, list(cpus)
+        self.path = Path(directory) / ('side-%s.pkl' % hashlib.sha256(name.encode()).hexdigest()[:16])
+        self.process, self.started = None, None
+        self.record = dict(operation=name, cpus=self.cpus, outcome='not_started')
+
+    def start(self, ready):
+        import atexit
+        import multiprocessing
+        forkable, waited, why = ready
+        self.record.update(waited_for_threads_s=waited)
+        if not forkable:
+            self.record.update(outcome='computed_in_order', reason='no fork: %s' % why)
+            return self
+        try:
+            self.path.unlink()
+        except OSError:
+            pass
+        self.process = multiprocessing.get_context('fork').Process(
+            target=_side_main, args=(self.function, self.path, self.cpus), name='classroom-side-' + self.name)
+        self.started = time.monotonic()
+        self.process.start()
+        atexit.register(self.cancel)                  # registered after multiprocessing's own exit hook: runs first
+        self.record.update(outcome='running', pid=self.process.pid, started_at=round(time.time(), 3))
+        return self
+
+    def result(self):
+        if self.process is None:
+            return self.function()
+        clock = time.monotonic()
+        self.process.join()
+        self.record.update(parent_waited_s=round(time.monotonic() - clock, 3),
+                           side_seconds=round(time.monotonic() - self.started, 3), exitcode=self.process.exitcode)
+        value, error = None, None
+        if self.process.exitcode == 0 and self.path.is_file():
+            try:
+                with self.path.open('rb') as stream:
+                    value = pickle.load(stream)
+            except Exception as failure:  # noqa: BLE001 - redone here below, recorded
+                error = '%s: %s' % (type(failure).__name__, failure)
+        else:
+            error = 'side process exit %s' % self.process.exitcode
+        try:
+            self.path.unlink()
+        except OSError:
+            pass
+        if error is None:
+            self.record['outcome'] = 'side_process'
+            return value
+        self.record.update(outcome='redone_in_order', reason=error)
+        return self.function()
+
+    def cancel(self):
+        process = self.process
+        if process is not None and process.is_alive():
+            process.terminate()
+            process.join(5)
+            if process.is_alive():
+                process.kill()
+                process.join(5)
+            self.record['outcome'] = 'stopped_with_the_classroom'
+
+
 def run(day, calculations, teacher_rows, previous, brain, day_external, day_external_sha256):
     requested = [False]
     previous_handler = signal.signal(signal.SIGTERM, lambda *_: requested.__setitem__(0, True))
@@ -433,6 +519,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         if save_requested():
             save('saved: stop requested; every completed operation and the continuation state retained')
             raise TeacherSaved('classroom saved every completed operation and its full continuation state')
+    def phase_path(name):
+        return phase_directory / (hashlib.sha256(name.encode()).hexdigest() + '.pkl')
     def phase(name, operation):
         stop()
         try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
@@ -440,7 +528,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             _SP.report_phase('classroom: %s' % name, units_done=len(state['phases']), unit='saved operations')
         except Exception:  # noqa: BLE001
             pass
-        path = phase_directory / (hashlib.sha256(name.encode()).hexdigest() + '.pkl')
+        path = phase_path(name)
         if path.exists():
             retained = _load_raw_state(path)
             if retained['name'] != name or retained['identity'] != identity:
@@ -537,6 +625,19 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         # the classroom is not affected.
         native_limits = K.native_cutoff_limits(os.environ)
         received['native_cutoff'] = native_limits
+        # Side by side (Greg, 2026-10-07 night: the September 29 pattern for every piece): the exhaustion/D facts read
+        # the ROOT's bedrock files only, never the shared pictures, so they run on their own process beside the full
+        # ordered read (off the read's consumer core) and the phase below takes their value; computed in order here
+        # when the read is already saved, the facts are saved, or no fork can be taken.
+        side_exhaustion = None
+        if (market is not None and not phase_path('shared_market_context').exists()
+                and not phase_path('exhaustion_d_facts').exists()):
+            lane = K.lane_cpus()
+            consumer, siblings, _ = K._lane_pin().consumer_core(lane)
+            off_consumer = [c for c in lane if c != consumer and c not in siblings] or lane
+            side_exhaustion = _SideTask('exhaustion_d_facts', lambda: K.exhaustion_d_facts(calculations, brain), d,
+                                        off_consumer).start(K._fork_ready(wait=2.0))
+            received['side_by_side'] = dict(exhaustion_d_facts=side_exhaustion.record)
         if market is not None:
             market_reading = phase('shared_market_context', lambda: K.market_context(
                 visible, market, save_requested=save_requested, native_limits=native_limits))
@@ -566,7 +667,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         # (frankie_box_teach.facts, code only, no model; built 2026-09-21, not invoked on the experiment path until now)
         # runs on the ROOT's completed whole-day bedrock layers. A ROOT without a native pass, a missing input or a
         # refusal leaves only these facts unavailable, named with the reason; the Dipole classroom and the day go on.
-        exhaustion_d = phase('exhaustion_d_facts', lambda: K.exhaustion_d_facts(calculations, brain))
+        exhaustion_d = phase('exhaustion_d_facts', side_exhaustion.result if side_exhaustion is not None else
+                             lambda: K.exhaustion_d_facts(calculations, brain))
         if exhaustion_d.get('status') == 'computed':
             facts_path = d / 'exhaustion-d-facts.json'
             _dump(facts_path, exhaustion_d['facts'])
@@ -596,11 +698,18 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             dipole_operands=K.dipole_operands(visible), exhaustion_d=exhaustion_d,
             # the six native entries' arithmetic (None when no shared market was read: each reads absent with the reason)
             native_entries=native_entries)
+        # The anchor pictures enter every component answer whole (the published guarantee); each is encoded ONCE on
+        # the lane (K.picture_texts: a pinned fork pool) and spliced into each answer that names it: the same bytes.
+        # Only when a component answer is still to be computed; released after the summary.
+        if shared_market is not None and any(not phase_path('component:' + n).exists() for n in names):
+            shared_market.prepare_picture_texts()        # placement: received.cpu_pinning.picture_texts
         outputs = {n: phase('component:' + n, lambda n=n: K.component_answer(
             visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)],
             learner_context=learner_context, shared_market=shared_market, exhaustion_d=exhaustion_d)) for n in names}
         summary = phase('summary', lambda: K.summary_answer(visible, outputs, learner_context=learner_context,
                                                           shared_market=shared_market, exhaustion_d=exhaustion_d))
+        if shared_market is not None:
+            shared_market.release_picture_texts()
         ext_ledgers = phase('external_answers', lambda: KX.answers(
             ext_visible, dipole_visible=visible, learner_context=learner_context,
             independent_evidence=independent_external, knowledge=knowledge, school=school))
@@ -788,6 +897,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             item['output_pins'] = {name: (outputs_pinned.get(name) or ('this receipt' if name == 'receipt.json' else 'not on disk'))
                                    for name in item['outputs']}
     received['all99'] = all99
+    # every pool that ran in this process, including those after the market read (the anchor picture texts)
+    received['cpu_pinning'] = dict(received.get('cpu_pinning') or {}, **K.pinning_record())
     key = ext['teacher_key']
     result = dict(schema=SCHEMA, day=day, status='complete', mode=mode, components=report['components'],
                   observations=report['observations'], pairs=report['pairs'], novel_findings=len(novel),

@@ -238,6 +238,78 @@ def _legend(whole):
     return _AM().MATERIAL_LEGEND + '\n\n' if stacked else ''
 
 
+# ---- material renders side by side and once (2026-10-07 night, the Sept-29 pattern item 4: independent pieces side by
+# side). render_material is a deterministic function of (the value's sorted JSON or the text, label, legacy text, piece
+# size); keep_texts only adds `layer_texts`. Every render this process makes is kept by that exact key (sha256 of each
+# text), so a section rendered for the measurement is not rendered again for the prompt or the comparison; the
+# independent sections of one material, brain or comparison are rendered on an ordered pinned pool of the lane
+# (frankie_box_adviser_market.PinnedMap: fork, one worker per CPU in physical-core order, a dead or failed worker's
+# render computed in-process at its own turn). Same texts, same order, same renders list; placement on RENDER_POOLS only.
+_RENDERS = {}
+RENDER_POOLS = []
+
+
+def _render_key(value, label, legacy_text, max_chars):
+    if isinstance(value, str):
+        kind, source = 'text', value
+    else:
+        kind, source = 'json', json.dumps(value, sort_keys=True)
+    legacy = source if legacy_text is None else legacy_text
+    return (kind, label, sha(source.encode()), sha(legacy.encode()), len(source), len(legacy), max_chars)
+
+
+def _render_task(jobs, index):
+    """One pinned-pool task: render_material of jobs[index] (value, label, legacy_text, max_chars, keep_texts)."""
+    value, label, legacy_text, max_chars, keep = jobs[index]
+    return _AM().render_material(value, label=label, legacy_text=legacy_text, max_chars=max_chars, keep_texts=keep)
+
+
+def _rendered(value, label, legacy_text=None, max_chars=JEV_PIECE_CHARS, keep_texts=False):
+    """render_material(value, ...), from the kept render of this exact key when there is one (a fresh copy; the layer
+    texts only when asked for)."""
+    import copy
+    key = _render_key(value, label, legacy_text, max_chars)
+    render = _RENDERS.get(key)
+    if render is None or (keep_texts and 'layer_texts' not in render):
+        render = _AM().render_material(value, label=label, legacy_text=legacy_text, max_chars=max_chars,
+                                       keep_texts=keep_texts)
+        _RENDERS[key] = render
+    out = copy.deepcopy(render)
+    if not keep_texts:
+        out.pop('layer_texts', None)
+    return out
+
+
+def _prerender(jobs, label):
+    """Render the jobs [(value, label, legacy_text, max_chars, keep_texts)] not yet kept, side by side on a pinned pool
+    (two or more, a lane of two or more CPUs, this process single-threaded); anything not returned is rendered
+    in-process later at its own turn by _rendered, exactly as before."""
+    todo, keys = [], set()
+    for job in jobs:
+        key = _render_key(job[0], job[1], job[2], job[3])
+        kept = _RENDERS.get(key)
+        if key in keys or (kept is not None and (not job[4] or 'layer_texts' in kept)):
+            continue
+        keys.add(key)
+        todo.append(job)
+    if len(todo) < 2:
+        return
+    try:
+        pool = _AM().PinnedMap(_render_task, todo, list(range(len(todo))), label=label)
+    except Exception as error:  # noqa: BLE001 - no pool here (another import path, no lane helper): in-process, as before
+        RENDER_POOLS.append(dict(label=label, tasks=len(todo), mode='in_process',
+                                 reason='%s: %s' % (type(error).__name__, str(error)[:200])))
+        return
+    try:
+        done = pool.results()
+    finally:
+        pool.close()
+    RENDER_POOLS.append(pool.record)
+    for job, (ok, value) in zip(todo, done):
+        if ok:
+            _RENDERS[_render_key(job[0], job[1], job[2], job[3])] = value
+
+
 def _body(value, label, encoding=None, renders=None):
     """One material value as the prompt carries it: json.dumps(sort_keys) (legacy) or every existing lossless stack,
     layered and proven by parse-back, as self-contained blocks of at most one Jev piece (stacked). renders: a list
@@ -245,11 +317,15 @@ def _body(value, label, encoding=None, renders=None):
     legacy = json.dumps(value, sort_keys=True)
     if (encoding or ENCODING) != STACKED:
         return legacy
-    render = _AM().render_material(value, label=label, legacy_text=legacy, max_chars=JEV_PIECE_CHARS,
-                                   keep_texts=renders is not None)
+    render = _rendered(value, label, legacy, JEV_PIECE_CHARS, renders is not None)
     if renders is not None:
         renders.append((label, render))
     return render['text']
+
+
+def _body_job(value, label, renders=None):
+    """The _prerender job of a stacked _body(value, label, STACKED, renders)."""
+    return (value, label, json.dumps(value, sort_keys=True), JEV_PIECE_CHARS, renders is not None)
 
 
 def complete(make_prompt, piece, ask=None, depth=0):
@@ -487,6 +563,14 @@ def wait_bundle(slots, schema, seconds, poll):
 def material_parts(material, encoding=None, renders=None):
     """The material's labelled sections, whole, in the order Jev reads them. Nothing is cut or summarized. encoding:
     LEGACY or STACKED (default: the day's ENCODING); renders collects the stacked renders for the token measurement."""
+    if (encoding or ENCODING) == STACKED:
+        m = material['material']
+        _prerender([_body_job(value, name, renders) for value, name, present in (
+            (m.get('dipole_classroom'), 'classroom package', True),
+            (m.get('dipole_external'), 'external section', m.get('dipole_external') is not None),
+            (m.get('experiment_directive'), 'experiment directive', m.get('experiment_directive') is not None),
+            ((material.get('survivors') or {}).get('list'), 'search survivors', bool(material.get('survivors'))))
+            if present], 'Jev material section renders')
     parts = [('classroom_package', '===== CLASSROOM PACKAGE (%s, %s, sha256 %s) =====\n%s' % (
         material['material'].get('source'), material['material'].get('path'), material['material'].get('sha256'),
         _body(material['material'].get('dipole_classroom'), 'classroom package', encoding, renders)))]
@@ -601,6 +685,11 @@ def load_brain(config, day, encoding=None, renders=None):
             if earlier is not None:
                 first[label] = earlier
 
+    if stacked:
+        _prerender([_body_job(saved['content'], '%s %s' % (kind, saved['key']), renders)
+                    for kind, group in (('entry', entries), ('lesson', lessons)) for saved in group
+                    if saved['key'] not in first], 'Jev brain renders')
+
     def body(saved, kind):
         if not stacked:
             return json.dumps(saved['content'], sort_keys=True)
@@ -688,13 +777,15 @@ def compare_text(claims, frankie, encoding=None, renders=None):
     AM = _AM()
     ordered = sorted(files.items())
     earlier = {label: first for label, _, first, _ in AM.dedupe_documents([(n, f.get('text') or '') for n, f in ordered])}
+    _prerender([(f.get('text') or '', 'frankie %s' % name, None, JEV_PIECE_CHARS, renders is not None)
+                for name, f in ordered if earlier.get(name) is None] + [_body_job(listed, 'jev claims', renders)],
+               'Jev comparison renders')
     sections = []
     for name, f in ordered:
         if earlier.get(name) is not None:
             body = '(the same bytes as %s; carried once above, not repeated: the brain dedupe)' % earlier[name]
         else:
-            render = AM.render_material(f.get('text') or '', label='frankie %s' % name, max_chars=JEV_PIECE_CHARS,
-                                        keep_texts=renders is not None)
+            render = _rendered(f.get('text') or '', 'frankie %s' % name, None, JEV_PIECE_CHARS, renders is not None)
             if renders is not None:
                 renders.append(('frankie %s' % name, render))
             body = render['text']

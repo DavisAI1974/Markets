@@ -385,7 +385,13 @@ def market_context(visible, timeline, *, save_requested, native_limits=None):
             if cursor in wanted:
                 if cursor in pictures:
                     raise ValueError('identity: shared market holds two original INPUT pictures for one classroom adapter cursor')
-                pictures[cursor] = copy.deepcopy(picture)
+                # Retained as yielded (a new top-level mapping, its contents shared): the core never changes a picture
+                # or any update, state or envelope inside it once yielded (frankie_box_market_timeline.iter_pictures
+                # builds each picture new per INPUT; a state is replaced, never edited), so this IS the picture at its
+                # instant. Greg, 2026-10-07 night (the September 29 pattern; full data): a deep copy per anchor walked
+                # every last-observed state again (up to 76 anchors, each the latest full book of every instrument), in
+                # memory and in time; shared states now cost once, and the saved phase pickles them once.
+                pictures[cursor] = dict(picture)
                 # The core's per-instant thinner dict (absent layers, exact clocks, readable record) when present.
                 statuses[cursor] = dict(source_status=status, applied_evidence=item['evidence'] is not None,
                                         unpaired_outcomes=picture.get('unpaired_outcomes'),
@@ -469,6 +475,16 @@ class ClassroomMarketContext:
     """Actual answer context: complete retained anchors plus access to the full exact source."""
     def __init__(self, calculations, day, retained):
         self.calculations, self.day, self.retained = calculations, day, retained
+        self.picture_texts = None       # id(picture) -> (picture, text) while the component answers are written
+
+    def prepare_picture_texts(self):
+        """Encode every retained anchor picture once, on the lane (picture_texts); the component answers splice them.
+        Returns the placement record (also on PINNING_RECORD['picture_texts'])."""
+        self.picture_texts = picture_texts(self.retained['pictures'])
+        return dict(PINNING_RECORD.get('picture_texts') or {})
+
+    def release_picture_texts(self):
+        self.picture_texts = None
 
     def iter_pictures(self):
         from frankie_box_market_timeline import SharedMarketTimeline
@@ -742,10 +758,19 @@ def _queue_levels(node, prefix, out):
         for key, value in node.items():
             _queue_levels(value, prefix + '.' + str(key) if prefix else str(key), out)
     elif isinstance(node, list):
+        names = _LEVEL_NAMES.get(prefix)
+        if names is None:
+            names = _LEVEL_NAMES[prefix] = []
         for position, level in enumerate(node, 1):
             queue = level.get('fifo_queue') if isinstance(level, dict) else None
             if isinstance(queue, list):
-                out['%s[L%d].fifo_queue#len' % (prefix, position)] = ('n', float(len(queue)))
+                while len(names) < position:      # the leaf names of this list, built once per level (hot path)
+                    names.append('%s[L%d].fifo_queue#len' % (prefix, len(names) + 1))
+                out[names[position - 1]] = ('n', float(len(queue)))
+
+
+# '<prefix>[L<i>].fifo_queue#len' per list prefix, index i - 1 (the same strings _queue_levels formatted per level before)
+_LEVEL_NAMES = {}
 
 
 # Identifiers among the carriers (review G-3): constant per instrument, so a series of them is degenerate. They are kept as
@@ -2615,10 +2640,19 @@ def external_points_use(ext_ledgers, day_file, day_file_sha256, *, cutoff_ns=Non
                      'ties to no registry entry is listed outside the 99, never mapped here')
 
 
-def _exact_market_text(value):
-    """Carry all original fields, bytes and float bits; never numpy/repr truncation."""
+_MARKET_TEXT_ENCODING = 'typed mapping entries; scalar tags c15_journal.pack'
+
+
+def _market_encode(item, splice=None):
+    """The typed tree of one value (see _exact_market_text). `splice(item)`, when given, returns a marker string for an
+    item whose JSON text is already known (the anchor pictures), else None."""
     from research.kalshi.frankie_boss.c15_journal import SerializedObservation, pack
+
     def encode(item):
+        if splice is not None:
+            mark = splice(item)
+            if mark is not None:
+                return mark
         if isinstance(item, SerializedObservation):
             return encode(item.materialize())
         if isinstance(item, dict):
@@ -2628,8 +2662,89 @@ def _exact_market_text(value):
         if isinstance(item, (tuple, list)):
             return ['tuple' if isinstance(item, tuple) else 'list', [encode(child) for child in item]]
         return pack(item)
-    return json.dumps(dict(encoding='typed mapping entries; scalar tags c15_journal.pack', complete_value=encode(value)),
-                      separators=(',', ':'))
+    return encode(item)
+
+
+def _picture_text(picture):
+    """The JSON text of one picture's typed tree, exactly as it sits inside _exact_market_text's output."""
+    return json.dumps(_market_encode(picture), separators=(',', ':'))
+
+
+def _exact_market_text(value, texts=None):
+    """Carry all original fields, bytes and float bits; never numpy/repr truncation.
+
+    `texts` (ClassroomMarketContext.picture_texts: id(picture) -> (picture, its _picture_text)): a picture already
+    encoded is spliced in as its text instead of being walked again (Greg, 2026-10-07 night: the anchor pictures, the
+    latest full book of every instrument, were encoded once per component that names them). The output is the same
+    bytes: json.dumps with these separators writes a list element exactly as it writes that element alone, and each
+    splice point is a fresh random marker that must occur exactly once in the text (else the plain walk runs)."""
+    if texts:
+        import uuid
+        token, marks = uuid.uuid4().hex, {}
+
+        def splice(item):
+            hit = texts.get(id(item))
+            if hit is None or hit[0] is not item:
+                return None
+            mark = '\x00frankie-picture:%s:%d\x00' % (token, len(marks))
+            marks[json.dumps(mark)] = hit[1]
+            return mark
+        text = json.dumps(dict(encoding=_MARKET_TEXT_ENCODING, complete_value=_market_encode(value, splice)),
+                          separators=(',', ':'))
+        found = sorted((text.find(mark), mark) for mark in marks)
+        if all(position >= 0 and text.count(mark) == 1 for position, mark in found):
+            pieces, at = [], 0
+            for position, mark in found:
+                pieces += [text[at:position], marks[mark]]
+                at = position + len(mark)
+            pieces.append(text[at:])
+            return ''.join(pieces)
+    return json.dumps(dict(encoding=_MARKET_TEXT_ENCODING, complete_value=_market_encode(value)), separators=(',', ':'))
+
+
+_PICTURE_SHARED = {}
+
+
+def _picture_text_job(cursor):
+    return _picture_text(_PICTURE_SHARED['pictures'][cursor])
+
+
+def picture_texts(pictures):
+    """{id(picture): (picture, text)} for every retained anchor picture (cursor -> picture), each encoded ONCE: on a
+    pinned fork pool over the booked CPUs (frankie_box_lane_pin.ordered_map; a dead worker's picture is redone with
+    one worker fewer) when this process can fork, else here one after another. The placement goes on PINNING_RECORD."""
+    import gc
+    import multiprocessing
+    import time
+    started = time.monotonic()
+    cursors = [c for c in sorted(pictures) if isinstance(pictures[c], dict)]
+    lane = lane_cpus()
+    workers = min(len(lane), len(cursors))
+    forkable, waited, why = _fork_ready() if workers > 1 else (False, 0.0, 'one picture or one CPU')
+    texts, report = {}, {}
+    if forkable:
+        LP = _lane_pin()
+        _PICTURE_SHARED['pictures'] = pictures
+        gc.freeze()
+        try:
+            for cursor, text in LP.ordered_map(_picture_text_job, cursors, workers, cpus=lane,
+                                               context=multiprocessing.get_context('fork'), poll=5.0, report=report):
+                texts[id(pictures[cursor])] = (pictures[cursor], text)
+        finally:
+            gc.unfreeze()
+            _PICTURE_SHARED.clear()
+        record = dict(LP.record(workers, lane, what='classroom anchor picture texts (fork pool, ordered_map)'),
+                      worker_deaths=report.get('worker_deaths'), redone=report.get('redone'))
+    else:
+        for cursor in cursors:
+            texts[id(pictures[cursor])] = (pictures[cursor], _picture_text(pictures[cursor]))
+        record = dict(workers=1, where='this process, one picture after another', why=why)
+    PINNING_RECORD['picture_texts'] = dict(record, pictures=len(cursors), waited_for_threads_s=waited,
+                                           characters=sum(len(t) for _, t in texts.values()),
+                                           seconds=round(time.monotonic() - started, 3),
+                                           rule='each anchor picture encoded once and spliced into every component '
+                                                'answer that names it; the answer text is the same bytes')
+    return texts
 
 
 def _calculate_evidence(pre, origin):
@@ -2882,7 +2997,7 @@ def component_answer(visible, comp, rights, *, learner_context=None, shared_mark
     if shared_market is not None:
         result['evidence'] += (' Shared market pictures retained at these original PRESENT anchors, each with its source '
             'status (exact clocks, the updates present at that boundary, last-observed states) or listed unavailable: '
-            + _exact_market_text(shared_market.component(visible, name))
+            + _exact_market_text(shared_market.component(visible, name), getattr(shared_market, 'picture_texts', None))
             + '. These anchors supplement the full ordered source accessible through the answer context; an absent '
             'layer or picture makes the instant thinner, never removes it; the Dipole values and target equations '
             'are unchanged.')

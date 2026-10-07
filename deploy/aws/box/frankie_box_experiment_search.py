@@ -5,7 +5,7 @@ every new run). Spec: research/kalshi/frankie_boss/
 SPEC-experiment-orchestrator.md (steps 5-6) and SPEC-scientific-teacher.md (the search IS the scientific teacher).
 Reads ONE day's exported data (frankie_box_experiment_data.py: /opt/frankie-box/work/experiment-data/<day>/cycle-<NN>/)
 in place. Nothing is re-derived and no copy is written: the ROOT's row spools are streamed through the journal's own
-codec (c15_journal.unpack) into Arrow columns held in memory, and DuckDB aligns them.
+codec (c15_journal.unpack) into columns held in memory, and one as-of selection (asof_source_rows) aligns them.
 
 SERIES (step 5). The axis is the F_LAST group closes (the ROOT's book-frame spool, in its order). Each source is placed
 on the axis AS OF the moment it was knowable, never later information:
@@ -19,7 +19,7 @@ on the axis AS OF the moment it was knowable, never later information:
               trade), each known from its own publication stamp, read through the file's as-of reader at the halt.
               Calendar counts, dates/weekdays and entity IDs are categorical search conditions, not x/y signals.
 Receive clocks can run backwards, so the axis time is the running maximum of the frames' ts_recv_ns (order is the
-spool's order, which is the ROOT's ordinal order). Alignment is a DuckDB ASOF join (value known_at <= axis time).
+spool's order, which is the ROOT's ordinal order). Alignment is an as-of selection (value known_at <= axis time).
 Every series passes odcore.leakage.assert_no_leakage in its own row order before it is searched: its value as of a
 row must not change when every later row of its source is scrambled. A series that fails is listed and not searched.
 
@@ -82,10 +82,18 @@ Generic source reads must match the selected export's byte-count/SHA256 pins, in
 journal route is available. Spools are hashed as decoded; JSON and the optional external receipt use their checked
 bytes. Prepared arrays are saved only after those checks finish and remain bound to the manifest and this source.
 CPUs and dead workers (Greg, 2026-10-07 night): every pool is frankie_box_lane_pin.ordered_map, each worker pinned to its
-own lane CPU (physical cores first; the coordinator pinned to its own CPU after the source preparation; DuckDB opens
-after the readers' forks). A worker that dies never hangs or stops the search: its lost job is redone (a coupling part
-it was writing is set aside first), the in-flight window shrinks by one, a discovery problem whose worker dies on every
-try is listed `worker_died`; all of it in MANIFEST cpu_placement.pool_recovery. Values, order and pins are unchanged.
+own lane CPU (physical cores first; the coordinator pinned to its own CPU after the source preparation; no DuckDB
+connection is opened, none was ever queried). A worker that dies never hangs or stops the search: its lost job is redone
+(a coupling part it was writing is set aside first), the in-flight window shrinks by one, a discovery problem whose
+worker dies on every try is listed `worker_died`; all of it in MANIFEST cpu_placement.pool_recovery. Values, order and
+pins are unchanged.
+Every remaining serial walk of the search runs the Sept 29 pattern (Greg, 2026-10-07 night; values, order and pins
+unchanged, each checked against the serial result on synthetic data): columns() accumulates per channel (the leaves a
+row carries, not rows x every channel seen); the frame/structure/price spools and the INPUT spool are decoded by pinned
+workers in ordered line ranges with every per-record check on the coordinator in spool order; each source's leakage
+gates run side by side on pinned workers; one alignment serves a source's numeric and text fields; the coupling
+parts are read for discovery nominations by pinned workers and merged in part order; the parts are pinned by pinned
+hashing threads. Where each pass ran: MANIFEST cpu_placement.source_passes / passes.
 """
 import argparse
 from datetime import date
@@ -1822,25 +1830,46 @@ DISCOVERY_SCHEMA = 'FRANKIE_SEARCH_DISCOVERY_INDEX_V1'
 DISCOVERY_NITERATIONS, DISCOVERY_MAXSIZE = 40, 12            # odcore.symbolic.discover defaults
 
 
-def discovery_nominations(parts, staging):
-    """{(cell, cell_value, y): {(x, k): [provenance]}} from the coupling parts: rows beyond chance with x leading y."""
+def _part_nominations(args):
+    """(rows read, [(key, feature, provenance)] in row order) of one coupling part (the reading discovery_nominations
+    has always done, one part per call)."""
+    part, staging = args
+    path, found, read = Path(part), [], 0
+    with path.open('r', encoding='utf-8') as handle:
+        for ordinal, line in enumerate(handle):
+            read += 1
+            row = json.loads(line)
+            lag = row.get('best_lag')
+            if not row.get('beyond_chance') or type(lag) is not int or lag <= 0:
+                continue
+            found.append(((row['cell'], row.get('cell_value'), row['y']), (row['x'], lag), dict(
+                part=str(path.relative_to(staging)), row=ordinal, x_transform=row.get('x_transform'),
+                y_transform=row.get('y_transform'), same_way=row.get('same_way'), opposite=row.get('opposite'),
+                both_moving=row.get('both_moving'), null_shifts=row.get('null_shifts'))))
+    return read, found
+
+
+def discovery_nominations(parts, staging, workers=1, context=None):
+    """{(cell, cell_value, y): {(x, k): [provenance]}} from the coupling parts: rows beyond chance with x leading y.
+    The parts are read side by side by the lane's pinned workers and merged in part order, so the mapping, its key
+    order and every provenance list are those of one reader going through the parts in order."""
     out, read = {}, 0
-    for part in sorted(parts):
-        path = Path(part)
-        if not path.is_file():
-            continue
-        with path.open('r', encoding='utf-8') as handle:
-            for ordinal, line in enumerate(handle):
-                read += 1
-                row = json.loads(line)
-                lag = row.get('best_lag')
-                if not row.get('beyond_chance') or type(lag) is not int or lag <= 0:
-                    continue
-                key = (row['cell'], row.get('cell_value'), row['y'])
-                out.setdefault(key, {}).setdefault((row['x'], lag), []).append(dict(
-                    part=str(path.relative_to(staging)), row=ordinal, x_transform=row.get('x_transform'),
-                    y_transform=row.get('y_transform'), same_way=row.get('same_way'), opposite=row.get('opposite'),
-                    both_moving=row.get('both_moving'), null_shifts=row.get('null_shifts')))
+    jobs = [(part, staging) for part in sorted(parts) if Path(part).is_file()]
+    if workers > 1 and len(jobs) > 1:
+        import multiprocessing
+        started, count = time.time(), min(workers, len(jobs))
+        results = _lane_pin().ordered_map(_part_nominations, jobs, count, context=context or multiprocessing.get_context('fork'),
+                                          cpus=lane_cpus(), window=count * 4, report=POOL_RECOVERY)
+    else:
+        started, count = None, 1
+        results = ((job, _part_nominations(job)) for job in jobs)
+    for _, (rows, found) in results:
+        read += rows
+        for key, feature, provenance in found:
+            out.setdefault(key, {}).setdefault(feature, []).append(provenance)
+    if started is not None:
+        SOURCE_PASSES.append(dict(what='discovery nominations (coupling parts read)', parts=len(jobs), rows=read,
+                                  workers=count, seconds=round(time.time() - started, 3)))
     return out, read
 
 
@@ -2011,7 +2040,7 @@ def discovery(day, cycle, day_role, staging, parts, context, workers, log):
     elif mode != 'on':
         index.update(status='not_run_disabled', problems=[], counts={}, reason='FRANKIE_DISCOVERY=%s' % mode)
     else:
-        nominations, rows_read = discovery_nominations(parts, staging)
+        nominations, rows_read = discovery_nominations(parts, staging, workers, context)
         jobs = []
         for (cell_col, cell_value, y), features in sorted(nominations.items(), key=lambda kv: (kv[0][0], str(kv[0][1]), kv[0][2])):
             ordered = sorted(features)
@@ -2212,6 +2241,9 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         raise SystemExit(75)
     cpu_placement = pin_coordinator(workers)      # the coordinator on its own CPU; the pools below take the rest
     cpu_placement['pool_recovery'] = POOL_RECOVERY   # filled as the pools run; written whole with the manifest
+    # where each parallel source pass ran (the spool parses also sit on their sources' `parse`); a preparation loaded
+    # from recovery lists only the passes after it
+    cpu_placement['source_passes'] = SOURCE_PASSES
     names = sorted(series)
     import multiprocessing
     context = multiprocessing.get_context('fork')                # the workers share the arrays, no copy
@@ -2232,6 +2264,17 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     else:
         cell_index = {('whole-day', None): None}
         for col, values in sorted(cells.items()):
+            if all(type(v) is str for v in values[1:] if v is not None):
+                # one pass per column: the positions of each distinct text label in step order, the same arrays as
+                # np.nonzero(arrived == value)[0] (str equality is the dict's), instead of one full comparison per
+                # label (labels x steps; ID-valued context cells have about one label per group)
+                positions = {}
+                for position, value in enumerate(values[1:]):     # a step belongs to the cell of the group it arrives at
+                    if value is not None:
+                        positions.setdefault(value, []).append(position)
+                for value in sorted(positions):
+                    cell_index[(col, value)] = np.asarray(positions[value], dtype=np.intp)
+                continue
             arrived = np.asarray(values[1:], dtype=object)          # a step belongs to the cell of the group it arrives at
             for value in sorted({v for v in arrived if v is not None}):
                 cell_index[(col, value)] = np.nonzero(arrived == value)[0]
@@ -2288,8 +2331,16 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     # Symbolic discovery (stage 7 spec row): candidates from this day's couplings, per cell, in the same held workers
     discovered = discovery(day, cycle, day_role, staging, parts, context, workers, log)
     phase('discovery')
-    part_pins = [dict(path=str(Path(p).relative_to(staging)), rows=None, sha256=sha256_file(p)) for p in sorted(parts)
-                 if Path(p).exists()]
+    pinned_parts = [p for p in sorted(parts) if Path(p).exists()]
+    hashing_started = time.time()
+    # the parts hashed side by side on pinned threads (hashlib releases the GIL), pins listed in part order as before
+    with _lane_pin().executor('thread', max(1, min(workers, len(pinned_parts) or 1)), lane_cpus()) as hashers:
+        part_digests = list(hashers.map(sha256_file, pinned_parts))
+    part_pins = [dict(path=str(Path(p).relative_to(staging)), rows=None, sha256=digest)
+                 for p, digest in zip(pinned_parts, part_digests)]
+    SOURCE_PASSES.append(dict(what='coupling part pins (sha256)', parts=len(pinned_parts),
+                              workers=max(1, min(workers, len(pinned_parts) or 1)), kind='pinned threads',
+                              seconds=round(time.time() - hashing_started, 3)))
     cell_specs = [(c, v, None) for c, v in cell_index]
     if sha256_file(day_dir / 'MANIFEST.json') != identity['data_manifest_sha256']:
         raise ValueError('selected export manifest changed before search publication')

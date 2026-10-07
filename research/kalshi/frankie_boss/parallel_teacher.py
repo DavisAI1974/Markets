@@ -315,7 +315,14 @@ class _RawStreams:
         if not self.batch:
             return
         blob = pickle.dumps((self.tables, self.batch, _changes_applied()), protocol=pickle.HIGHEST_PROTOCOL)
-        self.pending.append((blob, self.pool.submit(_raw_batch, blob)))
+        try:
+            future = self.pool.submit(_raw_batch, blob)
+        except Exception as error:  # noqa: BLE001 - a pool that broke between results: redone in _result, one fewer
+            from concurrent.futures import Future
+            from concurrent.futures.process import BrokenProcessPool
+            future = Future()
+            future.set_exception(error if isinstance(error, BrokenProcessPool) else BrokenProcessPool(str(error)))
+        self.pending.append((blob, future))
         self._new_batch()
         while len(self.pending) > 2 * self.cpus:          # bounded: never the whole day's windows in flight
             self._collect(*self.pending.popleft())
@@ -833,11 +840,34 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
         pending = deque()
         remaining = deque(index for index in range(len(jobs)) if index not in blobs)
         failure, breaks = None, {}
+        def rebuild(lost, error):
+            nonlocal pool, workers
+            for other, other_future in pending:
+                if (other_future.done() and not other_future.cancelled()
+                        and other_future.exception() is None):
+                    keep_chunk(other, other_future.result())       # finished before the pool broke: kept
+                else:
+                    lost.append(other)
+            pending.clear()
+            pool.shutdown(wait=True, cancel_futures=True)
+            workers = max(1, workers - 1)
+            pool = new_pool(workers)
+            remaining.extendleft(reversed(sorted(set(lost))))
+            FINISH_POOL_RECORD['rebuilds'].append(dict(workers=workers, chunks_again=len(set(lost)),
+                                                       error='%s: %s' % (type(error).__name__, error)))
         while remaining or pending:
             stopping = recovery_path and save_requested and save_requested()
-            while not stopping and failure is None and remaining and len(pending) < workers:
-                index = remaining.popleft()
-                pending.append((index, pool.submit(_chunk, jobs[index])))
+            try:
+                while not stopping and failure is None and remaining and len(pending) < workers:
+                    index = remaining[0]
+                    pending.append((index, pool.submit(_chunk, jobs[index])))
+                    remaining.popleft()
+            except BrokenProcessPool as error:     # the pool broke between results: the same redo, one fewer
+                breaks[remaining[0]] = breaks.get(remaining[0], 0) + 1
+                if breaks[remaining[0]] > RAW_POOL_MAX_CONSECUTIVE_BREAKS:
+                    raise
+                rebuild([], error)
+                continue
             if pending:
                 index, future = pending.popleft()
                 try:
@@ -847,20 +877,7 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
                     if breaks[index] > RAW_POOL_MAX_CONSECUTIVE_BREAKS:
                         failure = failure or error
                         continue
-                    lost = [index]
-                    for other, other_future in pending:
-                        if (other_future.done() and not other_future.cancelled()
-                                and other_future.exception() is None):
-                            keep_chunk(other, other_future.result())       # finished before the pool broke: kept
-                        else:
-                            lost.append(other)
-                    pending.clear()
-                    pool.shutdown(wait=True, cancel_futures=True)
-                    workers = max(1, workers - 1)
-                    pool = new_pool(workers)
-                    remaining.extendleft(reversed(lost))
-                    FINISH_POOL_RECORD['rebuilds'].append(dict(workers=workers, chunks_again=len(lost),
-                                                               error='%s: %s' % (type(error).__name__, error)))
+                    rebuild([index], error)
                     continue
                 except Exception as error:
                     # Drain and retain other work already in flight before propagating the failure.

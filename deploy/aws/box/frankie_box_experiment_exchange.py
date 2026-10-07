@@ -459,13 +459,43 @@ def teacher_rows(path):
             return None, '%s is not a complete %s' % (path, DC.SOURCE_SCHEMA)
         if evidence_hash({k: v for k, v in snapshot.items() if k != 'source_snapshot_hash'}) != snapshot.get('source_snapshot_hash'):
             return None, '%s differs from its own source_snapshot_hash' % path
-        ledgers = {name: DC._dimension_ledger(snapshot, i) for i, name in enumerate(COLUMNS)}
+        ledgers = _ledgers(snapshot, COLUMNS)
     except (ValueError, KeyError, TypeError) as error:
         return None, '%s could not be read (%s: %s)' % (path, type(error).__name__, error)
     return dict(path=str(path), sha256=sha256_bytes(raw), bytes=len(raw), rows=len(snapshot['rows']),
                 source_snapshot_hash=snapshot['source_snapshot_hash'], as_of=snapshot['as_of'],
                 through_cursor=snapshot['through_cursor'], ledgers=ledgers, columns=tuple(COLUMNS),
                 retained_rows=snapshot['rows']), None
+
+
+def _ledger_task(snapshot, index):
+    """One pinned-pool task: the teacher's own per-component ledger of column `index` (dipole_classroom._dimension_ledger,
+    unchanged), on the fork-inherited snapshot (frankie_box_adviser_market.PinnedMap)."""
+    from research.kalshi.frankie_boss import dipole_classroom as DC
+    return DC._dimension_ledger(snapshot, index)
+
+
+def _ledgers(snapshot, columns):
+    """{column: ledger} exactly as the serial comprehension built them, the 19 columns side by side on an ordered pinned
+    pool (the Sept-29 pattern, item 4; each ledger is a separate pass over every retained row). Assembled in column
+    order; a worker failure (or no pool: one CPU, other threads) is computed in-process at its column's turn, so the
+    first column that raises raises the same error at the same place. Values unchanged."""
+    from research.kalshi.frankie_boss import dipole_classroom as DC
+    import frankie_box_adviser_market as AM
+    pool = AM.PinnedMap(_ledger_task, snapshot, list(range(len(columns))), label='teacher Dipole component ledgers')
+    try:
+        done = pool.results()
+    finally:
+        pool.close()
+    LEDGER_POOLS.append(pool.record)
+    out = {}
+    for index, name in enumerate(columns):
+        ok, value = done[index]
+        out[name] = value if ok else DC._dimension_ledger(snapshot, index)
+    return out
+
+
+LEDGER_POOLS = []     # the ledger pools' placement records of this process (receipt only; never a document)
 
 
 def retained_evidence_counts(measure, names):
@@ -599,6 +629,58 @@ def _evidence_producers(measure):
 def _retained_evidence_task(measure, names):
     """One pinned-pool task: the unchanged count on the fork-inherited measure (PinnedMap)."""
     return retained_evidence_counts(measure, list(names))
+
+
+def _exchange_task(measure, task):
+    """One pinned-pool task of the exchange prefetch: ('evidence', names) the retained-evidence count, ('pair', (a, b))
+    measure_pair, ('component', name) measure_component; each the unchanged function on the fork-inherited measure."""
+    kind, key = task
+    if kind == 'evidence':
+        return retained_evidence_counts(measure, list(key))
+    if kind == 'pair':
+        return measure_pair(measure, key[0], key[1])
+    return measure_component(measure, key)
+
+
+def _prefetch_tasks(docs, measure):
+    """The independent arithmetic every item of this exchange will ask for, each once, heaviest kind first: the
+    retained-evidence counts (a pass over every retained teacher row per named field), then the component pairs
+    boss_turn measures (measure_pair: a pass over two whole ledgers), then the components (measure_component). The keys
+    are taken from the lessons results exactly as the item loop takes them (claimed_names, component_of); a key no item
+    asks for in the end costs only its computation, never a value."""
+    evidence, pairs, components = [], [], []
+    if measure is None:
+        return []
+    columns = measure['columns']
+    for doc, _ in docs:
+        for result in doc.get('results') or []:
+            names = claimed_names(finite(result))
+            key = tuple(names)
+            if key not in evidence and any(str(n).startswith('dipole.group') for n in key):
+                evidence.append(key)
+            comps = {n: component_of(n, columns) for n in names}
+            for c in comps.values():
+                if c and c not in components:
+                    components.append(c)
+            for i, a in enumerate(names):
+                for b in names[i + 1:]:
+                    ca, cb = comps.get(a), comps.get(b)
+                    if ca and cb and ca != cb and (ca, cb) not in pairs:
+                        pairs.append((ca, cb))
+    return ([('evidence', k) for k in evidence] + [('pair', k) for k in pairs]
+            + [('component', k) for k in components])
+
+
+def _measured(memo, key, function, *args):
+    """The memoized seat arithmetic: a fresh copy of the value already computed for this exact key (by the prefetch pool
+    or an earlier item), else the unchanged function, whose value is then kept. Deterministic functions of the retained
+    ledgers, so every item gets the same value it computed serially; an exception is never cached (it raises again,
+    at the same item, exactly as the serial call)."""
+    if memo is None:
+        return function(*args)
+    if key not in memo:
+        memo[key] = function(*args)
+    return copy.deepcopy(memo[key])
 
 
 def retained_evidence_checks(item, said):
@@ -901,9 +983,11 @@ def shared_count_accounting(result, day, src):
                 proposals=proposals, cites=said.cites, independent_measurements=0)
 
 
-def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id, *, shared=None, origin=None):
+def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id, *, shared=None, origin=None, memo=None):
     """The BOSS teacher's turn on one scientific-teacher result, within its own role: its measurement, its masks and
-    controls. Returns (the turn in the discussion schema, the measured pairs and components, the proposals, cites)."""
+    controls. Returns (the turn in the discussion schema, the measured pairs and components, the proposals, cites).
+    memo: an optional dict of already computed measure_component / measure_pair values of this measure (_measured);
+    absent, every value is computed here as before."""
     said = Said()
     shared = shared if shared is not None else shared_count_accounting(result, day, src)
     origin = origin if origin is not None else origin_evidence_accounting(result, day, src)
@@ -920,7 +1004,7 @@ def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id
     comps = {n: component_of(n, columns) for n in names} if measure else {}
     for n, c in comps.items():
         if c and c not in components:
-            components[c] = measure_component(measure, c)
+            components[c] = _measured(memo, ('component', c), measure_component, measure, c)
     pairs = [(a, b) for i, a in enumerate(names) for b in names[i + 1:]]
     if measure is not None and not pairs:
         checks.append(dict(source_id=src['source_id'], claim=label, result='unresolved',
@@ -941,7 +1025,7 @@ def boss_turn(D, S, item, result, claim, measure, measure_why, day, src, rows_id
                              'teacher\'s counts.' % (said.v(a, src['sha256'], 'claimed series'),
                                                                      said.v(b, src['sha256'], 'claimed series'), why))
             continue
-        m = measure_pair(measure, ca, cb)
+        m = _measured(memo, ('pair', ca, cb), measure_pair, measure, ca, cb)
         co, corr = m['co_movement'], m['correlation']
         st = co['steps']
         same, opposite = st['same_direction'], st['opposite_direction']
@@ -1295,17 +1379,16 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
     # so its workers run while the reader's decode workers wait on the serial picture consumer. The pool takes the
     # reader's worker CPUs (never the consumer's whole core). The item loop below stays serial and in order; it takes
     # each worker value or recomputes in-process at the item's own turn (same value, same exception, same place).
-    evidence_keys = []
+    # The seats' component and pair measurements (measure_component / measure_pair, each a pass over whole teacher
+    # ledgers, asked again by every item naming the same components) are prefetched on the same pool, each distinct key
+    # once (2026-10-07 night, the Sept-29 pattern: independent pieces side by side); boss_turn takes them through its
+    # memo, a fresh copy per item, and computes any key the pool did not return at the item's own turn.
     if measure is not None:
         _evidence_producers(measure)          # set once before the fork, exactly as the first count would have set it
-        for doc, _ in docs:
-            for result in doc.get('results') or []:
-                key = tuple(claimed_names(finite(result)))
-                if key not in evidence_keys and any(str(n).startswith('dipole.group') for n in key):
-                    evidence_keys.append(key)
+    tasks = _prefetch_tasks(docs, measure)
     plan = AM.reader_plan()
-    evidence_pool = AM.PinnedMap(_retained_evidence_task, measure, evidence_keys,
-                                 label='exchange retained-evidence counts',
+    evidence_pool = AM.PinnedMap(_exchange_task, measure, tasks,
+                                 label='exchange retained-evidence counts and seat measurements',
                                  cpus=[c for c in plan['reader_set'] if c != plan['consumer']] or plan['lane'])
     # The shared market picture at the teacher's own explicit cutoff (source_hash/as_of/through_cursor):
     # one complete picture for the whole exchange, never a day serialized per item, never a Frankie
@@ -1318,11 +1401,19 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                 placement=placement)
         else:
             shared_market, shared_market_why = None, measure_why
-        precomputed = dict(zip(evidence_keys, evidence_pool.results()))
+        prefetched = dict(zip(tasks, evidence_pool.results()))
     finally:
         evidence_pool.close()
+    precomputed = {key: value for (kind, key), value in prefetched.items() if kind == 'evidence'}
+    memo = {(kind,) + (key if kind == 'pair' else (key,)): value
+            for (kind, key), (ok, value) in prefetched.items() if kind != 'evidence' and ok}
     if notes is not None:
         notes['placement'] = dict(shared_reader=placement, retained_evidence_pool=evidence_pool.record,
+                                  teacher_ledger_pools=list(LEDGER_POOLS),
+                                  prefetch=dict(evidence=len(precomputed),
+                                                pairs=sum(1 for kind, _ in tasks if kind == 'pair'),
+                                                components=sum(1 for kind, _ in tasks if kind == 'component'),
+                                                returned=len(memo) + sum(1 for ok, _ in precomputed.values() if ok)),
                                   rule='CPU placement of this piece (receipt only; never in the exchange documents)')
 
     def evidence_of(prior):
@@ -1376,7 +1467,8 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             shared = shared_count_accounting(prior, day, src)
             origin = origin_evidence_accounting(prior, day, src)
             boss, measured, components, proposals, boss_cites = boss_turn(D, S, item, prior, claim, measure, measure_why,
-                                                                          day, src, rows_id, shared=shared, origin=origin)
+                                                                          day, src, rows_id, shared=shared, origin=origin,
+                                                                          memo=memo)
             science, side, found, science_cites = science_turn(D, S, item, prior, claim, boss, measured, proposals, day, src,
                                                                origin=origin)
             rework = None
@@ -1894,6 +1986,8 @@ def main():
                    shared_market_context=shared_market_pin,
                    shared_market_context_listed=notes.get('shared_market_context_listed'),
                    placement=notes.get('placement'),
+                   # the same record under the name the one-day reporter projects (frankie_box_workflow_inspection USED)
+                   cpu_placement=notes.get('placement'),
                    workflow_report=workflow_report,
                    seconds=round(time.time() - started, 1), at=time.time(), model_calls=0)
     tmp = out / 'receipt.pending'

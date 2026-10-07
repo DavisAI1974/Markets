@@ -344,6 +344,14 @@ def export(day, cycle, dirs, root=ROOT, workers=1):
                 item['expected'] = dict(bytes=rc['journal_bytes'], sha256=rc['journal_sha256'])
                 item['expected_from'] = 'ingestion-receipt.json (BOSS_BLOCK_INGESTION_RECEIPT_V1 journal pin)'
     pins, hashing = _pin_all([item['destination'] for item in files], workers)
+    # the native selection checks plan() ran (frankie_box_experiment_native.selected_files: the large ledgers and
+    # section products witnessed side by side on pinned threads before their pins are compared); diagnostic only
+    try:
+        import frankie_box_experiment_native as _NATIVE
+    except ImportError:
+        _NATIVE = None
+    hashing['native_selection_check'] = (dict(_NATIVE.LAST_SELECTION_CHECK)
+                                         if _NATIVE is not None and getattr(_NATIVE, 'LAST_SELECTION_CHECK', None) else None)
     for item in files:
         item['bytes'], item['sha256'] = pins[item.pop('destination')]
         if item.get('expected') and item['expected'] != {k: item[k] for k in ('bytes', 'sha256')}:

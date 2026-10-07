@@ -41,12 +41,72 @@ def _frame_index(numeric, receive_times):
     return frame_index(numeric, receive_times)
 
 
+class _JournalWitness:
+    """The sealed journal's physical-bytes check, run on a lane thread beside the frame check and the decode (Greg,
+    2026-10-07 night: every serial pass on the lane's CPUs). The journal is the largest file the search reads (~24 GB);
+    its witness used to run alone before anything else. Same check, same error text: read_columns verifies it before it
+    returns anything and, when the read raised, before that error is passed on, so a changed journal is always reported
+    as the integrity failure it is, never as a later decode or count disagreement and never as a result."""
+
+    def __init__(self):
+        self.thread, self.pin, self.path, self.measured, self.error, self.seconds = None, None, None, None, None, None
+
+    def start(self, path, pin):
+        import threading
+        import time
+        self.path, self.pin = path, {key: pin[key] for key in ('bytes', 'sha256')}
+
+        def run():
+            started = time.time()
+            try:
+                try:
+                    import frankie_box_lane_pin as LP
+                    LP.pin_thread(None, LP.lane_cpus())         # on the held lane, never off it
+                except Exception:  # noqa: BLE001 - placement is never a reason to stop the check
+                    pass
+                from frankie_box_durable import witness
+                self.measured = witness(path)
+            except BaseException as error:  # noqa: BLE001 - re-raised by verify()
+                self.error = error
+            self.seconds = round(time.time() - started, 3)
+        self.thread = threading.Thread(target=run, name='journal-witness', daemon=True)
+        self.thread.start()
+
+    def verify(self):
+        if self.thread is None:
+            return
+        self.thread.join()
+        if self.error is not None:
+            raise self.error
+        if self.measured != self.pin:
+            raise ValueError('selected sealed journal physical bytes changed')
+
+    def record(self, result):
+        if self.thread is not None:
+            for report in result[2]:
+                report['journal_witness'] = dict(seconds=self.seconds, mode='lane thread beside the frame check and the '
+                                                 'decode; verified before any result is returned')
+
+
 def read_columns(day_dir, columns, frame_numeric, receive_times, *, workers=15, frame_sha256=None):
     """Same-frame numeric/text channels plus exact source/disposition receipts.
 
     Uses the shared Session INPUT extractor unchanged. Journal ordinals, extracted
     INPUT indices and F_LAST positions remain three distinct identities.
     """
+    check = _JournalWitness()
+    try:
+        result = _read_columns(day_dir, columns, frame_numeric, receive_times, workers=workers,
+                               frame_sha256=frame_sha256, journal_check=check)
+    except BaseException:
+        check.verify()          # a changed journal is reported as the integrity failure, ahead of the later error
+        raise
+    check.verify()
+    check.record(result)
+    return result
+
+
+def _read_columns(day_dir, columns, frame_numeric, receive_times, *, workers, frame_sha256, journal_check):
     from frankie_box_durable import witness
     from frankie_box_boss_session import Session
     from research.kalshi.frankie_boss.c15_journal import pack
@@ -109,8 +169,7 @@ def read_columns(day_dir, columns, frame_numeric, receive_times, *, workers=15, 
             or derive.get('source_binding') != root_binding
             or str(root_binding['source']['trading_day']) != str(receipt['trading_day'])):
         raise ValueError('selected journal does not belong to this ROOT source')
-    if witness(journal) != {key: pin[key] for key in ('bytes', 'sha256')}:
-        raise ValueError('selected sealed journal physical bytes changed')
+    journal_check.start(journal, pin)     # verified by read_columns before anything is returned or raised past it
     frames_path, frames_pin = artifact('root', 'work/derived/.rows/frames.jsonl')
     if frames_pin is None:
         return {}, {}, [], [dict(source='journal.group', retained=str(journal), sha256=pin['sha256'],

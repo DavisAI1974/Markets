@@ -67,9 +67,52 @@ def _witness(path):
     return witness(path)
 
 
-def _check(path, pin):
-    if _witness(path) != {k: pin[k] for k in ('bytes', 'sha256')}:
+def _check(path, pin, measured=None):
+    if (measured if measured is not None else _witness(path)) != {k: pin[k] for k in ('bytes', 'sha256')}:
         raise ValueError('selected native evidence changed: ' + str(path))
+
+
+# The selection checks of the large artifacts side by side (Greg, 2026-10-07 night: every serial pass on the lane's
+# CPUs). selected_files verifies each selected ledger and section product against its derivation pin, one after the
+# other; the three ledgers and two section products are the multi-GB ones. Their witnesses (bytes + sha256 of the same
+# file, frankie_box_durable.witness) are computed up front on pinned lane threads (hashlib releases the GIL), only for
+# paths that already pass take()'s own path rules; take() then runs every rule and comparison in its original order
+# with the measured witness, so the selected list, the errors and their precedence are the serial ones. Where it ran
+# and how long it took: LAST_SELECTION_CHECK (the export records it in MANIFEST.hashing.native_selection_check).
+LAST_SELECTION_CHECK = {}
+
+
+def _regular_under(root, pin, name, directory):
+    """True when take() would accept this pin's path (absolute, no '..', no symbolic link, the expected name, inside
+    its directory) and it is a regular file: only then is it read before take() runs."""
+    try:
+        path = Path(pin['path'])
+        return (path.is_absolute() and '..' not in path.parts
+                and not any(p.is_symlink() for p in (path, *path.parents))
+                and path.name == name and path.relative_to(root).is_relative_to(directory) and path.is_file())
+    except (KeyError, TypeError, ValueError, OSError):
+        return False
+
+
+def _prefetch_witnesses(root, wanted):
+    """{path: future of its witness} for the (pin, name, directory) entries take() would read, on pinned threads."""
+    LAST_SELECTION_CHECK.clear()
+    targets = []
+    for pin, name, directory in wanted:
+        if isinstance(pin, dict) and _regular_under(root, pin, name, directory) and pin['path'] not in targets:
+            targets.append(pin['path'])
+    if len(targets) < 2:
+        return None, {}
+    try:
+        import frankie_box_lane_pin as LP
+    except ImportError:
+        from deploy.aws.box import frankie_box_lane_pin as LP
+    lane = LP.lane_cpus()
+    count = max(1, min(len(targets), len(lane)))
+    pool = LP.executor('thread', count, lane)
+    LAST_SELECTION_CHECK.update(files=len(targets), threads=count, started=time.time(),
+                                cpu_placement=LP.record(count, lane, what='native selection witnesses (pinned threads)'))
+    return pool, {path: pool.submit(_witness, path) for path in targets}
 
 
 def selected_files(root, day):
@@ -99,7 +142,21 @@ def selected_files(root, day):
     if native.get('skipped') or not native.get('result') or set(native.get('ledgers') or {}) != set(LEDGERS):
         raise ValueError('native derivation lacks its completed authoritative ledgers')
     selected = []
+    layers = derive.get('layers') or {}
+    pool, measured = _prefetch_witnesses(root, [(native['ledgers'].get(name), name, 'work/bedrock') for name in LEDGERS]
+                                         + [(layers.get(name), name + '.json.gz', 'work/derived/.projection-v2')
+                                            for name in SECTIONS])
+    try:
+        return _take_all(root, binding, native, derive, policy, selected, measured)
+    finally:
+        if pool is not None:
+            pool.shutdown(wait=True, cancel_futures=True)
+            if LAST_SELECTION_CHECK.get('started'):
+                LAST_SELECTION_CHECK['seconds'] = round(time.time() - LAST_SELECTION_CHECK.pop('started'), 3)
 
+
+def _take_all(root, binding, native, derive, policy, selected, measured):
+    """selected_files' selection, in its original order (the witnesses of `measured` are used where present)."""
     def take(role, pin, name, directory):
         path = Path(pin['path'])
         if (not path.is_absolute() or '..' in path.parts
@@ -108,7 +165,8 @@ def selected_files(root, day):
         relative = path.relative_to(root)
         if path.name != name or not relative.is_relative_to(directory):
             raise ValueError('native artifact is outside its selected scientific directory')
-        _check(path, pin)
+        future = measured.get(pin['path'])
+        _check(path, pin, future.result() if future is not None else None)
         selected.append(dict(stage='root', path=str(relative), source=str(path),
             pattern='completed native derivation:' + role, what='existing exact native calculation evidence',
             native_role=role, evidence_contract=evidence_contract(role),

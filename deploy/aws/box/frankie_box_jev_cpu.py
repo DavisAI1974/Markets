@@ -784,6 +784,8 @@ def _run(request, request_path, out, brain, jev_brain):
                    lane_threads=dict(runtime['thread_record'], server_threads=(server.threads_resolution if server is not None
                                                                                 else 'no server started on this attempt')),
                    placement=dict(placement, server=(server.placement if server is not None else None)),
+                   # the same record under the name the one-day reporter projects (frankie_box_workflow_inspection USED)
+                   cpu_placement=dict(placement, server=(server.placement if server is not None else None)),
                    claims_seal=pin(seal_path), scientific_result=pin(result_path), deliveries=deliveries,
                    client_receipt=pin(out / 'client-receipt.json'), report=report,
                    report_number=request['report_number'], pending=pending,

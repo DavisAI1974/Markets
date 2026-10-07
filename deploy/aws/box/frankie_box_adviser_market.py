@@ -1562,7 +1562,19 @@ class PinnedMap:
             return False
         _POOL_SHARED = self.shared          # kept until close(): a worker the pool respawns forks with the same input
         try:
-            self.pool = LP.pinned_pool(multiprocessing.get_context('fork'), workers, cpus=self.cpus)
+            # gc.freeze() across the fork (Python's documented fork-without-exec recipe): the workers' collections never
+            # walk the parent's objects (the large shared input: retained teacher rows, ledgers, items), so those pages
+            # stay shared instead of being copied into every worker. The parent unfreezes right after; values unchanged.
+            import gc
+            freeze = hasattr(gc, 'freeze')
+            if freeze:
+                gc.freeze()
+            try:
+                self.pool = LP.pinned_pool(multiprocessing.get_context('fork'), workers, cpus=self.cpus)
+            finally:
+                if freeze:
+                    gc.unfreeze()
+            self.record['gc_freeze_at_fork'] = freeze
             self.pending = {i: self.pool.apply_async(_pool_task, (self.function, i, self.arguments[i])) for i in indexes}
             self.record.update(mode='pinned_fork_pool', workers=workers,
                                cpus=LP.record(workers, self.cpus, self.record['label'])['worker_cpus'])
@@ -1635,9 +1647,156 @@ class PinnedMap:
         _POOL_SHARED = None
 
 
+_JOURNAL = ' journal'        # the hasher's key for the sealed journal (no layer name starts with a space)
+
+
+def _early_pins(identity):
+    """{name: pin} hashed before the shared reader opens, in hand-out order: the sealed journal first (the reader's
+    constructor waits for it), then the non-native layer spools and the attached day file largest first. The native
+    ledgers wait: the reader's own selected_files check hashes them whole in this process. Anything malformed is left to
+    the reader and the verdict loop, which raise exactly as before; nothing is raised here."""
+    out = {}
+    try:
+        journal = identity.get('journal')
+        if isinstance(journal, dict) and isinstance(journal.get('path'), str):
+            out[_JOURNAL] = journal
+        sources = dict(identity.get('sources') or {})
+        if (identity.get('external') or {}).get('status') == 'attached':
+            sources['external'] = identity['external']
+        rest = []
+        for name, pin in sources.items():
+            if not str(name).startswith('native.') and isinstance(pin, dict) and isinstance(pin.get('path'), str):
+                size = pin.get('bytes')
+                rest.append((-(size if type(size) is int else 0), str(name), pin))
+        out.update((name, pin) for _, name, pin in sorted(rest, key=lambda item: item[:2]))
+    except Exception:  # noqa: BLE001 - the reader and the verdict loop raise the integrity error in their order
+        pass
+    return out
+
+
+class _PinHasher:
+    """Whole-file sha256 of pinned files on threads pinned one per lane CPU in physical-core order (hashlib and file
+    reads release the GIL; two threads on a one-CPU slot so a disk wait overlaps a hash). Values are what
+    frankie_box_durable.witness returns ({bytes, sha256} of every byte), read in larger blocks; each file's outcome is
+    (True, witness) or (False, the exception), raised by the caller in its own order. Placement only; never a value."""
+
+    BLOCK = 8 << 20
+
+    def __init__(self, placement):
+        import queue
+        import threading
+        self.placement, self.queue, self.halt = placement, queue.Queue(), threading.Event()
+        self.seen, self.done, self.stats, self.paths, self.threads = {}, {}, {}, {}, []
+        self.record = None
+
+    def _put(self, name, pin):
+        import threading
+        if name in self.done:
+            return
+        self.done[name] = threading.Event()
+        if not isinstance(pin, dict) or 'path' not in pin:
+            # a malformed pin: the same lookup error the serial check raised, in the caller's pin order
+            try:
+                pin['path']
+            except BaseException as error:  # noqa: BLE001
+                self.seen[name] = (False, error)
+            else:
+                self.seen[name] = (False, TypeError('malformed pin for %s' % name))
+            self.done[name].set()
+            return
+        self.paths[name] = pin['path']
+        self.record['files'] += 1
+        self.record['bytes'] += pin['bytes'] if type(pin.get('bytes')) is int else 0
+        self.queue.put(name)
+
+    def _run(self, cpu):
+        import hashlib
+        import os
+        import threading
+        if cpu is not None:
+            try:
+                os.sched_setaffinity(threading.get_native_id(), {cpu})
+            except (OSError, ValueError) as error:
+                self.record.setdefault('affinity_fallbacks', []).append(dict(cpu=cpu, error=repr(error)))
+        while True:
+            name = self.queue.get()
+            if name is None:
+                return
+            try:
+                if self.halt.is_set():
+                    raise RuntimeError('pin hashing stopped: the reader raised before this pin was needed')
+                hashed, size = hashlib.sha256(), 0
+                with open(self.paths[name], 'rb') as source:
+                    stat = os.fstat(source.fileno())
+                    for block in iter(lambda: source.read(self.BLOCK), b''):
+                        if self.halt.is_set():
+                            raise RuntimeError('pin hashing stopped: the reader raised before this pin was needed')
+                        hashed.update(block)
+                        size += len(block)
+                self.stats[name] = (stat.st_dev, stat.st_ino)
+                self.seen[name] = (True, dict(bytes=size, sha256=hashed.hexdigest()))
+            except BaseException as error:  # noqa: BLE001 - raised in pin order by the caller
+                self.seen[name] = (False, error)
+            finally:
+                self.done[name].set()
+
+    def start(self, early):
+        import threading
+        from time import perf_counter
+        ordered, _, basis = core_order(lane_cpus())
+        threads = max(1, min(max(2, len(ordered)), len(early) + 2))
+        cpus = [ordered[i % len(ordered)] for i in range(threads)] if ordered else None
+        self.record = dict(threads=threads, cpus=cpus, placement_basis=basis, files=0, bytes=0,
+                           order='the sealed journal first (the reader waits for it), then the layer spools largest first, '
+                                 'beside the reader\'s own constructor; verdicts taken in the pin order',
+                           before_reader=[n.strip() for n in early], verified_by_reader=[], started=perf_counter())
+        self.placement['pin_hashing'] = self.record
+        for name, pin in early.items():
+            self._put(name, pin)
+        self.threads = [threading.Thread(target=self._run, args=(cpus[i] if cpus else None,),
+                                         name='adviser-pin-sha256-%d' % i, daemon=True) for i in range(threads)]
+        for thread in self.threads:
+            thread.start()
+
+    def journal_witness(self):
+        """{path, bytes, sha256, dev, ino} this process measured on the journal, for the reader's input_witness (it
+        stands only when it equals the reader's pin and names the pinned file; otherwise the reader hashes it itself);
+        None when the journal was not measured here."""
+        from time import perf_counter
+        if _JOURNAL not in self.done:
+            self.record['journal'] = 'not measured here (no journal path in the identity); the reader hashes it itself'
+            return None
+        self.done[_JOURNAL].wait()
+        ok, value = self.seen[_JOURNAL]
+        self.record['journal_seconds'] = round(perf_counter() - self.record['started'], 3)
+        if not ok:
+            self.record['journal'] = 'measurement failed here (%s); the reader hashes it itself' % type(value).__name__
+            return None
+        dev, ino = self.stats[_JOURNAL]
+        self.record['journal'] = 'measured here; handed to the reader as its input_witness'
+        return dict(path=self.paths[_JOURNAL], dev=dev, ino=ino, **value)
+
+    def finish(self, pins, by_reader):
+        """{name: (ok, witness | exception)} for every pin in `pins` (queued now if not yet), all threads joined."""
+        from time import perf_counter
+        self.record['verified_by_reader'] = list(by_reader)
+        for name, pin in pins.items():
+            self._put(name, pin)
+        for _ in self.threads:
+            self.queue.put(None)
+        for thread in self.threads:
+            thread.join()
+        self.record['seconds'] = round(perf_counter() - self.record.pop('started'), 3)
+        return {name: self.seen.get(name, (False, RuntimeError('pin %s was not hashed' % name))) for name in pins}
+
+    def stop(self):
+        self.halt.set()
+        for _ in self.threads:
+            self.queue.put(None)
+
+
 class AdviserMarketContext:
     def __init__(self, identity, *, day, source_hash, as_of, through_cursor):
-        from frankie_box_durable import witness
         from frankie_box_market_timeline import SharedMarketTimeline, _json
         if type(as_of) is not int or type(through_cursor) is not int or through_cursor < 0:
             raise ValueError('adviser cutoff requires the original explicit integer as_of and through_cursor')
@@ -1648,27 +1807,45 @@ class AdviserMarketContext:
         # pure overhead). The reader's own contract: same rows, same order, same ordinals, same errors for any count.
         self.plan = reader_plan()
         self.placement = dict(reader=dict(self.plan, former_fixed_workers=WORKERS))
-        self.reader = SharedMarketTimeline(self.root, day=self.day, workers=self.plan['workers'])
-        if self.reader.identity != identity:
-            raise ValueError('adviser source differs from the shared market reader identity')
-        ingestion = _json(self.reader.source['ingestion_receipt'])
-        if ingestion['source_prefix_hash'] != source_hash:
-            raise ValueError('adviser cutoff names another sealed source')
-        record_count = ingestion['record_count']
-        if type(record_count) is not int or not through_cursor < record_count:
-            raise ValueError('adviser cutoff lies outside the sealed source record count')
         # Every pinned layer is checked whole before the read, so a read that stops exactly at
         # the cutoff loses no byte integrity. Row identities and clocks are checked by the core on
         # every consumed row. A mismatch here is corruption, never thin coverage.
-        pinned = dict(identity['sources'])
-        if (identity.get('external') or {}).get('status') == 'attached':
-            pinned['external'] = identity['external']
-        # The whole-file checks run concurrently on pinned threads (research item 2a; hashlib and file reads release the
-        # GIL), largest file first; the verdicts are then taken IN THE PIN ORDER, so the first mismatch or read error
-        # raised is the one the serial loop raised. Every byte of every pin is still hashed (skipping a re-hash on an
-        # unchanged stat is Greg's open call, not done here).
-        seen = self._witness_all(pinned, witness)
+        # The whole-file hashes start BEFORE the shared reader opens (the Sept-29 pattern, item 4: independent pieces side
+        # by side; 2026-10-07 night): the sealed journal first (the reader takes this process's own measurement of it
+        # through its input_witness contract instead of re-reading tens of GB serially in its constructor), the layer
+        # spools largest first beside it, while the reader's constructor runs its own serial native-artifact checks.
+        # The verdicts are still taken after the reader's own checks and IN THE PIN ORDER, so the first error raised is
+        # the one the serial order raised. Every byte of every pin is hashed in this process: the native ledgers by the
+        # reader's selected_files check (same path, same pin, this process; not hashed a second time here), every other
+        # pin here. Skipping a re-hash on an unchanged stat across processes stays Greg's open call (not done).
+        hasher = _PinHasher(self.placement)
+        try:
+            early = _early_pins(identity)
+            hasher.start(early)
+            journal = hasher.journal_witness()
+            self.reader = SharedMarketTimeline(self.root, day=self.day, workers=self.plan['workers'], input_witness=journal)
+            self._journal_witness = journal if (self.reader.report.get('input_verification') or {}).get('re_read') is False \
+                else None
+            if self.reader.identity != identity:
+                raise ValueError('adviser source differs from the shared market reader identity')
+            ingestion = _json(self.reader.source['ingestion_receipt'])
+            if ingestion['source_prefix_hash'] != source_hash:
+                raise ValueError('adviser cutoff names another sealed source')
+            record_count = ingestion['record_count']
+            if type(record_count) is not int or not through_cursor < record_count:
+                raise ValueError('adviser cutoff lies outside the sealed source record count')
+            pinned = dict(identity['sources'])
+            if (identity.get('external') or {}).get('status') == 'attached':
+                pinned['external'] = identity['external']
+            by_reader = [name for name, pin in pinned.items()
+                         if name.startswith('native.') and (self.reader.layers.get(name) or {}).get('source') == pin]
+            seen = hasher.finish({name: pin for name, pin in pinned.items() if name not in by_reader}, by_reader)
+        except BaseException:
+            hasher.stop()
+            raise
         for name, pin in pinned.items():
+            if name in by_reader:
+                continue                 # measured whole by the reader's selected_files check in this process
             ok, value = seen[name]
             if not ok:
                 raise value
@@ -1680,51 +1857,6 @@ class AdviserMarketContext:
                           position=('last_sealed_input' if through_cursor == record_count - 1
                                     else 'before_sealed_source_end'),
                           origin='the measurement\'s own explicit source scope; no target-derived selection')
-
-    def _witness_all(self, pinned, witness):
-        """{name: (True, witness) | (False, exception)} for every pin, hashed on threads pinned one per lane CPU in
-        physical-core order (two threads on a one-CPU slot, so a disk wait overlaps a hash)."""
-        import os
-        import queue
-        import threading
-        from time import perf_counter
-        ordered, _, basis = core_order(lane_cpus())
-        names = sorted(pinned, key=lambda n: -int(pinned[n].get('bytes') or 0))
-        threads = max(1, min(len(names), max(2, len(ordered))))
-        record = dict(threads=threads, cpus=[ordered[i % len(ordered)] for i in range(threads)] if ordered else None,
-                      placement_basis=basis, files=len(names), bytes=sum(int(pinned[n].get('bytes') or 0) for n in names),
-                      order='largest first; verdicts taken in the pin order')
-        work, seen = queue.Queue(), {}
-        for name in names:
-            work.put(name)
-
-        def run(cpu):
-            if cpu is not None:
-                try:
-                    os.sched_setaffinity(threading.get_native_id(), {cpu})
-                except (OSError, ValueError) as error:
-                    record.setdefault('affinity_fallbacks', []).append(dict(cpu=cpu, error=repr(error)))
-            while True:
-                try:
-                    name = work.get_nowait()
-                except queue.Empty:
-                    return
-                try:
-                    seen[name] = (True, witness(pinned[name]['path']))
-                except BaseException as error:  # noqa: BLE001 - raised in pin order by the caller
-                    seen[name] = (False, error)
-        started = perf_counter()
-        pool = [threading.Thread(target=run, args=(record['cpus'][i] if record['cpus'] else None,),
-                                 name='adviser-pin-sha256-%d' % i, daemon=True) for i in range(threads)]
-        for thread in pool:
-            thread.start()
-        for thread in pool:
-            thread.join()
-        record['seconds'] = round(perf_counter() - started, 3)
-        self.placement['pin_hashing'] = record
-        for name in names:
-            seen.setdefault(name, (False, RuntimeError('pin %s was not hashed' % name)))
-        return seen
 
     def _coverage(self, picture):
         """What is present and what is thin at this instant, from the picture alone; nothing invented."""
@@ -1808,7 +1940,9 @@ class AdviserMarketContext:
                                      '(%d INPUT envelopes without an adapter cursor seen)' % (wanted, cursorless))
                 if cursor <= wanted:
                     if picture['original_applied'] is not None:
-                        last_applied = dict(at=copy.deepcopy(picture['at']), source_status=picture['source_status'])
+                        # the reference only (the reader builds a fresh `at` per picture and never touches it after
+                        # the yield); copied once after the walk, not at every applied instant on the serial path
+                        last_applied = (picture['at'], picture['source_status'])
                         tail_after = {}
                     else:
                         status = picture['source_status']
@@ -1829,7 +1963,8 @@ class AdviserMarketContext:
         if selected is None:
             raise ValueError('sealed source ended before the adviser cutoff adapter cursor %d' % wanted)
         tail = dict(cutoff_input_has_applied_operand=selected['original_applied'] is not None,
-                    last_applied_at_or_before_cutoff=last_applied,
+                    last_applied_at_or_before_cutoff=(None if last_applied is None else
+                                                      dict(at=copy.deepcopy(last_applied[0]), source_status=last_applied[1])),
                     inputs_after_last_applied_through_cutoff=tail_after,
                     basis='the cutoff instant is the picture; its last-observed states come from earlier exact '
                           'boundaries; an absent APPLIED operand at or after the last applied instant blocks only '
@@ -1861,7 +1996,9 @@ class AdviserMarketContext:
     def iter_pictures(self):
         """Full exact owner-local history; never silently replace it with the cutoff snapshot."""
         from frankie_box_market_timeline import SharedMarketTimeline
-        reader = SharedMarketTimeline(self.root, day=self.day, workers=self.plan['workers'])
+        # this process's own measurement of the journal, when the first reader accepted it (same file, same pin)
+        reader = SharedMarketTimeline(self.root, day=self.day, workers=self.plan['workers'],
+                                      input_witness=getattr(self, '_journal_witness', None))
         if reader.identity != self.reader.identity:
             raise ValueError('adviser full history changed from its original selected source')
         yield from reader.iter_pictures()
