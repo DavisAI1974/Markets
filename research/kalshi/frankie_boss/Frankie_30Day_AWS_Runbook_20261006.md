@@ -11,6 +11,16 @@ Step 6 and historical admission are not closed. The owner publication/successor 
 Codex must reconcile changed claim-input pins with the current correction identity guard before
 publication wiring. Step 5 remains incomplete. Source-only; nothing executed; all holds remain.
 
+## Step 7 started — 2026-10-06 22:49–22:53 ET
+
+Read `STEP7_JEV_CPU_ROUTE_20261007.md`. Pods are eliminated. Greg is discussing GitHub,
+the small AWS box, local, and now the existing owning 16-CPU day lane; Codex recommends the
+latter with a subset of the existing booking, not another lane. CPU count/runtime pins and
+completion behavior are not yet settled; nothing was launched. The independent first source
+fix retains all of Jev's teacher lessons and whole brain objects instead of last-lesson-wins.
+The report traces claim sealing, interrupted-call recovery, testing, immediate publication and
+completion gaps. Step 7 is incomplete. Granite remains CCode's step-6 work; source-only hold.
+
 ## Source continuation — steps 5 and 6, 2026-10-07 UTC
 
 Step 5's governing decision below is unchanged. The built correction-delivery interfaces and

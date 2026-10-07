@@ -253,47 +253,54 @@ def material_text(material):
 
 
 def load_brain(config, day):
-    """Every earlier brain entry and every lessons file, whole, checked; returns (text for the student, pins)."""
-    entries, lessons, pins = [], {}, []
+    """Every selected entry and teacher lesson, whole; return actual consumed-byte witnesses.
+
+    More than one lesson may concern the same claims under different circumstances. Preserve
+    all of them; neither arrival order nor age chooses a winning lesson. The config's optional
+    byte/hash witnesses are checked when supplied; legacy unpinned selections remain explicit.
+    """
+    entries, lessons, pins = [], [], []
     for item in config.get('brain') or []:
         raw = urllib.request.urlopen(item['url'], timeout=120).read()
+        if (('bytes' in item and item['bytes'] != len(raw))
+                or ('sha256' in item and item['sha256'] != sha(raw))):
+            raise ValueError('%s differs from its selected brain bytes' % item['key'])
         value = json.loads(raw)
-        pins.append(dict(kind=item['kind'], key=item['key'], bytes=len(raw), sha256=sha(raw)))
+        pins.append(dict(kind=item['kind'], key=item['key'], bytes=len(raw), sha256=sha(raw),
+                         selection_hash_bound='sha256' in item))
         if item['kind'] == 'entries':
             if value.get('schema') != 'JEV_BRAIN_ENTRY_V1':
                 raise ValueError('%s is not a JEV_BRAIN_ENTRY_V1' % item['key'])
             if value.get('day') == day:
                 raise ValueError('%s is an entry for this same day %s: the same day is not run twice' % (item['key'], day))
             if value.get('include', True):
-                entries.append(value)
-        else:
+                entries.append(dict(key=item['key'], content=value))
+        elif item['kind'] == 'lessons':
             if value.get('schema') != 'JEV_LESSONS_V1':
                 raise ValueError('%s is not a JEV_LESSONS_V1' % item['key'])
-            lessons[value.get('claims_sha256')] = dict(value, key=item['key'])
-    if not entries:
-        return '', pins
+            lessons.append(dict(key=item['key'], content=value))
+        else:
+            raise ValueError('unknown Jev brain kind: %s' % item['kind'])
     blocks = []
-    for entry in sorted(entries, key=lambda e: (e.get('day'), e.get('filed_at') or 0)):
-        taught = lessons.get(entry.get('claims_sha256'))
-        by_claim = {r.get('claim_id'): r for r in (taught or {}).get('results') or []}
-        lines = ['===== YOUR EARLIER DAY %s (%s): %d claims; the teacher\'s lessons: %s =====' % (
-            entry.get('day'), entry.get('stamp'), len(entry.get('claims') or []),
-            'written (%s)' % taught['key'] if taught else 'pending (not tested yet)')]
-        for claim in entry.get('claims') or []:
-            lines.append('CLAIM %s [%s]: %s' % (claim.get('id'), claim.get('kind'), json.dumps(
-                {k: claim.get(k) for k in ('statement', 'series', 'cells', 'condition', 'lag', 'target', 'direction', 'evidence')},
-                sort_keys=True)))
-            result = by_claim.get(claim.get('id'))
-            if result is not None:
-                lines.append('  TEACHER\'S LESSON: %s' % json.dumps(result, sort_keys=True))
-            elif taught:
-                lines.append('  TEACHER\'S LESSON: none written for this claim (listed, not filled in)')
-        for other in [r for r in (taught or {}).get('results') or [] if r.get('claim_id') not in
-                      {c.get('id') for c in entry.get('claims') or []}]:
-            lines.append('  TEACHER\'S LESSON on an unmatched claim id: %s' % json.dumps(other, sort_keys=True))
-        blocks.append('\n'.join(lines))
-    return ('===== YOUR BRAIN: your own earlier claims and what the scientific teacher\'s tests showed (never anyone '
-            'else\'s answers) =====\n' + '\n\n'.join(blocks)), pins
+    for saved in entries:
+        entry = saved['content']
+        taught = [t['key'] for t in lessons if t['content'].get('claims_sha256') == entry.get('claims_sha256')]
+        blocks.append('===== YOUR ENTRY %s; matching teacher lessons: %s =====\n%s' % (
+            saved['key'], json.dumps(taught) if taught else 'pending (not supplied)',
+            json.dumps(entry, sort_keys=True)))
+    entry_hashes = {e['content'].get('claims_sha256') for e in entries}
+    for saved in lessons:
+        lesson = saved['content']
+        matched = lesson.get('claims_sha256') in entry_hashes
+        blocks.append('===== TEACHER LESSON %s; matching carried entry: %s =====\n%s' % (
+            saved['key'], 'present' if matched else 'not supplied; lesson retained with its own claims binding',
+            json.dumps(lesson, sort_keys=True)))
+    if not blocks:
+        return '', pins
+    return ('===== YOUR BRAIN: your own claims and their scientific-teacher lessons; every selected lesson retained. '
+            'Older lessons stay available. Conflicts about the same thing require research; keep both accounts and '
+            'their circumstances while unresolved. A checked partial replacement preserves unaffected knowledge. '
+            'Age or a newer result alone never establishes replacement. =====\n' + '\n\n'.join(blocks)), pins
 
 
 def student_claims(day, text):
@@ -305,8 +312,10 @@ def student_claims(day, text):
         'You are Jev, an independent student reading the Dipole classroom material for the natural gas trading day %s '
         '(pack %d of %d: the whole material, or notes read from every piece of it). You work alone: you have not seen '
         'anyone else\'s answer. File CLAIMS for a scientist to test on the data; you do not grade or teach. If the '
-        'material carries YOUR BRAIN (your earlier claims and the teacher\'s lessons on them), learn from it: build on '
-        'what held, and where the data showed something else, say what you now claim instead.\n'
+        'material carries YOUR BRAIN (your earlier claims and all the teacher\'s lessons on them), use older lessons '
+        'as well. For conflicting knowledge about the same thing, propose research into the circumstances and scope; '
+        'keep both accounts while unresolved. A replacement can be partial and must preserve unaffected knowledge. '
+        'A newer result alone does not establish replacement, and you cannot declare a claim scientifically checked.\n'
         'Return JSON only: {"claims": [{"kind": "mechanism" | "novel_finding" | "test_next", "statement": "one '
         'falsifiable sentence", "series": ["the dipole components, pairs or survivor series it uses, by their names in '
         'the material"], "cells": ["where it should hold, e.g. a component, pair, session phase or side"], "condition": '

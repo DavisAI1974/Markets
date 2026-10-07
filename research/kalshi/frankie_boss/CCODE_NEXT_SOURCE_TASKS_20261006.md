@@ -59,6 +59,16 @@ Return updates to step-4 sections 8/9, step-6 record section 8 and your handoff/
 review, AST without project imports and whitespace only; no tests/runs/installs/model calls,
 reproduction/AWS/dispatch/E2E. Pins and threads null unchanged; no training; boxes stopped.
 
+## Step-7 ownership — 2026-10-06 22:49 ET
+
+Greg started step 7 with Codex while CCode continues the assigned step-6 and historical fixes.
+Codex owns the Jev CPU/source trace and `clm_sidecar/sit_in.py`; no Pod route will return.
+The initial brain-reader correction preserves every teacher lesson for the same claims binding.
+Read `STEP7_JEV_CPU_ROUTE_20261007.md` for the current host discussion and open interfaces.
+No edit to CCode's historical-binding or meeting-recovery functions is part of this step-7 slice.
+The existing scientific-teacher Jev consumer will need coordination before a later implementation;
+its current trace is documentation only. Keep the four follow-up groups assigned above; the owner-publication trace has been received.
+
 ## Reader-hook return — Codex, 2026-10-06 late ET
 
 The reserved step-5 hooks are now source-built: both frozen-selection guards, both exchange
