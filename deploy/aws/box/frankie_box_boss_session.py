@@ -2238,12 +2238,33 @@ class Session:
                 # Metadata-only extraction after every canonical row is verified. The
                 # complete INPUT wire observation is passed to all producer stages.
                 from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader
-                with CompactConformanceReader(rows_path, expected_count=count, expected_head_hash=head,
-                        workers=self.source_binding.get('data_workers', 1)) as reader:
-                    probe.reader_workers = dict(requested=self.source_binding.get('data_workers', 1),
-                                                effective=len(reader.worker_cpus))
-                    for entry in probe.track(reader.entries(), count, 'source-journal-records'):
-                        take_next(entry['kind'], entry['payload'])
+                # The ordered consumer (this loop: extraction, spool appends, saves) is the serial bound; it gets a whole
+                # physical core (Greg, 2026-10-07): pinned to the first booked CPU, that core's other hardware thread left
+                # out of the reader's worker set. The reader's worker_budget reserves the first CPU of the affinity and
+                # takes the rest, so the affinity is narrowed only while the reader picks its workers (each worker then
+                # pins itself to its own CPU); the original affinity comes back on every exit (save, error, done).
+                # Placement only: the same verified partitions in the same order; data_workers stays the requested
+                # number in the source identity. Without a readable topology only the consumer CPU is reserved.
+                affinity = sorted(os.sched_getaffinity(0))
+                consumer = affinity[0]
+                topology = cpu_topology(affinity)
+                consumer_core = [c for c in affinity if topology and topology[c] == topology[consumer]] if topology \
+                    else [consumer]
+                idle = consumer_core[1:] if len(affinity) - len(consumer_core) >= 1 else []
+                try:
+                    os.sched_setaffinity(0, set(affinity) - set(idle))
+                    with CompactConformanceReader(rows_path, expected_count=count, expected_head_hash=head,
+                            workers=self.source_binding.get('data_workers', 1)) as reader:
+                        os.sched_setaffinity(0, {consumer})
+                        probe.reader_workers = dict(requested=self.source_binding.get('data_workers', 1),
+                                                    effective=len(reader.worker_cpus), worker_cpus=list(reader.worker_cpus),
+                                                    consumer_cpu=consumer, consumer_core_idle_siblings=idle,
+                                                    topology_basis=('/sys/devices/system/cpu/cpu*/topology' if topology
+                                                                    else 'unreadable: consumer CPU only'))
+                        for entry in probe.track(reader.entries(), count, 'source-journal-records'):
+                            take_next(entry['kind'], entry['payload'])
+                finally:
+                    os.sched_setaffinity(0, set(affinity))
             elif layout == 'compact':
                 with CompactReader(rows_path, expected_count=count, expected_head_hash=head) as reader:
                     for ordinal, kind, body, digest in probe.track(reader.rows(), count, 'source-journal-records'):
