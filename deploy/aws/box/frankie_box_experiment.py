@@ -125,7 +125,8 @@ from pathlib import Path
 SCHEMA = 'FRANKIE_EXPERIMENT_RUN_V1'
 STAGES = ('fetch', 'ingest', 'external', 'root', 'teacher', 'classroom', 'jev', 'data', 'search', 'lessons', 'exchange',
           'voice', 'school', 'reports')
-FINISHED = ('done', 'reused', 'skipped')
+FINISHED = ('done', 'reused', 'skipped', 'not_run')   # not_run: a listed outcome (the step's equation had no operand on
+                                                       # this day: a search with no causal axis); the day goes on
 HANDED_OFF = 'waiting_for_pod'           # the jev step's end on the box: material relayed, the Pod is its own dispatch
 BOX_ROOT = Path('/opt/frankie-box')
 WORK = BOX_ROOT / 'work'
@@ -147,6 +148,34 @@ ROWS_ROUTE = ('put right only by moving the retained publication under %s aside 
 SHARED_MARKET_POLICY = 'FRANKIE_SHARED_MARKET_TIMELINE_V1'   # the one shared-market policy a NEW plan may select (Codex's
                                                              # frankie_box_market_timeline; ROOT and teacher wrappers forward it)
 JEV_BRAIN = BOX_ROOT / 'jev-brain'          # Jev's own brain on the box (plan jev_brain overrides; the S3 lineage is clm-sidecar/jev-brain)
+# THE ONE PINNED MODEL RUNTIME ON THE BOX (Greg, 2026-10-07): Granite 4.2 3B Q4_K_M under llama.cpp b11440, installed once by
+# frankie_box_granite_meeting_setup.sh under GRANITE_DIR at the paths the meeting's runtime gate expects; the meeting
+# (voice_route=local) AND Jev bind to that same definition (no second install, no second pin set; Jev improves with it)
+GRANITE_DIR = BOX_ROOT / 'granite'
+GRANITE_PROVENANCE_SCHEMA = 'FRANKIE_GRANITE_RUNTIME_PROVENANCE_V1'   # written by the setup script after every pin check passed
+SHARED_RUNTIME_SCHEMA = 'FRANKIE_SHARED_MODEL_RUNTIME_V1'
+# THE 99 LAYERS COMBINED FOR FRANKIE (Greg, 2026-10-07: "the biggest thing ... is making sure the 99 layers are combined for
+# Frankie first"): the retained 99-entry crosswalk (6 raw, 49 calculation/clock, 23 control/knowledge/arm, 9 sealed
+# answers, 2 disabled shadows, 10 append-only outputs; ROOT_PLANE_COVERAGE_20261006.md) pinned by CYCLE_CALCULATION_PINS.
+# Every ROOT records, per entry, whether the day PRODUCED it, whether it is ADMITTED into the shared market timeline
+# picture, or why it is absent (thinner picture; the day stays), retired, sealed, disabled or an output (all99_admission).
+CROSSWALK = 'research/kalshi/frankie_boss/audits/CROSSWALK_SUNDAY_CYCLE0_FEED_33746436209_20260916.json'
+CYCLE_PINS = 'research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json'
+ALL99_SCHEMA = 'FRANKIE_ALL99_ADMISSION_V1'
+ALL99_GROUPS = {                 # registry group -> (role, how the day's evidence carries it into the shared picture)
+    'canonical_raw_dbn_mbo': ('raw', 'journal'),
+    'order_lifecycle': ('calculation', 'native'), 'full_book_fifo_queue': ('calculation', 'native'),
+    'microstructure_mechanics': ('calculation', 'native'), 'legacy_observable_crosswalk': ('calculation', 'legacy'),
+    'derived_geometry': ('calculation', 'native'), 'prebirth_opportunity': ('calculation', 'native'),
+    'causal_clocks': ('calculation', 'native'),
+    'binding_common_controls': ('control', 'brain'), 'current_brain_runtime': ('knowledge', 'brain'),
+    'frozen_learned_structure': ('knowledge', 'brain'), 'corrected_extra_agent_carryforward': ('knowledge', 'brain'),
+    'a_memory_overlay': ('arm', 'retired'), 'a_clean_overlay': ('arm', 'retired'),
+    'sealed_step1_answer': ('sealed', 'boundary'), 'sealed_target_timing': ('sealed', 'boundary'),
+    'provisional_shadow': ('shadow', 'disabled'), 'append_only_outputs': ('output', 'stages')}
+LEGACY_CARRIER = {'legacy_price': 'root.prices', 'legacy_book_imbalance': 'root.frames',
+                  'legacy_structure_observables': 'root.structures',
+                  'legacy_native_signed_flow': 'completed_sources', 'legacy_per_second_roll20': 'completed_sources'}
 S3_BUCKET = 'bento-568968024170-us-east-2-an'
 JEV_BUCKET = 'frankie-granite42-568968024170-us-east-1'
 CURVE_PREFIX = 'nymex/ng_fut_parent_v0'
@@ -525,8 +554,285 @@ def presign_items(plan, code_root):
 # --------------------------------------------------------------------------------------------------------------- run
 
 def done_status(r):
-    """A step is finished when done, reused or skipped; a retired Pod handoff is still pending."""
+    """A step is finished when done, reused, skipped or not_run (a listed outcome: the step's equation had no operand on
+    this day, e.g. a search with no causal axis; nothing to retry, the day goes on); a retired Pod handoff is still pending."""
     return bool(r and r['status'] in FINISHED)
+
+
+KEEP_RUNNING_SCHEMA = 'FRANKIE_KEEP_RUNNING_V1'
+
+
+def this_instance():
+    """(instance id, region) of this box from IMDSv2 (a token PUT, then the identity document); (None, why) off a box."""
+    import urllib.request
+    try:
+        req = urllib.request.Request('http://169.254.169.254/latest/api/token', method='PUT',
+                                     headers={'X-aws-ec2-metadata-token-ttl-seconds': '60'})
+        token = urllib.request.urlopen(req, timeout=2).read().decode()
+        req = urllib.request.Request('http://169.254.169.254/latest/dynamic/instance-identity/document',
+                                     headers={'X-aws-ec2-metadata-token': token})
+        doc = json.loads(urllib.request.urlopen(req, timeout=2).read())
+        return doc.get('instanceId'), doc.get('region')
+    except Exception as error:  # noqa: BLE001 - not on a box, or IMDS unreachable: named
+        return None, '%s: %s' % (type(error).__name__, str(error)[:200])
+
+
+def box_in_use(run_name=None):
+    """What keeps THIS box in use besides the caller: orchestrator starts alive (any run), a queue line worker holding its
+    lock, a CPU controller holding its lock; [] when nothing. Read-only."""
+    busy = []
+    try:
+        import subprocess as sp
+        pids = sp.run(['pgrep', '-f', 'frankie_box_experiment.py --action start --run '], capture_output=True, text=True).stdout.split()
+        pids = [x for x in pids if x != str(os.getpid())]
+        if pids:
+            busy.append('orchestrator start(s) alive: pids %s' % ' '.join(pids))
+    except Exception as error:  # noqa: BLE001
+        busy.append('pgrep unavailable (%s): assumed in use' % type(error).__name__)
+    try:
+        import frankie_box_frankie_queue as Q
+        for line in Q.LINES:
+            status, held = Q.worker_state(line)
+            if held and (status or {}).get('pid') != os.getpid():
+                busy.append('%s line worker holds its lock (pid %s)' % (line, (status or {}).get('pid')))
+    except Exception as error:  # noqa: BLE001
+        busy.append('queue state unreadable (%s): assumed in use' % type(error).__name__)
+    parent = WORK / 'cpu-controller'
+    for lock in sorted(parent.glob('*/controller.lock')) if parent.is_dir() else ():
+        try:
+            import fcntl
+            with open(lock, 'a') as handle:
+                try:
+                    fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    fcntl.flock(handle, fcntl.LOCK_UN)
+                except OSError:
+                    busy.append('CPU controller of %s holds its lock' % lock.parent.name)
+        except OSError:
+            busy.append('CPU controller lock %s unreadable: assumed in use' % lock)
+    return busy
+
+
+def keep_running(run_name, value, reason, by, log=print):
+    """This box's KeepRunning tag (Greg, 2026-10-07: "keep running only when in use"): 'true' at a run's start, 'false' at
+    the end of the run's last worker on this box when nothing else is in use (box_in_use lists what is); never silent:
+    every call appends its record (the tag value asked, what was done, the reason, or the failure) to
+    <run>/keep-running.json (FRANKIE_KEEP_RUNNING_V1) and prints it. The idle guard (deploy/aws/idle_instance_guard.py)
+    stops a box whose tag is not 'true' and that holds no fresh lane lease. ec2:CreateTags on this instance is the one
+    permission (the instance profile; a missing permission is recorded, never raised)."""
+    instance, region = this_instance()
+    doc = dict(schema=KEEP_RUNNING_SCHEMA, run=run_name, asked='true' if value else 'false', reason=reason, by=by, at=time.time(),
+               instance=instance, region=region)
+    if instance is None:
+        doc.update(tagged=False, error='no instance identity: %s' % region)
+    else:
+        busy = [] if value else box_in_use(run_name)
+        if busy:
+            doc.update(tagged=False, kept='true', busy=busy, note='not cleared: the box is still in use by the above')
+        else:
+            try:
+                import boto3
+                boto3.client('ec2', region_name=region).create_tags(
+                    Resources=[instance], Tags=[dict(Key='KeepRunning', Value=doc['asked']),
+                                                dict(Key='KeepRunningReason', Value=('%s: %s' % (by, reason))[:255])])
+                doc['tagged'] = True
+            except Exception as error:  # noqa: BLE001 - a cost guard, never the run's outcome; named
+                doc.update(tagged=False, error='%s: %s' % (type(error).__name__, str(error)[:300]))
+    try:
+        path = RUNS / run_name / 'keep-running.json'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        events = json.loads(path.read_bytes()) if path.is_file() else []
+        events.append(doc)
+        tmp = path.with_suffix('.pending')
+        tmp.write_text(json.dumps(events, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+        os.replace(tmp, path)
+    except (OSError, ValueError) as error:
+        doc['record_error'] = '%s: %s' % (type(error).__name__, error)
+    log('keep-running %s: %s' % (run_name, json.dumps(doc, sort_keys=True)))
+    return doc
+
+
+def all99_crosswalk(code_root):
+    """The pinned 99-entry crosswalk from the staged checkout: (entries, pin) where pin records the file's witness and
+    whether it equals the sha256 CYCLE_CALCULATION_PINS.json binds it to. A mismatch or an unreadable file is a SEPARATE
+    VISIBLE integrity failure (never relabelled as missing coverage): the entries are still listed when readable, the
+    pin says 'differs'/'unreadable', and the caller's list carries it."""
+    path = Path(code_root) / CROSSWALK
+    pin = dict(path=str(path), expected_sha256=None, actual_sha256=None, integrity='unverified')
+    try:
+        pins = json.loads((Path(code_root) / CYCLE_PINS).read_bytes())
+        pin['expected_sha256'] = (pins.get('crosswalk') or {}).get('sha256')
+        pin['registry_sha256'] = pins.get('registry_sha256')
+    except (OSError, ValueError) as error:
+        pin['pins_error'] = '%s: %s' % (type(error).__name__, error)
+    try:
+        raw = path.read_bytes()
+        doc = json.loads(raw)
+        entries = doc.get('layers') or []
+        pin['actual_sha256'] = hashlib.sha256(raw).hexdigest()
+        pin['bytes'] = len(raw)
+        pin['crosswalk_sha256'] = doc.get('crosswalk_sha256')
+        pin['registry_sha256_in_crosswalk'] = doc.get('registry_sha256')
+        pin['integrity'] = ('verified' if pin['expected_sha256'] and pin['actual_sha256'] == pin['expected_sha256']
+                            else 'unpinned' if not pin['expected_sha256'] else 'differs')
+        if doc.get('schema') != 'FRANKIE_NATIVE_RAW_MBO_LAYER_CROSSWALK_V1' or len(entries) != 99:
+            pin['integrity'] = 'differs'
+            pin['shape'] = 'schema %s, %d entries (99 expected)' % (doc.get('schema'), len(entries))
+        return entries, pin
+    except (OSError, ValueError) as error:
+        pin['integrity'] = 'unreadable'
+        pin['error'] = '%s: %s' % (type(error).__name__, error)
+        return [], pin
+
+
+def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch, ingest, brain):
+    """Per day: every one of the 99 crosswalk entries with its disposition for THIS ROOT (ALL99_SCHEMA):
+      produced   the ROOT derived it (derive.json layers[<id>].status == 'derived'; the sealed journal for the raw six)
+      admitted   produced AND carried into the shared market timeline picture: the ROOT is under the plan's policy and the
+                 carrying timeline layer is present (root.frames/prices/structures from the ROOT's spool pins; native.member
+                 and native.lifecycle from the completed native ledgers; completed_sources for the two post-stream aggregates)
+      absent     not produced (bedrock off, no producer, a producer failure) or produced but not in the picture (a legacy
+                 ROOT, an absent carrier): the picture is THINNER here, the day stays (Greg's missing-coverage rule)
+      knowledge  a control/knowledge input carried by the brain, not a numeric timeline layer (its consumers are the
+                 learner/teacher readers); 'brain' names whether the brain root exists
+      retired    Memory A / A-clean overlays: retired by Greg (H06-H08 historical/not_bound); not an input
+      sealed     a Step-1/timing answer boundary: preserved, never exposed as a live discovery input
+      disabled   a provisional shadow producer: listed, never silently activated
+      output     an append-only output: filed by its own later stage (classroom, search, Jev, reports), pending at ROOT
+      integrity  the carrier's evidence could not be verified (selected_files raised): a separate visible failure
+    Reads the ROOT's derive.json layer records and spool pins; it instantiates no timeline reader (no spool is read).
+    Producers in Codex-owned code are named per entry (producer.file) so a request can name file and entry."""
+    entries, pin = all99_crosswalk(code_root)
+    out = dict(schema=ALL99_SCHEMA, day=day, crosswalk=pin, plan_policy=plan_policy, entries=[], counts={},
+               rule='no entry rejects the timeline or the day: an absent layer thins the picture with its reason; '
+                    'disabled producers are listed, never activated; integrity failures stay separate and visible')
+    calc = calc or {}
+    derive, derive_why = {}, None
+    try:
+        dpath = (calc.get('derivation') or {}).get('path')
+        derive = json.loads(Path(dpath).read_bytes()) if dpath else {}
+        if not dpath:
+            derive_why = 'the ROOT receipt names no derivation'
+    except (OSError, ValueError) as error:
+        derive_why = 'derive.json unreadable: %s: %s' % (type(error).__name__, error)
+    layers = derive.get('layers') or {}
+    bedrock = derive.get('bedrock') if isinstance(derive.get('bedrock'), dict) else {}
+    failures = derive.get('failure_count')
+    # the timeline's carrying layers, as frankie_box_market_timeline.SharedMarketTimeline establishes them at open
+    carriers = {}
+    for role in ('frames', 'prices', 'structures'):
+        spool = (calc.get('shared_market_sources') or {}).get(role)
+        if not plan_policy:
+            carriers['root.' + role] = dict(status='absent', reason='a legacy plan: no shared market policy, no spool pin')
+        elif spool is None:
+            carriers['root.' + role] = dict(status='absent', reason='the completed ROOT recorded no %s spool pin' % role)
+        elif isinstance(spool, dict) and spool.get('status') == 'absent':
+            carriers['root.' + role] = dict(status='absent', reason=spool.get('reason') or 'the ROOT published no %s spool' % role)
+        else:
+            carriers['root.' + role] = dict(status='present', pin={k: spool.get(k) for k in ('path', 'bytes', 'sha256')} if isinstance(spool, dict) else spool)
+    native_status = 'absent'
+    try:
+        from frankie_box_experiment_native import selected_files
+        selected = {item['native_role']: item for item in selected_files(calc_dir, str(day))} if calc_dir else {}
+        for role, name in (('exact_member_rows.jsonl', 'native.member'), ('exact_lifecycle_rows.jsonl', 'native.lifecycle')):
+            item = selected.get(role)
+            carriers[name] = (dict(status='present', pin=dict(path=item['source'], **item['expected'])) if item else
+                              dict(status='absent', reason='no completed native calculation in this ROOT (bedrock off)'
+                                   if not selected else 'native ledger not selected'))
+        native_status = 'present' if all(carriers[n]['status'] == 'present' for n in ('native.member', 'native.lifecycle')) else 'absent'
+    except Exception as error:  # noqa: BLE001 - altered or incomplete native evidence is an integrity failure, listed as such
+        native_status = 'integrity'
+        for name in ('native.member', 'native.lifecycle'):
+            carriers[name] = dict(status='integrity', reason='%s: %s' % (type(error).__name__, str(error)[:300]))
+    external = calc.get('external') or {}
+    carriers['external'] = (dict(status='present') if external.get('status') == 'attached' else
+                            dict(status='absent', reason=external.get('reason') or 'no day file attached to this ROOT'))
+    carriers['completed_sources'] = dict(status='present' if any(k in layers for k in ('legacy_native_signed_flow', 'legacy_per_second_roll20'))
+                                         and plan_policy else 'absent',
+                                         note='post_stream_only: the aggregate has no exact contributor cursor provenance (the timeline lists it so)')
+    in_picture = bool(plan_policy) and not policy_mismatch
+    picture_why = (None if in_picture else 'a legacy plan (no shared market policy): produced layers are not in the shared picture'
+                   if not plan_policy else 'the ROOT is refused under the plan\'s policy: %s' % policy_mismatch)
+    brain_present = bool(brain) and Path(brain).is_dir()
+    counts = {}
+    for entry in entries:
+        layer, group = entry.get('layer_id'), entry.get('group_id')
+        role, carrier = ALL99_GROUPS.get(group, ('unknown', 'unknown'))
+        producer = entry.get('producer') or {}
+        row = dict(entry=layer, group=group, role=role, policy=entry.get('policy'),
+                   producer=dict(file=producer.get('file'), symbol=producer.get('symbol'), kind=producer.get('kind')),
+                   historical_status=entry.get('status'))
+        record = layers.get(layer) if isinstance(layers, dict) else None
+        if role == 'raw':
+            if ingest and ingest.get('status') in FINISHED:
+                row.update(produced=True, source=dict(ingest=ingest.get('ingest'), receipt_sha256=ingest.get('receipt_sha256')),
+                           carrier='journal')
+                row.update(disposition='admitted' if in_picture else 'absent',
+                           reason='the sealed journal is the timeline\'s input' if in_picture else picture_why)
+            else:
+                row.update(produced=False, disposition='absent', reason='no sealed ingest of the day on this box')
+        elif role == 'calculation':
+            if record is None:
+                row.update(produced=False, disposition='absent',
+                           reason=derive_why or 'the ROOT derivation lists no record for this layer (not in the pin)')
+            elif record.get('status') == 'derived':
+                name = LEGACY_CARRIER.get(layer, 'native') if carrier == 'legacy' else 'native'
+                if name == 'native':
+                    present = native_status
+                    where = 'native.member+native.lifecycle'
+                else:
+                    present = carriers.get(name, {}).get('status', 'absent')
+                    where = name
+                row.update(produced=True, producer_record=dict(producer=record.get('producer'), sha256=record.get('sha256')),
+                           carrier=where)
+                if present == 'integrity':
+                    row.update(disposition='integrity', reason=carriers['native.member'].get('reason'))
+                elif in_picture and present == 'present':
+                    row.update(disposition='admitted', reason=None)
+                else:
+                    row.update(disposition='absent', reason=picture_why or 'produced, but its carrying timeline layer %s is absent: %s'
+                               % (where, carriers.get(name if name != 'native' else 'native.member', {}).get('reason')))
+            else:
+                row.update(produced=False, disposition='absent', carrier='native' if carrier == 'native' else LEGACY_CARRIER.get(layer),
+                           reason='%s: %s' % (record.get('status'), record.get('reason') or 'no reason recorded'))
+        elif carrier == 'brain':
+            row.update(produced=None, disposition='knowledge', carrier='brain', brain=dict(path=str(brain), present=brain_present),
+                       reason='a control/knowledge input of the learner and teacher readers, not a numeric timeline layer; '
+                              'its consumption is each reader\'s own receipt')
+        elif carrier == 'retired':
+            row.update(produced=False, disposition='retired', reason='Memory A is retired (Greg); H06-H08 stay historical/not_bound')
+        elif carrier == 'boundary':
+            row.update(produced=None, disposition='sealed', reason='a lawful answer boundary: preserved, never a live discovery input')
+        elif carrier == 'disabled':
+            row.update(produced=False, disposition='disabled', reason='a provisional shadow producer, disabled by the existing '
+                                                                      'policy: listed here, never silently activated')
+        elif carrier == 'stages':
+            row.update(produced=None, disposition='output', reason='an append-only output filed by its own later stage; pending '
+                                                                   'at ROOT; not a teacher input')
+        else:
+            row.update(produced=None, disposition='absent', reason='unknown registry group %s' % group)
+        counts[row['disposition']] = counts.get(row['disposition'], 0) + 1
+        out['entries'].append(row)
+    out.update(counts=counts, listed=len(out['entries']), carriers=carriers, in_picture=in_picture, picture_why=picture_why,
+               derivation=dict(path=(calc.get('derivation') or {}).get('path'), failure_count=failures, read_error=derive_why,
+                               bedrock=('skipped: %s' % bedrock.get('reason')) if bedrock.get('skipped') else
+                               ('derived %d layer(s)' % len(bedrock.get('layers') or [])) if bedrock else 'none recorded'),
+               absent=[dict(entry=r['entry'], reason=r['reason']) for r in out['entries'] if r['disposition'] == 'absent'],
+               disabled=[r['entry'] for r in out['entries'] if r['disposition'] == 'disabled'],
+               integrity=[dict(entry=r['entry'], reason=r['reason']) for r in out['entries'] if r['disposition'] == 'integrity'],
+               requests=sorted({r['producer']['file'] for r in out['entries'] if r['disposition'] == 'absent' and r['produced'] is False
+                                and r['producer'].get('file')}))
+    return out
+
+
+def all99_summary(doc):
+    """The one-day inspection's projection of an all-99 list: counts, the absent/disabled/integrity entries, the pin."""
+    if not doc:
+        return None
+    return dict(counts=doc.get('counts'), listed=doc.get('listed'), in_picture=doc.get('in_picture'), picture_why=doc.get('picture_why'),
+                absent=doc.get('absent'), disabled=doc.get('disabled'), integrity=doc.get('integrity'),
+                crosswalk=dict(integrity=(doc.get('crosswalk') or {}).get('integrity'),
+                               sha256=(doc.get('crosswalk') or {}).get('actual_sha256')),
+                carriers={k: v.get('status') for k, v in (doc.get('carriers') or {}).items()})
 
 
 class Run:
@@ -609,9 +915,17 @@ class Run:
         different checked school, those reports are stale and get their revision under the same number. A reports receipt
         from before that field is not judged by it."""
         r, s = self.receipt('reports', day) or {}, self.receipt('school', day) or {}
-        rendered = (r.get('school') or {}).get('sha256')
         current = s.get('school_sha256') or (s.get('row') or {}).get('sha256')
-        return bool(rendered and current and s.get('status') in ('done', 'reused') and rendered != current)
+        if s.get('status') not in ('done', 'reused') or not current:
+            return False
+        # what the reports were actually rendered with: the day-reports receipt's school_sha256 (the step's own file,
+        # <reports-dir>/receipts/<run>/<day>.json; correction_consumer, 2026-10-07), else this run's recorded school
+        step = Run.reports_receipt(None, day=day, run=self.plan['run']) or {}
+        if 'school_sha256' in step or step.get('school_status') not in (None, 'not given'):
+            rendered = step.get('school_sha256')
+            return rendered != current             # none rendered (school not given then) while a school stands now: stale
+        rendered = (r.get('school') or {}).get('sha256')
+        return bool(rendered and rendered != current)
 
     def school_current(self, day, stage='school'):
         """(current, why) of the day's recorded school against the brain's checked school chain (Codex's
@@ -888,8 +1202,10 @@ class Run:
                 # a legacy (or other-implementation) completed ROOT never satisfies a shared-policy plan: preserved as
                 # it is, never recomputed or relabelled here; one finished ROOT per day (root_of) and one plan per run,
                 # so the compatible successor is a NEW run name
+                all99 = self.all99(e['day'], calc, retained, policy, mismatch)
                 return self.record('root', e['day'], 'refused', calculations=str(calc), interrupted_attempts=attempts,
                                    retained_policy=retained.get('shared_market_policy'), plan_policy=policy, mismatch=mismatch,
+                                   all99=all99, inspection=dict(outputs=dict(all99=all99_summary(all99))),
                                    reason='the completed ROOT %s does not carry the plan\'s shared market policy (%s); it is '
                                           'preserved; the compatible successor is a new run name' % (calc, mismatch))
             sources = [calc / 'calculations-receipt.json', calc / 'work' / 'derive.json',
@@ -900,11 +1216,21 @@ class Run:
                                            summary=dict(calculations=str(calc), role=e['role'],
                                                         root_status=retained.get('status'),
                                                         producer_failures=retained.get('failure_count')))
+            all99 = self.all99(e['day'], calc, retained, policy, None)
             return self.record('root', e['day'], 'reused', calculations=str(calc), interrupted_attempts=attempts,
                                receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
                                if (calc / 'calculations-receipt.json').is_file() else None,
                                shared_market_policy=retained.get('shared_market_policy'), plan_policy=policy,
-                               brain_entry=brain_entry)
+                               brain_entry=brain_entry, all99=all99,
+                               # the one-day inspection: a reused ROOT received the retained receipt and produced the
+                               # same all-99 list; operator review only
+                               inspection=dict(inputs=dict(calculations=str(calc), receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
+                                                           if (calc / 'calculations-receipt.json').is_file() else None),
+                                               use=dict(reused=True, plan_policy=policy or 'none (legacy plan: bedrock off)',
+                                                        interrupted_attempts=attempts),
+                                               outputs=dict(root_status=retained.get('status'), producer_failures=retained.get('failure_count'),
+                                                            shared_market_policy=retained.get('shared_market_policy'),
+                                                            all99=all99_summary(all99))))
         ing = self.receipt('ingest', e['day'])
         if not (ing and ing['status'] in FINISHED):
             return self.record('root', e['day'], 'waiting', reason='the day has no sealed ingest yet (stage ingest)')
@@ -934,6 +1260,9 @@ class Run:
                                interrupted_attempts=attempts, reason='no calculations-receipt.json (the attempt is kept)')
         calc = json.loads((output / 'calculations-receipt.json').read_bytes())
         self.claim_end(e, output, sha256_file(output / 'calculations-receipt.json'), None)
+        # the 99 layers combined for Frankie: per entry produced / admitted / absent (thinner picture, the day stays) /
+        # knowledge / retired / sealed / disabled / output, on this receipt and in the one-day inspection (Greg, 2026-10-07)
+        all99 = self.all99(e['day'], output, calc, policy, self.shared_policy_mismatch(calc.get('shared_market_policy')) if policy else None)
         brain_entry = self.brain_stage(e['day'], 'root',
                                        [output / 'calculations-receipt.json', output / 'work' / 'derive.json',
                                         output / 'work' / 'derivation-digest-full.md'] +
@@ -947,7 +1276,7 @@ class Run:
                            interrupted_attempts=attempts, digest=True, plan_policy=policy,
                            shared_market_policy=calc.get('shared_market_policy'),
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
-                           brain_entry=brain_entry, owner_binding=self.owner,
+                           brain_entry=brain_entry, owner_binding=self.owner, all99=all99,
                            # the one-day inspection (frankie_box_workflow_inspection.py): what the ROOT child received,
                            # how this caller used it, what it produced; operator review only, never knowledge or a gate
                            inspection=dict(inputs=dict(ingestion_receipt=dict(path=ing['receipt'], sha256=ing['receipt_sha256']),
@@ -957,7 +1286,19 @@ class Run:
                                            outputs=dict(calculations=str(output), exit_code=code,
                                                         receipt_sha256=sha256_file(output / 'calculations-receipt.json'),
                                                         root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
-                                                        shared_market_policy=calc.get('shared_market_policy'))))
+                                                        shared_market_policy=calc.get('shared_market_policy'),
+                                                        all99=all99_summary(all99))))
+
+    def all99(self, day, calc_dir, calc, policy, mismatch):
+        """The day's all-99 production/admission list (all99_admission), never raising out of the ROOT step: a failure
+        to build the list is itself listed (schema, error) so the receipt shows it instead of a missing field."""
+        try:
+            return all99_admission(self.code_root, day, calc_dir, calc, policy, mismatch, self.receipt('ingest', day),
+                                   self.plan.get('brain') or str(BRAIN))
+        except Exception as error:  # noqa: BLE001 - the list is operator-visible accounting; its failure is recorded, not hidden
+            self.log('all99 %s: the list could not be built (%s: %s)' % (day, type(error).__name__, error))
+            return dict(schema=ALL99_SCHEMA, day=day, listed=0, counts={}, entries=[],
+                        error='%s: %s' % (type(error).__name__, error), rule='the list could not be built; nothing is inferred')
 
     # The shared ROOT claim (frankie_box_root_claims.py; SPEC-pod-day-runner.md): the Pods, the worker boxes and this
     # orchestrator run the ROOT of a day only after claiming it once. Opt-in: while /opt/frankie-box/work/root-claims does
@@ -1417,8 +1758,19 @@ class Run:
     # the day reports (Greg, 2026-09-29: "make sure classroom is printing out an analysis after every day has gone through
     # it, and same with Frankie, and have them number their reports")
     @staticmethod
-    def reports_receipt(log):
-        """The day reports step's receipt: the last line of its log, or None."""
+    def reports_receipt(log, day=None, run=None):
+        """The day reports step's receipt: the file the step writes at <reports-dir>/receipts/<run>/<day>.json (its
+        fields school, school_sha256, school_status, school_listed among them; correction_consumer, 2026-10-07) when
+        given a day and run, else the last line of its log, or None."""
+        if day and run:
+            try:
+                r = json.loads((REPORTS / 'receipts' / run / ('%s.json' % day)).read_bytes())
+                if isinstance(r, dict) and r.get('schema') == REPORTS_SCHEMA and str(r.get('day')) == str(day):
+                    return r
+            except (OSError, ValueError):
+                pass
+        if log is None:
+            return None
         try:
             lines = [x for x in Path(log).read_text(encoding='utf-8', errors='replace').splitlines() if x.strip()]
             r = json.loads(lines[-1]) if lines else None
@@ -1457,8 +1809,17 @@ class Run:
             else:
                 env['EXCHANGE_LISTED'] = 'the day\'s exchange stage is %s%s' % (
                     (x or {}).get('status') or 'not run', (': ' + x['reason']) if (x or {}).get('reason') else '')
+            # the school file (correction_consumer, stage 12, 2026-10-07): the day's FRANKIE_SCHOOL_KNOWLEDGE_V1 file when
+            # the school stage is done/reused (the wrapper passes --school), else why there is none (--school-listed);
+            # without it the FRANKIE report's school section reads "not given"
+            school = self.receipt('school', day) or {}
+            if school.get('status') in ('done', 'reused') and school.get('file'):
+                env['SCHOOL'] = school['file']
+            else:
+                env['SCHOOL_LISTED'] = 'the day\'s school stage is %s%s' % (
+                    school.get('status') or 'not run', (': ' + school['reason']) if school.get('reason') else '')
             code, log = self.child('reports', day, 'frankie_box_experiment_day_reports.sh', env)
-            r = self.reports_receipt(log)
+            r = self.reports_receipt(log, day=day, run=self.plan['run'])
             for item in (r or {}).get('reports') or []:
                 try:
                     self.log(Path(item['file']).read_text(encoding='utf-8', errors='replace'))
@@ -1806,8 +2167,16 @@ class Run:
             receipt_path = target / 'receipt.json'
             prior_receipt = receipt_path.read_bytes() if receipt_path.is_file() else None
             env = dict(EXCHANGE_VIEW=x['frankie_view'], OUT_DIR=target, BRAIN=brain)
+            # the one pinned runtime on the box (shared_runtime): its paths reach the wrapper as LLAMA_SERVER/GGUF_MODEL
+            # only when the gate is ready; otherwise the wrapper runs inputs-only and the refusal's reasons are on this
+            # receipt (nothing silent; the day goes on, the meeting is non-blocking)
+            runtime = self.shared_runtime()
+            if runtime['status'] == 'ready':
+                env.update(LLAMA_SERVER=runtime['binary'], GGUF_MODEL=runtime['model'])
             inputs['env'] = {k: str(v) for k, v in env.items()}
-            inputs['runtime_binary_and_model_set'] = bool(os.environ.get('LLAMA_SERVER') and os.environ.get('GGUF_MODEL'))
+            inputs['runtime_binary_and_model_set'] = runtime['status'] == 'ready'
+            inputs['shared_runtime'] = dict(status=runtime['status'], reasons=runtime['reasons'], binary=runtime['binary'],
+                                            model=runtime['model'], provenance=runtime['provenance'])
             code, log = self.child('voice', day, 'frankie_box_granite_meeting.sh', env)
             if code != 0:
                 current = receipt_path.read_bytes() if receipt_path.is_file() else None
@@ -1866,9 +2235,10 @@ class Run:
             except (OSError, ValueError) as error:
                 stands, changed = 'the runtime config cannot be read (%s: %s)' % (type(error).__name__, error), None
         elif record['status'] == 'inputs_only':
-            both = bool(os.environ.get('LLAMA_SERVER') and os.environ.get('GGUF_MODEL'))
-            stands = None if both else 'LLAMA_SERVER / GGUF_MODEL are not both set in this process: the wrapper would run inputs-only again'
-            changed = 'LLAMA_SERVER and GGUF_MODEL are set now'
+            runtime = self.shared_runtime()               # the one pinned runtime on the box, gated once per Run
+            stands = None if runtime['status'] == 'ready' else ('the shared model runtime is still refused: %s: the wrapper would '
+                                                                 'run inputs-only again' % '; '.join(runtime['reasons'])[:600])
+            changed = 'the shared model runtime is ready now (%s)' % runtime['binary']
         else:
             return None, 'the retained record is %s: not a standing refusal' % record['status']
         if stands is None:
@@ -2381,17 +2751,25 @@ class Run:
         if manifest is None or not manifest.is_file():
             return self.record('jev', day, 'waiting', reason='the owning day\'s search is %s (Jev tests his claims on it)'
                                % (s.get('status') or 'not run'))
-        runtime = self.plan.get('jev_runtime') or ((self.dir / 'jev-runtime.json') if (self.dir / 'jev-runtime.json').is_file() else None)
-        if not runtime or not Path(runtime).is_file():
-            return self.record('jev', day, 'waiting', reason='Jev\'s CPU runtime configuration (JEV_CPU_RUNTIME_V1: binary, '
-                               'model, worker CPUs of the held lane, budgets, completion policy) is not supplied (plan '
-                               'jev_runtime or %s): a missing runtime choice is waiting, never skipped'
-                               % (self.dir / 'jev-runtime.json'))
+        # Greg, 2026-10-07: Jev uses the SAME weights, code and setup as Granite (one pinned runtime on the box: Granite 4.2
+        # 3B Q4_K_M under llama.cpp b11440 at the paths the meeting's gate expects), so he improves with it. Run.jev passes
+        # no separate binary/model: the request binds the shared runtime definition (the staged GRANITE_MEETING_RUNTIME_V1
+        # config, the install's provenance, the gated paths); a plan's older jev_runtime (JEV_CPU_RUNTIME_V1) is recorded
+        # as superseded and NOT used. The helper's own binding to this definition is Codex's (remaining_consumers).
+        shared = self.shared_runtime()
+        superseded = self.plan.get('jev_runtime') or (str(self.dir / 'jev-runtime.json') if (self.dir / 'jev-runtime.json').is_file() else None)
+        if shared['status'] != 'ready':
+            return self.record('jev', day, 'waiting', shared_runtime=shared, superseded_jev_runtime=superseded,
+                               reason='the one pinned model runtime (Granite 4.2 3B Q4_K_M under llama.cpp b11440, shared with the '
+                                      'meeting) is not ready on this box: %s; a missing runtime is waiting, never skipped or borrowed'
+                                      % '; '.join(shared['reasons'])[:900])
+        runtime = (shared['config'] or {}).get('path')
         jev_brain = Path(self.plan.get('jev_brain') or str(JEV_BRAIN))
-        for label, p in (('runtime', Path(runtime)), ('jev_brain', jev_brain)):
+        for label, p in (('runtime config', Path(runtime)), ('binary', Path(shared['binary'])), ('model', Path(shared['model'])),
+                         ('jev_brain', jev_brain)):
             if not p.is_absolute() or any(q.is_symlink() for q in (p, *p.parents)):
                 # the helper refuses a relative or symlinked path, and the request is written once: refused BEFORE it
-                # is written (a run keeps one plan: a corrected path is a new run or <run>/jev-runtime.json)
+                # is written (a corrected install is the setup script's; a corrected brain path is a new run)
                 return self.record('jev', day, 'refused', reason='Jev\'s %s path must be absolute and symlink-free: %s' % (label, p))
         marker = self.stop_marker
         if not marker:
@@ -2419,7 +2797,11 @@ class Run:
                        slot_booking=booking, cpus=list(held['cpus']),
                        source=dict(commit=self.commit, code_root=str(self.code_root)), save_marker=str(marker),
                        output=str(out), brain=str(brain), jev_brain=str(jev_brain), report_number=number,
-                       classroom_receipt=file_pin(producer), search=file_pin(manifest), runtime=file_pin(Path(runtime)))
+                       classroom_receipt=file_pin(producer), search=file_pin(manifest), runtime=file_pin(Path(runtime)),
+                       # the shared runtime definition Jev binds to (the same install the meeting runs on): the config
+                       # pin above, the install's provenance pin, the gated binary/model paths; no separate pin set
+                       shared_runtime=dict(schema=SHARED_RUNTIME_SCHEMA, provenance=shared['provenance'], binary=shared['binary'],
+                                           model=shared['model'], superseded_jev_runtime=superseded))
         path = self.dir / 'days' / day / ('jev-request-%s.json' % stamp)
         if path.is_file():
             retained = json.loads(path.read_bytes())
@@ -2467,7 +2849,10 @@ class Run:
                                unresolved_calls=status['unresolved_calls'], request_pins=request_pins,
                                reason='Jev\'s retained state lists unresolved model calls; none is retried or erased, the '
                                       'owner\'s review resolves them (frankie_box_jev_cpu status.json)')
-        code, log = self.child('jev', day, 'frankie_box_jev_cpu.sh', dict(JEV_REQUEST=path))
+        # the same LLAMA_SERVER / GGUF_MODEL the meeting child gets: one runtime, one install (the helper reads the request's
+        # shared_runtime binding; the environment names the same paths for its wrapper)
+        code, log = self.child('jev', day, 'frankie_box_jev_cpu.sh', dict(JEV_REQUEST=path, LLAMA_SERVER=shared['binary'],
+                                                                           GGUF_MODEL=shared['model']))
         receipt, status = read(receipt_path), read(status_path)
         fields = dict(exit_code=code, log=log, request=str(path), stamp=stamp, output=str(out), report_number=number,
                       request_pins=request_pins, rebook=request.get('rebook'),
@@ -2660,7 +3045,24 @@ class Run:
             env.update(SHARED_MARKET_POLICY=policy, CALCULATION_ROOTS=','.join(roots[d] for d, _ in receipts))
         code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh', env)
         by_day = {e['day']: e for e in todo}
-        missing = [d for d, _ in receipts if self.day_rows(by_day[d])[0] is None]   # the gate: accepted rows only
+        # the teacher step's LISTED outcomes (workflow_reports, 2026-10-07): a day whose experiment-teacher-rows/<day>/
+        # receipt.json says equation_not_run (exit 5: no operand for the pinned equation on this day, no rows file) is a
+        # listed day WITHOUT Dipole rows, not a failed batch; exit 4 (rows published, external section listed) is listed
+        # too; the step exits 3 only on a failed day. missing = days with neither accepted rows nor such a receipt
+        listed = {}
+        for d, _ in receipts:
+            if self.day_rows(by_day[d])[0] is not None:
+                continue
+            try:
+                published = json.loads((TEACHER_ROWS / d / 'receipt.json').read_bytes())
+            except (OSError, ValueError):
+                published = None
+            if isinstance(published, dict) and published.get('day') == d and published.get('status') == 'equation_not_run':
+                listed[d] = dict(status='equation_not_run', reason=(published.get('equation_not_run') or {}).get('reason'),
+                                 operand=(published.get('equation_not_run') or {}).get('operand'))
+        missing = [d for d, _ in receipts if self.day_rows(by_day[d])[0] is None and d not in listed]   # the gate: accepted rows only
+        if listed:
+            self.log('teacher %s: no Dipole rows for %s (equation_not_run: listed, the days go on without them)' % (batch_key, sorted(listed)))
         for d, _ in receipts:
             rows, source, _ = self.day_rows(by_day[d])
             if rows is not None:
@@ -2681,6 +3083,7 @@ class Run:
             status = 'refused'
         return self.record('teacher', batch_key, status,
                            exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
+                           rows_listed=listed or None,
                            remote_days=remote, refused_days=refused or None, shared_market_policy=policy,
                            calculation_roots=roots or None, root_waiting=root_waiting or None,
                            external_waiting=external_waiting, brain_entries=brain_entries,
@@ -2691,12 +3094,70 @@ class Run:
                                                                      for d, r in receipts}),
                                            use=dict(policy=policy or 'none (legacy plan)', refused=refused or None,
                                                     root_waiting=root_waiting or None, external_waiting=external_waiting or None,
-                                                    rows_missing=missing, waiting=waiting, skipped_days=sorted(set(by_day) - set(dict(receipts)))),
+                                                    rows_missing=missing, rows_listed=listed or None, waiting=waiting,
+                                                    skipped_days=sorted(set(by_day) - set(dict(receipts)))),
                                            outputs=dict(exit_code=code, rows={d: str(self.day_rows(by_day[d])[0]) for d, _ in receipts},
                                                         brain_entries=sorted(brain_entries))),
                            reason=None if code == 0 and not missing and not waiting else
                            'rows missing for %s, waiting on ingest %s (those days go on without Dipole rows, listed)'
                            % (missing, waiting))
+
+    def shared_runtime(self):
+        """THE ONE pinned model runtime on the box (Greg, 2026-10-07: Jev uses the same weights, code and setup as Granite):
+        {status: ready|refused, config, provenance, binary, model, reasons, rule} built once per Run from the staged
+        knowledge/GRANITE_MEETING_RUNTIME_V1.json (frankie_box_granite_meeting.load_config), the setup script's provenance
+        receipt under GRANITE_DIR (exactly one FRANKIE_GRANITE_RUNTIME_PROVENANCE_V1 names llama-server and the GGUF)
+        and the meeting's own runtime gate on those paths (binary and every extracted file against llama_cpp_files, the
+        model against model_sha256). 'refused' names every reason VISIBLY until the pinned install exists; nothing is
+        installed, guessed or borrowed. The meeting child (LLAMA_SERVER/GGUF_MODEL) and Jev bind to this same result."""
+        cached = getattr(self, '_shared_runtime', None)
+        if cached is not None:
+            return cached
+        started = time.time()
+        out = dict(schema=SHARED_RUNTIME_SCHEMA, status='refused', config=None, provenance=None, binary=None, model=None, reasons=[],
+                   rule='one pinned runtime (Granite 4.2 3B Q4_K_M, llama.cpp b11440) for the meeting and Jev; refused visibly '
+                        'until frankie_box_granite_meeting_setup.sh installed it under %s' % GRANITE_DIR)
+        try:
+            import frankie_box_granite_meeting as GM
+            config, witness = GM.load_config()
+            out['config'] = witness
+            found = sorted(p for p in GRANITE_DIR.glob('*/provenance.json') if not p.is_symlink()) if GRANITE_DIR.is_dir() else []
+            docs = []
+            for p in found:
+                try:
+                    doc = json.loads(p.read_bytes())
+                except (OSError, ValueError) as error:
+                    out['reasons'].append('unreadable provenance %s (%s: %s)' % (p, type(error).__name__, error))
+                    continue
+                if doc.get('schema') == GRANITE_PROVENANCE_SCHEMA:
+                    docs.append((p, doc))
+            if not docs:
+                out['reasons'].append('no %s under %s: the pinned runtime is not installed on this box (the setup script '
+                                      'writes it after every pin check passed)' % (GRANITE_PROVENANCE_SCHEMA, GRANITE_DIR))
+            elif len(docs) > 1:
+                out['reasons'].append('%d provenance receipts under %s (%s): exactly one pinned runtime is expected; none chosen'
+                                      % (len(docs), GRANITE_DIR, ', '.join(str(p) for p, _ in docs)))
+            else:
+                p, doc = docs[0]
+                binary, model = doc.get('server'), doc.get('model')
+                out.update(provenance=file_pin(p), binary=binary, model=model)
+                pins = config.get('pins') or {}
+                for key, have in (('release', 'llama_cpp_release'), ('asset', 'llama_cpp_asset'), ('server_sha256', 'llama_server_sha256'),
+                                  ('model_sha256', 'model_sha256')):
+                    if doc.get(key) != pins.get(have):
+                        out['reasons'].append('provenance %s %s differs from the staged pin %s %s' % (key, doc.get(key), have, pins.get(have)))
+                if not binary or not str(binary).startswith(str(GRANITE_DIR) + '/') or not model or not str(model).startswith(str(GRANITE_DIR) + '/'):
+                    out['reasons'].append('provenance names a server/model outside %s (%s, %s)' % (GRANITE_DIR, binary, model))
+                else:
+                    out['reasons'].extend(GM.gate(config, binary=binary, model=model))   # the meeting's own gate: binary, files, model sha256
+        except Exception as error:  # noqa: BLE001 - an unreadable config or gate is a visible refusal, never a silent inputs-only
+            out['reasons'].append('%s: %s' % (type(error).__name__, str(error)[:300]))
+        out['status'] = 'ready' if not out['reasons'] else 'refused'
+        out['seconds'] = round(time.time() - started, 1)
+        self._shared_runtime = out
+        self.log('shared model runtime: %s%s (%.1f s)' % (out['status'], ('' if out['status'] == 'ready' else ': ' + '; '.join(out['reasons'])[:600]),
+                                                          out['seconds']))
+        return out
 
     TEACHER_KNOWLEDGE_PRODUCERS = ('research/kalshi/frankie_boss/dipole_classroom.py',
                                    'research/kalshi/frankie_boss/dipole_classroom_integration.py',
@@ -2900,7 +3361,10 @@ class Run:
             dipole_missing = ('no Dipole rows for the day (teacher batch: %s); exported and searched without them, listed '
                               'missing; a later search with the rows would be a second search of the day (declined)'
                               % ((self.receipt('teacher', self.batch_of(e['day'])) or {}).get('status') or 'not run'))
-        env = dict(ACTION='export', DAY=e['day'], CYCLE=CYCLE, CALCULATIONS=root['calculations'], INGEST=ing['ingest'])
+        # DATA_WORKERS: the export pins its hashing in a largest-first process pool (workflow_reports, 2026-10-07); the
+        # 15 workers of the held 16-CPU lane, as ROOT and search; without it the export hashes serially
+        env = dict(ACTION='export', DAY=e['day'], CYCLE=CYCLE, CALCULATIONS=root['calculations'], INGEST=ing['ingest'],
+                   DATA_WORKERS=self.cores.DAY_RUN_CPUS - 1)
         for key, var in (('launch', 'LAUNCH'), ('preparation', 'PREPARATION'), ('principal_inputs', 'PRINCIPAL_INPUTS'),
                          ('host_config', 'HOST_CONFIG'), ('run', 'RUN')):
             if e.get(key):
@@ -2930,6 +3394,22 @@ class Run:
         ready, why = self.external_ready(e)
         if not ready:
             return self.record('search', e['day'], 'waiting', reason=why)
+        # no causal axis: a day whose ROOT published no book-frame spool (frames.jsonl under work/derived/.rows) has no
+        # per-day causal axis, and the search refuses before its manifest (build_series: frames_pin None, SystemExit).
+        # Under the missing-coverage rule that is a listed outcome of THIS step, never the day's failure: not_run with
+        # the reason, the day goes on (Jev and the lessons name it when they need the search)
+        root = self.receipt('root', e['day']) or {}
+        calc = Path(root['calculations']) if root.get('calculations') else None
+        frames = (calc / 'work' / 'derived' / '.rows' / 'frames.jsonl') if calc else None
+        if frames is None or not frames.is_file() or frames.stat().st_size == 0:
+            pin = ((root.get('all99') or {}).get('carriers') or {}).get('root.frames') or {}
+            return self.record('search', e['day'], 'not_run', target=str(target), calculations=str(calc) if calc else None,
+                               frames_spool=str(frames) if frames else None,
+                               reason='no causal axis: the day\'s ROOT published no book-frame spool (%s%s); the search has no '
+                                      'per-day axis and is not run; the day goes on without a search (listed)' % (
+                                          frames if frames else 'no ROOT calculations named',
+                                          ('; the ROOT lists root.frames ' + pin.get('status') + ': ' + str(pin.get('reason')))
+                                          if pin else ''))
         if not self.disk_ok('search'):
             return None
         env = dict(DAY=e['day'], CYCLE=CYCLE, DAY_ROLE=e['role'], LAGS=self.plan['lags'], WORKERS=self.cores.DAY_RUN_CPUS - 1)
@@ -3019,7 +3499,13 @@ class Run:
 
     def lessons(self, batch_key, entries):
         self.check_save()
-        searched = [e for e in self.plan['days'] if e['role'] == 'discovery' and self.finished('search', e['day'])]
+        # the searched days: a finished search WITH a manifest; a not_run search (no causal axis) is finished for the day
+        # but supplies no search to test claims on: listed, never passed as a path to the teacher
+        searched = [e for e in self.plan['days'] if e['role'] == 'discovery' and self.finished('search', e['day'])
+                    and (self.receipt('search', e['day']) or {}).get('status') != 'not_run']
+        not_run = [e['day'] for e in self.plan['days'] if (self.receipt('search', e['day']) or {}).get('status') == 'not_run']
+        if not_run:
+            self.log('lessons %s: no search to test on for %s (search not_run: no causal axis); listed' % (batch_key, not_run))
         remote = [e['day'] for e in searched if self.remote_root(e['day'])]
         if remote:
             return self.record('lessons', batch_key, 'waiting', remote_days=remote,
@@ -3502,7 +3988,16 @@ def main():
         run_dir.mkdir(parents=True, exist_ok=True)
         saved.write_text(json.dumps(plan, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     run = Run(a, plan, a.code_root, a.commit, log=lambda text: print(text, flush=True))
-    summary = run.start(stages)
+    # this box is IN USE from the run's start (KeepRunning=true, Greg 2026-10-07); the run's work continues in the
+    # detached queue line workers after start() returns, so the clear is theirs (frankie_box_frankie_queue worker end:
+    # cleared only when no orchestrator start, line worker or CPU controller is alive on the box; else kept, named)
+    keep_running(a.run, True, 'orchestrator start of run %s (stages %s)' % (a.run, ','.join(stages)), 'frankie_box_experiment.py start',
+                 log=lambda text: print(text, flush=True))
+    try:
+        summary = run.start(stages)
+    finally:
+        keep_running(a.run, False, 'orchestrator start of run %s ended (the line workers keep the box while they run)' % a.run,
+                     'frankie_box_experiment.py start', log=lambda text: print(text, flush=True))
     print(json.dumps(summary, indent=1, sort_keys=True))
     if summary['stopped']:
         raise SystemExit(4)

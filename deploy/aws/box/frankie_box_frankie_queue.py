@@ -638,7 +638,14 @@ def frankie_lessons(run, e):
     if not (s and s['status'] in X.FINISHED):
         return run.record('frankie_lessons', day, 'waiting', reason='the day\'s search is %s (Frankie\'s claims are tested '
                                                                     'on the searches)' % ((s or {}).get('status') or 'not run'))
-    searched = [x['day'] for x in run.plan['days'] if x['role'] == 'discovery' and run.finished('search', x['day'])]
+    if s['status'] == 'not_run':
+        # no causal axis on this day (the search is a listed not_run): Frankie's claims of the day cannot be tested on
+        # its own search; listed, the day goes on (the missing operand blocks this equation only)
+        return run.record('frankie_lessons', day, 'skipped', reason='the day\'s search is not_run (%s): no search of the '
+                                                                    'day to test Frankie\'s claims on; listed' % s.get('reason'))
+    # a not_run search of another day supplies no search either: never passed as a path to the teacher
+    searched = [x['day'] for x in run.plan['days'] if x['role'] == 'discovery' and run.finished('search', x['day'])
+                and (run.receipt('search', x['day']) or {}).get('status') != 'not_run']
     remote = [d for d in searched if run.remote_root(d)]
     if remote:
         return run.record('frankie_lessons', day, 'waiting', remote_days=remote,
@@ -2071,12 +2078,25 @@ def main():
         raise SystemExit('--max-seconds >= 60 and --poll-seconds 5..600 required')
     sys.path.insert(0, str(HERE))
     if a.action == 'worker':
-        if a.line == 'class':
-            code = class_worker(a.code_root, a.commit, a.max_seconds, a.poll_seconds, log=lambda t: print(t, flush=True),
-                                scope=a.scope)
-        else:
-            code = root_worker(a.code_root, a.commit, a.max_seconds, a.poll_seconds, log=lambda t: print(t, flush=True),
-                               wait_lock=a.wait_lock, scope=a.scope)
+        try:
+            if a.line == 'class':
+                code = class_worker(a.code_root, a.commit, a.max_seconds, a.poll_seconds, log=lambda t: print(t, flush=True),
+                                    scope=a.scope)
+            else:
+                code = root_worker(a.code_root, a.commit, a.max_seconds, a.poll_seconds, log=lambda t: print(t, flush=True),
+                                   wait_lock=a.wait_lock, scope=a.scope)
+        finally:
+            # the box's KeepRunning tag (Greg, 2026-10-07: "keep running only when in use"): a line worker's end is the
+            # last work of a run on this box; cleared to false ONLY when no orchestrator start, other line worker or CPU
+            # controller is alive here (frankie_box_experiment.box_in_use names what is; then the tag is kept, recorded);
+            # every exit path (bound, idle, error) passes here; recorded in <run>/keep-running.json, never silent
+            try:
+                import frankie_box_experiment as X
+                run_name = (a.scope or '').split(':', 1)[0] or 'queue'
+                X.keep_running(run_name, False, '%s line worker ended (scope %s)' % (a.line, a.scope or 'none'),
+                               'frankie_box_frankie_queue.py worker', log=lambda t: print(t, flush=True))
+            except Exception as error:  # noqa: BLE001 - a cost guard, never the worker's outcome; named
+                print('keep-running: not recorded (%s: %s)' % (type(error).__name__, error), flush=True)
         print(json.dumps(show(20)['lines'][a.line], indent=1, sort_keys=True, default=str))
         return code
     if a.action == 'kick':

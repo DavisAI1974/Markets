@@ -119,6 +119,22 @@ def ssm_client(region):
         return CLIENTS[('ssm', region)]
 
 
+def keep_running(instance, region, value, reason, by):
+    """The box's KeepRunning tag (Greg, 2026-10-07: "keep running only when in use"): set 'true' when a run claims the
+    lane, cleared to 'false' at finish, failed, lease-lost or stop; never silent: the result (or the failure to tag,
+    named) is returned for the event journal and the receipt. The idle guard (deploy/aws/idle_instance_guard.py) stops a
+    box whose tag is not 'true' and that holds no fresh lane lease. ec2:CreateTags on the instance is the one permission."""
+    doc = dict(instance=instance, region=region, keep_running='true' if value else 'false', reason=reason, by=by, at=utc())
+    try:
+        boto3.client('ec2', region_name=region).create_tags(
+            Resources=[instance], Tags=[dict(Key='KeepRunning', Value=doc['keep_running']),
+                                        dict(Key='KeepRunningReason', Value=('%s: %s' % (by, reason))[:255])])
+        doc['tagged'] = True
+    except Exception as error:  # noqa: BLE001 - the tag is a cost guard, never the day's outcome; its failure is named
+        doc.update(tagged=False, error='%s: %s' % (type(error).__name__, str(error)[:300]))
+    return doc
+
+
 _WINDOW = [0.0, None]
 
 
@@ -887,6 +903,10 @@ class Controller:
                 raise RuntimeError('the worker refused the job: %s' % why)
             self.event(worker=w.where, day=day, step='job', result='started', attempt=attempt,
                        s3_inputs=sum(1 for f in inputs if f['source'] != 'box export'))
+            # the worker box is IN USE for this day's ROOT-to-finish window: KeepRunning=true, named (cleared at finish())
+            self.event(worker=w.where, day=day, step='keep_running', **keep_running(
+                w.target['instance'], w.target['region'], True, 'day %s attempt %s started on the Linux lane (run %s)' % (day, attempt, self.run),
+                'pod_root/controller.py ' + controller_id()))
             return True
         except LeaseNotEstablished as e:
             # not a start defect: nothing was submitted; the claim and the exported parts stay for the lease holder
@@ -1257,6 +1277,12 @@ def preflight(a):
           lambda: dict(ping=[(x['PingStatus'], x.get('PlatformName')) for x in ssm_client(
               a.boxes.partition('@')[2] or 'us-east-1').describe_instance_information(
               Filters=[{'Key': 'InstanceIds', 'Values': [worker]}])['InstanceInformationList']]))
+    check('worker KeepRunning tag', 'ec2:DescribeInstances now; ec2:CreateTags on %s for the KeepRunning tag at the day\'s start and '
+          'at the controller\'s end (exercised by the loop, not here)' % worker,
+          lambda: dict(tags={t['Key']: t['Value'] for t in boto3.client('ec2', region_name=a.boxes.partition('@')[2] or 'us-east-1')
+                             .describe_instances(InstanceIds=[worker])['Reservations'][0]['Instances'][0].get('Tags', [])
+                             if t['Key'] in ('KeepRunning', 'KeepRunningPolicy', 'KeepRunningReason')}))
+
     def lease_state():
         lease = read_lease(a.run)
         return dict(lease=lease, alive=lease_alive(lease))
@@ -1517,6 +1543,21 @@ def finish(a, ctl):
     if ctl.heartbeat_thread is not None and ctl.heartbeat_thread is not threading.current_thread():
         ctl.heartbeat_thread.join(HEARTBEAT_SECONDS)       # no heartbeat lands after the release below
     ctl.outcome = ctl.outcome or dict(outcome='ended', complete=False)
+    # every exit path (finished, failed, refused, lease lost/unestablished, budget, stop, signal): the worker box's
+    # KeepRunning cleared to false, UNLESS the worker's last-seen status shows a live job of this run (a stop whose job
+    # continues unattended, a budget end): then the tag is left true and the reason is recorded; never silent either way
+    for w in workers_of(a, ctl.commit):
+        live = [j.get('job_id') for j in ((ctl.last_worker or {}).get('jobs') or [])
+                if j.get('run') == a.run and j.get('pid_alive')]
+        if live:
+            ctl.outcome['keep_running'] = dict(instance=w.target['instance'], keep_running='true', changed=False,
+                                               reason='left true: live job(s) %s of the run continue on the worker (outcome %s)'
+                                                      % (live, ctl.outcome.get('outcome')))
+        else:
+            ctl.outcome['keep_running'] = keep_running(w.target['instance'], w.target['region'], False,
+                                                       'controller ended %s; no live job of run %s seen on the worker'
+                                                       % (ctl.outcome.get('outcome'), a.run), 'pod_root/controller.py ' + controller_id())
+        ctl.event(worker=w.where, step='keep_running', **ctl.outcome['keep_running'])
     out = ctl.summary()
     body = json.dumps(dict(out, events=ctl.events), indent=1, sort_keys=True, default=str)
     try:

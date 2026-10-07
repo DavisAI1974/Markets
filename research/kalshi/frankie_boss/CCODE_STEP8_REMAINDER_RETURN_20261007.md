@@ -394,3 +394,257 @@ Nothing in a-d failed. Not done because not in scope: the signing-window limit (
 provisioning item; the saved main plan and the claim-store activation are written by the orchestrator at its first start;
 the B1 duckdb/pyarrow Linux dependency named in the step-1 handoff was not examined. The policy's run-time effect and the
 installed runtime's behaviour under a real meeting stay RUNTIME-UNVERIFIED until the one authorized E2E.
+
+## 9. The restart pass of 2026-10-07 evening (Greg's redirect: the 99 layers first; source only, read-only account inspection)
+
+Branch `ccode/teacher-tasks-20261006b-step8-corrections` over `5f111885` (the independent review's corrections `9cd1e2aa` and
+the restart pass `5f111885` taken as the work list's current state, not redone). Worktree only; nothing committed by this
+role (the parent commits). Changed files: `deploy/aws/box/frankie_box_experiment.py` (+451/-35 incl. this section's code),
+`deploy/aws/box/frankie_box_experiment.sh` (+6/-6), `deploy/aws/box/frankie_box_frankie_queue.py` (+8/-1),
+`deploy/aws/box/frankie_box_successor_dispatch.py` (+15, the `waiting_school` branch only), this file.
+`frankie_box_workflow_inspection.py` NOT edited (the work branch's union copy wins at the merge; projections requested below).
+SOURCE-BUILT / RUNTIME-UNVERIFIED: AST without project imports, `bash -n`/`sh -n`, `git diff --check` only; nothing ran.
+
+### 9.1 The 99 layers combined for Frankie (Greg's first priority)
+
+The retained 99-entry crosswalk is `research/kalshi/frankie_boss/audits/CROSSWALK_SUNDAY_CYCLE0_FEED_33746436209_20260916.json`
+(schema `FRANKIE_NATIVE_RAW_MBO_LAYER_CROSSWALK_V1`, 99 `layers`, each with `group_id`, `layer_id`, `policy`, `producer`
+{file, symbol, kind}), pinned by `knowledge/CYCLE_CALCULATION_PINS.json` (`crosswalk.sha256 ece9c624...`, `registry_sha256
+239a1480...`; the registry JSON itself is not in this tree, the crosswalk carries all 99 identities). The ROOT's
+`work/derive.json` already records EVERY registry layer of the whole-day pin by id (`layers[<layer_id>].status` = derived /
+not_derived (bedrock off) / could_not (no producer), with producer and reason; `bedrock.skipped`/`not_derived`); the
+timeline (`frankie_box_market_timeline.SharedMarketTimeline`, work branch) admits six carrying layers: `root.frames`,
+`root.prices`, `root.structures` (the ROOT's `shared_market_sources` spool pins), `native.member`, `native.lifecycle`
+(`frankie_box_experiment_native.selected_files`), `external`, and lists `absent_layers` without rejecting anything.
+
+Built (`frankie_box_experiment.py`): `all99_crosswalk(code_root)` (the pinned list with its integrity: verified / differs /
+unreadable / unpinned, a SEPARATE visible state, never missing coverage), `all99_admission(code_root, day, calc_dir, calc,
+plan_policy, policy_mismatch, ingest, brain)` (`FRANKIE_ALL99_ADMISSION_V1`), `all99_summary`, `Run.all99` (never raises out
+of the ROOT step: a list that cannot be built is itself recorded). Wired into `Run.root` on every outcome: done, reused and
+the policy refusal; the full list is the ROOT receipt's `all99` and its projection is `inspection.outputs.all99` (counts,
+absent/disabled/integrity entries, carriers, the crosswalk pin). Per entry: `entry, group, role, policy, producer{file,
+symbol, kind}, historical_status, produced, carrier, disposition, reason` with dispositions `admitted` (produced AND the ROOT
+is under the plan's shared policy AND the carrying timeline layer is present), `produced`-but-`absent` (a legacy ROOT, a
+refused policy, an absent carrier: the reason names it; the picture is thinner, the day stays), `absent` (not_derived with
+the ROOT's own reason: bedrock off; could_not; no record), `knowledge` (the 23 control/knowledge/arm entries carried by the
+brain, their consumption each reader's own receipt), `retired` (Memory A / A-clean overlays, by Greg), `sealed` (the 9
+answer boundaries, preserved), `disabled` (the 2 shadows, listed, never activated), `output` (the 10 append-only outputs,
+filed by later stages), `integrity` (`selected_files` raised: altered/incomplete native evidence, visible). Carriers: the
+legacy five map to `root.prices`/`root.frames`/`root.structures` and the two post-stream aggregates to the timeline's
+`completed_sources`; the 44 native calculation/clock layers to `native.member`+`native.lifecycle`; the raw six to the
+sealed journal (the timeline's input). No timeline reader is instantiated and no spool is read: derive.json, the receipt's
+spool pins and `selected_files` only (hot path unchanged). The missing-coverage rule holds throughout: nothing in the list
+refuses a timeline or a day; `requests` lists the producer files of entries absent-and-not-produced so a request can name
+file and entry.
+
+What this does NOT claim: that any producer in Codex-owned code now derives a layer it did not before. Under a bedrock-off
+ROOT the 44 native layers are `absent: not_derived (bedrock off)`; under `--bedrock on` (the policy route) they are
+`admitted` only when `selected_files` finds the completed ledgers. Requests, by file and entry (producers in Codex-owned
+code): `deploy/aws/box/frankie_box_boss_session.py` `Session.derive`/`_derive_bedrock` (the per-layer `layers[<id>]`
+records for the `order_lifecycle`, `full_book_fifo_queue`, `microstructure_mechanics`, `derived_geometry`,
+`prebirth_opportunity`, `causal_clocks` groups must be written with status derived and a producer when the native pass
+runs; today only the pin's `registry_layers` get a record); `deploy/aws/box/frankie_box_market_timeline.py`
+`SharedMarketTimeline.__init__` (expose, beside `coverage.layers`, which crosswalk layer ids each carrying layer delivers, so
+the caller's carrier map stops being a static table); `deploy/aws/box/frankie_box_workflow_inspection.py` `FIELDS['root']`
+(project `all99`: counts, absent, disabled, integrity, carriers; the work-branch copy).
+
+### 9.2 Day-quantity agnostic
+
+Searched every owned file for a count gate (`len(days)`, `== 1/2/3/30`, "one day", "three", `days[0]`, `[-1]`):
+`frankie_box_experiment.py` (`load_plan`, `pair_units`, `start`, `scope_text`, `teacher` batching `BATCH = 5` = "1 day in
+5", a batching rule for any N), `frankie_box_frankie_queue.py` (`parse_scope`, admission, `_needs_finish`),
+`frankie_box_experiment.sh`/`frankie_box_frankie_queue.sh` (`DAYS` comma lists), `frankie_box_cpu_controller.sh` and
+`pod_root/controller.py` (`--days` a distinct comma list, default the saved plan), `frankie_box_run.yml` (runner ingest
+`DAYS`: non-empty distinct list; the controller `DAYS` regex). Nothing keys on the count: a plan of 1, 2, 3 or N days is
+admitted, batched, scoped and finished identically. Removed: nothing (there was nothing to remove); the docstrings' "ONE-
+day"/"THREE-day" words name Greg's rollout steps, not a gate. The two main lanes + one Linux lane stay the capacity, not a
+day count.
+
+### 9.3 One pinned model runtime for the meeting AND Jev (Greg, 2026-10-07)
+
+`Run.shared_runtime()` (once per Run, cached, seconds recorded): the staged `knowledge/GRANITE_MEETING_RUNTIME_V1.json`
+(`frankie_box_granite_meeting.load_config`), exactly one `FRANKIE_GRANITE_RUNTIME_PROVENANCE_V1` under
+`/opt/frankie-box/granite/*/provenance.json` (the setup script writes it after every pin check), its release/asset/
+server_sha256/model_sha256 compared with the staged pins, then the meeting's own gate (`GM.gate(config, binary, model)`: the
+binary and every extracted file against `llama_cpp_files`, the model against `model_sha256`). `refused` names every reason
+visibly until the pinned install exists. `Run.voice` (local route) passes `LLAMA_SERVER`/`GGUF_MODEL` to the wrapper only
+when ready, else inputs-only with the reasons on the receipt (`inspection.inputs.shared_runtime`); `standing_voice`'s
+inputs-only check reads the same result instead of the process environment. `Run.jev` no longer takes a separate runtime:
+the plan's `jev_runtime`/`<run>/jev-runtime.json` is recorded as `superseded_jev_runtime` and not used; the request's
+`runtime` is the Granite config's pin and `request.shared_runtime` = {provenance pin, binary, model}; the child gets the
+same `LLAMA_SERVER`/`GGUF_MODEL`; a not-ready runtime is `waiting` with the reasons (never skipped, never borrowed).
+`frankie_box_experiment.sh` refuses `JEV_RUNTIME`. Request: `deploy/aws/box/frankie_box_jev_cpu.py` `execute` accepts
+`request.shared_runtime` (binary/model/provenance) in place of `JEV_CPU_RUNTIME_V1`'s binary/model (remaining_consumers is
+making it reference the shared definition); the worker-CPU subset, budgets and completion policy stay Greg's.
+
+### 9.4 The cross-owner requests of this pass, implemented in owned files
+
+- correction_consumer (stage 12): `Run.reports` sets `SCHOOL` (the school receipt's `file` when done/reused) else
+  `SCHOOL_LISTED` ("the day's school stage is <status>: <reason>"); `Run.reports_receipt(log, day, run)` reads the step's
+  own receipt at `<reports-dir>/receipts/<run>/<day>.json` first (fields `school, school_sha256, school_status,
+  school_listed`), the log's last line otherwise; `Run.reports_school_stale` compares the school stage's row sha256 with
+  that receipt's `school_sha256` (a revision under the same N when they differ, or when the reports were rendered with no
+  school while one stands now), falling back to the run's recorded `school.sha256`; the `waiting_school` drain branch
+  (`frankie_box_successor_dispatch.py`), once the recovery is complete, runs `Run.reports` on the held lane when
+  `reports_stale` says so (the nested drain skipped for exactly that call: the drain holds the inbox flock) and records the
+  revision's status on the operation's recovery state.
+- workflow_reports (stages 4/6/7): `Run.teacher` reads `experiment-teacher-rows/<day>/receipt.json`; `equation_not_run` is a
+  listed day without rows (`rows_listed`, the batch not failed; exit 4/5 are the wrapper's listed outcomes, 3 the failed
+  day); `Run.data` passes `DATA_WORKERS = DAY_RUN_CPUS - 1` (15); `Run.search` records `not_run` with the reason when the
+  ROOT published no `work/derived/.rows/frames.jsonl` (no causal axis) and the day goes on: `not_run` joined `FINISHED`
+  (`done_status`), `lessons`/`frankie_lessons` never pass a not_run day as a search path (listed), Jev waits on it by name.
+
+### 9.5 Stages 0-3 and the lane rule, verified in source (no change needed)
+
+Preflight/resume: `controller.preflight` names each prerequisite (saved plan, claim store, staged checkout, box script,
+credentials, both buckets, the worker over SSM, no live lease) and refuses activation; `check_resume`/`reconcile_resume`
+keep an uncertain resume unknown and reconcile it through the worker status, never redispatching. Lease: established at
+claim, submit-after-export, renewal, coordination, save relay, resume and release (`lease_established` at each; the loop
+ends `lease_lost`/`lease_unestablished`); `UNSUCCESSFUL` outcomes exit 1, distinct from budget/stop/no_remaining_work.
+Ingest: never re-ingested when sealed (Monday refused by name). Day file: `external_ready` waits, never refuses. ROOT: the
+owner binding's exact attempt, the policy mismatch refusal preserved, the brain commit before the receipt (`brain_stage`),
+`DATA_WORKERS=15` inside the booked 16 (`cores run`). Lanes: `PARALLEL_DAYS=2` main + `SLOTS=1`/`LINUX_LANE` fixed; a day's
+later steps run `--inside` its held booking. Jev blind: the request carries the classroom PRODUCER's receipt and the search
+manifest only. No Pods (refused inputs in both routes).
+
+### 9.6 AWS efficiency and data processing (Greg's token-stack rule applied to AWS), applies or not
+
+| mechanism | applies | now / effect |
+|---|---|---|
+| S3 copies instead of box exports for the Linux lane's inputs | yes, existing | `controller.s3_source` HeadObject on the runner ingest and day-file keys; a hit skips a multi-GB export (hours on a big day); kept |
+| multipart / parallel part transfer | yes, existing | `pod_transfer.plan_parts` + the worker's part downloads; the controller re-signs per part; kept |
+| conditional reads/writes (ETag) | yes, existing | the lease (`IfNoneMatch`/`IfMatch`), `job.json` create-only; kept |
+| S3 byte-range reads of the tape | no | the sealed journal is verified whole against its pin (bytes, sha256, chained head hash); a range read cannot verify the identity; invariant |
+| S3 Select / Athena over the tape | no | the journal is a compact chained container, not row-addressable without the reader; a query engine cannot reproduce the decoded entries, counts and head hashes; invariant |
+| S3 Metadata / Storage Lens / Athena instead of list/head | no at this scale | the controller lists one prefix per run with `MaxKeys=1` and heads a handful of keys; the system tables cost a table bucket + Athena per query for no saving; revisit only if the `pod-root/` prefix grows to many thousands of objects |
+| instance type / placement | correct as is | main r7i.8xlarge (32 vCPU = two 16-CPU lanes), worker r7i.4xlarge (16 vCPU = one lane), both us-east-1d, same subnet (`subnet-0910ec79d4e5d6017`): no cross-AZ transfer; memory-optimized matches the journal readers; no change |
+| SSM for every box step | yes, existing | the controller drives the worker over Run Command; the main-box actions run locally under the same preamble |
+| cost side | measured read-only | both boxes STOPPED: only EBS bills (main gp3 2048 GiB 16000 IOPS 1000 MiB/s; worker gp3 120 GiB); the transfer bucket holds retained `pod-root/days-20260930-1/...` parts (not deleted here) |
+| one-day canary | later | the measurement is a 1-2 minute slice on the real E2E, extrapolated; none run |
+
+### 9.7 Read-only account inspection (the Aws connector; every call named)
+
+`sts GetCallerIdentity` (account `...4170`, root). `ec2 DescribeInstances` us-east-1: main `i-035994afa8bdf66a5`
+`frankie-ingest32-20260917` r7i.8xlarge (16 cores x 2) STOPPED, profile `arn:aws:iam::568968024170:instance-profile/Ssm`,
+us-east-1d, `KeepRunning=true`, IMDSv2 required, AMI `ami-025d99823a4caad37`; worker `i-0d17573dbce871520`
+`frankie-linux-r7i4xl` r7i.4xlarge (8 x 2) STOPPED, profile `Ssm`, us-east-1d, same subnet, IMDSv2 required, same AMI;
+us-east-2: `i-08cee7171c0a76a04` `markets-year-pull-v2` r6i.2xlarge STOPPED (profile `Ssm`, IMDSv2 optional; not this
+experiment's). `ssm DescribeInstanceInformation` us-east-1 and us-east-2: EMPTY (no managed node is Online; both boxes are
+stopped, so SSM status cannot be read until a start Greg authorizes). `iam GetInstanceProfile Ssm`: role `Ssm`, trust
+`ec2.amazonaws.com`, no permissions boundary; `ListAttachedRolePolicies`: `AmazonSSMManagedInstanceCore` only;
+`ListRolePolicies`: none; `GetPolicy`/`GetPolicyVersion`: the managed policy grants ssm:*InstanceInformation/Document/
+Parameter, ssmmessages and ec2messages, NO S3 and NO ssm:SendCommand. `s3 ListBuckets`: `bento-568968024170-us-east-2-an`
+(ingest), `frankie-granite42-568968024170-us-east-1` (transfer; `GetBucketLocation` us-east-1). `ec2 DescribeVolumes`,
+`s3 ListObjectsV2` (two prefixes, 5 keys): above. So: the 8A instance-profile dependency is NOT met for the main-box
+controller route (it needs S3 on both buckets and SSM SendCommand to the worker); the worker box needs nothing beyond
+`AmazonSSMManagedInstanceCore` (it reads/writes through presigned URLs).
+
+### 9.8 Prepared account steps (TEXT ONLY; Greg decides; nothing executed here)
+
+1. Least-privilege inline policy on role `Ssm` (`iam put-role-policy --role-name Ssm --policy-name FrankieBoxController`),
+   built from what the box modules actually call (`controller.py`, `pod_transfer.py`, the presigned map of
+   `frankie_box_run.yml`); no CloudWatch Logs (none is called):
+```json
+{"Version": "2012-10-17", "Statement": [
+ {"Sid": "TransferObjects", "Effect": "Allow",
+  "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+  "Resource": ["arn:aws:s3:::frankie-granite42-568968024170-us-east-1/pod-root/*",
+               "arn:aws:s3:::frankie-granite42-568968024170-us-east-1/box-runs/*"]},
+ {"Sid": "TransferList", "Effect": "Allow", "Action": "s3:ListBucket",
+  "Resource": "arn:aws:s3:::frankie-granite42-568968024170-us-east-1",
+  "Condition": {"StringLike": {"s3:prefix": ["pod-root/*", "box-runs/*"]}}},
+ {"Sid": "IngestRead", "Effect": "Allow", "Action": "s3:GetObject",
+  "Resource": ["arn:aws:s3:::bento-568968024170-us-east-2-an/frankie/ingest/*",
+               "arn:aws:s3:::bento-568968024170-us-east-2-an/frankie/day_external/*"]},
+ {"Sid": "IngestList", "Effect": "Allow", "Action": "s3:ListBucket",
+  "Resource": "arn:aws:s3:::bento-568968024170-us-east-2-an",
+  "Condition": {"StringLike": {"s3:prefix": ["frankie/ingest/*", "frankie/day_external/*"]}}},
+ {"Sid": "WorkerRunCommand", "Effect": "Allow", "Action": "ssm:SendCommand",
+  "Resource": ["arn:aws:ec2:us-east-1:568968024170:instance/i-0d17573dbce871520",
+               "arn:aws:ssm:us-east-1::document/AWS-RunShellScript"]},
+ {"Sid": "WorkerCommandRead", "Effect": "Allow",
+  "Action": ["ssm:GetCommandInvocation", "ssm:ListCommandInvocations", "ssm:DescribeInstanceInformation"], "Resource": "*"}
+]}
+```
+   Not included on purpose: `ssm:GetParameter` on `/markets/frankie/github-token` (the runner-only git push; the box must not
+   hold it), any `s3:*` on `nymex/*` (the day-file build reads it through the dispatch's presigned map), any write to the
+   ingest bucket. Verify after: `iam list-role-policies Ssm`; from the box, `cpu_controller.sh ACTION=preflight` (read-only).
+2. Worker box setup over SSM (after `ec2 start-instances i-0d17573dbce871520`, on Greg's go): `ssm send-command
+   --instance-ids i-0d17573dbce871520 --document-name AWS-RunShellScript` with the committed
+   `deploy/aws/box/frankie_box_worker_setup.sh` preamble `MARKETS_SHA=<the dispatched commit>` (exactly as `frankie_box_run.yml`
+   sends box scripts: `ssm_run_sh.preamble` + the script bytes); then `ACTION=jobs` through the controller route
+   (`frankie_box_pod_root_loop.sh ACTION=status`) to read the worker's job list; `ssm describe-instance-information` must
+   show the worker Online first.
+3. Main-box systemd-run/venv check (read-only; the box started on Greg's go): `frankie_box_cpu_controller.sh
+   ACTION=preflight RUN=<run> CODE_ROOT=<staged> MARKETS_SHA=<commit>` (it checks `systemd-run`, `/opt/frankie-box/venv/bin/python
+   -c 'import boto3, botocore'`, the saved plan, the claim store, the staged checkout, the credential route to both buckets
+   and to the worker over SSM, no live lease; exit 2 names the missing one; nothing installed).
+4. The ONE pinned runtime install (serves the meeting AND Jev; one install, one pin set): on the main box over SSM,
+   `CODE_ROOT=<staged checkout> GRANITE_DIR=/opt/frankie-box/granite sh deploy/aws/box/frankie_box_granite_meeting_setup.sh`.
+   It fetches `https://github.com/ggml-org/llama.cpp/releases/download/b11440/llama-b11440-bin-ubuntu-x64.tar.gz`
+   (sha256 `5e6dcc9178743c49de36e5e1b77f38453e820647782a738856b1e3fd73b1fb2b`, 17,693,628 bytes), extracts into its one top
+   directory, verifies every extracted file against `pins.llama_cpp_files` and `llama-server` against
+   `b30ec35b37e15c7365e61c6d269c5a184448f8ad342ed577999964a037abc3db`; fetches
+   `https://huggingface.co/ibm-granite/granite-4.2-3b-GGUF/resolve/main/granite-4.2-3b-Q4_K_M.gguf` (sha256
+   `e0406663965846ae22a403456eb826ccce5f450840491f71952f18a7cb78e7d5`, 2,244,011,552 bytes, the official ibm-granite
+   repository, lfs.oid cross-checked by CCode 2026-10-06); writes `<GRANITE_DIR>/<top>/provenance.json`
+   (`FRANKIE_GRANITE_RUNTIME_PROVENANCE_V1`: release, asset, archive_sha256, server, server_sha256, model, model_sha256) and
+   prints `LLAMA_SERVER=...`/`GGUF_MODEL=...`. The box needs HTTPS egress to github.com and huggingface.co (not verified
+   while stopped); a retained file that differs from its pin is refused and left in place. `Run.shared_runtime` then finds
+   that provenance and gates it again; `Run.voice` and `Run.jev` bind to it. Disk: 2.3 GB on the main volume (2048 GiB).
+   Expected sha256 sources: `knowledge/GRANITE_MEETING_RUNTIME_V1.json` (`pins`); the asset hash was measured on the fetched
+   bytes, the model hash is the repository's LFS oid at commit `c40945d71cd90f249a56985e8155551a9188dc30`.
+
+### 9.9 Checks, skills, calls
+
+AST (`python3 -I -c "import ast,..."`) on `frankie_box_experiment.py`, `frankie_box_frankie_queue.py`,
+`frankie_box_successor_dispatch.py`, `pod_root/controller.py`, `frankie_box_cores.py`: OK; `bash -n` and `sh -n` on
+`frankie_box_experiment.sh`: OK; `git diff --check`: clean. Skills: `api-and-interface-design` (Skill tool, first), then the
+AWS registry through `mcp__Aws__aws___search_documentation(topics=["agent_skills"])` and `retrieve_skill`: `aws-compute`
+(+ `references/systems-manager.md`, `references/instance-selection.md`), `setting-up-ec2-instance-profiles`
+(+ `references/ec2-instance-profile-setup.md`), `aws-storage` (`references/s3-general-purpose-knowledge.md`),
+`querying-aws-s3`, `aws-iam`, `aws-billing-and-cost-management`. Account calls (all read-only, named in 9.7). No test, no
+E2E, no dispatch, no model/data run, no install, no account write, no start.
+
+### 9.10 Open after this pass
+
+The all-99 producer requests (9.1); Jev's helper binding to the shared runtime (9.3); the reporter projection of `all99`
+(work branch); `pod_agent.run_full_day` reading `facts['finish']=='waiting'` and `frankie_box_jev_cpu.execute` accepting
+the REBOOK successor chain (standing requests, Codex-owned); `frankie_box_lane_state.py:619` kick scope; the inline policy,
+worker setup, preflight and the one runtime install (9.8, Greg's decisions; a separate agent holds the account writes); the
+remote voice acknowledgment interface stays listed as the unused fallback (`voice_route=local` is the plan). A fresh
+independent review of these files is required before integration; nothing here is runtime evidence.
+
+### 9.11 KeepRunning = "keep running only when in use" (Greg, 2026-10-07; source only)
+
+Facts relayed: the main box was left running on its `KeepRunning=true` tag (about $51/day) after the 8A account pass;
+Greg stopped it; the parent set `KeepRunning=false` on both boxes plus a `KeepRunningPolicy` tag. No idle guard was on
+this branch. Built:
+- `deploy/aws/idle_instance_guard.py` (NEW) and `.github/workflows/frankie_box_idle_guard.yml` (NEW, cron `17 */6 * * *`
+  plus `workflow_dispatch` with `dry_run`; the runner's AWS secrets as `frankie_box_run.yml`): every Frankie box (the two
+  instances by id, any `Name` starting `frankie-`) that is running with `KeepRunning` not `'true'` AND no fresh lane lease
+  (`pod-root/<run>/controller/lease.json`, not released, heartbeat younger than 600 s; a fresh lease protects the worker
+  lane always and the main box when its host is `main`; an unreadable lease protects) is stopped (`ec2 StopInstances`);
+  everything else is left running; every instance, action and reason is in the JSON report (artifact). Nothing
+  terminated, no tag changed.
+- `pod_root/controller.py`: `keep_running(instance, region, value, reason, by)` (ec2 CreateTags `KeepRunning` +
+  `KeepRunningReason`, failure named, never raised); `start_day` tags the worker `true` when the day's job started
+  (event `keep_running`); `finish()` clears it to `false` on EVERY exit path (finished, failed, refused, lease lost /
+  unestablished, budget, stop, signal) unless the worker's last-seen status shows a live job of the run (then left `true`
+  with the reason, recorded on the outcome and the event journal); `preflight` adds the read-only `worker KeepRunning tag`
+  check naming `ec2:CreateTags`.
+- `frankie_box_experiment.py`: `this_instance()` (IMDSv2), `box_in_use(run)` (orchestrator starts alive, a line worker
+  holding its lock, a CPU controller holding its lock: read-only), `keep_running(run, value, reason, by)` (tags this box;
+  a clear is skipped and recorded as `kept` while `box_in_use` names something; every call appended to
+  `<run>/keep-running.json`, `FRANKIE_KEEP_RUNNING_V1`, and printed). `main()` ACTION=start sets `true` before `Run.start`
+  and asks for the clear in a `finally` (kept while the detached line workers run).
+- `frankie_box_frankie_queue.py`: the `worker` action's `finally` asks for the clear at the line worker's end (the run's
+  last work on the box); kept and named while anything else is in use.
+Limits, named: a worker killed outright (SIGKILL, host reboot) leaves the tag `true` until the next worker end or a
+by-hand clear; the guard then reports "KeepRunning=true: left running" so it is visible, never silent. The main box
+needs `ec2:CreateTags` (own instance) in the inline policy of 9.8; the guard's runner keys need `ec2:DescribeInstances`,
+`ec2:StopInstances` on the two instances and `s3:ListBucket`/`GetObject` on `pod-root/*`. Requests: the reporter's
+`FIELDS` to project `<run>/keep-running.json` on the one-day inspection (work-branch `frankie_box_workflow_inspection.py`);
+`pod_agent.py` (Codex) to clear the worker's tag itself at `day_complete` when no controller is attached.
+Checks: AST on `idle_instance_guard.py`, `controller.py`, `frankie_box_experiment.py`, `frankie_box_frankie_queue.py`;
+`yaml.safe_load` on the new workflow; `git diff --check`. Not run; no tag was changed by this pass.

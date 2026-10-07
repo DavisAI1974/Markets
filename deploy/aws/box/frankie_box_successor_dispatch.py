@@ -738,6 +738,21 @@ def drain(run, day):
                         # skipped for exactly this recovery (this drain holds the lock); then rebuild_dependents again
                         # verifies the checked chain. Never a second drain, scheduler or model runtime.
                         recovered = run.recover_school(day, downstream['recovery_intent'])
+                        if recovered.get('status') == 'complete':
+                            # the recovered school (file, row sha256, status) reaches the day reports on this held lane
+                            # (correction_consumer, stage 12): a revision under the same number when the reports were
+                            # rendered on the replaced school (Run.reports_stale reads the school receipt). The nested
+                            # drain is skipped for exactly this call (this drain holds the inbox lock; re-entering it
+                            # would block on its own flock); a report failure is the reports step's own receipt
+                            entry = next((x for x in run.plan['days'] if x['day'] == day), None)
+                            run._school_recovery.add(day)
+                            try:
+                                if entry is not None and run.reports_stale(entry):
+                                    recovered['reports'] = {k: (run.guarded('reports', entry) or {}).get(k) for k in ('status', 'reason', 'report_number')}
+                                else:
+                                    recovered['reports'] = dict(status='current', reason='the reports already carry this school')
+                            finally:
+                                run._school_recovery.discard(day)
                         state('waiting', **dict({k: v for k, v in downstream.items() if k != 'status'}, recovery=recovered))
                         if recovered.get('status') != 'complete':
                             # the operation stays unacknowledged (its state carries the recovery's stage, inputs, use and
