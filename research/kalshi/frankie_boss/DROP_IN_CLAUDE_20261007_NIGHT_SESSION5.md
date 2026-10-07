@@ -65,3 +65,4 @@ NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS.
 
 ## Tip at handoff
 (appended by the parent below)
+- Work branch tip at handoff: a13b8b6 (this commit's parent carries all code; the fix agent's edits, if any, come after).
