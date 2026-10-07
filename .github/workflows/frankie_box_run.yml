@@ -79,7 +79,7 @@ concurrency:
   # The orchestrator's read-only plan / status and a DETACH=on start (returns once its systemd unit is up; the script
   # refuses a second live start of the same RUN) get a group per dispatch (2026-09-30: a plan sat pending for hours behind
   # a waiting orchestrator start that held box-experiment).
-  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_pod_root_loop.sh' && ((contains(inputs.variables, 'ACTION=loop') || contains(inputs.variables, 'ACTION=resume')) && 'pod-root-loop' || format('pod-root-{0}', github.run_id))) || (inputs.script == 'deploy/aws/box/frankie_box_cycle0.sh' && format('box-cycle0-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_ingest_block.sh' && format('box-ingest-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh' || inputs.script == 'deploy/aws/box/frankie_box_console.sh' || inputs.script == 'deploy/aws/box/frankie_box_jev_reports.sh' || inputs.script == 'deploy/aws/box/frankie_box_cores.sh' || (inputs.script == 'deploy/aws/box/frankie_box_frankie_queue.sh' && contains(inputs.variables, 'ACTION=show'))) && format('box-progress-{0}', inputs.instance) || (inputs.script == 'deploy/aws/box/frankie_box_frankie_queue.sh' && format('box-frankie-queue-{0}-{1}', inputs.instance, github.run_id)) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_cycle.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && format('clm-pod-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh' && format('jev-pod-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_principal_inputs.sh' && format('box-inputs-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_upload.sh' && format('clm-upload-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_relay.sh' && format('jev-relay-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_digest_canary.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_composition.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_stacks.sh' || inputs.script == 'deploy/aws/box/frankie_box_parallel_journal_canary.sh') && format('box-canary-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_joined_teacher.sh' && format('box-joined-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_export_calcs.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_data.sh') && format('box-export-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_experiment.sh' && (contains(inputs.variables, 'ACTION=plan') || contains(inputs.variables, 'ACTION=status') || contains(inputs.variables, 'DETACH=on')) && format('box-experiment-{0}-{1}', inputs.instance, github.run_id)) || ((inputs.script == 'deploy/aws/box/frankie_box_experiment_search.sh' || inputs.script == 'deploy/aws/box/frankie_box_scientific_teacher.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment.sh') && format('box-experiment-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_experiment_teacher.sh' && format('box-teacher-{0}-{1}', inputs.instance, github.run_id)) || ((inputs.script == 'deploy/aws/box/frankie_box_experiment_classroom.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_classroom_v2.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_day_reports.sh') && format('box-classroom-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_day_facts.sh' && format('box-facts-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_day_external.sh' && format('box-external-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_runner_ingest.sh' && format('runner-ingest-{0}', github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_pull_runner_ingest.sh' && format('box-pull-runner-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_archive_day.sh' && format('box-archive-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_cleanup_code.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_bedrock.sh') && format('box-cleanup-code-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
+  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_pod_root_loop.sh' && ((contains(inputs.variables, 'ACTION=loop') || contains(inputs.variables, 'ACTION=resume')) && 'pod-root-loop' || format('pod-root-{0}', github.run_id))) || (inputs.script == 'deploy/aws/box/frankie_box_cpu_controller.sh' && ((contains(inputs.variables, 'ACTION=status') || contains(inputs.variables, 'ACTION=preflight')) && format('box-progress-{0}', inputs.instance) || format('box-cpu-controller-{0}-{1}', inputs.instance, github.run_id))) || (inputs.script == 'deploy/aws/box/frankie_box_cycle0.sh' && format('box-cycle0-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_ingest_block.sh' && format('box-ingest-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh' || inputs.script == 'deploy/aws/box/frankie_box_console.sh' || inputs.script == 'deploy/aws/box/frankie_box_jev_reports.sh' || inputs.script == 'deploy/aws/box/frankie_box_cores.sh' || (inputs.script == 'deploy/aws/box/frankie_box_frankie_queue.sh' && contains(inputs.variables, 'ACTION=show'))) && format('box-progress-{0}', inputs.instance) || (inputs.script == 'deploy/aws/box/frankie_box_frankie_queue.sh' && format('box-frankie-queue-{0}-{1}', inputs.instance, github.run_id)) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_cycle.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && format('clm-pod-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh' && format('jev-pod-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_principal_inputs.sh' && format('box-inputs-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_upload.sh' && format('clm-upload-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_relay.sh' && format('jev-relay-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_digest_canary.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_composition.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_stacks.sh' || inputs.script == 'deploy/aws/box/frankie_box_parallel_journal_canary.sh') && format('box-canary-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_joined_teacher.sh' && format('box-joined-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_export_calcs.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_data.sh') && format('box-export-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_experiment.sh' && (contains(inputs.variables, 'ACTION=plan') || contains(inputs.variables, 'ACTION=status') || contains(inputs.variables, 'DETACH=on')) && format('box-experiment-{0}-{1}', inputs.instance, github.run_id)) || ((inputs.script == 'deploy/aws/box/frankie_box_experiment_search.sh' || inputs.script == 'deploy/aws/box/frankie_box_scientific_teacher.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment.sh') && format('box-experiment-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_experiment_teacher.sh' && format('box-teacher-{0}-{1}', inputs.instance, github.run_id)) || ((inputs.script == 'deploy/aws/box/frankie_box_experiment_classroom.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_classroom_v2.sh' || inputs.script == 'deploy/aws/box/frankie_box_experiment_day_reports.sh') && format('box-classroom-{0}-{1}', inputs.instance, github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_day_facts.sh' && format('box-facts-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_day_external.sh' && format('box-external-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_runner_ingest.sh' && format('runner-ingest-{0}', github.run_id)) || (inputs.script == 'deploy/aws/box/frankie_box_pull_runner_ingest.sh' && format('box-pull-runner-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_archive_day.sh' && format('box-archive-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_cleanup_code.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_bedrock.sh') && format('box-cleanup-code-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
   cancel-in-progress: false
 jobs:
   validate-staging-route:
@@ -260,6 +260,12 @@ jobs:
           [[ "$RUN_TIMEOUT" =~ ^[0-9]+$ ]] || { echo "timeout must be an integer number of seconds"; exit 1; }
           bash -n "$SCRIPT"
           echo "script sha256: $(sha256sum "$SCRIPT" | cut -c1-64)  ref: $GITHUB_SHA"
+      - name: Refuse the retired Pod routes (Greg, 2026-10-06, Pods are retired; AWS CPU lanes only; no provider is contacted)
+        if: inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh' || inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
+        run: |
+          echo "$SCRIPT is a retired Pod launch route: no Pod is created, reached or deleted; nothing ran."
+          echo "Jev's CPU route is Codex's step 7 (STEP7_JEV_CPU_ROUTE_20261007.md); the Linux lane controller is script=deploy/aws/box/frankie_box_pod_root_loop.sh (runner) and deploy/aws/box/frankie_box_cpu_controller.sh (main box)."
+          exit 1
       - name: Copy the repository secret FRANKIE_GITHUB_TOKEN into SSM /markets/frankie/github-token (only on request; value never printed)
         if: inputs.github_token_to_ssm == 'true'
         env:
@@ -539,52 +545,19 @@ jobs:
           lines = [l for l in text.splitlines() if 'frankie-disk-rescue' in l]
           print('### boothook console lines (%d)' % len(lines)); print('\n'.join(lines))
           PY
-      - name: CLM sidecar Pod (runner; standalone learner on its own GPU Pod, always deleted)
-        if: inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
-        env:
-          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
-        run: |
-          set -euo pipefail
-          declare -A v=()
-          for pair in $VARIABLES; do v[${pair%%=*}]=${pair#*=}; done
-          [[ "${v[STAMP]:-}" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "STAMP required"; exit 1; }
-          [[ "${v[DATASET_KEY]:-}" =~ ^(host-deliveries|clm-sidecar)/[A-Za-z0-9_./-]+$ ]] || { echo "DATASET_KEY required"; exit 1; }
-          [[ "${v[MAX_MINUTES]:-150}" =~ ^[0-9]+$ ]] || { echo "MAX_MINUTES must be an integer"; exit 1; }
-          [[ "${v[CHECKPOINT_MINUTES]:-30}" =~ ^[0-9]+$ ]] || { echo "CHECKPOINT_MINUTES must be an integer"; exit 1; }
-          python research/kalshi/frankie_boss/clm_sidecar/launch.py --dataset-key "${v[DATASET_KEY]}" --stamp "${v[STAMP]}" \
-            --max-minutes "${v[MAX_MINUTES]:-150}" --checkpoint-minutes "${v[CHECKPOINT_MINUTES]:-30}" 2>&1 | tee box-run-output.txt
-          { echo '### CLM sidecar report'; cat clm-sidecar-out/report.md 2>/dev/null || echo '(no report)'; } >> "$GITHUB_STEP_SUMMARY"
-      - name: Jev Pod (runner; the experiment's blind outside student on his own GPU Pod, always deleted; no Granite)
-        if: inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh'
-        env:
-          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
-        run: |
-          set -euo pipefail
-          declare -A v=()
-          for pair in $VARIABLES; do v[${pair%%=*}]=${pair#*=}; done
-          [[ "${v[STAMP]:-}" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "STAMP required"; exit 1; }
-          [[ "${v[DAY]:-}" =~ ^[0-9]{8}$ ]] || { echo "DAY=YYYYMMDD required (a classroom-arm discovery day)"; exit 1; }
-          [[ "${v[MAX_MINUTES]:-480}" =~ ^[0-9]+$ ]] || { echo "MAX_MINUTES must be an integer"; exit 1; }
-          [[ "${v[WAIT_MINUTES]:-360}" =~ ^[0-9]+$ ]] || { echo "WAIT_MINUTES must be an integer"; exit 1; }
-          [[ "${v[CHECKPOINT_MINUTES]:-30}" =~ ^[0-9]+$ ]] || { echo "CHECKPOINT_MINUTES must be an integer"; exit 1; }
-          # REPORT_NUMBER (optional): the day's number from the box reports step (CLASSROOM / FRANKIE REPORT #N), so his
-          # report is JEV REPORT #N; absent, the next free number is taken from S3 (clm_sidecar/jev_report.py)
-          [[ "${v[REPORT_NUMBER]:-}" =~ ^([1-9][0-9]*)?$ ]] || { echo "REPORT_NUMBER must be a positive integer"; exit 1; }
-          set +e
-          python research/kalshi/frankie_boss/clm_sidecar/launch.py --jev --day "${v[DAY]}" --stamp "${v[STAMP]}" \
-            --max-minutes "${v[MAX_MINUTES]:-480}" --wait-minutes "${v[WAIT_MINUTES]:-360}" \
-            --checkpoint-minutes "${v[CHECKPOINT_MINUTES]:-30}" --report-number "${v[REPORT_NUMBER]:-0}" 2>&1 | tee box-run-output.txt
-          rc=${PIPESTATUS[0]}
-          set -e
-          # the numbered JEV REPORT (printed in full in the log above) also into the step summary, whatever the outcome
-          { echo '### Jev report'; cat clm-sidecar-out/jev-report.md 2>/dev/null || cat clm-sidecar-out/report.md 2>/dev/null || echo '(no report)'; } >> "$GITHUB_STEP_SUMMARY"
-          exit "$rc"
+      # The former "CLM sidecar Pod" and "Jev Pod" runner steps (clm_sidecar/launch.py on a Runpod GPU Pod) are retired:
+      # the step "Refuse the retired Pod routes" above ends either dispatch before any provider call. The launcher source
+      # stays in git (research/kalshi/frankie_boss/clm_sidecar/launch.py) as historical evidence; it is no longer reachable
+      # from this workflow and no step here carries a provider credential.
       - name: AWS CPU Linux lane controller (runner; retained ROOT-to-finish ownership)
         # Legacy marker filename; the experiment uses two main-box lanes and one Linux lane, no Pods.
         # VARIABLES: ACTION=plan|status|loop|resume|stop RUN=<saved run> CODE_ROOT=<staged main checkout>
         # BOXES=i-0d17573dbce871520@us-east-1 SLOTS=1 [DATA_WORKERS=15] [BUDGET_MINUTES=330]
         # JOB=<run>-YYYYMMDD-aN is required for resume/stop. stop requests cooperative save, not machine shutdown.
-        # plan/status are read-only; loop/resume require Greg's explicit AWS go. Controller lifetime remains pending #8.
+        # plan/status are read-only; loop/resume require Greg's explicit AWS go. A loop here is BOUNDED (its budget end is
+        # budget_expired, never completion); the controller's lifetime is the main-box route script=
+        # deploy/aws/box/frankie_box_cpu_controller.sh (a run-bound systemd unit); an S3 lease keeps the two off one run.
+        # --commit binds the staged checkout to THIS dispatched commit (the controller refuses a differing queue code_commit).
         if: inputs.script == 'deploy/aws/box/frankie_box_pod_root_loop.sh'
         run: |
           set -euo pipefail
@@ -594,8 +567,8 @@ jobs:
             k=${pair%%=*}
             case "$k" in
               ACTION|RUN|CODE_ROOT|BOXES|SLOTS|DATA_WORKERS|BUDGET_MINUTES|JOB) ;;
-              PODS|COUNT|CONFIRM|DATA_CENTERS|VOLUME_GB|CONTAINER_GB|COST_CEILING|WAIT_MINUTES)
-                echo "$k is a retired Pod input; AWS CPU lanes only"; exit 1;;
+              PODS|COUNT|CONFIRM|DATA_CENTERS|VOLUME_GB|CONTAINER_GB|WAIT_MINUTES|RUNPOD_API_KEY|HOST|STATE_DIR)
+                echo "$k is a retired Pod input or a main-box-only controller input; refused here (even when empty)"; exit 1;;
               *) echo "unsupported Linux controller input: $k"; exit 1;;
             esac
             [[ ! -v v[$k] ]] || { echo "duplicate controller input: $k"; exit 1; }
@@ -615,34 +588,20 @@ jobs:
           fi
           set +e
           python research/kalshi/frankie_boss/pod_root/controller.py --action "${v[ACTION]}" --run "${v[RUN]}" \
-            --code-root "${v[CODE_ROOT]}" --boxes "${v[BOXES]}" --slots "${v[SLOTS]:-1}" \
+            --code-root "${v[CODE_ROOT]}" --boxes "${v[BOXES]}" --slots "${v[SLOTS]:-1}" --commit "$GITHUB_SHA" \
             --data-workers "${v[DATA_WORKERS]:-15}" --budget-minutes "${v[BUDGET_MINUTES]:-330}" "${args[@]}" \
             2>&1 | tee box-run-output.txt
           rc=${PIPESTATUS[0]}
           set -e
           [ ! -f pod-root-controller.json ] || cp pod-root-controller.json "pod-root-controller-${GITHUB_RUN_ID}.json"
           exit "$rc"
-      - name: CLM sidecar Pod cleanup (always delete the Pod)
+      - name: Retired Pod cleanup branch (always; no provider call, no credential)
         if: always() && (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' || inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh')
-        env:
-          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
         run: |
-          [ -f clm-sidecar-pod.txt ] || exit 0
-          python - <<'PY'
-          import http.client, os
-          pod = open('clm-sidecar-pod.txt').read().strip()
-          c = http.client.HTTPSConnection('api.runpod.io', timeout=30)
-          c.request('DELETE', '/v2/pods/' + pod, None, {'Authorization': 'Bearer ' + os.environ['RUNPOD_API_KEY']})
-          print('cleanup delete', pod, c.getresponse().status)
-          PY
-      - name: CLM sidecar outputs (artifact)
-        if: always() && (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' || inputs.script == 'deploy/aws/box/frankie_box_jev_pod.sh')
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: clm-sidecar-${{ github.run_id }}
-          path: clm-sidecar-out/
-          if-no-files-found: warn
-          retention-days: 30
+          # The former always-delete branch contacted the Pod provider with its key. Pods are retired: this dispatch created
+          # nothing, so there is nothing to delete and no provider is contacted, on success, failure or cancel alike.
+          [ ! -f clm-sidecar-pod.txt ] || echo "clm-sidecar-pod.txt is present from a historical run; no Pod is deleted here (Pods are retired); a separate owner decides"
+          echo "retired Pod route: no cleanup action"
       - name: Run the committed script on the box
         if: inputs.script != 'deploy/aws/box/frankie_box_pod_root_loop.sh' && inputs.script != 'deploy/aws/box/frankie_box_console.sh' && inputs.script != 'deploy/aws/box/frankie_box_disk_rescue.sh' && inputs.script != 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && inputs.script != 'deploy/aws/box/frankie_box_jev_pod.sh'
         run: |
