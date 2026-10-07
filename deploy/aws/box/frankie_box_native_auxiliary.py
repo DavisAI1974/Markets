@@ -11,67 +11,26 @@ from types import SimpleNamespace
 
 import cloudpickle
 
+# What the native values computed here depend on (the auxiliary transport policy's helper_code,
+# frankie_box_parallel_evidence.RuntimeSections.start): the worker's level and census computation, the census
+# batching, the per-level result view and the snapshot partition/assembly. The worker processes and their CPUs
+# (_worker, NativeWorker), the book worker set (ParallelBook.__init__, widen, handover, lost workers) and close may
+# change without refusing a saved checkpoint: a level's result does not depend on which or how many workers compute it.
+NATIVE_VALUE_CODE = ('_serve', 'ParallelCensus', '_BookView', 'ParallelBook._wrap', 'ParallelBook._reseed',
+                     'ParallelBook.snapshot', 'ParallelBook._snapshot', 'ParallelBook.materialized')
+
+
+def native_code_identity():
+    from frankie_box_bedrock import code_identity
+    return code_identity(__file__, NATIVE_VALUE_CODE)
+
 
 def _worker(connection, producers, cpu, kind, state):
+    """One auxiliary worker process: pinned to its CPU, then the computation (_serve)."""
     try:
         from frankie_box_parallel_evidence import pin_threads
-        from frankie_box_bedrock import load_producers
         pin_threads(os.getpid(), cpu)
-        load_producers(producers)
-        from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import InstrumentBook
-        census = cloudpickle.loads(state) if state is not None else None
-        books = {}
-        connection.send_bytes(cloudpickle.dumps(('ok', dict(pid=os.getpid(), cpu=cpu))))
-        while True:
-            command, payload = cloudpickle.loads(connection.recv_bytes())
-            if command == 'stop':
-                break
-            started = time.perf_counter()
-            if kind == 'book' and command == 'levels':
-                token, generation, reset, changes, items, now_ns, include_ids, dropped = payload
-                for old_token in dropped:
-                    books.pop(old_token, None)
-                previous = books.get(token)
-                if previous is None:
-                    if not reset or generation != 1:
-                        raise ValueError('book worker requires an initial complete partition')
-                    view, last_generation = SimpleNamespace(levels={'B':{},'A':{}}, orders={}), 0
-                else:
-                    view, last_generation = previous
-                if generation != last_generation + 1:
-                    raise ValueError('book worker snapshot generation differs')
-                if reset:
-                    view = SimpleNamespace(levels={'B':{},'A':{}}, orders={})
-                # Remove all old affected levels first: a moved order may be in
-                # another changed level in this same partition.
-                for side, price, ids, orders in changes:
-                    for oid in view.levels[side].pop(price, ()):
-                        view.orders.pop(oid, None)
-                for side, price, ids, orders in changes:
-                    if ids:
-                        view.levels[side][price] = ids
-                        view.orders.update(orders)
-                books[token] = view, generation
-                actual = {(side,price) for side in ('B','A')
-                          for price,ids in view.levels[side].items() if ids}
-                if actual != set(items):
-                    raise ValueError('persistent book partition coverage differs')
-                levels = [(side,price,InstrumentBook._level(view, side, price, now_ns, include_ids))
-                          for side,price in items]
-                result = token, generation, levels
-            elif kind == 'census' and command == 'observe_batch':
-                stream = io.BytesIO(payload)
-                observed = 0
-                while stream.tell() < len(payload):
-                    census.observe(cloudpickle.load(stream))
-                    observed += 1
-                result = observed
-            elif kind == 'census' and command == 'state':
-                result = census
-            else:
-                raise ValueError('unsupported native auxiliary command')
-            connection.send_bytes(cloudpickle.dumps(
-                ('ok', (result, time.perf_counter()-started)), protocol=5))
+        _serve(connection, producers, cpu, kind, state)
     except BaseException:
         try:
             connection.send_bytes(cloudpickle.dumps(('error', traceback.format_exc()), protocol=5))
@@ -79,6 +38,65 @@ def _worker(connection, producers, cpu, kind, state):
             pass
     finally:
         connection.close()
+
+
+def _serve(connection, producers, cpu, kind, state):
+    from frankie_box_bedrock import load_producers
+    load_producers(producers)
+    from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import InstrumentBook
+    census = cloudpickle.loads(state) if state is not None else None
+    books = {}
+    connection.send_bytes(cloudpickle.dumps(('ok', dict(pid=os.getpid(), cpu=cpu))))
+    while True:
+        command, payload = cloudpickle.loads(connection.recv_bytes())
+        if command == 'stop':
+            break
+        started = time.perf_counter()
+        if kind == 'book' and command == 'levels':
+            token, generation, reset, changes, items, now_ns, include_ids, dropped = payload
+            for old_token in dropped:
+                books.pop(old_token, None)
+            previous = books.get(token)
+            if previous is None:
+                if not reset or generation != 1:
+                    raise ValueError('book worker requires an initial complete partition')
+                view, last_generation = SimpleNamespace(levels={'B':{},'A':{}}, orders={}), 0
+            else:
+                view, last_generation = previous
+            if generation != last_generation + 1:
+                raise ValueError('book worker snapshot generation differs')
+            if reset:
+                view = SimpleNamespace(levels={'B':{},'A':{}}, orders={})
+            # Remove all old affected levels first: a moved order may be in
+            # another changed level in this same partition.
+            for side, price, ids, orders in changes:
+                for oid in view.levels[side].pop(price, ()):
+                    view.orders.pop(oid, None)
+            for side, price, ids, orders in changes:
+                if ids:
+                    view.levels[side][price] = ids
+                    view.orders.update(orders)
+            books[token] = view, generation
+            actual = {(side,price) for side in ('B','A')
+                      for price,ids in view.levels[side].items() if ids}
+            if actual != set(items):
+                raise ValueError('persistent book partition coverage differs')
+            levels = [(side,price,InstrumentBook._level(view, side, price, now_ns, include_ids))
+                      for side,price in items]
+            result = token, generation, levels
+        elif kind == 'census' and command == 'observe_batch':
+            stream = io.BytesIO(payload)
+            observed = 0
+            while stream.tell() < len(payload):
+                census.observe(cloudpickle.load(stream))
+                observed += 1
+            result = observed
+        elif kind == 'census' and command == 'state':
+            result = census
+        else:
+            raise ValueError('unsupported native auxiliary command')
+        connection.send_bytes(cloudpickle.dumps(
+            ('ok', (result, time.perf_counter()-started)), protocol=5))
 
 
 class NativeWorker:
@@ -265,6 +283,14 @@ class ParallelBook:
         except BaseException:
             self.close()
             raise
+        self.wrapper, self.effect_wrapper = self._wrap()
+        InstrumentBook.book_snapshot = self.wrapper
+        InstrumentBook._book_effect = self.effect_wrapper
+        self.active = True
+
+    def _wrap(self):
+        """The snapshot and book-effect wrappers: full-depth snapshots on the workers, dirty-level tracking for the
+        mirrors; every other call the original pinned method."""
         owner = self
         def snapshot(book,now_ns,depth_levels=10,include_full_depth=False,include_order_ids=False):
             if not include_full_depth:
@@ -292,10 +318,7 @@ class ParallelBook:
                     state['dirty'].add((current.side, current.price_raw))
             return result
         from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import F_TOB, UNDEF_PRICE
-        self.wrapper, self.effect_wrapper = snapshot, effect
-        InstrumentBook.book_snapshot = snapshot
-        InstrumentBook._book_effect = effect
-        self.active = True
+        return snapshot, effect
 
     def _reseed(self):
         """Every mirror starts again: the next snapshot of each book sends its complete partition (generation 1) to the

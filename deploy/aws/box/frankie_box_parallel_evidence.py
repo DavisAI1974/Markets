@@ -23,11 +23,28 @@ NAMES = ('member', 'lifecycle', 'legacy')
 BATCH_ROWS = 32
 BATCH_BYTES = 1 << 20  # Flush threshold, never a row or scientific-output cap.
 
+# What the exact evidence bytes and accounting depend on (the evidence transport policy's helper_code): the pinned
+# RowSink.write capture and encoding, the ordered commit/hash, the sink proxies, the member freeze bridge and the
+# checkpoint barriers. The processes and their CPUs (_encoder, _Encoder, pin_threads, core_plan, _booked_cpus),
+# batching dispatch, RuntimeSections.start/close and the policy binding itself may change without refusing a saved
+# checkpoint (a commit checks every row's ledger, ordinal and byte extent).
+NATIVE_VALUE_CODE = ('_Capture', '_encode_serve', '_Sink', 'ParallelEvidence.install', 'ParallelEvidence.originals_only',
+                     'ParallelEvidence.write', 'ParallelEvidence.commit_one', 'ParallelEvidence.drain',
+                     'ParallelEvidence.materialized', 'ParallelEvidence.finish', 'FrozenMemberBridge',
+                     'RuntimeSections.materialized', 'RuntimeSections.finish')
 
-def bind_transport_policy(driver, attribute, policy, predecessor):
+
+def native_code_identity():
+    from frankie_box_bedrock import code_identity
+    return code_identity(__file__, NATIVE_VALUE_CODE)
+
+
+def bind_transport_policy(driver, attribute, policy, predecessors):
+    """Bind the current transport policy; a saved driver's earlier policy is accepted only when it is one of the
+    named predecessors, on a verified full-state resume, and the transition is recorded."""
     previous = getattr(driver, attribute, None)
     if previous is not None and previous != policy:
-        if (previous != predecessor or not driver.checkpointer.parent_checkpoint
+        if (previous not in predecessors or not driver.checkpointer.parent_checkpoint
                 or getattr(driver, '_frankie_reconstruction_checkpoint', None) is not None):
             raise ValueError('saved transport policy requires its verified full-state predecessor')
         driver.adapter.assert_groups_closed()
@@ -111,9 +128,22 @@ class _Capture:
 
 
 def _encoder(connection, producers, cpu):
-    shared = None
+    """One encoder process: pinned to its CPU, then the encoding (_encode_serve)."""
     try:
         pin_threads(os.getpid(), cpu)
+        _encode_serve(connection, producers, cpu)
+    except BaseException:
+        try:
+            connection.send_bytes(cloudpickle.dumps(('error', traceback.format_exc()), protocol=5))
+        except (EOFError, OSError):
+            pass
+    finally:
+        connection.close()
+
+
+def _encode_serve(connection, producers, cpu):
+    shared = None
+    try:
         from frankie_box_bedrock import load_producers
         load_producers(producers)
         from research.kalshi.frankie_raw_mbo_benchmark.native_row_sink import RowSink
@@ -167,16 +197,10 @@ def _encoder(connection, producers, cpu):
             connection.send_bytes(cloudpickle.dumps(('ok', dict(
                 schema='FRANKIE_ENCODED_BATCH_SHM_V1', name=shared.name,
                 bytes=required, values=metadata)), protocol=5))
-    except BaseException:
-        try:
-            connection.send_bytes(cloudpickle.dumps(('error', traceback.format_exc()), protocol=5))
-        except (EOFError, OSError):
-            pass
     finally:
         if shared is not None:
             shared.close()
             shared.unlink()
-        connection.close()
 
 
 class _Encoder:
@@ -267,14 +291,19 @@ class ParallelEvidence:
             writer='ROOT', serializer='pinned RowSink.write',
             checkpoint_barrier='flush batches then materialize original sinks',
             helper_sha256='98f7450ed0669802bd12643831d44b259bdefd2654ef638496045390990a71ad')
-        policy = dict(schema='FRANKIE_PARALLEL_EVIDENCE_V3', encoders=2,
+        current = dict(encoders=2,
             maximum_pending_batches=2, batch_rows=BATCH_ROWS, batch_flush_bytes=BATCH_BYTES,
             row_freeze='one immutable member pickle inside pinned note_member_row; independent other rows',
             output_transport='producer-owned shared bytes; ROOT ordered write/hash; reuse after commit',
             writer='ROOT', serializer='pinned RowSink.write',
-            checkpoint_barrier='flush batches then materialize original sinks',
+            checkpoint_barrier='flush batches then materialize original sinks')
+        # V4 binds the native code identity of this file's NATIVE_VALUE_CODE, not its whole bytes. Compatibility rule
+        # (Greg, 2026-10-07): a saved V3 policy (whole-file helper_sha256) is accepted only while this whole file is
+        # byte-identical; the existing V2 predecessor rule is unchanged. The transition is recorded on the driver.
+        policy = dict(current, schema='FRANKIE_PARALLEL_EVIDENCE_V4', helper_code=native_code_identity()['sha256'])
+        whole_file = dict(current, schema='FRANKIE_PARALLEL_EVIDENCE_V3',
             helper_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
-        bind_transport_policy(driver, '_frankie_evidence_policy', policy, predecessor)
+        bind_transport_policy(driver, '_frankie_evidence_policy', policy, (predecessor, whole_file))
         if not hasattr(driver, '_frankie_evidence_metrics'):
             driver._frankie_evidence_metrics = dict(rows=0, encode_seconds=0.0,
                 submit_seconds=0.0, receive_seconds=0.0, commit_seconds=0.0)
@@ -486,12 +515,19 @@ class RuntimeSections(ParallelSections):
                 book_rule='persistent fixed partitions; ordered snapshot deltas; pinned math; join before next event',
                 census_rule='immutable ordered batches; drain and materialize at checkpoint',
                 helper_sha256='5cc07cb1289f0b89facf5a93b7287a6f4fed2be6f785eee79329e0a8e09f1343')
-            policy = dict(schema='FRANKIE_NATIVE_AUXILIARY_V3',
-                book_workers=len(book_roles), census_workers=1,
+            rules = dict(census_workers=1,
                 book_rule='persistent fixed partitions; ordered snapshot deltas; pinned math; join before next event',
-                census_rule='scoped shared member freeze; ordered batches; drain and materialize at checkpoint',
+                census_rule='scoped shared member freeze; ordered batches; drain and materialize at checkpoint')
+            # V4 binds the native code identity of frankie_box_native_auxiliary's NATIVE_VALUE_CODE and no longer the
+            # book worker count (a level's result does not depend on it; ParallelBook already changes its worker set
+            # mid-run); the count is recorded in the workers receipt. Compatibility rule (Greg, 2026-10-07): a saved
+            # V3 policy is accepted only while frankie_box_native_auxiliary.py is byte-identical and the count is the
+            # same; the existing V2 predecessor rule is unchanged. The transition is recorded on the driver.
+            policy = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V4',
+                helper_code=auxiliary.native_code_identity()['sha256'])
+            whole_file = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V3', book_workers=len(book_roles),
                 helper_sha256=hashlib.sha256(Path(auxiliary.__file__).read_bytes()).hexdigest())
-            bind_transport_policy(self.driver, '_frankie_auxiliary_policy', policy, predecessor)
+            bind_transport_policy(self.driver, '_frankie_auxiliary_policy', policy, (predecessor, whole_file))
             if not hasattr(self.driver, '_frankie_auxiliary_metrics'):
                 self.driver._frankie_auxiliary_metrics = dict(census={}, books={})
             metrics = self.driver._frankie_auxiliary_metrics
@@ -512,6 +548,7 @@ class RuntimeSections(ParallelSections):
                 workers[role] = dict(pid=worker.process.pid, **self.plan[role])
             workers['ROOT'] = dict(pid=os.getpid(), **self.plan['ROOT'])
             receipt = dict(schema='FRANKIE_RUNTIME_WORKERS_V1', at=time.time(), workers=workers,
+                book_workers=len(book_roles),
                 base_calculation_processes=3, auxiliary_calculation_processes=1+len(book_roles),
                 encoding_processes=2, ledger_io_processes=len(storage_workers),
                 total_processes=len(workers)+len(storage_workers), ledger_io_workers=storage_workers,

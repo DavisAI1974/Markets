@@ -16,13 +16,62 @@ import frankie_box_segmented_ledger as ledger_storage
 import frankie_box_finalization as finalization
 
 SCHEMA = 'FRANKIE_NATIVE_FULL_STATE_V1'
+RUNTIME_SCHEMA = 'FRANKIE_NATIVE_RUNTIME_CODE_V2'
+# What a saved full state depends on in THIS file: the pickled object graph and its runtime bindings, the descriptor
+# and ledger state written, the restore and the record skip on continuation. The save policy (maybe_save: when, disk
+# reserve), raise_if_requested, runtime_identity and read_checkpoint (the acceptance rules) may change without
+# refusing a saved checkpoint.
+NATIVE_VALUE_CODE = ('SCHEMA', 'sink_items', 'ledger_state', 'copy_ledger_prefixes', 'StatePickler', 'StateUnpickler',
+                     'FullCheckpointer.externals', 'FullCheckpointer._write', 'FullCheckpointer.save_boundary',
+                     'restore_driver', 'compare_reconstructed_prefix', 'consume_recovery')
 
 
 def runtime_identity():
+    """The runtime a full state is written and restored under (Greg, 2026-10-07: saves survive unrelated edits):
+    Python and cloudpickle exactly; the native code identity of this file's NATIVE_VALUE_CODE and of
+    frankie_box_segmented_ledger's (not their whole bytes); frankie_box_finalization still by its whole bytes."""
+    from frankie_box_bedrock import code_identity
+    return dict(schema=RUNTIME_SCHEMA, python=sys.version, cloudpickle=cloudpickle.__version__,
+                serializer_code=code_identity(__file__, NATIVE_VALUE_CODE)['sha256'],
+                ledger_storage_code=ledger_storage.native_code_identity()['sha256'],
+                finalization_sha256=witness(Path(finalization.__file__).resolve())['sha256'])
+
+
+def whole_file_runtime_identity():
+    """The earlier (V1) runtime form: every file by its whole bytes."""
     return dict(python=sys.version, cloudpickle=cloudpickle.__version__,
                 serializer_sha256=witness(Path(__file__).resolve())['sha256'],
                 ledger_storage_sha256=witness(Path(ledger_storage.__file__).resolve())['sha256'],
                 finalization_sha256=witness(Path(finalization.__file__).resolve())['sha256'])
+
+
+def runtime_acceptance(saved):
+    """Why a saved descriptor's runtime is accepted, or None (refused). 'code': the current native code identity.
+    Compatibility rule (Greg, 2026-10-07), recorded with the resume: a V1 whole-file runtime is accepted only while
+    those whole files are byte-identical ('whole_file_unchanged'); the three exact earlier deployments named below
+    keep their existing rules, each still requiring the same Python, cloudpickle and remaining file bytes."""
+    if saved == runtime_identity():
+        return 'code'
+    current_runtime = whole_file_runtime_identity()
+    if saved == current_runtime:
+        return 'whole_file_unchanged'
+    predecessor_runtime = dict(current_runtime)
+    predecessor_runtime.pop('ledger_storage_sha256')
+    predecessor_runtime.pop('finalization_sha256')
+    predecessor_runtime['serializer_sha256'] = 'd5487c5444055cac5a91bc60bb8cb796924f10126fe02ba1384addbde43fd2d1'
+    # Exact known V1 predecessor only. Python/cloudpickle and the complete
+    # scientific driver identity must still match, and the old bytes verify.
+    deployed_runtime = dict(current_runtime)
+    deployed_runtime.pop('finalization_sha256')
+    deployed_runtime['serializer_sha256'] = '629b1355de7539e84fb8142343b182dc06cfe5033aaa3f6bf837962317a5cf76'
+    deployed_runtime['ledger_storage_sha256'] = 'b66361659495d787329a6097384df10bf4f27fc3056b511ee46f53bb7119c760'
+    pre_opening_runtime = dict(current_runtime)
+    pre_opening_runtime['serializer_sha256'] = 'e2ff73c9d6e6a76fb6ae1e3d712c337adf72c2845dbc15d41e94dc2d957f3cac'
+    for label, runtime in (('predecessor_d5487c54', predecessor_runtime), ('deployed_629b1355', deployed_runtime),
+                           ('pre_opening_e2ff73c9', pre_opening_runtime)):
+        if saved == runtime:
+            return label
+    return None
 
 
 def sink_items(sinks):
@@ -190,24 +239,12 @@ def read_checkpoint(path, identity, *, continuation_binding=None):
             raise ValueError('checkpoint controller state is corrupt')
         if descriptor.get('continuation_binding') != continuation_binding:
             raise ValueError('checkpoint opening state or provenance differs')
-        current_runtime = runtime_identity()
-        predecessor_runtime = dict(current_runtime)
-        predecessor_runtime.pop('ledger_storage_sha256')
-        predecessor_runtime.pop('finalization_sha256')
-        predecessor_runtime['serializer_sha256'] = 'd5487c5444055cac5a91bc60bb8cb796924f10126fe02ba1384addbde43fd2d1'
-        # Exact known V1 predecessor only. Python/cloudpickle and the complete
-        # scientific driver identity must still match, and the old bytes verify.
-        deployed_runtime = dict(current_runtime)
-        deployed_runtime.pop('finalization_sha256')
-        deployed_runtime['serializer_sha256'] = '629b1355de7539e84fb8142343b182dc06cfe5033aaa3f6bf837962317a5cf76'
-        deployed_runtime['ledger_storage_sha256'] = 'b66361659495d787329a6097384df10bf4f27fc3056b511ee46f53bb7119c760'
-        pre_opening_runtime = dict(current_runtime)
-        pre_opening_runtime['serializer_sha256'] = 'e2ff73c9d6e6a76fb6ae1e3d712c337adf72c2845dbc15d41e94dc2d957f3cac'
-        accepted_runtime = descriptor['runtime'] in (current_runtime, predecessor_runtime, deployed_runtime,
-                                                     pre_opening_runtime)
+        acceptance = runtime_acceptance(descriptor['runtime'])
         if (descriptor.get('schema') != SCHEMA or descriptor['driver_identity'] != identity or
-                not accepted_runtime or descriptor['finalized'] != latest['locked']):
+                acceptance is None or descriptor['finalized'] != latest['locked']):
             raise ValueError('full checkpoint runtime or producer identity differs')
+        # recorded in the native receipt (frankie_box_bedrock.run: recovery.runtime_acceptance)
+        latest['_runtime_acceptance'] = acceptance
         if witness(safe_path(descriptor['driver_state']['path'])) != descriptor['driver_state']:
             raise ValueError('full checkpoint bytes differ')
     if latest['locked'] and descriptor is None:

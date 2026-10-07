@@ -31,6 +31,52 @@ KNOWLEDGE_MANIFEST_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_knowled
 LEDGER_FILES = ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl', 'legacy_observable_rows.jsonl')
 NS = 1_000_000_000
 
+CODE_IDENTITY_SCHEMA = 'FRANKIE_NATIVE_CODE_IDENTITY_V1'
+# The definitions of THIS file that determine native values (the completed native stage's identity in
+# frankie_box_boss_session._native_stage): the pins, the record stamping, the run identity, the traversal and its
+# receipts. Everything else here (RowSpool, the projection, _move_aside, recovery selection, code_identity itself)
+# may change without refusing a completed native stage. A new definition the traversal calls is added to this list.
+NATIVE_VALUE_CODE = ('PIN_COMMIT', 'PIN_LINEAGE', 'V4_ADAPTER', 'V4_ADAPTER_MODULE', 'MISSION_PATH', 'CONTRACT_PATH',
+                     'KNOWLEDGE_MANIFEST_PATH', 'LEDGER_FILES', 'NS', 'NeverInvoke', 'sha256_file', 'witness',
+                     'ledger_file_identity', 'reconciled_ledger_witness', 'write_json', 'producers_commit',
+                     'loaded_modules', 'load_producers', 'source_object', 'iter_driver_records', 'span_seconds',
+                     'identity', 'run')
+
+
+def code_identity(path, names):
+    """The identity of the named definitions of one source file, for saved native work (Greg, 2026-10-07: a save
+    survives unrelated edits, never a changed computation). Each name is a top-level def/class/assignment or a
+    'Class.method'; each is hashed as its syntax tree without positions (ast.dump), so a comment, a blank line or a
+    move within the file is accepted while any change to the named code refuses. The file is read from disk, as the
+    whole-file witness it replaces was. A missing name raises: the identity is never computed from less."""
+    import ast
+    path = Path(path)
+    tree = ast.parse(path.read_bytes(), str(path))
+
+    def find(body, name):
+        for node in body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node.name == name:
+                return node
+            if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == name for t in node.targets):
+                return node
+            if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == name:
+                return node
+        raise ValueError('%s defines no %s; native code identity refused' % (path.name, name))
+
+    digest = hashlib.sha256(json.dumps([CODE_IDENTITY_SCHEMA, path.name, list(names)]).encode())
+    for name in names:
+        body, node = tree.body, None
+        for part in name.split('.'):
+            node = find(body, part)
+            body = getattr(node, 'body', [])
+        text = ast.dump(node, include_attributes=False).encode()
+        digest.update(len(text).to_bytes(8, 'big') + text)
+    return dict(schema=CODE_IDENTITY_SCHEMA, file=path.name, names=list(names), sha256=digest.hexdigest())
+
+
+def native_code_identity():
+    return code_identity(__file__, NATIVE_VALUE_CODE)
+
 
 class NeverInvoke:
     """A declared CadencePolicy that never fires: the BOSS is invoked by the session's own stages (reading, classroom,
@@ -670,7 +716,8 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                    emission=emission,
                    recovery=dict(parent_checkpoint=str(resume_checkpoint) if resume_checkpoint else None,
                        restored_state_records=checkpoint['completed_mbo_records'] if descriptor else 0,
-                       authorized_reconstruction_records=checkpoint['completed_mbo_records'] if checkpoint and descriptor is None else 0),
+                       authorized_reconstruction_records=checkpoint['completed_mbo_records'] if checkpoint and descriptor is None else 0,
+                       runtime_acceptance=checkpoint.get('_runtime_acceptance') if checkpoint else None),
                    execution=dict(
                        policy=getattr(driver, '_frankie_parallel_policy', {'calculation_processes': 1}),
                        metrics=getattr(driver, '_frankie_parallel_metrics', {}),

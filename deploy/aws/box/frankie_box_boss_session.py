@@ -2648,7 +2648,7 @@ class Session:
         from research.kalshi.frankie_boss.c15_journal import evidence_hash
         stage_identity = dict(schema=NATIVE_RECOVERY_SCHEMA, source=self.source_binding,
             pin=pin['pins_witness']['sha256'], producers=self._producer_witnesses(pin),
-            wrapper=witness(Path(B.__file__)), opening_book=opening_book,
+            wrapper=B.native_code_identity(), opening_book=opening_book,
             opening_adapter_state_hash=evidence_hash(opening_adapter_state),
             native_input=NativeInputView.RULE)
         records = NativeInputView(records)
@@ -2660,8 +2660,16 @@ class Session:
                 raise ValueError('native emission implementation differs from the selected ROOT policy')
         if recovery and native_stage.is_file():
             saved = load_json(native_stage)
+            # The wrapper is the native code identity of frankie_box_bedrock (its NATIVE_VALUE_CODE definitions), so an
+            # edit elsewhere in that file keeps a completed stage. Compatibility rule (Greg, 2026-10-07): a stage saved
+            # in the earlier whole-file form ({bytes, sha256} of frankie_box_bedrock.py) is accepted only while that
+            # whole file is byte-identical; every other identity field must still be equal.
             if saved.get('identity') != stage_identity:
-                raise ValueError('completed native stage source or implementation changed; retained outputs preserved')
+                legacy = dict(stage_identity, wrapper=witness(Path(B.__file__)))
+                if saved.get('identity') != legacy:
+                    raise ValueError('completed native stage source or implementation changed; retained outputs preserved')
+                self.note('bedrock: completed native stage saved in the whole-file wrapper form; accepted because '
+                          'frankie_box_bedrock.py is byte-identical to the saving checkout')
             for item in saved['artifacts']:
                 if witness(Path(item['path'])) != {k: item[k] for k in ('bytes', 'sha256')}:
                     raise ValueError('completed native stage artifact changed: ' + item['path'])
