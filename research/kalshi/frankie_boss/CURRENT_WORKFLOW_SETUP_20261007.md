@@ -34,6 +34,18 @@ Search receives its actual series/cell mappings through the common F_LAST view w
 changing lag or target mathematics. Internal teacher objects are not proof that all
 user-facing teacher seats or native training consumed every field.
 
+**Authoritative missing-coverage correction (pending source implementation/review):** no
+authentic available day or time is rejected from timeline reconstruction merely because
+raw fields, layers, clocks, derived updates or modality coverage are missing. That instant
+remains usable with a thinner explicit picture. Carry available evidence and distinguish
+missing/unavailable/stale state from a new observation; never fabricate zeros, mark stale
+values fresh, backfill future results, retro-sort late arrivals by event time, or wait for
+all 99 registry entries. An equation may remain unavailable when its required operands are
+missing, but that cannot discard the instant/day or unrelated evidence. Integrity corruption
+or irreconcilable identity remains a separate visible failure. The published `d6af990` core
+and stopped adviser draft predate this correction and must not be called compliant until
+CCode completes the cross-consumer correction and fresh review.
+
 The versioned `FRANKIE_SHARED_MARKET_TIMELINE_V1` policy requires native calculations
 for explicitly selected new requests. ROOT binds implementation and retained spool pins;
 legacy results retain their original policy/source/request identities. CCode still owns
@@ -94,10 +106,10 @@ H06–H08 remain historical/not_bound. No outcome labels or replacement weights 
 Review is source/interface inspection, AST parsing without project imports and scoped
 `git diff --check`; each active source slice still needs its author's final return and
 review. No tests, validator framework, scientific/data/model runs, installs, starts or
-dispatch occurred. AWS workflow discovery previously required reauthentication; the
-later documentation-only lookup stalled and was interrupted. No new successful AWS
-research/account operation is claimed. Existing documented efficiency guidance is reused;
-there is no measured acceleration claim.
+dispatch occurred. AWS MCP reconnected successfully on 2026-10-07 and the guided-skill registry responded.
+A documentation-only lookup retrieved the `authoring-mwaa-workflow` skill; no AWS account
+mutation, workload, install, dispatch, data/scientific/model run or measured acceleration
+occurred. This reconnection changes tooling availability only, not execution authorization.
 
 Exactly three held 16-CPU lanes, two main and one Linux, each with 15 workers plus
 coordinator; no Pods. Keep giant evidence on its owner and reuse the normal checkpoint
