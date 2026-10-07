@@ -520,6 +520,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     # every stream generator has started and is undone when the walk's evidence ends, before finish sizes its pool.
     # Shared path only; the legacy no-policy walk is unchanged. Placement only: no row, hash or identity depends on it.
     LP = _box_module('frankie_box_lane_pin')
+    PT.FINISH_POOL_RECORD.clear()
     cpu_pinning = dict(schema='FRANKIE_TEACHER_CPU_PINNING_V1', outcome='not_pinned',
                        reason='legacy no-policy walk: placement unchanged' if market is None else None)
     if market is not None:
@@ -551,7 +552,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         except Exception as error:  # noqa: BLE001 - speed only: without it every row is encoded here, as before
             precompute.update(outcome='not_used', reason='the pool could not start (%s: %s)' % (type(error).__name__, error))
         limit = 2 * pre.workers * PT.EVIDENCE_BATCH if pre is not None else 1
-        ahead, batch, slots, done, last = deque(), [], [], [False], [None]
+        ahead, batch, slots, done, last, failed = deque(), [], [], [False], [None], [None]
         whole = tuple(entity) if entity is not None else None
 
         def flush():
@@ -566,7 +567,11 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             # read ahead in source order (the timeline's own order; nothing is reordered or dropped) so the workers
             # encode upcoming payloads while the consumer runs the pinned loop
             while not done[0] and len(ahead) < limit:
-                item = next(pictures, None)
+                try:
+                    item = next(pictures, None)
+                except Exception as error:  # noqa: BLE001 - raised in order, after every earlier instant is consumed
+                    failed[0], done[0] = error, True
+                    break
                 if item is None:
                     done[0] = True
                     break
@@ -618,6 +623,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 if len(ahead) * 2 <= limit:
                     fill()
                 if not ahead:
+                    if failed[0] is not None:
+                        raise failed[0]
                     break
                 entry = ahead.popleft()
                 item = entry[0]
@@ -706,6 +713,12 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             if learner_binding is not None and as_of != bound:
                 raise ValueError('learner reading does not end at its requested whole-day cutoff')
             spec = [(cursor, True, h) for cursor, h in sorted(hashes.items())]
+            if market is not None and len(cpu_pinning.get('lane') or ()) > 1:
+                # the attachment pool on every CPU of the lane but the coordinator's (it joins the chunks in order
+                # while they run): one spawn worker per CPU, physical cores first, the coordinator's sibling last
+                coordinator, finish_cpus, finish_basis = LP.placement(len(cpu_pinning['lane']) - 1, cpu_pinning['lane'])
+                PT.FINISH_WORKER_CPUS = tuple(finish_cpus)
+                cpu_pinning['finish_plan'] = dict(coordinator=coordinator, worker_cpus=list(finish_cpus), basis=finish_basis)
             attachment = PT.finish(teacher, rows, processed, hashes, spec, source_manifest_hash=rc['manifest_hash'],
                                    recovery_path=out / 'teacher-attachment-state.pkl',
                                    save_requested=save_requested)
@@ -718,6 +731,9 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 evidence.close()
         finally:
             PT.RAW_WORKER_CPUS = None
+            PT.FINISH_WORKER_CPUS = None
+            cpu_pinning['finish_pool'] = dict(PT.FINISH_POOL_RECORD) if PT.FINISH_POOL_RECORD else None
+            cpu_pinning['evidence_precompute'] = dict(precompute)
             if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
                 cpu_pinning['restored'] = LP.restore_mask(cpu_pinning['original_mask'])
             cpu_pinning['raw_pool'] = dict(PT.RAW_POOL_RECORD)
