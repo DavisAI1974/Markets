@@ -128,12 +128,145 @@ def _rows(pin, *, packed, timing=None):
         raise ValueError('shared market rows differ from their source pin: ' + pin['path'])
 
 
+# ---- layer-row decode on the lane (Greg, 2026-10-07: CPUs pinned to the jobs and workers) --------------------------
+# A layer spool's rows are decoded (json.loads, plus the journal codec's unpack for ROOT spools) one by one in the
+# consumer's process; the frame spool alone runs to hundreds of GB on a full day. The decode is per row and
+# order-free: workers pinned one per lane CPU decode ordered line-aligned byte ranges and hand the rows back; this
+# process yields them in file order with the same ordinals. The bytes are hashed in file order on a thread here and
+# checked against the pin at exhaustion, as _rows does; a range that fails to decode hands back the rows before the
+# failing line and the error, so the same rows are yielded before the same error. Same rows, same order, same
+# ordinals, same errors. Below PARALLEL_DECODE_MIN_BYTES or with one worker it is _rows itself.
+PARALLEL_DECODE_MIN_BYTES = 64 << 20
+DECODE_RANGE_BYTES = 16 << 20
+DECODE_WINDOW_PER_WORKER = 2
+
+
+def lane_cpus():
+    """The held lane's CPUs, never the host count: FRANKIE_LANE_CPUS or FRANKIE_BOOKED_CPUS (cores' cpu_list)
+    intersected with this process's affinity; the affinity alone when neither names a CPU of it."""
+    import os
+    affinity = set(os.sched_getaffinity(0))
+    for name in ('FRANKIE_LANE_CPUS', 'FRANKIE_BOOKED_CPUS'):
+        listed = set()
+        try:
+            for part in (os.environ.get(name) or '').split(','):
+                if part.strip():
+                    low, _, high = part.strip().partition('-')
+                    listed.update(range(int(low), int(high or low) + 1))
+        except ValueError:
+            continue
+        if listed & affinity:
+            return sorted(listed & affinity)
+    return sorted(affinity)
+
+
+def _decode_pin(handout):
+    import os
+    os.sched_setaffinity(0, {handout.get()})
+
+
+def _decode_range(args):
+    """Rows of one byte range, decoded exactly as _rows decodes them; (rows, error) where error is the exception the
+    first undecodable line raised (rows hold every row before it)."""
+    path, start, end, packed = args
+    from research.kalshi.frankie_boss.c15_journal import unpack
+    rows = []
+    try:
+        with open(path, 'rb') as stream:
+            stream.seek(start)
+            position = start
+            for raw in stream:
+                if position >= end:
+                    break
+                position += len(raw)
+                row = json.loads(raw)
+                rows.append(unpack(row) if packed else row)
+    except Exception as error:  # noqa: BLE001 - handed back and raised in order by the consumer
+        return rows, error
+    return rows, None
+
+
+def _decode_ranges(path, size):
+    cuts = [0]
+    with open(path, 'rb') as stream:
+        while cuts[-1] + DECODE_RANGE_BYTES < size:
+            stream.seek(cuts[-1] + DECODE_RANGE_BYTES - 1)
+            stream.readline()
+            cut = stream.tell()
+            if cut >= size:
+                break
+            cuts.append(cut)
+    cuts.append(size)
+    return [(a, b) for a, b in zip(cuts, cuts[1:]) if b > a]
+
+
+def _rows_parallel(pin, *, packed, timing, workers):
+    """_rows with the decode on pinned lane workers (see above)."""
+    import collections
+    import multiprocessing
+    import threading
+    from time import perf_counter
+    path = str(_local(pin['path']))
+    lane = lane_cpus()
+    cpus = (lane[1:] if len(lane) > workers else lane)[:workers] or lane
+    context = multiprocessing.get_context('spawn')      # spawn: this process already runs reader workers and threads
+    handout = context.Queue()
+    for cpu in cpus:
+        handout.put(cpu)
+    hashed = dict(sha256=hashlib.sha256(), bytes=0, error=None)
+
+    def hash_file():
+        try:
+            with open(path, 'rb') as stream:
+                for block in iter(lambda: stream.read(1 << 24), b''):
+                    hashed['sha256'].update(block)
+                    hashed['bytes'] += len(block)
+        except BaseException as error:  # noqa: BLE001 - raised at exhaustion
+            hashed['error'] = error
+    ranges = iter(_decode_ranges(path, _local(pin['path']).stat().st_size))
+    pool = context.Pool(len(cpus), initializer=_decode_pin, initargs=(handout,))
+    hasher = threading.Thread(target=hash_file, name='layer-sha256', daemon=True)
+    hasher.start()
+    pending, ordinal, spent = collections.deque(), 0, 0.0
+    timing.update(mode='pinned_lane_workers', workers=len(cpus), cpus=cpus, range_bytes=DECODE_RANGE_BYTES)
+    try:
+        def fill():
+            while len(pending) < len(cpus) * DECODE_WINDOW_PER_WORKER:
+                item = next(ranges, None)
+                if item is None:
+                    return
+                pending.append(pool.apply_async(_decode_range, ((path, item[0], item[1], packed),)))
+        fill()
+        while pending:
+            mark = perf_counter()
+            rows, error = pending.popleft().get()
+            fill()
+            spent += perf_counter() - mark
+            timing['decode_seconds'] = round(spent, 3)
+            for row in rows:
+                yield ordinal, row
+                ordinal += 1
+            if error is not None:
+                raise error
+        hasher.join()
+        if hashed['error'] is not None:
+            raise hashed['error']
+        if hashed['bytes'] != pin['bytes'] or hashed['sha256'].hexdigest() != pin['sha256']:
+            raise ValueError('shared market rows differ from their source pin: ' + pin['path'])
+    finally:
+        pool.terminate()
+        pool.join()
+
+
 class _Changes:
     """One existing ordered producer stream; no completion-order merge or row cap."""
-    def __init__(self, name, pin, *, kind, state):
+    def __init__(self, name, pin, *, kind, state, workers=1):
         self.name, self.pin, self.kind, self.state = name, pin, kind, state
-        self.timing = dict(decode_seconds=0.0)
-        self.rows = _rows(pin, packed=kind in ('frame', 'price', 'structure'), timing=self.timing)
+        self.timing = dict(decode_seconds=0.0, mode='serial')
+        packed = kind in ('frame', 'price', 'structure')
+        self.rows = (_rows_parallel(pin, packed=packed, timing=self.timing, workers=workers)
+                     if workers > 1 and pin['bytes'] >= PARALLEL_DECODE_MIN_BYTES else
+                     _rows(pin, packed=packed, timing=self.timing))
         self.pending = None
         self.previous = -1
         self.finished = False
@@ -389,7 +522,7 @@ class SharedMarketTimeline:
             if Path(pin['path']) != root / 'work/derived/.rows' / (role + '.jsonl'):
                 raise ValueError('completed shared source pins another path as its ' + role + ' spool')
             self.layers[name] = dict(status='present', source=pin)
-            self.streams.append(_Changes(name, pin, kind=kind, state=state))
+            self.streams.append(_Changes(name, pin, kind=kind, state=state, workers=workers))
         # Native: absent only when the native pass did not complete or an older saved legacy plan ran it
         # off (selected_files returns nothing); every NEW run has it ON;
         # a bedrock-on ROOT whose artifacts are incomplete or altered raises inside selected_files.
@@ -404,7 +537,7 @@ class SharedMarketTimeline:
                 continue
             pin = dict(path=item['source'], **item['expected'])
             self.layers[name] = dict(status='present', source=pin)
-            self.streams.append(_Changes(name, pin, kind='native', state=state))
+            self.streams.append(_Changes(name, pin, kind='native', state=state, workers=workers))
         external = self.source.get('external') or {}
         self.publications = _Publications(external, day) if external.get('status') == 'attached' else None
         self.layers['external'] = (dict(status='present', source=external) if self.publications is not None else

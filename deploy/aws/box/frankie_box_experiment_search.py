@@ -360,7 +360,7 @@ def spool_columns(path, pin, time_key, workers=1, report=None):
     hasher = threading.Thread(target=hash_file, name='spool-sha256')
     numeric, text, count = {}, {}, 0
     try:
-        with multiprocessing.get_context('fork').Pool(min(workers, len(ranges))) as pool:
+        with pinned_pool(multiprocessing.get_context('fork'), min(workers, len(ranges))) as pool:
             hasher.start()                         # after the workers are forked: no thread is copied into them
             for part_numeric, part_text, part_count in pool.imap(_spool_range_columns, ranges):
                 for merged, part in ((numeric, part_numeric), (text, part_text)):
@@ -622,7 +622,7 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
     notes.append(dict(axis='F_LAST group closes', groups=n, receive_clock_steps_backwards=backwards))
     series = {'frames.' + k: np.asarray(v, dtype=object) for k, v in f_num.items()}
     text_cols = {'frames.' + k: v for k, v in f_text.items()}
-    con = duckdb.connect()
+    con = duckdb.connect(config=dict(threads=len(lane_cpus())))      # the lane's CPUs, not DuckDB's host-count default
 
     gates = [dict(source='frames', passed=True, reason='the axis source itself: each value is its own group close')]
 
@@ -1205,11 +1205,49 @@ def _load_state(path, identity):
         raise ValueError('saved search state belongs to different inputs or search code: %s' % path)
     return state
 
+def lane_cpus():
+    """The held lane's CPUs, never the host count: FRANKIE_LANE_CPUS or FRANKIE_BOOKED_CPUS (cores' cpu_list, e.g.
+    '0-15') intersected with this process's affinity; the affinity alone when neither names a CPU of it."""
+    affinity = set(os.sched_getaffinity(0))
+    for name in ('FRANKIE_LANE_CPUS', 'FRANKIE_BOOKED_CPUS'):
+        listed = set()
+        try:
+            for part in (os.environ.get(name) or '').split(','):
+                if part.strip():
+                    low, _, high = part.strip().partition('-')
+                    listed.update(range(int(low), int(high or low) + 1))
+        except ValueError:
+            continue
+        if listed & affinity:
+            return sorted(listed & affinity)
+    return sorted(affinity)
+
+
+def worker_cpus(workers):
+    """One lane CPU per worker: the lane's CPUs after its first (the coordinator's) when the lane has room, else the
+    lane's own CPUs in turn (Greg, 2026-10-07: CPUs pinned to the jobs and workers)."""
+    lane = lane_cpus()
+    pool = lane[1:] if len(lane) > workers else lane
+    return [pool[i % len(pool)] for i in range(workers)]
+
+
+def _pin_from(handout):
+    os.sched_setaffinity(0, {handout.get()})
+
+
+def pinned_pool(context, workers):
+    """context.Pool(workers) with each worker pinned to its own lane CPU (worker_cpus)."""
+    handout = context.Queue()
+    for cpu in worker_cpus(workers):
+        handout.put(cpu)
+    return context.Pool(workers, initializer=_pin_from, initargs=(handout,))
+
+
 def _run_pending(context, workers, function, jobs):
     """Keep only the held lane's workers in flight; a stop drains each submitted operation."""
     from collections import deque
     pending, source = deque(), iter(jobs)
-    with context.Pool(workers) as pool:
+    with pinned_pool(context, workers) as pool:
         def fill():
             while len(pending) < workers and not _stop_requested():
                 job = next(source, None)
@@ -1710,6 +1748,9 @@ def _discovery_compute(args):
         result.update(status='too_few_rows', reason='fewer than two rows with the target and every feature present')
     else:
         try:
+            # parallelism='serial', deterministic=True: one Julia thread does the fit; the default 'auto' would start a
+            # host-count thread pool in each of the lane's workers. The fits do not depend on it.
+            os.environ.setdefault('PYTHON_JULIACALL_THREADS', '1')
             from odcore.symbolic import _regressor
             import pysr  # noqa: F401  (the existing Julia-backed engine; imported in this worker only)
         except Exception as error:   # noqa: BLE001 - an absent engine blocks only this equation, named
