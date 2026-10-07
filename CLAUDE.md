@@ -1,3 +1,19 @@
+# Current Frankie AWS continuation — 2026-10-07 (CCode: the pre-#5 queue, slices A-D RETURNED; source-only)
+
+READ FIRST for a Claude session on the CCode queue: `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007.md` (the box),
+then `CLAUDE_HANDOFF_20261007_CCODE_SLICES_A_D.md` (the full state). Branch `ccode/teacher-tasks-20261006b`, rebased onto
+Codex's `80a0e279` (ccr-5fce7de3-xa4hfg), pushed, tip `fea2e165`. All four slices of `CCODE_NEXT_SOURCE_TASKS_20261006.md`
+are returned as one `[skip ci]` commit each: A follow-ups (the scientific seat consumes the one origin accounting; the
+zero/unclassified limitation; listed origin reasons voiced), B (REPRODUCTIONS/REFORMULATIONS bindings in
+`frankie_box_historical_claims.py`, the never-invoked `frankie_box_historical_reproduction.py` capability, the teacher
+reads hash-bound reproduction records; Memory A claims H06-H08 `not_bound`: retired by Greg), C (the owner's completed
+native evidence reaches every accumulated result; every completed-native consumer classed), D (`provenance` on the ROOT
+price/structure rows, FRANKIE_ROOT_ROW_PROVENANCE_V1; late knowledge listed at the frozen boundaries). SOURCE-BUILT /
+RUNTIME-UNVERIFIED: ast.parse, git diff --check, regex-constant compile only; nothing ran. The codebase-memory index is
+current on the branch (CLI, foreground; the MCP call times out). NEXT = Codex's integration review of the four returns and
+its search adapter for the provenance contract; no new CCode slice is assigned. STOP before #5; boxes stopped; HOLD.
+The Codex-facing documents (`CCODE_*`) are separate from this Claude handoff and drop-in.
+
 # Current Frankie AWS continuation — 2026-10-06
 
 Greg requested a chat handoff at 08:02 ET before finishing all of #2. Latest slice wires native accumulated lesson
