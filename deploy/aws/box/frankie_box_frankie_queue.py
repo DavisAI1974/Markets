@@ -1143,6 +1143,20 @@ def _bind_owner(x, slot, cpus, code_root, commit):
         owner = dict(schema='FRANKIE_QUEUE_OWNER_V1', run=x['run'], day=x['day'], host=socket.gethostname(),
                      attempt=attempt, commit=commit, code_root=str(Path(code_root).resolve()),
                      marker=str(marker_of(x['run'], x['day'])), bound_utc=utc(), bound_by_pid=os.getpid())
+        released = x.pop('failed_finish_bookings', None)
+        if released:
+            why_not = _jev_progress(x['run'], x['day'])
+            decision = dict(by='queue-after-failed', at_utc=utc(), previous_booking=released.get('booking'),
+                            previous_cpus=released.get('cpus'), held_bookings=released.get('held_bookings') or [],
+                            released_attempt=released.get('attempt'), released_why=released.get('why'),
+                            rule='the retry of a FAILED finish on a new booking: the released owner\'s bookings, so a retained '
+                                 'Jev request with no progress gets its create-only .rebookN successor (the original '
+                                 'request never changed)')
+            if why_not is None:
+                owner['rebooked'] = decision
+                x.setdefault('owner_rebooks', []).append(decision)
+            else:
+                x.setdefault('owner_rebooks', []).append(dict(decision, not_applied=why_not))
     # held_bookings: every booking this SAME owner binding (attempt, marker) has held, in order. A queue rebook decision
     # (_rebook_owner) carries it, so a Jev request bound to any earlier booking of this owner has its explicit REBOOK
     # successor (Run.jev_rebooked) instead of a refusal (second review F1)
@@ -1420,6 +1434,17 @@ def _finish_steps(run, e, code_root, commit, log):
                         dispatches=j.get('dispatches'), receipt_read_back=already or None)
     if j.get('status') not in X.FINISHED:
         return ('waiting' if j.get('status') == 'waiting' else 'failed'), facts
+    # R-A (fresh review): Jev finishes after the class line rendered the reports; their 99-layer join now has a late
+    # piece (Jev's lists, a candidates update). A revision under the same number, in this same slot, no model call;
+    # its outcome is listed in the facts and never gates the day's close
+    try:
+        stale = run.reports_stale(e)
+    except Exception as error:      # noqa: BLE001 - e.g. a corrupt school chain: named in the facts, never the day's close
+        stale, facts['reports_revision'] = False, dict(status='not_checked', reason='%s: %s' % (type(error).__name__, error))
+    if stale:
+        r = run.guarded('reports', e) or {}
+        facts['reports_revision'] = dict(status=r.get('status'), reason=r.get('reason'),
+                                         trigger='late pieces after Jev (reports_stale)')
     return _close(run, e, facts)
 
 
@@ -1654,7 +1679,33 @@ def _sync_root(doc, x, plans):
     return None
 
 
-def _release_owner(x, why):
+def _jev_progress(run_name, day):
+    """None when the day's retained Jev request made no progress a rebook would have to resume (R-C): its step receipt
+    names a request and the helper receipt it names is absent or 'failed'. Otherwise the reason no queue rebook decision is
+    carried (no Jev request retained, Jev done, or a helper receipt in another state: the owner decides, never guessed)."""
+    import frankie_box_experiment as X
+    try:
+        step = json.loads((X.RUNS / run_name / 'days' / day / 'jev.json').read_bytes())
+    except (OSError, ValueError):
+        return 'no readable Jev step receipt for the day (nothing retained to rebook)'
+    if not step.get('request'):
+        return 'the Jev step receipt names no retained request'
+    if step.get('status') in X.FINISHED:
+        return 'Jev is %s (read back, never rebuilt)' % step.get('status')
+    helper = step.get('receipt')
+    if helper:
+        try:
+            status = json.loads(Path(helper).read_bytes()).get('status')
+        except OSError:
+            status = None
+        except ValueError:
+            return 'the Jev helper receipt %s is unreadable JSON: an integrity question for the owner' % helper
+        if status not in (None, 'failed'):
+            return 'the Jev helper receipt is %s (progress the owner decides on)' % status
+    return None
+
+
+def _release_owner(x, why, failed_finish=False):
     """A failed (never saved) day gives its owner binding up: kept as history, so the once-per-worker retry binds afresh
     (the next attempt number, any free 16 CPUs) exactly as before the contract. The booking itself was released by the
     thread's end. Never for a saved/unknown day."""
@@ -1666,6 +1717,15 @@ def _release_owner(x, why):
         x['save_request'] = None
         x.setdefault('save_requests_stale', []).append(dict(archived=archived, why=why, at_utc=utc()))
     x.setdefault('owner_history', []).append(dict(owner, released_utc=utc(), released_why=why))
+    if failed_finish:
+        # R-C (fresh review): the bookings this owner held, carried to the retry's binding (_bind_owner), which turns
+        # them into a queue rebook decision only when the day's retained Jev request made no progress (its helper
+        # receipt failed or absent), so Run.jev_rebooked mints the .rebookN successor instead of refusing forever
+        held = list(owner.get('held_bookings') or [])
+        if owner.get('booking') and not any(h.get('booking') == owner['booking'] for h in held):
+            held.append(dict(booking=owner['booking'], cpus=sorted(owner.get('cpus') or [])))
+        x['failed_finish_bookings'] = dict(held_bookings=held, booking=owner.get('booking'), cpus=owner.get('cpus'),
+                                           attempt=owner.get('attempt'), released_utc=utc(), why=why)
     x['owner'] = None
 
 
@@ -1757,7 +1817,8 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                                        retained_booking=job['holder'].get('retained'), child=facts.get('child'),
                                        inspection=facts.get('inspection'))
                     if y['finish']['state'] == 'failed':
-                        _release_owner(y, 'finish failed: the next admission books any free slot; the owner binding is history')
+                        _release_owner(y, 'finish failed: the next admission books any free slot; the owner binding is history',
+                                       failed_finish=True)
                     elif y['finish']['state'] == 'waiting':
                         # F1: a wait stays a wait; the retry binds a new booking to the SAME owner with a recorded
                         # rebook decision, so a done or pending Jev is reused/resumed, never refused
@@ -1814,7 +1875,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                         # failed or pending Jev bound to the released booking needs ACTION=resume REBOOK=on, as on the
                         # finish-only route (a failure is not a wait).
                         _release_owner(y, 'finish failed after the ROOT in the same slot: the next admission books any '
-                                          'free slot; the owner binding is history')
+                                          'free slot; the owner binding is history', failed_finish=True)
                 elif result == 'claimed_elsewhere':
                     y.update(state='running', where=(facts.get('claim') or {}).get('where'), reason=reason)
                     _release_owner(y, 'claimed elsewhere: this box holds nothing of the day')

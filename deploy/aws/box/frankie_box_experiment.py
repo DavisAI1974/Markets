@@ -2189,6 +2189,15 @@ class Run:
             step = step if step is not None else self.receipt('reports', day)
             if step and {k: v for k, v in (step.get('late_pieces') or {}).items() if k != 'checked_at'} != summary:
                 from frankie_box_durable import write_json
+                # N-1 (fresh review): re-read right before the write and write only when the step is the one read (its
+                # `at` unchanged), so a reports render recorded meanwhile is never written over (its own next check
+                # records the result instead)
+                fresh = self.receipt('reports', day)
+                if not fresh or fresh.get('at') != step.get('at'):
+                    self.log('reports %s: the step was re-recorded during the late-pieces check; result not written '
+                             'over it (outcome %s)' % (day, outcome))
+                    return outcome
+                step = fresh
                 checked = dict(summary, checked_at=time.time())
                 # also under the step's `inspection` (projected whole by frankie_box_workflow_inspection)
                 write_json(self.receipt_path('reports', day), dict(step, late_pieces=checked,
@@ -3948,11 +3957,24 @@ class Run:
                                                    counts=(receipt or {}).get('counts') if bound else None,
                                                    publication=(receipt or {}).get('publication') if bound else None)))
         if code == 0 and bound:
-            return self.record('survivors', batch_key, 'done', receipt=receipt.get('receipt'), survivors=receipt.get('survivors'),
+            done = self.record('survivors', batch_key, 'done', receipt=receipt.get('receipt'), survivors=receipt.get('survivors'),
                                counts=receipt.get('counts'), publication=receipt.get('publication'),
                                listed_count=receipt.get('listed'), integrity_failures=receipt.get('integrity_failures'),
                                late_knowledge=receipt.get('late_knowledge'), all99_coverage=receipt.get('all99_coverage'),
                                workflow_report=receipt.get('workflow_report'), **fields)
+            # R-A (fresh review): the candidates receipt is a late piece of the batch's arm days whose reports are already
+            # done; each gets its revision under the same number when the join's inputs changed (reports_stale). Only a
+            # done reports step is revised (a day still rendering renders on the current inputs itself); a revision's
+            # failure is that day's reports receipt, never this boundary's
+            for entry in entries:
+                if entry.get('classroom_arm') and (self.receipt('reports', entry['day']) or {}).get('status') == 'done':
+                    try:
+                        if self.reports_stale(entry):
+                            self.guarded('reports', entry)
+                    except Exception as error:  # noqa: BLE001 - never this stage's outcome; named in the log
+                        self.log('survivors %s: report revision of %s not made (%s: %s)' % (
+                            batch_key, entry['day'], type(error).__name__, error))
+            return done
         return self.record('survivors', batch_key, 'failed', reason='no survivor update receipt bound to this boundary after the '
                                                                     'step (exit %s; its log names why)' % code, **fields)
 

@@ -906,3 +906,39 @@ source only; nothing ran; no account call.
 
 Checks: AST parse clean on the three files; `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED. A
 fresh independent review is required before integration.
+
+## 14. The fresh review's required items R-A, R-C, R-D and nits N-1, N-3 (2026-10-07 night, session 2; review `fb97f35`)
+
+Base: `fb97f35` on `ccr-d2f8f826-iefeah-frankie` (the integration push is held for Greg). Uncommitted; source only;
+nothing ran; no account call. R-B belongs to the day-file agent and is not touched here.
+
+- **R-A** (late pieces never revised the reports):
+  - `frankie_box_frankie_queue._finish_steps`: after Jev ends in `X.FINISHED` and before `_close`, `run.reports_stale(e)`
+    then `run.guarded('reports', e)`, in the same slot, no model call. The outcome is in the finish facts as
+    `reports_revision`. A check that raises (a corrupt school chain) is listed `not_checked` and never stops the close.
+  - `Run.survivors`: after a done boundary, every classroom-arm day of the batch whose reports step is done gets
+    `reports_stale` then `guarded('reports')`. A revision's failure is that day's reports receipt; it is logged and never
+    changes the boundary's outcome.
+- **N-1** `Run.reports_late_pieces`: re-reads the reports step immediately before writing and writes only when its `at`
+  is the one read. A render recorded meanwhile is never written over; the next check records the result.
+- **N-3** `frankie_box_successor_dispatch` waiting_school branch: the `exchange_not_done` disposition now also runs
+  `reports_stale` (the late-pieces check). A changed join gets its revision there, the exchange's state named.
+- **R-C** (a failed finish released its owner, so a failed Jev was refused forever):
+  - `_release_owner(..., failed_finish=True)` on both the finish-only route and the one-slot route keeps the released
+    owner's bookings as `failed_finish_bookings`.
+  - `_bind_owner` (the retry, new owner) consumes them once. When `_jev_progress` finds the day's retained Jev request
+    with no progress (the step receipt names a request, Jev is not finished, its helper receipt is absent or `failed`),
+    the new owner carries a `rebooked` decision `by='queue-after-failed'` with those `held_bookings`. `Run.jev_rebooked`
+    then mints the create-only `.rebookN` successor; the original request is never changed.
+  - Otherwise the decision is recorded under `owner_rebooks` with `not_applied` and its reason: no request, Jev
+    finished, unreadable helper receipt, or a helper receipt in another state (the owner decides).
+- **R-D** `frankie_box_experiment_search._discovery_compute` (assigned to me for this pass; normally Codex's file): when
+  the problem's result file already exists, it is read back and its pin returned (`read_back` named), never recomputed.
+  It stands only when it is this exact problem: schema, id, cell, cell value, target, features, seeds and regressor
+  settings. Anything else is retained and refused, as before. I chose this over dropping `seconds` because a fitted
+  problem is not reproducible across processes either.
+
+Checks: AST parse and `git diff --check` clean on the four changed files.
+
+SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED. A fresh independent review of these fixes is required before
+integration.

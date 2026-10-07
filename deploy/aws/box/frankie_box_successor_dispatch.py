@@ -772,6 +772,17 @@ def drain(run, day):
                             elif exchange.get('status') not in ('done', 'reused'):
                                 recovered['reports'] = dict(status='exchange_not_done', prior=exchange.get('status'),
                                                             reason='the exchange is not done; the reports revise after it')
+                                # N-3 (fresh review): the late-pieces check runs whatever the exchange's state
+                                # (Run.reports_stale's contract); a changed join still gets its revision now
+                                run._school_recovery.add(day)
+                                try:
+                                    if run.reports_stale(entry):
+                                        recovered['reports'] = dict(
+                                            {k: (run.guarded('reports', entry) or {}).get(k)
+                                             for k in ('status', 'reason', 'report_number')},
+                                            exchange='not done (%s); revised for late pieces' % exchange.get('status'))
+                                finally:
+                                    run._school_recovery.discard(day)
                             else:
                                 run._school_recovery.add(day)
                                 try:

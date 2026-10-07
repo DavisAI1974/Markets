@@ -1520,6 +1520,29 @@ def _discovery_compute(args):
     import frankie_box_experiment_transforms as T
     problem_id, cell_col, cell_value, y, features, seeds, niterations, maxsize = args
     started = time.time()
+    out = _JOB['discovery_dir'] / 'problems' / (problem_id + '.json')
+    if out.is_file():
+        # R-D (fresh review): a crash between this file and its recovery pickle leaves the written result; it is read
+        # back, never recomputed (the bytes carry wall `seconds`, and a fitted problem is not reproducible across
+        # processes). It stands only when it is this exact problem (id, cell, target, features, seeds, regressor
+        # settings); anything else is retained and refused, as before
+        data = out.read_bytes()
+        try:
+            prior = json.loads(data)
+        except ValueError as error:
+            raise ValueError('discovery result exists but is not readable JSON (retained for recovery): %s: %s' % (out, error))
+        expected = dict(schema=DISCOVERY_SCHEMA + '_PROBLEM', id=problem_id, cell=cell_col, cell_value=cell_value, target=y,
+                        features=[dict(name='x%d' % i, series=x, lag=k) for i, (x, k) in enumerate(features)],
+                        seeds=list(seeds), regressor=dict(module='odcore.symbolic', configuration='_regressor',
+                                                          niterations=niterations, maxsize=maxsize))
+        expected = json.loads(json.dumps(expected, sort_keys=True, default=str))   # the file's own JSON encoding
+        if not isinstance(prior, dict) or {k: prior.get(k) for k in expected} != expected:
+            raise ValueError('discovery result exists for another problem definition (retained for recovery): %s' % out)
+        return dict({k: prior.get(k) for k in ('id', 'cell', 'cell_value', 'target', 'rows_in_cell', 'rows_used', 'status',
+                                                'reason', 'seconds')},
+                    features=len(features), file=str(out.relative_to(_JOB['discovery_dir'])), bytes=len(data),
+                    sha256=hashlib.sha256(data).hexdigest(), fitted_seeds=len(prior.get('fits') or []),
+                    read_back='the result file written before a crash, read back (not recomputed)')
     series = _JOB['series']
     idx = _JOB['cells'][(cell_col, cell_value)]
     n = len(series[y])
@@ -1582,7 +1605,6 @@ def _discovery_compute(args):
                           note='each seed retained individually; reproduction across seeds and acceptance are scientific '
                                'checking (not this stage)')
     result['seconds'] = round(time.time() - started, 3)
-    out = _JOB['discovery_dir'] / 'problems' / (problem_id + '.json')
     data = (json.dumps(result, indent=1, sort_keys=True, default=str) + '\n').encode()
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.is_file() and out.read_bytes() != data:
