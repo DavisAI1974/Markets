@@ -67,10 +67,12 @@ def _booked_cpus():
 
 
 def core_plan():
-    """One role per booked CPU after the first (the system/coordinator CPU). The six native/evidence roles take one
-    CPU on each of six distinct physical cores, as before; every other booked CPU, the second hardware thread of a core
-    included, is a full-book worker. A 16-CPU lane on 16 cores gives 15 roles (9 book) as before; a 32-CPU booking gives
-    31 (25 book). The book results do not depend on the worker count: ParallelBook partitions levels by price modulo
+    """One role per booked CPU after the first (the system/coordinator CPU) and after the ROOT core's second hardware
+    thread (left idle: the ROOT role has a whole core). The six native/evidence roles take one CPU on each of six
+    distinct physical cores, as before; every other booked CPU, the second hardware thread of a core included, is a
+    full-book worker. A 16-CPU lane on 16 cores gives 15 roles (9 book) as before; a 32-CPU booking on 16 cores x 2
+    threads gives 30 (24 book); the 16-CPU native half of the side-by-side ROOT (8 cores x 2) gives 14 (8 book). The book
+    results do not depend on the worker count: ParallelBook partitions levels by price modulo
     the count and assembles them with the pinned original arithmetic (frankie_box_native_auxiliary)."""
     seen, cores, siblings = set(), [], []
     for cpu in _booked_cpus():
@@ -85,7 +87,11 @@ def core_plan():
     if len(cores) < 8:
         raise ValueError('six native/evidence cores, a book core and a system core required')
     roles = ['ROOT', 'queue', 'replenishment', 'census', 'encoder-1', 'encoder-2']
-    places = cores[1:] + siblings
+    # The ROOT role is the traversal's serial consumer: its core's other hardware thread stays idle so it has a whole
+    # physical core (Greg, 2026-10-07); every other sibling remains a book worker. On a lane without siblings nothing
+    # changes. The book results do not depend on the worker count (above).
+    root_core = (cores[1]['package'], cores[1]['core'])
+    places = cores[1:] + [s for s in siblings if (s['package'], s['core']) != root_core]
     roles += ['book-' + str(index + 1) for index in range(len(places) - len(roles))]
     return dict(zip(roles, places))
 
