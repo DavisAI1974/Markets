@@ -492,16 +492,47 @@ def _root_overlap_env():
     return {'FRANKIE_ROOT_NATIVE_OVERLAP': value} if value in ('on', 'off') else {}
 
 
+def _entry_running(entry):
+    """A day whose work may be live: the entry or its finish is running, or its state is unknown (an owner gone without
+    an acknowledgment: possibly still running). Such a day never changes source."""
+    finish = (entry.get('finish') or {}).get('state')
+    return entry.get('state') in ('running', 'unknown') or finish in ('running', 'unknown')
+
+
 def _source_wait(entry, code_root, commit):
-    """Admission-only source check; a refusal keeps the entry and any held day intact."""
+    """Admission source check (called under the queue lock). Greg, 2026-10-07: "The box is going to follow the days
+    around as it moves through the workflow": a day that is NOT running (saved, resumed, queued, failed or waiting)
+    follows the worker's current source; the change is recorded on the entry (source_rebinds: old and new commit and
+    code_root, when, the rule) and on its owner binding (owner.source_history), the old binding kept. The day's own
+    stage resume checks still decide (ROOT's legacy/input identities, the classroom's phase keys, ...): a stage that
+    refuses the new code refuses visibly, as before. A RUNNING (or unknown) day never moves: it waits with the reason."""
     owner = entry.get('source_owner')
-    if owner is None:
-        if entry.get('attempts') or entry.get('finish'):
-            return 'retained day has no source-owner binding; explicit owner recovery required'
-        return None
     expected = dict(commit=commit, code_root=str(Path(code_root).resolve()))
+    if owner is None:
+        if (entry.get('attempts') or entry.get('finish')) and _entry_running(entry):
+            return 'a running day has no source-owner binding; it never changes source while it runs'
+        return None
     if owner != expected:
-        return 'retained day source differs from this worker; resume with its original commit and checkout'
+        if _entry_running(entry):
+            return ('the day is running (or unknown) on its source %s; a running day never moves to another source (save it '
+                    'first; a saved day follows the current source on its next admission)' % owner.get('commit'))
+        if not Path(expected['code_root']).is_dir():
+            return 'this worker\'s checkout %s is unavailable; the day keeps its source %s' % (
+                expected['code_root'], owner.get('commit'))
+        record = dict(at_utc=utc(), at=time.time(), previous=dict(owner), new=dict(expected), pid=os.getpid(),
+                      state=entry.get('state'), finish=(entry.get('finish') or {}).get('state'),
+                      rule='a day that is not running follows the current source (Greg, 2026-10-07); its stages\' own '
+                           'resume identity checks still decide')
+        entry.setdefault('source_rebinds', []).append(record)
+        entry['source_owner'] = dict(expected)
+        if isinstance(entry.get('owner'), dict) and (entry['owner'].get('commit'), entry['owner'].get('code_root')) != \
+                (expected['commit'], expected['code_root']):
+            history = list(entry['owner'].get('source_history') or [])
+            history.append(dict(commit=entry['owner'].get('commit'), code_root=entry['owner'].get('code_root'),
+                                until_utc=record['at_utc']))
+            entry['owner'] = dict(entry['owner'], commit=expected['commit'], code_root=expected['code_root'],
+                                  source_history=history)
+        return None
     if not Path(owner['code_root']).is_dir():
         return 'retained day checkout is unavailable; restore its original source before resume'
     return None
@@ -2142,6 +2173,42 @@ def owner_status(run, day):
                          else 'save pending acknowledgment' if (root or {}).get('save_request') else (root or {}).get('state')))
 
 
+def retire_run(run, by, reason):
+    """ACTION=retire RUN=: a dead run's line entries leave both lines' active lists and are kept, whole, under the line's
+    `retired` list with the record (who, when, the reason, their state then); nothing is deleted. Its duplicate-data
+    claim on a day then no longer blocks a new run of the same day. Refused (nothing changed) while any of the run's
+    entries is running or unknown and that line's worker is alive. Its retained bookings, ROOT directories, receipts and
+    brain entries are untouched (listed by their own owners)."""
+    if not reason:
+        raise SystemExit('ACTION=retire needs REASON (recorded on every retired entry)')
+    out = {}
+    with locked():
+        docs = {line: load(line) for line in LINES}
+        for line, doc in docs.items():
+            live = [x for x in doc['entries'] if x['run'] == run and _entry_running(x)]
+            if live and worker_state(line)[1]:
+                raise SystemExit('%s: %s entr%s of run %s running/unknown while the %s worker is alive (%s); nothing retired' % (
+                    line, len(live), 'y' if len(live) == 1 else 'ies', run, line,
+                    ', '.join('seq %d %s %s' % (x['seq'], x['day'], x['state']) for x in live)))
+        for line, doc in docs.items():
+            mine = [x for x in doc['entries'] if x['run'] == run]
+            if not mine:
+                out[line] = []
+                continue
+            record = dict(by=by, reason=reason, at_utc=utc(), at=time.time(), pid=os.getpid(), host=socket.gethostname())
+            for x in mine:
+                doc.setdefault('retired', []).append(dict(x, retired=dict(record, state_then=x['state'],
+                                                                         finish_then=(x.get('finish') or {}).get('state'))))
+            doc['entries'] = [x for x in doc['entries'] if x['run'] != run]
+            save(line, doc)
+            for x in mine:
+                event(line, 'retired', seq=x['seq'], run=run, day=x['day'], state=x['state'], by=by, reason=reason)
+            out[line] = [dict(seq=x['seq'], day=x['day'], state=x['state']) for x in mine]
+    return dict(schema='FRANKIE_QUEUE_RETIRE_V1', run=run, retired=out, by=by, reason=reason,
+                note='entries kept under each line\'s retired list; bookings, ROOT directories, receipts and brain entries '
+                     'untouched')
+
+
 def resume_owner(run, day, by, rebook=False):
     """The explicit resume of a saved/unknown owned day: its marker archived beside its acknowledgment, the ROOT-line entry
     (and its class entry) back to queued WITH the same owner binding (attempt, CPUs, booking, marker), so the next
@@ -2200,7 +2267,9 @@ def resume_owner(run, day, by, rebook=False):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('--action', required=True, choices=('show', 'enqueue', 'worker', 'kick', 'handover', 'save', 'status', 'resume'))
+    p.add_argument('--action', required=True, choices=('show', 'enqueue', 'worker', 'kick', 'handover', 'save', 'status', 'resume',
+                                                      'retire'))
+    p.add_argument('--reason', help='retire: the recorded reason')
     p.add_argument('--wait-lock', action='store_true', help='worker: wait for the running worker to end (handover)')
     p.add_argument('--line', choices=LINES)
     p.add_argument('--code-root')
@@ -2219,6 +2288,13 @@ def main():
         if a.events != 'all' and not a.events.isdigit():
             raise SystemExit('--events: a number or all')
         print(json.dumps(show(a.events), indent=1, sort_keys=True, default=str))
+        return 0
+    if a.action == 'retire':
+        import re
+        if not (a.run and re.fullmatch('[A-Za-z0-9_-]{1,64}', a.run)):
+            raise SystemExit('--run [A-Za-z0-9_-] required')
+        sys.path.insert(0, str(HERE))
+        print(json.dumps(retire_run(a.run, 'dispatch retire', a.reason), indent=1, sort_keys=True, default=str))
         return 0
     if a.action in ('save', 'status', 'resume'):
         import re

@@ -24,12 +24,17 @@
 #   resume  RUN DAY [REBOOK=on]  a saved/unknown owned day back in line with the SAME owner (attempt, CPUs, marker
 #                                archived); refused when its retained booking is gone unless REBOOK=on (the same attempt
 #                                on any free 16 CPUs, an explicit decision); then kick LINE=root (SCOPE=RUN:...)
+#   retire  RUN REASON           a dead run's line entries leave both lines (kept whole under each line's `retired` list
+#                                with who/when/why; nothing deleted), so its duplicate-data claim no longer blocks a new
+#                                run of the same day; refused while one of its entries runs under a live worker
+# A day that is NOT running follows the worker's current source on its next admission (recorded on the entry as
+# source_rebinds; its stages' own resume checks still decide); a running day never moves.
 # LINE is root or class. MARKETS_SHA (the dispatched commit) is required for every action but show and status.
 set -eu
 export HOME="${HOME:-/root}"
 : "${CODE_ROOT:?staged checkout required}"
 ACTION="${ACTION:-show}"
-case "$ACTION" in show|enqueue|worker|kick|handover|save|status|resume) ;; *) echo "ACTION must be show, enqueue, worker, kick, handover, save, status or resume" >&2; exit 2;; esac
+case "$ACTION" in show|enqueue|worker|kick|handover|save|status|resume|retire) ;; *) echo "ACTION must be show, enqueue, worker, kick, handover, save, status, resume or retire" >&2; exit 2;; esac
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 case "$CODE_ROOT" in *..*) echo "no .. in CODE_ROOT" >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
@@ -38,6 +43,13 @@ SCRIPT="$CODE_ROOT/deploy/aws/box/frankie_box_frankie_queue.py"
 if [ "$ACTION" = show ]; then
   case "${EVENTS:-50}" in all) ;; ""|*[!0-9]*) echo "EVENTS must be a number or all" >&2; exit 2;; esac
   exec "$PY" -B "$SCRIPT" --action show --events "${EVENTS:-50}"
+fi
+if [ "$ACTION" = retire ]; then
+  : "${RUN:?the dead run name required}"; : "${REASON:?REASON (recorded on every retired entry) required}"
+  case "$RUN" in ""|*[!A-Za-z0-9_-]*) echo "RUN: letters, digits, _ and - only" >&2; exit 2;; esac
+  : "${MARKETS_SHA:?full dispatched commit required}"
+  [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
+  exec "$PY" -B "$SCRIPT" --action retire --run "$RUN" --reason "$REASON"
 fi
 case "$ACTION" in save|status|resume)
   : "${RUN:?the orchestrator run name required}"; : "${DAY:?YYYYMMDD required}"

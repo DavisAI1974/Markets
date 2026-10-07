@@ -1440,3 +1440,24 @@ Uncommitted; source only; nothing ran.
   `WORKERS=15` from `Run.search`. Confirm no inner step falls back to `os.cpu_count()`.
 
 Checks: AST parse and `git diff --check` clean.
+
+## 24. A saved day follows the current source; ACTION=retire for dead runs (Greg, 2026-10-07)
+
+Uncommitted; source only. Files: `deploy/aws/box/frankie_box_frankie_queue.py`, `frankie_box_frankie_queue.sh`.
+
+- **`_source_wait`.** It runs under the queue lock at every admission and reconcile.
+  - A day that is NOT running (saved, resumed, queued, failed or waiting) now follows the worker's current source.
+  - It writes `source_rebinds` on the entry: when, previous and new commit/code_root, state and finish then, the rule.
+  - It moves the owner binding's commit/code_root to the new source, keeping the old ones in `owner.source_history`.
+  - A running or unknown day (`_entry_running`: state or finish running/unknown) never moves; it waits with the
+    reason. An unknown day may still be running.
+  - The stages' own resume identity checks are unchanged and still decide (ROOT's legacy and input identities, the
+    classroom's phase keys).
+- **`ACTION=retire RUN= REASON=`** (new `retire_run`).
+  - The run's entries leave both lines' active lists and are kept whole under each line's `retired` list, with who,
+    when, the reason, and the state then. Nothing is deleted; an event is logged.
+  - The dead run's duplicate-data entry then no longer blocks `enqueue` of the same day by a new run.
+  - Refused, with nothing changed, while one of its entries is running or unknown under a live worker of that line.
+  - Bookings, ROOT directories, receipts and brain entries are untouched.
+
+Checks: AST parse, `bash -n`, `git diff --check` clean.
