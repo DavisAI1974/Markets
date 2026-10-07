@@ -24,6 +24,7 @@ import hashlib
 import json
 import os
 import signal
+import time
 import uuid
 import sys
 from pathlib import Path
@@ -36,6 +37,61 @@ from frankie_box_monday_calculations import whole_day_pin_document  # noqa: E402
 
 PARENT = Path('/opt/frankie-box/work/experiment-roots')
 INGESTION_SCHEMA = 'BOSS_BLOCK_INGESTION_RECEIPT_V1'
+REPOSITORY = Path(__file__).resolve().parents[3]       # this checkout's root (the one that builds the documents)
+CHECKOUT_REBIND_SCHEMA = 'FRANKIE_ROOT_CHECKOUT_REBIND_V1'
+
+
+def _checkout_relative(path):
+    """`path` relative to this checkout's root, or None when it is not inside it."""
+    try:
+        return Path(path).relative_to(REPOSITORY).as_posix()
+    except (TypeError, ValueError):
+        return None
+
+
+def content_rebinds(saved, built, where='$'):
+    """Identity is content, not location (Greg, 2026-10-07: a saved ROOT resumes from any checkout of the same source).
+
+    Compares a saved ROOT document with the one this checkout builds. Returns [] when they are equal; the list of
+    checkout moves when the ONLY differences are file witnesses ({path, bytes, sha256, ...}) whose bytes, sha256 and
+    every other key are equal and whose paths name the same file inside a checkout: the current path is
+    <this checkout>/<rel> and the saved path is <another absolute prefix>/<rel>. Returns None for any other difference
+    (a hash, bytes, schema, data_workers, policy, a key, a value type, a path outside the checkout). Old saved documents
+    (absolute paths of the checkout that wrote them) fall under the same rule; nothing saved is rewritten."""
+    if isinstance(saved, dict) and isinstance(built, dict):
+        if set(saved) != set(built):
+            return None
+        moves = []
+        if ({'path', 'bytes', 'sha256'} <= set(saved) and saved['path'] != built['path']
+                and isinstance(saved['path'], str) and isinstance(built['path'], str)):
+            rel = _checkout_relative(built['path'])
+            if (rel is None or not saved['path'].startswith('/') or not saved['path'].endswith('/' + rel)
+                    or len(saved['path']) <= len(rel) + 1):
+                return None
+            for key in sorted(saved):
+                if key != 'path' and content_rebinds(saved[key], built[key], '%s.%s' % (where, key)) != []:
+                    return None
+            return [dict(at=where, saved_path=saved['path'], current_path=built['path'], relative=rel,
+                         saved_checkout=saved['path'][:-len(rel) - 1], current_checkout=str(REPOSITORY),
+                         bytes=saved['bytes'], sha256=saved['sha256'])]
+        for key in sorted(saved):
+            found = content_rebinds(saved[key], built[key], '%s.%s' % (where, key))
+            if found is None:
+                return None
+            moves.extend(found)
+        return moves
+    if isinstance(saved, list) and isinstance(built, list):
+        if len(saved) != len(built):
+            return None
+        moves = []
+        for i, (a, b) in enumerate(zip(saved, built)):
+            found = content_rebinds(a, b, '%s[%d]' % (where, i))
+            if found is None:
+                return None
+            moves.extend(found)
+        return moves
+    # leaves: equal value AND equal JSON type (True never equals 1 here)
+    return [] if type(saved) is type(built) and saved == built else None
 
 
 def _sha256_file(path):
@@ -196,12 +252,21 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     PARENT.mkdir(parents=True, exist_ok=True)
     output.mkdir(mode=0o700, exist_ok=resume)
     sync_directory(PARENT)
+    rebinds = []
     def save_or_match(path, body):
+        """The saved document when this checkout builds the same content (equal, or equal but for the checkout prefix
+        of recorded file paths: content_rebinds); it stays the identity, never rewritten. Any other difference refuses
+        (retained, never discarded). A fresh ROOT publishes the built document."""
         if resume and path.exists():
-            if json.loads(path.read_bytes()) != body:
+            saved = json.loads(path.read_bytes())
+            moves = content_rebinds(saved, json.loads(json.dumps(body, sort_keys=True, allow_nan=False)))
+            if moves is None:
                 raise ValueError('retained ROOT source/pin differs: %s' % path)
-        else:
-            _save_new_complete(path, body)
+            if moves:
+                rebinds.append(dict(document=str(path), sha256=_sha256_file(path), moves=moves))
+            return saved
+        _save_new_complete(path, body)
+        return body
     source = dict(trading_day=day, manifest_hash=receipt['manifest_hash'], container=container, completion=completion,
                   source_prefix_hash=receipt['source_prefix_hash'], record_count=receipt['record_count'])
     # the legacy (bedrock off) text below is part of an older saved plan's pinned calculation-pins.json bytes: kept
@@ -228,9 +293,21 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             producer='existing_pinned_native_traversal', bedrock=True, source_manifest=manifest_pin,
             representation='exact_local_ledgers_and_existing_compressed_projections', digest_bedrock=False,
             emission=emission_binding())
-    save_or_match(output / 'source-binding.json', binding)
+    # on resume the SAVED binding stays the identity (Session reads source-binding.json; every stage identity and the
+    # retained derivation compare against it), whatever checkout path this process built
+    binding = save_or_match(output / 'source-binding.json', binding)
     if external['status'] == 'attached':
         save_or_match(output / 'external-computation.json', external_computation)
+    if rebinds:
+        # the move is recorded in the attempt (append-only, one record per resuming process): old/new checkout,
+        # this commit, every moved path with its unchanged bytes and sha256; the saved documents are untouched
+        records = output / 'checkout-rebinds'
+        records.mkdir(mode=0o700, exist_ok=True)
+        _save_new_complete(records / ('%d-%s.json' % (time.time_ns(), uuid.uuid4().hex[:8])), dict(
+            schema=CHECKOUT_REBIND_SCHEMA, at=time.time(), commit=commit, current_checkout=str(REPOSITORY),
+            saved_checkouts=sorted({m['saved_checkout'] for r in rebinds for m in r['moves']}), documents=rebinds,
+            rule='the saved documents differ from this checkout\'s only in the checkout prefix of recorded file paths '
+                 'whose bytes and sha256 are equal; the saved documents stay the identity'))
     session = Session(output, day, '00', None)
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
     session.phase('deriving', 'experiment ROOT: sealed day, legacy and native calculations; no giant bedrock digest'
@@ -296,6 +373,10 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                                'and error in derive.json / work/derived/.rows/failures.jsonl; every other record calculated'),
                 model_calls=0, source_replays=0, source_writes=0,
                 status='calculations_retained' if not failures else 'calculations_retained_with_failures')
+    rebind_dir = output / 'checkout-rebinds'
+    if rebind_dir.is_dir():
+        # additive: the checkout moves recorded in this attempt (content_rebinds), each pinned
+        calc['checkout_rebinds'] = [witness(path) for path in sorted(rebind_dir.glob('*.json'))]
     # How the ROOT used its lane (operator inspection only; never an input to a calculation): the native stage beside
     # the legacy pass (work/native-overlap.json, FRANKIE_ROOT_NATIVE_OVERLAP_V1: child pid, CPUs, seconds, outcome) or
     # the serial order when it is absent (a record of an earlier attempt stays pinned as written). No hash-pass count:

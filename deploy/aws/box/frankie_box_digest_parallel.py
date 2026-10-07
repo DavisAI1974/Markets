@@ -19,6 +19,7 @@ Row sources are described, not passed: ('members', database, group keys) or ('ro
 excluded, start, count), so each helper reads its own range of a finished sources.sqlite read-only.
 """
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+import contextlib
 import copy
 import hashlib
 import json
@@ -717,20 +718,9 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         _save_checkpoint(scratch, key, code, passes)
         return passes[label]
 
-    owned = pool is None
-    if owned:
-        pool = PinnedPool(cpus, label='table %s helpers' % name)
-    try:
-        return _write_table_passes(destination, name, specs, scratch, pool, note, passes, step, parts, dictionary,
-                                   drop, reserve)
-    finally:
-        if owned:
-            pool.close()
-
-
-def _write_table_passes(destination, name, specs, scratch, pool, note, passes, step, parts, dictionary, drop, reserve):
-    """write_table_parallel's passes on the given pool (unchanged order: snapshot, plan, merge, final, copy, proof)."""
-    if True:
+    shared = pool
+    with (contextlib.nullcontext(shared) if shared is not None else PinnedPool(cpus, label='table %s helpers' % name)) \
+            as pool:
         _room(scratch, reserve=reserve)
         snaps = step('snapshot', lambda: list(pool.map(_snapshot, [(spec, str(p)) for spec, p in zip(specs, parts)])))
         facts, n, first, seeds = _seeds(snaps)
@@ -798,7 +788,7 @@ def _write_table_passes(destination, name, specs, scratch, pool, note, passes, s
         raise ValueError('table parts do not end the file')
     jobs = [(str(destination), off, size, s['n'], spec, header, str(inverse / 'table.sqlite'), seed)
             for off, size, s, spec, seed in zip(offsets, sizes, snaps, specs, seeds)]
-    verified = sum(pool.map(_verify, jobs))
+    verified = sum(pool_map_verify(jobs, cpus, pool=shared))
     if TS._identity(destination) != before:
         raise ValueError('table changed during inverse proof')
     if verified != n:

@@ -58,6 +58,8 @@ import json
 import math
 import os
 import sys
+import threading
+import time
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -459,6 +461,187 @@ def _facts(entry, open_ns):
                 publication_times_in_day=[k['published_ns'] for k in during], known_state_counts=counts)
 
 
+# ---------------------------------------------------------------------------------------------- the dot products' bits
+# Greg, 2026-10-07 night ("do the fastest loop"; N = 32, "we are going from 16 to 32 after the day run is done"): the
+# Pearson's three dot products are numpy.dot -> OpenBLAS ddot, which above OPENBLAS_DDOT_ONE_THREAD_MAX elements splits
+# the vectors into one chunk per OpenBLAS thread and sums the partials, so the last bits followed the OpenBLAS thread
+# count (by default the CPU count at library load: 16 on a 16-CPU lane, 32 on the 32-CPU day). The bits are now those of
+# exactly OPENBLAS_REDUCTION_THREADS = 32 OpenBLAS threads on every lane and in every process (blas_reduction(): one
+# setting per process, inherited by a fork):
+#   EMULATED (the default once proven): numpy's OpenBLAS runs one thread (no oversubscription in pools or in the native
+#     series threads) and _dot reproduces the 32-thread reduction: the same chunk boundaries, the same per-chunk kernel
+#     (numpy.dot on the slice, one thread) and the partials summed in OpenBLAS's order from 0.0. Used ONLY after a
+#     startup self-check proves it bit-identical to the threaded 32 result on test vectors of many sizes (below and above
+#     the split, odd lengths, NaN / inf / -0.0 / subnormal / overflow);
+#   THREADED (automatic fallback when the self-check, or setting the count, fails; the reason recorded): numpy's OpenBLAS
+#     set to exactly 32 threads and numpy.dot as is;
+#   NOT_CONTROLLED (numpy's OpenBLAS cannot be found or set, e.g. threadpoolctl absent): numpy.dot with the library as it
+#     loaded (the wrappers' OPENBLAS_NUM_THREADS=32, which OpenBLAS caps at the CPU count at load); recorded, never hidden.
+# The values computed are the threaded-32 values in the first two modes; the record goes on the receipts (classroom
+# received.cpu_pinning.blas_reduction, search MANIFEST cpu_placement.blas_reduction).
+OPENBLAS_REDUCTION_THREADS = 32
+OPENBLAS_DDOT_ONE_THREAD_MAX = 10000
+OPENBLAS_REDUCTION_SCHEMA = 'FRANKIE_OPENBLAS_REDUCTION_V1'
+OPENBLAS_REDUCTION_RULE = (
+    'OpenBLAS 0.3.34 kernel/x86_64/ddot.c: n <= 10000 (or a zero increment) runs dot_compute on one thread, otherwise '
+    'nthreads = num_cpu_avail(1) = blas_cpu_number and the partials are summed in thread order starting from 0.0; '
+    'driver/others/blas_l1_thread.c blas_level1_thread_with_return_value: contiguous chunks, thread t takes '
+    'width = (remaining + nthreads - t - 1) / (nthreads - t) (blas_quickdivide is exact integer division under '
+    'USE64BITINT, the numpy wheel build). driver/others/memory.c: the count at load is min(OPENBLAS_NUM_THREADS, the '
+    'affinity CPU count, MAX_THREADS); openblas_set_num_threads is capped only by MAX_THREADS (64)')
+_BLAS = {}                      # this process's one setting (a fork inherits it with the library's thread count)
+_BLAS_LIB = []                  # the threadpoolctl controller of numpy's OpenBLAS, when found
+_BLAS_LOCK = threading.Lock()
+
+
+def _openblas_widths(n, threads=OPENBLAS_REDUCTION_THREADS):
+    """The chunk widths blas_level1_thread_with_return_value hands its threads for an n-element ddot."""
+    widths, left, used = [], int(n), 0
+    while left > 0:
+        width = (left + threads - used - 1) // (threads - used)
+        left -= width
+        if left < 0:
+            width += left
+        widths.append(width)
+        used += 1
+    return widths
+
+
+def _emulated_dot(np, a, b):
+    """OpenBLAS's 32-thread ddot on one thread: numpy.dot per chunk (the same kernel), partials summed in thread order
+    from 0.0. Python float. Defined for 1-D C-contiguous float64 vectors (the Pearson's centred arrays always are)."""
+    if a.shape != b.shape:
+        return float(np.dot(a, b))                  # numpy's own error for mismatched lengths
+    if not (a.ndim == 1 and a.dtype == np.float64 and b.dtype == np.float64 and a.flags.c_contiguous
+            and b.flags.c_contiguous):
+        raise ValueError('the emulated OpenBLAS reduction is proven for 1-D contiguous float64 vectors only')
+    n = int(a.shape[0])
+    if n <= OPENBLAS_DDOT_ONE_THREAD_MAX:
+        return float(np.dot(a, b))
+    widths = _openblas_widths(n)
+    if widths[0] > OPENBLAS_DDOT_ONE_THREAD_MAX and _BLAS_LIB and _BLAS_LIB[0].get_num_threads() != 1:
+        raise RuntimeError('numpy\'s OpenBLAS no longer runs one thread (%d): a chunk would split again'
+                           % _BLAS_LIB[0].get_num_threads())
+    dot, start = 0.0, 0
+    for width in widths:
+        end = start + width
+        dot = dot + float(np.dot(a[start:end], b[start:end]))
+        start = end
+    return dot
+
+
+def _dot(np, a, b):
+    """numpy.dot's value with the bits of exactly OPENBLAS_REDUCTION_THREADS OpenBLAS threads (numpy.float64)."""
+    mode = (_BLAS or blas_reduction())['mode']
+    if mode == 'EMULATED':
+        return np.float64(_emulated_dot(np, a, b))
+    return np.dot(a, b)
+
+
+def _bits(np, value):
+    return int(np.array([value], dtype=np.float64).view(np.uint64)[0])
+
+
+def _self_check_cases(np):
+    """Deterministic vectors: sizes below, at and above the split, odd lengths, chunk widths above the split (n > 32 *
+    10000), wide magnitudes (so the summation order shows in the bits), and NaN / inf / -inf / -0.0 / subnormal /
+    overflow placements."""
+    rng = np.random.default_rng(20261007)
+    sizes = (1, 2, 3, 7, 15, 16, 17, 31, 32, 33, 100, 1001, 9999, 10000, 10001, 10002, 10015, 10016, 10017, 10031, 10032,
+             10033, 10047, 12345, 16001, 20000, 31999, 32000, 32001, 65537, 99999, 100000, 160001, 319999, 320000,
+             320001, 320031, 320032, 320033, 333333, 480017, 654321, 1000003)
+    for n in sizes:
+        a = rng.standard_normal(n) * np.exp2(rng.integers(-30, 30, n))
+        b = rng.standard_normal(n) * np.exp2(rng.integers(-30, 30, n))
+        yield 'wide', a, b
+        if n >= 3 and n in (3, 17, 10001, 10033, 320001, 654321):
+            mid, last = n // 2, n - 1
+            for label, at, va, vb in (('nan', mid, np.nan, 1.0), ('inf', mid, np.inf, 2.0),
+                                      ('inf_minus_inf', last, -np.inf, 3.0), ('inf_times_zero', 0, np.inf, 0.0),
+                                      ('overflow', last, 1e300, 1e300), ('subnormal', mid, 5e-324, 1.0)):
+                x, y = a.copy(), b.copy()
+                x[at], y[at] = va, vb
+                if label == 'inf_minus_inf':
+                    x[0], y[0] = np.inf, 1.0
+                yield label, x, y
+            z = np.full(n, -0.0)
+            yield 'negative_zero', z, np.abs(b)
+
+
+def _blas_setup():
+    np = _np()
+    started = time.monotonic()
+    record = dict(schema=OPENBLAS_REDUCTION_SCHEMA, threads=OPENBLAS_REDUCTION_THREADS,
+                  one_thread_max=OPENBLAS_DDOT_ONE_THREAD_MAX, rule=OPENBLAS_REDUCTION_RULE, pid=os.getpid(),
+                  env={k: os.environ.get(k) for k in ('OPENBLAS_NUM_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS')})
+    try:
+        from threadpoolctl import ThreadpoolController
+        found = [c for c in ThreadpoolController().lib_controllers if c.internal_api == 'openblas']
+    except Exception as error:                       # noqa: BLE001 - recorded, never hidden
+        record.update(mode='NOT_CONTROLLED', reason='threadpoolctl unavailable: %s: %s' % (type(error).__name__, error))
+        return record
+    numpy_libs = str(Path(np.__file__).resolve().parent.parent / 'numpy.libs') + os.sep
+    own = [c for c in found if str(c.filepath).startswith(numpy_libs)]
+    lib = own[0] if len(own) == 1 else (found[0] if len(found) == 1 and not own else None)
+    if lib is None:
+        record.update(mode='NOT_CONTROLLED', reason='numpy\'s OpenBLAS not identified among %d loaded OpenBLAS '
+                                                    'libraries' % len(found),
+                      libraries=sorted(str(c.filepath) for c in found))
+        return record
+    record.update(library=dict(filepath=str(lib.filepath), version=lib.version, architecture=lib.architecture,
+                               threading_layer=lib.threading_layer), threads_at_setup=lib.get_num_threads())
+    lib.set_num_threads(OPENBLAS_REDUCTION_THREADS)
+    if lib.get_num_threads() != OPENBLAS_REDUCTION_THREADS:
+        record.update(mode='NOT_CONTROLLED', threads_now=lib.get_num_threads(),
+                      reason='numpy\'s OpenBLAS did not take %d threads' % OPENBLAS_REDUCTION_THREADS)
+        return record
+    lib.set_num_threads(1)
+    mismatch, error, cases, sizes, kinds, one_thread_differs = None, None, 0, set(), set(), 0
+    if lib.get_num_threads() != 1:
+        error = 'numpy\'s OpenBLAS did not take 1 thread (%d)' % lib.get_num_threads()
+    else:
+        _BLAS_LIB[:] = [lib]
+        try:
+            for label, a, b in _self_check_cases(np):      # one case at a time: 32 threads, then one thread
+                lib.set_num_threads(OPENBLAS_REDUCTION_THREADS)
+                want = _bits(np, np.dot(a, b))
+                lib.set_num_threads(1)
+                got = _bits(np, _emulated_dot(np, a, b))
+                one_thread_differs += _bits(np, np.dot(a, b)) != want
+                cases, sizes, kinds = cases + 1, sizes | {int(a.size)}, kinds | {label}
+                if got != want:
+                    mismatch = dict(case=label, n=int(a.size), threaded_bits=want, emulated_bits=got)
+                    break
+        except Exception as exc:                     # noqa: BLE001 - the fallback below, reason recorded
+            error = '%s: %s' % (type(exc).__name__, exc)
+        if error is None and mismatch is None and not one_thread_differs:
+            error = 'the threaded and one-thread results never differed: the check did not exercise the split'
+        lib.set_num_threads(1)
+    check = dict(cases=cases, sizes=sorted(sizes), kinds=sorted(kinds), mismatch=mismatch, error=error,
+                 cases_where_plain_one_thread_differs=one_thread_differs,
+                 seconds=round(time.monotonic() - started, 3))
+    if mismatch is None and error is None:
+        record.update(mode='EMULATED', threads_now=lib.get_num_threads(), self_check=check,
+                      reason='self-check bit-identical to %d OpenBLAS threads on every case' % OPENBLAS_REDUCTION_THREADS)
+        return record
+    _BLAS_LIB[:] = []
+    lib.set_num_threads(OPENBLAS_REDUCTION_THREADS)
+    record.update(mode='THREADED', threads_now=lib.get_num_threads(), self_check=check,
+                  reason='self-check failed (%s); numpy.dot under exactly %d OpenBLAS threads'
+                         % (error or 'first mismatch %(case)s n=%(n)d' % mismatch, OPENBLAS_REDUCTION_THREADS))
+    return record
+
+
+def blas_reduction():
+    """This process's dot-product setting (run once, under a lock; a fork inherits it): EMULATED, THREADED or
+    NOT_CONTROLLED with its reason, the library, the thread count and the self-check. Receipt-only, never an answer."""
+    if not _BLAS:
+        with _BLAS_LOCK:
+            if not _BLAS:
+                _BLAS.update(_blas_setup())
+    return json.loads(json.dumps(_BLAS, default=str))
+
+
 # ---------------------------------------------------------------------------------------------- pairs (the 171 shapes)
 def _pearson(np, x, y):
     n = int(x.size)
@@ -468,10 +651,10 @@ def _pearson(np, x, y):
     if bool(np.all(x == x[0])) or bool(np.all(y == y[0])):
         return {'present_overlap': n, 'pearson': None, 'reason': 'ZERO_VARIANCE'}
     dx, dy = x - x.mean(), y - y.mean()
-    vx, vy = float(np.dot(dx, dx)), float(np.dot(dy, dy))
+    vx, vy = float(_dot(np, dx, dx)), float(_dot(np, dy, dy))
     if vx == 0 or vy == 0:
         return {'present_overlap': n, 'pearson': None, 'reason': 'ZERO_VARIANCE'}
-    return {'present_overlap': n, 'pearson': float(np.dot(dx, dy) / math.sqrt(vx * vy)), 'reason': None}
+    return {'present_overlap': n, 'pearson': float(_dot(np, dx, dy) / math.sqrt(vx * vy)), 'reason': None}
 
 
 def _co_movement(np, ca, cb, x, y):

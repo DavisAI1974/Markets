@@ -63,25 +63,50 @@ case "$OPENING_RECEIPT" in
 esac
 case "$OPENING_RECEIPT" in *..*) echo "OPENING_RECEIPT must not contain .."; exit 2;; esac
 # CPU booking (Greg, 2026-09-29: "Correct 16 and no double booking"; "We don't double book cores or workers"): every
-# ingest, canary and conform day process books 8 CPUs in the box's ledger (frankie_box_cores.py) and runs under
-# taskset -c <its 8>, so every reader worker (pinned from cpus[1:] of the process's own affinity) and every encoder stays
-# inside them. THE RULE: VERIFY=inline runs the encode pool and the conformance-reader pool at the same time, so it needs
-# WORKERS x 2 + 1 CPUs; VERIFY=deferred and a conform run one pool: WORKERS + 1. Above 8 the dispatch is REFUSED here with
-# that reason (measured 2026-09-29: an inline WORKERS=7 ingest ran 14 workers + its parent). Fewer than 8 free: the day
-# does not start, prints CPU_BOOKING_WAITING with 'waiting: N free of 8 needed' and the script exits 75 (retry later).
-if [ -z "$WORKERS" ]; then
-  if [ "$ACTION" = conform ] || [ "$VERIFY" = deferred ]; then WORKERS=7; else WORKERS=3; fi
-fi
-case "$WORKERS" in ""|*[!0-9]*) echo "WORKERS must be an integer"; exit 2;; esac
-if [ "$ACTION" = conform ] || [ "$VERIFY" = deferred ]; then DEMAND=$((WORKERS + 1)); FITS=7; RULE="one pool: WORKERS + 1"
-else DEMAND=$((WORKERS * 2 + 1)); FITS=3; RULE="VERIFY=inline runs the encode and verify pools together: WORKERS x 2 + 1"; fi
-case "$ACTION" in canary|ingest|conform)
-  [ "$DEMAND" -le 8 ] || { echo "WORKERS=$WORKERS needs $DEMAND CPUs ($RULE), more than the 8 a day process books; refused (the most that fits: $FITS)"; exit 2; } ;;
-esac
+# ingest, canary and conform day process books its CPUs in the box's ledger (frankie_box_cores.py) and runs under
+# taskset -c <them>; inside, the parent is pinned to the lowest booked CPU and every encoder, replay and reader worker
+# to one other booked CPU, physical cores first (operations/ingest_cpus.py), so nothing floats and nothing leaves the
+# booking. SIZE (Greg, 2026-10-07 night: "Including ingest. Basically anything using a cpu to do its work"):
+#   DAY_CPUS=8|16|24|32|auto  the CPUs one day process books. auto = the free CPUs (frankie_box_cores.py free) divided by
+#     the days run side by side, rounded down to 8/16/24/32: one day takes the whole box, or the days fill it together.
+#     Default: auto for MODE=parallel and ACTION=conform (their pools scale with the CPUs), 8 for the sequential writer
+#     (its parent is the causal sequence; more encoders would idle); with WORKERS given, the smallest size it fits.
+#   WORKERS  default DAY_CPUS - 1. THE RULE: a day process runs ONE pool at a time (the encode pool ends at the seal,
+#     before the conformance reader starts; the parallel writer's replay/encode pool closes before its reader), so it
+#     needs WORKERS + 1 CPUs; a demand above DAY_CPUS is REFUSED with that reason (measured 2026-09-29: an inline
+#     WORKERS=7 ingest of the older writer kept both pools alive, 14 workers + its parent). The output never depends on
+#     the count: the encodings are pure, the replay segments are fixed by the plan, the reader only verifies.
+# A size not free: the day does not start, prints CPU_BOOKING_WAITING with 'waiting: N free of M needed' and the script
+# exits 75 (retry later).
+DAY_CPUS="${DAY_CPUS:-}"
+case "$DAY_CPUS" in ""|auto|8|16|24|32) ;; *) echo "DAY_CPUS must be 8, 16, 24, 32 or auto"; exit 2;; esac
+case "$WORKERS" in "") ;; *[!0-9]*) echo "WORKERS must be an integer"; exit 2;; esac
 case "$CANARY" in ""|*[!0-9]*) echo "CANARY must be an integer"; exit 2;; esac
 NCPU=$(nproc 2>/dev/null || echo 1)
-[ "$WORKERS" -le "$NCPU" ] || { echo "WORKERS must be at most the box's $NCPU CPUs"; exit 2; }
+[ -z "$WORKERS" ] || [ "$WORKERS" -le "$NCPU" ] || { echo "WORKERS must be at most the box's $NCPU CPUs"; exit 2; }
 [ "$CANARY" -ge 1 ] || { echo "CANARY must be at least 1"; exit 2; }
+AT=1
+size_day() {   # resolves DAY_CPUS and WORKERS for the day process(es) about to start (after the checkout: this commit's
+  # frankie_box_cores.py answers `free`); idempotent once resolved; AT = the days that will book side by side
+  if [ -z "$DAY_CPUS" ] && [ -n "$WORKERS" ]; then
+    for S in 8 16 24 32; do if [ $((WORKERS + 1)) -le "$S" ]; then DAY_CPUS=$S; break; fi; done
+    [ -n "$DAY_CPUS" ] || { echo "WORKERS=$WORKERS needs $((WORKERS + 1)) CPUs, more than the 32 a day process books; refused"; return 2; }
+  fi
+  if [ -z "$DAY_CPUS" ]; then
+    if [ "$MODE" = parallel ] || [ "$ACTION" = conform ]; then DAY_CPUS=auto; else DAY_CPUS=8; fi
+  fi
+  if [ "$DAY_CPUS" = auto ]; then
+    FREE=$("$PY" -I -S "$MK/deploy/aws/box/frankie_box_cores.py" free 2>/dev/null | cut -d' ' -f1)
+    case "$FREE" in ""|*[!0-9]*) FREE=$NCPU; echo "### the ledger's free count could not be read; sizing from the box's $NCPU CPUs";; esac
+    PER=$((FREE / AT)); DAY_CPUS=8
+    for S in 16 24 32; do if [ "$PER" -ge "$S" ]; then DAY_CPUS=$S; fi; done
+    echo "### DAY_CPUS=auto: $FREE CPUs free for $AT day process(es) side by side: $DAY_CPUS CPUs each"
+  fi
+  [ "$DAY_CPUS" -le "$NCPU" ] || { echo "DAY_CPUS=$DAY_CPUS is more than the box's $NCPU CPUs; refused"; return 2; }
+  [ -n "$WORKERS" ] || WORKERS=$((DAY_CPUS - 1))
+  DEMAND=$((WORKERS + 1))
+  [ "$DEMAND" -le "$DAY_CPUS" ] || { echo "WORKERS=$WORKERS needs $DEMAND CPUs (one pool at a time: WORKERS + 1), more than the $DAY_CPUS this day process books; refused (the most that fits: $((DAY_CPUS - 1)), or a larger DAY_CPUS)"; return 2; }
+}
 mkdir -p "$ROOT/data" "$ROOT/work" "$ROOT/receipts" "$ROOT/tmp"
 PY="$ROOT/venv/bin/python"; [ -x "$PY" ] || { echo "venv not staged"; exit 2; }
 units_idle() {

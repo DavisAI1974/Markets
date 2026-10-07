@@ -782,6 +782,358 @@ class _QueuedSpool:
         self.writer.append(self.spool, value)
 
 
+# ---- the legacy pass's frame rows on replica shards (Greg, 2026-10-07: every booked CPU used; byte-identical) ----------
+# Profile of the serial legacy pass (from the code; a1 measured ~25 records/s before the encoders/ParallelBook existed,
+# against the ingest's whole causal replay at 1.77 ms/record): per INPUT record the replay process runs the spool decode
+# (unpack(json.loads)), adapter.apply (normalize, InstrumentBook.apply with its two top-ten legacy signatures per group, the
+# F_LAST event_frame: top-ten snapshot, rolling activity, raw actions), the D1 attribution, binner.observe per legacy row
+# and the prices/structures rows. Those are state-bound and ordered (one adapter, one binner, every spool in program
+# order) and stay in the replay. Per closed group, with the frame sections retained, it then built the frame row:
+# book_transition, book_snapshot(include_full_depth, include_order_ids) (every level, every resting order's FIFO entry,
+# the top ten twice), observe_book (every resting order and level copied), then pack + json.dumps of that whole tree
+# (~366 KB of frame bytes per record on 20231018). That row is ~95% of the pass and it only READS the live book:
+# book_snapshot's full-depth path, _level, _prices and observe_book never mutate the adapter (dict.get on the levels,
+# never an insert; no cache written), and book_transition is a pure function of two top-ten books.
+#
+# So the frame rows run on replica shards: W pinned processes forked from the replay at one INPUT position each replay the
+# same INPUT spool through their own copy of the same adapter (the same pinned producer code, the same opening state, the
+# same records in the same order: a deterministic state machine, so every replica's adapter is the replay's at every
+# record), keep the same pending group INPUTs and previous top-ten book, and build and encode only the frame rows whose
+# closed-group ordinal is theirs (ordinal mod W): the same function the serial path calls (legacy_frame_row), so the same
+# line or the same failure row. The replay never builds a frame row: at each closed group it takes that group's line from
+# its shard and writes it at its own slot, so every spool still receives exactly the serial lines in the serial order and
+# a save point needs no drain. Each line arrives with a lockstep check (the INPUT index, the frame's identity, the
+# adapter's record and group counts, the top-ten book's depth fields) that must equal the replay's own, byte for byte.
+#
+# A shard that exits, raises or fails its check is LOST: the others are stopped (their look-ahead is discarded), the
+# replay builds that one row itself (its adapter is exactly at that group: it has not moved past it), and W-1 shards are
+# forked again from the replay's state after that group, on the CPUs left (the lost one's CPU is not refilled; none left:
+# the replay builds every later row itself). CPUs handed over (the native child's, once it ended first) are taken the same
+# way: after the replay has its current row, the shards restart on their CPUs plus the new ones, once.
+LEGACY_SHARD_POLL_SECONDS = 1.0
+LEGACY_SHARD_PIPE_BYTES = 8 << 20            # asked of F_SETPIPE_SZ (capped by /proc/sys/fs/pipe-max-size): a row in one write
+
+
+def legacy_frame_record(adapter, frame, book, previous_book, group_inputs, index, retain_frame_sections,
+                        book_transition, observe_book):
+    """The frame row value exactly as the legacy pass builds it at a closed group (moved here unchanged so the serial
+    path and the replica shards run one function)."""
+    record_book = dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'))
+    record_book.update({k: book.get(k) for k in ('best_bid', 'best_ask', 'mid', 'depth_imbalance_n')})
+    transition = book_transition(previous_book, book)
+    record_book.update(transition['after'])  # exact producer-returned full-depth fields
+    record_book['transition'] = transition['sign_signature']
+    if retain_frame_sections:
+        live_book = adapter.books[frame['instrument_id']]
+        # Reuse the producer's existing full-depth/FIFO routine on the book already replayed.
+        # Its *_levels_full lists have no top-N slice. Keep the original top-ten quantities intact.
+        full = live_book.book_snapshot(frame['ts_recv_ns'], include_full_depth=True,
+                                       include_order_ids=True)
+        record_book['book'] = dict(book, bid_levels_full=full['bid_levels_full'],
+                                  ask_levels_full=full['ask_levels_full'])
+        record_book['activity'] = frame.get('activity')
+        record_book['integrity'] = frame.get('integrity')
+        record_book['native_frame'] = {k: v for k, v in frame.items()
+                                       if k not in ('book', 'activity', 'integrity')}
+        record_book['observation'] = observe_book(live_book)
+        record_book['input_records'] = [item[1] for item in group_inputs]
+        record_book['input_record_indices'] = [item[0] for item in group_inputs]
+        record_book['input_cursor'] = index
+    return record_book
+
+
+def legacy_frame_row(adapter, frame, book, previous_book, group_inputs, index, retain_frame_sections,
+                     book_transition, observe_book):
+    """('frame', line, value) for the frames spool, or ('failure', line, row) for the failures spool: the serial try/except
+    around building the row and frames.append(record_book) (RowSpool.append's line: json.dumps(pack(value)) compact),
+    with the serial except clause's row when either raises. Encoding the failure row itself may raise, as the serial
+    failures.append did."""
+    try:
+        record_book = legacy_frame_record(adapter, frame, book, previous_book, group_inputs, index,
+                                          retain_frame_sections, book_transition, observe_book)
+        return 'frame', _encode_row(record_book), record_book
+    except Exception as error:
+        row = dict(index=index, book=True, frame=frame, group_inputs=group_inputs,
+                   error=f'{type(error).__name__}: {error}')
+        return 'failure', _encode_row(row), row
+
+
+def legacy_frame_check(adapter, index, frame, book, group_inputs):
+    """The lockstep check a shard's line carries (pickled, compared as bytes so a NaN compares equal to itself)."""
+    import pickle
+    return pickle.dumps((index, frame.get('instrument_id'), frame.get('sequence'), frame.get('ts_recv_ns'),
+                         frame.get('ts_event_ns'), adapter.record_count, adapter.completed_event_group_count,
+                         [item[0] for item in group_inputs],
+                         tuple(book.get(k) for k in ('best_bid', 'best_ask', 'bid_depth_full', 'ask_depth_full',
+                                                     'bid_order_count_full', 'ask_order_count_full',
+                                                     'bid_price_level_count_full', 'ask_price_level_count_full'))),
+                        protocol=4)
+
+
+def legacy_replica_advance(state, index, record):
+    """One INPUT record through a replica: exactly the replay's state transitions (adapter.apply, a failed apply skipped,
+    the group's INPUTs kept per instrument, popped at the close, the previous top-ten book), nothing else. Returns None, or
+    (check, build) at a closed group; build() must be called before the next record (it reads the live book)."""
+    adapter = state['adapter']
+    try:
+        frame, _ = adapter.apply(record)
+    except Exception:  # noqa: BLE001 - the replay records the failure; the replica's state moves exactly as the replay's
+        return None
+    pending = state['pending_inputs']
+    pending.setdefault(int(record['instrument_id']), []).append((index, record))
+    if frame is None:
+        return None
+    book = frame.get('book') or {}
+    group_inputs = pending.pop(frame['instrument_id'])
+    previous_book, state['previous_book'] = state['previous_book'], book
+    tools = state['book_transition'], state['observe_book']
+    return (legacy_frame_check(adapter, index, frame, book, group_inputs),
+            lambda: legacy_frame_row(adapter, frame, book, previous_book, group_inputs, index, True, *tools))
+
+
+def _spool_records_from(path, start):
+    """A RowSpool's rows from row `start` on, each decoded exactly as RowSpool.__iter__ does (unpack(json.loads(line)));
+    the rows before `start` are skipped as raw lines (never decoded). JSON lines carry no raw CR (json escapes it), so
+    the binary split on newline is the text-mode split."""
+    from research.kalshi.frankie_boss.c15_journal import unpack
+    with open(path, 'rb') as handle:
+        for _ in range(start):
+            if not handle.readline():
+                return
+        for line in handle:
+            yield unpack(json.loads(line))
+
+
+def _legacy_shard_worker(slot, count, cpu, connection, others, records_path, start, base, state, advance):
+    """A replica shard (forked from the replay): pinned to its CPU, it replays the INPUT rows from `start` and sends,
+    in order, (ordinal, check, kind, line, value-of-a-failure-row) for every closed group whose ordinal (from `base`)
+    is its own. Any exception is sent as ('error', ...); it always leaves by os._exit (never flushing an inherited
+    buffer)."""
+    import pickle
+    code = 0
+    try:
+        for other in others:
+            other.close()
+        try:
+            os.sched_setaffinity(0, {cpu})
+        except OSError:
+            pass
+        try:
+            import fcntl
+            limit = int(Path('/proc/sys/fs/pipe-max-size').read_text())
+            fcntl.fcntl(connection.fileno(), 1031, min(LEGACY_SHARD_PIPE_BYTES, limit))   # F_SETPIPE_SZ
+        except (OSError, ValueError, ImportError):
+            pass
+        ordinal = base
+        for index, record in enumerate(_spool_records_from(records_path, start), start):
+            out = advance(state, index, record)
+            if out is None:
+                continue
+            check, build = out
+            if (ordinal - base) % count == slot:
+                kind, line, value = build()
+                connection.send_bytes(pickle.dumps(('row', ordinal, check, kind, line,
+                                                    value if kind == 'failure' else None), protocol=5))
+            ordinal += 1
+    except BaseException:  # noqa: BLE001 - reported to the replay, which redoes this shard's row
+        import traceback
+        code = 1
+        try:
+            connection.send_bytes(pickle.dumps(('error', traceback.format_exc()), protocol=5))
+        except BaseException:  # noqa: BLE001
+            pass
+    finally:
+        os._exit(code)
+
+
+class LegacyFrameShards:
+    """The replica shards of the legacy pass (see the block comment above). result() returns the closed group's
+    (kind, line, value) in the replay's order; write() puts it on its spool with RowSpool.append's bookkeeping."""
+
+    HANDOVER_CHECK_SECONDS = 5.0
+
+    def __init__(self, cpus, records_path, start, state, *, advance=legacy_replica_advance, note=None, flush=None,
+                 handover=None, limit=None):
+        self.cpus, self.records_path, self.advance = list(cpus), str(records_path), advance
+        self.note, self.flush, self.handover = note, flush, handover
+        self.limit = limit                       # the most CPUs the shards may hold (data_workers), None = no bound
+        self.started_workers = len(self.cpus)
+        self.workers, self.base, self.ordinal = [], 0, 0
+        self.workers_lost = self.frames_redone = self.frames_from_shards = self.frames_in_replay = self.restarts = 0
+        self.wait_seconds = 0.0
+        self.handed_over = []
+        self.losses = []
+        self._pending_last = {}
+        self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
+        self._start(start, state)
+
+    @property
+    def count(self):
+        return len(self.workers)
+
+    def _start(self, start, state):
+        import multiprocessing
+        self.workers = []
+        if not self.cpus:
+            return
+        if self.flush is not None:
+            self.flush()                          # nothing buffered is copied into the forked shards
+        context = multiprocessing.get_context('fork')
+        receivers = []
+        for slot, cpu in enumerate(self.cpus):
+            receive, send = context.Pipe(duplex=False)
+            process = context.Process(target=_legacy_shard_worker, name='root-legacy-shard-%d' % slot, daemon=True,
+                                      args=(slot, len(self.cpus), cpu, send, receivers + [receive],
+                                            self.records_path, start, self.base, state, self.advance))
+            process.start()
+            send.close()                          # only the shard holds the write end: its exit is EOF here
+            receivers.append(receive)
+            self.workers.append((process, receive, cpu))
+
+    def _stop(self):
+        for process, receive, _ in self.workers:
+            if process.exitcode is None:
+                process.terminate()
+        for process, receive, _ in self.workers:
+            process.join()
+            receive.close()
+        self.workers = []
+
+    def _receive(self, process, receive, ordinal, check):
+        import pickle
+        while True:
+            if receive.poll(LEGACY_SHARD_POLL_SECONDS):
+                try:
+                    message = pickle.loads(receive.recv_bytes())
+                except (EOFError, OSError):
+                    return None, 'exited (exit code %s)' % process.exitcode
+                if message[0] == 'error':
+                    return None, 'raised: ' + message[1].strip().splitlines()[-1]
+                _, got, got_check, kind, line, value = message
+                if got != ordinal or got_check != check:
+                    return None, 'out of lockstep at closed group %d (sent %d)' % (ordinal, got)
+                return (kind, line, value), None
+            if process.exitcode is not None and not receive.poll(0):
+                return None, 'exited (exit code %s)' % process.exitcode
+
+    def result(self, check, fallback, restart):
+        """The closed group's row: from its shard, or built here by fallback() when that shard is lost (or none is
+        left). restart() -> (next INPUT index, state after this group) for shards forked again from the replay."""
+        ordinal = self.ordinal
+        self.ordinal += 1
+        extra = []
+        if self.handover is not None and time.monotonic() >= self._handover_next:
+            self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
+            extra = [cpu for cpu in (self.handover() or []) if cpu not in self.cpus]
+            if self.limit is not None:
+                extra = extra[:max(0, self.limit - len(self.cpus))]
+            if extra:
+                self.handover = None
+        out, why, lost_cpu = None, 'no shard left', None
+        if self.workers:
+            process, receive, lost_cpu = self.workers[(ordinal - self.base) % len(self.workers)]
+            started = time.time()
+            out, why = self._receive(process, receive, ordinal, check)
+            self.wait_seconds += time.time() - started
+        if out is not None:
+            self.frames_from_shards += 1
+        else:
+            out = fallback()
+            self.frames_in_replay += 1
+            if self.workers:
+                self.frames_redone += 1
+                self.workers_lost += 1
+                self._stop()
+                self.cpus = [cpu for cpu in self.cpus if cpu != lost_cpu]
+                self.losses.append(dict(closed_group=ordinal, cpu=lost_cpu, why=why))
+                if self.note is not None:
+                    self.note(f'legacy pass: replica shard on CPU {lost_cpu} lost at closed group {ordinal} ({why}); '
+                              f'that row built in the replay, {len(self.cpus)} shard(s) forked again from the replay '
+                              f'after it ({self.workers_lost} of {self.started_workers} lost so far); rows unchanged')
+                if not extra:
+                    self.base = ordinal + 1
+                    self.restarts += 1
+                    self._start(*restart())
+        if extra:
+            self._stop()
+            self.cpus = self.cpus + extra
+            self.started_workers += len(extra)
+            self.handed_over = extra
+            self.base = ordinal + 1
+            self.restarts += 1
+            self._start(*restart())
+            if self.note is not None:
+                self.note(f'legacy pass: the native stage ended first; its CPUs {cpu_ranges(extra)} handed to the replica '
+                          f'shards, now {len(self.cpus)} pinned on {cpu_ranges(self.cpus)} from closed group '
+                          f'{ordinal + 1}; rows unchanged')
+        return out
+
+    def write(self, spool, kind, line, value):
+        """RowSpool.append's bookkeeping with the line already encoded. A shard's frame row arrives without its value:
+        the spool's first/last values are then decoded from the line when needed (as RowSpool.reopen reads them)."""
+        spool._writer.write(line)
+        spool._count += 1
+        if value is None and kind == 'frame':
+            if not spool._ends:
+                spool._ends = [self._decode(line)] * 2
+                self._pending_last.pop(id(spool), None)
+            else:
+                self._pending_last[id(spool)] = (spool, line)
+            return
+        self._pending_last.pop(id(spool), None)
+        if not spool._ends:
+            spool._ends = [value, value]
+        else:
+            spool._ends[1] = value
+
+    @staticmethod
+    def _decode(line):
+        from research.kalshi.frankie_boss.c15_journal import unpack
+        return unpack(json.loads(line))
+
+    def settle_ends(self):
+        for spool, line in self._pending_last.values():
+            spool._ends[1] = self._decode(line)
+        self._pending_last.clear()
+
+    def close(self):
+        self._stop()
+        self.settle_ends()
+
+    def terminate(self):
+        self._stop()
+
+    def summary(self):
+        return dict(shards_started=self.started_workers, shards_now=len(self.cpus), cpus=list(self.cpus),
+                    rows_from_shards=self.frames_from_shards, rows_in_replay=self.frames_in_replay,
+                    rows_redone_after_loss=self.frames_redone, shards_lost=self.workers_lost, losses=self.losses,
+                    restarts=self.restarts, handed_over=self.handed_over,
+                    replay_waited_seconds=round(self.wait_seconds, 3))
+
+
+def _split_handover(source, shares):
+    """CPUs handed over once (source(): [] until some are freed) split between `shares` takers in proportion to their
+    weights, in CPU order; each taker's callable returns its own part (then [] again: a part is taken once)."""
+    parts, given = {}, set()
+
+    def taker(i):
+        def take():
+            if not parts:
+                freed = list(source() or [])
+                if not freed:
+                    return []
+                total, at = sum(shares), 0
+                for k, weight in enumerate(shares):
+                    size = len(freed) - at if k == len(shares) - 1 else (len(freed) * weight) // total
+                    parts[k], at = freed[at:at + size], at + size
+            if i in given:
+                return []
+            given.add(i)
+            return parts.get(i, [])
+        return take
+    return [taker(i) for i in range(len(shares))]
+
+
 def _pin_worker(cpus):
     """A fan-out thread takes the next CPU in turn and is pinned to it (Greg, 2026-09-28: pin workers to CPUs so none sit
     idle); the prompt building and tokenizing each thread does before its model call run on its own CPU."""
@@ -1303,6 +1655,11 @@ class Session:
                 # resume reopens each spool at its saved byte offset
                 self._row_writer = None
                 writer.terminate()
+            shards = getattr(self, '_frame_shards', None)
+            if shards is not None:
+                # every row the replay wrote is on its spool; a shard's look-ahead was never written, so nothing to drain
+                self._frame_shards = None
+                shards.terminate()
             self._stop_native_overlap('the ROOT legacy/native derivation stopped before the native stage was joined')
             raise
 
@@ -1642,23 +1999,51 @@ class Session:
         # before the next INPUT, so the replay order and the values are the serial ones. The booked CPUs after the
         # replay's are split once, never double-pinned: book workers first, encoders after (recorded in
         # work/legacy-cpu-split.json). observe_book stays in the replay (a copy of the live book; no existing worker).
-        writer, replay_cpu, lane, parallel_book = None, None, lane_cpus(), None
+        # DEFAULT (FRANKIE_ROOT_LEGACY_FRAME_SHARDS=on): the frame rows are built on replica shards instead
+        # (LegacyFrameShards, see the block comment at legacy_frame_row): every helper CPU is a shard pinned to it, the
+        # replay builds no frame row, and every spool is still written by the replay in the serial order. 'off' keeps the
+        # encoders + ParallelBook route below. Placement only: the same lines, the same order, the same saved state.
+        writer, replay_cpu, lane, parallel_book, shards = None, None, lane_cpus(), None, None
         # The replay is the serial bound: it takes the first CPU and its core's other hardware thread stays idle, so the
         # replay has a whole core (AWS deep dive / review L-3); without a readable topology only the replay CPU is kept.
         topology = cpu_topology(lane)
         replay_core = [c for c in lane if topology and topology[c] == topology[lane[0]]] if topology else lane[:1]
-        helpers = [c for c in lane if c not in replay_core][:max(0, int((self.source_binding or {}).get('data_workers') or 1))]
-        book_cpus = helpers[:min(16, len(helpers) // 2)] if retain_frame_sections else []
-        encoder_cpus = helpers[len(book_cpus):]
-        if retain_frame_sections and encoder_cpus:
+        helper_limit = max(0, int((self.source_binding or {}).get('data_workers') or 1))
+        helpers = [c for c in lane if c not in replay_core][:helper_limit]
+        shard_mode = os.environ.get('FRANKIE_ROOT_LEGACY_FRAME_SHARDS', 'on')
+        if shard_mode not in ('on', 'off'):
+            raise ValueError('FRANKIE_ROOT_LEGACY_FRAME_SHARDS must be on or off')
+        use_shards = bool(retain_frame_sections and helpers and shard_mode == 'on')
+        book_cpus = helpers[:min(16, len(helpers) // 2)] if (retain_frame_sections and not use_shards) else []
+        encoder_cpus = helpers[len(book_cpus):] if not use_shards else []
+        shard_cpus = helpers if use_shards else []
+        if use_shards:
+            replay_cpu = lane[0]
+            os.sched_setaffinity(0, {replay_cpu})
+            write_json(self.work / 'legacy-cpu-split.json', dict(
+                schema='FRANKIE_ROOT_LEGACY_CPUS_V1', at=time.time(), booked=lane, replay=replay_cpu,
+                replay_core_idle_siblings=[c for c in replay_core if c != replay_cpu], topology=topology,
+                topology_basis=('/sys/devices/system/cpu/cpu*/topology' if topology else 'unreadable: plain list order'),
+                book_workers=[], encoders=[], frame_shards=shard_cpus, frame_route='replica_shards',
+                rule='one CPU per process, none shared: the replay, one replica shard per helper CPU (each replays the '
+                     'INPUT spool and builds the frame rows of its closed-group ordinals mod the shard count)'))
+            prices_out, structures_out, failures_out = prices, structures, failures
+            self.note(f'legacy pass: replay on CPU {replay_cpu}, frame rows built on {len(shard_cpus)} pinned replica '
+                      f'shards {cpu_ranges(shard_cpus)} (replay core siblings idle: '
+                      f'{cpu_ranges(replay_core[1:]) or "none"}), written by the replay in the serial order')
+        elif retain_frame_sections and encoder_cpus:
+            # the native child's CPUs, if it ends first, split between the book workers and the encoders (once)
+            book_handover, writer_handover = (_split_handover(self._freed_native_cpus, (len(book_cpus), len(encoder_cpus)))
+                                              if book_cpus else (None, self._freed_native_cpus))
             for rows in (prices, frames, structures, failures):
                 rows._writer.flush()              # nothing buffered is copied into the forked encoders
-            writer = OrderedRowWriter(encoder_cpus, note=self.note, handover=self._freed_native_cpus)
+            writer = OrderedRowWriter(encoder_cpus, note=self.note, handover=writer_handover)
             self._row_writer = writer
             if book_cpus:
                 sys.path.insert(0, str(Path(__file__).resolve().parent))
                 from frankie_box_native_auxiliary import ParallelBook
-                parallel_book = ParallelBook(PRODUCERS, book_cpus)     # spawned after the forked encoders
+                parallel_book = ParallelBook(PRODUCERS, book_cpus, note=self.note,
+                                             handover=book_handover)     # spawned after the forked encoders
                 self._parallel_book = parallel_book
             replay_cpu = lane[0]
             os.sched_setaffinity(0, {replay_cpu})
@@ -1666,7 +2051,7 @@ class Session:
                 schema='FRANKIE_ROOT_LEGACY_CPUS_V1', at=time.time(), booked=lane, replay=replay_cpu,
                 replay_core_idle_siblings=[c for c in replay_core if c != replay_cpu], topology=topology,
                 topology_basis=('/sys/devices/system/cpu/cpu*/topology' if topology else 'unreadable: plain list order'),
-                book_workers=book_cpus, encoders=encoder_cpus,
+                book_workers=book_cpus, encoders=encoder_cpus, frame_route='encoders_and_parallel_book',
                 rule='one CPU per process, none shared: the replay, the ParallelBook level workers, the frame encoders'))
             prices_out, structures_out, failures_out = (_QueuedSpool(prices, writer), _QueuedSpool(structures, writer),
                                                         _QueuedSpool(failures, writer))
@@ -1697,6 +2082,16 @@ class Session:
         if recovery and save_requested and save_requested():
             save_legacy(next_record)
             raise TeacherSaved('ROOT saved before the next INPUT record')
+        if use_shards:
+            # forked here, from the replay's state at next_record (fresh or resumed): the same adapter, pending group
+            # INPUTs and previous top-ten book the loop below starts from
+            shards = LegacyFrameShards(
+                shard_cpus, records.path, next_record,
+                dict(adapter=adapter, previous_book=previous_book, pending_inputs=pending_inputs,
+                     book_transition=book_transition, observe_book=observe_book),
+                note=self.note, handover=self._freed_native_cpus, limit=helper_limit,
+                flush=lambda: [rows._writer.flush() for rows in (prices, frames, structures, failures)])
+            self._frame_shards = shards
         probe = _box_module('frankie_box_progress').for_session(self)
         from itertools import islice
         remaining = islice(records, next_record, None)
@@ -1768,32 +2163,24 @@ class Session:
                 if frame is not None:
                     book = frame.get('book') or {}
                     group_inputs = pending_inputs.pop(frame['instrument_id']) if retain_frame_sections else []
-                    try:
-                        record_book = dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'))
-                        record_book.update({k: book.get(k) for k in ('best_bid', 'best_ask', 'mid', 'depth_imbalance_n')})
-                        transition = book_transition(previous_book, book)
-                        record_book.update(transition['after'])  # exact producer-returned full-depth fields
-                        record_book['transition'] = transition['sign_signature']
-                        if retain_frame_sections:
-                            live_book = adapter.books[frame['instrument_id']]
-                            # Reuse the producer's existing full-depth/FIFO routine on the book already replayed.
-                            # Its *_levels_full lists have no top-N slice. Keep the original top-ten quantities intact.
-                            full = live_book.book_snapshot(frame['ts_recv_ns'], include_full_depth=True,
-                                                           include_order_ids=True)
-                            record_book['book'] = dict(book, bid_levels_full=full['bid_levels_full'],
-                                                      ask_levels_full=full['ask_levels_full'])
-                            record_book['activity'] = frame.get('activity')
-                            record_book['integrity'] = frame.get('integrity')
-                            record_book['native_frame'] = {k: v for k, v in frame.items()
-                                                           if k not in ('book', 'activity', 'integrity')}
-                            record_book['observation'] = observe_book(live_book)
-                            record_book['input_records'] = [item[1] for item in group_inputs]
-                            record_book['input_record_indices'] = [item[0] for item in group_inputs]
-                            record_book['input_cursor'] = index
-                        append_frame(record_book, frame, group_inputs, index)
-                    except Exception as error:
-                        failures_out.append(dict(index=index, book=True, frame=frame, group_inputs=group_inputs,
-                                             error=f'{type(error).__name__}: {error}'))
+                    if shards is not None:
+                        # this group's row from its replica shard (or built here when that shard is lost), written at
+                        # this slot: the serial line on frames, or the serial failure row on failures
+                        kind, line, value = shards.result(
+                            legacy_frame_check(adapter, index, frame, book, group_inputs),
+                            lambda: legacy_frame_row(adapter, frame, book, previous_book, group_inputs, index,
+                                                     retain_frame_sections, book_transition, observe_book),
+                            lambda: (index + 1, dict(adapter=adapter, previous_book=book, pending_inputs=pending_inputs,
+                                                     book_transition=book_transition, observe_book=observe_book)))
+                        shards.write(frames if kind == 'frame' else failures, kind, line, value)
+                    else:
+                        try:
+                            record_book = legacy_frame_record(adapter, frame, book, previous_book, group_inputs, index,
+                                                              retain_frame_sections, book_transition, observe_book)
+                            append_frame(record_book, frame, group_inputs, index)
+                        except Exception as error:
+                            failures_out.append(dict(index=index, book=True, frame=frame, group_inputs=group_inputs,
+                                                 error=f'{type(error).__name__}: {error}'))
                     previous_book = book
                     try:
                         # provenance (ROW_PROVENANCE_SCHEMA): the closing INPUT index (the record whose application closed
@@ -1811,6 +2198,23 @@ class Session:
                 if recovery and save_requested and save_requested():
                     save_legacy(index + 1)
                     raise TeacherSaved('ROOT saved with all open groups and output rows; next INPUT %d' % (index + 1))
+        if shards is not None:
+            shards.close()                        # every row was written in the loop; the shards end; spool ends settled
+            self._frame_shards = None
+            os.sched_setaffinity(0, set(lane))
+            summary = shards.summary()
+            self.note(f'legacy pass: {summary["rows_from_shards"]} frame rows from replica shards, '
+                      f'{summary["rows_in_replay"]} built in the replay; the replay waited '
+                      f'{summary["replay_waited_seconds"]:.1f} s on shards'
+                      + (f'; {summary["shards_lost"]} shard(s) lost, {summary["rows_redone_after_loss"]} row(s) redone'
+                         if summary['shards_lost'] else '')
+                      + (f'; native CPUs {cpu_ranges(summary["handed_over"])} handed over' if summary['handed_over'] else ''))
+            split = self.work / 'legacy-cpu-split.json'
+            if split.is_file():
+                write_json(split, dict(load_json(split), frame_shards_summary=summary))
+            if summary['handed_over']:
+                self._native_overlap_record(legacy_shards_widened=dict(cpus=summary['handed_over'],
+                                                                      shards=summary['shards_now']))
         if parallel_book is not None:
             book_metrics = dict(calls=parallel_book.calls, levels=parallel_book.levels,
                                 seconds=round(parallel_book.seconds, 3), workers=len(book_cpus))

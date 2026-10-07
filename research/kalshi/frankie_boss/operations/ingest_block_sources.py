@@ -68,6 +68,7 @@ from research.kalshi.frankie_boss.source_conformance import SourceConformanceDri
 from research.kalshi.frankie_boss import opening_book as opening_books                  # noqa: E402
 from research.kalshi.frankie_boss import fast_mbo_decode                                # noqa: E402
 from research.kalshi.frankie_boss.operations import parallel_ingest                     # noqa: E402
+from research.kalshi.frankie_boss.operations import ingest_cpus                         # noqa: E402
 
 RECEIPT_SCHEMA = 'BOSS_BLOCK_INGESTION_RECEIPT_V1'
 CANARY_SCHEMA = 'BOSS_BLOCK_INGESTION_CANARY_V1'
@@ -213,13 +214,21 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                    standard='box_standard.TARGET_BOXES 1189: rows per box = partition_entries_for(2 x declared records), '
                             'bytes per box = the format ceiling')
     started, cpu_started = time.perf_counter(), time.process_time()
+    # CPU placement (Greg, 2026-10-07 night: every ingest process pinned): the parent on the booking's lowest CPU, each
+    # encoder on one worker CPU (physical cores first), the reader's workers on cpus[1:] as the first run's reader pins
+    # them; placement only (operations/ingest_cpus.py)
+    place = ingest_cpus.placement(workers)
+    if event is not None:
+        event(ingest_cpus.record(workers))
     with ExitStack() as stack:
-        snapshots = [mbo_source._verified_copy(path, member, stack) for path, member in zip(paths, scope.members)]
-        streams = [mbo_source._decompressed(snapshot, zstd, stack) for snapshot in snapshots]
-        metadata = [mbo_source._metadata(stream, pin, dbn) for stream in streams]
+        # every member verified and decompressed side by side before any record is read (parallel_ingest.prepared_sources)
+        prepared = parallel_ingest.prepared_sources(paths, scope.members, pin, dbn, zstd, stack, event=event)
+        streams, metadata = [p[0] for p in prepared], [p[1] for p in prepared]
         if writer == 'compact':
             driver = conformance_driver_with_compact_journal(scope, journal_path,
-                expected_scope_hash=expected_scope_hash, block_bytes=block_bytes, workers=workers, block_rows=block_rows)
+                expected_scope_hash=expected_scope_hash, block_bytes=block_bytes,
+                workers=len(place['workers']) if workers > 0 and place['workers'] else workers,   # one encoder per worker CPU
+                block_rows=block_rows, cpus=place['workers'], note=event)
         else:
             driver = SourceConformanceDriver(scope, journal_path, expected_scope_hash=expected_scope_hash)
         stack.callback(driver.close)
@@ -234,6 +243,7 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
             driver._builder.adapter = opening
         cursor, sessions_seen, stopped, partials, skipped = 0, [], False, [], []
         opening_result, opening_file = None, None
+        ingest_cpus.pin_parent()               # the causal sequence on the parent CPU; the encoders hold the others
         if event is not None:
             event(dict(phase='ingestion', records=0, total_records=total))
         for index, (stream, (_, ts_out), member, path) in enumerate(zip(streams, metadata, scope.members, paths)):
@@ -369,12 +379,21 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
             # conformance reader: workers verify every original body and hash, then send only
             # the conformance fields. Full book observations do not cross IPC. The seal
             # states what was written; complete() is the claim, made after it.
-            journal.seal()
-            reader = CompactConformanceReader(journal_path, expected_count=journal.count,
-                                          expected_head_hash=journal.head_hash, workers=workers, emit=event)
-            stack.callback(reader.close)
-            driver._builder.journal = reader
-            completion = driver.complete()
+            journal.seal()                       # the encoders end here; the reader takes their CPUs
+
+            def drain(n):
+                # the first-run reader (not edited) sizes its pinned workers from the calling thread's affinity: built on
+                # the whole booking, then the ordered consumer back on the parent CPU (cpus[0], the CPU it reserves).
+                # complete() re-derives its claim from the builder and the journal each time (no state is consumed),
+                # so a drain whose reader lost a worker is run again with one worker fewer (ingest_cpus.resilient)
+                with ingest_cpus.lane_affinity():
+                    reader = CompactConformanceReader(journal_path, expected_count=journal.count,
+                                                      expected_head_hash=journal.head_hash, workers=n, emit=event)
+                ingest_cpus.pin_parent()
+                stack.callback(reader.close)
+                driver._builder.journal = reader
+                return driver.complete()
+            completion = ingest_cpus.resilient(drain, workers, note=event, label='conformance reader')
             state = driver._builder.export_state()
         else:
             completion = driver.complete()                 # one full conformance drain, inline
@@ -464,16 +483,40 @@ def fetch_sources(manifest, sources_dir, *, env_file):
     if Path(env_file).is_file():
         load_env_file(env_file)
     import boto3
+    from boto3.s3.transfer import TransferConfig
+    from concurrent.futures import ThreadPoolExecutor
     s3 = boto3.client('s3', region_name='us-east-2')
-    for member in manifest['sources']:
+    # S3 byte-range GETs (aws-storage skill: 8-16 MB ranges, ~15 streams fill a 12.5 Gb/s NIC): the CRT transfer client
+    # first where awscrt is installed (the box venv, 2026-10-07; this path signs its own requests), the classic
+    # multipart download after; the members side by side, each hashed as soon as it lands. The sha256 check is unchanged.
+    configs = [TransferConfig(multipart_threshold=64 << 20, multipart_chunksize=16 << 20, max_concurrency=15)]
+    try:
+        import awscrt  # noqa: F401
+        configs.insert(0, TransferConfig(preferred_transfer_client='crt', multipart_threshold=64 << 20,
+                                         multipart_chunksize=16 << 20, max_concurrency=15))
+    except Exception:  # noqa: BLE001 - no awscrt or an older boto3: the classic client only
+        pass
+
+    def one(member):
         target = Path(sources_dir) / member['member_key']
         if target.is_file() and target.stat().st_size == member['size_bytes'] and sha256_file(target) == member['sha256']:
-            continue
+            return None
         key = manifest['prefix'] + '/' + member['member_key']
         target.parent.mkdir(parents=True, exist_ok=True)
-        s3.download_file(manifest['bucket'], key, str(target))
+        for number, config in enumerate(configs):
+            try:
+                s3.download_file(manifest['bucket'], key, str(target), Config=config)
+                break
+            except Exception:  # noqa: BLE001 - the next transfer client; the last one's error stands
+                if number == len(configs) - 1:
+                    raise
         if sha256_file(target) != member['sha256']:
-            raise SystemExit('downloaded member differs from the manifest: ' + member['member_key'])
+            return 'downloaded member differs from the manifest: ' + member['member_key']
+        return None
+    with ThreadPoolExecutor(max_workers=max(1, min(4, len(manifest['sources'])))) as pool:
+        refused = [why for why in pool.map(one, manifest['sources']) if why]
+    if refused:
+        raise SystemExit('; '.join(refused))
 
 
 def _emitter(output):
@@ -498,8 +541,11 @@ def conform_directory(directory, *, workers):
         raise SystemExit('the builder checkpoint differs from the receipt')
     state = unpack(json.loads(raw))
     started = time.perf_counter()
-    completion, verified = parallel_ingest.conform(scope, directory / receipt['journal_file'], state, workers=max(1, workers),
-                                                   emit=_emitter(directory))
+    emit = _emitter(directory)
+    emit(ingest_cpus.record(max(1, workers)))
+    completion, verified = ingest_cpus.resilient(
+        lambda n: parallel_ingest.conform(scope, directory / receipt['journal_file'], state, workers=n, emit=emit),
+        max(1, workers), note=emit, label='conformance reader')
     claimed = json.loads((directory / 'completion.json').read_bytes())
     same = all(claimed.get(k) == v for k, v in asdict(completion).items() if k != 'member_counts') \
         and list(claimed.get('member_counts') or []) == list(completion.member_counts)

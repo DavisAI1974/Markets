@@ -193,6 +193,7 @@ def _save_table(scratch, ordinal, key, entry, context=None):
 
 
 def _copy_verified(path, output, expected):
+    """Copy a proved table into output, hashing what is read; output is a file or a _HashingWriter."""
     hashed, size = hashlib.sha256(), 0
     with Path(path).open('rb') as source:
         for block in iter(lambda: source.read(1024*1024), b''):
@@ -255,6 +256,84 @@ def open_sources(bedrock_entries, layers_root):
     return BedrockSources(bedrock_entries, layers_root)
 
 
+class _HashingWriter:
+    """The staged digest's writer: every byte handed to the file is also hashed, in the same order, so the stage's
+    witness is known when the copy ends; the one read-back of the staged file is then compared with it."""
+    def __init__(self, output):
+        self.output, self.hasher, self.size = output, hashlib.sha256(), 0
+
+    def write(self, data):
+        self.output.write(data)
+        self.hasher.update(data)
+        self.size += len(data)
+
+    def witness(self):
+        return dict(bytes=self.size, sha256=self.hasher.hexdigest())
+
+
+def _inode(path):
+    """A file's identity for 'unchanged since its witness': device, inode, size and modification time (a hard link
+    changes the link count and ctime only)."""
+    info = os.stat(path)
+    return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)
+
+
+LEGACY_TABLES = 5            # the legacy tables, always written: ordinals 0-4; the bedrock tables follow from 5
+TABLE_THREADS = 4            # bedrock tables written at once on the shared helpers (FRANKIE_DIGEST_TABLE_THREADS)
+
+
+def _pin_thread(cpus):
+    """Pin the calling thread (a Linux thread id; a new thread inherits its creator's CPUs) to cpus."""
+    import threading
+    os.sched_setaffinity(threading.get_native_id(), set(cpus))
+
+
+def _topology_helpers():
+    """cpu_topology and core_groups from frankie_box_boss_session (imported, never copied): the loaded module when the
+    ROOT already holds it, else imported; (None, reason) when it cannot be imported."""
+    for name in ('frankie_box_boss_session', 'deploy.aws.box.frankie_box_boss_session', '__main__'):
+        module = sys.modules.get(name)
+        if module is not None and hasattr(module, 'cpu_topology') and hasattr(module, 'core_groups'):
+            return module, None
+    try:
+        import frankie_box_boss_session as module
+    except ImportError as error:
+        return None, 'frankie_box_boss_session not importable (%s)' % error
+    return module, None
+
+
+def cpu_placement(lane):
+    """Where the digest runs on the booked lane (Greg, 2026-10-07: every process pinned, nothing idle). The coordinator
+    core is the physical core of lane[0]: the main thread (the serial tables: TS.write_table is one Python thread) is
+    pinned to lane[0]; the coordinator-side threads (each parallel table's merge, copy and witness, the cross context,
+    the bedrock sources build) to lane[0]'s second hardware thread; the shared helpers take one CPU each of every other
+    core, one thread per core first, then the second threads. Without a readable topology: main on lane[0], side
+    threads with it, helpers lane[1:]. Placement only: no byte, order or hash depends on it."""
+    coordinator, cores, basis = lane[0], None, None
+    module, problem = _topology_helpers()
+    if module is not None:
+        topology = module.cpu_topology(lane)
+        if topology is not None:
+            cores = module.core_groups(lane, topology)
+        else:
+            problem = 'sysfs topology unreadable'
+    if cores:
+        own = next(group for group in cores if coordinator in group)
+        side = [cpu for cpu in own if cpu != coordinator]
+        rest = [group for group in cores if group is not own]
+        helpers = [group[0] for group in rest] + [cpu for group in rest for cpu in group[1:]]
+        basis = ('physical cores: the coordinator core %s holds the main thread (%d) and the side threads (%s); one '
+                 'helper per hardware thread of the other %d cores, first threads first'
+                 % (own, coordinator, side[0] if side else coordinator, len(rest)))
+    else:
+        side, helpers = [], list(lane[1:])
+        basis = 'booked list order (%s): main and side threads on %d, helpers the rest' % (problem, coordinator)
+    if not helpers:
+        helpers = list(lane)
+    return dict(lane=list(lane), coordinator=coordinator, side=side[0] if side else coordinator, helpers=helpers,
+                basis=basis)
+
+
 def write_digest(destination, receipt, layers, prices, frames, structures, roll, first, buys, sells,
                  *, bedrock_entries, scratch_directory, disk_reserve=None):
     """Fresh destination only; all scratch retained, even after publication failure.
@@ -265,7 +344,25 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
     Caller-owned flow arrays remain a separate memory boundary. Production layer
     files are independently pinned; only table/column metadata and one row/cell
     are retained in Python. No compatibility renderer/parser materializes tables.
-    """
+
+    Schedule (Greg, 2026-10-07: the steps run at once on every booked CPU, every process pinned). Each table keeps its
+    ordinal, its rows, its writer and its save point; only WHEN it is written changes, so the document (assembled in
+    ordinal order) is the same bytes:
+      - the save points are looked up first, in ordinal order, as an unbroken legacy prefix (as before);
+      - every legacy table read from a big closed spool (legacy_book_imbalance) is written by the parallel writer on the
+        shared pinned helpers in a side thread, its cross-table context (the columns legacy_structure_observables
+        derives from it) built at the same time and first, from the same spool ranges;
+      - the main thread (lane[0]) writes the serial tables in ordinal order, starting legacy_structure_observables as
+        soon as that context exists instead of after the whole book table; table witnesses and save receipts are
+        written by side threads;
+      - the bedrock sources are built on a side thread from the start, and every bedrock table is written as soon as
+        they exist, TABLE_THREADS at once, on the same helpers, beside the legacy tables;
+      - the staged document is hashed as it is written and read back once (the intent and publication receipts reuse
+        that witness for the same unchanged inode instead of reading the whole document twice more).
+    A dead helper never stops a pass (frankie_box_digest_parallel.PinnedPool)."""
+    import threading
+    import time
+    from concurrent.futures import ThreadPoolExecutor, wait as wait_all
     destination, scratch = _safe(destination), _safe(scratch_directory)
     if destination.exists():
         raise FileExistsError('existing digest evidence preserved')
@@ -276,7 +373,6 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
     db.execute('PRAGMA temp_store=FILE')
     db.execute('PRAGMA mmap_size=0')
     db.execute('CREATE TABLE families (name TEXT PRIMARY KEY, count INTEGER, first_ordinal INTEGER)')
-    stages = []
 
     counted = {}
 
@@ -303,157 +399,240 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
     # and the per-second series are read from them), so their sha256s key every legacy table.
     legacy_inputs = {name: entry.get('sha256') for name, entry in sorted((receipt.get('layers') or {}).items())
                      if not entry.get('bedrock')}
-    reusing = {'legacy': True}
 
-    def table(name, rows, context=None):
-        ordinal = len(stages)
-        if context is None and _parallel_spool(rows) and len(helper_cpus) > 1:
-            return parallel_table(ordinal, name, rows)
+    import frankie_box_digest_parallel as PP
+    lane = lane_cpus()
+    place = cpu_placement(lane)
+    helper_cpus = place['helpers']
+    # The part count every earlier digest used (one part per CPU of lane[1:]): the parts are positions in the rows, the
+    # bytes do not depend on them, and keeping the count keeps every part spec (and its pass save point key) as before.
+    parts = len(lane) - 1 if len(lane) > 1 else len(lane)
+    reserve = disk_reserve if disk_reserve is not None else int(os.environ.get('FRANKIE_DIGEST_DISK_RESERVE', PP.DISK_RESERVE))
+    table_threads = max(1, int(os.environ.get('FRANKIE_DIGEST_TABLE_THREADS') or TABLE_THREADS))
+    notes, timeline = [], []
+
+    def timed(ordinal, name, mode):
+        entry = dict(ordinal=ordinal, name=name, mode=mode, started=time.time(), ended=None,
+                     cpus=[place['coordinator']] if mode == 'serial' else
+                     [place['side']] + list(helper_cpus) if mode.startswith('parallel') else [place['side']])
+        timeline.append(entry)
+        return entry
+
+    original_affinity = os.sched_getaffinity(0)
+    _pin_thread({place['coordinator']})
+    pool = PP.PinnedPool(helper_cpus, label='digest table helpers', note=notes.append)
+    side = ThreadPoolExecutor(max_workers=8, thread_name_prefix='digest-side', initializer=_pin_thread,
+                              initargs=({place['side']},))
+    bedrock_jobs = ThreadPoolExecutor(max_workers=table_threads, thread_name_prefix='digest-bedrock',
+                                      initializer=_pin_thread, initargs=({place['side']},))
+    futures = []
+    legacy_stages = [None] * LEGACY_TABLES
+    built, bedrock = {}, dict(stages=[], header=None, futures=[])
+
+    # ---- legacy save points: an unbroken prefix, looked up in ordinal order (as the serial order did)
+    rows_of = [lambda: prices, lambda: per_second_rows(first,buys,sells,roll), lambda: frames,
+               counted_structures, family_rows]
+    names = ['legacy_price', 'per_second_flow_and_roll20', 'legacy_book_imbalance', 'legacy_structure_observables',
+             'structure_families']
+    context_of = [None, None, None, ('legacy_book_imbalance',), None]
+    contexts = {}
+    reused = 0
+    for ordinal, name in enumerate(names):
+        saved = _saved_table(scratch, ordinal, legacy_key(name, context_of[ordinal], code, legacy_inputs), context=True)
+        if saved is None:
+            break
+        legacy_stages[ordinal] = dict(name=saved['name'], rows=saved['rows'], path=Path(saved['path']), digest=saved['digest'])
+        contexts[name] = _Rows(Path(saved['path']).parent/('table-%04d' % ordinal)/'table.sqlite')
+        timeline.append(dict(ordinal=ordinal, name=name, mode='reused', saved=saved['saved']))
+        reused += 1
+
+    def finish_serial(ordinal, name, key, rows, path, root, identity):
+        digest = _witness(path)
+        if TS._identity(path) != identity:
+            raise ValueError('proved table changed before its byte witness')
+        legacy_stages[ordinal] = dict(name=name, rows=rows, path=path, digest=digest)
+        _save_table(scratch, ordinal, key, legacy_stages[ordinal], context=_witness(root/'table.sqlite'))
+
+    def serial_table(ordinal, name, rows, context):
         root = scratch/('table-%04d' % ordinal)
         path = scratch/('table-%04d.txt' % ordinal)
         key = legacy_key(name, context, code, legacy_inputs)
-        # Legacy tables are reused only as an unbroken prefix, so a context table is always the one actually used.
-        saved = _saved_table(scratch, ordinal, key, context=True) if reusing['legacy'] else None
-        if saved is not None:
-            stages.append(dict(name=saved['name'], rows=saved['rows'], path=Path(saved['path']), digest=saved['digest']))
-            return _Rows(Path(saved['path']).parent/('table-%04d' % ordinal)/'table.sqlite')
-        reusing['legacy'] = False
+        entry = timed(ordinal, name, 'serial')
         proof = TS.write_table(path, name, rows, root, context=context)
-        original = _Rows(root/'table.sqlite')
-        # Bind write_table's actual inverse proof to unchanged bytes; assembly
-        # independently hashes those bytes while copying.
-        digest = _witness(path)
         if TS._identity(path) != proof['verified_identity']:
             raise ValueError('proved table changed before its byte witness')
-        stages.append(dict(name=name, rows=proof['rows'], path=path, digest=digest))
-        _save_table(scratch, ordinal, key, stages[-1], context=_witness(root/'table.sqlite'))
-        return original
+        entry['ended'] = time.time()
+        # the byte witness and save receipt bind the same unchanged file on a side thread; the main thread goes on
+        futures.append(side.submit(finish_serial, ordinal, name, key, proof['rows'], path, root, proof['verified_identity']))
+        return _Rows(root/'table.sqlite')
 
-    # A big legacy table read from a closed RowSpool (the frame sections make legacy_book_imbalance hundreds of GB on a
-    # full day) is written by the parallel table writer on the booked lane's CPUs, as the bedrock tables are: the same
-    # bytes and inverse proof as TS.write_table over the same rows (frankie_box_digest_parallel), each helper reading its
-    # own line range of the spool (never held whole). Every field and row is kept; nothing is reduced. Its save point and
-    # its cross-table context (the columns a later table derives from it, DG.CROSS_DERIVED) are kept as the serial
-    # table's are, so the structures table that follows reads the same context values.
-    import frankie_box_digest_parallel as PP
-    lane = lane_cpus()
-    helper_cpus = lane[1:] if len(lane) > 1 else lane
-
-    def parallel_table(ordinal, name, rows):
+    def context_job(ordinal, name, specs):
+        # the context database in the serial writer's form (table 'source', TS._dump rows) holding the columns later
+        # tables derive from this one; empty when none does
+        entry = timed(ordinal, name + ' (context)', 'parallel-context')
         root = scratch/('table-%04d' % ordinal)
+        columns = sorted({col for (_, _), (source, col) in DG.CROSS_DERIVED.items() if source == name})
+        root.mkdir(parents=True, exist_ok=False)
+        cdb = sqlite3.connect(root/'table.sqlite')
+        try:
+            cdb.execute('CREATE TABLE source (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL)')
+            if columns:
+                for i, row in enumerate(PP.cross_context(specs, columns, helper_cpus, pool=pool)):
+                    cdb.execute('INSERT INTO source VALUES (?, ?)', (i, TS._dump(row)))
+            cdb.commit()
+        finally:
+            cdb.close()
+        entry['ended'] = time.time()
+        return _Rows(root/'table.sqlite'), _witness(root/'table.sqlite')
+
+    def parallel_table(ordinal, name, rows, specs, context_future):
+        # A big legacy table read from a closed RowSpool (the frame sections make legacy_book_imbalance hundreds of GB
+        # on a full day) is written by the parallel table writer: the same bytes and inverse proof as TS.write_table over
+        # the same rows (frankie_box_digest_parallel), each helper reading its own line range of the spool (never held
+        # whole). Every field and row is kept; nothing is reduced.
+        entry = timed(ordinal, name, 'parallel')
         path = scratch/('table-%04d.txt' % ordinal)
         key = legacy_key(name, None, code, legacy_inputs)
-        saved = _saved_table(scratch, ordinal, key, context=True) if reusing['legacy'] else None
-        if saved is not None:
-            stages.append(dict(name=saved['name'], rows=saved['rows'], path=Path(saved['path']), digest=saved['digest']))
-            return _Rows(Path(saved['path']).parent/('table-%04d' % ordinal)/'table.sqlite')
-        reusing['legacy'] = False
-        specs = PP.spool_specs(rows.path, len(helper_cpus))
-        reserve = disk_reserve if disk_reserve is not None else int(os.environ.get('FRANKIE_DIGEST_DISK_RESERVE', PP.DISK_RESERVE))
         proof = PP.write_table_parallel(path, name, specs, scratch/('table-%04d.parallel' % ordinal), helper_cpus,
-                                        reserve=reserve)
+                                        reserve=reserve, pool=pool)
         if proof['rows'] != len(rows):
             raise ValueError('parallel legacy table rows differ from the spool count')
         digest = _witness(path)
         if TS._identity(path) != proof['verified_identity']:
             raise ValueError('proved table changed before its byte witness')
-        # the context database in the serial writer's form (table 'source', TS._dump rows) holding the columns later
-        # tables derive from this one; empty when none does
-        columns = sorted({col for (_, _), (source, col) in DG.CROSS_DERIVED.items() if source == name})
-        root.mkdir(parents=True, exist_ok=False)
-        db = sqlite3.connect(root/'table.sqlite')
-        try:
-            db.execute('CREATE TABLE source (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL)')
-            if columns:
-                for i, row in enumerate(PP.cross_context(specs, columns, helper_cpus)):
-                    db.execute('INSERT INTO source VALUES (?, ?)', (i, TS._dump(row)))
-            db.commit()
-        finally:
-            db.close()
-        stages.append(dict(name=name, rows=proof['rows'], path=path, digest=digest))
-        _save_table(scratch, ordinal, key, stages[-1], context=_witness(root/'table.sqlite'))
-        return _Rows(root/'table.sqlite')
+        _, context_witness = context_future.result()
+        legacy_stages[ordinal] = dict(name=name, rows=proof['rows'], path=path, digest=digest)
+        _save_table(scratch, ordinal, key, legacy_stages[ordinal], context=context_witness)
+        entry['ended'] = time.time()
 
-    # The bedrock sources (layer preparation and member merge, on the pinned helpers) are independent of the five
-    # sequential legacy tables: build them on a thread while the legacy tables are written, then join.
-    import threading
-    built = {}
+    def bedrock_table(index, ordinal, name, spec, key):
+        # Every bedrock table is written by the parallel writer on the shared helpers (same bytes as write_table; Greg
+        # 2026-09-28: no table runs for hours on one core), TABLE_THREADS tables at once. The parts come from the table's
+        # specs at the part count every earlier digest used, never from the CPU list.
+        entry = timed(ordinal, name, 'parallel-bedrock')
+        path = scratch / ('table-%04d.txt' % ordinal)
+        proof = PP.write_table_parallel(path, name, PP.split_specs(spec, parts), scratch / ('table-%04d' % ordinal),
+                                        helper_cpus, reserve=reserve, pool=pool)
+        digest = _witness(path)
+        if TS._identity(path) != proof['verified_identity']:
+            raise ValueError('proved table changed before its byte witness')
+        bedrock['stages'][index] = dict(name=name, rows=proof['rows'], path=path, digest=digest)
+        _save_table(scratch, ordinal, key, bedrock['stages'][index])
+        entry['ended'] = time.time()
+
+    # The bedrock sources (layer preparation and member merge, on the pinned helpers) are independent of the legacy
+    # tables: built on a side thread from the start; each bedrock table is queued as soon as they exist.
     def build_sources():
         try:
-            built['sources'] = open_sources(bedrock_entries, scratch/'calculation-layers')
+            _pin_thread({place['side']})
+            sources = built['sources'] = open_sources(bedrock_entries, scratch/'calculation-layers')
+            bedrock['header'] = DG.bedrock_header(sources.derived, sources.layer_count, sources.verdict or {})
+            layers_identity = layers_identity_of(bedrock_entries)
+            tables = list(sources.tables.items())
+            bedrock['stages'] = [None] * len(tables)
+            for index, (name, rows) in enumerate(tables):
+                ordinal = LEGACY_TABLES + index
+                spec = bedrock_spec(rows, sources.root)
+                key = bedrock_key(name, code, layers_identity, spec)
+                saved = _saved_table(scratch, ordinal, key)
+                if saved is not None:
+                    bedrock['stages'][index] = dict(name=saved['name'], rows=saved['rows'], path=Path(saved['path']),
+                                                    digest=saved['digest'])
+                    timeline.append(dict(ordinal=ordinal, name=name, mode='reused', saved=saved['saved']))
+                    continue
+                bedrock['futures'].append(bedrock_jobs.submit(bedrock_table, index, ordinal, name, spec, key))
         except BaseException as error:
             built['error'] = error
     builder = threading.Thread(target=build_sources, name='bedrock-sources') if bedrock_entries else None
-    if builder is not None:
-        builder.start()
+    failed = True
     try:
-        try:
-            table('legacy_price', prices)
-            table('per_second_flow_and_roll20', per_second_rows(first,buys,sells,roll))
-            book = table('legacy_book_imbalance', frames)
-            table('legacy_structure_observables', counted_structures(), {'legacy_book_imbalance':book})
-            table('structure_families', family_rows())
-        finally:
-            if builder is not None:
-                builder.join()
-                if 'error' in built:
-                    raise built['error']
-        legacy_count = len(stages)
-        layer_header = None
-        if bedrock_entries:
-            with built.pop('sources') as sources:
-                layer_header = DG.bedrock_header(sources.derived, sources.layer_count, sources.verdict or {})
-                import frankie_box_digest_parallel as P
-                # Every bedrock table is written by the parallel writer on the helper cores (same bytes as write_table;
-                # Greg 2026-09-28: no table runs for hours on one core). Finished tables are reused from their save points.
-                # every CPU but 0-1 (Greg, 2026-09-28: pin workers to CPUs so none sit idle; was 2-15 only). The bytes do
-                # not depend on the count: the parts come from the table's specs, not from the CPU list.
-                cpus = helper_cpus             # the booked lane after its coordinator CPU (16 or 32 booked)
-                layers_identity = layers_identity_of(bedrock_entries)
-                for name, rows in sources.tables.items():
-                    spec = bedrock_spec(rows, sources.root)
-                    ordinal = len(stages)
-                    key = bedrock_key(name, code, layers_identity, spec)
-                    saved = _saved_table(scratch, ordinal, key)
-                    if saved is not None:
-                        stages.append(dict(name=saved['name'], rows=saved['rows'], path=Path(saved['path']), digest=saved['digest']))
-                        continue
-                    path = scratch / ('table-%04d.txt' % ordinal)
-                    reserve = disk_reserve if disk_reserve is not None else int(os.environ.get('FRANKIE_DIGEST_DISK_RESERVE', P.DISK_RESERVE))
-                    proof = P.write_table_parallel(path, name, P.split_specs(spec, len(cpus)),
-                                                   scratch / ('table-%04d' % ordinal), cpus, reserve=reserve)
-                    digest = _witness(path)
-                    if TS._identity(path) != proof['verified_identity']:
-                        raise ValueError('proved table changed before its byte witness')
-                    stages.append(dict(name=name, rows=proof['rows'], path=path, digest=digest))
-                    _save_table(scratch, ordinal, key, stages[-1])
+        if builder is not None:
+            builder.start()
+        # ---- the legacy tables after the saved prefix: the parallel ones (and their contexts, first) to the side
+        # threads now; then the serial ones on the main thread in ordinal order
+        rows = {ordinal: rows_of[ordinal]() for ordinal in range(reused, LEGACY_TABLES)}
+        parallel = {ordinal for ordinal in rows
+                    if context_of[ordinal] is None and _parallel_spool(rows[ordinal]) and parts > 1}
+        for ordinal in sorted(parallel):
+            specs = PP.spool_specs(rows[ordinal].path, parts)
+            context_future = side.submit(context_job, ordinal, names[ordinal], specs)
+            contexts[names[ordinal]] = context_future
+            futures.append(context_future)
+            futures.append(side.submit(parallel_table, ordinal, names[ordinal], rows[ordinal], specs, context_future))
+        for ordinal in sorted(set(rows) - parallel):
+            context = None
+            if context_of[ordinal] is not None:
+                context = {}
+                for source in context_of[ordinal]:
+                    held = contexts[source]
+                    context[source] = held.result()[0] if hasattr(held, 'result') else held
+            made = serial_table(ordinal, names[ordinal], rows[ordinal], context)
+            contexts[names[ordinal]] = made
+        if builder is not None:
+            builder.join()
+            if 'error' in built:
+                raise built['error']
+        for future in list(futures) + list(bedrock['futures']):
+            future.result()
+        stages = list(legacy_stages) + list(bedrock['stages'])
+        if any(entry is None for entry in stages):
+            raise ValueError('a digest table has no proved stage')
+        legacy_count = LEGACY_TABLES
+        layer_header = bedrock['header'] if bedrock_entries else None
         stage = scratch/'digest.pending'
         with stage.open('xb') as output:
-            output.write(DG.digest_header(receipt).encode('utf-8'))
+            sink = _HashingWriter(output)
+            sink.write(DG.digest_header(receipt).encode('utf-8'))
             for i, entry in enumerate(stages):
                 if i == legacy_count and layer_header is not None:
-                    output.write(layer_header.encode('utf-8'))
+                    sink.write(layer_header.encode('utf-8'))
                 elif i:
-                    output.write(b'\n')
-                _copy_verified(entry['path'], output, entry['digest'])
+                    sink.write(b'\n')
+                _copy_verified(entry['path'], sink, entry['digest'])
             output.flush()
             os.fsync(output.fileno())
+        staged = sink.witness()
+        # the one read-back of the staged document: its bytes on disk are the bytes written
+        if _witness(stage) != staged:
+            raise ValueError('staged digest read back differs from the bytes written')
+        staged_inode = _inode(stage)
         result = dict(schema='FRANKIE_STREAMED_DIGEST_V1', path=str(destination), verified=True,
-                      **_witness(stage), tables=[dict(name=e['name'],rows=e['rows'],**e['digest']) for e in stages],
-                      scratch_directory=str(scratch))
+                      **staged, tables=[dict(name=e['name'],rows=e['rows'],**e['digest']) for e in stages],
+                      scratch_directory=str(scratch),
+                      cpu_schedule=dict(schema='FRANKIE_DIGEST_CPU_SCHEDULE_V1', placement=place, parts=parts,
+                                        table_threads=table_threads, helpers=pool.record(), notes=list(notes),
+                                        timeline=sorted(timeline, key=lambda e: (e['ordinal'], e['name'])),
+                                        stage_witness='hashed as written and read back once; the intent and the '
+                                        'publication reuse it for the same unchanged inode'))
         _save_new(scratch/'verification-receipt.json', result)
+        if _inode(stage) != staged_inode:
+            raise ValueError('staged digest changed after its witness')
         _save_new(scratch/'publication-intent.json',
                   dict(schema='FRANKIE_DIGEST_PUBLICATION_INTENT_V1',source=str(stage),destination=str(destination),
-                       proof=_witness(scratch/'verification-receipt.json'),**_witness(stage)))
+                       proof=_witness(scratch/'verification-receipt.json'),**staged))
         # Same-filesystem link creates the public name atomically and refuses an
         # existing name. The verified scratch inode is retained as evidence.
         os.link(stage, destination)
         _sync_directory(destination.parent)
+        if _inode(destination) != staged_inode:
+            raise ValueError('published digest is not the verified staged inode')
         _save_new(scratch/'publication-receipt.json',
                   dict(schema='FRANKIE_DIGEST_PUBLICATION_V1',destination=str(destination),
-                       intent=_witness(scratch/'publication-intent.json'),**_witness(destination)))
+                       intent=_witness(scratch/'publication-intent.json'),**staged,
+                       witness_basis='the verified staged inode (device, inode, bytes, mtime unchanged since its '
+                                     'read-back); the same bytes are not read a third time'))
+        failed = False
         return result
     finally:
+        # every side thread and table job ends before this returns or raises (a finished table keeps its save point
+        # for a rerun; queued bedrock tables are not started after a failure)
+        if builder is not None and builder.is_alive():
+            builder.join()
+        side.shutdown(wait=True, cancel_futures=failed)
+        bedrock_jobs.shutdown(wait=True, cancel_futures=failed)
+        wait_all(list(futures) + list(bedrock['futures']))
+        pool.close()
         if built.get('sources') is not None:
             built.pop('sources').close()
         db.close()
+        os.sched_setaffinity(threading.get_native_id(), original_affinity)

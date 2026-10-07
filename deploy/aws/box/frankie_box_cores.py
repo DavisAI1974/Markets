@@ -20,10 +20,12 @@ SIZES (hard):
            ONE worker CPU of that held lane: STAGE CLAIMS below). With fewer than 16 free it does NOT start: it records
            'waiting: N free of 16 needed' and exits 75 (a later dispatch retries). Its workers = the booked 16 less the
            parent = 15.
-  ingest | canary | conform  8 CPUs per day process. THE RULE (stated in every receipt): an ingest or canary with
-           VERIFY=inline runs its encode pool and its conformance-reader pool at the same time, so it needs WORKERS x 2 + 1
-           CPUs; VERIFY=deferred, and a conform, run one pool: WORKERS + 1. A demand above 8 is REFUSED with that reason
-           (never booked bigger, never squeezed onto fewer). The largest worker counts that fit: inline 3, deferred 7.
+  ingest | canary | conform  8 CPUs per day process by default, or --size 16 / 24 / 32 (Greg, 2026-10-07 night: one day
+           may take the whole box, or days side by side fill it). THE RULE (stated in every receipt): a day process runs
+           ONE pool at a time (the encode pool ends at the seal, before the conformance reader starts; the parallel
+           writer's replay/encode pool closes before its reader), so it needs WORKERS + 1 CPUs (it was WORKERS x 2 + 1
+           for an inline verify while the idle encode pool stayed alive). A demand above the size is REFUSED with that
+           reason (never booked bigger, never squeezed onto fewer). The largest WORKERS that fit: size - 1.
   Never more than nproc in total: every booking comes out of the free set.
 
 FREE = the online CPUs, less the CPUs of live bookings, less the CPUs actually in use by any running Frankie process tree
@@ -75,6 +77,7 @@ OPERATIONS
            (a saved day): its CPUs stay booked after its pids end, until the owner resumes or an operator releases
   show     READ-ONLY: every CPU -> its owner (booking or unbooked Frankie process) and its live use, the free count, what
            can be booked now; --json for the raw record
+  free     READ-ONLY: '<free> <online>' CPUs now (a sizing hint; the booking decides under the lock)
   allowed  --pid P: READ-ONLY, the CPUs the workers of P's job may use (its booking less the parent CPU; for a job not in
            the ledger every CPU but 0 not held by a booking), comma list; for frankie_box_spread_workers.sh
 Standard library only (the spread sidecar runs it with python -I -S). Nothing here stops, signals or re-pins a running
@@ -102,7 +105,12 @@ DAY_RUN_CPUS = 16                       # every day-run step, exactly (Greg, 202
 # 16 (the default, one lane) or 32 (both lanes of the main box, CPUs 0-31, ONE booking held by the day for all its
 # stages). A 32 slot is never split: it waits until all 32 are free.
 DAY_RUN_SIZES = (16, 32)
-INGEST_CPUS = 8                         # every ingest / canary / conform day process
+INGEST_CPUS = 8                         # an ingest / canary / conform day process, unless it asks a larger size
+# Greg, 2026-10-07 night ("Including ingest. Basically anything using a cpu"): an ingest day process may book 8, 16, 24 or
+# 32 CPUs (--size; frankie_box_ingest_block.sh DAY_CPUS): one day can take the whole box, or days side by side fill it.
+# The output does not depend on the count (the encodings are pure, the replay segments are fixed by the plan, the
+# reader only verifies); never split, never squeezed: a size that is not free waits like any booking.
+INGEST_SIZES = (8, 16, 24, 32)
 WAITING_EXIT = 75                       # EX_TEMPFAIL: not started, a later dispatch retries
 REFUSED_EXIT = 2
 BUSY_FRACTION = 0.05                    # an unpinned Frankie thread above this share of one CPU holds the CPU it runs on
@@ -125,23 +133,23 @@ SLOT_CPUS = {'adviser': 1}
 STAGE_CPUS = {stage: SLOT_CPUS[slot] for stage, slot in STAGE_SLOTS.items()}
 SLOT_WAIT_POLL = 5.0                    # seconds between claim attempts while the shared slot is busy
 UNATTACHED_CLAIM_SECONDS = 120.0        # a claim whose step pid was never recorded is stale after this
-INGEST_RULE = ('an ingest or canary with VERIFY=inline runs its encode pool and its conformance-reader pool at the same '
-               'time: WORKERS x 2 + 1 CPUs (the parent included); VERIFY=deferred and a conform run one pool: WORKERS + 1; '
-               'the day process books %d CPUs and a demand above %d is refused' % (INGEST_CPUS, INGEST_CPUS))
+INGEST_RULE = ('an ingest, canary or conform day process runs ONE pool at a time (the encode pool ends at the seal before '
+               'the conformance reader starts; the parallel writer\'s replay/encode pool closes before its reader): WORKERS + 1 '
+               'CPUs, the parent included; the day process books --size CPUs (one of %s, default %d) and a demand above '
+               'its size is refused' % (INGEST_SIZES, INGEST_CPUS))
 DAY_RUN_RULE = ('a day-run step books exactly %d CPUs, never fewer; its workers = %d (the parent keeps the lowest booked '
                 'CPU); with fewer than %d free it waits' % (DAY_RUN_CPUS, DAY_RUN_CPUS - 1, DAY_RUN_CPUS))
 
 
 def ingest_demand(kind, workers, verify):
-    """CPUs one ingest / canary / conform day process uses: inline verify runs two pools at once."""
-    if kind == 'conform' or verify == 'deferred':
-        return workers + 1
-    return workers * 2 + 1
+    """CPUs one ingest / canary / conform day process uses: one pool at a time (2026-10-07 night: the encoders end at the
+    seal, before the reader; before that an inline verify kept both pools alive and counted WORKERS x 2 + 1)."""
+    return workers + 1
 
 
-def ingest_workers(verify, kind='ingest'):
-    """The largest WORKERS whose demand fits the 8-CPU booking (inline 3, deferred and conform 7)."""
-    return max(w for w in range(0, INGEST_CPUS) if ingest_demand(kind, w, verify) <= INGEST_CPUS)
+def ingest_workers(verify, kind='ingest', size=INGEST_CPUS):
+    """The largest WORKERS whose demand fits a booking of `size` CPUs (size - 1)."""
+    return max(w for w in range(0, size) if ingest_demand(kind, w, verify) <= size)
 
 
 def size_of(kind, workers=None, verify=None, size=None):
@@ -159,12 +167,16 @@ def size_of(kind, workers=None, verify=None, size=None):
         return None, 'an %s booking needs --verify inline|deferred (the rule counts the verify pool)' % kind
     if workers is None or workers < 0:
         return None, 'an %s booking needs --workers (the rule counts them)' % kind
+    if size is None:
+        size = INGEST_CPUS
+    if size not in INGEST_SIZES:
+        return None, 'an %s day process books one of %s CPUs (asked %s)' % (kind, INGEST_SIZES, size)
     need = ingest_demand(kind, workers, verify)
-    if need > INGEST_CPUS:
-        return None, ('WORKERS=%d with %s needs %d CPUs, more than the %d a day process books (%s); the largest WORKERS '
-                      'that fits is %d' % (workers, 'a conform' if kind == 'conform' else 'VERIFY=%s' % verify, need,
-                                           INGEST_CPUS, INGEST_RULE, ingest_workers(verify, kind)))
-    return INGEST_CPUS, None
+    if need > size:
+        return None, ('WORKERS=%d needs %d CPUs, more than the %d this day process books (%s); the largest WORKERS that '
+                      'fits is %d (or ask a larger --size)' % (workers, need, size, INGEST_RULE,
+                                                               ingest_workers(verify, kind, size)))
+    return size, None
 
 
 # ------------------------------------------------------------------------------------------------------------ /proc
@@ -868,6 +880,18 @@ def cmd_allowed(a):
     return 0
 
 
+def cmd_free(a):
+    """READ-ONLY. '<free> <online>': the CPUs a booking could take now (online less booked less in use by unbooked Frankie
+    processes, the same sets book uses). A hint for sizing (frankie_box_ingest_block.sh DAY_CPUS=auto); the booking itself
+    decides under the lock."""
+    me = os.getpid()
+    held, _, _, bookings = usage(a.window, exclude=ancestors(processes(), me) | {me})
+    online = online_cpus()
+    booked = {c for b in bookings for c in b['cpus']}
+    print('%d %d' % (len([c for c in online if c not in booked and c not in held]), len(online)))
+    return 0
+
+
 def cmd_show(a):
     """READ-ONLY: every CPU -> owner, live use, free count. Writes nothing (a stale booking is named, not reaped)."""
     me = os.getpid()
@@ -957,8 +981,9 @@ def main():
         s.add_argument('--window', type=float, default=1.0, help='seconds between the two /proc samples')
         s.add_argument('--outcome', help='write the booking outcome (booked | waiting | refused) as JSON here')
         s.add_argument('--cpus', help='a saved day\'s resume: exactly its retained CPU list (comma list / ranges)')
-        s.add_argument('--size', type=int, help='day-run slot size: one of %s (default %d; the run\'s plan day_cpus)'
-                                                % (DAY_RUN_SIZES, DAY_RUN_CPUS))
+        s.add_argument('--size', type=int, help='day-run slot size: one of %s (default %d; the run\'s plan day_cpus); '
+                                                'an ingest/canary/conform day process: one of %s (default %d)'
+                                                % (DAY_RUN_SIZES, DAY_RUN_CPUS, INGEST_SIZES, INGEST_CPUS))
         if name == 'book':
             s.add_argument('--pid', type=int, help='the process that holds the booking (default: the caller\'s parent)')
         else:
@@ -982,6 +1007,8 @@ def main():
     s.add_argument('--json', action='store_true')
     s = sub.add_parser('allowed')
     s.add_argument('--pid', type=int, required=True)
+    s = sub.add_parser('free')
+    s.add_argument('--window', type=float, default=1.0)
     a = p.parse_args()
     if getattr(a, 'booking', None) and not re.fullmatch('[A-Za-z0-9_.-]{1,160}', a.booking):
         raise SystemExit('--booking: a booking id from the ledger')
@@ -993,7 +1020,7 @@ def main():
         except (ValueError, TypeError):
             raise SystemExit('--cpus: a comma list of CPUs / ranges')
     return dict(book=cmd_book, run=cmd_run, release=cmd_release, retain=cmd_retain, own=cmd_own, reap=cmd_reap, show=cmd_show,
-                allowed=cmd_allowed)[a.action](a)
+                allowed=cmd_allowed, free=cmd_free)[a.action](a)
 
 
 if __name__ == '__main__':

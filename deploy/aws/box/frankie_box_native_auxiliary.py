@@ -205,6 +205,12 @@ class ParallelCensus:
         self.worker.close()
 
 
+class _WorkerLost(Exception):
+    def __init__(self, workers, why):
+        super().__init__(why)
+        self.workers, self.why = workers, why
+
+
 class _BookView:
     def __init__(self, book, results):
         self.book, self.results = book, results
@@ -225,7 +231,19 @@ class _BookView:
 
 
 class ParallelBook:
-    def __init__(self,producers,cpus,metrics=None):
+    """Full-depth snapshot levels on pinned book workers, the original assembly on their exact per-level results.
+
+    A level's result does not depend on which worker computed it or how many there are (the partition only spreads the
+    work; every level joins before the snapshot is assembled), so the worker set may change between snapshots:
+    - a worker that disconnects or fails is dropped (never refilled: one less worker), every mirror is re-seeded on the
+      survivors and the snapshot is computed again (on no worker left: the original method in this process); `note`
+      records it; nothing stops;
+    - `handover()` (asked every HANDOVER_CHECK_SECONDS between snapshots until it hands CPUs over, once) adds one pinned
+      worker per CPU handed over (the native child's, once it ended first beside the legacy pass) and re-seeds."""
+
+    HANDOVER_CHECK_SECONDS = 5.0
+
+    def __init__(self,producers,cpus,metrics=None,note=None,handover=None):
         from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import InstrumentBook
         self.book_class = InstrumentBook
         self.original = InstrumentBook.book_snapshot
@@ -236,9 +254,14 @@ class ParallelBook:
         self.active = False
         self.calls, self.levels, self.seconds = 0,0,0.0
         metrics = metrics if metrics is not None else {}
+        self.producers, self.metrics, self.note, self.handover = producers, metrics, note, handover
+        self.cpus = []
+        self.workers_lost, self.snapshots_redone, self.handed_over = 0, 0, []
+        self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
         try:
             for cpu in cpus:
                 self.workers.append(NativeWorker(producers,cpu,'book',metrics=metrics.setdefault(str(cpu),{})))
+                self.cpus.append(cpu)
         except BaseException:
             self.close()
             raise
@@ -274,7 +297,86 @@ class ParallelBook:
         InstrumentBook._book_effect = effect
         self.active = True
 
+    def _reseed(self):
+        """Every mirror starts again: the next snapshot of each book sends its complete partition (generation 1) to the
+        current workers; the old tokens are released on the workers that hold them."""
+        self.dropped.extend(self.references)
+        self.references.clear()
+        self.states.clear()
+
+    def widen(self, cpus):
+        """One more pinned book worker per CPU in `cpus` (only between snapshots: nothing pending). Returns the CPUs added."""
+        if any(worker.pending for worker in self.workers):
+            raise RuntimeError('book workers widen only with joined levels')
+        added = []
+        for cpu in cpus:
+            if cpu in self.cpus:
+                continue
+            self.workers.append(NativeWorker(self.producers,cpu,'book',metrics=self.metrics.setdefault(str(cpu),{})))
+            self.cpus.append(cpu)
+            added.append(cpu)
+        if added:
+            self._reseed()
+        return added
+
+    def _take_handover(self):
+        self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
+        extra = [cpu for cpu in (self.handover() or []) if cpu not in self.cpus]
+        if not extra:
+            return
+        self.handover = None
+        try:
+            added = self.widen(extra)
+        except Exception as error:  # noqa: BLE001 - a worker that will not start is one CPU not used, never a stop
+            added = []
+            if self.note is not None:
+                self.note('full-depth book workers: handed-over CPUs not taken (%s: %s); %d workers continue'
+                          % (type(error).__name__, error, len(self.workers)))
+        self.handed_over = added
+        if added and self.note is not None:
+            self.note('full-depth book workers: CPUs %s handed over; now %d pinned workers; levels unchanged'
+                      % (','.join(map(str, added)), len(self.workers)))
+
+    def _lose(self, lost, why):
+        """Drop the failed workers (one less each, never refilled), drain the others' results (discarded), re-seed."""
+        for worker in self.workers:
+            if worker in lost or not worker.pending:
+                continue
+            try:
+                worker.receive()
+            except Exception:  # noqa: BLE001 - a second failure in the same snapshot: dropped as well
+                lost.append(worker)
+        for worker in lost:
+            index = self.workers.index(worker)
+            self.workers.pop(index)
+            self.cpus.pop(index)
+            try:
+                worker.close()
+            except Exception:  # noqa: BLE001
+                pass
+        self.workers_lost += len(lost)
+        self.snapshots_redone += 1
+        self._reseed()
+        if self.note is not None:
+            self.note('full-depth book workers: %d lost (%s); %d left%s; this snapshot computed again, levels unchanged'
+                      % (len(lost), why, len(self.workers), '' if self.workers else ' (snapshots in this process)'))
+
     def snapshot(self,book,now_ns,depth_levels,include_order_ids):
+        if self.handover is not None and time.monotonic() >= self._handover_next:
+            self._take_handover()
+        if not self.workers:
+            started = time.perf_counter()
+            result = self.original(book,now_ns,depth_levels,True,include_order_ids)
+            self.calls += 1
+            self.seconds += time.perf_counter()-started
+            return result
+        try:
+            return self._snapshot(book,now_ns,depth_levels,include_order_ids)
+        except _WorkerLost as lost:
+            self._lose(lost.workers, lost.why)
+            return self.snapshot(book,now_ns,depth_levels,include_order_ids)
+
+    def _snapshot(self,book,now_ns,depth_levels,include_order_ids):
         started = time.perf_counter()
         items = [(side,price) for side in ('B','A') for price in book._prices(side)]
         state = self.states.get(book)
@@ -301,12 +403,27 @@ class ParallelBook:
             orders = {oid:book.orders[oid] for oid in ids if oid in book.orders}
             changes[partition(side, price)].append((side, price, ids, orders))
         dropped, self.dropped = self.dropped, []
+        lost, why = [], None
         for worker, delta, batch in zip(self.workers, changes, batches):
-            worker.send('levels', (state['token'], generation, state['reset'], delta,
-                                  batch, now_ns, include_order_ids, dropped))
+            try:
+                worker.send('levels', (state['token'], generation, state['reset'], delta,
+                                      batch, now_ns, include_order_ids, dropped))
+            except (EOFError, OSError) as error:
+                lost.append(worker)
+                why = why or '%s: %s' % (type(error).__name__, error)
         results = {}
+        replies = []
         for worker in self.workers:
-            token, actual_generation, levels = worker.receive()
+            if worker in lost:
+                continue
+            try:
+                replies.append(worker.receive())
+            except RuntimeError as error:
+                lost.append(worker)
+                why = why or (str(error).splitlines() or [type(error).__name__])[0]
+        if lost:
+            raise _WorkerLost(lost, why)
+        for token, actual_generation, levels in replies:
             if token != state['token'] or actual_generation != generation:
                 raise ValueError('book result belongs to another snapshot')
             for side, price, result in levels:
