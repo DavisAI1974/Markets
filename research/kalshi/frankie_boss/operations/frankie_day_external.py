@@ -28,15 +28,21 @@ after_halt}. published_ns is UTC nanoseconds. The 13 (Greg's order) and where th
                                                                           'eia930.us48' (wind, gas, the burn estimate)
    6 squeeze_watch.sessions_since_prompt_expiry                         -> 'calendar.sessions_since_prompt_expiry'
   10 weather.gw_hdd                                                     -> 'weather.gw_daily' and 'weather.obs_hourly'
-  11 EIA weekly storage (level, weekly change, vs 5-year)               -> 'storage.weekly'
-  12 storage estimate vs actual                                         -> 'storage.estimate_captures' (the archived
-                                                                          pages; values not extracted yet: listed missing)
+  11 EIA weekly storage (level, weekly change, vs 5-year)               -> 'storage.weekly' (as printed where the
+                                                                          archived report is held, else the EIA series)
+  12 storage estimate vs actual                                         -> 'storage.estimate' (estimate, printed actual,
+                                                                          surprise per print; values, never page links)
   13 the futures curve                                                  -> 'curve.definitions', 'curve.statistics',
                                                                           'curve.trades' (every trade of every month),
                                                                           'curve.settled_shape', 'curve.traded_shape'
 
-TIME GUARD (spec 2d7313bd): every row has published_ns. check_day_file() refuses a file with a row lacking it, or with
-a row at or after the halt. AsOfReader(file, cutoff_ns) refuses (LeakRefused, naming the point, the time and the
+THE 99 AND THE READER STAMP (Greg 2026-10-07). Every table carries its 99 mapping (POINT_REGISTRY_MAP: registry_entries,
+registry_mapping 'closest' with registry_mapping_reason, event_time_basis, points) and every row an event_time_ns column
+(its own event time; None when it has none). published_ns is the ONE reader stamp: max(event_time_ns, publication); a
+row with no event time sits at 14:00 ET of the trading day ('this is not a time-specific event') unless published later.
+
+TIME GUARD (spec 2d7313bd): every row has published_ns. check_day_file() refuses a file with a row lacking it, with
+a row at or after the halt, or with an event_time_ns after its reader stamp. AsOfReader(file, cutoff_ns) refuses (LeakRefused, naming the point, the time and the
 cutoff) any request past its cutoff and any point holding a value past it; it never filters silently.
 
     python3.12 frankie_day_external.py build --src <dir> --history-prefix frankie/day_history/<run> --day 20211005 --out <file>
@@ -68,6 +74,97 @@ EIA930_LAG_NS = int(2 * 3600e9)           # period stamp + 2 h: covers hour-begi
 SETTLE_STAT = 3                           # Databento StatType.SETTLEMENT_PRICE
 N_RANKS = 12                              # forward_curve.N_RANKS
 SERIES_STATIONS_NOTE = 'the 16 gas-weighted metros of nws_temp_feed.STATION_WEIGHTS_RAW'
+DEFAULT_PLACEMENT_ET = (14, 0)            # Greg 2026-10-07: a value with no event time of its own sits at 14:00 ET
+DEFAULT_PLACEMENT_NOTE = 'this is not a time-specific event'
+
+# Greg, 2026-10-07: every point maps to one of the 99 (deploy/aws/box/frankie_box_all99_coverage.REGISTRY); none of the
+# 13 is an MBO layer, so every mapping is the CLOSEST entry with its reason. Each table of the day file carries its
+# mapping as metadata (registry_entries / registry_mapping / registry_mapping_reason / event_time_basis / points), the
+# names frankie_box_all99_coverage.external_point_mapping reads. Keys are table names or prefixes ending in '.'.
+_FLOW = 'aggressor_and_native_signed_flow'
+_BAL = 'depletion_and_replenishment'
+POINT_REGISTRY_MAP = {
+    'cot.023651': dict(points=[1, 3, 4], registry_entries=[_FLOW], registry_mapping='closest',
+                       registry_mapping_reason='managed-money net positioning (its 1y/3y percentiles and week-on-week change) '
+                       'is the signed directional flow of one trader class; no 99 entry is external positioning',
+                       event_time_basis='intrinsic'),
+    'cot.023391': dict(points=[8], registry_entries=[_FLOW], registry_mapping='closest',
+                       registry_mapping_reason='ICE Henry Hub LD1 managed-money net positioning, as cot.023651',
+                       event_time_basis='intrinsic'),
+    'cot.': dict(points=[8], registry_entries=[_FLOW], registry_mapping='closest',
+                 registry_mapping_reason='other ICE Henry Hub codes beside LD1 (context for point 8), as cot.023651',
+                 event_time_basis='intrinsic'),
+    'mos.raw': dict(points=[2], registry_entries=['clock_feature_availability'], registry_mapping='closest',
+                    registry_mapping_reason='every MOS model-cycle row, available at cycle time + dissemination; no 99 '
+                    'entry is weather', event_time_basis='intrinsic'),
+    'mos.gw_by_cycle': dict(points=[2], registry_entries=['clock_feature_availability'], registry_mapping='closest',
+                            registry_mapping_reason='forecast gas-weighted HDD per model cycle, available at cycle time + '
+                            'dissemination; no 99 entry is weather', event_time_basis='intrinsic'),
+    'mos.disagreement_by_cycle': dict(points=[9], registry_entries=['clock_feature_availability'], registry_mapping='closest',
+                                      registry_mapping_reason='GFS-minus-NAM spread per shared model cycle, available at '
+                                      'cycle time + dissemination', event_time_basis='intrinsic'),
+    'eia930.hourly': dict(points=[5, 7], registry_entries=[_BAL], registry_mapping='closest',
+                          registry_mapping_reason='hourly generation by fuel and balancing-area demand: wind displaces gas '
+                          'burn and gas burn draws on the gas balance', event_time_basis='intrinsic'),
+    'eia930.us48': dict(points=[5, 7], registry_entries=[_BAL], registry_mapping='closest',
+                        registry_mapping_reason='US48 wind and the gas-burn estimate are supply/demand balance terms',
+                        event_time_basis='intrinsic'),
+    'calendar.sessions_since_prompt_expiry': dict(points=[6], registry_entries=['contract_session_roll_state'],
+                                                  registry_mapping='closest',
+                                                  registry_mapping_reason='sessions since the prompt contract expired is '
+                                                  'a contract/roll calendar state', event_time_basis='default_1400',
+                                                  event_time_note=DEFAULT_PLACEMENT_NOTE),
+    'weather.gw_daily': dict(points=[10], registry_entries=['clock_event_known_by'], registry_mapping='closest',
+                             registry_mapping_reason='an observed gas-day index, known once the gas day ends (+10 min)',
+                             event_time_basis='intrinsic'),
+    'weather.obs_hourly': dict(points=[10], registry_entries=['clock_event_known_by'], registry_mapping='closest',
+                               registry_mapping_reason='every ASOS observation, known minutes after its time',
+                               event_time_basis='intrinsic'),
+    'storage.weekly': dict(points=[11], registry_entries=[_BAL], registry_mapping='closest',
+                           registry_mapping_reason='weekly working-gas level and injection are the gas balance itself',
+                           event_time_basis='intrinsic'),
+    'storage.estimate': dict(points=[12], registry_entries=[_BAL], registry_mapping='closest',
+                             registry_mapping_reason='the street estimate of the injection against the printed actual',
+                             event_time_basis='intrinsic'),
+    'curve.': dict(points=[13], registry_entries=['price_and_book_path', 'contract_session_roll_state'],
+                   registry_mapping='closest',
+                   registry_mapping_reason='the futures curve across months (prices, settlements, shape) and its '
+                   'front/next contract pair', event_time_basis='intrinsic'),
+}
+
+
+def registry_map_for(name):
+    """The POINT_REGISTRY_MAP entry of a table name (exact name first, then the longest prefix ending in '.')."""
+    if name in POINT_REGISTRY_MAP:
+        return POINT_REGISTRY_MAP[name]
+    pre = [k for k in POINT_REGISTRY_MAP if k.endswith('.') and name.startswith(k)]
+    return POINT_REGISTRY_MAP[max(pre, key=len)] if pre else None
+
+
+def _utc_ns(text, fmt):
+    return ns(dt.datetime.strptime(text, fmt).replace(tzinfo=UTC))
+
+
+def _et_ns(day_iso, hour, minute=0):
+    d = dt.date.fromisoformat(day_iso)
+    return ns(dt.datetime(d.year, d.month, d.day, hour, minute, tzinfo=ET).astimezone(UTC))
+
+
+# The intrinsic event time of a row, per table (None: no event time of its own -> the 14:00 ET placement). The reader
+# stamp (published_ns) of every row is max(event_time_ns, publication) so every reader of the file sees one time.
+EVENT_TIME_RULES = {
+    'cot.': lambda c, r: _et_ns(r[c.index('report_date')], 17) if 'report_date' in c and r[c.index('report_date')] else None,
+    'storage.weekly': lambda c, r: _et_ns(r[c.index('week_ending')], 17),
+    'storage.estimate': lambda c, r: r[c.index('print_ns')],
+    'weather.obs_hourly': lambda c, r: _utc_ns(r[c.index('valid_utc')], '%Y-%m-%d %H:%M'),
+    'weather.gw_daily': lambda c, r: r[c.index('published_ns')] - OBS_LAG_NS,
+    'mos.': lambda c, r: _utc_ns(r[c.index('runtime_utc')], '%Y-%m-%d %H:%M:%S'),
+    'eia930.': lambda c, r: _utc_ns(r[c.index('period_utc')], '%Y-%m-%dT%H'),
+    'curve.statistics': lambda c, r: r[c.index('ts_event')],
+    'curve.trades': lambda c, r: r[c.index('ts_event')],
+    'curve.': lambda c, r: r[c.index('published_ns')],
+    'calendar.': lambda c, r: None,
+}
 
 
 class LeakRefused(RuntimeError):
@@ -101,7 +198,9 @@ def sha256_bytes(raw):
 # ------------------------------------------------------------------------------------------------ the builder pieces
 
 class Build:
-    FAMILIES = ('calendar', 'cot', 'storage', 'consensus', 'weather_obs', 'mos', 'eia930')
+    # 'as_printed' (fetch_day_history.py as-printed): the storage report and the street estimate as published at the
+    # time, extracted from the archived pages; it replaces reading the consensus captures here (values, not pointers)
+    FAMILIES = ('calendar', 'cot', 'storage', 'weather_obs', 'mos', 'eia930', 'as_printed')
 
     def __init__(self, src, history_prefix, day, eia930_prefix=None, family_prefixes=None):
         self.src, self.hp, self.day = Path(src), history_prefix.strip('/'), day
@@ -167,12 +266,16 @@ class Build:
             code = store.get('contract_code') or Path(path).stem.split('_')[-1]
             reports = store.get('reports') or []
             cols = sorted({k for r in reports for k in r})
+            lead = ['published_ns', 'publication_confidence', 'publication_delayed']
+            # a store field with a lead column's name (the store records its own publication fields) keeps its value
+            # under 'store_<name>', so no column repeats and nothing is dropped
+            names = [('store_' + c) if c in lead else c for c in cols]
             rows = []
             for r in reports:
                 pub, delayed, conf = cot_feed.publication_datetime(dt.date.fromisoformat(r['report_date']))
                 rows.append([ns(pub.astimezone(UTC)), conf, bool(delayed)] + [r.get(c) for c in cols])
             kept, later = self.keep(rows)
-            self.points[f'cot.{code}'] = table(['published_ns', 'publication_confidence', 'publication_delayed'] + cols, kept,
+            self.points[f'cot.{code}'] = table(lead + names, kept,
                                                source=store.get('source'), vintage='CFTC archive as retrieved',
                                                native_resolution='weekly (positions as of Tuesday)', after_halt=later,
                                                note='every report published before the halt; percentiles are the feed\'s '
@@ -191,6 +294,7 @@ class Build:
                 levels[dt.date.fromisoformat(r['period'])] = float(r['value'])
             except (KeyError, TypeError, ValueError):
                 self.lack('storage.weekly', 'unreadable row %r' % (r,))
+        printed = self.as_printed().get('reports', {})
         rows = []
         for week in sorted(levels):
             thu = week + dt.timedelta(days=6)
@@ -199,42 +303,65 @@ class Build:
             iso = week.isocalendar()[1]
             prior = [(w.year, levels[w]) for w in levels if w.isocalendar()[1] == iso and week.year - 5 <= w.year < week.year]
             vs5 = round(levels[week] - sum(v for _, v in prior) / len(prior), 1) if len(prior) == 5 else None
-            rows.append([ns(pub), week.isoformat(), levels[week], None if prev is None else round(levels[week] - prev, 1),
-                         vs5, prior])
+            level, chg = levels[week], None if prev is None else round(levels[week] - prev, 1)
+            five, year_ago, source = None, None, 'EIA API v2 natural-gas/stor/wkly NW2_EPG0_SWO_R48_BCF'
+            p = printed.get(week.isoformat())
+            if p:                    # Greg 2026-10-07: the value as published at the time, where the archive holds it
+                pub = dt.datetime.fromisoformat(p['print_datetime_et']).astimezone(UTC)
+                level = float(p['level_bcf']) if p.get('level_bcf') is not None else level
+                chg = float(p['net_change_bcf']) if p.get('net_change_bcf') is not None else chg
+                five, year_ago = p.get('five_year_avg_bcf'), p.get('year_ago_bcf')
+                vs5 = round(level - five, 1) if five is not None else vs5
+                source = p['source']
+            rows.append([ns(pub), week.isoformat(), level, chg, vs5, prior, five, year_ago, source])
         kept, later = self.keep(rows)
         self.points['storage.weekly'] = table(
-            ['published_ns', 'week_ending', 'level_bcf', 'weekly_chg_bcf', 'vs_5yr_bcf', 'same_week_prior_5y_levels'], kept,
-            source='EIA API v2 natural-gas/stor/wkly NW2_EPG0_SWO_R48_BCF', vintage='current (revised); the as-printed '
-            'values are in the archived EIA pages (storage.estimate_captures, house eia_wngsr)',
+            ['published_ns', 'week_ending', 'level_bcf', 'weekly_chg_bcf', 'vs_5yr_bcf', 'same_week_prior_5y_levels',
+             'five_yr_avg_bcf', 'year_ago_bcf', 'source'], kept,
+            source='EIA Weekly Natural Gas Storage Report as printed (archived report pages, as_printed family) where '
+                   'held; otherwise EIA API v2 natural-gas/stor/wkly NW2_EPG0_SWO_R48_BCF', vintage='as published',
             native_resolution='weekly (week ending Friday)', after_halt=later,
             note='published Thursday 10:30 ET after the week (rule; no holiday moved a late-September/October print); '
-                 'vs_5yr is EIA\'s own comparison (level minus the same week\'s five prior-year levels, all five listed '
-                 'beside it); None when fewer than five prior years exist')
+                 'vs_5yr is EIA\'s own comparison (the printed level minus the printed five-year average when the '
+                 'report is held, else the level minus the same week\'s five prior-year levels, all five listed beside '
+                 'it); None when fewer than five prior years exist; each row names its source')
+
+    def as_printed(self):
+        """The as_printed family's storage_as_printed.json ({} when absent; the absence is listed once)."""
+        if getattr(self, '_as_printed', None) is None:
+            key = f'{self.fam["as_printed"]}/as_printed/storage_as_printed.json'
+            if (self.src / key).is_file():
+                self._as_printed = self.read(key)
+            else:
+                self._as_printed = {}
+                self.lack('as_printed', 'no as_printed/storage_as_printed.json under %s (storage stays the EIA series; '
+                          'the estimate is not available)' % self.fam['as_printed'])
+        return self._as_printed
 
     # 12
     def estimate(self):
-        base = self.src / self.fam['consensus'] / 'consensus'
-        if not base.is_dir():
-            return self.lack('storage.estimate', 'no consensus captures under the day-history run')
+        """The street estimate against the printed actual, per print published before the halt (values, not pages)."""
+        doc = self.as_printed()
+        if not doc:
+            return self.lack('storage.estimate', 'no as_printed file (see as_printed)')
         rows = []
-        for path in sorted(base.glob('snapshots/*/*/*.html')):
-            house, pr, ts = path.parts[-3], path.parts[-2], path.stem
-            try:
-                t = dt.datetime.strptime(ts, '%Y%m%d%H%M%S').replace(tzinfo=UTC)
-            except ValueError:
-                continue
-            key = str(path.relative_to(self.src))
-            raw = path.read_bytes()
-            self.inputs.append(dict(key=key, bytes=len(raw), sha256=sha256_bytes(raw), manifest_checked=False))
-            rows.append([ns(t), house, pr, key, sha256_bytes(raw)])
+        for pr, e in sorted((doc.get('estimates') or {}).items()):
+            t = ns(dt.datetime.fromisoformat(e['print_datetime_et']).astimezone(UTC))
+            est, act = e.get('estimate_bcf'), e.get('actual_bcf')
+            rows.append([t, t, pr, e.get('week_ending'), est, act,
+                         None if est is None or act is None else round(act - est, 1), e.get('source')])
         kept, later = self.keep(rows)
-        self.points['storage.estimate_captures'] = table(
-            ['published_ns', 'house', 'print', 'capture_key', 'sha256'], kept, source='Wayback Machine captures',
-            vintage='archived capture', native_resolution='per capture', after_halt=later,
-            note='the archived pages that carry the street estimate (TradingEconomics, investing.com) and EIA\'s own '
-                 'report (the as-printed actual); a capture is public at its capture time')
-        self.lack('storage.estimate', 'the estimate values are not extracted from the %d captures yet (the extractor is '
-                  'the next build; the captures are referenced in storage.estimate_captures)' % len(kept))
+        self.points['storage.estimate'] = table(
+            ['published_ns', 'print_ns', 'print_date', 'week_ending', 'estimate_bcf', 'actual_bcf', 'surprise_bcf', 'source'],
+            kept, source='street estimate (TradingEconomics consensus / investing.com forecast, archived calendar pages) '
+            'and the printed actual (EIA report as printed)', vintage='as published', native_resolution='per weekly print',
+            after_halt=later, note='a print\'s estimate is public before the print; the row is placed at the print '
+                                   '(10:30 ET Thursday); surprise = actual minus estimate')
+        recent = (self.date - dt.timedelta(days=8)).isoformat()
+        for m in doc.get('missing') or []:       # the prints of this day's week that the archive does not hold
+            if m.get('print_date') and recent <= m['print_date'] <= self.date.isoformat():
+                self.lack('storage.estimate' if m.get('field') == 'estimate' else 'storage.weekly.as_printed',
+                          '%s: %s' % (m['print_date'], m['reason']))
 
     # 10
     def weather(self):
@@ -569,6 +696,42 @@ class Build:
                 if str(g.get('day')) in touching:
                     self.lack(fam + '.fetch_gap', '%s (fetch gap keyed %s in %s)' % (g.get('reason'), g.get('day'), prefix))
 
+    def place(self):
+        """Every table gets its 99 mapping (POINT_REGISTRY_MAP) and every row its reader stamp: event_time_ns (the row's
+        own event time, None when it has none) and published_ns = max(event time, publication); a row with no event
+        time sits at 14:00 ET of the trading day unless published later (Greg 2026-10-07). Every reader of the file
+        (the shared market reader, the classroom, the search) then sees one time per row. A row placed at or after the
+        halt leaves the day (counted in after_halt)."""
+        default = _et_ns(self.date.isoformat(), *DEFAULT_PLACEMENT_ET)
+        for name, t in self.points.items():
+            mapping = registry_map_for(name)
+            if mapping is None:
+                self.lack(name, 'no 99 mapping for this table (POINT_REGISTRY_MAP)')
+            else:
+                t.update({k: (list(v) if isinstance(v, list) else v) for k, v in mapping.items()})
+            rule = next((EVENT_TIME_RULES[k] for k in sorted(EVENT_TIME_RULES, key=len, reverse=True)
+                         if name == k or (k.endswith('.') and name.startswith(k))), None)
+            cols = t['columns']
+            if 'event_time_ns' in cols:
+                continue
+            i = cols.index(t['stamp_column'])
+            rows, later = [], 0
+            for r in t['rows']:
+                ev = rule(cols, r) if rule else None
+                stamp = max(ev, r[i]) if ev is not None else max(default, r[i])
+                r = list(r)
+                r[i] = stamp
+                if stamp >= self.halt_ns:
+                    later += 1
+                    continue
+                rows.append(r[:i + 1] + [ev] + r[i + 1:])
+            t['columns'] = cols[:i + 1] + ['event_time_ns'] + cols[i + 1:]
+            t['rows'] = sorted(rows, key=lambda r: r[i]) if later or any(
+                rows[k][i] > rows[k + 1][i] for k in range(len(rows) - 1)) else rows
+            t['after_halt'] = (t.get('after_halt') or 0) + later
+            if mapping and mapping.get('event_time_basis') == 'default_1400':
+                t['placement_ns'] = default
+
     def run(self, with_curve=True, src_curve=None):
         for piece in (self.calendar, self.cot, self.storage, self.estimate, self.weather, self.mos, self.eia930,
                       self.source_gaps):
@@ -587,11 +750,15 @@ class Build:
                 self.lack('curve', f'{type(exc).__name__}: {exc}')
         else:
             self.lack('curve', 'not built in this run (--no-curve)')
+        self.place()
         body = dict(schema=SCHEMA, trading_day=self.day, open_utc=self.open.isoformat(), halt_utc=self.halt.isoformat(),
                     open_ns=self.open_ns, halt_ns=self.halt_ns, built_utc=dt.datetime.now(UTC).isoformat(),
                     history_prefix=self.hp, eia930_history_prefix=self.eia_hp,
                     family_history_prefixes=dict(self.fam), inputs=self.inputs, points=self.points, missing=self.missing,
-                    guard='time only: every row carries published_ns < halt_ns; read through AsOfReader')
+                    point_registry_map=POINT_REGISTRY_MAP, placement_et='%02d:%02d' % DEFAULT_PLACEMENT_ET,
+                    placement_note=DEFAULT_PLACEMENT_NOTE,
+                    guard='time only: every row carries published_ns = max(event_time_ns, publication) < halt_ns; read '
+                          'through AsOfReader')
         check_day_file(body)
         return body
 
@@ -613,6 +780,7 @@ def check_day_file(body):
         if len(set(t['columns'])) != len(t['columns']):
             raise StagingRefused('%s repeats a column name' % name)
         i = t['columns'].index(t['stamp_column'])
+        ev = t['columns'].index('event_time_ns') if 'event_time_ns' in t['columns'] else None
         for n, row in enumerate(t['rows']):
             if len(row) != len(t['columns']):
                 raise StagingRefused('%s row %d has %d values for %d columns' % (
@@ -622,6 +790,11 @@ def check_day_file(body):
                 raise StagingRefused('%s row %d has no integer publication stamp (%r)' % (name, n, stamp))
             if stamp >= halt:
                 raise StagingRefused('%s row %d is stamped %d, at or after the halt %d' % (name, n, stamp, halt))
+            if ev is not None:
+                event = row[ev]
+                if event is not None and (not isinstance(event, int) or isinstance(event, bool) or event > stamp):
+                    raise StagingRefused('%s row %d: event_time_ns %r is not an integer at or before its reader stamp %d'
+                                         % (name, n, event, stamp))
     return True
 
 
@@ -716,6 +889,9 @@ SEARCH_SERIES = (   # (series name, point, value column, row filter) - the 13 po
     ('storage.level_bcf', 'storage.weekly', 'level_bcf', None),
     ('storage.weekly_chg_bcf', 'storage.weekly', 'weekly_chg_bcf', None),
     ('storage.vs_5yr_bcf', 'storage.weekly', 'vs_5yr_bcf', None),
+    ('storage.estimate_bcf', 'storage.estimate', 'estimate_bcf', None),
+    ('storage.actual_bcf', 'storage.estimate', 'actual_bcf', None),
+    ('storage.surprise_bcf', 'storage.estimate', 'surprise_bcf', None),
     ('curve.settled.front', 'curve.settled_shape', 'front', None),
     ('curve.settled.slope_1', 'curve.settled_shape', 'slope_1', None),
     ('curve.settled.slope_back', 'curve.settled_shape', 'slope_back', None),

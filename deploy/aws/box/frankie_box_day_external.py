@@ -5,8 +5,9 @@ research/kalshi/frankie_boss/operations/frankie_day_external.py. Plan: HISTORICA
 
 ACTION=build, per day of DAYS:
   1. fetch, through the presigned map (MAP_URL), the day-history objects the day needs (frankie/day_history/<run>/...:
-     calendar, cot store, storage, consensus captures of the day's prints, weather obs of the day's months, the MOS raw
-     files covering it, the day's EIA-930 files, manifest.json) and the curve's native files of the day's two UTC
+     calendar, cot store, storage, weather obs of the day's months, the MOS raw files covering it, the day's EIA-930
+     files, the as_printed storage report and street estimate (fetch_day_history.py as-printed; a family of its own,
+     usually HISTORY_FAMILY_RUNS as_printed=<id>), manifest.json) and the curve's native files of the day's two UTC
      partitions (nymex/ng_fut_parent_v0/{definition,statistics,mbo}/native/...), into /opt/frankie-box/work/day-external/
      <RUN>/src/<the S3 key>; the day-history files are checked against its manifest.json, the curve files against the
      curve pull's manifests (a file no manifest names is used and listed `unverified`);
@@ -22,6 +23,9 @@ ACTION=build, per day of DAYS:
          MANIFEST.json naming the file, its sha256 and its S3 key (the brain loader reads only cycle/lessons entries,
          so the attachment is found by its day key and never enters the corpus).
 ACTION=link: step 3 only, for an existing RUN (after an ingest seals).
+Every day file carries Frankie's 13 points mapped to the 99 (POINT_REGISTRY_MAP of the builder, closest entry with its
+reason; Greg 2026-10-07) and every row one reader stamp, published_ns = max(event_time_ns, publication), a row with no
+event time of its own at 14:00 ET of the trading day; the receipt repeats the map, the rule and the code sha256s.
 Nothing here edits a pinned file, a sealed journal, a receipt of the ingest, or an existing brain entry.
 """
 import argparse
@@ -43,6 +47,8 @@ CURVE = 'nymex/ng_fut_parent_v0'
 S3_DAY = 'frankie/day_external/{day}/{name}'
 FILE, RECEIPT = 'day-external.json', 'day-external-receipt.json'
 RECEIPT_SCHEMA = 'FRANKIE_DAY_EXTERNAL_RECEIPT_V1'
+CODE_FILES = ('research/kalshi/frankie_boss/operations/frankie_day_external.py',
+              'research/kalshi/frankie_boss/operations/fetch_day_history.py', 'deploy/aws/box/frankie_box_day_external.py')
 
 
 def sha256_file(path):
@@ -57,7 +63,9 @@ def ymd(day):
     return dt.date(int(day[:4]), int(day[4:6]), int(day[6:]))
 
 
-FAMILIES = ('calendar', 'cot', 'storage', 'consensus', 'weather_obs', 'mos', 'eia930')
+# the builder's families (Build.FAMILIES): 'consensus' is no longer read; its captures reach the day file through the
+# as_printed family (fetch_day_history.py as-printed), values only
+FAMILIES = ('calendar', 'cot', 'storage', 'weather_obs', 'mos', 'eia930', 'as_printed')
 
 
 def family_prefixes(history_prefix, eia930_prefix=None, overrides=None):
@@ -90,7 +98,7 @@ def wanted_keys(day, keys, history_prefix, prints, eia930_prefix=None, overrides
                 out.append(k)
             elif fam_of.get(fam) != prefix:
                 continue
-            elif rel.endswith('/receipt.json') or fam in ('calendar', 'storage'):
+            elif rel.endswith('/receipt.json') or fam in ('calendar', 'storage', 'as_printed'):
                 out.append(k)
             elif fam == 'cot' and rel.startswith('cot/store/') and name.endswith('.json'):
                 out.append(k)
@@ -150,7 +158,8 @@ def verify_curve(src, listing):
 
 def build_day(job):
     sys.path.insert(0, job['code_root'])
-    from research.kalshi.frankie_boss.operations.frankie_day_external import Build, check_day_file
+    from research.kalshi.frankie_boss.operations.frankie_day_external import (Build, check_day_file, POINT_REGISTRY_MAP,
+                                                                              DEFAULT_PLACEMENT_ET, DEFAULT_PLACEMENT_NOTE)
     day, run_dir = job['day'], Path(job['run_dir'])
     target = run_dir / day
     target.mkdir(parents=True, exist_ok=False)
@@ -170,7 +179,15 @@ def build_day(job):
                    points={k: len(v['rows']) for k, v in body['points'].items()}, missing=body['missing'],
                    inputs=body['inputs'], curve_verification=job['curve_verification'],
                    reader='research/kalshi/frankie_boss/operations/frankie_day_external.py AsOfReader',
-                   guard='time only: every row has published_ns < halt_ns (checked before writing)')
+                   guard='time only: every row has published_ns < halt_ns (checked before writing)',
+                   point_registry_map=POINT_REGISTRY_MAP,
+                   reader_stamp_rule='published_ns = max(event_time_ns, publication); a row with no event time of its '
+                                     'own sits at %02d:%02d ET of the trading day (%s) unless published later'
+                                     % (DEFAULT_PLACEMENT_ET + (DEFAULT_PLACEMENT_NOTE,)),
+                   point_mappings={k: dict(registry_entries=v.get('registry_entries'), mapping=v.get('registry_mapping'),
+                                           event_time_basis=v.get('event_time_basis'), rows=len(v['rows']))
+                                   for k, v in body['points'].items()},
+                   code_sha256={rel: sha256_file(Path(job['code_root']) / rel) for rel in CODE_FILES})
     (target / RECEIPT).write_text(json.dumps(receipt, indent=1, sort_keys=True), encoding='utf-8')
     return dict(day=day, path=str(target / FILE), sha256=receipt['sha256'], bytes=len(raw), points=receipt['points'],
                 missing=len(body['missing']))
@@ -277,8 +294,8 @@ def main():
     overrides = {}
     for item in [x for x in a.family_history_runs.split(',') if x]:
         fam, _, rid = item.partition('=')
-        if fam not in FAMILIES or not rid.isdigit():
-            raise SystemExit('--family-history-runs: family=<numeric run id> with a family of %s' % (FAMILIES,))
+        if fam not in FAMILIES or not rid.isalnum():
+            raise SystemExit('--family-history-runs: family=<run id> (letters and digits) with a family of %s' % (FAMILIES,))
         overrides[fam] = 'frankie/day_history/%s' % rid
     record = dict(schema='FRANKIE_DAY_EXTERNAL_RUN_V1', action=a.action, run=a.run, days=days, markets_sha=a.markets_sha,
                   history_prefix=history_prefix, eia930_history_prefix=eia930_prefix,

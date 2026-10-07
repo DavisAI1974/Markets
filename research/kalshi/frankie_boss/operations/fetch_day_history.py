@@ -25,6 +25,7 @@ local files only; publishing to S3 is the workflow's step (frankie_day_history.y
     python3.12 research/kalshi/frankie_boss/operations/fetch_day_history.py plan --out <file.json>     # offline
     python3.12 research/kalshi/frankie_boss/operations/fetch_day_history.py canary                     # network, ~1-2 min
     python3.12 research/kalshi/frankie_boss/operations/fetch_day_history.py fetch --family all --out <dir>
+    python3.12 research/kalshi/frankie_boss/operations/fetch_day_history.py as-printed --src <S3 mirror> --runs <id,...> --out <dir>
 """
 from __future__ import annotations
 
@@ -422,6 +423,170 @@ FETCH = dict(calendar=fetch_calendar, cot=fetch_cot, storage=fetch_storage, cons
              weather_obs=fetch_weather_obs, mos=fetch_mos, eia930=fetch_eia930)
 
 
+# ------------------------------------------------------------------------------------------------ as printed (Greg 2026-10-07)
+# "Put the historical correct data in there ... Just make it right": the storage report and the street estimate as they
+# were PUBLISHED at the time, read off the archived pages already fetched (consensus family: EIA's WNGSR page, the
+# TradingEconomics and investing.com calendars) plus the two stores that already hold as-printed values
+# (storage_vintage/storage_vintage.json: EIA as first printed; consensus/storage_consensus.json: the pre-print street
+# estimate). Values go into the file (Greg: "Site links aren't able to be computed"); each value names its page.
+# A print the archive does not hold is listed in `missing` with the reason; nothing is filled in.
+AS_PRINTED_SCHEMA = 'FRANKIE_STORAGE_AS_PRINTED_V1'
+HOUSE_NAMES = dict(tradingeconomics='TradingEconomics (tradingeconomics.com/united-states/natural-gas-stocks-change)',
+                   investing_www='investing.com event 386', investing_es='es.investing.com event 386',
+                   investing_mx='mx.investing.com event 386', eia_wngsr='EIA WNGSR (ir.eia.gov/ngs/ngs.html)')
+
+
+def _html_text(raw):
+    import html as _html
+    import re
+    t = re.sub(r'(?is)<script.*?</script>|<style.*?</style>', ' ', raw)
+    return re.sub(r'\s+', ' ', _html.unescape(re.sub(r'<[^>]+>', ' ', t)).replace('\xa0', ' '))
+
+
+def _html_rows(raw):
+    import html as _html
+    import re
+    raw = re.sub(r'(?is)<script.*?</script>|<style.*?</style>', ' ', raw)
+    out = []
+    for tr in re.findall(r'(?is)<tr[^>]*>(.*?)</tr>', raw):
+        out.append([_html.unescape(re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', c))).replace('\xa0', ' ').strip()
+                    for c in re.findall(r'(?is)<t[dh][^>]*>(.*?)</t[dh]>', tr)])
+    return out
+
+
+def _bcf(text):
+    try:
+        return float(text.replace('Bcf', '').replace('B', '').replace(',', '').strip())
+    except (AttributeError, ValueError):
+        return None
+
+
+def parse_snapshot(house, raw):
+    """The values one archived page shows: EIA WNGSR -> its report; a calendar page -> its rows per print date."""
+    import re
+    if house == 'eia_wngsr':
+        s = _html_text(raw)
+        m = re.search(r'for week ending (\w+ \d+, \d{4}) \| Released: (\w+ \d+, \d{4}) at ([\d:]+) ([ap])\.m\.', s)
+        t = re.search(r'Total ([\d,]+) ([\d,]+) (-?[\d,]+) (-?[\d,]+) ([\d,]+) (-?[\d.]+) ([\d,]+) (-?[\d.]+)', s)
+        if not (m and t):
+            return []
+        g = [x.replace(',', '') for x in t.groups()]
+        hh, mm = (int(x) for x in m.group(3).split(':'))
+        hh = hh + 12 if m.group(4) == 'p' and hh != 12 else hh
+        rel = dt.datetime.strptime(m.group(2), '%B %d, %Y').date()
+        return [dict(kind='report', week_ending=dt.datetime.strptime(m.group(1), '%B %d, %Y').date().isoformat(),
+                     print_date=rel.isoformat(), print_datetime_et=dt.datetime(rel.year, rel.month, rel.day, hh, mm,
+                                                                               tzinfo=ET).isoformat(),
+                     level_bcf=int(g[0]), prior_level_bcf=int(g[1]), net_change_bcf=int(g[2]), implied_flow_bcf=int(g[3]),
+                     year_ago_bcf=int(g[4]), five_year_avg_bcf=int(g[6]))]
+    out = []
+    for r in _html_rows(raw):
+        if house == 'tradingeconomics' and len(r) >= 7 and re.match(r'\d{4}-\d{2}-\d{2}$', r[0]) and 'Natural Gas' in r[2]:
+            out.append(dict(kind='calendar', print_date=r[0], actual=_bcf(r[4]), previous=_bcf(r[5]), estimate=_bcf(r[6])))
+        elif house.startswith('investing') and len(r) >= 5:
+            d = None
+            for fmt in ('%d.%m.%Y', '%b %d, %Y', '%d/%m/%Y'):
+                try:
+                    d = dt.datetime.strptime(r[0][:12] if fmt == '%b %d, %Y' else r[0], fmt).date()
+                    break
+                except ValueError:
+                    continue
+            if d is not None:
+                out.append(dict(kind='calendar', print_date=d.isoformat(), actual=_bcf(r[2]), estimate=_bcf(r[3]),
+                                previous=_bcf(r[4])))
+    return out
+
+
+def as_printed(src, runs, out):
+    """Build <out>/as_printed/storage_as_printed.json from a local mirror of the S3 keys (src): the consensus snapshots of
+    the given day_history runs, storage_vintage/storage_vintage.json and consensus/storage_consensus.json."""
+    import glob
+    src, rec = Path(src), Receipt(out, 'as_printed')
+    prints = sorted({p['release_et'][:10] for d in days_selected() for p in storage_prints_around(d)})
+    seen = {}
+    for run in runs:
+        for path in sorted(glob.glob(str(src / f'frankie/day_history/{run}/consensus/snapshots/*/*/*.html'))):
+            house, cap = Path(path).parts[-3], Path(path).stem
+            raw = Path(path).read_bytes()
+            key = str(Path(path).relative_to(src))
+            rec.body['requests'].append(dict(key=key, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()))
+            for v in parse_snapshot(house, raw.decode('utf-8', 'replace')):
+                v.update(house=house, capture_utc=cap, capture_key=key)
+                seen.setdefault(v['print_date'], []).append(v)
+    def load(key):
+        path = src / key
+        if not path.is_file():
+            rec.gap('all', f'{key}: not in the mirror')
+            return {}
+        raw = path.read_bytes()
+        rec.body['requests'].append(dict(key=key, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()))
+        return json.loads(raw)
+    vint = (load('storage_vintage/storage_vintage.json') or {}).get('reports', {})
+    cons = {r['print_date']: r for r in (load('consensus/storage_consensus.json') or {}).get('reports', [])}
+    reports, estimates, missing = {}, {}, []
+    for pr in prints:
+        p = dt.date.fromisoformat(pr)
+        week = (p - dt.timedelta(days=6)).isoformat()
+        at = dt.datetime(p.year, p.month, p.day, 10, 30, tzinfo=ET).isoformat()
+        got = seen.get(pr, [])
+        w = sorted((v for v in got if v['kind'] == 'report'), key=lambda v: v['capture_utc'])
+        v = vint.get(week)
+        cal = [x for x in got if x['kind'] == 'calendar' and x.get('actual') is not None]
+        if w:
+            x = w[0]
+            reports[week] = dict(print_date=pr, print_datetime_et=x['print_datetime_et'], level_bcf=x['level_bcf'],
+                                 net_change_bcf=x['net_change_bcf'], five_year_avg_bcf=x['five_year_avg_bcf'],
+                                 year_ago_bcf=x['year_ago_bcf'], source='EIA WNGSR as released %s (archived page, capture '
+                                 '%s UTC)' % (pr, x['capture_utc']))
+        elif v and v.get('as_printed'):
+            a = v['as_printed']
+            reports[week] = dict(print_date=pr, print_datetime_et=at, level_bcf=a.get('national_level'),
+                                 net_change_bcf=a.get('national_chg'), five_year_avg_bcf=None, year_ago_bcf=None,
+                                 source='EIA WNGSR as first printed %s (storage_vintage store: archived ir.eia.gov/ngs/ngs.html; '
+                                 'corroborated %s)' % (pr, (v.get('corroboration') or {}).get('route')))
+        elif cal:
+            x = sorted(cal, key=lambda c: (c['house'] != 'tradingeconomics', c['capture_utc']))[0]
+            reports[week] = dict(print_date=pr, print_datetime_et=at, level_bcf=None, net_change_bcf=x['actual'],
+                                 five_year_avg_bcf=None, year_ago_bcf=None,
+                                 source='net change as printed: %s calendar row (archived page, capture %s UTC); level: '
+                                 'no archived report held' % (HOUSE_NAMES[x['house']], x['capture_utc']))
+            missing.append(dict(print_date=pr, field='report_level',
+                                reason='no archived copy of the EIA report for this print (level and five-year average are '
+                                       'the EIA series)'))
+        else:
+            missing.append(dict(print_date=pr, field='report',
+                                reason='no archived copy of the EIA report or a calendar row for this print'))
+        actual = reports.get(week, {}).get('net_change_bcf')
+        c = cons.get(pr)
+        est = [x for x in got if x['kind'] == 'calendar' and x.get('estimate') is not None]
+        if c and (c.get('consensus_pre_print_bcf') is not None or c.get('consensus_chg_bcf') is not None):
+            pre = c.get('consensus_pre_print_bcf')
+            estimates[pr] = dict(week_ending=week, print_datetime_et=at,
+                                 estimate_bcf=pre if pre is not None else c.get('consensus_chg_bcf'),
+                                 actual_bcf=c.get('actual_as_printed_bcf', actual),
+                                 source='street estimate: TradingEconomics consensus %s (storage_consensus store, archived '
+                                 'page); actual as printed: %s' % ('captured before the print at %s' % c.get(
+                                     'consensus_pre_print_snapshot_utc') if pre is not None else 'final',
+                                     (c.get('actual_as_printed_source') or '').split(';')[0]))
+        elif est and actual is not None:
+            x = sorted(est, key=lambda c: (c['house'] != 'tradingeconomics', c['capture_utc']))[0]
+            estimates[pr] = dict(week_ending=week, print_datetime_et=at, estimate_bcf=x['estimate'], actual_bcf=actual,
+                                 source='street estimate: %s calendar row (archived page, capture %s UTC); actual: %s'
+                                 % (HOUSE_NAMES[x['house']], x['capture_utc'], reports[week]['source']))
+        else:
+            missing.append(dict(print_date=pr, field='estimate',
+                                reason='no archived calendar page with the street estimate for this print is held'))
+    doc = dict(schema=AS_PRINTED_SCHEMA, built_utc=dt.datetime.now(UTC).isoformat(), prints=prints, runs=list(runs),
+               reports=reports, estimates=estimates, missing=missing,
+               rule='values as published at the time, read off the archived pages; each value names its page; a print '
+                    'the archive does not hold is listed, never filled')
+    rec.save('storage_as_printed.json', doc)
+    for m in missing:
+        rec.gap(m['print_date'], '%s: %s' % (m['field'], m['reason']))
+    rec.close()
+    return 0
+
+
 def canary():
     """One small request per source: reachable, the format as the feeds expect, and 2021 coverage. ~1-2 minutes."""
     probes = [
@@ -465,7 +630,13 @@ def main():
     sub.add_parser('canary')
     f = sub.add_parser('fetch'); f.add_argument('--family', required=True, help='all or a comma list of ' + ','.join(FAMILIES))
     f.add_argument('--out', required=True)
+    ap = sub.add_parser('as-printed', help='storage report + street estimate as published, from an S3 mirror')
+    ap.add_argument('--src', required=True, help='local mirror of the S3 keys')
+    ap.add_argument('--runs', required=True, help='comma list of day_history run ids whose consensus snapshots to read')
+    ap.add_argument('--out', required=True)
     args = p.parse_args()
+    if args.cmd == 'as-printed':
+        return as_printed(args.src, [r for r in args.runs.split(',') if r], args.out)
     if args.cmd == 'plan':
         return plan(args.out)
     if args.cmd == 'canary':

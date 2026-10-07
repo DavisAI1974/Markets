@@ -1,7 +1,8 @@
 name: Frankie day history (the 13 points for the experiment days; free public sources only)
 # research/kalshi/frankie_boss/HISTORICAL_DATA_PLAN_20260929.md. Dispatch only, each on Greg's go.
 # action=canary: one small request per source (~1-2 min), prints what came back; writes nothing.
-# action=fetch: runs operations/fetch_day_history.py fetch for the named families at native resolution and uploads
+# action=fetch: runs operations/fetch_day_history.py fetch for the named families (and, with `days`, only those selected
+#   days: DAY_HISTORY_DAYS) at native resolution and uploads
 #   the result (raw files + receipt.json per family) to s3://<bucket>/frankie/day_history/<run_id>/ plus an artifact.
 #   New objects under a new prefix only: no existing store (cot/, weather/, consensus/, grid_stack/) is touched.
 # Nothing here touches Databento. The EIA key is the repository secret EIA_API_KEY (DEMO_KEY when it is absent).
@@ -16,6 +17,10 @@ on:
         description: 'fetch: all, or a comma list of calendar,cot,storage,consensus,weather_obs,mos,eia930'
         required: false
         default: 'all'
+      days:
+        description: 'optional comma list YYYYMMDD of selected days (DAY_HISTORY_DAYS); empty = all selected days'
+        required: false
+        default: ''
 permissions:
   contents: read
 concurrency:
@@ -42,9 +47,12 @@ jobs:
         if: inputs.action == 'fetch'
         env:
           FAMILIES: ${{ inputs.families }}
+          DAY_HISTORY_DAYS: ${{ inputs.days }}
+          DAY_HISTORY_DEADLINE_S: '16200'
         run: |
           set -euo pipefail
           case "$FAMILIES" in *[!a-z0-9_,]*) echo "families must be a comma list of names"; exit 2;; esac
+          case "$DAY_HISTORY_DAYS" in *[!0-9,]*) echo "days must be YYYYMMDD values separated by commas"; exit 2;; esac
           python research/kalshi/frankie_boss/operations/fetch_day_history.py fetch --family "$FAMILIES" --out day-history
       - name: Upload to S3 (new prefix, new objects only)
         if: inputs.action == 'fetch'
