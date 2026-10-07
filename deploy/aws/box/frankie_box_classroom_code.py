@@ -599,7 +599,8 @@ class _Arrivals:
 # classroom's arithmetic. Nothing new is invented: the operands are the native producers' own per-group values (the
 # native member rows the shared reader yields at their GROUP_CLOSE emission, flattened by the joined teacher's leaf rule,
 # frankie_box_joined_teacher._flatten: a mapping is walked by dotted key, a number or boolean is kept, a string is a
-# category, a list is its length and stays whole in the picture), the native lifecycle rows of the entry's own sections
+# category, a list is its length and stays whole in the picture; a FIFO queue list also enters per side and level,
+# QUEUE_LEVEL_RULE below), the native lifecycle rows of the entry's own sections
 # (counted per Dipole interval, the joined teacher's count-of-rows-in-the-window form), and the INPUT envelope's reset
 # and session-scope carriers. The equations are the classroom's existing external-section arithmetic
 # (dipole_classroom_external: the value in force at each Dipole row, _direction, _pair = relation, Pearson, co-movement),
@@ -630,6 +631,40 @@ NATIVE_ENTRY_RULE = ('a member value is placed at the INPUT cursor of its GROUP_
                      'counts in the interval of the first Dipole row at or after its cursor (zero = measured none over the '
                      'exhausted source while the carrier was present); every series is per instrument (never pooled across '
                      'contracts); FINALIZE / unplaceable rows are counted and never placed; nothing averaged')
+
+
+# Per-level FIFO queue lengths (Greg, 2026-10-07 night: "Do queue length however it will give a better output").
+QUEUE_LEVEL_RULE = ('every list of book levels whose elements carry a fifo_queue list (book_full.bid_levels_full, '
+                    'book_full.ask_levels_full, wherever the selected carrier holds one) adds one series per side and level: '
+                    '<side>_levels_full[L<i>].fifo_queue#len = the number of orders queued at the i-th level of that list at '
+                    'that instant, i counted from 1 in the producer\'s own level order (never re-sorted here; the V4 state '
+                    'adapter lists each side from its best price outward, bids descending and asks ascending, '
+                    'research/ng_exhaustion_mbo_v4_state_adapter_20260820.py _prices at this checkout; the pinned producers '
+                    'checkout is not read here, so that order is carried as the producer\'s, not re-checked; L1 is the best '
+                    'level at that instant, L2 the next, and so on: a distance from the best at each instant, not a fixed '
+                    'price). The list\'s own '
+                    'length series (#len, the number of levels) stays alongside. A level not present at an instant (the book '
+                    'is shallower then) reads MISSING, never zero. As many levels as the data carries; no cap')
+QUEUE_LEVEL_COST = ('expected, not measured: per member row, one extra leaf per level per side (depth D gives 2D series per '
+                    'instrument); hot path about one dict write per level per member row plus a second walk of each selected '
+                    'carrier\'s mappings (order of 1 to 3 minutes per 1M member rows at D = 100); memory at most n_dipole_rows x 17 bytes per series (about 170 MB per '
+                    'instrument at D = 100 and 50k Dipole rows); 19 pairs per series after the pass (about 4 s per '
+                    'instrument at D = 100 and 50k rows) and about 0.6 KB per pair in native-entry-arithmetic.json. No bound '
+                    'is applied; if one is ever needed it is recorded here as a named limit, never a silent truncation')
+
+
+def _queue_levels(node, prefix, out):
+    """Per-level FIFO queue lengths under one selected carrier (QUEUE_LEVEL_RULE): mappings are walked by dotted key; a
+    list whose elements are level mappings with a fifo_queue list yields one ('n', length) leaf per level, in list order.
+    A level without a fifo_queue list yields nothing (it reads MISSING, never zero). Lists are not descended further."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            _queue_levels(value, prefix + '.' + str(key) if prefix else str(key), out)
+    elif isinstance(node, list):
+        for position, level in enumerate(node, 1):
+            queue = level.get('fifo_queue') if isinstance(level, dict) else None
+            if isinstance(queue, list):
+                out['%s[L%d].fifo_queue#len' % (prefix, position)] = ('n', float(len(queue)))
 
 
 class _NumSeries:
@@ -806,6 +841,7 @@ class _NativeEntryArithmetic:
                     break
             if found:
                 _flatten(node, head, leaves)
+                _queue_levels(node, head, leaves)       # per-level FIFO queue lengths beside the list's own length
         seen = self.member_keys.setdefault(instrument, set())
         for leaf in seen - leaves.keys():
             key = ('native.member.row.' + leaf, instrument)
@@ -883,15 +919,18 @@ class _NativeEntryArithmetic:
                               'co-movement counts (_pair). Categories: runs over the Dipole rows and, per value (a cell), '
                               'each Dipole component\'s rows, PRESENT count and first-to-last direction inside the cell'),
                    leaf_rule=('frankie_box_joined_teacher._flatten: mapping walked by dotted key; number / boolean kept; '
-                              'string = category; list = its length (#len), the list itself stays whole in the picture'),
+                              'string = category; list = its length (#len), the list itself stays whole in the picture. '
+                              'Plus FIFO queues per level (Greg, 2026-10-07 night): ' + QUEUE_LEVEL_RULE),
                    limit=('descriptive for this day\'s window; no causation or outcome claimed (R01, R02); a list carrier '
-                          '(FIFO queues, levels, raw actions) enters as its length, not entry by entry; lifecycle rows '
+                          'enters as its length, and a FIFO queue also per level (its length at that level), not order by '
+                          'order; no level cap is applied (expected cost in queue_level_cost); lifecycle rows '
                           'enter as their count per Dipole interval, their fields stay in the pictures; the leaf rule '
                           'carries numbers as float64, so an integer above 2**53 (a ns clock, an id) is not exact in the '
                           'arithmetic (it stays exact in the picture and the ledger)'),
                    **result)
         out['seconds'] = round(time.monotonic() - started, 3)
         out['hot_path_seconds'] = round(self.note_seconds, 3)
+        out['queue_level_cost'] = QUEUE_LEVEL_COST
         out['timing'] = ('hot_path_seconds: note() inside the classroom\'s one ordered pass (part of read.seconds); seconds: '
                          'the per-series materialization and the pairs after the pass')
         return out
@@ -1009,7 +1048,8 @@ class _NativeEntryArithmetic:
                 base = s['name'].split('@', 1)[0]
                 if base.startswith('native.member.row.'):
                     leaf = base[len('native.member.row.'):]
-                    if any(leaf == h or leaf.startswith(h + '.') or leaf.startswith(h + '#') for h in spec['heads']):
+                    if any(leaf == h or leaf.startswith(h + '.') or leaf.startswith(h + '#') or leaf.startswith(h + '[')
+                           for h in spec['heads']):
                         own.append(s['name'])
                 elif base.startswith('native.lifecycle.'):
                     if base[len('native.lifecycle.'):] in spec['sections']:
@@ -1537,7 +1577,8 @@ CLASSROOM_COMPUTATIONS = {
                               'derived_v4_mechanics_fifo_features): per series the value in force at each Dipole row, state '
                               'counts, terminal state, first-to-last direction, and per Dipole component the relation, Pearson '
                               'and co-movement counts; categories as runs and per-value cells of each Dipole component; '
-                              'operands: the native member rows\' own fields (joined-teacher leaf rule), the lifecycle rows of '
+                              'operands: the native member rows\' own fields (joined-teacher leaf rule, plus each FIFO queue\'s '
+                              'length per side and level from the best, QUEUE_LEVEL_RULE), the lifecycle rows of '
                               'the entry\'s sections counted per Dipole interval, the INPUT envelope\'s reset and session-scope '
                               'carriers; per instrument, never pooled',
 }

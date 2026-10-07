@@ -388,3 +388,21 @@ Requests: workflow_reports, `frankie_box_workflow_inspection.py` classroom FIELD
 reason, per-entry use/form/series/pairs/unavailable, file pin, timings); today it reaches the markdown via `received`.
 
 Fresh independent review (frankie-school-recovery or frankie-ccode-review) required before integration.
+
+### 2026-10-07 night, session 2 (continued): FIFO queue length per level
+
+Greg (relayed): "Do queue length however it will give a better output." Asking Frankie would need a model call, so the
+richer output is taken. `_queue_levels` / `QUEUE_LEVEL_RULE`: every list of book levels whose elements carry a
+`fifo_queue` list (book_full.bid_levels_full / ask_levels_full, wherever a selected carrier holds one) adds one series
+per instrument, side and level, `<side>_levels_full[L<i>].fifo_queue#len` (orders queued at the i-th level from that
+side's best at that instant), in the producer's own level order (never re-sorted here; the V4 state adapter at this
+checkout lists bids descending and asks ascending; the pinned producers checkout is not read, so that order is carried
+as the producer's). Each enters the same per-Dipole-row arithmetic (relation, Pearson, co-movement against the 19
+components). The list's own length series (#len) and the scalar order counts stay alongside. A level absent at an
+instant reads MISSING, never zero. No level cap. Expected cost (`QUEUE_LEVEL_COST`, not measured): 2D series per
+instrument at depth D; about 1-3 minutes of hot path per 1M member rows at D = 100; up to about 170 MB per instrument at
+D = 100 and 50k Dipole rows; about 4 s of pairs per instrument; about 0.6 KB per pair in native-entry-arithmetic.json.
+Attributed to every one of the six whose carrier holds the levels (book_full: price_and_book_path,
+derived_price_flow_book_paths, derived_v4_mechanics_fifo_features).
+
+2026-10-07: Frankie can say in his own report whether he wants the per-level queue lengths kept or changed.
