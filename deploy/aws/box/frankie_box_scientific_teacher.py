@@ -134,6 +134,36 @@ def open_class(reason):
     return 'open_other', 'listed by the claims builder with its own reason'
 
 
+def binding_identity(binding):
+    """What makes a reproduction binding the same binding: its status, entry ids and source pins (path, revision,
+    sha256), whether it is the tables' shape (entries with sources) or a lessons' projection (a flat sources list)."""
+    if not isinstance(binding, dict):
+        return None
+    sources = [s for e in binding.get('entries') or [] for s in e.get('sources') or []] or list(binding.get('sources') or [])
+    return dict(status=binding.get('status'), entry_ids=sorted(binding.get('entry_ids') or []),
+                sources=sorted((str(s.get('path')), str(s.get('revision')), str(s.get('sha256'))) for s in sources))
+
+
+def current_binding(claim, HC):
+    """(binding, reform, superseded): the CURRENT declared tables always decide (Greg's step-5 direction, 2026-10-06: a
+    known error fixed at its source must not stay active because a record froze it); a binding or reformulation the
+    claim carries from an earlier freeze is compared and, when it differs, listed as superseded, never used."""
+    binding, reform = HC.reproduction_of(claim['id']), HC.reformulation_of(claim['id'])
+    superseded = {}
+    retained = claim.get('reproduction')
+    if retained is not None and binding_identity(retained) != binding_identity(binding):
+        superseded['reproduction'] = dict(retained=binding_identity(retained), current=binding_identity(binding))
+    retained_reform = claim.get('reformulation')
+    if retained_reform is not None and retained_reform != reform:
+        superseded['reformulation'] = dict(retained=retained_reform, current=reform)
+    if superseded:
+        superseded.update(binding_tables_sha256=HC.binding_tables_sha256(),
+                          rule='the declared tables changed after this claim\'s binding was frozen into its lesson: the '
+                               'retained binding is not used by any consumer; the lesson bytes stay as evidence; a '
+                               'reproduction status read against the superseded binding is not established')
+    return binding, reform, superseded or None
+
+
 def reconsideration(doc, path, raw, claims, records_dir=None, records_selection=None):
     """The historical collection's standing, carried with every lessons file so neither teacher reads a mapped subset
     as the collection, nor a prior rejection label as closure (R11, R13). Four statuses, each counted and bound to the
@@ -144,11 +174,13 @@ def reconsideration(doc, path, raw, claims, records_dir=None, records_selection=
     import frankie_box_historical_claims as HC
     import frankie_box_historical_reproduction as HR
     not_testable = doc.get('not_testable') or []
-    bindings, reforms, performed, records_listed = {}, {}, {}, []
+    bindings, reforms, performed, records_listed, superseded_claims = {}, {}, {}, [], []
     for c in claims:
-        binding = c.get('reproduction') or HC.reproduction_of(c['id'])
+        binding, reform, superseded = current_binding(c, HC)
+        if superseded:
+            superseded_claims.append(dict(claim_id=c['id'],
+                                          superseded=sorted(k for k in superseded if k in ('reproduction', 'reformulation'))))
         bindings[binding['status']] = bindings.get(binding['status'], 0) + 1
-        reform = c.get('reformulation') or HC.reformulation_of(c['id'])
         reforms[reform['status']] = reforms.get(reform['status'], 0) + 1
         records, listed = HR.records_for(c['id'], records_dir if records_dir is not None else REPRODUCTION_DIR,
                                          selection=records_selection)
@@ -181,6 +213,7 @@ def reconsideration(doc, path, raw, claims, records_dir=None, records_selection=
                         bindings=dict(sorted(bindings.items())), records=dict(sorted(performed.items())),
                         records_listed=records_listed, binding_tables_sha256=HC.binding_tables_sha256(),
                         records_dir=str(records_dir if records_dir is not None else REPRODUCTION_DIR),
+                        retained_bindings_superseded=superseded_claims,
                         records_selection_frozen=records_selection is not None,
                         what='each mapped claim\'s original calculation is traced to code at its exact revision '
                              '(REPRODUCTIONS: sources with sha256, entry point, inputs, recorded outputs); `records` counts '
@@ -712,8 +745,7 @@ def test(claims_doc, days, records_dir=None, records_selection=None):
             # and the status stays pending_teacher_work (not_bound for the retired Memory A claims).
             import frankie_box_historical_claims as HC
             import frankie_box_historical_reproduction as HR
-            binding = c.get('reproduction') or HC.reproduction_of(c['id'])
-            reform = c.get('reformulation') or HC.reformulation_of(c['id'])
+            binding, reform, superseded = current_binding(c, HC)
             directory = records_dir if records_dir is not None else REPRODUCTION_DIR
             records, records_listed = HR.records_for(c['id'], directory, selection=records_selection)
             reproduction = HR.status_of(records)
@@ -724,6 +756,7 @@ def test(claims_doc, days, records_dir=None, records_selection=None):
                                                 days=sorted({t['day'] for t in tests}), counts=result['counts'],
                                                 rule='a count comparison on stored search evidence, not a reproduction'),
                 original_calculation_reproduction=reproduction,
+                binding_tables_sha256=HC.binding_tables_sha256(), retained_binding_superseded=superseded,
                 reproduction_binding=dict(status=binding['status'], entry_ids=binding.get('entry_ids') or [],
                                           reason=binding.get('reason'),
                                           sources=[dict(path=s['path'], revision=s['revision'], sha256=s['sha256'],

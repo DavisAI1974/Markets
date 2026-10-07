@@ -166,6 +166,31 @@ def lesson_context(doc):
     return context
 
 
+def binding_correction(result):
+    """For a historical lesson result: the binding it froze versus the CURRENT declared tables (Greg's step-5 direction,
+    2026-10-06: a known error fixed at its source must not stay active because a lesson froze it). Returns None for a
+    result without research_rework; else {superseded, retained, current, binding_tables_sha256}. The current binding is
+    what both seats and Frankie consume; the retained one is listed, never used; the lesson bytes are untouched."""
+    rework = result.get('research_rework') if isinstance(result, dict) else None
+    if not isinstance(rework, dict):
+        return None
+    import frankie_box_historical_claims as HC
+    import frankie_box_scientific_teacher as ST
+    current = HC.reproduction_of(result.get('claim_id'))
+    retained = rework.get('reproduction_binding') or {}
+    current_view = dict(status=current['status'], entry_ids=current.get('entry_ids') or [], reason=current.get('reason'),
+                        sources=[dict(path=s['path'], revision=s['revision'], sha256=s['sha256'], catalog_id=s.get('catalog_id'))
+                                 for e in current.get('entries') or [] for s in e.get('sources') or []],
+                        inputs_missing=[i.get('path') for e in current.get('entries') or []
+                                        for i in e.get('inputs') or [] if i.get('status') != 'committed'],
+                        rule='a declared binding; not a reproduction')
+    superseded = bool(retained) and ST.binding_identity(retained) != ST.binding_identity(current_view)
+    return dict(superseded=superseded, retained=retained if superseded else None, current=current_view,
+                binding_tables_sha256=HC.binding_tables_sha256(),
+                rule='the current declared tables decide; a binding frozen in a lesson that differs is superseded and '
+                     'not used by either seat or by Frankie; the lesson bytes stay as evidence')
+
+
 def context_checks(item, day, src, said):
     """Both seats state the same source-scoped obligations before their turn is hashed."""
     checks, words = [], []
@@ -219,6 +244,19 @@ def context_checks(item, day, src, said):
     elif prior.get('tests') is not None:
         words.append('This lesson result carries no market/context classification of its series (an older reader): its '
                      'rows are read with that limitation; no market finding is attributed to a label.')
+    if item['author'] == 'historical':
+        correction = binding_correction(prior)
+        if correction and correction['superseded']:
+            words.append('Historical binding correction: the reproduction binding this lesson froze (%s) is superseded by '
+                         'the declared tables now (%s; tables %s). Neither seat uses the retained binding; any reproduction '
+                         'status this lesson read against it is not established; the lesson bytes stay as evidence.' % (
+                             said.v(json.dumps(dict(status=correction['retained'].get('status'),
+                                                    entry_ids=correction['retained'].get('entry_ids')), sort_keys=True),
+                                    src['sha256'], 'retained binding'),
+                             said.v(json.dumps(dict(status=correction['current']['status'],
+                                                    entry_ids=correction['current']['entry_ids']), sort_keys=True),
+                                    src['sha256'], 'current binding'),
+                             said.v(correction['binding_tables_sha256'][:12], src['sha256'], 'binding tables sha256')))
     for text in words:
         checks.append(dict(source_id=src['source_id'], claim='collection and completed-native scope',
                            check=text, result='unresolved'))
@@ -1219,11 +1257,16 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                 prior_rework = result.get('research_rework') or {}
                 reproduction = prior_rework.get('original_calculation_reproduction')
                 records = (prior_rework.get('reproduction_records') or {}).get('records') or []
+                correction = binding_correction(result) or {}
                 performed = (isinstance(reproduction, str) and reproduction.startswith('performed_')
                              and any(isinstance(r, dict) and r.get('record_sha256') and r.get('status') == reproduction
-                                     for r in records))
+                                     for r in records)
+                             and not correction.get('superseded'))   # a status read against a superseded binding is not established
                 rework = dict(prior_rework, status='OPEN_REWORK_REQUIRED', closed=False,
                     claim_id=result['claim_id'], lesson_sha256=src['sha256'],
+                    reproduction_binding=correction.get('current', prior_rework.get('reproduction_binding')),
+                    binding_superseded=(dict(retained=correction['retained'], binding_tables_sha256=correction['binding_tables_sha256'],
+                                             rule=correction['rule']) if correction.get('superseded') else None),
                     collection=context.get('reconsideration'),
                     prior_disposition=result.get('disposition'),
                     original_calculation_reproduction=reproduction if performed else 'not_established_by_this_exchange',
@@ -1241,6 +1284,11 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                     if performed else
                     'Original research reproduction and repair/reformulation remain open; '
                     'the current count comparison does not establish their completion.')
+                if correction.get('superseded'):
+                    side['untested'].append(
+                        'The reproduction binding this lesson froze is superseded by the declared tables now; neither seat '
+                        'uses it, and a reproduction status read against it is not established (corrected at the source, '
+                        'propagated here; the lesson bytes stay as evidence).')
             findings += found
             turns = [dict(turn=1, seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR,
                           responds_to='the scientific teacher\'s lessons result on the claim', record=boss,
@@ -1276,6 +1324,10 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                     frankie_side['research_rework'] = rework
                     reply['learned'].append('Historical conclusions are source-scoped claims, not final truth. '
                         'This research remains open for original-calculation reproduction and repair or reformulation.')
+                    if rework.get('binding_superseded'):
+                        reply['learned'].append('The historical binding this lesson carried for %s has been corrected at '
+                                                'its source and superseded; I use the current binding and treat nothing '
+                                                'read against the old one as established.' % result['claim_id'])
                 if shared['teaching']:
                     reply['reasoning'] += (' I retain the BOSS teacher\'s shared count accounting and its original '
                                            'scope limits as teaching; it adds no measurement or confirmation.')
