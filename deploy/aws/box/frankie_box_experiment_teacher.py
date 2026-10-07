@@ -149,6 +149,58 @@ OPERAND_ENTRIES = ('canonical_sep_nov_2021_dbn_mbo_objects', 'october_first_sour
 EXPOSED = 'teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only'
 
 
+EXTERNAL_POINTS_SCHEMA = 'FRANKIE_TEACHER_EXTERNAL_POINTS_V1'
+
+
+def external_points_summary(key, status=None, reason=None):
+    """Per day-file point (the day file's own point ids, dipole_classroom_external.POINTS / DEFERRED), from the external
+    section key this step built or reused (never recomputed): the series of the point present in the section, the Dipole
+    rows at which a PRESENT value was used (state_counts PRESENT per series, aligned at or before each row's own time),
+    the rows its tables had known by the cutoff and not yet known, and every missing entry with its reason. Without a key:
+    status and reason only (never zeros). Read by the day reports' 99-layer join (its per-point table)."""
+    if not isinstance(key, dict):
+        return dict(schema=EXTERNAL_POINTS_SCHEMA, status=status or 'not_built',
+                    reason=reason or 'no external section key was built or reused by this step', points=[])
+    by_name = {s.get('name'): s for s in key.get('series') or [] if isinstance(s, dict)}
+    points = []
+    for p in key.get('points') or []:
+        if not isinstance(p, dict):
+            continue
+        series = []
+        for name in p.get('series') or []:
+            counts = ((by_name.get(name) or {}).get('alignment') or {}).get('state_counts') or {}
+            series.append(dict(series=name, present_rows=int(counts.get('PRESENT') or 0), state_counts=counts))
+        used = sum(x['present_rows'] for x in series)
+        tables = [dict(table=t.get('name'), rows_known=t.get('rows_known'), not_yet_known=t.get('not_yet_known'),
+                       absent=t.get('absent'), reason=t.get('reason')) for t in p.get('tables') or [] if isinstance(t, dict)]
+        missing = [dict(point=m.get('point'), reason=m.get('reason'), detail={k: v for k, v in m.items()
+                                                                              if k not in ('point', 'reason')})
+                   for m in p.get('missing') or [] if isinstance(m, dict)]
+        if used:
+            use, why = 'used', ('%d Dipole row(s) took a PRESENT value of its series (aligned at or before each row\'s own '
+                                'time) in the external section' % used)
+        elif series:
+            use, why = 'missing', 'its series are in the section, but no value was published at or before any Dipole row'
+        else:
+            use, why = 'missing', ('none of its series is in the day file read at the cutoff%s' % (
+                ': ' + '; '.join(str(m['reason']) for m in missing) if missing else ''))
+        points.append(dict(point_id=p.get('point_id'), name=p.get('name'), use=use, reason=why, rows_used=used,
+                           series=series, tables=tables, missing=missing))
+    for p in (key.get('deferred') or {}).get('points') or []:
+        if isinstance(p, dict) and p.get('point_id') is not None:
+            points.append(dict(point_id=p['point_id'], name=p.get('name'), use='deferred', rows_used=0, series=[],
+                               tables=[dict(table=t) for t in p.get('tables') or []], missing=[],
+                               reason='deferred by Greg, not read: %s' % (key.get('deferred') or {}).get('reason')))
+    counts = {}
+    for p in points:
+        counts[p['use']] = counts.get(p['use'], 0) + 1
+    return dict(schema=EXTERNAL_POINTS_SCHEMA, status=status or 'built', reason=reason,
+                external_key_hash=key.get('external_key_hash'), cutoff_ns=key.get('cutoff_ns'), rows=key.get('rows'),
+                points=points, counts=counts,
+                rule='per point as the external section key records it: used = a PRESENT value of its series reached a '
+                     'Dipole row; missing = none did, with the reason; deferred = left out by Greg; never a zero filled in')
+
+
 def all99_field(result, market_report, *, day):
     """The teacher's FRANKIE_ALL99_COVERAGE_V1: the shared reader's per-day field (what each carrier yielded) with this
     piece's own rows: the APPLIED operands that entered the pinned R3 equation, the teacher's computed forms, the
@@ -372,6 +424,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                       ingestion_receipt=dict(path=str(receipt_path), sha256=receipt_sha256), rows=0, processed=0,
                       entity_rows=0, through_cursor=rc['record_count'] - 1, model_calls=0, phase_timings=phases,
                       external_section=dict(external, listed='no external section built: the rows it aligns to were not computed'),
+                      external_points=external_points_summary(None, status='not_built', reason='no external section built: the rows it aligns to were not computed'),
                       experiment_directive=directive_witness(),
                       shared_market_identity=market.identity if market is not None else None,
                       shared_market_read=None,
@@ -527,7 +580,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                       entity_rows=0, through_cursor=through, walk_seconds=round(walked, 1),
                       seconds=round(time.time() - started, 1), model_calls=0, experiment_directive=directive_witness(),
                       phase_timings=phases,
-                      external_section=dict(external, listed='no external section built: the rows it aligns to were not computed'))
+                      external_section=dict(external, listed='no external section built: the rows it aligns to were not computed'),
+                      external_points=external_points_summary(None, status='not_built', reason='no external section built: the rows it aligns to were not computed'))
         if market is not None:
             result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
                           shared_market_arithmetic=shared_read.get('equation'),
@@ -582,16 +636,26 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         result.update(learner_binding=learner_binding, evidence_seat='frankie',
                       independent_scientific_verification=False)
     code = 4 if external.get('status') == 'refused' else 0
+    external_key = None
     if learner_binding is None and external.get('status') not in ('absent', 'refused'):
         try:
             key, section = EXT.ensure_external_section(out, source, external['path'], external['sha256'], trading_day=day,
                                                        built_by='teacher-only step')
             external.update(status='built' if not section['reused'] else 'reused', section=section)
+            external_key = key
         except Exception as error:                 # listed; the rows stand; the classroom V2 refuses with the same error
             external.update(status='failed', error='%s: %s' % (type(error).__name__, error))
             code = 4
         phase('external_section')
     result['external_section'] = external
+    # the per-point summary of the 13 points (the day reports' 99-layer join reads it): from the key above only
+    result['external_points'] = (external_points_summary(external_key) if external_key is not None else
+                                 external_points_summary(None, status='not_built', reason=(
+                                     'the external section is %s%s' % (external.get('status'),
+                                                                     (': ' + str(external.get('reason') or external.get('error')))
+                                                                     if (external.get('reason') or external.get('error')) else '')
+                                     if learner_binding is None else
+                                     'a learner-bound teacher step builds no external section (the classroom builds it)')))
     result['status'] = 'rows_published'
     result['all99_coverage'] = all99_field(result, shared_read, day=day)
     result['workflow_report'] = workflow_report(result, receipt_path=receipt_path, rc=rc, external=external, market=market,

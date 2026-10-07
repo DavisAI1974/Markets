@@ -1234,3 +1234,34 @@ ListObjectsV2 and GetObject, us-east-2, bucket bento-568968024170-us-east-2-an, 
 
 Checks: AST parse clean; `bash -n` clean on the wrapper; `git diff --check` clean.
 SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.
+
+## 20. The BOSS teacher's per-point list reaches the 99-layer table
+
+Uncommitted; source only; nothing ran; no account call.
+
+- **`frankie_box_experiment_teacher.py`.**
+  - New `external_points_summary(key)` (FRANKIE_TEACHER_EXTERNAL_POINTS_V1). It is built only from the external
+    section key the step already builds or reuses (`EXT.ensure_external_section`), never recomputed. Per day-file point,
+    using the day file's own point ids:
+    - `use`: used when a PRESENT value of its series reached at least one Dipole row; missing otherwise, with the
+      reason; deferred for point 6, Greg's squeeze deferral.
+    - `rows_used`: PRESENT rows summed over its series.
+    - the series with their state counts;
+    - the tables with rows known / not yet known by the cutoff;
+    - every missing entry with its reason.
+  - The receipt carries it as `external_points`.
+    - When no section was built: status `not_built` with the reason. The reason is the section's
+      absent/refused/failed status, a learner-bound step, or the equation_not_run paths. Never zeros.
+  - Additive: the teacher's retained-receipt checks compare named fields only, so an older receipt stays valid.
+- **`frankie_box_experiment_day_reports.collect_external_points`.** The `teacher` piece now reads the receipt's
+  `external_points` the same way as the classroom's list: per point use, reason, rows used, series, missing.
+  - Its join input is `<receipt>#external_points` with the sha256 of that list, so the one `join_inputs` formula
+    covers it. A receipt without the field is not_reported, named.
+- **Scientific teacher, exchange, Granite meeting, Jev.** No per-point record exists in their modules (searched for
+  point ids and per-point lists). They stay not_reported.
+- **ROOT admission.** Unchanged.
+- **Open.** The one-day reporter does not project `external_points` on the teacher piece by value. It is in the
+  receipt, listed as retained at source, and the reports' 99-layer table shows it. Adding it to the reporter's FIELDS
+  is a one-word change in a file not assigned this pass.
+
+Checks: AST parse and `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.

@@ -1526,7 +1526,8 @@ def _rows(doc, shared_schema):
 EXTERNAL_POINT_PIECES = (
     ('shared_reader', 'the shared market reader\'s external publications as the BOSS teacher\'s full read recorded them '
                       '(teacher receipt shared_market_read.external_publications.points: per table rows and presented)'),
-    ('teacher', 'the BOSS teacher receipt (external_section: one section for the day file, no per-point record)'),
+    ('teacher', 'the BOSS teacher receipt external_points (FRANKIE_TEACHER_EXTERNAL_POINTS_V1, from its external section '
+                'key: per point used / missing / deferred, rows used, series, missing with reason)'),
     ('classroom', 'the classroom receipt all99_coverage.external_points.points (computed / context / absent, with reason)'),
     ('search', 'the search MANIFEST external source: searched fields and alias series per day-file table, absent series'),
     ('scientific_teacher', 'the lessons files: per-entry lists only (no per-point record)'),
@@ -1662,12 +1663,31 @@ def collect_external_points(d, run_name, run_dir):
                 per[pid] = dict(disposition='missing', reason='its tables (%s) are not in the day file the reader read'
                                                                 % listing(tables))
         add('shared_reader', 'read', seen=tseen, per=per, basis='teacher_receipt')
-    # the BOSS teacher's own use of the day file: one section, no per-point record
-    if isinstance(teacher, dict):
-        add('teacher', 'not_reported', 'the BOSS teacher records its external section as one section (status %s), not per '
-                                       'point' % rec((teacher.get('external_section') or {}).get('status')), seen=tseen)
-    else:
+    # the BOSS teacher's own use of the day file: its receipt's external_points (FRANKIE_TEACHER_EXTERNAL_POINTS_V1, from
+    # its external section key), read like the classroom's list; a receipt from before the field is not_reported
+    tpoints = teacher.get('external_points') if isinstance(teacher, dict) else None
+    if not isinstance(teacher, dict):
         add('teacher', 'not_reported', twhy)
+    elif not isinstance(tpoints, dict):
+        add('teacher', 'not_reported', 'the BOSS teacher receipt records no per-point list (written before the field; its '
+                                       'external section status %s)' % rec((teacher.get('external_section') or {}).get('status')),
+            seen=tseen)
+    elif not isinstance(tpoints.get('points'), list) or (tpoints.get('status') != 'built' and not tpoints.get('points')):
+        add('teacher', 'not_reported', 'the BOSS teacher built no per-point list: %s (%s)' % (
+            rec(tpoints.get('status')), rec(tpoints.get('reason'))),
+            seen=dict(path='%s#external_points' % (tseen or {}).get('path'),
+                      sha256=sha256_bytes(json.dumps(tpoints, sort_keys=True).encode())))
+    else:
+        per = {}
+        for item in tpoints['points']:
+            if isinstance(item, dict) and item.get('point_id') is not None:
+                per[item['point_id']] = dict(disposition=item.get('use'), reason=item.get('reason'),
+                                             rows_used=item.get('rows_used'),
+                                             series=[x.get('series') for x in item.get('series') or [] if isinstance(x, dict)],
+                                             missing=[x.get('reason') for x in item.get('missing') or [] if isinstance(x, dict)])
+        add('teacher', 'read', seen=dict(path='%s#external_points' % (tseen or {}).get('path'),
+                                         sha256=sha256_bytes(json.dumps(tpoints, sort_keys=True).encode())),
+            per=per, basis='teacher_receipt')
     # the classroom
     ext = ((d.receipt.get('all99_coverage') or {}).get('external_points') if isinstance(d.receipt, dict) else None) or {}
     if d.source.get('kind') != 'classroom receipt':
