@@ -1,5 +1,14 @@
 # Dipole coverage and both-teacher continuation — 2026-10-06
 
+## Current return review — 2026-10-06 night ET / 2026-10-07 UTC
+
+Refetched integration `e697d52e` and CCode `d3945e13`. The latter is documentation
+only; A-D implementation was already integrated. D1/B7/C2 and A4/B1-B6/C1 remain
+assigned and open, in the order stated atop `CCODE_NEXT_SOURCE_TASKS_20261006.md`.
+No numerical/source implementation changed in this integration. Exact prices remain
+pending corrected originating INPUT provenance; the existing structure join is preserved.
+Steps 2-4 incomplete; source-built/runtime-unverified; every execution hold remains.
+
 ## Latest clarification — market conditions vs context (Greg, 2026-10-06)
 
 Greg excludes trading costs and non-market bookkeeping from research/Dipole signals.

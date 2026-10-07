@@ -1,3 +1,33 @@
+# Current integration review — 2026-10-06 night ET / 2026-10-07 UTC
+
+Codex fetched integration `e697d52e` and CCode `d3945e13`. The latter adds only the Claude handoff,
+drop-in and the state block below; A-D source was already integrated. The integration review HAS
+landed in `research/kalshi/frankie_boss/CCODE_NEXT_SOURCE_TASKS_20261006.md`: read its newest
+section before the older Claude drop-in. D1, B7, C2, A4, B1-B6 and C1 remain assigned to CCode.
+The older statement that no new CCode work is assigned does not close that correction queue.
+Codex owns search/dipole and shared handoffs; exact structures are built, exact prices wait for
+correct originating trade INPUT provenance. Dates/weekdays/IDs group market signals as search
+conditions; they are not numerical signals/targets. No trading-cost or profit-selection research.
+No runtime work is authorized; source review, AST without imports and whitespace checks only.
+STOP before #5. Preserve the draft, Granite pins and historical artifacts; Memory A stays retired.
+The memory-index statement below describes Claude's host, not proof of availability on another host.
+
+# Prior CCode return — 2026-10-07 (slices A-D RETURNED; source-only)
+
+READ FIRST for a Claude session on the CCode queue: `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007.md` (the box),
+then `CLAUDE_HANDOFF_20261007_CCODE_SLICES_A_D.md` (the full state). Branch `ccode/teacher-tasks-20261006b`, rebased onto
+Codex's `80a0e279` (ccr-5fce7de3-xa4hfg), pushed, tip `fea2e165`. All four slices of `CCODE_NEXT_SOURCE_TASKS_20261006.md`
+are returned as one `[skip ci]` commit each: A follow-ups (the scientific seat consumes the one origin accounting; the
+zero/unclassified limitation; listed origin reasons voiced), B (REPRODUCTIONS/REFORMULATIONS bindings in
+`frankie_box_historical_claims.py`, the never-invoked `frankie_box_historical_reproduction.py` capability, the teacher
+reads hash-bound reproduction records; Memory A claims H06-H08 `not_bound`: retired by Greg), C (the owner's completed
+native evidence reaches every accumulated result; every completed-native consumer classed), D (`provenance` on the ROOT
+price/structure rows, FRANKIE_ROOT_ROW_PROVENANCE_V1; late knowledge listed at the frozen boundaries). SOURCE-BUILT /
+RUNTIME-UNVERIFIED: ast.parse, git diff --check, regex-constant compile only; nothing ran. The codebase-memory index is
+current on the branch (CLI, foreground; the MCP call times out). NEXT = Codex's integration review of the four returns and
+its search adapter for the provenance contract; no new CCode slice is assigned. STOP before #5; boxes stopped; HOLD.
+The Codex-facing documents (`CCODE_*`) are separate from this Claude handoff and drop-in.
+
 # Current Frankie AWS continuation — 2026-10-06
 
 Greg requested a chat handoff at 08:02 ET before finishing all of #2. Latest slice wires native accumulated lesson

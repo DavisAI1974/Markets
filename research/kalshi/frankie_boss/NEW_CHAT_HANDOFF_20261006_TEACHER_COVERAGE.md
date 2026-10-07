@@ -1,5 +1,17 @@
 # Detailed continuation handoff: BOTH teachers' Dipole coverage — 2026-10-06
 
+## Latest refetch/integration — 2026-10-06 night ET / 2026-10-07 UTC
+
+Integration fetched at `e697d52e`; CCode advanced from `fea2e165` to `d3945e13`
+with Claude-side handoff documentation only. This return is integrated without reapplying
+A-D. No D1/B7/C2 or other correction implementation returned. Read the newest section of
+`CCODE_NEXT_SOURCE_TASKS_20261006.md` for the concrete ordered assignment; its correction
+queue supersedes the returned Claude handoff's stale review/closure wording. Sections 8/9
+of the step-4 report now carry that qualification directly. Exact prices still await D1;
+exact structures and provenance-channel exclusion are already source-built.
+Source-only documentation integration; no scientific execution or runtime verification.
+Steps 2-4 remain incomplete. All existing holds, ownership and Greg's choices remain.
+
 ## Restart checkpoint — 2026-10-06 night
 
 Read `CODEX_HANDOFF_20261006_NIGHT.md` first for the closed-chat state, reading order,

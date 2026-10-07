@@ -1,5 +1,37 @@
 # CCode assignment — next pre-#5 source tasks
 
+## Current assignment after refetching CCode `d3945e13` — 2026-10-06 night ET
+
+Fetched integration `e697d52e` and CCode `d3945e13f48194c5a6bcf7cecfd89515fd270158`.
+The only return since `fea2e165` is Claude-side documentation. A-D source is already
+integrated; NONE of the correction groups below is closed by that documentation.
+The new Claude handoff/drop-in's "integration review next" and "nothing else assigned"
+wording is superseded by this existing, source-traced correction queue.
+
+| Order | CCode-owned implementation | Required return to Codex |
+|---|---|---|
+| 1 | D1: actual originating trade INPUT identity through producer and retained open-group state | Exact schema/fields, index and ordinal units, receipt plus both recovery identities; name every necessary producer/state file. Preserve trade values/order. |
+| 2 | B7 and C2: historical cost/profit contamination and both-teacher market/context distinction | Source-traced dependency/admission changes, actual arithmetic and explanation consumers, exact unsettled definitions. Preserve original audit bytes and searchable date/day/ID context. |
+| 3 | B2/B3/B4/B5: immutable reference vs output, pre-dispatch identity, full admission/status, owner-local frozen selection | Full source/input/entry/operation binding and recovery behavior; no performed claim without the retained operation evidence. |
+| 4 | B1/B6, A4, C1: complete evidence, original-input supply, discovery identity, native content identity | All retained evidence without caps; settled supply interface or precise gap; identity independent of arithmetic availability and local paths. |
+
+This orders the existing queue; it creates no new slice or mathematical choice. Keep each
+coherent finding group in a separate `[skip ci]` commit. B7/C2 may affect the binding semantics
+that B4/B5 must freeze; reconcile them before claiming closure. Do not call reproduction or
+other project code. Do not rebuild the committed claims artifact. Update sections 8/9 and
+the CCode handoff with actual corrections and remaining dependencies, then push the return.
+
+Before editing: fetch BOTH branches, inspect a clean worktree/current tips, and incorporate
+the current integration branch while preserving newer work. Do not reset to any checkpoint or
+reapply A-D. Codex retains `frankie_box_experiment_search.py`,
+`frankie_box_experiment_dipole.py` and shared handoffs. The exact structure adapter and
+provenance-channel exclusion are already built. The exact price adapter will follow a reviewed
+D1 contract; V1 prices remain explicitly pending, never joined by timestamp/spool position.
+
+Return only source/interface review, AST without project imports and whitespace results.
+No tests, installs, project/model/data runs, AWS actions, dispatch or E2E. STOP before #5;
+preserve its draft and Granite pins (`threads: null`); never apply `9c19cc2`.
+
 ## Greg's latest priority — market conditions only; temporal context retained (2026-10-06)
 
 This clarification supersedes older instructions to use every scalar as a feature:

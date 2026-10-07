@@ -266,6 +266,17 @@ Nothing here was invented or run; storage, hashing and inventories were not coun
 
 ## 8. The expanded pre-#5 queue (CCODE_NEXT_SOURCE_TASKS top section), on `ccode/teacher-tasks-20261006b` from `6cf36b3`
 
+**Current review qualification (2026-10-06 night ET):** the following slice descriptions
+are the original return, not correction closure. Refetch found CCode `d3945e13`, a
+documentation-only successor of already integrated `fea2e165`; no correction source
+returned. `CCODE_NEXT_SOURCE_TASKS_20261006.md` owns the full A4/B1-B7/C1-C2/D1 queue.
+In particular, the V1 price contract below incorrectly promises originating INPUT identity:
+the producer stamps the group-closing index on earlier trades. Its row ordinal is within
+the emitted group, not the originating INPUT. Do not implement its proposed exact price
+join. Codex's exact structure join and provenance-channel exclusion are already built.
+Historical bindings below are audit/capability wiring with open admission, recovery and
+cost/profit-contamination defects, not safe runnable market-research reproduction.
+
 ### Slice A: discovery-day delivery and BOTH-seat arithmetic (parent `6cf36b3`)
 
 Changed: `frankie_box_teacher_knowledge.py`, `frankie_box_experiment_exchange.py`, `frankie_box_scientific_teacher.py`.
@@ -470,6 +481,19 @@ knowledge (today: at the next owner boundary that freezes after it, by the exist
 Checks: `ast.parse` of the three modules without project imports; `git diff --check`. No run.
 
 ## 9. Closure table after slices A-D (against the existing contracts; SOURCE-BUILT / RUNTIME-UNVERIFIED throughout)
+
+**Current correction status (supersedes the original closure table below):**
+
+| Step | Still open after review of `d3945e13` |
+|---|---|
+| 2 | A4 discovery identity, C1 owner-native content identity, C2 both-teacher market/context consumption, B4/B5 record admission and frozen selection; native-learner and late-scheduling decisions. |
+| 3 | D1 actual originating trade INPUT provenance, then Codex's exact price adapter; C2 consumer classification; existing held trajectory/4.2/4.4 definitions. Exact structures are source-built. |
+| 4 | B1-B7 evidence preservation, execution/recovery/reference separation, admission/status, frozen selection, original-input supply and historical cost/profit rework; reproduction/reformulation open for BOTH teachers. |
+| 5 | STOP; draft unapplied, decisions held. |
+
+No correction above was delivered by the new documentation commit. The older table records
+what A-D attempted to connect; it does not waive implementation defects or reduce remaining
+work to execution alone. H06-H08 remain historical/not_bound. All runtime verification is open.
 
 | step | actual consumer / function | source-built connection | remaining implementation or decision | runtime verification needed |
 |---|---|---|---|---|

@@ -6,6 +6,28 @@ UTC date is 2026-10-07; Greg's local date is 2026-10-06.
 
 ## Fetch first; preserve current work
 
+### Follow-on integration review — 2026-10-06 night ET / 2026-10-07 UTC
+
+Fetched integration `e697d52e72346e6eced6587e9c76ad21b53d4c4a` and CCode
+`d3945e13f48194c5a6bcf7cecfd89515fd270158`. CCode has exactly one new commit
+beyond the already integrated `fea2e165`: documentation only (`CLAUDE.md`,
+`CLAUDE_HANDOFF_20261007_CCODE_SLICES_A_D.md`, `DROP_IN_CLAUDE_20261007.md`).
+This integration preserves that return and clarifies its stale next-step/closure wording.
+No new producer, teacher, historical or native-consumer correction was returned.
+
+Direct source review reconfirmed D1's closing-index stamp, A4's discovery flag after
+arithmetic failure exits, B1's stderr/comparison caps, B4's incomplete admission/status
+logic, and B7's declared profit-based outputs. CCode owns all corrections; the newest
+task-queue section gives the execution order and return contract. Exact price placement
+remains blocked on D1. No reserved search/dipole code change is appropriate before it.
+The step-4 sections 8/9 now explicitly distinguish the original return from open review
+corrections. Steps 2-4 remain incomplete; no new scientific result or runtime claim.
+
+Memory MCP has no callable tool and the CLI is absent from PATH on this host. Direct
+source/git inspection used; no index was claimed, installed or rebuilt. Only documentation
+changes in this integration; whitespace and changed-file review only, no project imports
+or execution. All existing holds and ownership below remain in force.
+
 - Repository: `DavisAI1974/Markets`.
 - Integration branch: `ccr-5fce7de3-xa4hfg`.
 - Last implementation commit: `109c3a3a7616c3ccc7b322abac7af2acbe5d80a1`.
