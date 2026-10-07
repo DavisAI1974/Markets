@@ -41,11 +41,20 @@ import frankie_box_digest_stream as TS  # noqa: E402
 
 # ---- helpers ------------------------------------------------------------------------------------------------------
 
-def _init(box, cpus):
+POOL_PIN_WAIT_SECONDS = 5.0      # a helper's wait for its CPU before it takes the pool's whole CPU set instead
+
+
+def _init(box, cpus, fallback=()):
+    """Each helper takes one CPU of the pool's hand-out (in the order given: one thread per physical core first) and is
+    pinned to it. A helper that finds the hand-out empty never blocks there: it is pinned to the pool's whole CPU set."""
     if box not in sys.path:
         sys.path.insert(0, box)
-    cpu = cpus.get()
-    os.sched_setaffinity(0, {cpu})
+    import queue as queue_module
+    try:
+        cpu = {cpus.get(timeout=POOL_PIN_WAIT_SECONDS)}
+    except queue_module.Empty:
+        cpu = set(fallback) or set(os.sched_getaffinity(0))
+    os.sched_setaffinity(0, cpu)
 
 
 def _pool(cpus):
@@ -54,7 +63,114 @@ def _pool(cpus):
     for cpu in cpus:
         queue.put(cpu)
     return ProcessPoolExecutor(max_workers=len(cpus), mp_context=context, initializer=_init,
-                               initargs=(str(BOX), queue))
+                               initargs=(str(BOX), queue, tuple(cpus)))
+
+
+class PinnedPool:
+    """The helper processes, one pinned per CPU, shared by every table the digest writes at once (Greg, 2026-10-07:
+    every booked CPU busy, every process pinned). map() is pool.map: the results in job order, whatever order the
+    helpers finish in, so every pass folds its parts exactly as before; several tables' passes may interleave on the
+    helpers, which changes only when a part runs, never what it returns.
+
+    A dead helper never stops or hangs a pass (Greg, 2026-10-07: "continue but with just one less worker"): the
+    executor reports it as BrokenProcessPool on every task it held; the pool is started again on one CPU fewer (the
+    last of the order, a second hardware thread first) and every task of every caller that had not completed is
+    submitted again with its own job. The part functions are pure functions of their job (the plan pass starts from an
+    empty count file, _plan_fresh; the final pass truncates its outputs), so a task run twice returns the same result.
+    With every helper lost the tasks run in the calling thread. A task's own exception still raises from map()."""
+
+    def __init__(self, cpus, label='digest table helpers', note=None):
+        import threading
+        self.cpus, self.label, self.note = list(cpus), label, note
+        self.started_workers = len(self.cpus)
+        self.workers_lost = 0
+        self.tasks_redone = 0
+        self._lock = threading.RLock()
+        self._generation = 0
+        self._executor = _pool(self.cpus) if self.cpus else None
+
+    @property
+    def workers(self):
+        return len(self.cpus)
+
+    def _submit(self, fn, job):
+        from concurrent.futures.process import BrokenProcessPool
+        while True:
+            with self._lock:
+                generation, executor = self._generation, self._executor
+                if executor is None:
+                    return generation, None
+                try:
+                    return generation, executor.submit(fn, job)
+                except BrokenProcessPool:
+                    pass
+            self._recover(generation)
+
+    def _recover(self, generation):
+        with self._lock:
+            if generation != self._generation or self._executor is None:
+                return                          # another caller already restarted this generation
+            broken, before = self._executor, len(self.cpus)
+            broken.shutdown(wait=True, cancel_futures=True)
+            self.cpus = self.cpus[:-1]
+            self.workers_lost += before - len(self.cpus)
+            self._generation += 1
+            self._executor = _pool(self.cpus) if self.cpus else None
+        if self.note is not None:
+            self.note('%s: a helper exited with work in flight; %s (%d of %d lost so far); its tasks are re-done with the '
+                      'same jobs, order and bytes unchanged' % (self.label, ('%d pinned helper(s) left' % len(self.cpus))
+                      if self.cpus else 'no helper left: the tasks run in the calling thread', self.workers_lost,
+                      self.started_workers))
+
+    def map(self, fn, jobs):
+        from concurrent.futures.process import BrokenProcessPool
+        jobs = list(jobs)
+        slots = [self._submit(fn, job) for job in jobs]
+        out = []
+        for i, job in enumerate(jobs):
+            while True:
+                generation, future = slots[i]
+                if future is None:
+                    out.append(fn(job))
+                    break
+                try:
+                    out.append(future.result())
+                    break
+                except BrokenProcessPool:
+                    self._recover(generation)
+                    for k in range(i, len(jobs)):
+                        held, pending = slots[k]
+                        if pending is None or held == self._generation:
+                            continue
+                        if pending.done() and not pending.cancelled() and pending.exception() is None:
+                            continue            # completed before the loss: its result stands
+                        slots[k] = self._submit(fn, jobs[k])
+                        with self._lock:
+                            self.tasks_redone += 1
+        return out
+
+    def record(self):
+        return dict(started_workers=self.started_workers, workers=len(self.cpus), workers_lost=self.workers_lost,
+                    tasks_redone=self.tasks_redone, cpus=list(self.cpus))
+
+    def close(self):
+        with self._lock:
+            executor, self._executor = self._executor, None
+        if executor is not None:
+            executor.shutdown(wait=True)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+
+def _plan_fresh(job):
+    """The plan pass of one part from an empty count file: the coordinator removes it before the pass, and a part re-done
+    after its helper died starts from nothing again (sqlite would refuse the existing table)."""
+    (Path(job[1]) / 'freq.sqlite').unlink(missing_ok=True)
+    return _plan(job)
 
 
 def _readonly(path):
@@ -541,7 +657,8 @@ def _copy(destination, name, n, facts, whole, first, scales, sep, parts, sizes, 
     return dict(offsets=offsets, identity=TS._identity(destination), numbered=number)
 
 
-def write_table_parallel(destination, name, specs, scratch_directory, cpus, progress=None, reserve=DISK_RESERVE):
+def write_table_parallel(destination, name, specs, scratch_directory, cpus, progress=None, reserve=DISK_RESERVE,
+                         pool=None):
     """specs: ordered part row sources (see _source_rows). The same bytes and proof as TS.write_table over the same rows
     (no context); note the ROWS differ for `bedrock.members`, where _source_rows applies MEMBER_LIST_PATHS and the serial
     reader does not, so that table is not byte-identical to a serial build of sources.sqlite. reserve = the bytes every
@@ -550,7 +667,10 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     Save points per pass (Greg, 2026-09-28: stop, fix and restart without losing work): each finished pass records its
     result in scratch/passes.pkl, keyed by the table's parts and the code the pass depends on (_pass_code); a rerun with
     the same scratch directory resumes at the first pass not saved under the current code. A pass's files are deleted
-    only once the pass that reads them is saved."""
+    only once the pass that reads them is saved.
+
+    pool: a PinnedPool shared with other tables written at the same time (the digest's one set of pinned helpers); None
+    starts one on cpus for this table alone. Which helper runs a part never changes what the part returns."""
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     scratch = Path(scratch_directory)
@@ -597,7 +717,20 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         _save_checkpoint(scratch, key, code, passes)
         return passes[label]
 
-    with _pool(cpus) as pool:
+    owned = pool is None
+    if owned:
+        pool = PinnedPool(cpus, label='table %s helpers' % name)
+    try:
+        return _write_table_passes(destination, name, specs, scratch, pool, note, passes, step, parts, dictionary,
+                                   drop, reserve)
+    finally:
+        if owned:
+            pool.close()
+
+
+def _write_table_passes(destination, name, specs, scratch, pool, note, passes, step, parts, dictionary, drop, reserve):
+    """write_table_parallel's passes on the given pool (unchanged order: snapshot, plan, merge, final, copy, proof)."""
+    if True:
         _room(scratch, reserve=reserve)
         snaps = step('snapshot', lambda: list(pool.map(_snapshot, [(spec, str(p)) for spec, p in zip(specs, parts)])))
         facts, n, first, seeds = _seeds(snaps)
@@ -605,7 +738,7 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
 
         def plan():
             drop('freq.sqlite')
-            return list(pool.map(_plan, [(spec, str(p), facts, seed, first, reserve) for spec, p, seed in zip(specs, parts, seeds)]))
+            return list(pool.map(_plan_fresh, [(spec, str(p), facts, seed, first, reserve) for spec, p, seed in zip(specs, parts, seeds)]))
         planned = step('plan', plan)
         whole, kept, scales = _table_facts(columns, n, planned)
 
@@ -665,7 +798,7 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         raise ValueError('table parts do not end the file')
     jobs = [(str(destination), off, size, s['n'], spec, header, str(inverse / 'table.sqlite'), seed)
             for off, size, s, spec, seed in zip(offsets, sizes, snaps, specs, seeds)]
-    verified = sum(pool_map_verify(jobs, cpus))
+    verified = sum(pool.map(_verify, jobs))
     if TS._identity(destination) != before:
         raise ValueError('table changed during inverse proof')
     if verified != n:
@@ -675,9 +808,11 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
                 scratch_directory=str(scratch), parts=len(specs))
 
 
-def pool_map_verify(jobs, cpus):
-    with _pool(cpus) as pool:
-        return list(pool.map(_verify, jobs))
+def pool_map_verify(jobs, cpus, pool=None):
+    if pool is not None:
+        return pool.map(_verify, jobs)
+    with PinnedPool(cpus, label='inverse proof helpers') as own:
+        return own.map(_verify, jobs)
 
 
 # ---- splitting a table into parts ----------------------------------------------------------------------------------
@@ -706,20 +841,35 @@ def spool_specs(path, parts):
 
 
 def _cross_rows(job):
-    """The named flat columns of each row of one spool part, in order: the cross-table context a later table reads."""
+    """The named flat columns of each row of one spool part, in order: the cross-table context a later table reads.
+
+    A column name without a dot is a top-level key of the row in DG._flatten's output: a nested key always carries its
+    parent's name and a dot, so flat[c] for such a c is row[c] exactly when row[c] is not a non-empty mapping (which
+    flattening dissolves into dotted keys). Those columns are read straight from the row, without flattening the whole
+    frame (every price level and order of the full-depth book); any dotted column takes the whole flattening as before."""
     spec, columns = job
     out = []
+    top = all('.' not in c for c in columns)
     for row in _source_rows(spec):
-        flat = DG._flatten(dict(row))
-        out.append({c: flat[c] for c in columns if c in flat})
+        if top:
+            out.append({c: row[c] for c in columns if c in row and not (isinstance(row[c], dict) and row[c])})
+        else:
+            flat = DG._flatten(dict(row))
+            out.append({c: flat[c] for c in columns if c in flat})
     return out
 
 
-def cross_context(specs, columns, cpus):
+def cross_context(specs, columns, cpus, pool=None):
     """Every row's cross-derived source columns (DG.CROSS_DERIVED), in table order, decoded on the pinned helpers: what
-    TS.write_table's _snapshot reads of a context table, so a later table's cross check sees the same values."""
-    with _pool(cpus) as pool:
-        for part in pool.map(_cross_rows, [(spec, list(columns)) for spec in specs]):
+    TS.write_table's _snapshot reads of a context table, so a later table's cross check sees the same values. pool: the
+    digest's shared PinnedPool (None: one of its own on cpus)."""
+    jobs = [(spec, list(columns)) for spec in specs]
+    if pool is not None:
+        for part in pool.map(_cross_rows, jobs):
+            yield from part
+        return
+    with PinnedPool(cpus, label='cross-context helpers') as own:
+        for part in own.map(_cross_rows, jobs):
             yield from part
 
 

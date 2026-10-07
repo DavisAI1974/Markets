@@ -32,7 +32,6 @@ Nothing is dropped: every record is journaled; a record a step cannot process ra
 import gc
 import hashlib
 import json
-import multiprocessing
 import os
 import pickle
 import struct
@@ -93,8 +92,10 @@ class SpoolJournal:
         self.stream.close()
 
 
-def read_spool(path):
-    with open(path, 'rb') as stream:
+def read_spool(path, digest=None, size=None):
+    """(kind, body) per entry in order. `digest` (a hashlib object) and `size` (a one-item list) receive every byte read,
+    so the reader proves the spool against its done record without a second pass over it."""
+    with open(path, 'rb', buffering=16 * 1024 * 1024) as stream:
         while head := stream.read(_HEADER.size):
             if len(head) != _HEADER.size:
                 raise ValueError(f'{path}: truncated entry header')
@@ -103,6 +104,9 @@ def read_spool(path):
             body = stream.read(body_length)
             if len(name) != name_length or len(body) != body_length:
                 raise ValueError(f'{path}: truncated entry')
+            if digest is not None:
+                digest.update(head); digest.update(name); digest.update(body)
+                size[0] += len(head) + len(name) + len(body)
             yield name.decode('ascii'), body
 
 
@@ -375,8 +379,10 @@ def completion_from(scope, builder, member_counts):
 def conform(scope, journal_path, checkpoint_state, *, workers, emit=None):
     """The conformance drain on a sealed container (inline, or later for a deferred ingest): the builder at its final
     state reads every entry back through CompactConformanceReader and SourceConformanceDriver.complete()."""
-    reader = CompactConformanceReader(journal_path, expected_count=checkpoint_state['journal_count'],
-                                      expected_head_hash=checkpoint_state['journal_hash'], workers=workers, emit=emit)
+    with ingest_cpus.lane_affinity():       # the first-run reader sizes its pinned workers from the caller's affinity
+        reader = CompactConformanceReader(journal_path, expected_count=checkpoint_state['journal_count'],
+                                          expected_head_hash=checkpoint_state['journal_hash'], workers=workers, emit=emit)
+    ingest_cpus.pin_parent()                # the ordered consumer on the CPU the reader reserved for it (cpus[0])
     try:
         b = _builder_at(scope, dict(chain=checkpoint_state['prefix'], adapter=checkpoint_state['adapter'],
                                     sessions=checkpoint_state['sessions']), reader)
@@ -451,56 +457,90 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
     if opening_result is not None:
         opening_result.update(file=opening_file, instruments=len(states[0]['adapter']['books']),
                               resting_orders=sum(len(b['orders']) for b in states[0]['adapter']['books']))
-    # PASS 2
+    # PASS 2 and PASS 3 OVERLAPPED, ordered hand-off (Greg, 2026-10-07 night: "anything using a cpu", nothing idle): ONE
+    # pool of pinned workers (one per booked CPU less the parent's, physical cores first; ingest_cpus.pinned_pool) runs
+    # the segment replays AND pass 3's block encodings. Segments are queued a window ahead (workers + 2); pass 3 takes
+    # segment k as soon as its replay is done, in order, while later segments replay, and its blocks are encoded on the
+    # same workers and inserted strictly in order (CompactBuildJournal(executor=...)). A dead worker never stops the
+    # stage: its task is submitted again with its own arguments and the pool continues with one worker fewer (a
+    # segment's interrupted .part is kept aside by _segment; the encodings are pure). Bytes, rows, digests, head hash and
+    # boxes are the passes' own: placement and overlap change only when and where the same work runs.
+    place = ingest_cpus.placement(workers)
+    worker_cpus = place['workers'] or [place['parent']]
+    if event is not None:
+        event(ingest_cpus.record(workers))
     pass2_started = time.perf_counter()
     pending = [k for k in range(plan['segments']) if _done(seg_dir, k) is None]
     _SHARED.update(scope=scope, states=states, pickles=pickles, records=records, names=source_names, spools=seg_dir)
     del one
     worker_cpu = 0.0
-    if pending:
-        gc.collect()
-        gc.freeze()          # the forked workers share the records without the collector touching (and copying) every page
-        with multiprocessing.get_context('fork').Pool(workers) as pool:
-            for done in pool.imap_unordered(_segment, pending):
-                worker_cpu += done['cpu_seconds']
-                if event is not None:
-                    event(dict(phase='parallel_pass2', segment=done['segment'], entries=done['entries']))
-    pass2_seconds = time.perf_counter() - pass2_started
-    _SHARED.clear()
-    del records
-    gc.unfreeze()
-    # PASS 3
+    gc.collect()
+    gc.freeze()          # the forked workers share the records without the collector touching (and copying) every page
+    note = (lambda text: event(dict(phase='worker_lost', note=str(text)))) if event is not None else None
+    pool = ingest_cpus.pinned_pool(worker_cpus, 'parallel ingest workers (segment replay, block encoding)', note=note)
+    if event is not None and pool.fallback:
+        event(dict(phase='cpu_placement_fallback', reason=pool.fallback))
+    tasks, queue = {}, list(pending)
+    pass2_seconds = 0.0
+
+    def top_up():
+        while queue and len(tasks) < pool.workers + 2:
+            k = queue.pop(0)
+            tasks[k] = pool.submit(_segment, k)
+
     pass3_started = time.perf_counter()
     if Path(journal_path).exists():
         Path(journal_path).rename(Path(str(journal_path) + f'.partial-{int(time.time())}'))   # never deleted
-    journal = CompactBuildJournal(journal_path, block_bytes=block_bytes, workers=encoders, block_rows=block_rows)
+    journal = CompactBuildJournal(journal_path, block_bytes=block_bytes, workers=0, block_rows=block_rows,
+                                  executor=pool if encoders else None)
+    spools_removed, closed = [], False
     try:
+        top_up()
         for k in range(plan['segments']):
+            if k in tasks:
+                done = pool.get(tasks.pop(k))
+                worker_cpu += done['cpu_seconds']
+                pass2_seconds = time.perf_counter() - pass2_started
+                if event is not None:
+                    event(dict(phase='parallel_pass2', segment=done['segment'], entries=done['entries']))
+            top_up()
             spool = seg_dir / f'spool-{k:05d}.bin'
-            for kind, body in read_spool(spool):
+            digest, size = hashlib.sha256(), [0]
+            for kind, body in read_spool(spool, digest=digest, size=size):
                 journal.append_body(kind, body, PLACEHOLDER)
+            marker = json.loads((seg_dir / f'spool-{k:05d}.bin.done.json').read_bytes())
+            if marker.get('bytes') != size[0] or marker.get('sha256') != digest.hexdigest():
+                raise ValueError(f'segment {k}: the spool read in pass 3 ({size[0]} bytes, {digest.hexdigest()}) differs '
+                                 f'from its done record; refused (the partial container is moved aside on resume)')
+            spools_removed.append(dict(segment=k, bytes=marker['bytes'], sha256=marker['sha256']))
             if event is not None:
                 event(dict(phase='parallel_pass3', segment=k, entries=journal.count))
         journal.seal()
         worker_cpu += journal.worker_cpu_seconds
+        pool.close()
+        closed = True
     finally:
         journal.close()
+        if not closed:
+            pool.terminate()
+        _SHARED.clear()
+        gc.unfreeze()
+    del records
     pass3_seconds = time.perf_counter() - pass3_started
     if journal.count != 2 * plan['records']:
         raise ValueError(f'the container holds {journal.count} entries for {plan["records"]} records; refused')
-    # the spools are the workers' intermediate bytes, every entry of which is now in the sealed container; they are
-    # removed (listed with their sha256) so a day does not hold its journal twice on the box
-    spools_removed = []
+    # the spools are the workers' intermediate bytes, every entry of which is now in the sealed container (each spool's
+    # bytes and sha256 checked against its done record as pass 3 read it); they are removed (listed with their sha256) so
+    # a day does not hold its journal twice on the box
     for k in range(plan['segments']):
-        spool = seg_dir / f'spool-{k:05d}.bin'
-        done = _done(seg_dir, k)
-        spools_removed.append(dict(segment=k, bytes=done['bytes'], sha256=done['sha256']))
-        spool.unlink()
+        (seg_dir / f'spool-{k:05d}.bin').unlink()
     final_state = states[-1]
     verify_started = time.perf_counter()
     if verify == 'inline':
         checkpoint = _builder_at(scope, final_state, _Tail(journal.count, journal.head_hash)).export_state()
-        completion, state = conform(scope, journal_path, checkpoint, workers=encoders or 1, emit=event)
+        completion, state = ingest_cpus.resilient(
+            lambda n: conform(scope, journal_path, checkpoint, workers=n, emit=event), encoders or 1, note=event,
+            label='conformance reader')
         conformance = 'inline'
     else:
         builder = _builder_at(scope, final_state, _Tail(journal.count, journal.head_hash))

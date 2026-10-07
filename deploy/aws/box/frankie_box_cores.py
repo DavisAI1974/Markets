@@ -15,8 +15,9 @@ never take the same CPU.
 
 SIZES (hard):
   day-run  every step of a day run the orchestrator runs (root, teacher, classroom, data, search, lessons, exchange, voice,
-           school, reports, survivors) books EXACTLY 16 CPUs, never fewer (or runs inside its day's held 16; the meeting
-           (voice) and Jev, steps of the day too, share ONE worker CPU of that held lane: STAGE CLAIMS below). With fewer than 16 free it does NOT start: it records
+           school, reports, jev, survivors) books EXACTLY 16 CPUs, never fewer (or runs inside its day's held 16 or 32,
+           Jev too, like every other stage, on the whole held lane: Greg, 2026-10-07 night; only the meeting (voice) takes
+           ONE worker CPU of that held lane: STAGE CLAIMS below). With fewer than 16 free it does NOT start: it records
            'waiting: N free of 16 needed' and exits 75 (a later dispatch retries). Its workers = the booked 16 less the
            parent = 15.
   ingest | canary | conform  8 CPUs per day process. THE RULE (stated in every receipt): an ingest or canary with
@@ -52,7 +53,8 @@ only with `release` and the explicit reason; nothing releases it on its own. `sh
 their owner. A retained set in use by an unbooked Frankie process (an orphan of the dead holder) is not taken over
 while that process runs.
 
-STAGE CLAIMS (Greg, 2026-10-07). The stages of STAGE_SLOTS (voice and jev: the shared 'adviser' slot of ONE CPU) run
+STAGE CLAIMS (Greg, 2026-10-07). The stages of STAGE_SLOTS (voice: the 'adviser' slot of ONE CPU; Jev left it on Greg's
+2026-10-07 night decision "just have jev operate in that box like everyone else" and runs --inside on the whole lane) run
 only --inside their day's held booking, on the slot's CPU: the highest WORKER CPU of the booking (never its parent/
 coordinator CPU). A claim is recorded under the booking's `steps` (stage, slot, cpus, pid with its start time, at) under
 the ledger lock before the step runs, and moved to `steps_released` with its exit code when it ends; a claim whose pid
@@ -107,13 +109,18 @@ BUSY_FRACTION = 0.05                    # an unpinned Frankie thread above this 
 KINDS = ('day-run', 'ingest', 'canary', 'conform')
 DAY_RUN_STAGES = ('root', 'teacher', 'classroom', 'data', 'search', 'lessons', 'exchange', 'voice', 'school', 'reports',
                   'jev', 'survivors')   # survivors (stage 10): the batch boundary's survivor/candidate update, same lane rule
-# THE ADVISER SLOT (Greg, 2026-10-07): Granite's meeting (the voice stage) and Jev are ordinary stages of the day on that
-# day's held lane and SHARE ONE worker CPU of it (never the coordinator/parent CPU): small, rare, never at the same time.
-# Whichever stage needs it claims the slot, runs under taskset of that one CPU at threads=1, and releases it when it ends;
-# the other waits for the slot while it is busy (the wait is printed on the step's CPU_BOOKING line, so it is on the
-# stage receipt and the inspection report, never silent). The rest of the lane stays with the day's other stages. No box,
-# host, lane or reserved block of workers of their own. Such a stage never books on its own: it needs --inside its slot.
-STAGE_SLOTS = {'voice': 'adviser', 'jev': 'adviser'}
+# THE ADVISER SLOT (Greg, 2026-10-07): Granite's meeting (the voice stage) is an ordinary stage of the day on that day's
+# held lane on ONE worker CPU of it (never the coordinator/parent CPU). It claims the slot, runs under taskset of that one
+# CPU at threads=1, and releases it when it ends; a second claimant waits while it is busy (the wait is printed on the
+# step's CPU_BOOKING line, so it is on the stage receipt and the inspection report, never silent). No box, host, lane or
+# reserved block of workers of its own. Such a stage never books on its own: it needs --inside its slot.
+# JEV (Greg, 2026-10-07 night: "Give jev more"; "just have jev operate in that box like everyone else so he'll have plenty
+# of cpus"): Jev is NOT a slot stage any more. He runs --inside the day's held booking like teacher, classroom, search and
+# the exchange, under taskset of the WHOLE held lane (16, or 32 on a 32-CPU day), his llama-server threads from the one
+# setting frankie_box_jev_cpu.JEV_THREADS. Within a day the stages run one after another (search -> jev -> lessons ->
+# exchange -> voice), so Jev's lane and the meeting's slot CPU are never in use at the same time; across days each day
+# has its own booking, so nothing is double booked.
+STAGE_SLOTS = {'voice': 'adviser'}
 SLOT_CPUS = {'adviser': 1}
 STAGE_CPUS = {stage: SLOT_CPUS[slot] for stage, slot in STAGE_SLOTS.items()}
 SLOT_WAIT_POLL = 5.0                    # seconds between claim attempts while the shared slot is busy
@@ -687,8 +694,9 @@ def attach_step(booking, claim_id, pid, exit_code=None, end=False):
 def cmd_run_inside(a, command):
     """A step of a day that already HOLDS its day-run booking (Greg, 2026-09-30: a day never leaves its slot until every
     kept step of the run table is done): the step runs under taskset of the held CPUs, its pid is added to the booking,
-    nothing is booked or released here (the slot's holder releases it when the whole day is done). A STAGE_CPUS step (Jev)
-    takes only its claimed worker CPUs of the slot and gives them back when it ends."""
+    nothing is booked or released here (the slot's holder releases it when the whole day is done); Jev too, on the whole
+    lane. A STAGE_CPUS step (the meeting, voice) takes only its claimed worker CPU of the slot and gives it back when it
+    ends."""
     b, why = held_booking(a.inside)
     if b is None:
         emit_outcome(a, dict(status='refused', reason=why))
