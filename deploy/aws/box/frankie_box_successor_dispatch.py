@@ -721,6 +721,15 @@ def drain(run, day):
                             if item is not None:
                                 retained[('successors', day)] = item
                         continue
+                    if downstream['status'] == 'waiting_school':
+                        # CCode (Step 8): the owner's own voice then school on this held lane, the nested inbox drain
+                        # skipped for exactly this recovery (this drain holds the lock); then rebuild_dependents again
+                        # verifies the checked chain. Never a second drain, scheduler or model runtime.
+                        recovered = run.recover_school(day, downstream['recovery_intent'])
+                        state('waiting', **dict({k: v for k, v in downstream.items() if k != 'status'}, recovery=recovered))
+                        if recovered.get('status') != 'complete':
+                            time.sleep(5)
+                        continue
                     if downstream['status'] != 'complete':
                         state('waiting', **{k: v for k, v in downstream.items() if k != 'status'})
                         time.sleep(5)

@@ -55,7 +55,10 @@ case "${EXTERNAL_HISTORY_FAMILY_RUNS:-}" in *[!a-z0-9_=,]*) echo "EXTERNAL_HISTO
 [ -z "${EXTERNAL_HISTORY_FAMILY_RUNS:-}" ] || set -- "$@" --external-family-history-runs "$EXTERNAL_HISTORY_FAMILY_RUNS"
 case "${EXTERNAL_WAIT:-on}" in on|off) ;; *) echo "EXTERNAL_WAIT must be on or off" >&2; exit 2;; esac
 set -- "$@" --external-wait "${EXTERNAL_WAIT:-on}" --brain "${BRAIN:-/opt/frankie-box/brain}"
-case "${BRAIN:-/opt/frankie-box/brain}${PREVIOUS_CLASSROOM:-}" in *..*) echo "no .. in BRAIN or PREVIOUS_CLASSROOM" >&2; exit 2;; esac
+# Jev's CPU runtime configuration (JEV_CPU_RUNTIME_V1) and brain, saved in the plan when given at the first start (Step 7)
+[ -z "${JEV_RUNTIME:-}" ] || set -- "$@" --jev-runtime "$JEV_RUNTIME"
+[ -z "${JEV_BRAIN:-}" ] || set -- "$@" --jev-brain "$JEV_BRAIN"
+case "${BRAIN:-/opt/frankie-box/brain}${PREVIOUS_CLASSROOM:-}${JEV_RUNTIME:-}${JEV_BRAIN:-}" in *..*) echo "no .. in BRAIN, PREVIOUS_CLASSROOM, JEV_RUNTIME or JEV_BRAIN" >&2; exit 2;; esac
 case "${BRAIN:-/opt/frankie-box/brain}" in /opt/frankie-box/*) ;; *) echo "BRAIN must be under /opt/frankie-box" >&2; exit 2;; esac
 case "${PREVIOUS_CLASSROOM:-}" in ""|/opt/frankie-box/work/experiment-roots/*/work/classroom) ;; *) echo "PREVIOUS_CLASSROOM must be an experiment root's work/classroom" >&2; exit 2;; esac
 [ -z "${PREVIOUS_CLASSROOM:-}" ] || set -- "$@" --previous-classroom "$PREVIOUS_CLASSROOM"

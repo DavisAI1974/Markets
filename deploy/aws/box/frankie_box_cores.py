@@ -92,7 +92,8 @@ WAITING_EXIT = 75                       # EX_TEMPFAIL: not started, a later disp
 REFUSED_EXIT = 2
 BUSY_FRACTION = 0.05                    # an unpinned Frankie thread above this share of one CPU holds the CPU it runs on
 KINDS = ('day-run', 'ingest', 'canary', 'conform')
-DAY_RUN_STAGES = ('root', 'teacher', 'classroom', 'data', 'search', 'lessons', 'exchange', 'voice', 'school', 'reports')
+DAY_RUN_STAGES = ('root', 'teacher', 'classroom', 'data', 'search', 'lessons', 'exchange', 'voice', 'school', 'reports',
+                  'jev')                # jev (Step 7): inside the SAME held day lane, a worker subset of its 16 CPUs
 INGEST_RULE = ('an ingest or canary with VERIFY=inline runs its encode pool and its conformance-reader pool at the same '
                'time: WORKERS x 2 + 1 CPUs (the parent included); VERIFY=deferred and a conform run one pool: WORKERS + 1; '
                'the day process books %d CPUs and a demand above %d is refused' % (INGEST_CPUS, INGEST_CPUS))

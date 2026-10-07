@@ -142,6 +142,7 @@ ROWS_FILE = 'host-dipole-classroom-source.c15.json'
 DAY_EXTERNAL = WORK / 'day-external'
 DAY_FILE, DAY_FILE_RECEIPT = 'day-external.json', 'day-external-receipt.json'
 BRAIN = BOX_ROOT / 'brain'
+JEV_BRAIN = BOX_ROOT / 'jev-brain'          # Jev's own brain on the box (plan jev_brain overrides; the S3 lineage is clm-sidecar/jev-brain)
 S3_BUCKET = 'bento-568968024170-us-east-2-an'
 JEV_BUCKET = 'frankie-granite42-568968024170-us-east-1'
 CURVE_PREFIX = 'nymex/ng_fut_parent_v0'
@@ -156,6 +157,12 @@ ROLE_OF_YEAR = {year: 'discovery' for year in range(2021, 2026)}
 INGESTION_SCHEMA = 'BOSS_BLOCK_INGESTION_RECEIPT_V1'
 OVERRIDES = ('ingest', 'calculations', 'launch', 'preparation', 'principal_inputs', 'host_config', 'run',
              'teacher_rows', 'jev_stamp', 'frankie_ledgers', 'opening_receipt', 'previous_classroom')
+
+
+def file_pin(path):
+    """The {path, bytes, sha256} witness of a file as it is now (the Jev request's pins; frankie_box_jev_cpu re-reads them)."""
+    path = Path(path)
+    return dict(path=str(path), bytes=path.stat().st_size, sha256=sha256_file(path))
 
 
 def sha256_file(path):
@@ -311,6 +318,9 @@ def load_plan(a, code_root):
                 lags=a.lags, transforms=a.transforms or None, batch=BATCH,
                 external_history_run=a.external_history_run or None, external_wait=a.external_wait != 'off',
                 brain=a.brain, previous_classroom=a.previous_classroom or None, directive=directive_of(code_root))
+    for key in ('jev_runtime', 'jev_brain'):                  # only when given: earlier plans keep their digest
+        if getattr(a, key, None):
+            plan[key] = str(Path(getattr(a, key)))
     if getattr(a, 'external_eia930_history_run', None):       # only when given: earlier plans keep their digest
         plan['external_eia930_history_run'] = a.external_eia930_history_run
     if getattr(a, 'external_family_history_runs', None):      # family=<run id>,... (the gap-only fetch chunks)
@@ -524,6 +534,7 @@ class Run:
         self._knowledge = {}
         self.queue_previous = None       # the class worker: (PREVIOUS, None, from) taken from the class line
         self.school_day = None           # the class worker: the class line's school-day number = the report number N
+        self._school_recovery = None     # recover_school: the day whose own successor drain holds the inbox (no nested drain)
         # THE OWNER BINDING (Step 8, 2026-10-07): a queue day carries its owner (run, day, host, attempt, commit, code root,
         # exact CPU set, booking, day-specific save marker), bound by the queue BEFORE dispatch. This Run reads the save
         # request from ITS OWN marker (never a process-global environment variable: the two main lanes are threads of one
@@ -550,6 +561,11 @@ class Run:
 
     def successors(self, day):
         """Explicit owner corrections finish before this day's next dependent operation."""
+        if (self._school_recovery or {}).get('day') == day:
+            # inside the day's own drain (recover_school, called by successor_dispatch.drain under its lock): the inbox
+            # is held by that caller and re-entering it here would deadlock on the drain lock. Only the one recovery
+            # bound to its operation skips it; nothing else does.
+            return []
         import frankie_box_successor_dispatch as S
         completed = S.drain(self, day)
         if completed and (self.receipt('successors', day) or {}).get('acknowledgments') != completed:
@@ -573,7 +589,31 @@ class Run:
         done = done_status(self.receipt(stage, key))
         if done and stage in ('exchange', 'voice', 'school', 'reports'):
             self.require_current_teacher_inputs(key)
+        if done and stage in ('school', 'reports') and not self.school_current(key, stage)[0]:
+            return False               # a checked school successor stands: the stage runs again on it (old artifacts stay)
         return done
+
+    def school_current(self, day, stage='school'):
+        """(current, why) of the day's recorded school against the brain's checked school chain (Codex's
+        frankie_box_school_knowledge.retained_school: the indexed original and its explicit checked successors). A
+        done/reused school whose file is no longer the latest checked complete school is superseded: the school stage
+        runs again through the owner operation and the reports get their revision under the same number; the old
+        artifacts stay. A chain that still requires a successor supersedes the school stage only (the reports wait on
+        the school stage's own run, never re-rendered on a stale school meanwhile). A corrupt chain raises; it is never
+        read as absence."""
+        s = self.receipt('school', day) or {}
+        if s.get('status') not in ('done', 'reused'):
+            return True, None
+        import frankie_box_school_knowledge as SK
+        retained = SK.retained_school(str(self.plan.get('brain') or BRAIN), day)
+        if retained is None:
+            return True, None              # nothing indexed for the day: nothing supersedes the recorded file
+        if retained['status'] != 'complete':
+            return stage != 'school', 'the school chain requires a checked successor of %s' % retained['original']['sha256'][:12]
+        recorded = s.get('school_sha256') or (s.get('row') or {}).get('sha256')
+        if recorded and recorded != retained['original']['sha256']:
+            return False, 'superseded by the checked school successor %s' % retained['original']['sha256'][:12]
+        return True, None
 
     def remote_root(self, day):
         receipt = self.receipt('root', day)
@@ -1365,9 +1405,12 @@ class Run:
                     self.log(Path(item['file']).read_text(encoding='utf-8', errors='replace'))
                 except OSError as error:
                     self.log('reports %s: %s could not be read back (%s)' % (day, item.get('file'), error))
+            school = self.receipt('school', day) or {}
             fields = dict(exit_code=code, log=log, classroom=classroom, classroom_status=c['status'],
                           exchange_status=(x or {}).get('status'), exchange=env.get('EXCHANGE'),
                           meeting=(r or {}).get('meeting'),
+                          school=dict(status=school.get('status'), file=school.get('file'),
+                                      sha256=school.get('school_sha256') or (school.get('row') or {}).get('sha256')),
                           report_number=(r or {}).get('report_number'),
                           reports=[{k: item.get(k) for k in ('kind', 'number', 'revision', 'file', 'sha256', 'existing')}
                                    for item in (r or {}).get('reports') or []],
@@ -1399,6 +1442,8 @@ class Run:
             return False
         if r.get('exchange_status') not in ('done', 'reused'):
             return True
+        if not self.school_current(e['day'], 'reports')[0]:
+            return True                    # the reports were rendered on a school that a checked successor replaced
         if x.get('frankie_view'):
             import frankie_box_brain as BR
             meeting = BR.read_meeting_for_exchange(x['frankie_view'])
@@ -1617,11 +1662,21 @@ class Run:
             return self.record('school', day, 'skipped', reason='Monday 20211004 is out of the school (it starts with the '
                                                                 'first school day)')
         brain = Path(self.plan.get('brain') or str(BRAIN))
-        index = brain / 'school' / 'index.json'
-        rows = [r for r in (json.loads(index.read_bytes()).get('rows') or [])
-                if r.get('day') == day] if index.is_file() else []
-        if rows:
-            return self.record('school', day, 'reused', file=str(brain / 'school' / rows[-1]['file']), row=rows[-1])
+        # the checked school chain (Codex's frankie_box_school_knowledge.retained_school): the indexed original and its
+        # explicit checked successors; a corrupt chain raises (never read as absence). A complete chain of THIS run is
+        # reused as its latest checked school; one that requires a successor goes through the school child, whose CLI
+        # runs the owner operation (the original index row is never rewritten here); another run's same-day school
+        # is never reused
+        import frankie_box_school_knowledge as SK
+        retained = SK.retained_school(str(brain), day)
+        if retained is not None and retained['content'].get('run') != self.plan['run']:
+            return self.record('school', day, 'refused', school_sha256=retained['original']['sha256'],
+                               reason='the day\'s indexed school belongs to run %s, not this run; another run\'s same-day '
+                                      'school is never reused' % retained['content'].get('run'))
+        if retained is not None and retained['status'] == 'complete':
+            return self.record('school', day, 'reused', file=retained['original']['path'],
+                               row=dict(retained['row'], **retained['original']), school_sha256=retained['original']['sha256'],
+                               corrections=retained['corrections'])
         c = self.receipt('classroom', day)
         if not (c and c['status'] in ('done', 'reused', 'refused')):
             return self.record('school', day, 'waiting', reason='the day\'s classroom step is %s' % (
@@ -1630,6 +1685,20 @@ class Run:
         if not (x and x['status'] in ('done', 'reused', 'skipped')):
             return self.record('school', day, 'waiting', reason='the day\'s exchange is %s (the school file is written '
                                                                 'once, with it)' % ((x or {}).get('status') or 'not run'))
+        if retained is not None:
+            # requires_successor: the owner operation needs the completed corrected meeting when the school's discussion
+            # is bound to a replaced exchange (frankie_box_school_knowledge._successor_projection); until the day's voice
+            # is done or reused on the current exchange the successor waits, never a failed child
+            import frankie_box_experiment_review as REVIEW
+            import frankie_box_lane_state as LS
+            records = REVIEW.corrections(LS.knowledge_roots(str(brain)))
+            meetings = [i for i in retained['content']['sections']['exchange']['items'] if i['name'] == 'discussion (meeting)']
+            needs_meeting = any(((i.get('content') or {}).get('exchange') or {}).get('sha256') in records for i in meetings)
+            v = self.receipt('voice', day) or {}
+            if needs_meeting and v.get('status') not in ('done', 'reused'):
+                return self.record('school', day, 'waiting', school_sha256=retained['original']['sha256'],
+                                   reason='the checked school successor awaits the completed corrected meeting; the day\'s '
+                                          'voice is %s' % (v.get('status') or 'not run'))
         classroom = c.get('classroom') or (str(Path(self.receipt('root', day)['calculations']) / 'work' / 'classroom')
                                            if (self.receipt('root', day) or {}).get('calculations') else None)
         if not classroom:
@@ -1657,27 +1726,166 @@ class Run:
             return self.record('school', day, 'failed', exit_code=code, log=log, reason='no school receipt after the step '
                                                                                         '(its log names why)')
         return self.record('school', day, 'done', exit_code=code, log=log, file=r['file'], row=r['row'],
-                           sections=r.get('sections'), missing=r.get('missing'), withheld=r.get('withheld'))
+                           school_sha256=(r.get('row') or {}).get('sha256'), reused_by_child=r.get('reused'),
+                           sections=r.get('sections'), missing=r.get('missing'), withheld=r.get('withheld'),
+                           successor=r.get('successor'), correction=r.get('correction'), corrections=r.get('corrections'))
+
+    def recover_school(self, day, recovery_intent):
+        """The owner's recovery of a day's school under a checked source successor (successor_dispatch.rebuild_dependents
+        -> 'waiting_school', called from its drain under the drain lock, on this same owner/day/held lane): the existing
+        voice then school steps, with the nested successor drain skipped for exactly this recovery (the caller holds the
+        inbox). Save, currentness and held-slot checks stay the steps' own. 'complete' only when the school stage ended
+        done/reused on the checked successor; a meeting that is not complete leaves it waiting, never a failed or requeued
+        substitute. No second drain, scheduler or model runtime."""
+        e = next((x for x in self.plan['days'] if x['day'] == day), None)
+        if e is None or not e.get('classroom_arm'):
+            return dict(status='refused', reason='no classroom-arm day %s in the plan' % day, recovery_intent=recovery_intent)
+        if self.save_requested():
+            return dict(status='saved', reason='save requested on the owner; the recovery resumes with the day',
+                        recovery_intent=recovery_intent)
+        previous = self._school_recovery
+        self._school_recovery = dict(day=day, intent=recovery_intent)
+        try:
+            v = self.voice(e) or {}
+            if v.get('status') not in ('done', 'reused', 'skipped'):
+                return dict(status='waiting', stage='voice', voice=v, recovery_intent=recovery_intent,
+                            reason='the corrected meeting is %s: %s' % (v.get('status'), v.get('reason')))
+            s = self.school(e) or {}
+            return dict(status='complete' if done_status(s) else (s.get('status') or 'waiting'), stage='school',
+                        voice=v, school=s, recovery_intent=recovery_intent, reason=s.get('reason'))
+        finally:
+            self._school_recovery = previous
 
     def jev(self, e):
+        """Jev's day on the held CPU lane (Step 7, Codex's frankie_box_jev_cpu.py/.sh; Greg: a worker subset of the SAME
+        held 16-CPU day lane, sequentially; no other host, booking or lane). The immutable JEV_CPU_REQUEST_V1 is persisted
+        under the day BEFORE the first dispatch and reused byte for byte (a retained request that binds another identity
+        is refused, never re-minted); the child runs inside the day's held booking ('jev' in cores.DAY_RUN_STAGES) with
+        the day's own save marker; its receipt or status is checked against the request before any status is recorded
+        (an exit code alone is nothing). Missing runtime configuration is waiting, never skipped or done. The existing
+        knowledge boundary runs before the dispatch (child) and again once both local deliveries are read back."""
         day = e['day']
         remote = self.remote_stage('jev', day)
         if remote is not None:
             return remote
         if not e['classroom_arm']:
             return self.record('jev', day, 'skipped', reason='not a classroom-arm day (Jev sits in on the arm days only)')
+        if e.get('role') != 'discovery':
+            return self.record('jev', day, 'waiting', reason='a %s day has no authorized Jev route (the CPU route takes '
+                                                             'discovery classroom-arm days only)' % e.get('role'))
         c = self.receipt('classroom', day)
         if not (c and c['status'] in ('done', 'reused') and c.get('classroom')):
             return self.record('jev', day, 'waiting', reason='the day\'s classroom is not complete yet (its material is '
                                                              'written by the classroom step)')
-        calc = Path(c['classroom']).parent.parent
-        material = calc / 'jev-material' / 'classroom-request.json'
-        if not material.is_file():
-            return self.record('jev', day, 'failed', reason='no Jev material at %s' % material)
+        producer = Path(c['classroom']) / 'receipt.json'      # the classroom PRODUCER's receipt, never this step's record
+        if not producer.is_file():
+            return self.record('jev', day, 'failed', reason='no classroom producer receipt at %s' % producer)
+        s = self.receipt('search', day) or {}
+        manifest = Path(s['target']) / 'MANIFEST.json' if s.get('status') in ('done', 'reused') and s.get('target') else None
+        if manifest is None or not manifest.is_file():
+            return self.record('jev', day, 'waiting', reason='the owning day\'s search is %s (Jev tests his claims on it)'
+                               % (s.get('status') or 'not run'))
+        runtime = self.plan.get('jev_runtime') or ((self.dir / 'jev-runtime.json') if (self.dir / 'jev-runtime.json').is_file() else None)
+        if not runtime or not Path(runtime).is_file():
+            return self.record('jev', day, 'waiting', reason='Jev\'s CPU runtime configuration (JEV_CPU_RUNTIME_V1: binary, '
+                               'model, worker CPUs of the held lane, budgets, completion policy) is not supplied (plan '
+                               'jev_runtime or %s): a missing runtime choice is waiting, never skipped'
+                               % (self.dir / 'jev-runtime.json'))
+        marker = self.stop_marker
+        if not marker:
+            return self.record('jev', day, 'waiting', reason='no day-bound save marker on this Run (the owner binding or '
+                                                             'FRANKIE_LANE_STOP_FILE): Jev binds the exact marker')
+        booking = getattr(self, 'slot_booking', None)
+        held, why = self.cores.held_booking(booking) if booking else (None, 'no held day booking on this Run')
+        if held is None or held.get('run') != self.plan['run'] or held.get('day') != day or len(held.get('cpus') or []) != 16:
+            return self.record('jev', day, 'waiting', reason='Jev needs the day\'s live held 16-CPU booking: %s' % why)
+        attempt = self.owned_attempt or os.environ.get('FRANKIE_LANE_ATTEMPT') or ''
+        if not attempt:
+            root = self.receipt('root', day) or {}
+            attempt = Path(root['calculations']).name if root.get('calculations') else ''
+        if not re.fullmatch(re.escape('%s-%s-a' % (self.plan['run'], day)) + r'[0-9]+', attempt):
+            return self.record('jev', day, 'waiting', reason='the original ROOT attempt of the day is not established on '
+                                                             'this Run (%r)' % attempt)
         stamp = jev_stamp(self.plan, e)
-        return self.record('jev', day, 'waiting', stamp=stamp, material=str(material),
-                           reason='Pods are retired; wire Jev blind comparison on an authorized CPU transport, '
-                                  'then seal/test his claims before publishing tested knowledge')
+        number = self.report_number(e)
+        brain = Path(self.plan.get('brain') or str(BRAIN))
+        jev_brain = Path(self.plan.get('jev_brain') or str(JEV_BRAIN))
+        out = self.dir / 'days' / day / 'jev' / stamp
+        owner = self.owner or dict(schema='FRANKIE_LANE_OWNER_V1', host=os.uname().nodename, attempt=attempt,
+                                   marker=str(marker), lane_owner=os.environ.get('FRANKIE_LANE_OWNER'))
+        request = dict(schema='JEV_CPU_REQUEST_V1', run=self.plan['run'], day=day, day_role='discovery', stamp=stamp,
+                       attempt=attempt, owner=owner, host=os.uname().nodename, plan_sha256=plan_digest(self.plan),
+                       slot_booking=booking, cpus=list(held['cpus']),
+                       source=dict(commit=self.commit, code_root=str(self.code_root)), save_marker=str(marker),
+                       output=str(out), brain=str(brain), jev_brain=str(jev_brain), report_number=number,
+                       classroom_receipt=file_pin(producer), search=file_pin(manifest), runtime=file_pin(Path(runtime)))
+        path = self.dir / 'days' / day / ('jev-request-%s.json' % stamp)
+        if path.is_file():
+            retained = json.loads(path.read_bytes())
+            bound = ('schema', 'run', 'day', 'day_role', 'stamp', 'attempt', 'host', 'plan_sha256', 'source', 'output',
+                     'brain', 'jev_brain', 'report_number', 'slot_booking', 'cpus')
+            differ = [k for k in bound if retained.get(k) != request.get(k)]
+            if differ:
+                return self.record('jev', day, 'refused', request=str(path), differs=differ,
+                                   reason='the retained Jev request binds another %s; the same request resumes byte for '
+                                          'byte or an explicit owner recovery decides (never re-minted)' % ', '.join(differ))
+        else:
+            self.cores.write_json(path, request, exclusive=True)      # create-only: the request is written once
+        # the helper pins the request as given (status.json) and resolved (owner.json / receipt.json): both are this file
+        request_pins = [file_pin(path)] + ([file_pin(path.resolve())] if path.resolve() != path else [])
+        status_path, receipt_path = out / 'status.json', out / 'receipt.json'
+
+        def read(p):
+            try:
+                return json.loads(p.read_bytes()) if p.is_file() else None
+            except ValueError:
+                return None
+
+        def bound_receipt(doc):
+            return isinstance(doc, dict) and doc.get('schema') == 'JEV_CPU_RECEIPT_V1' and \
+                (doc.get('owner') or {}).get('request_pin') in request_pins
+
+        def bound_status(doc):
+            return isinstance(doc, dict) and doc.get('schema') == 'JEV_CPU_STATUS_V1' and doc.get('request') in request_pins
+        status = read(status_path)
+        if not receipt_path.is_file() and bound_status(status) and status.get('unresolved_calls'):
+            return self.record('jev', day, 'waiting', request=str(path), status=str(status_path), stamp=stamp,
+                               unresolved_calls=status['unresolved_calls'],
+                               reason='Jev\'s retained state lists unresolved model calls; none is retried or erased, the '
+                                      'owner\'s review resolves them (frankie_box_jev_cpu status.json)')
+        code, log = self.child('jev', day, 'frankie_box_jev_cpu.sh', dict(JEV_REQUEST=path))
+        receipt, status = read(receipt_path), read(status_path)
+        fields = dict(exit_code=code, log=log, request=str(path), stamp=stamp, output=str(out), report_number=number)
+        if bound_receipt(receipt):
+            fields.update(receipt=str(receipt_path), receipt_status=receipt.get('status'), claims_seal=receipt.get('claims_seal'),
+                          scientific_result=receipt.get('scientific_result'), deliveries=receipt.get('deliveries'),
+                          report=receipt.get('report'), client_receipt=receipt.get('client_receipt'),
+                          pending=receipt.get('pending'), unparsed=receipt.get('unparsed'))
+            if receipt.get('deliveries'):
+                # both local deliveries read back (Jev's lesson reader, Frankie's jev-tested publication): the existing
+                # knowledge boundary runs now whatever the comparison disposition; a pending one keeps the stage waiting
+                # and never erases the delivered evidence
+                import frankie_box_lane_state as LS
+                fields['knowledge_after_delivery'] = LS.boundary(day, 'jev', brain=str(brain))
+            if code == 0 and receipt.get('status') == 'done':
+                return self.record('jev', day, 'done', **fields)
+            return self.record('jev', day, 'waiting', reason='Jev\'s receipt is %s (exit %d): %s' % (
+                receipt.get('status'), code, '; '.join(receipt.get('pending') or []) or 'see the receipt'), **fields)
+        if bound_status(status):
+            fields.update(status=str(status_path), child=status.get('child'), unresolved_calls=status.get('unresolved_calls'),
+                          child_reason=status.get('reason'))
+            standing = file_pin(Path(marker)) if Path(marker).is_file() else None
+            if code == 75 and status.get('status') == 'saved' and not status.get('unresolved_calls') and \
+                    (status.get('save_marker') is None or status.get('save_marker') == standing):
+                # the child's saved acknowledgment: bound to this request, to this marker's bytes when it stands, no
+                # unresolved model call; the day's own save classifies the thread (its marker), this keeps the child's side
+                return self.record('jev', day, 'saved', reason='Jev saved on the day\'s marker (acknowledged by its '
+                                                              'status; the same request resumes it)', **fields)
+            return self.record('jev', day, 'waiting' if code in (5, 75) else 'failed',
+                               reason='Jev\'s status is %s (exit %d): %s' % (status.get('status'), code, status.get('reason')),
+                               **fields)
+        return self.record('jev', day, 'waiting' if code in (5, 75) else 'failed',
+                           reason='exit %d without a receipt or status bound to the request %s' % (code, path), **fields)
 
     def teacher(self, batch_key, entries):
         refused = {}                                     # day -> why its retained teacher knowledge is not taught again
@@ -2327,6 +2535,10 @@ def main():
     p.add_argument('--external-wait', choices=('on', 'off'), default='on',
                    help='on: a day\'s root, teacher, classroom, data and search wait for its day file (default)')
     p.add_argument('--brain', default=str(BRAIN), help='Frankie\'s brain (the classroom and day-file entries)')
+    p.add_argument('--jev-runtime', help='Jev\'s CPU runtime configuration file (JEV_CPU_RUNTIME_V1: binary, model, worker '
+                                         'CPUs of the held lane, budgets, completion policy); saved in the plan when given at '
+                                         'the first start, else <run>/jev-runtime.json is read; absent = Jev waits')
+    p.add_argument('--jev-brain', help='Jev\'s brain directory on the box (default %s)' % JEV_BRAIN)
     p.add_argument('--previous-classroom', help='the run\'s first arm day: PREVIOUS = this <root>/work/classroom '
                                                 '(default: the latest earlier classroom day on the box)')
     p.add_argument('--disk-floor-gb', type=float, default=100.0)
