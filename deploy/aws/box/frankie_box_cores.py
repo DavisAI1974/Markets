@@ -41,14 +41,15 @@ inside the booking, and every unpinned child inherits it), adds the job's pid to
 that dies without its release is reaped: a booking whose pids are all gone is released with a receipt (book reaps first).
 
 RETAINED BOOKINGS (Step 8, 2026-10-07: a saved main day keeps its exact 16 CPUs). A day-run booking that its owner marks
-`retained` (retain --booking ID --run R --day D --reason TEXT), and a queue day's whole-day slot booking (stage
-day-slot-*) whose pids are all gone (its holder died: reaping RETAINS it for that owner instead of releasing it; a
-single step's booking is reaped as before), keeps its CPUs booked with
+`retained` (retain --booking ID --run R --day D --reason TEXT), and a booking marked OWNED by a queue day (own
+--booking ID --run R --day D --attempt A, the queue's owner binding) whose pids are all gone (its holder died: reaping
+RETAINS it for that owner instead of releasing it; any other booking is reaped as before), keeps its CPUs booked with
 no live process: no other day can take them. Only its owner takes them back: a `book` with --cpus naming exactly that
 set and --run/--day equal to the retained owner's takes the retained booking over IN PLACE (same id, the new holder
 pid, the retention kept as history); any other request for those CPUs waits. An operator releases a retained booking
 only with `release` and the explicit reason; nothing releases it on its own. `show` lists retained bookings with
-their owner. A day-slot booking from before this rule whose holder is gone is retained too and needs that release.
+their owner. A retained set in use by an unbooked Frankie process (an orphan of the dead holder) is not taken over
+while that process runs.
 
 OPERATIONS
   book     --kind K [--day D --run R --stage S --commit C --workers W --verify V --pid P]: book for pid P (default the
@@ -57,6 +58,8 @@ OPERATIONS
            --outcome FILE writes the booking outcome as JSON for the caller
   release  --booking ID [--reason TEXT]
   reap     release every booking whose pids are all gone (a retained booking is never reaped)
+  own      --booking ID --run R --day D [--attempt A]: mark a live day-run booking owned by a queue day (its death
+           retains it for that owner instead of reaping it)
   retain   --booking ID --run R --day D [--attempt A --reason TEXT]: mark a live day-run booking retained by its owner
            (a saved day): its CPUs stay booked after its pids end, until the owner resumes or an operator releases
   show     READ-ONLY: every CPU -> its owner (booking or unbooked Frankie process) and its live use, the free count, what
@@ -333,9 +336,10 @@ def reap_locked():
     for b in live_bookings():
         if b['_alive'] or b['_retained']:
             continue
-        if b.get('kind') == 'day-run' and b.get('run') and b.get('day') and str(b.get('stage') or '').startswith('day-slot-'):
-            # a queue day's whole-day slot (frankie_box_frankie_queue._book_slot): its owner's, never freed by its death
-            _retain_locked(b, b['run'], b['day'], attempt=None,
+        if b.get('owner'):
+            # a queue day's slot that its owner marked owned (frankie_box_frankie_queue._bind_owner): never freed by the
+            # holder's death; retained for that owner (the day is unknown until its ACTION=resume)
+            _retain_locked(b, b['owner']['run'], b['owner']['day'], attempt=b['owner'].get('attempt'),
                            reason='reaped: every pid of the booking is gone without a release; retained for its owner (unknown)')
             continue
         out.append(release_one(b, 'reaped: every pid of the booking is gone (the job ended without its release)'))
@@ -421,6 +425,11 @@ def book_locked(kind, size, pid, meta, window):
                     and (b.get('retained') or {}).get('day') == meta.get('day')]
             if not mine:
                 return None, dict(status='waiting', reason='the retained lane CPU set is still occupied')
+            orphan = sorted(c for c in requested if c in held)
+            if orphan:
+                return None, dict(status='waiting', in_use_unbooked=cpu_list(orphan),
+                                  reason='the retained lane CPU set is in use by a Frankie process not in the ledger (CPUs %s; '
+                                         'an orphan of the dead holder?): not taken over while it runs' % cpu_list(orphan))
             start = start_time(pid)
             if start is None:
                 return None, dict(status='refused', reason='pid %d is not running' % pid)
@@ -490,6 +499,23 @@ def attach(booking, pid, role):
         if start is not None:
             b['pids'].append(dict(pid=pid, start=start, role=role))
             write_json(path, b)
+
+
+def own(booking, run, day, attempt):
+    """Mark a live day-run booking OWNED by a queue day (run, day, attempt): from now on its death retains it for that
+    owner instead of reaping it. Returns the booking."""
+    with Lock():
+        path = LEDGER / (booking + '.json')
+        if not path.is_file():
+            raise ValueError('booking %s is not in the ledger (released or never made)' % booking)
+        b = json.loads(path.read_bytes())
+        if b.get('kind') != 'day-run':
+            raise ValueError('only a day-run booking is owned (%s is %s)' % (booking, b.get('kind')))
+        if b.get('owner') and (b['owner'].get('run'), b['owner'].get('day')) != (run, day):
+            raise ValueError('booking %s is owned by %s %s already' % (booking, b['owner'].get('run'), b['owner'].get('day')))
+        b['owner'] = dict(run=run, day=day, attempt=attempt, at=now_iso())
+        write_json(path, b)
+        return b
 
 
 def retain(booking, run, day, attempt=None, reason=None):
@@ -631,6 +657,12 @@ def cmd_run(a):
     return code
 
 
+def cmd_own(a):
+    b = own(a.booking, a.run, a.day, a.attempt)
+    print(json.dumps({k: v for k, v in b.items() if not k.startswith('_')}, indent=1, sort_keys=True))
+    return 0
+
+
 def cmd_retain(a):
     b = retain(a.booking, a.run, a.day, attempt=a.attempt, reason=a.reason or 'retained by its owner (a saved day)')
     print(json.dumps({k: v for k, v in b.items() if not k.startswith('_')}, indent=1, sort_keys=True))
@@ -764,12 +796,14 @@ def main():
     s = sub.add_parser('release')
     s.add_argument('--booking', required=True)
     s.add_argument('--reason')
-    s = sub.add_parser('retain')
-    s.add_argument('--booking', required=True)
-    s.add_argument('--run', required=True)
-    s.add_argument('--day', required=True)
-    s.add_argument('--attempt')
-    s.add_argument('--reason')
+    for name in ('retain', 'own'):
+        s = sub.add_parser(name)
+        s.add_argument('--booking', required=True)
+        s.add_argument('--run', required=True)
+        s.add_argument('--day', required=True)
+        s.add_argument('--attempt')
+        if name == 'retain':
+            s.add_argument('--reason')
     sub.add_parser('reap')
     s = sub.add_parser('show')
     s.add_argument('--window', type=float, default=2.0)
@@ -786,7 +820,7 @@ def main():
             parse_list(a.cpus)
         except (ValueError, TypeError):
             raise SystemExit('--cpus: a comma list of CPUs / ranges')
-    return dict(book=cmd_book, run=cmd_run, release=cmd_release, retain=cmd_retain, reap=cmd_reap, show=cmd_show,
+    return dict(book=cmd_book, run=cmd_run, release=cmd_release, retain=cmd_retain, own=cmd_own, reap=cmd_reap, show=cmd_show,
                 allowed=cmd_allowed)[a.action](a)
 
 

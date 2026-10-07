@@ -1091,6 +1091,8 @@ def _bind_owner(x, slot, cpus, code_root, commit):
                      marker=str(marker_of(x['run'], x['day'])), bound_utc=utc(), bound_by_pid=os.getpid())
     owner = dict(owner, cpus=sorted(cpus), booking=slot, holder_pid=os.getpid(), holder_utc=utc())
     x['owner'] = owner
+    import frankie_box_cores as C
+    C.own(slot, x['run'], x['day'], owner['attempt'])       # the ledger: this booking's death retains it for this owner
     return owner
 
 
@@ -1306,7 +1308,10 @@ def _child_save_verdict(run, e, cl):
 def _save_result(error, facts, holder, entry, run_obj):
     """A SystemExit(75) in the day's thread: saved when the save is this owner's (its marker stands) and, for a class-arm
     day in its class phase, the child acknowledged; unknown when the child is gone without one."""
-    facts = getattr(run_obj, 'save_facts', None) or facts or {}
+    facts = dict(getattr(run_obj, 'save_facts', None) or facts or {})
+    root = holder.get('root')
+    if root is not None:
+        facts.update(root_done=True, calculations=root.get('calculations'), root_status=root['status'])
     child = facts.get('child') or {}
     if child.get('state') == 'unknown':
         holder['result'] = ('unknown', 'saved without the class child\'s acknowledgment: %s' % child.get('reason'), facts)
@@ -1379,6 +1384,8 @@ def _root_job(entry, code_root, commit, log, holder):
         run, e = _run_for(entry, code_root, commit, log)
         run.slot_booking = holder['slot']
         r = run.root(e)
+        if r is not None and r['status'] in ('done', 'reused'):
+            holder['root'] = r                         # a save after this point is a done entry with a saved finish
         if r is None:
             holder['result'] = ('queued', 'the disk floor: %s' % (run.stopped or {}).get('reason'), {})
         elif r['status'] in ('done', 'reused'):
@@ -1543,6 +1550,20 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     continue
                 _end_attempt(y, result, reason)
                 y['attempts'][-1].update(facts)
+                if result in OWNER_STATES and facts.get('root_done'):
+                    # the ROOT finished in this slot before the save: the entry is DONE with a saved/unknown finish, so a
+                    # resume takes the finish path and never rediscovers its own ROOT as another runner's
+                    y.update(state='done', reason=None, where='box-slot', calculations=facts.get('calculations'),
+                             done_seq=doc['next_done_seq'], done_at=time.time(), done_utc=utc(),
+                             finish=dict(state=result, reason=reason, ended_utc=utc(), facts=facts,
+                                         retained_booking=job['holder'].get('retained'), child=facts.get('child')))
+                    doc['next_done_seq'] += 1
+                    event('root', 'slot_' + result, seq=seq, day=y['day'], run=y['run'], reason=reason, owner=y.get('owner'),
+                          child=facts.get('child'), root_done=True)
+                    log('ROOT seq %d %s (%s): ROOT done, then %s: %s (attempt %s, CPUs %s retained)' % (
+                        seq, y['day'], y['run'], result, reason, (y.get('owner') or {}).get('attempt'),
+                        (y.get('owner') or {}).get('cpus')))
+                    continue
                 if result in OWNER_STATES:
                     y.update(state=result, reason=reason, retained_booking=job['holder'].get('retained'),
                              retain_error=job['holder'].get('retain_error'), child=facts.get('child'))
@@ -1561,8 +1582,10 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     doc['next_done_seq'] += 1
                 elif result == 'claimed_elsewhere':
                     y.update(state='running', where=(facts.get('claim') or {}).get('where'), reason=reason)
+                    _release_owner(y, 'claimed elsewhere: this box holds nothing of the day')
                 elif result == 'queued':
                     y.update(state='queued', where=None, reason='back in line at its own place: %s' % reason)
+                    _release_owner(y, 'back in line before any work: the next admission binds afresh on free CPUs')
                 else:
                     y.update(state='failed', where=None, reason=reason)
                     _release_owner(y, 'failed: the attempt is kept as evidence; a retry mints the next attempt on free CPUs')
@@ -1578,7 +1601,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                         x['reason'] = why
                         owner_waiting.append(x)
                         continue                            # do not reconcile another source's retained attempt
-                if x['state'] != 'done' and x['seq'] not in running:
+                if (x['state'] != 'done' or (x.get('finish') or {}).get('state') == 'running') and x['seq'] not in running:
                     change = _sync_root(doc, x, plans)
                     if change:
                         event('root', 'sync_' + change, seq=x['seq'], day=x['day'], run=x['run'], reason=x.get('reason'),
@@ -1620,6 +1643,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 except (Exception, SystemExit) as error:            # a refusal of the day, never the worker's end
                     _release_slot(slot, 'the owner binding of %s %s was refused: %s' % (x['run'], x['day'], error))
                     x['finish'] = dict(x.get('finish') or {}, state='failed', reason='owner binding refused: %s' % error)
+                    _release_owner(x, 'owner binding refused on the finish path')
                     event('root', 'finish_refused', seq=x['seq'], day=x['day'], run=x['run'], reason=str(error))
                     continue
                 x['finish'] = dict(state='running', started_utc=utc(), pid=os.getpid(), commit=commit, slot_booking=slot)

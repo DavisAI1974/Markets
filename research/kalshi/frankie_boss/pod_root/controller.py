@@ -621,9 +621,6 @@ class Controller:
         the original job, claim and inputs (renew with resume), never a new attempt; refused with the reason otherwise."""
         if not self.state:
             return
-        request = self.state.resume_request()
-        if request is None:
-            return
         if self.resume_pending is None and self.state.resume_pending():
             # a previous controller left a resume unresolved (durable): reconciled, never re-sent
             self.resume_pending = self.state.resume_pending()
@@ -632,6 +629,9 @@ class Controller:
             return
         if self.resume_pending is not None:
             return                                   # one request at a time; the pending one is reconciled first
+        request = self.state.resume_request()
+        if request is None:
+            return
         job_id = str(request.get('job_id') or '')
         ack = dict(run=self.run, request=request, controller=self.lease_identity)
         before = next((dict(j) for j in jobs if j.get('job_id') == job_id), None)
@@ -704,20 +704,27 @@ class Controller:
             return
         self.resume_pending = None
         self.state.resume_settled()
-        self.state.resume_acknowledge(ack)
+        if (self.state.dir / 'resume-request.json').exists():
+            self.state.resume_acknowledge(ack)
+        else:                                        # the request was moved aside by hand: the acknowledgment still lands
+            write_json(self.state.dir / ('resume-ack-%d.json' % int(time.time())),
+                       dict(ack, schema=STATE_SCHEMA + '_RESUME_ACK', acknowledged_utc=utc()), create_only=True)
 
     def relay_save(self, w, jobs):
-        """Once: the cooperative save requested of every live retained job of this run on the worker."""
+        """Once: the cooperative save requested of every live retained job of this run on the worker. Not made while the
+        lease is not established (retried at the next poll; the stop is not settled before the relay is made)."""
         if self.stop_relayed is not None:
             return
-        self.stop_relayed = {}
         if not self.stop.get('save'):
+            self.stop_relayed = {}
             return
+        if not self.lease_established('stop relay'):
+            self.event(worker=w.where, step='stop', result='relay deferred', detail='lease ownership not established; retried')
+            return
+        self.stop_relayed = {}
         for j in jobs:
             if j.get('workflow') == 'root-to-finish' and j.get('pid_alive'):
                 try:
-                    if not self.lease_established('stop relay'):
-                        raise LeaseNotEstablished('lease ownership not established; the save is not relayed')
                     r = box('stop', w.target, 600, COMMIT=self.commit, JOB=j['job_id'])
                     self.stop_relayed[j['job_id']] = r.get('result')
                 except Exception as error:  # noqa: BLE001
@@ -725,9 +732,13 @@ class Controller:
                 self.event(worker=w.where, day=j.get('day'), step='stop', attempt=j['job_id'], result=self.stop_relayed[j['job_id']])
 
     def stop_settled(self, jobs):
-        """True once no relayed job is still active, or the stop wait elapsed (the job then continues unattended; said so)."""
-        waiting = [j for j in jobs if j.get('job_id') in (self.stop_relayed or {}) and j.get('state') in ACTIVE and j.get('pid_alive')]
-        return not waiting or time.time() - self.stop_seen > self.a.stop_wait_minutes * 60
+        """True once the relay was made and no relayed job is still active, or the stop wait elapsed (the job then
+        continues unattended, or the save was never relayed; the acknowledgment says which)."""
+        elapsed = time.time() - self.stop_seen > self.a.stop_wait_minutes * 60
+        if self.stop_relayed is None:
+            return elapsed                           # the relay is still to be made (the lease); settled only by the wait
+        waiting = [j for j in jobs if j.get('job_id') in self.stop_relayed and j.get('state') in ACTIVE and j.get('pid_alive')]
+        return not waiting or elapsed
 
     def acknowledge_stop(self, w, jobs):
         pending = [dict(job_id=j.get('job_id'), day=j.get('day'), state=j.get('state'), pid_alive=j.get('pid_alive'),
@@ -735,7 +746,8 @@ class Controller:
                    for j in jobs if j.get('run') == self.run and j.get('state') not in ('day_complete', 'cleaned')]
         unattended = [p for p in pending if p['pid_alive']]
         self.outcome = dict(outcome='stop_acknowledged', request=self.stop, relayed=self.stop_relayed, pending=pending,
-                            jobs_continue_unattended=unattended, claims_untouched=True, complete=False)
+                            jobs_continue_unattended=unattended, claims_untouched=True, complete=False,
+                            save_never_relayed=bool(self.stop.get('save')) and self.stop_relayed is None)
         if self.state:
             self.state.acknowledge(dict(run=self.run, request=self.stop, relayed=self.stop_relayed, pending=pending,
                                         jobs_continue_unattended=unattended, controller=self.lease_identity))
@@ -866,6 +878,10 @@ class Controller:
             self.event(worker=w.where, day=day, step='job', result='started', attempt=attempt,
                        s3_inputs=sum(1 for f in inputs if f['source'] != 'box export'))
             return True
+        except LeaseNotEstablished as e:
+            # not a start defect: nothing was submitted; the claim and the exported parts stay for the lease holder
+            self.event(worker=w.where, day=day, step='start', result='lease not established', attempt=attempt, error=str(e)[:300])
+            return None
         except Exception as e:  # noqa: BLE001
             self.event(worker=w.where, day=day, step='start', result='failed', error='%s: %s' % (type(e).__name__, str(e)[:400]))
             # An SSM timeout can occur after acceptance. Keep ownership and input slots until status establishes what
@@ -959,7 +975,8 @@ class Controller:
                 prepared = box('prepare', MAIN, 1800, CODE_ROOT=self.a.code_root, RUN=self.run, DAY=day,
                                WHERE=w.where, ATTEMPT=job['job_id'], COMMIT=self.commit)
                 if not self.start_day(w, prepared['state'], retained=True):
-                    raise RuntimeError('retained preparation did not complete; same claim and inputs kept')
+                    raise RuntimeError('retained preparation did not complete (or the lease was not established); same '
+                                       'claim and inputs kept')
                 return dict(job_id=job['job_id'], resumed_preparation=True)
             if (saved['run'], saved['name'], saved['where'], saved['commit']) != \
                     (self.run, job['job_id'], w.where, self.commit):
@@ -1128,7 +1145,8 @@ class Controller:
                         self.snapshot(w, st)
                         time.sleep(self.a.poll_seconds)
                         continue
-                    if self.start_day(w, d):
+                    started = self.start_day(w, d)
+                    if started or started is None:       # None: the lease, not the start, was the obstacle (not counted)
                         self.snapshot(w, st)
                         continue
                     with self.lock:

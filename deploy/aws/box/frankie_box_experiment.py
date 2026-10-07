@@ -1281,7 +1281,7 @@ class Run:
         try:
             return Q.kick(line, self.code_root, self.commit, self.a.queue_worker_seconds, self.a.queue_poll_seconds,
                           by='frankie_box_experiment.py %s' % self.plan['run'], log=self.log, scope=self.scope_text())
-        except Exception as error:                   # listed; the next start kicks again
+        except (Exception, SystemExit) as error:     # listed (a scope refusal included); the next start kicks again
             self.log('the %s worker could not be kicked (%s: %s)' % (line, type(error).__name__, error))
             return None
 
@@ -1699,10 +1699,9 @@ class Run:
                     brain_entries[e['day']] = self.teacher_knowledge(e['day'], rows_path, source)
                 except ValueError as error:
                     refused[e['day']] = str(error)     # the other days of the batch are not held back by this one
-        if refused and not todo:
-            return self.record('teacher', batch_key, 'refused', brain_entries=brain_entries, refused_days=refused,
-                               reason='teacher knowledge not taught again for %s: %s' % (
-                                   sorted(refused), '; '.join('%s: %s' % kv for kv in sorted(refused.items()))[:1500]))
+        if refused:
+            self.log('teacher %s: knowledge not taught again for %s (explicit checked successor required): %s' % (
+                batch_key, sorted(refused), '; '.join('%s: %s' % kv for kv in sorted(refused.items()))[:1500]))
         if not todo:
             return self.record('teacher', batch_key, 'waiting' if remote_waiting else 'skipped',
                                reason='waiting for owning lane teacher receipts' if remote_waiting else
@@ -1740,14 +1739,13 @@ class Run:
                 except ValueError as error:
                     refused[d] = str(error)             # recorded per day; the batch's other entries stay
         if refused:
-            return self.record('teacher', batch_key, 'refused', exit_code=code, log=log, days=[d for d, _ in receipts],
-                               rows_missing=missing, waiting=waiting, remote_days=remote, brain_entries=brain_entries,
-                               refused_days=refused,
-                               reason='teacher knowledge not taught again for %s (explicit checked successor required): %s' % (
-                                   sorted(refused), '; '.join('%s: %s' % kv for kv in sorted(refused.items()))[:1500]))
+            self.log('teacher %s: knowledge not taught again for %s (explicit checked successor required): %s' % (
+                batch_key, sorted(refused), '; '.join('%s: %s' % kv for kv in sorted(refused.items()))[:1500]))
+        # a refused day is recorded on the batch (refused_days) and refuses its own classroom with the same reason; the
+        # batch's other days are not held back by it (the batch status is the child's and the rows', as before)
         return self.record('teacher', batch_key, 'done' if code == 0 and not missing and not waiting else 'failed',
                            exit_code=code, log=log, days=[d for d, _ in receipts], rows_missing=missing, waiting=waiting,
-                           remote_days=remote,
+                           remote_days=remote, refused_days=refused or None,
                            external_waiting=external_waiting, brain_entries=brain_entries,
                            new_bytes=sum(new_bytes(TEACHER_ROWS / d) for d, _ in receipts),
                            reason=None if code == 0 and not missing and not waiting else
