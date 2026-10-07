@@ -149,3 +149,15 @@ def unclassified(values, steps):
     v = np.asarray(values, dtype=object)
     unknown = np.asarray([not (finite(a) and finite(b)) for a, b in zip(v[:-1], v[1:])], dtype=bool)
     return int(np.count_nonzero(unknown & (np.asarray(steps) == 0)))
+
+
+SAVE_VALUE_CODE = ('_steps', 'finite', '_sign', '_RunningLowerMedian', 'sign_of_step', 'run_length', 'magnitude_class', 'level_crossing', 'acceleration', 'TRANSFORMS', 'unclassified')
+
+def save_identity():
+    """This module's value code for a saved search (frankie_box_bedrock.code_identity of the declared definitions, so a
+    comment or an unrelated edit never refuses a save; frankie_box_experiment_search's continuation identity V2)."""
+    try:
+        import frankie_box_bedrock as B
+    except ImportError:
+        from deploy.aws.box import frankie_box_bedrock as B
+    return B.code_identity(__file__, SAVE_VALUE_CODE)

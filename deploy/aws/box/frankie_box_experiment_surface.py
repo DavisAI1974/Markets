@@ -123,3 +123,15 @@ def state_masks(series, cells):
             if mask.any():
                 masks[('state:' + name, label)] = mask
     return masks
+
+
+SAVE_VALUE_CODE = ('journal_axis', 'ordinal_values', 'ENTITY_COLUMNS', 'CLOCK_COLUMNS', 'POINT_CLOCK_COLUMNS', 'identity_and_clock_columns', 'external_fields', 'state_masks')
+
+def save_identity():
+    """This module's value code for a saved search (frankie_box_bedrock.code_identity of the declared definitions, so a
+    comment or an unrelated edit never refuses a save; frankie_box_experiment_search's continuation identity V2)."""
+    try:
+        import frankie_box_bedrock as B
+    except ImportError:
+        from deploy.aws.box import frankie_box_bedrock as B
+    return B.code_identity(__file__, SAVE_VALUE_CODE)

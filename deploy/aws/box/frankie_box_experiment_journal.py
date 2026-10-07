@@ -369,3 +369,22 @@ def _read_columns(day_dir, columns, frame_numeric, receive_times, *, workers, fr
     report.update(numeric=sorted(numeric), text=sorted(text), mixed=mixed)
     return ({'journal.group.' + name: values for name, values in numeric.items()},
             {'journal.group.' + name: values for name, values in text.items()}, [report], [])
+
+
+SAVE_VALUE_CODE = ('SCHEMA', '_integer', '_range_add', '_frame_index', '_JournalWitness', 'read_columns', '_read_columns')
+
+
+def save_identity():
+    """binding() for a saved search, function-level: this module's declared value code and the one extractor method it
+    calls (frankie_box_boss_session.Session._find_observation) by frankie_box_bedrock.code_identity, so an unrelated edit
+    of the session file never refuses a saved search; the shared timeline's own binding (its owner's) as before.
+    binding() itself is unchanged: it is the receipt field (implementation=...) and keeps its meaning."""
+    here = Path(__file__).resolve()
+    try:
+        import frankie_box_bedrock as B
+    except ImportError:
+        from deploy.aws.box import frankie_box_bedrock as B
+    from frankie_box_market_timeline import binding as timeline_binding
+    return dict(schema=SCHEMA + '_SAVE_IDENTITY', shared_timeline=timeline_binding(),
+                helper=B.code_identity(here, SAVE_VALUE_CODE),
+                extractor=B.code_identity(here.with_name('frankie_box_boss_session.py'), ['Session._find_observation']))

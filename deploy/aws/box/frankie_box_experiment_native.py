@@ -239,6 +239,11 @@ def _line_ranges(path, size, piece_bytes):
 
 def _decode_range(args):
     """(decoded rows of the range in order, the first decode error or None)."""
+    try:                       # a forked worker never keeps the search's mark-only SIGTERM handler (ROOT's contract)
+        from frankie_box_experiment_search import _worker_default_sigterm
+    except ImportError:
+        from deploy.aws.box.frankie_box_experiment_search import _worker_default_sigterm
+    _worker_default_sigterm()
     path, start, end = args
     rows, position = [], start
     with open(path, 'rb') as handle:
@@ -488,3 +493,15 @@ def read_columns(day_dir, columns, frame_numeric, receive_times, *, workers=1):
             reason=('legacy row evidence aliases the shared source; no duplicate observation' if role == LEDGERS[2]
                     else 'completed calculation/section evidence; no whole-day summary backfill or duplicate projected rows')))
     return numeric, text, sources, notes
+
+
+SAVE_VALUE_CODE = ('SCHEMA', 'EMISSION_SCHEMA', 'LEDGERS', 'SECTIONS', 'PROJECTION_PLAN', 'entry_carriers', 'evidence_contract', '_witness', '_check', '_regular_under', 'selected_files', '_take_all', '_ranges_add', '_line_ranges', '_decode_range', '_decoded_lines', 'read_columns')
+
+def save_identity():
+    """This module's value code for a saved search (frankie_box_bedrock.code_identity of the declared definitions, so a
+    comment or an unrelated edit never refuses a save; frankie_box_experiment_search's continuation identity V2)."""
+    try:
+        import frankie_box_bedrock as B
+    except ImportError:
+        from deploy.aws.box import frankie_box_bedrock as B
+    return B.code_identity(__file__, SAVE_VALUE_CODE)

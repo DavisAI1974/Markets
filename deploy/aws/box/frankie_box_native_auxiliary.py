@@ -30,7 +30,15 @@ def native_code_identity():
 
 
 def _worker(connection, producers, cpu, kind, state):
-    """One auxiliary worker process: pinned to its CPU, then the computation (_serve)."""
+    """One auxiliary worker process: pinned to its CPU, then the computation (_serve).
+    SIGTERM (session 5, 2026-10-08; the shard-hang rule): the default action first, before any task. The workers are
+    spawned (exec resets a caught handler, so a spawned worker never had the ROOT's save handler); this keeps it so if
+    the start method ever changes to fork. Not part of NATIVE_VALUE_CODE."""
+    try:
+        import signal
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except (ValueError, OSError):
+        pass
     try:
         from frankie_box_parallel_evidence import pin_threads
         pin_threads(os.getpid(), cpu)
@@ -165,20 +173,51 @@ class NativeWorker:
         return result
 
     def close(self):
-        if self.process.is_alive():
-            if not self.pending:
-                try:
-                    self.send('stop')
-                except (EOFError,OSError):
-                    pass
-                self.process.join(timeout=5)
-            if self.process.is_alive():
-                self.process.terminate()
-                self.process.join(timeout=5)
-            if self.process.is_alive():
-                self.process.kill()
-                self.process.join(timeout=5)
-        self.connection.close()
+        """The bounded stop of _close_workers for this one worker (the same steps and 5 s bounds as before: 'stop',
+        terminate, kill). Returns what had to be terminated or killed (pid, at, how, exit code), else None."""
+        stopped = _close_workers([self])
+        return stopped[0] if stopped else None
+
+
+WORKER_STOP_SECONDS = 5.0      # _close_workers: each step's bound (shared by every worker it stops)
+
+
+def _close_workers(workers):
+    """Stop native auxiliary workers, every wait bounded (session 5; the rule of frankie_box_lane_pin's dead-worker
+    handling and boss_session's LegacyFrameShards._stop / _bounded_pool_stop): 'stop' to each idle live worker, one
+    shared WORKER_STOP_SECONDS for all to exit; terminate() the rest, one shared bound; kill() what is still alive, one
+    shared bound; every connection closed. Per worker this is the earlier NativeWorker.close (stop, join 5, terminate,
+    join 5, kill, join 5); several workers now wait in parallel instead of 15 s each in turn. Returns the workers that
+    had to be terminated or killed: [dict(pids, at, how, exit_code)]. A worker's only output is its pipe (results
+    the caller reads), so ending one loses nothing."""
+    live = [w for w in workers if w.process.is_alive()]
+    for worker in live:
+        if not worker.pending:
+            try:
+                worker.send('stop')
+            except (EOFError, OSError):
+                pass
+
+    def wait(group):
+        deadline = time.monotonic() + WORKER_STOP_SECONDS
+        for worker in group:
+            worker.process.join(timeout=max(0.0, deadline - time.monotonic()))
+        return [w for w in group if w.process.is_alive()]
+    stopped = []
+    if live and not all(w.pending for w in live):
+        live = wait(live)
+    for how in ('terminate', 'kill'):
+        if not live:
+            break
+        for worker in live:
+            getattr(worker.process, how)()
+        group, live = live, wait(live)
+        stopped.extend(dict(pids=[w.process.pid], at=round(time.time(), 3), how=how, exit_code=w.process.exitcode)
+                       for w in group if w not in live)
+    stopped.extend(dict(pids=[w.process.pid], at=round(time.time(), 3), how='left_alive', exit_code=None) for w in live)
+    for worker in workers:
+        worker.connection.close()
+    return stopped
 
 
 class ParallelCensus:
@@ -304,6 +343,7 @@ class ParallelBook:
         self.producers, self.metrics, self.note, self.handover = producers, metrics, note, handover
         self.cpus = []
         self.workers_lost, self.snapshots_redone, self.handed_over = 0, 0, []
+        self.stop_kills = []          # workers a bounded stop had to terminate or kill (session 5; additive)
         self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
         try:
             for cpu in cpus:
@@ -403,7 +443,9 @@ class ParallelBook:
             self.workers.pop(index)
             self.cpus.pop(index)
             try:
-                worker.close()
+                stopped = worker.close()
+                if stopped:
+                    self.stop_kills.append(stopped)
             except Exception:  # noqa: BLE001
                 pass
         self.workers_lost += len(lost)
@@ -527,8 +569,13 @@ class ParallelBook:
             self.book_class.book_snapshot = self.original
             self.book_class._book_effect = self.original_effect
             self.active = False
-        for worker in self.workers:
-            worker.close()
+        stopped = _close_workers(self.workers)
+        if stopped:
+            self.stop_kills.extend(stopped)
+            if self.note is not None:
+                self.note('full-depth book workers: %d did not stop on request within %.0f s and were ended (%s); '
+                          'workers write nothing durable, nothing lost'
+                          % (len(stopped), WORKER_STOP_SECONDS, ', '.join(s['how'] for s in stopped)))
         self.workers.clear()
         self.states.clear()
         self.references.clear()

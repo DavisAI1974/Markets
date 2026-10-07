@@ -143,6 +143,10 @@ from pathlib import Path
 SCHEMA = 'FRANKIE_EXPERIMENT_RUN_V1'
 STAGES = ('fetch', 'ingest', 'external', 'root', 'teacher', 'classroom', 'jev', 'data', 'search', 'lessons', 'exchange',
           'voice', 'school', 'reports')
+SAVED_EXIT = 75     # EX_TEMPFAIL: a stage child stopped at a save point on a requested save (the ROOT's convention; every stage
+                    # with a save route exits 75 the same way: stacks pass 2026-10-07). Run.child_saved classifies it 'saved'.
+PROBE_DIRS_ENV = 'FRANKIE_PROBE_DIRS'   # the stage's known probe directories, exported to the child (comma-separated;
+                                        # frankie_box_stage_progress reads every absolute work directory a process names)
 FINISHED = ('done', 'reused', 'skipped', 'not_run')   # not_run: a listed outcome (the step's equation had no operand on
                                                        # this day: a search with no causal axis); the day goes on
 HANDED_OFF = 'waiting_for_pod'           # the jev step's end on the box: material relayed, the Pod is its own dispatch
@@ -649,6 +653,52 @@ def presign_items(plan, code_root):
 
 # --------------------------------------------------------------------------------------------------------------- run
 
+def classify_child_calls(results):
+    """(saved, bad) over a list of child call records carrying exit_code (the lessons batch; stacks pass 2026-10-07,
+    school R6): saved = the calls that exited SAVED_EXIT (a child stopped at a save point on a requested save: never a
+    failure), bad = every other nonzero exit. Pure; the caller records the batch 'saved' when any call saved."""
+    saved = [r for r in results if r.get('exit_code') == SAVED_EXIT]
+    bad = [r for r in results if r.get('exit_code') not in (0, SAVED_EXIT)]
+    return saved, bad
+
+
+def probe_directories(stage, env, code_root, work_root=None, box_root=None):
+    """The directories a stage child's FRANKIE_WORK_PROBE_V1 progress.json may be in, known BEFORE the child starts
+    (stacks pass 2026-10-07: teacher 4, ingest X4, reports X6), in a fixed order, deduplicated, as strings. Pure: nothing
+    is created or read except the ingest's committed manifest (its block name). Every absolute path a stage env value
+    names under the work root (a directory, or a file's own directory; comma-separated lists split), then per stage:
+      teacher   experiment-teacher-rows/<day> for every day of the batch (env DAYS)
+      ingest    the block data directory <box>/data/block_<block> (outside the work root: the generic reader never finds
+                it on its own) and RESUME_DIR when the ingest continues one
+      reports   REPORTS_DIR/receipts/<run> beside REPORTS_DIR (the step's own receipt directory)
+    The stage heartbeat checks these first (named), then what the process tree itself names. A directory that does not
+    exist yet is named anyway (the reader skips what is not there). Never an input to the child."""
+    work_root = str(work_root or WORK).rstrip('/') + '/'
+    box = Path(box_root or BOX_ROOT)
+    found = []
+    for value in (env or {}).values():
+        for part in str(value).split(','):
+            part = part.strip()
+            if not part.startswith(work_root):
+                continue
+            path = Path(part)
+            found.append(str(path.parent) if (path.suffix and not path.is_dir()) or path.is_file() else str(path))
+    if stage == 'teacher':
+        found += [str(Path(work_root) / 'experiment-teacher-rows' / d) for d in str(env.get('DAYS') or '').split(',') if d]
+    if stage in ('ingest', 'fetch') and env.get('MANIFEST'):
+        try:
+            block = json.loads((Path(code_root) / str(env['MANIFEST'])).read_bytes()).get('block')
+        except (OSError, ValueError, TypeError):
+            block = None
+        if isinstance(block, str) and block and re.fullmatch(r'[0-9_]+', block):
+            found.append(str(box / 'data' / ('block_' + block)))
+        if env.get('RESUME_DIR'):
+            found.append(str(env['RESUME_DIR']))
+    if stage == 'reports' and env.get('REPORTS_DIR') and env.get('RUN'):
+        found.append(str(Path(str(env['REPORTS_DIR'])) / 'receipts' / str(env['RUN'])))
+    return [d for d in dict.fromkeys(found) if d and d.rstrip('/') != work_root.rstrip('/')]
+
+
 def done_status(r):
     """A step is finished when done, reused, skipped or not_run (a listed outcome: the step's equation had no operand on
     this day, e.g. a search with no causal axis; nothing to retry, the day goes on); a retired Pod handoff is still pending."""
@@ -1137,6 +1187,30 @@ class Run:
             self.log('day saved on its assigned lane; resume the retained attempt')
             raise SystemExit(75)
 
+    def child_saved(self, stage, key, code, log=None, **fields):
+        """The ONE classification of a stage child's exit 75 (stacks pass 2026-10-07: school R6, reports X5; every stage
+        with a save route exits SAVED_EXIT the way the ROOT does): None unless code is SAVED_EXIT and the ledger did not
+        print a 'waiting for a CPU booking' line for this call (that 75 is 'not started', the caller's own waiting
+        record); else the step's 'saved' receipt, returned for the caller to return. A 75 on this owner's STANDING
+        marker never reaches a step: child() raises SystemExit(75) right after the child, and the day thread
+        (frankie_box_frankie_queue._thread_end) classifies the DAY saved with its booking retained. A 75 WITHOUT the
+        standing marker is the child's own save route (a SIGTERM to the child: mark only, run to the next save point,
+        exact durable state); it was recorded 'failed' (or counted as a failed teacher call) until this pass. Now:
+        'saved', never a failure, never a requeue; nothing is booked or released here (a step inside the held slot never
+        touches the booking; the slot is the day's). done_status is False for 'saved', so the next start re-runs the
+        step, which reuses its saved pre-read and written work; the day's later steps read 'saved' as not finished and
+        wait, exactly as they do for 'waiting'. The caller does not start a following step after it."""
+        if code != SAVED_EXIT:
+            return None
+        if (self._cpu.get((stage, key)) or {}).get('status') == 'waiting':
+            return None
+        self.log('%s %s: the step saved at a save point (exit %d) without this owner\'s standing marker; kept, re-run on the '
+                 'next start' % (stage, key, code))
+        return self.record(stage, key, 'saved', exit_code=code, log=log,
+                           reason='the step stopped at a save point on a requested save (exit 75) without this owner\'s '
+                                  'standing marker; its saved state is kept; the next start re-runs the step, which reuses '
+                                  'its saved pre-read and written work; never a failure or a requeue', **fields)
+
     # receipts
     def receipt_path(self, stage, key):
         return self.dir / ('batches' if stage in ('teacher', 'lessons', 'survivors') else 'days') / key / (stage + '.json')
@@ -1299,6 +1373,14 @@ class Run:
         full.pop('FRANKIE_LANE_STOP_FILE', None)
         if self.stop_marker:
             full['FRANKIE_LANE_STOP_FILE'] = str(self.stop_marker)
+        # the stage's probe directories (stacks pass 2026-10-07: teacher 4, ingest X4, reports X6; probe_directories):
+        # named to the heartbeat below (checked first) and exported to the child, whose forked/spawned workers inherit it
+        # (frankie_box_stage_progress reads every absolute work directory a process's environment names). Not an input:
+        # no stage reads it; the queue never carries it as a run setting (RUN_SETTING_IDENTITY)
+        probe_dirs = probe_directories(stage, env, self.code_root)
+        full.pop(PROBE_DIRS_ENV, None)
+        if probe_dirs:
+            full[PROBE_DIRS_ENV] = ','.join(probe_dirs)
         command = ['sh' if script.endswith('ingest_block.sh') else 'bash', str(self.box / script)]
         if stage in self.cores.DAY_RUN_STAGES:  # exactly 16 CPUs booked, the step under taskset -c <them> (frankie_box_cores.py)
             inside = getattr(self, 'slot_booking', None)   # the day's held slot (ROOT line): its steps never re-book
@@ -1315,8 +1397,10 @@ class Run:
             import frankie_box_stage_progress as SP
             # FA-4: a stage that names its output directory (the ROOT: OUTPUT_ROOT = experiment-roots/<attempt>) has its
             # FRANKIE_WORK_PROBE_V1 progress.json there; the heartbeat reads it (and its native-overlap/ beside it)
+            # the stage's own directories follow (probe_directories above: the teacher's rows directories, the ingest's
+            # block data directory and RESUME_DIR, the reports' receipt directory, every work directory the env names)
             heartbeat = SP.Heartbeat(self.dir, key, stage, log_path=log_path,
-                                     probe_dirs=[str(env['OUTPUT_ROOT'])] if env.get('OUTPUT_ROOT') else ())
+                                     probe_dirs=([str(env['OUTPUT_ROOT'])] if env.get('OUTPUT_ROOT') else []) + probe_dirs)
             full.update(heartbeat.env())
         except Exception as error:  # noqa: BLE001 - the probe is never the stage's outcome
             self.log('%s %s: no stage heartbeat (%s: %s)' % (stage, key, type(error).__name__, error))
@@ -1446,6 +1530,13 @@ class Run:
             return self.record('ingest', e['day'], 'waiting', exit_code=code, log=log, cpu_booking=cpu,
                                reason=cpu['line'], inspection=dict(inputs=inputs, use='waiting for its CPU booking: %s'
                                                                    % cpu['line'], outputs=dict(exit_code=code)))
+        saved = self.child_saved('ingest', e['day'], code, log, directories=[str(p) for p in made], cpu_booking=cpu,
+                                 resume_dir=str(self.resume_dir(e) or '') or None,
+                                 inspection=dict(inputs=inputs, use='saved at a save point (INGEST_SAVED, ingest-saved-<ts>.json '
+                                                                    'in its directory); the next start continues it (RESUME_DIR)',
+                                                 outputs=dict(exit_code=code, directories=[str(p) for p in made])))
+        if saved:
+            return saved
         if code != 0 or not receipt or why:
             return self.record('ingest', e['day'], 'failed', exit_code=code, log=log, directories=[str(p) for p in made],
                                reason=why or 'no sealed ingest of the day after the step (its directory is kept)',
@@ -1575,6 +1666,12 @@ class Run:
         child_started = time.time()
         code, log = self.child('root', e['day'], 'frankie_box_experiment_root.sh', env)
         child_seconds = round(time.time() - child_started, 1)
+        saved = self.child_saved('root', e['day'], code, log, output_root=str(output), interrupted_attempts=attempts,
+                                 seconds=child_seconds, native_pass=native_pass_facts(output, None, policy, child_seconds),
+                                 claim='kept: the attempt resumes under it (claim_root retakes this box\'s own claim when no '
+                                       'ROOT of the day runs)' if held else 'no claim store')
+        if saved:
+            return saved
         if code != 0 or not (output / 'calculations-receipt.json').is_file():
             self.claim_end(e, output, None, 'the box ROOT attempt ended without calculations-receipt.json (exit %s)' % code)
             return self.record('root', e['day'], 'failed', exit_code=code, log=log, output_root=str(output),
@@ -1821,6 +1918,9 @@ class Run:
                 return None
             env.update(ACTION='build', RUN='%s-ext-%s-a%d' % (self.plan['run'], day, len(attempts) + 1))
         code, log = self.child('external', day, 'frankie_box_day_external.sh', env)
+        saved = self.child_saved('external', day, code, log, action=env['ACTION'], external_run=env['RUN'])
+        if saved:
+            return saved
         path, sha, why = attached_day_file(directory)
         history_inputs = dict(ingest=str(directory), history_run=history,
                               eia930_history_run=self.plan.get('external_eia930_history_run'),
@@ -2198,6 +2298,9 @@ class Run:
                       teacher_knowledge_delivery_status=delivery_status)
         if code == 0 and self.classroom_ready(e)[0] == 'reused':
             return self.record('classroom', day, 'done', new_bytes=new_bytes(d), **fields)
+        saved = self.child_saved('classroom', day, code, **{k: v for k, v in fields.items() if k != 'exit_code'})
+        if saved:
+            return saved
         if code == 3 and r.get('status') == 'refused':
             return self.record('classroom', day, 'refused', reason=r.get('reason'), **fields)
         return self.record('classroom', day, 'failed', reason='no completion.json after the step (its log names why)', **fields)
@@ -2370,11 +2473,12 @@ class Run:
             classroom, x = env['CLASSROOM'], self.receipt('exchange', day)
             code, log = self.child('reports', day, 'frankie_box_experiment_day_reports.sh', env)
             r = self.reports_receipt(log, day=day, run=self.plan['run'])
+            # reports X4 (stacks pass 2026-10-07): the child's log already holds both reports in full (it prints them);
+            # they are not read back here. Each report is named once from the step's receipt with its sha256
             for item in (r or {}).get('reports') or []:
-                try:
-                    self.log(Path(item['file']).read_text(encoding='utf-8', errors='replace'))
-                except OSError as error:
-                    self.log('reports %s: %s could not be read back (%s)' % (day, item.get('file'), error))
+                self.log('reports %s: %s #%s%s %s sha256 %s%s' % (
+                    day, item.get('kind'), item.get('number'), ('.%s' % item['revision']) if item.get('revision') else '',
+                    item.get('file'), item.get('sha256'), ' (existing)' if item.get('existing') else ''))
             school = self.receipt('school', day) or {}
             fields = dict(exit_code=code, log=log, classroom=classroom, classroom_status=c['status'],
                           exchange_status=(x or {}).get('status'), exchange=env.get('EXCHANGE'),
@@ -2406,6 +2510,11 @@ class Run:
                                                        exit_code=code)))
             if code == 0 and r:
                 return self.record('reports', day, 'done', **fields)
+            # reports X5: the step exits 75 at a report boundary on a requested save (its written reports are reused on
+            # the re-run): saved, never failed or requeued, exactly as the ROOT's 75 (child_saved)
+            saved = self.child_saved('reports', day, code, **{k: v for k, v in fields.items() if k != 'exit_code'})
+            if saved:
+                return saved
             return self.record('reports', day, 'failed', reason='the report step exited %d%s (its log names why)' % (
                 code, '' if r else ' without a receipt'), **fields)
         except Exception as error:        # a report failure never stops the run: recorded, retried on the next start
@@ -2860,6 +2969,9 @@ class Run:
         if rows is not None:
             env['TEACHER_ROWS'] = rows
         code, log = self.child('exchange', day, 'frankie_box_experiment_exchange.sh', env)
+        saved = self.child_saved('exchange', day, code, log, lessons=[str(f) for f in files], listed=listed)
+        if saved:
+            return saved
         if code != 0 or not (target / 'receipt.json').is_file():
             return self.record('exchange', day, 'failed', exit_code=code, log=log, lessons=[str(f) for f in files],
                                listed=listed, reason='no exchange receipt after the step (its log names why)')
@@ -3412,6 +3524,9 @@ class Run:
         if base is not None and source != 'launch run':
             env['TEACHER_ROWS'] = base
         code, log = self.child('school', day, 'frankie_box_school_knowledge.sh', env)
+        saved = self.child_saved('school', day, code, log, report_number=number)
+        if saved:
+            return saved
         try:
             lines = [z for z in Path(log).read_text(encoding='utf-8', errors='replace').splitlines() if z.strip()]
             r = json.loads(lines[-1]) if lines else None
@@ -3960,6 +4075,12 @@ class Run:
         if policy:
             env.update(SHARED_MARKET_POLICY=policy, CALCULATION_ROOTS=','.join(roots[d] for d, _ in receipts))
         code, log = self.child('teacher', batch_key, 'frankie_box_experiment_teacher.sh', env)
+        saved = self.child_saved('teacher', batch_key, code, log, days=[d for d, _ in receipts], waiting=waiting,
+                                 remote_days=remote, refused_days=refused or None, shared_market_policy=policy,
+                                 calculation_roots=roots or None, root_waiting=root_waiting or None,
+                                 external_waiting=external_waiting)
+        if saved:
+            return saved
         by_day = {e['day']: e for e in todo}
         # the teacher step's LISTED outcomes (workflow_reports, 2026-10-07): a day whose experiment-teacher-rows/<day>/
         # receipt.json says equation_not_run (exit 5: no operand for the pinned equation on this day, no rows file) is a
@@ -4293,6 +4414,9 @@ class Run:
         if not self.disk_ok('data'):
             return None
         code, log = self.child('data', e['day'], 'frankie_box_experiment_data.sh', env)
+        saved = self.child_saved('data', e['day'], code, log, target=str(target))
+        if saved:
+            return saved
         if code != 0 or not (target / 'MANIFEST.json').is_file():
             return self.record('data', e['day'], 'failed', exit_code=code, log=log, reason='no exported MANIFEST.json')
         return self.record('data', e['day'], 'done', exit_code=code, log=log, target=str(target), dipole=source,
@@ -4337,6 +4461,9 @@ class Run:
         if e['role'] == 'confirmation':
             env['FROZEN_SURVIVORS'] = self.plan['frozen_survivors']
         code, log = self.child('search', e['day'], 'frankie_box_experiment_search.sh', env)
+        saved = self.child_saved('search', e['day'], code, log, target=str(target))
+        if saved:
+            return saved
         if code != 0 or not (target / 'MANIFEST.json').is_file():
             return self.record('search', e['day'], 'failed', exit_code=code, log=log, reason='no search MANIFEST.json')
         brain_entry = self.search_knowledge(e, target)
@@ -4408,6 +4535,9 @@ class Run:
             if ('lessons', key) in retained:
                 retained[('accumulated_lessons', day)] = retained.pop(('lessons', key))
         receipt = target / 'receipt.json'
+        saved = self.child_saved('accumulated_lessons', day, code, log, accumulated_out=str(target))
+        if saved:
+            return saved
         if code != 0 or not receipt.is_file():
             return self.record('accumulated_lessons', day, 'failed', exit_code=code, log=log,
                                reason='no completed accumulated scientific lesson receipt after the call')
@@ -4479,7 +4609,20 @@ class Run:
             # the teacher child's own receipt (FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1, printed as its last line; school_recovery
             # 2026-10-07): carried on the call for the one-day reporter; absent = None (never inferred from the exit code)
             results.append(dict(claims=name, exit_code=code, log=log, receipt=last_json_line(log)))
-        bad = [r for r in results if r['exit_code'] != 0]
+            if code == SAVED_EXIT and (self._cpu.get(('lessons', '%s-%s' % (batch_key, name))) or {}).get('status') != 'waiting':
+                # school R6 (stacks pass 2026-10-07): the teacher child saved at a save point (exit 75, its pre-read and
+                # written documents kept): no following call is started after a save; the calls not started are listed
+                results += [dict(claims=later, exit_code=None, not_started='a teacher call before it saved') for later, _ in
+                            calls[[c[0] for c in calls].index(name) + 1:]]
+                break
+        saved, bad = classify_child_calls(results)
+        if saved:
+            # never a failure or a requeue: the batch is 'saved' (not FINISHED), re-run on the next start; the finished
+            # calls' written lessons are reused there (lessons_written), the saved call resumes its own saved state
+            return self.record('lessons', batch_key, 'saved', calls=results, exit_code=SAVED_EXIT,
+                               searched_days=[e['day'] for e in searched], not_run_days=not_run or None,
+                               reason='%d teacher call(s) saved at a save point (exit 75): kept; the next start re-runs the '
+                                      'batch, which reuses the written lessons and the saved pre-read' % len(saved))
         rec = self.record('lessons', batch_key, 'failed' if bad else 'done', calls=results,
                           searched_days=[e['day'] for e in searched], not_run_days=not_run or None,
                           reason='%d teacher call(s) failed' % len(bad) if bad else None)
@@ -4516,6 +4659,9 @@ class Run:
         except (ValueError, OSError) as error:   # a refusal of the dispatch is this stage's own failure, never the batch's
             return self.record('survivors', batch_key, 'failed', boundary_day=days[-1], batch_days=days,
                                reason='%s: %s' % (type(error).__name__, error))
+        saved = self.child_saved('survivors', batch_key, code, log, boundary_day=days[-1], batch_days=days)
+        if saved:
+            return saved
         receipt = last_json_line(log)
         bound = isinstance(receipt, dict) and receipt.get('schema') == 'FRANKIE_SURVIVOR_UPDATE_RECEIPT_V1' and \
             receipt.get('boundary_day') == days[-1] and receipt.get('run') == self.plan['run']

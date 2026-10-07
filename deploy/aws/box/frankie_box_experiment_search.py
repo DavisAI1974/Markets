@@ -350,6 +350,7 @@ SPOOL_RANGES_PER_WORKER = 4          # several ranges per worker: a dense range 
 
 
 def _spool_range_columns(args):
+    _worker_default_sigterm()
     path, start, end = args
     from research.kalshi.frankie_boss.c15_journal import unpack
     def rows():
@@ -614,8 +615,13 @@ FRAME_COLUMNS_ENV = 'FRANKIE_SEARCH_FRAME_COLUMNS'          # disk (default) | m
 FRAME_SAVE_EVERY_CHUNKS = 32
 FRAME_SAVE_SECONDS = 120.0
 COLUMN_CACHE_ENTRIES = 4
-_TAG_NONE, _TAG_INT, _TAG_FLOAT, _TAG_BOOL, _TAG_BIG = 0, 1, 2, 3, 4
-_INT64_MIN, _INT64_MAX = -(1 << 63), (1 << 63) - 1
+_TAG_NONE = 0
+_TAG_INT = 1
+_TAG_FLOAT = 2
+_TAG_BOOL = 3
+_TAG_BIG = 4
+_INT64_MIN = -(1 << 63)
+_INT64_MAX = (1 << 63) - 1
 
 
 def frame_columns_mode():
@@ -1149,6 +1155,7 @@ SPOOL_RANGE_BYTES = 16 << 20
 
 def _spool_range_rows(args):
     """(the range's records decoded in order, the first decode error or None)."""
+    _worker_default_sigterm()
     path, start, end = args
     from research.kalshi.frankie_boss.c15_journal import unpack
     out, position = [], start
@@ -1991,6 +1998,7 @@ SOURCE_PASSES = []        # where the parallel source passes ran (MANIFEST cpu_p
 
 
 def _gate_job(index):
+    _worker_default_sigterm()
     source, known_at, values = _GATE['jobs'][index]
     return leakage_gate(None, source, known_at, values)
 
@@ -2228,6 +2236,7 @@ def _cell_retry(args):
 
 
 def _step_job(args):
+    _worker_default_sigterm()
     identity = dict(search=_JOB['identity'], job=args)
     path = _JOB['recovery'] / ('step-' + hashlib.sha256(json.dumps(args).encode()).hexdigest() + '.pkl')
     if path.is_file():
@@ -2524,6 +2533,7 @@ def plane_summary(sources, notes):
 
 def _cell_job(args):
     """One cell/x job; retain its exact next partner and all completed candidate rows on save."""
+    _worker_default_sigterm()
     part, cell_col, cell_value, tx, x, lags, survivors, header = args
     identity = dict(search=_JOB['identity'], job=args)
     state_path, partial = Path(part + '.state.pkl'), Path(part + '.tmp')
@@ -2617,6 +2627,7 @@ DISCOVERY_NITERATIONS, DISCOVERY_MAXSIZE = 40, 12            # odcore.symbolic.d
 def _part_nominations(args):
     """(rows read, [(key, feature, provenance)] in row order) of one coupling part (the reading discovery_nominations
     has always done, one part per call)."""
+    _worker_default_sigterm()
     part, staging = args
     path, found, read = Path(part), [], 0
     hashed, size = hashlib.sha256(), 0
@@ -2664,6 +2675,7 @@ def discovery_nominations(parts, staging, workers=1, context=None):
 
 
 def _discovery_job(args):
+    _worker_default_sigterm()
     identity = dict(search=_JOB['identity'], job=args)
     path = _JOB['recovery'] / ('discovery-' + args[0] + '.pkl')
     if path.is_file():
@@ -2958,7 +2970,178 @@ def compact_report(value, at):
     return value
 
 
-def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, workers=8, transform_names=None):
+# ---- continuation identity (ROOT's contract items 4-6) --------------------------------------------------------------
+# A saved search resumes from any checkout of the same source: the identity binds CONTENT. V2 binds the declared value
+# functions of each module (frankie_box_bedrock.code_identity: the syntax tree of each named definition, so a comment,
+# a probe or a report edit elsewhere in the file never refuses a save, while any change to the named code does) and the
+# directive by bytes and sha256. A saved identity is accepted when equal, or when frankie_box_experiment_root.
+# content_rebinds finds only checkout-prefix moves of equal files (recorded under recovery/checkout-rebinds/); a V1
+# (whole-file) save is accepted while every file is byte-identical (the V1 identity rebuilt here). The SAVED identity
+# stays the identity of every later state check (nothing saved is rewritten).
+CONTINUATION_SCHEMA = 'FRANKIE_SEARCH_CONTINUATION_V2'
+SEARCH_VALUE_CODE = (
+    'CELL_NAMES', 'F_LAST', 'ROW_PROVENANCE_SCHEMA', 'PRICE_ROW_PROVENANCE_SCHEMA', 'EVENT_IDENTITY_FIELDS',
+    'NON_MARKET_IDENTITIES', 'NON_MARKET_CALENDAR', 'NON_MARKET_EXECUTION', 'SEARCH_CONTEXT_IDENTITIES',
+    'non_market_reason', 'unpack_spool', '_flatten', 'columns', '_spool_range_columns', '_spool_ranges', 'spool_columns',
+    '_TAG_NONE', '_TAG_INT', '_TAG_FLOAT', '_TAG_BOOL', '_TAG_BIG', '_INT64_MIN', '_INT64_MAX',
+    '_encode_numeric', '_decode_numeric', '_encode_text', '_decode_text', '_typed_key', '_encode_digest',
+    '_decode_digest', '_disk_chunk', 'FrameColumnStore', 'ColumnRef', 'ContextLabelRef', 'FrameColumns', '_values_of',
+    'disk_spool_columns', '_spool_range_rows', 'decoded_spool', 'known_time_rows', 'asof_source_rows', 'asof_values',
+    'root_row_columns', 'build_series', 'leakage_gate', 'leakage_gate_batch', 'leakage_gates', '_gate_job',
+    'transforms', 'couple', '_partner_transforms', '_step_job_compute', 'y_transforms', 'build_cell_index',
+    'build_jobs', '_cell_job', '_part_nominations', 'discovery_nominations', '_discovery_compute', 'DISCOVERY_SCHEMA',
+    'discovery')
+
+
+def _code_identity(path, names):
+    try:
+        import frankie_box_bedrock as B
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_bedrock as B
+    return B.code_identity(path, names)
+
+
+def directive_document():
+    """directive_witness() plus its bytes (a file witness content_rebinds can move between checkouts)."""
+    witness = directive_witness()
+    return dict(witness, bytes=Path(witness['path']).stat().st_size)
+
+
+def continuation_identities(day, cycle, day_role, day_dir, lags, transform_names, frozen, external_fields_mode,
+                            T, SURFACE, NATIVE, JOURNAL, DIPOLE):
+    """(the V2 identity this checkout writes, the V1 identity a c9bf631-era save carries, rebuilt here)."""
+    common = dict(day=day, cycle=cycle, role=day_role, data_manifest_sha256=sha256_file(day_dir / 'MANIFEST.json'),
+                  lags=lags, transforms=transform_names, frozen_sha256=sha256_file(frozen) if frozen else None,
+                  external_fields_mode=external_fields_mode)
+    v2 = dict(common, schema=CONTINUATION_SCHEMA, code=_code_identity(__file__, SEARCH_VALUE_CODE),
+              transform_code=T.save_identity(), surface_code=SURFACE.save_identity(),
+              native_reader_code=NATIVE.save_identity(), journal_reader=JOURNAL.save_identity(),
+              dipole_reader=DIPOLE.save_identity(), directive=directive_document(),
+              frame_columns=frame_columns_mode(), column_codec=column_codec())
+    v1 = dict(common, schema='FRANKIE_SEARCH_CONTINUATION_V1', code_sha256=sha256_file(__file__),
+              transform_sha256=sha256_file(T.__file__), surface_sha256=sha256_file(SURFACE.__file__),
+              native_reader_sha256=sha256_file(NATIVE.__file__), journal_reader=JOURNAL.binding(),
+              dipole_reader=DIPOLE.binding(), directive=directive_witness())
+    return v2, v1
+
+
+def _load_raw_identity(path):
+    from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state
+    return _load_raw_state(Path(path))['identity']
+
+
+def _root_module():
+    try:
+        import frankie_box_experiment_root as R
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_experiment_root as R
+    return R
+
+
+def accept_saved_identity(saved, built, legacy, rebinds_dir):
+    """(the identity to continue with: the SAVED one, how it was accepted); refuses any other difference."""
+    R = _root_module()
+    candidates = [('current', built)] if saved.get('schema') == CONTINUATION_SCHEMA else [('V1 whole-file', legacy)]
+    for label, current in candidates:
+        if saved == current:
+            return saved, dict(how='equal (%s identity)' % label)
+        if label == 'V1 whole-file':
+            # V1's directive witness carries no bytes; a checkout move of an equal directive is accepted by its sha256
+            # and content, the rest by content_rebinds
+            moved = dict(saved)
+            if (isinstance(saved.get('directive'), dict) and isinstance(current.get('directive'), dict)
+                    and {k: v for k, v in saved['directive'].items() if k != 'path'}
+                    == {k: v for k, v in current['directive'].items() if k != 'path'}):
+                moved['directive'] = current['directive']
+            moves = R.content_rebinds(moved, current)
+            if moves is not None and moved.get('directive') is not saved.get('directive'):
+                moves = list(moves) + [dict(at='$.directive', saved_path=saved['directive'].get('path'),
+                                            current_path=current['directive'].get('path'),
+                                            sha256=current['directive'].get('sha256'))]
+        else:
+            moves = R.content_rebinds(saved, current)
+        if moves is not None:
+            Path(rebinds_dir).mkdir(parents=True, exist_ok=True)
+            record = dict(schema=R.CHECKOUT_REBIND_SCHEMA, identity=label, moves=moves, at=time.time())
+            name = '%d-%s.json' % (time.time_ns(), hashlib.sha256(json.dumps(moves, sort_keys=True, default=str)
+                                                                 .encode()).hexdigest()[:8])
+            (Path(rebinds_dir) / name).write_text(json.dumps(record, indent=1, sort_keys=True, default=str) + '\n',
+                                                 encoding='utf-8')
+            return saved, dict(how='accepted (%s identity): checkout moves of equal files only' % label,
+                               rebinds=str(Path(rebinds_dir) / name), moves=len(moves))
+    raise ValueError('saved search state belongs to different inputs or search code (neither the current identity, a '
+                     'checkout move of it, nor a byte-identical V1 save); retained, not overwritten')
+
+
+def cell_preview(cells, transforms_count, series_count):
+    """The cell and coupling-job counts the search is about to generate (one pass per cell column, the same value sets
+    build_cell_index uses), largest columns first. A receipt number, not a gate (Greg's call (b) is open)."""
+    import numpy as np
+    per_column = []
+    for col, values in sorted(cells.items()):
+        values = _values_of(values)
+        arrived = values[1:]
+        if all(type(v) is str for v in arrived if v is not None):
+            distinct = len({v for v in arrived if v is not None})
+        else:
+            distinct = len({v for v in np.asarray(arrived, dtype=object) if v is not None})
+        per_column.append((distinct, col))
+    total = 1 + sum(d for d, _ in per_column)
+    return dict(schema='FRANKIE_SEARCH_CELL_PREVIEW_V1', cells=total, columns=len(per_column),
+                transforms=transforms_count, series=series_count, jobs=total * transforms_count * series_count,
+                largest=[dict(column=c, cells=d) for d, c in sorted(per_column, key=lambda x: (-x[0], x[1]))[:25]],
+                rule='counted before the cell index and the job list are generated; whole-day is one cell; ID/calendar '
+                     'context columns are cells (Greg\'s open call (b)); a count, not a gate')
+
+
+def build_cell_index(cells):
+    """{(column, value): step positions} (whole-day: None) exactly as the search has always built it."""
+    import numpy as np
+    cell_index = {('whole-day', None): None}
+    for col, values in sorted(cells.items()):
+        if isinstance(values, ColumnRef):
+            values = values.values()
+        if all(type(v) is str for v in values[1:] if v is not None):
+            # one pass per column: the positions of each distinct text label in step order, the same arrays as
+            # np.nonzero(arrived == value)[0] (str equality is the dict's), instead of one full comparison per
+            # label (labels x steps; ID-valued context cells have about one label per group)
+            positions = {}
+            for position, value in enumerate(values[1:]):     # a step belongs to the cell of the group it arrives at
+                if value is not None:
+                    positions.setdefault(value, []).append(position)
+            for value in sorted(positions):
+                cell_index[(col, value)] = np.asarray(positions[value], dtype=np.intp)
+            continue
+        arrived = np.asarray(values[1:], dtype=object)          # a step belongs to the cell of the group it arrives at
+        for value in sorted({v for v in arrived if v is not None}):
+            cell_index[(col, value)] = np.nonzero(arrived == value)[0]
+    return cell_index
+
+
+def build_jobs(staging, cell_index, transform_names, names, lags, survivors, header):
+    return [(str(staging / 'couplings' / ('%04d-%s-%s.jsonl' % (c, tx, hashlib.sha256(x.encode()).hexdigest()[:16]))),
+             col, value, tx, x, lags, survivors, header)
+            for c, (col, value) in enumerate(sorted(cell_index, key=lambda k: (k[0] != 'whole-day', k[0], str(k[1]))))
+            for tx in transform_names for x in names]
+
+
+def search(*args, **kwargs):
+    """_search with the save route installed for its duration (the previous SIGTERM handler restored after)."""
+    import signal
+    previous = signal.getsignal(signal.SIGTERM)
+    try:
+        return _search(*args, **kwargs)
+    finally:
+        try:
+            signal.signal(signal.SIGTERM, previous)
+        except (ValueError, OSError, TypeError):
+            pass
+        SAVE_REQUEST.update(marked=False, at=None, marker=None, coordinator_pid=None)
+
+
+def _search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, workers=8, transform_names=None):
     if type(lags) is not int or lags < 0:
         raise ValueError('lags must be a nonnegative integer')
     # Where the time goes (Greg, 2026-10-07): seconds per phase, in the manifest as phase_timings. Diagnostic only.
@@ -3005,19 +3188,23 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     recovery = staging / 'recovery'
     recovery.mkdir(parents=True, exist_ok=True)
     (staging / 'couplings').mkdir(parents=True, exist_ok=True)
-    identity = dict(schema='FRANKIE_SEARCH_CONTINUATION_V1', day=day, cycle=cycle, role=day_role,
-                    data_manifest_sha256=sha256_file(day_dir / 'MANIFEST.json'), lags=lags,
-                    transforms=transform_names, frozen_sha256=sha256_file(frozen) if frozen else None,
-                    code_sha256=sha256_file(__file__), transform_sha256=sha256_file(T.__file__),
-                    external_fields_mode=external_fields_mode, surface_sha256=sha256_file(SURFACE.__file__),
-                    native_reader_sha256=sha256_file(NATIVE.__file__),
-                    journal_reader=JOURNAL.binding(), dipole_reader=DIPOLE.binding(),
-                    directive=directive_witness())
+    identity, legacy_identity = continuation_identities(day, cycle, day_role, day_dir, lags, transform_names, frozen,
+                                                        external_fields_mode, T, SURFACE, NATIVE, JOURNAL, DIPOLE)
     identity_path = recovery / 'identity.pkl'
     if identity_path.is_file():
-        _load_state(identity_path, identity)
+        identity, acceptance = accept_saved_identity(_load_raw_identity(identity_path), identity, legacy_identity,
+                                                     recovery / 'checkout-rebinds')
     else:
         _save_state(identity_path, dict(identity=identity))
+        acceptance = dict(how='fresh: this process wrote the identity')
+    # the save route (ROOT's contract): SIGTERM marks the save; the marker reaches the forked workers; a marker left by
+    # a run that exited 75 is this resume's own start, cleared here and listed
+    marker = recovery / 'save-requested'
+    resumed_after_save = marker.is_file()
+    if resumed_after_save:
+        marker.unlink()
+    install_save_handler(marker)
+    acceptance['resumed_after_requested_save'] = resumed_after_save
     # A publication interrupted after its final manifest resumes without reopening any scientific operation.
     if (staging / 'MANIFEST.json').is_file():
         manifest = json.loads((staging / 'MANIFEST.json').read_bytes())
@@ -3033,7 +3220,8 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
             raise SystemExit(75)
         # This existing source preparation is one operation. A requested stop lets it finish and retains every array.
         prepared = build_series(day_dir, log, external_fields_mode=external_fields_mode, workers=workers,
-                                data_manifest_sha256=identity['data_manifest_sha256'])
+                                data_manifest_sha256=identity['data_manifest_sha256'], columns_dir=staging / 'columns',
+                                columns_identity=identity)
         _save_state(prepared_path, dict(identity=identity, prepared=prepared))
         phase('prepare_series')
     axis, series, cells, sources, notes, gates = prepared
@@ -3068,32 +3256,24 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     if _stop_requested():
         raise SystemExit(75)       # all submitted transforms have drained and saved their full results
     phase('transform_steps')
+    # Greg's call (b) (ID context fields as cells) stays open and unchanged; the count is a receipt number BEFORE the
+    # cells and jobs are generated, so day 1 shows it (cell-preview.json beside the recovery state, the heartbeat, the
+    # log and the MANIFEST cell_preview)
+    preview = cell_preview(cells, len(transform_names), len(names))
+    (recovery / 'cell-preview.json').write_text(json.dumps(preview, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    log('search: cell preview before the jobs: %d cells (%d columns), %d coupling jobs (cells x %d transforms x %d '
+        'series); largest columns by cells: %s' % (preview['cells'], preview['columns'], preview['jobs'],
+                                                     len(transform_names), len(names),
+                                                     json.dumps(preview['largest'][:5])))
+    _progress('search: cell preview', preview['cells'], None, 'cells', every=None, jobs=preview['jobs'])
     cells_path = recovery / 'cells.pkl'
     if cells_path.is_file():
         cell_index = _load_state(cells_path, identity)['cells']
     else:
-        cell_index = {('whole-day', None): None}
-        for col, values in sorted(cells.items()):
-            if all(type(v) is str for v in values[1:] if v is not None):
-                # one pass per column: the positions of each distinct text label in step order, the same arrays as
-                # np.nonzero(arrived == value)[0] (str equality is the dict's), instead of one full comparison per
-                # label (labels x steps; ID-valued context cells have about one label per group)
-                positions = {}
-                for position, value in enumerate(values[1:]):     # a step belongs to the cell of the group it arrives at
-                    if value is not None:
-                        positions.setdefault(value, []).append(position)
-                for value in sorted(positions):
-                    cell_index[(col, value)] = np.asarray(positions[value], dtype=np.intp)
-                continue
-            arrived = np.asarray(values[1:], dtype=object)          # a step belongs to the cell of the group it arrives at
-            for value in sorted({v for v in arrived if v is not None}):
-                cell_index[(col, value)] = np.nonzero(arrived == value)[0]
+        cell_index = build_cell_index(cells)
         _save_state(cells_path, dict(identity=identity, cells=cell_index))
     header = dict(day=day, cycle=cycle, day_role=day_role)
-    jobs = [(str(staging / 'couplings' / ('%04d-%s-%s.jsonl' % (c, tx, hashlib.sha256(x.encode()).hexdigest()[:16]))),
-             col, value, tx, x, lags, survivors, header)
-            for c, (col, value) in enumerate(sorted(cell_index, key=lambda k: (k[0] != 'whole-day', k[0], str(k[1]))))
-            for tx in transform_names for x in names]
+    jobs = build_jobs(staging, cell_index, transform_names, names, lags, survivors, header)
     jobs_path = recovery / 'jobs.pkl'
     if jobs_path.is_file():
         if _load_state(jobs_path, identity)['jobs'] != jobs:
@@ -3178,7 +3358,10 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     rule='counts per pair, cell, lag and day; never pooled across days; never a coefficient or an average '
                          'as the finding (D37); a confirmation day runs only the frozen survivor list',
                     frozen_survivors=str(frozen) if frozen else None, model_calls=0,
-                    phase_timings=phases, fft_cache=fft_cache, workers=workers, cpu_placement=cpu_placement)
+                    phase_timings=phases, fft_cache=fft_cache, workers=workers, cpu_placement=cpu_placement,
+                    continuation=dict(acceptance, identity_schema=identity.get('schema')), cell_preview=preview,
+                    memory=next((src.get('parse', {}).get('memory') for src in sources if src.get('source') == 'frames'),
+                                None) or dict(frame_columns='memory (in-memory reference path, or a V1 preparation)'))
     # The 99 through the search (FRANKIE_ALL99_COVERAGE_V1, piece 'search'): the plane receipt just built, a placed series
     # of an entry counted as arriving at every coupling pair; built and validated by the one registry module
     import frankie_box_all99_coverage as ALL99

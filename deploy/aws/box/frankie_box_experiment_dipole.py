@@ -239,3 +239,19 @@ def read_columns(day_dir, path, columns, journal_numeric, journal_text, receive_
         notes.append(dict(source='dipole', reason='producer-declared unavailable raw numeric values are not observations; '
                           'see sources[dipole].raw_value_projection for exact source cursors, states and reasons'))
     return numeric, text, [report], notes
+
+
+SAVE_VALUE_CODE = ('SCHEMA', 'read_columns')
+
+
+def save_identity():
+    """binding() for a saved search, function-level for this module (frankie_box_bedrock.code_identity); the codec and
+    the state module whole-file as in binding(). binding() itself is unchanged (the receipt field)."""
+    from research.kalshi.frankie_boss import c15_journal, c15_normalizer
+    try:
+        import frankie_box_bedrock as B
+    except ImportError:
+        from deploy.aws.box import frankie_box_bedrock as B
+    return dict(schema=SCHEMA + '_SAVE_IDENTITY', helper=B.code_identity(__file__, SAVE_VALUE_CODE),
+                codec_sha256=hashlib.sha256(Path(c15_journal.__file__).read_bytes()).hexdigest(),
+                state_sha256=hashlib.sha256(Path(c15_normalizer.__file__).read_bytes()).hexdigest())
