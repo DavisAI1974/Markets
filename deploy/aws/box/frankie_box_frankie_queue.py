@@ -79,6 +79,7 @@ with Jev still waiting).
 import argparse
 import contextlib
 import fcntl
+import hashlib
 import json
 import os
 import shutil
@@ -370,12 +371,22 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
     QUEUE.mkdir(parents=True, exist_ok=True)
     probe = _take_worker_lock(line)
     if probe is None:
+        # the lock's fast path never bypasses the scope: the running worker's PERSISTED scope (its status file) is
+        # compared with the requested one; 'already running' is said only when it covers these run/days
         status, _ = worker_state(line)
+        theirs = (status or {}).get('scope')
+        try:
+            covered = bool(theirs) and parse_scope(theirs)['run'] == scope['run'] and \
+                set(scope['days']) <= set(parse_scope(theirs)['days'])
+        except SystemExit:
+            covered = False
         with locked():
             event(line, 'kick_worker_running', by=by, worker=(status or {}).get('pid'), scope=scope['text'],
-                  worker_scope=(status or {}).get('scope'))
-        return dict(started=False, reason='a %s worker runs (pid %s, scope %s); days outside its scope wait for the next '
-                                          'kick after it ends' % (line, (status or {}).get('pid'), (status or {}).get('scope')))
+                  worker_scope=theirs, covered=covered)
+        return dict(started=False, covered=covered, worker_scope=theirs,
+                    reason='a %s worker runs (pid %s, scope %s): it %s; days outside its scope wait for the next kick '
+                           'after it ends' % (line, (status or {}).get('pid'), theirs,
+                                              'covers %s' % scope['text'] if covered else 'does NOT cover %s' % scope['text']))
     probe.close()                         # released: the new worker takes it (a race with another kick: one of them exits)
     (QUEUE / 'logs').mkdir(parents=True, exist_ok=True)
     log_path = QUEUE / 'logs' / ('%s-worker.log' % line)
@@ -853,7 +864,7 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print, scope=
                 if x is None or (x['state'] == 'failed' and x['seq'] in retried):
                     state = 'idle' if x is None else 'stopped_at_failed'
                     about = None if x is None else dict(seq=x['seq'], day=x['day'], run=x['run'], reason=x.get('reason'))
-                    _worker_status('class', state=state, commit=commit, front=about)
+                    _worker_status('class', state=state, commit=commit, front=about, scope=scope['text'])
                     event('class', 'worker_end', state=state, front=about)
                     probe.update('class:' + state, n_done, len(doc['entries']) or None,
                                  state='complete' if x is None else 'failed')
@@ -877,7 +888,7 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print, scope=
                     # the front is a saved/unknown class: its owner's ACTION=resume brings it back; nothing takes it
                     x['reason'] = 'the class is %s on its owner; ACTION=resume RUN=%s DAY=%s resumes it' % (x['state'], x['run'], x['day'])
                     save('class', doc)
-                    _worker_status('class', state='waiting_owner', commit=commit,
+                    _worker_status('class', state='waiting_owner', commit=commit, scope=scope['text'],
                                    front=dict(seq=x['seq'], run=x['run'], day=x['day'], reason=x['reason']))
                     probe.update('class:waiting_owner', n_done, len(doc['entries']) or None, state='waiting')
                     event('class', 'waiting_owner', seq=x['seq'], run=x['run'], day=x['day'], reason=x['reason'])
@@ -889,7 +900,7 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print, scope=
                 if why:
                     x['reason'] = why
                     save('class', doc)
-                    _worker_status('class', state='waiting_owner', commit=commit,
+                    _worker_status('class', state='waiting_owner', commit=commit, scope=scope['text'],
                                    front=dict(seq=x['seq'], run=x['run'], day=x['day'], reason=why))
                     probe.update('class:waiting_owner', n_done, len(doc['entries']) or None, state='waiting')
                     event('class', 'waiting_owner', seq=x['seq'], run=x['run'], day=x['day'], reason=why)
@@ -912,9 +923,8 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print, scope=
                         continue
                     current = x['seq']
                 entry = dict(x)
-            _worker_status('class', state='running', commit=commit, front=dict(seq=entry['seq'], day=entry['day'],
-                                                                              run=entry['run'],
-                                                                              school_day=entry.get('school_day')))
+            _worker_status('class', state='running', commit=commit, scope=scope['text'],
+                           front=dict(seq=entry['seq'], day=entry['day'], run=entry['run'], school_day=entry.get('school_day')))
             probe.update('class:%s:%s' % (entry['day'], entry['run']), n_done, len(doc['entries']) or None, in_flight=1)
             try:
                 result, reason, facts = class_day(entry, previous, entry['school_day'], code_root, commit, log)
@@ -948,6 +958,7 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print, scope=
                 if result == 'saved':
                     owner = y.get('owner') or {}
                     ack = dict(schema='FRANKIE_QUEUE_SAVE_ACK_V1', run=y['run'], day=y['day'], marker=owner.get('marker'),
+                               request=marker_identity(owner.get('marker')),      # the save this answers (its generation)
                                root_attempt=owner.get('attempt'), booking=y.get('slot_booking'), child_pid=os.getpid(),
                                child_attempt={k: att.get(k) for k in ('pid', 'host', 'started_utc', 'school_day')},
                                school_day=y.get('school_day'), stages=facts.get('stages'), at=time.time(), at_utc=utc())
@@ -990,7 +1001,7 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print, scope=
                                                     'finished steps skipped, same school day %s' % (stop, y.get('school_day')))
                     save('class', doc)
             event('class', 'worker_saved', reason=str(stop), front=current)
-            _worker_status('class', state='saved', reason=str(stop), commit=commit)
+            _worker_status('class', state='saved', reason=str(stop), commit=commit, scope=scope['text'])
             release()
     return code
 
@@ -1073,6 +1084,20 @@ def _book_slot(x, stage, commit):
 
 def marker_of(run, day):
     return SAVE_DIR / ('%s-%s.save-request.json' % (run, day))
+
+
+def marker_identity(marker):
+    """The standing save request's identity: the sha256 of the marker's bytes and its requested_at (the generation).
+    None when no marker stands. An acknowledgment carries the identity it answered; a verdict compares it with the
+    marker standing NOW, so an earlier save's acknowledgment never satisfies a later save."""
+    if not marker or not Path(marker).is_file():
+        return None
+    raw = Path(marker).read_bytes()
+    try:
+        requested_at = json.loads(raw).get('requested_at')
+    except ValueError:
+        requested_at = None
+    return dict(sha256=hashlib.sha256(raw).hexdigest(), requested_at=requested_at)
 
 
 def _bind_owner(x, slot, cpus, code_root, commit):
@@ -1300,11 +1325,14 @@ def _child_save_verdict(run, e, cl):
         return dict(state=state, reason=cl.get('reason'))
     ack = cl.get('save_ack')
     if state == 'saved' and ack:
+        standing = marker_identity(run.owner.get('marker'))
         bound = (ack.get('marker') == run.owner.get('marker') and ack.get('root_attempt') == run.owner.get('attempt')
-                 and ack.get('booking') == getattr(run, 'slot_booking', None))
+                 and ack.get('booking') == getattr(run, 'slot_booking', None)
+                 and standing is not None and ack.get('request') == standing)
         if bound:
             return dict(state='acknowledged', ack=ack)
-        return dict(state='unknown', reason='the class acknowledgment binds another marker/attempt/booking', ack=ack)
+        return dict(state='unknown', ack=ack, reason='the class acknowledgment binds another marker/attempt/booking or '
+                    'an earlier save request (the standing marker\'s identity is %s)' % ((standing or {}).get('sha256') or 'none'))
     if state == 'queued':
         # not taken by the class worker yet: no child runs; the class worker will not take it while the booking is
         # retained (no live holder), so the owner's save stands on its own
@@ -1820,7 +1848,7 @@ def request_save(run, day, by):
             C.write_json(marker, body, exclusive=True)
         except FileExistsError:
             raise SystemExit('a save request stands already: %s' % marker)
-        x['save_request'] = body
+        x['save_request'] = dict(body, identity=marker_identity(marker))
         save('root', doc)
         event('root', 'save_requested', seq=x['seq'], day=day, run=run, marker=str(marker), by=by)
         return dict(requested=body, marker=str(marker), entry_state=x['state'],
@@ -1852,7 +1880,7 @@ def owner_status(run, day):
                                                            'retained_booking', 'retain_error', 'attempts')},
                 class_entry={k: (cls or {}).get(k) for k in ('seq', 'state', 'reason', 'school_day', 'slot_booking', 'save_ack',
                                                            'attempts')} if cls else None,
-                booking=booking, marker=dict(path=str(marker), standing=marker.is_file()) if marker else None,
+                booking=booking, marker=dict(path=str(marker), standing=marker.is_file(), identity=marker_identity(marker)) if marker else None,
                 class_ack=json.loads(ack_path.read_bytes()) if ack_path and ack_path.is_file() else None,
                 worker=worker_state('root')[0],
                 verdict=('saved' if (root or {}).get('state') == 'saved' or ((root or {}).get('finish') or {}).get('state') == 'saved'
