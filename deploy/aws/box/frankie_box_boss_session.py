@@ -74,14 +74,37 @@ MIN_SPLIT_BYTES = 1024     # a reading piece is split for regeneration down to t
 FRAME_SECTIONS = ('book', 'activity', 'integrity', 'native_frame', 'observation', 'input_records',
                   'input_record_indices')
 FRAME_SECTIONS_SCHEMA = 'FRANKIE_ROOT_FULL_DEPTH_GROUPS_V2'
-# Row provenance on the legacy price/structure spools (CCode slice D, 2026-10-06, the reserved-search review after bbe2d560):
-# every prices row and every structures row carries `provenance` = the ORIGINAL extracted INPUT index and the producer's
-# instrument identity already in scope where the row is appended, so equal timestamps and spool ordinals (which frame or
-# structure failures can shift) are never used as identities. Calculation outputs are unchanged. The identity keys of
-# the legacy recovery state and the derivation receipt name this schema; an older spool without `provenance` is explicit.
-ROW_PROVENANCE_SCHEMA = 'FRANKIE_ROOT_ROW_PROVENANCE_V1'
+# Row provenance on the legacy price/structure spools (CCode slice D, 2026-10-06; D1 correction 2026-10-07, Codex's
+# integration review): every structures row carries `provenance` (ROW_PROVENANCE_SCHEMA, V1, unchanged: the closing INPUT
+# cursor, the frame's instrument and the group's member INPUT indices). Every prices row carries `provenance` under the
+# price-only PRICE_ROW_PROVENANCE_SCHEMA (V2): the pinned producer (InstrumentBook.apply) accumulates each trade's legacy
+# control row in its open-group state and returns the whole list only when the instrument's F_LAST group closes, so V1's
+# `input_index` = the loop index at the close stamped EARLIER trades with the closing INPUT (false identity). V2 attributes
+# each row to the INPUT whose application appended it, read from the producer's retained open-group state after every
+# apply (no timestamp or spool-position join; values and row order unchanged). Fields and units:
+#   input_index            the ORIGINAL extracted INPUT index (the loop index over the sealed source's records; the same
+#                          units as frames.input_cursor / frames.input_record_indices[i]) whose application appended this
+#                          row; None for a row the opening adapter state carried into this source (origin says so)
+#   legacy_row_ordinal     0-based ordinal among the legacy rows that INPUT's application appended (trade or projection);
+#                          (input_index, legacy_row_ordinal) is unique within the source
+#   instrument_id          as the originating INPUT record carries it (None stays None); the book's instrument for a row
+#                          carried in by the opening state
+#   group_close_input_index  the INPUT whose application closed the F_LAST group that emitted the row (= the group's
+#                          frames.input_cursor): the V1 `input_index`, named for what it is
+#   group_row_ordinal      0-based ordinal within the emitted group's legacy rows (the V1 `legacy_row_ordinal`)
+#   row_kind               'trade' (the producer's control row of a T action) or 'projection_at_event_group_end' (the
+#                          producer's projection of the last A/C/M (else last non-F/N) member at the close: appended by
+#                          the closing INPUT; the projected member's own INPUT index is not carried by the producer)
+#   origin                 'this_source', 'this_source_apply_failed' (appended before the producer raised on that INPUT,
+#                          which is in failures) or 'open_group_before_this_source' (restored with opening_adapter_state)
+# The legacy recovery identity, the completed-stage identity and the derivation receipt name BOTH schemas, so an older
+# saved state, completed stage or spool (V1 prices) refuses / is explicit: V1 price identities are never read as corrected.
+ROW_PROVENANCE_SCHEMA = 'FRANKIE_ROOT_ROW_PROVENANCE_V1'              # structures (and the receipt's row_provenance_schema)
+PRICE_ROW_PROVENANCE_SCHEMA = 'FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2'  # prices: originating INPUT identity (D1)
+ROW_PROVENANCE_SCHEMAS = dict(prices=PRICE_ROW_PROVENANCE_SCHEMA, structures=ROW_PROVENANCE_SCHEMA)
 ROW_PROVENANCE_FIELDS = dict(
-    prices=('provenance.input_index', 'provenance.instrument_id', 'provenance.legacy_row_ordinal'),
+    prices=('provenance.input_index', 'provenance.legacy_row_ordinal', 'provenance.instrument_id',
+            'provenance.group_close_input_index', 'provenance.group_row_ordinal', 'provenance.row_kind', 'provenance.origin'),
     structures=('provenance.input_cursor', 'provenance.instrument_id', 'provenance.input_record_indices'))
 NATIVE_RECOVERY_SCHEMA = 'FRANKIE_ROOT_NATIVE_RECOVERY_V1'
 
@@ -725,7 +748,8 @@ class Session:
         derived = self.work / 'derived'
         identity = dict(source=self.source_binding, pin=pin['pins_witness']['sha256'],
                         producers=self._producer_witnesses(pin), opening_book=opening_book,
-                        row_provenance_schema=ROW_PROVENANCE_SCHEMA)
+                        row_provenance_schema=ROW_PROVENANCE_SCHEMA,
+                        price_row_provenance_schema=PRICE_ROW_PROVENANCE_SCHEMA)
         if retain_frame_sections:
             identity['frame_sections_schema'] = FRAME_SECTIONS_SCHEMA
         if recovery and bedrock:
@@ -817,6 +841,7 @@ class Session:
                 raise ValueError('saved ROOT live adapter differs from its retained canonical state')
             binner, previous_book = saved['binner'], saved['previous_book']
             legacy_count, next_record = saved['legacy_count'], saved['next_record']
+            pending_legacy = saved['pending_legacy_rows']
             if retain_frame_sections:
                 pending_inputs = saved['pending_inputs']
             prices, frames, structures, failures = [B.RowSpool.resume(saved['spools'][name]) for name in names]
@@ -826,11 +851,17 @@ class Session:
                 failures.append(dict(missing, error='INPUT entry carries no MBO record the producers can read'))
             legacy_count = 0
             previous_book = None
+            # D1: legacy rows the opening adapter state carries in an OPEN group were appended by records of an earlier
+            # source; their originating INPUT is not in this source (input_index None, origin named), never guessed.
+            pending_legacy = {int(iid): [dict(input_index=None, legacy_row_ordinal=k, instrument_id=int(iid),
+                                              origin='open_group_before_this_source')
+                                         for k in range(len(book._legacy_group_rows))]
+                              for iid, book in adapter.books.items() if book.event_group and book._legacy_group_rows}
         def save_legacy(cursor):
             _save_raw_state(recovery_path, dict(identity=identity, next_record=cursor,
                 adapter=mbo_resume_state.export_adapter_state(adapter, include_open_groups=True),
                 adapter_live=adapter,
-                pending_inputs=pending_inputs,
+                pending_inputs=pending_inputs, pending_legacy_rows=pending_legacy,
                 binner=binner, previous_book=previous_book, legacy_count=legacy_count,
                 spools={name: rows.saved_position() for name, rows in zip(names, (prices, frames, structures, failures))}))
         if not 0 <= next_record <= len(records):
@@ -843,30 +874,69 @@ class Session:
         remaining = islice(records, next_record, None)
         for index, record in enumerate(probe.track(remaining, len(records) - next_record, 'root-legacy-records'), next_record):
             try:
+                record_instrument = record.get('instrument_id')      # as the INPUT record carries it; None stays None
+                try:
+                    instrument_key = int(record_instrument)
+                except (TypeError, ValueError):
+                    instrument_key = None
+                # D1: the producer's retained open-group state BEFORE this INPUT is applied (InstrumentBook.apply resets
+                # _legacy_group_rows when event_group is empty, so an open group is the only state that carries rows).
+                book_before = adapter.books.get(instrument_key) if instrument_key is not None else None
+                open_before = len(book_before._legacy_group_rows) if (book_before is not None and book_before.event_group) else 0
+                opened = pending_legacy.get(instrument_key) or []
+                if len(opened) != open_before:
+                    raise ValueError('legacy row attribution differs from the producer\'s retained open-group state '
+                                     '(instrument %s: %d attributed, %d open before INPUT %d)'
+                                     % (instrument_key, len(opened), open_before, index))
+                def attribute_open_rows(origin):
+                    # the group stays open: rows this INPUT's application appended are attributed to it now, from the
+                    # producer's own retained state (its list grows only by appends until the close returns and resets it)
+                    book_after = adapter.books.get(instrument_key)
+                    now_open = book_after._legacy_group_rows if (book_after is not None and book_after.event_group) else []
+                    if len(now_open) < open_before:
+                        raise ValueError('the producer\'s open-group legacy rows shrank without a close at INPUT %d' % index)
+                    for k in range(open_before, len(now_open)):
+                        pending_legacy.setdefault(instrument_key, []).append(dict(
+                            input_index=index, legacy_row_ordinal=k - open_before, instrument_id=record_instrument,
+                            origin=origin))
                 try:
                     frame, legacy_rows = adapter.apply(record)
                 except Exception as error:
                     failures.append(dict(index=index, record=record, error=f'{type(error).__name__}: {error}'))
+                    attribute_open_rows('this_source_apply_failed')   # a row appended before the producer raised stays attributed
                     continue
                 if retain_frame_sections:
                     instrument = int(record['instrument_id'])
                     pending_inputs.setdefault(instrument, []).append((index, record))
-                record_instrument = record.get('instrument_id')      # as the INPUT record carries it; None stays None
-                for legacy_ordinal, row in enumerate(legacy_rows):
+                if frame is None:
+                    attribute_open_rows('this_source')
+                else:
+                    pending_legacy.pop(instrument_key, None)
+                for group_ordinal, row in enumerate(legacy_rows):
                     legacy_count += 1
                     try:
                         binner.observe(row)
                     except Exception as error:
                         failures.append(dict(index=index, legacy=True, error=f'{type(error).__name__}: {error}'))
                     if row.get('action') == native_roll20.TRADE_ACTION:
-                        # provenance (ROW_PROVENANCE_SCHEMA): the original extracted INPUT index of the record this legacy
-                        # row came from (the same units as frames.input_cursor / input_record_indices), the record's
-                        # instrument identity as the INPUT carries it (None stays None: nothing is inferred), and the
-                        # row's ordinal among that record's legacy rows (one record can yield several trade rows).
+                        # provenance (PRICE_ROW_PROVENANCE_SCHEMA, D1): the ORIGINAL INPUT whose application appended this
+                        # row (an earlier member of the group: from the attribution made when that INPUT was applied; a row
+                        # appended by this closing INPUT: this index), its ordinal among that INPUT's rows, the instrument as
+                        # that INPUT carries it, plus the closing INPUT and the row's ordinal within the emitted group (the
+                        # V1 values, named as such) and the row kind. Nothing is inferred from timestamps or positions.
+                        source = opened[group_ordinal] if group_ordinal < open_before else dict(
+                            input_index=index, legacy_row_ordinal=group_ordinal - open_before,
+                            instrument_id=record_instrument, origin='this_source')
                         prices.append(dict(ts_recv=row.get('ts_recv'), ts_event=row.get('ts_event'), price=row.get('price'), size=row.get('size'),
                                            bid_px_00=row.get(native_roll20.BID_TOUCH_FIELD), ask_px_00=row.get(native_roll20.ASK_TOUCH_FIELD),
-                                           provenance=dict(schema=ROW_PROVENANCE_SCHEMA, input_index=index,
-                                                           instrument_id=record_instrument, legacy_row_ordinal=legacy_ordinal)))
+                                           provenance=dict(schema=PRICE_ROW_PROVENANCE_SCHEMA,
+                                                           input_index=source['input_index'],
+                                                           legacy_row_ordinal=source['legacy_row_ordinal'],
+                                                           instrument_id=source['instrument_id'],
+                                                           group_close_input_index=index, group_row_ordinal=group_ordinal,
+                                                           row_kind=('projection_at_event_group_end'
+                                                                     if row.get('projection_at_event_group_end') else 'trade'),
+                                                           origin=source['origin'])))
                 if frame is not None:
                     book = frame.get('book') or {}
                     group_inputs = pending_inputs.pop(frame['instrument_id']) if retain_frame_sections else []
@@ -923,8 +993,10 @@ class Session:
         layers = {
             'legacy_price': dict(status='derived' if prices else 'could_not', producer='research/ng_exhaustion_mbo_v4_state_adapter_20260820.py (legacy control row projection)',
                                  count=len(prices), first=prices[:1], last=prices[-1:], reason=None if prices else 'no trade rows in this cycle\'s prefix',
-                                 row_provenance=dict(schema=ROW_PROVENANCE_SCHEMA, fields=list(ROW_PROVENANCE_FIELDS['prices']),
-                                                     rule='identity fields, not observations: never a searched series')),
+                                 row_provenance=dict(schema=PRICE_ROW_PROVENANCE_SCHEMA, fields=list(ROW_PROVENANCE_FIELDS['prices']),
+                                                     rule='identity fields, not observations: never a searched series',
+                                                     superseded='FRANKIE_ROOT_ROW_PROVENANCE_V1 prices stamped the group-closing '
+                                                                'INPUT on earlier trades: never read as originating identity')),
             'legacy_native_signed_flow': dict(status='derived' if binner.trades_seen else 'could_not', producer='research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py SecondBinner (clock ts_recv)',
                                               summary=binner.summary(), per_second=[dict(second=first + i, buy=buys[i], sell=sells[i]) for i in range(len(buys))],
                                               reason=None if binner.trades_seen else 'no classified trades'),
@@ -950,7 +1022,10 @@ class Session:
                        opening_book=opening_book if opening_adapter_state is not None else (opening_book or dict(status='empty', reason='the legacy pass starts from an empty book')),
                        f_last_groups=adapter.completed_event_group_count, failures=failures, failure_count=len(failures),
                        producers=self._producer_witnesses(pin), layers={},
-                       row_provenance_schema=ROW_PROVENANCE_SCHEMA, row_provenance_fields=ROW_PROVENANCE_FIELDS)
+                       row_provenance_schema=ROW_PROVENANCE_SCHEMA, row_provenance_fields=ROW_PROVENANCE_FIELDS,
+                       row_provenance_schemas=dict(ROW_PROVENANCE_SCHEMAS),
+                       price_row_provenance_schema=PRICE_ROW_PROVENANCE_SCHEMA,
+                       unclosed_legacy_rows={str(i): rows for i, rows in pending_legacy.items()})
         if retain_frame_sections:
             layers['legacy_book_imbalance']['frame_sections_schema'] = FRAME_SECTIONS_SCHEMA
             layers['legacy_book_imbalance']['frame_sections'] = list(FRAME_SECTIONS)
