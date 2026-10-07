@@ -105,3 +105,5 @@ At 4 days per 16xl box, a box pulls up to about 64-116 GB. The ceiling is the gp
 | Single stream (~100 MB/s) | ~11 min | ~19 min |
 
 The ingest step should use parallel transfers. The transfer rates are estimates, not measured.
+
+**Quota request FILED 2026-10-07 19:09:28Z (Greg go via parent):** service-quotas RequestServiceQuotaIncrease us-east-1, ec2 L-1216C47A, desired 640 vCPU; request id `66c042562b594ac18e9966a1939b5b62Tf00eIjo`, status PENDING, current value 256 (no prior open request).
