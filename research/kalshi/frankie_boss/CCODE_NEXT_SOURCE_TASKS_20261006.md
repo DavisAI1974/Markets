@@ -1,5 +1,18 @@
 # CCode assignment — next pre-#5 source tasks
 
+## Reader-hook return — Codex, 2026-10-06 late ET
+
+The reserved step-5 hooks are now source-built: both frozen-selection guards, both exchange
+school boundaries, and direct lesson correction resolution with the actual delivered path/hash.
+The two frozen reader identities also bind `frankie_box_experiment_review.py`. Changes are
+limited to `teacher_knowledge.teach_accumulated`, `experiment_exchange.load_lessons` and
+`experiment_exchange.accumulated_lessons`. `load_lessons(..., brain=None)` uses the existing
+box brain default for correction lookup; a supplied brain is used by accumulated exchange.
+No historical-binding or step-6 recovery function was edited. Do not reimplement these hooks;
+fetch and preserve them with your remaining six groups. The scientific-owner publication and
+successor interface trace remains yours to return; no automatic scientific decision was added.
+Source review, AST without project imports and whitespace only. Nothing ran.
+
 ## Ownership update — Greg, 2026-10-06 22:46 ET
 
 Greg asked Codex to handle the step-5 reader hookups while CCode continues step 6.

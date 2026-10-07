@@ -496,7 +496,8 @@ joins and provenance-channel exclusion remain. No timestamp or spool-position id
 inferred; these projections add no independent observations or identity-linked trajectories.
 
 Step 5's shared correction interfaces are described in `STEP5_CORRECTION_DELIVERY_20261007.md`.
-CCode's owned reader hooks and scientific-owner publication/successor interface are assigned.
+Codex completed the narrow standalone reader hooks after Greg's 22:46 ET reassignment;
+CCode still returns the scientific-owner publication/successor interface.
 Step 6's remaining three recovery groups are also in that task; the Codex runtime-failure
 consumer wiring is built. No scientific computation or runtime verification occurred.
 
@@ -645,7 +646,7 @@ step 6; neither authorizes execution. See the new section 8 integration note and
 | 2 | A4, C1, C2, B4/B5 source-corrected (section 8, Corrections). Open: native-learner and late-scheduling decisions (Greg); Codex's integration review of the corrections; runtime verification. |
 | 3 | D1 source-corrected: `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (contract in section 8). Codex's exact price adapter is source-built. Open: the held trajectory/4.2/4.4 definitions. Exact structures unchanged (V1). |
 | 4 | B1-B7 source-corrected (B7 by deletion); B2-B5 follow-ups source-corrected (`2f1d6630`: coverage apart from matched scope, the complete plan and inventory bound to the entry, the record chain coheres, a broken frozen record refuses). Open: the input-supply interface (B6: named, not built; Greg's authorization); reproduction/reformulation open for BOTH teachers; nothing run. |
-| 5 | Authorized source work: scoped correction delivery and stale-input refusal built. Open: scientific-owner publication, standalone hooks and corrected-successor scheduling. Old draft unapplied. |
+| 5 | Authorized source work: scoped correction delivery and stale-input refusal built. Standalone hooks are also built. Open: scientific-owner publication and corrected-successor scheduling. Old draft unapplied. |
 
 The table distinguishes source implementation from the remaining review and workflow gaps. The older table records
 what A-D attempted to connect; it does not waive implementation defects or reduce remaining

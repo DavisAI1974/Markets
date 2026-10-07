@@ -132,12 +132,18 @@ class Said:
 
 
 # ------------------------------------------------------------------------------------------------------------- inputs
-def load_lessons(paths, day):
+def load_lessons(paths, day, *, brain=None):
     """[(doc, source)] for the lessons files that tested the day; listed = the files given that did not, with the reason."""
+    import frankie_box_lane_state as LS
+    import frankie_box_experiment_review as REVIEW
+    brain = LS.BRAIN if brain is None else brain
+    corrections = REVIEW.corrections(LS.knowledge_roots(brain))
     docs, listed = [], []
     for path in paths:
         raw = Path(path).read_bytes()
-        doc = json.loads(raw)
+        delivered = REVIEW.current_document(dict(path=str(path), bytes=len(raw), sha256=sha256_bytes(raw),
+            content=json.loads(raw)), corrections, brain, day=day, stage='exchange')
+        path, doc = delivered['path'], delivered['content']
         author = LESSONS.get(doc.get('schema'))
         if author is None or doc.get('author') != author:
             raise SystemExit('%s is not a supported scientific lesson schema of its author' % path)
@@ -145,7 +151,7 @@ def load_lessons(paths, day):
         if day not in tested:
             listed.append(dict(path=str(path), reason='these lessons did not test %s (days tested: %s)' % (day, tested)))
             continue
-        docs.append((doc, dict(path=str(path), sha256=sha256_bytes(raw), bytes=len(raw), author=author,
+        docs.append((doc, dict(path=str(path), sha256=delivered['sha256'], bytes=delivered['bytes'], author=author,
                                schema=doc['schema'], day=doc.get('day'), stamp=doc.get('stamp'), days_tested=tested,
                                claims_sha256=doc.get('claims_sha256'), claims_source=doc.get('claims_source'),
                                source_id='lessons:%s:%s' % (author, Path(path).name))))
@@ -270,6 +276,7 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
     import frankie_box_scientific_teacher as ST
     import frankie_box_classroom_code as K
     import frankie_box_experiment_search as SEARCH
+    import frankie_box_experiment_review as REVIEW
     from research.kalshi.frankie_boss import dipole_classroom as DC
     from frankie_box_durable import write_json
     from frankie_box_durable import witness
@@ -278,9 +285,10 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
                     teacher_rows=dict(path=str(rows_path), **witness(rows_path)) if rows_path else None,
                     rules=rules_witness, producer_sha256=sha256_bytes(Path(__file__).read_bytes()),
                     reader_sha256={m.__name__: sha256_bytes(Path(m.__file__).read_bytes())
-                                   for m in (LS, BR, ST, K, SEARCH, DC)})
+                                   for m in (LS, BR, ST, K, SEARCH, DC, REVIEW)})
     input_path = Path(input_path)
     if input_path.is_file():
+        LS.require_current_selection(input_path, brain=brain)
         retained = json.loads(input_path.read_bytes())
         if retained.get('identity') != identity:
             raise ValueError('retained exchange learner inputs belong to another source selection or producer')
@@ -295,9 +303,9 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
             for d in current['documents'] if d.get('sha256') not in frozen],
             rule='listed, never consumed here: no reopening of a frozen selection; the late-scheduling decision is held'))
         return retained
-    docs, listed = load_lessons(paths, day)
+    docs, listed = load_lessons(paths, day, brain=brain)
     selected = LS.learner_knowledge(day, 'exchange', brain=brain)
-    school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'])
+    school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'], stage='exchange')
     seen = {src['sha256'] for _, src in docs}
 
     def take(doc, source, address=()):

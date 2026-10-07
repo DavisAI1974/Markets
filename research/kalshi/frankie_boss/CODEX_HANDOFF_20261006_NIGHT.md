@@ -1,5 +1,16 @@
 # Codex restart handoff — 2026-10-06 night (America/New_York)
 
+## Reader hookup completed after Greg's 22:46 ET direction
+
+Codex took and built the narrow step-5 hooks while CCode continues his step-6 and historical
+corrections. Standalone teacher/exchange frozen selections now refuse replaced dependencies;
+both school readers use the exchange boundary; direct lessons resolve to actual successor
+file/hash identities. The correction implementation is bound in both frozen reader identities.
+Read the newest CCode task section before any overlapping edit. Scientific-owner publication
+and corrected-successor scheduling remain open; no research, runtime or training occurred.
+Source review/AST/whitespace only. Older compatible knowledge and partial-replacement rules
+are unchanged. CCode still owns all six review groups and the owner-publication interface trace.
+
 ## Current source integration — 2026-10-07 UTC / 2026-10-06 late ET
 
 CCode's fourth-session return through `276d6073` is integrated with its history; the review

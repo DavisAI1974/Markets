@@ -37,6 +37,7 @@ def teach_accumulated(day, search, brain, out_dir):
     import frankie_box_candidate_claims as CC
     import frankie_box_historical_claims as HC
     import frankie_box_historical_reproduction as HR
+    import frankie_box_experiment_review as REVIEW
     from frankie_box_durable import write_json, witness
 
     day, search, out_dir = str(day), Path(search), Path(out_dir)
@@ -50,7 +51,7 @@ def teach_accumulated(day, search, brain, out_dir):
         raise ValueError('accumulated claims must use this owning day search')
     identity = dict(day=day, search=str(search), manifest=manifest_witness, brain=str(brain),
                     producer=witness(__file__), readers={m.__name__: witness(m.__file__)
-                                                       for m in (LS, BR, ST, EX, CC, HC, HR)})
+                                                       for m in (LS, BR, ST, EX, CC, HC, HR, REVIEW)})
     input_path = out_dir / 'inputs.json'
     # B5: the OWNER's reproduction records live beside its other outputs; the selection of its files is frozen with the
     # scientific inputs (below) and consumed by every test of this owner; later arrivals are listed in the receipt only.
@@ -61,6 +62,7 @@ def teach_accumulated(day, search, brain, out_dir):
                                'replaced (the late-scheduling decision is held for Greg); it is available at a later '
                                'owner boundary through the same learner_knowledge selection')
     if input_path.is_file():
+        LS.require_current_selection(input_path, brain=brain)
         inputs = json.loads(input_path.read_bytes())
         if inputs.get('identity') != identity or inputs.get('schema') != 'FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1':
             raise ValueError('retained scientific knowledge belongs to another search or reader')
@@ -73,7 +75,7 @@ def teach_accumulated(day, search, brain, out_dir):
                                                     for r in HR.record_selection(records_dir) if r['path'] not in frozen_records])
     else:
         selected = LS.learner_knowledge(day, 'exchange', brain=brain)
-        school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'])
+        school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'], stage='exchange')
         documents, listed, seen = [], [], set()
 
         def take(doc, source, address=()):

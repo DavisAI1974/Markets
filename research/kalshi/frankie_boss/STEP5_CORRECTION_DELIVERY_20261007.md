@@ -37,6 +37,7 @@ decision, not independent proof that its scientific conclusion is correct.
 | `lane_state.learner_school` | Rebuilds copied-source views with corrected inline lessons and true container hashes; the immutable school source is unchanged. Stage argument preserves own-day answer walls. |
 | `brain.identity` / `brain.load` | Use corrected JSON source identities/content before corpus deduplication. Captured request bases pin correction-record identities; a later relevant correction requires an explicit successor request. |
 | Experiment exchange arguments | Resolve directly supplied lesson paths to their checked successors before passing them to the exchange. |
+| Standalone teacher/exchange | Guard retained scientific/exchange selections, resolve directly supplied lessons to their actual corrected file/hash, use the exchange school boundary, and bind the correction reader implementation in frozen input identities. |
 | Experiment teacher reuse/child boundaries | Check both accumulated-teacher and exchange frozen selections; a known replaced input cannot silently continue as current. |
 
 Copied-source containers can be rebuilt by substitution. Computed results cannot: a derived
@@ -53,16 +54,17 @@ zero independent observations. Scientific judgments still belong to the existing
 
 ## Completion gaps — do not mark all of step 5 complete
 
-1. CCode's owned standalone teacher/exchange entry points need the same frozen-selection hook,
-   and their school calls must pass `stage='exchange'`. The task queue contains exact interfaces.
-2. Scientific owners must explicitly supply a checked decision and successor after research or
+The standalone reader hooks were completed by Codex after Greg's 22:46 ET ownership update.
+The remaining gaps are:
+
+1. Scientific owners must explicitly supply a checked decision and successor after research or
    correction. No producer currently calls `record_correction` automatically; an ordinary newer
    or contradictory lesson must NEVER trigger it. There is no newly invented adjudication rule.
-3. Scheduling corrected successor operations for already-frozen/completed work is not complete.
+2. Scheduling corrected successor operations for already-frozen/completed work is not complete.
    The current runner refuses stale dependencies; it does not yet build every replacement
    operation. Existing immutable request identities and pending feedback must be carried forward
    by their owner, without an implicit scientific rerun or reopening unrelated completed days.
-4. Historical reproduction/rework, native learner decisions, the remaining step-2–4 gaps and
+3. Historical reproduction/rework, native learner decisions, the remaining step-2–4 gaps and
    CCode's remaining B2-R/B4-R/BIND-R corrections remain open. Real computation requires Greg's separate authorization.
 
 Verification: direct source/interface review, `ast.parse` on changed Python text without project
