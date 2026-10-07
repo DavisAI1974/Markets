@@ -1359,8 +1359,11 @@ def root_row_columns(spool, numeric, text, count, frames, owners, axis_rows, pro
     return out_numeric, out_text, report
 
 
-def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_manifest_sha256=None):
-    """The axis and every series on it. Returns (axis_time, series {name: np.ndarray}, cells {name: list}, sources, notes)."""
+def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_manifest_sha256=None, columns_dir=None,
+                 columns_identity=None):
+    """The axis and every series on it. Returns (axis_time, series {name: np.ndarray}, cells {name: list}, sources, notes).
+    columns_dir given and FRANKIE_SEARCH_FRAME_COLUMNS=disk (the default): the frames are typed on-disk columns and every
+    frames series/cell is a ColumnRef (materialized one at a time by its reader); otherwise the in-memory reference."""
     import numpy as np
     import pyarrow as pa
     import duckdb
@@ -1411,7 +1414,14 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
     if frames_pin is None:
         raise SystemExit('no book-frame spool at %s: the ROOT legacy pass did not run for this day' % frames_path)
     frames_parse = {}
-    f_num, f_text, f_other, n = spool_columns(frames_path, frames_pin, 'ts_recv_ns', workers, frames_parse)
+    on_disk = columns_dir is not None and frame_columns_mode() == 'disk'
+    if on_disk:
+        f_num, f_text, f_other, n = disk_spool_columns(frames_path, frames_pin, 'ts_recv_ns', workers, frames_parse,
+                                                       Path(columns_dir) / 'frames', columns_identity)
+    else:
+        f_num, f_text, f_other, n = spool_columns(frames_path, frames_pin, 'ts_recv_ns', workers, frames_parse)
+        frames_parse['frame_columns'] = ('memory: the in-memory reference path (%s=memory)' % FRAME_COLUMNS_ENV
+                                         if columns_dir is not None else 'memory: no column directory given')
     sources.append(dict(source='frames', path=str(frames_path), rows=n, parse=frames_parse,
                         bytes=frames_pin['bytes'], sha256=frames_pin['sha256'],
                         numeric=sorted(f_num), text=sorted(f_text), not_searched=f_other,
@@ -1423,12 +1433,24 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
     axis = np.maximum.accumulate(recv)  # exact nanoseconds; no loss of ordering above 2**53
     backwards = int(np.count_nonzero(np.diff(recv) < 0))
     notes.append(dict(axis='F_LAST group closes', groups=n, receive_clock_steps_backwards=backwards))
-    series = {'frames.' + k: np.asarray(v, dtype=object) for k, v in f_num.items()}
-    text_cols = {'frames.' + k: v for k, v in f_text.items()}
+    if on_disk:
+        series = {'frames.' + k: f_num.ref(k) for k in f_num}
+        text_cols = {'frames.' + k: f_text.ref(k) for k in f_text}
+        # the exact-membership readers (frame_index in the shared timeline) index these columns row by row: they get a
+        # mapping of exactly the columns frame_index and SharedFrameView consult, materialized once (memory bound noted)
+        membership = {k: f_num[k] for k in f_num
+                      if k in ('input_cursor', 'native_frame.instrument_id', 'ts_event_ns')
+                      or re.fullmatch(r'input_record_indices\[\d+\]|input_records\[\d+\]\.instrument_id', k)}
+        frames_parse['membership_columns'] = dict(columns=len(membership), values=len(membership) * n,
+                                                  why='frame_index reads them row by row (frankie_box_market_timeline, frozen)')
+    else:
+        series = {'frames.' + k: np.asarray(v, dtype=object) for k, v in f_num.items()}
+        text_cols = {'frames.' + k: v for k, v in f_text.items()}
+        membership = f_num
     gates = [dict(source='frames', passed=True, reason='the axis source itself: each value is its own group close')]
 
     import frankie_box_experiment_native as NATIVE
-    native_numeric, native_text, native_sources, native_notes = NATIVE.read_columns(day_dir, columns, f_num, recv,
+    native_numeric, native_text, native_sources, native_notes = NATIVE.read_columns(day_dir, columns, membership, recv,
                                                                                     workers=workers)
     series.update({name: np.asarray(values, dtype=object) for name, values in native_numeric.items()})
     text_cols.update(native_text)
@@ -1440,7 +1462,7 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
 
     import frankie_box_experiment_journal as JOURNAL
     journal_numeric, journal_text, journal_sources, journal_notes = JOURNAL.read_columns(
-        day_dir, columns, f_num, recv, workers=workers, frame_sha256=sources[0]['sha256'])
+        day_dir, columns, membership, recv, workers=workers, frame_sha256=sources[0]['sha256'])
     series.update({name: np.asarray(values, dtype=object) for name, values in journal_numeric.items()})
     text_cols.update(journal_text)
     sources.extend(journal_sources)
@@ -1500,7 +1522,7 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
             series[name + '.' + key] = np.asarray([values[i] if i >= 0 else None for i in source_rows], dtype=object)
         return source_rows
 
-    root_frames, root_owners = JOURNAL._frame_index(f_num, recv)
+    root_frames, root_owners = JOURNAL._frame_index(membership, recv)
     derive_path = day_dir / 'root' / 'work' / 'derive.json'
     derive_pin = source_pin(derive_path)
     derive = read_json(derive_path, derive_pin) if derive_pin is not None else {}
@@ -1911,7 +1933,7 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
     log('series: %d on %d groups (%d receive-clock steps backwards), %d cell columns' % (len(series), n, backwards, len(cells)))
     if shared_policy is not None:
         from frankie_box_market_timeline import SharedFrameView
-        market_view = SharedFrameView(f_num, recv, series, cells, policy=shared_policy, sources=sources)
+        market_view = SharedFrameView(membership, recv, series, cells, policy=shared_policy, sources=sources)
         series, cells = market_view.series, market_view.cells
         sources.append(market_view.report)
     return axis, series, cells, sources, notes, gates
