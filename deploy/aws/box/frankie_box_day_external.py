@@ -23,6 +23,11 @@ ACTION=build, per day of DAYS:
          MANIFEST.json naming the file, its sha256 and its S3 key (the brain loader reads only cycle/lessons entries,
          so the attachment is found by its day key and never enters the corpus).
 ACTION=link: step 3 only, for an existing RUN (after an ingest seals).
+Parallel (Greg 2026-10-07, every piece uses the lane's CPUs): the objects of ALL the days are fetched once (the union of
+the days' keys, each key once) through FETCH_STREAMS concurrent presigned GETs (default 16; S3 scales by parallel
+requests); the curve files are hashed by the lane's CPUs side by side; the days are built side by side, one process per
+day, WORKERS of them (0 or unset: every CPU this process may run on, os.sched_getaffinity). Values, hashes, the receipt
+and the 99 mapping are the same as a serial run: only the order of the work changes, and listings are sorted by key.
 Every day file carries Frankie's 13 points mapped to the 99 (POINT_REGISTRY_MAP of the builder, closest entry with its
 reason; Greg 2026-10-07) and every row one reader stamp, published_ns = max(event_time_ns, publication), a row with no
 event time of its own at 14:00 ET of the trading day; the receipt repeats the map, the rule and the code sha256s.
@@ -37,7 +42,7 @@ import os
 import subprocess
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 BOX = Path('/opt/frankie-box')
@@ -57,6 +62,14 @@ def sha256_file(path):
         for block in iter(lambda: f.read(1 << 24), b''):
             h.update(block)
     return h.hexdigest()
+
+
+def lane_cpus():
+    """The CPUs this process may run on (the lane's taskset/cgroup affinity when one is set), else os.cpu_count()."""
+    try:
+        return max(1, len(os.sched_getaffinity(0)))
+    except (AttributeError, OSError):
+        return max(1, os.cpu_count() or 1)
 
 
 def ymd(day):
@@ -119,39 +132,56 @@ def wanted_keys(day, keys, history_prefix, prints, eia930_prefix=None, overrides
     return sorted(set(out))
 
 
-def fetch(keys, url_map, src, listing):
-    for i, k in enumerate(keys):
-        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
-            import frankie_box_stage_progress as _SP
-            _SP.report_phase('external: fetching day-history objects', units_done=i, units_total=len(keys), unit='objects', every=10)
-        except Exception:  # noqa: BLE001
-            pass
-        dest = src / k
-        entry = url_map[k]
-        if dest.is_file() and dest.stat().st_size == entry.get('bytes'):
-            listing.append(dict(key=k, status='present'))
-            continue
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        part = Path(str(dest) + '.part')
-        r = subprocess.run(['curl', '-fsS', '--proto', '=https', '-L', '--retry', '5', '--retry-delay', '5', '-o', str(part),
-                            '--url', entry['url']])
-        if r.returncode != 0 or part.stat().st_size != entry.get('bytes'):
-            listing.append(dict(key=k, status='failed', returncode=r.returncode))
-            continue
-        os.replace(part, dest)
-        listing.append(dict(key=k, status='downloaded', bytes=entry.get('bytes')))
+FETCH_STREAMS = int(os.environ.get('FETCH_STREAMS') or 16)   # concurrent object GETs (S3 guidance: parallel requests)
 
 
-def verify_curve(src, listing):
-    """Each curve native file against the curve pull's manifests (key -> sha256)."""
+def _fetch_one(k, url_map, src):
+    """One object of the day history through its presigned GET (curl, retries); its listing entry."""
+    dest = src / k
+    entry = url_map[k]
+    if dest.is_file() and dest.stat().st_size == entry.get('bytes'):
+        return dict(key=k, status='present')
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    part = Path(str(dest) + '.part')
+    r = subprocess.run(['curl', '-fsS', '--proto', '=https', '-L', '--retry', '5', '--retry-delay', '5', '-o', str(part),
+                        '--url', entry['url']])
+    if r.returncode != 0 or not part.is_file() or part.stat().st_size != entry.get('bytes'):
+        return dict(key=k, status='failed', returncode=r.returncode)
+    os.replace(part, dest)
+    return dict(key=k, status='downloaded', bytes=entry.get('bytes'))
+
+
+def fetch(keys, url_map, src, listing, workers=FETCH_STREAMS):
+    """Every key once, `workers` presigned GETs at a time (S3 serves parallel requests; one GET per object at a time was
+    the stage's wall clock); the listing is sorted by key whatever order the GETs finish in."""
+    keys = sorted(set(keys))
+    out = []
+    with ThreadPoolExecutor(max_workers=max(1, min(workers, len(keys) or 1))) as pool:
+        futures = [pool.submit(_fetch_one, k, url_map, src) for k in keys]
+        for i, fut in enumerate(as_completed(futures), 1):
+            out.append(fut.result())
+            try:                                 # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+                import frankie_box_stage_progress as _SP
+                _SP.report_phase('external: fetching day-history objects', units_done=i, units_total=len(keys),
+                                 unit='objects', every=10)
+            except Exception:  # noqa: BLE001
+                pass
+    listing.extend(sorted(out, key=lambda x: x['key']))
+
+
+def verify_curve(src, listing, workers=None):
+    """Each curve native file against the curve pull's manifests (key -> sha256); the files are hashed side by side by
+    the lane's CPUs (hashlib releases the GIL), the result is in path order as before."""
     named = {}
     for m in glob.glob(str(src / CURVE / '*' / 'manifests' / '*.json')):
         for o in json.loads(Path(m).read_bytes()).get('objects', []):
             named[o['key']] = o['sha256']
     out = []
-    for p in sorted(glob.glob(str(src / CURVE / '*' / 'native' / '*.dbn.zst'))):
+    paths = sorted(glob.glob(str(src / CURVE / '*' / 'native' / '*.dbn.zst')))
+    with ThreadPoolExecutor(max_workers=max(1, min(workers or lane_cpus(), len(paths) or 1))) as pool:
+        digests = list(pool.map(sha256_file, paths))
+    for p, have in zip(paths, digests):
         key = str(Path(p).relative_to(src))
-        have = sha256_file(p)
         want = named.get(key)
         status = 'verified' if want == have else ('unverified: no manifest names it' if want is None else 'MISMATCH')
         out.append(dict(key=key, sha256=have, status=status))
@@ -285,9 +315,11 @@ def main():
     p.add_argument('--family-history-runs', default='', help='optional family=<run id>,... read from other day_history runs')
     p.add_argument('--map', default='')
     p.add_argument('--brain', default='')
-    p.add_argument('--workers', type=int, default=2)
+    p.add_argument('--workers', type=int, default=0, help='days built side by side (0: every CPU of the lane)')
+    p.add_argument('--fetch-workers', type=int, default=FETCH_STREAMS, help='presigned GETs at a time (FETCH_STREAMS)')
     a = p.parse_args()
     days = sorted({d for d in a.days.split(',') if d})
+    workers = a.workers if a.workers > 0 else lane_cpus()
     if any(not (len(d) == 8 and d.isdigit()) for d in days):
         raise SystemExit('DAYS must be YYYYMMDD values')
     sys.path.insert(0, a.code_root)
@@ -303,6 +335,7 @@ def main():
             raise SystemExit('--family-history-runs: family=<run id> (letters and digits) with a family of %s' % (FAMILIES,))
         overrides[fam] = 'frankie/day_history/%s' % rid
     record = dict(schema='FRANKIE_DAY_EXTERNAL_RUN_V1', action=a.action, run=a.run, days=days, markets_sha=a.markets_sha,
+                  workers=workers, fetch_workers=a.fetch_workers,
                   history_prefix=history_prefix, eia930_history_prefix=eia930_prefix,
                   family_history_prefixes=family_prefixes(history_prefix, eia930_prefix, overrides), at=time.time(), fetch=[], curve=[], built=[], attach=[])
     if a.action == 'build':
@@ -310,16 +343,19 @@ def main():
             raise SystemExit('%s exists: a build RUN is fresh (ACTION=link reuses one)' % run_dir)
         src = run_dir / 'src'
         src.mkdir(parents=True)
+        union = set()
         for day in days:
             prints = sorted({x['release_et'][:10] for x in storage_prints_around(ymd(day))})
             keys = wanted_keys(day, url_map, history_prefix, prints, eia930_prefix, overrides)
-            print('### %s: %d objects to fetch' % (day, len(keys)), flush=True)
-            fetch(keys, url_map, src, record['fetch'])
-        curve = verify_curve(src, record['curve'])
+            print('### %s: %d objects needed' % (day, len(keys)), flush=True)
+            union.update(keys)
+        print('### %d distinct objects for %d days, %d GETs at a time' % (len(union), len(days), a.fetch_workers), flush=True)
+        fetch(union, url_map, src, record['fetch'], a.fetch_workers)
+        curve = verify_curve(src, record['curve'], workers)
         jobs = [dict(day=d, run_dir=str(run_dir), src=str(src), history_prefix=history_prefix, eia930_prefix=eia930_prefix,
                      overrides=overrides, code_root=a.code_root,
                      markets_sha=a.markets_sha, run=a.run, curve_verification=curve) for d in days]
-        with ProcessPoolExecutor(max_workers=max(1, min(a.workers, len(days)))) as pool:
+        with ProcessPoolExecutor(max_workers=max(1, min(workers, len(days)))) as pool:
             for r in pool.map(build_day, jobs):
                 record['built'].append(r)
                 print(json.dumps(r), flush=True)

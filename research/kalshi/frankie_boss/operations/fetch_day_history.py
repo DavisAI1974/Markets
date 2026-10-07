@@ -36,7 +36,9 @@ import http.client
 import json
 import os
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -215,6 +217,7 @@ RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
 RETRY_BUDGET_S = dict(eia=3600, archive=3600)
 IA_PACE_S = 3.0                                   # the Internet Archive refuses connections when polled faster
 _retry_spent = dict.fromkeys(RETRY_BUDGET_S, 0)
+_retry_lock = threading.Lock()                     # the families fetch side by side (FAMILY_LANES); one budget each
 # A wall-clock budget for the whole fetch (the workflow sets it below its job timeout): once passed, a request is not
 # made and is recorded as a gap naming why, so every family still closes its receipt before the job is stopped.
 _T0 = time.monotonic()
@@ -239,10 +242,13 @@ def http_get_retry(url, params=None, timeout=120, headers=None, what='', budget=
         if attempt == len(RETRY_WAITS_S):
             raise RuntimeError(f'{last!r} after {attempt + 1} tries') from last
         wait = RETRY_WAITS_S[attempt]
-        if _retry_spent[budget] + wait > RETRY_BUDGET_S[budget]:
+        with _retry_lock:
+            spent = _retry_spent[budget] + wait > RETRY_BUDGET_S[budget]
+            if not spent:
+                _retry_spent[budget] += wait
+        if spent:
             raise RuntimeError(f'{last!r} after {attempt + 1} tries (the {budget} retry budget of '
                                f'{RETRY_BUDGET_S[budget]} s is spent)') from last
-        _retry_spent[budget] += wait
         print(f'RETRY {what}: try {attempt + 1} failed {last!r}; waiting {wait} s', flush=True)
         time.sleep(wait)
 
@@ -436,6 +442,35 @@ def fetch_eia930(out):
 
 FETCH = dict(calendar=fetch_calendar, cot=fetch_cot, storage=fetch_storage, consensus=fetch_consensus,
              weather_obs=fetch_weather_obs, mos=fetch_mos, eia930=fetch_eia930)
+
+# Greg 2026-10-07 (every piece uses the CPUs/workers it can): the families fetch side by side, one lane per source host,
+# so each host keeps its own pacing (the Internet Archive one request per IA_PACE_S, IEM its sleeps, EIA one request at a
+# time) while the hosts overlap. Families sharing a host stay in one lane, in this order. The wall clock of a fetch is
+# the slowest lane instead of the sum; every receipt, file and gap is the same as a serial fetch.
+FAMILY_LANES = (('storage', 'eia930'),          # api.eia.gov
+                ('consensus',),                 # web.archive.org (+ the investing chart feed)
+                ('weather_obs', 'mos'),         # mesonet.agron.iastate.edu
+                ('cot',),                       # publicreporting.cftc.gov
+                ('calendar',))                  # computed, no host
+
+
+def fetch_families(fams, out):
+    """Run the selected families, one thread per host lane; a family that raises does not stop the other lanes, and
+    the first error is raised once every lane has closed its receipts."""
+    lanes = [[f for f in lane if f in fams] for lane in FAMILY_LANES]
+    lanes = [lane for lane in lanes if lane] + [[f] for f in fams if not any(f in lane for lane in FAMILY_LANES)]
+
+    def run(lane):
+        for fam in lane:
+            print(f'### {fam} (lane {"+".join(lane)})', flush=True)
+            FETCH[fam](out)
+            print(f'### {fam} done', flush=True)
+
+    with ThreadPoolExecutor(max_workers=len(lanes) or 1) as pool:
+        futures = [pool.submit(run, lane) for lane in lanes]
+    errors = [f.exception() for f in futures if f.exception() is not None]
+    if errors:
+        raise errors[0]
 
 
 # ------------------------------------------------------------------------------------------------ as printed (Greg 2026-10-07)
@@ -694,9 +729,7 @@ def main():
     unknown = set(fams) - set(FAMILIES)
     if unknown:
         raise SystemExit(f'unknown families {sorted(unknown)}')
-    for fam in fams:
-        print(f'### {fam}', flush=True)
-        FETCH[fam](args.out)
+    fetch_families(fams, args.out)
     return 0
 
 

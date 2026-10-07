@@ -193,6 +193,7 @@ jobs:
           case "$FAMILIES" in *[!a-z0-9_,]*) echo "families must be a comma list of names"; exit 2;; esac
           case "$DAY_HISTORY_DAYS" in *[!0-9,]*) echo "days must be a comma list of YYYYMMDD"; exit 2;; esac
           echo "days: ${DAY_HISTORY_DAYS:-all selected}"
+          # the families fetch side by side, one lane per source host (fetch_day_history.py FAMILY_LANES)
           python research/kalshi/frankie_boss/operations/fetch_day_history.py fetch --family "$FAMILIES" --out day-history
       - name: Upload to S3 (new prefix, new objects only)
         if: always()
@@ -203,18 +204,23 @@ jobs:
           AWS_EC2_METADATA_DISABLED: 'true'
         run: |
           python - <<'PY'
+          # 16 PUTs at a time (S3 scales by parallel requests; one boto3 client is thread safe); the manifest keeps the
+          # sorted file order, so it is the same document a serial upload writes
           import hashlib, json, os, pathlib
+          from concurrent.futures import ThreadPoolExecutor
           import boto3
+          from botocore.config import Config
           bucket = 'bento-568968024170-us-east-2-an'
           prefix = f"frankie/day_history/{os.environ['GITHUB_RUN_ID']}/"
-          s3 = boto3.client('s3', region_name='us-east-2')
+          s3 = boto3.client('s3', region_name='us-east-2', config=Config(max_pool_connections=16, retries=dict(mode='adaptive')))
           files = sorted(p for p in pathlib.Path('day-history').rglob('*') if p.is_file())
-          manifest = []
-          for p in files:
+          def put(p):
               key = prefix + str(p.relative_to('day-history'))
               body = p.read_bytes()
               s3.put_object(Bucket=bucket, Key=key, Body=body, ServerSideEncryption='AES256')
-              manifest.append(dict(key=key, bytes=len(body), sha256=hashlib.sha256(body).hexdigest()))
+              return dict(key=key, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+          with ThreadPoolExecutor(max_workers=16) as pool:
+              manifest = list(pool.map(put, files))
           s3.put_object(Bucket=bucket, Key=prefix + 'manifest.json', Body=json.dumps(manifest, indent=1).encode(),
                         ServerSideEncryption='AES256')
           print(f'uploaded {len(manifest)} objects under s3://{bucket}/{prefix}')
