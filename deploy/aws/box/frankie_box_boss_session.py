@@ -309,6 +309,27 @@ def lane_cpus():
     return sorted(affinity)
 
 
+def cpu_topology(cpus):
+    """{cpu: [package, core]} for the given CPUs from /sys/devices/system/cpu/cpu<N>/topology (physical_package_id,
+    core_id), or None when any of it cannot be read (the caller then keeps the plain list order and records why)."""
+    try:
+        out = {}
+        for cpu in cpus:
+            base = Path('/sys/devices/system/cpu') / ('cpu%d' % cpu) / 'topology'
+            out[cpu] = [int((base / 'physical_package_id').read_text()), int((base / 'core_id').read_text())]
+        return out
+    except (OSError, ValueError):
+        return None
+
+
+def core_groups(cpus, topology):
+    """The CPUs grouped by physical core (both hardware threads together), cores in the order of their first CPU."""
+    groups = {}
+    for cpu in sorted(cpus):
+        groups.setdefault(tuple(topology[cpu]), []).append(cpu)
+    return sorted(groups.values(), key=lambda group: group[0])
+
+
 def _encode_frame(payload):
     """A frame op's row line from its snapshot (pickled at the serial append point; see OrderedRowWriter)."""
     import pickle
@@ -1140,8 +1161,19 @@ class Session:
         # half (its core plan reads FRANKIE_LANE_CPUS), the legacy pass the second (replay, ParallelBook workers and
         # encoders split inside it). Both lists come from the booking; recorded in native-overlap.json.
         lane = lane_cpus()
-        half = len(lane) // 2
-        native_cpus, legacy_cpus = (lane[:half], lane[half:]) if half else (lane, lane)
+        # By physical core (AWS deep dive / review L-3): 32 booked CPUs are 16 cores x 2 threads, and a plain halving
+        # pairs every legacy CPU with a native CPU on the same core; native takes half the cores (both threads of
+        # each), legacy the other half. Without a readable topology the plain halves stay, recorded.
+        topology = cpu_topology(lane)
+        cores = core_groups(lane, topology) if topology else None
+        if cores and len(cores) >= 2:
+            native_cpus = sorted(c for group in cores[:len(cores) // 2] for c in group)
+            legacy_cpus = sorted(c for group in cores[len(cores) // 2:] for c in group)
+            split_basis = 'physical cores in halves (both threads of each core on one side)'
+        else:
+            half = len(lane) // 2
+            native_cpus, legacy_cpus = (lane[:half], lane[half:]) if half else (lane, lane)
+            split_basis = 'booked list in halves (topology %s)' % ('unreadable' if topology is None else 'one core')
         session = self
 
         def child():
@@ -1177,7 +1209,7 @@ class Session:
             self._native_overlap_record(attempt=dict(
                 mode='on', intent_at=time.time(), child_pid=None, outcome='unknown', lane_cpus=lane,
                 native_cpus=native_cpus, legacy_cpus=legacy_cpus, legacy_pass_cpu=legacy_cpu,
-                split='booked list in halves: native the first, legacy the second; no CPU in both',
+                split=split_basis + '; no CPU in both', topology=topology,
                 native_probe=str(self.dir / 'native-overlap' / 'progress.json'),
                 rule='ROOT process 2 (native traversal) beside process 1 (legacy pass) on the same sealed INPUT spool; '
                      'identical calls and outputs to the serial order; native-stage.json is witness-checked at the join'))
@@ -1404,7 +1436,11 @@ class Session:
         # replay's are split once, never double-pinned: book workers first, encoders after (recorded in
         # work/legacy-cpu-split.json). observe_book stays in the replay (a copy of the live book; no existing worker).
         writer, replay_cpu, lane, parallel_book = None, None, lane_cpus(), None
-        helpers = lane[1:1 + max(0, int((self.source_binding or {}).get('data_workers') or 1))]
+        # The replay is the serial bound: it takes the first CPU and its core's other hardware thread stays idle, so the
+        # replay has a whole core (AWS deep dive / review L-3); without a readable topology only the replay CPU is kept.
+        topology = cpu_topology(lane)
+        replay_core = [c for c in lane if topology and topology[c] == topology[lane[0]]] if topology else lane[:1]
+        helpers = [c for c in lane if c not in replay_core][:max(0, int((self.source_binding or {}).get('data_workers') or 1))]
         book_cpus = helpers[:min(16, len(helpers) // 2)] if retain_frame_sections else []
         encoder_cpus = helpers[len(book_cpus):]
         if retain_frame_sections and encoder_cpus:
@@ -1421,6 +1457,8 @@ class Session:
             os.sched_setaffinity(0, {replay_cpu})
             write_json(self.work / 'legacy-cpu-split.json', dict(
                 schema='FRANKIE_ROOT_LEGACY_CPUS_V1', at=time.time(), booked=lane, replay=replay_cpu,
+                replay_core_idle_siblings=[c for c in replay_core if c != replay_cpu], topology=topology,
+                topology_basis=('/sys/devices/system/cpu/cpu*/topology' if topology else 'unreadable: plain list order'),
                 book_workers=book_cpus, encoders=encoder_cpus,
                 rule='one CPU per process, none shared: the replay, the ParallelBook level workers, the frame encoders'))
             prices_out, structures_out, failures_out = (_QueuedSpool(prices, writer), _QueuedSpool(structures, writer),
