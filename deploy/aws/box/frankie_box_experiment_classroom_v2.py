@@ -521,6 +521,10 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             # resume can serve every remaining consumer without recalculating its 19 components/171 pairs.
             evidence = phase('guided_evidence', lambda: K._evidence(visible))
             K._EVIDENCE_CACHE[visible['pre_message']['teacher_message_hash']] = evidence
+        # how the 171 Dipole pairs were computed in this process (fork pool on the lane, or serial with the reason); empty
+        # when the evidence came from a saved phase or from TEACH (transcribed)
+        received['dipole_pairs_pool'] = dict(K.PAIR_POOL_RECORD) or dict(
+            basis='not computed in this process (TEACH transcribes; or restored from a saved phase)')
         shared_market = None
         market_reading = None
         native_entries = dict(schema=K.NATIVE_ENTRY_SCHEMA, status='unavailable',

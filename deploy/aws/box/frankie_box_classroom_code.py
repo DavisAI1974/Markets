@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import copy
 import json
+import bisect
 import re
 import sys
 from pathlib import Path
@@ -722,13 +723,32 @@ def _rss_bytes():
         return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024, 'peak resident (getrusage ru_maxrss)'
 
 
+def _settle_numeric(s, limit):
+    """Record a numeric series' state at the close of its open row (when that row is closed, i.e. below `limit`): one
+    row with an update in its interval, and a run start when the state differs from the last recorded one. The same
+    record the former per-row closing loop made."""
+    k = s.open_k
+    if k is None or k >= limit:
+        return
+    s.fresh += 1
+    state = (s.code, s.value, s.reason)
+    if state != s.rec:
+        s.rows.append(k)
+        s.codes.append(s.code)
+        s.values.append(s.value if s.code == 0 else float('nan'))
+        if s.code != 0:
+            s.reasons[len(s.rows) - 1] = s.reason
+        s.rec = state
+    s.open_k = None
+
+
 class _NumSeries:
     __slots__ = ('code', 'value', 'reason', 'rec', 'rows', 'codes', 'values', 'reasons', 'fresh', 'known', 'first', 'last',
-                 'low', 'high', 'nonpresent', 'nulls')
+                 'low', 'high', 'nonpresent', 'nulls', 'open_k')
 
     def __init__(self):
         from array import array
-        self.code, self.value, self.reason, self.rec = None, None, None, None
+        self.code, self.value, self.reason, self.rec, self.open_k = None, None, None, None, None
         self.rows, self.codes, self.values, self.reasons = array('q'), array('b'), array('d'), {}
         self.fresh, self.known, self.first, self.last, self.low, self.high = 0, 0, None, None, None, None
         self.nonpresent, self.nulls = {}, 0
@@ -778,7 +798,7 @@ class _NativeEntryArithmetic:
         self.heads = sorted(self.head_entries)
         self.identity_heads = [leaf for leaf in IDENTITY_LEAVES if leaf in self.head_entries]
         self.num, self.cat, self.cnt = {}, {}, {}
-        self.dirty, self.cat_dirty, self.interval, self.after_last = set(), set(), {}, {}
+        self.after_last = {}
         self.member_keys, self.scopes, self.identities = {}, {}, {}
         self.unplaced = {}
         self.member_rows, self.lifecycle_rows, self.reset_inputs = 0, 0, 0
@@ -804,8 +824,9 @@ class _NativeEntryArithmetic:
                                                                  'native series are never re-sorted' % (cursor, self.last_cursor))
                 return
             self.last_cursor = cursor
-            while self.k < self.n and self.cursors[self.k] < cursor:
-                self._close_row()
+            if self.k < self.n and self.cursors[self.k] < cursor:
+                # every Dipole row before this cursor closes at once (bisect over the sorted roster; was a per-row loop)
+                self.k = bisect.bisect_left(self.cursors, cursor, self.k)
         instrument = at.get('instrument_id')
         # the envelope carriers on exact pictures only (the core's own rule for reset / source_scope_changed)
         if type(instrument) is int and (picture.get('coverage') or {}).get('exact_clocks'):
@@ -844,14 +865,18 @@ class _NativeEntryArithmetic:
             self._close_row()
 
     def _count(self, key):
-        if self.k >= self.n:
-            self.after_last[key] = self.after_last.get(key, 0) + 1
-        else:
-            self.interval[key] = self.interval.get(key, 0) + 1
         slot = self.cnt.get(key)
         if slot is None:
             from array import array
             slot = self.cnt[key] = dict(total=0, first=None, last=None, rows=array('q'), counts=array('q'))
+        k = self.k
+        if k >= self.n:
+            self.after_last[key] = self.after_last.get(key, 0) + 1
+        elif slot['rows'] and slot['rows'][-1] == k:
+            slot['counts'][-1] += 1             # the event's interval = the row it is closed with (no per-row loop)
+        else:
+            slot['rows'].append(k)
+            slot['counts'].append(1)
         slot['total'] += 1
         cursor = self.at_cursor
         if slot['first'] is None:
@@ -864,20 +889,28 @@ class _NativeEntryArithmetic:
         if slot is None:
             if value is None:
                 return
-            slot = self.cat[key] = dict(current=None, rec=None, changes=[], distinct=set(), known=0)
+            slot = self.cat[key] = dict(current=None, rec=None, changes=[], distinct=set(), known=0, open_k=None)
         if value is not None:
             slot['known'] += 1
             slot['distinct'].add(value)
-        if value != slot['current']:
-            slot['current'] = value
-            self.cat_dirty.add(key)
+        k = self.k
+        if k >= self.n:
+            return                                  # after the last Dipole row: no row closes with it
+        if slot['open_k'] != k:
+            self._settle_category(slot, self.n)     # the previous row's last value, recorded once (no per-row loop)
+            slot['open_k'] = k
+        slot['current'] = value
 
     def _numeric(self, key, code, value, reason):
         s = self.num.get(key)
         if s is None:
             s = self.num[key] = _NumSeries()
-        s.code, s.value, s.reason = code, value, reason
-        self.dirty.add(key)
+        k = self.k
+        if k < self.n:
+            if s.open_k != k:
+                _settle_numeric(s, self.n)          # the previous row's last state, recorded once (no per-row loop)
+                s.open_k = k
+            s.code, s.value, s.reason = code, value, reason
         if code == 0:
             s.known += 1
             point = (self.at_cursor, value)
@@ -981,31 +1014,16 @@ class _NativeEntryArithmetic:
         slot['last'] = [self.at_cursor, value]
 
     def _close_row(self):
-        k = self.k
-        for key in self.dirty:
-            s = self.num[key]
-            s.fresh += 1
-            state = (s.code, s.value, s.reason)
-            if state != s.rec:
-                s.rows.append(k)
-                s.codes.append(s.code)
-                s.values.append(s.value if s.code == 0 else float('nan'))
-                if s.code != 0:
-                    s.reasons[len(s.rows) - 1] = s.reason
-                s.rec = state
-        self.dirty.clear()
-        for key in self.cat_dirty:
-            slot = self.cat[key]
-            if slot['current'] != slot['rec']:
-                slot['changes'].append((k, slot['current']))
-                slot['rec'] = slot['current']
-        self.cat_dirty.clear()
-        for key, count in self.interval.items():
-            slot = self.cnt[key]
-            slot['rows'].append(k)
-            slot['counts'].append(count)
-        self.interval.clear()
+        # Rows are recorded lazily (each series settles its last state of a row when a later row first touches it, and
+        # at _compute), so closing a row is advancing the row index: the values are those the per-row loop recorded.
         self.k += 1
+
+    @staticmethod
+    def _settle_category(slot, limit):
+        k = slot['open_k']
+        if k is not None and k < limit and slot['current'] != slot['rec']:
+            slot['changes'].append((k, slot['current']))
+            slot['rec'] = slot['current']
 
     # ---- after the pass
     def finish(self):
@@ -1013,8 +1031,7 @@ class _NativeEntryArithmetic:
         import time
         started = self.finish_clock = time.monotonic()
         if self.status is None:
-            while self.k < self.n:
-                self._close_row()
+            self.k = self.n                         # the rows no picture reached close with what they hold
         # a cutoff in the pass computes what it holds over the rows it closed; a cutoff after it keeps what is done
         result = (self._compute() if self.status in (None, 'cutoff')
                   else _native_unavailable_entries(self.status, self.reason))
@@ -1068,6 +1085,11 @@ class _NativeEntryArithmetic:
             values = np.array([float(p['value']) if p['state'] == 'PRESENT' else np.nan for p in observations], dtype=np.float64)
             dipole[name] = (codes, values, EXT._direction(np, codes, values))
         cursors = np.array(self.cursors[:n], dtype=np.int64)
+        # settle each series' last open row when it is a closed row (a row at or past n is not closed: never recorded)
+        for item in self.num.values():
+            _settle_numeric(item, n)
+        for slot in self.cat.values():
+            self._settle_category(slot, n)
         rows = np.arange(n)
         series = []
 
@@ -1116,6 +1138,8 @@ class _NativeEntryArithmetic:
             values = np.zeros(n, dtype=np.float64)       # zero = no event in the interval over the exhausted source
             event_rows = np.frombuffer(slot['rows'], dtype=np.int64) if len(slot['rows']) else np.zeros(0, np.int64)
             event_counts = np.frombuffer(slot['counts'], dtype=np.int64) if len(slot['counts']) else np.zeros(0, np.int64)
+            closed = event_rows < n                      # an interval of a row not closed (cutoff) is not counted
+            event_rows, event_counts = event_rows[closed], event_counts[closed]
             values[event_rows] = event_counts
             codes = np.zeros(n, dtype=np.int8)
             busiest = int(np.argmax(event_counts)) if event_counts.size else None    # the first interval with the most
@@ -2411,16 +2435,57 @@ def _calculate_evidence(pre, origin):
         comps.append(dict(comp, terminal_state=last['state'], terminal_value=last['value'],
                           terminal_reason=last.get('raw_reason'), first_to_last_present_direction=direction))
     names = [c['name'] for c in comps]
+    order = [(left, right) for i, left in enumerate(names) for right in names[i + 1:]]
+    measured = _pair_measures(math, ledgers, order)
     review = []
-    for i, left in enumerate(names):
-        for right in names[i + 1:]:
-            review.append(dict(left=left, right=right,
-                               direction_relation=math._direction_relation(directions[left], directions[right]),
-                               correlation=math._pearson(ledgers[left], ledgers[right]),
-                               co_movement=math._co_movement(ledgers[left], ledgers[right]),
-                               interpretation_limit='DESCRIPTIVE_WITHIN_CAUSAL_WINDOW_NOT_CAUSATION_OR_FUTURE_PREDICTION',
-                               computed_by=AUTHOR))
+    for (left, right), (correlation, co_movement) in zip(order, measured):
+        review.append(dict(left=left, right=right,
+                           direction_relation=math._direction_relation(directions[left], directions[right]),
+                           correlation=correlation, co_movement=co_movement,
+                           interpretation_limit='DESCRIPTIVE_WITHIN_CAUSAL_WINDOW_NOT_CAUSATION_OR_FUTURE_PREDICTION',
+                           computed_by=AUTHOR))
     return dict(pre, components=comps, relationship_review=review, evidence_source=origin)
+
+
+# The 171 Dipole pairs on the lane's CPUs (Greg, 2026-10-07: every piece uses the lane). dipole_classroom._pearson and
+# _co_movement are pure Python over the whole-day ledgers, so threads cannot help (GIL). A fork pool shares the ledgers
+# copy-on-write (nothing pickled in), runs the SAME functions per pair and returns their dicts in pair order, so every
+# value is the one the serial loop computes. Fork is taken only on Linux and only while this process runs one thread (a
+# fork beside live threads can inherit a held lock); otherwise the serial loop runs. The choice is recorded in
+# PAIR_POOL_RECORD for the receipt.
+_PAIR_SHARED = {}
+PAIR_POOL_RECORD = {}
+
+
+def _pair_job(index):
+    math, ledgers, order = _PAIR_SHARED['math'], _PAIR_SHARED['ledgers'], _PAIR_SHARED['order']
+    left, right = order[index]
+    return math._pearson(ledgers[left], ledgers[right]), math._co_movement(ledgers[left], ledgers[right])
+
+
+def _pair_measures(math, ledgers, order):
+    import os
+    import threading
+    import time
+    started = time.monotonic()
+    workers = min(len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else 1, 16, len(order))
+    use_fork = sys.platform.startswith('linux') and threading.active_count() == 1 and workers > 1
+    if use_fork:
+        import multiprocessing
+        from concurrent.futures import ProcessPoolExecutor
+        _PAIR_SHARED.update(math=math, ledgers=ledgers, order=order)
+        try:
+            with ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context('fork')) as pool:
+                measured = list(pool.map(_pair_job, range(len(order)), chunksize=max(1, len(order) // (workers * 4))))
+        finally:
+            _PAIR_SHARED.clear()
+        basis = 'fork pool (%d workers, the lane affinity); same functions, pair order kept' % workers
+    else:
+        measured = [(math._pearson(ledgers[a], ledgers[b]), math._co_movement(ledgers[a], ledgers[b])) for a, b in order]
+        basis = ('serial: %s' % ('more than one live thread (no fork beside threads)' if threading.active_count() > 1
+                                 else 'one CPU or not Linux'))
+    PAIR_POOL_RECORD.update(pairs=len(order), basis=basis, seconds=round(time.monotonic() - started, 3))
+    return measured
 
 
 def _component_evidence(visible, name):

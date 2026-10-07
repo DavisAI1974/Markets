@@ -473,3 +473,28 @@ missing-list entry naming the spread is listed there. The external key, its hash
 has used them. In `external_points_use`, point 6 is used like the others (computed when published at or before a Dipole
 row) and the dropped spread is named beside the points, never as a point. The earlier line above, "6 (squeeze) is
 absent, deferred by Greg", is superseded.
+
+### 2026-10-07 night, session 2 (continued): the classroom on the lane's CPUs (Greg: every piece uses as much as possible)
+
+Skills used: `performance-optimization` (Skill tool). Through the `Aws` connector: `search_documentation` (agent_skills),
+then `retrieve_skill` for `querying-aws-s3`, `aws-storage`, `aws-compute`, `querying-data-lake` and `aws-sdk-python-usage`
+(found by the search for Python data processing). No account call in this pass. The classroom reads only owner-local
+pinned bytes on its lane: the ROOT spools, the sealed journal through the core reader, the teacher rows and the day file.
+It has no S3 read to speed up. The S3 skills apply to stage 1 (fetch), not here. S3 Metadata / Athena would add a copy
+outside the chained-hash reader, so they are not used (rejected, as recorded on 2026-10-07 evening).
+
+| Piece | Serial / under-used before (file:line at 4d5e585+) | Change | Skill | Expected gain (estimate) |
+|---|---|---|---|---|
+| Single ordered pass + source read | core `SharedMarketTimeline` already decodes with workers=15; the classroom loop is order-bound (`market_context`) | none: the source order is the contract; the journal witness already overlaps (eff34d5) | performance-optimization, aws-compute | 0 |
+| Native entry arithmetic, in-pass row closing | `_close_row` walked every dirty series and category per Dipole row, and `note` looped row by row up to the cursor | rows settle lazily per series (`_settle_numeric`, `_settle_category`, counts appended at their row); closing jumps by `bisect` over the sorted roster; same recorded runs, `fresh` counts and cutoff behaviour | performance-optimization | removes the about 5 min closing loop and part of the hot path (projected 25-35 min down to about 15-25 min on 20231018) |
+| Native entry pairs | already on threads (d8eb215) | unchanged | performance-optimization | already about 5x |
+| Dipole operands (171 pairs) | `_calculate_evidence` ran `dipole_classroom._pearson` / `_co_movement` (pure Python over the whole-day ledgers) serially (GUIDED, SOCRATIC, VERIFY) | `_pair_measures`: a fork pool sized to the lane (at most 16) shares the ledgers copy-on-write and runs the same functions per pair in pair order; fork only on Linux with one live thread, else serial; recorded in `received.dipole_pairs_pool` | performance-optimization, aws-compute (instance CPUs) | about 5-10 min to under 1 min |
+| External section | numpy pairs (`dipole_classroom_external._pair`), a few thousand pairs | unchanged: seconds | performance-optimization | 0 |
+| Anchor pictures | deepcopy at about 76 wanted cursors | unchanged | - | 0 |
+| Answers and ledgers | 19 component answers and the summary, Python string assembly, each a saved phase | unchanged: about 30 s total; a pool would break per-phase save/resume for little gain | performance-optimization | 0 |
+
+Canary (1-2 minutes, for the parent's canary session; not run): the classroom step on the one-day plan with
+`FRANKIE_NATIVE_CUTOFF_SECONDS=90`. It reads `received.dipole_pairs_pool` (basis, seconds),
+`native_entries.hot_path_seconds`, `native_entries.seconds`, `native_entries.pair_threads`, `native_entries.cutoff` (the
+cursor reached) and `read.pictures_seen` from the receipt. Extrapolate seconds per picture to the day's 1,543,574
+journal entries. Values, cursors, hashes and the source order are unchanged by construction.
