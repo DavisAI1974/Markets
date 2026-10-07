@@ -8,7 +8,8 @@ two channels: Codex integrates from the CCODE documents; a Claude session starts
 
 Codex's integration review of A-D landed as an ORDERED correction queue at the top of `CCODE_NEXT_SOURCE_TASKS_20261006.md`
 (D1; B7/C2; B2-B5; B1/B6/A4/C1), in Codex's `61264cac`. This session rebased clean onto it and returned one `[skip ci]` commit
-per group: `f2a43e80` D1, `3d7f1640` B7/C2, `130742ff` B2-B5, `a3651234` B1/B6/A4/C1, then the docs commit. Everything
+per group: `f2a43e80` D1, `3d7f1640` B7/C2, `130742ff` B2-B5, `a3651234` B1/B6/A4/C1, `744cae4c` docs, then `c94dcac0`
+(B7 by deletion, Greg: no cost references, see below); tip `c94dcac0`, pushed, worktree clean, scratchpad empty. Everything
 SOURCE-BUILT / RUNTIME-UNVERIFIED (`ast.parse` without project imports, `git diff --check`, the codebase-memory CLI index);
 nothing run, no reproduction called, the claims file byte-identical, Codex's two modules untouched, STOP before #5 kept.
 The per-finding record (what each correction does, the D1 field/unit table for Codex's price adapter, what stays open) is
