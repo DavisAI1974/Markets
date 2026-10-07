@@ -80,6 +80,43 @@ def _transition_operation(pin, lesson):
                 historical_binding_tables_sha256=records['binding_tables_sha256'])
 
 
+def _validate_operation(operation, lesson):
+    """Check one completed accumulated result against its frozen owner operation."""
+    pin, identity = operation['inputs'], operation['identity']
+    if (not isinstance(pin.get('path'), str) or not pin['path'] or type(pin.get('bytes')) is not int
+            or pin['bytes'] < 0 or not re.fullmatch('[0-9a-f]{64}', str(pin.get('sha256')))):
+        raise ValueError('correction transition lacks an exact frozen-input witness')
+    claims = lesson.get('claim_inputs')
+    if (not isinstance(claims, dict) or claims.get('schema') != 'FRANKIE_SCIENTIFIC_CLAIM_INPUTS_V1'
+            or lesson.get('claim_inputs_sha256') != _lesson_digest(claims)
+            or claims.get('author') != lesson['author']
+            or claims.get('claims_sha256') != lesson['claims_sha256']
+            or [c['id'] for c in claims['claims']] != [r['claim_id'] for r in lesson['results']]):
+        raise ValueError('correction transition has an inconsistent complete claim projection')
+    retest = lesson.get('knowledge_retest') or {}
+    expected = dict(input_sha256=pin['sha256'], claim_inputs_sha256=lesson['claim_inputs_sha256'],
+                    search_manifest_sha256=identity['manifest']['sha256'],
+                    source_lesson_sha256=operation['source_lesson_sha256'],
+                    source_lesson_content_sha256=operation['source_lesson_content_sha256'])
+    if any(retest.get(key) != value for key, value in expected.items()):
+        raise ValueError('correction transition differs from its completed result operation')
+    for key in ('selection_sha256', 'source_lesson_sha256', 'source_lesson_content_sha256',
+                'reproduction_records_selection_sha256', 'historical_binding_tables_sha256'):
+        if not re.fullmatch('[0-9a-f]{64}', str(operation.get(key))):
+            raise ValueError('correction transition lacks its complete operation binding: ' + key)
+    if (claims.get('reader_sha256') != identity['readers']['frankie_box_scientific_teacher']['sha256']
+            or any(claims.get(key) != operation[key] for key in
+                   ('reproduction_records_selection_sha256', 'historical_binding_tables_sha256'))
+            or identity.get('day') != lesson['day'] or not identity.get('brain')
+            or not identity.get('search') or lesson.get('results_sha256') != _lesson_digest(lesson['results'])):
+        raise ValueError('correction result differs from its scientific-owner input binding')
+    searches = lesson.get('searches') or []
+    if (len(searches) != 1 or searches[0].get('day') != identity['day']
+            or searches[0].get('dir') != identity['search']
+            or searches[0].get('manifest_sha256') != identity['manifest']['sha256']):
+        raise ValueError('correction transition must name the actual owning search')
+
+
 def _validate_transition(transition, before, after, publication):
     """Check the transported owner binding without exposing private frozen selections."""
     if (not isinstance(transition, dict) or transition.get('schema') != TRANSITION_SCHEMA
@@ -88,39 +125,7 @@ def _validate_transition(transition, before, after, publication):
     operations = []
     for name, lesson in (('original', before), ('replacement', after)):
         operation = transition[name]
-        pin, identity = operation['inputs'], operation['identity']
-        if (not isinstance(pin.get('path'), str) or not pin['path'] or type(pin.get('bytes')) is not int
-                or pin['bytes'] < 0 or not re.fullmatch('[0-9a-f]{64}', str(pin.get('sha256')))):
-            raise ValueError('correction transition lacks an exact frozen-input witness')
-        claims = lesson.get('claim_inputs')
-        if (not isinstance(claims, dict) or claims.get('schema') != 'FRANKIE_SCIENTIFIC_CLAIM_INPUTS_V1'
-                or lesson.get('claim_inputs_sha256') != _lesson_digest(claims)
-                or claims.get('author') != lesson['author']
-                or claims.get('claims_sha256') != lesson['claims_sha256']
-                or [c['id'] for c in claims['claims']] != [r['claim_id'] for r in lesson['results']]):
-            raise ValueError('correction transition has an inconsistent complete claim projection')
-        retest = lesson.get('knowledge_retest') or {}
-        expected = dict(input_sha256=pin['sha256'], claim_inputs_sha256=lesson['claim_inputs_sha256'],
-                        search_manifest_sha256=identity['manifest']['sha256'],
-                        source_lesson_sha256=operation['source_lesson_sha256'],
-                        source_lesson_content_sha256=operation['source_lesson_content_sha256'])
-        if any(retest.get(key) != value for key, value in expected.items()):
-            raise ValueError('correction transition differs from its completed result operation')
-        for key in ('selection_sha256', 'source_lesson_sha256', 'source_lesson_content_sha256',
-                    'reproduction_records_selection_sha256', 'historical_binding_tables_sha256'):
-            if not re.fullmatch('[0-9a-f]{64}', str(operation.get(key))):
-                raise ValueError('correction transition lacks its complete operation binding: ' + key)
-        if (claims.get('reader_sha256') != identity['readers']['frankie_box_scientific_teacher']['sha256']
-                or any(claims.get(key) != operation[key] for key in
-                       ('reproduction_records_selection_sha256', 'historical_binding_tables_sha256'))
-                or identity.get('day') != lesson['day'] or not identity.get('brain')
-                or not identity.get('search') or lesson.get('results_sha256') != _lesson_digest(lesson['results'])):
-            raise ValueError('correction result differs from its scientific-owner input binding')
-        searches = lesson.get('searches') or []
-        if (len(searches) != 1 or searches[0].get('day') != identity['day']
-                or searches[0].get('dir') != identity['search']
-                or searches[0].get('manifest_sha256') != identity['manifest']['sha256']):
-            raise ValueError('correction transition must name the actual owning search')
+        _validate_operation(operation, lesson)
         operations.append(operation)
     if (operations[0]['identity']['brain'] != operations[1]['identity']['brain']
             or operations[1]['identity']['day'] != publication['day']

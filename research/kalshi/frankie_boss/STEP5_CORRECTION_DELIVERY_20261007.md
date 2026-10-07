@@ -26,12 +26,47 @@ input/hash fields; there is no metadata exemption from unaffected-value equality
 corrections retain their existing interface. Standalone scientific CLI results without accumulated
 operation bindings remain unsupported for changed-input corrections, explicitly refused.
 
-This does not schedule a retest or wire a producer's publication. A second concrete scheduling
-gap is now traced: `teach_accumulated` builds `already_tested` from claim contents plus the search
-manifest, without the reader/table/reproduction-selection identity. A new output directory alone
-can therefore skip the requested correction on an unchanged search. The explicit successor must
-select the affected original claims and changed operation pins without reusing that old result
-or reopening unrelated work. Do not remove the ordinary deduplication guard globally.
+## Explicit successor retest and checked publication — 2026-10-07 continuation
+
+`frankie_box_teacher_knowledge.teach_successor(day, search, brain, out_dir, request=...)`
+now provides the explicit owner-local operation. The request has exactly `original_inputs`,
+`original_result`, `reason`, and `evidence`; the first two and every evidence item are actual
+path/bytes/SHA256 witnesses. It verifies the original completed result against its frozen
+operation and published brain identity before scientific work. It requires the same exact
+owner day, brain and unchanged search manifest, plus a distinct output directory.
+
+The operation selects exactly the original result's complete ordered claim set from the
+original frozen source, retaining the full source lesson. It schedules that explicit set
+through the existing teacher even on the same search; ordinary `teach_accumulated` deduplication
+is unchanged. No unrelated brain claims are reopened. Original reproduction records remain
+selected at their original pins; additional records in the new owner's reproduction directory
+join the frozen selection. Missing/changed originals refuse. Older bindings can be listed as
+inadmissible by the current scientific reader but are never silently erased. Later arrivals
+remain listed and require another explicit operation, not mutation of frozen inputs.
+
+The existing teacher writes complete results durably and reuses exact completed files on
+restart. A same-directory successor lock serializes calls; changed requests/readers refuse.
+The result's original and replacement operation bindings are checked before the durable
+`FRANKIE_TEACHER_SUCCESSOR_RECEIPT_V1` is returned. The receipt includes the actual new/reused
+file counts and both input witnesses needed by the correction publisher. Same-search retesting
+is explicitly not an independent observation.
+
+This candidate is NOT published as an ordinary newer lesson and does not replace the original.
+`publish_successor(brain, receipt=..., scopes=..., decision=..., reason=..., evidence=...)`
+now calls the existing `record_correction` after verifying the exact receipt and frozen request.
+The owner must supply the actual checked decision, evidence and all changed JSON addresses;
+none is inferred from result disposition, age or disagreement. The existing same-subject and
+unaffected-value guard still applies, including metadata. Publication/retry uses the existing
+correction lock/objects/record and reaches the existing learner delivery path immediately.
+After publication, retry the publication with its retained receipt; do not retest the replaced
+original. The retest entrypoint explicitly refuses an already-replaced original.
+
+Scope is deliberately precise: this supports operation-reader/binding/reproduction changes for
+one accumulated result's unchanged claims and search. Changed claim content, changed search
+inputs, a smaller affected subset within a multi-claim result, dependent exchange/request
+successors and main/worker dispatch/acknowledgment are not wired by this slice. No CLI or run
+loop invokes it automatically, no scientific decision is manufactured, and no actual retest or
+publication was performed. SOURCE-BUILT / RUNTIME-UNVERIFIED.
 
 ## Governing knowledge rule
 
@@ -89,16 +124,17 @@ The standalone reader hooks were completed by Codex after Greg's 22:46 ET owners
 The remaining gaps are:
 
 1. Scientific owners must explicitly supply a checked decision and successor after research or
-   correction. No producer currently calls `record_correction` automatically; an ordinary newer
-   or contradictory lesson must NEVER trigger it. There is no newly invented adjudication rule.
+   correction. The explicit `publish_successor` interface now calls `record_correction`; no producer
+   chooses a scientific decision automatically. An ordinary newer or contradictory lesson must NEVER trigger it. There is no newly invented adjudication rule.
 2. The accumulated-teacher identity transition is source-built as described above; standalone
-   CLI operation binding and corrected-successor scheduling remain incomplete. In particular,
-   a fresh directory alone does not overcome the existing same-claim/same-search reuse rule.
+   CLI operation binding and full corrected-successor scheduling remain incomplete. The explicit
+   accumulated-owner interface above overcomes same-search reuse only for its pinned original result;
+   the normal run loop still needs owner request/decision delivery and completion acknowledgment.
    The current runner refuses stale dependencies; it does not yet build every replacement
    operation. Existing immutable request identities and pending feedback must be carried forward
    by their owner, without an implicit scientific rerun or reopening unrelated completed days.
 3. Historical reproduction/rework, native learner decisions, the remaining step-2–4 gaps and
-   CCode's remaining B2-R/B4-R/BIND-R corrections remain open. Real computation requires Greg's separate authorization.
+   runtime verification of the integrated historical-binding/comparison fixes remain open. Real computation requires Greg's separate authorization.
 
 Verification: direct source/interface review, `ast.parse` on changed Python text without project
 imports and `git diff --check`. No synthetic exercises, tests or runtime claims.

@@ -16,7 +16,86 @@ def _digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
 
 
-def teach_accumulated(day, search, brain, out_dir):
+def teach_successor(day, search, brain, out_dir, *, request):
+    """Explicit owner retest of one original result; never a correction decision or publication.
+
+    Request carries original_inputs/original_result path/bytes/sha256 witnesses, reason and
+    evidence witnesses. It selects exactly the original result's ordered claims, not the rest
+    of the brain. This narrow route changes operation pins, not claim content or search evidence.
+    Its complete result still needs record_correction with a checked decision and exact scopes.
+    """
+    import fcntl
+    directory = Path(out_dir)
+    lock_path = directory / 'successor.lock'
+    if any(p.is_symlink() for p in (lock_path, *lock_path.parents)):
+        raise ValueError('successor owner directory traverses a symbolic link')
+    directory.mkdir(parents=True, exist_ok=True)
+    with lock_path.open('a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        return teach_accumulated(day, search, brain, directory, _successor=request)
+
+
+def publish_successor(brain, *, receipt, scopes, decision, reason, evidence):
+    """Publish only the owner's explicit checked decision about a retained successor result.
+
+    The decision, scopes and evidence are never inferred from a newer result or its disposition.
+    record_correction keeps the unchanged-knowledge guard and owns durable publication/reuse.
+    """
+    import frankie_box_experiment_review as REVIEW
+    completed = json.loads(REVIEW._read_pin(receipt))
+    if (completed.get('schema') != 'FRANKIE_TEACHER_SUCCESSOR_RECEIPT_V1'
+            or completed.get('publication') != 'awaiting_checked_owner_decision'
+            or len(completed.get('files') or []) != 1):
+        raise ValueError('successor publication requires one retained complete owner result')
+    request, transition = completed['successor_request'], completed['owner_transition']
+    if (transition['original_inputs'] != request['original_inputs']
+            or transition['replacement_inputs'] != completed['inputs']):
+        raise ValueError('successor receipt differs from its operation witnesses')
+    frozen = json.loads(REVIEW._read_pin(completed['inputs']))
+    if frozen['identity'].get('successor') != request:
+        raise ValueError('successor receipt differs from the frozen owner request')
+    return REVIEW.record_correction(brain, original=request['original_result'], replacement=completed['files'][0],
+                                    scopes=scopes, decision=decision, reason=reason, evidence=evidence,
+                                    publication_day=frozen['identity']['day'], owner_transition=transition)
+
+
+def _successor_document(request, identity, input_path, REVIEW, BR):
+    """Resolve explicit witnesses before any scientific work; preserve the original operation."""
+    if (not isinstance(request, dict)
+            or set(request) != {'original_inputs', 'original_result', 'reason', 'evidence'}
+            or not isinstance(request['reason'], str) or not request['reason'].strip()
+            or not isinstance(request['evidence'], list) or not request['evidence']):
+        raise ValueError('successor requires exact original witnesses, reason and evidence')
+    for pin in (request['original_inputs'], request['original_result'], *request['evidence']):
+        REVIEW._read_pin(pin)
+    original = json.loads(REVIEW._read_pin(request['original_result']))
+    if (original.get('schema') not in LESSONS or LESSONS[original['schema']] != original.get('author')
+            or original.get('written_by') != 'scientific_teacher'):
+        raise ValueError('successor needs an original completed scientific lesson')
+    operation = REVIEW._transition_operation(request['original_inputs'], original)
+    REVIEW._validate_operation(operation, original)
+    old = operation['identity']
+    if (old['day'] != identity['day'] or old['brain'] != identity['brain']
+            or old['search'] != identity['search'] or old['manifest'] != identity['manifest']
+            or Path(request['original_inputs']['path']).resolve().parent == input_path.resolve().parent):
+        raise ValueError('successor needs a distinct operation on the exact original owner/search')
+    records = REVIEW.corrections([Path(identity['brain'])])
+    legal = {e.get('sha256') for _, manifest, _ in BR.entries_before(identity['brain'], 'snapshot')
+             for e in manifest.get('entries', []) if e.get('include')}
+    legal.update(r['body']['replacement']['sha256'] for r in records.values())
+    if request['original_result']['sha256'] not in legal:
+        raise ValueError('successor original is not published learner knowledge')
+    if request['original_result']['sha256'] in records:
+        raise ValueError('successor original already has a checked replacement; select its current owner explicitly')
+    frozen = json.loads(REVIEW._read_pin(request['original_inputs']))
+    source = next(d for d in frozen['selection']['documents']
+                  if d['source']['sha256'] == operation['source_lesson_sha256']
+                  and _digest(d['lesson']) == operation['source_lesson_content_sha256'])
+    document = dict(source, claims=original['claim_inputs']['claims'])
+    return document, original, operation, frozen['selection']['reproduction_records']['files']
+
+
+def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
     """Return actual new result files, exact reuses and explicitly unconsumed inputs.
 
     Selection is captured once. Restart reads that selection even if publication has
@@ -53,6 +132,13 @@ def teach_accumulated(day, search, brain, out_dir):
                     producer=witness(__file__), readers={m.__name__: witness(m.__file__)
                                                        for m in (LS, BR, ST, EX, CC, HC, HR, REVIEW)})
     input_path = out_dir / 'inputs.json'
+    successor_document = original_result = original_operation = None
+    original_records = []
+    if _successor is not None:
+        successor_document, original_result, original_operation, original_records = _successor_document(
+            _successor, identity, input_path, REVIEW, BR)
+        # An explicit request is part of restart identity, not a mutable force/retry switch.
+        identity['successor'] = _successor
     # B5: the OWNER's reproduction records live beside its other outputs; the selection of its files is frozen with the
     # scientific inputs (below) and consumed by every test of this owner; later arrivals are listed in the receipt only.
     records_dir = out_dir / 'reproduction'
@@ -73,6 +159,27 @@ def teach_accumulated(day, search, brain, out_dir):
                               reproduction_records=[dict(r, reason='arrived after this owner froze its record selection; '
                                                                    'not consumed by the frozen selection')
                                                     for r in HR.record_selection(records_dir) if r['path'] not in frozen_records])
+    elif _successor is not None:
+        # Keep every original record, including old bindings now listed as inadmissible by
+        # the current reader. A new owner directory must not silently erase that evidence.
+        retained_records = {r['path']: r for r in original_records}
+        if len(retained_records) != len(original_records):
+            raise ValueError('original reproduction selection repeats a path')
+        for pin in original_records:
+            REVIEW._read_pin(pin)
+        for pin in HR.record_selection(records_dir):
+            if pin['path'] in retained_records and retained_records[pin['path']] != pin:
+                raise ValueError('successor reproduction record changed an original witness')
+            retained_records[pin['path']] = pin
+        selection = dict(documents=[successor_document], listed=[], versions=[],
+                         selection_listed=[], school_listed=[],
+                         reproduction_records=dict(directory=str(records_dir), files=list(retained_records.values()),
+                                                   binding_tables_sha256=HC.binding_tables_sha256(),
+                                                   rule='explicit successor owner record selection; later arrivals are not consumed'))
+        inputs = dict(schema='FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1', identity=identity,
+                      selection=selection, selection_sha256=_digest(selection))
+        write_json(input_path, inputs)
+        LS.require_current_selection(input_path, brain=brain)
     else:
         selected = LS.learner_knowledge(day, 'exchange', brain=brain)
         school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'], stage='exchange')
@@ -151,8 +258,17 @@ def teach_accumulated(day, search, brain, out_dir):
     input_hash = witness(input_path)['sha256']
     records_selection = inputs['selection'].get('reproduction_records') or dict(directory=str(records_dir), files=[])
     documents = inputs['selection']['documents']
+    if _successor is not None and documents != [successor_document]:
+        raise ValueError('successor retained selection differs from its exact original claims')
+    if _successor is not None:
+        selected_records = {r['path']: r for r in records_selection['files']}
+        if any(selected_records.get(r['path']) != r for r in original_records):
+            raise ValueError('successor retained selection lost original reproduction evidence')
+        for pin in records_selection['files']:
+            REVIEW._read_pin(pin)
     listed = list(inputs['selection']['listed'])
     reused, files = [], []
+    created_files = 0
 
     def claim_key(lesson, claim):
         # Identity deduplication never merges counts, distinct IDs, authors or scopes.
@@ -164,7 +280,7 @@ def teach_accumulated(day, search, brain, out_dir):
         current = any(str(s.get('day')) == day and
                       s.get('manifest_sha256') == manifest_witness['sha256']
                       for s in lesson['searches'])
-        if current:
+        if current and _successor is None:
             result_ids = {r['claim_id'] for r in lesson['results']}
             for claim in item['claims']:
                 if claim['id'] in result_ids:
@@ -284,6 +400,18 @@ def teach_accumulated(day, search, brain, out_dir):
                               records_dir=Path(records_selection['directory']), records_selection=records_selection['files'])
             result = dict(expected, results=results, results_sha256=_digest(results))
             write_json(path, result)
+            created_files += 1
+        if _successor is not None:
+            transition = dict(schema=REVIEW.TRANSITION_SCHEMA,
+                              owner='frankie_box_teacher_knowledge.teach_accumulated',
+                              original=original_operation,
+                              replacement=REVIEW._transition_operation(dict(path=str(input_path), **witness(input_path)), result))
+            REVIEW._validate_transition(transition, original_result, result, dict(day=day))
+            # Research result retained whole. Only an explicit checked decision can replace
+            # the original; do not publish this candidate as an ordinary additional lesson.
+            files.append(dict(path=str(path), **witness(path), author=lesson['author'],
+                              claim_ids=[c['id'] for c in claims], publication='awaiting_checked_owner_decision'))
+            continue
         # Publication is repeatable, including recovery after the complete file was saved.
         if lesson['author'] == 'search':
             # The standalone CCode publisher still refuses this new author. Use the
@@ -307,9 +435,19 @@ def teach_accumulated(day, search, brain, out_dir):
                  all_reused=not files, owner_native_evidence=native_ref is not None,
                  rule='new_result_files counts the result headers this call wrote; none means every claim was already '
                       'tested on this exact manifest or reused: no new result exists, nothing was computed')
-    return dict(inputs=dict(path=str(input_path), sha256=input_hash), files=files,
+    result = dict(inputs=dict(path=str(input_path), **witness(input_path)), files=files,
                 reused=reused, listed=listed, selection_listed=inputs['selection']['selection_listed'],
                 school_listed=inputs['selection']['school_listed'], late_knowledge=late_knowledge, scope=scope)
+    if _successor is not None:
+        result.update(schema='FRANKIE_TEACHER_SUCCESSOR_RECEIPT_V1',
+                      successor_request=_successor, publication='awaiting_checked_owner_decision',
+                      owner_transition=dict(original_inputs=_successor['original_inputs'], replacement_inputs=result['inputs']))
+        result['scope']['rule'] = ('explicit same-search owner retest, not independent evidence; result files include '
+                                  'exact completed reuses; no correction or ordinary lesson was published')
+        result['scope'].update(new_result_files=created_files, completed_result_files=len(files),
+                               all_reused=created_files == 0)
+        write_json(out_dir / 'successor-receipt.json', result)
+    return result
 
 
 def late_arrivals(day, brain, selection, LS):

@@ -1,5 +1,18 @@
 # Spec: the 30-day experiment orchestrator
 
+## Current Codex source slice — explicit Step 5 successor operation
+
+After integration `3a1416b7`, Codex added `teach_successor` and `publish_successor` in
+`frankie_box_teacher_knowledge.py`. An explicit witnessed owner request schedules one original
+accumulated result's ordered claims on its unchanged owning search, bypassing only that operation's
+same-search reuse. It preserves original reproduction records, retains/reuses complete candidates,
+and publishes only through a separately supplied checked decision and the existing scope guard.
+Read `STEP5_CORRECTION_DELIVERY_20261007.md` for the exact contract and limits. Normal owner
+request/decision dispatch, changed-claim/search transitions and dependent recovery remain open;
+Step 5 is not complete. CCode's Step 8A assignment remains active and disjoint. Step 7 remains
+pending at its prior checkpoint; `Run.jev` still waits. Source review/AST without project imports
+and whitespace checks only; no tests, data/model calls, reproduction or AWS activity.
+
 ## Step 8A source ownership — 2026-10-06 23:33 ET
 
 Greg assigned CCode a disjoint Step 8 source slice after Codex fixes the sixth-return issues.
