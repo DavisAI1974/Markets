@@ -238,18 +238,51 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                     learner_reading_producers=KR.producer_hashes())
     if market is not None:
         identity['shared_market'] = market.identity
+    # Inspection (Greg, 2026-10-07): every input this piece received, with path, bytes, sha256, the whole-day
+    # binding (as_of / through_cursor / source hash) and the source binding, recorded in the receipt itself so
+    # the reporter shows them from receipt.json alone. Recorded, not re-verified here; the checks above are the
+    # verification and they refuse on a mismatch.
+    received = dict(
+        schema='FRANKIE_CLASSROOM_RECEIVED_V1', day=day, calculations=str(calculations), teacher_rows=str(teacher_rows),
+        brain=str(Path(brain)),
+        root_receipt=dict(path=str(calculations / 'calculations-receipt.json'), sha256=identity['root_receipt']),
+        source_binding=dict(path=str(calculations / 'source-binding.json'),
+                            sha256=_sha256(calculations / 'source-binding.json'),
+                            shared_market_policy=(shared_policy.get('schema') if isinstance(shared_policy, dict)
+                                                  else shared_policy)),
+        ingestion_receipt=teacher_receipt.get('ingestion_receipt'),
+        teacher_receipt=dict(path=str(teacher_rows / 'receipt.json'), sha256=identity['teacher_receipt']),
+        teacher_attachment=dict(path=str(teacher_rows / 'teacher-attachment.pkl'), sha256=attachment_sha,
+                                bytes=(teacher_rows / 'teacher-attachment.pkl').stat().st_size),
+        binding=dict(request_id=p.get('request_id'), source_hash=p.get('source_hash'), as_of=p.get('as_of'),
+                     through_cursor=p.get('through_cursor'), cycle_index=0, cycle_count=1,
+                     note='through_cursor = record_count - 1 names the sealed day and its whole-day causal cutoff; '
+                          'it is an identity, not a claim that every input applied or every layer exists'),
+        day_file=dict(path=str(day_file), sha256=day_sha, bytes=Path(day_file).stat().st_size, found=day_source),
+        previous=carried, previous_external=external_carried,
+        directive=dict(path=str(DIRECTIVE_PATH), sha256=identity['directive']), rules=rules_witness,
+        producers=identity['producers'], learner_reading_producers=identity['learner_reading_producers'],
+        shared_market_identity=market.identity if market is not None else None,
+        shared_market_external=shared_external,
+        teacher_shared_market_arithmetic=teacher_receipt.get('shared_market_arithmetic'))
     state = _load_raw_state(state_path) if state_path.exists() else dict(identity=identity, started=time.time(), phases={})
     phase_directory = d / 'saved-phases'
     phase_directory.mkdir(exist_ok=True)
     if state['identity'] != identity:
         raise ValueError('saved classroom source, previous class, directive or destination changed')
+    # Where the classroom's time goes, per saved operation (Greg, 2026-10-07: show where a run spends its
+    # time): seconds of each operation when it was computed (kept across resumes from the saved state), or
+    # `restored` with no seconds when a phase file predates this field. Diagnostic only; never an input to
+    # any answer.
+    timings = state.setdefault('timings', {})
     def save():
         _save_raw_state(state_path, state)
         # Inspection-readable progress beside the pickle (Greg, 2026-10-07: every piece reports what it
         # received/used/produced): which operations are saved, so a stop/wait is visible without unpickling.
         _dump(d / 'phase-progress.json', dict(schema='FRANKIE_CLASSROOM_PHASE_PROGRESS_V1', day=day,
                                               saved_phases=list(state['phases']), started=state['started'],
-                                              saved_at=time.time(), stop_requested=bool(save_requested())))
+                                              saved_at=time.time(), stop_requested=bool(save_requested()),
+                                              timings=timings))
     def stop():
         if save_requested():
             save()
@@ -262,10 +295,13 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             if retained['name'] != name or retained['identity'] != identity:
                 raise ValueError('saved classroom operation belongs to another continuation')
             value = retained['value']
+            timings.setdefault(name, dict(restored=True, seconds=None))
         else:
             if name in state['phases']:
                 raise ValueError('saved classroom operation is missing; refuse recalculation')
+            clock = time.monotonic()
             value = operation()
+            timings[name] = dict(restored=False, seconds=round(time.monotonic() - clock, 3))
             _save_raw_state(path, dict(identity=identity, name=name, value=value))
         if name not in state['phases']:
             state['phases'][name] = path.name
@@ -362,7 +398,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                               'missing evidence never falls back to the host key',
                        teacher_rows=str(teacher_rows), shared_market_external=shared_external,
                        shared_market=shared_market.summary() if shared_market is not None else None,
-                       external=dict(day_file=dict(path=str(day_file), sha256=day_sha, found=day_source)))
+                       external=dict(day_file=dict(path=str(day_file), sha256=day_sha, found=day_source)),
+                       received=received, phase_timings=dict(timings), jev_material=dict(
+                           path=str(jev_path), sha256=hashlib.sha256(jev_raw).hexdigest(), bytes=len(jev_raw)))
         _dump(d / 'receipt.json', refusal)
         print(json.dumps(refusal), flush=True)
         return 3
@@ -482,6 +520,21 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     manifest = phase('brain_publication', publish_brain)
     if not (entry / 'MANIFEST.json').is_file() or json.loads((entry / 'MANIFEST.json').read_bytes()) != manifest:
         raise ValueError('published classroom brain manifest differs from its saved operation')
+    # Inspection (Greg, 2026-10-07): what this piece produced, each file with its pin. receipt.json cannot pin
+    # itself; phase-progress.json is progress, not a product. A name not on disk is listed, never pinned.
+    produced_names = (['code-answers.json', 'learner-knowledge.json', 'ledgers.json', 'classroom.md',
+                       'external-code-answers.json', 'external-novel-findings.json', 'transcript.md',
+                       'classroom-external.md', 'history.json', 'external-history.json',
+                       'package.external.pre_message.json', 'package.external.binding.json']
+                      + [f'package.{part}.c15.json' for part in ('source', 'teacher_key', 'pre_message', 'binding')]
+                      + [f'{name}.json' for name in files])
+    outputs_pinned, outputs_listed = {}, []
+    for name in produced_names:
+        path = d / name
+        if path.is_file():
+            outputs_pinned[name] = dict(path=str(path), bytes=path.stat().st_size, sha256=_sha256(path))
+        else:
+            outputs_listed.append(dict(name=name, reason='not on disk after the classroom wrote its files'))
     key = ext['teacher_key']
     result = dict(schema=SCHEMA, day=day, status='complete', mode=mode, components=report['components'],
                   observations=report['observations'], pairs=report['pairs'], novel_findings=len(novel),
@@ -526,7 +579,15 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                  why='the experiment has no principal request; the V1 request identity is the digest of the '
                                      'V1 model-visible request (unchanged), the external correction names the digest of the '
                                      'V2 request'),
-                  brain_entry=str(entry), brain_manifest=manifest, seconds=round(time.time() - started, 1), model_calls=0)
+                  brain_entry=str(entry), brain_manifest=manifest, seconds=round(time.time() - started, 1), model_calls=0,
+                  # Inspection (Greg, 2026-10-07): received with pins, produced with pins, where the time went.
+                  received=received,
+                  outputs=dict(schema='FRANKIE_CLASSROOM_OUTPUTS_V1', directory=str(d), pinned=outputs_pinned,
+                               listed=outputs_listed,
+                               brain_entry=dict(path=str(entry), manifest_entries=[
+                                   dict(name=e.get('name'), bytes=e.get('bytes'), sha256=e.get('sha256'), include=e.get('include'))
+                                   for e in manifest.get('entries', [])])),
+                  phase_timings=dict(timings))
     result = phase('receipt', lambda: result)
     _dump(d / 'receipt.json', result)
     stop()

@@ -67,6 +67,8 @@ unclosed_instruments closed_source_without_root_frame unplaceable_input_clocks i
 shared_market_context shared_market_context_listed shared_market adviser_market_reader workflow_report
 claims_seal scientific_result deliveries client_receipt pending unparsed jev_withheld teacher_rows
 teacher_rows_listed lessons exchange_hash refused_to_run inputs
+received phase_timings timings read pinned
+axis discovery fft_cache hashing exact_membership equation_not_run findings
 '''.split())
 WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the adviser pieces' own inputs / use / outputs record
 
@@ -79,19 +81,21 @@ journal_sha256 manifest_sha256 data_manifest_sha256 shared_market_identity share
 day_external day_role partial_members tail_members opening_book input_sources claim_inputs claim_inputs_sha256
 searches searched_days requested_search_days frozen_survivors entity binding source commit plan_sha256
 teacher_rows shared_market_external teacher_shared_market_arithmetic learner_reading carried_from_previous
-school_knowledge stage_knowledge classroom_rules experiment_directive
+school_knowledge stage_knowledge classroom_rules experiment_directive received
 '''.split())
 USED = set('''coverage completeness arithmetic equation shared_market_arithmetic shared_market_use root_processes not_run
 layers dispositions frame_dispositions pairing exclusions leakage lags transforms cells_not_counted not_searched
 missing excluded withheld listed reason caveat rule interpretation limitation view absent_layers unclosed_instruments
 closed_source_without_root_frame unplaceable_input_clocks completed_sources stopped
-shared_market anchor_pictures source_status_counts applied_to
+shared_market anchor_pictures source_status_counts applied_to phase_timings timings read
+axis exact_membership fft_cache hashing equation_not_run
 '''.split())
 PRODUCED = set('''outputs rows entity_rows rows_file attachment_file failure_count status shared_market_sources
 presented_inputs external_publications integrity_failure placed_series placed_cells couplings series cells planes
 results reports brain_entry brain_entries external_section external_computation frame_sections files
 mode components observations pairs novel_findings novel_finding_ids dropped_findings correction_ids
 teacher_complete completion_hash external_novel_finding_ids jev_material saved_phases stop_requested
+discovery findings unclaimed
 '''.split())
 
 _OUT = []          # the current piece's markdown; stdout when no --write directory is given
@@ -152,7 +156,8 @@ def metadata(path, label):
 
 
 def workflow_report_block(body, label):
-    """The piece's own FRANKIE_PIECE_WORKFLOW_REPORT_V1 (exchange, Granite meeting, Jev CPU, Jev sit-in): the
+    """The piece's own FRANKIE_PIECE_WORKFLOW_REPORT_V1 (exchange, Granite meeting, Jev CPU, Jev sit-in; since
+    2026-10-07 also the BOSS teacher receipt, the data export MANIFEST and the search MANIFEST): the
     inputs it received (the cutoff picture's source, as_of/through_cursor, hash, bytes), how it used them
     (which picture values reached which prompt or record, what a role or the privacy wall withheld, every
     missing/stale/unavailable disposition, caps that refused) and what it produced (seals, inputs with pins,
@@ -192,6 +197,9 @@ def classroom_projection(receipt, path):
     json_block(dict(
         status=receipt.get('status'), mode=receipt.get('mode'),
         inputs=dict(
+            # every input the classroom recorded receiving, with path/bytes/sha256 and the whole-day binding
+            # (FRANKIE_CLASSROOM_RECEIVED_V1; None on a receipt written before the field existed)
+            received=receipt.get('received'),
             shared_source_identity=shared.get('identity'),
             shared_source_read=dict(source_exhausted=coverage.get('source_exhausted'),
                                     core_report_complete=coverage.get('core_report_complete'),
@@ -209,8 +217,15 @@ def classroom_projection(receipt, path):
         use=dict(entered=use.get('entered'), arithmetic=use.get('arithmetic'), components=use.get('components'),
                  partial_missing_stale=use.get('partial_missing_stale'), completed_only=use.get('completed_only'),
                  knowledge_applied_to=(receipt.get('stage_knowledge') or {}).get('applied_to'),
+                 # where the time went: the classroom's own full ordered pass (pictures seen, when the last
+                 # anchor was retained, the tail after it) and seconds per saved operation; diagnostic only
+                 shared_read_timing=(use.get('received') or {}).get('read'),
+                 phase_timings=receipt.get('phase_timings'),
                  limit=use.get('limit') or shared.get('limit')),
         outputs=dict(
+            # every file the classroom produced, with its pin, and the brain entry's manifest entries
+            # (FRANKIE_CLASSROOM_OUTPUTS_V1; None on a receipt written before the field existed)
+            pinned=receipt.get('outputs'),
             components=receipt.get('components'), observations=receipt.get('observations'), pairs=receipt.get('pairs'),
             novel_finding_ids=receipt.get('novel_finding_ids'), dropped_findings=receipt.get('dropped_findings'),
             correction_ids=receipt.get('correction_ids'), teacher_complete=receipt.get('teacher_complete'),
@@ -284,7 +299,24 @@ def artifact_paths(record, piece):
         if isinstance(item, dict) and item.get('day') == record.get('_inspection_day'):
             rows = absolute(item.get('rows'))
             if rows:
-                out.append(rows / 'receipt.json')
+                # The teacher-only step: its receipt.json (FRANKIE_EXPERIMENT_TEACHER_ROWS_V1 with the piece's
+                # workflow report), the measured knowledge the Run filed beside it (teacher-knowledge.json) and
+                # the BOSS teacher's external-section receipt. Rows, attachment and walk state are never opened.
+                out += [rows / 'receipt.json', rows / 'teacher-knowledge.json',
+                        rows / 'external-section' / 'receipt.json']
+    if target and piece == 'search':
+        # The search's own findings record (its brain source) and the symbolic discovery index
+        # beside its MANIFEST; coupling parts and equation parts are never opened here.
+        out += [target / 'knowledge-findings.json', target / 'discovery' / 'INDEX.json']
+    entries = [record.get('brain_entry'), record.get('teacher_brain_entry')]
+    if isinstance(record.get('brain_entries'), dict):
+        entries += list(record['brain_entries'].values())
+    for publication in entries:
+        if isinstance(publication, dict):
+            # The immediate brain commit of this piece: its MANIFEST only (pins of what was filed).
+            entry = absolute(publication.get('path')) or absolute(publication.get('entry'))
+            if entry:
+                out.append(entry if entry.suffix == '.json' else entry / 'MANIFEST.json')
     for field in ('exchange', 'frankie_view', 'meeting'):
         path = absolute(record.get(field))
         if path:
