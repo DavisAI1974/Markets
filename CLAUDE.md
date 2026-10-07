@@ -1,3 +1,9 @@
+# Claude session drop-in — 2026-10-07 night, session 4: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007_NIGHT_SESSION4.md`
+
+Branch `ccr-d2f8f826-iefeah-frankie`. Parent-only; agents (model "opus") do the work. FIRST check the main box and run
+e2e-20231018-a2 (saved or running). Then, in order: APPLY the AWS stack to ROOT, push, relaunch, then AWS work on
+every other piece. Full frames, nothing dropped or shrunk (absolute). The session-3 drop-in is superseded by session 4.
+
 # Claude session drop-in — 2026-10-07 night, session 3: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007_NIGHT_SESSION3.md`
 
 Branch `ccr-d2f8f826-iefeah-frankie`. Parent-only; agents (model "opus") do the work. Greg's go for the one-day E2E on
