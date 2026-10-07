@@ -1024,25 +1024,66 @@ class Run:
 
     # the classroom arm (V2: the 19/171 classroom plus the external section) and Jev's material
     def previous_of(self, e):
-        """(PREVIOUS classroom directory or None, why it waits or None, where it came from)."""
+        """(PREVIOUS classroom directory or None, why it waits or None, where it came from). The class line pins the
+        selection in its entry; outside the line the selection is PERSISTED in the day's continuation
+        (days/<day>/previous.json, create-only) the first time it is made, explicit none included, so a retry after a
+        save or a failure carries the same PREVIOUS and never repicks a newer classroom."""
         if self.queue_previous is not None:        # the class worker: class k carries class k-1 of the class line
             return self.queue_previous
+        kept = self.previous_kept(e['day'])
+        if kept is not None:
+            return kept['classroom'], None, kept['from'] + ' (kept from %s)' % kept['selected_utc']
+        selection = None
         if e.get('previous_classroom'):
-            return e['previous_classroom'], None, 'plan (the day)'
-        arm_days = [x for x in self.plan['days'] if x['classroom_arm']]
-        i = [x['day'] for x in arm_days].index(e['day'])
-        if i > 0:
-            prev = arm_days[i - 1]['day']
-            r = self.receipt('classroom', prev)
-            if not (r and r['status'] in ('done', 'reused') and r.get('classroom')):
-                return None, 'the previous arm day %s has no complete classroom yet (its history is carried in)' % prev, None
-            return r['classroom'], None, 'the previous arm day of this run (%s)' % prev
-        if self.plan.get('previous_classroom'):
-            return self.plan['previous_classroom'], None, 'plan (PREVIOUS_CLASSROOM)'
-        found, found_day = latest_completed_classroom(e['day'])
-        if found is None:
-            return None, None, 'none: no other complete classroom on the box (history starts here)'
-        return str(found), None, 'the most recently completed classroom on the box (%s; trading-date order ignored)' % found_day
+            selection = e['previous_classroom'], None, 'plan (the day)'
+        else:
+            arm_days = [x for x in self.plan['days'] if x['classroom_arm']]
+            i = [x['day'] for x in arm_days].index(e['day'])
+            if i > 0:
+                prev = arm_days[i - 1]['day']
+                r = self.receipt('classroom', prev)
+                if not (r and r['status'] in ('done', 'reused') and r.get('classroom')):
+                    return None, 'the previous arm day %s has no complete classroom yet (its history is carried in)' % prev, None
+                selection = r['classroom'], None, 'the previous arm day of this run (%s)' % prev
+            elif self.plan.get('previous_classroom'):
+                selection = self.plan['previous_classroom'], None, 'plan (PREVIOUS_CLASSROOM)'
+            else:
+                found, found_day = latest_completed_classroom(e['day'])
+                if found is None:
+                    selection = None, None, 'none: no other complete classroom on the box (history starts here)'
+                else:
+                    selection = str(found), None, ('the most recently completed classroom on the box (%s; trading-date order '
+                                                   'ignored)' % found_day)
+        self.previous_keep(e['day'], selection)
+        return selection
+
+    def previous_path(self, day):
+        return self.dir / 'days' / day / 'previous.json'
+
+    def previous_kept(self, day):
+        path = self.previous_path(day)
+        if not path.is_file():
+            return None
+        kept = json.loads(path.read_bytes())
+        if kept.get('schema') != 'FRANKIE_PREVIOUS_SELECTION_V1' or kept.get('day') != day or kept.get('run') != self.plan['run']:
+            raise ValueError('%s is not this run/day\'s previous-classroom selection' % path)
+        return kept
+
+    def previous_keep(self, day, selection):
+        """The selection written once (create-only) BEFORE the first child dispatch; a selection kept meanwhile wins."""
+        path = self.previous_path(day)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        body = dict(schema='FRANKIE_PREVIOUS_SELECTION_V1', run=self.plan['run'], day=day, classroom=selection[0],
+                    **{'from': selection[2]}, selected_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                    selected_by_commit=self.commit)
+        try:
+            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+        except FileExistsError:
+            return
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(body, indent=1, sort_keys=True) + '\n')
+            f.flush()
+            os.fsync(f.fileno())
 
     def classroom_ready(self, e):
         """The classroom step's readiness checks, in its order: (None, None, facts) when the day may take its class now;
@@ -1704,8 +1745,21 @@ class Run:
                            'rows missing for %s, waiting on ingest %s (those days go on without Dipole rows, listed)'
                            % (missing, waiting))
 
+    TEACHER_KNOWLEDGE_PRODUCERS = ('research/kalshi/frankie_boss/dipole_classroom.py',
+                                   'research/kalshi/frankie_boss/dipole_classroom_integration.py',
+                                   'research/kalshi/frankie_boss/c15_journal.py',
+                                   'deploy/aws/box/frankie_box_experiment_teacher.py')
+
+    def teacher_producer_identity(self):
+        """The exact producers a teacher-knowledge summary is bound to: the staged commit and the sha256 of the modules
+        that compute the teacher key from the rows (and the teacher step that wrote the rows)."""
+        return dict(commit=self.commit, modules={name: sha256_file(self.code_root / name) for name in self.TEACHER_KNOWLEDGE_PRODUCERS})
+
     def teacher_knowledge(self, day, rows_path, source):
-        """Publish every measured component/pair result; per-cursor teacher evidence stays on its owning box."""
+        """Publish every measured component/pair result; per-cursor teacher evidence stays on its owning box. A new summary
+        is bound to the exact producer identities that made it; a retained summary whose producer identity differs from
+        the current one, or is not established (an older summary without one), is NOT reused and NOT regenerated here: the
+        old result is preserved and an explicit checked successor (the correction route) is required."""
         from research.kalshi.frankie_boss import dipole_classroom as DC, dipole_classroom_integration as I
         from research.kalshi.frankie_boss.c15_journal import unpack
         from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
@@ -1713,10 +1767,22 @@ class Run:
         rows_path = Path(rows_path)
         source_sha = sha256_file(rows_path)
         path = rows_path.parent / 'teacher-knowledge.json'
+        producer = self.teacher_producer_identity()
         if path.exists():
             body = json.loads(path.read_bytes())
             if body['source']['sha256'] != source_sha or body['day'] != day:
                 raise ValueError('retained teacher knowledge belongs to another source/day')
+            retained = body.get('producer')
+            if retained is None:
+                raise ValueError('retained teacher knowledge %s carries no producer identity (unestablished): the old result '
+                                 'is preserved; an explicit checked successor is required before it is taught again' % path)
+            if retained != producer:
+                changed = sorted(k for k in set(retained.get('modules') or {}) | set(producer['modules'])
+                                 if (retained.get('modules') or {}).get(k) != producer['modules'].get(k))
+                raise ValueError('retained teacher knowledge %s was produced by another producer identity (commit %s vs %s; '
+                                 'modules changed: %s): the old result is preserved, nothing is regenerated here; an '
+                                 'explicit checked successor is required' % (path, retained.get('commit'), producer['commit'],
+                                                                             changed or 'none'))
         else:
             snapshot = unpack(json.loads(rows_path.read_bytes()))
             key = I._repin_teacher_key_correlations(DC.build_teacher_key(snapshot))
@@ -1733,6 +1799,7 @@ class Run:
                         source=dict(path=str(rows_path), sha256=source_sha, bytes=rows_path.stat().st_size,
                                     owner=os.environ.get('FRANKIE_LANE_OWNER', 'main'),
                                     snapshot_hash=key['source_snapshot_hash']),
+                        producer=producer,
                         findings=json_form(findings),
                         rule='all component/pair measured outputs individually; every cursor/state/reason remains '
                              'in the exact source, consumed by the teacher; no host grade or student decision process')
