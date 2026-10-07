@@ -1340,3 +1340,52 @@ Uncommitted; source only; nothing ran; no account call. File: `deploy/aws/box/fr
   call.
 
 Checks: AST parse and `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.
+
+## 22. Performance pass on my pieces (Greg, 2026-10-07: every piece uses the lane and the AWS efficiency tools)
+
+Uncommitted; source only; nothing ran (no canary: the parent runs one canary session after all agents return).
+
+**Skills used.**
+- `performance-optimization` (Skill tool): data shape first; change only measured hot spots; keep/revert by canary.
+- Through the Aws connector (`search_documentation` with agent_skills, then `retrieve_skill`):
+  - `aws-storage` + `references/s3-general-purpose-knowledge.md` -> the S3 performance guidance read with
+    `search_documentation`:
+    - concurrent byte-range GETs of 8-16 MB;
+    - about one connection per 85-90 MB/s, about 15 for a 10 Gb/s NIC;
+    - parallel requests across objects.
+  - `querying-aws-s3`, `querying-data-lake`, `ingesting-into-data-lake`: read. Not adopted for these pieces: the day
+    prefixes hold a handful of objects, and the calcs read local sealed files. S3 Metadata/Athena/S3 Tables would be
+    new hosting and infrastructure, outside this pass. No code change.
+  - `aws-compute` + `references/instance-selection.md`: the main box is a fixed-performance r7i (no burst credits) and
+    the sealed ingests are on EBS. No instance change.
+  - `aws-billing-and-cost-management`: cost of the ranged GETs (below).
+
+**Account calls this pass:** `search_documentation` x2, `retrieve_skill` x7 (documentation and skills only). No
+resource read or changed.
+
+| Piece | Now (file:line before) | Change | Skill | Expected gain (estimate) | 1-2 min canary |
+|---|---|---|---|---|---|
+| Sealed-ingest pull from S3 | `frankie_box_pull_runner_ingest.sh` `download`: one urllib stream per object, the journal (tens of GB) included | `ranged_download`: objects above 64 MiB fetched as concurrent 16 MiB byte ranges (`RANGE_STREAMS`, default 15) with `os.pwrite` at offsets; completed ranges kept in `.part.ranges` for resume (an old one-stream `.part` counts its whole leading ranges). The pointer sha256/bytes checks after the pull are unchanged | aws-storage (byte-range fetches, parallel connections) | one stream is about 85-90 MB/s, so a 23 GB journal takes about 4-5 min; 15 ranges move up to the NIC/EBS limit, about 4-8x (EBS write throughput is then the ceiling) | `RANGE_STREAMS=15` vs `1` on one day's pull, stopped after 90 s: compare the bytes in `.part.ranges` / `.part` |
+| Day-file build fetch | `frankie_box_day_external.py` `fetch`: about 1,000 small day-history objects, one `curl` at a time | `_fetch_one` per key through a ThreadPoolExecutor (`FETCH_STREAMS`, default 16); the listing kept in key order; byte checks unchanged; a missing `.part` after a failed curl is now `failed`, not an exception | aws-storage (parallel requests across objects) | dominated by per-object connection setup, so about 10-15x on the fetch phase (minutes to tens of seconds) | `ACTION=build` of one day with `FETCH_STREAMS=16` vs `1`, stopped after 90 s: count `downloaded` lines in the log |
+| External step S3 day file | `Run.external_from_s3` `fetch`: one urllib stream for the ~35 MB file | `ranged_fetch`: 16 MiB ranges, up to 8 at once, when the object exceeds 32 MiB; sha256/bytes/receipt/`check_day_file` checks unchanged | aws-storage | small (about 1-2 s per day); kept because it is the same rule | time the external step for 20231018 with an S3 listing in the map |
+| Scientific teacher (lessons) | `frankie_box_scientific_teacher.test`: every search coupling part hashed and needle-scanned in one process | `_scan_part` per part over a fork Pool of the child's CPUs minus one (the held lane: 15). Results merged in (day, part, line) order, so selected rows, ordinals, raw-line hashes, counts and the pin checks are identical. Inline when one part, one CPU (Jev's shared CPU) or a threaded caller | performance-optimization (data shape: independent parts, CPU-bound hash and scan) | about 10x on the scan phase for a day with many parts (it was one core of sixteen) | `frankie_box_scientific_teacher.sh` on one searched day, stopped at 90 s: compare `parts_read` in the progress / phase timing |
+| Queue owner, Jev start | `frankie_box_frankie_queue._finish_steps`: the owning day polled its class entry every 60 s, so Jev and the close started up to a minute after the class ended | `OWNER_CLASS_POLL = 15` | performance-optimization (needless wait) | up to 45 s earlier Jev/close per arm day | the queue event log: class `done` to the owner's `jev` start, before vs after |
+| BOSS teacher | `frankie_box_experiment_teacher.sh:75` already runs `--workers $((SHARE - 1))` (15) under taskset of the held lane | none | - | - | - |
+| Exchange, school, reports, survivors, inspection, stage_progress | small JSON documents; process start dominates | none; reasoned from the data shape | performance-optimization | - | - |
+| Granite meeting, Jev | one shared lane CPU by Greg's design; the slot claim polls every 5 s (`frankie_box_cores.SLOT_WAIT_POLL`) | only the owner poll above | - | see the queue row | - |
+| The teacher's journal hash | `_teach` hashes the sealed journal once (about 15 s for 23 GB at about 1.5 GB/s); a sha256 is sequential | not changed: a cross-process witness cache would change the verification policy, and the gain is small | performance-optimization (measure first) | - | - |
+
+**Cost** (aws-billing-and-cost-management):
+- Ranged GETs raise the GET request count to about 1,440 per 23 GB journal at 16 MiB. At S3 Standard GET pricing that
+  is a fraction of a cent per day.
+- The data transferred is unchanged. Cross-region transfer applies as before, since the box is in us-east-1 and the
+  bucket in us-east-2.
+
+**Invariants.** Bytes, sha256 checks, pins, listing order, row order, ordinals and counts are unchanged in every
+changed path. No new scheduler.
+
+**Checks:** AST parse clean (four .py files plus the pull script's Python heredoc); `bash -n` clean on the pull
+script; `git diff --check` clean.
+
+SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED. Each change is kept only if its canary beats the baseline (the
+performance skill's keep/revert rule).

@@ -1394,7 +1394,9 @@ def _finish_steps(run, e, code_root, commit, log):
                 return ('waiting' if door == 'waiting' else 'failed'), facts
             if cl is None:
                 facts['class_line'] = _after_root(run, e, code_root, commit, log)
-            time.sleep(60)
+            # the owner's poll of its class entry: 15 s (was 60), so Jev and the close start within 15 s of the class
+            # ending instead of up to a minute later; one small JSON read under the queue lock per poll
+            time.sleep(OWNER_CLASS_POLL)
         facts['frankie'] = dict(status=state or 'classroom finished', reason=(cl or {}).get('reason'),
                                 school_day=(cl or {}).get('school_day'))
         if state == 'failed':
@@ -1450,6 +1452,9 @@ def _finish_steps(run, e, code_root, commit, log):
         facts['reports_revision'] = dict(status=r.get('status'), reason=r.get('reason'),
                                          trigger='late pieces after Jev (reports_stale)')
     return _close(run, e, facts)
+
+
+OWNER_CLASS_POLL = 15        # seconds between the owning day's reads of its class entry (performance pass, 2026-10-07)
 
 
 def _close(run, e, facts):

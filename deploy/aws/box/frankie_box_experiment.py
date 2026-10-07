@@ -193,6 +193,36 @@ NATIVE_CUTOFF_ENV = dict(native_cutoff_seconds='FRANKIE_NATIVE_CUTOFF_SECONDS',
 NATIVE_CUTOFF_PLAN_KEYS = tuple(NATIVE_CUTOFF_ENV)
 
 
+RANGE_BYTES = 16 << 20       # aws-storage skill / S3 performance guidance: concurrent 8-16 MB byte-range GETs
+RANGE_STREAMS = 8            # the S3 day file is ~35 MB: a few ranges at once; the journal pull uses its own (15)
+
+
+def ranged_fetch(url, target, size, streams=RANGE_STREAMS, range_bytes=RANGE_BYTES):
+    """One presigned GET object written to target as concurrent byte ranges (os.pwrite at their offsets). Raises on any
+    short range or non-206 answer; the caller checks the whole file's bytes and sha256 against its receipt as before."""
+    import urllib.request
+    total = max(1, (size + range_bytes - 1) // range_bytes)
+    fd = os.open(target, os.O_RDWR | os.O_CREAT | os.O_TRUNC, 0o644)
+    try:
+        os.ftruncate(fd, size)
+
+        def one(i):
+            start, end = i * range_bytes, min(size, (i + 1) * range_bytes) - 1
+            request = urllib.request.Request(url, headers={'Range': 'bytes=%d-%d' % (start, end)})
+            with urllib.request.urlopen(request, timeout=300) as response:
+                if response.status != 206:
+                    raise ValueError('range GET answered %s, not 206' % response.status)
+                data = response.read()
+            if len(data) != end - start + 1:
+                raise ValueError('range %d returned %d of %d bytes' % (i, len(data), end - start + 1))
+            os.pwrite(fd, data, start)
+        with ThreadPoolExecutor(max(1, min(streams, total))) as pool:
+            list(pool.map(one, range(total)))
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def pin_or_listed(path):
     """file_pin(path), or {path, unavailable: why} when the file cannot be read now (never raises; None for no path).
     For small metadata files only (manifests, receipts, the day file); a journal is pinned from its receipt instead."""
@@ -1818,8 +1848,11 @@ class Run:
             stage_dir.mkdir(parents=True, exist_ok=True)
             target = stage_dir / name
             pending = target.with_name(name + '.pending')
-            with urllib.request.urlopen(item['url'], timeout=900) as response, open(pending, 'wb') as out:
-                shutil.copyfileobj(response, out, 8 * 1024 * 1024)
+            if (item.get('bytes') or 0) > 2 * RANGE_BYTES:
+                ranged_fetch(item['url'], pending, item['bytes'])      # the day file: concurrent byte ranges
+            else:
+                with urllib.request.urlopen(item['url'], timeout=900) as response, open(pending, 'wb') as out:
+                    shutil.copyfileobj(response, out, 8 * 1024 * 1024)
             if pending.stat().st_size != item.get('bytes'):
                 raise ValueError('%s: %d bytes fetched, S3 listed %s' % (keys[name], pending.stat().st_size, item.get('bytes')))
             os.replace(pending, target)

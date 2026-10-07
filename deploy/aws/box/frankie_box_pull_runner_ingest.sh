@@ -5,6 +5,7 @@
 #   DAYS=<d1,d2,..>  RUN=<GitHub run id of the runner ingest>  ATTEMPT=<its attempt, default 1>
 #   POINTERS_SHA=<the commit on branch frankie-ingest-pointers holding ingest_pointers/<day>-gh-<run>-<attempt>.json>
 #   PARALLEL=<days pulled side by side, default 2>
+#   RANGE_STREAMS=<concurrent 16 MiB byte-range GETs per large object, default 15; 1 = the one-stream download>
 #   POINTER_SOURCE=artifact (instead of POINTERS_SHA; 2026-09-29, the combined pointer commit is written only after every
 #     day of the run ends): each day's pointer is its own runner-ingest job's workflow artifact ingest-pointer-<day> of
 #     RUN, read from the GitHub API with the token in SSM /markets/frankie/github-token (us-east-2; memory only, never
@@ -34,6 +35,7 @@ case "$POINTER_SOURCE" in ""|artifact) ;; *) echo "POINTER_SOURCE must be artifa
 case "$RUN" in ""|*[!0-9]*) echo "RUN must be the runner ingest's GitHub run id"; exit 2;; esac
 case "$ATTEMPT" in ""|*[!0-9]*) echo "ATTEMPT must be an integer"; exit 2;; esac
 case "$PARALLEL" in ""|*[!0-9]*|0) echo "PARALLEL must be a positive integer"; exit 2;; esac
+case "${RANGE_STREAMS:-15}" in ""|*[!0-9]*|0) echo "RANGE_STREAMS must be a positive integer"; exit 2;; esac
 [ -n "$DAYS" ] || { echo "DAYS required (comma list of YYYYMMDD)"; exit 2; }
 for D in $(echo "$DAYS" | tr ',' ' '); do
   case "$D" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "DAYS must be YYYYMMDD values ($D)"; exit 2;; esac
@@ -58,7 +60,7 @@ if [ -n "$POINTERS_SHA" ]; then
 fi
 echo "### free before: $(df -B1 --output=avail "$ROOT" | tail -1) bytes"
 MAPF="$MAPF" WORK="$WORK" ROOT="$ROOT" DAYS="$DAYS" RUN="$RUN" ATTEMPT="$ATTEMPT" POINTERS_SHA="$POINTERS_SHA" \
-POINTER_SOURCE="$POINTER_SOURCE" PARALLEL="$PARALLEL" nice -n 10 ionice -c2 -n7 "$PY" - <<'PYEOF'
+POINTER_SOURCE="$POINTER_SOURCE" PARALLEL="$PARALLEL" RANGE_STREAMS="${RANGE_STREAMS:-15}" nice -n 10 ionice -c2 -n7 "$PY" - <<'PYEOF'
 import hashlib, json, os, subprocess, sys, time, urllib.error, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -133,10 +135,77 @@ def sealed(day):
             out.append(str(r.parent))
     return out
 
+RANGE_BYTES = 16 << 20         # S3 performance guidance (aws-storage skill, "byte-range fetches"): 8-16 MB ranges
+RANGE_STREAMS = int(E.get('RANGE_STREAMS') or 15)   # ~one stream per 85-90 MB/s; about 15 saturate a 10-12.5 Gb/s NIC
+RANGED_ABOVE = 64 << 20        # smaller objects keep the one-stream download below
+
+
+def ranged_download(url, dest, size):
+    """A large object fetched as concurrent byte ranges (RANGE_BYTES each, RANGE_STREAMS at a time) written in place into
+    dest.part at their offsets (os.pwrite); the completed range indexes are recorded in dest.part.ranges (fsynced after
+    every range), so an interrupted pull resumes with only the missing ranges. A .part written by the older one-stream
+    download (no .ranges file) counts its whole leading ranges as done. The bytes are the object's own; the caller then
+    hashes the whole file against the pointer exactly as before (nothing about the identity check changes)."""
+    part = dest.with_name(dest.name + '.part')
+    ranges_path = dest.with_name(dest.name + '.part.ranges')
+    total = (size + RANGE_BYTES - 1) // RANGE_BYTES
+    done = set()
+    if ranges_path.exists():
+        try:
+            done = set(json.loads(ranges_path.read_text()).get('done') or [])
+        except ValueError:
+            done = set()
+    elif part.exists():
+        have = part.stat().st_size
+        done = {i for i in range(total) if min(size, (i + 1) * RANGE_BYTES) <= have}
+    fd = os.open(part, os.O_RDWR | os.O_CREAT, 0o644)
+    import threading
+    lock = threading.Lock()
+    try:
+        if os.fstat(fd).st_size < size:
+            os.ftruncate(fd, size)
+        def fetch(i):
+            start, end = i * RANGE_BYTES, min(size, (i + 1) * RANGE_BYTES) - 1
+            for attempt in range(8):
+                try:
+                    req = urllib.request.Request(url, headers={'Range': 'bytes=%d-%d' % (start, end)})
+                    with urllib.request.urlopen(req, timeout=120) as r:
+                        if r.status != 206:
+                            raise SystemExit('range GET refused for %s (status %s)' % (dest.name, r.status))
+                        data = r.read()
+                    if len(data) != end - start + 1:
+                        raise OSError('range %d returned %d of %d bytes' % (i, len(data), end - start + 1))
+                    os.pwrite(fd, data, start)
+                    with lock:
+                        done.add(i)
+                        os.fsync(fd)
+                        tmp = ranges_path.with_name(ranges_path.name + '.pending')
+                        tmp.write_text(json.dumps(dict(size=size, range_bytes=RANGE_BYTES, done=sorted(done))))
+                        os.replace(tmp, ranges_path)
+                    return True
+                except (OSError, urllib.error.URLError) as e:
+                    say('   retry %d for %s range %d after %s' % (attempt + 1, dest.name, i, e))
+                    time.sleep(min(60, 5 * (attempt + 1)))
+            return False
+        todo = [i for i in range(total) if i not in done]
+        with ThreadPoolExecutor(max(1, RANGE_STREAMS)) as pool:
+            ok = all(pool.map(fetch, todo))
+    finally:
+        os.close(fd)
+    if not ok or len(done) != total or part.stat().st_size != size:
+        return False
+    os.rename(part, dest)
+    ranges_path.unlink()
+    return True
+
+
 def download(url, dest, size):
-    """dest written whole (via dest.part, resumed by range); True when it holds exactly size bytes."""
+    """dest written whole (via dest.part, resumed by range); True when it holds exactly size bytes. An object larger than
+    RANGED_ABOVE goes through ranged_download (concurrent byte ranges; the lane's network, not one TCP stream)."""
     if dest.exists():
         return dest.stat().st_size == size
+    if size > RANGED_ABOVE and RANGE_STREAMS > 1:
+        return ranged_download(url, dest, size)
     part = dest.with_name(dest.name + '.part')
     for attempt in range(8):
         have = part.stat().st_size if part.exists() else 0

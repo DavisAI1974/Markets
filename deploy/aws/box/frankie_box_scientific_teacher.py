@@ -438,6 +438,29 @@ def frankie_claims(path, day):
                 claims=claims)
 
 
+def _scan_part(args):
+    """One search coupling part: (sha256 hex of every byte read, bytes, lines hashed, lines parsed, the selected rows in
+    line order, each with its exact identity _where). Verify exactly the bytes consumed, in the same pass as parsing;
+    text-mode newline normalization never changes a row's raw-line hash. A top-level function (the fork pool's target)."""
+    path, rel, pin, wanted, needles, needle_filter = args
+    hashed, size, lines, parsed, selected = hashlib.sha256(), 0, 0, 0, []
+    with open(path, 'rb') as handle:
+        for ordinal, line in enumerate(handle):
+            hashed.update(line)
+            size += len(line)
+            lines += 1
+            if needle_filter and not any(n in line for n in needles):
+                continue
+            r = json.loads(line)
+            parsed += 1
+            if (r['x'], r['y']) in wanted:
+                # the row's exact identity: its part (the search's pin), its ordinal and the raw line's sha256, the same
+                # three values Run.search_knowledge records for a candidate (part_sha256, row, row_sha256)
+                r['_where'] = dict(part=rel, part_sha256=pin, row=ordinal, row_sha256=sha256_bytes(line))
+                selected.append(r)
+    return hashed.hexdigest(), size, lines, parsed, selected
+
+
 def load_searches(dirs):
     days = []
     for d in dirs:
@@ -764,6 +787,7 @@ def test(claims_doc, days, records_dir=None, records_selection=None, report=None
                       for flag in (True, False)})
     needle_filter = 0 < len(needles) <= 2 * NEEDLE_LIMIT
     hashed_rows = parsed_rows = selected_rows = parts_read = 0
+    jobs = []
     for d in days:
         seen_parts = set()
         for part in d['parts']:
@@ -776,29 +800,31 @@ def test(claims_doc, days, records_dir=None, records_selection=None, report=None
             pin = (d.get('part_pins') or {}).get(rel)
             if not isinstance(pin, str) or not re.fullmatch('[0-9a-f]{64}', pin):
                 raise ValueError('search evidence part lacks its exact sha256: %s' % part)
-            hashed, size = hashlib.sha256(), 0
-            # Verify exactly the bytes consumed, in the same pass as parsing. Text-mode
-            # newline normalization must never change the discovery row's raw-line hash.
-            parts_read += 1
-            with open(part, 'rb') as handle:
-                for ordinal, line in enumerate(handle):
-                    hashed.update(line)
-                    size += len(line)
-                    hashed_rows += 1
-                    if needle_filter and not any(n in line for n in needles):
-                        continue
-                    r = json.loads(line)
-                    parsed_rows += 1
-                    if (r['x'], r['y']) in wanted:
-                        # the row's exact identity: its part (the search's pin), its ordinal and the raw line's sha256,
-                        # the same three values Run.search_knowledge records for a candidate (part_sha256, row, row_sha256)
-                        r['_where'] = dict(part=rel, part_sha256=pin, row=ordinal,
-                                           row_sha256=sha256_bytes(line))
-                        rows.setdefault((d['day'], r['x'], r['y']), []).append(r)
-                        selected_rows += 1
-            expected_size = (d.get('part_bytes') or {}).get(rel)
-            if hashed.hexdigest() != pin or (expected_size is not None and size != expected_size):
-                raise ValueError('search evidence differs from its manifest: %s' % part)
+            jobs.append((d['day'], str(part), rel, pin, (d.get('part_bytes') or {}).get(rel)))
+    # Efficiency (Greg, 2026-10-07; performance-optimization): the parts are independent files, each hashed and filtered
+    # on its own; they are scanned by the step's lane workers (a fork pool over the CPUs this child was given, the day's
+    # held lane) and merged in the original order (day, part, line), so the selected rows, their ordinals, raw-line hashes
+    # and every verification are exactly the one-process result. One part or one CPU: in this process.
+    import threading
+    workers = max(1, min(len(jobs), len(os.sched_getaffinity(0)) - 1 if hasattr(os, 'sched_getaffinity') else 1))
+    if threading.active_count() > 1:
+        workers = 1          # never fork a threaded process (a caller with threads scans in-process, as before)
+    scan_args = [(path, rel, pin, frozenset(wanted), needles, needle_filter) for _, path, rel, pin, _ in jobs]
+    if workers > 1:
+        import multiprocessing
+        with multiprocessing.get_context('fork').Pool(workers) as pool:
+            scanned = pool.map(_scan_part, scan_args, chunksize=1)
+    else:
+        scanned = [_scan_part(a) for a in scan_args]
+    for (day_of, path, rel, pin, expected_size), (digest, size, hashed, parsed, selected) in zip(jobs, scanned):
+        parts_read += 1
+        hashed_rows += hashed
+        parsed_rows += parsed
+        if digest != pin or (expected_size is not None and size != expected_size):
+            raise ValueError('search evidence differs from its manifest: %s' % path)
+        for r in selected:
+            rows.setdefault((day_of, r['x'], r['y']), []).append(r)
+            selected_rows += 1
     if report is not None:
         report.update(row_filter='needle' if needle_filter else 'parse_all', needles=len(needles), needle_limit=NEEDLE_LIMIT,
                       parts_read=parts_read, rows_hashed=hashed_rows, rows_parsed=parsed_rows, rows_selected=selected_rows,
