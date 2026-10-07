@@ -57,6 +57,10 @@ NEW SESSION -- Frankie (Greg, 2026-10-07 night). THE AGENTS ARE THE ONLY WAY WOR
   work together (not a scientific day result).
 - Day files: no point on any INGESTED day may be missing; fill it before the run (Greg). The squeeze 3-day
   calendar-front spread is NOT part of this research: dropped, never chased or raised again (Greg).
+- EFFICIENCY FIRST (Greg, 2026-10-07 night, STOP EVERYTHING): every piece of the workflow must employ as much as
+  possible: the lane's CPUs/workers AND the AWS efficiency and data-processing tools/skills. Nothing ran that way yet
+  (the agents reported no AWS skill used on the calcs). This is fixed BEFORE the one-day E2E and before more day-file
+  work. Work stopped at 89d67e2 (integration = work branch); day-file agent stopped mid weather download (reads only).
 - REPORTS (Greg):
   - One-day run: a handful of STATUS reports, one per workflow piece: what it received, what it did, what it produced,
     so Greg can tweak or give a thumbs up. Human-only; never knowledge.
