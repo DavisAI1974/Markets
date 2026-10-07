@@ -429,3 +429,118 @@ outside that directory (`python3 -I`).
     container.
   - No writes, and no other service.
 - The local copies of the three day files were deleted after the check; the receipts remain in the session scratch only.
+
+## Second follow-up, 2026-10-07 night (session 2): `44d5673..df0f8de`
+
+Reviewer: ccode_review, under the same go, relayed by the parent. This pass is READ-ONLY: no fixes, no git writes, no
+account calls. The only write is this appended section. NO RUNS.
+
+Commits reviewed: b655b4b (F-1), 83091a8 (the classroom computes 18 of 18), dcf97c7 (per-level FIFO queue lengths) and
+df0f8de (status reports gated to the one-day run, plus the scientific teacher message). The doc commits were skimmed.
+Everything was read through `git diff` and `git archive`.
+
+### Verdict: APPROVED for integration (source only)
+
+- Two items are REQUIRED before the one-day E2E on 20231018: G-1 and G-2.
+- Neither changes a value, an order or an identity. Both concern whether the classroom finishes in reasonable time and
+  memory on the day, and whether its one-day status report can be shown at all.
+
+### Required before the one-day E2E
+
+**G-1 (owner main_recovery). The classroom's native entry arithmetic has no measured cost, and it grows with
+instruments x leaves x levels x 19 components.**
+- Where: `frankie_box_classroom_code.py` `_NativeEntryArithmetic` (`note`/`_member`/`_queue_levels` on the hot path;
+  `_compute` after the pass) and `QUEUE_LEVEL_COST` (the author marks it "expected, not measured").
+- What drives the cost:
+  - one numeric series per instrument and per leaf of `book_full`, `book_regime`, `activity_full`, `activity_since`,
+    `capture_observations`, `integrity_delta`, `raw_actions` and `structure.price_raw_*`;
+  - plus 2 x D queue-level series per instrument (no cap, as Greg decided);
+  - each series is paired with all 19 Dipole components in a single classroom process, with no worker pool.
+  The day's own curve definitions run to about 1,900 instruments (curve.definitions on the neighbouring day files). Only
+  the instruments that carry member rows count, but that number is not recorded anywhere I can read.
+- The whole result is held in memory, pickled into the `shared_market_context` phase file and written again to
+  `native-entry-arithmetic.json`. The author's own figures are about 0.6 KB per pair and about 170 MB per instrument at
+  D = 100 and 50k Dipole rows.
+- Failure path: on 20231018 the classroom phase runs for hours or exhausts the lane's memory share before the Dipole
+  answers are written. That holds the day's slot and makes the one-day test a test of this one computation.
+- Minimal fix (no cap, nothing dropped):
+  - Measure it, per the standing canary rule: count, from the ROOT's existing native member ledger of 20231018, the
+    member rows, the distinct instruments with member rows and the maximum level depth per side, with a 1-2 minute read.
+  - From those, state the expected series count, pair count, file size and seconds in the record.
+  - If the figure is out of bounds, Greg decides (for example, the pairs computed in the lane's 15 workers), recorded as
+    a named limit, never a silent cut.
+
+**G-2 (owner main_recovery). The compact receipt view repeats every series name, which can push the classroom receipt
+past the reporter's 8 MiB metadata ceiling.**
+- Where: `native_entries_compact` keeps `series_names` (every own and thin series name of every entry). The compact view
+  is written three times: `received.native_entries`, the receipt's top-level `native_entries`, and the all-99 list's
+  `native_entries`.
+- The three book-carried entries share the same `book_full` series, so each name appears under up to three entries.
+- Failure path: with many instruments and levels, the classroom receipt grows past `frankie_box_workflow_inspection`'s
+  8 MiB ceiling. The classroom piece's one-day status report then reads "not-inspected-too-large", which loses the main
+  piece Greg reviews on day 1.
+- Minimal fix: keep counts and relation counts in the compact view. The names stay in the pinned
+  `native-entry-arithmetic.json` (already pinned on the receipt). Alternatively, record the receipt's size beside it and
+  check it against the ceiling on the canary.
+
+### Judged and found sound
+
+- **F-1 (b655b4b):** FIXED.
+  - `Run.survivors` no longer renders another day's reports and no longer runs that day's drain.
+  - A day with an unacknowledged correction is skipped and named.
+  - For the others it runs the read-only `reports_stale`. The late-pieces result lands on that day's own reports step
+    through the N-1 guarded write. The done step's status is never re-recorded.
+  - The notes go on the survivors receipt.
+- **Author's open point (a closed day keeps "changed" with no automatic re-admission):** acceptable as visible pending
+  state for Greg's decision. It cannot occur on the one-day run: there, the boundary update runs inside the day's own
+  class line before its reports render, and `_finish_steps` revises after Jev.
+- **18 of 18 (83091a8, dcf97c7), against the shared reader's cursor/order invariants and the missing-coverage rule:**
+  - An adapter cursor that goes backwards is an integrity failure: it is never re-sorted.
+  - Rows are closed strictly by the Dipole cursor roster. That roster is checked to be one shared, strictly increasing
+    roster, else integrity_failure.
+  - A member value is placed at its own GROUP_CLOSE cursor and carried forward as "in force". Rows carried forward are
+    counted apart from rows with a new update, so stale stays distinguishable from new.
+  - A leaf missing from the instrument's latest member row reads MISSING, never its older value. Before the first value
+    a row reads MISSING with NO_VALUE_AT_OR_BEFORE_THIS_ROW. A non-finite value reads INVALID. No zero is filled in.
+  - Per instrument, never pooled. A FINALIZE or unplaceable row is counted and never placed.
+  - Events after the last Dipole row are counted apart.
+  - A setup or compute failure blocks only this arithmetic (status `failed`, with the reason); the classroom and the day
+    go on.
+  - The Dipole values and target equations are unchanged.
+  - A queue level absent at an instant reads MISSING. Levels follow the producer's order, not a re-sort.
+- **Resume:** the result is part of the saved `shared_market_context` phase, so a resume reuses it rather than
+  recomputing. A reading saved before this change reads `unavailable` with the reason. The identity pins
+  `frankie_box_joined_teacher.py`.
+- **The inspection flag (df0f8de):**
+  - It is decided once and saved with the plan: `auto` gives one_day for a one-day plan, else off.
+  - A saved plan's value stands under `auto`. An older saved plan without the key stays without it (read as off), so its
+    plan digest is unchanged.
+  - An explicit `INSPECTION=one_day/off` on an existing run changes the plan and is refused by the existing "a run keeps
+    one plan" check. That refusal is visible, never a silent re-fingerprint.
+  - The queue (`_inspect`) and `start()` both gate on `Run.inspection_on`.
+  - The one-day E2E on 20231018 under the default gives one_day. This matches Greg's "status reports for the one-day run
+    only".
+- **The fetch/ingest/external inspection records:** small pins and recorded facts. The journal is never re-read, and the
+  presigned map URL is never recorded (only whether one was given).
+- **The scientific teacher message:** the corrected text matches `frankie_box_brain.write_lessons_entry`, which admits
+  author `search` with `knowledge_retest`. Text only.
+
+### Non-blocking
+
+- **G-3.** `contract_session_roll_state`'s carrier `instrument_id` (and `raw_symbol` when numeric) enters as a numeric
+  series. It is constant per instrument (the series are per instrument), so its pairs are degenerate rather than wrong,
+  but an identifier is not a signal. The search routes identities apart; the classroom could do the same.
+- **G-4.** `Run.external_outputs` parses the whole day file (30-67 MB) on every external step, including N-day runs where
+  no status report is made. That costs seconds per day. Gate it on `inspection_on()`.
+- **G-5.** The stage `inspection` fields are still written into step receipts on N-day runs. They are receipt metadata,
+  not the status reports, so this is consistent with Greg's rule. FYI.
+
+### Checks run
+
+- AST parse without project imports: the 6 changed `.py` files at df0f8de parse.
+- `bash -n deploy/aws/box/frankie_box_experiment.sh`: ok.
+- `git diff --check 44d5673..df0f8de`: clean.
+- Nothing executed and no account calls.
+- Skills: carried from this session's pass (`api-and-interface-design`, `code-review-and-quality`,
+  `doubt-driven-development` in its reduced self-check form).
+- UNVERIFIED: the instrument and member-row counts of 20231018 (G-1), and the actual receipt size (G-2).
