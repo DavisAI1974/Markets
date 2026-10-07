@@ -482,8 +482,8 @@ Checks: `ast.parse` of the three modules without project imports; `git diff --ch
 
 ### Corrections after Codex's integration review (2026-10-07; CCODE_NEXT_SOURCE_TASKS top section, in its order)
 
-Four `[skip ci]` commits on `ccode/teacher-tasks-20261006b` atop Codex's `61264cac`: `f2a43e80` D1 | `3d7f1640` B7/C2 |
-`130742ff` B2-B5 | `a3651234` B1/B6/A4/C1. SOURCE-BUILT / RUNTIME-UNVERIFIED (`ast.parse` without project imports,
+Commits on `ccode/teacher-tasks-20261006b` atop Codex's `19f72f47` (rebased 2026-10-07): `18b6edcd` D1 | `8930b4f0` B7/C2 |
+`5fdc14f5` B2-B5 | `45f52d28` B1/B6/A4/C1 | `6002a926` docs | `602e29f6` B7 by deletion | `0ed26712` handoff | `b5d0fe74` step-5 direction. SOURCE-BUILT / RUNTIME-UNVERIFIED (`ast.parse` without project imports,
 `git diff --check`); nothing run, no reproduction called, the claims file untouched, Codex's two modules untouched.
 
 **D1 (`frankie_box_boss_session.py`): the corrected price row contract for Codex's exact price adapter.** Codex's trace
@@ -519,7 +519,7 @@ No new event axis, price-slot trajectory or lag definition.
 B7, per Greg (2026-10-07): no reference to transaction costs belongs in market-conditions work, so none remains in the
 owned modules. The `crypto_harness` binding (the `_info_dipole_harness.py` driver and its results file, whose calculation
 was not market-conditions work) is DELETED from `REPRODUCTIONS`; H01/H02 stay bound by `crypto_trend_flip` (counts only).
-No admission table, no field, status word or sentence about it exists in the code (`3d7f1640` had added one; `744cae4c`'s
+No admission table, no field, status word or sentence about it exists in the code (`8930b4f0` had added one; `6002a926`'s
 successor commit removes it). `binding_tables_sha256` covers the two tables. C2, in the arithmetic: `ST.test` classifies
 every tested and origin row's x/y with the reserved search's own `non_market_reason` (`series_role`): a context label or a
 bookkeeping/clock/diagnostic channel makes the row `counts_only` with its reason (so the verdict counts exclude it);
@@ -562,6 +562,36 @@ evidence for the same owner refuses); a carried same-day reference of another ma
 none (listed with its provenance, left out of `by_day`); `teach_accumulated` returns `scope` (new result files, reuses,
 `all_reused`).
 
+**Greg's step-5 direction applied to the owned consumers (`b5d0fe74`; SPEC-experiment-orchestrator.md opening section,
+Codex `19f72f47`).** The direction: a known error fixed at its source must not stay active because a record froze it;
+carry checked corrections to both teachers and Frankie's actual inputs through existing paths; list propagation gaps
+precisely. Traced: (a) a historical claim projected from a retained lesson carries the reproduction/reformulation binding
+frozen into its `claim_inputs` at test time, and `ST.test` / `reconsideration` preferred that frozen binding; (b) the
+exchange copied a retained result's `research_rework` (its binding and reproduction status) forward into both seats'
+records and Frankie's `research_rework`. Both would have kept the deleted harness binding active. Now `ST.current_binding`
+always takes the CURRENT tables and lists a differing retained binding as `retained_binding_superseded`
+(`binding_identity` = status, entry ids, source pins); the exchange's `binding_correction` does the same per historical
+item: `context_checks` voices it in BOTH seats, the rework record carries the current binding and `binding_superseded`, a
+reproduction status read against a superseded binding is not `performed`, and Frankie's lawful reply learns one correction
+line beside the rework he already receives. No lesson, result, record or brain file is rewritten or deleted; nothing is
+relabelled as recalculated; a superseded binding's lesson bytes remain evidence.
+
+Propagation gaps the current interfaces do not cover (listed, not built; each would be a new recovery/retention mechanism):
+1. An owner's frozen `inputs.json` (`teach_accumulated`) refuses after any reader or table change ("retained scientific
+   knowledge belongs to another search or reader"), so a corrected successor retest of an ALREADY-frozen owner day needs a
+   new accumulated out_dir or a move-aside-with-receipt of `inputs.json`; `teach_accumulated` has no move-aside (derive
+   has `_move_aside`). A fresh out_dir produces a successor result whose identity differs (`claim_inputs` binds the tables).
+2. The exchange's frozen `learner-knowledge.json` refuses the same way (producer/reader sha in its identity): a corrected
+   exchange of an already-frozen day needs a successor run directory; none is scheduled by anything.
+3. Published brain lessons carrying a superseded binding stay selectable by `learner_knowledge`; they are corrected at
+   consumption (this commit), not in the brain: the brain writer is append-only and nothing marks a published lesson
+   superseded there. Consumers that do not pass through `ST.test` or the exchange (digest renders,
+   `frankie_box_classroom_code.exchange_reply` text, Codex's modules) still show the frozen bytes.
+4. Frankie receives the correction line only on exchange days; on non-classroom days the accumulated results published
+   through the brain writer carry the current binding, but no separate delivery to Frankie exists outside the exchange.
+5. A performed reproduction record written against earlier tables is listed, not admitted, by `records_for`; a corrected
+   reproduction is new authorized execution, which nothing here performs or implies.
+
 Still open after these corrections (unchanged decisions): everything in section 5 and the Claude handoff; the exact
 price adapter (Codex, on the V2 contract above); runtime verification of all of it.
 
@@ -579,7 +609,7 @@ does not reverse those authorizations. Source review/AST/whitespace only; nothin
 
 **Current correction status (supersedes the original closure table below):**
 
-| Step | After the 2026-10-07 corrections (`a3651234`); SOURCE-BUILT / RUNTIME-UNVERIFIED |
+| Step | After the 2026-10-07 corrections (`45f52d28`); SOURCE-BUILT / RUNTIME-UNVERIFIED |
 |---|---|
 | 2 | A4, C1, C2, B4/B5 source-corrected (section 8, Corrections). Open: native-learner and late-scheduling decisions (Greg); Codex's integration review of the corrections; runtime verification. |
 | 3 | D1 source-corrected: `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (contract in section 8). Open: Codex's exact price adapter on it; the held trajectory/4.2/4.4 definitions. Exact structures unchanged (V1). |

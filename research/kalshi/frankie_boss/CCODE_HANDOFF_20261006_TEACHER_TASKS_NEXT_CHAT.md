@@ -2,8 +2,8 @@
 
 ## STATE AFTER THE THIRD CHAT (2026-10-07): Codex's correction queue D1, B7/C2, B2-B5, B1/B6/A4/C1 RETURNED
 
-Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's `61264cac` (ccr-5fce7de3-xa4hfg), pushed. One `[skip ci]`
-commit per finding group, in Codex's order: `f2a43e80` D1 | `3d7f1640` B7/C2 | `130742ff` B2-B5 | `a3651234` B1/B6/A4/C1 |
+Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's `19f72f47` (ccr-5fce7de3-xa4hfg), pushed. One `[skip ci]`
+commit per finding group, in Codex's order: `18b6edcd` D1 | `8930b4f0` B7/C2 | `5fdc14f5` B2-B5 | `45f52d28` B1/B6/A4/C1 |
 then this documentation commit. Owned files only (`frankie_box_boss_session.py`, `frankie_box_historical_claims.py`,
 `frankie_box_historical_reproduction.py`, `frankie_box_scientific_teacher.py`, `frankie_box_teacher_knowledge.py`,
 `frankie_box_experiment_exchange.py`); Codex's two modules and the shared handoffs untouched. SOURCE-BUILT / RUNTIME-UNVERIFIED:
@@ -12,6 +12,10 @@ then this documentation commit. Owned files only (`frankie_box_boss_session.py`,
 Detail per finding: step-4 report `CCODE_STEP4_SOURCE_ROUTE_20261006.md` section 8 ("Corrections after Codex's integration
 review") and the section 9 status table. Greg, 2026-10-07: no reference to transaction costs belongs in market-conditions
 work: the `crypto_harness` binding is deleted from `REPRODUCTIONS` and no admission table, field or sentence about it remains.
+
+Greg's step-5 direction (`19f72f47`) is applied to the owned consumers in `b5d0fe74`: the current declared tables decide; a
+binding frozen in a lesson is superseded (listed, never used) in both seats and in Frankie's lawful reply; the five
+propagation gaps the current interfaces do not cover are listed in the step-4 report section 8 (none is built).
 
 What Codex picks up:
 1. D1 handshake: prices now carry `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (originating `input_index` + `legacy_row_ordinal`,

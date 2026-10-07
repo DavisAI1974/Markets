@@ -2,7 +2,7 @@
 
 ```
 CCODE DROP-IN (new chat, 2026-10-07): the correction queue D1, B7/C2, B2-B5, B1/B6/A4/C1 is RETURNED; Codex's review of it is next
-STATE 2026-10-07: tip = the docs commit above a3651234 on Codex's 61264cac; corrections f2a43e80 / 3d7f1640 / 130742ff / a3651234
+STATE 2026-10-07: tip = the docs commit above 45f52d28 on Codex's 61264cac; corrections 18b6edcd / 8930b4f0 / 5fdc14f5 / 45f52d28
 (step-4 report section 8 "Corrections", section 9). Read CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md top section first.
 The lines below are the prior (2026-10-06) box, kept for the reading order and boundaries, which still hold.
 ----

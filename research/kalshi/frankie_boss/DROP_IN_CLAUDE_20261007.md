@@ -15,7 +15,7 @@ FIRST, in this order:
      git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
      git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
      git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -10
-   The tip must be c94dcac0 or later on Codex's 61264cac or later. Expect a clean rebase; if Codex edited
+   The tip must be the docs commit above b5d0fe74 on Codex's 19f72f47 or later. Expect a clean rebase; if Codex edited
    frankie_box_boss_session.py / frankie_box_experiment_exchange.py / frankie_box_scientific_teacher.py /
    frankie_box_teacher_knowledge.py / frankie_box_historical_*.py, read its diff before touching that module.
 READ, in order (research/kalshi/frankie_boss/):
@@ -24,8 +24,10 @@ READ, in order (research/kalshi/frankie_boss/):
    NEW_CHAT_HANDOFF_20261006_TEACHER_COVERAGE.md        newest sections only (Codex's reserved search continuation)
    CCODE_STEP4_SOURCE_ROUTE_20261006.md section 8 "Corrections after Codex's integration review" + section 9 table
 DONE (source-built, runtime-unverified; nothing ran): A-D (c31cad06 7cb2ce52 11082ff8 2a05c147); the correction queue
-D1 f2a43e80 (prices: FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2, originating INPUT from the producer's retained open-group state;
-structures stay V1), B7/C2 3d7f1640, B2-B5 130742ff, B1/B6/A4/C1 a3651234, docs 744cae4c, c94dcac0 = B7 BY DELETION.
+D1 18b6edcd (prices: FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2, originating INPUT from the producer's retained open-group state;
+structures stay V1), B7/C2 8930b4f0, B2-B5 5fdc14f5, B1/B6/A4/C1 45f52d28, docs 6002a926, 602e29f6 = B7 BY DELETION.
+b5d0fe74 = Greg's step-5 direction applied (current tables decide; frozen bindings superseded in both seats + Frankie;
+propagation gaps listed in step-4 report section 8). The tip must be b5d0fe74 or later.
 GREG (2026-10-07, twice): NO reference to transaction costs in market-conditions work, period. The crypto_harness binding
 is deleted from REPRODUCTIONS (H01/H02 stay bound by crypto_trend_flip); no admission table, field, status word or
 sentence about costs exists in any owned module. Never reintroduce one; never "frame" a cost-based result as context.

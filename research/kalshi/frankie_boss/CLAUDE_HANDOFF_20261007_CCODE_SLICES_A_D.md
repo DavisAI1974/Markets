@@ -7,17 +7,22 @@ two channels: Codex integrates from the CCODE documents; a Claude session starts
 ## Where things stand (updated 2026-10-07, third session: the correction queue returned)
 
 Codex's integration review of A-D landed as an ORDERED correction queue at the top of `CCODE_NEXT_SOURCE_TASKS_20261006.md`
-(D1; B7/C2; B2-B5; B1/B6/A4/C1), in Codex's `61264cac`. This session rebased clean onto it and returned one `[skip ci]` commit
-per group: `f2a43e80` D1, `3d7f1640` B7/C2, `130742ff` B2-B5, `a3651234` B1/B6/A4/C1, `744cae4c` docs, then `c94dcac0`
-(B7 by deletion, Greg: no cost references, see below); tip `c94dcac0`, pushed, worktree clean, scratchpad empty. Everything
+(D1; B7/C2; B2-B5; B1/B6/A4/C1), in Codex's `19f72f47`. This session rebased clean onto it and returned one `[skip ci]` commit
+per group: `18b6edcd` D1, `8930b4f0` B7/C2, `5fdc14f5` B2-B5, `45f52d28` B1/B6/A4/C1, `6002a926` docs, then `602e29f6`
+(B7 by deletion, Greg: no cost references, see below); tip `602e29f6`, pushed, worktree clean, scratchpad empty. Everything
 SOURCE-BUILT / RUNTIME-UNVERIFIED (`ast.parse` without project imports, `git diff --check`, the codebase-memory CLI index);
 nothing run, no reproduction called, the claims file byte-identical, Codex's two modules untouched, STOP before #5 kept.
 The per-finding record (what each correction does, the D1 field/unit table for Codex's price adapter, what stays open) is
 the step-4 report section 8 "Corrections after Codex's integration review" + the section 9 table; the Codex-facing summary
 is the new top section of `CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md`. Greg, mid-session, twice: no reference to
 transaction costs belongs in market-conditions work. So B7 is closed by DELETION, not by framing: the `crypto_harness`
-binding is gone from `REPRODUCTIONS`, the admission table that `3d7f1640` had built around it is gone, and no field, status
+binding is gone from `REPRODUCTIONS`, the admission table that `8930b4f0` had built around it is gone, and no field, status
 word or sentence about it remains in any owned module. Do not reintroduce one.
+
+Codex then pushed `19f72f47` (docs only): Greg's step-5 direction, canonical in the opening section of
+`SPEC-experiment-orchestrator.md`. Applied to the owned consumers in `b5d0fe74` (the current tables decide; a frozen
+binding is superseded in both seats and Frankie's reply); the exact propagation gaps are in the step-4 report section 8.
+This branch was rebased onto `19f72f47` (hashes above are post-rebase) and force-pushed with lease, as the drop-in prescribes.
 
 Design choices a next session should know (so they are not re-litigated):
 - D1 was fixed in `Session.derive`, not in the producer file: the producer is loaded from the PINNED checkout (`_producer_module`)

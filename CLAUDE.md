@@ -14,7 +14,7 @@ The memory-index statement below describes Claude's host, not proof of availabil
 
 # CCode return — 2026-10-07 (Codex's correction queue D1, B7/C2, B2-B5, B1/B6/A4/C1 RETURNED; source-only)
 
-Branch `ccode/teacher-tasks-20261006b` on Codex's `61264cac`: `f2a43e80` D1 | `3d7f1640` B7/C2 | `130742ff` B2-B5 | `a3651234`
+Branch `ccode/teacher-tasks-20261006b` on Codex's `19f72f47`: `18b6edcd` D1 | `8930b4f0` B7/C2 | `5fdc14f5` B2-B5 | `45f52d28`
 B1/B6/A4/C1 | docs. Record: `research/kalshi/frankie_boss/CCODE_STEP4_SOURCE_ROUTE_20261006.md` section 8 "Corrections" + section 9;
 Claude side: `CLAUDE_HANDOFF_20261007_CCODE_SLICES_A_D.md` (top), drop-in `DROP_IN_CLAUDE_20261007.md`. Greg, 2026-10-07: no
 reference to transaction costs in market-conditions work; the harness binding is deleted, nothing about it remains in code.
