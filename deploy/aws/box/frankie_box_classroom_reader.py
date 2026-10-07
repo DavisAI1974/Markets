@@ -19,7 +19,8 @@ def sha256(path):
 def producer_hashes():
     root = Path(__file__).resolve().parents[3]
     paths = ['deploy/aws/box/frankie_box_classroom_reader.py',
-             'deploy/aws/box/frankie_box_experiment_teacher.py']
+             'deploy/aws/box/frankie_box_experiment_teacher.py',
+             'deploy/aws/box/frankie_box_market_timeline.py']
     paths += ['research/kalshi/frankie_boss/' + name + '.py' for name in (
         'parallel_teacher', 'parallel_journal', 'teacher_changes', 'c15_teacher_r3',
         'c15_teacher', 'c15_normalizer_r3', 'c15_normalizer', 'dipole_target',
@@ -71,7 +72,9 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
         environment = {k: os.environ.get(k) for k in ('FRANKIE_WALK_CACHE', 'FRANKIE_TEACHER_CHANGES')}
         try:
             code = T._teach(day, receipt_path, ingest['sha256'], 15, day_file, day_sha256,
-                            save_requested=save_requested, learner_binding=own, learner_directory=directory)
+                            save_requested=save_requested, learner_binding=own, learner_directory=directory,
+                            calculations=calculations if source.get('shared_market_policy') else None,
+                            shared_market_policy=(source.get('shared_market_policy') or {}).get('schema'))
             if code:
                 raise ValueError('learner reading did not finish: exit %s' % code)
         finally:
@@ -97,6 +100,7 @@ def read_day(day, calculations, binding, *, day_file, day_sha256, save_requested
         receipt=dict(path=str(result_path), sha256=sha256(result_path)),
         source_snapshot_hash=snapshot['source_snapshot_hash'], producers=own['producers'],
         walk_seconds=result['walk_seconds'], seconds=result['seconds'],
+        shared_market_read=result.get('shared_market_read'), shared_market_use=result.get('shared_market_use'),
         independent_scientific_verification=False,
         purpose='current evidence for accumulated-knowledge recognition before host grading')
     return snapshot, witness

@@ -495,6 +495,10 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
             raise ValueError('search evidence differs from the selected export: ' + str(path))
         return json.loads(raw)
 
+    binding_path = day_dir / 'root' / 'source-binding.json'
+    binding_pin = source_pin(binding_path)
+    shared_policy = (read_json(binding_path, binding_pin).get('shared_market_policy')
+                     if binding_pin is not None else None)
     rows_dir = day_dir / 'root' / 'work' / 'derived' / '.rows'
     sources, notes = [], []
     frames_path = rows_dir / 'frames.jsonl'
@@ -932,6 +936,11 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
                 note['source'], note.get('missing', ''),
                 note.get('excluded') or note.get('reason') or 'not included in the selected export'))
     log('series: %d on %d groups (%d receive-clock steps backwards), %d cell columns' % (len(series), n, backwards, len(cells)))
+    if shared_policy is not None:
+        from frankie_box_market_timeline import SharedFrameView
+        market_view = SharedFrameView(f_num, recv, series, cells, policy=shared_policy, sources=sources)
+        series, cells = market_view.series, market_view.cells
+        sources.append(market_view.report)
     return axis, series, cells, sources, notes, gates
 
 

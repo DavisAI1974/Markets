@@ -149,6 +149,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     receipt = json.loads((calculations / 'calculations-receipt.json').read_bytes())
     if receipt.get('day') != day:
         raise SystemExit('the calculations are for day %s, not %s' % (receipt.get('day'), day))
+    source = json.loads((calculations / 'source-binding.json').read_bytes())
+    shared_policy = source.get('shared_market_policy')
+    market = _box('frankie_box_market_timeline').SharedMarketTimeline(calculations, day=day, workers=15) if shared_policy else None
     if not (work / 'derivation-digest-full.md').is_file():
         raise SystemExit('the day\'s ROOT ran without the digest; the classroom day needs DIGEST=on (the brain entry takes it)')
     d = work / 'classroom'
@@ -161,6 +164,13 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     teacher_receipt = json.loads((teacher_rows / 'receipt.json').read_bytes())
     if teacher_receipt.get('day') != day:
         raise SystemExit('the teacher rows are for day %s, not %s' % (teacher_receipt.get('day'), day))
+    if market is not None:
+        shared_read = teacher_receipt.get('shared_market_read') or {}
+        if (teacher_receipt.get('shared_market_identity') != market.identity
+                or shared_read.get('identity') != market.identity or shared_read.get('complete') is not True
+                or teacher_receipt.get('ingestion_receipt') != {
+                    key: market.source['ingestion_receipt'][key] for key in ('path', 'sha256')}):
+            raise ValueError('shared classroom requires its exact completed shared teacher source, not another same-day reading')
     attachment_sha = _sha256(teacher_rows / 'teacher-attachment.pkl')
     if attachment_sha != teacher_receipt['attachment_file']['sha256']:
         raise SystemExit('teacher-attachment.pkl differs from its teacher rows receipt; refused')
@@ -171,6 +181,10 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         raise SystemExit('the day file of the historical data points: %s' % error)
     if _sha256(day_file) != day_sha:
         raise SystemExit('the day file %s differs from the sha256 %s (%s); refused' % (day_file, day_sha, day_source))
+    if market is not None:
+        external = market.source.get('external') or {}
+        if external.get('status') != 'attached' or external.get('sha256') != day_sha:
+            raise ValueError('classroom external day file is outside the exact shared ROOT publication source')
     day_receipt = Path(day_file).parent / 'day-external-receipt.json'
 
     d.mkdir(parents=True, exist_ok=True)
@@ -205,6 +219,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                     directive=_sha256(DIRECTIVE_PATH), rules=rules_witness,
                     producers={m.__name__: _sha256(m.__file__) for m in (F, S, R, EXT, V2, C, K, KX, LS, BR, KR)},
                     learner_reading_producers=KR.producer_hashes())
+    if market is not None:
+        identity['shared_market'] = market.identity
     state = _load_raw_state(state_path) if state_path.exists() else dict(identity=identity, started=time.time(), phases={})
     phase_directory = d / 'saved-phases'
     phase_directory.mkdir(exist_ok=True)
@@ -297,6 +313,14 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             # resume can serve every remaining consumer without recalculating its 19 components/171 pairs.
             evidence = phase('guided_evidence', lambda: K._evidence(visible))
             K._EVIDENCE_CACHE[visible['pre_message']['teacher_message_hash']] = evidence
+        shared_market = None
+        market_reading = None
+        if market is not None:
+            market_reading = phase('shared_market_context', lambda: K.market_context(
+                visible, market, save_requested=save_requested))
+            if market_reading['identity'] != market.identity:
+                raise ValueError('retained classroom market reading differs from its original source')
+            shared_market = K.ClassroomMarketContext(calculations, day, market_reading)
         # These inputs and their checks are retained before any answer. A resume uses this exact selection,
         # never a later peer knowledge version or a newly completed school day partway through the classroom.
         knowledge_reproduction = phase('knowledge_reproduction', lambda: K.stage_knowledge_reproduction(visible, knowledge))
@@ -304,8 +328,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         learner_context = dict(stage_knowledge=knowledge_reproduction, school=reproduction)
         outputs = {n: phase('component:' + n, lambda n=n: K.component_answer(
             visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)],
-            learner_context=learner_context)) for n in names}
-        summary = phase('summary', lambda: K.summary_answer(visible, outputs, learner_context=learner_context))
+            learner_context=learner_context, shared_market=shared_market)) for n in names}
+        summary = phase('summary', lambda: K.summary_answer(visible, outputs, learner_context=learner_context,
+                                                          shared_market=shared_market))
         ext_ledgers = phase('external_answers', lambda: KX.answers(
             ext_visible, dipole_visible=visible, learner_context=learner_context,
             independent_evidence=independent_external, knowledge=knowledge, school=school))
@@ -325,7 +350,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     ext_report = phase('external_report', lambda: EXT.validate_external_ledgers(ext_ledgers, ext['pre_message']))
     _dump(d / 'code-answers.json', dict(schema=K.SCHEMA, rules=rules_witness, outputs=outputs, summary=summary,
                                         school=reproduction, stage_knowledge=knowledge_reproduction,
-                                        learner_reading=learner_reading, model_calls=0))
+                                        learner_reading=learner_reading, model_calls=0,
+                                        shared_market=shared_market.summary() if shared_market is not None else None))
     _dump(d / 'learner-knowledge.json', dict(day=day, stage='classroom', documents=knowledge,
                                            versions=knowledge_input['versions'], listed=knowledge_input['listed'],
                                            school_documents=school, school_listed=school_listed,
@@ -437,6 +463,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                   teacher_complete=completion.get('teacher_complete'), completion_hash=completion.get('completion_hash'),
                   carried_from_previous=carried, school_knowledge=school_witness, classroom_rules=rules_witness,
                   learner_reading=learner_reading,
+                  shared_market=shared_market.summary() if shared_market is not None else None,
                   stage_knowledge=dict(path=str(d / 'learner-knowledge.json'),
                                        sha256=_sha256(d / 'learner-knowledge.json'),
                                        versions=knowledge_input['versions'],

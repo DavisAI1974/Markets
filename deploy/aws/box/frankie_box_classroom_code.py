@@ -20,6 +20,7 @@ before answers. This is source-built, not runtime-verified or independent scient
 from __future__ import annotations
 
 import hashlib
+import copy
 import json
 import re
 import sys
@@ -128,6 +129,97 @@ def independent_evidence(visible, snapshot, witness):
     evidence = _calculate_evidence(dict(pre, components=comps),
         'learner-owned sealed-journal reading; same measurement mathematics, no host answer or scientific independence claim')
     return dict(classroom_binding_hash=binding['classroom_binding_hash'], witness=witness, evidence=evidence)
+
+
+def market_context(visible, timeline, *, save_requested):
+    """Read the complete shared view once; retain full pictures for existing evidence anchors."""
+    from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
+    ingest = timeline.source['ingestion_receipt']
+    raw = Path(ingest['path']).read_bytes()
+    if hashlib.sha256(raw).hexdigest() != ingest['sha256']:
+        raise ValueError('shared classroom ingestion receipt differs from its retained source')
+    source = json.loads(raw)
+    binding = visible['binding']
+    if (source['source_prefix_hash'] != binding['source_hash']
+            or source['record_count'] - 1 != binding['through_cursor']
+            or binding['cycle_index'] != 0 or binding['cycle_count'] != 1):
+        raise ValueError('shared classroom context requires the same complete sealed-day source and cursor scope')
+    anchors, wanted = {}, set()
+    for component in _evidence(visible)['components']:
+        present = [(int(p['cursor']), float(p['value'])) for p in component['observations'] if p['state'] == 'PRESENT']
+        chosen = {} if not present else dict(first=present[0], last=present[-1],
+            minimum=min(present, key=lambda cv: (cv[1], cv[0])),
+            maximum=max(present, key=lambda cv: (cv[1], -cv[0])))
+        anchors[component['name']] = {name: dict(adapter_cursor=value[0], value=value[1])
+                                      for name, value in chosen.items()}
+        wanted.update(value[0] for value in chosen.values())
+    pictures, counts = {}, {}
+    iterator = timeline.iter_pictures()
+    try:
+        for item in iterator:
+            if save_requested():
+                raise TeacherSaved('shared classroom picture read interrupted; no completed reading claimed')
+            picture = item['picture']
+            status = picture['source_status']
+            key = json.dumps(status, sort_keys=True)
+            counts[key] = counts.get(key, 0) + 1
+            cursor = picture['at']['adapter_cursor']
+            if item['evidence'] is not None and cursor in wanted:
+                if cursor in pictures:
+                    raise ValueError('shared market has ambiguous APPLIED pictures for classroom adapter cursor')
+                pictures[cursor] = copy.deepcopy(picture)
+    finally:
+        iterator.close()
+    if not timeline.report['complete'] or wanted != set(pictures):
+        raise ValueError('shared market reading lacks complete source or exact PRESENT anchor pictures')
+    return dict(schema='FRANKIE_CLASSROOM_SHARED_MARKET_V1', classroom_binding_hash=visible['binding']['classroom_binding_hash'],
+                identity=timeline.identity, reader=dict(module='frankie_box_market_timeline',
+                    interface='SharedMarketTimeline.iter_pictures', workers=15),
+                anchors=anchors, pictures=pictures, report=copy.deepcopy(timeline.report),
+                source_status_counts=counts,
+                use='full ordered source read; complete first/last/min/max PRESENT pictures supplement unchanged Dipole mathematics',
+                limit='no claim that every market field changes a target or is interpreted; no native training')
+
+
+class ClassroomMarketContext:
+    """Actual answer context: complete retained anchors plus access to the full exact source."""
+    def __init__(self, calculations, day, retained):
+        self.calculations, self.day, self.retained = calculations, day, retained
+
+    def iter_pictures(self):
+        from frankie_box_market_timeline import SharedMarketTimeline
+        reader = SharedMarketTimeline(self.calculations, day=self.day, workers=15)
+        if reader.identity != self.retained['identity']:
+            raise ValueError('classroom full market reader changed from its retained selection')
+        yield from reader.iter_pictures()
+
+    def component(self, visible, name):
+        if self.retained['classroom_binding_hash'] != visible['binding']['classroom_binding_hash']:
+            raise ValueError('shared market answer context belongs to another classroom')
+        selected = self.retained['anchors'][name]
+        return dict(reader=self.retained['reader'], identity=self.retained['identity'], anchors=selected,
+                    pictures={str(p['adapter_cursor']): self.retained['pictures'][p['adapter_cursor']]
+                              for p in selected.values()}, use=self.retained['use'], limit=self.retained['limit'])
+
+    def summary(self):
+        return {key: self.retained[key] for key in ('reader', 'identity', 'report', 'source_status_counts', 'use', 'limit')}
+
+
+def _exact_market_text(value):
+    """Carry all original fields, bytes and float bits; never numpy/repr truncation."""
+    from research.kalshi.frankie_boss.c15_journal import SerializedObservation, pack
+    def encode(item):
+        if isinstance(item, SerializedObservation):
+            return encode(item.materialize())
+        if isinstance(item, dict):
+            # Reports can key dispositions by integer instrument identity. Preserve
+            # key type explicitly instead of letting JSON silently stringify it.
+            return ['mapping', [[pack(key), encode(child)] for key, child in item.items()]]
+        if isinstance(item, (tuple, list)):
+            return ['tuple' if isinstance(item, tuple) else 'list', [encode(child) for child in item]]
+        return pack(item)
+    return json.dumps(dict(encoding='typed mapping entries; scalar tags c15_journal.pack', complete_value=encode(value)),
+                      separators=(',', ':'))
 
 
 def _calculate_evidence(pre, origin):
@@ -253,7 +345,7 @@ def _recognize_pattern(finding, pair):
                 full_claim_tested=False, reason='pair measured; no implemented structure predicate for this finding')
 
 
-def component_answer(visible, comp, rights, *, learner_context=None):
+def component_answer(visible, comp, rights, *, learner_context=None, shared_market=None):
     """One component. TEACH: parse_component's shape (six narratives, one explanation per occurring state, one
     interpretation per pair in the order of `rights`). GUIDED: parse_independent_component's shape, which adds the
     claimed state counts, terminal state, direction, every observation with its note and each pair's relation, all
@@ -298,6 +390,11 @@ def component_answer(visible, comp, rights, *, learner_context=None):
                      f'{json.dumps(comp.get("change_from_previous"), sort_keys=True)}. No outcome after the causal cutoff is '
                      'known or claimed (rule R02).'),
     )
+    if shared_market is not None:
+        result['evidence'] += (' Complete shared market pictures at these original PRESENT anchors, including exact '
+            'clocks, all updates and last-observed states: ' + _exact_market_text(shared_market.component(visible, name))
+            + '. These anchors supplement the complete ordered source accessible through the answer context; '
+            'the Dipole values and target equations are unchanged.')
     occurring = [s for s in STATES if any(p['state'] == s for p in comp['observations'])]
     result['state_explanations'] = {s: f'{name}: {STATE_MEANING[s]}' + (f' (unit {comp["unit"]})' if s == 'PRESENT' and comp.get('unit') else '')
                                     for s in occurring}
@@ -362,7 +459,7 @@ def _step_disagreement(pair):
     return None
 
 
-def summary_answer(visible, outputs, *, learner_context=None):
+def summary_answer(visible, outputs, *, learner_context=None, shared_market=None):
     """The summary in parse_summary's shape. Novel findings are only what a computation here surfaces: a pair whose
     first-to-last relation and its step-by-step co-movement counts point different ways (filed as a HYPOTHESIS)."""
     pre = _evidence(visible)
@@ -385,6 +482,12 @@ def summary_answer(visible, outputs, *, learner_context=None):
     cycle_summary = (f'{AUTHOR}: {len(comps)} components. First-to-last PRESENT direction: '
                      + '; '.join(f'{k} {len(v)} ({", ".join(v)})' for k, v in sorted(by_direction.items()))
                      + '. Terminal state: ' + '; '.join(f'{k} {len(v)} ({", ".join(v)})' for k, v in sorted(by_terminal.items())) + '.')
+    if shared_market is not None:
+        cycle_summary += (' Shared ordered market source and complete-read dispositions used by this review: '
+            + _exact_market_text(shared_market.summary())
+            + '. Complete component anchor pictures are carried in the component evidence; they do not replace '
+            'access to the full ordered view. Unsupported/failed/unpaired inputs remain source dispositions, '
+            'not invented Dipole measurements or claims of native training.')
     correlation_review = (f'{AUTHOR}: {len(review)} pairs ({pre["evidence_source"]}). Relation: {json.dumps(relations, sort_keys=True)}. Pearson reported '
                           f'on {reported} pairs; not reported on {len(review) - reported} ({json.dumps(not_reported, sort_keys=True)}). '
                           f'{len(disagreements)} pairs whose first-to-last relation and step-by-step co-movement counts point different '

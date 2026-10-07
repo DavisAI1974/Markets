@@ -115,6 +115,18 @@ actual legacy coverage and must not be presented as the new shared view. This na
 explicitly requested source wiring supersedes the prior no-producer-activation instruction
 only for this named route; no runtime start or general scientific change is authorized.
 
+For the teacher on the same new policy, `Run.teacher` must also supply
+`SHARED_MARKET_POLICY=FRANKIE_SHARED_MARKET_TIMELINE_V1` and `CALCULATION_ROOTS`, a comma
+list of absolute owner-local ROOT paths aligned with `DAYS` and `INGESTION_RECEIPTS`.
+The shell forwards `--calculations ROOT --shared-market-policy SCHEMA`. Python binds
+the same ingestion/journal/external evidence and records `shared_market_identity` plus
+`shared_market_read.complete` in recovery and completion. Before any retained-teacher
+fast path, require the planned policy, exact matching ROOT source-binding witness and
+matching complete shared read; a legacy teacher receipt is not compatible. Retain old
+results and require explicit compatible recovery rather than changing their identity.
+The remote teacher must run with its owning ROOT/ingest paths, not caller-local aliases.
+Fetch `SHARED_MARKET_TIMELINE_20261007.md` and actual published source before wiring.
+
 Codex's Step 7 owner has also drafted `frankie_box_jev_cpu.py` / `.sh`; independent review is
 underway. Read the final published `STEP7_CPU_CONTINUATION_20261007.md` and caller supplement
 before integration. `Run.jev` must retain `JEV_CPU_REQUEST_V1` before calling the child with

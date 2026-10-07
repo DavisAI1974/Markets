@@ -59,7 +59,7 @@ def _save_new_complete(path, value):
 
 
 def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
-                  frozen_survivors=None, resume=False, *, bedrock=False):
+                  frozen_survivors=None, resume=False, *, bedrock=False, shared_market_policy=None):
     requested = [False]
     previous_handler = signal.signal(signal.SIGTERM, lambda *_: requested.__setitem__(0, True))
     stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
@@ -67,7 +67,8 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
         return requested[0] or bool(stop_file and Path(stop_file).exists())
     try:
         result = _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers,
-                                digest, frozen_survivors, resume, save_requested=save_requested, bedrock=bedrock)
+                                digest, frozen_survivors, resume, save_requested=save_requested, bedrock=bedrock,
+                                shared_market_policy=shared_market_policy)
         if save_requested():
             from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
             raise TeacherSaved('ROOT completion published; resume uses the completed receipt')
@@ -77,12 +78,16 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
 
 
 def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
-                   frozen_survivors=None, resume=False, save_requested=None, bedrock=False):
+                   frozen_survivors=None, resume=False, save_requested=None, bedrock=False, shared_market_policy=None):
     require_checkout(commit)
     if day_role not in ('discovery', 'confirmation'):
         raise ValueError('day role discovery or confirmation required')
     if day_role == 'confirmation' and not (frozen_survivors and Path(frozen_survivors).is_file()):
         raise ValueError('a confirmation day stays untouched until the survivor list is frozen (give it)')
+    if shared_market_policy is not None:
+        from frankie_box_market_timeline import SCHEMA as timeline_schema, binding as timeline_binding
+        if shared_market_policy != timeline_schema or not bedrock:
+            raise ValueError('the shared market policy requires its exact version and native bedrock calculations')
     receipt_pin = witness(safe_path(receipt_path))
     if receipt_pin['sha256'] != receipt_sha256:
         raise ValueError('ingestion receipt differs from the sha256 given')
@@ -190,6 +195,8 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                    record_count=receipt['record_count'], journal_count=receipt['journal_count'],
                    journal_hash=receipt['journal_hash'], day_role=day_role, partial_members=partial_members,
                    tail_members=tail_members, opening_book=opening_book, external=external)
+    if shared_market_policy is not None:
+        binding['shared_market_policy'] = timeline_binding()
     if bedrock:
         from frankie_box_native_emission import binding as emission_binding
         binding['native_calculation_policy'] = dict(schema=NATIVE_RECOVERY_SCHEMA,
@@ -260,6 +267,13 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                                'and error in derive.json / work/derived/.rows/failures.jsonl; every other record calculated'),
                 model_calls=0, source_replays=0, source_writes=0,
                 status='calculations_retained' if not failures else 'calculations_retained_with_failures')
+    if shared_market_policy is not None:
+        # Pin existing spools at publication; a reader must never invent a new
+        # source identity by hashing whatever happens to be at an old pathname.
+        calc['shared_market_policy'] = binding['shared_market_policy']
+        calc['shared_market_sources'] = {
+            name: witness(session.work / 'derived' / '.rows' / (name + '.jsonl'))
+            for name in ('frames', 'prices', 'structures')}
     _save_new_complete(output / 'calculations-receipt.json', calc)
     session.phase('derived')
     return calc
@@ -279,10 +293,11 @@ def main():
     p.add_argument('--resume', action='store_true', help='reuse the source-bound unfinished ROOT directory')
     p.add_argument('--bedrock', choices=('on', 'off'), default='off',
                    help='explicit native calculation source route; does not establish downstream consumer coverage')
+    p.add_argument('--shared-market-policy', choices=('FRANKIE_SHARED_MARKET_TIMELINE_V1',))
     a = p.parse_args()
     print(json.dumps(calculate_day(a.commit, a.ingestion_receipt, a.ingestion_receipt_sha256, a.day, a.day_role,
                                    a.output_root, a.data_workers, a.digest == 'on', a.frozen_survivors, a.resume,
-                                   bedrock=a.bedrock == 'on'), sort_keys=True), flush=True)
+                                   bedrock=a.bedrock == 'on', shared_market_policy=a.shared_market_policy), sort_keys=True), flush=True)
 
 
 if __name__ == '__main__':

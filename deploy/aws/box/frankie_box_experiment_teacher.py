@@ -57,7 +57,8 @@ def _sha256(path):
     return h.hexdigest()
 
 
-def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None):
+def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None,
+          *, calculations=None, shared_market_policy=None):
     # Keep the cooperative handler through publication too: an orderly stop must not
     # leave a completed attachment without its rows/external section/completion receipt.
     import signal
@@ -70,13 +71,15 @@ def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ext
     previous_signal = signal.signal(signal.SIGTERM, request_save)
     try:
         return _teach(day, receipt_path, receipt_sha256, workers, day_external,
-                      day_external_sha256, save_requested=save_requested)
+                      day_external_sha256, save_requested=save_requested, calculations=calculations,
+                      shared_market_policy=shared_market_policy)
     finally:
         signal.signal(signal.SIGTERM, previous_signal)
 
 
 def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None,
-           *, save_requested, learner_binding=None, learner_directory=None):
+           *, save_requested, learner_binding=None, learner_directory=None,
+           calculations=None, shared_market_policy=None):
     receipt_path = Path(receipt_path)
     if _sha256(receipt_path) != receipt_sha256:
         raise SystemExit('the ingestion receipt differs from the sha256 given')
@@ -106,6 +109,19 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     journal = receipt_path.parent / rc['journal_file']
     if journal.stat().st_size != rc['journal_bytes'] or _sha256(journal) != rc['journal_sha256']:
         raise SystemExit('the sealed journal differs from its ingestion receipt')
+    market = None
+    if calculations is not None or shared_market_policy is not None:
+        from frankie_box_market_timeline import SCHEMA, SharedMarketTimeline
+        if calculations is None or shared_market_policy != SCHEMA:
+            raise ValueError('shared teacher requires calculations and its exact versioned policy together')
+        market = SharedMarketTimeline(calculations, day=day, workers=workers)
+        if (market.source['ingestion_receipt']['sha256'] != receipt_sha256
+                or market.input_pin['sha256'] != rc['journal_sha256']):
+            raise ValueError('teacher and shared picture have different sealed evidence')
+        shared_external = market.source.get('external') or {}
+        if ((shared_external.get('sha256') if shared_external.get('status') == 'attached' else None)
+                != external.get('sha256')):
+            raise ValueError('teacher and shared picture have different external publications')
     out = OUT / day
     if learner_binding is not None:
         # The learner owns a separate calculation and recovery namespace. It may reuse the
@@ -123,6 +139,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         if (retained_receipt.get('schema') != 'FRANKIE_EXPERIMENT_TEACHER_ROWS_V1' or
                 retained_receipt.get('day') != day or
                 retained_receipt.get('learner_binding') != learner_binding or
+                retained_receipt.get('shared_market_identity') != (market.identity if market else None) or
                 retained_receipt.get('ingestion_receipt', {}).get('sha256') != receipt_sha256):
             raise ValueError('retained teacher receipt belongs to another day or ingestion; preserved')
         old_external = retained_receipt.get('external_section', {})
@@ -174,14 +191,35 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     T.evidence_hash = PJ._chain_hash_factory(h0)
     TC.apply()
     evidence = None
+    market_state = out / 'shared-market-state.pkl'
+    def shared_evidence():
+        pictures = market.iter_applied()
+        try:
+            for item in pictures:
+                # Both existing equations see the identical richer current input.
+                # Their raw argument/hash and numerical formulas remain unchanged.
+                teacher.market_picture = item['picture']
+                teacher.control.market_picture = item['picture']
+                teacher.raw_teacher.market_picture = item['picture']
+                yield item['evidence']
+        finally:
+            pictures.close()
+            PT._save_raw_state(market_state, market.report)
     try:
-        evidence = PJ.parallel_journal_prefix(builder, through, None)
+        evidence = shared_evidence() if market else PJ.parallel_journal_prefix(builder, through, None)
         rows, processed, hashes = PT.row_pass(teacher, evidence, as_of=bound, source_manifest_hash=rc['manifest_hash'],
             recovery_path=out / 'teacher-raw-state.pkl',
             recovery_identity=dict(receipt_sha256=receipt_sha256, journal_sha256=rc['journal_sha256'],
                                    journal_count=rc['journal_count'], journal_hash=rc['journal_hash'], through=through,
-                                   **({'learner_binding': learner_binding} if learner_binding is not None else {})),
+                                   **({'learner_binding': learner_binding} if learner_binding is not None else {}),
+                                   **({'shared_market_identity': market.identity} if market is not None else {})),
             save_requested=save_requested, retain_dstate=True)
+        if market is not None:
+            # A completed raw recovery may reuse its saved read. Never describe an
+            # unstarted current iterator as a fresh complete evidence delivery.
+            shared_read = PT._load_raw_state(market_state) if market_state.exists() else None
+            if not shared_read or shared_read.get('identity') != market.identity or not shared_read.get('complete'):
+                raise ValueError('completed teacher raw state lacks its matching complete shared read; preserved')
         if save_requested():
             raise PT.TeacherSaved('teacher raw pass saved; attachment assembly has not started')
         walked = time.time() - started
@@ -233,6 +271,9 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                   attachment_file=dict(file='teacher-attachment.pkl', sha256=_sha256(out / 'teacher-attachment.pkl')),
                   model_calls=0, caveat='whole-day context: the exact-row check in finish compares the rows with themselves',
                   experiment_directive=directive_witness())
+    if market is not None:
+        result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
+                      shared_market_use='full current picture exposed to both raw teachers; existing equations use original APPLIED fields')
     if learner_binding is not None:
         result.update(learner_binding=learner_binding, evidence_seat='frankie',
                       independent_scientific_verification=False)
@@ -269,10 +310,13 @@ def main():
     p.add_argument('--workers', type=int, default=8)
     p.add_argument('--day-external', help='the day file (FRANKIE_DAY_EXTERNAL_V1); default: beside the sealed ingest')
     p.add_argument('--day-external-sha256', help='its sha256 (given together with --day-external; a mismatch is refused)')
+    p.add_argument('--calculations', help='owner-local ROOT of the same sealed source')
+    p.add_argument('--shared-market-policy', choices=['FRANKIE_SHARED_MARKET_TIMELINE_V1'])
     a = p.parse_args()
     if (a.day_external is None) != (a.day_external_sha256 is None):
         p.error('--day-external and --day-external-sha256 are given together')
-    return teach(a.day, a.ingestion_receipt, a.ingestion_receipt_sha256, a.workers, a.day_external, a.day_external_sha256)
+    return teach(a.day, a.ingestion_receipt, a.ingestion_receipt_sha256, a.workers, a.day_external, a.day_external_sha256,
+                 calculations=a.calculations, shared_market_policy=a.shared_market_policy)
 
 
 if __name__ == '__main__':

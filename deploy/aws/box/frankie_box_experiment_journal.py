@@ -16,7 +16,9 @@ SCHEMA = 'FRANKIE_JOURNAL_GROUP_SEARCH_V1'
 
 def binding():
     here = Path(__file__).resolve()
-    return dict(schema=SCHEMA, helper_sha256=hashlib.sha256(here.read_bytes()).hexdigest(),
+    from frankie_box_market_timeline import binding as timeline_binding
+    return dict(schema=SCHEMA, shared_timeline=timeline_binding(),
+                helper_sha256=hashlib.sha256(here.read_bytes()).hexdigest(),
                 extractor_sha256=hashlib.sha256(here.with_name('frankie_box_boss_session.py').read_bytes()).hexdigest())
 
 
@@ -34,39 +36,9 @@ def _range_add(ranges, ordinal):
 
 
 def _frame_index(numeric, receive_times):
-    cursors, instruments = numeric.get('input_cursor'), numeric.get('native_frame.instrument_id')
-    slots = sorted((int(match.group(1)), name) for name in numeric
-                   if (match := re.fullmatch(r'input_record_indices\[(\d+)\]', name)))
-    if cursors is None or instruments is None or not slots:
-        return None, None
-    if any(len(values) != len(receive_times) for values in (cursors, instruments, *(numeric[name] for _, name in slots))):
-        raise ValueError('ROOT group membership columns have different lengths')
-    if [slot for slot, _ in slots] != list(range(len(slots))):
-        raise ValueError('ROOT group INPUT positions have gaps')
-    frames, owners, previous = [], {}, -1
-    for position, stamp in enumerate(receive_times):
-        cursor, instrument = cursors[position], instruments[position]
-        if not _integer(cursor) or not _integer(instrument) or cursor <= previous:
-            raise ValueError('ROOT frame INPUT cursor/instrument identity is not exact and ordered')
-        members, ended = [], False
-        for slot, name in slots:
-            index = numeric[name][position]
-            if index is None:
-                ended = True
-                continue
-            if (ended or not _integer(index) or index < 0 or index > cursor
-                    or index in owners or (members and index <= members[-1])):
-                raise ValueError('ROOT group INPUT membership is duplicated or out of order')
-            record_instruments = numeric.get('input_records[%d].instrument_id' % slot)
-            if record_instruments is None or record_instruments[position] != instrument:
-                raise ValueError('ROOT group INPUT instrument differs from its frame')
-            members.append(index)
-            owners[index] = position
-        if not members or members[-1] != cursor:
-            raise ValueError('ROOT group does not end at its declared INPUT cursor')
-        frames.append(dict(cursor=cursor, instrument=instrument, stamp=int(stamp), members=set(members)))
-        previous = cursor
-    return frames, owners
+    # One shared membership contract for the raw journal and native producer views.
+    from frankie_box_market_timeline import frame_index
+    return frame_index(numeric, receive_times)
 
 
 def read_columns(day_dir, columns, frame_numeric, receive_times, *, workers=15, frame_sha256=None):

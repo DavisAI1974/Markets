@@ -144,17 +144,10 @@ def read_columns(day_dir, columns, frame_numeric, receive_times):
     if set(selected) != required:
         raise ValueError('native export has an incomplete or unknown artifact set')
     n = len(receive_times)
-    cursors = frame_numeric.get('input_cursor')
-    instruments = frame_numeric.get('native_frame.instrument_id')
-    index = {}
-    if cursors is not None and instruments is not None:
-        for position, (cursor, instrument, stamp) in enumerate(zip(cursors, instruments, receive_times)):
-            if any(isinstance(v, bool) or not isinstance(v, int) for v in (cursor, instrument)):
-                raise ValueError('ROOT frame identity is not exact integer provenance')
-            key = (cursor, instrument, int(stamp))
-            if key in index:
-                raise ValueError('ROOT frame provenance is duplicated')
-            index[key] = position
+    from frankie_box_market_timeline import frame_index
+    frames, _ = frame_index(frame_numeric, receive_times)
+    index = {(frame['cursor'], frame['instrument'], frame['stamp']): position
+             for position, frame in enumerate(frames or [])}
     members = {}
     numeric, text, sources, notes = {}, {}, [], []
 

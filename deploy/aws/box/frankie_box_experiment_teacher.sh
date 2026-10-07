@@ -27,6 +27,13 @@ if [ -n "${DAY_EXTERNALS:-}${DAY_EXTERNAL_SHA256S:-}" ]; then
   [ "$NX" = "$ND" ] && [ "$NS" = "$ND" ] || { echo "DAY_EXTERNALS and DAY_EXTERNAL_SHA256S must be comma lists as long as DAYS" >&2; exit 2; }
   case "$DAY_EXTERNALS" in *..*) echo "no .. in DAY_EXTERNALS" >&2; exit 2;; esac
 fi
+# New shared-policy requests require one owner-local ROOT for every teacher day.
+if [ -n "${SHARED_MARKET_POLICY:-}${CALCULATION_ROOTS:-}" ]; then
+  [ "${SHARED_MARKET_POLICY:-}" = FRANKIE_SHARED_MARKET_TIMELINE_V1 ] || { echo "unknown shared market policy" >&2; exit 2; }
+  NC=$(echo "${CALCULATION_ROOTS:-}" | tr ',' '\n' | grep -c .)
+  [ "$NC" = "$ND" ] || { echo "CALCULATION_ROOTS must align with DAYS" >&2; exit 2; }
+  case "$CALCULATION_ROOTS" in *..*|*' '*|*'	'*) echo "invalid calculation path list" >&2; exit 2;; esac
+fi
 MINE=$(/opt/frankie-box/venv/bin/python -c 'import os; print(" ".join(str(c) for c in sorted(os.sched_getaffinity(0))))') \
   || { echo "could not read this process's CPU affinity" >&2; exit 2; }
 NCPU=$(echo "$MINE" | wc -w)
@@ -55,6 +62,11 @@ for DAY in $(echo "$DAYS" | tr ',' ' '); do
     case "$X" in /opt/frankie-box/*) ;; *) echo "day file $X must be under /opt/frankie-box" >&2; exit 2;; esac
     case "$XS" in [0-9a-f]*) [ "${#XS}" = 64 ] || { echo "bad sha256 $XS" >&2; exit 2; };; *) echo "bad sha256 $XS" >&2; exit 2;; esac
     EXTRA="--day-external $X --day-external-sha256 $XS"
+  fi
+  if [ -n "${SHARED_MARKET_POLICY:-}" ]; then
+    ROOT=$(echo "$CALCULATION_ROOTS" | cut -d, -f"$I")
+    case "$ROOT" in /opt/frankie-box/work/experiment-roots/*) ;; *) echo "bad calculation root $ROOT" >&2; exit 2;; esac
+    EXTRA="$EXTRA --calculations $ROOT --shared-market-policy $SHARED_MARKET_POLICY"
   fi
   LOG="$LOGS/$DAY-$(date +%s).log"
   echo "### $DAY: CPUs $PIN, receipt $R ($SHA), log $LOG ${EXTRA:+(day file given)}"
