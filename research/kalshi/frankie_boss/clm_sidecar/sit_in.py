@@ -1,7 +1,7 @@
 """Jev, the blind outside student in the experiment (Greg, 2026-09-29: "yes, include him").
 
-Spec: research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md, section "Jev". Runs on Jev's OWN Pod (Qwen3-8B
-chat, JEV_CHAT_URL), on the three classroom-arm days of the experiment only. Jev is NOT one of the three classroom seats
+Spec: research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md, section "Jev". The Pod route is retired;
+the CPU launcher/runtime is not yet wired. This client uses JEV_CHAT_URL on classroom-arm days. Jev is NOT one of the three classroom seats
 and never speaks in the classroom (rule R17). No Granite call of any kind: Frankie is code, and his answers are read
 from his classroom files, never asked for.
 
@@ -32,9 +32,11 @@ into its own note, notes kept as MULTIPLE NOTE PACKS, every step run once per pa
 answer (finish_reason length) is regenerated from its input in halves until whole. An answer that is not JSON is asked
 again once and, if still not JSON, kept whole under "unparsed" (listed, never dropped). A claim repeated in the same
 words is kept and marked duplicate_of (listed, not dropped). Progress is saved to STATE_PATH after every step, so a
-restart picks up where it stopped. Oversize bundles arrive as JEV_FEED_PART_V1 parts over consecutive slots and are
+restart reuses recorded replies and prepared uploads. A pending call with unknown completion refuses an automatic
+retry. Run this client as a repository module so the shared durable writer is available. Oversize bundles arrive as JEV_FEED_PART_V1 parts over consecutive slots and are
 joined and checked (sha256) here.
 """
+import base64
 import gzip
 import hashlib
 import json
@@ -42,7 +44,9 @@ import os
 import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
+from pathlib import Path
 
 JEV_CONTEXT = 32768
 JEV_PIECE_CHARS = 54000          # one piece or note pack per Jev prompt: a little under the input room (~18k of 32,768 tokens)
@@ -50,7 +54,7 @@ JEV_PROMPT_CHARS = JEV_CONTEXT * 3
 JEV_MODEL = 'Qwen3-8B'
 STATE_PATH = os.environ.get('SIT_IN_STATE', '/workspace/jev-sit-in/state.json')
 CLAIM_KINDS = ('mechanism', 'novel_finding', 'test_next')
-CALLS = [0]                      # every Jev model call this process made (retries and note reading included)
+PROGRESS = None                  # required before model work; the current durable phase and replay cursor
 
 
 class Incomplete(Exception):
@@ -82,7 +86,7 @@ def sha(data):
 
 
 def jev(prompt):
-    """Jev's own model: Qwen3-8B chat served on this Pod. Output = the remaining context; a cut-off answer raises Incomplete."""
+    """Jev's configured chat endpoint. Recorded replies replay without another model call."""
     if len(prompt) > JEV_PROMPT_CHARS:
         raise ValueError('Jev prompt of %d chars does not fit; the caller reads it in pieces (nothing is cut)' % len(prompt))
     max_tokens = JEV_CONTEXT - len(prompt) // 3 - 256
@@ -90,14 +94,18 @@ def jev(prompt):
         raise Incomplete('no output room left for a %d-char prompt' % len(prompt))
     body = json.dumps(dict(model='jev', messages=[dict(role='user', content=prompt)],
                            temperature=0, max_tokens=max_tokens, chat_template_kwargs=dict(enable_thinking=False))).encode()
-    request = urllib.request.Request(os.environ.get('JEV_CHAT_URL', 'http://127.0.0.1:8091/v1/chat/completions'),
-                                     data=body, headers={'Content-Type': 'application/json'})
-    CALLS[0] += 1
-    with urllib.request.urlopen(request, timeout=900) as response:
-        choice = json.loads(response.read())['choices'][0]
+    reply = recorded_chat(body)
+    value = json.loads(reply)
+    choices = value.get('choices') if isinstance(value, dict) else None
+    if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+        raise ValueError('recorded Jev reply has no usable choices; original bytes retained')
+    choice = choices[0]
     if choice.get('finish_reason') == 'length':
         raise Incomplete('Jev stopped at %d output tokens' % max_tokens)
-    return choice['message']['content']
+    message = choice.get('message')
+    if not isinstance(message, dict) or not isinstance(message.get('content'), str):
+        raise ValueError('recorded Jev reply has no text content; original bytes retained')
+    return message['content']
 
 
 def parse_json(text):
@@ -182,21 +190,126 @@ def json_asker():
 
 
 def save_state(state):
-    try:
-        os.makedirs(os.path.dirname(STATE_PATH), exist_ok=True)
-        with open(STATE_PATH + '.tmp', 'w') as handle:
-            json.dump(state, handle)
-        os.replace(STATE_PATH + '.tmp', STATE_PATH)
-    except OSError as error:
-        log('state not saved:', error)
+    from deploy.aws.box.frankie_box_durable import write_json
+    write_json(STATE_PATH, state)       # failure propagates before any subsequent model work or answer access
 
 
 def load_state():
-    try:
-        with open(STATE_PATH) as handle:
-            return json.load(handle)
-    except (OSError, ValueError):
+    path = Path(STATE_PATH)
+    if not path.exists():
         return None
+    value = json.loads(path.read_bytes())
+    if not isinstance(value, dict):
+        raise ValueError('retained Jev state is not an object; refused, never reset')
+    return value
+
+
+def bind_inputs(state, name, value):
+    """Freeze actual selected contents before model work, including phases reconstructed on restart."""
+    if name in state and state[name] != value:
+        raise ValueError('retained Jev %s differs; an explicit successor is required' % name)
+    if name not in state:
+        state[name] = value
+        save_state(state)
+
+
+def begin_phase(state, phase):
+    global PROGRESS
+    state.setdefault('calls', {}).setdefault(phase, [])
+    PROGRESS = dict(state=state, phase=phase, cursor=0)
+
+
+def recorded_chat(body):
+    """Durable pre-send intent, then whole response bytes. Unknown outcomes never trigger a repeated call.
+
+    Replaying the deterministic note/claim traversal consumes retained replies in order; changed
+    requests refuse. The intent records possibility of dispatch, not proof the server received it.
+    """
+    if PROGRESS is None:
+        raise ValueError('Jev model work requires a bound durable phase')
+    state, phase, cursor = PROGRESS['state'], PROGRESS['phase'], PROGRESS['cursor']
+    calls = state['calls'][phase]
+    body_text = body.decode('utf-8')
+    if cursor < len(calls):
+        call = calls[cursor]
+        if call['request'] != body_text or call['request_sha256'] != sha(body):
+            raise ValueError('retained Jev request differs at %s/%d' % (phase, cursor))
+        if call['status'] != 'replied':
+            raise ValueError('Jev %s/%d has an unresolved or failed request; retained evidence requires owner review, no retry'
+                             % (phase, cursor))
+        raw = base64.b64decode(call['response_base64'], validate=True)
+        if sha(raw) != call['response_sha256'] or len(raw) != call['response_bytes']:
+            raise ValueError('retained Jev response bytes differ')
+    else:
+        call = dict(request=body_text, request_sha256=sha(body), status='pending', intent_at=time.time())
+        calls.append(call)
+        save_state(state)
+        request = urllib.request.Request(os.environ.get('JEV_CHAT_URL', 'http://127.0.0.1:8091/v1/chat/completions'),
+                                         data=body, headers={'Content-Type': 'application/json'})
+        chunks = []
+        try:
+            with urllib.request.urlopen(request, timeout=900) as response:
+                read_reply(response, chunks)
+            raw = b''.join(chunks)
+        except Exception as error:
+            partial = getattr(error, 'partial', b'')
+            if isinstance(partial, bytes) and partial:
+                chunks.append(partial)
+            if isinstance(error, urllib.error.HTTPError):
+                try:
+                    read_reply(error, chunks)
+                except Exception as read_error:
+                    partial = getattr(read_error, 'partial', b'')
+                    if isinstance(partial, bytes) and partial:
+                        chunks.append(partial)
+                    call['error_body_read_failure'] = repr(read_error)
+                finally:
+                    error.close()
+            partial = b''.join(chunks)
+            call.update(status='failed', error=repr(error), observed_at=time.time(),
+                        partial_base64=base64.b64encode(partial).decode('ascii'),
+                        partial_bytes=len(partial), partial_sha256=sha(partial))
+            save_state(state)
+            raise
+        call.update(status='replied', response_base64=base64.b64encode(raw).decode('ascii'),
+                    response_sha256=sha(raw), response_bytes=len(raw), received_at=time.time())
+        save_state(state)              # preserve even malformed/cut-off responses before interpretation
+    PROGRESS['cursor'] += 1
+    return raw
+
+
+def read_reply(response, chunks):
+    """Keep received chunks accessible even when a later read fails; never replace them with error prose."""
+    while True:
+        chunk = response.read1(65536)
+        if not chunk:
+            break
+        chunks.append(chunk)
+    length = response.headers.get('Content-Length')
+    if length is not None and sum(map(len, chunks)) != int(length):
+        raise ValueError('Jev reply body differs from declared Content-Length')
+
+
+def end_phase():
+    if PROGRESS['cursor'] != len(PROGRESS['state']['calls'][PROGRESS['phase']]):
+        raise ValueError('Jev phase ended before every retained request was consumed')
+
+
+def prepared_json(state, name, value=None):
+    """Exact upload bytes retained before PUT; retries reuse the same bytes and timestamps."""
+    if name not in state:
+        if value is None:
+            raise ValueError('missing prepared Jev artifact: ' + name)
+        data = json.dumps(value, sort_keys=True, indent=1).encode()
+        state[name] = dict(text=data.decode(), bytes=len(data), sha256=sha(data))
+        save_state(state)
+    saved = state[name]
+    data = saved['text'].encode()
+    if len(data) != saved['bytes'] or sha(data) != saved['sha256']:
+        raise ValueError('prepared Jev artifact differs: ' + name)
+    if value is not None and json.loads(data) != value:
+        raise ValueError('prepared Jev artifact is not the supplied document: ' + name)
+    return data
 
 
 def read_bundle(slots, schema):
@@ -371,12 +484,14 @@ def main():
     config = get_json(os.environ['CONFIG_URL'])
     stamp, day = os.environ.get('STAMP', ''), os.environ['DAY']
     wait, poll = int(os.environ.get('WAIT_SECONDS', '21600')), int(os.environ.get('POLL_SECONDS', '60'))
-    state = load_state() or {}
-    if state.get('stamp') not in (None, stamp) or state.get('day') not in (None, day):
-        state = {}                                   # another sit-in's progress: start fresh, never mix
-    state.update(stamp=stamp, day=day)
-    calls = lambda: state.get('model_calls_before_restart', 0) + CALLS[0]
-    state['model_calls_before_restart'] = state.get('model_calls', 0)
+    retained = load_state()
+    state = {} if retained is None else retained
+    if retained is not None and (state.get('schema') != 'JEV_SIT_IN_PROGRESS_V2' or 'inputs' not in state):
+        raise ValueError('legacy Jev progress lacks the durable call/input binding; owner review required, never reset')
+    if retained is not None and (state.get('stamp') != stamp or state.get('day') != day):
+        raise ValueError('retained Jev progress belongs to another day/stamp; refused, never reset')
+    state.update(schema='JEV_SIT_IN_PROGRESS_V2', stamp=stamp, day=day)
+    calls = lambda: sum(c['status'] == 'replied' for records in state.get('calls', {}).values() for c in records)
 
     # 0. BRAIN: his earlier days and the teacher's lessons on them, whole (never Frankie's)
     brain_text, brain_pins = load_brain(config, day)
@@ -393,10 +508,30 @@ def main():
         material['material'].get('bytes'), material['material'].get('sha256'),
         'yes' if material.get('survivors') else 'no', [u.get('item') for u in material.get('unavailable') or []]))
 
+    def destination(url):
+        # A refreshed presigned credential for the same object is transport, not new research input.
+        parsed = urllib.parse.urlsplit(url)
+        query = [(key, value) for key, value in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+                 if not key.lower().startswith('x-amz-') and key.lower() not in ('awsaccesskeyid', 'signature', 'expires')]
+        return parsed._replace(query=urllib.parse.urlencode(sorted(query)), fragment='').geturl()
+
+    targets = {key: [destination(url) for url in config[key]] for key in ('material', 'frankie')}
+    targets.update({key: destination(config[key]) for key in ('claims', 'comparison', 'report', 'transcript', 'receipt')})
+    targets['brain_entry'] = dict(key=config['brain_entry']['key'], url=destination(config['brain_entry']['url']))
+    targets['lessons_key'] = config.get('lessons_key')
+    bind_inputs(state, 'inputs', dict(day=day, stamp=stamp, material=material, brain_text=brain_text,
+        brain_pins=brain_pins, targets=targets, client_sha256=sha(Path(__file__).read_bytes()),
+        chat_endpoint=destination(os.environ.get('JEV_CHAT_URL', 'http://127.0.0.1:8091/v1/chat/completions')),
+        model=JEV_MODEL, context=JEV_CONTEXT, piece_chars=JEV_PIECE_CHARS, prompt_chars=JEV_PROMPT_CHARS))
+
     # 2-3. STUDENT, then FILE the claims before anything of Frankie's is read
-    if not state.get('claims_filed'):
+    if 'prepared_claims' not in state:
+        if state.get('claims_filed'):
+            raise ValueError('claims were filed without their retained exact bytes; refused')
+        begin_phase(state, 'student')
         text = material_text(material) + ('\n\n' + brain_text if brain_text else '')
         claims, unparsed, raw = student_claims(day, text)
+        end_phase()
         filed_at = time.time()
         document = dict(schema='JEV_CLAIMS_V1', stamp=stamp, day=day, author='jev', model=JEV_MODEL, filed_at=filed_at,
                         blind=dict(frankie_read=False, statement='filed before any of Frankie\'s outputs were read'),
@@ -407,24 +542,46 @@ def main():
                         counts=dict(claims=len(claims), unparsed=len(unparsed),
                                     duplicates=sum(1 for c in claims if c.get('duplicate_of')),
                                     by_kind={k: sum(1 for c in claims if c['kind'] == k) for k in sorted({c['kind'] for c in claims})}))
-        data = json.dumps(document, sort_keys=True, indent=1).encode()
+        state.update(claims=claims, unparsed=unparsed, student_raw=raw, model_calls=calls())
+        prepared_json(state, 'prepared_claims', document)
+    data = prepared_json(state, 'prepared_claims')
+    document = json.loads(data)
+    if (document.get('schema') != 'JEV_CLAIMS_V1' or document.get('day') != day
+            or document.get('stamp') != stamp or document.get('claims') != state.get('claims')
+            or document.get('unparsed') != state.get('unparsed')
+            or document.get('blind', {}).get('frankie_read') is not False):
+        raise ValueError('prepared Jev claims do not match their bound blind state')
+    seal = dict(sha256=sha(data), bytes=len(data), at=document['filed_at'])
+    if not state.get('claims_filed'):
         log('claims filed -> HTTP %d (%d claims, %d unparsed)' % (put(config['claims'], data, 'application/json'),
-                                                                  len(claims), len(unparsed)))
-        state.update(claims_filed=dict(sha256=sha(data), bytes=len(data), at=filed_at), claims=claims, unparsed=unparsed,
-                     student_raw=raw, model_calls=calls())
+                                                                  len(document['claims']), len(document['unparsed'])))
+        state.update(claims_filed=seal, model_calls=calls())
         save_state(state)
+    if state['claims_filed'] != seal:
+        raise ValueError('filed Jev seal does not name the prepared claims; Frankie remains unread')
     claims = state['claims']
 
     # 4. COMPARE, only now (the blind wall: the claims are filed and pinned above)
-    if not state.get('compared'):
-        assert state.get('claims_filed'), 'the blind wall: Frankie is read only after the claims are filed'
+    if 'prepared_comparison' not in state:
+        if state.get('compared'):
+            raise ValueError('comparison lacks retained prepared bytes; refused')
         frankie = wait_bundle(config['frankie'], 'JEV_FRANKIE_OUTPUTS_V1', wait, poll)
         if frankie is None:
+            if 'frankie_input' in state:
+                raise ValueError('selected Frankie comparison material is missing; retained model work is not discarded')
             comparison = dict(schema='JEV_COMPARISON_V1', stamp=stamp, day=day, available=False,
                               reason='no JEV_FRANKIE_OUTPUTS_V1 bundle within %d s' % wait)
         else:
-            frankie_read_at = time.time()
+            if frankie.get('day') != day:
+                raise ValueError('Frankie comparison material belongs to another day')
+            bind_inputs(state, 'frankie_input', frankie)
+            if 'frankie_read_at' not in state:
+                state['frankie_read_at'] = time.time()
+                save_state(state)
+            frankie_read_at = state['frankie_read_at']
+            begin_phase(state, 'comparison')
             verdicts, raw = compare(day, claims, frankie)
+            end_phase()
             comparison = dict(schema='JEV_COMPARISON_V1', stamp=stamp, day=day, available=True, orientation_only=True,
                               claims_sha256=state['claims_filed']['sha256'], claims_filed_at=state['claims_filed']['at'],
                               frankie_read_at=frankie_read_at,
@@ -438,10 +595,15 @@ def main():
                               only_jev=[x for v in verdicts for x in (v.get('only_jev') or [])],
                               only_frankie=[x for v in verdicts for x in (v.get('only_frankie') or [])],
                               unparsed=[v['raw'] for v in verdicts if 'raw' in v and len(v) == 1])
-        data = json.dumps(comparison, sort_keys=True, indent=1).encode()
+        prepared_json(state, 'prepared_comparison', comparison)
+    data = prepared_json(state, 'prepared_comparison')
+    comparison = json.loads(data)
+    if not state.get('compared'):
         log('comparison -> HTTP %d' % put(config['comparison'], data, 'application/json'))
         state.update(compared=comparison, model_calls=calls())
         save_state(state)
+    if state['compared'] != comparison:
+        raise ValueError('retained comparison does not match its prepared bytes')
     comparison = state['compared']
 
     # 5. REPORT, transcript, receipt
@@ -452,7 +614,7 @@ def main():
             number, c['id'], c['kind'], cell(c['statement']), cell('; '.join(map(str, c.get('series') or []))),
             cell(c.get('direction')), cell('; '.join(map(str, c.get('evidence') or []))), c.get('duplicate_of') or ''))
     lines = ['# Jev, blind outside student: day %s (%s)' % (day, stamp), '',
-             'Model %s on his own Pod; no Granite call. Claims filed %s, before Frankie was read (sha256 %s). Every claim '
+             'Model %s through Jev\'s configured endpoint; no Granite call. Claims filed %s, before Frankie was read (sha256 %s). Every claim '
              'is a CLAIM for the scientific teacher (the experiment\'s search) to test; search results: pending.' % (
                  JEV_MODEL, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(state['claims_filed']['at'])),
                  state['claims_filed']['sha256']), '',
@@ -473,9 +635,12 @@ def main():
     report = '\n'.join(lines) + '\n'
     log('report -> HTTP %d' % put(config['report'], report.encode(), 'text/markdown'))
     transcript = [dict(step='student', answers=state.get('student_raw')), dict(step='compare', answers=comparison.get('raw'))]
-    put(config['transcript'], gzip.compress('\n'.join(json.dumps(t, sort_keys=True) for t in transcript).encode()))
+    put(config['transcript'], gzip.compress('\n'.join(json.dumps(t, sort_keys=True) for t in transcript).encode(), mtime=0))
     receipt = dict(schema='JEV_SIT_IN_RECEIPT_V1', stamp=stamp, day=day, model=JEV_MODEL, granite_calls=0,
                    jev_model_calls=calls(), claims=state['claims_filed'],
+                   call_accounting=dict(completed_replies=calls(),
+                       intents_without_reply=sum(c['status'] != 'replied' for records in state.get('calls', {}).values() for c in records),
+                       rule='counts span retained phases and retries; an intent alone is not proof of dispatch'),
                    claims_count=len(claims), unparsed=len(state.get('unparsed') or []),
                    comparison_available=bool(comparison.get('available')),
                    report=dict(bytes=len(report.encode()), sha256=sha(report.encode())), status='done')

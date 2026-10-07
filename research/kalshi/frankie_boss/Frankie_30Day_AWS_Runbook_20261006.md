@@ -1,5 +1,17 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+## Step 7 source checkpoint — 2026-10-06 late ET
+
+Jev now retains all selected teacher lessons and full entry/lesson contents. Its client uses the
+shared durable writer, binds selected inputs, retains each model request/reply and reconstructs
+completed packs without another call. Unknown calls, malformed state and changed inputs refuse
+automatic restart. Exact claims/comparison bytes are prepared before upload; the local claim
+seal is checked before Frankie answers are read. `STEP7_JEV_CPU_ROUTE_20261007.md` records the
+source changes and limits. CPU runtime/model pins, exact token budgeting, core subset, owner-local
+claim/teacher/publication/completion wiring and interrupted-operation disposition remain open.
+No Pod fallback, new lane or runtime action. CCode keeps the four fifth-session review groups;
+Codex's step-5 successor identity/publication gap remains open. SOURCE-BUILT / RUNTIME-UNVERIFIED.
+
 ## Fifth-session integration review — 2026-10-07
 
 CCode `3667b289` is integrated with its history and Codex's `36cefbec` reader hooks preserved.

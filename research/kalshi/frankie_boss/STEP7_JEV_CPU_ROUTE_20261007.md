@@ -31,9 +31,9 @@ the selected input files and sealed-claim boundary must enforce that separation.
 |---|---|---|
 | Material | `experiment_classroom_v2` writes `jev-material/classroom-request.json` before answers; relay builds the governed material/external/survivor bundle | Reuse the material receipt and exact available survivor pins on CPU; never open whole private classroom state to Jev. |
 | Model | `sit_in.jev` calls an OpenAI-compatible chat endpoint; old bootstrap serves the existing Jev model on a GPU | Pin an explicit CPU runtime/model artifact; verify context/token budgeting and CPU allocation without changing Granite's configuration. No throughput claim yet. |
-| Progress | `sit_in` saves state after broad phases | Current save errors are logged and swallowed; invalid state reads return no state; a different day resets state; completed per-pack work and interrupted calls are not durably retained. Bind the operation inputs and preserve each call/result through existing durable writes. |
-| Seal | `sit_in.main` uploads claims, then saves `claims_filed` before reading Frankie outputs | Interruption after PUT but before local save can repeat generation/upload. Prepare immutable claim bytes and retain their identity before upload; read back/verify the seal before opening Frankie material. |
-| Brain | `load_brain` renders Jev's entries and teacher lessons; comparison stays out of his brain | First source fix below retains every lesson and whole objects. The new CPU operation still needs an immutable selected-file inventory and recovery binding. |
+| Progress | `sit_in` now uses the shared durable writer, binds selected contents, records each request intent and whole reply, and replays completed replies while rebuilding packs | CPU model/runtime identity and operation orchestration still need wiring. An uncertain call refuses automatic retry; owner recovery/successor handling remains open. Legacy state is refused, never reset. |
+| Seal | `sit_in.main` now durably prepares exact claim bytes before PUT and verifies the saved local seal before reading Frankie outputs; comparison bytes are likewise prepared | A retry after PUT reuses identical bytes without model regeneration. CPU owner-local claim artifact and remote/consumer readback verification still need wiring; local state plus HTTP acceptance is not that consumer verification. |
+| Brain | `load_brain` renders Jev's entries and teacher lessons; comparison stays out of his brain | First source fix below retains every lesson and whole objects. The client now binds actual selected contents on retry; CPU source inventory and runtime identities still need integration. |
 | Scientific test | `ST.jev_claims`, `ST.test`, `ST.write`, `ST.publish_lessons` already read labelled claims and immediately publish tested Jev knowledge as `jev-tested` | Bind the consumed claims to the sealed receipt, call this existing scientific path on the owning completed search, return lessons to Jev and publish immediately to Frankie. Do not treat the model comparison as a test. |
 | Completion | `_finish_day` calls `Run.jev` last; accepts FINISHED or the legacy handed-off status | Define completed claims/testing/publication/brain/report receipts for CPU; material handoff alone must not claim finished scientific work. Preserve owner/slot recovery. |
 | Reports | Existing numbered Jev reports and the day report number | Reuse the day's number and retained whole evidence; avoid a new numbering or reporting subsystem. |
@@ -59,6 +59,40 @@ adjudication, model change, training or host choice was introduced.
 
 Checks: direct source/interface review, AST parsing without project imports, git diff --check.
 No runtime result is established by this source correction.
+
+## Recovery and prepared-claim source correction
+
+The client now records `JEV_SIT_IN_PROGRESS_V2` through the existing
+`deploy.aws.box.frankie_box_durable` writer: fsync/readback, atomic replacement and retained
+previous bytes. It must be invoked as a repository module; the retired standalone Pod bootstrap
+is not a supported deployment. Failed saves propagate. Malformed state, another day/stamp and
+legacy state without the new binding refuse instead of being discarded.
+
+Before model work, the state binds the actual material bundle, full rendered brain and consumed
+brain byte/hash witnesses, output destinations, client-source hash and current client parameters.
+Presigned credential refreshes for the same object are allowed; object/version query parameters
+remain part of the destination identity. This does not pin an unselected CPU model/runtime.
+
+Every model request has a durable pre-send intent. Complete raw reply bytes (including malformed,
+non-JSON and cut-off replies) are saved before interpretation. Caught read failures retain received
+chunks and failure evidence. On restart, note/claim traversal reconstructs from the same replies;
+request mismatch or an unknown/failed outcome refuses automatic model retry. A pre-send intent
+is explicitly not proof the server received a call. No pending call is silently marked completed.
+The current 900-second socket timeout is still the legacy client setting, not an overall operation
+deadline; CPU runtime, exact token budgeting, elapsed-time policy and interrupted-operation
+reporting remain open. A hard process kill may leave received-but-not-durably-saved bytes unknown;
+the retained intent makes that uncertainty explicit and prevents repeating the request.
+
+Claims and comparison documents now have exact prepared bytes/hash/length retained before PUT.
+A crash after a successful PUT reuses identical bytes and timestamps, never regenerates claims.
+The local filed seal must match prepared claim bytes before Frankie material is opened. Selected
+comparison material is bound and a changed/missing retry refuses. Transcript gzip metadata is
+stable on retry. Existing reports still say scientific tests are pending; no teacher call or
+scientific completion is invented. Model accounting distinguishes recorded replies from intents
+with no reply. Full recovery evidence remains in owner-local state for the future CPU route.
+
+Checks were source/interface review, `ast.parse` without project imports and whitespace checks
+only. This is host-independent source work; no client, model or upload was invoked.
 
 ## Hosting discussion
 
