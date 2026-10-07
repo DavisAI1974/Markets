@@ -156,6 +156,21 @@ def binding_identity(binding):
     embedded = binding.get('identity')
     if isinstance(embedded, dict) and embedded.get('schema') == BINDING_IDENTITY_SCHEMA:
         return _validate_identity(_json_stable(embedded))
+    if isinstance(embedded, dict) and embedded.get('schema') == 'FRANKIE_BINDING_IDENTITY_V2':
+        # the earlier schema established per-entry commands, declarations and calculations, and FLAT source/input pins
+        # (no per-entry association): converted, with exactly those associations named unestablished, never dropped
+        v2 = _json_stable(embedded)
+        per_entry = {}
+        for entry_id in v2.get('entry_ids') or []:
+            per_entry[str(entry_id)] = dict(command=(v2.get('commands') or {}).get(str(entry_id)),
+                                            recorded_outputs=(v2.get('recorded_outputs') or {}).get(str(entry_id)),
+                                            calculation=(v2.get('calculations') or {}).get(str(entry_id)))
+        identity = dict(schema=BINDING_IDENTITY_SCHEMA, status=v2.get('status'),
+                        entry_ids=sorted(str(x) for x in v2.get('entry_ids') or []), entries=per_entry,
+                        flat_sources=sorted(list(x) for x in v2.get('sources') or []),
+                        flat_inputs=v2.get('inputs'), converted_from='FRANKIE_BINDING_IDENTITY_V2',
+                        unestablished=['per-entry association of sources and inputs (V2 kept them flat)'], complete=False)
+        return _validate_identity(_json_stable(identity))
     entries = binding.get('entries')
     if isinstance(entries, list) and all(isinstance(e, dict) for e in entries):
         per_entry = {}
@@ -218,8 +233,13 @@ def binding_identities_differ(retained, current):
             return True, unestablished
         return False, unestablished
     # per entry: every part PRESENT on both sides is compared (a difference there is a real difference, complete or
-    # not); a part absent on the retained side stays unestablished
+    # not); a part absent on the retained side stays unestablished; flat pins a converted identity carries are compared
+    # against the current flat pins
     current_entries = current.get('entries') or {}
+    if retained.get('flat_sources') is not None:
+        current_flat = sorted(src for parts in current_entries.values() for src in parts.get('sources') or [])
+        if retained['flat_sources'] != current_flat:
+            return True, unestablished
     for entry_id, parts in retained['entries'].items():
         other = current_entries.get(entry_id)
         if not isinstance(other, dict) or not isinstance(parts, dict):

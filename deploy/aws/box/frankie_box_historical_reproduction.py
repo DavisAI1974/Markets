@@ -563,11 +563,8 @@ def inventory_of_outputs(entry, outputs):
     for i, (g, d) in enumerate(zip(got, declared)):
         if g != d:
             reasons.append('comparison output %d is not declared comparison %d' % (i, i))
-    seen = []
-    for g in got:
-        if g in seen:
-            reasons.append('comparison repeats a declared output: %s' % json.dumps(g, sort_keys=True))
-        seen.append(g)
+    # same count and the declared key at every position: an omitted, duplicated, extra or foreign output is a mismatch
+    # at some position or in the count; a declaration the entry itself repeats is legitimately repeated
     return reasons
 
 
@@ -691,7 +688,7 @@ def coherence(entry, plan_doc, run_doc, comparison, status, dispatch_doc=None, d
             derived, coverage = aggregate_status(comparison.get('outputs') or [])
             if derived != comparison.get('status'):
                 reasons.append('comparison status %r does not follow its retained outputs (%r)' % (comparison.get('status'), derived))
-            if json.loads(json.dumps(comparison.get('coverage'), sort_keys=True)) != json.loads(json.dumps(coverage, sort_keys=True)):
+            if canonical(comparison.get('coverage')) != canonical(coverage):
                 reasons.append('comparison coverage facts differ from what its retained outputs derive')
         failed = bool(run_doc.get('timed_out')) or run_doc.get('returncode') != 0
         if failed and status != 'performed_failed':
