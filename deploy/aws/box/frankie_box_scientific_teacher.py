@@ -134,7 +134,7 @@ def open_class(reason):
     return 'open_other', 'listed by the claims builder with its own reason'
 
 
-def reconsideration(doc, path, raw, claims, records_dir=None):
+def reconsideration(doc, path, raw, claims, records_dir=None, records_selection=None):
     """The historical collection's standing, carried with every lessons file so neither teacher reads a mapped subset
     as the collection, nor a prior rejection label as closure (R11, R13). Four statuses, each counted and bound to the
     claims file by sha256; the full not_testable list stays in that file (path:line, catalog id, statement, reason).
@@ -150,7 +150,8 @@ def reconsideration(doc, path, raw, claims, records_dir=None):
         bindings[binding['status']] = bindings.get(binding['status'], 0) + 1
         reform = c.get('reformulation') or HC.reformulation_of(c['id'])
         reforms[reform['status']] = reforms.get(reform['status'], 0) + 1
-        records, listed = HR.records_for(c['id'], records_dir if records_dir is not None else REPRODUCTION_DIR)
+        records, listed = HR.records_for(c['id'], records_dir if records_dir is not None else REPRODUCTION_DIR,
+                                         selection=records_selection)
         records_listed.extend(listed)
         word = HR.status_of(records)
         performed[word] = performed.get(word, 0) + 1
@@ -180,6 +181,7 @@ def reconsideration(doc, path, raw, claims, records_dir=None):
                         bindings=dict(sorted(bindings.items())), records=dict(sorted(performed.items())),
                         records_listed=records_listed, binding_tables_sha256=HC.binding_tables_sha256(),
                         records_dir=str(records_dir if records_dir is not None else REPRODUCTION_DIR),
+                        records_selection_frozen=records_selection is not None,
                         what='each mapped claim\'s original calculation is traced to code at its exact revision '
                              '(REPRODUCTIONS: sources with sha256, entry point, inputs, recorded outputs); `records` counts '
                              'the hash-bound HISTORICAL_REPRODUCTION_V1 records a teacher\'s authorized execution wrote, by '
@@ -200,7 +202,7 @@ def reconsideration(doc, path, raw, claims, records_dir=None):
                      'closed by a disposition word (R14)')
 
 
-def historical_claims(path, records_dir=None):
+def historical_claims(path, records_dir=None, records_selection=None):
     """HISTORICAL_CLAIMS_V1 (frankie_box_historical_claims.py): the catalog's claims, author 'historical'. Its claims
     are tested; its not_testable list travels with the lessons by reference, counted by open status (reconsideration).
     Each claim carries `reproduction` (its declared binding: frankie_box_historical_claims.reproduction_of) and
@@ -220,7 +222,8 @@ def historical_claims(path, records_dir=None):
               for c in doc.get('claims') or []]
     return dict(author='historical', stamp=doc['catalog_sha256'][:12], day=None, claims_sha256=sha256_bytes(raw),
                 source=str(path), claims=claims,
-                reconsideration=reconsideration(doc, path, raw, claims, records_dir=records_dir))
+                reconsideration=reconsideration(doc, path, raw, claims, records_dir=records_dir,
+                                                records_selection=records_selection))
 
 
 def frankie_claims(path, day):
@@ -405,7 +408,13 @@ def completed_native_evidence(d, out_root):
     else:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
+    # C1: the reference's IDENTITY is its content, sources and owning manifest (identity below), never where this owner
+    # materialized it (path): identical bytes under another output root are the same evidence; different bytes for the
+    # same frozen owner are different evidence (native_evidence_identity compares them).
     reference = dict(path=str(path), sha256=sha256_bytes(data), bytes=len(data), day=d['day'],
+                     search_manifest_sha256=d['manifest_sha256'], read_from=doc['read_from'],
+                     identity=dict(day=d['day'], search_manifest_sha256=d['manifest_sha256'], sha256=sha256_bytes(data),
+                                   bytes=len(data), read_from=doc['read_from']),
                      counts=dict(first_last_pairs=len((doc.get('section_4_2') or {}).get('first_last_pairs') or []),
                                  stream_end_rows=len((doc.get('section_4_4') or {}).get('stream_end_rows') or []),
                                  finalize_rows=doc['finalize_rows']['by_ledger'],
@@ -413,6 +422,17 @@ def completed_native_evidence(d, out_root):
                      receipt=doc.get('receipt'), matching_rule=(doc.get('section_4_4') or {}).get('matching_rule'),
                      listed=listed)
     return reference, listed
+
+
+def native_evidence_identity(reference):
+    """The storage-independent identity of a completed-native reference (C1): its own `identity` when it carries one,
+    else everything but the materialization path (an older reference), so two readings of the same bytes under
+    different output roots compare equal and different evidence never does."""
+    if not isinstance(reference, dict):
+        return reference
+    if isinstance(reference.get('identity'), dict):
+        return reference['identity']
+    return {k: v for k, v in reference.items() if k != 'path'}
 
 
 def match(name, series):
@@ -427,6 +447,31 @@ def match(name, series):
         if n in (whole, tail) or (len(n) >= 4 and (n in whole)):
             out.append(s)
     return out
+
+
+def series_role(name):
+    """The source ROLE of one search series name, by the reserved search's own classification (Greg, 2026-10-06: market
+    conditions only): 'market' for a market quantity; 'context_only' for an ID / date / weekday / entity label that may
+    group observations as a search condition; otherwise the search's exclusion reason (bookkeeping, hashes, clocks,
+    availability or integrity diagnostics). Older retained searches may still carry such
+    channels as series; this reader names them wherever it consumes a row (C2)."""
+    import frankie_box_experiment_search as SEARCH
+    reason = SEARCH.non_market_reason(name)
+    return 'market' if reason is None else reason
+
+
+def role_reasons(x, y):
+    """Why a row of (x, y) is counts only (C2): either side is not a market quantity."""
+    reasons = []
+    for side, name in (('x', x), ('y', y)):
+        role = series_role(name)
+        if role == 'context_only':
+            reasons.append('%s "%s" is a context label (ID / date / weekday / entity): it may group market signals as a '
+                           'search condition and is not a signal, target or explanation; association with it is not a '
+                           'market finding' % (side, name))
+        elif role != 'market':
+            reasons.append('%s "%s" is not a market quantity (%s): retained counts, never a market finding' % (side, name, role))
+    return reasons
 
 
 def row_scope_reasons(claim, row, reverse=False):
@@ -479,7 +524,12 @@ def mirror_of(row, forward_rows):
     return None
 
 
-def test(claims_doc, days):
+def test(claims_doc, days, records_dir=None, records_selection=None):
+    """records_dir / records_selection (B5): the OWNER's reproduction records directory and the selection of its files
+    the owner froze with its other inputs (frankie_box_historical_reproduction.record_selection at the freeze); without
+    them the module default REPRODUCTION_DIR is read live (the CLI route). With a frozen selection only those files are
+    read, bytes-verified, and later arrivals are listed apart, so a restart of the same frozen operation reads the same
+    records and a new file never changes a result across claims."""
     wanted = {}
     per_claim = []
     for c in claims_doc['claims']:
@@ -547,6 +597,7 @@ def test(claims_doc, days):
                                 chance_check=dict(shifts=r['null_shifts'], reached=r['null_at_or_beyond'],
                                                   largest=r['null_largest'], exclusion=r['null_exclusion']),
                                 beyond_chance=r['beyond_chance'], search_manifest_sha256=d['manifest_sha256'],
+                                series_roles=dict(x=series_role(x), y=series_role(y)), role_reasons=role_reasons(x, y),
                                 discovery_row=bound, fields_equal=same_row, origin_part_in_search=origin_part_bound,
                                 mark='origin_evidence_mirror' if m is not None else 'origin_evidence',
                                 mirror_of=(dict(x=m['x'], y=m['y'], lag=m['best_lag'], where=m['_where']) if m is not None else None),
@@ -561,7 +612,8 @@ def test(claims_doc, days):
                                                  'and transform pair at the negated lag carries the same counts: one '
                                                  'measurement, listed once, never a second test'))
                             continue
-                        scope_reasons = row_scope_reasons(c, r, reverse=(x, y) == (b, a))
+                        roles = dict(x=series_role(x), y=series_role(y))
+                        scope_reasons = role_reasons(x, y) + list(row_scope_reasons(c, r, reverse=(x, y) == (b, a)))
                         if scope_reasons:
                             mark = 'counts_only'  # retained observations, never evidence for an unapplied claim scope
                         elif c['direction'] is None or not r['beyond_chance']:
@@ -583,7 +635,8 @@ def test(claims_doc, days):
                                                       x_moves=r['x_moves'], y_moves=r['y_moves']),
                                           chance_check=dict(shifts=r['null_shifts'], reached=r['null_at_or_beyond'],
                                                             largest=r['null_largest'], exclusion=r['null_exclusion']),
-                                          mark=mark, scope_not_tested=scope_reasons, days_named=[d['day']]))
+                                          mark=mark, scope_not_tested=scope_reasons, days_named=[d['day']],
+                                          series_roles=roles))
         held, other = verdicts.count('held'), verdicts.count('shown_otherwise')
         disposition = ('INSUFFICIENT_EVIDENCE' if not tests else 'SUPPORTED_SCOPED' if held and not other
                        else 'CONTRADICTED_SCOPED' if other and not held else 'PLAUSIBLE_UNRESOLVED')
@@ -599,6 +652,15 @@ def test(claims_doc, days):
                             'counts are over every step of the cell' % c['condition'])
         if c['direction'] is None:
             untested.append('no direction stated in a testable form ("%s"): counts reported, nothing marked held' % c['direction_text'])
+        # C2: the claim's own series names classified the same way; a claimed bookkeeping / context series can
+        # only be counts, never a market finding, and the claim says so in its untested list.
+        for name in c['series']:
+            for hit in matched.get(name, []):
+                role = series_role(hit)
+                if role != 'market':
+                    untested.append('the claimed series "%s" (search series "%s") is %s: its rows are retained as counts '
+                                    'only; no market finding rests on it' % (name, hit, 'a context label that may group '
+                                    'market signals, not a signal' if role == 'context_only' else 'not a market quantity (%s)' % role))
         claimed = (c.get('x_transform', 'sign_of_step'), c.get('y_transform', 'sign_of_step'))
         if not any(t['x_transform'] == claimed[0] and t['y_transform'] == claimed[1] for t in tests):
             untested.append('no search row carries the claimed transform pair %s -> %s on the days given' % claimed)
@@ -629,7 +691,17 @@ def test(claims_doc, days):
                                                counts_only=verdicts.count('counts_only')),
                       days_tested=sorted({t['day'] for t in tests}), disposition=disposition,
                       disposition_note='orientation only (R14); the counts and days above are the finding',
-                      challenge=challenges, untested=untested, mirrored_rows=mirrored)
+                      challenge=challenges, untested=untested, mirrored_rows=mirrored,
+                      market_context=dict(
+                          roles={name: series_role(name) for hits in matched.values() for name in hits},
+                          context_only_rows=sum(1 for t in tests if 'context_only' in t['series_roles'].values()),
+                          non_market_rows=sum(1 for t in tests if any(v not in ('market', 'context_only')
+                                                                      for v in t['series_roles'].values())),
+                          cells_rule='the row\'s cell and cell_value group the observations the counts are over; the counts '
+                                     'are attributed to the market conditions inside the group, never to the label',
+                          rule='market conditions only (Greg, 2026-10-06): a row whose x or y is a context label or a '
+                               'bookkeeping / clock / diagnostic channel is counts_only; dates, days and IDs stay attached '
+                               'to every row (day, cell, where) as searchable context'))
         source_rework = (c.get('source_claim') or {}).get('research_rework')
         if source_rework is not None or claims_doc['author'] == 'historical':
             # R11/R13: a stored-count reassessment is one status; reproduction and repair stay pending until a teacher
@@ -642,7 +714,8 @@ def test(claims_doc, days):
             import frankie_box_historical_reproduction as HR
             binding = c.get('reproduction') or HC.reproduction_of(c['id'])
             reform = c.get('reformulation') or HC.reformulation_of(c['id'])
-            records, records_listed = HR.records_for(c['id'], REPRODUCTION_DIR)
+            directory = records_dir if records_dir is not None else REPRODUCTION_DIR
+            records, records_listed = HR.records_for(c['id'], directory, selection=records_selection)
             reproduction = HR.status_of(records)
             if reproduction == 'pending_teacher_work' and binding['status'] == 'not_bound':
                 reproduction = 'not_bound'
@@ -659,7 +732,11 @@ def test(claims_doc, days):
                                           inputs_missing=[i.get('path') for e in binding.get('entries') or []
                                                           for i in e.get('inputs') or [] if i.get('status') != 'committed'],
                                           rule='a declared binding; not a reproduction'),
-                reproduction_records=dict(records=records, listed=records_listed, directory=str(REPRODUCTION_DIR)),
+                reproduction_records=dict(records=records, listed=records_listed, directory=str(directory),
+                                          selection_frozen=records_selection is not None,
+                                          summary=HR.status_summary(records),
+                                          rule='every admitted record\'s own status is kept beside the one-word summary; '
+                                               'listed records are named with their reason, never dropped'),
                 repair_or_reformulation='not_bound' if reform['status'] == 'not_bound' else 'pending_teacher_work',
                 reformulation_needs=dict(status=reform['status'], kind=reform.get('kind'), needs=list(reform.get('needs') or []),
                                          where=list(reform.get('where') or []), decision=reform.get('decision')),

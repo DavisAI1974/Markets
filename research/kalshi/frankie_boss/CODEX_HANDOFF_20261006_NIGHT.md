@@ -6,6 +6,16 @@ UTC date is 2026-10-07; Greg's local date is 2026-10-06.
 
 ## Latest decision — 2026-10-06 21:53 ET
 
+**Later 22:11–22:12 ET update:** Greg authorized Codex to implement #5 and assigned CCode #6.
+The current CCode return through `ecd8720` is integrated; four remaining B2–B5 findings plus
+the disjoint step-6 source assignment are at the top of `CCODE_NEXT_SOURCE_TASKS_20261006.md`.
+Granite currently performs inference with pinned weights, not independent weight learning;
+the task requests a trace/proposal for that gap, without inventing feedback or training.
+Older lessons remain available regardless of age. Research is needed for conflicting knowledge
+about the SAME thing; both accounts remain available while unresolved. Research may establish
+a circumstance-specific or partial replacement, preserving all unaffected knowledge. Full
+replacement is never presumed. Codex's step-5 source is still in progress, not completed here.
+
 Greg discussed #5 and authorized proceeding with market-only checking/correction: fix errors
 through affected calculations, findings and lessons, then deliver checked corrections to Frankie
 before dependent work. No maker/taker costs or profit objectives, including indirect parameter

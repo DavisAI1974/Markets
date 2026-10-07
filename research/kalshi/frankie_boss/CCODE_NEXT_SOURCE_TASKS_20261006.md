@@ -1,5 +1,101 @@
 # CCode assignment — next pre-#5 source tasks
 
+## ACTIVE assignment — Greg, 2026-10-06 22:11 ET: step 6 plus return corrections
+
+Codex fetched CCode `ecd8720edfe3078810925443a061c8bb1e07b83a` (including `c94dcac0`)
+against integration `19f72f473a1156bac4bdc1cad87d63680347a1c2`. These are different branches,
+not competing checkpoints. The returned correction commits are integrated with their history;
+do not reapply A–D or the returned corrections. Fetch CURRENT integration before your next edit.
+Greg explicitly assigned CCode step 6; Codex continues step 5 and the exact-price adapter.
+This section supersedes older “nothing else assigned” statements and the CCode step-6 hold.
+Source-only boundaries still apply; this is not a runtime authorization.
+
+### 6. Finish the bounded Granite meeting source/recovery path
+
+Read `GRANITE_INTEGRATION_RECOVERY_20261006.md` first (the named brain/queue/school/report/
+owner-import wiring is ALREADY built), then `CCODE_HANDOFF_CODEX_GRANITE_RUNTIME_20261006.md`,
+`CCODE_GRANITE_FACILITATOR_20261006.md`, `GRANITE_DISCUSSION_REPORT_20261006.md`, the role V2
+charter and `knowledge/GRANITE_MEETING_RUNTIME_V1.json`. Trace current source, not old line numbers.
+
+Own `frankie_box_granite_meeting.py`, its launcher/setup scripts, and
+`.github/workflows/frankie_granite_meeting.yml`. Own a new `CCODE_STEP6_RETURN_20261007.md`
+report. Codex reserves brain, lane-state, experiment runner, search/dipole and shared handoffs
+while step 5 is in flight. Return any needed change to those files as an exact interface request.
+
+Concrete source findings to fix within that ownership:
+
+1. **Meeting deadline:** `_meeting` checks its deadline only BETWEEN items; `discuss_item`
+   can perform six rounds, each with three HTTP requests whose timeout is 600 seconds.
+   Carry the remaining meeting budget through every turn/token-count/chat request. Preserve
+   the current item's completed work and list it plus every unreached item explicitly open
+   when the budget expires. Use the settled 3000-second parameter; do not tune or replace it.
+2. **Interrupted-call recovery:** completed meetings reuse correctly, but an interruption before
+   `meeting.json` is complete loses completed turns/items and a retry can replay them. Retain
+   source-bound per-item/turn progress through the existing durable writer, bind the exact
+   exchange/config/charter/rules inputs before calls, and reuse completed work. An interrupted
+   call with unknown completion must be explicit; no silent duplicate call or invented answer.
+   Source-only implementation; do not invoke a stub or the real runtime to exercise it.
+3. **Whole evidence and cleanup:** malformed coordinator output is sliced to `raw[:2000]`;
+   startup stderr is sliced and a live server's piped stderr is not drained. Preserve complete
+   raw call/error evidence by durable file witness where needed, with no content truncation.
+   Ensure server startup failures and request failures release the ephemeral process while
+   retaining partial meeting state. No new logging or validator framework.
+4. **Runner return contract:** trace the existing artifact/optional PUT to the existing owner
+   import. Document exact returned file/hash and missing orchestration, without implementing
+   an automatic dispatch or choosing the first E2E host. Put workflow inputs into environment
+   variables before shell use (current GET/PUT URLs are interpolated into shell source).
+   Keep dispatch-only and inputs-only defaults; no new permissions or services.
+
+5. **Greg's 22:12 ET weight-learning question:** the current `LlamaServer` is inference-only;
+   `gate` rejects changed GGUF bytes and there is no optimizer, training feedback or learned
+   checkpoint path. State this plainly in the return. Trace any existing suitable learning
+   machinery and propose the smallest concrete path for Granite to improve its coordination
+   from checked feedback, including retained state and recovery. Distinguish conversation context,
+   retained lessons and actual weight updates. Identify the feedback/objective decisions still
+   needed; do not invent them, relax the model hash gate, implement training, or run anything on
+   the strength of this question. Keep Frankie's separate native learner out of this assignment.
+
+Keep Granite the bounded post-class coordinator with zero evidentiary weight. Requests stay
+requested until a code seat actually performs them. Preserve all four record categories,
+source/answer walls, non-blocking runtime refusal and immediate owner publication. Pins and
+all confirmed parameters are unchanged, especially `threads: null`. Accumulated-content scope
+beyond the existing label/hash index and first E2E host remain Greg's decisions. Do not reopen
+model selection, restore old roles, expand to a fourth lane, or reimplement completed wiring.
+
+### Corrections still required from the returned pre-#5 queue
+
+These are source-traced findings in the NEW return, not a request to replay earlier work.
+Keep ownership of the historical/teacher modules and one `[skip ci]` commit per finding group.
+
+| Finding | Current defect | Required correction |
+|---|---|---|
+| B2 follow-up | `_aligned` lists unmatched members but removes them before `_compare_json`; the latter can say `matched` when only the intersection matches. `produced_only` leaves and alignment gaps do not affect that status. | Preserve every gap and separate matched comparable scope from incomplete coverage. No whole-output `performed_matched` when declared comparable evidence is missing/unmatched. Do not invent a tolerance or scientific verdict. |
+| B3 follow-up | `run()` checks the written plan against the supplied plan and rederives one executable boolean, but does not bind its command, pins, comparison declarations or capability/table hashes back to the CURRENT declared entry. `verify_staging()` only verifies the rows present, not that all declared rows exist. | Reconstruct/compare the complete declared plan and source/input/reference inventory before dispatch or reuse. A self-consistent altered/stale plan or incomplete inventory must refuse, even when its executable flag agrees. |
+| B4 follow-up | `_admit` hash-checks plan/run files independently but never requires their entry IDs to equal the record's entry, `run.plan_sha256` to equal the admitted plan, or performed success to agree with returncode/timeout/dispatch. `record()` accepts that same unlinked combination. | Bind record → declared entry → plan → dispatch → run → comparison. Require coherent schemas/identities and status facts; a failed/timed-out run cannot be admitted as matched. Retain every performed status, including failures; no fabricated execution evidence. |
+| B5 follow-up | `records_for(selection=...)` lists a selected missing/changed record and continues, changing the scientific evidence behind frozen inputs. | Refuse preparation/reuse on a selected missing/changed file. Continue to list genuinely new, unselected arrivals separately. Do not treat a broken selected pin as an optional absence. |
+
+B1's removed caps, A4's discovery identity before arithmetic, C1's content-vs-path identity,
+and the returned market/context classification are retained. B6's exact unsupplied-input gap
+remains open; no data access is authorized. The deleted historical binding stays deleted.
+D1's V2 originating INPUT contract is received; price placement belongs to Codex, not this task.
+
+### Knowledge rule for both assignments
+
+Older lessons remain available. Age is never a reason to retire them. Only conflicting knowledge
+about the SAME thing calls for that conflict's research: determine whether circumstances explain
+the difference, whether part needs replacing, or whether evidence establishes full replacement.
+An unresolved conflict keeps both accounts and their scopes available. A researched partial
+replacement keeps ALL unaffected knowledge available; full replacement is never the default.
+This is distinct from fixing a demonstrated source/calculation error. Do not invent a recency
+winner, automatic obsolescence, global lesson deletion or a scientific replacement criterion.
+
+Return the step-6 source changes and exact remaining consumer/transport requests in the new report;
+update the existing step-4 report sections 8/9 for B2–B5 fixes and your handoff. Do not edit this
+shared assignment or Codex-owned files while Codex is working. Checks: source/interface review,
+`ast.parse` without project imports, `git diff --check` ONLY. No tests, setup, download, model/data/
+project runs, historical reproduction, AWS calls, starts, dispatch, canaries or E2E. Keep the
+preserved draft unapplied; never apply `9c19cc2`. H06–H08 stay historical/not_bound.
+
 ## Greg's step-5 correction direction — 2026-10-06 21:53 ET
 
 Greg has now discussed #5: check and correct the market research and get corrected knowledge

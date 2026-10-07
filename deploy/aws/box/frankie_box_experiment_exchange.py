@@ -200,6 +200,25 @@ def context_checks(item, day, src, said):
         if native.get('listed'):
             words.append('Completed-native coverage still listed: %s.' %
                          said.v(json.dumps(native['listed'], sort_keys=True), src['sha256'], 'native coverage listed'))
+    # C2 (Greg, 2026-10-06): BOTH seats state the market/context distinction the reader applied in its arithmetic:
+    # rows whose x or y is a context label or a bookkeeping channel are counts only; cells group, never explain.
+    prior = item.get('prior') or {}
+    market = prior.get('market_context')
+    if isinstance(market, dict):
+        roles = market.get('roles') or {}
+        non_market = {k: v for k, v in roles.items() if v != 'market'}
+        words.append('Market conditions only: of %s matched series, %s are not market quantities (%s); %s tested rows have '
+                     'a context-label side and %s a bookkeeping / clock / diagnostic side, all counts only. A date, '
+                     'weekday or ID groups the observations a count is over and is never the explanation of the '
+                     'relation; the market conditions inside the group are. Dates and days stay attached to every row.' % (
+                         said.v(len(roles), src['sha256'], 'matched series'),
+                         said.v(len(non_market), src['sha256'], 'non-market series'),
+                         said.v(json.dumps(non_market, sort_keys=True), src['sha256'], 'non-market series roles'),
+                         said.v(market.get('context_only_rows'), src['sha256'], 'context-only rows'),
+                         said.v(market.get('non_market_rows'), src['sha256'], 'non-market rows')))
+    elif prior.get('tests') is not None:
+        words.append('This lesson result carries no market/context classification of its series (an older reader): its '
+                     'rows are read with that limitation; no market finding is attributed to a label.')
     for text in words:
         checks.append(dict(source_id=src['source_id'], claim='collection and completed-native scope',
                            check=text, result='unresolved'))
@@ -629,6 +648,9 @@ def origin_evidence_accounting(result, day, src):
         if row.get('day') != day:
             listed.append(dict(origin, day=row.get('day'), reason='outside current day; original status unchanged'))
             continue
+        # A4: identity presence is independent of whether the row's arithmetic can be performed: the reader's
+        # authenticated discovery_row on a current-day row counts as found even when the row is only listed below.
+        found = found or row.get('discovery_row') is True
         reasons, margins = count_margins(row)
         where = row.get('where') if isinstance(row.get('where'), dict) else None
         if where is None:
@@ -652,7 +674,6 @@ def origin_evidence_accounting(result, day, src):
             listed_on_day += 1
             continue
         discovery = row.get('discovery_row') is True
-        found = found or discovery
         scope = {key: row[key] for key in ('day', 'x', 'y', 'x_transform', 'y_transform', 'cell', 'cell_value', 'lag')}
         scope_text = ('on %s, %s -> %s (%s / %s), cell %s=%s, lag %s' % tuple(
             said.v(scope[key], src['sha256'], 'origin row ' + key)
@@ -687,6 +708,8 @@ def origin_evidence_accounting(result, day, src):
         teaching.append(text)
     return dict(schema=schema, rows=entries, listed=listed, teaching=teaching, cites=said.cites,
                 independent_measurements=0, counts_as_test=False, discovery_row_found=found,
+                discovery_row_margins_stated=any(e['discovery_row'] for e in entries),
+                discovery_row_listed_without_arithmetic=any(x.get('discovery_row') for x in listed),
                 listed_on_day=listed_on_day,
                 limitation='nonzero transformed-step margins at the retained circular shift, not PRESENT masks or known '
                            'physical inactivity: zero may be stationary, missing or unclassified (the shared route\'s '
@@ -1189,9 +1212,10 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             if src['author'] == 'historical':
                 # Scoped measurements remain evidence. Neither seat may turn an
                 # inherited rejection (or a counts-only reassessment) into closure.
-                # A PERFORMED reproduction status the reader took from a hash-bound HISTORICAL_REPRODUCTION_V1 record
-                # (performed_matched / performed_differs, with the record listed) is kept, never overwritten by this
-                # exchange, which itself establishes nothing; any other value is not established here (slice B).
+                # A PERFORMED reproduction status the reader took from an admitted hash-bound HISTORICAL_REPRODUCTION
+                # record (performed_matched / performed_differs / performed_not_comparable / performed_failed, with the
+                # record listed) is kept as read, never overwritten or folded, by this exchange, which itself establishes
+                # nothing; any other value is not established here (slice B; B4: every performed fact is preserved).
                 prior_rework = result.get('research_rework') or {}
                 reproduction = prior_rework.get('original_calculation_reproduction')
                 records = (prior_rework.get('reproduction_records') or {}).get('records') or []
@@ -1203,8 +1227,10 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                     collection=context.get('reconsideration'),
                     prior_disposition=result.get('disposition'),
                     original_calculation_reproduction=reproduction if performed else 'not_established_by_this_exchange',
-                    reproduction_status_source=('the reader\'s hash-bound HISTORICAL_REPRODUCTION_V1 record(s), kept as read'
+                    reproduction_status_source=('the reader\'s admitted hash-bound HISTORICAL_REPRODUCTION record(s), kept as read'
                                                 if performed else 'none: no performed record was read by the lessons'),
+                    reproduction_record_statuses=(prior_rework.get('reproduction_records') or {}).get('summary'),
+                    reproduction_records_listed=(prior_rework.get('reproduction_records') or {}).get('listed'),
                     repair_or_reformulation='not_established_by_this_exchange',
                     note='existing search counts may reassess a mapped claim; they do not establish '
                          'reproduction or repair of the original discarded research; a performed reproduction is the '

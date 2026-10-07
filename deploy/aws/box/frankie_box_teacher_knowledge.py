@@ -52,7 +52,10 @@ def teach_accumulated(day, search, brain, out_dir):
                     producer=witness(__file__), readers={m.__name__: witness(m.__file__)
                                                        for m in (LS, BR, ST, EX, CC, HC, HR)})
     input_path = out_dir / 'inputs.json'
-    late_knowledge = dict(listed=[], frozen=False,
+    # B5: the OWNER's reproduction records live beside its other outputs; the selection of its files is frozen with the
+    # scientific inputs (below) and consumed by every test of this owner; later arrivals are listed in the receipt only.
+    records_dir = out_dir / 'reproduction'
+    late_knowledge = dict(listed=[], frozen=False, reproduction_records=[],
                           rule='knowledge published after this owner froze its selection is LISTED here, never consumed by '
                                'the frozen selection: no completed or frozen day is reopened and no frozen input is '
                                'replaced (the late-scheduling decision is held for Greg); it is available at a later '
@@ -63,7 +66,11 @@ def teach_accumulated(day, search, brain, out_dir):
             raise ValueError('retained scientific knowledge belongs to another search or reader')
         if inputs.get('selection_sha256') != _digest(inputs['selection']):
             raise ValueError('retained scientific knowledge selection differs from its binding')
-        late_knowledge.update(frozen=True, listed=late_arrivals(day, brain, inputs['selection'], LS))
+        frozen_records = {r['path'] for r in inputs['selection'].get('reproduction_records', {}).get('files') or []}
+        late_knowledge.update(frozen=True, listed=late_arrivals(day, brain, inputs['selection'], LS),
+                              reproduction_records=[dict(r, reason='arrived after this owner froze its record selection; '
+                                                                   'not consumed by the frozen selection')
+                                                    for r in HR.record_selection(records_dir) if r['path'] not in frozen_records])
     else:
         selected = LS.learner_knowledge(day, 'exchange', brain=brain)
         school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'])
@@ -129,12 +136,18 @@ def teach_accumulated(day, search, brain, out_dir):
                     listed.append(dict(source=item.get('path'), sha256=item.get('sha256'),
                                        reason='school scientific item has no transported structured claim content'))
         selection = dict(documents=documents, listed=listed, versions=selected['versions'],
-                         selection_listed=selected['listed'], school_listed=school_listed)
+                         selection_listed=selected['listed'], school_listed=school_listed,
+                         reproduction_records=dict(directory=str(records_dir), files=HR.record_selection(records_dir),
+                                                   binding_tables_sha256=HC.binding_tables_sha256(),
+                                                   rule='the owner-local HISTORICAL_REPRODUCTION records as they were at '
+                                                        'this freeze (path, bytes, sha256): the only ones any test of this '
+                                                        'owner reads; later files are listed in the receipt, never read'))
         inputs = dict(schema='FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1', identity=identity,
                       selection=selection, selection_sha256=_digest(selection))
         write_json(input_path, inputs)
 
     input_hash = witness(input_path)['sha256']
+    records_selection = inputs['selection'].get('reproduction_records') or dict(directory=str(records_dir), files=[])
     documents = inputs['selection']['documents']
     listed = list(inputs['selection']['listed'])
     reused, files = [], []
@@ -186,7 +199,10 @@ def teach_accumulated(day, search, brain, out_dir):
             continue
         claim_inputs = dict(schema='FRANKIE_SCIENTIFIC_CLAIM_INPUTS_V1', author=lesson['author'],
                             claims_sha256=lesson['claims_sha256'], claims=claims,
-                            reader_sha256=identity['readers'][ST.__name__]['sha256'])
+                            reader_sha256=identity['readers'][ST.__name__]['sha256'],
+                            # B5: the frozen record selection and the binding tables are part of what the test consumed
+                            reproduction_records_selection_sha256=_digest(records_selection),
+                            historical_binding_tables_sha256=HC.binding_tables_sha256())
         claim_inputs_sha = _digest(claim_inputs)
         result_identity = dict(input_sha256=input_hash, source_lesson_sha256=item['source']['sha256'],
                                source_lesson_content_sha256=_digest(lesson), original_claim_day=lesson.get('original_claim_day', lesson.get('day')),
@@ -208,11 +224,28 @@ def teach_accumulated(day, search, brain, out_dir):
         # (a candidate-only lesson carries none of its own; the owner's search pins are the only lawful source here).
         carried = lesson.get('completed_native_evidence') or {}
         by_day = dict(carried.get('by_day') or {})
-        if native_ref is not None:
-            if day in by_day and by_day[day] != native_ref:
-                raise ValueError('retained lesson carries a different completed-native reference for this owning day')
-            by_day[day] = native_ref
         listed_native = list(carried.get('listed') or [])
+        carried_same_day = by_day.get(day)
+        if native_ref is not None:
+            # C1: compare the reference's IDENTITY (content, sources, owning manifest), not its materialization path:
+            # the same bytes read under another output root are the same evidence; different bytes for this owner refuse.
+            if carried_same_day is not None and \
+                    ST.native_evidence_identity(carried_same_day) != ST.native_evidence_identity(native_ref):
+                raise ValueError('retained lesson carries a different completed-native reference for this owning day')
+            if carried_same_day is not None and carried_same_day.get('path') != native_ref.get('path'):
+                listed_native.append(dict(day=day, reason='the carried same-day reference is the same evidence materialized '
+                                                          'at another path; the owner\'s own materialization is cited',
+                                          carried_path=carried_same_day.get('path'), sha256=native_ref.get('sha256')))
+            by_day[day] = native_ref
+        elif carried_same_day is not None:
+            # no completed-native evidence of THIS owner: a carried same-day reference from another manifest never stands
+            # in for it; it is listed with its provenance and left out of by_day for this owner (C1).
+            by_day.pop(day)
+            listed_native.append(dict(day=day, reason='this owner\'s search carries no completed native evidence; the '
+                                                      'retained lesson\'s same-day reference (another manifest) is not '
+                                                      'read as the owner\'s and is listed with its provenance',
+                                      carried=dict(path=carried_same_day.get('path'), sha256=carried_same_day.get('sha256'),
+                                                   search_manifest_sha256=carried_same_day.get('search_manifest_sha256'))))
         listed_native += [x for x in native_listed if x not in listed_native]
         expected['completed_native_evidence'] = dict(
             by_day=by_day, listed=listed_native,
@@ -245,7 +278,8 @@ def teach_accumulated(day, search, brain, out_dir):
                             ('bytes' in part and actual['bytes'] != part['bytes']):
                         raise ValueError('owning search evidence differs from its manifest: %s' % source)
                 parts_verified = True
-            results = ST.test(dict(author=lesson['author'], claims=claims), days)
+            results = ST.test(dict(author=lesson['author'], claims=claims), days,
+                              records_dir=Path(records_selection['directory']), records_selection=records_selection['files'])
             result = dict(expected, results=results, results_sha256=_digest(results))
             write_json(path, result)
         # Publication is repeatable, including recovery after the complete file was saved.
@@ -265,9 +299,15 @@ def teach_accumulated(day, search, brain, out_dir):
             ST.publish_lessons(path, brain_dir=brain)
         files.append(dict(path=str(path), **witness(path), author=lesson['author'],
                           claim_ids=[c['id'] for c in claims]))
+    # C1: the actual scope of this call: a loop that reuses every claim emits no new result file and says so.
+    scope = dict(new_result_files=len(files), reused=len(reused), inputs_listed=len(listed),
+                 claims_scheduled=len(scheduled), claims_already_tested=len(already_tested),
+                 all_reused=not files, owner_native_evidence=native_ref is not None,
+                 rule='new_result_files counts the result headers this call wrote; none means every claim was already '
+                      'tested on this exact manifest or reused: no new result exists, nothing was computed')
     return dict(inputs=dict(path=str(input_path), sha256=input_hash), files=files,
                 reused=reused, listed=listed, selection_listed=inputs['selection']['selection_listed'],
-                school_listed=inputs['selection']['school_listed'], late_knowledge=late_knowledge)
+                school_listed=inputs['selection']['school_listed'], late_knowledge=late_knowledge, scope=scope)
 
 
 def late_arrivals(day, brain, selection, LS):

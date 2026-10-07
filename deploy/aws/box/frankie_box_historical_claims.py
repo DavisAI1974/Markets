@@ -265,6 +265,9 @@ NG_INPUTS = [
          where='local caches of the research tree, not committed', status='not_in_repository'),
 ]
 NG_PRODUCED = 'renders/ng_refine_s95/fingerprints.json'
+# B2: the recorded file holds 108 days; the driver runs six. Compare on the argv days only; legs aligned by entry_idx
+# (never by list position); members present on one side only are listed, not matched.
+_NG_SCOPE = dict(top_level='argv', member_key='entry_idx')
 
 REPRODUCTIONS = (
     dict(id='crypto_trend_flip', claims=['H01', 'H02'], status='defined',
@@ -326,29 +329,6 @@ REPRODUCTIONS = (
          limits='crypto 1-minute bars of two days (2026-05-23..24), pooled n=1560 and per cell: the docstring itself calls the '
                 'data thin and the deploy map unvalidated (DEPLOY_VALIDATED = False); a match reproduces the recorded numbers, '
                 'not an edge'),
-    dict(id='crypto_harness', claims=['H01', 'H02'], status='missing_inputs',
-         calculation='the falsification harness: the same R-bps reversal timing trigger for both detectors; champion filter = '
-                     'trailing order-flow imbalance threshold, challenger filter = odcore.info_dipole.divergence '
-                     '(divergence + exhaustion); ZigZag pivots at theta = 20 bps as truth; tune on the first 60 percent, score '
-                     'the last 40 percent out of sample: calls, TP, FP, FN, recall, precision, bps_to_turn, net_oos (taker) and '
-                     'net_oos_maker per venue',
-         entry=dict(cwd='.', script='_info_dipole_harness.py', argv=[], produces=['_info_dipole_harness_results.json']),
-         sources=[INFO_DIPOLE,
-                  _src('_info_dipole_harness.py', BB28, 'c0adfc40dcc07e2e296daa26b5da9c4e20c7d00a6b34445df5ca1687e3222dda',
-                       'driver (writes _info_dipole_harness_results.json)', 'review.095'),
-                  _src('_info_dipole_swing_backtest.py', BB28, '7f0f9ce36cc3feec0e1e509b190d4b6ca0c1614ffaab288b969f128b59f94964',
-                       'dependency: load_series("realbins"), zigzag(), trailing_imbalance()', 'review.111'),
-                  _src('_info_dipole_harness_results.json', BB28, 'ace94a10b8bb2b35f45a37a519ef7fb364c138f10508ce5d6a72c3a8026130e8',
-                       'recorded output', 'review.096')],
-         inputs=[dict(path='realbins/*_bins.json (1-second bins; the live collectors\' format, dict keyed by ts)',
-                      where='not in the repository (the realbins directory is not committed at any revision)',
-                      status='not_in_repository')],
-         recorded_outputs=[dict(kind='json_file', what='per venue, champion and challenger: n_calls, TP, FP, FN, n_turns, recall, '
-                                                       'precision, bps_to_turn, net_oos, net_oos_maker, params; config',
-                                produced='_info_dipole_harness_results.json', recorded='_info_dipole_harness_results.json',
-                                fields=['config', 'per_venue'])],
-         limits='the challenger is the divergence() read used as a turn FILTER on 1-second bins; the recorded net_oos values are '
-                'negative at the taker fee for every venue (the file records them); nothing here is an edge claim'),
     dict(id='ng_leg_fingerprints', claims=['H03', 'H04', 'H05', 'H09', 'H10'], status='missing_inputs',
          calculation='per NG day: legs = lag_join.scan_moves on the raw tape (trigger TRIG["NG"] = 0.015 USD); per leg: '
                      'dipole_pieces (dip_imb_level = odcore.info_dipole imb_level over the ~300 s Lee-Ready signed-flow window '
@@ -359,19 +339,19 @@ REPRODUCTIONS = (
          entry=dict(cwd='research/kalshi', script='characterize_turns.py',
                     argv=['20250916', '20250925', '20250929', '20251008', '20251016', '20251020'],
                     produces=[NG_PRODUCED],
-                    note='the driver MERGES into an existing fingerprints.json; a reproduction stages an empty renders/ dir so '
-                         'the produced file holds only the days run'),
+                    note='the driver MERGES into an existing fingerprints.json; the recorded file is staged APART (never in '
+                         'the tree), so the produced file holds only the days run; compared on those days only (scope)'),
          sources=NG_SOURCES, inputs=NG_INPUTS,
          recorded_outputs=[
              dict(kind='json_file', what='H03: per leg dip_imb_level and dir', produced=NG_PRODUCED,
                   recorded='research/kalshi/renders/ng_refine_s95/fingerprints.json', claims=['H03'],
-                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.dip_imb_level']),
+                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.dip_imb_level'], scope=_NG_SCOPE),
              dict(kind='json_file', what='H04/H05: per leg imb_R, aligned_imb_R, book and dir', produced=NG_PRODUCED,
                   recorded='research/kalshi/renders/ng_refine_s95/fingerprints.json', claims=['H04', 'H05'],
-                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.imb_R', '*.*.aligned_imb_R', '*.*.book']),
+                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.imb_R', '*.*.aligned_imb_R', '*.*.book'], scope=_NG_SCOPE),
              dict(kind='json_file', what='H09/H10: per leg turn_far_thinning and continuation', produced=NG_PRODUCED,
                   recorded='research/kalshi/renders/ng_refine_s95/fingerprints.json', claims=['H09', 'H10'],
-                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.turn_far_thinning', '*.*.continuation']),
+                  fields=['*.*.day', '*.*.entry_idx', '*.*.dir', '*.*.turn_far_thinning', '*.*.continuation'], scope=_NG_SCOPE),
              dict(kind='prose', claims=['H03'], what='1,537 legs cleared |dip_imb_level| >= 0.15; sign matched realized leg '
                                                       'direction on 87.6 percent',
                   recorded_in='ng_brain.json plays/0/instances/0 (what_the_state_said, what_the_day_did)',
@@ -474,6 +454,12 @@ REFORMULATIONS = (
          needs=['everything H09 needs, on frames.bid_depth_full'],
          where=['frankie_box_experiment_search.build_series'], decision='Greg: mathematical decision'),
 )
+
+
+# C2 (Greg, 2026-10-06): the market/context distinction the teachers' explanations use.
+MARKET_ROLE_RULE = ('IDs, dates, weekdays and availability codes may GROUP market signals as search conditions; they are '
+                    'never numerical signals, targets or explanations; market prices, spreads, signed flow, depth, FIFO '
+                    'rank/age, elapsed market durations, positioning and derived geometry are the quantities')
 
 
 def reproduction_of(claim_id):

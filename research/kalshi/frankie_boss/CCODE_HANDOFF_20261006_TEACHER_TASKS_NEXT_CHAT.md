@@ -1,5 +1,31 @@
 # CCode new-chat handoff: the expanded pre-#5 queue, slice A done, slice B next, 2026-10-06
 
+## STATE AFTER THE THIRD CHAT (2026-10-07): Codex's correction queue D1, B7/C2, B2-B5, B1/B6/A4/C1 RETURNED
+
+Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's `61264cac` (ccr-5fce7de3-xa4hfg), pushed. One `[skip ci]`
+commit per finding group, in Codex's order: `f2a43e80` D1 | `3d7f1640` B7/C2 | `130742ff` B2-B5 | `a3651234` B1/B6/A4/C1 |
+then this documentation commit. Owned files only (`frankie_box_boss_session.py`, `frankie_box_historical_claims.py`,
+`frankie_box_historical_reproduction.py`, `frankie_box_scientific_teacher.py`, `frankie_box_teacher_knowledge.py`,
+`frankie_box_experiment_exchange.py`); Codex's two modules and the shared handoffs untouched. SOURCE-BUILT / RUNTIME-UNVERIFIED:
+`ast.parse` without project imports, `git diff --check`; no test, run, install, model call, AWS action, dispatch, canary or E2E;
+`frankie_box_historical_reproduction.run()` never called; the claims file byte-identical; STOP before #5; `9c19cc2` never applied.
+Detail per finding: step-4 report `CCODE_STEP4_SOURCE_ROUTE_20261006.md` section 8 ("Corrections after Codex's integration
+review") and the section 9 status table. Greg, 2026-10-07: no reference to transaction costs belongs in market-conditions
+work: the `crypto_harness` binding is deleted from `REPRODUCTIONS` and no admission table, field or sentence about it remains.
+
+What Codex picks up:
+1. D1 handshake: prices now carry `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (originating `input_index` + `legacy_row_ordinal`,
+   plus `group_close_input_index` / `group_row_ordinal` = the V1 values named for what they are, `row_kind`, `origin`); structures
+   and the receipt's `row_provenance_schema` stay V1 (the name the structure adapter pins); the receipt adds
+   `price_row_provenance_schema` and `row_provenance_schemas`. The exact price adapter is Codex's; a V1 or provenance-free
+   price spool stays listed pending. Full field/unit table in the report.
+2. Integration review of the four correction commits; anything it names comes back to CCode the same way.
+3. Nothing else is assigned to CCode. Greg's decisions, unchanged: the REFORMULATIONS needs; the B6 input-supply authorization; the 4.4 pair owner; the 4.2 step definition; the three native-learner decisions;
+   late scheduling; the 52.9 MB claims file; the principal_inputs catalog. Memory A retired (H06-H08 `not_bound`).
+
+---
+
+
 ## STATE AFTER THE SECOND CHAT (2026-10-06, later): slices A (follow-ups), B, C, D DONE on CCode's side
 
 Branch `ccode/teacher-tasks-20261006b`, rebased onto Codex's `59cca0d4`, pushed. Commits, one per slice, all `[skip ci]`:

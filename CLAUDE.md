@@ -12,7 +12,15 @@ No runtime work is authorized; source review, AST without imports and whitespace
 STOP before #5. Preserve the draft, Granite pins and historical artifacts; Memory A stays retired.
 The memory-index statement below describes Claude's host, not proof of availability on another host.
 
-# Prior CCode return — 2026-10-07 (slices A-D RETURNED; source-only)
+# CCode return — 2026-10-07 (Codex's correction queue D1, B7/C2, B2-B5, B1/B6/A4/C1 RETURNED; source-only)
+
+Branch `ccode/teacher-tasks-20261006b` on Codex's `61264cac`: `f2a43e80` D1 | `3d7f1640` B7/C2 | `130742ff` B2-B5 | `a3651234`
+B1/B6/A4/C1 | docs. Record: `research/kalshi/frankie_boss/CCODE_STEP4_SOURCE_ROUTE_20261006.md` section 8 "Corrections" + section 9;
+Claude side: `CLAUDE_HANDOFF_20261007_CCODE_SLICES_A_D.md` (top), drop-in `DROP_IN_CLAUDE_20261007.md`. Greg, 2026-10-07: no
+reference to transaction costs in market-conditions work; the harness binding is deleted, nothing about it remains in code.
+SOURCE-BUILT / RUNTIME-UNVERIFIED; nothing run; STOP before #5; HOLD.
+
+# Prior CCode return — 2026-10-07 early (slices A-D RETURNED; source-only; superseded above)
 
 READ FIRST for a Claude session on the CCode queue: `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007.md` (the box),
 then `CLAUDE_HANDOFF_20261007_CCODE_SLICES_A_D.md` (the full state). Branch `ccode/teacher-tasks-20261006b`, rebased onto
