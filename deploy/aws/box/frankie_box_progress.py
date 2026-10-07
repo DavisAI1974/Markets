@@ -62,10 +62,10 @@ class Probe:
             temporary.write_text(json.dumps(value, sort_keys=True) + '\n', encoding='utf-8')
             os.replace(temporary, path)
 
-    def track(self, records, total, stage):
-        """Yield every input unchanged; count only after its consumer returns."""
-        done = 0
-        self.update(stage, total=total)
+    def track(self, records, total, stage, done=0):
+        """Yield every input unchanged; count only after its consumer returns. done = the units already completed by a
+        saved attempt (a resumed reader starts there), so progress continues from the cursor instead of 0."""
+        self.update(stage, done, total)
         for record in records:
             yield record
             done += 1

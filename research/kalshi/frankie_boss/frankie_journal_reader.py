@@ -86,13 +86,40 @@ class FrankieCompactReader(CompactReader):
         self.worker_cpu_seconds = 0.0
         super().__init__(path, expected_count=expected_count, expected_head_hash=expected_head_hash)
 
-    def entries(self):
+    def resume_point(self, consumed):
+        """(start, previous) of the compact block that holds entry consumed-1, the last entry a saved consumer took;
+        (0, GENESIS_HASH) when it took none. Resuming there reads only that block again (at most one block's entries
+        are verified twice) and every later block once, instead of the whole verified prefix.
+
+        Why this is as strong as reading from entry 0: the caller has checked the whole file's bytes and sha256 against
+        the sealed receipt in this process (frankie_box_experiment_root: the journal witness; the saved INPUT identity's
+        container sha256), so the blocks table and every prefix body are byte-identical to those the saving process
+        verified in order (seam, block sha256, decoded chain) before it yielded them; the chain from this block to the
+        seal is verified here, and the terminal head and the seal are checked at the end as before. A changed file
+        fails the sha256 before any read; a cursor outside the source is refused."""
+        if type(consumed) is not int or not 0 <= consumed <= self.count:
+            raise ValueError('saved journal cursor is outside the sealed source')
+        if consumed == 0:
+            return 0, GENESIS_HASH
+        row = self.db.execute('SELECT start,previous FROM blocks WHERE start<? ORDER BY start DESC LIMIT 1',
+                              (consumed,)).fetchone()
+        if row is None:
+            raise ValueError('no compact block holds the saved journal cursor')
+        return int(row[0]), row[1]
+
+    def entries(self, resume=None):
+        """Every entry in order from genesis, or (resume=resume_point(consumed)) from the start of the block that holds
+        the saved cursor; seams, blocks, the terminal head and the seal are verified exactly as from genesis."""
         context = multiprocessing.get_context('spawn')
         assignments = context.Queue()
         for cpu in self.worker_cpus:
             assignments.put(cpu)
-        index = iter(self.db.execute('SELECT start,count,previous,head FROM blocks ORDER BY start'))
-        count, head = 0, GENESIS_HASH
+        first, head = resume if resume is not None else (0, GENESIS_HASH)
+        if type(first) is not int or not 0 <= first <= self.count:
+            raise ValueError('resume block is outside the sealed source')
+        index = iter(self.db.execute('SELECT start,count,previous,head FROM blocks WHERE start>=? ORDER BY start',
+                                     (first,)))
+        count = first
         started, last_emit = time.perf_counter(), 0.0
         try:
             with ProcessPoolExecutor(max_workers=len(self.worker_cpus), mp_context=context,
@@ -124,7 +151,7 @@ class FrankieCompactReader(CompactReader):
                         try:
                             self.emit(dict(phase=self.progress_phase, entries=count,
                                 total=self.count, percent=round(100*count/max(1,self.count),4),
-                                records_per_second=count/2/max(now-started,1e-9),
+                                resumed_at=first, records_per_second=(count-first)/2/max(now-started,1e-9),
                                 worker_cpus=self.worker_cpus, worker_cpu_seconds=self.worker_cpu_seconds,
                                 queued_blocks=len(pending),
                                 oldest_queue_age_seconds=now-pending[0][1] if pending else 0))

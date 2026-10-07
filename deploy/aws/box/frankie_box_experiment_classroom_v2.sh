@@ -31,13 +31,11 @@ set -- --day "$DAY" --calculations "$CALCULATIONS" --teacher-rows "$TEACHER_ROWS
 [ -z "${PREVIOUS:-}" ] || set -- "$@" --previous "$PREVIOUS"
 [ -z "${DAY_EXTERNAL:-}" ] || set -- "$@" --day-external "$DAY_EXTERNAL" --day-external-sha256 "$DAY_EXTERNAL_SHA256"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
-# Math-library thread caps = this process's own CPU affinity count (the booked lane the Run started it under; Greg,
-# 2026-10-07: BLAS/OpenMP caps to the assigned CPUs), set only when the caller did not. OpenBLAS already defaults to
-# the affinity count, so the cap names the same number explicitly and keeps it from ever exceeding the lane; the
-# runner records the caps in received.cpu_pinning.thread_caps.
-LANE_N=$(/opt/frankie-box/venv/bin/python -c 'import os; print(len(os.sched_getaffinity(0)))') || LANE_N=""
-if [ -n "$LANE_N" ]; then
-  export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-$LANE_N}" OMP_NUM_THREADS="${OMP_NUM_THREADS:-$LANE_N}" \
-         MKL_NUM_THREADS="${MKL_NUM_THREADS:-$LANE_N}"
-fi
+# Math-library thread counts fixed at N=32 on every lane (Greg, 2026-10-07 night: "we are going from 16 to 32"), set
+# before numpy loads so no Pearson's bits follow the lane size. OpenBLAS caps this load-time count at the process's
+# affinity CPU count (OpenBLAS 0.3.34 memory.c), so the code settles the exact count after load
+# (dipole_classroom_external.blas_reduction: one OpenBLAS thread per caller with the proven 32-thread reduction order,
+# or exactly 32 threads when its self-check fails); the runner records these values in received.cpu_pinning.thread_caps
+# and the setting in received.cpu_pinning.blas_reduction.
+export OPENBLAS_NUM_THREADS=32 OMP_NUM_THREADS=32 MKL_NUM_THREADS=32
 exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_classroom_v2.py" "$@"

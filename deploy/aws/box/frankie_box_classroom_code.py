@@ -70,8 +70,15 @@ def _lane_pin():
 
 
 def pinning_record():
-    """Receipt view of PINNING_RECORD (per pool: its CPU map and outcome)."""
-    return {name: dict(item) for name, item in PINNING_RECORD.items()}
+    """Receipt view of PINNING_RECORD (per pool: its CPU map and outcome), with this process's OpenBLAS reduction
+    setting (dipole_classroom_external.blas_reduction: the 32-thread bits of every Pearson dot product) whenever a
+    Pearson ran here, else named as not run."""
+    out = {name: dict(item) for name, item in PINNING_RECORD.items()}
+    if 'blas_reduction' not in out:
+        EXT = sys.modules.get('research.kalshi.frankie_boss.dipole_classroom_external')
+        out['blas_reduction'] = (EXT.blas_reduction() if EXT is not None and getattr(EXT, '_BLAS', None) else
+                                 dict(mode='NOT_RUN', threads=32, reason='no Pearson dot product ran in this process'))
+    return out
 
 SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'
 # V3 = V2 with R17 amended for Granite's active bounded post-class facilitator role (Greg, 2026-10-06)
@@ -1246,6 +1253,10 @@ class _NativeEntryArithmetic:
         LP = _lane_pin()
         PINNING_RECORD['native_series_threads'] = LP.record(self.pair_threads, lane_cpus(),
                                                             what='classroom native series threads (_compute)')
+        # the pairs' dot products carry the bits of exactly 32 OpenBLAS threads on every lane, settled once here before
+        # the threads start (EXT.blas_reduction: one OpenBLAS thread per caller + the proven 32-thread reduction order,
+        # or 32 threads as they are when the self-check fails); received.cpu_pinning.blas_reduction
+        PINNING_RECORD['blas_reduction'] = EXT.blas_reduction()
         with LP.executor('thread', self.pair_threads, lane_cpus()) as pool:
             series.extend(pool.map(run, jobs))
         for key in sorted(self.cat, key=lambda k: (k[0], str(k[1]))):

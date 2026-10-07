@@ -6,6 +6,7 @@
 #   POINTERS_SHA=<the commit on branch frankie-ingest-pointers holding ingest_pointers/<day>-gh-<run>-<attempt>.json>
 #   PARALLEL=<days pulled side by side, default 2>
 #   RANGE_STREAMS=<concurrent 16 MiB byte-range GETs per large object, default 15; 1 = the one-stream download>
+#   OBJECT_STREAMS=<a day's objects downloaded side by side, each hashed the moment it lands, default 4>
 #   POINTER_SOURCE=artifact (instead of POINTERS_SHA; 2026-09-29, the combined pointer commit is written only after every
 #     day of the run ends): each day's pointer is its own runner-ingest job's workflow artifact ingest-pointer-<day> of
 #     RUN, read from the GitHub API with the token in SSM /markets/frankie/github-token (us-east-2; memory only, never
@@ -36,6 +37,7 @@ case "$RUN" in ""|*[!0-9]*) echo "RUN must be the runner ingest's GitHub run id"
 case "$ATTEMPT" in ""|*[!0-9]*) echo "ATTEMPT must be an integer"; exit 2;; esac
 case "$PARALLEL" in ""|*[!0-9]*|0) echo "PARALLEL must be a positive integer"; exit 2;; esac
 case "${RANGE_STREAMS:-15}" in ""|*[!0-9]*|0) echo "RANGE_STREAMS must be a positive integer"; exit 2;; esac
+case "${OBJECT_STREAMS:-4}" in ""|*[!0-9]*|0) echo "OBJECT_STREAMS must be a positive integer"; exit 2;; esac
 [ -n "$DAYS" ] || { echo "DAYS required (comma list of YYYYMMDD)"; exit 2; }
 for D in $(echo "$DAYS" | tr ',' ' '); do
   case "$D" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "DAYS must be YYYYMMDD values ($D)"; exit 2;; esac
@@ -60,7 +62,7 @@ if [ -n "$POINTERS_SHA" ]; then
 fi
 echo "### free before: $(df -B1 --output=avail "$ROOT" | tail -1) bytes"
 MAPF="$MAPF" WORK="$WORK" ROOT="$ROOT" DAYS="$DAYS" RUN="$RUN" ATTEMPT="$ATTEMPT" POINTERS_SHA="$POINTERS_SHA" \
-POINTER_SOURCE="$POINTER_SOURCE" PARALLEL="$PARALLEL" RANGE_STREAMS="${RANGE_STREAMS:-15}" nice -n 10 ionice -c2 -n7 "$PY" - <<'PYEOF'
+POINTER_SOURCE="$POINTER_SOURCE" PARALLEL="$PARALLEL" RANGE_STREAMS="${RANGE_STREAMS:-15}" OBJECT_STREAMS="${OBJECT_STREAMS:-4}" nice -n 10 ionice -c2 -n7 "$PY" - <<'PYEOF'
 import hashlib, json, os, subprocess, sys, time, urllib.error, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -138,6 +140,7 @@ def sealed(day):
 RANGE_BYTES = 16 << 20         # S3 performance guidance (aws-storage skill, "byte-range fetches"): 8-16 MB ranges
 RANGE_STREAMS = int(E.get('RANGE_STREAMS') or 15)   # ~one stream per 85-90 MB/s; about 15 saturate a 10-12.5 Gb/s NIC
 RANGED_ABOVE = 64 << 20        # smaller objects keep the one-stream download below
+OBJECT_STREAMS = int(E.get('OBJECT_STREAMS') or 4)  # a day's objects downloaded side by side, each hashed as it lands
 
 
 def ranged_download(url, dest, size):
@@ -280,16 +283,26 @@ def one(day):
         if set(want) != set(objs) or any(objs[p]['bytes'] != want[p]['bytes'] for p in want):
             return dict(res, status='refused', reason='the S3 objects differ from the pointer: s3 %s, pointer %s' % (
                 sorted((p, o['bytes']) for p, o in objs.items()), sorted((p, f['bytes']) for p, f in want.items())))
-    stage.mkdir(exist_ok=True)
-    t0 = time.time()
-    for p in sorted(objs, key=lambda p: objs[p]['bytes']):
+    for p in objs:
         if '/' in p or p.startswith('.'):
             return dict(res, status='refused', reason='object name %r is not a plain file name' % p)
+    stage.mkdir(exist_ok=True)
+    t0 = time.time()
+
+    def land(p):
+        """One object downloaded (ranged when large) and hashed the moment it lands, while the day's other objects still
+        download (Greg, 2026-10-07 night: "anything using a cpu"; the hash overlaps the network, nothing waits for it)."""
         if not download(objs[p]['url'], stage / p, objs[p]['bytes']):
-            return dict(res, status='waiting', reason='download of %s incomplete (kept as .part; the next dispatch resumes it)' % p)
+            return p, None
+        return p, dict(bytes=(stage / p).stat().st_size, sha256=sha256_file(stage / p))
+    with ThreadPoolExecutor(OBJECT_STREAMS) as pool:
+        landed = dict(pool.map(land, sorted(objs, key=lambda p: objs[p]['bytes'])))
+    missing = sorted(p for p, f in landed.items() if f is None)
+    if missing:
+        return dict(res, status='waiting', reason='download of %s incomplete (kept as .part; the next dispatch resumes it)' % ', '.join(missing))
     files = {}
     for p in sorted(objs):
-        files[p] = dict(bytes=(stage / p).stat().st_size, sha256=sha256_file(stage / p))
+        files[p] = landed[p]
         say('   %s %s %d %s' % (day, p, files[p]['bytes'], files[p]['sha256']))
     res.update(staged=str(stage), files=files, download_seconds=round(time.time() - t0, 1))
     if pointer is None:

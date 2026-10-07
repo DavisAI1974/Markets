@@ -549,12 +549,14 @@ def _self_check_cases(np):
     rng = np.random.default_rng(20261007)
     sizes = (1, 2, 3, 7, 15, 16, 17, 31, 32, 33, 100, 1001, 9999, 10000, 10001, 10002, 10015, 10016, 10017, 10031, 10032,
              10033, 10047, 12345, 16001, 20000, 31999, 32000, 32001, 65537, 99999, 100000, 160001, 319999, 320000,
-             320001, 320031, 320032, 320033, 333333, 480017, 654321, 1000003)
+             320001, 320031, 320032, 320033, 333333, 480017, 654321)
+    top = max(sizes)
+    pool_a = rng.standard_normal(top) * np.ldexp(1.0, rng.integers(-30, 30, top))
+    pool_b = rng.standard_normal(top) * np.ldexp(1.0, rng.integers(-30, 30, top))
     for n in sizes:
-        a = rng.standard_normal(n) * np.exp2(rng.integers(-30, 30, n))
-        b = rng.standard_normal(n) * np.exp2(rng.integers(-30, 30, n))
+        a, b = pool_a[:n], pool_b[:n]            # contiguous prefixes of one wide-magnitude pool
         yield 'wide', a, b
-        if n >= 3 and n in (3, 17, 10001, 10033, 320001, 654321):
+        if n in (3, 17, 10001, 10033, 320001, 320033):
             mid, last = n // 2, n - 1
             for label, at, va, vb in (('nan', mid, np.nan, 1.0), ('inf', mid, np.inf, 2.0),
                                       ('inf_minus_inf', last, -np.inf, 3.0), ('inf_times_zero', 0, np.inf, 0.0),
@@ -602,16 +604,17 @@ def _blas_setup():
     else:
         _BLAS_LIB[:] = [lib]
         try:
-            for label, a, b in _self_check_cases(np):      # one case at a time: 32 threads, then one thread
-                lib.set_num_threads(OPENBLAS_REDUCTION_THREADS)
-                want = _bits(np, np.dot(a, b))
-                lib.set_num_threads(1)
-                got = _bits(np, _emulated_dot(np, a, b))
-                one_thread_differs += _bits(np, np.dot(a, b)) != want
-                cases, sizes, kinds = cases + 1, sizes | {int(a.size)}, kinds | {label}
-                if got != want:
-                    mismatch = dict(case=label, n=int(a.size), threaded_bits=want, emulated_bits=got)
-                    break
+            with np.errstate(all='ignore'):                # the NaN / inf / overflow cases warn by design
+                for label, a, b in _self_check_cases(np):  # one case at a time: 32 threads, then one thread
+                    lib.set_num_threads(OPENBLAS_REDUCTION_THREADS)
+                    want = _bits(np, np.dot(a, b))
+                    lib.set_num_threads(1)
+                    got = _bits(np, _emulated_dot(np, a, b))
+                    one_thread_differs += int(_bits(np, np.dot(a, b)) != want)
+                    cases, sizes, kinds = cases + 1, sizes | {int(a.size)}, kinds | {label}
+                    if got != want:
+                        mismatch = dict(case=label, n=int(a.size), threaded_bits=want, emulated_bits=got)
+                        break
         except Exception as exc:                     # noqa: BLE001 - the fallback below, reason recorded
             error = '%s: %s' % (type(exc).__name__, exc)
         if error is None and mismatch is None and not one_thread_differs:

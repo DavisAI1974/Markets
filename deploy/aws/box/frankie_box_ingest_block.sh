@@ -10,8 +10,10 @@
 # 2026-09-29 "ingest wed separately so it's there when we need it right after"), OPENING_RECEIPT (the prior trading day's
 # sealed ingest receipt for the FIRST day of the list when that day opens at the prior halt: $ROOT/work/ingest-*/
 # ingestion-receipt.json, or Monday's recovery receipt on the box, $ROOT/work/sealed-recovery-*/recovery-receipt.json,
-# whose checkpoint sits beside it; see opening_book.py), WORKERS (PER DAY PROCESS; default the most its CPU booking fits:
-# 3 with VERIFY=inline, 7 with VERIFY=deferred and for a conform; see "CPU booking" below),
+# whose checkpoint sits beside it; see opening_book.py), DAY_CPUS (8|16|24|32|auto, the CPUs one day process books) and
+# WORKERS (PER DAY PROCESS; default DAY_CPUS - 1: one pool at a time; see "CPU booking" below), FETCH_AHEAD (on|off,
+# default on with MAP_URL: a list's next day is fetched inside the running day's booking), MEMBER_STREAMS / RANGE_STREAMS
+# (the fetch's members side by side and its shared 16 MB range GETs),
 # CANARY (default 20000), MARKETS_SHA (the DISPATCHED COMMIT; frankie_box_run.yml sets it from GITHUB_SHA: the box checks out
 # that commit, never a branch name, and refuses a HEAD that differs; the chat-9 ship review), CYCLE (00).
 # Order (the chat-9 ship review): the cycle units are checked idle BEFORE the checkout moves (a running session lazy-loads
@@ -137,24 +139,63 @@ prepare() { units_idle || return 2; checkout_markets || return 2; manifest_ok ||
 each_day() {   # $1 = fetch|ingest over the MANIFEST list, in order; a day that fails stops the list (the next day's book waits on it)
   units_idle || return 2; checkout_markets || return 2
   if [ "$1" = ingest ] && [ "$DAYS_AT_ONCE" -gt 1 ]; then at_once; return $?; fi
+  if [ "$1" = ingest ]; then size_day || return 2; fi
+  I=0; FA=""
   for MANIFEST in $(echo "$MANIFESTS" | tr ',' ' '); do
+    I=$((I + 1))
+    if [ -n "$FA" ]; then fetch_ahead_wait "$FA"; FA=""; fi       # this day's partitions, fetched inside the previous day's booking
     manifest_ok || return 2; mkdir -p "$DATA"
     if [ "$1" = fetch ]; then fetch || return $?; continue; fi
-    run_tool ingest; RC=$?
+    if [ -n "${MAP_URL:-}" ] && ! partitions_present; then fetch || return $?; fi   # the first day (or a skipped fetch-ahead)
+    # FETCH-AHEAD (Greg, 2026-10-07 night: "fetch of partition N+1 while decoding N"): with MAP_URL set, the next day's
+    # partitions are fetched while this day ingests, INSIDE this day's CPU booking (taskset of its booked CPUs, read from
+    # the booking outcome), so nothing outside the ledger runs; the next day starts only after that fetch has ended.
+    NEXT=$(echo "$MANIFESTS" | tr ',' '\n' | grep . | sed -n "$((I + 1))p")
+    OUTCOME="$ROOT/tmp/ingest-booking-$$-$I.json"
+    if [ -n "$NEXT" ] && [ -n "${MAP_URL:-}" ] && [ "${FETCH_AHEAD:-on}" != off ]; then
+      FA="$ROOT/tmp/ingest-fetch-ahead-$$-$((I + 1))"; fetch_ahead "$OUTCOME" "$NEXT" "$FA"
+    fi
+    BOOKING_OUTCOME="$OUTCOME"; run_tool ingest; RC=$?; BOOKING_OUTCOME=""
+    [ -s "$OUTCOME" ] || echo '{"status": "not started"}' > "$OUTCOME"     # a fetch-ahead waiting on it ends at once
+    if [ "$RC" != 0 ] && [ -n "$FA" ]; then fetch_ahead_wait "$FA"; FA=""; fi
     [ "$RC" != 75 ] || { echo "### the list waits at $MANIFEST for its CPU booking; the days after it wait too (exit 75)"; return 75; }
     [ "$RC" = 0 ] || { echo "### the list stops at $MANIFEST; the days after it wait (each opens with the book this day closes with)"; return 3; }
-    [ -s "$OUT/ingestion-receipt.json" ] || { echo "### $OUT has no ingestion receipt; the list stops at $MANIFEST"; return 3; }
+    [ -s "$OUT/ingestion-receipt.json" ] || { echo "### $OUT has no ingestion receipt; the list stops at $MANIFEST"; [ -z "$FA" ] || fetch_ahead_wait "$FA"; return 3; }
     OPENING_RECEIPT="$OUT/ingestion-receipt.json"     # the next day opens with the book this day closed with
   done
 }
-fetch() {
+partitions_present() {   # every member of the manifest M on the box under DATA (sizes and sha256 are the fetch's and the tool's checks)
+  for member in $("$PY" -c "import json,sys; print(' '.join(s['member_key'] for s in json.load(open(sys.argv[1]))['sources']))" "$M"); do
+    [ -s "$DATA/$member" ] || return 1
+  done
+}
+fetch_ahead() {   # $1 = the booking outcome file of the day about to ingest, $2 = the next day's manifest, $3 = marker prefix
+  ( W=0
+    while [ ! -s "$1" ] && [ "$W" -lt 900 ]; do sleep 1; W=$((W + 1)); done
+    CPUS=$("$PY" -I -S -c "import json,sys; o=json.load(open(sys.argv[1])); print(o.get('cpus') or '' if o.get('status') == 'booked' else '')" "$1" 2>/dev/null)
+    case "$CPUS" in ""|*[!0-9,-]*) echo "### fetch-ahead of $2 skipped: the day's booking was not made (the day fetches it before it starts)"; echo skipped > "$3.rc"; exit 0;; esac
+    MANIFEST="$2"
+    if manifest_ok && mkdir -p "$DATA"; then
+      echo "### fetch-ahead of $MANIFEST inside the running day's booking (CPUs $CPUS)"
+      FETCH_PIN="taskset -c $CPUS" fetch; RC=$?
+    else RC=2; fi
+    echo "$RC" > "$3.rc.tmp" && mv "$3.rc.tmp" "$3.rc"
+  ) > "$3.log" 2>&1 &
+}
+fetch_ahead_wait() {   # $1 = marker prefix: waits for the fetch-ahead, prints its log; a failed one is fetched again by the day itself
+  while [ ! -s "$1.rc" ]; do sleep 2; done
+  echo "### fetch-ahead log ($1.log)"; cat "$1.log"
+  [ "$(cat "$1.rc")" = 0 ] || [ "$(cat "$1.rc")" = skipped ] || echo "### fetch-ahead exited $(cat "$1.rc"); the day checks its partitions and fetches again before it starts"
+}
+fetch() {   # FETCH_PIN (optional) = "taskset -c <cpus>": the fetch runs inside a day booking it was handed (fetch-ahead)
   [ -n "${MAP_URL:-}" ] || { echo "MAP_URL not set (dispatch frankie_box_run.yml with presign=<bucket>/<prefix>/<member_key> for every partition)"; return 2; }
   case "$MAP_URL" in https://*.amazonaws.com/*) ;; *) echo "MAP_URL must be an https amazonaws URL"; return 2;; esac
   cd "$ROOT/tmp" || return 2
-  MAPF="ingest-map-$$.json"     # per dispatch: dispatches running side by side never share or delete each other's map
+  MAPF="ingest-map-$$-$BLOCK.json"     # per dispatch and day: dispatches and fetch-aheads never share or delete each other's map
   curl -fsS --proto =https -m 60 --retry 3 -o "$MAPF" --url "$MAP_URL" || { echo "map download failed"; return 2; }
-  MAPF="$MAPF" M="$M" DATA="$DATA" ROOT="$ROOT" MK="$MK" MARKETS_SHA="$MARKETS_SHA" "$PY" - <<'PYEOF'
-import glob, hashlib, json, os, subprocess, sys, time
+  MAPF="$MAPF" M="$M" DATA="$DATA" ROOT="$ROOT" MK="$MK" MARKETS_SHA="$MARKETS_SHA" ${FETCH_PIN:-} "$PY" - <<'PYEOF'
+import glob, hashlib, json, os, subprocess, sys, threading, time
+from concurrent.futures import ThreadPoolExecutor
 sys.path.insert(0, os.environ['MK'])
 from research.kalshi.frankie_boss.block_source_scope import block_source_scope     # the tool's own validation, before any path is built
 m = json.load(open(os.environ['MAPF'])); manifest = json.load(open(os.environ['M'])); data = os.path.realpath(os.environ['DATA'])
@@ -169,10 +210,18 @@ def ok_url(u):
 # A partition above RANGED_ABOVE is pulled as concurrent byte-range GETs of the same presigned URL (aws-storage skill, S3
 # byte-range fetches: 8-16 MB ranges, ~15 streams fill a 12.5 Gb/s NIC; the journal pull's pattern) written at their
 # offsets into <dest>.part; smaller ones keep the one curl stream. The bytes and sha256 check below are unchanged.
+# The members run side by side (MEMBER_STREAMS, default every member up to 4; Greg, 2026-10-07 night "anything using a
+# cpu"): ONE shared pool of RANGE_STREAMS range GETs serves all of them (the NIC budget is not multiplied), and a member is
+# hashed the moment it lands while the others still download. The receipt lists the members in manifest order.
 RANGE_BYTES = 16 << 20; RANGED_ABOVE = 64 << 20; RANGE_STREAMS = int(os.environ.get('RANGE_STREAMS') or 15)
+MEMBER_STREAMS = int(os.environ.get('MEMBER_STREAMS') or min(4, max(1, len(scope.members))))
+RANGES = ThreadPoolExecutor(max(1, RANGE_STREAMS), thread_name_prefix='range')
+SAY = threading.Lock()
+def say(*a):
+    with SAY:
+        print(*a, flush=True)
 def ranged(url, part, size):
     import urllib.request
-    from concurrent.futures import ThreadPoolExecutor
     fd = os.open(part, os.O_RDWR | os.O_CREAT, 0o644)
     try:
         os.ftruncate(fd, size)
@@ -188,18 +237,16 @@ def ranged(url, part, size):
                     if len(data) == end - start + 1:
                         os.pwrite(fd, data, start); return True
                 except OSError as e:
-                    print('   retry %d range %d of %s: %s' % (attempt + 1, i, os.path.basename(part), e))
+                    say('   retry %d range %d of %s: %s' % (attempt + 1, i, os.path.basename(part), e))
                 time.sleep(min(60, 5 * (attempt + 1)))
             return False
-        with ThreadPoolExecutor(max(1, RANGE_STREAMS)) as pool:
-            ok = all(pool.map(one, range((size + RANGE_BYTES - 1) // RANGE_BYTES)))
+        ok = all(RANGES.map(one, range((size + RANGE_BYTES - 1) // RANGE_BYTES)))
         os.fsync(fd)
     finally:
         os.close(fd)
     return 0 if ok else 1
-receipt = dict(schema='FRANKIE_BOX_INGEST_FETCH_RECEIPT_V1', at=time.time(), block=manifest['block'], manifest_hash=manifest['manifest_hash'],
-               markets_sha=os.environ['MARKETS_SHA'], files=[], refused=[])
-for member in scope.members:
+def member_one(member):
+    """(kind, entry): kind 'files' or 'refused', exactly the entries the one-at-a-time loop wrote."""
     dest = os.path.realpath(os.path.join(data, member.member_key))
     if not dest.startswith(data + os.sep):
         raise SystemExit(f'{member.member_key} escapes the data directory; refused')
@@ -210,40 +257,47 @@ for member in scope.members:
         for other in sorted(glob.glob(os.path.join(os.path.dirname(data), 'block_*', member.member_key))):
             if os.path.getsize(other) == member.size_bytes and sha(other) == member.sha256:
                 os.link(other, dest)
-                receipt['files'].append(dict(member_key=member.member_key, status='linked', linked_from=other, sha256=member.sha256))
-                print('linked', dest, 'from', other); break
-        if os.path.exists(dest):
-            continue
+                say('linked', dest, 'from', other)
+                return 'files', dict(member_key=member.member_key, status='linked', linked_from=other, sha256=member.sha256)
     if os.path.exists(dest):
         have = sha(dest)
         if have == member.sha256 and os.path.getsize(dest) == member.size_bytes:
-            receipt['files'].append(dict(member_key=member.member_key, status='present', sha256=have)); print('present', dest); continue
-        receipt['refused'].append(dict(member_key=member.member_key, reason='a different file is already at the destination; not overwritten (move it aside with a receipt first)', sha256=have))
-        print('REFUSED (present, different):', dest); continue
+            say('present', dest); return 'files', dict(member_key=member.member_key, status='present', sha256=have)
+        say('REFUSED (present, different):', dest)
+        return 'refused', dict(member_key=member.member_key, reason='a different file is already at the destination; not overwritten (move it aside with a receipt first)', sha256=have)
     if key is None:
-        receipt['refused'].append(dict(member_key=member.member_key, reason='not in the presigned map')); print('REFUSED (not presigned):', member.member_key); continue
+        say('REFUSED (not presigned):', member.member_key); return 'refused', dict(member_key=member.member_key, reason='not in the presigned map')
     if m[key].get('bytes') != member.size_bytes:
-        receipt['refused'].append(dict(member_key=member.member_key, reason='bytes differ from the manifest', have=m[key].get('bytes'))); print('REFUSED (bytes):', member.member_key); continue
+        say('REFUSED (bytes):', member.member_key); return 'refused', dict(member_key=member.member_key, reason='bytes differ from the manifest', have=m[key].get('bytes'))
     if not ok_url(m[key].get('url')):
-        receipt['refused'].append(dict(member_key=member.member_key, reason='the map entry is not an https amazonaws URL')); print('REFUSED (url):', member.member_key); continue
+        say('REFUSED (url):', member.member_key); return 'refused', dict(member_key=member.member_key, reason='the map entry is not an https amazonaws URL')
     part = dest + '.part'; t0 = time.time()
     if member.size_bytes > RANGED_ABOVE and RANGE_STREAMS > 1:
         returncode = ranged(m[key]['url'], part, member.size_bytes)
     else:
         returncode = subprocess.run(['curl', '-fsS', '--proto', '=https', '-L', '--retry', '5', '--retry-delay', '5', '-C', '-', '-o', part, '--url', m[key]['url']]).returncode
     if returncode != 0:
-        receipt['refused'].append(dict(member_key=member.member_key, reason='download failed', returncode=returncode)); print('REFUSED (download):', member.member_key); continue
+        say('REFUSED (download):', member.member_key); return 'refused', dict(member_key=member.member_key, reason='download failed', returncode=returncode)
     got = sha(part)
     if os.path.getsize(part) != member.size_bytes or got != member.sha256:
         os.replace(part, part + f'.rejected-{int(time.time())}')
-        receipt['refused'].append(dict(member_key=member.member_key, reason='digest differs from the manifest; the bytes are kept aside as .part.rejected-<ts>', sha256=got)); print('REFUSED (digest):', member.member_key); continue
+        say('REFUSED (digest):', member.member_key); return 'refused', dict(member_key=member.member_key, reason='digest differs from the manifest; the bytes are kept aside as .part.rejected-<ts>', sha256=got)
     if os.path.exists(dest):   # something landed at the destination during the download: never overwritten
         os.replace(part, part + f'.late-{int(time.time())}')
-        receipt['refused'].append(dict(member_key=member.member_key, reason='a file appeared at the destination during the download; not overwritten (the download is kept aside as .part.late-<ts>)')); print('REFUSED (late):', member.member_key); continue
-    os.replace(part, dest); receipt['files'].append(dict(member_key=member.member_key, status='restored', sha256=got, seconds=round(time.time() - t0, 1),
-                                    transport='ranged-%d' % RANGE_STREAMS if member.size_bytes > RANGED_ABOVE and RANGE_STREAMS > 1 else 'curl'))
-    print('restored', dest, member.size_bytes, f'{time.time()-t0:.0f}s')
-name = os.path.join(os.environ['ROOT'], 'receipts', f'ingest-fetch-{manifest["block"]}-{int(time.time())}.json')
+        say('REFUSED (late):', member.member_key); return 'refused', dict(member_key=member.member_key, reason='a file appeared at the destination during the download; not overwritten (the download is kept aside as .part.late-<ts>)')
+    os.replace(part, dest)
+    say('restored', dest, member.size_bytes, f'{time.time()-t0:.0f}s')
+    return 'files', dict(member_key=member.member_key, status='restored', sha256=got, seconds=round(time.time() - t0, 1),
+                         transport='ranged-%d' % RANGE_STREAMS if member.size_bytes > RANGED_ABOVE and RANGE_STREAMS > 1 else 'curl')
+receipt = dict(schema='FRANKIE_BOX_INGEST_FETCH_RECEIPT_V1', at=time.time(), block=manifest['block'], manifest_hash=manifest['manifest_hash'],
+               markets_sha=os.environ['MARKETS_SHA'], files=[], refused=[], member_streams=MEMBER_STREAMS, range_streams=RANGE_STREAMS)
+try:
+    with ThreadPoolExecutor(max(1, MEMBER_STREAMS), thread_name_prefix='member') as members:
+        for kind, entry in members.map(member_one, scope.members):    # manifest order
+            receipt[kind].append(entry)
+finally:
+    RANGES.shutdown(wait=True)
+name = os.path.join(os.environ['ROOT'], 'receipts', f'ingest-fetch-{manifest["block"]}-{int(time.time())}-{os.getpid()}.json')
 with open(name, 'x') as f: json.dump(receipt, f, indent=1, sort_keys=True)
 print('RECEIPT', name)
 raise SystemExit(0 if not receipt['refused'] else 1)
@@ -266,10 +320,13 @@ run_tool() {   # $1 = canary|ingest (prepare ran: units idle, the dispatched com
     EXTRA="$EXTRA --opening-receipt $OPENING_RECEIPT"; echo "### opening book: the prior day's sealed ingest $OPENING_RECEIPT"
   fi
   [ "${PROFILE:-0}" = 1 ] && EXTRA="$EXTRA --profile"     # PROFILE=1: cProfile the parent, profile.txt in the work directory (a measurement)
-  echo "### $1: block $BLOCK, $WORKERS workers, manifest $MANIFEST, markets $MARKETS_SHA, out $OUT"
-  # inside its CPU booking: frankie_box_cores.py books 8 CPUs, starts the tool under taskset -c <them>, releases at its end
+  size_day || return 2
+  echo "### $1: block $BLOCK, $DAY_CPUS CPUs, $WORKERS workers, manifest $MANIFEST, markets $MARKETS_SHA, out $OUT"
+  # inside its CPU booking: frankie_box_cores.py books DAY_CPUS CPUs, starts the tool under taskset -c <them>, releases at
+  # its end; the booking outcome (booked CPUs) goes to BOOKING_OUTCOME when a fetch-ahead waits on it
   ( cd "$MK" && PYTHONPATH="$MK" "$PY" "$MK/deploy/aws/box/frankie_box_cores.py" run --kind "$1" --day "$BLOCK" \
-      --run "$(basename "$OUT")" --stage "$1" --commit "$MARKETS_SHA" --workers "$WORKERS" --verify "$VERIFY" -- \
+      --run "$(basename "$OUT")" --stage "$1" --commit "$MARKETS_SHA" --workers "$WORKERS" --verify "$VERIFY" \
+      --size "$DAY_CPUS" ${BOOKING_OUTCOME:+--outcome "$BOOKING_OUTCOME"} -- \
       "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
       --manifest "$M" --sources-dir "$DATA" --output-dir "$OUT" --session-policy cme_trading_day --workers "$WORKERS" $EXTRA )
   RC=$?
@@ -279,17 +336,29 @@ run_tool() {   # $1 = canary|ingest (prepare ran: units idle, the dispatched com
   [ -s "$OUT/profile.txt" ] && { echo "### profile.txt (whole)"; cat "$OUT/profile.txt"; }
   return 0     # the tool's exit decided above; a missing ingestion receipt on a canary is not a failure (run 35681037861 exited 1 on this test)
 }
-at_once() {   # DAYS_AT_ONCE days of the list side by side (each warms its own book), each day process its own 8-CPU booking
-  # with WORKERS workers (never split, never shared: a day that cannot book its 8 waits and is listed)
+at_once() {   # DAYS_AT_ONCE days of the list side by side (each warms its own book), each day process its own booking of
+  # DAY_CPUS (auto: the free CPUs divided among the days at once) with WORKERS workers (never split, never shared: a day
+  # that cannot book waits and is listed). ROLLING (Greg, 2026-10-07 night, nothing idle): the next day starts as soon as
+  # any running day ends, not when a whole batch has ended. With MAP_URL set, every day's partitions are fetched first
+  # (members side by side, ranged), before any day books: a fetch outside a booking never runs beside the days.
   N=$(echo "$MANIFESTS" | tr ',' '\n' | grep -c .); AT=$DAYS_AT_ONCE; [ "$N" -ge "$AT" ] || AT=$N
-  SHARE=$WORKERS
-  RUNNING=0; FAILED=0; WAITED=0
-  for MANIFEST in $(echo "$MANIFESTS" | tr ',' ' '); do       # POSIX sh: batches of AT days, each batch waited whole
+  if [ -n "${MAP_URL:-}" ]; then
+    for MANIFEST in $(echo "$MANIFESTS" | tr ',' ' '); do
+      manifest_ok || return 2; mkdir -p "$DATA"; partitions_present || fetch || return $?
+    done
+  fi
+  size_day || return 2
+  RUNNING=""; FAILED=0; WAITED=0
+  for MANIFEST in $(echo "$MANIFESTS" | tr ',' ' '); do       # POSIX sh: a slot frees when any running day's pid ends
+    while :; do
+      LIVE=""; C=0; for P in $RUNNING; do if kill -0 "$P" 2>/dev/null; then LIVE="$LIVE $P"; C=$((C + 1)); fi; done; RUNNING=$LIVE
+      [ "$C" -lt "$AT" ] && break
+      sleep 2
+    done
     manifest_ok || return 2; mkdir -p "$DATA"
-    ( WORKERS=$SHARE; run_tool ingest ) > "$ROOT/tmp/ingest-$BLOCK-$$.log" 2>&1 &
-    echo "### started $MANIFEST (pid $!, $SHARE workers, log $ROOT/tmp/ingest-$BLOCK-$$.log)"
-    RUNNING=$((RUNNING + 1))
-    if [ "$RUNNING" -ge "$AT" ]; then wait; RUNNING=0; fi
+    ( run_tool ingest ) > "$ROOT/tmp/ingest-$BLOCK-$$.log" 2>&1 &
+    RUNNING="$RUNNING $!"
+    echo "### started $MANIFEST (pid $!, $DAY_CPUS CPUs, $WORKERS workers, log $ROOT/tmp/ingest-$BLOCK-$$.log)"
     sleep 1                                   # distinct output directory names (their names carry the second)
   done
   wait
@@ -306,8 +375,11 @@ at_once() {   # DAYS_AT_ONCE days of the list side by side (each warms its own b
 conform() {   # item 3's later half: the conformance drain on a sealed ingest whose conformance was deferred (the day's
   # manifest is the committed one the receipt names by hash)
   [ -n "$DIRECTORY" ] && [ -s "$DIRECTORY/ingestion-receipt.json" ] || { echo "DIRECTORY must hold a sealed ingestion-receipt.json"; return 2; }
+  size_day || return 2
+  echo "### conform: $DIRECTORY, $DAY_CPUS CPUs, $WORKERS reader workers"
   ( cd "$MK" && PYTHONPATH="$MK" "$PY" "$MK/deploy/aws/box/frankie_box_cores.py" run --kind conform \
-      --day "$(basename "$DIRECTORY")" --run "$(basename "$DIRECTORY")" --stage conform --commit "$MARKETS_SHA" --workers "$WORKERS" -- \
+      --day "$(basename "$DIRECTORY")" --run "$(basename "$DIRECTORY")" --stage conform --commit "$MARKETS_SHA" --workers "$WORKERS" \
+      --size "$DAY_CPUS" -- \
       "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py --conform "$DIRECTORY" --workers "$WORKERS" )
   RC=$?
   [ "$RC" != 75 ] || { echo "### conform WAITING for its CPU booking (not started)"; return 75; }

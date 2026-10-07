@@ -1244,6 +1244,13 @@ def pin_coordinator(workers):
     LP = _lane_pin()
     lane = lane_cpus()
     placed = LP.record(workers, lane, what='search coordinator + transform/coupling/discovery pool workers')
+    # numpy's OpenBLAS settled once here, before the pools fork (each worker inherits it) and before the coordinator
+    # narrows to its one CPU (the self-check's 32 OpenBLAS threads take the lane): one thread per worker with
+    # the proven 32-thread reduction order for any Pearson dot product, or exactly 32 threads when the self-check fails
+    # (dipole_classroom_external.blas_reduction, Greg 2026-10-07 night: N=32 on every lane). The workers' FFTs are not
+    # BLAS; the discovery engine's own Julia BLAS is a separate library, not set here.
+    from research.kalshi.frankie_boss.dipole_classroom_external import blas_reduction
+    placed['blas_reduction'] = blas_reduction()
     placed['coordinator_pinned'] = LP.pin_thread(placed['coordinator'], lane) is not None
     return placed
 
