@@ -38,7 +38,12 @@ Actions:
              worker's last-seen job reported distinctly.
 Rules kept: the day-file gate; one claim per day; the same committed ROOT script, commit and receipts as the box; zero
 data dropped; counts, not averages; a claim is never cleared here; an interrupted or refused handoff keeps the original
-claim and inputs; exactly one Linux lane (SLOTS=1); no new AWS service, booking or host.
+claim and inputs; exactly one Linux lane (SLOTS=1); no new AWS service, booking or host. Ownership is established at
+every effect boundary (claim, submission after an export, renewal, coordination, save relay, resume): the lease's last
+successful conditional write must be fresh, else one is tried, else the effect is not made and the loop ends
+(lease_lost / lease_unestablished). A resume whose transport step fails after it may have launched is UNKNOWN until the
+worker's status settles it; it is never redispatched. Every unsuccessful outcome exits nonzero; a budget end, a stop and
+a lane with no remaining work exit zero and are never day completion.
 """
 import argparse
 import fcntl
@@ -275,7 +280,7 @@ class State:
         return read_json(self.dir / 'stop-ack.json')
 
     def resume_request(self):
-        return read_json(self.dir / 'resume-request.json')
+        return read_json(self.dir / 'resume-request.json', tolerant=True)
 
     def resume_acknowledge(self, doc):
         """The request archived beside its acknowledgment (both kept; a request is consumed exactly once)."""
@@ -441,6 +446,8 @@ class Controller:
         self.lease_extra = {}
         self.lease_lock = threading.Lock()
         self.lease_lost = False
+        self.lease_fresh_at = None       # epoch of the last SUCCESSFUL conditional lease write; ownership is established
+        self.resume_pending = None       # a resume whose outcome is unknown until the worker's status settles it
         self.heartbeat_thread = None
         self.finished = threading.Event()
 
@@ -466,7 +473,8 @@ class Controller:
         self.state.status(dict(run=self.run, controller=dict(self.lease_identity, action=self.a.action, commit=self.commit,
                                                             code_root=self.a.code_root, budget_minutes=self.a.budget_minutes,
                                                             open_ended=self.open_ended, stop=self.stop,
-                                                            stop_relayed=self.stop_relayed, outcome=self.outcome),
+                                                            stop_relayed=self.stop_relayed, resume_pending=self.resume_pending,
+                                                            lease_fresh_at=self.lease_fresh_at, outcome=self.outcome),
                                queue=dict(counts=q.get('counts'), code_commit=q.get('code_commit'), active=q.get('active'),
                                           free_bytes=q.get('free_bytes')),
                                worker=worker or self.last_worker, held=held))
@@ -529,6 +537,7 @@ class Controller:
             r = s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=lease_key(self.run), Body=json.dumps(doc, sort_keys=True).encode(),
                                                ServerSideEncryption='AES256', ContentType='application/json', **conditions)
             self.lease_etag = r.get('ETag')
+            self.lease_fresh_at = time.time()
 
     def heartbeat(self):
         while not self.finished.wait(HEARTBEAT_SECONDS):
@@ -540,7 +549,32 @@ class Controller:
                     self.event(step='lease', result='lost', detail='another controller holds the lease now; this one ends '
                                'without touching the worker or any claim')
                     return
-                self.event(step='lease', result='heartbeat failed', error='%s: %s' % (type(error).__name__, str(error)[:200]))
+                self.event(step='lease', result='heartbeat failed', error='%s: %s' % (type(error).__name__, str(error)[:200]),
+                           fresh_for=round(time.time() - (self.lease_fresh_at or 0)))
+
+    def lease_established(self, boundary):
+        """Ownership at an effect boundary (a claim, a submission after an export, a renewal, a coordination reply, a save
+        relay, a resume): the last successful conditional write must be younger than the lease's freshness; otherwise one
+        synchronous conditional write is tried now. False = ownership cannot be established (lost, or not renewed within
+        the freshness): the effect is NOT made, the claim and any outstanding work stay as they are."""
+        if self.lease_lost:
+            return False
+        if self.lease_fresh_at is not None and time.time() - self.lease_fresh_at < LEASE_FRESH_SECONDS:
+            return True
+        try:
+            self.write_lease()
+            return True
+        except Exception as error:  # noqa: BLE001
+            code = getattr(error, 'response', {}).get('Error', {}).get('Code')
+            if code in ('PreconditionFailed', '412'):
+                self.lease_lost = True
+                self.event(step='lease', result='lost', boundary=boundary,
+                           detail='another controller holds the lease; the effect is not made')
+            else:
+                self.event(step='lease', result='not established', boundary=boundary,
+                           error='%s: %s' % (type(error).__name__, str(error)[:200]),
+                           detail='the lease could not be renewed within its freshness; the effect is not made')
+            return False
 
     def release_lease(self):
         if self.lease_etag is None or self.lease_lost:
@@ -573,8 +607,11 @@ class Controller:
         request = self.state.resume_request()
         if request is None:
             return
+        if self.resume_pending is not None:
+            return                                   # one request at a time; the pending one is reconciled first
         job_id = str(request.get('job_id') or '')
         ack = dict(run=self.run, request=request, controller=self.lease_identity)
+        before = next((dict(j) for j in jobs if j.get('job_id') == job_id), None)
         try:
             if self.stop is not None:
                 raise ValueError('a stop is pending; no resume while stopping')
@@ -584,17 +621,55 @@ class Controller:
             held = next((d.get('claim') for d in q['days'] if (d.get('claim') or {}).get('attempt') == job_id), None)
             if not held or held.get('where') != w.where:
                 raise ValueError('the day must still be claimed by this Linux worker (original claim untouched)')
-            live = [j for j in jobs if j.get('job_id') == job_id]
-            if live and (live[0].get('pid_alive') or live[0].get('state') == 'day_complete'):
+            if before and (before.get('pid_alive') or before.get('state') == 'day_complete'):
                 raise ValueError('the job is %s (pid alive %s): a live or completed day is not resumed' % (
-                    live[0].get('state'), live[0].get('pid_alive')))
-            result = self.renew(w, dict(job_id=job_id), resume=True)
-            ack.update(resumed=True, result=result)
-            self.event(worker=w.where, step='resume', attempt=job_id, result='resumed', detail=result)
+                    before.get('state'), before.get('pid_alive')))
         except (Exception, SystemExit) as error:  # noqa: BLE001
+            # refused BEFORE any transport or renewal: nothing was sent, nothing rewritten
             ack.update(resumed=False, refused='%s: %s' % (type(error).__name__, str(error)[:400]),
-                       note='original claim, job files and inputs untouched')
+                       note='refused before any renewal or transport; original claim, job files and inputs untouched')
             self.event(worker=w.where, step='resume', attempt=job_id, result='refused', error=ack['refused'][:300])
+            self.state.resume_acknowledge(ack)
+            return
+        try:
+            result = self.renew(w, dict(job_id=job_id), resume=True)
+        except (Exception, SystemExit) as error:  # noqa: BLE001
+            # the renewal/transport step failed or timed out AFTER it may have rewritten transport metadata or launched
+            # the job: the outcome is UNKNOWN until the worker's own status settles it; the request stays as evidence
+            self.resume_pending = dict(job_id=job_id, since=time.time(), request=request, before=before,
+                                       error='%s: %s' % (type(error).__name__, str(error)[:400]))
+            self.event(worker=w.where, step='resume', attempt=job_id, result='unknown', error=self.resume_pending['error'][:300],
+                       detail='reconciled through the worker status before any definite acknowledgment; no redispatch')
+            self.snapshot()
+            return
+        ack.update(resumed=True, result=result)
+        self.event(worker=w.where, step='resume', attempt=job_id, result='resumed', detail=result)
+        self.state.resume_acknowledge(ack)
+
+    def reconcile_resume(self, w, jobs):
+        """An unknown resume settled by the worker's status: the job live (or advanced) = it resumed; the job unchanged
+        for a whole lease freshness = no launch observed. Either way the original attempt is the one acknowledged; nothing
+        is redispatched and the request evidence is archived only with its acknowledgment."""
+        pending = self.resume_pending
+        if pending is None:
+            return
+        now = next((dict(j) for j in jobs if j.get('job_id') == pending['job_id']), None)
+        before = pending.get('before') or {}
+        ack = dict(run=self.run, request=pending['request'], controller=self.lease_identity, transport_error=pending['error'],
+                   observed_before=before, observed_now=now)
+        if now and (now.get('pid_alive') or now.get('state') == 'day_complete' or
+                    (now.get('updated') and now.get('updated') != before.get('updated'))):
+            ack.update(resumed=True, reconciled='the worker reports the original attempt live or advanced after the '
+                                                 'transport failure')
+            self.event(worker=w.where, step='resume', attempt=pending['job_id'], result='reconciled resumed')
+        elif time.time() - pending['since'] > LEASE_FRESH_SECONDS:
+            ack.update(resumed=False, reconciled='no launch observed within %d s after the transport failure; the original '
+                                                  'attempt, claim and inputs are retained; a new request may be made'
+                                                  % LEASE_FRESH_SECONDS)
+            self.event(worker=w.where, step='resume', attempt=pending['job_id'], result='reconciled not resumed')
+        else:
+            return
+        self.resume_pending = None
         self.state.resume_acknowledge(ack)
 
     def relay_save(self, w, jobs):
@@ -607,6 +682,8 @@ class Controller:
         for j in jobs:
             if j.get('workflow') == 'root-to-finish' and j.get('pid_alive'):
                 try:
+                    if not self.lease_established('stop relay'):
+                        raise RuntimeError('lease ownership not established; the save is not relayed')
                     r = box('stop', w.target, 600, COMMIT=self.commit, JOB=j['job_id'])
                     self.stop_relayed[j['job_id']] = r.get('result')
                 except Exception as error:  # noqa: BLE001
@@ -673,6 +750,9 @@ class Controller:
 
     def start_day(self, w, st, retained=False):
         day = st['day']
+        if not self.lease_established('claim'):
+            self.event(worker=w.where, day=day, step='claim', result='not made', detail='lease ownership not established')
+            return False
         if not retained:
             c = box('claim', MAIN, 1800, CODE_ROOT=self.a.code_root, RUN=self.run, DAY=day, WHERE=w.where, COMMIT=self.commit)
             if not c.get('claimed'):
@@ -717,6 +797,9 @@ class Controller:
                                    source='box export'))
                 self.event(worker=w.where, day=day, step='export', file=f['name'], bytes=f['bytes'], parts=len(parts),
                            seconds=round(time.time() - t0))
+            if not self.lease_established('submit'):
+                raise RuntimeError('lease ownership not established after the export; the job is not submitted (the claim '
+                                   'and the exported parts are retained for the owner that holds the lease)')
             self.resign(inputs)
             job = dict(schema='FRANKIE_POD_ROOT_JOB_V1', name=attempt, run=self.run, day=day, role=st['role'],
                        digest=st['digest'], commit=self.commit, data_workers=15,
@@ -804,6 +887,8 @@ class Controller:
             return None
 
     def coordinate(self, w, job):
+        if not self.lease_established('coordinate'):
+            raise RuntimeError('lease ownership not established; the coordination request is left for the lease holder')
         prefix = self.prefix(job['job_id']) + '/rpc'
         response = box('coordinate', MAIN, 1800, CODE_ROOT=self.a.code_root,
                        url_map=dict(rpc=dict(url=self.sign.get(TRANSFER_BUCKET, prefix + '/request.json')),
@@ -811,6 +896,8 @@ class Controller:
         self.event(worker=w.where, day=job['day'], step='coordinate', id=response.get('id'), error=response.get('error'))
 
     def renew(self, w, job, resume=False):
+        if not self.lease_established('resume' if resume else 'renew'):
+            raise RuntimeError('lease ownership not established; the %s is not made' % ('resume' if resume else 'renewal'))
         prefix = self.prefix(job['job_id']) + '/rpc'
         update = dict(mailbox=dict(request_put=self.sign.put(TRANSFER_BUCKET, prefix + '/request.json'),
                                    response_get=self.sign.get(TRANSFER_BUCKET, prefix + '/response.json')))
@@ -888,6 +975,13 @@ class Controller:
                                                     note='another controller took the lease; the worker keeps its job and claim')
                 self.snapshot()
                 return
+            if not self.lease_established('poll'):
+                self.outcome = self.outcome or dict(outcome='lease_unestablished', complete=False,
+                                                    note='the lease could not be renewed within its freshness and ownership '
+                                                         'cannot be established; the worker keeps its job and claim; '
+                                                         'outstanding effects are retained for the lease holder')
+                self.snapshot()
+                return
             self.check_stop()
             try:
                 st = w.status()
@@ -903,6 +997,7 @@ class Controller:
                 continue
             jobs = [j for j in st.get('jobs') or [] if j.get('run') == self.run]
             if only_job is None:
+                self.reconcile_resume(w, jobs)
                 self.check_resume(w, jobs)
             if self.stop is not None:
                 self.relay_save(w, jobs)
@@ -1192,11 +1287,17 @@ def main():
                                     state_dir=a.state_dir, lease_key=lease_key(a.run)))
         try:
             serve(a, ctl)
-        except (Exception, SystemExit) as error:
+        except SystemExit as error:
             if not ctl.finished.is_set():
-                ctl.outcome = dict(outcome='refused' if isinstance(error, SystemExit) else 'failed', complete=False,
-                                   error='%s: %s' % (type(error).__name__, str(error)[:600]), note='nothing served')
-                ctl.event(step=a.action, result=ctl.outcome['outcome'], error=ctl.outcome['error'][:300])
+                ctl.outcome = dict(outcome='refused', complete=False, error='SystemExit: %s' % str(error)[:600], note='nothing served')
+                ctl.event(step=a.action, result='refused', error=ctl.outcome['error'][:300])
+                finish(a, ctl)
+            raise SystemExit(error.code if isinstance(error.code, int) and error.code != 0 else 1)
+        except Exception as error:  # noqa: BLE001
+            if not ctl.finished.is_set():
+                ctl.outcome = dict(outcome='failed', complete=False, error='%s: %s' % (type(error).__name__, str(error)[:600]),
+                                   note='nothing served')
+                ctl.event(step=a.action, result='failed', error=ctl.outcome['error'][:300])
                 finish(a, ctl)
             raise
         return
@@ -1298,14 +1399,22 @@ def run_serving(a, ctl, workers, only_job=None):
         while t.is_alive():
             t.join(60)
     finish(a, ctl)
-    if (ctl.outcome or {}).get('outcome') in ('worker_unreachable',):
+    if (ctl.outcome or {}).get('outcome') in UNSUCCESSFUL:
         raise SystemExit(1)
+
+
+UNSUCCESSFUL = ('failed', 'refused', 'lease_lost', 'lease_unestablished', 'blocked_by_start_failures', 'worker_unreachable',
+                'terminated_by_signal')
 
 
 def finish(a, ctl):
     if ctl.finished.is_set():
         return
     ctl.finished.set()
+    if ctl.resume_pending is not None:
+        ctl.outcome = dict(ctl.outcome or dict(outcome='ended', complete=False), resume_unresolved=ctl.resume_pending,
+                           note_resume='a resume request remains unresolved: resume-request.json is kept; the next '
+                                       'controller reconciles it through the worker status before acknowledging')
     if ctl.heartbeat_thread is not None and ctl.heartbeat_thread is not threading.current_thread():
         ctl.heartbeat_thread.join(HEARTBEAT_SECONDS)       # no heartbeat lands after the release below
     ctl.outcome = ctl.outcome or dict(outcome='ended', complete=False)
