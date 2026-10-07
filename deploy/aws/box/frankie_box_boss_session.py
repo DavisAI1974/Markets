@@ -370,6 +370,127 @@ def _encoder_pin(cpus, fallback=None):
     os.sched_setaffinity(0, cpu)
 
 
+POOL_POLL_SECONDS = 1.0          # a pinned-pool wait's step: between steps it checks its workers are the ones it started
+
+
+class _PoolTask:
+    """One submitted encoding with its function and arguments kept beside its result, so a task lost with a dead worker
+    is submitted again with the same arguments (the encodings are pure: the same bytes at the same FIFO slot). A task
+    whose result is None runs in the calling process when it is collected (every worker lost)."""
+    __slots__ = ('fn', 'args', 'result')
+
+    def __init__(self, fn, args, result):
+        self.fn, self.args, self.result = fn, args, result
+
+    def ready(self):
+        return self.result is None or self.result.ready()
+
+
+class _PinnedPool:
+    """A fork pool of encoders pinned one per CPU (_encoder_pin) that neither stops nor waits forever when a worker dies
+    (Greg, 2026-10-07: "We don't want it to die if worker dies" / "continue but with just one less worker").
+
+    multiprocessing.Pool replaces a dead worker but the task it held never completes. get() waits in POOL_POLL_SECONDS
+    steps (a slow task is not a failure: no overall deadline) and, at each step, checks whether any worker has exited
+    or the worker set differs from the one started (no maxtasksperchild: these pools never retire workers). On a loss
+    the pool is ended and started again on the surviving workers' CPUs, one CPU fewer per worker lost (the dead
+    worker's CPU is not refilled), and every collected-later task that was not ready is submitted again with its
+    own arguments. Only the result is replaced: the caller still writes each slot once, in its own order. With every
+    worker lost the tasks run in the calling process. Each loss is noted; nothing stops. A real encode exception still
+    raises from get() exactly as AsyncResult.get raised it."""
+
+    def __init__(self, cpus, label, note=None, flush=None):
+        self.cpus, self.label, self.note, self.flush = list(cpus), label, note, flush
+        self.started_workers = len(self.cpus)
+        self.workers_lost = 0
+        self.tasks_redone = 0
+        self.outstanding = {}
+        self._start()
+
+    @property
+    def workers(self):
+        return len(self.cpus)
+
+    def _start(self):
+        self.pool, self.pids = None, frozenset()
+        if not self.cpus:
+            return
+        import multiprocessing
+        context = multiprocessing.get_context('fork')
+        handout = context.Queue()
+        for cpu in self.cpus:
+            handout.put(cpu)
+        if self.flush is not None:
+            self.flush()                  # nothing buffered is copied into the forked encoders
+        self.pool = context.Pool(len(self.cpus), initializer=_encoder_pin, initargs=(handout, tuple(self.cpus)))
+        self.pids = frozenset(process.pid for process in self.pool._pool)
+
+    def submit(self, fn, args):
+        task = _PoolTask(fn, args, None if self.pool is None else self.pool.apply_async(fn, (args,)))
+        self.outstanding[id(task)] = task
+        return task
+
+    def get(self, task):
+        import multiprocessing
+        try:
+            while task.result is not None:
+                try:
+                    return task.result.get(POOL_POLL_SECONDS)
+                except multiprocessing.TimeoutError:
+                    if self._lost():
+                        self._recover()
+            return task.fn(task.args)
+        finally:
+            self.outstanding.pop(id(task), None)
+
+    def _lost(self):
+        workers = list(self.pool._pool)
+        return frozenset(process.pid for process in workers) != self.pids or any(
+            process.exitcode is not None for process in workers)
+
+    def _recover(self):
+        alive = [process for process in list(self.pool._pool)
+                 if process.pid in self.pids and process.exitcode is None]
+        held = set()
+        for process in alive:
+            try:
+                affinity = os.sched_getaffinity(process.pid)
+            except OSError:
+                continue
+            if len(affinity) == 1:
+                held |= affinity
+        keep = max(0, min(len(alive), len(self.cpus) - 1))
+        survivors = [cpu for cpu in self.cpus if cpu in held]
+        if len(survivors) != keep:
+            survivors = self.cpus[:keep]          # placement only: the CPUs the survivors held are not readable
+        self.pool.terminate()
+        self.pool.join()
+        lost = [task for task in self.outstanding.values() if task.result is not None and not task.result.ready()]
+        before = len(self.cpus)
+        self.cpus = survivors
+        self._start()
+        for task in lost:
+            task.result = None if self.pool is None else self.pool.apply_async(task.fn, (task.args,))
+        self.workers_lost += before - len(self.cpus)
+        self.tasks_redone += len(lost)
+        if self.note is not None:
+            where = (f'{len(self.cpus)} pinned worker(s) left on CPUs {cpu_ranges(self.cpus)}' if self.cpus
+                     else 'no worker left: encoding continues in the calling process')
+            self.note(f'{self.label}: an encoder worker exited with work in flight; {where} '
+                      f'({self.workers_lost} of {self.started_workers} lost so far); {len(lost)} task(s) re-done with '
+                      f'the same arguments ({self.tasks_redone} in all); order and bytes unchanged, the stage continues')
+
+    def close(self):
+        if self.pool is not None:
+            self.pool.close()
+            self.pool.join()
+
+    def terminate(self):
+        if self.pool is not None:
+            self.pool.terminate()
+            self.pool.join()
+
+
 class OrderedRowWriter:
     """The legacy pass's spool appends in the serial order, with the frame rows encoded on pinned lane workers.
 
@@ -384,27 +505,44 @@ class OrderedRowWriter:
     Ops are queued in program order and written strictly in that order, so every spool receives exactly the lines, in
     exactly the order, the serial `spool.append(value)` calls would write (RowSpool's own line, count and first/last
     bookkeeping). A frame whose encoding raised writes, at its own slot, the failure row the serial except clause would
-    have written. The in-flight window is fixed (window_per_worker x workers frames). drain() writes everything queued;
+    have written. The in-flight window is window_per_worker x workers frames (workers as now: a dead encoder is not
+    refilled; its lost frames are encoded again with the same payload, _PinnedPool). drain() writes everything queued;
     it runs before every save point (a saved spool position always has every earlier row on disk, so a resume reopens
     the spools at exactly those byte offsets) and before the spools are closed."""
 
-    def __init__(self, cpus, window_per_worker=4):
+    def __init__(self, cpus, window_per_worker=4, note=None):
         import collections
-        import multiprocessing
-        context = multiprocessing.get_context('fork')
-        handout = context.Queue()
-        for cpu in cpus:
-            handout.put(cpu)
         self.cpus = list(cpus)
-        self.workers = len(self.cpus)
         self.queue = collections.deque()
-        self.window = self.workers * window_per_worker
-        self.pool = context.Pool(self.workers, initializer=_encoder_pin, initargs=(handout, tuple(self.cpus)))
+        self.window_per_worker = window_per_worker
+        self._spools = {}
+        self.pinned = _PinnedPool(self.cpus, 'legacy pass frame encoders', note=note, flush=self._flush_spools)
         self.frames_encoded = 0
         self.wait_seconds = 0.0
 
+    @property
+    def workers(self):
+        return self.pinned.workers
+
+    @property
+    def window(self):
+        return max(1, self.pinned.workers) * self.window_per_worker
+
+    @property
+    def workers_lost(self):
+        return self.pinned.workers_lost
+
+    @property
+    def tasks_redone(self):
+        return self.pinned.tasks_redone
+
+    def _flush_spools(self):
+        for spool in self._spools.values():
+            spool._writer.flush()
+
     def append(self, spool, value):
         """A small row (prices, structures, failures): encoded here, now, exactly as RowSpool.append would."""
+        self._spools[id(spool)] = spool
         self.queue.append((spool, value, _encode_row(value), None))
         self._write_ready()
 
@@ -419,7 +557,9 @@ class OrderedRowWriter:
         except Exception:  # noqa: BLE001 - the serial path decides, unchanged
             self.append(spool, value)
             return
-        self.queue.append((spool, value, self.pool.apply_async(_encode_frame, (payload,)), (failures, payload, index)))
+        self._spools[id(spool)] = spool
+        self._spools[id(failures)] = failures
+        self.queue.append((spool, value, self.pinned.submit(_encode_frame, payload), (failures, payload, index)))
         while len(self.queue) > self.window:
             self._write_one()
         self._write_ready()
@@ -436,7 +576,7 @@ class OrderedRowWriter:
         if not isinstance(encoded, str):
             started = time.time()
             try:
-                encoded = encoded.get()
+                encoded = self.pinned.get(encoded)      # a lost frame is encoded again, never a failure row
                 self.frames_encoded += 1
             except Exception as error:
                 # the serial except clause's failure row, at this frame's own slot in the failures spool
@@ -469,13 +609,11 @@ class OrderedRowWriter:
         try:
             self.drain()
         finally:
-            self.pool.close()
-            self.pool.join()
+            self.pinned.close()
 
     def terminate(self):
         self.queue.clear()
-        self.pool.terminate()
-        self.pool.join()
+        self.pinned.terminate()
 
 
 LAYER_SPOOL_PARALLEL_MIN_BYTES = 64 << 20
@@ -524,14 +662,16 @@ def _spool_line_ranges(path, size, step):
     return [(str(path), a, b) for a, b in zip(cuts, cuts[1:]) if b > a]
 
 
-def write_layer_json(path, value, cpus, window_per_worker=2):
+def write_layer_json(path, value, cpus, window_per_worker=2, note=None):
     """frankie_box_durable.write_json(path, value), byte for byte, with every top-level RowSpool value of the layer
     (legacy_book_imbalance.frames, legacy_structure_observables.groups) decoded and encoded on encoders pinned one per
     CPU in `cpus`, read straight from the spool file in ordered line-aligned ranges (streamed; never held whole). The
     rest of the document is encoded by the same encoder with a placeholder string in each spool's place, and the
     spool's list text is joined in at the placeholder: '[', newline + two spaces, the elements, newline + one space,
     ']' (json's list form at that level; '[]' when empty). The rows decoded must equal the spool's count, as
-    RowSpool.__iter__ requires. With no CPUs, no spool or a small spool it is write_json itself."""
+    RowSpool.__iter__ requires. With no CPUs, no spool or a small spool it is write_json itself. A dead encoder is
+    not refilled: its lost ranges are encoded again from the same arguments on the survivors (_PinnedPool; `note`
+    records each loss) and the document is the same bytes."""
     B = _box_module('frankie_box_bedrock')
     durable = _box_module('frankie_box_durable')
     spools = {key: spool for key, spool in value.items()
@@ -554,13 +694,8 @@ def write_layer_json(path, value, cpus, window_per_worker=2):
         order.append(key)
     parts.append(rest)
     import collections
-    import multiprocessing
-    context = multiprocessing.get_context('fork')
-    handout = context.Queue()
-    for cpu in cpus:
-        handout.put(cpu)
 
-    def chunks(pool):
+    def chunks(pinned):
         for i, key in enumerate(order):
             yield parts[i].encode('utf-8')
             spool = spools[key]
@@ -568,15 +703,15 @@ def write_layer_json(path, value, cpus, window_per_worker=2):
             pending, total, first = collections.deque(), 0, True
             submitted = iter(ranges)
             for item in submitted:
-                pending.append(pool.apply_async(_layer_range_text, (item,)))
+                pending.append(pinned.submit(_layer_range_text, item))
                 if len(pending) >= len(cpus) * window_per_worker:
                     break
             yield b'[\n  '
             while pending:
-                piece, count = pending.popleft().get()
+                piece, count = pinned.get(pending.popleft())
                 nxt = next(submitted, None)
                 if nxt is not None:
-                    pending.append(pool.apply_async(_layer_range_text, (nxt,)))
+                    pending.append(pinned.submit(_layer_range_text, nxt))
                 if not count:
                     continue
                 if not first:
@@ -590,8 +725,11 @@ def write_layer_json(path, value, cpus, window_per_worker=2):
         yield parts[-1].encode('utf-8')
         yield b'\n'
 
-    with context.Pool(len(cpus), initializer=_encoder_pin, initargs=(handout, tuple(cpus))) as pool:
-        return durable.write_chunks(path, chunks(pool))
+    pinned = _PinnedPool(cpus, 'layer %s encoders' % Path(path).name, note=note)
+    try:
+        return durable.write_chunks(path, chunks(pinned))
+    finally:
+        pinned.terminate()                        # as the pool's context exit did
 
 
 class _QueuedSpool:
@@ -1467,7 +1605,7 @@ class Session:
         if retain_frame_sections and encoder_cpus:
             for rows in (prices, frames, structures, failures):
                 rows._writer.flush()              # nothing buffered is copied into the forked encoders
-            writer = OrderedRowWriter(encoder_cpus)
+            writer = OrderedRowWriter(encoder_cpus, note=self.note)
             self._row_writer = writer
             if book_cpus:
                 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -1636,7 +1774,9 @@ class Session:
             self._row_writer = None
             os.sched_setaffinity(0, set(lane))
             self.note(f'legacy pass: {writer.frames_encoded} frame rows encoded on {writer.workers} pinned lane CPUs; '
-                      f'the replay waited {writer.wait_seconds:.1f} s on encoders')
+                      f'the replay waited {writer.wait_seconds:.1f} s on encoders'
+                      + (f'; {writer.workers_lost} encoder worker(s) lost, {writer.tasks_redone} frame(s) re-done'
+                         if writer.workers_lost else ''))
         if recovery:
             save_legacy(len(records))
         probe.update('root-legacy-finalize')
@@ -1699,7 +1839,7 @@ class Session:
         for name, value in layers.items():
             path = derived / f'{name}.json'
             started = time.time()
-            write_layer_json(path, value, layer_cpus)
+            write_layer_json(path, value, layer_cpus, note=self.note)
             if layer_cpus and any(isinstance(v, B.RowSpool) for v in value.values()):
                 self.note(f'layer {name}.json written in {time.time() - started:.1f} s (spools encoded on pinned lane '
                           f'CPUs {layer_cpus[0]}-{layer_cpus[-1]})')
