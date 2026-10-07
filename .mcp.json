@@ -2,7 +2,10 @@
   "mcpServers": {
     "codebase-memory-mcp": {
       "command": "sh",
-      "args": ["-c", "exec \"$HOME/.local/bin/codebase-memory-mcp\""]
+      "args": [
+        "-c",
+        "exec \"$HOME/.local/bin/codebase-memory-mcp\""
+      ]
     },
     "aws-mcp": {
       "command": "uvx",
@@ -10,8 +13,7 @@
         "mcp-proxy-for-aws-cli@1.7.0",
         "https://aws-mcp.us-east-1.api.aws/mcp",
         "--metadata",
-        "AWS_REGION=us-east-2",
-        "--read-only"
+        "AWS_REGION=us-east-2"
       ]
     }
   }

@@ -1,7 +1,7 @@
 ---
 name: aws-infra-reviewer
 description: Reviews the repo's AWS code and config (deploy/aws, systemd units, setup scripts, boto3/S3/SSM/Bedrock call sites, IAM assumptions) against the official AWS agent skills and docs - security, reliability, cost, region correctness. Use before merging AWS-touching changes or when auditing the AWS setup. Reports findings only; never edits files or touches the account.
-tools: Skill, mcp__aws-mcp__aws___search_documentation, mcp__aws-mcp__aws___retrieve_skill, mcp__aws-mcp__aws___read_documentation, mcp__aws-mcp__aws___get_regional_availability, Read, Grep, Glob, Bash
+tools: Skill, Read, Grep, Glob, Bash, mcp__aws-mcp__aws___search_documentation, mcp__aws-mcp__aws___retrieve_skill, mcp__aws-mcp__aws___read_documentation, mcp__aws-mcp__aws___get_regional_availability, mcp__aws-mcp__aws___list_regions, mcp__aws-mcp__aws___get_tasks, mcp__aws-mcp__aws___run_script, mcp__aws-mcp__aws___get_presigned_url, mcp__Aws__aws___search_documentation, mcp__Aws__aws___retrieve_skill, mcp__Aws__aws___read_documentation, mcp__Aws__aws___get_regional_availability, mcp__Aws__aws___list_regions, mcp__Aws__aws___get_tasks, mcp__Aws__aws___run_script, mcp__Aws__aws___get_presigned_url
 model: inherit
 ---
 

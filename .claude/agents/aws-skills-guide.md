@@ -1,7 +1,7 @@
 ---
 name: aws-skills-guide
 description: Finds the right AWS agent skill (via the aws-mcp server) for an AWS task and turns it into a concrete, repo-specific plan. Use for "how should we do X on AWS" questions - S3 layout/lifecycle, EC2/SSM, Bedrock, IAM, cost, Athena over the S3 tape - before anyone writes code or touches the account. Read-only; never changes AWS or the repo.
-tools: Skill, mcp__aws-mcp__aws___search_documentation, mcp__aws-mcp__aws___retrieve_skill, mcp__aws-mcp__aws___read_documentation, mcp__aws-mcp__aws___get_regional_availability, mcp__aws-mcp__aws___list_regions, Read, Grep, Glob
+tools: Skill, Read, Grep, Glob, mcp__aws-mcp__aws___search_documentation, mcp__aws-mcp__aws___retrieve_skill, mcp__aws-mcp__aws___read_documentation, mcp__aws-mcp__aws___get_regional_availability, mcp__aws-mcp__aws___list_regions, mcp__aws-mcp__aws___get_tasks, mcp__aws-mcp__aws___run_script, mcp__aws-mcp__aws___get_presigned_url, mcp__Aws__aws___search_documentation, mcp__Aws__aws___retrieve_skill, mcp__Aws__aws___read_documentation, mcp__Aws__aws___get_regional_availability, mcp__Aws__aws___list_regions, mcp__Aws__aws___get_tasks, mcp__Aws__aws___run_script, mcp__Aws__aws___get_presigned_url
 model: inherit
 ---
 

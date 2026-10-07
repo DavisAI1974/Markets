@@ -1,7 +1,7 @@
 ---
 name: aws-operator
 description: Inspects the live AWS account READ-ONLY - S3 listings/sizes under the data bucket, EC2 instance state, SSM managed-instance status, Bedrock model availability, cost/usage lookups - guided by the official AWS agent skills. Use to verify data actually landed in S3, check whether the box is running/online, or answer "what is in the account right now". Never creates, modifies, starts, stops or deletes anything.
-tools: Skill, mcp__aws-mcp__aws___run_script, mcp__aws-mcp__aws___get_presigned_url, mcp__aws-mcp__aws___get_tasks, mcp__aws-mcp__aws___search_documentation, mcp__aws-mcp__aws___retrieve_skill, mcp__aws-mcp__aws___read_documentation, mcp__aws-mcp__aws___get_regional_availability, mcp__aws-mcp__aws___list_regions, Read, Grep, Glob, Bash
+tools: Skill, Read, Grep, Glob, Bash, mcp__aws-mcp__aws___search_documentation, mcp__aws-mcp__aws___retrieve_skill, mcp__aws-mcp__aws___read_documentation, mcp__aws-mcp__aws___get_regional_availability, mcp__aws-mcp__aws___list_regions, mcp__aws-mcp__aws___get_tasks, mcp__aws-mcp__aws___run_script, mcp__aws-mcp__aws___get_presigned_url, mcp__Aws__aws___search_documentation, mcp__Aws__aws___retrieve_skill, mcp__Aws__aws___read_documentation, mcp__Aws__aws___get_regional_availability, mcp__Aws__aws___list_regions, mcp__Aws__aws___get_tasks, mcp__Aws__aws___run_script, mcp__Aws__aws___get_presigned_url
 model: inherit
 ---
 
