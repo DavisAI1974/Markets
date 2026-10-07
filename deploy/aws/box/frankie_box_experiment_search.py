@@ -553,6 +553,485 @@ def spool_columns(path, pin, time_key, workers=1, report=None):
     return numeric, text, other, rows
 
 
+# ---- the save request route (ROOT's contract, frankie_box_experiment_root.calculate_day: SIGTERM only MARKS the save) --
+# The queue's ACTION=save reaches the piece as SIGTERM and/or the lane stop file (FRANKIE_LANE_STOP_FILE). The handler
+# only marks it (and drops a marker file the forked workers can see); the piece runs on to its next save point (a frame
+# column index save, a transform result, a coupling job's exact next partner, a discovery problem), writes exact state
+# and exits 75. Every pool worker restores the default SIGTERM first (_worker_default_sigterm): a worker never carries
+# the mark-only handler, so a pool terminate() always ends it (the a2 shard hang was a caught SIGTERM + an unbounded join).
+SAVE_REQUEST = dict(marked=False, at=None, marker=None, coordinator_pid=None)
+
+
+def install_save_handler(marker):
+    """In the coordinator's main thread: SIGTERM marks the save (and touches `marker`). Returns the previous handler."""
+    import signal
+    SAVE_REQUEST.update(marker=str(marker), coordinator_pid=os.getpid())
+
+    def mark(*_):
+        SAVE_REQUEST.update(marked=True, at=time.time())
+        try:
+            Path(marker).touch()
+        except OSError:
+            pass
+    return signal.signal(signal.SIGTERM, mark)
+
+
+def _worker_default_sigterm():
+    """In a forked pool worker (never in the coordinator): SIGTERM back to its default action."""
+    if SAVE_REQUEST['coordinator_pid'] is None or os.getpid() == SAVE_REQUEST['coordinator_pid']:
+        return
+    try:
+        import signal
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except (ValueError, OSError):
+        pass
+
+
+# ---- the frames spool as typed on-disk columns (Greg, 2026-10-07 night, R5 GO) ----------------------------------------
+# The frame spool of a full day (a2: ~817 KB of JSON per F_LAST row, ~430 GB) does not fit the box's RAM as Python
+# objects, which is what columns() builds. FRAME_COLUMNS=disk (the default) decodes it ONCE, in ordered byte ranges cut
+# at line starts (every line is one F_LAST group, so every cut is a group-closed boundary), each range on a pinned lane
+# worker (frankie_box_lane_pin.ordered_map) that runs the unchanged columns() on its range only and writes ONE chunk file
+# of typed segments, one per channel present in the range:
+#   numeric: positions (uint32, omitted when every row of the chunk carries the channel), tags (uint8: 0 None, 1 int64,
+#            2 float64 by its IEEE bits, 3 bool, 4 integer outside int64), payload (int64), and the big integers as
+#            decimal text: every value (type and bits) is exactly recoverable, nothing is dropped or narrowed;
+#   text:    positions, UTF-8 (surrogatepass) bytes and uint64 offsets.
+# The coordinator receives the chunks IN FILE ORDER and keeps only the channel order (first appearance, exactly the
+# merge rule of spool_columns) and each channel's segment list. A channel is read back (FrameColumns / ColumnRef) as the
+# same Python list columns() would have built: None for the rows of chunks without it, the chunk's values in place.
+# Readers (series transforms, the cells, the membership readers, discovery) materialize one column at a time (a small
+# per-process cache, COLUMN_CACHE_ENTRIES); nothing holds every frame value at once. FRAME_COLUMNS=memory keeps the
+# in-memory columns() path as the REFERENCE for the byte-identity proof only.
+# Save/resume (ROOT's contract): the chunk files are the save points; the coordinator's index (channel order, segments,
+# rows, the hasher's OpenSSL running state, the spool's stat and last line) is saved exactly every
+# FRAME_SAVE_EVERY_CHUNKS chunks or FRAME_SAVE_SECONDS, and at a requested save (then exit 75). A resume on the same
+# unchanged spool (device, inode, size, mtime and the last line, as frankie_box_boss_session._resume_row_spool) seeks to
+# the first unsaved range and continues the running hash (no re-read of the saved prefix); anything else decodes from
+# byte 0 (one full pass, noted). The sha256 of the whole spool is still compared with the export pin at the end (seal).
+DISK_COLUMNS_SCHEMA = 'FRANKIE_SEARCH_DISK_COLUMNS_V1'
+FRAME_COLUMNS_ENV = 'FRANKIE_SEARCH_FRAME_COLUMNS'          # disk (default) | memory (reference for the proof only)
+FRAME_SAVE_EVERY_CHUNKS = 32
+FRAME_SAVE_SECONDS = 120.0
+COLUMN_CACHE_ENTRIES = 4
+_TAG_NONE, _TAG_INT, _TAG_FLOAT, _TAG_BOOL, _TAG_BIG = 0, 1, 2, 3, 4
+_INT64_MIN, _INT64_MAX = -(1 << 63), (1 << 63) - 1
+
+
+def frame_columns_mode():
+    mode = os.environ.get(FRAME_COLUMNS_ENV, 'disk')
+    if mode not in ('disk', 'memory'):
+        raise ValueError('%s must be disk or memory' % FRAME_COLUMNS_ENV)
+    return mode
+
+
+def _encode_numeric(values):
+    """(segment bytes, present count, dense) of one numeric channel's values in one chunk (see the section note)."""
+    import struct
+    from array import array
+    present = [i for i, v in enumerate(values) if v is not None]
+    tags, payload, bigs = bytearray(), array('q'), []
+    for i in present:
+        v = values[i]
+        kind = type(v)
+        if kind is bool:
+            tags.append(_TAG_BOOL)
+            payload.append(1 if v else 0)
+        elif kind is int:
+            if _INT64_MIN <= v <= _INT64_MAX:
+                tags.append(_TAG_INT)
+                payload.append(v)
+            else:
+                tags.append(_TAG_BIG)
+                payload.append(len(bigs))
+                bigs.append(str(v))
+        elif kind is float:
+            tags.append(_TAG_FLOAT)
+            payload.append(struct.unpack('<q', struct.pack('<d', v))[0])
+        else:
+            raise TypeError('unhandled numeric value type %s' % kind.__name__)
+    dense = len(present) == len(values)
+    if payload.itemsize != 8:
+        raise ValueError('array q is not 64-bit here')
+    if sys.byteorder != 'little':
+        payload.byteswap()
+    big = json.dumps(bigs).encode() if bigs else b''
+    head = b'' if dense else array('I', present).tobytes()
+    return head + bytes(tags) + payload.tobytes() + big, len(present), dense, len(big)
+
+
+def _decode_numeric(blob, rows, present, dense, big_bytes):
+    import struct
+    from array import array
+    at = 0
+    if dense:
+        positions = range(rows)
+    else:
+        positions = array('I')
+        positions.frombytes(blob[:4 * present])
+        at = 4 * present
+    tags = blob[at:at + present]
+    at += present
+    payload = array('q')
+    payload.frombytes(blob[at:at + 8 * present])
+    if sys.byteorder != 'little':
+        payload.byteswap()
+    at += 8 * present
+    bigs = json.loads(blob[at:at + big_bytes]) if big_bytes else []
+    out = [None] * rows
+    for position, tag, value in zip(positions, tags, payload):
+        if tag == _TAG_INT:
+            out[position] = value
+        elif tag == _TAG_FLOAT:
+            out[position] = struct.unpack('<d', struct.pack('<q', value))[0]
+        elif tag == _TAG_BOOL:
+            out[position] = value == 1
+        elif tag == _TAG_BIG:
+            out[position] = int(bigs[value])
+        else:
+            raise ValueError('unknown numeric column tag %d' % tag)
+    return out
+
+
+def _encode_text(values):
+    from array import array
+    present = [i for i, v in enumerate(values) if v is not None]
+    pieces, offsets, total = [], array('Q', [0]), 0
+    for i in present:
+        data = values[i].encode('utf-8', 'surrogatepass')
+        pieces.append(data)
+        total += len(data)
+        offsets.append(total)
+    if sys.byteorder != 'little':
+        offsets.byteswap()
+    dense = len(present) == len(values)
+    head = b'' if dense else array('I', present).tobytes()
+    return head + offsets.tobytes() + b''.join(pieces), len(present), dense, 0
+
+
+def _decode_text(blob, rows, present, dense, _big_bytes=0):
+    from array import array
+    at = 0
+    if dense:
+        positions = range(rows)
+    else:
+        positions = array('I')
+        positions.frombytes(blob[:4 * present])
+        at = 4 * present
+    offsets = array('Q')
+    offsets.frombytes(blob[at:at + 8 * (present + 1)])
+    if sys.byteorder != 'little':
+        offsets.byteswap()
+    data = blob[at + 8 * (present + 1):]
+    out = [None] * rows
+    for k, position in enumerate(positions):
+        out[position] = data[offsets[k]:offsets[k + 1]].decode('utf-8', 'surrogatepass')
+    return out
+
+
+def _max_rss_bytes():
+    try:
+        import resource
+        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024      # Linux reports KiB
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _disk_chunk(args):
+    """One byte range of the spool -> one chunk file (written whole, fsynced, renamed): the unchanged columns() of the
+    range, each channel's values as one typed segment. Returns the chunk's rows, its channel names in first-appearance
+    order with each segment's place, the chunk's bytes and sha256 as written, and this worker's peak RSS."""
+    _worker_default_sigterm()
+    path, start, end, chunk_path = args
+    numeric, text, _, count = _spool_range_columns((path, start, end))
+    if count >= 1 << 32:
+        raise ValueError('a chunk of more than 2**32 rows cannot use uint32 positions')
+    hashed, offset, segments = hashlib.sha256(), 0, []
+    pending = chunk_path + '.tmp'
+    with open(pending, 'wb') as out:
+        for kind, mapping, encode in (('n', numeric, _encode_numeric), ('t', text, _encode_text)):
+            for name, values in mapping.items():
+                blob, present, dense, big = encode(values)
+                out.write(blob)
+                hashed.update(blob)
+                segments.append((kind, name, offset, len(blob), present, dense, big))
+                offset += len(blob)
+        out.flush()
+        os.fsync(out.fileno())
+    os.replace(pending, chunk_path)
+    observed = os.stat(chunk_path)
+    return dict(rows=count, segments=segments, bytes=offset, sha256=hashed.hexdigest(), start=start, end=end,
+                stat=[observed.st_dev, observed.st_ino, observed.st_size, observed.st_mtime_ns], max_rss=_max_rss_bytes())
+
+
+_COLUMN_CACHE = {}           # (store directory, kind, name) -> materialized list; at most COLUMN_CACHE_ENTRIES per process
+
+
+class FrameColumnStore:
+    """The on-disk columns of one spool (built by disk_spool_columns): channel order and segments in memory, values on
+    disk. column(kind, name) is the exact list columns() would have built for that channel."""
+
+    def __init__(self, directory, rows, chunks, order, segments):
+        self.directory, self.rows, self.chunks = str(directory), rows, chunks   # chunks: [(file, rows, bytes, sha256)]
+        self.order = order            # {'n': [names], 't': [names]} first-appearance order
+        self.segments = segments      # {(kind, name): [(chunk number, offset, length, present, dense, big)]}
+
+    def __getstate__(self):
+        return dict(directory=self.directory, rows=self.rows, chunks=self.chunks, order=self.order,
+                    segments=self.segments)
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+    def column(self, kind, name):
+        key = (self.directory, kind, name)
+        hit = _COLUMN_CACHE.get(key)
+        if hit is not None:
+            _COLUMN_CACHE[key] = _COLUMN_CACHE.pop(key)          # most recent last
+            return hit
+        decode = _decode_numeric if kind == 'n' else _decode_text
+        out, segs, k = [], self.segments.get((kind, name)) or [], 0
+        handles = {}
+        try:
+            for number, (file, rows, _, _) in enumerate(self.chunks):
+                if k < len(segs) and segs[k][0] == number:
+                    _, offset, length, present, dense, big = segs[k]
+                    k += 1
+                    handle = handles.get(file)
+                    if handle is None:
+                        handles.clear()
+                        handle = handles[file] = open(Path(self.directory) / file, 'rb')
+                    handle.seek(offset)
+                    out.extend(decode(handle.read(length), rows, present, dense, big))
+                else:
+                    out.extend([None] * rows)
+        finally:
+            for handle in handles.values():
+                handle.close()
+        if len(out) != self.rows:
+            raise ValueError('on-disk column %s does not cover the spool rows' % name)
+        _COLUMN_CACHE[key] = out
+        while len(_COLUMN_CACHE) > COLUMN_CACHE_ENTRIES:
+            _COLUMN_CACHE.pop(next(iter(_COLUMN_CACHE)))
+        return out
+
+    def check_files(self):
+        """The seal's check of every chunk against what its worker wrote: size and stat as recorded (no re-read)."""
+        for file, _, size, _ in self.chunks:
+            if (Path(self.directory) / file).stat().st_size != size:
+                raise ValueError('on-disk frame column chunk %s changed after it was written; retained' % file)
+
+
+class ColumnRef:
+    """One channel of a FrameColumnStore where the search used to hold np.asarray(values, dtype=object): len() without
+    reading, and the same object array (np.asarray, iteration, indexing, slicing) materialized on use."""
+
+    def __init__(self, store, kind, name):
+        self.store, self.kind, self.name = store, kind, name
+
+    def values(self):
+        return self.store.column(self.kind, self.name)
+
+    def __len__(self):
+        return self.store.rows
+
+    def __array__(self, dtype=None, copy=None):
+        import numpy as np
+        return np.asarray(self.values(), dtype=object if dtype is None else dtype)
+
+    def __iter__(self):
+        return iter(self.values())
+
+    def __getitem__(self, index):
+        values = self.values()
+        if isinstance(index, slice):
+            import numpy as np
+            return np.asarray(values, dtype=object)[index]
+        return values[index]
+
+
+class FrameColumns:
+    """The {channel: values} mapping columns() returns for one kind, read from a FrameColumnStore: the same keys in the
+    same order; a value is materialized only when asked for (get / [] / pop / items, one at a time)."""
+
+    def __init__(self, store, kind):
+        self.store, self.kind, self._keys = store, kind, list(store.order[kind])
+        self._present = set(self._keys)
+
+    def __len__(self):
+        return len(self._keys)
+
+    def __iter__(self):
+        return iter(list(self._keys))
+
+    def __contains__(self, key):
+        return key in self._present
+
+    def keys(self):
+        return list(self._keys)
+
+    def __getitem__(self, key):
+        if key not in self._present:
+            raise KeyError(key)
+        return self.store.column(self.kind, key)
+
+    def get(self, key, default=None):
+        return self[key] if key in self._present else default
+
+    def items(self):
+        for key in list(self._keys):
+            yield key, self[key]
+
+    def values(self):
+        for key in list(self._keys):
+            yield self[key]
+
+    def ref(self, key):
+        return ColumnRef(self.store, self.kind, key)
+
+    def pop(self, key, *default):
+        if key not in self._present:
+            if default:
+                return default[0]
+            raise KeyError(key)
+        value = self[key]
+        self._present.discard(key)
+        self._keys.remove(key)
+        return value
+
+
+def _values_of(value):
+    """The plain values of a series/cell entry (a ColumnRef is materialized; anything else is itself)."""
+    return value.values() if isinstance(value, ColumnRef) else value
+
+
+def disk_spool_columns(path, pin, time_key, workers, report, directory, identity, *, save_every=None):
+    """spool_columns' result (numeric, text, mixed-kinds list, rows) with numeric/text as FrameColumns over on-disk
+    chunks (see the section note); resumable from its own saves under `directory`."""
+    import multiprocessing
+    started = time.time()
+    path, directory = Path(path), Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    size = path.stat().st_size
+    S = _boss_session()
+    save_path = directory / 'index.pkl'
+    resumed = dict(from_chunk=0, how='fresh: no saved index')
+    saved = None
+    if save_path.is_file():
+        try:
+            saved = _load_state(save_path, identity)
+        except ValueError as error:
+            raise ValueError('saved frame column index belongs to other inputs or code (%s): %s retained' % (error, save_path))
+        observed = path.stat()
+        tail = S._line_ending_at(path, size) if S is not None else None
+        if (saved['pin'] != {k: pin[k] for k in ('bytes', 'sha256')} or saved['spool_stat'] != [
+                observed.st_dev, observed.st_ino, observed.st_size, observed.st_mtime_ns] or saved['tail'] != tail
+                or saved.get('hash_snapshot') is None):
+            why = ('the spool is not the one saved (pin, device, inode, size, mtime or last line differ)'
+                   if saved.get('hash_snapshot') is not None else 'the save holds no running hash state')
+            aside = directory.with_name(directory.name + '.set-aside-%d' % int(time.time() * 1000))
+            os.replace(directory, aside)
+            directory.mkdir(parents=True)
+            resumed = dict(from_chunk=0, how='one full pass from byte 0: ' + why, set_aside=str(aside))
+            saved = None
+        else:
+            for file, _, length, sha in saved['chunks']:          # ROOT's rule: stat as written, no re-read
+                if (directory / file).stat().st_size != length:
+                    raise ValueError('saved frame column chunk %s changed; retained for recovery' % file)
+            resumed = dict(from_chunk=len(saved['chunks']), how='unchanged spool: stat and last line checked; resumed '
+                           'at the saved range, the running hash continued (the saved prefix is not read again)')
+    if saved is not None:
+        ranges = [tuple(r) for r in saved['ranges']]
+    else:
+        ranges = _spool_ranges(str(path), size, max(workers * SPOOL_RANGES_PER_WORKER, size // SPOOL_COLUMN_RANGE_BYTES + 1))
+    first = len(saved['chunks']) if saved is not None else 0
+    chunks = list(saved['chunks']) if saved is not None else []
+    order = saved['order'] if saved is not None else dict(n=[], t=[])
+    segments = saved['segments'] if saved is not None else {}
+    known = dict(n=set(order['n']), t=set(order['t']))
+    rows = saved['rows'] if saved is not None else 0
+    peak_rss, chunk_bytes = (saved or {}).get('peak_rss') or 0, sum(c[2] for c in chunks)
+    count = max(1, min(workers, len(ranges) - first)) if len(ranges) > first else 1
+    window = count * SPOOL_WINDOW_PER_WORKER
+    hasher = FrontierHasher(path, window * max(b - a for _, a, b in ranges), name='frame-columns-sha256',
+                            resumable=True, resume=saved['hash_snapshot'] if saved is not None else None)
+    hasher.advance(ranges[first - 1][2] if first else 0)
+    observed = path.stat()
+    spool_stat = [observed.st_dev, observed.st_ino, observed.st_size, observed.st_mtime_ns]
+    tail = S._line_ending_at(path, size) if S is not None else None
+    every = save_every or FRAME_SAVE_EVERY_CHUNKS
+    last_save, saves = [time.time()], [0]
+
+    def save_index():
+        _save_state(save_path, dict(identity=identity, schema=DISK_COLUMNS_SCHEMA, pin={k: pin[k] for k in ('bytes', 'sha256')},
+                                    ranges=[list(r) for r in ranges], chunks=chunks, order=order, segments=segments,
+                                    rows=rows, hash_snapshot=hasher.snapshot, spool_stat=spool_stat, tail=tail,
+                                    peak_rss=peak_rss))
+        last_save[0] = time.time()
+        saves[0] += 1
+
+    jobs = [(str(path), a, b, str(directory / ('chunk-%06d.bin' % k))) for k, (_, a, b) in enumerate(ranges)][first:]
+    finished, stopped = False, False
+    try:
+        if jobs:
+            for job, result in _lane_pin().ordered_map(
+                    _disk_chunk, jobs, count, context=multiprocessing.get_context('fork'), cpus=lane_cpus(),
+                    window=window, stop=_stop_requested, on_start=hasher.start, report=POOL_RECOVERY):
+                number = len(chunks)
+                for kind, name, offset, length, present, dense, big in result['segments']:
+                    if name not in known[kind]:
+                        known[kind].add(name)
+                        order[kind].append(name)
+                    segments.setdefault((kind, name), []).append((number, offset, length, present, dense, big))
+                chunks.append((Path(job[3]).name, result['rows'], result['bytes'], result['sha256']))
+                rows += result['rows']
+                chunk_bytes += result['bytes']
+                peak_rss = max(peak_rss, result['max_rss'] or 0)
+                hasher.advance(job[2])
+                if len(chunks) % every == 0 or time.time() - last_save[0] >= FRAME_SAVE_SECONDS:
+                    save_index()
+                _progress('search: frame columns %s' % path.name, len(chunks), len(ranges), 'byte ranges',
+                          bytes_done=job[2], bytes_total=size, rows=rows)
+        else:
+            hasher.start()
+        if len(chunks) < len(ranges):
+            stopped = True
+            save_index()                     # a requested save: every submitted range drained and saved, exit 75
+            raise SystemExit(75)
+        finished = True
+    finally:
+        if not finished:
+            ended = hasher.stop()
+            if report is not None:
+                report.update(aborted=not stopped, saved_for_resume=stopped, hasher_ended=ended,
+                              chunks_saved=len(chunks))
+    hashed_bytes, digest = hasher.finish()
+    if hashed_bytes != pin['bytes'] or digest != pin['sha256']:
+        raise ValueError('search spool differs from the selected export: ' + str(path))
+    store = FrameColumnStore(directory, rows, chunks, order, segments)
+    store.check_files()
+    save_index()
+    numeric, text = FrameColumns(store, 'n'), FrameColumns(store, 't')
+    other = sorted(key + ' (mixed kinds: numeric and text channels both retained)'
+                   for key in set(order['t']) & set(order['n']))
+    if report is not None:
+        report.update(mode='disk_columns_fork_pool_line_ranges', workers=count, ranges=len(ranges), window=window,
+                      bytes=size, rows=rows, seconds=round(time.time() - started, 3), hashing=hasher.report(),
+                      store=dict(schema=DISK_COLUMNS_SCHEMA, directory=str(directory), chunks=len(chunks),
+                                 chunk_bytes=chunk_bytes, numeric_channels=len(order['n']), text_channels=len(order['t']),
+                                 saves=saves[0], save_every_chunks=every, save_every_seconds=FRAME_SAVE_SECONDS,
+                                 resumed=resumed),
+                      memory=dict(per_worker_peak_rss_bytes=peak_rss, range_bytes=max(b - a for _, a, b in ranges),
+                                  in_flight_ranges=window, reader_cache_columns=COLUMN_CACHE_ENTRIES,
+                                  reader_bound='one channel materialized at a time: rows x (8-byte slot + its value '
+                                               'object), at most %d channels cached per process' % COLUMN_CACHE_ENTRIES,
+                                  basis='a writer holds one range\'s columns() (its peak RSS measured above); the '
+                                        'coordinator holds the channel order and segment lists only'),
+                      basis='ordered byte ranges cut at line starts; typed segments per channel per range; channel order '
+                            'by first appearance (spool_columns\' merge rule); bytes hashed in file order against the pin')
+    return numeric, text, other, rows
+
+
 # ---- the INPUT spool read on the held lane (the Sept 29 pattern, item 3: batch decode, every per-record check kept) ---
 # unpack_spool decodes one record at a time (json + c15_journal.unpack) on the coordinator, and the INPUT spool carries
 # every source record of the day. Its records are independent until the consumer's per-record checks, so above
@@ -1515,6 +1994,12 @@ def _fft_cache_stats():
 
 
 def _stop_requested():
+    """A requested save: the SIGTERM mark (coordinator), its marker file (forked workers), or the lane stop file."""
+    if SAVE_REQUEST['marked']:
+        return True
+    marker = SAVE_REQUEST['marker']
+    if marker and Path(marker).is_file():
+        return True
     path = os.environ.get('FRANKIE_LANE_STOP_FILE')
     return bool(path and Path(path).is_file())
 

@@ -187,6 +187,7 @@ workflow_report_file
 '''.split())
 
 _OUT = []          # the current piece's markdown; stdout when no --write directory is given
+_PRINT = [True]    # False inside a side-by-side worker: the coordinator prints the piece in order
 _READ_CACHE = {}   # compute dedupe: str(path) -> (body, pin) or the error, one read per reporter process
 _READ_LEDGER = {}  # str(path) -> requests served (1 = read once and used once)
 
@@ -209,7 +210,8 @@ CPU_KEYS = ('cpu_placement', 'cpu_pinning', 'pool_recovery', 'cpu_booking', 'cpu
 
 def emit(text):
     _OUT.append(text)
-    print(text)
+    if _PRINT[0]:
+        print(text)
 
 
 def json_block(body):
@@ -992,6 +994,176 @@ def artifact_paths(record, piece):
     return list(dict.fromkeys(out))
 
 
+def render_piece(ctx, piece, title, stages):
+    """One piece's markdown lines (the loop body of main, unchanged; ctx = run_dir, day, run, entry, records,
+    saved_plan_sha256, extra). emit prints as it goes unless printing is held for a side-by-side worker."""
+    _OUT.clear()
+    _PIECE_MAPS.clear()
+    emit('## ' + piece + ': ' + title + '\n')
+    if piece == 'preflight':
+        lane_records(ctx['run_dir'], ctx['run'], ctx['day'])
+        keep_running_projection(ctx['run_dir'])
+    if piece in CLASSROOM_ONLY and not ctx['entry'].get('classroom_arm'):
+        emit('Not applicable under the saved non-classroom day plan.\n')
+    elif piece == 'confirmation':
+        emit('Separate design/authorization required; this report activates nothing.\n')
+    elif piece == 'candidates':
+        emit('Cross-day boundary; no per-day survivor completion inferred. Candidate generation, '
+             'scientific checking and survivor acceptance must be reviewed separately.\n')
+    selected = [p for p, stage in ctx['records'] if stage in stages]
+    if not selected:
+        emit('No day-bound step metadata found for this piece. Actual processing/consumption: unknown.\n')
+    seen = set()
+    for path in selected:
+        body = metadata(path, 'Control receipt (not computation proof)')
+        if body is None:
+            continue
+        if isinstance(body.get('all99'), dict):
+            # the ROOT step's per-day production/admission list (FRANKIE_ALL99_ADMISSION_V1) as its own section
+            all99_section(body['all99'], '%s step all-99 (%s all99)' % (piece, path.name))
+        matches_plan = body.get('plan_sha256') == ctx['saved_plan_sha256']
+        json_block(dict(step_plan_sha256=body.get('plan_sha256'),
+                        saved_plan_sha256=ctx['saved_plan_sha256'],
+                        matches_saved_plan=matches_plan))
+        if not matches_plan:
+            emit('Step plan identity missing/different; its artifact paths are not followed.\n')
+            continue
+        if foreign_owner(body):
+            json_block(dict(disposition='foreign-owner-reference-only; artifact paths not opened on this host',
+                            owner=body.get('owner'), remote_owner=body.get('remote_owner'),
+                            remote_attempt=body.get('remote_attempt'), attempt=body.get('attempt'),
+                            instruction='inspect original retained run receipts on the owning lane'))
+            continue
+        for artifact in artifact_paths(dict(body, _inspection_day=ctx['day']), piece):
+            if artifact not in seen:
+                seen.add(artifact)
+                retained = metadata(artifact, 'Retained producer/consumer metadata (recorded scope only)')
+                if piece == 'classroom' and isinstance(retained, dict):
+                    classroom_projection(retained, artifact)
+                if piece == 'candidates' and isinstance(retained, dict):
+                    candidates_projection(retained, artifact)
+                if isinstance(retained, dict) and piece not in ('classroom',):
+                    # every other piece's own all-99 list (teacher receipt, search MANIFEST, core read, ROOT step)
+                    for key in ('all99_coverage', 'all99'):
+                        if isinstance(retained.get(key), dict) and (retained[key].get('schema') or '').startswith('FRANKIE_ALL99'):
+                            all99_section(retained[key], '%s all-99 (%s %s)' % (piece, artifact.name, key))
+        # the school / corrections pieces: the checked successor chain by its recorded pins (the school successor
+        # receipt and correction records; the successor operation, its state, the recovery intent, the acknowledgment
+        # and the dependents receipt), bounded depth, each projected as recorded; the school file itself is never opened
+        # (its witness is in the receipt), and a disposition read here is a recorded one, not a consumption proof
+        queue = [(p, 1) for p in pins(body, FOLLOW.get(piece, ()))]
+        while queue:
+            artifact, depth = queue.pop(0)
+            if artifact in seen or depth > FOLLOW_DEPTH:
+                continue
+            seen.add(artifact)
+            followed = metadata(artifact, 'Successor chain record (recorded scope only; depth %d)' % depth)
+            if followed:
+                queue += [(p, depth + 1) for p in pins(followed, FOLLOW.get(piece, ()))]
+        # Reuse numbered reports as references: never regenerate, modify or substitute them.
+        for report in body.get('reports') or []:
+            if isinstance(report, dict):
+                json_block(dict(existing_report=report, disposition='reuse this normal report; not regenerated'))
+    heartbeat_block(ctx['run_dir'], ctx['day'], stages)   # every piece: its heartbeats (or their absence) and CPU use
+    for path in ctx['extra'][piece]:
+        if path.suffix.lower() == '.json':
+            metadata(path, 'Operator-supplied metadata (identity/consumption not independently verified)')
+        else:
+            json_block(dict(existing_artifact=str(path), exists=path.is_file(),
+                            disposition='review original on owning lane; not read or transformed'))
+    emit('Review: reconcile named inputs with recorded processing/channels/results; inspect full '
+         'referenced outputs and every listed exclusion/refusal. Unexpected behavior is an operator '
+         'finding; this reporter invents no interpretation. If the actual consumer evidence is absent, '
+         'record that gap before claiming this piece consumed its inputs.\n')
+    return list(_OUT)
+
+
+# Side by side (stacks pass, 2026-10-07 night; the Sept-29 "pieces side by side"): the pieces are independent renders of
+# recorded metadata. The coordinator reads every step receipt and every artifact the pieces name ONCE (a thread pool of
+# the lane, into the read cache), then renders the pieces on pinned fork workers of the booked lane
+# (frankie_box_lane_pin.ordered_map: ordered hand-off, a dead worker's piece redone with one fewer, the coordinator renders
+# it after the third loss) and prints and writes them in PIECES order: stdout and every markdown file are those of the
+# serial path. The workers' read requests are merged into the read ledger. FRANKIE_INSPECTION_SIDE_BY_SIDE=off renders
+# in-process one piece after another (the earlier path).
+_RENDER_CTX = {}
+
+
+def _piece_job(job):
+    piece, title, stages = job
+    _PRINT[0] = False
+    before = dict(_READ_LEDGER)
+    lines = render_piece(_RENDER_CTX, piece, title, stages)
+    delta = {k: n - before.get(k, 0) for k, n in _READ_LEDGER.items() if n != before.get(k, 0)}
+    return lines, delta
+
+
+def _prefetch(ctx, lane):
+    """Read every step receipt's named artifacts once (threads; the read cache only, no ledger request counted)."""
+    paths = []
+    for path, stage in ctx['records']:
+        value = _READ_CACHE.get(str(path))
+        if isinstance(value, tuple) and value[0].get('plan_sha256') == ctx['saved_plan_sha256'] \
+                and not foreign_owner(value[0]):
+            for piece, _, stages in PIECES:
+                if stage in stages:
+                    paths += artifact_paths(dict(value[0], _inspection_day=ctx['day']), piece)
+    paths = [p for p in dict.fromkeys(paths) if str(p) not in _READ_CACHE]
+
+    def one(path):
+        try:
+            return str(path), _read_object_once(path)
+        except (OSError, ValueError) as error:
+            return str(path), error
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max(1, min(len(lane), len(paths) or 1))) as pool:
+        for key, value in pool.map(one, paths):
+            _READ_CACHE.setdefault(key, value)
+    return len(paths)
+
+
+def render_pieces(ctx, record):
+    """Yield (piece, title, lines) in PIECES order; side by side on the lane when possible (see the section note)."""
+    import os
+    LP, why = None, None
+    if os.environ.get('FRANKIE_INSPECTION_SIDE_BY_SIDE', 'on') == 'off':
+        why = 'FRANKIE_INSPECTION_SIDE_BY_SIDE=off'
+    else:
+        try:
+            try:
+                import frankie_box_lane_pin as LP
+            except ImportError:
+                from deploy.aws.box import frankie_box_lane_pin as LP
+            if len(LP.lane_cpus()) < 2:
+                why, LP = 'the lane has one CPU', None
+        except Exception as error:  # noqa: BLE001 - placement is never a reason to stop; listed
+            why, LP = 'the pin helper is unavailable (%s: %s)' % (type(error).__name__, error), None
+    record.update(mode='in-process, one piece after another', reason=why)
+    done = set()
+    if LP is not None:
+        lane = LP.lane_cpus()
+        record.update(prefetched=_prefetch(ctx, lane), mode='side by side on pinned fork workers', reason=None,
+                      cpu_placement=LP.record(min(len(PIECES), len(lane) - 1 or 1), what='inspection: one worker per piece'),
+                      pool_recovery=dict(worker_deaths=[], redone=[]))
+        _RENDER_CTX.clear()
+        _RENDER_CTX.update(ctx)
+        try:
+            for job, (lines, delta) in LP.ordered_map(_piece_job, list(PIECES), min(len(PIECES), len(lane) - 1 or 1),
+                                                      report=record['pool_recovery']):
+                for k, n in delta.items():
+                    _READ_LEDGER[k] = _READ_LEDGER.get(k, 0) + n
+                for text in lines:
+                    print(text)
+                done.add(job[0])
+                yield job[0], job[1], lines
+        except Exception as error:  # noqa: BLE001 - the pool failed: the rest in-process, listed
+            record['pool_failure'] = '%s: %s (the pieces not yet written were rendered in-process)' % (
+                type(error).__name__, error)
+    _PRINT[0] = True
+    for piece, title, stages in PIECES:
+        if piece not in done:
+            yield piece, title, render_piece(ctx, piece, title, stages)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run-dir', type=Path, required=True)
@@ -1004,6 +1176,7 @@ def main():
     args = parser.parse_args()
     inspection_dir = args.run_dir / 'days' / args.day / 'inspection' if args.write else None
     written = []
+    render = {}                 # how the pieces were rendered (side by side or in-process), listed in index.md
     try:
         plan, plan_pin = read_object(args.run_dir / 'plan.json')
     except (OSError, ValueError) as error:
@@ -1054,92 +1227,17 @@ def main():
     json_block(dict(plan=plan_pin, plan_sha256=saved_plan_sha256, selected_day=entry,
                     metadata_byte_ceiling=METADATA_BYTE_LIMIT, unreadable_or_excluded_records=errors))
     preamble = '\n'.join(_OUT)
-    for piece, title, stages in PIECES:
-        _OUT.clear()
-        _PIECE_MAPS.clear()
-        emit('## ' + piece + ': ' + title + '\n')
-        if piece == 'preflight':
-            lane_records(args.run_dir, plan['run'], args.day)
-            keep_running_projection(args.run_dir)
-        if piece in CLASSROOM_ONLY and not entry.get('classroom_arm'):
-            emit('Not applicable under the saved non-classroom day plan.\n')
-        elif piece == 'confirmation':
-            emit('Separate design/authorization required; this report activates nothing.\n')
-        elif piece == 'candidates':
-            emit('Cross-day boundary; no per-day survivor completion inferred. Candidate generation, '
-                 'scientific checking and survivor acceptance must be reviewed separately.\n')
-        selected = [p for p, stage in records if stage in stages]
-        if not selected:
-            emit('No day-bound step metadata found for this piece. Actual processing/consumption: unknown.\n')
-        seen = set()
-        for path in selected:
-            body = metadata(path, 'Control receipt (not computation proof)')
-            if body is None:
-                continue
-            if isinstance(body.get('all99'), dict):
-                # the ROOT step's per-day production/admission list (FRANKIE_ALL99_ADMISSION_V1) as its own section
-                all99_section(body['all99'], '%s step all-99 (%s all99)' % (piece, path.name))
-            matches_plan = body.get('plan_sha256') == saved_plan_sha256
-            json_block(dict(step_plan_sha256=body.get('plan_sha256'),
-                            saved_plan_sha256=saved_plan_sha256,
-                            matches_saved_plan=matches_plan))
-            if not matches_plan:
-                emit('Step plan identity missing/different; its artifact paths are not followed.\n')
-                continue
-            if foreign_owner(body):
-                json_block(dict(disposition='foreign-owner-reference-only; artifact paths not opened on this host',
-                                owner=body.get('owner'), remote_owner=body.get('remote_owner'),
-                                remote_attempt=body.get('remote_attempt'), attempt=body.get('attempt'),
-                                instruction='inspect original retained run receipts on the owning lane'))
-                continue
-            for artifact in artifact_paths(dict(body, _inspection_day=args.day), piece):
-                if artifact not in seen:
-                    seen.add(artifact)
-                    retained = metadata(artifact, 'Retained producer/consumer metadata (recorded scope only)')
-                    if piece == 'classroom' and isinstance(retained, dict):
-                        classroom_projection(retained, artifact)
-                    if piece == 'candidates' and isinstance(retained, dict):
-                        candidates_projection(retained, artifact)
-                    if isinstance(retained, dict) and piece not in ('classroom',):
-                        # every other piece's own all-99 list (teacher receipt, search MANIFEST, core read, ROOT step)
-                        for key in ('all99_coverage', 'all99'):
-                            if isinstance(retained.get(key), dict) and (retained[key].get('schema') or '').startswith('FRANKIE_ALL99'):
-                                all99_section(retained[key], '%s all-99 (%s %s)' % (piece, artifact.name, key))
-            # the school / corrections pieces: the checked successor chain by its recorded pins (the school successor
-            # receipt and correction records; the successor operation, its state, the recovery intent, the acknowledgment
-            # and the dependents receipt), bounded depth, each projected as recorded; the school file itself is never opened
-            # (its witness is in the receipt), and a disposition read here is a recorded one, not a consumption proof
-            queue = [(p, 1) for p in pins(body, FOLLOW.get(piece, ()))]
-            while queue:
-                artifact, depth = queue.pop(0)
-                if artifact in seen or depth > FOLLOW_DEPTH:
-                    continue
-                seen.add(artifact)
-                followed = metadata(artifact, 'Successor chain record (recorded scope only; depth %d)' % depth)
-                if followed:
-                    queue += [(p, depth + 1) for p in pins(followed, FOLLOW.get(piece, ()))]
-            # Reuse numbered reports as references: never regenerate, modify or substitute them.
-            for report in body.get('reports') or []:
-                if isinstance(report, dict):
-                    json_block(dict(existing_report=report, disposition='reuse this normal report; not regenerated'))
-        heartbeat_block(args.run_dir, args.day, stages)   # every piece: its heartbeats (or their absence) and CPU use
-        for path in extra[piece]:
-            if path.suffix.lower() == '.json':
-                metadata(path, 'Operator-supplied metadata (identity/consumption not independently verified)')
-            else:
-                json_block(dict(existing_artifact=str(path), exists=path.is_file(),
-                                disposition='review original on owning lane; not read or transformed'))
-        emit('Review: reconcile named inputs with recorded processing/channels/results; inspect full '
-             'referenced outputs and every listed exclusion/refusal. Unexpected behavior is an operator '
-             'finding; this reporter invents no interpretation. If the actual consumer evidence is absent, '
-             'record that gap before claiming this piece consumed its inputs.\n')
+    ctx = dict(run_dir=args.run_dir, day=args.day, run=plan['run'], entry=entry, records=records,
+               saved_plan_sha256=saved_plan_sha256, extra=extra)
+    for piece, title, lines in render_pieces(ctx, render):
         if inspection_dir is not None:
-            written.append((piece, title, write_piece(inspection_dir, piece, preamble + '\n' + '\n'.join(_OUT))))
+            written.append((piece, title, write_piece(inspection_dir, piece, preamble + '\n' + '\n'.join(lines))))
     if inspection_dir is not None:
         index = [header[0], header[1], 'One file per canonical piece, written from this reporter\'s output after the '
                  'one-day test. Temporary operator review only: not knowledge, not scientific evidence, not a '
                  'completion gate; the brain and the teachers never read these files.\n']
         index += ['- [%s](%s): %s' % (piece, path.name, title) for piece, title, path in written]
+        index += ['', '## Rendering', '', '```json', json.dumps(render, indent=2, sort_keys=True, default=str), '```']
         index += ['', '## Read ledger (compute dedupe: each metadata file read and hashed once by this reporter)', '',
                   'files read: %d; requests: %d; requests served from an earlier read: %d' % (
                       len(_READ_LEDGER), sum(_READ_LEDGER.values()),
