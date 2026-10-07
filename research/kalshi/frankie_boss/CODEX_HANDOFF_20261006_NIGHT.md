@@ -2,7 +2,25 @@
 
 Prepared after the chat was idle, at Greg's request to commit, push and start a new chat.
 UTC date is 2026-10-07; Greg's local date is 2026-10-06.
-**SOURCE-BUILT / RUNTIME-UNVERIFIED. Steps 2–4 remain incomplete. STOP before #5.**
+**SOURCE-BUILT / RUNTIME-UNVERIFIED. Steps 2–4 remain incomplete. #5 purpose now settled below; implementation incomplete, execution held.**
+
+## Latest decision — 2026-10-06 21:53 ET
+
+Greg discussed #5 and authorized proceeding with market-only checking/correction: fix errors
+through affected calculations, findings and lessons, then deliver checked corrections to Frankie
+before dependent work. No maker/taker costs or profit objectives, including indirect parameter
+selection. No freezing faulty pieces merely to preserve a record. Keep raw market evidence,
+causal/answer walls and truthful identities; existing recovery contracts must support correction
+rather than indefinite use of known errors. All 30 days continue learning; no knowledge freeze.
+
+The opening section of `SPEC-experiment-orchestrator.md` is the governing decision. Runbook,
+step-1 checklist and the actual older maker/taker-cost instruction have been corrected. CCode's
+task document carries its implications for his existing queue and requests exact propagation
+gaps; no new slice or overlapping ownership is assigned. Discussion is complete for this purpose,
+not a claim that correction propagation is implemented. Other mathematical decisions stay open.
+The older blanket "discuss/STOP before #5" text below is superseded only by this settled source
+direction. Preserve the unapplied draft; never apply `9c19cc2`. No tests, scientific/project/data/
+model runs, historical reproduction, AWS actions or dispatch. No runtime change in this update.
 
 ## Fetch first; preserve current work
 

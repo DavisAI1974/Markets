@@ -1,5 +1,43 @@
 # Spec: the 30-day experiment orchestrator
 
+## Step #5 decision — Greg, 2026-10-06 21:53 ET: check, correct and teach
+
+The step-5 discussion has settled its purpose: get the research right and fix errors through
+their actual downstream uses. Replace the former one-time freeze/untouched-confirmation/cost
+description for this continuous-learning experiment with market-only checking and correction.
+
+- Check the existing mathematics, original market evidence, causal timing and stated conditions.
+  Preserve symbolic/nonlinear discovery and the existing settled scientific calculations. No new
+  profit objective, numerical threshold, rarity gate or invented scientific definition follows.
+- Maker/taker fees, commissions, assumed execution costs/slippage and profit objectives must not
+  select, tune, confirm, reject or teach a market relationship. Trace indirect contamination of
+  selected parameters and derived results; stripping final fee columns does not correct it.
+  Actual prices/spreads, liquidity, flow, full book, FIFO, age and market durations remain evidence.
+  Dates/weekdays/IDs remain attached, searchable grouping conditions, never numerical signals or targets.
+- Fix a known error at its source and trace every affected calculation, finding, selection and lesson.
+  A known-wrong result must not remain active knowledge because its record or inputs were frozen.
+  Correct/recompute affected dependencies when execution is authorized; keep unaffected work reusable.
+  Until corrected evidence exists, explicitly identify affected conclusions as needing correction;
+  do not relabel unchanged old bytes as corrected or claim that a source patch recalculated results.
+- Deliver checked corrections through the existing brain/knowledge path before the next dependent
+  step, including both teachers and Frankie's actual consumption. A stored correction or receipt
+  alone is insufficient. Reuse of corrected knowledge does not become a new independent observation.
+- Preserve original market inputs, causal/answer walls and truthful operation identities. Saved-input
+  and write-once contracts support safe correction/recovery; they must not impose indefinite reuse
+  of a known error. Use explicit corrected successor work where required by those contracts, with
+  affected dependencies identified. Do not rewrite a past prediction as if it originally used a fix.
+  Keep only the recordkeeping needed to perform and verify the correction; no archival project or
+  freeze for posterity is requested. This is not authorization to delete retained evidence.
+- All 30 days continue learning from available completed knowledge. No restored year split or
+  untouched holdout, and no brain/knowledge freeze. Other mathematical choices remain open.
+
+Greg authorized proceeding with this settled direction. Implementation is incomplete; this decision
+does not claim an existing end-to-end correction/supersession path. CCode's current D1/B7/C2 and
+A4/B1-B6/C1 assignments retain their ownership; correction propagation must be traced before it
+is declared built. No new validator framework. Source review, AST without project imports and
+whitespace checks only. No tests, project/data/model runs, historical reproduction, AWS actions
+or dispatch. Preserve the unapplied patch; never apply `9c19cc2`. Granite pins remain unchanged.
+
 **Native recovery source slice, 2026-10-06:** bedrock information is required. An explicit default-off ROOT option now
 connects complete manifest/opening state, full native checkpoints and completed-stage reuse while omitting giant rendered
 bedrock tables. The queue does not activate it yet; exact lifecycle availability and actual shared consumers remain open.
@@ -55,8 +93,8 @@ nested lessons, school files and prior-class carry. All assigned years use the e
 that is a compatibility name for learning, not a 2021-2023-only designation. Knowledge becomes usable at the next
 applicable workflow boundary after publication. Preserve per-day raw-source timing, answer walls, Jev blindness,
 individual evidence and scientific mathematics. These shared-knowledge results are learning results, not untouched
-holdout results. No freeze/confirmation implementation or compute launch is authorized by this amendment. Remaining
-step #5 evaluation/freeze design still needs discussion. Older year-split text below is superseded by this decision.
+holdout results. This R15 amendment did not authorize compute launch. The later step-5 decision above
+settles checking/correction; older year-split and freeze-for-confirmation text is superseded.
 
 **Step #2 implementation update:** See `HANDOFF_20261006_STEP2_KNOWLEDGE.md` for the source-built learner-answer/carry
 slice and remaining gaps. #2 remains unchecked. Actual learner documents/checks now precede answers; transport
@@ -68,7 +106,7 @@ teacher, classroom, data/search and scientific-teacher pieces. Do not rebuild wo
 **Current source checkpoint:** `HANDOFF_20261006_STEP1_RECOVERY.md`: Linux ownership and retained-day recovery are
 source-built, not runtime-verified. Actual legal knowledge delivery, full search, survivor batches, frozen confirmation,
 Granite, Jev CPU and final launch remain unfinished. The ordered implementation list in that handoff is authoritative;
-its step #5 means freeze/confirmation (not stage 5 of the execution table below), and needs Greg's discussion first.
+its step #5 now means market-only checking/correction (not stage 5 of the execution table below), as settled above.
 Jev's pending CPU route/completion dependency also stays for Greg's discussion. Do not bypass it to call a day complete.
 All prior search/confirmation drafts are preserved as an unapplied patch; the active search only adds recovery at this
 checkpoint. One orderly save retains every completed result and active continuation state before stopping; unsupported
@@ -141,7 +179,7 @@ detail; where it conflicts with this table, this table wins.
 | 11 | Three-way meeting | After today's Frankie findings have been tested | Frankie + BOSS teacher + scientific teacher discuss the tested findings. Granite may only voice the three code-generated seats under R17; it does no calculation or decision. | Meeting is sequential in classroom order; voice transport not yet wired |
 | 12 | Frankie end of day | After meeting (or after the recorded voice-not-wired state) | Consolidates the brain/lessons/exchange already written during the day into school knowledge and numbered reports; **not the first knowledge write**. | Same held lane |
 | 13 | Jev blind comparison | Classroom-arm discovery days; governed material only | Jev receives the classroom material/survivors but never Frankie's answers before filing his own claims. His claims are labelled and feed later scientific-teacher testing. Prefer local/small CPU hosting if sufficient; no standing GPU Pod requirement. | Jev |
-| 14 | Remaining freeze/evaluation design | Discuss at step #5 | The former year-based freeze barrier is retired for these 30 learning days. Any remaining freeze purpose must be settled with Greg. | Not wired or authorized to execute |
+| 14 | Market-only checking and correction | Step #5 decision above | Fix errors through affected calculations, findings and lessons; deliver checked corrections before dependent work. No fee/profit criterion or knowledge freeze. | Decision settled; implementation incomplete; execution held |
 | 15 | Separate confirmation, if later requested | Requires a separately defined design | These 30 shared-knowledge days are not an untouched holdout. No new confirmation set is selected here. | Not wired or authorized to execute |
 
 ### Non-classroom discovery days

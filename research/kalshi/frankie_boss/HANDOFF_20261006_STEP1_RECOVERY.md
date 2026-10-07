@@ -1,5 +1,11 @@
 # Frankie AWS handoff — step 1 recovery, 2026-10-06
 
+**Later step-5 decision, 2026-10-06 21:53 ET:** Greg settled its purpose as market-only
+checking/correction and prompt delivery of corrected knowledge. Read the opening section of
+`SPEC-experiment-orchestrator.md`; it supersedes the older discussion/freeze instructions here.
+No maker/taker costs, profit-based selection or freezing errors into active knowledge.
+Implementation remains incomplete and every runtime execution hold remains.
+
 ## Latest CPU entry-point source update — 2026-10-06
 
 The stale A1 controller argument defect is corrected in source. `.github/workflows/frankie_box_run.yml` now routes
@@ -95,7 +101,7 @@ Granite needs its own discussion before final workflow wiring/E2E. Do not reopen
 - [ ] 3. Complete existing native-field search surfaces, cross-transform pairs, conditions/cells, targets, Dipole,
   scoped claims and the unchanged symbolic discovery engine.
 - [ ] 4. Candidate/survivor batches and scientific double-checks, with equal checked single-occurrence treatment.
-- [ ] 5. **Discuss with Greg first**, then settle/wire one-time freeze and untouched confirmation, including costs.
+- [ ] 5. Wire market-only checking/correction through affected calculations, findings and lessons; deliver checked corrections to Frankie before dependent work. Purpose settled with Greg at 21:53 ET; implementation remains open. No trading costs/profit objectives or knowledge freeze.
 - [ ] 6. Discuss Granite, then wire its bounded CPU post-class facilitator role.
 - [ ] 7. Discuss/finish Jev CPU blind comparison, claim sealing/testing and immediate tested-knowledge publication.
 - [ ] 8. Finish the three-lane launch/status/resume/stop interface, dependencies, controller lifetime and Pod audit.

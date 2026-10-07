@@ -1,5 +1,11 @@
 # Frankie AWS workflow — new-chat implementation checkpoint
 
+**Later step-5 decision, 2026-10-06 21:53 ET:** the discussion is now complete for market-only
+checking/correction and prompt delivery of corrected knowledge. The opening section of
+`SPEC-experiment-orchestrator.md` governs. Older freeze/confirmation instructions below are
+superseded; no transaction costs, profit objectives or preservation of known errors as active
+knowledge. Original evidence/causal identities remain; runtime execution is still held.
+
 **Latest continuation:** Read `HANDOFF_20261006_STEP1_RECOVERY.md` first. Step #1 is source-built, not runtime-verified; the next step is #2. The earlier checkpoint descriptions below are historical. Pause before #5.
 
 Greg requested this checkpoint to end a drifting chat. Fetch the latest branch and continue from the commit containing this file. Attachments are unnecessary. This is a partially wired implementation, **not a completed or executed workflow**.
@@ -39,7 +45,7 @@ other legal-knowledge/search changes remain working drafts until explicitly publ
 
 **Current ordered ten-step list supersedes numbering below:** (1) Linux ownership and complete-state recovery;
 (2) actual legal knowledge delivery; (3) complete existing discovery/search surfaces; (4) candidate/survivor promotion;
-(5) freeze and confirmation; (6) discuss then wire Granite; (7) Jev CPU blind comparison; (8) three-lane operating
+(5) market-only checking and correction; (6) discuss then wire Granite; (7) Jev CPU blind comparison; (8) three-lane operating
 interface/dependencies; (9) Greg's explicit AWS go and one real ROOT-to-finish E2E; (10) separately authorized 30 days.
 Print the checkbox list after #1 is complete in source and identify runtime verification separately.
 **Greg requires a discussion before any work on #5 (freeze/confirmation).** Preserve existing local drafts but do not
@@ -97,7 +103,7 @@ New `frankie_box_experiment_surface.py` prepares a full native journal-ordinal r
 
 1. Review and finish the remote runner/small-state foundation without expanding architecture. In particular: actual legal knowledge consumption by learner stages; immutable source/version provenance; actual search findings rather than manifest counts; existing ROOT reuse/attempt identity; interrupted submission/resume and retained affinity; same-owner failure recovery; same-day/confirmation answer walls; previous-class small carry state; teacher knowledge on reused rows. Do not equate SSM success or uploaded versions with completed learning.
 2. Connect the full applicable existing search surface: native per-event/full-field input, all cross-transform pairs, cells/conditions, targets including fills/exhaustion, Dipole on search-only days, scoped historical/Frankie/Jev claims, and preserved symbolic equation discovery. Current cell code compresses selected indices before lag counting; preserve the original causal axis when conditioning. Freeze the tested lag/scope instead of selecting a new best lag on confirmation. Use exact day-specific source bindings and list not-measurable cases rather than silently skipping.
-3. Wire candidates/survivor batches, double-checks and one-time freeze, then confirmation against frozen specifications with existing applicable maker/taker costs. No producer/freeze path is finished in this checkpoint. No rarity gates. Do not invent fee assumptions or acceptance redesigns. Existing symbolic module's historical prose is not current R06 policy.
+3. Wire applicable candidate/survivor checks and correction through affected calculations, findings and lessons under the later step-5 decision. Exclude maker/taker costs and profit objectives, including their influence on selected parameters. Correct known errors rather than keeping them active behind frozen records; publish checked corrections before dependent work. No rarity gates or invented scientific definitions. Implementation remains incomplete. Existing symbolic module's historical prose is not current R06 policy.
 4. Bring Greg a focused Granite implementation discussion **before final launch wiring or real E2E**. Then wire the bounded small CPU facilitator using the role/rules. Current voice transport remains a stub.
 5. Finish Jev's authorized CPU route, blind claim sealing/testing and immediate tested-knowledge publication; no fourth experimental lane and no Pod.
 6. Finish the actual three-lane launch entry point, discovery→freeze→confirmation dependency order, and concrete launch/status/resume/stop commands in the runbook. The current low-level renew/resume actions are not a finished operating interface. Audit stale Pod-oriented GitHub workflow labels/branches before any dispatch; no Pod command is authorized.

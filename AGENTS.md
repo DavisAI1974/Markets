@@ -13,7 +13,7 @@
 - AWS CPU only; no Pods. Exactly three held 16-CPU lanes: two main and one Linux, each with 15 workers plus coordinator. Keep giant evidence on its owning lane.
 - No starts, AWS installations, compute dispatch, training, data/scientific runs or model calls without Greg's explicit authorization.
 - No extra tests or validator framework. One real E2E only after wiring/discussions and explicit AWS go; thirty days require separate authorization.
-- Workflow #5 freeze/evaluation remains discussion-gated; its draft stays unapplied. Jev CPU remains discussion pending. Do not activate disabled producers silently.
+- Greg settled workflow #5 on 2026-10-06 at 21:53 ET: market-only checking/correction through affected calculations, findings and lessons, with checked corrections reaching Frankie before dependent work. Read the opening section of SPEC-experiment-orchestrator.md. Never keep known errors active merely because records were frozen; no trading-cost/profit criterion or knowledge freeze. Implementation remains incomplete; other mathematical decisions remain open. Its old draft stays unapplied; never apply 9c19cc2. Jev CPU remains discussion pending. Do not activate disabled producers silently.
 - Push with [skip ci]. Distinguish source-built from runtime-verified; Steps #2/#3 remain open and no real E2E is established by this setup.
 
 ## Evidence and successor work

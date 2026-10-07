@@ -1,5 +1,18 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+## Step #5 clarified — 2026-10-06 21:53 ET
+
+Greg settled workflow #5 as market-only checking, correction and immediate teaching of corrected
+knowledge. Read the new opening section of `SPEC-experiment-orchestrator.md` for the governing
+contract. Maker/taker costs and profit objectives cannot influence research selection, calculations
+or verdicts. Dates/weekdays/IDs remain searchable grouping context for actual market conditions.
+Fix errors through affected results and lessons; saved records must never keep known errors active.
+Keep original market evidence and truthful causal identities, without adding an archival project.
+The 30 days continue learning; the former year split/one-time knowledge freeze stays retired.
+The discussion is complete for this scope; implementation and affected-consumer propagation remain
+open. Source work only; no tests, calculations, reproduction calls or AWS execution are authorized.
+The old draft stays unapplied. This workflow #5 is distinct from item 5 in the short build list below.
+
 ## Latest CPU entry-point source update — 2026-10-06
 
 The stale A1 controller argument defect is corrected in source. `.github/workflows/frankie_box_run.yml` now routes
@@ -105,7 +118,7 @@ them for the rest of the day or count their reuse as an independent check.
 
 Generate the revised plan before authorized execution; do not overwrite/reinterpret a saved plan or its receipts.
 The year-role mapping and explicit knowledge-order policy change its identity. No plan was dispatched. Older references
-below to untouched 2024-2025 confirmation are superseded for these 30 learning days; remaining #5 design requires discussion.
+below to untouched 2024-2025 confirmation are superseded for these 30 learning days; #5 follows the correction decision above.
 
 **Step #2 source update:** `HANDOFF_20261006_STEP2_KNOWLEDGE.md` records actual structured knowledge reaching learner
 answers, pinned versions and complete previous-class carry. Reused-teacher reconciliation is integrated; #2 remains open
@@ -115,7 +128,7 @@ are not consumption proof. No runtime/E2E verification or AWS compute occurred.
 **Current implementation checkpoint:** `HANDOFF_20261006_STEP1_RECOVERY.md` is the next-chat handoff. Step #1
 (Linux ownership and retained-day save/recovery) is source-built; runtime verification remains pending the one E2E.
 The complete ten-step checkbox list and exact current low-level status/stop/resume commands are in that handoff.
-Continue with #2, actual legal knowledge delivery. **Discuss with Greg before #5 (freeze/confirmation)** and before
+Continue with #2, actual legal knowledge delivery. **Apply the later #5 checking/correction decision above**; discuss before
 settling the pending Jev CPU route/completion dependency. Discuss Granite before wiring its final role.
 
 The GitHub dispatch entry, main-lane stop interface, dependencies and long-lived controller service remain #8.
@@ -178,7 +191,7 @@ Three lanes is the launch architecture. A fourth lane is outside this build. Git
 
 After wiring is complete and Greg gives an explicit AWS go, run one real day from ROOT through the existing completion stage.
 
-Use that run to confirm the actual path: the day keeps its box and lane, all required search surfaces execute, survivor/freeze/confirmation finish, Frankie receives stage knowledge at the next legal step, cross-box knowledge delivery works, and Granite facilitates the post-class loop. Preserve the existing claims, receipts and completion evidence.
+Use that run to confirm the actual path: the day keeps its box and lane, all required search surfaces execute, applicable scientific checks and corrections reach affected findings and lessons, Frankie receives corrected stage knowledge before dependent work, cross-box knowledge delivery works, and Granite facilitates the post-class loop. Preserve the existing claims, receipts and completion evidence. No fee/profit-based research verdict or knowledge freeze belongs in that path.
 
 Fix failures where they occur and resume using the existing checkpoint rules. Do not create a validator framework, test farm, broad A/B program or additional discovery project. Use the end-to-end run’s real evidence to decide whether the wiring is ready.
 

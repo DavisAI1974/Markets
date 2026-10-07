@@ -1,5 +1,27 @@
 # CCode assignment — next pre-#5 source tasks
 
+## Greg's step-5 correction direction — 2026-10-06 21:53 ET
+
+Greg has now discussed #5: check and correct the market research and get corrected knowledge
+into Frankie promptly. No maker/taker fees, execution-cost assumptions or profit objectives
+in calculations, parameter selection, confirmation or teaching. Dates/day/IDs retain their
+search/grouping role; underlying market conditions supply the signals.
+
+For the EXISTING owned correction queue, especially B7/C2/B4/B5/C1: trace affected calculations,
+findings and lessons, and ensure known-wrong content cannot stay active merely because it was
+frozen or recorded. Carry checked corrections to both teachers and Frankie's actual inputs via
+existing knowledge/recovery paths. Do not merely append a warning while continuing to use a
+known-bad conclusion. List propagation gaps precisely if the current interface does not support
+the correction. Preserve raw source evidence and truthful identities; no deletion, retroactive
+rewrite of predictions, new retention framework or implicit scientific rerun is authorized.
+Source fixes do not themselves establish recalculated historical results.
+
+The canonical contract is now the opening section of `SPEC-experiment-orchestrator.md`.
+This clarification applies to your currently assigned files; it does not assign a separate
+step-5 implementation slice or Codex's reserved search/dipole modules. Keep the current order
+and disjoint ownership. Do not apply the old draft or `9c19cc2`; open mathematical decisions,
+Granite pins, Memory A retirement and every execution hold remain. No tests/runs/AWS.
+
 ## Current assignment after refetching CCode `d3945e13` — 2026-10-06 night ET
 
 Fetched integration `e697d52e` and CCode `d3945e13f48194c5a6bcf7cecfd89515fd270158`.
