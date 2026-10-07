@@ -417,6 +417,47 @@ def launch(job_id):
     return proc.pid
 
 
+CONTROLLER_ATTACHED_SECONDS = 1200     # a controller renews a live job every 900 s; a renewal this recent = attached
+
+
+def release_keep_running(job_id, reason):
+    """At day_complete: clear THIS worker box's KeepRunning tag when no controller is attached (Greg, 2026-10-07: keep
+    running only when in use). Attached = the job was renewed by a controller within CONTROLLER_ATTACHED_SECONDS: its
+    finish() owns the tag then (left as it is, named). Another live root-to-finish job on this box keeps it on. The
+    tag call needs ec2:CreateTags on this instance (the worker role's policy); a failure is recorded, never raised."""
+    try:
+        renewed = read_json(JOBS / job_id / 'controller-renewed.json').get('epoch')
+    except (OSError, ValueError):
+        renewed = None
+    if renewed and time.time() - float(renewed) < CONTROLLER_ATTACHED_SECONDS:
+        return dict(action='left', reason='a controller is attached (renewed %d s ago): its finish() owns the tag'
+                                          % int(time.time() - float(renewed)))
+    others = []
+    for d in sorted(JOBS.iterdir()) if JOBS.is_dir() else ():
+        if d.name == job_id or not (d / 'job.json').is_file():
+            continue
+        other = state_of(d.name) or {}
+        if other.get('state') in ACTIVE and job_alive(d.name, other):
+            others.append(d.name)
+    if others:
+        return dict(action='left', reason='other live job(s) on this box: %s' % others)
+    try:
+        import urllib.request
+        token = urllib.request.urlopen(urllib.request.Request(
+            'http://169.254.169.254/latest/api/token', method='PUT',
+            headers={'X-aws-ec2-metadata-token-ttl-seconds': '60'}), timeout=2).read().decode()
+        ident = json.loads(urllib.request.urlopen(urllib.request.Request(
+            'http://169.254.169.254/latest/dynamic/instance-identity/document',
+            headers={'X-aws-ec2-metadata-token': token}), timeout=2).read())
+        import boto3
+        boto3.client('ec2', region_name=ident['region']).create_tags(
+            Resources=[ident['instanceId']], Tags=[dict(Key='KeepRunning', Value='false'),
+                                                   dict(Key='KeepRunningReason', Value=('pod_agent: %s' % reason)[:255])])
+        return dict(action='cleared', instance=ident['instanceId'], reason=reason)
+    except Exception as error:  # noqa: BLE001 - a cost guard, never the day's outcome; named
+        return dict(action='not_cleared', reason=reason, error='%s: %s' % (type(error).__name__, str(error)[:300]))
+
+
 def renew_job(job_id, update, resume=False):
     """Refresh transport only; the job's day, source hashes, commit and lane stay fixed."""
     with lane_lock():
@@ -435,6 +476,9 @@ def renew_job(job_id, update, resume=False):
             job['inputs'] = new
             write_json(d / 'job.json', job, mode=0o600)
         write_json(d / 'mailbox.json', update['mailbox'], mode=0o600)
+        # the controller's renewal is its attachment (release_keep_running reads it): its own file, never a write into
+        # state.json (the running job owns that one)
+        write_json(d / 'controller-renewed.json', dict(epoch=time.time(), resume=resume))
         if not resume:
             return None
         state = state_of(job_id) or {}
@@ -738,6 +782,12 @@ def run_full_day(job_id, job, code):
             if not r or r['status'] not in X.FINISHED:
                 raise RuntimeError('%s: %s' % (stage, r))
         ok, facts = Q._finish_day(run, e, code, job['commit'], run.log)
+        if not ok and facts.get('finish') == 'waiting':
+            # a step that waits (its input not there yet, a listed owner decision): WAITING, never a failure; the claim,
+            # lane and artifacts stay; the same job resumes it (frankie_box_frankie_queue._finish_day's own word)
+            set_state(job_id, 'finish_waiting', facts=facts,
+                      detail='the day stopped at a step that waits; same-box claim retained for the same job\'s resume')
+            return 3
         if not ok:
             raise RuntimeError('day finish: %s' % facts)
         root = run.receipt('root', job['day'])
@@ -755,7 +805,8 @@ def run_full_day(job_id, job, code):
         LS.request('day_done', calculations=root['calculations'], receipt_sha256=root['receipt_sha256'],
                    receipts=[LS.pack_file(p) for p in receipts])
         set_state(job_id, 'day_complete', calculations=root['calculations'], facts=facts,
-                  detail='complete on original Linux box; ROOT and journal retained here')
+                  detail='complete on original Linux box; ROOT and journal retained here',
+                  keep_running=release_keep_running(job_id, 'day %s of run %s complete' % (job['day'], job['run'])))
         return 0
     except (Exception, SystemExit) as error:
         if isinstance(error, SystemExit) and error.code == 75:

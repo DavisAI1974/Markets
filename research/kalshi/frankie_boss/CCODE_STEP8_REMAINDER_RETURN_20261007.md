@@ -648,3 +648,129 @@ needs `ec2:CreateTags` (own instance) in the inline policy of 9.8; the guard's r
 `pod_agent.py` (Codex) to clear the worker's tag itself at `day_complete` when no controller is attached.
 Checks: AST on `idle_instance_guard.py`, `controller.py`, `frankie_box_experiment.py`, `frankie_box_frankie_queue.py`;
 `yaml.safe_load` on the new workflow; `git diff --check`. Not run; no tag was changed by this pass.
+
+## 10. The restart pass of 2026-10-07 late evening ("respawn and finish"; SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED)
+
+Work branch `ccr-d2f8f826-iefeah-frankie` working tree over `05e97286` (the Step 8 branch merged; nothing committed by this
+role). Skills: `api-and-interface-design` (Skill tool, first). No account call in this pass (the earlier survey stands). No
+test, run, install, dispatch or account write. Checks: `python3 -I` AST parse of the 12 changed Python files, `bash -n` and
+`sh -n` on the 5 changed shells, `json.load` on the runtime JSON, `yaml.safe_load` on `frankie_box_run.yml`,
+`git diff --check` on every changed file: all clean. A fresh independent review is required before integration.
+
+### 10.1 Greg's decisions applied
+
+- **Jev uses ALL of Granite's settings** (`frankie_box_jev_cpu.py`): `bind_runtime` (replaces `runtime_check`; the
+  `JEV_CPU_RUNTIME_V1` schema, `PROPOSED_JEV_CPU_RUNTIME_V1`, `approval_sha256`, `--propose`/`approved_example` are
+  removed: review B1/B2). Every row is read at call time from `GRANITE_MEETING_RUNTIME_V1.json` through
+  `frankie_box_granite_meeting.local_runtime`: weights, build, runtime path, temperature, top_p (injected on every chat
+  body), context_size, max_output_tokens_per_turn, input_token_cap_per_call, the per-call ceiling (CALL_CEILING_SECONDS
+  unless the definition sets one), max_meeting_seconds (per-process), completion (nothing over the cap is sent, nothing
+  truncated, unparsed answers listed). Derived in code, one line each: min_output_tokens = max_output_tokens_per_turn;
+  token_margin = context_size - cap - max_output (so the client refuses any prompt over Granite's cap and halves it);
+  piece_chars = cap x 2. The only refusal: the shared runtime absent or its pins/files differing. The transport gets
+  Granite's parameter rows verbatim (`server_params`).
+- **Granite and Jev share ONE worker CPU of the day's lane** (`frankie_box_cores.py`: `STAGE_SLOTS`, `SLOT_CPUS`,
+  `STAGE_CPUS`, `claim_step`, `attach_step`, `cmd_run_step`, `cmd_run_inside`, `cmd_run`): the 'adviser' slot = the
+  highest worker CPU of the held booking (never the parent/coordinator), claimed under the ledger lock when voice or jev
+  runs, released when it ends; the other stage WAITS in place while it is busy; the CPU_BOOKING line names the holder and
+  the seconds waited (on the step receipt: `Run.jev` `adviser_slot`, `Run.voice` `inspection.inputs.adviser_slot`). Such a
+  stage never books on its own (refused without `--inside`). threads = 1: Jev `JEV_THREADS`; the meeting through
+  `MEETING_THREADS=1` (`Run.voice`) -> `frankie_box_granite_meeting.sh --threads` -> `frankie_box_granite_meeting._meeting(threads=)`
+  (narrow edit, bound into the meeting binding). The helper checks its affinity is exactly its claim (`execute`).
+  `Run.voice` without a held day slot records waiting, non-blocking, named. `'survivors'` joined `DAY_RUN_STAGES`.
+- **No days on the small box**: the worker-box lane is a LISTED, UNUSED FALLBACK (`pod_root/controller.py` main:
+  loop/resume refuse without `--fallback-route worker_box`; `frankie_box_cpu_controller.sh` start/resume require
+  `FALLBACK=worker_box`; `frankie_box_run.yml` loop/resume require `FALLBACK=worker_box`; `frankie_box_pod_root_loop.sh`
+  header). The default lane set is the main box's two lanes (`PARALLEL_DAYS=2`, unchanged). Nothing starts the worker.
+- **The native pass ON for every NEW request** (Greg reversed the 2026-09-29 no-bedrock decision): `main()` defaults
+  `--shared-market-policy` to `FRANKIE_SHARED_MARKET_TIMELINE_V1` when the run has no saved plan; a run with a saved plan
+  keeps exactly its saved value (never mutated). Under the policy the ROOT wrapper passes `--bedrock on`
+  (`frankie_box_experiment_root.sh`, confirmed). `frankie_box_experiment_root.py`: `--bedrock` default `on`, function
+  defaults `bedrock=True`, docstring; the resume branch calls `Session.native_layer_records()`; the legacy pin rule text is
+  kept byte-identical (an older saved plan's pinned bytes). `frankie_box_monday_calculations.py` docstrings corrected.
+  `Run.root` records `seconds` and `native_pass` (`native_pass_facts`: requested, derivation bedrock record, timings,
+  ledgers, ROOT child wall seconds; the ADDED time is unmeasured until a bedrock-off ROOT of the same day exists).
+
+### 10.2 Review findings fixed (REVIEW_20261007_EVENING_SLICES_AND_READINESS.md)
+
+B1/B2 above. B3a: `frankie_box_frankie_queue.kick` writes `<line>-kick.json` and waits up to `KICK_LOCK_WAIT_SECONDS`
+for the worker's lock; `frankie_box_experiment.box_in_use` counts a kick younger than `KICK_GRACE_SECONDS` (not the kick that
+started the ending worker: `PROCESS_STARTED`), running/unknown entries of any run, queued entries with a live or just-kicked
+worker, and an unreadable queue (SystemExit included) as in use. B3b: `idle_instance_guard.protects` (any fresh or
+unreadable lease protects BOTH experiment boxes) and `still_idle` (re-describe right before StopInstances). B3c:
+`controller.finish` keeps the worker tag on when the job state is UNKNOWN (a submit/resume with no reachable worker status
+newer than it: `last_submit_at`, `at_epoch`; an unresolved resume). B5: a `not_run` search makes `Run.jev`,
+`Run.accumulated_lessons` and `Run.exchange` record `not_run` (listed); `Run.voice` passes it on; `Run.school` accepts it.
+N2: stage 10 wired (10.3). N3: per-entry carriers from the one registry; A-clean `not_applicable`. N5: Jev's exchange-context
+path `out.parents[3]`. N6: `GRANITE_MEETING_RUNTIME_V1.json` `settled.hosts_in_order` (local child first) and
+`hosts_superseded`.
+
+### 10.3 Cross-owner requests implemented here
+
+- `Run.lessons`: each teacher call carries `receipt` (its printed last JSON line, `last_json_line`); after the batch record,
+  `Run.survivors` (stage 10, `frankie_box_survivor_update.sh`: RUN, BOUNDARY_DAY = the batch's last day, BATCH_DAYS,
+  BRAIN, SEARCHES of finished searches) on the held lane, recorded as stage `survivors` under the batch key (receipt path
+  in `batches/`), bound to the printed `FRANKIE_SURVIVOR_UPDATE_RECEIPT_V1` (schema, run, boundary day). A batch of one day
+  is a boundary. Also run for a batch whose lessons finished earlier (start loop; queue `_finish_steps`).
+- `Run.school`: `missing_listed`, `withheld_listed`, `workflow_report` copied onto the step record.
+- `Run.reports`: `RUN_DIR`, `CANDIDATES_RECEIPT` (the batch's survivors receipt), `CARRIED_CLAIMS_RECEIPT` (accumulated
+  lessons), `JEV_RECEIPT`, each only when its stage finished with it.
+- all-99: `all99_crosswalk`/`all99_admission` import the ONE registry (`frankie_box_all99_coverage.registry`,
+  `MARKET_CARRIERS`, `NATIVE_ENTRIES`, `FIXED_WORDS`, `NOT_MARKET_CARRIED`, `CARRIER_ELEMENTS`); `ALL99_GROUPS`,
+  `LEGACY_CARRIER` and the local `CROSSWALK` are gone; `work/native-layer-records.json` is read when bound to derive.json;
+  the 18 native-only entries are listed with what was admitted (`native_only`); the shared field `FRANKIE_ALL99_COVERAGE_V1`
+  (`A99.field('root', ...)`, validated) is on the ROOT receipt as `all99.coverage`, its counts/validation in
+  `all99_summary`.
+- `Run.jev`: the request may carry `shared_market_context` (the exchange's retained read, when it exists at request time).
+- `frankie_box_jev_cpu.py` REBOOK chain: `request_chain`, `bind_owner`, `_comparable`; `Run.jev_rebooked` mints a successor
+  that RESUMES retained progress on the same output under the original owner identity (recorded in `rebook-<n>.json`);
+  `Run.jev` binds every link's pin; `main()` writes status for a chain link.
+- `frankie_box_lane_state.learner_knowledge`: a per-document `current_document` ValueError is listed
+  (`withheld_not_current`), the selection goes on; source integrity still raises. The kick at the `class_done` branch
+  already carries the run's plan scope (verified).
+- `frankie_box_teacher_knowledge.teach_accumulated`: `ST.test(report=)` into the result's `evidence_read` (excluded from
+  the reuse header comparison).
+- `pod_agent.run_full_day`: `facts['finish'] == 'waiting'` is state `finish_waiting` (exit 3), not a failure;
+  `release_keep_running` at day_complete clears the worker tag only when no controller renewed the job within 1200 s
+  (`controller-renewed.json`, written by `renew_job`) and no other live job runs.
+- `frankie_box_granite_meeting.sh`: unset LLAMA_SERVER/GGUF_MODEL -> `--route local` (the gate refuses visibly);
+  `INPUTS_ONLY=1` stays the only inputs-only switch. `Run.standing_voice` keeps such a refused record standing while the
+  shared runtime is refused.
+
+### 10.4 Requests to other owners
+
+- workflow_reports, `frankie_box_all99_coverage.py`: a vocabulary word for an evidence integrity failure (the ROOT passes
+  piece word `integrity` with canonical `unknown` meanwhile); the stale "bedrock off" wording at lines ~20 and ~244.
+- workflow_reports, `frankie_box_workflow_inspection.py` FIELDS: project `root.native_pass`, `root.seconds`,
+  `root.all99.coverage`/`native_only`, `jev.adviser_slot`, `voice.inspection.inputs.adviser_slot`, the `survivors` step
+  (batches/<key>/survivors.json), `lessons.calls[].receipt`, `school.missing_listed/withheld_listed/workflow_report`,
+  `<run>/keep-running.json`.
+- workflow_reports, `frankie_box_experiment_search.py` lines 3 and 65 and `frankie_box_market_timeline.py` lines ~293, ~353,
+  ~360: replace "bedrock off" as the experiment's expected state with "the native pass is ON for every NEW run (Greg
+  reversed the 2026-09-29 no-bedrock decision); absent only when the pass did not complete or an older saved legacy plan
+  ran it off".
+- Codex / Session owner, `frankie_box_experiment_root.py` + `frankie_box_boss_session.Session.derive`: a native traversal
+  that raises still fails the whole ROOT; under the missing-coverage rule it should be recorded in derive.json (bedrock
+  status failed, reason) while the legacy pass completes, so the day stays with a thinner picture.
+- Codex, `frankie_box_granite_meeting.resolve_threads`: `threads: null` resolves to `os.cpu_count()` (the HOST, 32 on the
+  main box), not the affinity; any caller that does not pass `--threads` refuses at start inside a 16-CPU lane.
+- Account (parent): the worker role lacks `ec2:CreateTags` (pod_agent's clear is recorded as `not_cleared` until it has it).
+
+### 10.5 Bedrock hits (deploy/aws/box, .github/workflows, pod_root)
+
+Changed: `frankie_box_experiment.py` (docstring, absent reasons, legacy plan wording, `--shared-market-policy` default and
+help), `frankie_box_experiment_root.sh` (header, the legacy-only comment), `frankie_box_experiment_root.py` (docstring,
+defaults, argparse), `frankie_box_monday_calculations.py` (two docstrings, `--bedrock` help). Left, with why: the legacy
+pin rule text and phase label in `frankie_box_experiment_root.py` (an older saved plan's pinned bytes/label);
+`BEDROCK="${BEDROCK:-off}"` for an empty policy (older saved legacy plans only); `bedrock=False` in
+`write_retained_digest`/`render_digest`/`digest_bedrock=False` (the giant rendered tables, not the native pass); the
+digest/projection/side-builder/cleanup modules and `boss_bedrock_integration.yml` (the bedrock table machinery, not a
+default); `frankie_box_boss_session.py` (already corrected by its owner in `05e97286`); the workflow_reports files listed
+in 10.4; `frankie_box_run.yml` hits are lock/script names.
+
+### 10.6 Open (not runtime evidence)
+
+Everything above is source-built only. Jev's and the meeting's 400-output-token, 8192-input-cap budgets are Granite's and
+untested for Jev's claims answers (halving, more calls); the native pass's added time per day is unmeasured; the shared
+adviser slot's wait has never been observed; the worker-tag clear needs CreateTags; the 8A dependencies and the remote
+voice acknowledgment stay as named in sections 5 and 9. A fresh independent review is required before integration.

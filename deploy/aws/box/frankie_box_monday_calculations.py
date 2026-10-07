@@ -138,8 +138,9 @@ def resume_legacy(session, source):
 def whole_day_pin_document(source, rule='One complete Monday delivery; all registry groups and all three bedrock groups. '
                                          'Historical definitions carry no execution-cycle roster.'):
     """The whole-day calculation pin for a source: the historical groups without cycle rosters, the complete-registry
-    group, and the three bedrock groups (the experiment's ROOT uses the same pin with bedrock off). Shared by the Monday
-    ROOT and frankie_box_experiment_root.py so the pin is built in one place."""
+    group, and the three bedrock groups (the experiment's ROOT uses the same pin with the native pass ON: Greg reversed the
+    2026-09-29 no-bedrock decision on 2026-10-07; only an older saved legacy plan ran it off). Shared by the Monday ROOT and
+    frankie_box_experiment_root.py so the pin is built in one place."""
     historical_path = REPOSITORY / 'research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json'
     historical = json.loads(historical_path.read_bytes())
     groups = []
@@ -158,8 +159,9 @@ def whole_day_pin_document(source, rule='One complete Monday delivery; all regis
 
 def calculate(commit, authorship_path, authorship_sha256, output_root, data_workers=1, resume_checkpoint=None, reconstruct_missing=False, binding_sha256=None,
               bedrock=True, digest=True):
-    """bedrock=False / digest=False (Greg, 2026-09-29, the experiment): skip ROOT processes 2+3 (bedrock traversal and
-    projection) / 4 (the Markdown digest). Frankie's cycle keeps both on (the defaults)."""
+    """bedrock=False / digest=False skip ROOT processes 2+3 (bedrock traversal and projection) / 4 (the Markdown digest).
+    Both default on, for Frankie's cycle and for the experiment alike (Greg reversed the 2026-09-29 no-bedrock decision on
+    2026-10-07: the experiment runs the native pass); off is an explicit caller choice only."""
     if resume_checkpoint and not bedrock:
         raise ValueError('a resume checkpoint belongs to the bedrock traversal; it cannot resume a bedrock-off ROOT')
     require_checkout(commit)
@@ -257,7 +259,7 @@ def main():
     parser.add_argument('--resume-checkpoint')
     parser.add_argument('--reconstruct-missing', action='store_true')
     parser.add_argument('--binding-sha256')
-    parser.add_argument('--bedrock', choices=('on', 'off'), default='on', help='off: skip ROOT processes 2 and 3 (the experiment)')
+    parser.add_argument('--bedrock', choices=('on', 'off'), default='on', help='off: skip ROOT processes 2 and 3 (an explicit choice; the experiment runs them: the native pass is ON)')
     parser.add_argument('--digest', choices=('on', 'off'), default='on', help='off: skip ROOT process 4 (the experiment)')
     args = parser.parse_args()
     print(json.dumps(calculate(args.commit, args.authorship, args.authorship_sha256, args.output_root, args.data_workers,

@@ -15,7 +15,8 @@ never take the same CPU.
 
 SIZES (hard):
   day-run  every step of a day run the orchestrator runs (root, teacher, classroom, data, search, lessons, exchange, voice,
-           school, reports) books EXACTLY 16 CPUs, never fewer. With fewer than 16 free it does NOT start: it records
+           school, reports, survivors) books EXACTLY 16 CPUs, never fewer (or runs inside its day's held 16; the meeting
+           (voice) and Jev, steps of the day too, share ONE worker CPU of that held lane: STAGE CLAIMS below). With fewer than 16 free it does NOT start: it records
            'waiting: N free of 16 needed' and exits 75 (a later dispatch retries). Its workers = the booked 16 less the
            parent = 15.
   ingest | canary | conform  8 CPUs per day process. THE RULE (stated in every receipt): an ingest or canary with
@@ -50,6 +51,14 @@ pid, the retention kept as history); any other request for those CPUs waits. An 
 only with `release` and the explicit reason; nothing releases it on its own. `show` lists retained bookings with
 their owner. A retained set in use by an unbooked Frankie process (an orphan of the dead holder) is not taken over
 while that process runs.
+
+STAGE CLAIMS (Greg, 2026-10-07). The stages of STAGE_SLOTS (voice and jev: the shared 'adviser' slot of ONE CPU) run
+only --inside their day's held booking, on the slot's CPU: the highest WORKER CPU of the booking (never its parent/
+coordinator CPU). A claim is recorded under the booking's `steps` (stage, slot, cpus, pid with its start time, at) under
+the ledger lock before the step runs, and moved to `steps_released` with its exit code when it ends; a claim whose pid
+is gone (or never recorded within UNATTACHED_CLAIM_SECONDS) is released by the next claim. While another live claim holds
+the slot, the step WAITS in place (polling every SLOT_WAIT_POLL s) and its CPU_BOOKING line names the holder and the
+seconds waited. The CPU never leaves the day's booking, so no other day can take it and nothing is double booked.
 
 OPERATIONS
   book     --kind K [--day D --run R --stage S --commit C --workers W --verify V --pid P]: book for pid P (default the
@@ -93,7 +102,18 @@ REFUSED_EXIT = 2
 BUSY_FRACTION = 0.05                    # an unpinned Frankie thread above this share of one CPU holds the CPU it runs on
 KINDS = ('day-run', 'ingest', 'canary', 'conform')
 DAY_RUN_STAGES = ('root', 'teacher', 'classroom', 'data', 'search', 'lessons', 'exchange', 'voice', 'school', 'reports',
-                  'jev')                # jev (Step 7): inside the SAME held day lane, a worker subset of its 16 CPUs
+                  'jev', 'survivors')   # survivors (stage 10): the batch boundary's survivor/candidate update, same lane rule
+# THE ADVISER SLOT (Greg, 2026-10-07): Granite's meeting (the voice stage) and Jev are ordinary stages of the day on that
+# day's held lane and SHARE ONE worker CPU of it (never the coordinator/parent CPU): small, rare, never at the same time.
+# Whichever stage needs it claims the slot, runs under taskset of that one CPU at threads=1, and releases it when it ends;
+# the other waits for the slot while it is busy (the wait is printed on the step's CPU_BOOKING line, so it is on the
+# stage receipt and the inspection report, never silent). The rest of the lane stays with the day's other stages. No box,
+# host, lane or reserved block of workers of their own. Such a stage never books on its own: it needs --inside its slot.
+STAGE_SLOTS = {'voice': 'adviser', 'jev': 'adviser'}
+SLOT_CPUS = {'adviser': 1}
+STAGE_CPUS = {stage: SLOT_CPUS[slot] for stage, slot in STAGE_SLOTS.items()}
+SLOT_WAIT_POLL = 5.0                    # seconds between claim attempts while the shared slot is busy
+UNATTACHED_CLAIM_SECONDS = 120.0        # a claim whose step pid was never recorded is stale after this
 INGEST_RULE = ('an ingest or canary with VERIFY=inline runs its encode pool and its conformance-reader pool at the same '
                'time: WORKERS x 2 + 1 CPUs (the parent included); VERIFY=deferred and a conform run one pool: WORKERS + 1; '
                'the day process books %d CPUs and a demand above %d is refused' % (INGEST_CPUS, INGEST_CPUS))
@@ -587,14 +607,80 @@ def held_booking(booking):
         return b, None
 
 
+def claim_step(booking, stage):
+    """Under the ledger lock: claim the stage's slot CPU(s) of the live held booking (STAGE_SLOTS): the highest worker
+    CPU(s) of the booking, shared by every stage of the same slot. Stale claims (pid gone, or never attached within
+    UNATTACHED_CLAIM_SECONDS) are moved to steps_released first. Returns (claim, None, None), or (None, why, holder) while
+    another live claim holds the slot, or (None, why, None) when the booking is not a live held slot."""
+    slot = STAGE_SLOTS[stage]
+    with Lock():
+        path = LEDGER / (booking + '.json')
+        if not path.is_file():
+            return None, 'booking %s is not in the ledger (released or never made)' % booking, None
+        b = json.loads(path.read_bytes())
+        if b.get('retained') or not any(alive(p) for p in b.get('pids') or []):
+            return None, 'booking %s is not a live held slot' % booking, None
+        steps, gone, now = [], [], time.time()
+        for s in b.get('steps') or []:
+            stale = (not alive(s['pid'])) if s.get('pid') else (now - float(s.get('at_epoch') or 0) > UNATTACHED_CLAIM_SECONDS)
+            (gone if stale else steps).append(s)
+        for s in gone:
+            s.update(released=now_iso(), release_reason='stale: its pid is gone or was never recorded (released by the next claim)')
+        workers = sorted(c for c in (b.get('worker_cpus') or b['cpus'][1:]) if c != b['parent_cpu'])
+        count = SLOT_CPUS[slot]
+        if len(workers) < count:
+            return None, 'the held slot %s has %d worker CPU(s); the %s slot needs %d' % (booking, len(workers), slot, count), None
+        cpus = workers[-count:]
+        holders = [s for s in steps if s.get('slot') == slot or set(s.get('cpus') or []) & set(cpus)]
+        if gone:
+            b['steps'] = steps
+            b['steps_released'] = (b.get('steps_released') or []) + gone
+            write_json(path, b)
+        if holders:
+            h = holders[0]
+            return None, ('the %s slot (CPU %s of %s) is held by stage %s (claim %s since %s)'
+                          % (slot, cpu_list(cpus), booking, h.get('stage'), h.get('claim_id'), h.get('at'))), h
+        claim = dict(stage=stage, slot=slot, cpus=cpus, pid=None, at=now_iso(), at_epoch=now,
+                     claim_id='%s-%d-%d' % (stage, int(now * 1000), os.getpid()))
+        b['steps'] = steps + [claim]
+        write_json(path, b)
+        return claim, None, None
+
+
+def attach_step(booking, claim_id, pid, exit_code=None, end=False):
+    """Record the step's pid on its claim, or (end=True) move the claim to steps_released with its exit code."""
+    with Lock():
+        path = LEDGER / (booking + '.json')
+        if not path.is_file():
+            return None
+        b = json.loads(path.read_bytes())
+        keep, done = [], None
+        for s in b.get('steps') or []:
+            if s.get('claim_id') != claim_id:
+                keep.append(s)
+            elif end:
+                done = dict(s, released=now_iso(), exit_code=exit_code, release_reason='the step ended')
+            else:
+                start = start_time(pid)
+                keep.append(dict(s, pid=dict(pid=pid, start=start) if start is not None else None))
+        b['steps'] = keep
+        if done is not None:
+            b['steps_released'] = (b.get('steps_released') or []) + [done]
+        write_json(path, b)
+        return b
+
+
 def cmd_run_inside(a, command):
     """A step of a day that already HOLDS its day-run booking (Greg, 2026-09-30: a day never leaves its slot until every
     kept step of the run table is done): the step runs under taskset of the held CPUs, its pid is added to the booking,
-    nothing is booked or released here (the slot's holder releases it when the whole day is done)."""
+    nothing is booked or released here (the slot's holder releases it when the whole day is done). A STAGE_CPUS step (Jev)
+    takes only its claimed worker CPUs of the slot and gives them back when it ends."""
     b, why = held_booking(a.inside)
     if b is None:
         emit_outcome(a, dict(status='refused', reason=why))
         return REFUSED_EXIT
+    if a.stage in STAGE_CPUS:
+        return cmd_run_step(a, b, command)
     emit_outcome(a, dict(status='booked', booking=b['booking'], cpus=b['cpu_list'], parent_cpu=b['parent_cpu'],
                          inside=True, reason='inside the day\'s held slot %s: CPUs %s' % (b['booking'], b['cpu_list'])))
     print('### inside the held day slot %s: CPUs %s (stage %s)' % (b['booking'], b['cpu_list'], a.stage), flush=True)
@@ -618,6 +704,61 @@ def cmd_run_inside(a, command):
     return 128 - code if code < 0 else code
 
 
+def cmd_run_step(a, b, command):
+    """A STAGE_SLOTS step inside its day's held slot: claim the shared slot CPU (waiting in place while another stage of
+    the slot holds it, the wait recorded), run under taskset of exactly that CPU, release the claim when it ends (the
+    day's slot itself stays held)."""
+    started, waited_on, announced = time.time(), None, False
+    while True:
+        claim, why, holder = claim_step(b['booking'], a.stage)
+        if claim is not None:
+            break
+        if holder is None:
+            emit_outcome(a, dict(status='refused', reason=why))
+            return REFUSED_EXIT
+        waited_on = dict(stage=holder.get('stage'), claim=holder.get('claim_id'), since=holder.get('at'))
+        if not announced:
+            print('### stage %s waits for the shared slot: %s' % (a.stage, why), flush=True)
+            announced = True
+        time.sleep(SLOT_WAIT_POLL)
+    waited = round(time.time() - started, 1)
+    cpus = cpu_list(claim['cpus'])
+    emit_outcome(a, dict(status='booked', booking=b['booking'], cpus=cpus, parent_cpu=b['parent_cpu'], inside=True,
+                         step_claim=claim['claim_id'], slot=claim['slot'], waited_seconds=waited, waited_on=waited_on,
+                         reason='stage %s inside the day\'s held slot %s on the shared %s CPU %s (the lane keeps %s); waited '
+                                '%.1f s for the slot%s' % (a.stage, b['booking'], claim['slot'], cpus, b['cpu_list'], waited,
+                                                          (' (held by stage %s)' % waited_on['stage']) if waited_on else '')))
+    print('### stage %s inside the held day slot %s: worker CPU(s) %s of %s (claim %s)'
+          % (a.stage, b['booking'], cpus, b['cpu_list'], claim['claim_id']), flush=True)
+    env = dict(os.environ, FRANKIE_CPU_BOOKING=b['booking'], FRANKIE_BOOKED_CPUS=cpus, FRANKIE_LANE_CPUS=b['cpu_list'],
+               FRANKIE_STEP_CLAIM=claim['claim_id'])
+    try:
+        child = subprocess.Popen(['taskset', '-c', cpus] + command, env=env)
+    except OSError as error:
+        attach_step(b['booking'], claim['claim_id'], None, exit_code=None, end=True)
+        print('### the step did not start (%s); its claim is released, the slot stays held' % error, flush=True)
+        return 1
+    try:
+        attach_step(b['booking'], claim['claim_id'], child.pid)
+    except (OSError, ValueError, KeyError) as error:
+        print('### the step pid %d was not recorded on its claim (%s)' % (child.pid, error), flush=True)
+
+    def forward(signum, _frame):
+        if child.poll() is None:
+            child.send_signal(signum)
+    for s in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(s, forward)
+    code = child.wait()
+    code = 128 - code if code < 0 else code
+    try:
+        attach_step(b['booking'], claim['claim_id'], None, exit_code=code, end=True)
+        print('### stage %s claim %s released (exit %d); the slot stays held' % (a.stage, claim['claim_id'], code), flush=True)
+    except (OSError, ValueError, KeyError) as error:
+        print('### stage %s claim %s not released here (%s); the next claim releases it once its pid is gone'
+              % (a.stage, claim['claim_id'], error), flush=True)
+    return code
+
+
 def cmd_run(a):
     command = a.command[1:] if a.command[:1] == ['--'] else a.command
     if not command:
@@ -625,6 +766,10 @@ def cmd_run(a):
         return REFUSED_EXIT
     if getattr(a, 'inside', None):
         return cmd_run_inside(a, command)
+    if a.stage in STAGE_CPUS:
+        emit_outcome(a, dict(status='refused', reason='stage %s runs only inside its day\'s held lane (--inside) on the shared '
+                                                      '%s slot; it never books CPUs of its own' % (a.stage, STAGE_SLOTS[a.stage])))
+        return REFUSED_EXIT
     b, outcome = book(a.kind, os.getpid(), meta_of(a), a.window)
     if not b:
         emit_outcome(a, outcome)

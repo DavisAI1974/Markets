@@ -438,7 +438,8 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
                                         'never search steps'))
         if path.is_file():
             result = json.loads(path.read_bytes())
-            header = {k: v for k, v in result.items() if k not in ('results', 'results_sha256')}
+            # evidence_read is the read's own measurement (rows hashed/parsed/selected), not an input: never compared
+            header = {k: v for k, v in result.items() if k not in ('results', 'results_sha256', 'evidence_read')}
             if header != expected or result.get('results_sha256') != _digest(result.get('results')) or \
                     [r['claim_id'] for r in result['results']] != [c['id'] for c in claims]:
                 raise ValueError('completed accumulated teaching differs from its exact retained inputs')
@@ -448,14 +449,16 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
             # stream; a separate full pre-read adds I/O without binding those later reads.
             measured_claims = ([c for c in claims if c['id'] in item['affected_claim_ids']]
                                if _successor is not None else claims)
+            read_report = {}     # what the read did (row filter, parts, rows hashed/parsed/selected; school_recovery 2026-10-07)
             measured = ST.test(dict(author=lesson['author'], claims=measured_claims), days,
-                              records_dir=Path(records_selection['directory']), records_selection=records_selection['files'])
+                              records_dir=Path(records_selection['directory']), records_selection=records_selection['files'],
+                              report=read_report)
             if [r['claim_id'] for r in measured] != [c['id'] for c in measured_claims]:
                 raise ValueError('scientific owner returned a different affected claim set')
             retained = {r['claim_id']: r for r in original_result['results']} if _successor is not None else {}
             retained.update({r['claim_id']: r for r in measured})
             results = [retained[c['id']] for c in claims]
-            result = dict(expected, results=results, results_sha256=_digest(results))
+            result = dict(expected, results=results, results_sha256=_digest(results), evidence_read=read_report)
             write_json(path, result)
             created_files += 1
         if _successor is not None:

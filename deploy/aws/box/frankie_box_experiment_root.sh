@@ -1,6 +1,8 @@
 # The experiment's ROOT for any ingested day (frankie_box_experiment_root.py): the day's sealed ingest read in place, the
-# same whole-day pin, Session.derive with bedrock OFF (ROOT process 1 always; process 4, the digest, only with DIGEST=on
-# for a classroom-arm day). No authorship, no re-ingest, no model call. Inputs: CODE_ROOT, INGESTION_RECEIPT (the day's
+# same whole-day pin, Session.derive with the NATIVE PASS ON for the experiment (Greg reversed the 2026-09-29 no-bedrock
+# decision: every NEW run's plan carries SHARED_MARKET_POLICY, under which BEDROCK defaults to on below; only an older
+# saved legacy plan, never mutated, still reaches here without a policy and keeps its native-off ROOT) (ROOT process 1
+# always; process 4, the digest, with DIGEST=on). No authorship, no re-ingest, no model call. Inputs: CODE_ROOT, INGESTION_RECEIPT (the day's
 # compact ingestion-receipt.json) + INGESTION_RECEIPT_SHA256, DAY (YYYYMMDD), DAY_ROLE (discovery | confirmation, the
 # latter only with FROZEN_SURVIVORS), OUTPUT_ROOT (fresh, under /opt/frankie-box/work/experiment-roots/), DATA_WORKERS,
 # DIGEST (on | off, default off). A probe: frankie_box_progress.sh DIRECTORY=<OUTPUT_ROOT>.
@@ -20,7 +22,7 @@ set -- --commit "$MARKETS_SHA" --ingestion-receipt "$INGESTION_RECEIPT" --ingest
 # picture (Greg, 2026-10-07: an absent native layer never blocks the day; the reader lists
 # it). This flag does not dispatch execution.
 case "${SHARED_MARKET_POLICY:-}" in
-  '') BEDROCK="${BEDROCK:-off}" ;;
+  '') BEDROCK="${BEDROCK:-off}" ;;   # an older saved legacy plan only (kept as saved); every NEW run carries the policy
   FRANKIE_SHARED_MARKET_TIMELINE_V1) BEDROCK="${BEDROCK:-on}"; set -- "$@" --shared-market-policy "$SHARED_MARKET_POLICY" ;;
   *) echo 'unknown SHARED_MARKET_POLICY; retained evidence unchanged' >&2; exit 2;;
 esac

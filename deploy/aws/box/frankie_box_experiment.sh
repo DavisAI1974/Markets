@@ -84,7 +84,8 @@ case "${VOICE_ROUTE:-local}" in
   github) set -- "$@" --voice-route github ;;
   *) echo "VOICE_ROUTE must be local or github" >&2; exit 2;;
 esac
-# the synchronized shared market input of a NEW run (Greg, 2026-10-07), saved with the plan at its first start
+# the synchronized shared market input of a NEW run (Greg, 2026-10-07), saved with the plan at its first start; unset =
+# the orchestrator's default: a NEW run selects it (native pass on), an existing run keeps its saved plan's value
 case "${SHARED_MARKET_POLICY:-}" in
   '') ;;
   FRANKIE_SHARED_MARKET_TIMELINE_V1) set -- "$@" --shared-market-policy "$SHARED_MARKET_POLICY" ;;

@@ -95,6 +95,8 @@ HERE = Path(__file__).resolve().parent
 QUEUE = Path('/opt/frankie-box/work/frankie-queue')
 SCHEMA = 'FRANKIE_QUEUE_LINE_V1'
 LINES = ('root', 'class')
+KICK_LOCK_WAIT_SECONDS = 60          # kick waits up to this for the started worker to hold its lock (B3a)
+KICK_GRACE_SECONDS = 900             # a kick this recent keeps the box in use (KeepRunning) even before its worker's lock
 STATES = ('queued', 'running', 'done', 'failed', 'saved', 'unknown')
 # saved: the day's owner stopped at a boundary on its day-bound save marker and retains its attempt, exact CPU set and
 #        booking; it leaves this state only through ACTION=resume (never ordinary admission or a failure retry).
@@ -407,11 +409,25 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
             proc = subprocess.Popen(argv, env=dict(os.environ, **env), stdout=out, stderr=subprocess.STDOUT,
                                     stdin=subprocess.DEVNULL, start_new_session=True)
         how = dict(method='new session', pid=proc.pid, systemd_run=how)
+    # B3a (2026-10-07): the kick is recorded BEFORE it returns (<line>-kick.json: when, by, scope, how) and waits, bounded,
+    # until the new worker holds its lock, so a caller's KeepRunning clear (box_in_use) never sees an idle box while the
+    # kicked worker is still importing; a worker that has not taken its lock in time is named, and the kick marker keeps
+    # the box in use for KICK_GRACE_SECONDS
+    import frankie_box_cores as C
+    C.write_json(QUEUE / ('%s-kick.json' % line), dict(schema='FRANKIE_QUEUE_KICK_V1', line=line, at=time.time(), at_utc=utc(),
+                                                       by=by, scope=scope['text'], how=how))
+    deadline, held = time.time() + KICK_LOCK_WAIT_SECONDS, False
+    while time.time() < deadline:
+        _, held = worker_state(line)
+        if held:
+            break
+        time.sleep(1.0)
     with locked():
         event(line, 'kick', by=by, commit=commit, code_root=str(code_root), max_seconds=max_seconds, how=how, log=str(log_path),
-              scope=scope['text'])
-    log('%s worker started for %s (%s); log %s' % (line, scope['text'], how, log_path))
-    return dict(started=True, how=how, log=str(log_path), scope=scope['text'])
+              scope=scope['text'], worker_lock_held=bool(held))
+    log('%s worker started for %s (%s); log %s; worker lock %s' % (line, scope['text'], how, log_path,
+                                                                  'held' if held else 'NOT yet held after %d s' % KICK_LOCK_WAIT_SECONDS))
+    return dict(started=True, how=how, log=str(log_path), scope=scope['text'], worker_lock_held=bool(held))
 
 
 def handover(line, code_root, commit, max_seconds, poll_seconds, log=print, scope=None):
@@ -1366,8 +1382,16 @@ def _finish_steps(run, e, code_root, commit, log):
             facts['lessons'] = dict(batch=key, status=r.get('status'), reason=r.get('reason'))
             if r.get('status') not in X.FINISHED:
                 return ('waiting' if r.get('status') == 'waiting' else 'failed'), facts
+        if key and key.startswith('discovery') and run.finished('lessons', key) and not run.finished('survivors', key):
+            # stage 10 at the batch boundary (Run.lessons runs it after recording the lessons; this covers a batch whose
+            # lessons finished earlier); never a gate on the day: its outcome is listed in the facts
+            batch = [d for d in run.plan['days'] if run.batch_of(d['day']) == key]
+            r = run.survivors(key, batch) or {}
+        if key and key.startswith('discovery'):
+            r = run.receipt('survivors', key) or {}
+            facts['survivors'] = dict(batch=key, status=r.get('status'), reason=r.get('reason'))
 
-    # Jev remains blind: the relay gives him only the governed classroom material, never Frankie's answers.
+    # Jev remains blind: his stage reads only the governed classroom material, never Frankie's answers (sealed first).
     if not e['classroom_arm']:
         for stage in ('classroom', 'jev', 'exchange', 'voice', 'school', 'reports'):
             r = run.guarded(stage, e) or {}

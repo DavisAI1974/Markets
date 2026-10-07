@@ -14,7 +14,9 @@ the committed box script, run as a child with its own inputs, its output kept in
            presigned map: getprefix frankie/day_history/<EXTERNAL_HISTORY_RUN>/ and nymex/ng_fut_parent_v0/, put slots
            frankie/day_external/<day>/day-external.json and day-external-receipt.json. A day whose history or curve is not
            in the map yet WAITS, listed: the day is never skipped, and a day file is never built without its pieces)
-  root     frankie_box_experiment_root.sh             (bedrock off; DIGEST=on only on the classroom-arm days)
+  root     frankie_box_experiment_root.sh             (every NEW run: SHARED_MARKET_POLICY with the native pass on, --bedrock
+           on, so native.member/native.lifecycle exist for the 99; an older saved plan keeps its legacy bedrock-off ROOT;
+           DIGEST=on)
   teacher  frankie_box_experiment_teacher.sh DAYS=... (the Dipole rows, 1 day in 5: a batch of up to five days, each its
            own walk; a day whose rows exist is skipped; while the script is not built the batch stops here, listed;
            it takes the day file beside the sealed ingest and builds the BOSS teacher's external section)
@@ -24,9 +26,10 @@ the committed box script, run as a child with its own inputs, its output kept in
            or the plan's previous_classroom)
            The day's report number N is reserved right after its classroom step (done, reused or refused), where the
            reports used to run, so the numbering is unchanged (frankie_box_experiment_day_reports.reserve_number)
-  jev      frankie_box_jev_relay.sh ACTION=material   (classroom-arm days: Jev's material, relayed when the dispatch
-           presigned the slots putrange:<jev bucket>/clm-sidecar/<stamp>/material:8; the Jev Pod is its own workflow step
-           and cannot be started from the box, so the step records waiting_for_pod with the exact dispatches)
+  jev      frankie_box_jev_cpu.sh JEV_REQUEST=...     (classroom-arm discovery days: an ordinary stage of the day on the
+           day's held lane, on the ONE worker CPU it shares with the meeting (frankie_box_cores.STAGE_SLOTS 'adviser',
+           threads=1), every runtime row from Granite's shared definition; no box, host, Pod or relay of its own. Older
+           receipts of the retired relay (waiting_for_pod) are read as they are and stay pending)
   data     frankie_box_experiment_data.sh ACTION=export
   search   frankie_box_experiment_search.sh
   lessons  frankie_box_scientific_teacher.sh          (after each batch: every discovery-day search of the run so far,
@@ -155,29 +158,14 @@ GRANITE_DIR = BOX_ROOT / 'granite'
 GRANITE_PROVENANCE_SCHEMA = 'FRANKIE_GRANITE_RUNTIME_PROVENANCE_V1'   # written by the setup script after every pin check passed
 SHARED_RUNTIME_SCHEMA = 'FRANKIE_SHARED_MODEL_RUNTIME_V1'
 # THE 99 LAYERS COMBINED FOR FRANKIE (Greg, 2026-10-07: "the biggest thing ... is making sure the 99 layers are combined for
-# Frankie first"): the retained 99-entry crosswalk (6 raw, 49 calculation/clock, 23 control/knowledge/arm, 9 sealed
-# answers, 2 disabled shadows, 10 append-only outputs; ROOT_PLANE_COVERAGE_20261006.md) pinned by CYCLE_CALCULATION_PINS.
-# Every ROOT records, per entry, whether the day PRODUCED it, whether it is ADMITTED into the shared market timeline
-# picture, or why it is absent (thinner picture; the day stays), retired, sealed, disabled or an output (all99_admission).
-CROSSWALK = 'research/kalshi/frankie_boss/audits/CROSSWALK_SUNDAY_CYCLE0_FEED_33746436209_20260916.json'
+# Frankie first"). The 99 identities, their roles and their settled per-entry market carriers come from ONE registry,
+# frankie_box_all99_coverage (REGISTRY / entries / MARKET_CARRIERS / NATIVE_ENTRIES / FIXED_WORDS; review 2026-10-07: four
+# copies had drifted); this file keeps only the ROOT's own reading of them. Every ROOT records, per entry, whether the day
+# PRODUCED it and whether it is ADMITTED into the shared market timeline picture through its own carrier, or why not
+# (thinner picture; the day stays), and the shared field FRANKIE_ALL99_COVERAGE_V1 beside it (all99_admission).
 CYCLE_PINS = 'research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json'
 ALL99_SCHEMA = 'FRANKIE_ALL99_ADMISSION_V1'
-ALL99_GROUPS = {                 # registry group -> (role, how the day's evidence carries it into the shared picture)
-    'canonical_raw_dbn_mbo': ('raw', 'journal'),
-    'order_lifecycle': ('calculation', 'native'), 'full_book_fifo_queue': ('calculation', 'native'),
-    'microstructure_mechanics': ('calculation', 'native'), 'legacy_observable_crosswalk': ('calculation', 'legacy'),
-    'derived_geometry': ('calculation', 'native'), 'prebirth_opportunity': ('calculation', 'native'),
-    'causal_clocks': ('calculation', 'native'),
-    'binding_common_controls': ('control', 'brain'), 'current_brain_runtime': ('knowledge', 'brain'),
-    'frozen_learned_structure': ('knowledge', 'brain'), 'corrected_extra_agent_carryforward': ('knowledge', 'brain'),
-    'a_memory_overlay': ('arm', 'retired'), 'a_clean_overlay': ('arm', 'retired'),
-    'sealed_step1_answer': ('sealed', 'boundary'), 'sealed_target_timing': ('sealed', 'boundary'),
-    'provisional_shadow': ('shadow', 'disabled'), 'append_only_outputs': ('output', 'stages')}
-LEGACY_CARRIER = {'legacy_price': 'root.prices', 'legacy_book_imbalance': 'root.frames',
-                  'legacy_structure_observables': 'root.structures',
-                  'legacy_native_signed_flow': 'completed_sources', 'legacy_per_second_roll20': 'completed_sources'}
 S3_BUCKET = 'bento-568968024170-us-east-2-an'
-JEV_BUCKET = 'frankie-granite42-568968024170-us-east-1'
 CURVE_PREFIX = 'nymex/ng_fut_parent_v0'
 MONDAY = '20211004'                      # the gold standard: never re-ingested
 MONDAY_RECOVERY = '/opt/frankie-box/work/sealed-recovery-35796793428/recovery-receipt.json'   # its ingest was recovered; checkpoint beside it
@@ -351,7 +339,8 @@ def load_plan(a, code_root):
                 lags=a.lags, transforms=a.transforms or None, batch=BATCH,
                 external_history_run=a.external_history_run or None, external_wait=a.external_wait != 'off',
                 brain=a.brain, previous_classroom=a.previous_classroom or None, directive=directive_of(code_root))
-    for key in ('jev_runtime', 'jev_brain'):                  # only when given: earlier plans keep their digest
+    for key in ('jev_brain',):     # only when given: earlier plans keep their digest (a saved plan's older jev_runtime
+                                   # stays in it, recorded as superseded by Run.jev, never used)
         if getattr(a, key, None):
             plan[key] = str(Path(getattr(a, key)))
     if getattr(a, 'shared_market_policy', None):              # a NEW request's policy, saved with the plan at its first
@@ -511,7 +500,8 @@ def jev_stamp(plan, e):
 def presign_items(plan, code_root):
     """The presign string one orchestrator dispatch carries (frankie_box_run.yml presign=...): every partition of every
     planned day's manifest (fetch), the day history and curve prefixes (read-only getprefix), the day-file upload slots
-    of every day, and Jev's material slots of every classroom-arm day. Listed items only; nothing is presigned here."""
+    of every day. Listed items only; nothing is presigned here. (Jev's material stays on the box: his stage runs on the
+    day's held lane, so no material slot to another host is listed; Greg, 2026-10-07.)"""
     items = []
     for e in plan['days']:
         if not e.get('manifest'):
@@ -545,9 +535,6 @@ def presign_items(plan, code_root):
     for e in plan['days']:
         for name in (DAY_FILE, DAY_FILE_RECEIPT):
             items.append('put:%s/frankie/day_external/%s/%s' % (S3_BUCKET, e['day'], name))
-    for e in plan['days']:
-        if e['classroom_arm']:
-            items.append('putrange:%s/clm-sidecar/%s/material:8' % (JEV_BUCKET, jev_stamp(plan, e)))
     return list(dict.fromkeys(items))
 
 
@@ -560,6 +547,7 @@ def done_status(r):
 
 
 KEEP_RUNNING_SCHEMA = 'FRANKIE_KEEP_RUNNING_V1'
+PROCESS_STARTED = time.time()           # this process's start (box_in_use: a kick before it is the one that started us)
 
 
 def this_instance():
@@ -593,9 +581,34 @@ def box_in_use(run_name=None):
         import frankie_box_frankie_queue as Q
         for line in Q.LINES:
             status, held = Q.worker_state(line)
-            if held and (status or {}).get('pid') != os.getpid():
+            other = held and (status or {}).get('pid') != os.getpid()
+            if other:
                 busy.append('%s line worker holds its lock (pid %s)' % (line, (status or {}).get('pid')))
-    except Exception as error:  # noqa: BLE001
+            # B3a (2026-10-07): a kick returns after its worker took the lock or KICK_LOCK_WAIT_SECONDS passed; a kick this
+            # recent keeps the box in use while its worker is still starting (Python start-up, imports)
+            kick = Q.QUEUE / ('%s-kick.json' % line)
+            if kick.is_file():
+                try:
+                    age = time.time() - float(json.loads(kick.read_bytes()).get('at') or 0)
+                except (OSError, ValueError):
+                    age, at = 0.0, time.time()           # unreadable: a fresh kick (in use), never idle on a guess
+                else:
+                    at = time.time() - age
+                # the kick that started THIS process (a line worker ending) is not a new kick: ignored here
+                mine = (status or {}).get('pid') == os.getpid() and at <= PROCESS_STARTED
+                if age < Q.KICK_GRACE_SECONDS and not mine:
+                    busy.append('%s line kicked %d s ago (its worker may still be starting)' % (line, int(age)))
+            # unfinished entries of ANY run: running / unknown always keep the box (an uncertain day is never read as
+            # idle); queued ones only while a worker of the line is alive or was kicked (nothing else would take them)
+            entries = Q.load(line).get('entries') or []
+            live = [x for x in entries if x.get('state') in ('running', 'unknown')]
+            if live:
+                busy.append('%s line: %d running/unknown entr%s (%s)' % (line, len(live), 'y' if len(live) == 1 else 'ies',
+                                                                         ', '.join('%s %s' % (x.get('run'), x.get('day')) for x in live[:6])))
+            queued = [x for x in entries if x.get('state') == 'queued']
+            if queued and (other or any(b.startswith('%s line kicked' % line) for b in busy)):
+                busy.append('%s line: %d queued entr%s with a live or just-kicked worker' % (line, len(queued), 'y' if len(queued) == 1 else 'ies'))
+    except (Exception, SystemExit) as error:  # noqa: BLE001 - Q.load refuses with SystemExit: also in use, named
         busy.append('queue state unreadable (%s): assumed in use' % type(error).__name__)
     parent = WORK / 'cpu-controller'
     for lock in sorted(parent.glob('*/controller.lock')) if parent.is_dir() else ():
@@ -652,56 +665,53 @@ def keep_running(run_name, value, reason, by, log=print):
 
 
 def all99_crosswalk(code_root):
-    """The pinned 99-entry crosswalk from the staged checkout: (entries, pin) where pin records the file's witness and
-    whether it equals the sha256 CYCLE_CALCULATION_PINS.json binds it to. A mismatch or an unreadable file is a SEPARATE
-    VISIBLE integrity failure (never relabelled as missing coverage): the entries are still listed when readable, the
-    pin says 'differs'/'unreadable', and the caller's list carries it."""
-    path = Path(code_root) / CROSSWALK
-    pin = dict(path=str(path), expected_sha256=None, actual_sha256=None, integrity='unverified')
+    """The ONE registry (frankie_box_all99_coverage.registry) and its pin: (registry doc, pin). The pin records the
+    crosswalk file's witness, the registry's integrity findings and whether CYCLE_CALCULATION_PINS.json binds the same
+    crosswalk sha256 as the registry module; any difference is a SEPARATE VISIBLE integrity finding (never relabelled
+    as missing coverage); the embedded identities are still the ones listed, so no entry is dropped."""
+    import frankie_box_all99_coverage as A99
+    reg = A99.registry(code_root)
+    pin = dict(path=str(Path(code_root) / A99.CROSSWALK_PATH), crosswalk=reg.get('crosswalk'),
+               expected_sha256=A99.CROSSWALK_SHA256, registry_sha256=A99.REGISTRY_SHA256,
+               registry_integrity=list(reg.get('integrity') or []))
     try:
         pins = json.loads((Path(code_root) / CYCLE_PINS).read_bytes())
-        pin['expected_sha256'] = (pins.get('crosswalk') or {}).get('sha256')
-        pin['registry_sha256'] = pins.get('registry_sha256')
+        pinned = (pins.get('crosswalk') or {}).get('sha256')
+        pin['cycle_pins_sha256'] = pinned
+        if pinned != A99.CROSSWALK_SHA256:
+            pin['registry_integrity'].append(dict(kind='cycle_pins_crosswalk_differs', cycle_pins=pinned,
+                                                  registry=A99.CROSSWALK_SHA256))
     except (OSError, ValueError) as error:
-        pin['pins_error'] = '%s: %s' % (type(error).__name__, error)
-    try:
-        raw = path.read_bytes()
-        doc = json.loads(raw)
-        entries = doc.get('layers') or []
-        pin['actual_sha256'] = hashlib.sha256(raw).hexdigest()
-        pin['bytes'] = len(raw)
-        pin['crosswalk_sha256'] = doc.get('crosswalk_sha256')
-        pin['registry_sha256_in_crosswalk'] = doc.get('registry_sha256')
-        pin['integrity'] = ('verified' if pin['expected_sha256'] and pin['actual_sha256'] == pin['expected_sha256']
-                            else 'unpinned' if not pin['expected_sha256'] else 'differs')
-        if doc.get('schema') != 'FRANKIE_NATIVE_RAW_MBO_LAYER_CROSSWALK_V1' or len(entries) != 99:
-            pin['integrity'] = 'differs'
-            pin['shape'] = 'schema %s, %d entries (99 expected)' % (doc.get('schema'), len(entries))
-        return entries, pin
-    except (OSError, ValueError) as error:
-        pin['integrity'] = 'unreadable'
-        pin['error'] = '%s: %s' % (type(error).__name__, error)
-        return [], pin
+        pin['registry_integrity'].append(dict(kind='cycle_pins_unreadable', error='%s: %s' % (type(error).__name__, error)))
+    pin['actual_sha256'] = (reg.get('crosswalk') or {}).get('sha256')
+    pin['integrity'] = ('verified' if reg.get('crosswalk') and not pin['registry_integrity'] else
+                        'not_in_checkout' if not reg.get('crosswalk') and all(f.get('kind') == 'crosswalk_not_in_checkout'
+                                                                               for f in pin['registry_integrity'])
+                        else 'differs')
+    return reg, pin
 
 
 def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch, ingest, brain):
-    """Per day: every one of the 99 crosswalk entries with its disposition for THIS ROOT (ALL99_SCHEMA):
-      produced   the ROOT derived it (derive.json layers[<id>].status == 'derived'; the sealed journal for the raw six)
-      admitted   produced AND carried into the shared market timeline picture: the ROOT is under the plan's policy and the
-                 carrying timeline layer is present (root.frames/prices/structures from the ROOT's spool pins; native.member
-                 and native.lifecycle from the completed native ledgers; completed_sources for the two post-stream aggregates)
-      absent     not produced (bedrock off, no producer, a producer failure) or produced but not in the picture (a legacy
-                 ROOT, an absent carrier): the picture is THINNER here, the day stays (Greg's missing-coverage rule)
-      knowledge  a control/knowledge input carried by the brain, not a numeric timeline layer (its consumers are the
-                 learner/teacher readers); 'brain' names whether the brain root exists
-      retired    Memory A / A-clean overlays: retired by Greg (H06-H08 historical/not_bound); not an input
-      sealed     a Step-1/timing answer boundary: preserved, never exposed as a live discovery input
-      disabled   a provisional shadow producer: listed, never silently activated
-      output     an append-only output: filed by its own later stage (classroom, search, Jev, reports), pending at ROOT
+    """Per day: every one of the 99 registry entries with its disposition for THIS ROOT (ALL99_SCHEMA), its own words:
+      admitted   produced AND carried into the shared market timeline picture by the entry's OWN settled carrier
+                 (frankie_box_all99_coverage.MARKET_CARRIERS: input / opening / clock / availability through the sealed
+                 journal; root.frames / root.prices / root.structures from the ROOT's spool pins; native.member /
+                 native.lifecycle from the completed native ledgers): row-level presence inside a carrier is the shared
+                 reader's count (frankie_box_market_timeline), never claimed here
+      thin       not admitted through its own carrier but its thinner settled carrier is present (the picture carries a
+                 thinner form)
+      absent     not produced (a native pass that did not complete or a legacy plan's native-off ROOT, no producer, a
+                 producer failure) or produced but not in the picture: the picture is THINNER, the day stays
+      completed_only  a post-stream aggregate (no contributing-cursor provenance), never a live value
+      control / not_read_by_this_piece / retired / not_applicable / withheld_by_role / disabled / output_not_written_here /
+                 produced: settled by role (the shared vocabulary; FIXED_WORDS for the sealed, shadow, Memory A, A-clean
+                 and arm-profile entries)
       integrity  the carrier's evidence could not be verified (selected_files raised): a separate visible failure
-    Reads the ROOT's derive.json layer records and spool pins; it instantiates no timeline reader (no spool is read).
-    Producers in Codex-owned code are named per entry (producer.file) so a request can name file and entry."""
-    entries, pin = all99_crosswalk(code_root)
+    The same rows are the shared field FRANKIE_ALL99_COVERAGE_V1 (frankie_box_all99_coverage.field, piece 'root') on the
+    receipt as all99['coverage'], validated (its findings beside it). Reads derive.json, the receipt's spool pins and
+    selected_files only; it instantiates no timeline reader (no spool is read)."""
+    import frankie_box_all99_coverage as A99
+    reg, pin = all99_crosswalk(code_root)
     out = dict(schema=ALL99_SCHEMA, day=day, crosswalk=pin, plan_policy=plan_policy, entries=[], counts={},
                rule='no entry rejects the timeline or the day: an absent layer thins the picture with its reason; '
                     'disabled producers are listed, never activated; integrity failures stay separate and visible')
@@ -717,122 +727,225 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
     layers = derive.get('layers') or {}
     bedrock = derive.get('bedrock') if isinstance(derive.get('bedrock'), dict) else {}
     failures = derive.get('failure_count')
-    # the timeline's carrying layers, as frankie_box_market_timeline.SharedMarketTimeline establishes them at open
+    # the per-layer native records Session.derive writes right after derive.json (work/native-layer-records.json,
+    # FRANKIE_ROOT_NATIVE_LAYER_RECORDS_V1; correction_consumer 2026-10-07): one record per native registry layer, bound to
+    # derive.json's bytes; used only when that binding holds (else listed, never trusted)
+    native_records, native_records_why = {}, None
+    nl_path = Path(calc_dir) / 'work' / 'native-layer-records.json' if calc_dir else None
+    if nl_path is not None and nl_path.is_file():
+        try:
+            nl = json.loads(nl_path.read_bytes())
+            dpath = (calc.get('derivation') or {}).get('path')
+            bound = dpath and (nl.get('derive') or {}).get('sha256') == sha256_file(dpath)
+            if nl.get('status') == 'built' and bound:
+                native_records = {r['entry']: r for r in nl.get('records') or [] if isinstance(r, dict) and r.get('entry')}
+            else:
+                native_records_why = 'native-layer-records.json is %s%s' % (nl.get('status'), '' if bound else ', not bound to this derive.json')
+        except (OSError, ValueError, KeyError) as error:
+            native_records_why = 'native-layer-records.json unreadable: %s: %s' % (type(error).__name__, error)
+    else:
+        native_records_why = 'no work/native-layer-records.json in this ROOT (written by Session.derive after derive.json)'
+    in_picture = bool(plan_policy) and not policy_mismatch
+    picture_why = (None if in_picture else 'an older saved legacy plan (no shared market policy, kept as saved): produced '
+                   'layers are not in the shared picture' if not plan_policy else
+                   'the ROOT is refused under the plan\'s policy: %s' % policy_mismatch)
+    journal = bool(ingest and ingest.get('status') in FINISHED)
     carriers = {}
+    for name in ('input', 'opening', 'clock', 'availability'):
+        carriers[name] = (dict(status='present', via='the sealed journal of the day (the timeline\'s input)') if journal and in_picture
+                          else dict(status='absent', reason='no sealed ingest of the day on this box' if not journal else picture_why))
     for role in ('frames', 'prices', 'structures'):
         spool = (calc.get('shared_market_sources') or {}).get(role)
         if not plan_policy:
-            carriers['root.' + role] = dict(status='absent', reason='a legacy plan: no shared market policy, no spool pin')
+            carriers['root.' + role] = dict(status='absent', reason='an older saved legacy plan: no shared market policy, no spool pin')
         elif spool is None:
             carriers['root.' + role] = dict(status='absent', reason='the completed ROOT recorded no %s spool pin' % role)
         elif isinstance(spool, dict) and spool.get('status') == 'absent':
             carriers['root.' + role] = dict(status='absent', reason=spool.get('reason') or 'the ROOT published no %s spool' % role)
         else:
             carriers['root.' + role] = dict(status='present', pin={k: spool.get(k) for k in ('path', 'bytes', 'sha256')} if isinstance(spool, dict) else spool)
-    native_status = 'absent'
+    native_done = bool(bedrock) and not bedrock.get('skipped')
     try:
         from frankie_box_experiment_native import selected_files
         selected = {item['native_role']: item for item in selected_files(calc_dir, str(day))} if calc_dir else {}
         for role, name in (('exact_member_rows.jsonl', 'native.member'), ('exact_lifecycle_rows.jsonl', 'native.lifecycle')):
             item = selected.get(role)
             carriers[name] = (dict(status='present', pin=dict(path=item['source'], **item['expected'])) if item else
-                              dict(status='absent', reason='no completed native calculation in this ROOT (bedrock off)'
-                                   if not selected else 'native ledger not selected'))
-        native_status = 'present' if all(carriers[n]['status'] == 'present' for n in ('native.member', 'native.lifecycle')) else 'absent'
+                              dict(status='absent', reason=('the native pass did not run in this ROOT (%s)' % (
+                                  bedrock.get('reason') if bedrock.get('skipped') else 'no bedrock record in derive.json'))
+                                  if not selected else 'native ledger not selected'))
     except Exception as error:  # noqa: BLE001 - altered or incomplete native evidence is an integrity failure, listed as such
-        native_status = 'integrity'
         for name in ('native.member', 'native.lifecycle'):
             carriers[name] = dict(status='integrity', reason='%s: %s' % (type(error).__name__, str(error)[:300]))
-    external = calc.get('external') or {}
-    carriers['external'] = (dict(status='present') if external.get('status') == 'attached' else
-                            dict(status='absent', reason=external.get('reason') or 'no day file attached to this ROOT'))
-    carriers['completed_sources'] = dict(status='present' if any(k in layers for k in ('legacy_native_signed_flow', 'legacy_per_second_roll20'))
-                                         and plan_policy else 'absent',
-                                         note='post_stream_only: the aggregate has no exact contributor cursor provenance (the timeline lists it so)')
-    in_picture = bool(plan_policy) and not policy_mismatch
-    picture_why = (None if in_picture else 'a legacy plan (no shared market policy): produced layers are not in the shared picture'
-                   if not plan_policy else 'the ROOT is refused under the plan\'s policy: %s' % policy_mismatch)
+    carriers['completed'] = dict(status='completed_only', note='post_stream_only: the aggregate has no exact contributor cursor '
+                                                              'provenance (the timeline lists it so; never a live value)')
     brain_present = bool(brain) and Path(brain).is_dir()
-    counts = {}
-    for entry in entries:
-        layer, group = entry.get('layer_id'), entry.get('group_id')
-        role, carrier = ALL99_GROUPS.get(group, ('unknown', 'unknown'))
-        producer = entry.get('producer') or {}
+    native_entries = set(getattr(A99, 'NATIVE_ENTRIES', ()))
+    rows = []
+    for entry in reg['layers']:
+        layer, group, role = entry['entry'], entry['group'], entry['role']
+        first, thinner = A99.MARKET_CARRIERS.get(layer, (None, None))
         row = dict(entry=layer, group=group, role=role, policy=entry.get('policy'),
-                   producer=dict(file=producer.get('file'), symbol=producer.get('symbol'), kind=producer.get('kind')),
-                   historical_status=entry.get('status'))
+                   historical_status=entry.get('historical_delivery_status'), carrier=first, thinner_carrier=thinner)
         record = layers.get(layer) if isinstance(layers, dict) else None
+        native_record = native_records.get(layer)
+        if record is None and native_record is not None:
+            record = native_record                  # the derivation's own per-layer native status, by crosswalk id
+        if native_record is not None:
+            row.update(native_record={k: native_record.get(k) for k in ('status', 'reason', 'producer_named_by_crosswalk',
+                                                                         'native_limit', 'projection') if k in native_record})
         if role == 'raw':
-            if ingest and ingest.get('status') in FINISHED:
-                row.update(produced=True, source=dict(ingest=ingest.get('ingest'), receipt_sha256=ingest.get('receipt_sha256')),
-                           carrier='journal')
-                row.update(disposition='admitted' if in_picture else 'absent',
-                           reason='the sealed journal is the timeline\'s input' if in_picture else picture_why)
+            row.update(produced=journal, source=dict(ingest=(ingest or {}).get('ingest'), receipt_sha256=(ingest or {}).get('receipt_sha256')))
+            status = carriers.get(first, {}).get('status')
+            row.update(disposition='admitted' if status == 'present' else 'absent',
+                       reason=('carried by %s (%s)' % (first, A99.CARRIER_ELEMENTS.get(first, first))) if status == 'present'
+                       else carriers.get(first, {}).get('reason'))
+        elif role in ('calculation', 'clock'):
+            if layer in A99.NOT_MARKET_CARRIED:
+                row.update(produced=None if record is None else record.get('status') == 'derived',
+                           disposition='not_read_by_this_piece', reason=A99.NOT_MARKET_CARRIED[layer])
+            elif first == 'completed':
+                row.update(produced=None if record is None else record.get('status') == 'derived', disposition='completed_only',
+                           canonical='completed_only', reason=carriers['completed']['note'])
             else:
-                row.update(produced=False, disposition='absent', reason='no sealed ingest of the day on this box')
-        elif role == 'calculation':
-            if record is None:
-                row.update(produced=False, disposition='absent',
-                           reason=derive_why or 'the ROOT derivation lists no record for this layer (not in the pin)')
-            elif record.get('status') == 'derived':
-                name = LEGACY_CARRIER.get(layer, 'native') if carrier == 'legacy' else 'native'
-                if name == 'native':
-                    present = native_status
-                    where = 'native.member+native.lifecycle'
+                if record is not None and record.get('status') == 'derived':
+                    produced, how = True, dict(producer=record.get('producer'), sha256=record.get('sha256'))
+                elif record is not None:
+                    produced, how = False, '%s: %s' % (record.get('status'), record.get('reason') or 'no reason recorded')
+                elif layer in native_entries and native_done and carriers.get(first, {}).get('status') == 'present':
+                    # a native-only entry: its one producer is the native pass; derive.json carries no per-layer record for
+                    # it (a request to the producer owner), the completed pass and its carrier ledger are the production
+                    produced, how = True, 'the completed native pass (its %s ledger present); derive.json has no per-layer record' % first
                 else:
-                    present = carriers.get(name, {}).get('status', 'absent')
-                    where = name
-                row.update(produced=True, producer_record=dict(producer=record.get('producer'), sha256=record.get('sha256')),
-                           carrier=where)
-                if present == 'integrity':
-                    row.update(disposition='integrity', reason=carriers['native.member'].get('reason'))
-                elif in_picture and present == 'present':
-                    row.update(disposition='admitted', reason=None)
+                    produced, how = False, derive_why or ('the native pass did not complete in this ROOT' if layer in native_entries
+                                                          else 'the ROOT derivation lists no record for this layer')
+                row.update(produced=produced, producer_record=how)
+                state = carriers.get(first, {}).get('status')
+                thin_state = carriers.get(thinner, {}).get('status') if thinner else None
+                if state == 'integrity':
+                    row.update(disposition='integrity', canonical='unknown', integrity=True,
+                               reason='INTEGRITY (separate, visible; not missing coverage): ' + str(carriers[first].get('reason')))
+                elif produced and in_picture and state == 'present':
+                    row.update(disposition='admitted', reason='produced and carried by its own carrier %s' % first)
+                elif in_picture and thin_state == 'present':
+                    row.update(disposition='thin', reason='its own carrier %s is %s (%s); the thinner carrier %s is present' % (
+                        first, state or 'absent', carriers.get(first, {}).get('reason') or how, thinner))
                 else:
-                    row.update(disposition='absent', reason=picture_why or 'produced, but its carrying timeline layer %s is absent: %s'
-                               % (where, carriers.get(name if name != 'native' else 'native.member', {}).get('reason')))
+                    row.update(disposition='absent', reason=picture_why or ('produced, but its carrier %s is absent: %s' % (
+                        first, carriers.get(first, {}).get('reason')) if produced else 'not produced: %s' % how))
+        elif layer in A99.FIXED_WORDS:
+            word = A99.FIXED_WORDS[layer]
+            row.update(produced=None, disposition=word, reason={
+                'withheld_by_role': 'a sealed answer/target: withheld by role (R09/R10), never a live discovery input',
+                'disabled': 'a provisional shadow disabled by the existing policy: listed, never silently activated',
+                'retired': 'Memory A is retired (Greg, 2026-09-27); H06-H08 stay historical/not_bound',
+                'not_applicable': 'the A-clean overlay is NOT_APPLICABLE in the crosswalk (not Memory A); the plan selects no A-clean arm',
+                'control': 'a DELIVERED binding control: the plan\'s arm/profile selection applied by the orchestrator, not market evidence',
+            }.get(word, word))
+        elif role in ('control', 'knowledge'):
+            row.update(produced=None, disposition='not_read_by_this_piece', consumer='the learner and teacher readers (brain)',
+                       brain=dict(path=str(brain), present=brain_present),
+                       reason='not a ROOT input by role: a %s input carried by the brain to the learner/teacher readers; their '
+                              'consumption is each reader\'s own receipt' % role)
+        elif role == 'output':
+            if layer == 'output_source_state_manifest_code_model_run_hashes' and calc.get('source_binding'):
+                row.update(produced=True, disposition='produced', pin=dict(source_binding=calc.get('source_binding'),
+                                                                           calculation_pins=calc.get('calculation_pins')),
+                           reason='this ROOT wrote its source binding and calculation pins')
             else:
-                row.update(produced=False, disposition='absent', carrier='native' if carrier == 'native' else LEGACY_CARRIER.get(layer),
-                           reason='%s: %s' % (record.get('status'), record.get('reason') or 'no reason recorded'))
-        elif carrier == 'brain':
-            row.update(produced=None, disposition='knowledge', carrier='brain', brain=dict(path=str(brain), present=brain_present),
-                       reason='a control/knowledge input of the learner and teacher readers, not a numeric timeline layer; '
-                              'its consumption is each reader\'s own receipt')
-        elif carrier == 'retired':
-            row.update(produced=False, disposition='retired', reason='Memory A is retired (Greg); H06-H08 stay historical/not_bound')
-        elif carrier == 'boundary':
-            row.update(produced=None, disposition='sealed', reason='a lawful answer boundary: preserved, never a live discovery input')
-        elif carrier == 'disabled':
-            row.update(produced=False, disposition='disabled', reason='a provisional shadow producer, disabled by the existing '
-                                                                      'policy: listed here, never silently activated')
-        elif carrier == 'stages':
-            row.update(produced=None, disposition='output', reason='an append-only output filed by its own later stage; pending '
-                                                                   'at ROOT; not a teacher input')
+                row.update(produced=None, disposition='output_not_written_here',
+                           reason='an append-only output filed by its own stage: %s' % (getattr(A99, 'OUTPUT_ROUTES', {}).get(layer) or 'another stage'))
         else:
-            row.update(produced=None, disposition='absent', reason='unknown registry group %s' % group)
-        counts[row['disposition']] = counts.get(row['disposition'], 0) + 1
+            row.update(produced=None, disposition='not_read_by_this_piece', reason='role %s: not a ROOT input' % role)
+        out['counts'][row['disposition']] = out['counts'].get(row['disposition'], 0) + 1
         out['entries'].append(row)
-    out.update(counts=counts, listed=len(out['entries']), carriers=carriers, in_picture=in_picture, picture_why=picture_why,
+        rows.append(row)
+    native18 = sorted(native_entries)
+    out.update(listed=len(out['entries']), carriers=carriers, in_picture=in_picture, picture_why=picture_why,
                derivation=dict(path=(calc.get('derivation') or {}).get('path'), failure_count=failures, read_error=derive_why,
                                bedrock=('skipped: %s' % bedrock.get('reason')) if bedrock.get('skipped') else
                                ('derived %d layer(s)' % len(bedrock.get('layers') or [])) if bedrock else 'none recorded'),
+               native_only=dict(entries=native18, admitted=[r['entry'] for r in rows if r['entry'] in native_entries
+                                                            and r['disposition'] == 'admitted'],
+                                records=dict(path=str(nl_path) if nl_path else None, used=bool(native_records),
+                                             listed=native_records_why),
+                                rule='the 18 native-only entries are carried only by native.member / native.lifecycle (Greg, '
+                                     '2026-10-07: they must reach Frankie and both teachers; every NEW run has the native pass ON)'),
                absent=[dict(entry=r['entry'], reason=r['reason']) for r in out['entries'] if r['disposition'] == 'absent'],
                disabled=[r['entry'] for r in out['entries'] if r['disposition'] == 'disabled'],
                integrity=[dict(entry=r['entry'], reason=r['reason']) for r in out['entries'] if r['disposition'] == 'integrity'],
-               requests=sorted({r['producer']['file'] for r in out['entries'] if r['disposition'] == 'absent' and r['produced'] is False
-                                and r['producer'].get('file')}))
+               requests=sorted({r['entry'] for r in out['entries'] if r['disposition'] == 'absent' and r.get('produced') is False}))
+    # the shared field (FRANKIE_ALL99_COVERAGE_V1) from the same rows, and its own validation (findings, never raised)
+    field_rows = [dict({k: v for k, v in r.items() if k not in ('role', 'policy')}, consumer='the shared market timeline picture')
+                  for r in rows]
+    try:
+        coverage = A99.field('root', day, field_rows, code_root=code_root, stage='root', registry_doc=reg,
+                             basis=dict(plan_policy=plan_policy, in_picture=in_picture, derivation=out['derivation']))
+        coverage['validation'] = A99.validate(coverage) if hasattr(A99, 'validate') else 'no validator in this checkout'
+    except Exception as error:  # noqa: BLE001 - the field is accounting; its failure is recorded, never hidden
+        coverage = dict(schema='FRANKIE_ALL99_COVERAGE_V1', error='%s: %s' % (type(error).__name__, error),
+                        rule='the shared field could not be built; nothing is inferred')
+    out['coverage'] = coverage
     return out
 
 
 def all99_summary(doc):
-    """The one-day inspection's projection of an all-99 list: counts, the absent/disabled/integrity entries, the pin."""
+    """The one-day inspection's projection of an all-99 list: counts, the absent/disabled/integrity entries, the pin, the
+    native-only entries and the shared field's counts and validation."""
     if not doc:
         return None
+    cov = doc.get('coverage') or {}
     return dict(counts=doc.get('counts'), listed=doc.get('listed'), in_picture=doc.get('in_picture'), picture_why=doc.get('picture_why'),
                 absent=doc.get('absent'), disabled=doc.get('disabled'), integrity=doc.get('integrity'),
+                native_only=doc.get('native_only'),
                 crosswalk=dict(integrity=(doc.get('crosswalk') or {}).get('integrity'),
                                sha256=(doc.get('crosswalk') or {}).get('actual_sha256')),
-                carriers={k: v.get('status') for k, v in (doc.get('carriers') or {}).items()})
+                carriers={k: v.get('status') for k, v in (doc.get('carriers') or {}).items()},
+                coverage=dict(schema=cov.get('schema'), counts=cov.get('counts'), integrity_ok=cov.get('integrity_ok'),
+                              validation=cov.get('validation'), error=cov.get('error')))
+
+
+def last_json_line(log):
+    """The last non-empty line of a child's log parsed as a JSON object (a child prints its receipt last), else None."""
+    try:
+        with open(log, 'rb') as f:
+            f.seek(0, os.SEEK_END)
+            size = f.tell()
+            f.seek(max(0, size - 4 * 1024 * 1024))       # the tail holds the last line (a receipt is far smaller)
+            lines = [z for z in f.read().decode('utf-8', 'replace').splitlines() if z.strip()]
+        value = json.loads(lines[-1]) if lines else None
+        return value if isinstance(value, dict) else None
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def native_pass_facts(output, calc, policy, child_seconds):
+    """What the ROOT's native pass (bedrock on under the shared policy) did, for the receipt and the one-day inspection:
+    requested on/off, the derivation's own bedrock record (skipped/reason, its timings when recorded, the ledgers it
+    produced), and the ROOT child's wall seconds on the held 16-CPU lane. The ADDED time of the native pass is this ROOT's
+    seconds against a bedrock-off ROOT of the same day: none has run yet, so it is UNMEASURED (named, never estimated
+    here). A failed native pass is listed with its reason; it never rejects the day by this caller."""
+    out = dict(requested='on' if policy else 'off (legacy plan)', root_child_seconds=child_seconds, cpus=16,
+               added_seconds='unmeasured: compare with a bedrock-off ROOT of the same day (none run)')
+    try:
+        derive = json.loads((Path(output) / 'work' / 'derive.json').read_bytes())
+    except (OSError, ValueError) as error:
+        out.update(derive='unreadable or absent: %s: %s' % (type(error).__name__, error))
+        return out
+    b = derive.get('bedrock') if isinstance(derive.get('bedrock'), dict) else None
+    if b is None:
+        out.update(status='absent', reason='derive.json records no bedrock pass')
+    elif b.get('skipped'):
+        out.update(status='skipped', reason=b.get('reason'))
+    else:
+        out.update(status='derived', ledgers=sorted(b.get('ledgers') or {}),
+                   **{k: b[k] for k in ('seconds', 'timings', 'phase_seconds', 'emission', 'failure', 'error') if k in b})
+    for k in ('timings', 'phase_seconds', 'seconds'):
+        if k in derive:
+            out['derive_' + k] = derive[k]
+    if calc:
+        out['root_processes'] = calc.get('root_processes')
+    return out
 
 
 class Run:
@@ -894,7 +1007,7 @@ class Run:
 
     # receipts
     def receipt_path(self, stage, key):
-        return self.dir / ('batches' if stage in ('teacher', 'lessons') else 'days') / key / (stage + '.json')
+        return self.dir / ('batches' if stage in ('teacher', 'lessons', 'survivors') else 'days') / key / (stage + '.json')
 
     def receipt(self, stage, key):
         path = self.receipt_path(stage, key)
@@ -1226,7 +1339,7 @@ class Run:
                                # same all-99 list; operator review only
                                inspection=dict(inputs=dict(calculations=str(calc), receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
                                                            if (calc / 'calculations-receipt.json').is_file() else None),
-                                               use=dict(reused=True, plan_policy=policy or 'none (legacy plan: bedrock off)',
+                                               use=dict(reused=True, plan_policy=policy or 'none (an older saved legacy plan, kept as saved: native pass off; every NEW run has it ON)',
                                                         interrupted_attempts=attempts),
                                                outputs=dict(root_status=retained.get('status'), producer_failures=retained.get('failure_count'),
                                                             shared_market_policy=retained.get('shared_market_policy'),
@@ -1253,12 +1366,19 @@ class Run:
         if policy:
             env['SHARED_MARKET_POLICY'] = policy     # the wrapper forwards --bedrock on --shared-market-policy; the same
                                                     # saved plan reaches the Linux lane's job, so its ROOT runs under it too
+        child_started = time.time()
         code, log = self.child('root', e['day'], 'frankie_box_experiment_root.sh', env)
+        child_seconds = round(time.time() - child_started, 1)
         if code != 0 or not (output / 'calculations-receipt.json').is_file():
             self.claim_end(e, output, None, 'the box ROOT attempt ended without calculations-receipt.json (exit %s)' % code)
             return self.record('root', e['day'], 'failed', exit_code=code, log=log, output_root=str(output),
-                               interrupted_attempts=attempts, reason='no calculations-receipt.json (the attempt is kept)')
+                               interrupted_attempts=attempts, seconds=child_seconds,
+                               native_pass=native_pass_facts(output, None, policy, child_seconds),
+                               reason='no calculations-receipt.json (the attempt is kept)%s' % (
+                                   '; the native pass was ON (policy %s): its failure, if it is the cause, is named in the '
+                                   'log and native_pass; no bedrock-off retry is substituted' % policy if policy else ''))
         calc = json.loads((output / 'calculations-receipt.json').read_bytes())
+        native = native_pass_facts(output, calc, policy, child_seconds)
         self.claim_end(e, output, sha256_file(output / 'calculations-receipt.json'), None)
         # the 99 layers combined for Frankie: per entry produced / admitted / absent (thinner picture, the day stays) /
         # knowledge / retired / sealed / disabled / output, on this receipt and in the one-day inspection (Greg, 2026-10-07)
@@ -1273,20 +1393,21 @@ class Run:
                                                     producer_failures=calc.get('failure_count')))
         return self.record('root', e['day'], 'done', exit_code=code, log=log, calculations=str(output),
                            receipt_sha256=sha256_file(output / 'calculations-receipt.json'), new_bytes=new_bytes(output),
-                           interrupted_attempts=attempts, digest=True, plan_policy=policy,
-                           shared_market_policy=calc.get('shared_market_policy'),
+                           interrupted_attempts=attempts, digest=True, plan_policy=policy, seconds=child_seconds,
+                           native_pass=native, shared_market_policy=calc.get('shared_market_policy'),
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
                            brain_entry=brain_entry, owner_binding=self.owner, all99=all99,
                            # the one-day inspection (frankie_box_workflow_inspection.py): what the ROOT child received,
                            # how this caller used it, what it produced; operator review only, never knowledge or a gate
                            inspection=dict(inputs=dict(ingestion_receipt=dict(path=ing['receipt'], sha256=ing['receipt_sha256']),
                                                        env={k: str(v) for k, v in env.items()}, owned_attempt=self.owned_attempt),
-                                           use=dict(resume=resume, plan_policy=policy or 'none (legacy plan: bedrock off)',
+                                           use=dict(resume=resume, plan_policy=policy or 'none (an older saved legacy plan, kept as saved: native pass off; every NEW run has it ON)',
                                                     interrupted_attempts=attempts, claim=held[2] if held else 'no claim store'),
                                            outputs=dict(calculations=str(output), exit_code=code,
                                                         receipt_sha256=sha256_file(output / 'calculations-receipt.json'),
                                                         root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
                                                         shared_market_policy=calc.get('shared_market_policy'),
+                                                        native_pass=native, seconds=child_seconds,
                                                         all99=all99_summary(all99))))
 
     def all99(self, day, calc_dir, calc, policy, mismatch):
@@ -1818,6 +1939,19 @@ class Run:
             else:
                 env['SCHOOL_LISTED'] = 'the day\'s school stage is %s%s' % (
                     school.get('status') or 'not run', (': ' + school['reason']) if school.get('reason') else '')
+            # the FRANKIE report's "The 99 layers" section (correction_consumer, 2026-10-07): the run directory and the piece
+            # receipts that carry an all-99 list; each only when its stage finished with that receipt (else the report lists it)
+            env['RUN_DIR'] = self.dir
+            batch = self.batch_of(day)
+            sv = self.receipt('survivors', batch) if batch else None
+            if sv and sv.get('status') == 'done' and isinstance(sv.get('receipt'), dict) and sv['receipt'].get('path'):
+                env['CANDIDATES_RECEIPT'] = sv['receipt']['path']
+            al = self.receipt('accumulated_lessons', day) or {}
+            if al.get('status') == 'done' and al.get('receipt'):
+                env['CARRIED_CLAIMS_RECEIPT'] = al['receipt']
+            jv = self.receipt('jev', day) or {}
+            if jv.get('receipt') and Path(jv['receipt']).is_file():
+                env['JEV_RECEIPT'] = jv['receipt']
             code, log = self.child('reports', day, 'frankie_box_experiment_day_reports.sh', env)
             r = self.reports_receipt(log, day=day, run=self.plan['run'])
             for item in (r or {}).get('reports') or []:
@@ -2076,6 +2210,11 @@ class Run:
         if not (search and search['status'] in FINISHED):
             return self.record('exchange', day, 'waiting', reason='the day\'s search is %s' % ((search or {}).get('status')
                                                                                               or 'not run'))
+        if search['status'] == 'not_run':
+            # B5: the exchange's scientific turn replies with the day's search counts; with no search of the day the
+            # exchange is not run (listed with the search's reason); voice, school and reports go on without it
+            return self.record('exchange', day, 'not_run', reason='the day\'s search is not_run (%s): no search counts for '
+                                                                 'the exchange; listed' % search.get('reason'))
         files, listed = self.lessons_files(e, lessons)
         import frankie_box_experiment_review as REVIEW
         import frankie_box_lane_state as LS
@@ -2136,8 +2275,10 @@ class Run:
         self.check_save()
         x = self.receipt('exchange', day)
         if not (x and x['status'] in ('done', 'reused') and x.get('frankie_view')):
-            return self.record('voice', day, 'skipped' if (x or {}).get('status') == 'skipped' else 'waiting',
-                               reason='the day\'s exchange is %s' % ((x or {}).get('status') or 'not run'))
+            status = (x or {}).get('status')
+            return self.record('voice', day, status if status in ('skipped', 'not_run') else 'waiting',
+                               reason='the day\'s exchange is %s%s' % (status or 'not run',
+                                                                       (': ' + x['reason']) if (x or {}).get('reason') else ''))
         self.require_current_exchange(day, dict(EXCHANGE_VIEW=x['frankie_view']))
         target = BR.meeting_directory(x['frankie_view'], owner_dir=self.dir)
         brain = self.plan.get('brain') or str(BRAIN)
@@ -2163,13 +2304,24 @@ class Run:
                     record['status'], why)
         if not reused and self.plan.get('voice_route') == 'github':
             return self.voice_remote(e, x, target, brain, inputs)
+        if not reused and not getattr(self, 'slot_booking', None):
+            # Greg, 2026-10-07: the meeting is an ordinary stage of the day on the day's held lane, on the ONE worker CPU it
+            # shares with Jev (frankie_box_cores.STAGE_SLOTS 'adviser'); a Run that holds no day slot (the --root-queue off
+            # batch path) has no lane to place it on: waiting, non-blocking, named; never a booking of its own
+            return self.record('voice', day, 'waiting', non_blocking=True,
+                               reason='the meeting runs on the day\'s held lane (the shared adviser CPU); this Run holds no '
+                                      'day slot (the ROOT line or the class line runs it)',
+                               inspection=dict(inputs=inputs, use='not dispatched: no held day lane on this Run',
+                                               outputs=dict(meeting_status=None)))
         if not reused:
             receipt_path = target / 'receipt.json'
             prior_receipt = receipt_path.read_bytes() if receipt_path.is_file() else None
-            env = dict(EXCHANGE_VIEW=x['frankie_view'], OUT_DIR=target, BRAIN=brain)
+            # MEETING_THREADS=1: the meeting's llama-server on the shared adviser CPU of the lane at one thread (every other
+            # runtime row from Granite's definition); the CPU is claimed by the child wrapper (cores cmd_run_step)
+            env = dict(EXCHANGE_VIEW=x['frankie_view'], OUT_DIR=target, BRAIN=brain, MEETING_THREADS=1)
             # the one pinned runtime on the box (shared_runtime): its paths reach the wrapper as LLAMA_SERVER/GGUF_MODEL
-            # only when the gate is ready; otherwise the wrapper runs inputs-only and the refusal's reasons are on this
-            # receipt (nothing silent; the day goes on, the meeting is non-blocking)
+            # when the gate is ready; otherwise the wrapper runs the local route on the canonical paths and the meeting's
+            # gate REFUSES visibly (a refused record; the reasons also on this receipt; the day goes on, non-blocking)
             runtime = self.shared_runtime()
             if runtime['status'] == 'ready':
                 env.update(LLAMA_SERVER=runtime['binary'], GGUF_MODEL=runtime['model'])
@@ -2178,6 +2330,7 @@ class Run:
             inputs['shared_runtime'] = dict(status=runtime['status'], reasons=runtime['reasons'], binary=runtime['binary'],
                                             model=runtime['model'], provenance=runtime['provenance'])
             code, log = self.child('voice', day, 'frankie_box_granite_meeting.sh', env)
+            inputs['adviser_slot'] = (self._cpu.get(('voice', day)) or {}).get('line') or 'no claim line (the child did not reach the ledger)'
             if code != 0:
                 current = receipt_path.read_bytes() if receipt_path.is_file() else None
                 if (current is None or current == prior_receipt
@@ -2232,6 +2385,14 @@ class Run:
                 stands = ('the runtime config %s (sha256 %s) still refuses: %s' % (witness['path'], witness['sha256'][:12],
                                                                                   '; '.join(reasons))) if reasons else None
                 changed = 'the runtime config %s (sha256 %s) no longer refuses by itself' % (witness['path'], witness['sha256'][:12])
+                if stands is None:
+                    # the local route's refusal of a runtime not installed (the wrapper no longer runs inputs-only without
+                    # LLAMA_SERVER/GGUF_MODEL): it stands while the one shared runtime is still refused on this box
+                    runtime = self.shared_runtime()
+                    if runtime['status'] != 'ready':
+                        stands = 'the shared model runtime is still refused: %s' % '; '.join(runtime['reasons'])[:600]
+                    else:
+                        changed = 'the shared model runtime is ready now (%s)' % runtime['binary']
             except (OSError, ValueError) as error:
                 stands, changed = 'the runtime config cannot be read (%s: %s)' % (type(error).__name__, error), None
         elif record['status'] == 'inputs_only':
@@ -2570,7 +2731,7 @@ class Run:
             return self.record('school', day, 'waiting', reason='the day\'s classroom step is %s' % (
                 (c or {}).get('status') or 'not run'))
         x = self.receipt('exchange', day)
-        if not (x and x['status'] in ('done', 'reused', 'skipped')):
+        if not (x and x['status'] in ('done', 'reused', 'skipped', 'not_run')):
             return self.record('school', day, 'waiting', reason='the day\'s exchange is %s (the school file is written '
                                                                 'once, with it)' % ((x or {}).get('status') or 'not run'))
         if retained is not None:
@@ -2604,7 +2765,7 @@ class Run:
         if x['status'] in ('done', 'reused'):
             env['EXCHANGE_VIEW'] = x['frankie_view']
         else:
-            env['EXCHANGE_LISTED'] = 'the exchange was skipped: %s' % x.get('reason')
+            env['EXCHANGE_LISTED'] = 'the exchange was %s: %s' % (x['status'], x.get('reason'))
         mine = LESSONS_ROOT / 'frankie' / ('%s-frankie.json' % day)
         if mine.is_file():
             env['LESSONS'] = mine
@@ -2626,6 +2787,10 @@ class Run:
                            school_sha256=(r.get('row') or {}).get('sha256'), reused_by_child=r.get('reused'),
                            sections=r.get('sections'), missing=r.get('missing'), withheld=r.get('withheld'),
                            successor=r.get('successor'), correction=r.get('correction'), corrections=r.get('corrections'),
+                           # the child's own lists and piece report (school_recovery, 2026-10-07: FRANKIE_SCHOOL_KNOWLEDGE_RECEIPT_V1
+                           # missing_listed / withheld_listed / workflow_report), carried as given for the one-day reporter
+                           missing_listed=r.get('missing_listed'), withheld_listed=r.get('withheld_listed'),
+                           workflow_report=r.get('workflow_report'),
                            # the one-day inspection (frankie_box_workflow_inspection.py): what the school child received,
                            # how it used it (a new school, the owner successor operation, or the child's own reuse) and what
                            # it produced; operator review only, never knowledge or a gate
@@ -2723,13 +2888,16 @@ class Run:
             self._school_recovery.discard(day)
 
     def jev(self, e):
-        """Jev's day on the held CPU lane (Step 7, Codex's frankie_box_jev_cpu.py/.sh; Greg: a worker subset of the SAME
-        held 16-CPU day lane, sequentially; no other host, booking or lane). The immutable JEV_CPU_REQUEST_V1 is persisted
-        under the day BEFORE the first dispatch and reused byte for byte (a retained request that binds another identity
-        is refused, never re-minted); the child runs inside the day's held booking ('jev' in cores.DAY_RUN_STAGES) with
-        the day's own save marker; its receipt or status is checked against the request before any status is recorded
-        (an exit code alone is nothing). Missing runtime configuration is waiting, never skipped or done. The existing
-        knowledge boundary runs before the dispatch (child) and again once both local deliveries are read back."""
+        """Jev's day: an ordinary stage of the day on the day's held lane (Greg, 2026-10-07), on the ONE worker CPU he shares
+        with the meeting (frankie_box_cores.STAGE_SLOTS 'adviser': claimed when the stage runs, released when it ends; the
+        other stage waits while it is busy, the wait on this receipt), threads=1, every other runtime row from Granite's
+        shared definition (frankie_box_jev_cpu.bind_runtime); no box, host, lane or block of workers of his own. The
+        immutable JEV_CPU_REQUEST_V1 is persisted under the day BEFORE the first dispatch and reused byte for byte (a retained
+        request that binds another identity is refused, never re-minted; a REBOOK'd day runs the explicit successor chain);
+        the child runs inside the day's held booking with the day's own save marker; its receipt or status is checked
+        against the request chain before any status is recorded (an exit code alone is nothing). A shared runtime that is
+        absent or differs from its pins is waiting, never skipped or done. The existing knowledge boundary runs before the
+        dispatch (child) and again once both local deliveries are read back."""
         day = e['day']
         remote = self.remote_stage('jev', day)
         if remote is not None:
@@ -2747,15 +2915,20 @@ class Run:
         if not producer.is_file():
             return self.record('jev', day, 'failed', reason='no classroom producer receipt at %s' % producer)
         s = self.receipt('search', day) or {}
+        if s.get('status') == 'not_run':
+            # B5 (2026-10-07): no causal axis on this day, so no search to test Jev's claims on: the missing operand blocks
+            # this equation only; listed with the search's own reason and the day goes on (never a permanent wait)
+            return self.record('jev', day, 'not_run', reason='the owning day\'s search is not_run (%s): Jev has no search of '
+                                                            'the day to test his claims on; listed' % s.get('reason'))
         manifest = Path(s['target']) / 'MANIFEST.json' if s.get('status') in ('done', 'reused') and s.get('target') else None
         if manifest is None or not manifest.is_file():
             return self.record('jev', day, 'waiting', reason='the owning day\'s search is %s (Jev tests his claims on it)'
                                % (s.get('status') or 'not run'))
-        # Greg, 2026-10-07: Jev uses the SAME weights, code and setup as Granite (one pinned runtime on the box: Granite 4.2
-        # 3B Q4_K_M under llama.cpp b11440 at the paths the meeting's gate expects), so he improves with it. Run.jev passes
-        # no separate binary/model: the request binds the shared runtime definition (the staged GRANITE_MEETING_RUNTIME_V1
-        # config, the install's provenance, the gated paths); a plan's older jev_runtime (JEV_CPU_RUNTIME_V1) is recorded
-        # as superseded and NOT used. The helper's own binding to this definition is Codex's (remaining_consumers).
+        # Greg, 2026-10-07: Jev uses Granite's settings, ALL of them (one pinned runtime on the box: Granite 4.2 3B Q4_K_M
+        # under llama.cpp b11440 at the paths the meeting's gate expects), so he improves with it. Run.jev passes no
+        # separate binary/model/budget: the request binds the shared runtime definition (the staged GRANITE_MEETING_RUNTIME_V1
+        # config, the install's provenance, the gated paths) and the helper reads every row from it; a plan's older
+        # jev_runtime (JEV_CPU_RUNTIME_V1) is recorded as superseded and NOT used.
         shared = self.shared_runtime()
         superseded = self.plan.get('jev_runtime') or (str(self.dir / 'jev-runtime.json') if (self.dir / 'jev-runtime.json').is_file() else None)
         if shared['status'] != 'ready':
@@ -2794,7 +2967,8 @@ class Run:
                                    marker=str(marker), lane_owner=os.environ.get('FRANKIE_LANE_OWNER'))
         request = dict(schema='JEV_CPU_REQUEST_V1', run=self.plan['run'], day=day, day_role='discovery', stamp=stamp,
                        attempt=attempt, owner=owner, host=os.uname().nodename, plan_sha256=plan_digest(self.plan),
-                       slot_booking=booking, cpus=list(held['cpus']),
+                       slot_booking=booking, cpus=list(held['cpus']),      # the day's lane (identity); Jev runs on its
+                       # shared adviser CPU, claimed by the child wrapper (frankie_box_cores cmd_run_step)
                        source=dict(commit=self.commit, code_root=str(self.code_root)), save_marker=str(marker),
                        output=str(out), brain=str(brain), jev_brain=str(jev_brain), report_number=number,
                        classroom_receipt=file_pin(producer), search=file_pin(manifest), runtime=file_pin(Path(runtime)),
@@ -2802,6 +2976,12 @@ class Run:
                        # pin above, the install's provenance pin, the gated binary/model paths; no separate pin set
                        shared_runtime=dict(schema=SHARED_RUNTIME_SCHEMA, provenance=shared['provenance'], binary=shared['binary'],
                                            model=shared['model'], superseded_jev_runtime=superseded))
+        # optional (efficiency): the exchange's retained read of the same shared market source at the teachers' cutoff;
+        # the helper reuses it only when its identity and scope are this cutoff's (else a fresh read, recorded). Listed
+        # when the exchange has not written it yet (in the class order Jev runs before the exchange).
+        exchange_context = self.dir / 'exchange' / day / 'shared-market-context.json'
+        if exchange_context.is_file() and not exchange_context.is_symlink():
+            request['shared_market_context'] = file_pin(exchange_context)
         path = self.dir / 'days' / day / ('jev-request-%s.json' % stamp)
         if path.is_file():
             retained = json.loads(path.read_bytes())
@@ -2821,8 +3001,17 @@ class Run:
                 out = Path(request['output'])
         else:
             self.cores.write_json(path, request, exclusive=True)      # create-only: the request is written once
-        # the helper pins the request as given (status.json) and resolved (owner.json / receipt.json): both are this file
+        # the helper pins the request as given (status.json) and resolved (owner.json / receipt.json): both are this file;
+        # a REBOOK successor that resumes retained progress keeps the ORIGINAL owner (its request pin is an earlier link
+        # of the chain), so every link's exact pin binds too
         request_pins = [file_pin(path)] + ([file_pin(path.resolve())] if path.resolve() != path else [])
+        link = request.get('rebook')
+        while isinstance(link, dict) and isinstance(link.get('of'), dict):
+            request_pins.append(link['of'])
+            try:
+                link = json.loads(Path(link['of']['path']).read_bytes()).get('rebook')
+            except (OSError, ValueError):
+                break
         status_path, receipt_path = out / 'status.json', out / 'receipt.json'
 
         def read(p):
@@ -2854,15 +3043,19 @@ class Run:
         code, log = self.child('jev', day, 'frankie_box_jev_cpu.sh', dict(JEV_REQUEST=path, LLAMA_SERVER=shared['binary'],
                                                                            GGUF_MODEL=shared['model']))
         receipt, status = read(receipt_path), read(status_path)
+        slot = self._cpu.get(('jev', day))        # the shared adviser CPU claim line (cpu, seconds waited, holder)
         fields = dict(exit_code=code, log=log, request=str(path), stamp=stamp, output=str(out), report_number=number,
-                      request_pins=request_pins, rebook=request.get('rebook'),
+                      request_pins=request_pins, rebook=request.get('rebook'), adviser_slot=slot,
                       # the one-day inspection (frankie_box_workflow_inspection.py): what this caller gave the helper, how
                       # the answer was bound, what came back; operator review only, never knowledge or a gate
                       inspection=dict(inputs=dict(request=request_pins, classroom_receipt=request['classroom_receipt'],
                                                   search_manifest=request['search'], runtime=request['runtime'],
                                                   attempt=attempt, booking=booking, cpus=request['cpus'], marker=str(marker),
-                                                  brain=str(brain), jev_brain=str(jev_brain), report_number=number),
+                                                  brain=str(brain), jev_brain=str(jev_brain), report_number=number,
+                                                  shared_market_context=request.get('shared_market_context') or
+                                                  'not supplied: the exchange has not retained its read yet (the helper reads)'),
                                       use=dict(exit_code=code, receipt_bound=bound_receipt(receipt), status_bound=bound_status(status),
+                                               adviser_slot=(slot or {}).get('line') or 'no claim line (the child did not reach the ledger)',
                                                binding='a receipt counts only with owner.request_pin in request_pins; a status '
                                                        'only with request in request_pins; an exit code alone is nothing'),
                                       outputs=dict(receipt=str(receipt_path) if receipt_path.is_file() else None,
@@ -2903,12 +3096,11 @@ class Run:
         ACTION=resume REBOOK=on records on the owner binding the booking/CPUs it replaced (frankie_box_frankie_queue.
         resume_owner: owner.rebooked). The ORIGINAL request is never changed. The chain is jev-request-<stamp>.json, then
         .rebook1.json, .rebook2.json ...; the successor for the live booking is reused when it stands; else one is minted
-        create-only ONLY when the retained request differs in booking/CPUs alone, the rebook decision names exactly the
-        booking/CPUs the newest retained request bound, and the newest request's output holds no Jev progress (its
-        state, claims, seal, status, receipt or runtime evidence): then nothing is duplicated and the successor binds the
-        new booking/CPUs, a new output beside the old one (<output>.rebook<n>) and the chain. Retained progress is named
-        and refused here: resuming it under another booking is the helper's resume (Codex, frankie_box_jev_cpu.execute,
-        which binds owner.json to the request pin), never a second start that could repeat model calls."""
+        create-only ONLY when the retained request differs in booking/CPUs alone and the rebook decision names exactly the
+        booking/CPUs the newest retained request bound. Its output: the newest request's own output when that holds Jev
+        progress (state, claims, seal, status, receipt or runtime evidence): the helper (frankie_box_jev_cpu.request_chain /
+        bind_owner) then RESUMES that progress under the retained original owner identity, nothing repeated or re-minted,
+        the resume recorded beside it; else a fresh output beside the old one (<output>.rebook<n>), nothing to resume."""
         if set(differ) - {'slot_booking', 'cpus'}:
             return None, 'the request differs in %s, not in the booking/CPUs alone' % ', '.join(differ)
         decision = (self.owner or {}).get('rebooked')
@@ -2928,21 +3120,19 @@ class Run:
         previous_out = Path(newest['output'])
         progress = [name for name in ('state.json', 'claims.json', 'claims-seal.json', 'status.json', 'receipt.json', 'runtime-evidence')
                     if (previous_out / name).exists()]
-        if progress:
-            return None, ('retained Jev progress under %s (%s): resuming it under another booking is the helper\'s resume '
-                          '(request to Codex: frankie_box_jev_cpu.execute accepting a rebook successor chain bound to its '
-                          'retained owner.json), never a second start here; nothing is duplicated, the day waits on that' % (
-                              previous_out, ', '.join(progress)))
         n = len(chain)
         successor = dict(newest, slot_booking=request['slot_booking'], cpus=request['cpus'],
-                         output='%s.rebook%d' % (newest['output'], n),
+                         output=str(previous_out) if progress else '%s.rebook%d' % (newest['output'], n),
                          rebook=dict(n=n, of=file_pin(newest_path), previous_booking=newest.get('slot_booking'),
                                      previous_cpus=newest.get('cpus'), decision=decision,
-                                     rule='the original request stands unchanged; this successor binds the rebooked lane'))
+                                     resumes=progress or None,
+                                     rule='the original request stands unchanged; this successor binds the rebooked lane'
+                                          + ('; it resumes the retained progress under the original owner' if progress else '')))
         path = original.with_name('%s.rebook%d.json' % (original.stem, n))
         self.cores.write_json(path, successor, exclusive=True)
-        self.log('jev %s: REBOOK successor %s minted for booking %s (the original %s stands unchanged)' % (
-            request['day'], path.name, request['slot_booking'], original.name))
+        self.log('jev %s: REBOOK successor %s minted for booking %s (the original %s stands unchanged%s)' % (
+            request['day'], path.name, request['slot_booking'], original.name,
+            '; resumes %s' % ', '.join(progress) if progress else ''))
         return (path, successor), None
 
     def teacher(self, batch_key, entries):
@@ -3472,6 +3662,10 @@ class Run:
             return self.record('accumulated_lessons', day, 'skipped',
                                reason='the classroom exchange already consumes accumulated claims on this owning search')
         search = self.receipt('search', day)
+        if (search or {}).get('status') == 'not_run':
+            return self.record('accumulated_lessons', day, 'not_run', reason='the owning day\'s search is not_run (%s): no '
+                                                                            'search to retest accumulated claims on; listed'
+                                                                            % search.get('reason'))
         if not (search and search['status'] in FINISHED and search.get('target')):
             return self.record('accumulated_lessons', day, 'waiting', reason='the owning day search is not complete')
         target = self.dir / 'scientific-knowledge' / day
@@ -3530,8 +3724,10 @@ class Run:
             if ledgers:
                 calls.append(('frankie-%s' % e['day'], dict(FRANKIE_LEDGERS=ledgers, FRANKIE_DAY=e['day'])))
         if not calls:
-            return self.record('lessons', batch_key, 'skipped', reason='no claims named: no historical claims file and no '
-                                                                       'Jev or Frankie claims for the days of this batch')
+            rec = self.record('lessons', batch_key, 'skipped', reason='no claims named: no historical claims file and no '
+                                                                      'Jev or Frankie claims for the days of this batch')
+            self.survivors(batch_key, entries)     # the batch boundary still updates over every earlier lesson in the brain
+            return rec
         results = []
         for name, env in calls:
             try:
@@ -3551,11 +3747,64 @@ class Run:
                 continue
             code, log = self.child('lessons', '%s-%s' % (batch_key, name), 'frankie_box_scientific_teacher.sh',
                                    dict(env, SEARCHES=searches, BRAIN=self.plan.get('brain') or str(BRAIN)))
-            results.append(dict(claims=name, exit_code=code, log=log))
+            # the teacher child's own receipt (FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1, printed as its last line; school_recovery
+            # 2026-10-07): carried on the call for the one-day reporter; absent = None (never inferred from the exit code)
+            results.append(dict(claims=name, exit_code=code, log=log, receipt=last_json_line(log)))
         bad = [r for r in results if r['exit_code'] != 0]
-        return self.record('lessons', batch_key, 'failed' if bad else 'done', calls=results,
-                           searched_days=[e['day'] for e in searched],
-                           reason='%d teacher call(s) failed' % len(bad) if bad else None)
+        rec = self.record('lessons', batch_key, 'failed' if bad else 'done', calls=results,
+                          searched_days=[e['day'] for e in searched], not_run_days=not_run or None,
+                          reason='%d teacher call(s) failed' % len(bad) if bad else None)
+        if not bad:
+            self.survivors(batch_key, entries)
+        return rec
+
+    def survivors(self, batch_key, entries):
+        """Stage 10 at the batch boundary (frankie_box_survivor_update.sh; school_recovery 2026-10-07): after the batch's
+        lessons are recorded finished, the survivor/candidate update over every brain entry at the boundary, keyed by the
+        batch's LAST day in plan order (a batch of one day is a boundary), on the day's held lane ('survivors' in
+        cores.DAY_RUN_STAGES). Recorded as stage 'survivors' under the batch key with the child's printed receipt
+        (FRANKIE_SURVIVOR_UPDATE_RECEIPT_V1, its last line). The update freezes its selection once (inputs.json): a
+        repeated call reproduces the same bytes; consumed only by LATER classrooms. Never a gate on the day."""
+        if self.finished('survivors', batch_key):
+            return self.receipt('survivors', batch_key)
+        days = [e['day'] for e in entries]
+        if not days:
+            return self.record('survivors', batch_key, 'skipped', reason='an empty batch has no boundary')
+        searches = []
+        listed = []
+        for d in days:
+            r = self.receipt('search', d) or {}
+            if r.get('status') in ('done', 'reused') and r.get('target') and (Path(r['target']) / 'MANIFEST.json').is_file():
+                searches.append('%s=%s' % (d, r['target']))
+            else:
+                listed.append('%s: search %s' % (d, r.get('status') or 'not run'))
+        env = dict(RUN=self.plan['run'], BOUNDARY_DAY=days[-1], BATCH_DAYS=','.join(days),
+                   BRAIN=self.plan.get('brain') or str(BRAIN))
+        if searches:
+            env['SEARCHES'] = ','.join(searches)
+        try:
+            code, log = self.child('survivors', batch_key, 'frankie_box_survivor_update.sh', env)
+        except (ValueError, OSError) as error:   # a refusal of the dispatch is this stage's own failure, never the batch's
+            return self.record('survivors', batch_key, 'failed', boundary_day=days[-1], batch_days=days,
+                               reason='%s: %s' % (type(error).__name__, error))
+        receipt = last_json_line(log)
+        bound = isinstance(receipt, dict) and receipt.get('schema') == 'FRANKIE_SURVIVOR_UPDATE_RECEIPT_V1' and \
+            receipt.get('boundary_day') == days[-1] and receipt.get('run') == self.plan['run']
+        fields = dict(exit_code=code, log=log, boundary_day=days[-1], batch_days=days, searches_listed=listed or None,
+                      inspection=dict(inputs=dict(env={k: str(v) for k, v in env.items()}, listed=listed),
+                                      use=dict(bound_receipt=bound, rule='the child\'s printed receipt counts only when its '
+                                                                         'schema, run and boundary day are this call\'s'),
+                                      outputs=dict(receipt=(receipt or {}).get('receipt') if bound else None,
+                                                   counts=(receipt or {}).get('counts') if bound else None,
+                                                   publication=(receipt or {}).get('publication') if bound else None)))
+        if code == 0 and bound:
+            return self.record('survivors', batch_key, 'done', receipt=receipt.get('receipt'), survivors=receipt.get('survivors'),
+                               counts=receipt.get('counts'), publication=receipt.get('publication'),
+                               listed_count=receipt.get('listed'), integrity_failures=receipt.get('integrity_failures'),
+                               late_knowledge=receipt.get('late_knowledge'), all99_coverage=receipt.get('all99_coverage'),
+                               workflow_report=receipt.get('workflow_report'), **fields)
+        return self.record('survivors', batch_key, 'failed', reason='no survivor update receipt bound to this boundary after the '
+                                                                    'step (exit %s; its log names why)' % code, **fields)
 
     def lessons_written(self, name, searched_days, *, frankie_ledgers=None, jev_stamp=None):
         """Reuse only a completed standalone operation covering these exact current inputs.
@@ -3710,6 +3959,8 @@ class Run:
                         self.guarded('accumulated_lessons', e)
             if 'lessons' in stages and role == 'discovery' and not self.stopped and not self.finished('lessons', key):
                 self.lessons(key, entries)
+            elif 'lessons' in stages and role == 'discovery' and not self.stopped and not self.finished('survivors', key):
+                self.survivors(key, entries)       # the boundary of a batch whose lessons finished before stage 10 existed
             # after the lessons: the three-way exchange of each arm day, its meeting, the school knowledge
             # base, then the day reports (they carry the exchange; rebuilt once when it arrives after them)
             for stage in ('exchange', 'voice', 'school', 'reports'):
@@ -3882,14 +4133,14 @@ def main():
     p.add_argument('--external-wait', choices=('on', 'off'), default='on',
                    help='on: a day\'s root, teacher, classroom, data and search wait for its day file (default)')
     p.add_argument('--brain', default=str(BRAIN), help='Frankie\'s brain (the classroom and day-file entries)')
-    p.add_argument('--jev-runtime', help='Jev\'s CPU runtime configuration file (JEV_CPU_RUNTIME_V1: binary, model, worker '
-                                         'CPUs of the held lane, budgets, completion policy); saved in the plan when given at '
-                                         'the first start, else <run>/jev-runtime.json is read; absent = Jev waits')
     p.add_argument('--jev-brain', help='Jev\'s brain directory on the box (default %s)' % JEV_BRAIN)
     p.add_argument('--shared-market-policy', choices=(SHARED_MARKET_POLICY,),
                    help='the synchronized shared market input of a NEW run (Greg, 2026-10-07): saved with the plan at its '
-                        'first start; every ROOT runs --bedrock on under it and every teacher reads it; a completed legacy '
-                        'ROOT or teacher result never satisfies it (preserved; an explicit compatible successor is required)')
+                        'first start; every ROOT runs --bedrock on under it (the native pass that produces native.member and '
+                        'native.lifecycle, the only carriers of 18 of the 99 entries) and every teacher reads it; a completed '
+                        'legacy ROOT or teacher result never satisfies it (preserved; an explicit compatible successor is '
+                        'required). DEFAULT for every NEW run (no saved plan yet); an existing run keeps its saved plan\'s '
+                        'value (an old saved request is never mutated)')
     p.add_argument('--previous-classroom', help='the run\'s first arm day: PREVIOUS = this <root>/work/classroom '
                                                 '(default: the latest earlier classroom day on the box)')
     p.add_argument('--voice-route', choices=('local', 'github'), default='local',
@@ -3967,6 +4218,13 @@ def main():
                               successors=S.status(run_dir),
                               free_bytes=shutil.disk_usage(BOX_ROOT).free), indent=1, sort_keys=True))
         return
+    if a.action in ('plan', 'start') and getattr(a, 'shared_market_policy', None) is None:
+        # Greg, 2026-10-07: every NEW request selects the shared market timeline with the native pass ON (bedrock on) for
+        # every day, so the ROOT produces native.member/native.lifecycle (the only carriers of 18 of the 99 entries). A run
+        # with a saved plan keeps exactly that plan's value: an old saved request is never mutated in place.
+        saved_plan = run_dir / 'plan.json'
+        a.shared_market_policy = (json.loads(saved_plan.read_bytes()).get('shared_market_policy') if saved_plan.is_file()
+                                  else SHARED_MARKET_POLICY)
     plan, refused = load_plan(a, a.code_root)
     if refused:        # only rule breaks decline the run (a day listed twice, a bad day, an unknown class or field)
         print(json.dumps(dict(refused=refused, plan=plan), indent=1, sort_keys=True))

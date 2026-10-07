@@ -8,8 +8,11 @@
   "quantization": "Q4_K_M",
   "runtime": "llama.cpp (llama-server, OpenAI-compatible /v1/chat/completions with a JSON schema response format)",
   "hosts_in_order": [
-   "free standard GitHub Actions CPU runner (.github/workflows/frankie_granite_meeting.yml, dispatch only)",
-   "the existing small AWS CPU box, started only while a meeting runs"
+   "the local child on the owning box: an ordinary stage of the day on that day's held 16-CPU lane, on the ONE worker CPU (never the coordinator) the meeting shares with Jev (the adviser slot of frankie_box_cores.STAGE_SLOTS), threads=1, claimed while it runs and released when it ends (Greg, 2026-10-07; frankie_box_granite_meeting.DEFAULT_VOICE_ROUTE = local)",
+   "free standard GitHub Actions CPU runner (.github/workflows/frankie_granite_meeting.yml, dispatch only): the listed fallback route (voice_route=github), unused on the local route"
+  ],
+  "hosts_superseded": [
+   "the existing small AWS CPU box, started only while a meeting runs: superseded by Greg, 2026-10-07 (no separate box, host, lane or reserved block of workers for Granite or Jev; both run on the day's held lane)"
   ],
   "not_permitted": [
    "Pod",

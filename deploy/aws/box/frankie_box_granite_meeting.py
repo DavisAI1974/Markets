@@ -1323,7 +1323,7 @@ def meeting(exchange_path, out_dir, **kwargs):
 
 
 def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=None, brain=None, inputs_only=False,
-            log=print, route=DEFAULT_VOICE_ROUTE):
+            log=print, route=DEFAULT_VOICE_ROUTE, threads=None):
     import frankie_box_classroom_code as K
     from frankie_box_durable import write_json
     exchange_path, out_dir = Path(exchange_path), Path(out_dir)
@@ -1410,6 +1410,10 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         log('meeting %s: %s (%s)' % (exchange.get('day'), record['status'], '; '.join(refusals) or 'inputs written'))
         return receipt
     params = config['proposed_runtime_parameters']
+    if threads is not None:
+        # the caller's lane placement (Greg, 2026-10-07: the meeting and Jev share ONE worker CPU of the day's held lane
+        # at threads=1): every other row stays the definition's; the value is bound into the binding and the record
+        params = dict(params, threads=int(threads), threads_source='caller: the day lane\'s shared adviser CPU slot')
     # finding 2: the exact inputs every call of this meeting is bound to, written ONCE; retained progress of other
     # inputs is refused (never reused across inputs); the binding sha256 travels in every progress file
     binding = dict(schema=BINDING_SCHEMA, day=exchange.get('day'), run=exchange.get('run'),
@@ -1598,6 +1602,8 @@ def main():
                    help='local (default): a child on the owning box\'s lane under the shared runtime definition; github: the listed '
                         'fallback (dispatched by the Run, never from here)')
     p.add_argument('--inputs-only', action='store_true', help='write what Granite would be given; zero model calls')
+    p.add_argument('--threads', type=int, help='the caller\'s lane placement: llama-server threads for this meeting (the day '
+                                              'lane\'s shared adviser CPU gives 1); absent = the definition\'s threads rule')
     p.add_argument('--return-witness', action='store_true',
                    help='write return.json beside the record (its bytes and sha256 by name, the owner import to run); no meeting')
     p.add_argument('--local-runtime', action='store_true',
@@ -1612,8 +1618,10 @@ def main():
         return 0
     if a.route == 'github' and not a.inputs_only:
         p.error('the github route is dispatched by the Run (voice_remote); here it is inputs-only')
+    if a.threads is not None and a.threads < 1:
+        p.error('--threads must be a positive integer')
     receipt = meeting(a.exchange, a.out_dir, config_path=a.config, binary=a.binary, model=a.model, brain=a.brain,
-                      inputs_only=a.inputs_only, route=a.route)
+                      inputs_only=a.inputs_only, route=a.route, threads=a.threads)
     print(json.dumps(receipt, sort_keys=True), flush=True)
     return 0
 

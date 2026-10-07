@@ -340,8 +340,18 @@ def learner_knowledge(day, stage, brain=BRAIN, *, classroom_mode=None):
                                        reason='retained text evidence; no structured learner calculation consumes this format'))
                     continue
                 content = json.loads(p.read_bytes())
-                delivered = REVIEW.current_document(dict(label=label, day=eday, kind=kind, path=str(p),
-                    bytes=e['bytes'], sha256=e['sha256'], content=content), records, brain, day=day, stage=stage)
+                try:
+                    delivered = REVIEW.current_document(dict(label=label, day=eday, kind=kind, path=str(p),
+                        bytes=e['bytes'], sha256=e['sha256'], content=content), records, brain, day=day, stage=stage)
+                except ValueError as error:
+                    # missing-coverage rule (2026-10-07): ONE document that cannot be delivered current (a correction
+                    # that needs its checked successor, an unresolved chain) is withheld and LISTED with its reason; the
+                    # rest of the selection is delivered; never a refusal of the whole selection. The source's own
+                    # integrity (missing file, altered bytes) is checked above and still raises: a separate failure.
+                    listed.append(dict(label=label, path=str(p), sha256=e['sha256'], bytes=e['bytes'],
+                                       disposition='withheld_not_current',
+                                       reason='not delivered: no current form at this boundary (%s)' % error))
+                    continue
                 if delivered['sha256'] in seen:
                     listed.append(dict(label=label, path=delivered['path'], sha256=delivered['sha256'],
                                        reason='identical delivered bytes already supplied'))

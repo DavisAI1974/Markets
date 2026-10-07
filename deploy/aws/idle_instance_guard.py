@@ -5,8 +5,12 @@ is RUNNING:
   KeepRunning == 'true'      -> left running (in use: a run set it at its lane claim/start; reported)
   a FRESH lane lease          -> left running whatever the tag (a controller of a run holds the Linux lane within its
                                  freshness: s3://<transfer bucket>/pod-root/<run>/controller/lease.json, not released,
-                                 heartbeat younger than LEASE_FRESH_SECONDS; the worker lane is protected by any fresh lease,
-                                 the main box by a fresh lease whose host is 'main'); reported with the lease
+                                 heartbeat younger than LEASE_FRESH_SECONDS). ANY fresh or unreadable lease protects BOTH
+                                 experiment boxes: every controller, wherever it is hosted (runner or main), drives the main
+                                 box over SSM (queue, claim, export, release, coordinate, prepare) as well as the worker;
+                                 reported with the lease
+  right before a stop          -> the instance is described again: still running, KeepRunning still not 'true' and no fresh
+                                 lease now, else left running with the reason (closes the window since the snapshot)
   otherwise                   -> STOPPED (ec2 StopInstances), reported with the reason; --dry-run reports without stopping
 Nothing is terminated, no volume is touched, no tag is changed. The report (every instance, what was done and why) is
 printed as JSON and written to --report. Exit 0; 2 when a stop call failed (the instance is named).
@@ -83,12 +87,33 @@ def frankie_instances():
 
 
 def protects(lease, box):
-    """A fresh lease protects the Linux worker lane always, and the main box when the controller is hosted there."""
+    """A fresh (or unreadable) lease protects BOTH experiment boxes (B3b, 2026-10-07): a controller hosted on the runner
+    still drives the main box over SSM (pod_root/controller.py box(..., MAIN) for queue, claim, export, release,
+    coordinate, prepare), so its lease protects the main box exactly as it protects the worker. Any other frankie-* box
+    is not driven by a controller and is not protected by a lease."""
     if lease.get('unreadable'):
         return True
-    if box['lane'] == 'linux':
-        return True
-    return box['lane'] == 'main' and lease.get('host') == 'main'
+    return box['lane'] in ('main', 'linux')
+
+
+def still_idle(box):
+    """(idle, why) re-read immediately before StopInstances: the instance's state and KeepRunning tag now, and the
+    leases now. Any read failure is NOT idle (never a stop on a guess)."""
+    try:
+        r = boto3.client('ec2', region_name=box['region']).describe_instances(InstanceIds=[box['instance']])
+        i = r['Reservations'][0]['Instances'][0]
+        tags = {t['Key']: t['Value'] for t in i.get('Tags', [])}
+        if i.get('State', {}).get('Name') != 'running':
+            return False, 'state now %s' % i.get('State', {}).get('Name')
+        if str(tags.get('KeepRunning')).lower() == 'true':
+            return False, 'KeepRunning=true now (set since the snapshot)'
+        fresh, _ = fresh_leases()
+        holders = [l for l in fresh if protects(l, box)]
+        if holders:
+            return False, 'a fresh lane lease protects it now: %s' % [l.get('run') for l in holders]
+        return True, None
+    except Exception as error:  # noqa: BLE001 - a failed re-read is not idle
+        return False, 're-read before the stop failed (%s: %s): left running' % (type(error).__name__, str(error)[:200])
 
 
 def main():
@@ -113,7 +138,10 @@ def main():
                 row.update(action='stop' if a.dry_run else 'stopped',
                            reason='running with KeepRunning=%r and no fresh lane lease: idle (Greg: keep running only when in use)'
                                   % box.get('keep_running'))
-                if not a.dry_run:
+                idle, why = (True, None) if a.dry_run else still_idle(box)
+                if not idle:
+                    row.update(action='left_running', reason='re-checked right before the stop: ' + why)
+                elif not a.dry_run:
                     try:
                         r = boto3.client('ec2', region_name=box['region']).stop_instances(InstanceIds=[box['instance']])
                         row['stop_result'] = [dict(current=s['CurrentState']['Name'], previous=s['PreviousState']['Name'])

@@ -1,5 +1,7 @@
 # The AWS CPU Linux lane controller's LIFETIME on the main box (Step 8A; research/kalshi/frankie_boss/pod_root/controller.py
-# --host main). The runner-hosted route (frankie_box_run.yml script=deploy/aws/box/frankie_box_pod_root_loop.sh) is a
+# --host main). A LISTED, UNUSED FALLBACK (Greg, 2026-10-07: NO days on the small box; every day runs on the main box's two
+# held lanes): start and resume refuse unless FALLBACK=worker_box names this route explicitly (with GO); preflight, status,
+# stop and clear_stop stay as they are; the main lanes never require this route. The runner-hosted route (frankie_box_run.yml script=deploy/aws/box/frankie_box_pod_root_loop.sh) is a
 # bounded GitHub job; this script runs the SAME controller as a run-bound systemd unit on the main box, from the staged
 # checkout, the pattern of frankie_box_experiment.sh DETACH=on: the dispatch returns once the unit is up, the runner's
 # end cannot stop it, and its state is retained under /opt/frankie-box/work/cpu-controller/<RUN>/.
@@ -93,6 +95,7 @@ case "$ACTION" in
     cat "$STATE/stop-request.json"
     exit 0 ;;
   resume)
+    [ "${FALLBACK:-}" = worker_box ] || { echo "the worker-box lane is a listed, unused fallback (every day runs on the main box's two lanes): FALLBACK=worker_box (an explicit decision) required; nothing requested" >&2; exit 2; }
     [ "${GO:-}" = GREG_AWS_GO ] || { echo "resume starts compute on the worker: GO=GREG_AWS_GO (Greg's explicit go) required; nothing requested" >&2; exit 2; }
     case "${JOB:-}" in "$RUN"-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-a[0-9]*) ;; *) echo "JOB must name the original $RUN-YYYYMMDD-aN attempt" >&2; exit 2;; esac
     case "$JOB" in *[!A-Za-z0-9_-]*) echo "JOB carries a character outside [A-Za-z0-9_-]" >&2; exit 2;; esac
@@ -115,6 +118,7 @@ case "$ACTION" in
     STAMP="$(date +%s)"; mv "$STATE/stop-request.json" "$STATE/stop-request-$STAMP.json"
     echo "moved aside: $STATE/stop-request-$STAMP.json (nothing deleted)" ;;
   start)
+    [ "${FALLBACK:-}" = worker_box ] || { echo "the worker-box lane is a listed, unused fallback (every day runs on the main box's two lanes): FALLBACK=worker_box (an explicit decision) required; nothing started" >&2; exit 2; }
     [ "${GO:-}" = GREG_AWS_GO ] || { echo "start is AWS compute coordination: GO=GREG_AWS_GO (Greg's explicit go) required; nothing started" >&2; exit 2; }
     command -v systemd-run >/dev/null || { echo "systemd-run is a prerequisite on this host; nothing started" >&2; exit 2; }
     PIDS="$(alive_pids | tr '\n' ' ')"
@@ -142,7 +146,7 @@ case "$ACTION" in
     MARK="$STATE/.start-$STAMP"; : > "$MARK"
     systemd-run --unit "$UNIT" --collect -p StandardOutput=append:"$LOG" -p StandardError=append:"$LOG" \
       -E HOME="$HOME" -E PYTHONDONTWRITEBYTECODE=1 -E PYTHONNOUSERSITE=1 -E PYTHONPATH="$CODE_ROOT" -E CPU_CONTROLLER_UNIT="$UNIT" \
-      "$PY" -B "$CONTROLLER" --action loop --commit "$MARKETS_SHA" --budget-minutes 0 "$@"
+      "$PY" -B "$CONTROLLER" --action loop --commit "$MARKETS_SHA" --budget-minutes 0 --fallback-route worker_box "$@"
     echo "controller of $RUN started as unit $UNIT, log $LOG, state $STATE"
     sleep 10
     if ! systemctl is-active "$UNIT"; then

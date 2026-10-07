@@ -1,16 +1,19 @@
-"""The experiment's ROOT for any ingested day (Greg, 2026-09-29: "we forgot root in the experiment"; the bedrock-off
-switch). Spec: research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md, step 3.
+"""The experiment's ROOT for any ingested day (Greg, 2026-09-29: "we forgot root in the experiment"). Spec:
+research/kalshi/frankie_boss/SPEC-experiment-orchestrator.md, step 3.
 
 The Monday ROOT (frankie_box_monday_calculations.py) starts from Monday's launch authorship and its recovered-ingestion
 descriptor; neither exists for another day, and the experiment forecasts nothing through the full pipeline, so it needs
 no authorship. This ROOT starts from the day's own sealed ingest (BOSS_BLOCK_INGESTION_RECEIPT_V1, written by
 frankie_box_ingest_block.sh ACTION=ingest), pins it (receipt sha256 given by the caller; the journal's bytes and sha256
 checked against the receipt), builds the SAME whole-day calculation pin (whole_day_pin_document, shared with the Monday
-ROOT), and runs the SAME Session.derive with bedrock OFF by default: ROOT process 1 (the legacy pass: every INPUT record, the five
-legacy layers and the row spools) always, process 4 (the Markdown digest) only when asked (classroom-arm days, where
-Frankie reads it). The explicit --bedrock on source route additionally runs the existing native traversal and compressed
-projection, with opening state and complete recovery; it does not render the giant bedrock tables. The orchestrator
-does not select this route until the remaining shared consumer connections are settled.
+ROOT), and runs the SAME Session.derive with the NATIVE PASS ON for the experiment (Greg reversed the 2026-09-29
+no-bedrock decision, 2026-10-07: the 18 native-only registry entries are carried only by the native member/lifecycle
+ledgers and must reach Frankie and both teachers): ROOT process 1 (the legacy pass: every INPUT record, the five legacy
+layers and the row spools), the existing native traversal and compressed projection with opening state and complete
+recovery (processes 2+3; the giant bedrock tables are not rendered), and process 4 (the Markdown digest) when asked.
+--bedrock defaults to on; every NEW orchestrator request carries the shared market policy, under which the wrapper
+passes --bedrock on. --bedrock off remains only for an older saved legacy plan (kept as saved, never mutated): its pin
+rule text and its source binding stay byte-identical so its retained ROOT resumes unchanged.
 Nothing is re-ingested: the sealed journal is read in place, read-only. Incomplete data never stops the day: a
 partial member (the trading-day cut) is carried, producer failures are listed in the receipt and every other record is
 calculated (status calculations_retained_with_failures). A day already calculated declines (duplicate
@@ -59,7 +62,7 @@ def _save_new_complete(path, value):
 
 
 def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
-                  frozen_survivors=None, resume=False, *, bedrock=False, shared_market_policy=None):
+                  frozen_survivors=None, resume=False, *, bedrock=True, shared_market_policy=None):
     requested = [False]
     previous_handler = signal.signal(signal.SIGTERM, lambda *_: requested.__setitem__(0, True))
     stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
@@ -78,7 +81,7 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
 
 
 def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
-                   frozen_survivors=None, resume=False, save_requested=None, bedrock=False, shared_market_policy=None):
+                   frozen_survivors=None, resume=False, save_requested=None, bedrock=True, shared_market_policy=None):
     require_checkout(commit)
     if day_role not in ('discovery', 'confirmation'):
         raise ValueError('day role discovery or confirmation required')
@@ -89,7 +92,8 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
         if shared_market_policy != timeline_schema:
             raise ValueError('the shared market policy requires its exact version')
         # Greg, 2026-10-07: an absent native layer thins the shared picture; it never blocks the
-        # day. With bedrock off the reader lists native.member/native.lifecycle absent.
+        # day. Every NEW request runs the native pass (bedrock on); only an older saved legacy plan ran
+        # without it, and then the reader lists native.member/native.lifecycle absent.
     receipt_pin = witness(safe_path(receipt_path))
     if receipt_pin['sha256'] != receipt_sha256:
         raise ValueError('ingestion receipt differs from the sha256 given')
@@ -183,6 +187,8 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             _save_new_complete(path, body)
     source = dict(trading_day=day, manifest_hash=receipt['manifest_hash'], container=container, completion=completion,
                   source_prefix_hash=receipt['source_prefix_hash'], record_count=receipt['record_count'])
+    # the legacy (bedrock off) text below is part of an older saved plan's pinned calculation-pins.json bytes: kept
+    # byte-identical so its retained ROOT resumes; every NEW request takes the first text (the native pass ON)
     rule = ('One complete day delivery for the experiment; existing native calculators and exact local evidence; '
             'compressed projections retained, giant bedrock rendering omitted. Source route only; consumer coverage separate.'
             if bedrock else 'One complete day delivery for the experiment; the complete registry; the bedrock groups '
@@ -243,6 +249,10 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
         if digest:
             write_retained_digest(session, result, layers, prices, frames, structures, bedrock=False)
         session.note('resumed from the saved derivation; no legacy calculation replay')
+        if hasattr(session, 'native_layer_records'):
+            # the per-layer native records of the retained derivation (work/native-layer-records.json, bound to its
+            # derive.json bytes; correction_consumer 2026-10-07): written when absent, nothing derived
+            session.native_layer_records()
     else:
         result = session.derive(source=SimpleNamespace(container=container), bedrock=bedrock, digest=digest,
                                 opening_adapter_state=opening_state, opening_book=opening_book,
@@ -299,8 +309,9 @@ def main():
     p.add_argument('--digest', choices=('on', 'off'), default='off', help='on for a classroom-arm day (Frankie reads it)')
     p.add_argument('--frozen-survivors')
     p.add_argument('--resume', action='store_true', help='reuse the source-bound unfinished ROOT directory')
-    p.add_argument('--bedrock', choices=('on', 'off'), default='off',
-                   help='explicit native calculation source route; does not establish downstream consumer coverage')
+    p.add_argument('--bedrock', choices=('on', 'off'), default='on',
+                   help='the native pass (default on: Greg reversed the 2026-09-29 no-bedrock decision); off only for an '
+                        'older saved legacy plan; does not establish downstream consumer coverage')
     p.add_argument('--shared-market-policy', choices=('FRANKIE_SHARED_MARKET_TIMELINE_V1',))
     a = p.parse_args()
     print(json.dumps(calculate_day(a.commit, a.ingestion_receipt, a.ingestion_receipt_sha256, a.day, a.day_role,

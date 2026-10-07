@@ -1,5 +1,11 @@
 """The AWS CPU Linux lane controller (SPEC-experiment-orchestrator.md; Frankie_30Day_AWS_Runbook_20261006.md "Three lane
-layout": two held 16-CPU lanes on the main box plus ONE held 16-CPU Linux worker lane, i-0d17573dbce871520). Pods are
+layout": two held 16-CPU lanes on the main box plus ONE held 16-CPU Linux worker lane, i-0d17573dbce871520).
+
+A LISTED, UNUSED FALLBACK (Greg, 2026-10-07: "NO days on the small box"): every day runs on the main box
+i-035994afa8bdf66a5, on its two held 16-CPU lanes, and never leaves it; the worker box is not part of the default lane
+set. This route is kept in code the way the GitHub voice route is kept: nothing starts it; an activating action (loop,
+resume) refuses unless the operator names it explicitly (--fallback-route worker_box, on Greg's decision); plan, status,
+stop, preflight and retained stay read-only/cooperative. The main lanes' own runs never require it. Pods are
 retired (Greg, 2026-10-06): nothing here creates, registers, reaches or deletes a Pod, and every retired Pod argument is
 refused before parsing. The same code runs on two hosts:
 
@@ -471,6 +477,7 @@ class Controller:
         self.stop_seen = None
         self.outcome = None
         self.last_worker = None
+        self.last_submit_at = None       # epoch just BEFORE the last job submit/resume to the worker (its outcome may be unknown)
         self.lease_identity = dict(host=HOST['host'], pid=os.getpid(), started_epoch=int(self.started),
                                    unit=os.environ.get('CPU_CONTROLLER_UNIT'), controller=controller_id(),
                                    scope=dict(run=a.run, days=a.days or 'the saved plan'))
@@ -499,7 +506,7 @@ class Controller:
             return
         worker = None
         if w is not None:
-            worker = dict(where=w.where, at=utc(), jobs=worker_status.get('jobs') if worker_status else None,
+            worker = dict(where=w.where, at=utc(), at_epoch=time.time(), jobs=worker_status.get('jobs') if worker_status else None,
                           unreachable=worker_status is None)
             self.last_worker = worker
         q = self.queue_state or {}
@@ -898,6 +905,7 @@ class Controller:
                 job['mailbox'] = dict(request_put=self.sign.put(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/request.json'),
                                       response_get=self.sign.get(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/response.json'))
             job['_job_url'] = self.sign.get(TRANSFER_BUCKET, key)
+            self.last_submit_at = time.time()      # before the effect: an interrupted submit leaves the worker's state unknown
             job_id, why = w.submit(job)
             if not job_id:
                 raise RuntimeError('the worker refused the job: %s' % why)
@@ -1032,7 +1040,9 @@ class Controller:
             if not any(j['job_id'] == job['job_id'] for j in status['jobs']):
                 # Acceptance never reached the box, or its SSM answer was lost: retry the SAME claimed job.
                 saved['_job_url'] = self.sign.get(TRANSFER_BUCKET, key)
+                self.last_submit_at = time.time()
                 return w.submit(saved)
+            self.last_submit_at = time.time()
         return box('resume' if resume else 'renew', w.target, 600, COMMIT=self.commit, JOB=job['job_id'], url_map=update)
 
     def remaining_work(self, q, jobs, w):
@@ -1353,6 +1363,9 @@ def main():
     p.add_argument('--url-hours', type=float, default=72.0)
     p.add_argument('--disk-floor-gb', type=float, default=100.0)
     p.add_argument('--wait-for-days', choices=('yes', 'no'), default='yes')
+    p.add_argument('--fallback-route', choices=('worker_box',),
+                   help='the explicit opt-in to this listed, unused fallback (loop/resume refuse without it; Greg, 2026-10-07: '
+                        'every day runs on the main box\'s two lanes)')
     a, extra = p.parse_known_args()
     if extra:
         retired = [x for x in extra if x.split('=', 1)[0] in RETIRED_POD_FLAGS]
@@ -1367,6 +1380,10 @@ def main():
     a.days = [d for d in a.days.split(',') if d]
     if not all(re.fullmatch(r'[0-9]{8}', d) for d in a.days) or len(set(a.days)) != len(a.days):
         raise SystemExit('--days must be distinct YYYYMMDD values')
+    if a.action in ('loop', 'resume') and a.fallback_route != 'worker_box':
+        raise SystemExit('the worker-box lane is a listed, unused fallback: every day runs on the main box\'s two held lanes '
+                         '(Greg, 2026-10-07); %s refuses without --fallback-route worker_box (an explicit decision); nothing '
+                         'claimed or started' % a.action)
     if a.action in ('loop', 'resume', 'stop', 'preflight') and (a.slots != 1 or a.boxes != LINUX_LANE):
         raise SystemExit('the experiment uses exactly one Linux lane: --boxes %s --slots 1' % LINUX_LANE)
     if a.url_hours > 168:
@@ -1547,12 +1564,24 @@ def finish(a, ctl):
     # KeepRunning cleared to false, UNLESS the worker's last-seen status shows a live job of this run (a stop whose job
     # continues unattended, a budget end): then the tag is left true and the reason is recorded; never silent either way
     for w in workers_of(a, ctl.commit):
-        live = [j.get('job_id') for j in ((ctl.last_worker or {}).get('jobs') or [])
-                if j.get('run') == a.run and j.get('pid_alive')]
-        if live:
+        seen = ctl.last_worker or {}
+        live = [j.get('job_id') for j in (seen.get('jobs') or []) if j.get('run') == a.run and j.get('pid_alive')]
+        # UNKNOWN keeps the tag on (8A: an uncertain state stays unknown, never read as idle): a submit or resume was
+        # attempted and no reachable worker status newer than it was seen, or a resume is still unresolved
+        unknown = None
+        if ctl.resume_pending is not None:
+            unknown = 'a resume request is unresolved (its worker outcome is unknown)'
+        elif ctl.last_submit_at is not None and (not seen or seen.get('unreachable') or
+                                                 float(seen.get('at_epoch') or 0) < ctl.last_submit_at):
+            unknown = ('a job was submitted/resumed at %s and no reachable worker status newer than it was seen'
+                       % time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(ctl.last_submit_at)))
+        if live or unknown:
             ctl.outcome['keep_running'] = dict(instance=w.target['instance'], keep_running='true', changed=False,
-                                               reason='left true: live job(s) %s of the run continue on the worker (outcome %s)'
-                                                      % (live, ctl.outcome.get('outcome')))
+                                               worker_state='live' if live else 'unknown',
+                                               reason=('left true: live job(s) %s of the run continue on the worker (outcome %s)'
+                                                       % (live, ctl.outcome.get('outcome'))) if live else
+                                                      ('left true: the worker\'s job state is UNKNOWN (%s; outcome %s)'
+                                                       % (unknown, ctl.outcome.get('outcome'))))
         else:
             ctl.outcome['keep_running'] = keep_running(w.target['instance'], w.target['region'], False,
                                                        'controller ended %s; no live job of run %s seen on the worker'
