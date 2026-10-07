@@ -485,7 +485,9 @@ def compare(entry, run_doc, staging):
     references = {s['path']: s for s in staging.get('recorded') or []}
     argv = (entry.get('entry') or {}).get('argv') or []
     for rec in entry.get('recorded_outputs') or []:
-        item = dict(kind=rec['kind'], what=rec.get('what'), claims=rec.get('claims', entry['claims']))
+        item = dict(kind=rec['kind'], what=rec.get('what'), claims=rec.get('claims', entry['claims']),
+                    produced=rec.get('produced'), recorded=rec.get('recorded'), pattern=rec.get('pattern'),
+                    recorded_in=rec.get('recorded_in'))
         if rec['kind'] == 'printed':
             m = re.search(rec['pattern'], run_doc.get('stdout') or '', re.M)
             if m is None:
@@ -529,6 +531,39 @@ def compare(entry, run_doc, staging):
     return dict(status=status, outputs=outputs, coverage=coverage, **facts,
                 rule='a match reproduces the recorded numbers on the original inputs; it is not a verdict on the claim; '
                      'a difference is evidence with its fields named, not a rejection (R11, R14)')
+
+
+def command_argv(command):
+    """The argv run() records for a declared command: [sys.executable, '-B', script, *argv][1:] (the producer contract)."""
+    return ['-B', command.get('script')] + list(command.get('argv') or [])
+
+
+def output_declaration_key(rec):
+    """What identifies one declared comparison (recorded output) beside its kind: enough to detect an omitted, duplicated
+    or foreign output in a retained comparison."""
+    return json.loads(json.dumps(dict(kind=rec.get('kind'), what=rec.get('what'), claims=rec.get('claims'),
+                                      produced=rec.get('produced'), recorded=rec.get('recorded'), pattern=rec.get('pattern'),
+                                      recorded_in=rec.get('recorded_in')), sort_keys=True))
+
+
+def inventory_of_outputs(entry, outputs):
+    """B4-F: the reasons a retained outputs list is not the entry's full declared comparison inventory, else []."""
+    declared = [output_declaration_key(dict(r, claims=r.get('claims', entry['claims']))) for r in entry.get('recorded_outputs') or []]
+    if not isinstance(outputs, list):
+        return ['comparison outputs are not a list']
+    got = [output_declaration_key(o) if isinstance(o, dict) else None for o in outputs]
+    reasons = []
+    if len(got) != len(declared):
+        reasons.append('comparison retains %d outputs for %d declared comparisons' % (len(got), len(declared)))
+    for i, (g, d) in enumerate(zip(got, declared)):
+        if g != d:
+            reasons.append('comparison output %d is not declared comparison %d' % (i, i))
+    seen = []
+    for g in got:
+        if g in seen:
+            reasons.append('comparison repeats a declared output: %s' % json.dumps(g, sort_keys=True))
+        seen.append(g)
+    return reasons
 
 
 def aggregate_status(outputs):
@@ -638,15 +673,21 @@ def coherence(entry, plan_doc, run_doc, comparison, status, dispatch_doc=None, d
             if dispatch_doc.get('capability_sha256') != run_doc.get('capability_sha256'):
                 reasons.append('dispatch marker names another capability revision than the run')
         command = plan_doc.get('command') or {}
-        expected_argv = [command.get('script')] + list(command.get('argv') or []) if command else None
-        if expected_argv is not None and run_doc.get('argv') != expected_argv:
+        # B4-F: the producer contract is run()'s own: argv recorded = [sys.executable, '-B', script, *args][1:]
+        expected_argv = command_argv(command) if command else None
+        if expected_argv is not None and list(run_doc.get('argv') or []) != expected_argv:
             reasons.append('the run\'s command differs from the plan\'s declared entry point')
         if comparison.get('returncode') != run_doc.get('returncode') or comparison.get('timed_out') != run_doc.get('timed_out'):
             reasons.append('comparison run facts (returncode/timed_out) differ from the run document')
         if comparison.get('status') in PERFORMED and comparison.get('status') != 'performed_failed':
-            derived, _ = aggregate_status(comparison.get('outputs') or [])
+            # B4-F: the retained outputs must be the FULL declared comparison inventory, in order, no omission,
+            # duplicate or extra, and the retained coverage/status must be what those outputs derive
+            reasons.extend(inventory_of_outputs(entry, comparison.get('outputs')))
+            derived, coverage = aggregate_status(comparison.get('outputs') or [])
             if derived != comparison.get('status'):
                 reasons.append('comparison status %r does not follow its retained outputs (%r)' % (comparison.get('status'), derived))
+            if json.loads(json.dumps(comparison.get('coverage'), sort_keys=True)) != json.loads(json.dumps(coverage, sort_keys=True)):
+                reasons.append('comparison coverage facts differ from what its retained outputs derive')
         if comparison.get('returncode') != run_doc.get('returncode') or comparison.get('timed_out') != run_doc.get('timed_out'):
             reasons.append('comparison run facts (returncode/timed_out) differ from the run document')
         failed = bool(run_doc.get('timed_out')) or run_doc.get('returncode') != 0
