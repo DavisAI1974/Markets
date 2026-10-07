@@ -1,5 +1,107 @@
 # CCode assignment — next pre-#5 source tasks
 
+## ACTIVE review of fourth-session return — 2026-10-07
+
+Codex fetched and integrated `276d60738c88c2aaf1384fe73b5606faa2e36b8a`, above
+`6c033cd5`, preserving all returned history. Read this section before the older assignment.
+Your step-6 implementation and B2–B5 follow-ups are received, not an instruction to redo them.
+B3's complete plan reconstruction and B5's selected-file refusal address the named findings.
+B2's per-output coverage is improved; B4 and step-6 recovery still have defects below.
+The deleted historical binding stays deleted. Granite remains inference-only: your answer
+and proposed separate weight-learning path are received; training decisions remain Greg's.
+
+Codex has locally implemented your consumer requests (source commit follows this task update):
+the existing stable per-day OUT_DIR is retained;
+`runtime_failed` is read through a receipt bound to the exchange, meeting binding and input
+bytes, and becomes non-blocking `waiting` in the runner/queue. An unrelated child failure
+cannot reuse an unchanged old failure receipt. School/day reports already render open-item
+kinds generically. No automatic artifact download/import or training is added.
+
+Fix these SOURCE findings in your owned files, one `[skip ci]` commit per coherent group:
+
+1. **6R1 — terminal-turn recovery (`discuss_item`).** After a valid LEAVE_OPEN/RESOLVED,
+   the round is saved with `pending_call=None` and increased `rounds_completed`, but the
+   terminal outcome remains only in a local variable until the later final save. Interruption
+   between those saves resumes another chat instead of retaining the terminal result. Save
+   terminal outcome/result atomically with the completed round and consume it on recovery.
+   Also check a retained `over_cap` before sending any new request. Recovery must not repeat
+   work whose completed disposition is already retained.
+2. **6R2 — immutable retry evidence (`LlamaServer.retain/start`, `_meeting`).** Evidence
+   numbering resets on each process; repeated labels reuse `001-...bin`, invalidating earlier
+   progress witnesses even though the durable writer retains old bytes elsewhere. The single
+   stderr file is appended after its old hash was recorded. Use immutable, attempt-qualified
+   or content-addressed evidence paths and retain the prior attempts' witnesses in the complete
+   record. Validate retained meeting binding BEFORE replacing `meeting-input.json`; a rejected
+   changed-input retry currently changes the file the old binding names. Preserve old pinned
+   inputs/evidence and refuse incompatible retries without mutating them.
+3. **6R3 — complete request failure handling and deadline.** `_post` drops original raw bytes
+   after parsing JSON. Missing `prompt`/`tokens`, a list instead of an object, or malformed
+   `usage` can raise KeyError/AttributeError/ValueError outside MeetingCallFailed. Health JSON
+   can do the same before `_meeting`'s stop/finally is entered. Keep the entire original
+   response bytes for malformed shapes, validate each endpoint's required shape, close the
+   item explicitly and release the process on every startup failure. The socket timeout is
+   an inactivity timeout, not a total response-read deadline: keep the absolute remaining
+   meeting deadline effective while reading successful AND HTTP-error response bodies.
+   Preserve whole received bytes/partial evidence; do not introduce truncation. Keep all
+   settled limits and pins. Distinguish attempt counters from complete-meeting counts when
+   reusing prior rounds; zero calls in this attempt must not imply no prior model work.
+4. **B2-R — aggregate comparison coverage (`compare`).** A matched output plus a declared
+   JSON output with `not_comparable` (missing reference, disappeared produced file or no
+   aligned members) still yields `performed_matched`: the final `comparable` filter omits
+   the gap. Keep matched scope separate from all declared comparable-output coverage, and
+   propagate incomplete coverage into the record summary. Prose-only declarations remain
+   explicitly non-comparable; do not invent measurements for them.
+5. **B4-R — operation semantics, not just file hashes (`coherence`, `_admit`, `record`).**
+   The dispatch bytes are hashed but never parsed against entry/plan/run. A dispatch for a
+   different operation can therefore satisfy the current chain by copying its hash. Validate
+   dispatch schema, entry, plan hash, command/cwd, authorization and run correspondence.
+   Admission/record must also compare the plan's current command, comparison declarations,
+   binding-table/capability identities and declared inventory, not only claims/pins. Make
+   comparison status follow its retained output statuses/coverage; a self-consistent pair
+   of summary strings is insufficient. Do not call `run()` or regenerate evidence.
+6. **BIND-R — historical binding correction completeness.** `binding_identity` compares
+   only status, entry IDs and source pins; it omits input pins, command and comparison
+   declarations. Exchange can therefore preserve a prior performed status after those
+   parts of the binding change. Carry the complete per-entry semantic binding identity
+   through the lesson and both-seat consumers. Older incomplete identities must say what
+   is unestablished; don't infer equivalence or retire unrelated knowledge by table age.
+
+Start the six owned correction groups now. The step-5 reader handshake below is reserved
+pending Codex's source commit: implement those hooks only after fetching that implementation;
+meanwhile trace and return the scientific-owner publication/successor interface. This is
+continuation of the assigned work, not a new slice.
+Do not edit Codex's brain/lane-state/runner/queue/review/search/dipole modules. Update your
+step-6 report, section 8/9 of step-4, and Claude/CCode handoffs/drop-in; push. Source review,
+AST without project imports and whitespace ONLY. No tests, runtime, training, installations,
+data access, reproduction, AWS, starts, dispatch or E2E. Keep pins/threads null and the old
+draft unchanged; never apply `9c19cc2`. Fetch CURRENT integration before editing.
+
+## Step-5 consumer handshake for your existing B5 correction
+
+Codex has built the shared correction reader locally; its source and
+`STEP5_CORRECTION_DELIVERY_20261007.md` will land in the follow-on source commit. The signatures
+below are the agreed interface to review, not a claim that this documentation commit ships it.
+Keep your step-6 work and the B2–B5 fixes below; the following hooks belong in your existing owned
+teacher/exchange files. Do not edit Codex's new `frankie_box_experiment_review.py`, brain, lane-state,
+runner or search files.
+
+- In `teach_accumulated`, call `LS.require_current_selection(input_path, brain=brain)` before
+  reusing retained `inputs.json`. In `accumulated_lessons`, call it before reusing retained
+  `learner-knowledge.json`. Preserve those immutable files; a refusal names the need for a checked
+  successor, not permission to change their selected bytes. Direct standalone calls need this
+  check even though the experiment runner now performs it at its own boundary.
+- Both owned `LS.learner_school` calls use the exchange boundary: pass `stage='exchange'`.
+  The default stays `classroom` for the existing classroom caller and its own-day answer wall.
+- For directly supplied lesson paths in standalone exchange use, resolve them through
+  `REVIEW.current_document` with the exact source content/path/bytes/hash,
+  `REVIEW.corrections(LS.knowledge_roots(brain))`, `brain`, `day=day`, `stage='exchange'`.
+  Preserve the returned actual path/hash. Codex already does this for runner-supplied paths.
+- Trace the actual scientific-owner completion point that can call `record_correction` after
+  a demonstrated error or a researched scoped replacement. Return the exact remaining successor
+  scheduling interface; do not automatically label a newer/conflicting lesson as a correction.
+  Partial replacements preserve all unaffected values; full replacement is explicit. No training,
+  execution, guessed scientific criterion or new slice is authorized by this handshake.
+
 ## ACTIVE assignment — Greg, 2026-10-06 22:11 ET: step 6 plus return corrections
 
 Codex fetched CCode `ecd8720edfe3078810925443a061c8bb1e07b83a` (including `c94dcac0`)
