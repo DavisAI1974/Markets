@@ -808,7 +808,7 @@ def _disk_chunk(args):
     _worker_default_sigterm()
     path, start, end, chunk_path = args[:4]
     codec = args[4] if len(args) > 4 else 'typed'
-    numeric, text, _, count = _spool_range_columns((path, start, end))
+    numeric, text, count = _spool_range_columns((path, start, end))
     if count >= 1 << 32:
         raise ValueError('a chunk of more than 2**32 rows cannot use uint32 positions')
     hashed, offset, segments = hashlib.sha256(), 0, []
