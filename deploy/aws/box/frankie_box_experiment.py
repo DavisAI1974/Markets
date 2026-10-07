@@ -2046,7 +2046,16 @@ class Run:
         else:
             cpus_why = 'no held booking or owner CPU set known to this Run; unpinned'
         command = [sys.executable, '-I', '-B', str(script), '--run-dir', str(self.dir), '--day', day, '--write']
-        pre = (lambda: os.sched_setaffinity(0, cpus)) if cpus else None
+        # F10 (second review): no preexec_fn (unsafe in this threaded process: the child can deadlock before exec). The
+        # pin is taskset in the command itself, as the stage children pin; without taskset the reporter runs unpinned,
+        # named on the receipt
+        if cpus:
+            taskset = shutil.which('taskset')
+            if taskset:
+                command = [taskset, '-c', ','.join(str(c) for c in cpus)] + command
+            else:
+                cpus_why = 'taskset not found on this host; the reporter ran unpinned (held CPUs %s)' % cpus
+                cpus = None
         code, reason = None, None
         started = time.time()
         try:
@@ -2055,7 +2064,7 @@ class Run:
                                                                  trigger)).encode())
                 out.flush()
                 code = subprocess.run(command, stdout=out, stderr=subprocess.STDOUT, timeout=self.INSPECTION_SECONDS,
-                                      preexec_fn=pre).returncode
+                                      start_new_session=True).returncode
         except subprocess.TimeoutExpired:
             reason = 'the reporter exceeded %d s and was stopped; the files written so far stand' % self.INSPECTION_SECONDS
         except OSError as error:
@@ -2907,6 +2916,11 @@ class Run:
         if e.get('role') != 'discovery':
             return self.record('jev', day, 'waiting', reason='a %s day has no authorized Jev route (the CPU route takes '
                                                              'discovery classroom-arm days only)' % e.get('role'))
+        done = self.jev_done_receipt(e)
+        if done is not None:
+            # F1 (second review): a done Jev is returned unchanged, never rebuilt on a later booking (a retried finish
+            # binds a new booking; rebuilding compared slot_booking/cpus and relabelled completed evidence as refused)
+            return done
         c = self.receipt('classroom', day)
         if not (c and c['status'] in ('done', 'reused') and c.get('classroom')):
             return self.record('jev', day, 'waiting', reason='the day\'s classroom is not complete yet (its material is '
@@ -3091,6 +3105,32 @@ class Run:
         return self.record('jev', day, 'waiting' if code in (5, 75) else 'failed',
                            reason='exit %d without a receipt or status bound to the request %s' % (code, path), **fields)
 
+    def jev_done_receipt(self, e):
+        """The day's existing 'done' jev receipt when it still stands on its own evidence, else None. It stands when its
+        request is this day's retained request (days/<day>/jev-request-<stamp>.json or one of its .rebookN successors) and
+        that request file's bytes still match the pin recorded on the receipt, and the helper's JEV_CPU_RECEIPT_V1 at the
+        recorded path is 'done' with owner.request_pin among the recorded request_pins. Nothing is re-recorded: the receipt
+        is returned as it is. Anything less (no receipt, not done, a changed request or helper receipt) is None and the
+        ordinary path runs, with its own checks."""
+        prior = self.receipt('jev', e['day'])
+        if not (prior and prior.get('status') == 'done' and prior.get('request') and prior.get('receipt')):
+            return None
+        stem = 'jev-request-%s' % jev_stamp(self.plan, e)
+        request = Path(prior['request'])
+        if request.parent != self.dir / 'days' / e['day'] or not re.fullmatch(re.escape(stem) + r'(\.rebook[0-9]+)?\.json', request.name):
+            return None
+        pins = [p for p in prior.get('request_pins') or [] if isinstance(p, dict)]
+        try:
+            if not request.is_file() or file_pin(request) not in pins:
+                return None
+            helper = json.loads(Path(prior['receipt']).read_bytes())
+        except (OSError, ValueError):
+            return None
+        if not (isinstance(helper, dict) and helper.get('schema') == 'JEV_CPU_RECEIPT_V1' and helper.get('status') == 'done'
+                and (helper.get('owner') or {}).get('request_pin') in pins):
+            return None
+        return prior
+
     def jev_rebooked(self, original, request, differ):
         """The explicit REBOOK successor of a retained Jev request: ((path, request) to run, None) or (None, why).
         ACTION=resume REBOOK=on records on the owner binding the booking/CPUs it replaced (frankie_box_frankie_queue.
@@ -3105,7 +3145,8 @@ class Run:
             return None, 'the request differs in %s, not in the booking/CPUs alone' % ', '.join(differ)
         decision = (self.owner or {}).get('rebooked')
         if not decision:
-            return None, 'no REBOOK decision on the owner binding (ACTION=resume REBOOK=on records one); the retained booking is required'
+            return None, ('no REBOOK decision on the owner binding (ACTION=resume REBOOK=on, or the queue\'s retry of a waiting '
+                          'finish, records one); the retained booking is required')
         chain = [original] + sorted((q for q in original.parent.glob(original.stem + '.rebook*.json')
                                      if re.fullmatch(re.escape(original.stem) + r'\.rebook[0-9]+\.json', q.name)),
                                     key=lambda q: int(re.search(r'\.rebook([0-9]+)\.json$', q.name).group(1)))
@@ -3113,7 +3154,12 @@ class Run:
         newest = json.loads(newest_path.read_bytes())
         if newest.get('slot_booking') == request['slot_booking'] and newest.get('cpus') == request['cpus']:
             return (newest_path, newest), None           # the successor for this booking stands already (reused byte for byte)
-        if (decision.get('previous_booking'), decision.get('previous_cpus')) != (newest.get('slot_booking'), newest.get('cpus')):
+        # the decision replaced the newest request's booking: named as previous_booking/CPUs (ACTION=resume REBOOK=on), or
+        # among held_bookings, every booking the SAME owner binding held (the queue's own retry of a waiting finish,
+        # frankie_box_frankie_queue._rebook_owner; second review F1). A booking this owner never held stays refused.
+        held = [(h.get('booking'), sorted(h.get('cpus') or [])) for h in decision.get('held_bookings') or [] if isinstance(h, dict)]
+        if (newest.get('slot_booking'), sorted(newest.get('cpus') or [])) not in held and \
+                (decision.get('previous_booking'), decision.get('previous_cpus')) != (newest.get('slot_booking'), newest.get('cpus')):
             return None, ('the REBOOK decision replaced booking %s (CPUs %s), not the newest retained request\'s %s (%s); the '
                           'chain is broken, an explicit owner decision is required' % (
                               decision.get('previous_booking'), decision.get('previous_cpus'), newest.get('slot_booking'), newest.get('cpus')))
@@ -3447,8 +3493,11 @@ class Run:
         if key not in self._day_file_sha:                 # read once per Run: what the ROOT and the teacher both saw
             try:
                 self._day_file_sha[key] = attached_day_file(directory)[1:] if directory is not None else (None, None)
-            except Exception as error:              # noqa: BLE001 - a witness that cannot be read is not judged
+            except OSError as error:                # a witness that cannot be read (absent, I/O) is not judged: waiting
                 return 'waiting', 'waiting: the day file beside the sealed ingest could not be read (%s: %s)' % (type(error).__name__, error)
+            except (ValueError, KeyError, TypeError) as error:   # F8: malformed content: integrity failure, never a wait
+                return 'refused', 'refused: integrity failure: the day file beside the sealed ingest is malformed (%s: %s)' % (
+                    type(error).__name__, error)
         attached, absent = self._day_file_sha[key]
         section = saved.get('external_section') or {}
         bound = section.get('sha256') or section.get('sha256_expected')
@@ -3918,6 +3967,7 @@ class Run:
         by_role = [[e for e in days if e['role'] == role] for role in ('discovery', 'confirmation')]
         batches = [(role_days[0]['role'], i // BATCH + 1, role_days[i:i + BATCH])
                    for role_days in by_role if role_days for i in range(0, len(role_days), BATCH)]
+        inspected = set()
         for role, n, entries in batches:
             if self.stopped or root_line:            # with the ROOT line on, every step after ROOT runs in the day's slot
                 break
@@ -3976,6 +4026,15 @@ class Run:
                 for e in entries:
                     if not self.queue_owned(e):
                         self.inspect_day(e['day'], 'start: after the batch %s last stage loop' % key)
+                        inspected.add(e['day'])
+        if self.stopped:
+            # F3 (second review): the disk floor stopped this start; every day it owns still gets its inspection, the
+            # trigger naming the stop (the reporter writes small markdown only; its own failure is on its receipt)
+            for e in days:
+                if e['day'] not in inspected and not self.queue_owned(e):
+                    self.inspect_day(e['day'], 'start: stopped at the disk floor before the day\'s last stage (stage %s, free %s '
+                                               'bytes, floor %s bytes)' % (self.stopped.get('stage'), self.stopped.get('free_bytes'),
+                                                                           self.stopped.get('floor_bytes')))
         # every start kicks the workers of lines that hold days not done (a waiting day resumes without a dispatch)
         import frankie_box_frankie_queue as Q
         for line, on in (('root', getattr(self.a, 'root_queue', 'off')), ('class', getattr(self.a, 'frankie_queue', 'off'))):

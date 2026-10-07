@@ -1143,7 +1143,12 @@ def _bind_owner(x, slot, cpus, code_root, commit):
         owner = dict(schema='FRANKIE_QUEUE_OWNER_V1', run=x['run'], day=x['day'], host=socket.gethostname(),
                      attempt=attempt, commit=commit, code_root=str(Path(code_root).resolve()),
                      marker=str(marker_of(x['run'], x['day'])), bound_utc=utc(), bound_by_pid=os.getpid())
-    owner = dict(owner, cpus=sorted(cpus), booking=slot, holder_pid=os.getpid(), holder_utc=utc())
+    # held_bookings: every booking this SAME owner binding (attempt, marker) has held, in order. A queue rebook decision
+    # (_rebook_owner) carries it, so a Jev request bound to any earlier booking of this owner has its explicit REBOOK
+    # successor (Run.jev_rebooked) instead of a refusal (second review F1)
+    held = list(owner.get('held_bookings') or [])
+    held.append(dict(booking=slot, cpus=sorted(cpus), bound_utc=utc()))
+    owner = dict(owner, cpus=sorted(cpus), booking=slot, holder_pid=os.getpid(), holder_utc=utc(), held_bookings=held)
     x['owner'] = owner
     import frankie_box_cores as C
     C.own(slot, x['run'], x['day'], owner['attempt'])       # the ledger: this booking's death retains it for this owner
@@ -1220,6 +1225,15 @@ def _finish_day(run, e, code_root, commit, log):
             saved = dict(getattr(run, 'save_facts', None) or {})
             saved['inspection'] = _inspect(run, e['day'], 'saved', log)
             run.save_facts = saved
+        else:
+            # F3: any other SystemExit (a refusal raised as SystemExit) still gets the day's inspection, then propagates
+            _inspect(run, e['day'], 'failed (%s: %s)' % (type(error).__name__, error), log)
+        raise
+    except Exception as error:
+        # F3 (second review): a step that raises (close_day refusing a successor off its lane, the teacher raising) is
+        # exactly the day an operator needs to see: the inspection runs, then the error propagates to the thread's one
+        # classification (_thread_end: finish_failed with the reason), unchanged
+        _inspect(run, e['day'], 'failed (%s: %s)' % (type(error).__name__, error), log)
         raise
     facts['finish'] = status
     facts['inspection'] = _inspect(run, e['day'], status, log)
@@ -1399,9 +1413,11 @@ def _finish_steps(run, e, code_root, commit, log):
             if r.get('status') != 'skipped':
                 return ('waiting' if r.get('status') == 'waiting' else 'failed'), facts
         return _close(run, e, facts)
-    j = run.guarded('jev', e) or {}
+    # F1: a Jev already finished for the day is read back, never rebuilt on a later booking (a retried finish)
+    already = run.finished('jev', e['day'])
+    j = (run.receipt('jev', e['day']) if already else run.guarded('jev', e)) or {}
     facts['jev'] = dict(status=j.get('status'), reason=j.get('reason'), material_sent=j.get('material_sent'),
-                        dispatches=j.get('dispatches'))
+                        dispatches=j.get('dispatches'), receipt_read_back=already or None)
     if j.get('status') not in X.FINISHED:
         return ('waiting' if j.get('status') == 'waiting' else 'failed'), facts
     return _close(run, e, facts)
@@ -1653,6 +1669,31 @@ def _release_owner(x, why):
     x['owner'] = None
 
 
+def _rebook_owner(x, why):
+    """A WAITING finish keeps its owner binding (run, day, host, attempt, marker, source) and records the queue's explicit
+    REBOOK decision on it (second review F1, 2026-10-07): its booking was released by the thread's end, so the once-per-
+    worker retry books any free 16 CPUs (cpus/booking cleared, as resume_owner REBOOK=on does) and _bind_owner binds the
+    new booking to the SAME owner. The decision names the booking/CPUs it replaces and every booking this owner held, so
+    Run.jev_rebooked mints the create-only .rebookN successor of a retained Jev request (its progress resumed, never
+    re-minted) instead of refusing it. A standing save marker that the waiting finish never answered is archived as
+    stale, exactly as before (an earlier save never satisfies a later one). Never for a saved/unknown day."""
+    owner = x.get('owner')
+    if owner is None:
+        return
+    archived = _archive_marker(owner.get('marker'), 'stale')
+    if archived:
+        x['save_request'] = None
+        x.setdefault('save_requests_stale', []).append(dict(archived=archived, why=why, at_utc=utc()))
+    held = list(owner.get('held_bookings') or [])
+    if owner.get('booking') and not any(h.get('booking') == owner['booking'] for h in held):
+        held.append(dict(booking=owner['booking'], cpus=sorted(owner.get('cpus') or [])))
+    decision = dict(by='queue', reason=why, at_utc=utc(), previous_booking=owner.get('booking'),
+                    previous_cpus=owner.get('cpus'), held_bookings=held,
+                    rule='the queue\'s own retry of a waiting finish on a new booking of the same owner binding')
+    x.setdefault('owner_rebooks', []).append(decision)
+    x['owner'] = dict(owner, cpus=None, booking=None, rebooked=decision)
+
+
 def _archive_marker(marker, label):
     """The day's save marker and its class acknowledgment moved aside as <name>.<label>-<epoch> (never deleted)."""
     if not marker:
@@ -1715,9 +1756,12 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                                        else 'failed', reason=reason, ended_utc=utc(), facts=facts,
                                        retained_booking=job['holder'].get('retained'), child=facts.get('child'),
                                        inspection=facts.get('inspection'))
-                    if y['finish']['state'] in ('failed', 'waiting'):
-                        _release_owner(y, 'finish %s: the next admission books any free slot; the owner binding is history'
-                                       % y['finish']['state'])
+                    if y['finish']['state'] == 'failed':
+                        _release_owner(y, 'finish failed: the next admission books any free slot; the owner binding is history')
+                    elif y['finish']['state'] == 'waiting':
+                        # F1: a wait stays a wait; the retry binds a new booking to the SAME owner with a recorded
+                        # rebook decision, so a done or pending Jev is reused/resumed, never refused
+                        _rebook_owner(y, 'finish waiting: the retry books any free 16 CPUs for the same owner binding')
                     event('root', 'finish_end', seq=seq, day=y['day'], run=y['run'], result=result, reason=reason, facts=facts)
                     log('FINISH seq %d %s (%s): %s%s' % (seq, y['day'], y['run'], result, (': %s' % reason) if reason else ''))
                     continue
@@ -1758,6 +1802,9 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                                                          facts={k: facts.get(k) for k in ('teacher', 'class_line')},
                                                          inspection=facts.get('inspection'), ended_utc=utc()))
                     doc['next_done_seq'] += 1
+                    if y['finish']['state'] == 'waiting':
+                        # F1, the same rule on the ROOT-and-finish-in-one-slot route: the retry rebinds the same owner
+                        _rebook_owner(y, 'finish waiting: the retry books any free 16 CPUs for the same owner binding')
                 elif result == 'claimed_elsewhere':
                     y.update(state='running', where=(facts.get('claim') or {}).get('where'), reason=reason)
                     _release_owner(y, 'claimed elsewhere: this box holds nothing of the day')
