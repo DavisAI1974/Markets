@@ -1,5 +1,13 @@
 # Codex restart handoff — 2026-10-06 night (America/New_York)
 
+**New-chat entry point, 2026-10-07 00:54 ET:** Read
+`CODEX_HANDOFF_20261007_WORKFLOW_CONTINUATION.md` first. Agents still need to complete the
+remaining pieces of the actual workflow; the ten-item list is only the implementation and
+rollout checklist. Greg's agreed sequence is E2E, one complete day with temporary inspection
+reports for pieces missing reports, review/adjustments, then three days. Those extra reports
+are not Frankie knowledge and need no permanent storage. The new handoff also identifies
+the fetched but unintegrated CCode return. Older next-action wording below is background.
+
 ## Current continuation — delegated source review and Step 5, 2026-10-07
 
 Read `MODULE_REVIEW_INDEX_20261007.md`, then `STEP5_CONTINUATION_20261007.md` and the

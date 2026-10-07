@@ -3,7 +3,7 @@
 ## Start here
 
 - Apply using-agent-skills, then context-engineering when available. Locate missing named skills before proceeding.
-- Read research/kalshi/frankie_boss/CODEX_HANDOFF_20261006_NIGHT.md first and follow its reading order. It is the current restart pointer; HANDOFF_20261006_SUCCESSOR_AND_FULL_EVIDENCE.md remains earlier background.
+- Read research/kalshi/frankie_boss/CODEX_HANDOFF_20261007_WORKFLOW_CONTINUATION.md first. It records the remaining agent work across the entire workflow and the agreed E2E, one-day inspection, then three-day sequence. CODEX_HANDOFF_20261006_NIGHT.md and earlier handoffs remain background.
 - Consult CLAUDE.md for shared project context; its older session notes and startup hooks do not supersede the current handoff or Greg's current instructions.
 - Verify the actual branch tip and preserve newer work. Current integration branch: ccr-5fce7de3-xa4hfg. CCode returns on ccode/teacher-tasks-20261006b. Do not reset to the handoff checkpoint.
 - Inspect existing implementations, inventories and contracts before building. Coordinate disjoint ownership with other agents; CCode owns the Step #4 scientific/candidate files and separate smaller-model facilitator work.
