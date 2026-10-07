@@ -441,9 +441,85 @@ def claims_of(doc):
     return {c['id']: c for c in claims['claims']}, None
 
 
-def teacher_rows(path):
+LEDGER_SAVE_SCHEMA = 'FRANKIE_EXCHANGE_TEACHER_LEDGERS_SAVE_V1'
+LEDGER_SAVE_NAME = 'teacher-ledgers'          # <retain_dir>/teacher-ledgers.json (manifest) + .pickle (exact state)
+LEDGER_CODE = ('teacher_rows', '_ledgers', '_ledgers_one_pass', 'DIMENSION_LEDGER_SOURCE_SHA256', 'LEDGER_SAVE_SCHEMA')
+
+
+def _ledger_code_identity():
+    """Function-level identity of the code that builds the saved measurement (frankie_box_bedrock.code_identity, the
+    native checkpoints' rule) plus the source sha256 of dipole_classroom._dimension_ledger; None when unreadable (then
+    nothing is saved or loaded: the measurement is computed)."""
+    try:
+        import inspect
+        import frankie_box_bedrock as BED
+        from research.kalshi.frankie_boss import dipole_classroom as DC
+        return dict(exchange=BED.code_identity(Path(__file__), LEDGER_CODE),
+                    dimension_ledger=hashlib.sha256(inspect.getsource(DC._dimension_ledger).encode()).hexdigest())
+    except Exception:  # noqa: BLE001 - no identity, no save: computed as before
+        return None
+
+
+def _load_ledger_save(retain_dir, raw_pin, notes):
+    """The saved measurement when its manifest binds the same rows file (bytes and sha256 just measured from the
+    file's own bytes: never a stat-only skip), the same code identity and the pickle's own bytes/sha256; else None with
+    the reason in notes. Exact: the pickle keeps every value and key order the computation produced."""
+    import pickle
+    manifest_path = Path(retain_dir) / (LEDGER_SAVE_NAME + '.json')
+    if not manifest_path.is_file():
+        notes['ledger_save'] = 'no saved measurement at %s; computed' % manifest_path
+        return None
+    try:
+        manifest = json.loads(manifest_path.read_bytes())
+        identity = _ledger_code_identity()
+        pickle_path = Path(retain_dir) / (LEDGER_SAVE_NAME + '.pickle')
+        data = pickle_path.read_bytes()
+        why = ('schema' if manifest.get('schema') != LEDGER_SAVE_SCHEMA else
+               'rows file differs' if {k: manifest.get('rows', {}).get(k) for k in ('bytes', 'sha256')} != raw_pin else
+               'code identity differs' if identity is None or manifest.get('code') != identity else
+               'pickle differs from its manifest' if dict(bytes=len(data), sha256=sha256_bytes(data)) != manifest.get('pickle')
+               else None)
+        if why is not None:
+            notes['ledger_save'] = 'saved measurement not used (%s); computed' % why
+            return None
+        measure = pickle.loads(data)
+        notes['ledger_save'] = 'loaded the exact saved measurement %s (rows %s)' % (manifest_path, raw_pin['sha256'][:16])
+        return measure
+    except Exception as error:  # noqa: BLE001 - a save that does not load is never trusted: computed, recorded
+        notes['ledger_save'] = 'saved measurement unreadable (%s: %s); computed' % (type(error).__name__, str(error)[:200])
+        return None
+
+
+def _write_ledger_save(retain_dir, measure, raw_pin, notes):
+    """Exact save of the measurement after the ledger pass (pickle, key order kept) and its manifest, each written
+    whole (pickle first, manifest LAST: a manifest names only a complete pickle). Never raises."""
+    import pickle
+    try:
+        identity = _ledger_code_identity()
+        if identity is None:
+            notes['ledger_save_written'] = 'no code identity readable; not saved'
+            return
+        from frankie_box_durable import write_bytes
+        data = pickle.dumps(measure, protocol=pickle.HIGHEST_PROTOCOL)
+        write_bytes(Path(retain_dir) / (LEDGER_SAVE_NAME + '.pickle'), data)
+        manifest = dict(schema=LEDGER_SAVE_SCHEMA, rows=dict(path=measure['path'], **raw_pin), code=identity,
+                        pickle=dict(bytes=len(data), sha256=sha256_bytes(data)), at=round(time.time(), 3),
+                        rule='the exchange step loads this instead of parsing and ledgering the rows again when the rows '
+                             'file (re-hashed), the code identity and the pickle all match')
+        write_bytes(Path(retain_dir) / (LEDGER_SAVE_NAME + '.json'), (json.dumps(manifest, indent=1, sort_keys=True) + '\n').encode())
+        notes['ledger_save_written'] = str(Path(retain_dir) / (LEDGER_SAVE_NAME + '.json'))
+    except Exception as error:  # noqa: BLE001 - the save is a resume aid, never the outcome
+        notes['ledger_save_written'] = 'not saved (%s: %s)' % (type(error).__name__, str(error)[:200])
+
+
+def teacher_rows(path, retain_dir=None, notes=None):
     """(the BOSS teacher's measurement of the day, None) or (None, why): its Dipole rows snapshot, checked against its
-    own source_snapshot_hash, read into the per-component ledgers the teacher key is built from."""
+    own source_snapshot_hash, read into the per-component ledgers the teacher key is built from.
+    retain_dir (save point, Greg 2026-10-07 night: saves at a boundary, matching ROOT's): after the ledger pass the exact
+    measurement is saved there; a later call with the same rows bytes and code loads it instead of parsing and
+    ledgering again (the context-only step saves, the exchange step loads: the double read of the rows becomes one
+    parse plus one re-hash). notes (optional dict) receives what happened. The returned value is identical either way."""
+    notes = notes if notes is not None else {}
     from research.kalshi.frankie_boss import dipole_classroom as DC
     from research.kalshi.frankie_boss.c15_journal import unpack, evidence_hash
     from research.kalshi.frankie_boss.c15_normalizer import COLUMNS
@@ -453,6 +529,11 @@ def teacher_rows(path):
     if not path.is_file():
         return None, '%s is not on the box' % path
     raw = path.read_bytes()
+    raw_pin = dict(bytes=len(raw), sha256=sha256_bytes(raw))
+    if retain_dir is not None:
+        saved = _load_ledger_save(retain_dir, raw_pin, notes)
+        if saved is not None and saved.get('path') == str(path):
+            return saved, None
     try:
         snapshot = unpack(json.loads(raw))
         if snapshot.get('schema') != DC.SOURCE_SCHEMA or tuple(snapshot.get('coverage_columns') or ()) != tuple(COLUMNS):
@@ -462,10 +543,13 @@ def teacher_rows(path):
         ledgers = _ledgers(snapshot, COLUMNS)
     except (ValueError, KeyError, TypeError) as error:
         return None, '%s could not be read (%s: %s)' % (path, type(error).__name__, error)
-    return dict(path=str(path), sha256=sha256_bytes(raw), bytes=len(raw), rows=len(snapshot['rows']),
-                source_snapshot_hash=snapshot['source_snapshot_hash'], as_of=snapshot['as_of'],
-                through_cursor=snapshot['through_cursor'], ledgers=ledgers, columns=tuple(COLUMNS),
-                retained_rows=snapshot['rows']), None
+    measure = dict(path=str(path), sha256=raw_pin['sha256'], bytes=len(raw), rows=len(snapshot['rows']),
+                   source_snapshot_hash=snapshot['source_snapshot_hash'], as_of=snapshot['as_of'],
+                   through_cursor=snapshot['through_cursor'], ledgers=ledgers, columns=tuple(COLUMNS),
+                   retained_rows=snapshot['rows'])
+    if retain_dir is not None:
+        _write_ledger_save(retain_dir, measure, raw_pin, notes)
+    return measure, None
 
 
 def _ledger_task(snapshot, index):
@@ -1414,7 +1498,11 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
         docs, listed = load_lessons(lessons_paths, day)
     if not docs:
         listed.append(dict(reason='no current or accumulated scientific lessons are available; no claim turns produced'))
-    measure, measure_why = teacher_rows(rows_path)
+    save_notes = {}
+    measure, measure_why = teacher_rows(rows_path, retain_dir=Path(input_path).parent if input_path is not None else None,
+                                        notes=save_notes)
+    if notes is not None:
+        notes['ledger_save'] = save_notes
     import frankie_box_adviser_market as AM
     # The retained-evidence counts of every item (each one scans every retained teacher row per named field) on an
     # ordered pinned pool (Greg, 2026-10-07: independent exchange items concurrently), started BEFORE the shared read
@@ -1908,7 +1996,10 @@ def context_only(a, out, started):
     retained read). Nothing else of the exchange is written: no exchange documents, no receipt.json (so the later
     exchange step runs in full and reuses this file), no brain entry, no accumulated tests. Same reader, same pins,
     same cutoff as the exchange; a context already retained there is checked and reused (a differing one refuses)."""
-    measure, measure_why = teacher_rows(a.teacher_rows)
+    save_notes = {}
+    # the ledger save point: the exact measurement after the ledger pass, saved beside the retained context; the
+    # exchange step loads it (one rows parse and one ledger pass for both steps)
+    measure, measure_why = teacher_rows(a.teacher_rows, retain_dir=out, notes=save_notes)
     placement = {}
     context, why = (None, measure_why) if not a.teacher_rows else (None, None)
     if a.teacher_rows:
@@ -1921,13 +2012,46 @@ def context_only(a, out, started):
                 shared_market_context=(dict(path=str(path), bytes=path.stat().st_size, sha256=sha256_bytes(path.read_bytes()))
                                        if context is not None and path.is_file() else None),
                 scope=(context or {}).get('scope'), placement=dict(placement, teacher_ledger_pools=list(LEDGER_POOLS)),
+                ledger_save=save_notes, save_requested=_save_requested(),
                 seconds=round(time.time() - started, 1),
                 rule='the cutoff read only; the exchange step itself runs later and reuses this retained file')
     print(json.dumps(line, sort_keys=True, default=str), flush=True)
     return 0
 
 
+# ---- the save route (Greg, 2026-10-07 night: every piece's save/restore matches ROOT's; frankie_box_experiment_root
+# calculate_day): SIGTERM or the lane stop file only MARKS the save; the piece runs on to its next durable boundary
+# (accumulated tests filed, exchange documents written once, brain entry filed), prints a saved line and exits 75.
+# Every boundary is idempotent on restart (write_once keeps an existing document, the brain entry is reused), so the
+# restart continues from it. Pool workers reset SIGTERM to default (frankie_box_adviser_market._pool_task).
+EXIT_SAVED = 75
+_SAVE_MARK = []
+
+
+def _mark_save(*_):
+    _SAVE_MARK.append(time.time())
+
+
+def _save_requested():
+    stop = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    return bool(_SAVE_MARK) or bool(stop and Path(stop).exists())
+
+
+def _save_point(a, boundary, started):
+    if _save_requested():
+        print(json.dumps(dict(schema='FRANKIE_EXCHANGE_SAVED_V1', run=a.run, day=a.day, status='saved', boundary=boundary,
+                              seconds=round(time.time() - started, 1),
+                              rule='saved at a durable boundary; the restart continues from it (exit 75 is never a failure)'),
+                         sort_keys=True), flush=True)
+        raise SystemExit(EXIT_SAVED)
+
+
 def main():
+    import signal
+    try:
+        signal.signal(signal.SIGTERM, _mark_save)
+    except ValueError:
+        pass                                    # not the main thread: the stop file still marks the save
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--day', required=True)
     p.add_argument('--run', required=True)
@@ -1955,6 +2079,7 @@ def main():
         _SP.report_phase('exchange: accumulated claims tested', units_done=1, units_total=3, unit='boundaries')
     except Exception:  # noqa: BLE001
         pass
+    _save_point(a, 'accumulated claims tested', started)
     notes = {}
     full, view = exchange(a.day, a.run, a.lessons, a.teacher_rows, rules_witness,
                           brain=a.brain, input_path=out / 'learner-knowledge.json', notes=notes)
@@ -1970,6 +2095,7 @@ def main():
         _SP.report_phase('exchange: exchange and Frankie view written', units_done=2, units_total=3, unit='boundaries')
     except Exception:  # noqa: BLE001
         pass
+    _save_point(a, 'exchange and Frankie view written', started)
     entry = Path(a.brain) / ('%s-exchange' % a.day)
     manifest_path = entry / 'MANIFEST.json'
     have = json.loads(manifest_path.read_bytes()) if manifest_path.is_file() else {}
@@ -1981,6 +2107,7 @@ def main():
         _SP.report_phase('exchange: brain entry filed', units_done=3, units_total=3, unit='boundaries')
     except Exception:  # noqa: BLE001
         pass
+    _save_point(a, 'brain entry filed', started)
     import frankie_box_adviser_market as AM
     shared_market = full['sources'].get('shared_market_context')
     context_path = out / 'shared-market-context.json'

@@ -129,6 +129,114 @@ def _state(chain, adapter, sessions, cursor, pickles):
                 sessions=[[iid, session] for iid, session in sessions.items()])
 
 
+# ---- Save/restore on ROOT's contract (session 5, Greg: "every workflow piece needs their restore save code updated to
+# match ROOT's"). ROOT's helpers: frankie_box_experiment_root.calculate_day (the SIGTERM mark + save_requested),
+# frankie_box_native_checkpoint (periodic exact saves), frankie_box_boss_session._saved_spool_position /
+# _resume_row_spool / _check_spool_claims (file positions without a re-read, the seal check), content_rebinds, and
+# frankie_box_bedrock.code_identity (function-level code identity). The ingest's files are not RowSpools (binary
+# spools, sealed .done.json markers, canonical-JSON + pickle states), so the RULES are mirrored here with each helper
+# named; nothing of the journal's bytes depends on any of it.
+
+PASS1_SCHEMA = 'FRANKIE_PARALLEL_INGEST_PASS1_STATE_V1'
+CODE_NAMES = ('pass_one', '_state', '_segment', 'SpoolJournal', 'read_spool', 'PLACEHOLDER', 'SEGMENT_RECORDS')
+
+
+class IngestSaved(Exception):
+    """A requested save was honoured at a save point (ROOT: TeacherSaved -> exit 75); `where` says which point."""
+
+    def __init__(self, where):
+        super().__init__(where.get('phase', 'saved'))
+        self.where = where
+
+
+def default_sigterm():
+    """In a forked worker: SIGTERM back to the default action (ROOT _legacy_shard_worker, the a2 shard hang: a worker
+    inheriting the parent's mark-only save handler ignores terminate() and an unbounded join hangs). Cheap and
+    idempotent; a non-main thread leaves it as it is (the bounded stop still ends the worker)."""
+    import signal
+    try:
+        if signal.getsignal(signal.SIGTERM) is not signal.SIG_DFL:
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except (ValueError, OSError):
+        pass
+
+
+def code_identity():
+    """Function-level identity of the pass code (frankie_box_bedrock.code_identity: each named def/class/assignment's
+    syntax tree without positions), so a saved pass 1 / spool survives unrelated edits and refuses a changed pass.
+    None (with no refusal) when the helper cannot be imported here; the builder's own identity (implementation_identity,
+    the journal's gold identity) is checked separately and unchanged."""
+    import sys
+    box = str(Path(__file__).resolve().parents[4] / 'deploy' / 'aws' / 'box')
+    if box not in sys.path:
+        sys.path.insert(0, box)
+    try:
+        import frankie_box_bedrock
+        return frankie_box_bedrock.code_identity(Path(__file__), CODE_NAMES)
+    except Exception:  # noqa: BLE001 - no identity to bind; noted by the caller
+        return None
+
+
+def _fsync_write(path, raw):
+    with Path(path).open('xb') as stream:
+        stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+
+
+def save_pass1_state(directory, index, state, pickled, meta=None):
+    """The periodic exact save (ROOT: native checkpoints / legacy-state.pkl; the Sept-29 item 2 rule): pass 1's state
+    number `index` (canonical JSON) and the live adapter pickle (key order kept) under segments/pass1/, then a done
+    record with both sha256s written LAST (a state without its done record is ignored on resume). Create-only."""
+    directory = Path(directory)
+    directory.mkdir(exist_ok=True)
+    state_raw = canonical_bytes(pack(state))
+    base = directory / ('state-%05d' % index)
+    for suffix in ('.c15.json', '.pickle', '.done.json'):
+        stale = base.with_name(base.name + suffix)
+        if stale.exists():
+            stale.rename(stale.with_name(stale.name + '.stopped-%d' % int(time.time())))   # never deleted
+    _fsync_write(base.with_name(base.name + '.c15.json'), state_raw)
+    _fsync_write(base.with_name(base.name + '.pickle'), pickled)
+    done = dict(schema=PASS1_SCHEMA, index=index, cursor=state['cursor'], state_sha256=hashlib.sha256(state_raw).hexdigest(),
+                pickle_sha256=hashlib.sha256(pickled).hexdigest(), state_bytes=len(state_raw), pickle_bytes=len(pickled),
+                meta=meta or {}, at=round(time.time(), 3))
+    _fsync_write(base.with_name(base.name + '.done.json'), json.dumps(done, sort_keys=True).encode())
+    return done
+
+
+def load_pass1_states(directory, *, manifest_hash, implementation, segment_records, code):
+    """The saved pass-1 states 0..n (contiguous, each sha256-checked against its done record), or None. A save of
+    another manifest / builder identity / segment size refuses; a save without a code identity (older) is accepted
+    when the identity here cannot be compared, and listed."""
+    directory = Path(directory)
+    if not directory.is_dir():
+        return None
+    states, pickles, metas = [], [], []
+    while True:
+        base = directory / ('state-%05d' % len(states))
+        marker = base.with_name(base.name + '.done.json')
+        if not marker.is_file():
+            break
+        done = json.loads(marker.read_bytes())
+        meta = done.get('meta') or {}
+        if done.get('schema') != PASS1_SCHEMA or meta.get('manifest_hash') != manifest_hash \
+                or meta.get('implementation') != implementation or meta.get('segment_records') != segment_records:
+            raise ValueError('%s is a pass-1 save of another manifest, builder identity or segment size; refused '
+                             '(move segments/pass1 aside to start over)' % marker)
+        if code is not None and meta.get('code') is not None and meta['code'] != code:
+            raise ValueError('%s was saved by different pass code (function-level identity differs); refused' % marker)
+        state_raw = base.with_name(base.name + '.c15.json').read_bytes()
+        pickled = base.with_name(base.name + '.pickle').read_bytes()
+        if hashlib.sha256(state_raw).hexdigest() != done['state_sha256'] or \
+                hashlib.sha256(pickled).hexdigest() != done['pickle_sha256']:
+            raise ValueError('%s: the saved state or pickle differs from its done record; refused' % marker)
+        states.append(unpack(json.loads(state_raw)))
+        pickles.append(pickled)
+        metas.append(meta)
+    if not states:
+        return None
+    return dict(states=states, pickles=pickles, metas=metas)
+
+
 def prepared_sources(paths, members, pin, dbn, zstd, stack, *, event=None):
     """[(stream, metadata)] in member order, the stream decompressed and positioned after its DBN metadata, exactly as
     the serial preparation (mbo_source._verified_copy, _decompressed, _metadata per member, one member after another)
@@ -179,9 +287,15 @@ def prepared_sources(paths, members, pin, dbn, zstd, stack, *, event=None):
 
 
 def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_names, evolve=True,
-             segment_records=SEGMENT_RECORDS, event=None, opening_descriptor=None):
+             segment_records=SEGMENT_RECORDS, event=None, opening_descriptor=None, save_dir=None, save_meta=None,
+             resume=None, save_requested=None):
     """The decoded records of the trading day, in order, plus (evolve) the saved states. Cuts the day exactly as
-    ingest_block_sources.ingest does, with the same boundary checks."""
+    ingest_block_sources.ingest does, with the same boundary checks.
+    save_dir (session 5, ROOT's contract item 2): every state is ALSO saved there as it is made (save_pass1_state), so a
+    crash or a requested save loses at most one segment of pass 1. resume = load_pass1_states(...): the states and
+    pickles saved before; the chain, the live adapter (its pickle: key order kept) and the sessions continue from the
+    last of them, the records before its cursor are decoded again (they are held for pass 2; no state is advanced for
+    them). save_requested(): checked after each save; true -> IngestSaved (the caller exits 75)."""
     dbn, zstd = mbo_source._check_pin(pin)
     records, states, partials, skipped, sessions_seen, pickles = [], [], [], [], [], []
     member_counts = [0] * len(scope.members)
@@ -190,6 +304,30 @@ def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_
         adapter = restore_adapter_state(opening_state)
         adapter.record_count = adapter.completed_event_group_count = 0
     chain, sessions, opening_result = RecordPrefixChain(scope), {}, None
+    resume_cursor, resumed = 0, bool(evolve and resume)
+    if resumed:
+        states, pickles = list(resume['states']), list(resume['pickles'])
+        last = states[-1]
+        resume_cursor = last['cursor']
+        chain = RecordPrefixChain.restore(scope, last['chain'])
+        adapter = pickle.loads(pickles[-1])
+        if export_adapter_state(adapter) != last['adapter']:
+            raise ValueError('the saved pass-1 adapter pickle differs from its canonical state; refused')
+        sessions = {int(iid): value for iid, value in last['sessions']}
+        opening_result = (resume['metas'][0] or {}).get('opening_result')
+
+    def saved(index):
+        if save_dir is None:
+            return
+        meta = dict(save_meta or {})
+        if index == 0:
+            meta['opening_result'] = opening_result
+        save_pass1_state(save_dir, index, states[index], pickles[index], meta)
+        if event is not None:
+            event(dict(phase='parallel_pass1_saved', state=index, cursor=states[index]['cursor']))
+        if save_requested is not None and save_requested():
+            raise IngestSaved(dict(phase='pass1', state=index, cursor=states[index]['cursor'],
+                                   rule='a requested save honoured at pass 1\'s next group-closed save point'))
     started, since = time.perf_counter(), 0
     with ExitStack() as stack:
         prepared = prepared_sources(paths, scope.members, pin, dbn, zstd, stack, event=event)
@@ -200,7 +338,7 @@ def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_
             iterator = fast_mbo_decode.records(stream, pin, ts_out, dbn)
             tail, take = tails.get(member.member_key), takes.get(member.member_key)
             if tail is not None:
-                warming = evolve and opening_state is None
+                warming = evolve and opening_state is None and not resumed   # a resumed adapter is already past the warm
                 last, first_flags, snapshot_records, warm_started = None, None, 0, time.perf_counter()
                 for position in range(tail['skip']):
                     last = next(iterator, None)
@@ -248,9 +386,10 @@ def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_
                 session_id = session(member, raw)
                 if not sessions_seen or sessions_seen[-1][0] != session_id:
                     sessions_seen.append((session_id, cursor, index))
-                if evolve:
-                    if cursor == 0:
+                if evolve and cursor >= resume_cursor:
+                    if cursor == 0 and not states:
                         states.append(_state(chain, adapter, sessions, 0, pickles))       # the day's opening state
+                        saved(0)
                     msg = adapter.normalize(raw, None, name, member.sha256)
                     previous_session = sessions.get(msg.instrument_id)
                     if msg.instrument_id in chain.open_instruments and session_id != previous_session:
@@ -267,13 +406,15 @@ def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_
                 records.append((raw, index, session_id))
                 member_counts[index] += 1
                 taken += 1
-                if evolve and cursor + 1 - states[-1]['cursor'] >= segment_records and not chain.open_instruments:
+                if evolve and cursor >= resume_cursor and cursor + 1 - states[-1]['cursor'] >= segment_records \
+                        and not chain.open_instruments:
                     try:
                         adapter.assert_groups_closed()               # both the chain and the book must be group-closed
                     except RuntimeError:
                         pass
                     else:
                         states.append(_state(chain, adapter, sessions, cursor + 1, pickles))
+                        saved(len(states) - 1)
                 if take is not None and taken == take['take']:
                     following = next(iterator, None)
                     if following is None:
@@ -290,8 +431,12 @@ def pass_one(scope, paths, pin, session, *, takes, tails, opening_state, source_
                     event(dict(phase='parallel_pass1', records=len(records), states=len(states),
                                seconds=round(time.perf_counter() - started, 3)))
     if evolve:
+        if resume_cursor > len(records):
+            raise ValueError('the saved pass-1 cursor %d is past the %d records the sources decode to; refused'
+                             % (resume_cursor, len(records)))
         if states[-1]['cursor'] != len(records):
             states.append(_state(chain, adapter, sessions, len(records), pickles))
+            saved(len(states) - 1)
     return dict(records=records, states=states, pickles=pickles, partials=partials, skipped=skipped, sessions_seen=sessions_seen,
                 member_counts=member_counts, opening_result=opening_result, seconds=round(time.perf_counter() - started, 3))
 
@@ -306,6 +451,7 @@ _SHARED = {}
 
 def _segment(k):
     """Pass-2 worker: replay segment k from its saved state through the builder; its end state must equal pass 1's."""
+    default_sigterm()                   # a forked worker never keeps the parent's mark-only save handler
     s = _SHARED
     start_state, end_state = s['states'][k], s['states'][k + 1]
     started = time.process_time()
@@ -330,8 +476,13 @@ def _segment(k):
             or [[iid, v] for iid, v in b._sessions.items()] != end_state['sessions']):
         raise ValueError(f'segment {k}: the replayed end state differs from pass 1 at cursor {end_state["cursor"]}; refused')
     os.replace(part, final)
+    observed = final.stat()
     done = dict(segment=k, start_cursor=start_state['cursor'], end_cursor=end_state['cursor'], entries=b.journal.entries,
-                bytes=b.journal.bytes, sha256=b.journal.sha.hexdigest(), cpu_seconds=round(time.process_time() - started, 3))
+                bytes=b.journal.bytes, sha256=b.journal.sha.hexdigest(), cpu_seconds=round(time.process_time() - started, 3),
+                # additive (ROOT _saved_spool_position's `resume` block): the file as sealed, so a resume of an
+                # unchanged spool reads nothing; pass 3 still compares its full read with bytes/sha256 (the seal check)
+                resume=dict(device=observed.st_dev, inode=observed.st_ino, mtime_ns=observed.st_mtime_ns,
+                            size=observed.st_size))
     final.with_name(final.name + '.done.json').write_text(json.dumps(done, sort_keys=True))
     return done
 
@@ -342,8 +493,20 @@ def _done(spools, k):
         return None
     done = json.loads(marker.read_bytes())
     spool = spools / f'spool-{k:05d}.bin'
-    if not spool.is_file() or spool.stat().st_size != done['bytes'] or _sha256_file(spool) != done['sha256']:
+    if not spool.is_file() or spool.stat().st_size != done['bytes']:
         return None
+    # ROOT _resume_row_spool's rule: the same unchanged file (device, inode, mtime, size as sealed) is accepted without
+    # a read (pass 3 reads it once and compares bytes + sha256 with this marker: the seal check, _check_spool_claims);
+    # anything else (an older marker without `resume`, a moved or touched file) is one full pass here
+    fast, observed = done.get('resume'), spool.stat()
+    if fast and (fast.get('device'), fast.get('inode'), fast.get('mtime_ns'), fast.get('size')) == (
+            observed.st_dev, observed.st_ino, observed.st_mtime_ns, observed.st_size):
+        done['resumed_how'] = 'unchanged file: stat checked, no read (pass 3 compares its full read)'
+        return done
+    if _sha256_file(spool) != done['sha256']:
+        return None
+    done['resumed_how'] = 'one full pass (sha256): ' + ('an older marker without a resume block' if not fast
+                                                       else 'the file is not the one sealed (device, inode or mtime differ)')
     return done
 
 

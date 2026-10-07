@@ -99,6 +99,87 @@ def heartbeat(phase, done, total=None, unit=None, every=None, **extra):
     SP.report_phase(phase, units_done=done, units_total=total, unit=unit, every=every, **extra)
 
 
+# ---- periodic exact saves inside the long sub-steps (Greg, 2026-10-07 night: "every workflow piece needs their
+# restore save code updated to match ROOT's"; the September 29 item 2 rule: exact state at a closed boundary every N
+# units, so a crash loses at most one segment, and a requested save runs on to the next boundary, saves, exits 75).
+# The boundary is an in-order arrival of an ordered computation (a native series chunk, a Dipole pair, an anchor
+# picture text): every value before it is final. Each save writes ONLY the values since the last one, as one more
+# segment file (parallel_teacher._save_raw_state: a sha256-prefixed pickle, fsynced, renamed), so saving is linear in
+# the values and never rewrites an earlier segment. A resume loads the segments in order (each checked: its hash, its
+# key, its start = the values before it) and computes only the rest with the same functions; a value comes back through
+# the same pickle a saved phase uses, so the result is the same bytes. The key binds the classroom's identity (set by
+# the runner), the operation and its whole job list: another day, code or job list never matches. A sub-step's segments
+# are removed once it returns its whole value (its phase then saves it). Configured by the classroom V2 runner
+# (SEGMENT_SAVES: directory, identity digest, save_requested, every_s); without it nothing is saved here (as before).
+SEGMENT_SCHEMA = 'FRANKIE_CLASSROOM_SEGMENT_SAVE_V1'
+SEGMENT_SAVES = {}
+SEGMENT_RECORD = {}
+SEGMENT_EVERY_SECONDS = 120.0
+
+
+class _Segments:
+    def __init__(self, operation, jobs_key):
+        import time
+        config = SEGMENT_SAVES
+        self.operation, self.enabled = operation, bool(config.get('directory'))
+        self.key = hashlib.sha256(json.dumps([SEGMENT_SCHEMA, config.get('identity'), operation, jobs_key],
+                                             sort_keys=True, default=str).encode()).hexdigest()
+        self.directory = (Path(config['directory']) / 'segment-saves' / ('%s-%s' % (operation, self.key[:16]))
+                          if self.enabled else None)
+        self.every = float(config.get('every_s') or SEGMENT_EVERY_SECONDS)
+        self.save_requested = config.get('save_requested')
+        self.saved, self.last = 0, time.monotonic()
+        self.record = SEGMENT_RECORD.setdefault(operation, dict(saves=0, resumed_values=0, segments_loaded=0))
+        self.record.update(enabled=self.enabled, every_s=self.every,
+                           directory=str(self.directory) if self.directory else None)
+
+    def load(self):
+        """The values saved by an earlier attempt, in order ([] when none). A segment that fails its checks refuses."""
+        if not self.enabled or not self.directory.is_dir():
+            return []
+        from research.kalshi.frankie_boss.parallel_teacher import _load_raw_state
+        values = []
+        for path in sorted(self.directory.glob('seg-*.pkl')):
+            body = _load_raw_state(path)
+            if body.get('schema') != SEGMENT_SCHEMA or body.get('key') != self.key or body.get('start') != len(values):
+                raise ValueError('saved classroom segment %s belongs to another continuation; retained for recovery' % path)
+            values.extend(body['values'])
+            self.record['segments_loaded'] += 1
+        self.saved = len(values)
+        self.record['resumed_values'] = len(values)
+        return values
+
+    def offer(self, values):
+        """After an in-order arrival: `values` = every final value so far. Saves the new ones when the interval passed or
+        a save was requested; on a requested save raises TeacherSaved (exit 75) after the segment is durable."""
+        import time
+        if not self.enabled:
+            return
+        requested = bool(self.save_requested and self.save_requested())
+        if requested or time.monotonic() - self.last >= self.every:
+            if len(values) > self.saved:
+                from research.kalshi.frankie_boss.parallel_teacher import _save_raw_state
+                _save_raw_state(self.directory / ('seg-%012d.pkl' % self.saved),
+                                dict(schema=SEGMENT_SCHEMA, key=self.key, operation=self.operation, start=self.saved,
+                                     values=list(values[self.saved:])))
+                self.saved = len(values)
+                self.record['saves'] += 1
+                self.record['saved_values'] = self.saved
+            self.last = time.monotonic()
+        if requested:
+            from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
+            self.record['stopped_at'] = self.saved
+            raise TeacherSaved('classroom %s saved at %d values (a closed boundary); a resume continues there'
+                               % (self.operation, self.saved))
+
+    def done(self):
+        """The sub-step returned its whole value: its segments are no longer the resume point (its phase saves it)."""
+        if self.enabled and self.directory.is_dir():
+            import shutil
+            shutil.rmtree(self.directory, ignore_errors=True)
+            self.record['removed_after_completion'] = True
+
+
 SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'
 # V3 = V2 with R17 amended for Granite's active bounded post-class facilitator role (Greg, 2026-10-06)
 RULES_PATH = Path(__file__).resolve().parents[3] / 'research/kalshi/frankie_boss/knowledge/CLASSROOM_RULES_V3.json'
@@ -1508,52 +1589,79 @@ def _native_series_parallel(native, run, jobs, lane, LP):
     import time
     started = time.monotonic()
     workers = native.pair_threads
+    # periodic exact saves at closed chunks (_Segments); a resume computes only the series after the saved ones. A
+    # series the cutoff left uncomputed ends the saving (a marker is never saved: the cutoff record lives on `native`).
+    segments = _Segments('native_series', [[getattr(j[0], '__name__', str(j[0])), repr(j[1]), j[2], j[3]] for j in jobs])
+    prefix = segments.load()
+    start = len(prefix)
+    saving = [True]
+
+    def offer(values_so_far, new):
+        if saving[0] and any(_is_not_computed(v) for v in new):
+            saving[0] = False
+            segments.record['stopped_saving'] = 'a series the cutoff left uncomputed; markers are never saved'
+        if saving[0]:
+            segments.offer(values_so_far)
     forkable, waited, why = _fork_ready() if workers > 1 else (False, 0.0, 'one CPU booked')
     if not forkable:
         PINNING_RECORD['native_series_threads'] = dict(
             LP.record(workers, lane, what='classroom native series threads (_compute; no fork: %s)' % why),
-            waited_for_threads_s=waited)
+            waited_for_threads_s=waited, resumed_from_series=start)
         import threading
         lock = threading.Lock()
-        native.series_done, native.series_total = 0, len(jobs)
+        native.series_done, native.series_total = start, len(jobs)
 
         def counted(job):                # the same run(job), counted for the heartbeat (map keeps job order)
             value = run(job)
             with lock:
                 native.series_done += 1
             return value
+        values = list(prefix)
         with LP.executor('thread', workers, lane) as pool:
-            values = list(pool.map(counted, jobs))
+            try:
+                for value in pool.map(counted, jobs[start:]):      # map yields in job order
+                    values.append(value)
+                    offer(values, (value,))
+            except BaseException:
+                pool.shutdown(wait=False, cancel_futures=True)     # a save or failure never waits for queued series
+                raise
         PINNING_RECORD['native_series_threads']['seconds'] = round(time.monotonic() - started, 3)
+        segments.done()
         return values
     # chunks small enough to balance (about eight per worker), large enough that the hand-back is not per series
     size = max(1, -(-len(jobs) // (workers * 8)))
-    spans = [(a, min(a + size, len(jobs))) for a in range(0, len(jobs), size)]
-    workers = min(workers, len(spans))
+    spans = [(a, min(a + size, len(jobs))) for a in range(start, len(jobs), size)]
+    workers = max(1, min(workers, len(spans)))
     context = multiprocessing.get_context('fork')
     flag = context.Value('i', 0, lock=False)
-    report, values = {}, [None] * len(jobs)
+    report, values = {}, list(prefix) + [None] * (len(jobs) - start)
     _NATIVE_SHARED.update(native=native, run=run, jobs=jobs, flag=flag)
     _RSS_COORDINATOR[:] = [os.getpid()]
-    native.series_done, native.series_total = 0, len(jobs)
+    native.series_done, native.series_total = start, len(jobs)
     gc.freeze()               # the pass's state stays shared: a worker's collector never writes the coordinator's pages
+    mapped = LP.ordered_map(_native_chunk, spans, workers, context=context, cpus=lane, window=workers * 2, poll=5.0,
+                            report=report) if spans else iter(())
     try:
-        for span, (chunk, record) in LP.ordered_map(_native_chunk, spans, workers, context=context, cpus=lane,
-                                                    window=workers * 2, poll=5.0, report=report):
+        for span, (chunk, record) in mapped:
             values[span[0]:span[1]] = chunk
             native.series_done = span[1]          # chunks arrive in job order: every series before span[1] is back
             heartbeat('classroom native entries: series', native.series_done, len(jobs), unit='series',
-                                every=1.0, chunk_workers=workers)
+                      every=1.0, chunk_workers=workers)
             if record is not None and native.cutoff is None:
                 native.cutoff, native.status, native.reason = record['cutoff'], record['status'], record['reason']
+            offer(values[:span[1]], chunk)
     finally:
+        if hasattr(mapped, 'close'):
+            mapped.close()                        # the pool is stopped now (bounded), not when the traceback is freed
         gc.unfreeze()
         _NATIVE_SHARED.clear()
         _RSS_COORDINATOR[:] = []
+    segments.done()
     PINNING_RECORD['native_series_processes'] = dict(
         LP.record(workers, lane, what='classroom native series processes (_compute: member values, event counts, '
                                       'categories, per-level FIFO queues; fork pool, ordered_map)'),
         jobs=len(jobs), chunks=len(spans), series_per_chunk=size, window=workers * 2, waited_for_threads_s=waited,
+        resumed_from_series=start,
         worker_deaths=report.get('worker_deaths'), redone=report.get('redone'),
         seconds=round(time.monotonic() - started, 3),
         rule='same functions, sorted series order, values placed back by job index: the series a single thread computes; '
@@ -2764,24 +2872,40 @@ def picture_texts(pictures):
     workers = min(len(lane), len(cursors))
     forkable, waited, why = _fork_ready() if workers > 1 else (False, 0.0, 'one picture or one CPU')
     texts, report = {}, {}
-    if forkable:
+    # periodic exact saves per picture text in cursor order (_Segments); a resume encodes only the rest
+    segments = _Segments('picture_texts', cursors)
+    done = segments.load()                     # [(cursor, text)] in cursor order
+    for cursor, text in done:
+        texts[id(pictures[cursor])] = (pictures[cursor], text)
+    arrived = list(done)
+    rest = cursors[len(done):]
+    if forkable and len(rest) > 1:
         LP = _lane_pin()
         _PICTURE_SHARED['pictures'] = pictures
         gc.freeze()
+        mapped = LP.ordered_map(_picture_text_job, rest, max(1, min(workers, len(rest))), cpus=lane,
+                                context=multiprocessing.get_context('fork'), poll=5.0, report=report)
         try:
-            for cursor, text in LP.ordered_map(_picture_text_job, cursors, workers, cpus=lane,
-                                               context=multiprocessing.get_context('fork'), poll=5.0, report=report):
+            for cursor, text in mapped:
                 texts[id(pictures[cursor])] = (pictures[cursor], text)
+                arrived.append((cursor, text))
                 heartbeat('classroom: anchor picture texts', len(texts), len(cursors), unit='pictures', every=1.0)
+                segments.offer(arrived)
         finally:
+            mapped.close()                     # the pool is stopped now (bounded)
             gc.unfreeze()
             _PICTURE_SHARED.clear()
         record = dict(LP.record(workers, lane, what='classroom anchor picture texts (fork pool, ordered_map)'),
                       worker_deaths=report.get('worker_deaths'), redone=report.get('redone'))
     else:
-        for cursor in cursors:
-            texts[id(pictures[cursor])] = (pictures[cursor], _picture_text(pictures[cursor]))
-        record = dict(workers=1, where='this process, one picture after another', why=why)
+        for cursor in rest:
+            text = _picture_text(pictures[cursor])
+            texts[id(pictures[cursor])] = (pictures[cursor], text)
+            arrived.append((cursor, text))
+            segments.offer(arrived)
+        record = dict(workers=1, where='this process, one picture after another', why=why or 'one picture left')
+    segments.done()
+    record['resumed_pictures'] = len(done)
     PINNING_RECORD['picture_texts'] = dict(record, pictures=len(cursors), waited_for_threads_s=waited,
                                            characters=sum(len(t) for _, t in texts.values()),
                                            seconds=round(time.monotonic() - started, 3),
@@ -2856,26 +2980,44 @@ def _pair_measures(math, ledgers, order):
         # new pool with one worker fewer; with one worker left (or a live thread beside, where no fork is taken) they
         # run in this process. Same functions, results placed by pair index: the values are the serial loop's.
         measured, live, rounds = [None] * len(order), workers, []
+        # periodic exact saves of the measured pairs in pair order (_Segments); a resume measures only the rest
+        segments = _Segments('dipole_pairs', [list(pair) for pair in order])
+        resumed = segments.load()
+        measured[:len(resumed)] = resumed
+        contiguous = [len(resumed)]
+
+        def offer():
+            while contiguous[0] < len(measured) and measured[contiguous[0]] is not None:
+                contiguous[0] += 1
+            segments.offer(measured[:contiguous[0]])
         try:
             while any(m is None for m in measured):
                 remaining = [i for i, m in enumerate(measured) if m is None]
                 if live <= 1 or threading.active_count() > 1:
                     for i in remaining:
                         measured[i] = _pair_job(i)
+                        offer()
                     rounds.append(dict(workers=1, pairs=len(remaining), where='this process (serial)'))
                     break
                 futures, broken = [], None
                 try:
                     with LP.executor('process', live, lane, mp_context=context) as pool:
                         futures = [(i, pool.submit(_pair_job, i)) for i in remaining]
-                        for i, future in futures:
-                            try:
-                                measured[i] = future.result()
-                            except BrokenProcessPool as error:
-                                broken = error
-                                break
-                            heartbeat('classroom: dipole pairs', sum(m is not None for m in measured), len(order),
-                                      unit='pairs', every=1.0)
+                        try:
+                            for i, future in futures:
+                                try:
+                                    measured[i] = future.result()
+                                except BrokenProcessPool as error:
+                                    broken = error
+                                    break
+                                heartbeat('classroom: dipole pairs', sum(m is not None for m in measured), len(order),
+                                          unit='pairs', every=1.0)
+                                offer()
+                        except BaseException:
+                            # a requested save (TeacherSaved) or a failure: queued pairs are cancelled, so the
+                            # executor's exit waits only for the pairs already running (bounded)
+                            pool.shutdown(wait=False, cancel_futures=True)
+                            raise
                 except BrokenProcessPool as error:
                     broken = broken or error
                 if broken is None:
@@ -2889,7 +3031,8 @@ def _pair_measures(math, ledgers, order):
                 live -= 1
         finally:
             _PAIR_SHARED.clear()
-        PINNING_RECORD['dipole_pair_processes'] = dict(workers=workers, rounds=rounds)
+        segments.done()
+        PINNING_RECORD['dipole_pair_processes'] = dict(workers=workers, rounds=rounds, resumed_pairs=len(resumed))
         basis = ('fork pool (%d workers, each pinned to one lane CPU, physical cores first%s); same functions, pair order '
                  'kept' % (workers, '' if len(rounds) == 1 else '; a dead worker\'s pairs measured again with one worker '
                                                                'fewer (rounds in received.cpu_pinning)'))

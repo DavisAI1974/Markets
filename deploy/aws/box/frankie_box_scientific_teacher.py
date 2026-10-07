@@ -613,7 +613,7 @@ def _default_sigterm(job):
     return fn(arg)
 
 
-def _pinned_map(fn, args, label):
+def _pinned_map(fn, args, label, *, on_item=None, stop=None):
     """[fn(a) for a in args], in order, on the shared pinned fork pool (frankie_box_lane_pin.ordered_map): sized from the
     booked lane (one worker per lane CPU but the coordinator's, never more than the items), each worker pinned to its
     placement CPU (physical cores first, the coordinator's sibling last), at most two tasks per worker in flight, results
@@ -638,7 +638,12 @@ def _pinned_map(fn, args, label):
                                                'a threaded caller: a threaded process is never forked'))
         out = []
         for i, a in enumerate(args):
+            if stop is not None and stop():
+                note['stopped'] = 'a save was requested: %d of %d items done, the rest left for the resume' % (i, len(args))
+                break
             out.append(fn(a))
+            if on_item is not None:
+                on_item(i, out[-1])
             _report_units(label, i + 1, len(args))
         note['seconds'] = round(time.time() - started, 3)
         return out
@@ -654,12 +659,16 @@ def _pinned_map(fn, args, label):
     try:
         for _, value in LP.ordered_map(_default_sigterm, [(fn, a) for a in args], workers,
                                        context=multiprocessing.get_context('fork'), cpus=order, window=2 * workers,
-                                       report=recovery):
+                                       report=recovery, stop=stop):
             out.append(value)
+            if on_item is not None:
+                on_item(len(out) - 1, value)
             _report_units(label, len(out), len(args))
     finally:
         note.update(worker_deaths=recovery.get('worker_deaths') or [], redone=recovery.get('redone') or [],
                     completed=len(out), seconds=round(time.time() - started, 3))
+        if len(out) < len(args):
+            note['stopped'] = 'a save was requested: %d of %d items done, the rest left for the resume' % (len(out), len(args))
         if recovery.get('worker_deaths'):
             print('%s: %d worker death(s), %d task(s) redone with one fewer worker each'
                   % (label, len(recovery['worker_deaths']), len(recovery.get('redone') or [])), file=sys.stderr, flush=True)
@@ -876,6 +885,245 @@ def shared_scan(claims_docs, days):
     return _shared_prepared(members, plans, jobs, [_merge_part(ix, values) for ix in layout], len(claims_docs))
 
 
+# ------------------------------------------------------------------------- save / restore (ROOT's contract, session 5)
+# Greg, 2026-10-07 night: "every workflow piece needs their restore save code updated to match ROOT's". The route is
+# ROOT's (frankie_box_experiment_root.calculate_day): SIGTERM or the lane's FRANKIE_LANE_STOP_FILE only MARKS the save;
+# the piece runs on to its next boundary (a pre-read task, or a claim document written), writes its exact state and
+# exits 75 (SAVE_EXIT), which the queue records as saved, never failure. Forked workers never inherit the mark-only
+# handler (os.register_at_fork resets SIGTERM to its default in every child: the a2 shard hang).
+# The exact state is the pre-read checkpoint: an append-only pickle stream (key order kept) under <out>/saves/, one
+# header (the identity: every task, the shared specs, the function-level code identity of the code that computes the
+# values) then one record per finished task (its value and its file's position), flushed and fsynced at every save
+# point: periodically (SAVE_EVERY_SECONDS), on a requested save and at the end. A crash loses at most the tasks after
+# the last fsync and a partial final record (dropped on load, listed). A resumed task's file is checked by
+# frankie_box_boss_session._resume_row_spool's rule, mirrored (the parts are immutable pinned files, not a RowSpool):
+# same size, device, inode and mtime and the same last line (_line_ending_at) -> the saved value, no read; anything else
+# (or an old-shape record without the position) -> ONE full pass (the task again: every byte hashed, the pin checked by
+# test() / the native assembly exactly as before). Identity is content (frankie_box_experiment_root.content_rebinds):
+# the saved header against the one this checkout builds; checkout moves are recorded under <saves>/checkout-rebinds/,
+# any other difference refuses (an unfinished save) or sets aside (a completed one: nothing to resume).
+SAVE_SCHEMA = 'FRANKIE_SCIENTIFIC_PRE_READ_SAVE_V1'
+SAVE_EXIT = 75
+SAVE_EVERY_SECONDS = 60
+SAVE_CODE_NAMES = ('sha256_bytes', 'SCAN_BLOCK', '_segments', '_line_at', '_line_starts', '_scan_part_shared',
+                   'SCAN_RANGE_MIN_BYTES', 'SCAN_RANGE_BYTES', '_part_ranges', '_hash_part', '_part_tasks', '_pre_read_task',
+                   '_read_pinned', '_finalize_rows', 'NATIVE_ROLES', 'NATIVE_LEDGERS', '_LEDGER_ABSENT', '_native_projection',
+                   '_native_read', '_native_read_kept', '_native_tasks')
+_SAVE = dict(requested=False, installed=False)
+
+
+class ScientificSaved(SystemExit):
+    """A requested save reached its boundary: the exact state is on disk; the process exits SAVE_EXIT (75)."""
+    def __init__(self, reason):
+        super().__init__(SAVE_EXIT)
+        self.reason = reason
+
+
+def _child_default_sigterm():
+    import signal
+    try:
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except (ValueError, OSError):
+        pass
+
+
+def install_save_route():
+    """ROOT's save route in this process: SIGTERM marks the save (never stops mid-task); every forked child gets the
+    default SIGTERM back. Idempotent; only the CLI installs it (an importing caller keeps its own handlers)."""
+    import signal
+    if _SAVE['installed']:
+        return
+    signal.signal(signal.SIGTERM, lambda *_: _SAVE.__setitem__('requested', True))
+    if hasattr(os, 'register_at_fork'):
+        os.register_at_fork(after_in_child=_child_default_sigterm)
+    _SAVE['installed'] = True
+
+
+def save_requested():
+    """The mark (SIGTERM) or the lane's stop file (FRANKIE_LANE_STOP_FILE, set by Run.child), as ROOT's save_requested."""
+    stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    return _SAVE['requested'] or bool(stop_file and Path(stop_file).exists())
+
+
+def _task_file(task):
+    """The one file a pre-read task reads (its position is what a save records)."""
+    kind, payload = task
+    if kind == 'native':
+        role_kind, _, pin = payload
+        return pin['retained'] if role_kind == 'file' else pin.get('path')
+    if kind == 'hash':
+        return payload
+    return payload[0]
+
+
+def _task_identity(task):
+    kind, payload = task
+    return [kind, sha256_bytes(json.dumps(payload, sort_keys=True, default=str).encode())]
+
+
+def _file_position(path):
+    """The saved position of an input file (frankie_box_boss_session._saved_spool_position's `resume` block, minus the
+    running hash: these files are read whole, never appended): size, device, inode, mtime and the last line's offset and
+    sha256; None when the file cannot be stat'ed or does not end on a whole line (a resume then makes one full pass)."""
+    try:
+        observed = os.stat(path)
+        import frankie_box_boss_session as BS
+        tail = BS._line_ending_at(Path(path), observed.st_size)
+    except Exception:  # noqa: BLE001 - no position: the resume reads the file again (one full pass)
+        return None
+    return dict(path=str(path), bytes=observed.st_size, device=observed.st_dev, inode=observed.st_ino,
+                mtime_ns=observed.st_mtime_ns, tail_offset=tail['offset'], tail_sha256=tail['sha256'])
+
+
+def _position_unchanged(position):
+    """frankie_box_boss_session._resume_row_spool's rule, mirrored: (True, how) when the file is the one saved."""
+    if not position:
+        return False, 'one full pass: the save recorded no position (an older save, or no whole last line)'
+    now = _file_position(position['path'])
+    if now is None:
+        return False, 'one full pass: the file cannot be read back now'
+    if (now['bytes'], now['device'], now['inode'], now['mtime_ns']) != (
+            position['bytes'], position['device'], position['inode'], position['mtime_ns']):
+        return False, 'one full pass: the file is not the one saved (size, device, inode or mtime differ)'
+    if (now['tail_offset'], now['tail_sha256']) != (position['tail_offset'], position['tail_sha256']):
+        return False, 'one full pass: its last line differs from the saved one'
+    return True, 'unchanged file: stat and last line checked, no full read'
+
+
+def _save_identity(tasks):
+    """The header a save binds: every task in order, the shared specs, and the function-level code identity of the code
+    that computes the saved values (frankie_box_bedrock.code_identity; a comment or an unrelated edit keeps it)."""
+    specs = [[sorted([list(p) for p in wanted]), [n.decode('utf-8', 'replace') for n in needles], flag]
+             for wanted, needles, flag in _SHARED_SPECS]
+    try:
+        import frankie_box_bedrock as BED
+    except ImportError:
+        from deploy.aws.box import frankie_box_bedrock as BED
+    return dict(schema=SAVE_SCHEMA, tasks=[_task_identity(t) for t in tasks], specs=specs,
+                code=BED.code_identity(Path(__file__), SAVE_CODE_NAMES))
+
+
+class PreReadSave:
+    """The pre-read checkpoint (see the section note): load() the saved values that may be reused, add() a finished
+    task, flush() at a save point (fsync), finish() at the end. Never changes a value: a reused value is the pickled
+    value of the same task on the same unchanged file under the same code identity."""
+
+    def __init__(self, directory, tasks):
+        self.directory = Path(directory)
+        self.identity = _save_identity(tasks)
+        self.key = sha256_bytes(json.dumps(self.identity['tasks'] + [self.identity['specs']], sort_keys=True).encode())[:24]
+        self.path = self.directory / ('%s.pkl' % self.key)
+        self.note = dict(path=str(self.path), reused=0, full_pass=[], saved=0, flushes=0, dropped_tail=None,
+                         rebinds=None, old_shape=False)
+        self.handle, self.last_flush = None, time.time()
+
+    def load(self):
+        """{task index: value} that may be reused (each file checked as _resume_row_spool does); notes every full pass."""
+        import pickle
+        if not self.path.is_file():
+            return {}
+        header, records, complete = None, [], False
+        with open(self.path, 'rb') as handle:
+            while True:
+                at = handle.tell()
+                try:
+                    item = pickle.load(handle)
+                except EOFError:
+                    break
+                except Exception as error:  # noqa: BLE001 - a partial final record of a crash: dropped, listed
+                    self.note['dropped_tail'] = dict(at=at, reason='%s: %s' % (type(error).__name__, error))
+                    break
+                if header is None:
+                    header = item
+                elif item.get('complete'):
+                    complete = True
+                else:
+                    records.append(item)
+        saved_identity = (header or {}).get('identity')
+        if saved_identity is not None and 'code' not in saved_identity:
+            # an older save shape without the function-level identity: its values are not reused; one full pass
+            self.note['old_shape'] = True
+            saved_identity = None
+        if saved_identity is None:
+            self._set_aside('the save has no identity this code can check (an older shape): one full pass of every task')
+            return {}
+        import frankie_box_experiment_root as XR
+        moves = XR.content_rebinds(saved_identity, self.identity)
+        if moves is None:
+            if complete:
+                self._set_aside('a completed save of different code or inputs: nothing to resume, set aside')
+                return {}
+            raise ValueError('the saved scientific pre-read %s differs from what this checkout builds (code or inputs); '
+                             'retained for recovery: move it aside to start the pre-read again' % self.path)
+        if moves:
+            from frankie_box_durable import write_json
+            write_json(self.directory / 'checkout-rebinds' / ('%s-%d.json' % (self.key, time.time_ns())),
+                       dict(schema='FRANKIE_ROOT_CHECKOUT_REBIND_V1', save=str(self.path), moves=moves))
+            self.note['rebinds'] = len(moves)
+        reuse = {}
+        for record in records:
+            index = record.get('index')
+            same, how = _position_unchanged(record.get('position'))
+            if same:
+                reuse[index] = record['value']
+            else:
+                self.note['full_pass'].append(dict(index=index, file=(record.get('position') or {}).get('path'), how=how))
+        self.note['reused'] = len(reuse)
+        self._records = records
+        return reuse
+
+    def _set_aside(self, reason):
+        target = self.path.with_name(self.path.name + '.set-aside-%d' % time.time_ns())
+        os.replace(self.path, target)
+        self.note.setdefault('set_aside', []).append(dict(path=str(target), reason=reason))
+
+    def _open(self):
+        import pickle
+        if self.handle is None:
+            self.directory.mkdir(parents=True, exist_ok=True)
+            existing = self.path.is_file()
+            self.handle = open(self.path, 'ab')
+            if not existing:
+                pickle.dump(dict(identity=self.identity), self.handle, protocol=pickle.HIGHEST_PROTOCOL)
+            elif self.note.get('dropped_tail'):
+                # never append after a partial record: rewrite the readable records, then continue
+                self.handle.close()
+                records = getattr(self, '_records', [])
+                pending = self.path.with_name(self.path.name + '.pending')
+                with open(pending, 'wb') as out:
+                    pickle.dump(dict(identity=self.identity), out, protocol=pickle.HIGHEST_PROTOCOL)
+                    for record in records:
+                        pickle.dump(record, out, protocol=pickle.HIGHEST_PROTOCOL)
+                    out.flush()
+                    os.fsync(out.fileno())
+                os.replace(pending, self.path)
+                self.handle = open(self.path, 'ab')
+
+    def add(self, index, task, value):
+        import pickle
+        self._open()
+        pickle.dump(dict(index=index, position=_file_position(_task_file(task)), value=value), self.handle,
+                    protocol=pickle.HIGHEST_PROTOCOL)
+        self.note['saved'] += 1
+        if save_requested() or time.time() - self.last_flush >= SAVE_EVERY_SECONDS:
+            self.flush()
+
+    def flush(self):
+        if self.handle is not None:
+            self.handle.flush()
+            os.fsync(self.handle.fileno())
+            self.note['flushes'] += 1
+        self.last_flush = time.time()
+
+    def finish(self):
+        import pickle
+        self._open()
+        pickle.dump(dict(complete=True, at=time.time()), self.handle, protocol=pickle.HIGHEST_PROTOCOL)
+        self.flush()
+        self.handle.close()
+        self.handle = None
+
+
 def _pre_read_task(task):
     """One item of pre_read's single pool: ('native', a completed-native read) -> _native_read_kept's ('ok'|'error', v);
     ('scan', a part) -> ('ok', _scan_part_shared's tuples) or ('error', text) (the documents then scan on their own)."""
@@ -888,7 +1136,7 @@ def _pre_read_task(task):
         return 'error', '%s: %s' % (type(error).__name__, error)
 
 
-def pre_read(days, claims_docs, out_root):
+def pre_read(days, claims_docs, out_root, save_dir=None):
     """Every searched day's completed native evidence AND the search-part scan of every claim document to be tested, on
     ONE pinned lane pool side by side (Greg, 2026-10-07: sub-steps of a piece run side by side where independent; the
     native reads of every day and the claim scan read different files and never depend on each other). Returns
@@ -910,11 +1158,42 @@ def pre_read(days, claims_docs, out_root):
                 scan_documents=0 if plan is None else len(plan[0]), side_by_side=bool(tasks and parts))
     if plan is not None:
         _SHARED_SPECS = _shared_specs(plan[0], plan[1])
+    every = [('native', t) for t in tasks] + part_tasks
+    save = reuse = None
     try:
-        out = _pinned_map(_pre_read_task, [('native', t) for t in tasks] + part_tasks,
-                          'scientific pre-read: %d native evidence reads of %d days and %d search parts for %d claim '
-                          'documents, side by side' % (len(tasks), len(days), len(parts), note['scan_documents']))
+        if save_dir is not None and every:
+            # the exact save of this pre-read (see the save section): finished tasks reused on an unchanged file
+            save = PreReadSave(save_dir, every)
+            reuse = save.load()
+        reuse = reuse or {}
+        run = [i for i in range(len(every)) if i not in reuse]
+        _report_units('scientific pre-read: %d of %d tasks resumed from the save' % (len(reuse), len(every)),
+                      len(reuse), len(every))
+        values = dict(reuse)
+
+        def finished(k, value):
+            values[run[k]] = value
+            if save is not None and value[0] == 'ok':
+                save.add(run[k], every[run[k]], value)
+        _pinned_map(_pre_read_task, [every[i] for i in run],
+                    'scientific pre-read: %d native evidence reads of %d days and %d search parts for %d claim '
+                    'documents, side by side (%d resumed)' % (len(tasks), len(days), len(parts), note['scan_documents'],
+                                                              len(reuse)),
+                    on_item=finished, stop=save_requested if save is not None else None)
+        if save is not None:
+            note['save'] = save.note
+            if len(values) < len(every):
+                save.flush()
+                save.handle and save.handle.close()
+                raise ScientificSaved('a save was requested: %d of %d pre-read tasks saved at %s'
+                                      % (len(values), len(every), save.path))
+            save.finish()
+        out = [values[i] for i in range(len(every))]
+    except ScientificSaved:
+        raise
     except Exception as error:  # noqa: BLE001 - the serial route below reads everything itself
+        if isinstance(error, ValueError) and 'saved scientific pre-read' in str(error):
+            raise                                   # a save this checkout refuses is visible, never read around
         print('scientific pre-read not used (%s: %s); native evidence and parts read on their own'
               % (type(error).__name__, error), file=sys.stderr, flush=True)
         note.update(used=False, reason='%s: %s' % (type(error).__name__, error), seconds=round(time.time() - started, 3))
@@ -2047,6 +2326,7 @@ def publish_lessons(path, brain_dir='/opt/frankie-box/brain', log=print):
 
 
 def main():
+    install_save_route()
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--search', action='append', required=True, help='a completed experiment search directory (repeat per day)')
     p.add_argument('--jev-claims', help='a JEV_CLAIMS_V1 file (Jev\'s claims of one day)')
@@ -2140,7 +2420,12 @@ def main():
         if not (Path(a.out_dir) / doc['author'] / ('%s-%s.json' % (
             '-'.join(sorted(d['day'] for d in days)) if doc['author'] == 'historical' else doc['day'],
             doc['stamp'] or 'frankie'))).exists()]
-    native_list, prepared_list, pre_note = pre_read(days, [docs[index] for index in to_test], Path(a.out_dir))
+    try:
+        native_list, prepared_list, pre_note = pre_read(days, [docs[index] for index in to_test], Path(a.out_dir),
+                                                        save_dir=Path(a.out_dir) / 'saves')
+    except ScientificSaved as saved:
+        _print_saved(a, days, 'pre_read', saved.reason, documents_left=len(to_test))
+        raise
     native = dict(zip([d['day'] for d in days], native_list))
     for day, (ref, native_listed) in native.items():
         print('completed native evidence %s: %s' % (day, 'read, %s' % json.dumps(ref['counts'], sort_keys=True) if ref
@@ -2161,6 +2446,12 @@ def main():
                        'prepared 0 = each document read its own parts; documents_resumed = result files already written '
                        '(reused below, nothing re-tested)')
     for index, doc in enumerate(docs):
+        if index and save_requested():
+            # ROOT's route: the save is marked; this boundary (every earlier document written and published) is the
+            # exact state: the next call reuses those result files and tests the rest. Exit 75, never a failure.
+            _print_saved(a, days, 'document_boundary', 'a save was requested: %d of %d claim documents done'
+                         % (index, len(docs)), documents_left=len(docs) - index, operations=operations)
+            raise ScientificSaved('document boundary %d of %d' % (index, len(docs)))
         started = time.time()
         operation, frozen = freeze_operation(doc, days, a.out_dir, a.brain)
         doc = frozen['selection']['doc']
@@ -2294,6 +2585,17 @@ def _accumulated_report(a, result, out, started):
                      publication='published per file unless awaiting a checked owner decision'),
         seconds=round(time.time() - started, 3), model_calls=0)
     return dict(all99_coverage=all99, workflow_report=report)
+
+
+def _print_saved(a, days, boundary, reason, documents_left=None, operations=None):
+    """The last stdout line of a saved call (FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1, status 'saved'): where it stopped,
+    why, what is left and every pool so far; the caller reads exit 75 as saved, never as a failure."""
+    print(json.dumps(dict(schema='FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1', status='saved', exit_code=SAVE_EXIT,
+                          boundary=boundary, reason=reason, documents_left=documents_left,
+                          searched_days=[d['day'] for d in days], out_dir=str(a.out_dir),
+                          operations=operations or [], pools=list(POOL_NOTES), model_calls=0,
+                          resume='the same call again: written result files are reused, saved pre-read tasks on '
+                                 'unchanged files are reused, the rest runs'), sort_keys=True, default=str), flush=True)
 
 
 def _write_teacher_receipt(a, days, native, operations, listed, code_root, shared_read=None):

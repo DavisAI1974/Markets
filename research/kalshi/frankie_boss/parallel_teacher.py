@@ -312,6 +312,67 @@ def _progress(stage, completed, total=None, force=False, _last={}):
         PROGRESS_ERRORS[0] += 1
 
 
+# ---- save identity like ROOT's (Greg, 2026-10-07 night: "every workflow piece needs their restore save code updated to
+# match ROOT's"). (5) Function-level code identity: a raw-pass or attachment save binds frankie_box_bedrock.code_identity
+# of the declared definitions below (a comment or an unrelated edit of this file no longer refuses a save; any change to
+# the named code does); a save written with the old whole-file parallel_teacher_sha256 is accepted while this file is
+# byte-identical. (4) Identity is content, not location: any other difference is offered to
+# frankie_box_experiment_root.content_rebinds; checkout-prefix moves with equal bytes and sha256 are accepted and recorded
+# (<recovery>.checkout-rebinds/<n>.json), anything else refuses as before. Nothing saved is rewritten.
+ROW_PASS_CODE = ('RAW_MARK', 'DSTATE_SCHEMA', '_changes_applied', '_raw_batch', '_RawStreams', '_dstate_row', 'row_pass')
+FINISH_CODE = ('GUARD_EVERY', '_FastStateHash', '_receipt', '_chunk', '_canonical', '_candidate', 'finish')
+
+
+def _box(name):
+    import importlib
+    for qualified in (name, 'deploy.aws.box.' + name):
+        try:
+            return importlib.import_module(qualified)
+        except ImportError:
+            continue
+    return None
+
+
+def _code_witness(names):
+    """{'parallel_teacher_code': code_identity(this file, names)}; the whole-file sha256 when bedrock is not here."""
+    bedrock = _box('frankie_box_bedrock')
+    if bedrock is not None and hasattr(bedrock, 'code_identity'):
+        return dict(parallel_teacher_code=bedrock.code_identity(__file__, names))
+    return dict(parallel_teacher_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+
+
+def _identity_accepted(saved, built, recovery_path, record=None):
+    """True when a saved identity may be resumed under the identity this process builds (ROOT's rule, see above)."""
+    if saved == built:
+        return True
+    whole = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    if (isinstance(saved, dict) and isinstance(built, dict) and 'parallel_teacher_sha256' in saved
+            and 'parallel_teacher_code' in built):
+        if saved['parallel_teacher_sha256'] != whole:
+            return False
+        rest_saved = {k: v for k, v in saved.items() if k != 'parallel_teacher_sha256'}
+        rest_built = {k: v for k, v in built.items() if k != 'parallel_teacher_code'}
+        if record is not None:
+            record.setdefault('identity_notes', []).append('an old whole-file save, accepted: this file is byte-identical')
+        if rest_saved == rest_built:
+            return True
+        saved, built = rest_saved, rest_built
+    root = _box('frankie_box_experiment_root')
+    moves = root.content_rebinds(saved, built) if root is not None and hasattr(root, 'content_rebinds') else None
+    if not moves:
+        return False
+    import json
+    where = Path(str(recovery_path) + '.checkout-rebinds')
+    where.mkdir(parents=True, exist_ok=True)
+    note = where / ('%d.json' % time.time_ns())
+    note.write_text(json.dumps(dict(schema='FRANKIE_TEACHER_CHECKOUT_REBINDS_V1', save=str(recovery_path), moves=moves,
+                                    rule='checkout-prefix moves with equal bytes and sha256 only; nothing saved is '
+                                         'rewritten'), indent=1, sort_keys=True, default=str))
+    if record is not None:
+        record.setdefault('checkout_rebinds', []).append(dict(file=str(note), moves=len(moves)))
+    return True
+
+
 def _pin_raw_worker(cpus, counter):
     """Spawn-worker initializer: the next CPU of the plan (a shared counter, so a respawned worker never blocks on an
     emptied hand-out); a refused pin keeps the inherited mask."""
@@ -803,13 +864,14 @@ def row_pass(self, evidence, *, as_of, source_manifest_hash, recovery_path=None,
     continuation = {} if recovery_path or retain_dstate else None
     identity = dict(binding=self.binding, source_manifest_hash=source_manifest_hash,
                     entity=entity, source=recovery_identity,
-                    parallel_teacher_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()) if recovery_path else None
+                    **_code_witness(ROW_PASS_CODE)) if recovery_path else None
     if identity is not None and retain_dstate:
         identity['dstate_schema'] = DSTATE_SCHEMA
     if recovery_path and Path(recovery_path).exists():
         saved = _load_raw_state(recovery_path)
-        if saved['identity'] != identity or saved['as_of'] > as_of:
+        if not _identity_accepted(saved['identity'], identity, recovery_path, SAVE_RECORD) or saved['as_of'] > as_of:
             raise ValueError('saved teacher source, code or causal bound differs')
+        identity = saved['identity']             # the saved document stays the identity (ROOT's rule)
         as_of = saved['as_of']
         rows, processed, entity_hashes = saved['rows'], saved['processed'], saved['entity_hashes']
         continuation = saved['continuation']
@@ -919,12 +981,15 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
     recovery_identity = dict(binding=self.binding, candidate=candidate, source=source_manifest_hash,
                              processed=processed, context=hashlib.sha256(_canonical(spec)).hexdigest(),
                              normalizer=self.normalizer.export(),
-                             parallel_teacher_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+                             **_code_witness(FINISH_CODE))
     if dstate_rows is not None:
         recovery_identity['dstate_sha256'] = T.evidence_hash(dstate_rows)
     saved = _load_raw_state(recovery_path) if recovery_path and Path(recovery_path).exists() else None
-    if saved and saved['identity'] != recovery_identity:
+    identity_notes = {}
+    if saved and not _identity_accepted(saved['identity'], recovery_identity, recovery_path, identity_notes):
         raise ValueError('saved teacher attachment source, context or normalizer changed')
+    if saved:
+        recovery_identity = saved['identity']   # the saved document stays the identity (chunks are bound to it)
     jobs = saved['jobs'] if saved else []
     # Preparation is saved once; each result gets its own immutable, hash-bound file.
     # Rewriting all prior tensors after every chunk would turn recovery into quadratic I/O.
@@ -984,7 +1049,7 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash,
     workers = min(cpus, max(1, len(jobs)))
     FINISH_POOL_RECORD.clear()
     FINISH_POOL_RECORD.update(workers=workers, cpus=list(planned) or None, chunks=len(jobs), chunk_rows=size,
-                              reused_chunks=len(blobs), rebuilds=[],
+                              reused_chunks=len(blobs), rebuilds=[], **identity_notes,
                               basis=('each spawn worker pinned to one CPU of the plan' if planned else
                                      'unpinned spawn workers on the parent\'s mask (no plan given)'))
     joined = [0]

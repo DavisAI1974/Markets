@@ -133,6 +133,9 @@ root_execution native_overlap timing parse
 cpu_placement pool_recovery
 workflow_report_file leakage_failed source_passes native_selection_check journal_witness
 run_settings transport worker_deaths redone cpu_pinning fallbacks caps retries skipped refusals waits dedupe
+transport_fallback transport_receipt transport_attempts hash_pass stalls bytes_to_fetch bytes_fetched fetch_pin
+rehash_rule member_streams range_streams transport_module refused report_rendering checkout_rebinds content_rebinds
+save_point resume resumed_from_save
 '''.split())
 WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the pieces' own inputs / use / outputs record
 # The successor chain (school and corrections pieces): recorded pins {path, bytes, sha256} followed one by one from the
@@ -191,11 +194,15 @@ _READ_LEDGER = {}  # str(path) -> requests served (1 = read once and used once)
 # stale input, swallowed exception, default taken, error, redo or dedupe; matched on the key name at any depth.
 VISIBILITY = re.compile(r'(skip|wait|refus|fallback|(^|_)caps?($|_)|capped|retr(y|ies)|missing|stale|absent|swallow|'
                         r'default|error|problem|listed|not_run|deferred|withheld|exclu|worker_death|redone|redo|'
-                        r'recover|lost|timeout|stopped|stop_|limit|transport|dedupe|read_once|repeated|unavailable)',
+                        r'recover|lost|timeout|stopped|stop_|limit|transport|dedupe|read_once|repeated|unavailable|stall)',
                         re.IGNORECASE)
 VISIBILITY_DEPTH = 8
 VISIBILITY_ROWS = 400
 VISIBILITY_VALUE_CHARS = 600
+# Save/restore (Greg, 2026-10-07: every piece's save and restore matches ROOT's): key names that record a save point,
+# a resume source, accepted checkout rebinds, a checkpoint, a full pass forced by a missing field, a saved exit.
+SAVE_RESTORE = re.compile(r'(save|resum|rebind|checkpoint|full_pass|restor|saved_phases|cursor|exit_code|seal)',
+                          re.IGNORECASE)
 PLACEMENT_SCHEMA = 'FRANKIE_LANE_PLACEMENT_V1'
 CPU_KEYS = ('cpu_placement', 'cpu_pinning', 'pool_recovery', 'cpu_booking', 'cpus')
 
@@ -270,6 +277,7 @@ def metadata(path, label):
     nested_workflow_reports(body, path.name)
     cpu_map_block(body, path.name)
     visibility_block(body, path.name)
+    save_restore_block(body, path.name)
     return body
 
 
@@ -295,12 +303,14 @@ def _walk(value, path, depth, visit):
                 _walk(item, '%s[%d]' % (path, index), depth + 1, visit)
 
 
-def visibility_rows(body):
-    """(rows [(key path, value text)], empty key paths) of every visibility key (VISIBILITY) at any depth."""
+def visibility_rows(body, pattern=None):
+    """(rows [(key path, value text)], empty key paths) of every key matching pattern (default VISIBILITY) at any
+    depth."""
     rows, empty = [], []
+    pattern = pattern or VISIBILITY
 
     def visit(key, path, value):
-        if not VISIBILITY.search(key):
+        if not pattern.search(key):
             return False
         if value in (None, [], {}, '', False):
             empty.append(path)
@@ -330,6 +340,23 @@ def visibility_block(body, label):
                                                                                         VISIBILITY_ROWS))
     emit('Empty visibility fields (nothing recorded there): %d%s\n' % (
         len(empty), (': ' + ', '.join(empty[:40]) + (' ...' if len(empty) > 40 else '')) if empty else ''))
+
+
+def save_restore_block(body, label):
+    """The piece's save/restore row (Greg, 2026-10-07: ROOT's contract for every piece): every recorded save point,
+    resume source, accepted checkout rebind (content_rebinds / checkout-rebinds), checkpoint, cursor, seal and full
+    pass forced by a missing field, with its value; absent = the object records none (unknown, never 'saved')."""
+    rows, empty = visibility_rows(body, SAVE_RESTORE)
+    if not rows and not empty:
+        return
+    emit('#### ' + label + ': save / restore (last save point, resume source, rebinds accepted, full passes forced)\n')
+    if rows:
+        emit('| recorded at | value |\n|---|---|')
+        for path, text in rows[:VISIBILITY_ROWS]:
+            emit('| %s | %s |' % (path.replace('|', '/'), text.replace('|', '/').replace('\n', ' ')))
+        emit('')
+    if empty:
+        emit('Empty save/restore fields: %d: %s\n' % (len(empty), ', '.join(empty[:40]) + (' ...' if len(empty) > 40 else '')))
 
 
 def cpu_map_rows(body):
@@ -818,6 +845,47 @@ def foreign_owner(record):
                 or record.get('owner') not in (None, 'main'))
 
 
+def _log_path(record):
+    value = record.get('log')
+    return absolute(value.get('path') if isinstance(value, dict) else value)
+
+
+def fetch_receipts(record):
+    """The fetch receipts a fetch step's log names ('RECEIPT <path>' lines of frankie_box_ingest_block.sh ACTION=fetch),
+    the log read once under the metadata ceiling; [] when the log is absent or names none."""
+    log = _log_path(record)
+    if record.get('stage') != 'fetch' or log is None:
+        return []
+    try:
+        if log.stat().st_size > METADATA_BYTE_LIMIT:
+            return []
+        text = log.read_text(encoding='utf-8', errors='replace')
+    except OSError:
+        return []
+    out = []
+    for line in text.splitlines():
+        if line.startswith('RECEIPT '):
+            path = absolute(line[len('RECEIPT '):].strip())
+            if path and path.suffix == '.json':
+                out.append(path)
+    return list(dict.fromkeys(out))
+
+
+def fetch_probe_dirs(receipt):
+    """progress.json of the block fetch (T.WorkProbe beside the partitions): the directory of a member's transport
+    receipt dest, read from the fetch receipt (one read, shared through the reporter's read cache)."""
+    try:
+        body, _ = read_object(receipt)
+    except (OSError, ValueError):
+        return []
+    out = []
+    for entry in (body.get('files') or []) + (body.get('refused') or []):
+        dest = absolute(((entry or {}).get('transport_receipt') or {}).get('dest')) if isinstance(entry, dict) else None
+        if dest:
+            out.append(dest.parent / 'progress.json')
+    return list(dict.fromkeys(out))
+
+
 def artifact_paths(record, piece):
     """Only known metadata contracts, never recursive scans or giant evidence reads."""
     if foreign_owner(record):
@@ -841,6 +909,16 @@ def artifact_paths(record, piece):
     ingest = absolute(record.get('ingest'))
     if ingest and piece == 'external':
         out.append(ingest / 'day-external-receipt.json')
+    if piece == 'ingest':
+        # X3 (stacks pass, the ingest owner's request): the ingest's own FRANKIE_WORK_PROBE_V1 progress.json beside the
+        # journal (ingest / pass 1 / pass 2 / pass 3 / seal-conform), and the block fetch receipts
+        # (FRANKIE_BOX_INGEST_FETCH_RECEIPT_V1 with each member's FRANKIE_S3_TRANSPORT_V1 transport_receipt) that the
+        # fetch names on its RECEIPT lines in the step log, with the fetch probe beside the partitions they landed in.
+        if ingest:
+            out.append(ingest / 'progress.json')
+        for receipt in fetch_receipts(record):
+            out.append(receipt)
+            out += fetch_probe_dirs(receipt)
     publication = record.get('brain_entry')
     source_review = publication.get('source_review') if isinstance(publication, dict) else None
     if piece == 'search' and isinstance(source_review, dict):

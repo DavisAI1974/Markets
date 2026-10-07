@@ -23,15 +23,33 @@ One place for what search, the native reader, the data export and the day-file b
                    section note at the end);
   record()         the CPU map for the piece's receipt (lane, coordinator, workers, basis), projected by
                    frankie_box_workflow_inspection.
+  end_pool() / end_executor()  (session 5, 2026-10-07) the bounded end of a pool, one shared rule for every caller
+                   that holds a pool (ordered_map's cleanup, pinned_pool holders, operations/ingest_cpus.end_pool):
+                   terminate (or close), join up to STOP_JOIN_SECONDS, SIGKILL the survivors by pid, join again
+                   bounded, every kill listed in the report (report['stop_kills'] = [{pid, cpu, at, exit_code}], the
+                   shape of report['worker_deaths']); multiprocessing.Pool.terminate() itself joins each worker without
+                   a bound, which is where a worker that swallowed SIGTERM hung the a2 run;
+  RedoPool         (session 5) the submit/get shape of ordered_map's dead-worker rule over pinned_pool: apply_async()
+                   handles whose get() polls, redoes a task whose worker died (attempts, then the coordinator) and
+                   never hangs; end() is end_pool;
+  reset_worker_sigterm()  run first by every process initializer here: SIGTERM back to its default action in the worker,
+                   so a handler inherited from the parent (the ROOT's save flag) cannot keep a worker alive through
+                   terminate() (the a2 shard exit hang, 2026-10-07 22:36Z, E2E_ONE_DAY_20231018.md sessions 4-5);
+  exclude_sibling= (keyword on placement / pinned_pool / executor / ordered_map / record, default False: every caller
+                   unchanged) leaves the coordinator's hyperthread sibling OUT of the worker set, the whole physical
+                   core to a serial consumer as the ROOT does; record() lists the choice (sibling_idle, idle_cpus).
 
 Placement changes WHERE work runs, never what it computes: no value, order, hash or identity depends on it.
 """
 import os
+import signal
 import threading
 import time
 
 _LANE = None
 POLL_SECONDS = 30.0
+STOP_JOIN_SECONDS = 10.0    # end_pool / end_executor / ordered_map's cleanup: the most a join waits after terminate(),
+                            # then SIGKILL and one more join of the same bound (frankie_box_boss_session.STOP_JOIN_SECONDS)
 
 
 def _session():
@@ -94,22 +112,56 @@ def core_order(cpus=None):
         len(groups), len(order))
 
 
-def placement(workers, cpus=None):
-    """(coordinator cpu, [worker cpus], basis). The coordinator keeps the first CPU of the core order; the workers take
-    the other cores' threads first and the coordinator's sibling last; with more workers than CPUs they cycle."""
+def _coordinator_siblings(order, coordinator):
+    """(the coordinator's sibling hardware threads within `order`, topology known?); never raises."""
+    try:
+        topology = _session().cpu_topology(order)
+    except Exception:  # noqa: BLE001
+        return set(), False
+    if not topology:
+        return set(), False
+    return {c for c in order if topology.get(c) == topology.get(coordinator)} - {coordinator}, True
+
+
+def _place(workers, cpus, exclude_sibling):
+    """placement()'s work plus the CPUs it set aside: (coordinator, [worker cpus], basis, [idle cpus])."""
     order, basis = core_order(cpus)
     coordinator = order[0]
-    if workers < len(order):
-        try:
-            topology = _session().cpu_topology(order)
-            sibling = {c for c in order if topology and topology.get(c) == topology.get(coordinator)} - {coordinator}
-        except Exception:  # noqa: BLE001
-            sibling = set()
+    idle = []
+    if exclude_sibling:
+        sibling, known = _coordinator_siblings(order, coordinator)
+        others = [c for c in order[1:] if c not in sibling]
+        if sibling and others:
+            idle = sorted(sibling)
+            rest = others if workers < len(others) + 1 else [coordinator] + others
+            basis += "; the coordinator's sibling thread%s %s left idle (whole core for the coordinator)" % (
+                's' if len(idle) > 1 else '', ','.join(str(c) for c in idle))
+        elif sibling:
+            # a single-core lane: nothing but the sibling to work on, so it stays a worker CPU (never idle, noted)
+            rest = order[1:] if workers < len(order) else order
+            basis += "; sibling exclusion requested but the lane holds no other core: the sibling %s stays a worker CPU" % (
+                ','.join(str(c) for c in sorted(sibling)))
+        else:
+            rest = order[1:] if workers < len(order) else order
+            basis += '; sibling exclusion requested: ' + (
+                'the coordinator has no sibling in the lane' if known else 'topology unreadable, no CPU set aside')
+    elif workers < len(order):
+        sibling, _ = _coordinator_siblings(order, coordinator)
         rest = [c for c in order[1:] if c not in sibling] + [c for c in order[1:] if c in sibling]
     else:
         rest = order
     workers = max(1, int(workers))
-    return coordinator, [rest[i % len(rest)] for i in range(workers)], basis
+    return coordinator, [rest[i % len(rest)] for i in range(workers)], basis, idle
+
+
+def placement(workers, cpus=None, *, exclude_sibling=False):
+    """(coordinator cpu, [worker cpus], basis). The coordinator keeps the first CPU of the core order; the workers take
+    the other cores' threads first and the coordinator's sibling last; with more workers than CPUs they cycle.
+    exclude_sibling=True (session 5, default off: every caller unchanged) leaves the coordinator's sibling thread(s)
+    out of the worker set, the whole physical core to a serial coordinator as the ROOT does; the basis says so, and
+    record() lists the idle CPUs. A lane with no other core keeps the sibling as a worker CPU (noted, never idle)."""
+    coordinator, worker_list, basis, _ = _place(workers, cpus, exclude_sibling)
+    return coordinator, worker_list, basis
 
 
 def pin_thread(cpu, fallback=None):
@@ -132,17 +184,34 @@ def pin_native_thread(cpu, fallback=None):
     return pin_thread(cpu, fallback)
 
 
+def reset_worker_sigterm():
+    """In a forked worker, before any task: SIGTERM back to its default action (the parent's handler is inherited by the
+    fork; the ROOT's save handler only sets a flag, so a worker blocked in a pipe write resumed it after terminate()
+    and the unbounded join hung: a2, 2026-10-07 22:36Z). Returns what was done: 'reset' (a handler or SIG_IGN was in
+    place), 'default' (nothing to do) or 'kept (<why>)' (not the main thread: end_pool's bounded join and SIGKILL still
+    end the worker). Never raises; the parent's own handler is untouched (a different process)."""
+    try:
+        if signal.getsignal(signal.SIGTERM) is signal.SIG_DFL:
+            return 'default'
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        return 'reset'
+    except (ValueError, OSError, TypeError) as error:
+        return 'kept (%s)' % type(error).__name__
+
+
 def _pool_initializer(cpus, counter, fallback):
+    reset_worker_sigterm()          # first, before the pin and before any task (session 5)
     with counter.get_lock():
         turn = counter.value
         counter.value += 1
     pin_thread(cpus[turn % len(cpus)], fallback)
 
 
-def pinned_pool(context, workers, cpus=None):
-    """context.Pool(workers), each worker pinned to its own lane CPU (placement); respawn-safe, lane fallback."""
+def pinned_pool(context, workers, cpus=None, *, exclude_sibling=False):
+    """context.Pool(workers), each worker pinned to its own lane CPU (placement); respawn-safe, lane fallback. Each
+    worker resets SIGTERM to its default action first (reset_worker_sigterm); end it with end_pool (bounded)."""
     lane = list(cpus) if cpus is not None else lane_cpus()
-    _, worker_list, _ = placement(workers, lane)
+    _, worker_list, _ = placement(workers, lane, exclude_sibling=exclude_sibling)
     pool = context.Pool(workers, initializer=_pool_initializer,
                         initargs=(tuple(worker_list), context.Value('l', 0), tuple(lane)))
     pool._frankie_pids = _pids(pool)
@@ -195,11 +264,14 @@ def _thread_initializer(cpus, counter, lock, fallback):
     pin_native_thread(cpus[turn % len(cpus)], fallback)
 
 
-def executor(kind, workers, cpus=None, mp_context=None):
-    """('process' | 'thread') executor of `workers`, each worker pinned to its lane CPU (placement)."""
+def executor(kind, workers, cpus=None, mp_context=None, *, exclude_sibling=False):
+    """('process' | 'thread') executor of `workers`, each worker pinned to its lane CPU (placement). A process worker
+    resets SIGTERM to its default action first (reset_worker_sigterm; a thread shares the process's handler, so the
+    thread initializer leaves it); end a process executor with end_executor (bounded: shutdown(wait=True) joins each
+    worker without a bound)."""
     from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
     lane = list(cpus) if cpus is not None else lane_cpus()
-    _, worker_list, _ = placement(workers, lane)
+    _, worker_list, _ = placement(workers, lane, exclude_sibling=exclude_sibling)
     if kind == 'thread':
         return ThreadPoolExecutor(max_workers=workers, initializer=_thread_initializer,
                                   initargs=(tuple(worker_list), [0], threading.Lock(), tuple(lane)))
@@ -209,13 +281,164 @@ def executor(kind, workers, cpus=None, mp_context=None):
                                initargs=(tuple(worker_list), context.Value('l', 0), tuple(lane)))
 
 
-def record(workers, cpus=None, what=None):
-    """The CPU map for a receipt: lane, coordinator, the worker CPUs in hand-out order and the basis."""
+def _worker_cpu(pid):
+    """The CPU a live worker is pinned to (its affinity from /proc/<pid>/status; one CPU as an int, several as a sorted
+    list), or None when it cannot be read; read before a kill, the entry vanishes once the worker is reaped."""
+    try:
+        with open('/proc/%d/status' % pid) as handle:
+            for line in handle:
+                if line.startswith('Cpus_allowed_list:'):
+                    cpus = sorted(_parse(line.split(':', 1)[1]))
+                    return cpus[0] if len(cpus) == 1 else cpus
+    except (OSError, ValueError):
+        pass
+    return None
+
+
+def _kill_survivors(processes, kills, at=None):
+    """SIGKILL by pid every process of `processes` still alive; one record per kill appended to `kills` (pid, cpu, at,
+    exit_code None until reaped); a pid already gone is skipped; never raises."""
+    for process in processes:
+        pid = getattr(process, 'pid', None)
+        try:
+            alive = pid and process.exitcode is None
+        except (AttributeError, ValueError, OSError):
+            alive = bool(pid)
+        if not alive:
+            continue
+        cpu = _worker_cpu(pid)
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            continue
+        except OSError as error:
+            kills.append(dict(pid=pid, cpu=cpu, at=round(time.time(), 3), exit_code=None, error=str(error)[:200]))
+            continue
+        kills.append(dict(pid=pid, cpu=cpu, at=round(time.time(), 3), exit_code=None, process=process))
+
+
+def _record_kills(kills, report, key='stop_kills'):
+    for kill in kills:
+        process = kill.pop('process', None)
+        if process is not None:
+            try:
+                kill['exit_code'] = process.exitcode
+            except (AttributeError, ValueError, OSError):
+                pass
+    if report is not None:
+        report.setdefault(key, []).extend(kills)
+    return kills
+
+
+def end_pool(pool, grace=None, report=None, *, normal=False, label='pool'):
+    """End a multiprocessing Pool with a BOUND (session 5, 2026-10-07; a2's shard exit hang: terminate() swallowed by an
+    inherited SIGTERM handler, then an unbounded join). terminate() (or close() when normal=True: the workers end
+    after their queued work) runs in a helper thread for at most `grace` seconds (STOP_JOIN_SECONDS by default; Pool
+    .terminate() itself joins every worker without a bound); a worker still alive after that is SIGKILLed by pid and
+    the helper gets `grace` more seconds; then pool.join() (immediate once the helper ended). Every kill is listed in
+    report['stop_kills'] ({pid, cpu, at, exit_code}: the shape of ordered_map's report['worker_deaths']), a helper
+    still running after the second bound in report['stop_incomplete'] (left to end on its own, never waited for).
+    A pool worker holds no output of its own (every result the caller kept is already in the caller), so a kill loses
+    nothing the caller has. Never raises; returns dict(label, how, seconds, kills, joined, errors). One shared rule for
+    every caller that holds a pool: ordered_map's cleanup, pinned_pool holders, operations/ingest_cpus.end_pool."""
+    bound = STOP_JOIN_SECONDS if grace is None else max(0.0, float(grace))
+    if pool is None:
+        return dict(label=label, how=None, seconds=0.0, kills=[], joined=True, errors=[], outcome='no pool')
+    started = time.monotonic()
+    before = list(getattr(pool, '_pool', None) or [])
+    how = 'close' if normal else 'terminate'
+    errors = []
+
+    def stop():
+        try:
+            getattr(pool, how)()
+        except Exception as error:  # noqa: BLE001 - recorded; the end stays bounded below
+            errors.append('%s: %s' % (type(error).__name__, str(error)[:200]))
+    helper = threading.Thread(target=stop, name='frankie-end-%s' % label, daemon=True)
+    helper.start()
+    helper.join(bound)
+    kills = []
+    if helper.is_alive():
+        # workers the pool's own handler forked before terminate() stopped it are in pool._pool now, not in `before`
+        current = list(getattr(pool, '_pool', None) or [])
+        _kill_survivors(before + [p for p in current if p not in before], kills)
+        helper.join(bound)
+    joined = not helper.is_alive()
+    if joined:
+        try:
+            pool.join()
+        except Exception as error:  # noqa: BLE001
+            errors.append('join: %s: %s' % (type(error).__name__, str(error)[:200]))
+    _record_kills(kills, report)
+    if not joined and report is not None:
+        report.setdefault('stop_incomplete', []).append(dict(
+            label=label, at=round(time.time(), 3), waited_seconds=round(2 * bound, 3),
+            note='%s() still running after the kills; left to end on its own, not waited for' % how))
+    return dict(label=label, how=how, seconds=round(time.monotonic() - started, 3), kills=kills, joined=joined,
+                errors=errors)
+
+
+def end_executor(pool_executor, grace=None, report=None, *, label='executor'):
+    """End a concurrent.futures ProcessPoolExecutor with a BOUND (session 5): shutdown(wait=False, cancel_futures=True)
+    (its wait=True joins the manager thread, which waits for every running task and joins each worker without a
+    bound), terminate() every live worker (SIGTERM: the default action after reset_worker_sigterm), join them up to
+    `grace` seconds in all (STOP_JOIN_SECONDS by default), SIGKILL the survivors by pid and join again bounded, then
+    the manager thread bounded. Kills are listed in report['stop_kills'] ({pid, cpu, at, exit_code}); a running task's
+    future ends BrokenProcessPool from the executor itself. A ThreadPoolExecutor (no processes) just gets the
+    shutdown. Never raises; returns dict(label, seconds, kills, joined, errors)."""
+    bound = STOP_JOIN_SECONDS if grace is None else max(0.0, float(grace))
+    started = time.monotonic()
+    errors, kills = [], []
+    if pool_executor is None:
+        return dict(label=label, seconds=0.0, kills=[], joined=True, errors=[], outcome='no executor')
+    processes = list((getattr(pool_executor, '_processes', None) or {}).values())
+    try:
+        pool_executor.shutdown(wait=False, cancel_futures=True)
+    except Exception as error:  # noqa: BLE001
+        errors.append('shutdown: %s: %s' % (type(error).__name__, str(error)[:200]))
+    if processes:
+        for process in processes:
+            try:
+                if process.exitcode is None:
+                    process.terminate()
+            except (AttributeError, ValueError, OSError) as error:
+                errors.append('terminate %s: %s' % (getattr(process, 'pid', None), type(error).__name__))
+        deadline = time.monotonic() + bound
+        for process in processes:
+            try:
+                process.join(max(0.0, deadline - time.monotonic()))
+            except (AttributeError, ValueError, OSError):
+                pass
+        _kill_survivors(processes, kills)
+        if kills:
+            deadline = time.monotonic() + bound
+            for process in processes:
+                try:
+                    process.join(max(0.0, deadline - time.monotonic()))
+                except (AttributeError, ValueError, OSError):
+                    pass
+    manager = getattr(pool_executor, '_executor_manager_thread', None)
+    if manager is not None and manager.is_alive():
+        manager.join(bound)
+    joined = manager is None or not manager.is_alive()
+    _record_kills(kills, report)
+    if not joined and report is not None:
+        report.setdefault('stop_incomplete', []).append(dict(
+            label=label, at=round(time.time(), 3), waited_seconds=round(bound, 3),
+            note='the executor manager thread still running after the kills; left to end on its own, not waited for'))
+    return dict(label=label, seconds=round(time.monotonic() - started, 3), kills=kills, joined=joined, errors=errors)
+
+
+def record(workers, cpus=None, what=None, *, exclude_sibling=False):
+    """The CPU map for a receipt: lane, coordinator, the worker CPUs in hand-out order and the basis; plus (additive,
+    session 5) sibling_idle (the exclude_sibling choice) and idle_cpus (the coordinator's sibling threads set aside,
+    [] when none)."""
     lane = list(cpus) if cpus is not None else lane_cpus()
-    coordinator, worker_list, basis = placement(max(1, workers), lane)
+    coordinator, worker_list, basis, idle = _place(max(1, workers), lane, exclude_sibling)
     return dict(schema='FRANKIE_LANE_PLACEMENT_V1', lane=lane, coordinator=coordinator,
                 workers=len(worker_list) if workers else 0, worker_cpus=worker_list if workers else [],
                 basis=basis, what=what, at=round(time.time(), 3),
+                sibling_idle=bool(exclude_sibling), idle_cpus=idle,
                 rule='placement only: values, order, hashes and identities never depend on it; a refused pin falls '
                      'back to the lane, never off it')
 
@@ -298,7 +521,8 @@ def generators_started(streams):
 # submitted again (on_retry(job) first, e.g. to set a half-written output aside), the in-flight window shrinks by one
 # per death (one less worker), and after `attempts` pool tries it runs once in the coordinator itself. Results are
 # yielded in job order, each exactly once; an exception raised BY a task still propagates as before. The deaths and
-# redone tasks are listed in `report` for the piece's receipt.
+# redone tasks are listed in `report` for the piece's receipt. Session 5: the pool's end is bounded (end_pool) and
+# every worker it had to SIGKILL is listed in report['stop_kills']; a worker resets SIGTERM to its default action first.
 
 _STARTED = None
 
@@ -337,20 +561,26 @@ class _Done:
 
 
 def ordered_map(function, jobs, workers, *, context=None, cpus=None, window=None, stop=None, on_start=None,
-                on_retry=None, poll=5.0, attempts=3, report=None, fallback=None):
+                on_retry=None, poll=5.0, attempts=3, report=None, fallback=None, exclude_sibling=False,
+                stop_join=None):
     """Yield (job, result) in job order from a pinned fork pool of `workers` (placement), at most `window` tasks in
     flight (default: workers), none submitted once stop() is true (submitted ones drain); on_start(pool) right after
     the workers are forked. See the section note for the dead-worker rule. fallback(job), when given, is the result of
-    a task whose workers died `attempts` times (a listed disposition) instead of running it in the coordinator."""
+    a task whose workers died `attempts` times (a listed disposition) instead of running it in the coordinator.
+    Session 5 (additive): every worker resets SIGTERM to its default action before its first task; the cleanup is
+    end_pool (terminate, join up to `stop_join` seconds (STOP_JOIN_SECONDS), SIGKILL the survivors, join again
+    bounded), each kill listed in report['stop_kills'] ({pid, cpu, at, exit_code}; [] when none); exclude_sibling
+    leaves the coordinator's sibling thread out of the worker CPUs (placement)."""
     import multiprocessing
     from collections import deque
     context = context or multiprocessing.get_context('fork')
     lane = list(cpus) if cpus is not None else lane_cpus()
     workers = max(1, int(workers))
-    _, worker_list, _ = placement(workers, lane)
+    _, worker_list, _ = placement(workers, lane, exclude_sibling=exclude_sibling)
     report = report if report is not None else {}
     report.setdefault('worker_deaths', [])
     report.setdefault('redone', [])
+    report.setdefault('stop_kills', [])
     started = context.SimpleQueue()
     pool = context.Pool(workers, initializer=_tracked_initializer,
                         initargs=(tuple(worker_list), context.Value('l', 0), tuple(lane), started))
@@ -433,8 +663,7 @@ def ordered_map(function, jobs, workers, *, context=None, cpus=None, window=None
             yield entry[1], value
             fill()
     finally:
-        pool.terminate()
-        pool.join()
+        end_pool(pool, stop_join, report, label='ordered_map')
 
 
 _END = object()

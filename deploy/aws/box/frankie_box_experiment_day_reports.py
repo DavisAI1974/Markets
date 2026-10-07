@@ -100,6 +100,7 @@ import hashlib
 import json
 import os
 import re
+import signal
 import sys
 import time
 from pathlib import Path
@@ -2349,7 +2350,10 @@ def _render_one(kind):
 
 def _render_job(kind):
     """The worker side: ('ok', lines) or ('error', text). A rendering error is returned (the coordinator re-renders that
-    report in-process, so the real exception and traceback surface there), never confused with a lost worker."""
+    report in-process, so the real exception and traceback surface there), never confused with a lost worker. A forked
+    worker never keeps the coordinator's mark-only SIGTERM handler (the a2 shard hang): default here, and the handler
+    itself ends any process that is not the coordinator."""
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
     try:
         return 'ok', _render_one(kind)
     except Exception as error:  # noqa: BLE001 - re-raised in the coordinator by rendering again
@@ -2403,12 +2407,38 @@ def render_side_by_side(kinds, args, record):
             yield kind, _render_one(kind)
 
 
+# THE SAVE REQUEST ROUTE (ROOT's contract, frankie_box_experiment_root.calculate_day): the queue's save marker
+# (FRANKIE_LANE_STOP_FILE) or SIGTERM MARKS the save; the step runs on to the next report boundary, whose save point is
+# already on disk, and exits 75 (never a failure or a requeue). A save requested after the last report is not a
+# boundary: the step completes (index and receipt) and exits as usual.
+SAVED_EXIT = 75
+_SAVE = dict(requested=False, coordinator=None, stop_file=None)
+
+
+def _mark_save(signum, frame):
+    if os.getpid() != _SAVE['coordinator']:
+        os._exit(128 + signum)                  # a forked child: the default action, never a mark-only hang
+    _SAVE['requested'] = True
+
+
+def save_requested():
+    return _SAVE['requested'] or bool(_SAVE['stop_file'] and Path(_SAVE['stop_file']).exists())
+
+
+def _code_sha256():
+    """The templates' code identity in a save point: this file's bytes (every report template lives here). A save
+    under other code is not reused: both reports are rendered again (an existing report with other bytes then refuses
+    visibly, write_new never overwrites)."""
+    return sha256_bytes(Path(__file__).resolve().read_bytes())
+
+
 def _save_path(reports, run_name, day):
     return Path(reports) / 'receipts' / str(run_name) / ('%s.reports-save.json' % day)
 
 
 def _save_identity(d, number, revision):
-    return dict(number=number, revision=revision, source_sha256=d.source['sha256'], exchange_sha256=d.exchange_sha256,
+    return dict(number=number, revision=revision, code_sha256=_code_sha256(),
+                source_sha256=d.source['sha256'], exchange_sha256=d.exchange_sha256,
                 meeting_sha256=d.meeting_sha256, meeting_status=d.meeting['status'], school_sha256=d.school_sha256,
                 school_status=d.school_status, all99_sha256=d.all99_sha256)
 
@@ -2438,6 +2468,23 @@ def write_save(reports, run_name, day, identity, written):
 
 def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, exchange_listed=None, *, return_receipt=False,
         school=None, school_listed=None, run_dir=None, piece_receipts=None):
+    """The step (see the module note); the save request route marks a save for the duration (ROOT's contract)."""
+    _SAVE.update(requested=False, coordinator=os.getpid(), stop_file=os.environ.get('FRANKIE_LANE_STOP_FILE'))
+    try:
+        previous = signal.signal(signal.SIGTERM, _mark_save)
+    except ValueError:                          # not the main thread: the stop file alone marks a save
+        previous = None
+    try:
+        return _run(day, classroom, run_name, reports, cls, refused_reason, exchange, exchange_listed,
+                    return_receipt=return_receipt, school=school, school_listed=school_listed, run_dir=run_dir,
+                    piece_receipts=piece_receipts)
+    finally:
+        if previous is not None:
+            signal.signal(signal.SIGTERM, previous)
+
+
+def _run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, exchange_listed=None, *, return_receipt=False,
+         school=None, school_listed=None, run_dir=None, piece_receipts=None):
     started = time.monotonic()
     d = Day(day, classroom, refused_reason, exchange, exchange_listed, school, school_listed)
     timings = dict(read_inputs=round(time.monotonic() - started, 6))
@@ -2533,6 +2580,17 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                         write_save(reports, run_name, day, identity, written_so_far)
                     except OSError as error:
                         problems.append('the save point could not be written: %s: %s' % (type(error).__name__, error))
+                try:                   # the heartbeat continues from the saved cursor: resumed reports count as done
+                    import frankie_box_stage_progress as _SP
+                    _SP.report_phase('reports: %s report written' % k, units_done=len(written_so_far),
+                                     units_total=len(KINDS), unit='reports', resumed=sorted(resumed))
+                except Exception:  # noqa: BLE001
+                    pass
+                if save_requested() and len(written_so_far) < len(KINDS):
+                    rendering['saved_at'] = sorted(written_so_far)
+                    print('SAVED reports %s %s: %s written, the save point %s resumes at the next report' % (
+                        run_name, day, ', '.join(sorted(written_so_far)), _save_path(reports, run_name, day)), flush=True)
+                    raise SystemExit(SAVED_EXIT)
                 copy, copy_why = None, None
                 if d.dir.is_dir():
                     copy = str(d.dir / files[k])
@@ -2557,6 +2615,11 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                                 sha256=entry['sha256'], bytes=len(raw), existing=False, supersedes=superseded))
             for _ in rendered:     # nothing is left; lets the pool end through its own bounded path
                 pass
+            # the seal check: every report the index now names equals the save point's claim for it
+            for entry in index['reports'][-len(KINDS):]:
+                claim = written_so_far.get(entry['kind'])
+                if not claim or claim.get('sha256') != entry['sha256'] or claim.get('bytes') != entry['bytes']:
+                    problems.append('the %s report differs from its save point claim (%s)' % (entry['kind'], claim))
         write_index(reports, index)
         timings['build_and_write'] = round(time.monotonic() - started - timings['read_inputs'] - timings['all99_join'], 6)
         try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
