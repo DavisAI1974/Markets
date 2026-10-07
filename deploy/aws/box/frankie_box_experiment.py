@@ -1937,44 +1937,10 @@ class Run:
             if not (c and c['status'] in ('done', 'reused', 'refused')):
                 return self.record('reports', day, 'waiting', reason='the day\'s classroom step is %s (the reports follow '
                                    'a done, reused or refused classroom)' % ((c or {}).get('status') or 'not run'))
-            classroom = c.get('classroom')
-            if not classroom:                    # refused before the classroom step named its directory (e.g. no digest)
-                root = self.receipt('root', day) or {}
-                classroom = str(Path(root['calculations']) / 'work' / 'classroom') if root.get('calculations') else None
-            if not classroom:
-                return self.record('reports', day, 'failed', reason='neither the classroom step nor the root step names '
-                                                                    'the day\'s classroom directory')
-            env = dict(DAY=day, CLASSROOM=classroom, RUN=self.plan['run'], REPORTS_DIR=REPORTS, DAY_CLASS=e['cls'])
-            if c['status'] == 'refused' and c.get('reason'):
-                env['REFUSED_REASON'] = c['reason']      # used only when the classroom wrote no receipt of its own
-            x = self.receipt('exchange', day)
-            if x and x['status'] in ('done', 'reused') and x.get('exchange'):
-                env['EXCHANGE'] = x['exchange']
-            else:
-                env['EXCHANGE_LISTED'] = 'the day\'s exchange stage is %s%s' % (
-                    (x or {}).get('status') or 'not run', (': ' + x['reason']) if (x or {}).get('reason') else '')
-            # the school file (correction_consumer, stage 12, 2026-10-07): the day's FRANKIE_SCHOOL_KNOWLEDGE_V1 file when
-            # the school stage is done/reused (the wrapper passes --school), else why there is none (--school-listed);
-            # without it the FRANKIE report's school section reads "not given"
-            school = self.receipt('school', day) or {}
-            if school.get('status') in ('done', 'reused') and school.get('file'):
-                env['SCHOOL'] = school['file']
-            else:
-                env['SCHOOL_LISTED'] = 'the day\'s school stage is %s%s' % (
-                    school.get('status') or 'not run', (': ' + school['reason']) if school.get('reason') else '')
-            # the FRANKIE report's "The 99 layers" section (correction_consumer, 2026-10-07): the run directory and the piece
-            # receipts that carry an all-99 list; each only when its stage finished with that receipt (else the report lists it)
-            env['RUN_DIR'] = self.dir
-            batch = self.batch_of(day)
-            sv = self.receipt('survivors', batch) if batch else None
-            if sv and sv.get('status') == 'done' and isinstance(sv.get('receipt'), dict) and sv['receipt'].get('path'):
-                env['CANDIDATES_RECEIPT'] = sv['receipt']['path']
-            al = self.receipt('accumulated_lessons', day) or {}
-            if al.get('status') == 'done' and al.get('receipt'):
-                env['CARRIED_CLAIMS_RECEIPT'] = al['receipt']
-            jv = self.receipt('jev', day) or {}
-            if jv.get('receipt') and Path(jv['receipt']).is_file():
-                env['JEV_RECEIPT'] = jv['receipt']
+            env, why = self.reports_invocation(day, c, e.get('cls'))
+            if env is None:
+                return self.record('reports', day, 'failed', reason=why)
+            classroom, x = env['CLASSROOM'], self.receipt('exchange', day)
             code, log = self.child('reports', day, 'frankie_box_experiment_day_reports.sh', env)
             r = self.reports_receipt(log, day=day, run=self.plan['run'])
             for item in (r or {}).get('reports') or []:
@@ -2104,22 +2070,133 @@ class Run:
                            reason=reason, rule='temporary operator review; not knowledge, not a gate; a reporter failure '
                                                'never fails the day')
 
+    def reports_invocation(self, day, c=None, cls=None):
+        """THE ONE builder of the day reports' invocation (the wrapper's environment), used by Run.reports to render and by
+        Run.reports_stale to ask late_pieces_changed what the reports would read NOW (one source, so the check never
+        compares against an invocation the render would not use). c: the day's classroom step receipt (read when None);
+        cls: the day class (from the plan when None). Returns (env, None), or (None, why) when no classroom directory is
+        named by the classroom or the root step. Reads receipts only; renders nothing."""
+        c = c if c is not None else (self.receipt('classroom', day) or {})
+        if cls is None:
+            cls = next((x.get('cls') for x in self.plan.get('days') or [] if x.get('day') == day), None)
+        classroom = c.get('classroom')
+        if not classroom:                    # refused before the classroom step named its directory (e.g. no digest)
+            root = self.receipt('root', day) or {}
+            classroom = str(Path(root['calculations']) / 'work' / 'classroom') if root.get('calculations') else None
+        if not classroom:
+            return None, 'neither the classroom step nor the root step names the day\'s classroom directory'
+        env = dict(DAY=day, CLASSROOM=classroom, RUN=self.plan['run'], REPORTS_DIR=REPORTS)
+        if cls is not None:
+            env['DAY_CLASS'] = cls
+        if c.get('status') == 'refused' and c.get('reason'):
+            env['REFUSED_REASON'] = c['reason']      # used only when the classroom wrote no receipt of its own
+        x = self.receipt('exchange', day)
+        if x and x['status'] in ('done', 'reused') and x.get('exchange'):
+            env['EXCHANGE'] = x['exchange']
+        else:
+            env['EXCHANGE_LISTED'] = 'the day\'s exchange stage is %s%s' % (
+                (x or {}).get('status') or 'not run', (': ' + x['reason']) if (x or {}).get('reason') else '')
+        # the school file (correction_consumer, stage 12, 2026-10-07): the day's FRANKIE_SCHOOL_KNOWLEDGE_V1 file when
+        # the school stage is done/reused (the wrapper passes --school), else why there is none (--school-listed);
+        # without it the FRANKIE report's school section reads "not given"
+        school = self.receipt('school', day) or {}
+        if school.get('status') in ('done', 'reused') and school.get('file'):
+            env['SCHOOL'] = school['file']
+        else:
+            env['SCHOOL_LISTED'] = 'the day\'s school stage is %s%s' % (
+                school.get('status') or 'not run', (': ' + school['reason']) if school.get('reason') else '')
+        # the FRANKIE report's "The 99 layers" section (correction_consumer, 2026-10-07): the run directory and the piece
+        # receipts that carry an all-99 list; each only when its stage finished with that receipt (else the report lists it)
+        env['RUN_DIR'] = self.dir
+        batch = self.batch_of(day)
+        sv = self.receipt('survivors', batch) if batch else None
+        if sv and sv.get('status') == 'done' and isinstance(sv.get('receipt'), dict) and sv['receipt'].get('path'):
+            env['CANDIDATES_RECEIPT'] = sv['receipt']['path']
+        al = self.receipt('accumulated_lessons', day) or {}
+        if al.get('status') == 'done' and al.get('receipt'):
+            env['CARRIED_CLAIMS_RECEIPT'] = al['receipt']
+        jv = self.receipt('jev', day) or {}
+        if jv.get('receipt') and Path(jv['receipt']).is_file():
+            env['JEV_RECEIPT'] = jv['receipt']
+        return env, None
+
     def reports_stale(self, e):
-        """A newly returned meeting or exchange gets a report revision under the existing number."""
-        r, x = self.receipt('reports', e['day']), self.receipt('exchange', e['day'])
-        if not (r and r['status'] == 'done' and x and x['status'] in ('done', 'reused')):
+        """Do the day's done reports need a revision under the existing number? True when:
+          - a done exchange has returned since the reports were rendered without one;
+          - the school they were rendered on was replaced by a checked successor (school_current / reports_school_stale);
+          - the meeting the exchange carries changed (record sha256 or status);
+          - the 99-layer join's input set changed (frankie_box_experiment_day_reports.late_pieces_changed, F9a: a late
+            Jev, candidates or carried-claims receipt, a lessons list, an exchange). This check runs whatever the
+            exchange's state (the reports render on a waiting or not_run exchange too, so a late piece is never hidden
+            behind it), with the invocation the render would use NOW (reports_invocation, the one builder).
+        late_pieces_changed 'unknown' is never a change: no revision, its reason logged. The check's result is recorded on
+        the reports step receipt (late_pieces) for the one-day inspection, only when it differs from the recorded one."""
+        day = e['day']
+        r, x = self.receipt('reports', day), self.receipt('exchange', day)
+        if not (r and r['status'] == 'done'):
             return False
-        if r.get('exchange_status') not in ('done', 'reused'):
+        exchange_done = bool(x and x['status'] in ('done', 'reused'))
+        if exchange_done and r.get('exchange_status') not in ('done', 'reused'):
             return True
-        if not self.school_current(e['day'], 'reports')[0] or self.reports_school_stale(e['day']):
-            return True                    # the reports were rendered on a school that a checked successor replaced
-        if x.get('frankie_view'):
-            import frankie_box_brain as BR
-            meeting = BR.read_meeting_for_exchange(x['frankie_view'])
-            current = ((meeting.get('receipt') or {}).get('record') or {}).get('sha256')
-            prior = r.get('meeting') or {}
-            return prior.get('sha256') != current or prior.get('status') != meeting['status']
-        return False
+        if exchange_done:
+            if not self.school_current(day, 'reports')[0] or self.reports_school_stale(day):
+                return True                # the reports were rendered on a school that a checked successor replaced
+            if x.get('frankie_view'):
+                import frankie_box_brain as BR
+                meeting = BR.read_meeting_for_exchange(x['frankie_view'])
+                current = ((meeting.get('receipt') or {}).get('record') or {}).get('sha256')
+                prior = r.get('meeting') or {}
+                if prior.get('sha256') != current or prior.get('status') != meeting['status']:
+                    return True
+        return self.reports_late_pieces(day, r) == 'changed'
+
+    def reports_late_pieces(self, day, step=None):
+        """late_pieces_changed (correction_consumer's contract, FRANKIE_DAY_REPORTS_LATE_PIECES_V1) on the day reports
+        receipt <REPORTS>/receipts/<run>/<day>.json with `current` built from reports_invocation (every INVOCATION_KEYS
+        key given, None included, so nothing falls back to the recorded value). Returns its outcome ('changed' |
+        'unchanged' | 'unknown'). An unknown is logged with its reason. The summary (outcome, reason, differences,
+        reasons_only count, invocation source, checked_at) is written onto the reports step receipt as late_pieces when
+        it differs from the one recorded there (a durable rewrite of the same receipt: no new attempt, no knowledge
+        boundary). Never raises: a failure of the check itself is an unknown."""
+        import frankie_box_experiment_day_reports as DR
+        try:
+            env, why = self.reports_invocation(day)
+            if env is None:
+                late = dict(schema=getattr(DR, 'LATE_PIECES_SCHEMA', None), outcome='unknown', differences=[],
+                            reason='no invocation can be built now: %s' % why)
+            else:
+                pieces = dict(candidates=env.get('CANDIDATES_RECEIPT'), carried_claims=env.get('CARRIED_CLAIMS_RECEIPT'),
+                              jev=env.get('JEV_RECEIPT'))
+                current = dict(classroom=env['CLASSROOM'], refused_reason=env.get('REFUSED_REASON'),
+                               exchange=env.get('EXCHANGE'), exchange_listed=env.get('EXCHANGE_LISTED'),
+                               school=env.get('SCHOOL'), school_listed=env.get('SCHOOL_LISTED'), run_dir=str(env['RUN_DIR']),
+                               piece_receipts={k: str(v) for k, v in pieces.items() if v})
+                late = DR.late_pieces_changed(DR.reports_receipt_path(REPORTS, self.plan['run'], day), current)
+        except Exception as error:      # noqa: BLE001 - the check is accounting; its own failure is an unknown, named
+            late = dict(outcome='unknown', differences=[], reason='the late-pieces check failed: %s: %s' % (
+                type(error).__name__, error))
+        outcome = late.get('outcome') if late.get('outcome') in ('changed', 'unchanged', 'unknown') else 'unknown'
+        if outcome == 'unknown':
+            self.log('reports %s: late pieces unknown (no revision): %s' % (day, late.get('reason')))
+        summary = dict(schema=late.get('schema'), outcome=outcome, reason=late.get('reason'),
+                       differences=late.get('differences') or [], reasons_only=len(late.get('reasons_only') or []),
+                       invocation_source=(late.get('invocation') or {}).get('source'),
+                       recorded_all99_sha256=(late.get('recorded') or {}).get('all99_sha256'),
+                       current_all99_sha256=(late.get('current') or {}).get('all99_sha256'),
+                       rule='changed = a revision under the same number; unknown = no revision, reason logged; '
+                            'operator review only, never a gate')
+        try:
+            step = step if step is not None else self.receipt('reports', day)
+            if step and {k: v for k, v in (step.get('late_pieces') or {}).items() if k != 'checked_at'} != summary:
+                from frankie_box_durable import write_json
+                checked = dict(summary, checked_at=time.time())
+                # also under the step's `inspection` (projected whole by frankie_box_workflow_inspection)
+                write_json(self.receipt_path('reports', day), dict(step, late_pieces=checked,
+                                                                   inspection=dict(step.get('inspection') or {},
+                                                                                   late_pieces=checked)))
+        except Exception as error:      # noqa: BLE001 - recording is for the inspection; its failure is logged, not hidden
+            self.log('reports %s: the late-pieces result could not be recorded (%s: %s)' % (day, type(error).__name__, error))
+        return outcome
 
     def report_number(self, e):
         """The day's report number N: reserved once, right after its classroom step, in the reports' own index

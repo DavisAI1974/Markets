@@ -1050,6 +1050,12 @@ def day_coverage(day, *, manifest_sha256, planes, sources, tests, knowledge_inpu
     checked = field(stage, day, entries, stage=stage, registry_doc=reg,
                     basis='search plane receipt and coupling rows' if search_mode else 'search plane receipt and the test rows of this operation')
     counts = {d: sum(1 for e in entries if e['disposition'] == d) for d in DISPOSITIONS}
+    # every word present is counted, including the clock override words (stamped_at_boundary, stamped_not_committed,
+    # discovery_only, stamped_from_model_calls, no_model_call_this_day) that are outside DISPOSITIONS: additive, the
+    # DISPOSITIONS keys stay (zero included), so the counts sum to the entries listed
+    for e in entries:
+        if e['disposition'] not in counts:
+            counts[e['disposition']] = sum(1 for x in entries if x['disposition'] == e['disposition'])
     by_role = {}
     for e in entries:
         by_role.setdefault(e['role'], {}).setdefault(e['disposition'], 0)

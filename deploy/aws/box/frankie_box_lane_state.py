@@ -505,9 +505,30 @@ def import_meeting_record(exchange_path, record_path, expected_sha256):
             entry = next(e for e in plan['days'] if e['day'] == day)
             reports['meeting_refresh_pending'] = True
             write_json(owner / 'days' / day / 'reports.json', reports)
+            # the refresh keeps the reports' whole invocation (F9 follow-up, 2026-10-07 night): the school as the school
+            # step records it now (the same rule as Run.reports_invocation), this run's directory, and the piece receipts
+            # the last build recorded (all99_invocation on the day reports receipt), so a refresh never drops the
+            # candidates / carried-claims / Jev lists from the 99-layer join. No recorded invocation: none passed, named.
+            recorded_invocation, invocation_why = {}, None
+            try:
+                built = json.loads(R.reports_receipt_path(X.REPORTS, run, day).read_bytes())
+                recorded_invocation = built.get('all99_invocation') if isinstance(built.get('all99_invocation'), dict) else {}
+                if not recorded_invocation:
+                    invocation_why = 'the day reports receipt records no all99_invocation (built before it existed)'
+            except (OSError, ValueError) as error:
+                invocation_why = 'the day reports receipt could not be read (%s: %s)' % (type(error).__name__, error)
+            school_step = read_step('school') or {}
+            school_file = school_step.get('file') if school_step.get('status') in ('done', 'reused') else None
+            school_listed = None if school_file else 'the day\'s school stage is %s%s' % (
+                school_step.get('status') or 'not run', (': ' + school_step['reason']) if school_step.get('reason') else '')
+            piece_receipts = {k: v for k, v in (recorded_invocation.get('piece_receipts') or {}).items() if v}
+            reports['meeting_refresh_invocation'] = dict(school=school_file, school_listed=school_listed, run_dir=str(owner),
+                                                         piece_receipts=piece_receipts, listed=invocation_why)
             refreshed = R.run(day, classroom['classroom'], run, X.REPORTS, entry['cls'],
                               classroom.get('reason') if classroom.get('status') == 'refused' else None,
-                              exchange=exchange_step['exchange'], return_receipt=True)
+                              exchange=exchange_step['exchange'], return_receipt=True,
+                              school=school_file, school_listed=school_listed, run_dir=owner,
+                              piece_receipts=piece_receipts)
             reports.update(status='failed' if refreshed['problems'] else 'done', meeting=refreshed['meeting'],
                            reports=refreshed['reports'], problems=refreshed['problems'],
                            report_number=refreshed['report_number'], meeting_refresh_pending=bool(refreshed['problems']))

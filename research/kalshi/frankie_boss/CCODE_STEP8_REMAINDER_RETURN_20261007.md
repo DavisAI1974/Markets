@@ -876,3 +876,33 @@ pass is uncommitted in the working tree and is committed by the parent by path. 
 AST parse without project imports clean on the nine changed `.py` files; the JSON parses; `git diff --check` clean on all
 changed files. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED. A fresh independent review is required before integration;
 this self-review does not replace it.
+
+## 13. Late pieces wired, meeting refresh invocation, day_coverage counts (2026-10-07 night, session 2; after `c2d4f4d`)
+
+Base: `c2d4f4d` (my `9fbdc4d` and correction_consumer's `c2d4f4d`, which defines `late_pieces_changed`). Uncommitted;
+source only; nothing ran; no account call.
+
+- `frankie_box_experiment.py`:
+  - `Run.reports_invocation(day, c=None, cls=None)` is now the one builder of the day reports' environment. `Run.reports`
+    renders with it and `Run.reports_stale` checks with it, so the check never compares against an invocation the render
+    would not use. Behaviour of `Run.reports` is unchanged (`DAY_CLASS` falls back to the plan entry's class).
+  - `Run.reports_stale`: the early `return False` on a not-done exchange is gone. The exchange-returned, school and
+    meeting checks still apply when the exchange is done; then, whatever the exchange's state,
+    `Run.reports_late_pieces` calls `late_pieces_changed(reports_receipt_path(REPORTS, run, day), current)`, with
+    `current` carrying every INVOCATION_KEYS key (None included, so nothing falls back to the recorded value).
+    `changed` returns True (a revision under the same number); `unknown` returns False and logs its reason; a failure of
+    the check itself is an unknown.
+  - The result summary (outcome, reason, differences, reasons_only count, invocation source, recorded/current join
+    sha256, checked_at) is written onto the reports step receipt as `late_pieces` and inside its `inspection` (which the
+    reporter projects whole), only when it differs from the recorded one. It is a direct durable rewrite of the same
+    receipt, not `record()`: no new attempt, no knowledge boundary.
+- `frankie_box_lane_state.py` meeting refresh (`import_meeting_record`): `R.run` now gets `school` / `school_listed` (from
+  the school step receipt, the same rule as `reports_invocation`), `run_dir` (the owner run directory) and
+  `piece_receipts` (the last build's recorded `all99_invocation`), so a refresh keeps the candidates / carried-claims /
+  Jev lists in the join. When no invocation is recorded, none is passed and the reason is kept on the reports step as
+  `meeting_refresh_invocation.listed`.
+- `frankie_box_all99_coverage.day_coverage`: `counts` keeps every DISPOSITIONS key and now also counts every other word
+  present (the clock override words), so the counts sum to the entries listed. Additive.
+
+Checks: AST parse clean on the three files; `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED. A
+fresh independent review is required before integration.
