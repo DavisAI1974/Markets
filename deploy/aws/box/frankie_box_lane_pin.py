@@ -18,6 +18,9 @@ One place for what search, the native reader, the data export and the day-file b
                    pinned worker can hang a pool while the heartbeat says running");
   executor()       concurrent.futures ProcessPoolExecutor / ThreadPoolExecutor with the same pinning (a dead process
                    worker already raises BrokenProcessPool there);
+  ordered_map()    the pinned fork pool the data/search pieces use: ordered results, bounded in-flight window, and a
+                   dead worker never hangs or stops the stage (its lost task is redone, the window shrinks by one;
+                   section note at the end);
   record()         the CPU map for the piece's receipt (lane, coordinator, workers, basis), projected by
                    frankie_box_workflow_inspection.
 

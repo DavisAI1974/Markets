@@ -81,6 +81,11 @@ operation without matching state is retained and refused, never silently overwri
 Generic source reads must match the selected export's byte-count/SHA256 pins, including frames when no INPUT or
 journal route is available. Spools are hashed as decoded; JSON and the optional external receipt use their checked
 bytes. Prepared arrays are saved only after those checks finish and remain bound to the manifest and this source.
+CPUs and dead workers (Greg, 2026-10-07 night): every pool is frankie_box_lane_pin.ordered_map, each worker pinned to its
+own lane CPU (physical cores first; the coordinator pinned to its own CPU after the source preparation; DuckDB opens
+after the readers' forks). A worker that dies never hangs or stops the search: its lost job is redone (a coupling part
+it was writing is set aside first), the in-flight window shrinks by one, a discovery problem whose worker dies on every
+try is listed `worker_died`; all of it in MANIFEST cpu_placement.pool_recovery. Values, order and pins are unchanged.
 """
 import argparse
 from datetime import date
