@@ -124,7 +124,7 @@ def _sha256(path):
 
 
 def _pin(path):
-    """(bytes, sha256, seconds) of one linked file; a worker-pool job (one file per worker, largest first)."""
+    """(bytes, sha256, seconds) of one linked file (the serial reference; _pin_job is what the pools run)."""
     path = Path(path)
     started = time.time()
     size, digest = path.stat().st_size, _sha256(path)
@@ -132,7 +132,10 @@ def _pin(path):
 
 
 PROBE_FAILURES = dict(count=0, last=None)    # probe writes that failed (on the MANIFEST hashing record; never silent)
-REUSE_PINS_ENV = 'FRANKIE_EXPORT_REUSE_PINS'  # Greg's open call (c): off unless he says so
+REUSE_PINS_ENV = 'FRANKIE_EXPORT_REUSE_PINS'  # Greg's open call (c) for a rerun that did not follow a requested save
+PROGRESS_SCHEMA = 'FRANKIE_EXPORT_PINS_PROGRESS_V2'
+HASH_SEGMENT_BYTES = 8 << 30                 # a large file's running hash is saved every 8 GiB (ROOT's running state)
+SAVE_REQUEST = dict(marked=False, coordinator_pid=None, marker=None)
 
 
 def _progress(phase, done=None, total=None, unit=None, every=10, **extra):
@@ -149,31 +152,144 @@ def _progress(phase, done=None, total=None, unit=None, every=10, **extra):
         PROBE_FAILURES['last'] = '%s: %s' % (type(error).__name__, str(error)[:200])
 
 
+def _session():
+    """frankie_box_boss_session (ROOT's _ResumableSha256 / _sha256_library / _hash_file_into), or None."""
+    try:
+        import frankie_box_boss_session as S
+    except ImportError:
+        try:
+            from deploy.aws.box import frankie_box_boss_session as S
+        except Exception:  # noqa: BLE001
+            return None
+    except Exception:  # noqa: BLE001
+        return None
+    return S
+
+
 def _stat_key(path):
     s = os.stat(path)
     return [s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns]   # no ctime: the export's own hard link changes it
 
 
+def _tail_sha256(path, size):
+    """sha256 of the file's last min(64 KiB, size) bytes: the "same last line" part of ROOT's unchanged-file rule
+    (frankie_box_boss_session._resume_row_spool) for files that are not line spools (the SQLite journal)."""
+    with open(path, 'rb') as handle:
+        handle.seek(max(0, size - (64 << 10)))
+        return hashlib.sha256(handle.read()).hexdigest()
+
+
+def _stop_requested():
+    if SAVE_REQUEST['marked']:
+        return True
+    marker = SAVE_REQUEST['marker']
+    if marker and Path(marker).is_file():
+        return True
+    stop = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    return bool(stop and Path(stop).is_file())
+
+
+def _worker_default_sigterm():
+    if SAVE_REQUEST['coordinator_pid'] is None or os.getpid() == SAVE_REQUEST['coordinator_pid']:
+        return
+    try:
+        import signal
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except (ValueError, OSError):
+        pass
+
+
+def install_save_handler(marker):
+    """ROOT's save route (frankie_box_experiment_root.calculate_day): SIGTERM only marks the save; the export finishes
+    the file segment in hand, records it, and exits 75. Returns the previous handler."""
+    import signal
+    SAVE_REQUEST.update(coordinator_pid=os.getpid(), marker=str(marker), marked=False)
+
+    def mark(*_):
+        SAVE_REQUEST['marked'] = True
+        try:
+            Path(marker).touch()
+        except OSError:
+            pass
+    return signal.signal(signal.SIGTERM, mark)
+
+
+def _append(progress_path, row):
+    """One whole line appended (O_APPEND: lines from several hashing workers never interleave)."""
+    line = (json.dumps(row, sort_keys=True) + '\n').encode()
+    fd = os.open(progress_path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+    try:
+        os.write(fd, line)
+    finally:
+        os.close(fd)
+
+
+def _pin_job(job):
+    """One file's pin on a pool worker: ROOT's resumable SHA-256 in HASH_SEGMENT_BYTES segments, the running state
+    appended to the progress file after each segment (a save point), continued from `resume` (a saved state of this
+    unchanged file); a requested save stops after the segment in hand and returns ('saved', hashed bytes). The pin is
+    the same sha256 value as _pin's (the same bytes, one hash). Without the resumable hasher: _pin itself."""
+    _worker_default_sigterm()
+    path, progress_path, resume = job
+    started = time.time()
+    S = _session()
+    library = S._sha256_library() if S is not None else None
+    if library is None:
+        return _pin(path)
+    size = Path(path).stat().st_size
+    state, length = (bytes.fromhex(resume['state']), resume['length']) if resume else (None, 0)
+    hasher = S._ResumableSha256(library, state, length)
+    while hasher.length < size:
+        S._hash_file_into(path, hasher, min(size, hasher.length + HASH_SEGMENT_BYTES))
+        if progress_path is not None and hasher.length < size:
+            _append(progress_path, dict(schema=PROGRESS_SCHEMA, path=str(path), stat=_stat_key(path),
+                                        partial=dict(state=hasher.state().hex(), length=hasher.length)))
+        if hasher.length < size and _stop_requested():
+            return 'saved', hasher.length, round(time.time() - started, 3)
+    return size, hasher.hexdigest(), round(time.time() - started, 3)
+
+
 def _pins_progress(progress_path, paths, reuse):
-    """The export's save point: every measured pin is appended to <target>.pins-progress.jsonl as it lands (source,
-    stat key, bytes, sha256), so an interrupted export has its finished files on record. REUSING a recorded pin on a
-    rerun skips a re-hash by stat alone, which is Greg's open call (c): only with FRANKIE_EXPORT_REUSE_PINS=on, and
-    then only for an identical (device, inode, size, mtime_ns); default off, every file re-hashed."""
-    saved = {}
+    """The export's save points (<target>.pins-progress.jsonl): every finished pin and every large file's running hash
+    state, appended as they land, and a `saved` line when the export exits 75 on a requested save.
+    ROOT's contract for a resume AFTER a requested save: a file whose (device, inode, size, mtime) and last 64 KiB are
+    the ones recorded keeps its finished pin, or continues its saved running hash (no re-read of the hashed prefix);
+    anything else is hashed from byte 0. A rerun that did not follow a requested save (a crash, a manual rerun) reuses
+    nothing unless FRANKIE_EXPORT_REUSE_PINS=on (Greg's open call (c)). Returns (rows read, reused pins, partial states,
+    the rule applied)."""
+    saved, partial, after_save, torn = {}, {}, False, 0
     if progress_path is not None and Path(progress_path).is_file():
         for line in Path(progress_path).read_bytes().splitlines():
             try:
                 row = json.loads(line)
             except ValueError:
-                continue                       # a torn last line of a killed export: ignored, listed by count
-            saved[row['path']] = row
-    reused = {}
-    if reuse:
+                torn += 1                     # a torn last line of a killed export: ignored, counted
+                continue
+            if row.get('saved'):
+                after_save = True
+            elif row.get('partial'):
+                partial[row['path']] = row
+            elif 'sha256' in row:
+                saved[row['path']] = row
+                partial.pop(row['path'], None)
+    use = after_save or reuse
+    reused, resumes = {}, {}
+    if use:
         for p in paths:
+            key = _stat_key(p)
             row = saved.get(str(p))
-            if row is not None and row.get('stat') == _stat_key(p):
-                reused[str(p)] = (row['bytes'], row['sha256'], 0.0)
-    return saved, reused
+            if row is not None and row.get('stat') == key and row.get('tail_sha256') in (None, _tail_sha256(p, key[2])):
+                if row.get('tail_sha256') is not None or reuse:
+                    reused[str(p)] = (row['bytes'], row['sha256'], 0.0)
+                    continue
+            row = partial.get(str(p))
+            if row is not None and row.get('stat') == key:
+                resumes[str(p)] = row['partial']
+    rule = ('resume after a requested save: ROOT\'s unchanged-file rule (stat and last 64 KiB) keeps finished pins and '
+            'continues saved running hashes' if after_save else
+            'FRANKIE_EXPORT_REUSE_PINS=on: recorded pins of identical stat reused (Greg\'s open call (c))' if reuse else
+            'no requested save on record and the reuse switch off: every file hashed from byte 0')
+    return dict(rows=len(saved) + len(partial), torn_lines=torn, after_save=after_save), reused, resumes, rule
 
 
 def _pin_all(paths, workers, progress_path=None):
@@ -183,30 +299,39 @@ def _pin_all(paths, workers, progress_path=None):
     sha256 whatever the worker count: a speed-up never changes a pin. Effect unmeasured here; bounded above by
     the largest single file (serial inside one file) and by the volume's read throughput (the work directory is
     EBS: the hash is I/O-bound there, so the per-file seconds recorded below show whether the disk or the CPU
-    was the wall). Recorded in MANIFEST.hashing for the one-day canary."""
+    was the wall). Recorded in MANIFEST.hashing for the one-day canary. A requested save (SIGTERM / the lane stop file)
+    drains the files in hand, records them and exits 75 (SystemExit(75)); the next run resumes from the records."""
     paths = sorted(paths, key=lambda p: Path(p).stat().st_size, reverse=True)
     started, placed = time.time(), None
     reuse = os.environ.get(REUSE_PINS_ENV) == 'on'
-    saved, reused = _pins_progress(progress_path, paths, reuse)
+    found, reused, resumes, rule = _pins_progress(progress_path, paths, reuse)
     todo = [p for p in paths if str(p) not in reused]
     total_bytes_todo, done_bytes, done_files = sum(Path(p).stat().st_size for p in todo), [0], [0]
-    log = open(progress_path, 'a', encoding='utf-8') if progress_path is not None else None
+    held = []
 
     def landed(path, result):
+        if result[0] == 'saved':
+            held.append(dict(path=str(path), hashed_bytes=result[1]))
+            return
         done_files[0] += 1
         done_bytes[0] += result[0]
-        if log is not None:
-            log.write(json.dumps(dict(path=str(path), stat=_stat_key(path), bytes=result[0], sha256=result[1],
-                                      seconds=result[2]), sort_keys=True) + '\n')
-            log.flush()
+        if progress_path is not None:
+            key = _stat_key(path)
+            _append(progress_path, dict(schema=PROGRESS_SCHEMA, path=str(path), stat=key, tail_sha256=_tail_sha256(path, key[2]),
+                                        bytes=result[0], sha256=result[1], seconds=result[2]))
         _progress('data: hashing linked files', done_files[0], len(todo), 'files', bytes_done=done_bytes[0],
                   bytes_total=total_bytes_todo)
     _progress('data: hashing linked files', 0, len(todo), 'files', every=None, bytes_done=0, bytes_total=total_bytes_todo)
     measured = dict(reused)
+    jobs = [(p, str(progress_path) if progress_path is not None else None, resumes.get(str(p))) for p in todo]
     if workers <= 1 or len(todo) <= 1:
-        for p in todo:
-            measured[str(p)] = _pin(p)
-            landed(p, measured[str(p)])
+        for job in jobs:
+            if _stop_requested():
+                break
+            result = _pin_job(job)
+            landed(job[0], result)
+            if result[0] != 'saved':
+                measured[str(job[0])] = result
         mode = 'serial'
     else:
         # each hashing process pinned to its own lane CPU, physical cores first (frankie_box_lane_pin; Greg, 2026-10-07
@@ -218,12 +343,17 @@ def _pin_all(paths, workers, progress_path=None):
         placed = LP.record(min(workers, len(todo)), what='export hashing processes (largest file first)')
         placed['pool_recovery'] = dict(worker_deaths=[], redone=[])
         # ordered, pinned; a dead hashing worker's file is hashed again, never a hang or a stopped export
-        for p, result in LP.ordered_map(_pin, todo, min(workers, len(todo)), report=placed['pool_recovery']):
-            measured[str(p)] = result
-            landed(p, result)
+        for job, result in LP.ordered_map(_pin_job, jobs, min(workers, len(todo)), report=placed['pool_recovery'],
+                                          stop=_stop_requested):
+            landed(job[0], result)
+            if result[0] != 'saved':
+                measured[str(job[0])] = result
         mode = 'process_pool'
-    if log is not None:
-        log.close()
+    if len(measured) < len(paths):
+        if progress_path is not None:
+            _append(progress_path, dict(schema=PROGRESS_SCHEMA, saved=True, at=time.time(), held=held,
+                                        pinned=len(measured), files=len(paths)))
+        raise SystemExit(75)          # a requested save: every file in hand recorded; the next run resumes from them
     measured = {str(p): measured[str(p)] for p in paths}
     pins = {path: (size, digest) for path, (size, digest, _) in measured.items()}
     slowest = sorted(((seconds, size, path) for path, (size, _, seconds) in measured.items()), reverse=True)[:5]
@@ -232,11 +362,13 @@ def _pin_all(paths, workers, progress_path=None):
     return pins, dict(mode=mode, workers=min(workers, len(todo)) if mode == 'process_pool' else 1,
                       mode_reason=(None if mode == 'process_pool' else
                                    'one worker given' if workers <= 1 else 'at most one file to hash'),
-                      save_point=dict(path=str(progress_path) if progress_path else None, recorded_before=len(saved),
-                                      reused=sorted(reused), reuse_switch='%s=%s' % (REUSE_PINS_ENV, 'on' if reuse else 'off'),
-                                      rule="every pin is appended as it lands; a recorded pin is reused only with the "
-                                           "switch on (Greg's open call (c): skip re-hash on an unchanged stat), "
-                                           "otherwise every file is hashed again"),
+                      save_point=dict(path=str(progress_path) if progress_path else None, found=found,
+                                      reused=sorted(reused), continued=sorted(resumes), rule=rule,
+                                      reuse_switch='%s=%s' % (REUSE_PINS_ENV, 'on' if reuse else 'off'),
+                                      segment_bytes=HASH_SEGMENT_BYTES,
+                                      seal='a reused or continued pin has no second full read here; the search '
+                                           'decodes every file it reads against these pins (its full read is the '
+                                           'witness; a difference refuses there, visibly)'),
                       probe_failures=PROBE_FAILURES,
                       files=len(paths), bytes=total_bytes, seconds=wall,
                       bytes_per_second=round(total_bytes / wall) if wall > 0 else None,
@@ -385,7 +517,26 @@ def workflow_report(day, cycle, dirs, files, excluded, missing, unclaimed, exter
 
 
 def export(day, cycle, dirs, root=ROOT, workers=1):
+    """_export with ROOT's save route installed for its duration (SIGTERM marks; exit 75 at the next save point)."""
+    import signal
+    previous = signal.getsignal(signal.SIGTERM)
     target = Path(root) / str(day) / f'cycle-{cycle}'
+    install_save_handler(target.parent / (target.name + '.save-requested'))
+    try:
+        return _export(day, cycle, dirs, root, workers)
+    finally:
+        try:
+            signal.signal(signal.SIGTERM, previous)
+        except (ValueError, OSError, TypeError):
+            pass
+        SAVE_REQUEST.update(marked=False, coordinator_pid=None, marker=None)
+
+
+def _export(day, cycle, dirs, root=ROOT, workers=1):
+    target = Path(root) / str(day) / f'cycle-{cycle}'
+    marker = target.parent / (target.name + '.save-requested')
+    if marker.is_file():
+        marker.unlink()          # this run is the resume of a requested save (the progress file says so)
     if (target / 'MANIFEST.json').exists():
         raise SystemExit('%s already exported (%s): the same day and cycle is not exported twice (duplicate data declines '
                          'the run); move it aside with a receipt to redo it' % (target, target / 'MANIFEST.json'))

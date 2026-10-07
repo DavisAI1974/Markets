@@ -191,12 +191,12 @@ def _close_workers(workers):
     had to be terminated or killed: [dict(pids, at, how, exit_code)]. A worker's only output is its pipe (results
     the caller reads), so ending one loses nothing."""
     live = [w for w in workers if w.process.is_alive()]
-    for worker in live:
-        if not worker.pending:
-            try:
-                worker.send('stop')
-            except (EOFError, OSError):
-                pass
+    asked = [w for w in live if not w.pending]      # before send(): sending 'stop' marks a worker pending
+    for worker in asked:
+        try:
+            worker.send('stop')
+        except (EOFError, OSError):
+            pass
 
     def wait(group):
         deadline = time.monotonic() + WORKER_STOP_SECONDS
@@ -204,7 +204,7 @@ def _close_workers(workers):
             worker.process.join(timeout=max(0.0, deadline - time.monotonic()))
         return [w for w in group if w.process.is_alive()]
     stopped = []
-    if live and not all(w.pending for w in live):
+    if asked:                                       # as before: only a worker asked to stop is waited for first
         live = wait(live)
     for how in ('terminate', 'kill'):
         if not live:
