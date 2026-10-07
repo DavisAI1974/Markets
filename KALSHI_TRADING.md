@@ -1,5 +1,23 @@
 # KALSHI TRADING — file index
 
+## 2026-10-07 - The main/class owner contract, the scoped queue, the school and Jev callers (Step 8 remainder, source only)
+- `deploy/aws/box/frankie_box_frankie_queue.py` / `.sh` - the owner contract (CCode's now): a ROOT-line day bound to its
+  owner (attempt, source, exact 16 CPUs, booking, day-bound marker `frankie-queue/save/<run>-<day>.save-request.json`)
+  before its thread starts; states `saved` and `unknown`; `ACTION=save | status | resume RUN DAY [REBOOK=on]`; the class
+  child's acknowledgment bound to the marker, booking, attempt and the save request's identity; `SCOPE=RUN:D1,D2` required
+  for worker / kick / handover (a worker touches nothing outside it; a kick without one starts nothing).
+- `deploy/aws/box/frankie_box_cores.py` - the ledger retains an owned booking whose holder died (`own`, `retain`); only its
+  owner takes it back in place (`book --cpus` of exactly that set); `jev` is a day-run stage (inside the held lane).
+- `deploy/aws/box/frankie_box_experiment.py` / `.sh` - `Run.bind_owner` / `owned_attempt` / the per-Run marker; `scope_text`;
+  `previous_of` persisted (`days/<day>/previous.json`); teacher knowledge bound to its producer identities; `Run.school` on
+  the checked school chain (`retained_school`), `Run.recover_school` (the `waiting_school` callback), `school_current`;
+  `Run.jev` on Codex's `frankie_box_jev_cpu.sh` (`JEV_CPU_REQUEST_V1` persisted once under the day; `--jev-runtime` /
+  `--jev-brain`, `JEV_RUNTIME` / `JEV_BRAIN` at the first start, or `<run>/jev-runtime.json`; absent = waiting).
+- `deploy/aws/box/frankie_box_successor_dispatch.py` - ONLY the `waiting_school` branch of `drain` is CCode's (the rest Codex's).
+- `research/kalshi/frankie_boss/pod_root/controller.py` - the three 8A findings: ownership established at every effect
+  boundary, the durable unknown resume reconciled through the worker, every unsuccessful outcome nonzero; `--days`.
+  Record: `research/kalshi/frankie_boss/CCODE_STEP8_REMAINDER_RETURN_20261007.md`. Not run.
+
 ## 2026-10-07 - The AWS CPU Linux lane controller: one controller, two hosts (Step 8A, source only)
 - `research/kalshi/frankie_boss/pod_root/controller.py` - the Linux lane controller (CCode's): on the GitHub runner a bounded
   job (plan | status | loop | resume | stop; a budget end is `budget_expired`, never completion); on the main box a run-bound

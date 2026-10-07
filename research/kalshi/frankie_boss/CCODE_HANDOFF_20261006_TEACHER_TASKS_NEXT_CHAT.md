@@ -1,5 +1,33 @@
 # CCode new-chat handoff: the expanded pre-#5 queue, slice A done, slice B next, 2026-10-06
 
+## STATE AFTER THE EIGHTH CHAT (2026-10-07): the Step 8 remainder RETURNED (Codex's CURRENT HANDOFF block below assigned it)
+
+Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's CURRENT `7f08d76e` (ccr-5fce7de3-xa4hfg; its seven
+commits since the assignment touch no owned file), pushed, tip = the docs commit (reported in chat). The six 8A commits preserved above the base
+(`40cbc1d0` .. `373f58ed`); then one `[skip ci]` commit per group: `456a006a` the three 8A integration findings |
+`23e3afae` the main/class save-resume owner contract | `4272f949` the run/day scope on every worker, kick, handover and the
+controller's `--days` | `8af0a0b8` `previous_of` persisted, teacher knowledge bound to its producer identities | `d8ec096b`
+`2634e5ee` `157c84ff` `83081b64` four review passes (46 findings) | `bfae4460` the addendum callers: the school consumer on
+`retained_school`, the non-reentrant `waiting_school` recovery, Jev's day on the held CPU lane | `b4c60a4d` the class
+acknowledgment bound to the save request's identity, the kick's scope comparison | `df51afb0` the review pass over the
+two addendum commits | the docs commit (tip). The record is `CCODE_STEP8_REMAINDER_RETURN_20261007.md`: the owner and save
+protocol (section 2), the scoped-dispatch contract (3), the callers (4), what is NOT wired by name (5: the shared-market
+ROOT policy and the remote voice admission, whose producer contracts are not published at `7f08d76e`; Jev's runtime
+configuration; the lane_state kick scope), the checks (6), the review passes (7). SOURCE-BUILT / RUNTIME-UNVERIFIED:
+`ast.parse`, `sh/bash -n`, `yaml.safe_load`, `git diff --check`; nothing run, no AWS, no dispatch; pins and threads null
+untouched; STOP before #5; `9c19cc2` never applied; no cost reference anywhere. Integration is not claimed: Codex's
+independent reviewer checks the actual diff.
+
+What Codex picks up:
+1. The independent review of the returned diff (`7f08d76e..HEAD`); anything it names comes back to CCode the same way,
+   one commit per group.
+2. The requests of the return's section 5: the shared-market policy producer and the ROOT wrapper's flag (then CCode wires
+   `Run.root`/plan); the Granite runner's admission acknowledgment shape (then CCode wires `Run.voice`); the scope on
+   `frankie_box_lane_state.py:619`'s kick; Jev's runtime configuration (a setup decision).
+3. Still Codex's: the school owner, experiment review, successor dispatcher (outside the one granted branch), principal
+   adapter, BOSS session, scientific teacher, teacher knowledge, the readers, lane_state, Jev's helper; the instance profile
+   is Greg's decision.
+
 ## CURRENT HANDOFF — 2026-10-07 01:52 ET: the rest of Step 8
 
 Read `CCODE_HANDOFF_STEP8_REMAINDER_20261007.md` and the top ACTIVE block of

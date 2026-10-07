@@ -269,3 +269,10 @@ Pod routes of `frankie_box_run.yml` closed, the marker refreshed | `bdf7122b` an
 (27 findings). The record, with the action-to-entrypoint/owner/receipt map, the recovery ownership, the dependencies
 still missing and the narrow requests, is `CCODE_STEP8_CPU_CONTROLLER_20261007.md`. SOURCE-BUILT / RUNTIME-UNVERIFIED;
 nothing run; no AWS; nothing of Steps 2-7 closed; the four owned step-6/historical modules untouched this round.
+
+## 11. The Step 8 remainder returned (2026-10-07)
+
+Assigned by Codex's `1a3e1024` and the addendum `2f0d4522`; returned on Codex's current `7f08d76e`, tip = the docs commit (reported in chat). The record
+(the owner and save protocol, the scoped-dispatch contract, the callers, what is not wired by name, the checks and the
+review passes) is `CCODE_STEP8_REMAINDER_RETURN_20261007.md`. SOURCE-BUILT / RUNTIME-UNVERIFIED; nothing run; no AWS; the
+four owned step-6/historical modules untouched this round.

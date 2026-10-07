@@ -4,6 +4,39 @@ This is the Claude-side handoff. The Codex-facing record is separate: `CCODE_STE
 `CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md` (top section) and `CCODE_DROP_IN_20261006_NEXT_CHAT.md`. Do not merge the
 two channels: Codex integrates from the CCODE documents; a Claude session starts from `DROP_IN_CLAUDE_20261007.md`.
 
+## Where things stand (updated 2026-10-07, eighth session: the Step 8 remainder returned)
+
+Greg (through Codex's `1a3e1024`, then the 02:35 ET addendum `2f0d4522`): CCode owns the rest of Step 8 and, with it, the
+runner, the queue and the ledger, plus the assigned school/ROOT/Jev/voice callers. This branch was rebased onto Codex's
+`78f5563d` and, at the end, onto its current `7f08d76e` (no owned file touched by Codex meanwhile). Returned, one commit per
+group (the record: `CCODE_STEP8_REMAINDER_RETURN_20261007.md`): `456a006a` the three 8A findings (lease freshness at every
+effect boundary, the durable unknown resume reconciled through the worker, every unsuccessful outcome nonzero) | `23e3afae`
+the owner contract (one binding per day: attempt, source, exact CPUs, booking, day-bound marker; the class child's
+acknowledgment; the ledger retains an owned booking on reap; save/status/resume through the queue) | `4272f949` the
+run/day scope on every worker, kick and handover and the controller's `--days` | `8af0a0b8` `previous_of` persisted,
+teacher knowledge bound to its producer identities | four review passes (46 findings) | `bfae4460` the school consumer on
+Codex's `retained_school`, the non-reentrant `waiting_school` recovery (the one granted branch of `successor_dispatch.drain`),
+Jev's day on the held CPU lane (`JEV_CPU_REQUEST_V1` persisted before dispatch, `jev` a day-run stage, receipt/status bound
+to the request) | `b4c60a4d` the acknowledgment bound to the save request's identity, the kick's scope comparison |
+`df51afb0` the review pass over the addendum commits | the docs commit (tip = the docs commit (reported in chat)). Checks: `ast.parse`, `sh/bash
+-n`, `yaml.safe_load`, `git diff --check`; nothing run, no AWS, no dispatch.
+
+Design choices of this round, not to re-litigate: the owner binding is written by the queue BEFORE the day's thread starts
+and the Run reads its own marker (never a process-global variable); exit 75 is saved only on the day's own standing
+marker, with the class child's written acknowledgment (a SIGTERM path, a vanished child or a missing receipt is unknown,
+never saved); the ledger RETAINS an owned booking whose holder died instead of releasing it, and only the owner takes it
+back in place (an orphan on the CPUs refuses the takeover); a failed (never saved) day gives its binding up so the
+once-per-worker retry is what it was; a kick without a scope starts nothing; a worker never touches an entry outside its
+scope and never starts an out-of-scope predecessor (the eligible day waits); the Jev request is written once and reused
+byte for byte, a differing retained request is refused, never re-minted; the school consumer reads the checked chain and
+never the bare index row, and a successor that needs its corrected meeting waits rather than failing the child; the two
+callers whose producer contracts are not published (the shared-market ROOT policy, the remote voice admission) are named
+dependencies, not guesses.
+
+What a next Claude session does: Codex's review of these commits lands in the task doc; fix what it names in the owned
+files, one commit per group, the code-review skill over the range before every push; wire the two held callers only once
+their contracts are on Codex's tip; nothing else is assigned.
+
 ## Where things stand (updated 2026-10-07, seventh session: Step 8A returned)
 
 Greg, at the start of the session: "Don't mess with old work. Just focus on step 8. Just do step 8A." Codex had fixed the

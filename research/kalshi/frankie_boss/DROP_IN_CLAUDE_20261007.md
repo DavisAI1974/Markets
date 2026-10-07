@@ -1,5 +1,45 @@
 # DROP-IN (Claude): the CCode pre-#5 queue after Codex's correction queue was returned (2026-10-07, end of the third session)
 
+Current box (2026-10-07, after the eighth session: the Step 8 remainder returned). The earlier boxes below are kept for their reading order and boundaries.
+
+```
+CCode queue, CLAUDE session, 2026-10-07. The Step 8 REMAINDER is RETURNED on Codex's 7f08d76e: 456a006a 8A findings |
+23e3afae owner contract | 4272f949 scope | 8af0a0b8 previous_of + producer identity | d8ec096b 2634e5ee 157c84ff 83081b64
+review passes | bfae4460 school consumer + waiting_school recovery + Jev CPU caller | b4c60a4d ack identity + kick scope |
+df51afb0 review pass | the docs commit = tip. HOLD stands.
+FIRST, in this order:
+1. /run using-agent-skills (the Skill tool). Greg's rules and the boundaries below win where they differ from a skill.
+2. Branch (the harness branch is never the work). Exactly:
+     git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
+     git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
+     git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -20
+   If Codex edited an owned file (frankie_box_experiment.py/.sh, frankie_box_frankie_queue.py/.sh, frankie_box_cores.py,
+   pod_root/controller.py, frankie_box_cpu_controller.sh, frankie_box_run.yml, the drain branch of
+   frankie_box_successor_dispatch.py), read its diff before touching that file.
+3. #run memory mcp BEFORE any code change (Greg): CLI, after the rebase, tree quiescent (it aborts if files change):
+     echo '{"repo_path":"/home/user/Markets","mode":"full"}' | codebase-memory-mcp cli --quiet --json index_repository
+READ, in order (research/kalshi/frankie_boss/):
+   CCODE_STEP8_REMAINDER_RETURN_20261007.md              the record: protocol (2), scope (3), callers (4), NOT wired (5), review (7)
+   CLAUDE_HANDOFF_20261007_CCODE_SLICES_A_D.md (top)     the Claude-side state, design choices not to re-litigate
+   CCODE_NEXT_SOURCE_TASKS_20261006.md (top section)     Codex's independent review of the return lands HERE
+BOUNDARIES: source/interface review, ast.parse without project imports, sh -n, yaml.safe_load, git diff --check ONLY. No
+tests, runs, installs, model calls, AWS, dispatch, canaries, E2E; boxes stopped. Owned: frankie_box_experiment.py/.sh,
+frankie_box_frankie_queue.py/.sh, frankie_box_cores.py, pod_root/controller.py, frankie_box_cpu_controller.sh, the
+controller routing and Pod gates of frankie_box_run.yml, frankie_box_pod_root_loop.sh, and ONLY the waiting_school branch
+of successor_dispatch.drain. Never edit Codex's files (school owner, experiment review, the rest of the successor
+dispatcher, principal adapter, BOSS session, scientific teacher, teacher knowledge, search/native/journal readers,
+lane_state, Jev's helper, shared assignment/handoff docs) or the unowned box side (frankie_box_pod_root.sh/.py,
+pod_agent.py): return exact interface requests. Never call frankie_box_historical_reproduction.run(); never rebuild the
+claims file. Granite pins/threads null settled. STOP before #5; never apply 9c19cc2. H06-H08 historical, bind nothing.
+NO cost references, ever.
+NEXT: (1) fix what Codex's review names, one [skip ci] commit per finding group; (2) wire the shared-market ROOT policy
+(Run.root/plan) and the remote voice admission (Run.voice) ONLY once their producer contracts are on Codex's tip (return
+section 5 names what to look for); (3) run the code-review skill over origin/ccr-5fce7de3-xa4hfg..HEAD at high effort
+BEFORE every push and fix what it finds. Update the return record, both handoffs (Claude + CCODE) and both drop-ins; push
+--force-with-lease -u; report exact tips. Nothing on the scratchpad.
+```
+
+
 Current box (2026-10-07, after the seventh session: Step 8A returned). The earlier boxes below are kept for their reading order and boundaries.
 
 ```
