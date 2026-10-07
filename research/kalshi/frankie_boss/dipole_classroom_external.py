@@ -31,8 +31,18 @@ WHAT THE SECTION HOLDS (the teacher key; the TEACH pre-message shows all of it):
     pairing across the rows; over consecutive both-PRESENT rows how many steps moved the same way, the opposite way, one
     side only, or neither). Counts and per-pair coefficients only; nothing averaged across pairs (D37).
 A series the day file does not carry is kept, every row MISSING with the file's own reason, so the pair set never
-depends on what arrived. Point 12 (the storage estimate) has no numeric series yet (the file lists the extractor as not
-built); its captures are carried whole in its point entry.
+depends on what arrived. Point 12 (the storage estimate vs the printed actual) reads the day file's `storage.estimate`
+table (estimate_bcf, actual_bcf, surprise_bcf per print; frankie_day_external.py since 72e9ae8) as three series, and its
+rows are also carried whole in its point entry. A superseded day file (before 72e9ae8) carries `storage.estimate_captures`
+instead: it is still read, carried whole, its three series read MISSING with the reason, and the shape is named.
+
+THE STAMP SHAPE (review R-B, Greg 2026-10-07: a value with no event time of its own sits at 14:00 ET of its trading day,
+or at its publication when later). Every Dipole row reads a value from the table's stamp column (published_ns), the one
+stamp AsOfReader hands out. The descriptor names which stamp that is (day_file_stamp_shape): READER_STAMP (every table
+carries event_time_ns; published_ns = max(event time, publication), the 14:00 ET placement included, the same time the
+shared market reader uses) or PUBLICATION_STAMP (a superseded file: published_ns is the publication time, the placement
+is not in the file, so a value may be read before 14:00 ET; listed, never re-placed here, since the search reads the
+same stamps).
 
 GRADE (deterministic, host side): fact components are compared exactly (counts, states, directions, every known value and
 its time, first/last/extremes); relationship claims are checked against the key's direction relation, with the key's
@@ -102,9 +112,11 @@ POINTS = (
     dict(point_id=10, name='weather.gw_hdd (observed)', tables=('weather.gw_daily', 'weather.obs_hourly'),
          series=('weather.gw_hdd', STATION_PREFIX + '*'), missing=('weather', 'weather.*')),
     dict(point_id=11, name='EIA weekly storage (level, weekly change, vs 5-year)', tables=('storage.weekly',),
-         series=('storage.level_bcf', 'storage.weekly_chg_bcf', 'storage.vs_5yr_bcf'), missing=('storage', 'storage.weekly')),
-    dict(point_id=12, name='storage estimate vs actual', tables=('storage.estimate_captures', 'storage.weekly'),
-         series=(), missing=('estimate', 'storage.estimate', 'storage.estimate_captures')),
+         series=('storage.level_bcf', 'storage.weekly_chg_bcf', 'storage.vs_5yr_bcf'), missing=('storage', 'storage.weekly', 'storage.weekly.*', 'as_printed')),
+    dict(point_id=12, name='storage estimate vs actual',
+         tables=('storage.estimate', 'storage.estimate_captures', 'storage.weekly'),
+         series=('storage.estimate_bcf', 'storage.actual_bcf', 'storage.surprise_bcf'),
+         missing=('estimate', 'storage.estimate', 'storage.estimate_captures', 'as_printed')),
     dict(point_id=13, name='the futures curve shape',
          tables=('curve.definitions', 'curve.statistics', 'curve.trades', 'curve.settled_shape', 'curve.traded_shape'),
          series=('curve.settled.*', 'curve.traded.*'), missing=('curve', 'curve.*')),
@@ -120,7 +132,26 @@ DEFERRED = dict(
             dict(point_id=None, name='squeeze_watch.calendar_front_next_spread_chg_3d', tables=())),
     series=('calendar.sessions_since_prompt_expiry',), tables=('calendar.sessions_since_prompt_expiry',),
     missing=('calendar', 'calendar.*', 'squeeze_watch.*'))
-ROWS_CARRIED_WHOLE = ('storage.estimate_captures',)   # point 12 has no numeric series: its captures are carried whole
+# point 12's rows are carried whole in its point entry: the current table (values per print) and, for a superseded day
+# file, the old captures table (no numeric series; context only)
+ROWS_CARRIED_WHOLE = ('storage.estimate', 'storage.estimate_captures')
+ROWS_CONTEXT_ONLY = ('storage.estimate_captures',)   # carried whole, no numeric series (superseded shape)
+STAMP_SHAPE_READER = 'READER_STAMP'            # published_ns = max(event_time_ns, publication), 14:00 ET default
+STAMP_SHAPE_PUBLICATION = 'PUBLICATION_STAMP'  # superseded: published_ns = publication; the placement is not in the file
+STAMP_SHAPE_NOTES = {
+    STAMP_SHAPE_READER: 'every table carries event_time_ns; published_ns is the reader stamp max(event time, publication), '
+                        'a value with no event time of its own placed at 14:00 ET of the trading day unless published '
+                        'later (Greg 2026-10-07); the classroom reads each value from that stamp, as the shared reader does',
+    STAMP_SHAPE_PUBLICATION: 'a superseded day file (before frankie_day_external.py 72e9ae8): published_ns is the publication '
+                             'time and no table carries event_time_ns, so the 14:00 ET placement is not in the file and a '
+                             'value may be read before 14:00 ET; read as published, listed here, never re-placed',
+}
+
+
+def stamp_shape(body):
+    """(shape, tables without event_time_ns) of a day file: READER_STAMP when every table carries event_time_ns."""
+    lacking = sorted(n for n, t in (body.get('points') or {}).items() if 'event_time_ns' not in (t.get('columns') or ()))
+    return (STAMP_SHAPE_PUBLICATION if lacking else STAMP_SHAPE_READER), lacking
 
 
 class DayExternalRefused(ValueError):
@@ -199,6 +230,10 @@ def open_day_external(day_file, sha256, cutoff_ns, *, trading_day):
                       history_prefix=body.get('history_prefix'), inputs=len(body.get('inputs') or ()),
                       guard=body.get('guard'), reader='operations/frankie_day_external.AsOfReader',
                       reader_cutoff_ns=int(cutoff_ns))
+    shape, lacking = stamp_shape(body)
+    descriptor.update(day_file_stamp_shape=shape, stamp_shape_note=STAMP_SHAPE_NOTES[shape],
+                      tables_without_event_time=lacking, placement_et=body.get('placement_et'),
+                      placement_note=body.get('placement_note'))
     return dx, reader, descriptor
 
 

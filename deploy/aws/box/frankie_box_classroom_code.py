@@ -1410,10 +1410,13 @@ def external_points_use(ext_ledgers, day_file, day_file_sha256, *, cutoff_ns=Non
         """The point's tie to the 99 and its placement, as the day file records them (Greg, 2026-10-07: every point
         mapped, `mapping: closest` with its reason when no exact fit; a value with no intrinsic event time sits at 14:00
         ET of its trading day, or at its publication when later, with the note). A readable row whose reader stamp is
-        EARLIER than its declared event time would let the external section read it before Greg's placement: counted
-        as `read_before_event_time`, an integrity finding of the reader's placement, never a computed use."""
+        EARLIER than its declared event time (or than the table's 14:00 ET placement_ns when it has none) would let the
+        external section read it before Greg's placement: counted as `read_before_event_time` / `read_before_placement`,
+        an integrity finding listed beside the use (review R-B; the use word still says whether a value entered the
+        arithmetic). A table without event_time_ns is a superseded publication-stamp shape, named."""
         tie = dict(entries=[], mapping=[], mapping_reason=[], event_time_basis=[], note=[], rows_read=0,
-                   read_before_event_time=0, rows_with_event_time=0)
+                   read_before_event_time=0, rows_with_event_time=0, read_before_placement=0, carried_whole=[],
+                   tables_without_event_time=[])
         def add(key, value):
             if value is not None and value not in tie[key]:
                 tie[key].append(value)
@@ -1430,6 +1433,11 @@ def external_points_use(ext_ledgers, day_file, day_file_sha256, *, cutoff_ns=Non
             columns = table.get('columns') or []
             stamp_column = table.get('stamp_column') or 'published_ns'
             stamp = columns.index(stamp_column) if stamp_column in columns else None
+            if tname in EXT.ROWS_CARRIED_WHOLE:
+                tie['carried_whole'].append(tname)
+            if 'event_time_ns' not in columns:
+                tie['tables_without_event_time'].append(tname)     # a superseded (publication-stamp) table
+            placement = table.get('placement_ns')                  # the 14:00 ET placement of a default_1400 table
             per_row = any(key in columns for key in row_keys)
             for row in table.get('rows') or []:
                 if cutoff_ns is not None and stamp is not None and row[stamp] is not None and row[stamp] > cutoff_ns:
@@ -1446,28 +1454,48 @@ def external_points_use(ext_ledgers, day_file, day_file_sha256, *, cutoff_ns=Non
                     tie['rows_with_event_time'] += 1
                     if stamp is not None and type(row[stamp]) is int and row[stamp] < tied['event_time_ns']:
                         tie['read_before_event_time'] += 1
+                elif (type(placement) is int and stamp is not None and type(row[stamp]) is int
+                      and row[stamp] < placement):
+                    tie['read_before_placement'] += 1     # no event time of its own, stamped before 14:00 ET
         return tie
     points = []
     for p in EXT.POINTS:
         series = [name for name in components if EXT._matches(name, p['series'])]
         operands = [dict(series=name, present_rows=int((components[name].get('state_counts') or {}).get('PRESENT', 0)),
                          state_counts=components[name].get('state_counts')) for name in series]
+        for o in operands:     # an operand with no PRESENT value is listed unavailable, never a zero
+            o['unavailable'] = None if o['present_rows'] else (
+                'no PRESENT value reached a Dipole row (null in the day file, not yet published, or not in the file; the '
+                'key\'s segments and the day file\'s missing list carry the reason); only arithmetic that needs it waits')
         present = sum(o['present_rows'] for o in operands)
         tie = tie_of(p['tables'])
         entries = tie['entries']
-        if tie['read_before_event_time'] and (present > 0 or not p['series']):
-            # never earlier than its placement: the reader's stamp precedes the declared event time on some rows
-            use, reason = 'absent', ('integrity: %d readable row(s) carry a reader stamp earlier than their declared event '
-                                     'time, so the external section could read them before Greg\'s placement; not counted '
-                                     'as computed until the reader places them at their event time' % tie['read_before_event_time'])
+        early = tie['read_before_event_time'] + tie['read_before_placement']
+        placement_integrity = None
+        if early:
+            # Review R-B: a reader stamp earlier than the declared event time (or the 14:00 ET placement) lets the
+            # external section read the row before Greg's placement. That is an integrity finding of its own, listed
+            # beside the use; the use word still says what happened (a value that entered the arithmetic is computed,
+            # never relabelled absent).
+            placement_integrity = ('integrity: %d readable row(s) carry a reader stamp earlier than their declared event '
+                                   'time and %d earlier than the 14:00 ET placement; the external section read them from '
+                                   'that earlier stamp' % (tie['read_before_event_time'], tie['read_before_placement']))
             findings.append(dict(kind='external_read_before_event_time', point_id=p['point_id'],
-                                 rows=tie['read_before_event_time']))
-        elif not p['series']:
-            use, reason = 'context', ('no numeric series for this point (the day file lists its extractor as not built); its '
-                                      'captures are carried whole in the point review; no arithmetic reads them')
-        elif present > 0:
+                                 rows=tie['read_before_event_time'], rows_before_placement=tie['read_before_placement']))
+        if tie['tables_without_event_time']:
+            findings.append(dict(kind='external_publication_stamp_shape', point_id=p['point_id'],
+                                 tables=list(tie['tables_without_event_time']),
+                                 reason=EXT.STAMP_SHAPE_NOTES[EXT.STAMP_SHAPE_PUBLICATION]))
+        if present > 0:
             use, reason = 'computed', ('its series entered the external section arithmetic at the Dipole rows at or after '
                                        'the stamp its reader placed it at')
+        elif any(t in EXT.ROWS_CONTEXT_ONLY for t in tie['carried_whole']):
+            use, reason = 'context', ('a superseded day-file shape: no value of its series entered the arithmetic; its '
+                                      'rows (%s) are carried whole in the point review, no arithmetic reads them'
+                                      % ', '.join(t for t in tie['carried_whole'] if t in EXT.ROWS_CONTEXT_ONLY))
+        elif not p['series']:
+            use, reason = 'context', ('no numeric series for this point; its tables are carried in the point review; no '
+                                      'arithmetic reads them')
         elif not series:
             use, reason = 'absent', 'none of its series is in today\'s external section (absent from the day file; see missing)'
         else:
@@ -1479,7 +1507,13 @@ def external_points_use(ext_ledgers, day_file, day_file_sha256, *, cutoff_ns=Non
                            mapping=tie['mapping'], mapping_reason=tie['mapping_reason'],
                            event_time_basis=tie['event_time_basis'], note=tie['note'],
                            placement=dict(rows_read=tie['rows_read'], rows_with_event_time=tie['rows_with_event_time'],
-                                          read_before_event_time=tie['read_before_event_time']),
+                                          read_before_event_time=tie['read_before_event_time'],
+                                          read_before_placement=tie['read_before_placement'],
+                                          integrity=placement_integrity,
+                                          stamp_shape=(EXT.STAMP_SHAPE_PUBLICATION if tie['tables_without_event_time']
+                                                       else EXT.STAMP_SHAPE_READER),
+                                          tables_without_event_time=tie['tables_without_event_time']),
+                           carried_whole=tie['carried_whole'],
                            feeds_listed=(None if entries else 'unmapped: the day file declares no registry entry for this '
                                          'point (Greg: every point maps, closest with its reason); listed, never guessed '
                                          'here (request to the day-file agent)'),

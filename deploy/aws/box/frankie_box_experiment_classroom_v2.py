@@ -565,7 +565,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         # The 13 external points (Greg via Frankie, 2026-10-07): per point how the classroom used it (computed / context /
         # absent), the series that entered the external section arithmetic (each value at or after its reader stamp), the
         # 99 entries the day file declares it feeds with the mapping basis (exact / closest) and the placement note, and
-        # any row whose reader stamp precedes its declared event time (an integrity finding, never a computed use).
+        # any row whose reader stamp precedes its declared event time or 14:00 ET placement (an integrity finding listed
+        # beside the use, review R-B), and the day file's stamp shape (reader stamp, or a superseded publication stamp).
         consumers['external_points'] = phase('external_points', lambda: K.external_points_use(
             ext_ledgers, day_file, day_sha, cutoff_ns=(ext_visible.get('pre_message') or {}).get('cutoff_ns')))
         # the all-99 list after every answer: it accounts for what entered the Dipole, exhaustion/D and external arithmetic
