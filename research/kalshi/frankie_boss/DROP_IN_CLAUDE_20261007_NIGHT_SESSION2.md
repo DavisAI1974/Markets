@@ -55,6 +55,8 @@ NEW SESSION -- Frankie (Greg, 2026-10-07 night). THE AGENTS ARE THE ONLY WAY WOR
   20231018 on the main box runs as soon as (1) the independent follow-up review of 44d5673..df0f8de approves and the
   integration branch is fast-forwarded, (2) the main-box cleanup + PySR install has returned. Purpose: prove all pieces
   work together (not a scientific day result).
+- Day files: no point on any INGESTED day may be missing; fill it before the run (Greg). The squeeze 3-day
+  calendar-front spread is NOT part of this research: dropped, never chased or raised again (Greg).
 - REPORTS (Greg):
   - One-day run: a handful of STATUS reports, one per workflow piece: what it received, what it did, what it produced,
     so Greg can tweak or give a thumbs up. Human-only; never knowledge.
