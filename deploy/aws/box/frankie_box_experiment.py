@@ -3658,6 +3658,46 @@ class Run:
         return self.record('jev', day, 'waiting' if code in (5, 75) else 'failed',
                            reason='exit %d without a receipt or status bound to the request %s' % (code, path), **fields)
 
+    def jev_context_read(self, e, context):
+        """The shared market picture at the teachers' cutoff, read ONCE on the day's held lane before Jev (exchange owner,
+        EXCHANGE_CONTEXT_ONLY=1, frankie_box_experiment_exchange.context_only): the same reader, pins and cutoff as the
+        exchange, retained as exchange/<day>/shared-market-context.json, the file the exchange's own read and Jev's helper
+        reuse. Context-only writes no receipt.json, so the later exchange step runs in full. An efficiency only: whatever
+        happens here, Jev's helper reads for itself when no retained file is there (as before); the outcome is listed on
+        the Jev record and never decides the stage. Its log/heartbeat key is '<day>-context' (logs/<day>-context-
+        exchange.log; heartbeat lines keyed '<day>-context'), so the real exchange's <day>-exchange.log is never touched.
+        Returns one dict: status reused | retained | retained_nonzero_exit | not_read | failed, with the reason or pin."""
+        day = e['day']
+        target = context.parent
+        if context.is_file() and not context.is_symlink():
+            return dict(status='reused', shared_market_context=file_pin(context),
+                        reason='already retained (an earlier context read or the exchange itself)')
+        x = self.receipt('exchange', day) or {}
+        if (target / 'receipt.json').is_file() or x.get('status') in ('done', 'reused'):
+            # the exchange is complete without a retained read (no teacher rows then): its directory is not written to
+            return dict(status='not_read', reason='the day\'s exchange is already complete (%s) with no retained context'
+                                                  % (x.get('status') or 'receipt.json present'))
+        rows, why = self.rows_file(e)
+        if rows is None:
+            return dict(status='not_read', reason='no teacher Dipole rows for the cutoff read: %s' % why)
+        env = dict(DAY=day, RUN=self.plan['run'], LESSONS='', OUT_DIR=target, BRAIN=self.plan.get('brain') or str(BRAIN),
+                   SEARCH_DIR=SEARCH / day / ('cycle-' + CYCLE) / 'discovery', TEACHER_ROWS=rows, EXCHANGE_CONTEXT_ONLY='1')
+        key = '%s-context' % day
+        try:
+            code, log = self.child('exchange', key, 'frankie_box_experiment_exchange.sh', env)
+        except ValueError as error:
+            # child()'s own boundary checks (teacher inputs not current, a remote lane): nothing ran; Jev reads for itself
+            return dict(status='not_read', reason='the cutoff read was not started: %s' % error, teacher_rows=str(rows))
+        cpu = self._cpu.get(('exchange', key))
+        if context.is_file() and not context.is_symlink():
+            # the request pins whatever file is retained there (the exchange's own reader wrote it); a nonzero exit
+            # beside it is listed, never hidden
+            return dict(status='retained' if code == 0 else 'retained_nonzero_exit', exit_code=code, log=log,
+                        teacher_rows=str(rows), cpu_booking=cpu, shared_market_context=file_pin(context))
+        return dict(status='failed', exit_code=code, log=log, teacher_rows=str(rows), cpu_booking=cpu,
+                    reason='no retained shared-market-context.json after the cutoff read (exit %s; its log names why); '
+                           'Jev\'s helper reads for itself' % code)
+
     def jev_done_receipt(self, e):
         """The day's existing 'done' jev receipt when it still stands on its own evidence, else None. It stands when its
         request is this day's retained request (days/<day>/jev-request-<stamp>.json or one of its .rebookN successors) and
