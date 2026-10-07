@@ -360,20 +360,22 @@ def spool_columns(path, pin, time_key, workers=1, report=None):
     hasher = threading.Thread(target=hash_file, name='spool-sha256')
     numeric, text, count = {}, {}, 0
     try:
-        with pinned_pool(multiprocessing.get_context('fork'), min(workers, len(ranges))) as pool:
-            hasher.start()                         # after the workers are forked: no thread is copied into them
-            for part_numeric, part_text, part_count in pool.imap(_spool_range_columns, ranges):
-                for merged, part in ((numeric, part_numeric), (text, part_text)):
-                    for key, values in part.items():
-                        if key in merged:
-                            merged[key].extend(values)
-                        else:                      # first seen in this range: None for every earlier row, as columns()
-                            merged[key] = [None] * count
-                            merged[key].extend(values)
-                    for key, values in merged.items():
-                        if key not in part:
-                            values.extend([None] * part_count)
-                count += part_count
+        # in file order; pinned; hasher started after the workers are forked (no thread is copied into them); a dead
+        # worker's range is decoded again, never a hang (frankie_box_lane_pin.ordered_map)
+        for _, (part_numeric, part_text, part_count) in _lane_pin().ordered_map(
+                _spool_range_columns, ranges, min(workers, len(ranges)), context=multiprocessing.get_context('fork'),
+                cpus=lane_cpus(), window=len(ranges), on_start=lambda pool: hasher.start(), report=POOL_RECOVERY):
+            for merged, part in ((numeric, part_numeric), (text, part_text)):
+                for key, values in part.items():
+                    if key in merged:
+                        merged[key].extend(values)
+                    else:                      # first seen in this range: None for every earlier row, as columns()
+                        merged[key] = [None] * count
+                        merged[key].extend(values)
+                for key, values in merged.items():
+                    if key not in part:
+                        values.extend([None] * part_count)
+            count += part_count
     finally:
         if hasher.ident is not None:
             hasher.join()
@@ -622,12 +624,11 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
     notes.append(dict(axis='F_LAST group closes', groups=n, receive_clock_steps_backwards=backwards))
     series = {'frames.' + k: np.asarray(v, dtype=object) for k, v in f_num.items()}
     text_cols = {'frames.' + k: v for k, v in f_text.items()}
-    con = duckdb.connect(config=dict(threads=len(lane_cpus())))      # the lane's CPUs, not DuckDB's host-count default
-
     gates = [dict(source='frames', passed=True, reason='the axis source itself: each value is its own group close')]
 
     import frankie_box_experiment_native as NATIVE
-    native_numeric, native_text, native_sources, native_notes = NATIVE.read_columns(day_dir, columns, f_num, recv)
+    native_numeric, native_text, native_sources, native_notes = NATIVE.read_columns(day_dir, columns, f_num, recv,
+                                                                                    workers=workers)
     series.update({name: np.asarray(values, dtype=object) for name, values in native_numeric.items()})
     text_cols.update(native_text)
     sources.extend(native_sources)
@@ -648,6 +649,9 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         gates.append(dict(source=journal_source['source'], passed=True if placed else None,
                           reason=('exact journal INPUT pairing and existing group membership; no timestamp-asof or invented intermediate state'
                                   if placed else 'no journal rows placed; unsupported or incomplete source groups remain explicitly retained')))
+    # DuckDB's connection (and its thread pool) opens only now: the frame, native and journal readers above fork their
+    # pinned workers first, so no DuckDB thread exists in the process they fork from. Same threads, same queries.
+    con = duckdb.connect(config=dict(threads=len(lane_cpus())))      # the lane's CPUs, not DuckDB's host-count default
 
     def asof(name, known_at, values_by_col):
         """Account for source-row selection, then place each numeric column through its existing leakage gate."""
@@ -1205,60 +1209,67 @@ def _load_state(path, identity):
         raise ValueError('saved search state belongs to different inputs or search code: %s' % path)
     return state
 
+def _lane_pin():
+    """frankie_box_lane_pin (the shared lane placement of the data/search pieces), beside this file."""
+    try:
+        import frankie_box_lane_pin as LP
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_lane_pin as LP
+    return LP
+
+
 def lane_cpus():
     """The held lane's CPUs, never the host count: FRANKIE_LANE_CPUS or FRANKIE_BOOKED_CPUS (cores' cpu_list, e.g.
-    '0-15') intersected with this process's affinity; the affinity alone when neither names a CPU of it."""
-    affinity = set(os.sched_getaffinity(0))
-    for name in ('FRANKIE_LANE_CPUS', 'FRANKIE_BOOKED_CPUS'):
-        listed = set()
-        try:
-            for part in (os.environ.get(name) or '').split(','):
-                if part.strip():
-                    low, _, high = part.strip().partition('-')
-                    listed.update(range(int(low), int(high or low) + 1))
-        except ValueError:
-            continue
-        if listed & affinity:
-            return sorted(listed & affinity)
-    return sorted(affinity)
+    '0-15') intersected with this process's affinity; the affinity alone when neither names a CPU of it. Read once per
+    process (frankie_box_lane_pin.lane_cpus), so the coordinator pinning itself later never shrinks its workers' lane."""
+    return _lane_pin().lane_cpus()
 
 
 def worker_cpus(workers):
-    """One lane CPU per worker: the lane's CPUs after its first (the coordinator's) when the lane has room, else the
-    lane's own CPUs in turn (Greg, 2026-10-07: CPUs pinned to the jobs and workers)."""
+    """One lane CPU per worker (frankie_box_lane_pin.placement): the coordinator keeps the first CPU of the physical-core
+    order; the workers take the other cores' threads first and the coordinator's sibling last (Greg, 2026-10-07: CPUs
+    pinned to the jobs and workers, physical-core aware)."""
+    return _lane_pin().placement(workers, lane_cpus())[1]
+
+
+def pin_coordinator(workers):
+    """Pin this (the coordinator's) thread to the placement's coordinator CPU once the source preparation (DuckDB's
+    threads, the readers' own pools) is done; the CPU map for the manifest."""
+    LP = _lane_pin()
     lane = lane_cpus()
-    pool = lane[1:] if len(lane) > workers else lane
-    return [pool[i % len(pool)] for i in range(workers)]
-
-
-def _pin_from(handout):
-    os.sched_setaffinity(0, {handout.get()})
-
-
-def pinned_pool(context, workers):
-    """context.Pool(workers) with each worker pinned to its own lane CPU (worker_cpus)."""
-    handout = context.Queue()
-    for cpu in worker_cpus(workers):
-        handout.put(cpu)
-    return context.Pool(workers, initializer=_pin_from, initargs=(handout,))
+    placed = LP.record(workers, lane, what='search coordinator + transform/coupling/discovery pool workers')
+    placed['coordinator_pinned'] = LP.pin_thread(placed['coordinator'], lane) is not None
+    return placed
 
 
 def _run_pending(context, workers, function, jobs):
-    """Keep only the held lane's workers in flight; a stop drains each submitted operation."""
-    from collections import deque
-    pending, source = deque(), iter(jobs)
-    with pinned_pool(context, workers) as pool:
-        def fill():
-            while len(pending) < workers and not _stop_requested():
-                job = next(source, None)
-                if job is None:
-                    break
-                pending.append((job, pool.apply_async(function, (job,))))
-        fill()
-        while pending:
-            job, result = pending.popleft()
-            yield job, result.get()
-            fill()
+    """Keep only the held lane's workers in flight; a stop drains each submitted operation. Ordered, pinned, and a dead
+    worker never hangs or stops the stage: its lost job is redone (frankie_box_lane_pin.ordered_map; a lost coupling
+    job's half-written part is set aside first, _cell_retry), the window shrinks by one; listed in POOL_RECOVERY."""
+    yield from _lane_pin().ordered_map(function, jobs, workers, context=context, cpus=lane_cpus(),
+                                       stop=_stop_requested, report=POOL_RECOVERY,
+                                       on_retry=_cell_retry if function is _cell_job else None,
+                                       fallback=_discovery_lost if function is _discovery_job else None)
+
+
+# Dead pool workers and the jobs redone for them, over every pool of this search (manifest cpu_placement.pool_recovery)
+POOL_RECOVERY = dict(worker_deaths=[], redone=[])
+
+
+def _cell_retry(args):
+    """Before a coupling job whose worker died is run again: with no saved continuation state, the part (and its .tmp)
+    it was writing is set aside as <name>.lost-<ts> (never deleted), so the redo starts its part fresh (as the job
+    would from nothing); with saved state the redo resumes from it exactly as a resume does."""
+    part = args[0]
+    if Path(part + '.state.pkl').is_file():
+        return
+    stamp = int(time.time() * 1000)
+    for name in (part + '.tmp', part):
+        if Path(name).exists():
+            os.replace(name, '%s.lost-%d' % (name, stamp))
+            POOL_RECOVERY['redone'].append(dict(set_aside=name, to='%s.lost-%d' % (name, stamp)))
+
 
 def _step_job(args):
     identity = dict(search=_JOB['identity'], job=args)
@@ -1679,6 +1690,16 @@ def _discovery_job(args):
     return result
 
 
+def _discovery_lost(args):
+    """A discovery problem whose worker process died on every try (e.g. the fitting engine crashed it): listed with that
+    disposition, no result file, never fitted in the coordinator (the search goes on; missing-coverage rule)."""
+    problem_id, cell_col, cell_value, y, features = args[:5]
+    return dict(id=problem_id, cell=cell_col, cell_value=cell_value, target=y, rows_in_cell=None, rows_used=None,
+                status='worker_died', reason='the worker process running this problem died on every try (pool recovery '
+                'redid it); not fitted, listed', seconds=None, features=len(features), file=None, bytes=None, sha256=None,
+                fitted_seeds=0)
+
+
 def _discovery_compute(args):
     """One problem: rows, operand dispositions, the leakage check of every lag construction, then the existing regressor
     once per seed (when the engine is importable in this process); its result file is written once, then pinned."""
@@ -1905,7 +1926,7 @@ def workflow_report(manifest, day_dir, identity, *, phase_timings, fft_cache, wo
                             experiment_directive=(manifest.get('experiment_directive') or {}).get('sha256'),
                             code_pins={k: identity.get(k) for k in ('code_sha256', 'transform_sha256', 'surface_sha256',
                                                                    'native_reader_sha256', 'journal_reader', 'dipole_reader')},
-                            workers=workers),
+                            workers=workers, cpu_placement=manifest.get('cpu_placement')),
                 use=dict(axis='F_LAST group closes of the ROOT frame spool in spool order; the running maximum of the '
                               'receive clock in exact nanoseconds; never a timestamp as-of or a dense grid',
                          exact_membership=(shared[0].get('exact_membership') if shared else
@@ -2025,6 +2046,8 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     axis, series, cells, sources, notes, gates = prepared
     if _stop_requested():
         raise SystemExit(75)
+    cpu_placement = pin_coordinator(workers)      # the coordinator on its own CPU; the pools below take the rest
+    cpu_placement['pool_recovery'] = POOL_RECOVERY   # filled as the pools run; written whole with the manifest
     names = sorted(series)
     import multiprocessing
     context = multiprocessing.get_context('fork')                # the workers share the arrays, no copy
@@ -2122,7 +2145,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     rule='counts per pair, cell, lag and day; never pooled across days; never a coefficient or an average '
                          'as the finding (D37); a confirmation day runs only the frozen survivor list',
                     frozen_survivors=str(frozen) if frozen else None, model_calls=0,
-                    phase_timings=phases, fft_cache=fft_cache, workers=workers)
+                    phase_timings=phases, fft_cache=fft_cache, workers=workers, cpu_placement=cpu_placement)
     # The 99 through the search (FRANKIE_ALL99_COVERAGE_V1, piece 'search'): the plane receipt just built, a placed series
     # of an entry counted as arriving at every coupling pair; built and validated by the one registry module
     import frankie_box_all99_coverage as ALL99

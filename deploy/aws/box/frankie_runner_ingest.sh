@@ -38,12 +38,26 @@ from pathlib import Path
 m = json.load(open(sys.argv[1])); out = Path(sys.argv[2])
 archive = {Path(s['archive_key']).name: s['archive_key'] for s in m['sessions']}
 s3 = boto3.client('s3', region_name='us-east-2')
+# S3 transfers (aws-storage skill; the box's offload pattern): the CRT client when awscrt is installed (preferred_transfer_
+# client='crt' raises without it, so it is asked for only then), else the classic manager; 16 MiB parts, 16 at a time.
+# The bytes are the same; the sha256/size checks below are unchanged.
+from boto3.s3.transfer import TransferConfig
+try:
+    import awscrt  # noqa: F401
+    PREFERRED = 'crt'
+except ImportError:
+    PREFERRED = 'auto'
+try:
+    CFG = TransferConfig(multipart_threshold=64 << 20, multipart_chunksize=16 << 20, max_concurrency=16,
+                         preferred_transfer_client=PREFERRED)
+except TypeError:
+    CFG = TransferConfig(multipart_threshold=64 << 20, multipart_chunksize=16 << 20, max_concurrency=16)
 for member in m['sources']:
     key = archive.get(member['member_key'])
     if key is None:
         raise SystemExit('no session archive_key for ' + member['member_key'])
     target = out / member['member_key']
-    s3.download_file(m['bucket'], key, str(target))
+    s3.download_file(m['bucket'], key, str(target), Config=CFG)
     h = hashlib.sha256()
     with open(target, 'rb') as f:
         for block in iter(lambda: f.read(1 << 20), b''):
@@ -73,6 +87,20 @@ import hashlib, json, os, sys, boto3
 from pathlib import Path
 m = json.load(open(sys.argv[1])); out = Path(sys.argv[2]); prefix = sys.argv[3]
 s3 = boto3.client('s3', region_name='us-east-2')
+# S3 transfers (aws-storage skill; the box's offload pattern): the CRT client when awscrt is installed (preferred_transfer_
+# client='crt' raises without it, so it is asked for only then), else the classic manager; 16 MiB parts, 16 at a time.
+# The bytes are the same; the sha256/size checks below are unchanged.
+from boto3.s3.transfer import TransferConfig
+try:
+    import awscrt  # noqa: F401
+    PREFERRED = 'crt'
+except ImportError:
+    PREFERRED = 'auto'
+try:
+    CFG = TransferConfig(multipart_threshold=64 << 20, multipart_chunksize=16 << 20, max_concurrency=16,
+                         preferred_transfer_client=PREFERRED)
+except TypeError:
+    CFG = TransferConfig(multipart_threshold=64 << 20, multipart_chunksize=16 << 20, max_concurrency=16)
 files = []
 for p in sorted(x for x in out.rglob('*') if x.is_file()):
     h = hashlib.sha256()
@@ -80,7 +108,7 @@ for p in sorted(x for x in out.rglob('*') if x.is_file()):
         for block in iter(lambda: f.read(8 << 20), b''):
             h.update(block)
     key = prefix + '/' + str(p.relative_to(out))
-    s3.upload_file(str(p), m['bucket'], key)
+    s3.upload_file(str(p), m['bucket'], key, Config=CFG)
     size = s3.head_object(Bucket=m['bucket'], Key=key)['ContentLength']
     if size != p.stat().st_size:
         raise SystemExit('uploaded size differs: ' + key)

@@ -42,7 +42,7 @@ import os
 import subprocess
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 BOX = Path('/opt/frankie-box')
@@ -64,11 +64,22 @@ def sha256_file(path):
     return h.hexdigest()
 
 
-def lane_cpus():
-    """The CPUs this process may run on (the lane's taskset/cgroup affinity when one is set), else os.cpu_count()."""
+def _lane_pin():
+    """frankie_box_lane_pin (the shared lane placement), beside this file."""
     try:
-        return max(1, len(os.sched_getaffinity(0)))
-    except (AttributeError, OSError):
+        import frankie_box_lane_pin as LP
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_lane_pin as LP
+    return LP
+
+
+def lane_cpus():
+    """How many CPUs the held lane has (FRANKIE_LANE_CPUS / FRANKIE_BOOKED_CPUS within this process's affinity, else the
+    affinity: frankie_box_lane_pin.lane_cpus), else os.cpu_count()."""
+    try:
+        return max(1, len(_lane_pin().lane_cpus()))
+    except Exception:  # noqa: BLE001
         return max(1, os.cpu_count() or 1)
 
 
@@ -133,22 +144,72 @@ def wanted_keys(day, keys, history_prefix, prints, eia930_prefix=None, overrides
 
 
 FETCH_STREAMS = int(os.environ.get('FETCH_STREAMS') or 16)   # concurrent object GETs (S3 guidance: parallel requests)
+# A large object (the curve's MBO/statistics partitions) is pulled as concurrent byte-range GETs of the same presigned URL,
+# each range written at its offset into <dest>.part (aws-storage skill, S3 byte-range fetches: 8-16 MB ranges; the
+# ingest fetch's and the journal pull's pattern, frankie_box_ingest_block.sh). Small objects keep the one curl stream.
+# The bytes land at the same offsets: the size check here and the curve manifest sha256 check (verify_curve) and the
+# history manifest check (the builder) are unchanged. RANGE_STREAMS=1 restores the one-stream download.
+RANGE_BYTES = 16 << 20
+RANGED_ABOVE = 64 << 20
+RANGE_STREAMS = int(os.environ.get('RANGE_STREAMS') or 15)
+
+
+def _ranged_get(url, part, size, streams=None):
+    """0 when every range of [0, size) arrived whole (HTTP 206, exact length) and was written at its offset, else 1."""
+    import random
+    import urllib.request
+    streams = max(1, streams or RANGE_STREAMS)
+    fd = os.open(str(part), os.O_RDWR | os.O_CREAT, 0o644)
+    try:
+        os.ftruncate(fd, size)
+
+        def one(i):
+            start, end = i * RANGE_BYTES, min(size, (i + 1) * RANGE_BYTES) - 1
+            for attempt in range(6):
+                try:
+                    request = urllib.request.Request(url, headers={'Range': 'bytes=%d-%d' % (start, end)})
+                    with urllib.request.urlopen(request, timeout=120) as response:
+                        if response.status != 206:
+                            return False
+                        data = response.read()
+                    if len(data) == end - start + 1:
+                        os.pwrite(fd, data, start)
+                        return True
+                except OSError as error:
+                    print('   retry %d range %d of %s: %s' % (attempt + 1, i, part.name, error), flush=True)
+                time.sleep(min(60, 5 * (attempt + 1)) * (0.5 + random.random()))   # backoff with jitter (S3 503 SlowDown)
+            return False
+        with ThreadPoolExecutor(streams) as pool:
+            ok = all(pool.map(one, range((size + RANGE_BYTES - 1) // RANGE_BYTES)))
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    return 0 if ok else 1
 
 
 def _fetch_one(k, url_map, src):
-    """One object of the day history through its presigned GET (curl, retries); its listing entry."""
+    """One object of the day history through its presigned GET (curl, retries; byte ranges above RANGED_ABOVE); its
+    listing entry."""
     dest = src / k
     entry = url_map[k]
     if dest.is_file() and dest.stat().st_size == entry.get('bytes'):
         return dict(key=k, status='present')
     dest.parent.mkdir(parents=True, exist_ok=True)
     part = Path(str(dest) + '.part')
-    r = subprocess.run(['curl', '-fsS', '--proto', '=https', '-L', '--retry', '5', '--retry-delay', '5', '-o', str(part),
-                        '--url', entry['url']])
-    if r.returncode != 0 or not part.is_file() or part.stat().st_size != entry.get('bytes'):
-        return dict(key=k, status='failed', returncode=r.returncode)
+    size = entry.get('bytes')
+    started = time.time()
+    if isinstance(size, int) and size > RANGED_ABOVE and RANGE_STREAMS > 1:
+        if part.exists():
+            part.unlink()                        # a stale partial from an interrupted one-stream GET; refetched whole
+        returncode, transport = _ranged_get(entry['url'], part, size), 'ranged-%d' % RANGE_STREAMS
+    else:
+        returncode = subprocess.run(['curl', '-fsS', '--proto', '=https', '-L', '--retry', '5', '--retry-delay', '5',
+                                     '-o', str(part), '--url', entry['url']]).returncode
+        transport = 'curl'
+    if returncode != 0 or not part.is_file() or part.stat().st_size != size:
+        return dict(key=k, status='failed', returncode=returncode, transport=transport)
     os.replace(part, dest)
-    return dict(key=k, status='downloaded', bytes=entry.get('bytes'))
+    return dict(key=k, status='downloaded', bytes=size, transport=transport, seconds=round(time.time() - started, 1))
 
 
 def fetch(keys, url_map, src, listing, workers=FETCH_STREAMS):
@@ -178,8 +239,8 @@ def verify_curve(src, listing, workers=None):
             named[o['key']] = o['sha256']
     out = []
     paths = sorted(glob.glob(str(src / CURVE / '*' / 'native' / '*.dbn.zst')))
-    with ThreadPoolExecutor(max_workers=max(1, min(workers or lane_cpus(), len(paths) or 1))) as pool:
-        digests = list(pool.map(sha256_file, paths))
+    with _lane_pin().executor('thread', max(1, min(workers or lane_cpus(), len(paths) or 1))) as pool:
+        digests = list(pool.map(sha256_file, paths))       # each hashing thread pinned to its lane CPU; path order kept
     for p, have in zip(paths, digests):
         key = str(Path(p).relative_to(src))
         want = named.get(key)
@@ -226,6 +287,14 @@ def build_day(job):
     (target / RECEIPT).write_text(json.dumps(receipt, indent=1, sort_keys=True), encoding='utf-8')
     return dict(day=day, path=str(target / FILE), sha256=receipt['sha256'], bytes=len(raw), points=receipt['points'],
                 missing=len(body['missing']))
+
+
+def _set_aside_day(job):
+    """Before a day whose builder process died is built again: its half-built <run>/<day>/ directory (build_day creates
+    it exclusively) is renamed <day>.lost-<ms>, never deleted, so the redo builds the day from nothing."""
+    target = Path(job['run_dir']) / job['day']
+    if target.exists():
+        os.replace(target, target.with_name('%s.lost-%d' % (job['day'], int(time.time() * 1000))))
 
 
 def sealed_ingests(day):
@@ -355,15 +424,20 @@ def main():
         jobs = [dict(day=d, run_dir=str(run_dir), src=str(src), history_prefix=history_prefix, eia930_prefix=eia930_prefix,
                      overrides=overrides, code_root=a.code_root,
                      markets_sha=a.markets_sha, run=a.run, curve_verification=curve) for d in days]
-        with ProcessPoolExecutor(max_workers=max(1, min(workers, len(days)))) as pool:
-            for r in pool.map(build_day, jobs):
-                record['built'].append(r)
-                print(json.dumps(r), flush=True)
-                try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
-                    import frankie_box_stage_progress as _SP
-                    _SP.report_phase('external: day files built', units_done=len(record['built']), units_total=len(jobs), unit='days')
-                except Exception:  # noqa: BLE001
-                    pass
+        record['cpu_placement'] = _lane_pin().record(max(1, min(workers, len(days))),
+                                                     what='day builders, one pinned process per day; curve hashing threads')
+        record['cpu_placement']['pool_recovery'] = dict(worker_deaths=[], redone=[])
+        # in day order whatever order they finish; pinned; a dead builder's day is set aside (never deleted) and built
+        # again, never a hang or a stopped stage (frankie_box_lane_pin.ordered_map)
+        for _, r in _lane_pin().ordered_map(build_day, jobs, max(1, min(workers, len(days))), on_retry=_set_aside_day,
+                                            report=record['cpu_placement']['pool_recovery']):
+            record['built'].append(r)
+            print(json.dumps(r), flush=True)
+            try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+                import frankie_box_stage_progress as _SP
+                _SP.report_phase('external: day files built', units_done=len(record['built']), units_total=len(jobs), unit='days')
+            except Exception:  # noqa: BLE001
+                pass
 
     elif not run_dir.is_dir():
         raise SystemExit('%s is not an existing run' % run_dir)

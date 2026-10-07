@@ -5,6 +5,7 @@ completed-knowledge evidence; they are not repeated observations or early live f
 """
 import hashlib
 import json
+import time
 from pathlib import Path
 
 SCHEMA = 'FRANKIE_NATIVE_SEARCH_INPUTS_V1'
@@ -147,7 +148,120 @@ def _ranges_add(ranges, ordinal):
         ranges.append([ordinal, ordinal])
 
 
-def read_columns(day_dir, columns, frame_numeric, receive_times):
+# ---- the ledger decode on the held lane (Greg, 2026-10-07 night: every piece pinned to its lane, concurrent) ---------
+# The member and lifecycle ledgers are read once, in ledger order. The JSON decode of each line is independent of every
+# other line, so above NATIVE_PARALLEL_MIN_BYTES the file is cut at line starts into ordered byte ranges and pinned
+# forked workers decode them (json.loads of the same bytes); the parent receives the decoded rows range by range IN
+# FILE ORDER and runs every check below unchanged and in order (emission provenance, exact member/lifecycle identities,
+# the members map, the monotone ROOT position, dispositions with their ordinal ranges, the bucketing and columns()).
+# A line that does not decode stops its range at that line: the rows before it are checked first, then the same
+# decode error is raised, so the first failure is the serial one. The bytes are hashed in file order beside the
+# workers and checked against the pin after the last row, as the serial read does. At most NATIVE_WINDOW_PER_WORKER
+# ranges per worker are in flight (bounded memory). One worker or a small ledger: the serial read itself.
+NATIVE_PARALLEL_MIN_BYTES = 64 << 20
+NATIVE_RANGE_BYTES = 16 << 20
+NATIVE_WINDOW_PER_WORKER = 2
+
+
+def _line_ranges(path, size, piece_bytes):
+    """Ordered [start, end) byte ranges of the file, each starting at a line start (cut just after a newline)."""
+    cuts = [0]
+    with open(path, 'rb') as handle:
+        nominal = piece_bytes
+        while nominal < size:
+            handle.seek(nominal - 1)
+            handle.readline()
+            cut = handle.tell()
+            if cuts[-1] < cut < size:
+                cuts.append(cut)
+            nominal = max(cut, nominal) + piece_bytes
+    cuts.append(size)
+    return [(str(path), a, b) for a, b in zip(cuts, cuts[1:]) if b > a]
+
+
+def _decode_range(args):
+    """(decoded rows of the range in order, the first decode error or None)."""
+    path, start, end = args
+    rows, position = [], start
+    with open(path, 'rb') as handle:
+        handle.seek(start)
+        for raw in handle:
+            if position >= end:
+                break
+            position += len(raw)
+            try:
+                rows.append(json.loads(raw))
+            except Exception as error:  # noqa: BLE001 - re-raised by the parent after the rows before it are checked
+                return rows, error
+    return rows, None
+
+
+def _decoded_lines(path, workers):
+    """Yield (ordinal, decoded row) of the ledger in file order; (bytes, sha256) of every byte read, via `done`."""
+    done = {}
+    size = path.stat().st_size
+
+    def serial():
+        hashed, total = hashlib.sha256(), 0
+        with path.open('rb') as handle:
+            for ordinal, raw in enumerate(handle):
+                hashed.update(raw)
+                total += len(raw)
+                yield ordinal, json.loads(raw)
+        done.update(bytes=total, sha256=hashed.hexdigest(), mode='serial', workers=1)
+
+    def parallel():
+        import multiprocessing
+        import threading
+        try:
+            import frankie_box_lane_pin as LP
+        except ImportError:
+            from deploy.aws.box import frankie_box_lane_pin as LP
+        ranges = _line_ranges(path, size, NATIVE_RANGE_BYTES)
+        count = min(workers, len(ranges))
+        hashed, state, stop = hashlib.sha256(), dict(bytes=0), threading.Event()
+
+        def hash_file():
+            try:
+                with path.open('rb') as handle:
+                    for block in iter(lambda: handle.read(1 << 24), b''):
+                        if stop.is_set():
+                            return
+                        hashed.update(block)
+                        state['bytes'] += len(block)
+            except BaseException as error:  # noqa: BLE001 - re-raised after the join
+                state['error'] = error
+        hasher = threading.Thread(target=hash_file, name='native-ledger-sha256')
+        ordinal, finished, recovery = 0, False, dict(worker_deaths=[], redone=[])
+        try:
+            # pinned, in file order, at most NATIVE_WINDOW_PER_WORKER ranges per worker in flight; the hasher starts
+            # after the fork; a dead worker's range is decoded again, never a hang (frankie_box_lane_pin.ordered_map)
+            for _, (rows, error) in LP.ordered_map(_decode_range, ranges, count,
+                                                    context=multiprocessing.get_context('fork'),
+                                                    window=count * NATIVE_WINDOW_PER_WORKER,
+                                                    on_start=lambda pool: hasher.start(), report=recovery):
+                for row in rows:
+                    yield ordinal, row
+                    ordinal += 1
+                if error is not None:
+                    raise error
+            finished = True
+        finally:
+            if not finished:
+                stop.set()
+            if hasher.ident is not None:
+                hasher.join()
+        if state.get('error') is not None:
+            raise state['error']
+        done.update(bytes=state['bytes'], sha256=hashed.hexdigest(), mode='fork_pool_line_ranges', workers=count,
+                    ranges=len(ranges), pool_recovery=recovery,
+                    cpu_placement=LP.record(count, what='native ledger decode workers'))
+
+    use_parallel = workers > 1 and size >= NATIVE_PARALLEL_MIN_BYTES
+    return (parallel() if use_parallel else serial()), done
+
+
+def read_columns(day_dir, columns, frame_numeric, receive_times, *, workers=1):
     """Return native numeric/text columns on the unchanged ROOT frame axis and receipts.
 
     Lifecycle slots retain emission order within each section/group. A slot is not
@@ -217,12 +331,11 @@ def read_columns(day_dir, columns, frame_numeric, receive_times):
             counts[reason] = counts.get(reason, 0) + 1
 
         def rows():
-            hashed, size, previous = hashlib.sha256(), 0, -1
-            with path.open('rb') as handle:
-                for ordinal, raw in enumerate(handle):
-                    hashed.update(raw)
-                    size += len(raw)
-                    row = json.loads(raw)
+            previous = -1
+            started = time.time()
+            decoded, read = _decoded_lines(path, workers)
+            try:
+                for ordinal, row in decoded:
                     if not isinstance(row, dict):
                         raise ValueError('native ledger row is not an object')
                     report['rows'] += 1
@@ -267,8 +380,15 @@ def read_columns(day_dir, columns, frame_numeric, receive_times):
                     disposition('searched', ordinal, row)
                     report['searched_rows'] += 1
                     yield position, row
-            if size != pin['bytes'] or hashed.hexdigest() != pin['sha256']:
+            finally:
+                decoded.close()   # an early check failure stops the decode workers and the hasher now
+            if read.get('bytes') != pin['bytes'] or read.get('sha256') != pin['sha256']:
                 raise ValueError('native exported ledger changed during its single read')
+            report['parse'] = dict({k: v for k, v in read.items() if k not in ('bytes', 'sha256')},
+                                   seconds=round(time.time() - started, 3),
+                                   basis='ordered line ranges decoded by pinned workers; every check in the parent in '
+                                         'ledger order; bytes hashed in file order against the pin'
+                                         if read.get('mode') != 'serial' else 'one serial read')
 
         def aligned():
             iterator = iter(rows())

@@ -140,14 +140,23 @@ def _pin_all(paths, workers):
     EBS: the hash is I/O-bound there, so the per-file seconds recorded below show whether the disk or the CPU
     was the wall). Recorded in MANIFEST.hashing for the one-day canary."""
     paths = sorted(paths, key=lambda p: Path(p).stat().st_size, reverse=True)
-    started = time.time()
+    started, placed = time.time(), None
     if workers <= 1 or len(paths) <= 1:
         measured = {str(p): _pin(p) for p in paths}
         mode = 'serial'
     else:
-        from concurrent.futures import ProcessPoolExecutor
-        with ProcessPoolExecutor(max_workers=min(workers, len(paths))) as pool:
-            measured = dict(zip((str(p) for p in paths), pool.map(_pin, paths)))
+        # each hashing process pinned to its own lane CPU, physical cores first (frankie_box_lane_pin; Greg, 2026-10-07
+        # night: nothing floating). Pins are unchanged.
+        try:
+            import frankie_box_lane_pin as LP
+        except ImportError:
+            from deploy.aws.box import frankie_box_lane_pin as LP
+        placed = LP.record(min(workers, len(paths)), what='export hashing processes (largest file first)')
+        placed['pool_recovery'] = dict(worker_deaths=[], redone=[])
+        # ordered, pinned; a dead hashing worker's file is hashed again, never a hang or a stopped export
+        measured = {str(p): result for p, result in LP.ordered_map(_pin, paths, min(workers, len(paths)),
+                                                                   report=placed['pool_recovery'])}
+        measured = {str(p): measured[str(p)] for p in paths}
         mode = 'process_pool'
     pins = {path: (size, digest) for path, (size, digest, _) in measured.items()}
     slowest = sorted(((seconds, size, path) for path, (size, _, seconds) in measured.items()), reverse=True)[:5]
@@ -158,6 +167,7 @@ def _pin_all(paths, workers):
                       bytes_per_second=round(total_bytes / wall) if wall > 0 else None,
                       largest_file_bytes=max((size for size, _ in pins.values()), default=0),
                       slowest_files=[dict(seconds=s, bytes=b, path=p) for s, b, p in slowest],
+                      cpu_placement=placed if mode == 'process_pool' else None,
                       basis='one file per worker, largest first; identities invariant; measure on the one-day canary; '
                             'bytes_per_second against the volume throughput says whether the disk was the wall')
 

@@ -480,6 +480,21 @@ class _PinnedPool:
                       f'({self.workers_lost} of {self.started_workers} lost so far); {len(lost)} task(s) re-done with '
                       f'the same arguments ({self.tasks_redone} in all); order and bytes unchanged, the stage continues')
 
+    def widen(self, extra):
+        """More pinned workers on CPUs handed over (the native child's, once it ended). Only between tasks: the caller
+        has collected every outstanding result, so nothing is in flight and nothing is redone; the pool is closed and
+        started again on its CPUs plus `extra` (one worker per CPU, the same pure encodings). Returns the CPUs added."""
+        if self.outstanding:
+            raise RuntimeError('a pinned pool widens only with nothing in flight')
+        extra = [cpu for cpu in extra if cpu not in self.cpus]
+        if not extra:
+            return []
+        self.close()
+        self.cpus = self.cpus + extra
+        self.started_workers += len(extra)
+        self._start()
+        return extra
+
     def close(self):
         if self.pool is not None:
             self.pool.close()
@@ -510,15 +525,23 @@ class OrderedRowWriter:
     it runs before every save point (a saved spool position always has every earlier row on disk, so a resume reopens
     the spools at exactly those byte offsets) and before the spools are closed."""
 
-    def __init__(self, cpus, window_per_worker=4, note=None):
+    HANDOVER_CHECK_SECONDS = 5.0     # how often append_frame asks `handover` for CPUs freed beside the legacy pass
+
+    def __init__(self, cpus, window_per_worker=4, note=None, handover=None):
         import collections
         self.cpus = list(cpus)
         self.queue = collections.deque()
         self.window_per_worker = window_per_worker
         self._spools = {}
+        self.note = note
         self.pinned = _PinnedPool(self.cpus, 'legacy pass frame encoders', note=note, flush=self._flush_spools)
         self.frames_encoded = 0
         self.wait_seconds = 0.0
+        # handover(): CPUs freed beside this pass (the native child's, once it ended), [] while none; asked every
+        # HANDOVER_CHECK_SECONDS until it hands some over, once (Greg, 2026-10-07: every CPU used)
+        self.handover = handover
+        self.handed_over = []
+        self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
 
     @property
     def workers(self):
@@ -559,6 +582,8 @@ class OrderedRowWriter:
             return
         self._spools[id(spool)] = spool
         self._spools[id(failures)] = failures
+        if self.handover is not None and time.monotonic() >= self._handover_next:
+            self._take_handover()
         self.queue.append((spool, value, self.pinned.submit(_encode_frame, payload), (failures, payload, index)))
         while len(self.queue) > self.window:
             self._write_one()
@@ -590,6 +615,21 @@ class OrderedRowWriter:
             finally:
                 self.wait_seconds += time.time() - started
         self._write(spool, encoded, value)
+
+    def _take_handover(self):
+        """Widen the encoders onto the handed-over CPUs: every queued row is written first (drain: the same lines in
+        the same order, as at a save point), then the pool restarts on its CPUs plus the new ones. Placement only."""
+        self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
+        extra = [cpu for cpu in (self.handover() or []) if cpu not in self.pinned.cpus]
+        if not extra:
+            return
+        self.handover = None
+        self.drain()
+        added = self.pinned.widen(extra)
+        self.handed_over = added
+        if self.note is not None and added:
+            self.note(f'legacy pass: the native stage ended first; its CPUs {cpu_ranges(added)} handed to the frame '
+                      f'encoders, now {self.pinned.workers} pinned on {cpu_ranges(self.pinned.cpus)}; rows unchanged')
 
     @staticmethod
     def _write(spool, encoded, value):
@@ -1375,7 +1415,7 @@ class Session:
             process.start()
         finally:
             lock.__exit__(None, None, None)   # this process's copy closes; the child's copy keeps the flock
-        self._native_overlap = dict(process=process, lane=lane, started=time.time(),
+        self._native_overlap = dict(process=process, lane=lane, started=time.time(), native_cpus=list(native_cpus),
                                     environment={k: os.environ.get(k) for k in ('FRANKIE_LANE_CPUS', 'FRANKIE_BOOKED_CPUS')})
         # from here every exit joins it; the legacy pass (and the layer writes after it) see only the second half
         os.sched_setaffinity(0, set(legacy_cpus))
@@ -1385,6 +1425,14 @@ class Session:
                   f'{cpu_ranges(native_cpus)}, legacy on {cpu_ranges(legacy_cpus)}; {split_basis})')
         del handle
         return process
+
+    def _freed_native_cpus(self):
+        """The native child's CPUs once it has exited while the legacy pass still runs (Greg, 2026-10-07: every CPU
+        used): [] while it runs or with no overlap. Never the legacy side's CPUs, so never the replay's core."""
+        overlap = getattr(self, '_native_overlap', None)
+        if not overlap or overlap['process'].is_alive():
+            return []
+        return list(overlap.get('native_cpus') or [])
 
     def _join_native_overlap(self, process, outcome_note):
         process.join()
@@ -1605,7 +1653,7 @@ class Session:
         if retain_frame_sections and encoder_cpus:
             for rows in (prices, frames, structures, failures):
                 rows._writer.flush()              # nothing buffered is copied into the forked encoders
-            writer = OrderedRowWriter(encoder_cpus, note=self.note)
+            writer = OrderedRowWriter(encoder_cpus, note=self.note, handover=self._freed_native_cpus)
             self._row_writer = writer
             if book_cpus:
                 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -1776,7 +1824,11 @@ class Session:
             self.note(f'legacy pass: {writer.frames_encoded} frame rows encoded on {writer.workers} pinned lane CPUs; '
                       f'the replay waited {writer.wait_seconds:.1f} s on encoders'
                       + (f'; {writer.workers_lost} encoder worker(s) lost, {writer.tasks_redone} frame(s) re-done'
-                         if writer.workers_lost else ''))
+                         if writer.workers_lost else '')
+                      + (f'; native CPUs {cpu_ranges(writer.handed_over)} handed over' if writer.handed_over else ''))
+            if writer.handed_over:
+                self._native_overlap_record(legacy_encoders_widened=dict(cpus=writer.handed_over,
+                                                                         workers=writer.workers))
         if recovery:
             save_legacy(len(records))
         probe.update('root-legacy-finalize')
@@ -1832,8 +1884,13 @@ class Session:
         # The layer files carrying a whole spool (legacy_book_imbalance.frames, legacy_structure_observables.groups) are
         # re-encoded on the lane's pinned encoders, byte for byte the serial write_json (write_layer_json); the writer
         # itself (join, sha256, write) stays on the lane's first CPU.
-        layer_cpus = lane[1:1 + max(0, int((self.source_binding or {}).get('data_workers') or 1))] \
+        # A native stage beside this pass that has already ended hands its CPUs to the layer encoders too (Greg,
+        # 2026-10-07: every CPU used); the requested data_workers count still bounds them.
+        freed = [c for c in self._freed_native_cpus() if c not in lane]
+        layer_cpus = (lane[1:] + freed)[:max(0, int((self.source_binding or {}).get('data_workers') or 1))] \
             if retain_frame_sections else []
+        if freed and layer_cpus:
+            self._native_overlap_record(layer_encoders_widened=dict(cpus=[c for c in layer_cpus if c in freed]))
         if layer_cpus:
             os.sched_setaffinity(0, {lane[0]})
         for name, value in layers.items():
@@ -1842,7 +1899,7 @@ class Session:
             write_layer_json(path, value, layer_cpus, note=self.note)
             if layer_cpus and any(isinstance(v, B.RowSpool) for v in value.values()):
                 self.note(f'layer {name}.json written in {time.time() - started:.1f} s (spools encoded on pinned lane '
-                          f'CPUs {layer_cpus[0]}-{layer_cpus[-1]})')
+                          f'CPUs {cpu_ranges(layer_cpus)})')
             receipt['layers'][name] = dict(status=value['status'], producer=value.get('producer'), reason=value.get('reason'), **witness(path), path=str(path))
         if layer_cpus:
             os.sched_setaffinity(0, set(lane))
