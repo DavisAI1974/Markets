@@ -435,7 +435,8 @@ class Heartbeat:
         except Exception as error:  # noqa: BLE001 - a failed sample is written, never raised
             line['work_probes_error'] = '%s: %s' % (type(error).__name__, error)
         if self.pid:
-            line['cpu_ranges'] = cpu_list_of(self.pid)
+            line['cpu_ranges'] = cpu_list_of(self.pid) or getattr(self, 'last_cpu_ranges', None)
+            self.last_cpu_ranges = line['cpu_ranges']
         if units is None:
             units = self._units_from_probe(getattr(self, '_pids', None) or [])
         if self.log_path:
@@ -450,6 +451,12 @@ class Heartbeat:
                                  source='the last log line (the stage publishes no units)')
             except OSError:
                 pass
+        if (units is None or units.get('units_done') is None) and getattr(self, 'last_units', None):
+            # stacks pass: once the tree has exited (the final line) or between two writes, the last measured units are
+            # carried, labelled, instead of None
+            units = dict(self.last_units, source='the last measured units (%s), carried' % self.last_units.get('source'))
+        elif units is not None and units.get('units_done') is not None:
+            self.last_units = dict(units)
         units = units or dict(phase=None, units_done=None, units_total=None, unit=None, source='nothing published')
         line.update(phase=units.get('phase'), units_done=units.get('units_done'), units_total=units.get('units_total'),
                     unit=units.get('unit'))

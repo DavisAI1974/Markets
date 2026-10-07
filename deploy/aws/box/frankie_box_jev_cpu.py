@@ -708,8 +708,20 @@ def _run(request, request_path, out, brain, jev_brain):
     result_path = scientific_dir / 'jev' / (request['day'] + '-' + request['stamp'] + '.json')
     if not result_path.exists():
         records = frozen['selection']['reproduction_records']
-        native = {d['day']: ST.completed_native_evidence(d, scientific_dir) for d in days}
-        results = ST.test(doc, days, records_dir=Path(records['directory']), records_selection=records['files'])
+        # cross-owner R4 (school stage, 2026-10-07 night): one pinned shared pre-read of every day's native evidence and
+        # this claim document's search parts, side by side (ST.pre_read), consumed by ST.test(scanned=); the same rows,
+        # ordinals, hashes and errors as each read on its own (the pre-read falls back to them itself). Jev stays blind:
+        # it reads only what the test already read. A scientific teacher without pre_read: the reads as before.
+        if hasattr(ST, 'pre_read'):
+            native_list, prepared_list, pre_note = ST.pre_read(days, [doc], scientific_dir)
+            native = dict(zip([d['day'] for d in days], native_list))
+            placement['scientific_pre_read'] = pre_note
+            results = ST.test(doc, days, records_dir=Path(records['directory']), records_selection=records['files'],
+                              scanned=prepared_list[0] if prepared_list else None)
+        else:
+            native = {d['day']: ST.completed_native_evidence(d, scientific_dir) for d in days}
+            placement['scientific_pre_read'] = 'not available in this scientific teacher; each read on its own'
+            results = ST.test(doc, days, records_dir=Path(records['directory']), records_selection=records['files'])
         ST.write(doc, days, results, scientific_dir, brain_dir=brain, native=native, operation=operation, publish=False)
     lesson = json.loads(result_path.read_bytes())
     REVIEW._validate_operation(REVIEW._transition_operation(operation, lesson), lesson)
