@@ -525,13 +525,37 @@ def compare(entry, run_doc, staging):
         else:
             item.update(status='declared_not_comparable_by_code', recorded_in=rec.get('recorded_in'), note=rec.get('note'))
         outputs.append(item)
-    comparable = [o for o in outputs if o['status'] in ('matched', 'incomplete', 'differs', 'not_found')]
-    status = ('performed_differs' if any(o['status'] in ('differs', 'not_found') for o in comparable)
-              else 'performed_incomplete' if any(o['status'] == 'incomplete' for o in comparable)
-              else 'performed_matched' if comparable else 'performed_not_comparable')
-    return dict(status=status, outputs=outputs, **facts,
+    status, coverage = aggregate_status(outputs)
+    return dict(status=status, outputs=outputs, coverage=coverage, **facts,
                 rule='a match reproduces the recorded numbers on the original inputs; it is not a verdict on the claim; '
                      'a difference is evidence with its fields named, not a rejection (R11, R14)')
+
+
+def aggregate_status(outputs):
+    """(status, coverage) over the retained per-output statuses (B2-R): the matched scope is one fact, the coverage of
+    EVERY declared comparable output (printed and json_file) is another. A declared comparable output that could not be
+    compared at all (not_comparable: missing reference, produced file gone, no aligned members) is a coverage gap, so the
+    whole output is never 'performed_matched' with one. Prose declarations are explicitly outside comparison and never
+    become measurements. Pure over the outputs, so an admitted record's status can be recomputed from its retained outputs."""
+    declared = [o for o in outputs if o.get('kind') in ('printed', 'json_file')]
+    prose = [o for o in outputs if o.get('kind') not in ('printed', 'json_file')]
+    compared = [o for o in declared if o.get('status') in ('matched', 'incomplete', 'differs', 'not_found')]
+    uncovered = [dict(what=o.get('what'), kind=o.get('kind'), status=o.get('status'), reason=o.get('reason'))
+                 for o in declared if o.get('status') not in ('matched', 'incomplete', 'differs', 'not_found')]
+    coverage = dict(declared_comparable=len(declared), compared=len(compared), uncovered=uncovered,
+                    complete=bool(declared) and not uncovered and all(o.get('status') == 'matched' for o in compared),
+                    prose_declared=len(prose),
+                    rule='matched scope and declared-output coverage are separate facts; a gap in either keeps the whole '
+                         'output from being matched; prose declarations are never compared')
+    if any(o.get('status') in ('differs', 'not_found') for o in compared):
+        status = 'performed_differs'
+    elif not compared:
+        status = 'performed_not_comparable'
+    elif uncovered or any(o.get('status') == 'incomplete' for o in compared):
+        status = 'performed_incomplete'
+    else:
+        status = 'performed_matched'
+    return status, coverage
 
 
 # ------------------------------------------------------------------------------------------------------------ record
