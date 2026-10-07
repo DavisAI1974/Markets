@@ -1,3 +1,10 @@
+# Claude session drop-in — 2026-10-07 night, session 2: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007_NIGHT_SESSION2.md`
+
+Branch `ccr-d2f8f826-iefeah-frankie`. Parent-only session; agents do the work, spawned with model "opus".
+Greg's decisions this session are listed in that file (Jev on Granite's settings, one shared lane CPU,
+all days on the main box, native pass ON, everything mapped to the 99 with the 14:00 ET default, 30 day
+files, no runs until everything is right). Everything is SOURCE-BUILT / RUNTIME-UNVERIFIED.
+
 # Claude session drop-in — 2026-10-07 evening: THE AGENTS ARE THE ONLY WAY WORK RUNS (Greg)
 
 READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007_AGENTS_PASS.md` (the box at its top, then
