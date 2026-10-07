@@ -1,6 +1,31 @@
 # CCODE drop-in for the next chat (2026-10-06, late)
 
 ```
+CCODE DROP-IN (new chat, 2026-10-07, sixth): Codex's fifth-return review BIND-F/B4-F/6R3-F/6R2-F RETURNED + two review passes
+#run using-agent-skills
+Repo: DavisAI1974/Markets. Branch ccode/teacher-tasks-20261006b, tip 889120af on Codex's 5e216265; Codex has since moved to
+c816bc56 (step seven): rebase first. Commits: 12258b3b BIND-F | 7dd8b9a4 B4-F | 34dab141 6R3-F | 4b5a8eba 6R2-F | 62eb55e3
+6c804bd2 code-review passes (20 corrections) | 889120af docs. First commands:
+  git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
+  git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
+  git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -10   (if Codex edited an owned module, read its diff first)
+#run memory mcp AFTER the rebase, tree quiescent (the CLI aborts if files change under it):
+  echo '{"repo_path":"/home/user/Markets","mode":"full"}' | codebase-memory-mcp cli --quiet --json index_repository
+Read, in order (research/kalshi/frankie_boss/):
+  CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md   top section = state after the sixth chat
+  CCODE_STEP6_RETURN_20261007.md section 9, then 8    what each finding changed; the two review passes
+  CCODE_NEXT_SOURCE_TASKS_20261006.md top section     Codex's review of the seven commits lands HERE
+  CCODE_STEP4_SOURCE_ROUTE_20261006.md sections 8-9   historical-side detail and the closure table
+NEXT: (1) fix every source defect Codex names in the owned files, one [skip ci] commit per finding group; do not reapply what
+Codex integrated. (2) Run the code-review skill over origin/ccr-5fce7de3-xa4hfg..HEAD at high effort BEFORE every push and
+fix what it finds. (3) Nothing else is assigned; the reader hooks, successor scheduling and the claim-input identity
+mismatch are Codex's. Update the step-6 return, step-4 report 8/9, both handoffs and both drop-ins; push --force-with-lease -u.
+Boundaries unchanged (below): source only; never edit Codex's files; never call run(); never rebuild the claims file; pins and
+threads null settled; STOP before #5; never apply 9c19cc2; H06-H08 bind nothing; NO cost references, ever.
+Nothing left on the scratchpad.
+```
+
+```
 CCODE DROP-IN (new chat, 2026-10-07): the correction queue D1, B7/C2, B2-B5, B1/B6/A4/C1 is RETURNED; Codex's review of it is next
 STATE 2026-10-07: tip = the docs commit above 45f52d28 on Codex's 61264cac; corrections 18b6edcd / 8930b4f0 / 5fdc14f5 / 45f52d28
 (step-4 report section 8 "Corrections", section 9). Read CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md top section first.

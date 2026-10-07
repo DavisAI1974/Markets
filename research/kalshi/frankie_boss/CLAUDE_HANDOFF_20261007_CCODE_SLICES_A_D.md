@@ -11,7 +11,7 @@ landed `5e216265`. This branch was rebased onto it and returned, one commit per 
 `7dd8b9a4` B4-F, `34dab141` 6R3-F, `4b5a8eba` 6R2-F. Greg: "this has to be the last correction", so the code-review
 skill was run adversarially over the whole range at high effort, twice; its 20 findings are fixed in `62eb55e3` and
 `6c804bd2` (the gravest was an `import http.client` line built by the 6R3-F edit script and never applied). Record:
-`CCODE_STEP6_RETURN_20261007.md` section 9; step-4 report sections 8/9. A third pass was not run (Greg: commit and push).
+`CCODE_STEP6_RETURN_20261007.md` section 9; step-4 report sections 8/9. A third pass was not run (Greg: commit and push). Pushed as `889120af`; Codex's integration tip moved to `c816bc56` (step seven) meanwhile, so the next session rebases first.
 Checks: `ast.parse`, a static check that every dotted module used is imported, `git diff --check`; nothing run.
 Boundaries unchanged: reader hooks Codex's, pins and threads null untouched, `9c19cc2` never applied, no cost reference.
 
