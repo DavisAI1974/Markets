@@ -101,18 +101,27 @@ def claimed_lag(text):
     return int(match.group(0)) if match else None
 
 
-def jev_claims(path):
+def jev_claims(path, seal_path=None):
     raw = Path(path).read_bytes()
     doc = json.loads(raw)
     if doc.get('schema') != 'JEV_CLAIMS_V1':
         raise SystemExit('%s is not a JEV_CLAIMS_V1' % path)
+    # Legacy claims remain readable for inspection, but cannot enter a new scientific
+    # operation without the consuming owner's pre-comparison blind seal.
+    seal_path = Path(seal_path) if seal_path is not None else Path(path).with_name('claims-seal.json')
+    seal = None
+    if seal_path.exists():
+        from frankie_box_jev_cpu import sealed_claims
+        seal = sealed_claims(path, seal_path)
+        if Path(path).read_bytes() != raw:
+            raise ValueError('Jev claims changed during seal readback')
     claims = [dict(id=c['id'], statement=c.get('statement'), kind=c.get('kind'), series=list(c.get('series') or []),
                    direction=claimed_direction(c.get('direction')), direction_text=c.get('direction'),
                    lag=claimed_lag(c.get('lag')), cells=list(c.get('cells') or []), day_made=doc.get('day'),
                    source_claim=c)
               for c in doc.get('claims') or []]
     return dict(author='jev', stamp=doc.get('stamp'), day=doc.get('day'), claims_sha256=sha256_bytes(raw),
-                source=str(path), claims=claims)
+                source=str(path), claims=claims, blind_seal=seal)
 
 
 OPEN_CLASSES = (                 # not_testable reasons of frankie_box_historical_claims -> the open status they stay in
@@ -984,6 +993,8 @@ def publish_standalone_correction(brain, *, original, replacement, original_inpu
 
 def freeze_operation(doc, days, out_dir, brain_dir):
     """Pin standalone scientific inputs before testing; never infer an old operation later."""
+    if doc['author'] == 'jev' and not doc.get('blind_seal'):
+        raise ValueError('Jev scientific testing requires the exact consuming-owner blind seal; legacy claims preserved')
     import frankie_box_historical_claims as HC
     import frankie_box_historical_reproduction as HR
     import frankie_box_experiment_review as R
@@ -1172,6 +1183,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--search', action='append', required=True, help='a completed experiment search directory (repeat per day)')
     p.add_argument('--jev-claims', help='a JEV_CLAIMS_V1 file (Jev\'s claims of one day)')
+    p.add_argument('--jev-seal', help='the consuming-owner JEV_CPU_BLIND_SEAL_V1 for those exact claims')
     p.add_argument('--jev-stamp', help='fetch clm-sidecar/<stamp>/jev/claims.json through MAP_URL (presign getprefix) instead')
     p.add_argument('--frankie-ledgers', help='Frankie\'s classroom ledgers.json of one day (only its novel findings are read)')
     p.add_argument('--frankie-day', help='the day of those ledgers (YYYYMMDD)')
@@ -1185,6 +1197,8 @@ def main():
     p.add_argument('--accumulated-day', help='test completed legal knowledge on this one owning day, without a classroom')
     p.add_argument('--accumulated-out', help='the retained accumulated-input/result directory; paired with --accumulated-day')
     a = p.parse_args()
+    if a.jev_seal and not (a.jev_claims or a.jev_stamp):
+        p.error('--jev-seal requires the exact Jev claims source')
     if a.accumulated_day or a.accumulated_out:
         if (not a.accumulated_day or not re.fullmatch('[0-9]{8}', a.accumulated_day) or
                 not a.accumulated_out or len(a.search) != 1 or
@@ -1227,7 +1241,7 @@ def main():
         if all(d['day'] == candidates[0]['day'] for d in days):
             raise SystemExit('--search-findings needs at least one completed search of ANOTHER day: the candidates\' own '
                              'day %s is origin evidence, not a test' % candidates[0]['day'])
-    for doc in ([jev_claims(a.jev_claims)] if a.jev_claims else []) + \
+    for doc in ([jev_claims(a.jev_claims, a.jev_seal)] if a.jev_claims else []) + \
                ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []) + \
                ([historical_claims(a.historical_claims, records_selection=[])] if a.historical_claims else []) + candidates:
         operation, frozen = freeze_operation(doc, days, a.out_dir, a.brain)

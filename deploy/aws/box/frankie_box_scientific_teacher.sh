@@ -22,6 +22,12 @@ if [ -n "${ACCUMULATED_DAY:-}" ] || [ -n "${ACCUMULATED_OUT:-}" ]; then
   set -- "$@" --accumulated-day "$ACCUMULATED_DAY" --accumulated-out "$ACCUMULATED_OUT"
 fi
 [ -z "${JEV_STAMP:-}" ] || set -- "$@" --jev-stamp "$JEV_STAMP"
+if [ -n "${JEV_CLAIMS:-}" ]; then
+  : "${JEV_SEAL:?owner-local blind claim seal required}"
+  [ -z "${JEV_STAMP:-}" ] || { echo 'give exact JEV_CLAIMS or legacy JEV_STAMP, not both' >&2; exit 2; }
+  set -- "$@" --jev-claims "$JEV_CLAIMS"
+fi
+[ -z "${JEV_SEAL:-}" ] || set -- "$@" --jev-seal "$JEV_SEAL"
 [ -z "${FRANKIE_LEDGERS:-}" ] || set -- "$@" --frankie-ledgers "$FRANKIE_LEDGERS" --frankie-day "${FRANKIE_DAY:?FRANKIE_DAY required}"
 if [ -n "${SEARCH_FINDINGS:-}" ]; then
   # one day's knowledge-findings.json (FRANKIE_SEARCH_FINDINGS_V1), beside its search MANIFEST; tested on the other searches

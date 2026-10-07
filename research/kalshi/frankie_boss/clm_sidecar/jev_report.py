@@ -184,10 +184,10 @@ def comparison_item(item, numbers, fields):
     return '- ' + '. '.join(parts) + '.'
 
 
-def render(number, how, day, stamp, outcome, local, bucket):
+def render(number, how, day, stamp, outcome, local, bucket, *, cpu=False):
     claims_doc, claims_why = load(local, 'claims.json')
     comparison, comparison_why = load(local, 'comparison.json')
-    receipt, receipt_why = load(local, 'receipt.json')
+    receipt, receipt_why = load(local, 'client-receipt.json' if cpu else 'receipt.json')
     report_path = Path(local) / 'report.md'
     claims = (claims_doc or {}).get('claims') or []
     unparsed = (claims_doc or {}).get('unparsed') or []
@@ -199,7 +199,7 @@ def render(number, how, day, stamp, outcome, local, bucket):
          'Report number: %d (%s).' % (number, how),
          'The other reports for this trade day: CLASSROOM REPORT #%d and FRANKIE REPORT #%d (written on the box).' % (
              number, number),
-         'Pod outcome (recorded by the launcher): %s.' % rec(outcome), '', '## Summary (recorded counts)', '']
+         ('CPU owner outcome' if cpu else 'Pod outcome (recorded by the launcher)') + ': %s.' % rec(outcome), '', '## Summary (recorded counts)', '']
     if claims_doc is None:
         L.append('- Claims: not recorded (%s).' % claims_why)
     else:
@@ -267,9 +267,14 @@ def render(number, how, day, stamp, outcome, local, bucket):
             L += ['Note pack %s:' % rec(u.get('pack') if isinstance(u, dict) else None), '']
             L += fenced(u.get('text') if isinstance(u, dict) else u) + ['']
 
-    L += ['## Glossary (fixed text)', ''] + ['- %s: %s' % (t, m) for t, m in GLOSSARY] + ['']
-    L += ['## Evidence', '', '- bucket: %s' % bucket, '- sit-in outputs: clm-sidecar/%s/jev/' % stamp,
-          '- report number claim: %s/%04d.json' % (NUMBERS, number)]
+    glossary = [(t, m.replace('on his own GPU Pod', 'on the owning day CPU lane') if cpu else m) for t, m in GLOSSARY]
+    L += ['## Glossary (fixed text)', ''] + ['- %s: %s' % (t, m) for t, m in glossary] + ['']
+    if cpu:
+        L += ['## Evidence', '', '- owner-local sit-in outputs: %s' % local,
+              '- report number: retained from the owning day; no new allocation']
+    else:
+        L += ['## Evidence', '', '- bucket: %s' % bucket, '- sit-in outputs: clm-sidecar/%s/jev/' % stamp,
+              '- report number claim: %s/%04d.json' % (NUMBERS, number)]
     if claims_doc is not None:
         L.append('- material sha256 (recorded): %s' % rec((claims_doc.get('material') or {}).get('sha256')))
     if receipt is not None:

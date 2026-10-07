@@ -143,6 +143,31 @@ def snapshot(brain=BRAIN, owner=None):
         raw = (json.dumps(published, sort_keys=True, indent=1) + '\n').encode()
         files.append(dict(path=str(directory / 'MANIFEST.json'), bytes=len(raw), sha256=digest(raw),
                           data=base64.b64encode(raw).decode()))
+    # Jev-only generated knowledge uses the SAME owner-version transport but is not
+    # a generic brain entry. BR.ENTRY_GLOBS never descends into this namespace, so
+    # raw Jev claims cannot enter Frankie's corpus or teacher seats through mirroring.
+    for manifest_path in sorted((Path(brain) / 'jev-peer').glob('*/MANIFEST.json')):
+        raw = manifest_path.read_bytes()
+        manifest = json.loads(raw)
+        if (manifest.get('schema') != 'JEV_PEER_KNOWLEDGE_V1' or manifest.get('audience') != 'jev'
+                or {e.get('name') for e in manifest.get('entries', [])} != {'own-entry.json', 'teacher-lesson.json'}
+                or len(manifest['entries']) != 2):
+            raise ValueError('invalid completed Jev-only knowledge manifest')
+        for entry in manifest['entries']:
+            expected_kind = 'entries' if entry['name'] == 'own-entry.json' else 'lessons'
+            if entry.get('kind') != expected_kind:
+                raise ValueError('Jev-only member has the wrong consumer type')
+            path = manifest_path.parent / entry['name']
+            if any(p.is_symlink() for p in (path, *path.parents)):
+                raise ValueError('Jev-only knowledge path traverses a symbolic link')
+            packed = pack_file(path)
+            if any(packed[k] != entry[k] for k in ('bytes', 'sha256')):
+                raise ValueError('Jev-only knowledge member differs from completed manifest')
+            files.append(packed)
+        packed_manifest = pack_file(manifest_path)
+        if packed_manifest['sha256'] != digest(raw):
+            raise ValueError('Jev-only manifest changed during publication')
+        files.append(packed_manifest)
     school = Path(brain) / 'school'
     for p in sorted(school.glob('*.json')):
         files.append(pack_file(p))

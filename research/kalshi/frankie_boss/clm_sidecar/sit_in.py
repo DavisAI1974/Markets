@@ -55,6 +55,7 @@ JEV_MODEL = 'Qwen3-8B'
 STATE_PATH = os.environ.get('SIT_IN_STATE', '/workspace/jev-sit-in/state.json')
 CLAIM_KINDS = ('mechanism', 'novel_finding', 'test_next')
 PROGRESS = None                  # required before model work; the current durable phase and replay cursor
+LOCAL = None                    # explicit owner-local CPU adapter; absent preserves retained client behavior
 
 
 class Incomplete(Exception):
@@ -76,6 +77,8 @@ def get_json(url):
 
 
 def put(url, data, content_type='application/octet-stream'):
+    if LOCAL is not None:
+        return LOCAL['put'](url, data)
     request = urllib.request.Request(url, data=data, method='PUT', headers={'Content-Type': content_type})
     with urllib.request.urlopen(request, timeout=300) as response:
         return response.status
@@ -87,18 +90,33 @@ def sha(data):
 
 def jev(prompt):
     """Jev's configured chat endpoint. Recorded replies replay without another model call."""
-    if len(prompt) > JEV_PROMPT_CHARS:
+    if LOCAL is None and len(prompt) > JEV_PROMPT_CHARS:
         raise ValueError('Jev prompt of %d chars does not fit; the caller reads it in pieces (nothing is cut)' % len(prompt))
-    max_tokens = JEV_CONTEXT - len(prompt) // 3 - 256
-    if max_tokens < 1024:
+    if LOCAL is not None:
+        state = PROGRESS['state']
+        key = sha(prompt.encode())
+        counts = state.setdefault('token_counts', {})
+        if key not in counts:
+            counts[key] = LOCAL['count_tokens']([dict(role='user', content=prompt)])
+            save_state(state)
+        max_tokens = min(LOCAL['max_output_tokens'], JEV_CONTEXT - counts[key] - LOCAL['token_margin'])
+    else:
+        max_tokens = JEV_CONTEXT - len(prompt) // 3 - 256
+    if max_tokens < (LOCAL['min_output_tokens'] if LOCAL is not None else 1024):
         raise Incomplete('no output room left for a %d-char prompt' % len(prompt))
-    body = json.dumps(dict(model='jev', messages=[dict(role='user', content=prompt)],
-                           temperature=0, max_tokens=max_tokens, chat_template_kwargs=dict(enable_thinking=False))).encode()
+    if LOCAL is None:
+        payload = dict(model='jev', messages=[dict(role='user', content=prompt)], temperature=0,
+                       max_tokens=max_tokens, chat_template_kwargs=dict(enable_thinking=False))
+    else:
+        payload = dict(messages=[dict(role='user', content=prompt)], temperature=0, max_tokens=max_tokens)
+    body = json.dumps(payload).encode()
     reply = recorded_chat(body)
     value = json.loads(reply)
     choices = value.get('choices') if isinstance(value, dict) else None
     if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
         raise ValueError('recorded Jev reply has no usable choices; original bytes retained')
+    if LOCAL is not None and (value.get('usage') or {}).get('prompt_tokens') != counts[key]:
+        raise ValueError('Jev server prompt usage differs from its exact template/token count; reply retained')
     choice = choices[0]
     if choice.get('finish_reason') == 'length':
         raise Incomplete('Jev stopped at %d output tokens' % max_tokens)
@@ -116,8 +134,9 @@ def parse_json(text):
         return None
 
 
-def pieces(text, size=JEV_PIECE_CHARS):
+def pieces(text, size=None):
     """The whole text in pieces a little under the limit, cut on a line boundary where one is near."""
+    size = JEV_PIECE_CHARS if size is None else size
     out, start = [], 0
     while start < len(text):
         end = min(len(text), start + size)
@@ -241,6 +260,8 @@ def recorded_chat(body):
         if sha(raw) != call['response_sha256'] or len(raw) != call['response_bytes']:
             raise ValueError('retained Jev response bytes differ')
     else:
+        if LOCAL is not None:
+            LOCAL['check_save']()
         call = dict(request=body_text, request_sha256=sha(body), status='pending', intent_at=time.time())
         calls.append(call)
         save_state(state)
@@ -248,9 +269,12 @@ def recorded_chat(body):
                                          data=body, headers={'Content-Type': 'application/json'})
         chunks = []
         try:
-            with urllib.request.urlopen(request, timeout=900) as response:
-                read_reply(response, chunks)
-            raw = b''.join(chunks)
+            if LOCAL is not None:
+                raw = LOCAL['chat'](body)
+            else:
+                with urllib.request.urlopen(request, timeout=900) as response:
+                    read_reply(response, chunks)
+                raw = b''.join(chunks)
         except Exception as error:
             partial = getattr(error, 'partial', b'')
             if isinstance(partial, bytes) and partial:
@@ -267,6 +291,7 @@ def recorded_chat(body):
                     error.close()
             partial = b''.join(chunks)
             call.update(status='failed', error=repr(error), observed_at=time.time(),
+                        transport_evidence=getattr(error, 'evidence', None), possible_send=getattr(error, 'sent', None),
                         partial_base64=base64.b64encode(partial).decode('ascii'),
                         partial_bytes=len(partial), partial_sha256=sha(partial))
             save_state(state)
@@ -356,6 +381,9 @@ def material_text(material):
         parts.append('===== EXTERNAL SECTION: THE HISTORICAL DATA POINTS BESIDE THE 19 DIPOLE COLUMNS (same material, '
                      'sha256 %s) =====\n%s' % (material['material'].get('sha256'),
                                                 json.dumps(material['material']['dipole_external'], sort_keys=True)))
+    if material['material'].get('experiment_directive') is not None:
+        parts.append('===== GOVERNED EXPERIMENT DIRECTIVE =====\n' +
+                     json.dumps(material['material']['experiment_directive'], sort_keys=True))
     if material.get('survivors'):
         parts.append('===== SEARCH SURVIVORS SO FAR (%s, sha256 %s) =====\n%s' % (
             material['survivors'].get('path'), material['survivors'].get('sha256'),
@@ -480,8 +508,8 @@ def compare(day, claims, frankie):
     return verdicts, raw
 
 
-def main():
-    config = get_json(os.environ['CONFIG_URL'])
+def main(config=None):
+    config = get_json(os.environ['CONFIG_URL']) if config is None else config
     stamp, day = os.environ.get('STAMP', ''), os.environ['DAY']
     wait, poll = int(os.environ.get('WAIT_SECONDS', '21600')), int(os.environ.get('POLL_SECONDS', '60'))
     retained = load_state()
@@ -492,6 +520,15 @@ def main():
         raise ValueError('retained Jev progress belongs to another day/stamp; refused, never reset')
     state.update(schema='JEV_SIT_IN_PROGRESS_V2', stamp=stamp, day=day)
     calls = lambda: sum(c['status'] == 'replied' for records in state.get('calls', {}).values() for c in records)
+
+    if LOCAL is not None:
+        if retained is not None and 'cpu_owner' not in state:
+            raise ValueError('legacy Jev state has no CPU owner; preserve it for explicit recovery')
+        if retained is not None and state['cpu_owner'] != LOCAL['identity']:
+            raise ValueError('retained Jev CPU owner differs; explicit recovery required')
+        # First durable input binding below writes owner and complete inputs together.
+        state['cpu_owner'] = LOCAL['identity']
+        LOCAL['check_save']()
 
     # 0. BRAIN: his earlier days and the teacher's lessons on them, whole (never Frankie's)
     brain_text, brain_pins = load_brain(config, day)
@@ -559,13 +596,17 @@ def main():
         save_state(state)
     if state['claims_filed'] != seal:
         raise ValueError('filed Jev seal does not name the prepared claims; Frankie remains unread')
+    if LOCAL is not None:
+        LOCAL['seal'](data, state)  # consuming-owner readback before any Frankie access
+        LOCAL['check_save']()
     claims = state['claims']
 
     # 4. COMPARE, only now (the blind wall: the claims are filed and pinned above)
     if 'prepared_comparison' not in state:
         if state.get('compared'):
             raise ValueError('comparison lacks retained prepared bytes; refused')
-        frankie = wait_bundle(config['frankie'], 'JEV_FRANKIE_OUTPUTS_V1', wait, poll)
+        frankie = (LOCAL['frankie']() if LOCAL is not None else
+                   wait_bundle(config['frankie'], 'JEV_FRANKIE_OUTPUTS_V1', wait, poll))
         if frankie is None:
             if 'frankie_input' in state:
                 raise ValueError('selected Frankie comparison material is missing; retained model work is not discarded')
@@ -661,6 +702,7 @@ def main():
         save_state(state)
     receipt.update(brain_carried=len(brain_pins), brain_entry=state['brain_written'])
     log('receipt -> HTTP %d' % put(config['receipt'], json.dumps(receipt, sort_keys=True).encode(), 'application/json'))
+    return receipt
 
 
 if __name__ == '__main__':

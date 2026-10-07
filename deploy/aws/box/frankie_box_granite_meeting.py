@@ -547,12 +547,19 @@ class LlamaServer:
             raise
 
     def _start(self, wait_seconds):
+        available = sorted(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else None
+        if available is not None and self.threads > len(available):
+            raise MeetingCallFailed('configured %d runtime threads exceed the %d CPUs in the owning affinity; '
+                                    'choose an explicit fitting thread configuration before launch' %
+                                    (self.threads, len(available)), sent=False)
         with socket.socket() as s:
             s.bind(('127.0.0.1', 0))
             self.port = s.getsockname()[1]
         command = [self.binary, '-m', self.model, '--host', '127.0.0.1', '--port', str(self.port),
                    '--ctx-size', str(int(self.params['context_size'])), '--threads', str(self.threads),
                    '--parallel', '1', '--no-context-shift', '--log-disable']
+        if self.params.get('cpu_only'):
+            command += ['--n-gpu-layers', '0']
         # the server's stderr goes to a FILE, whole (never a pipe that nobody drains; never sliced)
         if self.evidence_dir is not None:
             self.evidence_dir.mkdir(parents=True, exist_ok=True)
@@ -1187,7 +1194,8 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
     binding_sha = sha256_bytes(binding_bytes)
     evidence_dir = out_dir / 'evidence'
     # finding 1: the settled budget bounds EVERY request of the meeting, the server start included
-    server = LlamaServer(binary, model, params, log=log, deadline=time.monotonic() + float(params['max_meeting_seconds']),
+    server = LlamaServer(binary, model, dict(params, cpu_only=True), log=log,
+                         deadline=time.monotonic() + float(params['max_meeting_seconds']),
                          evidence_dir=evidence_dir)
     items, not_discussed, reused = [], [], []
     runtime_failure = None
