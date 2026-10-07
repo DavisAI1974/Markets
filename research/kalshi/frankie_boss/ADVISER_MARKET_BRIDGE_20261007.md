@@ -118,3 +118,61 @@ but the request may carry `shared_market_context` (the exchange's retained read)
 `frankie_box_experiment_teacher` (workflow-reports): retain the teacher's own read of its cutoff as
 `shared-market-context.json` so the exchange's walk is saved too; `knowledge/GRANITE_MEETING_RUNTIME_V1.json`
 `settled.hosts_in_order`: the local child on the owning box first (documentation of Greg's decision).
+
+## 2026-10-07 late (Greg's bounded resumption: clock_model_evaluation from the experiment's REAL model calls)
+
+SOURCE-BUILT / RUNTIME-UNVERIFIED. Checks: `python3 -I` ast.parse on the three changed .py files; `git diff --check`
+(and `--no-index` on the new module) clean. No tests, runs, installs, dispatch, model calls or account calls.
+
+### Contract: FRANKIE_MODEL_EVALUATION_CLOCK_V1 (`deploy/aws/box/frankie_box_model_clock.py`, NEW)
+One append-only record per real model call, and per call refused over a cap or not made, in
+`<run-dir>/days/<day>/model-clock.jsonl` (exclusive lock, O_APPEND, fsync). Required fields: `schema, piece
+(meeting|jev|jev_sit_in), run, day, lane, call_id, model, cutoff, wall_start, wall_end, outcome`. Outcomes:
+`answered` (reply_sha256), `refused_over_cap` (input_tokens > cap), `failed` (reason; `sent` True/False/None),
+`not_called` (reason), `unknown_completion` (reason; wall_end null: a pre-send intent without a recorded reply; never
+repeated). `model` = the shared Granite runtime pins (definition, release, pins_sha256, model_identity, quantization,
+config pin, threads, cpus); null only for not_called/failed. `cutoff` = source_hash, as_of, through_cursor (the
+original explicit scope) plus, where the input carries them, record_count, position, input_cursor, adapter_cursor,
+ts_recv_ns, ts_event_ns, publication_frontier_ns, picture_sha256 (unavailable clocks null and named); or
+`{"listed": reason}`; null only for not_called/failed. Every other caller field is kept; `record_call` adds only
+`cutoff_disposition` and `prior_records_for_call`. Idempotent per (piece, call_id): an identical record is not appended
+twice; a differing later record for the same call is appended beside it (readers take the first as primary and list
+the rest). Signatures: `record_call(run_dir, day, record)` (raises ValueError on a malformed record),
+`record_or_list(run_dir, day, record, fallback_dir)` (never raises; lists to `model-clock-unrecorded.jsonl`),
+`validate`, `cutoff_of(context_or_reference)`, `run_dir_of(out_dir, run, day)`, `read_day(run_dir, day)`,
+`coverage_row(run_dir, day)`.
+
+### Call sites
+- Meeting (`frankie_box_granite_meeting.py`): `discuss_item(..., clock=None)` stamps every round once: answered
+  (before the round's progress write), refused_over_cap (counted round input), failed (count or chat, with `sent`),
+  not_called / unknown_completion (budget spent before / after sending), unknown_completion for a retained pending
+  intent on restart. `_meeting` stamps the gate refusal or inputs-only run, a runtime start failure, a system prompt
+  over the cap (per item), budget spent or runtime exited before an item, and an attempt failing in discussion. Call
+  ids: `meeting:<binding sha16>:<item>:r<round>` (stable per intent). The record and receipt carry `model_clock`
+  (file, cutoff, every record of the attempt, the unrecorded ones); the workflow report's outputs carry it too.
+- Threads (coordinator relay of ccode_step8's finding): `threads_resolution(params)`; null now resolves to the
+  claimed adviser slot (1), never the host CPU count; an integer is clamped to the owning affinity. Recorded in
+  `runtime.effective.threads_resolution`, on the receipt (`threads`) and in the workflow report.
+- Jev (owner-local CPU route): stamped by `frankie_box_jev_cpu.model_clock` (ccode_step8, committed 445d6789) through
+  `record_call`; its record shape validates under this contract unchanged. sit_in adds `model_clock(**fields)`: the
+  client-side "no output room" refusal (stamped once per prompt, never on replay) goes to `LOCAL['model_clock']` when
+  the owner supplies it (request below), otherwise it is kept in the durable state as unclocked; the remote route
+  stamps its own answered/failed calls (piece `jev_sit_in`) to `FRANKIE_MODEL_CLOCK_RUN_DIR` when given, otherwise
+  lists them beside the state file.
+
+### Causality and consumers
+The records are written after the day's classroom (the meeting is the post-class voice stage; Jev runs after the
+classroom package). No reader exists in the classroom, so the same day's classroom never sees them (no same-day
+circular teaching). Same day: the one-day inspection (meeting and Jev pieces), the all-99 coverage of the day, and the
+Jev comparison's own receipt may read them. Later days: they may reach Frankie only as lawful prior-session carry
+(a request to the owners; no carry reader was added here). Jev's blind wall is unchanged: a record carries a reply's
+sha256, never its text, and no Frankie output.
+
+### Open
+- ccode_step8: pass `model_clock` in `SI.LOCAL` (exact text in the return); optionally `cutoff=MC.cutoff_of(context)`.
+- workflow_reports: the all-99 row for `clock_model_evaluation` from `coverage_row(run_dir, day)`; the inspection
+  projection of `model_clock` for the meeting and Jev pieces.
+- `knowledge/GRANITE_MEETING_RUNTIME_V1.json` `threads_rule` text still says "null = the host's online CPU count"; the
+  code now resolves null to 1 (owner of that file to update the text).
+- The full time-addressable model query/history protocol stays an explicit gap: a stamped call is not proof a model
+  experienced every historical picture. A fresh independent review is required before integration.

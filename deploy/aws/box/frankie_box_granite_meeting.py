@@ -44,6 +44,12 @@ Hosting: the meeting is a CHILD on the owning box's held lane, CPU only, under t
 `voice_route=local` is the default; the GitHub route stays listed as the unused fallback. Jev's CPU turn binds to the
 same `local_runtime` (Greg: "same weight code and setup as Granite so that way it can automatically improve").
 Nothing here keys on how many days a run holds.
+
+Model-evaluation clock (Greg, 2026-10-07): every coordinator call, and every call refused over a cap or not made
+(gate, start failure, budget, runtime exit, system prompt over cap), is stamped once as FRANKIE_MODEL_EVALUATION_CLOCK_V1
+(frankie_box_model_clock) in <run-dir>/days/<day>/model-clock.jsonl with the meeting input's exact market cutoff, the
+shared runtime pins, the lane and the wall clock; the meeting record and receipt name the file and every record of the
+attempt. Threads: null resolves to the claimed adviser slot (1), never the host CPU count (threads_resolution).
 """
 import argparse
 import hashlib
@@ -447,12 +453,32 @@ def seat_answer(seat, item):
 
 
 # ------------------------------------------------------------------------------------------ the model transport
-def resolve_threads(params):
-    """threads null = the host's online CPU count at launch; an integer is clamped to it (never oversubscribe a 2-core
-    runner with a fixed 8). The value used is recorded, never assumed."""
+CLAIMED_SLOT_THREADS = 1     # Greg, 2026-10-07: the meeting and Jev share ONE worker CPU of the day's held lane, threads=1
+
+
+def threads_resolution(params):
+    """How the runtime thread count is chosen, recorded on the record and the receipt (never assumed).
+    threads null = the claimed adviser slot (one CPU, Greg 2026-10-07), NEVER the host's CPU count: the host count (32
+    on the main box) refused at start inside a 16-CPU lane. An integer is clamped to the owning affinity (the CPUs the
+    stage claim gave this process), not to the host."""
     host = os.cpu_count() or 1
+    affinity = len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else None
     wanted = params.get('threads')
-    return host if wanted in (None, '') else max(1, min(int(wanted), host)), host
+    limit = affinity or host
+    if wanted in (None, ''):
+        threads, basis = CLAIMED_SLOT_THREADS, 'threads null: the claimed adviser slot (one lane CPU, threads=1; Greg, 2026-10-07)'
+    else:
+        threads = max(1, min(int(wanted), limit))
+        basis = 'threads %s from %s, clamped to the owning affinity (%s CPUs)' % (
+            wanted, params.get('threads_source') or 'the runtime definition', limit)
+    return dict(threads=threads, requested=wanted, basis=basis, host_cpus=host, affinity_cpus=affinity,
+                rule='null never resolves to the host CPU count; an integer never exceeds the claimed affinity')
+
+
+def resolve_threads(params):
+    """(threads, host CPU count); see threads_resolution for the rule (null = the claimed slot, 1)."""
+    resolved = threads_resolution(params)
+    return resolved['threads'], resolved['host_cpus']
 
 
 class MeetingBudgetExpired(RuntimeError):
@@ -528,7 +554,8 @@ class LlamaServer:
     def __init__(self, binary, model, params, log=print, *, deadline=None, evidence_dir=None):
         self.binary, self.model, self.params, self.log = str(binary), str(model), params, log
         self.process, self.port, self.calls, self.tokens = None, None, 0, dict(prompt=0, completion=0)
-        self.threads, self.host_cpus = resolve_threads(params)
+        self.threads_resolution = threads_resolution(params)
+        self.threads, self.host_cpus = self.threads_resolution['threads'], self.threads_resolution['host_cpus']
         self.last_usage = {}
         self.deadline = deadline
         self.evidence_dir = Path(evidence_dir) if evidence_dir else None
@@ -1025,12 +1052,21 @@ def _close_item(item, state, outcome, open_item):
                 rule='four categories kept apart; agreement among voices is never confirmation (R17)')
 
 
-def discuss_item(server, item, system, params, log, progress=None):
+def discuss_item(server, item, system, params, log, progress=None, clock=None):
     """One item: rounds of coordinator turn -> code validation -> code seat answer, until LEAVE_OPEN/RESOLVED, the turn
     budget, the input cap, the MEETING time budget (every request bounded; finding 1) or a failed request (finding 3).
     Completed rounds are durable per item (finding 2): a retained complete item is reused without a call; a retained
     pending call (interrupted with unknown completion) closes the item open by code, naming the round, and is never
-    repeated; completed rounds of an interrupted item are kept and resumed from."""
+    repeated; completed rounds of an interrupted item are kept and resumed from.
+
+    clock(call_key, outcome, wall_start, wall_end, **fields) (the meeting's model-evaluation clock, Greg 2026-10-07):
+    every would-be coordinator call of a round is stamped once: answered (reply sha256, BEFORE the round's progress
+    write), refused_over_cap (the counted input against the cap; no call), failed (with whether the request was sent),
+    not_called (budget spent before sending) or unknown_completion (sent, no reply; or a retained pending intent found
+    on restart). A reused complete item or a consumed retained outcome makes no call and no stamp. None = no clock."""
+    def stamp(round_number, outcome, wall_start, wall_end, **fields):
+        if clock is not None:
+            clock('%s:r%d' % (_safe_name(item['item_id']), round_number), outcome, wall_start, wall_end, **fields)
     turns_by_seat = {t['seat']: t for t in item['voiced']}
     fresh = dict(status='in_progress', rounds_completed=0, coordinator=[], answers=[], requests=[], notes=[], refused=[],
                  token_counts=[], over_cap=None, outcome=None, pending_call=None, result=None,
@@ -1048,6 +1084,11 @@ def discuss_item(server, item, system, params, log, progress=None):
         pending = state['pending_call']
         log('item %s: a chat call of round %s was pending when the meeting was interrupted; closed open, not repeated'
             % (item['item_id'], pending.get('round')))
+        stamp(int(pending.get('round') or 0), 'unknown_completion',
+              pending.get('started_at') if isinstance(pending.get('started_at'), (int, float)) else time.time(), None,
+              reason='a durable pre-send intent of this round was found on restart with no recorded reply; transmission '
+                     'and completion are unknown and the call is never repeated',
+              transcript_sha256=pending.get('transcript_sha256'))
         result = _close_item(item, state, 'LEFT_OPEN_BY_CODE', dict(
             kind='interrupted_call', seat=None, binds_to=None, round=pending.get('round'),
             transcript_sha256=pending.get('transcript_sha256'), started_at=pending.get('started_at'),
@@ -1079,12 +1120,17 @@ def discuss_item(server, item, system, params, log, progress=None):
         log('item %s: retained terminal outcome %s consumed; no call' % (item['item_id'], outcome))
     elif state.get('over_cap') is not None:
         log('item %s: retained over-cap count consumed; no call' % item['item_id'])
+    # the round in flight and its wall start, for the clock on an exception path (stage: 'count' or 'chat')
+    flight = dict(round=None, stage=None, started=None)
     try:
         for round_number in (range(int(state['rounds_completed']) + 1, int(params['max_coordinator_turns_per_item']) + 1)
                              if outcome is None and state.get('over_cap') is None else ()):
+            flight.update(round=round_number, stage='count', started=time.time())
             counted = server.count_tokens(transcript, label='%s-r%d' % (label, round_number))
             if counted > cap:
                 state['over_cap'] = dict(round=round_number, input_tokens=counted, cap=cap)
+                stamp(round_number, 'refused_over_cap', flight['started'], time.time(), input_tokens=counted, cap=cap,
+                      reason='round input counted with the server tokenizer over the per-call cap; no call, nothing trimmed')
                 if progress is not None:
                     progress.save(state)       # the over-cap fact is retained before anything else happens
                 break
@@ -1093,7 +1139,15 @@ def discuss_item(server, item, system, params, log, progress=None):
                                          transcript_sha256=sha256_bytes(json.dumps(transcript, sort_keys=True).encode()))
             if progress is not None:
                 progress.save(state)
+            flight.update(stage='chat', started=state['pending_call']['started_at'])
             raw, reply_bytes = server.chat(transcript, ACTION_SCHEMA, label='%s-r%d' % (label, round_number))
+            # stamped BEFORE the round's progress write: a crash between the two leaves an answered stamp and a pending
+            # intent; the restart then appends unknown_completion beside it (both kept, never one silently)
+            stamp(round_number, 'answered', flight['started'], time.time(), reply_sha256=sha256_bytes(reply_bytes),
+                  input_tokens_counted=counted,
+                  prompt_tokens_used=(getattr(server, 'last_usage', None) or {}).get('prompt_tokens'),
+                  attempt=server.attempt, transcript_sha256=state['pending_call']['transcript_sha256'])
+            flight.update(stage=None)
             state['token_counts'].append(dict(round=round_number, counted_before_call=counted,
                                               prompt_tokens_used=(getattr(server, 'last_usage', None) or {}).get('prompt_tokens'),
                                               reply=server.retain('%s-r%d-reply' % (label, round_number), reply_bytes),
@@ -1153,6 +1207,13 @@ def discuss_item(server, item, system, params, log, progress=None):
         # server (completion unknown); a request that provably never left this process is no pending call
         if getattr(error, 'sent', None) is False:
             state['pending_call'] = None
+        if flight['stage'] is not None:
+            sent = getattr(error, 'sent', None) if flight['stage'] == 'chat' else False
+            stamp(flight['round'], 'unknown_completion' if sent is not False and flight['stage'] == 'chat' else 'not_called',
+                  flight['started'], None if sent is not False and flight['stage'] == 'chat' else time.time(),
+                  reason='the meeting time budget was spent during the %s of this round (%s)' % (
+                      'chat call' if flight['stage'] == 'chat' else 'token count before any call', str(error)[:300]),
+                  sent=sent)
         outcome = 'LEFT_OPEN_BY_CODE'
         open_item = dict(kind='time_budget', seat=None, binds_to=None, rounds_completed=int(state['rounds_completed']),
                          text='the meeting time budget of %s s was spent on this item after %d completed rounds (%s); the '
@@ -1161,6 +1222,12 @@ def discuss_item(server, item, system, params, log, progress=None):
     except MeetingCallFailed as error:
         if getattr(error, 'sent', None) is False:
             state['pending_call'] = None      # never reached the socket: nothing to duplicate, not an unknown completion
+        if flight['stage'] is not None:
+            stamp(flight['round'], 'failed', flight['started'], time.time(),
+                  reason='%s failed: %s' % ('the chat call' if flight['stage'] == 'chat' else
+                                            'the token count (no call was sent)', str(error)[:300]),
+                  sent=(getattr(error, 'sent', None) if flight['stage'] == 'chat' else False),
+                  stage=flight['stage'], evidence=getattr(error, 'evidence', None))
         outcome = 'LEFT_OPEN_BY_CODE'
         open_item = dict(kind='call_failed', seat=None, binds_to=None, rounds_completed=int(state['rounds_completed']),
                          evidence=error.evidence, text='a request to the coordinator runtime failed after %d completed rounds: %s; '
@@ -1262,7 +1329,11 @@ def meeting_workflow_report(out_dir, given, record, *, status, params=None, refu
                      binding=(record or {}).get('binding'), counts=(record or {}).get('counts'),
                      not_discussed=[n.get('item_id') for n in not_discussed],
                      publication=(record or {}).get('publication'),
-                     waits=[n.get('reason') for n in not_discussed]))
+                     waits=[n.get('reason') for n in not_discussed],
+                     # FRANKIE_MODEL_EVALUATION_CLOCK_V1 (frankie_box_model_clock): the day clock file this meeting
+                     # stamped, the cutoff its input was cut at, every record of this attempt and any not recorded
+                     model_clock=(record or {}).get('model_clock'),
+                     threads=((runtime.get('effective') or {}).get('threads_resolution'))))
 
 
 def publish_meeting_record(exchange_path, out_dir, brain=None, *, include_inputs=True):
@@ -1290,7 +1361,10 @@ def publish_meeting_record(exchange_path, out_dir, brain=None, *, include_inputs
     receipt = dict(schema=RECEIPT_SCHEMA, day=record['day'], status='complete',
                    record=pin, counts=record.get('counts'),
                    model_calls=record['model_calls'], tokens=record.get('tokens'),
-                   publication=publication, brain_entry=brain_entry, seconds=record.get('seconds'))
+                   publication=publication, brain_entry=brain_entry, seconds=record.get('seconds'),
+                   # the thread resolution (null = the claimed slot, 1) and the model clock of this meeting, as recorded
+                   threads=((record.get('runtime') or {}).get('effective') or {}).get('threads_resolution'),
+                   model_clock=record.get('model_clock'))
     inputs = out_dir / 'meeting-input.json'
     if include_inputs and inputs.is_file():
         receipt['inputs'] = witness_file(inputs)
@@ -1392,17 +1466,60 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                 knowledge_index=knowledge_index, route=route, local_route=local_route, brain=brain,
                 shared_market_picture=(None if 'shared_market_picture' not in given else
                                        {k: given['shared_market_picture'][k] for k in ('sha256', 'chars', 'picture_sha256', 'delivery')}))
+    # The model-evaluation clock (FRANKIE_MODEL_EVALUATION_CLOCK_V1, frankie_box_model_clock; Greg, 2026-10-07): one
+    # record per real (or refused / not-made) coordinator call into <run-dir>/days/<day>/model-clock.jsonl, with the
+    # exact market cutoff of the meeting input (the shared market context's original scope and cutoff clocks), the
+    # shared runtime pins and the lane. Written after the day's classroom; never read by that day's classroom.
+    import frankie_box_model_clock as MC
+    clock_state = dict(prefix='meeting:x%s' % sha256_bytes(raw)[:16], attempt=None,
+                       model=dict(definition=SHARED_RUNTIME_SCHEMA, release=shared_runtime['release'],
+                                  pins_sha256=shared_runtime['pins_sha256'], model_identity=shared_runtime['model_identity'],
+                                  quantization=shared_runtime['quantization'], config=config_witness, threads=None,
+                                  cpus=(sorted(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else None)))
+    clock_run_dir = MC.run_dir_of(out_dir, exchange.get('run'), exchange.get('day'))
+    clock_cutoff = MC.cutoff_of(given.get('shared_market'))
+    clock_results = []
+
+    def clock(call_key, outcome, wall_start, wall_end, **fields):
+        try:
+            record = dict(schema=MC.SCHEMA, piece='meeting', run=exchange.get('run'), day=str(exchange.get('day')),
+                          lane=dict(host=socket.gethostname(), booking=os.environ.get('FRANKIE_CPU_BOOKING'),
+                                    booked_cpus=os.environ.get('FRANKIE_BOOKED_CPUS'),
+                                    lane_cpus=os.environ.get('FRANKIE_LANE_CPUS'), attempt=clock_state['attempt']),
+                          call_id='%s:%s' % (clock_state['prefix'], call_key), model=clock_state['model'],
+                          cutoff=clock_cutoff, wall_start=wall_start, wall_end=wall_end, outcome=outcome, **fields)
+            result = MC.record_or_list(clock_run_dir, str(exchange.get('day')), record, out_dir)
+        except Exception as error:      # noqa: BLE001 - the clock is accounting; its failure is listed on the record
+            result = dict(recorded=False, call_id=call_key, reason='%s: %s' % (type(error).__name__, str(error)[:300]))
+        clock_results.append(dict(result, outcome=outcome))
+        if not result.get('recorded'):
+            log('meeting %s: model clock record for %s not recorded in the day clock (%s)' % (
+                exchange.get('day'), call_key, result.get('reason')))
+        return result
+
+    def clock_summary():
+        return dict(path=None if clock_run_dir is None else str(MC.clock_path(clock_run_dir, exchange.get('day'))),
+                    run_dir=None if clock_run_dir is None else str(clock_run_dir), cutoff=clock_cutoff,
+                    stamped_this_attempt=list(clock_results),
+                    unrecorded=[r for r in clock_results if not r.get('recorded')],
+                    rule='one FRANKIE_MODEL_EVALUATION_CLOCK_V1 record per coordinator call or refused/not-made call of '
+                         'this attempt; reused rounds and items make no call and no record; ' + MC.CAUSALITY)
     refusals = gate(config, binary, model) if not inputs_only else []
     if inputs_only or refusals:
         if inputs_only and local_route['reasons']:
             # the local route's requirements are named on an inputs-only receipt too (what the box still needs)
             refusals = ['inputs only; the local runtime would refuse: ' + r for r in local_route['reasons']]
+        now = time.time()
+        clock('gate', 'not_called', now, now,
+              reason=('inputs only: zero model calls by request' if inputs_only else
+                      'the runtime gate refused the meeting: ' + '; '.join(refusals)[:900]))
         record = dict(base, status='inputs_only' if inputs_only else 'refused', refused_to_run=refusals,
-                      items=[], model_calls=0, publication='none', timings=timings)
+                      items=[], model_calls=0, publication='none', timings=timings, model_clock=clock_summary())
         write_json(out_dir / 'meeting.json', record)
         receipt = dict(schema=RECEIPT_SCHEMA, day=exchange.get('day'), status=record['status'], refused_to_run=refusals,
                        inputs=witness_file(out_dir / 'meeting-input.json'), record=witness_file(out_dir / 'meeting.json'),
                        model_calls=0, seconds=round(time.time() - started, 1), route=route, local_route=local_route,
+                       model_clock=record['model_clock'],
                        workflow_report=meeting_workflow_report(out_dir, given, record, status=record['status'],
                                                               params=config.get('proposed_runtime_parameters'),
                                                               refusals=refusals, context=shared_context, route=route))
@@ -1436,21 +1553,30 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
     server = LlamaServer(binary, model, dict(params, cpu_only=True), log=log,
                          deadline=time.monotonic() + float(params['max_meeting_seconds']),
                          evidence_dir=evidence_dir)
+    # call ids are stable per intent: the binding (inputs, runtime, parameters) + item + round, never per attempt
+    clock_state.update(prefix='meeting:%s' % binding_sha[:16], attempt=server.attempt,
+                       model=dict(clock_state['model'], threads=server.threads,
+                                  threads_resolution=server.threads_resolution))
     items, not_discussed, reused = [], [], []
     runtime_failure = None
+    start_wall = time.time()
     try:
         server.start()
     except (MeetingCallFailed, MeetingBudgetExpired) as error:
         # finding 3: the process is already released by start(); the partial state (inputs, binding) stays; the receipt
         # says what happened with the whole stderr witnessed; no meeting.json (nothing was discussed)
+        clock('start:%s' % server.attempt, 'not_called', start_wall, time.time(),
+              reason='the coordinator runtime did not start: %s' % str(error)[:600])
         attempt = server.attempt_record('end', 'runtime_failed', error=str(error), seconds=round(time.time() - started, 1))
         receipt = dict(schema=RECEIPT_SCHEMA, day=exchange.get('day'), status='runtime_failed',
+                       threads=server.threads_resolution, model_clock=clock_summary(),
                        refused_to_run=['the coordinator runtime did not start: %s' % error],
                        evidence=dict(server_stderr=server.stderr_witness(), retained=server.evidence, attempt=attempt,
                                      attempts=LlamaServer.retained_attempts(evidence_dir)),
                        inputs=witness_file(out_dir / 'meeting-input.json'), binding=witness_file(binding_path),
                        model_calls=0, seconds=round(time.time() - started, 1), route=route, local_route=local_route,
-                       workflow_report=meeting_workflow_report(out_dir, given, dict(base, timings=timings), status='runtime_failed',
+                       workflow_report=meeting_workflow_report(out_dir, given, dict(base, timings=timings, model_clock=clock_summary()),
+                                                              status='runtime_failed',
                                                               params=params, context=shared_context, route=route,
                                                               refusals=['the coordinator runtime did not start: %s' % error]))
         write_json(out_dir / 'receipt.json', receipt)
@@ -1482,6 +1608,11 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
             progress = ItemProgress(out_dir, item['item_id'], binding_sha)
             retained = progress.load()
             if system_over_cap and (retained is None or retained.get('status') not in ('complete', 'interrupted')):
+                now = time.time()
+                clock('%s:r%d' % (_safe_name(item['item_id']), int((retained or {}).get('rounds_completed') or 0) + 1),
+                      'refused_over_cap', now, now, input_tokens=system_tokens, cap=cap,
+                      reason='the system prompt (charter, context and the whole shared market picture) alone is over the '
+                             'per-call cap; no call for this item, nothing trimmed')
                 not_discussed.append(dict(item_id=item['item_id'], kind='input_cap_system_prompt',
                                           reason='the system prompt (charter, context and the whole shared market picture) is %d '
                                                  'tokens, over the per-call cap of %d; no call was made and nothing was trimmed; '
@@ -1491,18 +1622,25 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                 continue
             if retained is None or retained.get('status') not in ('complete', 'interrupted'):
                 remaining = server.remaining()
+                next_call = '%s:r%d' % (_safe_name(item['item_id']), int((retained or {}).get('rounds_completed') or 0) + 1)
                 if remaining is not None and remaining <= 0:
+                    now = time.time()
+                    clock(next_call, 'not_called', now, now, reason='the meeting time budget of %s s was spent before '
+                          'this item was reached' % params['max_meeting_seconds'])
                     not_discussed.append(dict(item_id=item['item_id'], reason='meeting time budget of %s s spent; the item '
                                               'keeps its code-seeded open items' % params['max_meeting_seconds'],
                                               open_items=item['open_items']))
                     continue
                 if not server.alive():
+                    now = time.time()
+                    clock(next_call, 'not_called', now, now, reason='the coordinator runtime exited before this item '
+                          'was reached (its whole stderr is retained)')
                     not_discussed.append(dict(item_id=item['item_id'], reason='the coordinator runtime exited (its whole stderr '
                                               'is retained: %s); the item keeps its code-seeded open items'
                                               % json.dumps(server.stderr_witness(), sort_keys=True),
                                               open_items=item['open_items']))
                     continue
-            result = discuss_item(server, item, system, params, log, progress=progress)
+            result = discuss_item(server, item, system, params, log, progress=progress, clock=clock)
             if result.get('reused_from_progress'):
                 reused.append(item['item_id'])
             items.append(result)
@@ -1516,6 +1654,11 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
             log('server release after a discussion failure raised %r' % inner)
         server._record_quietly('end', 'failed_in_discussion', error=repr(error), items_completed_this_attempt=len(items),
                                seconds=round(time.time() - started, 1))
+        now = time.time()
+        clock('attempt-failed:%s' % server.attempt, 'not_called', now, now,
+              reason='the meeting attempt failed in discussion (%s) after %d item(s); no further coordinator call was made '
+                     'by this attempt; a call already sent is stamped by its round or, on restart, as unknown_completion'
+                     % (repr(error)[:300], len(items)))
         raise
     finally:
         server.stop()
@@ -1528,6 +1671,7 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                   runtime=dict(binary=witness_file(binary), model=witness_file(model), parameters=params,
                                provenance=runtime_provenance(config.get('pins') or {}, binary),
                                effective=dict(threads=server.threads, host_cpus=server.host_cpus, host_cpu=host_cpu(),
+                                              threads_resolution=server.threads_resolution,
                                               call_ceiling_seconds=float(params.get('call_ceiling_seconds') or CALL_CEILING_SECONDS)),
                                budget_seconds=params['max_meeting_seconds'],
                                budget_left_seconds=None if server.remaining() is None else round(server.remaining(), 1),
@@ -1561,6 +1705,7 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                               refused=sum(len(i['refused']) for i in items), not_discussed=len(not_discussed),
                               reused_items=len(reused)),
                   publication='retained; publication disposition is recorded in the receipt',
+                  model_clock=clock_summary(),
                   rule='coordination only; the seats\' records are the evidence; nothing open is dropped (role V2)')
     write_json(out_dir / 'meeting.json', record)
     receipt = publish_meeting_record(exchange_path, out_dir, brain)

@@ -103,6 +103,24 @@ def jev(prompt):
     else:
         max_tokens = JEV_CONTEXT - len(prompt) // 3 - 256
     if max_tokens < (LOCAL['min_output_tokens'] if LOCAL is not None else 1024):
+        # a refusal before any call is a model-clock record too (nothing silent); stamped once per prompt, never on replay
+        key = sha(prompt.encode())
+        stamped = PROGRESS['state'].setdefault('clock_refusals', {}) if PROGRESS is not None else {}
+        if key not in stamped:
+            now = time.time()
+            if LOCAL is not None:
+                result = model_clock(call_id='room-' + key, outcome='refused_over_cap', wall_start=now, wall_end=now,
+                                     input_tokens=counts[key],
+                                     cap=JEV_CONTEXT - LOCAL['token_margin'] - LOCAL['min_output_tokens'],
+                                     reason='no output room: the exact input count leaves less than the minimum output '
+                                            'tokens; not sent, regenerated from halves')
+            else:
+                result = model_clock(call_id='room-' + key, outcome='not_called', wall_start=now, wall_end=now,
+                                     reason='no output room by the chars-based estimate (%d chars, about %d tokens; not an '
+                                            'exact count); not sent, regenerated from halves' % (len(prompt), len(prompt) // 3))
+            stamped[key] = result
+            if PROGRESS is not None:
+                save_state(PROGRESS['state'])
         raise Incomplete('no output room left for a %d-char prompt' % len(prompt))
     if LOCAL is None:
         payload = dict(model='jev', messages=[dict(role='user', content=prompt)], temperature=0,
@@ -124,6 +142,48 @@ def jev(prompt):
     if not isinstance(message, dict) or not isinstance(message.get('content'), str):
         raise ValueError('recorded Jev reply has no text content; original bytes retained')
     return message['content']
+
+
+def model_clock(**fields):
+    """One FRANKIE_MODEL_EVALUATION_CLOCK_V1 record (deploy/aws/box/frankie_box_model_clock.py) for a Jev model call or
+    refusal made HERE. Never raises: the clock is accounting, never the call's outcome; returns where it went.
+
+    Owner-local CPU route (LOCAL): the real chat and token-count calls are stamped by the owner's adapter
+    (frankie_box_jev_cpu: LOCAL['chat'] / LOCAL['count_tokens'], piece 'jev'); only a refusal decided in this client
+    (no output room) reaches here, through LOCAL['model_clock'](**fields), which binds piece, run, day, lane, the runtime
+    pins and the teacher-binding cutoff. Without that hook the record is kept in the durable state, named as unclocked.
+    Remote route (JEV_CHAT_URL; the retired Pod route): piece 'jev_sit_in'; written to <FRANKIE_MODEL_CLOCK_RUN_DIR>/days/
+    <day>/model-clock.jsonl when that owner directory is given, otherwise listed beside the state file
+    (model-clock-unrecorded.jsonl) with the reason. The remote material carries no shared market context (it requires
+    the owner-local binding), so its cutoff is listed, never invented."""
+    if LOCAL is not None:
+        hook = LOCAL.get('model_clock')
+        if callable(hook):
+            try:
+                return dict(hook(**fields) or {}, via='owner model_clock hook')
+            except Exception as error:  # noqa: BLE001 - listed, never hidden
+                return dict(recorded=False, reason='owner model_clock hook raised %s: %s' % (type(error).__name__, error),
+                            record=fields)
+        return dict(recorded=False, record=fields,
+                    reason='the owner CPU adapter supplies no model_clock hook; the record is kept in the Jev state only')
+    try:
+        try:
+            from deploy.aws.box import frankie_box_model_clock as MC
+        except ImportError:
+            import frankie_box_model_clock as MC
+        state = PROGRESS['state'] if PROGRESS is not None else {}
+        material = ((state.get('inputs') or {}).get('material') or {}).get('material') or {}
+        record = dict(schema=MC.SCHEMA, piece='jev_sit_in', run=os.environ.get('RUN') or os.environ.get('FRANKIE_RUN'),
+                      day=str(state.get('day') or os.environ.get('DAY')),
+                      lane=dict(host=os.environ.get('HOSTNAME'), route='remote JEV_CHAT_URL', stamp=os.environ.get('STAMP')),
+                      model=dict(model_identity=JEV_MODEL, context=JEV_CONTEXT,
+                                 endpoint=(state.get('inputs') or {}).get('chat_endpoint'),
+                                 definition='the configured remote endpoint (retired Pod route), not the shared Granite runtime'),
+                      cutoff=MC.cutoff_of(material.get('shared_market_context')), **fields)
+        run_dir = os.environ.get('FRANKIE_MODEL_CLOCK_RUN_DIR') or None
+        return MC.record_or_list(run_dir, record['day'], record, Path(STATE_PATH).parent)
+    except Exception as error:  # noqa: BLE001 - listed, never hidden
+        return dict(recorded=False, reason='%s: %s' % (type(error).__name__, error), record=fields)
 
 
 def parse_json(text):
@@ -294,10 +354,18 @@ def recorded_chat(body):
                         transport_evidence=getattr(error, 'evidence', None), possible_send=getattr(error, 'sent', None),
                         partial_base64=base64.b64encode(partial).decode('ascii'),
                         partial_bytes=len(partial), partial_sha256=sha(partial))
+            if LOCAL is None:
+                # remote route: this client made the call, so it stamps the clock (the CPU route is stamped by its owner)
+                call['model_clock'] = model_clock(call_id=call['request_sha256'], outcome='failed', wall_start=call['intent_at'],
+                                                  wall_end=call['observed_at'], reason=repr(error)[:600],
+                                                  sent=getattr(error, 'sent', None))
             save_state(state)
             raise
         call.update(status='replied', response_base64=base64.b64encode(raw).decode('ascii'),
                     response_sha256=sha(raw), response_bytes=len(raw), received_at=time.time())
+        if LOCAL is None:
+            call['model_clock'] = model_clock(call_id=call['request_sha256'], outcome='answered', wall_start=call['intent_at'],
+                                              wall_end=call['received_at'], reply_sha256=call['response_sha256'])
         save_state(state)              # preserve even malformed/cut-off responses before interpretation
     PROGRESS['cursor'] += 1
     return raw
