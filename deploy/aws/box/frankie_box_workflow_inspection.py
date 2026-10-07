@@ -109,7 +109,7 @@ all99 all99_coverage all99_boundary all99_coverage_files evidence_read missing_l
 same_pair_candidates native_pass native_entries native_carriers opening_state layer_entries survivors boundary_day
 batch_days shared_runtime superseded_jev_runtime route_integrity shared_field
 exhaustion_d native_only_ingestion model_clock use_counts registry_entries registry_mapping registry_entry_findings
-confirmation_clock
+confirmation_clock external_points
 '''.split())
 WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the pieces' own inputs / use / outputs record
 # The successor chain (school and corrections pieces): recorded pins {path, bytes, sha256} followed one by one from the

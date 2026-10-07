@@ -258,7 +258,7 @@ POINT_GLOSSARY = (
     (3, 'CFTC Commitments of Traders, NYMEX natural gas: managed-money net position, change week over week'),
     (4, 'CFTC Commitments of Traders, NYMEX natural gas: managed-money net position, percentile over 3 years'),
     (5, 'EIA-930 grid data: US-48 wind generation'),
-    (6, 'squeeze watch: sessions since the front contract\'s expiry (deferred by Greg)'),
+    (6, 'contract calendar: sessions since the front contract\'s expiry (one of the 13; it stays)'),
     (7, 'EIA-930 grid data: US-48 estimated natural gas burn for power'),
     (8, 'CFTC Commitments of Traders, ICE Henry Hub LD1: managed-money net position, percentile over 1 year'),
     (9, 'weather forecast model disagreement: the largest spread between models on gas-weighted heating degree days'),
@@ -1527,7 +1527,7 @@ EXTERNAL_POINT_PIECES = (
     ('shared_reader', 'the shared market reader\'s external publications as the BOSS teacher\'s full read recorded them '
                       '(teacher receipt shared_market_read.external_publications.points: per table rows and presented)'),
     ('teacher', 'the BOSS teacher receipt external_points (FRANKIE_TEACHER_EXTERNAL_POINTS_V1, from its external section '
-                'key: per point used / missing / deferred, rows used, series, missing with reason)'),
+                'key: per point used / missing, rows used, series, missing with reason)'),
     ('classroom', 'the classroom receipt all99_coverage.external_points.points (computed / context / absent, with reason)'),
     ('search', 'the search MANIFEST external source: searched fields and alias series per day-file table, absent series'),
     ('scientific_teacher', 'the lessons files: per-entry lists only (no per-point record)'),

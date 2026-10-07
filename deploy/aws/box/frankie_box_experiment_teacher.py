@@ -187,10 +187,16 @@ def external_points_summary(key, status=None, reason=None):
         points.append(dict(point_id=p.get('point_id'), name=p.get('name'), use=use, reason=why, rows_used=used,
                            series=series, tables=tables, missing=missing))
     for p in (key.get('deferred') or {}).get('points') or []:
+        # Point 6 (sessions since prompt expiry, the contract calendar) is one of the 13 and STAYS (Greg, 2026-10-07
+        # night: only the squeeze 3-day calendar-front spread, not a point, was dropped). The external section key
+        # (dipole_classroom_external.DEFERRED) still leaves its table unread, so this step has no value of it: missing,
+        # with that reason (the shared reader and the search read the table; their columns show their own use)
         if isinstance(p, dict) and p.get('point_id') is not None:
-            points.append(dict(point_id=p['point_id'], name=p.get('name'), use='deferred', rows_used=0, series=[],
+            points.append(dict(point_id=p['point_id'], name=p.get('name'), use='missing', rows_used=0, series=[],
                                tables=[dict(table=t) for t in p.get('tables') or []], missing=[],
-                               reason='deferred by Greg, not read: %s' % (key.get('deferred') or {}).get('reason')))
+                               reason='the external section key does not read its table%s (dipole_classroom_external still '
+                                      'lists it under DEFERRED; the point stays, so the section owner lifts that)' % (
+                                          ' ' + ', '.join(p.get('tables') or []) if p.get('tables') else '')))
     counts = {}
     for p in points:
         counts[p['use']] = counts.get(p['use'], 0) + 1
@@ -198,7 +204,8 @@ def external_points_summary(key, status=None, reason=None):
                 external_key_hash=key.get('external_key_hash'), cutoff_ns=key.get('cutoff_ns'), rows=key.get('rows'),
                 points=points, counts=counts,
                 rule='per point as the external section key records it: used = a PRESENT value of its series reached a '
-                     'Dipole row; missing = none did, with the reason; deferred = left out by Greg; never a zero filled in')
+                     'Dipole row; missing = none did (or the section does not read the point\'s table), with the reason; '
+                     'never a zero filled in')
 
 
 def all99_field(result, market_report, *, day):

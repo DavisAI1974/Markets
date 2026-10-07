@@ -1244,7 +1244,7 @@ Uncommitted; source only; nothing ran; no account call.
     section key the step already builds or reuses (`EXT.ensure_external_section`), never recomputed. Per day-file point,
     using the day file's own point ids:
     - `use`: used when a PRESENT value of its series reached at least one Dipole row; missing otherwise, with the
-      reason; deferred for point 6, Greg's squeeze deferral.
+      reason. (Corrected in 20.1: point 6 is not deferred.)
     - `rows_used`: PRESENT rows summed over its series.
     - the series with their state counts;
     - the tables with rows known / not yet known by the cutoff;
@@ -1265,3 +1265,29 @@ Uncommitted; source only; nothing ran; no account call.
   is a one-word change in a file not assigned this pass.
 
 Checks: AST parse and `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.
+
+### 20.1 Addendum: point 6 stays; the teacher's list in the one-day reporter
+
+- **Point 6 is not deferred.** Point 6 ("sessions since prompt expiry", the contract calendar) is one of the 13 and
+  stays. Greg dropped only the squeeze 3-day calendar-front spread, which is not a point.
+  - `external_points_summary` no longer writes `deferred`. Point 6 is used or missing like the others.
+  - The external section key (`dipole_classroom_external.DEFERRED`) still leaves the calendar table unread, so the
+    teacher has no value for point 6. It reads `missing`, with that reason named.
+  - The shared reader and the search read the calendar table, so their columns in the 99-layer table show their own
+    use of point 6.
+- **Same mistake elsewhere.**
+  - In my code this session: the day-reports join label (`teacher` piece description) and the points glossary entry
+    for point 6 ("deferred by Greg" -> "one of the 13; it stays").
+  - Not mine: the classroom report's "Deferred (recorded reason)" line renders what the classroom recorded from the
+    same EXT.DEFERRED. It stays as recorded.
+  - `_point_declaration` takes only names from EXT.DEFERRED. It never marks a point deferred.
+- **Request (external section / classroom owner).** Lift point 6 out of `dipole_classroom_external.DEFERRED`: move it
+  into POINTS with its table `calendar.sessions_since_prompt_expiry` and its series. Keep only the squeeze spread
+  deferred.
+  - This also changes the classroom's `external_points_use` (point 6 now `absent: deferred by Greg`) and the classroom
+    external key, its hash and the lesson.
+  - That is a change to the classroom's external lesson, so it is not made here.
+- **`frankie_box_workflow_inspection.py`.** FIELDS gains `external_points`, so the teacher piece (and any receipt
+  carrying it) shows the per-point list by value.
+
+Checks: AST parse and `git diff --check` clean.
