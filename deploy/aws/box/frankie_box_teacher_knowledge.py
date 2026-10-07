@@ -20,8 +20,9 @@ def teach_successor(day, search, brain, out_dir, *, request):
     """Explicit owner retest of one original result; never a correction decision or publication.
 
     Request carries original_inputs/original_result path/bytes/sha256 witnesses, reason and
-    evidence witnesses. It selects exactly the original result's ordered claims, not the rest
-    of the brain. This narrow route changes operation pins, not claim content or search evidence.
+    evidence witnesses. Optional affected_claim_ids selects the claims to recompute;
+    replacement_claims and replacement_search pin corrected projections and search manifests.
+    Unaffected claims/results keep their original bytes and scientific provenance.
     Its complete result still needs record_correction with a checked decision and exact scopes.
     """
     import fcntl
@@ -62,7 +63,9 @@ def publish_successor(brain, *, receipt, scopes, decision, reason, evidence):
 def _successor_document(request, identity, input_path, REVIEW, BR):
     """Resolve explicit witnesses before any scientific work; preserve the original operation."""
     if (not isinstance(request, dict)
-            or set(request) != {'original_inputs', 'original_result', 'reason', 'evidence'}
+            or not {'original_inputs', 'original_result', 'reason', 'evidence'} <= set(request)
+            or set(request) - {'original_inputs', 'original_result', 'reason', 'evidence',
+                               'affected_claim_ids', 'replacement_claims', 'replacement_search'}
             or not isinstance(request['reason'], str) or not request['reason'].strip()
             or not isinstance(request['evidence'], list) or not request['evidence']):
         raise ValueError('successor requires exact original witnesses, reason and evidence')
@@ -75,10 +78,17 @@ def _successor_document(request, identity, input_path, REVIEW, BR):
     operation = REVIEW._transition_operation(request['original_inputs'], original)
     REVIEW._validate_operation(operation, original)
     old = operation['identity']
+    search_pin = request.get('replacement_search')
+    if search_pin is not None:
+        corrected_search = json.loads(REVIEW._read_pin(search_pin))
+        if (str(corrected_search.get('day')) != identity['day']
+                or Path(search_pin['path']).resolve() != (Path(identity['search']) / 'MANIFEST.json').resolve()
+                or {k: search_pin[k] for k in ('bytes', 'sha256')} != identity['manifest']):
+            raise ValueError('replacement search must pin the exact corrected owner manifest')
     if (old['day'] != identity['day'] or old['brain'] != identity['brain']
-            or old['search'] != identity['search'] or old['manifest'] != identity['manifest']
+            or (search_pin is None and (old['search'] != identity['search'] or old['manifest'] != identity['manifest']))
             or Path(request['original_inputs']['path']).resolve().parent == input_path.resolve().parent):
-        raise ValueError('successor needs a distinct operation on the exact original owner/search')
+        raise ValueError('successor needs a distinct operation on the same owner and an explicit search transition')
     records = REVIEW.corrections([Path(identity['brain'])])
     legal = {e.get('sha256') for _, manifest, _ in BR.entries_before(identity['brain'], 'snapshot')
              for e in manifest.get('entries', []) if e.get('include')}
@@ -88,10 +98,31 @@ def _successor_document(request, identity, input_path, REVIEW, BR):
     if request['original_result']['sha256'] in records:
         raise ValueError('successor original already has a checked replacement; select its current owner explicitly')
     frozen = json.loads(REVIEW._read_pin(request['original_inputs']))
-    source = next(d for d in frozen['selection']['documents']
-                  if d['source']['sha256'] == operation['source_lesson_sha256']
-                  and _digest(d['lesson']) == operation['source_lesson_content_sha256'])
-    document = dict(source, claims=original['claim_inputs']['claims'])
+    claims = original['claim_inputs']['claims']
+    ids = [c['id'] for c in claims]
+    affected = request.get('affected_claim_ids', ids)
+    if (not isinstance(affected, list) or not affected or len(set(affected)) != len(affected)
+            or [i for i in ids if i in affected] != affected):
+        raise ValueError('affected claims must be a nonempty ordered subset of original identities')
+    source, lesson = request['original_result'], original
+    if request.get('replacement_claims') is not None:
+        source = request['replacement_claims']
+        projection = json.loads(REVIEW._read_pin(source))
+        if (projection.get('schema') != 'FRANKIE_SCIENTIFIC_CLAIM_INPUTS_V1'
+                or projection.get('author') != original['author']
+                or [c['id'] for c in projection['claims']] != ids
+                or not projection.get('claims_sha256')
+                or any(a != b for a, b in zip(claims, projection['claims']) if a['id'] not in affected)):
+            raise ValueError('corrected projection must preserve identities and every unaffected claim')
+        claims = projection['claims']
+        # Input header only, never a fabricated completed scientific lesson.
+        lesson = dict(schema=original['schema'], author=original['author'], day=original['day'],
+                      original_claim_day=original.get('original_claim_day', original['day']),
+                      stamp=original.get('stamp'), claims_sha256=projection['claims_sha256'],
+                      claims_source=source['path'], searches=[], results=[])
+    document = dict(source=source, lesson=lesson, claims=claims,
+                    original_lesson=original, original_source=request['original_result'],
+                    input_kind='explicit_successor', affected_claim_ids=affected)
     return document, original, operation, frozen['selection']['reproduction_records']['files']
 
 
@@ -148,7 +179,8 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
                                'replaced (the late-scheduling decision is held for Greg); it is available at a later '
                                'owner boundary through the same learner_knowledge selection')
     if input_path.is_file():
-        LS.require_current_selection(input_path, brain=brain)
+        if _successor is None:
+            LS.require_current_selection(input_path, brain=brain)
         inputs = json.loads(input_path.read_bytes())
         if inputs.get('identity') != identity or inputs.get('schema') != 'FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1':
             raise ValueError('retained scientific knowledge belongs to another search or reader')
@@ -179,7 +211,6 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
         inputs = dict(schema='FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1', identity=identity,
                       selection=selection, selection_sha256=_digest(selection))
         write_json(input_path, inputs)
-        LS.require_current_selection(input_path, brain=brain)
     else:
         selected = LS.learner_knowledge(day, 'exchange', brain=brain)
         school, school_listed = LS.learner_school(day, brain=brain, versions=selected['versions'], stage='exchange')
@@ -325,6 +356,11 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
         result_identity = dict(input_sha256=input_hash, source_lesson_sha256=item['source']['sha256'],
                                source_lesson_content_sha256=_digest(lesson), original_claim_day=lesson.get('original_claim_day', lesson.get('day')),
                                claim_inputs_sha256=claim_inputs_sha, search_manifest_sha256=manifest_witness['sha256'])
+        if _successor is not None:
+            result_identity['claim_operations'] = {
+                c['id']: (dict(inputs=_successor['original_inputs'], result=_successor['original_result'])
+                          if c['id'] not in item['affected_claim_ids'] else dict(input_sha256=input_hash))
+                for c in claims}
         path = out_dir / 'results' / (_digest(result_identity) + '.json')
         expected = dict(schema=lesson['schema'], author=lesson['author'], day=day,
                         original_claim_day=result_identity['original_claim_day'], stamp=lesson.get('stamp'),
@@ -340,7 +376,7 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
             expected['reconsideration'] = lesson['reconsideration']
         # Completed native evidence: the retained lesson's references for other days unchanged, plus THIS owner's
         # (a candidate-only lesson carries none of its own; the owner's search pins are the only lawful source here).
-        carried = lesson.get('completed_native_evidence') or {}
+        carried = (original_result if _successor is not None else lesson).get('completed_native_evidence') or {}
         by_day = dict(carried.get('by_day') or {})
         listed_native = list(carried.get('listed') or [])
         carried_same_day = by_day.get(day)
@@ -349,7 +385,11 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
             # the same bytes read under another output root are the same evidence; different bytes for this owner refuse.
             if carried_same_day is not None and \
                     ST.native_evidence_identity(carried_same_day) != ST.native_evidence_identity(native_ref):
-                raise ValueError('retained lesson carries a different completed-native reference for this owning day')
+                if _successor is None or not _successor.get('replacement_search'):
+                    raise ValueError('retained lesson carries a different completed-native reference for this owning day')
+                listed_native.append(dict(day=day, reason='explicit corrected search; previous evidence remains in the '
+                                          'original operation and is not counted as a new observation', carried=carried_same_day))
+                carried_same_day = None
             if carried_same_day is not None and carried_same_day.get('path') != native_ref.get('path'):
                 listed_native.append(dict(day=day, reason='the carried same-day reference is the same evidence materialized '
                                                           'at another path; the owner\'s own materialization is cited',
@@ -396,8 +436,15 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
                             ('bytes' in part and actual['bytes'] != part['bytes']):
                         raise ValueError('owning search evidence differs from its manifest: %s' % source)
                 parts_verified = True
-            results = ST.test(dict(author=lesson['author'], claims=claims), days,
+            measured_claims = ([c for c in claims if c['id'] in item['affected_claim_ids']]
+                               if _successor is not None else claims)
+            measured = ST.test(dict(author=lesson['author'], claims=measured_claims), days,
                               records_dir=Path(records_selection['directory']), records_selection=records_selection['files'])
+            if [r['claim_id'] for r in measured] != [c['id'] for c in measured_claims]:
+                raise ValueError('scientific owner returned a different affected claim set')
+            retained = {r['claim_id']: r for r in original_result['results']} if _successor is not None else {}
+            retained.update({r['claim_id']: r for r in measured})
+            results = [retained[c['id']] for c in claims]
             result = dict(expected, results=results, results_sha256=_digest(results))
             write_json(path, result)
             created_files += 1

@@ -128,10 +128,45 @@ def _validate_transition(transition, before, after, publication):
         _validate_operation(operation, lesson)
         operations.append(operation)
     if (operations[0]['identity']['brain'] != operations[1]['identity']['brain']
+            or operations[0]['identity']['day'] != operations[1]['identity']['day']
             or operations[1]['identity']['day'] != publication['day']
             or operations[0]['inputs']['sha256'] == operations[1]['inputs']['sha256']
             or operations[0]['inputs']['path'] == operations[1]['inputs']['path']):
         raise ValueError('correction successor needs a distinct retained operation on the same owner day/brain')
+    request = operations[1]['identity'].get('successor')
+    if request:
+        if request['original_inputs'] != operations[0]['inputs']:
+            raise ValueError('successor did not name this original frozen operation')
+        ids = [r['claim_id'] for r in before['results']]
+        affected = request.get('affected_claim_ids', ids)
+        if (not affected or len(set(affected)) != len(affected)
+                or [i for i in ids if i in affected] != affected):
+            raise ValueError('successor affected identities differ from the original lesson')
+        if [r['claim_id'] for r in after['results']] != ids:
+            raise ValueError('successor must retain the original ordered claim identities')
+        for old_claim, claim, old_result, result in zip(before['claim_inputs']['claims'],
+                                                       after['claim_inputs']['claims'],
+                                                       before['results'], after['results']):
+            if old_claim['id'] not in affected and (old_claim != claim or old_result != result):
+                raise ValueError('successor changed an unaffected claim or its completed result')
+        provenance = after['knowledge_retest'].get('claim_operations')
+        if provenance is not None:
+            expected = {i: (dict(input_sha256=operations[1]['inputs']['sha256']) if i in affected else
+                            dict(inputs=request['original_inputs'], result=request['original_result'])) for i in ids}
+            if provenance != expected:
+                raise ValueError('successor claim provenance differs from its recomputed/preserved partition')
+        elif affected != ids:
+            raise ValueError('partial successor lacks per-claim original operation bindings')
+        old_claims, new_claims = before['claim_inputs']['claims'], after['claim_inputs']['claims']
+        if old_claims != new_claims or before['claims_sha256'] != after['claims_sha256']:
+            projection = request.get('replacement_claims')
+            if not projection or operations[1]['source_lesson_sha256'] != projection['sha256']:
+                raise ValueError('changed claims require an explicit frozen replacement projection')
+        if any(operations[0]['identity'][k] != operations[1]['identity'][k] for k in ('search', 'manifest')):
+            search = request.get('replacement_search')
+            if (not search or {k: search[k] for k in ('bytes', 'sha256')} != operations[1]['identity']['manifest']
+                    or Path(search['path']) != Path(operations[1]['identity']['search']) / 'MANIFEST.json'):
+                raise ValueError('changed search requires the exact replacement manifest binding')
 
 
 def _validate_correction(body, before, after):
@@ -161,13 +196,20 @@ def _validate_correction(body, before, after):
     if before.get('schema') != schemas.get(before.get('author')) or before.get('schema') is None:
         raise ValueError('correction accepts only the existing scientific lesson schemas')
     # Exactly the same subject, not text similarity, a newer date or a loosely matching pair.
-    for key in ('schema', 'author', 'day', 'claims_sha256'):
+    for key in ('schema', 'author', 'day'):
         if before.get(key) != after.get(key):
             raise ValueError('correction changes the original lesson subject: ' + key)
     transition = body.get('owner_transition')
     changed_inputs = any(before.get(key) != after.get(key) for key in ('claim_inputs', 'claim_inputs_sha256'))
     if changed_inputs or transition is not None:
         _validate_transition(transition, before, after, publication)
+    if before.get('claims_sha256') != after.get('claims_sha256') and not (
+            transition and transition['replacement']['identity'].get('successor', {}).get('replacement_claims')):
+        raise ValueError('changed claim source requires an explicit owner projection transition')
+    if transition and transition['replacement']['identity'].get('successor'):
+        request = transition['replacement']['identity']['successor']
+        if body.get('original') is not None and {k: request['original_result'][k] for k in ('path', 'bytes', 'sha256')} != body['original']:
+            raise ValueError('owner transition corrected another original result')
     if not before.get('claims_sha256') or before.get('written_by') != 'scientific_teacher' or after.get('written_by') != 'scientific_teacher':
         raise ValueError('correction needs a claim-bound scientific lesson')
     if [r['claim_id'] for r in before['results']] != [r['claim_id'] for r in after['results']]:

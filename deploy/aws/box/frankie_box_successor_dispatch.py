@@ -67,11 +67,15 @@ def enqueue(run, day, request):
     if (original['identity']['day'] != day or original['identity']['brain'] != identity['brain']):
         raise ValueError('successor request belongs to another scientific owner')
     search = run.receipt('search', day) or {}
-    if (search.get('status') not in ('done', 'reused') or search.get('target') != original['identity']['search']
-            or D.witness(Path(search['target']) / 'MANIFEST.json') != original['identity']['manifest']):
+    replacement_search = request.get('replacement_search')
+    selected_search = str(Path(replacement_search['path']).parent) if replacement_search else original['identity']['search']
+    selected_manifest = ({k: replacement_search[k] for k in ('bytes', 'sha256')} if replacement_search
+                         else original['identity']['manifest'])
+    if (search.get('status') not in ('done', 'reused') or search.get('target') != selected_search
+            or D.witness(Path(search['target']) / 'MANIFEST.json') != selected_manifest):
         raise ValueError('successor request must use this run/day completed owning search')
     directory = run.dir / 'successors' / day
-    body = dict(schema=SCHEMA, owner=identity, search=original['identity']['search'], request=request)
+    body = dict(schema=SCHEMA, owner=identity, search=selected_search, request=request)
     key = R.digest(R.canonical(body))
     with lock(directory / 'inbox.lock'):
         path = directory / 'requests' / (key + '.json')
@@ -85,7 +89,8 @@ def enqueue(run, day, request):
             # remain reusable even after their correction has replaced the original.
             import frankie_box_teacher_knowledge as TK
             import frankie_box_brain as BR
-            TK._successor_document(request, original['identity'], directory / 'intake' / 'inputs.json', R, BR)
+            TK._successor_document(request, dict(original['identity'], search=selected_search, manifest=selected_manifest),
+                                   directory / 'intake' / 'inputs.json', R, BR)
         return dict(id=key, operation=once(path, body))
 
 
