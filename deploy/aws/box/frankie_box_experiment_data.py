@@ -121,6 +121,34 @@ def _sha256(path):
     return h.hexdigest()
 
 
+def _pin(path):
+    """(bytes, sha256) of one linked file; a worker-pool job (one file per worker, largest first)."""
+    path = Path(path)
+    return path.stat().st_size, _sha256(path)
+
+
+def _pin_all(paths, workers):
+    """Pin every linked file. The export's wall time is the hashing (the sealed journal alone is ~23.7 GB, the
+    V2 frame spool several GB); files are independent, so the held lane's workers hash them side by side, the
+    largest first so one long file does not trail a drained pool. The identities are the same bytes and the same
+    sha256 whatever the worker count: a speed-up never changes a pin. Effect unmeasured here; bounded above by
+    the largest single file (serial inside one file). Recorded in MANIFEST.hashing for the one-day canary."""
+    paths = sorted(paths, key=lambda p: Path(p).stat().st_size, reverse=True)
+    started = time.time()
+    if workers <= 1 or len(paths) <= 1:
+        pins = {str(p): _pin(p) for p in paths}
+        mode = 'serial'
+    else:
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=min(workers, len(paths))) as pool:
+            pins = dict(zip((str(p) for p in paths), pool.map(_pin, paths)))
+        mode = 'process_pool'
+    return pins, dict(mode=mode, workers=min(workers, len(paths)) if mode == 'process_pool' else 1,
+                      files=len(paths), bytes=sum(size for size, _ in pins.values()), seconds=round(time.time() - started, 3),
+                      largest_file_bytes=max((size for size, _ in pins.values()), default=0),
+                      basis='one file per worker, largest first; identities invariant; measure on the one-day canary')
+
+
 def plan(day, cycle, dirs):
     """(files, excluded, missing, notes) for one day and cycle: every catalogued file decided by the first pattern that
     claims it; a directory not given is listed, never guessed."""
@@ -162,7 +190,51 @@ def plan(day, cycle, dirs):
     return files, excluded, missing, notes
 
 
-def export(day, cycle, dirs, root=ROOT):
+def workflow_report(day, cycle, dirs, files, excluded, missing, unclaimed, external, hashing, *, status):
+    """The piece's inputs / use / outputs record for the one-day review (Greg, 2026-10-07): what the export received
+    (every directory it was given, every file it linked with path/bytes/sha256 and source binding), how it used it
+    (the first-pattern catalog decision per file: linked, excluded with its reason, missing, unclaimed; nothing
+    recomputed, nothing copied) and what it produced (the manifest, the counts, the external attachment state). A link
+    is availability for the teachers, never proof that a teacher consumed the file. Schema shared with the adviser
+    pieces so one reporter projects it (frankie_box_workflow_inspection.workflow_report_block)."""
+    by_stage = {}
+    for item in files:
+        by_stage.setdefault(item['stage'], dict(files=0, bytes=0))
+        by_stage[item['stage']]['files'] += 1
+        by_stage[item['stage']]['bytes'] += item.get('bytes') or 0
+    return dict(schema='FRANKIE_PIECE_WORKFLOW_REPORT_V1', piece='data',
+                inputs=dict(day=str(day), cycle=str(cycle),
+                            directories={k: (str(v) if v else None) for k, v in dirs.items()},
+                            directories_absent=[m for m in missing if m['reason'].startswith('no ') or 'absent' in m['reason']],
+                            received_files=[dict(stage=f['stage'], path=f['path'], source=f['source'], bytes=f.get('bytes'),
+                                                 sha256=f.get('sha256'), what=f['what'],
+                                                 source_binding=f.get('pattern'),
+                                                 native_role=f.get('native_role')) for f in files],
+                            external_day_file=external, shared_market_picture=None, shared_market_dispositions=None),
+                use=dict(decision_rule='the first catalog pattern that claims a file decides it (CATALOG order); '
+                                       'selected native evidence is claimed first by selected_files',
+                         linked_by_stage=by_stage,
+                         excluded=[dict(stage=e['stage'], path=e['path'], reason=e['reason'], bytes=e['bytes'], what=e['what'])
+                                   for e in excluded],
+                         missing=missing, unclaimed=unclaimed,
+                         withheld_roles=dict(FRANKIE_REASONING='R09', GRADED='R10', BEDROCK='unselected native state',
+                                             MIXED="Greg's call", OTHER_MODEL="Greg's call"),
+                         computation='none: hard links only; bytes and sha256 measured on the linked inode',
+                         hashing=hashing,
+                         dipole_rows=('teacher directory given; its rows are linked' if dirs.get('teacher')
+                                      else 'no teacher directory given: the day is exported without the teacher-only '
+                                           'Dipole rows (listed missing; a launch run may still carry them)')),
+                outputs=dict(status=status, manifest='MANIFEST.json beside the links',
+                             counts=dict(files=len(files), bytes=sum(f.get('bytes') or 0 for f in files),
+                                         excluded=len(excluded), missing=len(missing), unclaimed=len(unclaimed)),
+                             external=external, model_calls=0, waits=[],
+                             refusals='an existing MANIFEST declines a second export; a failed hard link refuses the '
+                                      'whole export (a copy would be a second build), nothing partial is published'),
+                rule='recorded inputs, use and outputs of this piece for the one-day review; availability is not proof '
+                     'of consumption; missing evidence means unknown, never zero')
+
+
+def export(day, cycle, dirs, root=ROOT, workers=1):
     target = Path(root) / str(day) / f'cycle-{cycle}'
     if (target / 'MANIFEST.json').exists():
         raise SystemExit('%s already exported (%s): the same day and cycle is not exported twice (duplicate data declines '
@@ -180,8 +252,10 @@ def export(day, cycle, dirs, root=ROOT):
         except OSError as error:
             raise SystemExit('cannot hard-link %s (%s): a copy would be a second build of the data; nothing written'
                              % (item['source'], error))
-        item['bytes'] = destination.stat().st_size
-        item['sha256'] = _sha256(destination)
+        item['destination'] = str(destination)
+    pins, hashing = _pin_all([item['destination'] for item in files], workers)
+    for item in files:
+        item['bytes'], item['sha256'] = pins[item.pop('destination')]
         if item.get('expected') and item['expected'] != {k: item[k] for k in ('bytes', 'sha256')}:
             raise ValueError('selected native artifact changed while linking: ' + item['source'])
     ext = [f for f in files if f['stage'] == 'ingest' and Path(f['path']).name == 'day-external.json']
@@ -199,7 +273,10 @@ def export(day, cycle, dirs, root=ROOT):
                           'reason toward forecasts (R09), grades (R10), mixed files and other models\' output; '
                           'selected complete native ledgers and section products are shared, checkpoint/staging state '
                           'and duplicate projected aliases remain excluded; hard links only, nothing recomputed; '
-                          'availability is not proof of teacher consumption'))
+                          'availability is not proof of teacher consumption'),
+                    hashing=hashing)
+    manifest['workflow_report'] = workflow_report(day, cycle, dirs, files, excluded, missing, notes[0]['unclaimed'],
+                                                  external, hashing, status='exported')
     staging.mkdir(parents=True, exist_ok=True)
     (staging / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     os.replace(staging, target)
@@ -219,7 +296,11 @@ def main():
     p.add_argument('--run', help='ONE run directory: /opt/frankie-box/work/runs/<run_id>')
     p.add_argument('--teacher', help='the teacher-only step directory of the day: /opt/frankie-box/work/experiment-teacher-rows/<day>')
     p.add_argument('--plan-only', action='store_true', help='print what would be linked, excluded and missing; write nothing')
+    p.add_argument('--workers', type=int, default=1,
+                   help='processes hashing the linked files side by side (the held lane gives 15); identities unchanged')
     a = p.parse_args()
+    if a.workers < 1:
+        raise SystemExit('--workers must be a positive integer')
     if not (len(a.day) == 8 and a.day.isdigit() and a.cycle.isdigit()):
         raise SystemExit('--day YYYYMMDD and --cycle NN required')
     dirs = dict(ingest=a.ingest, authorship=a.authorship, root=a.calculations, preparation=a.preparation, principal_inputs=a.principal_inputs,
@@ -234,8 +315,8 @@ def main():
                               missing=[(m['stage'], m['pattern'], m['reason']) for m in missing],
                               unclaimed=[(u['stage'], u['path'], u['bytes']) for u in notes[0]['unclaimed']]), indent=1))
         return
-    m = export(a.day, a.cycle, dirs)
-    print(json.dumps(dict(target=str(ROOT / a.day / ('cycle-' + a.cycle)), counts=m['counts'],
+    m = export(a.day, a.cycle, dirs, workers=a.workers)
+    print(json.dumps(dict(target=str(ROOT / a.day / ('cycle-' + a.cycle)), counts=m['counts'], hashing=m['hashing'],
                           excluded=[(e['stage'], e['path'], e['reason']) for e in m['excluded']],
                           missing=[(x['stage'], x['pattern'], x['reason']) for x in m['missing']],
                           unclaimed=[(u['stage'], u['path'], u['bytes']) for u in m['unclaimed']]), indent=1))

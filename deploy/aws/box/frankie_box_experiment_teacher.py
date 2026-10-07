@@ -23,6 +23,12 @@ into <out>/external-section/ (the rows' as-of alignment, the facts of every poin
 through operations/frankie_day_external.AsOfReader at the rows' cutoff. No day file beside the ingest: listed in the
 receipt, the rows stand (the classroom V2 builds the section when the file is there). A file beside the ingest that
 differs from its receipt, or a section that fails, is listed in the receipt; the rows stand and the step exits 4.
+
+Missing coverage (Greg, 2026-10-07): a missing operand blocks only the equation that needs it, never the day. A journal
+without the full-book observation, or a day on which no original APPLIED operand reaches the pinned equation, publishes a
+receipt with status equation_not_run (exit 5) and no rows file; the export and the search list the Dipole rows missing
+and the day goes on. Nothing is invented. Every receipt carries the piece's workflow_report (inputs / use / outputs)
+for the one-day inspection reporter (frankie_box_workflow_inspection.py).
 """
 import argparse
 import hashlib
@@ -55,6 +61,74 @@ def _sha256(path):
         for block in iter(lambda: f.read(64 * 1024 * 1024), b''):
             h.update(block)
     return h.hexdigest()
+
+
+def _publish(out, result):
+    """The step's receipt, complete or not at all; then the directory entry is durable."""
+    temporary = out / 'receipt.json.pending'
+    with temporary.open('w') as f:
+        json.dump(result, f, indent=1, sort_keys=True)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(temporary, out / 'receipt.json')
+    directory_fd = os.open(out, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
+def workflow_report(result, *, receipt_path, rc, external, market, equation, workers, exit_code):
+    """The piece's inputs / use / outputs record for the one-day review (Greg, 2026-10-07; schema shared with the
+    adviser pieces so frankie_box_workflow_inspection projects it). Inputs: the sealed journal and its receipt, the
+    day file, the shared ROOT identity. Use: which operands entered the pinned R3 equation (the original APPLIED
+    payloads of the contiguous adapter-cursor prefix), every instant listed without that operand, the external section
+    state, the whole-day context. Outputs: the rows file, the attachment, this receipt, the exit code. A row in the
+    rows file is the teacher's measured output; it is not proof that the classroom or the search consumed it."""
+    identity = result.get('shared_market_identity')
+    read = result.get('shared_market_read') or {}
+    return dict(schema='FRANKIE_PIECE_WORKFLOW_REPORT_V1', piece='teacher',
+                inputs=dict(day=result['day'],
+                            ingestion_receipt=dict(path=str(receipt_path), sha256=result['ingestion_receipt']['sha256']),
+                            journal=dict(path=str(Path(receipt_path).parent / rc['journal_file']), bytes=rc['journal_bytes'],
+                                         sha256=rc['journal_sha256'], journal_count=rc['journal_count'],
+                                         record_count=rc['record_count'], observation_mode=rc.get('observation_mode'),
+                                         source_binding='BOSS_BLOCK_INGESTION_RECEIPT_V1 of this trading day, bytes and '
+                                                        'sha256 checked before the walk'),
+                            day_file={k: external.get(k) for k in ('path', 'sha256', 'found', 'status', 'reason') if k in external},
+                            entity=result.get('entity'),
+                            calculations=(identity or {}).get('calculations'),
+                            shared_market_picture=(None if identity is None else dict(
+                                identity=identity, read_complete=read.get('complete'),
+                                coverage=read.get('coverage'), basis='SharedMarketTimeline.iter_applied over the same '
+                                                                    'sealed journal; complete means source exhaustion only')),
+                            shared_market_dispositions=(None if identity is None else dict(
+                                arithmetic=read.get('arithmetic'), journal=read.get('journal'),
+                                integrity_failure=read.get('integrity_failure'), stopped=read.get('stopped'))),
+                            experiment_directive=(result.get('experiment_directive') or {}).get('sha256'),
+                            workers=workers),
+                use=dict(equation='the pinned JournalTeacherR3 row pass (c15_teacher_r3 + teacher_changes), unchanged: '
+                                  'original APPLIED payloads with every adapter cursor from zero, the whole day as context',
+                         operands_entered=(dict(rows=equation['rows'], through_applied_cursor=equation['through_applied_cursor'])
+                                           if equation is not None else dict(rows=result.get('rows'), basis='parallel journal prefix')),
+                         instants_without_operand=(dict(count=len(equation['absent']), ended_at=equation['ended_at'],
+                                                        listed_in='shared_market_arithmetic.absent')
+                                                   if equation is not None else None),
+                         thinner_picture=(dict(absent_layers=(read.get('coverage') or {}).get('absent_layers'),
+                                               rule=read.get('completeness')) if read else None),
+                         external_section=external.get('status'),
+                         through_cursor=result.get('through_cursor'), as_of=result.get('as_of'),
+                         skipped=result.get('equation_not_run'),
+                         walk_seconds=result.get('walk_seconds'), model_calls=0),
+                outputs=dict(status=result.get('status', 'rows_published'), exit_code=exit_code,
+                             rows_file=result.get('rows_file'), attachment_file=result.get('attachment_file'),
+                             rows=result.get('rows'), entity_rows=result.get('entity_rows'),
+                             external_section=external, receipt='receipt.json in the same directory',
+                             brain='filed by the orchestrator beside this receipt (teacher-knowledge.json -> <brain>/<day>-teacher) '
+                                   'before the classroom; recorded there, not here',
+                             waits=[]),
+                rule='recorded inputs, use and outputs of this piece for the one-day review; a measured row is not proof '
+                     'of downstream consumption; missing evidence means unknown, never zero')
 
 
 def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None,
@@ -103,9 +177,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     rc = json.loads(receipt_path.read_bytes())
     if rc.get('schema') != 'BOSS_BLOCK_INGESTION_RECEIPT_V1' or rc.get('writer') != 'compact' or rc.get('trading_day') != day:
         raise SystemExit('a compact BOSS_BLOCK_INGESTION_RECEIPT_V1 of trading day %s is required' % day)
-    if rc.get('observation_mode') == 'none':
-        raise SystemExit('this journal was written without the full-book observation (observation none); the teacher reads '
-                         'the observation, so this day needs observation_replay wired into the walk first (listed, not run)')
+    # A journal written without the full-book observation (observation none) carries no operand for this equation;
+    # the day is not refused: the step publishes an equation_not_run receipt below, after the retained-receipt checks.
     journal = receipt_path.parent / rc['journal_file']
     if journal.stat().st_size != rc['journal_bytes'] or _sha256(journal) != rc['journal_sha256']:
         raise SystemExit('the sealed journal differs from its ingestion receipt')
@@ -147,6 +220,10 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         current_sha = external.get('sha256') or external.get('sha256_expected')
         if old_sha is not None and old_sha != current_sha:
             raise ValueError('retained teacher external input identity changed; preserved')
+    if retained_receipt is not None and retained_receipt.get('status') == 'equation_not_run' and not (out / ROWS_FILE).exists():
+        # A retained equation_not_run receipt is not a duplicate publication: the walk is attempted again below
+        # (the same source gives the same explicit result; a repaired source may now carry the operand).
+        pass
     if (out / ROWS_FILE).exists():
         status = (retained_receipt or {}).get('external_section', {}).get('status')
         retry_publication = retained_receipt is None or status in ('failed', 'refused')
@@ -156,6 +233,30 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 (out / 'teacher-attachment-state.pkl').is_file()):
             raise ValueError('teacher publication is incomplete without its saved calculation state; preserved')
     out.mkdir(parents=True, exist_ok=True)
+    if rc.get('observation_mode') == 'none':
+        # Greg, 2026-10-07: a missing operand blocks only the equation that needs it, never the day. The teacher
+        # reads the full-book observation; this journal has none, so the Dipole rows are not computed and the day
+        # goes on without them (the export and the search list them missing). Nothing is invented.
+        reason = ('this journal was written without the full-book observation (observation none); the teacher reads the '
+                  'observation, so its equation has no operand on this day; observation_replay would have to be wired '
+                  'into the walk first (listed, not run)')
+        result = dict(schema='FRANKIE_EXPERIMENT_TEACHER_ROWS_V1', day=day, status='equation_not_run',
+                      equation_not_run=dict(reason=reason, operand='full-book observation', rows=0),
+                      ingestion_receipt=dict(path=str(receipt_path), sha256=receipt_sha256), rows=0, processed=0,
+                      entity_rows=0, through_cursor=rc['record_count'] - 1, model_calls=0,
+                      external_section=dict(external, listed='no external section built: the rows it aligns to were not computed'),
+                      experiment_directive=directive_witness(),
+                      shared_market_identity=market.identity if market is not None else None,
+                      shared_market_read=None,
+                      shared_market_use=('not read here: the walk that consumes the shared picture did not run; every other '
+                                         'consumer opens the same ROOT with its own reader') if market is not None else None)
+        if learner_binding is not None:
+            result.update(learner_binding=learner_binding, evidence_seat='frankie', independent_scientific_verification=False)
+        result['workflow_report'] = workflow_report(result, receipt_path=receipt_path, rc=rc, external=external, market=market,
+                                                    equation=None, workers=workers, exit_code=5)
+        _publish(out, result)
+        print(json.dumps(result, sort_keys=True), flush=True)
+        return 5
     os.environ['FRANKIE_WALK_CACHE'] = str(out / 'walk-cache')       # never inside the sealed ingest directory
     os.environ.setdefault('FRANKIE_TEACHER_CHANGES', '1')
 
@@ -191,6 +292,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     T.evidence_hash = PJ._chain_hash_factory(h0)
     TC.apply()
     evidence = None
+    shared_read = None
     market_state = out / 'shared-market-state.pkl'
     # The pinned R3 equation's operands are the original APPLIED payloads with every adapter
     # cursor from zero (c15_teacher_r3.iter_raw). It runs on exactly that prefix. An instant
@@ -255,13 +357,24 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         if save_requested():
             raise PT.TeacherSaved('teacher raw pass saved; attachment assembly has not started')
         walked = time.time() - started
-        as_of = max(r[4] for r in rows)
-        if learner_binding is not None and as_of != bound:
-            raise ValueError('learner reading does not end at its requested whole-day cutoff')
-        spec = [(cursor, True, h) for cursor, h in sorted(hashes.items())]
-        attachment = PT.finish(teacher, rows, processed, hashes, spec, source_manifest_hash=rc['manifest_hash'],
-                               recovery_path=out / 'teacher-attachment-state.pkl',
-                               save_requested=save_requested)
+        if not rows:
+            # No original APPLIED operand reached the equation on the whole day (every INPUT failed, unpaired or
+            # unreadable, or the adapter-cursor prefix ended at zero). The pinned PT.finish requires a nonempty
+            # complete prefix; that is the equation's refusal, not the day's. The shared read, with every instant
+            # listed, is retained in shared-market-state.pkl; the receipt below says so and the day goes on.
+            equation_not_run = dict(reason='no original APPLIED operand on the whole day; the pinned equation (PT.finish) '
+                                           'requires a nonempty complete prefix, so no Dipole row is computed or invented',
+                                    operand='original APPLIED payload (contiguous adapter-cursor prefix)', rows=0,
+                                    processed=processed)
+        else:
+            equation_not_run = None
+            as_of = max(r[4] for r in rows)
+            if learner_binding is not None and as_of != bound:
+                raise ValueError('learner reading does not end at its requested whole-day cutoff')
+            spec = [(cursor, True, h) for cursor, h in sorted(hashes.items())]
+            attachment = PT.finish(teacher, rows, processed, hashes, spec, source_manifest_hash=rc['manifest_hash'],
+                                   recovery_path=out / 'teacher-attachment-state.pkl',
+                                   save_requested=save_requested)
     finally:
         try:
             # Closing a paused walk drains already submitted block workers and their
@@ -275,6 +388,26 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             PJ._CANONICAL.clear()
             PJ._SUBSETS.clear()
             reader.close()
+    if equation_not_run is not None:
+        result = dict(schema='FRANKIE_EXPERIMENT_TEACHER_ROWS_V1', day=day, status='equation_not_run',
+                      equation_not_run=equation_not_run, entity=list(entity),
+                      ingestion_receipt=dict(path=str(receipt_path), sha256=receipt_sha256), rows=0, processed=processed,
+                      entity_rows=0, through_cursor=through, walk_seconds=round(walked, 1),
+                      seconds=round(time.time() - started, 1), model_calls=0, experiment_directive=directive_witness(),
+                      external_section=dict(external, listed='no external section built: the rows it aligns to were not computed'))
+        if market is not None:
+            result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
+                          shared_market_arithmetic=shared_read.get('equation'),
+                          shared_market_use='full picture read and every instant listed (shared_market_arithmetic); the '
+                                            'existing equation had no operand, so no row was computed or invented')
+        if learner_binding is not None:
+            result.update(learner_binding=learner_binding, evidence_seat='frankie', independent_scientific_verification=False)
+        result['workflow_report'] = workflow_report(result, receipt_path=receipt_path, rc=rc, external=external, market=market,
+                                                    equation=(shared_read or {}).get('equation') if market is not None else None,
+                                                    workers=workers, exit_code=5)
+        _publish(out, result)
+        print(json.dumps(result, sort_keys=True), flush=True)
+        return 5
     request_id = 'experiment-%s-cycle-00' % day
     source = DC.snapshot_teacher_attachment(attachment, request_id=request_id, cycle_index=0, cycle_count=1,
                                             source_hash=rc['source_prefix_hash'], as_of=as_of, through_cursor=through)
@@ -323,17 +456,11 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             external.update(status='failed', error='%s: %s' % (type(error).__name__, error))
             code = 4
     result['external_section'] = external
-    temporary = out / 'receipt.json.pending'
-    with temporary.open('w') as f:
-        json.dump(result, f, indent=1, sort_keys=True)
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(temporary, out / 'receipt.json')
-    directory_fd = os.open(out, os.O_RDONLY)
-    try:
-        os.fsync(directory_fd)
-    finally:
-        os.close(directory_fd)
+    result['status'] = 'rows_published'
+    result['workflow_report'] = workflow_report(result, receipt_path=receipt_path, rc=rc, external=external, market=market,
+                                                equation=(shared_read or {}).get('equation') if market is not None else None,
+                                                workers=workers, exit_code=code)
+    _publish(out, result)
     print(json.dumps(result, sort_keys=True), flush=True)
     return code
 

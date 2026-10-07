@@ -9,7 +9,10 @@
 # name), REPORTS_DIR (default /opt/frankie-box/work/experiment-reports), DAY_CLASS (optional; default from the weekday),
 # REFUSED_REASON (optional: the orchestrator's reason when it refused the classroom before a receipt was written),
 # EXCHANGE (optional: the day's exchange.json under /opt/frankie-box/work/experiment/<run>/exchange/<day>/; both
-# reports carry the three-way exchange), EXCHANGE_LISTED (optional: why there is none).
+# reports carry the three-way exchange), EXCHANGE_LISTED (optional: why there is none), SCHOOL (optional, 2026-10-07: the
+# day's FRANKIE_SCHOOL_KNOWLEDGE_V1 file the school stage wrote, <brain>/school/<day>.json or a retained checked successor
+# <brain>/school/successors/<day>/<op>/school.json; the FRANKIE report carries what it consolidated and what it lists
+# missing or withheld; its sha256 is part of the reports' source), SCHOOL_LISTED (optional: why there is none).
 set -eu
 : "${MARKETS_SHA:?full dispatched commit required}"; : "${CODE_ROOT:?staged clean checkout required}"
 : "${DAY:?YYYYMMDD required}"; : "${CLASSROOM:?the classroom directory of the day required}"; : "${RUN:?the orchestrator run name required}"
@@ -29,5 +32,9 @@ case "${EXCHANGE:-}" in ""|/opt/frankie-box/work/experiment/*/exchange/[0-9]*/ex
 case "${EXCHANGE:-}" in *..*) echo "no .. in EXCHANGE" >&2; exit 2;; esac
 [ -z "${EXCHANGE:-}" ] || set -- "$@" --exchange "$EXCHANGE"
 [ -z "${EXCHANGE_LISTED:-}" ] || set -- "$@" --exchange-listed "$EXCHANGE_LISTED"
+case "${SCHOOL:-}" in ""|/opt/frankie-box/*/school/[0-9]*.json|/opt/frankie-box/*/school/successors/[0-9]*/*/school.json) ;; *) echo "SCHOOL must be a brain's school/<day>.json or school/successors/<day>/<operation>/school.json" >&2; exit 2;; esac
+case "${SCHOOL:-}" in *..*) echo "no .. in SCHOOL" >&2; exit 2;; esac
+[ -z "${SCHOOL:-}" ] || set -- "$@" --school "$SCHOOL"
+[ -z "${SCHOOL_LISTED:-}" ] || set -- "$@" --school-listed "$SCHOOL_LISTED"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_day_reports.py" "$@"

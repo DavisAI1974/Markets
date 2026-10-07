@@ -335,6 +335,7 @@ def _write(path, body):
 KNOWLEDGE_CORRECTION_REQUEST = 'FRANKIE_KNOWLEDGE_CORRECTION_FOLLOWUP_REQUEST_V1'
 KNOWLEDGE_CORRECTION_RESPONSE = 'FRANKIE_KNOWLEDGE_CORRECTION_FOLLOWUP_RESPONSE_V1'
 KNOWLEDGE_CORRECTION_CONSUMER = 'FRANKIE_ORIGINAL_SESSION_KNOWLEDGE_REPRODUCTION_V1'
+PIECE_WORKFLOW_REPORT = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the one-day inspection record (frankie_box_workflow_inspection)
 
 
 def knowledge_correction_response(request, initial_response):
@@ -443,14 +444,53 @@ def consume_knowledge_correction(request, scope_response, original_request):
                       day=document['content'].get('day') if isinstance(document['content'], dict) else None,
                       kind='original-session-checked-knowledge') for document in effective]
     reproduction = CODE.stage_knowledge_reproduction(visible, knowledge)
+    overlay_sha256, visible_sha256 = digest(scope_response), digest(visible)
+    # The one-day inspection record (Greg, 2026-10-07): what this consumer received, how it used it and what it
+    # produced, from the values computed above only. No clock, no new reading: the host recomputes this whole
+    # consumption from the same request and ledger and compares it byte for byte before attesting.
+    replaced = [dict(original_sha256=selected['sha256'], effective_sha256=document['sha256'], path=document['path'])
+                for selected, document in zip(request['selected_knowledge'], effective)
+                if selected['sha256'] != document['sha256']]
+    unaffected = [selected['sha256'] for selected, document in zip(request['selected_knowledge'], effective)
+                  if selected['sha256'] == document['sha256']]
+    workflow_report = dict(
+        schema=PIECE_WORKFLOW_REPORT, piece='knowledge_correction_consumer',
+        inputs=dict(original_request_sha256=request['original_request_sha256'],
+                    original_response_sha256=request['original_response_sha256'],
+                    checked_overlay_sha256=overlay_sha256, visible_evidence_sha256=visible_sha256,
+                    knowledge_base=request['knowledge_base'], learner_consumer=request['learner_consumer'],
+                    corrections=[dict(correction_sha256=c['record']['sha256'], original_sha256=c['original']['sha256'],
+                                      replacement_sha256=c['replacement']['sha256'], bytes=c['replacement']['bytes'])
+                                 for c in request['corrections']],
+                    selected_knowledge=[{k: s.get(k) for k in ('path', 'bytes', 'sha256')}
+                                        for s in request['selected_knowledge']]),
+        use=dict(replaced=replaced, unaffected=unaffected,
+                 chain='whole checked documents replaced along the carried correction chain; no field-level edit of a '
+                       'derived result; a stale container requires its scientific owner\'s successor',
+                 currentness='REVIEW.require_current on the effective selection and on the original visible evidence',
+                 reader='classroom_code.stage_knowledge_reproduction on classroom.visible_of(original request): '
+                        'existing pair/component predicates only',
+                 not_done=['no forecast rerun', 'no classroom answer rerun', 'no native training',
+                           'no new predicate, numerical method, target, label, lag or validation criterion',
+                           'no answer key read, no new snapshot, no walk'],
+                 pending_feedback='the original pending feedback object is preserved unchanged',
+                 model_calls=0),
+        outputs=dict(effective_documents=len(effective), replaced_documents=len(replaced),
+                     reproduction_fields=sorted(reproduction) if isinstance(reproduction, dict) else
+                     type(reproduction).__name__,
+                     all_knowledge_consumed=False, native_learning_performed=False,
+                     independent_scientific_verification=False, waits=[]),
+        rule='recorded inputs, use and outputs for the one-day review; an analytical reproduction is not native '
+             'learning or scientific confirmation; unsupported predicates stay listed, never promoted; missing '
+             'evidence means unknown, never zero')
     consumption = dict(schema=KNOWLEDGE_CORRECTION_CONSUMER,
         original_request_sha256=request['original_request_sha256'],
         original_response_sha256=request['original_response_sha256'],
-        checked_overlay_sha256=digest(scope_response), visible_evidence_sha256=digest(visible),
+        checked_overlay_sha256=overlay_sha256, visible_evidence_sha256=visible_sha256,
         selected_knowledge=effective, reproduction=reproduction,
         scope='existing pair/component predicates on the original lawful visible evidence',
         native_learning_performed=False, independent_scientific_verification=False,
-        all_knowledge_consumed=False, pending_feedback_preserved=True)
+        all_knowledge_consumed=False, pending_feedback_preserved=True, workflow_report=workflow_report)
     return dict(scope_response, learner_consumption=consumption)
 
 

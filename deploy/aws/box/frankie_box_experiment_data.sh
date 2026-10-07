@@ -23,6 +23,10 @@ set -- --day "$DAY" --cycle "$CYCLE" --calculations "$CALCULATIONS"
 [ -z "${HOST_CONFIG:-}" ] || set -- "$@" --host-config "$HOST_CONFIG"
 [ -z "${RUN:-}" ] || set -- "$@" --run "$RUN"
 [ -z "${TEACHER:-}" ] || set -- "$@" --teacher "$TEACHER"
+# WORKERS (default 1): processes hashing the linked files side by side; the orchestrator starts this step under its
+# booked 16 CPUs and may give 15. The pins (bytes, sha256) are identical whatever the count.
+case "${WORKERS:-1}" in *[!0-9]*|0) echo "WORKERS must be a positive integer" >&2; exit 2;; esac
+set -- "$@" --workers "${WORKERS:-1}"
 case "$ACTION" in plan) set -- "$@" --plan-only;; export) ;; *) echo "ACTION must be plan or export" >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 exec nice -n 10 /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_data.py" "$@"

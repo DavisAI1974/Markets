@@ -69,6 +69,12 @@ claims_seal scientific_result deliveries client_receipt pending unparsed jev_wit
 teacher_rows_listed lessons exchange_hash refused_to_run inputs
 received phase_timings timings read pinned
 axis discovery fft_cache hashing exact_membership equation_not_run findings
+school school_sha256 school_status school_listed index row number_assigned_now built_from revision supersedes
+classroom_copy classroom_copy_listed exchange_sha256 meeting_sha256 meeting_status problems
+successor correction corrections reused_by_child school_recovery dependents native_results native_intent
+acknowledgments learner_consumption selected_knowledge checked_overlay_sha256 visible_evidence_sha256
+all_knowledge_consumed native_learning_performed forecast_replaced pending_feedback_preserved
+original_request_sha256 original_response_sha256 host_attestation_sha256 request_sha256 response_sha256 session_id
 '''.split())
 WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the adviser pieces' own inputs / use / outputs record
 
@@ -82,6 +88,8 @@ day_external day_role partial_members tail_members opening_book input_sources cl
 searches searched_days requested_search_days frozen_survivors entity binding source commit plan_sha256
 teacher_rows shared_market_external teacher_shared_market_arithmetic learner_reading carried_from_previous
 school_knowledge stage_knowledge classroom_rules experiment_directive received
+school school_sha256 built_from exchange_sha256 meeting_sha256 original_request_sha256 original_response_sha256
+checked_overlay_sha256 visible_evidence_sha256 selected_knowledge
 '''.split())
 USED = set('''coverage completeness arithmetic equation shared_market_arithmetic shared_market_use root_processes not_run
 layers dispositions frame_dispositions pairing exclusions leakage lags transforms cells_not_counted not_searched
@@ -89,6 +97,7 @@ missing excluded withheld listed reason caveat rule interpretation limitation vi
 closed_source_without_root_frame unplaceable_input_clocks completed_sources stopped
 shared_market anchor_pictures source_status_counts applied_to phase_timings timings read
 axis exact_membership fft_cache hashing equation_not_run
+school_listed problems number_assigned_now meeting_status school_status
 '''.split())
 PRODUCED = set('''outputs rows entity_rows rows_file attachment_file failure_count status shared_market_sources
 presented_inputs external_publications integrity_failure placed_series placed_cells couplings series cells planes
@@ -96,6 +105,8 @@ results reports brain_entry brain_entries external_section external_computation 
 mode components observations pairs novel_findings novel_finding_ids dropped_findings correction_ids
 teacher_complete completion_hash external_novel_finding_ids jev_material saved_phases stop_requested
 discovery findings unclaimed
+report_number revision supersedes classroom_copy index row file sha256 bytes learner_consumption
+all_knowledge_consumed native_learning_performed forecast_replaced pending_feedback_preserved
 '''.split())
 
 _OUT = []          # the current piece's markdown; stdout when no --write directory is given
@@ -152,7 +163,31 @@ def metadata(path, label):
                     other_fields_retained_at_source=sorted(set(body) - FIELDS)))
     received_used_produced(body, path.name)
     workflow_report_block(body, path.name)
+    nested_workflow_reports(body, path.name)
     return body
+
+
+def nested_workflow_reports(body, label):
+    """A piece whose own record sits inside a retained envelope: the correction consumer's
+    FRANKIE_ORIGINAL_SESSION_KNOWLEDGE_REPRODUCTION_V1 travels as learner_consumption inside the follow-up
+    receipt/response (the dependents' native-results file carries that receipt whole). Known field names, one
+    level each, never a scan; the flags beside it are projected as recorded; the reproduction body stays at source."""
+    for field in ('receipt', 'response', 'learner_consumption'):
+        inner = body.get(field)
+        if not isinstance(inner, dict):
+            continue
+        if field == 'learner_consumption':
+            json_block(dict(learner_consumption={k: inner.get(k) for k in (
+                'schema', 'original_request_sha256', 'original_response_sha256', 'checked_overlay_sha256',
+                'visible_evidence_sha256', 'scope', 'native_learning_performed', 'independent_scientific_verification',
+                'all_knowledge_consumed', 'pending_feedback_preserved')},
+                selected_knowledge=[{k: d.get(k) for k in ('path', 'bytes', 'sha256')}
+                                    for d in inner.get('selected_knowledge') or [] if isinstance(d, dict)],
+                disposition='the analytical consumer\'s record; a reproduction is not native learning, a forecast '
+                            'rerun or scientific confirmation'))
+            workflow_report_block(inner, label + ' > learner_consumption')
+        else:
+            nested_workflow_reports(inner, label + ' > ' + field)
 
 
 def workflow_report_block(body, label):
@@ -291,6 +326,22 @@ def artifact_paths(record, piece):
         path = absolute(source_review.get('path'))
         if path:
             out.append(path)
+    if piece == 'school':
+        # The school step's record names the school file (never opened here: it inlines the day's lessons, exchange
+        # and meeting); its small index (the indexed original) or successor receipt (a checked successor) is the
+        # contract. The reports step writes its receipt beside its index, <reports-dir>/receipts/<run>/<day>.json
+        # (its workflow_report: what the reports received, carried, withheld and produced); the index keeps every build.
+        school_file = absolute(record.get('file')) if record.get('stage') == 'school' else None
+        if school_file is None and isinstance(record.get('school'), dict):
+            school_file = absolute(record['school'].get('file'))
+        if school_file:
+            out.append(school_file.with_name('receipt.json') if 'successors' in school_file.parts
+                       else school_file.with_name('index.json'))
+        reports = [absolute(r.get('file')) for r in record.get('reports') or [] if isinstance(r, dict)]
+        reports = [r for r in reports if r]
+        if reports and record.get('run') and record.get('_inspection_day'):
+            out.append(reports[0].parent / 'receipts' / str(record['run']) / (str(record['_inspection_day']) + '.json'))
+            out.append(reports[0].parent / 'index.json')
     classroom = absolute(record.get('classroom'))
     if classroom and piece == 'classroom':
         out += [classroom / name for name in ('receipt.json', 'learner-knowledge.json',
