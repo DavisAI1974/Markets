@@ -186,6 +186,30 @@ def executability(entry, staging):
     return not reasons, reasons
 
 
+def input_supply(entry, staging):
+    """B6: the exact state of the original-input supply for this binding. There is NO settled interface by which a
+    teacher supplies an input that is not in the repository (realbins/, the S3 NG MBP-10 tapes, the regime caches):
+    stage() lists them missing and executability() refuses, so supplying the bytes has no implemented path today. The
+    missing interface is named precisely; it is not built here (no data fetched, no AWS source activated, no input
+    invented) and nothing claims runnable reproduction for a missing_inputs binding."""
+    missing = [m for m in staging.get('missing') or [] if m.get('what') == 'input']
+    if not missing:
+        return dict(status='no_external_input_needed' if entry['status'] == 'defined' else 'not_applicable', missing=[])
+    return dict(status='no_settled_interface', missing=[dict(path=m.get('path'), where=m.get('where')) for m in missing],
+                interface_needed='an authorized local-input receipt per declared input, bound into the staging as '
+                                 'what=input, status=supplied: {path (the declared input), local_path, bytes, sha256, '
+                                 'read_from (the source the teacher read it from), authorization (the explicit go)}; '
+                                 'stage() would verify the bytes against it at staging and run() again before dispatch; '
+                                 'the sha256 of the supplied bytes would then join pins_of() so a record names them',
+                nearest_existing_contracts=['frankie_box_boss_session.Session.source_binding: container {path, bytes, '
+                                            'sha256, journal_count, journal_hash} pinned per cycle and re-verified in derive()',
+                                            'the search MANIFEST couplings.parts: {path, bytes, sha256} per evidence part, '
+                                            'verified by frankie_box_teacher_knowledge before the first test',
+                                            'frankie_box_durable.witness(path): {bytes, sha256}'],
+                decision='whether the teachers may read these inputs at all (S3 credentials, the realbins archive) and under '
+                         'which authorization is Greg\'s; no reformulation definition is implied by it')
+
+
 def plan(entry, staging, out_dir):
     executable, reasons = executability(entry, staging)
     doc = dict(schema=PLAN_SCHEMA, entry_id=entry['id'], claims=list(entry['claims']), binding_status=entry['status'],
@@ -198,6 +222,7 @@ def plan(entry, staging, out_dir):
                staging_sha256=sha256_bytes(canonical(staging)),
                capability_sha256=sha256_bytes(Path(__file__).read_bytes()),
                executable=executable, not_executable_reasons=reasons,
+               input_supply=input_supply(entry, staging),
                rule='a plan stages declared bytes and names the recorded outputs; it runs nothing and marks nothing reproduced')
     data = (json.dumps(doc, indent=1, sort_keys=True) + '\n').encode()
     ok, why = write_once(Path(out_dir) / 'plan.json', data)
@@ -257,11 +282,21 @@ def run(plan_doc, staging, out_dir, authorized=None, timeout=3600):
             raise SystemExit(why)
         try:
             done = subprocess.run(argv, cwd=str(cwd), capture_output=True, timeout=timeout)
-            result = dict(returncode=done.returncode, stdout=done.stdout.decode('utf-8', 'replace'),
-                          stderr=done.stderr.decode('utf-8', 'replace')[-20000:], timed_out=False)
+            raw_out, raw_err, returncode, timed_out = done.stdout, done.stderr, done.returncode, False
         except subprocess.TimeoutExpired as error:
-            result = dict(returncode=None, stdout=(error.stdout or b'').decode('utf-8', 'replace'),
-                          stderr=(error.stderr or b'').decode('utf-8', 'replace')[-20000:], timed_out=True)
+            raw_out, raw_err, returncode, timed_out = error.stdout or b'', error.stderr or b'', None, True
+        # B1: the ORIGINAL bytes of both streams are retained whole (write-once files, hash-bound in this document); the
+        # decoded text is a convenience for the printed-pattern comparison, never a reduction of the evidence.
+        streams = {}
+        for name, raw in (('stdout', raw_out), ('stderr', raw_err)):
+            ok, why = write_once(out / (name + '.bin'), raw)
+            if not ok:
+                raise SystemExit(why)
+            streams[name] = dict(path=str(out / (name + '.bin')), bytes=len(raw), sha256=sha256_bytes(raw))
+        result = dict(returncode=returncode, timed_out=timed_out, streams=streams,
+                      stdout=raw_out.decode('utf-8', 'replace'), stderr=raw_err.decode('utf-8', 'replace'),
+                      streams_rule='stdout.bin / stderr.bin hold every original byte; the text fields are a replacement '
+                                   'decoding of the same bytes, whole, not a cap')
         produced = []
         for rel in command.get('produces') or []:
             path = cwd / rel
@@ -355,11 +390,12 @@ def _compare_json(produced, recorded, fields, scope=None, argv=None):
             matched += 1
         else:
             differs.append(dict(field=key, recorded=value, produced=got[key]))
-    extra = sum(1 for k in got if k not in want and _selected(k, fields))
+    # B1: every differing, missing and produced-only leaf is kept (no cap, no sampling); counts beside the lists
+    produced_only = sorted(k for k in got if k not in want and _selected(k, fields))
     status = 'differs' if differs or not_found else 'matched' if matched else 'not_comparable'
-    return dict(status=status, leaves_recorded=len(want), matched=matched, differs=differs[:200],
-                differs_count=len(differs), not_found=not_found[:200], not_found_count=len(not_found),
-                produced_only_leaves=extra, scope=scope, alignment=notes)
+    return dict(status=status, leaves_recorded=len(want), matched=matched, differs=differs,
+                differs_count=len(differs), not_found=not_found, not_found_count=len(not_found),
+                produced_only=produced_only, produced_only_leaves=len(produced_only), scope=scope, alignment=notes)
 
 
 def compare(entry, run_doc, staging):

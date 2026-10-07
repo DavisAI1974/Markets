@@ -415,7 +415,13 @@ def completed_native_evidence(d, out_root):
     else:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
+    # C1: the reference's IDENTITY is its content, sources and owning manifest (identity below), never where this owner
+    # materialized it (path): identical bytes under another output root are the same evidence; different bytes for the
+    # same frozen owner are different evidence (native_evidence_identity compares them).
     reference = dict(path=str(path), sha256=sha256_bytes(data), bytes=len(data), day=d['day'],
+                     search_manifest_sha256=d['manifest_sha256'], read_from=doc['read_from'],
+                     identity=dict(day=d['day'], search_manifest_sha256=d['manifest_sha256'], sha256=sha256_bytes(data),
+                                   bytes=len(data), read_from=doc['read_from']),
                      counts=dict(first_last_pairs=len((doc.get('section_4_2') or {}).get('first_last_pairs') or []),
                                  stream_end_rows=len((doc.get('section_4_4') or {}).get('stream_end_rows') or []),
                                  finalize_rows=doc['finalize_rows']['by_ledger'],
@@ -423,6 +429,17 @@ def completed_native_evidence(d, out_root):
                      receipt=doc.get('receipt'), matching_rule=(doc.get('section_4_4') or {}).get('matching_rule'),
                      listed=listed)
     return reference, listed
+
+
+def native_evidence_identity(reference):
+    """The storage-independent identity of a completed-native reference (C1): its own `identity` when it carries one,
+    else everything but the materialization path (an older reference), so two readings of the same bytes under
+    different output roots compare equal and different evidence never does."""
+    if not isinstance(reference, dict):
+        return reference
+    if isinstance(reference.get('identity'), dict):
+        return reference['identity']
+    return {k: v for k, v in reference.items() if k != 'path'}
 
 
 def match(name, series):

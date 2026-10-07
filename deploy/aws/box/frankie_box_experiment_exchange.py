@@ -656,6 +656,9 @@ def origin_evidence_accounting(result, day, src):
         if row.get('day') != day:
             listed.append(dict(origin, day=row.get('day'), reason='outside current day; original status unchanged'))
             continue
+        # A4: identity presence is independent of whether the row's arithmetic can be performed: the reader's
+        # authenticated discovery_row on a current-day row counts as found even when the row is only listed below.
+        found = found or row.get('discovery_row') is True
         reasons, margins = count_margins(row)
         where = row.get('where') if isinstance(row.get('where'), dict) else None
         if where is None:
@@ -679,7 +682,6 @@ def origin_evidence_accounting(result, day, src):
             listed_on_day += 1
             continue
         discovery = row.get('discovery_row') is True
-        found = found or discovery
         scope = {key: row[key] for key in ('day', 'x', 'y', 'x_transform', 'y_transform', 'cell', 'cell_value', 'lag')}
         scope_text = ('on %s, %s -> %s (%s / %s), cell %s=%s, lag %s' % tuple(
             said.v(scope[key], src['sha256'], 'origin row ' + key)
@@ -714,6 +716,8 @@ def origin_evidence_accounting(result, day, src):
         teaching.append(text)
     return dict(schema=schema, rows=entries, listed=listed, teaching=teaching, cites=said.cites,
                 independent_measurements=0, counts_as_test=False, discovery_row_found=found,
+                discovery_row_margins_stated=any(e['discovery_row'] for e in entries),
+                discovery_row_listed_without_arithmetic=any(x.get('discovery_row') for x in listed),
                 listed_on_day=listed_on_day,
                 limitation='nonzero transformed-step margins at the retained circular shift, not PRESENT masks or known '
                            'physical inactivity: zero may be stationary, missing or unclassified (the shared route\'s '
