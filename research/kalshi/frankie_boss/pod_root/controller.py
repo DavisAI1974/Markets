@@ -441,7 +441,8 @@ class Controller:
         self.outcome = None
         self.last_worker = None
         self.lease_identity = dict(host=HOST['host'], pid=os.getpid(), started_epoch=int(self.started),
-                                   unit=os.environ.get('CPU_CONTROLLER_UNIT'), controller=controller_id())
+                                   unit=os.environ.get('CPU_CONTROLLER_UNIT'), controller=controller_id(),
+                                   scope=dict(run=a.run, days=a.days or 'the saved plan'))
         self.lease_etag = None
         self.lease_extra = {}
         self.lease_lock = threading.Lock()
@@ -621,6 +622,8 @@ class Controller:
             held = next((d.get('claim') for d in q['days'] if (d.get('claim') or {}).get('attempt') == job_id), None)
             if not held or held.get('where') != w.where:
                 raise ValueError('the day must still be claimed by this Linux worker (original claim untouched)')
+            if not self.authorized(held.get('day') or job_id[len(self.run) + 1:len(self.run) + 9]):
+                raise ValueError('the day is outside this controller\'s authorized scope (--days); not resumed here')
             if before and (before.get('pid_alive') or before.get('state') == 'day_complete'):
                 raise ValueError('the job is %s (pid alive %s): a live or completed day is not resumed' % (
                     before.get('state'), before.get('pid_alive')))
@@ -878,10 +881,20 @@ class Controller:
             self.event(worker=w.where, day=day, attempt=attempt, step='handle %s' % state, result='failed',
                        error='%s: %s' % (type(e).__name__, str(e)[:500]))
 
+    def authorized(self, day):
+        """The authorized scope: the run's saved plan, narrowed by --days when given (a one-day scope admits one day)."""
+        return not self.a.days or day in self.a.days
+
     def next_ready(self):
+        """The front ready day of the line within the authorized scope: an out-of-scope day ahead that has not started
+        makes the eligible days behind it wait (FIFO), and is never claimed by this controller."""
         with self.lock:
             q = self.queue()
             for d in q['days']:
+                if d['state'] == 'ready' and not self.authorized(d['day']):
+                    self.event(day=d['day'], step='scope', result='out of scope ahead',
+                               detail='not claimed by this controller; the eligible days behind it wait (FIFO)')
+                    return None
                 if d['state'] == 'ready' and self.start_failures.get(d['day'], 0) < 2:
                     return d
             return None
@@ -944,6 +957,8 @@ class Controller:
         reasons, blocked = [], []
         for d in q['days']:
             claim = d.get('claim') or {}
+            if not self.authorized(d['day']) and claim.get('where') != w.where:
+                continue                                 # outside the authorization and not this lane's: not its work
             if d['state'] == 'ready' and self.start_failures.get(d['day'], 0) >= 2:
                 blocked.append('%s ready but not started after 2 failed starts' % d['day'])
             elif d['state'] in ('ready', 'waiting_ingest', 'waiting_day_file', 'behind_in_root_line', 'not_in_root_line'):
@@ -1224,6 +1239,8 @@ def main():
     p.add_argument('--commit', default='', help='the staged checkout\'s full commit; the queue\'s code_commit must equal it')
     p.add_argument('--job', help='original retained Linux job/attempt, required for resume/stop')
     p.add_argument('--run', required=True, help='the orchestrator run (its plan.json lists the days, roles and arm)')
+    p.add_argument('--days', default='', help='the authorized days (comma list YYYYMMDD) this controller may claim or '
+                                              'resume; default: every day of the run\'s saved plan')
     p.add_argument('--code-root', required=True, help='a staged clean checkout on the main box holding this code')
     p.add_argument('--boxes', default='', help='the worker box instance@region (set up by frankie_box_worker_setup.sh)')
     p.add_argument('--slots', type=int, default=1, help='days at once on the worker: exactly 1 (one held 16-CPU lane)')
@@ -1246,6 +1263,9 @@ def main():
         raise SystemExit('--run [A-Za-z0-9_-] and --code-root /opt/frankie-box/code/... required')
     if a.commit and not re.fullmatch(r'[0-9a-f]{40}', a.commit):
         raise SystemExit('--commit must be the full 40-hex commit')
+    a.days = [d for d in a.days.split(',') if d]
+    if not all(re.fullmatch(r'[0-9]{8}', d) for d in a.days) or len(set(a.days)) != len(a.days):
+        raise SystemExit('--days must be distinct YYYYMMDD values')
     if a.action in ('loop', 'resume', 'stop', 'preflight') and (a.slots != 1 or a.boxes != LINUX_LANE):
         raise SystemExit('the experiment uses exactly one Linux lane: --boxes %s --slots 1' % LINUX_LANE)
     if a.url_hours > 168:
@@ -1334,6 +1354,8 @@ def held_worker(a, ctl, q):
     held = next((d.get('claim') for d in q['days'] if (d.get('claim') or {}).get('attempt') == a.job), None)
     if not held or held['where'] != w.where:
         raise SystemExit('the day must still be claimed by this Linux worker (original claim untouched)')
+    if not ctl.authorized(held.get('day') or a.job[len(a.run) + 1:len(a.run) + 9]):
+        raise SystemExit('the day is outside this controller\'s authorized scope (--days); original claim untouched')
     return w
 
 

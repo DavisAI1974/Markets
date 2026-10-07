@@ -1238,12 +1238,16 @@ class Run:
                            reason='in the ROOT line at seq %d (%s, %s): it runs in arrival order in the next free day-run '
                                   'slot (box or Pod)' % (entry['seq'], outcome, entry['state']))
 
+    def scope_text(self):
+        """The authorized scope of this run: its saved plan's days, exactly (a one-day plan is a one-day scope)."""
+        return '%s:%s' % (self.plan['run'], ','.join(e['day'] for e in self.plan['days']))
+
     def kick(self, line):
         self.check_save()
         import frankie_box_frankie_queue as Q
         try:
             return Q.kick(line, self.code_root, self.commit, self.a.queue_worker_seconds, self.a.queue_poll_seconds,
-                          by='frankie_box_experiment.py %s' % self.plan['run'], log=self.log)
+                          by='frankie_box_experiment.py %s' % self.plan['run'], log=self.log, scope=self.scope_text())
         except Exception as error:                   # listed; the next start kicks again
             self.log('the %s worker could not be kicked (%s: %s)' % (line, type(error).__name__, error))
             return None

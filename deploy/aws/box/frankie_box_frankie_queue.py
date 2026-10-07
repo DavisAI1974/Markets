@@ -101,6 +101,29 @@ STATES = ('queued', 'running', 'done', 'failed', 'saved', 'unknown')
 #        booking are retained; ACTION=resume reconciles and resumes it, nothing requeues it on its own.
 SAVE_DIR = QUEUE / 'save'                 # <run>-<day>.save-request.json: the day-bound save marker; its acknowledgments beside it
 OWNER_STATES = ('saved', 'unknown')
+
+
+# THE AUTHORIZED SCOPE (Step 8, 2026-10-07). Every worker is started FOR an exact run and set of days ("RUN:D1,D2,...",
+# the orchestrator's saved plan days or a dispatch's one day). It reconciles, admits, finishes and receipts only entries
+# inside that scope; an entry outside it is left exactly as it is (never admitted, requeued, failed or deleted). FIFO
+# holds within the eligible scope: an out-of-scope predecessor that has not started makes the eligible day behind it
+# wait (the line is never reordered), and it is never started by this worker (a predecessor cannot widen the
+# authorization). A kick without a scope is refused; a restart carries its own scope and never expands it.
+
+def parse_scope(text):
+    """'RUN:D1,D2' -> {'run': RUN, 'days': {D1, D2}}; refuses anything else."""
+    import re
+    run, sep, days = (text or '').partition(':')
+    if not sep or not re.fullmatch('[A-Za-z0-9_-]{1,64}', run):
+        raise SystemExit('--scope RUN:YYYYMMDD,... required (the authorized run and days)')
+    out = [d for d in days.split(',') if d]
+    if not out or not all(re.fullmatch('[0-9]{8}', d) for d in out) or len(set(out)) != len(out):
+        raise SystemExit('--scope days must be distinct YYYYMMDD values')
+    return dict(run=run, days=set(out), text='%s:%s' % (run, ','.join(out)))
+
+
+def in_scope(x, scope):
+    return x['run'] == scope['run'] and x['day'] in scope['days']
 CLASS_STAGES = ('classroom', 'data', 'search', 'batch_lessons', 'frankie_lessons', 'exchange', 'voice', 'school', 'reports')
 CORES_PER_SLOT = 16                       # a box day-run slot: exactly 16 booked CPUs (the core ledger's rule)
 # the Run settings an entry carries (the enqueuer's orchestrator arguments), so the worker builds the same Run
@@ -331,22 +354,26 @@ def class_running(log=print):
             fcntl.flock(f, fcntl.LOCK_UN)
 
 
-def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print):
-    """Start the line's worker detached (systemd-run, else a new session) unless one runs. The kicked worker is bounded by
-    max_seconds like a dispatched one. Returns what happened (also an event)."""
+def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scope=None):
+    """Start the line's worker detached (systemd-run, else a new session) unless one runs, FOR the authorized scope
+    (RUN:days; refused without one). The kicked worker is bounded by max_seconds like a dispatched one. A running worker
+    keeps its own scope: a day outside it waits for the next kick after that worker ends. Returns what happened."""
+    scope = parse_scope(scope['text'] if isinstance(scope, dict) else scope)
     QUEUE.mkdir(parents=True, exist_ok=True)
     probe = _take_worker_lock(line)
     if probe is None:
         status, _ = worker_state(line)
         with locked():
-            event(line, 'kick_worker_running', by=by, worker=(status or {}).get('pid'))
-        return dict(started=False, reason='a %s worker runs (pid %s)' % (line, (status or {}).get('pid')))
+            event(line, 'kick_worker_running', by=by, worker=(status or {}).get('pid'), scope=scope['text'],
+                  worker_scope=(status or {}).get('scope'))
+        return dict(started=False, reason='a %s worker runs (pid %s, scope %s); days outside its scope wait for the next '
+                                          'kick after it ends' % (line, (status or {}).get('pid'), (status or {}).get('scope')))
     probe.close()                         # released: the new worker takes it (a race with another kick: one of them exits)
     (QUEUE / 'logs').mkdir(parents=True, exist_ok=True)
     log_path = QUEUE / 'logs' / ('%s-worker.log' % line)
     argv = [sys.executable, '-B', str(HERE / 'frankie_box_frankie_queue.py'), '--action', 'worker', '--line', line,
             '--code-root', str(code_root), '--commit', commit, '--max-seconds', str(int(max_seconds)),
-            '--poll-seconds', str(int(poll_seconds))]
+            '--poll-seconds', str(int(poll_seconds)), '--scope', scope['text']]
     env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
                MARKETS_SHA=commit, CODE_ROOT=str(code_root))
     how = None
@@ -362,15 +389,18 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print):
                                     stdin=subprocess.DEVNULL, start_new_session=True)
         how = dict(method='new session', pid=proc.pid, systemd_run=how)
     with locked():
-        event(line, 'kick', by=by, commit=commit, code_root=str(code_root), max_seconds=max_seconds, how=how, log=str(log_path))
-    log('%s worker started (%s); log %s' % (line, how, log_path))
-    return dict(started=True, how=how, log=str(log_path))
+        event(line, 'kick', by=by, commit=commit, code_root=str(code_root), max_seconds=max_seconds, how=how, log=str(log_path),
+              scope=scope['text'])
+    log('%s worker started for %s (%s); log %s' % (line, scope['text'], how, log_path))
+    return dict(started=True, how=how, log=str(log_path), scope=scope['text'])
 
 
-def handover(line, code_root, commit, max_seconds, poll_seconds, log=print):
+def handover(line, code_root, commit, max_seconds, poll_seconds, log=print, scope=None):
     """Move the line to new code without stopping any running day (2026-09-30): the running worker gets SIGTERM, which
     only stops it TAKING new work (its running days finish in their slots, then it ends and releases its lock); a new
-    worker at this commit starts detached now and waits on the lock, so it takes over the moment the old one ends."""
+    worker at this commit starts detached now and waits on the lock, so it takes over the moment the old one ends. The
+    new worker carries the given scope (never the old worker's, never wider)."""
+    scope = parse_scope(scope['text'] if isinstance(scope, dict) else scope)
     if line != 'root':
         raise SystemExit('handover is for the root line')
     status, held = worker_state(line)
@@ -406,7 +436,7 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print):
     log_path = QUEUE / 'logs' / ('%s-worker.log' % line)
     argv = [sys.executable, '-B', str(HERE / 'frankie_box_frankie_queue.py'), '--action', 'worker', '--line', line,
             '--code-root', str(code_root), '--commit', commit, '--max-seconds', str(int(max_seconds)),
-            '--poll-seconds', str(int(poll_seconds)), '--wait-lock']
+            '--poll-seconds', str(int(poll_seconds)), '--wait-lock', '--scope', scope['text']]
     env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
                MARKETS_SHA=commit, CODE_ROOT=str(code_root))
     unit = 'frankie-queue-%s-handover-%d' % (line, int(time.time()))
@@ -415,7 +445,7 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print):
     code = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).returncode
     with locked():
         event(line, 'handover', old_pid=old, signalled=signalled, superseded=superseded, unit=unit, exit_code=code,
-              commit=commit)
+              commit=commit, scope=scope['text'])
     return dict(old_worker=old, signalled=signalled, superseded_waiting=superseded, new_unit=unit, systemd_run_exit=code, log=str(log_path),
                 note='the old worker finishes the days in its slots and ends; the new one waits on the lock, then runs')
 
@@ -786,8 +816,9 @@ def _take_class(doc, x, commit):
     return previous, None
 
 
-def class_worker(code_root, commit, max_seconds, poll_seconds, log=print):
-    """The one class worker: the front of the class line, one day at a time, polled while it waits."""
+def class_worker(code_root, commit, max_seconds, poll_seconds, log=print, scope=None):
+    """The one class worker: the front of the class line, one day at a time, polled while it waits; FOR its scope only."""
+    scope = parse_scope(scope['text'] if isinstance(scope, dict) else scope)
     lock = _take_worker_lock('class')
     if lock is None:
         status, _ = worker_state('class')
@@ -800,7 +831,7 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print):
     deadline = time.monotonic() + max_seconds
     retried, current, previous, code = set(), None, None, 0
     _worker_status('class', state='running', commit=commit, code_root=str(code_root), max_seconds=max_seconds,
-                   poll_seconds=poll_seconds, started_utc=utc())
+                   poll_seconds=poll_seconds, started_utc=utc(), scope=scope['text'])
 
     def release():
         nonlocal lock
@@ -825,6 +856,15 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print):
                     release()
                     code = 0 if x is None else 3
                     break
+                if not in_scope(x, scope):
+                    # the front is outside this worker's authorization: FIFO makes everything behind it wait, and this
+                    # worker never starts it (left exactly as it is); a kick with the right scope takes it
+                    about = dict(seq=x['seq'], day=x['day'], run=x['run'], state=x['state'], scope=scope['text'])
+                    _worker_status('class', state='waiting_out_of_scope', commit=commit, front=about, scope=scope['text'])
+                    event('class', 'worker_end', state='waiting_out_of_scope', front=about, scope=scope['text'])
+                    probe.update('class:waiting_out_of_scope', n_done, len(doc['entries']) or None, state='waiting')
+                    release()
+                    return 5
                 if (x.get('readiness') or {}).get('remote'):
                     # The remote holder runs the class in its original lane; the main worker never takes it.
                     release()
@@ -1096,7 +1136,7 @@ def _after_root(run, e, code_root, commit, log):
                 event('class', 'slot', seq=y['seq'], day=y['day'], run=y['run'], slot_booking=slot, owner=y.get('owner'))
     if (c or {}).get('status') == 'queued':
         kick('class', code_root, commit, run.a.queue_worker_seconds, run.a.queue_poll_seconds,
-             by='ROOT line after %s %s' % (run.plan['run'], e['day']), log=log)
+             by='ROOT line after %s %s' % (run.plan['run'], e['day']), log=log, scope=run.scope_text())
     return out
 
 
@@ -1436,11 +1476,12 @@ def _retain_quietly(x):
         x['owner']['retain_error'] = '%s: %s' % (type(error).__name__, error)
 
 
-def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lock=False):
+def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lock=False, scope=None):
     """The one ROOT worker: box slots filled from the front of the ROOT line in arrival order; Pod claims followed. It
     never starts a ROOT after its bound or a stop signal, and waits for the ROOTs it started (their receipts are theirs).
     Each box-slot day runs its whole day in the slot (ROOT, its teacher, the class line); days whose ROOT is done but
-    whose day is not take free slots first."""
+    whose day is not take free slots first. Everything it reconciles, admits or receipts is inside its scope."""
+    scope = parse_scope(scope['text'] if isinstance(scope, dict) else scope)
     lock = _take_worker_lock('root', wait=wait_lock)
     if lock is None:
         status, _ = worker_state('root')
@@ -1454,7 +1495,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
     deadline = time.monotonic() + max_seconds
     running, retried, plans, code = {}, set(), {}, 0
     _worker_status('root', state='running', commit=commit, code_root=str(code_root), max_seconds=max_seconds,
-                   poll_seconds=poll_seconds, started_utc=utc())
+                   poll_seconds=poll_seconds, started_utc=utc(), scope=scope['text'])
     while True:
         if time.monotonic() >= deadline:
             stop.setdefault('reason', 'the time bound (%d s)' % max_seconds)
@@ -1501,6 +1542,8 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 event('root', 'slot_end', seq=seq, day=y['day'], run=y['run'], result=result, reason=reason, facts=facts)
                 log('ROOT seq %d %s (%s): %s%s' % (seq, y['day'], y['run'], result, (': %s' % reason) if reason else ''))
             for x in ordered(doc):
+                if not in_scope(x, scope):
+                    continue                                # outside the authorization: left exactly as it is
                 if (x['seq'] not in running and not str(x.get('where') or '').startswith('worker:') and
                         (x['state'] != 'done' or _needs_finish(x, plans) or x.get('needs_receipt'))):
                     why = _source_wait(x, code_root, commit)
@@ -1525,9 +1568,12 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 return (min(f, total - len(running)) if f is not None else total - len(running)), src
 
             # first the days whose ROOT is done but whose day is not: back into a slot ahead of any new ROOT
+            out_of_scope_ahead = None
             for x in ordered(doc):
                 if stop or x['seq'] in running or not _needs_finish(x, plans):
                     continue
+                if not in_scope(x, scope):
+                    continue                                # its own scope's worker finishes it
                 why = _source_wait(x, code_root, commit)
                 if why:
                     x['reason'] = source = why
@@ -1554,6 +1600,13 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     break                                   # retained owner recovery precedes new day admission
                 if x['state'] in ('done', 'running') + OWNER_STATES:
                     continue                                # a saved/unknown day is its owner's (ACTION=resume), not admitted
+                if not in_scope(x, scope):
+                    # an out-of-scope predecessor that has not started: FIFO makes the eligible days behind it wait;
+                    # this worker never starts it (a predecessor cannot widen the authorization)
+                    out_of_scope_ahead = x
+                    source = 'seq %d day %s run %s is outside this worker\'s scope %s and has not started: the days behind ' \
+                             'it wait (FIFO); a kick with its scope takes it' % (x['seq'], x['day'], x['run'], scope['text'])
+                    break
                 why = _source_wait(x, code_root, commit)
                 if why:
                     x['reason'] = source = why
@@ -1582,8 +1635,8 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 t.start()
                 event('root', 'take', seq=x['seq'], day=x['day'], run=x['run'], where='box-slot', slot_booking=slot)
             save('root', doc)
-            pending = [x for x in doc['entries'] if x['state'] != 'done' or
-                       (x.get('finish') or {}).get('state') not in ('finished', 'failed') and _needs_finish(x, plans)]
+            pending = [x for x in doc['entries'] if in_scope(x, scope) and (x['state'] != 'done' or
+                       (x.get('finish') or {}).get('state') not in ('finished', 'failed') and _needs_finish(x, plans))]
             owned = [x for x in pending if x['state'] in OWNER_STATES or (x.get('finish') or {}).get('state') in OWNER_STATES]
             n_done = len(doc['entries']) - len(pending)
             end = None
@@ -1594,7 +1647,11 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 blocked = owned[0]                           # every pending day is saved/unknown: its owner's ACTION=resume
                 end = ('waiting_owner', 5)
             elif not running and not pending and not after:
-                end = ('idle', 0)
+                end = ('idle', 0)                            # nothing of this scope left; other scopes' days are untouched
+            elif not running and not after and out_of_scope_ahead is not None and pending and \
+                    all(x['state'] not in ('running',) for x in pending):
+                blocked = out_of_scope_ahead
+                end = ('waiting_out_of_scope', 5)
             elif not running and not after and blocked is not None and all(x['state'] != 'running' for x in pending):
                 end = ('stopped_at_failed', 3)
             elif not running and stop and not after:
@@ -1602,17 +1659,20 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
             if end:
                 about = None if blocked is None else dict(seq=blocked['seq'], day=blocked['day'], run=blocked['run'],
                                                           reason=blocked.get('reason'))
-                _worker_status('root', state=end[0], commit=commit,
-                               reason=blocked.get('reason') if end[0] == 'waiting_owner' else stop.get('reason'), front=about,
-                               pending=len(pending))
-                event('root', 'worker_end', state=end[0], reason=stop.get('reason'), front=about, pending=len(pending))
+                _worker_status('root', state=end[0], commit=commit, scope=scope['text'],
+                               reason=blocked.get('reason') if end[0] == 'waiting_owner' else source if end[0] == 'waiting_out_of_scope'
+                               else stop.get('reason'), front=about, pending=len(pending))
+                event('root', 'worker_end', state=end[0], reason=stop.get('reason'), front=about, pending=len(pending),
+                      scope=scope['text'])
                 probe.update('root:' + end[0], n_done, len(doc['entries']) or None,
-                             state='waiting' if end[0] == 'waiting_owner' else 'complete' if end[1] == 0 else 'failed')
+                             state='waiting' if end[0] in ('waiting_owner', 'waiting_out_of_scope') else 'complete' if end[1] == 0 else 'failed')
                 fcntl.flock(lock, fcntl.LOCK_UN)            # released under the queue lock: an enqueue now gets a new kick
                 lock.close()
                 code = end[1]
                 break
         for x in after:                                     # a ROOT finished elsewhere: its step receipt, then the class line
+            if not in_scope(x, scope):
+                continue
             why = _source_wait(x, code_root, commit)
             if why:
                 with locked():
@@ -1634,7 +1694,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     event('root', 'receipt_after_found_failed', seq=x['seq'], day=x['day'], run=x['run'],
                           reason='%s: %s' % (type(error).__name__, error))
         _worker_status('root', state='running', commit=commit, running=sorted(running), stop=stop.get('reason'),
-                       pending=len(pending))
+                       pending=len(pending), scope=scope['text'])
         probe.update('root:running %d' % len(running), n_done, len(doc['entries']) or None, in_flight=len(running))
         time.sleep(poll_seconds)
     return code
@@ -1772,6 +1832,7 @@ def main():
     p.add_argument('--max-seconds', type=int, default=1500)
     p.add_argument('--poll-seconds', type=int, default=60)
     p.add_argument('--kick', choices=('on', 'off'), default='on', help='enqueue: kick the line\'s worker after')
+    p.add_argument('--scope', help='worker/kick/handover: the authorized RUN:YYYYMMDD,... this worker may admit (required)')
     a = p.parse_args()
     if a.action == 'show':
         if a.events != 'all' and not a.events.isdigit():
@@ -1795,17 +1856,20 @@ def main():
     sys.path.insert(0, str(HERE))
     if a.action == 'worker':
         if a.line == 'class':
-            code = class_worker(a.code_root, a.commit, a.max_seconds, a.poll_seconds, log=lambda t: print(t, flush=True))
+            code = class_worker(a.code_root, a.commit, a.max_seconds, a.poll_seconds, log=lambda t: print(t, flush=True),
+                                scope=a.scope)
         else:
             code = root_worker(a.code_root, a.commit, a.max_seconds, a.poll_seconds, log=lambda t: print(t, flush=True),
-                               wait_lock=a.wait_lock)
+                               wait_lock=a.wait_lock, scope=a.scope)
         print(json.dumps(show(20)['lines'][a.line], indent=1, sort_keys=True, default=str))
         return code
     if a.action == 'kick':
-        print(json.dumps(kick(a.line, a.code_root, a.commit, a.max_seconds, a.poll_seconds, by='dispatch'), sort_keys=True))
+        print(json.dumps(kick(a.line, a.code_root, a.commit, a.max_seconds, a.poll_seconds, by='dispatch', scope=a.scope),
+                         sort_keys=True))
         return 0
     if a.action == 'handover':
-        print(json.dumps(handover(a.line, a.code_root, a.commit, a.max_seconds, a.poll_seconds), sort_keys=True, default=str))
+        print(json.dumps(handover(a.line, a.code_root, a.commit, a.max_seconds, a.poll_seconds, scope=a.scope),
+                         sort_keys=True, default=str))
         return 0
     # enqueue: the orchestrator's own readiness checks on the run's saved plan, then the entry (and the kick)
     import re
@@ -1817,7 +1881,7 @@ def main():
     print(json.dumps(r, indent=1, sort_keys=True, default=str))
     if (r or {}).get('status') == 'queued' and a.kick == 'on':
         print(json.dumps(kick(a.line, a.code_root, a.commit, SETTINGS['queue_worker_seconds'], a.poll_seconds,
-                              by='dispatch enqueue'), sort_keys=True))
+                              by='dispatch enqueue', scope='%s:%s' % (a.run, a.day)), sort_keys=True))
     return 0 if (r or {}).get('status') in ('queued', 'done', 'reused') else 3
 
 

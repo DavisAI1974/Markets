@@ -552,7 +552,7 @@ jobs:
       - name: AWS CPU Linux lane controller (runner; retained ROOT-to-finish ownership)
         # Legacy marker filename; the experiment uses two main-box lanes and one Linux lane, no Pods.
         # VARIABLES: ACTION=plan|status|loop|resume|stop RUN=<saved run> CODE_ROOT=<staged main checkout>
-        # BOXES=i-0d17573dbce871520@us-east-1 SLOTS=1 [DATA_WORKERS=15] [BUDGET_MINUTES=330]
+        # BOXES=i-0d17573dbce871520@us-east-1 SLOTS=1 [DATA_WORKERS=15] [BUDGET_MINUTES=330] [DAYS=YYYYMMDD,... the authorized scope]
         # JOB=<run>-YYYYMMDD-aN is required for resume/stop. stop requests cooperative save, not machine shutdown.
         # plan/status are read-only; loop/resume require Greg's explicit AWS go. A loop here is BOUNDED (its budget end is
         # budget_expired, never completion); the controller's lifetime is the main-box route script=
@@ -566,7 +566,7 @@ jobs:
             [[ "$pair" =~ ^[A-Z_][A-Z0-9_]*= ]] || { echo "expected NAME=VALUE"; exit 1; }
             k=${pair%%=*}
             case "$k" in
-              ACTION|RUN|CODE_ROOT|BOXES|SLOTS|DATA_WORKERS|BUDGET_MINUTES|JOB) ;;
+              ACTION|RUN|CODE_ROOT|BOXES|SLOTS|DATA_WORKERS|BUDGET_MINUTES|JOB|DAYS) ;;
               PODS|COUNT|CONFIRM|DATA_CENTERS|VOLUME_GB|CONTAINER_GB|WAIT_MINUTES|RUNPOD_API_KEY|HOST|STATE_DIR)
                 echo "$k is a retired Pod input or a main-box-only controller input; refused here (even when empty)"; exit 1;;
               *) echo "unsupported Linux controller input: $k"; exit 1;;
@@ -579,6 +579,7 @@ jobs:
           [[ "${v[CODE_ROOT]:-}" =~ ^/opt/frankie-box/code/[A-Za-z0-9_.-]+/markets$ ]] || { echo "CODE_ROOT=/opt/frankie-box/code/<dir>/markets required"; exit 1; }
           [[ "${v[BOXES]:-}" == i-0d17573dbce871520@us-east-1 && "${v[SLOTS]:-1}" == 1 ]] || { echo "BOXES=i-0d17573dbce871520@us-east-1 SLOTS=1 required"; exit 1; }
           for k in DATA_WORKERS BUDGET_MINUTES; do [[ "${v[$k]:-1}" =~ ^[1-9][0-9]*$ ]] || { echo "$k must be a positive integer"; exit 1; }; done
+          [[ "${v[DAYS]:-}" =~ ^([0-9]{8}(,[0-9]{8})*)?$ ]] || { echo "DAYS must be a comma list of YYYYMMDD (the authorized scope)"; exit 1; }
           args=()
           if [[ "${v[ACTION]}" == resume || "${v[ACTION]}" == stop ]]; then
             [[ "${v[JOB]:-}" =~ ^${v[RUN]}-[0-9]{8}-a[0-9]+$ ]] || { echo "JOB must name the original RUN-YYYYMMDD-aN attempt"; exit 1; }
@@ -589,7 +590,7 @@ jobs:
           set +e
           python research/kalshi/frankie_boss/pod_root/controller.py --action "${v[ACTION]}" --run "${v[RUN]}" \
             --code-root "${v[CODE_ROOT]}" --boxes "${v[BOXES]}" --slots "${v[SLOTS]:-1}" --commit "$GITHUB_SHA" \
-            --data-workers "${v[DATA_WORKERS]:-15}" --budget-minutes "${v[BUDGET_MINUTES]:-330}" "${args[@]}" \
+            --data-workers "${v[DATA_WORKERS]:-15}" --budget-minutes "${v[BUDGET_MINUTES]:-330}" --days "${v[DAYS]:-}" "${args[@]}" \
             2>&1 | tee box-run-output.txt
           rc=${PIPESTATUS[0]}
           set -e

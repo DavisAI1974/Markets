@@ -4,7 +4,8 @@
 # checkout, the pattern of frankie_box_experiment.sh DETACH=on: the dispatch returns once the unit is up, the runner's
 # end cannot stop it, and its state is retained under /opt/frankie-box/work/cpu-controller/<RUN>/.
 # Inputs: MARKETS_SHA (the dispatch sets it), CODE_ROOT (the staged clean checkout /opt/frankie-box/code/<dir>/markets at
-# MARKETS_SHA), RUN, ACTION:
+# MARKETS_SHA), RUN, DAYS (optional comma list YYYYMMDD: the authorized scope the service may claim or resume; default
+# every day of the run's saved plan), ACTION:
 #   preflight   read-only: the prerequisites beyond source (saved main plan, claim store, staged checkout, the instance
 #               profile's credential route to S3 and to the worker over SSM, no live lease) named one by one; exit 2 when
 #               one is missing. Nothing is installed, provisioned or created.
@@ -46,6 +47,7 @@ case "$MARKETS_SHA" in *[!0-9a-f]*) echo "MARKETS_SHA must be a full hex commit"
 BOXES="${BOXES:-i-0d17573dbce871520@us-east-1}"; SLOTS="${SLOTS:-1}"
 [ "$BOXES" = i-0d17573dbce871520@us-east-1 ] && [ "$SLOTS" = 1 ] || { echo "BOXES=i-0d17573dbce871520@us-east-1 SLOTS=1 is the one Linux lane" >&2; exit 2; }
 case "${DATA_WORKERS:-15}${POLL_SECONDS:-60}${STOP_WAIT_MINUTES:-30}" in *[!0-9]*) echo "DATA_WORKERS, POLL_SECONDS and STOP_WAIT_MINUTES must be whole numbers" >&2; exit 2;; esac
+case "${DAYS:-}" in *[!0-9,]*) echo "DAYS must be a comma list of YYYYMMDD" >&2; exit 2;; esac
 CONTROLLER="$CODE_ROOT/research/kalshi/frankie_boss/pod_root/controller.py"
 PY=/opt/frankie-box/venv/bin/python
 STATE="/opt/frankie-box/work/cpu-controller/$RUN"
@@ -56,7 +58,8 @@ LOG="/opt/frankie-box/logs/cpu-controller-$RUN.log"
 "$PY" -c 'import boto3, botocore' 2>/dev/null || { echo "boto3 is not importable from $PY: the venv pins are a prerequisite; not installed here" >&2; exit 2; }
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 set -- --run "$RUN" --code-root "$CODE_ROOT" --host main --state-dir "$STATE" --boxes "$BOXES" --slots "$SLOTS" \
-  --data-workers "${DATA_WORKERS:-15}" --poll-seconds "${POLL_SECONDS:-60}" --stop-wait-minutes "${STOP_WAIT_MINUTES:-30}"
+  --data-workers "${DATA_WORKERS:-15}" --poll-seconds "${POLL_SECONDS:-60}" --stop-wait-minutes "${STOP_WAIT_MINUTES:-30}" \
+  --days "${DAYS:-}"
 # A live controller holds $STATE/controller.lock for its lifetime (fcntl); its pid is in controller.json. Liveness is the
 # lock, never a command-line pattern.
 alive_pids() {

@@ -8,9 +8,13 @@
 # Inputs: CODE_ROOT (staged checkout), ACTION:
 #   show                         read-only: both lines, every entry with its state and reason, the workers [EVENTS=50|all]
 #   enqueue LINE RUN DAY         the orchestrator's own readiness checks on the run's saved plan, then the entry [KICK=on]
-#   worker  LINE                 the line's one worker in the foreground, bounded [MAX_SECONDS=1500 POLL_SECONDS=60]; a
+#   worker  LINE SCOPE           the line's one worker in the foreground, bounded [MAX_SECONDS=1500 POLL_SECONDS=60]; a
 #                                second worker exits at once; exit 0 idle, 3 stopped at a failed entry, 5 saved at the bound
-#   kick    LINE                 starts the line's worker detached (systemd-run) unless one runs [MAX_SECONDS=43200]
+#                                or waiting (an owner's resume, or an out-of-scope predecessor at the front)
+#   kick    LINE SCOPE           starts the line's worker detached (systemd-run) unless one runs [MAX_SECONDS=43200]
+# SCOPE=RUN:YYYYMMDD,... is the authorization a worker/kick/handover carries: it admits, reconciles and receipts ONLY
+# those run/days; everything else in the line is left exactly as it is (FIFO still makes an eligible day wait behind an
+# unstarted predecessor; the predecessor is never started by that worker).
 #   handover LINE=root           the running worker stops taking work and ends after its running days; a new worker at
 #                                this commit (every day runs its whole day in its slot) waits on the lock and takes over
 #   save    RUN DAY              the day-bound save of a running owned day: its marker written; the owner stops at its
@@ -49,6 +53,11 @@ esac
 case "${LINE:-}" in root|class) ;; *) echo "LINE must be root or class" >&2; exit 2;; esac
 case "${POLL_SECONDS:-60}" in ""|*[!0-9]*) echo "POLL_SECONDS must be whole seconds" >&2; exit 2;; esac
 set -- --line "$LINE" --code-root "$CODE_ROOT" --commit "$MARKETS_SHA" --poll-seconds "${POLL_SECONDS:-60}"
+case "$ACTION" in worker|kick|handover)
+  : "${SCOPE:?SCOPE=RUN:YYYYMMDD,... (the authorized run and days) required}"
+  case "$SCOPE" in *[!A-Za-z0-9_:,-]*) echo "SCOPE carries a character outside [A-Za-z0-9_:,-]" >&2; exit 2;; esac
+  set -- "$@" --scope "$SCOPE" ;;
+esac
 case "$ACTION" in
   worker)
     case "${MAX_SECONDS:-1500}" in ""|*[!0-9]*) echo "MAX_SECONDS must be whole seconds" >&2; exit 2;; esac
