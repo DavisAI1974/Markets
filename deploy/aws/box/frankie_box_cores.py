@@ -117,7 +117,15 @@ INGEST_CPUS = 8                         # an ingest / canary / conform day proce
 # reader only verifies); never split, never squeezed: a size that is not free waits like any booking.
 INGEST_SIZES = (8, 16, 24, 32)
 WAITING_EXIT = 75                       # EX_TEMPFAIL: not started, a later dispatch retries
+SAVED_EXIT = 75                         # the SAME code from a job that RAN: it stopped at a save point on a requested save
+                                        # (ROOT, ingest INGEST_SAVED, every stage with a save route; stacks pass 2026-10-07).
+                                        # cmd_run tells them apart by who exited: the ledger (not started) or the job
 REFUSED_EXIT = 2
+SAVE_RETAINED_KINDS = ('ingest', 'canary')   # a job of these kinds that exits SAVED_EXIT under cmd_run keeps its booking
+                                        # (S1, 2026-10-07); its resume (same kind, run, day) takes it back without --cpus.
+                                        # A day-run slot is retained by its QUEUE owner (frankie_box_frankie_queue._end_slot)
+                                        # and taken back with --cpus: that protocol is unchanged here
+RETAINABLE_KINDS = ('day-run',) + SAVE_RETAINED_KINDS   # what retain() accepts
 BUSY_FRACTION = 0.05                    # an unpinned Frankie thread above this share of one CPU holds the CPU it runs on
 KINDS = ('day-run', 'ingest', 'canary', 'conform')
 DAY_RUN_STAGES = ('root', 'teacher', 'classroom', 'data', 'search', 'lessons', 'exchange', 'voice', 'school', 'reports',
@@ -504,6 +512,35 @@ def book_locked(kind, size, pid, meta, window):
             write_json(b['_path'], b)
             return b, dict(status='booked', booking=b['booking'], cpus=cpu_list(b['cpus']), parent_cpu=b['parent_cpu'],
                            resumed_from=b['booking'])
+    if requested is None:
+        # S1 (stacks pass 2026-10-07): the owner of a booking RETAINED on a save (cmd_run: a job of a RETAINABLE kind that
+        # exited SAVED_EXIT) takes it back in place by kind, run and day without naming its CPUs (the ingest wrapper never
+        # does): the same rule as the --cpus take-over above, the retained set exactly (the size asked is recorded, never
+        # applied: a saved job resumes on its own CPUs). Without this the retained set would wait on itself for ever.
+        mine = [b for b in bookings if b['_retained'] and b.get('kind') == kind and kind in SAVE_RETAINED_KINDS
+                and (b.get('retained') or {}).get('run') == meta.get('run')
+                and (b.get('retained') or {}).get('day') == meta.get('day')]
+        if mine:
+            orphan = sorted(c for c in mine[0]['cpus'] if c in held)
+            if orphan:
+                return None, dict(status='waiting', in_use_unbooked=cpu_list(orphan),
+                                  reason='the retained %s set of %s %s is in use by a Frankie process not in the ledger (CPUs %s; '
+                                         'an orphan of the dead holder?): not taken over while it runs'
+                                         % (kind, meta.get('run'), meta.get('day'), cpu_list(orphan)))
+            start = start_time(pid)
+            if start is None:
+                return None, dict(status='refused', reason='pid %d is not running' % pid)
+            b = mine[0]
+            b['resumed'] = (b.get('resumed') or []) + [dict(retained=b.pop('retained'), at=now_iso(), at_epoch=time.time(),
+                                                           stage=meta.get('stage'), commit=meta.get('commit'), pid=pid,
+                                                           size_asked=size)]
+            b['_retained'] = False
+            b['pids'] = [dict(pid=pid, start=start, role='booking holder')]
+            b['stage'] = meta.get('stage')
+            b['commit'] = meta.get('commit') or b.get('commit')
+            write_json(b['_path'], b)
+            return b, dict(status='booked', booking=b['booking'], cpus=cpu_list(b['cpus']), parent_cpu=b['parent_cpu'],
+                           resumed_from=b['booking'], size_asked=size)
     if len(free) < size:
         return None, dict(status='waiting', free=len(free), needed=size, free_cpus=cpu_list(free),
                           booked_cpus=cpu_list(booked), in_use_unbooked=cpu_list(held), reaped=[r['booking'] for r in reaped],
@@ -592,8 +629,8 @@ def retain(booking, run, day, attempt=None, reason=None):
             raise ValueError('booking %s is not in the ledger (released or never made)' % booking)
         b = json.loads(path.read_bytes())
         b['_path'] = str(path)
-        if b.get('kind') != 'day-run':
-            raise ValueError('only a day-run booking is retained (%s is %s)' % (booking, b.get('kind')))
+        if b.get('kind') not in RETAINABLE_KINDS:
+            raise ValueError('only a %s booking is retained (%s is %s)' % ('/'.join(RETAINABLE_KINDS), booking, b.get('kind')))
         if b.get('run') not in (None, run) or b.get('day') not in (None, day):
             raise ValueError('booking %s belongs to %s %s, not %s %s' % (booking, b.get('run'), b.get('day'), run, day))
         return _retain_locked(b, run, day, attempt=attempt, reason=reason)
@@ -850,6 +887,20 @@ def cmd_run(a):
         signal.signal(s, forward)
     code = child.wait()
     code = 128 - code if code < 0 else code
+    if code == SAVED_EXIT and b.get('kind') in SAVE_RETAINED_KINDS and meta_of(a).get('run') and meta_of(a).get('day'):
+        # S1 (ingest owner, stacks pass 2026-10-07): the job RAN and exited 75 = it saved at a save point (the ingest prints
+        # INGEST_SAVED and writes ingest-saved-<ts>.json with its RESUME_DIR; ROOT's convention). Its CPUs stay booked for
+        # this owner (run, day) exactly as a saved day's slot: nobody else books them; the resume (the same kind, run and
+        # day: the ingest's --run is its RESUME_DIR's name) takes the retained booking back IN PLACE (book_locked), or an
+        # operator releases it with the reason. The ledger's own 'waiting' 75 never reaches here (it returns before the job).
+        try:
+            retain(b['booking'], meta_of(a)['run'], meta_of(a)['day'],
+                   reason='the job saved at a save point (exit %d); its CPUs stay its own until its resume or an explicit release' % code)
+            print('### CPU booking %s RETAINED (exit %d: saved at a save point); resume with the same run/day takes it back'
+                  % (b['booking'], code), flush=True)
+            return code
+        except (OSError, ValueError, KeyError) as error:
+            print('### CPU booking %s not retained on the save (%s); released as before' % (b['booking'], error), flush=True)
     release(b['booking'], 'the job ended (exit %d)' % code, exit_code=code)
     print('### CPU booking %s released (exit %d)' % (b['booking'], code), flush=True)
     return code

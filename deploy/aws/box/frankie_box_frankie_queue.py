@@ -402,7 +402,11 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
     if shutil.which('systemd-run'):
         unit = 'frankie-queue-%s-%d' % (line, int(time.time()))
         cmd = ['systemd-run', '--unit', unit, '--collect', '-p', 'StandardOutput=append:%s' % log_path,
-               '-p', 'StandardError=append:%s' % log_path] + [x for k, v in sorted(env.items()) for x in ('-E', '%s=%s' % (k, v))] + argv
+               '-p', 'StandardError=append:%s' % log_path,
+               '-p', 'KillMode=mixed',   # S2 (stacks pass 2026-10-07): a stop signals the MAIN process only (its save route marks and runs
+               # to the save point); the stages' pool workers are not SIGTERMed under it (the default control-group mode did, and a
+               # parent redid their work with one fewer before its save point); the remainder is SIGKILLed at TimeoutStopSec
+               ] + [x for k, v in sorted(env.items()) for x in ('-E', '%s=%s' % (k, v))] + argv
         code = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).returncode
         how = dict(method='systemd-run', unit=unit, exit_code=code)
     if how is None or how['exit_code'] != 0:
@@ -479,7 +483,8 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print, scop
                MARKETS_SHA=commit, CODE_ROOT=str(code_root), **_run_settings_env())
     unit = 'frankie-queue-%s-handover-%d' % (line, int(time.time()))
     cmd = ['systemd-run', '--unit', unit, '--collect', '-p', 'StandardOutput=append:%s' % log_path,
-           '-p', 'StandardError=append:%s' % log_path] + [x for k, v in sorted(env.items()) for x in ('-E', '%s=%s' % (k, v))] + argv
+           '-p', 'StandardError=append:%s' % log_path,
+           '-p', 'KillMode=mixed'] + [x for k, v in sorted(env.items()) for x in ('-E', '%s=%s' % (k, v))] + argv   # S2: as kick()
     code = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).returncode
     with locked():
         event(line, 'handover', old_pid=old, signalled=signalled, superseded=superseded, unit=unit, exit_code=code,
@@ -494,7 +499,8 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print, scop
 # must take from its own claim, and anything named like a credential.
 RUN_SETTING_PREFIX = 'FRANKIE_'
 RUN_SETTING_IDENTITY = ('FRANKIE_LANE_', 'FRANKIE_BOOKED_CPUS', 'FRANKIE_CPU_BOOKING', 'FRANKIE_STEP_CLAIM',
-                        'FRANKIE_STAGE_PROGRESS')
+                        'FRANKIE_STAGE_PROGRESS', 'FRANKIE_PROBE_DIRS')   # FRANKIE_PROBE_DIRS: a stage child's own probe
+                                        # directories (frankie_box_experiment.Run.child), never a run setting
 RUN_SETTING_SECRET = re.compile(r'TOKEN|SECRET|PASSWORD|CREDENTIAL|(^|_)KEY($|_)')
 
 

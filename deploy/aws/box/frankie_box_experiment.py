@@ -3755,10 +3755,20 @@ class Run:
                 # on the explicit rebook successor of the retained request; anything else differing is refused as before
                 successor, why = self.jev_rebooked(path, request, differ)
                 if successor is None:
+                    # X6 (exchange owner, stacks pass 2026-10-07): a RESTAGE differs in `source` (commit, code root) alone
+                    # while every bound content is equal (identity is content, not location: experiment_root.content_rebinds
+                    # over the bound keys less source, and the pinned inputs' sha256). MEASURED and named on the refusal;
+                    # not yet accepted here, because the helper binds source.commit itself (frankie_box_jev_cpu.py: the
+                    # held booking's commit, MARKETS_SHA, bind_owner's retained identity); the accepting form is a joint
+                    # change (a .sourceN successor the helper's request_chain follows). Old requests load unchanged.
+                    source_rebind = self.jev_source_rebind(retained, request, bound, differ)
                     return self.record('jev', day, 'refused', request=str(path), differs=differ, rebook=why,
+                                       source_rebind=source_rebind,
                                        reason='the retained Jev request binds another %s; the same request resumes byte for '
-                                              'byte or an explicit owner recovery decides (never re-minted); REBOOK successor: %s'
-                                              % (', '.join(differ), why))
+                                              'byte or an explicit owner recovery decides (never re-minted); REBOOK successor: %s%s'
+                                              % (', '.join(differ), why,
+                                                 '; a restage with equal bound content (source alone differs): accepted only '
+                                                 'with the helper\'s source binding (X6, listed)' if source_rebind.get('content_equal') else ''))
                 path, request = successor
                 out = Path(request['output'])
         else:
@@ -3925,6 +3935,27 @@ class Run:
                 and (helper.get('owner') or {}).get('request_pin') in pins):
             return None
         return prior
+
+    def jev_source_rebind(self, retained, request, bound, differ):
+        """X6 (stacks pass 2026-10-07): the content identity of a retained Jev request against the one this checkout
+        builds when they differ: content_equal when `source` (commit, code root) is the ONLY bound difference, every other
+        bound key is equal (frankie_box_experiment_root.content_rebinds: equal, or checkout moves of equal-bytes
+        witnesses only) and the pinned inputs (classroom receipt, search manifest, runtime config) carry the same sha256.
+        Report only: the caller still refuses (the helper binds source.commit); nothing saved is rewritten."""
+        out = dict(saved_source=retained.get('source'), current_source=request.get('source'), differs=differ,
+                   content_equal=False)
+        try:
+            import frankie_box_experiment_root as XR
+            moves = XR.content_rebinds({k: retained.get(k) for k in bound if k != 'source'},
+                                       {k: request.get(k) for k in bound if k != 'source'})
+        except Exception as error:  # noqa: BLE001 - a report only
+            out['error'] = '%s: %s' % (type(error).__name__, error)
+            return out
+        pins = {k: ((retained.get(k) or {}).get('sha256'), (request.get(k) or {}).get('sha256'))
+                for k in ('classroom_receipt', 'search', 'runtime')}
+        out.update(bound_moves=moves, pins_equal={k: a == b and a is not None for k, (a, b) in pins.items()},
+                   content_equal=(differ == ['source'] and moves is not None and all(a == b and a is not None for a, b in pins.values())))
+        return out
 
     def jev_rebooked(self, original, request, differ):
         """The explicit REBOOK successor of a retained Jev request: ((path, request) to run, None) or (None, why).

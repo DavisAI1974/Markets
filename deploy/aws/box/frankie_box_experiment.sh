@@ -152,7 +152,11 @@ if [ "${DETACH:-off}" = on ]; then
   for NAME in $RUN_SETTINGS; do eval "VALUE=\${$NAME}"; set -- -E "$NAME=$VALUE" "$@"; done
   [ -z "$RUN_SETTINGS" ] || echo "run settings passed to the unit: $RUN_SETTINGS"
   set -- -E HOME="$HOME" -E PYTHONDONTWRITEBYTECODE=1 -E PYTHONNOUSERSITE=1 -E PYTHONPATH="$CODE_ROOT" -E MAP_URL="$MAP_URL" "$@"
-  systemd-run --unit "$UNIT" --collect -p StandardOutput=append:"$LOG" -p StandardError=append:"$LOG" "$@"
+  # S2 (stacks pass 2026-10-07): KillMode=mixed, so a stop signals the MAIN process only (the orchestrator's save route
+  # marks and its stages run to their save points); the stages' pool workers are not SIGTERMed with it (the default
+  # control-group mode did, and a parent redid their work with one fewer before its save point); the rest is SIGKILLed
+  # at TimeoutStopSec. The ingest under the orchestrator runs in this unit.
+  systemd-run --unit "$UNIT" --collect -p StandardOutput=append:"$LOG" -p StandardError=append:"$LOG" -p KillMode=mixed "$@"
   echo "orchestrator $RUN started detached: unit $UNIT, log $LOG"
   sleep 10
   if systemctl is-active --quiet "$UNIT"; then

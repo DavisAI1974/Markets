@@ -144,7 +144,10 @@ case "$ACTION" in
     "$PY" -B "$CONTROLLER" --action preflight --commit "$MARKETS_SHA" "$@" || { echo "preflight refused activation (above); nothing started" >&2; exit 2; }
     UNIT="frankie-cpu-controller-$RUN-$STAMP"
     MARK="$STATE/.start-$STAMP"; : > "$MARK"
-    systemd-run --unit "$UNIT" --collect -p StandardOutput=append:"$LOG" -p StandardError=append:"$LOG" \
+    # S2 (stacks pass 2026-10-07): KillMode=mixed: a stop signals the controller (main process) only; the stage children
+    # it runs and their pool workers are not SIGTERMed with it (the default control-group mode made a parent redo their
+    # work with one fewer before its save point); the remainder is SIGKILLed at TimeoutStopSec
+    systemd-run --unit "$UNIT" --collect -p StandardOutput=append:"$LOG" -p StandardError=append:"$LOG" -p KillMode=mixed \
       -E HOME="$HOME" -E PYTHONDONTWRITEBYTECODE=1 -E PYTHONNOUSERSITE=1 -E PYTHONPATH="$CODE_ROOT" -E CPU_CONTROLLER_UNIT="$UNIT" \
       "$PY" -B "$CONTROLLER" --action loop --commit "$MARKETS_SHA" --budget-minutes 0 --fallback-route worker_box "$@"
     echo "controller of $RUN started as unit $UNIT, log $LOG, state $STATE"
