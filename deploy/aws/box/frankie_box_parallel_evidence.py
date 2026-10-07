@@ -536,6 +536,38 @@ class FrozenMemberBridge:
             self.active = False
 
 
+def auxiliary_policies(book_workers):
+    """The auxiliary transport policy this checkout binds, and the saved predecessors it accepts (on a verified
+    full-state resume, recorded by bind_transport_policy). book_workers: the core plan's starting count."""
+    import frankie_box_native_auxiliary as auxiliary
+    predecessor = dict(schema='FRANKIE_NATIVE_AUXILIARY_V2',
+        book_workers=book_workers, census_workers=1,
+        book_rule='persistent fixed partitions; ordered snapshot deltas; pinned math; join before next event',
+        census_rule='immutable ordered batches; drain and materialize at checkpoint',
+        helper_sha256='5cc07cb1289f0b89facf5a93b7287a6f4fed2be6f785eee79329e0a8e09f1343')
+    rules = dict(census_workers=1,
+        book_rule='persistent fixed partitions; ordered snapshot deltas; pinned math; join before next event',
+        census_rule='scoped shared member freeze; ordered batches; drain and materialize at checkpoint')
+    # V4 binds the native code identity of frankie_box_native_auxiliary's NATIVE_VALUE_CODE and no longer the
+    # book worker count (a level's result does not depend on it; ParallelBook already changes its worker set
+    # mid-run); the count is recorded in the workers receipt. Compatibility rule (Greg, 2026-10-07): a saved
+    # V3 policy is accepted only while frankie_box_native_auxiliary.py is byte-identical and the count is the
+    # same; the existing V2 predecessor rule is unchanged. The transition is recorded on the driver.
+    # V5 (2026-10-07 night): level placement moved out of ParallelBook._snapshot into ParallelBook._slot (a
+    # hash of side and price; the earlier price-modulo placement put every bid on one worker and every ask on
+    # another on NG's power-of-two tick grid). Placement never changes a level's value (InstrumentBook._level
+    # reads only its own level), so a saved V4 policy of the deployment that had the old placement (helper
+    # code 81092be5, commits 275367f/1e0a893) is accepted on a verified full-state resume, recorded.
+    policy = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V5',
+        book_placement='ParallelBook._slot: golden-ratio hash of (side, price) modulo the worker count',
+        helper_code=auxiliary.native_code_identity()['sha256'])
+    price_modulo = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V4',
+        helper_code='81092be52fd103e586013440640a923f4a89f832d5e1fe9c48fa9995a0ab4103')
+    whole_file = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V3', book_workers=book_workers,
+        helper_sha256=hashlib.sha256(Path(auxiliary.__file__).read_bytes()).hexdigest())
+    return policy, (predecessor, whole_file, price_modulo)
+
+
 class RuntimeSections(ParallelSections):
     def __init__(self, driver, producers):
         super().__init__(driver, producers)
@@ -551,37 +583,11 @@ class RuntimeSections(ParallelSections):
             for kind, branch in self.branches.items():
                 pin_threads(branch.process.pid, self.plan[kind]['cpu'])
             from frankie_box_native_auxiliary import ParallelCensus, ParallelBook
-            import frankie_box_native_auxiliary as auxiliary
             book_roles = [role for role in self.plan if role.startswith('book-')]
             if not book_roles:
                 raise ValueError('at least one full-book worker core required')
-            predecessor = dict(schema='FRANKIE_NATIVE_AUXILIARY_V2',
-                book_workers=len(book_roles), census_workers=1,
-                book_rule='persistent fixed partitions; ordered snapshot deltas; pinned math; join before next event',
-                census_rule='immutable ordered batches; drain and materialize at checkpoint',
-                helper_sha256='5cc07cb1289f0b89facf5a93b7287a6f4fed2be6f785eee79329e0a8e09f1343')
-            rules = dict(census_workers=1,
-                book_rule='persistent fixed partitions; ordered snapshot deltas; pinned math; join before next event',
-                census_rule='scoped shared member freeze; ordered batches; drain and materialize at checkpoint')
-            # V4 binds the native code identity of frankie_box_native_auxiliary's NATIVE_VALUE_CODE and no longer the
-            # book worker count (a level's result does not depend on it; ParallelBook already changes its worker set
-            # mid-run); the count is recorded in the workers receipt. Compatibility rule (Greg, 2026-10-07): a saved
-            # V3 policy is accepted only while frankie_box_native_auxiliary.py is byte-identical and the count is the
-            # same; the existing V2 predecessor rule is unchanged. The transition is recorded on the driver.
-            # V5 (2026-10-07 night): level placement moved out of ParallelBook._snapshot into ParallelBook._slot (a
-            # hash of side and price; the earlier price-modulo placement put every bid on one worker and every ask on
-            # another on NG's power-of-two tick grid). Placement never changes a level's value (InstrumentBook._level
-            # reads only its own level), so a saved V4 policy of the deployment that had the old placement (helper
-            # code 81092be5, commits 275367f/1e0a893) is accepted on a verified full-state resume, recorded.
-            policy = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V5',
-                book_placement='ParallelBook._slot: golden-ratio hash of (side, price) modulo the worker count',
-                helper_code=auxiliary.native_code_identity()['sha256'])
-            price_modulo = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V4',
-                helper_code='81092be52fd103e586013440640a923f4a89f832d5e1fe9c48fa9995a0ab4103')
-            whole_file = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V3', book_workers=len(book_roles),
-                helper_sha256=hashlib.sha256(Path(auxiliary.__file__).read_bytes()).hexdigest())
-            bind_transport_policy(self.driver, '_frankie_auxiliary_policy', policy,
-                                  (predecessor, whole_file, price_modulo))
+            policy, predecessors = auxiliary_policies(len(book_roles))
+            bind_transport_policy(self.driver, '_frankie_auxiliary_policy', policy, predecessors)
             if not hasattr(self.driver, '_frankie_auxiliary_metrics'):
                 self.driver._frankie_auxiliary_metrics = dict(census={}, books={})
             metrics = self.driver._frankie_auxiliary_metrics
