@@ -1147,3 +1147,90 @@ in-process by lane_state) the call is a no-op, because no `FRANKIE_STAGE_PROGRES
 `report_phase` gained `every=N` seconds: inside a loop it skips a write younger than N s, except the last unit.
 
 Checks: AST parse and `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.
+
+## 19. Frankie's 13-point day files: S3 preferred, never overwritten, and attached to the 99-layer combination
+
+Uncommitted; source only; nothing ran. Account calls: two reads through the Aws connector (`run_script`; S3
+ListObjectsV2 and GetObject, us-east-2, bucket bento-568968024170-us-east-2-an, nothing changed). They confirmed:
+- `frankie/day_history/asprinted20261007/` holds `manifest.json` and `as_printed/{receipt.json,storage_as_printed.json}`;
+- `frankie/day_external/20231018/` holds the verified pair;
+- the day file receipt carries `point_registry_map` and `point_mappings`.
+
+### 19.1 Never overwrite a verified S3 day file
+
+- `presign_items` adds a read-only `getprefix:<bucket>/frankie/day_external/<day>/` per day, beside the two upload slots.
+- `.github/workflows/frankie_box_run.yml` presign step:
+  - the getprefix allowlist admits `frankie/day_external/`;
+  - a day's upload slots are presigned only when S3 holds NEITHER object of the pair;
+  - only a definite 404 counts as absent: a permission or transient error presigns nothing for the day. Before, any
+    ClientError counted as absent, and each object was checked alone.
+- `frankie_box_day_external.attach` can therefore never PUT over S3's file, because it gets no slot.
+
+### 19.2 Prefer the S3 file (`Run.s3_day_file`, `Run.external_from_s3`)
+
+- **The S3 state.** `s3_day_file` reads it from the presigned map:
+  - present: both objects listed;
+  - absent: both slots presigned;
+  - integrity: one object without the other, refused and never built over;
+  - unknown: no map, or a map without the listing; the old route runs.
+- **Present.** The S3 receipt is fetched first.
+  - Attached pair is the same sha256: it is reused, with nothing else downloaded.
+  - Otherwise the file is fetched into `DAY_EXTERNAL/<run>-s3-<day>-<utc>/<day>/` and checked: bytes, sha256 and bytes
+    against its receipt, the trading day against the ingest and the step, and `check_day_file`.
+  - The attached pair is then moved aside (`<name>.superseded-<utc>`, never deleted) and the S3 pair hard-linked in.
+  - The caches are cleared and the day-file brain entry filed. A different old entry is moved aside to
+    `<day>-day-file.superseded-<utc>`, which is outside the brain's entry globs.
+  - Both shas are recorded on the step receipt (`previous`, `s3`) and in its `inspection`.
+- **Never swapped once this run's ROOT, teacher or classroom of the day finished on the attached file.** The attached
+  file stays, and the differing sha is a visible finding (`s3_day_file_differs_after_use`).
+- **Failures.** A failed fetch waits and is retried; a failed check is an integrity refusal (the staged copy is kept).
+- **Fallback.** A rebuild runs only when S3 is absent (or unknown, as before).
+
+### 19.3 History families
+
+- `HISTORY_FAMILIES` now equals the builder's `FAMILIES`: `as_printed` added, `consensus` dropped. Family run ids
+  are alphanumeric (`isalnum`, e.g. `as_printed=asprinted20261007`); the wrapper text says so.
+- `history_lacking`: a NAMED as_printed run must be presigned (its `as_printed/` objects); its manifest is checked
+  like every family run. Not named: no wait. The builder reads as_printed from the main run or lists the point missing.
+- `presign_items` already lists every family run (getprefix), as_printed included.
+
+### 19.4 The 99-layer combination: each point under its entries (`frankie_box_experiment_day_reports.py`)
+
+- **The declaration.** `_point_declaration` reads the day file receipt beside the day file the classroom (else the
+  external step) recorded. Its `point_registry_map` and `point_mappings` give, per point: tables, rows, 99 entries,
+  mapping, reason, event-time basis and note. Table-prefix keys (`cot.`, `curve.`) are resolved by longest prefix.
+  Fallback: the builder's `POINT_REGISTRY_MAP`, named as the basis. Point names come from
+  `dipole_classroom_external.POINTS`/`DEFERRED`.
+- **Each piece's OWN per-point record** (`collect_external_points`, called at the end of `collect_all99`):
+
+  | Piece | Source | Words |
+  |---|---|---|
+  | shared reader | the teacher receipt's `shared_market_read.external_publications.points`, per table rows/presented | presented, or missing with the not-yet-public / after-halt counts |
+  | BOSS teacher | its receipt | not_reported (one external section, no per-point record), with its section status |
+  | classroom | `all99_coverage.external_points.points` | computed / context / absent, with reason and present rows |
+  | search | the MANIFEST external source | searched (field and alias series counts per table) or missing (its absent entries) |
+  | scientific teacher, exchange, meeting (Granite), Jev | none per point | not_reported |
+
+- **In the join.** `all99_join` adds `external_points` (point-major, every piece's word) and, under each entry row,
+  one `external_points` sub-row per point the day file maps to that entry: point id/name, tables, mapping and reason,
+  event-time basis, note, per-piece words. It also adds `external_points_unmapped`, `external_points_declaration` and
+  `external_points_pieces`. A piece's per-point integrity failure is listed once in `integrity`. The per-entry rows
+  are unchanged.
+- **One input formula.** The point sources (declaration plus one per piece, each with file/sha256/basis) enter
+  `join_inputs` in `all99_join` AND in `late_pieces_changed`: a changed per-point record is a late piece.
+- **The FRANKIE report.** It gains "Frankie's 13 points under their 99 entries": a table per mapped entry and point,
+  each piece's word, plus a per-point line with the reasons.
+- **The summary.** `all99_summary` carries the per-point words and the unmapped list.
+- **`frankie_box_market_timeline.py`.** Text only: the external carrier's registry text now says the 13 points map to
+  99 entries (it said they were outside the registry).
+
+### 19.5 Not done, named
+
+- `frankie_box_classroom_code.py` was not changed: its per-point list already carries what the join needs.
+- The BOSS teacher records no per-point list. Its external section key carries `points` with series and missing per
+  point, so a per-point projection on the teacher receipt would replace not_reported (request to the teacher owner).
+- ROOT's `all99_admission` does not read the day file. The join takes the declaration from the day file receipt
+  itself; whether the ROOT's admission list should list the points is the parent's call.
+
+Checks: AST parse clean; `bash -n` clean on the wrapper; `git diff --check` clean.
+SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.

@@ -319,8 +319,12 @@ jobs:
                   bucket, _, prefix = item[len('getprefix:'):].partition('/')
                   # also read-only: the 30 days' history and curve pulls the day file is built from (2026-09-29,
                   # frankie_box_day_external.sh)
-                  if not prefix.startswith(('clm-sidecar/', 'frankie/day_history/', 'nymex/ng_fut_parent_v0/', 'frankie/ingest/')) or '..' in prefix:
-                      raise SystemExit('getprefix is for clm-sidecar/, frankie/day_history/, nymex/ng_fut_parent_v0/ and frankie/ingest/ only')
+                  # and frankie/day_external/<day>/: what S3 already holds of a day file (read-only; the orchestrator
+                  # prefers a verified S3 day file, Run.external)
+                  if not prefix.startswith(('clm-sidecar/', 'frankie/day_history/', 'nymex/ng_fut_parent_v0/', 'frankie/ingest/',
+                                            'frankie/day_external/')) or '..' in prefix:
+                      raise SystemExit('getprefix is for clm-sidecar/, frankie/day_history/, nymex/ng_fut_parent_v0/, frankie/ingest/ '
+                                       'and frankie/day_external/ only')
                   region = 'us-east-1' if bucket.endswith('us-east-1') else 'us-east-2'
                   pages = boto3.client('s3', region_name=region).get_paginator('list_objects_v2').paginate(Bucket=bucket, Prefix=prefix)
                   items += ['%s/%s' % (bucket, o['Key']) for page in pages for o in page.get('Contents', [])]
@@ -391,14 +395,29 @@ jobs:
                   # too; an object already there is skipped (never overwritten, the box lists it), not a failure
                   if not key.startswith(('clm-sidecar/', 'frankie/day_external/')):
                       raise SystemExit('upload slots are for clm-sidecar/ and frankie/day_external/ only')
-                  try:
-                      s3.head_object(Bucket=bucket, Key=key)
-                      if key.startswith('frankie/day_external/'):
-                          print(f'upload slot {bucket}/{key}: the object exists; skipped, never overwritten')
+                  if key.startswith('frankie/day_external/'):
+                      # a day file and its receipt are one pair: when S3 holds EITHER object of the day, neither slot is
+                      # presigned (a verified S3 day file is never overwritten, never half replaced); only a definite
+                      # 404 counts as absent (a permission or transient error presigns nothing for the day)
+                      day_dir = key.rsplit('/', 1)[0]
+                      held = []
+                      for name in ('day-external.json', 'day-external-receipt.json'):
+                          try:
+                              s3.head_object(Bucket=bucket, Key='%s/%s' % (day_dir, name))
+                              held.append(name)
+                          except s3.exceptions.ClientError as e:
+                              if e.response.get('Error', {}).get('Code') not in ('404', 'NoSuchKey', 'NotFound'):
+                                  print(f'upload slot {bucket}/{key}: S3 state unknown ({e.response.get("Error", {}).get("Code")}); not presigned')
+                                  held.append('unknown')
+                      if held:
+                          print(f'upload slot {bucket}/{key}: S3 holds {held} for this day; skipped, never overwritten')
                           continue
-                      raise SystemExit('upload slot refuses an existing object: ' + key)
-                  except s3.exceptions.ClientError:
-                      pass
+                  else:
+                      try:
+                          s3.head_object(Bucket=bucket, Key=key)
+                          raise SystemExit('upload slot refuses an existing object: ' + key)
+                      except s3.exceptions.ClientError:
+                          pass
                   url = s3.generate_presigned_url('put_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=expires)
                   print('::add-mask::' + url)
                   out['put:' + key] = dict(bucket=bucket, url=url)

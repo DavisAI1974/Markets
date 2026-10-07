@@ -12,7 +12,7 @@
 # SEARCH_WORKERS / TEACHER_CPUS (not used: every day-run step books exactly 16 CPUs in the box's ledger, frankie_box_cores.py,
 # and runs 15 workers; a step that cannot book 16 waits), PARALLEL_DAYS (2: the two main-box lanes), DISK_FLOOR_GB (100),
 # EXTERNAL_HISTORY_RUN (the day_history run id the day files are built from), EXTERNAL_HISTORY_EIA930_RUN (optional
-# second run id for the eia930 family), EXTERNAL_HISTORY_FAMILY_RUNS (optional family=<run id>,...), EXTERNAL_WAIT (on|off), BRAIN,
+# second run id for the eia930 family), EXTERNAL_HISTORY_FAMILY_RUNS (optional family=<run id>,...; run ids alphanumeric, e.g. as_printed=asprinted20261007), EXTERNAL_WAIT (on|off), BRAIN,
 # PREVIOUS_CLASSROOM (the run's first arm day), MAP_URL (the dispatch's presigned map: the partitions for fetch, the
 # day history and curve prefixes and the day-file slots for external, Jev's material slots for jev; ACTION=plan prints
 # the whole presign string), FRANKIE_QUEUE (on|off, default on: classroom-arm days enter Frankie's class line, arrival

@@ -1482,6 +1482,8 @@ def collect_all99(d, run_name, run_dir, piece_receipts):
     order = {p: i for i, (p, _, _) in enumerate(ALL99_PIECES)}
     sources.sort(key=lambda s: (order.get(s['piece'].split(' #')[0], len(order)), s['piece']))
     d.all99_sources, d.all99_problems = sources, problems
+    # Frankie's 13 day-file points: each piece's own per-point record (part of the join's input set)
+    collect_external_points(d, run_name, run_dir)
 
 
 def _rows(doc, shared_schema):
@@ -1515,6 +1517,233 @@ def _rows(doc, shared_schema):
             if isinstance(item, dict) else dict(entry=None) for item in items], None, used
 
 
+
+# ------------------------------------------------------------- Frankie's 13 day-file points under their 99 entries
+# Greg, 2026-10-07 night: the 13 points MUST be attached to the 99-layer combination. Each point's own sub-row sits under
+# every 99 entry the day file maps it to (the day file receipt's point_registry_map: points, registry entries, mapping,
+# reason, event-time basis), with each consuming piece's OWN recorded per-point disposition. Additive: the per-entry rows
+# are unchanged. A piece that records nothing per point is not_reported (never inferred from its per-entry row).
+EXTERNAL_POINT_PIECES = (
+    ('shared_reader', 'the shared market reader\'s external publications as the BOSS teacher\'s full read recorded them '
+                      '(teacher receipt shared_market_read.external_publications.points: per table rows and presented)'),
+    ('teacher', 'the BOSS teacher receipt (external_section: one section for the day file, no per-point record)'),
+    ('classroom', 'the classroom receipt all99_coverage.external_points.points (computed / context / absent, with reason)'),
+    ('search', 'the search MANIFEST external source: searched fields and alias series per day-file table, absent series'),
+    ('scientific_teacher', 'the lessons files: per-entry lists only (no per-point record)'),
+    ('exchange', 'the exchange receipt: per-entry list only (no per-point record)'),
+    ('meeting', 'the meeting receipt (Granite): per-entry list only (no per-point record)'),
+    ('jev', 'the Jev receipts: per-entry list only (no per-point record)'),
+)
+POINT_PIECE_PREFIX = 'external_points[%s]'
+
+
+def _point_declaration(d, run_dir, run_name):
+    """The 13 points as the day file used today declares them: {point_id: point}, and the source record. Read once: the
+    day file receipt beside the day file the classroom (else the external step) recorded; its point_registry_map (table or
+    table-prefix -> points, registry entries, mapping, reason, event-time basis, note) and point_mappings (per table rows).
+    Without that receipt: the builder's POINT_REGISTRY_MAP (the module constant), named as the basis."""
+    day_file = ((d.receipt.get('external') or {}).get('day_file') or {}).get('path') if isinstance(d.receipt, dict) else None
+    origin = 'the classroom receipt\'s external.day_file'
+    if not day_file:
+        step, _, why, bad = _step(d, run_dir, run_name, 'external')
+        day_file = (step or {}).get('day_file')
+        origin = 'the external step receipt\'s day_file'
+    registry, mappings, src = None, {}, dict(piece=POINT_PIECE_PREFIX % 'declaration', for_frankie=True, basis=None,
+                                             status='not_reported', reason=None, file=None, sha256=None)
+    if day_file:
+        doc, seen, why = _json_once(d, 'day file receipt', Path(day_file).with_name('day-external-receipt.json'))
+        if doc is None:
+            src.update(status='integrity' if seen else 'not_reported', reason=why)
+        elif str(doc.get('trading_day')) != str(d.day):
+            src.update(status='integrity', reason='the day file receipt is for day %s, not %s' % (doc.get('trading_day'), d.day),
+                       file=seen.get('path'), sha256=seen.get('sha256'))
+        else:
+            registry, mappings = doc.get('point_registry_map'), doc.get('point_mappings') or {}
+            src.update(status='read' if isinstance(registry, dict) else 'not_reported', file=seen.get('path'),
+                       sha256=seen.get('sha256'), basis='day_file_receipt',
+                       reason=('%s (%s)' % (origin, day_file)) if isinstance(registry, dict) else
+                       'the day file receipt carries no point_registry_map (a day file built before the 99 mapping)')
+    else:
+        src.update(reason='no day file is recorded for the day (classroom receipt or external step)')
+    if not isinstance(registry, dict):
+        try:
+            from research.kalshi.frankie_boss.operations.frankie_day_external import POINT_REGISTRY_MAP
+            registry = POINT_REGISTRY_MAP
+            src['basis'] = 'builder_constant'
+            src['reason'] = '%s; the builder\'s POINT_REGISTRY_MAP is used for the mapping (not this day\'s file)' % src['reason']
+        except Exception as error:  # noqa: BLE001 - no declaration: the points are listed by name only
+            registry = {}
+            src['reason'] = '%s; the builder constant is not importable (%s: %s)' % (src['reason'], type(error).__name__, error)
+    names, default_tables = {}, {}
+    try:
+        from research.kalshi.frankie_boss import dipole_classroom_external as EXT
+        for item in tuple(EXT.POINTS) + tuple(EXT.DEFERRED['points']):
+            if item.get('point_id') is not None:
+                names[item['point_id']] = item['name']
+                default_tables[item['point_id']] = list(item.get('tables') or ())
+    except Exception:  # noqa: BLE001 - names are a convenience; the ids and the mapping stand without them
+        pass
+
+    def map_key(table):
+        if table in registry:
+            return table
+        prefixes = [k for k in registry if k.endswith('.') and table.startswith(k)]
+        return max(prefixes, key=len) if prefixes else None
+    points = {}
+
+    def point(pid):
+        return points.setdefault(pid, dict(point_id=pid, name=names.get(pid), tables=[], rows=0, declared_by=[],
+                                           entries=[], mapping=[], mapping_reason=[], event_time_basis=[], note=[]))
+    for key, item in sorted(registry.items()):
+        for pid in item.get('points') or []:
+            p = point(pid)
+            p['declared_by'].append(key)
+            for field, value in (('entries', item.get('registry_entries') or []), ('mapping', [item.get('registry_mapping')]),
+                                 ('mapping_reason', [item.get('registry_mapping_reason')]),
+                                 ('event_time_basis', [item.get('event_time_basis')]), ('note', [item.get('event_time_note')])):
+                for v in value:
+                    if v is not None and v not in p[field]:
+                        p[field].append(v)
+    for table, item in sorted(mappings.items()):
+        key = map_key(table)
+        for pid in (registry.get(key) or {}).get('points') or []:
+            point(pid)['tables'].append(table)
+            point(pid)['rows'] += int((item or {}).get('rows') or 0)
+    for pid in sorted(set(names) | set(points)):
+        p = point(pid)
+        if not p['tables']:
+            p['tables'] = list(default_tables.get(pid) or [])
+            p['tables_basis'] = 'the classroom\'s point table list (the day file receipt names no table rows for it)'
+        if not p['entries']:
+            p['unmapped'] = 'the day file declares no 99 entry for this point: listed here, never guessed'
+    return points, src
+
+
+def collect_external_points(d, run_name, run_dir):
+    """Every consuming piece's OWN per-point record of the day's 13 points, read once each. Sets d.all99_point_sources
+    (one source per piece: piece, status, reason, file, sha256, basis, points {point_id: dict(disposition, reason)}) and
+    d.all99_points (the declaration). Only recorded per-point facts: a piece without one is not_reported."""
+    points, decl = _point_declaration(d, run_dir, run_name)
+    sources = [decl]
+    tables_of = {pid: list(p['tables']) for pid, p in points.items()}
+
+    def add(piece, status, reason=None, seen=None, per=None, basis=None):
+        sources.append(dict(piece=POINT_PIECE_PREFIX % piece, for_frankie=piece not in ('jev',), status=status,
+                            reason=reason, file=(seen or {}).get('path'), sha256=(seen or {}).get('sha256'), basis=basis,
+                            points=per or {}))
+    # the shared reader, as the BOSS teacher's full read recorded it
+    rows_dir = d.receipt.get('teacher_rows') if isinstance(d.receipt, dict) else None
+    teacher, tseen, twhy = (None, None, 'the classroom receipt names no teacher rows') if not rows_dir else \
+        _json_once(d, 'teacher receipt', Path(rows_dir) / 'receipt.json')
+    pubs = ((teacher or {}).get('shared_market_read') or {}).get('external_publications') if isinstance(teacher, dict) else None
+    if teacher is None:
+        add('shared_reader', 'integrity' if tseen else 'not_reported', twhy, seen=tseen)
+    elif not isinstance(pubs, dict) or not isinstance(pubs.get('points'), dict):
+        add('shared_reader', 'not_reported', 'the teacher receipt records no shared external publications (no shared '
+                                             'read, or a read without the day file)', seen=tseen)
+    else:
+        per = {}
+        for pid, tables in tables_of.items():
+            have = {t: pubs['points'][t] for t in tables if isinstance(pubs['points'].get(t), dict)}
+            presented = sum(int(v.get('presented') or 0) for v in have.values())
+            rows = sum(int(v.get('rows') or 0) for v in have.values())
+            gone = [t for t in tables if t not in have]
+            if presented:
+                per[pid] = dict(disposition='presented', presented=presented, rows=rows,
+                                reason='%d publication(s) of %s presented in the picture at/after their placement' % (
+                                    presented, listing(sorted(have))) + ('; not in the read: %s' % listing(gone) if gone else ''))
+            elif have:
+                waiting = {t: len((pubs.get('not_yet_public') or {}).get(t) or []) for t in have}
+                per[pid] = dict(disposition='missing', presented=0, rows=rows,
+                                reason='none of its %d row(s) was presented by the halt (not yet public: %s; after halt: %s)'
+                                       % (rows, json.dumps(waiting, sort_keys=True),
+                                          json.dumps({t: (pubs.get('after_halt') or {}).get(t) for t in have}, sort_keys=True)))
+            else:
+                per[pid] = dict(disposition='missing', reason='its tables (%s) are not in the day file the reader read'
+                                                                % listing(tables))
+        add('shared_reader', 'read', seen=tseen, per=per, basis='teacher_receipt')
+    # the BOSS teacher's own use of the day file: one section, no per-point record
+    if isinstance(teacher, dict):
+        add('teacher', 'not_reported', 'the BOSS teacher records its external section as one section (status %s), not per '
+                                       'point' % rec((teacher.get('external_section') or {}).get('status')), seen=tseen)
+    else:
+        add('teacher', 'not_reported', twhy)
+    # the classroom
+    ext = ((d.receipt.get('all99_coverage') or {}).get('external_points') if isinstance(d.receipt, dict) else None) or {}
+    if d.source.get('kind') != 'classroom receipt':
+        add('classroom', 'not_reported', 'the classroom wrote no receipt: %s' % d.receipt.get('reason'))
+    elif not isinstance(ext.get('points'), list):
+        add('classroom', 'not_reported', 'the classroom receipt records no per-point list (%s)' % rec(ext.get('reason') or ext.get('status')),
+            seen=dict(path=d.source.get('path'), sha256=d.source.get('sha256')))
+    else:
+        per = {}
+        for item in ext['points']:
+            if isinstance(item, dict) and item.get('point_id') is not None:
+                per[item['point_id']] = dict(disposition=item.get('use'), reason=item.get('reason'),
+                                             present_rows=sum(int(o.get('present_rows') or 0) for o in item.get('series') or []
+                                                              if isinstance(o, dict)))
+        add('classroom', 'read', seen=dict(path='%s#all99_coverage.external_points' % d.source.get('path'),
+                                           sha256=sha256_bytes(json.dumps(ext, sort_keys=True).encode())),
+            per=per, basis='classroom_receipt')
+    # the search
+    step, sseen, swhy, sbad = _step(d, run_dir, run_name, 'search')
+    if sbad:
+        add('search', 'integrity', sbad, seen=sseen)
+    elif step is None or not step.get('target'):
+        add('search', 'not_reported', swhy or 'the search step (status %s) names no target' % (step or {}).get('status'))
+    else:
+        manifest, mseen, mwhy = _json_once(d, 'search MANIFEST', Path(step['target']) / 'MANIFEST.json')
+        source = next((x for x in (manifest or {}).get('sources') or [] if isinstance(x, dict) and x.get('source') == 'external'),
+                      None) if isinstance(manifest, dict) else None
+        if manifest is None:
+            add('search', 'integrity' if mseen else 'not_reported', mwhy, seen=mseen)
+        elif source is None:
+            add('search', 'not_reported', 'the search MANIFEST records no external source (no day file beside its ingest)',
+                seen=mseen)
+        else:
+            searched = (source.get('all_fields') or {}).get('searched') or []
+            aliases = (source.get('all_fields') or {}).get('alias_definitions') or []
+            absent = source.get('absent') or []
+            per = {}
+            for pid, tables in tables_of.items():
+                fields = sum(1 for f in searched if any(str(f).startswith('external.%s.' % t) for t in tables))
+                named = [a.get('name') for a in aliases if isinstance(a, dict) and a.get('point') in tables
+                         and a.get('name') in (source.get('series') or [])]
+                gone = [a for a in absent if isinstance(a, dict) and a.get('point') in tables]
+                if fields or named:
+                    per[pid] = dict(disposition='searched', fields=fields, alias_series=named,
+                                    reason='%d field series and %d alias series of its tables entered the coupling search'
+                                           % (fields, len(named)))
+                else:
+                    per[pid] = dict(disposition='missing', reason=('absent: %s' % listing('%s (%s)' % (a.get('series'), a.get('reason'))
+                                                                                       for a in gone)) if gone else
+                                    'no searched series of its tables (%s)' % listing(tables))
+            add('search', 'read', seen=mseen, per=per, basis='search_manifest')
+    for piece in ('scientific_teacher', 'exchange', 'meeting', 'jev'):
+        add(piece, 'not_reported', 'this piece records a per-entry list only; no per-point record (its per-entry row is '
+                                   'in the 99 table)')
+    d.all99_points, d.all99_point_sources = points, sources
+
+
+def external_points_rows(points, point_sources):
+    """Per point (point-major): its declaration and every piece's own disposition (not_reported where the piece recorded
+    none, never inferred)."""
+    out = []
+    for pid in sorted(points, key=lambda x: (str(type(x)), x)):
+        p = points[pid]
+        per = []
+        for s in point_sources[1:]:
+            name = s['piece'][len('external_points['):-1]
+            if s['status'] != 'read':
+                per.append(dict(piece=name, disposition=s['status'], reason=s['reason']))
+            else:
+                got = s['points'].get(pid)
+                per.append(dict(piece=name, **got) if got else
+                           dict(piece=name, disposition='not_reported', reason='the piece\'s list has no row for this point'))
+        out.append(dict(p, pieces=per))
+    return out
+
+
 def join_inputs(sources):
     """The join's input set: one row per piece list (piece, status, file, sha256, reason, basis). Its sha256 is the join's
     join_sha256 (the reports' reuse key); late_pieces_changed compares it by JOIN_COMPARED (no reason text)."""
@@ -1522,12 +1751,12 @@ def join_inputs(sources):
                  basis=s.get('basis')) for s in sources]
 
 
-def all99_join(day, sources, problems, lessons_source=None):
+def all99_join(day, sources, problems, lessons_source=None, point_sources=None, points=None):
     """The ONE per-day table of the 99 entries from the pieces' recorded lists (ALL99_JOIN_SCHEMA). Returns the join
     document; its sha256 over the inputs (join_inputs) binds the reports' reuse. lessons_source: where the scientific
     teacher's lessons list came from (collect_all99's d.all99_lessons_source), carried as recorded."""
     A99, registry_why = _shared_registry()
-    inputs = join_inputs(sources)
+    inputs = join_inputs(list(sources) + list(point_sources or []))   # the ONE formula (late_pieces_changed uses the same)
     join_sha256 = sha256_bytes(json.dumps(inputs, sort_keys=True).encode())
     pieces, per, integrity = [], {}, [dict(kind='problem', detail=p) for p in problems]
     known = {layer: group for layer, group, _ in A99.REGISTRY} if A99 else {}
@@ -1620,6 +1849,22 @@ def all99_join(day, sources, problems, lessons_source=None):
                             'REACH_REFINE reads the piece\'s own word',
                rule='diagnostic only, never knowledge: a recorded arrival is what the piece recorded, not proof that a '
                     'particular equation used the entry; missing lists read as unknown, never zero')
+    # Frankie's 13 day-file points (additive): point-major, each with its declaration and every piece's own disposition
+    point_rows = external_points_rows(points or {}, list(point_sources or [])) if point_sources else []
+    decl = (point_sources or [None])[0]
+    doc.update(external_points=point_rows,
+               external_points_declaration=({k: decl.get(k) for k in ('status', 'reason', 'file', 'sha256', 'basis')}
+                                            if decl else None),
+               external_points_pieces=[{k: s.get(k) for k in ('piece', 'status', 'reason', 'file', 'sha256', 'basis')}
+                                       for s in (point_sources or [])[1:]],
+               external_points_unmapped=[r['point_id'] for r in point_rows if r.get('unmapped')],
+               external_points_rule='one sub-row per day-file point under every 99 entry the day file maps it to; each '
+                                    'piece\'s own recorded per-point word (presented / computed / context / searched / '
+                                    'absent / missing, with its reason); not_reported where the piece records nothing per '
+                                    'point (never inferred from its per-entry row); an unmapped point is listed apart')
+    for ps in point_sources or []:
+        if ps.get('status') == 'integrity':          # a visible failure of the piece's per-point record, listed once
+            integrity.append(dict(kind='external_point', piece=ps['piece'], detail=ps.get('reason')))
     if A99 is None:
         doc.update(status='not_built', reason=registry_why, entries=[], finals={}, no_computation=[], disagreements=[],
                    integrity=integrity)
@@ -1688,6 +1933,11 @@ def all99_join(day, sources, problems, lessons_source=None):
         for f in found:
             disagreements.append(dict(entry=entry, **f))
         row['disagreements'] = found
+        # the day-file points mapped to this entry: one sub-row each (additive; the entry's own row is unchanged)
+        row['external_points'] = [dict(point_id=x['point_id'], name=x['name'], tables=x['tables'],
+                                       mapping=x['mapping'], mapping_reason=x['mapping_reason'],
+                                       event_time_basis=x['event_time_basis'], note=x['note'], pieces=x['pieces'])
+                                  for x in point_rows if entry in (x.get('entries') or [])]
         entries.append(row)
     for s in pieces:
         if s.get('summary_vs_list'):
@@ -1712,6 +1962,9 @@ def all99_summary(join):
                 lessons_basis=(join.get('lessons_source') or {}).get('basis'),
                 lessons_current=(join.get('lessons_source') or {}).get('current'),
                 finals=join.get('finals'), no_computation=len(join.get('no_computation') or []),
+                external_points={str(x['point_id']): {c['piece']: c.get('disposition') for c in x['pieces']}
+                                 for x in join.get('external_points') or []},
+                external_points_unmapped=join.get('external_points_unmapped'),
                 disagreements=len(join.get('disagreements') or []), integrity=len(join.get('integrity') or []))
 
 
@@ -1760,6 +2013,7 @@ def all99_lines(d):
                     + [e['final'], listing(e['reached_by'])])
     L += ['### The 99 entries', '']
     L += table(['#', 'entry', 'role'] + read + ['final for Frankie', 'reached (Frankie pieces)'], rows) + ['']
+    L += external_points_lines(j)
     L += ['### Entries that reached no computation (every piece\'s recorded word and reason)', '',
           'Entries no Frankie piece recorded in a computation: %d.' % len(j['no_computation']), '']
     for e in j['entries']:
@@ -1778,6 +2032,38 @@ def all99_lines(d):
     L += ['', '### Integrity (separate visible failures)', '']
     L += ['- %s: %s.' % (x.get('piece') or x.get('entry') or x['kind'], x['detail']) for x in j['integrity']] or ['None recorded.']
     return L + ['', 'The join rules (fixed text): %s.' % JOIN_RULES, '']
+
+
+def external_points_lines(j):
+    """Frankie's 13 day-file points under their 99 entries: one sub-row per point under each mapped entry, each piece's
+    own recorded word (fixed templates; paths and hashes stay in the Evidence section)."""
+    points = j.get('external_points') or []
+    decl = j.get('external_points_declaration') or {}
+    L = ['### Frankie\'s 13 points under their 99 entries', '',
+         'Each day-file point sits under every 99 entry the day file maps it to (mapping, reason, event-time basis as the '
+         'day file declares them; declaration %s: %s). Each piece\'s word is its own recorded per-point disposition; '
+         '"not_reported" means the piece records nothing per point (never inferred).' % (rec(decl.get('status')),
+                                                                                          rec(decl.get('reason'))), '']
+    if not points:
+        return L + ['No point is declared for this day.', '']
+    pieces = [c['piece'] for c in points[0]['pieces']]
+    rows = []
+    for e in j.get('entries') or []:
+        for x in e.get('external_points') or []:
+            words = {c['piece']: c.get('disposition') for c in x['pieces']}
+            rows.append([e['n'], e['entry'], 'point %s %s' % (x['point_id'], rec(x.get('name'))), listing(x.get('mapping')),
+                         listing(x.get('event_time_basis'))] + [rec(words.get(p)) for p in pieces])
+    L += table(['#', 'entry', 'point', 'mapping', 'event-time basis'] + pieces, rows) + ['']
+    for x in points:
+        L.append('- Point %s (%s): entries %s; mapping %s: %s; tables %s. %s' % (
+            x['point_id'], rec(x.get('name')), listing(x.get('entries')), listing(x.get('mapping')),
+            listing(x.get('mapping_reason')), listing(x.get('tables')),
+            '; '.join('%s %s%s' % (c['piece'], rec(c.get('disposition')), (' (%s)' % c['reason']) if c.get('reason') else '')
+                      for c in x['pieces'])))
+    unmapped = j.get('external_points_unmapped') or []
+    if unmapped:
+        L.append('- Unmapped points (the day file declares no 99 entry; listed, never guessed): %s.' % listing(unmapped))
+    return L + ['']
 
 
 # ------------------------------------------------------------------------------------------------- the exchange section
@@ -2018,7 +2304,8 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
     timings = dict(read_inputs=round(time.monotonic() - started, 6))
     # the 99 layers: every piece's recorded list read once (pinned files checked), then joined; no recomputation
     collect_all99(d, run_name, Path(run_dir) if run_dir else RUNS / run_name, dict(piece_receipts or {}))
-    d.all99 = all99_join(day, d.all99_sources, d.all99_problems, d.all99_lessons_source)
+    d.all99 = all99_join(day, d.all99_sources, d.all99_problems, d.all99_lessons_source,
+                         point_sources=d.all99_point_sources, points=d.all99_points)
     d.all99_sha256 = d.all99['join_sha256']
     timings['all99_join'] = round(time.monotonic() - started - timings['read_inputs'], 6)
     try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
@@ -2269,7 +2556,7 @@ def late_pieces_changed(receipt, current=None):
         out['read'] += [dict(i) for i in getattr(d, 'inputs', None) or []]
         return done('unknown', 'the day\'s inputs could not be read now (%s: %s)' % (type(error).__name__, error))
     out['read'] += [dict(i) for i in d.inputs]
-    now = join_inputs(d.all99_sources)
+    now = join_inputs(list(d.all99_sources) + list(getattr(d, 'all99_point_sources', None) or []))   # all99_join's formula
     out['current'] = dict(all99_sha256=sha256_bytes(json.dumps(now, sort_keys=True).encode()), inputs=now,
                           lessons_source=d.all99_lessons_source)
 

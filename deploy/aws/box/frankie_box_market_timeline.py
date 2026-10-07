@@ -565,7 +565,11 @@ class SharedMarketTimeline:
                                 entries=[e for e, (first, _) in CARRIERS.items() if first == carrier],
                                 thin_for=[e for e, (first, thin) in CARRIERS.items()
                                           if thin == carrier and self._carrier(first)[0] == 'absent'])
-        out['external']['registry'] = 'none of the 99 entries: the day file\'s publications are outside the registry'
+        out['external']['registry'] = ('the day file\'s 13 points map to 99 entries (closest, with the reason; '
+                                       'frankie_box_all99_coverage.external_point_mapping): each publication carries its '
+                                       'entries, and an entry it feeds reads yielded once presented (external_points / '
+                                       'external_presented on the entry\'s row); the day reports list each point under its '
+                                       'entries')
         return out
 
     def _rows_yielded(self, carrier):

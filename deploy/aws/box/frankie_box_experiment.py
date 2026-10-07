@@ -399,16 +399,18 @@ def load_plan(a, code_root):
         runs = {}
         for item in [x for x in a.external_family_history_runs.split(',') if x]:
             fam, _, rid = item.partition('=')
-            if fam not in HISTORY_FAMILIES or not rid.isdigit():
-                raise SystemExit('--external-family-history-runs: family=<numeric run id>, family one of %s'
-                                 % (HISTORY_FAMILIES,))
+            if fam not in HISTORY_FAMILIES or not rid.isalnum():
+                raise SystemExit('--external-family-history-runs: family=<alphanumeric run id> (a GitHub run id or a '
+                                 'named pull such as asprinted20261007), family one of %s' % (HISTORY_FAMILIES,))
             runs[fam] = rid
         plan['external_family_history_runs'] = runs
     return plan, refused
 
 
 DIRECTIVE = 'research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json'
-HISTORY_FAMILIES = ('calendar', 'cot', 'storage', 'consensus', 'weather_obs', 'mos', 'eia930')
+# the day-file builder's families (frankie_box_day_external.FAMILIES): 'consensus' is no longer read; its captures reach
+# the day file through the as_printed family (fetch_day_history.py as-printed); a family run id is alphanumeric (isalnum)
+HISTORY_FAMILIES = ('calendar', 'cot', 'storage', 'weather_obs', 'mos', 'eia930', 'as_printed')
 
 
 def directive_of(code_root):
@@ -579,6 +581,11 @@ def presign_items(plan, code_root):
     else:
         items.append('# no EXTERNAL_HISTORY_RUN: the day files cannot be built in this dispatch (the external step waits)')
     for e in plan['days']:
+        # the day key on S3 (frankie/day_external/<day>/): a read-only listing of what S3 already holds (a verified day
+        # file is fetched and preferred by Run.external), and the two upload slots. The workflow presigns a day's PUT
+        # slots only when S3 holds NEITHER day object (frankie_box_run.yml: a verified S3 day file is never overwritten,
+        # never a pair half replaced); the as_printed family run, when named, is in the getprefix list above
+        items.append('getprefix:%s/frankie/day_external/%s/' % (S3_BUCKET, e['day']))
         for name in (DAY_FILE, DAY_FILE_RECEIPT):
             items.append('put:%s/frankie/day_external/%s/%s' % (S3_BUCKET, e['day'], name))
     return list(dict.fromkeys(items))
@@ -1640,6 +1647,13 @@ class Run:
                 key = '%s/%s/native/glbx-mdp3-%s.%s.dbn.zst' % (CURVE_PREFIX, schema, part, schema)
                 if key not in url_map:
                     lack.append(key)
+        if family_runs.get('as_printed'):
+            # a NAMED as_printed pull (the storage estimate and its captures, values only) must be presigned whole: its
+            # files under <prefix>/as_printed/. Not named: the builder reads as_printed from the main run when it has
+            # them and lists the point missing otherwise (missing-coverage rule; never a wait for it)
+            ap = 'frankie/day_history/%s/as_printed/' % family_runs['as_printed']
+            if not any(k.startswith(ap) for k in url_map):
+                lack.append(ap + '*')
         return lack
 
     def external(self, e):
@@ -1649,16 +1663,25 @@ class Run:
             return self.record('external', day, 'waiting', reason='the day has no sealed ingest yet (the day file is '
                                                                   'attached beside it)')
         directory = Path(ing['ingest'])
+        # the verified S3 day file is preferred (2026-10-07 night: Frankie's 13 points are rebuilt and verified on S3);
+        # a rebuild is the fallback only when S3 holds none; S3's state comes from the dispatch's presigned listing
+        s3 = self.s3_day_file(day)
+        if s3['status'] == 'integrity':
+            return self.record('external', day, 'refused', reason='integrity: %s' % s3['reason'], s3=s3,
+                               inspection=dict(inputs=dict(ingest=str(directory), s3=s3), use='refused: %s' % s3['reason'],
+                                               outputs={}))
+        if s3['status'] == 'present':
+            return self.external_from_s3(day, directory, s3)
         path, sha, why = attached_day_file(directory)
         if path is not None:
             day_receipt = directory / DAY_FILE_RECEIPT
             brain_entry = self.brain_stage(day, 'day-file', [path, day_receipt],
                                            summary=dict(day_file=str(path), sha256=sha))
             return self.record('external', day, 'reused', day_file=str(path), sha256=sha, ingest=str(directory),
-                               brain_entry=brain_entry,
-                               inspection=dict(inputs=dict(ingest=str(directory)),
+                               brain_entry=brain_entry, s3=s3,
+                               inspection=dict(inputs=dict(ingest=str(directory), s3=s3),
                                                use='reused: the day file is attached beside the sealed ingest (never '
-                                                   'rebuilt or overwritten)',
+                                                   'rebuilt or overwritten); S3 %s' % s3['status'],
                                                outputs=self.external_outputs(path, day_receipt)))
         if why.startswith('DIFFERS'):
             return self.record('external', day, 'refused', reason=why + ' (a day file is never overwritten; move it aside '
@@ -1719,6 +1742,155 @@ class Run:
                                                 if env['ACTION'] == 'build' else
                                                 'an earlier build of this run attached (ACTION=link; never rebuilt)'),
                                            outputs=self.external_outputs(path, day_receipt)))
+
+    def s3_day_file(self, day):
+        """What S3 holds of the day file pair frankie/day_external/<day>/ (never a URL on a receipt), from the dispatch's
+        presigned map: the workflow lists the day prefix (getprefix) and presigns the two upload slots only when S3 holds
+        neither object. status: present (both objects listed, with their bytes), absent (both upload slots presigned),
+        integrity (one object without the other: never half replaced, never built over), unknown (no map, or a map
+        without this day's listing: the attached / build route runs as before)."""
+        url_map, why = self.url_map()
+        keys = {name: 'frankie/day_external/%s/%s' % (day, name) for name in (DAY_FILE, DAY_FILE_RECEIPT)}
+        if url_map is None:
+            return dict(status='unknown', keys=list(keys.values()), reason=why)
+        listed = {name: url_map[k] for name, k in keys.items() if isinstance(url_map.get(k), dict)}
+        slots = [name for name, k in keys.items() if ('put:' + k) in url_map]
+        out = dict(keys=list(keys.values()), listed={n: v.get('bytes') for n, v in listed.items()}, put_slots=slots)
+        if len(listed) == 2:
+            return dict(out, status='present', reason='S3 holds the day file and its receipt')
+        if listed:
+            return dict(out, status='integrity', reason='S3 holds only %s of the day pair %s' % (sorted(listed), sorted(keys)))
+        if len(slots) == 2:
+            return dict(out, status='absent', reason='S3 holds neither object of the day pair (both upload slots presigned)')
+        return dict(out, status='unknown', reason='the presigned map carries no S3 listing for this day (a dispatch without '
+                                                  'the frankie/day_external/<day>/ listing)')
+
+    def external_from_s3(self, day, directory, s3):
+        """The verified S3 day file attached beside the sealed ingest. The S3 receipt is fetched first; when the attached
+        pair already is that file (same sha256) it is reused with nothing downloaded. Otherwise the file is fetched into
+        its own directory under DAY_EXTERNAL, checked (bytes and sha256 against its receipt, the trading day, check_day_file)
+        and attached: the attached pair moved aside (<name>.superseded-<utc>, never deleted) and the S3 pair hard-linked in;
+        the day-file brain entry of the old file, if any, moved aside the same way (<day>-day-file.superseded-<utc>, outside
+        the brain's entry globs) so the new one is filed. Never swapped once this run's ROOT, teacher or classroom of the
+        day finished on the attached file (completed science is never changed under it): then the attached file stays and
+        the differing S3 sha256 is a visible finding. A failed download waits (retried); a check failure is an integrity
+        refusal; both shas are recorded."""
+        import urllib.request
+        url_map, _ = self.url_map()
+        keys = {name: 'frankie/day_external/%s/%s' % (day, name) for name in (DAY_FILE, DAY_FILE_RECEIPT)}
+        stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
+        stage_dir = DAY_EXTERNAL / ('%s-s3-%s-%s' % (self.plan['run'], day, stamp)) / day
+        inputs = dict(ingest=str(directory), s3={k: v for k, v in s3.items() if k != 'reason'})
+
+        def fetch(name):
+            item = url_map[keys[name]]
+            stage_dir.mkdir(parents=True, exist_ok=True)
+            target = stage_dir / name
+            pending = target.with_name(name + '.pending')
+            with urllib.request.urlopen(item['url'], timeout=900) as response, open(pending, 'wb') as out:
+                shutil.copyfileobj(response, out, 8 * 1024 * 1024)
+            if pending.stat().st_size != item.get('bytes'):
+                raise ValueError('%s: %d bytes fetched, S3 listed %s' % (keys[name], pending.stat().st_size, item.get('bytes')))
+            os.replace(pending, target)
+            return target
+        try:
+            receipt_path = fetch(DAY_FILE_RECEIPT)
+            receipt = json.loads(receipt_path.read_bytes())
+        except (OSError, ValueError) as error:
+            return self.record('external', day, 'waiting', reason='the S3 day receipt could not be fetched (%s: %s); retried'
+                               % (type(error).__name__, error), s3=inputs['s3'],
+                               inspection=dict(inputs=inputs, use='waiting: S3 receipt fetch', outputs={}))
+        s3_sha = receipt.get('sha256')
+        try:
+            attached, attached_sha, attached_why = attached_day_file(directory)
+        except (ValueError, KeyError, TypeError) as error:    # a malformed attached file: replaced below, never read
+            attached, attached_sha, attached_why = None, None, 'malformed: %s: %s' % (type(error).__name__, error)
+        if attached is not None and attached_sha == s3_sha:
+            day_receipt = directory / DAY_FILE_RECEIPT
+            brain_entry = self.brain_stage(day, 'day-file', [attached, day_receipt],
+                                           summary=dict(day_file=str(attached), sha256=attached_sha))
+            self._attached[day] = (str(attached), attached_sha)
+            return self.record('external', day, 'reused', day_file=str(attached), sha256=attached_sha, ingest=str(directory),
+                               brain_entry=brain_entry, s3=dict(inputs['s3'], sha256=s3_sha, same_as_attached=True),
+                               inspection=dict(inputs=inputs, use='reused: the attached day file IS the verified S3 file '
+                                                                  '(same sha256; nothing downloaded beyond its receipt)',
+                                               outputs=self.external_outputs(attached, day_receipt)))
+        used = [stage for stage in ('root', 'teacher', 'classroom') if self.finished(stage, day)]
+        if attached is not None and used:
+            day_receipt = directory / DAY_FILE_RECEIPT
+            finding = dict(kind='s3_day_file_differs_after_use', attached_sha256=attached_sha, s3_sha256=s3_sha,
+                           used_by=used, reason='this run\'s %s already finished on the attached file; completed results are '
+                                                'never changed under them: an explicit successor run takes the S3 file'
+                                                % ', '.join(used))
+            self.log('external %s: %s' % (day, finding['reason']))
+            return self.record('external', day, 'reused', day_file=str(attached), sha256=attached_sha, ingest=str(directory),
+                               s3=dict(inputs['s3'], sha256=s3_sha, same_as_attached=False), findings=[finding],
+                               inspection=dict(inputs=inputs, use='kept the attached file: %s' % finding['reason'],
+                                               outputs=dict(self.external_outputs(attached, day_receipt), findings=[finding])))
+        try:
+            file_path = fetch(DAY_FILE)
+        except (OSError, ValueError) as error:
+            return self.record('external', day, 'waiting', reason='the S3 day file could not be fetched (%s: %s); retried'
+                               % (type(error).__name__, error), s3=dict(inputs['s3'], sha256=s3_sha),
+                               inspection=dict(inputs=inputs, use='waiting: S3 day file fetch', outputs={}))
+        try:
+            have = sha256_file(file_path)
+            if have != s3_sha or file_path.stat().st_size != receipt.get('bytes'):
+                raise ValueError('S3 day file sha256 %s / %d bytes differ from its receipt (%s / %s)' % (
+                    have, file_path.stat().st_size, s3_sha, receipt.get('bytes')))
+            body = json.loads(file_path.read_bytes())
+            ingest_day = json.loads((directory / 'ingestion-receipt.json').read_bytes()).get('trading_day') \
+                if (directory / 'ingestion-receipt.json').is_file() else day
+            if str(body.get('trading_day')) != str(day) or str(ingest_day) != str(day):
+                raise ValueError('S3 day file trading day %s, ingest %s, step day %s' % (body.get('trading_day'), ingest_day, day))
+            from research.kalshi.frankie_boss.operations.frankie_day_external import check_day_file
+            check_day_file(body)
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            return self.record('external', day, 'refused', reason='integrity: the S3 day file failed its checks: %s: %s'
+                               % (type(error).__name__, error), s3=dict(inputs['s3'], sha256=s3_sha), staged=str(stage_dir),
+                               inspection=dict(inputs=inputs, use='refused (integrity): kept staged at %s' % stage_dir,
+                                               outputs={}))
+        moved = []
+        for name in (DAY_FILE, DAY_FILE_RECEIPT):
+            old = directory / name
+            if old.exists():
+                aside = old.with_name('%s.superseded-%s' % (name, stamp))
+                os.rename(old, aside)
+                moved.append(dict(file=str(old), moved_to=str(aside)))
+        for name in (DAY_FILE, DAY_FILE_RECEIPT):
+            try:
+                os.link(stage_dir / name, directory / name)
+            except OSError:
+                shutil.copy2(stage_dir / name, directory / name)
+        path, sha, why = attached_day_file(directory)
+        if path is None:
+            return self.record('external', day, 'failed', reason='the S3 pair did not attach: %s' % why, moved_aside=moved,
+                               s3=dict(inputs['s3'], sha256=s3_sha))
+        self._attached[day] = (str(path), sha)
+        for key in [k for k in self._day_file_sha if k and k[0] == day]:
+            self._day_file_sha.pop(key, None)
+        brain_moved = None
+        try:
+            brain_entry = self.brain_stage(day, 'day-file', [path, directory / DAY_FILE_RECEIPT],
+                                           summary=dict(day_file=str(path), sha256=sha))
+        except ValueError as error:
+            # the brain holds the replaced file's day-file knowledge: moved aside (never deleted; outside ENTRY_GLOBS),
+            # then the verified file's entry filed
+            entry = Path(self.plan.get('brain') or str(BRAIN)) / ('%s-day-file' % day)
+            brain_moved = dict(entry=str(entry), moved_to=str(entry) + '.superseded-%s' % stamp, why=str(error))
+            os.rename(entry, brain_moved['moved_to'])
+            brain_entry = self.brain_stage(day, 'day-file', [path, directory / DAY_FILE_RECEIPT],
+                                           summary=dict(day_file=str(path), sha256=sha))
+        return self.record('external', day, 'done', action='s3', day_file=str(path), sha256=sha, ingest=str(directory),
+                           previous=dict(sha256=attached_sha, why=attached_why, moved_aside=moved),
+                           s3=dict(inputs['s3'], sha256=s3_sha, staged=str(stage_dir)), brain_entry=brain_entry,
+                           brain_moved_aside=brain_moved, new_bytes=new_bytes(stage_dir.parent),
+                           inspection=dict(inputs=inputs,
+                                           use='the verified S3 day file attached (receipt sha256 and bytes, trading day and '
+                                               'check_day_file checked); the previous pair moved aside, never deleted',
+                                           outputs=dict(self.external_outputs(path, directory / DAY_FILE_RECEIPT),
+                                                        previous_sha256=attached_sha, moved_aside=moved,
+                                                        brain_moved_aside=brain_moved)))
 
     @staticmethod
     def external_outputs(path, day_receipt):
