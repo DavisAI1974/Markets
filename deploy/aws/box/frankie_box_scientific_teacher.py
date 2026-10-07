@@ -432,16 +432,32 @@ def load_searches(dirs):
     days = []
     for d in dirs:
         d = Path(d)
-        manifest = json.loads((d / 'MANIFEST.json').read_bytes())
+        manifest_raw = (d / 'MANIFEST.json').read_bytes()
+        manifest = json.loads(manifest_raw)
+        parts, part_pins, part_bytes, seen = [], {}, {}, set()
+        for pin in manifest['couplings']['parts']:
+            relative = Path(pin['path'])
+            part = d / relative
+            resolved = part.resolve()
+            if (relative.is_absolute() or '..' in relative.parts
+                    or not resolved.is_relative_to(d.resolve()) or resolved in seen):
+                raise ValueError('search evidence part escapes its owner or repeats an existing part')
+            seen.add(resolved)
+            rel = str(relative)
+            if not isinstance(pin.get('sha256'), str) or not re.fullmatch('[0-9a-f]{64}', pin['sha256']):
+                raise ValueError('search evidence part lacks its exact sha256: %s' % part)
+            parts.append(part)
+            part_pins[rel] = pin['sha256']
+            if 'bytes' in pin:
+                part_bytes[rel] = pin['bytes']
         # Greg 2026-10-06: all 30 days contribute learned knowledge, regardless of the old year/role label.
         # Exact search sources and separate per-day measurements remain bound below.
         days.append(dict(dir=d, day=manifest['day'], cycle=manifest['cycle'], lags=manifest['lags'],
                          series=manifest['series'], cells=[tuple(c) for c in manifest['cells']],
-                         parts=[d / p['path'] for p in manifest['couplings']['parts']],
-                         part_pins={p['path']: p.get('sha256') for p in manifest['couplings']['parts']},
+                         parts=parts, part_pins=part_pins, part_bytes=part_bytes,
                          native_retained=[x for x in manifest.get('notes') or [] if x.get('source') == 'native' and x.get('retained')],
                          native_reports=[x for x in manifest.get('sources') or [] if str(x.get('source', '')).startswith('native.')],
-                         manifest_sha256=sha256_bytes((d / 'MANIFEST.json').read_bytes())))
+                         manifest_sha256=sha256_bytes(manifest_raw)))
     if len({x['day'] for x in days}) != len(days):
         raise SystemExit('the same day was given twice (duplicate data declines the run)')
     return days
@@ -696,17 +712,34 @@ def test(claims_doc, days, records_dir=None, records_selection=None):
         per_claim.append((c, matched, missing, pairs))
     rows = {}
     for d in days:
+        seen_parts = set()
         for part in d['parts']:
             rel = str(Path(part).relative_to(d['dir']))
-            with open(part) as handle:
+            resolved = Path(part).resolve()
+            if (not resolved.is_relative_to(Path(d['dir']).resolve()) or resolved in seen_parts
+                    or '..' in Path(rel).parts):
+                raise ValueError('search evidence part escapes its owner or repeats an existing part')
+            seen_parts.add(resolved)
+            pin = (d.get('part_pins') or {}).get(rel)
+            if not isinstance(pin, str) or not re.fullmatch('[0-9a-f]{64}', pin):
+                raise ValueError('search evidence part lacks its exact sha256: %s' % part)
+            hashed, size = hashlib.sha256(), 0
+            # Verify exactly the bytes consumed, in the same pass as parsing. Text-mode
+            # newline normalization must never change the discovery row's raw-line hash.
+            with open(part, 'rb') as handle:
                 for ordinal, line in enumerate(handle):
+                    hashed.update(line)
+                    size += len(line)
                     r = json.loads(line)
                     if (r['x'], r['y']) in wanted:
                         # the row's exact identity: its part (the search's pin), its ordinal and the raw line's sha256,
                         # the same three values Run.search_knowledge records for a candidate (part_sha256, row, row_sha256)
-                        r['_where'] = dict(part=rel, part_sha256=(d.get('part_pins') or {}).get(rel), row=ordinal,
-                                           row_sha256=sha256_bytes(line.encode()))
+                        r['_where'] = dict(part=rel, part_sha256=pin, row=ordinal,
+                                           row_sha256=sha256_bytes(line))
                         rows.setdefault((d['day'], r['x'], r['y']), []).append(r)
+            expected_size = (d.get('part_bytes') or {}).get(rel)
+            if hashed.hexdigest() != pin or (expected_size is not None and size != expected_size):
+                raise ValueError('search evidence differs from its manifest: %s' % part)
     results = []
     for c, matched, missing, pairs in per_claim:
         tests, verdicts, challenges, mirrored = [], [], [], []
@@ -902,7 +935,89 @@ def test(claims_doc, days, records_dir=None, records_selection=None):
     return results
 
 
-def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/frankie-box/brain', native=None):
+def submit_correction_work(run, day, *, request=None, successor_id=None, decision=None):
+    """Scientific-owner intake for explicit researched work; never infer a decision from counts.
+
+    Request and decision use the existing successor contracts. The decision names the actual
+    completed research receipt and scoped evidence; the dispatcher rechecks them before filing.
+    Calling this boundary queues work only. The held owner loop alone can run or publish it.
+    """
+    import frankie_box_successor_dispatch as S
+    if request is not None:
+        if decision is not None or successor_id is not None:
+            raise ValueError('scientific request and completed decision are separate owner operations')
+        return S.enqueue(run, day, request)
+    if decision is None or successor_id is None:
+        raise ValueError('completed scientific decision needs its retained successor identity')
+    return S.submit_decision(run, day, successor_id, decision)
+
+
+def publish_standalone_correction(brain, *, original, replacement, original_inputs, replacement_inputs,
+                                  affected_claim_ids, scopes, decision, reason, evidence, publication_day):
+    """Publish an explicitly researched standalone correction using both actual operations.
+
+    A retained candidate is produced with --retain-only in its own --out-dir. It does not
+    become ordinary learner knowledge before this checked, scoped owner decision is supplied.
+    """
+    import frankie_box_experiment_review as R
+    return R.record_correction(brain, original=original, replacement=replacement, scopes=scopes,
+        decision=decision, reason=reason, evidence=evidence, publication_day=publication_day,
+        owner_transition=dict(original_inputs=original_inputs, replacement_inputs=replacement_inputs,
+                              affected_claim_ids=affected_claim_ids))
+
+
+def freeze_operation(doc, days, out_dir, brain_dir):
+    """Pin standalone scientific inputs before testing; never infer an old operation later."""
+    import frankie_box_historical_claims as HC
+    import frankie_box_historical_reproduction as HR
+    import frankie_box_experiment_review as R
+    import frankie_box_experiment_search as SEARCH
+    from frankie_box_durable import witness, write_json
+    day = '-'.join(sorted(d['day'] for d in days)) if doc['author'] == 'historical' else doc['day']
+    name = '%s-%s.json' % (day, doc['stamp'] or 'frankie')
+    path = Path(out_dir) / doc['author'] / (name + '.inputs.json')
+    if path.with_name(name).exists() and not path.exists():
+        raise ValueError('legacy standalone result has no frozen operation; explicit historical rework is required')
+    source = dict(path=doc['source'], **witness(doc['source']))
+    searches = [dict(day=d['day'], cycle=d['cycle'], dir=str(d['dir']),
+                     manifest=dict(path=str(d['dir'] / 'MANIFEST.json'), **witness(d['dir'] / 'MANIFEST.json')))
+                for d in days]
+    if any(s['manifest']['sha256'] != d['manifest_sha256'] for s, d in zip(searches, days)):
+        raise ValueError('standalone search changed before operation freeze')
+    identity = dict(day=day, brain=str(brain_dir), reader_sha256=witness(__file__)['sha256'],
+                    readers={m.__name__: witness(m.__file__) for m in (HC, HR, SEARCH, R)})
+    saved = json.loads(path.read_bytes()) if path.exists() else None
+    records = (saved['selection']['reproduction_records'] if saved is not None else
+               dict(directory=str(REPRODUCTION_DIR), files=HR.record_selection(REPRODUCTION_DIR),
+                    binding_tables_sha256=HC.binding_tables_sha256()))
+    if doc['author'] == 'historical':
+        # The collection summary and tests must consume the same frozen records.
+        # Later records cannot change a resumed historical operation's projection.
+        current = historical_claims(doc['source'], records_dir=Path(records['directory']),
+                                    records_selection=records['files'])
+        if (current['claims_sha256'] != source['sha256'] or current['claims_sha256'] != doc['claims_sha256']
+                or current['stamp'] != doc['stamp'] or current['claims'] != doc['claims']):
+            raise ValueError('historical claims changed while their operation was being frozen')
+        doc = current
+    if path.exists():
+        if (saved.get('schema') != 'FRANKIE_STANDALONE_TEACHER_INPUTS_V1' or saved['identity'] != identity
+                or saved['selection']['doc'] != doc or saved['selection']['source'] != source
+                or saved['selection']['searches'] != searches
+                or saved['selection_sha256'] != R._lesson_digest(saved['selection'])
+                or saved['selection']['reproduction_records']['binding_tables_sha256'] != HC.binding_tables_sha256()):
+            raise ValueError('standalone operation changed; an explicit successor directory is required')
+    else:
+        selection = dict(doc=doc, source=source, searches=searches, reproduction_records=records)
+        saved = dict(schema='FRANKIE_STANDALONE_TEACHER_INPUTS_V1', identity=identity,
+                     selection=selection, selection_sha256=R._lesson_digest(selection))
+        write_json(path, saved)
+    for item in saved['selection']['reproduction_records']['files']:
+        R._read_pin(item)
+    return dict(path=str(path), **witness(path)), saved
+
+
+def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/frankie-box/brain', native=None,
+          operation=None, publish=True):
     schema = {'jev': 'JEV_LESSONS_V1', 'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1',
               'search': 'SEARCH_CANDIDATE_LESSONS_V1'}[doc['author']]
     if doc['author'] == 'historical':
@@ -920,6 +1035,12 @@ def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/
                              for d in days],
                    results=results, model_calls=0,
                    rule='each day on its own, never pooled; counts are the finding, the disposition word is orientation')
+    if operation is not None:
+        import frankie_box_experiment_review as R
+        frozen = json.loads(R._read_pin(operation))
+        lessons['scientific_operation'] = dict(inputs=operation, selection_sha256=frozen['selection_sha256'])
+        lessons['results_sha256'] = R._lesson_digest(results)
+        R._validate_operation(R._transition_operation(operation, lessons), lessons)
     if doc.get('reconsideration') is not None:
         lessons['reconsideration'] = doc['reconsideration']
     if native is not None:
@@ -940,18 +1061,14 @@ def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/
     if path.exists():
         raise SystemExit('%s exists: these claims were already taught (duplicate data declines the run)' % path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(data)
+    from frankie_box_durable import write_bytes
+    write_bytes(path, data)
     log('%s lessons: %d claims, %s -> %s' % (doc['author'], len(results),
                                               json.dumps({k: sum(r['disposition'] == k for r in results) for k in DISPOSITIONS}), path))
-    if doc['author'] == 'jev' and map_url:
-        key = 'put:clm-sidecar/jev-brain/lessons/%s' % name
-        entries = json.loads(urllib.request.urlopen(map_url, timeout=60).read())
-        if key not in entries:
-            raise SystemExit('no presigned slot %s in MAP_URL (dispatch with presign=put:frankie-granite42-568968024170-us-east-1/%s)'
-                             % (key, key[4:]))
-        request = urllib.request.Request(entries[key]['url'], data=data, method='PUT')
-        with urllib.request.urlopen(request, timeout=300) as response:
-            log('uploaded to Jev\'s brain: %s HTTP %d' % (key[4:], response.status))
+    if not publish:
+        return path
+    if doc['author'] == 'jev':
+        upload_jev_lessons(path, map_url, log=log)
     if doc['author'] == 'search':
         log('search candidate lessons retained, NOT published: frankie_box_brain.write_lessons_entry admits the authors '
             'frankie/historical/jev only (its edit, and the LESSONS maps of frankie_box_teacher_knowledge.py and '
@@ -961,6 +1078,36 @@ def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/
 
     return path
 
+
+
+def upload_jev_lessons(path, map_url=None, log=print):
+    """Deliver retained teacher bytes to their existing Jev object, including interrupted-write recovery.
+
+    Repeating this PUT reuses the exact lesson, never another scientific test. HTTP acceptance
+    is transport evidence only; consumer-side seal/readback remains the CPU owner's contract.
+    """
+    if not map_url:
+        return None
+    path = Path(path)
+    data = path.read_bytes()
+    lesson = json.loads(data)
+    if (lesson.get('schema') != 'JEV_LESSONS_V1' or lesson.get('author') != 'jev'
+            or lesson.get('written_by') != 'scientific_teacher'):
+        raise ValueError('only completed Jev scientific-teacher lessons may be uploaded')
+    name = '%s-%s.json' % (lesson['day'], lesson['stamp'] or 'frankie')
+    if path.name != name:
+        raise ValueError('Jev lesson filename differs from its retained day/stamp')
+    key = 'put:clm-sidecar/jev-brain/lessons/%s' % name
+    with urllib.request.urlopen(map_url, timeout=60) as response:
+        entries = json.loads(response.read())
+    if key not in entries:
+        raise SystemExit('no presigned slot %s in MAP_URL (dispatch with presign=put:frankie-granite42-568968024170-us-east-1/%s)'
+                         % (key, key[4:]))
+    request = urllib.request.Request(entries[key]['url'], data=data, method='PUT')
+    with urllib.request.urlopen(request, timeout=300) as response:
+        status = response.status
+    log('uploaded retained Jev lessons: %s HTTP %d' % (key[4:], status))
+    return dict(key=key[4:], bytes=len(data), sha256=sha256_bytes(data), http_status=status)
 
 
 def publish_lessons(path, brain_dir='/opt/frankie-box/brain', log=print):
@@ -1017,6 +1164,8 @@ def main():
                                              'search): its candidates tested on the OTHER searches given; the candidates\' '
                                              'own day is listed as origin evidence, never as a test')
     p.add_argument('--brain', default='/opt/frankie-box/brain', help='the owning lane plan\'s knowledge directory')
+    p.add_argument('--out-dir', default=str(ROOT), help='immutable standalone operation/result directory')
+    p.add_argument('--retain-only', action='store_true', help='retain candidate results for an explicit checked correction')
     p.add_argument('--accumulated-day', help='test completed legal knowledge on this one owning day, without a classroom')
     p.add_argument('--accumulated-out', help='the retained accumulated-input/result directory; paired with --accumulated-day')
     a = p.parse_args()
@@ -1051,7 +1200,7 @@ def main():
     if not (a.jev_claims or a.frankie_ledgers or a.historical_claims or a.search_findings):
         raise SystemExit('give --jev-claims / --jev-stamp, --frankie-ledgers, --historical-claims and/or --search-findings')
     days = load_searches(a.search)
-    native = {d['day']: completed_native_evidence(d, ROOT) for d in days}
+    native = {d['day']: completed_native_evidence(d, Path(a.out_dir)) for d in days}
     for day, (ref, listed) in native.items():
         print('completed native evidence %s: %s' % (day, 'read, %s' % json.dumps(ref['counts'], sort_keys=True) if ref
                                                        else '; '.join(x['reason'] for x in listed)), flush=True)
@@ -1064,8 +1213,28 @@ def main():
                              'day %s is origin evidence, not a test' % candidates[0]['day'])
     for doc in ([jev_claims(a.jev_claims)] if a.jev_claims else []) + \
                ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []) + \
-               ([historical_claims(a.historical_claims)] if a.historical_claims else []) + candidates:
-        write(doc, days, test(doc, days), ROOT, os.environ.get('MAP_URL'), brain_dir=a.brain, native=native)
+               ([historical_claims(a.historical_claims, records_selection=[])] if a.historical_claims else []) + candidates:
+        operation, frozen = freeze_operation(doc, days, a.out_dir, a.brain)
+        doc = frozen['selection']['doc']
+        records = frozen['selection']['reproduction_records']
+        name = '%s-%s.json' % (frozen['identity']['day'], doc['stamp'] or 'frankie')
+        result_path = Path(a.out_dir) / doc['author'] / name
+        if result_path.exists():
+            import frankie_box_experiment_review as R
+            raw = result_path.read_bytes()
+            retained = json.loads(raw)
+            R._validate_operation(R._transition_operation(operation, retained), retained)
+            if not a.retain_only and doc['author'] != 'search':
+                import frankie_box_lane_state as LS
+                R.require_current([dict(path=str(result_path), sha256=sha256_bytes(raw), content=retained)],
+                                  R.corrections(LS.knowledge_roots(a.brain)))
+                if doc['author'] == 'jev':
+                    upload_jev_lessons(result_path, os.environ.get('MAP_URL'))
+                publish_lessons(result_path, brain_dir=a.brain)
+            continue
+        results = test(doc, days, records_dir=Path(records['directory']), records_selection=records['files'])
+        write(doc, days, results, a.out_dir, os.environ.get('MAP_URL'), brain_dir=a.brain, native=native,
+              operation=operation, publish=not a.retain_only)
 
 
 if __name__ == '__main__':

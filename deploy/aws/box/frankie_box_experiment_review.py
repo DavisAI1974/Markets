@@ -47,9 +47,28 @@ def _lesson_digest(value):
     return digest(json.dumps(value, sort_keys=True, allow_nan=False).encode())
 
 
+def claim_searches(lesson, claim_id):
+    """Preserved claims keep their actual evidence scope across partial correction chains."""
+    operation = (lesson.get('knowledge_retest') or {}).get('claim_operations', {}).get(claim_id)
+    return operation['searches'] if operation is not None else lesson['searches']
+
+
 def _transition_operation(pin, lesson):
     """Read the actual frozen accumulated-teacher operation; never manufacture a successor."""
     inputs = json.loads(_read_pin(pin))
+    if inputs.get('schema') == 'FRANKIE_STANDALONE_TEACHER_INPUTS_V1':
+        selection = inputs['selection']
+        doc = selection['doc']
+        if (inputs['selection_sha256'] != _lesson_digest(selection)
+                or doc['author'] != lesson['author'] or doc['claims_sha256'] != lesson['claims_sha256']
+                or doc['claims'] != lesson['claim_inputs']['claims']):
+            raise ValueError('standalone result differs from its frozen claim projection')
+        return dict(kind='standalone', inputs={k: pin[k] for k in ('path', 'bytes', 'sha256')},
+                    identity=inputs['identity'], selection_sha256=inputs['selection_sha256'],
+                    claim_inputs_sha256=_lesson_digest(lesson['claim_inputs']),
+                    claims_sha256=doc['claims_sha256'],
+                    source=selection['source'], searches=selection['searches'],
+                    reproduction_records=selection['reproduction_records'])
     if inputs.get('schema') != 'FRANKIE_TEACHER_KNOWLEDGE_INPUTS_V1':
         raise ValueError('correction transition requires accumulated-teacher frozen inputs')
     selection = inputs['selection']
@@ -93,6 +112,17 @@ def _validate_operation(operation, lesson):
             or claims.get('claims_sha256') != lesson['claims_sha256']
             or [c['id'] for c in claims['claims']] != [r['claim_id'] for r in lesson['results']]):
         raise ValueError('correction transition has an inconsistent complete claim projection')
+    if operation.get('kind') == 'standalone':
+        expected_searches = [dict(day=s['day'], cycle=s['cycle'], dir=s['dir'],
+                                  manifest_sha256=s['manifest']['sha256']) for s in operation['searches']]
+        if (lesson.get('scientific_operation') != dict(inputs=pin, selection_sha256=operation['selection_sha256'])
+                or lesson['claim_inputs_sha256'] != operation['claim_inputs_sha256']
+                or claims['reader_sha256'] != identity['reader_sha256']
+                or lesson['claims_sha256'] != operation['claims_sha256']
+                or lesson['searches'] != expected_searches or lesson['day'] != identity['day']
+                or lesson.get('results_sha256') != _lesson_digest(lesson['results'])):
+            raise ValueError('standalone result differs from its exact frozen operation')
+        return
     retest = lesson.get('knowledge_retest') or {}
     expected = dict(input_sha256=pin['sha256'], claim_inputs_sha256=lesson['claim_inputs_sha256'],
                     search_manifest_sha256=identity['manifest']['sha256'],
@@ -120,13 +150,35 @@ def _validate_operation(operation, lesson):
 def _validate_transition(transition, before, after, publication):
     """Check the transported owner binding without exposing private frozen selections."""
     if (not isinstance(transition, dict) or transition.get('schema') != TRANSITION_SCHEMA
-            or transition.get('owner') != 'frankie_box_teacher_knowledge.teach_accumulated'):
+            or transition.get('owner') not in ('frankie_box_teacher_knowledge.teach_accumulated',
+                                               'frankie_box_scientific_teacher')):
         raise ValueError('changed claim inputs require an explicit supported scientific-owner transition')
     operations = []
     for name, lesson in (('original', before), ('replacement', after)):
         operation = transition[name]
         _validate_operation(operation, lesson)
         operations.append(operation)
+    if transition['owner'] == 'frankie_box_scientific_teacher':
+        if (any(o.get('kind') != 'standalone' for o in operations)
+                or operations[0]['identity']['brain'] != operations[1]['identity']['brain']
+                or operations[0]['inputs'] == operations[1]['inputs']
+                or operations[0]['inputs']['sha256'] == operations[1]['inputs']['sha256']
+                or operations[0]['inputs']['path'] == operations[1]['inputs']['path']
+                or publication['day'] not in [s['day'] for s in operations[1]['searches']]):
+            raise ValueError('standalone correction requires distinct frozen operations on its publishing owner')
+        ids = [r['claim_id'] for r in before['results']]
+        affected = transition.get('affected_claim_ids')
+        if (not isinstance(affected, list) or not affected or len(set(affected)) != len(affected)
+                or [i for i in ids if i in affected] != affected
+                or [r['claim_id'] for r in after['results']] != ids):
+            raise ValueError('standalone correction needs explicit affected claim identities')
+        for old_claim, claim, old_result, result in zip(before['claim_inputs']['claims'],
+                                                       after['claim_inputs']['claims'], before['results'], after['results']):
+            if old_claim['id'] not in affected and (old_claim != claim or old_result != result):
+                raise ValueError('standalone correction changed an unaffected claim/result')
+        return
+    if any(o.get('kind') == 'standalone' for o in operations):
+        raise ValueError('mixed standalone/accumulated correction owners are not interchangeable')
     if (operations[0]['identity']['brain'] != operations[1]['identity']['brain']
             or operations[0]['identity']['day'] != operations[1]['identity']['day']
             or operations[1]['identity']['day'] != publication['day']
@@ -134,9 +186,26 @@ def _validate_transition(transition, before, after, publication):
             or operations[0]['inputs']['path'] == operations[1]['inputs']['path']):
         raise ValueError('correction successor needs a distinct retained operation on the same owner day/brain')
     request = operations[1]['identity'].get('successor')
+    if not request and (before['claim_inputs']['claims'] != after['claim_inputs']['claims']
+                        or before['claims_sha256'] != after['claims_sha256']
+                        or any(operations[0]['identity'][k] != operations[1]['identity'][k]
+                               for k in ('search', 'manifest'))):
+        raise ValueError('changed claims/search require an explicit successor request')
     if request:
         if request['original_inputs'] != operations[0]['inputs']:
             raise ValueError('successor did not name this original frozen operation')
+        collection = before.get('reconsideration')
+        expected_origin = (before.get('knowledge_retest') or {}).get('reconsideration_origin')
+        if collection is not None:
+            if after.get('reconsideration') != collection:
+                raise ValueError('successor changed the retained original collection context')
+            if expected_origin is None and before['claims_sha256'] != after['claims_sha256']:
+                if collection['claims_file_sha256'] != before['claims_sha256']:
+                    raise ValueError('original collection lacks its claims binding')
+                expected_origin = dict(claims_sha256=collection['claims_file_sha256'],
+                                       result={k: request['original_result'][k] for k in ('path', 'bytes', 'sha256')})
+        if after['knowledge_retest'].get('reconsideration_origin') != expected_origin:
+            raise ValueError('successor changed the original collection provenance')
         ids = [r['claim_id'] for r in before['results']]
         affected = request.get('affected_claim_ids', ids)
         if (not affected or len(set(affected)) != len(affected)
@@ -151,8 +220,9 @@ def _validate_transition(transition, before, after, publication):
                 raise ValueError('successor changed an unaffected claim or its completed result')
         provenance = after['knowledge_retest'].get('claim_operations')
         if provenance is not None:
-            expected = {i: (dict(input_sha256=operations[1]['inputs']['sha256']) if i in affected else
-                            dict(inputs=request['original_inputs'], result=request['original_result'])) for i in ids}
+            expected = {i: (dict(input_sha256=operations[1]['inputs']['sha256'], searches=after['searches']) if i in affected else
+                            dict(inputs=request['original_inputs'], result=request['original_result'],
+                                 searches=claim_searches(before, i))) for i in ids}
             if provenance != expected:
                 raise ValueError('successor claim provenance differs from its recomputed/preserved partition')
         elif affected != ids:
@@ -169,8 +239,203 @@ def _validate_transition(transition, before, after, publication):
                 raise ValueError('changed search requires the exact replacement manifest binding')
 
 
+def _exchange_digest(value):
+    # The exchange's existing canonical encoding includes literal Unicode.
+    return digest(json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False,
+                             allow_nan=False).encode('utf-8'))
+
+
+def _exchange_sources(receipt, records):
+    """Validate only the declared source chains, even when later corrections now exist."""
+    supplied = receipt['source_corrections']
+    by_hash = {record['record']['sha256']: record for record in records.values()}
+    if (not supplied or len({pin['sha256'] for pin in supplied}) != len(supplied)
+            or any(pin['sha256'] not in by_hash or pin['bytes'] != by_hash[pin['sha256']]['record']['bytes']
+                   for pin in supplied)):
+        raise ValueError('exchange source correction is absent from checked owner knowledge')
+    selected = {by_hash[pin['sha256']]['original']['sha256']: by_hash[pin['sha256']] for pin in supplied}
+    if any(record['body']['written_by'] != 'scientific_teacher' for record in selected.values()):
+        raise ValueError('exchange source correction must replace a checked scientific lesson')
+    consumed = set()
+    for pair in receipt['operation']['documents']:
+        old, new = pair['original'], pair['replacement']
+        if any(old.get(key) != new.get(key) for key in ('schema', 'author', 'source_id', 'accumulated')):
+            raise ValueError('exchange rebuild changed an original lesson slot or blind-wall status')
+        cursor = old['sha256']
+        seen = set()
+        while cursor in selected:
+            if cursor in seen:
+                raise ValueError('exchange source correction cycle')
+            seen.add(cursor)
+            consumed.add(cursor)
+            cursor = selected[cursor]['replacement']['sha256']
+        if cursor != new['sha256'] or (not seen and old != new):
+            raise ValueError('exchange source replacement is not its declared checked chain')
+    if consumed != set(selected):
+        raise ValueError('exchange rebuild supplied an unrelated source correction')
+    return consumed
+
+
+def _exchange_source_ancestry(receipt, records):
+    """The declared scientific links and their earlier source ancestry, never later replacements."""
+    ancestors = _exchange_sources(receipt, records)
+    while True:
+        earlier = {sha for sha, record in records.items()
+                   if record['body']['written_by'] == 'scientific_teacher'
+                   and record['replacement']['sha256'] in ancestors} - ancestors
+        if not earlier:
+            return ancestors
+        ancestors.update(earlier)
+
+
+def _exchange_wall(view):
+    sources = view['sources']['lessons']
+    for item in view['items']:
+        matches = [source for source in sources if source['sha256'] == item['lessons']['sha256']
+                   and source['path'] == item['lessons']['path']
+                   and source['author'] == item['author']
+                   and bool(source.get('accumulated')) == item['lessons']['accumulated']]
+        blind = item['author'] == 'jev' and not item['lessons']['accumulated']
+        if not matches or item['blind_jev'] != blind or (view['view'] == 'frankie' and blind):
+            raise ValueError('exchange result changed its selected lesson identity or Jev wall')
+    for context in view['lesson_contexts']:
+        source = context['source']
+        blind = source['author'] == 'jev' and not source.get('accumulated')
+        if source not in sources or context['blind_jev'] != blind or (view['view'] == 'frankie' and blind):
+            raise ValueError('exchange lesson context crossed its selected source or Jev wall')
+
+
+def _validate_exchange_correction(body, before, after):
+    """Transported binding for a deterministic exchange rebuilt from checked lesson corrections."""
+    receipt = body['exchange_transition']
+    operation = receipt['operation']
+    if (receipt.get('schema') != 'FRANKIE_EXCHANGE_SUCCESSOR_RECEIPT_V1'
+            or receipt.get('status') != 'complete'
+            or receipt.get('owner') != 'frankie_box_experiment_exchange.exchange'
+            or operation.get('schema') != 'FRANKIE_EXCHANGE_SUCCESSOR_OPERATION_V1'
+            or receipt.get('operation_sha256') != digest(canonical(operation))
+            or body['decision'] != 'checked_dependency_rebuild' or body['scopes'] != [[]]
+            or body['written_by'] != 'teacher_exchange'
+            or body['publication'] != dict(day=receipt['day'], stage='exchange')
+            or receipt['original_view'] != body['original'] or receipt['frankie_view'] != body['replacement']
+            or any(before.get(k) != after.get(k) for k in ('schema', 'view', 'day', 'run', 'rules'))
+            or before.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1' or before.get('view') != 'frankie'
+            or before['day'] != operation['day'] or before['run'] != operation['run']
+            or any(receipt.get(key) != operation.get(key) for key in
+                   ('day', 'run', 'brain', 'original_inputs', 'original_view', 'source_corrections'))
+            or before['rules'] != operation['rules'] or not operation['source_corrections']
+            or receipt['source_corrections'] != operation['source_corrections']
+            or before['sources']['teacher_rows'] != after['sources']['teacher_rows']
+            or before['sources']['teacher_rows_listed'] != after['sources']['teacher_rows_listed']
+            or before['sources']['lessons'] != [p['original'] for p in operation['documents']]
+            or after['sources']['lessons'] != [p['replacement'] for p in operation['documents']]
+            or any(view['knowledge_inputs'].get(k) != receipt[field][k]
+                   for view, field in ((before, 'original_inputs'), (after, 'replacement_inputs'))
+                   for k in ('path', 'sha256'))
+            or any(view['knowledge_inputs']['sources'] != view['sources']['lessons'] for view in (before, after))
+            or any(view.get('exchange_hash') != _exchange_digest({k: v for k, v in view.items()
+                                                                 if k != 'exchange_hash'}) for view in (before, after))
+            or receipt.get('model_calls') != 0 or receipt.get('scientific_retests') != 0):
+        raise ValueError('exchange correction differs from its exact retained owner rebuild')
+    pins = [receipt[field] for field in ('original_inputs', 'original_view', 'replacement_inputs', 'full', 'frankie_view')]
+    for pin in pins + receipt['source_corrections']:
+        if (not isinstance(pin.get('path'), str) or not pin['path'] or type(pin.get('bytes')) is not int
+                or pin['bytes'] < 0 or not re.fullmatch('[0-9a-f]{64}', str(pin.get('sha256')))):
+            raise ValueError('exchange transition lacks a complete artifact witness')
+    if (receipt['original_inputs']['path'] == receipt['replacement_inputs']['path']
+            or receipt['original_inputs']['sha256'] == receipt['replacement_inputs']['sha256']
+            or before['knowledge_inputs']['versions'] != after['knowledge_inputs']['versions']):
+        raise ValueError('exchange successor must retain its original knowledge version selection in a new operation')
+    if before == after:
+        raise ValueError('exchange correction has no changed dependency/result')
+    _exchange_wall(after)
+
+
+def _validate_exchange_inputs(receipt, before, after, brain, records):
+    """Owner-side frozen selection and full/blind projection checks; no exchange math runs."""
+    _exchange_sources(receipt, records)
+    old = json.loads(_read_pin(receipt['original_inputs']))
+    new = json.loads(_read_pin(receipt['replacement_inputs']))
+    full = json.loads(_read_pin(receipt['full']))
+    operation = receipt['operation']
+    old_id, new_id = old['identity'], new['identity']
+    expected_identity = dict(old_id, producer_sha256=operation['producer_sha256'],
+                             reader_sha256=operation['reader_sha256'], successor_operation=operation)
+    if (Path(receipt['brain']).resolve() != Path(brain).resolve()
+            or old.get('schema') != 'FRANKIE_EXCHANGE_KNOWLEDGE_INPUTS_V1'
+            or new_id != expected_identity
+            or any(old_id.get(k) != operation[k] for k in ('day', 'run', 'brain', 'teacher_rows', 'rules'))
+            or [source for _, source in old['documents']] != before['sources']['lessons']
+            or [source for _, source in new['documents']] != after['sources']['lessons']
+            or len(old['documents']) != len(new['documents'])
+            or {k: v for k, v in old.items() if k not in ('identity', 'documents', 'claims_by_source')}
+               != {k: v for k, v in new.items() if k not in ('identity', 'documents', 'claims_by_source')}):
+        raise ValueError('exchange successor changed its original owner or complete frozen selection')
+    expected_claims = {}
+    for (lesson, source), (successor, next_source) in zip(old['documents'], new['documents']):
+        delivered = current_document(dict(source, content=lesson), records, brain,
+                                     day=operation['day'], stage='exchange')
+        expected_source = dict(source)
+        projection = old['claims_by_source'][source['source_id']]
+        if delivered['sha256'] != source['sha256']:
+            checked = delivered['content']
+            expected_source.update({k: delivered[k] for k in ('path', 'bytes', 'sha256')})
+            searches = [s for result in checked['results'] for s in claim_searches(checked, result['claim_id'])]
+            days = (sorted({str(s['day']) for s in searches}) if (checked.get('knowledge_retest') or {}).get('claim_operations')
+                    else sorted(str(s['day']) for s in checked.get('searches') or []))
+            expected_source.update(schema=checked['schema'], author=checked['author'], day=checked.get('day'),
+                stamp=checked.get('stamp'), days_tested=days, claims_sha256=checked.get('claims_sha256'),
+                claims_source=checked.get('claims_source'))
+            if 'container_sha256' in expected_source:
+                expected_source.update(container_sha256=delivered['sha256'], address=[])
+            if checked.get('claim_inputs') != lesson.get('claim_inputs'):
+                claims = checked.get('claim_inputs') or {}
+                if (claims.get('schema') != 'FRANKIE_SCIENTIFIC_CLAIM_INPUTS_V1'
+                        or claims.get('author') != checked['author']
+                        or claims.get('claims_sha256') != checked['claims_sha256']
+                        or _lesson_digest(claims) != checked.get('claim_inputs_sha256')
+                        or [c['id'] for c in claims['claims']] != [r['claim_id'] for r in checked['results']]):
+                    raise ValueError('exchange successor changed claims without their checked complete projection')
+                projection = dict(claims={c['id']: c for c in claims['claims']}, listed=None)
+            elif checked.get('claims_sha256') != lesson.get('claims_sha256'):
+                raise ValueError('exchange successor changed its claim source without its legal projection')
+        if successor != delivered['content'] or next_source != expected_source:
+            raise ValueError('exchange successor document differs from its exact checked replacement')
+        expected_claims[source['source_id']] = projection
+    if new['claims_by_source'] != expected_claims:
+        raise ValueError('exchange successor changed an uncorrected frozen claim projection')
+    require_current([dict(source, content=lesson) for lesson, source in new['documents']], records)
+    for pin in receipt['source_corrections']:
+        _read_pin(pin)
+    if (full.get('schema') != before['schema'] or full.get('view') != 'full'
+            or full.get('day') != operation['day'] or full.get('run') != operation['run']
+            or full.get('rules') != operation['rules'] or full.get('sources') != after['sources']
+            or full.get('knowledge_inputs') != after['knowledge_inputs']
+            or full.get('exchange_hash') != _exchange_digest({k: v for k, v in full.items() if k != 'exchange_hash'})
+            or after.get('full_exchange_hash') != full['exchange_hash']):
+        raise ValueError('exchange successor full artifact differs from its learner-view binding')
+    _exchange_wall(full)
+    if [context['source'] for context in full['lesson_contexts']] != full['sources']['lessons']:
+        raise ValueError('exchange full artifact lost a selected lesson context')
+    hidden = {item['item_id'] for item in full['items'] if item['blind_jev']}
+    expected_view = dict(full, view='frankie', items=[i for i in full['items'] if not i['blind_jev']],
+        lesson_contexts=[c for c in full['lesson_contexts'] if not c['blind_jev']],
+        teachers_findings=[f for f in full['teachers_findings'] if f['from_item'] not in hidden],
+        jev_withheld=dict(items=len(hidden), findings=sum(f['from_item'] in hidden for f in full['teachers_findings']),
+                          reason=before['jev_withheld']['reason']), full_exchange_hash=full['exchange_hash'])
+    expected_view.pop('exchange_hash')
+    expected_view['exchange_hash'] = _exchange_digest(expected_view)
+    if after != expected_view:
+        raise ValueError('exchange successor learner view differs from the full artifact blind-wall projection')
+
+
 def _validate_correction(body, before, after):
     """Validate a declared scientific-owner decision, not decide whether the science is true."""
+    if body.get('exchange_transition') is not None:
+        if body.get('schema') != SCHEMA or not body.get('reason') or not body.get('evidence'):
+            raise ValueError('exchange correction requires its checked source evidence')
+        _validate_exchange_correction(body, before, after)
+        return
     decisions = ('demonstrated_source_error', 'researched_partial_replacement', 'researched_full_replacement')
     scopes = body.get('scopes')
     if (body.get('schema') != SCHEMA or body.get('decision') not in decisions
@@ -200,11 +465,13 @@ def _validate_correction(body, before, after):
         if before.get(key) != after.get(key):
             raise ValueError('correction changes the original lesson subject: ' + key)
     transition = body.get('owner_transition')
-    changed_inputs = any(before.get(key) != after.get(key) for key in ('claim_inputs', 'claim_inputs_sha256'))
+    changed_inputs = any(before.get(key) != after.get(key) for key in (
+        'claim_inputs', 'claim_inputs_sha256', 'searches', 'scientific_operation', 'knowledge_retest'))
     if changed_inputs or transition is not None:
         _validate_transition(transition, before, after, publication)
     if before.get('claims_sha256') != after.get('claims_sha256') and not (
-            transition and transition['replacement']['identity'].get('successor', {}).get('replacement_claims')):
+            transition and (transition.get('owner') == 'frankie_box_scientific_teacher'
+                            or transition['replacement']['identity'].get('successor', {}).get('replacement_claims'))):
         raise ValueError('changed claim source requires an explicit owner projection transition')
     if transition and transition['replacement']['identity'].get('successor'):
         request = transition['replacement']['identity']['successor']
@@ -244,7 +511,7 @@ def _save_object(brain, raw):
 
 
 def record_correction(brain, *, original, replacement, scopes, decision, reason, evidence, publication_day,
-                      owner_transition=None):
+                      owner_transition=None, exchange_transition=None):
     """Publish the scientific owner's completed decision. This performs no research or retest.
 
     Arguments are exact path/bytes/sha256 witnesses. The original must already be legal brain
@@ -258,7 +525,7 @@ def record_correction(brain, *, original, replacement, scopes, decision, reason,
     """
     import fcntl
     import frankie_box_brain as BR
-    from frankie_box_durable import write_json, witness
+    from frankie_box_durable import write_json, write_bytes, witness
     brain = Path(brain)
     raw_before, raw_after = _read_pin(original), _read_pin(replacement)
     before, after = json.loads(raw_before), json.loads(raw_after)
@@ -269,11 +536,21 @@ def record_correction(brain, *, original, replacement, scopes, decision, reason,
                 replacement={k: replacement[k] for k in ('path', 'bytes', 'sha256')},
                 scopes=scopes, decision=decision, reason=reason, evidence=evidence,
                 publication=dict(day=str(publication_day), stage='lessons'))
+    if exchange_transition is not None:
+        if owner_transition is not None:
+            raise ValueError('one correction cannot have two computation owners')
+        receipt = json.loads(_read_pin(exchange_transition['receipt']))
+        body.update(written_by='teacher_exchange', exchange_transition=receipt,
+                    publication=dict(day=str(publication_day), stage='exchange'))
     if owner_transition is not None:
+        original_operation = _transition_operation(owner_transition['original_inputs'], before)
         body['owner_transition'] = dict(schema=TRANSITION_SCHEMA,
-            owner='frankie_box_teacher_knowledge.teach_accumulated',
-            original=_transition_operation(owner_transition['original_inputs'], before),
+            owner=('frankie_box_scientific_teacher' if original_operation.get('kind') == 'standalone'
+                   else 'frankie_box_teacher_knowledge.teach_accumulated'),
+            original=original_operation,
             replacement=_transition_operation(owner_transition['replacement_inputs'], after))
+        if original_operation.get('kind') == 'standalone':
+            body['owner_transition']['affected_claim_ids'] = owner_transition.get('affected_claim_ids')
         if any(Path(body['owner_transition'][name]['identity']['brain']).resolve() != brain.resolve()
                for name in ('original', 'replacement')):
             raise ValueError('correction transition belongs to another publishing brain')
@@ -285,7 +562,11 @@ def record_correction(brain, *, original, replacement, scopes, decision, reason,
         raise ValueError('correction publication traverses a symbolic link')
     with (directory / 'publish.lock').open('a+') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        existing = corrections([brain])
+        if exchange_transition is not None:
+            import frankie_box_lane_state as LS
+            existing = corrections(LS.knowledge_roots(brain))
+        else:
+            existing = corrections([brain])
         legal = {e.get('sha256') for _, m, _ in BR.entries_before(brain, 'snapshot')
                  for e in m.get('entries', []) if e.get('include')}
         legal.update(r['body']['replacement']['sha256'] for r in existing.values())
@@ -294,6 +575,23 @@ def record_correction(brain, *, original, replacement, scopes, decision, reason,
         prior = existing.get(original['sha256'])
         if prior and prior['body'] != body:
             raise ValueError('competing correction needs research; never select by recency')
+        if exchange_transition is not None:
+            if prior is None:
+                _validate_exchange_inputs(receipt, before, after, brain, existing)
+            # A transported exchange must carry the exact scientific decisions it uses.
+            # Preserve original owner bodies/bytes and only their public lesson objects;
+            # private frozen selections, evidence and the full Jev exchange stay owner-local.
+            for sha in sorted(_exchange_source_ancestry(receipt, existing)):
+                source = existing[sha]
+                for item in (source['original'], source['replacement']):
+                    _save_object(brain, _read_pin(item))
+                source_raw = _read_pin(source['record'])
+                source_path = directory / (digest(canonical(source['body'])) + '.json')
+                if source_path.exists():
+                    if source_path.read_bytes() != source_raw:
+                        raise ValueError('retained source correction differs from its exact transported bytes')
+                else:
+                    write_bytes(source_path, source_raw)
         cursor, visited = replacement['sha256'], {original['sha256']}
         while cursor in existing:
             if cursor in visited:
@@ -343,6 +641,9 @@ def corrections(roots):
                 raise ValueError('correction cycle: ' + cursor)
             seen.add(cursor)
             cursor = found[cursor]['replacement']['sha256']
+    for record in found.values():
+        if record['body'].get('exchange_transition') is not None:
+            _exchange_sources(record['body']['exchange_transition'], found)
     return found
 
 
@@ -364,13 +665,23 @@ def references(value):
 
 def _ancestors(sha, records):
     ancestors = set()
+    source_ancestors = set()
     for original in records:
         cursor = original
+        path = []
         while cursor in records:
+            path.append(records[cursor])
             cursor = records[cursor]['replacement']['sha256']
             if cursor == sha:
                 ancestors.add(original)
+                for record in path:
+                    transition = record['body'].get('exchange_transition')
+                    if transition is not None:
+                        source_ancestors.update(_exchange_source_ancestry(transition, records))
                 break
+    # Only provenance of the exact checked source links used by this rebuilt exchange
+    # is exempt. A later correction to their replacements is still a stale dependency.
+    ancestors.update(source_ancestors)
     return ancestors
 
 
@@ -422,6 +733,12 @@ def current_document(document, records, brain, *, day, stage):
         pin = record['replacement']
         result.update(pin, content=json.loads(_read_pin(pin)))
         applied.append(record['record'])
+    for sha in _ancestors(result['sha256'], records) - ancestors:
+        publication = records[sha]['body']['publication']
+        if str(day) == publication['day'] and stage in ('root', 'teacher', 'classroom', 'search'):
+            raise ValueError('corrected lesson is beyond this day answer boundary')
+        ancestors.add(sha)
+        applied.append(records[sha]['record'])
     content = result['content']
     schema = content.get('schema') if isinstance(content, dict) else None
     changed = False

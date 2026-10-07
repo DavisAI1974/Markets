@@ -23,7 +23,7 @@ from research.kalshi.frankie_boss.dipole_classroom_integration import (
     prepare_integrated_cycle,
 )
 from research.kalshi.frankie_boss.dipole_classroom_session import CORRECTION_REQUEST_SCHEMA
-from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
+from research.kalshi.frankie_boss.frankie_principal_adapter import KNOWLEDGE_CORRECTION_REQUEST, json_form
 from research.kalshi.frankie_boss.operations import run_actual_sunday as base
 
 INITIAL_REQUEST_SCHEMA = "FRANKIE_BOSS_SESSION_REQUEST_V1"
@@ -42,6 +42,12 @@ def _adapter_identity(adapter_class):
 
 def await_recorded_principal(request, directory, host_lock, probe=None, pending=None):
     schema = request.get("schema") if type(request) is dict else None
+    if schema == KNOWLEDGE_CORRECTION_REQUEST:
+        # The base observer matches the exact content-addressed follow-up outbox.
+        # principal_pending only knows original/classroom wait identities, so it
+        # cannot publish a wait receipt for this separate correction-only request.
+        # Keep observing its actual response; progress is advisory, not execution.
+        return base.await_recorded_principal(request, directory, host_lock, probe)
     if schema == INITIAL_REQUEST_SCHEMA:
         request_name, response_name, status = (
             "session-request.json",

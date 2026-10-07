@@ -351,8 +351,8 @@ def import_meeting_record(exchange_path, record_path, expected_sha256):
     if not re.fullmatch(r'[0-9]{8}', day) or not isinstance(run, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', run):
         raise ValueError('returned meeting needs the original run/day identity')
     owner = Path('/opt/frankie-box/work/experiment') / run
-    if exchange_path != owner / 'exchange' / day / 'exchange-frankie.json':
-        raise ValueError('returned meeting must name the owning experiment exchange')
+    target = BR.meeting_directory(exchange_path, owner_dir=owner)
+    successor = target != owner / 'meeting' / day
     plan = json.loads((owner / 'plan.json').read_bytes())
     if plan.get('schema') != X.SCHEMA or plan.get('run') != run or not any(e.get('day') == day for e in plan.get('days', [])):
         raise ValueError('returned meeting is outside the retained plan')
@@ -374,24 +374,30 @@ def import_meeting_record(exchange_path, record_path, expected_sha256):
     exchange_step = read_step('exchange', required=True)
     exchange_receipt = json.loads((exchange_path.parent / 'receipt.json').read_bytes())
     if (exchange_step.get('status') not in ('done', 'reused')
-            or exchange_receipt.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_RECEIPT_V1'
+            or exchange_receipt.get('schema') != ('FRANKIE_EXCHANGE_SUCCESSOR_RECEIPT_V1' if successor
+                                                 else 'FRANKIE_EXPERIMENT_EXCHANGE_RECEIPT_V1')
             or exchange_receipt.get('status') != 'complete' or exchange_receipt.get('run') != run
             or str(exchange_receipt.get('day')) != day
-            or exchange_receipt.get('exchange_hash') != exchange.get('exchange_hash')):
+            or (not successor and exchange_receipt.get('exchange_hash') != exchange.get('exchange_hash'))):
         raise ValueError('returned meeting needs the original completed exchange receipt')
+    if successor and (exchange_step.get('successor_inputs') != exchange_receipt.get('replacement_inputs')
+                      or exchange_step.get('exchange_sha256') != digest(exchange_path.read_bytes())):
+        raise ValueError('returned successor meeting differs from the current exchange input binding')
     for field, name in (('frankie_view', 'exchange-frankie.json'), ('exchange', 'exchange.json')):
         source = exchange_path.parent / name
-        pin = exchange_receipt.get(field) or {}
+        pin = exchange_receipt.get('full' if successor and field == 'exchange' else field) or {}
         source_raw = source.read_bytes()
         if (pin.get('path') != str(source) or exchange_step.get(field) != str(source)
                 or pin.get('bytes') != len(source_raw) or pin.get('sha256') != digest(source_raw)):
             raise ValueError('original exchange %s differs from its retained source pin' % field)
+    import frankie_box_experiment_review as REVIEW
+    REVIEW.require_current([dict(exchange_receipt['frankie_view'], content=exchange)],
+                           REVIEW.corrections(knowledge_roots(plan.get('brain') or BRAIN)))
     raw = record_path.read_bytes()
     if digest(raw) != expected_sha256:
         raise ValueError('returned meeting differs from the supplied artifact hash')
     record = BR.read_meeting_record(record_path, exchange_path=exchange_path,
                                     expected_sha256=expected_sha256, complete=False)
-    target = owner / 'meeting' / day
     if any(p.is_symlink() for p in (target, *target.parents)):
         raise ValueError('returned meeting output traverses a symbolic link')
     target.mkdir(parents=True, exist_ok=True)
@@ -400,6 +406,8 @@ def import_meeting_record(exchange_path, record_path, expected_sha256):
         raise ValueError('meeting lock is a symbolic link')
     with lock_path.open('a+') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
+        if read_step('exchange', required=True) != exchange_step:
+            raise ValueError('owning exchange changed before meeting import; returned bytes preserved')
         output = target / 'meeting.json'
         step = read_step('voice')
         reports = read_step('reports')
@@ -411,7 +419,7 @@ def import_meeting_record(exchange_path, record_path, expected_sha256):
         if prior_receipt.is_file():
             retained_receipt = json.loads(prior_receipt.read_bytes())
             if retained_receipt.get('status') == 'complete':
-                retained = BR.read_meeting_for_exchange(exchange_path)
+                retained = BR.read_meeting_for_exchange(exchange_path, owner_dir=owner)
                 if record['status'] != 'complete' or retained['receipt']['record']['sha256'] != expected_sha256:
                     raise ValueError('a completed meeting receipt cannot be downgraded or re-pinned')
         if step and step.get('status') in ('done', 'reused') and step.get('meeting_sha256') != expected_sha256:
@@ -430,6 +438,8 @@ def import_meeting_record(exchange_path, record_path, expected_sha256):
                            model_calls=record.get('model_calls', 0), publication='none')
             write_json(target / 'receipt.json', receipt)
         # Reconcile a prior non-blocking disposition; keep plan/CPU/owner identity intact.
+        if read_step('exchange', required=True) != exchange_step:
+            raise ValueError('owning exchange changed during meeting import; publication retained without step reassignment')
         step_path = owner / 'days' / day / 'voice.json'
         if step is not None:
             step.update(status='done' if record['status'] == 'complete' else 'waiting',
@@ -511,9 +521,23 @@ def _coordinate(body, code_root, commit):
     held = C.holder(run, day)
     if not held or held['where'] != where or held['attempt'] != body.get('attempt'):
         raise ValueError('lane request does not own this day')
+    request_sha256 = digest(json.dumps(body, sort_keys=True, separators=(',', ':')).encode())
+    request_path = STATE / 'rpc' / (body['id'] + '.request.json')
     prior_response = STATE / 'rpc' / (body['id'] + '.json')
+    if request_path.exists():
+        retained = json.loads(request_path.read_bytes())
+        if retained.get('request_sha256') != request_sha256 or retained.get('body') != body:
+            raise ValueError('coordination request ID reused with a different or unbound payload; retained intent preserved')
+    elif prior_response.exists():
+        raise ValueError('legacy coordination result has no retained request binding; preserved for explicit recovery')
+    else:
+        # coordinate() holds the existing per-ID lock. Pin intent before any side effect.
+        write(request_path, dict(request_sha256=request_sha256, body=body))
     if prior_response.exists():
-        return json.loads(prior_response.read_bytes())
+        response = json.loads(prior_response.read_bytes())
+        if response.get('request_sha256') != request_sha256 or response.get('id') != body['id']:
+            raise ValueError('coordination result differs from its retained request binding; preserved')
+        return response
     plan = Q._plan_of(run)
     entry = next(e for e in plan['days'] if e['day'] == day)
     op = body['op']
@@ -630,7 +654,7 @@ def _coordinate(body, code_root, commit):
         result = dict(done=True)
     else:
         raise ValueError('unknown coordination operation %s' % op)
-    response = dict(id=body['id'], result=result)
+    response = dict(id=body['id'], request_sha256=request_sha256, result=result)
     write(prior_response, response)
     return response
 

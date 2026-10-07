@@ -1,5 +1,33 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+## Current continuation — delegated source review and Step 5, 2026-10-07
+
+Read `MODULE_REVIEW_INDEX_20261007.md`, then `STEP5_CONTINUATION_20261007.md` and the
+per-step reports. Verified starting tip was `4e416e18`; changed-input/partial-claim source
+was pushed as `439cb0b`. This checkpoint adds standalone operation binding, scientific-owner
+intake, checked dependent exchange recovery and original-session correction follow-up,
+plus the bounded source fixes from the other step agents. Preserve the actual branch tip.
+
+Greg first requested Frankie/BOSS plans, then at 00:37 ET authorized improvements that
+preserve the science. Their two `*_MODULE_PERFORMANCE_PLAN_20261007.md` files record the
+approved source slices and exact implementation/remaining decisions. Do not ask again for
+that source approval. It does not settle native targets/objectives/lineage, new typed
+scientific mappings, numerical kernels, producer activation or AWS/runtime execution.
+
+SOURCE-BUILT / RUNTIME-UNVERIFIED. Pending feedback, original forecasts and source/session
+identities remain intact. The same-session correction ledger is not native training;
+its later knowledge-consumer connection and school containers embedding old meetings can
+still require explicit successors. General main/class save recovery, exact global queue
+launch scope, Jev CPU completion and CCode Step 8A integration remain open. No claim that
+all ten steps are complete. Historical rework remains required for both teachers.
+
+Source/interface review, AST without project imports and whitespace checks only. No tests,
+synthetic exercises, installs, model/data/reproduction runs, AWS account inspection/actions,
+starts or dispatch. AWS tools retrieved documentation only. No new validator framework.
+Exactly three held 16-CPU lanes, each 15 workers plus coordinator; no Pods. CCode's files
+remain his. All runtime execution remains stopped; one real E2E and thirty days each need
+their separate explicit authorization. Push with `[skip ci]`.
+
 ## Current checkpoint — Step 5 successor loop dispatch/recovery source-built
 
 Greg requested wiring the owner loop so this source item can be checked off. See

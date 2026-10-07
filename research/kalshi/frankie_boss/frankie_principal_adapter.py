@@ -7,6 +7,7 @@ only the feedback is newly authored. This module computes no market labels.
 from __future__ import annotations
 
 import hashlib
+import base64
 import json
 import os
 from pathlib import Path
@@ -329,6 +330,53 @@ def _write(path, body):
         handle.write(canonical(body))
         handle.flush()
         os.fsync(handle.fileno())
+
+
+KNOWLEDGE_CORRECTION_REQUEST = 'FRANKIE_KNOWLEDGE_CORRECTION_FOLLOWUP_REQUEST_V1'
+KNOWLEDGE_CORRECTION_RESPONSE = 'FRANKIE_KNOWLEDGE_CORRECTION_FOLLOWUP_RESPONSE_V1'
+
+
+def knowledge_correction_response(request, initial_response):
+    """Compare checked scopes and retain corrected knowledge for the original session.
+
+    This is a code-computed correction ledger, not native learning. Later learner
+    computations do not yet read this retained overlay. No forecast or training runs.
+    """
+    from deploy.aws.box import frankie_box_experiment_review as REVIEW
+    if request.get('schema') != KNOWLEDGE_CORRECTION_REQUEST:
+        raise ValueError('checked knowledge correction follow-up required')
+    if (request['original_response_sha256'] != digest(initial_response)
+            or request['original_request_sha256'] != initial_response.get('request_sha256')
+            or any(request[k] != initial_response.get(k) for k in
+                   ('session_id', 'model_identity_as_reported_by_session'))):
+        raise ValueError('knowledge correction must use the unchanged original learner session')
+    ledger = []
+    for correction in request['corrections']:
+        values = {}
+        for name in ('record', 'original', 'replacement'):
+            item = correction[name]
+            raw = base64.b64decode(item['base64'], validate=True)
+            if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != item['sha256']:
+                raise ValueError('correction follow-up contains changed ' + name)
+            values[name] = json.loads(raw)
+        body, before, after = (values[name] for name in ('record', 'original', 'replacement'))
+        if (body['original']['sha256'] != correction['original']['sha256']
+                or body['replacement']['sha256'] != correction['replacement']['sha256']):
+            raise ValueError('correction lesson objects differ from the checked record')
+        REVIEW._validate_correction(body, before, after)
+        ledger.append(dict(correction_sha256=correction['record']['sha256'],
+            original_sha256=correction['original']['sha256'], replacement_sha256=correction['replacement']['sha256'],
+            decision=body['decision'], reason=body['reason'], evidence=body['evidence'],
+            changes=[dict(scope=scope, previous=REVIEW._at(before, scope), corrected=REVIEW._at(after, scope))
+                     for scope in body['scopes']], corrected_knowledge=after))
+    if not ledger or len({row['correction_sha256'] for row in ledger}) != len(ledger):
+        raise ValueError('nonempty unique checked corrections required')
+    return dict(schema=KNOWLEDGE_CORRECTION_RESPONSE, request_sha256=digest(request),
+        request_id=request['request_id'], original_request_sha256=request['original_request_sha256'],
+        original_response_sha256=request['original_response_sha256'], session_id=request['session_id'],
+        model_identity_as_reported_by_session=request['model_identity_as_reported_by_session'],
+        correction_consumption=ledger, feedback=None, native_learning_performed=False,
+        forecast_replaced=False, pending_feedback_preserved=True)
 
 
 def _checked_receipt(path):
@@ -965,6 +1013,230 @@ class FrankiePrincipalAdapter:
             self.record_session_response(dispatched['response'], host_attestation=dispatched['host_attestation'])
         return self.recover(request_id, attachment)
 
+    def _knowledge_correction_paths(self, request_sha256):
+        if (not isinstance(request_sha256, str) or len(request_sha256) != 64
+                or any(c not in '0123456789abcdef' for c in request_sha256)):
+            raise ValueError('full correction request SHA256 required')
+        directory = self.directory / 'knowledge-corrections' / request_sha256
+        return directory / 'request.json', directory / 'response.json'
+
+    def _knowledge_correction_original(self, *, original_request=None, original_response=None):
+        if (original_request is None) != (original_response is None):
+            raise ValueError('both original request and response witnesses required')
+        values = []
+        for name, pin in (('session-request.json', original_request), ('session-response.json', original_response)):
+            path = self.directory / name
+            raw = path.read_bytes()
+            if pin is not None:
+                if (not isinstance(pin, dict) or set(pin) != {'path', 'bytes', 'sha256'}
+                        or not isinstance(pin['path'], str) or Path(pin['path']).resolve() != path
+                        or path.is_symlink() or type(pin['bytes']) is not int or pin['bytes'] != len(raw)
+                        or pin['sha256'] != hashlib.sha256(raw).hexdigest()):
+                    raise ValueError('original learner file differs from exact supplied witness: ' + name)
+            value = json.loads(raw)
+            if not isinstance(value, dict):
+                raise ValueError('original learner object required: ' + name)
+            values.append(value)
+        request, retained = values
+        if (request.get('schema') != 'FRANKIE_BOSS_SESSION_REQUEST_V1'
+                or not isinstance(request.get('request_id'), str) or not request['request_id']
+                or not isinstance(request.get('attachment'), dict)
+                or not isinstance(request['attachment'].get('feedback_contract'), dict)
+                or set(retained) != {'response', 'host_attestation'}):
+            raise ValueError('original learner request or response envelope is malformed')
+        self._attest_host(retained['response'], retained['host_attestation'], request)
+        if retained['response'].get('request_sha256') != digest(request):
+            raise ValueError('original learner response answers another request')
+        return request, retained
+
+    def _knowledge_correction_selection(self, original, *, brain, correction_sha256s):
+        """Read the original selection and choose only complete supplied correction chains."""
+        from deploy.aws.box import frankie_box_experiment_review as REVIEW
+        from deploy.aws.box import frankie_box_lane_state as LS
+        base_pin = original['attachment'].get('knowledge_base')
+        if not isinstance(base_pin, dict):
+            raise ValueError('original request has no bound knowledge base; never infer a replacement selection')
+        if file_witness(base_pin['path']) != {k: base_pin[k] for k in ('bytes', 'sha256')}:
+            raise ValueError('original selected knowledge base changed')
+        base = json.loads(Path(base_pin['path']).read_bytes())
+        if base.get('schema') != 'FRANKIE_ACCUMULATED_KNOWLEDGE_BASE_V1':
+            raise ValueError('original accumulated knowledge selection required')
+        brain = Path(brain).resolve()
+        records = REVIEW.corrections(LS.knowledge_roots(brain))
+        by_record = {r['record']['sha256']: r for r in records.values()}
+        if not isinstance(correction_sha256s, (list, tuple)) or any(
+                not isinstance(s, str) or len(s) != 64 or any(c not in '0123456789abcdef' for c in s)
+                for s in correction_sha256s):
+            raise ValueError('explicit checked correction hash list required')
+        requested = list(correction_sha256s)
+        if len(set(requested)) != len(requested) or any(s not in by_record for s in requested):
+            raise ValueError('unique published checked correction record hashes required')
+        if not set(base.get('corrections', [])).issubset(by_record):
+            raise ValueError('original selected correction records are missing')
+        selected = []
+        def selected_document(pin):
+            raw = REVIEW._read_pin(pin)
+            doc = dict(pin, content=json.loads(raw))
+            # Resolve only replacements already present in the original base.
+            visited = set()
+            while doc['sha256'] in records and records[doc['sha256']]['record']['sha256'] in base.get('corrections', []):
+                if doc['sha256'] in visited:
+                    raise ValueError('original selected correction chain cycles')
+                visited.add(doc['sha256'])
+                pin = records[doc['sha256']]['replacement']
+                doc = dict(pin, content=json.loads(REVIEW._read_pin(pin)))
+            selected.append(doc)
+        for entry in base['entries']:
+            directory = (brain / entry['path']).resolve()
+            if not directory.is_relative_to(brain / 'history'):
+                raise ValueError('original knowledge entry lies outside retained owner history')
+            manifest_raw = (directory / 'MANIFEST.json').read_bytes()
+            if hashlib.sha256(manifest_raw).hexdigest() != entry['sha256']:
+                raise ValueError('original knowledge entry manifest changed')
+            for item in json.loads(manifest_raw)['entries']:
+                if item.get('include') and item['name'].endswith('.json'):
+                    if Path(item['name']).name != item['name']:
+                        raise ValueError('original knowledge member leaves its entry')
+                    selected_document(dict(path=str(directory / item['name']), bytes=item['bytes'], sha256=item['sha256']))
+        source_day = original['attachment']['feedback_contract'].get('trading_day')
+        for row in base.get('school', []):
+            # Match the original brain reader's own-answer wall; a captured base
+            # alone does not mean its current-day school answers were delivered.
+            if source_day is not None and str(row.get('day')) != str(source_day) and row.get('include', True):
+                path = (brain / 'school' / row['file']).resolve()
+                if not path.is_relative_to(brain / 'school'):
+                    raise ValueError('original school member leaves its owner directory')
+                selected_document(dict(path=str(path), bytes=row['bytes'], sha256=row['sha256']))
+        relevant = {d['sha256'] for d in selected}
+        for document in selected:
+            relevant.update(REVIEW.references(document['content']))
+        chosen, listed = [], []
+        pending = []
+        for sha in requested:
+            if sha in base.get('corrections', []):
+                listed.append(dict(sha256=sha, reason='already available in original selected knowledge'))
+            else:
+                pending.append(sha)
+        while pending:
+            ready = [sha for sha in pending if by_record[sha]['original']['sha256'] in relevant]
+            if not ready:
+                break
+            for sha in ready:
+                chosen.append(sha)
+                relevant.add(by_record[sha]['replacement']['sha256'])
+                pending.remove(sha)
+        # Do not call a downstream correction unrelated merely because the caller
+        # omitted the checked predecessor that connects it to this selection.
+        reachable = set(relevant)
+        while True:
+            added = {record['replacement']['sha256'] for record in records.values()
+                     if record['original']['sha256'] in reachable} - reachable
+            if not added:
+                break
+            reachable.update(added)
+        if any(by_record[sha]['original']['sha256'] in reachable for sha in pending):
+            raise ValueError('affected correction candidate is missing a predecessor correction from the supplied chain')
+        listed.extend(dict(sha256=sha, reason='does not affect original selected knowledge') for sha in pending)
+        return dict(base_pin=base_pin, selected=selected, by_record=by_record,
+                    correction_sha256s=chosen, listed=listed)
+
+    def prepare_knowledge_correction(self, request_id, *, brain, correction_sha256s):
+        """Add an immutable outbox item; caller holds its existing host single-writer lock."""
+        from deploy.aws.box import frankie_box_experiment_review as REVIEW
+        original, retained = self._knowledge_correction_original()
+        if original['request_id'] != request_id:
+            raise ValueError('correction request ID differs from original forecast')
+        selection = self._knowledge_correction_selection(original, brain=brain, correction_sha256s=correction_sha256s)
+        if not selection['correction_sha256s'] or selection['listed']:
+            raise ValueError('prepare requires only the nonempty exact affected correction subset')
+        carried = []
+        for sha in selection['correction_sha256s']:
+            record = selection['by_record'][sha]
+            payload = {}
+            for name in ('record', 'original', 'replacement'):
+                pin = record[name]
+                raw = REVIEW._read_pin(pin)
+                payload[name] = dict(pin, base64=base64.b64encode(raw).decode('ascii'))
+            carried.append(payload)
+        response = retained['response']
+        original_host = json.loads(Path(retained['host_attestation']['host_record']['path']).read_bytes())
+        request = dict(schema=KNOWLEDGE_CORRECTION_REQUEST, mechanism='AGENT_SESSION', request_id=request_id,
+            original_request_sha256=digest(original), original_response_sha256=digest(response),
+            original_host_attestation_sha256=digest(retained['host_attestation']),
+            original_host_authority=original_host['host_authority'],
+            session_id=response['session_id'], model_identity_as_reported_by_session=response['model_identity_as_reported_by_session'],
+            original_feedback_contract=original['attachment']['feedback_contract'],
+            original_pending_feedback=response.get('pending_feedback'), knowledge_base=selection['base_pin'],
+            selected_knowledge=selection['selected'], corrections=carried,
+            instruction='Apply each checked correction to retained knowledge in this same learner session. '
+                        'Consume every declared scope and complete replacement lesson. Preserve the original forecast, '
+                        'request/input/source/target/session identities and pending outcome feedback. '
+                        'Do not rerun a forecast, invent labels or perform native training.')
+        knowledge_correction_response(request, response)  # Check the complete carried scope before publication.
+        path, _ = self._knowledge_correction_paths(digest(request))
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists():
+            if json.loads(path.read_bytes()) != json_form(request):
+                raise ValueError('retained knowledge correction request changed')
+        else:
+            _write(path, request)
+            from deploy.aws.box.frankie_box_durable import sync_directory
+            sync_directory(path.parent)
+            sync_directory(path.parent.parent)
+        return request
+
+    def execute_knowledge_correction(self, request_id, *, brain, correction_sha256s):
+        request = self.prepare_knowledge_correction(request_id, brain=brain, correction_sha256s=correction_sha256s)
+        sha = digest(request)
+        path, response_path = self._knowledge_correction_paths(sha)
+        if response_path.exists():
+            return self.recover_knowledge_correction(sha)
+        intent = path.with_name('dispatch-intent.json')
+        if intent.exists() or self.session_executor is None:
+            raise PrincipalPending('same original learner session must consume ' + str(path))
+        _write(intent, dict(request_sha256=sha, session_id=request['session_id']))
+        from deploy.aws.box.frankie_box_durable import sync_directory
+        sync_directory(intent.parent)
+        dispatched = self.session_executor(request)
+        self.record_knowledge_correction_response(dispatched['response'],
+            host_attestation=dispatched['host_attestation'], request_sha256=sha)
+        return self.recover_knowledge_correction(sha)
+
+    def record_knowledge_correction_response(self, response, *, host_attestation, request_sha256):
+        path, response_path = self._knowledge_correction_paths(request_sha256)
+        request = json.loads(path.read_bytes())
+        original, retained = self._knowledge_correction_original()
+        if (digest(request) != request_sha256 or digest(original) != request['original_request_sha256']
+                or digest(retained['host_attestation']) != request['original_host_attestation_sha256']
+                or response != json_form(knowledge_correction_response(request, retained['response']))):
+            raise ValueError('knowledge follow-up differs from original session or full corrected-scope consumption')
+        self._attest_host(response, host_attestation, request)
+        host = json.loads(Path(host_attestation['host_record']['path']).read_bytes())
+        if host['host_authority'] != request['original_host_authority']:
+            raise ValueError('knowledge correction must return from the original host authority')
+        result = dict(response=response, host_attestation=host_attestation)
+        if response_path.exists():
+            if json.loads(response_path.read_bytes()) != result:
+                raise ValueError('retained knowledge correction response differs')
+        else:
+            _write(response_path, result)
+            from deploy.aws.box.frankie_box_durable import sync_directory
+            sync_directory(response_path.parent)
+        return result
+
+    def recover_knowledge_correction(self, request_sha256):
+        _, path = self._knowledge_correction_paths(request_sha256)
+        if not path.exists():
+            raise PrincipalPending('knowledge correction response remains unknown; do not resend')
+        value = json.loads(path.read_bytes())
+        self.record_knowledge_correction_response(value['response'], host_attestation=value['host_attestation'],
+                                                  request_sha256=request_sha256)
+        return dict(schema='FRANKIE_KNOWLEDGE_CORRECTION_FOLLOWUP_RECEIPT_V1',
+            request_sha256=request_sha256, response_sha256=digest(value['response']),
+            session_id=value['response']['session_id'], correction_consumption=value['response']['correction_consumption'],
+            host_attestation_sha256=digest(value['host_attestation']), native_learning_performed=False,
+            pending_feedback_preserved=True)
+
     def _attest_host(self, response, host_attestation, request):
         if (not isinstance(response, dict) or not isinstance(host_attestation, dict) or
                 any(not isinstance(response.get(k),str) or not response[k].strip()
@@ -1071,3 +1343,59 @@ class FrankiePrincipalAdapter:
             gap=ValueLabel(**s['gap']) if s['gap'] is not None else None,
             path=tuple(ValueLabel(**v) for v in s['path'])) for s in body['sessions'])
         return FrankieFeedback(**dict(body, sessions=sessions))
+
+
+class RetainedKnowledgeCorrectionAdapter(FrankiePrincipalAdapter):
+    """Correction-only access to an existing principal; no native runtime construction."""
+
+    def __init__(self, directory):
+        self.directory = Path(directory).resolve()
+        if not self.directory.is_dir():
+            raise ValueError('retained original principal directory required')
+        self.session_executor = None
+
+
+def select_knowledge_corrections(*, original_request, original_response, brain, correction_sha256s):
+    """Bind exact original files and select complete affected candidate chains, without writing.
+
+    Raw file witnesses and canonical JSON identities are deliberately separate. The
+    caller retains its existing single-writer lock through selection and preparation.
+    An unaffected result is explicit and never publishes a follow-up request.
+    """
+    paths = []
+    for pin, name in ((original_request, 'session-request.json'), (original_response, 'session-response.json')):
+        if (not isinstance(pin, dict) or set(pin) != {'path', 'bytes', 'sha256'}
+                or not isinstance(pin['path'], str) or not pin['path']
+                or type(pin['bytes']) is not int or pin['bytes'] < 0
+                or not isinstance(pin['sha256'], str) or len(pin['sha256']) != 64
+                or any(c not in '0123456789abcdef' for c in pin['sha256'])):
+            raise ValueError('exact original learner file witness required: ' + name)
+        path = Path(pin['path'])
+        if not path.is_absolute() or path.name != name or path.is_symlink():
+            raise ValueError('canonical original principal file path required: ' + name)
+        paths.append(path.resolve())
+    if paths[0].parent != paths[1].parent:
+        raise ValueError('original request and response must belong to the same principal directory')
+    adapter = RetainedKnowledgeCorrectionAdapter(paths[0].parent)
+    original, retained = adapter._knowledge_correction_original(
+        original_request=original_request, original_response=original_response)
+    selection = adapter._knowledge_correction_selection(original, brain=brain, correction_sha256s=correction_sha256s)
+    # Do not return a no-op or affected result against original files that changed
+    # while the complete selected knowledge and correction objects were inspected.
+    adapter._knowledge_correction_original(original_request=original_request, original_response=original_response)
+    return dict(schema='FRANKIE_KNOWLEDGE_CORRECTION_SELECTION_V1',
+        status='affected' if selection['correction_sha256s'] else 'not_affected',
+        directory=str(adapter.directory), request_id=original['request_id'],
+        original_request=dict(original_request), original_response=dict(original_response),
+        original_request_sha256=digest(original), original_response_sha256=digest(retained['response']),
+        original_response_envelope_sha256=digest(retained),
+        correction_sha256s=selection['correction_sha256s'], listed=selection['listed'])
+
+
+def prepare_knowledge_correction(directory, request_id, *, brain, correction_sha256s):
+    return RetainedKnowledgeCorrectionAdapter(directory).prepare_knowledge_correction(
+        request_id, brain=brain, correction_sha256s=correction_sha256s)
+
+
+def recover_knowledge_correction(directory, request_sha256):
+    return RetainedKnowledgeCorrectionAdapter(directory).recover_knowledge_correction(request_sha256)

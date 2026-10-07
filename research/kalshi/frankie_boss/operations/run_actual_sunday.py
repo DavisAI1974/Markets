@@ -119,10 +119,14 @@ def await_recorded_principal(request,directory,host_lock,probe=None,pending=None
     # This is frankie_principal_adapter.json_form, inlined so this module keeps its stdlib-only import.
     expected=json.loads(json.dumps(request,sort_keys=True,ensure_ascii=True,separators=(',',':'),allow_nan=False))
     matches=[]
-    for path in sorted((Path(directory)/'execution').glob('cycle-*/principal/session-request.json')):
+    pattern = ('cycle-*/principal/knowledge-corrections/*/request.json'
+               if request.get('schema') == 'FRANKIE_KNOWLEDGE_CORRECTION_FOLLOWUP_REQUEST_V1'
+               else 'cycle-*/principal/session-request.json')
+    for path in sorted((Path(directory)/'execution').glob(pattern)):
         if path.exists() and json.loads(path.read_bytes())==expected:matches.append(path)
     if len(matches)!=1:raise ValueError('unique retained principal request required')
-    request_path=matches[0];response_path=request_path.with_name('session-response.json')
+    request_path=matches[0]
+    response_path=request_path.with_name('response.json' if request_path.name=='request.json' else 'session-response.json')
     if probe is not None:probe.advance('frankie_calculation',unit='outputs')
     print(json.dumps(dict(status='actual_frankie_session_pending',request_id=request['request_id'],
         request_path=str(request_path),prepared_context_retained=True)),flush=True)
@@ -264,7 +268,7 @@ class ActualHost:
         self.instance_id=self.retained_instance_id()
         self.builder=self.context=self.decoder=self.optimizer=self.checkpoint=self.admit=None
         self.schedule=None   # the verified schedule (its model_context_rows is the declared row window); set by source verification, required before training
-        self.scope=None;self.cache=None;self.original_prepare=None
+        self.scope=None;self.cache=None;self.preparation_provider=None
         self.coordinator=None
         self.pending_return=False;self.resume_wait_sha256=None;self._workflow_cycle=None
         self._workflow_resuming=[]
@@ -649,14 +653,13 @@ class ActualHost:
     def close_cache(self):
         if self.cache is not None:
             cache=self.cache
-            self.context._prepare=self.original_prepare
-            self.cache=None;self.original_prepare=None
+            self.context.release_preparation_provider(self.preparation_provider)
+            self.cache=None;self.preparation_provider=None
             cache.close()
 
     def prime_cache(self,binding,cycle_directory):
         self.close_cache()
         self.progress('boss_reasoning',unit='records')
-        original=self.context._prepare
         recovery=self.host.get('retained_preparation_recovery') if binding['cycle_index']==0 else None
         if recovery is not None:
             if self.checkpoint.training_cursor!=-1:raise ValueError('first preparation recovery requires unchanged initial training')
@@ -669,24 +672,26 @@ class ActualHost:
                     raise ValueError('retained preparation requested for different cutoff')
                 return self.api.recover_retained_preparation(self.context,witness,as_of=as_of,through_cursor=through_cursor,
                     progress=self.recovery_progress)
-            self.context._prepare=recover
+            prepare=recover
         else:
             # Greg, 2026-09-28 ("We have to fix that 1 cpu problem"): the pinned _prepare runs unchanged; only its journal
             # walk (context_session.journal_prefix, both passes) runs across the box's CPUs. Same payloads, order,
-            # checks and summary (parallel_journal.py); context_session.py and c15_journal.py are untouched.
+            # checks and summary (parallel_journal.py). The serial _prepare body is
+            # unchanged; the new provider boundary has its own current code identity.
             from research.kalshi.frankie_boss.parallel_journal import prepare_parallel
             context=self.context
-            self.context._prepare=lambda as_of,through_cursor:prepare_parallel(context,as_of,through_cursor)
+            prepare=lambda as_of,through_cursor:prepare_parallel(context,as_of,through_cursor)
+        cache=self.api.prepare_context_cache(self.context,as_of=binding['as_of'],through_cursor=binding['through_cursor'],
+            expected_source_checkpoint=self.source_checkpoint,expected_model_hash=self.context._model_hash(),
+            expected_teacher_binding=None if self.context.teacher is None else self.context.teacher.binding,
+            checkpoint_hash=self.checkpoint.checkpoint_hash,current_checkpoint_hash=lambda:self.checkpoint.checkpoint_hash,
+            prepare=prepare)
+        provider=cache.prepare
         try:
-            cache=self.api.prepare_context_cache(self.context,as_of=binding['as_of'],through_cursor=binding['through_cursor'],
-                expected_source_checkpoint=self.source_checkpoint,expected_model_hash=self.context._model_hash(),
-                expected_teacher_binding=None if self.context.teacher is None else self.context.teacher.binding,
-                checkpoint_hash=self.checkpoint.checkpoint_hash,current_checkpoint_hash=lambda:self.checkpoint.checkpoint_hash)
-        finally:self.context._prepare=original
-        try:self.api.driver._save(cycle_directory/'host-context-cache.c15.json',cache.receipt)
+            self.api.driver._save(cycle_directory/'host-context-cache.c15.json',cache.receipt)
+            self.context.install_preparation_provider(provider)
         except BaseException:cache.close();raise
-        self.original_prepare=original;self.cache=cache
-        self.context._prepare=cache.prepare
+        self.preparation_provider=provider;self.cache=cache
         self.progress('boss_reasoning',completed=1,total=1,unit='outputs')
 
     def phase(self,phase,**values):

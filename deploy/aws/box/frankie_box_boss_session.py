@@ -282,10 +282,11 @@ def pin_groups(pin):
 
 class Session:
     def __init__(self, session, day, cycle, pod_id, served_model=SERVED_MODEL_DEFAULT, *,
-                 request_directory=None, require_retained_derivation=False):
+                 request_directory=None, require_retained_derivation=False, knowledge_correction=None):
         self.dir = Path(session).resolve()
         self.request_directory = Path(request_directory or ROOT / 'request').resolve()
         self.require_retained_derivation = require_retained_derivation
+        self.knowledge_correction_input = knowledge_correction
         self.day, self.cycle, self.pod_id, self.served_model = day, cycle, pod_id, served_model
         self.work = self.dir / ('work' if cycle == '00' else f'work-{cycle}')   # per cycle; cycle 00 keeps 'work' (its receipts already live there)
         self.out = self.dir / 'out'
@@ -2101,6 +2102,51 @@ class Session:
         C.validate(visible, ledgers)
         return ledgers
 
+    def knowledge_correction(self, request_path, request_sha256):
+        """Consume checked knowledge in the original code learner session; no forecast rerun."""
+        from research.kalshi.frankie_boss.frankie_principal_adapter import (
+            digest, knowledge_correction_response, json_form)
+        request = load_json(Path(request_path))
+        original = load_json(self.request_directory / 'session-request.json')
+        initial = load_json(self.out / 'response.json')
+        original_host = load_json(self.out / 'host-session-record.json')
+        if (digest(request) != request_sha256 or digest(original) != request['original_request_sha256']
+                or original_host.get('request_sha256') != digest(original)
+                or original_host.get('response_sha256') != digest(initial)
+                or not original_host.get('host_authority')
+                or original_host['host_authority'] != request['original_host_authority']
+                or any(original_host.get(k) != initial.get(k)
+                       for k in ('session_id', 'model_identity_as_reported_by_session'))):
+            raise ValueError('follow-up must bind the original retained learner request, response and host')
+        reply = json_form(knowledge_correction_response(request, initial))
+        directory = self.out / 'knowledge-corrections' / request_sha256
+        directory.mkdir(parents=True, exist_ok=True)
+        def retain(name, body):
+            path = directory / name
+            if path.exists():
+                if load_json(path) != body:
+                    raise ValueError('retained knowledge follow-up differs: ' + str(path))
+            else:
+                write_json(path, body)
+            return path
+        retain('request.json', request)
+        response_path = retain('response.json', reply)
+        host = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION',
+            request_sha256=request_sha256, response_sha256=digest(reply), session_id=reply['session_id'],
+            model_identity_as_reported_by_session=reply['model_identity_as_reported_by_session'],
+            host_authority=original_host['host_authority'], turn='knowledge-correction',
+            original_request_sha256=digest(original), original_response_sha256=digest(initial),
+            response=dict(path=str(response_path), **witness(response_path)))
+        host_path = retain('host-record.json', host)
+        attestation = {k: host[k] for k in ('schema', 'mechanism', 'request_sha256', 'response_sha256',
+                                           'session_id', 'model_identity_as_reported_by_session')}
+        attestation['host_record'] = dict(path=str(host_path), **witness(host_path))
+        retain('host-attestation.json', attestation)
+        # The full corrected lesson is consumed above, and retained in the reply's
+        # correction_consumption ledger. No historical output or pending label changes.
+        self.note('checked knowledge follow-up ready for its original host: ' + str(directory))
+        return directory
+
     def correction(self):
         """Turn 2 of the Dipole classroom: the host's correction request (request/classroom-correction-request.json, exported
         from the host and fetched onto the box) answered by FRANKIE'S CODE (no model call; frankie_box_classroom_code,
@@ -2549,6 +2595,11 @@ class Session:
         self.note(f'brain: pinned {len(base["entries"])} accumulated entries for this request, including prior cycle-zero runs')
 
     def _run(self, stage):
+        if stage == 'knowledge_correction':
+            if not self.knowledge_correction_input:
+                raise ValueError('explicit knowledge correction request and digest required')
+            self.knowledge_correction(*self.knowledge_correction_input)
+            return
         self.verify()
         self._pin_matches_request()       # before any engine reach: a request rendered under another calculation pin is refused here, receipted
         retained_derivation = self._derive_needed() if self.require_retained_derivation else None
@@ -2627,11 +2678,19 @@ def main():
     parser.add_argument('--cycle', default='00')
     parser.add_argument('--pod', default=POD_ID_DEFAULT)
     parser.add_argument('--served-model', default=SERVED_MODEL_DEFAULT)
-    parser.add_argument('--stage', default='run', choices=('run', 'preflight', 'correction', 'derive_only'))
+    parser.add_argument('--stage', default='run', choices=('run', 'preflight', 'correction', 'derive_only', 'knowledge_correction'))
+    parser.add_argument('--knowledge-correction-request')
+    parser.add_argument('--knowledge-correction-sha256')
     args = parser.parse_args()
+    followup = (args.knowledge_correction_request, args.knowledge_correction_sha256)
+    if args.stage == 'knowledge_correction' and not all(followup):
+        parser.error('knowledge_correction requires an exact request path and digest')
+    if args.stage != 'knowledge_correction' and any(followup):
+        parser.error('knowledge correction arguments belong only to the follow-up stage')
     Session(args.session, args.day, args.cycle, args.pod, args.served_model,
             request_directory=args.request_directory,
-            require_retained_derivation=args.require_retained_derivation).run(args.stage)
+            require_retained_derivation=args.require_retained_derivation,
+            knowledge_correction=followup if args.stage == 'knowledge_correction' else None).run(args.stage)
 
 
 if __name__ == '__main__':

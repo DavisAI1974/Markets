@@ -147,7 +147,7 @@ def load_lessons(paths, day, *, brain=None):
         author = LESSONS.get(doc.get('schema'))
         if author is None or doc.get('author') != author:
             raise SystemExit('%s is not a supported scientific lesson schema of its author' % path)
-        tested = sorted(str(s.get('day')) for s in doc.get('searches') or [])
+        tested = lesson_days(doc)
         if day not in tested:
             listed.append(dict(path=str(path), reason='these lessons did not test %s (days tested: %s)' % (day, tested)))
             continue
@@ -158,6 +158,15 @@ def load_lessons(paths, day, *, brain=None):
     return docs, listed
 
 
+def lesson_days(doc):
+    """The union of actual claim-operation days, including unchanged partial-successor results."""
+    import frankie_box_experiment_review as REVIEW
+    if not (doc.get('knowledge_retest') or {}).get('claim_operations'):
+        return sorted(str(search['day']) for search in doc.get('searches') or [])
+    return sorted({str(search['day']) for result in doc.get('results') or []
+                   for search in REVIEW.claim_searches(doc, result['claim_id'])})
+
+
 def lesson_context(doc):
     """Preserve the whole collection/evidence context once per source lesson.
 
@@ -166,9 +175,21 @@ def lesson_context(doc):
     """
     context = {key: doc[key] for key in ('reconsideration', 'completed_native_evidence') if key in doc}
     collection = context.get('reconsideration')
-    if collection is not None and (collection.get('schema') != 'FRANKIE_HISTORICAL_RECONSIDERATION_V1'
-            or collection.get('claims_file_sha256') != doc.get('claims_sha256')):
-        raise ValueError('historical reconsideration differs from its lesson claims binding')
+    if collection is not None:
+        origin = (doc.get('knowledge_retest') or {}).get('reconsideration_origin')
+        expected = doc.get('claims_sha256')
+        if origin is not None:
+            pin = origin.get('result') or {}
+            if (not re.fullmatch('[0-9a-f]{64}', str(origin.get('claims_sha256')))
+                    or not isinstance(pin.get('path'), str) or not pin['path']
+                    or type(pin.get('bytes')) is not int or pin['bytes'] < 0
+                    or not re.fullmatch('[0-9a-f]{64}', str(pin.get('sha256')))):
+                raise ValueError('historical collection origin lacks its complete retained result witness')
+            expected = origin['claims_sha256']
+            context['reconsideration_origin'] = origin
+        if (collection.get('schema') != 'FRANKIE_HISTORICAL_RECONSIDERATION_V1'
+                or collection.get('claims_file_sha256') != expected):
+            raise ValueError('historical reconsideration differs from its original claims binding')
     return context
 
 
@@ -221,10 +242,22 @@ def context_checks(item, day, src, said):
                 said.v(collection.get('candidates'), src['sha256'], 'collection candidate statements'),
                 said.v(collection.get('catalog_sha256'), src['sha256'], 'collection catalog sha256'),
                 said.v(json.dumps(collection.get('statuses'), sort_keys=True), src['sha256'], 'collection statuses')))
+            if context.get('reconsideration_origin'):
+                words.append('This collection context remains bound to its original claims source %s; it is not '
+                             'a remeasurement or coverage assertion for the corrected claims projection.' %
+                             said.v(context['reconsideration_origin']['claims_sha256'], src['sha256'],
+                                    'original collection claims sha256'))
     native = context.get('completed_native_evidence')
     if native is not None:
         reference = (native.get('by_day') or {}).get(day)
-        if reference is not None:
+        references = [reference] if reference is not None else []
+        if 'claim_searches' in context:
+            manifests = {s['manifest_sha256'] for s in context['claim_searches'] if str(s['day']) == day}
+            candidates = references + [entry['carried'] for entry in native.get('listed') or []
+                                       if isinstance(entry, dict) and isinstance(entry.get('carried'), dict)]
+            references = list({json.dumps(r, sort_keys=True): r for r in candidates
+                               if str(r.get('day')) == day and r.get('search_manifest_sha256') in manifests}.values())
+        for reference in references:
             if str(reference.get('day')) != day:
                 raise ValueError('completed native reference names a different day')
             words.append('Completed native evidence for this day, as declared by the bound scientific lesson: %s. '
@@ -232,8 +265,11 @@ def context_checks(item, day, src, said):
                          'supplements only. This reference adds no independent measurement and does not establish '
                          'a new semantic calculation or a live search step.' %
                          said.v(json.dumps(reference, sort_keys=True), src['sha256'], 'completed native reference'))
-        else:
-            words.append('This lesson has no completed-native reference for the current day; '
+        if not references:
+            words.append('This claim has no completed-native reference matching its retained search for the current '
+                         'day; the lesson collection references remain in their original scope.'
+                         if 'claim_searches' in context else
+                         'This lesson has no completed-native reference for the current day; '
                          'references for other days remain in their original scope.')
         if native.get('listed'):
             words.append('Completed-native coverage still listed: %s.' %
@@ -332,7 +368,7 @@ def accumulated_lessons(day, run, paths, brain, input_path, rows_path, rules_wit
                 return
             seen.add(source['sha256'])
             docs.append((doc, dict(path=source['path'], sha256=source['sha256'], author=author, schema=schema,
-                day=doc.get('day'), stamp=doc.get('stamp'), days_tested=[s['day'] for s in doc.get('searches') or []],
+                day=doc.get('day'), stamp=doc.get('stamp'), days_tested=lesson_days(doc),
                 claims_sha256=doc.get('claims_sha256'), claims_source=doc.get('claims_source'),
                 source_id='accumulated-lessons:' + source['sha256'], accumulated=True,
                 container_sha256=source.get('container_sha256', source['sha256']), address=list(address))))
@@ -1204,15 +1240,30 @@ def science_turn(D, S, item, result, claim, boss, measured, proposals, day, src,
 
 
 # ------------------------------------------------------------------------------------------------------------ the run
-def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, brain=None, input_path=None, notes=None):
+def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, brain=None, input_path=None, notes=None,
+             _knowledge=None):
     """notes: an optional dict the caller owns; the late-knowledge listing of the frozen learner selection is put there
     (for the receipt, which may change across restarts) and never into the exchange documents, whose bytes a restart must
     reproduce exactly (write_once, R16)."""
     from research.kalshi.frankie_boss import dipole_teacher_discussion as D
     from research.kalshi.frankie_boss import dipole_scientific_review as S
     import frankie_box_classroom_code as K
-    knowledge = None
-    if brain is not None:
+    import frankie_box_experiment_review as REVIEW
+    knowledge = _knowledge
+    if knowledge is not None:
+        # Only rebuild_successor supplies an already checked, durably frozen selection.
+        # Keep the seat mathematics and blind-wall decisions below identical to the ordinary exchange.
+        if input_path is None or json.loads(Path(input_path).read_bytes()) != knowledge:
+            raise ValueError('explicit exchange knowledge differs from its retained input file')
+        if any(knowledge['identity'].get(key) != value for key, value in
+               (('day', day), ('run', run), ('brain', str(brain)), ('rules', rules_witness))):
+            raise ValueError('explicit exchange knowledge belongs to another owner or rules')
+        if ((knowledge['identity'].get('successor_operation') or {}).get('schema') !=
+                'FRANKIE_EXCHANGE_SUCCESSOR_OPERATION_V1'
+                or (knowledge['identity'].get('teacher_rows') or {}).get('path') != rows_path):
+            raise ValueError('explicit exchange knowledge lacks its checked successor or original rows')
+        docs, listed = knowledge['documents'], list(knowledge['listed'])
+    elif brain is not None:
         if input_path is None:
             raise ValueError('accumulated exchange knowledge requires a retained input path')
         knowledge = accumulated_lessons(day, run, lessons_paths, brain, input_path, rows_path, rules_witness)
@@ -1256,8 +1307,11 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
             seen.add(item_id)
             prior = finite(result)
             claim = claims.get(result['claim_id'])
+            item_context = context
+            if (doc.get('knowledge_retest') or {}).get('claim_operations'):
+                item_context = dict(context, claim_searches=REVIEW.claim_searches(doc, result['claim_id']))
             item = dict(item_id=item_id, author=src['author'], claim_id=result['claim_id'], prior=prior, request=request,
-                        rows_sha256=measure['sha256'] if measure else None, lesson_context=context)
+                        rows_sha256=measure['sha256'] if measure else None, lesson_context=item_context)
             item.update(retained_evidence=retained_evidence_counts(measure, claimed_names(prior)),
                         evidence_source_id=rows_id, lesson_sha256=src['sha256'])
             shared = shared_count_accounting(prior, day, src)
@@ -1422,7 +1476,7 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                                            current_day_test_rows=len(side['counts_on_day']),
                                            origin_rows_on_day=len(side.get('origin_on_day') or []),
                                            retained_test_days=sorted(side['counts_per_day'])),
-                              lesson_context=context,
+                              lesson_context=item_context,
                               retained_evidence=item['retained_evidence'],
                               blind_jev=blind_jev,
                               turns=turns, voice_turns=voice))
@@ -1461,6 +1515,172 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
     view.pop('exchange_hash')
     view['exchange_hash'] = S.digest(finite(view))
     return finite(full), finite(view)
+
+
+def rebuild_successor(day, run, brain, out_dir, *, original_inputs, original_view, source_corrections):
+    """Recompute one published exchange from its frozen selection and explicit checked corrections.
+
+    All arguments named original_* and source_corrections are path/bytes/SHA256 witnesses.
+    No brain reselection, accumulated-teacher test, model call or publication occurs here.
+    The existing exchange runs on the same ordered lesson slots (including their blind flags),
+    rows and rules. A durable content-addressed receipt permits restart/publication without
+    replacing the original input, full exchange or learner view. Scientific decisions remain
+    those in the supplied correction records; this operation establishes no new acceptance rule.
+    """
+    import fcntl
+    import frankie_box_brain as BR
+    import frankie_box_classroom_code as K
+    import frankie_box_experiment_review as REVIEW
+    import frankie_box_historical_claims as HC
+    import frankie_box_lane_state as LS
+    from research.kalshi.frankie_boss import dipole_scientific_review as S
+    from frankie_box_durable import write_json, witness
+
+    def pin(value):
+        REVIEW._read_pin(value)
+        return {key: value[key] for key in ('path', 'bytes', 'sha256')}
+
+    original_inputs, original_view = pin(original_inputs), pin(original_view)
+    retained = json.loads(REVIEW._read_pin(original_inputs))
+    before = json.loads(REVIEW._read_pin(original_view))
+    identity = retained.get('identity') or {}
+    if (not re.fullmatch('[0-9]{8}', str(day)) or not re.fullmatch('[A-Za-z0-9_-]{1,64}', str(run))
+            or retained.get('schema') != 'FRANKIE_EXCHANGE_KNOWLEDGE_INPUTS_V1'
+            or before.get('schema') != SCHEMA or before.get('view') != 'frankie'
+            or any(identity.get(k) != v or before.get(k) != v for k, v in (('day', day), ('run', run)))
+            or Path(identity.get('brain', '')).resolve() != Path(brain).resolve()):
+        raise ValueError('exchange successor needs the same owner day/run/brain and a frozen Frankie view')
+    brain = str(identity['brain'])
+    prior_sources = [source for _, source in retained['documents']]
+    knowledge = before.get('knowledge_inputs') or {}
+    if (knowledge.get('path') != original_inputs['path'] or knowledge.get('sha256') != original_inputs['sha256']
+            or knowledge.get('sources') != prior_sources or before['sources']['lessons'] != prior_sources
+            or knowledge.get('versions') != retained['versions']
+            or before.get('rules') != identity.get('rules')
+            or before.get('exchange_hash') != S.digest({k: v for k, v in before.items() if k != 'exchange_hash'})):
+        raise ValueError('published exchange differs from its frozen selection or content binding')
+    _, rules = K.rules()
+    rules_witness = dict(file=Path(rules['path']).name, sha256=rules['sha256'], bytes=rules['bytes'], rules=rules['rules'])
+    if rules_witness != identity['rules']:
+        raise ValueError('exchange successor must preserve the original classroom rules')
+    rows = identity.get('teacher_rows')
+    if rows is not None:
+        pin(rows)
+    if before['sources'].get('teacher_rows') is not None and (
+            rows is None or any(before['sources']['teacher_rows'].get(k) != rows.get(k)
+                                for k in ('path', 'bytes', 'sha256'))):
+        raise ValueError('exchange successor rows differ from the original published rows')
+
+    records = REVIEW.corrections(LS.knowledge_roots(brain))
+    legal = {entry.get('sha256') for _, manifest, _ in BR.entries_before(brain, 'snapshot')
+             for entry in manifest.get('entries') or [] if entry.get('include')}
+    legal.update(record['replacement']['sha256'] for record in records.values())
+    if original_view['sha256'] not in legal:
+        raise ValueError('exchange successor original is not published learner knowledge')
+    if not isinstance(source_corrections, list) or not source_corrections:
+        raise ValueError('exchange successor requires explicit checked source correction witnesses')
+    supplied = [pin(item) for item in source_corrections]
+    by_hash = {record['record']['sha256']: record for record in records.values()}
+    if (len({p['sha256'] for p in supplied}) != len(supplied)
+            or any(p['sha256'] not in by_hash or p['bytes'] != by_hash[p['sha256']]['record']['bytes'] for p in supplied)):
+        raise ValueError('exchange successor correction is not a checked owner record')
+    documents, replacements, consumed, claims_by_source = [], [], set(), {}
+    for doc, source in retained['documents']:
+        if doc.get('schema') not in LESSONS or doc.get('author') != LESSONS[doc['schema']]:
+            raise ValueError('exchange successor selection contains a non-scientific lesson')
+        cursor = source['sha256']
+        while cursor in records:
+            consumed.add(records[cursor]['record']['sha256'])
+            cursor = records[cursor]['replacement']['sha256']
+        delivered = REVIEW.current_document(dict(source, content=doc), records, brain, day=day, stage='exchange')
+        successor, next_source = delivered['content'], dict(source)
+        if delivered['sha256'] != source['sha256']:
+            next_source.update({k: delivered[k] for k in ('path', 'bytes', 'sha256')})
+            next_source.update(schema=successor['schema'], author=successor['author'], day=successor.get('day'),
+                stamp=successor.get('stamp'), days_tested=lesson_days(successor),
+                claims_sha256=successor.get('claims_sha256'), claims_source=successor.get('claims_source'))
+            # This is the complete checked object, no longer an inline member of the old school/container.
+            if 'container_sha256' in next_source:
+                next_source.update(container_sha256=delivered['sha256'], address=[])
+            if successor.get('claim_inputs') != doc.get('claim_inputs'):
+                if 'claim_inputs' not in successor:
+                    raise ValueError('changed successor claims require their complete legal projection')
+                claims, why = claims_of(successor)
+                claims_by_source[source['source_id']] = dict(claims=claims, listed=why)
+            else:
+                if successor.get('claims_sha256') != doc.get('claims_sha256'):
+                    raise ValueError('changed successor claim source requires its complete legal projection')
+                claims_by_source[source['source_id']] = retained['claims_by_source'][source['source_id']]
+        else:
+            claims_by_source[source['source_id']] = retained['claims_by_source'][source['source_id']]
+        documents.append([successor, next_source])
+        replacements.append(dict(original=source, replacement=next_source))
+    if consumed != {p['sha256'] for p in supplied}:
+        raise ValueError('exchange successor corrections must be exactly the affected selected lesson chains')
+    REVIEW.require_current([dict(source, content=doc) for doc, source in documents], records)
+    supplied.sort(key=lambda value: value['sha256'])
+    reader_paths = [BOX / (name + '.py') for name in ('frankie_box_lane_state', 'frankie_box_brain',
+        'frankie_box_scientific_teacher', 'frankie_box_classroom_code', 'frankie_box_experiment_search',
+        'frankie_box_experiment_review', 'frankie_box_historical_claims')]
+    reader_paths += [ROOT / 'research/kalshi/frankie_boss' / (name + '.py') for name in
+        ('dipole_classroom', 'dipole_teacher_discussion', 'dipole_scientific_review', 'c15_journal', 'c15_normalizer')]
+    reader_pins = {str(path.relative_to(ROOT)): sha256_bytes(path.read_bytes()) for path in reader_paths}
+    operation = dict(schema='FRANKIE_EXCHANGE_SUCCESSOR_OPERATION_V1', day=day, run=run, brain=brain,
+        original_inputs=original_inputs, original_view=original_view, source_corrections=supplied,
+        teacher_rows=rows, rules=rules_witness, producer_sha256=sha256_bytes(Path(__file__).read_bytes()),
+        reader_sha256=reader_pins, binding_tables_sha256=HC.binding_tables_sha256(), documents=replacements)
+    operation_sha = REVIEW.digest(REVIEW.canonical(operation))
+    directory = Path(out_dir) / operation_sha
+    if any(p.is_symlink() for p in (directory, *directory.parents, directory / 'successor.lock')):
+        raise ValueError('exchange successor owner directory traverses a symbolic link')
+    directory.mkdir(parents=True, exist_ok=True)
+    input_path, receipt_path = directory / 'learner-knowledge.json', directory / 'receipt.json'
+    if any(Path(p['path']).resolve().parent == directory.resolve() for p in (original_inputs, original_view)):
+        raise ValueError('exchange successor cannot reuse its original output directory')
+    next_identity = dict(identity, producer_sha256=operation['producer_sha256'], reader_sha256=reader_pins,
+                         successor_operation=operation)
+    selected = dict(retained, identity=next_identity, documents=documents, claims_by_source=claims_by_source)
+
+    def save(path, value):
+        if path.is_file():
+            if json.loads(path.read_bytes()) != value:
+                raise ValueError('exchange successor durable artifact changed: ' + str(path))
+        else:
+            write_json(path, value)
+        return dict(path=str(path), **witness(path))
+
+    with (directory / 'successor.lock').open('a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if receipt_path.is_file():
+            completed = json.loads(receipt_path.read_bytes())
+            if (completed.get('schema') != 'FRANKIE_EXCHANGE_SUCCESSOR_RECEIPT_V1'
+                    or completed.get('status') != 'complete'
+                    or completed.get('owner') != 'frankie_box_experiment_exchange.exchange'
+                    or completed.get('original_inputs') != original_inputs or completed.get('original_view') != original_view
+                    or completed.get('operation') != operation or completed.get('operation_sha256') != operation_sha):
+                raise ValueError('exchange successor receipt differs from the explicit operation')
+            for key in ('replacement_inputs', 'full', 'frankie_view'):
+                pin(completed[key])
+            if json.loads(REVIEW._read_pin(completed['replacement_inputs'])) != selected:
+                raise ValueError('exchange successor completed selection changed')
+            return dict(completed, receipt=dict(path=str(receipt_path), **witness(receipt_path)))
+        if original_view['sha256'] in records:
+            raise ValueError('exchange original already has a checked successor; reuse its retained receipt')
+        replacement_inputs = save(input_path, selected)
+        full, view = exchange(day, run, [], rows['path'] if rows else None, rules_witness,
+                              brain=brain, input_path=input_path, _knowledge=selected)
+        if (view['sources']['teacher_rows'] != before['sources']['teacher_rows']
+                or view['sources']['teacher_rows_listed'] != before['sources']['teacher_rows_listed']):
+            raise ValueError('exchange successor changed its original teacher measurement binding')
+        full_pin = save(directory / 'exchange.json', full)
+        view_pin = save(directory / 'exchange-frankie.json', view)
+        completed = dict(schema='FRANKIE_EXCHANGE_SUCCESSOR_RECEIPT_V1', status='complete',
+            owner='frankie_box_experiment_exchange.exchange', day=day, run=run, brain=brain,
+            original_inputs=original_inputs, original_view=original_view, replacement_inputs=replacement_inputs,
+            full=full_pin, frankie_view=view_pin, source_corrections=supplied,
+            operation=operation, operation_sha256=operation_sha, model_calls=0, scientific_retests=0)
+        receipt = save(receipt_path, completed)
+        return dict(completed, receipt=receipt)
 
 
 def tally(values):

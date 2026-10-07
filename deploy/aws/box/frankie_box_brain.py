@@ -29,7 +29,8 @@ SCHEMA = 'FRANKIE_BOX_BRAIN_ENTRY_V1'
 ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*', '[0-9]' * 8 + '-ingest', '[0-9]' * 8 + '-day-file',
                '[0-9]' * 8 + '-root', '[0-9]' * 8 + '-teacher', '[0-9]' * 8 + '-search',
                '[0-9]' * 8 + '-lessons', '[0-9]' * 8 + '-jev-tested', '[0-9]' * 8 + '-exchange',
-               '[0-9]' * 8 + '-meeting', '[0-9]' * 8 + '-survivors', '[0-9]' * 8 + '-confirmation')
+               '[0-9]' * 8 + '-meeting', '[0-9]' * 8 + '-meeting-*',
+               '[0-9]' * 8 + '-survivors', '[0-9]' * 8 + '-confirmation')
 # Non-cycle knowledge entries, ordered inside one day. They become readable as soon as each stage writes them.
 DAY_KINDS = {'ingest': -40, 'day-file': -30, 'root': -20, 'teacher': -10,
              'search': 10, 'lessons': 20, 'jev-tested': 30, 'exchange': 40,
@@ -52,6 +53,9 @@ def parse_entry_name(name):
     kind = re.fullmatch(r'([0-9]{8})-(ingest|day-file|root|teacher|search|lessons|jev-tested|exchange|meeting|survivors|confirmation)', name)
     if kind:
         return kind.group(1), kind.group(2)
+    meeting = re.fullmatch(r'([0-9]{8})-meeting-([0-9a-f]{64})', name)
+    if meeting:
+        return meeting.group(1), 'meeting'
     match = re.fullmatch(r'(?:([0-9]{8})-)?cycle-([0-9]+)', name)
     return (match.group(1), match.group(2)) if match else None
 
@@ -74,9 +78,13 @@ def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 *
         p = Path(item)
         if not p.is_file():
             raise FileNotFoundError('stage knowledge source missing: %s' % p)
-        raw = p.read_bytes()
-        rec = dict(path=str(p), bytes=len(raw), sha256=sha256_bytes(raw), inline=False)
-        if len(raw) <= inline_limit and p.suffix.lower() in ('.json', '.md', '.txt'):
+        from frankie_box_filehash import witness
+        pin = witness(p)
+        rec = dict(path=str(p), **pin, inline=False)
+        if pin['bytes'] <= inline_limit and p.suffix.lower() in ('.json', '.md', '.txt'):
+            raw = p.read_bytes()
+            if len(raw) != pin['bytes'] or sha256_bytes(raw) != pin['sha256']:
+                raise ValueError('stage source changed while preparing its inline content')
             try:
                 rec['content'] = json.loads(raw) if p.suffix.lower() == '.json' else raw.decode('utf-8')
                 rec['inline'] = True
@@ -242,7 +250,50 @@ def read_meeting_record(record_path, *, exchange_path, expected_sha256=None, com
     return record
 
 
-def read_meeting_for_exchange(exchange_path):
+def meeting_directory(exchange_path, *, owner_dir=None):
+    """Resolve only an exact owner/day exchange route, including receipt-bound successors."""
+    import frankie_box_experiment_review as REVIEW
+    exchange_path = Path(exchange_path)
+    if any(p.is_symlink() for p in (exchange_path, *exchange_path.parents)):
+        raise ValueError('meeting exchange path traverses a symbolic link')
+    raw = exchange_path.read_bytes()
+    source = json.loads(raw)
+    day, run = str(source.get('day')), source.get('run')
+    if (source.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1' or source.get('view') != 'frankie'
+            or not re.fullmatch(r'[0-9]{8}', day) or not isinstance(run, str)
+            or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', run)):
+        raise ValueError('meeting lookup requires an owner-bound Frankie exchange')
+    candidates = [Path(owner_dir)] if owner_dir is not None else [p for p in exchange_path.parents if p.name == run]
+    owners = []
+    for candidate in candidates:
+        if candidate.name != run or not exchange_path.is_relative_to(candidate):
+            continue
+        parts = exchange_path.relative_to(candidate).parts
+        regular = parts == ('exchange', day, 'exchange-frankie.json')
+        successor = (len(parts) == 7 and parts[:3] == ('successors', day, 'work')
+                     and parts[4] == 'exchange' and parts[6] == 'exchange-frankie.json'
+                     and all(re.fullmatch(r'[0-9a-f]{64}', parts[i]) for i in (3, 5)))
+        if regular or successor:
+            owners.append((candidate, successor))
+    if len(owners) != 1:
+        raise ValueError('exchange path does not name one exact owning experiment')
+    owner, successor = owners[0]
+    directory = owner / 'meeting' / day
+    if successor:
+        receipt = json.loads((exchange_path.parent / 'receipt.json').read_bytes())
+        selected = receipt.get('frankie_view') or {}
+        if (receipt.get('schema') != 'FRANKIE_EXCHANGE_SUCCESSOR_RECEIPT_V1'
+                or receipt.get('status') != 'complete' or receipt.get('day') != day or receipt.get('run') != run
+                or receipt.get('operation_sha256') != exchange_path.parent.name
+                or REVIEW.digest(REVIEW.canonical(receipt.get('operation'))) != receipt['operation_sha256']
+                or selected != dict(path=str(exchange_path), bytes=len(raw), sha256=sha256_bytes(raw))):
+            raise ValueError('successor meeting exchange differs from its completed owner receipt')
+        REVIEW._read_pin(receipt['replacement_inputs'])
+        directory = directory / 'successors' / selected['sha256']
+    return directory
+
+
+def read_meeting_for_exchange(exchange_path, *, owner_dir=None):
     """Read the owning experiment's receipt-bound meeting; never guess from an unrelated file."""
     exchange_path = Path(exchange_path)
     source_raw = exchange_path.read_bytes()
@@ -252,7 +303,7 @@ def read_meeting_for_exchange(exchange_path):
             or source.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1'
             or not source.get('run') or not source.get('exchange_hash')):
         raise ValueError('meeting lookup requires a dated Frankie exchange view')
-    directory = exchange_path.parent.parent.parent / 'meeting' / day
+    directory = meeting_directory(exchange_path, owner_dir=owner_dir)
     path, receipt_path = directory / 'meeting.json', directory / 'receipt.json'
     if not receipt_path.is_file():
         return dict(status='missing', record=None, path=None, receipt=None,
@@ -304,18 +355,28 @@ def write_meeting_entry(brain, day, record_path, *, exchange_path):
     record = read_meeting_record(source, exchange_path=exchange_path, expected_sha256=digest)
     if str(record['day']) != str(day):
         raise ValueError('meeting brain entry day differs')
+    import frankie_box_experiment_review as REVIEW
+    records = REVIEW.corrections([brain])
+    REVIEW.require_current([dict(path=str(source), bytes=len(raw), sha256=digest, content=record)], records)
+    successors = [r for r in records.values() if r['replacement']['sha256'] == record['exchange']['sha256']
+                  and r['body'].get('exchange_transition')]
     brain = Path(brain)
     if any(p.is_symlink() for p in (brain, *brain.parents)):
         raise ValueError('meeting brain path contains a symbolic link')
     brain.mkdir(parents=True, exist_ok=True)
     sync_directory(brain.parent)
-    entry = brain / ('%s-meeting' % day)
+    entry_name = '%s-meeting' % day
+    if successors:
+        entry_name += '-' + record['exchange']['sha256']
+    entry = brain / entry_name
     target, manifest_path = entry / 'meeting.json', entry / 'MANIFEST.json'
     manifest = dict(schema=SCHEMA, cycle='meeting', day=str(day), entry_kind='meeting', entries=[
         dict(name='meeting.json', bytes=len(raw), sha256=digest, include=True,
              kind='post-class discussion; coordinator turns have zero evidentiary weight')], unavailable=[],
         knowledge_status='available_immediately',
         note='seat statements, coordinator turns, code-seat answers and open items/requested tests remain distinct')
+    if successors:
+        manifest.update(entry_name=entry_name, exchange_corrections=[r['record'] for r in successors])
     lock_path = brain / '.meeting.lock'
     if lock_path.is_symlink():
         raise ValueError('meeting brain lock is a symbolic link')
@@ -544,9 +605,16 @@ def capture_base(brain, request_identity):
     frozen = brain / FROZEN_DIR / 'MANIFEST.json'
     if frozen.is_file():
         candidates.append(frozen)
-    entries = {}
+    import frankie_box_experiment_review as REVIEW
+    records = REVIEW.corrections([brain])
+    entries, withheld_meetings = {}, []
     for path in sorted(candidates):
         manifest, digest = _checked_entry(path.parent)
+        replaced = _stale_meeting_sources(manifest, path.parent, records)
+        if replaced:
+            withheld_meetings.append(dict(path=str(path), sha256=digest, corrections=replaced,
+                                          reason='meeting discussed an explicitly replaced exchange'))
+            continue
         if digest in entries:
             continue
         destination = history / ('entry-' + digest)
@@ -557,8 +625,9 @@ def capture_base(brain, request_identity):
                                cycle=manifest.get('cycle'), day=manifest.get('day'), source_schema=manifest.get('schema'))
     value = dict(schema='FRANKIE_ACCUMULATED_KNOWLEDGE_BASE_V1', request_identity=request_identity,
                  entries=list(entries.values()), rule='all previously stored intact knowledge; immutable for this request')
-    import frankie_box_experiment_review as REVIEW
-    value['corrections'] = sorted(r['record']['sha256'] for r in REVIEW.corrections([brain]).values())
+    value['corrections'] = sorted(r['record']['sha256'] for r in records.values())
+    if withheld_meetings:
+        value['withheld_meetings'] = withheld_meetings
     school = _school_index(brain)['rows'] if (brain / SCHOOL_DIR / 'index.json').is_file() else []
     if school:          # the school days written so far, pinned by their index rows (the files are never overwritten)
         value['school'] = [{k: r.get(k) for k in ('day', 'file', 'sha256', 'bytes', 'report_number', 'include')} for r in school]
@@ -1038,6 +1107,28 @@ def frozen_entry(brain):
         return None, None
 
 
+def _stale_meeting_sources(manifest, directory, records):
+    """Selection-only exclusion of a discussion of an explicitly replaced exchange."""
+    if manifest.get('entry_kind') != 'meeting' or not records:
+        return []
+    replacements = []
+    for item in manifest.get('entries', []):
+        if not item.get('include'):
+            continue
+        if Path(item['name']).name != item['name']:
+            raise ValueError('meeting member leaves its retained entry')
+        raw = (Path(directory) / item['name']).read_bytes()
+        if len(raw) != item['bytes'] or sha256_bytes(raw) != item['sha256']:
+            raise ValueError('retained meeting member differs from its manifest')
+        meeting = json.loads(raw)
+        if meeting.get('schema') != 'FRANKIE_GRANITE_MEETING_V1':
+            raise ValueError('meeting entry contains another artifact schema')
+        old = (meeting.get('exchange') or {}).get('sha256')
+        if old in records:
+            replacements.append(records[old]['record'])
+    return replacements
+
+
 def entries_before(brain, cycle, day=None):
     """(label, manifest, entry_dir) for every entry written so far, from every day and every cycle, EXCEPT this run's own
     day+cycle (Greg, 2026-09-29: the cycles replay the day and restart earlier, so his reasoning may carry later data;
@@ -1047,6 +1138,8 @@ def entries_before(brain, cycle, day=None):
     found = []
     if not brain.is_dir():
         return found
+    import frankie_box_experiment_review as REVIEW
+    records = REVIEW.corrections([brain])
     own = entry_name(day, cycle)
     for d in sorted({p for pattern in ENTRY_GLOBS for p in brain.glob(pattern) if p.is_dir()}):
         parsed = parse_entry_name(d.name)
@@ -1057,6 +1150,13 @@ def entries_before(brain, cycle, day=None):
             manifest = json.loads(m.read_bytes())
         except Exception:
             continue
+        replaced = _stale_meeting_sources(manifest, d, records)
+        if replaced:
+            # Return a reader projection only. Original bytes, manifest and pinned bases stay immutable.
+            manifest = dict(manifest, entries=[dict(item, include=False,
+                reason='meeting discussed an explicitly replaced exchange') for item in manifest.get('entries', [])],
+                unavailable=list(manifest.get('unavailable') or []) + [dict(
+                    reason='meeting discussed an explicitly replaced exchange', corrections=replaced)])
         entry_day, cyc = parsed
         label = (f'{entry_day}-{cyc}' if cyc in DAY_KINDS else
                  f'{entry_day}-cycle-{cyc}' if entry_day else f'cycle-{cyc} (day not recorded)')

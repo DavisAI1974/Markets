@@ -239,10 +239,13 @@ def main():
     for name in ('response','response-sha256','host-attestation','host-attestation-sha256'):
         parser.add_argument('--'+name)
     parser.add_argument('--cycle-index',type=int,required=True)
-    parser.add_argument('--turn',choices=('initial','correction','outcome'),default='initial')
+    parser.add_argument('--turn',choices=('initial','correction','outcome','knowledge_correction'),default='initial')
+    parser.add_argument('--knowledge-correction-sha256')
     parser.add_argument('--learning-cutoff-ns',type=int)
     parser.add_argument('--prepare-outcome',action='store_true')
     args=parser.parse_args()
+    if (args.turn=='knowledge_correction') != bool(args.knowledge_correction_sha256):
+        parser.error('knowledge_correction turn requires its exact request SHA256 only')
     response_args=(args.response,args.response_sha256,args.host_attestation,args.host_attestation_sha256)
     if args.prepare_outcome and args.turn!='outcome':
         parser.error('--prepare-outcome requires --turn outcome')
@@ -270,10 +273,22 @@ def main():
         plan=_load(directory/'request-plan.c15.json');export=_load(directory/'principal-export.c15.json')
         principal=directory/'principal'
         # Recording cannot initiate source binding, receiver preparation or a session.
-        if not (principal/'bound-mapping.json').exists() or not (principal/'session-request.json').exists():
+        if (not (principal/'session-request.json').exists() or
+                args.turn!='knowledge_correction' and not (principal/'bound-mapping.json').exists()):
             raise ValueError('actual retained principal request and mapping required')
         request=json.loads((principal/'session-request.json').read_bytes())
         if request['request_id']!=plan['request_id']:raise ValueError('retained principal request differs from plan')
+        if args.turn=='knowledge_correction':
+            # This response is independent of pending outcomes/native training. Do
+            # not rebuild the classroom or native adapter merely to record it.
+            from research.kalshi.frankie_boss.frankie_principal_adapter import RetainedKnowledgeCorrectionAdapter
+            correction_adapter=RetainedKnowledgeCorrectionAdapter(principal)
+            response=verified_json(args.response,args.response_sha256)
+            attestation=verified_json(args.host_attestation,args.host_attestation_sha256)
+            correction_adapter.record_knowledge_correction_response(response,
+                host_attestation=attestation,request_sha256=args.knowledge_correction_sha256)
+            print(json.dumps(correction_adapter.recover_knowledge_correction(args.knowledge_correction_sha256)))
+            return
         # Host-only package loading: withheld targets are never printed or placed
         # in the model-facing response. The actual host still grades both turns.
         classroom_package={

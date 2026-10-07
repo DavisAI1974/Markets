@@ -62,11 +62,10 @@ def _box(name):
 
 
 def _sha256(path):
-    h = hashlib.sha256()
-    with open(path, 'rb') as f:
-        for block in iter(lambda: f.read(64 * 1024 * 1024), b''):
-            h.update(block)
-    return h.hexdigest()
+    # Reuse the existing streamed, changed-file-aware witness within this process;
+    # repeated source/receipt checks need not reread unchanged owner-local bytes.
+    from frankie_box_filehash import sha256_file
+    return sha256_file(path)
 
 
 def _bytes(path, raw):
@@ -275,6 +274,13 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         return selected, school, listed
     knowledge_input, school, school_listed = phase('learner_inputs', learner_inputs)
     knowledge = knowledge_input['documents']
+    # Ordinary new knowledge waits for the next boundary, but a checked correction
+    # cannot leave a known error active in a saved classroom. Keep every retained
+    # input/answer intact and require an explicit successor instead of repicking.
+    import frankie_box_experiment_review as REVIEW
+    REVIEW.require_current(
+        list(knowledge) + [dict(row, content=doc) for row, doc in school],
+        REVIEW.corrections(LS.knowledge_roots(brain)))
     learner_reading, independent_external = None, None
     try:
         if mode in ('SOCRATIC', 'VERIFY'):

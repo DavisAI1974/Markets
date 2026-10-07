@@ -301,9 +301,10 @@ def load_plan(a, code_root):
     for d in arm:
         if d not in names:
             refused.append(dict(day=d, reason='a classroom-arm day that is not in the day list'))
-    # the days run unit by unit (a pair's two days side by side, --parallel-days 4 = two pairs at once), discovery first
-    order = {d: i for i, d in enumerate(d for role in ('discovery', 'confirmation') for u in units[role] for d in u['days'])}
-    days.sort(key=lambda e: (order.get(e['day'], len(order)), e['day']))
+    # Greg 2026-10-06: days learn in supplied workflow order, not trading-date order.
+    # Keep the submitted order (plan entries, then --days) in the saved plan/digest.
+    # Pair units still define the same grouping and classroom-arm membership above;
+    # they do not reorder the caller's randomized day sequence.
     plan = dict(schema=SCHEMA, run=a.run, cls=klass, days=days, left_out=left_out, classroom_arm=arm, units=units,
                 knowledge_order='completed_workflow_stages_all_30_days_no_trading_date_or_year_holdout',
                 frozen_survivors=a.frozen_survivors or None, historical_claims=a.historical_claims or None,
@@ -506,8 +507,8 @@ def presign_items(plan, code_root):
 # --------------------------------------------------------------------------------------------------------------- run
 
 def done_status(r):
-    """A step is finished when done, reused or skipped, or (jev) when its material went out and it waits for the Pod."""
-    return bool(r and (r['status'] in FINISHED or (r['status'] == HANDED_OFF and r.get('material_sent'))))
+    """A step is finished when done, reused or skipped; a retired Pod handoff is still pending."""
+    return bool(r and r['status'] in FINISHED)
 
 
 class Run:
@@ -657,6 +658,8 @@ class Run:
                                                  brain=self.plan.get('brain') or BRAIN)
         if stage in ('lessons', 'exchange') and not successor:
             self.require_current_teacher_inputs(key[:8])
+        if stage in ('voice', 'school', 'reports') and not successor:
+            self.require_current_exchange(key[:8], env)
         full = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), **{k: str(v) for k, v in env.items()})
         command = ['sh' if script.endswith('ingest_block.sh') else 'bash', str(self.box / script)]
         if stage in self.cores.DAY_RUN_STAGES:  # exactly 16 CPUs booked, the step under taskset -c <them> (frankie_box_cores.py)
@@ -770,6 +773,18 @@ class Run:
         if remote is not None:
             return remote
         calc, attempts = root_of(e, self.plan['run'])
+        owned_output = None
+        if os.environ.get('FRANKIE_LANE_MAILBOX'):
+            attempt = os.environ.get('FRANKIE_LANE_ATTEMPT', '')
+            if not re.fullmatch(re.escape('%s-%s-a' % (self.plan['run'], e['day'])) + r'[0-9]+', attempt):
+                raise ValueError('remote ROOT requires its original run/day/attempt identity')
+            owned_output = ROOTS / attempt
+            if owned_output.is_symlink() or any(Path(p) != owned_output for p in attempts):
+                raise ValueError('retained ROOT directories differ from the claimed attempt; preserved')
+            if calc is not None and calc != owned_output:
+                raise ValueError('completed ROOT differs from the claimed attempt; preserved')
+            if owned_output.exists() and not owned_output.is_dir():
+                raise ValueError('claimed ROOT output is not a retained directory')
         if calc:
             retained = json.loads((calc / 'calculations-receipt.json').read_bytes())
             if retained.get('day') != e['day'] or retained.get('day_role') != e['role']:
@@ -794,16 +809,9 @@ class Run:
             return self.record('root', e['day'], 'waiting', reason=why)
         if not self.disk_ok('root'):
             return None
-        output = ROOTS / ('%s-%s-a%d' % (self.plan['run'], e['day'], len(attempts) + 1))
-        resume = False
-        if os.environ.get('FRANKIE_LANE_MAILBOX') and attempts:
-            # Keep the saved Linux work directory; the ROOT wrapper uses existing retained-stage recovery.
-            candidates = [Path(p) for p in attempts if re.fullmatch(
-                re.escape('%s-%s-a' % (self.plan['run'], e['day'])) + r'[0-9]+', Path(p).name)]
-            if not candidates:
-                raise ValueError('retained ROOT attempt cannot be identified safely')
-            output = max(candidates, key=lambda p: int(p.name.rsplit('-a', 1)[1]))
-            resume = True
+        output = owned_output or ROOTS / ('%s-%s-a%d' % (self.plan['run'], e['day'], len(attempts) + 1))
+        # First dispatch and resume both use the central claim's exact directory.
+        resume = owned_output is not None and owned_output.is_dir()
         held = self.claim_root(e, output)          # None = no claim store on the box: exactly as before
         if held is not None and not held[0]:
             return self.record('root', e['day'], 'waiting', reason=held[1], claim=held[2])
@@ -1028,6 +1036,20 @@ class Run:
             if saved.get('status') == 'complete' and saved.get('day') == e['day'] and \
                     all((facts['d'] / name).is_file() for name in complete_files) and \
                     (Path(saved.get('brain_entry') or '') / 'MANIFEST.json').is_file():
+                import frankie_box_lane_state as LS
+                import frankie_box_experiment_review as REVIEW
+                selected_path = facts['d'] / 'learner-knowledge.json'
+                try:
+                    if sha256_file(selected_path) != (saved.get('stage_knowledge') or {}).get('sha256'):
+                        raise ValueError('completed classroom learner selection differs from its receipt')
+                    selected = json.loads(selected_path.read_bytes())
+                    REVIEW.require_current(
+                        list(selected['documents']) + [dict(row, content=doc)
+                                                      for row, doc in selected['school_documents']],
+                        REVIEW.corrections(LS.knowledge_roots(self.plan.get('brain') or BRAIN)))
+                except (OSError, ValueError, KeyError, TypeError) as error:
+                    return 'refused', ('completed classroom preserved; checked successor required before reuse: '
+                                       + str(error)), facts
                 return 'reused', None, facts
         if not (calc / 'work' / 'derivation-digest-full.md').is_file():
             return 'refused', ('the ROOT %s ran without the digest; a classroom-arm day needs DIGEST=on (its brain entry '
@@ -1187,6 +1209,7 @@ class Run:
                                   'slot (box or Pod)' % (entry['seq'], outcome, entry['state']))
 
     def kick(self, line):
+        self.check_save()
         import frankie_box_frankie_queue as Q
         try:
             return Q.kick(line, self.code_root, self.commit, self.a.queue_worker_seconds, self.a.queue_poll_seconds,
@@ -1202,6 +1225,7 @@ class Run:
         import frankie_box_frankie_queue as Q
         deadline = time.monotonic() + self.a.queue_worker_seconds
         while True:
+            self.check_save()
             left = []
             for e in days:
                 x = Q.entry_of('root', self.plan['run'], e['day'])
@@ -1220,6 +1244,7 @@ class Run:
                 return
             status, held = Q.worker_state('root')
             if not held:
+                self.check_save()
                 self.kick('root')
             time.sleep(self.a.queue_poll_seconds)
 
@@ -1373,11 +1398,39 @@ class Run:
         """After knowledge sync and before reuse/dispatch: frozen errors need checked successors."""
         import frankie_box_lane_state as LS
         brain = self.plan.get('brain') or BRAIN
+        exchange = self.receipt('exchange', day) or {}
+        successor = exchange.get('successor_inputs')
+        if successor:
+            import frankie_box_experiment_review as REVIEW
+            REVIEW._read_pin(successor)
         paths = (self.dir / 'scientific-knowledge' / day / 'inputs.json',
-                 self.dir / 'exchange' / day / 'scientific-knowledge' / 'inputs.json',
-                 self.dir / 'exchange' / day / 'learner-knowledge.json')
-        for path in paths:
+                 Path(successor['path']) if successor else self.dir / 'exchange' / day / 'scientific-knowledge' / 'inputs.json',
+                 Path(successor['path']) if successor else self.dir / 'exchange' / day / 'learner-knowledge.json')
+        for path in dict.fromkeys(paths):
             LS.require_current_selection(path, brain=brain)
+
+    def require_current_exchange(self, day, env):
+        """Do not launch a consumer with sources captured before child() drained corrections."""
+        import frankie_box_experiment_review as REVIEW
+        current = self.receipt('exchange', day) or {}
+        selected = [(field, name) for field, name in (('EXCHANGE_VIEW', 'frankie_view'), ('EXCHANGE', 'exchange'))
+                    if env.get(field)]
+        if not selected:
+            if current.get('status') in ('done', 'reused') and current.get('frankie_view'):
+                raise ValueError('exchange became available at the child boundary; rebuild consumer inputs')
+            return
+        self.require_current_teacher_inputs(day)
+        if current.get('status') not in ('done', 'reused'):
+            raise ValueError('consumer exchange is no longer complete; rebuild inputs')
+        receipt_path = Path(current['frankie_view']).parent / 'receipt.json'
+        published = json.loads(receipt_path.read_bytes())
+        for field, name in selected:
+            if str(env[field]) != current.get(name):
+                raise ValueError('exchange changed at the child boundary; rebuild consumer inputs')
+            pin = published['full' if name == 'exchange' and current.get('successor_inputs') else name]
+            if pin['path'] != str(env[field]):
+                raise ValueError('consumer exchange differs from its publication receipt')
+            REVIEW._read_pin(pin)
 
     def exchange(self, e):
         day = e['day']
@@ -1387,6 +1440,14 @@ class Run:
             return self.record('exchange', day, 'skipped', reason='discovery days only (R15)')
         target = self.dir / 'exchange' / day
         self.require_current_teacher_inputs(day)
+        successor = self.receipt('exchange', day) or {}
+        if successor.get('successor_inputs'):
+            import frankie_box_experiment_review as REVIEW
+            REVIEW._read_pin(successor['successor_inputs'])
+            delivered = Path(successor['frankie_view'])
+            if sha256_file(delivered) != successor['exchange_sha256']:
+                raise ValueError('retained exchange successor changed')
+            return successor
         if (target / 'receipt.json').is_file():
             r = json.loads((target / 'receipt.json').read_bytes())
             return self.record('exchange', day, 'reused', exchange=r['exchange']['path'], frankie_view=r['frankie_view']['path'],
@@ -1439,11 +1500,14 @@ class Run:
         day = e['day']
         if not e['classroom_arm']:
             return self.record('voice', day, 'skipped', reason='not a classroom-arm day')
+        self.successors(day)
+        self.check_save()
         x = self.receipt('exchange', day)
         if not (x and x['status'] in ('done', 'reused') and x.get('frankie_view')):
             return self.record('voice', day, 'skipped' if (x or {}).get('status') == 'skipped' else 'waiting',
                                reason='the day\'s exchange is %s' % ((x or {}).get('status') or 'not run'))
-        target = self.dir / 'meeting' / day
+        self.require_current_exchange(day, dict(EXCHANGE_VIEW=x['frankie_view']))
+        target = BR.meeting_directory(x['frankie_view'], owner_dir=self.dir)
         brain = self.plan.get('brain') or str(BRAIN)
         existing = target / 'meeting.json'
         reused, code, log = False, 0, None
@@ -1463,7 +1527,7 @@ class Run:
                         or json.loads(current).get('status') != 'runtime_failed'):
                     return self.record('voice', day, 'failed', exit_code=code, log=log,
                                        reason='meeting child failed; retained artifacts are kept for recovery')
-        result = BR.read_meeting_for_exchange(x['frankie_view'])
+        result = BR.read_meeting_for_exchange(x['frankie_view'], owner_dir=self.dir)
         if result['status'] == 'missing':
             return self.record('voice', day, 'failed', exit_code=code, log=log, reason=result['reason'])
         r = result['receipt']
@@ -1824,11 +1888,18 @@ class Run:
                                                                        'Jev or Frankie claims for the days of this batch')
         results = []
         for name, env in calls:
-            written = self.lessons_written(name, [e['day'] for e in searched],
-                                           frankie_ledgers=env.get('FRANKIE_LEDGERS'))
+            try:
+                written = self.lessons_written(name, [e['day'] for e in searched],
+                                               frankie_ledgers=env.get('FRANKIE_LEDGERS'),
+                                               jev_stamp=env.get('JEV_STAMP'))
+            except (ValueError, OSError) as error:
+                return self.record('lessons', batch_key, 'waiting', calls=results, pending_claims=name,
+                                   requested_search_days=[e['day'] for e in searched], reason=str(error))
             if written:                           # already taught: a second call would decline (duplicate data)
                 import frankie_box_scientific_teacher as ST
                 for path in written:
+                    if name.startswith('jev-'):
+                        ST.upload_jev_lessons(path, os.environ.get('MAP_URL'), log=self.log)
                     ST.publish_lessons(path, brain_dir=self.plan.get('brain') or str(BRAIN), log=self.log)
                 results.append(dict(claims=name, exit_code=0, reused=[str(w) for w in written]))
                 continue
@@ -1840,21 +1911,53 @@ class Run:
                            searched_days=[e['day'] for e in searched],
                            reason='%d teacher call(s) failed' % len(bad) if bad else None)
 
-    def lessons_written(self, name, searched_days, *, frankie_ledgers=None):
-        """The lessons files a call of this batch already wrote (the scientific teacher's own names), or []."""
+    def lessons_written(self, name, searched_days, *, frankie_ledgers=None, jev_stamp=None):
+        """Reuse only a completed standalone operation covering these exact current inputs.
+
+        Existing but changed/legacy work remains intact and requires an explicit successor;
+        absence alone returns [] and permits the ordinary first call.
+        """
+        import frankie_box_scientific_teacher as ST
+        import frankie_box_experiment_review as REVIEW
+        import frankie_box_lane_state as LS
         if name == 'historical':
             path = self.historical_lessons(searched_days)
-            return [path] if path and path.is_file() else []
-        kind, _, day = name.partition('-')
-        if kind == 'frankie':
-            path = LESSONS_ROOT / 'frankie' / ('%s-frankie.json' % day)
-            if path.is_file() and frankie_ledgers is not None:
-                import frankie_box_scientific_teacher as ST
-                current = ST.frankie_claims(frankie_ledgers, day)
-                if json.loads(path.read_bytes()).get('claims_sha256') != current['claims_sha256']:
-                    raise ValueError('retained Frankie lessons do not cover the current Dipole/external claim set; preserved')
-            return [path] if path.is_file() else []
-        return sorted((LESSONS_ROOT / 'jev').glob('%s-*.json' % day)) if kind == 'jev' else []
+        else:
+            kind, _, day = name.partition('-')
+            if kind not in ('frankie', 'jev'):
+                return []
+            if kind == 'jev' and not jev_stamp:
+                raise ValueError('Jev lesson reuse needs the exact requested stamp')
+            path = (LESSONS_ROOT / 'jev' / ('%s-%s.json' % (day, jev_stamp)) if kind == 'jev' else
+                    LESSONS_ROOT / 'frankie' / ('%s-frankie.json' % day))
+        if path is None or not path.is_file():
+            return []
+        lesson = json.loads(path.read_bytes())
+        operation_pin = (lesson.get('scientific_operation') or {}).get('inputs')
+        if not operation_pin or not searched_days:
+            raise ValueError('retained lessons lack exact requested operation coverage; checked successor required: %s' % path)
+        frozen = json.loads(REVIEW._read_pin(operation_pin))
+        if name == 'historical':
+            current = ST.historical_claims(self.code_root / self.plan['historical_claims'], records_selection=[])
+        elif kind == 'frankie':
+            if frankie_ledgers is None:
+                raise ValueError('Frankie lesson reuse needs the exact current ledgers')
+            current = ST.frankie_claims(frankie_ledgers, day)
+        else:
+            current = ST.jev_claims(frozen['selection']['doc']['source'])
+            if current['stamp'] != jev_stamp or current['day'] != day:
+                raise ValueError('retained Jev lessons belong to another claim request')
+        searches = ST.load_searches([SEARCH / d / ('cycle-' + CYCLE) / 'discovery' for d in searched_days])
+        # The existing operation freezer is read-only for a retained result: it refuses
+        # changed claims/searches/readers/records and never invents a legacy operation.
+        brain = self.plan.get('brain') or str(BRAIN)
+        operation, _ = ST.freeze_operation(current, searches, LESSONS_ROOT, brain)
+        if operation != operation_pin:
+            raise ValueError('retained lesson belongs to another frozen scientific operation')
+        REVIEW._validate_operation(REVIEW._transition_operation(operation, lesson), lesson)
+        REVIEW.require_current([dict(path=str(path), sha256=sha256_file(path), content=lesson)],
+                               REVIEW.corrections(LS.knowledge_roots(brain)))
+        return [path]
 
     def batch_of(self, day):
         for role in ('discovery', 'confirmation'):
@@ -2013,8 +2116,15 @@ class Run:
         unfinished = sorted(set(unfinished) | {(r['day'], 'successors') for r in successors if r['status'] != 'done'})
         not_wired = sorted({(k, s) for k, v in rows.items() for s, st in v.items()
                             if (self.receipt(s, k) or {}).get('not_wired') and not done_status(self.receipt(s, k))})
+        unfinished_batches = sorted(k for k, status in batches.items() if status not in FINISHED)
+        # This is operational accounting for the requested stages, never an E2E verdict.
+        # Keep non-blocking meeting semantics, but unimplemented work cannot imply completion.
+        state = ('stopped_disk_floor' if self.stopped else
+                 'incomplete' if unfinished or not_wired or unfinished_batches else 'complete')
         handed_off = sorted(k for k in rows if (self.receipt('jev', k) or {}).get('status') == HANDED_OFF)
         out = dict(schema=SCHEMA, run=self.plan['run'], plan_sha256=plan_digest(self.plan), stages=list(stages), days=rows,
+                   completion_scope='requested_stages', omitted_stages=[s for s in STAGES if s not in stages],
+                   status=state, unfinished_batches=unfinished_batches,
                    left_out=self.plan['left_out'], successors=successors,
                    batches=batches, stopped=self.stopped, free_bytes=shutil.disk_usage(BOX_ROOT).free,
                    unfinished=[dict(day=k, stage=s) for k, s in unfinished],
@@ -2030,8 +2140,7 @@ class Run:
         tmp = self.dir / 'summary.pending'
         tmp.write_text(json.dumps(out, indent=1, sort_keys=True) + '\n', encoding='utf-8')
         os.replace(tmp, self.dir / 'summary.json')
-        state = 'stopped_disk_floor' if self.stopped else 'complete' if not unfinished else 'incomplete'
-        self.probe.update('summary', state=state)
+        self.probe.update('summary:requested_stages', state=state)
         return out
 
 
@@ -2146,10 +2255,11 @@ def main():
         if not a.successor_file:
             p.error('successor request/decision/retry needs --successor-file')
         value = json.loads(Path(a.successor_file).read_bytes())
+        import frankie_box_scientific_teacher as ST
         if a.action == 'successor-request':
-            result = S.enqueue(run, a.successor_day, value)
+            result = ST.submit_correction_work(run, a.successor_day, request=value)
         elif a.action == 'successor-decision':
-            result = S.submit_decision(run, a.successor_day, a.successor_id, value)
+            result = ST.submit_correction_work(run, a.successor_day, successor_id=a.successor_id, decision=value)
         else:
             result = S.retry(run, a.successor_day, a.successor_id, value)
         print(json.dumps(result, sort_keys=True))
@@ -2192,7 +2302,7 @@ def main():
     print(json.dumps(summary, indent=1, sort_keys=True))
     if summary['stopped']:
         raise SystemExit(4)
-    if summary['unfinished'] or any(v not in FINISHED for v in summary['batches'].values()):
+    if summary['unfinished'] or summary['not_wired'] or summary['unfinished_batches']:
         raise SystemExit(3)
 
 

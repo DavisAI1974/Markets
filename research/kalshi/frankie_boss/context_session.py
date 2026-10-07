@@ -7,6 +7,7 @@ coverage are verified before any model forward; no result-bearing run is implied
 from __future__ import annotations
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Callable
 import heapq
 import torch
 from research.refrag.qsv_registry import QSV_FEATURE_REGISTRY
@@ -24,6 +25,11 @@ except ImportError:
 
 SCHEMA = 'BOSS_CONTEXT_SESSION_V1'
 PACKET_SCHEMA = 'BOSS_NATIVE_CONTEXT_RECORD_PACKET_V1'
+
+# Keep the existing tuple wire shape; providers change preparation ownership,
+# never the tokens, evidence or canonical receipt representation.
+PreparedContext = tuple[dict[str, torch.Tensor], dict, str, dict | None, list]
+PreparationProvider = Callable[[int, int], PreparedContext]
 
 
 def tensor_identity(tensors):
@@ -119,7 +125,31 @@ class ContextSessionRunner:
         if (qsv is None) != (expected_qsv_hash is None) or (qsv is not None and qsv.digest != expected_qsv_hash):
             raise ValueError('QSV requires its trusted artifact identity')
         self._retry=None; self._last=None
+        self._preparation_provider = None
         self._check_model()
+
+    def install_preparation_provider(self, provider: PreparationProvider) -> None:
+        """The owning host installs one provider until release, never replaces it."""
+        if not callable(provider):
+            raise TypeError('callable preparation provider required')
+        if self._preparation_provider is not None:
+            raise ValueError('release the current preparation provider before installing another')
+        self._preparation_provider = provider
+
+    def release_preparation_provider(self, provider: PreparationProvider) -> None:
+        """Only the installed callable's owner may release it, including on failure."""
+        if self._preparation_provider is not provider:
+            raise ValueError('preparation provider ownership differs')
+        self._preparation_provider = None
+
+    def prepare(self, as_of: int, through_cursor: int) -> PreparedContext:
+        """Return the original five-part preparation from the explicit provider.
+
+        `_prepare` remains the serial implementation and compatibility surface.
+        Providers must call that implementation, not recurse through this method.
+        """
+        provider = self._preparation_provider
+        return self._prepare(as_of, through_cursor) if provider is None else provider(as_of, through_cursor)
 
     def _check_model(self):
         trunk=self.model.trunk if isinstance(self.model,B1Reasoner) else self.model
@@ -203,7 +233,7 @@ class ContextSessionRunner:
         identity=(as_of,cursor,self.builder.journal.count,self.builder.journal.head_hash)
         if self._retry is not None and self._retry[:4]!=identity:
             raise ValueError('retry the original failed cutoff with unchanged journal')
-        tokens,info,input_hash,teacher,context=self._prepare(as_of,cursor)
+        tokens,info,input_hash,teacher,context=self.prepare(as_of,cursor)
         model_hash=self._model_hash()
         if self._retry is not None and self._retry[4:]!=(input_hash,model_hash):
             raise ValueError('retry input or model differs from failed forward')

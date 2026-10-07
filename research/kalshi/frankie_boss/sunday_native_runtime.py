@@ -163,7 +163,7 @@ def prepare_critic_request(context, *, as_of, through_cursor, source_as_of,
             or type(output_tokens) is not int
             or not 1 <= output_tokens <= service_context):
         raise ValueError('explicit service-compatible output token budget required')
-    tokens, info, input_hash, teacher, rows = context._prepare(as_of, through_cursor)
+    tokens, info, input_hash, teacher, rows = context.prepare(as_of, through_cursor)
     if any(row['normalized']['ts_event_ns'] > source_as_of
            for row in journal_prefix(context.builder, through_cursor)):
         raise ValueError('context event beyond causal cutoff')

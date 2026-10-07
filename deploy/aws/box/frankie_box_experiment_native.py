@@ -13,6 +13,30 @@ LEDGERS = ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl', 'legacy_obse
 SECTIONS = ('bedrock_section_4_2', 'bedrock_section_4_4')
 
 
+def evidence_contract(role):
+    """Describe existing evidence roles; this does not admit a new consumer."""
+    common = dict(schema='FRANKIE_NATIVE_EVIDENCE_ROLE_V1', role=role,
+                  artifact_identity=['sha256', 'bytes'], additional_independent_observation=False)
+    if role in LEDGERS[:2]:
+        return dict(common, representation='exact_ordered_ledger_rows',
+                    row_identity=['artifact_sha256', 'zero_based_ledger_ordinal'],
+                    group_join=['input_cursor', 'instrument_id', 'ts_recv_ns'],
+                    availability='GROUP_CLOSE at checked emission time; FINALIZE is post-stream knowledge only',
+                    entity_identity='original row identities retained; section/list slots are not entity trajectories',
+                    consumer='existing exact ROOT F_LAST placement; per-row dispositions state actual use')
+    if role == LEDGERS[2]:
+        return dict(common, representation='exact_ordered_ledger_rows',
+                    row_identity=['artifact_sha256', 'zero_based_ledger_ordinal'],
+                    availability='original row clocks retained; no new live placement',
+                    consumer='retained source alias; not an additional live search observation')
+    if role in ('receipt', 'result', *SECTIONS):
+        return dict(common, representation=('completion_receipt' if role == 'receipt'
+                                           else 'completed_calculation_product'),
+                    availability='completed calculation; no whole-day backfill onto earlier live groups',
+                    consumer='retained metadata or completed evidence; no new scientific consumer supplied')
+    raise ValueError('unknown native evidence role')
+
+
 def _witness(path):
     from frankie_box_durable import witness
     return witness(path)
@@ -62,7 +86,8 @@ def selected_files(root, day):
         _check(path, pin)
         selected.append(dict(stage='root', path=str(relative), source=str(path),
             pattern='completed native derivation:' + role, what='existing exact native calculation evidence',
-            native_role=role, expected={k: pin[k] for k in ('bytes', 'sha256')}))
+            native_role=role, evidence_contract=evidence_contract(role),
+            expected={k: pin[k] for k in ('bytes', 'sha256')}))
 
     take('receipt', native['receipt'], 'receipt.json', 'work/bedrock')
     take('result', native['result'], 'result.json', 'work/bedrock')
@@ -104,6 +129,11 @@ def read_columns(day_dir, columns, frame_numeric, receive_times):
             role = item['native_role']
             if role in selected or item['stage'] != 'root':
                 raise ValueError('duplicate or non-ROOT native export role')
+            # Older exports have no role descriptor. Keep their existing read
+            # path; a supplied descriptor must describe this same interpretation.
+            if ('evidence_contract' in item
+                    and item['evidence_contract'] != evidence_contract(role)):
+                raise ValueError('native export evidence role contract differs')
             path = Path(item['path'])
             if path.is_absolute() or '..' in path.parts:
                 raise ValueError('native export path escapes the owning export')
@@ -132,6 +162,8 @@ def read_columns(day_dir, columns, frame_numeric, receive_times):
         path, pin = selected[ledger]
         report = dict(source=source, schema=SCHEMA, path=str(path), sha256=pin['sha256'],
             bytes=pin['bytes'], rows=0, searched_rows=0, dispositions={}, sections={},
+            evidence_contract=evidence_contract(ledger),
+            export_contract_present='evidence_contract' in pin,
             placement='exact emitting INPUT cursor + instrument + receive time on existing F_LAST axis',
             entity_rule='all identities retained; section/list positions are not identity-linked trajectories')
         sources.append(report)
@@ -235,6 +267,8 @@ def read_columns(day_dir, columns, frame_numeric, receive_times):
         path, item = selected[role]
         notes.append(dict(source='native', retained=str(path), sha256=item['sha256'], bytes=item['bytes'],
             role=role, disposition='retained_not_live_search',
+            evidence_contract=evidence_contract(role),
+            export_contract_present='evidence_contract' in item,
             reason=('legacy row evidence aliases the shared source; no duplicate observation' if role == LEDGERS[2]
                     else 'completed calculation/section evidence; no whole-day summary backfill or duplicate projected rows')))
     return numeric, text, sources, notes

@@ -50,7 +50,7 @@ def _save(path, data):
 
 
 def _preview(runner, *, as_of, through_cursor, source_as_of):
-    tokens, info, input_hash, _, _ = runner._prepare(as_of, through_cursor)
+    tokens, info, input_hash, _, _ = runner.prepare(as_of, through_cursor)
     receipt = ContextReceipt(**info, input_hash=input_hash, model_hash=runner._model_hash())
     mapped = map_native_context(tokens=tokens, receipt=receipt, entity=runner.entity,
         registry=runner.model.trunk.registry, expected_input_hash=input_hash,

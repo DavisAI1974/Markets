@@ -182,6 +182,9 @@ def acknowledgment(path, value):
     record = records.get(value['request']['original_result']['sha256'])
     if not record or record['body'] != correction or record['record'] != saved['correction']:
         raise ValueError('successor acknowledgment has no matching checked brain correction')
+    if saved.get('dependents') != pin(target / 'dependents.json'):
+        raise ValueError('successor acknowledgment lacks its exact completed dependent receipt')
+    dependent_receipt(path, value)
     return pin(target / 'ack.json')
 
 
@@ -213,6 +216,242 @@ def close_day(run, day):
             if len(completed) != len(requests):
                 continue
             return once(directory / 'closed.json', dict(owner=owner(run, day), acknowledgments=completed))
+
+
+def prepare_dependents(run, day, value, target, correction):
+    """Freeze exact dependent inputs before rebuilding, publishing or invalidating anything."""
+    import frankie_box_lane_state as LS
+    path = target / 'dependents-intent.json'
+    operation_path = target.parent.parent / 'requests' / (target.name + '.json')
+    binding = dict(operation=pin(operation_path), publication=pin(target / 'publication.json'),
+                   owner=value['owner'], correction=correction)
+    if path.exists():
+        saved = read(pin(path))
+        if saved.get('schema') != 'FRANKIE_DEPENDENTS_INTENT_V1' or any(saved.get(k) != v for k, v in binding.items()):
+            raise ValueError('retained dependent intent belongs to another successor publication')
+        return saved
+    brain = value['owner']['brain']
+    records = R.corrections(LS.knowledge_roots(brain))
+    available = sorted((r['record'] for r in records.values()), key=lambda p: p['sha256'])
+    exchange = run.receipt('exchange', day) or {}
+    selected = None
+    if exchange.get('frankie_view'):
+        view = pin(exchange['frankie_view'])
+        inputs = exchange.get('successor_inputs') or pin(Path(view['path']).parent / 'learner-knowledge.json')
+        retained = read(inputs)
+        chains = {}
+        for _, source in retained['documents']:
+            cursor, visited = source['sha256'], set()
+            while cursor in records:
+                if cursor in visited:
+                    raise ValueError('dependent lesson correction chain cycles')
+                visited.add(cursor)
+                record = records[cursor]
+                chains[record['record']['sha256']] = record['record']
+                cursor = record['replacement']['sha256']
+        if chains:
+            selected = dict(original_inputs=inputs, original_view=view,
+                            source_corrections=[chains[k] for k in sorted(chains)], original_receipt=exchange,
+                            original_voice=run.receipt('voice', day))
+    sessions = value['request'].get('learner_requests') or []
+    if sessions:
+        from research.kalshi.frankie_boss import frankie_principal_adapter as PA
+        for session in sessions:
+            # Canonical files and attested original session are checked before durable intent.
+            PA.select_knowledge_corrections(original_request=session['request'], original_response=session['response'],
+                                            brain=brain, correction_sha256s=[p['sha256'] for p in available])
+    saved = dict(schema='FRANKIE_DEPENDENTS_INTENT_V1', **binding, exchange=selected,
+                 available_corrections=available, learner_sessions=sessions)
+    once(path, saved)
+    return saved
+
+
+def dependency_result(target):
+    """Read the held-child output against its immutable parent-prepared intent."""
+    intent_pin = pin(target / 'dependents-intent.json')
+    intent = read(intent_pin)
+    result = read(pin(target / 'dependencies-result.json'))
+    if (result.get('schema') != 'FRANKIE_DEPENDENTS_COMPUTATION_V1' or result.get('status') != 'complete'
+            or result.get('intent') != intent_pin or result.get('operation') != intent['operation']):
+        raise ValueError('dependent computation differs from its exact retained intent')
+    original, rebuilt = intent['exchange'], result.get('exchange')
+    if original is None:
+        if rebuilt is not None:
+            raise ValueError('dependent computation invented an exchange')
+    else:
+        if (not isinstance(rebuilt, dict) or rebuilt.get('original_inputs') != original['original_inputs']
+                or rebuilt.get('original_view') != original['original_view']
+                or rebuilt.get('source_corrections') != original['source_corrections']
+                or read(rebuilt['receipt']) != {k: v for k, v in rebuilt.items() if k != 'receipt'}):
+            raise ValueError('dependent computation changed its original exchange or checked source chains')
+        for key in ('replacement_inputs', 'full', 'frankie_view'):
+            read(rebuilt[key])
+    return intent, result
+
+
+def rebuild_dependents(run, day, value, target, correction):
+    """Parent publication/recovery; exchange calculations run only in the held child."""
+    intent = prepare_dependents(run, day, value, target, correction)
+    if not (target / 'dependencies-result.json').exists():
+        return dict(status='dispatch', reason='held-lane dependent computation required')
+    intent, computed = dependency_result(target)
+    brain, rebuilt = value['owner']['brain'], computed['exchange']
+    checked = {p['sha256']: p for p in intent['available_corrections']}
+    exchange_publication = voice_invalidation = None
+    if rebuilt is not None:
+        selected = intent['exchange']
+        record = R.record_correction(brain, original=selected['original_view'], replacement=rebuilt['frankie_view'],
+            scopes=[[]], decision='checked_dependency_rebuild',
+            reason='original teacher exchange recomputed from its checked corrected lesson inputs',
+            evidence=selected['source_corrections'], publication_day=day,
+            exchange_transition=dict(receipt=rebuilt['receipt']))
+        exchange_publication = once(target / 'exchange-publication.json',
+            dict(intent=pin(target / 'dependents-intent.json'), computation=pin(target / 'dependencies-result.json'),
+                 original=selected['original_view'], replacement=rebuilt['frankie_view'], correction=record))
+        checked[record['sha256']] = record
+        current = run.receipt('exchange', day) or {}
+        if current != selected['original_receipt'] and not (
+                current.get('frankie_view') == rebuilt['frankie_view']['path'] and current.get('correction') == record
+                and current.get('successor_inputs') == rebuilt['replacement_inputs']):
+            raise ValueError('another exchange receipt cannot complete this dependent intent')
+        if current == selected['original_receipt']:
+            run.record('exchange', day, 'done', exchange=rebuilt['full']['path'],
+                frankie_view=rebuilt['frankie_view']['path'], exchange_sha256=rebuilt['frankie_view']['sha256'],
+                successor_inputs=rebuilt['replacement_inputs'], correction=record)
+        # This intent survives a crash after the exchange receipt but before voice reset.
+        voice_path = target / 'voice-invalidation.json'
+        expected = dict(exchange_publication=exchange_publication, original_receipt=selected['original_voice'])
+        if not voice_path.exists():
+            voice = run.receipt('voice', day)
+            original_voice = selected['original_voice']
+            if original_voice and original_voice.get('status') in ('done', 'reused'):
+                if voice == original_voice:
+                    run.record('voice', day, 'waiting', reason='checked exchange successor requires its own meeting',
+                               original_receipt=original_voice, invalidated_by=exchange_publication)
+                elif not voice or voice.get('invalidated_by') != exchange_publication or voice.get('status') != 'waiting':
+                    raise ValueError('voice receipt changed outside this dependent invalidation')
+        voice_invalidation = once(voice_path, expected)
+    native_path = target / 'native-dependents-intent.json'
+    if intent['learner_sessions']:
+        from research.kalshi.frankie_boss import frankie_principal_adapter as PA
+    if native_path.exists():
+        native = read(pin(native_path))
+        if native.get('intent') != pin(target / 'dependents-intent.json') or native.get('exchange_publication') != exchange_publication:
+            raise ValueError('native dependent selection belongs to another exchange publication')
+    else:
+        selections = [PA.select_knowledge_corrections(original_request=s['request'], original_response=s['response'],
+                        brain=brain, correction_sha256s=sorted(checked)) for s in intent['learner_sessions']]
+        native = dict(intent=pin(target / 'dependents-intent.json'), exchange_publication=exchange_publication,
+                      selections=selections, corrections=[checked[k] for k in sorted(checked)])
+        once(native_path, native)
+    receipts = []
+    for index, selection in enumerate(native['selections']):
+        # Recheck canonical supplied originals even after the preparation/publication crash boundary.
+        current = PA.select_knowledge_corrections(original_request=selection['original_request'],
+            original_response=selection['original_response'], brain=brain,
+            correction_sha256s=[p['sha256'] for p in native['corrections']])
+        if current != selection:
+            raise ValueError('native dependent selection changed after its durable intent')
+        if selection['status'] == 'not_affected':
+            receipts.append(dict(selection=index, status='not_affected'))
+            continue
+        directory = Path(selection['directory'])
+        followup = PA.prepare_knowledge_correction(directory, selection['request_id'], brain=brain,
+                                                   correction_sha256s=selection['correction_sha256s'])
+        key = PA.digest(followup)
+        request = pin(directory / 'knowledge-corrections' / key / 'request.json')
+        try:
+            recovered = PA.recover_knowledge_correction(directory, key)
+        except PA.PrincipalPending:
+            return dict(status='waiting', reason='same-session correction consumption awaits original host response',
+                        request=request, native_intent=pin(native_path))
+        completed = once(target / 'native-results' / (str(index) + '.json'),
+            dict(selection=index, native_intent=pin(native_path), request=request,
+                 response=pin(directory / 'knowledge-corrections' / key / 'response.json'), receipt=recovered))
+        receipts.append(dict(selection=index, status='complete', result=completed))
+    completed = dict(schema='FRANKIE_DEPENDENTS_RECEIPT_V1', status='complete', operation=intent['operation'],
+        publication=intent['publication'], intent=pin(target / 'dependents-intent.json'),
+        computation=pin(target / 'dependencies-result.json'), exchange_publication=exchange_publication,
+        voice_invalidation=voice_invalidation, native_intent=pin(native_path), native_results=receipts)
+    once(target / 'dependents.json', completed)
+    return completed
+
+
+def dependent_receipt(path, value):
+    """Completion requires every frozen dependency and original-session response witness."""
+    target = path.parent.parent / 'work' / path.stem
+    saved = read(pin(target / 'dependents.json'))
+    intent, computed = dependency_result(target)
+    if (saved.get('schema') != 'FRANKIE_DEPENDENTS_RECEIPT_V1' or saved.get('status') != 'complete'
+            or saved.get('operation') != pin(path) or saved.get('publication') != pin(target / 'publication.json')
+            or saved.get('intent') != pin(target / 'dependents-intent.json')
+            or saved.get('computation') != pin(target / 'dependencies-result.json')
+            or intent.get('owner') != value['owner']
+            or intent.get('learner_sessions') != (value['request'].get('learner_requests') or [])):
+        raise ValueError('dependent completion is not bound to this exact owner operation')
+    native = read(saved['native_intent'])
+    if (saved['native_intent'] != pin(target / 'native-dependents-intent.json')
+            or native['intent'] != saved['intent'] or native['exchange_publication'] != saved['exchange_publication']
+            or len(saved['native_results']) != len(native['selections'])
+            or len(native['selections']) != len(intent['learner_sessions'])):
+        raise ValueError('dependent completion changed its original native selection')
+    if computed['exchange'] is not None:
+        published = read(saved['exchange_publication'])
+        invalidation = read(saved['voice_invalidation'])
+        if (saved['exchange_publication'] != pin(target / 'exchange-publication.json')
+                or saved['voice_invalidation'] != pin(target / 'voice-invalidation.json')
+                or published['intent'] != saved['intent'] or published['computation'] != saved['computation']
+                or published['original'] != intent['exchange']['original_view']
+                or published['replacement'] != computed['exchange']['frankie_view']
+                or invalidation != dict(exchange_publication=saved['exchange_publication'],
+                                        original_receipt=intent['exchange']['original_voice'])):
+            raise ValueError('dependent completion lacks its exact exchange/voice recovery chain')
+        correction = read(published['correction'])
+        if correction['original'] != published['original'] or correction['replacement'] != published['replacement']:
+            raise ValueError('dependent exchange correction binds another result')
+        import frankie_box_lane_state as LS
+        records = R.corrections(LS.knowledge_roots(value['owner']['brain']))
+        checked = records.get(published['original']['sha256'])
+        if not checked or checked['body'] != correction or checked['record'] != published['correction']:
+            raise ValueError('dependent exchange correction is not its checked published record')
+    elif saved['exchange_publication'] is not None or saved['voice_invalidation'] is not None:
+        raise ValueError('dependent receipt invented an exchange publication')
+    if intent['learner_sessions']:
+        from research.kalshi.frankie_boss import frankie_principal_adapter as PA
+    for index, (selection, result, original) in enumerate(zip(native['selections'], saved['native_results'], intent['learner_sessions'])):
+        if (result.get('selection') != index or selection['original_request'] != original['request']
+                or selection['original_response'] != original['response']):
+            raise ValueError('dependent receipt substituted another native session')
+        current = PA.select_knowledge_corrections(original_request=original['request'], original_response=original['response'],
+            brain=value['owner']['brain'], correction_sha256s=[p['sha256'] for p in native['corrections']])
+        if current != selection:
+            raise ValueError('dependent receipt changed its canonical originals or applicable correction subset')
+        if selection['status'] == 'not_affected':
+            if result != dict(selection=index, status='not_affected'):
+                raise ValueError('unaffected native session has an invented consumption receipt')
+            continue
+        if result.get('result') != pin(target / 'native-results' / (str(index) + '.json')):
+            raise ValueError('dependent native result is outside its canonical owner output')
+        completed = read(result['result'])
+        request, response = read(completed['request']), read(completed['response'])
+        proof = completed['receipt']
+        key = PA.digest(request)
+        directory = Path(selection['directory']) / 'knowledge-corrections' / key
+        recovered = PA.recover_knowledge_correction(selection['directory'], key)
+        if (result['status'] != 'complete' or completed['selection'] != index
+                or completed['native_intent'] != saved['native_intent']
+                or completed['request'] != pin(directory / 'request.json')
+                or completed['response'] != pin(directory / 'response.json')
+                or request.get('request_id') != selection['request_id']
+                or request.get('original_request_sha256') != selection['original_request_sha256']
+                or request.get('original_response_sha256') != selection['original_response_sha256']
+                or [c['record']['sha256'] for c in request.get('corrections', [])] != selection['correction_sha256s']
+                or proof != recovered
+                or proof.get('schema') != 'FRANKIE_KNOWLEDGE_CORRECTION_FOLLOWUP_RECEIPT_V1'
+                or proof['request_sha256'] != PA.digest(request) or proof['response_sha256'] != PA.digest(response['response'])
+                or proof['host_attestation_sha256'] != PA.digest(response['host_attestation'])):
+            raise ValueError('dependent receipt lacks the exact consumed native follow-up')
+    return pin(target / 'dependents.json')
 
 
 def execute(path, phase):
@@ -248,13 +487,33 @@ def execute(path, phase):
                     read(result)
                 return
             TK.teach_successor(identity['day'], value['search'], identity['brain'], target, request=value['request'])
-        else:
+        elif phase == 'publish':
             decision_pin = pin(directory / 'decisions' / path.name)
             decision = read(decision_pin)
             if read(decision['receipt'])['successor_request'] != value['request']:
                 raise ValueError('publication decision belongs to another request')
             record = TK.publish_successor(identity['brain'], **decision)
             once(target / 'publication.json', dict(operation=pin(path), decision=decision_pin, correction=record))
+        elif phase == 'dependencies':
+            intent_pin = pin(target / 'dependents-intent.json')
+            intent = read(intent_pin)
+            if (intent.get('schema') != 'FRANKIE_DEPENDENTS_INTENT_V1' or intent.get('operation') != pin(path)
+                    or intent.get('owner') != identity or intent.get('publication') != pin(target / 'publication.json')):
+                raise ValueError('dependent child lacks its parent-prepared exact intent')
+            if (target / 'dependencies-result.json').exists():
+                dependency_result(target)
+                return
+            rebuilt = None
+            if intent['exchange'] is not None:
+                import frankie_box_experiment_exchange as EX
+                selected = intent['exchange']
+                rebuilt = EX.rebuild_successor(identity['day'], identity['run'], identity['brain'], target / 'exchange',
+                    original_inputs=selected['original_inputs'], original_view=selected['original_view'],
+                    source_corrections=selected['source_corrections'])
+            once(target / 'dependencies-result.json', dict(schema='FRANKIE_DEPENDENTS_COMPUTATION_V1',
+                status='complete', operation=pin(path), intent=intent_pin, exchange=rebuilt))
+        else:
+            raise ValueError('unknown successor child phase')
 
 
 def drain(run, day):
@@ -341,10 +600,34 @@ def drain(run, day):
                     checked = records.get(value['request']['original_result']['sha256'])
                     if not checked or checked['record'] != published['correction'] or checked['body'] != correction:
                         raise ValueError('successor publication is not the checked brain correction')
+                    downstream = rebuild_dependents(run, day, value, target, published['correction'])
+                    if downstream['status'] == 'dispatch':
+                        phase = 'dependencies'
+                        state('running', phase=phase, slot_booking=run.slot_booking)
+                        code, log = run.child('lessons', day + '-successor-' + key,
+                            'frankie_box_teacher_successor.sh', dict(SUCCESSOR_OPERATION=path,
+                            SUCCESSOR_PHASE=phase, SUCCESSOR_OWNER_DAY=day))
+                        if code != 0:
+                            D.write_json(failure, dict(operation=pin(path), phase=phase, exit_code=code,
+                                                       log=log, at=time.time()))
+                            continue
+                        dependency_result(target)
+                        for retained in (run._cpu, run._knowledge):
+                            item = retained.pop(('lessons', day + '-successor-' + key), None)
+                            if item is not None:
+                                retained[('successors', day)] = item
+                        continue
+                    if downstream['status'] != 'complete':
+                        state('waiting', **{k: v for k, v in downstream.items() if k != 'status'})
+                        time.sleep(5)
+                        continue
+                    dependents_pin = once(target / 'dependents.json', downstream)
+                    # Full readback before any acknowledgment, including legacy missing receipts.
+                    dependent_receipt(path, value)
                     import frankie_box_lane_state as LS
                     available = LS.boundary(day, 'lessons', brain=identity['brain'])
                     once(ack, dict(operation=pin(path), publication=pin(publication),
-                                   correction=published['correction']))
+                                   correction=published['correction'], dependents=dependents_pin))
                     state('done', acknowledgment=pin(ack), knowledge_available=available)
                     completed.append(pin(ack))
                     break
@@ -363,7 +646,7 @@ def drain(run, day):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--operation', required=True)
-    p.add_argument('--phase', choices=('research', 'publish'), required=True)
+    p.add_argument('--phase', choices=('research', 'publish', 'dependencies'), required=True)
     a = p.parse_args()
     execute(Path(a.operation), a.phase)
 

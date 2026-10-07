@@ -108,7 +108,7 @@ class FrankieForecastController:
             from forecast_artifact import NativeForecastArtifact
             from frankie_forecast_consumer import _computation_binding
         runner = self.bridge.context
-        tokens,info,input_hash,_,context = runner._prepare(as_of, through_cursor)
+        tokens,info,input_hash,_,context = runner.prepare(as_of, through_cursor)
         receipt = mapper.ContextReceipt(**info,input_hash=input_hash,model_hash=runner._model_hash())
         if receipt.source_prefix_hash != source_hash:
             raise ValueError('critic context differs from requested source')

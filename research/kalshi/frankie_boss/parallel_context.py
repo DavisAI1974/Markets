@@ -28,6 +28,7 @@ native_mbo_encoder.py are unchanged (both are inside the pinned native model has
     computed the original way and must match, or the run stops. Everything else goes to the original.
 """
 from concurrent.futures import ProcessPoolExecutor
+from collections import deque
 import hashlib
 import json
 import multiprocessing
@@ -141,25 +142,44 @@ class ParallelContext:
         try:
             with ProcessPoolExecutor(max_workers=len(self.worker_cpus), mp_context=context,
                                      initializer=_assign_cpu, initargs=(assignments,)) as pool:
-                futures = [pool.submit(_encode_chunk, rows[a:a+CHUNK], metadata[a:a+CHUNK], as_of, registry)
-                           for a in range(0, len(rows), CHUNK)]
-                for future in futures:
-                    part = future.result()
-                    if part['first'] is not None and not last_recv <= part['first']:
-                        raise ValueError('rows must be received by cutoff in receive order')
-                    last_recv = part['last']
-                    for n, nm, identity, has_order, recv in zip(part['numeric'], part['nmasks'], part['identities'],
-                                                                part['orders'], part['recvs']):
-                        parents.append(previous.get(identity, -1) if has_order else -1)
-                        if has_order:
-                            first.setdefault(identity, recv)
-                            previous[identity] = i
-                        age = recv-first[identity] if has_order else 0
-                        n.append(float(age) if age <= 2**53 else 0.); nm.append(has_order and age <= 2**53)
-                        numeric.append(n); nmasks.append(nm)
-                        i += 1
-                    categorical.extend(part['categorical']); cmasks.extend(part['cmasks'])
-                    blobs.extend(part['blobs']); splits.extend(part['splits'])
+                starts = iter(range(0, len(rows), CHUNK))
+                pending = deque()
+
+                def submit():
+                    start = next(starts, None)
+                    if start is not None:
+                        pending.append(pool.submit(_encode_chunk, rows[start:start+CHUNK],
+                                                   metadata[start:start+CHUNK], as_of, registry))
+
+                try:
+                    # Match the journal reader's bounded ordered window. This
+                    # limits queued work, never the complete input or output.
+                    for _ in range(2 * len(self.worker_cpus)):
+                        submit()
+                    while pending:
+                        future = pending.popleft()
+                        part = future.result()
+                        if part['first'] is not None and not last_recv <= part['first']:
+                            raise ValueError('rows must be received by cutoff in receive order')
+                        last_recv = part['last']
+                        for n, nm, identity, has_order, recv in zip(part['numeric'], part['nmasks'], part['identities'],
+                                                                    part['orders'], part['recvs']):
+                            parents.append(previous.get(identity, -1) if has_order else -1)
+                            if has_order:
+                                first.setdefault(identity, recv)
+                                previous[identity] = i
+                            age = recv-first[identity] if has_order else 0
+                            n.append(float(age) if age <= 2**53 else 0.); nm.append(has_order and age <= 2**53)
+                            numeric.append(n); nmasks.append(nm)
+                            i += 1
+                        categorical.extend(part['categorical']); cmasks.extend(part['cmasks'])
+                        blobs.extend(part['blobs']); splits.extend(part['splits'])
+                        submit()
+                finally:
+                    # Cancel work that has not started; the executor's context
+                    # exit drains any already running jobs before propagating failure.
+                    for future in pending:
+                        future.cancel()
         finally:
             assignments.close()
             assignments.join_thread()

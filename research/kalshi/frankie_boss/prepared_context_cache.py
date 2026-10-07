@@ -10,8 +10,8 @@ teacher binding (which covers the normalizer), QSV identity and the current trai
 checkpoint. A changed identity is refused; nothing is ever recomputed silently.
 
 No model forward, inference, training or service call happens here. Nothing is persisted
-and nothing is loaded from a serialized request. Not wired into any module; Codex owns host
-integration.
+and nothing is loaded from a serialized request. The actual Sunday host installs this
+cache as its context's preparation provider and releases it after checkpoint readback.
 """
 import copy
 from pathlib import Path
@@ -79,7 +79,13 @@ class PreparedContextCache:
     """Holds one preparation; prepare() returns independent copies under unchanged identities."""
 
     def __init__(self, context, *, as_of, through_cursor, expected_source_checkpoint, expected_model_hash,
-                 expected_teacher_binding, checkpoint_hash, current_checkpoint_hash):
+                 expected_teacher_binding, checkpoint_hash, current_checkpoint_hash,
+                 prepare=None):
+        # Explicit parallel/recovery preparation avoids temporarily replacing the
+        # context's method. Omitted keeps existing callers on the serial surface.
+        preparation = context._prepare if prepare is None else prepare
+        if not callable(preparation):
+            raise TypeError('callable preparation source required')
         if type(as_of) is not int or type(through_cursor) is not int or through_cursor < 0:
             raise ValueError('exact integer cutoff required')
         if (type(expected_source_checkpoint) is not dict or set(expected_source_checkpoint) != {'count', 'head_hash'}
@@ -104,7 +110,7 @@ class PreparedContextCache:
         # Cheap identity checks first: a mismatch must not cost a full preparation.
         self._identity = self._bindings()
         self._assert_identity()
-        tokens, info, input_hash, teacher, rows = context._prepare(as_of, through_cursor)
+        tokens, info, input_hash, teacher, rows = preparation(as_of, through_cursor)
         if (type(tokens) is not dict or type(info) is not dict or type(rows) is not list
                 or not all(isinstance(v, torch.Tensor) for v in tokens.values())):
             raise ValueError('unexpected native preparation shape')
@@ -202,12 +208,12 @@ class PreparedContextCache:
 
 
 def prepare_context_cache(context, *, as_of, through_cursor, expected_source_checkpoint, expected_model_hash,
-                          expected_teacher_binding, checkpoint_hash, current_checkpoint_hash):
+                          expected_teacher_binding, checkpoint_hash, current_checkpoint_hash, prepare=None):
     """Prepare once and return the cache; a failed preparation raises and caches nothing."""
     return PreparedContextCache(context, as_of=as_of, through_cursor=through_cursor,
         expected_source_checkpoint=expected_source_checkpoint, expected_model_hash=expected_model_hash,
         expected_teacher_binding=expected_teacher_binding, checkpoint_hash=checkpoint_hash,
-        current_checkpoint_hash=current_checkpoint_hash)
+        current_checkpoint_hash=current_checkpoint_hash, prepare=prepare)
 
 
 def same_preparation(left, right):

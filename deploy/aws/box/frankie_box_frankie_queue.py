@@ -210,7 +210,8 @@ def line_view(doc, line):
                  last_attempt=(x.get('attempts') or [None])[-1], where=x.get('where'), stages=x.get('stages'),
                  done_seq=x.get('done_seq'), done_utc=x.get('done_utc'), school_day=x.get('school_day'),
                  previous=x.get('previous'), classroom=x.get('classroom'), calculations=x.get('calculations'),
-                 class_line=x.get('class_line'), readiness=x.get('readiness'), line_state=x['state'])
+                 class_line=x.get('class_line'), readiness=x.get('readiness'), line_state=x['state'],
+                 source_owner=x.get('source_owner'))
         if x['state'] == 'queued' and ahead is not None:
             v['line_state'] = 'waiting_prior'
             v['behind'] = 'seq %d day %s run %s (%s) has not left the line' % (ahead['seq'], ahead['day'], ahead['run'],
@@ -397,6 +398,27 @@ def handover(line, code_root, commit, max_seconds, poll_seconds, log=print):
                 note='the old worker finishes the days in its slots and ends; the new one waits on the lock, then runs')
 
 
+def _source_wait(entry, code_root, commit):
+    """Admission-only source check; a refusal keeps the entry and any held day intact."""
+    owner = entry.get('source_owner')
+    if owner is None:
+        if entry.get('attempts') or entry.get('finish'):
+            return 'retained day has no source-owner binding; explicit owner recovery required'
+        return None
+    expected = dict(commit=commit, code_root=str(Path(code_root).resolve()))
+    if owner != expected:
+        return 'retained day source differs from this worker; resume with its original commit and checkout'
+    if not Path(owner['code_root']).is_dir():
+        return 'retained day checkout is unavailable; restore its original source before resume'
+    return None
+
+
+def _bind_source(entry, code_root, commit):
+    """Called under the queue lock only after _source_wait allows admission."""
+    if entry.get('source_owner') is None:
+        entry['source_owner'] = dict(commit=commit, code_root=str(Path(code_root).resolve()))
+
+
 def _run_for(entry, code_root, commit, log):
     """(Run, plan day entry) of a queue entry: its run's saved plan (checked against the entry's plan_sha256) and the
     enqueuer's settings."""
@@ -412,7 +434,9 @@ def _run_for(entry, code_root, commit, log):
     if e is None:
         raise RuntimeError('day %s is not in the run %s plan' % (entry['day'], entry['run']))
     a = argparse.Namespace(**dict(SETTINGS, **(entry.get('settings') or {})))
-    return X.Run(a, plan, code_root, commit, log=log), e
+    run = X.Run(a, plan, code_root, commit, log=log)
+    run.source_owner = entry.get('source_owner')
+    return run, e
 
 
 class Bound(BaseException):
@@ -533,24 +557,35 @@ def frankie_lessons(run, e):
     ledgers = Path(c['classroom']) / 'ledgers.json' if c and c.get('classroom') else None
     if ledgers is None or not ledgers.is_file():
         return run.record('frankie_lessons', day, 'skipped', reason='no ledgers.json in the day\'s classroom (%s)' % ledgers)
-    written = run.lessons_written('frankie-%s' % day, [], frankie_ledgers=ledgers)
-    if written:
-        import frankie_box_scientific_teacher as ST
-        for path in written:
-            ST.publish_lessons(path, brain_dir=run.plan.get('brain') or str(X.BRAIN), log=run.log)
-        return run.record('frankie_lessons', day, 'reused', lessons=[str(w) for w in written])
     s = run.receipt('search', day)
     if not (s and s['status'] in X.FINISHED):
         return run.record('frankie_lessons', day, 'waiting', reason='the day\'s search is %s (Frankie\'s claims are tested '
                                                                     'on the searches)' % ((s or {}).get('status') or 'not run'))
     searched = [x['day'] for x in run.plan['days'] if x['role'] == 'discovery' and run.finished('search', x['day'])]
+    remote = [d for d in searched if run.remote_root(d)]
+    if remote:
+        return run.record('frankie_lessons', day, 'waiting', remote_days=remote,
+                          reason='each remote search needs its owning lane scientific result; local paths cannot cover it')
+    try:
+        written = run.lessons_written('frankie-%s' % day, searched, frankie_ledgers=ledgers)
+    except (ValueError, OSError) as error:
+        return run.record('frankie_lessons', day, 'waiting', requested_search_days=searched, reason=str(error))
+    if written:
+        import frankie_box_scientific_teacher as ST
+        for path in written:
+            ST.publish_lessons(path, brain_dir=run.plan.get('brain') or str(X.BRAIN), log=run.log)
+        return run.record('frankie_lessons', day, 'reused', searched_days=searched, lessons=[str(w) for w in written])
     searches = ','.join(str(X.SEARCH / d / ('cycle-' + X.CYCLE) / 'discovery') for d in searched)
     # a lessons call is a day-run step: run as stage 'lessons' so it books its 16 CPUs in the ledger like the batch calls
     code, log = run.child('lessons', day, 'frankie_box_scientific_teacher.sh',
                           dict(FRANKIE_LEDGERS=ledgers, FRANKIE_DAY=day, SEARCHES=searches,
                                BRAIN=run.plan.get('brain') or str(X.BRAIN)))
     cpu = getattr(run, '_cpu', {}).pop(('lessons', day), None)
-    written = run.lessons_written('frankie-%s' % day, [], frankie_ledgers=ledgers)
+    try:
+        written = run.lessons_written('frankie-%s' % day, searched, frankie_ledgers=ledgers)
+    except (ValueError, OSError) as error:
+        return run.record('frankie_lessons', day, 'waiting', exit_code=code, log=log, cpu_booking=cpu,
+                          requested_search_days=searched, reason=str(error))
     if cpu and cpu['status'] == 'waiting' and not written:
         return run.record('frankie_lessons', day, 'waiting', exit_code=code, log=log, cpu_booking=cpu, reason=cpu['line'])
     if code != 0 or not written:
@@ -572,10 +607,14 @@ def class_day(entry, previous, school_day, code_root, commit, log):
     scientific-teacher pass tests his resulting claims against the causal search before the meeting.  Nothing here
     releases or re-books the day's slot.
     """
+    why = _source_wait(entry, code_root, commit)
+    if why:
+        return 'waiting', why, {}
+    if not _slot_live(entry.get('slot_booking')):
+        return 'waiting', 'the owning day has no live held slot; owner recovery required before class work', {}
     run, e = _run_for(entry, code_root, commit, log)
     day = e['day']
-    if _slot_live(entry.get('slot_booking')):
-        run.slot_booking = entry['slot_booking']
+    run.slot_booking = entry['slot_booking']
     run.successors(day)
     run.check_save()
     run.school_day = school_day
@@ -752,6 +791,18 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print):
                     # The remote holder runs the class in its original lane; the main worker never takes it.
                     release()
                     return 0
+                why = _source_wait(x, code_root, commit)
+                if why is None and not _slot_live(x.get('slot_booking')):
+                    why = 'the owning day has no live held slot; waiting for its owner'
+                if why:
+                    x['reason'] = why
+                    save('class', doc)
+                    _worker_status('class', state='waiting_owner', commit=commit,
+                                   front=dict(seq=x['seq'], run=x['run'], day=x['day'], reason=why))
+                    probe.update('class:waiting_owner', n_done, len(doc['entries']) or None, state='waiting')
+                    event('class', 'waiting_owner', seq=x['seq'], run=x['run'], day=x['day'], reason=why)
+                    release()
+                    return 5
                 mine = (x['state'] == 'running' and x['seq'] == current and
                         (x.get('attempts') or [{}])[-1].get('pid') == os.getpid())
                 if not mine:
@@ -759,6 +810,8 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print):
                         raise Bound('the time bound (%d s) before taking seq %d' % (max_seconds, x['seq']))
                     if x['state'] == 'failed':
                         retried.add(x['seq'])            # a failed front is retried once per worker start, never skipped
+                    _bind_source(x, code_root, commit)
+                    save('class', doc)                   # source intent precedes report/attempt side effects
                     previous, why = _take_class(doc, x, commit)
                     save('class', doc)
                     if previous is None:
@@ -927,8 +980,15 @@ def _after_root(run, e, code_root, commit, log):
         with locked():                              # the class runs inside the day's own held slot (no second booking)
             doc = load('class')
             y = next((z for z in doc['entries'] if z['run'] == run.plan['run'] and z['day'] == e['day']), None)
-            if y is not None and y['state'] != 'done' and y.get('slot_booking') != slot:
+            if y is not None and y['state'] != 'done':
+                source_owner = getattr(run, 'source_owner', None)
+                if y.get('source_owner') is not None and y['source_owner'] != source_owner:
+                    out.update(status='waiting', owner_waiting=True,
+                               reason='class entry source differs from its owning day; explicit recovery required')
+                    return out
                 y['slot_booking'] = slot
+                if source_owner is not None:
+                    y['source_owner'] = source_owner
                 save('class', doc)
                 event('class', 'slot', seq=y['seq'], day=y['day'], run=y['run'], slot_booking=slot)
     if (c or {}).get('status') == 'queued':
@@ -995,6 +1055,14 @@ def _finish_day(run, e, code_root, commit, log):
         # Greg's settled order: Frankie learns from ROOT + BOSS teacher BEFORE the search tests his resulting claims.
         facts['class_line'] = _after_root(run, e, code_root, commit, log)
         while True:
+            if (facts.get('class_line') or {}).get('owner_waiting'):
+                # An older failed class is not this owner's failure. Keep the current thread/slot and
+                # original attempts while source recovery is pending; no terminal/save acknowledgment.
+                log('class %s %s: holding its slot (%s)' % (
+                    run.plan['run'], e['day'], facts['class_line']['reason']))
+                time.sleep(60)
+                facts['class_line'] = _after_root(run, e, code_root, commit, log)
+                continue
             run.check_save()
             cl = entry_of('class', run.plan['run'], e['day'])
             state = (cl or {}).get('state')
@@ -1039,7 +1107,7 @@ def _finish_day(run, e, code_root, commit, log):
     j = run.guarded('jev', e) or {}
     facts['jev'] = dict(status=j.get('status'), reason=j.get('reason'), material_sent=j.get('material_sent'),
                         dispatches=j.get('dispatches'))
-    finished = j.get('status') in X.FINISHED + (X.HANDED_OFF,)
+    finished = j.get('status') in X.FINISHED
     if finished:
         import frankie_box_successor_dispatch as S
         facts['successors'] = S.close_day(run, e['day'])
@@ -1180,7 +1248,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
         if time.monotonic() >= deadline:
             stop.setdefault('reason', 'the time bound (%d s)' % max_seconds)
         finished = [seq for seq, job in running.items() if not job['thread'].is_alive()]
-        after = []
+        after, owner_waiting = [], []
         with locked():
             doc = load('root')
             for seq in finished:
@@ -1211,6 +1279,13 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 event('root', 'slot_end', seq=seq, day=y['day'], run=y['run'], result=result, reason=reason, facts=facts)
                 log('ROOT seq %d %s (%s): %s%s' % (seq, y['day'], y['run'], result, (': %s' % reason) if reason else ''))
             for x in ordered(doc):
+                if (x['seq'] not in running and not str(x.get('where') or '').startswith('worker:') and
+                        (x['state'] != 'done' or _needs_finish(x, plans) or x.get('needs_receipt'))):
+                    why = _source_wait(x, code_root, commit)
+                    if why:
+                        x['reason'] = why
+                        owner_waiting.append(x)
+                        continue                            # do not reconcile another source's retained attempt
                 if x['state'] != 'done' and x['seq'] not in running:
                     change = _sync_root(doc, x, plans)
                     if change:
@@ -1231,6 +1306,10 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
             for x in ordered(doc):
                 if stop or x['seq'] in running or not _needs_finish(x, plans):
                     continue
+                why = _source_wait(x, code_root, commit)
+                if why:
+                    x['reason'] = source = why
+                    continue                                # no booking, attempt mutation or failed-day retry
                 if (x.get('finish') or {}).get('state') == 'failed':
                     if x['seq'] in retried:
                         continue                            # a failed finish is retried once per worker start
@@ -1240,14 +1319,22 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     source = why
                     break                                   # no free slot: the days behind wait
                 holder = dict(slot=slot)
+                _bind_source(x, code_root, commit)
                 x['finish'] = dict(state='running', started_utc=utc(), pid=os.getpid(), commit=commit, slot_booking=slot)
+                save('root', doc)                            # retain source before the child thread can do work
                 t = threading.Thread(target=_finish_job, args=(dict(x), code_root, commit, log, holder), daemon=True)
                 running[x['seq']] = dict(thread=t, holder=holder, kind='finish')
                 t.start()
                 event('root', 'finish_take', seq=x['seq'], day=x['day'], run=x['run'], where='box-slot', slot_booking=slot)
             for x in ordered(doc):
+                if owner_waiting:
+                    break                                   # retained owner recovery precedes new day admission
                 if x['state'] in ('done', 'running'):
                     continue
+                why = _source_wait(x, code_root, commit)
+                if why:
+                    x['reason'] = source = why
+                    break                                   # FIFO: a retained-source refusal never admits its successor
                 if x['state'] == 'failed':
                     if x['seq'] in retried:
                         blocked = x
@@ -1260,9 +1347,11 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     source = why
                     break                                   # no free slot: everything behind the front waits
                 holder = dict(slot=slot)
+                _bind_source(x, code_root, commit)
                 x.setdefault('attempts', []).append(dict(where='box-slot', pid=os.getpid(), commit=commit,
                                                          started=time.time(), started_utc=utc(), slot_booking=slot))
                 x.update(state='running', where='box-slot', reason='its whole day in the held box slot %s' % slot)
+                save('root', doc)                            # intent is durable before scientific work starts
                 t = threading.Thread(target=_root_job, args=(dict(x), code_root, commit, log, holder), daemon=True)
                 running[x['seq']] = dict(thread=t, holder=holder)
                 t.start()
@@ -1272,7 +1361,10 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                        (x.get('finish') or {}).get('state') not in ('finished', 'failed') and _needs_finish(x, plans)]
             n_done = len(doc['entries']) - len(pending)
             end = None
-            if not running and not pending and not after:
+            if not running and owner_waiting and not after:
+                blocked = owner_waiting[0]
+                end = ('waiting_owner', 5)
+            elif not running and not pending and not after:
                 end = ('idle', 0)
             elif not running and not after and blocked is not None and all(x['state'] != 'running' for x in pending):
                 end = ('stopped_at_failed', 3)
@@ -1281,16 +1373,26 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
             if end:
                 about = None if blocked is None else dict(seq=blocked['seq'], day=blocked['day'], run=blocked['run'],
                                                           reason=blocked.get('reason'))
-                _worker_status('root', state=end[0], commit=commit, reason=stop.get('reason'), front=about,
+                _worker_status('root', state=end[0], commit=commit,
+                               reason=blocked.get('reason') if end[0] == 'waiting_owner' else stop.get('reason'), front=about,
                                pending=len(pending))
                 event('root', 'worker_end', state=end[0], reason=stop.get('reason'), front=about, pending=len(pending))
                 probe.update('root:' + end[0], n_done, len(doc['entries']) or None,
-                             state='complete' if end[1] == 0 else 'failed')
+                             state='waiting' if end[0] == 'waiting_owner' else 'complete' if end[1] == 0 else 'failed')
                 fcntl.flock(lock, fcntl.LOCK_UN)            # released under the queue lock: an enqueue now gets a new kick
                 lock.close()
                 code = end[1]
                 break
         for x in after:                                     # a ROOT finished elsewhere: its step receipt, then the class line
+            why = _source_wait(x, code_root, commit)
+            if why:
+                with locked():
+                    doc = load('root')
+                    y = find(doc, x['seq'])
+                    y.update(reason=why, needs_receipt=True)
+                    save('root', doc)
+                    event('root', 'receipt_waiting_owner', seq=x['seq'], day=x['day'], run=x['run'], reason=why)
+                continue
             try:
                 run, e = _run_for(x, code_root, commit, log)
                 r = run.root(e)

@@ -51,8 +51,9 @@ Every original target row additionally supplies dipole.group.rows[position].* nu
 exact owning INPUT group. Ordered slots preserve intermediate states; they are not independent observations.
 Structures additionally supply structures.group.* by exact original closing INPUT, instrument and full ROOT
 membership, bound to the selected derive receipt. Legacy structures.* timestamp aliases remain unchanged.
-Price V1 provenance incorrectly names the closing INPUT for earlier trades; exact price placement remains listed
-pending producer correction. Both spools' provenance.* fields are metadata, excluded from series and cells.
+Price V2 provenance binds every declared trade-row slot to its originating INPUT and emitting group close;
+unsupported V1/opening-state origins remain explicitly unplaced. Both spools' provenance.* fields are metadata,
+excluded from series and cells.
 Raw component numeric values in both positional and entity closing-row channels require the producer's PRESENT
 state. Other states project to None with exact source-cursor/reason accounting; original snapshot evidence and
 independent metadata remain intact, including incomplete annotations on PRESENT values.
@@ -549,7 +550,11 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
                               unplaced_clock_ordinal_ranges=unavailable,
                               reason='missing or non-integer publication/receive clock; original rows retained in '
                                      'the named source; no guessed timestamp or placement; booleans are not clocks'))
-        selected = {int(i) for i in asof_source_rows(axis, known_at) if i >= 0}
+        # Placement depends only on these unchanged clocks, not the field values.
+        # Reuse the exact original ordinals for every leaf; each field still runs
+        # its own leakage gate before gathering any values.
+        source_rows = np.fromiter(asof_source_rows(axis, known_at), dtype=np.int64, count=len(axis))
+        selected = {int(i) for i in source_rows if i >= 0}
         unselected, unselected_count = [], 0
         for ordinal in valid:
             if ordinal in selected:
@@ -574,7 +579,7 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
             if gate['passed'] is False:
                 notes.append(dict(source=name, field=key, excluded='failed the leakage gate'))
                 continue
-            series[name + '.' + key] = asof_values(con, axis, known_at, values)
+            series[name + '.' + key] = np.asarray([values[i] if i >= 0 else None for i in source_rows], dtype=object)
 
     root_frames, root_owners = JOURNAL._frame_index(f_num, recv)
     derive_path = day_dir / 'root' / 'work' / 'derive.json'
@@ -1323,6 +1328,8 @@ def _cell_job(args):
 
 
 def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, workers=8, transform_names=None):
+    if type(lags) is not int or lags < 0:
+        raise ValueError('lags must be a nonnegative integer')
     import numpy as np
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import frankie_box_experiment_transforms as T
@@ -1334,6 +1341,8 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     if external_fields_mode not in ('all', 'aliases'):
         raise ValueError('SEARCH_EXTERNAL_FIELDS must be all or aliases')
     transform_names = list(transform_names or T.TRANSFORMS)
+    if len(transform_names) != len(set(transform_names)):
+        raise ValueError('transform names must be unique; duplicate jobs would share retained output paths')
     unknown = [t for t in transform_names if t not in T.TRANSFORMS]
     if unknown:
         raise SystemExit('unknown transforms %s (known: %s)' % (unknown, sorted(T.TRANSFORMS)))
@@ -1449,7 +1458,8 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     experiment_directive=directive_witness(),
                     sources=sources, notes=notes, leakage=gates, lags=lags,
                     series=names, cells=[(c, v) for c, v, _ in cell_specs],
-                    transforms=dict(names=transform_names, pairs={t: list(y_transforms(t)) for t in transform_names},
+                    transforms=dict(names=transform_names,
+                                    pairs={t: [ty for ty in y_transforms(t) if ty in steps] for t in transform_names},
                                     module_sha256=sha256_file(Path(T.__file__)),
                                     unclassified_steps=unclassified),
                     couplings=dict(parts=part_pins, rows=count, beyond_chance=beyond, jobs=len(jobs), workers=workers),

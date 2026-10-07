@@ -87,9 +87,17 @@ def sha256_bytes(data):
 
 
 def witness_file(path):
+    """Hash every byte sequentially without materializing a model-sized Python bytes object."""
     path = Path(path)
-    data = path.read_bytes()
-    return dict(path=str(path), bytes=len(data), sha256=sha256_bytes(data))
+    digest, size = hashlib.sha256(), 0
+    with path.open('rb') as source:
+        while True:
+            chunk = source.read(1024 * 1024)
+            if not chunk:
+                break
+            digest.update(chunk)
+            size += len(chunk)
+    return dict(path=str(path), bytes=size, sha256=digest.hexdigest())
 
 
 def load_config(path=CONFIG):
@@ -139,7 +147,7 @@ def runtime_provenance(pins, binary):
     if not server_sha or not manifest:
         return dict(reasons=['pins llama_server_sha256 / llama_cpp_files are explicit blanks: the extracted runtime cannot be '
                              'verified (the archive hash llama_cpp_sha256 is not the binary\'s)'], verified=verified)
-    actual = sha256_bytes(path.read_bytes())
+    actual = witness_file(path)['sha256']
     if actual != server_sha:
         reasons.append('llama-server binary sha256 %s differs from pin llama_server_sha256 %s' % (actual[:12], server_sha[:12]))
     root = path.parent
@@ -147,7 +155,7 @@ def runtime_provenance(pins, binary):
         sibling = root / name
         if not sibling.is_file():
             reasons.append('extracted file %s missing beside llama-server' % name)
-        elif sha256_bytes(sibling.read_bytes()) != sha:
+        elif witness_file(sibling)['sha256'] != sha:
             reasons.append('extracted file %s differs from pin llama_cpp_files' % name)
         else:
             verified.append(name)
@@ -230,6 +238,12 @@ def validate_action(value, item, turns_by_seat):
         return None, 'the turn names another item (%r)' % value.get('item_id')
     if value['action'] not in ACTIONS:
         return None, 'unknown action %r' % value.get('action')
+    if value['seat'] is not None and value['seat'] not in SEATS:
+        return None, 'unknown seat %r' % value['seat']
+    if value['binds_to'] is not None and not isinstance(value['binds_to'], str):
+        return None, 'binds_to must be text or null'
+    if not isinstance(value['cites'], list):
+        return None, 'cites must be a list'
     text = value.get('text')
     if not isinstance(text, str) or not text.strip():
         return None, 'empty text'
@@ -240,11 +254,13 @@ def validate_action(value, item, turns_by_seat):
         for k, v in c.items():
             cited_all.setdefault(k, set()).update(v)
         shas_all |= s
-    for token in V.NUMBER.findall(text):
+    text_numbers = set(V.NUMBER.findall(text))
+    for token in text_numbers:
         if token not in numbers:
             return None, 'the number %s is in no seat\'s turn on this item (role V2: never introduce empirical content)' % token
     for c in value.get('cites') or []:
-        if not isinstance(c, dict) or 'value' not in c or 'source_sha256' not in c:
+        if (not isinstance(c, dict) or not isinstance(c.get('value'), str)
+                or not isinstance(c.get('source_sha256'), str)):
             return None, 'malformed cite'
         v = str(c['value'])
         if v in cited_all:
@@ -255,6 +271,9 @@ def validate_action(value, item, turns_by_seat):
                 return None, 'the cited value %s names a file no turn cites' % v
         else:
             return None, 'the cited value %s is in no turn' % v
+    missing_cites = text_numbers - {c['value'] for c in value['cites']}
+    if missing_cites:
+        return None, 'voiced numbers need their source cites: %s' % ', '.join(sorted(missing_cites))
     lower = text.lower()
     for w in V.POOLED:
         if w in lower:
@@ -276,11 +295,15 @@ def validate_action(value, item, turns_by_seat):
             return None, 'a requested test is routed to the scientific teacher (the code test seat)'
         bound = value.get('binds_to')
         allowed = {o['binds_to'] for o in item['open_items'] if o.get('binds_to')}
-        allowed |= {(item.get('claim') or {}).get('claim_id')}
-        if bound not in allowed:
+        claim_id = (item.get('claim') or {}).get('claim_id')
+        if claim_id:
+            allowed.add(claim_id)
+        if not bound or bound not in allowed:
             return None, ('the requested test is unbound: binds_to must be an existing proposal_id, claim_id or listed '
                           'untested text of this item (%r given); Granite names no new test of its own' % bound)
     if value['action'] == 'RESOLVED':
+        if item['open_items']:
+            return None, 'RESOLVED refused: the code seats still list open items; Granite never closes them'
         frankie = item['records'].get('frankie') or {}
         resolution = str(frankie.get('resolution') or '')
         if not resolution.startswith('RESOLVED_') or frankie.get('remaining_disagreements'):
@@ -909,6 +932,10 @@ def discuss_item(server, item, system, params, log, progress=None):
         state = fresh
         if progress is not None:
             progress.save(state)
+    elif (state.get('outcome') not in ('LEAVE_OPEN', 'RESOLVED') and state.get('over_cap') is None
+          and state.get('transcript', [])[:2] != fresh['transcript']):
+        raise ValueError('retained item transcript has another governed input or coordinator prompt; '
+                         'keep its progress and resolve the input transition before another model call')
     transcript = state['transcript']
     cap = int(params['input_token_cap_per_call'])
     outcome, open_item = None, None
@@ -1049,8 +1076,8 @@ def publish_meeting_record(exchange_path, out_dir, brain=None, *, include_inputs
     publication = 'retained; awaiting return to the owning lane brain'
     brain_entry = None
     if brain:
-        BR.write_meeting_entry(brain, record['day'], record_path, exchange_path=exchange_path)
-        entry = Path(brain) / ('%s-meeting' % record['day'])
+        manifest, _ = BR.write_meeting_entry(brain, record['day'], record_path, exchange_path=exchange_path)
+        entry = Path(brain) / manifest.get('entry_name', '%s-meeting' % record['day'])
         brain_entry = dict(path=str(entry), manifest=witness_file(entry / 'MANIFEST.json'))
         publication = 'published immediately to the owning lane brain'
     receipt = dict(schema=RECEIPT_SCHEMA, day=record['day'], status='complete',
@@ -1181,6 +1208,8 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         raise
     try:
         system = system_prompt(CHARTER.read_text(encoding='utf-8'), rules_witness['rules'])
+        system += ('\n\n## Retained meeting context (labels and findings summaries, not new evidence)\n'
+                   + json.dumps({key: given[key] for key in ('knowledge_index', 'teachers_findings')}, sort_keys=True))
         for item in given['items']:
             progress = ItemProgress(out_dir, item['item_id'], binding_sha)
             retained = progress.load()

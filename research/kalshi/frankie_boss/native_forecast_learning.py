@@ -215,7 +215,7 @@ class NativeForecastLearner:
         journal_state = (journal.count, journal.head_hash)
         self._emit(started, request_id, 'prepare_start')
         try:
-            tokens, info, prepared_hash, teacher, context = self.context._prepare(as_of, through_cursor)
+            tokens, info, prepared_hash, teacher, context = self.context.prepare(as_of, through_cursor)
         except Exception as error:
             self._emit(started, request_id, 'step_failed', error_type=type(error).__name__)
             raise

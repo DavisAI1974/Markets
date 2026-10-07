@@ -218,13 +218,15 @@ class NativeTrunk(Trunk):
         if len(bounds) != h.shape[1]+1 or bounds[0] != 0 or bounds[-1] != tokens['byte_values'].numel():
             raise ValueError('every event must own all its exact field bytes')
         embedded = []
+        # Width/device/dtype are identical for every event; keep each event's
+        # positions, embedding operands and reduction order unchanged.
+        frequencies = torch.exp(torch.arange(self.cfg.d_model, device=h.device, dtype=h.dtype)
+                                * (-math.log(10000.)/self.cfg.d_model))
         for a,b in zip(bounds,bounds[1:]):
             if b <= a:
                 raise ValueError('empty or reversed exact field span')
             values = tokens['byte_values'][a:b].long()
             positions = torch.arange(b-a, device=h.device, dtype=h.dtype).unsqueeze(1)
-            frequencies = torch.exp(torch.arange(self.cfg.d_model, device=h.device, dtype=h.dtype)
-                                    * (-math.log(10000.)/self.cfg.d_model))
             positional = 1 + torch.sin((positions+1)*frequencies)
             embedded.append((self.byte_embedding(values)*positional).sum(0))
         h = h + self.byte_projection(torch.stack(embedded).unsqueeze(0))

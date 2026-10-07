@@ -101,7 +101,7 @@ class NativeForecastRefresh:
         cursor = self.context.builder.chain.next_cursor-1 if through_cursor is None else through_cursor
         journal = self.context.builder.journal
         journal_state = (journal.count, journal.head_hash)
-        tokens, info, input_hash, teacher, context = self.context._prepare(as_of, cursor)
+        tokens, info, input_hash, teacher, context = self.context.prepare(as_of, cursor)
         if info['source_prefix_hash'] != source_hash:
             raise ValueError('session source differs from the native journal prefix')
         for entry in journal_prefix(self.context.builder, cursor):
