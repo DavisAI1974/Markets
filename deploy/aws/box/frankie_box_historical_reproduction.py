@@ -38,7 +38,7 @@ wrote down). Everything is bytes-bound
                              NG file is compared only on the days the driver ran, legs aligned by entry_idx, never by list
                              position; unaligned members are listed); 'prose' = declared, not comparable by code;
   record(entry, plan, run, comparison, records_dir, operation_dir)   HISTORICAL_REPRODUCTION_V2: status performed_matched |
-                             performed_differs | performed_not_comparable | performed_failed | not_run, the pins (sources
+                             performed_differs | performed_incomplete | performed_not_comparable | performed_failed | not_run, the pins (sources
                              AND committed inputs), the operation evidence (plan.json / run.json paths with their file
                              sha256 and canonical hashes), record_sha256 over the record; written once
                              under <records_dir>/<entry id>-<sha12>.json;
@@ -72,7 +72,8 @@ RECORD_SCHEMA = 'HISTORICAL_REPRODUCTION_V2'
 AUTHORIZATION = 'EXECUTION AUTHORIZED BY GREG'     # the exact literal run() requires; the launch HOLD stands otherwise
 # precedence for the one-word summary (status_of): a difference is never hidden by a match; a performed fact (even an
 # incomparable or failed one) is never reported as not_run
-STATUSES = ('performed_differs', 'performed_matched', 'performed_not_comparable', 'performed_failed', 'not_run')
+STATUSES = ('performed_differs', 'performed_incomplete', 'performed_matched', 'performed_not_comparable', 'performed_failed',
+            'not_run')
 PERFORMED = tuple(s for s in STATUSES if s.startswith('performed_'))
 RECORDED_OUTPUT_ROLE = 'recorded output'   # a source whose role starts with this is an immutable reference, never a tree file
 
@@ -209,19 +210,65 @@ def input_supply(entry, staging):
                          'which authorization is Greg\'s; no reformulation definition is implied by it')
 
 
-def plan(entry, staging, out_dir):
+def declared_inventory(entry):
+    """Every row a complete staging of this binding must account for (staged, recorded apart, or listed missing)."""
+    rows = [dict(path=s['path'], revision=s['revision'], sha256=s['sha256'], what='reference' if is_recorded_reference(s) else 'source')
+            for s in entry.get('sources') or []]
+    rows += [dict(path=i['path'], revision=i['revision'], sha256=i['sha256'], what='input')
+             for i in entry.get('inputs') or [] if i.get('status') == 'committed']
+    return sorted(rows, key=lambda d: (d['what'], d['path'], d['revision'], d['sha256']))
+
+
+def inventory_complete(entry, staging):
+    """B3 follow-up: the staging must account for EVERY declared row, as staged (tree), recorded (apart) or missing with
+    its reason; a row the staging does not know, or knows with other bytes, refuses. Reasons, else []."""
+    reasons = []
+    declared = declared_inventory(entry)
+    present = {}
+    for row in list(staging.get('staged') or []) + list(staging.get('recorded') or []):
+        present[(row.get('what'), row.get('path'))] = (row.get('revision'), row.get('sha256'))
+    missing = {(m.get('what'), m.get('path')): (m.get('revision'), m.get('sha256')) for m in staging.get('missing') or []
+               if m.get('path') is not None}
+    for row in declared:
+        key = (row['what'], row['path'])
+        if key in present:
+            if present[key] != (row['revision'], row['sha256']):
+                reasons.append('%s %s is staged at other bytes/revision than declared' % (row['what'], row['path']))
+        elif key in missing:
+            if missing[key] != (row['revision'], row['sha256']):
+                reasons.append('%s %s is listed missing with other bytes/revision than declared' % (row['what'], row['path']))
+        else:
+            reasons.append('%s %s is declared but the staging neither staged it nor listed it missing' % (row['what'], row['path']))
+    declared_keys = {(r['what'], r['path']) for r in declared}
+    declared_keys |= {('input', i['path']) for i in entry.get('inputs') or [] if i.get('status') != 'committed'}  # listed missing by design
+    for key in sorted(set(present) | set(missing)):
+        if key not in declared_keys and key[1] is not None:
+            reasons.append('%s %s is in the staging but not declared by the binding' % key)
+    return reasons
+
+
+def plan_document(entry, staging):
+    """The complete declared plan of (entry, staging): pure, so run() can reconstruct it and refuse a plan that differs
+    in ANY field (command, pins, comparison declarations, tables, capability, inventory), not only in `executable`."""
     executable, reasons = executability(entry, staging)
-    doc = dict(schema=PLAN_SCHEMA, entry_id=entry['id'], claims=list(entry['claims']), binding_status=entry['status'],
-               calculation=entry.get('calculation'), command=entry.get('entry'),
-               staged=[{k: s[k] for k in ('path', 'revision', 'sha256', 'what')} for s in staging['staged']],
-               recorded_references=[{k: s[k] for k in ('path', 'revision', 'sha256')} for s in staging.get('recorded') or []],
-               missing=staging['missing'], recorded_outputs=entry.get('recorded_outputs') or [],
-               pins=pins_of(entry), binding_tables_sha256=HC.binding_tables_sha256(),
-               staging_sha256=sha256_bytes(canonical(staging)),
-               capability_sha256=sha256_bytes(Path(__file__).read_bytes()),
-               executable=executable, not_executable_reasons=reasons,
-               input_supply=input_supply(entry, staging),
-               rule='a plan stages declared bytes and names the recorded outputs; it runs nothing and marks nothing reproduced')
+    reasons = reasons + inventory_complete(entry, staging)
+    executable = executable and not reasons
+    return dict(schema=PLAN_SCHEMA, entry_id=entry['id'], claims=list(entry['claims']), binding_status=entry['status'],
+                calculation=entry.get('calculation'), command=entry.get('entry'),
+                staged=[{k: s[k] for k in ('path', 'revision', 'sha256', 'what')} for s in staging['staged']],
+                recorded_references=[{k: s[k] for k in ('path', 'revision', 'sha256')} for s in staging.get('recorded') or []],
+                missing=staging['missing'], recorded_outputs=entry.get('recorded_outputs') or [],
+                declared_inventory=declared_inventory(entry),
+                pins=pins_of(entry), binding_tables_sha256=HC.binding_tables_sha256(),
+                staging_sha256=sha256_bytes(canonical(staging)),
+                capability_sha256=sha256_bytes(Path(__file__).read_bytes()),
+                executable=executable, not_executable_reasons=reasons,
+                input_supply=input_supply(entry, staging),
+                rule='a plan stages declared bytes and names the recorded outputs; it runs nothing and marks nothing reproduced')
+
+
+def plan(entry, staging, out_dir):
+    doc = plan_document(entry, staging)
     data = (json.dumps(doc, indent=1, sort_keys=True) + '\n').encode()
     ok, why = write_once(Path(out_dir) / 'plan.json', data)
     if not ok:
@@ -247,12 +294,19 @@ def run(plan_doc, staging, out_dir, authorized=None, timeout=3600):
     if plan_doc.get('staging_sha256') != sha256_bytes(canonical(staging)):
         raise ValueError('the staging given is not the one the plan was made from: refused')
     entry = entry_by_id(plan_doc['entry_id'])
-    executable, reasons = executability(entry, staging)
-    if executable != bool(plan_doc.get('executable')):
-        raise ValueError('the plan\'s executable flag does not follow from the binding and staging: refused')
-    problems = verify_staging(staging)
+    # B3 follow-up: the COMPLETE declared plan is reconstructed from the current entry and the staging and must equal
+    # the plan given field by field (command, pins, recorded outputs, tables, capability, inventory, executable); a
+    # self-consistent altered or stale plan refuses even when its executable flag agrees
+    expected = plan_document(entry, staging)
+    if canonical(expected) != canonical(plan_doc):
+        differing = sorted(k for k in set(expected) | set(plan_doc) if expected.get(k) != plan_doc.get(k))
+        raise ValueError('the plan does not follow from the current declared binding and staging (fields %s): refused'
+                         % ', '.join(differing))
+    executable, reasons = expected['executable'], expected['not_executable_reasons']
+    problems = verify_staging(staging) + inventory_complete(entry, staging)
     if problems:
-        raise ValueError('staged bytes no longer match their declaration: ' + json.dumps(problems, sort_keys=True))
+        raise ValueError('staged inventory is incomplete or its bytes no longer match the declaration: '
+                         + json.dumps(problems, sort_keys=True, default=str))
     run_path, dispatch_path = out / 'run.json', out / 'dispatch.json'
     if run_path.is_file():
         existing = json.loads(run_path.read_bytes())
@@ -390,10 +444,26 @@ def _compare_json(produced, recorded, fields, scope=None, argv=None):
             differs.append(dict(field=key, recorded=value, produced=got[key]))
     # B1: every differing, missing and produced-only leaf is kept (no cap, no sampling); counts beside the lists
     produced_only = sorted(k for k in got if k not in want and _selected(k, fields))
-    status = 'differs' if differs or not_found else 'matched' if matched else 'not_comparable'
+    # B2 follow-up: the comparable scope and the coverage are separate facts. Members present on one side only, lists
+    # whose positions are unrelated, argv keys the record does not hold and produced-only leaves are coverage GAPS:
+    # with any of them, 'matched' may not be said of the output as a whole; 'incomplete' says the compared scope
+    # matched while declared comparable evidence is missing or unmatched. No tolerance, no verdict.
+    gaps = dict(unaligned_members=notes['unaligned_members'], not_comparable_lists=notes['not_comparable_lists'],
+                argv_keys_absent_from_recorded=notes['argv_keys_absent_from_recorded'], produced_only=produced_only)
+    complete = not any(gaps.values())
+    if differs or not_found:
+        status = 'differs'
+    elif not matched:
+        status = 'not_comparable'
+    elif not complete:
+        status = 'incomplete'
+    else:
+        status = 'matched'
     return dict(status=status, leaves_recorded=len(want), matched=matched, differs=differs,
                 differs_count=len(differs), not_found=not_found, not_found_count=len(not_found),
-                produced_only=produced_only, produced_only_leaves=len(produced_only), scope=scope, alignment=notes)
+                produced_only=produced_only, produced_only_leaves=len(produced_only), scope=scope, alignment=notes,
+                coverage=dict(complete=complete, compared_scope='the aligned members and selected fields only',
+                              gaps={k: v for k, v in gaps.items() if v}))
 
 
 def compare(entry, run_doc, staging):
@@ -455,8 +525,9 @@ def compare(entry, run_doc, staging):
         else:
             item.update(status='declared_not_comparable_by_code', recorded_in=rec.get('recorded_in'), note=rec.get('note'))
         outputs.append(item)
-    comparable = [o for o in outputs if o['status'] in ('matched', 'differs', 'not_found')]
+    comparable = [o for o in outputs if o['status'] in ('matched', 'incomplete', 'differs', 'not_found')]
     status = ('performed_differs' if any(o['status'] in ('differs', 'not_found') for o in comparable)
+              else 'performed_incomplete' if any(o['status'] == 'incomplete' for o in comparable)
               else 'performed_matched' if comparable else 'performed_not_comparable')
     return dict(status=status, outputs=outputs, **facts,
                 rule='a match reproduces the recorded numbers on the original inputs; it is not a verdict on the claim; '
@@ -477,16 +548,57 @@ def _operation_evidence(operation_dir, plan_doc, run_doc):
         evidence[name] = dict(path=str(path), sha256=sha256_bytes(raw), bytes=len(raw), canonical_sha256=sha256_bytes(canonical(doc)))
     dispatch = out / 'dispatch.json'
     evidence['dispatch'] = dict(path=str(dispatch), sha256=sha256_bytes(dispatch.read_bytes())) if dispatch.is_file() else None
+    if run_doc.get('status') == 'run' and (evidence['dispatch'] or {}).get('sha256') != run_doc.get('dispatch_sha256'):
+        raise ValueError('operation evidence: the dispatch marker is missing or is not the one the run names')
     return evidence
 
 
+def coherence(entry, plan_doc, run_doc, comparison, status):
+    """B4 follow-up: the reasons record -> entry -> plan -> dispatch -> run -> comparison do not cohere, else [].
+    Identities must chain and the status must agree with the run's facts (returncode, timeout, dispatch)."""
+    reasons = []
+    if plan_doc.get('schema') != PLAN_SCHEMA or plan_doc.get('entry_id') != entry['id']:
+        reasons.append('plan schema/entry (%s/%s) is not this entry\'s' % (plan_doc.get('schema'), plan_doc.get('entry_id')))
+    if list(plan_doc.get('claims') or []) != list(entry['claims']) or plan_doc.get('pins') != pins_of(entry):
+        reasons.append('plan claims/pins differ from the declared entry')
+    if run_doc.get('schema') != RUN_SCHEMA or run_doc.get('entry_id') != entry['id']:
+        reasons.append('run schema/entry (%s/%s) is not this entry\'s' % (run_doc.get('schema'), run_doc.get('entry_id')))
+    if run_doc.get('plan_sha256') != sha256_bytes(canonical(plan_doc)):
+        reasons.append('run.plan_sha256 does not name this plan')
+    if run_doc.get('status') == 'run':
+        if not run_doc.get('dispatch_sha256'):
+            reasons.append('a run without its dispatch marker hash')
+        if comparison.get('returncode') != run_doc.get('returncode') or comparison.get('timed_out') != run_doc.get('timed_out'):
+            reasons.append('comparison run facts (returncode/timed_out) differ from the run document')
+        failed = bool(run_doc.get('timed_out')) or run_doc.get('returncode') != 0
+        if failed and status != 'performed_failed':
+            reasons.append('status %s on a run that did not complete (returncode %s, timed_out %s)'
+                           % (status, run_doc.get('returncode'), run_doc.get('timed_out')))
+        if not failed and status == 'performed_failed':
+            reasons.append('performed_failed on a run that completed (returncode 0, not timed out)')
+        if status not in PERFORMED:
+            reasons.append('a completed run recorded as %s' % status)
+    else:
+        if status != 'not_run':
+            reasons.append('status %s without a run' % status)
+        if comparison.get('status') not in (None, 'not_run'):
+            reasons.append('a comparison on a run that did not happen')
+    if comparison.get('status') != status and not (run_doc.get('status') != 'run' and status == 'not_run'):
+        reasons.append('comparison status %r differs from the record status %r' % (comparison.get('status'), status))
+    return reasons
+
+
 def record(entry, plan_doc, run_doc, comparison, records_dir, operation_dir):
-    """The record of one operation (B4): every performed fact kept (performed_not_comparable and performed_failed are
-    statuses, never folded into not_run), bound to the entry, its claims, its pins (sources and inputs), the binding
-    tables and the retained operation evidence under operation_dir."""
+    """The record of one operation (B4): every performed fact kept (performed_incomplete, performed_not_comparable and
+    performed_failed are statuses, never folded into not_run), bound to the entry, its claims, its pins (sources and
+    inputs), the binding tables and the retained operation evidence under operation_dir; refused unless record, entry,
+    plan, dispatch, run and comparison cohere (coherence())."""
     status = 'not_run' if run_doc.get('status') != 'run' else comparison['status']
     if status not in STATUSES:
         raise ValueError('comparison status %r is not a record status' % status)
+    problems = coherence(entry, plan_doc, run_doc, comparison, status)
+    if problems:
+        raise ValueError('record refused, the operation does not cohere: ' + '; '.join(problems))
     doc = dict(schema=RECORD_SCHEMA, entry_id=entry['id'], claims=list(entry['claims']), status=status,
                binding_status=entry['status'], calculation=entry.get('calculation'), pins=pins_of(entry),
                binding_tables_sha256=plan_doc['binding_tables_sha256'],
@@ -551,11 +663,19 @@ def _admit(doc, path, claim_id):
             raw = opath.read_bytes()
             if sha256_bytes(raw) != item.get('sha256') or sha256_bytes(canonical(json.loads(raw))) != want:
                 return 'performed status whose %s evidence differs from the record\'s hashes' % name
+        plan_doc = json.loads(Path(operation['plan']['path']).read_bytes())
         run_doc = json.loads(Path(operation['run']['path']).read_bytes())
         if run_doc.get('status') != 'run':
             return 'performed status but the retained run is %r' % run_doc.get('status')
-        if (doc.get('comparison') or {}).get('status') != doc.get('status'):
-            return 'record status %r differs from its comparison status %r' % (doc.get('status'), (doc.get('comparison') or {}).get('status'))
+        # B4 follow-up: the chain record -> entry -> plan -> dispatch -> run -> comparison must cohere
+        dispatch = operation.get('dispatch') or {}
+        dpath = Path(dispatch.get('path') or '')
+        if not dpath.is_file() or sha256_bytes(dpath.read_bytes()) != dispatch.get('sha256') \
+                or dispatch.get('sha256') != run_doc.get('dispatch_sha256'):
+            return 'performed status without the dispatch marker the run names'
+        problems = coherence(entry, plan_doc, run_doc, doc.get('comparison') or {}, doc.get('status'))
+        if problems:
+            return 'operation does not cohere: ' + '; '.join(problems)
     elif (doc.get('comparison') or {}).get('status') not in (None, 'not_run'):
         return 'not_run record carries a performed comparison'
     return None
@@ -579,13 +699,15 @@ def records_for(claim_id, records_dir, selection=None):
         frozen = None
         paths = sorted(directory.glob('*.json')) if directory.is_dir() else []
     for path in paths:
+        # B5 follow-up: a SELECTED file that is gone or changed is a broken frozen pin, never an optional absence:
+        # preparation/reuse refuses; genuinely new, unselected arrivals are listed apart (above)
         if not path.is_file():
-            listed.append(dict(path=str(path), claim_id=claim_id, reason='frozen record file is gone'))
+            if frozen is not None:
+                raise ValueError('frozen reproduction record %s is gone: the owner\'s selection is broken; refused' % path)
             continue
         raw = path.read_bytes()
         if frozen is not None and (len(raw) != frozen[str(path)]['bytes'] or sha256_bytes(raw) != frozen[str(path)]['sha256']):
-            listed.append(dict(path=str(path), claim_id=claim_id, reason='frozen record file changed since the selection; not read'))
-            continue
+            raise ValueError('frozen reproduction record %s changed since the owner\'s selection: refused' % path)
         try:
             doc = json.loads(raw)
         except ValueError as error:
