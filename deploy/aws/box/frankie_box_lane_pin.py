@@ -333,14 +333,16 @@ def _record_kills(kills, report, key='stop_kills'):
 def end_pool(pool, grace=None, report=None, *, normal=False, label='pool'):
     """End a multiprocessing Pool with a BOUND (session 5, 2026-10-07; a2's shard exit hang: terminate() swallowed by an
     inherited SIGTERM handler, then an unbounded join). terminate() (or close() when normal=True: the workers end
-    after their queued work) runs in a helper thread for at most `grace` seconds (STOP_JOIN_SECONDS by default; Pool
-    .terminate() itself joins every worker without a bound); a worker still alive after that is SIGKILLed by pid and
-    the helper gets `grace` more seconds; then pool.join() (immediate once the helper ended). Every kill is listed in
+    after their queued work) and then pool.join() run in a helper thread for at most `grace` seconds in all
+    (STOP_JOIN_SECONDS by default; Pool.terminate() and Pool.join() each join every worker without a bound); a worker
+    still alive after that is SIGKILLed by pid and the helper gets `grace` more seconds. Every kill is listed in
     report['stop_kills'] ({pid, cpu, at, exit_code}: the shape of ordered_map's report['worker_deaths']), a helper
     still running after the second bound in report['stop_incomplete'] (left to end on its own, never waited for).
     A pool worker holds no output of its own (every result the caller kept is already in the caller), so a kill loses
-    nothing the caller has. Never raises; returns dict(label, how, seconds, kills, joined, errors). One shared rule for
-    every caller that holds a pool: ordered_map's cleanup, pinned_pool holders, operations/ingest_cpus.end_pool."""
+    nothing the caller has. A terminate() already in flight elsewhere (a no-op the second time) changes nothing: the
+    join is what the bound watches. Never raises; returns dict(label, how, seconds, kills, joined, errors). One shared
+    rule for every caller that holds a pool: ordered_map's cleanup, pinned_pool holders, RedoPool.end,
+    operations/ingest_cpus.end_pool."""
     bound = STOP_JOIN_SECONDS if grace is None else max(0.0, float(grace))
     if pool is None:
         return dict(label=label, how=None, seconds=0.0, kills=[], joined=True, errors=[], outcome='no pool')
@@ -353,7 +355,11 @@ def end_pool(pool, grace=None, report=None, *, normal=False, label='pool'):
         try:
             getattr(pool, how)()
         except Exception as error:  # noqa: BLE001 - recorded; the end stays bounded below
-            errors.append('%s: %s' % (type(error).__name__, str(error)[:200]))
+            errors.append('%s: %s: %s' % (how, type(error).__name__, str(error)[:200]))
+        try:
+            pool.join()
+        except Exception as error:  # noqa: BLE001
+            errors.append('join: %s: %s' % (type(error).__name__, str(error)[:200]))
     helper = threading.Thread(target=stop, name='frankie-end-%s' % label, daemon=True)
     helper.start()
     helper.join(bound)
@@ -364,16 +370,11 @@ def end_pool(pool, grace=None, report=None, *, normal=False, label='pool'):
         _kill_survivors(before + [p for p in current if p not in before], kills)
         helper.join(bound)
     joined = not helper.is_alive()
-    if joined:
-        try:
-            pool.join()
-        except Exception as error:  # noqa: BLE001
-            errors.append('join: %s: %s' % (type(error).__name__, str(error)[:200]))
     _record_kills(kills, report)
     if not joined and report is not None:
         report.setdefault('stop_incomplete', []).append(dict(
             label=label, at=round(time.time(), 3), waited_seconds=round(2 * bound, 3),
-            note='%s() still running after the kills; left to end on its own, not waited for' % how))
+            note='%s() + join() still running after the kills; left to end on its own, not waited for' % how))
     return dict(label=label, how=how, seconds=round(time.monotonic() - started, 3), kills=kills, joined=joined,
                 errors=errors)
 

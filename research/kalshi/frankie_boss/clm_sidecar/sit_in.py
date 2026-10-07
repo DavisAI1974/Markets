@@ -418,23 +418,45 @@ def begin_phase(state, phase):
 
 
 def recorded_chat(body):
-    """Durable pre-send intent, then whole response bytes. Unknown outcomes never trigger a repeated call.
+    """Durable pre-send intent, then whole response bytes.
 
     Replaying the deterministic note/claim traversal consumes retained replies in order; changed
     requests refuse. The intent records possibility of dispatch, not proof the server received it.
+    An INTERRUPTED call (a retained intent with no reply, or a failed one) is RE-DONE (Greg, 2026-10-07 night,
+    superseding "unknown outcomes never trigger a repeated call"): the retained record is moved whole to
+    state['interrupted_calls'] (phase, index, redone), a pending intent is stamped unknown_completion on the model
+    clock, and the SAME request bytes (checked equal to the retained ones) are sent again; nothing is counted answered
+    until the re-sent call replies. Jev stays blind: the request is the traversal's own, byte for byte.
     """
     if PROGRESS is None:
         raise ValueError('Jev model work requires a bound durable phase')
     state, phase, cursor = PROGRESS['state'], PROGRESS['phase'], PROGRESS['cursor']
     calls = state['calls'][phase]
     body_text = body.decode('utf-8')
+    if cursor < len(calls) and calls[cursor]['status'] != 'replied':
+        old = calls[cursor]
+        if old['request'] != body_text or old['request_sha256'] != sha(body):
+            raise ValueError('retained Jev request differs at %s/%d' % (phase, cursor))
+        if cursor != len(calls) - 1:
+            raise ValueError('Jev %s/%d is unresolved but later calls are retained; explicit owner recovery' % (phase, cursor))
+        calls.pop(cursor)
+        record = dict(old, phase=phase, index=cursor, redone=True, redone_at=time.time())
+        if old['status'] == 'pending':
+            fields = dict(call_id=old['request_sha256'], outcome='unknown_completion', wall_start=old.get('intent_at'),
+                          wall_end=None, decided_by='sit_in client (interrupted call re-done)',
+                          reason='a durable pre-send intent with no recorded reply was found on restart; transmission and '
+                                 'completion are unknown; the same request is re-sent (Greg, 2026-10-07)')
+            try:
+                record['model_clock'] = (LOCAL['model_clock'](**fields) if LOCAL is not None and LOCAL.get('model_clock')
+                                         else model_clock(**fields))
+            except Exception as error:  # noqa: BLE001 - listed on the record, never the call's outcome
+                record['model_clock'] = dict(recorded=False, reason=repr(error)[:300])
+        state.setdefault('interrupted_calls', []).append(record)
+        save_state(state)
     if cursor < len(calls):
         call = calls[cursor]
         if call['request'] != body_text or call['request_sha256'] != sha(body):
             raise ValueError('retained Jev request differs at %s/%d' % (phase, cursor))
-        if call['status'] != 'replied':
-            raise ValueError('Jev %s/%d has an unresolved or failed request; retained evidence requires owner review, no retry'
-                             % (phase, cursor))
         raw = base64.b64decode(call['response_base64'], validate=True)
         if sha(raw) != call['response_sha256'] or len(raw) != call['response_bytes']:
             raise ValueError('retained Jev response bytes differ')

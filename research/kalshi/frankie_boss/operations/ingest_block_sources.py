@@ -492,6 +492,14 @@ def _hash_beside(path):
         return None
 
 
+def _child_default_sigterm():
+    import signal
+    try:
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except (ValueError, OSError):
+        pass
+
+
 def write_once(path, value):
     raw = json.dumps(value, indent=1, sort_keys=True, default=str).encode()
     with Path(path).open('xb') as stream:
@@ -721,6 +729,9 @@ def main():
     if args.mode == 'parallel':
         import signal
         signal.signal(signal.SIGTERM, lambda *_: requested.__setitem__(0, True))
+        # every forked child (the pinned pass-2/3 pool, its replacements after a dead worker, any helper) starts with
+        # the DEFAULT SIGTERM, never the mark-only handler (the a2 shard hang): an at-fork hook runs in each child
+        os.register_at_fork(after_in_child=_child_default_sigterm)
         emit(dict(phase='save_route', handler='mark-only SIGTERM', stop_file=stop_file,
                   rule='a save request is honoured at the next save point, then exit 75'))
     else:

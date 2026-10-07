@@ -211,3 +211,42 @@ plus a full read of the sealed journal for its sha256.
 - X4 (Run controller, frankie_box_run.yml / experiment.py): when the ingest runs as an experiment stage, pass the ingest
   output directory and the block data directory as the stage heartbeat's `probe_dirs` so the new progress.json probes are
   read first (they are also found beside open files).
+
+## 10. Save/restore vs ROOT (Greg: "every workflow piece needs their restore save code updated to match ROOT's")
+
+Scope: the PARALLEL ingest (operations/parallel_ingest.py, MODE=parallel) is the resumable writer. The sequential
+writer (ingest_block_sources.ingest) is canary-or-whole by design: it has no save point, so it keeps the default SIGTERM
+(a stop ends it, the day is ingested again from its start) and says so on its `save_route` event. The ingest's files are
+not RowSpools (binary spools with sealed `.done.json` markers; canonical JSON + pickle states), so ROOT's rules are
+mirrored with each helper named in a comment; nothing of the journal bytes depends on any of it. Lines are the current
+working tree.
+
+| # | ROOT contract item (ROOT helper) | Before | After (file:line) |
+|---|---|---|---|
+| 1 | Save request route: SIGTERM / FRANKIE_LANE_STOP_FILE MARKS the save, run to the next save point, write exact state, exit 75; workers never inherit the mark-only handler (experiment_root.py:125 save_requested; boss_session `_legacy_shard_worker` SIG_DFL) | MISSING: no handler (SIGTERM killed the tool mid-pass); exit 75 meant only "CPU booking waiting" | DONE: ingest_block_sources `save_requested` 727 + mark-only SIGTERM in parallel mode, `os.register_at_fork(after_in_child=_child_default_sigterm)` 734/495 (EVERY forked child, incl. a replacement pool after a dead worker, starts with the default SIGTERM), task-level `default_sigterm` (parallel_ingest 155, compact_build_journal `_default_sigterm` 395; both skip the parent itself when a task runs inline). Save points: each pass-1 group-closed state (parallel_ingest `saved` 325 -> `IngestSaved` 335) and each pass-2/3 segment boundary (718). `IngestSaved` -> `ingest-saved-<ts>.json` (BOSS_BLOCK_INGESTION_SAVED_V1, the RESUME_DIR) + `INGEST_SAVED` line + exit 75 (ingest_block_sources 805). The wrapper tells saved from booking-wait (ingest_block.sh 326, each_day, at_once 370/373) and traps TERM with a command so it reports the tool's 75 instead of dying first (415). A request arriving during the drain after the seal completes the day (exit 0), as ROOT publishes its completion |
+| 2 | Periodic exact saves at group-closed points every N units, the last save is the resume point (native checkpoints; legacy-state.pkl) | PARTIAL: states made every 20,000 records at group-closed points but written only when pass 1 ENDED (an interruption inside pass 1 restarted it at record 0) | DONE: `save_pass1_state` 191 writes every state as it is made (canonical JSON + the live adapter pickle, key order kept, done record with both sha256s LAST, create-only, fsync) under segments/pass1/; `load_pass1_states` 212 (contiguous, sha256-checked); `pass_one(resume=...)` 314 restores chain (RecordPrefixChain.restore), adapter (the pickle, checked against its canonical state) and sessions from the last save and continues; records before its cursor are decoded again (held for pass 2), no state advanced for them; plan.json stays the commit point of a complete pass 1 |
+| 3 | File positions without re-read (boss_session `_saved_spool_position` 1102, `_resume_row_spool` 1129, `_records_cursor` 1192, `_spool_records_from` 894) | PARTIAL: a resume re-hashed every finished spool in `_done`, then pass 3 hashed it again | DONE (mirrored): `_segment` adds a `resume` block to each `.done.json` (device, inode, mtime_ns, size of the sealed spool, 490); `_done` 496 accepts the same unchanged file with NO read (pass 3 reads it once and compares bytes + sha256: the seal check), else ONE full pass with the reason (`resumed_how`, summed on the `parallel_pass2_reused` event 670). `_records_cursor` for the partition read: N/A, stated: the partition is a zstd DBN stream through the pinned extractor's verified snapshot (mbo_source `_verified_copy`), which has no seekable record offset; the decode is re-run by count (the records are needed in memory for pass 2 anyway) |
+| 4 | Identity is content, not location (experiment_root.py:52 content_rebinds) | DONE by construction: plan.json and the pass-1 saves bind content only (manifest_hash, `implementation_identity()` = code blob hashes keyed by file NAME, segment size, sha256s); no saved path. The worktree per dispatched commit (`ingest-code/<sha>`) therefore resumes from any checkout of the same source | DONE (no path to rebind; `content_rebinds` would return [] on every saved document; nothing recorded under checkout-rebinds/ because nothing moves) |
+| 5 | Function-level code identity (frankie_box_bedrock.code_identity) | MISSING: the saves bound the builder identity only, not the pass code itself | DONE: `code_identity` 170 = bedrock.code_identity(parallel_ingest.py, CODE_NAMES: pass_one, _state, _segment, SpoolJournal, read_spool, PLACEHOLDER, SEGMENT_RECORDS); bound in the pass-1 saves and plan.json (`code`, additive); a different identity refuses; the builder identity (gold) is checked as before |
+| 6 | Additive; an older save still loads (with one full pass noted); the probe continues from the saved cursor | n/a | DONE: plan.json without `code` loads (`old_save_loaded` event 590); a `.done.json` without `resume` is one full pass (`resumed_how`); a pass-1 save without `code` loads; the work probe counts records decoded from 0, so it continues past the saved cursor on its own |
+| 7 | Seal check: the full witness read compared with the last saved claim (boss_session `_check_spool_claims`) | DONE: pass 3 reads every spool once and compares bytes + sha256 with its `.done.json` (706-711), refusing visibly; the plan's states/pickles are sha256-checked on resume | DONE (unchanged; now the ONLY full read of a reused spool) |
+
+Toy proof (`scratchpad/ingest/test_save_resume.py`; synthetic MBO rows, the real builder, prefix chain and V4 adapter,
+torch stubbed for the package import): from scratch 403 records -> 10 states; the same run with a save requested after
+the 4th save stops with IngestSaved at state 3 (cursor 150), 4 states on disk; the resumed run's 10 states are
+byte-identical (canonical) to from-scratch, records and counts equal; pass 2 on both gives 9 byte-identical spools; an
+unchanged spool is reused with no read, an old marker with one full pass; an old-shape pass-1 save (no code identity)
+loads and a different code identity refuses; a forked child has the default SIGTERM while the parent holds the mark-only
+handler. `SAVE/RESUME CHECKS PASSED`. The earlier journal-bytes, pool and transport toys re-ran clean after these edits.
+Not run: a real day, the queue's ACTION=save route on the box, frankie_box_cores.py run's 75 pass-through.
+
+Cross-owner for save/restore:
+- S1 (frankie_box_cores.py `run`, frankie_box_frankie_queue.py:175 save): the ingest exits 75 on a SAVE as well as on a
+  booking wait; `cores.py run` must pass the child's 75 through and RELEASE vs RETAIN the booking as the queue's saved
+  rule says (ROOT retains it; the ingest today releases at the end of `run`), and the queue must record "saved" for an
+  ingest that printed INGEST_SAVED (saved/failed/running/done/unknown distinct).
+- S2 (the Run controller's unit for the ingest): systemd's default KillMode=control-group sends SIGTERM to every
+  process of the unit, the pool workers included; with the default SIGTERM they die and the parent redoes their work
+  with one fewer before it reaches its save point. KillMode=mixed (SIGTERM to the main process only) is the clean route.
+- S3 (boss_session `_PinnedPool._recover` 451-467): its `terminate(); join()` is unbounded; with the at-fork rule the
+  ingest's workers end on SIGTERM, so it returns, but the bound belongs there.

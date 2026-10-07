@@ -117,6 +117,15 @@ SEGMENT_RECORD = {}
 SEGMENT_EVERY_SECONDS = 120.0
 
 
+def _job_key(job):
+    """A job's stable text for the segment key: a function by its qualified name (never its address), else repr."""
+    if isinstance(job, tuple):
+        return [_job_key(part) for part in job]
+    if callable(job):
+        return '%s.%s' % (getattr(job, '__module__', '?'), getattr(job, '__qualname__', getattr(job, '__name__', '?')))
+    return repr(job)
+
+
 class _Segments:
     def __init__(self, operation, jobs_key):
         import time
@@ -1591,7 +1600,7 @@ def _native_series_parallel(native, run, jobs, lane, LP):
     workers = native.pair_threads
     # periodic exact saves at closed chunks (_Segments); a resume computes only the series after the saved ones. A
     # series the cutoff left uncomputed ends the saving (a marker is never saved: the cutoff record lives on `native`).
-    segments = _Segments('native_series', [[getattr(j[0], '__name__', str(j[0])), repr(j[1]), j[2], j[3]] for j in jobs])
+    segments = _Segments('native_series', [_job_key(j) for j in jobs])
     prefix = segments.load()
     start = len(prefix)
     saving = [True]
@@ -3037,7 +3046,13 @@ def _pair_measures(math, ledgers, order):
                  'kept' % (workers, '' if len(rounds) <= 1 else '; a dead worker\'s pairs measured again with one worker '
                                                                'fewer (rounds in received.cpu_pinning)'))
     else:
-        measured = [(math._pearson(ledgers[a], ledgers[b]), math._co_movement(ledgers[a], ledgers[b])) for a, b in order]
+        # the same per-pair calls in pair order, with the same periodic exact saves as the pool path (_Segments)
+        segments = _Segments('dipole_pairs', [list(pair) for pair in order])
+        measured = segments.load()
+        for a, b in order[len(measured):]:
+            measured.append((math._pearson(ledgers[a], ledgers[b]), math._co_movement(ledgers[a], ledgers[b])))
+            segments.offer(measured)
+        segments.done()
         basis = ('serial: %s' % ('more than one live thread (no fork beside threads)' if threading.active_count() > 1
                                  else 'one CPU or not Linux'))
     PAIR_POOL_RECORD.update(pairs=len(order), basis=basis, seconds=round(time.monotonic() - started, 3))

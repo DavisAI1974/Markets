@@ -26,7 +26,8 @@ the owning brain path. A runner retains the same bytes for an explicit owner-sid
 
 Recovery and evidence (Codex findings 1-3, 2026-10-06; built 2026-10-07): the settled meeting budget bounds EVERY request
 (start, template, tokenize, chat); per-item progress is durable (completed rounds reused on a restart, a pending call with
-unknown completion closed open and never repeated, everything bound to meeting-binding.json); the server's whole stderr
+unknown completion stamped and RE-DONE from the retained transcript (Greg, 2026-10-07 night), everything bound to
+meeting-binding.json; a save request (SIGTERM / lane stop file) stops at the next round or item and exits 75); the server's whole stderr
 and every failed or malformed reply are retained as files under evidence/, never sliced; a startup or request failure
 releases the process and keeps the partial state. return.json names the record's bytes and hash for the owner import.
 Runtime: llama.cpp llama-server, ephemeral, started here and stopped here; model/release pins and the runtime parameters

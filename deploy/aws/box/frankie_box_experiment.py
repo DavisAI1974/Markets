@@ -3679,12 +3679,12 @@ class Run:
             return self.record('jev', day, 'waiting', request=str(path), receipt=str(receipt_path), stamp=stamp,
                                pending=receipt.get('pending'), report=receipt.get('report'),
                                reason='Jev\'s receipt awaits the owner\'s disposition: %s' % '; '.join(receipt.get('pending') or []))
-        if not receipt_path.is_file() and bound_status(status) and status.get('unresolved_calls'):
-            # status_file, never 'status': record() takes the stage status positionally (a duplicate keyword raised)
-            return self.record('jev', day, 'waiting', request=str(path), status_file=str(status_path), stamp=stamp,
-                               unresolved_calls=status['unresolved_calls'], request_pins=request_pins,
-                               reason='Jev\'s retained state lists unresolved model calls; none is retried or erased, the '
-                                      'owner\'s review resolves them (frankie_box_jev_cpu status.json)')
+        # Greg, 2026-10-07 night (supersedes "none is retried or erased"): an interrupted Jev call is RE-DONE. A retained
+        # state listing unresolved calls is re-dispatched from its saved inputs; the helper (sit_in.recorded_chat) stamps
+        # the interrupted intent unknown_completion, lists it in state interrupted_calls and re-sends the byte-identical
+        # request; nothing is counted answered until it completes. (stacks pass, the Jev owner's scoped edit)
+        redispatched_unresolved = (status['unresolved_calls'] if not receipt_path.is_file() and bound_status(status)
+                                   and status.get('unresolved_calls') else None)
         # the same LLAMA_SERVER / GGUF_MODEL the meeting child gets: one runtime, one install (the helper reads the request's
         # shared_runtime binding; the environment names the same paths for its wrapper)
         code, log = self.child('jev', day, 'frankie_box_jev_cpu.sh', dict(JEV_REQUEST=path, LLAMA_SERVER=shared['binary'],
@@ -3693,6 +3693,7 @@ class Run:
         slot = self._cpu.get(('jev', day))        # the ledger's CPU_BOOKING line: inside the held lane, its CPUs
         lane_threads = (receipt or {}).get('lane_threads') if bound_receipt(receipt) else None
         fields = dict(exit_code=code, log=log, request=str(path), stamp=stamp, output=str(out), report_number=number,
+                      redispatched_unresolved=redispatched_unresolved,
                       request_pins=request_pins, rebook=request.get('rebook'), cpu_booking=slot,
                       lane_cpus=list(held['cpus']), lane_threads=lane_threads or
                       'not recorded: no receipt bound to the request on this attempt (the helper writes it with its receipt)',

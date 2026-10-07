@@ -174,16 +174,69 @@ Ranked by expected gain. "Built" = done in this pass.
   in `_pool_initializer`/`_tracked_initializer`, and bound the close (the `bounded_pool_close` pattern, adviser 1661).
 - X2 `frankie_box_experiment.py` (Run): nothing needed for the 32-CPU Jev fix (Run already binds the lane); please keep
   `request['cpus']` = the held booking's CPUs.
-- X3 Jev interrupted calls re-done (Greg's rule as relayed): experiment.py:3683-3688 records waiting on
-  `unresolved_calls` and never re-dispatches; sit_in's call accounting (`intents_without_reply`) and jev_cpu.py
-  (`client['call_accounting']['intents_without_reply']` raise, 702) would need the meeting's pattern (stamp
-  unknown_completion, re-send from the retained state). Not changed here: it changes Jev's documented rule ("no model
-  request is retried or erased") and needs Run's side; Greg to confirm it applies to Jev too.
+- X3 Jev interrupted calls re-done: DECIDED by Greg (2026-10-07 night: the re-do rule applies to Jev) and BUILT, see
+  "Jev interrupted calls re-done" below (scope granted: jev_cpu.py, sit_in.py, and experiment.py Run.jev 3682-3687 + 3696).
 - X4 R4 from the school owner (ST.pre_read / test(scanned=)): DONE in jev_cpu.py 710-725.
 - X5 frankie_box_market_timeline.py: no request from these pieces beyond the ones queued after a2.
 
 ## Remaining / not done
-- Exchange ledger save point (pickle) and the double teacher-rows read (spot 3).
 - Double gate dedupe in the meeting (spot 4); stat-skip re-hash (open call (c)).
-- Jev interrupted-call redo (X3).
+- Items PARTIAL in "Save/restore vs ROOT" below (periodic saves are per call/round/boundary already; spool helpers N/A).
 - Everything above is SOURCE-BUILT / RUNTIME-UNVERIFIED; first runtime evidence will be the restaged one-day run.
+
+## Save/restore vs ROOT (Greg, 2026-10-07 night: "every workflow piece needs their restore save code updated to match ROOT's")
+
+ROOT's contract items 1-7 (scratchpad/save_restore_directive.txt) against the exchange, Jev and the meeting. Lines are the
+working tree after this pass.
+
+| # | ROOT item | Exchange | Jev | Meeting |
+|---|---|---|---|---|
+| 1 | save request route: SIGTERM marks, run to the next group-closed point, exact state, exit 75; workers reset SIGTERM | BUILT: `_mark_save` / `_save_requested` (honours FRANKIE_LANE_STOP_FILE) / `_save_point` (exchange 2027-2050), handler installed in `main`; boundaries after the accumulated tests (2082), after the documents are written once (2098), after the brain entry (2110); prints FRANKIE_EXCHANGE_SAVED_V1, exit 75 | DONE before: mark-only handler (jev 472), `check_save` (473-475) at every boundary and before every send (sit_in), exit 75 with `saved` status when no call is unresolved (jev 870-886) | BUILT: `MeetingSaveRequested` (BaseException), `_mark_save`, `save_requested`, `save_point` (meeting 667-692); checked before every round's count/chat (1390) and before every item (1944); the attempt record says `saved`, the server is released (1992-2001); `main` installs the handler and returns 75 (2126-2140) |
+| 1b | workers reset SIGTERM | `AM._pool_task` (adviser 1517-1530) for every PinnedMap worker; llama-server is exec'd (handlers reset by exec) | same | same |
+| 2 | periodic exact saves at boundaries | BUILT: the ledger save point (`_write_ledger_save` 493-512: exact pickle, key order kept, manifest LAST) after the ledger pass; the retained shared-market-context.json after the input assembly (AM.from_teacher); documents write-once | DONE: state.json saved before every send (durable intent) and after every reply (sit_in recorded_chat), inputs frozen by `bind_inputs`, material/config retained | DONE: per-item progress saved after every round and before every chat (pending intent) (meeting ~1395-1440) |
+| 3 | file positions without re-read (`_saved_spool_position` / `_resume_row_spool`, boss_session 1102/1129) | N/A: the exchange appends no spool and reads whole pinned files (rows JSON, lessons); each read is re-hashed (no stat skip, open call (c)); the ledger save removes the second parse and ledger pass of the rows (`_load_ledger_save` 463-490, called from `teacher_rows` 515ff; context_only saves, the exchange step loads) | N/A: no spool; inputs are whole pinned files | N/A: no spool; progress files are small JSON rewritten whole |
+| 4 | identity is content (`content_rebinds`) | the ledger save binds the rows' bytes+sha256 (re-hashed) and the code identity, not the path's checkout; documents are write-once by content | BUILT: `bind_owner` (jev 186-230) accepts an owner saved by another checkout when `XR.content_rebinds` finds only checkout-prefix moves of equal bytes/sha256, records `<out>/checkout-rebinds/<ns>.json`, keeps the saved owner. Run still binds `request['source']` (commit) in the retained Jev request (experiment.py 3633-3646): a restage to a NEW commit refuses there first (cross-owner X6) | BUILT: the meeting binding (meeting 1857-1885): a differing retained binding is accepted when `content_rebinds` returns only checkout moves (charter, rules, runtime definition live in the checkout), recorded under `<out>/checkout-rebinds/`, the SAVED binding bytes stay the identity (binding sha256 in every progress file unchanged) |
+| 5 | function-level code identities | BUILT for the ledger save: `_ledger_code_identity` = `frankie_box_bedrock.code_identity(exchange, LEDGER_CODE)` + the source sha256 of `dipole_classroom._dimension_ledger` (449-461) | PARTIAL: the owner identity pins the client, helper and transport files whole (jev ~438); changing to function-level would change every retained owner's bytes (old saves must load), so left whole-file (strict: refuses on any edit of those files) | DONE by content: every resumed round requires the retained transcript's system and first message to equal the rebuilt ones (meeting ~1352), so a code change that changes a prompt refuses and one that does not is accepted |
+| 6 | additive; old saves load | no save = computed as before (test: `no saved measurement ... computed`); a mismatched save = computed, reason on the receipt `ledger_save` | an owner/state saved before this pass loads unchanged (no new required field); `interrupted_calls` is additive | progress saved before this pass loads; `interrupted_calls` additive; a legacy-input binding keeps its legacy input (meeting ~1712-1721) |
+| 7 | seal check | the documents are write-once (`write_once` refuses a differing existing document) | DONE: `sealed_claims` re-reads seal, claims, state and inputs sha256 before comparison (jev ~267-289) | DONE: the binding and input sha256 are re-checked at start; publication reads back the complete record (`publish_meeting_record`) |
+
+Probe after resume: Jev and the meeting report tokens generated (MODEL_PROGRESS) from 0 per process, and reused rounds/calls
+make no call, so units/min counts only this attempt's work (stated, not a saved cursor).
+
+## Jev interrupted calls re-done (Greg's decision on X3, 2026-10-07 night)
+- `sit_in.recorded_chat` (sit_in.py 420-475): a retained call at the cursor whose status is not `replied` (pending intent
+  or failed) with byte-identical request bytes is moved whole into `state['interrupted_calls']` (phase, index, redone,
+  redone_at), a pending intent is stamped `unknown_completion` on the model clock (LOCAL['model_clock'], decided_by
+  'sit_in client (interrupted call re-done)'), the state is saved, and the same request is sent again through the normal
+  path (check_save, durable pending intent, LOCAL['chat']). A retained unresolved call followed by later calls refuses
+  (explicit owner recovery). Nothing is counted answered until the re-sent call replies (`intents_without_reply` counts
+  state['calls'] only).
+- `frankie_box_jev_cpu.py`: `client_clock` keeps a caller's decided_by (~688); the unresolved-intents raise names the
+  re-do (~702); `main`'s status rule text names Greg's decision (~851-855).
+- `frankie_box_experiment.py` Run.jev, the granted narrow edit: lines 3682-3687 (the `return self.record('jev', ...,
+  'waiting', ... 'none is retried or erased' ...)` replaced by `redispatched_unresolved = ...`, so the attempt is
+  re-dispatched from its saved request) and line 3696 (`redispatched_unresolved=` added to the stage fields). Nothing
+  else in experiment.py was touched.
+- Jev stays blind: the re-sent request is the traversal's own body, checked equal to the retained one.
+
+## Tests run for the save/restore pass (scratchpad/exchange/)
+5. `test_jev_redo.py` (sit_in loaded by path; a BaseException kills attempt 1 mid-call): `attempt 1: call status pending`;
+   `attempt 2: ... calls ['replied'] interrupted_calls 1 redone True`; `re-sent request byte-identical: True`;
+   `clock: ['unknown_completion']`; `attempt 3 replays the retained reply without a call: True sends 2`.
+6. `test_saves.py`: (a) ledger save: `no save yet -> None` (old shape: computed), `loaded exact: True True`, `changed rows
+   -> None ... rows file differs; computed`, `changed code -> None ... code identity differs; computed`; (b) meeting save
+   route: `stopped: save requested; stopped at item item-1 before round 1 ... progress status in_progress | calls sent 0`,
+   `resumed: LEAVE_OPEN | calls sent 1 | exit code on save 75`; (c) `content_rebinds` importable from the meeting's path.
+   `frankie_box_bedrock.code_identity(exchange, LEDGER_CODE)` computes (61bddc32...).
+Not run: the exchange/meeting `main` save routes end to end, the Jev owner rebind, Run's re-dispatch (need the box).
+
+## Jev relay render (classroom owner's note)
+The relay (`frankie_box_jev_relay.sh`, Pod route) is refused and not in my files: left untouched. On the CPU route Jev's
+material is rendered through the existing lossless stacks already (sit_in.py 59-61, 242-307: `_AM().render_material`,
+STACKED_TEXT_V1 keys once, DIGEST_V10 tables, parse-back proven, brain dedupe 648-660); nothing to add.
+
+## Cross-owner (save/restore)
+- X6 `frankie_box_experiment.py` Run.jev (3633-3646): the retained Jev request binds `source` (commit, code_root); a restage
+  to a new commit refuses the retained request before Jev's own content rebind can apply. ROOT's rule would accept a
+  source move when the saved documents' content is equal; the Run owner decides.
+- X1 (lane_pin ordered_map SIGTERM/bounded close) stands.

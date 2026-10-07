@@ -204,6 +204,22 @@ def bind_owner(out, identity, chain):
                 runtime_cpus=(identity.get('shared_runtime') or {}).get('cpus'),
                 rule='the retained owner identity, state, seal and calls stand unchanged; only the held lane differs'))
             return retained, record
+        if retained != identity:
+            # identity is content, not location (ROOT's frankie_box_experiment_root.content_rebinds; Greg, 2026-10-07
+            # night: every piece's save/restore matches ROOT's): an owner saved by another checkout of the same source
+            # differs only in checkout-prefix paths of equal-bytes, equal-sha256 witnesses (client, helper, transport,
+            # reader pins); those moves are accepted and recorded under <out>/checkout-rebinds/, the SAVED owner stays
+            # the identity (the state's cpu_owner and the claims seal stay valid). Anything else refuses as before.
+            try:
+                import frankie_box_experiment_root as XR
+                moves = XR.content_rebinds(retained, identity)
+            except Exception:  # noqa: BLE001 - no rebind check: the retain below refuses as before
+                moves = None
+            if moves:
+                write_json(out / 'checkout-rebinds' / ('%d.json' % time.time_ns()),
+                           dict(schema='JEV_CPU_CHECKOUT_REBIND_V1', owner=pin(owner_path), moves=moves,
+                                rule='checkout-prefix moves of equal bytes and sha256 only; the saved owner is kept'))
+                return retained, None
     retain_json(owner_path, identity)
     return identity, None
 
@@ -675,7 +691,7 @@ def _run(request, request_path, out, brain, jev_brain):
         # record of this owner too, with the same pins, cutoff and lane as the real calls (queued item SI.LOCAL, 2026-10-07
         # night): sit_in calls LOCAL['model_clock'](**fields) once per prompt; the runtime pins and cutoff are bound here
         return model_clock(out, request, **dict(fields, model=clock_pins, cutoff=clock_cutoff,
-                                                decided_by='sit_in client (no output room)'))
+                                                decided_by=fields.get('decided_by') or 'sit_in client (no output room)'))
 
     SI.LOCAL = dict(identity=identity, put=local_put, seal=seal_claims, frankie=frankie_bundle, check_save=check_save,
                     count_tokens=counted, model_clock=client_clock, measure_tokens=measured,
@@ -700,7 +716,9 @@ def _run(request, request_path, out, brain, jev_brain):
     if witness(entry_path) != {k: retained_state['brain_written'][k] for k in ('bytes', 'sha256')}:
         raise ValueError('retained Jev own brain entry differs')
     if client['call_accounting']['intents_without_reply']:
-        raise ValueError('Jev still has unresolved model request intents')
+        # never counted answered until it completes; the next attempt re-does it (Greg, 2026-10-07 night)
+        raise ValueError('Jev still has unresolved model request intents (re-done from the same saved request on the next '
+                         'attempt)')
     doc = ST.jev_claims(claims_path, seal_path=seal_path)
     days = ST.load_searches([search_path.parent])
     scientific_dir = out / 'scientific'
@@ -848,7 +866,9 @@ def main():
                       request=pin(args.request), owner=state.get('cpu_owner'), reason=repr(error),
                       state=pin(state_path) if state_path.exists() else None, unresolved_calls=uncertain,
                       save_marker=pin(marker) if marker.is_file() else None,
-                      rule='no model request is retried or erased; owner review resolves uncertainty')
+                      rule='an interrupted model request is never erased and never counted answered: the next attempt '
+                           're-sends the same saved request (sit_in.recorded_chat; Greg, 2026-10-07 night, superseding '
+                           '"no model request is retried")')
         # A refused/stale invocation never rewrites a completed scientific/day receipt.
         if out.is_dir() and not isinstance(error, BlockingIOError):
             owner_path = out / 'owner.json'

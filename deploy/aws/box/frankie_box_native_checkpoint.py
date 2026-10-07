@@ -32,12 +32,39 @@ NATIVE_VALUE_CODE = ('SCHEMA', 'sink_items', 'ledger_state', 'copy_ledger_prefix
 def runtime_identity():
     """The runtime a full state is written and restored under (Greg, 2026-10-07: saves survive unrelated edits):
     Python and cloudpickle exactly; the native code identity of this file's NATIVE_VALUE_CODE and of
-    frankie_box_segmented_ledger's (not their whole bytes); frankie_box_finalization still by its whole bytes."""
+    frankie_box_segmented_ledger's (not their whole bytes); frankie_box_finalization by its native code identity
+    (finalization_code, its NATIVE_VALUE_CODE; stacks pass 2026-10-07 night) and, recorded beside it with its earlier
+    meaning, its whole bytes (finalization_sha256). Acceptance compares finalization_code when a save carries it, else
+    the saved whole-file sha256 by frankie_box_finalization.accepts_whole_file (_finalization_normalized)."""
     from frankie_box_bedrock import code_identity
     return dict(schema=RUNTIME_SCHEMA, python=sys.version, cloudpickle=cloudpickle.__version__,
                 serializer_code=code_identity(__file__, NATIVE_VALUE_CODE)['sha256'],
                 ledger_storage_code=ledger_storage.native_code_identity()['sha256'],
-                finalization_sha256=witness(Path(finalization.__file__).resolve())['sha256'])
+                finalization_sha256=witness(Path(finalization.__file__).resolve())['sha256'],
+                finalization_code=finalization.native_code_identity()['sha256'])
+
+
+def _finalization_normalized(saved):
+    """(saved runtime with its finalization fields replaced by the current ones, why) when the saved finalization is
+    accepted, else (saved unchanged, None). Accepted: a saved finalization_code equal to the current one (the whole
+    bytes may differ); a save without finalization_code (every save before the stacks pass: V2 and V1 forms) whose
+    finalization_sha256 frankie_box_finalization.accepts_whole_file accepts (the same bytes, or a known earlier file
+    whose NATIVE_VALUE_CODE is unchanged). The rest of the runtime is still compared by the rules below, field by field."""
+    if not isinstance(saved, dict) or 'finalization_sha256' not in saved:
+        return saved, None
+    current_whole = witness(Path(finalization.__file__).resolve())['sha256']
+    if 'finalization_code' in saved:
+        if saved['finalization_code'] != finalization.native_code_identity()['sha256']:
+            return saved, None
+        why = 'finalization_code'
+    else:
+        why = finalization.accepts_whole_file(saved['finalization_sha256'])
+        if why is None:
+            return saved, None
+    normalized = dict(saved, finalization_sha256=current_whole)
+    if 'schema' in saved:                           # the V2 form carries finalization_code from now on
+        normalized['finalization_code'] = finalization.native_code_identity()['sha256']
+    return normalized, why
 
 
 def whole_file_runtime_identity():
@@ -56,6 +83,12 @@ def runtime_acceptance(saved):
     current = runtime_identity()
     if saved == current:
         return 'code'
+    # finalization by its native code identity (stacks pass): an accepted saved finalization is compared as current,
+    # every other field by the rules below; the label names how it was accepted
+    normalized, finalization_why = _finalization_normalized(saved)
+    if finalization_why is not None and normalized != saved:
+        label = runtime_acceptance(normalized)
+        return None if label is None else '%s; finalization %s' % (label, finalization_why)
     # The persistent-id serializer (serializer_code 65006dc9, commits up to c9bf631; e2e a2's saves): its states load
     # through the unchanged persistent_load, and every other runtime field must still be equal.
     if saved == dict(current, serializer_code=PERSISTENT_ID_SERIALIZER_CODE):

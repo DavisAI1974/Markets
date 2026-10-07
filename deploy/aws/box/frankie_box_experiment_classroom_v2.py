@@ -131,6 +131,30 @@ def identity_acceptance(saved, current):
     return None
 
 
+def checkout_rebinds(saved, current):
+    """Identity is content, not location (frankie_box_experiment_root.content_rebinds, ROOT's rule): the checkout moves
+    under which `saved` equals `current` (or its whole-file form), or None. Only file witnesses whose bytes, sha256 and
+    every other key are equal and whose paths name the same file inside a checkout may differ."""
+    import frankie_box_experiment_root as XR
+    for form, built in (('code', current), ('whole_file_unchanged', dict(
+            current, exhaustion_d_code=_whole_file_identities(EXHAUSTION_D_CODE),
+            native_entry_code=_whole_file_identities(NATIVE_ENTRY_CODE)))):
+        moves = XR.content_rebinds(saved, built)
+        if moves:
+            return form, moves
+    return None
+
+
+def _record_rebinds(directory, moves, rule):
+    """<classroom>/checkout-rebinds/<ns>-<sha8>.json (as ROOT's <attempt>/checkout-rebinds/); nothing saved is rewritten."""
+    raw = json.dumps(dict(schema='FRANKIE_CLASSROOM_CHECKOUT_REBIND_V1', rule=rule, moves=moves, at=time.time()),
+                     indent=1, sort_keys=True).encode()
+    path = Path(directory) / 'checkout-rebinds' / ('%d-%s.json' % (time.time_ns(), hashlib.sha256(raw).hexdigest()[:8]))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _bytes(path, raw)
+    return str(path)
+
+
 DIRECTIVE_PATH = ROOT / 'research/kalshi/frankie_boss/knowledge/EXPERIMENT_DIRECTIVE_V1.json'
 
 
@@ -672,14 +696,25 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     state = _load_raw_state(state_path) if state_path.exists() else dict(identity=identity, started=time.time(), phases={})
     phase_directory = d / 'saved-phases'
     phase_directory.mkdir(exist_ok=True)
-    acceptance = identity_acceptance(state['identity'], identity)
+    acceptance, rebinds = identity_acceptance(state['identity'], identity), None
+    if acceptance is None:
+        found = checkout_rebinds(state['identity'], identity)
+        if found is not None:
+            acceptance = 'checkout_rebind (%s)' % found[0]
+            rebinds = dict(moves=found[1], record=_record_rebinds(d, found[1], found[0]))
     if acceptance is None:
         raise ValueError('saved classroom source, previous class, directive or destination changed')
     # recorded on the receipt (received.identity_acceptance): 'code' (equal), or 'whole_file_unchanged' (a save made
     # before the function-level code identities, accepted while those files are byte-identical; its identity is kept)
-    received['identity_acceptance'] = dict(rule=acceptance, current_code=dict(
+    received['identity_acceptance'] = dict(rule=acceptance, checkout_rebinds=rebinds, current_code=dict(
         exhaustion_d_code=identity['exhaustion_d_code'], native_entry_code=identity['native_entry_code']))
     identity = state['identity']
+    # Periodic exact saves inside the long sub-steps (the 171 pairs, the native series, the anchor picture texts):
+    # frankie_box_classroom_code._Segments, bound to this identity, honouring the same save request.
+    K.SEGMENT_SAVES.update(directory=str(d), identity=hashlib.sha256(json.dumps(
+        identity, sort_keys=True, default=str).encode()).hexdigest(), save_requested=save_requested,
+        every_s=float(os.environ.get('FRANKIE_CLASSROOM_SAVE_EVERY_SECONDS') or K.SEGMENT_EVERY_SECONDS))
+    received['segment_saves'] = K.SEGMENT_RECORD
     # Where the classroom's time goes, per saved operation (Greg, 2026-10-07: show where a run spends its
     # time): seconds of each operation when it was computed (kept across resumes from the saved state), or
     # `restored` with no seconds when a phase file predates this field. Diagnostic only; never an input to
@@ -820,6 +855,15 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         # value, so the answers are the same bytes. Each is computed in order here when its phase is saved, the read
         # is saved, or no fork can be taken; a dead side process is redone in order (_SideTask.result).
         side = {}
+        if journal_witness is not None and journal_claim is None and not phase_path('receipt').exists():
+            # the claim was taken without a full read (resume rule): the full read runs beside the stage, on the
+            # booked CPUs off the consumer core, and is compared at the seal (ROOT's _check_spool_claims)
+            lane = K.lane_cpus()
+            consumer, siblings, _ = K._lane_pin().consumer_core(lane)
+            from frankie_box_filehash import witness as full_witness
+            side['journal_seal_check'] = _SideTask('journal_seal_check', lambda: full_witness(journal_pin['path']), d,
+                                                   [c for c in lane if c != consumer and c not in siblings] or lane
+                                                   ).start(K._fork_ready(wait=2.0))
         if market is not None and not phase_path('shared_market_context').exists():
             lane = K.lane_cpus()
             consumer, siblings, _ = K._lane_pin().consumer_core(lane)
@@ -830,6 +874,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                    ('school_reproduction', lambda: K.school_reproduction(visible, school))):
                 if not phase_path(name).exists():
                     side[name] = _SideTask(name, function, d, off_consumer).start(ready)
+            received['side_by_side'] = {name: task.record for name, task in side.items()}
+        if side:
             received['side_by_side'] = {name: task.record for name, task in side.items()}
         side_exhaustion = side.get('exhaustion_d_facts')
         if market is not None:
@@ -1100,6 +1146,19 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     # a heartbeat that could not be written (the probe module failed to import), counted per error; {} = none
     received['probe_errors'] = dict(K.PROBE_ERRORS)
     received['output_pins'] = dict(PIN_RECORD)              # where the output sha256s ran and how long
+    # The seal check (ROOT's _check_spool_claims): when this attempt took the journal claim without a full read, the full
+    # read made beside the stage must equal it; a difference refuses visibly (the failure receipt names it).
+    if 'journal_seal_check' in side:
+        full = side['journal_seal_check'].result()
+        seal = dict(claim={k: journal_witness[k] for k in ('bytes', 'sha256')},
+                    full_read={k: full.get(k) for k in ('bytes', 'sha256')})
+        seal['equal'] = seal['claim'] == seal['full_read']
+        received['journal_seal_check'] = seal
+        if not seal['equal']:
+            raise ValueError('journal seal check: the full read %s differs from the saved claim %s; refused, every saved '
+                             'operation retained' % (seal['full_read'], seal['claim']))
+    else:
+        received['journal_seal_check'] = dict(basis='the journal was fully read in this attempt (or no shared journal)')
     key = ext['teacher_key']
     result = dict(schema=SCHEMA, day=day, status='complete', mode=mode, components=report['components'],
                   observations=report['observations'], pairs=report['pairs'], novel_findings=len(novel),

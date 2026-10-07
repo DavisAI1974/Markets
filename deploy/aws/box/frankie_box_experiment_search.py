@@ -393,10 +393,24 @@ class FrontierHasher:
     the shard exit hang of a2 came from an unbounded join). The digest is compared only after the last range."""
     BLOCK = 16 << 20
 
-    def __init__(self, path, lead, name='spool-sha256'):
+    def __init__(self, path, lead, name='spool-sha256', resumable=False, resume=None):
+        """resumable: hash with frankie_box_boss_session._ResumableSha256 (ROOT's OpenSSL running state, checked once
+        per process against hashlib) so `snapshot` = (state, hashed bytes) can be saved at a save point; resume = such a
+        snapshot to continue from (the bytes before it are not read again). Without the library: hashlib, no snapshot."""
         import threading
         self.path, self.lead = str(path), max(self.BLOCK, int(lead))
         self.sha256, self.bytes, self.error, self.frontier = hashlib.sha256(), 0, None, 0
+        self.snapshot, self.resumed_from = None, 0
+        if resumable or resume is not None:
+            S = _boss_session()
+            library = S._sha256_library() if S is not None else None
+            if library is not None:
+                state, length = resume if resume is not None else (None, 0)
+                self.sha256 = S._ResumableSha256(library, state, length)
+                self.bytes = self.resumed_from = int(length)
+                self.snapshot = (self.sha256.state(), self.bytes)
+            elif resume is not None:
+                raise ValueError('a saved SHA-256 running state cannot be continued without the resumable hasher')
         self.stopped, self.throttle_waits, self.started_at, self.seconds = False, 0, None, None
         self.condition = threading.Condition()
         self.thread = threading.Thread(target=self._run, name=name, daemon=True)
@@ -405,6 +419,7 @@ class FrontierHasher:
         self.started_at = time.time()
         try:
             with open(self.path, 'rb', buffering=0) as handle:
+                handle.seek(self.bytes)
                 while True:
                     with self.condition:
                         while not self.stopped and self.bytes >= self.frontier + self.lead:
@@ -417,6 +432,8 @@ class FrontierHasher:
                         return
                     self.sha256.update(block)
                     self.bytes += len(block)
+                    if self.snapshot is not None:
+                        self.snapshot = (self.sha256.state(), self.bytes)     # one tuple: read whole by a saver
         except BaseException as error:  # noqa: BLE001 - re-raised by finish()
             self.error = error
         finally:
@@ -453,7 +470,23 @@ class FrontierHasher:
     def report(self):
         return dict(mode='frontier-throttled thread (the decode and the hash share one disk read via the page cache)',
                     lead_bytes=self.lead, throttle_waits=self.throttle_waits, seconds=self.seconds,
-                    stopped_early=self.stopped)
+                    stopped_early=self.stopped, resumable=self.snapshot is not None, resumed_from_byte=self.resumed_from)
+
+
+def _boss_session():
+    """frankie_box_boss_session (ROOT's spool save helpers: _ResumableSha256, _sha256_library, _line_ending_at), or None
+    when it cannot be imported here (then hashing is hashlib and no running state is saved; listed on the receipt)."""
+    try:
+        import frankie_box_boss_session as S
+    except ImportError:
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import frankie_box_boss_session as S
+        except Exception:  # noqa: BLE001
+            return None
+    except Exception:  # noqa: BLE001
+        return None
+    return S
 
 
 # The column spools are cut into ranges of about SPOOL_COLUMN_RANGE_BYTES (at least SPOOL_RANGES_PER_WORKER per

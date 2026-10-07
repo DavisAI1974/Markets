@@ -728,7 +728,7 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
     finally:
         journal.close()
         if not closed:
-            ingest_cpus.end_pool(pool, normal=False, grace=30.0, note=event, label='parallel ingest workers (error path)')
+            ingest_cpus.end_pool(pool, normal=False, grace=5.0, note=event, label='parallel ingest workers (save or error path)')
         _SHARED.clear()
         gc.unfreeze()
     del records

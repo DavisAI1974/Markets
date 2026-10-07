@@ -161,6 +161,7 @@ each_day() {   # $1 = fetch|ingest over the MANIFEST list, in order; a day that 
     BOOKING_OUTCOME="$OUTCOME"; run_tool ingest; RC=$?; BOOKING_OUTCOME=""
     [ -s "$OUTCOME" ] || echo '{"status": "not started"}' > "$OUTCOME"     # a fetch-ahead waiting on it ends at once
     if [ "$RC" != 0 ] && [ -n "$FA" ]; then fetch_ahead_wait "$FA"; FA=""; fi
+    [ "$RC" != 75 ] || [ -z "${SAVED_OUT:-}" ] || { echo "### the list is SAVED at $MANIFEST ($SAVED_OUT); the days after it wait (exit 75)"; return 75; }
     [ "$RC" != 75 ] || { echo "### the list waits at $MANIFEST for its CPU booking; the days after it wait too (exit 75)"; return 75; }
     [ "$RC" = 0 ] || { echo "### the list stops at $MANIFEST; the days after it wait (each opens with the book this day closes with)"; return 3; }
     [ -s "$OUT/ingestion-receipt.json" ] || { echo "### $OUT has no ingestion receipt; the list stops at $MANIFEST"; [ -z "$FA" ] || fetch_ahead_wait "$FA"; return 3; }
@@ -322,6 +323,13 @@ run_tool() {   # $1 = canary|ingest (prepare ran: units idle, the dispatched com
       "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
       --manifest "$M" --sources-dir "$DATA" --output-dir "$OUT" --session-policy cme_trading_day --workers "$WORKERS" $EXTRA )
   RC=$?
+  if [ "$RC" = 75 ] && ls "$OUT"/ingest-saved-*.json >/dev/null 2>&1; then
+    # ROOT's save route: a requested save honoured at a save point (pass-1 state or segment boundary); exit 75 is
+    # "saved", never a failure; resume with RESUME_DIR=$OUT (the booking was released by frankie_box_cores.py run)
+    echo "### $1 of block $BLOCK SAVED at a save point; resume: ACTION=ingest MODE=parallel RESUME_DIR=$OUT (exit 75)"
+    for R in "$OUT"/ingest-saved-*.json; do cat "$R"; done
+    SAVED_OUT="$OUT"; return 75
+  fi
   [ "$RC" != 75 ] || { echo "### $1 of block $BLOCK WAITING for its CPU booking (not started; nothing written)"; return 75; }
   [ "$RC" = 0 ] || { echo "$1 failed (exit $RC); the directory $OUT is kept"; return 3; }
   for R in canary-receipt.json ingestion-receipt.json; do [ -s "$OUT/$R" ] && { echo "### $R"; cat "$OUT/$R"; }; done
@@ -358,10 +366,11 @@ at_once() {   # DAYS_AT_ONCE days of the list side by side (each warms its own b
     manifest_ok || return 2
     echo "### $MANIFEST"; cat "$ROOT/tmp/ingest-$BLOCK-$$.log"
     if ! grep -q '"schema": "BOSS_BLOCK_INGESTION_RECEIPT_V1"' "$ROOT/tmp/ingest-$BLOCK-$$.log"; then
-      FAILED=$((FAILED + 1)); if grep -q '^CPU_BOOKING_WAITING ' "$ROOT/tmp/ingest-$BLOCK-$$.log"; then WAITED=$((WAITED + 1)); fi
+      FAILED=$((FAILED + 1))
+      if grep -q '^CPU_BOOKING_WAITING \|^INGEST_SAVED ' "$ROOT/tmp/ingest-$BLOCK-$$.log"; then WAITED=$((WAITED + 1)); fi   # waiting or saved: exit 75, not a failure
     fi
   done
-  [ "$FAILED" -eq 0 ] || [ "$FAILED" != "$WAITED" ] || { echo "### $WAITED day(s) WAITING for a CPU booking (not started); retry later (exit 75)"; return 75; }
+  [ "$FAILED" -eq 0 ] || [ "$FAILED" != "$WAITED" ] || { echo "### $WAITED day(s) WAITING for a CPU booking or SAVED at a save point (see each log: INGEST_SAVED names its RESUME_DIR); retry later (exit 75)"; return 75; }
   [ "$FAILED" -eq 0 ] || { echo "### $FAILED day(s) have no sealed ingest ($WAITED of them waiting for a CPU booking); each directory is kept (RESUME_DIR continues a parallel one)"; return 3; }
 }
 conform() {   # item 3's later half: the conformance drain on a sealed ingest whose conformance was deferred (the day's
@@ -400,6 +409,10 @@ spread_sidecar() {
   trap 'kill "$SPREAD_PID" 2>/dev/null' EXIT
 }
 case "$ACTION" in ingest|conform) spread_sidecar ;; esac
+# A save request (SIGTERM to the unit: the queue's ACTION=save) reaches the tool through frankie_box_cores.py run; this
+# shell only notes it and keeps waiting for the tool's exit (a trap with a command, never '' : the children keep the
+# default disposition), so the tool's 75 "saved" is reported instead of the shell dying first.
+trap 'echo "### SIGTERM received: the ingest saves at its next save point (parallel mode) and exits 75"' TERM
 case "$ACTION" in
   fetch) each_day fetch ;;
   canary) prepare && run_tool canary ;;

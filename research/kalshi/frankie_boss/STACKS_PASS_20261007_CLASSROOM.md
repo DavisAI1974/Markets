@@ -144,3 +144,51 @@ Everything on the box:
 | lane_pin executor | K `_pair_measures` (process), K `_native_series_parallel` thread fallback, v2 `_pin_outputs` (thread) |
 | lane_pin record | `received.cpu_pinning.*`, `received.output_pins` |
 | classroom commit 5de6392 sub-steps | v2 series/categories/queues (ordered_map), pictures (ordered_map), exhaustion/D (side task), pairs (executor with redo). The reader (learner walk) reuses the teacher's pinned walk sized from the booking. Code answers, external code and staged have no pool (see rank 4/5; staged is not on the experiment path). |
+
+## 8. Save/restore vs ROOT (follow-up, Greg: "every workflow piece needs their restore save code updated to match ROOT's")
+
+v2 = `deploy/aws/box/frankie_box_experiment_classroom_v2.py`, K = `deploy/aws/box/frankie_box_classroom_code.py`. Lines
+are from the current working tree. SOURCE-BUILT / RUNTIME-UNVERIFIED.
+
+| ROOT item | Classroom before | Classroom now |
+|---|---|---|
+| 1 save route, exit 75, children not mark-only | PARTIAL. SIGTERM / the lane stop file marked a save. `phase()` stopped between operations (v2 `stop()` :738-742) and exited 75 (`TeacherSaved`, a SystemExit(75); `run` records `last_event` saved, :450). Forked children inherited the mark-only handler. Inside the long sub-steps a request was honoured only at the end of the operation. | DONE. `_owner_sigterm` (v2:412): forked children get the default action. The three long sub-steps check the request at every closed boundary, save, and raise `TeacherSaved` (K `_Segments.offer`, :160-185). Queued pairs/series are cancelled, so exit waits only for work already running (K :1620-1628, :3010-3022). Saved, failed and refused stay distinct on receipt.json (v2 `_failure_receipt`; exit 3/75/1). The queue side (frankie_box_frankie_queue.py:175) is unchanged and not mine. |
+| 2 periodic exact saves at closed boundaries | PARTIAL. One exact save per completed operation (saved-phases/*.pkl, sha256-prefixed pickle). Nothing inside the native series, 171 pairs or picture texts. | DONE. K `_Segments` (:111-200) runs every `FRANKIE_CLASSROOM_SAVE_EVERY_SECONDS` (default 120 s, v2:714). It also saves on a request. Boundaries: each in-order native series chunk (K `_native_series_parallel` :1603, fork and thread paths), each pair in pair order (K `_pair_measures` :2993 pool, :3050 serial), each anchor picture text in cursor order (K `picture_texts` :2885). Each save is one more segment file holding only the new values (`parallel_teacher._save_raw_state`: pickle, key order kept, sha256 prefix, fsync, rename). The key binds the classroom identity digest, the operation and its whole job list (functions by qualified name, never by address, K `_job_key` :120). Segments are removed once the sub-step returns; its phase then saves it. A cutoff marker is never saved; saving stops at the first one. |
+| 3 file positions without re-read | N/A for spools: the classroom appends to no spool or part file and reads no spool itself. The journal is read by the market timeline (cross-owner). Two large inputs: the journal witness was fully re-hashed on every resume; teacher-attachment.pkl is read whole every attempt because it must be unpickled. | DONE (mirrored, the classroom has no RowSpool). The journal claim is saved in `<classroom>/journal-witness.json` with the additive resume block, by `_journal_witness_record` (v2:211, written at :612): device, inode, mtime_ns, size and the last MiB's offset/sha256. This is the line-free form of `_saved_spool_position` / `_line_ending_at`. A resume on the same unchanged file takes the claim without a full read; anything else is one full pass, with the reason on `received.journal_witness.resume.how` (`_saved_journal_witness` v2:220; the rule of `_resume_row_spool`). The recorded sha256 is the same value. The attachment stays one combined pass (read, hash in memory, unpickle the same bytes). No stat-only skip anywhere. |
+| 4 identity is content, not location | MISSING. Any path difference refused, e.g. `rules.path` names the checkout's CLASSROOM_RULES_V3.json. | DONE. `checkout_rebinds` (v2:134) applies `frankie_box_experiment_root.content_rebinds` to the saved identity versus the one this checkout builds, in its code form and its whole-file form. Only checkout-prefix moves of equal bytes/sha256 are accepted. They are recorded under `<classroom>/checkout-rebinds/` (`_record_rebinds` v2:148) and on `received.identity_acceptance.checkout_rebinds`. The saved identity stays the identity (v2 ~700-712), and nothing saved is rewritten. |
+| 5 function-level code identities | DONE in the first pass for exhaustion/D and native entry code (v2 `EXHAUSTION_D_CODE` / `identity_acceptance` :99-131). PARTIAL for the classroom's own code: `runner_sha256` and `producers` still bind the classroom's own modules by whole bytes, so any edit to classroom code refuses a saved classroom. | unchanged. Listed: a2 has no classroom save yet, and its classroom stage starts from the restaged tip. Moving the classroom's own producers to declared functions is a separate, larger step. |
+| 6 additive, old saves load, probe continues | PARTIAL | DONE. New files/fields only: `journal-witness.json`, `segment-saves/`, `checkout-rebinds/`, and `received.segment_saves` / `journal_seal_check` / `identity_acceptance`. A c9bf631 classroom identity has the same field set (checked against `git show c9bf631`) and loads through `whole_file_unchanged` while those files' bytes and the runner/producer bytes match. A save without journal-witness.json takes one full pass, noted. Without `SEGMENT_SAVES` (an older runner) nothing is saved inside sub-steps and the values are unchanged (test 4). The heartbeat continues from the resumed count (series_done = start; pairs and pictures count the resumed values). |
+| 7 seal check against the saved claim | MISSING | DONE. When an attempt took the journal claim without a full read, the full read runs as a side process beside the stage (v2 :864). It is compared at the seal before the receipt (v2 ~1150-1160, ROOT's `_check_spool_claims`). A difference raises, so the failure receipt names it. Every saved phase file is checked by its own sha256 prefix on load (`_load_raw_state`). |
+
+**The one listed exception:** the full ordered market read (`shared_market_context`, K `market_context`) cannot save mid-read. A stop there raises `TeacherSaved` with no partial reading claimed, and a resume reads again from the start. Saved native-series segments are reused after it, because the read is deterministic and the segments are keyed by identity and job list. Lifting this needs `frankie_box_market_timeline.py` start-at-cursor and segmented replay from group-closed states, which is cross-owner and after a2 (that file is hashed into a2's binding).
+
+Also listed:
+- The native-entry cutoff clock (Greg's open call (e)) counts the current attempt's native work only. A resumed series phase can therefore compute series an uninterrupted run would have cut off. Recorded here, not decided.
+- Pickle bytes of the pair values differ between the pool path and the serial loop even without any save (memo sharing), while the values are equal and their JSON bytes are identical (test 2b). The products are the JSON files.
+
+### Toy proof (scratchpad `classroom/selftest2.py`; research package `__init__` skipped because torch is absent here)
+
+Each case: save (a requested save after 3 arrivals: exit 75, one segment file) -> resume -> compare with from scratch.
+```
+1  native series, fork pool:   exit 75, 1 segment, resumed 40 of 300 series, equal (== and JSON bytes), segments removed
+1b native series, thread path: exit 75, 1 segment, resumed 4, equal, removed
+2  171 pairs, fork executor:   exit 75, 1 segment, resumed 4, equal (== True, JSON True; pickle bytes differ, see above)
+2b pool path without any save: == True, pickle bytes differ (pre-existing; values equal)
+3  anchor picture texts:       exit 75, 1 segment, resumed 4, texts equal
+4  old shape (no SEGMENT_SAVES): values equal, saving disabled
+5a another identity's segments: not read (0 resumed), values equal
+5b a tampered segment:         refused ("saved teacher state hash differs; retained, not discarded")
+6  journal witness:            same file -> claim without a full read; appended file -> "the file is not the one saved
+                               (size, device, inode or mtime differ)"; no journal-witness.json -> "the save recorded no
+                               journal witness (a first attempt or an older save)"
+7  identity from another checkout (rules path under /opt/frankie-box/code/c9bf631-x/markets/):
+                               direct equality None; content_rebinds accepts ('code', the rules file relative path); a
+                               changed sha256 -> None; an old whole-file save from another checkout -> 'whole_file_unchanged'
+8  TeacherSaved exit code 75
+```
+Also run: py_compile on both files, `git diff --check` clean.
+
+### Cross-owner (save/restore)
+- `frankie_box_market_timeline.py`: start-at-cursor / segmented replay (the listed exception), after a2.
+- `frankie_box_lane_pin.py:135-145, 306-310`: SIG_DFL in the pool initializers (the classroom now covers this for its own forks).
+- `frankie_box_experiment_teacher.py:436`: the learner walk runs `_teach` inside the classroom. Its own saves inside the walk are the teacher's contract; the classroom phase `learner_reading` resumes it through `KR.read_day`'s retained receipt.
