@@ -10,8 +10,8 @@ then this documentation commit. Owned files only (`frankie_box_boss_session.py`,
 `ast.parse` without project imports, `git diff --check`; no test, run, install, model call, AWS action, dispatch, canary or E2E;
 `frankie_box_historical_reproduction.run()` never called; the claims file byte-identical; STOP before #5; `9c19cc2` never applied.
 Detail per finding: step-4 report `CCODE_STEP4_SOURCE_ROUTE_20261006.md` section 8 ("Corrections after Codex's integration
-review") and the section 9 status table. Greg, 2026-10-07: "We never have transaction costs in market conditions work" (recorded
-verbatim in `frankie_box_historical_claims.MARKET_ROLE_RULE`).
+review") and the section 9 status table. Greg, 2026-10-07: no reference to transaction costs belongs in market-conditions
+work: the `crypto_harness` binding is deleted from `REPRODUCTIONS` and no admission table, field or sentence about it remains.
 
 What Codex picks up:
 1. D1 handshake: prices now carry `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (originating `input_index` + `legacy_row_ordinal`,
@@ -20,8 +20,7 @@ What Codex picks up:
    `price_row_provenance_schema` and `row_provenance_schemas`. The exact price adapter is Codex's; a V1 or provenance-free
    price spool stays listed pending. Full field/unit table in the report.
 2. Integration review of the four correction commits; anything it names comes back to CCode the same way.
-3. Nothing else is assigned to CCode. Greg's decisions, unchanged: the REFORMULATIONS needs; the B7 cost-free selection/turn
-   choices; the B6 input-supply authorization; the 4.4 pair owner; the 4.2 step definition; the three native-learner decisions;
+3. Nothing else is assigned to CCode. Greg's decisions, unchanged: the REFORMULATIONS needs; the B6 input-supply authorization; the 4.4 pair owner; the 4.2 step definition; the three native-learner decisions;
    late scheduling; the 52.9 MB claims file; the principal_inputs catalog. Memory A retired (H06-H08 `not_bound`).
 
 ---

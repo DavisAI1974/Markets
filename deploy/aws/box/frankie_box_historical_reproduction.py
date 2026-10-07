@@ -6,9 +6,9 @@ reformulations; nothing closes until reworked). This module is the CAPABILITY th
 authorized. It is NEVER invoked under the hold: run() refuses unless its caller passes the AUTHORIZATION literal, and
 nothing here is called by any lane, launcher, workflow or teacher step today. CCode performs no research with it.
 
-The bindings it executes are the declared tables of frankie_box_historical_claims (REPRODUCTIONS, REFORMULATIONS,
-MARKET_ADMISSION): sources at exact revisions with sha256, the entry point, the inputs, the recorded outputs (what the
-original author wrote down) and what the original calculation is admissible as. Everything is bytes-bound
+The bindings it executes are the declared tables of frankie_box_historical_claims (REPRODUCTIONS, REFORMULATIONS):
+sources at exact revisions with sha256, the entry point, the inputs and the recorded outputs (what the original author
+wrote down). Everything is bytes-bound
 (Codex's integration review 2026-10-06, B2-B5, applied 2026-10-07):
   stage(entry, out_dir)      git show <revision>:<path> for every declared source and committed input, sha256 verified
                              (frankie_box_historical_claims.read_source: the working tree only on an equal sha). The
@@ -40,7 +40,7 @@ original author wrote down) and what the original calculation is admissible as. 
   record(entry, plan, run, comparison, records_dir, operation_dir)   HISTORICAL_REPRODUCTION_V2: status performed_matched |
                              performed_differs | performed_not_comparable | performed_failed | not_run, the pins (sources
                              AND committed inputs), the operation evidence (plan.json / run.json paths with their file
-                             sha256 and canonical hashes), the admission, record_sha256 over the record; written once
+                             sha256 and canonical hashes), record_sha256 over the record; written once
                              under <records_dir>/<entry id>-<sha12>.json;
   records_for(claim_id, records_dir, selection=None)   what the teachers read: every record covering the claim whose
                              record_sha256 holds, whose entry, claims, binding status, pins and binding tables equal the
@@ -52,8 +52,7 @@ original author wrote down) and what the original calculation is admissible as. 
 A record is a teacher's reproduction of the ORIGINAL calculation on its ORIGINAL inputs. It is not a test of the claim on
 the search's series (frankie_box_scientific_teacher.test does that on stored counts), not a repair and not a
 reformulation (REFORMULATIONS names what those need; none is performed here). A matched record does not make the claim
-true, a differing record does not make it false: both are evidence with their counts (R11, R14); and a record of a
-COST-SELECTED calculation (MARKET_ADMISSION) is identified historical context, never market evidence (B7).
+true, a differing record does not make it false: both are evidence with their counts (R11, R14).
 """
 import hashlib
 import json
@@ -218,7 +217,6 @@ def plan(entry, staging, out_dir):
                recorded_references=[{k: s[k] for k in ('path', 'revision', 'sha256')} for s in staging.get('recorded') or []],
                missing=staging['missing'], recorded_outputs=entry.get('recorded_outputs') or [],
                pins=pins_of(entry), binding_tables_sha256=HC.binding_tables_sha256(),
-               market_admission=HC.MARKET_ADMISSION.get(entry['id'], dict(status='undeclared')).get('status'),
                staging_sha256=sha256_bytes(canonical(staging)),
                capability_sha256=sha256_bytes(Path(__file__).read_bytes()),
                executable=executable, not_executable_reasons=reasons,
@@ -462,8 +460,7 @@ def compare(entry, run_doc, staging):
               else 'performed_matched' if comparable else 'performed_not_comparable')
     return dict(status=status, outputs=outputs, **facts,
                 rule='a match reproduces the recorded numbers on the original inputs; it is not a verdict on the claim; '
-                     'a difference is evidence with its fields named, not a rejection (R11, R14); a cost-selected '
-                     'calculation\'s match is historical context, never market evidence (MARKET_ADMISSION)')
+                     'a difference is evidence with its fields named, not a rejection (R11, R14)')
 
 
 # ------------------------------------------------------------------------------------------------------------ record
@@ -486,14 +483,13 @@ def _operation_evidence(operation_dir, plan_doc, run_doc):
 def record(entry, plan_doc, run_doc, comparison, records_dir, operation_dir):
     """The record of one operation (B4): every performed fact kept (performed_not_comparable and performed_failed are
     statuses, never folded into not_run), bound to the entry, its claims, its pins (sources and inputs), the binding
-    tables, the admission and the retained operation evidence under operation_dir."""
+    tables and the retained operation evidence under operation_dir."""
     status = 'not_run' if run_doc.get('status') != 'run' else comparison['status']
     if status not in STATUSES:
         raise ValueError('comparison status %r is not a record status' % status)
     doc = dict(schema=RECORD_SCHEMA, entry_id=entry['id'], claims=list(entry['claims']), status=status,
                binding_status=entry['status'], calculation=entry.get('calculation'), pins=pins_of(entry),
                binding_tables_sha256=plan_doc['binding_tables_sha256'],
-               market_admission=HC.MARKET_ADMISSION.get(entry['id'], dict(status='undeclared')).get('status'),
                capability_sha256=sha256_bytes(Path(__file__).read_bytes()),
                plan_sha256=sha256_bytes(canonical(plan_doc)), run_sha256=sha256_bytes(canonical(run_doc)),
                operation=_operation_evidence(operation_dir, plan_doc, run_doc),
@@ -598,7 +594,7 @@ def records_for(claim_id, records_dir, selection=None):
         if doc.get('schema') != RECORD_SCHEMA:
             if str(doc.get('schema') or '').startswith('HISTORICAL_REPRODUCTION_V'):
                 listed.append(dict(path=str(path), claim_id=claim_id, schema=doc.get('schema'),
-                                   reason='an older record schema; its admission semantics are superseded, not read'))
+                                   reason='an older record schema; its record semantics are superseded, not read'))
             continue
         if claim_id not in (doc.get('claims') or []):
             continue
@@ -609,7 +605,6 @@ def records_for(claim_id, records_dir, selection=None):
             continue
         records.append(dict(path=str(path), sha256=sha256_bytes(raw), record_sha256=doc['record_sha256'],
                             entry_id=doc['entry_id'], status=doc['status'], not_run_reason=doc.get('not_run_reason'),
-                            market_admission=doc.get('market_admission'),
                             comparison_status=(doc.get('comparison') or {}).get('status'),
                             outputs=[dict(what=o.get('what'), status=o.get('status')) for o in
                                      (doc.get('comparison') or {}).get('outputs') or []],
@@ -633,6 +628,6 @@ def status_summary(records):
     for r in records:
         by_status[r['status']] = by_status.get(r['status'], 0) + 1
     return dict(word=status_of(records), by_status=dict(sorted(by_status.items())),
-                entries=[dict(entry_id=r['entry_id'], status=r['status'], path=r['path'], record_sha256=r['record_sha256'],
-                              market_admission=r.get('market_admission')) for r in records],
+                entries=[dict(entry_id=r['entry_id'], status=r['status'], path=r['path'], record_sha256=r['record_sha256'])
+                         for r in records],
                 precedence=list(STATUSES))

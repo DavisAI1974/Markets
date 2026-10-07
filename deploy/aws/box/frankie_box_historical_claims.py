@@ -34,7 +34,7 @@ eight sources that exist only at their catalog revision would read as unreadable
 committed file from its staged checkout (HISTORICAL_CLAIMS in frankie_box_scientific_teacher.sh). Idempotent by
 content: the same catalog, crosswalk and builder give the same bytes (no clock in the document).
 
-REPRODUCTIONS / REFORMULATIONS / MARKET_ADMISSION (CCode slice B, 2026-10-06; B7 2026-10-07): declared tables the scientific teacher
+REPRODUCTIONS / REFORMULATIONS (CCode slice B, 2026-10-06, below the crosswalk): declared tables the scientific teacher
 attaches at read time by claim id (frankie_box_scientific_teacher.historical_claims); they are not part of build()'s
 output. build() is unchanged by them except builder_sha256, which names the builder that built the committed file; the
 committed file is not rebuilt under the hold and stays byte-identical.
@@ -329,30 +329,6 @@ REPRODUCTIONS = (
          limits='crypto 1-minute bars of two days (2026-05-23..24), pooled n=1560 and per cell: the docstring itself calls the '
                 'data thin and the deploy map unvalidated (DEPLOY_VALIDATED = False); a match reproduces the recorded numbers, '
                 'not an edge'),
-    dict(id='crypto_harness', claims=['H01', 'H02'], status='missing_inputs',
-         calculation='the falsification harness: the same R-bps reversal timing trigger for both detectors; champion filter = '
-                     'trailing order-flow imbalance threshold, challenger filter = odcore.info_dipole.divergence '
-                     '(divergence + exhaustion); ZigZag pivots at theta = 20 bps as truth; tune on the first 60 percent, score '
-                     'the last 40 percent out of sample: calls, TP, FP, FN, recall, precision, bps_to_turn, net_oos (taker) and '
-                     'net_oos_maker per venue',
-         entry=dict(cwd='.', script='_info_dipole_harness.py', argv=[], produces=['_info_dipole_harness_results.json']),
-         sources=[INFO_DIPOLE,
-                  _src('_info_dipole_harness.py', BB28, 'c0adfc40dcc07e2e296daa26b5da9c4e20c7d00a6b34445df5ca1687e3222dda',
-                       'driver (writes _info_dipole_harness_results.json)', 'review.095'),
-                  _src('_info_dipole_swing_backtest.py', BB28, '7f0f9ce36cc3feec0e1e509b190d4b6ca0c1614ffaab288b969f128b59f94964',
-                       'dependency: load_series("realbins"), zigzag(), trailing_imbalance()', 'review.111'),
-                  _src('_info_dipole_harness_results.json', BB28, 'ace94a10b8bb2b35f45a37a519ef7fb364c138f10508ce5d6a72c3a8026130e8',
-                       'recorded output', 'review.096')],
-         inputs=[dict(path='realbins/*_bins.json (1-second bins; the live collectors\' format, dict keyed by ts)',
-                      where='not in the repository (the realbins directory is not committed at any revision)',
-                      status='not_in_repository')],
-         recorded_outputs=[dict(kind='json_file', what='per venue, champion and challenger: n_calls, TP, FP, FN, n_turns, recall, '
-                                                       'precision, bps_to_turn, net_oos, net_oos_maker, params; config',
-                                produced='_info_dipole_harness_results.json', recorded='_info_dipole_harness_results.json',
-                                fields=['config', 'per_venue'])],
-         limits='the challenger is the divergence() read used as a turn FILTER on 1-second bins; the recorded net_oos values are '
-                'negative at the taker fee for every venue (the file records them); nothing here is an edge claim; '
-                'MARKET_ADMISSION[crypto_harness]: cost-selected, historical context only (B7)'),
     dict(id='ng_leg_fingerprints', claims=['H03', 'H04', 'H05', 'H09', 'H10'], status='missing_inputs',
          calculation='per NG day: legs = lag_join.scan_moves on the raw tape (trigger TRIG["NG"] = 0.015 USD); per leg: '
                      'dipole_pieces (dip_imb_level = odcore.info_dipole imb_level over the ~300 s Lee-Ready signed-flow window '
@@ -480,74 +456,10 @@ REFORMULATIONS = (
 )
 
 
-# MARKET_ADMISSION (B7 / C2, Codex's review 2026-10-06; Greg: market conditions only, costs and bookkeeping are never
-# signals, objectives or verdicts): per reproduction binding, what its ORIGINAL calculation selected or labelled by
-# execution cost, traced in the pinned sources, and therefore what a byte-matched reproduction of it IS and IS NOT
-# admissible as. The original bytes and recorded results stay bound above, intact, as identified historical context
-# (so the prior conclusion can be explained and reworked); nothing is rewritten, rebuilt or rerun. Where a cost-free
-# route needs a mathematical choice the source never made, that choice is named and left to Greg, never taken here.
-MARKET_ADMISSION = {
-    'crypto_trend_flip': dict(
-        status='market_conditions',
-        trace=['_info_dipole_trend_flip.py @ ' + BB28 + ': no fee, cost or profit enters the arithmetic; the printed rates '
-               'are continuation/reversal COUNTS over winner onsets (confirm vs diverge split, aligned <= -0.2 gate, the '
-               '2-factor gate); its "best flip detector (pooled edge)" line ranks detectors by a count difference, not by net'],
-        admissible_as='market-condition evidence of the ORIGINAL calculation on its original inputs (reproduction status as '
-                      'recorded); provisional like every historical result; the pooled lines are pooled (never the lead)',
-        not_admissible_as=None, pending_choice=None),
-    'crypto_harness': dict(
-        status='cost_selected_historical_context',
-        trace=['_info_dipole_harness.py @ ' + BB28 + ' (sha256 c0adfc40...): run_calls() subtracts FEE_RT (10 bps taker) or '
-               'FEE_MAKER (4 bps) per leg; tune_and_score() picks best = (R, W, T) by that fee-adjusted IN-SAMPLE net '
-               '(line "if best is None or net > best[0]"), then computes the OOS calls/TP/FP/FN/recall/precision/'
-               'bps_to_turn at those selected params; SWING_THETA = 20 bps is declared the tradeable fee-floor swing that '
-               'DEFINES the true turns (zigzag(p, SWING_THETA)), so FN/TP/recall are measured against a cost-defined truth',
-               '_info_dipole_swing_backtest.py @ ' + BB28 + ' (dependency): the minimum tradeable swing is the one that '
-               'beats the round-trip fee; its sweep is a fee sweep',
-               'every per_venue field of _info_dipole_harness_results.json is downstream of that selection or that truth: '
-               'net_oos / net_oos_maker (profit), params (fee-selected), n_calls / TP / FP / FN / n_turns / recall / '
-               'precision / bps_to_turn (at fee-selected params against fee-floor turns); config carries fee_rt_bps and '
-               'swing_theta_bps'],
-        admissible_as='identified historical context: an audit of what the prior cost-based run produced (a byte-matched '
-                      'reproduction says the recorded numbers were reproduced, nothing more), kept whole so the prior '
-                      'conclusion can be explained and reworked',
-        not_admissible_as='independent market-condition evidence on H01/H02; a market verdict (support or dismissal) on the '
-                          'divergence/exhaustion relation; a tuning objective; excluding net_oos/net_oos_maker or zeroing the '
-                          'fee does not remove the profit-selected params or the fee-floor turn definition',
-        pending_choice='a cost-free selection rule for (R, W, T) and a cost-free turn definition (the ZigZag theta without '
-                       'a fee-floor rationale) are mathematical choices the source never states: Greg; none is taken here'),
-    'ng_leg_fingerprints': dict(
-        status='market_conditions_under_a_fee_justified_threshold',
-        trace=['month_characterize.py @ ' + C21DF + ': no fee, cost or profit enters dipole_pieces / depth_pieces / '
-               'turn_pieces / move_path; TRIG["NG"] = 0.015 USD is the leg trigger, whose comment calls it a "fee-justified '
-               'trigger" (a threshold VALUE motivated by a fee floor; the arithmetic on legs is cost-free)',
-               'lag_join.py @ ' + C21DF + ': fee_cents() exists for the Kalshi echo study; scan_moves() (the leg definition '
-               'the characterizer imports) uses only the trigger, CONFIRM_S and COOLDOWN_S',
-               'event_move_baseline.py @ ' + C21DF + ': retention / run_thr / far_thinning are price and depth geometry'],
-        admissible_as='market-condition evidence of the ORIGINAL per-leg calculation under its named trigger; the trigger '
-                      'value is a threshold choice (already an open H03 LEG/threshold need in REFORMULATIONS)',
-        not_admissible_as='a verdict that the 0.015 trigger is the market\'s own leg definition: its value was fee-motivated',
-        pending_choice='a trigger / LEG definition stated without a fee rationale (REFORMULATIONS H03): Greg'),
-    'memory_a_retired': dict(status='not_bound', trace=['Memory A retired by Greg 2026-10-06; nothing is reproduced'],
-                             admissible_as=None, not_admissible_as=None, pending_choice=None),
-}
-# C2: the same distinction for the fields a consumer may meet (the teachers' explanations use these words).
-MARKET_ROLE_RULE = ('Greg, 2026-10-07: "We never have transaction costs in market conditions work." '
-                    'IDs, dates, weekdays and availability codes may GROUP market signals as search conditions; they are '
-                    'never numerical signals, targets or explanations; execution costs and profit are never objectives '
-                    'or verdicts; market prices, spreads, signed flow, depth, FIFO rank/age, elapsed market durations, '
-                    'positioning and derived geometry remain the quantities (Greg, 2026-10-06)')
-
-
-def market_admission_of(claim_id):
-    """The market admission of every binding covering one claim: {status, entries: {entry_id: admission}}. status =
-    'cost_selected_historical_context' when any covering binding is cost-selected (its reproduction can never be read as
-    a market verdict), else the bindings' own word, 'unmapped' with no binding."""
-    entries = {e['id']: MARKET_ADMISSION.get(e['id'], dict(status='undeclared')) for e in REPRODUCTIONS if claim_id in e['claims']}
-    words = {a['status'] for a in entries.values()}
-    status = ('unmapped' if not entries else 'cost_selected_historical_context'
-              if 'cost_selected_historical_context' in words else next(iter(sorted(words))))
-    return dict(status=status, entries=entries, rule=MARKET_ROLE_RULE)
+# C2 (Greg, 2026-10-06): the market/context distinction the teachers' explanations use.
+MARKET_ROLE_RULE = ('IDs, dates, weekdays and availability codes may GROUP market signals as search conditions; they are '
+                    'never numerical signals, targets or explanations; market prices, spreads, signed flow, depth, FIFO '
+                    'rank/age, elapsed market durations, positioning and derived geometry are the quantities')
 
 
 def reproduction_of(claim_id):
@@ -577,8 +489,8 @@ def reformulation_of(claim_id):
 
 def binding_tables_sha256():
     """The sha256 of both declared tables (canonical JSON), so a record or lessons file can say which bindings it read."""
-    return hashlib.sha256(json.dumps(dict(reproductions=REPRODUCTIONS, reformulations=REFORMULATIONS,
-                                          market_admission=MARKET_ADMISSION), sort_keys=True).encode()).hexdigest()
+    return hashlib.sha256(json.dumps(dict(reproductions=REPRODUCTIONS, reformulations=REFORMULATIONS),
+                                     sort_keys=True).encode()).hexdigest()
 
 
 def sha256_bytes(data):

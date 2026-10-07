@@ -144,12 +144,10 @@ def reconsideration(doc, path, raw, claims, records_dir=None, records_selection=
     import frankie_box_historical_claims as HC
     import frankie_box_historical_reproduction as HR
     not_testable = doc.get('not_testable') or []
-    bindings, reforms, performed, records_listed, admissions = {}, {}, {}, [], {}
+    bindings, reforms, performed, records_listed = {}, {}, {}, []
     for c in claims:
         binding = c.get('reproduction') or HC.reproduction_of(c['id'])
         bindings[binding['status']] = bindings.get(binding['status'], 0) + 1
-        admission = (c.get('market_admission') or HC.market_admission_of(c['id']))['status']
-        admissions[admission] = admissions.get(admission, 0) + 1
         reform = c.get('reformulation') or HC.reformulation_of(c['id'])
         reforms[reform['status']] = reforms.get(reform['status'], 0) + 1
         records, listed = HR.records_for(c['id'], records_dir if records_dir is not None else REPRODUCTION_DIR,
@@ -181,10 +179,6 @@ def reconsideration(doc, path, raw, claims, records_dir=None, records_selection=
                         status='pending_teacher_work' if performed.get('pending_teacher_work') or performed.get('not_run')
                                or not performed else 'performed_where_bound',
                         bindings=dict(sorted(bindings.items())), records=dict(sorted(performed.items())),
-                        market_admission=dict(sorted(admissions.items())),
-                        market_admission_rule='cost_selected_historical_context: the binding\'s original calculation selected '
-                                              'or labelled by execution cost (B7); its reproduction is audit context, never a '
-                                              'market verdict; ' + HC.MARKET_ROLE_RULE,
                         records_listed=records_listed, binding_tables_sha256=HC.binding_tables_sha256(),
                         records_dir=str(records_dir if records_dir is not None else REPRODUCTION_DIR),
                         records_selection_frozen=records_selection is not None,
@@ -224,8 +218,7 @@ def historical_claims(path, records_dir=None, records_selection=None):
                    direction_text=c.get('direction'), lag=claimed_lag(c.get('lag')), cells=list(c.get('cells') or []),
                    condition=c.get('condition'), x_transform=c.get('x_transform', 'sign_of_step'),
                    y_transform=c.get('y_transform', 'sign_of_step'), source=c.get('source'), day_made=None,
-                   source_claim=c, reproduction=HC.reproduction_of(c['id']), reformulation=HC.reformulation_of(c['id']),
-                   market_admission=HC.market_admission_of(c['id']))
+                   source_claim=c, reproduction=HC.reproduction_of(c['id']), reformulation=HC.reformulation_of(c['id']))
               for c in doc.get('claims') or []]
     return dict(author='historical', stamp=doc['catalog_sha256'][:12], day=None, claims_sha256=sha256_bytes(raw),
                 source=str(path), claims=claims,
@@ -459,8 +452,8 @@ def match(name, series):
 def series_role(name):
     """The source ROLE of one search series name, by the reserved search's own classification (Greg, 2026-10-06: market
     conditions only): 'market' for a market quantity; 'context_only' for an ID / date / weekday / entity label that may
-    group observations as a search condition; otherwise the search's exclusion reason (execution cost or profit,
-    bookkeeping, hashes, clocks, availability or integrity diagnostics). Older retained searches may still carry such
+    group observations as a search condition; otherwise the search's exclusion reason (bookkeeping, hashes, clocks,
+    availability or integrity diagnostics). Older retained searches may still carry such
     channels as series; this reader names them wherever it consumes a row (C2)."""
     import frankie_box_experiment_search as SEARCH
     reason = SEARCH.non_market_reason(name)
@@ -659,7 +652,7 @@ def test(claims_doc, days, records_dir=None, records_selection=None):
                             'counts are over every step of the cell' % c['condition'])
         if c['direction'] is None:
             untested.append('no direction stated in a testable form ("%s"): counts reported, nothing marked held' % c['direction_text'])
-        # C2: the claim's own series names classified the same way; a claimed cost / bookkeeping / context series can
+        # C2: the claim's own series names classified the same way; a claimed bookkeeping / context series can
         # only be counts, never a market finding, and the claim says so in its untested list.
         for name in c['series']:
             for hit in matched.get(name, []):
@@ -706,7 +699,7 @@ def test(claims_doc, days, records_dir=None, records_selection=None):
                                                                       for v in t['series_roles'].values())),
                           cells_rule='the row\'s cell and cell_value group the observations the counts are over; the counts '
                                      'are attributed to the market conditions inside the group, never to the label',
-                          rule='market conditions only (Greg, 2026-10-06): a row whose x or y is a context label or a cost / '
+                          rule='market conditions only (Greg, 2026-10-06): a row whose x or y is a context label or a '
                                'bookkeeping / clock / diagnostic channel is counts_only; dates, days and IDs stay attached '
                                'to every row (day, cell, where) as searchable context'))
         source_rework = (c.get('source_claim') or {}).get('research_rework')
@@ -721,22 +714,12 @@ def test(claims_doc, days, records_dir=None, records_selection=None):
             import frankie_box_historical_reproduction as HR
             binding = c.get('reproduction') or HC.reproduction_of(c['id'])
             reform = c.get('reformulation') or HC.reformulation_of(c['id'])
-            admission = c.get('market_admission') or HC.market_admission_of(c['id'])
             directory = records_dir if records_dir is not None else REPRODUCTION_DIR
             records, records_listed = HR.records_for(c['id'], directory, selection=records_selection)
             reproduction = HR.status_of(records)
             if reproduction == 'pending_teacher_work' and binding['status'] == 'not_bound':
                 reproduction = 'not_bound'
-            cost_selected = admission['status'] == 'cost_selected_historical_context'
             result['research_rework'] = dict(source_rework or {}, status='OPEN_REWORK_REQUIRED', closed=False,
-                market_admission=dict(admission, reproduction_admissible_as_market_evidence=not cost_selected,
-                                      reproduction_word_means=('the recorded numbers of the prior COST-SELECTED run were (or were '
-                                                               'not) reproduced byte for byte: historical context, never a '
-                                                               'market verdict on the claim' if cost_selected else
-                                                               'the recorded numbers of the original market-condition calculation '
-                                                               'were (or were not) reproduced: evidence, not a verdict'),
-                                      prior_labels_rule='a prior rejection reached through execution economics does not dismiss '
-                                                        'the market relation; the claim stays open for cost-free rework'),
                 stored_evidence_reassessed=dict(performed=bool(tests), disposition=disposition,
                                                 days=sorted({t['day'] for t in tests}), counts=result['counts'],
                                                 rule='a count comparison on stored search evidence, not a reproduction'),
@@ -755,8 +738,6 @@ def test(claims_doc, days, records_dir=None, records_selection=None):
                                           rule='every admitted record\'s own status is kept beside the one-word summary; '
                                                'listed records are named with their reason, never dropped'),
                 repair_or_reformulation='not_bound' if reform['status'] == 'not_bound' else 'pending_teacher_work',
-                cost_free_route=(['pending_greg: ' + str(a.get('pending_choice')) for a in admission['entries'].values()
-                                  if a.get('status') == 'cost_selected_historical_context'] or None),
                 reformulation_needs=dict(status=reform['status'], kind=reform.get('kind'), needs=list(reform.get('needs') or []),
                                          where=list(reform.get('where') or []), decision=reform.get('decision')),
                 construction=c.get('construction') or (c.get('source_claim') or {}).get('construction'),

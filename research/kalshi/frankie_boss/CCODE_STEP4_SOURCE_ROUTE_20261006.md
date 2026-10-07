@@ -334,7 +334,7 @@ Traced first (every pin computed from git history here, verified byte-equal to t
 | binding | claims | original calculation (entry) | sources @ revision (catalog id) | inputs | recorded outputs | status |
 |---|---|---|---|---|---|---|
 | `crypto_trend_flip` | H01 H02 | `_info_dipole_trend_flip.py` main: `signed_flow_features` over the 30-min pre-entry window of 1-min bars per winner onset; confirm/diverge split; the aligned <= -0.2 gate; the 2-factor gate with `odcore.info_dipole.divergence` | `odcore/info_dipole.py` (review.091), `_info_dipole_trend_flip.py` (review.112), `_info_dipole_flow_detrend.py` (review.107, cited negative) @ `bb28b35e` | 6 `fingerprint_dataset/test_bars/*.json` + `fingerprint_dataset/onsets/winner_onsets.json` (1,560), all committed @ `bb28b35e` | 10 printed patterns (POOLED 1560 / 50 / 38 / +12; temporal +4 / +18; gate ~65 tol 1; per cell 100 / 84; 2-factor 317 / 64 / 58 / 52 / 49) + 2 prose (early 70 / late 62; "neutral") | defined |
-| `crypto_harness` | H01 H02 | `_info_dipole_harness.py` main: same timing trigger, champion OFI filter vs challenger `divergence()`, ZigZag theta 20 bps, OOS 40 percent | `_info_dipole_harness.py` (review.095), `_info_dipole_swing_backtest.py` (review.111), `odcore/info_dipole.py`, `_info_dipole_harness_results.json` (review.096) | `realbins/*_bins.json`: not in the repository at any revision | the results json, leaf by leaf (`config`, `per_venue`) | missing_inputs |
+| `crypto_harness` (DELETED 2026-10-07, Greg: not market-conditions work; no reference remains in code) | H01 H02 | `_info_dipole_harness.py` main: same timing trigger, champion OFI filter vs challenger `divergence()`, ZigZag theta 20 bps, OOS 40 percent | `_info_dipole_harness.py` (review.095), `_info_dipole_swing_backtest.py` (review.111), `odcore/info_dipole.py`, `_info_dipole_harness_results.json` (review.096) | `realbins/*_bins.json`: not in the repository at any revision | the results json, leaf by leaf (`config`, `per_venue`) | missing_inputs |
 | `ng_leg_fingerprints` | H03 H04 H05 H09 H10 | `characterize_turns.py <days>` -> `month_characterize.characterize_day("NG", day, "s3")`: legs by `lag_join.scan_moves` (TRIG 0.015); per leg `dipole_pieces` (dip_imb_level), `depth_pieces` (imb_R, aligned_imb_R, book), `turn_pieces` (turn_far_thinning), `move_path` (dir, continuation) | `month_characterize.py`, `event_move_baseline.py`, `characterize_turns.py`, `lag_join.py`, `forward_curve.py`, `nws_temp_feed.py` @ `21df8f14` (three swept catalog ids; the rest pinned here), `odcore/info_dipole.py` @ `bb28b35e`, `renders/ng_refine_s95/fingerprints.json` @ `21df8f14` (NOT in the catalog: bound by path + revision + sha256), `ng_brain.json` @ `bb28b35e` | NG MBP-10 day tapes on S3 (`nymex_mbp10/`) + local regime caches: not in the repository | `fingerprints.json` per leg, per claim field set; ng_brain prose (1,537 legs / 87.6 percent AND the brain's own recount 2,459/3,697 = 0.665; book_contrarian confidence 0.5 / UNCLEAR; turn_far_thinning demotion "held legs ~half negative"), each declared not comparable by code | missing_inputs |
 | `memory_a_retired` | H06 H07 H08 | Memory A exact native MBO closes (Oct 4 / Oct 5 2021) | the two catalog sources (positive knowledge doc, member-first receipt) @ `b4f364f0`, sha256 from the catalog (that revision is not in this clone); the recalculation script is in neither the catalog nor this repository's history | the A-memory ledger: not bound | preserved as evidence; not compared | not_bound: "Memory A retired by Greg 2026-10-06; original evidence preserved" |
 
@@ -485,7 +485,6 @@ Checks: `ast.parse` of the three modules without project imports; `git diff --ch
 Four `[skip ci]` commits on `ccode/teacher-tasks-20261006b` atop Codex's `61264cac`: `f2a43e80` D1 | `3d7f1640` B7/C2 |
 `130742ff` B2-B5 | `a3651234` B1/B6/A4/C1. SOURCE-BUILT / RUNTIME-UNVERIFIED (`ast.parse` without project imports,
 `git diff --check`); nothing run, no reproduction called, the claims file untouched, Codex's two modules untouched.
-Greg, 2026-10-07, recorded verbatim in `MARKET_ROLE_RULE`: "We never have transaction costs in market conditions work."
 
 **D1 (`frankie_box_boss_session.py`): the corrected price row contract for Codex's exact price adapter.** Codex's trace
 holds: `InstrumentBook.apply` accumulates each T action's control row in `_legacy_group_rows` and returns the list only at
@@ -517,21 +516,16 @@ V1 (or no `provenance`) is never read as originating identity: the adapter shoul
 No new event axis, price-slot trajectory or lag definition.
 
 **B7 / C2 (`frankie_box_historical_claims.py`, `frankie_box_scientific_teacher.py`, `frankie_box_experiment_exchange.py`).**
-`MARKET_ADMISSION` per binding, traced in the pinned sources: `crypto_harness` = `cost_selected_historical_context`
-(`run_calls` subtracts the fee per leg; `tune_and_score` selects (R, W, T) by fee-adjusted in-sample net; `SWING_THETA` is
-the fee-floor swing that DEFINES the true turns, so FN/TP/recall are against a cost-defined truth; every `per_venue` field
-is downstream); admissible only as identified audit context, never as market evidence or a verdict on H01/H02; the
-cost-free selection rule and turn definition are named as Greg's choices, none taken. `crypto_trend_flip` is cost-free
-(counts). `ng_leg_fingerprints` is cost-free arithmetic under a fee-JUSTIFIED trigger value (`TRIG["NG"] = 0.015`,
-`month_characterize` line 43), the open H03 LEG/threshold need. The original bytes, recorded outputs and comparisons are
-unchanged; `binding_tables_sha256` covers the new table (no records exist). In the arithmetic: `ST.test` classifies every
-tested and origin row's x/y with the reserved search's own `non_market_reason` (`series_role`): a context label or a
-cost/bookkeeping/clock/diagnostic channel makes the row `counts_only` with its reason (so the verdict counts exclude it);
+B7, per Greg (2026-10-07): no reference to transaction costs belongs in market-conditions work, so none remains in the
+owned modules. The `crypto_harness` binding (the `_info_dipole_harness.py` driver and its results file, whose calculation
+was not market-conditions work) is DELETED from `REPRODUCTIONS`; H01/H02 stay bound by `crypto_trend_flip` (counts only).
+No admission table, no field, status word or sentence about it exists in the code (`3d7f1640` had added one; `744cae4c`'s
+successor commit removes it). `binding_tables_sha256` covers the two tables. C2, in the arithmetic: `ST.test` classifies
+every tested and origin row's x/y with the reserved search's own `non_market_reason` (`series_role`): a context label or a
+bookkeeping/clock/diagnostic channel makes the row `counts_only` with its reason (so the verdict counts exclude it);
 claimed series of those roles are named in `untested`; every result carries `market_context` (roles, counts, the cell
-rule). `research_rework` carries `market_admission` with what the reproduction word may mean and
-`reproduction_admissible_as_market_evidence`; `reconsideration` counts admissions. Both seats voice the distinction and
-the admission through `context_checks`; a cost-selected binding adds an untested line in the historical item. Dates,
-days and IDs stay attached to every row (`day`, `cell`, `where`). Not a validator framework: one classifier, reused.
+rule: labels group, market conditions explain). Both seats voice the distinction through `context_checks`. Dates, days
+and IDs stay attached to every row (`day`, `cell`, `where`). Not a validator framework: one classifier, reused.
 
 **B2-B5 (`frankie_box_historical_reproduction.py` V2 schemas; the teacher, the knowledge replay, the exchange).**
 B2: recorded references (`role` starting `recorded output`) are staged under `<out>/recorded/`, never in the tree the
@@ -579,7 +573,7 @@ price adapter (Codex, on the V2 contract above); runtime verification of all of 
 |---|---|
 | 2 | A4, C1, C2, B4/B5 source-corrected (section 8, Corrections). Open: native-learner and late-scheduling decisions (Greg); Codex's integration review of the corrections; runtime verification. |
 | 3 | D1 source-corrected: `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (contract in section 8). Open: Codex's exact price adapter on it; the held trajectory/4.2/4.4 definitions. Exact structures unchanged (V1). |
-| 4 | B1-B7 source-corrected. Open: the input-supply interface (B6: named, not built; Greg's authorization); the cost-free selection/turn choices (B7, Greg); reproduction/reformulation open for BOTH teachers; nothing run. |
+| 4 | B1-B7 source-corrected (B7 by deletion: the harness binding and every reference to it are gone). Open: the input-supply interface (B6: named, not built; Greg's authorization); reproduction/reformulation open for BOTH teachers; nothing run. |
 | 5 | STOP; draft unapplied, decisions held. |
 
 No correction above was delivered by the new documentation commit. The older table records

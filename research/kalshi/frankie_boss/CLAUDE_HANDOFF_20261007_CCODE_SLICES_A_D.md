@@ -13,8 +13,10 @@ SOURCE-BUILT / RUNTIME-UNVERIFIED (`ast.parse` without project imports, `git dif
 nothing run, no reproduction called, the claims file byte-identical, Codex's two modules untouched, STOP before #5 kept.
 The per-finding record (what each correction does, the D1 field/unit table for Codex's price adapter, what stays open) is
 the step-4 report section 8 "Corrections after Codex's integration review" + the section 9 table; the Codex-facing summary
-is the new top section of `CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md`. Greg, mid-session: "We never have transaction
-costs in market conditions work" (recorded verbatim in `frankie_box_historical_claims.MARKET_ROLE_RULE`).
+is the new top section of `CCODE_HANDOFF_20261006_TEACHER_TASKS_NEXT_CHAT.md`. Greg, mid-session, twice: no reference to
+transaction costs belongs in market-conditions work. So B7 is closed by DELETION, not by framing: the `crypto_harness`
+binding is gone from `REPRODUCTIONS`, the admission table that `3d7f1640` had built around it is gone, and no field, status
+word or sentence about it remains in any owned module. Do not reintroduce one.
 
 Design choices a next session should know (so they are not re-litigated):
 - D1 was fixed in `Session.derive`, not in the producer file: the producer is loaded from the PINNED checkout (`_producer_module`)

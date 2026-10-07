@@ -201,14 +201,14 @@ def context_checks(item, day, src, said):
             words.append('Completed-native coverage still listed: %s.' %
                          said.v(json.dumps(native['listed'], sort_keys=True), src['sha256'], 'native coverage listed'))
     # C2 (Greg, 2026-10-06): BOTH seats state the market/context distinction the reader applied in its arithmetic:
-    # rows whose x or y is a context label or a cost / bookkeeping channel are counts only; cells group, never explain.
+    # rows whose x or y is a context label or a bookkeeping channel are counts only; cells group, never explain.
     prior = item.get('prior') or {}
     market = prior.get('market_context')
     if isinstance(market, dict):
         roles = market.get('roles') or {}
         non_market = {k: v for k, v in roles.items() if v != 'market'}
         words.append('Market conditions only: of %s matched series, %s are not market quantities (%s); %s tested rows have '
-                     'a context-label side and %s a cost / bookkeeping / clock / diagnostic side, all counts only. A date, '
+                     'a context-label side and %s a bookkeeping / clock / diagnostic side, all counts only. A date, '
                      'weekday or ID groups the observations a count is over and is never the explanation of the '
                      'relation; the market conditions inside the group are. Dates and days stay attached to every row.' % (
                          said.v(len(roles), src['sha256'], 'matched series'),
@@ -218,15 +218,7 @@ def context_checks(item, day, src, said):
                          said.v(market.get('non_market_rows'), src['sha256'], 'non-market rows')))
     elif prior.get('tests') is not None:
         words.append('This lesson result carries no market/context classification of its series (an older reader): its '
-                     'rows are read with that limitation; no market finding is attributed to a label or a cost field.')
-    admission = ((prior.get('research_rework') or {}).get('market_admission') if item['author'] == 'historical' else None)
-    if isinstance(admission, dict):
-        words.append('Historical binding admission %s: %s. A reproduction of a cost-selected calculation reports the prior '
-                     'run\'s numbers as identified historical context; it is never a market verdict, and a prior rejection '
-                     'reached through execution economics does not dismiss the market relation.' % (
-                         said.v(admission.get('status'), src['sha256'], 'market admission status'),
-                         said.v(json.dumps({k: v.get('admissible_as') for k, v in (admission.get('entries') or {}).items()},
-                                           sort_keys=True), src['sha256'], 'market admission per binding')))
+                     'rows are read with that limitation; no market finding is attributed to a label.')
     for text in words:
         checks.append(dict(source_id=src['source_id'], claim='collection and completed-native scope',
                            check=text, result='unresolved'))
@@ -1230,14 +1222,10 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                 performed = (isinstance(reproduction, str) and reproduction.startswith('performed_')
                              and any(isinstance(r, dict) and r.get('record_sha256') and r.get('status') == reproduction
                                      for r in records))
-                admission = prior_rework.get('market_admission') or {}
-                cost_selected = admission.get('status') == 'cost_selected_historical_context'
                 rework = dict(prior_rework, status='OPEN_REWORK_REQUIRED', closed=False,
                     claim_id=result['claim_id'], lesson_sha256=src['sha256'],
                     collection=context.get('reconsideration'),
                     prior_disposition=result.get('disposition'),
-                    market_admission=admission or dict(status='undeclared_by_the_lessons'),
-                    reproduction_is_market_evidence=bool(performed and admission and not cost_selected),
                     original_calculation_reproduction=reproduction if performed else 'not_established_by_this_exchange',
                     reproduction_status_source=('the reader\'s admitted hash-bound HISTORICAL_REPRODUCTION record(s), kept as read'
                                                 if performed else 'none: no performed record was read by the lessons'),
@@ -1253,11 +1241,6 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                     if performed else
                     'Original research reproduction and repair/reformulation remain open; '
                     'the current count comparison does not establish their completion.')
-                if cost_selected:
-                    side['untested'].append(
-                        'The bound original calculation selected its parameters and defined its turns by execution cost '
-                        '(market admission: cost_selected_historical_context): any reproduction of it is identified '
-                        'historical context, not market evidence on this claim; the cost-free route is a pending choice.')
             findings += found
             turns = [dict(turn=1, seat='boss_teacher', author=D.BOSS_ROLE, author_label=BOSS_AUTHOR,
                           responds_to='the scientific teacher\'s lessons result on the claim', record=boss,
