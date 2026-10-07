@@ -206,6 +206,26 @@ every role starts with the API agent skill. Use the agent skills as the engineer
 - Greg's handoff wins one overlap: no new tests or validator framework. Take the skills' design
   and review discipline, and verify by AST parse, diff check and source reading.
 
+**One-day test reports (Greg, 2026-10-07).** After the ONE-day test, every workflow piece produces a
+markdown report of what it received, how it used it and what it produced, so Greg and Frankie can see
+whether that piece of the workflow runs the way they want before the THREE-day run. Build it into the
+piece you own, now, as part of this assignment:
+- The reporter already exists: `deploy/aws/box/frankie_box_workflow_inspection.py` (Codex, `0b36d15`;
+  stdout-only, one day, the sixteen canonical pieces in `PIECES`, reads receipts and known metadata
+  contracts only, never giant evidence). Extend it; never write a second reporter.
+- Your piece's receipt and metadata must carry what the report needs: every input it received (path,
+  bytes, sha256, as_of/through_cursor, source binding), how it used it (which fields entered which
+  computation, what was skipped and why, every missing/stale/unavailable disposition), and what it
+  produced (outputs with pins, counts, refusals, waits). If the reporter cannot show it from your
+  receipt, add the field to your receipt and the projection to the reporter's `artifact_paths` /
+  `FIELDS` for your piece.
+- The one-day run writes one file per piece, `<run-dir>/days/<day>/inspection/<piece>.md`, from the
+  reporter's output, plus `index.md` listing them. Temporary operator review only: not knowledge,
+  not scientific evidence, not a completion gate; the brain and the teachers never read them.
+- Missing evidence reads as unknown, never zero. A receipt does not prove downstream computation; say
+  only what was recorded.
+- Name in your return which fields and projections you added for your piece.
+
 **Efficiency and data processing (Greg, 2026-10-07).** Make things run faster and process data
 better wherever the role's work allows, and say what you used:
 - Look first at the existing efficiency and recovery mechanisms in the repo (16-CPU lane workers, the
