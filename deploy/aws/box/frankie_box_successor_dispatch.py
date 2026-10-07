@@ -228,7 +228,8 @@ def close_day(run, day):
 
     One drain, then the inbox is read under its lock: every request acknowledged = the day closed (the closed.json pin,
     as before). A request still unacknowledged when the drain returns (the waiting_school branch breaks out of a
-    waiting owner school recovery; a request admitted during the drain) is NOT looped on here: the result is
+    waiting owner school recovery, or a second waiting_school after a complete one in the same drain call; a request
+    admitted during the drain) is NOT looped on here: the result is
     {'status': 'waiting', 'pending': [...], ...} naming them, and the caller (the queue's _finish_day) records the day
     waiting and lets its slot go; the next worker start drains again (CCode, Step 8, on the parent's assignment of
     2026-10-07: the previous loop re-entered the drain without a pause, holding the finish thread). The drain's own
@@ -653,6 +654,7 @@ def drain(run, day):
             if ack.is_file():
                 completed.append(acknowledgment(path, value))
                 continue
+            school_completed = None      # F7: at most ONE 'complete' owner school recovery per operation per drain call
             while True:
                 held, why = run.cores.held_booking(getattr(run, 'slot_booking', None)) if getattr(run, 'slot_booking', None) else (None, 'no held day booking')
                 if (not held or held.get('run') != identity['run'] or held.get('day') != day
@@ -735,31 +737,60 @@ def drain(run, day):
                         continue
                     if downstream['status'] == 'waiting_school':
                         # CCode (Step 8): the owner's own voice then school on this held lane, the nested inbox drain
-                        # skipped for exactly this recovery (this drain holds the lock); then rebuild_dependents again
-                        # verifies the checked chain. Never a second drain, scheduler or model runtime.
+                        # skipped for exactly this recovery (this drain holds drain.lock; close_day takes inbox.lock only
+                        # after the drain returns); then rebuild_dependents again verifies the checked chain. Never a
+                        # second drain, scheduler or model runtime.
+                        if school_completed is not None:
+                            # F7 (second review): a recovery already ended 'complete' in THIS drain call and the chain
+                            # still reads waiting_school (for example another correction landed meanwhile). No second
+                            # recovery (it would dispatch the school child again): recorded waiting with the reason,
+                            # the ordinary poll interval, and the drain moves on; the next drain call tries it once more.
+                            state('waiting', **dict({k: v for k, v in downstream.items() if k != 'status'},
+                                                    recovery=school_completed,
+                                                    reason='the school stage ended done but the chain still requires a '
+                                                           'successor (one complete recovery per operation per drain call)'))
+                            time.sleep(5)
+                            break
                         recovered = run.recover_school(day, downstream['recovery_intent'])
                         if recovered.get('status') == 'complete':
+                            school_completed = recovered
                             # the recovered school (file, row sha256, status) reaches the day reports on this held lane
                             # (correction_consumer, stage 12): a revision under the same number when the reports were
                             # rendered on the replaced school (Run.reports_stale reads the school receipt). The nested
-                            # drain is skipped for exactly this call (this drain holds the inbox lock; re-entering it
-                            # would block on its own flock); a report failure is the reports step's own receipt
+                            # drain is skipped for exactly this call (this drain holds drain.lock; re-entering it would
+                            # block on its own flock); a report failure is the reports step's own receipt.
+                            # F6 (second review): three distinct dispositions, never 'current' when no reports exist
                             entry = next((x for x in run.plan['days'] if x['day'] == day), None)
-                            run._school_recovery.add(day)
-                            try:
-                                if entry is not None and run.reports_stale(entry):
-                                    recovered['reports'] = {k: (run.guarded('reports', entry) or {}).get(k) for k in ('status', 'reason', 'report_number')}
-                                else:
-                                    recovered['reports'] = dict(status='current', reason='the reports already carry this school')
-                            finally:
-                                run._school_recovery.discard(day)
+                            reports = run.receipt('reports', day) or {}
+                            exchange = run.receipt('exchange', day) or {}
+                            if entry is None:
+                                recovered['reports'] = dict(status='not_applicable', reason='the day is not in the run plan')
+                            elif reports.get('status') != 'done':
+                                recovered['reports'] = dict(status='not_rendered', prior=reports.get('status'),
+                                                            reason='no reports rendered yet (the reports stage renders on '
+                                                                   'the current school when it runs)')
+                            elif exchange.get('status') not in ('done', 'reused'):
+                                recovered['reports'] = dict(status='exchange_not_done', prior=exchange.get('status'),
+                                                            reason='the exchange is not done; the reports revise after it')
+                            else:
+                                run._school_recovery.add(day)
+                                try:
+                                    if run.reports_stale(entry):
+                                        recovered['reports'] = {k: (run.guarded('reports', entry) or {}).get(k)
+                                                                for k in ('status', 'reason', 'report_number')}
+                                    else:
+                                        recovered['reports'] = dict(status='current',
+                                                                    reason='the reports already carry this school')
+                                finally:
+                                    run._school_recovery.discard(day)
                         state('waiting', **dict({k: v for k, v in downstream.items() if k != 'status'}, recovery=recovered))
                         if recovered.get('status') != 'complete':
                             # the operation stays unacknowledged (its state carries the recovery's stage, inputs, use and
                             # outputs; a failed stage is the day's own failed receipt, retried by the ordinary path);
-                            # the next boundary's drain tries it once more. The ordinary poll interval first: close_day
-                            # loops on drain until every request is acknowledged, and recover_school dispatches nothing
-                            # twice, so without it that loop would spin hot on reads and receipt rewrites.
+                            # the next drain call tries it once more. The ordinary poll interval first: close_day drains
+                            # ONCE and returns 'waiting' for an unacknowledged request, but the class worker's keep() and
+                            # every child boundary drain again, and recover_school dispatches nothing twice, so without it
+                            # those repeated drains would spin hot on reads and receipt rewrites.
                             time.sleep(5)
                             break
                         continue

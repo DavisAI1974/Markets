@@ -789,8 +789,10 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
                    historical_status=entry.get('historical_delivery_status'), carrier=first, thinner_carrier=thinner)
         record = layers.get(layer) if isinstance(layers, dict) else None
         native_record = native_records.get(layer)
+        basis = 'derive_layer_record' if record is not None else None
         if record is None and native_record is not None:
             record = native_record                  # the derivation's own per-layer native status, by crosswalk id
+            basis = 'native_layer_record'
         if native_record is not None:
             row.update(native_record={k: native_record.get(k) for k in ('status', 'reason', 'producer_named_by_crosswalk',
                                                                          'native_limit', 'projection') if k in native_record})
@@ -813,17 +815,22 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
                 elif record is not None:
                     produced, how = False, '%s: %s' % (record.get('status'), record.get('reason') or 'no reason recorded')
                 elif layer in native_entries and native_done and carriers.get(first, {}).get('status') == 'present':
-                    # a native-only entry: its one producer is the native pass; derive.json carries no per-layer record for
-                    # it (a request to the producer owner), the completed pass and its carrier ledger are the production
-                    produced, how = True, 'the completed native pass (its %s ledger present); derive.json has no per-layer record' % first
+                    # THE GROUP PROXY FALLBACK (second review F4, named): neither derive.json nor a bound
+                    # work/native-layer-records.json carries this native entry's own record, so the completed native pass
+                    # and its carrier ledger stand in for it. Named on the row (basis) with why the per-layer record was
+                    # not used; never presented as a per-layer check
+                    basis = 'group_proxy'
+                    produced, how = True, ('GROUP PROXY (no per-layer record used: %s): the completed native pass (its %s '
+                                           'ledger present); derive.json has no per-layer record' % (
+                                               native_records_why or 'the bound native-layer records list no record for it', first))
                 else:
                     produced, how = False, derive_why or ('the native pass did not complete in this ROOT' if layer in native_entries
                                                           else 'the ROOT derivation lists no record for this layer')
-                row.update(produced=produced, producer_record=how)
+                row.update(produced=produced, producer_record=how, basis=basis or 'no_record')
                 state = carriers.get(first, {}).get('status')
                 thin_state = carriers.get(thinner, {}).get('status') if thinner else None
                 if state == 'integrity':
-                    row.update(disposition='integrity', canonical='unknown', integrity=True,
+                    row.update(disposition='integrity', integrity=True,
                                reason='INTEGRITY (separate, visible; not missing coverage): ' + str(carriers[first].get('reason')))
                 elif produced and in_picture and state == 'present':
                     row.update(disposition='admitted', reason='produced and carried by its own carrier %s' % first)
@@ -857,7 +864,21 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
                            reason='an append-only output filed by its own stage: %s' % (getattr(A99, 'OUTPUT_ROUTES', {}).get(layer) or 'another stage'))
         else:
             row.update(produced=None, disposition='not_read_by_this_piece', reason='role %s: not a ROOT input' % role)
+        # THE CANONICAL WORD (the one 99 registry, frankie_box_all99_coverage, 9464189e): the shared vocabulary word and its
+        # class on every row, from the registry module only (FIXED_WORDS first, then a row's explicit canonical, then
+        # LEGACY_WORDS); no word of this list's own decides it. The ROOT word stays in `disposition` (the day reports read
+        # it: 'admitted' is the producer-side picture admission, never a computation) and is the field's piece_disposition.
+        # An integrity row is 'integrity_failure' (a separate visible failure), never 'unknown'
+        word = row['disposition']
+        canonical = A99.FIXED_WORDS.get(layer) or row.get('canonical') or (
+            word if word in A99.VOCABULARY else A99.LEGACY_WORDS.get(word))
+        if canonical not in A99.VOCABULARY:
+            row['canonical_listed'] = 'the ROOT word %r is not in the shared vocabulary; recorded as unknown' % word
+            canonical = 'unknown'
+        row.update(canonical=canonical, **{'class': A99.WORD_CLASS[canonical]})
         out['counts'][row['disposition']] = out['counts'].get(row['disposition'], 0) + 1
+        tally = out.setdefault('counts_canonical', {})
+        tally[canonical] = tally.get(canonical, 0) + 1
         out['entries'].append(row)
         rows.append(row)
     native18 = sorted(native_entries)
@@ -868,7 +889,8 @@ def all99_admission(code_root, day, calc_dir, calc, plan_policy, policy_mismatch
                native_only=dict(entries=native18, admitted=[r['entry'] for r in rows if r['entry'] in native_entries
                                                             and r['disposition'] == 'admitted'],
                                 records=dict(path=str(nl_path) if nl_path else None, used=bool(native_records),
-                                             listed=native_records_why),
+                                             listed=native_records_why,
+                                             group_proxy=[r['entry'] for r in rows if r.get('basis') == 'group_proxy']),
                                 rule='the 18 native-only entries are carried only by native.member / native.lifecycle (Greg, '
                                      '2026-10-07: they must reach Frankie and both teachers; every NEW run has the native pass ON)'),
                absent=[dict(entry=r['entry'], reason=r['reason']) for r in out['entries'] if r['disposition'] == 'absent'],
@@ -895,7 +917,8 @@ def all99_summary(doc):
     if not doc:
         return None
     cov = doc.get('coverage') or {}
-    return dict(counts=doc.get('counts'), listed=doc.get('listed'), in_picture=doc.get('in_picture'), picture_why=doc.get('picture_why'),
+    return dict(counts=doc.get('counts'), counts_canonical=doc.get('counts_canonical'), listed=doc.get('listed'),
+                in_picture=doc.get('in_picture'), picture_why=doc.get('picture_why'),
                 absent=doc.get('absent'), disabled=doc.get('disabled'), integrity=doc.get('integrity'),
                 native_only=doc.get('native_only'),
                 crosswalk=dict(integrity=(doc.get('crosswalk') or {}).get('integrity'),
@@ -961,7 +984,7 @@ class Run:
         self._knowledge = {}
         self.queue_previous = None       # the class worker: (PREVIOUS, None, from) taken from the class line
         self.school_day = None           # the class worker: the class line's school-day number = the report number N
-        self._school_recovery = set()    # recover_school: the days whose own successor drain holds the inbox (no nested drain)
+        self._school_recovery = set()    # recover_school: the days whose own successor drain holds drain.lock (no nested drain)
         self._day_file_sha = {}          # (day, ingest dir) -> (the attached day file's sha256, why absent), read once (day_rows)
         # THE OWNER BINDING (Step 8, 2026-10-07): a queue day carries its owner (run, day, host, attempt, commit, code root,
         # exact CPU set, booking, day-specific save marker), bound by the queue BEFORE dispatch. This Run reads the save
@@ -990,9 +1013,9 @@ class Run:
     def successors(self, day):
         """Explicit owner corrections finish before this day's next dependent operation."""
         if day in self._school_recovery:
-            # inside the day's own drain (recover_school, called by successor_dispatch.drain under its lock): the inbox
-            # is held by that caller and re-entering it here would deadlock on the drain lock. Only the one recovery
-            # bound to its operation skips it; nothing else does.
+            # inside the day's own drain (recover_school, called by successor_dispatch.drain under drain.lock): that
+            # caller holds drain.lock and re-entering it here would block on its own flock. Only the one recovery bound to
+            # its operation skips it; nothing else does.
             return []
         import frankie_box_successor_dispatch as S
         completed = S.drain(self, day)
@@ -2827,8 +2850,8 @@ class Run:
     def recover_school(self, day, recovery_intent):
         """The owner's recovery of a day's school under a checked source successor (successor_dispatch.rebuild_dependents
         -> 'waiting_school', called from its drain under the drain lock, on this same owner/day/held lane): the existing
-        voice then school steps, with the nested successor drain skipped for exactly this recovery (the caller holds the
-        inbox). Save, currentness and held-slot checks stay the steps' own. 'complete' only when the school stage ended
+        voice then school steps, with the nested successor drain skipped for exactly this recovery (the caller holds
+        drain.lock). Save, currentness and held-slot checks stay the steps' own. 'complete' only when the school stage ended
         done/reused on the checked successor; a refused or still-pending meeting leaves it 'waiting' (never a completed
         school, requeue or invented discussion); a failed voice/school child or a raised error is 'failed' = the stage's
         own failed receipt (visible, separate from a wait, retried by the ordinary path, never the operation's
@@ -2841,12 +2864,13 @@ class Run:
             return dict(status='saved', reason='save requested on the owner; the recovery resumes with the day',
                         recovery_intent=recovery_intent)
         self._school_recovery.add(day)
-        # Every drain of the day calls this (child boundaries, the class worker's keep(), close_day's loop), so a child
+        # Every drain of the day calls this (child boundaries, the class worker's keep(), close_day's one drain), so a child
         # is dispatched here AT MOST ONCE PER INVALIDATION, never once per call: only an absent voice or the
         # invalidation's own blocking wait runs the meeting child; a failed voice or school (any child failure) is the
         # step's own failure, retried by the ordinary path (guarded() on the next start, the class worker's next poll),
         # and a non-blocking refused meeting is the owner's decision. Re-dispatching per call is the unbounded
-        # model-child dispatch the fifth pass closed; close_day's drain loop would reach it again.
+        # model-child dispatch the fifth pass closed; repeated drains (keep(), every boundary) would reach it again. A drain
+        # call itself runs at most one 'complete' recovery per operation (successor_dispatch, second review F7).
         use = dict(voice='not dispatched here', school='not dispatched here')
         paths = dict(voice=self.receipt_path('voice', day).as_posix(), school=self.receipt_path('school', day).as_posix())
         stage = 'voice'

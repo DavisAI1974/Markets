@@ -1429,11 +1429,14 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         binary, model = shared_runtime['binary'], shared_runtime['model']
     _, rules = K.rules()
     rules_witness = dict(file=Path(rules['path']).name, sha256=rules['sha256'], bytes=rules['bytes'], rules=rules['rules'])
-    knowledge_index = []
+    knowledge_index, knowledge_listed = [], []
     if brain:
         import frankie_box_lane_state as LS
         selected = LS.learner_knowledge(str(exchange['day']), 'voice', brain=brain)
         knowledge_index = [{k: d[k] for k in ('label', 'day', 'kind', 'path', 'sha256')} for d in selected['documents']]
+        # what the selection left out and why (excluded by the source manifest, unreadable, ...): recorded on the
+        # meeting record, never silently dropped; not part of the meeting input (its identity is unchanged)
+        knowledge_listed = list(selected.get('listed') or [])
     given = meeting_input(exchange, knowledge_index)
     phase('inputs')
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -1463,7 +1466,8 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                 charter=given['charter'], rules=rules_witness, runtime_config=config_witness,
                 coordinator=dict(label=COORDINATOR_LABEL, model_identity=config['settled']['model_identity'],
                                  quantization=config['settled']['quantization'], runtime=config['settled']['runtime']),
-                knowledge_index=knowledge_index, route=route, local_route=local_route, brain=brain,
+                knowledge_index=knowledge_index, knowledge_listed=knowledge_listed, route=route, local_route=local_route,
+                brain=brain,
                 shared_market_picture=(None if 'shared_market_picture' not in given else
                                        {k: given['shared_market_picture'][k] for k in ('sha256', 'chars', 'picture_sha256', 'delivery')}))
     # The model-evaluation clock (FRANKIE_MODEL_EVALUATION_CLOCK_V1, frankie_box_model_clock; Greg, 2026-10-07): one

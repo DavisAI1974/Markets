@@ -595,8 +595,15 @@ def _run(request, request_path, out, brain, jev_brain):
                         raw if isinstance(raw, bytes) else str(raw).encode()).hexdigest())
         return raw
 
+    def client_clock(**fields):
+        # a refusal decided inside the client (sit_in: no output room after the exact count; never sent) is a model-clock
+        # record of this owner too, with the same pins, cutoff and lane as the real calls (queued item SI.LOCAL, 2026-10-07
+        # night): sit_in calls LOCAL['model_clock'](**fields) once per prompt; the runtime pins and cutoff are bound here
+        return model_clock(out, request, **dict(fields, model=clock_pins, cutoff=clock_cutoff,
+                                                decided_by='sit_in client (no output room)'))
+
     SI.LOCAL = dict(identity=identity, put=local_put, seal=seal_claims, frankie=frankie_bundle, check_save=check_save,
-                    count_tokens=counted,
+                    count_tokens=counted, model_clock=client_clock,
                     # Granite's sampling rows on every call (temperature, top_p); the client's body otherwise as recorded
                     chat=chat,
                     **{k: runtime[k] for k in ('max_output_tokens', 'min_output_tokens', 'token_margin')})

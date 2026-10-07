@@ -490,7 +490,8 @@ def artifact_paths(record, piece):
     root = absolute(record.get('calculations'))
     if root and piece == 'root':
         out += [root / 'calculations-receipt.json', root / 'source-binding.json',
-                root / 'work/derive.json', root / 'external-computation.json']
+                root / 'work/derive.json', root / 'external-computation.json',
+                root / 'work/native-layer-records.json']      # per native layer status (second review F4)
     target = absolute(record.get('target'))
     if target and piece in ('data', 'search'):
         out.append(target / 'MANIFEST.json')

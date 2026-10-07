@@ -1805,6 +1805,16 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     if y['finish']['state'] == 'waiting':
                         # F1, the same rule on the ROOT-and-finish-in-one-slot route: the retry rebinds the same owner
                         _rebook_owner(y, 'finish waiting: the retry books any free 16 CPUs for the same owner binding')
+                    elif y['finish']['state'] == 'failed':
+                        # the same rule as the finish-only route above (2026-10-07 night, the gap ccode_step8 named): a
+                        # failed finish gives its owner binding up, kept as history. Kept, it would pin the retry to the
+                        # exact CPUs of a booking the thread's end already released (_book_slot books owner['cpus']), so
+                        # the retry waits on whichever day took them. The retry binds afresh: root_of names the SAME
+                        # completed ROOT attempt, any free 16 CPUs. A done Jev is read back (Run.jev_done_receipt); a
+                        # failed or pending Jev bound to the released booking needs ACTION=resume REBOOK=on, as on the
+                        # finish-only route (a failure is not a wait).
+                        _release_owner(y, 'finish failed after the ROOT in the same slot: the next admission books any '
+                                          'free slot; the owner binding is history')
                 elif result == 'claimed_elsewhere':
                     y.update(state='running', where=(facts.get('claim') or {}).get('where'), reason=reason)
                     _release_owner(y, 'claimed elsewhere: this box holds nothing of the day')

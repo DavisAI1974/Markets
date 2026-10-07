@@ -62,7 +62,7 @@ def _save_new_complete(path, value):
 
 
 def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
-                  frozen_survivors=None, resume=False, *, bedrock=True, shared_market_policy=None):
+                  frozen_survivors=None, resume=False, *, bedrock=True, shared_market_policy=None, bedrock_off_cause=None):
     requested = [False]
     previous_handler = signal.signal(signal.SIGTERM, lambda *_: requested.__setitem__(0, True))
     stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
@@ -71,7 +71,7 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
     try:
         result = _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers,
                                 digest, frozen_survivors, resume, save_requested=save_requested, bedrock=bedrock,
-                                shared_market_policy=shared_market_policy)
+                                shared_market_policy=shared_market_policy, bedrock_off_cause=bedrock_off_cause)
         if save_requested():
             from research.kalshi.frankie_boss.parallel_teacher import TeacherSaved
             raise TeacherSaved('ROOT completion published; resume uses the completed receipt')
@@ -81,8 +81,20 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
 
 
 def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
-                   frozen_survivors=None, resume=False, save_requested=None, bedrock=True, shared_market_policy=None):
+                   frozen_survivors=None, resume=False, save_requested=None, bedrock=True, shared_market_policy=None,
+                   bedrock_off_cause=None):
     require_checkout(commit)
+    # Why the native pass is off, stated to Session.derive (second review F5; correction_consumer cceb191 defines the
+    # causes): the caller's explicit cause when given; otherwise this ROOT's own request decides it. A request WITHOUT
+    # the shared market policy is an older saved legacy plan run with its saved native-off setting (legacy_plan, kept as
+    # saved, never mutated); a request WITH the policy defaults the native pass on, so off there was selected by the
+    # caller (caller_override, e.g. BEDROCK=off given to the wrapper). This route never turns the pass off after a
+    # failure (no native_pass_failed fallback exists here: a failed native pass is the ROOT's own failure). Bedrock on:
+    # no cause, derive.json unchanged.
+    if bedrock:
+        bedrock_off_cause = None
+    elif bedrock_off_cause is None:
+        bedrock_off_cause = 'legacy_plan' if shared_market_policy is None else 'caller_override'
     if day_role not in ('discovery', 'confirmation'):
         raise ValueError('day role discovery or confirmation required')
     if day_role == 'confirmation' and not (frozen_survivors and Path(frozen_survivors).is_file()):
@@ -257,7 +269,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
         result = session.derive(source=SimpleNamespace(container=container), bedrock=bedrock, digest=digest,
                                 opening_adapter_state=opening_state, opening_book=opening_book,
                                 recovery=True, save_requested=save_requested, retain_frame_sections=True,
-                                digest_bedrock=False)
+                                digest_bedrock=False, bedrock_off_cause=bedrock_off_cause)
     # Greg, 2026-09-29: no data is dropped even when it is not all complete; a calculation that cannot use a record
     # skips over it, the day is not skipped. Producer failures stay in derive.json (and the failures spool) with their
     # record index and error, and are named in the receipt; the day's calculations go on to the next steps.
@@ -313,10 +325,14 @@ def main():
                    help='the native pass (default on: Greg reversed the 2026-09-29 no-bedrock decision); off only for an '
                         'older saved legacy plan; does not establish downstream consumer coverage')
     p.add_argument('--shared-market-policy', choices=('FRANKIE_SHARED_MARKET_TIMELINE_V1',))
+    p.add_argument('--bedrock-off-cause', choices=('caller_override', 'legacy_plan'),
+                   help='why --bedrock off (recorded on derive.json); default: legacy_plan without the shared market '
+                        'policy, caller_override with it; ignored with --bedrock on')
     a = p.parse_args()
     print(json.dumps(calculate_day(a.commit, a.ingestion_receipt, a.ingestion_receipt_sha256, a.day, a.day_role,
                                    a.output_root, a.data_workers, a.digest == 'on', a.frozen_survivors, a.resume,
-                                   bedrock=a.bedrock == 'on', shared_market_policy=a.shared_market_policy), sort_keys=True), flush=True)
+                                   bedrock=a.bedrock == 'on', shared_market_policy=a.shared_market_policy,
+                                   bedrock_off_cause=a.bedrock_off_cause), sort_keys=True), flush=True)
 
 
 if __name__ == '__main__':

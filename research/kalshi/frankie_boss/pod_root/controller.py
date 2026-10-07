@@ -469,6 +469,7 @@ class Controller:
         self.force_box = set()
         self.start_failures = {}
         self.tries = {}
+        self.deferred = set()            # handle() keys whose last try was a lease deferral (F11: not counted as a try)
         self.commit = a.commit
         self.queue_state = None
         self.state = HOST['state']
@@ -904,6 +905,12 @@ class Controller:
                 job['inputs'] = self.resign(job['inputs'])
                 job['mailbox'] = dict(request_put=self.sign.put(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/request.json'),
                                       response_get=self.sign.get(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/response.json'))
+                # F2 (second review): the worker reads the job BODY from _job_url (pod_agent: a presigned GET of this
+                # key), not from the submitted dict, so the re-signed GETs and mailbox only take effect once stored. The
+                # identity check above proved it is the same job; it is written back unconditionally, as renew() does.
+                # The lease was established for 'submit' just above; this write is part of that submission.
+                s3(TRANSFER_BUCKET).put_object(Bucket=TRANSFER_BUCKET, Key=key, Body=json.dumps(job).encode(),
+                                               ServerSideEncryption='AES256')
             job['_job_url'] = self.sign.get(TRANSFER_BUCKET, key)
             self.last_submit_at = time.time()      # before the effect: an interrupted submit leaves the worker's state unknown
             job_id, why = w.submit(job)
@@ -941,11 +948,15 @@ class Controller:
         released and cleaned (no legacy job is started any more; an old one found on the worker is still accounted for)."""
         state, attempt, day = j.get('state'), j.get('job_id'), j.get('day')
         key = (w.where, attempt, state)
-        self.tries[key] = self.tries.get(key, 0) + 1
-        if self.tries[key] > 2:
+        if self.tries.get(key, 0) >= 2:
+            self.tries[key] += 1
             if self.tries[key] == 3:
                 self.event(worker=w.where, day=day, attempt=attempt, step='handle', result='gave up after 2 tries', state=state)
             return
+        # F11 (second review): a LeaseNotEstablished deferral is not a try. It is recorded 'deferred' (once per streak),
+        # never 'failed', and does not count toward the two-try give-up, so a lease re-established later in this same
+        # process still releases and cleans the failed job. Every other outcome counts, as before.
+        counted = True
         try:
             if j.get('workflow') == 'root-to-finish':
                 self.event(worker=w.where, day=day, attempt=attempt, step='retained', result=state, detail=j.get('detail'))
@@ -964,9 +975,19 @@ class Controller:
             else:
                 self.event(worker=w.where, day=day, attempt=attempt, step='legacy', result=state,
                            detail='a legacy shipping job state; no import or reupload route exists any more; left as found')
+        except LeaseNotEstablished as e:
+            counted = False
+            if key not in self.deferred:
+                self.deferred.add(key)
+                self.event(worker=w.where, day=day, attempt=attempt, step='handle %s' % state, result='deferred',
+                           error=str(e)[:500], detail='not counted as a try; retried when the lease is established')
         except Exception as e:  # noqa: BLE001
             self.event(worker=w.where, day=day, attempt=attempt, step='handle %s' % state, result='failed',
                        error='%s: %s' % (type(e).__name__, str(e)[:500]))
+        finally:
+            if counted:
+                self.deferred.discard(key)
+                self.tries[key] = self.tries.get(key, 0) + 1
 
     def authorized(self, day):
         """The authorized scope: the run's saved plan, narrowed by --days when given (a one-day scope admits one day)."""

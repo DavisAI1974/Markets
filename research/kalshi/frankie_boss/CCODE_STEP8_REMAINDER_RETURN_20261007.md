@@ -788,3 +788,91 @@ record: piece jev, call id (sha256 of the request body or messages), model/runti
 identity, quantization, config pin, threads, CPU), the exact market cutoff of the material (the classroom teacher
 binding: source_hash, as_of, through_cursor; listed when absent), wall start/end, outcome, run/day/lane. A replayed
 recorded reply is not a call and is not recorded. AST and diff-check clean.
+
+## 11. Second-review fixes, partial pass (`08e2553`, 2026-10-07; recorded here because that pass ended before its record)
+
+Review: `REVIEW_20261007_EVENING_SECOND_PASS.md` (F1-F11). Done in `08e2553` (SOURCE-BUILT / RUNTIME-UNVERIFIED):
+- F1 (a) `Run.jev_done_receipt`: a done Jev receipt whose request is the day's retained request (or a `.rebookN`
+  successor) with matching bytes and a done `JEV_CPU_RECEIPT_V1` is returned unchanged; `_finish_steps` reads a finished
+  Jev back instead of rebuilding it on a later booking. (b) the queue's `_rebook_owner`: a WAITING finish keeps its owner
+  binding (attempt, marker, source) with a recorded queue rebook decision and `held_bookings`; `Run.jev_rebooked` accepts a
+  booking this same owner held.
+- F3 inspection on every outcome: `_finish_day` runs the day inspection when a step raises (then re-raises) and on any
+  SystemExit; `Run.start` inspects the days a disk-floor stop left, the trigger naming the stop.
+- F8 `shared_teacher_compatible`: an unreadable day file waits; a malformed one is an integrity refusal.
+- F10 the reporter is pinned by `taskset -c` in its command (no `preexec_fn` in the threaded process); unpinned when
+  taskset is absent, named on the receipt.
+
+## 12. Second-review fixes, completing pass (2026-10-07 night, session 2; Greg restarted Step 8, relayed by the parent)
+
+Base: work branch `ccr-d2f8f826-iefeah-frankie` at `64e6335` (over `08e2553` and correction_consumer's `cceb191`); this
+pass is uncommitted in the working tree and is committed by the parent by path. Source only: nothing ran, no account call.
+
+### 12.1 Fixes, each in the file the finding names
+
+- **F2** `pod_root/controller.py` `start_day`, IfNoneMatch 412 path: after re-signing the retained job's input GETs and
+  mailbox, the job is written back to the same `job.json` key (no IfNoneMatch, SSE AES256), as `renew()` does, because the
+  worker reads the job body from `_job_url`, not the submitted dict. The identity check above it is unchanged; the lease
+  was established for `submit` just before.
+- **F11** `pod_root/controller.py` `handle`: a `LeaseNotEstablished` deferral is not a try. It is recorded `deferred`
+  (once per streak, `self.deferred`), never `failed`, and does not count toward the two-try give-up; every other outcome
+  counts as before (`finally`). A lease re-established later in the same process still releases and cleans the failed job.
+- **F6** `frankie_box_successor_dispatch.drain`, waiting_school branch: after a complete recovery the reports disposition
+  is one of `not_applicable` (day not in the plan), `not_rendered` ("no reports rendered yet; the reports stage renders on
+  the current school"), `exchange_not_done`, a reports revision (`Run.reports_stale` then `guarded('reports')`), or
+  `current`. `current` is recorded only when done reports exist on a done exchange and are not stale.
+- **F7** same branch: at most one `complete` owner school recovery per operation per drain call (`school_completed`). A
+  second `waiting_school` in the same call records `waiting` with "the school stage ended done but the chain still
+  requires a successor (one complete recovery per operation per drain call)", the previous recovery attached, sleeps the
+  ordinary 5 s and breaks; the next drain call tries once more. No second school child dispatch inside one call.
+- Comment drift (second review FYI): the waiting_school comments, `close_day`'s docstring, `Run._school_recovery`,
+  `Run.successors` and `Run.recover_school` now say drain.lock (not "the inbox lock") and "close_day's one drain" (not its
+  loop).
+- **F4 consumer** `frankie_box_experiment.all99_admission`: it already read `work/native-layer-records.json` when bound to
+  derive.json's sha256 (`725dffd`). Added: every calculation/clock row names its `basis` (`derive_layer_record`,
+  `native_layer_record`, `group_proxy` or `no_record`); the group-proxy fallback's reason starts "GROUP PROXY (no per-layer
+  record used: <why>)" and `native_only.records.group_proxy` lists those entries. Every row carries `canonical` (the shared
+  vocabulary word) and `class` from `frankie_box_all99_coverage` only (FIXED_WORDS first, then LEGACY_WORDS), and the list
+  carries `counts_canonical` (also in `all99_summary`). The ROOT word stays in `disposition` because the day reports read
+  it (`admitted` refines to `picture`, never `computation`); it is the shared field's `piece_disposition`. An integrity row
+  is now `integrity_failure` in the shared field (it was `canonical='unknown'`, which relabelled an integrity failure).
+  `a_clean_promoted_positive_capsule` is `not_applicable` (FIXED_WORDS; NOT_APPLICABLE in the crosswalk, not Memory A).
+  `frankie_box_workflow_inspection.artifact_paths`: the root piece also follows `work/native-layer-records.json`.
+- **Gap from 08e2553** `frankie_box_frankie_queue.root_worker`, ROOT-and-finish-in-one-slot route: a `failed` finish now
+  releases its owner binding (`_release_owner`), exactly as the finish-only route does. Kept, the owner pinned the retry
+  to the exact CPUs of a booking the thread's end had released (`_book_slot` books `owner['cpus']`), so the retry waited
+  on whichever day took them. The retry binds afresh: `root_of` names the same completed ROOT attempt, any free 16 CPUs.
+  This is the review's F1(b) rule (keep the binding on `waiting`, release it on `failed`). Consequence, named: a done Jev
+  is read back (`jev_done_receipt`); a failed or still-pending Jev request bound to the released booking is refused on the
+  new booking (no REBOOK decision; `ACTION=resume REBOOK=on` covers saved/unknown days only). A failure is not a wait.
+- **jev_cpu SI.LOCAL** `frankie_box_jev_cpu._run`: `SI.LOCAL['model_clock']` is supplied (`client_clock`), so sit_in's
+  no-room refusal (decided in the client after the exact count, never sent) is a `FRANKIE_MODEL_EVALUATION_CLOCK_V1` record
+  with the same runtime pins, cutoff and lane as the real calls, `decided_by` named.
+- **GRANITE_MEETING_RUNTIME_V1.json** (documentation fields only, schema unchanged): `threads_rule` states the code's rule
+  (null = the claimed adviser slot, one lane worker CPU shared with Jev, threads=1; never the host count; an integer
+  clamped to the owning affinity), the 2026-10-06 wording named as superseded. N6: `settled.hosts_in_order[0]` already
+  named the local route first; it now also says main box only (`i-035994afa8bdf66a5`). The file's sha256 changes; no run
+  has pinned it.
+- **N1** `frankie_box_experiment_classroom_v2.py`: the journal witness handed to `SharedMarketTimeline` carries `path` and
+  the measured file's `dev`/`ino`. The reader's `_caller_witness` already requires the path to be the pin's path (or the
+  same file), the size to equal the pin and dev/ino when given. Before, the path was stripped, so the classroom's
+  measurement was never accepted and the reader re-hashed the journal (safe, slow).
+- `frankie_box_granite_meeting.py` voice path: the meeting record carries `knowledge_listed` (`selected['listed']`: what
+  the knowledge selection left out and why). Not part of the meeting input; its identity is unchanged.
+- **correction_consumer's request** `frankie_box_experiment_root._calculate_day`: passes `bedrock_off_cause` to
+  `Session.derive` (cceb191). With bedrock off and no stated cause: `legacy_plan` without the shared market policy,
+  `caller_override` with it. This route has no native-failed fallback, so it never states `native_pass_failed`. New CLI
+  flag `--bedrock-off-cause {caller_override,legacy_plan}`. Bedrock on: no cause, derive.json unchanged. The `.sh` carries
+  no such flag and is unchanged.
+
+### 12.2 Not done this pass
+
+- `Run.reports_stale` is not wired to `late_pieces_changed` (the parent's instruction: correction_consumer is building it in
+  `frankie_box_experiment_day_reports.py`; the contract comes through the parent).
+- First review B5 (a `not_run` search leaves Jev waiting): fixed in `725dffd` per its record; not re-checked here.
+
+### 12.3 Checks
+
+AST parse without project imports clean on the nine changed `.py` files; the JSON parses; `git diff --check` clean on all
+changed files. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED. A fresh independent review is required before integration;
+this self-review does not replace it.

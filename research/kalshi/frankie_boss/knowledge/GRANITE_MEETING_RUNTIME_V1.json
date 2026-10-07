@@ -8,7 +8,7 @@
   "quantization": "Q4_K_M",
   "runtime": "llama.cpp (llama-server, OpenAI-compatible /v1/chat/completions with a JSON schema response format)",
   "hosts_in_order": [
-   "the local child on the owning box: an ordinary stage of the day on that day's held 16-CPU lane, on the ONE worker CPU (never the coordinator) the meeting shares with Jev (the adviser slot of frankie_box_cores.STAGE_SLOTS), threads=1, claimed while it runs and released when it ends (Greg, 2026-10-07; frankie_box_granite_meeting.DEFAULT_VOICE_ROUTE = local)",
+   "the local child on the owning box, the main box only (i-035994afa8bdf66a5; Greg, 2026-10-07: all days on the main box; the small box is an unused listed fallback): an ordinary stage of the day on that day's held 16-CPU lane, on the ONE worker CPU (never the coordinator) the meeting shares with Jev (the adviser slot of frankie_box_cores.STAGE_SLOTS), threads=1, claimed while it runs and released when it ends (Greg, 2026-10-07; frankie_box_granite_meeting.DEFAULT_VOICE_ROUTE = local)",
    "free standard GitHub Actions CPU runner (.github/workflows/frankie_granite_meeting.yml, dispatch only): the listed fallback route (voice_route=github), unused on the local route"
   ],
   "hosts_superseded": [
@@ -107,7 +107,7 @@
   "max_coordinator_turns_per_item": 6,
   "max_meeting_seconds": 3000,
   "threads": null,
-  "threads_rule": "null = the host's online CPU count at launch (os.cpu_count()); an integer is clamped to that count; the value used is written to the record's runtime.effective"
+  "threads_rule": "null = the claimed adviser slot: ONE worker CPU of the day's held 16-CPU lane, shared sequentially by Granite and Jev, threads=1 (Greg, 2026-10-07; frankie_box_granite_meeting.threads_resolution); null never resolves to the host CPU count; an integer is clamped to the owning affinity (the CPUs the stage claim gave the process), never to the host; the value used and its basis are written to the record's runtime.effective. Superseded wording (2026-10-06): null = the host's online CPU count at launch"
  },
  "record": {
   "schema": "FRANKIE_GRANITE_MEETING_V1",
