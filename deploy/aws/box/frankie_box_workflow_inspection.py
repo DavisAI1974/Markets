@@ -10,11 +10,26 @@ It reports recorded processing evidence, never infers consumption from availabil
 Large journals, model state, row spools and scientific result parts are not opened.
 Use --artifact PIECE=PATH for additional exact JSON metadata or an existing report;
 operator-supplied artifacts are labelled unverified references, not adopted evidence.
+Step receipts carry an `inspection` object (inputs / use / outputs) where their caller records it (the ROOT, teacher
+and Jev callers of frankie_box_experiment.py, Step 8; the school and reports steps, and the successor operation's
+state for the owner school recovery, whose chain the school/corrections pieces follow by recorded pins, bounded
+depth, the school file itself never opened); the preflight piece projects the owner-local lane records
+(the queue's owner binding, save marker and class acknowledgment, the Linux lane controller's last status) by their
+known paths, recorded scope only. The teacher receipt, the data export MANIFEST and the search MANIFEST carry their
+own FRANKIE_PIECE_WORKFLOW_REPORT_V1 (workflow_report), projected whole.
 """
 import argparse
 import hashlib
 import json
 from pathlib import Path
+
+# Owner-local lane records (known metadata contracts of frankie_box_frankie_queue.py, frankie_box_cores.py and
+# pod_root/controller.py); read only, projected to the run/day asked for. Absent = reported absent, never zero.
+QUEUE_DIR = Path('/opt/frankie-box/work/frankie-queue')
+CONTROLLER_DIR = Path('/opt/frankie-box/work/cpu-controller')
+LANE_ENTRY_FIELDS = ('seq', 'state', 'reason', 'where', 'owner', 'attempts', 'finish', 'save_request', 'save_ack', 'child',
+                     'retained_booking', 'retain_error', 'slot_booking', 'source_owner', 'school_day', 'previous', 'resumes',
+                     'owner_history', 'save_requests_stale', 'readiness', 'enqueued_utc', 'done_utc')
 
 # Canonical SECTION 0, including conditional/cross-day work; not the ten-item build list.
 PIECES = (
@@ -75,8 +90,33 @@ successor correction corrections reused_by_child school_recovery dependents nati
 acknowledgments learner_consumption selected_knowledge checked_overlay_sha256 visible_evidence_sha256
 all_knowledge_consumed native_learning_performed forecast_replaced pending_feedback_preserved
 original_request_sha256 original_response_sha256 host_attestation_sha256 request_sha256 response_sha256 session_id
+inspection owner_binding plan_policy shared_market_policy retained_policy mismatch calculation_roots
+refused_days root_waiting external_waiting rows_missing interrupted_attempts exit_code
+request request_pins stamp output differs receipt_status status_file deliveries pending unresolved_calls
+knowledge_after_delivery claims_seal scientific_result unparsed child child_reason client_receipt
+school_sha256 successor correction corrections reused_by_child recovery recovery_intent
+row school school_status voice_status stages invalidated_by original_receipt progress acknowledgments acknowledgment
+non_blocking meeting_status meeting_sha256 classroom_status exchange_status exchange_sha256 previous_attempts
+teacher_rows teacher_rows_listed lessons failure candidate phase original replacement scopes invalidation
+original_school dependents school_recovery exchange_publication voice_invalidation school_transition
+rows_missing rows_refused rows_waiting retries waited_seconds not_queued finish
+trigger directory written pieces_written moved_aside cpus cpus_note seconds pending acknowledged requests standing
+route attempts operator_dispatch intent admission returned rebook exchange_sha256 github_run_id github_run_attempt
+conclusion concluded predecessor meeting_input workflow archive dispatched admitted_utc recorded_utc
+input_verification producer_pins_checked slowest_files bytes_per_second dipole_missing dipole exported_from this_root
+walk_seconds
 '''.split())
-WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the adviser pieces' own inputs / use / outputs record
+WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the pieces' own inputs / use / outputs record
+# The successor chain (school and corrections pieces): recorded pins {path, bytes, sha256} followed one by one from the
+# step receipt, bounded depth, known field names only (never a directory scan); each file is read under the metadata
+# ceiling and projected like any other receipt. A pin that does not resolve is reported unavailable, never invented.
+FOLLOW = {
+    'meeting': ('intent', 'admission', 'returned'),   # the remote voice route's dispatch intent, admission and return
+    'school': ('successor', 'correction', 'corrections'),
+    'corrections': ('operation', 'progress', 'recovery_intent', 'acknowledgment', 'failure', 'candidate', 'dependents',
+                    'school_recovery', 'exchange_publication', 'voice_invalidation', 'invalidation', 'publication'),
+}
+FOLLOW_DEPTH = 4   # successors step -> state.json -> ack.json -> dependents.json -> school-recovery.json
 
 # Received / used / produced (Greg, 2026-10-07): every piece's report says what it received,
 # how it used it and what it produced. These are projections of recorded fields only; a
@@ -96,8 +136,9 @@ layers dispositions frame_dispositions pairing exclusions leakage lags transform
 missing excluded withheld listed reason caveat rule interpretation limitation view absent_layers unclosed_instruments
 closed_source_without_root_frame unplaceable_input_clocks completed_sources stopped
 shared_market anchor_pictures source_status_counts applied_to phase_timings timings read
-axis exact_membership fft_cache hashing equation_not_run
+axis exact_membership fft_cache hashing equation_not_run input_verification producer_pins_checked walk_seconds
 school_listed problems number_assigned_now meeting_status school_status
+rows_missing rows_refused rows_waiting external_waiting refused_days root_waiting dipole_missing retries waited_seconds
 '''.split())
 PRODUCED = set('''outputs rows entity_rows rows_file attachment_file failure_count status shared_market_sources
 presented_inputs external_publications integrity_failure placed_series placed_cells couplings series cells planes
@@ -278,6 +319,52 @@ def classroom_projection(receipt, path):
                     'recorded for a thinner instant, not a verdict on the day; nothing here is knowledge or a gate'))
 
 
+def pins(record, fields):
+    """Absolute JSON paths of the named pin fields (a pin, or a list of pins), recorded scope only."""
+    out = []
+    for field in fields:
+        value = record.get(field)
+        for item in (value if isinstance(value, list) else [value]):
+            path = absolute(item.get('path')) if isinstance(item, dict) else None
+            if path and path.suffix == '.json':
+                out.append(path)
+    return out
+
+
+def lane_records(run_dir, run, day):
+    """The owner-local lane records of one run/day: the queue's two line entries (projected to the day), both line
+    workers' last status (their scope), the day-bound save marker and its class acknowledgment, the run's Linux lane
+    controller status and latest outcome, and the day's persisted PREVIOUS selection. Known paths only; nothing scanned."""
+    emit('### Lane ownership, scope, save and resume (owner-local records; recorded scope only)\n')
+    for line in ('root', 'class'):
+        path = QUEUE_DIR / ('%s.json' % line)
+        try:
+            body, pin = read_object(path)
+        except (OSError, ValueError) as error:
+            json_block(dict(path=str(path), unavailable=str(error)))
+            continue
+        mine = [x for x in body.get('entries') or [] if isinstance(x, dict) and x.get('run') == run and x.get('day') == day]
+        json_block(dict(source_read=pin, line=line, entries=[{k: x.get(k) for k in LANE_ENTRY_FIELDS} for x in mine],
+                        absent='no %s-line entry names this run/day' % line if not mine else None))
+    for path in (QUEUE_DIR / 'root-worker.json', QUEUE_DIR / 'class-worker.json'):
+        metadata(path, 'Line worker last status (its authorized scope)')
+    marker = QUEUE_DIR / 'save' / ('%s-%s.save-request.json' % (run, day))
+    for path, label in ((marker, 'Day-bound save marker (standing now)'),
+                        (Path(str(marker) + '.class-ack.json'), 'Class child acknowledgment (standing now)')):
+        if path.is_file():
+            metadata(path, label)
+        else:
+            json_block(dict(path=str(path), absent='not standing now (archived copies, if any, sit beside it as <name>.<label>-<epoch>)'))
+    state = CONTROLLER_DIR / run
+    metadata(state / 'status.json', 'Linux lane controller last status (lease freshness, scope, outcome, held jobs)')
+    outcomes = sorted(state.glob('outcome-*.json')) if state.is_dir() else []
+    if outcomes:
+        metadata(outcomes[-1], 'Linux lane controller latest outcome (never a day completion)')
+    previous = run_dir / 'days' / day / 'previous.json'
+    if previous.is_file():
+        metadata(previous, 'Persisted PREVIOUS classroom selection (create-only; a retry never repicks)')
+
+
 def write_piece(directory, piece, text):
     """One markdown file per piece; temporary operator review, never knowledge or a gate."""
     directory.mkdir(parents=True, exist_ok=True)
@@ -381,6 +468,12 @@ def artifact_paths(record, piece):
             if path:
                 base = path.parent if path.suffix == '.json' else path
                 out += [base / 'receipt.json', base / 'owner.json', base / 'client-receipt.json']
+        # the immutable JEV_CPU_REQUEST_V1 (pins of the classroom producer receipt, the search manifest and the
+        # runtime) and the helper's bound status beside the receipt (Step 8 caller records)
+        for field in ('request', 'status_file'):
+            path = absolute(record.get(field))
+            if path:
+                out.append(path)
     return list(dict.fromkeys(out))
 
 
@@ -448,6 +541,8 @@ def main():
     for piece, title, stages in PIECES:
         _OUT.clear()
         emit('## ' + piece + ': ' + title + '\n')
+        if piece == 'preflight':
+            lane_records(args.run_dir, plan['run'], args.day)
         if piece in CLASSROOM_ONLY and not entry.get('classroom_arm'):
             emit('Not applicable under the saved non-classroom day plan.\n')
         elif piece == 'confirmation':
@@ -482,6 +577,19 @@ def main():
                     retained = metadata(artifact, 'Retained producer/consumer metadata (recorded scope only)')
                     if piece == 'classroom' and isinstance(retained, dict):
                         classroom_projection(retained, artifact)
+            # the school / corrections pieces: the checked successor chain by its recorded pins (the school successor
+            # receipt and correction records; the successor operation, its state, the recovery intent, the acknowledgment
+            # and the dependents receipt), bounded depth, each projected as recorded; the school file itself is never opened
+            # (its witness is in the receipt), and a disposition read here is a recorded one, not a consumption proof
+            queue = [(p, 1) for p in pins(body, FOLLOW.get(piece, ()))]
+            while queue:
+                artifact, depth = queue.pop(0)
+                if artifact in seen or depth > FOLLOW_DEPTH:
+                    continue
+                seen.add(artifact)
+                followed = metadata(artifact, 'Successor chain record (recorded scope only; depth %d)' % depth)
+                if followed:
+                    queue += [(p, depth + 1) for p in pins(followed, FOLLOW.get(piece, ()))]
             # Reuse numbered reports as references: never regenerate, modify or substitute them.
             for report in body.get('reports') or []:
                 if isinstance(report, dict):

@@ -275,7 +275,12 @@ class SharedMarketTimeline:
     `report['coverage']`; `report['complete']` means only that the whole available
     source was exhausted with its pins verified.
     """
-    def __init__(self, calculations, *, day, workers=15):
+    def __init__(self, calculations, *, day, workers=15, input_witness=None):
+        """`input_witness`: an optional {bytes, sha256} the caller measured on the sealed journal in this same
+        process (the teacher hashes it against its ingestion receipt before opening this reader). When it equals
+        the ROOT's container pin the full re-read is skipped and `report['input_verification']` says whose
+        measurement stood; anything else (absent, different, malformed) falls back to this reader's own full
+        hash. The pin, the identity and the integrity rule are unchanged: a mismatch still raises."""
         from frankie_box_durable import witness
         from frankie_box_experiment_native import selected_files
         root = _local(Path(calculations).absolute()).resolve()
@@ -340,13 +345,27 @@ class SharedMarketTimeline:
         self.day, self.workers = str(day), workers
         self.extracted_count = derive['input_records']
         self.input_pin = self.source['container']
-        if witness(self.input_pin['path']) != {k: self.input_pin[k] for k in ('bytes', 'sha256')}:
-            raise ValueError('shared input journal differs from its exact sealed source bytes')
+        expected = {k: self.input_pin[k] for k in ('bytes', 'sha256')}
+        supplied = ({k: input_witness.get(k) for k in ('bytes', 'sha256')} if isinstance(input_witness, dict) else None)
+        if supplied == expected:
+            # The caller measured these exact bytes in this process; a second full read of the sealed journal
+            # (tens of GB on a big day) would re-measure the same pin. The chained head hash is still verified
+            # by the compact reader as the envelopes are read.
+            verification = dict(basis='caller_measured_witness_equal_to_pin', re_read=False,
+                                note='the caller hashed the sealed journal against its ingestion receipt in this process')
+        else:
+            if witness(self.input_pin['path']) != expected:
+                raise ValueError('shared input journal differs from its exact sealed source bytes')
+            verification = dict(basis='full_read_by_this_reader', re_read=True,
+                                caller_witness=('absent' if input_witness is None else 'differs_from_pin_or_malformed; '
+                                                'the reader measured the bytes itself'))
+        self.input_verification = verification
         self.identity = dict(schema=SCHEMA, day=self.day, source_binding=source_pin,
                              calculations=calculation_pin, journal=self.input_pin,
                              sources={stream.name: stream.pin for stream in self.streams}, external=external,
                              completed_sources=self.completed_sources, absent_layers=self.absent_layers)
         self.report = dict(identity=self.identity, complete=False, presented_inputs=0,
+                           input_verification=verification,
                            interpretation='actual shared-reader input delivery; target/learner arithmetic coverage is separate',
                            completeness=dict(
                                complete='source exhausted: every journal envelope, every pinned layer row and every external '

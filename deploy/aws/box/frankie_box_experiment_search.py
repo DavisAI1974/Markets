@@ -1011,6 +1011,41 @@ def couple(fx, fy, lags):
 
 _JOB = {}
 
+# The partner-side FFTs of one cell, memoized per worker process (Greg, 2026-10-07: every mechanism that makes a stage
+# faster gets used). A cell/x job couples x with every (ty, y) partner of the cell; without this cache each job
+# recomputes transforms(y) for every partner, so the y-side rffts are repeated once per x. The jobs are ordered by
+# cell, so a worker keeps the partners of its current cell and drops them when the cell changes; when the cell's
+# partners do not all fit the byte cap, the ones that fit stay (the same prefix hits on every job; no eviction thrash).
+# transforms() is deterministic, so a cached value equals a recomputed one bit for bit: rows, counts and parts are
+# invariant. Per-worker hits/misses are aggregated into MANIFEST.fft_cache for the one-day canary.
+_FFT_CACHE = dict(cell=None, entries={}, bytes=0, hits=0, misses=0, not_cached=0)
+_FFT_CACHE_BYTES = int(os.environ.get('FRANKIE_SEARCH_FFT_CACHE_BYTES', str(512 * 1024 * 1024)))   # per worker process
+
+
+def _partner_transforms(cell, key, values):
+    """transforms(values()) for partner `key` of `cell`, from the worker's cache when it holds it."""
+    cache = _FFT_CACHE
+    if cache['cell'] != cell:
+        cache.update(cell=cell, entries={}, bytes=0)
+    hit = cache['entries'].get(key)
+    if hit is not None:
+        cache['hits'] += 1
+        return hit
+    cache['misses'] += 1
+    fy = transforms(values())
+    size = fy['s'].nbytes + fy['a'].nbytes
+    if cache['bytes'] + size <= _FFT_CACHE_BYTES:
+        cache['entries'][key] = fy
+        cache['bytes'] += size
+    else:
+        cache['not_cached'] += 1
+    return fy
+
+
+def _fft_cache_stats():
+    return dict(hits=_FFT_CACHE['hits'], misses=_FFT_CACHE['misses'], not_cached=_FFT_CACHE['not_cached'],
+                entries=len(_FFT_CACHE['entries']), bytes=_FFT_CACHE['bytes'], cap_bytes=_FFT_CACHE_BYTES)
+
 
 def _stop_requested():
     path = os.environ.get('FRANKIE_LANE_STOP_FILE')
@@ -1318,8 +1353,9 @@ def _cell_job(args):
                                             bytes=partial.stat().st_size, sha256=sha256_file(partial)))
                 return None
             ty, y = partners[partner_index]
+            fy = _partner_transforms((cell_col, cell_value), (ty, y), lambda: pick(steps[ty][y]))
             row = dict(header, x=x, y=y, cell=cell_col, cell_value=cell_value, transform=tx, x_transform=tx,
-                       y_transform=ty, **couple(fx, transforms(pick(steps[ty][y])), lags))
+                       y_transform=ty, **couple(fx, fy, lags))
             out.write(json.dumps(row, sort_keys=True) + '\n')
             count += 1
             beyond += row['beyond_chance']
@@ -1333,12 +1369,71 @@ def _cell_job(args):
                                 bytes=partial.stat().st_size, sha256=digest, ready_to_publish=True))
     os.replace(partial, part)
     _save_state(state_path, dict(identity=identity, complete=True, result=result, sha256=digest))
-    return result
+    # The fifth element is this worker's cache accounting at the end of a freshly computed job (never saved in the
+    # retained result: a recovered job reports none); the caller aggregates it for MANIFEST.fft_cache.
+    return result + (_fft_cache_stats(),)
+
+
+def workflow_report(manifest, day_dir, identity, *, phase_timings, fft_cache, workers):
+    """The piece's inputs / use / outputs record for the one-day review (Greg, 2026-10-07; schema shared with the
+    teacher, the export and the adviser pieces so frankie_box_workflow_inspection projects it). Inputs: the export
+    manifest pin and every source the series were read from (path, bytes, sha256, rows), the directive, the pinned
+    code. Use: the axis, every leakage gate, every excluded/missing/listed disposition, what was not searched, the
+    cells not counted, the transforms and lags, the chance check, where the time went. Outputs: the coupling parts
+    with pins, the counts (rows, beyond-chance), the planes receipt. A count is a count; it is not a finding and not
+    proof that the scientific teacher consumed it."""
+    notes = manifest['notes']
+    dispositions = [note for note in notes if any(k in note for k in ('excluded', 'missing', 'reason', 'listed'))]
+    shared = [s for s in manifest['sources'] if s.get('source') == 'shared_market']
+    return dict(schema='FRANKIE_PIECE_WORKFLOW_REPORT_V1', piece='search',
+                inputs=dict(day=manifest['day'], cycle=manifest['cycle'], day_role=manifest['day_role'],
+                            data_manifest=dict(path=str(day_dir / 'MANIFEST.json'), sha256=identity['data_manifest_sha256'],
+                                               source_binding='the governed export of this day and cycle (MANIFEST.json, '
+                                                              'checked again before publication)'),
+                            sources=[{k: s.get(k) for k in ('source', 'path', 'bytes', 'sha256', 'rows', 'frames', 'exact_membership')
+                                      if k in s} for s in manifest['sources']],
+                            frozen_survivors=manifest.get('frozen_survivors'), lags=manifest['lags'],
+                            transforms=manifest['transforms']['names'],
+                            experiment_directive=(manifest.get('experiment_directive') or {}).get('sha256'),
+                            code_pins={k: identity.get(k) for k in ('code_sha256', 'transform_sha256', 'surface_sha256',
+                                                                   'native_reader_sha256', 'journal_reader', 'dipole_reader')},
+                            workers=workers),
+                use=dict(axis='F_LAST group closes of the ROOT frame spool in spool order; the running maximum of the '
+                              'receive clock in exact nanoseconds; never a timestamp as-of or a dense grid',
+                         exact_membership=(shared[0].get('exact_membership') if shared else
+                                           'no shared-market policy on this ROOT: the legacy F_LAST view'),
+                         leakage=manifest['leakage'],
+                         dispositions=dispositions,
+                         not_searched=manifest['not_searched'],
+                         cells_not_counted=manifest['cells_not_counted'],
+                         cells=len(manifest['cells']), series=len(manifest['series']),
+                         transforms=dict(names=manifest['transforms']['names'], pairs=manifest['transforms']['pairs'],
+                                         unclassified_steps=manifest['transforms']['unclassified_steps']),
+                         chance_check='every circular shift of y outside the lag window; a pair is beyond chance only when '
+                                      'no shift reached |D| at the best lag (an orientation, the counts are the result)',
+                         phase_timings=phase_timings, fft_cache=fft_cache, model_calls=0),
+                outputs=dict(status='searched', manifest='MANIFEST.json beside the coupling parts',
+                             couplings=manifest['couplings'], planes=len(manifest['planes']) if isinstance(manifest.get('planes'), list)
+                             else manifest.get('planes'),
+                             brain='knowledge-findings.json and the brain entry are filed by the orchestrator '
+                                   '(Run.search_knowledge) after this manifest; recorded there, not here',
+                             refusals='an existing MANIFEST declines a second search; a confirmation day without a frozen '
+                                      'survivor list is refused; no ROOT frame spool means no axis: refused before this '
+                                      'manifest (listed by the orchestrator, the day goes on)',
+                             waits=['a requested stop (exit 75) saves every submitted operation and resumes from it']),
+                rule='recorded inputs, use and outputs of this piece for the one-day review; a count is not a finding and '
+                     'not proof of downstream consumption; missing evidence means unknown, never zero')
 
 
 def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, workers=8, transform_names=None):
     if type(lags) is not int or lags < 0:
         raise ValueError('lags must be a nonnegative integer')
+    # Where the time goes (Greg, 2026-10-07): seconds per phase, in the manifest as phase_timings. Diagnostic only.
+    phases, phase_started = {}, [time.time()]
+    def phase(name):
+        now = time.time()
+        phases[name] = round(phases.get(name, 0.0) + now - phase_started[0], 3)
+        phase_started[0] = now
     import numpy as np
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import frankie_box_experiment_transforms as T
@@ -1394,9 +1489,11 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         manifest = json.loads((staging / 'MANIFEST.json').read_bytes())
         os.replace(staging, target)
         return manifest
+    phase('identity_and_recovery')
     prepared_path = recovery / 'prepared.pkl'
     if prepared_path.is_file():
         prepared = _load_state(prepared_path, identity)['prepared']
+        phase('prepare_series_loaded_from_recovery')
     else:
         if _stop_requested():
             raise SystemExit(75)
@@ -1404,6 +1501,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         prepared = build_series(day_dir, log, external_fields_mode=external_fields_mode, workers=workers,
                                 data_manifest_sha256=identity['data_manifest_sha256'])
         _save_state(prepared_path, dict(identity=identity, prepared=prepared))
+        phase('prepare_series')
     axis, series, cells, sources, notes, gates = prepared
     if _stop_requested():
         raise SystemExit(75)
@@ -1420,6 +1518,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         unclassified[tname][name] = n_unknown
     if _stop_requested():
         raise SystemExit(75)       # all submitted transforms have drained and saved their full results
+    phase('transform_steps')
     cells_path = recovery / 'cells.pkl'
     if cells_path.is_file():
         cell_index = _load_state(cells_path, identity)['cells']
@@ -1442,12 +1541,21 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     else:
         _save_state(jobs_path, dict(identity=identity, jobs=jobs))
     _JOB.update(steps=steps, cells=cell_index)
+    phase('cells_and_jobs')
     started = time.time()
     parts, count, beyond, not_counted = [], 0, 0, []
+    # Per-worker FFT cache accounting: the last report from each fresh job stands in for its worker (hits and misses
+    # are cumulative per process); the aggregate is the sum over the latest report of every job, an upper bound on
+    # distinct workers' totals only when workers are distinguishable, so it is recorded as 'reported_by_jobs'.
+    cache_reports, recovered_jobs = [], 0
     for _, result in _run_pending(context, workers, _cell_job, jobs):
         if result is None:
             continue                # this worker saved its exact next pair on the cooperative stop
-        part, n_rows, n_beyond, short = result
+        part, n_rows, n_beyond, short = result[:4]
+        if len(result) > 4:
+            cache_reports.append(result[4])
+        else:
+            recovered_jobs += 1
         if short:
             not_counted.append(short)
         parts.append(part)
@@ -1457,6 +1565,14 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         raise SystemExit(75)         # every submitted pair worker has saved; no child is left running
     if len(parts) != len(jobs):
         raise ValueError('search workers stopped before every job was retained; resume with the stop request cleared')
+    phase('couplings')
+    fft_cache = dict(cap_bytes_per_worker=_FFT_CACHE_BYTES, fresh_jobs=len(cache_reports), recovered_jobs=recovered_jobs,
+                     last_report_hits=max((r['hits'] for r in cache_reports), default=0),
+                     last_report_misses=max((r['misses'] for r in cache_reports), default=0),
+                     last_report_not_cached=max((r['not_cached'] for r in cache_reports), default=0),
+                     basis='per-worker cumulative counters at each fresh job\'s end; the maxima are the busiest worker\'s '
+                           'totals; hits/(hits+misses) is the share of partner FFTs not recomputed; measure the coupling '
+                           'phase with and without FRANKIE_SEARCH_FFT_CACHE_BYTES=0 on the one-day canary')
     part_pins = [dict(path=str(Path(p).relative_to(staging)), rows=None, sha256=sha256_file(p)) for p in sorted(parts)
                  if Path(p).exists()]
     cell_specs = [(c, v, None) for c, v in cell_index]
@@ -1477,7 +1593,10 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     planes=plane_summary(sources, notes),
                     rule='counts per pair, cell, lag and day; never pooled across days; never a coefficient or an average '
                          'as the finding (D37); a confirmation day runs only the frozen survivor list',
-                    frozen_survivors=str(frozen) if frozen else None, model_calls=0)
+                    frozen_survivors=str(frozen) if frozen else None, model_calls=0,
+                    phase_timings=phases, fft_cache=fft_cache, workers=workers)
+    manifest['workflow_report'] = workflow_report(manifest, day_dir, identity, phase_timings=phases, fft_cache=fft_cache,
+                                                  workers=workers)
     manifest_path = staging / 'MANIFEST.json'
     with manifest_path.with_suffix('.json.pending').open('w', encoding='utf-8') as handle:
         handle.write(json.dumps(manifest, indent=1, sort_keys=True) + '\n')
@@ -1485,10 +1604,11 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
         os.fsync(handle.fileno())
     os.replace(manifest_path.with_suffix('.json.pending'), manifest_path)
     os.replace(staging, target)
+    phase('publish')
     log('search: %d series x %d transforms (%d sources failed the leakage gate, listed), %d cells, %d pair rows, %d '
-        'beyond chance (a count, not a finding by itself) in %.0f s' % (
+        'beyond chance (a count, not a finding by itself) in %.0f s; phases %s' % (
             len(names), len(transform_names), sum(1 for g in gates if g['passed'] is False), len(cell_specs), count,
-            beyond, manifest['seconds']))
+            beyond, manifest['seconds'], json.dumps(phases, sort_keys=True)))
     return manifest
 
 
@@ -1510,7 +1630,8 @@ def main():
                workers=a.workers, transform_names=[t for t in (a.transforms or '').split(',') if t] or None)
     print(json.dumps(dict(target=str(ROOT / a.day / ('cycle-' + a.cycle) / a.day_role), couplings=m['couplings'],
                           leakage_failed=[g.get('source', g.get('series')) for g in m['leakage'] if g['passed'] is False],
-                          not_searched=m['not_searched']), indent=1))
+                          not_searched=m['not_searched'], phase_timings=m.get('phase_timings'),
+                          fft_cache=m.get('fft_cache')), indent=1))
 
 
 if __name__ == '__main__':

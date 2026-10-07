@@ -122,9 +122,11 @@ def _sha256(path):
 
 
 def _pin(path):
-    """(bytes, sha256) of one linked file; a worker-pool job (one file per worker, largest first)."""
+    """(bytes, sha256, seconds) of one linked file; a worker-pool job (one file per worker, largest first)."""
     path = Path(path)
-    return path.stat().st_size, _sha256(path)
+    started = time.time()
+    size, digest = path.stat().st_size, _sha256(path)
+    return size, digest, round(time.time() - started, 3)
 
 
 def _pin_all(paths, workers):
@@ -132,21 +134,30 @@ def _pin_all(paths, workers):
     V2 frame spool several GB); files are independent, so the held lane's workers hash them side by side, the
     largest first so one long file does not trail a drained pool. The identities are the same bytes and the same
     sha256 whatever the worker count: a speed-up never changes a pin. Effect unmeasured here; bounded above by
-    the largest single file (serial inside one file). Recorded in MANIFEST.hashing for the one-day canary."""
+    the largest single file (serial inside one file) and by the volume's read throughput (the work directory is
+    EBS: the hash is I/O-bound there, so the per-file seconds recorded below show whether the disk or the CPU
+    was the wall). Recorded in MANIFEST.hashing for the one-day canary."""
     paths = sorted(paths, key=lambda p: Path(p).stat().st_size, reverse=True)
     started = time.time()
     if workers <= 1 or len(paths) <= 1:
-        pins = {str(p): _pin(p) for p in paths}
+        measured = {str(p): _pin(p) for p in paths}
         mode = 'serial'
     else:
         from concurrent.futures import ProcessPoolExecutor
         with ProcessPoolExecutor(max_workers=min(workers, len(paths))) as pool:
-            pins = dict(zip((str(p) for p in paths), pool.map(_pin, paths)))
+            measured = dict(zip((str(p) for p in paths), pool.map(_pin, paths)))
         mode = 'process_pool'
+    pins = {path: (size, digest) for path, (size, digest, _) in measured.items()}
+    slowest = sorted(((seconds, size, path) for path, (size, _, seconds) in measured.items()), reverse=True)[:5]
+    wall = round(time.time() - started, 3)
+    total_bytes = sum(size for size, _ in pins.values())
     return pins, dict(mode=mode, workers=min(workers, len(paths)) if mode == 'process_pool' else 1,
-                      files=len(paths), bytes=sum(size for size, _ in pins.values()), seconds=round(time.time() - started, 3),
+                      files=len(paths), bytes=total_bytes, seconds=wall,
+                      bytes_per_second=round(total_bytes / wall) if wall > 0 else None,
                       largest_file_bytes=max((size for size, _ in pins.values()), default=0),
-                      basis='one file per worker, largest first; identities invariant; measure on the one-day canary')
+                      slowest_files=[dict(seconds=s, bytes=b, path=p) for s, b, p in slowest],
+                      basis='one file per worker, largest first; identities invariant; measure on the one-day canary; '
+                            'bytes_per_second against the volume throughput says whether the disk was the wall')
 
 
 def plan(day, cycle, dirs):
@@ -221,6 +232,7 @@ def workflow_report(day, cycle, dirs, files, excluded, missing, unclaimed, exter
                                              MIXED="Greg's call", OTHER_MODEL="Greg's call"),
                          computation='none: hard links only; bytes and sha256 measured on the linked inode',
                          hashing=hashing,
+                         producer_pins_checked=hashing.get('producer_pins_checked'),
                          dipole_rows=('teacher directory given; its rows are linked' if dirs.get('teacher')
                                       else 'no teacher directory given: the day is exported without the teacher-only '
                                            'Dipole rows (listed missing; a launch run may still carry them)')),
@@ -253,11 +265,30 @@ def export(day, cycle, dirs, root=ROOT, workers=1):
             raise SystemExit('cannot hard-link %s (%s): a copy would be a second build of the data; nothing written'
                              % (item['source'], error))
         item['destination'] = str(destination)
+    # Producer pins (Greg, 2026-10-07: integrity stays a separate visible failure): the sealed journal's bytes and
+    # sha256 are pinned in its ingestion receipt; the selected native artifacts carry their derivation pins. The
+    # export still measures every linked inode itself; a measurement that differs from the producer's pin is
+    # corruption of the source, raised with both named, never re-pinned quietly as the new identity.
+    receipts = [f for f in files if f['stage'] == 'ingest' and Path(f['path']).name == 'ingestion-receipt.json']
+    if len(receipts) == 1:
+        rc = json.loads(Path(receipts[0]['source']).read_bytes())
+        # the receipt names its journal relative to its own directory (the teacher opens receipt.parent / journal_file)
+        journal_path = (str(Path(receipts[0]['path']).parent / rc['journal_file'])
+                        if isinstance(rc.get('journal_file'), str) else None)
+        for item in files:
+            if (item['stage'] == 'ingest' and journal_path is not None and item['path'] == journal_path
+                    and type(rc.get('journal_bytes')) is int and rc.get('journal_sha256')):
+                item['expected'] = dict(bytes=rc['journal_bytes'], sha256=rc['journal_sha256'])
+                item['expected_from'] = 'ingestion-receipt.json (BOSS_BLOCK_INGESTION_RECEIPT_V1 journal pin)'
     pins, hashing = _pin_all([item['destination'] for item in files], workers)
     for item in files:
         item['bytes'], item['sha256'] = pins[item.pop('destination')]
         if item.get('expected') and item['expected'] != {k: item[k] for k in ('bytes', 'sha256')}:
-            raise ValueError('selected native artifact changed while linking: ' + item['source'])
+            raise ValueError('linked artifact differs from its producer pin (%s): %s measured %s, pinned %s'
+                             % (item.get('expected_from', 'native derivation'), item['source'],
+                                {k: item[k] for k in ('bytes', 'sha256')}, item['expected']))
+    hashing['producer_pins_checked'] = [dict(path=f['path'], stage=f['stage'], pinned_by=f.get('expected_from', 'native derivation'))
+                                        for f in files if f.get('expected')]
     ext = [f for f in files if f['stage'] == 'ingest' and Path(f['path']).name == 'day-external.json']
     external = (dict(status='attached', path='ingest/' + ext[0]['path'], sha256=ext[0]['sha256'], bytes=ext[0]['bytes'])
                 if len(ext) == 1 else

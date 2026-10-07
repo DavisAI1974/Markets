@@ -75,10 +75,22 @@ for DAY in $(echo "$DAYS" | tr ',' ' '); do
     --day "$DAY" --ingestion-receipt "$R" --ingestion-receipt-sha256 "$SHA" --workers $((SHARE - 1)) $EXTRA > "$LOG" 2>&1 &
   PIDS="$PIDS $!:$DAY:$LOG"
 done
-FAILED=0
+# Exit codes of one day (frankie_box_experiment_teacher.py): 0 rows published; 4 rows published, the external section
+# listed refused/failed in the receipt; 5 equation_not_run (no operand for the pinned equation on this day: no rows,
+# the receipt names the missing operand; Greg, 2026-10-07: the day goes on without its Dipole rows, listed). 4 and 5
+# are LISTED outcomes with a published receipt, not failures of the step; anything else is a failed day (listed too;
+# the other days go on) and the step exits 3. The orchestrator reads each day's receipt.json for the exact status.
+FAILED=0; LISTED=0
 for P in $PIDS; do
   PID=${P%%:*}; REST=${P#*:}; DAY=${REST%%:*}; LOG=${REST#*:}
-  if wait "$PID"; then echo "### $DAY done"; else echo "### $DAY FAILED (listed; the other days go on)"; FAILED=$((FAILED + 1)); fi
+  wait "$PID"; RC=$?
+  case "$RC" in
+    0) echo "### $DAY done";;
+    4) echo "### $DAY rows published; external section listed in its receipt (exit 4)"; LISTED=$((LISTED + 1));;
+    5) echo "### $DAY equation_not_run: no Dipole rows this day, the receipt lists the missing operand (exit 5); the day goes on"; LISTED=$((LISTED + 1));;
+    *) echo "### $DAY FAILED (exit $RC; listed; the other days go on)"; FAILED=$((FAILED + 1));;
+  esac
   tail -n 40 "$LOG"
 done
+echo "### teacher step: $FAILED failed, $LISTED listed (receipts published) of $ND days"
 [ "$FAILED" -eq 0 ] || exit 3
