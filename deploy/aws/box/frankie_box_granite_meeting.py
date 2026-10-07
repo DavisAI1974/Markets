@@ -400,13 +400,14 @@ def material_record(given, basis, tokens):
                      'here at the meeting; nothing dropped, truncated or summarized')
 
 
-def meeting_input(exchange, knowledge_index=None, *, stacks=True):
+def meeting_input(exchange, knowledge_index=None, *, stacks=True, notes=None):
     """Per item of Frankie's view: the three seats' voiced turns (text, lines, cites), their retained record fields,
     the code-seeded open items. Accumulated knowledge is listed by label and hash only (names, not content).
     stacks (default): the non-picture material is written through every proven layered stack (render_material); the
     input names the encoding and every message's render summary (sha256, chars before/after, layers), so the binding
     pins what each prompt carries. stacks=False: the legacy input, byte-identical to the input before the stacks (a
-    retained binding of that input keeps its prompts and request identities)."""
+    retained binding of that input keeps its prompts and request identities).
+    notes: an optional dict the caller owns; the item-render pool placement goes there (receipt only, never the input)."""
     import frankie_box_exchange_voice as V
     voiced = {i['item_id']: i for i in V.voice_input(exchange)['items']}
     items = []
@@ -456,11 +457,30 @@ def meeting_input(exchange, knowledge_index=None, *, stacks=True):
                  'legacy JSON, compact JSON and the stacked text; the numbers a coordinator turn may voice are in the '
                  'seats\' turn texts, lines and cites (strings, never rewritten by a stack); nothing is dropped, '
                  'truncated or summarized')
-        given['material_stacks']['context'] = context_text(given)[1]
         for item in items:
             item['message_render'] = None          # marks the item stacked; its summary is filled below
-            item['message_render'] = item_message(item)[1]
+        # Every item's render (each layered stack proven by parse-back) is independent of the others: an ordered pinned
+        # pool on the caller's lane CPUs when it has two or more (frankie_box_adviser_market.PinnedMap; a one-CPU slot,
+        # such as the voice stage's adviser CPU, renders in-process exactly as before). Summaries are assigned in item
+        # order; a worker failure is recomputed in-process at the item's turn. The pool forks before the context
+        # render runs here, which then overlaps it.
+        renders = AM.PinnedMap(_item_render, items, list(range(len(items))), label='meeting item renders')
+        try:
+            given['material_stacks']['context'] = context_text(given)[1]
+            done = renders.results()
+        finally:
+            renders.close()
+        for index, item in enumerate(items):
+            ok, value = done[index]
+            item['message_render'] = value if ok else item_message(item)[1]
+        if notes is not None:
+            notes['item_render_pool'] = renders.record
     return given
+
+
+def _item_render(items, index):
+    """One pinned-pool task: the unchanged render summary of item `index` (PinnedMap)."""
+    return item_message(items[index])[1]
 
 
 # ------------------------------------------------------------------------------------------ validation of a turn
@@ -671,6 +691,7 @@ class LlamaServer:
         self.attempt = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()) + '-' + str(os.getpid())
         self.stderr_path, self._stderr_handle = None, None
         self.evidence = []
+        self.cpus, self.placement = None, None
 
     def remaining(self):
         """Seconds of meeting budget left (None = no budget set)."""
@@ -814,6 +835,11 @@ class LlamaServer:
         command = [self.binary, '-m', self.model, '--host', '127.0.0.1', '--port', str(self.port),
                    '--ctx-size', str(int(self.params['context_size'])), '--threads', str(self.threads),
                    '--parallel', '1', '--no-context-shift', '--log-disable']
+        # Explicit placement (Greg, 2026-10-07: every process pinned, physical-core aware): the server process is pinned,
+        # before exec, to exactly `threads` CPUs of the owning affinity in physical-core order (distinct cores first), so
+        # every thread llama.cpp creates inherits that set; on the claimed one-CPU adviser slot that is its one CPU.
+        # The command line is unchanged; a refused pin keeps the inherited affinity and is recorded (L-2).
+        self.cpus, self.placement = self._server_cpus(available)
         if self.params.get('cpu_only'):
             command += ['--n-gpu-layers', '0']
         # the server's stderr goes to a FILE, whole (never a pipe that nobody drains; never sliced)
@@ -827,12 +853,25 @@ class LlamaServer:
         else:
             stderr = subprocess.DEVNULL
         try:
-            self.attempt_record('start', 'starting', command=command, port=self.port, threads=self.threads)   # before any process work (6R2-F)
+            self.attempt_record('start', 'starting', command=command, port=self.port, threads=self.threads,
+                                placement=self.placement)   # before any process work (6R2-F)
         except Exception:
             self._close_stderr()
             raise
         try:
-            self.process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=stderr)
+            import threading
+            before_exec = bool(self.cpus) and threading.active_count() == 1    # preexec_fn only when single-threaded
+            self.process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=stderr,
+                                            preexec_fn=self._pin_child if before_exec else None)
+            if self.cpus and not before_exec:
+                try:          # other threads here: pin the new process right after the spawn instead
+                    os.sched_setaffinity(self.process.pid, set(self.cpus))
+                    self.placement['mode'] = 'after spawn (this process runs other threads)'
+                except OSError as error:
+                    self.placement['mode'] = 'inherited (after-spawn pin refused: %r)' % error
+            elif self.cpus:
+                self.placement['mode'] = 'before exec'
+
         except Exception as error:
             self._close_stderr()
             # _meeting owns the single terminal write and the bound runtime_failed receipt.
@@ -874,6 +913,27 @@ class LlamaServer:
                                        % json.dumps(self.stderr_witness(), sort_keys=True))
         raise MeetingCallFailed('llama-server did not report healthy within %s s; stderr retained at %s'
                                 % (round(wait, 1), json.dumps(self.stderr_witness(), sort_keys=True)), evidence=self.stderr_witness())
+
+    def _server_cpus(self, available):
+        """(cpus, placement record): the first `threads` CPUs of the owning affinity in physical-core order."""
+        if not available:
+            return None, dict(cpus=None, basis='no affinity interface; the server inherits the owning affinity')
+        try:
+            import frankie_box_lane_pin as LP
+            ordered, basis = LP.core_order(available)
+        except Exception as error:  # noqa: BLE001 - placement never stops the meeting
+            ordered, basis = sorted(available), 'plain sorted order (lane pin helper unavailable: %s)' % type(error).__name__
+        cpus = ordered[:max(1, self.threads)]
+        return cpus, dict(cpus=cpus, threads=self.threads, owning_affinity=sorted(available), basis=basis,
+                          rule='the server process pinned before exec; its threads inherit the set; a refused pin keeps '
+                               'the inherited affinity (the child cannot report it; the owning affinity bounds it)')
+
+    def _pin_child(self):
+        """preexec_fn: pin the server process before exec (never raises: a refusal keeps the inherited affinity)."""
+        try:
+            os.sched_setaffinity(0, set(self.cpus))
+        except Exception:  # noqa: BLE001
+            pass
 
     def _read_bounded(self, response, label, timeout, transport):
         """6R3-F: read a response body whole under the ABSOLUTE meeting deadline. Every blocking read is bounded by the
@@ -1408,6 +1468,8 @@ def meeting_workflow_report(out_dir, given, record, *, status, params=None, refu
                                        if picture is not None else ')'),
                              system_prompt_tokens=system_count,
                              per_item='item_id, author, claim, voiced seat turns, retained seat records, code-seeded open items'),
+                 placement=dict(server=(runtime.get('effective') or {}).get('placement'),
+                                rule='the llama-server process pinned to its threads\' CPUs of the claimed slot; placement only'),
                  material_stacks=_material_report(given, record),
                  picture_delivery=(None if picture is None else dict(
                      delivered=picture['delivery'], chars=picture['chars'],
@@ -1836,7 +1898,7 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                   runtime=dict(binary=witness_file(binary), model=witness_file(model), parameters=params,
                                provenance=runtime_provenance(config.get('pins') or {}, binary),
                                effective=dict(threads=server.threads, host_cpus=server.host_cpus, host_cpu=host_cpu(),
-                                              threads_resolution=server.threads_resolution,
+                                              threads_resolution=server.threads_resolution, placement=server.placement,
                                               call_ceiling_seconds=float(params.get('call_ceiling_seconds') or CALL_CEILING_SECONDS)),
                                budget_seconds=params['max_meeting_seconds'],
                                budget_left_seconds=None if server.remaining() is None else round(server.remaining(), 1),

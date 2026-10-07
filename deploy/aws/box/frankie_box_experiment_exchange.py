@@ -57,9 +57,11 @@ and goes on; other bytes decline (duplicate data, R16). Counts, never averages; 
 or not readable is listed with its reason (R04).
 """
 import argparse
+import copy
 import hashlib
 import json
 import math
+import os
 import re
 import sys
 import time
@@ -492,10 +494,7 @@ def retained_evidence_counts(measure, names):
     if measure is None:
         out['listed'].append(dict(reason='no retained teacher snapshot available'))
         return out
-    if '_retained_evidence_producers' not in measure:
-        measure['_retained_evidence_producers'] = {
-            m.__name__: sha256_bytes(Path(m.__file__).read_bytes()) for m in (DC, SEARCH)}
-    out['arithmetic_sources'] = measure['_retained_evidence_producers']
+    out['arithmetic_sources'] = _evidence_producers(measure)
     retained = measure['retained_rows']
     cursors = [row['cursor'] for row in retained]
     if (any(type(c) is not int or not 0 <= c <= measure['through_cursor'] for c in cursors)
@@ -585,6 +584,21 @@ def retained_evidence_counts(measure, names):
         out['listed'].append(dict(reason='no pair of available exact numeric fields for the same entity; '
                                  'governed targets are not implicitly mixed with this evidence axis'))
     return out
+
+
+def _evidence_producers(measure):
+    """The arithmetic sources' file hashes, recorded on the measure once (the same assignment the count made inline)."""
+    from research.kalshi.frankie_boss import dipole_classroom as DC
+    import frankie_box_experiment_search as SEARCH
+    if '_retained_evidence_producers' not in measure:
+        measure['_retained_evidence_producers'] = {
+            m.__name__: sha256_bytes(Path(m.__file__).read_bytes()) for m in (DC, SEARCH)}
+    return measure['_retained_evidence_producers']
+
+
+def _retained_evidence_task(measure, names):
+    """One pinned-pool task: the unchanged count on the fork-inherited measure (PinnedMap)."""
+    return retained_evidence_counts(measure, list(names))
 
 
 def retained_evidence_checks(item, said):
@@ -1275,15 +1289,47 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
     if not docs:
         listed.append(dict(reason='no current or accumulated scientific lessons are available; no claim turns produced'))
     measure, measure_why = teacher_rows(rows_path)
+    import frankie_box_adviser_market as AM
+    # The retained-evidence counts of every item (each one scans every retained teacher row per named field) on an
+    # ordered pinned pool (Greg, 2026-10-07: independent exchange items concurrently), started BEFORE the shared read
+    # so its workers run while the reader's decode workers wait on the serial picture consumer. The pool takes the
+    # reader's worker CPUs (never the consumer's whole core). The item loop below stays serial and in order; it takes
+    # each worker value or recomputes in-process at the item's own turn (same value, same exception, same place).
+    evidence_keys = []
+    if measure is not None:
+        _evidence_producers(measure)          # set once before the fork, exactly as the first count would have set it
+        for doc, _ in docs:
+            for result in doc.get('results') or []:
+                key = tuple(claimed_names(finite(result)))
+                if key not in evidence_keys and any(str(n).startswith('dipole.group') for n in key):
+                    evidence_keys.append(key)
+    plan = AM.reader_plan()
+    evidence_pool = AM.PinnedMap(_retained_evidence_task, measure, evidence_keys,
+                                 label='exchange retained-evidence counts',
+                                 cpus=[c for c in plan['reader_set'] if c != plan['consumer']] or plan['lane'])
     # The shared market picture at the teacher's own explicit cutoff (source_hash/as_of/through_cursor):
     # one complete picture for the whole exchange, never a day serialized per item, never a Frankie
     # target selection. A legacy teacher (no shared identity) leaves every exchange byte unchanged.
-    import frankie_box_adviser_market as AM
-    if rows_path:
-        shared_market, shared_market_why = AM.from_teacher(rows_path, day, measure,
-            retain=(Path(input_path).parent / 'shared-market-context.json') if input_path is not None else None)
-    else:
-        shared_market, shared_market_why = None, measure_why
+    placement = {}
+    try:
+        if rows_path:
+            shared_market, shared_market_why = AM.from_teacher(rows_path, day, measure,
+                retain=(Path(input_path).parent / 'shared-market-context.json') if input_path is not None else None,
+                placement=placement)
+        else:
+            shared_market, shared_market_why = None, measure_why
+        precomputed = dict(zip(evidence_keys, evidence_pool.results()))
+    finally:
+        evidence_pool.close()
+    if notes is not None:
+        notes['placement'] = dict(shared_reader=placement, retained_evidence_pool=evidence_pool.record,
+                                  rule='CPU placement of this piece (receipt only; never in the exchange documents)')
+
+    def evidence_of(prior):
+        names = claimed_names(prior)
+        ok, value = precomputed.get(tuple(names), (False, None))
+        # a fresh copy per item, as the serial count gave each item its own dict
+        return copy.deepcopy(value) if ok else retained_evidence_counts(measure, names)
     market_reference = AM.reference(shared_market) if shared_market is not None else None
     market_turn = {} if market_reference is None else dict(market_context=market_reference)
     if notes is not None:
@@ -1325,7 +1371,7 @@ def exchange(day, run, lessons_paths, rows_path, rules_witness, log=print, *, br
                 item_context = dict(context, claim_searches=REVIEW.claim_searches(doc, result['claim_id']))
             item = dict(item_id=item_id, author=src['author'], claim_id=result['claim_id'], prior=prior, request=request,
                         rows_sha256=measure['sha256'] if measure else None, lesson_context=item_context)
-            item.update(retained_evidence=retained_evidence_counts(measure, claimed_names(prior)),
+            item.update(retained_evidence=evidence_of(prior),
                         evidence_source_id=rows_id, lesson_sha256=src['sha256'])
             shared = shared_count_accounting(prior, day, src)
             origin = origin_evidence_accounting(prior, day, src)
@@ -1718,6 +1764,34 @@ def write_once(path, data):
     return True, None
 
 
+CONTEXT_ONLY_SCHEMA = 'FRANKIE_EXCHANGE_SHARED_CONTEXT_ONLY_V1'
+
+
+def context_only(a, out, started):
+    """EXCHANGE_CONTEXT_ONLY=1 (research item 1, 2026-10-07): the day lane reads the shared market picture at the
+    teachers' explicit cutoff ONCE, before Jev, and retains it as <out>/shared-market-context.json, the very file the
+    exchange's own from_teacher(retain=...) reuses and Jev's helper reuses (frankie_box_jev_cpu, the exchange's
+    retained read). Nothing else of the exchange is written: no exchange documents, no receipt.json (so the later
+    exchange step runs in full and reuses this file), no brain entry, no accumulated tests. Same reader, same pins,
+    same cutoff as the exchange; a context already retained there is checked and reused (a differing one refuses)."""
+    measure, measure_why = teacher_rows(a.teacher_rows)
+    placement = {}
+    context, why = (None, measure_why) if not a.teacher_rows else (None, None)
+    if a.teacher_rows:
+        import frankie_box_adviser_market as AM
+        context, why = AM.from_teacher(a.teacher_rows, a.day, measure, retain=out / 'shared-market-context.json',
+                                       placement=placement)
+    path = out / 'shared-market-context.json'
+    line = dict(schema=CONTEXT_ONLY_SCHEMA, run=a.run, day=a.day, status='retained' if context is not None else 'not_bound',
+                listed=why, teacher_rows=a.teacher_rows,
+                shared_market_context=(dict(path=str(path), bytes=path.stat().st_size, sha256=sha256_bytes(path.read_bytes()))
+                                       if context is not None and path.is_file() else None),
+                scope=(context or {}).get('scope'), placement=placement, seconds=round(time.time() - started, 1),
+                rule='the cutoff read only; the exchange step itself runs later and reuses this retained file')
+    print(json.dumps(line, sort_keys=True, default=str), flush=True)
+    return 0
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--day', required=True)
@@ -1737,6 +1811,8 @@ def main():
     started = time.time()
     out = Path(a.out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    if os.environ.get('EXCHANGE_CONTEXT_ONLY') == '1':
+        return context_only(a, out, started)
     import frankie_box_teacher_knowledge as TK
     accumulated_claim_tests = TK.teach_accumulated(a.day, a.search, a.brain, out / 'scientific-knowledge')
     try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
@@ -1803,7 +1879,8 @@ def main():
                             'every item carry the exact market_context reference (scope, clocks, hash, dispositions); '
                             'the seat records and their validated vocabulary are unchanged'),
                  withheld=['Jev raw items from Frankie\'s view (JEV_WALL)', 'teacher answers, grades and private reasoning'],
-                 caps='none: code seats, no model call', model_calls=0, items=full['counts']['items']),
+                 caps='none: code seats, no model call', model_calls=0, items=full['counts']['items'],
+                 placement=notes.get('placement')),
         outputs=dict(exchange=written['exchange.json'], frankie_view=written['exchange-frankie.json'],
                      brain_entry=str(entry), brain_reused=brain_reused, exchange_hash=full['exchange_hash'],
                      counts=full['counts'], listed=len(full['listed']), waits=[]))
@@ -1816,6 +1893,7 @@ def main():
                    accumulated_claim_tests=accumulated_claim_tests,
                    shared_market_context=shared_market_pin,
                    shared_market_context_listed=notes.get('shared_market_context_listed'),
+                   placement=notes.get('placement'),
                    workflow_report=workflow_report,
                    seconds=round(time.time() - started, 1), at=time.time(), model_calls=0)
     tmp = out / 'receipt.pending'

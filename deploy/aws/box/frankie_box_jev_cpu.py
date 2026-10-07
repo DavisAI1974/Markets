@@ -413,6 +413,7 @@ def _run(request, request_path, out, brain, jev_brain):
         if stopped or Path(request['save_marker']).is_file():
             raise SystemExit(75)
     shared_context, shared_market_source, reuse_listed = None, None, None
+    placement = {}            # CPU placement (receipt and workflow report only; never the owner identity)
     if classroom.get('shared_market') is not None:
         # The cutoff is the classroom's own explicit teacher binding (source_hash/as_of/through_cursor),
         # never a Frankie target selection. Any disposition at that instant is carried, thinner.
@@ -447,6 +448,9 @@ def _run(request, request_path, out, brain, jev_brain):
             if shared_context is None:
                 shared_context = adviser.read(check_save=check_save)
                 shared_market_source = 'read by this Jev piece from the owner-local shared reader'
+        # the reader on this one claimed CPU: one reader worker (no pool oversubscribing the slot), the pin checks on
+        # threads of that CPU (frankie_box_adviser_market.reader_plan / _witness_all)
+        placement['shared_reader'] = adviser.placement
         AM.retain_context(context_path, shared_context)
         # the owner identity carries the retained context PIN (stable across attempts); where the bytes came from on
         # this attempt (fresh read, exchange reuse, retained) is receipt information, never identity
@@ -713,6 +717,7 @@ def _run(request, request_path, out, brain, jev_brain):
                            rule='a prompt over Granite\'s per-call input cap is never sent: it is regenerated from halves; '
                                 'nothing is cut to fit'),
                  model_calls=client.get('call_accounting'), cpus=cpus, threads=runtime['threads'],
+                 placement=dict(placement, server=(server.placement if server is not None else None)),
                  host_cpu=transport.host_cpu(), timings=timings,
                  picture_tokens=(client_report.get('use') or {}).get('picture_tokens'),
                  # every existing lossless stack on the non-picture material (frankie_box_adviser_market.render_material):
@@ -723,6 +728,7 @@ def _run(request, request_path, out, brain, jev_brain):
                      waits=pending, status='waiting' if pending else 'done'))
     receipt = dict(schema='JEV_CPU_RECEIPT_V1', status='waiting' if pending else 'done', owner=identity,
                    request_chain=chain, rebook_resume=rebook, runtime_cpus=cpus,
+                   placement=dict(placement, server=(server.placement if server is not None else None)),
                    claims_seal=pin(seal_path), scientific_result=pin(result_path), deliveries=deliveries,
                    client_receipt=pin(out / 'client-receipt.json'), report=report,
                    report_number=request['report_number'], pending=pending,

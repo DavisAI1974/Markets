@@ -45,8 +45,9 @@ WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'
 RENDER_SCHEMA = 'FRANKIE_ADVISER_PICTURE_RENDER_V1'
 ALL_99_SCHEMA = 'FRANKIE_ALL_99_COVERAGE_V1'
 MISSING_COVERAGE_RULE = 'every_authentic_boundary_kept_with_thinner_explicit_picture'
-WORKERS = 15
-USE = 'complete same-time picture at the existing original source cutoff; no target-derived selection'
+WORKERS = 15      # the former fixed reader worker count; kept for reference (the reader now sizes from the lane, below)
+PINNED_TASK_SECONDS = 1800.0   # per-result wait on a pinned pool (L-2): past it the pool is ended and the rest run in-process
+USE ='complete same-time picture at the existing original source cutoff; no target-derived selection'
 LIMIT = ('model receives this complete cutoff picture, not every historical picture; full ordered reader remains '
          'available to owner code; no time-addressable model query protocol or new scientific calculation')
 REPO = Path(__file__).resolve().parents[3]
@@ -1455,6 +1456,185 @@ def all_99_with_consumer(coverage, consumer):
 
 
 # ------------------------------------------------------------------------------------ the context
+# ---- CPU placement for the input assembly (Greg, 2026-10-07: every process, pool and thread pinned to its share of
+# the booked lane, physical-core aware, nothing floating or idle). Placement only: no value, order or byte of any
+# picture, count or prompt depends on it; it is recorded for the one-day inspection and never enters an identity.
+def lane_cpus():
+    """The held lane's CPUs this process may use: FRANKIE_LANE_CPUS / FRANKIE_BOOKED_CPUS intersected with the affinity
+    (the shared reader's own rule, frankie_box_market_timeline.lane_cpus, imported, never re-implemented)."""
+    from frankie_box_market_timeline import lane_cpus as timeline_lane
+    return timeline_lane()
+
+
+def core_order(cpus):
+    """(cpus ordered first thread of every physical core, then the second threads; {cpu: its sibling cpus in the list};
+    basis): the order is frankie_box_lane_pin.core_order (the one lane pin helper, imported), the siblings come from
+    frankie_box_boss_session.cpu_topology / core_groups (imported). Unreadable topology keeps the plain sorted order
+    and says so."""
+    cpus = sorted(cpus)
+    try:
+        import frankie_box_lane_pin as LP
+        ordered, basis = LP.core_order(cpus)
+        topology = LP._session().cpu_topology(cpus)
+        groups = LP._session().core_groups(cpus, topology) if topology is not None else []
+    except Exception as error:  # noqa: BLE001 - placement falls back to the plain order, recorded
+        return cpus, {}, 'plain sorted order (lane pin helpers unavailable: %s)' % type(error).__name__
+    return ordered, {cpu: [c for c in g if c != cpu] for g in groups for cpu in g}, basis
+
+
+def reader_plan(cpus=None):
+    """The shared-reader placement on the lane: the ordered picture consumer (this process's main thread) on a WHOLE
+    physical core (its sibling thread left out of the reader set), the reader's decode workers on every other lane CPU.
+    One CPU (Jev's claimed adviser slot): one reader worker, no pool oversubscribing the slot. Returns a dict with
+    consumer, idle, reader_set (the affinity the reader is constructed and spawned under) and workers."""
+    lane = sorted(lane_cpus() if cpus is None else cpus)
+    if len(lane) <= 2:
+        return dict(lane=lane, consumer=lane[0] if lane else None, idle=[], reader_set=lane, workers=1,
+                    basis='%d lane CPU(s): one reader worker; the slot is not oversubscribed' % len(lane))
+    _, siblings, basis = core_order(lane)
+    consumer = lane[0]
+    idle = [cpu for cpu in siblings.get(consumer, []) if cpu in lane]
+    reader_set = [cpu for cpu in lane if cpu not in idle]
+    return dict(lane=lane, consumer=consumer, idle=idle, reader_set=reader_set, workers=max(1, len(reader_set) - 1),
+                basis='consumer on a whole physical core (sibling %s idle); %d reader workers on the other lane CPUs; %s'
+                      % (idle or 'none', max(1, len(reader_set) - 1), basis))
+
+
+def _set_affinity(cpus, record, what):
+    """sched_setaffinity of the calling thread; a refusal keeps the inherited affinity and is recorded (L-2)."""
+    import os
+    try:
+        os.sched_setaffinity(0, set(cpus))
+        return True
+    except (OSError, ValueError) as error:
+        record.setdefault('affinity_fallbacks', []).append(dict(what=what, cpus=sorted(cpus), error=repr(error)))
+        return False
+
+
+_POOL_SHARED = None     # the fork-inherited read-only input of a PinnedMap pool (never pickled per task)
+
+
+def _pool_task(function, index, argument):
+    try:
+        return index, True, function(_POOL_SHARED, argument)
+    except BaseException as error:  # noqa: BLE001 - the parent recomputes in-process so the same error raises in order
+        return index, False, repr(error)
+
+
+class PinnedMap:
+    """function(shared, argument) over arguments on an ordered pinned pool; results() returns them IN ORDER.
+
+    The pool starts (forks) in the constructor, so a caller can start it, do other work (the shared read), then collect.
+    Fork, so `shared` is inherited and never pickled per task; workers pinned one per given CPU in physical-core order
+    by frankie_box_lane_pin.pinned_pool (respawn-safe, lane fallback). Used only when this process is single-threaded at
+    the fork (fork safety), with two or more CPUs and two or more arguments; otherwise nothing starts and the caller
+    computes in-process, in order. A worker value is returned as (True, value); anything else as (False, reason), and
+    the caller computes that argument in-process at its own turn, so the same value or the same exception arises
+    exactly where the serial loop raised it. Greg's rule (2026-10-07): a dead pool worker never stops or hangs the
+    piece: the death is seen at the next poll (frankie_box_lane_pin.check_alive), the pool is ended and every task not
+    yet collected (the lost one included) is redone on a fresh pool with one worker fewer (in-process below two). A
+    result not back within `timeout` from a live pool (a hung worker) ends the pool; that task and every later one run
+    in-process. `function` must be a module-level function, deterministic in (shared, argument)."""
+
+    POLL_SECONDS = 15.0
+
+    def __init__(self, function, shared, arguments, *, label, cpus=None, timeout=PINNED_TASK_SECONDS):
+        import frankie_box_lane_pin as LP
+        self.function, self.shared, self.arguments, self.timeout = function, shared, list(arguments), timeout
+        self.pool, self.pending = None, {}
+        self.cpus = sorted(LP.lane_cpus() if cpus is None else cpus)
+        self.record = dict(label=label, tasks=len(self.arguments), lane=self.cpus, mode='in_process', workers=1,
+                           cpus=None, timeout_seconds=timeout, poll_seconds=self.POLL_SECONDS, fallbacks=[], restarts=[],
+                           rule='placement only: values, order and errors are the in-process ones (results in argument '
+                                'order; a failed, lost or late worker result is recomputed)')
+        self._start(range(len(self.arguments)), min(len(self.cpus), len(self.arguments)))
+
+    def _start(self, indexes, workers):
+        global _POOL_SHARED
+        import multiprocessing
+        import threading
+        import frankie_box_lane_pin as LP
+        indexes = list(indexes)
+        why = ('one CPU' if workers < 2 or len(self.cpus) < 2 else 'fewer than two tasks' if len(indexes) < 2 else
+               'this process runs other threads (fork unsafe)' if threading.active_count() > 1 else None)
+        if why is not None:
+            self.record.update(mode='in_process', workers=1, cpus=None, reason=why)
+            return False
+        _POOL_SHARED = self.shared          # kept until close(): a worker the pool respawns forks with the same input
+        try:
+            self.pool = LP.pinned_pool(multiprocessing.get_context('fork'), workers, cpus=self.cpus)
+            self.pending = {i: self.pool.apply_async(_pool_task, (self.function, i, self.arguments[i])) for i in indexes}
+            self.record.update(mode='pinned_fork_pool', workers=workers,
+                               cpus=LP.record(workers, self.cpus, self.record['label'])['worker_cpus'])
+            return True
+        except (OSError, ValueError) as error:
+            self.record.update(mode='in_process', workers=1, cpus=None, reason='pool could not start: %r' % error)
+            self.close()
+            return False
+
+    def results(self):
+        out = [(False, 'in_process')] * len(self.arguments)
+        try:
+            i = 0
+            while i < len(self.arguments):
+                job = self.pending.get(i)
+                if job is None:
+                    i += 1
+                    continue
+                outcome = self._wait(i, job)
+                if outcome[0] == 'restarted':
+                    continue                      # the same task on the fresh pool (or in-process)
+                if outcome[0] == 'value':
+                    out[i] = outcome[1]
+                i += 1
+        finally:
+            self.close()
+        return out
+
+    def _wait(self, i, job):
+        import multiprocessing
+        import frankie_box_lane_pin as LP
+        waited = 0.0
+        while True:
+            try:
+                _, ok, value = job.get(timeout=self.POLL_SECONDS)
+            except multiprocessing.TimeoutError:
+                waited += self.POLL_SECONDS
+                try:
+                    LP.check_alive(self.pool)
+                except RuntimeError as died:
+                    left = [j for j in sorted(self.pending) if j >= i]
+                    workers = self.record['workers'] - 1
+                    self.record['restarts'].append(dict(at_task=i, tasks_redone=len(left), workers=workers,
+                                                        reason=str(died)[:300]))
+                    self.close()
+                    self.pending = {}
+                    self._start(left, workers)    # one worker fewer; in-process below two
+                    return ('restarted',)
+                if waited >= self.timeout:
+                    self.record['fallbacks'].append(dict(task=i, reason='no result within %s s from a live pool; pool '
+                                                                        'ended, task %d and later run in-process'
+                                                                        % (self.timeout, i)))
+                    self.close()
+                    self.pending = {}
+                    return ('in_process',)
+                continue
+            except Exception as error:  # noqa: BLE001 - an unpicklable result or a broken pool: in-process at its turn
+                self.record['fallbacks'].append(dict(task=i, reason=repr(error)[:300]))
+                return ('in_process',)
+            if not ok:
+                self.record['fallbacks'].append(dict(task=i, reason='worker raised %s; recomputed in-process' % value[:300]))
+            return ('value', (ok, value))
+
+    def close(self):
+        global _POOL_SHARED
+        if self.pool is not None:
+            self.pool.terminate()
+            self.pool.join()
+            self.pool = None
+        _POOL_SHARED = None
+
+
 class AdviserMarketContext:
     def __init__(self, identity, *, day, source_hash, as_of, through_cursor):
         from frankie_box_durable import witness
@@ -1463,7 +1643,12 @@ class AdviserMarketContext:
             raise ValueError('adviser cutoff requires the original explicit integer as_of and through_cursor')
         self.root = Path(identity['calculations']['path']).parent
         self.day = str(day)
-        self.reader = SharedMarketTimeline(self.root, day=self.day, workers=WORKERS)
+        # Reader workers from the lane (research item 5, 2026-10-07): every lane CPU but the consumer's whole core on a
+        # day lane (30 on a 32-CPU booking), 1 on Jev's one claimed CPU (15 decode processes time-sharing one CPU were
+        # pure overhead). The reader's own contract: same rows, same order, same ordinals, same errors for any count.
+        self.plan = reader_plan()
+        self.placement = dict(reader=dict(self.plan, former_fixed_workers=WORKERS))
+        self.reader = SharedMarketTimeline(self.root, day=self.day, workers=self.plan['workers'])
         if self.reader.identity != identity:
             raise ValueError('adviser source differs from the shared market reader identity')
         ingestion = _json(self.reader.source['ingestion_receipt'])
@@ -1478,8 +1663,16 @@ class AdviserMarketContext:
         pinned = dict(identity['sources'])
         if (identity.get('external') or {}).get('status') == 'attached':
             pinned['external'] = identity['external']
+        # The whole-file checks run concurrently on pinned threads (research item 2a; hashlib and file reads release the
+        # GIL), largest file first; the verdicts are then taken IN THE PIN ORDER, so the first mismatch or read error
+        # raised is the one the serial loop raised. Every byte of every pin is still hashed (skipping a re-hash on an
+        # unchanged stat is Greg's open call, not done here).
+        seen = self._witness_all(pinned, witness)
         for name, pin in pinned.items():
-            if witness(pin['path']) != {k: pin[k] for k in ('bytes', 'sha256')}:
+            ok, value = seen[name]
+            if not ok:
+                raise value
+            if value != {k: pin[k] for k in ('bytes', 'sha256')}:
                 raise ValueError('pinned shared layer bytes differ from their source pin: ' + name)
         self.pins_verified = sorted(['journal', *pinned])
         self.scope = dict(day=self.day, source_hash=source_hash, as_of=as_of, through_cursor=through_cursor,
@@ -1487,6 +1680,51 @@ class AdviserMarketContext:
                           position=('last_sealed_input' if through_cursor == record_count - 1
                                     else 'before_sealed_source_end'),
                           origin='the measurement\'s own explicit source scope; no target-derived selection')
+
+    def _witness_all(self, pinned, witness):
+        """{name: (True, witness) | (False, exception)} for every pin, hashed on threads pinned one per lane CPU in
+        physical-core order (two threads on a one-CPU slot, so a disk wait overlaps a hash)."""
+        import os
+        import queue
+        import threading
+        from time import perf_counter
+        ordered, _, basis = core_order(lane_cpus())
+        names = sorted(pinned, key=lambda n: -int(pinned[n].get('bytes') or 0))
+        threads = max(1, min(len(names), max(2, len(ordered))))
+        record = dict(threads=threads, cpus=[ordered[i % len(ordered)] for i in range(threads)] if ordered else None,
+                      placement_basis=basis, files=len(names), bytes=sum(int(pinned[n].get('bytes') or 0) for n in names),
+                      order='largest first; verdicts taken in the pin order')
+        work, seen = queue.Queue(), {}
+        for name in names:
+            work.put(name)
+
+        def run(cpu):
+            if cpu is not None:
+                try:
+                    os.sched_setaffinity(threading.get_native_id(), {cpu})
+                except (OSError, ValueError) as error:
+                    record.setdefault('affinity_fallbacks', []).append(dict(cpu=cpu, error=repr(error)))
+            while True:
+                try:
+                    name = work.get_nowait()
+                except queue.Empty:
+                    return
+                try:
+                    seen[name] = (True, witness(pinned[name]['path']))
+                except BaseException as error:  # noqa: BLE001 - raised in pin order by the caller
+                    seen[name] = (False, error)
+        started = perf_counter()
+        pool = [threading.Thread(target=run, args=(record['cpus'][i] if record['cpus'] else None,),
+                                 name='adviser-pin-sha256-%d' % i, daemon=True) for i in range(threads)]
+        for thread in pool:
+            thread.start()
+        for thread in pool:
+            thread.join()
+        record['seconds'] = round(perf_counter() - started, 3)
+        self.placement['pin_hashing'] = record
+        for name in names:
+            seen.setdefault(name, (False, RuntimeError('pin %s was not hashed' % name)))
+        return seen
 
     def _coverage(self, picture):
         """What is present and what is thin at this instant, from the picture alone; nothing invented."""
@@ -1536,11 +1774,31 @@ class AdviserMarketContext:
         # The thinner tail (core request, 2026-10-07): the last instant at or before the
         # cutoff that carries an original APPLIED operand, and every instant after it.
         last_applied, tail_after = None, {}
+        # Placement (research item 4, 2026-10-07): the reader's pools are spawned from this thread under the reader set
+        # (the lane without the consumer core's sibling), so its workers take every other lane CPU; once the first exact
+        # instant has started every stream (each stream is advanced at every exact input), this thread, the ordered
+        # consumer, is pinned to its whole physical core. Restored at the end. Placement only; a refusal is recorded.
+        import os
+        plan = self.plan
+        consumer = dict(plan=dict(consumer=plan['consumer'], idle=plan['idle'], reader_set=plan['reader_set'],
+                                  workers=plan['workers']), pinned_at_picture=None)
+        self.placement['consumer'] = consumer
+        before = sorted(os.sched_getaffinity(0))
+        narrowed = len(plan['reader_set']) > 1 and _set_affinity(plan['reader_set'], consumer, 'reader set')
+        pinned_consumer = len(plan['reader_set']) <= 1
+        presented = 0
         stream = self.reader.iter_pictures()
         try:
             for item in stream:
                 check_save()
                 picture = item['picture']
+                presented += 1
+                if not pinned_consumer:
+                    at = picture['at']
+                    if all(type(at.get(k)) is int for k in ('input_cursor', 'instrument_id', 'ts_recv_ns')):
+                        pinned_consumer = True
+                        if _set_affinity([plan['consumer']], consumer, 'consumer core'):
+                            consumer['pinned_at_picture'] = presented
                 cursor = picture['at']['adapter_cursor']
                 if type(cursor) is not int:
                     cursorless += 1
@@ -1566,6 +1824,8 @@ class AdviserMarketContext:
                         break      # nothing after the cutoff is decoded or retained
         finally:
             stream.close()
+            if narrowed or consumer['pinned_at_picture'] is not None:
+                _set_affinity(before, consumer, 'restore')
         if selected is None:
             raise ValueError('sealed source ended before the adviser cutoff adapter cursor %d' % wanted)
         tail = dict(cutoff_input_has_applied_operand=selected['original_applied'] is not None,
@@ -1601,7 +1861,7 @@ class AdviserMarketContext:
     def iter_pictures(self):
         """Full exact owner-local history; never silently replace it with the cutoff snapshot."""
         from frankie_box_market_timeline import SharedMarketTimeline
-        reader = SharedMarketTimeline(self.root, day=self.day, workers=WORKERS)
+        reader = SharedMarketTimeline(self.root, day=self.day, workers=self.plan['workers'])
         if reader.identity != self.reader.identity:
             raise ValueError('adviser full history changed from its original selected source')
         yield from reader.iter_pictures()
@@ -1645,9 +1905,11 @@ def load_context(path, *, identity, scope):
     return context
 
 
-def from_teacher(rows_path, day, measure, *, retain=None, check_save=lambda: None):
+def from_teacher(rows_path, day, measure, *, retain=None, check_save=lambda: None, placement=None):
     """(context, None) from the teacher's own explicit source/as-of/cursor, never its answers;
-    (None, why) when the teacher source carries no shared identity or its rows were not readable."""
+    (None, why) when the teacher source carries no shared identity or its rows were not readable.
+    placement: an optional dict the caller owns; the reader's CPU placement (lane plan, pin hashing, consumer core) and
+    whether the context was read or reused are put there for the receipt, never into the context."""
     receipt_path = Path(rows_path).parent / 'receipt.json'
     if not receipt_path.is_file():
         return None, 'no teacher receipt beside the Dipole rows; no shared market scope to bind'
@@ -1667,11 +1929,17 @@ def from_teacher(rows_path, day, measure, *, retain=None, check_save=lambda: Non
         raise ValueError('shared teacher ingestion receipt changed')
     reader = AdviserMarketContext(identity, day=day, source_hash=json.loads(raw)['source_prefix_hash'],
                                   as_of=measure['as_of'], through_cursor=measure['through_cursor'])
+    if placement is not None:
+        placement.update(reader.placement)
     if retain is not None and Path(retain).is_file():
+        if placement is not None:
+            placement['context'] = 'reused the retained read of the same source and cutoff: %s' % retain
         return load_context(retain, identity=reader.reader.identity, scope=reader.scope), None
     context = reader.read(check_save=check_save)
     if retain is not None:
         retain_context(retain, context)
+    if placement is not None:
+        placement.update(reader.placement, context='read by this piece from the owner-local shared reader')
     return context, None
 
 
