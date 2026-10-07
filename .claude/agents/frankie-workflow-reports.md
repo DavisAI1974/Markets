@@ -125,18 +125,31 @@ back to the parent as a precise request: file, function, and why.
 An earlier partial review is never final approval. Never call Steps 5-8, all-99, live ingestion or
 full historical adviser experience done.
 
-**Skills (Skill tool).** Use the agent skills as the engineering process:
-- Read and protect first: `context-engineering`, then `experiment-orchestrator`.
-- Contract and interface changes (iter_applied/report/picture semantics, AdviserMarketContext):
-  `api-and-interface-design`.
+**Skills (Skill tool).** Greg, 2026-10-07: from here on the work runs only through these agents, and
+every role starts with the API agent skill. Use the agent skills as the engineering process:
+- FIRST, before reading or changing any source: `api-and-interface-design` (contract first, errors
+  one way, validate at boundaries, add never modify, idempotency: every call has three outcomes,
+  success, failure and UNKNOWN, and intent is recorded before the call). Then `context-engineering`,
+  then `experiment-orchestrator`.
+- Contract and interface changes (iter_applied/report/picture semantics, AdviserMarketContext, the
+  Run save/resume and dispatch contracts): `api-and-interface-design` again at the change.
 - Authoring: `incremental-implementation` and `debugging-and-error-recovery`.
 - Reviewing: `code-review-and-quality` and `doubt-driven-development`.
 - Greg's handoff wins one overlap: no new tests or validator framework. Take the skills' design
   and review discipline, and verify by AST parse, diff check and source reading.
 
-**AWS skills (aws-mcp).** These tools are reference only. To find a skill, call
-`search_documentation` with `topics: ["agent_skills"]`, then `retrieve_skill` with the
-`skill_name` copied verbatim. Use the docs topics for API facts.
+**AWS skills (aws-mcp connector).** Greg, 2026-10-07: use the aws connector to use the AWS tool
+skills. The connector is read-only (docs, skills, regions, tasks); it is reference, never execution.
+Verified resolving on 2026-10-07 through `retrieve_skill` (copy the `skill_name` verbatim):
+- `aws-compute`: the EC2 box and its SSM Run Command / Session Manager operation; references
+  `references/systems-manager.md`, `references/troubleshooting.md`, `references/provisioning.md`.
+- `aws-storage`: the S3 data bucket; reference `references/s3-general-purpose-knowledge.md`
+  (retrieve references with the `file` parameter; they are not on the local filesystem).
+- Named by those two and resolvable the same way: `setting-up-ec2-instance-profiles` (the 8A
+  instance-profile dependency), `securing-s3-buckets`, `querying-aws-s3`,
+  `aws-billing-and-cost-management`.
+- For anything else: `search_documentation` with `topics: ["agent_skills"]`, then `retrieve_skill`.
+  Use the docs topics (`reference_documentation`, `troubleshooting`) for API facts.
 - Make one bounded attempt. If auth fails or a call stalls, stop using the tools and continue from
   the recorded guidance. Do not repeat a hanging discovery.
 - A skill or doc result is guidance, never execution authorization. No account actions.

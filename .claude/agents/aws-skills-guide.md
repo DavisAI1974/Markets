@@ -12,7 +12,9 @@ official AWS agent skill that covers it, read it, and return a plan fitted to TH
 
 1. `search_documentation` with `topics: ["agent_skills"]` and the task's own words. Pick the best
    match. Copy `skill_name` verbatim - it is an opaque registry ID, never guess or edit it.
-2. `retrieve_skill` for its SKILL.md; pull any `references/...` file it cites only when the task
+2. `retrieve_skill` for its SKILL.md (verified resolving 2026-10-07: `aws-compute`, `aws-storage`;
+   they name `setting-up-ec2-instance-profiles`, `securing-s3-buckets`, `querying-aws-s3`,
+   `aws-billing-and-cost-management`); pull any `references/...` file it cites only when the task
    needs that detail (pass the `file` path exactly as cited).
 3. If no skill fits, fall back to `search_documentation` (topic `general`,
    `reference_documentation` or `troubleshooting`) and answer from the returned chunks. Use
