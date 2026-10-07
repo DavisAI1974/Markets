@@ -541,7 +541,7 @@ class Run:
         self.queue_previous = None       # the class worker: (PREVIOUS, None, from) taken from the class line
         self.school_day = None           # the class worker: the class line's school-day number = the report number N
         self._school_recovery = set()    # recover_school: the days whose own successor drain holds the inbox (no nested drain)
-        self._day_file_sha = {}          # (day, ingest dir) -> the attached day file's sha256, read once (day_rows)
+        self._day_file_sha = {}          # (day, ingest dir) -> (the attached day file's sha256, why absent), read once (day_rows)
         # THE OWNER BINDING (Step 8, 2026-10-07): a queue day carries its owner (run, day, host, attempt, commit, code root,
         # exact CPU set, booking, day-specific save marker), bound by the queue BEFORE dispatch. This Run reads the save
         # request from ITS OWN marker (never a process-global environment variable: the two main lanes are threads of one
@@ -944,7 +944,17 @@ class Run:
                            interrupted_attempts=attempts, digest=True, plan_policy=policy,
                            shared_market_policy=calc.get('shared_market_policy'),
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
-                           brain_entry=brain_entry)
+                           brain_entry=brain_entry, owner_binding=self.owner,
+                           # the one-day inspection (frankie_box_workflow_inspection.py): what the ROOT child received,
+                           # how this caller used it, what it produced; operator review only, never knowledge or a gate
+                           inspection=dict(inputs=dict(ingestion_receipt=dict(path=ing['receipt'], sha256=ing['receipt_sha256']),
+                                                       env={k: str(v) for k, v in env.items()}, owned_attempt=self.owned_attempt),
+                                           use=dict(resume=resume, plan_policy=policy or 'none (legacy plan: bedrock off)',
+                                                    interrupted_attempts=attempts, claim=held[2] if held else 'no claim store'),
+                                           outputs=dict(calculations=str(output), exit_code=code,
+                                                        receipt_sha256=sha256_file(output / 'calculations-receipt.json'),
+                                                        root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
+                                                        shared_market_policy=calc.get('shared_market_policy'))))
 
     # The shared ROOT claim (frankie_box_root_claims.py; SPEC-pod-day-runner.md): the Pods, the worker boxes and this
     # orchestrator run the ROOT of a day only after claiming it once. Opt-in: while /opt/frankie-box/work/root-claims does
@@ -1460,7 +1470,26 @@ class Run:
                           report_number=(r or {}).get('report_number'),
                           reports=[{k: item.get(k) for k in ('kind', 'number', 'revision', 'file', 'sha256', 'existing')}
                                    for item in (r or {}).get('reports') or []],
-                          problems=(r or {}).get('problems'))
+                          problems=(r or {}).get('problems'),
+                          # the one-day inspection (frankie_box_workflow_inspection.py): what the report step received,
+                          # what the reports carry (and do not), what it produced; operator review only, never a gate
+                          inspection=dict(inputs=dict(env={k: str(v) for k, v in env.items()},
+                                                      classroom=dict(path=classroom, status=c['status']),
+                                                      exchange=dict(status=(x or {}).get('status'), path=env.get('EXCHANGE'),
+                                                                    sha256=(x or {}).get('exchange_sha256'),
+                                                                    listed=env.get('EXCHANGE_LISTED')),
+                                                      school=dict(status=school.get('status'), file=school.get('file'),
+                                                                  sha256=school.get('school_sha256') or (school.get('row') or {}).get('sha256'))),
+                                          use=dict(carried='the classroom directory, the exchange and its meeting (read by the '
+                                                           'report step itself)',
+                                                   school='recorded for currentness only: the reports do not read the school '
+                                                          'file; a later checked school successor gets a revision under '
+                                                          'the same number (reports_school_stale)',
+                                                   meeting_status=((r or {}).get('meeting') or {}).get('status')),
+                                          outputs=dict(report_number=(r or {}).get('report_number'),
+                                                       reports=[{k: item.get(k) for k in ('kind', 'number', 'revision', 'file', 'sha256')}
+                                                                for item in (r or {}).get('reports') or []],
+                                                       exit_code=code)))
             if code == 0 and r:
                 return self.record('reports', day, 'done', **fields)
             return self.record('reports', day, 'failed', reason='the report step exited %d%s (its log names why)' % (
@@ -1724,7 +1753,24 @@ class Run:
         if retained is not None and retained['status'] == 'complete':
             return self.record('school', day, 'reused', file=retained['original']['path'],
                                row=dict(retained['row'], **retained['original']), school_sha256=retained['original']['sha256'],
-                               corrections=retained['corrections'])
+                               corrections=retained['corrections'],
+                               # the one-day inspection (frankie_box_workflow_inspection.py): what this reuse received
+                               # (the indexed original row and the chain), what it reused and what it recorded
+                               inspection=dict(inputs=dict(brain=str(brain), index_row=retained['row'],
+                                                           indexed_original=dict(path=str(brain / 'school' / retained['row']['file']),
+                                                                                 bytes=retained['row'].get('bytes'),
+                                                                                 sha256=retained['row'].get('sha256')),
+                                                           chain='retained_school: the indexed original and its explicit checked '
+                                                                 'successors (school_transition records only)'),
+                                               use=dict(reused='the latest checked complete school of the chain',
+                                                        superseded_links=len(retained['corrections']),
+                                                        superseded=[c.get('sha256') for c in retained['corrections']],
+                                                        corrections_carried=len(retained['corrections']),
+                                                        not_run='no school child, no model call, no index row rewritten'),
+                                               outputs=dict(file=retained['original']['path'], school_sha256=retained['original']['sha256'],
+                                                            bytes=retained['original'].get('bytes'),
+                                                            report_number=retained['row'].get('report_number'),
+                                                            school_day=retained['row'].get('school_day'))))
         c = self.receipt('classroom', day)
         if not (c and c['status'] in ('done', 'reused', 'refused')):
             return self.record('school', day, 'waiting', reason='the day\'s classroom step is %s' % (
@@ -1751,7 +1797,14 @@ class Run:
                                            if (self.receipt('root', day) or {}).get('calculations') else None)
         if not classroom:
             return self.record('school', day, 'failed', reason='no classroom directory named for the day')
-        env = dict(DAY=day, RUN=self.plan['run'], REPORT_NUMBER=self.report_number(e), CLASSROOM=classroom, BRAIN=brain)
+        try:
+            number = self.report_number(e)
+        except SystemExit as error:     # the numbering rule refused (reserve_number: a day is never renumbered, a number
+            if error.code == 75:        # never given to two days): the step's own refusal, visible on its receipt; never an
+                raise                   # exit that escapes guarded() and the successor drain (both catch Exception only)
+            return self.record('school', day, 'refused', reason='the day\'s report number could not be reserved as its '
+                                                                'school day: %s' % error)
+        env = dict(DAY=day, RUN=self.plan['run'], REPORT_NUMBER=number, CLASSROOM=classroom, BRAIN=brain)
         if self.school_day is not None:
             env['SCHOOL_DAY'] = self.school_day        # the class line's school-day number (= REPORT_NUMBER), in the row
         if x['status'] in ('done', 'reused'):
@@ -1778,15 +1831,41 @@ class Run:
         return self.record('school', day, 'done', exit_code=code, log=log, file=r['file'], row=r['row'],
                            school_sha256=(r.get('row') or {}).get('sha256'), reused_by_child=r.get('reused'),
                            sections=r.get('sections'), missing=r.get('missing'), withheld=r.get('withheld'),
-                           successor=r.get('successor'), correction=r.get('correction'), corrections=r.get('corrections'))
+                           successor=r.get('successor'), correction=r.get('correction'), corrections=r.get('corrections'),
+                           # the one-day inspection (frankie_box_workflow_inspection.py): what the school child received,
+                           # how it used it (a new school, the owner successor operation, or the child's own reuse) and what
+                           # it produced; operator review only, never knowledge or a gate
+                           inspection=dict(inputs=dict(env={k: str(v) for k, v in env.items()},
+                                                       teacher_rows=dict(path=str(base) if base else None, source=source, listed=why),
+                                                       exchange=dict(status=x['status'], view=x.get('frankie_view'),
+                                                                     sha256=x.get('exchange_sha256')),
+                                                       lessons=str(mine) if mine.is_file() else 'none: no FRANKIE_LESSONS_V1 of the day',
+                                                       chain=('requires_successor: the indexed school %s has a replaced source' %
+                                                              retained['original']['sha256'][:12]) if retained else
+                                                             'none indexed: a new school is written once'),
+                                           use=dict(school=('the owner successor operation (frankie_box_school_knowledge.'
+                                                            'rebuild_successor): only checked copied sources and their '
+                                                            'projections change; the original file and index row stay')
+                                                           if r.get('successor') else
+                                                           ('the child reused the indexed school (same bytes)' if r.get('reused')
+                                                            else 'a new school written and indexed'),
+                                                    corrections_carried=len(r.get('corrections') or []),
+                                                    sections=r.get('sections'), missing=r.get('missing'), withheld=r.get('withheld')),
+                                           outputs=dict(file=r['file'], school_sha256=(r.get('row') or {}).get('sha256'),
+                                                        bytes=(r.get('row') or {}).get('bytes'), report_number=number,
+                                                        school_day=self.school_day, successor=r.get('successor'),
+                                                        correction=r.get('correction'), exit_code=code)))
 
     def recover_school(self, day, recovery_intent):
         """The owner's recovery of a day's school under a checked source successor (successor_dispatch.rebuild_dependents
         -> 'waiting_school', called from its drain under the drain lock, on this same owner/day/held lane): the existing
         voice then school steps, with the nested successor drain skipped for exactly this recovery (the caller holds the
         inbox). Save, currentness and held-slot checks stay the steps' own. 'complete' only when the school stage ended
-        done/reused on the checked successor; a meeting that is not complete leaves it waiting, never a failed or requeued
-        substitute. No second drain, scheduler or model runtime."""
+        done/reused on the checked successor; a refused or still-pending meeting leaves it 'waiting' (never a completed
+        school, requeue or invented discussion); a failed voice/school child or a raised error is 'failed' = the stage's
+        own failed receipt (visible, separate from a wait, retried by the ordinary path, never the operation's
+        failure.json). Returns status, stage, recovery_intent, reason and inspection={inputs, use, outputs} (receipt
+        paths and statuses only, never receipt bodies). No second drain, scheduler or model runtime."""
         e = next((x for x in self.plan['days'] if x['day'] == day), None)
         if e is None or not e.get('classroom_arm'):
             return dict(status='refused', reason='no classroom-arm day %s in the plan' % day, recovery_intent=recovery_intent)
@@ -1794,24 +1873,58 @@ class Run:
             return dict(status='saved', reason='save requested on the owner; the recovery resumes with the day',
                         recovery_intent=recovery_intent)
         self._school_recovery.add(day)
+        # Every drain of the day calls this (child boundaries, the class worker's keep(), close_day's loop), so a child
+        # is dispatched here AT MOST ONCE PER INVALIDATION, never once per call: only an absent voice or the
+        # invalidation's own blocking wait runs the meeting child; a failed voice or school (any child failure) is the
+        # step's own failure, retried by the ordinary path (guarded() on the next start, the class worker's next poll),
+        # and a non-blocking refused meeting is the owner's decision. Re-dispatching per call is the unbounded
+        # model-child dispatch the fifth pass closed; close_day's drain loop would reach it again.
+        use = dict(voice='not dispatched here', school='not dispatched here')
+        paths = dict(voice=self.receipt_path('voice', day).as_posix(), school=self.receipt_path('school', day).as_posix())
+        stage = 'voice'
         try:
-            # the meeting runs once per boundary, as on the ordinary path: a done/reused voice is used as it is; a
-            # non-blocking waiting one (the runtime gate refused the meeting) is NOT re-dispatched here: the owner's
-            # decision is what changes it; only an absent, blocking-waiting or failed voice runs the child
             v = self.receipt('voice', day) or {}
-            if not done_status(v) and not (v.get('status') == 'waiting' and v.get('non_blocking')):
+            if not v or (v.get('status') == 'waiting' and not v.get('non_blocking')):
+                use['voice'] = 'the meeting child dispatched (voice was %s)' % (v.get('status') or 'absent')
                 v = self.voice(e) or {}
+            elif v.get('status') == 'failed':
+                use['voice'] = 'failed voice not re-dispatched by the recovery; the next start or class poll retries it'
+            elif v.get('status') == 'waiting':
+                use['voice'] = 'non-blocking refused meeting not re-dispatched; the owner\'s decision changes it'
+            else:
+                use['voice'] = 'the %s meeting used as it is' % v.get('status')
             if v.get('status') not in ('done', 'reused', 'skipped'):
-                return dict(status='waiting', stage='voice', voice=self.receipt_path('voice', day).as_posix(),
-                            voice_status=v.get('status'), recovery_intent=recovery_intent,
+                return dict(status='failed' if v.get('status') == 'failed' else 'waiting', stage='voice',
+                            inspection=dict(inputs=dict(recovery_intent=recovery_intent, **paths), use=use,
+                                            outputs=dict(voice_status=v.get('status'),
+                                                         school_status=(self.receipt('school', day) or {}).get('status'))),
+                            recovery_intent=recovery_intent, voice_status=v.get('status'),
                             reason='the corrected meeting is %s: %s' % (v.get('status'), v.get('reason')))
+            stage = 'school'
+            s = self.receipt('school', day) or {}
+            if s.get('status') == 'failed':
+                use['school'] = 'failed school not re-dispatched by the recovery; the next start or class poll retries it'
+                return dict(status='failed', stage='school',
+                            inspection=dict(inputs=dict(recovery_intent=recovery_intent, **paths), use=use,
+                                            outputs=dict(voice_status=v.get('status'), school_status='failed')),
+                            recovery_intent=recovery_intent, school_status='failed',
+                            reason='the school step failed: %s' % s.get('reason'))
+            use['school'] = 'the school step run on the checked chain (school was %s)' % (s.get('status') or 'absent')
             s = self.school(e) or {}
             return dict(status='complete' if done_status(s) else (s.get('status') or 'waiting'), stage='school',
-                        voice=self.receipt_path('voice', day).as_posix(), school=self.receipt_path('school', day).as_posix(),
-                        school_status=s.get('status'), recovery_intent=recovery_intent, reason=s.get('reason'))
-        except Exception as error:      # noqa: BLE001 - an explicit waiting recovery, never the operation's failure.json
-            return dict(status='waiting', stage='recovery', recovery_intent=recovery_intent,
-                        reason='%s: %s' % (type(error).__name__, error))
+                        inspection=dict(inputs=dict(recovery_intent=recovery_intent, **paths), use=use,
+                                        outputs=dict(voice_status=v.get('status'), school_status=s.get('status'),
+                                                     school_sha256=s.get('school_sha256'), successor=s.get('successor'),
+                                                     correction=s.get('correction'), corrections=s.get('corrections'))),
+                        recovery_intent=recovery_intent, school_status=s.get('status'), reason=s.get('reason'))
+        except Exception as error:      # noqa: BLE001 - the stage's own failure, recorded as guarded() records it:
+            # visible on the day's receipt and separate from a wait (a corrupt school chain, a changed exchange at the
+            # child boundary); never the operation's failure.json and never relabelled as waiting
+            r = self.record(stage, day, 'failed', reason='%s: %s (in the owner school recovery)' % (type(error).__name__, error))
+            return dict(status='failed', stage=stage,
+                        inspection=dict(inputs=dict(recovery_intent=recovery_intent, **paths), use=use,
+                                        outputs={stage + '_status': 'failed'}),
+                        recovery_intent=recovery_intent, reason=r['reason'])
         finally:
             self._school_recovery.discard(day)
 
@@ -1918,13 +2031,28 @@ class Run:
                                pending=receipt.get('pending'), report=receipt.get('report'),
                                reason='Jev\'s receipt awaits the owner\'s disposition: %s' % '; '.join(receipt.get('pending') or []))
         if not receipt_path.is_file() and bound_status(status) and status.get('unresolved_calls'):
-            return self.record('jev', day, 'waiting', request=str(path), status=str(status_path), stamp=stamp,
-                               unresolved_calls=status['unresolved_calls'],
+            # status_file, never 'status': record() takes the stage status positionally (a duplicate keyword raised)
+            return self.record('jev', day, 'waiting', request=str(path), status_file=str(status_path), stamp=stamp,
+                               unresolved_calls=status['unresolved_calls'], request_pins=request_pins,
                                reason='Jev\'s retained state lists unresolved model calls; none is retried or erased, the '
                                       'owner\'s review resolves them (frankie_box_jev_cpu status.json)')
         code, log = self.child('jev', day, 'frankie_box_jev_cpu.sh', dict(JEV_REQUEST=path))
         receipt, status = read(receipt_path), read(status_path)
-        fields = dict(exit_code=code, log=log, request=str(path), stamp=stamp, output=str(out), report_number=number)
+        fields = dict(exit_code=code, log=log, request=str(path), stamp=stamp, output=str(out), report_number=number,
+                      request_pins=request_pins,
+                      # the one-day inspection (frankie_box_workflow_inspection.py): what this caller gave the helper, how
+                      # the answer was bound, what came back; operator review only, never knowledge or a gate
+                      inspection=dict(inputs=dict(request=request_pins, classroom_receipt=request['classroom_receipt'],
+                                                  search_manifest=request['search'], runtime=request['runtime'],
+                                                  attempt=attempt, booking=booking, cpus=request['cpus'], marker=str(marker),
+                                                  brain=str(brain), jev_brain=str(jev_brain), report_number=number),
+                                      use=dict(exit_code=code, receipt_bound=bound_receipt(receipt), status_bound=bound_status(status),
+                                               binding='a receipt counts only with owner.request_pin in request_pins; a status '
+                                                       'only with request in request_pins; an exit code alone is nothing'),
+                                      outputs=dict(receipt=str(receipt_path) if receipt_path.is_file() else None,
+                                                   status_file=str(status_path) if status_path.is_file() else None,
+                                                   receipt_status=(receipt or {}).get('status') if bound_receipt(receipt) else None,
+                                                   child_status=(status or {}).get('status') if bound_status(status) else None)))
         if bound_receipt(receipt):
             fields.update(receipt=str(receipt_path), receipt_status=receipt.get('status'), claims_seal=receipt.get('claims_seal'),
                           scientific_result=receipt.get('scientific_result'), deliveries=receipt.get('deliveries'),
@@ -1941,7 +2069,9 @@ class Run:
             return self.record('jev', day, 'waiting', reason='Jev\'s receipt is %s (exit %d): %s' % (
                 receipt.get('status'), code, '; '.join(receipt.get('pending') or []) or 'see the receipt'), **fields)
         if bound_status(status):
-            fields.update(status=str(status_path), child=status.get('child'), unresolved_calls=status.get('unresolved_calls'),
+            # status_file, never 'status': record() takes the stage status positionally (a duplicate keyword raised
+            # TypeError here, which classed the day failed instead of waiting)
+            fields.update(status_file=str(status_path), child=status.get('child'), unresolved_calls=status.get('unresolved_calls'),
                           child_reason=status.get('reason'))
             # exit 75 on the day's standing marker never reaches here: child() raised SystemExit(75) on it and the day's
             # own save classifies the thread (_thread_end); a 75 without a standing marker (the helper's signal path) is
@@ -2077,6 +2207,15 @@ class Run:
                            calculation_roots=roots or None, root_waiting=root_waiting or None,
                            external_waiting=external_waiting, brain_entries=brain_entries,
                            new_bytes=sum(new_bytes(TEACHER_ROWS / d) for d, _ in receipts),
+                           # the one-day inspection (frankie_box_workflow_inspection.py): per day what the teacher child
+                           # received, every disposition this caller applied, and what came back; operator review only
+                           inspection=dict(inputs=dict(env=env, days={d: dict(ingestion_receipt=r, calculation_root=roots.get(d))
+                                                                     for d, r in receipts}),
+                                           use=dict(policy=policy or 'none (legacy plan)', refused=refused or None,
+                                                    root_waiting=root_waiting or None, external_waiting=external_waiting or None,
+                                                    rows_missing=missing, waiting=waiting, skipped_days=sorted(set(by_day) - set(dict(receipts)))),
+                                           outputs=dict(exit_code=code, rows={d: str(self.day_rows(by_day[d])[0]) for d, _ in receipts},
+                                                        brain_entries=sorted(brain_entries))),
                            reason=None if code == 0 and not missing and not waiting else
                            'rows missing for %s, waiting on ingest %s (those days go on without Dipole rows, listed)'
                            % (missing, waiting))
@@ -2178,12 +2317,17 @@ class Run:
         key = (day, str(directory))
         if key not in self._day_file_sha:                 # read once per Run: what the ROOT and the teacher both saw
             try:
-                self._day_file_sha[key] = attached_day_file(directory)[1] if directory is not None else None
+                self._day_file_sha[key] = attached_day_file(directory)[1:] if directory is not None else (None, None)
             except Exception as error:              # noqa: BLE001 - a witness that cannot be read is not judged
                 return 'waiting', 'waiting: the day file beside the sealed ingest could not be read (%s: %s)' % (type(error).__name__, error)
-        attached = self._day_file_sha[key]
+        attached, absent = self._day_file_sha[key]
         section = saved.get('external_section') or {}
-        if (section.get('sha256') or section.get('sha256_expected')) != attached:
+        bound = section.get('sha256') or section.get('sha256_expected')
+        if attached is None and bound and absent and not absent.startswith('DIFFERS'):
+            # the witness is MISSING now (not an integrity mismatch): a missing witness is carried as missing, never
+            # relabelled a differing publication; the retained result is not judged until the file is readable again
+            return 'waiting', 'waiting: the day file beside the sealed ingest is missing (%s) while the teacher receipt binds %s; not judged by it' % (absent, bound)
+        if bound != attached:
             return 'refused', 'refused: the teacher receipt\'s external publication (%s) differs from the day file beside the sealed ingest (%s)' % (
                 section.get('sha256') or section.get('sha256_expected'), attached)
         return 'ok', None

@@ -961,7 +961,8 @@ def class_worker(code_root, commit, max_seconds, poll_seconds, log=print, scope=
                     owner = y.get('owner') or {}
                     ack = dict(schema='FRANKIE_QUEUE_SAVE_ACK_V1', run=y['run'], day=y['day'], marker=owner.get('marker'),
                                request=marker_identity(owner.get('marker')),      # the save this answers (its generation)
-                               root_attempt=owner.get('attempt'), booking=y.get('slot_booking'), child_pid=os.getpid(),
+                               root_attempt=owner.get('attempt'), booking=y.get('slot_booking'), cpus=owner.get('cpus'),
+                               source_owner=y.get('source_owner'), child_pid=os.getpid(),
                                child_attempt={k: att.get(k) for k in ('pid', 'host', 'started_utc', 'school_day')},
                                school_day=y.get('school_day'), stages=facts.get('stages'), at=time.time(), at_utc=utc())
                     _end_attempt(y, 'saved', reason)
@@ -1326,15 +1327,20 @@ def _child_save_verdict(run, e, cl):
     if state in ('done', 'failed'):
         return dict(state=state, reason=cl.get('reason'))
     ack = cl.get('save_ack')
+    if state == 'saved' and not ack:
+        return dict(state='unknown', reason='the class entry is saved without an acknowledgment on it: nothing binds it to this save')
     if state == 'saved' and ack:
         standing = marker_identity(run.owner.get('marker'))
+        # the exact binding: owner (marker), attempt, booking AND its CPU set, source, and the save's generation
         bound = (ack.get('marker') == run.owner.get('marker') and ack.get('root_attempt') == run.owner.get('attempt')
                  and ack.get('booking') == getattr(run, 'slot_booking', None)
+                 and ack.get('cpus') == run.owner.get('cpus')
+                 and ack.get('source_owner') == getattr(run, 'source_owner', None)
                  and standing is not None and ack.get('request') == standing)
         if bound:
             return dict(state='acknowledged', ack=ack)
-        return dict(state='unknown', ack=ack, reason='the class acknowledgment binds another marker/attempt/booking or '
-                    'an earlier save request (the standing marker\'s identity is %s)' % ((standing or {}).get('sha256') or 'none'))
+        return dict(state='unknown', ack=ack, reason='the class acknowledgment binds another marker/attempt/booking/CPUs/source '
+                    'or an earlier save request (the standing marker\'s identity is %s)' % ((standing or {}).get('sha256') or 'none'))
     if state == 'queued':
         # not taken by the class worker yet: no child runs; the class worker will not take it while the booking is
         # retained (no live holder), so the owner's save stands on its own

@@ -728,7 +728,13 @@ def drain(run, day):
                         recovered = run.recover_school(day, downstream['recovery_intent'])
                         state('waiting', **dict({k: v for k, v in downstream.items() if k != 'status'}, recovery=recovered))
                         if recovered.get('status') != 'complete':
-                            break        # the operation stays unacknowledged; the next boundary's drain tries it once more
+                            # the operation stays unacknowledged (its state carries the recovery's stage, inputs, use and
+                            # outputs; a failed stage is the day's own failed receipt, retried by the ordinary path);
+                            # the next boundary's drain tries it once more. The ordinary poll interval first: close_day
+                            # loops on drain until every request is acknowledged, and recover_school dispatches nothing
+                            # twice, so without it that loop would spin hot on reads and receipt rewrites.
+                            time.sleep(5)
+                            break
                         continue
                     if downstream['status'] != 'complete':
                         state('waiting', **{k: v for k, v in downstream.items() if k != 'status'})

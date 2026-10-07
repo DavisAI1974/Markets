@@ -875,7 +875,12 @@ class Controller:
                     return fields
                 if identity(existing) != identity(job):
                     raise ValueError('retained job differs; S3 job not overwritten')
+                # the retained job (same identity) is submitted with GETs and a mailbox signed NOW, not the ones signed
+                # when it was first stored (a URL is not identity; the worker checks bucket/key and sha256)
                 job = existing
+                job['inputs'] = self.resign(job['inputs'])
+                job['mailbox'] = dict(request_put=self.sign.put(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/request.json'),
+                                      response_get=self.sign.get(TRANSFER_BUCKET, self.prefix(attempt) + '/rpc/response.json'))
             job['_job_url'] = self.sign.get(TRANSFER_BUCKET, key)
             job_id, why = w.submit(job)
             if not job_id:
@@ -918,6 +923,11 @@ class Controller:
                 self.event(worker=w.where, day=day, attempt=attempt, step='retained', result=state, detail=j.get('detail'))
                 return
             if state in FINISHED_FAILED:
+                if not self.lease_established('release'):
+                    # the claim release, the worker clean and the S3 delete are effects: not made unless ownership is
+                    # established at this boundary (the loop entrance ends the service when it stays unestablished)
+                    raise LeaseNotEstablished('lease ownership not established; the failed job %s is left as found (claim, '
+                                              'worker files and S3 parts retained for the lease holder)' % attempt)
                 if state == 'failed_inputs':
                     self.force_box.add(day)                  # the next attempt takes every input from the box itself
                 self.release(w, day, attempt, 'the worker job ended %s: %s' % (state, j.get('detail')))
