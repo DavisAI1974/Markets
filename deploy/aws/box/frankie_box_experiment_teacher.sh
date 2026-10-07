@@ -70,8 +70,10 @@ for DAY in $(echo "$DAYS" | tr ',' ' '); do
   fi
   LOG="$LOGS/$DAY-$(date +%s).log"
   echo "### $DAY: CPUs $PIN, receipt $R ($SHA), log $LOG ${EXTRA:+(day file given)}"
+  # FRANKIE_LANE_CPUS = this day's slice (the CPUs the walk runs on), so the shared market timeline and every pool the
+  # day's teacher sizes from the lane see the same CPUs as the walk, never the whole booking or the host count
   # shellcheck disable=SC2086
-  taskset -c "$PIN" /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_teacher.py" \
+  FRANKIE_LANE_CPUS="$PIN" taskset -c "$PIN" /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_teacher.py" \
     --day "$DAY" --ingestion-receipt "$R" --ingestion-receipt-sha256 "$SHA" --workers $((SHARE - 1)) $EXTRA > "$LOG" 2>&1 &
   PIDS="$PIDS $!:$DAY:$LOG"
 done

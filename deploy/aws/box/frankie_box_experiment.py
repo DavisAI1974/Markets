@@ -3011,7 +3011,8 @@ class Run:
             return None, None, ('waiting: the meeting runtime config cannot be read (%s: %s); no dispatch intent is written '
                                 'without its witness' % (type(error).__name__, error))
         _, rules = K.rules()
-        given = GM.meeting_input(exchange, [])
+        render_notes = {}       # the item-render pool's CPU placement (frankie_box_granite_meeting.meeting_input notes=)
+        given = GM.meeting_input(exchange, [], notes=render_notes)
         input_bytes = GM._durable_json_bytes(given)
         owner = self.owner or dict(schema='FRANKIE_LANE_OWNER_V1', host=os.uname().nodename,
                                    attempt=self.owned_attempt or os.environ.get('FRANKIE_LANE_ATTEMPT'),
@@ -3025,6 +3026,10 @@ class Run:
                       rules=dict(file=Path(rules['path']).name, sha256=rules['sha256'], bytes=rules['bytes']),
                       meeting_input=dict(bytes=len(input_bytes), sha256=hashlib.sha256(input_bytes).hexdigest(),
                                          knowledge_index=[], note='what the runner computes from the same exchange without a brain'),
+                      # where the caller's render of the meeting input ran (CPU map of the item-render pool); a record
+                      # only, never part of the input bytes and not a bound identity field of the intent
+                      meeting_input_placement=render_notes.get('item_render_pool') or
+                      'not recorded (the render ran without a pool, or the meeting module recorded no placement)',
                       workflow=dict(file='.github/workflows/frankie_granite_meeting.yml',
                                     inputs=dict(exchange_sha256=sha, inputs_only='false', commit_must_equal=self.commit,
                                                 admission_get_url='a presigned GET of the attempt\'s admission.json (voice-dispatched writes it)',
@@ -3540,6 +3545,7 @@ class Run:
         # the helper reuses it only when its identity and scope are this cutoff's (else a fresh read, recorded). Listed
         # when the exchange has not written it yet (in the class order Jev runs before the exchange).
         exchange_context = self.dir / 'exchange' / day / 'shared-market-context.json'
+        context_read = self.jev_context_read(e, exchange_context)
         if exchange_context.is_file() and not exchange_context.is_symlink():
             request['shared_market_context'] = file_pin(exchange_context)
         path = self.dir / 'days' / day / ('jev-request-%s.json' % stamp)
@@ -3613,7 +3619,8 @@ class Run:
                                                   attempt=attempt, booking=booking, cpus=request['cpus'], marker=str(marker),
                                                   brain=str(brain), jev_brain=str(jev_brain), report_number=number,
                                                   shared_market_context=request.get('shared_market_context') or
-                                                  'not supplied: the exchange has not retained its read yet (the helper reads)'),
+                                                  'not supplied: the exchange has not retained its read yet (the helper reads)',
+                                                  shared_market_context_read=context_read),
                                       use=dict(exit_code=code, receipt_bound=bound_receipt(receipt), status_bound=bound_status(status),
                                                adviser_slot=(slot or {}).get('line') or 'no claim line (the child did not reach the ledger)',
                                                binding='a receipt counts only with owner.request_pin in request_pins; a status '
