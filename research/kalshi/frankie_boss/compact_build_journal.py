@@ -18,7 +18,8 @@ Identity: FREE. No teacher, normaliser or builder byte changes; the journal bodi
 builder's, unchanged.
 """
 from collections import deque
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import Future, ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 import hashlib
 import multiprocessing
 from pathlib import Path
@@ -56,14 +57,22 @@ class CompactBuildJournal:
     the trees already in hand, inserted and read back the way the first run's journal stack did.
     """
 
-    def __init__(self, path, *, block_bytes=MAX_BYTES // 2, workers=0, block_rows=MAX_ROWS):
+    def __init__(self, path, *, block_bytes=MAX_BYTES // 2, workers=0, block_rows=MAX_ROWS, cpus=None, note=None):
         """workers > 0 encodes blocks (order dedup, gzip) on that many spawned processes while the
         parent stays on the causal sequence; blocks are inserted in order and read back, as the
         first run's journal stack did. workers == 0 encodes inline. A box is cut at `block_rows`
         rows (the day's standard, box_standard.partition_entries_for; Greg, 2026-09-17:
         TARGET_BOXES = 1189 for every day we ingest) or at `block_bytes` of bodies (the format's
         ceiling by default), whichever comes first; the entries, count and head hash are invariant
-        to the cut, the container's bytes are not."""
+        to the cut, the container's bytes are not.
+
+        `cpus` (Greg, 2026-10-07 night: every ingest pool pinned): the encoder CPUs, one per worker
+        (operations/ingest_cpus.placement); each spawned encoder pins itself to one of them. A dead
+        encoder never stops the ingest: the pool is started again on one CPU fewer and every block
+        not yet inserted is encoded again from its own rows (encode_block is pure: the same blob),
+        then inserted in the same order; with no encoder left the blocks are encoded inline.
+        `note(dict)` hears each loss. The pool ends at the seal (no append after it), so the
+        conformance reader that follows never shares the CPUs with an idle encoder pool."""
         if type(block_rows) is not int or not 0 < block_rows <= MAX_ROWS:
             raise ValueError(f'rows per box must be an integer in 1..{MAX_ROWS}')
         self.path = Path(path)
@@ -72,10 +81,52 @@ class CompactBuildJournal:
         self.appends = 0
         self._rows, self._trees, self._pending_bytes, self._pending_previous = [], [], 0, GENESIS_HASH
         self.workers = int(workers)
-        self._pool = (ProcessPoolExecutor(max_workers=self.workers, mp_context=multiprocessing.get_context('spawn'))
-                      if self.workers > 0 else None)
-        self._inflight = deque()          # (future, start, count, previous, head) in submission order
+        self.note = note
+        self.encoder_cpus = list(cpus or [])[:self.workers] if self.workers > 0 else []
+        self.workers_started, self.workers_lost, self.blocks_redone = self.workers, 0, 0
+        self._pool = self._start_pool() if self.workers > 0 else None
+        self._inflight = deque()          # [future, start, count, previous, head, rows] in submission order
         self.worker_cpu_seconds = 0.0
+
+    def _start_pool(self):
+        context = multiprocessing.get_context('spawn')
+        if not self.encoder_cpus:
+            return ProcessPoolExecutor(max_workers=self.workers, mp_context=context)
+        handout = context.Queue()
+        for cpu in self.encoder_cpus:
+            handout.put(cpu)
+        return ProcessPoolExecutor(max_workers=self.workers, mp_context=context, initializer=_pin_encoder,
+                                   initargs=(handout, tuple(self.encoder_cpus)))
+
+    def _recover(self, error):
+        """A worker died (BrokenProcessPool): one worker fewer, every block not yet inserted encoded again."""
+        old = self._pool
+        try:
+            old.shutdown(wait=False, cancel_futures=True)
+        except Exception:  # noqa: BLE001 - the broken pool is being replaced; nothing of it is read again
+            pass
+        before = self.workers
+        self.workers = max(0, self.workers - 1)
+        if self.encoder_cpus:
+            self.encoder_cpus = self.encoder_cpus[:self.workers]    # placement only: which CPU's worker died is not read
+        self.workers_lost += before - self.workers
+        self._pool = self._start_pool() if self.workers > 0 else None
+        for entry in self._inflight:
+            entry[0] = self._submit(entry[5])
+        self.blocks_redone += len(self._inflight)
+        if self.note is not None:
+            self.note(dict(phase='encoder_lost', workers_before=before, workers_now=self.workers,
+                           encoder_cpus=list(self.encoder_cpus), blocks_redone=len(self._inflight),
+                           workers_lost=self.workers_lost, error='%s: %s' % (type(error).__name__, str(error)[:200]),
+                           rule='a dead encoder never stops the ingest: the blocks not yet inserted are encoded again '
+                                'from their own rows and inserted in order (same blobs); no encoder left: inline'))
+
+    def _submit(self, rows):
+        if self._pool is None:
+            done = Future()
+            done.set_result(_encode_rows(rows))
+            return done
+        return self._pool.submit(_encode_rows, rows)
 
     @property
     def count(self):
@@ -170,10 +221,18 @@ class CompactBuildJournal:
 
     def _collect(self, *, all_of_them):
         """Insert finished worker blocks in submission order; the queue holds at most 2 x workers."""
-        limit = 0 if all_of_them else 2 * self.workers
-        while self._inflight and (len(self._inflight) > limit or self._inflight[0][0].done()):
-            future, start, count, previous, head = self._inflight.popleft()
-            blob, cpu = future.result()
+        while self._inflight:
+            limit = 0 if all_of_them else 2 * max(1, self.workers)
+            entry = self._inflight[0]
+            if not (len(self._inflight) > limit or entry[0].done()):
+                return
+            try:
+                blob, cpu = entry[0].result()
+            except BrokenProcessPool as error:
+                self._recover(error)            # every in-flight block (this one included) submitted again, in order
+                continue
+            self._inflight.popleft()
+            _, start, count, previous, head, _ = entry
             self._insert(start, count, blob, previous, head)
             self.worker_cpu_seconds += cpu
 
@@ -182,11 +241,12 @@ class CompactBuildJournal:
             return
         start, count, head = self._rows[0][0], len(self._rows), self._rows[-1][3]
         if self._pool is None:
+            self._collect(all_of_them=True)      # blocks still in flight from a pool that lost every worker go first, in order
             trees = self._trees if all(tree is not None for tree in self._trees) else None    # a spliced row: the encoder parses the body
             self._insert(start, count, encode_block(self._rows, trees), self._pending_previous, head)
         else:
-            future = self._pool.submit(_encode_rows, self._rows)     # the worker parses the bodies itself
-            self._inflight.append((future, start, count, self._pending_previous, head))
+            rows = self._rows                                        # the worker parses the bodies itself
+            self._inflight.append([self._submit(rows), start, count, self._pending_previous, head, rows])
             self._collect(all_of_them=False)
         self._rows, self._trees, self._pending_bytes = [], [], 0
 
@@ -195,6 +255,13 @@ class CompactBuildJournal:
         self.flush()
         self._collect(all_of_them=True)
         self.writer.seal(expected_count=self.count, expected_head_hash=self.head_hash)
+        self._end_pool()
+
+    def _end_pool(self):
+        """The encoders end with the seal (nothing is appended after it): their CPUs are free for the reader."""
+        if self._pool is not None:
+            self._pool.shutdown(wait=True)
+            self._pool = None
 
     def rows(self):
         """Every committed row in order with the block chain re-checked; pending rows are flushed first."""
@@ -239,9 +306,22 @@ class CompactBuildJournal:
             if self._inflight:
                 self._collect(all_of_them=True)
         finally:
-            if self._pool is not None:
-                self._pool.shutdown(wait=True)
+            self._end_pool()
             self.writer.db.close()
+
+
+def _pin_encoder(handout, fallback):
+    """Spawned encoder initializer: one CPU of the hand-out, or (a replacement finding it empty) the pool's CPU set."""
+    import os
+    import queue as queue_module
+    try:
+        cpu = {handout.get(timeout=5.0)}
+    except queue_module.Empty:
+        cpu = set(fallback)
+    try:
+        os.sched_setaffinity(0, cpu)
+    except (AttributeError, OSError, ValueError):
+        pass                              # placement only: the encoder runs where it started
 
 
 def _encode_rows(rows):
@@ -251,7 +331,7 @@ def _encode_rows(rows):
 
 
 def conformance_driver_with_compact_journal(scope, journal_path, *, expected_scope_hash, block_bytes=MAX_BYTES // 2, workers=0,
-                                            block_rows=MAX_ROWS):
+                                            block_rows=MAX_ROWS, cpus=None, note=None):
     """SourceConformanceDriver whose builder writes the compact container directly.
 
     Same construction as source_recovery.rehydrate_source: the builder's __init__ hard-wires an
@@ -263,7 +343,8 @@ def conformance_driver_with_compact_journal(scope, journal_path, *, expected_sco
     builder.scope, builder.chain = scope, RecordPrefixChain(scope)
     builder.adapter, builder.identity = V4MboAdapter(), implementation_identity()
     builder._sessions, builder._failed = {}, False
-    builder.journal = CompactBuildJournal(journal_path, block_bytes=block_bytes, workers=workers, block_rows=block_rows)
+    builder.journal = CompactBuildJournal(journal_path, block_bytes=block_bytes, workers=workers, block_rows=block_rows,
+                                          cpus=cpus, note=note)
     driver = SourceConformanceDriver.__new__(SourceConformanceDriver)
     driver._builder = builder
     driver._stopped = driver._completed = driver._closed = False
