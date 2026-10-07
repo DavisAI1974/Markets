@@ -68,6 +68,9 @@ NEW SESSION -- Frankie (Greg, 2026-10-07 night). THE AGENTS ARE THE ONLY WAY WOR
 - MULTI-BOX ROOT (Greg's design): multiply the existing full-box setup. Clone boxes; number every 16-CPU group
   (lane) across all boxes 1..N; randomly assign each day a group number; each lane runs its day. No new scheduler:
   the same lane logic, multiplied. Boxes killed as soon as the 30 days are done. Build after the one-day run.
+- FULL DATA, ABSOLUTE (Greg): keep the full frame sections (full depth, order ids, queues, observation, native
+  frame, INPUT records). Never secretly shrink back to top 10 or drop ANY data. No speed change may reduce, sample,
+  truncate, summarize or omit; every stack lossless and parse-back proven. A day may book all 32 CPUs (DAY_CPUS=32).
 - REPORTS (Greg):
   - One-day run: a handful of STATUS reports, one per workflow piece: what it received, what it did, what it produced,
     so Greg can tweak or give a thumbs up. Human-only; never knowledge.
