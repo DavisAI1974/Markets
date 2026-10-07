@@ -51,6 +51,10 @@ NEW SESSION -- Frankie (Greg, 2026-10-07 night). THE AGENTS ARE THE ONLY WAY WOR
 - PySR install on the main box: yes. Main box trash cleared and important data archived to S3 with the existing tooling
   (frankie_box_archive_day.sh, frankie_box_cleanup_*.sh), not ad-hoc. Idle guard: not decided, not urgent.
 - E2E: on Greg's go once the workflow and code fixes are done.
+- E2E GO (Greg, 2026-10-07 night, given in advance): "I'm giving you my go now for when it's done." The one-day E2E on
+  20231018 on the main box runs as soon as (1) the independent follow-up review of 44d5673..df0f8de approves and the
+  integration branch is fast-forwarded, (2) the main-box cleanup + PySR install has returned. Purpose: prove all pieces
+  work together (not a scientific day result).
 - REPORTS (Greg):
   - One-day run: a handful of STATUS reports, one per workflow piece: what it received, what it did, what it produced,
     so Greg can tweak or give a thumbs up. Human-only; never knowledge.
