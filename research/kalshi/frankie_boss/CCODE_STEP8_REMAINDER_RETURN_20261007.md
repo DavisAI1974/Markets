@@ -1389,3 +1389,54 @@ script; `git diff --check` clean.
 
 SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED. Each change is kept only if its canary beats the baseline (the
 performance skill's keep/revert rule).
+
+## 23. Everything pinned for day 1 (Greg, 2026-10-07, urgent): launch level and in-stage
+
+Uncommitted; source only; nothing ran.
+
+**Launch level.**
+- Every DAY_RUN_STAGES child goes through `Run.child` -> `frankie_box_cores.py run --kind day-run ... [--inside <held
+  slot>]` -> `taskset -c <the booking's cpu_list>`:
+  - inside a held slot: `cmd_run_inside`, `frankie_box_cores.py:673-700`;
+  - otherwise: a fresh 16-CPU booking, `cmd_run`, `:762-790`.
+- The queue sets `run.slot_booking` on all three routes (`frankie_box_frankie_queue.py:724, 1547, 1598`). So every
+  stage after ROOT gets the day's full 16-CPU list, never one CPU and never the host count.
+- Exceptions:
+  - voice and Jev (STAGE_SLOTS) take the one shared adviser CPU, by Greg's design (`cmd_run_step`, which already set
+    `FRANKIE_LANE_CPUS` = the lane);
+  - fetch, ingest and external are not lane stages: the ingest books its own 8 CPUs; fetch and external are network
+    I/O.
+- **Fixed:** `cmd_run_inside` and `cmd_run` set only `FRANKIE_BOOKED_CPUS`. They now also set
+  `FRANKIE_LANE_CPUS` = the booked list. That is the name `boss_session.lane_cpus` and the meeting read first, so every
+  child sees the lane by either name.
+
+**Per stage (after ROOT).**
+
+| Stage | How its CPUs are used (file:line) | Status |
+|---|---|---|
+| teacher | `frankie_box_experiment_teacher.sh:37-75`: the child's affinity (16 in the slot) split per day, `taskset -c` per day, `--workers $((SHARE-1))` = 15. Inside: `FrankieCompactReader(workers=...)` decodes in parallel (`frankie_box_experiment_teacher.py:462`); the R3 walk (`:480-`) is the pinned equation over cursor order (inherently ordered, one process). The shared picture is read with `workers` (`:363`) | already ok; the ordered walk cannot be split without changing the equation |
+| data | `frankie_box_experiment.py` data step: `DATA_WORKERS = DAY_RUN_CPUS - 1` (15) -> `frankie_box_experiment_data.py:149` ProcessPool hashing | already ok |
+| search / discovery | `WORKERS = DAY_RUN_CPUS - 1` (15) passed by `Run.search`; `frankie_box_experiment_search.sh` default 8 is unused on this route | ok at launch; internals are workflow_reports' |
+| classroom | `frankie_box_experiment_classroom_v2.py:283` reader `workers=15`; `:371` affinity read | launch ok; in-stage request below |
+| scientific teacher / lessons | was: one-process scan of every coupling part; now `_scan_part` fork pool over the child's CPUs minus one (section 22) | changed (section 22) |
+| exchange | `teach_accumulated` -> `ST.test` (the same pool when the exchange child has no threads) | covered by section 22 |
+| school, reports, survivors | small JSON reads/writes; seconds | ok |
+| inspection | `Run.inspect_day` under `taskset -c <held CPUs>`; metadata only | ok |
+| Granite meeting, Jev | one shared lane CPU, threads=1 (Greg's design) | ok by design |
+
+**Requests through the parent (not my files).**
+- **main_recovery:** `frankie_box_classroom_code.py` `market_context` -> the full ordered pass (`ClassroomMarketContext`
+  read plus `_NativeEntryArithmetic.note()` per picture) and `_NativeEntryArithmetic.finish()` run in one process.
+  - On a big day this is the classroom's longest CPU step; the cutoff bounds it at 3600 s.
+  - The per-series pair computation in `finish()` is independent per series, so it can use a fork pool over the
+    child's CPUs with results merged in series order (byte-identical).
+  - The ordered note() pass itself is inherently ordered.
+- **workflow_reports:** `frankie_box_market_timeline.SharedMarketTimeline.iter_applied` / `iter_pictures`: the ordered
+  picture pass after the parallel decode is one process for the teacher and the classroom alike.
+  - Confirm that its decode workers use the lane (`workers` = 15 is passed by both callers).
+  - Anything order-independent in the picture assembly (per-layer row decode, per-publication placement) should move
+    into those workers.
+- **workflow_reports:** `frankie_box_experiment_search.py` internals (coupling and discovery pools) take
+  `WORKERS=15` from `Run.search`. Confirm no inner step falls back to `os.cpu_count()`.
+
+Checks: AST parse and `git diff --check` clean.

@@ -684,7 +684,9 @@ def cmd_run_inside(a, command):
     emit_outcome(a, dict(status='booked', booking=b['booking'], cpus=b['cpu_list'], parent_cpu=b['parent_cpu'],
                          inside=True, reason='inside the day\'s held slot %s: CPUs %s' % (b['booking'], b['cpu_list'])))
     print('### inside the held day slot %s: CPUs %s (stage %s)' % (b['booking'], b['cpu_list'], a.stage), flush=True)
-    env = dict(os.environ, FRANKIE_CPU_BOOKING=b['booking'], FRANKIE_BOOKED_CPUS=b['cpu_list'])
+    # FRANKIE_LANE_CPUS too (the held lane's CPUs, the name boss_session/granite read first), so every stage child sees
+    # the day's full lane list, never the host count (Greg, 2026-10-07: everything pinned for day 1)
+    env = dict(os.environ, FRANKIE_CPU_BOOKING=b['booking'], FRANKIE_BOOKED_CPUS=b['cpu_list'], FRANKIE_LANE_CPUS=b['cpu_list'])
     try:
         child = subprocess.Popen(['taskset', '-c', b['cpu_list']] + command, env=env)
     except OSError as error:
@@ -778,7 +780,7 @@ def cmd_run(a):
     emit_outcome(a, outcome)
     print('### CPU booking %s: CPUs %s (parent CPU %d, %d worker CPUs); %s'
           % (b['booking'], b['cpu_list'], b['parent_cpu'], len(b['worker_cpus']), b['rule']), flush=True)
-    env = dict(os.environ, FRANKIE_CPU_BOOKING=b['booking'], FRANKIE_BOOKED_CPUS=b['cpu_list'])
+    env = dict(os.environ, FRANKIE_CPU_BOOKING=b['booking'], FRANKIE_BOOKED_CPUS=b['cpu_list'], FRANKIE_LANE_CPUS=b['cpu_list'])
     try:
         child = subprocess.Popen(['taskset', '-c', b['cpu_list']] + command, env=env)
     except OSError as error:
