@@ -8,7 +8,7 @@ two channels: Codex integrates from the CCODE documents; a Claude session starts
 
 Greg (through Codex's `1a3e1024`, then the 02:35 ET addendum `2f0d4522`): CCode owns the rest of Step 8 and, with it, the
 runner, the queue and the ledger, plus the assigned school/ROOT/Jev/voice callers. This branch was rebased onto Codex's
-`78f5563d` and, at the end, onto its current `7f08d76e` (no owned file touched by Codex meanwhile). Returned, one commit per
+`78f5563d`, then `7f08d76e`, and at the end onto its current `d6af990c` (no owned file touched by Codex meanwhile). Returned, one commit per
 group (the record: `CCODE_STEP8_REMAINDER_RETURN_20261007.md`): `456a006a` the three 8A findings (lease freshness at every
 effect boundary, the durable unknown resume reconciled through the worker, every unsuccessful outcome nonzero) | `23e3afae`
 the owner contract (one binding per day: attempt, source, exact CPUs, booking, day-bound marker; the class child's
@@ -18,7 +18,9 @@ teacher knowledge bound to its producer identities | four review passes (46 find
 Codex's `retained_school`, the non-reentrant `waiting_school` recovery (the one granted branch of `successor_dispatch.drain`),
 Jev's day on the held CPU lane (`JEV_CPU_REQUEST_V1` persisted before dispatch, `jev` a day-run stage, receipt/status bound
 to the request) | `b4c60a4d` the acknowledgment bound to the save request's identity, the kick's scope comparison |
-`df51afb0` the review pass over the addendum commits | the docs commit (tip = the docs commit (reported in chat)). Checks: `ast.parse`, `sh/bash
+`df51afb0` the review pass over the addendum commits | `cf1f1f2c` the shared-market policy of a NEW run on `Run.root`/plan
+and `Run.teacher` (Codex published the producer at `d6af990c` while this session ran) | `24df7810` its review pass |
+the docs commit (tip = the docs commit (reported in chat)). Checks: `ast.parse`, `sh/bash
 -n`, `yaml.safe_load`, `git diff --check`; nothing run, no AWS, no dispatch.
 
 Design choices of this round, not to re-litigate: the owner binding is written by the queue BEFORE the day's thread starts
@@ -29,13 +31,14 @@ back in place (an orphan on the CPUs refuses the takeover); a failed (never save
 once-per-worker retry is what it was; a kick without a scope starts nothing; a worker never touches an entry outside its
 scope and never starts an out-of-scope predecessor (the eligible day waits); the Jev request is written once and reused
 byte for byte, a differing retained request is refused, never re-minted; the school consumer reads the checked chain and
-never the bare index row, and a successor that needs its corrected meeting waits rather than failing the child; the two
-callers whose producer contracts are not published (the shared-market ROOT policy, the remote voice admission) are named
-dependencies, not guesses.
+never the bare index row, and a successor that needs its corrected meeting waits rather than failing the child; the
+shared-market policy is a NEW run's plan field (a run keeps one plan; a legacy ROOT or teacher result is refused and
+preserved under it, never recomputed or relabelled); the one caller whose contract is not published (the remote voice
+admission) is a named dependency, not a guess.
 
 What a next Claude session does: Codex's review of these commits lands in the task doc; fix what it names in the owned
-files, one commit per group, the code-review skill over the range before every push; wire the two held callers only once
-their contracts are on Codex's tip; nothing else is assigned.
+files, one commit per group, the code-review skill over the range before every push; wire the remote voice admission only
+once its contract is on Codex's tip; nothing else is assigned.
 
 ## Where things stand (updated 2026-10-07, seventh session: Step 8A returned)
 

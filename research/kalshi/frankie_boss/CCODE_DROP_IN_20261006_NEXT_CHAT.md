@@ -3,10 +3,11 @@
 ```
 CCODE DROP-IN (new chat, 2026-10-07, eighth): the Step 8 remainder RETURNED (owner contract, scope, callers) + five review passes
 #run using-agent-skills
-Repo: DavisAI1974/Markets. Branch ccode/teacher-tasks-20261006b on Codex's 7f08d76e (the assignment is 1a3e1024 + the 02:35 ET
+Repo: DavisAI1974/Markets. Branch ccode/teacher-tasks-20261006b on Codex's d6af990c (the assignment is 1a3e1024 + the 02:35 ET
 addendum 2f0d4522); the docs commit = tip. Commits above the six 8A ones: 456a006a 8A findings | 23e3afae owner contract | 4272f949 scope |
 8af0a0b8 previous_of + producer identity | d8ec096b 2634e5ee 157c84ff 83081b64 review passes | bfae4460 school consumer +
-waiting_school recovery + Jev CPU caller | b4c60a4d ack identity + kick scope | df51afb0 review pass | the docs commit = tip.
+waiting_school recovery + Jev CPU caller | b4c60a4d ack identity + kick scope | df51afb0 review pass | cf1f1f2c the
+shared-market policy on Run.root/plan and Run.teacher | 24df7810 its review pass | the docs commit = tip.
 First commands:
   git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
   git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
@@ -20,9 +21,8 @@ Read, in order (research/kalshi/frankie_boss/):
   CCODE_STEP8_REMAINDER_RETURN_20261007.md            the record: protocol, scope, callers, what is NOT wired (section 5), review
   CCODE_NEXT_SOURCE_TASKS_20261006.md top section     Codex's independent review of the return lands HERE
 NEXT: (1) fix every source defect Codex's review names in the owned files, one [skip ci] commit per finding group; do not
-reapply what Codex integrated. (2) Wire the two held callers ONLY once their producer contracts are published on Codex's
-tip: the shared-market ROOT policy (frankie_box_market_timeline.py + the ROOT wrapper's --shared-market-policy flag) into
-Run.root/plan, and the Granite runner's admission acknowledgment into Run.voice; until then they stay named dependencies.
+reapply what Codex integrated. (2) Wire the one held caller ONLY once its contract is published on Codex's tip: the
+Granite runner's admission acknowledgment into Run.voice (return section 5); until then it stays a named dependency.
 (3) Run the code-review skill over origin/ccr-5fce7de3-xa4hfg..HEAD at high effort BEFORE every push and fix what it finds.
 Update the return record, both handoffs and both drop-ins; push --force-with-lease -u. Boundaries unchanged: source only;
 owned files only (never Codex's: school owner, review, successor dispatcher beyond the drain branch, principal adapter,

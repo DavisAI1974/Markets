@@ -3,10 +3,11 @@
 Current box (2026-10-07, after the eighth session: the Step 8 remainder returned). The earlier boxes below are kept for their reading order and boundaries.
 
 ```
-CCode queue, CLAUDE session, 2026-10-07. The Step 8 REMAINDER is RETURNED on Codex's 7f08d76e: 456a006a 8A findings |
+CCode queue, CLAUDE session, 2026-10-07. The Step 8 REMAINDER is RETURNED on Codex's d6af990c: 456a006a 8A findings |
 23e3afae owner contract | 4272f949 scope | 8af0a0b8 previous_of + producer identity | d8ec096b 2634e5ee 157c84ff 83081b64
 review passes | bfae4460 school consumer + waiting_school recovery + Jev CPU caller | b4c60a4d ack identity + kick scope |
-df51afb0 review pass | the docs commit = tip. HOLD stands.
+df51afb0 review pass | cf1f1f2c the shared-market policy on Run.root/plan and Run.teacher | 24df7810 its review pass |
+the docs commit = tip. HOLD stands.
 FIRST, in this order:
 1. /run using-agent-skills (the Skill tool). Greg's rules and the boundaries below win where they differ from a skill.
 2. Branch (the harness branch is never the work). Exactly:
@@ -32,9 +33,9 @@ lane_state, Jev's helper, shared assignment/handoff docs) or the unowned box sid
 pod_agent.py): return exact interface requests. Never call frankie_box_historical_reproduction.run(); never rebuild the
 claims file. Granite pins/threads null settled. STOP before #5; never apply 9c19cc2. H06-H08 historical, bind nothing.
 NO cost references, ever.
-NEXT: (1) fix what Codex's review names, one [skip ci] commit per finding group; (2) wire the shared-market ROOT policy
-(Run.root/plan) and the remote voice admission (Run.voice) ONLY once their producer contracts are on Codex's tip (return
-section 5 names what to look for); (3) run the code-review skill over origin/ccr-5fce7de3-xa4hfg..HEAD at high effort
+NEXT: (1) fix what Codex's review names, one [skip ci] commit per finding group; (2) wire the remote voice admission
+(Run.voice) ONLY once the Granite runner's acknowledgment interface is on Codex's tip (return section 5 names what to
+look for); (3) run the code-review skill over origin/ccr-5fce7de3-xa4hfg..HEAD at high effort
 BEFORE every push and fix what it finds. Update the return record, both handoffs (Claude + CCODE) and both drop-ins; push
 --force-with-lease -u; report exact tips. Nothing on the scratchpad.
 ```

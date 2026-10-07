@@ -2,7 +2,7 @@
 
 Assignment: `CCODE_STEP8_REMAINDER_ASSIGNMENT_20261007.md` (Greg, 2026-10-07 01:49-01:51 ET; the 02:35 ET addendum of
 its section 4) through `CCODE_HANDOFF_STEP8_REMAINDER_20261007.md`. Branch `ccode/teacher-tasks-20261006b`, rebased onto
-Codex's CURRENT `7f08d76e` (ccr-5fce7de3-xa4hfg; its seven commits since the assignment touch none of the owned files),
+Codex's CURRENT `d6af990c` (ccr-5fce7de3-xa4hfg; its eight commits since the assignment touch none of the owned files),
 pushed. Tip: the docs commit (reported in chat). The six 8A commits are preserved (rebased: `40cbc1d0` `57d619f2` `c134e0db` `a3603af9` `6bad3d22`
 `373f58ed`); above them, one `[skip ci]` commit per group:
 
@@ -16,6 +16,8 @@ pushed. Tip: the docs commit (reported in chat). The six 8A commits are preserve
 | `bfae4460` | the school consumer on the checked chain, the `waiting_school` recovery, Jev's day on the held CPU lane (section 4, the addendum) |
 | `b4c60a4d` | the class acknowledgment bound to the save request's identity; the kick's scope comparison (sections 2 and 3, the assignment's later lines) |
 | `df51afb0` | the review pass over the two addendum commits (section 7a) |
+| `cf1f1f2c` | the shared-market policy of a NEW run on `Run.root`/plan and `Run.teacher` (section 4; Codex's producer published at `d6af990c`) |
+| `24df7810` | the review pass over the policy commit (section 7b) |
 | the docs commit (tip) | this file; the handoffs, drop-ins and the file index |
 
 SOURCE-BUILT / RUNTIME-UNVERIFIED, every line: `ast.parse` without project imports on every changed Python file, `sh -n` /
@@ -155,21 +157,28 @@ scheduler: the plan and the ROOT line decide readiness as before.
   `<run>/jev-runtime.json`; Jev's brain from the plan (`--jev-brain` / `JEV_BRAIN`) or `/opt/frankie-box/jev-brain`.
   `prior_brain` is not supplied: the helper selects peer Jev knowledge from the synced roots itself (the supplement).
   Nothing of the helper's science, seal, transport or report is touched.
+- **The shared-market policy of a NEW run** (`cf1f1f2c`; Codex's `frankie_box_market_timeline.py`, the ROOT and teacher
+  wrappers' flags and `SHARED_MARKET_TIMELINE_20261007.md`, published at `d6af990c` and read before wiring). The policy
+  `FRANKIE_SHARED_MARKET_TIMELINE_V1` is saved with the plan at the run's FIRST start (`--shared-market-policy` /
+  `SHARED_MARKET_POLICY`; a run keeps one plan, so an omitted legacy policy stays omitted and is never presented as the
+  new view; the Linux lane runs the same saved plan, so its ROOT and teacher run under the same policy). `Run.root`
+  passes `SHARED_MARKET_POLICY` to the ROOT child (the wrapper forwards `--bedrock on --shared-market-policy`) and,
+  before the retained fast path, requires a completed ROOT's `shared_market_policy.schema` to be the plan's: a legacy or
+  other-policy ROOT is `refused` and preserved (one finished ROOT per day, `root_of`, so the successor is explicit; nothing
+  is recomputed or relabelled); a legacy plan reuses any completed ROOT and records the ROOT's own policy beside its
+  `plan_policy` of none. `Run.teacher` under the policy reads each day's completed OWNER-LOCAL ROOT (`shared_root_of`:
+  a remote owner's ROOT is that lane's, never a caller-local alias; a day without its completed ROOT waits; a ROOT under
+  another policy refuses the day) and passes `SHARED_MARKET_POLICY` + `CALCULATION_ROOTS` aligned with `DAYS` and
+  `INGESTION_RECEIPTS`; a retained teacher result is reused only when `shared_teacher_compatible` holds: the rows receipt's
+  `shared_market_identity` (the policy's schema, the day, the exact `calculations-receipt.json` witness of that ROOT), its
+  `shared_market_read` (the same identity, `complete`), the same ingestion receipt and the same external publication as
+  the attached day file; a legacy teacher receipt, the plan's rows or a launch run's never satisfy it (refused per day,
+  preserved, the batch's other days unaffected; an explicit compatible successor is required). The classroom's own
+  detection of a shared-policy ROOT and the V2 equality checks are Codex's (the report's item 4), not touched.
 
 ## 5. What is NOT wired, by name (dependencies, not hidden assumptions)
 
-1. **The shared-market ROOT policy** (the addendum: `SHARED_MARKET_POLICY=FRANKIE_SHARED_MARKET_TIMELINE_V1`, forwarded as
-   `--shared-market-policy` and `--bedrock on`). At `7f08d76e` neither `frankie_box_market_timeline.py` nor a
-   `--shared-market-policy` / `SHARED_MARKET_POLICY` forwarding in `frankie_box_experiment_root.py` / `.sh` exists; the
-   assignment says to fetch the completed source contract before wiring. Nothing was wired or persisted: a plan field
-   without its producer would be a guess at the contract. The `Run.root` / plan side, once the contract is published:
-   the requested policy saved in the plan at the run's first start (a run keeps one plan, so an omitted legacy policy stays
-   omitted and is never presented as the new view), forwarded by the ROOT child's environment, carried into the Linux
-   lane's job through the plan the controller exports, and checked before every retained ROOT fast path (`Run.root`'s
-   reuse of a completed ROOT and `root_of`): a legacy bedrock-off result does not satisfy a shared-policy request; old
-   attempts are preserved and an explicit compatible successor is required. Request: tell CCode when the producer and the
-   wrapper's flag are published, with the receipt field by which a ROOT declares the policy it was computed under.
-2. **The `Run.voice` remote (GitHub) admission caller** (`STEP6_COMPLETION_20261007.md`). `Run.voice` runs the LOCAL
+1. **The `Run.voice` remote (GitHub) admission caller** (`STEP6_COMPLETION_20261007.md`). `Run.voice` runs the LOCAL
    configured meeting child (`frankie_box_granite_meeting.sh`) and nothing in the runner dispatches the GitHub workflow;
    the report itself says no remote admission operation exists in the runner/lane interface yet. Not invented. The caller
    side, once the acknowledgment interface is agreed with the Granite runner owner: an immutable dispatch intent under
@@ -179,20 +188,20 @@ scheduler: the plan and the ROOT line decide readiness as before.
    the owning lane's acknowledgment of that exact run and predecessor (a predecessor's complete state and stopped process
    established first); the return through the existing owner importer (`frankie_box_granite_runner.py import`) and
    recorded before any successor attempt. Request: the acknowledgment's shape and where the runner reads it.
-3. **Jev's runtime configuration** (`JEV_CPU_RUNTIME_V1`: binary and model pins with quantization identity, the worker
+2. **Jev's runtime configuration** (`JEV_CPU_RUNTIME_V1`: binary and model pins with quantization identity, the worker
    subset of the held lane, context/output/chunk/time budgets, the completion policy): a setup decision, not a value to
    borrow from Granite; Jev waits until it is supplied (section 4).
-4. **A REBOOK'd day and its Jev request**: the retained request binds the original booking id and CPU list; after
+3. **A REBOOK'd day and its Jev request**: the retained request binds the original booking id and CPU list; after
    `REBOOK=on` (a different booking) the helper refuses that request and `Run.jev` reports the differing fields as
    `refused`. An explicit owner recovery (a new stamp is NOT minted by code) is the only way on; named, not hidden.
-5. **`frankie_box_lane_state.py:619`** (Codex's): `Q.kick('class', ...)` after a remote class completion passes no scope,
+4. **`frankie_box_lane_state.py:619`** (Codex's): `Q.kick('class', ...)` after a remote class completion passes no scope,
    so that kick now returns `started=False` ("no scope given") instead of starting an unscoped worker; the owning day's
    own class-wait kick (`_finish_day`, scoped to the run's plan) covers the class line meanwhile. Request: pass
    `scope='%s:%s' % (run, day)` (or the run's plan scope) there.
-6. The 8A dependencies stand (`CCODE_STEP8_CPU_CONTROLLER_20261007.md` section 4): the main box's instance profile (Greg's
+5. The 8A dependencies stand (`CCODE_STEP8_CPU_CONTROLLER_20261007.md` section 4): the main box's instance profile (Greg's
    decision), the signing window, the saved main plan, the claim store, the worker box, systemd-run and the venv, Jev's
    completion dependency.
-7. Earlier requests to Codex-owned functions stand (that report's section 6: the coordination gap tolerance, the worker's
+6. Earlier requests to Codex-owned functions stand (that report's section 6: the coordination gap tolerance, the worker's
    input-URL refresh, new queue day-state words: the queue now carries `saved` and `unknown`; `frankie_box_pod_root.py`'s
    `day_state` was not changed).
 
@@ -203,7 +212,8 @@ comes from (the helper's request fields and pin shape, `retained_school`'s resul
 fields, `parse_scope`'s keys). `sh -n` and `bash -n` on `frankie_box_experiment.sh`, `frankie_box_frankie_queue.sh`,
 `frankie_box_cpu_controller.sh`; `yaml.safe_load` on `frankie_box_run.yml`; `git diff --check` on every commit. The
 code-review skill run adversarially at high effort: four passes over the main contract/scope/integration commits (section
-7), one over the two addendum commits (`df51afb0`). No test, validator framework, synthetic stream or execution of any
+7), one over the two addendum commits (`df51afb0`), one over the policy commit (`24df7810`). No test, validator
+framework, synthetic stream or execution of any
 kind; no AWS call; the scratchpad left empty.
 
 ## 7. What the review passes fixed and kept
@@ -223,10 +233,13 @@ acknowledgment (only the written ack is). The pass over `bfae4460`/`b4c60a4d`: s
 
 The pass (REQUEST CHANGES, 2 critical, 4 required, 7 optional) and what was done: (critical) the `waiting_school` branch re-entered `rebuild_dependents` -> `recover_school` -> `Run.voice` every 5 s while the meeting was not complete, a model child re-dispatched without bound on the held lane: the branch now BREAKS out of the operation's loop when the recovery is not complete (the operation stays unacknowledged; the next boundary's drain tries it once more), and `recover_school` re-runs the voice child only when no receipt, a blocking wait or a failure stands (a non-blocking refused meeting is the owner's decision, not re-dispatched); (critical) the recovery state embedded the voice/school receipt bodies, so every poll rewrote the successors receipt: it carries receipt paths and statuses only; (required) the reports' currentness compared the school receipt with the chain, so reports rendered on the old school were reused once the school stage had re-recorded: `reports_school_stale` compares the reports' recorded school sha256 with the school stage's; (required) an exception in the recovery's voice/school became the operation's `failure.json` (a failure substitute): it is an explicit waiting recovery now, `SystemExit(75)` still propagating; (required) the Jev `saved` branch was unreachable on a standing marker (`child()` raises first) and would have labelled the helper's signal path as saved: removed, exit 75 without a standing marker is waiting with the child's reason; (required) a relative or symlinked `JEV_RUNTIME`/`JEV_BRAIN` would have poisoned the immutable request: refused before the request is written, and the launcher requires both under `/opt/frankie-box`; (optional, done) a bound receipt whose dispositions await the owner is not re-dispatched; the class worker's `passed('school')` resolves school currentness through `Run.finished`; the recovery marker is a per-day set (thread-safe across the pools). Kept, named: `finished()` on a corrupt school chain raises out of `Run.start` (per the contract: never read as absence; the queue paths record it as the day's failure); an acknowledgment from a class worker still on the previous commit carries no request identity and reads `unknown` (roll both workers together); the kick's fast path may read the previous worker's status file in the window before the new worker's first status write; `retained_school` is read on every currentness check (every correction record of every knowledge root per day per call).
 
+### 7b. The policy review pass (`24df7810`)
+
+The pass (REQUEST CHANGES, 1 critical, 6 required, 3 optional) and what was done in `24df7810`: (critical) a legacy teacher result refused by `Run.teacher` was still consumed by every other reader of the day's rows (classroom_ready, the classroom's knowledge publication, school, data, the lane's finish) and the batch was recorded `skipped`/`done`: one gate now, `Run.day_rows`, which every consumer passes (rows the plan's policy refuses are none, with the reason), and a batch with a refused day is `refused` (never FINISHED; its other days ran), the lane's `_finish_day` reads the same gate; (required) a refused ROOT was classed as waiting by `shared_root_of` (refused now); a waiting ROOT or an unsealed ingest was relabelled a permanent refusal of a valid teacher result (`shared_teacher_compatible` is three-way: ok, waiting, refused; waiting days are `root_waiting`, never refused); the external witness came from an in-process cache that is empty under `EXTERNAL_WAIT=off` (read beside the sealed ingest, `attached_day_file`, what the ROOT and the teacher both saw); only the policy's schema was compared where the reader requires the full binding, implementation sha included (`shared_policy_mismatch` against the staged `frankie_box_market_timeline.binding()`, in the ROOT fast path, before the teacher and through it for a retained teacher result); a stale partial legacy publication under `experiment-teacher-rows/<day>` was dispatched under the policy and failed deterministically every start (refused before dispatch); (optional, done) a refused ROOT is not re-recorded on every start (`root_enqueue` returns the prior refusal) and every refusal names the successor route: a new run name (a run keeps one plan, one finished ROOT per day). Confirmed by the pass, kept: the Linux lane runs the same saved plan (`pod_agent.run_full_day` writes `job['plan']`), so its ROOT and teacher carry the policy identically; `CALCULATION_ROOTS` is built from the same list as `DAYS` and `INGESTION_RECEIPTS`, and the teacher wrapper enforces the alignment independently.
+
 ## 8. What remains of Step 8 and of the workflow (not this return)
 
-The two caller dependencies of section 5 (the shared-market policy, the remote voice admission) once their producer
-contracts are published; Jev's runtime configuration; the lane_state kick scope (Codex's line); the 8A dependencies; the
+The remote voice admission (section 5) once its acknowledgment interface is agreed; Jev's runtime configuration; the lane_state kick scope (Codex's line); the 8A dependencies; the
 exact operating sequence for a real launch, written into the runbook only after a real E2E has been authorized and
 observed. Steps 2-7 are not closed by this return. Nothing here is runtime evidence; the first real dispatch of any of it
 needs Greg's explicit AWS go, then ONE day with inspection, review, then THREE days; thirty remain a separate decision.

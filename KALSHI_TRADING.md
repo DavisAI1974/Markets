@@ -12,7 +12,10 @@
   `previous_of` persisted (`days/<day>/previous.json`); teacher knowledge bound to its producer identities; `Run.school` on
   the checked school chain (`retained_school`), `Run.recover_school` (the `waiting_school` callback), `school_current`;
   `Run.jev` on Codex's `frankie_box_jev_cpu.sh` (`JEV_CPU_REQUEST_V1` persisted once under the day; `--jev-runtime` /
-  `--jev-brain`, `JEV_RUNTIME` / `JEV_BRAIN` at the first start, or `<run>/jev-runtime.json`; absent = waiting).
+  `--jev-brain`, `JEV_RUNTIME` / `JEV_BRAIN` at the first start, or `<run>/jev-runtime.json`; absent = waiting);
+  `--shared-market-policy` / `SHARED_MARKET_POLICY` (a NEW run's `FRANKIE_SHARED_MARKET_TIMELINE_V1`, saved with the plan):
+  every ROOT under it, every teacher on the day's completed owner-local ROOT (`CALCULATION_ROOTS`); a legacy ROOT or
+  teacher result is refused and preserved (`shared_root_of`, `shared_teacher_compatible`).
 - `deploy/aws/box/frankie_box_successor_dispatch.py` - ONLY the `waiting_school` branch of `drain` is CCode's (the rest Codex's).
 - `research/kalshi/frankie_boss/pod_root/controller.py` - the three 8A findings: ownership established at every effect
   boundary, the durable unknown resume reconciled through the worker, every unsuccessful outcome nonzero; `--days`.
