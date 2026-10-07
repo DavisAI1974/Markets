@@ -1,3 +1,9 @@
+# Claude session drop-in — 2026-10-07 night, session 5: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007_NIGHT_SESSION5.md`
+
+Branch `ccr-d2f8f826-iefeah-frankie`. Parent-only; agents (model "opus") do the work. a2's ROOT is RUNNING on c9bf631
+(legacy ETA ~23:35Z, native ~00:00Z): probe it first and watch the legacy finish for the shard exit hang (safe unblock in
+the drop-in). Restage the tip before the teacher stage. Never stage an intermediate WIP snapshot. Full data, absolute.
+
 # Claude session drop-in — 2026-10-07 night, session 4: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007_NIGHT_SESSION4.md`
 
 Branch `ccr-d2f8f826-iefeah-frankie`. Parent-only; agents (model "opus") do the work. FIRST check the main box and run
