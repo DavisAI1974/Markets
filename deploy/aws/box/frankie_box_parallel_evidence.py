@@ -89,8 +89,10 @@ def core_plan():
     distinct physical cores, as before; every other booked CPU, the second hardware thread of a core included, is a
     full-book worker. A 16-CPU lane on 16 cores gives 15 roles (9 book) as before; a 32-CPU booking on 16 cores x 2
     threads gives 30 (24 book); the 16-CPU native half of the side-by-side ROOT (8 cores x 2) gives 14 (8 book). The book
-    results do not depend on the worker count: ParallelBook partitions levels by price modulo
-    the count and assembles them with the pinned original arithmetic (frankie_box_native_auxiliary)."""
+    results do not depend on the worker count: ParallelBook places each level on a worker by a hash of (side, price)
+    modulo the count (ParallelBook._slot) and assembles them with the pinned original arithmetic
+    (frankie_box_native_auxiliary). In the native child beside the legacy pass, the legacy pass's CPUs are handed to
+    the book workers once it ends first (native_cpu_handover)."""
     seen, cores, siblings = set(), [], []
     for cpu in _booked_cpus():
         base = Path('/sys/devices/system/cpu') / ('cpu' + str(cpu)) / 'topology'
@@ -111,6 +113,49 @@ def core_plan():
     places = cores[1:] + [s for s in siblings if (s['package'], s['core']) != root_core]
     roles += ['book-' + str(index + 1) for index in range(len(places) - len(roles))]
     return dict(zip(roles, places))
+
+
+HANDOVER_ENV = 'FRANKIE_NATIVE_CPU_HANDOVER'
+HANDOVER_SCHEMA = 'FRANKIE_NATIVE_CPU_HANDOVER_V1'
+
+
+def native_cpu_handover():
+    """The CPUs the legacy pass handed to this native traversal, [] while none (Greg, 2026-10-07: "give it all the
+    CPUs"). The ROOT that forked this native child (frankie_box_boss_session._start_native_overlap) names the file in
+    FRANKIE_NATIVE_CPU_HANDOVER and writes it, atomically, once its legacy pass has ended and it only waits for this
+    child (_await_native_overlap). The file counts only for the process it names (child_pid == this pid), so a file of
+    an earlier attempt never hands CPUs over. Placement only: the book workers' level results do not depend on them."""
+    path = os.environ.get(HANDOVER_ENV)
+    if not path:
+        return []
+    try:
+        import json
+        body = json.loads(Path(path).read_bytes())
+    except (OSError, ValueError):
+        return []
+    if (not isinstance(body, dict) or body.get('schema') != HANDOVER_SCHEMA or body.get('child_pid') != os.getpid()
+            or not isinstance(body.get('cpus'), list) or not all(type(c) is int and c >= 0 for c in body['cpus'])):
+        return []
+    return sorted(set(body['cpus']))
+
+
+def runtime_note(directory):
+    """A note writer for the native child's placement events (handed-over CPUs, lost book workers): one JSON line each
+    in <bedrock>/runtime-workers-notes.jsonl, and the ROOT log (stderr). Never raises into the traversal."""
+    import json
+    import sys
+    def note(text):
+        line = json.dumps(dict(at=time.time(), pid=os.getpid(), note=text), sort_keys=True)
+        try:
+            with open(Path(directory) / 'runtime-workers-notes.jsonl', 'a') as stream:
+                stream.write(line + '\n')
+        except OSError:
+            pass
+        try:
+            print('native runtime: ' + text, file=sys.stderr, flush=True)
+        except (OSError, ValueError):
+            pass
+    return note
 
 
 class _Capture:
@@ -523,16 +568,29 @@ class RuntimeSections(ParallelSections):
             # mid-run); the count is recorded in the workers receipt. Compatibility rule (Greg, 2026-10-07): a saved
             # V3 policy is accepted only while frankie_box_native_auxiliary.py is byte-identical and the count is the
             # same; the existing V2 predecessor rule is unchanged. The transition is recorded on the driver.
-            policy = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V4',
+            # V5 (2026-10-07 night): level placement moved out of ParallelBook._snapshot into ParallelBook._slot (a
+            # hash of side and price; the earlier price-modulo placement put every bid on one worker and every ask on
+            # another on NG's power-of-two tick grid). Placement never changes a level's value (InstrumentBook._level
+            # reads only its own level), so a saved V4 policy of the deployment that had the old placement (helper
+            # code 81092be5, commits 275367f/1e0a893) is accepted on a verified full-state resume, recorded.
+            policy = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V5',
+                book_placement='ParallelBook._slot: golden-ratio hash of (side, price) modulo the worker count',
                 helper_code=auxiliary.native_code_identity()['sha256'])
+            price_modulo = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V4',
+                helper_code='81092be52fd103e586013440640a923f4a89f832d5e1fe9c48fa9995a0ab4103')
             whole_file = dict(rules, schema='FRANKIE_NATIVE_AUXILIARY_V3', book_workers=len(book_roles),
                 helper_sha256=hashlib.sha256(Path(auxiliary.__file__).read_bytes()).hexdigest())
-            bind_transport_policy(self.driver, '_frankie_auxiliary_policy', policy, (predecessor, whole_file))
+            bind_transport_policy(self.driver, '_frankie_auxiliary_policy', policy,
+                                  (predecessor, whole_file, price_modulo))
             if not hasattr(self.driver, '_frankie_auxiliary_metrics'):
                 self.driver._frankie_auxiliary_metrics = dict(census={}, books={})
             metrics = self.driver._frankie_auxiliary_metrics
             self.census = ParallelCensus(self.driver,self.producers,self.plan['census']['cpu'],metrics['census'])
-            self.books = ParallelBook(self.producers,[self.plan[role]['cpu'] for role in book_roles],metrics['books'])
+            # The legacy pass's CPUs join the book workers once it ends first (placement only; native_cpu_handover).
+            directory = self.driver.checkpointer.checkpoint_dir.parent
+            self.books = ParallelBook(self.producers,[self.plan[role]['cpu'] for role in book_roles],metrics['books'],
+                                      note=runtime_note(directory),
+                                      handover=native_cpu_handover if os.environ.get(HANDOVER_ENV) else None)
             from frankie_box_segmented_ledger import io_workers
             storage_workers = io_workers(self.driver.sinks)
             self.encoding = ParallelEvidence(self.driver, self.producers, self.plan)
@@ -549,6 +607,7 @@ class RuntimeSections(ParallelSections):
             workers['ROOT'] = dict(pid=os.getpid(), **self.plan['ROOT'])
             receipt = dict(schema='FRANKIE_RUNTIME_WORKERS_V1', at=time.time(), workers=workers,
                 book_workers=len(book_roles),
+                book_cpu_handover=os.environ.get(HANDOVER_ENV),
                 base_calculation_processes=3, auxiliary_calculation_processes=1+len(book_roles),
                 encoding_processes=2, ledger_io_processes=len(storage_workers),
                 total_processes=len(workers)+len(storage_workers), ledger_io_workers=storage_workers,

@@ -13,9 +13,11 @@ import cloudpickle
 
 # What the native values computed here depend on (the auxiliary transport policy's helper_code,
 # frankie_box_parallel_evidence.RuntimeSections.start): the worker's level and census computation, the census
-# batching, the per-level result view and the snapshot partition/assembly. The worker processes and their CPUs
-# (_worker, NativeWorker), the book worker set (ParallelBook.__init__, widen, handover, lost workers) and close may
-# change without refusing a saved checkpoint: a level's result does not depend on which or how many workers compute it.
+# batching, the per-level result view and the snapshot partition coverage/assembly. The worker processes and their
+# CPUs (_worker, NativeWorker), the book worker set (ParallelBook.__init__, widen, handover, lost workers), the level
+# placement (ParallelBook._slot: which worker computes a level) and close may change without refusing a saved
+# checkpoint: a level's result reads only its own level and orders (InstrumentBook._level), so it does not depend on
+# which or how many workers compute it.
 NATIVE_VALUE_CODE = ('_serve', 'ParallelCensus', '_BookView', 'ParallelBook._wrap', 'ParallelBook._reseed',
                      'ParallelBook.snapshot', 'ParallelBook._snapshot', 'ParallelBook.materialized')
 
@@ -257,7 +259,9 @@ class ParallelBook:
       survivors and the snapshot is computed again (on no worker left: the original method in this process); `note`
       records it; nothing stops;
     - `handover()` (asked every HANDOVER_CHECK_SECONDS between snapshots until it hands CPUs over, once) adds one pinned
-      worker per CPU handed over (the native child's, once it ended first beside the legacy pass) and re-seeds."""
+      worker per CPU handed over and re-seeds: in the legacy pass the native child's CPUs once it ended first, in the
+      native child (frankie_box_parallel_evidence.RuntimeSections) the legacy pass's CPUs once it ended first.
+    Levels are placed on workers by _slot (placement only, outside the native value code)."""
 
     HANDOVER_CHECK_SECONDS = 5.0
 
@@ -384,6 +388,22 @@ class ParallelBook:
             self.note('full-depth book workers: %d lost (%s); %d left%s; this snapshot computed again, levels unchanged'
                       % (len(lost), why, len(self.workers), '' if self.workers else ' (snapshots in this process)'))
 
+    # Fibonacci hashing (Knuth): the top 32 bits of a 64-bit golden-ratio product spread consecutive keys evenly.
+    SLOT_MULTIPLIER = 0x9E3779B97F4A7C15
+    SLOT_MASK = (1 << 64) - 1
+
+    @classmethod
+    def _slot(cls, side, price, count):
+        """The worker index that computes level (side, price): placement only, never a value (a level's result reads
+        only that level). A pure function of (side, price, count), so a persistent mirror keeps every level it owns
+        until the worker count changes (widen/lose re-seed). Prices are integer nanodollars on a tick grid
+        (InstrumentBook price_raw, PRICE_SCALE 1e9): NG's 0.001 tick is 1,000,000 = 2**6 * 15625, so the earlier
+        (price + side) % count put every bid on worker 0 and every ask on worker 1 for any count dividing 64 (e2e a2,
+        20231018: 8 workers, CPUs 7 and 16 computed 99% of the levels; ROOT waited 356 s of ~1,260 s on them). The
+        golden-ratio product's top bits do not depend on the grid's power-of-two factor."""
+        key = 2 * price + (side == 'A')
+        return (((key * cls.SLOT_MULTIPLIER) & cls.SLOT_MASK) >> 32) % count
+
     def snapshot(self,book,now_ns,depth_levels,include_order_ids):
         if self.handover is not None and time.monotonic() >= self._handover_next:
             self._take_handover()
@@ -416,15 +436,14 @@ class ParallelBook:
         generation = state['generation'] + 1
         count = len(self.workers)
         batches, changes = [[] for _ in range(count)], [[] for _ in range(count)]
-        def partition(side, price):
-            return (price + (side == 'A')) % count
+        slot = self._slot
         for side, price in items:
-            batches[partition(side, price)].append((side, price))
+            batches[slot(side, price, count)].append((side, price))
         changed = items if state['reset'] else sorted(state['dirty'])
         for side, price in changed:
             ids = list(book.levels[side].get(price, ()))
             orders = {oid:book.orders[oid] for oid in ids if oid in book.orders}
-            changes[partition(side, price)].append((side, price, ids, orders))
+            changes[slot(side, price, count)].append((side, price, ids, orders))
         dropped, self.dropped = self.dropped, []
         lost, why = [], None
         for worker, delta, batch in zip(self.workers, changes, batches):

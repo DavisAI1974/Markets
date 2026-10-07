@@ -1744,6 +1744,10 @@ class Session:
             native_cpus, legacy_cpus = (lane[:half], lane[half:]) if half else (lane, lane)
             split_basis = 'booked list in halves (topology %s)' % ('unreadable' if topology is None else 'one core')
         session = self
+        # An earlier attempt's hand-over file never reaches this child (it names its own child_pid), but it is removed
+        # before the fork so the work directory shows only this attempt's.
+        handover_path = self.work / self.NATIVE_CPU_HANDOVER_FILE
+        handover_path.unlink(missing_ok=True)
 
         def child():
             # A forked child of the ROOT: its own stop flag (the lane signals the ROOT; the ROOT forwards SIGTERM here),
@@ -1752,6 +1756,8 @@ class Session:
             signal.signal(signal.SIGTERM, lambda *_: stop.__setitem__(0, True))
             os.sched_setaffinity(0, set(native_cpus))
             os.environ['FRANKIE_LANE_CPUS'] = os.environ['FRANKIE_BOOKED_CPUS'] = ','.join(map(str, native_cpus))
+            # the legacy pass's CPUs reach this child's book workers once it ends first (_hand_legacy_cpus_to_native)
+            os.environ['FRANKIE_NATIVE_CPU_HANDOVER'] = str(handover_path)
             def child_save_requested():
                 return stop[0] or bool(save_requested and save_requested())
             probe = _box_module('frankie_box_progress').Probe(session.dir / 'native-overlap')
@@ -1786,6 +1792,7 @@ class Session:
         finally:
             lock.__exit__(None, None, None)   # this process's copy closes; the child's copy keeps the flock
         self._native_overlap = dict(process=process, lane=lane, started=time.time(), native_cpus=list(native_cpus),
+                                    legacy_cpus=list(legacy_cpus), handover_path=handover_path,
                                     environment={k: os.environ.get(k) for k in ('FRANKIE_LANE_CPUS', 'FRANKIE_BOOKED_CPUS')})
         # from here every exit joins it; the legacy pass (and the layer writes after it) see only the second half
         os.sched_setaffinity(0, set(legacy_cpus))
@@ -1795,6 +1802,33 @@ class Session:
                   f'{cpu_ranges(native_cpus)}, legacy on {cpu_ranges(legacy_cpus)}; {split_basis})')
         del handle
         return process
+
+    NATIVE_CPU_HANDOVER_FILE = 'native-cpu-handover.json'
+
+    def _hand_legacy_cpus_to_native(self, overlap):
+        """Greg, 2026-10-07 ("fix native, give it all the CPUs"): the mirror of _freed_native_cpus. Once the legacy pass
+        has ended and this ROOT only waits for the native child, the legacy half's CPUs go to the child's full-book
+        workers (frankie_box_parallel_evidence.native_cpu_handover reads this file every few seconds between snapshots;
+        one pinned book worker per CPU, levels unchanged). This process keeps its affinity: it only waits in join.
+        Written atomically, naming the child's pid; recorded in native-overlap.json. Never fails the ROOT."""
+        path = overlap.get('handover_path')
+        cpus = sorted(set(overlap.get('legacy_cpus') or []) - set(overlap.get('native_cpus') or []))
+        if path is None or not cpus or not overlap['process'].is_alive():
+            return None
+        body = dict(schema='FRANKIE_NATIVE_CPU_HANDOVER_V1', at=time.time(), child_pid=overlap['process'].pid,
+                    cpus=cpus, rule='the legacy pass ended first; its CPUs join the native full-book workers')
+        try:
+            pending = Path(str(path) + '.pending')
+            pending.write_text(json.dumps(body, sort_keys=True))
+            os.replace(pending, path)
+        except OSError as error:
+            self.note(f'native CPU hand-over not written ({type(error).__name__}: {error}); the native stage continues '
+                      f'on its own CPUs')
+            return None
+        self._native_overlap_record(legacy_cpus_handed_to_native=dict(cpus=cpus, at=body['at'], file=str(path)))
+        self.note(f'legacy pass ended first: CPUs {cpu_ranges(cpus)} handed to the native stage (child '
+                  f'{overlap["process"].pid}) for its full-book workers')
+        return cpus
 
     def _freed_native_cpus(self):
         """The native child's CPUs once it has exited while the legacy pass still runs (Greg, 2026-10-07: every CPU
@@ -1836,6 +1870,7 @@ class Session:
         import signal
         process = overlap['process']
         waited = time.time()
+        self._hand_legacy_cpus_to_native(overlap)
         while process.is_alive():
             process.join(timeout=5)
             if process.is_alive() and save_requested and save_requested():
