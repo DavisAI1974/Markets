@@ -355,14 +355,7 @@ def _encode_row(value):
     return json.dumps(pack(value), separators=(',', ':')) + '\n'
 
 
-POOL_POLL_SECONDS = 5.0          # how often a pinned-pool wait checks its workers are still the ones it started (L-2)
 POOL_PIN_WAIT_SECONDS = 5.0      # an initializer's wait for its CPU before it falls back to the pool's whole CPU set
-
-
-class PoolWorkerLost(RuntimeError):
-    """A pinned pool lost a worker while a task was in flight (L-2). multiprocessing.Pool replaces a dead worker but the
-    task it held never completes, so a plain .get() waits forever. Raised instead: the stage fails visibly, nothing is
-    written for the lost task, and the last save point stays the resume point. Never a failure row (not a data error)."""
 
 
 def _encoder_pin(cpus, fallback=None):
@@ -375,26 +368,6 @@ def _encoder_pin(cpus, fallback=None):
     except queue_module.Empty:
         cpu = set(fallback or ()) or set(os.sched_getaffinity(0))
     os.sched_setaffinity(0, cpu)
-
-
-def _pool_pids(pool):
-    return frozenset(process.pid for process in pool._pool)
-
-
-def _await_pool(pool, pids, result):
-    """AsyncResult.get without hanging on a lost task (L-2): wait in POOL_POLL_SECONDS steps (a slow task is not a
-    failure, so there is no overall deadline) and raise PoolWorkerLost as soon as any worker has exited or the pool's
-    worker set differs from the one it started with (these pools never retire workers: no maxtasksperchild)."""
-    import multiprocessing
-    while True:
-        try:
-            return result.get(POOL_POLL_SECONDS)
-        except multiprocessing.TimeoutError:
-            workers = list(pool._pool)
-            if frozenset(process.pid for process in workers) != pids or any(
-                    process.exitcode is not None for process in workers):
-                raise PoolWorkerLost('a pinned pool worker exited with a task in flight; the stage stops at its last '
-                                     'save point (resume reopens it), nothing written for the lost task') from None
 
 
 class OrderedRowWriter:
@@ -427,7 +400,6 @@ class OrderedRowWriter:
         self.queue = collections.deque()
         self.window = self.workers * window_per_worker
         self.pool = context.Pool(self.workers, initializer=_encoder_pin, initargs=(handout, tuple(self.cpus)))
-        self.pids = _pool_pids(self.pool)
         self.frames_encoded = 0
         self.wait_seconds = 0.0
 
@@ -464,10 +436,8 @@ class OrderedRowWriter:
         if not isinstance(encoded, str):
             started = time.time()
             try:
-                encoded = _await_pool(self.pool, self.pids, encoded)
+                encoded = encoded.get()
                 self.frames_encoded += 1
-            except PoolWorkerLost:
-                raise                    # infrastructure, never the serial except clause's failure row
             except Exception as error:
                 # the serial except clause's failure row, at this frame's own slot in the failures spool
                 import pickle
@@ -591,7 +561,6 @@ def write_layer_json(path, value, cpus, window_per_worker=2):
         handout.put(cpu)
 
     def chunks(pool):
-        pids = _pool_pids(pool)
         for i, key in enumerate(order):
             yield parts[i].encode('utf-8')
             spool = spools[key]
@@ -604,7 +573,7 @@ def write_layer_json(path, value, cpus, window_per_worker=2):
                     break
             yield b'[\n  '
             while pending:
-                piece, count = _await_pool(pool, pids, pending.popleft())
+                piece, count = pending.popleft().get()
                 nxt = next(submitted, None)
                 if nxt is not None:
                     pending.append(pool.apply_async(_layer_range_text, (nxt,)))
