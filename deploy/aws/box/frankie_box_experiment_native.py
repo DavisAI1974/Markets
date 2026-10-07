@@ -11,6 +11,24 @@ SCHEMA = 'FRANKIE_NATIVE_SEARCH_INPUTS_V1'
 EMISSION_SCHEMA = 'FRANKIE_NATIVE_EMISSION_V1'
 LEDGERS = ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl', 'legacy_observable_rows.jsonl')
 SECTIONS = ('bedrock_section_4_2', 'bedrock_section_4_4')
+# The ROOT projection's plan (frankie_box_projection.project: work/derived/.projection-v2/plan.json) carries the producers'
+# own crosswalk (native_layer_crosswalk.LAYER_PRODUCERS at the pin) for every projected bedrock layer: member_paths and
+# lifecycle_sections. Optional (an older ROOT or a projection not yet run lacks it: listed); bound to the same ledgers.
+PROJECTION_PLAN = 'projection_plan'
+
+
+def entry_carriers(plan_doc):
+    """{registry entry: dict(member=paths, sections=names, source)} from a projection plan's crosswalk, for every projected
+    layer; None when no plan is given (callers fall back to frankie_box_all99_coverage.NATIVE_SERIES, the retained
+    crosswalk's carrier text). Only the producers' recorded fields; nothing inferred."""
+    if not isinstance(plan_doc, dict):
+        return None
+    out = {}
+    for layer, record in (plan_doc.get('crosswalk') or {}).items():
+        if isinstance(record, dict):
+            out[layer] = dict(member=tuple(record.get('member_paths') or ()), sections=tuple(record.get('lifecycle_sections') or ()),
+                              source='projection plan crosswalk (%s)' % (record.get('carrier') or record.get('kind')))
+    return out
 
 
 def evidence_contract(role):
@@ -29,6 +47,12 @@ def evidence_contract(role):
                     row_identity=['artifact_sha256', 'zero_based_ledger_ordinal'],
                     availability='original row clocks retained; no new live placement',
                     consumer='retained source alias; not an additional live search observation')
+    if role == PROJECTION_PLAN:
+        return dict(common, representation='the producers\' own per-layer crosswalk (member_paths, lifecycle_sections) '
+                                           'the ROOT projection ran with (frankie_box_projection plan.json)',
+                    availability='static description of which ledger fields/sections carry which registry layer; no values',
+                    consumer='names the registry entry of each native series and update (frankie_box_all99_coverage.NATIVE_SERIES '
+                             'is the retained-crosswalk fallback); never a series itself')
     if role in ('receipt', 'result', *SECTIONS):
         return dict(common, representation=('completion_receipt' if role == 'receipt'
                                            else 'completed_calculation_product'),
@@ -103,6 +127,16 @@ def selected_files(root, day):
         if not entry or not entry.get('bedrock') or entry.get('encoding') != 'gzip-json':
             raise ValueError('native derivation lacks its exact compressed section product: ' + name)
         take(name, entry, name + '.json.gz', 'work/derived/.projection-v2')
+    plan_path = root / 'work/derived/.projection-v2/plan.json'
+    if plan_path.is_file() and not plan_path.is_symlink():
+        # the producers' per-layer crosswalk; it must name the very ledgers selected above (else integrity, raised)
+        plan_pin = dict(path=str(plan_path), **_witness(plan_path))
+        plan_doc = json.loads(plan_path.read_bytes())
+        for kind, name in (('member', LEDGERS[0]), ('lifecycle', LEDGERS[1])):
+            if {k: (plan_doc.get('ledgers') or {}).get(kind, {}).get(k) for k in ('path', 'bytes', 'sha256')} != \
+                    {k: native['ledgers'][name][k] for k in ('path', 'bytes', 'sha256')}:
+                raise ValueError('the projection plan names other native ledgers than the selected derivation')
+        take(PROJECTION_PLAN, plan_pin, 'plan.json', 'work/derived/.projection-v2')
     return selected
 
 
@@ -141,8 +175,21 @@ def read_columns(day_dir, columns, frame_numeric, receive_times):
     if not selected:
         return {}, {}, [], [dict(source='native', reason='no selected completed native evidence in this export')]
     required = {'receipt', 'result', *LEDGERS, *SECTIONS}
-    if set(selected) != required:
+    if not required <= set(selected) <= required | {PROJECTION_PLAN}:
         raise ValueError('native export has an incomplete or unknown artifact set')
+    # The registry entry of each native series: the producers' per-layer crosswalk in the projection plan when the export
+    # carries it (bound to these ledgers by selected_files), else the retained crosswalk's carrier text. Listed per entry.
+    import frankie_box_all99_coverage as ALL99
+    plan_carriers = None
+    if PROJECTION_PLAN in selected:
+        plan_path, plan_item = selected[PROJECTION_PLAN]
+        raw = plan_path.read_bytes()
+        if len(raw) != plan_item['bytes'] or hashlib.sha256(raw).hexdigest() != plan_item['sha256']:
+            raise ValueError('exported projection plan differs from its pin')
+        plan_carriers = entry_carriers(json.loads(raw))
+    carriers = {name: (dict(plan_carriers[name]) if plan_carriers and name in plan_carriers else
+                       dict(ALL99.NATIVE_SERIES[name], source='retained crosswalk carrier text (NATIVE_SERIES)'))
+                for name in ALL99.NATIVE_ENTRIES}
     n = len(receive_times)
     from frankie_box_market_timeline import frame_index
     frames, _ = frame_index(frame_numeric, receive_times)
@@ -256,7 +303,13 @@ def read_columns(day_dir, columns, frame_numeric, receive_times):
 
     load(LEDGERS[0], 'native.member')
     load(LEDGERS[1], 'native.lifecycle')
-    for role in ('result', 'receipt', LEDGERS[2], *SECTIONS):
+    for report in sources:
+        report['registry_entries'] = {name: dict(member=list(c.get('member') or ()), sections=list(c.get('sections') or ()),
+                                                 source=c.get('source')) for name, c in carriers.items()}
+    if PROJECTION_PLAN not in selected:
+        notes.append(dict(source='native', role=PROJECTION_PLAN, listed='no projection plan in this export: the native '
+                          'entries are named by the retained crosswalk carrier text (NATIVE_SERIES)'))
+    for role in ('result', 'receipt', LEDGERS[2], *SECTIONS) + ((PROJECTION_PLAN,) if PROJECTION_PLAN in selected else ()):
         path, item = selected[role]
         notes.append(dict(source='native', retained=str(path), sha256=item['sha256'], bytes=item['bytes'],
             role=role, disposition='retained_not_live_search',

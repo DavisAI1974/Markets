@@ -102,3 +102,115 @@ AWS mechanisms checked against these stages through the live `Aws` connector (`r
 **Cross-owner requests (precise).** (1) `deploy/aws/box/frankie_box_experiment.py`, `Run.teacher` (CCode): a day whose `experiment-teacher-rows/<day>/receipt.json` has `status: equation_not_run` is a listed day without Dipole rows, not a failed batch; record it as such and let the day advance (export and search already list the rows missing). (2) `Run.data`: pass `DATA_WORKERS=self.cores.DAY_RUN_CPUS - 1` (or `WORKERS`) to `frankie_box_experiment_data.sh`; today the export hashes serially. (3) `Run.search`: a day without a ROOT frame spool has no causal axis; the search refuses before its manifest (exit nonzero) and the step records `failed`; record it as `not_run` with the reason and let the day go on. (4) `frankie_box_adviser_market`, `frankie_box_experiment_classroom_v2`, `frankie_box_classroom_code`: the requests of the correction section above stand.
 
 **Open in these stages.** The `frames_pin is None` refusal in `build_series` (no axis without the frame spool; the day's search is the equation that lacks its operand, the orchestrator decides the day). Completed signed-flow/roll20 provenance under reversing clocks (unchanged, completed-only). The F_LAST membership-absent view has never been exercised by the downstream readers (`frankie_box_experiment_journal.read_columns` already lists `unsupported_root_group_membership`; `native.read_columns` is bound to the ROOT axis length). No runtime figure in this section is measured.
+
+## 2026-10-07 late: one 99-entry registry, the 99 through the core, the native-only 18, symbolic discovery (source-built, runtime unverified, review required)
+
+Greg resumed workflow_reports ("respawn and finish"). Source only: nothing ran, nothing installed, no account call.
+Skills: `api-and-interface-design` (first), `context-engineering`, `experiment-orchestrator`. Review findings of
+`REVIEW_20261007_EVENING_SLICES_AND_READINESS.md` addressed here: B4 (adviser), the registry table, entry-granular
+arrival, N1, N7.
+
+### One registry and one shared field
+- `frankie_box_all99_coverage.py` is the single source of the 99 entries (`REGISTRY`, `GROUP_ROLES`, `entries()`,
+  `registry()`), bound to the crosswalk (`CROSSWALK_PATH`, `CROSSWALK_SHA256` ece9c624..., `CROSSWALK_BYTES` 112545,
+  `REGISTRY_SHA256` 239a1480...). The classroom (`ALL99_REGISTRY`, the loop of `all99_coverage`) and the adviser
+  (`ROLES`, `registry_layers`) import their entry list from it; their routes and entry names are unchanged.
+- The shared per-piece field FRANKIE_ALL99_COVERAGE_V1: `field(piece, day, rows)` builds it (exactly 99 entries in
+  crosswalk order, each `{entry, group, role, disposition, reason, consumer, piece_disposition, class}`); unknown
+  names, duplicates, missing entries ('unrouted') and group contradictions are `integrity` findings, never relabelled.
+  `derive_field` builds a piece's field from another's (the teacher from the core's); `validate` re-checks a field
+  read back from a receipt.
+- Settled in the registry: ONE vocabulary (`VOCABULARY`, 16 words incl. `integrity_failure` and `unknown`) with
+  `LEGACY_WORDS` mapping every piece's old word; `FIXED_WORDS` settles the sealed nine (`withheld_by_role`), the two
+  shadows (`disabled`), Memory A (`retired`), A-clean (`not_applicable`, not Memory A) and
+  `selected_same_arm_profile` (`control`, a delivered binding control); causal_clocks role `clock`; the current
+  brain entries are `not_read_by_this_piece` unless a piece reads their own content; `CLASS_OF` / `WORD_CLASS` kept
+  for the day reports.
+- Settled carriers: `MARKET_CARRIERS` (entry -> carrier, thinner carrier), `CARRIER_ELEMENTS`, `NOT_MARKET_CARRIED`
+  (the teacher's Dipole state; the lock clock) and `NATIVE_SERIES` (the 18 native-only entries' own member fields and
+  lifecycle sections, transcribed from the retained crosswalk's producer carriers; at runtime the ROOT projection
+  plan's own producers' crosswalk is used when present).
+
+### The core carries the 99
+- `SharedMarketTimeline.report['layer_entries']`: per carrier (the six layers, `input`, `clock`, `availability`,
+  `opening`, `completed`, `external`) its picture element, the entries it yields, the entries it carries thinner,
+  presence and reason. Every picture carries the same map as `coverage.carried_entries`.
+- Every update names its entries (`update['entries']`, `ALL99.update_entries`): a ROOT row its layer's entries; a
+  native member row each native entry whose own field it holds; a native lifecycle row the entries of its
+  `emitting_section`. At the update's own GROUP_CLOSE emission; FINALIZE stays post-stream; nothing backfilled.
+- `report['all99_coverage']` is the day's FRANKIE_ALL99_COVERAGE_V1 (made at open, replaced at exhaustion with the
+  per-entry update counts): `yielded` / `yielded_no_rows` / `thin` / `absent` / `completed_only` with the ROOT's own
+  derive.json record of each native layer in the reason.
+- `opening_state` (report and every picture): `canonical_predecessor_bootstrap_objects` as an identity element (the
+  opening book descriptor from derive.json, else the source binding; tail members) with
+  `initial_last_observed_state`; pictures carry `coverage.last_observed_state` / `active_instrument_state` saying
+  whether rows exist yet. Never re-derived, never an empty book filled in.
+- `legacy_native_signed_flow` and `legacy_per_second_roll20` are `completed_only` (blocked on contributing-cursor
+  provenance, not on the reader).
+- N1: `input_witness` must name the pinned file (path resolving to the pin or `os.path.samefile`, current size; device
+  and inode when given); otherwise the reader hashes the file itself. The teacher and the classroom code pass
+  path/dev/ino.
+
+### The native-only 18 to Frankie and both teachers
+- Core: yielded per update with entry ids (above). Export: `selected_files` adds the projection plan
+  (`work/derived/.projection-v2/plan.json`, checked to name the selected ledgers); the export links each entry's
+  projected layer file with its derive.json pin, lists any not produced with the ROOT's reason, adds
+  `work/native-layer-records.json`, and writes `native_entries` in the MANIFEST. Search: the exact ledgers are placed as
+  before (exact emission cursor on the F_LAST axis); `plane_summary` gives each of the 18 its own row (series/cells of
+  its own carriers, or `native_carrier_without_rows` with the native dispositions of its sections). BOSS teacher: the
+  18 are in `teacher.market_picture` with their entry ids (exposed within its role; the pinned equations unchanged).
+- Searched for production: `frankie_box_bedrock.py` (`project`, `crosswalk_records`), `frankie_box_projection.py`
+  (`project`, plan.json), `frankie_box_boss_session._derive_bedrock`, the pin's bedrock groups and the retained
+  crosswalk. None of the 18 is reported unproduced by this code; absence is the ROOT's own recorded reason.
+
+### Entry-granular arrival in the scientific lists
+- `day_coverage` counts a test row for an entry only when it read a series of THAT entry (`EXPLICIT_SERIES`, the plane
+  table's own series names, the native carriers), never merely the same source; a clock arrives only when the
+  operation read at least one test row (N7); policy entries are `not_read_by_this_piece`, Memory A `retired`.
+  `search_coverage` is the search's own list (MANIFEST `all99_coverage`).
+
+### Symbolic discovery (stage 7)
+- `frankie_box_experiment_search.discovery`: per cell and target, features = every (x, lag k > 0) a coupling row of
+  that cell found beyond chance with x leading; rows y[t], x[t-k]; odcore.leakage on every lag construction; the
+  existing `odcore.symbolic._regressor` (unchanged configuration, discover() defaults 40/12), one fit per seed
+  (`FRANKIE_DISCOVERY_SEEDS`, default 0), every Pareto front kept; nothing averaged. Writes `discovery/INDEX.json`
+  (FRANKIE_SEARCH_DISCOVERY_INDEX_V1, with its workflow report), `discovery/problems/<id>.json` and
+  `nominations.json`. An absent PySR engine lists `equation_not_run` per problem (installing it is a box change on
+  Greg's go). Confirmation days: `not_run_confirmation_day`.
+
+### Inspection
+- `frankie_box_workflow_inspection.py`: `candidates` binds `('survivors',)` and renders the survivor receipt
+  (`candidates_projection`, coverage-file pins only); every piece's all-99 list renders as its own section
+  (`all99_section`: shared counts, integrity, every row); classroom failures show reason/listed/saved_phases and
+  `phase-progress.json` last_event; `keep-running.json` is projected in preflight; FIELDS/USED/PRODUCED gain the
+  all-99, survivor, native and school-list fields.
+
+### Later requests folded into the same pass
+- Frankie's 13 points tied to the 99: the day file declares per point (table metadata or a per-row column) the entries
+  it feeds (`EXTERNAL_ENTRY_KEYS`), `registry_mapping` exact/closest with its reason, `event_time_ns` /
+  `event_time_basis` (default_1400 for a value without an intrinsic time) / `as_of` / note (`external_point_mapping`;
+  an undeclared point and a name outside the 99 are listed findings, never guessed). The core places each point at
+  max(event time, publication) once the receive frontier reaches it (never earlier, never backfilled), names its
+  entries on the update and records `placement` (publication, event time, basis, mapping); the core field marks a
+  declared entry arrived only when the point's value was presented. Export: MANIFEST `external.registry_entries`;
+  search: the external source's `registry_entries` / `registry_mapping` and a per-entry `external` slot in the planes
+  (series of that point and its aliases); the adviser marks a fed entry arrived only when the point is in its picture;
+  the BOSS teacher sees the points in `teacher.market_picture` (exposed, within its role). The search still places the
+  points through the day file's own `AsOfReader` / `search_series` (owned by the day-file piece): the event-time rule
+  must be applied there too for the search to match the core (request).
+- `TEACHER_FORMS` is one table in the registry (fills, modifies, queue concentration, queue age/survival, depletion,
+  resilience, chain trajectory, chain extension, missingness, the Dipole state); the teacher list and the search's
+  entry patterns read it.
+- `clock_model_evaluation`: `model_clock_row` (frankie_box_model_clock.coverage_row); the adviser route `model_clock`;
+  `day_coverage(model_clock=...)`; the native member field stays the declared null.
+- `clock_prospective_discovery_confirmation` at the survivor update: `confirmation_clock_row(receipt)` and
+  `day_coverage(confirmation_clock=...)` (stamped_at_boundary / stamped_not_committed / discovery_only).
+- `USE_WORDS` (computed / context / absent) validated on rows that carry `use`; `exposed` is a shared word.
+
+### Open
+- Runtime: nothing ran. PySR is not installed. The step form and autoregressive features are listed, not run.
+- Cross-owner: day_reports `reach_of` should read `piece_disposition` for its REACH_REFINE words; classroom A-clean
+  word (`retired`) is corrected by FIXED_WORDS in the shared field (the classroom's own list keeps it);
+  `frankie_box_experiment_classroom_v2.py` should pass `path` in its `input_witness`; experiment.py
+  `all99_admission` should build its field with `ALL99.field` (step8).
+- A fresh independent review is required before integration.

@@ -25,7 +25,14 @@ import copy
 import hashlib
 import json
 import struct
+import sys
 from pathlib import Path
+
+# The one 99-entry registry (Greg, 2026-10-07): the entry list and the group roles come from
+# frankie_box_all99_coverage; this piece keeps its own ROUTES and dispositions below.
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import frankie_box_all99_coverage as ALL99  # noqa: E402
 
 SCHEMA = 'FRANKIE_ADVISER_MARKET_CONTEXT_V1'
 REFERENCE_SCHEMA = 'FRANKIE_ADVISER_MARKET_CONTEXT_REFERENCE_V1'
@@ -41,7 +48,7 @@ REPO = Path(__file__).resolve().parents[3]
 # The pinned 99-layer registry (content identity 239a1480...) is named by the committed crosswalk of run
 # 33746436209; the crosswalk file is pinned by knowledge/CYCLE_CALCULATION_PINS.json (path, bytes, sha256).
 # The registry JSON itself is not in this checkout; the crosswalk carries every layer_id and group_id.
-REGISTRY_SHA256 = '239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1'
+REGISTRY_SHA256 = ALL99.REGISTRY_SHA256
 CALCULATION_PINS = REPO / 'research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json'
 STACK_GRAMMAR = 'STACKED_TEXT_V1'
 DIGEST_GRAMMAR = 'DIGEST_V9'
@@ -434,6 +441,14 @@ def verify_render(context):
 #   completed   a completed-only aggregate without contributor cursors (identity.completed_sources)
 #   teacher     a Dipole teacher column; it reaches the teacher seat, not this raw picture
 #   bedrock     produced only by the native traversal/projection (bedrock); arrives only through native.member
+#   carrier     the one registry's settled carrier (frankie_box_all99_coverage.MARKET_CARRIERS / NATIVE_SERIES): arrives
+#               only when an update or last-observed row at or before this instant names THIS entry (update.entries,
+#               set by the shared reader per row), never because its layer is present (review 2026-10-07)
+#   stamped     the cutoff this context stamps (the lock clock): its adapter cursor
+#   model_clock the day's model-evaluation clock records (frankie_box_model_clock.coverage_row)
+#   control     a delivered binding control (selected_same_arm_profile), applied by the orchestrator; not market evidence
+#   not_read    a registry knowledge entry this piece does not read (its analogue consumer named); arrives only when the
+#               consumer reports reading that entry's own content (consumer['registry_content'][entry]) (review B4)
 #   consumer    a knowledge/control input read by the consuming piece itself (it reports what it loaded)
 #   rule        a wall the piece enforces (answer/outcome walls)
 #   retired     Memory A (retired by Greg, 2026-09-27); historical / not_bound
@@ -452,10 +467,10 @@ ROUTES = {
     'order_lifecycle_modifies': ('stream', 'root.frames', ('activity', 'input_records', 'native_frame')),
     'order_lifecycle_replaces': ('stream', 'root.frames', ('activity', 'input_records', 'native_frame')),
     'order_lifecycle_trades': ('stream', 'root.prices', ('price', 'size', 'provenance')),
-    'order_lifecycle_fills': ('stream', 'root.structures', ('fill_disposition',)),
-    'order_lifecycle_clears': ('stream', 'root.frames', ('observation', 'native_frame', 'integrity')),
-    'order_identity_transitions': ('bedrock',),
-    'contract_session_roll_state': ('bedrock',),
+    'order_lifecycle_fills': ('carrier',),
+    'order_lifecycle_clears': ('carrier',),
+    'order_identity_transitions': ('carrier',),
+    'contract_session_roll_state': ('carrier',),
     # full_book_fifo_queue (8)
     'full_bid_ask_depth': ('stream', 'root.frames', ('book', 'bid_depth_full', 'ask_depth_full')),
     'price_level_and_order_counts': ('stream', 'root.frames', ('book', 'bid_order_count_full', 'bid_price_level_count_full')),
@@ -464,14 +479,14 @@ ROUTES = {
     'queue_concentration': ('stream', 'root.frames', ('book', 'observation')),
     'orders_and_volume_ahead': ('stream', 'root.frames', ('book', 'observation')),
     'spread_and_depth_imbalance': ('stream', 'root.frames', ('book', 'spread', 'depth_imbalance_n', 'depth_imbalance_full')),
-    'complete_state_reset_bootstrap_receipts': ('input', ('flags', 'action')),
+    'complete_state_reset_bootstrap_receipts': ('carrier',),
     # microstructure_mechanics (7)
-    'mechanics_actions_by_side_and_level': ('stream', 'root.structures', ('action_counts', 'side_counts')),
-    'aggressor_and_native_signed_flow': ('completed', 'legacy_native_signed_flow'),
-    'depletion_and_replenishment': ('teacher', 'far_replenish_log1p_64/1024, far_absorption_share_64/1024'),
-    'resilience_and_recovery': ('teacher', 'far_identity_survival_64/1024, far_size_retention_64/1024'),
+    'mechanics_actions_by_side_and_level': ('carrier',),
+    'aggressor_and_native_signed_flow': ('carrier',),
+    'depletion_and_replenishment': ('carrier',),
+    'resilience_and_recovery': ('carrier',),
     'churn_and_queue_turnover': ('stream', 'root.frames', ('activity',)),
-    'price_and_book_path': ('stream', 'root.prices', ('price', 'provenance')),
+    'price_and_book_path': ('carrier',),
     'missingness_and_integrity_flags': ('stream', 'root.frames', ('integrity',)),
     # legacy_observable_crosswalk (5)
     'legacy_price': ('stream', 'root.prices', ('price', 'size', 'provenance')),
@@ -480,57 +495,56 @@ ROUTES = {
     'legacy_book_imbalance': ('stream', 'root.frames', ('book', 'depth_imbalance_n', 'best_bid', 'mid')),
     'legacy_structure_observables': ('stream', 'root.structures', ('action_counts', 'side_counts', 'component_count', 'price_raw_min')),
     # derived_geometry (8)
-    'derived_roll20_and_dipole_state': ('completed', 'legacy_per_second_roll20'),
+    'derived_roll20_and_dipole_state': ('teacher', 'the Dipole component states of the teacher rows (roll20 itself stays completed-only)'),
     'derived_d_family_geometry': ('stream', 'root.structures', ('candidate_family_id', 'mirror', 'carried_native_family')),
     'derived_open_world_predecessor_state': ('stream', 'root.structures', ('discovery_status',)),
-    'derived_ancestry_gaps': ('bedrock',),
-    'derived_unresolved_age_chain_trajectory': ('teacher', 'unresolved_age_groups_log, extension_count_log, step_ratio_log, '
-                                                           'pullback_ticks_last_log, step_duration_groups_log, pullback_ticks_prev_log'),
-    'derived_price_flow_book_paths': ('stream', 'root.frames', ('book', 'best_bid', 'mid', 'spread')),
-    'derived_v4_mechanics_fifo_features': ('bedrock',),
+    'derived_ancestry_gaps': ('carrier',),
+    'derived_unresolved_age_chain_trajectory': ('carrier',),
+    'derived_price_flow_book_paths': ('carrier',),
+    'derived_v4_mechanics_fifo_features': ('carrier',),
     'derived_feature_availability_timestamps': ('availability',),
     # prebirth_opportunity (5)
-    'prebirth_predecessor_at_risk_state': ('bedrock',),
-    'prebirth_unresolved_chain_extension_state': ('teacher', 'extension_count_log, step_ratio_log, pullback_ticks_*'),
-    'prebirth_ancestry_successor_opportunity': ('bedrock',),
-    'prebirth_stopped_chain_false_context_controls': ('bedrock',),
-    'prebirth_negative_opportunity_cases': ('bedrock',),
+    'prebirth_predecessor_at_risk_state': ('carrier',),
+    'prebirth_unresolved_chain_extension_state': ('carrier',),
+    'prebirth_ancestry_successor_opportunity': ('carrier',),
+    'prebirth_stopped_chain_false_context_controls': ('carrier',),
+    'prebirth_negative_opportunity_cases': ('carrier',),
     # causal_clocks (7)
     'clock_event_time': ('clock', ('ts_event_ns', 'raw_event_clock')),
     'clock_receive_time': ('clock', ('ts_recv_ns', 'raw_receive_clock')),
     'clock_event_known_by': ('availability',),
     'clock_feature_availability': ('availability',),
-    'clock_prospective_discovery_confirmation': ('consumer', 'lessons'),
-    'clock_model_evaluation': ('host_clock',),
-    'clock_lock_time': ('host_clock',),
+    'clock_prospective_discovery_confirmation': ('carrier',),
+    'clock_model_evaluation': ('model_clock',),
+    'clock_lock_time': ('stamped',),
     # binding_common_controls (4)
     'controlling_rt_mission': ('consumer', 'directive'),
     'native_calculation_contract': ('identity', 'policy'),
     'anchored_knowledge_manifest': ('consumer', 'knowledge'),
-    'selected_same_arm_profile': ('retired',),
+    'selected_same_arm_profile': ('control',),
     # a_clean_overlay (1), a_memory_overlay (3)
     'a_clean_promoted_positive_capsule': ('not_applicable',),
     'a_memory_promoted_positive_capsule': ('retired',),
     'a_memory_prior_lessons_package': ('retired',),
     'a_memory_prior_package_proof': ('retired',),
     # current_brain_runtime (5)
-    'authoritative_s135_construction': ('consumer', 'brain'),
-    'complete_s105_9_brain': ('consumer', 'brain'),
-    'doctrine_reasoning_play_index_evidence': ('consumer', 'brain'),
+    'authoritative_s135_construction': ('not_read', 'the Kalshi NG brain construction is not an input of the adviser pieces; its statements reach the scientific tests only through the historical claims crosswalk'),
+    'complete_s105_9_brain': ('not_read', 'the Kalshi NG brain is not an input of the adviser pieces; Frankie\'s brain entries (the knowledge index, learner documents) are a different thing'),
+    'doctrine_reasoning_play_index_evidence': ('not_read', 'the play index is in the historical catalog; it reaches tests only through the historical claims crosswalk'),
     'lawful_prior_session_carry': ('consumer', 'carry'),
     'october_outcome_wall_enforcement': ('rule', 'walls'),
     # frozen_learned_structure (9)
-    'learned_d_structures_and_families': ('consumer', 'knowledge'),
-    'learned_dipoles_and_geometry': ('consumer', 'knowledge'),
-    'learned_pair_triplet_recurrence': ('consumer', 'knowledge'),
-    'learned_chains_extensions_reappearances_ancestry': ('consumer', 'knowledge'),
-    'phase1_discoveries_structural_falsifiers': ('consumer', 'knowledge'),
-    'phase2_findings_modules_timing_pox_negatives': ('consumer', 'knowledge'),
-    'predecessor_ancestry_unresolved_chain_state': ('consumer', 'knowledge'),
-    'historical_timing_lifespan_context': ('consumer', 'knowledge'),
-    'learned_structure_proposal_index_material': ('consumer', 'knowledge'),
+    'learned_d_structures_and_families': ('not_read', 'registry file not read by the adviser pieces; analogue consumer: the learner knowledge documents / school files the piece loads'),
+    'learned_dipoles_and_geometry': ('not_read', 'registry file not read by the adviser pieces; analogue consumer: the learner knowledge documents / school files the piece loads'),
+    'learned_pair_triplet_recurrence': ('not_read', 'registry file not read by the adviser pieces; analogue consumer: the learner knowledge documents / school files the piece loads'),
+    'learned_chains_extensions_reappearances_ancestry': ('not_read', 'registry file not read by the adviser pieces; analogue consumer: the learner knowledge documents / school files the piece loads'),
+    'phase1_discoveries_structural_falsifiers': ('not_read', 'registry file not read by the adviser pieces; analogue consumer: the learner knowledge documents / school files the piece loads'),
+    'phase2_findings_modules_timing_pox_negatives': ('not_read', 'registry file not read by the adviser pieces; analogue consumer: the learner knowledge documents / school files the piece loads'),
+    'predecessor_ancestry_unresolved_chain_state': ('not_read', 'registry file not read by the adviser pieces; analogue consumer: the learner knowledge documents / school files the piece loads'),
+    'historical_timing_lifespan_context': ('not_read', 'registry file not read by the adviser pieces; analogue consumer: the learner knowledge documents / school files the piece loads'),
+    'learned_structure_proposal_index_material': ('not_read', 'registry file not read by the adviser pieces; analogue consumer: the learner knowledge documents / school files the piece loads'),
     # corrected_extra_agent_carryforward (1)
-    'extra_agent_corrected_information_and_gap_diagnoses': ('consumer', 'knowledge'),
+    'extra_agent_corrected_information_and_gap_diagnoses': ('not_read', 'registry file not read by the adviser pieces; analogue consumer: the learner knowledge documents / school files the piece loads'),
     # sealed_target_timing (2), sealed_step1_answer (7)
     'later_outcome_reveal': ('withheld',), 'target_ground_truth_onset_time': ('withheld',),
     'step1_existing_october_seconds': ('withheld',), 'step1_populations': ('withheld',), 'step1_crosswalks': ('withheld',),
@@ -545,47 +559,32 @@ ROUTES = {
     'output_knowledge_retrieval_receipts': ('output',), 'output_provider_invocation_response_receipts': ('output',),
     'output_answer_wall_access_receipts': ('output',), 'output_source_state_manifest_code_model_run_hashes': ('output',),
 }
-ROLES = {'canonical_raw_dbn_mbo': 'raw', 'order_lifecycle': 'calculation', 'full_book_fifo_queue': 'calculation',
-         'microstructure_mechanics': 'calculation', 'legacy_observable_crosswalk': 'calculation',
-         'derived_geometry': 'calculation', 'prebirth_opportunity': 'calculation', 'causal_clocks': 'clock',
-         'binding_common_controls': 'control', 'a_clean_overlay': 'arm', 'a_memory_overlay': 'arm',
-         'current_brain_runtime': 'knowledge', 'frozen_learned_structure': 'knowledge',
-         'corrected_extra_agent_carryforward': 'knowledge', 'sealed_target_timing': 'sealed_answer',
-         'sealed_step1_answer': 'sealed_answer', 'provisional_shadow': 'shadow', 'append_only_outputs': 'output'}
+ROLES = ALL99.GROUP_ROLES          # the one registry's group roles (identical to the list this piece carried)
 
 
 def registry_layers():
-    """(rows of {layer_id, group_id, role}, source note) from the pinned crosswalk; when the pinned file is absent
-    or its bytes differ, the committed code lists (49 calculation layers, 9 learned structures, 10 outputs) stand
-    in and the note says which names are unavailable in this checkout. Never invented."""
-    pins = json.loads(CALCULATION_PINS.read_bytes()) if CALCULATION_PINS.is_file() else {}
-    pin = pins.get('crosswalk') or {}
-    path = REPO / pin['path'] if pin.get('path') else None
-    if path is not None and path.is_file():
-        raw = path.read_bytes()
-        if _sha256(raw) == pin.get('sha256') and len(raw) == pin.get('bytes'):
-            crosswalk = json.loads(raw)
-            if crosswalk.get('registry_sha256') == REGISTRY_SHA256 and len(crosswalk.get('layers') or []) == 99:
-                rows = [dict(layer_id=l['layer_id'], group_id=l['group_id'], role=ROLES.get(l['group_id'], 'unknown'),
-                             historical_delivery_status=l.get('status')) for l in crosswalk['layers']]
-                return rows, dict(source='pinned crosswalk', path=str(path), sha256=pin['sha256'], bytes=pin['bytes'],
-                                  registry_sha256=REGISTRY_SHA256, layers=99)
-            note = 'crosswalk file names another registry or layer count'
-        else:
-            note = 'crosswalk bytes differ from their pin (integrity: separate visible failure, not missing coverage)'
-    else:
-        note = 'crosswalk file absent from this checkout'
-    from research.kalshi.frankie_boss import frankie_principal_adapter as PA
-    rows = [dict(layer_id=layer, group_id=group, role=ROLES.get(group, 'calculation'), historical_delivery_status=None)
-            for group, layers in PA.REGISTRY_CALCULATION_SET for layer in layers]
-    rows += [dict(layer_id=l, group_id='frozen_learned_structure', role='knowledge', historical_delivery_status=None)
-             for l in PA.FROZEN_LEARNED_STRUCTURE]
-    rows += [dict(layer_id=l, group_id='append_only_outputs', role='output', historical_delivery_status=None)
-             for l in PA.OUTPUT_LEDGERS]
-    return rows, dict(source='committed code lists (fallback)', reason=note, registry_sha256=REGISTRY_SHA256,
-                      layers_named=len(rows), layers_unnamed=99 - len(rows),
-                      unnamed_groups='canonical_raw_dbn_mbo (6), binding_common_controls (4), a_clean/a_memory overlays (4), '
-                                     'current_brain_runtime (5), corrected_extra_agent_carryforward (1), sealed (9), shadow (2)')
+    """(rows of {layer_id, group_id, role, historical_delivery_status}, source note) from the one registry
+    (frankie_box_all99_coverage): always the 99 embedded identities, bound to the crosswalk sha256, in crosswalk order.
+    The crosswalk file of this checkout is checked against them and against CYCLE_CALCULATION_PINS.json; every
+    difference is in the note's `integrity` (a separate visible failure, never missing coverage), never relabelled."""
+    reg = ALL99.registry(REPO)
+    integrity = list(reg['integrity'])
+    try:
+        pin = (json.loads(CALCULATION_PINS.read_bytes()).get('crosswalk') or {}) if CALCULATION_PINS.is_file() else {}
+    except ValueError as error:
+        pin = {}
+        integrity.append(dict(kind='calculation_pins_unreadable', error=str(error)))
+    if pin and (pin.get('sha256') != ALL99.CROSSWALK_SHA256 or pin.get('bytes') != ALL99.CROSSWALK_BYTES):
+        integrity.append(dict(kind='calculation_pins_name_another_crosswalk', pinned=pin,
+                              registry=dict(sha256=ALL99.CROSSWALK_SHA256, bytes=ALL99.CROSSWALK_BYTES)))
+    rows = [dict(layer_id=l['entry'], group_id=l['group'], role=l['role'], historical_delivery_status=l['historical_delivery_status'])
+            for l in reg['layers']]
+    crosswalk = reg['crosswalk'] or {}
+    return rows, dict(source=('pinned crosswalk' if crosswalk and not integrity else
+                              'one registry (frankie_box_all99_coverage; embedded identities bound to the crosswalk sha256)'),
+                      path=crosswalk.get('path'), sha256=crosswalk.get('sha256'), bytes=crosswalk.get('bytes'),
+                      registry_sha256=REGISTRY_SHA256, layers=len(rows), integrity=integrity,
+                      entries_from='frankie_box_all99_coverage.REGISTRY')
 
 
 def _has(value, keys):
@@ -609,7 +608,9 @@ def all_99_coverage(picture, *, reader=None, identity=None, consumer=None):
     piece's consumer, with an explicit disposition. picture=None means no shared picture reached the piece
     (legacy source): every picture route is then absent, said so. consumer: what the piece itself loaded
     ({'piece', 'brain', 'knowledge', 'directive', 'lessons', 'carry', 'walls'}: a value describing what was
-    loaded, or None/absent = not loaded by this piece)."""
+    loaded, or None/absent = not loaded by this piece; 'registry_content': {entry: what of THAT registry entry's own content
+    the piece read}, the only way a registry knowledge entry arrives here, review B4; 'model_clock': the day's
+    clock_model_evaluation row, or 'run_dir' to read it)."""
     rows, registry = registry_layers()
     identity = identity or (reader.identity if reader is not None else None) or {}
     layers = getattr(reader, 'layers', None) or {}
@@ -617,14 +618,22 @@ def all_99_coverage(picture, *, reader=None, identity=None, consumer=None):
     consumer = consumer or {}
     at = (picture or {}).get('at') or {}
     boundary = at.get('input_cursor')
-    observed = {}
+    observed, carried, tagged = {}, {}, False
     if picture is not None:
         for update in list(picture.get('updates') or []) + list(picture.get('last_observed_state') or []):
             entry = observed.setdefault(update['source'], dict(instruments=set(), at_boundary=0, previously_known=0, keys=set()))
             entry['instruments'].add(update.get('instrument_id'))
-            entry['at_boundary' if update.get('input_cursor') == boundary else 'previously_known'] += 1
+            when = 'at_boundary' if update.get('input_cursor') == boundary else 'previously_known'
+            entry[when] += 1
             if isinstance(update.get('value'), dict):
                 entry['keys'].update(update['value'].keys())
+            # the registry entries the shared reader named on this row (frankie_box_market_timeline: update.entries)
+            if 'entries' in update:
+                tagged = True
+                for name in update.get('entries') or ():
+                    slot = carried.setdefault(name, dict(at_boundary=0, previously_known=0, sources=set()))
+                    slot[when] += 1
+                    slot['sources'].add(update['source'])
     raw_record = None
     if picture is not None:
         payload = (picture.get('original_input') or {}).get('payload') or {}
@@ -640,7 +649,8 @@ def all_99_coverage(picture, *, reader=None, identity=None, consumer=None):
         route = ROUTES.get(row['layer_id'], ('unmapped',))
         kind = route[0]
         disposition, reason, where = None, None, None
-        if picture is None and kind in ('identity', 'source', 'input', 'stream', 'clock', 'availability', 'completed', 'bedrock'):
+        if picture is None and kind in ('identity', 'source', 'input', 'stream', 'clock', 'availability', 'completed', 'bedrock',
+                                        'carrier', 'stamped'):
             disposition, reason = 'absent', 'no shared market picture reached this piece (legacy teacher source without a shared identity)'
         elif kind == 'identity':
             if route[1] == 'journal':
@@ -706,6 +716,55 @@ def all_99_coverage(picture, *, reader=None, identity=None, consumer=None):
                 disposition, reason = 'thin', 'native layer present; no member row at or before this instant yet'
             else:
                 disposition, reason = 'absent', 'bedrock projection only; ' + str(native.get('reason') or 'native layer absent') + ' (disabled producer not activated silently)'
+        elif kind == 'carrier':
+            first, thin = ALL99.MARKET_CARRIERS[row['layer_id']]
+            hit = carried.get(row['layer_id'])
+            if hit:
+                # its own carrier, or only the thinner carrier the reader names when the own carrier is absent
+                disposition = ('arrived' if first in hit['sources'] or any(x.startswith('external.') for x in hit['sources'])
+                               else 'thin')     # a day-file point that declares this entry, presented at/after publication
+                where = dict(at_this_boundary=hit['at_boundary'], previously_known=hit['previously_known'],
+                             sources=sorted(hit['sources']))
+                reason = ('%d row(s) naming this entry at this instant' % hit['at_boundary'] if hit['at_boundary'] else
+                          'previously known last-observed row(s) naming this entry, not a new observation')
+                if disposition == 'thin':
+                    reason += '; carried only by the thinner carrier (%s absent)' % first
+            elif not tagged and observed:
+                disposition, reason = 'thin', 'the shared reader of this picture names no entries per row (an older core); not established per entry'
+            elif (layers.get(first) or {}).get('status') == 'absent':
+                if thin is not None and ((thin == 'input' and raw_record is not None)
+                                         or (layers.get(thin) or {}).get('status') == 'present'):
+                    disposition = 'thin'
+                    reason = '%s absent (%s); its thinner carrier %s is in the picture' % (first, layers[first].get('reason'), thin)
+                else:
+                    disposition, reason = 'absent', '%s absent: %s (a disabled producer is never activated silently)' % (
+                        first, layers[first].get('reason'))
+            else:
+                disposition, reason = 'thin', 'carrier %s present; no row naming this entry at or before this instant' % first
+        elif kind == 'model_clock':
+            # the day's model-evaluation clock (frankie_box_model_clock.coverage_row; remaining_consumers 2026-10-07): the
+            # consumer's own row when it carries one, else read from its run directory; the native member field stays the
+            # declared null
+            clock = consumer.get('model_clock')
+            if not isinstance(clock, dict) and consumer.get('run_dir'):
+                clock = ALL99.model_clock_row(consumer['run_dir'], identity.get('day'))
+            if isinstance(clock, dict):
+                disposition, reason, where = clock.get('disposition'), clock.get('reason'), clock.get('where')
+            else:
+                disposition, reason = 'not_reported_by_this_piece', ('no model clock row given to this piece (consumer '
+                                                                     'model_clock / run_dir); never a zero clock')
+        elif kind == 'stamped':
+            disposition = 'stamped'
+            reason = 'the cutoff this context stamps: adapter cursor %s at receive clock %s' % (at.get('adapter_cursor'), at.get('ts_recv_ns'))
+        elif kind == 'control':
+            disposition, reason = 'control', ('a delivered binding control (DELIVERED in the crosswalk): the orchestrator\'s plan '
+                                              'selects the arm/day; not market evidence and not retired')
+        elif kind == 'not_read':
+            content = (consumer.get('registry_content') or {}).get(row['layer_id'])
+            if content:
+                disposition, reason, where = 'arrived_at_consumer', str(consumer.get('piece')) + ' read this entry\'s own content', content
+            else:
+                disposition, reason = 'not_read_by_this_piece', route[1]
         elif kind == 'teacher':
             disposition, reason = 'teacher_seat', 'Dipole teacher columns (' + route[1] + ') reach the teacher seat/rows, not this raw picture'
         elif kind == 'consumer':
@@ -735,6 +794,12 @@ def all_99_coverage(picture, *, reader=None, identity=None, consumer=None):
             disposition, reason = 'not_on_experiment_path', 'host/model-evaluation/lock clock; not an experiment picture clock'
         else:
             disposition, reason = 'unmapped', 'no route authored for this layer id; named, not dropped'
+        fed = [x for x in (carried.get(row['layer_id']) or {}).get('sources', ()) if x.startswith('external.')]
+        if fed and disposition not in ('arrived', 'arrived_at_consumer'):
+            # a day-file point declares it feeds this entry and its value is in this picture (presented at or after its
+            # publication clock by the shared reader): arrived through that point, the route's own word kept in the reason
+            reason = 'day-file point(s) %s in this picture feed this entry; route %s: %s' % (sorted(fed), kind, reason)
+            disposition = 'arrived'
         out.append(dict(entry=row['layer_id'], group=row['group_id'], role=row['role'], route=kind,
                         disposition=disposition, reason=reason, **({'where': where} if where is not None else {})))
     counts = {}
@@ -743,8 +808,22 @@ def all_99_coverage(picture, *, reader=None, identity=None, consumer=None):
     return dict(schema=ALL_99_SCHEMA, registry=registry, at=dict(input_cursor=boundary, adapter_cursor=at.get('adapter_cursor'),
                                                                  ts_recv_ns=at.get('ts_recv_ns')),
                 consumer=consumer.get('piece'), entries=len(out), counts=counts, rows=out,
+                shared_field=_shared_field(out, consumer.get('piece'), identity.get('day')),
                 rule='roles are not interchangeable numeric layers; a thin or absent entry keeps the instant with its disposition; '
                      'a listed arrival is not proof that a consumer computed on it (' + MISSING_COVERAGE_RULE + ')')
+
+
+def _shared_field(rows, piece, day):
+    """The shared per-piece field FRANKIE_ALL99_COVERAGE_V1 from this block's rows (names, routes and dispositions
+    unchanged), built and validated by the one registry module."""
+    reaching = ('arrived', 'arrived_partial', 'completed_only', 'arrived_at_consumer', 'enforced_by_rule')
+    return ALL99.field('adviser:' + str(piece or 'picture'), day,
+                       [dict(entry=r['entry'], group=r['group'], disposition=r['disposition'], reason=r.get('reason'),
+                             consumer=(None if r['disposition'] not in reaching else
+                                       str(piece) if piece else 'the adviser market picture at this cutoff'),
+                             route=r.get('route')) for r in rows],
+                       code_root=REPO, stage='adviser_market',
+                       basis='one complete picture at the existing original source cutoff and the consuming piece\'s own loads')
 
 
 def all_99_with_consumer(coverage, consumer):
@@ -765,8 +844,26 @@ def all_99_with_consumer(coverage, consumer):
             elif kind == 'rule':
                 row['disposition'] = 'enforced_by_rule' if loaded else 'not_reported_by_this_piece'
             row['where'] = loaded
+        elif kind == 'model_clock':
+            clock = consumer.get('model_clock')
+            if not isinstance(clock, dict) and consumer.get('run_dir'):
+                clock = ALL99.model_clock_row(consumer['run_dir'], (out.get('shared_field') or {}).get('day'))
+            if isinstance(clock, dict):
+                row.update(disposition=clock.get('disposition'), reason=clock.get('reason'), where=clock.get('where'))
+        elif kind == 'not_read':
+            # review B4: a truthy brain/knowledge load never makes a registry knowledge entry arrive; only the consumer's
+            # report that it read THIS entry's own content does
+            content = (consumer.get('registry_content') or {}).get(row['entry'])
+            row['disposition'] = 'arrived_at_consumer' if content else 'not_read_by_this_piece'
+            row['reason'] = (str(consumer.get('piece')) + ' read this entry\'s own content' if content
+                             else ROUTES[row['entry']][1])
+            if content:
+                row['where'] = content
+            else:
+                row.pop('where', None)
         counts[row['disposition']] = counts.get(row['disposition'], 0) + 1
-    out.update(consumer=consumer.get('piece'), counts=counts)
+    out.update(consumer=consumer.get('piece'), counts=counts,
+               shared_field=_shared_field(out['rows'], consumer.get('piece'), (out.get('shared_field') or {}).get('day')))
     return out
 
 

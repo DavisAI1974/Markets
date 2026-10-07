@@ -43,7 +43,7 @@ PIECES = (
     ('search', 'Causal axis / channels / transforms / cells / chance checks', ('search',)),
     ('carried', 'Carried claims / accumulated scientific checking', ('accumulated_lessons', 'lessons')),
     ('findings', 'Today\'s Frankie claims / scientific checking', ('lessons',)),
-    ('candidates', 'Cross-day candidate / survivor update', ()),
+    ('candidates', 'Cross-day candidate / survivor update', ('survivors',)),
     ('meeting', 'Three code seats / bounded Granite discussion', ('exchange', 'voice')),
     ('school', 'End-of-day consolidation / numbered reports', ('school', 'reports')),
     ('jev', 'Blind Jev material / sealed claims / testing / delivery', ('jev',)),
@@ -105,6 +105,11 @@ route attempts operator_dispatch intent admission returned rebook exchange_sha25
 conclusion concluded predecessor meeting_input workflow archive dispatched admitted_utc recorded_utc
 input_verification producer_pins_checked slowest_files bytes_per_second dipole_missing dipole exported_from this_root
 walk_seconds
+all99 all99_coverage all99_boundary all99_coverage_files evidence_read missing_listed withheld_listed candidates_by_status
+same_pair_candidates native_pass native_entries native_carriers opening_state layer_entries survivors boundary_day
+batch_days shared_runtime superseded_jev_runtime route_integrity shared_field
+exhaustion_d native_only_ingestion model_clock use_counts registry_entries registry_mapping registry_entry_findings
+confirmation_clock
 '''.split())
 WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the pieces' own inputs / use / outputs record
 # The successor chain (school and corrections pieces): recorded pins {path, bytes, sha256} followed one by one from the
@@ -139,13 +144,15 @@ shared_market anchor_pictures source_status_counts applied_to phase_timings timi
 axis exact_membership fft_cache hashing equation_not_run input_verification producer_pins_checked walk_seconds
 school_listed problems number_assigned_now meeting_status school_status
 rows_missing rows_refused rows_waiting external_waiting refused_days root_waiting dipole_missing retries waited_seconds
+all99 all99_coverage all99_boundary evidence_read missing_listed withheld_listed candidates_by_status same_pair_candidates
+native_pass native_entries native_carriers opening_state layer_entries shared_runtime
 '''.split())
 PRODUCED = set('''outputs rows entity_rows rows_file attachment_file failure_count status shared_market_sources
 presented_inputs external_publications integrity_failure placed_series placed_cells couplings series cells planes
 results reports brain_entry brain_entries external_section external_computation frame_sections files
 mode components observations pairs novel_findings novel_finding_ids dropped_findings correction_ids
 teacher_complete completion_hash external_novel_finding_ids jev_material saved_phases stop_requested
-discovery findings unclaimed
+discovery findings unclaimed survivors all99_coverage_files
 report_number revision supersedes classroom_copy index row file sha256 bytes learner_consumption
 all_knowledge_consumed native_learning_performed forecast_replaced pending_feedback_preserved
 '''.split())
@@ -313,10 +320,91 @@ def classroom_projection(receipt, path):
             brain_entry=receipt.get('brain_entry'), jev_material=receipt.get('jev_material'),
             refusal=(dict(reason=receipt.get('reason'), listed=receipt.get('listed'))
                      if receipt.get('status') == 'refused' else None),
+            failure=(dict(reason=receipt.get('reason'), error_type=receipt.get('error_type'), listed=receipt.get('listed'),
+                          saved_phases=receipt.get('saved_phases'), stage_reached=receipt.get('stage_reached'),
+                          exit_code=receipt.get('exit_code'), phase_progress=_phase_progress(path))
+                     if receipt.get('status') == 'failed' else None),
             waits='phase-progress.json (saved_phases, stop_requested) shows a saved or waiting classroom; '
                   'status complete means every operation finished on this lane'),
         disposition='temporary operator review; a listed anchor, input or layer disposition is what the classroom '
                     'recorded for a thinner instant, not a verdict on the day; nothing here is knowledge or a gate'))
+    all99_section(receipt.get('all99_coverage'), 'classroom all-99 coverage (receipt.json all99_coverage)')
+
+
+def _phase_progress(receipt_path):
+    """phase-progress.json beside a classroom receipt: its saved phases and last event, as recorded; absent = unknown."""
+    path = receipt_path.with_name('phase-progress.json')
+    try:
+        body, pin = read_object(path)
+    except (OSError, ValueError) as error:
+        return dict(path=str(path), unavailable=str(error))
+    return dict(source_read=pin, saved_phases=body.get('saved_phases'), last_event=body.get('last_event'),
+                stop_requested=body.get('stop_requested'), saved_at=body.get('saved_at'))
+
+
+def all99_section(block, label):
+    """A piece's all-99 list as its own section: the piece's own counts, and the shared field
+    (FRANKIE_ALL99_COVERAGE_V1; the block itself or its nested shared_field) with its counts in the one vocabulary, its
+    integrity findings and every entry row (entry, role, word, the piece's word, reason, consumer). Recorded only."""
+    if not isinstance(block, dict):
+        return
+    shared = block if block.get('schema') == 'FRANKIE_ALL99_COVERAGE_V1' else block.get('shared_field')
+    emit('#### ' + label + '\n')
+    json_block(dict(piece_schema=block.get('schema'), piece_counts=block.get('counts'), piece_by_role=block.get('by_role'),
+                    use_counts=block.get('use_counts'), native_only_ingestion=block.get('native_only_ingestion'),
+                    route_integrity=block.get('route_integrity'), requests=block.get('requests'),
+                    shared_counts=(shared or {}).get('counts'), shared_by_role=(shared or {}).get('by_role'),
+                    integrity=(shared or {}).get('integrity'), integrity_ok=(shared or {}).get('integrity_ok'),
+                    listed=(shared or {}).get('listed'), registry=(shared or {}).get('registry'),
+                    absent=block.get('absent'), thin=block.get('thin'),
+                    disposition='what this piece recorded; an arrival is not proof that an equation used the entry; '
+                                'absent/thin keeps the day; integrity is listed apart'))
+    rows = (shared or {}).get('entries') or []
+    if rows:
+        emit('| entry | role | disposition | piece word | use | reason | consumer | day-file points |\n'
+             '|---|---|---|---|---|---|---|---|')
+        for e in rows:
+            if isinstance(e, dict):
+                emit('| %s | %s | %s | %s | %s | %s | %s | %s |' % tuple(str(e.get(k)).replace('|', '/').replace('\n', ' ') for k in (
+                    'entry', 'role', 'disposition', 'piece_disposition', 'use', 'reason', 'consumer', 'external_points')))
+        emit('')
+
+
+def candidates_projection(receipt, path):
+    """The survivor/candidate update receipt (FRANKIE_SURVIVOR_UPDATE_RECEIPT_V1): the survivors document pin, the
+    counts by status, the per-day all-99 coverage files (pins only, never opened here) and the boundary."""
+    if receipt.get('schema') != 'FRANKIE_SURVIVOR_UPDATE_RECEIPT_V1':
+        return
+    report = receipt.get('workflow_report') or {}
+    emit('#### candidates: survivor update (recorded in %s; candidates are not acceptance)\n' % path.name)
+    json_block(dict(status=receipt.get('status'), boundary_day=receipt.get('boundary_day'), batch_days=receipt.get('batch_days'),
+                    survivors=receipt.get('survivors'), reused=receipt.get('reused'), counts=receipt.get('counts'),
+                    candidates_by_status=(report.get('outputs') or {}).get('candidates_by_status'),
+                    all99_coverage_files=(report.get('outputs') or {}).get('all99_coverage_files'),
+                    all99_boundary=(report.get('use') or {}).get('all99_boundary'),
+                    listed=receipt.get('listed'), integrity_failures=receipt.get('integrity_failures'),
+                    late_knowledge=receipt.get('late_knowledge'), publication=receipt.get('publication'),
+                    disposition='temporary operator review; the pinned coverage files are not opened here'))
+
+
+def keep_running_projection(run_dir):
+    """<run>/keep-running.json (FRANKIE_KEEP_RUNNING_V1): every KeepRunning tag event of this run as recorded (a JSON
+    list), under the metadata ceiling; absent = no event recorded, never 'kept running'."""
+    path = run_dir / 'keep-running.json'
+    emit('### KeepRunning tag events (FRANKIE_KEEP_RUNNING_V1; recorded scope only)\n')
+    try:
+        size = path.stat().st_size
+        if size > METADATA_BYTE_LIMIT:
+            raise ValueError('not-inspected-too-large: %d bytes' % size)
+        raw = path.read_bytes()
+        events = json.loads(raw)
+    except (OSError, ValueError) as error:
+        json_block(dict(path=str(path), unavailable=str(error)))
+        return
+    json_block(dict(source_read=dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()),
+                    events=events if isinstance(events, list) else None,
+                    malformed=None if isinstance(events, list) else 'expected a JSON list of events',
+                    disposition='a tag request is not proof the box stayed up or stopped; the idle guard decides on its own'))
 
 
 def pins(record, fields):
@@ -394,7 +482,9 @@ def artifact_paths(record, piece):
         return []
     out = []
     for field in ('receipt',):
-        path = absolute(record.get(field))
+        value = record.get(field)
+        # a receipt is a path, or a pin {path, bytes, sha256} (the survivors step records its child's receipt pin)
+        path = absolute(value.get('path') if isinstance(value, dict) else value)
         if path:
             out.append(path)
     root = absolute(record.get('calculations'))
@@ -521,6 +611,7 @@ def main():
         days = [item.get('day') if isinstance(item, dict) else item for item in body.get('days') or []]
         in_scope = (body.get('key') in (args.day, 'day-' + args.day)
                     or args.day in days or args.day in (body.get('searched_days') or [])
+                    or args.day in (body.get('batch_days') or []) or body.get('boundary_day') == args.day
                     or args.day in (body.get('requested_search_days') or []))
         if in_scope:
             records.append((path, body.get('stage')))
@@ -543,6 +634,7 @@ def main():
         emit('## ' + piece + ': ' + title + '\n')
         if piece == 'preflight':
             lane_records(args.run_dir, plan['run'], args.day)
+            keep_running_projection(args.run_dir)
         if piece in CLASSROOM_ONLY and not entry.get('classroom_arm'):
             emit('Not applicable under the saved non-classroom day plan.\n')
         elif piece == 'confirmation':
@@ -558,6 +650,9 @@ def main():
             body = metadata(path, 'Control receipt (not computation proof)')
             if body is None:
                 continue
+            if isinstance(body.get('all99'), dict):
+                # the ROOT step's per-day production/admission list (FRANKIE_ALL99_ADMISSION_V1) as its own section
+                all99_section(body['all99'], '%s step all-99 (%s all99)' % (piece, path.name))
             matches_plan = body.get('plan_sha256') == saved_plan_sha256
             json_block(dict(step_plan_sha256=body.get('plan_sha256'),
                             saved_plan_sha256=saved_plan_sha256,
@@ -577,6 +672,13 @@ def main():
                     retained = metadata(artifact, 'Retained producer/consumer metadata (recorded scope only)')
                     if piece == 'classroom' and isinstance(retained, dict):
                         classroom_projection(retained, artifact)
+                    if piece == 'candidates' and isinstance(retained, dict):
+                        candidates_projection(retained, artifact)
+                    if isinstance(retained, dict) and piece not in ('classroom',):
+                        # every other piece's own all-99 list (teacher receipt, search MANIFEST, core read, ROOT step)
+                        for key in ('all99_coverage', 'all99'):
+                            if isinstance(retained.get(key), dict) and (retained[key].get('schema') or '').startswith('FRANKIE_ALL99'):
+                                all99_section(retained[key], '%s all-99 (%s %s)' % (piece, artifact.name, key))
             # the school / corrections pieces: the checked successor chain by its recorded pins (the school successor
             # receipt and correction records; the successor operation, its state, the recovery intent, the acknowledgment
             # and the dependents receipt), bounded depth, each projected as recorded; the school file itself is never opened

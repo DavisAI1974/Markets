@@ -1,6 +1,7 @@
 """The experiment's search, first slice: series on one causal axis per day, and sign-step couplings with a chance check.
 
-Greg, 2026-09-29 ("build the bedrock off switch and start the search"). Spec: research/kalshi/frankie_boss/
+Greg, 2026-09-29 ("build the bedrock off switch and start the search"; reversed 2026-10-07: the native pass is ON for
+every new run). Spec: research/kalshi/frankie_boss/
 SPEC-experiment-orchestrator.md (steps 5-6) and SPEC-scientific-teacher.md (the search IS the scientific teacher).
 Reads ONE day's exported data (frankie_box_experiment_data.py: /opt/frankie-box/work/experiment-data/<day>/cycle-<NN>/)
 in place. Nothing is re-derived and no copy is written: the ROOT's row spools are streamed through the journal's own
@@ -62,7 +63,7 @@ their exact existing ROOT group membership. Intermediate effects/order/rank fiel
 snapshots stay missing. Unknown/failed/unclosed/unmatched entries have explicit retained ordinal dispositions.
 
 LISTED, NOT SEARCHED (never dropped), each named in the MANIFEST's not_searched list with its reason: identity/clock
-fields, numeric-state conditions, new targets, the bedrock planes the experiment ROOT does not derive (bedrock off),
+fields, numeric-state conditions, new targets, the bedrock planes a ROOT did not derive (its native pass did not complete, or an older saved legacy plan ran it off),
 the native journal ordinal axis (the surface helper, unwired), the teacher's Dipole rows where the teacher has not run,
 and claims (tested by the scientific teacher on these counts). The MANIFEST's `planes` entry says, per plane of the
 existing inventory, whether this search consumed it, listed it, or whether no producer runs for it in the experiment.
@@ -861,8 +862,22 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
                     text_cols[name] = asof_values(con, axis, stamps, leaf_values).tolist()
                     text_fields.append(name)
                 mixed.extend(dict(field=key, note=item) for item in listed)
+        # the registry entries each point declares it feeds (frankie_box_all99_coverage.external_point_entries); a name
+        # outside the 99 is a finding, listed; a point without a declaration is outside the 99
+        import frankie_box_all99_coverage as ALL99
+        point_entries, point_mapping, entry_findings = {}, {}, []
+        for point, table in sorted((body.get('points') or {}).items()):
+            mapped = ALL99.external_point_mapping(table)
+            point_entries[point] = mapped['entries']
+            point_mapping[point] = {k: mapped[k] for k in ('mapping', 'mapping_reason', 'event_time_basis', 'note')}
+            entry_findings.extend(dict(f, point=point) for f in mapped['findings'])
         sources.append(dict(source='external', path=str(external), bytes=external_pin['bytes'],
                             sha256=external_pin['sha256'], schema=body.get('schema'),
+                            registry_entries=point_entries, registry_mapping=point_mapping,
+                            registry_entry_findings=entry_findings,
+                            placement_note='the search places each point through the day file\'s own as-of reader '
+                                           '(AsOfReader / search_series, owned by the day-file piece) at the stamps it '
+                                           'returns; the shared reader places at max(event time, publication)',
                             receipt=str(external_receipt) if receipt_pin is not None else None,
                             receipt_pin={key: receipt_pin[key] for key in ('bytes', 'sha256')} if receipt_pin is not None else None,
                             series=sorted(ext), absent=absent, missing=body.get('missing'),
@@ -1291,9 +1306,79 @@ def plane_summary(sources, notes):
             # now have their own measured field/ordinal receipts; a file read is
             # not a per-registry-layer proof, so do not invent that reconciliation.
             status = 'native_evidence_present_layer_mapping_open'
+        if remaining and 'bedrock' in remaining and 'native.member' in read:
+            # the legacy route's remaining text names the native (bedrock) pass; this ROOT ran it, so say so
+            remaining += ('; this ROOT\'s native pass ran: its exact native rows are placed (native_exact_emission_rows; '
+                          'the 18 native-only entries have their own per-entry rows below)')
         out[name] = dict(status=status, declared_status=declared_status, source=source, source_read=receipt is not None,
                          mapped_by=consumed_by, remaining=remaining,
                          evidence='sources placed_series/placed_cells/exclusions; cells_not_counted; couplings.parts')
+    external = read.get('external')
+    if external and external.get('registry_entries'):
+        # Frankie's points tied to the 99 (2026-10-07): per entry a point declares it feeds, the series of that point the
+        # search placed (external.<point>... and its legacy aliases), each at its own publication stamp (as-of placement)
+        import re
+        aliases = {}
+        for item in (external.get('all_fields') or {}).get('alias_definitions') or []:
+            aliases.setdefault(item.get('point'), []).append(item.get('name'))
+        placed = list(external.get('placed_series') or []) + list(external.get('placed_cells') or [])
+        by_entry = {}
+        for point, entries in external['registry_entries'].items():
+            patterns = ([r'^external\.' + re.escape(point) + r'(?:\.|$)']
+                        + [r'^external\.' + re.escape(a) + r'(?:\.|$)' for a in aliases.get(point) or [] if a])
+            series = [x for x in placed if any(re.match(p_, x) for p_ in patterns)]
+            for entry in entries:
+                slot = by_entry.setdefault(entry, dict(points=[], series=0, series_patterns=[]))
+                slot['points'].append(point)
+                slot.setdefault('mapping', {})[point] = (external.get('registry_mapping') or {}).get(point)
+                slot['series'] += len(series)
+                slot['series_patterns'].extend(patterns)
+        for entry, slot in by_entry.items():
+            prior = out.get(entry) or dict(status='not_in_this_export', declared_status=None, source=None, source_read=False,
+                                           mapped_by=None, remaining=None)
+            status = prior.get('status')
+            if slot['series'] and status not in ('mapped', 'clock'):
+                status = 'mapped_partial' if status in ('mapped_partial', 'native_carrier_without_rows') else 'mapped'
+            out[entry] = dict(prior, status=status, external=dict(slot, summary='%d series of day-file point(s) %s, each at '
+                                                                       'its publication stamp' % (slot['series'], slot['points'])))
+    native_reports = [read[n] for n in ('native.member', 'native.lifecycle') if n in read]
+    if native_reports:
+        # The 18 native-only registry entries (Greg, 2026-10-07: they reach Frankie and both teachers): each entry's own
+        # carriers (the projection plan's producers' crosswalk, else the retained crosswalk text; recorded by the native
+        # reader as registry_entries) matched against the native series and cells this search actually placed. Exact
+        # values at their GROUP_CLOSE emission frame; no new equation form; an entry with nothing placed is listed with
+        # the native reader's own dispositions for its sections.
+        import frankie_box_all99_coverage as ALL99
+        carriers = {}
+        for report in native_reports:
+            carriers.update(report.get('registry_entries') or {})
+        placed_series = [s for r in native_reports for s in r.get('placed_series') or []]
+        placed_cells = [c for r in native_reports for c in r.get('placed_cells') or []]
+        lifecycle = read.get('native.lifecycle') or {}
+        for name in ALL99.NATIVE_ENTRIES:
+            spec = carriers.get(name) or ALL99.NATIVE_SERIES[name]
+            patterns = ALL99.native_series_patterns(name, carriers or None)
+            series = [s for s in placed_series if any(p.match(s) for p in patterns)]
+            cells = [c for c in placed_cells if any(p.match(c) for p in patterns)]
+            prior = out.get(name) or {}
+            unplaced = None
+            if not series and not cells:
+                unplaced = dict(member_paths=['%s: no placed native.member.row field (absent from every member row on this day, '
+                                              'or excluded as an identity/clock: see exclusions)' % p for p in spec.get('member') or ()],
+                                sections={s: (lifecycle.get('sections') or {}).get(s) or 'no lifecycle row of this section in the ledger'
+                                          for s in spec.get('sections') or ()})
+            fed = ((prior.get('external') or {}).get('series') or 0) > 0
+            out[name] = dict(prior, status='mapped' if series or cells else 'mapped_partial' if fed else 'native_carrier_without_rows',
+                             declared_status=prior.get('declared_status'), source_read=True,
+                             legacy_route=dict(source=prior.get('source'), status=prior.get('status'), mapped_by=prior.get('mapped_by')),
+                             source='native.member' if spec.get('member') else 'native.lifecycle',
+                             mapped_by='native carriers: member %s, sections %s (%s)' % (
+                                 list(spec.get('member') or ()), list(spec.get('sections') or ()), spec.get('source')),
+                             native=dict(series=len(series), cells=len(cells), series_patterns=[p.pattern for p in patterns],
+                                         unplaced=unplaced,
+                                         summary='%d series / %d cells of its own native carriers placed' % (len(series), len(cells))),
+                             evidence='native source placed_series/placed_cells (names matching series_patterns); '
+                                      'native dispositions per section; couplings.parts')
     if 'native.member' in read:
         out['native_exact_emission_rows'] = dict(status='mapped_partial',
             sources=['native.member', 'native.lifecycle'],
@@ -1374,6 +1459,230 @@ def _cell_job(args):
     return result + (_fft_cache_stats(),)
 
 
+# ------------------------------------------------------------------------------- symbolic discovery (stage 7 spec row)
+# Greg, 2026-10-06: new discovery is central. Daily runs must be able to discover new nonlinear and multivariable
+# relationships; a fixed catalogue of pairwise tests is not a substitute. Discovery GENERATES candidates; scientific
+# checking and acceptance (the scientific teacher, the survivor update) assess them without narrowing it. The fitting
+# mathematics is the existing one, unchanged: odcore.symbolic (PySR, Julia backend) with its own regressor configuration
+# (_regressor: operators + - * / square cube exp log sqrt, squared loss, model_selection best) and discover()'s defaults
+# (niterations 40, maxsize 12). Nothing here defines a new equation form.
+#
+# The problem set is the search's own result, per cell: for each cell and each target series y, the features are every
+# (x, k) for which a coupling row of THIS cell found x leading y at best lag k > 0 beyond chance (every transform pair
+# counts; each nomination keeps its part file and row ordinal). The rows are the cell's group closes t (a step belongs
+# to the cell of the group it arrives at, as in the couplings) with target y[t] and features x[t - k]: strictly earlier
+# group closes, so every feature is causal; odcore.leakage.assert_no_leakage checks each lag construction on the real
+# series (the value as of row i must not change when every later row is scrambled). Values are the search's placed
+# series, unchanged (float64 only because the regressor requires it). A row missing the target or any feature blocks
+# only that row of that problem (counted per reason); a problem with fewer than two usable rows, or a failed leakage
+# check, is listed and not fitted. Every seed's Pareto front is retained individually: nothing is averaged across
+# seeds, cells, targets or days. The loss is the regressor's own objective, never a finding summary.
+DISCOVERY_SCHEMA = 'FRANKIE_SEARCH_DISCOVERY_INDEX_V1'
+DISCOVERY_NITERATIONS, DISCOVERY_MAXSIZE = 40, 12            # odcore.symbolic.discover defaults
+
+
+def discovery_nominations(parts, staging):
+    """{(cell, cell_value, y): {(x, k): [provenance]}} from the coupling parts: rows beyond chance with x leading y."""
+    out, read = {}, 0
+    for part in sorted(parts):
+        path = Path(part)
+        if not path.is_file():
+            continue
+        with path.open('r', encoding='utf-8') as handle:
+            for ordinal, line in enumerate(handle):
+                read += 1
+                row = json.loads(line)
+                lag = row.get('best_lag')
+                if not row.get('beyond_chance') or type(lag) is not int or lag <= 0:
+                    continue
+                key = (row['cell'], row.get('cell_value'), row['y'])
+                out.setdefault(key, {}).setdefault((row['x'], lag), []).append(dict(
+                    part=str(path.relative_to(staging)), row=ordinal, x_transform=row.get('x_transform'),
+                    y_transform=row.get('y_transform'), same_way=row.get('same_way'), opposite=row.get('opposite'),
+                    both_moving=row.get('both_moving'), null_shifts=row.get('null_shifts')))
+    return out, read
+
+
+def _discovery_job(args):
+    identity = dict(search=_JOB['identity'], job=args)
+    path = _JOB['recovery'] / ('discovery-' + args[0] + '.pkl')
+    if path.is_file():
+        return _load_state(path, identity)['result']
+    result = _discovery_compute(args)
+    _save_state(path, dict(identity=identity, result=result))
+    return result
+
+
+def _discovery_compute(args):
+    """One problem: rows, operand dispositions, the leakage check of every lag construction, then the existing regressor
+    once per seed (when the engine is importable in this process); its result file is written once, then pinned."""
+    import numpy as np
+    import frankie_box_experiment_transforms as T
+    problem_id, cell_col, cell_value, y, features, seeds, niterations, maxsize = args
+    started = time.time()
+    series = _JOB['series']
+    idx = _JOB['cells'][(cell_col, cell_value)]
+    n = len(series[y])
+    rows = list(range(n)) if idx is None else [int(j) + 1 for j in idx]
+    first = max(k for _, k in features)
+    excluded = dict(before_first_lag=sum(1 for t in rows if t < first), target_missing=0,
+                    feature_missing={'%s@%d' % (x, k): 0 for x, k in features})
+    used = []
+    for t in rows:
+        if t < first:
+            continue
+        if not T.finite(series[y][t]):
+            excluded['target_missing'] += 1
+            continue
+        missing = [(x, k) for x, k in features if not T.finite(series[x][t - k])]
+        if missing:
+            for x, k in missing:
+                excluded['feature_missing']['%s@%d' % (x, k)] += 1
+            continue
+        used.append(t)
+    from odcore.leakage import assert_no_leakage
+    leakage = []
+    for x, k in features:
+        p = np.asarray(series[x], dtype=object)
+        def signal_at(i, ts_, p_, bv_, sv_, k=k):
+            return p_[i - k] if i - k >= 0 else None
+        probe = sorted(set(used[int(j)] for j in np.linspace(0, len(used) - 1, min(65, len(used))).astype(int))) if used else []
+        passed, fails = assert_no_leakage(signal_at, np.arange(n), p, np.arange(n), np.zeros(n), probe)
+        leakage.append(dict(feature='%s@%d' % (x, k), passed=bool(passed), checked=len(probe), fails=len(fails)))
+    result = dict(schema=DISCOVERY_SCHEMA + '_PROBLEM', id=problem_id, cell=cell_col, cell_value=cell_value, target=y,
+                  features=[dict(name='x%d' % i, series=x, lag=k) for i, (x, k) in enumerate(features)],
+                  rows_in_cell=len(rows), rows_used=len(used), excluded=excluded, leakage=leakage, seeds=list(seeds),
+                  regressor=dict(module='odcore.symbolic', configuration='_regressor', niterations=niterations, maxsize=maxsize))
+    if any(not g['passed'] for g in leakage):
+        result.update(status='leakage_failed', reason='a lag construction failed odcore.leakage; not fitted (listed)')
+    elif len(used) < 2:
+        result.update(status='too_few_rows', reason='fewer than two rows with the target and every feature present')
+    else:
+        try:
+            from odcore.symbolic import _regressor
+            import pysr  # noqa: F401  (the existing Julia-backed engine; imported in this worker only)
+        except Exception as error:   # noqa: BLE001 - an absent engine blocks only this equation, named
+            result.update(status='equation_not_run', reason='the existing fitting engine is not importable in the box venv '
+                          '(%s: %s); installing it is a box change on Greg\'s go' % (type(error).__name__, str(error)[:200]))
+        else:
+            X = np.asarray([[float(series[x][t - k]) for x, k in features] for t in used], dtype=np.float64)
+            target = np.asarray([float(series[y][t]) for t in used], dtype=np.float64)
+            fits = []
+            for seed in seeds:
+                model = _regressor(niterations, maxsize, seed)
+                model.fit(X, target, variable_names=['x%d' % i for i in range(len(features))])
+                eqs = model.equations_
+                best = int(eqs['score'].idxmax())
+                fits.append(dict(seed=seed, best_equation=str(eqs.loc[best, 'equation']),
+                                 best_complexity=int(eqs.loc[best, 'complexity']), best_loss=float(eqs.loc[best, 'loss']),
+                                 best_score=float(eqs.loc[best, 'score']),
+                                 pareto=[dict(complexity=int(r.complexity), loss=float(r.loss), score=float(r.score),
+                                              equation=str(r.equation)) for r in eqs.itertuples()]))
+            result.update(status='fitted', fits=fits,
+                          note='each seed retained individually; reproduction across seeds and acceptance are scientific '
+                               'checking (not this stage)')
+    result['seconds'] = round(time.time() - started, 3)
+    out = _JOB['discovery_dir'] / 'problems' / (problem_id + '.json')
+    data = (json.dumps(result, indent=1, sort_keys=True, default=str) + '\n').encode()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if out.is_file() and out.read_bytes() != data:
+        raise ValueError('discovery result exists with other bytes (retained for recovery): %s' % out)
+    if not out.is_file():
+        pending = out.with_suffix('.json.pending')
+        with pending.open('wb') as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(pending, out)
+    return dict({k: result.get(k) for k in ('id', 'cell', 'cell_value', 'target', 'rows_in_cell', 'rows_used', 'status',
+                                             'reason', 'seconds')},
+                features=len(features), file=str(out.relative_to(_JOB['discovery_dir'])), bytes=len(data),
+                sha256=hashlib.sha256(data).hexdigest(),
+                fitted_seeds=len(result.get('fits') or []))
+
+
+def discovery(day, cycle, day_role, staging, parts, context, workers, log):
+    """Write <search>/discovery/INDEX.json (DISCOVERY_SCHEMA): every problem the couplings nominate, with its result
+    pin or its listed disposition; nothing silent. Runs inside the held lane's workers (the same fork context)."""
+    import importlib.util
+    started = time.time()
+    directory = staging / 'discovery'
+    directory.mkdir(parents=True, exist_ok=True)
+    _JOB['discovery_dir'] = directory
+    mode = os.environ.get('FRANKIE_DISCOVERY', 'on')
+    seeds = tuple(int(s) for s in os.environ.get('FRANKIE_DISCOVERY_SEEDS', '0').split(',') if s.strip())
+    engine = dict(module='odcore.symbolic', regressor='_regressor (operators, loss and model selection unchanged)',
+                  niterations=DISCOVERY_NITERATIONS, maxsize=DISCOVERY_MAXSIZE, seeds=list(seeds),
+                  pysr_findable=importlib.util.find_spec('pysr') is not None,
+                  basis='found by importlib.util.find_spec in the parent; imported only inside each worker (Julia is not '
+                        'initialised before the fork)')
+    index = dict(schema=DISCOVERY_SCHEMA, day=day, cycle=cycle, day_role=day_role, engine=engine, mode=mode,
+                 problem_definition=('per cell: target y[t] at the cell\'s group closes; features x[t-k] for every (x, k) '
+                                     'a coupling row of the same cell found beyond chance with x leading y at best lag k > 0; '
+                                     'values unchanged; rows missing an operand counted per reason'),
+                 listed=[dict(item='step form (differences of y and x)', reason='not run: the value form is the placed series '
+                              'as the couplings read them; the step form is a separate problem definition for Greg'),
+                         dict(item='the target\'s own earlier values as a feature', reason='not run: autoregressive terms are '
+                              'not nominated by a coupling row of x leading y'),
+                         dict(item='cross-cell and cross-day problems', reason='never pooled: one cell, one day per problem'),
+                         dict(item='acceptance', reason='discovery generates candidates; reproduction across seeds, '
+                              'walk-forward and the tautology null are scientific checking, not this stage')],
+                 rule='one problem per cell and target; every seed retained; nothing averaged; a missing operand blocks '
+                      'only its row; a missing engine blocks only the fit; everything listed')
+    if day_role != 'discovery':
+        index.update(status='not_run_confirmation_day', problems=[], counts={},
+                     reason='a confirmation day runs only the frozen survivor list; discovery is for discovery days')
+    elif mode != 'on':
+        index.update(status='not_run_disabled', problems=[], counts={}, reason='FRANKIE_DISCOVERY=%s' % mode)
+    else:
+        nominations, rows_read = discovery_nominations(parts, staging)
+        jobs = []
+        for (cell_col, cell_value, y), features in sorted(nominations.items(), key=lambda kv: (kv[0][0], str(kv[0][1]), kv[0][2])):
+            ordered = sorted(features)
+            problem_id = hashlib.sha256(json.dumps([cell_col, cell_value, y, ordered], default=str).encode()).hexdigest()[:16]
+            jobs.append((problem_id, cell_col, cell_value, y, ordered, seeds, DISCOVERY_NITERATIONS, DISCOVERY_MAXSIZE))
+        provenance = {problem_id: {'%s@%d' % f: nominations[(cell, value, y)][f] for f in feats}
+                      for problem_id, cell, value, y, feats, _, _, _ in jobs}
+        results = [result for _, result in _run_pending(context, workers, _discovery_job, jobs)]
+        if _stop_requested():
+            raise SystemExit(75)          # every submitted problem saved its result; resume reuses them
+        if len(results) != len(jobs):
+            raise ValueError('discovery workers stopped before every problem was retained; resume with the stop request cleared')
+        counts = {}
+        for result in results:
+            counts[result['status']] = counts.get(result['status'], 0) + 1
+        index.update(status='indexed', coupling_rows_read=rows_read, problems=results, counts=counts,
+                     nominations_file='nominations.json')
+        data = (json.dumps(provenance, indent=1, sort_keys=True, default=str) + '\n').encode()
+        (directory / 'nominations.json').write_bytes(data)
+        index['nominations'] = dict(file='nominations.json', bytes=len(data), sha256=hashlib.sha256(data).hexdigest(),
+                                    what='every coupling row (part, row ordinal, transforms, counts) that nominated each feature')
+    index['seconds'] = round(time.time() - started, 3)
+    index['workflow_report'] = dict(
+        schema='FRANKIE_PIECE_WORKFLOW_REPORT_V1', piece='discovery',
+        inputs=dict(day=day, cycle=cycle, day_role=day_role, coupling_parts=len(parts), engine=engine,
+                    series='the search\'s placed series (leakage-gated at placement), forked to the workers unchanged'),
+        use=dict(problem_definition=index['problem_definition'], mode=mode, listed=index['listed'],
+                 coupling_rows_read=index.get('coupling_rows_read'), counts=index.get('counts'),
+                 seconds=index['seconds'], model_calls=0),
+        outputs=dict(status=index['status'], index='discovery/INDEX.json', problems=len(index.get('problems') or []),
+                     nominations=index.get('nominations'),
+                     brain='the search knowledge entry is filed by the orchestrator after the MANIFEST; recorded there'),
+        rule='candidates only; acceptance is scientific checking; nothing averaged; missing evidence means unknown, never zero')
+    data = (json.dumps(index, indent=1, sort_keys=True, default=str) + '\n').encode()
+    path = directory / 'INDEX.json'
+    pending = path.with_suffix('.json.pending')
+    with pending.open('wb') as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(pending, path)
+    log('discovery: %s, %d problem(s) %s in %.0f s' % (index['status'], len(index.get('problems') or []),
+                                                       json.dumps(index.get('counts') or {}, sort_keys=True), index['seconds']))
+    return dict(status=index['status'], counts=index.get('counts'), problems=len(index.get('problems') or []),
+                index=dict(path='discovery/INDEX.json', bytes=len(data), sha256=hashlib.sha256(data).hexdigest()))
+
+
 def workflow_report(manifest, day_dir, identity, *, phase_timings, fft_cache, workers):
     """The piece's inputs / use / outputs record for the one-day review (Greg, 2026-10-07; schema shared with the
     teacher, the export and the adviser pieces so frankie_box_workflow_inspection projects it). Inputs: the export
@@ -1411,8 +1720,15 @@ def workflow_report(manifest, day_dir, identity, *, phase_timings, fft_cache, wo
                                          unclassified_steps=manifest['transforms']['unclassified_steps']),
                          chance_check='every circular shift of y outside the lag window; a pair is beyond chance only when '
                                       'no shift reached |D| at the best lag (an orientation, the counts are the result)',
-                         phase_timings=phase_timings, fft_cache=fft_cache, model_calls=0),
+                         phase_timings=phase_timings, fft_cache=fft_cache, model_calls=0,
+                         all99_coverage=dict(counts=(manifest.get('all99_coverage') or {}).get('shared_counts'),
+                                             integrity=(manifest.get('all99_coverage') or {}).get('integrity'),
+                                             native_entries={k: dict(status=v.get('status'), native=v.get('native'))
+                                                             for k, v in (manifest.get('planes') or {}).items()
+                                                             if isinstance(v, dict) and v.get('native')})),
                 outputs=dict(status='searched', manifest='MANIFEST.json beside the coupling parts',
+                             discovery=manifest.get('discovery'),
+                             all99_coverage='MANIFEST.json all99_coverage (FRANKIE_ALL99_COVERAGE_V1, piece search)',
                              couplings=manifest['couplings'], planes=len(manifest['planes']) if isinstance(manifest.get('planes'), list)
                              else manifest.get('planes'),
                              brain='knowledge-findings.json and the brain entry are filed by the orchestrator '
@@ -1573,6 +1889,9 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                      basis='per-worker cumulative counters at each fresh job\'s end; the maxima are the busiest worker\'s '
                            'totals; hits/(hits+misses) is the share of partner FFTs not recomputed; measure the coupling '
                            'phase with and without FRANKIE_SEARCH_FFT_CACHE_BYTES=0 on the one-day canary')
+    # Symbolic discovery (stage 7 spec row): candidates from this day's couplings, per cell, in the same held workers
+    discovered = discovery(day, cycle, day_role, staging, parts, context, workers, log)
+    phase('discovery')
     part_pins = [dict(path=str(Path(p).relative_to(staging)), rows=None, sha256=sha256_file(p)) for p in sorted(parts)
                  if Path(p).exists()]
     cell_specs = [(c, v, None) for c, v in cell_index]
@@ -1590,11 +1909,20 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                     couplings=dict(parts=part_pins, rows=count, beyond_chance=beyond, jobs=len(jobs), workers=workers),
                     cells_not_counted=sorted(not_counted, key=lambda d: (d['cell'], d['transform'], d['series'])),
                     not_searched=[dict(item=a, what=b) for a, b in NOT_SEARCHED],
-                    planes=plane_summary(sources, notes),
+                    planes=plane_summary(sources, notes), discovery=discovered,
                     rule='counts per pair, cell, lag and day; never pooled across days; never a coefficient or an average '
                          'as the finding (D37); a confirmation day runs only the frozen survivor list',
                     frozen_survivors=str(frozen) if frozen else None, model_calls=0,
                     phase_timings=phases, fft_cache=fft_cache, workers=workers)
+    # The 99 through the search (FRANKIE_ALL99_COVERAGE_V1, piece 'search'): the plane receipt just built, a placed series
+    # of an entry counted as arriving at every coupling pair; built and validated by the one registry module
+    import frankie_box_all99_coverage as ALL99
+    shared_source = next((s_ for s_ in sources if s_.get('source') == 'shared_market'), None)
+    manifest['all99_coverage'] = ALL99.search_coverage(
+        day, manifest_sha256=identity['data_manifest_sha256'], planes=manifest['planes'], sources=sources,
+        outputs=dict(output_candidate_discoveries=dict(discovered['index'], what='discovery/INDEX.json and the coupling parts')),
+        code_root=str(Path(__file__).resolve().parents[3]), shared_market=shared_source)
+    manifest['all99_coverage']['manifest_basis'] = 'search_manifest_sha256 here is the export MANIFEST this search read'
     manifest['workflow_report'] = workflow_report(manifest, day_dir, identity, phase_timings=phases, fft_cache=fft_cache,
                                                   workers=workers)
     manifest_path = staging / 'MANIFEST.json'

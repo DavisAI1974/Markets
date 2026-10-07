@@ -124,8 +124,10 @@ def workflow_report(result, *, receipt_path, rc, external, market, equation, wor
                              teacher='bytes and sha256 measured here against the ingestion receipt (phase verify_sealed_journal)',
                              shared_reader=read.get('input_verification') if read else None,
                              rule='one full hash per process; the compact reader still verifies the chained head hash on read'),
+                         all99_coverage=_all99_use(result.get('all99_coverage')),
                          model_calls=0),
                 outputs=dict(status=result.get('status', 'rows_published'), exit_code=exit_code,
+                             all99_coverage='receipt.json all99_coverage (FRANKIE_ALL99_COVERAGE_V1, piece teacher)',
                              rows_file=result.get('rows_file'), attachment_file=result.get('attachment_file'),
                              rows=result.get('rows'), entity_rows=result.get('entity_rows'),
                              external_section=external, receipt='receipt.json in the same directory',
@@ -134,6 +136,104 @@ def workflow_report(result, *, receipt_path, rc, external, market, equation, wor
                              waits=[]),
                 rule='recorded inputs, use and outputs of this piece for the one-day review; a measured row is not proof '
                      'of downstream consumption; missing evidence means unknown, never zero')
+
+
+# The 99 through the teacher (Greg, 2026-10-07: the 99 layers combined for Frankie FIRST). The teacher's own computed
+# forms of registry entries (the columns the search's plane table names as these entries' partial teacher form) and the
+# raw entries whose original APPLIED payload is the pinned equation's operand.
+# TEACHER_FORMS: the one shared table frankie_box_all99_coverage.TEACHER_FORMS (entry -> (Dipole columns, text)), the
+# same the search's plane rows name, so the teacher's list and the search cannot drift (main_recovery, 2026-10-07).
+OPERAND_ENTRIES = ('canonical_sep_nov_2021_dbn_mbo_objects', 'october_first_source_window', 'native_acmrtfn_messages',
+                   'snapshot_bootstrap_reset_messages', 'raw_source_identity_provenance_clocks_integrity',
+                   'clock_event_time', 'clock_receive_time')
+EXPOSED = 'teacher.market_picture: both raw teachers see the picture at every computed row; the pinned equations read original APPLIED fields only'
+
+
+def all99_field(result, market_report, *, day):
+    """The teacher's FRANKIE_ALL99_COVERAGE_V1: the shared reader's per-day field (what each carrier yielded) with this
+    piece's own rows: the APPLIED operands that entered the pinned R3 equation, the teacher's computed forms, the
+    picture entries exposed but not read by the equation, the cutoff it stamps and the pins it writes. Without a shared
+    market policy the base is absent and every picture entry says so. Nothing here is a new scientific mapping."""
+    import frankie_box_all99_coverage as ALL99
+    TEACHER_FORMS = {name: text for name, (_, text) in ALL99.TEACHER_FORMS.items()}
+    base = (market_report or {}).get('all99_coverage')
+    base_rows = {e['entry']: e for e in (base or {}).get('entries') or []}
+    rows_computed = result.get('rows') or 0
+    not_run = result.get('equation_not_run')
+    equation = result.get('shared_market_arithmetic') or {}
+    updates = {}
+    through = equation.get('through_applied_cursor')
+    absent_count = len(equation.get('absent') or []) if equation else None
+    operand_reason = ('original APPLIED payloads of the contiguous adapter-cursor prefix entered the pinned equation (%d rows%s)'
+                      % (rows_computed, '' if through is None else ' through adapter cursor %s' % through)
+                      + ('; %d instant(s) listed without that operand in shared_market_arithmetic' % absent_count
+                         if absent_count is not None else '; no shared reader on this ROOT (the parallel journal prefix)'))
+    for layer in ALL99.entries():
+        name, role = layer['entry'], layer['role']
+        prior = base_rows.get(name)
+        if name in OPERAND_ENTRIES:
+            if rows_computed:
+                row = dict(disposition='operand', consumer='JournalTeacherR3 row pass (pinned R3 equation, teacher_changes)',
+                           reason=operand_reason)
+            else:
+                row = dict(disposition='thin', consumer=None,
+                           reason='the sealed journal was read; the equation had no operand on this day: %s' % (
+                               (not_run or {}).get('reason') or 'no rows'))
+        elif name in TEACHER_FORMS:
+            if rows_computed:
+                row = dict(disposition='computed_here', canonical='thin',
+                           consumer='the teacher rows file (%s)' % ROWS_FILE,
+                           reason='the teacher form: %s; the registry layer itself through the shared reader: %s' % (
+                               TEACHER_FORMS[name], (prior or {}).get('disposition') or 'no shared reader'))
+            else:
+                row = dict(disposition='absent', reason='the equation did not run on this day: %s' % (
+                    (not_run or {}).get('reason') or 'no rows'))
+        elif name == 'clock_lock_time':
+            row = dict(disposition='stamped', consumer='the teacher attachment snapshot (as_of / through_cursor)',
+                       reason='as_of %s, through_cursor %s (the whole sealed day)' % (result.get('as_of'), result.get('through_cursor')))
+        elif name == 'output_source_state_manifest_code_model_run_hashes' and result.get('rows_file'):
+            row = dict(disposition='output_analogue', consumer='receipt.json',
+                       reason='the receipt pins the ingestion receipt, the rows file and the attachment (sha256)')
+        elif prior is None:
+            row = dict(disposition='absent' if role in ('raw', 'calculation', 'clock') else 'not_read_by_this_piece',
+                       reason=('no shared market policy on this ROOT: the teacher read the sealed journal directly and no '
+                               'picture carried this entry' if role in ('raw', 'calculation', 'clock') else
+                               'not an input of the teacher-only step (the sealed journal, its ingestion receipt and the day file)'))
+        elif prior.get('piece_disposition') == 'yielded_no_rows':
+            row = dict(disposition='thin', consumer=EXPOSED,
+                       reason='%s; nothing of it was in the picture on this day' % prior['reason'])
+        elif (prior.get('piece_disposition') or prior['disposition']) in ('yielded', 'carrier_present'):
+            row = dict(disposition='exposed_not_used', consumer=EXPOSED,
+                       reason='%s; exposed in the picture, not an operand of the pinned equation' % prior['reason'])
+        elif prior['disposition'] == 'thin':
+            row = dict(disposition='thin', consumer=EXPOSED, reason=prior['reason'])
+        elif (prior.get('piece_disposition') or prior['disposition']) == 'not_a_core_layer':
+            row = dict(disposition='not_read_by_this_piece',
+                       reason=('the experiment directive is witnessed in the receipt (experiment_directive), not an input to '
+                               'the equation' if name == 'controlling_rt_mission' else
+                               'not an input of the teacher-only step: %s' % prior['reason']))
+        else:
+            row = dict(disposition=prior.get('piece_disposition') or prior['disposition'], canonical=prior['disposition'],
+                       reason=prior['reason'], consumer=prior.get('consumer'))
+        updates[name] = row
+    return ALL99.derive_field(base, 'teacher', updates, day=day, stage='teacher',
+                              basis='the teacher receipt: rows %s, equation %s; the shared reader field as its base' % (
+                                  rows_computed, 'not run' if not_run else 'ran'))
+
+
+def _all99_use(field):
+    """The inspection projection of the teacher's all-99 field: the shared counts, the integrity findings, and every
+    native-only entry (Greg, 2026-10-07: the 18 reach both teachers) with its word, reason and consumer."""
+    if not isinstance(field, dict):
+        return None
+    import frankie_box_all99_coverage as ALL99
+    native = {e['entry']: dict(disposition=e['disposition'], piece_disposition=e.get('piece_disposition'),
+                               reason=e['reason'], consumer=e.get('consumer'))
+              for e in field.get('entries') or [] if e.get('entry') in ALL99.NATIVE_SERIES}
+    return dict(counts=field.get('counts'), by_role=field.get('by_role'), integrity=field.get('integrity'),
+                listed=field.get('listed'), native_entries=native,
+                rule='the native entries are in teacher.market_picture at their GROUP_CLOSE emission (exposed to both raw '
+                     'teachers within the teacher\'s role and walls); the pinned equations read original APPLIED fields only')
 
 
 def teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_external_sha256=None,
@@ -193,7 +293,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     # A journal written without the full-book observation (observation none) carries no operand for this equation;
     # the day is not refused: the step publishes an equation_not_run receipt below, after the retained-receipt checks.
     journal = receipt_path.parent / rc['journal_file']
-    journal_witness = dict(bytes=journal.stat().st_size, sha256=_sha256(journal))
+    journal_stat = journal.stat()
+    journal_witness = dict(bytes=journal_stat.st_size, sha256=_sha256(journal))
     if journal_witness != dict(bytes=rc['journal_bytes'], sha256=rc['journal_sha256']):
         raise SystemExit('the sealed journal differs from its ingestion receipt')
     phase('verify_sealed_journal')
@@ -204,7 +305,11 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             raise ValueError('shared teacher requires calculations and its exact versioned policy together')
         # The witness just measured is handed to the shared reader so the sealed journal (tens of GB on a big day)
         # is not hashed a second time in this process; the reader re-reads it itself if the witness differs.
-        market = SharedMarketTimeline(calculations, day=day, workers=workers, input_witness=journal_witness)
+        # bound to THE file measured (review N1): its path, device and inode travel with the bytes and sha256; the reader
+        # accepts the measurement only for the very file its pin names, else hashes the file itself
+        market = SharedMarketTimeline(calculations, day=day, workers=workers,
+                                      input_witness=dict(journal_witness, path=str(journal), dev=journal_stat.st_dev,
+                                                         ino=journal_stat.st_ino))
         phase('open_shared_picture')
         if (market.source['ingestion_receipt']['sha256'] != receipt_sha256
                 or market.input_pin['sha256'] != rc['journal_sha256']):
@@ -269,6 +374,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                          'consumer opens the same ROOT with its own reader') if market is not None else None)
         if learner_binding is not None:
             result.update(learner_binding=learner_binding, evidence_seat='frankie', independent_scientific_verification=False)
+        result['all99_coverage'] = all99_field(result, market.report if market is not None else None, day=day)
         result['workflow_report'] = workflow_report(result, receipt_path=receipt_path, rc=rc, external=external, market=market,
                                                     equation=None, workers=workers, exit_code=5)
         _publish(out, result)
@@ -424,6 +530,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                                             'existing equation had no operand, so no row was computed or invented')
         if learner_binding is not None:
             result.update(learner_binding=learner_binding, evidence_seat='frankie', independent_scientific_verification=False)
+        result['all99_coverage'] = all99_field(result, shared_read, day=day)
         result['workflow_report'] = workflow_report(result, receipt_path=receipt_path, rc=rc, external=external, market=market,
                                                     equation=(shared_read or {}).get('equation') if market is not None else None,
                                                     workers=workers, exit_code=5)
@@ -481,6 +588,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         phase('external_section')
     result['external_section'] = external
     result['status'] = 'rows_published'
+    result['all99_coverage'] = all99_field(result, shared_read, day=day)
     result['workflow_report'] = workflow_report(result, receipt_path=receipt_path, rc=rc, external=external, market=market,
                                                 equation=(shared_read or {}).get('equation') if market is not None else None,
                                                 workers=workers, exit_code=code)

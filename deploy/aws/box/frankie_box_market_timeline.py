@@ -10,7 +10,12 @@ this module: host answers, private decisions, school and other agents' claims do
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
+
+if str(Path(__file__).resolve().parent) not in sys.path:     # the box directory: every frankie_box_* module
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import frankie_box_all99_coverage as ALL99  # noqa: E402
 
 SCHEMA = 'FRANKIE_SHARED_MARKET_TIMELINE_V1'
 
@@ -22,6 +27,21 @@ LAYERS = ('root.frames', 'root.prices', 'root.structures', 'native.member', 'nat
 # dispositions. Integrity corruption (altered pinned bytes, contradictory identities) is a
 # separate visible failure and is never relabelled as missing coverage.
 MISSING_COVERAGE_RULE = 'every_authentic_boundary_kept_with_thinner_explicit_picture'
+
+# The 99-entry registry through this reader (Greg, 2026-10-07: the 99 layers combined for Frankie FIRST). The entry
+# list, the settled per-entry carriers (MARKET_CARRIERS: entry -> (carrier, thinner carrier or None)), the picture
+# element of each carrier and the native-only entries' own ledger fields/sections all live in the ONE registry module
+# (frankie_box_all99_coverage); this reader yields exactly those carriers. Carriers: the six LAYERS plus 'input' (the
+# original INPUT envelope, its outcomes and matched APPLIED), 'clock' (picture.at), 'availability' (known_at_ns /
+# availability_basis on every update), 'opening' (the opening adapter state) and 'completed' (post-stream aggregates,
+# metadata only). 'external' carries the day file's publications, which are outside the 99.
+CARRIER_ELEMENTS = ALL99.CARRIER_ELEMENTS
+CARRIERS = ALL99.MARKET_CARRIERS
+NOT_CORE = ALL99.NOT_MARKET_CARRIED
+OPENING_SEEDED = ('seeded', 'warmed_from_partition')
+COMPLETED_ONLY_REASON = ('post-stream aggregate without exact contributing-cursor availability under reversing clocks: '
+                         'completed-only until correct provenance exists (blocked on provenance, not on the reader); its '
+                         'values are never yielded into a live picture and never backfilled')
 
 
 def binding():
@@ -215,7 +235,8 @@ class _Changes:
 
 
 class _Publications:
-    """Every external row at its existing publication clock, in original tie order."""
+    """Every external row at the later of its recorded event time and its publication clock (Greg, 2026-10-07; at
+    publication when no event time is recorded), in original tie order, with the 99 entries it declares it feeds."""
     IDENTITIES = {'model', 'station', 'respondent', 'raw_symbol', 'symbol', 'instrument_id',
                   'publisher_id', 'horizon_days', 'rank', 'target_day', 'contract'}
 
@@ -227,12 +248,24 @@ class _Publications:
             raise ValueError('shared external publications belong to another day')
         self.pin, self.rows, self.position, self.states = pin, [], 0, {}
         self.report = dict(source=pin, presented=0, not_yet_public={},
-                           missing=body.get('missing'), after_halt={})
+                           missing=body.get('missing'), after_halt={}, points={}, entry_findings=[])
         for table_ordinal, (name, table) in enumerate(body['points'].items()):
             columns = table['columns']
             stamp = columns.index(table['stamp_column'])
             identities = [i for i, key in enumerate(columns) if key in self.IDENTITIES]
             self.report['after_halt'][name] = table.get('after_halt')
+            # the registry entries this point declares it feeds (frankie_box_all99_coverage.external_point_entries:
+            # table metadata or a per-row column; a name outside the 99 is a finding, never entered)
+            point = ALL99.external_point_mapping(table)
+            declared, findings = point['entries'], point['findings']
+            self.report['points'][name] = dict(stamp_column=table['stamp_column'], declared_entries=declared,
+                                               mapping=point['mapping'], mapping_reason=point['mapping_reason'],
+                                               event_time_basis=point['event_time_basis'], note=point['note'],
+                                               rows=len(table['rows']), presented=0,
+                                               placement='at the later of its recorded event time and its publication '
+                                                         'clock (stamp_column), once the receive frontier reaches it; '
+                                                         'never earlier than publication, never backfilled')
+            self.report['entry_findings'].extend(dict(f, point=name) for f in findings)
             for ordinal, row in enumerate(table['rows']):
                 known = row[stamp]
                 if type(known) is not int:
@@ -240,23 +273,38 @@ class _Publications:
                 entity = [(columns[i], row[i]) for i in identities]
                 value = dict(columns=columns, row=row, entity=entity,
                              table_metadata={k: v for k, v in table.items() if k not in ('rows', 'columns')})
-                self.rows.append((known, table_ordinal, ordinal, name, value))
+                mapped = ALL99.external_point_mapping(table, row)
+                self.report['entry_findings'].extend(dict(f, point=name, row=ordinal) for f in mapped['findings']
+                                                     if f not in findings)
+                # Greg, 2026-10-07: a point sits at its recorded event time (e.g. default_1400 for a value without an
+                # intrinsic time), never earlier than its publication; without a recorded event time, at publication
+                event = mapped['event_time_ns']
+                placed = max(event, known) if event is not None else known
+                placement = dict(publication_ns=known, event_time_ns=event, event_time_basis=mapped['event_time_basis'],
+                                 as_of=mapped['as_of'], note=mapped['note'], mapping=mapped['mapping'],
+                                 mapping_reason=mapped['mapping_reason'],
+                                 placed_by=('publication (no event time recorded)' if event is None else
+                                            'event_time' if event >= known else 'publication_after_event_time'))
+                self.rows.append((placed, table_ordinal, ordinal, name, value, mapped['entries'], placement))
         self.rows.sort(key=lambda item: item[:3])
 
     def through(self, frontier, cursor):
         while self.position < len(self.rows) and self.rows[self.position][0] <= frontier:
-            known, _, ordinal, name, value = self.rows[self.position]
+            known, _, ordinal, name, value, entries, placement = self.rows[self.position]
             self.position += 1
             update = dict(source='external.' + name, source_ordinal=ordinal, known_at_ns=known,
-                          presented_at_input_cursor=cursor, value=value,
-                          availability_basis='original_publication_clock_at_observed_receive_frontier')
+                          presented_at_input_cursor=cursor, value=value, entries=list(entries), placement=placement,
+                          availability_basis=('original_publication_clock_at_observed_receive_frontier'
+                                              if placement['event_time_ns'] is None else
+                                              'recorded_event_time_not_before_publication_at_observed_receive_frontier'))
+            self.report['points'][name]['presented'] += 1
             key = name, json.dumps(value['entity'], sort_keys=True, separators=(',', ':'))
             self.states[key] = update
             self.report['presented'] += 1
             yield update
 
     def finish(self):
-        for _, _, ordinal, name, _ in self.rows[self.position:]:
+        for _, _, ordinal, name, _, _, _ in self.rows[self.position:]:
             self.report['not_yet_public'].setdefault(name, []).append(ordinal)
         self.report['rows'] = len(self.rows)
 
@@ -270,15 +318,26 @@ class SharedMarketTimeline:
     explicitly choose/use the picture values; this reader's `presented` counts are not
     claims that every target used every field. Last-observed state always retains its
     original cursor: a prior group snapshot is never advertised as a newly
-    reconstructed intermediate book. Absent layers (native with bedrock off, a spool
+    reconstructed intermediate book. Absent layers (native when the native pass did not complete or an older saved legacy
+    plan ran it off, a spool
     the ROOT did not publish, no day file) thin the picture and are listed in
     `report['coverage']`; `report['complete']` means only that the whole available
     source was exhausted with its pins verified.
+
+    The 99 (2026-10-07): `report['layer_entries']` names per carrier (each layer, the
+    INPUT envelope, the clocks, availability stamps, the opening state, the completed
+    aggregates) the registry entries it yields; every picture carries the same map as
+    `coverage.carried_entries`; `report['all99_coverage']` is the day's shared field
+    FRANKIE_ALL99_COVERAGE_V1 (made at open, replaced at exhaustion with the rows each
+    carrier yielded). `opening_state` (on the report and on every picture) is the
+    predecessor bootstrap as an identity element with its initial last-observed
+    disposition. legacy_native_signed_flow / legacy_per_second_roll20 stay completed_only
+    (blocked on contributing-cursor provenance, not on this reader).
     """
     def __init__(self, calculations, *, day, workers=15, input_witness=None):
-        """`input_witness`: an optional {bytes, sha256} the caller measured on the sealed journal in this same
-        process (the teacher hashes it against its ingestion receipt before opening this reader). When it equals
-        the ROOT's container pin the full re-read is skipped and `report['input_verification']` says whose
+        """`input_witness`: an optional {path, bytes, sha256[, dev, ino]} the caller measured on the sealed journal in
+        this same process (the teacher hashes it against its ingestion receipt before opening this reader). When it
+        equals the ROOT's container pin AND names the pinned file (_caller_witness) the full re-read is skipped and `report['input_verification']` says whose
         measurement stood; anything else (absent, different, malformed) falls back to this reader's own full
         hash. The pin, the identity and the integrity rule are unchanged: a mismatch still raises."""
         from frankie_box_durable import witness
@@ -320,14 +379,16 @@ class SharedMarketTimeline:
                 raise ValueError('completed shared source pins another path as its ' + role + ' spool')
             self.layers[name] = dict(status='present', source=pin)
             self.streams.append(_Changes(name, pin, kind=kind, state=state))
-        # Native: absent when the ROOT ran with bedrock off (selected_files returns nothing);
+        # Native: absent only when the native pass did not complete or an older saved legacy plan ran it
+        # off (selected_files returns nothing); every NEW run has it ON;
         # a bedrock-on ROOT whose artifacts are incomplete or altered raises inside selected_files.
         selected = {item['native_role']: item for item in selected_files(root, str(day))}
         for role, name, state in (('exact_member_rows.jsonl', 'native.member', True),
                                   ('exact_lifecycle_rows.jsonl', 'native.lifecycle', False)):
             item = selected.get(role)
             if item is None:
-                self.layers[name] = dict(status='absent', reason=('no completed native calculation in this ROOT (bedrock off)'
+                self.layers[name] = dict(status='absent', reason=('no completed native calculation in this ROOT (the native pass did not complete, or an older saved '
+                                                                  'legacy plan ran it off)'
                                                                   if not selected else 'native ledger not selected'))
                 continue
             pin = dict(path=item['source'], **item['expected'])
@@ -343,22 +404,56 @@ class SharedMarketTimeline:
             disposition='post_stream_only: aggregate has no exact contributor cursor provenance')
             for role in ('legacy_native_signed_flow', 'legacy_per_second_roll20') if role in derive['layers']]
         self.day, self.workers = str(day), workers
+        # the ROOT's own record of every layer (status / reason / count), as derive.json carries it; read, never re-derived
+        self.derive_layers = {k: {f: v.get(f) for f in ('status', 'reason', 'count', 'producer', 'bedrock')}
+                              for k, v in (derive.get('layers') or {}).items() if isinstance(v, dict)}
+        # The predecessor bootstrap (canonical_predecessor_bootstrap_objects) as an identity element: the opening adapter
+        # state the ROOT legacy pass replayed this day onto (derive.json, else the source binding), with the initial
+        # last-observed disposition. Source-bound and pinned through derive.json / source-binding.json; nothing is
+        # re-derived, and an absent opening book is a thinner start, never a rejected day.
+        opening = (derive.get('opening_book') if isinstance(derive.get('opening_book'), dict) else
+                   self.source.get('opening_book') if isinstance(self.source.get('opening_book'), dict) else None)
+        status = (opening or {}).get('status')
+        if status in OPENING_SEEDED:
+            initial = dict(disposition='opening_book_in_root_adapter',
+                           reason='the orders resting at the open are in the ROOT adapter state; they reach the picture through '
+                                  'root.frames at each instrument\'s first group close; until a layer row arrives, '
+                                  'last_observed_state holds no row (not an empty book, not a zero)')
+        elif status in ('absent', 'empty'):
+            initial = dict(disposition='empty_book_at_open',
+                           reason=(opening or {}).get('listed') or (opening or {}).get('reason') or
+                                  'the legacy pass started from an empty book; orders resting at the prior halt appear only '
+                                  'when they trade, are modified or cancelled, or a snapshot resets the book')
+        else:
+            initial = dict(disposition='opening_not_recorded',
+                           reason='neither derive.json nor the source binding records the opening book of this ROOT')
+        self.opening_state = dict(entry='canonical_predecessor_bootstrap_objects', element='opening_state',
+                                  status=status or 'not_recorded', descriptor=opening,
+                                  source=('derive.json opening_book' if isinstance(derive.get('opening_book'), dict) else
+                                          'source-binding.json opening_book' if opening is not None else None),
+                                  tail_members=self.source.get('tail_members'),
+                                  initial_last_observed_state=initial,
+                                  rule='identity element; the opening book is never re-derived here, never fabricated, and '
+                                       'never promoted to a fresh observation')
+        # The native-only entries' own carriers: the producers' per-layer crosswalk from the ROOT projection plan when
+        # it was selected (bound to the same ledgers by selected_files), else the retained crosswalk's carrier text.
+        from frankie_box_experiment_native import PROJECTION_PLAN, entry_carriers
+        plan_item = selected.get(PROJECTION_PLAN)
+        plan_carriers = entry_carriers(_json(dict(path=plan_item['source'], **plan_item['expected']))) if plan_item else None
+        self.native_carriers = {name: (dict(plan_carriers[name]) if plan_carriers and name in plan_carriers else
+                                       dict(ALL99.NATIVE_SERIES[name], source='retained crosswalk carrier text '
+                                            '(frankie_box_all99_coverage.NATIVE_SERIES)'))
+                                for name in ALL99.NATIVE_ENTRIES}
         self.extracted_count = derive['input_records']
         self.input_pin = self.source['container']
         expected = {k: self.input_pin[k] for k in ('bytes', 'sha256')}
-        supplied = ({k: input_witness.get(k) for k in ('bytes', 'sha256')} if isinstance(input_witness, dict) else None)
-        if supplied == expected:
-            # The caller measured these exact bytes in this process; a second full read of the sealed journal
-            # (tens of GB on a big day) would re-measure the same pin. The chained head hash is still verified
-            # by the compact reader as the envelopes are read.
-            verification = dict(basis='caller_measured_witness_equal_to_pin', re_read=False,
-                                note='the caller hashed the sealed journal against its ingestion receipt in this process')
-        else:
+        verification = self._caller_witness(input_witness, expected)
+        if verification is None:
             if witness(self.input_pin['path']) != expected:
                 raise ValueError('shared input journal differs from its exact sealed source bytes')
             verification = dict(basis='full_read_by_this_reader', re_read=True,
-                                caller_witness=('absent' if input_witness is None else 'differs_from_pin_or_malformed; '
-                                                'the reader measured the bytes itself'))
+                                caller_witness=('absent' if input_witness is None else 'not bound to the pinned file (path / '
+                                                'device / inode / size) or differs from the pin; the reader measured the bytes itself'))
         self.input_verification = verification
         self.identity = dict(schema=SCHEMA, day=self.day, source_binding=source_pin,
                              calculations=calculation_pin, journal=self.input_pin,
@@ -379,7 +474,203 @@ class SharedMarketTimeline:
                            completed_native=[dict(role=role, path=item['source'], **item['expected'])
                                              for role, item in selected.items()
                                              if role not in ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl')])
+        self.report['opening_state'] = self.opening_state
+        self.report['layer_entries'] = self.layer_entries()
+        # per carrier present at open: the registry entries its picture element carries (a reference on every picture)
+        self.carried_entries = {carrier: list(item['entries'] + item['thin_for'])
+                                for carrier, item in self.report['layer_entries'].items() if item['status'] == 'present'}
+        self.thin_for = {carrier: list(item['thin_for']) for carrier, item in self.report['layer_entries'].items()
+                         if item['status'] == 'present' and item['thin_for']}
+        # per registry entry: the updates that carried it over this read (counted as yielded; never a value)
+        self.entry_counts = {}
+        self.external_entry_counts = {}     # entries fed by day-file points, counted when presented (at/after publication)
+        self.report['native_carriers'] = dict(
+            entries=self.native_carriers,
+            rule='the 18 native-only entries are yielded by native.member / native.lifecycle updates at their GROUP_CLOSE '
+                 'emission (exact INPUT cursor, instrument, receive clock); FINALIZE rows are post-stream only; every update '
+                 'names its entries (update.entries)')
+        self.report['all99_coverage'] = self.all99_coverage(exhausted=False)
         self.started = False
+
+    def _caller_witness(self, supplied, expected):
+        """The caller's measurement stands in for this reader's full hash only when it is bound to THE pinned file
+        (review N1, 2026-10-07): {path, bytes, sha256} with the path resolving to the pin's path or naming the same
+        file (os.path.samefile), the file's current size equal to the pin, and, when the caller recorded them, the
+        same device and inode. Anything else returns None (the reader hashes the file itself)."""
+        import os
+        if not isinstance(supplied, dict) or {k: supplied.get(k) for k in ('bytes', 'sha256')} != expected:
+            return None
+        path = supplied.get('path')
+        if not isinstance(path, str) or not path:
+            return None
+        pinned = Path(self.input_pin['path'])
+        try:
+            same = Path(path).resolve() == pinned.resolve() or os.path.samefile(path, pinned)
+            stat = os.stat(pinned)
+        except OSError:
+            return None
+        if not same or stat.st_size != expected['bytes']:
+            return None
+        if supplied.get('dev') is not None and (supplied.get('dev'), supplied.get('ino')) != (stat.st_dev, stat.st_ino):
+            return None
+        # The caller measured these exact bytes of this exact file in this process; a second full read of the sealed
+        # journal (tens of GB on a big day) would re-measure the same pin. The chained head hash is still verified by
+        # the compact reader as the envelopes are read.
+        return dict(basis='caller_measured_witness_equal_to_pin', re_read=False, path=str(pinned),
+                    bound_by=('path, size, device and inode' if supplied.get('dev') is not None else 'path and size'),
+                    note='the caller hashed the sealed journal in this process')
+
+    def _native_note(self, name):
+        """The entry's own native carriers and the ROOT's own record of the projected layer (derive.json layers)."""
+        if name not in ALL99.NATIVE_SERIES:
+            return ''
+        carriers = self.native_carriers.get(name) or {}
+        recorded = self.derive_layers.get(name) or {}
+        return ('; carriers member %s, sections %s (%s); derive.json layers[%s]: status %s, %s rows%s' % (
+            list(carriers.get('member') or ()), list(carriers.get('sections') or ()), carriers.get('source'), name,
+            recorded.get('status'), recorded.get('count'),
+            ' (%s)' % recorded.get('reason') if recorded.get('reason') else ''))
+
+    def _entries_of(self, source, row):
+        """The registry entries one update carries (frankie_box_all99_coverage.update_entries with this ROOT's native
+        carriers), plus the entries a ROOT layer carries thinner because their own carrier is absent here."""
+        return ALL99.update_entries(source, row, self.native_carriers) + self.thin_for.get(source, [])
+
+    def _carrier(self, carrier):
+        """(status present/absent, reason) of one carrier as known at open."""
+        if carrier in self.layers:
+            layer = self.layers[carrier]
+            return layer['status'], layer.get('reason')
+        if carrier in ('input', 'clock'):
+            return 'present', None
+        if carrier == 'availability':
+            present = [s.name for s in self.streams]
+            return (('present', None) if present or self.publications is not None else
+                    ('absent', 'no derived layer is present in this ROOT, so no update carries known_at_ns'))
+        if carrier == 'opening':
+            return (('present', None) if self.opening_state['status'] in OPENING_SEEDED else
+                    ('absent', self.opening_state['initial_last_observed_state']['reason']))
+        if carrier == 'completed':
+            return (('present', None) if self.completed_sources else
+                    ('absent', 'no completed per-second aggregate in this ROOT'))
+        return 'absent', 'unknown carrier'
+
+    def layer_entries(self):
+        """Per carrier: its picture element, the registry entries it carries, the entries it carries thinner when their
+        own carrier is absent, and whether it is present in this ROOT (with the absence reason)."""
+        out = {}
+        for carrier, element in CARRIER_ELEMENTS.items():
+            status, reason = self._carrier(carrier)
+            out[carrier] = dict(element=element, status=status, reason=reason,
+                                entries=[e for e, (first, _) in CARRIERS.items() if first == carrier],
+                                thin_for=[e for e, (first, thin) in CARRIERS.items()
+                                          if thin == carrier and self._carrier(first)[0] == 'absent'])
+        out['external']['registry'] = 'none of the 99 entries: the day file\'s publications are outside the registry'
+        return out
+
+    def _rows_yielded(self, carrier):
+        """Rows this carrier yielded over the exhausted source (None = not counted for this carrier)."""
+        outputs = self.report.get('outputs') or {}
+        if carrier in self.layers and carrier != 'external':
+            return ((self.report.get('sources') or {}).get(carrier) or {}).get('counts', {}).get('presented')
+        if carrier == 'external':
+            return outputs.get('publications_presented')
+        if carrier == 'input':
+            return ((self.report.get('coverage') or {}).get('inputs') or {}).get('extracted')
+        if carrier == 'clock':
+            return outputs.get('exact_placed')
+        if carrier == 'availability':
+            return outputs.get('updates_presented')
+        return None
+
+    def all99_coverage(self, *, exhausted):
+        """The core's per-day FRANKIE_ALL99_COVERAGE_V1 (piece 'market_timeline'): every registry entry with the picture
+        element that carries it, built and validated by the one registry module. At open (exhausted=False) a present
+        carrier reads 'carrier_present'; after exhaustion 'yielded' (rows yielded) or 'yielded_no_rows' (carrier present,
+        no row of it on this day: a measurement, not a zero filled in). An absent carrier with a thinner carrier present
+        reads 'thin'; with none, 'absent' with the reason. The two legacy per-second aggregates read 'completed_only'."""
+        rows = []
+        for layer in ALL99.entries():
+            name, role = layer['entry'], layer['role']
+            if name in CARRIERS:
+                first, thin = CARRIERS[name]
+                status, reason = self._carrier(first)
+                consumer = 'SharedMarketTimeline.iter_pictures: ' + CARRIER_ELEMENTS[first]
+                if first == 'completed':
+                    listed = [c for c in self.completed_sources if c.get('role') == name]
+                    row = (dict(disposition='completed_only', reason=COMPLETED_ONLY_REASON, consumer='report.completed_sources',
+                                completed=[{k: c.get(k) for k in ('role', 'path', 'bytes', 'sha256', 'disposition')} for c in listed])
+                           if listed else dict(disposition='absent', reason='no completed %s aggregate in this ROOT' % name))
+                elif first == 'opening':
+                    row = (dict(disposition='yielded', reason='opening adapter state %s (%s)' % (
+                                    self.opening_state['status'], self.opening_state['source']), consumer=consumer)
+                           if status == 'present' else
+                           dict(disposition='thin', reason='opening state %s: %s' % (self.opening_state['status'], reason),
+                                consumer=consumer))
+                elif status == 'present':
+                    per_entry = first.startswith(('root.', 'native.'))
+                    count = ((self.entry_counts.get(name, 0) if per_entry else self._rows_yielded(first))
+                             if exhausted else None)
+                    if not exhausted:
+                        row = dict(disposition='carrier_present', reason='carrier present at open; rows counted at exhaustion',
+                                   consumer=consumer)
+                    elif count and count > 0:
+                        row = dict(disposition='yielded', reason='%s update(s) of %s carrying this entry yielded over the '
+                                   'exhausted source%s' % (count, first, self._native_note(name)), consumer=consumer, rows=count)
+                    elif name in ALL99.NATIVE_SERIES:
+                        row = dict(disposition='yielded_no_rows', canonical='thin', consumer=consumer, rows=count,
+                                   reason='native carrier %s present; no update of this entry\'s own carriers on this day%s'
+                                          % (first, self._native_note(name)))
+                    elif first in ('input', 'clock'):
+                        row = dict(disposition='thin', reason='no INPUT of the exhausted source carried a readable record / exact '
+                                   'clock for this carrier (%s); every envelope was still presented' % first,
+                                   consumer=consumer, rows=count)
+                    else:
+                        row = dict(disposition='yielded_no_rows', reason='carrier %s present; no row of it on this day '
+                                   '(a measurement over the exhausted source, not a zero filled in)' % first,
+                                   consumer=consumer, rows=count)
+                elif thin is not None and self._carrier(thin)[0] == 'present':
+                    row = dict(disposition='thin', reason='%s absent (%s); carried thinner through %s%s' % (
+                                   first, reason, thin, self._native_note(name)),
+                               consumer='SharedMarketTimeline.iter_pictures: ' + CARRIER_ELEMENTS[thin], thin_carrier=thin)
+                else:
+                    row = dict(disposition='absent', reason='%s absent: %s%s' % (first, reason, self._native_note(name)))
+                row.update(carrier=first)
+            elif name in NOT_CORE:
+                row = dict(disposition='not_a_core_layer', reason=NOT_CORE[name])
+            elif name == 'selected_same_arm_profile':
+                row = dict(disposition='control', reason='a delivered binding control applied by the orchestrator\'s plan; '
+                                                         'not market evidence of this reader')
+            elif name == 'a_clean_promoted_positive_capsule':
+                row = dict(disposition='not_applicable', reason='NOT_APPLICABLE in the crosswalk (the A-clean overlay; not Memory A)')
+            elif role == 'sealed_answer':
+                row = dict(disposition='withheld_by_role', reason='a sealed answer/target; never an element of the market picture')
+            elif role == 'shadow':
+                row = dict(disposition='disabled', reason='a provisional shadow disabled by the existing policy; never activated here')
+            elif layer['group'] == 'a_memory_overlay':
+                row = dict(disposition='retired', reason='Memory A retired (Greg, 2026-09-27); H06-H08 historical / not_bound')
+            elif role == 'output':
+                row = dict(disposition='output_not_produced_here', reason='an append-only output of a later stage; this reader '
+                                                                         'writes no output')
+            else:
+                row = dict(disposition='not_a_core_layer', reason='a %s input read by its consuming piece; only raw/ROOT market '
+                                                                  'evidence enters this reader' % role)
+            fed = self.external_entry_counts.get(name, 0) if exhausted else 0
+            declared = sorted(point for point, item in ((self.publications.report.get('points') or {}) if self.publications else {}).items()
+                              if name in item['declared_entries'])
+            if fed or declared:
+                # a day-file point declares it feeds this entry: arrived only when its value was presented in the picture,
+                # at or after its own publication clock (never earlier, never backfilled)
+                row = dict(row, external_points=declared, external_presented=fed)
+                if fed and row['disposition'] not in ('yielded',):
+                    row.update(disposition='yielded', canonical='arrived',
+                               consumer='SharedMarketTimeline.iter_pictures: ' + CARRIER_ELEMENTS['external'])
+                row['reason'] = str(row.get('reason')) + ('; day-file point(s) %s declare this entry: %d publication(s) '
+                                                          'presented at/after their publication clock' % (declared, fed))
+            rows.append(dict(row, entry=name))
+        return ALL99.field('market_timeline', self.day, rows, stage='shared_market_timeline',
+                           basis=('pins verified and every source exhausted' if exhausted else
+                                  'layers known at open; rows counted at exhaustion'))
 
     def _inputs(self, reader):
         """Original journal envelopes, including failed/unpaired/unknown outcomes.
@@ -505,6 +796,10 @@ class SharedMarketTimeline:
                                     member = (emission.get('group_index'), cursor, instrument, stamp)
                                 elif stream.name == 'native.lifecycle' and member != (emission.get('group_index'), cursor, instrument, stamp):
                                     raise ValueError('native lifecycle update lacks its exact same-boundary member')
+                                # the registry entries this update carries, at its own causal availability (never backfilled)
+                                update['entries'] = self._entries_of(stream.name, update['value'])
+                                for name in update['entries']:
+                                    self.entry_counts[name] = self.entry_counts.get(name, 0) + 1
                                 updates.append(update)
                                 if stream.state:
                                     states[(stream.name, instrument)] = update
@@ -515,11 +810,16 @@ class SharedMarketTimeline:
                     elif cursor is not None:
                         self.report.setdefault('unplaceable_input_clocks', []).append(entry['ordinal'])
                         for stream in self.streams:
-                            updates.extend(stream.unplaced_at(cursor))
+                            for update in stream.unplaced_at(cursor):
+                                update['entries'] = self._entries_of(stream.name, update['value'])   # named, not counted as placed
+                                updates.append(update)
                     if type(stamp) is int:
                         frontier = stamp if frontier is None else max(frontier, stamp)
                         if self.publications is not None:
-                            updates.extend(self.publications.through(frontier, cursor))
+                            for update in self.publications.through(frontier, cursor):
+                                for name in update['entries']:
+                                    self.external_entry_counts[name] = self.external_entry_counts.get(name, 0) + 1
+                                updates.append(update)
                     point = dict(input_cursor=cursor, source_input_index=source['source_input_index'],
                                  input_journal_ordinal=entry['ordinal'], adapter_cursor=payload.get('cursor'),
                                  source_member_index=payload.get('source_member_index'), session_id=payload.get('session_id'),
@@ -533,8 +833,18 @@ class SharedMarketTimeline:
                                    exact_clocks=exact, normalized_evidence=normalized is not None,
                                    readable_record=raw is not None,
                                    placement=('exact' if exact else 'extracted_input_without_exact_clock_or_identity'
-                                              if cursor is not None else 'original_envelope_without_readable_record'))
+                                              if cursor is not None else 'original_envelope_without_readable_record'),
+                                   # the registry entries each present carrier yields (one shared reference)
+                                   carried_entries=self.carried_entries,
+                                   # a previously known row keeps its original cursor; before any row, the opening
+                                   # disposition says what the start of the day holds (never an empty book filled in)
+                                   last_observed_state=('rows_with_original_cursors' if states else
+                                                        self.opening_state['initial_last_observed_state']['disposition']),
+                                   active_instrument_state=('rows_with_original_cursors'
+                                                            if any(entity == instrument for (_, entity) in states)
+                                                            else 'no_layer_row_for_this_instrument_since_open'))
                     picture = dict(schema=SCHEMA, at=point, updates=updates, invalidated_state=invalidated,
+                                   opening_state=self.opening_state,
                                    last_observed_state=list(states.values()),
                                    active_instrument_state=[value for (_, entity), value in states.items() if entity == instrument],
                                    published_state=list(self.publications.states.values()) if self.publications else [],
@@ -591,6 +901,10 @@ class SharedMarketTimeline:
                                                        dispositions=stream.dispositions) for stream in self.streams}
             for stream in self.streams:
                 stream.close()
+            if self.report.get('complete'):
+                # the per-day all-99 list with the rows each carrier actually yielded over the exhausted source;
+                # a stopped or failed read keeps the list made at open (its basis says so)
+                self.report['all99_coverage'] = self.all99_coverage(exhausted=True)
 
     def iter_applied(self):
         """Teacher-facing view: every instant, with its arithmetic evidence present or absent.
