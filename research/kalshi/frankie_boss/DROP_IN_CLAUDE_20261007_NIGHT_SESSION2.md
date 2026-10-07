@@ -43,6 +43,24 @@ NEW SESSION -- Frankie (Greg, 2026-10-07 night). THE AGENTS ARE THE ONLY WAY WOR
   sha256s in CCODE_STEP8_REMAINDER_RETURN_20261007.md section 9. One install serves Granite and Jev.
 - Both boxes STOPPED, KeepRunning=false, KeepRunningPolicy tag set.
 
+## Greg's decisions, later in session 2 (binding)
+- Day 1 of the one-day E2E = the smallest S3-complete day, 20231018 (771,787 records, 8.8 GB journal).
+- Storage numbers: fetch through a registered workflow for INGESTED days only; days without an ingest are not chased.
+- Day files carry the historically correct (as-published) values, no special flag. No Databento pull for anything.
+- Classroom: all 18 native entries enter computation (18 of 18), none context-only.
+- PySR install on the main box: yes. Main box trash cleared and important data archived to S3 with the existing tooling
+  (frankie_box_archive_day.sh, frankie_box_cleanup_*.sh), not ad-hoc. Idle guard: not decided, not urgent.
+- E2E: on Greg's go once the workflow and code fixes are done.
+- REPORTS (Greg):
+  - One-day run: a handful of STATUS reports, one per workflow piece: what it received, what it did, what it produced,
+    so Greg can tweak or give a thumbs up. Human-only; never knowledge.
+  - After the one-day run (the N-day run): only the KNOWLEDGE-generating pieces matter for the brain (teachers, Frankie,
+    ROOT, any other piece that generates knowledge). Their reports update Frankie's brain; Greg reads them too.
+  - Frankie may keep only his own report in his brain: the knowledge he gained, how he was able to use it, and what he
+    thinks should be added or taken away.
+  - Frankie takes the other data-generating pieces and makes a full horizon analysis of them.
+  - Greg still wants the per-piece status reports in the N-day run, out of curiosity.
+
 ## What landed (work branch, all SOURCE-BUILT / RUNTIME-UNVERIFIED)
 9a2cf53 stage 12 | eff34d5 stages 4/6/7 | eca308a stage 5 | 7211b0d stages 8/9/10/14 (stage 10 built) |
 06cb302 adviser/Granite/Jev, token stacks | c8c8fb0 Step 8 branch merged | 05e97286 day reports 99-table,
