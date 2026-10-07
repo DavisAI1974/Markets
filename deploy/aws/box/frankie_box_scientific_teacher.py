@@ -606,8 +606,9 @@ def _scan_part_shared(args):
     """One search part read ONCE for every claim document in _SHARED_SPECS: [(digest, bytes, lines hashed, lines parsed,
     selected rows) per document], each tuple exactly _scan_part's own for that document's (wanted, needles, filter). The
     part is hashed once (the cost every per-document scan repeated); each distinct needle is searched once per block and
-    its hits shared by every document naming it; a line's ordinal and raw-line sha256 are computed once. Each document
-    parses its own lines into its own row objects (never one object shared between two documents' results), so its parsed
+    its hits shared by every document naming it; a line's ordinal, raw-line sha256 and (x, y) are computed once (one
+    json.loads per line however many documents admit it). Each document counts every line its own filter admits as parsed
+    and receives its own row object for every line it selects (never one object in two documents' results), so its parsed
     count, selection, ordinals and _where are those of its own scan. A top-level function (the fork pool's target)."""
     path, rel, pin = args
     specs = _SHARED_SPECS
@@ -650,16 +651,22 @@ def _scan_part_shared(args):
                 digest = sha256_bytes(line)
                 raw_of[start] = (line, digest)
             return digest
+        parsed_of = {}      # line start -> [the parsed row not yet handed to a document, or None; its (x, y)]
         for i, (wanted, needles, flag) in enumerate(specs):
             if flag:
                 starts = sorted(set().union(*(hits[n] for n in needles)) if needles else ())
             else:
                 starts = every
             for start in starts:
-                line = line_at(start)
-                r = json.loads(line)
+                entry = parsed_of.get(start)
+                if entry is None:
+                    r = json.loads(line_at(start))
+                    entry = parsed_of[start] = [r, (r['x'], r['y'])]
                 out[i][0] += 1
-                if (r['x'], r['y']) in wanted:
+                if entry[1] in wanted:
+                    r, entry[0] = entry[0], None
+                    if r is None:
+                        r = json.loads(line_at(start))   # a second document selecting the line gets its own row object
                     r['_where'] = dict(part=rel, part_sha256=pin, row=ordinal_of[start], row_sha256=line_sha(start))
                     out[i][1].append(r)
     digest = hashed.hexdigest()
