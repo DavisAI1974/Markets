@@ -83,11 +83,16 @@ row school school_status voice_status stages invalidated_by original_receipt pro
 non_blocking meeting_status meeting_sha256 classroom_status exchange_status exchange_sha256 previous_attempts
 teacher_rows teacher_rows_listed lessons failure candidate phase original replacement scopes invalidation
 original_school dependents school_recovery exchange_publication voice_invalidation school_transition
+rows_missing rows_refused rows_waiting retries waited_seconds not_queued finish
+trigger directory written pieces_written moved_aside cpus cpus_note seconds pending acknowledged requests standing
+route attempts operator_dispatch intent admission returned rebook exchange_sha256 github_run_id github_run_attempt
+conclusion concluded predecessor meeting_input workflow archive dispatched admitted_utc recorded_utc
 '''.split())
 # The successor chain (school and corrections pieces): recorded pins {path, bytes, sha256} followed one by one from the
 # step receipt, bounded depth, known field names only (never a directory scan); each file is read under the metadata
 # ceiling and projected like any other receipt. A pin that does not resolve is reported unavailable, never invented.
 FOLLOW = {
+    'meeting': ('intent', 'admission', 'returned'),   # the remote voice route's dispatch intent, admission and return
     'school': ('successor', 'correction', 'corrections'),
     'corrections': ('operation', 'progress', 'recovery_intent', 'acknowledgment', 'failure', 'candidate', 'dependents',
                     'school_recovery', 'exchange_publication', 'voice_invalidation', 'invalidation', 'publication'),

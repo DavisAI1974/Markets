@@ -327,6 +327,8 @@ def load_plan(a, code_root):
             plan[key] = str(Path(getattr(a, key)))
     if getattr(a, 'shared_market_policy', None):              # a NEW request's policy, saved with the plan at its first
         plan['shared_market_policy'] = a.shared_market_policy   # start (a run keeps one plan: a legacy plan stays legacy)
+    if getattr(a, 'voice_route', None) and a.voice_route != 'local':   # the meeting's host route (Step 6 caller): saved at
+        plan['voice_route'] = a.voice_route                            # the first start; absent = the local configured child
     if getattr(a, 'external_eia930_history_run', None):       # only when given: earlier plans keep their digest
         plan['external_eia930_history_run'] = a.external_eia930_history_run
     if getattr(a, 'external_family_history_runs', None):      # family=<run id>,... (the gap-only fetch chunks)
@@ -677,7 +679,8 @@ class Run:
                 fields['reason'] = '; '.join(c['line'] for c in refusals)
         # Successor completion already includes its checked publication/sync acknowledgment;
         # do not create another mailbox operation after that durable acknowledgment.
-        if status in FINISHED and stage != 'successors' and os.environ.get('FRANKIE_LANE_MAILBOX'):
+        # (the inspection reporter's receipt is operator review, not a stage knowledge boundary)
+        if status in FINISHED and stage not in ('successors', 'inspection') and os.environ.get('FRANKIE_LANE_MAILBOX'):
             import frankie_box_lane_state as LS
             LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage, brain=self.plan.get('brain') or BRAIN)
         fields['knowledge_available'] = self._knowledge.pop((stage, key), None)
@@ -1510,6 +1513,70 @@ class Run:
         except Exception as error:
             return self.record(stage, e['day'], 'failed', reason='%s: %s' % (type(error).__name__, error))
 
+    INSPECTION_SECONDS = 900          # the reporter reads recorded metadata only (8 MiB ceiling per file); never a long job
+
+    def inspect_day(self, day, trigger):
+        """The one-day inspection reporter (frankie_box_workflow_inspection.py --run-dir <run> --day <day> --write) after
+        the day's last step on its lane: one markdown per canonical workflow piece under days/<day>/inspection plus
+        index.md, from recorded receipts and known metadata contracts only (Greg, 2026-10-07: after the ONE-day test every
+        piece shows what it received, how it used it and what it produced, before the THREE-day run). Temporary operator
+        review: not knowledge, not evidence, not a gate, never read by a step. A previous inspection directory is moved
+        aside (inspection.<utc>), never overwritten, so a retried day keeps what its earlier end showed. The reporter runs
+        pinned to the day's held CPUs when they are known, under the same interpreter, -I (no project imports, by its own
+        contract). Its failure, timeout or partial write is recorded on the day's 'inspection' receipt with the log;
+        it never fails, waits or requeues the day. Returns the receipt."""
+        script = self.box / 'frankie_box_workflow_inspection.py'
+        out_dir = self.dir / 'days' / day / 'inspection'
+        logs = self.dir / 'logs'
+        logs.mkdir(parents=True, exist_ok=True)
+        log_path = logs / ('%s-inspection.log' % day)
+        moved_aside = None
+        if out_dir.is_dir():
+            moved_aside = str(out_dir) + '.' + time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
+            try:
+                os.rename(out_dir, moved_aside)
+            except OSError as error:
+                moved_aside = 'not moved aside (%s: %s); the reporter replaces the files in place' % (type(error).__name__, error)
+        cpus, cpus_why = None, None
+        booking = getattr(self, 'slot_booking', None)
+        if booking:
+            try:
+                held, why = self.cores.held_booking(booking)
+                cpus = sorted(held['cpus']) if held and held.get('cpus') else None
+                cpus_why = None if cpus else 'held booking %s not live: %s; unpinned' % (booking, why)
+            except Exception as error:  # noqa: BLE001 - the pin is a courtesy to the lane rule, named when it is not possible
+                cpus_why = 'ledger not read (%s: %s); unpinned' % (type(error).__name__, error)
+        elif self.owner and self.owner.get('cpus'):
+            cpus = sorted(self.owner['cpus'])
+        else:
+            cpus_why = 'no held booking or owner CPU set known to this Run; unpinned'
+        command = [sys.executable, '-I', '-B', str(script), '--run-dir', str(self.dir), '--day', day, '--write']
+        pre = (lambda: os.sched_setaffinity(0, cpus)) if cpus else None
+        code, reason = None, None
+        started = time.time()
+        try:
+            with open(log_path, 'ab') as out:
+                out.write(('\n### inspection %s at %s (%s)\n' % (day, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                                                                 trigger)).encode())
+                out.flush()
+                code = subprocess.run(command, stdout=out, stderr=subprocess.STDOUT, timeout=self.INSPECTION_SECONDS,
+                                      preexec_fn=pre).returncode
+        except subprocess.TimeoutExpired:
+            reason = 'the reporter exceeded %d s and was stopped; the files written so far stand' % self.INSPECTION_SECONDS
+        except OSError as error:
+            reason = 'the reporter could not be started: %s: %s' % (type(error).__name__, error)
+        written = sorted(p.name for p in out_dir.glob('*.md')) if out_dir.is_dir() else []
+        if reason is None and code != 0:
+            reason = 'the reporter exited %s (its log names why); the files written so far stand' % code
+        elif reason is None and 'index.md' not in written:
+            reason = 'the reporter exited 0 without writing index.md under %s' % out_dir
+        status = 'done' if reason is None else 'failed'
+        return self.record('inspection', day, status, trigger=trigger, exit_code=code, log=str(log_path),
+                           directory=str(out_dir), written=written, pieces_written=len([w for w in written if w != 'index.md']),
+                           moved_aside=moved_aside, cpus=cpus, cpus_note=cpus_why, seconds=round(time.time() - started, 1),
+                           reason=reason, rule='temporary operator review; not knowledge, not a gate; a reporter failure '
+                                               'never fails the day')
+
     def reports_stale(self, e):
         """A newly returned meeting or exchange gets a report revision under the existing number."""
         r, x = self.receipt('reports', e['day']), self.receipt('exchange', e['day'])
@@ -1683,13 +1750,28 @@ class Run:
                            new_bytes=new_bytes(target))
 
     def voice(self, e):
-        """Run or reuse the bounded meeting; a recorded runtime refusal never blocks school/reports."""
+        """Run or reuse the bounded meeting; a recorded runtime refusal never blocks school/reports.
+
+        One meeting child per DECISION, never per call: the main stage loop (every start), the owner school recovery
+        (every drain) and the class worker all reach this step. A standing non-blocking receipt (waiting, non_blocking,
+        the meeting refused / inputs_only) bound to the current exchange and to the same retained meeting record is
+        returned as it is while the decision that refused it stands (standing_voice); the class worker's passed('voice')
+        already treats it as passed. A voice receipt the day's own successor drain wrote during this call (recover_school
+        -> voice) is this call's result, never followed by a second dispatch. The step's receipt carries inspection=
+        {inputs, use, outputs} for the one-day report."""
         import frankie_box_brain as BR
         import frankie_box_granite_meeting as GM
         day = e['day']
         if not e['classroom_arm']:
             return self.record('voice', day, 'skipped', reason='not a classroom-arm day')
+        own_receipt = self.receipt_path('voice', day)
+        before = own_receipt.read_bytes() if own_receipt.is_file() else None
         self.successors(day)
+        after = own_receipt.read_bytes() if own_receipt.is_file() else None
+        if after is not None and after != before:
+            self.log('voice %s: recorded by the day\'s successor drain (the owner school recovery) during this call; '
+                     'not dispatched again' % day)
+            return json.loads(after)
         self.check_save()
         x = self.receipt('exchange', day)
         if not (x and x['status'] in ('done', 'reused') and x.get('frankie_view')):
@@ -1700,36 +1782,378 @@ class Run:
         brain = self.plan.get('brain') or str(BRAIN)
         existing = target / 'meeting.json'
         reused, code, log = False, 0, None
+        use = 'the meeting child dispatched (no retained meeting record for this exchange)'
+        inputs = dict(exchange_view=x['frankie_view'], exchange_sha256=x.get('exchange_sha256'), brain=brain,
+                      meeting_directory=str(target), retained_record=None, runtime_config=None)
         if existing.is_file():
             record = BR.read_meeting_record(existing, exchange_path=x['frankie_view'], complete=False)
+            inputs.update(retained_record=dict(path=str(existing), sha256=sha256_file(existing), status=record['status']),
+                          runtime_config=record.get('runtime_config'))
             if record['status'] == 'complete':
                 GM.publish_meeting_record(x['frankie_view'], target, brain)
                 reused = True
+                use = 'the retained complete meeting record of this exchange published again; no child'
+            else:
+                standing, why = self.standing_voice(day, existing, record)
+                if standing is not None:
+                    self.log('voice %s: standing %s meeting kept (%s); not dispatched again' % (day, record['status'], why))
+                    return standing
+                use = 'the meeting child dispatched (the retained record is %s and the decision that left it so has changed: %s)' % (
+                    record['status'], why)
+        if not reused and self.plan.get('voice_route') == 'github':
+            return self.voice_remote(e, x, target, brain, inputs)
         if not reused:
             receipt_path = target / 'receipt.json'
             prior_receipt = receipt_path.read_bytes() if receipt_path.is_file() else None
             env = dict(EXCHANGE_VIEW=x['frankie_view'], OUT_DIR=target, BRAIN=brain)
+            inputs['env'] = {k: str(v) for k, v in env.items()}
+            inputs['runtime_binary_and_model_set'] = bool(os.environ.get('LLAMA_SERVER') and os.environ.get('GGUF_MODEL'))
             code, log = self.child('voice', day, 'frankie_box_granite_meeting.sh', env)
             if code != 0:
                 current = receipt_path.read_bytes() if receipt_path.is_file() else None
                 if (current is None or current == prior_receipt
                         or json.loads(current).get('status') != 'runtime_failed'):
                     return self.record('voice', day, 'failed', exit_code=code, log=log,
-                                       reason='meeting child failed; retained artifacts are kept for recovery')
+                                       reason='meeting child failed; retained artifacts are kept for recovery',
+                                       inspection=dict(inputs=inputs, use=use,
+                                                       outputs=dict(exit_code=code, meeting_receipt_changed=current != prior_receipt)))
         result = BR.read_meeting_for_exchange(x['frankie_view'], owner_dir=self.dir)
         if result['status'] == 'missing':
-            return self.record('voice', day, 'failed', exit_code=code, log=log, reason=result['reason'])
+            return self.record('voice', day, 'failed', exit_code=code, log=log, reason=result['reason'],
+                               inspection=dict(inputs=inputs, use=use, outputs=dict(exit_code=code, meeting='missing')))
         r = result['receipt']
         fields = dict(exit_code=code, log=log, meeting_status=result['status'], meeting=result['path'],
                       meeting_sha256=(r.get('record') or {}).get('sha256'), model_calls=r.get('model_calls', 0),
                       publication=r.get('publication'), brain_entry=r.get('brain_entry'),
                       counts=r.get('counts'), receipt=str(target / 'receipt.json'),
                       runtime_evidence=r.get('evidence'), binding=r.get('binding'))
+        outputs = dict(meeting_status=result['status'], meeting=result['path'], model_calls=r.get('model_calls', 0),
+                       counts=r.get('counts'), refused_to_run=r.get('refused_to_run'), publication=r.get('publication'),
+                       brain_entry=r.get('brain_entry'), seconds=r.get('seconds'))
         if result['status'] == 'complete':
-            return self.record('voice', day, 'reused' if reused else 'done', **fields)
+            return self.record('voice', day, 'reused' if reused else 'done', inspection=dict(inputs=inputs, use=use, outputs=outputs),
+                               **fields)
         return self.record('voice', day, 'waiting', non_blocking=True,
                            refused_to_run=r.get('refused_to_run') or [result['reason']],
-                           reason=result['reason'] or 'the runtime gate refused the meeting', **fields)
+                           reason=result['reason'] or 'the runtime gate refused the meeting',
+                           inspection=dict(inputs=inputs, use=use, outputs=outputs,
+                                           standing_rule='kept as it is on later calls while the refusing decision stands '
+                                                         '(runtime config gate / LLAMA_SERVER+GGUF_MODEL); see standing_voice'),
+                           **fields)
+
+    def standing_voice(self, day, existing, record):
+        """(the standing voice receipt, why it stands) when the meeting is NOT to be dispatched again, else (None, why).
+        It stands when the day's voice receipt is waiting + non_blocking with meeting_status equal to the retained
+        record's (refused / inputs_only), names this meeting record (its path and the sha256 of its bytes now; the record
+        itself binds the current exchange, read_meeting_record raised otherwise), and the decision that refused it still
+        stands: for 'refused', frankie_box_granite_meeting.gate on the current runtime config still names a reason (or
+        the config cannot be read); for 'inputs_only', LLAMA_SERVER / GGUF_MODEL are still not both set in this process
+        (the wrapper runs inputs-only without them). A record refused only for a missing binary/model file passes the
+        config gate and is dispatched again at the next call (the child's own gate refuses it again without a model
+        call): bounded to one child per start, named here. The receipt is not rewritten while it stands."""
+        import frankie_box_granite_meeting as GM
+        v = self.receipt('voice', day) or {}
+        if not (v.get('status') == 'waiting' and v.get('non_blocking') and v.get('meeting_status') == record['status']
+                and v.get('meeting') == str(existing) and v.get('meeting_sha256') == sha256_file(existing)):
+            return None, 'no standing non-blocking voice receipt bound to this %s record' % record['status']
+        if record['status'] == 'refused':
+            try:
+                config, witness = GM.load_config()
+                reasons = GM.gate(config)
+                stands = ('the runtime config %s (sha256 %s) still refuses: %s' % (witness['path'], witness['sha256'][:12],
+                                                                                  '; '.join(reasons))) if reasons else None
+                changed = 'the runtime config %s (sha256 %s) no longer refuses by itself' % (witness['path'], witness['sha256'][:12])
+            except (OSError, ValueError) as error:
+                stands, changed = 'the runtime config cannot be read (%s: %s)' % (type(error).__name__, error), None
+        elif record['status'] == 'inputs_only':
+            both = bool(os.environ.get('LLAMA_SERVER') and os.environ.get('GGUF_MODEL'))
+            stands = None if both else 'LLAMA_SERVER / GGUF_MODEL are not both set in this process: the wrapper would run inputs-only again'
+            changed = 'LLAMA_SERVER and GGUF_MODEL are set now'
+        else:
+            return None, 'the retained record is %s: not a standing refusal' % record['status']
+        if stands is None:
+            return None, changed
+        return dict(v, standing=dict(kept=True, because=stands, at=time.time())), stands
+
+    # The remote (GitHub standard CPU runner) meeting route: the Step 6 caller contract (STEP6_COMPLETION_20261007.md,
+    # "Exact remaining caller contract"). The owner writes an IMMUTABLE dispatch intent before any dispatch; the dispatch
+    # itself is the operator's (workflow_dispatch of frankie_granite_meeting.yml by hand, with the presigned exchange GET,
+    # inputs_only=false and a presigned GET of this owner's admission file); the operator records the exact GitHub run
+    # (voice-dispatched), which writes the admission the runner must receive and verify BEFORE model setup/start (the
+    # runner helper's `admit`); the return archive is recorded (voice-returned) and imported through the existing owner
+    # importer (frankie_box_granite_runner.py import); an unknown outcome is reconciled to its attempt, never resent under
+    # a new identity; a continuation binds its complete predecessor archive. No scheduler, lock service, token or GitHub
+    # API call lives here: nothing in this file dispatches a workflow.
+    VOICE_INTENT_SCHEMA = 'FRANKIE_VOICE_DISPATCH_INTENT_V1'
+    VOICE_DISPATCH_SCHEMA = 'FRANKIE_VOICE_DISPATCH_V1'
+    VOICE_ADMISSION_SCHEMA = 'FRANKIE_VOICE_ADMISSION_V1'
+    VOICE_RETURN_SCHEMA = 'FRANKIE_VOICE_RETURN_V1'
+
+    def voice_dispatch_dir(self, day, exchange_sha256):
+        return self.dir / 'days' / day / 'voice-dispatch' / exchange_sha256
+
+    def voice_attempts(self, base):
+        """The attempt directories a1, a2, ... in order, each with what it has recorded (dispatched / admission / returned)."""
+        out = []
+        if not (base / 'attempts').is_dir():
+            return out
+        for d in sorted((base / 'attempts').glob('a[0-9]*'), key=lambda q: int(q.name[1:])):
+            rec = dict(name=d.name, directory=str(d))
+            for name in ('dispatched', 'admission', 'returned'):
+                path = d / (name + '.json')
+                rec[name] = json.loads(path.read_bytes()) if path.is_file() else None
+                rec[name + '_pin'] = file_pin(path) if path.is_file() else None
+            out.append(rec)
+        return out
+
+    def voice_intent(self, e, x, target, brain, write=True):
+        """The immutable dispatch intent of the current exchange (create-only; a retained intent whose bound fields differ is
+        refused, never rewritten): the exchange bytes/source/hash, run/day/owner, the meeting directory, the dispatched
+        source commit and code root, the runtime config and classroom rules witnesses, the meeting-input witness the
+        runner will compute from the same exchange (brain=None on the runner: no knowledge index, as frankie_box_granite_
+        meeting._meeting does without --brain), the workflow's expected inputs. Returns (intent, pin, refusal)."""
+        import frankie_box_granite_meeting as GM
+        import frankie_box_classroom_code as K
+        day = e['day']
+        view = Path(x['frankie_view'])
+        raw = view.read_bytes()
+        sha = hashlib.sha256(raw).hexdigest()
+        if x.get('exchange_sha256') and x['exchange_sha256'] != sha:
+            return None, None, 'refused: the exchange receipt\'s sha256 (%s) differs from the bytes of %s (%s)' % (
+                x['exchange_sha256'], view, sha)
+        exchange = json.loads(raw)
+        try:
+            config, config_witness = GM.load_config()
+        except (OSError, ValueError) as error:
+            return None, None, ('waiting: the meeting runtime config cannot be read (%s: %s); no dispatch intent is written '
+                                'without its witness' % (type(error).__name__, error))
+        _, rules = K.rules()
+        given = GM.meeting_input(exchange, [])
+        input_bytes = GM._durable_json_bytes(given)
+        owner = self.owner or dict(schema='FRANKIE_LANE_OWNER_V1', host=os.uname().nodename,
+                                   attempt=self.owned_attempt or os.environ.get('FRANKIE_LANE_ATTEMPT'),
+                                   marker=self.stop_marker, lane_owner=os.environ.get('FRANKIE_LANE_OWNER'))
+        intent = dict(schema=self.VOICE_INTENT_SCHEMA, run=self.plan['run'], day=day, plan_sha256=plan_digest(self.plan),
+                      owner=owner, host=os.uname().nodename,
+                      exchange=dict(path=str(view), bytes=len(raw), sha256=sha, exchange_hash=exchange.get('exchange_hash')),
+                      meeting_directory=str(target), brain=str(brain),
+                      source=dict(commit=self.commit, code_root=str(self.code_root)),
+                      runtime_config=config_witness,
+                      rules=dict(file=Path(rules['path']).name, sha256=rules['sha256'], bytes=rules['bytes']),
+                      meeting_input=dict(bytes=len(input_bytes), sha256=hashlib.sha256(input_bytes).hexdigest(),
+                                         knowledge_index=[], note='what the runner computes from the same exchange without a brain'),
+                      workflow=dict(file='.github/workflows/frankie_granite_meeting.yml',
+                                    inputs=dict(exchange_sha256=sha, inputs_only='false', commit_must_equal=self.commit,
+                                                admission_get_url='a presigned GET of the attempt\'s admission.json (voice-dispatched writes it)',
+                                                prior_state='the predecessor attempt\'s returned archive URL and sha256, for a continuation')),
+                      rule='written before any dispatch, create-only; the dispatch is the operator\'s by hand; an unknown '
+                           'outcome is reconciled to its attempt (voice-returned), never resent under a new identity')
+        base = self.voice_dispatch_dir(day, sha)
+        path = base / 'intent.json'
+        bound = ('schema', 'run', 'day', 'plan_sha256', 'exchange', 'meeting_directory', 'source', 'runtime_config', 'rules',
+                 'meeting_input')
+        if path.is_file():
+            retained = json.loads(path.read_bytes())
+            differ = [k for k in bound if retained.get(k) != intent.get(k)]
+            if differ:
+                return None, file_pin(path), ('refused: the retained dispatch intent %s binds another %s; it is never '
+                                              'rewritten (a changed source/config/exchange is a new intent under a new '
+                                              'exchange, or an explicit owner decision)' % (path, ', '.join(differ)))
+            return retained, file_pin(path), None
+        if not write:
+            return None, None, None
+        self.cores.write_json(path, intent, exclusive=True)
+        return intent, file_pin(path), None
+
+    def voice_remote(self, e, x, target, brain, inputs):
+        """The remote route's state, read from the intent and its attempts; the only write here is the intent itself
+        (before any dispatch). Every state is a visible receipt: waiting + non_blocking + meeting_status 'remote_pending'
+        names exactly what the operator does next (dispatch, record the run, record the return, import), or refused
+        with the reason. The day's school/reports go on (the class worker's passed('voice') passes remote_pending; the
+        reports are rebuilt once the meeting returns: reports_stale)."""
+        day = e['day']
+        intent, intent_pin, refusal = self.voice_intent(e, x, target, brain)
+        if refusal and refusal.startswith('waiting'):
+            return self.record('voice', day, 'waiting', non_blocking=True, meeting_status='remote_pending', route='github',
+                               reason=refusal, refused_to_run=[refusal], model_calls=0,
+                               inspection=dict(inputs=inputs, use='remote route: no intent yet (its witness is missing)', outputs=dict(waiting=refusal)))
+        if refusal:
+            # an integrity mismatch (a retained intent binding other bytes, an exchange receipt whose sha differs from its
+            # bytes): a visible refusal that holds the day's class side, never relabelled a wait
+            return self.record('voice', day, 'refused', route='github', reason=refusal, intent=intent_pin,
+                               inspection=dict(inputs=inputs, use='remote route: no intent, no dispatch', outputs=dict(refused=refusal)))
+        base = self.voice_dispatch_dir(day, intent['exchange']['sha256'])
+        attempts = self.voice_attempts(base)
+        latest = attempts[-1] if attempts else None
+        common = dict(route='github', intent=intent_pin, exchange_sha256=intent['exchange']['sha256'],
+                      attempts=[dict(name=a['name'], github_run=(a['dispatched'] or {}).get('github_run_id'),
+                                     admitted=bool(a['admission']), returned=(a['returned'] or {}).get('conclusion'))
+                                for a in attempts],
+                      operator_dispatch=dict(workflow=intent['workflow']['file'], inputs=intent['workflow']['inputs'],
+                                             exchange_file=intent['exchange']['path'],
+                                             then='frankie_box_experiment.sh ACTION=voice-dispatched RUN=%s VOICE_DAY=%s '
+                                                  'VOICE_GITHUB_RUN=<id> [VOICE_GITHUB_ATTEMPT=<n>]' % (self.plan['run'], day)))
+        use = 'remote route: the intent stands (%s); the dispatch, admission and return are recorded per attempt' % intent_pin['sha256'][:12]
+        def pending(reason, **more):
+            return self.record('voice', day, 'waiting', non_blocking=True, meeting_status='remote_pending', reason=reason,
+                               refused_to_run=[reason], model_calls=0,
+                               inspection=dict(inputs=dict(inputs, intent=intent_pin), use=use,
+                                               outputs=dict(attempts=common['attempts'], next=reason)), **common, **more)
+        if latest is None:
+            return pending('no dispatch recorded for this intent: dispatch the workflow by hand with exchange_sha256=%s, '
+                           'inputs_only=false, at commit %s, then record the exact GitHub run (voice-dispatched); the runner holds '
+                           'before any model setup until that admission is served to it' % (intent['exchange']['sha256'][:12], self.commit))
+        if latest['dispatched'] and not latest['admission']:
+            return pending('attempt %s records GitHub run %s without its admission (an interrupted record): run voice-dispatched '
+                           'again with the same run id (create-only; another id is refused)' % (
+                               latest['name'], latest['dispatched'].get('github_run_id')))
+        if latest['admission'] and not latest['returned']:
+            return pending('attempt %s: GitHub run %s attempt %s admitted (%s); its return is not recorded: an unknown outcome '
+                           'is reconciled, never resent (no new attempt until voice-returned records this one: the archive, its '
+                           'sha256 and the run\'s conclusion)' % (latest['name'], latest['admission']['github_run_id'],
+                                                                 latest['admission']['github_run_attempt'],
+                                                                 latest['admission_pin']['sha256'][:12]),
+                           admission=latest['admission_pin'])
+        returned = latest['returned'] or {}
+        if returned.get('conclusion') == 'success':
+            return pending('attempt %s returned success (archive %s); the complete record is not under %s yet: import it on '
+                           'this lane with frankie_box_granite_runner.py import --exchange %s --exchange-sha256 %s --commit %s '
+                           '--archive %s --archive-sha256 %s --out <intake dir>; the next start reuses the imported complete '
+                           'meeting' % (latest['name'], (returned.get('archive') or {}).get('sha256', '')[:12], target,
+                                        intent['exchange']['path'], intent['exchange']['sha256'], intent['source']['commit'],
+                                        (returned.get('archive') or {}).get('path'), (returned.get('archive') or {}).get('sha256')),
+                           returned=latest['returned_pin'])
+        return pending('attempt %s returned %s (archive %s, concluded): a continuation is a new attempt under this intent, '
+                       'dispatched by hand with prior_state_get_url/prior_state_sha256 = that archive, then voice-dispatched; '
+                       'its admission binds that predecessor' % (latest['name'], returned.get('conclusion'),
+                                                                  (returned.get('archive') or {}).get('sha256', 'none')[:12]),
+                       returned=latest['returned_pin'])
+
+    def voice_dispatched(self, day, github_run_id, github_run_attempt, by):
+        """The operator's record of the exact GitHub run dispatched for the standing intent: the attempt's dispatched.json
+        and the ADMISSION the runner must receive before model setup/start, both create-only. Refused when no intent stands
+        (the day's voice step writes it before any dispatch), when the latest attempt is not returned (an unknown outcome
+        is never followed by a new identity), or when the predecessor's return is not concluded. The same run id again
+        returns the existing record; another id for the same open attempt is refused."""
+        e = next((d for d in self.plan['days'] if d['day'] == day), None)
+        if e is None or not e.get('classroom_arm'):
+            return dict(status='refused', reason='no classroom-arm day %s in the plan' % day)
+        if not (str(github_run_id).isdigit() and str(github_run_attempt).isdigit()):
+            return dict(status='refused', reason='the GitHub run id and attempt are digits')
+        x = self.receipt('exchange', day) or {}
+        if not (x.get('status') in ('done', 'reused') and x.get('frankie_view')):
+            return dict(status='refused', reason='the day\'s exchange is %s; no meeting to dispatch' % (x.get('status') or 'not run'))
+        import frankie_box_brain as BR
+        target = BR.meeting_directory(x['frankie_view'], owner_dir=self.dir)
+        intent, intent_pin, refusal = self.voice_intent(e, x, target, self.plan.get('brain') or str(BRAIN), write=False)
+        if refusal:
+            return dict(status='refused', reason=refusal)
+        if intent is None:
+            return dict(status='refused', reason='no dispatch intent stands for the current exchange: run the day to its voice '
+                                                 'step first (the intent is written before any dispatch); nothing is admitted '
+                                                 'for a dispatch made before it')
+        base = self.voice_dispatch_dir(day, intent['exchange']['sha256'])
+        attempts = self.voice_attempts(base)
+        latest = attempts[-1] if attempts else None
+        predecessor = None
+
+        def predecessor_of(prior):
+            returned = prior['returned'] or {}
+            if not (returned.get('concluded') and (returned.get('archive') or {}).get('sha256')):
+                return None, ('the predecessor attempt %s is returned without a concluded conclusion and archive witness; a '
+                              'continuation needs both' % prior['name'])
+            return dict(attempt=prior['name'], github_run_id=returned.get('github_run_id'),
+                        github_run_attempt=returned.get('github_run_attempt'), conclusion=returned['conclusion'],
+                        archive=returned['archive'], returned=prior['returned_pin']), None
+        if latest is not None:
+            if latest['dispatched'] and str(latest['dispatched'].get('github_run_id')) == str(github_run_id) \
+                    and str(latest['dispatched'].get('github_run_attempt')) == str(github_run_attempt):
+                if latest['admission']:
+                    return dict(status='recorded', attempt=latest['name'], dispatched=latest['dispatched_pin'],
+                                admission=latest['admission_pin'], reason='already recorded; nothing rewritten')
+                attempt_dir = Path(latest['directory'])   # an interrupted record: the admission is written now, bound to
+                if len(attempts) > 1:                     # the same predecessor its dispatch had (the attempt before it)
+                    predecessor, why = predecessor_of(attempts[-2])
+                    if why:
+                        return dict(status='refused', reason=why)
+            elif not latest['returned']:
+                return dict(status='refused', attempt=latest['name'],
+                            reason='attempt %s (GitHub run %s) is not returned: an unknown outcome is reconciled with '
+                                   'voice-returned, never resent under a new identity' % (
+                                       latest['name'], (latest['dispatched'] or {}).get('github_run_id')))
+            else:
+                predecessor, why = predecessor_of(latest)
+                if why:
+                    return dict(status='refused', reason=why)
+                attempt_dir = base / 'attempts' / ('a%d' % (len(attempts) + 1))
+        else:
+            attempt_dir = base / 'attempts' / 'a1'
+        dispatched = dict(schema=self.VOICE_DISPATCH_SCHEMA, intent=intent_pin, run=self.plan['run'], day=day,
+                          github_run_id=str(github_run_id), github_run_attempt=str(github_run_attempt),
+                          workflow=intent['workflow']['file'], dispatched_by=by, recorded_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+        if not (attempt_dir / 'dispatched.json').is_file():
+            self.cores.write_json(attempt_dir / 'dispatched.json', dispatched, exclusive=True)
+        admission = dict(schema=self.VOICE_ADMISSION_SCHEMA, intent=intent_pin, run=self.plan['run'], day=day,
+                         owner=intent['owner'], host=intent['host'], exchange_sha256=intent['exchange']['sha256'],
+                         exchange_hash=intent['exchange']['exchange_hash'], commit=intent['source']['commit'],
+                         meeting_input_sha256=intent['meeting_input']['sha256'],
+                         github_run_id=str(github_run_id), github_run_attempt=str(github_run_attempt),
+                         predecessor=predecessor, attempt=attempt_dir.name, admitted_by=by,
+                         admitted_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                         rule='the runner (frankie_box_granite_runner.py admit) verifies run id, attempt, exchange sha256, '
+                              'commit and predecessor against its own GITHUB_RUN_ID / GITHUB_RUN_ATTEMPT / GITHUB_SHA / '
+                              'prior_state_sha256 before any model setup or call')
+        self.cores.write_json(attempt_dir / 'admission.json', admission, exclusive=True)
+        return dict(status='recorded', attempt=attempt_dir.name, dispatched=file_pin(attempt_dir / 'dispatched.json'),
+                    admission=file_pin(attempt_dir / 'admission.json'), predecessor=predecessor,
+                    next='serve %s to the runner as the workflow\'s admission_get_url (a presigned GET); the runner verifies '
+                         'it before model setup; after the run, record its return with voice-returned' % (attempt_dir / 'admission.json'))
+
+    def voice_returned(self, day, archive, archive_sha256, conclusion, by):
+        """The operator's record of an admitted attempt's return: the downloaded runner-state.zip witness (its sha256 must
+        equal the given one and the file must be owner-local), the GitHub run's conclusion and concluded=True. Create-only;
+        a different return for the same attempt is refused. The import of a successful archive is the existing owner
+        importer (named in the result); this records only."""
+        e = next((d for d in self.plan['days'] if d['day'] == day), None)
+        if e is None or not e.get('classroom_arm'):
+            return dict(status='refused', reason='no classroom-arm day %s in the plan' % day)
+        x = self.receipt('exchange', day) or {}
+        if not (x.get('status') in ('done', 'reused') and x.get('frankie_view')):
+            return dict(status='refused', reason='the day\'s exchange is %s' % (x.get('status') or 'not run'))
+        sha = x.get('exchange_sha256') or sha256_file(Path(x['frankie_view']))
+        base = self.voice_dispatch_dir(day, sha)
+        attempts = self.voice_attempts(base)
+        latest = attempts[-1] if attempts else None
+        if latest is None or not latest['admission']:
+            return dict(status='refused', reason='no admitted attempt stands under %s; nothing to return' % base)
+        archive = Path(archive)
+        if not archive.is_absolute() or not archive.is_file() or any(q.is_symlink() for q in (archive, *archive.parents)):
+            return dict(status='refused', reason='the archive must be an existing owner-local absolute, symlink-free file: %s' % archive)
+        if not str(archive).startswith(str(RUNS) + '/'):
+            return dict(status='refused', reason='the archive must be downloaded under %s (owner-local evidence)' % RUNS)
+        witness = file_pin(archive)
+        if not re.fullmatch('[0-9a-f]{64}', str(archive_sha256)) or witness['sha256'] != archive_sha256:
+            return dict(status='refused', reason='the archive sha256 %s differs from the given %s (the run\'s runner-state.json '
+                                                 'names the exact one)' % (witness['sha256'], archive_sha256))
+        record = dict(schema=self.VOICE_RETURN_SCHEMA, intent=latest['admission']['intent'], run=self.plan['run'], day=day,
+                      attempt=latest['name'], admission=latest['admission_pin'],
+                      github_run_id=latest['admission']['github_run_id'], github_run_attempt=latest['admission']['github_run_attempt'],
+                      conclusion=conclusion, concluded=True, archive=witness, returned_by=by,
+                      recorded_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+        path = Path(latest['directory']) / 'returned.json'
+        if path.is_file():
+            retained = json.loads(path.read_bytes())
+            if any(retained.get(k) != record.get(k) for k in ('attempt', 'github_run_id', 'github_run_attempt', 'conclusion', 'archive')):
+                return dict(status='refused', reason='attempt %s already records another return (%s, archive %s); never rewritten' % (
+                    latest['name'], retained.get('conclusion'), (retained.get('archive') or {}).get('sha256', '')[:12]))
+            return dict(status='recorded', attempt=latest['name'], returned=file_pin(path), reason='already recorded')
+        self.cores.write_json(path, record, exclusive=True)
+        importer = ('python deploy/aws/box/frankie_box_granite_runner.py import --exchange %s --exchange-sha256 %s --commit %s '
+                    '--archive %s --archive-sha256 %s --out %s' % (x['frankie_view'], sha, latest['admission']['commit'], archive,
+                                                                   archive_sha256, Path(latest['directory']) / 'intake'))
+        return dict(status='recorded', attempt=latest['name'], returned=file_pin(path), conclusion=conclusion,
+                    next=importer if conclusion == 'success' else
+                    'a continuation is a new attempt: dispatch by hand with prior_state = this archive, then voice-dispatched')
 
     def school(self, e):
         day = e['day']
@@ -2003,9 +2427,16 @@ class Run:
                      'brain', 'jev_brain', 'report_number', 'slot_booking', 'cpus')
             differ = [k for k in bound if retained.get(k) != request.get(k)]
             if differ:
-                return self.record('jev', day, 'refused', request=str(path), differs=differ,
-                                   reason='the retained Jev request binds another %s; the same request resumes byte for '
-                                          'byte or an explicit owner recovery decides (never re-minted)' % ', '.join(differ))
+                # a REBOOK'd day (ACTION=resume REBOOK=on: the same attempt on another free 16-CPU booking) runs its Jev
+                # on the explicit rebook successor of the retained request; anything else differing is refused as before
+                successor, why = self.jev_rebooked(path, request, differ)
+                if successor is None:
+                    return self.record('jev', day, 'refused', request=str(path), differs=differ, rebook=why,
+                                       reason='the retained Jev request binds another %s; the same request resumes byte for '
+                                              'byte or an explicit owner recovery decides (never re-minted); REBOOK successor: %s'
+                                              % (', '.join(differ), why))
+                path, request = successor
+                out = Path(request['output'])
         else:
             self.cores.write_json(path, request, exclusive=True)      # create-only: the request is written once
         # the helper pins the request as given (status.json) and resolved (owner.json / receipt.json): both are this file
@@ -2039,7 +2470,7 @@ class Run:
         code, log = self.child('jev', day, 'frankie_box_jev_cpu.sh', dict(JEV_REQUEST=path))
         receipt, status = read(receipt_path), read(status_path)
         fields = dict(exit_code=code, log=log, request=str(path), stamp=stamp, output=str(out), report_number=number,
-                      request_pins=request_pins,
+                      request_pins=request_pins, rebook=request.get('rebook'),
                       # the one-day inspection (frankie_box_workflow_inspection.py): what this caller gave the helper, how
                       # the answer was bound, what came back; operator review only, never knowledge or a gate
                       inspection=dict(inputs=dict(request=request_pins, classroom_receipt=request['classroom_receipt'],
@@ -2081,6 +2512,53 @@ class Run:
                                **fields)
         return self.record('jev', day, 'waiting' if code in (5, 75) else 'failed',
                            reason='exit %d without a receipt or status bound to the request %s' % (code, path), **fields)
+
+    def jev_rebooked(self, original, request, differ):
+        """The explicit REBOOK successor of a retained Jev request: ((path, request) to run, None) or (None, why).
+        ACTION=resume REBOOK=on records on the owner binding the booking/CPUs it replaced (frankie_box_frankie_queue.
+        resume_owner: owner.rebooked). The ORIGINAL request is never changed. The chain is jev-request-<stamp>.json, then
+        .rebook1.json, .rebook2.json ...; the successor for the live booking is reused when it stands; else one is minted
+        create-only ONLY when the retained request differs in booking/CPUs alone, the rebook decision names exactly the
+        booking/CPUs the newest retained request bound, and the newest request's output holds no Jev progress (its
+        state, claims, seal, status, receipt or runtime evidence): then nothing is duplicated and the successor binds the
+        new booking/CPUs, a new output beside the old one (<output>.rebook<n>) and the chain. Retained progress is named
+        and refused here: resuming it under another booking is the helper's resume (Codex, frankie_box_jev_cpu.execute,
+        which binds owner.json to the request pin), never a second start that could repeat model calls."""
+        if set(differ) - {'slot_booking', 'cpus'}:
+            return None, 'the request differs in %s, not in the booking/CPUs alone' % ', '.join(differ)
+        decision = (self.owner or {}).get('rebooked')
+        if not decision:
+            return None, 'no REBOOK decision on the owner binding (ACTION=resume REBOOK=on records one); the retained booking is required'
+        chain = [original] + sorted((q for q in original.parent.glob(original.stem + '.rebook*.json')
+                                     if re.fullmatch(re.escape(original.stem) + r'\.rebook[0-9]+\.json', q.name)),
+                                    key=lambda q: int(re.search(r'\.rebook([0-9]+)\.json$', q.name).group(1)))
+        newest_path = chain[-1]
+        newest = json.loads(newest_path.read_bytes())
+        if newest.get('slot_booking') == request['slot_booking'] and newest.get('cpus') == request['cpus']:
+            return (newest_path, newest), None           # the successor for this booking stands already (reused byte for byte)
+        if (decision.get('previous_booking'), decision.get('previous_cpus')) != (newest.get('slot_booking'), newest.get('cpus')):
+            return None, ('the REBOOK decision replaced booking %s (CPUs %s), not the newest retained request\'s %s (%s); the '
+                          'chain is broken, an explicit owner decision is required' % (
+                              decision.get('previous_booking'), decision.get('previous_cpus'), newest.get('slot_booking'), newest.get('cpus')))
+        previous_out = Path(newest['output'])
+        progress = [name for name in ('state.json', 'claims.json', 'claims-seal.json', 'status.json', 'receipt.json', 'runtime-evidence')
+                    if (previous_out / name).exists()]
+        if progress:
+            return None, ('retained Jev progress under %s (%s): resuming it under another booking is the helper\'s resume '
+                          '(request to Codex: frankie_box_jev_cpu.execute accepting a rebook successor chain bound to its '
+                          'retained owner.json), never a second start here; nothing is duplicated, the day waits on that' % (
+                              previous_out, ', '.join(progress)))
+        n = len(chain)
+        successor = dict(newest, slot_booking=request['slot_booking'], cpus=request['cpus'],
+                         output='%s.rebook%d' % (newest['output'], n),
+                         rebook=dict(n=n, of=file_pin(newest_path), previous_booking=newest.get('slot_booking'),
+                                     previous_cpus=newest.get('cpus'), decision=decision,
+                                     rule='the original request stands unchanged; this successor binds the rebooked lane'))
+        path = original.with_name('%s.rebook%d.json' % (original.stem, n))
+        self.cores.write_json(path, successor, exclusive=True)
+        self.log('jev %s: REBOOK successor %s minted for booking %s (the original %s stands unchanged)' % (
+            request['day'], path.name, request['slot_booking'], original.name))
+        return (path, successor), None
 
     def teacher(self, batch_key, entries):
         refused = {}                                     # day -> why its retained teacher knowledge is not taught again
@@ -2755,6 +3233,12 @@ class Run:
                                                                              (stage == 'reports' and self.reports_stale(e))):
                             self.guarded(stage, e)       # a class-line day's class side is the class worker's
                         tick(stage, e['day'])
+            # the one-day inspection after the batch's last stage loop (the ROOT line writes its own after _finish_day):
+            # every piece's record of what it received, used and produced, whatever the day's outcome; never a gate
+            if {'reports', 'lessons'} & set(stages) and not self.stopped:
+                for e in entries:
+                    if not self.queue_owned(e):
+                        self.inspect_day(e['day'], 'start: after the batch %s last stage loop' % key)
         # every start kicks the workers of lines that hold days not done (a waiting day resumes without a dispatch)
         import frankie_box_frankie_queue as Q
         for line, on in (('root', getattr(self.a, 'root_queue', 'off')), ('class', getattr(self.a, 'frankie_queue', 'off'))):
@@ -2857,7 +3341,15 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--action', required=True, choices=('plan', 'start', 'status', 'successor-request',
                                                       'successor-decision', 'successor-retry', 'successor-save',
-                                                      'successor-resume'))
+                                                      'successor-resume', 'voice-dispatched', 'voice-returned'))
+    p.add_argument('--voice-day', help='the classroom-arm day of a remote (GitHub) meeting dispatch record')
+    p.add_argument('--voice-github-run', help='voice-dispatched: the GitHub run id the operator dispatched for the standing intent')
+    p.add_argument('--voice-github-attempt', default='1', help='voice-dispatched: that run\'s attempt number (default 1)')
+    p.add_argument('--voice-archive', help='voice-returned: the downloaded runner-state.zip (owner-local absolute path)')
+    p.add_argument('--voice-archive-sha256', help='voice-returned: its SHA256 from the run\'s runner-state.json')
+    p.add_argument('--voice-conclusion', choices=('success', 'failure', 'cancelled', 'timed_out', 'lost'),
+                   help='voice-returned: the GitHub run\'s conclusion as read by the operator (lost = expired/unreadable state)')
+    p.add_argument('--voice-by', default='operator', help='who records the dispatch/return')
     p.add_argument('--successor-day', help='existing owner day for explicit successor intake')
     p.add_argument('--successor-file', help='JSON request, decision, or exact failure witness; no execution at intake')
     p.add_argument('--successor-id', help='content-addressed request id for decision/retry')
@@ -2914,6 +3406,11 @@ def main():
                         'ROOT or teacher result never satisfies it (preserved; an explicit compatible successor is required)')
     p.add_argument('--previous-classroom', help='the run\'s first arm day: PREVIOUS = this <root>/work/classroom '
                                                 '(default: the latest earlier classroom day on the box)')
+    p.add_argument('--voice-route', choices=('local', 'github'), default='local',
+                   help='the bounded meeting\'s host (Step 6): local = the configured meeting child on the owning lane '
+                        '(default); github = the standard CPU runner workflow, dispatched BY HAND against the immutable '
+                        'intent Run.voice writes first and admitted for that exact GitHub run (voice-dispatched / '
+                        'voice-returned); saved with the plan at the first start')
     p.add_argument('--disk-floor-gb', type=float, default=100.0)
     p.add_argument('--frankie-queue', choices=('on', 'off'), default='on',
                    help='on: classroom-arm days enter Frankie\'s class line (arrival FIFO, one class at a time, the class '
@@ -2933,6 +3430,23 @@ def main():
     if unknown:
         raise SystemExit('unknown stages %s' % sorted(unknown))
     run_dir = RUNS / a.run
+    if a.action.startswith('voice-'):
+        if not a.voice_day:
+            p.error('%s needs --voice-day' % a.action)
+        saved_plan = json.loads((run_dir / 'plan.json').read_bytes())
+        run = Run(a, saved_plan, a.code_root, a.commit)
+        if a.action == 'voice-dispatched':
+            if not a.voice_github_run:
+                p.error('voice-dispatched needs --voice-github-run')
+            result = run.voice_dispatched(a.voice_day, a.voice_github_run, a.voice_github_attempt, a.voice_by)
+        else:
+            if not (a.voice_archive and a.voice_archive_sha256 and a.voice_conclusion):
+                p.error('voice-returned needs --voice-archive, --voice-archive-sha256 and --voice-conclusion')
+            result = run.voice_returned(a.voice_day, a.voice_archive, a.voice_archive_sha256, a.voice_conclusion, a.voice_by)
+        print(json.dumps(result, indent=1, sort_keys=True))
+        if result.get('status') == 'refused':
+            raise SystemExit(3)
+        return
     if a.action.startswith('successor-'):
         if not a.successor_day:
             p.error('successor intake needs --successor-day')

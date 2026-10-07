@@ -609,8 +609,11 @@ def passed(run, stage, day):
     if stage == 'school':
         return run.finished('school', day)       # school currentness: a checked successor makes a done school run again
     if stage == 'voice':
+        # a non-blocking meeting state passes: the runtime gate's refusal, inputs-only, a runtime failure, or the remote
+        # route's pending dispatch/admission/return (Run.voice_remote); the reports are rebuilt when the meeting arrives
         return r['status'] in X.FINISHED or bool(r['status'] == 'waiting' and r.get('non_blocking')
-                                                and r.get('meeting_status') in ('refused', 'inputs_only', 'runtime_failed'))
+                                                and r.get('meeting_status') in ('refused', 'inputs_only', 'runtime_failed',
+                                                                                'remote_pending'))
     if stage == 'reports' and run.reports_stale(dict(day=day)):
         return False
     return r['status'] in X.FINISHED
@@ -1178,7 +1181,41 @@ TEACHER_BOOK_WAIT = 1800        # seconds the teacher retries a CPU booking (onl
 
 
 def _finish_day(run, e, code_root, commit, log):
-    """Finish a day in the SAME held 16-CPU slot.
+    """Finish a day in the SAME held 16-CPU slot: _finish_steps, then the one-day inspection reporter.
+
+    Returns (finished, facts). facts['finish'] is 'finished', 'waiting' (the day stopped at a step that waits: the entry
+    records waiting, retried once per worker start, never a failure) or 'failed' (a refusal or a failed child: the entry
+    records failed with the step's reason). facts['inspection'] is the reporter's receipt (frankie_box_experiment.Run.
+    inspect_day): one markdown per workflow piece under days/<day>/inspection plus index.md, written after the day's
+    last step here WHATEVER the outcome, including a save (Greg, 2026-10-07: see how each piece ran before the THREE-day
+    run). Never a gate: a reporter failure is recorded, the day's outcome stands.
+    """
+    try:
+        status, facts = _finish_steps(run, e, code_root, commit, log)
+    except SystemExit as error:
+        if error.code == 75 and run.save_requested():
+            saved = dict(getattr(run, 'save_facts', None) or {})
+            saved['inspection'] = _inspect(run, e['day'], 'saved', log)
+            run.save_facts = saved
+        raise
+    facts['finish'] = status
+    facts['inspection'] = _inspect(run, e['day'], status, log)
+    return status == 'finished', facts
+
+
+def _inspect(run, day, outcome, log):
+    """The reporter after the day's last step on this lane; never raises, never fails the day."""
+    try:
+        return run.inspect_day(day, 'queue line: the day ended %s on its held slot' % outcome)
+    except BaseException as error:  # noqa: BLE001 - the reporter is operator review, never the day's outcome
+        if isinstance(error, (KeyboardInterrupt, SystemExit)):
+            raise
+        log('inspection %s %s: not written (%s: %s)' % (run.plan['run'], day, type(error).__name__, error))
+        return dict(status='failed', reason='%s: %s' % (type(error).__name__, error))
+
+
+def _finish_steps(run, e, code_root, commit, log):
+    """The day's steps after its ROOT, in the held slot; (status, facts), status in finished / waiting / failed.
 
     ROOT has already finished.  The BOSS teacher always reads next.  On classroom-arm days Frankie then enters the
     class line immediately; that worker runs classroom -> data/search -> scientific-teacher tests -> meeting/end while
@@ -1192,21 +1229,44 @@ def _finish_day(run, e, code_root, commit, log):
     run.check_save()
 
     # BOSS teacher: whole journal, every level, day-local rows.
-    if run.day_rows(e)[0] is None:                    # the one gate: rows the plan's shared policy refuses are none
+    rows, source, why = run.day_rows(e)               # the one gate: rows the plan's shared policy refuses are none
+    if rows is None:
         deadline = time.monotonic() + TEACHER_BOOK_WAIT
+        retries = 0
         while True:
             run.check_save()
             t = run.teacher('day-%s' % e['day'], [e]) or {}
-            if t.get('status') != 'waiting' or run.day_rows(e)[0] is not None or time.monotonic() > deadline:
+            rows, source, why = run.day_rows(e)
+            if t.get('status') != 'waiting' or rows is not None or time.monotonic() > deadline:
                 break
+            retries += 1
             log('teacher %s %s: waiting (%s); retrying in the held slot' % (run.plan['run'], e['day'], t.get('reason')))
             time.sleep(30)
-        facts['teacher'] = dict(status=t.get('status'), reason=t.get('reason'), log=t.get('log'))
-        if run.day_rows(e)[0] is None:
-            return False, facts
+        facts['teacher'] = dict(status=t.get('status'), reason=t.get('reason'), log=t.get('log'), retries=retries,
+                                waited_seconds=TEACHER_BOOK_WAIT if time.monotonic() > deadline else None)
+        if rows is None and why and why.startswith('refused'):
+            # the plan's shared market policy refuses the retained rows: an identity mismatch, a visible refusal (the
+            # reason names the one route), never missing coverage; the day stops here with it
+            facts['teacher'].update(rows=None, rows_refused=why)
+            return 'failed', facts
+        if rows is None:
+            # THE MISSING-COVERAGE RULE (Greg, 2026-10-07): no teacher rows for the day (the teacher step failed or is
+            # still waiting at the bound, or its policy wait) is thinner evidence, not a rejected day. The day goes on; each consumer records its own disposition
+            # (the classroom waits on the rows it needs, the data export lists them missing and searches without them,
+            # a later teacher result would be a second export of the day, declined there). Named here and on the entry.
+            facts['teacher'].update(rows=None, rows_waiting=why,
+                                    rows_missing='no teacher rows for the day after the teacher step ended %s%s: the day goes '
+                                                 'on without them (missing-coverage rule); the classroom waits on them, the '
+                                                 'data export lists them missing and a later teacher result is a second '
+                                                 'export of the day (declined there)' % (
+                                                     t.get('status') or 'not run',
+                                                     (' (%s)' % (why or t.get('reason'))) if (why or t.get('reason')) else ''))
+            log('teacher %s %s: %s' % (run.plan['run'], e['day'], facts['teacher']['rows_missing']))
+        else:
+            facts['teacher'].update(rows=str(rows), source=source, brain_entries=t.get('brain_entries'))
     else:
         t = run.teacher('day-%s' % e['day'], [e])
-        facts['teacher'] = dict(status=t['status'], rows=str(run.day_rows(e)[0]),
+        facts['teacher'] = dict(status=t['status'], rows=str(rows), source=source,
                                 brain_entries=t.get('brain_entries'))
 
     if e['classroom_arm'] and os.environ.get('FRANKIE_LANE_MAILBOX'):
@@ -1225,7 +1285,7 @@ def _finish_day(run, e, code_root, commit, log):
         state, why, class_facts = class_day(entry, lease['previous'], lease['school_day'], code_root, commit, log)
         facts['frankie'] = dict(status=state, reason=why)
         if state != 'done':
-            return False, facts
+            return ('waiting' if state == 'waiting' else 'failed'), facts
         c = Path(class_facts['classroom'])
         LS.request('class_done', classroom=str(c), files=LS.pack_classroom_carry(c))
     elif e['classroom_arm']:
@@ -1272,22 +1332,25 @@ def _finish_day(run, e, code_root, commit, log):
             if state in ('done', 'failed') or (cl is None and run.finished('classroom', e['day'])):
                 break
             if cl is None and (facts.get('class_line') or {}).get('status') not in ('queued', None):
-                facts['frankie'] = dict(status='not queued', reason=(facts.get('class_line') or {}).get('reason'))
-                return False, facts
+                # the class line's door did not take the day: waiting (its classroom readiness names what it waits on,
+                # the teacher rows among them) or refused; the entry records the same word, never a bare failure
+                door = (facts.get('class_line') or {}).get('status')
+                facts['frankie'] = dict(status=door, not_queued=True, reason=(facts.get('class_line') or {}).get('reason'))
+                return ('waiting' if door == 'waiting' else 'failed'), facts
             if cl is None:
                 facts['class_line'] = _after_root(run, e, code_root, commit, log)
             time.sleep(60)
         facts['frankie'] = dict(status=state or 'classroom finished', reason=(cl or {}).get('reason'),
                                 school_day=(cl or {}).get('school_day'))
         if state == 'failed':
-            return False, facts
+            return 'failed', facts
     else:
         # Search-only discovery days do not enter the class line.
         for stage in ('data', 'search', 'accumulated_lessons'):
             r = run.guarded(stage, e) or {}
             facts[stage] = dict(status=r.get('status'), reason=r.get('reason'), target=r.get('target'), log=r.get('log'))
             if r.get('status') not in X.FINISHED:
-                return False, facts
+                return ('waiting' if r.get('status') == 'waiting' else 'failed'), facts
         key = run.batch_of(e['day'])
         if key and key.startswith('discovery') and not run.finished('lessons', key):
             run.check_save()
@@ -1295,7 +1358,7 @@ def _finish_day(run, e, code_root, commit, log):
             r = run.lessons(key, batch) or {}
             facts['lessons'] = dict(batch=key, status=r.get('status'), reason=r.get('reason'))
             if r.get('status') not in X.FINISHED:
-                return False, facts
+                return ('waiting' if r.get('status') == 'waiting' else 'failed'), facts
 
     # Jev remains blind: the relay gives him only the governed classroom material, never Frankie's answers.
     if not e['classroom_arm']:
@@ -1303,18 +1366,27 @@ def _finish_day(run, e, code_root, commit, log):
             r = run.guarded(stage, e) or {}
             facts[stage] = dict(status=r.get('status'), reason=r.get('reason'))
             if r.get('status') != 'skipped':
-                return False, facts
-        import frankie_box_successor_dispatch as S
-        facts['successors'] = S.close_day(run, e['day'])
-        return True, facts
+                return ('waiting' if r.get('status') == 'waiting' else 'failed'), facts
+        return _close(run, e, facts)
     j = run.guarded('jev', e) or {}
     facts['jev'] = dict(status=j.get('status'), reason=j.get('reason'), material_sent=j.get('material_sent'),
                         dispatches=j.get('dispatches'))
-    finished = j.get('status') in X.FINISHED
-    if finished:
-        import frankie_box_successor_dispatch as S
-        facts['successors'] = S.close_day(run, e['day'])
-    return finished, facts
+    if j.get('status') not in X.FINISHED:
+        return ('waiting' if j.get('status') == 'waiting' else 'failed'), facts
+    return _close(run, e, facts)
+
+
+def _close(run, e, facts):
+    """The day's successor inbox closed behind its last step: finished; or waiting while a request is still
+    unacknowledged (successor_dispatch.close_day returns the pending names instead of looping on the inbox: an owner
+    school recovery waiting on its meeting, a child failure awaiting its named retry). The entry records waiting with
+    them; the next worker start drains again. The finish thread is not held."""
+    import frankie_box_successor_dispatch as S
+    closed = S.close_day(run, e['day'])
+    facts['successors'] = closed
+    if isinstance(closed, dict) and closed.get('status') == 'waiting':
+        return 'waiting', facts
+    return 'finished', facts
 
 
 def _child_save_verdict(run, e, cl):
@@ -1386,8 +1458,10 @@ def _finish_job(entry, code_root, commit, log, holder):
         run, e = _run_for(entry, code_root, commit, log)
         run.slot_booking = holder['slot']
         ok, facts = _finish_day(run, e, code_root, commit, log)
-        holder['result'] = ('finished' if ok else 'finish_failed', None if ok else 'the day stopped at: %s' % json.dumps(
-            {k: (v or {}).get('reason') if isinstance(v, dict) else v for k, v in facts.items()}, sort_keys=True), facts)
+        status = facts.get('finish') if facts.get('finish') in ('finished', 'waiting') else 'failed'
+        holder['result'] = (status, None if ok else 'the day stopped (%s) at: %s' % (status, json.dumps(
+            {k: (v or {}).get('reason') if isinstance(v, dict) else v for k, v in facts.items()
+             if k not in ('inspection', 'finish')}, sort_keys=True)), facts)
     except (Exception, SystemExit) as error:
         _thread_end(error, facts, holder, entry, run, 'finish_failed')
     finally:
@@ -1396,7 +1470,7 @@ def _finish_job(entry, code_root, commit, log, holder):
 
 def _needs_finish(x, plans):
     """A done ROOT-line entry whose whole day (teacher, Frankie's class, Jev) has not finished in a slot yet: its ROOT
-    ran on a Pod, before the whole-day rule, or its finish failed (retried once per worker start)."""
+    ran on a Pod, before the whole-day rule, or its finish failed or stopped waiting (retried once per worker start)."""
     if x['state'] != 'done' or (x.get('finish') or {}).get('state') in ('finished',) + OWNER_STATES:
         return False                                # a saved/unknown finish is its owner's: ACTION=resume, never admission
     if str(x.get('where') or '').startswith('worker:'):
@@ -1442,7 +1516,8 @@ def _root_job(entry, code_root, commit, log, holder):
         elif r['status'] in ('done', 'reused'):
             ok, facts = _finish_day(run, e, code_root, commit, log)
             holder['result'] = ('done', None, dict(facts, calculations=r.get('calculations'), root_status=r['status'],
-                                                   finish='finished' if ok else 'finish_failed'))
+                                                   finish=facts.get('finish') if facts.get('finish') in ('finished', 'waiting')
+                                                   else 'failed'))
         elif r['status'] == 'waiting' and r.get('claim'):
             holder['result'] = ('claimed_elsewhere', r.get('reason'), dict(claim=r.get('claim')))
         elif r['status'] == 'waiting':
@@ -1605,12 +1680,13 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 y = find(doc, seq)
                 result, reason, facts = job['holder'].get('result') or ('failed', 'the slot ended without a result', {})
                 if job.get('kind') == 'finish':
-                    y['finish'] = dict(y.get('finish') or {}, state=result if result in OWNER_STATES else
-                                       'finished' if result == 'finished' else 'failed',
-                                       reason=reason, ended_utc=utc(), facts=facts,
-                                       retained_booking=job['holder'].get('retained'), child=facts.get('child'))
-                    if y['finish']['state'] == 'failed':
-                        _release_owner(y, 'finish failed: a retry books any free slot; the owner binding is history')
+                    y['finish'] = dict(y.get('finish') or {}, state=result if result in OWNER_STATES + ('finished', 'waiting')
+                                       else 'failed', reason=reason, ended_utc=utc(), facts=facts,
+                                       retained_booking=job['holder'].get('retained'), child=facts.get('child'),
+                                       inspection=facts.get('inspection'))
+                    if y['finish']['state'] in ('failed', 'waiting'):
+                        _release_owner(y, 'finish %s: the next admission books any free slot; the owner binding is history'
+                                       % y['finish']['state'])
                     event('root', 'finish_end', seq=seq, day=y['day'], run=y['run'], result=result, reason=reason, facts=facts)
                     log('FINISH seq %d %s (%s): %s%s' % (seq, y['day'], y['run'], result, (': %s' % reason) if reason else ''))
                     continue
@@ -1642,9 +1718,14 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 if result == 'done':
                     y.update(state='done', reason=None, where='box-slot', calculations=facts.get('calculations'),
                              class_line=facts.get('class_line'), done_seq=doc['next_done_seq'], done_at=time.time(),
-                             done_utc=utc(), finish=dict(state='finished' if facts.get('finish') == 'finished' else 'failed',
+                             done_utc=utc(), finish=dict(state=facts.get('finish') if facts.get('finish') in ('finished', 'waiting')
+                                                         else 'failed',
+                                                         reason=None if facts.get('finish') == 'finished' else
+                                                         {k: (v or {}).get('reason') if isinstance(v, dict) else v
+                                                          for k, v in facts.items()
+                                                          if k not in ('inspection', 'finish', 'calculations', 'root_status')},
                                                          facts={k: facts.get(k) for k in ('teacher', 'class_line')},
-                                                         ended_utc=utc()))
+                                                         inspection=facts.get('inspection'), ended_utc=utc()))
                     doc['next_done_seq'] += 1
                 elif result == 'claimed_elsewhere':
                     y.update(state='running', where=(facts.get('claim') or {}).get('where'), reason=reason)
@@ -1694,9 +1775,9 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                 if why:
                     x['reason'] = source = why
                     continue                                # no booking, attempt mutation or failed-day retry
-                if (x.get('finish') or {}).get('state') == 'failed':
+                if (x.get('finish') or {}).get('state') in ('failed', 'waiting'):
                     if x['seq'] in retried:
-                        continue                            # a failed finish is retried once per worker start
+                        continue                            # a failed or waiting finish is retried once per worker start
                     retried.add(x['seq'])
                 slot, cpus, why = _book_slot(x, 'finish', commit)
                 if slot is None:

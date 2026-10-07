@@ -224,15 +224,27 @@ def recover_sync(brain):
 
 
 def close_day(run, day):
-    """Serialize final acknowledgment with intake; late requests cannot reopen a completed day."""
+    """Serialize final acknowledgment with intake; late requests cannot reopen a completed day.
+
+    One drain, then the inbox is read under its lock: every request acknowledged = the day closed (the closed.json pin,
+    as before). A request still unacknowledged when the drain returns (the waiting_school branch breaks out of a
+    waiting owner school recovery; a request admitted during the drain) is NOT looped on here: the result is
+    {'status': 'waiting', 'pending': [...], ...} naming them, and the caller (the queue's _finish_day) records the day
+    waiting and lets its slot go; the next worker start drains again (CCode, Step 8, on the parent's assignment of
+    2026-10-07: the previous loop re-entered the drain without a pause, holding the finish thread). The drain's own
+    in-request waits (a failed child awaiting its named retry, a candidate awaiting the scientific-owner decision, a
+    save) are unchanged: they poll inside drain with their state recorded on the day's successors receipt."""
     directory = run.dir / 'successors' / day
-    while True:
-        completed = drain(run, day)
-        with lock(directory / 'inbox.lock'):
-            requests = sorted((directory / 'requests').glob('*.json'))
-            if len(completed) != len(requests):
-                continue
-            return once(directory / 'closed.json', dict(owner=owner(run, day), acknowledgments=completed))
+    completed = drain(run, day)
+    with lock(directory / 'inbox.lock'):
+        requests = sorted((directory / 'requests').glob('*.json'))
+        pending = [p.name for p in requests if not (directory / 'work' / p.stem / 'ack.json').is_file()]
+        if pending or len(completed) != len(requests):
+            return dict(status='waiting', acknowledged=len(completed), requests=len(requests), pending=pending,
+                        reason='%d of %d successor request(s) of the day unacknowledged after this drain (%s); the day is '
+                               'not closed; drained again at the next start' % (
+                                   len(pending), len(requests), ', '.join(pending) or 'the inbox changed during the drain'))
+        return once(directory / 'closed.json', dict(owner=owner(run, day), acknowledgments=completed))
 
 
 def prepare_dependents(run, day, value, target, correction):
