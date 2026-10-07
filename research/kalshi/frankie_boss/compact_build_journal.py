@@ -100,7 +100,7 @@ class CompactBuildJournal:
         context = multiprocessing.get_context('spawn')
         if not self.encoder_cpus:
             return ProcessPoolExecutor(max_workers=self.workers, mp_context=context)
-        handout = context.Queue()
+        handout = self._handout = context.Queue()
         for cpu in self.encoder_cpus:
             handout.put(cpu)
         return ProcessPoolExecutor(max_workers=self.workers, mp_context=context, initializer=_pin_encoder,
@@ -113,6 +113,7 @@ class CompactBuildJournal:
             old.shutdown(wait=False, cancel_futures=True)
         except Exception:  # noqa: BLE001 - the broken pool is being replaced; nothing of it is read again
             pass
+        self._close_handout()
         before = self.workers
         self.workers = max(0, self.workers - 1)
         if self.encoder_cpus:
@@ -277,6 +278,13 @@ class CompactBuildJournal:
         if self._pool is not None:
             self._pool.shutdown(wait=True)
             self._pool = None
+        self._close_handout()
+
+    def _close_handout(self):
+        handout, self._handout = getattr(self, '_handout', None), None
+        if handout is not None:
+            handout.close()
+            handout.join_thread()
 
     def rows(self):
         """Every committed row in order with the block chain re-checked; pending rows are flushed first."""

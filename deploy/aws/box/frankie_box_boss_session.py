@@ -2872,7 +2872,13 @@ class Session:
                                                     consumer_cpu=consumer, consumer_core_idle_siblings=idle,
                                                     topology_basis=('/sys/devices/system/cpu/cpu*/topology' if topology
                                                                     else 'unreadable: consumer CPU only'))
-                        for entry in probe.track(reader.entries(), count, 'source-journal-records'):
+                        # Resume at the saved cursor (frankie_journal_reader.resume_point): the whole file's sha256
+                        # was matched against the saved identity above, so the prefix the saving process verified is
+                        # not read again; at most the one block holding the cursor is verified a second time.
+                        resume_at = reader.resume_point(consumed)
+                        seen = resume_at[0]
+                        for entry in probe.track(reader.entries(resume=resume_at), count, 'source-journal-records',
+                                                 done=seen):
                             take_next(entry['kind'], entry['payload'])
                 finally:
                     os.sched_setaffinity(0, set(affinity))
