@@ -142,3 +142,46 @@ pre_read with real native evidence files (the native branch was exercised only w
 Everything above on the box: the lane_pin pool under the real booking, ranged scans on real parts, the survivor
 frozen-path dedupe, the school prefetch through lane_pin.executor, heartbeat units. a2 sees it only after a restage
 of the work-branch tip before its lessons / survivors / school stages.
+
+## 9. Save/restore vs ROOT (follow-up, Greg: "every workflow piece needs their restore save code updated to match ROOT's")
+Built in frankie_box_scientific_teacher.py (section "save / restore", lines ~885-1170; pre_read 1171; main 2405-2558;
+_print_saved 2628). SOURCE-BUILT / RUNTIME-UNVERIFIED; toy proof below.
+
+| ROOT item | School piece | Status |
+| --- | --- | --- |
+| 1 save route: mark-only SIGTERM / stop file, run to the next boundary, exact state, exit 75; children reset SIGTERM | `install_save_route` (938): SIGTERM only marks; `save_requested` = the mark or FRANKIE_LANE_STOP_FILE (Run.child sets it), as experiment_root.calculate_day (125); `os.register_at_fork(after_in_child=...)` resets SIGTERM to default in EVERY forked child (lane_pin pool workers included, so cross-owner R1 is covered inside this process); boundaries: each pre-read task (ordered_map `stop=`, submitted tasks drain) and each claim document (main 2485); `ScientificSaved` = SystemExit(75); last stdout line FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1 status `saved` (`_print_saved`). The accumulated mode keeps SIGTERM's default (no save point of this module there; its own result files are its resume point) | DONE (teacher CLI); caller side cross-owner R6 |
+| 2 periodic exact saves | `PreReadSave` (1014): append-only pickle stream (key order kept) `<out>/saves/<key>.pkl`: header (identity) + one record per finished task (value + file position); fsync every SAVE_EVERY_SECONDS=60 s, on a requested save and before the documents; a crash loses at most the tasks after the last fsync, a partial final record is dropped on load and listed (`dropped_tail`), the readable records rewritten before appending. Claim documents: each written result file is the document-level save (reused on resume) | DONE |
+| 3 file positions without re-read | `_file_position` (972) records path, bytes, device, inode, mtime_ns and the last line (frankie_box_boss_session._line_ending_at, imported); `_position_unchanged` (986) mirrors `_resume_row_spool`'s rule: unchanged -> the saved value, no read; else ONE full pass of that task (every byte hashed, the pin checked by test() / the native assembly as before). Not RowSpool objects (the parts are immutable pinned inputs, not appended spools), so `_saved_spool_position` / `_resume_row_spool` are mirrored, not called; the running-hash block is not needed (no append) | DONE (mirrored, named) |
+| 4 identity is content | `PreReadSave.load` compares the saved header with the built one through frankie_box_experiment_root.content_rebinds; checkout moves recorded under `<saves>/checkout-rebinds/`; any other difference on an unfinished save raises `SaveRefused` (visible; pre_read never reads around it); a completed save is set aside | DONE |
+| 5 function-level code identity | `_save_identity` (1001): frankie_box_bedrock.code_identity of SAVE_CODE_NAMES (the scan, hash, range, native read/projection functions and their constants); a comment or unrelated edit keeps a save, a changed computation refuses | DONE |
+| 6 additive, old saves load, probe continues | new files and receipt keys only (`shared_read.pre_read.save`: path, reused, full_pass list with reasons, saved, flushes, dropped_tail, rebinds, old_shape, set_aside, seal); an old-shape save (no code identity / no positions) loads: set aside, one full pass of every task, noted `old_shape`; the heartbeat starts at the resumed count (`_report_units` before the pool). No earlier save of this piece existed at c9bf631 (the pre-read save is new), so "old" = the older shapes above | DONE |
+| 7 seal check | `PreReadSave.seal` (1029): before the documents use any reused value, every reused file is re-checked by the same rule; FRANKIE_SCIENTIFIC_SEAL_FULL=1 also re-runs each reused task (a full witness read) and compares it with the saved claim; any difference raises SaveRefused. A full read at the seal is not the default: the teacher has no seal witness read of its own, and a default full read would re-hash every resumed part (Greg's open call (c) concerns skipping it) | DONE (cheap seal default; full seal by env) |
+| Survivor update (stage 10) | frozen `inputs.json` + `survivors.json` reproduce the same bytes on a restart (survivor_update.py `update`); no exit-75 route (a short pass); SIGTERM keeps its default | PARTIAL (resume by frozen inputs; no save route) |
+| School knowledge (stage 12 file) | one file, reused by `retained_school`; no save route | N/A (one unit) |
+
+Not reused outside a resume: a COMPLETED save (main finished every document) is set aside, so a new call reads and
+hashes every file again; skipping a re-hash on an unchanged stat outside a resume stays Greg's open call (c).
+
+Toy proof (scratchpad/school/selftest_save.py, 12 parts, two claim documents, 4-CPU container):
+```
+save requested -> exit 75 (a save was requested: 5 of 12 pre-read t)     OK
+save stream: header + 5 task records                                     OK
+resume: 5 reused (no read), 0 full passes, identical                     OK
+touched part: full passes 1 (one full pass: the file is not the one s)   OK
+completed save set aside, fresh read identical                           OK
+old-shape save loads: old_shape=True, reused 0, identical                OK
+changed code identity refuses (SaveRefused)                              OK
+seal: a reused file changed before the seal refuses (SaveRefused)        OK
+parent marks only; forked child SIGTERM default                          OK
+ALL OK
+```
+"identical" = the per-document prepared reads (rows, ordinals, raw-line sha256, counts, digests) equal the
+from-scratch pre-read with no save. selftest_scan.py re-run after these edits: ALL OK.
+
+Cross-owner, save route:
+- R6 frankie_box_experiment.py: `Run.lessons` (`bad = [r for r in results if r['exit_code'] != 0]`, about line 4484),
+  `accumulated_lessons` (about 4402-4410) and `survivors` (about 4514) record a child's exit 75 as failed. They should
+  do what the day thread does for exit 75 on the day's own standing marker (the classification near line 1571-1580):
+  saved, booking retained, never a failure or a requeue.
+- R1 (lane_pin initializers resetting SIGTERM) is covered for this process by `register_at_fork`; still useful for
+  other pieces.
