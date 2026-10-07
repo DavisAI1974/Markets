@@ -942,3 +942,27 @@ Checks: AST parse and `git diff --check` clean on the four changed files.
 
 SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED. A fresh independent review of these fixes is required before
 integration.
+
+## 15. The search's day-file reader on the rebuilt reader-stamp files (2026-10-07 night, session 2; after `72e9ae8`/`baf8b57`)
+
+Uncommitted; source only; nothing ran; no account call. Both files below are assigned to me for this item only.
+
+- `frankie_box_experiment_search.build_series`, the external source entry:
+  - The stamp shape is read with `dipole_classroom_external.stamp_shape(body)`, the classroom's own test.
+  - The source entry carries `stamp_shape` and `tables_without_event_time`, plus `stamp_shape_finding` (None for
+    READER_STAMP).
+  - A PUBLICATION_STAMP file (superseded) is read as stamped and named as a visible finding, both on the entry and in the
+    search notes (`external.stamp_shape`).
+  - `placement_note` now says the search reads the reader stamps max(event time, publication) with the 14:00 ET default,
+    the same instants as the shared reader. A superseded file gets its own wording, which says the two readers may differ.
+- `event_time_ns` (every table) and `print_ns` (storage.estimate) are no longer searched as numeric signals; they go to
+  `identities_and_clocks`.
+  - The one source of these sets is `frankie_box_experiment_surface`: `ENTITY_COLUMNS` (the former inline set),
+    `CLOCK_COLUMNS`, `POINT_CLOCK_COLUMNS` and `identity_and_clock_columns(point)`. The search uses them in place of its
+    own inline copy.
+  - `external_fields` still partitions entities by `ENTITY_COLUMNS` only. Partitioning by a clock would make every row its
+    own entity, so the clocks are kept as carried fields that the consumer routes to identities and clocks.
+- The surface file's sha256 changes. It is part of the search identity (`surface_sha256`); no run has used it.
+
+Checks: AST parse and `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED; a fresh independent
+review is required before integration.

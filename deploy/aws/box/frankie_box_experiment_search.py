@@ -823,6 +823,17 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         from research.kalshi.frankie_boss.operations.frankie_day_external import (
             AsOfReader, search_series, SEARCH_SERIES, StagingRefused)
         body = read_json(external, external_pin)
+        # the stamp shape of the file read (the classroom's one test, dipole_classroom_external.stamp_shape): READER_STAMP
+        # = every table carries event_time_ns and published_ns is the reader stamp max(event time, publication) with the
+        # 14:00 ET default, so this search and the shared reader place every point alike; PUBLICATION_STAMP = a superseded
+        # file stamped at publication (its placement is not in the file): read as stamped, named as a visible finding
+        from research.kalshi.frankie_boss.dipole_classroom_external import (
+            stamp_shape, STAMP_SHAPE_READER)
+        shape, without_event_time = stamp_shape(body)
+        if shape != STAMP_SHAPE_READER:
+            notes.append(dict(source='external.stamp_shape', finding='superseded_publication_stamp_file', stamp_shape=shape,
+                              tables_without_event_time=without_event_time,
+                              reason='read as stamped (publication); the reader-stamp placement is not in this file'))
         receipt_pin = source_pin(external_receipt)
         if receipt_pin is not None:
             receipt = read_json(external_receipt, receipt_pin)
@@ -845,12 +856,12 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         if mode == 'all':
             sys.path.insert(0, str(Path(__file__).resolve().parent))
             import frankie_box_experiment_surface as SURFACE
-            identity_columns = {'model', 'station', 'respondent', 'raw_symbol', 'symbol', 'instrument_id', 'publisher_id',
-                                'horizon_days', 'rank', 'target_day', 'contract'}
             for key, (stamps, values) in sorted(SURFACE.external_fields(reader).items()):
                 qualified, _, _entity = key.rpartition('.entity=')
                 point, column = qualified.rsplit('.', 1)
-                if column == reader.body['points'][point]['stamp_column'] or column in identity_columns:
+                # identities and clocks (entity keys, event_time_ns, storage.estimate's print_ns): never a numeric signal
+                if column == reader.body['points'][point]['stamp_column'] or \
+                        column in SURFACE.identity_and_clock_columns(point):
                     identity_fields.append(key)
                     continue
                 numeric, text, listed, _ = columns(({'value': value} for value in values), '')
@@ -875,9 +886,22 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
                             sha256=external_pin['sha256'], schema=body.get('schema'),
                             registry_entries=point_entries, registry_mapping=point_mapping,
                             registry_entry_findings=entry_findings,
-                            placement_note='the search places each point through the day file\'s own as-of reader '
-                                           '(AsOfReader / search_series, owned by the day-file piece) at the stamps it '
-                                           'returns; the shared reader places at max(event time, publication)',
+                            stamp_shape=shape, tables_without_event_time=without_event_time,
+                            stamp_shape_finding=(None if shape == STAMP_SHAPE_READER else dict(
+                                kind='superseded_publication_stamp_file', stamp_shape=shape,
+                                tables_without_event_time=without_event_time,
+                                note='a superseded day file stamped at publication: read as stamped; a value with no '
+                                     'intrinsic event time may be read before its 14:00 ET placement; rebuild the day '
+                                     'file (frankie_box_day_external) for the reader stamp')),
+                            placement_note=('the search places each point through the day file\'s own as-of reader '
+                                            '(AsOfReader / search_series, owned by the day-file piece) at its stamps, '
+                                            'which are the reader stamps max(event time, publication) with the 14:00 ET '
+                                            'default: the same instants the shared reader uses'
+                                            if shape == STAMP_SHAPE_READER else
+                                            'a superseded publication-stamp file: the search reads each point at its '
+                                            'publication stamp; the placement (max(event time, publication)) is not in '
+                                            'the file, so the search and the shared reader may differ; listed as a '
+                                            'finding'),
                             receipt=str(external_receipt) if receipt_pin is not None else None,
                             receipt_pin={key: receipt_pin[key] for key in ('bytes', 'sha256')} if receipt_pin is not None else None,
                             series=sorted(ext), absent=absent, missing=body.get('missing'),

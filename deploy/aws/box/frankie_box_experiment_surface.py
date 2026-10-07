@@ -67,14 +67,30 @@ def ordinal_values(length, positions, values):
     return np.asarray([values[i] if i >= 0 else None for i in indices], dtype=object)
 
 
+# The day file's identity columns: ENTITY_COLUMNS partition a table's rows into entities (never pooled); CLOCK_COLUMNS
+# (every table) and POINT_CLOCK_COLUMNS (per point) are clocks of a row, carried as identities and clocks, never a numeric
+# signal (2026-10-07 night: the rebuilt day files carry event_time_ns on every table and storage.estimate its print_ns).
+# A clock is not an entity key: partitioning by it would make every row its own entity.
+ENTITY_COLUMNS = frozenset({'model', 'station', 'respondent', 'raw_symbol', 'symbol', 'instrument_id',
+                            'publisher_id', 'horizon_days', 'rank', 'target_day', 'contract'})
+CLOCK_COLUMNS = frozenset({'event_time_ns'})
+POINT_CLOCK_COLUMNS = {'storage.estimate': frozenset({'print_ns'})}
+
+
+def identity_and_clock_columns(point):
+    """Every column of `point` that is an identity or a clock (ENTITY_COLUMNS, CLOCK_COLUMNS, the point's own clocks):
+    carried as identities_and_clocks, never searched as a numeric signal. The stamp column is the caller's own check."""
+    return ENTITY_COLUMNS | CLOCK_COLUMNS | POINT_CLOCK_COLUMNS.get(point, frozenset())
+
+
 def external_fields(reader):
     """All table columns at native publication times, partitioned by explicit native entity identifiers.
 
     The legacy thirteen named series remain aliases. This view additionally carries every other column,
-    including states and nested values, without interpreting missing values or pooling entities.
+    including states and nested values, without interpreting missing values or pooling entities. The clock columns
+    (identity_and_clock_columns) are carried as fields too; a consumer routes them to identities and clocks.
     """
-    identity_columns = {'model', 'station', 'respondent', 'raw_symbol', 'symbol', 'instrument_id',
-                        'publisher_id', 'horizon_days', 'rank', 'target_day', 'contract'}
+    identity_columns = ENTITY_COLUMNS
     out = {}
     for point in reader.body['points']:
         table = reader.point(point)
