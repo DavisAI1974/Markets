@@ -97,3 +97,30 @@ Requests: experiment_root._calculate_day passes bedrock_off_cause; Run.reports_s
 ### Day-file agent (30 day files): see the next section if it returned; otherwise its state is unknown.
 Before any day-file work, list frankie/day_external/ and frankie/day_external_superseded/ in S3
 (bento-568968024170-us-east-2-an) to see what it wrote; every new write should have a superseded copy.
+
+### Day-file agent (returned at session end): read-only inventory, NO edits, NO S3 writes
+- The day list: DAY_SELECTION_20260929.md says 30 (rows 97-146; line 102 marks 20211020 "out: roll window
+  -5"); blocks/DAY_SELECTION_CANDIDATES_20260929.json proposes 31 (20211020 added by Greg); HANDOFF_20260930_EARLY.md:18
+  says 31. GREG TO CONFIRM 30 or 31. The 31: 20211005 06 12 13 19 20 / 20221004 05 11 12 18 19 / 20231003 04
+  10 11 17 18 / 20241001 02 08 09 15 16 / 20250930 20251001 07 08 14 15 21.
+- Day files: 17 present, 14 missing (20211019; all six 2024 days; 20250930, 20251001, 20251007, 08, 14, 15, 21).
+  Ingests in S3: 18 days have none (may exist only on the box). Curve native files: present for all 31.
+  History inputs for all 31: frankie/day_history/36576414768/.
+- Gaps and fixes: storage.estimate (2025: wire consensus/storage_consensus.json with capture times;
+  2021/22/24: write an HTML extractor over runs 36557302661, 36576414768, 36609379489, 36618331994; 2023: no
+  capture exists); consensus.fetch missing on ALL 17 (read several runs, 36618331994 and 36557302661 have
+  receipts); prior-month weather obs for 202109/202209/202309 not fetched (free IEM, via
+  frankie_day_history.yml; the 72 h window does not need them); squeeze 3-day spread: computable for 2024/2025,
+  2021-2023 needs a Databento statistics pull (costs money, under $1; Greg had deferred squeeze).
+- POSSIBLE LEAK, GREG'S CALL: EIA-930 hourly and EIA weekly storage use current REVISED values stamped at the
+  original publication time (declared "current revision"); as-printed actuals exist only where archived pages
+  or the 2025 store cover a print (revised vs printed weekly change differs 0-1 Bcf).
+- Proposed 13-point mapping (all "closest"; the module places the day file outside the 99): COT 1,3,4,8 ->
+  aggressor_and_native_signed_flow; MOS 2,9 -> clock_feature_availability; EIA-930 5,7 and storage 11,12 ->
+  depletion_and_replenishment; 6 -> contract_session_roll_state; obs 10 -> clock_event_known_by; curve 13 ->
+  raw_source_identity_provenance_clocks_integrity / contract_session_roll_state / order_lifecycle_trades /
+  price_and_book_path. Not written into code.
+- TRANSPORT BLOCKER: the container proxy refuses mesonet.agron.iastate.edu, api.eia.gov, www.cftc.gov,
+  web.archive.org (403); the Aws connector's run_script times out at 60 s and cannot bundle ~1,050 objects.
+  The next pass needs container credentials for S3 (or run the fetch/build as a GitHub workflow / on the box,
+  which is a run and needs Greg's go).
