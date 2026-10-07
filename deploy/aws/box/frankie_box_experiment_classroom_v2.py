@@ -204,10 +204,11 @@ class _SideTask:
         if not forkable:
             self.record.update(outcome='computed_in_order', reason='no fork: %s' % why)
             return self
-        try:
-            self.path.unlink()
-        except OSError:
-            pass
+        for stale in [self.path] + list(self.path.parent.glob(self.path.name + '.*.pending')):
+            try:
+                stale.unlink()                        # a value left by an earlier, stopped attempt is never read
+            except OSError:
+                pass
         self.process = multiprocessing.get_context('fork').Process(
             target=_side_main, args=(self.function, self.path, self.cpus), name='classroom-side-' + self.name)
         self.started = time.monotonic()
