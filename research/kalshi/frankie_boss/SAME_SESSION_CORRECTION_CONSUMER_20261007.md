@@ -284,3 +284,78 @@ stage-12 survey stands). SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED.
 - The data export lists `work/native-layer-records.json` as unclaimed until its catalog includes it.
 - Nothing has run; AST parse without project imports, `bash -n` and `git diff --check` only. A fresh
   independent review is required before integration.
+
+## 2026-10-07 night, session 2: second-review fixes F5, F9a, F9b and the registry word in the 99-layer table (source-built, runtime unverified)
+
+Greg resumed this role for the second-review fixes (`REVIEW_20261007_EVENING_SECOND_PASS.md` F5, F9; the first
+review's B4 propagation into the table). Source only: nothing ran, nothing installed, no account call. Skills:
+`api-and-interface-design` (first), `context-engineering`, `experiment-orchestrator`, `incremental-implementation`.
+
+### F5 (cceb191, earlier in this pass): `frankie_box_boss_session.py`
+- A bedrock-off derivation records its real cause, `bedrock_off_cause` = `caller_override` / `legacy_plan` /
+  `native_pass_failed` / `unstated`, with its basis; derive.json is byte-identical when bedrock is on.
+  `frankie_box_experiment_root._calculate_day` still has to pass the cause (request to its owner).
+
+### F9a: late pieces make the reports stale: `frankie_box_experiment_day_reports.late_pieces_changed`
+- Contract: `late_pieces_changed(receipt, current=None) -> FRANKIE_DAY_REPORTS_LATE_PIECES_V1`. `receipt` is the
+  day reports receipt path (`reports_receipt_path(reports, run, day)`); `current` holds, key by key
+  (`INVOCATION_KEYS`: classroom, refused_reason, exchange, exchange_listed, school, school_listed, run_dir,
+  piece_receipts), what the orchestrator would pass now; an absent key keeps the value the build recorded in the
+  receipt's new `all99_invocation`.
+- Pure: it reads, never writes, takes no lock and renders nothing. It recomputes the join's input set with
+  `collect_all99` itself, on a `Day(..., join_only=True)` that skips the classroom outputs only the rendered reports
+  use. It compares per piece: `(status, file, sha256, basis)` for a list that was read or an integrity failure, and
+  `(status, basis)` for a piece that reported no list. Reason text and the bytes of a waiting step receipt are
+  reported as `reasons_only`, never as a change.
+- Three outcomes: `changed` (a list arrived, went or changed; a piece appeared or went; or no join was recorded),
+  `unchanged`, and `unknown` (the receipt or the day's inputs could not be read; the error is named; an unknown is
+  never a change and never a zero). The result carries the recorded and current input sets, the differences, the
+  invocation and its source per key, every file read with bytes and sha256, and the seconds taken.
+- A list read from a step receipt (the ROOT's `all99`) is identified by `<step>#<field>` and the sha256 of its
+  canonical JSON. That way a restart that rewrites the step receipt with the same list is not a late piece.
+
+### F9b: the current lessons after a reuse or a successor rebuild
+- The join's scientific-teacher lessons now come from the lesson inputs that the exchange document read by the
+  step records itself (`sources.lessons`). The original exchange and a checked successor both record them, with
+  the delivered path, bytes and sha256. Each current-day lessons file is read against that pin, and other bytes
+  are an integrity failure. Accumulated lesson documents are counted and listed, not joined.
+- Only when no exchange document was read does the join fall back to the exchange step receipt's list, or then
+  to the conventional path. Both fallbacks are labelled `MAY BE STALE`.
+- The basis (`LESSONS_BASIS`) is recorded on each lessons piece and in the join inputs (so it enters
+  `join_sha256`), and in `all99.lessons_source`, the workflow report (`use.all99_lessons_source`) and the
+  FRANKIE report.
+- Suppose the school's inline copy of a lessons file disagrees with the exchange's pin for the same path. That is
+  an integrity problem, and the inline copy is never silently substituted.
+- No change to `frankie_box_experiment_exchange.py` was needed.
+
+### The registry word in the table (reach_of on piece_disposition)
+- `canonical_of(A99, entry, piece_word, recorded_word, recorded_class)` takes the canonical word from the one
+  registry (`frankie_box_all99_coverage`, 9464189e). It uses the shared field's own `disposition`, else
+  `LEGACY_WORDS` of the piece's word, settled by `FIXED_WORDS`; the class is the registry's `WORD_CLASS`.
+- `reach_of(piece_word, klass)` splits only the registry's 'arrived' class (and the thin/completed-only classes)
+  by the piece's own word (`REACH_REFINE`: consumer, governs, ROOT picture). An `arrived_at_consumer` therefore
+  stays a consumer, never a computation, now that shared fields carry the canonical 'arrived'.
+- A recorded class that contradicts the registry is a field integrity finding. A FIXED_WORDS settlement is shown
+  beside the entry. The table shows `piece word (canonical)`.
+- The pieces' counts are kept both ways (`counts` piece words, `shared_counts` canonical). `summary_vs_list`
+  compares each with the matching count of the carried summary, so a carried summary is no longer compared word
+  for word against another vocabulary.
+- The local `CLASS_OF` lookup is gone from this file.
+
+### Fields added for the one-day inspection (day_reports piece)
+- receipt `all99_invocation`; `all99.lessons_source`; `all99.pieces[].basis`, `shared_counts`;
+  `all99.inputs[].basis`; carried `canonical`, `klass`, `settled`; workflow report
+  `inputs.all99_invocation`, `use.all99_lessons_source`, `use.all99.lessons_basis` / `lessons_current`. The
+  reporter projects the workflow report as recorded; no reporter change was needed.
+
+### Still open (requests to other owners)
+- ccode_step8, `frankie_box_experiment.py` `Run.reports_stale`: return True when
+  `late_pieces_changed(reports_receipt_path(REPORTS, run, day), current=<what Run.reports would pass now>)` says
+  `changed`. On `unknown`, return False and log the reason. Also run that check when the exchange is not done or
+  `not_run` (the reports render then too).
+- `frankie_box_lane_state` meeting refresh (`R.run(...)` without school, run_dir and piece receipts): pass them,
+  or the receipt's recorded `all99_invocation`. Otherwise a refresh drops a given candidates receipt from the join.
+- `frankie_box_all99_coverage.day_coverage`: `counts` covers only `DISPOSITIONS`, so the clock override words
+  (`stamped_*`, `no_model_call_this_day`) are missing from a carried summary, and `summary_vs_list` will name that.
+- Nothing has run. Checks: AST parse without project imports and `git diff --check` only. A fresh independent
+  review is required before integration.

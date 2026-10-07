@@ -83,6 +83,15 @@ failures stay separate. The ROOT and Jev's pieces are listed and never decide wh
 receipt['all99'] (ALL99_JOIN_SCHEMA); its sha256 over the pieces' inputs is part of the reports' source (a changed list
 gives a revision with the same N). Diagnostic only, never knowledge. Nothing here keys on how many days a run holds: the
 numbering is 1 + the highest number held (N=1 for a one-day run, any N after) and reuse is per (run, day).
+
+LATE PIECES (2026-10-07 second review F9; correction_consumer). Jev and the cross-day candidates normally finish after the
+reports. late_pieces_changed(receipt, current) is a pure read (no write, no lock, no report rendering): it recomputes
+the join's input set (join_inputs: piece, status, file, sha256, basis; collect_all99 itself, on a Day read join_only) from
+the invocation the receipt recorded (all99_invocation), overridden key by key by `current` (what the orchestrator would
+pass now), and compares it with the input set the receipt recorded. Three outcomes: 'changed' (a revision with the same N
+is due), 'unchanged', 'unknown' (it could not read what it needs; the reason is returned). The scientific teacher's lessons
+list is the lesson inputs the exchange document itself records (sources.lessons; current after a reused or successor
+exchange), its basis recorded beside it (LESSONS_BASIS), so a possibly stale list is never shown as a current one.
 """
 import argparse
 import datetime as dt
@@ -130,28 +139,51 @@ ALL99_PIECES = (
     ('jev_sit_in', False, 'the Jev client receipt pinned by JEV_CPU_RECEIPT_V1: workflow_report.use.all_99_coverage'),
 )
 PICTURE_READERS = ('classroom', 'exchange', 'meeting', 'jev', 'jev_sit_in')     # pieces that read the shared picture
-# How a recorded word is read: the row's own `class`, else the shared registry's CLASS_OF (frankie_box_all99_coverage; the
-# ONE classification, never copied here), then only these refinements of its 'arrived' class (so a consumer or a rule is
-# not counted as a computation) and of its thin / completed-only classes; the recorded word is always shown beside it:
+# How a recorded word is read (correction_consumer, 2026-10-07 second pass): the CANONICAL word and its class come from the
+# one registry (frankie_box_all99_coverage, 9464189e; never a local vocabulary here): the shared field's own `disposition`
+# when the row carries one (computed and settled by frankie_box_all99_coverage.field), else the registry's LEGACY_WORDS
+# mapping of the piece's word, then the registry's FIXED_WORDS settlement of the entry; the class is the registry's
+# WORD_CLASS of that canonical word. The refinements below read the PIECE's own word (`piece_disposition`, the word the
+# piece recorded) and only split the registry's 'arrived' class (so a consumer or a rule is not counted as a computation)
+# and its thin / completed-only classes; both words are always shown:
 #   computation / computation_thin   reached what the piece computes on, wholly / partially (thin, completed-only)
 #   consumer / governs               reached the piece's own consumer / a rule the piece enforces; not a computation
 #   picture                          ROOT only: admitted into the shared picture (producer side)
-#   exposed / absent / not_this_piece / withheld / disabled / retired / output / unmapped   the shared classes as named
-#   integrity / unclassified         the ROOT's integrity word / a word the shared CLASS_OF does not class
+#   exposed / absent / unknown / not_this_piece / withheld / disabled / retired / output / unmapped   the registry classes
+#   integrity / unclassified         the registry's integrity class / a word the registry does not map
 REACH_REFINE = {'knowledge_consumer': 'consumer', 'arrived_at_consumer': 'consumer', 'enforced_by_rule': 'governs',
                 'admitted': 'picture'}
 REACHED = ('computation', 'computation_thin', 'consumer', 'governs')
 
 
-def reach_of(word, row_class, class_of):
-    """The reach group of one recorded word (see REACH_REFINE): the row's class, else the shared CLASS_OF."""
-    if word == 'integrity':
-        return 'integrity'
-    klass = row_class or (class_of or {}).get(word)
+def canonical_of(A99, entry, piece_word, recorded_word=None, recorded_class=None):
+    """(canonical word, class, settled, class_differs) of one row from the one registry module A99. recorded_word: the
+    shared field's own `disposition` (None for a piece's legacy list); recorded_class: the row's `class` as recorded.
+    settled: the registry's FIXED_WORDS correction of the entry's word (listed, as frankie_box_all99_coverage.field lists
+    it); class_differs: a recorded class that contradicts the registry's class of the word (an integrity finding of the
+    piece's field, never relabelled). Both None when there is nothing to say."""
+    vocabulary, legacy = getattr(A99, 'VOCABULARY', {}), getattr(A99, 'LEGACY_WORDS', {})
+    canon = (recorded_word if recorded_word in vocabulary else piece_word if piece_word in vocabulary
+             else legacy.get(piece_word))
+    settled = differs = None
+    fixed = (getattr(A99, 'FIXED_WORDS', None) or {}).get(entry)
+    if fixed is not None and canon is not None and canon != fixed:
+        settled = 'the registry settles %s as %s (FIXED_WORDS); the piece\'s word %s maps to %s' % (entry, fixed, piece_word,
+                                                                                                    canon)
+        canon = fixed
+    klass = (getattr(A99, 'WORD_CLASS', None) or {}).get(canon) if canon else None
+    if recorded_class is not None and klass is not None and recorded_class != klass:
+        differs = 'the row recorded class %s; the registry\'s class of %s is %s (the registry\'s is used)' % (
+            recorded_class, canon, klass)
+    return canon, klass or 'unclassified', settled, differs
+
+
+def reach_of(piece_word, klass):
+    """The reach group of one row: the registry class (canonical_of), split by the piece's own word (REACH_REFINE)."""
     if klass is None or klass == 'unclassified':
         return 'unclassified'
     if klass == 'arrived':
-        return REACH_REFINE.get(word, 'computation')
+        return REACH_REFINE.get(piece_word, 'computation')
     if klass in ('thin', 'completed_only'):
         return 'computation_thin'
     return klass
@@ -333,7 +365,10 @@ class Day:
     """What the reports translate, read from the classroom directory (and the brain entry its receipt names)."""
 
     def __init__(self, day, classroom, refused_reason, exchange=None, exchange_listed=None, school=None,
-                 school_listed=None):
+                 school_listed=None, *, join_only=False):
+        """join_only (late_pieces_changed): read only what the 99-layer join reads (the classroom receipt, the exchange
+        and its meeting, the school file); the classroom's own output files, classroom.md and the brain MANIFEST that
+        only the rendered reports use are not read."""
         self.day, self.dir = day, Path(classroom)
         self.docs, self.absent = {}, []
         self.inputs = []                        # every file this step read: kind, path, bytes, sha256 (read once, hashed once)
@@ -385,7 +420,7 @@ class Day:
                              'when the orchestrator refused it)' % self.dir)
         self.status = self.receipt.get('status')
         self.dropped, self.brain, self.brain_why = None, None, None
-        if self.status != 'complete':
+        if self.status != 'complete' or join_only:
             return                              # a refused day: the answers, grade and completion were never written
         for name in JSON_FILES:
             path = self.dir / name
@@ -1118,8 +1153,10 @@ FINALS = (
 )
 JOIN_RULES = ('the shared registry (frankie_box_all99_coverage.REGISTRY) is the list of the 99 entries; a piece row whose '
               'id is not in it is listed as unregistered, a repeated id as a duplicate (both integrity), never dropped '
-              'silently; each piece\'s recorded word is shown as recorded and grouped by the row\'s own class, else the shared '
-              'CLASS_OF, refined only by REACH_REFINE; '
+              'silently; each piece\'s recorded word is shown as recorded beside its canonical word '
+              'from the shared registry (the shared field\'s disposition, else LEGACY_WORDS, settled by FIXED_WORDS) and '
+              'grouped by the registry\'s WORD_CLASS of the canonical word, refined only by REACH_REFINE on the piece\'s '
+              'own word; a recorded class that contradicts the registry is an integrity finding; '
               'different words from different pieces are not a disagreement (the pieces compute on different things). '
               'Disagreement rules: group (a piece lists the entry under another registry group than the shared '
               'registry); lawful_role (one piece records it withheld/disabled/retired while another records it '
@@ -1199,13 +1236,14 @@ def _use_all99(receipt):
 
 def collect_all99(d, run_name, run_dir, piece_receipts):
     """Read every piece's recorded all-99 list for the day, once each. Sets d.all99_sources: one dict per piece
-    (piece, for_frankie, status read / not_reported / integrity, reason, file, sha256, doc, summary)."""
+    (piece, for_frankie, status read / not_reported / integrity, reason, file, sha256, doc, summary, basis) and
+    d.all99_lessons_source (where the scientific teacher's lessons list came from: LESSONS_BASIS)."""
     frankie_of = {p: f for p, f, _ in ALL99_PIECES}
     sources, problems = [], []
 
-    def src(piece, status, reason=None, doc=None, seen=None, summary=None, for_frankie=None):
+    def src(piece, status, reason=None, doc=None, seen=None, summary=None, for_frankie=None, basis=None):
         sources.append(dict(piece=piece, for_frankie=frankie_of.get(piece, True) if for_frankie is None else for_frankie,
-                            status=status, reason=reason, doc=doc, summary=summary,
+                            status=status, reason=reason, doc=doc, summary=summary, basis=basis,
                             file=(seen or {}).get('path'), sha256=(seen or {}).get('sha256')))
 
     def from_step(piece, stage, field):
@@ -1217,7 +1255,10 @@ def collect_all99(d, run_name, run_dir, piece_receipts):
         if not isinstance(doc.get(field), dict):
             return src(piece, 'not_reported', 'the %s step receipt (status %s) carries no %s list%s' % (
                 stage, doc.get('status'), field, (': ' + str(doc['reason'])) if doc.get('reason') else ''), seen=seen)
-        return src(piece, 'read', doc=doc[field], seen=seen)
+        # the list's own identity (path#field, sha256 of its canonical JSON), not the step receipt's bytes: a step receipt
+        # rewritten by a restart ('reused') with the same list is the same join input (late_pieces_changed)
+        return src(piece, 'read', doc=doc[field], seen=dict(path='%s#%s' % (seen.get('path'), field),
+                                                           sha256=sha256_bytes(json.dumps(doc[field], sort_keys=True).encode())))
 
     def coverage_file(piece, receipt_kind, receipt_doc, receipt_seen):
         """workflow_report.outputs.all99_coverage_files[<day>] of a scientific receipt: the pinned list, read once."""
@@ -1246,18 +1287,49 @@ def collect_all99(d, run_name, run_dir, piece_receipts):
     else:
         src('classroom', 'read', doc=d.receipt['all99_coverage'],
             seen=dict(path=d.source.get('path'), sha256=d.source.get('sha256')))
-    # the scientific teacher: every lessons file the exchange consumed (the current, corrected documents), each read once
-    # (the school file's whole inline copy is used when it carries that path: the bytes the school read, not a re-read)
+    # the scientific teacher: every current-day lessons file the exchange consumed, each read once (F9b, 2026-10-07 second
+    # pass). The list comes from, in order (LESSONS_BASIS; the basis is recorded on each piece and in the join inputs, so
+    # a list that may be stale is distinguishable from a current one):
+    #   exchange_record        the exchange document this step read (d.exchange) records its own lesson inputs in
+    #                          sources.lessons, delivered path/bytes/sha256 (the original exchange and a checked successor
+    #                          alike): current after a reused exchange receipt or a successor rebuild; each file is read
+    #                          against that pin (other bytes are an integrity failure). Accumulated lesson documents
+    #                          (accumulated: true) are counted and listed, not joined (their days are other days).
+    #   exchange_step_receipt  no exchange document was read: the exchange step receipt's lessons list (a reused or
+    #                          successor step records none, so the list may be stale)
+    #   conventional_path      neither: Frankie's lessons at their conventional path (may be stale)
+    # (the school file's whole inline copy is used when it carries that path: the bytes the school read, not a re-read;
+    # a copy whose source_sha256 differs from the exchange's pin is an integrity failure, never a silent substitute)
     xstep, _, xwhy, xbad = _step(d, run_dir, run_name, 'exchange')
     if xbad:
         problems.append('exchange step receipt integrity: ' + xbad)
-    paths = [str(p) for p in ((xstep or {}).get('lessons') or [])]
-    origin = 'the exchange step receipt\'s lessons list'
-    if not paths:
+    record = d.exchange.get('sources') if isinstance(d.exchange, dict) else None
+    accumulated = []
+    if isinstance(record, dict) and isinstance(record.get('lessons'), list):
+        named = [x for x in record['lessons'] if isinstance(x, dict)]
+        accumulated = [dict(path=x.get('path'), sha256=x.get('sha256'), author=x.get('author'))
+                       for x in named if x.get('accumulated')]
+        pins = [{k: x.get(k) for k in ('path', 'bytes', 'sha256')} for x in named if not x.get('accumulated')]
+        basis = 'exchange_record'
+        origin = ('the exchange document read by this step (%s, sha256 %s): its sources.lessons, %d current-day lessons '
+                  'file(s) joined, %d accumulated lesson document(s) listed, not joined' % (
+                      d.exchange_path, d.exchange_sha256, len(pins), len(accumulated)))
+    elif (xstep or {}).get('lessons'):
+        pins, basis = [dict(path=str(x)) for x in xstep['lessons']], 'exchange_step_receipt'
+        origin = ('the exchange step receipt\'s lessons list (no exchange document was read by this step: %s); MAY BE '
+                  'STALE: a reused or successor exchange step records no list' % (d.exchange_listed or 'none given'))
+    else:
         mine = LESSONS_ROOT / 'frankie' / ('%s-frankie.json' % d.day)
-        if mine.is_file():
-            paths, origin = [str(mine)], 'the conventional path of Frankie\'s lessons (no exchange lessons list: %s)' % (
-                xwhy or (xstep or {}).get('status'))
+        pins, basis = ([dict(path=str(mine))], 'conventional_path') if mine.is_file() else ([], None)
+        origin = ('the conventional path of Frankie\'s lessons (no exchange document and no exchange lessons list: %s); '
+                  'MAY BE STALE' % (xwhy or (xstep or {}).get('status')) if mine.is_file() else
+                  'no exchange document, no exchange lessons list and no lessons file at the conventional path (%s)' % (
+                      xwhy or (xstep or {}).get('status')))
+    d.all99_lessons_source = dict(basis=basis, current=basis == 'exchange_record', origin=origin,
+                                  exchange=(dict(path=d.exchange_path, sha256=d.exchange_sha256)
+                                            if d.exchange is not None else None),
+                                  named=pins, accumulated_not_joined=accumulated)
+    paths = [str(x.get('path')) for x in pins]
     inline = {}
     if d.school_status == 'read':
         for item in ((d.school.get('sections') or {}).get('scientific_teacher') or {}).get('items') or []:
@@ -1265,13 +1337,23 @@ def collect_all99(d, run_name, run_dir, piece_receipts):
                     and isinstance(item.get('content'), dict):
                 inline[item['path']] = item
     seen_authors = set()
-    for path in paths:
+    for pin in pins:
+        path = str(pin.get('path'))
         if path in inline:
+            copy_sha = inline[path].get('source_sha256') or inline[path].get('sha256')
+            if pin.get('sha256') and copy_sha != pin['sha256']:
+                problems.append('lessons file %s: the school file\'s inline copy records sha256 %s; %s pins %s (integrity: '
+                                'two records of one file disagree; not joined)' % (path, copy_sha, basis, pin['sha256']))
+                continue
             lesson = inline[path]['content']
             d.inputs.append(dict(kind='lessons file (the school file\'s whole inline copy)', path=path,
-                                 bytes=inline[path].get('bytes'), sha256=inline[path].get('source_sha256')
-                                 or inline[path].get('sha256'), read_by='the school file read once above'))
+                                 bytes=inline[path].get('bytes'), sha256=copy_sha, read_by='the school file read once above'))
             lseen = d.inputs[-1]
+        elif pin.get('sha256'):
+            lesson, lseen, why, bad = _pinned_once(d, 'lessons file', pin)
+            if lesson is None:
+                problems.append('lessons file %s: %s' % (path, bad or why))
+                continue
         else:
             lesson, lseen, why = _json_once(d, 'lessons file', path)
             if lesson is None:
@@ -1287,23 +1369,23 @@ def collect_all99(d, run_name, run_dir, piece_receipts):
             piece = '%s #%d' % (piece, same + 1)
         seen_authors.add(author)
         by_day = (lesson.get('all99_coverage') or {}).get('by_day') if isinstance(lesson.get('all99_coverage'), dict) else None
-        pin = (by_day or {}).get(d.day) if isinstance(by_day, dict) else None
-        if pin is None:
+        pin_day = (by_day or {}).get(d.day) if isinstance(by_day, dict) else None
+        if pin_day is None:
             src(piece, 'not_reported', 'the lessons file (%s) carries no all-99 list for day %s%s' % (
                 lesson.get('schema'), d.day, '' if by_day else ' (lessons written before the list existed)'),
-                seen=lseen, for_frankie=author != 'jev')
+                seen=lseen, for_frankie=author != 'jev', basis=basis)
             continue
-        doc, seen, why, bad = _pinned_once(d, '%s all-99 list' % piece, pin)
+        doc, seen, why, bad = _pinned_once(d, '%s all-99 list' % piece, pin_day)
         if bad:
-            src(piece, 'integrity', bad, seen=seen, for_frankie=author != 'jev')
+            src(piece, 'integrity', bad, seen=seen, for_frankie=author != 'jev', basis=basis)
         elif doc is None:
-            src(piece, 'not_reported', why, for_frankie=author != 'jev')
+            src(piece, 'not_reported', why, for_frankie=author != 'jev', basis=basis)
         else:
-            src(piece, 'read', doc=doc, seen=seen, summary=pin.get('summary'), for_frankie=author != 'jev')
+            src(piece, 'read', doc=doc, seen=seen, summary=pin_day.get('summary'), for_frankie=author != 'jev', basis=basis)
     for author in ('frankie', 'historical', 'jev'):
         if author not in seen_authors:
             src('scientific_teacher[%s]' % author, 'not_reported',
-                'no %s lessons file among %s (%s)' % (author, origin, listing(paths) if paths else 'none named'))
+                'no %s lessons file among %s (%s)' % (author, origin, listing(paths) if paths else 'none named'), basis=basis)
     # carried claims (the accumulated-lessons step; on a classroom-arm day the exchange carries them, listed there)
     given = piece_receipts.get('carried_claims')
     if given:
@@ -1423,27 +1505,39 @@ def _rows(doc, shared_schema):
         return None, 'the piece recorded that its list could not be built: %s' % doc['error'], used
     if items is None:
         return None, 'the recorded list (schema %s) carries no entries[] or rows[]' % rec(doc.get('schema')), used
-    return [dict(entry=item.get('entry') or item.get('layer'), group=item.get('group'), disposition=item.get('disposition'),
+    # disposition = the piece's own word as recorded (a shared field carries it as piece_disposition); shared = the shared
+    # field's canonical word (None for a piece's own legacy list; canonical_of maps it through the registry then)
+    shared = used is not None
+    return [dict(entry=item.get('entry') or item.get('layer'), group=item.get('group'),
+                 disposition=(item.get('piece_disposition') or item.get('disposition')) if shared else item.get('disposition'),
+                 shared=item.get('disposition') if shared else None,
                  reason=item.get('reason'), consumer=item.get('consumer'), count=item.get('count'), **{'class': item.get('class')})
             if isinstance(item, dict) else dict(entry=None) for item in items], None, used
 
 
-def all99_join(day, sources, problems):
+def join_inputs(sources):
+    """The join's input set: one row per piece list (piece, status, file, sha256, reason, basis). Its sha256 is the join's
+    join_sha256 (the reports' reuse key); late_pieces_changed compares it by JOIN_COMPARED (no reason text)."""
+    return [dict(piece=s['piece'], status=s['status'], file=s['file'], sha256=s['sha256'], reason=s['reason'],
+                 basis=s.get('basis')) for s in sources]
+
+
+def all99_join(day, sources, problems, lessons_source=None):
     """The ONE per-day table of the 99 entries from the pieces' recorded lists (ALL99_JOIN_SCHEMA). Returns the join
-    document; its sha256 over the inputs (piece, status, file, sha256, reason) binds the reports' reuse."""
+    document; its sha256 over the inputs (join_inputs) binds the reports' reuse. lessons_source: where the scientific
+    teacher's lessons list came from (collect_all99's d.all99_lessons_source), carried as recorded."""
     A99, registry_why = _shared_registry()
-    inputs = [dict(piece=s['piece'], status=s['status'], file=s['file'], sha256=s['sha256'], reason=s['reason'])
-              for s in sources]
+    inputs = join_inputs(sources)
     join_sha256 = sha256_bytes(json.dumps(inputs, sort_keys=True).encode())
     pieces, per, integrity = [], {}, [dict(kind='problem', detail=p) for p in problems]
     known = {layer: group for layer, group, _ in A99.REGISTRY} if A99 else {}
-    class_of = getattr(A99, 'CLASS_OF', None) or {}
     validate = getattr(A99, 'validate', None)
     for s in sources:
         if s['status'] == 'read' and not isinstance(s['doc'], dict):
             s = dict(s, status='integrity', reason='the recorded list is a %s, not a JSON object' % type(s['doc']).__name__)
         summary = dict(piece=s['piece'], for_frankie=s['for_frankie'], status=s['status'], reason=s['reason'],
-                       file=s['file'], sha256=s['sha256'], schema=s['doc'].get('schema') if isinstance(s['doc'], dict) else None)
+                       file=s['file'], sha256=s['sha256'], basis=s.get('basis'),
+                       schema=s['doc'].get('schema') if isinstance(s['doc'], dict) else None)
         if s['status'] == 'integrity':
             integrity.append(dict(kind='piece', piece=s['piece'], detail=s['reason']))
         if s['status'] == 'read':
@@ -1484,14 +1578,22 @@ def all99_join(day, sources, problems):
                     elif r['entry'] in by:
                         duplicates.append(r['entry'])
                     else:
-                        if reach_of(str(r['disposition']), r.get('class'), class_of) == 'unclassified':
+                        # the canonical word and class from the one registry (canonical_of); the piece's word kept
+                        r = dict(r)
+                        r['canonical'], r['klass'], r['settled'], differs = canonical_of(
+                            A99, r['entry'], str(r['disposition']), r.get('shared'), r.get('class'))
+                        if r['klass'] == 'unclassified':
                             unknown_words.add(str(r['disposition']))
+                        if differs:
+                            integrity.append(dict(kind='field', piece=s['piece'], entry=r['entry'], detail=differs))
                         by[r['entry']] = r
-                counts = {}
+                counts, shared_counts = {}, {}
                 for r in by.values():
                     counts[str(r['disposition'])] = counts.get(str(r['disposition']), 0) + 1
+                    shared_counts[str(r['canonical'])] = shared_counts.get(str(r['canonical']), 0) + 1
                 per[s['piece']] = by
-                summary.update(listed=len(by), counts=counts, not_listed=[e for e in known if e not in by],
+                summary.update(listed=len(by), counts=counts, shared_counts=shared_counts,
+                               not_listed=[e for e in known if e not in by],
                                unregistered=unregistered, duplicates=duplicates, unknown_words=sorted(unknown_words),
                                malformed_rows=malformed, limit=s['doc'].get('limit'))
                 for kind, values in (('unregistered entries', unregistered), ('duplicate entries', duplicates)):
@@ -1499,13 +1601,23 @@ def all99_join(day, sources, problems):
                         integrity.append(dict(kind='piece', piece=s['piece'], detail='%s: %s' % (kind, listing(values))))
                 if malformed:
                     integrity.append(dict(kind='piece', piece=s['piece'], detail='%d rows carry no entry id' % malformed))
-                recorded = (s.get('summary') or {}).get('counts') if isinstance(s.get('summary'), dict) else None
-                if isinstance(recorded, dict) and {k: v for k, v in recorded.items() if v} != counts:
-                    summary['summary_vs_list'] = dict(carried_summary=recorded, list=counts)
+                # the carried summary (frankie_box_all99_coverage.summary) counts the piece's own words (counts) and the
+                # shared words (shared_counts): each compared with the same kind of count of the pinned list
+                carried = s.get('summary') if isinstance(s.get('summary'), dict) else {}
+                differ = {}
+                for name, mine in (('counts', counts), ('shared_counts', shared_counts)):
+                    recorded = carried.get(name)
+                    if isinstance(recorded, dict) and {k: v for k, v in recorded.items() if v} != mine:
+                        differ[name] = dict(carried_summary=recorded, list=mine)
+                if differ:
+                    summary['summary_vs_list'] = differ
         pieces.append(summary)
     doc = dict(schema=ALL99_JOIN_SCHEMA, day=str(day), join_sha256=join_sha256, inputs=inputs, pieces=pieces,
+               lessons_source=lessons_source,
                rules=JOIN_RULES, finals_meaning=dict(FINALS), reach_refine=REACH_REFINE,
-               class_source='row class, else frankie_box_all99_coverage.CLASS_OF',
+               class_source='the registry (frankie_box_all99_coverage): the shared field\'s disposition, else LEGACY_WORDS '
+                            'of the piece\'s word, settled by FIXED_WORDS; class = WORD_CLASS of that canonical word; '
+                            'REACH_REFINE reads the piece\'s own word',
                rule='diagnostic only, never knowledge: a recorded arrival is what the piece recorded, not proof that a '
                     'particular equation used the entry; missing lists read as unknown, never zero')
     if A99 is None:
@@ -1525,8 +1637,8 @@ def all99_join(day, sources, problems):
                 not_listed.append(s['piece'])
                 continue
             word = str(r['disposition'])
-            carried.append(dict(piece=s['piece'], for_frankie=s['for_frankie'], disposition=word,
-                                reach=reach_of(word, r.get('class'), class_of), klass=r.get('class') or class_of.get(word),
+            carried.append(dict(piece=s['piece'], for_frankie=s['for_frankie'], disposition=word, canonical=r['canonical'],
+                                reach=reach_of(word, r['klass']), klass=r['klass'], settled=r.get('settled'),
                                 reason=r.get('reason'),
                                 consumer=r.get('consumer'), count=r.get('count'), group=r.get('group')))
         frankie = [c for c in carried if c['for_frankie']]
@@ -1579,9 +1691,10 @@ def all99_join(day, sources, problems):
         entries.append(row)
     for s in pieces:
         if s.get('summary_vs_list'):
-            disagreements.append(dict(entry=None, rule='summary_vs_list', piece=s['piece'], detail='carried summary %s; '
-                                      'the pinned list %s' % (json.dumps(s['summary_vs_list']['carried_summary'], sort_keys=True),
-                                                              json.dumps(s['summary_vs_list']['list'], sort_keys=True))))
+            disagreements.append(dict(entry=None, rule='summary_vs_list', piece=s['piece'], detail=listing(
+                '%s: carried summary %s; the pinned list %s' % (name, json.dumps(v['carried_summary'], sort_keys=True),
+                                                                json.dumps(v['list'], sort_keys=True))
+                for name, v in sorted(s['summary_vs_list'].items()))))
     doc.update(status='built', registry=dict(module='frankie_box_all99_coverage', schema=getattr(A99, 'SCHEMA', None),
                                              registry_sha256=getattr(A99, 'REGISTRY_SHA256', None),
                                              crosswalk_sha256=getattr(A99, 'CROSSWALK_SHA256', None),
@@ -1596,6 +1709,8 @@ def all99_summary(join):
     return dict(schema=ALL99_JOIN_SCHEMA + '_SUMMARY', status=join.get('status'), join_sha256=join.get('join_sha256'),
                 pieces={p['piece']: dict(status=p['status'], listed=p.get('listed'), reason=p['reason'] if p['status'] != 'read' else None)
                         for p in join.get('pieces') or []},
+                lessons_basis=(join.get('lessons_source') or {}).get('basis'),
+                lessons_current=(join.get('lessons_source') or {}).get('current'),
                 finals=join.get('finals'), no_computation=len(join.get('no_computation') or []),
                 disagreements=len(join.get('disagreements') or []), integrity=len(join.get('integrity') or []))
 
@@ -1623,6 +1738,11 @@ def all99_lines(d):
         if p.get('unknown_words'):
             L.append('- %s recorded words this report\'s table does not group (shown as recorded, grouped unclassified): %s.'
                      % (p['piece'], listing(p['unknown_words'])))
+    ls = j.get('lessons_source') or {}
+    if ls:
+        L.append('- The scientific teacher\'s lessons list (%s): %s.' % (
+            'current: the lesson inputs the exchange itself recorded' if ls.get('current') else
+            'MAY BE STALE: not the exchange\'s own record' if ls.get('basis') else 'none', rec(ls.get('origin'))))
     L.append('')
     for p in j['pieces']:
         if p.get('limit'):
@@ -1634,7 +1754,8 @@ def all99_lines(d):
     read = [p['piece'] for p in j['pieces'] if p['status'] == 'read' and p.get('counts') is not None]
     rows = []
     for e in j['entries']:
-        words = {c['piece']: c['disposition'] for c in e['carried']}
+        words = {c['piece']: c['disposition'] if c.get('canonical') in (None, c['disposition']) else
+                 '%s (%s)' % (c['disposition'], c['canonical']) for c in e['carried']}
         rows.append([e['n'], e['entry'], rec(e['role'])] + [words.get(p, 'not listed') for p in read]
                     + [e['final'], listing(e['reached_by'])])
     L += ['### The 99 entries', '']
@@ -1644,8 +1765,10 @@ def all99_lines(d):
     for e in j['entries']:
         if e['computation']:
             continue
-        parts = ['%s: %s (%s)%s' % (c['piece'], c['disposition'], c['reach'],
-                                    (': ' + str(c['reason'])) if c.get('reason') else '') for c in e['carried']]
+        parts = ['%s: %s (%s%s)%s%s' % (c['piece'], c['disposition'],
+                                        '' if c.get('canonical') in (None, c['disposition']) else c['canonical'] + ', ',
+                                        c['reach'], (': ' + str(c['reason'])) if c.get('reason') else '',
+                                        ('; ' + c['settled']) if c.get('settled') else '') for c in e['carried']]
         L.append('- %s (%s; final %s). %s%s' % (
             e['entry'], rec(e['role']), e['final'], '; '.join(parts) if parts else 'No piece listed it',
             ('. Not listed by: ' + listing(e['not_listed_by'])) if e['not_listed_by'] else ''))
@@ -1895,7 +2018,7 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
     timings = dict(read_inputs=round(time.monotonic() - started, 6))
     # the 99 layers: every piece's recorded list read once (pinned files checked), then joined; no recomputation
     collect_all99(d, run_name, Path(run_dir) if run_dir else RUNS / run_name, dict(piece_receipts or {}))
-    d.all99 = all99_join(day, d.all99_sources, d.all99_problems)
+    d.all99 = all99_join(day, d.all99_sources, d.all99_problems, d.all99_lessons_source)
     d.all99_sha256 = d.all99['join_sha256']
     timings['all99_join'] = round(time.monotonic() - started - timings['read_inputs'], 6)
     reports.mkdir(parents=True, exist_ok=True)
@@ -1996,7 +2119,13 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                    inputs=d.inputs, reused=bool(out) and all(o.get('existing') for o in out), reuse_why=reuse_why,
                    index=str(reports / 'index.json'), problems=problems, model_calls=0,
                    # the 99 layers joined for the FRANKIE report (diagnostic, never knowledge): the full per-entry join
-                   all99=d.all99, all99_sha256=d.all99_sha256)
+                   all99=d.all99, all99_sha256=d.all99_sha256,
+                   # what late_pieces_changed re-reads to recompute the join's input set (F9): this build's invocation
+                   all99_invocation=dict(classroom=str(classroom), refused_reason=refused_reason,
+                                         exchange=exchange and str(exchange), exchange_listed=exchange_listed,
+                                         school=school and str(school), school_listed=school_listed,
+                                         run_dir=str(Path(run_dir) if run_dir else RUNS / run_name),
+                                         piece_receipts={k: str(v) for k, v in sorted((piece_receipts or {}).items())}))
     receipt['workflow_report'] = workflow_report(d, receipt)
     receipt_path = reports / 'receipts' / run_name / (day + '.json')
     receipt['receipt_path'] = str(receipt_path)
@@ -2015,6 +2144,149 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
     print('REPORT_NUMBER=%d' % number)
     print(json.dumps(receipt, sort_keys=True), flush=True)
     return receipt if return_receipt else (1 if problems else 0)
+
+
+# ---------------------------------------------------------------------------- late pieces (F9a; Run.reports_stale reads it)
+LATE_PIECES_SCHEMA = 'FRANKIE_DAY_REPORTS_LATE_PIECES_V1'
+# Per piece: a list read (or an integrity failure) is compared on (status, file, sha256, basis); a piece that reported no
+# list on (status, basis) only, because the file it names then is the step/receipt that carries NO list, whose bytes change
+# while a stage waits (a rewritten waiting step receipt is not a late piece). The reason text is reported, never compared.
+JOIN_COMPARED = ('status', 'file', 'sha256', 'basis')
+JOIN_COMPARED_NOT_REPORTED = ('status', 'basis')
+LESSONS_BASIS = ('exchange_record', 'exchange_step_receipt', 'conventional_path')
+INVOCATION_KEYS = ('classroom', 'refused_reason', 'exchange', 'exchange_listed', 'school', 'school_listed', 'run_dir',
+                   'piece_receipts')
+
+
+def reports_receipt_path(reports, run_name, day):
+    """The day reports receipt run() writes: <reports-dir>/receipts/<run>/<day>.json."""
+    return Path(reports) / 'receipts' / str(run_name) / ('%s.json' % day)
+
+
+def late_pieces_changed(receipt, current=None):
+    """Has the 99-layer join's input set changed since the day's reports were built? Pure: reads only, writes nothing,
+    takes no lock, renders nothing, makes no model call.
+
+    receipt  the path of the day reports receipt, reports_receipt_path(reports, run, day)
+             (FRANKIE_EXPERIMENT_DAY_REPORTS_RECEIPT_V1).
+    current  optional dict, keys from INVOCATION_KEYS: what the orchestrator would pass to the reports NOW (classroom,
+             refused_reason, exchange, exchange_listed, school, school_listed, run_dir, piece_receipts {candidates,
+             carried_claims, jev: path}). A key present (even None) replaces the value the receipt recorded in
+             all99_invocation; a key absent keeps the recorded value.
+
+    Returns LATE_PIECES_SCHEMA, always (it never raises for an unreadable input):
+      outcome   'changed' | 'unchanged' | 'unknown'; changed True | False | None (the same, as a boolean or None)
+      reason    one sentence: why this outcome
+      day, run
+      recorded  dict(receipt=dict(path, bytes, sha256), all99_sha256, inputs=[join_inputs rows as recorded])
+      current   dict(all99_sha256, inputs=[join_inputs rows now], lessons_source) or None when unknown
+      differences  [dict(piece, recorded=dict | None, current=dict | None)]: a piece whose compared fields differ
+                (JOIN_COMPARED for a list read or an integrity failure; JOIN_COMPARED_NOT_REPORTED, status and basis,
+                for a piece that reported no list), or that is listed on one side only
+      reasons_only  [dict(piece, recorded, current)]: nothing compared differs, only the reason text or the bytes of a
+                receipt that carries no list (reported, not a change)
+      invocation  dict(values=the invocation used, source={key: 'recorded' | 'current' | 'default'})
+      read      [every file read: kind, path, bytes, sha256] (the receipt first)
+      compared  dict(list=JOIN_COMPARED, not_reported=JOIN_COMPARED_NOT_REPORTED); seconds
+    Semantics: 'changed' when any piece's compared fields differ (a list arrived, went, or its bytes or basis changed; a
+    piece went from not reported to read or integrity), a piece appears or disappears, or the
+    receipt carries no recorded join (reports built before the join existed: a rebuild adds it). 'unchanged' otherwise.
+    'unknown' when the receipt cannot be read or is not a day reports receipt, or the day's inputs cannot be read now
+    (the classroom receipt, the exchange, the school file, an exchange of another day): the error is named in reason;
+    an unknown is never a change and never a zero. The caller decides what an unknown does (Run.reports_stale: no
+    revision, the reason logged); a rebuild itself states every integrity failure it meets."""
+    started = time.monotonic()
+    path = Path(receipt)
+    out = dict(schema=LATE_PIECES_SCHEMA, outcome='unknown', changed=None, reason=None, day=None, run=None,
+               recorded=dict(receipt=dict(path=str(path), bytes=None, sha256=None), all99_sha256=None, inputs=None),
+               current=None, differences=[], reasons_only=[], invocation=None, read=[],
+               compared=dict(list=list(JOIN_COMPARED), not_reported=list(JOIN_COMPARED_NOT_REPORTED)),
+               rule='a pure read of what the reports\' 99-layer join reads; never knowledge; never a gate on the day')
+
+    def done(outcome, reason):
+        out.update(outcome=outcome, changed=dict(changed=True, unchanged=False).get(outcome), reason=reason,
+                   seconds=round(time.monotonic() - started, 6))
+        return out
+    try:
+        raw = path.read_bytes()
+    except OSError as error:
+        return done('unknown', 'the reports receipt %s could not be read (%s: %s)' % (path, type(error).__name__, error))
+    out['recorded']['receipt'].update(bytes=len(raw), sha256=sha256_bytes(raw))
+    out['read'].append(dict(kind='day reports receipt', path=str(path), bytes=len(raw), sha256=sha256_bytes(raw)))
+    try:
+        rec_doc = json.loads(raw)
+    except ValueError as error:
+        return done('unknown', 'the reports receipt %s is not readable JSON (%s)' % (path, error))
+    if not isinstance(rec_doc, dict) or rec_doc.get('schema') != SCHEMA:
+        return done('unknown', 'the file %s is not a %s' % (path, SCHEMA))
+    day, run_name = str(rec_doc.get('day')), str(rec_doc.get('run'))
+    out.update(day=day, run=run_name)
+    join = rec_doc.get('all99') if isinstance(rec_doc.get('all99'), dict) else None
+    recorded_inputs = join.get('inputs') if join else None
+    out['recorded'].update(all99_sha256=rec_doc.get('all99_sha256'), inputs=recorded_inputs)
+    # the invocation: as recorded by the build (all99_invocation; older receipts: the fields the receipt carries), then
+    # replaced key by key by `current`
+    inv = rec_doc.get('all99_invocation') if isinstance(rec_doc.get('all99_invocation'), dict) else None
+    exchange_rec = rec_doc.get('exchange') if isinstance(rec_doc.get('exchange'), dict) else {}
+    fallback = dict(classroom=rec_doc.get('classroom'),
+                    refused_reason=('recorded refusal (its reason is not on this receipt)'
+                                    if (rec_doc.get('built_from') or {}).get('kind') == 'orchestrator refusal' else None),
+                    exchange=exchange_rec.get('path'), exchange_listed=exchange_rec.get('listed'),
+                    school=rec_doc.get('school'), school_listed=rec_doc.get('school_listed'),
+                    run_dir=str(RUNS / run_name), piece_receipts={})
+    values, source = {}, {}
+    for key in INVOCATION_KEYS:
+        if isinstance(current, dict) and key in current:
+            values[key], source[key] = current[key], 'current'
+        elif inv is not None and key in inv:
+            values[key], source[key] = inv[key], 'recorded'
+        else:
+            values[key], source[key] = fallback[key], 'default'
+    values['piece_receipts'] = {k: str(v) for k, v in sorted(dict(values['piece_receipts'] or {}).items()) if v}
+    out['invocation'] = dict(values=values, source=source)
+    if not values['classroom']:
+        return done('unknown', 'no classroom directory is recorded on the receipt or given')
+    if recorded_inputs is None or not isinstance(recorded_inputs, list):
+        return done('changed', 'the reports were built before the 99-layer join existed (the receipt records no join '
+                               'inputs); a revision adds it')
+    d = None
+    try:
+        d = Day(day, values['classroom'], values['refused_reason'], values['exchange'], values['exchange_listed'],
+                values['school'], values['school_listed'], join_only=True)
+        collect_all99(d, run_name, Path(values['run_dir']), values['piece_receipts'])
+    except (SystemExit, Exception) as error:      # noqa: BLE001 - every failure to read is an unknown, named
+        out['read'] += [dict(i) for i in getattr(d, 'inputs', None) or []]
+        return done('unknown', 'the day\'s inputs could not be read now (%s: %s)' % (type(error).__name__, error))
+    out['read'] += [dict(i) for i in d.inputs]
+    now = join_inputs(d.all99_sources)
+    out['current'] = dict(all99_sha256=sha256_bytes(json.dumps(now, sort_keys=True).encode()), inputs=now,
+                          lessons_source=d.all99_lessons_source)
+
+    def keyed(rows):
+        return {str(r.get('piece')): r for r in rows if isinstance(r, dict)}
+
+    def compared(row):
+        if row is None:
+            return None
+        keys = JOIN_COMPARED_NOT_REPORTED if row.get('status') == 'not_reported' else JOIN_COMPARED
+        return {k: row.get(k) for k in keys}
+    before, after = keyed(recorded_inputs), keyed(now)
+    for piece in sorted(set(before) | set(after)):
+        a, b = before.get(piece), after.get(piece)
+        pa, pb = compared(a), compared(b)
+        if pa != pb:
+            out['differences'].append(dict(piece=piece, recorded=pa, current=pb))
+        elif a.get('reason') != b.get('reason') or a.get('sha256') != b.get('sha256'):
+            out['reasons_only'].append(dict(piece=piece, recorded=a.get('reason'), current=b.get('reason'),
+                                            recorded_sha256=a.get('sha256'), current_sha256=b.get('sha256')))
+    if out['differences']:
+        return done('changed', 'the join\'s input set changed since the reports were built: %s' % listing(
+            '%s %s -> %s' % (x['piece'], (x['recorded'] or {}).get('status', 'absent'),
+                             (x['current'] or {}).get('status', 'absent')) for x in out['differences']))
+    return done('unchanged', 'every piece list the join reads has the same status, file, sha256 and basis as when the '
+                             'reports were built%s' % (' (reason text or a no-list receipt differs for %d piece(s); '
+                                                       'reported, not a change)' % len(out['reasons_only'])
+                                                       if out['reasons_only'] else ''))
 
 
 def workflow_report(d, receipt):
@@ -2058,11 +2330,14 @@ def workflow_report(d, receipt):
     return dict(
         schema=PIECE_WORKFLOW_REPORT, piece='day_reports',
         inputs=dict(files=d.inputs, built_from=d.source, exchange_sha256=d.exchange_sha256, meeting_sha256=d.meeting_sha256,
-                    school_sha256=d.school_sha256, school_row=d.school_row),
+                    school_sha256=d.school_sha256, school_row=d.school_row,
+                    all99_invocation=receipt.get('all99_invocation')),
         use=dict(sections_from={k: sorted(set(v) & read) for k, v in sections_from.items()},
                  not_read={k: sorted(set(v) - read) for k, v in sections_from.items() if set(v) - read},
                  dispositions=dispositions, reuse=receipt['reused'], reuse_why=receipt['reuse_why'],
                  all99=all99_summary(d.all99),
+                 # F9b: where the scientific teacher's lessons list came from (LESSONS_BASIS; current or may be stale)
+                 all99_lessons_source=d.all99.get('lessons_source'),
                  withheld=['the answer key\'s content and the exhaustive grade are never in the reports (R10); hashes and '
                            'paths appear only in the Evidence section; the meeting appears only in the Frankie report'],
                  rule='fixed templates per recorded field; no interpretation, ranking, average or pooled value (D37); '
