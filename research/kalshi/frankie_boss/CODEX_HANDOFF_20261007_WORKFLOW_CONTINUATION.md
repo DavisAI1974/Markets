@@ -12,7 +12,8 @@ the non-reentrant held-lane `waiting_school` callback still belongs to CCode.
 Finish remaining Steps 5/6/7 work while CCode continues Step 8. Step 5's affected-only
 standalone scientific successor was independently reviewed and published at `2c332df`;
 Step 7's Jev CPU continuation was independently reviewed and published at `523336f`.
-Step 6's exact retained state/archive intake and owner import passed independent source review;
+Step 6's exact retained state/archive intake and owner import were independently reviewed
+and published at `7f08d76`;
 fresh GitHub model work must refuse until a durable exact owner/run admission contract
 exists. The configured local owner route already exists; recovery receipts do not supply
 fresh compute admission. Jev's host policy is settled: a selected worker subset of the
@@ -29,15 +30,30 @@ applicable raw and derived changes and as-of states must form the fullest cohere
 timeline with exact event/receive clocks, original causal order and actual availability.
 No future-dependent backfill or dense empty-nanosecond rows. Both teachers and anyone
 influencing Frankie use this same evidence within existing role/privacy/answer boundaries.
-The shared-reader agent is implementing actual consumers and the versioned native producer
-policy `FRANKIE_SHARED_MARKET_TIMELINE_V1` for explicit new requests, resolving review
-findings on exact row identity/availability, complete spools/as-of states and actual
-teacher/classroom readers before final independent review. Older retained
-policies/identities remain untouched. This source authorization permits neither launches
-nor arbitrary producer activation; wiring and independent review are still underway.
+The shared timeline core and actual teacher/classroom/search bridges were independently
+reviewed and published at `d6af990c875893782b55cd9d236deefb3642e7f8`. Read
+`SHARED_MARKET_TIMELINE_20261007.md`. The core carries exact raw/ROOT/native changes,
+cross-instrument last-observed states and external publications; classroom performs a
+full source read and uses complete existing anchor pictures. Its raw teacher context
+is exposed to two internal equation objects; that is not proof of all user-facing
+teacher seats consuming all fields. Search retains its original F_LAST mathematical
+view. The new policy `FRANKIE_SHARED_MARKET_TIMELINE_V1` preserves older retained
+policies/identities rather than upgrading them in place.
 
-No all-99/live ingestion claim: the registry's 99 entries comprise raw 6, calculation 49,
-control 23, sealed knowledge 9, disabled 2 and outputs 10. Legacy normal ROOT defaults
+The separate Jev/Granite adviser bridge is ACTIVE with the remaining-consumers agent;
+the CCode-review agent's independent review is pending. Do not mark it complete from
+core publication. CCode's Step 8 new-request/caller and retained fast-path wiring has
+not returned; the latest checked CCode branch remains `954f3f356aff41fd0bccb483e1cfdcb539efd9ef`.
+Keep exact-cutoff adviser context distinct from the full-history core reader: a source-bound
+interface/report is not evidence that a model experienced every historical picture.
+Exact scientific/BOSS exchange field transport, native representation/
+checkpoint consumption and contributing-cursor provenance for completed second aggregates
+remain unproven. Completed evidence is not backfilled into live observations. No runtime
+launch, arbitrary producer activation or all-agent completion follows from source approval.
+
+No all-99/live ingestion claim: the retained crosswalk's 99 entries comprise raw 6,
+calculation/clock 49, control/knowledge/arm 23, sealed answers 9, disabled shadows 2 and
+append-only outputs 10. Legacy normal ROOT defaults
 bedrock off; native selection requires source-bound `bedrock: true`. Some completed native
 evidence remains materialized/referenced only; historical knowledge has selected typed
 consumers. Shared input receipt is not proof every field altered target mathematics.

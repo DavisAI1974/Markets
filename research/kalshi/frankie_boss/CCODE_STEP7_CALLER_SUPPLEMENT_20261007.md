@@ -4,8 +4,9 @@ This is the narrow caller contract for the source-built Jev CPU route. It supple
 the existing Step 8 assignment without transferring ownership of its recovery code.
 The Jev source received independent source review, including comparison evidence,
 completion policy and isolated peer transport. It has not been executed or deployed.
-At preparation these changes are in the shared integration working tree; the coordinating
-agent publishes the commit. Read the published integration tip before wiring the caller.
+The reviewed CPU continuation was published at `523336f`. Read the latest published
+integration tip before wiring the caller; later shared-market context additions retain
+the same owner, request and caller boundaries.
 
 ## Ownership and required call
 

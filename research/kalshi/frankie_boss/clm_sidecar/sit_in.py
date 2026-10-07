@@ -384,6 +384,12 @@ def material_text(material):
     if material['material'].get('experiment_directive') is not None:
         parts.append('===== GOVERNED EXPERIMENT DIRECTIVE =====\n' +
                      json.dumps(material['material']['experiment_directive'], sort_keys=True))
+    if material['material'].get('shared_market_context') is not None:
+        if LOCAL is None:
+            raise ValueError('shared raw market context requires its governed owner-local CPU source binding')
+        import frankie_box_adviser_market as AM
+        parts.append('===== SHARED MARKET PICTURE AT THE ORIGINAL CUTOFF (NO ANSWERS OR GRADES) =====\n'
+                     + AM.text(material['material']['shared_market_context']))
     if material.get('survivors'):
         parts.append('===== SEARCH SURVIVORS SO FAR (%s, sha256 %s) =====\n%s' % (
             material['survivors'].get('path'), material['survivors'].get('sha256'),

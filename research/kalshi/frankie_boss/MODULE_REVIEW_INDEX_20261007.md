@@ -11,17 +11,23 @@ changes, not native training, complete knowledge interpretation or runtime proof
 Steps 5/6/7 remain the immediate priority. The independently reviewed affected-only
 scientific successor was published at `2c332df`, and same-held-lane Jev CPU source at
 `523336f`. Jev's exact runtime/model pins and allocation/budgets remain pending. Granite
-retained state/archive recovery and import passed independent source review; fresh GitHub model
+retained state/archive recovery and import were reviewed and published at `7f08d76`; fresh GitHub model
 work must refuse pending a durable exact owner/run admission contract. CCode owns
 remaining Step 8 and the ROOT/Jev/school callers assigned in the published `2f0d452`
 addendum; see `CCODE_HANDOFF_STEP8_REMAINDER_20261007.md`. `waiting_school` must stay
 pending until his non-reentrant owner callback returns real completed successors.
 
-Shared-market picture implementation is active: calculations may run out of order, but
+Shared-market core and actual teacher/classroom/search bridges were independently reviewed
+and published at `d6af990`; see `SHARED_MARKET_TIMELINE_20261007.md`. Calculations may run out of order, but
 Frankie, both teachers and other influencing readers require the same fullest coherent
 raw/derived market picture with exact causal order and availability within role/answer
-walls. Its author is resolving exact identity/availability checks, spool/as-of integration
-and actual teacher/classroom consumers before final independent review. New explicit
+walls. Core source now provides exact raw/ROOT/native changes, cross-instrument snapshots,
+external publication state, complete classroom source reading with untrimmed anchor
+pictures, and the unchanged F_LAST search view. This does not prove every user-facing
+teacher seat or native model consumed every field. Separate Jev/Granite adviser wiring is
+active, with independent review pending; CCode's caller integrations have not returned.
+Completed aggregates' contributing-cursor provenance and broader scientific/native
+consumption remain open as documented. New explicit
 `FRANKIE_SHARED_MARKET_TIMELINE_V1` source policy does not relabel old ROOTs or authorize
 execution. No all-99 or full-consumer completion is established:
 the registry mixes raw/calculation/control/knowledge/disabled/output roles, legacy ROOT

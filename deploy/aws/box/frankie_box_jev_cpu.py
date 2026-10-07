@@ -55,6 +55,8 @@ def sealed_claims(path, seal_path):
         raise ValueError('Jev claims require a consuming-owner blind seal')
     if pinned(seal['claims']) != path or pinned(seal['material']) is None:
         raise ValueError('Jev seal names another claim object')
+    if seal['owner'].get('shared_market_context') is not None:
+        pinned(seal['owner']['shared_market_context'])
     claims = json.loads(path.read_bytes())
     state = json.loads(Path(seal['state_path']).read_bytes())
     if (claims.get('day') != seal['owner']['day'] or claims.get('stamp') != seal['owner']['stamp']
@@ -217,12 +219,29 @@ def _run(request, request_path, out, brain, jev_brain):
         raise ValueError('Jev science must use this owning day search')
     identity = dict(request, request_pin=pin(request_path), client=pin(SI.__file__), helper=pin(__file__),
                     transport=pin(transport.__file__), classroom_session=classroom.get('stand_ins'))
-    retain_json(out / 'owner.json', identity)
     stopped = []
     signal.signal(signal.SIGTERM, lambda *_: stopped.append('signal'))
     def check_save():
         if stopped or Path(request['save_marker']).is_file():
             raise SystemExit(75)
+    shared_context = None
+    if classroom.get('shared_market') is not None:
+        import frankie_box_adviser_market as AM
+        visible = attachment['dipole_classroom']
+        bound = visible['binding']
+        adviser = AM.AdviserMarketContext(classroom['shared_market']['identity'], day=request['day'],
+            source_hash=bound['source_hash'], as_of=bound['as_of'], through_cursor=bound['through_cursor'])
+        context_path = out / 'shared-market-context.json'
+        if context_path.is_file():
+            shared_context = json.loads(context_path.read_bytes())
+            if shared_context['identity'] != adviser.reader.identity or shared_context['scope'] != adviser.scope:
+                raise ValueError('Jev retained shared market context belongs to another original cutoff')
+            AM.text(shared_context)
+        else:
+            shared_context = adviser.read(check_save=check_save)
+            retain_json(context_path, shared_context)
+        identity.update(shared_market_context=pin(context_path), adviser_market_reader=pin(AM.__file__))
+    retain_json(out / 'owner.json', identity)
     state_path = out / 'state.json'
     seal_path, claims_path = out / 'claims-seal.json', out / 'claims.json'
     server = None
@@ -280,6 +299,8 @@ def _run(request, request_path, out, brain, jev_brain):
     material = dict(schema='JEV_DAY_MATERIAL_V1', day=request['day'], stamp=request['stamp'], day_role='discovery',
                     material=dict(material_pin, source='governed classroom request', **attachment), survivors=None,
                     unavailable=[dict(item='survivors', reason='only survivors already in the governed classroom material apply')])
+    if shared_context is not None:
+        material['material']['shared_market_context'] = shared_context
     material_file = out / 'material.json'
     retain_json(material_file, material)
     config_path = out / 'client-config.json'

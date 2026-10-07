@@ -1,0 +1,48 @@
+{
+  "schema": "CODEX_STOPPED_WIP_CAPTURE_V1",
+  "base_commit": "d6af990c875893782b55cd9d236deefb3642e7f8",
+  "captured_at": "2026-10-07T03:23:00-04:00",
+  "agents": "stopped; do not resume until user directs",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 6567,
+      "sha256": "ba35bd6434d7ae38b96b1106b500fabac9ef87efe4ffafd3a40fb16c8c5531a1"
+    },
+    {
+      "path": "deploy/aws/box/frankie_box_adviser_market.py",
+      "bytes": 5577,
+      "sha256": "842f1f84cd8e496c719eb09f454533cb9c1d24af10b7e28e466270dc0317542e"
+    },
+    {
+      "path": "deploy/aws/box/frankie_box_jev_cpu.py",
+      "bytes": 28298,
+      "sha256": "d9e1fc68c6bd51e11e0bfe488e0dc839aebd838e630e9b38b7c6b20aec34e7b7"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/clm_sidecar/sit_in.py",
+      "bytes": 43019,
+      "sha256": "7a36ed05876c8b2acbaecda6c92a0ff72eb1df6e4e08cebc7977ccdea7e7f276"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/CCODE_STEP7_CALLER_SUPPLEMENT_20261007.md",
+      "bytes": 6909,
+      "sha256": "a13a1144c0353ebeff0338e1a9e9c3fc1b2ef12b8cbb212cdb2b7b5232c1c548"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/CODEX_HANDOFF_20261007_WORKFLOW_CONTINUATION.md",
+      "bytes": 13899,
+      "sha256": "37a945e7bb0e90084e908e458bf23286d3bbf3da4137ef0dc02168faf19e94ac"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/CURRENT_WORKFLOW_SETUP_20261007.md",
+      "bytes": 9790,
+      "sha256": "fa985b3dd7a198b1019165059dca2691a1d4ce80c545b17c350d166e4e497b5d"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/MODULE_REVIEW_INDEX_20261007.md",
+      "bytes": 8706,
+      "sha256": "690f4246f1106b141a92a361db857667fe1cece6eccc58c281d64d52b2ce3334"
+    }
+  ]
+}
