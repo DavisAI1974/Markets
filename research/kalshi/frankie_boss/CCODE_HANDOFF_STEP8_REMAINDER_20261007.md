@@ -41,7 +41,10 @@ in the assignment. Do not copy their unfinished files from a historical branch.
    worker handover/restart and Linux admission. Outside-scope entries remain untouched;
    a predecessor can make an eligible day wait but cannot widen its authorization.
 4. Add the small predecessor/teacher-producer/school consumer integrations listed in the
-   assignment. Fetch Codex's final school helper before wiring its call.
+   assignment. Fetch Codex's final school helper and `SCHOOL_RECOVERY_CONTINUATION_20261007.md`
+   before wiring its call; include the exact non-reentrant `waiting_school` owner recovery
+   and finished/report currentness checks. The assignment grants only that narrow dispatcher
+   invocation branch in addition to your `Run` methods.
 5. Review your full diff and source interfaces, commit/push `[skip ci]`, and return the
    exact tip plus `CCODE_STEP8_REMAINDER_RETURN_20261007.md`. Codex's independent reviewer
    checks the actual completed return; do not claim integration or runtime success yourself.

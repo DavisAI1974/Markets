@@ -66,6 +66,8 @@ Own the entire boundary rather than adding exit-code-only handling:
 - Carry the same owner binding into the independent class process. The parent must wait
   for a saved-child acknowledgment bound to the exact marker, child, booking and attempt.
   A SIGTERM exception, child disappearance or missing receipt is not an acknowledgment.
+  Bind acknowledgment to the current immutable save-request identity/generation so a
+  previous save's marker or acknowledgment cannot satisfy a later save.
 - Integrate the CPU ledger's dead-process reaping with explicit retained ownership. Do not
   let another day claim saved CPUs, and do not silently rebook a missing live classroom
   slot. Recovery of a saved owner must reconcile the named retained CPU set and its source.
@@ -79,6 +81,8 @@ Own the entire boundary rather than adding exit-code-only handling:
 
 `Run.start`/`Run.kick` currently operate global queue workers. Bind admission and dispatch
 to the exact authorized run/day scope, including class work and restart/recovery paths.
+Compare an already-running worker's persisted run/day/plan scope before returning
+"already running"; the process-lock fast path must not bypass scope enforcement.
 A one-day request must not admit unrelated pending days from this or another run. Preserve
 FIFO within the eligible scope, retained owner claims and submitted randomized day order.
 Do not delete unrelated queue entries or expand the authorized scope on restart. Carry the
@@ -101,6 +105,17 @@ same exact scope through the Linux controller route where applicable. No second 
   child's `successor` and `correction` fields into the run's school receipt. Do not swallow
   corrupt bindings. Fetch and read the final helper/report before implementing this call.
   Coordinate if the interface changes; do not edit the school owner implementation.
+- The completed source contract is in `SCHOOL_RECOVERY_CONTINUATION_20261007.md`.
+  `successor_dispatch.rebuild_dependents` returns `waiting_school` with the exact recovery
+  intent. Wire existing voice then school under that owner/day/held lane without recursive
+  successor draining, preserving save/currentness/source/allocation checks. Then retry
+  dependent recovery and deliver the checked school correction to original-session requests.
+  CCode owns the narrow `drain` waiting-school invocation branch in
+  `frankie_box_successor_dispatch.py` for this integration, plus the matching `Run` methods.
+  The rest of that module and the school owner/review implementation remain Codex's.
+  Guard finished/report reuse against superseded school content; retain old report artifacts.
+  Fetch the actual published school source and report before wiring; do not implement from
+  this summary alone or describe the waiting state as completed recovery.
 
 ## Ownership
 

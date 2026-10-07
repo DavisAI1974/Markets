@@ -429,8 +429,111 @@ def _validate_exchange_inputs(receipt, before, after, brain, records):
         raise ValueError('exchange successor learner view differs from the full artifact blind-wall projection')
 
 
+def _validate_school_correction(body, before, after):
+    receipt = body['school_transition']
+    operation = receipt['operation']
+    if (receipt.get('schema') != 'FRANKIE_SCHOOL_SUCCESSOR_RECEIPT_V1'
+            or receipt.get('status') != 'complete'
+            or receipt.get('owner') != 'frankie_box_school_knowledge.rebuild_successor'
+            or operation.get('schema') != 'FRANKIE_SCHOOL_SUCCESSOR_OPERATION_V1'
+            or receipt.get('operation_sha256') != digest(canonical(operation))
+            or body['decision'] != 'checked_dependency_rebuild' or body['scopes'] != [[]]
+            or body['written_by'] != 'school' or body['publication'] != dict(day=operation['day'], stage='school')
+            or receipt['original_school'] != body['original'] or receipt['school'] != body['replacement']
+            or receipt['original_school'] != operation['original_school']
+            or receipt['source_corrections'] != operation['source_corrections']
+            or not receipt['source_corrections'] or before == after
+            or before.get('schema') != 'FRANKIE_SCHOOL_KNOWLEDGE_V1'
+            or any(before.get(k) != after.get(k) for k in before if k != 'sections')
+            or set(before) != set(after) or before['day'] != operation['day'] or before['run'] != operation['run']
+            or receipt.get('model_calls') != 0 or receipt.get('scientific_retests') != 0):
+        raise ValueError('school correction differs from its exact retained owner rebuild')
+    for pin in [receipt['original_school'], receipt['school']] + receipt['source_corrections']:
+        if (not isinstance(pin.get('path'), str) or not pin['path'] or type(pin.get('bytes')) is not int
+                or pin['bytes'] < 0 or not re.fullmatch('[0-9a-f]{64}', str(pin.get('sha256')))):
+            raise ValueError('school correction lacks an exact artifact witness')
+
+
+def _school_sources(receipt, records):
+    """Resolve this operation's declared checked links, never corrections published later."""
+    supplied = receipt['source_corrections']
+    by_hash = {r['record']['sha256']: r for r in records.values()}
+    if (len({p['sha256'] for p in supplied}) != len(supplied)
+            or any(p['sha256'] not in by_hash or p['bytes'] != by_hash[p['sha256']]['record']['bytes'] for p in supplied)):
+        raise ValueError('school rebuild source is absent from checked owner knowledge')
+    selected = {by_hash[p['sha256']]['original']['sha256']: by_hash[p['sha256']] for p in supplied}
+    if any(r['body']['written_by'] not in ('scientific_teacher', 'teacher_exchange') for r in selected.values()):
+        raise ValueError('school rebuild needs checked scientific/exchange sources')
+    return selected
+
+
+def _school_source_ancestry(receipt, records):
+    selected = _school_sources(receipt, records)
+    ancestors = set(selected)
+    for record in selected.values():
+        transition = record['body'].get('exchange_transition')
+        if transition is not None:
+            ancestors.update(_exchange_source_ancestry(transition, records))
+    while True:
+        earlier = {sha for sha, record in records.items()
+                   if record['replacement']['sha256'] in ancestors} - ancestors
+        if not earlier:
+            return ancestors
+        ancestors.update(earlier)
+
+
+def _validate_school_inputs(receipt, before, after, records, brain=None):
+    import frankie_box_school_knowledge as SK
+    selected = _school_sources(receipt, records)
+    meeting = None
+    if receipt['operation']['meeting_receipt'] is not None:
+        meetings = [i for i in after['sections']['exchange']['items'] if i['name'] == 'discussion (meeting)']
+        if len(meetings) != 1:
+            raise ValueError('school successor lost its complete replacement discussion')
+        meeting = meetings[0]
+    expected, consumed = SK._successor_projection(before, selected, meeting)
+    if expected != after or consumed != {p['sha256'] for p in receipt['source_corrections']}:
+        raise ValueError('school successor changed unaffected knowledge or its exact source selection')
+    if brain is not None:
+        import frankie_box_brain as BR
+        operation = receipt['operation']
+        if Path(operation['brain']).resolve() != Path(brain).resolve():
+            raise ValueError('school successor belongs to another brain owner')
+        owned = [row for row in BR._school_index(brain)['rows']
+                 if row['day'] == operation['day'] and row['run'] == operation['run']]
+        if len(owned) != 1:
+            raise ValueError('school successor lacks its original owner index row')
+        cursor = owned[0]['sha256']
+        while cursor in records:
+            cursor = records[cursor]['replacement']['sha256']
+        if cursor != receipt['original_school']['sha256']:
+            raise ValueError('school successor does not extend its indexed owner chain')
+        if meeting is not None:
+            views = [i for i in after['sections']['exchange']['items'] if i['name'] == 'exchange_frankie_view']
+            if len(views) != 1:
+                raise ValueError('school successor lost its owning exchange')
+            # Publication requires the actual model completion on its owner, not a copied digest.
+            source = next(r['body']['replacement'] for r in selected.values()
+                          if r['replacement']['sha256'] == views[0]['source_sha256'])
+            found = BR.read_meeting_for_exchange(source['path'])
+            if (found['status'] != 'complete' or found['record'] != meeting['content']
+                    or found['path'] != meeting['path']
+                    or any(found['receipt']['record'][k] != meeting[k] for k in ('bytes', 'sha256'))
+                    or json.loads(_read_pin(operation['meeting_receipt'])) != found['receipt']):
+                raise ValueError('school successor discussion differs from its completed owner receipt')
+        for section in after['sections'].values():
+            for item in section['items']:
+                if item.get('inline'):
+                    current_document(item, records, brain, day=operation['day'], stage='school')
+
+
 def _validate_correction(body, before, after):
     """Validate a declared scientific-owner decision, not decide whether the science is true."""
+    if body.get('school_transition') is not None:
+        if body.get('schema') != SCHEMA or not body.get('reason') or not body.get('evidence'):
+            raise ValueError('school correction requires its checked source evidence')
+        _validate_school_correction(body, before, after)
+        return
     if body.get('exchange_transition') is not None:
         if body.get('schema') != SCHEMA or not body.get('reason') or not body.get('evidence'):
             raise ValueError('exchange correction requires its checked source evidence')
@@ -511,7 +614,7 @@ def _save_object(brain, raw):
 
 
 def record_correction(brain, *, original, replacement, scopes, decision, reason, evidence, publication_day,
-                      owner_transition=None, exchange_transition=None):
+                      owner_transition=None, exchange_transition=None, school_transition=None):
     """Publish the scientific owner's completed decision. This performs no research or retest.
 
     Arguments are exact path/bytes/sha256 witnesses. The original must already be legal brain
@@ -536,6 +639,12 @@ def record_correction(brain, *, original, replacement, scopes, decision, reason,
                 replacement={k: replacement[k] for k in ('path', 'bytes', 'sha256')},
                 scopes=scopes, decision=decision, reason=reason, evidence=evidence,
                 publication=dict(day=str(publication_day), stage='lessons'))
+    if sum(value is not None for value in (owner_transition, exchange_transition, school_transition)) > 1:
+        raise ValueError('one correction cannot have two computation owners')
+    if school_transition is not None:
+        receipt = json.loads(_read_pin(school_transition['receipt']))
+        body.update(written_by='school', school_transition=receipt,
+                    publication=dict(day=str(publication_day), stage='school'))
     if exchange_transition is not None:
         if owner_transition is not None:
             raise ValueError('one correction cannot have two computation owners')
@@ -562,7 +671,7 @@ def record_correction(brain, *, original, replacement, scopes, decision, reason,
         raise ValueError('correction publication traverses a symbolic link')
     with (directory / 'publish.lock').open('a+') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        if exchange_transition is not None:
+        if exchange_transition is not None or school_transition is not None:
             import frankie_box_lane_state as LS
             existing = corrections(LS.knowledge_roots(brain))
         else:
@@ -570,18 +679,26 @@ def record_correction(brain, *, original, replacement, scopes, decision, reason,
         legal = {e.get('sha256') for _, m, _ in BR.entries_before(brain, 'snapshot')
                  for e in m.get('entries', []) if e.get('include')}
         legal.update(r['body']['replacement']['sha256'] for r in existing.values())
+        if school_transition is not None:
+            legal.update(r['sha256'] for r in BR._school_index(brain)['rows']
+                         if r['day'] == str(publication_day) and r['run'] == before['run'])
         if original['sha256'] not in legal:
             raise ValueError('correction original is not published learner knowledge')
         prior = existing.get(original['sha256'])
         if prior and prior['body'] != body:
             raise ValueError('competing correction needs research; never select by recency')
-        if exchange_transition is not None:
+        if exchange_transition is not None or school_transition is not None:
             if prior is None:
-                _validate_exchange_inputs(receipt, before, after, brain, existing)
+                if school_transition is not None:
+                    _validate_school_inputs(receipt, before, after, existing, brain)
+                else:
+                    _validate_exchange_inputs(receipt, before, after, brain, existing)
             # A transported exchange must carry the exact scientific decisions it uses.
             # Preserve original owner bodies/bytes and only their public lesson objects;
             # private frozen selections, evidence and the full Jev exchange stay owner-local.
-            for sha in sorted(_exchange_source_ancestry(receipt, existing)):
+            ancestry = (_school_source_ancestry(receipt, existing) if school_transition is not None
+                        else _exchange_source_ancestry(receipt, existing))
+            for sha in sorted(ancestry):
                 source = existing[sha]
                 for item in (source['original'], source['replacement']):
                     _save_object(brain, _read_pin(item))
@@ -644,6 +761,9 @@ def corrections(roots):
     for record in found.values():
         if record['body'].get('exchange_transition') is not None:
             _exchange_sources(record['body']['exchange_transition'], found)
+        if record['body'].get('school_transition') is not None:
+            _validate_school_inputs(record['body']['school_transition'],
+                json.loads(_read_pin(record['original'])), json.loads(_read_pin(record['replacement'])), found)
     return found
 
 
@@ -678,6 +798,9 @@ def _ancestors(sha, records):
                     transition = record['body'].get('exchange_transition')
                     if transition is not None:
                         source_ancestors.update(_exchange_source_ancestry(transition, records))
+                    school_transition = record['body'].get('school_transition')
+                    if school_transition is not None:
+                        source_ancestors.update(_school_source_ancestry(school_transition, records))
                 break
     # Only provenance of the exact checked source links used by this rebuilt exchange
     # is exempt. A later correction to their replacements is still a stale dependency.
@@ -743,10 +866,23 @@ def current_document(document, records, brain, *, day, stage):
     schema = content.get('schema') if isinstance(content, dict) else None
     changed = False
     # Transform ONLY explicit copied-source containers, never computed result structures.
-    if schema in ('FRANKIE_STAGE_KNOWLEDGE_V1', 'FRANKIE_SCHOOL_KNOWLEDGE_V1'):
+    if schema == 'FRANKIE_SCHOOL_KNOWLEDGE_V1':
+        # The school owner alone replaces copied sources, projections and discussions.
+        # A reader cannot repair the container merely by rewriting its nested hashes.
+        for section in content['sections'].values():
+            for item in section['items']:
+                if item.get('source_sha256') in records:
+                    raise ValueError('school projected source changed; explicit owner school successor required')
+                if item.get('inline') and item.get('sha256'):
+                    corrected = current_document(item, records, brain, day=day, stage=stage)
+                    if corrected['sha256'] != item['sha256']:
+                        raise ValueError('school source changed; explicit owner school successor required')
+                    applied.extend(corrected.get('corrections_applied') or [])
+                elif item.get('sha256') in records:
+                    raise ValueError('school pointer changed; explicit owner school successor required')
+    elif schema == 'FRANKIE_STAGE_KNOWLEDGE_V1':
         content = json.loads(json.dumps(content))
-        groups = ([content.get('sources') or []] if schema == 'FRANKIE_STAGE_KNOWLEDGE_V1'
-                  else [s.get('items') or [] for s in (content.get('sections') or {}).values() if s])
+        groups = [content.get('sources') or []]
         for group in groups:
             for item in group:
                 if item.get('inline') and 'content' in item and item.get('sha256'):

@@ -17,10 +17,13 @@ commits and `CCODE_STEP8_REMAINDER_RETURN_20261007.md` for independent agent rev
 integration. Source-only checks and `[skip ci]`; no execution or scientific choices.
 
 Handoff: `CCODE_HANDOFF_STEP8_REMAINDER_20261007.md`.
+School integration supplement: read `SCHOOL_RECOVERY_CONTINUATION_20261007.md` and the
+updated assignment section 4 for the exact `waiting_school`/non-reentrant voice-school
+caller contract. Its narrow dispatcher invocation branch is included in CCode ownership.
 The previous assignment follows as history; its protected-file allocation is superseded
 only by the exact expanded ownership in the new assignment.
 
-## ACTIVE CCODE ASSIGNMENT — Step 8A CPU controller lifetime and launch routing
+## HISTORICAL CCODE ASSIGNMENT — Step 8A CPU controller lifetime and launch routing
 
 Greg, 2026-10-06 23:30–23:33 ET: Codex should fix the sixth-return defects directly,
 then assign Step 8 or part of it to CCode here. **Those named source fixes are now built

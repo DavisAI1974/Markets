@@ -253,15 +253,24 @@ def prepare_dependents(run, day, value, target, correction):
             selected = dict(original_inputs=inputs, original_view=view,
                             source_corrections=[chains[k] for k in sorted(chains)], original_receipt=exchange,
                             original_voice=run.receipt('voice', day))
+    import frankie_box_school_knowledge as SK
+    retained_school = SK.retained_school(brain, day)
+    school = None
+    if retained_school is not None and (retained_school['status'] == 'requires_successor' or
+            (selected and selected['original_view']['sha256'] in R.references(retained_school['content']))):
+        if retained_school['content']['run'] != value['owner']['run']:
+            raise ValueError('dependent school belongs to another owner run')
+        school = dict(original_school=retained_school['original'], row=retained_school['row'],
+                      original_receipt=run.receipt('school', day))
     sessions = value['request'].get('learner_requests') or []
-    if sessions:
+    if sessions and school is None:
         from research.kalshi.frankie_boss import frankie_principal_adapter as PA
         for session in sessions:
             # Canonical files and attested original session are checked before durable intent.
             PA.select_knowledge_corrections(original_request=session['request'], original_response=session['response'],
                                             brain=brain, correction_sha256s=[p['sha256'] for p in available])
     saved = dict(schema='FRANKIE_DEPENDENTS_INTENT_V1', **binding, exchange=selected,
-                 available_corrections=available, learner_sessions=sessions)
+                 available_corrections=available, learner_sessions=sessions, school=school)
     once(path, saved)
     return saved
 
@@ -331,6 +340,45 @@ def rebuild_dependents(run, day, value, target, correction):
                 elif not voice or voice.get('invalidated_by') != exchange_publication or voice.get('status') != 'waiting':
                     raise ValueError('voice receipt changed outside this dependent invalidation')
         voice_invalidation = once(voice_path, expected)
+    school_recovery = None
+    if intent.get('school') is not None:
+        import frankie_box_school_knowledge as SK
+        selected_school = intent['school']
+        invalidation_path = target / 'school-invalidation.json'
+        expected = dict(intent=pin(target / 'dependents-intent.json'),
+                        original_school=selected_school['original_school'],
+                        original_receipt=selected_school['original_receipt'], exchange_publication=exchange_publication)
+        if not invalidation_path.exists():
+            original_receipt = selected_school['original_receipt']
+            current = run.receipt('school', day)
+            if original_receipt and original_receipt.get('status') in ('done', 'reused'):
+                if current == original_receipt:
+                    run.record('school', day, 'waiting', reason='checked source successor requires owner school recovery',
+                               original_receipt=original_receipt, invalidated_by=expected)
+                elif not current or current.get('invalidated_by') != expected:
+                    raise ValueError('school receipt changed outside its exact dependent invalidation')
+        invalidation = once(invalidation_path, expected)
+        retained = SK.retained_school(brain, day)
+        if retained is None or retained['row'] != selected_school['row']:
+            raise ValueError('dependent school lost its original indexed owner')
+        if retained['status'] != 'complete':
+            # The owning coordinator must resume its existing voice -> school steps without
+            # recursively draining this inbox. Never deliver a stale school to the learner.
+            return dict(status='waiting_school', reason='owner meeting/school successor must complete before dependent delivery',
+                        recovery_intent=invalidation, stages=['voice', 'school'])
+        records = R.corrections([brain])
+        cursor, links = selected_school['original_school']['sha256'], []
+        while cursor in records:
+            record = records[cursor]
+            if record['body'].get('school_transition') is None:
+                raise ValueError('dependent school lost its explicit owner transition')
+            links.append(record['record'])
+            checked[record['record']['sha256']] = record['record']
+            cursor = record['replacement']['sha256']
+        if not links or cursor != retained['original']['sha256']:
+            raise ValueError('dependent school is not its exact checked successor')
+        school_recovery = once(target / 'school-recovery.json', dict(invalidation=invalidation,
+            original=selected_school['original_school'], replacement=retained['original'], corrections=links))
     native_path = target / 'native-dependents-intent.json'
     if intent['learner_sessions']:
         from research.kalshi.frankie_boss import frankie_principal_adapter as PA
@@ -373,6 +421,8 @@ def rebuild_dependents(run, day, value, target, correction):
         publication=intent['publication'], intent=pin(target / 'dependents-intent.json'),
         computation=pin(target / 'dependencies-result.json'), exchange_publication=exchange_publication,
         voice_invalidation=voice_invalidation, native_intent=pin(native_path), native_results=receipts)
+    if intent.get('school') is not None:
+        completed['school_recovery'] = school_recovery
     once(target / 'dependents.json', completed)
     return completed
 
@@ -416,6 +466,29 @@ def dependent_receipt(path, value):
             raise ValueError('dependent exchange correction is not its checked published record')
     elif saved['exchange_publication'] is not None or saved['voice_invalidation'] is not None:
         raise ValueError('dependent receipt invented an exchange publication')
+    if intent.get('school') is not None:
+        recovered = read(saved['school_recovery'])
+        if (saved['school_recovery'] != pin(target / 'school-recovery.json')
+                or recovered['invalidation'] != pin(target / 'school-invalidation.json')
+                or recovered['original'] != intent['school']['original_school']):
+            raise ValueError('dependent completion lacks the exact school recovery intent')
+        invalidation = read(recovered['invalidation'])
+        if invalidation != dict(intent=saved['intent'], original_school=recovered['original'],
+                original_receipt=intent['school']['original_receipt'], exchange_publication=saved['exchange_publication']):
+            raise ValueError('dependent school recovery changed its original owner binding')
+        read(recovered['original'])
+        read(recovered['replacement'])
+        records = R.corrections([value['owner']['brain']])
+        cursor = recovered['original']['sha256']
+        for pin_record in recovered['corrections']:
+            record = records.get(cursor)
+            if not record or record['record'] != pin_record or record['body'].get('school_transition') is None:
+                raise ValueError('dependent completion lacks its checked school successor chain')
+            cursor = record['replacement']['sha256']
+        if not recovered['corrections'] or cursor != recovered['replacement']['sha256']:
+            raise ValueError('dependent school completion changed its replacement')
+    elif saved.get('school_recovery') is not None:
+        raise ValueError('dependent receipt invented a school recovery')
     if intent['learner_sessions']:
         from research.kalshi.frankie_boss import frankie_principal_adapter as PA
     for index, (selection, result, original) in enumerate(zip(native['selections'], saved['native_results'], intent['learner_sessions'])):

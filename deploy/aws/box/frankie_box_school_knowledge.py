@@ -251,6 +251,183 @@ def build(day, run, report_number, classroom, exchange_view, exchange_listed, le
                      'only WHERE Frankie was corrected, never the answer key or the exhaustive grade (R10)')
 
 
+def _successor_projection(before, records, meeting=None):
+    """Only copied sources and their existing school projections may change."""
+    import frankie_box_experiment_review as R
+    after = json.loads(json.dumps(before))
+    consumed = set()
+    changed_exchange = None
+    for section, body in after['sections'].items():
+        for item in body['items']:
+            if item['name'] == 'discussion (meeting)':
+                continue
+            cursor = item.get('source_sha256') or item.get('sha256')
+            links = []
+            while cursor in records:
+                link = records[cursor]
+                links.append(link)
+                consumed.add(link['record']['sha256'])
+                cursor = link['replacement']['sha256']
+            if not links:
+                continue
+            pin = links[-1]['replacement']
+            doc = json.loads(R._read_pin(pin))
+            if item.get('inline') and 'holds' not in item:
+                if item['sha256'] != links[0]['original']['sha256']:
+                    raise ValueError('school copied source differs from its correction identity')
+                if canonical(item['content']) != canonical(json.loads(R._read_pin(links[0]['original']))):
+                    raise ValueError('school inline source differs from its checked original')
+                content, digest, size = doc, pin['sha256'], pin['bytes']
+            elif section == 'boss_teacher' and item['name'] == 'exchange_measurements':
+                content = [dict(item_id=i['item_id'], author=i['author'], position=t['record']['position'],
+                                measured=t.get('measured'), proposals=t.get('proposals'))
+                           for i in doc.get('items') or [] for t in i.get('turns') or []
+                           if t.get('seat') == 'boss_teacher']
+                digest, size = sha256_bytes(canonical(content)), len(canonical(content))
+            elif section == 'scientific_teacher' and item['name'] == 'untested':
+                content = [dict(claim_id=r.get('claim_id'), untested=r.get('untested') or [],
+                                cannot_test_yet=r.get('cannot_test_yet') or []) for r in doc.get('results') or []]
+                digest, size = sha256_bytes(canonical(content)), len(canonical(content))
+            else:
+                raise ValueError('school source needs its specific owner projection: ' + item['name'])
+            item.update(path=links[-1]['body']['replacement']['path'], source_sha256=pin['sha256'], sha256=digest, bytes=size,
+                        inline=True, content=content)
+            if section == 'exchange' and item['name'] == 'exchange_frankie_view':
+                changed_exchange = (links[0]['original'], pin, doc)
+    meetings = [i for i in after['sections']['exchange']['items'] if i['name'] == 'discussion (meeting)']
+    if changed_exchange and meetings:
+        original, replacement, view = changed_exchange
+        if len(meetings) != 1 or meetings[0]['content']['exchange']['sha256'] != original['sha256']:
+            raise ValueError('school discussion is not bound to its original exchange')
+        if (meeting is None or meeting['content'].get('status') != 'complete'
+                or meeting['content'].get('day') != before['day'] or meeting['content'].get('run') != before['run']
+                or meeting['content']['exchange'].get('sha256') != replacement['sha256']
+                or meeting['content']['exchange'].get('exchange_hash') != view['exchange_hash']):
+            raise ValueError('school successor awaits the completed meeting for its corrected exchange')
+        expected = dict(meetings[0])
+        expected.update({k: meeting[k] for k in ('path', 'source_sha256', 'sha256', 'bytes', 'content')})
+        if meeting != expected:
+            raise ValueError('school successor changed meeting attribution or evidentiary authority')
+        meetings[0].update(meeting)
+    elif meeting is not None:
+        raise ValueError('school successor supplied an unrelated replacement meeting')
+    if not consumed or after == before:
+        raise ValueError('school successor needs an affected checked source')
+    return after, consumed
+
+
+def retained_school(brain, day):
+    """Return the indexed original and its explicit published successor; never rewrite on read."""
+    import frankie_box_brain as BR
+    import frankie_box_experiment_review as R
+    import frankie_box_lane_state as LS
+    rows = [r for r in BR._school_index(brain)['rows'] if r['day'] == day]
+    if not rows:
+        return None
+    if len(rows) != 1:
+        raise ValueError('school owner has ambiguous indexed originals')
+    row = rows[0]
+    pin = dict(path=str(Path(brain) / BR.SCHOOL_DIR / row['file']), bytes=row['bytes'], sha256=row['sha256'])
+    records = R.corrections(LS.knowledge_roots(brain))
+    R._read_pin(pin)
+    seen = []
+    while pin['sha256'] in records:
+        record = records[pin['sha256']]
+        if record['body'].get('school_transition') is None:
+            raise ValueError('school successor is missing its owner operation')
+        seen.append(record['record'])
+        pin = record['replacement']
+    doc = json.loads(R._read_pin(pin))
+    stale = set()
+    for section in doc['sections'].values():
+        for item in section['items']:
+            if item.get('source_sha256') in records or item.get('sha256') in records:
+                stale.add(item.get('source_sha256') or item['sha256'])
+            if item.get('inline'):
+                stale.update((R.references(item['content']) & set(records)) - R._ancestors(item['sha256'], records))
+    return dict(row=row, original=pin, content=doc, corrections=seen,
+                status='requires_successor' if stale else 'complete')
+
+
+def rebuild_successor(day, run, brain, *, original_school, exchange_view=None):
+    """Retain an explicit school successor on its original owner, after the new meeting completes.
+
+    Reuses the original container, rules, classroom work and author walls. Only checked source
+    copies and their existing projections change. No model/scientific execution occurs here.
+    """
+    import fcntl
+    import frankie_box_brain as BR
+    import frankie_box_experiment_review as R
+    import frankie_box_lane_state as LS
+    from frankie_box_durable import write_json, witness
+    before = json.loads(R._read_pin(original_school))
+    records = R.corrections(LS.knowledge_roots(brain))
+    prior = records.get(original_school['sha256'])
+    if prior is not None:
+        completed = prior['body'].get('school_transition') or {}
+        operation = completed.get('operation') or {}
+        if (completed.get('original_school') != original_school or operation.get('day') != day
+                or operation.get('run') != run or operation.get('brain') != str(Path(brain).resolve())):
+            raise ValueError('school retry belongs to another retained owner operation')
+        path = Path(brain) / 'school' / 'successors' / day / completed['operation_sha256'] / 'receipt.json'
+        if json.loads(path.read_bytes()) != completed:
+            raise ValueError('school retry lost its original completed receipt')
+        R._read_pin(completed['school'])
+        return dict(completed, receipt=dict(path=str(path), **witness(path)), correction=prior['record'])
+    retained = retained_school(brain, day)
+    if (retained is None or retained['original'] != original_school or before != retained['content']
+            or before.get('schema') != SCHEMA or before.get('day') != day or before.get('run') != run
+            or retained['row']['run'] != run):
+        raise ValueError('school successor must own the original indexed day/run/brain')
+    records = R.corrections(LS.knowledge_roots(brain))
+    old_meetings = [i for i in before['sections']['exchange']['items'] if i['name'] == 'discussion (meeting)']
+    meeting, meeting_receipt = None, None
+    if old_meetings and old_meetings[0]['content']['exchange']['sha256'] in records:
+        if not exchange_view:
+            raise ValueError('school successor requires the corrected owner exchange')
+        found = BR.read_meeting_for_exchange(exchange_view)
+        if found['status'] != 'complete':
+            raise ValueError('school successor awaits the completed corrected meeting: ' + found['status'])
+        meeting = dict(old_meetings[0], path=found['path'], content=found['record'],
+                       source_sha256=found['receipt']['record']['sha256'],
+                       sha256=found['receipt']['record']['sha256'], bytes=found['receipt']['record']['bytes'])
+        path = BR.meeting_directory(exchange_view) / 'receipt.json'
+        meeting_receipt = dict(path=str(path), **witness(path))
+    after, consumed = _successor_projection(before, records, meeting)
+    source_corrections = sorted((r['record'] for r in records.values() if r['record']['sha256'] in consumed),
+                                key=lambda p: p['sha256'])
+    operation = dict(schema='FRANKIE_SCHOOL_SUCCESSOR_OPERATION_V1', day=day, run=run,
+                     brain=str(Path(brain).resolve()), original_school=original_school,
+                     source_corrections=source_corrections, meeting_receipt=meeting_receipt,
+                     producer_sha256=sha256_bytes(Path(__file__).read_bytes()))
+    operation_sha = R.digest(R.canonical(operation))
+    directory = Path(brain) / 'school' / 'successors' / day / operation_sha
+    if any(p.is_symlink() for p in (directory, *directory.parents, directory / 'successor.lock')):
+        raise ValueError('school successor directory traverses a symbolic link')
+    directory.mkdir(parents=True, exist_ok=True)
+    def save(path, doc):
+        if path.exists():
+            if json.loads(path.read_bytes()) != doc:
+                raise ValueError('retained school successor artifact differs')
+        else:
+            write_json(path, doc)
+        return dict(path=str(path), **witness(path))
+    with (directory / 'successor.lock').open('a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        replacement = save(directory / 'school.json', after)
+        receipt = dict(schema='FRANKIE_SCHOOL_SUCCESSOR_RECEIPT_V1', status='complete',
+                       owner='frankie_box_school_knowledge.rebuild_successor', operation=operation,
+                       operation_sha256=operation_sha, original_school=original_school, school=replacement,
+                       source_corrections=source_corrections, model_calls=0, scientific_retests=0)
+        receipt_pin = save(directory / 'receipt.json', receipt)
+        correction = R.record_correction(brain, original=original_school, replacement=replacement,
+            scopes=[[]], decision='checked_dependency_rebuild',
+            reason='owner school rebuilt from checked source corrections and completed successor discussion',
+            evidence=source_corrections + ([meeting_receipt] if meeting_receipt else []), publication_day=day,
+            school_transition=dict(receipt=receipt_pin))
+        return dict(receipt, receipt=receipt_pin, correction=correction)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--day', required=True)
@@ -272,17 +449,46 @@ def main():
     import frankie_box_classroom_code as K
     _, rules = K.rules()
     rules_witness = dict(file=Path(rules['path']).name, sha256=rules['sha256'], bytes=rules['bytes'], rules=rules['rules'])
-    doc = build(a.day, a.run, a.report_number, a.classroom, a.exchange_view, a.exchange_listed, a.lessons,
-                a.teacher_rows, rules_witness)
-    data = (json.dumps(doc, indent=1, sort_keys=True, default=str) + '\n').encode('utf-8')
     if a.school_day is not None and a.school_day != a.report_number:
-        raise SystemExit('the school day %d and the report number %d differ: the class line gives one number to both'
-                         % (a.school_day, a.report_number))
-    row, reused = BR.write_school_day(a.brain, a.day, data, a.report_number, a.run, school_day=a.school_day)
-    receipt = dict(schema=RECEIPT_SCHEMA, run=a.run, day=a.day, status='complete', file=str(Path(a.brain) / 'school' / row['file']),
+        raise SystemExit('the school day and report number must match')
+    retained = retained_school(a.brain, a.day)
+    successor = None
+    if retained is not None:
+        if retained['content']['run'] != a.run or retained['row']['report_number'] != a.report_number:
+            raise ValueError('school reuse belongs to another run or class position')
+        if retained['status'] == 'requires_successor':
+            successor = rebuild_successor(a.day, a.run, a.brain,
+                original_school=retained['original'], exchange_view=a.exchange_view)
+            retained = retained_school(a.brain, a.day)
+        if retained['status'] != 'complete':
+            raise ValueError('school successor still has a replaced dependency')
+        doc, row = retained['content'], dict(retained['row'], **retained['original'])
+        file, reused = retained['original']['path'], successor is None
+    else:
+        import frankie_box_experiment_review as R
+        import frankie_box_lane_state as LS
+        records = R.corrections(LS.knowledge_roots(a.brain))
+        lessons = a.lessons
+        if lessons and Path(lessons).is_file():
+            raw = Path(lessons).read_bytes()
+            delivered = R.current_document(dict(path=lessons, bytes=len(raw), sha256=sha256_bytes(raw),
+                content=json.loads(raw)), records, a.brain, day=a.day, stage='school')
+            lessons = delivered['path']
+        doc = build(a.day, a.run, a.report_number, a.classroom, a.exchange_view, a.exchange_listed, lessons,
+                    a.teacher_rows, rules_witness)
+        data = (json.dumps(doc, indent=1, sort_keys=True, default=str) + '\n').encode('utf-8')
+        R.current_document(dict(path=str(Path(a.brain) / 'school' / (a.day + '.json')),
+            bytes=len(data), sha256=sha256_bytes(data), content=doc), records, a.brain, day=a.day, stage='school')
+        row, reused = BR.write_school_day(a.brain, a.day, data, a.report_number, a.run, school_day=a.school_day)
+        file = str(Path(a.brain) / 'school' / row['file'])
+    receipt = dict(schema=RECEIPT_SCHEMA, run=a.run, day=a.day, status='complete', file=file,
                    index=str(Path(a.brain) / 'school' / 'index.json'), row=row, reused=reused,
                    sections={k: len(v['items']) for k, v in doc['sections'].items()}, missing=len(doc['missing']),
                    withheld=len(doc['withheld']), model_calls=0)
+    if successor is not None:
+        receipt.update(successor=successor['receipt'], correction=successor['correction'])
+    elif retained is not None:
+        receipt['corrections'] = retained['corrections']
     print(json.dumps(receipt, sort_keys=True), flush=True)
     return 0
 
