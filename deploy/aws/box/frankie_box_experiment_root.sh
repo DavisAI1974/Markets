@@ -13,14 +13,18 @@ case "$OUTPUT_ROOT" in /opt/frankie-box/work/experiment-roots/*) ;; *) echo "OUT
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
 set -- --commit "$MARKETS_SHA" --ingestion-receipt "$INGESTION_RECEIPT" --ingestion-receipt-sha256 "$INGESTION_RECEIPT_SHA256" \
   --day "$DAY" --day-role "$DAY_ROLE" --output-root "$OUTPUT_ROOT" --data-workers "${DATA_WORKERS:-1}" --digest "${DIGEST:-off}"
-# New shared-input requests explicitly select the required native policy. A
-# missing policy retains legacy compatibility; the caller must not reuse a legacy
-# ROOT as a result for a shared-policy plan. This flag does not dispatch execution.
+# New shared-input requests select the versioned shared policy. A missing policy retains
+# legacy compatibility; the caller must not reuse a legacy ROOT as a result for a
+# shared-policy plan. BEDROCK (on | off) selects the native route separately: it defaults
+# to on under the shared policy (the published route), and BEDROCK=off is a lawful thinner
+# picture (Greg, 2026-10-07: an absent native layer never blocks the day; the reader lists
+# it). This flag does not dispatch execution.
 case "${SHARED_MARKET_POLICY:-}" in
-  '') ;;
-  FRANKIE_SHARED_MARKET_TIMELINE_V1) set -- "$@" --bedrock on --shared-market-policy "$SHARED_MARKET_POLICY" ;;
+  '') BEDROCK="${BEDROCK:-off}" ;;
+  FRANKIE_SHARED_MARKET_TIMELINE_V1) BEDROCK="${BEDROCK:-on}"; set -- "$@" --shared-market-policy "$SHARED_MARKET_POLICY" ;;
   *) echo 'unknown SHARED_MARKET_POLICY; retained evidence unchanged' >&2; exit 2;;
 esac
+case "$BEDROCK" in on|off) set -- "$@" --bedrock "$BEDROCK" ;; *) echo 'BEDROCK must be on or off' >&2; exit 2;; esac
 [ -z "${FROZEN_SURVIVORS:-}" ] || set -- "$@" --frozen-survivors "$FROZEN_SURVIVORS"
 case "${RESUME:-off}" in on) set -- "$@" --resume;; off) ;; *) echo 'RESUME must be on or off' >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"

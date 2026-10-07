@@ -192,10 +192,42 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     TC.apply()
     evidence = None
     market_state = out / 'shared-market-state.pkl'
+    # The pinned R3 equation's operands are the original APPLIED payloads with every adapter
+    # cursor from zero (c15_teacher_r3.iter_raw). It runs on exactly that prefix. An instant
+    # without its operand (failed, unpaired, unreadable, or past a cursor gap) is listed here
+    # with its ordinal; it is not skipped silently, not given an invented row, and it never
+    # removes the instant from the shared picture other consumers read.
+    equation = dict(rows=0, through_applied_cursor=None, absent=[], ended_at=None,
+                    rule='existing equation on its original contiguous operands only; no derived substitute')
     def shared_evidence():
         pictures = market.iter_applied()
+        expected = 0
         try:
             for item in pictures:
+                at = item['picture']['at']
+                if item['arithmetic']['status'] != 'present':
+                    equation['absent'].append(dict(input_journal_ordinal=at['input_journal_ordinal'],
+                                                   adapter_cursor=at['adapter_cursor'], input_cursor=at['input_cursor'],
+                                                   reason=item['arithmetic']['reason']))
+                    continue
+                if equation['ended_at'] is not None:
+                    equation['absent'].append(dict(input_journal_ordinal=at['input_journal_ordinal'],
+                                                   adapter_cursor=at['adapter_cursor'], input_cursor=at['input_cursor'],
+                                                   reason='after_equation_prefix_end'))
+                    continue
+                if item['evidence'].get('cursor') != expected:
+                    # The pinned equation would refuse here ('complete prefix requires every cursor
+                    # from zero'). Its prefix ends; the reader keeps presenting every later instant.
+                    equation['ended_at'] = dict(input_journal_ordinal=at['input_journal_ordinal'],
+                                                adapter_cursor=at['adapter_cursor'], expected_adapter_cursor=expected,
+                                                reason='adapter cursor gap before this APPLIED; the equation needs every cursor from zero')
+                    equation['absent'].append(dict(input_journal_ordinal=at['input_journal_ordinal'],
+                                                   adapter_cursor=at['adapter_cursor'], input_cursor=at['input_cursor'],
+                                                   reason='after_equation_prefix_end'))
+                    continue
+                expected += 1
+                equation['rows'] += 1
+                equation['through_applied_cursor'] = item['evidence']['cursor']
                 # Both existing equations see the identical richer current input.
                 # Their raw argument/hash and numerical formulas remain unchanged.
                 teacher.market_picture = item['picture']
@@ -204,7 +236,7 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 yield item['evidence']
         finally:
             pictures.close()
-            PT._save_raw_state(market_state, market.report)
+            PT._save_raw_state(market_state, dict(market.report, equation=dict(equation)))
     try:
         evidence = shared_evidence() if market else PJ.parallel_journal_prefix(builder, through, None)
         rows, processed, hashes = PT.row_pass(teacher, evidence, as_of=bound, source_manifest_hash=rc['manifest_hash'],
@@ -273,7 +305,11 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                   experiment_directive=directive_witness())
     if market is not None:
         result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
-                      shared_market_use='full current picture exposed to both raw teachers; existing equations use original APPLIED fields')
+                      shared_market_arithmetic=shared_read.get('equation'),
+                      shared_market_use='full current picture exposed to both raw teachers at every computed row; existing '
+                                        'equations use original APPLIED fields on their contiguous prefix; instants without '
+                                        'that operand are listed in shared_market_arithmetic, never invented or dropped '
+                                        'from the shared picture; shared_market_read.complete means source exhaustion only')
     if learner_binding is not None:
         result.update(learner_binding=learner_binding, evidence_seat='frankie',
                       independent_scientific_verification=False)

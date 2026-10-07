@@ -86,8 +86,10 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
         raise ValueError('a confirmation day stays untouched until the survivor list is frozen (give it)')
     if shared_market_policy is not None:
         from frankie_box_market_timeline import SCHEMA as timeline_schema, binding as timeline_binding
-        if shared_market_policy != timeline_schema or not bedrock:
-            raise ValueError('the shared market policy requires its exact version and native bedrock calculations')
+        if shared_market_policy != timeline_schema:
+            raise ValueError('the shared market policy requires its exact version')
+        # Greg, 2026-10-07: an absent native layer thins the shared picture; it never blocks the
+        # day. With bedrock off the reader lists native.member/native.lifecycle absent.
     receipt_pin = witness(safe_path(receipt_path))
     if receipt_pin['sha256'] != receipt_sha256:
         raise ValueError('ingestion receipt differs from the sha256 given')
@@ -271,9 +273,15 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
         # Pin existing spools at publication; a reader must never invent a new
         # source identity by hashing whatever happens to be at an old pathname.
         calc['shared_market_policy'] = binding['shared_market_policy']
-        calc['shared_market_sources'] = {
-            name: witness(session.work / 'derived' / '.rows' / (name + '.jsonl'))
-            for name in ('frames', 'prices', 'structures')}
+        calc['shared_market_sources'] = {}
+        for name in ('frames', 'prices', 'structures'):
+            spool = session.work / 'derived' / '.rows' / (name + '.jsonl')
+            if spool.is_file():
+                calc['shared_market_sources'][name] = dict(path=str(spool), **witness(spool))
+            else:
+                # Listed, never fabricated: the reader presents a thinner picture without this layer.
+                calc['shared_market_sources'][name] = dict(status='absent', path=str(spool),
+                                                           reason='the legacy pass published no ' + name + ' spool')
     _save_new_complete(output / 'calculations-receipt.json', calc)
     session.phase('derived')
     return calc

@@ -15,12 +15,22 @@ from pathlib import Path
 SCHEMA = 'FRANKIE_SHARED_MARKET_TIMELINE_V1'
 
 
+LAYERS = ('root.frames', 'root.prices', 'root.structures', 'native.member', 'native.lifecycle', 'external')
+
+# Greg, 2026-10-07 (supersedes earlier completeness wording): no day or time is rejected
+# from the reconstruction because data is missing. The instant stays, thinner, with explicit
+# dispositions. Integrity corruption (altered pinned bytes, contradictory identities) is a
+# separate visible failure and is never relabelled as missing coverage.
+MISSING_COVERAGE_RULE = 'every_authentic_boundary_kept_with_thinner_explicit_picture'
+
+
 def binding():
     return dict(schema=SCHEMA, implementation_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                 order='original_INPUT_cursor_and_journal_ordinal',
-                clocks='exact_original_event_and_receive_nanoseconds', required_native=True,
+                clocks='exact_original_event_and_receive_nanoseconds', required_native=False,
                 representation='sparse_changes_and_last_observed_state',
-                completed_knowledge='post_stream_only_no_earlier_backfill')
+                completed_knowledge='post_stream_only_no_earlier_backfill',
+                missing_coverage=MISSING_COVERAGE_RULE)
 
 
 def frame_index(numeric, receive_times):
@@ -252,14 +262,18 @@ class _Publications:
 
 
 class SharedMarketTimeline:
-    """Read a completed native-required ROOT as one shared market input.
+    """Read a completed shared-policy ROOT as one shared market input.
 
-    `iter_applied()` yields the original C15 payload and a point-in-time picture.
-    The payload is unchanged, so existing teacher formulas/masks receive identical
-    raw evidence. Consumers must explicitly choose/use the picture values; this
-    reader's `presented` counts are not claims that every target used every field.
-    Last-observed state always retains its original cursor: a prior group snapshot
-    is never advertised as a newly reconstructed intermediate book.
+    `iter_applied()` yields the original C15 payload (or None, with an explicit
+    arithmetic disposition) and a point-in-time picture. The payload is unchanged, so
+    existing teacher formulas/masks receive identical raw evidence. Consumers must
+    explicitly choose/use the picture values; this reader's `presented` counts are not
+    claims that every target used every field. Last-observed state always retains its
+    original cursor: a prior group snapshot is never advertised as a newly
+    reconstructed intermediate book. Absent layers (native with bedrock off, a spool
+    the ROOT did not publish, no day file) thin the picture and are listed in
+    `report['coverage']`; `report['complete']` means only that the whole available
+    source was exhausted with its pins verified.
     """
     def __init__(self, calculations, *, day, workers=15):
         from frankie_box_durable import witness
@@ -279,29 +293,47 @@ class SharedMarketTimeline:
         if (derive.get('source_binding') != self.source or type(derive.get('input_records')) is not int
                 or not 0 <= derive['input_records'] <= self.source['record_count']):
             raise ValueError('shared ROOT did not account for every original INPUT')
-        selected = {item['native_role']: item for item in selected_files(root, str(day))}
-        if not selected:
-            raise ValueError('shared market picture requires completed native calculation artifacts')
         if calculation.get('shared_market_policy') != self.source['shared_market_policy']:
             raise ValueError('completed shared market policy differs from its source')
-        frame_pin = calculation.get('shared_market_sources', {}).get('frames')
-        if (not isinstance(frame_pin, dict)
-                or Path(frame_pin['path']) != root / 'work/derived/.rows/frames.jsonl'):
-            raise ValueError('completed shared market source lacks its exact frame spool pin')
-        self.streams = [_Changes('root.frames', frame_pin, kind='frame', state=True)]
-        for role, kind in (('prices', 'price'), ('structures', 'structure')):
-            pin = calculation.get('shared_market_sources', {}).get(role)
-            if (not isinstance(pin, dict)
-                    or Path(pin['path']) != root / 'work/derived/.rows' / (role + '.jsonl')):
-                raise ValueError('completed shared source lacks its exact ' + role + ' spool pin')
-            self.streams.append(_Changes('root.' + role, pin, kind=kind, state=False))
+        # Layers. A layer the completed ROOT did not produce is listed absent and the
+        # picture is thinner there; a pin that names another path, or pinned bytes that
+        # differ (checked on read), is a contradiction and stays an error.
+        self.layers, self.streams = {}, []
+        pins = calculation.get('shared_market_sources') or {}
+        for role, kind, state in (('frames', 'frame', True), ('prices', 'price', False), ('structures', 'structure', False)):
+            name, pin = 'root.' + role, pins.get(role)
+            if pin is None:
+                self.layers[name] = dict(status='absent', reason='the completed ROOT recorded no ' + role + ' spool pin')
+                continue
+            if not isinstance(pin, dict):
+                raise ValueError('completed shared source has a malformed ' + role + ' spool pin')
+            if pin.get('status') == 'absent':
+                self.layers[name] = dict(status='absent', reason=pin.get('reason') or 'the ROOT published no ' + role + ' spool',
+                                         path=pin.get('path'))
+                continue
+            if Path(pin['path']) != root / 'work/derived/.rows' / (role + '.jsonl'):
+                raise ValueError('completed shared source pins another path as its ' + role + ' spool')
+            self.layers[name] = dict(status='present', source=pin)
+            self.streams.append(_Changes(name, pin, kind=kind, state=state))
+        # Native: absent when the ROOT ran with bedrock off (selected_files returns nothing);
+        # a bedrock-on ROOT whose artifacts are incomplete or altered raises inside selected_files.
+        selected = {item['native_role']: item for item in selected_files(root, str(day))}
         for role, name, state in (('exact_member_rows.jsonl', 'native.member', True),
                                   ('exact_lifecycle_rows.jsonl', 'native.lifecycle', False)):
-            item = selected[role]
+            item = selected.get(role)
+            if item is None:
+                self.layers[name] = dict(status='absent', reason=('no completed native calculation in this ROOT (bedrock off)'
+                                                                  if not selected else 'native ledger not selected'))
+                continue
             pin = dict(path=item['source'], **item['expected'])
+            self.layers[name] = dict(status='present', source=pin)
             self.streams.append(_Changes(name, pin, kind='native', state=state))
         external = self.source.get('external') or {}
         self.publications = _Publications(external, day) if external.get('status') == 'attached' else None
+        self.layers['external'] = (dict(status='present', source=external) if self.publications is not None else
+                                   dict(status='absent', reason=external.get('reason') or 'no day file attached to this ROOT',
+                                        recorded=external))
+        self.absent_layers = sorted(name for name, layer in self.layers.items() if layer['status'] == 'absent')
         self.completed_sources = [dict(role=role, **derive['layers'][role],
             disposition='post_stream_only: aggregate has no exact contributor cursor provenance')
             for role in ('legacy_native_signed_flow', 'legacy_per_second_roll20') if role in derive['layers']]
@@ -313,9 +345,18 @@ class SharedMarketTimeline:
         self.identity = dict(schema=SCHEMA, day=self.day, source_binding=source_pin,
                              calculations=calculation_pin, journal=self.input_pin,
                              sources={stream.name: stream.pin for stream in self.streams}, external=external,
-                             completed_sources=self.completed_sources)
+                             completed_sources=self.completed_sources, absent_layers=self.absent_layers)
         self.report = dict(identity=self.identity, complete=False, presented_inputs=0,
                            interpretation='actual shared-reader input delivery; target/learner arithmetic coverage is separate',
+                           completeness=dict(
+                               complete='source exhausted: every journal envelope, every pinned layer row and every external '
+                                        'row read, with bytes, hashes and counts verified against their pins',
+                               not_implied='all-layer coverage, all-input application or any consumer arithmetic; '
+                                           'those are in coverage, journal.dispositions and the consumer\'s own receipt',
+                               rule=MISSING_COVERAGE_RULE),
+                           coverage=dict(layers=self.layers, absent_layers=self.absent_layers,
+                                         present_layers=sorted(name for name in self.layers if name not in self.absent_layers),
+                                         inputs=None, basis='layers known at open; input dispositions counted at exhaustion'),
                            completed_native=[dict(role=role, path=item['source'], **item['expected'])
                                              for role, item in selected.items()
                                              if role not in ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl')])
@@ -455,12 +496,19 @@ class SharedMarketTimeline:
                                  ts_event_ns=(normalized.get('ts_event_ns') if normalized else raw.get('ts_event') if raw else None),
                                  ts_recv_ns=stamp, publication_frontier_ns=frontier, raw_event_clock=raw.get('ts_event') if raw else None,
                                  raw_receive_clock=raw.get('ts_recv') if raw else None)
+                    # The instant is always presented. What is missing at it is named here,
+                    # per Greg's rule: a thinner picture, never a rejected time.
+                    thinner = dict(absent_layers=self.absent_layers, source_status=source['status'],
+                                   exact_clocks=exact, normalized_evidence=normalized is not None,
+                                   readable_record=raw is not None,
+                                   placement=('exact' if exact else 'extracted_input_without_exact_clock_or_identity'
+                                              if cursor is not None else 'original_envelope_without_readable_record'))
                     picture = dict(schema=SCHEMA, at=point, updates=updates, invalidated_state=invalidated,
                                    last_observed_state=list(states.values()),
                                    active_instrument_state=[value for (_, entity), value in states.items() if entity == instrument],
                                    published_state=list(self.publications.states.values()) if self.publications else [],
                                    source_status=source['status'], unpaired_outcomes=source['unpaired_outcomes'], original_input=entry,
-                                   original_outcomes=source['outcomes'], original_applied=evidence)
+                                   original_outcomes=source['outcomes'], original_applied=evidence, coverage=thinner)
                     if source['source_input_index'] is not None:
                         self.report['presented_inputs'] += 1
                     yield dict(evidence=evidence, picture=picture)
@@ -473,6 +521,19 @@ class SharedMarketTimeline:
             self.report['journal']['unclosed_instruments'] = [dict(instrument_id=instrument, **details)
                                                             for instrument, details in open_groups.items()]
             self.report['journal']['unclosed_basis'] = 'INPUTs since last original matched APPLIED frame; missing ROOT projections are separate'
+            dispositions = self.report['journal']['dispositions']
+            counted = {reason: sum(last - first + 1 for first, last in ranges) for reason, ranges in dispositions.items()}
+            self.report['coverage']['inputs'] = dict(
+                envelopes=self.report['journal']['entries'], inputs=self.report['journal']['inputs'],
+                extracted=self.report['journal']['extracted'], applied=counted.get('applied', 0),
+                failed=counted.get('failed', 0), unpaired_input=counted.get('unpaired_input', 0),
+                input_without_readable_observation=counted.get('input_without_readable_observation', 0),
+                unplaceable_input_clocks=len(self.report.get('unplaceable_input_clocks', [])),
+                closed_source_without_root_frame=len(self.report.get('closed_source_without_root_frame', [])),
+                all_inputs_applied=counted.get('applied', 0) == self.report['journal']['inputs'])
+            self.report['coverage']['all_layers_present'] = not self.absent_layers
+            # Exhaustion only. Thinner coverage above never withholds this flag; a pin,
+            # count or identity contradiction raised instead and leaves it False.
             self.report['complete'] = True
         finally:
             self.report['sources'] = {stream.name: dict(source=stream.pin, counts=dict(stream.counts),
@@ -481,19 +542,38 @@ class SharedMarketTimeline:
                 stream.close()
 
     def iter_applied(self):
-        """Teacher-compatible view; never fabricate a successful application.
+        """Teacher-facing view: every instant, with its arithmetic evidence present or absent.
 
-        The general picture reader retains failures. The pinned raw teacher has no
-        failed-input target semantics, so this existing equation boundary refuses
-        those sources explicitly rather than silently omitting failed records.
+        Nothing is refused and nothing is fabricated. `evidence` is the unchanged original
+        APPLIED payload when the INPUT applied cleanly; otherwise it is None and
+        `arithmetic` says why (failed, unpaired, unreadable, or an APPLIED beside unknown
+        outcomes). A consumer's existing equation runs only where its own operands exist
+        and lists the rest; this reader never derives a replacement or a target.
         """
+        listing = self.report.setdefault('arithmetic', dict(present=0, absent=0, absent_by_status={}, absent_ordinals={},
+            rule='absent operands block only the equation that needs them, never the instant or unrelated evidence'))
+
+        def listed(status, ordinal):
+            ranges = listing['absent_ordinals'].setdefault(status, [])
+            if ranges and ranges[-1][1] + 1 == ordinal:
+                ranges[-1][1] = ordinal
+            else:
+                ranges.append([ordinal, ordinal])
         pictures = self.iter_pictures()
         try:
             for item in pictures:
-                if item['evidence'] is None or item['picture']['unpaired_outcomes']:
-                    raise ValueError('raw teacher cannot calculate this original source disposition: '
-                                     + item['picture']['source_status'])
-                yield item
+                picture = item['picture']
+                if item['evidence'] is not None and not picture['unpaired_outcomes']:
+                    status, arithmetic = 'present', dict(status='present', basis='original matched APPLIED payload')
+                else:
+                    status = (picture['source_status'] if item['evidence'] is None
+                              else 'applied_with_unknown_outcomes')
+                    arithmetic = dict(status='absent', reason=status, basis='no original APPLIED operand at this instant',
+                                      unpaired_outcomes=picture['unpaired_outcomes'])
+                    listing['absent_by_status'][status] = listing['absent_by_status'].get(status, 0) + 1
+                    listed(status, picture['at']['input_journal_ordinal'])
+                listing['present' if status == 'present' else 'absent'] += 1
+                yield dict(item, arithmetic=arithmetic)
         finally:
             pictures.close()
 
