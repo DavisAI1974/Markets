@@ -763,14 +763,20 @@ class Session:
 
     # ---- derive (the pin's producers on this cycle's rows) ------------------------------------------------
     def derive(self, *, source=None, bedrock=True, digest=True, opening_adapter_state=None, opening_book=None,
-               recovery=False, save_requested=None, retain_frame_sections=False, digest_bedrock=None):
+               recovery=False, save_requested=None, retain_frame_sections=False, digest_bedrock=None,
+               bedrock_off_cause=None):
         """The ROOT's four processes on the sealed source: (1) the legacy pass (every INPUT record -> the five legacy layers
         and the row spools), (2) the bedrock traversal, (3) the bedrock projection, (4) the derivation digest.
-        The native pass (2)+(3) is ON for the experiment and for Frankie's cycle (Greg reversed the 2026-09-29 no-bedrock
-        decision; the native-only registry entries must be produced and reach Frankie and the teachers). bedrock=False
-        remains only as an EXPLICIT caller override, never a default: it skips (2) and (3), records the bedrock layers as
-        not_derived with the override as the reason (never as a producer failure) and marks the receipt's bedrock block
-        override=True. digest=False skips (4) (the experiment reads the JSON, not Frankie's Markdown digest).
+        The native pass (2)+(3) is this method's default and the default of every NEW experiment request (the shared
+        market policy; Greg reversed the 2026-09-29 no-bedrock decision; the native-only registry entries must be
+        produced and reach Frankie and the teachers). An older saved legacy plan (no shared market policy) keeps the
+        native-off setting it was saved with. bedrock=False skips (2) and (3) and records the bedrock layers as
+        not_derived (never as a producer failure) with the CAUSE the caller states in bedrock_off_cause
+        (see _bedrock_off_cause: 'caller_override', 'legacy_plan' or 'native_pass_failed' with its error); without
+        one the cause is read from the source binding, or recorded as unstated, never asserted as an override.
+        The receipt's bedrock block carries override=True only for a caller override, plus off_cause. A bedrock-on
+        derivation's receipt is unchanged by this. digest=False skips (4) (the experiment reads the JSON, not Frankie's
+        Markdown digest).
         opening_adapter_state (Greg, 2026-09-29, a day that opens at the prior day's halt): the prior day's closing book
         from its sealed ingest (research/kalshi/frankie_boss/opening_book.py), restored into the pinned adapter with its
         counters zeroed, so the legacy pass replays the day's records onto the real book instead of an empty one;
@@ -1047,13 +1053,13 @@ class Session:
                                                                      rule='identity fields, not observations: never a searched series')),
         }
         bedrock_off = set(pin.get('projection_layers') or pin.get('bedrock_layers') or []) if (pin.get('bedrock') and not bedrock) else set()
+        off_cause = self._bedrock_off_cause(bedrock_off_cause) if (pin.get('bedrock') and not bedrock) else None
         for layer in pin['registry_layers']:
             if layer in bedrock_off:
                 layers.setdefault(layer, dict(status='not_derived', producer=None,
-                                              reason='native pass explicitly overridden off by the caller (bedrock=False): ROOT '
-                                                     'processes 2 (traversal) and 3 (projection) not run; not a producer '
-                                                     'failure; the default is the native pass ON (Greg reversed the '
-                                                     '2026-09-29 no-bedrock decision)'))
+                                              reason=off_cause['head'] + ': ROOT processes 2 (traversal) and 3 '
+                                                     '(projection) not run; not a producer failure; the default is the '
+                                                     'native pass ON (Greg reversed the 2026-09-29 no-bedrock decision)'))
             layers.setdefault(layer, dict(status='could_not', reason='no producer in the pin derives this layer; NO_PRODUCER_FOUND', producer=None))
         receipt = dict(schema='FRANKIE_BOX_DERIVATION_RECEIPT_V1', at=time.time(), cycle=self.cycle, pin_group=pin['group'],
                        source_binding=self.source_binding, rows=container, input_records=len(records), legacy_rows=legacy_count, adapter_records=adapter.record_count,
@@ -1095,11 +1101,11 @@ class Session:
                 save_requested=save_requested)
         elif pin.get('bedrock'):
             receipt['bedrock'] = dict(schema='FRANKIE_BOX_DERIVE_BEDROCK_V1', skipped=True, layers=[], not_derived=sorted(bedrock_off),
-                                      override=True,
-                                      reason='native pass explicitly overridden off by the caller (bedrock=False): ROOT '
-                                             'processes 2 and 3 not run; the default is the native pass ON (Greg reversed '
-                                             'the 2026-09-29 no-bedrock decision)')
-            self.note(f'native pass overridden off by the caller (bedrock=False): {len(bedrock_off)} bedrock layers not '
+                                      override=off_cause['override'],
+                                      off_cause={k: v for k, v in off_cause.items() if k != 'head'},
+                                      reason=off_cause['head'] + ': ROOT processes 2 and 3 not run; the default is the '
+                                             'native pass ON (Greg reversed the 2026-09-29 no-bedrock decision)')
+            self.note(f'native pass off ({off_cause["kind"]}): {off_cause["head"]}; {len(bedrock_off)} bedrock layers not '
                       f'derived (traversal and projection not run)')
         else:
             receipt['bedrock'] = None
@@ -1119,6 +1125,47 @@ class Session:
         probe.update('root-derived', state='complete', failed=len(failures))
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
         return receipt
+
+    BEDROCK_OFF_CAUSES = ('caller_override', 'legacy_plan', 'native_pass_failed')
+
+    def _bedrock_off_cause(self, stated):
+        """Why the native pass is off, true to its cause (second review F5). stated: None, one of BEDROCK_OFF_CAUSES,
+        or a dict(kind=..., error=..., detail=...) the caller passes; 'native_pass_failed' requires its error.
+        Without a stated cause it is read from this ROOT's own source binding: a shared-market-policy binding defaults
+        the native pass ON, so off there was selected by the caller (caller_override); an experiment binding without
+        the policy is an older saved legacy plan run with its saved native-off setting (legacy_plan); anything else is
+        recorded as 'unstated' (the caller ran with bedrock=False and named no cause). Returns
+        dict(kind, override, basis, error, detail, head); override is True only for caller_override."""
+        if isinstance(stated, str):
+            stated = dict(kind=stated)
+        if stated is not None:
+            if not isinstance(stated, dict) or stated.get('kind') not in self.BEDROCK_OFF_CAUSES:
+                raise ValueError('bedrock_off_cause must be one of %s (or a dict with that kind)'
+                                 % ', '.join(self.BEDROCK_OFF_CAUSES))
+            if stated['kind'] == 'native_pass_failed' and not stated.get('error'):
+                raise ValueError('bedrock_off_cause native_pass_failed requires the error the pass raised')
+            kind, basis = stated['kind'], 'stated by the caller (bedrock_off_cause)'
+        else:
+            binding = self.source_binding if isinstance(self.source_binding, dict) else {}
+            if binding.get('shared_market_policy'):
+                kind = 'caller_override'
+                basis = ('inferred: the source binding carries the shared market policy, whose native pass defaults on, '
+                         'so off was selected by the caller')
+            elif binding.get('schema') == 'FRANKIE_EXPERIMENT_DAY_CALCULATION_SOURCE_V1':
+                kind = 'legacy_plan'
+                basis = ('inferred: an experiment source binding without the shared market policy (an older saved '
+                         'legacy plan, kept as saved)')
+            else:
+                kind, basis = 'unstated', 'no cause stated by the caller and none readable from the source binding'
+            stated = {}
+        head = {
+            'caller_override': 'native pass explicitly overridden off by the caller (bedrock=False)',
+            'legacy_plan': 'native pass off as saved in an older legacy plan (no shared market policy; never mutated)',
+            'native_pass_failed': 'native pass off after it failed (%s)' % stated.get('error'),
+            'unstated': 'the caller ran with bedrock=False and stated no cause',
+        }[kind]
+        return dict(kind=kind, override=kind == 'caller_override', basis=basis, error=stated.get('error'),
+                    detail=stated.get('detail'), head=head)
 
     def _write_native_layer_records(self, pin, receipt):
         """work/native-layer-records.json (NATIVE_LAYER_RECORDS_SCHEMA): one record per native registry layer, so the
@@ -1145,7 +1192,9 @@ class Session:
                 native_state = 'the native pass ran (traversal and projection) under this pin'
             elif bedrock and bedrock.get('skipped'):
                 native_state = ('the native pass did not run (%s): %s' % (
-                    'an explicit caller override' if bedrock.get('override') else 'recorded skipped', bedrock.get('reason')))
+                    'an explicit caller override' if bedrock.get('override') else
+                    'recorded skipped, cause %s' % ((bedrock.get('off_cause') or {}).get('kind') or 'not recorded'),
+                    bedrock.get('reason')))
             else:
                 native_state = 'this pin carries no native (bedrock) producer group; the native pass is not part of it'
             records, counts = [], {}
