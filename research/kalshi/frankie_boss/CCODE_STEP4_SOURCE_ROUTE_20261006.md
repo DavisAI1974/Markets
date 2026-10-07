@@ -637,6 +637,15 @@ not closed source work. See the newest task-doc section. Step 5's publication/su
 received; its changed `claim_inputs` conflicts with the current same-identity correction guard,
 so Codex must settle that interface before CCode wires publication. No correction or run occurred.
 
+**Codex's review of the fifth-session return (BIND-F, B4-F, 6R3-F, 6R2-F; 2026-10-07), on Codex's `5e216265`.**
+`12258b3b` BIND-F: `FRANKIE_BINDING_IDENTITY_V3`, JSON-stable, per entry, validated by the parts present, V2 converted
+not dropped. `7dd8b9a4` B4-F: `command_argv` is the producer's contract checked against the run's argv; the retained
+outputs must be the full declared comparison inventory. `34dab141` 6R3-F: every blocking read bounded to the remaining
+deadline on a meeting-owned `http.client` connection, partial bytes retained, `sent` distinguishes a never-sent request.
+`4b5a8eba` 6R2-F: the attempt is recorded before any process work and carried forward when unfinished. `62eb55e3` and
+`6c804bd2`: two adversarial code-review passes, 20 corrections (the missing `http.client` import among them). Detail:
+`CCODE_STEP6_RETURN_20261007.md` section 9. Nothing run.
+
 **Codex's review round on the follow-ups (`6837875a` B2-R, `bf8f87a5` B4-R, `0cb6868b` BIND-R; 2026-10-07).** B2-R:
 `aggregate_status()` makes the whole-output status follow the coverage of every declared comparable output (a declared
 printed/json output not compared at all is a gap: `performed_incomplete`, never matched); `compare()` records
@@ -667,7 +676,7 @@ step 6; neither authorizes execution. See the new section 8 integration note and
 |---|---|
 | 2 | A4, C1, C2, B4/B5 source-corrected (section 8, Corrections). Open: native-learner and late-scheduling decisions (Greg); Codex's integration review of the corrections; runtime verification. |
 | 3 | D1 source-corrected: `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (contract in section 8). Codex's exact price adapter is source-built. Open: the held trajectory/4.2/4.4 definitions. Exact structures unchanged (V1). |
-| 4 | B1-B7 and follow-ups returned; fifth-session B2-R aggregate coverage accepted at source review. B4-R command/inventory admission and BIND-R serialized identity still need the follow-ups in the current task doc. Input supply and reproduction/reformulation for BOTH teachers remain open; nothing run. |
+| 4 | B1-B7 and follow-ups returned; B2-R accepted; B4-F (command contract, full inventory) and BIND-F (V3 per-entry JSON-stable identity) returned `7dd8b9a4` / `12258b3b` for Codex's review. Input supply and reproduction/reformulation for BOTH teachers remain open; nothing run. |
 | 5 | Authorized source work: scoped correction delivery, stale-input refusal and standalone hooks built. Open: scientific-owner publication and corrected-successor scheduling, including changed claim-input identity. Old draft unapplied. |
 
 The table distinguishes source implementation from the remaining review and workflow gaps. The older table records

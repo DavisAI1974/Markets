@@ -12,7 +12,14 @@ No runtime work is authorized; source review, AST without imports and whitespace
 STOP before #5. Preserve the draft, Granite pins and historical artifacts; Memory A stays retired.
 The memory-index statement below describes Claude's host, not proof of availability on another host.
 
-# CCode return — 2026-10-07 (Codex's correction queue D1, B7/C2, B2-B5, B1/B6/A4/C1 RETURNED; source-only)
+# CCode return — 2026-10-07 (Codex's fifth-return review BIND-F/B4-F/6R3-F/6R2-F RETURNED + two review passes; source-only)
+
+Branch `ccode/teacher-tasks-20261006b` on Codex's `5e216265`: `12258b3b` BIND-F | `7dd8b9a4` B4-F | `34dab141` 6R3-F | `4b5a8eba`
+6R2-F | `62eb55e3` `6c804bd2` code-review passes (20 corrections) | docs. Record: `research/kalshi/frankie_boss/CCODE_STEP6_RETURN_20261007.md`
+section 9; Claude side: `CLAUDE_HANDOFF_20261007_CCODE_SLICES_A_D.md` (top), drop-in `DROP_IN_CLAUDE_20261007.md`.
+SOURCE-BUILT / RUNTIME-UNVERIFIED; nothing run; STOP before #5; HOLD.
+
+# Prior CCode return — 2026-10-07 (Codex's correction queue D1, B7/C2, B2-B5, B1/B6/A4/C1 RETURNED; source-only)
 
 Branch `ccode/teacher-tasks-20261006b` on Codex's `19f72f47`: `18b6edcd` D1 | `8930b4f0` B7/C2 | `5fdc14f5` B2-B5 | `45f52d28`
 B1/B6/A4/C1 | docs. Record: `research/kalshi/frankie_boss/CCODE_STEP4_SOURCE_ROUTE_20261006.md` section 8 "Corrections" + section 9;

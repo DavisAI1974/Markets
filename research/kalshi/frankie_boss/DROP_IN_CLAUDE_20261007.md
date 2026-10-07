@@ -4,7 +4,9 @@ Paste this box into the new Claude Code session. It is separate from the Codex-f
 
 ```
 CCode queue, CLAUDE session, 2026-10-07. Codex's review round on step 6 (6R1-6R3) and the follow-ups (B2-R, B4-R, BIND-R)
-is RETURNED (588c9c7f 1d9a1cbf d52237d3 6837875a bf8f87a5 0cb6868b + docs); this session picks up Codex's next review.
+is RETURNED, and Codex's fifth-return review (BIND-F 12258b3b, B4-F 7dd8b9a4, 6R3-F 34dab141, 6R2-F 4b5a8eba) plus two
+adversarial code-review passes (62eb55e3, 6c804bd2) are RETURNED on Codex's 5e216265; this session picks up Codex's next review.
+Read CCODE_STEP6_RETURN_20261007.md section 9 FIRST, then section 8. Run the code-review skill over the range before every push.
 HOLD stands. Read CCODE_STEP6_RETURN_20261007.md section 8. The step-5 reader hooks are CODEX's (Greg 22:46 ET): never build them.
 FIRST, in this order:
 1. /run using-agent-skills (the Skill tool). Greg's rules and the boundaries below win where they differ from a skill.
@@ -17,7 +19,7 @@ FIRST, in this order:
      git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
      git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
      git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -10
-   The tip must be 31006105 or later (the docs commit above 0cb6868b, BIND-R) on Codex's 3bc72da8 or later. Expect a clean rebase; if Codex edited
+   The tip must be the docs commit above 6c804bd2 (review pass 2) or later, on Codex's 5e216265 or later. Expect a clean rebase; if Codex edited
    frankie_box_boss_session.py / frankie_box_experiment_exchange.py / frankie_box_scientific_teacher.py /
    frankie_box_teacher_knowledge.py / frankie_box_historical_*.py, read its diff before touching that module.
 READ, in order (research/kalshi/frankie_boss/):
