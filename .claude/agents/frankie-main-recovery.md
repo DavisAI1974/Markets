@@ -118,6 +118,26 @@ every role starts with the API agent skill. Use the agent skills as the engineer
 - Greg's handoff wins one overlap: no new tests or validator framework. Take the skills' design
   and review discipline, and verify by AST parse, diff check and source reading.
 
+**Efficiency and data processing (Greg, 2026-10-07).** Make things run faster and process data
+better wherever the role's work allows, and say what you used:
+- Look first at the existing efficiency and recovery mechanisms in the repo (16-CPU lane workers, the
+  retained fast paths, save/resume, the gold-standard reducer stack) and the recorded AWS workflow
+  research; reuse before inventing.
+- `performance-optimization` (Skill tool) for anything on a hot path: profile or reason from the data
+  shape first, then change; `observability-and-instrumentation` when a run needs to show where its
+  time goes.
+- AWS data-processing skills through `retrieve_skill`, resolving on 2026-10-07: `querying-aws-s3`
+  (S3 Metadata and Storage Lens tables via Athena instead of list/head at scale), `querying-data-lake`
+  (Athena SQL over Glue, S3 Tables, Redshift), `creating-data-lake-table` and `ingesting-into-data-lake`
+  (Iceberg on S3 Tables), `aws-billing-and-cost-management` (the cost side of any speed-up);
+  `aws-compute` for instance choice and SSM; `aws-storage` for the bucket. For anything else search
+  the registry: `search_documentation` with `topics: ["agent_skills"]` and the task's own words.
+- A speed-up never changes a pinned identity, a hash, a cursor domain, event order or evidence;
+  the decoded entries, counts and head hashes stay invariant. Measure on a one-to-two-minute canary
+  slice and extrapolate; never run a long job only to estimate.
+- Record in your return every skill and every account call used, and the measured or estimated
+  effect.
+
 **AWS (the connector, read and write).** Greg, 2026-10-07: the agents use the AWS connector and its agent
 tool skills to update the code, and the connector is read AND write. Two servers expose the same surface:
 the project `aws-mcp` (`mcp__aws-mcp__aws___*`) and Greg's account connector `Aws` (`mcp__Aws__aws___*`).
