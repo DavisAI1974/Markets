@@ -83,6 +83,51 @@ def count_records(raw, day, halt_utc_hour=HALT_UTC_HOUR):
                 last_record_f_last=last_is_f_last, halt_boundary_f_last=halt_boundary_f_last)
 
 
+def _get(s3, bucket, key):
+    """An object's bytes through S3 byte-range GETs (aws-storage skill: 16 MB ranges, 15 streams; boto3's multipart
+    download into a seekable buffer writes each range at its offset): the same bytes as one get_object stream."""
+    import io
+    from boto3.s3.transfer import TransferConfig
+    buffer = io.BytesIO()
+    s3.download_fileobj(bucket, key, buffer, Config=TransferConfig(multipart_threshold=64 << 20, multipart_chunksize=16 << 20,
+                                                                    max_concurrency=15))
+    return buffer.getvalue()
+
+
+def _stage_one(job):
+    """One day file, end to end, in its own process pinned to its own CPU (Greg, 2026-10-07 night: "anything using a
+    cpu"): archive bytes, the block copy, the copy re-read and compared, the record count (count_records, unchanged)."""
+    index, day, bucket, archive, target_prefix, cpu = job
+    if cpu is not None:
+        try:
+            os.sched_setaffinity(0, {cpu})
+        except (AttributeError, OSError, ValueError):
+            pass
+    import boto3
+    s3 = boto3.client('s3', region_name='us-east-2')
+    name = f'glbx-mdp3-{day}.mbo.dbn.zst'
+    source_key, target_key = f'{archive}/{name}', f'{target_prefix}/{name}'
+    raw = _get(s3, bucket, source_key)
+    sha = hashlib.sha256(raw).hexdigest()
+    head = None
+    try:
+        head = s3.head_object(Bucket=bucket, Key=target_key)
+    except s3.exceptions.ClientError:
+        pass
+    if head is None or head['ContentLength'] != len(raw):
+        s3.copy_object(Bucket=bucket, Key=target_key, CopySource=dict(Bucket=bucket, Key=source_key),
+                       MetadataDirective='REPLACE', Metadata={'sha256': sha, 'archive_key': source_key})
+    copied = _get(s3, bucket, target_key)
+    if hashlib.sha256(copied).hexdigest() != sha:
+        raise SystemExit('block copy differs from archive bytes: ' + name)
+    del copied
+    counts = count_records(raw, day)
+    source = dict(member_index=index, member_key=name, sha256=sha, size_bytes=len(raw), mbo_records=counts['mbo_records'])
+    session = dict(member_key=name, day_utc=day, **counts)
+    line = json.dumps(dict(member=index, key=target_key, bytes=len(raw), sha256=sha[:16], **counts))
+    return index, source, session, line
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--block', required=True, help='block id, e.g. 20211004_20211006')
@@ -91,34 +136,30 @@ def main():
     parser.add_argument('--bucket', default=BUCKET)
     parser.add_argument('--env-file', default=str(ROOT / 'scratchpad' / 'aws.env'))
     parser.add_argument('--out', required=True, help='manifest path, committed to git')
+    parser.add_argument('--parallel', type=int, help='day files staged side by side, each in its own pinned process '
+                                                     '(default: every day file, up to the CPUs this process may use)')
     args = parser.parse_args()
     if Path(args.env_file).is_file():
         load_env_file(args.env_file)
-    import boto3
-    s3 = boto3.client('s3', region_name='us-east-2')
     target_prefix = f'frankie/block_{args.block}/sources'
+    # the day files side by side (spawned processes: boto3 clients are not shared across a fork), each pinned to one
+    # CPU of this process's affinity; the manifest lists them in replay order whatever order they finish in
+    cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else [None]
+    width = max(1, min(len(args.days), args.parallel or len(cpus)))
+    jobs = [(index, day, args.bucket, args.archive, target_prefix, cpus[index % len(cpus)] if len(cpus) > 1 else None)
+            for index, day in enumerate(args.days)]
+    if width == 1:
+        done = [_stage_one(job) for job in jobs]
+    else:
+        import multiprocessing
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=width, mp_context=multiprocessing.get_context('spawn')) as pool:
+            done = list(pool.map(_stage_one, jobs))
     sources, sessions = [], []
-    for index, day in enumerate(args.days):
-        name = f'glbx-mdp3-{day}.mbo.dbn.zst'
-        source_key, target_key = f'{args.archive}/{name}', f'{target_prefix}/{name}'
-        raw = s3.get_object(Bucket=args.bucket, Key=source_key)['Body'].read()
-        sha = hashlib.sha256(raw).hexdigest()
-        head = None
-        try:
-            head = s3.head_object(Bucket=args.bucket, Key=target_key)
-        except s3.exceptions.ClientError:
-            pass
-        if head is None or head['ContentLength'] != len(raw):
-            s3.copy_object(Bucket=args.bucket, Key=target_key, CopySource=dict(Bucket=args.bucket, Key=source_key),
-                           MetadataDirective='REPLACE', Metadata={'sha256': sha, 'archive_key': source_key})
-        copied = s3.get_object(Bucket=args.bucket, Key=target_key)['Body'].read()
-        if hashlib.sha256(copied).hexdigest() != sha:
-            raise SystemExit('block copy differs from archive bytes: ' + name)
-        counts = count_records(raw, day)
-        sources.append(dict(member_index=index, member_key=name, sha256=sha, size_bytes=len(raw),
-                            mbo_records=counts['mbo_records']))
-        sessions.append(dict(member_key=name, day_utc=day, **counts))
-        print(json.dumps(dict(member=index, key=target_key, bytes=len(raw), sha256=sha[:16], **counts)), flush=True)
+    for index, source, session, line in sorted(done, key=lambda d: d[0]):
+        sources.append(source)
+        sessions.append(session)
+        print(line, flush=True)
     seams_clean = all(x['last_record_f_last'] for x in sessions[:-1])
     halts_clean = all(x['halt_boundary_f_last'] in (True, None) for x in sessions)
     body = dict(schema=SCHEMA, source_kind='NATIVE_DBN_MBO', role='HELD_OUT_BLIND_BLOCK',

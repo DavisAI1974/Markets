@@ -44,6 +44,9 @@ case "$DAYS_AT_ONCE" in ""|*[!0-9]*|0) echo "DAYS_AT_ONCE must be a positive int
 case "$RESUME_DIR" in ""|"$ROOT"/work/ingest-*) ;; *) echo "RESUME_DIR must be an existing $ROOT/work/ingest-* directory"; exit 2;; esac
 case "$DIRECTORY" in ""|"$ROOT"/work/ingest-*) ;; *) echo "DIRECTORY must be a $ROOT/work/ingest-* directory"; exit 2;; esac
 case "$RESUME_DIR$DIRECTORY" in *..*) echo "no .. in RESUME_DIR or DIRECTORY"; exit 2;; esac
+case "${FETCH_AHEAD:-on}" in on|off) ;; *) echo "FETCH_AHEAD must be on or off"; exit 2;; esac
+case "${MEMBER_STREAMS:-1}" in ""|*[!0-9]*|0) echo "MEMBER_STREAMS must be a positive integer"; exit 2;; esac
+case "${RANGE_STREAMS:-15}" in ""|*[!0-9]*|0) echo "RANGE_STREAMS must be a positive integer"; exit 2;; esac
 [ "$DAYS_AT_ONCE" = 1 ] || [ -z "$OPENING_RECEIPT" ] || { echo "DAYS_AT_ONCE > 1 runs days that warm their own books: no OPENING_RECEIPT"; exit 2; }
 case "$MARKETS_SHA" in ""|*[!0-9a-f]*) echo "MARKETS_SHA must be the dispatched commit (frankie_box_run.yml sets it from GITHUB_SHA)"; exit 2;; esac
 [ "${#MARKETS_SHA}" -eq 40 ] || { echo "MARKETS_SHA must be the full 40-hex commit"; exit 2; }
@@ -181,9 +184,11 @@ fetch_ahead() {   # $1 = the booking outcome file of the day about to ingest, $2
     else RC=2; fi
     echo "$RC" > "$3.rc.tmp" && mv "$3.rc.tmp" "$3.rc"
   ) > "$3.log" 2>&1 &
+  FA_PID=$!
 }
 fetch_ahead_wait() {   # $1 = marker prefix: waits for the fetch-ahead, prints its log; a failed one is fetched again by the day itself
-  while [ ! -s "$1.rc" ]; do sleep 2; done
+  while [ ! -s "$1.rc" ] && kill -0 "$FA_PID" 2>/dev/null; do sleep 2; done
+  [ -s "$1.rc" ] || echo 2 > "$1.rc"                       # ended without its exit record: treated as failed (refetched)
   echo "### fetch-ahead log ($1.log)"; cat "$1.log"
   [ "$(cat "$1.rc")" = 0 ] || [ "$(cat "$1.rc")" = skipped ] || echo "### fetch-ahead exited $(cat "$1.rc"); the day checks its partitions and fetches again before it starts"
 }
