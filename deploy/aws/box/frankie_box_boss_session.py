@@ -361,8 +361,16 @@ POOL_PIN_WAIT_SECONDS = 5.0      # an initializer's wait for its CPU before it f
 def _encoder_pin(cpus, fallback=None):
     """Each encoder process takes one lane CPU of its own and is pinned to it (Greg, 2026-10-07: CPUs pinned to the jobs).
     A replacement worker (the pool re-forks one that died) finds the hand-out empty: it never blocks there (L-2) and is
-    pinned to the pool's whole CPU set instead, never left on the forking process's CPU."""
+    pinned to the pool's whole CPU set instead, never left on the forking process's CPU.
+    SIGTERM (session 5, review 1.7): a pool worker is forked from the ROOT and inherits its save handler (a flag the
+    worker never reads), so Pool.terminate()'s SIGTERM could leave a worker blocked in a result-pipe write and the
+    pool's join waiting forever (the a2 shard hang's shape). The default action is restored first, as in the shards."""
     import queue as queue_module
+    import signal
+    try:
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except (ValueError, OSError):       # not the main thread: _bounded_pool_stop still ends the worker
+        pass
     try:
         cpu = {cpus.get(timeout=POOL_PIN_WAIT_SECONDS)}
     except queue_module.Empty:
@@ -371,6 +379,47 @@ def _encoder_pin(cpus, fallback=None):
 
 
 POOL_POLL_SECONDS = 1.0          # a pinned-pool wait's step: between steps it checks its workers are the ones it started
+POOL_STOP_SECONDS = 10.0         # _bounded_pool_stop: the bound on terminate()+join(), then on each kill()+join()
+POOL_CLOSE_GRACE_SECONDS = 60.0  # _bounded_pool_stop: a graceful close()+join() may take this long before terminate
+
+
+def _bounded_pool_stop(pool, graceful):
+    """End a multiprocessing.Pool without an unbounded wait (session 5, review 1.7; Greg: never hang). The rule is
+    frankie_box_lane_pin's dead-worker rule and parallel_teacher._bounded_shutdown's (grace, terminate, kill), mirrored
+    for a multiprocessing.Pool: graceful = close()+join() given POOL_CLOSE_GRACE_SECONDS; then terminate()+join() given
+    POOL_STOP_SECONDS; then kill() + a bounded join of every worker still alive. Pool.close/terminate/join run on a
+    daemon thread so this caller only ever waits with a timeout. Returns None, or what had to be killed (pids, at,
+    exit_code, and whether the pool's own stop thread was still waiting), for the caller to record. Placement and
+    teardown only: a worker's output is the pool's result pipe, nothing durable, so a kill loses nothing."""
+    import threading
+
+    def run(steps):
+        def body():
+            try:
+                for step in steps:
+                    step()
+            except Exception:  # noqa: BLE001 - a pool already ended; the processes are still checked below
+                pass
+        thread = threading.Thread(target=body, name='pinned-pool-stop', daemon=True)
+        thread.start()
+        return thread
+    if graceful:
+        thread = run((pool.close, pool.join))
+        thread.join(POOL_CLOSE_GRACE_SECONDS)
+        if not thread.is_alive():
+            return None
+    thread = run((pool.terminate, pool.join))
+    thread.join(POOL_STOP_SECONDS)
+    if not thread.is_alive():
+        return None
+    killed = []
+    for process in list(getattr(pool, '_pool', None) or []):
+        if process.exitcode is None:
+            process.kill()
+            process.join(POOL_STOP_SECONDS)
+            killed.append(dict(pids=[process.pid], at=round(time.time(), 3), exit_code=process.exitcode))
+    thread.join(POOL_STOP_SECONDS)
+    return dict(killed=killed, graceful=graceful, stop_thread_still_waiting=thread.is_alive())
 
 
 class _PoolTask:
@@ -405,6 +454,7 @@ class _PinnedPool:
         self.workers_lost = 0
         self.tasks_redone = 0
         self.outstanding = {}
+        self.stop_kills = []              # what _bounded_pool_stop had to kill (session 5): pids, at, exit code
         self._start()
 
     @property
@@ -463,8 +513,7 @@ class _PinnedPool:
         survivors = [cpu for cpu in self.cpus if cpu in held]
         if len(survivors) != keep:
             survivors = self.cpus[:keep]          # placement only: the CPUs the survivors held are not readable
-        self.pool.terminate()
-        self.pool.join()
+        self._stop_pool(graceful=False)
         lost = [task for task in self.outstanding.values() if task.result is not None and not task.result.ready()]
         before = len(self.cpus)
         self.cpus = survivors
@@ -495,15 +544,23 @@ class _PinnedPool:
         self._start()
         return extra
 
+    def _stop_pool(self, graceful):
+        """Pool.close/terminate + join, bounded (_bounded_pool_stop); a kill is recorded in stop_kills and noted."""
+        stopped = _bounded_pool_stop(self.pool, graceful)
+        if stopped and (stopped['killed'] or stopped['stop_thread_still_waiting']):
+            self.stop_kills.append(stopped)
+            if self.note is not None:
+                self.note(f'{self.label}: the pool did not end within its bound; {len(stopped["killed"])} worker(s) '
+                          f'killed' + ('; its stop thread was left waiting' if stopped['stop_thread_still_waiting']
+                                       else '') + '; workers write nothing durable, nothing lost')
+
     def close(self):
         if self.pool is not None:
-            self.pool.close()
-            self.pool.join()
+            self._stop_pool(graceful=True)
 
     def terminate(self):
         if self.pool is not None:
-            self.pool.terminate()
-            self.pool.join()
+            self._stop_pool(graceful=False)
 
 
 class OrderedRowWriter:
@@ -1121,7 +1178,9 @@ def _saved_spool_position(spool):
         tail = _line_ending_at(path, observed.st_size)
     except ValueError:                    # never at a save (every row is a whole line); a resume then makes one full pass
         return position
+    import ssl
     return dict(position, resume=dict(schema=SPOOL_RESUME_SCHEMA, sha256_state=hasher.state(), hashed_bytes=hasher.length,
+                                      openssl=ssl.OPENSSL_VERSION,
                             hashed_from=hashed_from, device=observed.st_dev, inode=observed.st_ino,
                             mtime_ns=observed.st_mtime_ns, tail_offset=tail['offset'], tail_sha256=tail['sha256']))
 
@@ -1152,6 +1211,11 @@ def _resume_row_spool(spool_class, position):
             tail = _line_ending_at(path, observed.st_size)
             if tail != dict(offset=fast['tail_offset'], sha256=fast['tail_sha256']):
                 why = 'its last line differs from the saved one'
+            elif not _restored_state_finalizes(library, fast['sha256_state'], position):
+                # review 2.3: the state covers exactly the saved bytes, so it must finalize to the saved sha256; a
+                # corrupted state or another libcrypto's SHA256_CTX layout fails here, never at the seal
+                why = ('the recorded SHA-256 state does not finalize to the saved sha256 (saved under %s)'
+                       % fast.get('openssl', 'an unrecorded OpenSSL'))
             else:
                 held, why = (fast['sha256_state'], position['bytes']), None
     if held is None:
@@ -1180,6 +1244,14 @@ def _resume_row_spool(spool_class, position):
     return spool, how
 
 
+def _restored_state_finalizes(library, state, position):
+    """True when a recorded SHA-256 running state (covering the saved position's whole file) finalizes to its sha256."""
+    try:
+        return _ResumableSha256(library, state, position['bytes']).hexdigest() == position['sha256']
+    except (ValueError, TypeError):
+        return False
+
+
 def _check_spool_claims(positions, witnesses):
     """The seal's full witnesses against the last saved claims (the running-hash sha256s): any difference refuses."""
     for name, position in positions.items():
@@ -1187,6 +1259,12 @@ def _check_spool_claims(positions, witnesses):
         if seen is not None and (seen['bytes'], seen['sha256']) != (position['bytes'], position['sha256']):
             raise ValueError(f'the {name} spool\'s saved sha256 claim differs from its full read at the seal '
                              f'({position["sha256"]} vs {seen["sha256"]}); retained for recovery')
+
+
+def _check_input_spool_claim(claim, seen):
+    """The INPUT spool's full witness against its last saved claim (review 2.7); no claim (no save) = nothing to check."""
+    if claim is not None and (claim['bytes'], claim['sha256']) != (seen['bytes'], seen['sha256']):
+        raise ValueError('the INPUT spool differs from its last saved claim; retained for recovery')
 
 
 def _records_cursor(path, index, offset):
@@ -2465,7 +2543,8 @@ class Session:
         if not 0 <= next_record <= len(records):
             raise ValueError('saved ROOT cursor is outside the retained input')
         # The INPUT spool's byte offset of row next_record: the saved one when the line ending there is the saved line
-        # (the INPUT spool was verified whole by _input_records), else one pass over the rows before it, done once here
+        # (the INPUT spool's whole-file witness is checked against its last saved claim in _input_records), else one
+        # pass over the rows before it, done once here
         # for the replay and every replica shard (each used to skip them itself). The end count check still holds.
         saved_cursor = ((saved or {}).get('records_cursor') or {}) if saved else {}
         records_offset = None
@@ -2714,13 +2793,25 @@ class Session:
             receipt['layers'][name] = dict(status=value['status'], producer=value.get('producer'), reason=value.get('reason'), **witness(path), path=str(path))
         if layer_cpus:
             os.sched_setaffinity(0, set(lane))
+        if final_positions and not (recovery and bedrock):
+            # session 5, review 2.2 (nothing quiet): a route that saved spool claims and has no legacy-stage witness
+            # (BEDROCK=off) pays one full read of each legacy spool here, so a fast resume's acceptance (stat + last
+            # line) is still checked against the whole file on every route; listed on the receipt
+            _check_spool_claims(final_positions, {name: witness(rows.path) for name, rows
+                                                  in zip(names, (prices, frames, structures, failures))})
+            receipt['spool_claims_check'] = dict(schema=SPOOL_RESUME_SCHEMA, spools=list(names), route='bedrock off',
+                                                 cost='one full read of each legacy spool, added on this route')
         if recovery and bedrock:
             # A separately published legacy completion lets interrupted native traversal/projection
             # continue without replaying or recalculating the already completed legacy stage.
             artifacts = [dict(path=str(rows.path), **witness(rows.path))
                          for rows in (records, prices, frames, structures, failures)]
-            # session 5: the last saved claims (running-hash sha256s) checked against these full reads at the seal
+            # session 5: the last saved claims (running-hash sha256s) checked against these full reads at the seal (the
+            # INPUT spool's claim is checked in _input_records against its own full witness)
             _check_spool_claims(final_positions, dict(zip(names, artifacts[1:])))
+            if final_positions:
+                receipt['spool_claims_check'] = dict(schema=SPOOL_RESUME_SCHEMA, spools=list(names), route='bedrock on',
+                                                     cost='none added: the legacy-stage witnesses')
             artifacts.extend({k: item[k] for k in ('path', 'bytes', 'sha256')}
                              for item in receipt['layers'].values())
             write_json(self.work / 'legacy-stage.json', dict(schema=NATIVE_RECOVERY_SCHEMA,
@@ -3220,6 +3311,9 @@ class Session:
             raise ValueError('saved INPUT extraction belongs to a different sealed source')
         if saved and not 0 <= saved['consumed'] <= count:
             raise ValueError('saved INPUT journal cursor is outside the sealed source')
+        # review 2.7: the last saved claim on the INPUT spool (the save resumed from, then each save_input), checked
+        # against the full witness below after the extraction, so a fast resume (stat + last line) is never the only check
+        input_claim = [saved['spool'] if saved else None]
         if saved:
             # session 5: the INPUT spool reopens as the legacy spools do (_resume_row_spool: no full read when unchanged
             # and saved with a `resume` block, else one pass instead of RowSpool.resume's two; the same refusals)
@@ -3231,7 +3325,8 @@ class Session:
             records = B.RowSpool(self.work / 'derived' / '.rows' / ('input-' + uuid.uuid4().hex + '.jsonl'))
             kinds, without_observation, bytes_fields, consumed = {}, [], {}, 0
         def save_input(complete=False):
-            _save_raw_state(state_path, dict(identity=identity, spool=_saved_spool_position(records), kinds=kinds,
+            input_claim[0] = _saved_spool_position(records)
+            _save_raw_state(state_path, dict(identity=identity, spool=input_claim[0], kinds=kinds,
                 without_observation=without_observation, bytes_fields=bytes_fields, consumed=consumed, complete=complete))
         def stop_input():
             if recovery and save_requested and save_requested():
@@ -3320,6 +3415,7 @@ class Session:
         if retain_all_fields:
             container['bytes_fields_spooled'] = bytes_fields
         container['record_spool'] = dict(path=str(records.path), **witness(records.path))
+        _check_input_spool_claim(input_claim[0], container['record_spool'])
         return records, container
 
     @staticmethod

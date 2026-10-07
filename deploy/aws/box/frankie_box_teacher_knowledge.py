@@ -335,26 +335,32 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
     days = ST.load_searches([search])
     if days[0]['manifest_sha256'] != manifest_witness['sha256']:
         raise ValueError('owning search manifest changed after accumulated input selection')
-    native_ref, native_listed = ST.completed_native_evidence(days[0], out_dir)
+    # Phase 1 (stacks pass, dedupe F1; the school owner's R3): the claims each document will test and the result file
+    # each would write, decided exactly as the loop below decides them (same order, same keys; the reuse entries are
+    # kept per item and appended at the item's own place below, so `reused` keeps its order). The documents still to
+    # be measured then go to ST.pre_read ONCE: this owner day's completed native evidence and the search-part scan of
+    # every such document on one pinned pool, side by side; each ST.test gets its prepared scan (scanned=), used only
+    # when its key equals the test's own read plan. Without pre_read (an older scientific teacher) the reads run as
+    # before. Bytes unchanged: the same native reference, the same rows, ordinals, raw-line hashes, counts and report.
+    planned = []
     for item in documents:
-        lesson, claims = item['lesson'], []
+        lesson, claims, item_reused = item['lesson'], [], []
         for claim in item['claims']:
             key = claim_key(lesson, claim)
-            # A candidate discovered on this owning day is NOT skipped (CCode slice A, 2026-10-06): the reader's own
-            # origin path lists its discovery rows from this owner's complete, hash-checked search parts (origin_evidence,
-            # each row bound by part sha256 + ordinal + raw-line sha256, discovery_row true only on the exact row) and
-            # counts no origin row as a test; its tests/days_tested cover other days only. Nothing is rerun or rewritten.
             if key in already_tested:
-                reused.append(dict(source=item['source'], claim_id=claim['id'], claim_sha256=key,
-                                   reason='this native claim already tested on the exact current search manifest'))
+                item_reused.append(dict(source=item['source'], claim_id=claim['id'], claim_sha256=key,
+                                        reason='this native claim already tested on the exact current search manifest'))
             elif key in scheduled:
-                reused.append(dict(source=item['source'], claim_id=claim['id'], claim_sha256=key,
-                                   reason='identical native claim already scheduled from a retained lesson'))
+                item_reused.append(dict(source=item['source'], claim_id=claim['id'], claim_sha256=key,
+                                        reason='identical native claim already scheduled from a retained lesson'))
             else:
                 scheduled.add(key)
                 claims.append(claim)
-        if not claims:
-            continue
+        planned.append((item, claims, item_reused))
+
+    def result_plan(item, claims):
+        """(claim_inputs, its sha, result_identity, result path) of one document: pure, the same each call."""
+        lesson = item['lesson']
         claim_inputs = dict(schema='FRANKIE_SCIENTIFIC_CLAIM_INPUTS_V1', author=lesson['author'],
                             claims_sha256=lesson['claims_sha256'], claims=claims,
                             reader_sha256=identity['readers'][ST.__name__]['sha256'],
@@ -384,7 +390,36 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
                                searches=[dict(day=day, cycle=manifest['cycle'], dir=str(search),
                                               manifest_sha256=manifest_witness['sha256'])]))
                 for c in claims}
-        path = out_dir / 'results' / (_digest(result_identity) + '.json')
+        return claim_inputs, claim_inputs_sha, result_identity, out_dir / 'results' / (_digest(result_identity) + '.json')
+
+    def measured_doc(item, claims):
+        measured_claims = ([c for c in claims if c['id'] in item['affected_claim_ids']]
+                           if _successor is not None else claims)
+        return dict(author=item['lesson']['author'], claims=measured_claims)
+    to_measure = [k for k, (item, claims, _) in enumerate(planned)
+                  if claims and not result_plan(item, claims)[3].is_file()]
+    prepared_scans, pre_read_note = {}, None
+    if hasattr(ST, 'pre_read'):
+        native_list, prepared_list, pre_read_note = ST.pre_read(
+            days, [measured_doc(planned[k][0], planned[k][1]) for k in to_measure], out_dir)
+        native_ref, native_listed = native_list[0]
+        prepared_scans = dict(zip(to_measure, prepared_list))
+    else:
+        native_ref, native_listed = ST.completed_native_evidence(days[0], out_dir)
+        pre_read_note = dict(used=False, reason='this scientific teacher has no pre_read: native evidence and each '
+                                                'document\'s parts read on their own, as before')
+    for index, (item, claims, item_reused) in enumerate(planned):
+        lesson = item['lesson']
+        reused.extend(item_reused)
+        # A candidate discovered on this owning day is NOT skipped (CCode slice A, 2026-10-06): the reader's own
+        # origin path lists its discovery rows from this owner's complete, hash-checked search parts (origin_evidence,
+        # each row bound by part sha256 + ordinal + raw-line sha256, discovery_row true only on the exact row) and
+        # counts no origin row as a test; its tests/days_tested cover other days only. Nothing is rerun or rewritten.
+        # (The claim scheduling itself ran in phase 1 above, in this same order.)
+        if not claims:
+            continue
+        claim_inputs, claim_inputs_sha, result_identity, path = result_plan(item, claims)
+        collection = original_result if _successor is not None else lesson
         expected = dict(schema=lesson['schema'], author=lesson['author'], day=day,
                         original_claim_day=result_identity['original_claim_day'], stamp=lesson.get('stamp'),
                         claims_sha256=lesson['claims_sha256'], claims_source=lesson.get('claims_source'),
@@ -447,12 +482,13 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
         else:
             # The scientific reader checks hashes/lengths in the actual consumed binary
             # stream; a separate full pre-read adds I/O without binding those later reads.
-            measured_claims = ([c for c in claims if c['id'] in item['affected_claim_ids']]
-                               if _successor is not None else claims)
+            doc = measured_doc(item, claims)
+            measured_claims = doc['claims']
             read_report = {}     # what the read did (row filter, parts, rows hashed/parsed/selected; school_recovery 2026-10-07)
-            measured = ST.test(dict(author=lesson['author'], claims=measured_claims), days,
+            extra = dict(scanned=prepared_scans[index]) if prepared_scans.get(index) is not None else {}
+            measured = ST.test(doc, days,
                               records_dir=Path(records_selection['directory']), records_selection=records_selection['files'],
-                              report=read_report)
+                              report=read_report, **extra)
             if [r['claim_id'] for r in measured] != [c['id'] for c in measured_claims]:
                 raise ValueError('scientific owner returned a different affected claim set')
             retained = {r['claim_id']: r for r in original_result['results']} if _successor is not None else {}
@@ -494,6 +530,7 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
                  reused=len(reused), inputs_listed=len(listed),
                  claims_scheduled=len(scheduled), claims_already_tested=len(already_tested),
                  all_reused=created_files == 0, owner_native_evidence=native_ref is not None,
+                 pre_read=pre_read_note,
                  rule='new_result_files counts the result headers this call wrote; none means every claim was already '
                       'tested on this exact manifest or reused: no new scientific result was written. '
                       'completed_result_files includes exact reuses available for publication')
