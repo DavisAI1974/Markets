@@ -93,7 +93,10 @@ row carries, not rows x every channel seen); the frame/structure/price spools an
 workers in ordered line ranges with every per-record check on the coordinator in spool order; each source's leakage
 gates run side by side on pinned workers; one alignment serves a source's numeric and text fields; the coupling
 parts are read for discovery nominations by pinned workers and merged in part order; the parts are pinned by pinned
-hashing threads. Where each pass ran: MANIFEST cpu_placement.source_passes / passes.
+hashing threads. Where each pass ran: MANIFEST cpu_placement.source_passes (spool parses: each source's `parse`).
+The one-day review reads workflow-report.json beside the MANIFEST (the piece's own record with every list longer than
+WORKFLOW_REPORT_LIST_BYTES named by its count and exact MANIFEST location; the MANIFEST itself outgrows the reporter's
+metadata ceiling on a full day).
 """
 import argparse
 from datetime import date
@@ -783,8 +786,9 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
     # open here started a lane-sized thread pool that served nothing and sat in every process the leakage-gate pools
     # below fork from. duckdb stays imported above, so a venv without it still stops at the same point.
 
-    def asof(name, known_at, values_by_col):
-        """Account for source-row selection, then place each numeric column through its existing leakage gate."""
+    def asof(name, known_at, values_by_col, gates_of_fields=None):
+        """Account for source-row selection, then place each numeric column through its existing leakage gate (the
+        gates of its fields, in field order, when the caller computed them in a batch with other sources)."""
         valid, unavailable = known_time_rows(known_at)
         if unavailable:
             notes.append(dict(source=name, source_rows=len(known_at), rows_with_integer_clock=len(valid),
@@ -815,7 +819,11 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
                                      'this alias before per-field leakage gates, not exact ROOT membership, '
                                      'valid observations or additional independent evidence'))
         # every field's gate (independent of the others; the same gate, results in field order) on the lane's workers
-        for (key, values), gate in zip(values_by_col.items(), leakage_gates(name, known_at, values_by_col, workers)):
+        if gates_of_fields is None:
+            gates_of_fields = leakage_gates(name, known_at, values_by_col, workers)
+        if len(gates_of_fields) != len(values_by_col):
+            raise ValueError('leakage gate batch does not match the fields of ' + name)
+        for (key, values), gate in zip(values_by_col.items(), gates_of_fields):
             gates.append(gate)
             if gate['passed'] is False:
                 notes.append(dict(source=name, field=key, excluded='failed the leakage gate'))
@@ -1085,8 +1093,11 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         # Same AsOfReader validation/clock policy as open(), consuming the exact checked bytes above.
         reader = AsOfReader(body, body['halt_ns'])
         ext, absent = search_series(reader)
-        for name, (known, values) in sorted(ext.items()):
-            asof('external.' + name, known, {'value': values})
+        # the aliases' gates in one batch on the lane's workers (each is the gate asof() would run), then asof() in order
+        alias_gates = leakage_gate_batch([('external.' + name + '.value', known, values)
+                                          for name, (known, values) in sorted(ext.items())], workers, what='external aliases')
+        for (name, (known, values)), gate in zip(sorted(ext.items()), alias_gates):
+            asof('external.' + name, known, {'value': values}, [gate])
         # Keep each entity's fields even when another entity/alias has identical values. Reuse columns() so nested,
         # boolean, missing and mixed numeric/text leaves follow the same exact-value rule as the existing spools.
         mode = external_fields_mode or os.environ.get('SEARCH_EXTERNAL_FIELDS', 'all')
@@ -1096,16 +1107,29 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         if mode == 'all':
             sys.path.insert(0, str(Path(__file__).resolve().parent))
             import frankie_box_experiment_surface as SURFACE
+            # Two passes over the same sorted fields: the first decides each field's role and flattens its values
+            # (pure), so every field's leakage gates run in one batch on the lane's workers; the second is the
+            # original per-field placement in the original order with those gates.
+            planned = []
             for key, (stamps, values) in sorted(SURFACE.external_fields(reader).items()):
                 qualified, _, _entity = key.rpartition('.entity=')
                 point, column = qualified.rsplit('.', 1)
                 # identities and clocks (entity keys, event_time_ns, storage.estimate's print_ns): never a numeric signal
                 if column == reader.body['points'][point]['stamp_column'] or \
                         column in SURFACE.identity_and_clock_columns(point):
+                    planned.append((key, None, None))
+                    continue
+                planned.append((key, stamps, columns(({'value': value} for value in values), '')))
+            field_gates = iter(leakage_gate_batch(
+                [('external.' + key + '.' + leaf, stamps, leaf_values)
+                 for key, stamps, flat in planned if flat is not None for leaf, leaf_values in flat[0].items()],
+                workers, what='external day-file fields'))
+            for key, stamps, flat in planned:
+                if flat is None:
                     identity_fields.append(key)
                     continue
-                numeric, text, listed, _ = columns(({'value': value} for value in values), '')
-                rows = asof('external.' + key, stamps, numeric)
+                numeric, text, listed, _ = flat
+                rows = asof('external.' + key, stamps, numeric, [next(field_gates) for _ in numeric])
                 searched_fields.extend('external.' + key + '.' + leaf for leaf in numeric
                                        if 'external.' + key + '.' + leaf in series)
                 for leaf, leaf_values in text.items():
@@ -1234,26 +1258,34 @@ _GATE = {}
 SOURCE_PASSES = []        # where the parallel source passes ran (MANIFEST cpu_placement.source_passes); diagnostic only
 
 
-def _gate_job(key):
-    return leakage_gate(None, _GATE['name'] + '.' + key, _GATE['known_at'], _GATE['values'][key])
+def _gate_job(index):
+    source, known_at, values = _GATE['jobs'][index]
+    return leakage_gate(None, source, known_at, values)
+
+
+def leakage_gate_batch(jobs, workers=1, what=None):
+    """[leakage_gate(None, source, known_at, values) for (source, known_at, values) in jobs], in job order."""
+    cells = sum(len(known_at) for _, known_at, _ in jobs)
+    if workers <= 1 or len(jobs) < 2 or cells < GATE_PARALLEL_MIN_CELLS:
+        return [leakage_gate(None, source, known_at, values) for source, known_at, values in jobs]
+    import multiprocessing
+    started, count = time.time(), min(workers, len(jobs))
+    _GATE['jobs'] = jobs
+    try:
+        gates = [gate for _, gate in _lane_pin().ordered_map(
+            _gate_job, range(len(jobs)), count, context=multiprocessing.get_context('fork'), cpus=lane_cpus(),
+            report=POOL_RECOVERY)]
+    finally:
+        _GATE.clear()
+    SOURCE_PASSES.append(dict(what='leakage gates', source=what, fields=len(jobs), rows=cells, workers=count,
+                              seconds=round(time.time() - started, 3)))
+    return gates
 
 
 def leakage_gates(name, known_at, values_by_col, workers=1):
     """[leakage_gate(..., name + '.' + key, known_at, values) for each key of values_by_col], in key order."""
-    keys = list(values_by_col)
-    if workers <= 1 or len(keys) < 2 or len(known_at) * len(keys) < GATE_PARALLEL_MIN_CELLS:
-        return [leakage_gate(None, name + '.' + key, known_at, values_by_col[key]) for key in keys]
-    import multiprocessing
-    started, count = time.time(), min(workers, len(keys))
-    _GATE.update(name=name, known_at=known_at, values=values_by_col)
-    try:
-        gates = [gate for _, gate in _lane_pin().ordered_map(
-            _gate_job, keys, count, context=multiprocessing.get_context('fork'), cpus=lane_cpus(), report=POOL_RECOVERY)]
-    finally:
-        _GATE.clear()
-    SOURCE_PASSES.append(dict(what='leakage gates', source=name, fields=len(keys), rows=len(known_at), workers=count,
-                              seconds=round(time.time() - started, 3)))
-    return gates
+    return leakage_gate_batch([(name + '.' + key, known_at, values) for key, values in values_by_col.items()],
+                              workers, what=name)
 
 
 def leakage_gate(con, source, known_at, values):
@@ -2154,6 +2186,24 @@ def workflow_report(manifest, day_dir, identity, *, phase_timings, fft_cache, wo
                      'not proof of downstream consumption; missing evidence means unknown, never zero')
 
 
+WORKFLOW_REPORT_FILE_SCHEMA = 'FRANKIE_SEARCH_WORKFLOW_REPORT_FILE_V1'
+WORKFLOW_REPORT_LIST_BYTES = 256 * 1024
+
+
+def compact_report(value, at):
+    """The workflow report for the one-day review file: every list whose JSON exceeds WORKFLOW_REPORT_LIST_BYTES is
+    named by {items, json_bytes, full_record_at} (its exact location in MANIFEST.json); everything else as recorded.
+    The MANIFEST keeps every item; nothing here is a result or a gate."""
+    if isinstance(value, dict):
+        return {key: compact_report(item, '%s.%s' % (at, key)) for key, item in value.items()}
+    if isinstance(value, list):
+        size = len(json.dumps(value, sort_keys=True))
+        if size > WORKFLOW_REPORT_LIST_BYTES:
+            return dict(items=len(value), json_bytes=size, full_record_at=at)
+        return [compact_report(item, '%s[%d]' % (at, i)) for i, item in enumerate(value)]
+    return value
+
+
 def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, workers=8, transform_names=None):
     if type(lags) is not int or lags < 0:
         raise ValueError('lags must be a nonnegative integer')
@@ -2372,6 +2422,23 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
     manifest['all99_coverage']['manifest_basis'] = 'search_manifest_sha256 here is the export MANIFEST this search read'
     manifest['workflow_report'] = workflow_report(manifest, day_dir, identity, phase_timings=phases, fft_cache=fft_cache,
                                                   workers=workers)
+    # the one-day review file (frankie_box_workflow_inspection reads it; the MANIFEST outgrows its metadata ceiling)
+    review = dict(schema=WORKFLOW_REPORT_FILE_SCHEMA, day=day, cycle=cycle, day_role=day_role,
+                  workflow_report=compact_report(manifest['workflow_report'], 'MANIFEST.json workflow_report'),
+                  leakage_failed=[gate for gate in gates if gate.get('passed') is False],
+                  cpu_placement=compact_report(cpu_placement, 'MANIFEST.json cpu_placement'),
+                  rule='operator review only: the piece\'s own record with long lists named by count and exact MANIFEST '
+                       'location; not knowledge, not evidence, not a gate')
+    review_bytes = (json.dumps(review, indent=1, sort_keys=True) + '\n').encode()
+    review_path = staging / 'workflow-report.json'
+    with review_path.with_suffix('.json.pending').open('wb') as handle:
+        handle.write(review_bytes)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(review_path.with_suffix('.json.pending'), review_path)
+    manifest['workflow_report_file'] = dict(path='workflow-report.json', bytes=len(review_bytes),
+                                            sha256=hashlib.sha256(review_bytes).hexdigest(),
+                                            what='the one-day review file (compact workflow report)')
     manifest_path = staging / 'MANIFEST.json'
     with manifest_path.with_suffix('.json.pending').open('w', encoding='utf-8') as handle:
         handle.write(json.dumps(manifest, indent=1, sort_keys=True) + '\n')

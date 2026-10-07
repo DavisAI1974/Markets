@@ -737,6 +737,8 @@ def _run(request, request_path, out, brain, jev_brain):
     phase('science_and_delivery')
     import frankie_box_adviser_market as AM
     client_report = client.get('workflow_report') or {}
+    # the material renders' pools of this attempt (sit_in._prerender; placement only, never the owner identity)
+    placement['material_render_pools'] = list(getattr(SI, 'RENDER_POOLS', []))
     workflow_report = AM.workflow_report('jev', context=shared_context,
         consumer=dict(brain='Jev-only peer knowledge and prior entries/lessons: %d sources (never Frankie\'s brain)' % len(config['brain'])
                             if config['brain'] else None,

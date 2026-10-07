@@ -16,7 +16,9 @@ state for the owner school recovery, whose chain the school/corrections pieces f
 depth, the school file itself never opened); the preflight piece projects the owner-local lane records
 (the queue's owner binding, save marker and class acknowledgment, the Linux lane controller's last status) by their
 known paths, recorded scope only. The teacher receipt, the data export MANIFEST and the search MANIFEST carry their
-own FRANKIE_PIECE_WORKFLOW_REPORT_V1 (workflow_report), projected whole.
+own FRANKIE_PIECE_WORKFLOW_REPORT_V1 (workflow_report), projected whole. The search also writes workflow-report.json
+beside its MANIFEST (FRANKIE_SEARCH_WORKFLOW_REPORT_FILE_V1: the same report with every long list named by its count
+and exact MANIFEST location), read here so the search piece reports even when its MANIFEST exceeds the ceiling.
 """
 import argparse
 import hashlib
@@ -112,6 +114,7 @@ exhaustion_d native_only_ingestion model_clock use_counts registry_entries regis
 confirmation_clock external_points
 root_execution native_overlap timing parse
 cpu_placement pool_recovery
+workflow_report_file leakage_failed source_passes native_selection_check journal_witness
 '''.split())
 WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the pieces' own inputs / use / outputs record
 # The successor chain (school and corrections pieces): recorded pins {path, bytes, sha256} followed one by one from the
@@ -149,7 +152,7 @@ rows_missing rows_refused rows_waiting external_waiting refused_days root_waitin
 all99 all99_coverage all99_boundary evidence_read missing_listed withheld_listed candidates_by_status same_pair_candidates
 native_pass native_entries native_carriers opening_state layer_entries shared_runtime
 cpu_pinning
-cpu_placement pool_recovery
+cpu_placement pool_recovery source_passes native_selection_check journal_witness leakage_failed
 '''.split())
 PRODUCED = set('''outputs rows entity_rows rows_file attachment_file failure_count status shared_market_sources
 presented_inputs external_publications integrity_failure placed_series placed_cells couplings series cells planes
@@ -159,6 +162,7 @@ teacher_complete completion_hash external_novel_finding_ids jev_material saved_p
 discovery findings unclaimed survivors all99_coverage_files
 report_number revision supersedes classroom_copy index row file sha256 bytes learner_consumption
 all_knowledge_consumed native_learning_performed forecast_replaced pending_feedback_preserved
+workflow_report_file
 '''.split())
 
 _OUT = []          # the current piece's markdown; stdout when no --write directory is given
@@ -572,7 +576,10 @@ def artifact_paths(record, piece):
     if target and piece == 'search':
         # The search's own findings record (its brain source) and the symbolic discovery index
         # beside its MANIFEST; coupling parts and equation parts are never opened here.
-        out += [target / 'knowledge-findings.json', target / 'discovery' / 'INDEX.json']
+        out += [target / 'knowledge-findings.json', target / 'discovery' / 'INDEX.json',
+                # the search's own one-day review file (FRANKIE_SEARCH_WORKFLOW_REPORT_FILE_V1): its workflow report with
+                # long lists named by count and exact MANIFEST location, readable when the MANIFEST outgrows the ceiling
+                target / 'workflow-report.json']
     entries = [record.get('brain_entry'), record.get('teacher_brain_entry')]
     if isinstance(record.get('brain_entries'), dict):
         entries += list(record['brain_entries'].values())

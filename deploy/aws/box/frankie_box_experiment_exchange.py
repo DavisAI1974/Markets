@@ -1878,7 +1878,8 @@ def context_only(a, out, started):
                 listed=why, teacher_rows=a.teacher_rows,
                 shared_market_context=(dict(path=str(path), bytes=path.stat().st_size, sha256=sha256_bytes(path.read_bytes()))
                                        if context is not None and path.is_file() else None),
-                scope=(context or {}).get('scope'), placement=placement, seconds=round(time.time() - started, 1),
+                scope=(context or {}).get('scope'), placement=dict(placement, teacher_ledger_pools=list(LEDGER_POOLS)),
+                seconds=round(time.time() - started, 1),
                 rule='the cutoff read only; the exchange step itself runs later and reuses this retained file')
     print(json.dumps(line, sort_keys=True, default=str), flush=True)
     return 0
