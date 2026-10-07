@@ -891,38 +891,326 @@ def legacy_replica_advance(state, index, record):
             lambda: legacy_frame_row(adapter, frame, book, previous_book, group_inputs, index, True, *tools))
 
 
-def _spool_records_from(path, start):
+def _spool_records_from(path, start, offset=None, cursor=None):
     """A RowSpool's rows from row `start` on, each decoded exactly as RowSpool.__iter__ does (unpack(json.loads(line)));
     the rows before `start` are skipped as raw lines (never decoded). JSON lines carry no raw CR (json escapes it), so
-    the binary split on newline is the text-mode split."""
+    the binary split on newline is the text-mode split.
+    offset (session 5, 2026-10-07): the byte offset where row `start` begins (recorded at a save, or found once by
+    _spool_offset_of); the reader seeks there instead of reading the `start` lines before it. None = skip from byte 0.
+    cursor: a dict whose 'offset' is kept at the byte offset of the next row after each row is yielded (a save records
+    it beside the row cursor). Same rows, same order, same decode either way."""
     from research.kalshi.frankie_boss.c15_journal import unpack
     with open(path, 'rb') as handle:
-        for _ in range(start):
-            if not handle.readline():
-                return
+        if offset is None:
+            position = 0
+            for _ in range(start):
+                line = handle.readline()
+                if not line:
+                    return
+                position += len(line)
+        else:
+            handle.seek(offset)
+            position = offset
+        if cursor is not None:
+            cursor['offset'] = position
         for line in handle:
+            if cursor is not None:
+                cursor['offset'] += len(line)
             yield unpack(json.loads(line))
 
 
-def _counted_spool_rows(spool, start):
-    """_spool_records_from(spool.path, start) with RowSpool.__iter__'s end check: the rows seen (skipped + decoded) must
-    equal the spool's count."""
+def _counted_spool_rows(spool, start, offset=None, cursor=None):
+    """_spool_records_from(spool.path, start, offset, cursor) with RowSpool.__iter__'s end check: the rows seen (skipped
+    or sought + decoded) must equal the spool's count (so a recorded offset at the wrong row boundary refuses here)."""
     if not spool._writer.closed:
         spool._writer.flush()
     seen = start
-    for row in _spool_records_from(spool.path, start):
+    for row in _spool_records_from(spool.path, start, offset, cursor):
         seen += 1
         yield row
     if seen != len(spool):
         raise ValueError('retained row spool count changed')
 
 
-def _legacy_shard_worker(slot, count, cpu, connection, others, records_path, start, base, state, advance):
-    """A replica shard (forked from the replay): pinned to its CPU, it replays the INPUT rows from `start` and sends,
-    in order, (ordinal, check, kind, line, value-of-a-failure-row) for every closed group whose ordinal (from `base`)
-    is its own. Any exception is sent as ('error', ...); it always leaves by os._exit (never flushing an inherited
-    buffer)."""
+# ---- Spool save/resume without re-reading the whole spool (session 5, 2026-10-07) --------------------------------------
+# A legacy save recorded each spool as RowSpool.saved_position() (path, count, bytes, sha256 of the whole file: one full
+# read), and a resume re-read it twice (RowSpool.resume: the sha256, then the line count); on a2 that was ~257 GB, ~3 min
+# at the save and ~8 min at the resume. The spools are append-only and every save leaves them on a full line, so:
+# - the save keeps the SHA-256 running state of the bytes already hashed and reads only the bytes appended since (the
+#   whole-file sha256 it records is the same value as before: SHA-256 over the same bytes, continued, not re-defined);
+# - the position gains an additive `resume` block (the running state, the file's device/inode/mtime/size, the last
+#   line's offset and sha256); a resume on the same unchanged file (same device, inode, size, mtime, and the same last
+#   line) reads only the first and last lines and none of the rest, and carries the running state on to the next save;
+# - any other case (an old save, e.g. c9bf631's, without `resume`; a changed stat; no resumable hasher) is ONE full pass
+#   (sha256 + line count together) with RowSpool.resume's refusals, in RowSpool.resume's order.
+# The running state is OpenSSL's SHA256_CTX (hashlib exposes none), reached through ctypes on the libcrypto hashlib
+# itself links; it is checked once per process against hashlib on a known vector across a state round trip at a partial
+# block, and refused (full hashlib reads, as before) when absent or different. The legacy stage's final witness (one
+# full read, unchanged) is compared with the last saved claim (_check_spool_claims), so the claim is checked at the seal.
+SPOOL_RESUME_SCHEMA = 'FRANKIE_ROOT_SPOOL_RESUME_V1'
+SPOOL_HASH_CHUNK = 16 << 20
+_SHA256_CTX_BYTES = 256      # >= sizeof(SHA256_CTX) on every OpenSSL (h[8], Nl, Nh, data[16], num, md_len = 112 bytes)
+_SHA256_LIBRARY = []         # [libcrypto or None], resolved once per process
+
+
+def _sha256_library():
+    """libcrypto with SHA256_Init/Update/Final whose saved-and-restored state reproduces hashlib.sha256, or None."""
+    if not _SHA256_LIBRARY:
+        found = None
+        try:
+            import ctypes
+            import ctypes.util
+            names = [ctypes.util.find_library('crypto'), 'libcrypto.so.3', 'libcrypto.so.1.1', 'libcrypto.so']
+            for name in [n for n in names if n]:
+                try:
+                    library = ctypes.CDLL(name)
+                    library.SHA256_Init.argtypes = [ctypes.c_void_p]
+                    library.SHA256_Update.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t]
+                    library.SHA256_Final.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+                    for function in (library.SHA256_Init, library.SHA256_Update, library.SHA256_Final):
+                        function.restype = ctypes.c_int
+                except (OSError, AttributeError):
+                    continue
+                if _sha256_library_matches(library):
+                    found = library
+                    break
+        except Exception:  # noqa: BLE001 - no resumable hasher: every caller falls back to full hashlib reads
+            found = None
+        _SHA256_LIBRARY.append(found)
+    return _SHA256_LIBRARY[0]
+
+
+def _sha256_library_matches(library):
+    data = bytes(range(256)) * 9 + b'frankie' * 13           # 2,395 bytes: the cut below leaves a partial block
+    for cut in (0, 1, 63, 64, 100, 1000, len(data)):
+        first = _ResumableSha256(library)
+        first.update(data[:cut])
+        second = _ResumableSha256(library, first.state(), first.length)
+        second.update(data[cut:])
+        if second.hexdigest() != hashlib.sha256(data).hexdigest() or second.length != len(data):
+            return False
+    return _ResumableSha256(library).hexdigest() == hashlib.sha256(b'').hexdigest()
+
+
+class _ResumableSha256:
+    """SHA-256 over a file's first `length` bytes whose state() can be recorded and continued in another process."""
+
+    def __init__(self, library, state=None, length=0):
+        import ctypes
+        self._library, self.length = library, int(length)
+        self._ctx = ctypes.create_string_buffer(_SHA256_CTX_BYTES)
+        if state is None:
+            if library.SHA256_Init(self._ctx) != 1:
+                raise ValueError('SHA256_Init failed')
+        else:
+            if len(state) != _SHA256_CTX_BYTES:
+                raise ValueError('recorded SHA-256 state has the wrong size')
+            ctypes.memmove(self._ctx, bytes(state), _SHA256_CTX_BYTES)
+
+    def update(self, data, size=None):
+        """data: bytes, or a ctypes address with its size (a filled read buffer)."""
+        import ctypes
+        if size is None:
+            size = len(data)
+            data = ctypes.c_char_p(bytes(data))
+        if size and self._library.SHA256_Update(self._ctx, data, size) != 1:
+            raise ValueError('SHA256_Update failed')
+        self.length += size
+
+    def state(self):
+        return bytes(self._ctx.raw)
+
+    def hexdigest(self):
+        import ctypes
+        copy = ctypes.create_string_buffer(self._ctx.raw, _SHA256_CTX_BYTES)
+        out = ctypes.create_string_buffer(32)
+        if self._library.SHA256_Final(out, copy) != 1:
+            raise ValueError('SHA256_Final failed')
+        return out.raw.hex()
+
+
+def _hash_file_into(path, hasher, end, newlines=None):
+    """Continue hasher (holding the file's bytes [0, hasher.length)) over [hasher.length, end); newlines: a one-item list
+    that the newline count of the bytes read is added to. Returns the bytes read."""
+    import ctypes
+    buffer = bytearray(SPOOL_HASH_CHUNK)
+    address = ctypes.addressof((ctypes.c_char * len(buffer)).from_buffer(buffer))
+    view = memoryview(buffer)
+    begun = hasher.length
+    with open(path, 'rb', buffering=0) as handle:
+        handle.seek(hasher.length)
+        while hasher.length < end:
+            got = handle.readinto(view[:min(len(buffer), end - hasher.length)])
+            if not got:
+                raise ValueError('saved row spool changed; retained for recovery')
+            if isinstance(hasher, _ResumableSha256):
+                hasher.update(address, got)
+            else:
+                hasher.update(view[:got])
+            if newlines is not None:
+                newlines[0] += buffer.count(b'\n', 0, got)
+    return hasher.length - begun
+
+
+class _PlainSha256:
+    """hashlib.sha256 with a length (no resumable state): the fallback when no libcrypto matches."""
+
+    def __init__(self):
+        self._hash, self.length = hashlib.sha256(), 0
+
+    def update(self, data):
+        self._hash.update(data)
+        self.length += len(data)
+
+    def hexdigest(self):
+        return self._hash.hexdigest()
+
+
+def _line_ending_at(path, end):
+    """The line that ends at byte `end` (its offset, its sha256; it must end on a newline). end 0 = no line."""
+    if end == 0:
+        return dict(offset=0, sha256=None)
+    with open(path, 'rb') as handle:
+        handle.seek(end - 1)
+        if handle.read(1) != b'\n':
+            raise ValueError('retained row spool has a partial final record')
+        offset, position = 0, end - 1
+        while position > 0:
+            begin = max(0, position - (1 << 20))
+            handle.seek(begin)
+            found = handle.read(position - begin).rfind(b'\n')
+            if found >= 0:
+                offset = begin + found + 1
+                break
+            position = begin
+        handle.seek(offset)
+        return dict(offset=offset, sha256=hashlib.sha256(handle.read(end - offset)).hexdigest())
+
+
+def _spool_offset_of(path, start):
+    """The byte offset where row `start` begins (one pass over the rows before it), or None past the end."""
+    position = 0
+    with open(path, 'rb') as handle:
+        for _ in range(start):
+            line = handle.readline()
+            if not line:
+                return None
+            position += len(line)
+    return position
+
+
+def _saved_spool_position(spool):
+    """RowSpool.saved_position()'s value (path, count, bytes, sha256 of the whole file: the same keys and values) plus
+    the additive `resume` block; only the bytes after the running state the spool holds are read. Without a resumable
+    hasher: RowSpool.saved_position() itself (a full read, as before)."""
+    library = _sha256_library()
+    if library is None:
+        return spool.saved_position()
+    if not spool._writer.closed:
+        spool._writer.flush()
+        os.fsync(spool._writer.fileno())
+    path = Path(spool.path)
+    observed = path.stat()
+    held = getattr(spool, '_sha256_held', None)
+    hasher = (_ResumableSha256(library, *held) if held and held[1] <= observed.st_size else _ResumableSha256(library))
+    hashed_from = hasher.length
+    _hash_file_into(path, hasher, observed.st_size)
+    spool._sha256_held = (hasher.state(), hasher.length)
+    position = dict(path=str(path), count=spool._count, bytes=observed.st_size, sha256=hasher.hexdigest())
+    try:
+        tail = _line_ending_at(path, observed.st_size)
+    except ValueError:                    # never at a save (every row is a whole line); a resume then makes one full pass
+        return position
+    return dict(position, resume=dict(schema=SPOOL_RESUME_SCHEMA, sha256_state=hasher.state(), hashed_bytes=hasher.length,
+                            hashed_from=hashed_from, device=observed.st_dev, inode=observed.st_ino,
+                            mtime_ns=observed.st_mtime_ns, tail_offset=tail['offset'], tail_sha256=tail['sha256']))
+
+
+def _resume_row_spool(spool_class, position):
+    """spool_class.resume(position) (RowSpool.resume: the same refusals in the same order, the same reopened object),
+    returning (spool, how). A position with a `resume` block on the same unchanged file reads only its first and last
+    lines; anything else is one full pass (sha256 + line count), the running state kept for the next save when a
+    resumable hasher exists."""
+    from research.kalshi.frankie_boss.c15_journal import unpack
+    path = Path(position['path'])
+    observed = path.stat()
+    if observed.st_size != position['bytes']:
+        raise ValueError('saved row spool changed; retained for recovery')
+    library = _sha256_library()
+    fast = position.get('resume') or None
+    why = 'the save recorded no resume block (an older save)'
+    held = tail = None
+    if fast is not None:
+        if fast.get('schema') != SPOOL_RESUME_SCHEMA:
+            why = 'unknown resume schema %r' % fast.get('schema')
+        elif library is None:
+            why = 'no resumable SHA-256 here'
+        elif (fast.get('hashed_bytes'), fast.get('device'), fast.get('inode'), fast.get('mtime_ns')) != (
+                position['bytes'], observed.st_dev, observed.st_ino, observed.st_mtime_ns):
+            why = 'the file is not the one saved (device, inode or mtime differ)'
+        else:
+            tail = _line_ending_at(path, observed.st_size)
+            if tail != dict(offset=fast['tail_offset'], sha256=fast['tail_sha256']):
+                why = 'its last line differs from the saved one'
+            else:
+                held, why = (fast['sha256_state'], position['bytes']), None
+    if held is None:
+        hasher, newlines = (_ResumableSha256(library) if library is not None else _PlainSha256()), [0]
+        _hash_file_into(path, hasher, observed.st_size, newlines)
+        if hasher.hexdigest() != position['sha256']:
+            raise ValueError('saved row spool changed; retained for recovery')
+        tail = _line_ending_at(path, observed.st_size)          # refuses a partial final record, as RowSpool.reopen
+        if newlines[0] != position['count']:
+            raise ValueError('saved row spool count differs')
+        if library is not None:
+            held = (hasher.state(), hasher.length)
+    spool = spool_class.__new__(spool_class)
+    spool.path, spool._count, spool._ends = path, position['count'], []
+    if spool._count:
+        with path.open('rb') as handle:
+            first = handle.readline()
+            handle.seek(tail['offset'])
+            last = handle.read(observed.st_size - tail['offset'])
+        spool._ends = [unpack(json.loads(first)), unpack(json.loads(last))]
+    if held is not None:
+        spool._sha256_held = held
+    spool._writer = path.open('a', encoding='utf-8', newline='\n')
+    how = ('unchanged file: stat and last line checked, no full read' if why is None
+           else 'one full pass (sha256 + count): ' + why)
+    return spool, how
+
+
+def _check_spool_claims(positions, witnesses):
+    """The seal's full witnesses against the last saved claims (the running-hash sha256s): any difference refuses."""
+    for name, position in positions.items():
+        seen = witnesses.get(name)
+        if seen is not None and (seen['bytes'], seen['sha256']) != (position['bytes'], position['sha256']):
+            raise ValueError(f'the {name} spool\'s saved sha256 claim differs from its full read at the seal '
+                             f'({position["sha256"]} vs {seen["sha256"]}); retained for recovery')
+
+
+def _records_cursor(path, index, offset):
+    """The INPUT row cursor a legacy save records beside next_record: the byte offset of row `index` and the line
+    ending there (a resume seeks to the offset after checking that line)."""
+    return dict(schema=SPOOL_RESUME_SCHEMA, index=index, offset=offset, previous_line=_line_ending_at(path, offset))
+
+
+def _legacy_shard_worker(slot, count, cpu, connection, others, records_path, start, base, state, advance, offset=None):
+    """A replica shard (forked from the replay): pinned to its CPU, it replays the INPUT rows from `start` (sought at
+    byte `offset` when given) and sends, in order, (ordinal, check, kind, line, value-of-a-failure-row) for every closed
+    group whose ordinal (from `base`) is its own. Any exception is sent as ('error', ...); it always leaves by os._exit
+    (never flushing an inherited buffer). It writes nothing durable: its only output is this pipe, every row reaches
+    its spool through the replay.
+    SIGTERM (session 5, 2026-10-07): a shard inherits the ROOT's save handler (frankie_box_experiment_root: SIGTERM
+    sets the save flag), which a shard never reads; blocked in a pipe write it then ignored LegacyFrameShards._stop's
+    terminate() and the unbounded join hung (a2, 22:36Z). The default action is restored first, so a terminate()
+    ends a shard at once, even inside that write."""
     import pickle
+    import signal
+    try:
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except (ValueError, OSError):       # not the main thread: _stop's bounded join and kill() still end the shard
+        pass
     code = 0
     try:
         for other in others:
@@ -938,7 +1226,7 @@ def _legacy_shard_worker(slot, count, cpu, connection, others, records_path, sta
         except (OSError, ValueError, ImportError):
             pass
         ordinal = base
-        for index, record in enumerate(_spool_records_from(records_path, start), start):
+        for index, record in enumerate(_spool_records_from(records_path, start, offset), start):
             out = advance(state, index, record)
             if out is None:
                 continue
@@ -964,9 +1252,10 @@ class LegacyFrameShards:
     (kind, line, value) in the replay's order; write() puts it on its spool with RowSpool.append's bookkeeping."""
 
     HANDOVER_CHECK_SECONDS = 5.0
+    STOP_JOIN_SECONDS = 10.0       # _stop: the most it waits for the shards to end after terminate(), then kill()
 
     def __init__(self, cpus, records_path, start, state, *, advance=legacy_replica_advance, note=None, flush=None,
-                 handover=None, limit=None):
+                 handover=None, limit=None, offset=None):
         self.cpus, self.records_path, self.advance = list(cpus), str(records_path), advance
         self.note, self.flush, self.handover = note, flush, handover
         self.limit = limit                       # the most CPUs the shards may hold (data_workers), None = no bound
@@ -976,15 +1265,18 @@ class LegacyFrameShards:
         self.wait_seconds = 0.0
         self.handed_over = []
         self.losses = []
+        self.stop_kills = []                     # shards _stop had to SIGKILL after STOP_JOIN_SECONDS (nothing lost)
         self._pending_last = {}
         self._handover_next = time.monotonic() + self.HANDOVER_CHECK_SECONDS
-        self._start(start, state)
+        self._start(start, state, offset)
 
     @property
     def count(self):
         return len(self.workers)
 
-    def _start(self, start, state):
+    def _start(self, start, state, offset=None):
+        """Fork one shard per CPU from the replay's state at INPUT row `start` (byte `offset` in the INPUT spool when
+        known; restart() may return it as a third item)."""
         import multiprocessing
         self.workers = []
         if not self.cpus:
@@ -997,20 +1289,39 @@ class LegacyFrameShards:
             receive, send = context.Pipe(duplex=False)
             process = context.Process(target=_legacy_shard_worker, name='root-legacy-shard-%d' % slot, daemon=True,
                                       args=(slot, len(self.cpus), cpu, send, receivers + [receive],
-                                            self.records_path, start, self.base, state, self.advance))
+                                            self.records_path, start, self.base, state, self.advance, offset))
             process.start()
             send.close()                          # only the shard holds the write end: its exit is EOF here
             receivers.append(receive)
             self.workers.append((process, receive, cpu))
 
     def _stop(self):
-        for process, receive, _ in self.workers:
+        """End every shard, bounded (session 5, 2026-10-07; a2 hung here twice): terminate() (SIGTERM, the default
+        action in a shard), then the read ends closed (a shard still blocked writing its pipe gets EPIPE and leaves),
+        then join up to STOP_JOIN_SECONDS in all, then kill() for any shard still alive, recorded in stop_kills and
+        noted. A shard writes nothing durable (its only output is its pipe; every row reaches a spool through the
+        replay, and anything still unread in a pipe is a look-ahead row the replay never wrote), so a killed shard
+        loses nothing; the rows, their order and the lockstep checks are unchanged."""
+        workers, self.workers = self.workers, []
+        for process, _, _ in workers:
             if process.exitcode is None:
                 process.terminate()
-        for process, receive, _ in self.workers:
-            process.join()
+        for _, receive, _ in workers:
             receive.close()
-        self.workers = []
+        deadline = time.monotonic() + self.STOP_JOIN_SECONDS
+        killed = []
+        for process, _, cpu in workers:
+            process.join(max(0.0, deadline - time.monotonic()))
+            if process.exitcode is None:
+                process.kill()
+                process.join(self.STOP_JOIN_SECONDS)
+                killed.append(dict(cpu=cpu, pid=process.pid, exit_code=process.exitcode))
+        if killed:
+            self.stop_kills.extend(killed)
+            if self.note is not None:
+                self.note(f'legacy pass: {len(killed)} replica shard(s) still alive {self.STOP_JOIN_SECONDS:.0f} s after '
+                          f'terminate() were killed (CPUs {cpu_ranges([k["cpu"] for k in killed])}); shards write '
+                          f'nothing durable, no row lost')
 
     def _receive(self, process, receive, ordinal, check):
         import pickle
@@ -1121,7 +1432,7 @@ class LegacyFrameShards:
                     rows_from_shards=self.frames_from_shards, rows_in_replay=self.frames_in_replay,
                     rows_redone_after_loss=self.frames_redone, shards_lost=self.workers_lost, losses=self.losses,
                     restarts=self.restarts, handed_over=self.handed_over,
-                    replay_waited_seconds=round(self.wait_seconds, 3))
+                    replay_waited_seconds=round(self.wait_seconds, 3), killed_at_stop=self.stop_kills)
 
 
 def _split_handover(source, shares):
@@ -2029,7 +2340,12 @@ class Session:
             pending_legacy = saved['pending_legacy_rows']
             if retain_frame_sections:
                 pending_inputs = saved['pending_inputs']
-            prices, frames, structures, failures = [B.RowSpool.resume(saved['spools'][name]) for name in names]
+            # session 5: an unchanged spool saved with a `resume` block reopens without a full read; an older save
+            # (c9bf631's) is one full pass instead of two; RowSpool.resume's refusals unchanged (_resume_row_spool)
+            resumed = [_resume_row_spool(B.RowSpool, saved['spools'][name]) for name in names]
+            prices, frames, structures, failures = [spool for spool, _ in resumed]
+            self.note('legacy resume: spools reopened (' + '; '.join(f'{name}: {how}' for name, (_, how)
+                                                                      in zip(names, resumed)) + ')')
         else:
             prices, frames, structures, failures = [B.RowSpool(derived / '.rows' / (name + '.jsonl')) for name in names]
             for missing in container.get('inputs_without_observation') or []:
@@ -2123,15 +2439,44 @@ class Session:
                 writer.drain()                    # every queued row on disk before its spool position is saved
             with (parallel_book.materialized() if parallel_book is not None else contextlib.nullcontext()):
                 save_legacy_state(cursor)         # the class's original methods while the live adapter is pickled
+        records_cursor = dict(offset=None)       # the INPUT spool's byte offset of row next_record (set below)
+        final_positions = {}                     # the last saved spool claims (checked against the seal's witnesses)
         def save_legacy_state(cursor):
+            # session 5 (additive): each spool's position is RowSpool.saved_position()'s value plus a `resume` block,
+            # hashing only the bytes appended since the running state held (_saved_spool_position); records_cursor is
+            # the INPUT spool's byte offset of row `cursor`, so a resume seeks instead of reading the rows before it
+            spools = {name: _saved_spool_position(rows) for name, rows in zip(names, (prices, frames, structures, failures))}
+            final_positions.clear()
+            final_positions.update(spools)
             _save_raw_state(recovery_path, dict(identity=identity, next_record=cursor,
                 adapter=mbo_resume_state.export_adapter_state(adapter, include_open_groups=True),
                 adapter_live=adapter,
                 pending_inputs=pending_inputs, pending_legacy_rows=pending_legacy,
                 binner=binner, previous_book=previous_book, legacy_count=legacy_count,
-                spools={name: rows.saved_position() for name, rows in zip(names, (prices, frames, structures, failures))}))
+                spools=spools,
+                records_cursor=(_records_cursor(records.path, cursor, records_cursor['offset'])
+                                if records_cursor['offset'] is not None else None)))
         if not 0 <= next_record <= len(records):
             raise ValueError('saved ROOT cursor is outside the retained input')
+        # The INPUT spool's byte offset of row next_record: the saved one when the line ending there is the saved line
+        # (the INPUT spool was verified whole by _input_records), else one pass over the rows before it, done once here
+        # for the replay and every replica shard (each used to skip them itself). The end count check still holds.
+        saved_cursor = ((saved or {}).get('records_cursor') or {}) if saved else {}
+        records_offset = None
+        if saved_cursor.get('schema') == SPOOL_RESUME_SCHEMA and saved_cursor.get('index') == next_record:
+            try:
+                if _line_ending_at(records.path, saved_cursor['offset']) == saved_cursor['previous_line']:
+                    records_offset = saved_cursor['offset']
+            except (OSError, ValueError):
+                records_offset = None
+        if records_offset is None:
+            records_offset = _spool_offset_of(records.path, next_record) if next_record else 0
+            if next_record:
+                self.note(f'legacy resume: INPUT row {next_record} found by one pass over the rows before it '
+                          f'(the save recorded no usable byte offset)')
+        else:
+            self.note(f'legacy resume: INPUT row {next_record} sought at its saved byte offset {records_offset}')
+        records_cursor['offset'] = records_offset
         if recovery and save_requested and save_requested():
             save_legacy(next_record)
             raise TeacherSaved('ROOT saved before the next INPUT record')
@@ -2142,14 +2487,14 @@ class Session:
                 shard_cpus, records.path, next_record,
                 dict(adapter=adapter, previous_book=previous_book, pending_inputs=pending_inputs,
                      book_transition=book_transition, observe_book=observe_book),
-                note=self.note, handover=self._freed_native_cpus, limit=helper_limit,
+                note=self.note, handover=self._freed_native_cpus, limit=helper_limit, offset=records_offset,
                 flush=lambda: [rows._writer.flush() for rows in (prices, frames, structures, failures)])
             self._frame_shards = shards
         probe = _box_module('frankie_box_progress').for_session(self)
         # From the saved cursor on: the rows before it are skipped as raw lines, never decoded again (a resumed legacy
         # pass no longer re-decodes the INPUT spool's prefix); each later row is decoded exactly as RowSpool.__iter__
         # does, and the spool's own count is still required at the end (RowSpool's 'count changed' refusal).
-        remaining = _counted_spool_rows(records, next_record)
+        remaining = _counted_spool_rows(records, next_record, records_offset, records_cursor)
         for index, record in enumerate(probe.track(remaining, len(records) - next_record, 'root-legacy-records'), next_record):
             try:
                 record_instrument = record.get('instrument_id')      # as the INPUT record carries it; None stays None
@@ -2226,7 +2571,8 @@ class Session:
                             lambda: legacy_frame_row(adapter, frame, book, previous_book, group_inputs, index,
                                                      retain_frame_sections, book_transition, observe_book),
                             lambda: (index + 1, dict(adapter=adapter, previous_book=book, pending_inputs=pending_inputs,
-                                                     book_transition=book_transition, observe_book=observe_book)))
+                                                     book_transition=book_transition, observe_book=observe_book),
+                                     records_cursor['offset']))
                         shards.write(frames if kind == 'frame' else failures, kind, line, value)
                     else:
                         try:
@@ -2367,6 +2713,8 @@ class Session:
             # continue without replaying or recalculating the already completed legacy stage.
             artifacts = [dict(path=str(rows.path), **witness(rows.path))
                          for rows in (records, prices, frames, structures, failures)]
+            # session 5: the last saved claims (running-hash sha256s) checked against these full reads at the seal
+            _check_spool_claims(final_positions, dict(zip(names, artifacts[1:])))
             artifacts.extend({k: item[k] for k in ('path', 'bytes', 'sha256')}
                              for item in receipt['layers'].values())
             write_json(self.work / 'legacy-stage.json', dict(schema=NATIVE_RECOVERY_SCHEMA,

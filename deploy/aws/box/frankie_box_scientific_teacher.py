@@ -494,46 +494,173 @@ def _lane_order():
         return cpus, 'lane helpers not read (%s: %s): affinity order' % (type(error).__name__, error)
 
 
-def _pin_pool_worker(order, counter):
-    """A pool process takes the next CPU of `order` (a shared counter, no queue feeder thread before the fork) and pins
-    itself to it (Greg, 2026-10-07: every pool worker pinned to its share of the booked lane). L-2: a failed pin keeps the
-    lane affinity inherited from the parent (taskset of the booking); the work itself is unchanged either way."""
+POOL_NOTES = []        # every pool _pinned_map ran in this process, in order: placement, mode, fallbacks, losses, redo
+POOL_POLL_SECONDS = 1.0  # a wait on one item's result looks at the pool this often (a dead worker is noticed within it)
+
+
+def _pin_pool_worker(order, counter, slots):
+    """A pool process takes the next CPU of `order` (a shared counter, no queue feeder thread before the fork), records
+    its pid at that slot (so a lost worker's CPU can be named and released) and pins itself to it (Greg, 2026-10-07:
+    every pool worker pinned to its share of the booked lane). SIGTERM goes back to its default action: a worker forked
+    from a parent that handles SIGTERM must still end when its pool ends it (the a2 shard exit hang, 2026-10-07: an
+    inherited SIGTERM handler swallowed terminate() and the join waited forever). OPENBLAS/OMP/MKL threads are one per
+    worker (nothing here uses them; the setting keeps a worker from fanning out over its siblings). L-2: a failed pin
+    keeps the lane affinity inherited from the parent (taskset of the booking); the work itself is unchanged either way."""
+    import signal
+    for name in ('OPENBLAS_NUM_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS'):
+        os.environ[name] = '1'
+    try:
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except (ValueError, OSError):  # placement/stop hygiene only
+        pass
     try:
         with counter.get_lock():
             index = counter.value
             counter.value += 1
+        if index < len(slots):
+            slots[index] = os.getpid()
         os.sched_setaffinity(0, {order[index % len(order)]})
     except Exception:  # noqa: BLE001 - placement only
         pass
 
 
+def _report_units(label, done, total):
+    """The stage heartbeat's units (frankie_box_stage_progress.report_phase, FRANKIE_WORK_PROBE pattern: units, the
+    heartbeat derives units/min and its report-only stall flag at 600 s). A no-op outside a Run.child stage; never raises."""
+    try:
+        import frankie_box_stage_progress as SP
+        SP.report_phase(label, units_done=done, units_total=total, unit='items', every=15)
+    except Exception:  # noqa: BLE001 - a probe is never the stage's outcome
+        pass
+
+
+def _lost_cpus(processes, slots, cpus):
+    """The CPUs of the workers that died on their own (an exit code other than the executor's own SIGTERM), from the pid
+    each worker recorded at its slot; [] when none can be named (the caller then releases the last CPU of the order)."""
+    import signal
+    dead = {p.pid for p in processes if p.exitcode is not None and p.exitcode != -signal.SIGTERM}
+    return [cpus[i] for i, pid in enumerate(slots[:len(cpus)]) if pid in dead]
+
+
+def _end_pool(pool, processes):
+    """End a pool without an unbounded wait: SIGKILL every worker process still alive (each has SIGTERM at its default,
+    so this is only for one stuck in a system call), join each for at most 5 s, then shut the executor down without
+    waiting for anything still queued. Returns the pids that would not end (listed by the caller, never waited on)."""
+    stuck = []
+    for p in processes:
+        try:
+            if p.exitcode is None:
+                p.kill()
+        except Exception:  # noqa: BLE001
+            pass
+    for p in processes:
+        try:
+            p.join(5)
+            if p.exitcode is None:
+                stuck.append(p.pid)
+        except Exception:  # noqa: BLE001
+            pass
+    try:
+        pool.shutdown(wait=not stuck, cancel_futures=True)
+    except Exception:  # noqa: BLE001
+        pass
+    return stuck
+
+
 def _pinned_map(fn, args, label):
     """[fn(a) for a in args], in order, on a fork pool whose processes are each pinned to one lane CPU (physical cores
-    first). One CPU, one item or a threaded caller (never fork a threaded process): in this process, as before. A pool
-    that breaks (a worker killed: OOM, signal) raises BrokenProcessPool instead of hanging, and the same items then run in
-    this process, in order (L-2). An exception of fn itself propagates exactly as in the serial loop. The placement note
-    goes to stderr (the last stdout line stays the step's receipt)."""
+    first; the pool is sized from the booked lane, FRANKIE_LANE_CPUS / FRANKIE_BOOKED_CPUS: one worker per lane CPU but
+    one, the parent's). One CPU, one item or a threaded caller (never fork a threaded process): in this process, as
+    before. A pool that loses a worker (killed: OOM, signal) never stops, hangs or waits on it (Greg, 2026-10-07): the
+    items already returned are kept, every item not returned is re-run with the same arguments at the same slot on a new
+    pool with one fewer worker per loss (the dead worker's CPU is released, never refilled), and with every worker lost
+    the rest run in this process, in order. Each pool end is bounded (_end_pool). An exception of fn itself propagates
+    exactly as in the serial loop: items are collected in order, so the first raising item in order raises, after every
+    earlier item was computed. Results are fn's own return values in args order, so they are the serial loop's.
+    Every pool is noted in POOL_NOTES (the receipt's `pools`: mode, CPUs, losses, items redone, reasons) and its units
+    reach the stage heartbeat; the placement line also goes to stderr (the last stdout line stays the step's receipt)."""
     import sys
     import threading
+    args = list(args)
     order, how = _lane_order()
     workers = max(1, min(len(args), len(order) - 1))
+    note = dict(label=label, items=len(args), lane=how, lane_cpus=len(order))
+    POOL_NOTES.append(note)
+    started = time.time()
     if workers <= 1 or threading.active_count() > 1:
-        return [fn(a) for a in args]
+        note.update(mode='in_process', reason=('nothing to run' if not args else 'one item' if len(args) == 1 else
+                                               'one lane CPU' if len(order) <= 2 else
+                                               'a threaded caller: a threaded process is never forked'))
+        out = []
+        for i, a in enumerate(args):
+            out.append(fn(a))
+            _report_units(label, i + 1, len(args))
+        note['seconds'] = round(time.time() - started, 3)
+        return out
     import multiprocessing
     from concurrent.futures import ProcessPoolExecutor
     from concurrent.futures.process import BrokenProcessPool
     context = multiprocessing.get_context('fork')
-    counter = context.Value('i', 0)
-    print('%s: %d pinned workers on CPUs %s (%s)' % (label, workers, ','.join(map(str, order[:workers])), how),
-          file=sys.stderr, flush=True)
-    try:
-        with ProcessPoolExecutor(workers, mp_context=context, initializer=_pin_pool_worker,
-                                 initargs=(order[:workers], counter)) as pool:
-            return list(pool.map(fn, args))
-    except BrokenProcessPool as error:
-        print('%s: pool broken (%s); the same %d items run in this process, in order' % (label, error, len(args)),
-              file=sys.stderr, flush=True)
-        return [fn(a) for a in args]
+    cpus = list(order[:workers])
+    note.update(mode='pool', workers_started=workers, cpus=','.join(map(str, cpus)), workers_lost=0, items_redone=0,
+                losses=[], stuck_pids=[])
+    print('%s: %d pinned workers on CPUs %s (%s)' % (label, workers, note['cpus'], how), file=sys.stderr, flush=True)
+    results, done, completed = [None] * len(args), [False] * len(args), 0
+    while True:
+        pending = [i for i in range(len(args)) if not done[i]]
+        if not pending:
+            break
+        if not cpus:
+            note['losses'].append(dict(at=round(time.time() - started, 3), items_left=len(pending),
+                                       reason='every worker lost: the remaining items run in this process, in order'))
+            for i in pending:
+                results[i], done[i] = fn(args[i]), True
+                completed += 1
+                _report_units(label, completed, len(args))
+            break
+        size = min(len(cpus), len(pending))
+        counter, slots = context.Value('i', 0), context.Array('i', size)
+        pool = ProcessPoolExecutor(size, mp_context=context, initializer=_pin_pool_worker,
+                                   initargs=(cpus[:size], counter, slots))
+        processes, lost = [], None
+        try:
+            futures = [(i, pool.submit(fn, args[i])) for i in pending]
+            processes = list(getattr(pool, '_processes', {}).values())   # the workers (fork: all started at first submit)
+            for position, (i, future) in enumerate(futures):
+                try:
+                    results[i] = future.result()
+                except BrokenProcessPool as error:
+                    lost = (position, error)
+                    break
+                done[i] = True
+                completed += 1
+                _report_units(label, completed, len(args))
+            if lost is not None:
+                for i, future in futures[lost[0] + 1:]:     # items another worker finished before the loss are kept
+                    if future.done() and not future.cancelled() and future.exception() is None:
+                        results[i], done[i] = future.result(), True
+                        completed += 1
+        except BaseException:
+            note['stuck_pids'] += _end_pool(pool, processes)
+            raise
+        if lost is None:
+            pool.shutdown(wait=True)
+            continue
+        named = _lost_cpus(processes, slots, cpus[:size])
+        released = named or cpus[-1:]
+        note['stuck_pids'] += _end_pool(pool, processes)
+        redo = sum(1 for i in pending if not done[i])
+        cpus = [c for c in cpus if c not in released]
+        note['workers_lost'] += len(released)
+        note['items_redone'] += redo
+        note['losses'].append(dict(at=round(time.time() - started, 3), error='%s: %s' % (type(lost[1]).__name__, lost[1]),
+                                   released_cpus=released, named_by=('the lost worker\'s own slot' if named else
+                                                                     'not named by the executor: the last CPU of the order'),
+                                   items_redone=redo, workers_after=len(cpus)))
+        print('%s: worker lost (%s); %d items re-run with the same arguments at the same slots on %d workers'
+              % (label, lost[1], redo, len(cpus)), file=sys.stderr, flush=True)
+    note['seconds'] = round(time.time() - started, 3)
+    return results
 
 
 def _scan_part(args):
