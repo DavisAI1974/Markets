@@ -728,7 +728,7 @@ def drain(run, day):
                         recovered = run.recover_school(day, downstream['recovery_intent'])
                         state('waiting', **dict({k: v for k, v in downstream.items() if k != 'status'}, recovery=recovered))
                         if recovered.get('status') != 'complete':
-                            time.sleep(5)
+                            break        # the operation stays unacknowledged; the next boundary's drain tries it once more
                         continue
                     if downstream['status'] != 'complete':
                         state('waiting', **{k: v for k, v in downstream.items() if k != 'status'})

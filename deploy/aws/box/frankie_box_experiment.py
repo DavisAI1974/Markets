@@ -534,7 +534,7 @@ class Run:
         self._knowledge = {}
         self.queue_previous = None       # the class worker: (PREVIOUS, None, from) taken from the class line
         self.school_day = None           # the class worker: the class line's school-day number = the report number N
-        self._school_recovery = None     # recover_school: the day whose own successor drain holds the inbox (no nested drain)
+        self._school_recovery = set()    # recover_school: the days whose own successor drain holds the inbox (no nested drain)
         # THE OWNER BINDING (Step 8, 2026-10-07): a queue day carries its owner (run, day, host, attempt, commit, code root,
         # exact CPU set, booking, day-specific save marker), bound by the queue BEFORE dispatch. This Run reads the save
         # request from ITS OWN marker (never a process-global environment variable: the two main lanes are threads of one
@@ -561,7 +561,7 @@ class Run:
 
     def successors(self, day):
         """Explicit owner corrections finish before this day's next dependent operation."""
-        if (self._school_recovery or {}).get('day') == day:
+        if day in self._school_recovery:
             # inside the day's own drain (recover_school, called by successor_dispatch.drain under its lock): the inbox
             # is held by that caller and re-entering it here would deadlock on the drain lock. Only the one recovery
             # bound to its operation skips it; nothing else does.
@@ -591,7 +591,18 @@ class Run:
             self.require_current_teacher_inputs(key)
         if done and stage in ('school', 'reports') and not self.school_current(key, stage)[0]:
             return False               # a checked school successor stands: the stage runs again on it (old artifacts stay)
+        if done and stage == 'reports' and self.reports_school_stale(key):
+            return False               # the reports were rendered on a school the school stage has since replaced
         return done
+
+    def reports_school_stale(self, day):
+        """The reports receipt records the school it was rendered on (sha256); once the school stage has re-recorded a
+        different checked school, those reports are stale and get their revision under the same number. A reports receipt
+        from before that field is not judged by it."""
+        r, s = self.receipt('reports', day) or {}, self.receipt('school', day) or {}
+        rendered = (r.get('school') or {}).get('sha256')
+        current = s.get('school_sha256') or (s.get('row') or {}).get('sha256')
+        return bool(rendered and current and s.get('status') in ('done', 'reused') and rendered != current)
 
     def school_current(self, day, stage='school'):
         """(current, why) of the day's recorded school against the brain's checked school chain (Codex's
@@ -1442,7 +1453,7 @@ class Run:
             return False
         if r.get('exchange_status') not in ('done', 'reused'):
             return True
-        if not self.school_current(e['day'], 'reports')[0]:
+        if not self.school_current(e['day'], 'reports')[0] or self.reports_school_stale(e['day']):
             return True                    # the reports were rendered on a school that a checked successor replaced
         if x.get('frankie_view'):
             import frankie_box_brain as BR
@@ -1743,18 +1754,27 @@ class Run:
         if self.save_requested():
             return dict(status='saved', reason='save requested on the owner; the recovery resumes with the day',
                         recovery_intent=recovery_intent)
-        previous = self._school_recovery
-        self._school_recovery = dict(day=day, intent=recovery_intent)
+        self._school_recovery.add(day)
         try:
-            v = self.voice(e) or {}
+            # the meeting runs once per boundary, as on the ordinary path: a done/reused voice is used as it is; a
+            # non-blocking waiting one (the runtime gate refused the meeting) is NOT re-dispatched here: the owner's
+            # decision is what changes it; only an absent, blocking-waiting or failed voice runs the child
+            v = self.receipt('voice', day) or {}
+            if not done_status(v) and not (v.get('status') == 'waiting' and v.get('non_blocking')):
+                v = self.voice(e) or {}
             if v.get('status') not in ('done', 'reused', 'skipped'):
-                return dict(status='waiting', stage='voice', voice=v, recovery_intent=recovery_intent,
+                return dict(status='waiting', stage='voice', voice=self.receipt_path('voice', day).as_posix(),
+                            voice_status=v.get('status'), recovery_intent=recovery_intent,
                             reason='the corrected meeting is %s: %s' % (v.get('status'), v.get('reason')))
             s = self.school(e) or {}
             return dict(status='complete' if done_status(s) else (s.get('status') or 'waiting'), stage='school',
-                        voice=v, school=s, recovery_intent=recovery_intent, reason=s.get('reason'))
+                        voice=self.receipt_path('voice', day).as_posix(), school=self.receipt_path('school', day).as_posix(),
+                        school_status=s.get('status'), recovery_intent=recovery_intent, reason=s.get('reason'))
+        except Exception as error:      # noqa: BLE001 - an explicit waiting recovery, never the operation's failure.json
+            return dict(status='waiting', stage='recovery', recovery_intent=recovery_intent,
+                        reason='%s: %s' % (type(error).__name__, error))
         finally:
-            self._school_recovery = previous
+            self._school_recovery.discard(day)
 
     def jev(self, e):
         """Jev's day on the held CPU lane (Step 7, Codex's frankie_box_jev_cpu.py/.sh; Greg: a worker subset of the SAME
@@ -1791,6 +1811,12 @@ class Run:
                                'model, worker CPUs of the held lane, budgets, completion policy) is not supplied (plan '
                                'jev_runtime or %s): a missing runtime choice is waiting, never skipped'
                                % (self.dir / 'jev-runtime.json'))
+        jev_brain = Path(self.plan.get('jev_brain') or str(JEV_BRAIN))
+        for label, p in (('runtime', Path(runtime)), ('jev_brain', jev_brain)):
+            if not p.is_absolute() or any(q.is_symlink() for q in (p, *p.parents)):
+                # the helper refuses a relative or symlinked path, and the request is written once: refused BEFORE it
+                # is written (a run keeps one plan: a corrected path is a new run or <run>/jev-runtime.json)
+                return self.record('jev', day, 'refused', reason='Jev\'s %s path must be absolute and symlink-free: %s' % (label, p))
         marker = self.stop_marker
         if not marker:
             return self.record('jev', day, 'waiting', reason='no day-bound save marker on this Run (the owner binding or '
@@ -1809,7 +1835,6 @@ class Run:
         stamp = jev_stamp(self.plan, e)
         number = self.report_number(e)
         brain = Path(self.plan.get('brain') or str(BRAIN))
-        jev_brain = Path(self.plan.get('jev_brain') or str(JEV_BRAIN))
         out = self.dir / 'days' / day / 'jev' / stamp
         owner = self.owner or dict(schema='FRANKIE_LANE_OWNER_V1', host=os.uname().nodename, attempt=attempt,
                                    marker=str(marker), lane_owner=os.environ.get('FRANKIE_LANE_OWNER'))
@@ -1847,7 +1872,12 @@ class Run:
 
         def bound_status(doc):
             return isinstance(doc, dict) and doc.get('schema') == 'JEV_CPU_STATUS_V1' and doc.get('request') in request_pins
-        status = read(status_path)
+        status, receipt = read(status_path), read(receipt_path)
+        if bound_receipt(receipt) and receipt.get('status') != 'done' and receipt.get('pending'):
+            # a complete receipt whose dispositions await the owner: nothing but that decision changes it; not re-run
+            return self.record('jev', day, 'waiting', request=str(path), receipt=str(receipt_path), stamp=stamp,
+                               pending=receipt.get('pending'), report=receipt.get('report'),
+                               reason='Jev\'s receipt awaits the owner\'s disposition: %s' % '; '.join(receipt.get('pending') or []))
         if not receipt_path.is_file() and bound_status(status) and status.get('unresolved_calls'):
             return self.record('jev', day, 'waiting', request=str(path), status=str(status_path), stamp=stamp,
                                unresolved_calls=status['unresolved_calls'],
@@ -1874,13 +1904,9 @@ class Run:
         if bound_status(status):
             fields.update(status=str(status_path), child=status.get('child'), unresolved_calls=status.get('unresolved_calls'),
                           child_reason=status.get('reason'))
-            standing = file_pin(Path(marker)) if Path(marker).is_file() else None
-            if code == 75 and status.get('status') == 'saved' and not status.get('unresolved_calls') and \
-                    (status.get('save_marker') is None or status.get('save_marker') == standing):
-                # the child's saved acknowledgment: bound to this request, to this marker's bytes when it stands, no
-                # unresolved model call; the day's own save classifies the thread (its marker), this keeps the child's side
-                return self.record('jev', day, 'saved', reason='Jev saved on the day\'s marker (acknowledged by its '
-                                                              'status; the same request resumes it)', **fields)
+            # exit 75 on the day's standing marker never reaches here: child() raised SystemExit(75) on it and the day's
+            # own save classifies the thread (_thread_end); a 75 without a standing marker (the helper's signal path) is
+            # waiting with the child's reason, never recorded as saved
             return self.record('jev', day, 'waiting' if code in (5, 75) else 'failed',
                                reason='Jev\'s status is %s (exit %d): %s' % (status.get('status'), code, status.get('reason')),
                                **fields)

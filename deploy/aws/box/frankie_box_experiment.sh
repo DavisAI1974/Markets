@@ -59,6 +59,9 @@ set -- "$@" --external-wait "${EXTERNAL_WAIT:-on}" --brain "${BRAIN:-/opt/franki
 [ -z "${JEV_RUNTIME:-}" ] || set -- "$@" --jev-runtime "$JEV_RUNTIME"
 [ -z "${JEV_BRAIN:-}" ] || set -- "$@" --jev-brain "$JEV_BRAIN"
 case "${BRAIN:-/opt/frankie-box/brain}${PREVIOUS_CLASSROOM:-}${JEV_RUNTIME:-}${JEV_BRAIN:-}" in *..*) echo "no .. in BRAIN, PREVIOUS_CLASSROOM, JEV_RUNTIME or JEV_BRAIN" >&2; exit 2;; esac
+for v in "${JEV_RUNTIME:-}" "${JEV_BRAIN:-}"; do
+  case "$v" in ""|/opt/frankie-box/*) ;; *) echo "JEV_RUNTIME and JEV_BRAIN must be absolute paths under /opt/frankie-box" >&2; exit 2;; esac
+done
 case "${BRAIN:-/opt/frankie-box/brain}" in /opt/frankie-box/*) ;; *) echo "BRAIN must be under /opt/frankie-box" >&2; exit 2;; esac
 case "${PREVIOUS_CLASSROOM:-}" in ""|/opt/frankie-box/work/experiment-roots/*/work/classroom) ;; *) echo "PREVIOUS_CLASSROOM must be an experiment root's work/classroom" >&2; exit 2;; esac
 [ -z "${PREVIOUS_CLASSROOM:-}" ] || set -- "$@" --previous-classroom "$PREVIOUS_CLASSROOM"

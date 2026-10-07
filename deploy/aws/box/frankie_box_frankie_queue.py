@@ -606,6 +606,8 @@ def passed(run, stage, day):
         return False
     if stage == 'classroom':
         return r['status'] in ('done', 'reused')
+    if stage == 'school':
+        return run.finished('school', day)       # school currentness: a checked successor makes a done school run again
     if stage == 'voice':
         return r['status'] in X.FINISHED or bool(r['status'] == 'waiting' and r.get('non_blocking')
                                                 and r.get('meeting_status') in ('refused', 'inputs_only', 'runtime_failed'))
