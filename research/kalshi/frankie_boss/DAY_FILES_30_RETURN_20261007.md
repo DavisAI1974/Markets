@@ -141,3 +141,22 @@ be on the box, which was not touched. Its day file is built and on S3 regardless
   frankie/day_history/asprinted20261007/ (manifest.json, as_printed/receipt.json, as_printed/storage_as_printed.json,
   ETags verified).
 - Nothing on EC2, SSM, IAM or any other service.
+
+## 9. Addendum: Greg's go "Do the workflow for the storage nos ... get them out of frankie"
+
+- Dispatch of `frankie_day_history.yml` (ref `ccr-d2f8f826-iefeah-frankie`, action=fetch, families=consensus,
+  days=20231003,20231004,20231010,20231011,20231017,20231018) was REFUSED by GitHub:
+  `POST .../actions/workflows/frankie_day_history.yml/dispatches: 404 Not Found`; `get_workflow` on the same file name
+  also 404. The workflow is not registered in the repository (the file is on the work branch, with the `days` input,
+  but not on the default branch). Stopped there as instructed; nothing pushed anywhere. No new as-printed data, no
+  rebuild; the 2023 storage report/estimate rows stay listed missing with their reason.
+- Registered alternative, not used (needs the parent's/Greg's word): the earlier day-history runs (36576414768 etc.)
+  came from `ng_historical_mbo_5y_to_s3_20260820.yml`, `mode=day_history`, which carries the same fetch steps and
+  accepts `families` and `days` (file on the work branch, lines 35-40 and 152-209). Dispatch inputs would be
+  mode=day_history, families=consensus, days=20231003,20231004,20231010,20231011,20231017,20231018, ref
+  ccr-d2f8f826-iefeah-frankie. Its day_history job uses no Databento.
+- Scratch deleted: `frankie/day_external_work/20261007/`: listed 156 objects (249,172,620 bytes, all under the
+  prefix), DeleteObjects 156 deleted, 0 errors; re-listed: 0 objects, and `frankie/day_external_work/` is empty.
+  Nothing else touched. The only other object set this agent created under frankie/ is
+  `frankie/day_history/asprinted20261007/` (3 objects), which is not scratch: every day file's receipt names it as the
+  as_printed input.
