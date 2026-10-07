@@ -16,15 +16,37 @@ from frankie_box_granite_meeting import witness_file
 SCHEMA = 'FRANKIE_GRANITE_RUNNER_STATE_V1'
 
 
+HASH_THREADS_MAX = 8      # whole-file sha256 side by side on pinned threads (hashlib and reads release the GIL)
+
+
 def files(root):
-    found = {}
+    """{relative path: {bytes, sha256}} of every runner-state file, in sorted path order. The walk and the symlink refusal
+    are serial and come first (the same first error as before); the hashes then run side by side on threads pinned to
+    the lane (frankie_box_lane_pin.executor, the Sept-29 primitive) and are assembled in the same sorted order. One file,
+    one CPU or no lane helper: hashed in order as before. Values and order unchanged; placement only."""
+    names = []
     for path in sorted(root.rglob('*')):
         if path.is_symlink():
             raise ValueError('runner state contains a symbolic link')
         if path.is_file() and path.name != '.meeting.lock':
-            found[path.relative_to(root).as_posix()] = {
-                k: v for k, v in witness_file(path).items() if k != 'path'}
-    return found
+            names.append(path)
+
+    def one(path):
+        return {k: v for k, v in witness_file(path).items() if k != 'path'}
+    witnesses = None
+    if len(names) > 1:
+        try:
+            import frankie_box_lane_pin as LP
+            lane = LP.lane_cpus()
+            workers = max(1, min(HASH_THREADS_MAX, len(lane), len(names)))
+            if workers > 1:
+                with LP.executor('thread', workers, cpus=lane) as pool:
+                    witnesses = list(pool.map(one, names))
+        except (ImportError, OSError, ValueError, RuntimeError):
+            witnesses = None      # no lane helper here: the serial hashes below (same values, same first error)
+    if witnesses is None:
+        witnesses = [one(path) for path in names]
+    return {path.relative_to(root).as_posix(): value for path, value in zip(names, witnesses)}
 
 
 def prepare(exchange, expected_sha, commit, out, *, archive=None, archive_sha=None, attempt=1, reuse=False):

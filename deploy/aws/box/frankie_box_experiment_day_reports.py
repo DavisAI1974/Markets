@@ -2325,6 +2325,117 @@ def write_new(path, raw):
         return False, '%s: %s' % (type(error).__name__, error)
 
 
+# ---------------------------------------------------------------------------- side by side + save points (stacks pass)
+# Stacks pass (2026-10-07 night, session 5; the Sept-29 templates: pieces side by side, exact saves at boundaries).
+# The two numbered reports of a day are independent translations of the same Day (read once, hashed once in Day): they
+# are rendered side by side on pinned fork workers of the booked lane (frankie_box_lane_pin.ordered_map: placement from
+# the lane, ordered hand-off, a dead worker's report redone with one fewer, the coordinator renders it after the third
+# loss), and each written report is a save point: <reports>/receipts/<run>/<day>.reports-save.json names every report
+# already written for this number, revision and these exact inputs, so a stopped step resumes at the next report
+# (the written report is re-read once and hash-checked, never re-rendered). The text is the same function of the same
+# Day either way: bytes, file names, numbering and the index rows are those of the serial path.
+# FRANKIE_REPORTS_SIDE_BY_SIDE=off renders in-process one after the other (the earlier path).
+SAVE_SCHEMA = 'FRANKIE_DAY_REPORTS_SAVE_V1'
+_RENDER = {}
+
+
+def _render_one(kind):
+    """One report's lines from the Day the coordinator built before the fork (module state, read-only here)."""
+    d, number, revision, run_name, cls, files = _RENDER['args']
+    if kind == 'classroom':
+        return classroom_report(d, number, revision, run_name, cls, files['frankie'])
+    return frankie_report(d, number, revision, run_name, cls, files['classroom'])
+
+
+def _render_job(kind):
+    """The worker side: ('ok', lines) or ('error', text). A rendering error is returned (the coordinator re-renders that
+    report in-process, so the real exception and traceback surface there), never confused with a lost worker."""
+    try:
+        return 'ok', _render_one(kind)
+    except Exception as error:  # noqa: BLE001 - re-raised in the coordinator by rendering again
+        return 'error', '%s: %s' % (type(error).__name__, error)
+
+
+def render_side_by_side(kinds, args, record):
+    """Yield (kind, lines) in the order of kinds; side by side on the lane when there are two or more to render and the
+    lane has two or more CPUs, else in-process. record gets mode, reason, the CPU map (lane_pin.record) and the pool
+    recovery (worker_deaths, redone); a pool that cannot start, or dies, continues in-process for the rest."""
+    _RENDER['args'] = args
+    kinds = list(kinds)
+    record.update(mode='in-process, one after the other', kinds=kinds, pool_recovery=None, cpu_placement=None)
+    LP, why = None, None
+    if len(kinds) < 2:
+        why = 'one report or none to render'
+    elif os.environ.get('FRANKIE_REPORTS_SIDE_BY_SIDE', 'on') == 'off':
+        why = 'FRANKIE_REPORTS_SIDE_BY_SIDE=off'
+    else:
+        try:
+            try:
+                import frankie_box_lane_pin as LP
+            except ImportError:
+                from deploy.aws.box import frankie_box_lane_pin as LP
+            if len(LP.lane_cpus()) < 2:
+                why, LP = 'the lane has one CPU', None
+        except Exception as error:  # noqa: BLE001 - placement is never a reason to stop; listed
+            why, LP = 'the pin helper is unavailable (%s: %s)' % (type(error).__name__, error), None
+    done = []
+    if LP is not None:
+        recovery = dict(worker_deaths=[], redone=[])
+        record.update(mode='side by side on pinned fork workers', pool_recovery=recovery,
+                      cpu_placement=LP.record(len(kinds), what='day reports: one worker per numbered report'))
+        try:
+            for kind, (status, value) in LP.ordered_map(_render_job, kinds, len(kinds), window=len(kinds),
+                                                         report=recovery, fallback=_render_job):
+                done.append(kind)
+                yield kind, (value if status == 'ok' else _render_one(kind))
+        except GeneratorExit:
+            raise
+        except Exception as error:  # noqa: BLE001 - the pool itself failed: the rest in-process, listed
+            if any(k not in done for k in kinds) and not isinstance(error, (SystemExit, KeyboardInterrupt)):
+                record['pool_failure'] = '%s: %s (the reports not yet yielded were rendered in-process)' % (
+                    type(error).__name__, error)
+            else:
+                raise
+    else:
+        record['reason'] = why
+    for kind in kinds:
+        if kind not in done:
+            yield kind, _render_one(kind)
+
+
+def _save_path(reports, run_name, day):
+    return Path(reports) / 'receipts' / str(run_name) / ('%s.reports-save.json' % day)
+
+
+def _save_identity(d, number, revision):
+    return dict(number=number, revision=revision, source_sha256=d.source['sha256'], exchange_sha256=d.exchange_sha256,
+                meeting_sha256=d.meeting_sha256, meeting_status=d.meeting['status'], school_sha256=d.school_sha256,
+                school_status=d.school_status, all99_sha256=d.all99_sha256)
+
+
+def load_save(reports, run_name, day, identity):
+    """{kind: saved write} of a save point for exactly this number, revision and inputs, else {} (with why)."""
+    path = _save_path(reports, run_name, day)
+    if not path.is_file():
+        return {}, None
+    try:
+        save = json.loads(path.read_bytes())
+    except (OSError, ValueError) as error:
+        return {}, 'the save point %s is unreadable (%s); every report is rendered' % (path, error)
+    if save.get('schema') != SAVE_SCHEMA or save.get('identity') != identity:
+        return {}, 'the save point %s is for other inputs or another number/revision; every report is rendered' % path
+    return dict(save.get('written') or {}), None
+
+
+def write_save(reports, run_name, day, identity, written):
+    path = _save_path(reports, run_name, day)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + '.pending')
+    tmp.write_text(json.dumps(dict(schema=SAVE_SCHEMA, run=run_name, day=day, identity=identity, written=written,
+                                   at=time.time()), indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    os.replace(tmp, path)
+
+
 def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, exchange_listed=None, *, return_receipt=False,
         school=None, school_listed=None, run_dir=None, piece_receipts=None):
     started = time.monotonic()
@@ -2344,6 +2455,7 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
     reports.mkdir(parents=True, exist_ok=True)
     out, printed, problems = [], [], list(d.school_problems)
     reuse_why = None
+    rendering = dict(mode='not rendered: the existing reports were reused')   # additive receipt field (stacks pass)
     with open(reports / '.lock', 'a+') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         index = read_index(reports)
@@ -2388,14 +2500,39 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
         else:
             revision = 1 + max([r.get('revision', 1) for k in KINDS for r in mine[k]] or [0])
             files = {k: file_name(k, number, revision) for k in KINDS}
-            texts = dict(classroom=classroom_report(d, number, revision, run_name, cls, files['frankie']),
-                         frankie=frankie_report(d, number, revision, run_name, cls, files['classroom']))
+            identity = _save_identity(d, number, revision)
+            saved, save_why = load_save(reports, run_name, day, identity)
+            rendering['save_point'] = str(_save_path(reports, run_name, day))
+            rendering['save_listed'] = save_why
+            resumed = {}
+            for k in KINDS:            # a report written before a stop: re-read once, hash-checked, never re-rendered
+                entry = saved.get(k)
+                central = reports / files[k]
+                if isinstance(entry, dict) and central.is_file():
+                    raw = central.read_bytes()
+                    if sha256_bytes(raw) == entry.get('sha256') and len(raw) == entry.get('bytes'):
+                        resumed[k] = raw
+            rendering['resumed_from_save'] = sorted(resumed)
+            written_so_far = {k: saved[k] for k in resumed}
+            rendered = render_side_by_side([k for k in KINDS if k not in resumed],
+                                           (d, number, revision, run_name, cls, files), rendering)
             for k in KINDS:
-                raw = ('\n'.join(texts[k]).rstrip('\n') + '\n').encode('utf-8')
+                if k in resumed:
+                    raw = resumed[k]
+                else:
+                    kind, lines = next(rendered)
+                    assert kind == k, 'reports are handed over in KINDS order'
+                    raw = ('\n'.join(lines).rstrip('\n') + '\n').encode('utf-8')
                 central = reports / files[k]
                 written, why = write_new(central, raw)
                 if not written:
                     raise SystemExit('the %s report %s could not be written: %s' % (k, central, why))
+                if k not in resumed:   # the save point after each report (the Sept-29 exact save at a boundary)
+                    written_so_far[k] = dict(file=str(central), sha256=sha256_bytes(raw), bytes=len(raw))
+                    try:
+                        write_save(reports, run_name, day, identity, written_so_far)
+                    except OSError as error:
+                        problems.append('the save point could not be written: %s: %s' % (type(error).__name__, error))
                 copy, copy_why = None, None
                 if d.dir.is_dir():
                     copy = str(d.dir / files[k])
@@ -2418,6 +2555,8 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                 printed.append((k, raw.decode('utf-8')))
                 out.append(dict(kind=k, number=number, revision=revision, file=str(central), classroom_copy=copy,
                                 sha256=entry['sha256'], bytes=len(raw), existing=False, supersedes=superseded))
+            for _ in rendered:     # nothing is left; lets the pool end through its own bounded path
+                pass
         write_index(reports, index)
         timings['build_and_write'] = round(time.monotonic() - started - timings['read_inputs'] - timings['all99_join'], 6)
         try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
@@ -2444,6 +2583,9 @@ def run(day, classroom, run_name, reports, cls, refused_reason, exchange=None, e
                    absent=[dict(file=name, reason=why) for name, why in d.absent],
                    inputs=d.inputs, reused=bool(out) and all(o.get('existing') for o in out), reuse_why=reuse_why,
                    index=str(reports / 'index.json'), problems=problems, model_calls=0,
+                   # stacks pass (additive): how the reports were rendered (side by side or in-process, with the reason),
+                   # the CPU map (frankie_box_lane_pin.record), pool recovery and the save point resumed from
+                   report_rendering=rendering,
                    # the 99 layers joined for the FRANKIE report (diagnostic, never knowledge): the full per-entry join
                    all99=d.all99, all99_sha256=d.all99_sha256,
                    # what late_pieces_changed re-reads to recompute the join's input set (F9): this build's invocation

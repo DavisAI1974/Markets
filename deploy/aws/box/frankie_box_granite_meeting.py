@@ -602,6 +602,35 @@ def threads_resolution(params):
                 rule='null never resolves to the host CPU count; an integer never exceeds the claimed affinity')
 
 
+# The model-call heartbeat (FA-4 pattern for the long model calls, stacks pass 2026-10-07 night): the stage heartbeat's
+# units for the meeting and Jev are TOKENS GENERATED (usage.completion_tokens summed over the answered calls of this
+# process), so units/min is the decode rate and the report-only stall flag (frankie_box_stage_progress.STALL_SECONDS,
+# 600 s) shows a call or a gap that produced nothing for that long. Phases, calls and the call in flight are extra
+# fields. Never raises; never changes a call, its inputs or its outcome.
+MODEL_PROGRESS = dict(completion_tokens=0, prompt_tokens=0, calls=0, phases=0, in_call_since=None)
+
+
+def report_model_progress(piece, phase, *, completion_tokens=0, prompt_tokens=0, call_done=False, call_started=False,
+                          phase_done=False, **extra):
+    try:
+        MODEL_PROGRESS['completion_tokens'] += int(completion_tokens or 0)
+        MODEL_PROGRESS['prompt_tokens'] += int(prompt_tokens or 0)
+        if call_done:
+            MODEL_PROGRESS['calls'] += 1
+            MODEL_PROGRESS['in_call_since'] = None
+        if call_started:
+            MODEL_PROGRESS['in_call_since'] = time.time()
+        if phase_done:
+            MODEL_PROGRESS['phases'] += 1
+        import frankie_box_stage_progress as _SP
+        _SP.report_phase('%s: %s' % (piece, phase), units_done=MODEL_PROGRESS['completion_tokens'],
+                         unit='tokens generated', calls_answered=MODEL_PROGRESS['calls'],
+                         prompt_tokens=MODEL_PROGRESS['prompt_tokens'], phases_done=MODEL_PROGRESS['phases'],
+                         in_call_since=MODEL_PROGRESS['in_call_since'], **extra)
+    except Exception:  # noqa: BLE001 - a probe never changes the stage
+        pass
+
+
 FLASH_ATTENTION_FLAGS = ('-fa', '--flash-attn')
 THREAD_ENV = ('OMP_NUM_THREADS', 'OMP_PROC_BIND', 'OMP_PLACES', 'GOMP_CPU_AFFINITY', 'OPENBLAS_NUM_THREADS',
               'MKL_NUM_THREADS', 'GGML_NUM_THREADS', 'LLAMA_ARG_THREADS', 'LLAMA_ARG_FLASH_ATTN', 'LLAMA_ARG_THREADS_BATCH')
@@ -1146,12 +1175,15 @@ class LlamaServer:
                     max_tokens=int(self.params['max_output_tokens_per_turn']),
                     response_format=dict(type='json_schema', json_schema=dict(name='coordinator_turn', schema=schema)),
                     stream=False)
+        report_model_progress('meeting', 'coordinator call %s in flight' % label, call_started=True)
         reply, raw = self._post('/v1/chat/completions', body, label, expect=self._expect_chat)
         self.calls += 1
         usage = reply.get('usage') or {}
         self.last_usage = usage
         self.tokens['prompt'] += int(usage.get('prompt_tokens') or 0)
         self.tokens['completion'] += int(usage.get('completion_tokens') or 0)
+        report_model_progress('meeting', 'coordinator call %s answered' % label, call_done=True,
+                              completion_tokens=usage.get('completion_tokens'), prompt_tokens=usage.get('prompt_tokens'))
         return reply['choices'][0]['message']['content'], raw
 
     def alive(self):
@@ -1640,11 +1672,8 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         now = time.time()
         timings[name] = round(now - phase_started, 3)
         phase_started = now
-        try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
-            import frankie_box_stage_progress as _SP
-            _SP.report_phase('meeting: %s done' % name, units_done=len(timings), unit='phases')
-        except Exception:  # noqa: BLE001
-            pass
+        # the stage heartbeat (frankie_box_stage_progress): units = tokens generated, phases as a field; never raises
+        report_model_progress('meeting', '%s done' % name, phase_done=True)
     raw = exchange_path.read_bytes()
     exchange = json.loads(raw)
     if exchange.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1' or exchange.get('view') != 'frankie':
@@ -1907,11 +1936,9 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
             if result.get('reused_from_progress'):
                 reused.append(item['item_id'])
             items.append(result)
-            try:                                     # the stage heartbeat (frankie_box_stage_progress); never changes the stage
-                import frankie_box_stage_progress as _SP
-                _SP.report_phase('meeting: items discussed', units_done=len(items) + len(not_discussed), units_total=len(given['items']), unit='items', rounds=result.get('rounds_completed'))
-            except Exception:  # noqa: BLE001
-                pass
+            # the stage heartbeat: units stay tokens generated; items as fields (never raises)
+            report_model_progress('meeting', 'items discussed', items_done=len(items) + len(not_discussed),
+                                  items_total=len(given['items']), rounds=result.get('rounds_completed'))
 
     except BaseException as error:
         # 6R2-F: an attempt that dies in discussion leaves a terminal record naming the failure; its stderr, evidence

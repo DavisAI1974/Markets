@@ -369,10 +369,12 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
         if event is not None:
             event(dict(phase='source_verification', records=cursor, total_records=total))
         verify_started = time.perf_counter()
+        early_hash = None
         if verify == 'deferred' and writer == 'compact':
             # item 3 (Greg, 2026-09-29): the seal now, the conformance drain later (--conform on this directory); the
             # completion is the builder's own state, the same fields complete() would claim after the drain
             journal.seal()
+            early_hash = _hash_beside(journal_path)          # the receipt's journal_sha256, read beside the next step
             completion, state = parallel_ingest.completion_from(scope, driver._builder, member_counts)
         elif writer == 'compact' and workers > 0:
             # Seal at the writer's tail, then run the one conformance drain through the first run's
@@ -380,6 +382,7 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
             # the conformance fields. Full book observations do not cross IPC. The seal
             # states what was written; complete() is the claim, made after it.
             journal.seal()                       # the encoders end here; the reader takes their CPUs
+            early_hash = _hash_beside(journal_path)          # the receipt's journal_sha256, read beside the drain
 
             def drain(n):
                 # the first-run reader (not edited) sizes its pinned workers from the calling thread's affinity: built on
@@ -408,7 +411,8 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                       conformance_seconds=round(verify_seconds, 3), sessions=sessions, records=cursor,
                       conformance='deferred' if (verify == 'deferred' and writer == 'compact') else 'inline',
                       workers=workers, worker_cpu_seconds=round(worker_cpu, 3), partial_members=partials, tail_members=skipped,
-                      opening_book=opening_result, opening_book_file=opening_file, packing=packing)
+                      opening_book=opening_result, opening_book_file=opening_file, packing=packing,
+                      journal_sha256_early=early_hash)
         if event is not None:
             event(dict(phase='source_saved', records=cursor, total_records=total, journal_hash=completion.journal_hash))
         return result
@@ -444,6 +448,48 @@ def _boxes(journal_path):
         return next(db.execute('SELECT count(*) FROM blocks'))[0]
     finally:
         db.close()
+
+
+class _HashBeside:
+    """The sealed journal's whole-file sha256 computed on a thread BESIDE the conformance drain (session 5, an idle-CPU
+    spot: the receipt's journal_sha256 used to be one more serial read after the drain). The file is sealed (rollback
+    journal, every commit done) and only read after; value() returns the digest only if the file's (size, mtime_ns,
+    inode) are what they were when the hash started, else None and the caller hashes again (never a stale value)."""
+
+    def __init__(self, path):
+        import threading
+        self.path, self.digest, self.error = Path(path), None, None
+        info = self.path.stat()
+        self.key = (info.st_size, info.st_mtime_ns, info.st_ino)
+        self.thread = threading.Thread(target=self._run, name='journal-sha256', daemon=True)
+        self.thread.start()
+
+    def _run(self):
+        try:
+            self.digest = sha256_file(self.path)
+        except Exception as error:  # noqa: BLE001 - the caller hashes again
+            self.error = error
+
+    def value(self):
+        self.thread.join()
+        info = self.path.stat()
+        if self.digest is None or (info.st_size, info.st_mtime_ns, info.st_ino) != self.key:
+            return None
+        return self.digest
+
+
+def _journal_sha256(result, journal):
+    """The receipt's journal_sha256: the digest hashed beside the drain when the file is unchanged since, else read now."""
+    early = result.get('journal_sha256_early')
+    value = early.value() if isinstance(early, _HashBeside) else None
+    return value or sha256_file(journal)
+
+
+def _hash_beside(path):
+    try:
+        return _HashBeside(path)
+    except OSError:
+        return None
 
 
 def write_once(path, value):
@@ -751,7 +797,7 @@ def main():
                        source_prefix_hash=result['completion']['source_prefix_hash'],
                        completion_digest=result['completion_digest'],
                        checkpoint_sha256=hashlib.sha256(checkpoint_raw).hexdigest(), checkpoint_state_hash=state['state_hash'],
-                       journal_file=journal.name, journal_sha256=sha256_file(journal), journal_bytes=journal.stat().st_size,
+                       journal_file=journal.name, journal_sha256=_journal_sha256(result, journal), journal_bytes=journal.stat().st_size,
                        ingest_seconds=result['ingest_seconds'], ingest_cpu_seconds=result['ingest_cpu_seconds'],
                        records_per_second=result['records_per_second'], ms_per_record=result['ms_per_record'],
                        conformance_seconds=result['conformance_seconds'], sessions=result['sessions'],

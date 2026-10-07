@@ -205,6 +205,7 @@ def workflow_report(result, *, receipt_path, rc, external, market, equation, wor
                              shared_reader=read.get('input_verification') if read else None,
                              rule='one full hash per process; the compact reader still verifies the chained head hash on read'),
                          all99_coverage=_all99_use(result.get('all99_coverage')),
+                         stacks=stack_events(result),
                          model_calls=0),
                 outputs=dict(status=result.get('status', 'rows_published'), exit_code=exit_code,
                              all99_coverage='receipt.json all99_coverage (FRANKIE_ALL99_COVERAGE_V1, piece teacher)',
@@ -216,6 +217,63 @@ def workflow_report(result, *, receipt_path, rc, external, market, equation, wor
                              waits=[]),
                 rule='recorded inputs, use and outputs of this piece for the one-day review; a measured row is not proof '
                      'of downstream consumption; missing evidence means unknown, never zero')
+
+
+def stack_events(result):
+    """Day-1 visibility of the speed stacks (Greg, 2026-10-07: every skip, wait, refusal, fallback, cap, retry and default
+    taken lands on the receipt AND in the inspection markdown): the CPU placement outcome, every pool's workers,
+    rebuilds after a dead worker, bounded stops, batches not registered (computed the original way), the periodic and
+    resumed saves, the journal prefetch, the defaults taken. A projection of fields already on the receipt; [] events
+    means nothing of the kind happened, a missing field means the step did not reach that part (unknown, never zero)."""
+    pin = result.get('cpu_pinning') or {}
+    events = []
+
+    def add(kind, where, reason, **detail):
+        events.append(dict(kind=kind, where=where, reason=reason, **detail))
+    if pin and pin.get('outcome') not in ('pinned', None):
+        add('placement', 'serial raw loop', '%s: %s' % (pin.get('outcome'), pin.get('reason') or pin.get('read_back')))
+    for name in ('raw_pool', 'finish_pool'):
+        record = pin.get(name) or {}
+        for rebuild in record.get('rebuilds') or []:
+            add('retry', name, 'dead worker: pool rebuilt with %s worker(s); %s redone' % (
+                rebuild.get('workers'), rebuild.get('batches_again', rebuild.get('chunks_again'))), error=rebuild.get('error'))
+        for stop in record.get('stops') or []:
+            add('bounded_stop', name, stop.get('reason') or 'shutdown error', **{k: v for k, v in stop.items() if k != 'reason'})
+    precompute = pin.get('evidence_precompute') or {}
+    if precompute.get('outcome') == 'not_used':
+        add('fallback', 'evidence precompute', precompute.get('reason'))
+    record = precompute.get('record') or {}
+    for why in record.get('not_registered_batches') or []:
+        add('fallback', 'evidence precompute', 'batch not registered (rows encoded the original way): %s' % why)
+    for rebuild in record.get('rebuilds') or []:
+        add('retry', 'evidence precompute', 'dead worker: pool rebuilt with %s worker(s); %s batch(es) again' % (
+            rebuild.get('workers'), rebuild.get('batches_again')), error=rebuild.get('error'))
+    for stop in record.get('stops') or []:
+        add('bounded_stop', 'evidence precompute', stop.get('reason') or 'shutdown error')
+    if precompute.get('resume_skipped_rows'):
+        add('skip', 'evidence precompute', 'resumed raw pass: %d saved row(s) read again but not encoded'
+            % precompute['resume_skipped_rows'])
+    saves = result.get('raw_saves') or {}
+    if saves.get('resumed_from'):
+        add('resume', 'raw pass', 'resumed from a saved raw pass at %s row(s) (complete %s)' % (
+            saves['resumed_from'].get('processed'), saves['resumed_from'].get('complete')))
+    for save in saves.get('saves') or []:
+        add('save', 'raw pass', 'periodic exact save at cursor %s (%s s)' % (save.get('cursor'), save.get('seconds')))
+    if saves.get('every_seconds') is None and saves:
+        add('default', 'raw pass', 'periodic save off (%s)' % saves.get('basis'))
+    if saves.get('progress_errors'):
+        add('swallowed', 'unit probe', '%d probe write(s) failed (report-only)' % saves['progress_errors'])
+    prefetch = result.get('journal_prefetch') or {}
+    if prefetch.get('outcome') not in ('measured', None):
+        add('fallback', 'journal prefetch', prefetch.get('reason') or prefetch.get('outcome'))
+    for name, value in sorted((result.get('run_defaults') or {}).items()):
+        add('default', 'run setting', '%s = %s' % (name, value))
+    return dict(schema='FRANKIE_TEACHER_STACK_EVENTS_V1', events=events,
+                placement=dict(outcome=pin.get('outcome'), lane=pin.get('lane'), consumer_mask=pin.get('consumer_mask'),
+                               raw_workers=(pin.get('raw_pool') or {}).get('workers'),
+                               precompute_workers=record.get('workers'),
+                               finish_workers=(pin.get('finish_pool') or {}).get('workers')) if pin else None,
+                rule='projection of the receipt; nothing here is an identity, a gate or a value')
 
 
 # The 99 through the teacher (Greg, 2026-10-07: the 99 layers combined for Frankie FIRST). The teacher's own computed
@@ -820,7 +878,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                       phase_timings=phases,
                       external_section=dict(external, listed='no external section built: the rows it aligns to were not computed'),
                       external_points=external_points_summary(None, status='not_built', reason='no external section built: the rows it aligns to were not computed'),
-                      cpu_pinning=cpu_pinning)
+                      cpu_pinning=cpu_pinning, raw_saves=raw_saves, journal_prefetch=dict(PREFETCH),
+                      run_defaults=dict(RUN_DEFAULTS))
         if market is not None:
             result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
                           shared_market_arithmetic=shared_read.get('equation'),
@@ -892,7 +951,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                   seconds=round(time.time() - started, 1), rows_file=dict(file=ROWS_FILE, sha256=None),
                   attachment_file=dict(file='teacher-attachment.pkl', sha256=attachment_sha[0]),
                   model_calls=0, caveat='whole-day context: the exact-row check in finish compares the rows with themselves',
-                  experiment_directive=directive_witness(), phase_timings=phases, cpu_pinning=cpu_pinning)
+                  experiment_directive=directive_witness(), phase_timings=phases, cpu_pinning=cpu_pinning,
+                  raw_saves=raw_saves, journal_prefetch=dict(PREFETCH), run_defaults=dict(RUN_DEFAULTS))
     if market is not None:
         result.update(shared_market_identity=market.identity, shared_market_read=shared_read,
                       shared_market_arithmetic=shared_read.get('equation'),
@@ -943,7 +1003,8 @@ def main():
     p.add_argument('--day', required=True)
     p.add_argument('--ingestion-receipt', required=True)
     p.add_argument('--ingestion-receipt-sha256', required=True)
-    p.add_argument('--workers', type=int, default=8)
+    p.add_argument('--workers', type=int, default=None,
+                   help='reader workers (default: the lane minus one, from FRANKIE_LANE_CPUS / the booking / affinity)')
     p.add_argument('--day-external', help='the day file (FRANKIE_DAY_EXTERNAL_V1); default: beside the sealed ingest')
     p.add_argument('--day-external-sha256', help='its sha256 (given together with --day-external; a mismatch is refused)')
     p.add_argument('--calculations', help='owner-local ROOT of the same sealed source')
@@ -951,6 +1012,19 @@ def main():
     a = p.parse_args()
     if (a.day_external is None) != (a.day_external_sha256 is None):
         p.error('--day-external and --day-external-sha256 are given together')
+    RUN_DEFAULTS.clear()
+    # One BLAS/OpenMP thread per process (the spawn workers are pinned one per CPU; torch only builds tensors here, no
+    # reduction, so the cap cannot change a value). Set before anything imports torch/numpy; an operator value stands.
+    for name in THREAD_CAPS:
+        if os.environ.get(name) is None:
+            os.environ[name] = '1'
+            RUN_DEFAULTS[name] = '1 (default taken)'
+    if a.workers is None:
+        lane = _box_module('frankie_box_lane_pin').lane_cpus()
+        a.workers = max(1, len(lane) - 1)
+        RUN_DEFAULTS['workers'] = '%d (default taken: lane of %d CPU(s) minus the consumer)' % (a.workers, len(lane))
+    if os.environ.get('FRANKIE_TEACHER_CHANGES') is None:
+        RUN_DEFAULTS['FRANKIE_TEACHER_CHANGES'] = '1 (default taken)'
     return teach(a.day, a.ingestion_receipt, a.ingestion_receipt_sha256, a.workers, a.day_external, a.day_external_sha256,
                  calculations=a.calculations, shared_market_policy=a.shared_market_policy)
 
