@@ -667,3 +667,133 @@ def ordered_map(function, jobs, workers, *, context=None, cpus=None, window=None
 
 
 _END = object()
+
+
+# ---- RedoPool: the submit/get shape of the dead-worker rule (session 5, 2026-10-07, for callers that hold a pool and
+# hand it tasks one by one: ingest's segment replay / block encoding). ordered_map is iterator-shaped; this is the same
+# rule over pinned_pool's placement: apply_async() returns a handle, handle.get() polls (never an unbounded wait) and a
+# task whose worker died is redone (`attempts` pool tries, then once in the coordinator, or fallback(job)). The pool
+# replaces a dead worker itself (multiprocessing does; the new one takes the next CPU in turn); in-flight bounding is
+# the caller's (ordered_map carries the window). One coordinator thread drives it. end() is end_pool (bounded). -------
+
+class _RedoResult:
+    """apply_async's handle: ready() / get(timeout) in the shape of multiprocessing's AsyncResult, polling."""
+    def __init__(self, pool, function, job):
+        self.pool, self.function, self.job = pool, function, job
+        self.token, self.result, self.tries = 0, None, 0
+
+    def ready(self):
+        with self.pool._lock:
+            self.pool._drain()
+        return self.result.ready()
+
+    def get(self, timeout=None):
+        """The task's result (its exception re-raised, as a pool result would), polling every `poll` seconds for a dead
+        worker; multiprocessing.TimeoutError after `timeout` seconds when given (the task stays outstanding)."""
+        import multiprocessing
+        deadline = None if timeout is None else time.monotonic() + max(0.0, float(timeout))
+        while not self.result.ready():
+            wait = self.pool.poll if deadline is None else min(self.pool.poll, max(0.0, deadline - time.monotonic()))
+            self.result.wait(wait)
+            if self.result.ready():
+                break
+            with self.pool._lock:
+                self.pool._recover()
+            if deadline is not None and time.monotonic() >= deadline and not self.result.ready():
+                raise multiprocessing.TimeoutError('RedoPool task not done after %.3f s (worker alive; polling)' % timeout)
+        with self.pool._lock:
+            self.pool._outstanding.pop(self.token, None)
+            self.pool._where.pop(self.token, None)
+        return self.result.get()
+
+
+class RedoPool:
+    def __init__(self, workers, *, context=None, cpus=None, poll=5.0, attempts=3, report=None, fallback=None,
+                 on_retry=None, exclude_sibling=False):
+        import multiprocessing
+        context = context or multiprocessing.get_context('fork')
+        lane = list(cpus) if cpus is not None else lane_cpus()
+        workers = max(1, int(workers))
+        _, worker_list, _ = placement(workers, lane, exclude_sibling=exclude_sibling)
+        self.report = report if report is not None else {}
+        for key in ('worker_deaths', 'redone', 'stop_kills'):
+            self.report.setdefault(key, [])
+        self.poll, self.attempts, self.fallback, self.on_retry = float(poll), int(attempts), fallback, on_retry
+        self.workers, self.cpu_map = workers, record(workers, lane, what='RedoPool', exclude_sibling=exclude_sibling)
+        self._started = context.SimpleQueue()
+        self.pool = context.Pool(workers, initializer=_tracked_initializer,
+                                 initargs=(tuple(worker_list), context.Value('l', 0), tuple(lane), self._started))
+        self.pool._frankie_pids = _pids(self.pool)
+        self._seen, self._dead, self._where, self._suspect = set(_pids(self.pool) or ()), set(), {}, {}
+        self._outstanding, self._ticket, self._lock = {}, 0, threading.Lock()
+
+    def apply_async(self, function, job):
+        """Submit function(job); the handle's get() polls and redoes the task when its worker died."""
+        handle = _RedoResult(self, function, job)
+        with self._lock:
+            self._submit(handle)
+        return handle
+
+    def _submit(self, handle):
+        self._ticket += 1
+        handle.token = self._ticket
+        handle.result = self.pool.apply_async(_tracked_call, ((handle.token, handle.function, handle.job),))
+        self._outstanding[handle.token] = handle
+
+    def _drain(self):
+        while not self._started.empty():
+            token, pid = self._started.get()
+            self._where[token] = pid
+
+    def _recover(self):
+        """ordered_map's dead-worker rule over the outstanding handles (see its section note)."""
+        self._drain()
+        now = _pids(self.pool)
+        if now is None:
+            return
+        self._seen.update(now)
+        newly = self._seen - now - self._dead
+        if newly:
+            self._dead.update(newly)
+            self.report['worker_deaths'].append(dict(pids=sorted(newly), at=round(time.time(), 3),
+                                                     in_flight_after=max(1, self.workers - len(self._dead))))
+        if not self._dead:
+            return
+        latest_started = max((t for t in self._where if t in self._outstanding), default=0)
+        for token in sorted(self._outstanding):
+            handle = self._outstanding[token]
+            if handle.result.ready():
+                continue
+            pid = self._where.get(token)
+            if pid is None and token < latest_started:
+                if self._suspect.setdefault(token, time.time()) > time.time() - self.poll:
+                    continue
+            elif pid not in self._dead:
+                continue
+            handle.tries += 1
+            self.report['redone'].append(dict(job=repr(handle.job)[:300], dead_pid=pid, try_number=handle.tries + 1))
+            if self.on_retry is not None:
+                self.on_retry(handle.job)
+            del self._outstanding[token]
+            self._where.pop(token, None)
+            self._suspect.pop(token, None)
+            if handle.tries >= self.attempts:
+                handle.result = _Done(self.fallback or handle.function, handle.job)
+            else:
+                self._submit(handle)
+
+    def outstanding(self):
+        """How many submitted tasks have not been collected by get()."""
+        with self._lock:
+            return len(self._outstanding)
+
+    def end(self, grace=None, *, normal=False):
+        """end_pool on the pool (bounded; kills in report['stop_kills']); returns its outcome."""
+        return end_pool(self.pool, grace, self.report, normal=normal, label='RedoPool')
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.end()
+        return False

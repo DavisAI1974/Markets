@@ -149,11 +149,17 @@ class IngestSaved(Exception):
         self.where = where
 
 
+_PARENT_PID = __import__('os').getpid()   # the importing (parent) process; a forked worker differs
+
+
 def default_sigterm():
     """In a forked worker: SIGTERM back to the default action (ROOT _legacy_shard_worker, the a2 shard hang: a worker
     inheriting the parent's mark-only save handler ignores terminate() and an unbounded join hangs). Cheap and
     idempotent; a non-main thread leaves it as it is (the bounded stop still ends the worker)."""
+    import os as _os
     import signal
+    if _os.getpid() == _PARENT_PID:
+        return                          # the task runs in the parent itself (no worker left / inline): its handler stays
     try:
         if signal.getsignal(signal.SIGTERM) is not signal.SIG_DFL:
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
@@ -560,13 +566,17 @@ def conform(scope, journal_path, checkpoint_state, *, workers, emit=None):
 
 def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, output, takes, tails, opening_state,
                     opening_descriptor, workers, encoders, block_rows, block_bytes, verify, resume, manifest_hash,
-                    segment_records=SEGMENT_RECORDS, event=None):
+                    segment_records=SEGMENT_RECORDS, event=None, save_requested=None):
     started, cpu_started = time.perf_counter(), time.process_time()
     output = Path(output)
     seg_dir = output / 'segments'
     seg_dir.mkdir(exist_ok=True)
     plan_path, states_path, pickles_path = seg_dir / 'plan.json', seg_dir / 'states.c15.json', seg_dir / 'adapters.pickle'
     identity = implementation_identity()
+    code = code_identity()
+    if event is not None and code is None:
+        event(dict(phase='code_identity_unavailable', rule='frankie_box_bedrock.code_identity could not be imported: '
+                   'saves carry no function-level pass identity; the builder identity is still bound'))
     plan = json.loads(plan_path.read_bytes()) if (resume and plan_path.is_file()) else None
     if plan is not None and (plan.get('schema') != PLAN_SCHEMA or plan.get('manifest_hash') != manifest_hash
                              or plan.get('implementation') != identity or plan.get('segment_records') != segment_records
@@ -574,12 +584,28 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
                              or _sha256_file(pickles_path) != plan.get('adapters_sha256')):
         raise ValueError('the saved pass-1 plan is for another manifest, code identity or segment size; refused '
                          '(move segments/ aside to start over)')
+    if plan is not None and code is not None and plan.get('code') is not None and plan['code'] != code:
+        raise ValueError('the saved pass-1 plan was made by different pass code (function-level identity differs); refused')
+    if plan is not None and event is not None and plan.get('code') is None:
+        event(dict(phase='old_save_loaded', what='plan.json without a code identity (a save older than session 5)',
+                   rule='accepted: the builder identity, manifest, segment size and both sha256s still bind it'))
     if plan is None:
         if plan_path.exists():
             raise ValueError(f'{plan_path} exists; resume with --resume or move segments/ aside')
+        save_meta = dict(manifest_hash=manifest_hash, implementation=identity, segment_records=segment_records, code=code)
+        saved_states = (load_pass1_states(seg_dir / 'pass1', manifest_hash=manifest_hash, implementation=identity,
+                                          segment_records=segment_records, code=code) if resume else None)
+        if event is not None and saved_states is not None:
+            event(dict(phase='parallel_pass1_resumed', states=len(saved_states['states']),
+                       cursor=saved_states['states'][-1]['cursor'],
+                       rule='pass 1 continues from its last saved group-closed state; the records before it are decoded '
+                            'again (held for pass 2), no state is advanced for them'))
+        if not resume and (seg_dir / 'pass1').exists():
+            (seg_dir / 'pass1').rename(seg_dir / ('pass1.stopped-%d' % int(time.time())))   # a fresh run: kept aside
         one = pass_one(scope, paths, pin, session, takes=takes, tails=tails, opening_state=opening_state,
                        source_names=source_names, segment_records=segment_records, event=event,
-                       opening_descriptor=opening_descriptor)
+                       opening_descriptor=opening_descriptor, save_dir=seg_dir / 'pass1', save_meta=save_meta,
+                       resume=saved_states, save_requested=save_requested)
         states_raw = canonical_bytes(pack(one['states']))
         with states_path.open('xb') as stream:
             stream.write(states_raw); stream.flush(); os.fsync(stream.fileno())
@@ -590,7 +616,8 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
                     records=len(one['records']), segments=len(one['states']) - 1, states_sha256=hashlib.sha256(states_raw).hexdigest(),
                     adapters_sha256=hashlib.sha256(pickles_raw).hexdigest(),
                     partials=one['partials'], skipped=one['skipped'], sessions_seen=one['sessions_seen'],
-                    member_counts=one['member_counts'], opening_result=one['opening_result'], pass1_seconds=one['seconds'])
+                    member_counts=one['member_counts'], opening_result=one['opening_result'], pass1_seconds=one['seconds'],
+                    code=code)
         with plan_path.open('x') as stream:
             json.dump(plan, stream, sort_keys=True)
         states, pickles = one['states'], one['pickles']
@@ -633,7 +660,14 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
     if event is not None:
         event(ingest_cpus.record(workers))
     pass2_started = time.perf_counter()
-    pending = [k for k in range(plan['segments']) if _done(seg_dir, k) is None]
+    reused = {k: _done(seg_dir, k) for k in range(plan['segments'])}
+    pending = [k for k, done in reused.items() if done is None]
+    if event is not None and len(pending) < plan['segments']:
+        hows = {}
+        for done in reused.values():
+            if done is not None:
+                hows[done.get('resumed_how')] = hows.get(done.get('resumed_how'), 0) + 1
+        event(dict(phase='parallel_pass2_reused', segments=plan['segments'] - len(pending), how=hows))
     _SHARED.update(scope=scope, states=states, pickles=pickles, records=records, names=source_names, spools=seg_dir)
     del one
     worker_cpu = 0.0
@@ -678,6 +712,12 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
             spools_removed.append(dict(segment=k, bytes=marker['bytes'], sha256=marker['sha256']))
             if event is not None:
                 event(dict(phase='parallel_pass3', segment=k, entries=journal.count))
+            if save_requested is not None and save_requested() and k + 1 < plan['segments']:
+                # a requested save at a segment boundary: every finished spool is durable (.done.json), pass 3 is
+                # always rebuilt on resume (this partial container is moved aside then, never deleted)
+                raise IngestSaved(dict(phase='pass2_3', segment=k, segments=plan['segments'],
+                                       rule='a requested save honoured at a segment boundary; the finished spools '
+                                            'are the resume point'))
         journal.seal()
         worker_cpu += journal.worker_cpu_seconds
         # every stop bounded (session 5; a2's shard exit hang was terminate() + an unbounded join()): the pool gets 60 s

@@ -172,6 +172,56 @@ def _attach_to_brain_entry(entry_dir, classroom_external_md, day_file, day_sha, 
 
 
 PIN_RECORD = {}
+JOURNAL_WITNESS_SCHEMA = 'FRANKIE_CLASSROOM_JOURNAL_WITNESS_V1'
+JOURNAL_TAIL_BYTES = 1 << 20
+
+
+def _file_tail(path, size):
+    """The last MiB of a file (offset, sha256): the line-free form of frankie_box_boss_session._line_ending_at."""
+    offset = max(0, size - JOURNAL_TAIL_BYTES)
+    with open(path, 'rb') as handle:
+        handle.seek(offset)
+        return dict(offset=offset, sha256=hashlib.sha256(handle.read(size - offset)).hexdigest())
+
+
+def _journal_witness_record(path, value):
+    """The saved claim of a full journal measure, with the additive resume block (frankie_box_boss_session.
+    _saved_spool_position's rule: device, inode, mtime, size and the tail)."""
+    observed = os.stat(path)
+    return dict(schema=JOURNAL_WITNESS_SCHEMA, path=str(path), bytes=value['bytes'], sha256=value['sha256'],
+                resume=dict(device=observed.st_dev, inode=observed.st_ino, mtime_ns=observed.st_mtime_ns,
+                            size=observed.st_size, tail=_file_tail(path, observed.st_size)), measured_at=time.time())
+
+
+def _saved_journal_witness(directory, path, pin):
+    """(value, file, why): the claim saved by an earlier attempt when it names this same unchanged file (the ROOT rule of
+    frankie_box_boss_session._resume_row_spool for a file without lines: size, device, inode and mtime equal and the
+    last MiB equal; no full read), else (None, None, why) and the caller makes one full pass. The claim must equal the
+    pin; the full read at the seal (_run: journal_seal_check) compares it again and refuses a difference."""
+    record_path = Path(directory) / 'journal-witness.json'
+    if not record_path.is_file():
+        return None, None, 'the save recorded no journal witness (a first attempt or an older save)'
+    try:
+        saved = json.loads(record_path.read_bytes())
+    except ValueError as error:
+        return None, None, 'journal-witness.json unreadable (%s)' % error
+    fast = saved.get('resume') or {}
+    try:
+        observed = os.stat(path)
+    except OSError as error:
+        return None, None, 'the journal cannot be stated (%s)' % error
+    if saved.get('schema') != JOURNAL_WITNESS_SCHEMA or saved.get('path') != str(path):
+        why = 'the saved witness names another schema or path'
+    elif {k: saved.get(k) for k in ('bytes', 'sha256')} != {k: pin.get(k) for k in ('bytes', 'sha256')}:
+        why = 'the saved witness differs from the pin'
+    elif (fast.get('size'), fast.get('device'), fast.get('inode'), fast.get('mtime_ns')) != (
+            observed.st_size, observed.st_dev, observed.st_ino, observed.st_mtime_ns):
+        why = 'the file is not the one saved (size, device, inode or mtime differ)'
+    elif _file_tail(path, observed.st_size) != fast.get('tail'):
+        why = 'its last MiB differs from the saved one'
+    else:
+        return dict(bytes=saved['bytes'], sha256=saved['sha256']), dict(dev=observed.st_dev, ino=observed.st_ino), None
+    return None, None, why
 
 
 def _pin_outputs(directory, names):
@@ -418,7 +468,19 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     # hash unchanged. A daemon thread never delays a refusal that happens before the join.
     journal_pin = (source.get('container') or {}) if isinstance(shared_policy, dict) else {}
     measured_witness, witness_thread, witness_clock = {}, None, time.monotonic()
+    # Save/restore as ROOT (frankie_box_boss_session._resume_row_spool): a resume on the SAME unchanged journal takes
+    # the claim its first attempt saved (no full read now); anything else is one full pass, the reason recorded. The
+    # full read still happens, side by side, and is compared with the claim at the seal (journal_seal_check below).
+    journal_resume = dict(how='first measure in this directory')
     if journal_pin.get('path'):
+        saved_value, saved_file, why = _saved_journal_witness(d, journal_pin['path'], journal_pin)
+        if saved_value is not None:
+            measured_witness.update(value=saved_value, file=saved_file)
+            journal_resume = dict(how='unchanged file: size, device, inode, mtime and the last MiB checked, no full read; '
+                                      'the full read runs beside the stage and is compared at the seal')
+        elif (d / 'journal-witness.json').is_file():
+            journal_resume = dict(how='one full pass: ' + why)
+    if journal_pin.get('path') and 'value' not in measured_witness:
         import threading
         from frankie_box_filehash import witness as measured
         def measure():
@@ -456,13 +518,18 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     if _sha256(day_file) != day_sha:
         raise SystemExit('the day file %s differs from the sha256 %s (%s); refused' % (day_file, day_sha, day_source))
     # the shared market source, opened after the cheap checks with the journal witness measured above
-    journal_witness, market = None, None
-    if witness_thread is not None:
-        witness_thread.join()
-        if 'error' in measured_witness:
-            raise measured_witness['error']
-        journal_witness = dict(path=journal_pin['path'], **measured_witness['value'],
-                               basis='frankie_box_filehash.witness: streamed sha256 in this process, cached per unchanged file',
+    journal_witness, market, journal_claim = None, None, None
+    if witness_thread is not None or 'value' in measured_witness:
+        if witness_thread is not None:
+            witness_thread.join()
+            if 'error' in measured_witness:
+                raise measured_witness['error']
+            # the claim a resume takes without a full read (written below once the directory exists)
+            journal_claim = _journal_witness_record(journal_pin['path'], measured_witness['value'])
+        journal_witness = dict(path=journal_pin['path'], **measured_witness['value'], resume=journal_resume,
+                               basis=('frankie_box_filehash.witness: streamed sha256 in this process, cached per unchanged file'
+                                      if witness_thread is not None else
+                                      'the claim journal-witness.json saved by the first attempt (resume rule above)'),
                                seconds=round(time.monotonic() - witness_clock, 3),
                                overlapped_with=['teacher receipt and attachment hash', 'day file resolution and hash'],
                                equals_pin=({k: measured_witness['value'].get(k) for k in ('bytes', 'sha256')}
@@ -517,6 +584,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
 
     d.mkdir(parents=True, exist_ok=True)
     out.mkdir(parents=True, exist_ok=True)
+    if journal_claim is not None and journal_witness.get('equals_pin'):
+        _dump(d / 'journal-witness.json', journal_claim)      # the resume point of the journal measure (additive)
     p = pickle.loads(attachment_raw)          # the bytes hashed and checked above (no second read)
     attachment_bytes = len(attachment_raw)
     del attachment_raw

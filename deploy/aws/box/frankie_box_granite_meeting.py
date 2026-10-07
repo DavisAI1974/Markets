@@ -663,6 +663,32 @@ def resolve_threads(params):
     return resolved['threads'], resolved['host_cpus']
 
 
+class MeetingSaveRequested(BaseException):
+    """A save was requested (SIGTERM marked it, or the lane stop file exists) and the meeting reached a durable boundary:
+    the round before the next count/chat (its progress saved) or the next item. BaseException so no 'except Exception'
+    of a call path swallows it; main() exits 75 (never a failure; the queue records saved)."""
+
+
+EXIT_SAVED = 75
+_SAVE_MARK = []
+
+
+def _mark_save(*_):
+    """The SIGTERM handler: MARK only (ROOT's calculate_day rule); a call in flight finishes (bounded by its ceiling) and
+    its reply is saved before the save point raises."""
+    _SAVE_MARK.append(time.time())
+
+
+def save_requested():
+    stop = os.environ.get('FRANKIE_LANE_STOP_FILE')
+    return bool(_SAVE_MARK) or bool(stop and Path(stop).exists())
+
+
+def save_point(where):
+    if save_requested():
+        raise MeetingSaveRequested('save requested; stopped at %s' % where)
+
+
 class MeetingBudgetExpired(RuntimeError):
     """The meeting's time budget (max_meeting_seconds, settled) is spent: no further request is made.
     sent: False = no send attempted; True = a send was attempted (possibly partial); None = outside a request."""
@@ -1360,6 +1386,7 @@ def discuss_item(server, item, system, params, log, progress=None, clock=None):
     try:
         for round_number in (range(int(state['rounds_completed']) + 1, int(params['max_coordinator_turns_per_item']) + 1)
                              if outcome is None and state.get('over_cap') is None else ()):
+            save_point('item %s before round %d (rounds before it saved)' % (item['item_id'], round_number))
             flight.update(round=round_number, stage='count', started=time.time())
             counted = server.count_tokens(transcript, label='%s-r%d' % (label, round_number))
             if counted > cap:
@@ -1827,9 +1854,29 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                    rule='every model call of this meeting is bound to these inputs; progress files name this binding')
     binding_bytes = (json.dumps(binding, indent=1, sort_keys=True) + '\n').encode()
     if binding_path.is_file():
-        if binding_path.read_bytes() != binding_bytes:
-            raise ValueError('retained meeting progress under %s belongs to other inputs (binding differs); move it aside, '
-                             'nothing is reused across inputs' % out_dir)
+        retained_bytes = binding_path.read_bytes()
+        if retained_bytes != binding_bytes:
+            # identity is content, not location (ROOT's frankie_box_experiment_root.content_rebinds): a binding saved
+            # by another checkout of the same source differs only in checkout-prefix paths of equal-bytes, equal-sha256
+            # witnesses (the charter, the rules, the runtime definition); those moves are accepted and recorded under
+            # <out>/checkout-rebinds/, the SAVED binding stays the identity (its bytes and sha256 travel in every
+            # progress file); any other difference refuses as before
+            moves = None
+            try:
+                import frankie_box_experiment_root as XR
+                moves = XR.content_rebinds(json.loads(retained_bytes), json.loads(binding_bytes))
+            except Exception as error:  # noqa: BLE001 - no rebind check: the refusal below stands
+                log('meeting binding rebind check unavailable (%r)' % error)
+            if not moves:
+                raise ValueError('retained meeting progress under %s belongs to other inputs (binding differs); move it '
+                                 'aside, nothing is reused across inputs' % out_dir)
+            from frankie_box_durable import write_json as _write_json
+            _write_json(out_dir / 'checkout-rebinds' / ('%d-%s.json' % (time.time_ns(), sha256_bytes(binding_bytes)[:8])),
+                        dict(schema='FRANKIE_MEETING_CHECKOUT_REBIND_V1', saved_binding_sha256=sha256_bytes(retained_bytes),
+                             built_binding_sha256=sha256_bytes(binding_bytes), moves=moves,
+                             rule='checkout-prefix moves of equal bytes and sha256 only; the saved binding is kept'))
+            log('meeting binding: %d checkout move(s) accepted; the saved binding stays the identity' % len(moves))
+            binding_bytes = retained_bytes
     else:
         from frankie_box_durable import write_bytes
         write_bytes(binding_path, binding_bytes)
@@ -1893,6 +1940,7 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         log('meeting %s: system prompt %d tokens against the per-call cap %d%s' % (
             exchange.get('day'), system_tokens, cap, ' (OVER: every item left open by code, no call)' if system_over_cap else ''))
         for item in given['items']:
+            save_point('before item %s' % item['item_id'])
             progress = ItemProgress(out_dir, item['item_id'], binding_sha)
             retained = progress.load()
             if system_over_cap and (retained is None or retained.get('status') != 'complete'):
@@ -1940,6 +1988,16 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
             report_model_progress('meeting', 'items discussed', items_done=len(items) + len(not_discussed),
                                   items_total=len(given['items']), rounds=result.get('rounds_completed'))
 
+    except MeetingSaveRequested as saved:
+        # the save route: the server is released, the attempt record says saved (not failed), progress files stay the
+        # resume point; nothing was in flight (the save point sits between calls)
+        try:
+            server.stop()
+        except Exception as inner:
+            log('server release at a save raised %r' % inner)
+        server._record_quietly('end', 'saved', reason=str(saved), items_completed_this_attempt=len(items),
+                               seconds=round(time.time() - started, 1))
+        raise
     except BaseException as error:
         # 6R2-F: an attempt that dies in discussion leaves a terminal record naming the failure; its stderr, evidence
         # and progress files (pending calls marked) stay as they are for the next attempt to carry forward; neither the
@@ -2062,8 +2120,19 @@ def main():
         p.error('the github route is dispatched by the Run (voice_remote); here it is inputs-only')
     if a.threads is not None and a.threads < 1:
         p.error('--threads must be a positive integer')
-    receipt = meeting(a.exchange, a.out_dir, config_path=a.config, binary=a.binary, model=a.model, brain=a.brain,
-                      inputs_only=a.inputs_only, route=a.route, threads=a.threads)
+    import signal
+    try:
+        signal.signal(signal.SIGTERM, _mark_save)        # mark only; children reset it (exec / _pool_task)
+    except ValueError:
+        pass
+    try:
+        receipt = meeting(a.exchange, a.out_dir, config_path=a.config, binary=a.binary, model=a.model, brain=a.brain,
+                          inputs_only=a.inputs_only, route=a.route, threads=a.threads)
+    except MeetingSaveRequested as saved:
+        print(json.dumps(dict(schema='FRANKIE_GRANITE_MEETING_SAVED_V1', status='saved', reason=str(saved),
+                              out_dir=str(a.out_dir), rule='progress files are the resume point; exit 75 is never a failure'),
+                         sort_keys=True), flush=True)
+        return EXIT_SAVED
     print(json.dumps(receipt, sort_keys=True), flush=True)
     return 0
 

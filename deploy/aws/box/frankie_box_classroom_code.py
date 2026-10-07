@@ -3034,7 +3034,7 @@ def _pair_measures(math, ledgers, order):
         segments.done()
         PINNING_RECORD['dipole_pair_processes'] = dict(workers=workers, rounds=rounds, resumed_pairs=len(resumed))
         basis = ('fork pool (%d workers, each pinned to one lane CPU, physical cores first%s); same functions, pair order '
-                 'kept' % (workers, '' if len(rounds) == 1 else '; a dead worker\'s pairs measured again with one worker '
+                 'kept' % (workers, '' if len(rounds) <= 1 else '; a dead worker\'s pairs measured again with one worker '
                                                                'fewer (rounds in received.cpu_pinning)'))
     else:
         measured = [(math._pearson(ledgers[a], ledgers[b]), math._co_movement(ledgers[a], ledgers[b])) for a, b in order]

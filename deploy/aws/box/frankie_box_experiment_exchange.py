@@ -2156,6 +2156,8 @@ def main():
                    shared_market_context=shared_market_pin,
                    shared_market_context_listed=notes.get('shared_market_context_listed'),
                    placement=notes.get('placement'),
+                   # the ledger save point: loaded, computed or not used, with the reason (receipt only)
+                   ledger_save=notes.get('ledger_save'),
                    # the same record under the name the one-day reporter projects (frankie_box_workflow_inspection USED)
                    cpu_placement=notes.get('placement'),
                    workflow_report=workflow_report,

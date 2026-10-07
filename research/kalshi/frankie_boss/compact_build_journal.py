@@ -389,8 +389,26 @@ def _pin_encoder(handout, fallback):
         pass                              # placement only: the encoder runs where it started
 
 
+_PARENT_PID = __import__('os').getpid()   # the importing (parent) process; a forked worker differs
+
+
+def _default_sigterm():
+    """A forked encoder (the shared pinned pool, executor=) must not keep the parent's mark-only save handler (ROOT
+    _legacy_shard_worker: the a2 shard hang); spawned encoders start with the default already. Idempotent and cheap."""
+    import os as _os
+    import signal
+    if _os.getpid() == _PARENT_PID:
+        return                          # the task runs in the parent itself (no worker left / inline): its handler stays
+    try:
+        if signal.getsignal(signal.SIGTERM) is not signal.SIG_DFL:
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except (ValueError, OSError):
+        pass
+
+
 def _encode_rows(rows):
     """Worker: encode one block from its rows (bodies are parsed here, off the causal parent)."""
+    _default_sigterm()
     started = time.process_time()
     return encode_block(rows), time.process_time() - started
 

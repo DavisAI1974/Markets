@@ -328,7 +328,7 @@ def _box(name):
     for qualified in (name, 'deploy.aws.box.' + name):
         try:
             return importlib.import_module(qualified)
-        except ImportError:
+        except Exception:  # noqa: BLE001 - not importable here: the caller takes its listed fallback
             continue
     return None
 

@@ -912,6 +912,14 @@ SAVE_CODE_NAMES = ('sha256_bytes', 'SCAN_BLOCK', '_segments', '_line_at', '_line
 _SAVE = dict(requested=False, installed=False)
 
 
+class SaveRefused(ValueError):
+    """A save this checkout refuses (different code or inputs, or a claim that differs at the seal): visible, never
+    read around."""
+
+
+_LAST_SAVE = []    # the pre-read save of this call, finished by main() once every document is written
+
+
 class ScientificSaved(SystemExit):
     """A requested save reached its boundary: the exact state is on disk; the process exits SAVE_EXIT (75)."""
     def __init__(self, reason):
@@ -1016,6 +1024,24 @@ class PreReadSave:
         self.note = dict(path=str(self.path), reused=0, full_pass=[], saved=0, flushes=0, dropped_tail=None,
                          rebinds=None, old_shape=False)
         self.handle, self.last_flush = None, time.time()
+        self.positions = {}
+
+    def seal(self, every, reuse):
+        """The seal check (ROOT's _check_spool_claims): every reused value's file is checked again by the same rule at the
+        end of the pre-read; FRANKIE_SCIENTIFIC_SEAL_FULL=1 also re-runs each reused task (a full witness read) and
+        compares its value with the saved claim. Any difference refuses, visibly."""
+        full = os.environ.get('FRANKIE_SCIENTIFIC_SEAL_FULL') == '1'
+        for index in sorted(reuse):
+            same, how = _position_unchanged(self.positions.get(index))
+            if not same:
+                raise SaveRefused('the saved pre-read claim for task %d differs at the seal (%s); retained for recovery'
+                                 % (index, how))
+            if full and _pre_read_task(every[index]) != reuse[index]:
+                raise SaveRefused('the saved pre-read claim for task %d differs from its full read at the seal; retained '
+                                 'for recovery' % index)
+        self.note['seal'] = dict(checked=len(reuse), full_read=full,
+                                 rule='every reused task\'s file re-checked (stat + last line); a full read with '
+                                      'FRANKIE_SCIENTIFIC_SEAL_FULL=1')
 
     def load(self):
         """{task index: value} that may be reused (each file checked as _resume_row_spool does); notes every full pass."""
@@ -1039,6 +1065,11 @@ class PreReadSave:
                     complete = True
                 else:
                     records.append(item)
+        if complete:
+            # the call that wrote it finished every document: nothing to resume. A new call reads every file again
+            # (skipping a re-hash on an unchanged stat outside a resume is Greg's open call (c), not taken)
+            self._set_aside('a completed save: its call finished, nothing to resume; this call reads again')
+            return {}
         saved_identity = (header or {}).get('identity')
         if saved_identity is not None and 'code' not in saved_identity:
             # an older save shape without the function-level identity: its values are not reused; one full pass
@@ -1053,7 +1084,7 @@ class PreReadSave:
             if complete:
                 self._set_aside('a completed save of different code or inputs: nothing to resume, set aside')
                 return {}
-            raise ValueError('the saved scientific pre-read %s differs from what this checkout builds (code or inputs); '
+            raise SaveRefused('the saved scientific pre-read %s differs from what this checkout builds (code or inputs); '
                              'retained for recovery: move it aside to start the pre-read again' % self.path)
         if moves:
             from frankie_box_durable import write_json
@@ -1066,6 +1097,7 @@ class PreReadSave:
             same, how = _position_unchanged(record.get('position'))
             if same:
                 reuse[index] = record['value']
+                self.positions[index] = record['position']
             else:
                 self.note['full_pass'].append(dict(index=index, file=(record.get('position') or {}).get('path'), how=how))
         self.note['reused'] = len(reuse)
@@ -1187,12 +1219,14 @@ def pre_read(days, claims_docs, out_root, save_dir=None):
                 save.handle and save.handle.close()
                 raise ScientificSaved('a save was requested: %d of %d pre-read tasks saved at %s'
                                       % (len(values), len(every), save.path))
-            save.finish()
+            save.seal(every, reuse)
+            save.flush()
+            _LAST_SAVE.append(save)     # finished (complete) by main() after the last document is written
         out = [values[i] for i in range(len(every))]
     except ScientificSaved:
         raise
     except Exception as error:  # noqa: BLE001 - the serial route below reads everything itself
-        if isinstance(error, ValueError) and 'saved scientific pre-read' in str(error):
+        if isinstance(error, SaveRefused):
             raise                                   # a save this checkout refuses is visible, never read around
         print('scientific pre-read not used (%s: %s); native evidence and parts read on their own'
               % (type(error).__name__, error), file=sys.stderr, flush=True)
@@ -2326,7 +2360,6 @@ def publish_lessons(path, brain_dir='/opt/frankie-box/brain', log=print):
 
 
 def main():
-    install_save_route()
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('--search', action='append', required=True, help='a completed experiment search directory (repeat per day)')
     p.add_argument('--jev-claims', help='a JEV_CLAIMS_V1 file (Jev\'s claims of one day)')
@@ -2367,6 +2400,9 @@ def main():
         write_json(out / 'receipt.json', receipt)
         print(json.dumps(receipt, sort_keys=True), flush=True)
         return
+    # ROOT's save route for this call (the accumulated mode above has no save point of this module: its own result
+    # files are its resume point, and SIGTERM keeps its default meaning there)
+    install_save_route()
     if a.jev_stamp and not a.jev_claims:
         key = 'clm-sidecar/%s/jev/claims.json' % a.jev_stamp
         entries = json.loads(urllib.request.urlopen(os.environ['MAP_URL'], timeout=60).read())
@@ -2518,6 +2554,8 @@ def main():
                                   cannot_test_yet=sum(len(r.get('cannot_test_yet') or []) for r in results)),
                       all99_coverage=all99, evidence_read=read_report, seconds=round(time.time() - started, 3))
         operations.append(record)
+    for save in _LAST_SAVE:
+        save.finish()                 # every document written: the save is complete (a later call sets it aside)
     _write_teacher_receipt(a, days, native, operations, listed, code_root, shared_read=shared)
 
 

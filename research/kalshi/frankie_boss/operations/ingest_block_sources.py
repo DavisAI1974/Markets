@@ -709,6 +709,23 @@ def main():
         raise SystemExit(f'{output} already holds a sealed ingest; nothing to resume')
     output.mkdir(parents=True, exist_ok=args.resume)
     emit = _emitter(output)
+    # ROOT's save request route (frankie_box_experiment_root.calculate_day): SIGTERM (the queue's ACTION=save, forwarded
+    # by frankie_box_cores.py run) or FRANKIE_LANE_STOP_FILE only MARKS the save; the parallel ingest runs on to its next
+    # save point (a pass-1 group-closed state, or a pass-2/3 segment boundary), then exits 75. The sequential writer has
+    # no save point (it is canary-or-whole by design), so it keeps the default SIGTERM (a stop = a fresh run), stated.
+    requested = [False]
+    stop_file = os.environ.get('FRANKIE_LANE_STOP_FILE')
+
+    def save_requested():
+        return requested[0] or bool(stop_file and Path(stop_file).exists())
+    if args.mode == 'parallel':
+        import signal
+        signal.signal(signal.SIGTERM, lambda *_: requested.__setitem__(0, True))
+        emit(dict(phase='save_route', handler='mark-only SIGTERM', stop_file=stop_file,
+                  rule='a save request is honoured at the next save point, then exit 75'))
+    else:
+        emit(dict(phase='save_route', handler='default SIGTERM', rule='the sequential writer has no save point; a stop '
+                  'ends it and the day is ingested again from its start (canary-or-whole by design)'))
 
     if args.sunday:
         if not args.source_path:
@@ -761,7 +778,7 @@ def main():
                 opening_state=(adapter_state if args.opening_receipt else None), opening_descriptor=opening_descriptor,
                 workers=max(1, args.workers), encoders=args.workers, block_rows=args.block_rows or partition_entries_for(2 * total),
                 block_bytes=args.block_bytes, verify=args.verify, resume=args.resume, manifest_hash=manifest['manifest_hash'],
-                segment_records=args.segment_records, event=emit)
+                segment_records=args.segment_records, event=emit, save_requested=save_requested)
         else:
             run_ingest = lambda: ingest(scope, paths, expected_scope_hash=scope.genesis_hash(), pin=pin, session=session,
                                         source_object=args.source_object, journal_path=journal, writer=writer,
@@ -769,10 +786,21 @@ def main():
                                         block_rows=args.block_rows, tails=tails, opening_descriptor=opening_descriptor,
                                         opening=(opening_adapter(adapter_state) if args.opening_receipt else None),
                                         observation_mode=args.observation, verify=args.verify)
-        if args.profile:
-            result = profiled(run_ingest, directory / 'profile.txt')
-        else:
-            result = run_ingest()
+        try:
+            if args.profile:
+                result = profiled(run_ingest, directory / 'profile.txt')
+            else:
+                result = run_ingest()
+        except parallel_ingest.IngestSaved as saved:
+            # ROOT's route (frankie_box_experiment_root.calculate_day -> TeacherSaved -> exit 75): the save was honoured
+            # at a save point; the directory is the resume point (RESUME_DIR=<it> / --resume); exit 75 is never a
+            # failure and never a requeue of a fresh day
+            record = dict(schema='BOSS_BLOCK_INGESTION_SAVED_V1', at=round(time.time(), 3), directory=str(directory),
+                          where=saved.where, resume='ACTION=ingest MODE=parallel RESUME_DIR=%s' % directory)
+            write_once(directory / ('ingest-saved-%d.json' % int(time.time())), record)
+            emit(dict(phase='saved', **saved.where))
+            print('INGEST_SAVED ' + json.dumps(record, sort_keys=True, default=str), flush=True)
+            return 75
         results[writer] = result
         if result['kind'] == 'canary':
             receipt = dict(common, schema=CANARY_SCHEMA, writer=writer, **{k: v for k, v in result.items() if k != 'kind'})
