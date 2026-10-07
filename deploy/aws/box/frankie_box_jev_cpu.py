@@ -224,23 +224,30 @@ def _run(request, request_path, out, brain, jev_brain):
     def check_save():
         if stopped or Path(request['save_marker']).is_file():
             raise SystemExit(75)
-    shared_context = None
+    shared_context, shared_market_source = None, None
     if classroom.get('shared_market') is not None:
+        # The cutoff is the classroom's own explicit teacher binding (source_hash/as_of/through_cursor),
+        # never a Frankie target selection. Any disposition at that instant is carried, thinner.
         import frankie_box_adviser_market as AM
-        visible = attachment['dipole_classroom']
-        bound = visible['binding']
+        bound = attachment['dipole_classroom']['binding']
         adviser = AM.AdviserMarketContext(classroom['shared_market']['identity'], day=request['day'],
             source_hash=bound['source_hash'], as_of=bound['as_of'], through_cursor=bound['through_cursor'])
         context_path = out / 'shared-market-context.json'
+        supplied = request.get('shared_market_context')   # optional: an earlier piece's retained read of the same cutoff
         if context_path.is_file():
-            shared_context = json.loads(context_path.read_bytes())
-            if shared_context['identity'] != adviser.reader.identity or shared_context['scope'] != adviser.scope:
-                raise ValueError('Jev retained shared market context belongs to another original cutoff')
-            AM.text(shared_context)
+            shared_context = AM.load_context(context_path, identity=adviser.reader.identity, scope=adviser.scope)
+            shared_market_source = 'retained in this Jev output'
+        elif supplied is not None:
+            shared_context = AM.load_context(pinned(supplied), identity=adviser.reader.identity, scope=adviser.scope)
+            shared_market_source = 'supplied retained read of the same source and cutoff: ' + supplied['path']
         else:
             shared_context = adviser.read(check_save=check_save)
-            retain_json(context_path, shared_context)
+            shared_market_source = 'read by this Jev piece from the owner-local shared reader'
+        AM.retain_context(context_path, shared_context)
         identity.update(shared_market_context=pin(context_path), adviser_market_reader=pin(AM.__file__))
+    else:
+        shared_market_source = ('classroom receipt carries no shared market summary (legacy source); '
+                                'Jev material bytes unchanged')
     retain_json(out / 'owner.json', identity)
     state_path = out / 'state.json'
     seal_path, claims_path = out / 'claims-seal.json', out / 'claims.json'

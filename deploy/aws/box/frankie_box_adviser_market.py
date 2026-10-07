@@ -270,6 +270,28 @@ def reference(context):
                 rule='reference only: the complete typed picture is the retained context named by picture_sha256')
 
 
+def workflow_report(piece, *, context, inputs, use, outputs):
+    """One piece's inputs / use / outputs record for the one-day operator review (Greg, 2026-10-07).
+
+    Recorded facts only: which picture values reached which prompt or record, what a role or
+    the privacy wall withheld, every missing/stale/unavailable disposition, every cap that
+    refused, model calls made or refused, waits. Temporary operator review, not knowledge.
+    `context` may be None (legacy source without a shared context) or a context/reference."""
+    picture = None
+    if isinstance(context, dict) and context.get('schema') == SCHEMA:
+        picture = reference(context)
+    elif isinstance(context, dict) and context.get('schema') == REFERENCE_SCHEMA:
+        picture = context
+    return dict(schema=WORKFLOW_REPORT_SCHEMA, piece=piece,
+                inputs=dict(inputs, shared_market_picture=picture,
+                            shared_market_dispositions=(None if picture is None else
+                                                        dict(coverage=picture['coverage'], read=picture['read']))),
+                use=use, outputs=outputs,
+                rule='recorded inputs, use and outputs of this piece for the one-day review; '
+                     'reaching a prompt or record is not proof of consumption or learning; '
+                     'missing evidence means unknown, never zero')
+
+
 def text(context):
     check(context)
     return ('Shared market picture at the original explicit source cutoff (%s). ' % context['scope']['position']

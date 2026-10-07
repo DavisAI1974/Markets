@@ -55,11 +55,56 @@ review source_review findings_listed independent_observations_added source manif
 file bytes sha256 input_sources deferred lacking missing_series
 days remote_days waiting plan_sha256 role day_role remote_attempt remote_batch_key
 remote_source_sha256 attempt commit
+shared_market_policy shared_market_sources shared_market_identity shared_market_read shared_market_arithmetic
+shared_market_use coverage completeness arithmetic integrity_failure stopped outputs dispositions
+frame_dispositions pairing placed_series placed_cells exclusions bedrock input_records data_manifest_sha256
+frozen_survivors presented_inputs external_publications completed_sources identity journal equation absent_layers
+unclosed_instruments closed_source_without_root_frame unplaceable_input_clocks interpretation limitation view
 '''.split())
+
+# Received / used / produced (Greg, 2026-10-07): every piece's report says what it received,
+# how it used it and what it produced. These are projections of recorded fields only; a
+# field under "used" is the producer's own recorded disposition, never an inference here.
+RECEIVED = set('''ingestion_receipt source_binding calculation_pins derivation container journal sources external
+identity calculations as_of through_cursor record_count journal_count journal_hash journal_file journal_bytes
+journal_sha256 manifest_sha256 data_manifest_sha256 shared_market_identity shared_market_policy learner_binding
+day_external day_role partial_members tail_members opening_book input_sources claim_inputs claim_inputs_sha256
+searches searched_days requested_search_days frozen_survivors entity binding source commit plan_sha256
+'''.split())
+USED = set('''coverage completeness arithmetic equation shared_market_arithmetic shared_market_use root_processes not_run
+layers dispositions frame_dispositions pairing exclusions leakage lags transforms cells_not_counted not_searched
+missing excluded withheld listed reason caveat rule interpretation limitation view absent_layers unclosed_instruments
+closed_source_without_root_frame unplaceable_input_clocks completed_sources stopped
+'''.split())
+PRODUCED = set('''outputs rows entity_rows rows_file attachment_file failure_count status shared_market_sources
+presented_inputs external_publications integrity_failure placed_series placed_cells couplings series cells planes
+results reports brain_entry brain_entries external_section external_computation frame_sections files
+'''.split())
+
+_OUT = []          # the current piece's markdown; stdout when no --write directory is given
+
+
+def emit(text):
+    _OUT.append(text)
+    print(text)
 
 
 def json_block(body):
-    print('```json\n' + json.dumps(body, indent=2, sort_keys=True, ensure_ascii=False) + '\n```\n')
+    emit('```json\n' + json.dumps(body, indent=2, sort_keys=True, ensure_ascii=False) + '\n```\n')
+
+
+def received_used_produced(body, label):
+    """Three recorded views of one metadata object; nothing sampled, nothing inferred."""
+    emit('#### ' + label + ': received / used / produced (recorded fields only)\n')
+    json_block(dict(received={k: v for k, v in body.items() if k in RECEIVED},
+                    used={k: v for k, v in body.items() if k in USED},
+                    produced={k: v for k, v in body.items() if k in PRODUCED},
+                    rule='missing evidence reads as unknown, never zero; a recorded output is not proof of downstream use'))
+    nested = body.get('shared_market_read')
+    if isinstance(nested, dict):
+        # The shared market read carries its own inputs (identity pins), use (coverage,
+        # arithmetic, dispositions) and outputs (pictures, frontier, integrity failure).
+        received_used_produced(nested, label + ' > shared market read')
 
 
 def read_object(path):
@@ -80,7 +125,7 @@ def read_object(path):
 
 def metadata(path, label):
     """Report exact metadata; failures stay visible and do not hide other pieces."""
-    print('### ' + label + '\n')
+    emit('### ' + label + '\n')
     try:
         body, pin = read_object(path)
     except (OSError, ValueError) as error:
@@ -88,7 +133,18 @@ def metadata(path, label):
         return
     json_block(dict(source_read=pin, recorded={k: v for k, v in body.items() if k in FIELDS},
                     other_fields_retained_at_source=sorted(set(body) - FIELDS)))
+    received_used_produced(body, path.name)
     return body
+
+
+def write_piece(directory, piece, text):
+    """One markdown file per piece; temporary operator review, never knowledge or a gate."""
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / (piece + '.md')
+    pending = path.with_name(path.name + '.pending')
+    pending.write_text(text, encoding='utf-8')
+    pending.replace(path)
+    return path
 
 
 def absolute(value):
@@ -151,7 +207,12 @@ def main():
     parser.add_argument('--day', required=True)
     parser.add_argument('--artifact', action='append', default=[], metavar='PIECE=PATH',
                         help='additional exact metadata/report reference for a canonical piece')
+    parser.add_argument('--write', action='store_true',
+                        help='also write <run-dir>/days/<day>/inspection/<piece>.md and index.md (Greg, 2026-10-07: '
+                             'the one-day test reports; temporary operator review, not knowledge, not a gate)')
     args = parser.parse_args()
+    inspection_dir = args.run_dir / 'days' / args.day / 'inspection' if args.write else None
+    written = []
     try:
         plan, plan_pin = read_object(args.run_dir / 'plan.json')
     except (OSError, ValueError) as error:
@@ -189,26 +250,31 @@ def main():
             records.append((path, body.get('stage')))
         elif path.parent == args.run_dir / 'days' / args.day:
             errors.append(dict(path=str(path), excluded='receipt does not name this day'))
-    print('# One-day workflow inspection: ' + args.day + '\n')
-    print('Temporary operator review only; not knowledge, scientific evidence, or a completion gate. '
-          'All values below are recorded metadata. A file, receipt, source-read count or brain publication '
-          'does not prove downstream computation. Missing evidence means unknown, never zero. '
-          'No journal, row spool, model state or coupling part is replayed or read. '
-          'Cross-day batch records retain their full scope; repeated references are not independent tests.\n')
+    header = ('# One-day workflow inspection: ' + args.day + '\n',
+              'Temporary operator review only; not knowledge, scientific evidence, or a completion gate. '
+              'All values below are recorded metadata. A file, receipt, source-read count or brain publication '
+              'does not prove downstream computation. Missing evidence means unknown, never zero. '
+              'No journal, row spool, model state or coupling part is replayed or read. '
+              'Cross-day batch records retain their full scope; repeated references are not independent tests.\n')
+    _OUT.clear()
+    for line in header:
+        emit(line)
     json_block(dict(plan=plan_pin, plan_sha256=saved_plan_sha256, selected_day=entry,
                     metadata_byte_ceiling=METADATA_BYTE_LIMIT, unreadable_or_excluded_records=errors))
+    preamble = '\n'.join(_OUT)
     for piece, title, stages in PIECES:
-        print('## ' + piece + ': ' + title + '\n')
+        _OUT.clear()
+        emit('## ' + piece + ': ' + title + '\n')
         if piece in CLASSROOM_ONLY and not entry.get('classroom_arm'):
-            print('Not applicable under the saved non-classroom day plan.\n')
+            emit('Not applicable under the saved non-classroom day plan.\n')
         elif piece == 'confirmation':
-            print('Separate design/authorization required; this report activates nothing.\n')
+            emit('Separate design/authorization required; this report activates nothing.\n')
         elif piece == 'candidates':
-            print('Cross-day boundary; no per-day survivor completion inferred. Candidate generation, '
-                  'scientific checking and survivor acceptance must be reviewed separately.\n')
+            emit('Cross-day boundary; no per-day survivor completion inferred. Candidate generation, '
+                 'scientific checking and survivor acceptance must be reviewed separately.\n')
         selected = [p for p, stage in records if stage in stages]
         if not selected:
-            print('No day-bound step metadata found for this piece. Actual processing/consumption: unknown.\n')
+            emit('No day-bound step metadata found for this piece. Actual processing/consumption: unknown.\n')
         seen = set()
         for path in selected:
             body = metadata(path, 'Control receipt (not computation proof)')
@@ -219,7 +285,7 @@ def main():
                             saved_plan_sha256=saved_plan_sha256,
                             matches_saved_plan=matches_plan))
             if not matches_plan:
-                print('Step plan identity missing/different; its artifact paths are not followed.\n')
+                emit('Step plan identity missing/different; its artifact paths are not followed.\n')
                 continue
             if foreign_owner(body):
                 json_block(dict(disposition='foreign-owner-reference-only; artifact paths not opened on this host',
@@ -241,10 +307,19 @@ def main():
             else:
                 json_block(dict(existing_artifact=str(path), exists=path.is_file(),
                                 disposition='review original on owning lane; not read or transformed'))
-        print('Review: reconcile named inputs with recorded processing/channels/results; inspect full '
-              'referenced outputs and every listed exclusion/refusal. Unexpected behavior is an operator '
-              'finding; this reporter invents no interpretation. If the actual consumer evidence is absent, '
-              'record that gap before claiming this piece consumed its inputs.\n')
+        emit('Review: reconcile named inputs with recorded processing/channels/results; inspect full '
+             'referenced outputs and every listed exclusion/refusal. Unexpected behavior is an operator '
+             'finding; this reporter invents no interpretation. If the actual consumer evidence is absent, '
+             'record that gap before claiming this piece consumed its inputs.\n')
+        if inspection_dir is not None:
+            written.append((piece, title, write_piece(inspection_dir, piece, preamble + '\n' + '\n'.join(_OUT))))
+    if inspection_dir is not None:
+        index = [header[0], header[1], 'One file per canonical piece, written from this reporter\'s output after the '
+                 'one-day test. Temporary operator review only: not knowledge, not scientific evidence, not a '
+                 'completion gate; the brain and the teachers never read these files.\n']
+        index += ['- [%s](%s): %s' % (piece, path.name, title) for piece, title, path in written]
+        write_piece(inspection_dir, 'index', '\n'.join(index) + '\n')
+        print('inspection written: %s (%d pieces + index.md)' % (inspection_dir, len(written)))
 
 
 if __name__ == '__main__':
