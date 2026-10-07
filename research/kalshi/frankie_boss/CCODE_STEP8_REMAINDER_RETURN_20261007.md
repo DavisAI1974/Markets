@@ -1291,3 +1291,17 @@ Checks: AST parse and `git diff --check` clean. SOURCE-BUILT / RUNTIME-UNVERIFIE
   carrying it) shows the per-point list by value.
 
 Checks: AST parse and `git diff --check` clean.
+
+### 20.2 Addendum: point 6 arrives through the key
+
+- **`frankie_box_experiment_teacher.external_points_summary`.** The branch that marked point 6 missing ("the section
+  key does not read its table") is removed. Point 6 is in `dipole_classroom_external.POINTS`, so it arrives through
+  `key['points']` like the other twelve: used or missing on its own series and tables.
+- **`frankie_box_experiment_day_reports` external section text.**
+  - The "Deferred (recorded reason) ... Deferred points" line is replaced. It now prints the key's `deferred.dropped`
+    ("Dropped by Greg (not one of the 13): squeeze_watch.calendar_front_next_spread_chg_3d (reason)").
+  - An empty deferred-points list prints nothing.
+  - An older key that still recorded deferred points is shown as "Deferred by an older key (recorded reason ...)",
+    as recorded.
+
+Checks: AST parse and `git diff --check` clean.

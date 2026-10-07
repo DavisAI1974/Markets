@@ -824,9 +824,17 @@ def external_classroom_lines(d, points):
     L += ['- Entry %s, day %s. Recorded reason: %s' % (rec(m.get('point')), rec(m.get('day')), rec(m.get('reason')))
           for m in unassigned]
     deferred = ext.get('deferred') or {}
-    L += ([''] if unassigned else []) + ['Deferred (recorded reason): %s. Deferred points: %s.' % (
-        rec(deferred.get('reason')), listing('%s (%s)' % (rec(q.get('point_id')), q.get('name'))
-                                              for q in deferred.get('points') or [])), '']
+    dropped = [q for q in deferred.get('dropped') or [] if isinstance(q, dict)]
+    old_points = [q for q in deferred.get('points') or [] if isinstance(q, dict)]   # an older key's deferral, as recorded
+    lines = []
+    if dropped:
+        lines.append('Dropped by Greg (not one of the 13): %s.' % listing(
+            '%s (%s)' % (q.get('name'), q.get('reason')) if q.get('reason') else str(q.get('name')) for q in dropped))
+    if old_points:
+        lines.append('Deferred by an older key (recorded reason: %s): %s.' % (
+            rec(deferred.get('reason')), listing('%s (%s)' % (rec(q.get('point_id')), q.get('name')) for q in old_points)))
+    if lines:
+        L += ([''] if unassigned else []) + lines + ['']
     if grade is None:
         L += ['The external grade: not recorded (external-post-grade.json: %s).' % d.why_absent('external-post-grade.json'), '']
     else:
