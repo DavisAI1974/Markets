@@ -1,3 +1,10 @@
+# Claude session drop-in — Step 8 agent review, 2026-10-07
+
+Branch `ccr-d2f8f826-iefeah-frankie` carries the aws-mcp server (read-only), the agent-skills plugin and
+nine agents in `.claude/agents/`. Greg: the agents go over Step 8 next. READ FIRST
+`research/kalshi/frankie_boss/CLAUDE_HANDOFF_20261007_AGENTS_STEP8_REVIEW.md` (drop-in box at its top).
+Review target: CCode `ccode/teacher-tasks-20261006b` (`8f242402` at close). Source-only; HOLD.
+
 # Latest assignment — CCode Step 8A, 2026-10-07 source only
 
 Greg asked Codex to fix the sixth-return findings directly; those fixes and CCode `31832bf2`

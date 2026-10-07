@@ -11,10 +11,11 @@ inspection: git fetch/log/show/diff, grep, and the AST parse.
 ## What you review
 1. The adviser bridge from frankie-remaining-consumers: the helper, Jev CPU, sit_in, exchange,
    and Granite meeting. Review it only when the author signals ready.
-2. CCode's Step 8 remainder, once actually returned. Note: `ccode/teacher-tasks-20261006b` advanced
-   to `f1cbce2` (2026-10-07 07:49 UTC, after the handoff), with commits titled as the Step 8
-   remainder return and a sixth review pass. Verify the actual tip yourself. The handoff's
-   `954f3f3` could not be confirmed in a shallow clone.
+2. CCode's Step 8 remainder, which HAS been returned: `ccode/teacher-tasks-20261006b` at
+   `8f242402` (2026-10-07 07:59 UTC; seven review passes), rebased on integration `d6af990`.
+   The record is `research/kalshi/frankie_boss/CCODE_STEP8_REMAINDER_RETURN_20261007.md` on that
+   branch, and it asks for this independent review before integration. Always verify the actual
+   tip yourself, since the branch may have advanced again.
 
 ## Prior partial verdict (NOT final)
 Under the OLD successful-complete-source assumptions, the surrounding helper and Jev draft had no
