@@ -912,6 +912,41 @@ class ColumnRef:
         return values[index]
 
 
+class ContextLabelRef(ColumnRef):
+    """A frames context channel moved to the cells (non_market_reason 'context_only'): the merged JSON label list the
+    in-memory path builds (number if present else label, json.dumps), materialized on use. check() makes the one pass
+    that refuses an overlap at build time, as the in-memory loop does."""
+
+    def __init__(self, number, label, name, rows):
+        self.number, self.label, self.name, self.rows = number, label, name, rows
+
+    def __len__(self):
+        return self.rows
+
+    def values(self):
+        store = getattr(self.number, 'store', None) or getattr(self.label, 'store', None)
+        key = (getattr(store, 'directory', None), 'context', self.name)
+        hit = _COLUMN_CACHE.get(key)
+        if hit is not None:
+            return hit
+        numbers = _values_of(self.number)
+        labels = _values_of(self.label) if self.label is not None else [None] * len(numbers)
+        merged = []
+        for number, label in zip(numbers, labels):
+            if number is not None and label is not None:
+                raise ValueError('numeric and text context channels overlap: ' + self.name)
+            value = number if number is not None else label
+            merged.append(None if value is None else json.dumps(value, ensure_ascii=False, allow_nan=False))
+        _COLUMN_CACHE[key] = merged
+        while len(_COLUMN_CACHE) > COLUMN_CACHE_ENTRIES:
+            _COLUMN_CACHE.pop(next(iter(_COLUMN_CACHE)))
+        return merged
+
+    def check(self):
+        self.values()
+        return self
+
+
 class FrameColumns:
     """The {channel: values} mapping columns() returns for one kind, read from a FrameColumnStore: the same keys in the
     same order; a value is materialized only when asked for (get / [] / pop / items, one at a time)."""
@@ -1887,7 +1922,13 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
         for name in list(mapping):
             reason = non_market_reason(name)
             if reason == 'context_only':
-                if channel_kind == 'series':
+                if channel_kind == 'series' and (isinstance(mapping[name], ColumnRef)
+                                                 or isinstance(text_cols.get(name), ColumnRef)):
+                    # an on-disk frames channel: the same merged labels, checked in one pass here, read on use
+                    text_cols[name] = ContextLabelRef(mapping[name], text_cols.get(name), name, len(mapping[name])).check()
+                    context_channels.append(name)
+                    del mapping[name]
+                elif channel_kind == 'series':
                     old = text_cols.get(name, [None] * len(mapping[name]))
                     merged = []
                     for number, label in zip(mapping[name], old):
