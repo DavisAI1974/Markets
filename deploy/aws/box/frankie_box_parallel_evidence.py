@@ -47,20 +47,47 @@ def pin_threads(pid, cpu):
         raise ValueError('native CPU affinity readback differs')
 
 
+def _booked_cpus():
+    """The booked CPUs (16 or 32, Greg 2026-10-07: each ROOT pass gets the whole booking while it runs), never the host
+    count: FRANKIE_LANE_CPUS or FRANKIE_BOOKED_CPUS (frankie_box_cores cpu_list) intersected with this process's
+    affinity; the affinity alone when neither names a CPU of it."""
+    affinity = set(os.sched_getaffinity(0))
+    for name in ('FRANKIE_LANE_CPUS', 'FRANKIE_BOOKED_CPUS'):
+        listed = set()
+        try:
+            for part in (os.environ.get(name) or '').split(','):
+                if part.strip():
+                    low, _, high = part.strip().partition('-')
+                    listed.update(range(int(low), int(high or low) + 1))
+        except ValueError:
+            continue
+        if listed & affinity:
+            return sorted(listed & affinity)
+    return sorted(affinity)
+
+
 def core_plan():
-    seen, cores = set(), []
-    for cpu in sorted(os.sched_getaffinity(0)):
+    """One role per booked CPU after the first (the system/coordinator CPU). The six native/evidence roles take one
+    CPU on each of six distinct physical cores, as before; every other booked CPU, the second hardware thread of a core
+    included, is a full-book worker. A 16-CPU lane on 16 cores gives 15 roles (9 book) as before; a 32-CPU booking gives
+    31 (25 book). The book results do not depend on the worker count: ParallelBook partitions levels by price modulo
+    the count and assembles them with the pinned original arithmetic (frankie_box_native_auxiliary)."""
+    seen, cores, siblings = set(), [], []
+    for cpu in _booked_cpus():
         base = Path('/sys/devices/system/cpu') / ('cpu' + str(cpu)) / 'topology'
         key = (int((base / 'physical_package_id').read_text()),
                int((base / 'core_id').read_text()))
         if key not in seen:
             seen.add(key)
             cores.append(dict(cpu=cpu, package=key[0], core=key[1]))
+        else:
+            siblings.append(dict(cpu=cpu, package=key[0], core=key[1]))
     if len(cores) < 8:
         raise ValueError('six native/evidence cores, a book core and a system core required')
     roles = ['ROOT', 'queue', 'replenishment', 'census', 'encoder-1', 'encoder-2']
-    roles += ['book-' + str(index + 1) for index in range(len(cores)-7)]
-    return dict(zip(roles, cores[1:]))
+    places = cores[1:] + siblings
+    roles += ['book-' + str(index + 1) for index in range(len(places) - len(roles))]
+    return dict(zip(roles, places))
 
 
 class _Capture:

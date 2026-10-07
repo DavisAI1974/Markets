@@ -58,6 +58,35 @@ class _Rows:
             db.close()
 
 
+PARALLEL_SPOOL_MIN_BYTES = 64 << 20
+
+
+def _parallel_spool(rows):
+    """A closed legacy RowSpool big enough for the parallel table writer. By type name: the ROOT loads
+    frankie_box_bedrock by path (boss_session._box_module), so its RowSpool class is not the imported module's."""
+    return (type(rows).__name__ == 'RowSpool' and hasattr(rows, 'path') and getattr(rows, '_writer', None) is not None
+            and rows._writer.closed and len(rows) > 0
+            and Path(rows.path).stat().st_size >= PARALLEL_SPOOL_MIN_BYTES)
+
+
+def lane_cpus():
+    """The booked lane's CPUs (16 or 32), never the host count: FRANKIE_LANE_CPUS or FRANKIE_BOOKED_CPUS (cores'
+    cpu_list) intersected with this process's affinity; the affinity alone when neither names a CPU of it."""
+    affinity = set(os.sched_getaffinity(0))
+    for name in ('FRANKIE_LANE_CPUS', 'FRANKIE_BOOKED_CPUS'):
+        listed = set()
+        try:
+            for part in (os.environ.get(name) or '').split(','):
+                if part.strip():
+                    low, _, high = part.strip().partition('-')
+                    listed.update(range(int(low), int(high or low) + 1))
+        except ValueError:
+            continue
+        if listed & affinity:
+            return sorted(listed & affinity)
+    return sorted(affinity)
+
+
 def per_second_rows(first, buys, sells, roll, window=20):
     """Same cumulative floating-point arithmetic as the compatibility renderer."""
     if len(buys) != len(sells) or len(buys) != len(roll) or window < 1:
@@ -278,6 +307,8 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
 
     def table(name, rows, context=None):
         ordinal = len(stages)
+        if context is None and _parallel_spool(rows) and len(helper_cpus) > 1:
+            return parallel_table(ordinal, name, rows)
         root = scratch/('table-%04d' % ordinal)
         path = scratch/('table-%04d.txt' % ordinal)
         key = legacy_key(name, context, code, legacy_inputs)
@@ -297,6 +328,51 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         stages.append(dict(name=name, rows=proof['rows'], path=path, digest=digest))
         _save_table(scratch, ordinal, key, stages[-1], context=_witness(root/'table.sqlite'))
         return original
+
+    # A big legacy table read from a closed RowSpool (the frame sections make legacy_book_imbalance hundreds of GB on a
+    # full day) is written by the parallel table writer on the booked lane's CPUs, as the bedrock tables are: the same
+    # bytes and inverse proof as TS.write_table over the same rows (frankie_box_digest_parallel), each helper reading its
+    # own line range of the spool (never held whole). Every field and row is kept; nothing is reduced. Its save point and
+    # its cross-table context (the columns a later table derives from it, DG.CROSS_DERIVED) are kept as the serial
+    # table's are, so the structures table that follows reads the same context values.
+    import frankie_box_digest_parallel as PP
+    lane = lane_cpus()
+    helper_cpus = lane[1:] if len(lane) > 1 else lane
+
+    def parallel_table(ordinal, name, rows):
+        root = scratch/('table-%04d' % ordinal)
+        path = scratch/('table-%04d.txt' % ordinal)
+        key = legacy_key(name, None, code, legacy_inputs)
+        saved = _saved_table(scratch, ordinal, key, context=True) if reusing['legacy'] else None
+        if saved is not None:
+            stages.append(dict(name=saved['name'], rows=saved['rows'], path=Path(saved['path']), digest=saved['digest']))
+            return _Rows(Path(saved['path']).parent/('table-%04d' % ordinal)/'table.sqlite')
+        reusing['legacy'] = False
+        specs = PP.spool_specs(rows.path, len(helper_cpus))
+        reserve = disk_reserve if disk_reserve is not None else int(os.environ.get('FRANKIE_DIGEST_DISK_RESERVE', PP.DISK_RESERVE))
+        proof = PP.write_table_parallel(path, name, specs, scratch/('table-%04d.parallel' % ordinal), helper_cpus,
+                                        reserve=reserve)
+        if proof['rows'] != len(rows):
+            raise ValueError('parallel legacy table rows differ from the spool count')
+        digest = _witness(path)
+        if TS._identity(path) != proof['verified_identity']:
+            raise ValueError('proved table changed before its byte witness')
+        # the context database in the serial writer's form (table 'source', TS._dump rows) holding the columns later
+        # tables derive from this one; empty when none does
+        columns = sorted({col for (_, _), (source, col) in DG.CROSS_DERIVED.items() if source == name})
+        root.mkdir(parents=True, exist_ok=False)
+        db = sqlite3.connect(root/'table.sqlite')
+        try:
+            db.execute('CREATE TABLE source (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL)')
+            if columns:
+                for i, row in enumerate(PP.cross_context(specs, columns, helper_cpus)):
+                    db.execute('INSERT INTO source VALUES (?, ?)', (i, TS._dump(row)))
+            db.commit()
+        finally:
+            db.close()
+        stages.append(dict(name=name, rows=proof['rows'], path=path, digest=digest))
+        _save_table(scratch, ordinal, key, stages[-1], context=_witness(root/'table.sqlite'))
+        return _Rows(root/'table.sqlite')
 
     # The bedrock sources (layer preparation and member merge, on the pinned helpers) are independent of the five
     # sequential legacy tables: build them on a thread while the legacy tables are written, then join.
@@ -332,7 +408,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
                 # Greg 2026-09-28: no table runs for hours on one core). Finished tables are reused from their save points.
                 # every CPU but 0-1 (Greg, 2026-09-28: pin workers to CPUs so none sit idle; was 2-15 only). The bytes do
                 # not depend on the count: the parts come from the table's specs, not from the CPU list.
-                cpus = [c for c in sorted(os.sched_getaffinity(0)) if c >= 2] or sorted(os.sched_getaffinity(0))
+                cpus = helper_cpus             # the booked lane after its coordinator CPU (16 or 32 booked)
                 layers_identity = layers_identity_of(bedrock_entries)
                 for name, rows in sources.tables.items():
                     spec = bedrock_spec(rows, sources.root)

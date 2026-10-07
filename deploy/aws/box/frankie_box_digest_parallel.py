@@ -81,6 +81,17 @@ def _source_rows(spec):
     if spec['kind'] == 'inline':          # rows given in the spec itself (comparisons against the serial writer)
         yield from spec['rows']
         return
+    if spec['kind'] == 'spool':           # a legacy RowSpool file: its line range, decoded as RowSpool.__iter__ decodes
+        from research.kalshi.frankie_boss.c15_journal import unpack
+        position = spec['start']
+        with open(spec['path'], 'rb') as handle:
+            handle.seek(position)
+            for line in handle:
+                if position >= spec['end']:
+                    break
+                position += len(line)
+                yield unpack(json.loads(line.decode('utf-8')))
+        return
     db = _readonly(spec['database'])
     try:
         if spec['kind'] == 'members':
@@ -670,6 +681,47 @@ def pool_map_verify(jobs, cpus):
 
 
 # ---- splitting a table into parts ----------------------------------------------------------------------------------
+
+def spool_specs(path, parts):
+    """Ordered part specs over a closed legacy RowSpool file (frankie_box_bedrock.RowSpool: one packed row per line):
+    contiguous line-aligned byte ranges, about size/parts bytes each, read straight from the file by each helper (the
+    rows are never held whole). The parts are positions, not a different row set: their rows in order are the spool's
+    rows, and the parallel writer's bytes do not depend on where the parts are cut."""
+    path = Path(path)
+    size = path.stat().st_size
+    cuts = [0]
+    with path.open('rb') as handle:
+        for k in range(1, max(1, parts)):
+            nominal = size * k // parts
+            if nominal <= cuts[-1]:
+                continue
+            handle.seek(nominal - 1)
+            handle.readline()                  # just after the newline at or after byte nominal - 1: a line start
+            cut = handle.tell()
+            if cuts[-1] < cut < size:
+                cuts.append(cut)
+    cuts.append(size)
+    return [dict(kind='spool', path=str(path), start=a, end=b) for a, b in zip(cuts, cuts[1:]) if b > a] or \
+        [dict(kind='spool', path=str(path), start=0, end=0)]
+
+
+def _cross_rows(job):
+    """The named flat columns of each row of one spool part, in order: the cross-table context a later table reads."""
+    spec, columns = job
+    out = []
+    for row in _source_rows(spec):
+        flat = DG._flatten(dict(row))
+        out.append({c: flat[c] for c in columns if c in flat})
+    return out
+
+
+def cross_context(specs, columns, cpus):
+    """Every row's cross-derived source columns (DG.CROSS_DERIVED), in table order, decoded on the pinned helpers: what
+    TS.write_table's _snapshot reads of a context table, so a later table's cross check sees the same values."""
+    with _pool(cpus) as pool:
+        for part in pool.map(_cross_rows, [(spec, list(columns)) for spec in specs]):
+            yield from part
+
 
 def split_specs(spec, parts):
     """spec as _bedrock_table_job receives it: {kind: members|rows, database, query, parameters, excluded}."""
