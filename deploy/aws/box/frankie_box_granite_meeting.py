@@ -42,8 +42,6 @@ import socket
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.request
 from pathlib import Path
 
 BOX = Path(__file__).resolve().parent
@@ -360,7 +358,8 @@ class LlamaServer:
         digest = sha256_bytes(data)
         if self.evidence_dir is None:
             return dict(label=label, bytes=len(data), sha256=digest, path=None, attempt=self.attempt)
-        path = self.evidence_dir / ('%s-%s.bin' % (digest, re.sub(r'[^A-Za-z0-9._-]', '_', label)[:100]))
+        # per-attempt directory (6R2-F): an unfinished attempt's evidence stays attributable without a final record
+        path = self.evidence_dir / self.attempt / ('%s-%s.bin' % (digest, re.sub(r'[^A-Za-z0-9._-]', '_', label)[:100]))
         if path.is_file():
             if sha256_bytes(path.read_bytes()) != digest:
                 raise ValueError('evidence file %s does not carry the bytes its name declares' % path)
@@ -378,16 +377,17 @@ class LlamaServer:
             self._stderr_handle.flush()
         return dict(witness_file(self.stderr_path), attempt=self.attempt)
 
-    def attempt_record(self, status, **facts):
-        """The immutable record of THIS attempt (6R2): <evidence_dir>/attempts/<attempt>.json, write-once; a complete
-        meeting lists every attempt's record so no earlier witness is lost when a later attempt finishes the meeting."""
+    def attempt_record(self, phase, status, **facts):
+        """The immutable record of THIS attempt (6R2-F): <evidence_dir>/attempts/<attempt>-<phase>.json, write-once;
+        phase 'start' is written BEFORE any process or model work (so a killed attempt is still discoverable) and
+        phase 'end' carries the terminal result when one exists. A complete meeting lists every attempt, finished or not."""
         from frankie_box_durable import write_bytes
-        doc = dict(schema='FRANKIE_GRANITE_MEETING_ATTEMPT_V1', attempt=self.attempt, status=status,
+        doc = dict(schema='FRANKIE_GRANITE_MEETING_ATTEMPT_V1', attempt=self.attempt, phase=phase, status=status,
                    server_stderr=self.stderr_witness(), evidence=list(self.evidence), calls_this_attempt=self.calls,
-                   tokens_this_attempt=dict(self.tokens), **facts)
+                   tokens_this_attempt=dict(self.tokens), at=time.time(), **facts)
         if self.evidence_dir is None:
             return doc
-        path = self.evidence_dir / 'attempts' / (self.attempt + '.json')
+        path = self.evidence_dir / 'attempts' / ('%s-%s.json' % (self.attempt, phase))
         data = (json.dumps(doc, indent=1, sort_keys=True, default=str) + '\n').encode()
         if path.is_file():
             if path.read_bytes() != data:
@@ -398,13 +398,38 @@ class LlamaServer:
 
     @staticmethod
     def retained_attempts(evidence_dir):
-        """Every attempt record under <evidence_dir>/attempts/, oldest first, each with its own file witness."""
-        directory = Path(evidence_dir) / 'attempts'
-        out = []
+        """Every attempt under <evidence_dir>/attempts/, oldest first, finished or not (6R2-F): its start record, its
+        end record when one exists, its stderr file witness by name and the evidence files of its own directory (by
+        content hash), so an attempt that died without a terminal record is carried forward with what it left."""
+        root = Path(evidence_dir)
+        directory = root / 'attempts'
+        attempts = {}
         if directory.is_dir():
             for path in sorted(directory.glob('*.json')):
                 raw = path.read_bytes()
-                out.append(dict(json.loads(raw), path=str(path), file_sha256=sha256_bytes(raw), file_bytes=len(raw)))
+                try:
+                    doc = json.loads(raw)
+                except ValueError:
+                    continue
+                entry = attempts.setdefault(str(doc.get('attempt')), dict(attempt=str(doc.get('attempt')), start=None, end=None))
+                entry[doc.get('phase') if doc.get('phase') in ('start', 'end') else 'end'] = dict(
+                    doc, path=str(path), file_sha256=sha256_bytes(raw), file_bytes=len(raw))
+        out = []
+        for attempt in sorted(attempts):
+            entry = attempts[attempt]
+            stderr = root / ('llama-server-stderr-%s.log' % attempt)
+            files = []
+            if (root / attempt).is_dir():
+                for path in sorted((root / attempt).iterdir()):
+                    if path.is_file():
+                        files.append(dict(path=str(path), bytes=path.stat().st_size, sha256_by_name=path.name.split('-', 1)[0]))
+            entry.update(finished=entry['end'] is not None,
+                         server_stderr=witness_file(stderr) if stderr.is_file() else None,
+                         evidence_files=files,
+                         rule=('finished: its end record is the terminal result' if entry['end'] is not None else
+                               'UNFINISHED: no terminal record exists; what it left (stderr, evidence, progress files marked '
+                               'pending) is carried as it is; nothing is fabricated or re-sent on its behalf'))
+            out.append(entry)
         return out
 
     def start(self, wait_seconds=600):
@@ -424,10 +449,12 @@ class LlamaServer:
             stderr = self._stderr_handle
         else:
             stderr = subprocess.DEVNULL
+        self.attempt_record('start', 'starting', command=command, port=self.port, threads=self.threads)   # before any process work (6R2-F)
         try:
             self.process = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=stderr)
-        except Exception:
+        except Exception as error:
             self._close_stderr()
+            self.attempt_record('end', 'failed_to_spawn', error=repr(error))
             raise
         try:
             wait = self._bounded(wait_seconds)
@@ -685,6 +712,7 @@ def _close_item(item, state, outcome, open_item):
                 coordinator_turns=state['coordinator'], code_seat_answers=state['answers'], notes=state['notes'],
                 requested_tests=state['requests'], open_items=open_items, refused=state['refused'], outcome=outcome,
                 token_counts=state['token_counts'], rounds_completed=state['rounds_completed'],
+                pending_call_intent=state.get('pending_call'),
                 rule='four categories kept apart; agreement among voices is never confirmation (R17)')
 
 
@@ -981,7 +1009,7 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
     except (MeetingCallFailed, MeetingBudgetExpired) as error:
         # finding 3: the process is already released by start(); the partial state (inputs, binding) stays; the receipt
         # says what happened with the whole stderr witnessed; no meeting.json (nothing was discussed)
-        attempt = server.attempt_record('runtime_failed', error=str(error), seconds=round(time.time() - started, 1))
+        attempt = server.attempt_record('end', 'runtime_failed', error=str(error), seconds=round(time.time() - started, 1))
         receipt = dict(schema=RECEIPT_SCHEMA, day=exchange.get('day'), status='runtime_failed',
                        refused_to_run=['the coordinator runtime did not start: %s' % error],
                        evidence=dict(server_stderr=server.stderr_witness(), retained=server.evidence, attempt=attempt,
@@ -1013,10 +1041,17 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
             if result.get('reused_from_progress'):
                 reused.append(item['item_id'])
             items.append(result)
+    except BaseException as error:
+        # 6R2-F: an attempt that dies in discussion leaves a terminal record naming the failure; its stderr, evidence
+        # and progress files (pending calls marked) stay as they are for the next attempt to carry forward
+        server.stop()
+        server.attempt_record('end', 'failed_in_discussion', error=repr(error), items_completed_this_attempt=len(items),
+                              seconds=round(time.time() - started, 1))
+        raise
     finally:
         server.stop()
-    attempt = server.attempt_record('complete', seconds=round(time.time() - started, 1), items_discussed_this_attempt=len(items) - len(reused),
-                                    items_reused=list(reused))
+    attempt = server.attempt_record('end', 'complete', seconds=round(time.time() - started, 1),
+                                    items_discussed_this_attempt=len(items) - len(reused), items_reused=list(reused))
     attempts = LlamaServer.retained_attempts(evidence_dir)
     record = dict(base, status='complete', items=items, not_discussed=not_discussed,
                   runtime=dict(binary=witness_file(binary), model=witness_file(model), parameters=params,
@@ -1027,8 +1062,10 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                                server_stderr=server.stderr_witness(), evidence=server.evidence,
                                attempt=attempt['attempt'],
                                attempts=attempts,
-                               attempts_rule='every attempt of this meeting with its own stderr and evidence witnesses, oldest first; '
-                                             'nothing an earlier attempt pinned is renamed, appended to or dropped'),
+                               unfinished_attempts=[a['attempt'] for a in attempts if not a['finished']],
+                               attempts_rule='every attempt of this meeting, finished or not, with its own stderr and evidence '
+                                             'witnesses, oldest first; nothing an earlier attempt pinned is renamed, appended to '
+                                             'or dropped; an unfinished attempt is carried with what it left'),
                   binding=dict(path=str(binding_path), sha256=binding_sha),
                   progress=dict(directory=str(out_dir / 'progress'), reused_items=reused),
                   # 6R3: counts of the COMPLETE meeting are derived from the retained rounds (every completed chat across all
@@ -1036,10 +1073,13 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                   model_calls=sum(len(i.get('token_counts') or []) for i in items),
                   calls=dict(completed_chat_calls_all_attempts=sum(len(i.get('token_counts') or []) for i in items),
                              this_attempt=server.calls, attempt=server.attempt,
-                             calls_sent_without_recorded_reply=sum(1 for i in items for o in i.get('open_items') or []
-                                                                   if o.get('kind') == 'interrupted_call'),
+                             pre_send_intents_unresolved=sum(1 for i in items if i.get('pending_call_intent')),
+                             interrupted_call_items=sum(1 for i in items for o in i.get('open_items') or []
+                                                        if o.get('kind') == 'interrupted_call'),
                              rule='model_calls counts completed coordinator calls of the whole meeting (all attempts, from the '
-                                  'retained rounds); this_attempt is this process alone'),
+                                  'retained rounds); this_attempt is this process alone; pre_send_intents_unresolved counts items '
+                                  'whose durable pre-send intent never got a recorded reply (any attempt, any closing kind): an '
+                                  'intent recorded before sending is not proof the request reached the server'),
                   tokens=dict(server.tokens, scope='this attempt only; per-round prompt_tokens_used across attempts are in items[].token_counts'),
                   seconds=round(time.time() - started, 1),
                   counts=dict(items=len(items), coordinator_turns=sum(len(i['coordinator_turns']) for i in items),
