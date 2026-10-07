@@ -61,6 +61,10 @@ NEW SESSION -- Frankie (Greg, 2026-10-07 night). THE AGENTS ARE THE ONLY WAY WOR
   possible: the lane's CPUs/workers AND the AWS efficiency and data-processing tools/skills. Nothing ran that way yet
   (the agents reported no AWS skill used on the calcs). This is fixed BEFORE the one-day E2E and before more day-file
   work. Work stopped at 89d67e2 (integration = work branch); day-file agent stopped mid weather download (reads only).
+- AFTER THE ONE-DAY RUN (Greg, planned): add a SECOND BIG BOX and run 2 days on each box (one day per 16-CPU lane),
+  for more CPUs and workers. This supersedes 'all days on the main box' for the N-day run. To build then: a second
+  r7i.8xlarge-class box (clone of the main box: Ssm profile, pinned Granite install, PySR), and the lane/controller
+  routing across two hosts (the existing worker-box route is the starting point). Not started; no box created.
 - REPORTS (Greg):
   - One-day run: a handful of STATUS reports, one per workflow piece: what it received, what it did, what it produced,
     so Greg can tweak or give a thumbs up. Human-only; never knowledge.
