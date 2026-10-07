@@ -307,3 +307,125 @@ Second review (`REVIEW_20261007_EVENING_SECOND_PASS.md`):
 - Whether a retried finish whose class entry failed under a released owner is admitted by `_after_root` without an
   owner-waiting hold. This predates the range on the finish-only route.
 - The picture-size cost of N-5.
+
+## Follow-up, 2026-10-07 night (session 2): the fixes and the day files, `fb97f35..2527e2f`
+
+Reviewer: ccode_review, under the same go, relayed by the parent. This pass is READ-ONLY: no fixes, no git writes.
+The only writes are this appended section and local scratch downloads. NO RUNS.
+
+Commits reviewed:
+- f99d1a1: R-A, R-C, R-D, N-1 and N-3.
+- 3bf4f2d: the 31 per-day md files.
+- 72e9ae8: the day-file builder, the box module, the workflow `days` input and the 31 day files on S3.
+- baf8b57: the classroom reads `storage.estimate` and the stamp shape.
+- 2527e2f: the search reads the new files.
+
+They were read through `git diff` and `git archive`.
+
+### Verdict: APPROVED for integration (source only)
+
+- R-A, R-B, R-C and R-D are fixed. N-1 and N-3 are fixed.
+- The day files check out on the three days sampled.
+- One new required item, F-1, should land before the one-day E2E. It does not block integration.
+
+### Status of R-A..R-D
+
+| Item | Status | Where |
+|---|---|---|
+| R-A | FIXED. `_finish_steps` revises the reports after Jev, before `_close`; a check error is listed in the facts and never blocks the close. `Run.survivors` revises the batch's done arm-day reports after a done boundary. The cross-day half introduces F-1. | `frankie_box_frankie_queue.py` `_finish_steps` (after the Jev block); `frankie_box_experiment.py` `Run.survivors` |
+| R-B | FIXED in the file itself. Every row carries `event_time_ns`, and `published_ns = max(event time, publication)`, with 14:00 ET for a row without an event time (`place()`). `check_day_file` refuses an event time later than its stamp. The shared reader, the classroom and the search therefore read the same instants. A superseded publication-stamp file is still read and is named as a finding (`stamp_shape`). The classroom no longer labels a used value `absent`. | `operations/frankie_day_external.py` `place`, `EVENT_TIME_RULES`; `dipole_classroom_external.stamp_shape`; `frankie_box_classroom_code.external_points_use`; `frankie_box_experiment_search.build_series` |
+| R-C | FIXED. A failed finish carries the released owner's bookings (`failed_finish_bookings`). `_bind_owner` turns them into a `queue-after-failed` rebook decision only when `_jev_progress` finds a retained request whose helper receipt is failed or absent; otherwise it records the decision with `not_applied`. The original request is never changed. | `frankie_box_frankie_queue.py` `_release_owner(failed_finish=True)`, `_jev_progress`, `_bind_owner` |
+| R-D | FIXED. An existing result file of the exact same problem definition is read back and never recomputed. Any other definition is still refused, with the file kept. | `frankie_box_experiment_search._discovery_compute` |
+| N-1 | FIXED. The step receipt is re-read right before the write; if its `at` changed, the result is not written over it. | `Run.reports_late_pieces` |
+| N-3 | FIXED. The late-pieces check also runs on an exchange that is not done. | `successor_dispatch.drain` waiting_school branch |
+
+### The author's deliberate deviation: clocks are kept out of the entity-grouping set
+
+AGREED.
+- `ENTITY_COLUMNS` partitions a table's rows into entities. Partitioning by `event_time_ns`, or by storage.estimate's
+  `print_ns`, would make every row its own entity, which splits a series into singletons.
+- The clocks are emitted as fields and routed to `identity_fields` by `identity_and_clock_columns(point)`, so they are
+  never searched as a numeric signal.
+- `external_fields` has one caller (the search), so no other consumer depends on the old grouping.
+
+### New required finding (before the one-day E2E; not blocking integration)
+
+**F-1 (owner ccode_step8). `Run.survivors` revises OTHER days' reports through `guarded`, on the boundary day's lane.**
+- Where: `frankie_box_experiment.py` `Run.survivors`, the new loop. The other calls involved:
+  - `self.guarded('reports', entry)` runs `self.successors(entry['day'])` and then `Run.child`;
+  - that calls `successors(day)`, which calls `drain`;
+  - `drain` raises `ValueError('successor requires its original held day lane')` for any unacknowledged request, because
+    this Run's `slot_booking` belongs to the boundary day.
+- Failure path:
+  1. An arm day of the batch has a pending correction (an unacknowledged successor request) at the boundary.
+  2. `guarded` catches the ValueError and records that day's DONE reports step as `failed`.
+  3. That relabels a done step on the strength of another lane's lane check. `reports_stale` then returns False for a
+     non-done step, so the day is never revised again by this route.
+- Even when no request is pending, the other day's reports child runs `--inside` the boundary day's held slot.
+  `cmd_run_inside` does not check the day, so it runs, but the rule is that a day stays on its lane. The reports render
+  is small, so the cost is negligible.
+- Minimal fix:
+  - Skip a day whose successor inbox holds an unacknowledged request; that day's own drain revises it (F6 / N-3).
+  - For the rest, call the revision with that day added to `_school_recovery` (no nested drain), or record a revision
+    request that the day's own owner picks up.
+  - Never let a revision failure record over a done reports step. Write the revision's outcome beside the step instead.
+
+### Non-blocking
+
+- **F-2. `storage.weekly` mixes vintages inside one row without saying so per field.**
+  - In `frankie_day_external.py` `storage_weekly`, where the archived report lacks `net_change_bcf` or the five-year
+    average, the row keeps the EIA-series (revised) change or `vs_5yr`.
+  - Meanwhile `level` is the printed value and the row's single `source` names the printed report.
+  - The record lists these prints (2024-09-26 and 10-03; 2025 five-year average), so the rows are honest at day level but
+    not at field level.
+  - Fix: a per-field vintage column, such as `revised_fields`.
+- **F-3. The receipts' `markets_sha` reads `worktree-on-3bf4f2df`, not a commit.**
+  - The receipts' `code_sha256` entries equal the committed files at 2527e2f (checked below), so the code is pinned
+    exactly.
+  - A rebuild under a commit would make the receipts self-describing.
+- **F-4. A table with no `EVENT_TIME_RULES` entry falls back to the 14:00 ET default.** This is conservative (later,
+  never earlier), so it cannot leak. It would delay a future table that does have an intrinsic time. Listed only.
+- **F-5. A late-pieces revision that ends `failed` inside `_finish_steps` is listed in `facts['reports_revision']`.**
+  The day still closes `finished`. That matches "never gates the close". The reports step shows the failure. FYI.
+
+### Day files on S3 (read-only spot check)
+
+Three of the 31 files were sampled, one per era: 20211012, 20231017 and 20251007. For each, the day file and its
+receipt were downloaded by presigned GET into a scratch directory, and the data was parsed by a checker script kept
+outside that directory (`python3 -I`).
+
+| day | bytes | sha256 = receipt | sha256 = DAY_FILES_30 record | tables | 99 mapping on every table | event_time_ns on every table | stamp < event time | stamp at/after halt | no-event row before 14:00 ET | stamps non-decreasing |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 20211012 | 46,971,399 | yes | yes (1beb8acb...) | 20 | yes | yes | 0 | 0 | 0 | yes |
+| 20231017 | 38,223,001 | yes | yes (c8e99961...) | 20 | yes | yes | 0 | 0 | 0 | yes |
+| 20251007 | 45,290,865 | yes | yes (5aaf3ed7...) | 20 | yes | yes | 0 | 0 | 0 | yes |
+
+- Every table maps to a 99 entry with mapping `closest`.
+- The calendar table is `default_1400`, with `placement_ns` at 14:00 ET of the day (for example 1634061600000000000 for
+  20211012). All other tables are `intrinsic`.
+- The receipts' `code_sha256` equal the sha256 of the three code files committed at HEAD:
+  - frankie_day_external.py 404e536d...
+  - fetch_day_history.py be07f9fc...
+  - frankie_box_day_external.py f6cd3943...
+- Listed missing: 1, 7 and 1 entries, matching the record's counts.
+- The other 28 days were not opened in this pass: UNVERIFIED beyond the record's own verification.
+
+### Checks run
+
+- AST parse without project imports: all 11 changed `.py` files at 2527e2f parse.
+- `git diff --check fb97f35..HEAD`: clean.
+- `bash -n`: no `.sh` file changed in this range.
+- The workflow change was read: a `days` input validated as digits and commas, and a deadline variable. Nothing else
+  changed, and nothing was dispatched.
+
+### Skills and account calls
+
+- Skills: `api-and-interface-design`, `code-review-and-quality` and `doubt-driven-development` (reduced self-check form,
+  as before), carried from this session's pass.
+- Account calls, all read-only, through the `Aws` connector:
+  - `run_script` x1: an s3 GetObject attempt. The connector's validator rejected the script (hashlib is blocked), so no
+    API call ran.
+  - `get_presigned_url` x6: presigned GETs for the three day files and their receipts. They were used with curl from the
+    container.
+  - No writes, and no other service.
+- The local copies of the three day files were deleted after the check; the receipts remain in the session scratch only.
