@@ -894,3 +894,95 @@ Checks:
 - `bash -n`: ok on the changed `.sh` files.
 - `git diff --check`: clean.
 - Nothing executed.
+
+## Seventh follow-up, 2026-10-07 night (session 2): `18cbc5a..8b5338d7` (code; docs skimmed)
+
+Reviewer: ccode_review, under the same go. This pass is READ-ONLY: no fixes, no git writes, no account calls, NO RUNS.
+The only write is this section.
+
+### Verdict: APPROVED for integration (source only)
+
+- No change in this range drops or shrinks data, or alters a value, an order or a byte identity.
+- The a2 launch path needs one explicit operator step before it can run on 32 CPUs (L-1). Without it the day visibly
+  waits for CPUs; it never fails silently. That step is not a code defect.
+
+### Required before the a2 launch (operator, ccode_step8 / the run agent)
+
+**L-1. a1's retained day-run booking (CPUs 0-15) must be released explicitly before a2 can book 32 CPUs.**
+- `ACTION=retire` keeps a1's bookings untouched, by design (they are "listed by their own owners").
+- The ledger hands a retained booking only to its owner, so a2's 32-CPU `day-run` booking (CPUs 0-31) waits on 0-15
+  indefinitely.
+- Fix: `frankie_box_cores.py release --booking day-run-20231018-day_slot_root-1791398468-1774` with the reason, after
+  retire. Confirm with `show` that no frankie process holds 0-15.
+
+### Checked and found sound
+
+**ad46ca06, the native input without bytes. This drops nothing.**
+- `NativeInputView` hands the pinned native adapter each record without its top-level bytes fields. That is the
+  projection every pre-experiment native run received; the adapter refuses bytes.
+- The INPUT spool, the legacy frames (`dbn_wire_bytes`) and the sealed journal keep every byte.
+- The view yields copies, so the spool is unchanged.
+- The stage identity names the rule, so an older native checkpoint is not reused across the change.
+
+**9e7a7d90, OrderedRowWriter. Byte-identical to the serial appends.**
+- Every spool append goes through one FIFO and is written strictly in program order, with RowSpool's own line, count
+  and first/last bookkeeping.
+- Frame values are pickled at the serial append point (shared references, dict order, tuples and bytes exact), so the
+  encoder packs the same object graph.
+- An encode failure writes the serial except clause's failure row at its own slot.
+- Every save point drains the queue first. No reader of the spools runs mid-pass: `len(prices)` and `prices[-1]` are
+  read only after `close()`.
+- The writers are flushed before the encoders fork. ParallelBook uses spawn, and is closed (the original InstrumentBook
+  methods restored) before the native pass and around the save pickle. An exception terminates the encoders.
+
+**910ef886, `write_layer_json`. Byte-identical to `write_json`.**
+- It uses the same encoder (indent=1, sort_keys, default=str, pure-Python iterencode).
+- Spool elements are re-indented by two spaces (JSON strings carry no raw newline) and joined with the element separator
+  at that level. The list brackets follow json's own form.
+- A unique placeholder is checked. The rows decoded are counted against `len(spool)`.
+- Small or empty spools take `write_json` itself.
+
+**Disjoint CPU halves (8b5338d7).**
+- The native child takes the first half of the booked list and sets `FRANKIE_LANE_CPUS` to it, so its core plan uses
+  only those CPUs.
+- The legacy parent takes the second half, split once and never shared: the replay, up to 7 ParallelBook workers and
+  the encoders.
+- The join restores the whole booking and its environment.
+- Values do not depend on worker counts: the ParallelBook partition is assembled with the pinned original arithmetic.
+
+**DIGEST_V10.**
+- The `X` cell carries bytes, bytearray and nested tuples exactly (hex, with type tags). Parsing is the exact inverse,
+  dict order is kept, and a non-string key is refused rather than coerced.
+- Empty mappings are now cells (`J{}`), never vanished columns. That closes a V9 loss.
+- V9 still reads: the staleness check accepts `READABLE_SCHEMAS`, and the corpus identity names the schema, so a V9
+  corpus is superseded and kept, never misread.
+- The parallel legacy table is checked against the spool count and its proved identity.
+
+**Timeline decode, search pools, DAY_CPUS=32.**
+- The timeline decode uses ordered ranges in a spawn pool. It yields in file order, and the whole-file sha256 is checked
+  at exhaustion as before.
+- DuckDB and Julia threads are capped to the lane.
+- DAY_CPUS=32: the plan key is saved only when it is 32, so older plans keep their fingerprint. The queue books the
+  plan's size. Worker counts are booked minus one. Jev, the successor drain and the classroom reader accept a 16- or
+  32-CPU booking. Queue retire and source-following never move a running or unknown day.
+
+### Non-blocking
+
+- **L-2.** Every new pinned pool (OrderedRowWriter, `write_layer_json`, the search, the timeline decode) hands out CPUs
+  from a queue in its initializer. If a worker dies (for example, an OOM kill), multiprocessing.Pool replaces it, the
+  replacement blocks forever on the empty CPU queue, and the lost task's `.get()` never returns.
+  - The stage stalls rather than failing. Its heartbeat keeps writing lines, so the stage reads `running`, not STALE,
+    while its units stop moving.
+  - Fix: add a timeout to `.get()`, or use a non-blocking `get_nowait` with an affinity fallback.
+  - Watch units per minute on the probe.
+- **L-3.** On an r7i.8xlarge, CPUs 0-15 and 16-31 are usually hyperthread siblings. The halves are disjoint logical CPUs
+  but share physical cores. That affects throughput only.
+- **L-4 (pre-existing, UNVERIFIED).** The E2E record measured about 525 KB of frames per record on 20231018, which
+  projects to about 400 GB of `frames.jsonl`, plus the layer JSON written at indent=1 and the digest tables. Measure on
+  the first minutes against the 1.4 TB free.
+
+Checks:
+- AST parse without imports: the 17 changed `.py` files at 8b5338d7 parse.
+- `bash -n`: ok on both changed `.sh` files.
+- `git diff --check` on the code: clean.
+- Nothing executed.
