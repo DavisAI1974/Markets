@@ -352,7 +352,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                     day_file=str(day_file), day_sha256=day_sha, previous=carried, previous_external=external_carried,
                     directive=_sha256(DIRECTIVE_PATH), rules=rules_witness,
                     producers={m.__name__: _sha256(m.__file__) for m in (F, S, R, EXT, V2, C, K, KX, LS, BR, KR)},
-                    learner_reading_producers=KR.producer_hashes())
+                    learner_reading_producers=KR.producer_hashes(),
+                    # the existing exhaustion/D computation this classroom now invokes, and its producers loader
+                    exhaustion_d_code={name: _sha256(BOX / name) for name in ('frankie_box_teach.py', 'frankie_box_bedrock.py')})
     if market is not None:
         identity['shared_market'] = market.identity
     # Inspection (Greg, 2026-10-07): every input this piece received, with path, bytes, sha256, the whole-day
@@ -388,6 +390,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         previous=carried, previous_external=external_carried,
         directive=dict(path=str(DIRECTIVE_PATH), sha256=identity['directive']), rules=rules_witness,
         producers=identity['producers'], learner_reading_producers=identity['learner_reading_producers'],
+        exhaustion_d_code=identity['exhaustion_d_code'],
         shared_market_identity=market.identity if market is not None else None,
         shared_market_external=shared_external,
         teacher_shared_market_arithmetic=teacher_receipt.get('shared_market_arithmetic'))
@@ -482,7 +485,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         return selected, school, listed
     knowledge_input, school, school_listed = phase('learner_inputs', learner_inputs)
     knowledge = knowledge_input['documents']
-    all99 = None
+    all99, exhaustion_d, consumers, market_reading = None, None, None, None
     # Ordinary new knowledge waits for the next boundary, but a checked correction
     # cannot leave a known error active in a saved classroom. Keep every retained
     # input/answer intact and require an explicit successor instead of repicking.
@@ -514,6 +517,17 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
             if market_reading['identity'] != market.identity:
                 raise ValueError('retained classroom market reading differs from its original source')
             shared_market = K.ClassroomMarketContext(calculations, day, market_reading)
+        # The 99 INGESTED, not only seen (Greg, 2026-10-07): the existing exhaustion/D classroom computation
+        # (frankie_box_teach.facts, code only, no model; built 2026-09-21, not invoked on the experiment path until now)
+        # runs on the ROOT's completed whole-day bedrock layers. A ROOT without a native pass, a missing input or a
+        # refusal leaves only these facts unavailable, named with the reason; the Dipole classroom and the day go on.
+        exhaustion_d = phase('exhaustion_d_facts', lambda: K.exhaustion_d_facts(calculations, brain))
+        if exhaustion_d.get('status') == 'computed':
+            facts_path = d / 'exhaustion-d-facts.json'
+            _dump(facts_path, exhaustion_d['facts'])
+            exhaustion_d = dict(exhaustion_d, file=dict(name=facts_path.name, path=str(facts_path),
+                                                        bytes=facts_path.stat().st_size, sha256=_sha256(facts_path)))
+        received['exhaustion_d'] = K._exhaustion_d_receipt(exhaustion_d)
         # These inputs and their checks are retained before any answer. A resume uses this exact selection,
         # never a later peer knowledge version or a newly completed school day partway through the classroom.
         knowledge_reproduction = phase('knowledge_reproduction', lambda: K.stage_knowledge_reproduction(visible, knowledge))
@@ -532,19 +546,31 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                            stage_knowledge_checks=len(knowledge_reproduction['checks']),
                            school_checks=len(reproduction['checks'])),
             carry=dict(previous=carried, previous_external=external_carried),
-            binding=received['binding'], mode=mode, dipole_components=len(names))
-        all99 = phase('all99_coverage', lambda: K.all99_coverage(market_reading, consumers, repo_root=ROOT))
+            binding=received['binding'], mode=mode, dipole_components=len(names),
+            # what the Dipole arithmetic takes per component today, and what the exhaustion/D facts took per entry
+            dipole_operands=K.dipole_operands(visible), exhaustion_d=exhaustion_d)
         outputs = {n: phase('component:' + n, lambda n=n: K.component_answer(
             visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)],
-            learner_context=learner_context, shared_market=shared_market)) for n in names}
+            learner_context=learner_context, shared_market=shared_market, exhaustion_d=exhaustion_d)) for n in names}
         summary = phase('summary', lambda: K.summary_answer(visible, outputs, learner_context=learner_context,
-                                                          shared_market=shared_market))
+                                                          shared_market=shared_market, exhaustion_d=exhaustion_d))
         ext_ledgers = phase('external_answers', lambda: KX.answers(
             ext_visible, dipole_visible=visible, learner_context=learner_context,
             independent_evidence=independent_external, knowledge=knowledge, school=school))
+        # The 13 external points (Greg via Frankie, 2026-10-07): per point how the classroom used it (computed / context /
+        # absent), the series that entered the external section arithmetic (each value at or after its reader stamp), the
+        # 99 entries the day file declares it feeds with the mapping basis (exact / closest) and the placement note, and
+        # any row whose reader stamp precedes its declared event time (an integrity finding, never a computed use).
+        consumers['external_points'] = phase('external_points', lambda: K.external_points_use(
+            ext_ledgers, day_file, day_sha, cutoff_ns=(ext_visible.get('pre_message') or {}).get('cutoff_ns')))
+        # the all-99 list after every answer: it accounts for what entered the Dipole, exhaustion/D and external arithmetic
+        all99 = phase('all99_coverage', lambda: K.all99_coverage(market_reading, consumers, repo_root=ROOT))
     except (K.ModeNotAnswerable, KX.ModeNotAnswerable) as error:
         pinned, listed = _pin_outputs(d, ['package.external.pre_message.json', 'package.external.binding.json']
                                       + [f'package.{part}.c15.json' for part in ('source', 'teacher_key', 'pre_message', 'binding')])
+        if all99 is None and consumers is not None:
+            # refused before the list: it still accounts for what was read (no external answers, said so in the list)
+            all99 = K.all99_coverage(market_reading, consumers, repo_root=ROOT)
         received['all99'] = all99
         refusal = dict(schema=SCHEMA, day=day, status='refused', mode=mode, reason=str(error),
                        listed='SOCRATIC/VERIFY require the learner-owned sealed-journal/day-file reader; '
@@ -552,7 +578,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                        teacher_rows=str(teacher_rows), shared_market_external=shared_external,
                        shared_market=shared_market.summary() if shared_market is not None else None,
                        shared_market_use=shared_market.use() if shared_market is not None else None,
-                       all99_coverage=all99,
+                       all99_coverage=all99, exhaustion_d=K._exhaustion_d_receipt(exhaustion_d),
                        external=dict(day_file=dict(path=str(day_file), sha256=day_sha, found=day_source)),
                        received=received, phase_timings=dict(timings), saved_phases=list(state['phases']),
                        outputs=dict(schema='FRANKIE_CLASSROOM_OUTPUTS_V1', directory=str(d), pinned=pinned, listed=listed,
@@ -573,7 +599,8 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                                         school=reproduction, stage_knowledge=knowledge_reproduction,
                                         learner_reading=learner_reading, model_calls=0,
                                         shared_market=shared_market.summary() if shared_market is not None else None,
-                                        shared_market_external=shared_external, all99_coverage=all99))
+                                        shared_market_external=shared_external, all99_coverage=all99,
+                                        exhaustion_d=K._exhaustion_d_receipt(exhaustion_d)))
     _dump(d / 'learner-knowledge.json', dict(day=day, stage='classroom', documents=knowledge,
                                            versions=knowledge_input['versions'], listed=knowledge_input['listed'],
                                            school_documents=school, school_listed=school_listed,
@@ -697,7 +724,9 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     produced_names = (['code-answers.json', 'learner-knowledge.json', 'ledgers.json', 'classroom.md',
                        'external-code-answers.json', 'external-novel-findings.json', 'transcript.md',
                        'classroom-external.md', 'history.json', 'external-history.json',
-                       'package.external.pre_message.json', 'package.external.binding.json']
+                       'package.external.pre_message.json', 'package.external.binding.json',
+                       # the whole exhaustion/D facts (listed, not pinned, on a day they were not computed)
+                       'exhaustion-d-facts.json']
                       + [f'package.{part}.c15.json' for part in ('source', 'teacher_key', 'pre_message', 'binding')]
                       + [f'{name}.json' for name in files])
     outputs_pinned, outputs_listed = _pin_outputs(d, produced_names)
@@ -723,6 +752,10 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
                   # All-99 (Greg, 2026-10-07): every registry entry's route and this day's disposition (also under
                   # received.all99, which the reporter projects whole, and in code-answers.json)
                   all99_coverage=all99,
+                  # The exhaustion/D facts (frankie_box_teach.facts on the completed bedrock rows): status, inputs, the
+                  # per-entry attribution and the pinned whole facts file (exhaustion-d-facts.json); the facts themselves
+                  # stay in that file. Also under received.exhaustion_d.
+                  exhaustion_d=K._exhaustion_d_receipt(exhaustion_d),
                   # The core teacher's own listing of which instants its pinned equation computed on and which it
                   # listed absent (revised core; None on a d6af990 teacher receipt). Carried, not reinterpreted.
                   teacher_shared_market_arithmetic=teacher_receipt.get('shared_market_arithmetic'),

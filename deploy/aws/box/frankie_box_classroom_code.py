@@ -26,6 +26,12 @@ import re
 import sys
 from pathlib import Path
 
+# The one 99-entry registry (Greg, 2026-10-07): the entry list comes from frankie_box_all99_coverage; this piece keeps
+# its own routes, consumers and dispositions below. The box directory holds every frankie_box_* module.
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import frankie_box_all99_coverage as ALL99  # noqa: E402
+
 SCHEMA = 'FRANKIE_BOX_CLASSROOM_CODE_V1'
 # V3 = V2 with R17 amended for Granite's active bounded post-class facilitator role (Greg, 2026-10-06)
 RULES_PATH = Path(__file__).resolve().parents[3] / 'research/kalshi/frankie_boss/knowledge/CLASSROOM_RULES_V3.json'
@@ -364,7 +370,11 @@ class ClassroomMarketContext:
         # identity and the chained head hash check are unchanged.
         from frankie_box_filehash import witness as measured
         journal = (self.retained.get('identity') or {}).get('journal') or {}
-        witness = measured(journal['path']) if journal.get('path') else None
+        witness = None
+        if journal.get('path'):
+            # bound to the measured file (review N1): the core accepts a caller's witness only for its pinned file
+            stat = Path(journal['path']).stat()
+            witness = dict(measured(journal['path']), path=journal['path'], dev=stat.st_dev, ino=stat.st_ino)
         reader = SharedMarketTimeline(self.calculations, day=self.day, workers=15, input_witness=witness)
         if reader.identity != self.retained['identity']:
             raise ValueError('classroom full market reader changed from its retained selection')
@@ -548,10 +558,9 @@ class _Arrivals:
 # component answers through the untrimmed anchor pictures and the full reader), or to its own consumer in this piece
 # (controls, knowledge, carry), or named sealed / disabled / output. Roles are not interchangeable numeric layers.
 ALL99_SCHEMA = 'FRANKIE_CLASSROOM_ALL99_COVERAGE_V1'
-ALL99_REGISTRY = dict(path='research/kalshi/frankie_boss/audits/CROSSWALK_SUNDAY_CYCLE0_FEED_33746436209_20260916.json',
-                      bytes=112545, sha256='ece9c624d9969166e81876e7705d0c47054e46b6aa3e5485803a218648184de9',
-                      registry_sha256='239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1',
-                      pinned_in='research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json')
+ALL99_REGISTRY = dict(path=ALL99.CROSSWALK_PATH, bytes=ALL99.CROSSWALK_BYTES, sha256=ALL99.CROSSWALK_SHA256,
+                      registry_sha256=ALL99.REGISTRY_SHA256, pinned_in=ALL99.PINNED_IN,
+                      entries_from='frankie_box_all99_coverage.REGISTRY (the one registry)')
 ALL99_ROLES = {'canonical_raw_dbn_mbo': 'raw',
                'order_lifecycle': 'calculation_clock', 'full_book_fifo_queue': 'calculation_clock',
                'microstructure_mechanics': 'calculation_clock', 'legacy_observable_crosswalk': 'calculation_clock',
@@ -564,9 +573,10 @@ ALL99_ROLES = {'canonical_raw_dbn_mbo': 'raw',
                'provisional_shadow': 'disabled_shadow', 'append_only_outputs': 'append_only_output'}
 ALL99_DISPOSITIONS = ('arrived', 'arrived_no_event', 'thin', 'absent', 'completed_only', 'stamped', 'knowledge_consumer',
                       'control_of_orchestrator', 'not_read_by_this_piece', 'retired', 'sealed', 'disabled',
-                      'output_analogue', 'output_not_produced_here')
-_NATIVE_ABSENT = 'the native member/lifecycle ledgers are the only producer of this layer; they are absent from this ROOT ' \
-                 '(experiment ROOT runs with bedrock off: a disabled producer is never activated silently)'
+                      'output_analogue', 'output_not_produced_here', 'unrouted')
+_NATIVE_ABSENT = 'the native member/lifecycle ledgers are the only producer of this layer and they are absent from this ROOT ' \
+                 '(the ROOT runs the native pass by default since 2026-10-07; absent here means an explicit recorded override ' \
+                 'or a native pass that did not complete; the core\'s own recorded reason is named where it exists)'
 # layer_id -> (group_id, route). route kinds:
 #   picture: via = picture element; layer = core layer that carries it (None = the INPUT envelope itself); probe = an
 #            arrivals counter; thin_via/thin_layer = a partial carrier used when the named layer is absent
@@ -755,9 +765,26 @@ def all99_coverage(shared, consumers, *, repo_root):
             core_layers[name] = dict(status='absent', reason=recorded.get('reason') or (
                 _NATIVE_ABSENT if name.startswith('native.') else 'the core listed this layer absent (no pinned spool / no day file)'))
     arrivals = (shared or {}).get('arrivals') if shared else None
-    entries, counts, requests = [], {}, []
-    for layer_id, (group, route) in ALL99_ROUTES.items():
+    entries, counts, requests, route_integrity = [], {}, [], []
+    # The entry list is the one registry's (frankie_box_all99_coverage.REGISTRY, crosswalk order); the routes are this
+    # piece's own. A registry entry without a route here, or a route whose group differs, is an integrity finding:
+    # listed (the entry is kept as 'unrouted'), never filled in.
+    for layer_id, group, _policy in ALL99.REGISTRY:
         role = ALL99_ROLES[group]
+        routed = ALL99_ROUTES.get(layer_id)
+        if routed is None:
+            route_integrity.append(dict(kind='registry_entry_without_classroom_route', entry=layer_id))
+            entry = dict(layer=layer_id, group=group, role=role, route=None, disposition='unrouted',
+                         reason='no classroom route for this registry entry (integrity finding; listed, not filled in)',
+                         registry_status=(file_layers.get(layer_id) or {}).get('status'),
+                         registry_policy=(file_layers.get(layer_id) or {}).get('policy'))
+            counts['unrouted'] = counts.get('unrouted', 0) + 1
+            entries.append(entry)
+            continue
+        route_group, route = routed
+        if route_group != group:
+            route_integrity.append(dict(kind='classroom_route_group_differs', entry=layer_id, route_group=route_group,
+                                        registry_group=group))
         entry = dict(layer=layer_id, group=group, role=role, route=route['via'],
                      registry_status=(file_layers.get(layer_id) or {}).get('status'),
                      registry_policy=(file_layers.get(layer_id) or {}).get('policy'))
@@ -772,6 +799,17 @@ def all99_coverage(shared, consumers, *, repo_root):
                 # any price rows the opening state carried in; judged before the price-spool presence check
                 opening = (shared.get('opening_book') or {})
                 rows = _probe(arrivals, 'price_origins.open_group_before_this_source')
+                # the core's own opening element (report.opening_state, also on every picture) when this reading carries
+                # it; the ingestion-receipt field read above stays the fallback for a reading saved before it existed
+                core_opening = (shared.get('report') or {}).get('opening_state')
+                if isinstance(core_opening, dict):
+                    entry['opening_state'] = {k: core_opening.get(k) for k in ('status', 'source', 'initial_last_observed_state')}
+                    if core_opening.get('status') in ('seeded', 'warmed_from_partition'):
+                        opening = dict(opening, status='seeded', core_status=core_opening.get('status'))
+                    elif core_opening.get('status') is not None:
+                        opening = dict(opening, status='absent', core_status=core_opening.get('status'),
+                                       listed=((core_opening.get('initial_last_observed_state') or {}).get('reason')
+                                               or opening.get('listed')))
                 if opening.get('status') == 'seeded' or (rows or 0) > 0:
                     entry.update(disposition='arrived', count=rows, opening_book=opening)
                 elif opening.get('status') == 'absent':
@@ -833,34 +871,642 @@ def all99_coverage(shared, consumers, *, repo_root):
             raise ValueError('unknown all-99 disposition ' + entry['disposition'])
         counts[entry['disposition']] = counts.get(entry['disposition'], 0) + 1
         entries.append(entry)
+    # Use (Greg, 2026-10-07: the classroom INGESTS, and "arrived" never overstates): per entry, whether it entered an
+    # operand of a named computation of this piece ('computed', with each computation named), is in the pictures / the
+    # received inputs only ('context'), or did not reach this piece ('absent', with the reason). Additive keys.
+    use_counts = {}
+    for entry in entries:
+        entry.update(_classroom_use(entry, consumers))
+        use_counts[entry['use']] = use_counts.get(entry['use'], 0) + 1
     by_role = {}
     for entry in entries:
         by_role.setdefault(entry['role'], {})
         by_role[entry['role']][entry['disposition']] = by_role[entry['role']].get(entry['disposition'], 0) + 1
     # Entries the core does not yield (requests to the core author, workflow_reports); never filled in here.
     requests.append(dict(file='deploy/aws/box/frankie_box_market_timeline.py', function='SharedMarketTimeline.__init__ / iter_pictures',
-                         entry='canonical_predecessor_bootstrap_objects',
+                         entry='canonical_predecessor_bootstrap_objects', status='built in the core (2026-10-07): report.opening_state and '
+                         'picture.opening_state with initial_last_observed_state; the classroom route reads report.opening_state first '
+                         '(2026-10-07 evening) and the ingestion receipt only for a reading saved before it existed',
                          what='yield the opening adapter state (opening-book pin, seeded / absent) as an identity element and the initial '
                               'last_observed_state disposition, so the predecessor bootstrap is a picture element rather than an ingestion-receipt field read here'))
     requests.append(dict(file='deploy/aws/box/frankie_box_market_timeline.py', function='SharedMarketTimeline.iter_pictures',
-                         entry='legacy_native_signed_flow / legacy_per_second_roll20',
+                         entry='legacy_native_signed_flow / legacy_per_second_roll20', status='named completed_only in the core report '
+                         '(report.all99_coverage, report.layer_entries.completed); blocked on provenance, not on the reader',
                          what='the per-second aggregates are yielded as completed_sources metadata only; their values could enter the '
                               'picture once an exact contributing-cursor provenance exists (blocked on provenance, not on the reader)'))
     native_absent = [e['layer'] for e in entries if e.get('disposition') in ('absent', 'thin') and
-                     (ALL99_ROUTES[e['layer']][1].get('layer') or '').startswith('native.')]
+                     (ALL99_ROUTES.get(e['layer'], (None, {}))[1].get('layer') or '').startswith('native.')]
     unrouted = sorted(set(file_layers) - set(ALL99_ROUTES))
     unlisted = sorted(set(ALL99_ROUTES) - set(file_layers)) if file_layers else None
+    registry_names = {layer for layer, _, _ in ALL99.REGISTRY}
+    route_integrity += [dict(kind='classroom_route_not_in_registry', entry=name)
+                        for name in sorted(set(ALL99_ROUTES) - registry_names)]
+    # The shared per-piece field (FRANKIE_ALL99_COVERAGE_V1), built and validated by the one registry module from the
+    # same entries: no name, route or disposition changes; the classroom's own list above stays as it was.
+    shared_field = ALL99.field(
+        'classroom', ((shared or {}).get('identity') or {}).get('day'),
+        [dict(entry=e['layer'], group=e['group'], disposition=e['disposition'],
+              reason=e.get('reason') or e.get('note') or e.get('route'),
+              consumer=e.get('consumer'), route=e.get('route'), piece_role=e['role'],
+              count=e.get('count'), use=e['use'], use_reason=e['use_reason'], computations=e['computations'],
+              **({'canonical': e['shared_word']} if e.get('shared_word') else {})) for e in entries],
+        code_root=repo_root, stage='classroom',
+        basis='the classroom shared-picture read (arrivals over the exhausted source) and its own consumers')
     return dict(schema=ALL99_SCHEMA, registry=registry, routed=len(entries), counts=counts, by_role=by_role,
                 core_layers=core_layers, entries=entries, requests=requests,
                 native_layers_absent_or_thin=native_absent,
                 unrouted_in_file=unrouted, routed_not_in_file=unlisted,
-                decision_open=('%d layers are carried only by the native member/lifecycle ledgers, which the experiment ROOT does not '
-                               'produce (bedrock off). Their instants stay in the picture, thinner; producing them is a plan/policy '
-                               'decision for Greg, never a silent activation here.' % len(native_absent)),
+                route_integrity=route_integrity, shared_field=shared_field,
+                use_counts=use_counts, use_vocabulary=dict(USE_VOCABULARY),
+                computations=dict(CLASSROOM_COMPUTATIONS),
+                native_only_ingestion=_native_only_ingestion(entries),
+                exhaustion_d=_exhaustion_d_receipt(consumers.get('exhaustion_d')),
+                external_points=consumers.get('external_points') or dict(
+                    status='not_computed', reason='the external answers were not reached before this list was built'),
+                decision_open=('%d layers carried only by the native member/lifecycle ledgers are absent or thin on this ROOT '
+                               '(each entry names the core\'s recorded reason; the native pass runs by default, so absence means an '
+                               'override or an incomplete native pass). Their instants stay in the picture, thinner.' % len(native_absent)
+                               if native_absent else None),
                 rule='every entry listed with a disposition; missing coverage thins the day and never rejects it; roles are not '
                      'interchangeable numeric layers; sealed answers stay sealed; nothing is fabricated to make an entry arrive',
                 limit='a counted arrival is evidence yielded to the pictures beside the component answers (and to the full reader), '
-                      'not proof that a Dipole equation used it; the Dipole arithmetic uses the teacher rows only')
+                      'not proof that a Dipole equation used it. `use` says what entered arithmetic: the Dipole arithmetic uses the '
+                      'teacher rows only (an entry whose teacher form is a Dipole component is computed in that partial form); the '
+                      'exhaustion/D facts (frankie_box_teach.facts) use the completed whole-day bedrock rows named per entry. A '
+                      'computed entry is not a claim that every field of it entered a target equation')
+
+
+# ------------------------------------------- what entered arithmetic: computed / context / absent (Greg, 2026-10-07)
+# "Frankie's classroom INGESTS the 99, not just sees them." Every entry of the all-99 list carries `use`: it entered an
+# operand of a NAMED existing computation of this piece, it reached the pictures / received inputs only, or it did not
+# reach this piece (with the reason). No computation below is new: the Dipole arithmetic is this module's own, the
+# exhaustion/D facts are frankie_box_teach.facts (the box-side exhaustion/D classroom computation, built 2026-09-21 and
+# not invoked on the experiment path until now), the learner checks are this module's reproductions.
+USE_VOCABULARY = {
+    'computed': 'entered an operand of a named computation of this piece (each computation, its operand and its form named: '
+                'own_rows = the entry\'s own rows; teacher_form = the partial form the teacher computes for the entry; '
+                'section_counts = the traversal\'s count of the entry\'s section rows, not the rows)',
+    'context': 'reached this piece (market pictures, the full reader, received inputs, rules, cutoff); no computation of this '
+               'piece reads it as an operand',
+    'absent': 'did not reach this piece on this day, with the reason (missing coverage, no event, withheld by role, retired, '
+              'disabled, an output, not an input of this piece); the day and the instant stay',
+}
+CLASSROOM_COMPUTATIONS = {
+    'dipole_arithmetic': '_calculate_evidence / component_answer / summary_answer: per component state counts, terminal state, '
+                         'first-to-last PRESENT direction, extremes and step counts; per pair Pearson, co-movement counts and '
+                         'direction relation (dipole_classroom\'s own functions); operands: the teacher rows (the learner-owned '
+                         'reading in SOCRATIC/VERIFY) of the Dipole components',
+    'exhaustion_d_facts': 'frankie_box_teach.facts (code only, no model): the lineage D-depth histogram and statuses (4.13), the '
+                          'ancestry gaps per event (4.14), the causal-clock order check per group, the family descriptor and '
+                          'action-string counts and the candidate-lane verdict; operands: the ROOT\'s completed whole-day bedrock '
+                          'layer files named by derive.json and derive.json\'s bedrock block',
+    'learner_check': 'stage_knowledge_reproduction / school_reproduction: each lawful prior finding checked against today\'s '
+                     'Dipole pair review; operands: the selected knowledge documents / completed school files and today\'s pairs',
+}
+_CHAIN = ('unresolved_age_groups_log', 'extension_count_log', 'step_ratio_log', 'pullback_ticks_last_log',
+          'step_duration_groups_log', 'pullback_ticks_prev_log')
+# entry -> (Dipole components carrying its computed form (None = every component of the roster), form, where that mapping is
+# recorded). Every mapping is an existing table's, never a new one: the teacher's TEACHER_FORMS and the search's PLANE_COVERAGE.
+TEACHER_FORM_COMPONENTS = {
+    'derived_roll20_and_dipole_state': (None, 'own_rows', 'the Dipole state rows themselves (every component, every cursor); '
+                                        'the per-second roll20 aggregate stays completed-only'),
+    'depletion_and_replenishment': (('far_replenish_log1p_64', 'far_replenish_log1p_1024', 'far_absorption_share_64',
+                                     'far_absorption_share_1024'), 'teacher_form', 'frankie_box_experiment_teacher.TEACHER_FORMS'),
+    'resilience_and_recovery': (('far_identity_survival_64', 'far_identity_survival_1024', 'far_size_retention_64',
+                                 'far_size_retention_1024'), 'teacher_form', 'frankie_box_experiment_teacher.TEACHER_FORMS'),
+    'derived_unresolved_age_chain_trajectory': (_CHAIN, 'teacher_form', 'frankie_box_experiment_teacher.TEACHER_FORMS'),
+    'prebirth_unresolved_chain_extension_state': (('extension_count_log', 'step_ratio_log', 'pullback_ticks_last_log',
+                                                   'pullback_ticks_prev_log'), 'teacher_form',
+                                                  'frankie_box_experiment_teacher.TEACHER_FORMS (pullback_ticks_*)'),
+    'order_lifecycle_fills': (('far_absorption_share_64', 'far_absorption_share_1024'), 'teacher_form',
+                              'frankie_box_experiment_search.PLANE_COVERAGE (the teacher\'s far_absorption_share_64/1024)'),
+    'order_lifecycle_modifies': (('far_priority_loss_rate_64', 'far_priority_loss_rate_1024'), 'teacher_form',
+                                 'frankie_box_experiment_search.PLANE_COVERAGE (the teacher\'s far_priority_loss_rate_64/1024)'),
+    'queue_concentration': (('far_size_hhi',), 'teacher_form', 'frankie_box_experiment_search.PLANE_COVERAGE (teacher far_size_hhi)'),
+    'missingness_and_integrity_flags': (None, 'teacher_form', 'frankie_box_experiment_search.PLANE_COVERAGE (the Dipole rows\' '
+                                        'states counted per column): the states and their reasons only, not the values'),
+}
+# The 18 entries carried only by the native member/lifecycle ledgers (frankie_box_boss_session.NATIVE_ONLY_ENTRIES).
+NATIVE_ONLY_ENTRIES = (
+    'order_lifecycle_fills', 'order_lifecycle_clears', 'contract_session_roll_state', 'complete_state_reset_bootstrap_receipts',
+    'depletion_and_replenishment', 'resilience_and_recovery', 'price_and_book_path', 'derived_ancestry_gaps',
+    'derived_unresolved_age_chain_trajectory', 'derived_price_flow_book_paths', 'derived_v4_mechanics_fifo_features',
+    'prebirth_predecessor_at_risk_state', 'prebirth_unresolved_chain_extension_state', 'prebirth_ancestry_successor_opportunity',
+    'prebirth_stopped_chain_false_context_controls', 'prebirth_negative_opportunity_cases',
+    'clock_prospective_discovery_confirmation', 'clock_model_evaluation')
+NATIVE_SEARCHED = ('frankie_box_bedrock.py (run, project, project_sections, SECTION_FILES, crosswalk_records); the pin\'s bedrock '
+                   'and projection layers (knowledge/CYCLE_CALCULATION_PINS.json, frankie_principal_adapter projection_layers); '
+                   'work/native-layer-records.json and frankie_box_boss_session NATIVE_ONLY_ENTRIES / NATIVE_ONLY_LIMITS; '
+                   'frankie_box_teach.py (facts and its six streams); frankie_box_experiment_teacher.TEACHER_FORMS; '
+                   'frankie_box_experiment_search.PLANE_COVERAGE; frankie_box_experiment_native.py; frankie_box_joined_teacher.py; '
+                   'frankie_box_compare.py; frankie_box_digest_render.py; dipole_classroom.py ROLE_DEFINITIONS; this module '
+                   '(Dipole arithmetic, learner checks) and frankie_box_classroom_reader.py')
+# Where no computation of THIS piece takes the native rows of an entry: the closest existing consumer, for Greg to decide.
+# Never wired here (that would be a new equation in the classroom).
+NATIVE_ONLY_CLOSEST = {
+    'order_lifecycle_fills': 'the native fill_disposition rows (a_memory_member_first_recalculation.fill_disposition) are read by no '
+                             'classroom computation (their teacher form far_absorption_share_64/1024 is). Closest existing '
+                             'consumers of the rows: frankie_box_experiment_search (structures.fill_disposition.* series and cells, '
+                             'the ROOT legacy form) and frankie_box_joined_teacher couplings over every numeric leaf of the layer',
+    'order_lifecycle_clears': 'native_full_capture_adapter._observe_before rows (capture_observations, integrity_delta, '
+                              'book_effect): no classroom computation. Closest: SharedMarketTimeline\'s reset invalidation '
+                              '(invalidated_state reason=reset, counted in this piece\'s arrivals) and the joined-teacher couplings',
+    'contract_session_roll_state': 'ExchangeSessionRule rows (session_phase, continuity_segment): no classroom computation. Closest: '
+                                   'SharedMarketTimeline\'s source_scope_changed invalidation (on the INPUT envelope\'s session_id / '
+                                   'source_member_index, not this layer) and frankie_box_joined_teacher CELL_NAMES (session_phase, '
+                                   'continuity_segment as coupling cells)',
+    'complete_state_reset_bootstrap_receipts': 'native_full_capture_adapter._enrich rows (integrity_delta, capture_observations, '
+                                               'snapshot_bootstrap_only): no classroom computation. Closest: the timeline\'s reset '
+                                               'invalidation and opening_state, and the joined-teacher couplings',
+    'price_and_book_path': 'native_book_regime.observe_snapshot rows (book_full / book_regime best bid/ask, mid, depth): no '
+                           'classroom computation. Closest: bedrock_section_4_2 (the book-regime companion, a completed product per '
+                           'frankie_box_experiment_native.evidence_contract) and the search\'s prices/frames axis',
+    'derived_price_flow_book_paths': 'book_regime and flow_substrate rows: no classroom computation. Closest: '
+                                     'frankie_box_joined_teacher (flow_substrate is one of its dipole series) and the search',
+    'derived_v4_mechanics_fifo_features': 'native_full_capture_adapter._window_extras rows (activity_since.*, fifo_queue): no '
+                                          'classroom computation. Closest: the search (its plane table names the V4 frame '
+                                          'book/activity sections as related inputs) and the joined-teacher couplings',
+}
+EXHAUSTION_D_SCHEMA = 'FRANKIE_CLASSROOM_EXHAUSTION_D_FACTS_V1'
+# What frankie_box_teach.facts takes from each lifecycle section and each member layer (its own code: _job_sections reads
+# lineage and recurrence; _job_clock / _job_evaluated / _job_families / _job_actions read these layers by name; the
+# candidate lane reads bedrock.sections_fed). A registry entry is attributed by the sections the pinned crosswalk declares for it.
+FACTS_SECTIONS = {
+    'lineage': ('lineage', 'D-depth histogram and lineage status counts (terminated / censored / open) over the lineage rows (4.13)'),
+    'recurrence': ('ancestry_gaps', 'ancestry gaps per event, every gap named, largest first (4.14)'),
+    'candidate': ('candidate_lane', 'the candidate-lane verdict: candidate unit events the traversal fed (bedrock.sections_fed), '
+                                    'against the warmup and the minimum; a count, not the rows'),
+    'episode': ('candidate_lane', 'the candidate-lane verdict: episode rows the traversal fed to 4.10-4.12 '
+                                  '(bedrock.sections_fed); a count, not the rows'),
+}
+FACTS_LAYERS = {
+    'clock_event_known_by': 'the causal-clock order check per group: clocks.first_lawful_availability_ns as event known-by',
+    'clock_feature_availability': 'the causal-clock order check per group: clocks.first_lawful_availability_ns as feature availability',
+    'clock_model_evaluation': 'the causal-clock order check per group: clocks.decision_ts_recv_ns as model evaluation (a null '
+                              'value reads unknown, never a violation); decision_basis counted',
+    'derived_d_family_geometry': 'family descriptor counts: structure.candidate_family_id and structure.side_string per group',
+    'legacy_structure_observables': 'action-string counts over the legacy structure groups',
+}
+
+
+def dipole_operands(visible):
+    """Per Dipole component of today's lawful evidence: how many observations (and PRESENT ones) the Dipole arithmetic takes."""
+    evidence = _evidence(visible)
+    return {c['name']: dict(observations=len(c['observations']),
+                            present=sum(1 for p in c['observations'] if p['state'] == 'PRESENT'),
+                            states={s: int((c.get('state_counts') or {}).get(s, 0)) for s in STATES})
+            for c in evidence['components']}
+
+
+def _sections_of(work, derive_measured, producers, layers):
+    """{registry entry: lifecycle sections the pinned crosswalk declares}, from work/native-layer-records.json when it is
+    bound to the same derive.json bytes, else from the pinned producers' crosswalk; ({}, reason) when neither is readable."""
+    path = Path(work) / 'native-layer-records.json'
+    if path.is_file():
+        try:
+            doc = json.loads(path.read_bytes())
+            bound = {k: (doc.get('derive') or {}).get(k) for k in ('bytes', 'sha256')}
+            if doc.get('status') == 'built' and bound == {k: derive_measured[k] for k in ('bytes', 'sha256')}:
+                return ({r['entry']: list((r.get('crosswalk') or {}).get('lifecycle_sections') or [])
+                         for r in doc.get('records') or [] if isinstance(r, dict) and r.get('entry')},
+                        {r['entry']: r.get('native_limit') for r in doc.get('records') or []
+                         if isinstance(r, dict) and r.get('native_limit')},
+                        'work/native-layer-records.json (bound to this derive.json)')
+        except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+            listed = 'native-layer-records.json unreadable (%s: %s); ' % (type(error).__name__, error)
+        else:
+            listed = 'native-layer-records.json not bound to this derive.json (status %s); ' % doc.get('status')
+    else:
+        listed = 'native-layer-records.json absent; '
+    try:
+        import frankie_box_bedrock as B
+        records = B.crosswalk_records(producers, layers)
+        return ({name: list(r.get('lifecycle_sections') or []) for name, r in records.items()}, {},
+                listed + 'the pinned producers\' crosswalk (native_layer_crosswalk.LAYER_PRODUCERS)')
+    except Exception as error:  # noqa: BLE001 - attribution basis only; recorded, never inferred
+        return {}, {}, listed + 'pinned crosswalk unreadable (%s: %s): no section attribution' % (type(error).__name__, error)
+
+
+def _facts_summary(f):
+    A, C, F = f['ancestry_gaps'], f['clocks'], f['families']
+    return dict(layers={name: dict(status=v.get('status'), count=v.get('count')) for name, v in f['layers'].items()},
+                traversal=f.get('traversal'),
+                lineage={k: f['lineage'].get(k) for k in ('nodes', 'terminated', 'censored', 'open', 'depth_histogram',
+                                                          'status_counts')},
+                ancestry_gaps=dict(events=A['events'], gaps=A['count'], smallest_ns=A['smallest_ns'], largest_ns=A['largest_ns'],
+                                   largest=(A['largest'][0] if A['largest'] else None)),
+                clocks=dict(groups=C['groups'], ordered=C['ordered'], unknown=C['unknown'], violations=len(C['violations']),
+                            derived_clocks=C['derived_clocks'], decision_basis=C['decision_basis'], rule=C['rule']),
+                families=dict(distinct_family_ids=F['distinct_family_ids'], side_strings=F['side_strings'],
+                              action_string_kinds=len(F['action_strings'])),
+                candidate_lane=f['candidate_lane'],
+                frozen=[{k: x.get(k) for k in ('layer', 'name', 'source', 'bytes', 'sha256')} for x in f.get('frozen') or []],
+                frozen_missing=f.get('frozen_missing') or [], frozen_integrity=f.get('frozen_integrity') or [])
+
+
+def _facts_attribution(f, sections_of, limits):
+    """Per registry entry: which operand of frankie_box_teach.facts it supplied and how many rows. An entry whose operand
+    held no row on this day is 'absent' with the reason (a measurement), never 'computed'."""
+    lane = f['candidate_lane']
+    rows_of = dict(lineage=f['lineage']['nodes'], recurrence=f['ancestry_gaps']['events'],
+                   candidate=lane.get('candidate_unit_events'), episode=lane.get('episode_rows'))
+    operands = {}
+    for name, sections in sections_of.items():
+        for section in sections:
+            if section in FACTS_SECTIONS:
+                fact, text = FACTS_SECTIONS[section]
+                operands.setdefault(name, []).append(dict(section=section, fact=fact, operand=text, rows=rows_of[section]))
+    for name, text in FACTS_LAYERS.items():
+        if name == 'legacy_structure_observables':
+            rows = sum(int(a.get('count') or 0) for a in f['families']['action_strings'])
+        else:
+            record = f['layers'].get(name) or {}
+            rows = record.get('count') if record.get('status') == 'derived' else 0
+        operands.setdefault(name, []).append(dict(layer_file=name, operand=text, rows=rows))
+    out = {}
+    for name, items in operands.items():
+        record = f['layers'].get(name) or {}
+        held = sum(int(o['rows'] or 0) for o in items)
+        # the candidate-lane operands are the traversal's fed counts of the section, not the rows themselves
+        rows_read = any(int(o['rows'] or 0) > 0 and o.get('section') not in ('candidate', 'episode') for o in items)
+        out[name] = dict(use='computed' if held > 0 else 'absent', form='own_rows' if rows_read else 'section_counts',
+                         operands=items, layer_status=record.get('status'),
+                         layer_rows=record.get('count'), layer_reason=record.get('reason'), limit=limits.get(name),
+                         reason=('rows of this entry entered frankie_box_teach.facts' if held > 0 else
+                                 'frankie_box_teach.facts ran over this entry\'s operand; it held no row on this day (%s)'
+                                 % (record.get('reason') or 'no row recorded')))
+    for item in f.get('frozen') or []:
+        out.setdefault(item['layer'], dict(use='context', operands=[], files=[], reason=(
+            'read whole as text by frankie_box_teach.facts from the brain\'s frozen learned-structure entry; text, not an '
+            'arithmetic operand'))).setdefault('files', []).append({k: item.get(k) for k in ('name', 'sha256', 'bytes')})
+    # a frozen file not there drops only its text; a differing one is an integrity finding (both listed, never computed)
+    for key, word in (('frozen_missing', 'missing'), ('frozen_integrity', 'integrity')):
+        for item in f.get(key) or []:
+            slot = out.setdefault(item['layer'], dict(use='absent', operands=[], reason=(
+                'frozen text not carried (%s): %s' % ('missing' if word == 'missing' else 'integrity finding', item['reason']))))
+            slot.setdefault(word, []).append(item)
+    return out
+
+
+def exhaustion_d_facts(calculations, brain):
+    """Invoke the EXISTING exhaustion/D classroom computation (frankie_box_teach.facts; code only, no model) on this day's
+    completed ROOT, and attribute each registry entry it read. Missing-coverage rule: never raises for coverage; a ROOT
+    without a native pass, an unreadable input or a refusal is 'unavailable' (or 'integrity_failure' / 'failed', each with
+    the reason) and only these facts are missing; the Dipole classroom and the day go on. The rows are the ROOT's completed
+    whole-day bedrock rows (GROUP_CLOSE emissions and the stream-end finalization), lawful at the classroom's whole-day
+    cutoff (through_cursor = record_count - 1); they are never placed into an earlier picture."""
+    import time
+    calculations, brain = Path(calculations), Path(brain)
+    work = calculations / 'work'
+    result = dict(schema=EXHAUSTION_D_SCHEMA, computation='frankie_box_teach.facts', author=AUTHOR, model_calls=0,
+                  inputs={}, attribution={}, status=None, reason=None,
+                  cutoff='completed whole-day rows inside the classroom\'s whole-day cutoff; never backfilled into a picture',
+                  rule='a missing input blocks only these facts; integrity mismatches are named as such, never as measurements')
+
+    def stop(status, reason, **extra):
+        result.update(status=status, reason=reason, **extra)
+        return result
+    try:
+        receipt = json.loads((calculations / 'calculations-receipt.json').read_bytes())
+        derive_path = work / 'derive.json'
+        raw = derive_path.read_bytes()
+    except (OSError, ValueError) as error:
+        return stop('unavailable', 'the ROOT receipt or derive.json is unreadable: %s: %s' % (type(error).__name__, error))
+    measured = dict(path=str(derive_path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    result['inputs']['derive'] = measured
+    pin = receipt.get('derivation') if isinstance(receipt.get('derivation'), dict) else None
+    if pin is None:
+        return stop('unavailable', 'the ROOT receipt names no derivation pin; derive.json is never read unpinned')
+    if {k: pin.get(k) for k in ('bytes', 'sha256')} != {k: measured[k] for k in ('bytes', 'sha256')}:
+        return stop('integrity_failure', 'derive.json differs from the derivation pin in the ROOT receipt',
+                    pinned={k: pin.get(k) for k in ('bytes', 'sha256')})
+    derive = json.loads(raw)
+    bedrock = derive.get('bedrock') if isinstance(derive.get('bedrock'), dict) else None
+    if bedrock is None:
+        return stop('unavailable', 'derive.json carries no native (bedrock) derivation on this ROOT')
+    if bedrock.get('skipped'):
+        return stop('unavailable', 'the native pass did not run on this ROOT (%s): %s' % (
+            'an explicit recorded override' if bedrock.get('override') else 'recorded skipped',
+            bedrock.get('reason') or bedrock.get('not_derived')))
+    crosswalk = bedrock.get('crosswalk')
+    if not crosswalk:
+        return stop('unavailable', 'the bedrock block names no pinned producers crosswalk, so no producers checkout')
+    producers = Path(crosswalk).parents[3]
+    result['inputs']['producers'] = dict(path=str(producers), derivation_commit=bedrock.get('producers_commit'))
+    if not producers.is_dir():
+        return stop('unavailable', 'the pinned producers checkout %s is not on this box' % producers)
+    try:
+        import frankie_box_bedrock as B
+        commit = B.producers_commit(producers)
+        if bedrock.get('producers_commit') not in (None, commit):
+            return stop('integrity_failure', 'the producers checkout is at %s; the derivation names %s' % (
+                commit, bedrock.get('producers_commit')))
+        result['inputs']['producers']['commit'] = commit
+        B.load_producers(producers)
+    except ValueError as error:
+        return stop('integrity_failure', 'pinned producers: %s' % error)
+    except Exception as error:  # noqa: BLE001 - the producers could not be loaded: these facts only, recorded
+        return stop('failed', 'pinned producers could not be loaded: %s: %s' % (type(error).__name__, error))
+    sections_of, limits, basis = _sections_of(work, measured, producers, list(bedrock.get('layers') or []))
+    result['inputs']['sections_basis'] = basis
+    frozen = brain / 'frozen-learned-structure' / 'MANIFEST.json'
+    result['inputs']['frozen_manifest'] = (dict(path=str(frozen), bytes=frozen.stat().st_size,
+                                                sha256=hashlib.sha256(frozen.read_bytes()).hexdigest())
+                                           if frozen.is_file() else dict(path=str(frozen), status='absent'))
+    import frankie_box_teach as T
+    started = time.monotonic()
+    try:
+        facts = T.facts(work, brain, producers)
+    except ValueError as error:
+        text = str(error)
+        kind = ('integrity_failure' if any(w in text for w in ('differs', 'outside', 'not the producers', 'not the pinned'))
+                else 'unavailable')
+        return stop(kind, 'frankie_box_teach.facts refused: ' + text, seconds=round(time.monotonic() - started, 3))
+    except Exception as error:  # noqa: BLE001 - a failed worker is a failed computation, recorded; never a measurement
+        return stop('failed', '%s: %s' % (type(error).__name__, error), seconds=round(time.monotonic() - started, 3))
+    return stop('computed', None, seconds=round(time.monotonic() - started, 3), facts=facts, summary=_facts_summary(facts),
+                attribution=_facts_attribution(facts, sections_of, limits))
+
+
+def exhaustion_d_text(result):
+    """The exhaustion/D facts as the summary answer carries them (or why they are not there)."""
+    if not result:
+        return None
+    if result.get('status') != 'computed':
+        return ('Exhaustion/D facts (frankie_box_teach.facts, code only) were not computed on this day: %s (%s). The bedrock '
+                'entries they read stay in the market pictures as context where present; nothing is filled in.'
+                % (result.get('status'), result.get('reason')))
+    pinned = result.get('file') or {}
+    return ('Exhaustion/D facts computed by Frankie\'s code (frankie_box_teach.facts; no model) from the ROOT\'s completed '
+            'whole-day bedrock rows: ' + json.dumps(result['summary'], sort_keys=True, default=str)
+            + '. Every gap, clock violation and family count is whole in %s (sha256 %s). These rows are completed whole-day '
+              'knowledge inside the classroom\'s whole-day cutoff, never backfilled into an earlier picture; descriptive, no '
+              'outcome claimed (R02).' % (pinned.get('name', 'exhaustion-d-facts.json'), pinned.get('sha256')))
+
+
+def _facts_for_component(result, name):
+    """Native rows computed by the facts for the registry entries whose teacher form is this component (the registry
+    entry links the two; no new relation is claimed)."""
+    if not result or result.get('status') != 'computed':
+        return []
+    out = []
+    for entry, (components, _, _) in TEACHER_FORM_COMPONENTS.items():
+        if components is None or name not in components:
+            continue
+        attributed = (result.get('attribution') or {}).get(entry)
+        if attributed and attributed.get('use') == 'computed':
+            out.append(dict(entry=entry, operands=attributed['operands'], limit=attributed.get('limit')))
+    return out
+
+
+def _exhaustion_d_receipt(result):
+    return None if result is None else {k: v for k, v in result.items() if k != 'facts'}
+
+
+def _classroom_use(entry, consumers):
+    """`use`, `use_reason`, `computations` and the shared word for one all-99 entry (see USE_VOCABULARY)."""
+    name, disposition = entry['layer'], entry['disposition']
+    route = (ALL99_ROUTES.get(name) or (None, {}))[1]
+    kind = route.get('kind')
+    computations = []
+    operands = consumers.get('dipole_operands') or {}
+    form = TEACHER_FORM_COMPONENTS.get(name)
+    if form is not None and operands:
+        components, how, source = form
+        wanted = list(operands) if components is None else list(components)
+        seen = [c for c in wanted if c in operands]
+        if seen:
+            computations.append(dict(computation='dipole_arithmetic', form=how, components=seen,
+                                     not_in_roster=[c for c in wanted if c not in operands] or None,
+                                     observations=sum(operands[c]['observations'] for c in seen),
+                                     present=sum(operands[c]['present'] for c in seen), mapping_source=source))
+    facts = ((consumers.get('exhaustion_d') or {}).get('attribution') or {}).get(name)
+    if facts and facts.get('use') == 'computed':
+        computations.append(dict(computation='exhaustion_d_facts', form=facts.get('form', 'own_rows'),
+                                 operands=facts['operands'], limit=facts.get('limit')))
+    fed = [p for p in ((consumers.get('external_points') or {}).get('entries_fed') or {}).get(name) or []
+           if p.get('use') == 'computed']
+    if fed:
+        # the day file declares these points feed this entry; their values entered the external section arithmetic
+        # an exact mapping is the entry's own evidence; a closest mapping (Greg: no exact fit) is a partial form
+        exact = all(p.get('mapping') == ['exact'] for p in fed)
+        computations.append(dict(computation='external_section_arithmetic', form='own_rows' if exact else 'external_closest',
+                                 points=[dict(point_id=p['point_id'], mapping=p.get('mapping'), note=p.get('note'))
+                                         for p in fed], as_of=EXTERNAL_AS_OF))
+    knowledge = consumers.get('knowledge') or {}
+    if name == 'anchored_knowledge_manifest' and knowledge.get('stage_knowledge_checks'):
+        computations.append(dict(computation='learner_check', form='own_rows', function='stage_knowledge_reproduction',
+                                 checks=knowledge['stage_knowledge_checks'], documents=len(knowledge.get('documents') or [])))
+    if name == 'lawful_prior_session_carry' and knowledge.get('school_checks'):
+        computations.append(dict(computation='learner_check', form='own_rows', function='school_reproduction',
+                                 checks=knowledge['school_checks'], school_days_read=len(knowledge.get('school_days_read') or []),
+                                 note='the completed school files of earlier sessions read at this boundary'))
+    shared = None
+    if computations:
+        own = any(c['form'] == 'own_rows' for c in computations)
+        if kind in ('picture', 'dipole'):
+            shared = 'arrived' if own else 'thin'
+        return dict(use='computed', computations=computations, shared_word=shared, use_reason='; '.join(
+            '%s (%s)' % (c['computation'], c['form']) for c in computations) + (
+            '' if own else '; a partial form or a count only: the entry\'s own rows are not an operand of this piece'))
+    if facts and facts.get('use') == 'context':
+        return dict(use='context', computations=[], shared_word=None, use_reason=facts['reason'])
+    if kind == 'picture':
+        if disposition in ('arrived', 'thin'):
+            return dict(use='context', computations=[], shared_word='exposed' if disposition == 'arrived' else 'thin',
+                        use_reason='in the market pictures (the anchor pictures in the component evidence and the full reader), '
+                                   'counted on the pass; no computation of this piece reads it as an operand')
+        if disposition == 'arrived_no_event':
+            return dict(use='absent', computations=[], shared_word='exposed',
+                        use_reason='carrier present; no event of this kind in the exhausted source on this day (a measurement, '
+                                   'not a missing layer)')
+        if facts:
+            return dict(use='absent', computations=[], shared_word=None,
+                        use_reason='%s; %s' % (entry.get('reason') or disposition, facts.get('reason')))
+        return dict(use='absent', computations=[], shared_word=None, use_reason=entry.get('reason') or disposition)
+    reasons = {
+        'completed': 'completed-only: its values are never yielded into a picture; only its completed-source disposition is '
+                     'listed in the summary',
+        'stamped': 'the whole-day causal cutoff bounding every answer; a bound, not an arithmetic operand',
+        'consumer': 'read and applied by this piece (directive, policy identity, rules, knowledge selection or carry); it '
+                    'governs the answers, not an arithmetic operand on this day',
+        'control': 'the mode and binding this piece was given; a control, not an operand',
+    }
+    if kind in reasons:
+        return dict(use='absent' if kind == 'completed' else 'context', computations=[], shared_word=None,
+                    use_reason=reasons[kind])
+    if kind == 'dipole':
+        return dict(use='absent', computations=[], shared_word=None,
+                    use_reason='no Dipole component evidence was recorded for this all-99 list')
+    absent = {'not_read': 'not an input of this piece: ' + str(route.get('via')),
+              'retired': 'retired: ' + str(route.get('via')), 'sealed': 'withheld by role (a sealed answer; never read)',
+              'disabled': 'disabled by the existing policy; never activated',
+              'output': 'an append-only output, not an input of this piece: ' + str(route.get('via'))}
+    return dict(use='absent', computations=[], shared_word=None,
+                use_reason=absent.get(kind, entry.get('reason') or 'no classroom route (integrity finding)'))
+
+
+def _native_only_ingestion(entries):
+    """The 18 native-only entries: the computation that ingests each, or why none does here and the closest existing one."""
+    by_name = {e['layer']: e for e in entries}
+    out = []
+    for name in NATIVE_ONLY_ENTRIES:
+        e = by_name.get(name) or {}
+        computations = e.get('computations') or []
+        own = [c for c in computations if c['form'] == 'own_rows']
+        out.append(dict(entry=name, use=e.get('use'), native_layer=e.get('disposition'),
+                        computations=[dict(computation=c['computation'], form=c['form']) for c in computations],
+                        own_rows_computed=bool(own),
+                        closest_existing_consumer=(None if own else NATIVE_ONLY_CLOSEST.get(name) or (
+                            'no computation of this piece reads this entry\'s own rows today (%s). frankie_box_teach.facts '
+                            'reads the lineage / recurrence section rows and only the traversal\'s candidate/episode counts; '
+                            'the episode / candidate / detector_coverage rows themselves are read by frankie_box_joined_teacher '
+                            'couplings and the search, not by the classroom' % e.get('use_reason')))))
+    return dict(entries=out, searched=NATIVE_SEARCHED,
+                rule='an entry is computed only when an existing computation of this piece took its rows (own_rows) or its '
+                     'recorded teacher form (teacher_form); where none exists here no equation is invented: the closest existing '
+                     'consumer is named for Greg to decide')
+
+
+# ------------------------------------------------ the 13 external points (Greg via Frankie, 2026-10-07: tie them to the 99)
+EXTERNAL_POINTS_SCHEMA = 'FRANKIE_CLASSROOM_EXTERNAL_POINTS_USE_V1'
+EXTERNAL_COMPUTATION = ('external_section_arithmetic: the classroom\'s existing external section (dipole_classroom_external '
+                        'key; Frankie\'s code answers in frankie_box_classroom_external_code: TEACH transcribed, GUIDED '
+                        'computed, SOCRATIC/VERIFY on the learner-owned reading): per series the values known at the '
+                        'cutoff, first/last/extremes, state counts over the Dipole rows, terminal state and first-to-last '
+                        'direction; per pair against each of the 19 Dipole columns and every other series the direction '
+                        'relation, Pearson with its overlap count and the co-movement counts')
+EXTERNAL_AS_OF = ('each Dipole row takes, per series, the latest value published at or before the row\'s own ts_recv_ns '
+                  '(AsOfReader at the classroom cutoff; a later stamp reaching a row is a hard AsOfViolation); a value '
+                  'published after the cutoff is counted not yet known and never read')
+
+
+def external_points_use(ext_ledgers, day_file, day_file_sha256, *, cutoff_ns=None):
+    """Per external point: how the classroom uses it (computed / context / absent, same rule as the native entries), the
+    series that entered the external section arithmetic with their PRESENT row counts, and the registry entries the day
+    file DECLARES the point feeds (frankie_box_all99_coverage.external_point_entries; no mapping is invented here). The
+    day file is read for its declarations only (bytes checked against the sha256 given); a row-level declaration is taken
+    only from rows published at or before the cutoff. Never raises for coverage."""
+    from research.kalshi.frankie_boss import dipole_classroom_external as EXT
+    components = {c['name']: c for c in ((ext_ledgers or {}).get('external_teachback') or {}).get('components') or []}
+    declared, findings, body = {}, [], None
+    try:
+        raw = Path(day_file).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != day_file_sha256:
+            findings.append(dict(kind='integrity', reason='the day file differs from its sha256; no declaration read'))
+        else:
+            body = json.loads(raw)
+    except (OSError, ValueError) as error:
+        findings.append(dict(kind='unreadable', reason='%s: %s' % (type(error).__name__, error)))
+    reader = getattr(ALL99, 'external_point_mapping', None)
+    if body is not None and reader is None:
+        findings.append(dict(kind='contract_absent', reason='frankie_box_all99_coverage.external_point_mapping is not in this '
+                                                            'checkout; no point-to-entry declaration read'))
+    tables = (body or {}).get('points') or {}
+    row_keys = (set(getattr(ALL99, 'EXTERNAL_ENTRY_KEYS', ())) | set(getattr(ALL99, 'EXTERNAL_EVENT_TIME_KEYS', ()))
+                | set(getattr(ALL99, 'EXTERNAL_MAPPING_KEYS', ())) | set(getattr(ALL99, 'EXTERNAL_NOTE_KEYS', ())))
+
+    def tie_of(names):
+        """The point's tie to the 99 and its placement, as the day file records them (Greg, 2026-10-07: every point
+        mapped, `mapping: closest` with its reason when no exact fit; a value with no intrinsic event time sits at 14:00
+        ET of its trading day, or at its publication when later, with the note). A readable row whose reader stamp is
+        EARLIER than its declared event time would let the external section read it before Greg's placement: counted
+        as `read_before_event_time`, an integrity finding of the reader's placement, never a computed use."""
+        tie = dict(entries=[], mapping=[], mapping_reason=[], event_time_basis=[], note=[], rows_read=0,
+                   read_before_event_time=0, rows_with_event_time=0)
+        def add(key, value):
+            if value is not None and value not in tie[key]:
+                tie[key].append(value)
+        for tname in names:
+            table = tables.get(tname)
+            if reader is None or not isinstance(table, dict):
+                continue
+            base = reader(table)
+            findings.extend(dict(item, table=tname) for item in base['findings'])
+            for name in base['entries']:
+                add('entries', name)
+            for key in ('mapping', 'mapping_reason', 'event_time_basis', 'note'):
+                add(key, base[key])
+            columns = table.get('columns') or []
+            stamp_column = table.get('stamp_column') or 'published_ns'
+            stamp = columns.index(stamp_column) if stamp_column in columns else None
+            per_row = any(key in columns for key in row_keys)
+            for row in table.get('rows') or []:
+                if cutoff_ns is not None and stamp is not None and row[stamp] is not None and row[stamp] > cutoff_ns:
+                    continue          # a row stamped after the cutoff is never read, its declarations included
+                tie['rows_read'] += 1
+                tied = reader(table, row) if per_row else base
+                if per_row:
+                    findings.extend(dict(item, table=tname) for item in tied['findings'] if item not in base['findings'])
+                    for name in tied['entries']:
+                        add('entries', name)
+                    for key in ('mapping', 'mapping_reason', 'event_time_basis', 'note'):
+                        add(key, tied[key])
+                if tied['event_time_ns'] is not None:
+                    tie['rows_with_event_time'] += 1
+                    if stamp is not None and type(row[stamp]) is int and row[stamp] < tied['event_time_ns']:
+                        tie['read_before_event_time'] += 1
+        return tie
+    points = []
+    for p in EXT.POINTS:
+        series = [name for name in components if EXT._matches(name, p['series'])]
+        operands = [dict(series=name, present_rows=int((components[name].get('state_counts') or {}).get('PRESENT', 0)),
+                         state_counts=components[name].get('state_counts')) for name in series]
+        present = sum(o['present_rows'] for o in operands)
+        tie = tie_of(p['tables'])
+        entries = tie['entries']
+        if tie['read_before_event_time'] and (present > 0 or not p['series']):
+            # never earlier than its placement: the reader's stamp precedes the declared event time on some rows
+            use, reason = 'absent', ('integrity: %d readable row(s) carry a reader stamp earlier than their declared event '
+                                     'time, so the external section could read them before Greg\'s placement; not counted '
+                                     'as computed until the reader places them at their event time' % tie['read_before_event_time'])
+            findings.append(dict(kind='external_read_before_event_time', point_id=p['point_id'],
+                                 rows=tie['read_before_event_time']))
+        elif not p['series']:
+            use, reason = 'context', ('no numeric series for this point (the day file lists its extractor as not built); its '
+                                      'captures are carried whole in the point review; no arithmetic reads them')
+        elif present > 0:
+            use, reason = 'computed', ('its series entered the external section arithmetic at the Dipole rows at or after '
+                                       'the stamp its reader placed it at')
+        elif not series:
+            use, reason = 'absent', 'none of its series is in today\'s external section (absent from the day file; see missing)'
+        else:
+            use, reason = 'absent', ('no value of its series was published at or before any Dipole row of the window (a '
+                                     'measurement, not a filled-in zero); the day stays')
+        points.append(dict(point_id=p['point_id'], name=p['name'], use=use, reason=reason,
+                           computation=EXTERNAL_COMPUTATION.split(':')[0] if use == 'computed' else None,
+                           series=operands, tables=list(p['tables']), feeds_entries=entries,
+                           mapping=tie['mapping'], mapping_reason=tie['mapping_reason'],
+                           event_time_basis=tie['event_time_basis'], note=tie['note'],
+                           placement=dict(rows_read=tie['rows_read'], rows_with_event_time=tie['rows_with_event_time'],
+                                          read_before_event_time=tie['read_before_event_time']),
+                           feeds_listed=(None if entries else 'unmapped: the day file declares no registry entry for this '
+                                         'point (Greg: every point maps, closest with its reason); listed, never guessed '
+                                         'here (request to the day-file agent)'),
+                           closest_existing_consumer=(None if use == 'computed' else
+                                                      'the external section arithmetic (when a value is published) and the '
+                                                      'scientific search\'s external.<alias> series')))
+    for p in EXT.DEFERRED['points']:
+        tie = tie_of(p['tables'])
+        points.append(dict(point_id=p['point_id'], name=p['name'], use='absent', computation=None, series=[],
+                           tables=list(p['tables']), feeds_entries=tie['entries'], mapping=tie['mapping'],
+                           mapping_reason=tie['mapping_reason'], event_time_basis=tie['event_time_basis'], note=tie['note'],
+                           reason='deferred by Greg, not read: ' + EXT.DEFERRED['reason'],
+                           closest_existing_consumer='the scientific search reads the calendar table; the classroom does '
+                                                     'not until Greg lifts the deferral'))
+    feeds = {}
+    for item in points:
+        for entry in item['feeds_entries']:
+            feeds.setdefault(entry, []).append(dict(point_id=item['point_id'], use=item['use'], mapping=item.get('mapping'),
+                                                    note=item.get('note')))
+    counts = {}
+    for item in points:
+        counts[item['use']] = counts.get(item['use'], 0) + 1
+    return dict(schema=EXTERNAL_POINTS_SCHEMA, points=points, counts=counts, entries_fed=feeds, findings=findings,
+                computation=EXTERNAL_COMPUTATION, as_of=EXTERNAL_AS_OF,
+                rule='a point is computed only when a value of its series was published at or before a Dipole row and '
+                     'entered the external section arithmetic; never before its publication time; a point the day file '
+                     'ties to no registry entry is listed outside the 99, never mapped here')
 
 
 def _exact_market_text(value):
@@ -1003,7 +1649,7 @@ def _recognize_pattern(finding, pair):
                 full_claim_tested=False, reason='pair measured; no implemented structure predicate for this finding')
 
 
-def component_answer(visible, comp, rights, *, learner_context=None, shared_market=None):
+def component_answer(visible, comp, rights, *, learner_context=None, shared_market=None, exhaustion_d=None):
     """One component. TEACH: parse_component's shape (six narratives, one explanation per occurring state, one
     interpretation per pair in the order of `rights`). GUIDED: parse_independent_component's shape, which adds the
     claimed state counts, terminal state, direction, every observation with its note and each pair's relation, all
@@ -1055,6 +1701,13 @@ def component_answer(visible, comp, rights, *, learner_context=None, shared_mark
             + '. These anchors supplement the full ordered source accessible through the answer context; an absent '
             'layer or picture makes the instant thinner, never removes it; the Dipole values and target equations '
             'are unchanged.')
+    native = _facts_for_component(exhaustion_d, name)
+    if native:
+        # The registry entries whose teacher form is this component also had their own native rows computed by
+        # frankie_box_teach.facts today; their operands and row counts are carried here (no new relation claimed).
+        result['evidence'] += (' The same registry entries\' own native rows, computed today by Frankie\'s code '
+            '(frankie_box_teach.facts; completed whole-day bedrock rows): ' + json.dumps(native, sort_keys=True, default=str)
+            + '. The registry entry links this component to those rows; no relation between them is computed or claimed.')
     occurring = [s for s in STATES if any(p['state'] == s for p in comp['observations'])]
     result['state_explanations'] = {s: f'{name}: {STATE_MEANING[s]}' + (f' (unit {comp["unit"]})' if s == 'PRESENT' and comp.get('unit') else '')
                                     for s in occurring}
@@ -1122,7 +1775,7 @@ def _step_disagreement(pair):
     return None
 
 
-def summary_answer(visible, outputs, *, learner_context=None, shared_market=None):
+def summary_answer(visible, outputs, *, learner_context=None, shared_market=None, exhaustion_d=None):
     """The summary in parse_summary's shape. Novel findings are only what a computation here surfaces: a pair whose
     first-to-last relation and its step-by-step co-movement counts point different ways (filed as a HYPOTHESIS)."""
     pre = _evidence(visible)
@@ -1152,7 +1805,10 @@ def summary_answer(visible, outputs, *, learner_context=None, shared_market=None
             'full ordered view. Unsupported/failed/unpaired inputs, absent layers and unavailable anchor pictures '
             'remain source dispositions of a thinner instant, not invented Dipole measurements, not a rejected day, '
             'and not claims of native training.')
-    correlation_review = (f'{AUTHOR}: {len(review)} pairs ({pre["evidence_source"]}). Relation: {json.dumps(relations, sort_keys=True)}. Pearson reported '
+    facts_text = exhaustion_d_text(exhaustion_d)
+    if facts_text:
+        cycle_summary += ' ' + facts_text
+    correlation_review =(f'{AUTHOR}: {len(review)} pairs ({pre["evidence_source"]}). Relation: {json.dumps(relations, sort_keys=True)}. Pearson reported '
                           f'on {reported} pairs; not reported on {len(review) - reported} ({json.dumps(not_reported, sort_keys=True)}). '
                           f'{len(disagreements)} pairs whose first-to-last relation and step-by-step co-movement counts point different '
                           'ways (filed as hypotheses). Every coefficient and count is per pair and per window, never pooled or '

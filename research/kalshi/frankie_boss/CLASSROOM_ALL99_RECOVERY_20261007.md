@@ -143,3 +143,190 @@ No tests, no validator framework, no runs, no installs, no dispatch, no Pods.
 Runtime unverified everywhere. The canary measurement of the pass and the witness overlap. The all-99 list is an
 account of yielded evidence and consumers, not proof of computation on every field; the native-only 18 wait on Greg.
 Fresh independent review (frankie-school-recovery or frankie-ccode-review) required before integration.
+
+## 2026-10-07 night: the classroom INGESTS the 99 (computed / context / absent), the native-only 18
+
+Greg resumed the role (relayed by the parent): "We need to get the other 18 of the 99 in and Frankie needs to ingest
+them." SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED. Nothing ran. Skills: `api-and-interface-design` (first),
+`experiment-orchestrator`. No AWS account call in this pass (the earlier survey stands).
+
+### What changed (owned files only; the ALL99_REGISTRY / ALL99_ROUTES block was not edited)
+
+`deploy/aws/box/frankie_box_classroom_code.py`
+- `exhaustion_d_facts(calculations, brain)`: invokes the EXISTING exhaustion/D classroom computation
+  `frankie_box_teach.facts` (built 2026-09-21; code only; not invoked on the experiment path since the 09-28 priming
+  became text-only). Inputs are checked first: derive.json against the ROOT receipt's derivation pin; the bedrock block
+  present and not skipped; the producers checkout (from bedrock.crosswalk) at the pinned commit
+  (`frankie_box_bedrock.producers_commit`), loaded with `load_producers`. Outcomes: `computed`, `unavailable` (no native
+  pass, missing input, frozen entry absent), `integrity_failure` (pin or digest mismatch, vocabulary outside the pin),
+  `failed` (a worker error). Never raises for coverage: only these facts go missing, the Dipole classroom and the day go on.
+- `_facts_attribution`: per registry entry, which operand of facts it supplied and how many rows. Sections per entry come
+  from `work/native-layer-records.json` when bound to the same derive.json bytes (correction_consumer's file), else from
+  the pinned crosswalk. Forms: `own_rows` (lineage / recurrence rows; the clock, family and legacy-structure layer files),
+  `section_counts` (the candidate lane reads only the traversal's candidate/episode counts). An operand with zero rows
+  is `absent` with the reason, never `computed`. The four frozen learned-structure layers read whole as text are `context`.
+- `TEACHER_FORM_COMPONENTS`: the Dipole components that carry an entry's computed form, copied from existing tables
+  only (`frankie_box_experiment_teacher.TEACHER_FORMS`, `frankie_box_experiment_search.PLANE_COVERAGE`): roll20/dipole
+  state, depletion, resilience, chain trajectory, chain extension, fills, modifies, queue concentration, missingness.
+  No new mapping.
+- `dipole_operands(visible)`: observations / PRESENT / states per component that the Dipole arithmetic takes today.
+- `_classroom_use`: every one of the 99 gets `use` (computed / context / absent), `use_reason` and `computations`
+  (computation, form, operands). `all99_coverage` applies it to every entry, returns `use_counts`, `use_vocabulary`,
+  `computations`, `native_only_ingestion` (the 18: computation or closest existing consumer, and `searched`) and
+  `exhaustion_d` (without the facts body). The shared field rows carry `use` / `use_reason` / `computations`, and
+  `canonical`: picture-only entries read `exposed` (not `arrived`), a teacher form or a count reads `thin`, own rows read
+  `arrived` (review N4).
+- `component_answer(..., exhaustion_d=None)`: on a component that is the teacher form of an entry whose own native rows
+  facts computed (the chain columns), the evidence carries those operands and row counts; no relation is claimed.
+- `summary_answer(..., exhaustion_d=None)`: the cycle summary carries the facts summary (lineage, ancestry gaps, clocks,
+  families, candidate lane, frozen sources) and the pin of the whole facts file, or the reason they were not computed.
+- `_NATIVE_ABSENT` and `decision_open` no longer say "bedrock off". The native pass runs by default, so absence means an
+  override or an incomplete pass, with the core's reason. The opening route reads the core's `report.opening_state`
+  first.
+
+`deploy/aws/box/frankie_box_experiment_classroom_v2.py`
+- New phase `exhaustion_d_facts` after the shared market reading (saved/resumed like every phase). Writes
+  `exhaustion-d-facts.json` (pinned; listed when not computed). `received.exhaustion_d`, `exhaustion_d` on the receipt,
+  the refusal receipt and code-answers.json. The consumers of the all-99 list carry `dipole_operands` and
+  `exhaustion_d`. Component and summary answers get `exhaustion_d`. The identity pins `frankie_box_teach.py` and
+  `frankie_box_bedrock.py` (`exhaustion_d_code`).
+
+`deploy/aws/box/frankie_box_classroom_reader.py`: unchanged. The SOCRATIC/VERIFY learner walk computes the same
+teacher forms on Frankie's own reading, so `dipole_operands` reads the learner evidence in those modes.
+
+### The 18 native-only entries: what ingests each (native pass on, a full day)
+
+| Entry | Computation | Form |
+|---|---|---|
+| order_lifecycle_fills | Dipole arithmetic on far_absorption_share_64/1024 | teacher_form; native fill_disposition rows: closest consumer named |
+| order_lifecycle_clears | none in the classroom (context) | closest: timeline reset invalidation; joined-teacher couplings |
+| contract_session_roll_state | none (context) | closest: timeline source_scope_changed; joined-teacher cells session_phase / continuity_segment |
+| complete_state_reset_bootstrap_receipts | none (context) | closest: timeline reset invalidation and opening_state |
+| depletion_and_replenishment | Dipole arithmetic on far_replenish_* and far_absorption_share_* | teacher_form |
+| resilience_and_recovery | Dipole arithmetic on far_identity_survival_* and far_size_retention_* | teacher_form |
+| price_and_book_path | none (context) | closest: bedrock_section_4_2 (book-regime companion), the search axis |
+| derived_ancestry_gaps | facts: ancestry gaps (recurrence) and D-depth (lineage) | own_rows |
+| derived_unresolved_age_chain_trajectory | facts (lineage; episode count) and Dipole arithmetic on the six chain columns | own_rows + teacher_form |
+| derived_price_flow_book_paths | none (context) | closest: joined teacher (flow_substrate), the search |
+| derived_v4_mechanics_fifo_features | none (context) | closest: the search (V4 frame sections), joined teacher |
+| prebirth_predecessor_at_risk_state | facts candidate lane (candidate/episode counts) | section_counts |
+| prebirth_unresolved_chain_extension_state | facts (lineage) and Dipole arithmetic on extension_count / step_ratio / pullback_* | own_rows + teacher_form |
+| prebirth_ancestry_successor_opportunity | facts (lineage) | own_rows |
+| prebirth_stopped_chain_false_context_controls | facts candidate lane (episode count) | section_counts |
+| prebirth_negative_opportunity_cases | facts candidate lane (episode count) | section_counts |
+| clock_prospective_discovery_confirmation | facts candidate lane (episode/candidate counts); discovery time only | section_counts |
+| clock_model_evaluation | facts clock order check (decision_ts_recv_ns, decision_basis) | own_rows; every value null under NeverInvoke, so every group reads unknown (limit carried) |
+
+Searched before naming "none": `frankie_box_bedrock.py`, the pin's bedrock and projection layers,
+`native-layer-records.json` / NATIVE_ONLY_*, `frankie_box_teach.py`, TEACHER_FORMS, PLANE_COVERAGE,
+`frankie_box_experiment_native.py`, `frankie_box_joined_teacher.py`, `frankie_box_compare.py`,
+`frankie_box_digest_render.py`, `dipole_classroom.py`, this module and the reader (`NATIVE_SEARCHED` in the code).
+The six with no classroom computation are not wired: that would be a new equation in the classroom. Greg decides.
+
+### Counts over the 99 (by reading the route table; not run)
+
+- A full day with the native pass on, facts computed, the candidate lane fired and learner checks present: 22 computed,
+  41 context, 36 absent. The 36 are 9 sealed, 2 disabled, 10 outputs, 4 overlays (Memory A / A-clean), 6 frozen /
+  carry-forward entries not read, 3 current-brain entries and the 2 completed-only aggregates.
+- The same day without a native pass (override): 11 computed (9 teacher forms + 2 learner checks). The native-only
+  entries are thin context or absent with the core's reason.
+- An entry whose computed carrier held no row on the day reads absent with the reason. A day without an event of a kind
+  reads absent ("no event, a measurement"). Neither rejects the day.
+
+### Efficiency
+
+The facts run its six layer streams in six spawn processes (its own design), after the market pass, inside the day's
+16-CPU lane. The phase is saved, so a resume never repeats it. Measured seconds go to `exhaustion_d.seconds` and
+`phase_timings` for the one-day canary. Nothing re-reads the journal. Pins, hashes, cursors and event order are untouched.
+
+### Checks
+
+`python3 -I` AST parse on the three .py files: ok. `git diff --check` on the four scoped files: clean.
+
+### Cross-owner requests
+
+1. workflow_reports, `frankie_box_workflow_inspection.py` classroom FIELDS: project `exhaustion_d` (status, reason,
+   inputs, attribution, file pin) and `all99_coverage.use_counts` / `native_only_ingestion`. Today they reach the
+   markdown through `received.exhaustion_d` and `received.all99`.
+2. Owner of `deploy/aws/box/frankie_box_teach.py` (unassigned; the parent): `facts()` refuses as a whole when the brain's
+   frozen entry lacks a file for one of its four layers. Under the missing-coverage rule that file should only thin the
+   frozen text, not block the lineage/gap/clock arithmetic. Split that requirement out, with no change to the arithmetic.
+3. workflow_reports, `frankie_box_experiment_teacher.py`: TEACHER_FORMS could name order_lifecycle_fills,
+   order_lifecycle_modifies, queue_concentration and missingness_and_integrity_flags, which the search's PLANE_COVERAGE
+   already names. The classroom copies both tables; one shared table would keep them from drifting.
+4. Greg (via the parent): whether the six native-only entries with no classroom computation should get one. Each
+   entry's closest existing consumer is named.
+
+Fresh independent review (frankie-school-recovery or frankie-ccode-review) required before integration.
+
+## 2026-10-07 night (continued): the 13 external points, facts without frozen files, no same-batch survivor teaching
+
+SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED. Nothing ran. The ALL99_REGISTRY / ALL99_ROUTES block was not edited.
+
+### 1. The 13 external points (FRANKIE_DAY_EXTERNAL_V1), tied to the 99
+
+The classroom already ingests the day file through an existing computation: its external section (the
+`dipole_classroom_external` key; Frankie's code answers in `frankie_box_classroom_external_code`, transcribed in TEACH,
+computed in GUIDED, on the learner-owned reading in SOCRATIC/VERIFY). For each series it computes values known at the
+cutoff, first/last/extremes, state counts over the Dipole rows, terminal state and direction. For each pair against the
+19 Dipole columns and every other series it computes the relation, Pearson with its overlap and the co-movement counts.
+Each Dipole row takes the latest value stamped at or before its own ts_recv_ns. A later stamp is a hard AsOfViolation, and
+a value published after the cutoff is never read.
+
+New in `frankie_box_classroom_code.py`: `external_points_use(ext_ledgers, day_file, day_file_sha256, cutoff_ns=)`
+(FRANKIE_CLASSROOM_EXTERNAL_POINTS_USE_V1). For each point it records:
+- `use`, with the series that entered the arithmetic and their PRESENT row counts. `computed` means a value was
+  published at or before a Dipole row. `context` is point 12: no numeric series, captures carried whole. `absent` covers
+  no published value, no series, Greg's deferral (point 6 and the front-next spread) or an integrity finding.
+- The 99 entries the day file declares the point feeds, with the mapping basis (exact / closest), its reason, the event
+  time basis and the note ("this is not a time-specific event"). These come through workflow_reports' contract
+  `frankie_box_all99_coverage.external_point_mapping`. No mapping is invented here. A point with no declaration is listed
+  `unmapped`, as a request to the day-file agent.
+- `placement`. A readable row whose reader stamp is EARLIER than its declared event time (Greg: 14:00 ET of its trading
+  day, or its publication time when later) would let the arithmetic read it before Greg's placement. Such a point reads
+  `absent` with an integrity reason and a finding, never `computed`.
+
+The all-99 list now adds `external_section_arithmetic` to each entry a computed point feeds: own_rows for an exact
+mapping, external_closest (thin) for a closest one. The list returns `external_points`.
+`frankie_box_experiment_classroom_v2.py`: new saved phase `external_points` after the external answers. The
+`all99_coverage` phase now runs after every answer. A refusal still writes the list.
+
+Per point, when its value is published at or before the window's rows: 1, 3, 4 (COT net pctile 1y, weekly change, 3y),
+2 (MOS forecast gw_hdd), 5 (EIA-930 wind), 7 (estimated gas burn), 8 (ICE LD1 pctile), 9 (MOS spread), 10 (observed
+gw_hdd and station temperatures), 11 (EIA storage) and 13 (curve shape) are computed. 12 (storage estimate vs actual) is
+context. 6 (squeeze) is absent, deferred by Greg. Today the day file's builder declares no entries, so every point reads
+unmapped until the day-file agent's declarations land.
+
+### 2. `frankie_box_teach.facts`: a missing frozen file drops only its text
+
+`facts()` no longer refuses when the brain's frozen entry lacks a file for one of the four layers. A file not named or
+not present is listed in `frozen_missing`. A file whose bytes differ from the manifest digest, or a name outside the
+frozen directory, is listed in `frozen_integrity` and its text is not used. The lineage, gap, clock, family and
+candidate-lane arithmetic still computes; it never read those files. With every file present and matching, the returned
+dict and `facts_text` are byte-identical (both keys and their text lines are added only when non-empty). It still refuses
+when there is no bedrock. The classroom carries both lists in its facts summary and attribution (`absent`, with the
+reason).
+
+### 3. `frankie_box_lane_state.learner_knowledge`: no same-batch survivor teaching
+
+A FRANKIE_SURVIVOR_UPDATE_V1 document is withheld from every day listed in its `boundary.batch_days`, not only the
+boundary day, whatever the stage. It is listed (disposition `withheld_same_batch`, with boundary, batch_days and the
+reason) in the selection's `listed`. That list lands on the classroom receipt (`stage_knowledge.selection_listed`,
+learner-knowledge.json), the exchange receipt and the teacher-knowledge receipt. ccode_step8's per-document ValueError
+handling (listed, not raised) is unchanged.
+
+### Checks
+
+`python3 -I` AST parse on the five .py files (classroom_code, classroom_v2, classroom_reader, teach, lane_state): ok.
+`git diff --check` on them and the .sh: clean.
+
+### Cross-owner requests
+
+1. Day-file agent (`operations/frankie_day_external.py`, `frankie_box_day_external.py`): declare each point's 99 entry
+   and mapping basis under `external_point_mapping`'s keys. Make the reader stamp of a non-time-specific row its event
+   time (14:00 ET, or its publication when later): `stamp_column`, or `published_ns` as handed out by `AsOfReader`. The
+   external section aligns on that stamp. Until then, a point whose stamp precedes its event time reads absent
+   (integrity), not computed.
+2. Owner of `frankie_box_granite_meeting.py` (the voice path, about line 1429): it calls `learner_knowledge(..., 'voice')`
+   and keeps only `documents`. Record `selected['listed']` on its receipt so the same-batch survivor exclusion is visible
+   there, as the exchange and teacher-knowledge already do.
