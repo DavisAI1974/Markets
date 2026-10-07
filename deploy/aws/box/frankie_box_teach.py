@@ -196,8 +196,10 @@ def facts(work, brain, producers):
     """The pre-message facts, exact and small, from work/derive.json, the bedrock layer files (the pinned producers' own
     row shapes: recurrence gaps are mappings with gap_ns/from_node/to_node/recv_ns; lineage statuses are
     native_lineage's TERMINATED / CENSORED_* / OPEN), the legacy structure observables and the brain's frozen entry.
-    Refuses without a bedrock or without an included frozen file for each of the four layers that define D and
-    exhaustion. A clock layer that was not derived is reported as unknown, never as an order violation."""
+    Refuses without a bedrock. A frozen learned-structure file that is absent (or not named for one of the four layers
+    that define D and exhaustion) drops only its text, listed in `frozen_missing`; one whose bytes differ from its manifest
+    digest is listed in `frozen_integrity` and its text is not used (2026-10-07, the missing-coverage rule; before, either
+    refused the whole facts). A clock layer that was not derived is reported as unknown, never as an order violation."""
     work, brain = Path(work), Path(brain)
     derive = _load(work / 'derive.json')
     bedrock = derive.get('bedrock')
@@ -265,26 +267,48 @@ def facts(work, brain, producers):
     lane = dict(span_seconds=span, warmup_seconds=warmup, min_observations=minimum, candidate_unit_events=candidates, episode_rows=episodes, verdict=verdict)
     traversal = dict(verdict=bedrock.get('verdict'), failed_gates=list(bedrock.get('failed_gates') or []),
                      note='the pinned run\'s own acceptance verdict over this slice (gates in native_calculation_runner); the layers are filed by their rows either way')
-    frozen = []
+    # The frozen learned-structure TEXT (Greg, 2026-10-07, missing-coverage rule): a frozen file that is not there drops
+    # only its own text, listed with the reason (`frozen_missing`); a file whose bytes differ from the manifest digest, or a
+    # name outside the frozen directory, is an integrity finding listed apart (`frozen_integrity`) and its text is not used.
+    # Neither blocks the lineage, gap, clock, family and candidate-lane arithmetic above, which never reads these files.
+    # With every file present and matching, the returned value is exactly what it was (both lists are added only when
+    # non-empty).
+    frozen, frozen_missing, frozen_integrity = [], [], []
     manifest_path = brain / FROZEN_DIR / 'MANIFEST.json'
     entries = _load(manifest_path).get('entries', []) if manifest_path.is_file() else []
     for layer in FROZEN_LAYERS:
         found = [e for e in entries if e.get('include') and layer in (e.get('layers') or [])]
         if not found:
-            raise ValueError(f'no included frozen learned-structure file for {layer} in the brain\'s frozen entry ({manifest_path})')
+            frozen_missing.append(dict(layer=layer, name=None, reason=(
+                f'no included frozen learned-structure file for {layer} in the brain\'s frozen entry ({manifest_path}'
+                + ('' if manifest_path.is_file() else ': the manifest is absent') + ')')))
+            continue
         for e in found:
             name = str(e.get('name') or '')
             path = (brain / FROZEN_DIR / name)
             if not name or '/' in name or '\\' in name or name in ('.', '..') or path.resolve().parent != (brain / FROZEN_DIR).resolve():
-                raise ValueError(f'the frozen entry names a file outside {FROZEN_DIR}: {name!r}')
+                frozen_integrity.append(dict(layer=layer, name=name, reason=f'the frozen entry names a file outside {FROZEN_DIR}: {name!r}'))
+                continue
             data = path.read_bytes() if path.is_file() else None
-            if data is None or sha256_bytes(data) != e.get('sha256'):
-                raise ValueError(f'the frozen file {e["name"]} for {layer} is absent or differs from its manifest digest')
+            if data is None:
+                frozen_missing.append(dict(layer=layer, name=e.get('name'), sha256=e.get('sha256'),
+                                           reason=f'the frozen file {e.get("name")} for {layer} is absent from {brain / FROZEN_DIR}'))
+                continue
+            if sha256_bytes(data) != e.get('sha256'):
+                frozen_integrity.append(dict(layer=layer, name=e.get('name'), manifest_sha256=e.get('sha256'),
+                                             measured_sha256=sha256_bytes(data), bytes=len(data),
+                                             reason=f'the frozen file {e.get("name")} for {layer} differs from its manifest digest'))
+                continue
             frozen.append(dict(layer=layer, name=e['name'], source=e.get('source'), bytes=len(data), sha256=e['sha256'],
                                text=data.decode('utf-8', errors='replace')))
-    return dict(schema=FACTS_SCHEMA, layers=layers, bedrock=dict(layers=names, derived=bedrock.get('derived'), could_not=bedrock.get('could_not'),
-                                                                   groups=bedrock.get('groups'), records=bedrock.get('records')),
-                traversal=traversal, lineage=lineage, ancestry_gaps=ancestry, clocks=clocks, families=families, candidate_lane=lane, frozen=frozen)
+    result = dict(schema=FACTS_SCHEMA, layers=layers, bedrock=dict(layers=names, derived=bedrock.get('derived'), could_not=bedrock.get('could_not'),
+                                                                     groups=bedrock.get('groups'), records=bedrock.get('records')),
+                  traversal=traversal, lineage=lineage, ancestry_gaps=ancestry, clocks=clocks, families=families, candidate_lane=lane, frozen=frozen)
+    if frozen_missing:
+        result['frozen_missing'] = frozen_missing
+    if frozen_integrity:
+        result['frozen_integrity'] = frozen_integrity
+    return result
 
 
 def facts_text(f):
@@ -321,6 +345,11 @@ def facts_text(f):
               f'{T["candidate_unit_events"]} candidate events; {T["episode_rows"]} episode rows', f'- verdict: {T["verdict"]}']
     for fr in f['frozen']:
         lines += ['', f'## Frozen learned structure for {fr["layer"]}: {fr["source"]} ({fr["bytes"]} bytes, sha256 {fr["sha256"]}), whole', '', fr['text'].rstrip('\n')]
+    # listed only when present, so the text is unchanged when every frozen file is there and matches
+    for item in f.get('frozen_missing') or []:
+        lines += ['', f'## Frozen learned structure for {item["layer"]}: not carried ({item["reason"]})']
+    for item in f.get('frozen_integrity') or []:
+        lines += ['', f'## Frozen learned structure for {item["layer"]}: integrity finding, text not used ({item["reason"]})']
     return '\n'.join(lines) + '\n'
 
 

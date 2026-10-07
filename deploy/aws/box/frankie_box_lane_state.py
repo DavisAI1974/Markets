@@ -340,6 +340,20 @@ def learner_knowledge(day, stage, brain=BRAIN, *, classroom_mode=None):
                                        reason='retained text evidence; no structured learner calculation consumes this format'))
                     continue
                 content = json.loads(p.read_bytes())
+                # No same-day circular teaching (Greg, standing; school_recovery 2026-10-07): a stage-10 survivor update
+                # is built from the rows of EVERY day of its batch (its confirmation records included), so no day of
+                # that batch may consume it, whatever its stage or the order its stages run in; the entry-day rule above
+                # covers only the boundary day. Withheld and listed with the reason, never a refusal.
+                batch = ((content.get('boundary') or {}).get('batch_days') or []) if isinstance(content, dict) else []
+                if (isinstance(content, dict) and content.get('schema') == 'FRANKIE_SURVIVOR_UPDATE_V1'
+                        and str(day) in {str(x) for x in batch}):
+                    listed.append(dict(label=label, path=str(p), sha256=e['sha256'], bytes=e['bytes'],
+                                       disposition='withheld_same_batch',
+                                       boundary=(content.get('boundary') or {}).get('day'), batch_days=[str(x) for x in batch],
+                                       reason=('survivor update of the batch containing %s (boundary %s): built from this '
+                                               'day\'s own rows; never taught back to a day of its own batch'
+                                               % (day, (content.get('boundary') or {}).get('day')))))
+                    continue
                 try:
                     delivered = REVIEW.current_document(dict(label=label, day=eday, kind=kind, path=str(p),
                         bytes=e['bytes'], sha256=e['sha256'], content=content), records, brain, day=day, stage=stage)
