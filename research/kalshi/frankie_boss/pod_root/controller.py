@@ -114,22 +114,28 @@ def ssm_client(region):
         return CLIENTS[('ssm', region)]
 
 
+_WINDOW = [0.0, None]
+
+
 def signing_window():
     """Seconds the current credentials stay valid, or None when they do not expire (the runner's static keys). On the
     main host the credentials are the instance profile's session: a presigned URL dies with them, whatever its ExpiresIn,
     so the signer asks for fresh credentials first (botocore refreshes inside its advisory window) and bounds ExpiresIn
     to what remains."""
+    now = time.time()
+    if now - _WINDOW[0] < 30:
+        return None if _WINDOW[1] is None else max(0, int(_WINDOW[1] - now))
+    expiry = None
     try:
         credentials = boto3.DEFAULT_SESSION.get_credentials() if boto3.DEFAULT_SESSION else boto3.Session().get_credentials()
-        if credentials is None:
-            return None
-        credentials.get_frozen_credentials()
-        expiry = getattr(credentials, '_expiry_time', None)
-        if expiry is None:
-            return None
-        return max(0, int(expiry.timestamp() - time.time()))
+        if credentials is not None:
+            credentials.get_frozen_credentials()
+            stamp = getattr(credentials, '_expiry_time', None)
+            expiry = stamp.timestamp() if stamp is not None else None
     except Exception:  # noqa: BLE001
-        return None
+        expiry = None
+    _WINDOW[0], _WINDOW[1] = now, expiry
+    return None if expiry is None else max(0, int(expiry - now))
 
 
 def controller_id():
@@ -197,6 +203,22 @@ def read_json(path, tolerant=False):
         if tolerant:
             return dict(unreadable=str(path), error='%s: %s' % (type(error).__name__, str(error)[:200]))
         raise
+
+
+def alive_pid(state_dir):
+    """The pid of the controller holding <state_dir>/controller.lock, 'held' when the lock is held but the identity is
+    unreadable, None when no controller holds it. The launcher calls this; retained() reports it."""
+    lock = Path(state_dir) / 'controller.lock'
+    if not lock.exists():
+        return None
+    with open(lock, 'a') as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.flock(handle, fcntl.LOCK_UN)
+            return None
+        except OSError:
+            identity = read_json(Path(state_dir) / 'controller.json', tolerant=True) or {}
+            return identity.get('pid') or 'held'
 
 
 class State:
@@ -416,6 +438,7 @@ class Controller:
         self.lease_identity = dict(host=HOST['host'], pid=os.getpid(), started_epoch=int(self.started),
                                    unit=os.environ.get('CPU_CONTROLLER_UNIT'), controller=controller_id())
         self.lease_etag = None
+        self.lease_extra = {}
         self.lease_lock = threading.Lock()
         self.lease_lost = False
         self.heartbeat_thread = None
@@ -451,10 +474,10 @@ class Controller:
     def queue(self):
         q = box('queue', MAIN, 1800, CODE_ROOT=self.a.code_root, RUN=self.run)
         if self.a.commit and q.get('code_commit') != self.a.commit:
-            if self.a.action in ('loop', 'resume', 'stop'):
+            if self.a.action in ('loop', 'resume'):
                 raise SystemExit('the staged checkout %s is at %s, the controller was given --commit %s: run/code identity '
                                  'differs; nothing claimed' % (self.a.code_root, q.get('code_commit'), self.a.commit))
-            say('NOTE: the staged checkout is at %s, this dispatch is %s (read-only action; the staged commit is used)'
+            say('NOTE: the staged checkout is at %s, this dispatch is %s (a read-only action or a save relay; the staged commit is used)'
                 % (q.get('code_commit'), self.a.commit))
         self.commit = q.get('code_commit')
         self.queue_state = q
@@ -480,9 +503,10 @@ class Controller:
                              'frankie_box_cpu_controller.sh ACTION=stop|resume; a runner loop ends with its budget' % (
                                  self.run, lease.get('host'), lease.get('pid'), lease.get('unit'), lease.get('controller'),
                                  lease.get('heartbeat_utc')))
+        self.lease_extra = dict(taken_over=dict(at=utc(), previous={k: lease.get(k) for k in ('host', 'pid', 'unit', 'controller',
+                                                                                              'heartbeat_utc', 'released_utc')}))
         try:
-            self.write_lease(IfMatch=etag, taken_over=dict(previous={k: lease.get(k) for k in ('host', 'pid', 'unit', 'heartbeat_utc',
-                                                                                                'released_utc')}))
+            self.write_lease(IfMatch=etag)
         except Exception as error:  # noqa: BLE001
             if getattr(error, 'response', {}).get('Error', {}).get('Code') in ('PreconditionFailed', '412'):
                 raise SystemExit('the stale lease of %s was taken by another controller meanwhile; not a second one' % self.run)
@@ -493,7 +517,7 @@ class Controller:
         another controller (after a heartbeat gap longer than its freshness) is lost, never overwritten."""
         doc = dict(self.lease_identity, schema=STATE_SCHEMA + '_LEASE', run=self.run, action=self.a.action,
                    state_dir=str(self.state.dir) if self.state else None, heartbeat_epoch=time.time(), heartbeat_utc=utc(),
-                   **fields)
+                   **self.lease_extra, **fields)
         conditions = {}
         if IfNoneMatch:
             conditions['IfNoneMatch'] = IfNoneMatch
@@ -924,8 +948,9 @@ class Controller:
                 time.sleep(self.a.poll_seconds)
                 continue
             jobs = [j for j in st.get('jobs') or []]
-            active = [j for j in jobs if j.get('state') in ACTIVE]
-            retained = [j for j in jobs if j.get('workflow') == 'root-to-finish' and j.get('state') not in ACTIVE + ('day_complete',)]
+            # a job just launched carries its previous state until it writes its own: its live process makes it active
+            active = [j for j in jobs if j.get('state') in ACTIVE or j.get('pid_alive')]
+            retained = [j for j in jobs if j.get('workflow') == 'root-to-finish' and j not in active and j.get('state') != 'day_complete']
             held = None
             if retained:
                 self.event(worker=w.where, step='held', result='failed/interrupted day requires same-box resume',
@@ -1071,21 +1096,7 @@ def retained(a):
     job are reported distinctly (the worker's live state needs --action status)."""
     state = Path(a.state_dir)
     identity = read_json(state / 'controller.json', tolerant=True) or {}
-    alive = False
-    if identity.get('pid'):
-        try:
-            argv = Path('/proc/%s/cmdline' % identity['pid']).read_bytes().split(b'\0')
-            alive = any(x.endswith(b'controller.py') for x in argv) and a.run.encode() in argv
-        except OSError:
-            alive = False
-    lock_held = False
-    if (state / 'controller.lock').exists():
-        with open(state / 'controller.lock', 'a') as handle:
-            try:
-                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                fcntl.flock(handle, fcntl.LOCK_UN)
-            except OSError:
-                lock_held = True
+    holder = alive_pid(state)
     status = read_json(state / 'status.json', tolerant=True) or {}
     outcomes = sorted(p.name for p in state.glob('outcome-*.json'))
     claims = []
@@ -1096,7 +1107,7 @@ def retained(a):
         claims.append(dict(file=p.name, where=doc.get('where'), attempt=doc.get('attempt'), started_utc=doc.get('started_utc'),
                            done=p.name.endswith('.done.json'), released='.released-' in p.name))
     return dict(schema=STATE_SCHEMA + '_RETAINED', run=a.run, state_dir=str(state),
-                controller=dict(identity=identity, process_alive=alive, lock_held=lock_held, status_at=status.get('at'),
+                controller=dict(identity=identity, lock_held=holder is not None, holder_pid=holder, status_at=status.get('at'),
                                 outcome=(status.get('controller') or {}).get('outcome'), outcomes=outcomes,
                                 stop_request=read_json(state / 'stop-request.json', tolerant=True),
                                 stop_ack=read_json(state / 'stop-ack.json', tolerant=True),
@@ -1173,6 +1184,22 @@ def main():
         if a.action in ('loop', 'resume'):
             HOST['state'].acquire()
     ctl = Controller(a)
+    if a.action in ('loop', 'resume'):
+        if ctl.state:
+            ctl.state.identity(dict(ctl.lease_identity, schema=STATE_SCHEMA, run=a.run, action=a.action, job=a.job,
+                                    commit=a.commit, code_root=a.code_root, boxes=a.boxes, slots=a.slots,
+                                    budget_minutes=a.budget_minutes, open_ended=ctl.open_ended, started_utc=utc(),
+                                    state_dir=a.state_dir, lease_key=lease_key(a.run)))
+        try:
+            serve(a, ctl)
+        except (Exception, SystemExit) as error:
+            if not ctl.finished.is_set():
+                ctl.outcome = dict(outcome='refused' if isinstance(error, SystemExit) else 'failed', complete=False,
+                                   error='%s: %s' % (type(error).__name__, str(error)[:600]), note='nothing served')
+                ctl.event(step=a.action, result=ctl.outcome['outcome'], error=ctl.outcome['error'][:300])
+                finish(a, ctl)
+            raise
+        return
     if a.action == 'status':
         say(json.dumps(box('status', MAIN, 600, CODE_ROOT=a.code_root, RUN=a.run), indent=1, sort_keys=True))
         ctl.queue()
@@ -1184,27 +1211,39 @@ def main():
                 say(w.where, 'unreachable:', e)
         return
     q = ctl.queue()
-    if a.action in ('resume', 'stop'):
-        if not a.job or not re.fullmatch(re.escape(a.run) + r'-[0-9]{8}-a[0-9]+', a.job):
-            raise SystemExit('--job must name the original run-day-attempt')
-        w = workers_of(a, ctl.commit)[0]
-        held = next((d.get('claim') for d in q['days'] if (d.get('claim') or {}).get('attempt') == a.job), None)
-        if not held or held['where'] != w.where:
-            raise SystemExit('the day must still be claimed by this Linux worker (original claim untouched)')
-        if a.action == 'stop':
-            say(json.dumps(box('stop', w.target, 600, COMMIT=ctl.commit, JOB=a.job), sort_keys=True))
-            return
-        run_serving(a, ctl, [w], only_job=a.job)
+    if a.action == 'stop':
+        w = held_worker(a, ctl, q)
+        say(json.dumps(box('stop', w.target, 600, COMMIT=ctl.commit, JOB=a.job), sort_keys=True))
         return
     say('queue of %s at %s: %s' % (a.run, q.get('code_commit'), q.get('counts')))
     for d in q['days']:
         say('  %s %s %s' % (d['day'], d['state'], d.get('attempt') or d.get('reason') or (d.get('claim') or {}).get('where') or ''))
-    if a.action == 'plan':
-        ready = [d for d in q['days'] if d['state'] == 'ready']
-        say('%d ready day(s); %d worker(s) x %d slot(s) would start %d now; claim store active: %s; lease: %s' % (
-            len(ready), len([b for b in a.boxes.split(',') if b]), a.slots,
-            min(len(ready), len([b for b in a.boxes.split(',') if b]) * a.slots), q.get('active'),
-            json.dumps(read_lease(a.run), sort_keys=True, default=str)))
+    ready = [d for d in q['days'] if d['state'] == 'ready']
+    say('%d ready day(s); %d worker(s) x %d slot(s) would start %d now; claim store active: %s; lease: %s' % (
+        len(ready), len([b for b in a.boxes.split(',') if b]), a.slots,
+        min(len(ready), len([b for b in a.boxes.split(',') if b]) * a.slots), q.get('active'),
+        json.dumps(read_lease(a.run), sort_keys=True, default=str)))
+
+
+def held_worker(a, ctl, q):
+    """resume / stop: --job names the original run-day-attempt and the day is still claimed by the Linux worker."""
+    if not a.job or not re.fullmatch(re.escape(a.run) + r'-[0-9]{8}-a[0-9]+', a.job):
+        raise SystemExit('--job must name the original run-day-attempt')
+    w = workers_of(a, ctl.commit)[0]
+    held = next((d.get('claim') for d in q['days'] if (d.get('claim') or {}).get('attempt') == a.job), None)
+    if not held or held['where'] != w.where:
+        raise SystemExit('the day must still be claimed by this Linux worker (original claim untouched)')
+    return w
+
+
+def serve(a, ctl):
+    """loop / resume: the queue read (the commit bound), the worker chosen, the run served."""
+    q = ctl.queue()
+    say('queue of %s at %s: %s' % (a.run, q.get('code_commit'), q.get('counts')))
+    for d in q['days']:
+        say('  %s %s %s' % (d['day'], d['state'], d.get('attempt') or d.get('reason') or (d.get('claim') or {}).get('where') or ''))
+    if a.action == 'resume':
+        run_serving(a, ctl, [held_worker(a, ctl, q)], only_job=a.job)
         return
     workers = workers_of(a, ctl.commit)
     if not workers:
@@ -1235,11 +1274,6 @@ def run_serving(a, ctl, workers, only_job=None):
     ctl.heartbeat_thread = threading.Thread(target=ctl.heartbeat, name='lease-heartbeat', daemon=True)
     ctl.heartbeat_thread.start()
     try:
-        if ctl.state:
-            ctl.state.identity(dict(ctl.lease_identity, schema=STATE_SCHEMA, run=a.run, action=a.action, job=only_job,
-                                    commit=ctl.commit, code_root=a.code_root, boxes=a.boxes, slots=a.slots,
-                                    budget_minutes=a.budget_minutes, open_ended=ctl.open_ended, started_utc=utc(),
-                                    state_dir=a.state_dir, lease_key=lease_key(a.run)))
         if only_job is None:
             r = box('enable', MAIN, 600, CODE_ROOT=a.code_root)
             say('claim store', r)

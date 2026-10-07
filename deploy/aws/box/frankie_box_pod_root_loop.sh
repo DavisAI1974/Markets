@@ -7,7 +7,7 @@
 # plan/status are read-only. loop/resume require Greg's explicit AWS compute go; a loop's budget end is recorded as
 # budget_expired (never completion). JOB is required for resume/stop and refused otherwise. Retired Pod inputs refuse.
 # The controller's LIFETIME beyond the bounded runner is the main-box route: script=deploy/aws/box/frankie_box_cpu_controller.sh
-# (ACTION=preflight|start|status|stop|clear_stop), a run-bound systemd unit from the staged checkout; an S3 lease keeps a
-# runner loop and a main-box service off the same run.
+# (ACTION=preflight|start|status|stop|resume|clear_stop), a run-bound systemd unit from the staged checkout; an S3 lease
+# keeps a runner loop and a main-box service off the same run (under a live service, stop and resume go through it).
 echo "frankie_box_pod_root_loop.sh is carried out by the workflow on the runner; it never runs on the box" >&2
 exit 2

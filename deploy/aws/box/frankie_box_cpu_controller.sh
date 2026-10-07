@@ -61,20 +61,8 @@ set -- --run "$RUN" --code-root "$CODE_ROOT" --host main --state-dir "$STATE" --
 # lock, never a command-line pattern.
 alive_pids() {
   [ -e "$STATE/controller.lock" ] || return 0
-  "$PY" - "$STATE" <<'PYEOF' 2>/dev/null
-import fcntl, json, sys
-from pathlib import Path
-state = Path(sys.argv[1])
-with open(state / 'controller.lock', 'a') as handle:
-    try:
-        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        fcntl.flock(handle, fcntl.LOCK_UN)
-    except OSError:
-        try:
-            print(json.loads((state / 'controller.json').read_bytes()).get('pid') or 'held')
-        except (OSError, ValueError):
-            print('held')
-PYEOF
+  "$PY" -B -c 'import sys; sys.path.insert(0, sys.argv[1]); import controller; p = controller.alive_pid(sys.argv[2]); print(p if p else "", end="")' \
+    "$CODE_ROOT/research/kalshi/frankie_boss/pod_root" "$STATE" 2>/dev/null
 }
 case "$ACTION" in
   preflight)
@@ -154,7 +142,11 @@ case "$ACTION" in
       ENDED="$(find "$STATE" -maxdepth 1 -name 'outcome-*.json' -newer "$MARK" | head -n 1)"
       rm -f "$MARK"
       if [ -n "$ENDED" ]; then
-        echo "the controller ended on its own within 10 s; its outcome $ENDED:"; cat "$ENDED"; tail -n 20 "$LOG"; exit 0
+        echo "the controller ended on its own within 10 s; its outcome $ENDED:"; cat "$ENDED"; tail -n 20 "$LOG"
+        # no_remaining_work is a clean end (nothing for the Linux lane); anything else means the start did not take
+        OUTCOME="$("$PY" -c 'import json,sys; print(json.load(open(sys.argv[1])).get("outcome") or "")' "$ENDED" 2>/dev/null)"
+        [ "$OUTCOME" = no_remaining_work ] && exit 0
+        echo "the start did not take (outcome $OUTCOME); read the outcome and the log above" >&2; exit 3
       fi
       echo "the unit is not active 10 s after start and wrote no outcome; log tail:"; tail -n 40 "$LOG"; exit 3
     fi
