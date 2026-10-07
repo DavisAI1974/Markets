@@ -247,3 +247,150 @@ The remote voice admission (section 5) once its acknowledgment interface is agre
 exact operating sequence for a real launch, written into the runbook only after a real E2E has been authorized and
 observed. Steps 2-7 are not closed by this return. Nothing here is runtime evidence; the first real dispatch of any of it
 needs Greg's explicit AWS go, then ONE day with inspection, review, then THREE days; thirty remain a separate decision.
+
+## 9. Account actions, 2026-10-07 evening (the 8A dependencies a-d; Greg's explicit authorization in session)
+
+Authorized by Greg in the parent session ("Yes for the account work", "Root", write enabled). Caller: the account root of
+568968024170 through the `Aws` connector (`run_script` only; no Bash AWS CLI, no git write commands). Skills used before
+acting: `api-and-interface-design` (intent recorded before every call; success/failure/unknown kept distinct; additive policy),
+then through `retrieve_skill`: `aws-compute` (`references/systems-manager.md`), `setting-up-ec2-instance-profiles`
+(`references/ec2-instance-profile-setup.md`: reuse the existing role, inline least-privilege over managed, never detach),
+`aws-storage`, `aws-billing-and-cost-management` (prices from the Pricing API, arithmetic by script). Every call below ran
+once; each result is the API's own return. Nothing here launched the experiment, dispatched a workflow, called a model,
+rotated a key, created or terminated an instance, or deleted anything. The `llama-server` binary was never executed: the
+gate check reads files only.
+
+### a. EC2 state and SSM registration (read-only)
+
+- `sts:GetCallerIdentity`: `arn:aws:iam::568968024170:root`.
+- `ec2:DescribeInstances` us-east-1 and us-east-2, `ssm:DescribeInstanceInformation` both regions, 12:5xZ, BEFORE:
+  - main `i-035994afa8bdf66a5` r7i.8xlarge us-east-1d, `stopped`, instance profile `arn:aws:iam::568968024170:instance-profile/Ssm`,
+    tags Name=frankie-ingest32-20260917, KeepRunning=true;
+  - worker `i-0d17573dbce871520` r7i.4xlarge us-east-1d, `stopped`, instance profile `Ssm`, tags Name=frankie-linux-r7i4xl,
+    Owner=frankie-boss, no KeepRunning tag;
+  - `i-08cee7171c0a76a04` r6i.2xlarge us-east-2b, `stopped`, profile `Ssm` (not touched);
+  - SSM `InstanceInformationList` empty in both regions (nothing running).
+- After `ec2:StartInstances` (12:58:11Z, both us-east-1 boxes, `stopped -> pending`), polled `ssm:DescribeInstanceInformation`:
+  both `Online` by 12:58:28Z, SSM Agent 3.3.4793.0, Ubuntu 24.04.
+- The main box resolves as the instance carrying profile `Ssm` in us-east-1 with the 32-CPU type and the controller's
+  `MAIN` constant; the worker as `i-0d17573dbce871520` (controller `--boxes`).
+
+### b. Inline least-privilege policy on role `Ssm` (the main box's instance profile; shared by both boxes and the us-east-2 box)
+
+Before: `iam:GetInstanceProfile Ssm` -> role `Ssm`; `iam:GetRole` trust = `ec2.amazonaws.com sts:AssumeRole`, no permissions
+boundary; `iam:ListAttachedRolePolicies` = `arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore` only; `iam:ListRolePolicies`
+= none. The statements were derived from the calls the box modules make (grep of `deploy/aws/box` and `pod_root`, 5f111885):
+`pod_root/controller.py` list/get/put/delete under `pod-root/*` and `box-runs/*` of `frankie-granite42-568968024170-us-east-1`
+(lease, journals, presigned map, exports; presigned URLs act with the signer's own permissions) and list/head under
+`frankie/ingest/*` and `frankie/day_external/*` of `bento-568968024170-us-east-2-an`; `frankie_box_heartbeat.py`,
+`frankie_box_offload.py` (`upload_file`, multipart), `frankie_box_clm_sidecar_extract.sh`, `frankie_box_brain.py` get/put
+under `host-deliveries/*` of the transfer bucket; `ssm_run_sh.py` SendCommand `AWS-RunShellScript` to the worker and
+`GetCommandInvocation`; the controller preflight's `DescribeInstanceInformation`; `GetParameter` on the four named
+parameters (already inside the managed policy; restated for intent); `GetCallerIdentity`. No CloudWatch/logs call exists in
+either tree, so none is granted. `AbortMultipartUpload` is the one action not literally named in source: `upload_file`
+needs it to clean up a failed multipart part set. Written with `iam:PutRolePolicy` (inline, additive; the managed policy was
+NOT detached), read back with `iam:GetRolePolicy` (document equal), after: attached = `AmazonSSMManagedInstanceCore`,
+inline = `FrankieBoxStep8A-20261007`.
+
+Policy name `FrankieBoxStep8A-20261007` on role `Ssm`, verbatim:
+
+```json
+{"Version": "2012-10-17", "Statement": [
+ {"Sid": "TransferBucketList", "Effect": "Allow", "Action": ["s3:ListBucket"],
+  "Resource": "arn:aws:s3:::frankie-granite42-568968024170-us-east-1",
+  "Condition": {"StringLike": {"s3:prefix": ["pod-root/*", "box-runs/*", "host-deliveries/*"]}}},
+ {"Sid": "ControllerTransferObjects", "Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+  "Resource": ["arn:aws:s3:::frankie-granite42-568968024170-us-east-1/pod-root/*",
+               "arn:aws:s3:::frankie-granite42-568968024170-us-east-1/box-runs/*"]},
+ {"Sid": "HostDeliveriesObjects", "Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject", "s3:AbortMultipartUpload"],
+  "Resource": "arn:aws:s3:::frankie-granite42-568968024170-us-east-1/host-deliveries/*"},
+ {"Sid": "IngestBucketList", "Effect": "Allow", "Action": ["s3:ListBucket"],
+  "Resource": "arn:aws:s3:::bento-568968024170-us-east-2-an",
+  "Condition": {"StringLike": {"s3:prefix": ["frankie/ingest/*", "frankie/day_external/*"]}}},
+ {"Sid": "IngestBucketRead", "Effect": "Allow", "Action": ["s3:GetObject"],
+  "Resource": ["arn:aws:s3:::bento-568968024170-us-east-2-an/frankie/ingest/*",
+               "arn:aws:s3:::bento-568968024170-us-east-2-an/frankie/day_external/*"]},
+ {"Sid": "WorkerRunShellScript", "Effect": "Allow", "Action": ["ssm:SendCommand"],
+  "Resource": ["arn:aws:ec2:us-east-1:568968024170:instance/i-0d17573dbce871520",
+               "arn:aws:ssm:us-east-1::document/AWS-RunShellScript"]},
+ {"Sid": "WorkerCommandStatus", "Effect": "Allow", "Action": ["ssm:GetCommandInvocation", "ssm:DescribeInstanceInformation"],
+  "Resource": "*"},
+ {"Sid": "BoxParameters", "Effect": "Allow", "Action": ["ssm:GetParameter"],
+  "Resource": ["arn:aws:ssm:us-east-2:568968024170:parameter/markets/frankie/github-token",
+               "arn:aws:ssm:us-east-2:568968024170:parameter/markets/frankie/granite-service",
+               "arn:aws:ssm:us-east-2:568968024170:parameter/markets/frankie/runpod-serverless",
+               "arn:aws:ssm:us-east-1:568968024170:parameter/markets/DATABENTO_API_KEY"]},
+ {"Sid": "Identity", "Effect": "Allow", "Action": ["sts:GetCallerIdentity"], "Resource": "*"}]}
+```
+
+Not proven by this section: the policy's effect at run time (the controller preflight and the first lease write are the
+proof, per section 4 of `CCODE_STEP8_CPU_CONTROLLER_20261007.md`); `GetCommandInvocation`/`DescribeInstanceInformation`
+carry `Resource: *` because SSM defines no resource type for them.
+
+### c. Worker box setup and the main-box systemd-run/venv check (SSM Run Command)
+
+- `ssm:SendCommand` to `i-0d17573dbce871520`, `AWS-RunShellScript`, command `dcf13b26-bc56-4b6a-8d8d-e6683934a510`, sent
+  13:01:38Z, executionTimeout 3600: `deploy/aws/box/frankie_box_worker_setup.sh` at `5f111885` delivered verbatim through a
+  quoted heredoc, hashed ON THE BOX before running (`sha256sum` = the worktree's
+  `d2570592809672b8f11c3ed10eb834c1eb86c3b70cb739cb88a916da69d22553`, refused otherwise), `MARKETS_SHA` prepended as the
+  single-quoted literal `ssm_run_sh.preamble` makes, stdout kept whole at `/var/tmp/ssm-output/worker-setup.out`.
+  `ssm:GetCommandInvocation`: `Success`. Output: ip-172-31-46-110, Ubuntu 24.04.4 LTS, 16 CPUs, 123 GB; Python 3.13.15;
+  "freeze matches the main box's 75 pins"; checkout `5f111885` detached, ingest worktree
+  `/opt/frankie-box/ingest-code/5f111885c23eb056f2769f3fa835a73709f727a0`; receipt `FRANKIE_WORKER_SETUP_V1`
+  (`freeze_matches_main: true`, cpus 16) under `/opt/frankie-box/receipts/worker-setup-<utc>.json`. Disk after: 19 GB free
+  of 116 GB (84% used): named, not changed.
+- `ssm:SendCommand` to `i-035994afa8bdf66a5`, command `02f6b8ef-e79b-41c9-a1d4-86842ef498d3`, executionTimeout 300,
+  `GetCommandInvocation`: `Success`. ip-172-31-39-59, Ubuntu 24.04.4 LTS, 32 CPUs, 247 GB, 1.1 TB free of 2.0 TB;
+  `/usr/bin/systemd-run` present (systemd 255, 255.4-1ubuntu8.17); `/opt/frankie-box/venv/bin/python` 3.13.15 imports
+  boto3 1.42.23 / botocore 1.42.97; the box role is `arn:aws:sts::568968024170:assumed-role/Ssm/i-035994afa8bdf66a5`;
+  claim store `/opt/frankie-box/work/root-claims` exists; experiment runs present: days-20260929-1, days-20260929-3,
+  days-20260930-1, pairs2-20260929-1; `/opt/frankie-box/markets` was at `25b30d9` (left there; the pinned commit was added
+  as an ingest worktree in d, the main checkout was not moved).
+
+### d. The one pinned CPU install on the main box (serves Granite and, by Greg's decision today, Jev: the same weights, build and runtime)
+
+- Before the box: the pinned asset was fetched into the session scratchpad through the proxy from
+  `https://github.com/ggml-org/llama.cpp/releases/download/b11440/llama-b11440-bin-ubuntu-x64.tar.gz`: 17,693,628 bytes,
+  sha256 `5e6dcc9178743c49de36e5e1b77f38453e820647782a738856b1e3fd73b1fb2b` = pin `llama_cpp_sha256`; one top directory
+  `llama-b11440`, so the gate's binary path is `$GRANITE_DIR/llama-b11440/llama-server`.
+- `ssm:SendCommand` to `i-035994afa8bdf66a5`, command `7e8f2cb5-791b-408f-9696-ceb11f90de2c`, sent 13:02:26Z,
+  executionTimeout 3600, `GetCommandInvocation`: `Success`, setup wall 55 s. The command: `git fetch --depth 1` of
+  `5f111885c23eb056f2769f3fa835a73709f727a0` into `/opt/frankie-box/markets` and `worktree add` at
+  `/opt/frankie-box/ingest-code/5f111885c23eb056f2769f3fa835a73709f727a0` (the box's existing pattern; CODE_ROOT);
+  `GRANITE_MEETING_RUNTIME_V1.json` there hashed `aee197b48ad37d1ba4c8e892c08ba0c84b615a25f4751414862312247d9dd032` and
+  `frankie_box_granite_meeting_setup.sh` `2e2b80d3b8d74ce737e5bc1ab77bc8eed22c54e7a83477aa04a793e7c176b01d` (both equal the
+  worktree; refused otherwise); then `CODE_ROOT=<that> GRANITE_DIR=/opt/frankie-box/granite sh frankie_box_granite_meeting_setup.sh`.
+- Installed, hashed on the box after the script (sources: the GitHub release asset above; the model from
+  `https://huggingface.co/ibm-granite/granite-4.2-3b-GGUF/resolve/main/granite-4.2-3b-Q4_K_M.gguf`):
+  - `/opt/frankie-box/granite/llama-b11440-bin-ubuntu-x64.tar.gz` 17,693,628 bytes,
+    sha256 `5e6dcc9178743c49de36e5e1b77f38453e820647782a738856b1e3fd73b1fb2b` (= `llama_cpp_sha256`);
+  - `/opt/frankie-box/granite/llama-b11440/llama-server`
+    sha256 `b30ec35b37e15c7365e61c6d269c5a184448f8ad342ed577999964a037abc3db` (= `llama_server_sha256`); the 50 files of
+    `llama_cpp_files` verified beside it (61 directory entries including the 10 .so symlinks and `provenance.json`);
+  - `/opt/frankie-box/granite/granite-4.2-3b-Q4_K_M.gguf` 2,244,011,552 bytes,
+    sha256 `e0406663965846ae22a403456eb826ccce5f450840491f71952f18a7cb78e7d5` (= `model_sha256`);
+  - `/opt/frankie-box/granite/llama-b11440/provenance.json` = `FRANKIE_GRANITE_RUNTIME_PROVENANCE_V1` (release b11440,
+    files_verified 50, host_cpus 32, verified_every_run true).
+- The Python gate, run read-only from the pinned checkout with the venv (`frankie_box_granite_meeting.gate(config,
+  binary=..., model=...)`, zero model calls, `llama-server` never executed): `gate reasons: []` -> "runtime may start".
+  That is the gate's file-level verdict only; no meeting, E2E or model call ran or is authorized by it.
+- No second install: Jev uses this same directory per Greg's decision; `JEV_CPU_RUNTIME_V1` (Codex's) still has to NAME
+  these paths and pins before a Jev child can start; until then `Run.jev` waits, as before.
+
+### Box states, instance-hours and cost
+
+- `ec2:StopInstances i-0d17573dbce871520` 13:03:32Z (`running -> stopping`); `ec2:DescribeInstances` 13:04:02Z: worker
+  `stopped` (returned to its prior state; no KeepRunning tag). Worker running time 12:58:11Z-13:03:32Z = 0.0892 h.
+- Main `i-035994afa8bdf66a5` is `running` and was LEFT RUNNING because its tag says KeepRunning=true (the parent's rule for
+  this work: return to prior state unless KeepRunning=true). Its prior state was `stopped`. 0.0975 h at 13:04:02Z and
+  counting. Stopping it is one call (`ec2:StopInstances`, us-east-1) if Greg wants the prior state back.
+- Prices from `pricing:GetProducts` (us-east-1 endpoint; Linux, shared tenancy, on-demand, US East N. Virginia):
+  r7i.4xlarge 1.0584 USD/h, r7i.8xlarge 2.1168 USD/h. Worker: 0.0944 USD. Main: 0.2064 USD at 13:04:02Z; 50.80 USD per
+  day if left running. Data transfer for the 2.2 GB model download in is not charged by EC2 (inbound).
+
+### What did not complete
+
+Nothing in a-d failed. Not done because not in scope: the signing-window limit (section 4.2) is a design limit, not a
+provisioning item; the saved main plan and the claim-store activation are written by the orchestrator at its first start;
+the B1 duckdb/pyarrow Linux dependency named in the step-1 handoff was not examined. The policy's run-time effect and the
+installed runtime's behaviour under a real meeting stay RUNTIME-UNVERIFIED until the one authorized E2E.
