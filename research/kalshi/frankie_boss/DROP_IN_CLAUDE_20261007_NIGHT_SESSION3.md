@@ -76,3 +76,9 @@ NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS.
 
 ## Session-end state
 (appended by the parent below)
+- Session 2 end: both in-flight agents landed. ROOT physical-core split c046d6ca (integrated at 98579cea). Granite/Jev
+  token stacks committed on the work branch (after 98579cea), NOT integrated and NOT reviewed yet; they matter only
+  for the meeting/Jev stages. Open from it: Jev may have to decode recipe-encoded numbers (Greg can switch recipe/
+  DIGEST layers off for Jev); experiment.py ~3011 remote-route intent hash vs the new stacked input (request to
+  ccode_step8). The a2 launch was in progress via frankie_box_run.yml (run 832 staging 98579cea at 19:49Z); the
+  Granite gate check is skipped by Greg's order. Check E2E_ONE_DAY_20231018.md for the run's state.
