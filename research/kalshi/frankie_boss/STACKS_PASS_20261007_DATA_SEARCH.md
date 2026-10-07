@@ -24,7 +24,7 @@ classroom). Never stage an intermediate WIP snapshot.
    (search.py:150-178) returns 'context_only' for SEARCH_CONTEXT_IDENTITIES (search.py:143: order_id, order_ids,
    fill/unresolved/matched_order_ids, instrument_id, publisher_id, channel_id, member_id, session_id, source_day,
    source_role, raw_symbol, symbol, contract, trading_weekday) and calendar names; build_series moves them from series
-   into text cells (search.py:~1286-1310), and search() makes one cell per distinct value (cell_index,
+   into text cells (search.py:1286-1310), and search() makes one cell per distinct value (cell_index,
    search.py:2430-2442) and one coupling job per (cell, transform, series) (jobs, search.py:2445). Feasibility cost:
    jobs = sum over cells x |transforms| x |series|; an ID-valued column has about one label per group, so on a full day
    (~10^5-10^6 groups) one such column alone gives ~10^5-10^6 cells x 5 transforms x every series, each job writing a
@@ -71,11 +71,11 @@ search.py
   range. Every per-record check stays on the coordinator in spool order (build_series:995-1060 unchanged).
 - `_progress` + `PROBE_FAILURES` (search.py:602-614): one heartbeat helper; the three old silent `report_phase`
   blocks (phases, coupling cells, discovery problems) now call it; transform steps report units.
-- `PART_DIGESTS`, `PART_READS`, `_part_digest` (search.py:~1553-1566): the coupling part pin is the digest its job
+- `PART_DIGESTS`, `PART_READS`, `_part_digest` (search.py:1552-1566): the coupling part pin is the digest its job
   recorded in its saved state (the fsynced bytes it renamed, or the file it re-hashed and compared on a resume).
 - `_part_nominations` (search.py:1969-1990): reads the part as bytes and hashes every line as read; returns
   (rows, nominations, (bytes, sha256)); `discovery_nominations` stores the read in PART_READS.
-- `search()` publish (search.py:~2493-2512): pins from PART_DIGESTS; a part without a recorded digest is hashed on
+- `search()` publish (search.py:2493-2512): pins from PART_DIGESTS; a part without a recorded digest is hashed on
   pinned threads (listed in source_passes.rehashed); a discovery read that disagrees with the job's digest is a hard
   error naming both. `cpu_placement.sigterm_inherited_by_workers` and `cpu_placement.probe_failures` added.
 
@@ -127,7 +127,7 @@ journal.py, dipole.py, transforms.py, surface.py: audited, no edit (reasons in s
 | pass dedupe: columns() | already one pass with per-channel accumulators (search.py:285) | unchanged |
 | pass dedupe: cell index | already one pass per text column (search.py:~2430) | unchanged |
 | pass dedupe: asof alignment | one alignment shared by a source's numeric and text fields (search.py:~971-975) | unchanged |
-| pass dedupe: INPUT loop | one pass per record; but `for field in event_fields: append None` per record (search.py:~1040-1045) is O(fields) per record | listed (S6): byte-identical rewrite to positional accumulators possible, not built (measure first) |
+| pass dedupe: INPUT loop | one pass per record; but `for field in event_fields: append None` per record (search.py:1035-1040) is O(fields) per record | listed (S6): byte-identical rewrite to positional accumulators possible, not built (measure first) |
 | content dedupe: coupling part rows | every row repeats day, cycle, day_role (header), and `transform` == `x_transform` | NOT built: the part bytes are read by the scientific teacher, review and survivor update (other owners) and pinned; a keys-once / `=k` stacked rendering (frankie_box_stacked_text.py / DIGEST_V10 grammar) would have to be an ADDITIONAL rendering with parse-back proof, or a coordinated format change. Request R4 |
 | content dedupe: MANIFEST / workflow-report.json | MANIFEST repeats per-source key lists (numeric/text/placed_series); workflow_report copies leakage, dispositions, not_searched from the MANIFEST | workflow-report.json already names long lists by count and MANIFEST location (compact_report); a stacked rendering of the MANIFEST for model readers is not built (no model reads it today; the scientific teacher reads JSON) |
 | content dedupe: export MANIFEST | `what` strings repeated per file of the same pattern | same as above: a pattern table referenced by index would change the MANIFEST bytes read by search/teacher; listed |
@@ -196,8 +196,8 @@ Shares are estimates from code structure, unmeasured (no stage-6/7 run on a full
 | S3 | build_series save points | a stop or crash in preparation redoes the whole preparation (decode of every spool) | all of preparation on a resume | yes | per-source saved results (prepared parts) bound to identity + pins | not built (memory/size of the pickles is the same problem as S0) |
 | S4 | search.py:2430-2442 cell index; 2445 jobs list | coordinator only; one pass per text column | small unless ID cells (call (b)) | yes: columns independent | ordered_map over columns, merged in sorted order | not built (gain depends on (b)) |
 | S5 | search.py:1523 pin_coordinator; lane_pin.placement | the coordinator's hyperthread sibling (N+16) is the LAST worker CPU, so a worker shares the coordinator's core; during build_series the coordinator is unpinned | a few % on merge-heavy phases | placement only | take the sibling out of the worker set (31 -> 30), as ROOT did | not built: lane_pin owner (request R2); throughput trade |
-| S6 | search.py:~1040 per-record `for field in event_fields: append None` | O(fields) per record on the coordinator | small-moderate | yes (positional accumulators, materialize at end like columns()) | pass collapse | not built: measure on a canary first |
-| S7 | search.py:~1287-1300 context merge, non_market_reason over every channel | coordinator | small | yes | ordered_map over channels | not built (small) |
+| S6 | search.py:1035 per-record `for field in event_fields: append None` | O(fields) per record on the coordinator | small-moderate | yes (positional accumulators, materialize at end like columns()) | pass collapse | not built: measure on a canary first |
+| S7 | search.py:1286-1300 context merge, non_market_reason over every channel | coordinator | small | yes | ordered_map over channels | not built (small) |
 | S8 | search.py:2463-2490 couplings | already on ordered_map; per-job state pickle per cell even for short jobs | dominant at search time | n/a | fewer files for short jobs would change recovery layout | listed (depends on (b)) |
 | S9 | discovery (search.py:2151) | PySR fits per problem on workers (serial Julia per worker by design) | unknown | n/a | already parallel | none |
 | S10 | data.py:387-404 export links | os.link per file, coordinator | negligible | yes | - | none needed |
