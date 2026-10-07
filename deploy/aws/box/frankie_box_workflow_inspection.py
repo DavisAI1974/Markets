@@ -64,7 +64,11 @@ shared_market_use coverage completeness arithmetic integrity_failure stopped out
 frame_dispositions pairing placed_series placed_cells exclusions bedrock input_records data_manifest_sha256
 frozen_survivors presented_inputs external_publications completed_sources identity journal equation absent_layers
 unclosed_instruments closed_source_without_root_frame unplaceable_input_clocks interpretation limitation view
+shared_market_context shared_market_context_listed shared_market adviser_market_reader workflow_report
+claims_seal scientific_result deliveries client_receipt pending unparsed jev_withheld teacher_rows
+teacher_rows_listed lessons exchange_hash refused_to_run inputs
 '''.split())
+WORKFLOW_REPORT_SCHEMA = 'FRANKIE_PIECE_WORKFLOW_REPORT_V1'   # the adviser pieces' own inputs / use / outputs record
 
 # Received / used / produced (Greg, 2026-10-07): every piece's report says what it received,
 # how it used it and what it produced. These are projections of recorded fields only; a
@@ -143,7 +147,30 @@ def metadata(path, label):
     json_block(dict(source_read=pin, recorded={k: v for k, v in body.items() if k in FIELDS},
                     other_fields_retained_at_source=sorted(set(body) - FIELDS)))
     received_used_produced(body, path.name)
+    workflow_report_block(body, path.name)
     return body
+
+
+def workflow_report_block(body, label):
+    """The piece's own FRANKIE_PIECE_WORKFLOW_REPORT_V1 (exchange, Granite meeting, Jev CPU, Jev sit-in): the
+    inputs it received (the cutoff picture's source, as_of/through_cursor, hash, bytes), how it used them
+    (which picture values reached which prompt or record, what a role or the privacy wall withheld, every
+    missing/stale/unavailable disposition, caps that refused) and what it produced (seals, inputs with pins,
+    model calls made or refused, waits). Projected whole from the receipt; prompt bodies are never in it and
+    a picture appears only as its exact reference."""
+    report = body.get('workflow_report')
+    if not isinstance(report, dict):
+        return
+    emit('#### ' + label + ': the piece\'s own inputs / use / outputs record\n')
+    if report.get('schema') != WORKFLOW_REPORT_SCHEMA:
+        json_block(dict(workflow_report=report, disposition='unknown workflow report schema; shown as recorded'))
+        return
+    for section in ('inputs', 'use', 'outputs'):
+        emit('##### ' + section + ' (' + str(report.get('piece')) + ')\n')
+        json_block(report.get(section))
+    json_block(dict(rule=report.get('rule'),
+                    disposition='temporary operator review; a recorded prompt delivery is not proof of consumption, '
+                                'learning or that a model experienced every historical picture'))
 
 
 def classroom_projection(receipt, path):
@@ -262,6 +289,15 @@ def artifact_paths(record, piece):
         path = absolute(record.get(field))
         if path:
             out.append(path.parent / 'receipt.json')
+    if piece == 'jev':
+        # The Jev CPU piece: its receipt.json (JEV_CPU_RECEIPT_V1 with the piece's workflow report),
+        # owner.json (identity, the shared market context pin) and the sit-in client receipt beside it.
+        # Material, claims, transcript and the retained picture itself are never opened here.
+        for field in ('jev', 'jev_receipt', 'jev_output', 'output'):
+            path = absolute(record.get(field))
+            if path:
+                base = path.parent if path.suffix == '.json' else path
+                out += [base / 'receipt.json', base / 'owner.json', base / 'client-receipt.json']
     return list(dict.fromkeys(out))
 
 

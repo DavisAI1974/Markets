@@ -219,13 +219,25 @@ def meeting_input(exchange, knowledge_index=None):
                           claim=item.get('claim'), lessons=item.get('lessons'),
                           voiced=voiced.get(item['item_id'], {}).get('turns') or [],
                           records=side, open_items=open_items_of(item, turns, side)))
-    return dict(schema=INPUT_SCHEMA, day=exchange.get('day'), run=exchange.get('run'),
-                exchange_hash=exchange.get('exchange_hash'), charter=witness_file(CHARTER) if CHARTER.is_file() else None,
-                teachers_findings=[dict(finding_id=f.get('finding_id'), kind=f.get('kind'), status=f.get('status'),
-                                        scope=f.get('scope')) for f in exchange.get('teachers_findings') or []],
-                knowledge_index=knowledge_index or [], items=items,
-                rule='Granite is given these turns and lists; it adds no empirical content (role V2); Jev raw items are '
-                     'not in this view (the lessons wall)')
+    given = dict(schema=INPUT_SCHEMA, day=exchange.get('day'), run=exchange.get('run'),
+                 exchange_hash=exchange.get('exchange_hash'), charter=witness_file(CHARTER) if CHARTER.is_file() else None,
+                 teachers_findings=[dict(finding_id=f.get('finding_id'), kind=f.get('kind'), status=f.get('status'),
+                                         scope=f.get('scope')) for f in exchange.get('teachers_findings') or []],
+                 knowledge_index=knowledge_index or [], items=items,
+                 rule='Granite is given these turns and lists; it adds no empirical content (role V2); Jev raw items are '
+                      'not in this view (the lessons wall)')
+    sources = exchange.get('sources') if isinstance(exchange.get('sources'), dict) else {}
+    shared = sources.get('shared_market_context')
+    if shared is not None:
+        # Bounded by role V2: the coordinator gets the exact reference (scope, clocks, hash, dispositions)
+        # to the picture the code seats stood under, never the picture body, which is evidence. The
+        # complete typed picture stays in the exchange document this meeting is bound to. A legacy
+        # exchange without the context leaves the meeting input bytes unchanged.
+        import frankie_box_adviser_market as AM
+        given['shared_market'] = dict(AM.reference(shared),
+            role='reference only: the seats measured under this picture; Granite coordinates and cites seat values '
+                 'only; the picture body is withheld from the coordinator (role V2: never evidence)')
+    return given
 
 
 # ------------------------------------------------------------------------------------------ validation of a turn
@@ -1065,6 +1077,46 @@ def discuss_item(server, item, system, params, log, progress=None):
     return result
 
 
+def meeting_workflow_report(out_dir, given, record, *, status, params=None, refusals=None):
+    """One-day review record (Greg, 2026-10-07): what the meeting received, how the prompt used it, what it
+    produced. Recorded facts only; the coordinator transcript's content is not copied here."""
+    import frankie_box_adviser_market as AM
+    out_dir = Path(out_dir)
+    items = (record or {}).get('items') or []
+    over_cap = [i['item_id'] for i in items if any((o or {}).get('kind') == 'input_cap' for o in i.get('open_items') or [])]
+    interrupted = [i['item_id'] for i in items if any((o or {}).get('kind') == 'interrupted_call' for o in i.get('open_items') or [])]
+    runtime = (record or {}).get('runtime') or {}
+    shared = (given or {}).get('shared_market')
+    return AM.workflow_report('meeting', context=shared,
+        inputs=dict(exchange=(record or {}).get('exchange'), charter=(given or {}).get('charter'),
+                    meeting_input=witness_file(out_dir / 'meeting-input.json') if (out_dir / 'meeting-input.json').is_file() else None,
+                    items=len((given or {}).get('items') or []), knowledge_index=len((given or {}).get('knowledge_index') or []),
+                    teachers_findings=len((given or {}).get('teachers_findings') or []),
+                    shared_market_context=('absent: the exchange carries no shared market context (legacy teacher)'
+                                           if shared is None else 'present as an exact reference in the meeting input')),
+        use=dict(prompt=dict(system='charter, output contract, retained meeting context: knowledge_index, '
+                                    'teachers_findings' + (', shared_market reference' if shared is not None else ''),
+                             per_item='item_id, author, claim, voiced seat turns, retained seat records, code-seeded open items'),
+                 withheld=['the shared market picture body (reference only; role V2: the coordinator is never evidence)',
+                           'Jev raw items (the lessons wall)', 'seat private process and grades (R09/R10)'],
+                 caps=dict(input_token_cap_per_call=(params or {}).get('input_token_cap_per_call'),
+                           context_size=(params or {}).get('context_size'),
+                           max_output_tokens_per_turn=(params or {}).get('max_output_tokens_per_turn'),
+                           max_coordinator_turns_per_item=(params or {}).get('max_coordinator_turns_per_item'),
+                           max_meeting_seconds=(params or {}).get('max_meeting_seconds'),
+                           refused_over_cap_items=over_cap,
+                           refused_turns=sum(len(i.get('refused') or []) for i in items),
+                           rule='an over-cap input makes no call and leaves the item open; nothing is truncated'),
+                 model_calls=(record or {}).get('model_calls', 0), calls=(record or {}).get('calls'),
+                 refused_to_run=refusals or [], interrupted_call_items=interrupted,
+                 budget=dict(seconds=runtime.get('budget_seconds'), left=runtime.get('budget_left_seconds'))),
+        outputs=dict(status=status, record=witness_file(out_dir / 'meeting.json') if (out_dir / 'meeting.json').is_file() else None,
+                     binding=(record or {}).get('binding'), counts=(record or {}).get('counts'),
+                     not_discussed=[n.get('item_id') for n in (record or {}).get('not_discussed') or []],
+                     publication=(record or {}).get('publication'),
+                     waits=[n.get('reason') for n in (record or {}).get('not_discussed') or []]))
+
+
 def publish_meeting_record(exchange_path, out_dir, brain=None, *, include_inputs=True):
     """Finish publication from retained complete bytes, including after an interrupted receipt write."""
     import frankie_box_brain as BR
@@ -1094,6 +1146,9 @@ def publish_meeting_record(exchange_path, out_dir, brain=None, *, include_inputs
     inputs = out_dir / 'meeting-input.json'
     if include_inputs and inputs.is_file():
         receipt['inputs'] = witness_file(inputs)
+    given = json.loads(inputs.read_bytes()) if inputs.is_file() else None
+    receipt['workflow_report'] = meeting_workflow_report(out_dir, given, record, status='complete',
+                                                         params=(record.get('runtime') or {}).get('parameters'))
     write_json(out_dir / 'receipt.json', receipt)
     return receipt
 
@@ -1170,7 +1225,10 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
         write_json(out_dir / 'meeting.json', record)
         receipt = dict(schema=RECEIPT_SCHEMA, day=exchange.get('day'), status=record['status'], refused_to_run=refusals,
                        inputs=witness_file(out_dir / 'meeting-input.json'), record=witness_file(out_dir / 'meeting.json'),
-                       model_calls=0, seconds=round(time.time() - started, 1))
+                       model_calls=0, seconds=round(time.time() - started, 1),
+                       workflow_report=meeting_workflow_report(out_dir, given, record, status=record['status'],
+                                                              params=config.get('proposed_runtime_parameters'),
+                                                              refusals=refusals))
         write_json(out_dir / 'receipt.json', receipt)
         log('meeting %s: %s (%s)' % (exchange.get('day'), record['status'], '; '.join(refusals) or 'inputs written'))
         return receipt
@@ -1210,14 +1268,17 @@ def _meeting(exchange_path, out_dir, *, config_path=CONFIG, binary=None, model=N
                        evidence=dict(server_stderr=server.stderr_witness(), retained=server.evidence, attempt=attempt,
                                      attempts=LlamaServer.retained_attempts(evidence_dir)),
                        inputs=witness_file(out_dir / 'meeting-input.json'), binding=witness_file(binding_path),
-                       model_calls=0, seconds=round(time.time() - started, 1))
+                       model_calls=0, seconds=round(time.time() - started, 1),
+                       workflow_report=meeting_workflow_report(out_dir, given, None, status='runtime_failed', params=params,
+                                                              refusals=['the coordinator runtime did not start: %s' % error]))
         write_json(out_dir / 'receipt.json', receipt)
         log('meeting %s: runtime failed to start (%s)' % (exchange.get('day'), error))
         raise
     try:
         system = system_prompt(CHARTER.read_text(encoding='utf-8'), rules_witness['rules'])
+        context_keys = ('knowledge_index', 'teachers_findings') + (('shared_market',) if 'shared_market' in given else ())
         system += ('\n\n## Retained meeting context (labels and findings summaries, not new evidence)\n'
-                   + json.dumps({key: given[key] for key in ('knowledge_index', 'teachers_findings')}, sort_keys=True))
+                   + json.dumps({key: given[key] for key in context_keys}, sort_keys=True))
         for item in given['items']:
             progress = ItemProgress(out_dir, item['item_id'], binding_sha)
             retained = progress.load()
