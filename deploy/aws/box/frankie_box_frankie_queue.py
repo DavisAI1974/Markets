@@ -1191,21 +1191,21 @@ def _finish_day(run, e, code_root, commit, log):
     run.check_save()
 
     # BOSS teacher: whole journal, every level, day-local rows.
-    if X.rows_of(e)[0] is None:
+    if run.day_rows(e)[0] is None:                    # the one gate: rows the plan's shared policy refuses are none
         deadline = time.monotonic() + TEACHER_BOOK_WAIT
         while True:
             run.check_save()
             t = run.teacher('day-%s' % e['day'], [e]) or {}
-            if t.get('status') != 'waiting' or X.rows_of(e)[0] is not None or time.monotonic() > deadline:
+            if t.get('status') != 'waiting' or run.day_rows(e)[0] is not None or time.monotonic() > deadline:
                 break
             log('teacher %s %s: waiting (%s); retrying in the held slot' % (run.plan['run'], e['day'], t.get('reason')))
             time.sleep(30)
         facts['teacher'] = dict(status=t.get('status'), reason=t.get('reason'), log=t.get('log'))
-        if X.rows_of(e)[0] is None:
+        if run.day_rows(e)[0] is None:
             return False, facts
     else:
         t = run.teacher('day-%s' % e['day'], [e])
-        facts['teacher'] = dict(status=t['status'], rows=str(X.rows_of(e)[0]),
+        facts['teacher'] = dict(status=t['status'], rows=str(run.day_rows(e)[0]),
                                 brain_entries=t.get('brain_entries'))
 
     if e['classroom_arm'] and os.environ.get('FRANKIE_LANE_MAILBOX'):
