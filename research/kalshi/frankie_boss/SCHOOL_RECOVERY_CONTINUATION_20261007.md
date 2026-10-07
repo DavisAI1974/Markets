@@ -92,3 +92,108 @@ was unavailable; this slice reuses the existing owner-local I/O, held-lane execu
 receipts, and makes no new AWS efficiency claim. API/module principles applied: one additive
 owner transition, exact input/output witnesses, checked boundary publication and original-intent
 retry behavior; no independent replacement pipeline.
+
+## 2026-10-07 evening: stage 10 built, all-99 coverage in the scientific stages, day-quantity agnostic (SOURCE-BUILT / RUNTIME-UNVERIFIED / UNREVIEWED)
+
+Greg resumed the school_recovery role (relayed by the parent) with the redirect "the 99 layers are combined for Frankie
+FIRST" and "day-quantity agnostic". Nothing ran; no account call was made; AWS skills were retrieved as documentation
+only. A fresh independent review is required before integration. Skills used through the Skill tool:
+api-and-interface-design (first), context-engineering, experiment-orchestrator, performance-optimization,
+observability-and-instrumentation, incremental-implementation, doubt-driven-development (degraded self-questioning: a
+subagent cannot spawn a fresh reviewer; cross-model skipped, non-interactive). Through the live `Aws` connector:
+`search_documentation` (topics agent_skills, the stage's own words) and `retrieve_skill` for querying-aws-s3,
+aws-storage, querying-data-lake, aws-billing-and-cost-management, aws-compute.
+
+### Files (all under deploy/aws/box/)
+
+| File | Lines | What |
+|---|---:|---|
+| `frankie_box_all99_coverage.py` (NEW) | 449 | the 99 identities of the retained crosswalk (`research/kalshi/frankie_boss/audits/CROSSWALK_SUNDAY_CYCLE0_FEED_33746436209_20260916.json`, sha256 `ece9c624...`, registry sha256 `239a1480...`) embedded and checked against the file; `day_coverage` (per day, per entry: arrived / thin / absent / disabled / withheld_by_role / produced / pending, with the reason and `via`), `registry`, `series_sources`, `tests_by_source`, `summary`, `retain` (content-addressed file), `boundary` (cross-day: days per disposition per entry), `markdown` |
+| `frankie_box_survivor_update.py` (NEW) | 495 | stage 10: `select` (frozen selection over every brain root, per-entry integrity capture), `lessons_in`, `candidate_key`, `build` (one candidate per tested claim, every test with exact provenance, days per mark, own-day/origin/duplicate rows listed never counted, `works_on`/`not_on`, `previously_known`/`new_tests`, `same_pair_candidates`), `coverage` (all-99 per batch day), `update` (inputs.json frozen, survivors.json reproducible, immediate brain commit `<boundary day>-survivors`, receipt with FRANKIE_PIECE_WORKFLOW_REPORT_V1, late knowledge listed), `main` |
+| `frankie_box_survivor_update.sh` (NEW) | 27 | the box wrapper: RUN, BOUNDARY_DAY, BATCH_DAYS (one or more), BRAIN, OUT, SEARCHES |
+| `frankie_box_scientific_teacher.py` | 1696 (+294) | `load_searches` retains the manifest's plane/source/shared-market receipts; `test(..., report=)` with the needle row filter (every byte still hashed; selected rows invariant); `all99_for_operation`; `write(..., all99=, read_report=)` carries `all99_coverage` and `evidence_read` in every lessons file; `teach_standalone_successor` refreshes its coverage; `upload_jev_lessons` records intent before the PUT and success / failure / unknown after it (HTTPError = failure, transport = unknown; a retry PUTs the same bytes to the same key); `main`: `--search-findings` with no other searched day is LISTED, not refused (N = 1 days lawful); `_accumulated_report` (coverage + workflow_report on the accumulated receipt); `_write_teacher_receipt` (FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1, content-addressed under `<out>/receipts/`, printed as the last line) |
+| `frankie_box_experiment_review.py` | 1064 (+41) | `current_document`: a FRANKIE_SURVIVOR_UPDATE_V1 whose cited lesson has a checked correction is delivered whole with each affected candidate marked (`stale_sources`, `status_disposition=awaiting_next_boundary_update`, doc-level `corrections_pending`) instead of raising; its checked successor is the next boundary update |
+| `frankie_box_school_knowledge.py` | 559 (+53) | `main` receipt carries `missing_listed` and `withheld_listed` (correction_consumer's request) and `workflow_report` (new `workflow_report()`: inputs by path/pin, per-section inline/subset/pointer dispositions, the currentness check, the day's lessons' all-99 summary, outputs file pin/row/reused/successor/corrections); the school file's bytes, index row and consumption path are unchanged |
+
+### Stage 10 design as built
+
+Cross-day batch boundary keyed by the batch's last day in plan order (a batch of one day is a boundary); cumulative over
+every lessons / jev-tested / search / survivors brain entry at the boundary; selection frozen in inputs.json (a restart
+reproduces the same bytes; later arrivals listed as late_knowledge and consumed at the next boundary; nothing waits).
+One candidate per tested claim (author, claim id, day made, statement), every test row with lessons sha256, result
+index, part sha256, row ordinal and raw-line sha256; the mark the scientific teacher gave it; days named per mark;
+counts never pooled. Status words are orientation only: survivor_scoped (held beyond chance the claimed way on at
+least one day other than the day the claim was made: one checked occurrence counts, R06), contradicted_scoped (no held
+day, a shown_otherwise day: kept, D52), open. Days shown otherwise stay beside days held (both accounts, R13). No
+threshold, rarity gate, minimum occurrence, averaging or freeze (step 13 freezes once, separately; not built). Filed
+immediately as `<brain>/<boundary day>-survivors` (write_stage_entry, stage `survivors`): `learner_knowledge` delivers
+it to every LATER classroom and excludes the boundary day's own classroom (DAY_KINDS survivors 50 > classroom 0): no
+same-day circular promotion. Each candidate carries claim_id, x, y, scope.pair and evidence_refs so the classroom's
+existing learner check binds it as a prior hypothesis, never as today's observation. Integrity failures (altered pinned
+bytes, unreadable manifests, lessons needing a checked successor) are listed apart and block only what they carry.
+
+### All-99 coverage (Greg's item 1)
+
+For every searched day the stage emits one list of the 99 entries. Raw (6) and calculation/clock (49) entries are
+read through the search MANIFEST's own plane receipt (`frankie_box_experiment_search.plane_summary`) and source
+receipts: an entry is `arrived` only when a test row of this operation read a series the search placed from that
+entry's source; `thin` when placed partially or placed and no claim named it; `absent` with the search's reason
+(listed missing, not in this export, not produced with bedrock off, built not called, produced not carried). The 23
+control/knowledge/arm entries are classified by role: the historical catalog entries reach the test through the
+historical crosswalk only (`thin`, with the mapped/not_testable counts) or are absent when no historical claims file
+was given; Memory A entries `disabled` (retired); arm/control policies `absent` by role; `lawful_prior_session_carry`
+`arrived` when the operation selected brain documents. The 9 sealed answers are `withheld_by_role` (R09/R10), the 2
+shadows `disabled`, the 10 outputs `produced` with the pin when this operation wrote them (candidate discoveries,
+negative/inconclusive ledger, knowledge retrieval receipts, source/code hashes), `pending` or `absent` (other owners)
+otherwise. The list is retained per day under `<out>/coverage/` (content-addressed), summarised inline in every lessons
+file (`all99_coverage.by_day`), on the accumulated receipt, the standalone teacher receipt, the survivor receipt and
+the school receipt's workflow_report, all under FRANKIE_PIECE_WORKFLOW_REPORT_V1 so the one-day reporter projects it.
+The registry file named by the pins (`frankie_native_raw_mbo_ingestion_layer_registry_20260828.json`) is not in this
+checkout; the crosswalk is, and the embedded identities are bound to its sha256; a difference is an integrity finding.
+
+### Day-quantity agnostic (Greg's item 2)
+
+Removed: the `--search-findings` refusal when the candidates' own day is the only searched day (now listed; the claims
+come back INSUFFICIENT_EVIDENCE with the reason; the next day's search tests them). The survivor boundary accepts one
+or more days. No other day-count literal exists in the owned files: `len(a.search) != 1` (accumulated mode) and the
+`len(...) != 1` checks in experiment_review/school_knowledge are identity checks (one owning search, one index row,
+one meeting), not run-length assumptions. `BATCH = 5` is in CCode's experiment.py (a teacher batch size, not a run
+length) and is named below.
+
+### Efficiency and data processing
+
+| Change | Mechanism | Estimated effect (from the data shape) | Canary |
+|---|---|---|---|
+| `test()` needle row filter | the parts' JSON encoding (`json.dumps(row, sort_keys=True)`); both encodings of every claimed name; every byte still hashed | a part carries every ordered pair x cell x transform pair; a claim names 2-3 series, so nearly every line skips `json.loads` (roughly 10-20 us) for a substring scan (under 1 us); parse time of the read falls by about the share of unrelated rows; hashing (about 1 GB/s) unchanged; rows, ordinals and raw-line hashes invariant | `evidence_read` on the receipt: rows_hashed vs rows_parsed vs rows_selected, and the operation's `seconds`, with and without `NEEDLE_LIMIT` |
+| Jev upload intent/result | the existing presigned PUT | no speed change; an interrupted upload is UNKNOWN, retried idempotently, never a silent second scientific test | the two files beside the lesson |
+
+AWS mechanisms (retrieved, judged against these stages): S3 byte-range/conditional reads, parallel transfer, S3 Select
+and Athena over the tape or receipts, S3 Metadata/Storage Lens, Glue/Iceberg tables for claims or day files: none
+applies. These stages read owner-local files on the box (search parts under /opt/frankie-box/work, brain entries,
+lessons) whose identity is a byte-exact hash of the whole file; a query engine cannot return the raw-line hashes and
+ordinals the provenance requires, and a second copy of pinned bytes would be a second identity. The only S3 touch is
+Jev's presigned PUT; an S3 conditional write (If-None-Match) would need the dispatcher's presign map to sign that
+header (not this role's file) and is named as a possible later request, not built. Cost side: nothing added; no
+account call made.
+
+### Review of stages 8, 9, 14 (successor side) in the owned files
+
+Fixed: no receipt for the standalone lessons call (now FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1); no all-99 trace; the
+N = 1 refusal; the Jev upload's unknown outcome; a survivors document blocking later classrooms on a corrected lesson
+(experiment_review); the school receipt's counts-only lists. Kept as designed: a corrupt search part (altered pinned
+bytes) still refuses the whole operation with the part named (an integrity failure, visible); the Jev blind seal is
+still required by `freeze_operation`; search candidates' origin rows are never tests.
+
+### Step 8 scope (deprioritized by Greg behind item 1; read, not fully reviewed)
+
+Read on `origin/ccode/teacher-tasks-20261006b-step8-corrections` (`5f11188`): `Run.school` (retained_school chain,
+other-run refusal, requires_successor waits on the corrected meeting), `Run.recover_school` (dispatch at most once per
+invalidation, failures the stage's own), `Run.school_current`, `Run.reports_school_stale`, and the `waiting_school`
+branch of `successor_dispatch.drain`. No blocking defect found in that read against the 91f3766/2c332df contracts.
+UNVERIFIED: the full Step 8 review was not performed in this pass; no edit was made on that branch.
+
+### Checks
+
+`python3 -I -c "import ast,sys; [ast.parse(open(p).read(), p) for p in sys.argv[1:]]"` on the five Python files: OK.
+`git diff --check` on deploy/aws/box: clean; the three new files checked for trailing whitespace and tabs: clean;
+`sh -n` on the wrapper: OK. No tests, no runs, no installs, no dispatch, no model or data call, no account write.

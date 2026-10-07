@@ -918,6 +918,47 @@ def current_document(document, records, brain, *, day, stage):
                     applied.extend(corrected.get('corrections_applied') or [])
                 elif item.get('sha256') in records:
                     raise ValueError('school pointer changed; explicit owner school successor required')
+    elif schema == 'FRANKIE_SURVIVOR_UPDATE_V1':
+        # The survivor/candidate update (frankie_box_survivor_update) is derived from lessons files it cites by sha256.
+        # Its checked successor is the NEXT boundary update (which consumes the corrected lessons); until then the
+        # document is delivered whole with each affected candidate marked explicitly (stale_sources, status_disposition)
+        # rather than refused: a known status stays visible and distinguishable from a corrected one, and a later
+        # classroom's day is never rejected for it (missing-coverage rule). Nothing is recomputed or relabelled.
+        content = json.loads(json.dumps(content))
+        pending = {}
+        for candidate in content.get('candidates') or []:
+            cited = set()
+            for test in (candidate.get('tests') or []) + (candidate.get('own_day_evidence') or []) + \
+                    (candidate.get('origin_evidence') or []) + (candidate.get('duplicates') or []):
+                if test.get('lesson_sha256'):
+                    cited.add(test['lesson_sha256'])
+            for lesson in candidate.get('lessons') or []:
+                if lesson.get('sha256'):
+                    cited.add(lesson['sha256'])
+            for known in candidate.get('previously_known') or []:
+                if known.get('survivors_sha256'):
+                    cited.add(known['survivors_sha256'])
+            stale = sorted((cited & set(records)) - ancestors)
+            if stale:
+                candidate['stale_sources'] = [records[sha]['record'] for sha in stale]
+                candidate['status_disposition'] = dict(
+                    status='awaiting_next_boundary_update',
+                    reason='a cited lessons file has a checked correction (%d); this status was computed on the earlier '
+                           'bytes and is carried as previously known, not as current; the next survivor update consumes '
+                           'the corrected lesson' % len(stale))
+                for sha in stale:
+                    pending[sha] = records[sha]['record']
+                changed = True
+        if changed:
+            content['corrections_pending'] = sorted(pending.values(), key=lambda r: r['sha256'])
+            content['corrections_pending_rule'] = ('candidates citing a corrected lesson are marked, never dropped or '
+                                                   'recomputed here; the checked successor is the next boundary update')
+            result.update(_save_object(brain, canonical(content)), content=content)
+        else:
+            stale = (references(content) & set(records)) - ancestors
+            if stale:
+                raise ValueError('survivor update cites a replaced source outside its candidates; checked successor required: '
+                                 + ', '.join(sorted(stale)))
     elif schema == 'FRANKIE_STAGE_KNOWLEDGE_V1':
         content = json.loads(json.dumps(content))
         groups = [content.get('sources') or []]

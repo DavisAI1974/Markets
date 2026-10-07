@@ -70,6 +70,7 @@ import json
 import os
 import re
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -461,11 +462,21 @@ def load_searches(dirs):
                 part_bytes[rel] = pin['bytes']
         # Greg 2026-10-06: all 30 days contribute learned knowledge, regardless of the old year/role label.
         # Exact search sources and separate per-day measurements remain bound below.
+        sources = manifest.get('sources') or []
         days.append(dict(dir=d, day=manifest['day'], cycle=manifest['cycle'], lags=manifest['lags'],
                          series=manifest['series'], cells=[tuple(c) for c in manifest['cells']],
                          parts=parts, part_pins=part_pins, part_bytes=part_bytes,
                          native_retained=[x for x in manifest.get('notes') or [] if x.get('source') == 'native' and x.get('retained')],
-                         native_reports=[x for x in manifest.get('sources') or [] if str(x.get('source', '')).startswith('native.')],
+                         native_reports=[x for x in sources if str(x.get('source', '')).startswith('native.')],
+                         # the all-99 coverage inputs (frankie_box_all99_coverage): the search's plane receipt (one row per
+                         # calculation/clock entry), every source receipt (placed series/cells, exclusions) and the
+                         # shared-market read; an older manifest without them is listed by that reader, never refused
+                         planes=manifest.get('planes') if isinstance(manifest.get('planes'), dict) else None,
+                         sources=[{k: v for k, v in s.items() if k in ('source', 'placed_series', 'placed_cells', 'exclusions',
+                                                                        'status', 'missing', 'reason', 'identity', 'coverage',
+                                                                        'absent_layers', 'all_fields', 'frame_sections')}
+                                  for s in sources if isinstance(s, dict)],
+                         shared_market=next((s for s in sources if isinstance(s, dict) and s.get('source') == 'shared_market'), None),
                          manifest_sha256=sha256_bytes(manifest_raw)))
     if len({x['day'] for x in days}) != len(days):
         raise SystemExit('the same day was given twice (duplicate data declines the run)')
@@ -713,12 +724,18 @@ def mirror_of(row, forward_rows):
     return None
 
 
-def test(claims_doc, days, records_dir=None, records_selection=None):
+NEEDLE_LIMIT = 64   # the row filter below: with at most this many distinct claimed series names the needle scan is cheaper
+                    # than parsing every row; above it every row is parsed as before (the same rows are selected either way)
+
+
+def test(claims_doc, days, records_dir=None, records_selection=None, report=None):
     """records_dir / records_selection (B5): the OWNER's reproduction records directory and the selection of its files
     the owner froze with its other inputs (frankie_box_historical_reproduction.record_selection at the freeze); without
     them the module default REPRODUCTION_DIR is read live (the CLI route). With a frozen selection only those files are
     read, bytes-verified, and later arrivals are listed apart, so a restart of the same frozen operation reads the same
-    records and a new file never changes a result across claims."""
+    records and a new file never changes a result across claims.
+    report (optional dict): filled with what the read did (row_filter, parts_read, rows_hashed, rows_parsed,
+    rows_selected) for the operation's receipt; it changes nothing the function computes."""
     wanted = {}
     per_claim = []
     for c in claims_doc['claims']:
@@ -736,6 +753,17 @@ def test(claims_doc, days, records_dir=None, records_selection=None):
             wanted[(a, b)] = wanted[(b, a)] = True
         per_claim.append((c, matched, missing, pairs))
     rows = {}
+    # Efficiency (Greg, 2026-10-07; performance-optimization: the data shape first): a part carries every ordered pair x
+    # cell x transform pair of the day and a claim names two or three series, so nearly every line is a row of other
+    # series. Every byte is still hashed (the manifest pin is verified on exactly the bytes consumed); a line that does
+    # not contain the JSON encoding of any claimed series name cannot carry a wanted (x, y) and is not parsed. The
+    # search writes rows with json.dumps(row, sort_keys=True) (ensure_ascii), the same encoding as the needles, so the
+    # selected rows, their ordinals and raw-line hashes are invariant. Above NEEDLE_LIMIT names every row is parsed.
+    # both encodings of every name (ASCII-escaped and raw UTF-8) so a writer's ensure_ascii choice can never hide a row
+    needles = sorted({json.dumps(name, ensure_ascii=flag).encode('utf-8') for pair in wanted for name in pair
+                      for flag in (True, False)})
+    needle_filter = 0 < len(needles) <= 2 * NEEDLE_LIMIT
+    hashed_rows = parsed_rows = selected_rows = parts_read = 0
     for d in days:
         seen_parts = set()
         for part in d['parts']:
@@ -751,20 +779,31 @@ def test(claims_doc, days, records_dir=None, records_selection=None):
             hashed, size = hashlib.sha256(), 0
             # Verify exactly the bytes consumed, in the same pass as parsing. Text-mode
             # newline normalization must never change the discovery row's raw-line hash.
+            parts_read += 1
             with open(part, 'rb') as handle:
                 for ordinal, line in enumerate(handle):
                     hashed.update(line)
                     size += len(line)
+                    hashed_rows += 1
+                    if needle_filter and not any(n in line for n in needles):
+                        continue
                     r = json.loads(line)
+                    parsed_rows += 1
                     if (r['x'], r['y']) in wanted:
                         # the row's exact identity: its part (the search's pin), its ordinal and the raw line's sha256,
                         # the same three values Run.search_knowledge records for a candidate (part_sha256, row, row_sha256)
                         r['_where'] = dict(part=rel, part_sha256=pin, row=ordinal,
                                            row_sha256=sha256_bytes(line))
                         rows.setdefault((d['day'], r['x'], r['y']), []).append(r)
+                        selected_rows += 1
             expected_size = (d.get('part_bytes') or {}).get(rel)
             if hashed.hexdigest() != pin or (expected_size is not None and size != expected_size):
                 raise ValueError('search evidence differs from its manifest: %s' % part)
+    if report is not None:
+        report.update(row_filter='needle' if needle_filter else 'parse_all', needles=len(needles), needle_limit=NEEDLE_LIMIT,
+                      parts_read=parts_read, rows_hashed=hashed_rows, rows_parsed=parsed_rows, rows_selected=selected_rows,
+                      rule='every byte of every part hashed against the manifest pin; the needle filter skips parsing lines '
+                           'that cannot carry a claimed series; selected rows, ordinals and raw-line hashes are invariant')
     results = []
     for c, matched, missing, pairs in per_claim:
         tests, verdicts, challenges, mirrored = [], [], [], []
@@ -1112,6 +1151,19 @@ def teach_standalone_successor(day, search, brain, out_dir, *, request):
                          results=[by_id.get(r['claim_id'], r) for r in before['results']],
                          scientific_operation=dict(inputs=inputs, selection_sha256=frozen['selection_sha256']))
             after['results_sha256'] = R._lesson_digest(after['results'])
+            # the all-99 coverage of the successor's own read: every searched day listed again from the retained
+            # (unaffected) and recomputed (affected) rows together; the original's lists stay in the original file
+            historical = before.get('reconsideration')
+            after['all99_coverage'] = all99_for_operation(
+                'scientific_teacher_successor', days, after['results'], out,
+                knowledge_inputs=dict(historical=(dict(mapped_claims=historical.get('mapped_claims'),
+                                                        not_testable=historical.get('not_testable'),
+                                                        catalog_sha256=historical.get('catalog_sha256')) if historical else None),
+                                      brain_documents=None, frankie=before['author'] == 'frankie',
+                                      jev=before['author'] == 'jev', search_candidates=before['author'] == 'search'),
+                outputs=dict(output_knowledge_retrieval_receipts=inputs,
+                             output_source_state_manifest_code_model_run_hashes=inputs),
+                code_root=os.environ.get('CODE_ROOT'))
             after['knowledge_retest'] = dict(before.get('knowledge_retest') or {}, claim_operations={
                 c['id']: (dict(input_sha256=inputs['sha256'], searches=searches) if c['id'] in affected else
                           dict(inputs=request['original_inputs'], result=request['original_result'],
@@ -1200,8 +1252,25 @@ def freeze_operation(doc, days, out_dir, brain_dir):
     return dict(path=str(path), **witness(path)), saved
 
 
+def all99_for_operation(stage, days, results, out_root, *, knowledge_inputs, outputs, code_root=None):
+    """The all-99 coverage list of every searched day for one operation: the rows the operation's tests read (tests
+    and origin-evidence rows alike) against the day's search plane/source receipts; each day's list retained once under
+    <out_root>/coverage/ and returned as {day: pin-with-summary}. A day whose manifest carries no plane receipt is still
+    listed (every entry absent with that reason); nothing refuses."""
+    import frankie_box_all99_coverage as A99
+    by_day = {}
+    for d in days:
+        tests = [t for r in results for t in (r.get('tests') or []) if t.get('day') == d['day']]
+        tests += [t for r in results for t in (r.get('origin_evidence') or []) if t.get('day') == d['day']]
+        coverage = A99.day_coverage(d['day'], manifest_sha256=d['manifest_sha256'], planes=d.get('planes'),
+                                    sources=d.get('sources'), tests=tests, knowledge_inputs=knowledge_inputs,
+                                    outputs=outputs, stage=stage, code_root=code_root, shared_market=d.get('shared_market'))
+        by_day[d['day']] = A99.retain(coverage, out_root)
+    return dict(by_day=by_day, rule=A99.RULE)
+
+
 def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/frankie-box/brain', native=None,
-          operation=None, publish=True):
+          operation=None, publish=True, all99=None, read_report=None):
     schema = {'jev': 'JEV_LESSONS_V1', 'frankie': 'FRANKIE_LESSONS_V1', 'historical': 'HISTORICAL_LESSONS_V1',
               'search': 'SEARCH_CANDIDATE_LESSONS_V1'}[doc['author']]
     if doc['author'] == 'historical':
@@ -1227,6 +1296,13 @@ def write(doc, days, results, out_dir, map_url=None, log=print, brain_dir='/opt/
         R._validate_operation(R._transition_operation(operation, lessons), lessons)
     if doc.get('reconsideration') is not None:
         lessons['reconsideration'] = doc['reconsideration']
+    if all99 is not None:
+        # the all-99 coverage of every searched day (frankie_box_all99_coverage): the pin and summary per day; the full
+        # per-entry list stays in the coverage file. Carried so every later reader (school, exchange, survivors) can
+        # name which entries reached these tests without re-reading the search.
+        lessons['all99_coverage'] = all99
+    if read_report is not None:
+        lessons['evidence_read'] = read_report
     if native is not None:
         lessons['completed_native_evidence'] = dict(
             by_day={day: ref for day, (ref, _) in native.items() if ref is not None},
@@ -1287,11 +1363,42 @@ def upload_jev_lessons(path, map_url=None, log=print):
     if key not in entries:
         raise SystemExit('no presigned slot %s in MAP_URL (dispatch with presign=put:frankie-granite42-568968024170-us-east-1/%s)'
                          % (key, key[4:]))
+    # Idempotency (api-and-interface-design: intent recorded before the call; three outcomes, success / failure /
+    # UNKNOWN): the intent (key, bytes, sha256) is written beside the lesson BEFORE the PUT; the result after it. A
+    # retry that finds an intent without a result knows the previous attempt's fate is unknown (a timeout after the
+    # bytes left) and PUTs the same bytes to the same key again, which is safe: the key is derived from the lesson's
+    # day/stamp, not from the attempt. The same completed result is reused, never a second upload.
+    from frankie_box_durable import write_json
+    intent_path = path.with_name(path.name + '.upload-intent.json')
+    result_path = path.with_name(path.name + '.upload-result.json')
+    intent = dict(schema='FRANKIE_JEV_LESSONS_UPLOAD_INTENT_V1', key=key[4:], bytes=len(data), sha256=sha256_bytes(data))
+    if result_path.is_file():
+        previous = json.loads(result_path.read_bytes())
+        if previous.get('intent') == intent and previous.get('outcome') == 'success':
+            log('retained Jev lessons already uploaded: %s HTTP %d (reused)' % (key[4:], previous['http_status']))
+            return dict(previous, reused=True)
+    if intent_path.is_file():
+        earlier = json.loads(intent_path.read_bytes())
+        if earlier.get('sha256') != intent['sha256'] or earlier.get('key') != intent['key']:
+            raise ValueError('Jev lessons upload intent belongs to other bytes or another key: %s' % intent_path)
+        log('earlier upload of %s has no recorded result: its fate is unknown; the same bytes are PUT again' % key[4:])
+    else:
+        write_json(intent_path, dict(intent, at=time.time()))
     request = urllib.request.Request(entries[key]['url'], data=data, method='PUT')
-    with urllib.request.urlopen(request, timeout=300) as response:
-        status = response.status
+    try:
+        with urllib.request.urlopen(request, timeout=300) as response:
+            status = response.status
+    except Exception as error:      # noqa: BLE001 - the outcome is recorded (failure or unknown) and the error re-raised
+        # an HTTP status is the server's answer: a failure; a transport error or timeout leaves the fate unknown
+        write_json(result_path, dict(intent=intent, outcome='failure' if isinstance(error, urllib.error.HTTPError) else 'unknown',
+                                     error=type(error).__name__ + ': ' + str(error), at=time.time(),
+                                     rule='unknown = the bytes may have landed; a retry PUTs the same bytes to the same key'))
+        raise
+    result = dict(intent=intent, outcome='success', key=key[4:], bytes=len(data), sha256=intent['sha256'], http_status=status,
+                  at=time.time())
+    write_json(result_path, result)
     log('uploaded retained Jev lessons: %s HTTP %d' % (key[4:], status))
-    return dict(key=key[4:], bytes=len(data), sha256=sha256_bytes(data), http_status=status)
+    return dict(key=key[4:], bytes=len(data), sha256=intent['sha256'], http_status=status)
 
 
 def publish_lessons(path, brain_dir='/opt/frankie-box/brain', log=print):
@@ -1364,10 +1471,12 @@ def main():
         import frankie_box_teacher_knowledge as TK
         from frankie_box_durable import write_json, witness
         out = Path(a.accumulated_out)
+        started = time.time()
         result = TK.teach_accumulated(a.accumulated_day, a.search[0], a.brain, out)
         receipt = dict(schema='FRANKIE_ACCUMULATED_LESSONS_V1', day=a.accumulated_day, status='complete',
                        search=witness(Path(a.search[0]) / 'MANIFEST.json'), accumulated_claim_tests=result,
                        model_calls=0)
+        receipt.update(_accumulated_report(a, result, out, started))
         write_json(out / 'receipt.json', receipt)
         print(json.dumps(receipt, sort_keys=True), flush=True)
         return
@@ -1391,26 +1500,40 @@ def main():
     for day, (ref, listed) in native.items():
         print('completed native evidence %s: %s' % (day, 'read, %s' % json.dumps(ref['counts'], sort_keys=True) if ref
                                                        else '; '.join(x['reason'] for x in listed)), flush=True)
-    candidates = []
+    candidates, listed = [], []
     if a.search_findings:
         import frankie_box_candidate_claims as CC
         candidates = [CC.candidate_claims(a.search_findings)]
         if all(d['day'] == candidates[0]['day'] for d in days):
-            raise SystemExit('--search-findings needs at least one completed search of ANOTHER day: the candidates\' own '
-                             'day %s is origin evidence, not a test' % candidates[0]['day'])
+            # Day-quantity agnostic (Greg, 2026-10-07): a run of one day has no other completed search yet. The
+            # candidates are still taught: their own day is listed as origin evidence, every claim comes back
+            # INSUFFICIENT_EVIDENCE with the reason in its untested list, and the next day's search tests them.
+            listed.append(dict(what='search_findings', day=candidates[0]['day'],
+                               reason='no completed search of another day was given: the candidates\' own day is origin '
+                                      'evidence, not a test; the claims are retained with their origin evidence only'))
+            print('search candidates of %s: no other searched day yet; origin evidence listed, no test (the day stays)'
+                  % candidates[0]['day'], flush=True)
+    operations = []
+    code_root = os.environ.get('CODE_ROOT')
     for doc in ([jev_claims(a.jev_claims, a.jev_seal)] if a.jev_claims else []) + \
                ([frankie_claims(a.frankie_ledgers, a.frankie_day)] if a.frankie_ledgers else []) + \
                ([historical_claims(a.historical_claims, records_selection=[])] if a.historical_claims else []) + candidates:
+        started = time.time()
         operation, frozen = freeze_operation(doc, days, a.out_dir, a.brain)
         doc = frozen['selection']['doc']
         records = frozen['selection']['reproduction_records']
         name = '%s-%s.json' % (frozen['identity']['day'], doc['stamp'] or 'frankie')
         result_path = Path(a.out_dir) / doc['author'] / name
+        record = dict(author=doc['author'], day=doc['day'], stamp=doc['stamp'], claims=len(doc['claims']),
+                      claims_sha256=doc['claims_sha256'], claims_source=doc['source'], operation=operation,
+                      searched_days=[d['day'] for d in days])
         if result_path.exists():
             import frankie_box_experiment_review as R
+            from frankie_box_durable import witness
             raw = result_path.read_bytes()
             retained = json.loads(raw)
             R._validate_operation(R._transition_operation(operation, retained), retained)
+            publication = 'retained_only'
             if not a.retain_only and doc['author'] != 'search':
                 import frankie_box_lane_state as LS
                 R.require_current([dict(path=str(result_path), sha256=sha256_bytes(raw), content=retained)],
@@ -1418,10 +1541,155 @@ def main():
                 if doc['author'] == 'jev':
                     upload_jev_lessons(result_path, os.environ.get('MAP_URL'))
                 publish_lessons(result_path, brain_dir=a.brain)
+                publication = 'published_exact_bytes_reused'
+            record.update(status='reused', lessons=dict(path=str(result_path), **witness(result_path)),
+                          publication=publication, all99_coverage=retained.get('all99_coverage'),
+                          evidence_read=retained.get('evidence_read'),
+                          reason='these claims were already taught on this exact frozen operation; no test repeated',
+                          seconds=round(time.time() - started, 3))
+            operations.append(record)
             continue
-        results = test(doc, days, records_dir=Path(records['directory']), records_selection=records['files'])
-        write(doc, days, results, a.out_dir, os.environ.get('MAP_URL'), brain_dir=a.brain, native=native,
-              operation=operation, publish=not a.retain_only)
+        read_report = {}
+        results = test(doc, days, records_dir=Path(records['directory']), records_selection=records['files'], report=read_report)
+        historical = doc.get('reconsideration')
+        knowledge_inputs = dict(
+            historical=(dict(mapped_claims=historical.get('mapped_claims'), not_testable=historical.get('not_testable'),
+                             catalog_sha256=historical.get('catalog_sha256')) if historical else None),
+            brain_documents=None, frankie=doc['author'] == 'frankie', jev=doc['author'] == 'jev',
+            search_candidates=doc['author'] == 'search')
+        outputs = dict(output_knowledge_retrieval_receipts=operation,
+                       output_source_state_manifest_code_model_run_hashes=operation)
+        all99 = all99_for_operation('scientific_teacher', days, results, Path(a.out_dir), knowledge_inputs=knowledge_inputs,
+                                    outputs=outputs, code_root=code_root)
+        path = write(doc, days, results, a.out_dir, os.environ.get('MAP_URL'), brain_dir=a.brain, native=native,
+                     operation=operation, publish=not a.retain_only, all99=all99, read_report=read_report)
+        from frankie_box_durable import witness
+        lesson_pin = dict(path=str(path), **witness(path))
+        # the lessons file is the candidate-discoveries and negative/inconclusive ledger output of this stage: the
+        # retained coverage lists name it under those two registry outputs only now that it exists
+        for day_pin in all99['by_day'].values():
+            day_pin['outputs_after_write'] = dict(output_candidate_discoveries=lesson_pin,
+                                                  output_negative_sparse_inconclusive_ledger=lesson_pin)
+        record.update(status='written', lessons=lesson_pin,
+                      publication='retained_only' if a.retain_only or doc['author'] == 'search' else 'published',
+                      dispositions={k: sum(r['disposition'] == k for r in results) for k in DISPOSITIONS},
+                      counts=dict(tests=sum(len(r.get('tests') or []) for r in results),
+                                  origin_evidence_rows=sum(len(r.get('origin_evidence') or []) for r in results),
+                                  held=sum(r['counts']['held'] for r in results),
+                                  shown_otherwise=sum(r['counts']['shown_otherwise'] for r in results),
+                                  unresolved=sum(r['counts']['unresolved'] for r in results),
+                                  counts_only=sum(r['counts']['counts_only'] for r in results),
+                                  untested_notes=sum(len(r.get('untested') or []) for r in results),
+                                  cannot_test_yet=sum(len(r.get('cannot_test_yet') or []) for r in results)),
+                      all99_coverage=all99, evidence_read=read_report, seconds=round(time.time() - started, 3))
+        operations.append(record)
+    _write_teacher_receipt(a, days, native, operations, listed, code_root)
+
+
+def _knowledge_inputs_of(documents):
+    """What knowledge an accumulated selection took, for the all-99 list: the brain documents selected and the
+    historical collection among them (mapped claims tested, not_testable carried by reference)."""
+    historical = None
+    for item in documents or []:
+        lesson = item.get('lesson') or {}
+        if lesson.get('author') == 'historical':
+            collection = lesson.get('reconsideration') or {}
+            historical = dict(mapped_claims=(historical or {}).get('mapped_claims', 0) + len(item.get('claims') or []),
+                              not_testable=collection.get('not_testable'), catalog_sha256=collection.get('catalog_sha256'))
+    return dict(historical=historical, brain_documents=len(documents or []),
+                frankie=any((i.get('lesson') or {}).get('author') == 'frankie' for i in documents or []),
+                jev=any((i.get('lesson') or {}).get('author') == 'jev' for i in documents or []),
+                search_candidates=any((i.get('lesson') or {}).get('author') == 'search' for i in documents or []))
+
+
+def _accumulated_report(a, result, out, started):
+    """The accumulated receipt's inspection fields (Greg, 2026-10-07: every piece reports what it received, how it used
+    it and what it produced): the all-99 coverage of the owning day from the result files' test rows, and the
+    FRANKIE_PIECE_WORKFLOW_REPORT_V1 the one-day reporter projects whole. Reads only this owner's own files."""
+    import frankie_box_experiment_review as R
+    from frankie_box_durable import witness
+    days = load_searches([a.search[0]])
+    tests_results = []
+    for pin in result.get('files') or []:
+        try:
+            tests_results.extend(json.loads(R._read_pin(pin)).get('results') or [])
+        except (OSError, ValueError) as error:
+            # an unreadable result file is an integrity finding of this receipt, never a reason to drop the day
+            tests_results.append(dict(tests=[], origin_evidence=[], integrity=str(error), file=pin))
+    inputs_pin = result.get('inputs')
+    documents = []
+    if inputs_pin:
+        try:
+            documents = json.loads(R._read_pin(inputs_pin)).get('selection', {}).get('documents') or []
+        except (OSError, ValueError):
+            documents = []
+    files = result.get('files') or []
+    outputs = dict(output_candidate_discoveries=files[0] if files else None,
+                   output_negative_sparse_inconclusive_ledger=files[0] if files else None,
+                   output_knowledge_retrieval_receipts=inputs_pin,
+                   output_source_state_manifest_code_model_run_hashes=inputs_pin)
+    all99 = all99_for_operation('carried_claims', days, tests_results, out, knowledge_inputs=_knowledge_inputs_of(documents),
+                                outputs=outputs, code_root=os.environ.get('CODE_ROOT'))
+    scope = result.get('scope') or {}
+    report = dict(
+        schema='FRANKIE_PIECE_WORKFLOW_REPORT_V1', piece='carried',
+        inputs=dict(search=dict(path=str(Path(a.search[0]) / 'MANIFEST.json'), **witness(Path(a.search[0]) / 'MANIFEST.json')),
+                    operation_inputs=inputs_pin, brain=str(a.brain), documents_selected=len(documents),
+                    documents=[dict(source=(d.get('source') or {}).get('path'), sha256=(d.get('source') or {}).get('sha256'),
+                                    author=(d.get('lesson') or {}).get('author'), claims=len(d.get('claims') or []),
+                                    input_kind=d.get('input_kind')) for d in documents],
+                    reproduction_records=(result.get('late_knowledge') or {}).get('reproduction_records')),
+        use=dict(scope=scope, reused=result.get('reused'), listed=result.get('listed'),
+                 selection_listed=result.get('selection_listed'), school_listed=result.get('school_listed'),
+                 late_knowledge=result.get('late_knowledge'),
+                 all99_coverage={day: pin['summary'] for day, pin in all99['by_day'].items()},
+                 rule='every skipped claim, listed input and late arrival above is the owner\'s own disposition; the all-99 '
+                      'list names which registry entries the tests actually read'),
+        outputs=dict(files=files, all99_coverage_files={day: {k: v for k, v in pin.items() if k != 'summary'}
+                                                        for day, pin in all99['by_day'].items()},
+                     publication='published per file unless awaiting a checked owner decision'),
+        seconds=round(time.time() - started, 3), model_calls=0)
+    return dict(all99_coverage=all99, workflow_report=report)
+
+
+def _write_teacher_receipt(a, days, native, operations, listed, code_root):
+    """The standalone call's receipt (FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1): every operation of this call (written or
+    reused), its lessons pin, dispositions, the all-99 coverage pins per searched day, what the read did, and the
+    FRANKIE_PIECE_WORKFLOW_REPORT_V1 for the one-day reporter. Printed as the last line (the caller records it) and
+    retained content-addressed under <out_dir>/receipts/; the same bytes reuse, different bytes under the same address
+    cannot occur (the address is the content)."""
+    from frankie_box_durable import write_bytes
+    report = dict(
+        schema='FRANKIE_PIECE_WORKFLOW_REPORT_V1', piece='findings',
+        inputs=dict(searches=[dict(day=d['day'], dir=str(d['dir']), manifest_sha256=d['manifest_sha256'],
+                                   planes_receipt=d.get('planes') is not None, sources=len(d.get('sources') or []))
+                              for d in days],
+                    claims=[dict(author=o['author'], day=o['day'], stamp=o['stamp'], claims=o['claims'],
+                                 claims_sha256=o['claims_sha256'], source=o['claims_source']) for o in operations],
+                    brain=str(a.brain), out_dir=str(a.out_dir), retain_only=bool(a.retain_only),
+                    completed_native_evidence={day: (dict(path=ref['path'], sha256=ref['sha256'], bytes=ref['bytes'], counts=ref['counts'])
+                                                     if ref else None) for day, (ref, _) in native.items()}),
+        use=dict(operations=[dict(author=o['author'], day=o['day'], status=o['status'], publication=o.get('publication'),
+                                  reason=o.get('reason'), dispositions=o.get('dispositions'), counts=o.get('counts'),
+                                  evidence_read=o.get('evidence_read'), seconds=o.get('seconds'),
+                                  all99_coverage={day: pin.get('summary') for day, pin in ((o.get('all99_coverage') or {}).get('by_day') or {}).items()})
+                             for o in operations],
+                 listed=listed + [item for _, items in native.values() for item in items],
+                 rule='an operation reused repeated no test; the all-99 list per searched day names which registry entries '
+                      'its tests read; listed items are dispositions, never dropped evidence'),
+        outputs=dict(lessons=[dict(author=o['author'], day=o['day'], **o['lessons']) for o in operations],
+                     all99_coverage_files=[{k: v for k, v in pin.items() if k != 'summary'}
+                                           for o in operations for pin in ((o.get('all99_coverage') or {}).get('by_day') or {}).values()]),
+        model_calls=0)
+    receipt = dict(schema='FRANKIE_SCIENTIFIC_TEACHER_RECEIPT_V1', status='complete', searched_days=[d['day'] for d in days],
+                   operations=operations, listed=listed, workflow_report=report, model_calls=0, code_root=code_root)
+    data = (json.dumps(receipt, indent=1, sort_keys=True, default=str) + '\n').encode()
+    path = Path(a.out_dir) / 'receipts' / (sha256_bytes(data) + '.json')
+    if not path.exists():
+        write_bytes(path, data)
+    receipt['receipt'] = dict(path=str(path), bytes=len(data), sha256=sha256_bytes(data))
+    print(json.dumps(receipt, sort_keys=True, default=str), flush=True)
+    return receipt
 
 
 if __name__ == '__main__':

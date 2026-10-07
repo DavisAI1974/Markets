@@ -34,6 +34,7 @@ import hashlib
 import json
 import re
 import sys
+import time
 from pathlib import Path
 
 BOX = Path(__file__).resolve().parent
@@ -460,8 +461,10 @@ def main():
     rules_witness = dict(file=Path(rules['path']).name, sha256=rules['sha256'], bytes=rules['bytes'], rules=rules['rules'])
     if a.school_day is not None and a.school_day != a.report_number:
         raise SystemExit('the school day and report number must match')
+    started = time.time()
     retained = retained_school(a.brain, a.day)
     successor = None
+    currentness = dict(records_consulted=None, lessons_delivered=None, lessons_corrections_applied=[], school_checked=False)
     if retained is not None:
         if retained['content']['run'] != a.run or retained['row']['report_number'] != a.report_number:
             raise ValueError('school reuse belongs to another run or class position')
@@ -473,33 +476,83 @@ def main():
             raise ValueError('school successor still has a replaced dependency')
         doc, row = retained['content'], dict(retained['row'], **retained['original'])
         file, reused = retained['original']['path'], successor is None
+        currentness.update(school_checked=True, chain='retained_school: the indexed original and its explicit checked successors',
+                           corrections_in_chain=len(retained['corrections']))
     else:
         import frankie_box_experiment_review as R
         import frankie_box_lane_state as LS
         records = R.corrections(LS.knowledge_roots(a.brain))
+        currentness['records_consulted'] = len(records)
         lessons = a.lessons
         if lessons and Path(lessons).is_file():
             raw = Path(lessons).read_bytes()
             delivered = R.current_document(dict(path=lessons, bytes=len(raw), sha256=sha256_bytes(raw),
                 content=json.loads(raw)), records, a.brain, day=a.day, stage='school')
+            currentness.update(lessons_delivered=dict(path=delivered['path'], sha256=delivered['sha256'], bytes=delivered.get('bytes')),
+                               lessons_corrections_applied=delivered.get('corrections_applied') or [])
             lessons = delivered['path']
         doc = build(a.day, a.run, a.report_number, a.classroom, a.exchange_view, a.exchange_listed, lessons,
                     a.teacher_rows, rules_witness)
         data = (json.dumps(doc, indent=1, sort_keys=True, default=str) + '\n').encode('utf-8')
         R.current_document(dict(path=str(Path(a.brain) / 'school' / (a.day + '.json')),
             bytes=len(data), sha256=sha256_bytes(data), content=doc), records, a.brain, day=a.day, stage='school')
+        currentness['school_checked'] = True
         row, reused = BR.write_school_day(a.brain, a.day, data, a.report_number, a.run, school_day=a.school_day)
         file = str(Path(a.brain) / 'school' / row['file'])
     receipt = dict(schema=RECEIPT_SCHEMA, run=a.run, day=a.day, status='complete', file=file,
                    index=str(Path(a.brain) / 'school' / 'index.json'), row=row, reused=reused,
                    sections={k: len(v['items']) for k, v in doc['sections'].items()}, missing=len(doc['missing']),
-                   withheld=len(doc['withheld']), model_calls=0)
+                   withheld=len(doc['withheld']), model_calls=0,
+                   # correction_consumer's request (2026-10-07): the LISTS beside the counts (the reporter never opens
+                   # the school file), and the piece's workflow report; the school file's bytes and index row are untouched
+                   missing_listed=list(doc['missing']), withheld_listed=list(doc['withheld']))
     if successor is not None:
         receipt.update(successor=successor['receipt'], correction=successor['correction'])
     elif retained is not None:
         receipt['corrections'] = retained['corrections']
-    print(json.dumps(receipt, sort_keys=True), flush=True)
+    receipt['workflow_report'] = workflow_report(a, doc, row, file, reused, successor, retained, currentness, started)
+    print(json.dumps(receipt, sort_keys=True, default=str), flush=True)
     return 0
+
+
+def workflow_report(a, doc, row, file, reused, successor, retained, currentness, started):
+    """FRANKIE_PIECE_WORKFLOW_REPORT_V1 for the school half of the stage-12 inspection (Greg, 2026-10-07): what the
+    school received (every input by path and pin where known), how it used it (per section and item: inline / subset /
+    pointer with its reason; the currentness check; every missing and withheld item with its reason; the all-99
+    summary the day's scientific lessons carry), and what it produced (the file pin, the row, reused, successor and
+    corrections). Projections of the document already built; nothing re-read, nothing opened beyond it."""
+    sections = {}
+    all99 = None
+    for name, body in (doc.get('sections') or {}).items():
+        items = []
+        for item in body.get('items') or []:
+            disposition = ('subset' if item.get('inline') and 'holds' in item else
+                           'inline' if item.get('inline') else 'pointer')
+            items.append(dict(name=item.get('name'), author=item.get('author'), disposition=disposition,
+                              path=item.get('path'), sha256=item.get('sha256'), source_sha256=item.get('source_sha256'),
+                              bytes=item.get('bytes'), holds=item.get('holds'), pointer_reason=item.get('pointer_reason')))
+            content = item.get('content') if item.get('inline') else None
+            if name == 'scientific_teacher' and isinstance(content, dict) and content.get('all99_coverage'):
+                all99 = {day: pin.get('summary') for day, pin in (content['all99_coverage'].get('by_day') or {}).items()}
+        sections[name] = dict(author=body.get('author'), author_label=body.get('author_label'), items=items)
+    inputs = dict(day=a.day, run=a.run, report_number=a.report_number, school_day=a.school_day, classroom=a.classroom,
+                  exchange_view=a.exchange_view, exchange_listed=a.exchange_listed, lessons=a.lessons,
+                  teacher_rows=a.teacher_rows, brain=a.brain, rules=doc.get('rules'),
+                  received=[dict(section=s, name=i['name'], path=i['path'], sha256=i['source_sha256'] or i['sha256'], bytes=i['bytes'])
+                            for s, body in sections.items() for i in body['items'] if i.get('path')])
+    use = dict(sections=sections, missing=list(doc.get('missing') or []), withheld=list(doc.get('withheld') or []),
+               currentness=currentness,
+               mode=('the owner successor operation (rebuild_successor): only checked copied sources and their projections changed'
+                     if successor is not None else 'the indexed school reused (same bytes, complete chain)' if retained is not None
+                     else 'a new school built and indexed once'),
+               all99_coverage=all99 if all99 is not None else 'unknown: the day\'s scientific lessons carry no all-99 summary (older lessons) or are absent',
+               rule='each section labelled with its author (R11); counts per day never pooled (R04, R05); only WHERE Frankie '
+                    'was corrected, never the answer key or the exhaustive grade (R10); a missing item is listed with its reason, never dropped')
+    outputs = dict(file=file, row=row, reused=reused, sections={k: len(v['items']) for k, v in sections.items()},
+                   successor=(successor or {}).get('receipt'), correction=(successor or {}).get('correction'),
+                   corrections=(retained or {}).get('corrections') if successor is None and retained is not None else None)
+    return dict(schema='FRANKIE_PIECE_WORKFLOW_REPORT_V1', piece='school', inputs=inputs, use=use, outputs=outputs,
+                seconds=round(time.time() - started, 3), model_calls=0)
 
 
 if __name__ == '__main__':
