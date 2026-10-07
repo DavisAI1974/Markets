@@ -1699,9 +1699,6 @@ class Run:
                     brain_entries[e['day']] = self.teacher_knowledge(e['day'], rows_path, source)
                 except ValueError as error:
                     refused[e['day']] = str(error)     # the other days of the batch are not held back by this one
-        if refused:
-            self.log('teacher %s: knowledge not taught again for %s (explicit checked successor required): %s' % (
-                batch_key, sorted(refused), '; '.join('%s: %s' % kv for kv in sorted(refused.items()))[:1500]))
         if not todo:
             return self.record('teacher', batch_key, 'waiting' if remote_waiting else 'skipped',
                                reason='waiting for owning lane teacher receipts' if remote_waiting else

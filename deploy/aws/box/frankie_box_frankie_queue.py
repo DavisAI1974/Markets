@@ -1206,7 +1206,13 @@ def _finish_day(run, e, code_root, commit, log):
         while True:
             if (facts.get('class_line') or {}).get('owner_waiting'):
                 # An older failed class is not this owner's failure. Keep the current thread/slot and
-                # original attempts while source recovery is pending; no terminal/save acknowledgment.
+                # original attempts while source recovery is pending; no terminal acknowledgment. A save stands on its
+                # own here: the class entry is not taken by anyone while its binding disagrees (no child to acknowledge).
+                if run.save_requested() and run.owner:
+                    facts['child'] = dict(state='no_child_running', reason='the class entry\'s binding differs from the owning '
+                                                                           'day; nobody takes it: no child to acknowledge')
+                    run.save_facts = facts
+                    raise SystemExit(75)
                 log('class %s %s: holding its slot (%s)' % (
                     run.plan['run'], e['day'], facts['class_line']['reason']))
                 time.sleep(60)
@@ -1214,6 +1220,11 @@ def _finish_day(run, e, code_root, commit, log):
                 continue
             cl = entry_of('class', run.plan['run'], e['day'])
             state = (cl or {}).get('state')
+            if state == 'queued' and not worker_state('class')[1]:
+                # no class worker runs (a scoped one ended at another run's front, or at its bound): this owner kicks one
+                # for its own run's scope, so its class is taken; a worker already running keeps its own scope
+                kick('class', code_root, commit, run.a.queue_worker_seconds, run.a.queue_poll_seconds,
+                     by='owning day %s %s (class queued, no worker)' % (run.plan['run'], e['day']), log=log, scope=run.scope_text())
             if run.save_requested() and run.owner:
                 # THE CHILD ACKNOWLEDGMENT. The class runs in the class worker's process on the same marker. This owner
                 # does not end as saved on its own say-so: it waits for the class entry to reach saved with an
@@ -1305,6 +1316,15 @@ def _child_save_verdict(run, e, cl):
     return None
 
 
+def _thread_end(error, facts, holder, entry, run_obj, failure_label):
+    """The one classification of a day thread's exception: exit 75 on the day's OWN standing marker is saved (with the
+    class child's verdict); any other SystemExit or exception is the day's failure under the caller's label."""
+    if isinstance(error, SystemExit) and error.code == 75 and run_obj is not None and run_obj.save_requested():
+        _save_result(error, facts, holder, entry, run_obj)
+        return
+    holder['result'] = (failure_label, '%s: %s' % (type(error).__name__, error), {})
+
+
 def _save_result(error, facts, holder, entry, run_obj):
     """A SystemExit(75) in the day's thread: saved when the save is this owner's (its marker stands) and, for a class-arm
     day in its class phase, the child acknowledged; unknown when the child is gone without one."""
@@ -1332,13 +1352,8 @@ def _finish_job(entry, code_root, commit, log, holder):
         ok, facts = _finish_day(run, e, code_root, commit, log)
         holder['result'] = ('finished' if ok else 'finish_failed', None if ok else 'the day stopped at: %s' % json.dumps(
             {k: (v or {}).get('reason') if isinstance(v, dict) else v for k, v in facts.items()}, sort_keys=True), facts)
-    except SystemExit as error:
-        if error.code == 75 and run is not None and run.save_requested():
-            _save_result(error, facts, holder, entry, run)
-        else:
-            holder['result'] = ('finish_failed', 'SystemExit: %s' % error, {})
-    except Exception as error:  # noqa: BLE001
-        holder['result'] = ('finish_failed', '%s: %s' % (type(error).__name__, error), {})
+    except (Exception, SystemExit) as error:
+        _thread_end(error, facts, holder, entry, run, 'finish_failed')
     finally:
         _end_slot(holder, entry, run)
 
@@ -1398,13 +1413,8 @@ def _root_job(entry, code_root, commit, log, holder):
             holder['result'] = ('queued', r.get('reason'), {})
         else:
             holder['result'] = ('failed', '%s: %s' % (r['status'], r.get('reason')), dict(log=r.get('log')))
-    except SystemExit as error:                       # exit 75 on the day's own marker = saved; any other refusal = failed
-        if error.code == 75 and run is not None and run.save_requested():
-            _save_result(error, facts, holder, entry, run)
-        else:
-            holder['result'] = ('failed', 'SystemExit: %s' % error, {})
-    except Exception as error:  # noqa: BLE001        # a refusal is the day's failure, never the worker's
-        holder['result'] = ('failed', '%s: %s' % (type(error).__name__, error), {})
+    except (Exception, SystemExit) as error:          # a refusal is the day's failure, never the worker's
+        _thread_end(error, facts, holder, entry, run, 'failed')
     finally:
         _end_slot(holder, entry, run)
 
@@ -1425,15 +1435,17 @@ def _sync_root(doc, x, plans):
         return 'queued'
     if x['state'] in OWNER_STATES:
         return None                                  # its owner's; reconciled only by ACTION=resume
-    finish = x.get('finish') or {}
-    if x['state'] == 'done' and finish.get('state') == 'running' and x.get('owner') and finish.get('pid') \
-            and not Path('/proc/%d' % int(finish['pid'])).exists():
-        # the finish's holder is gone without a saved result: unknown, like a ROOT-phase holder; retained, never re-admitted
-        x['finish'] = dict(finish, state='unknown', ended_utc=utc(),
-                           reason='its holder (pid %s) is gone without a saved result; attempt %s and its CPUs are retained; '
-                                  'ACTION=resume reconciles it' % (finish.get('pid'), x['owner'].get('attempt')))
-        _retain_quietly(x)
-        return 'unknown'
+    if x['state'] == 'done':
+        # a done entry is reconciled for ONE thing only: its finish holder gone without a saved result (unknown, retained)
+        finish = x.get('finish') or {}
+        if finish.get('state') == 'running' and x.get('owner') and finish.get('pid') \
+                and not Path('/proc/%d' % int(finish['pid'])).exists():
+            x['finish'] = dict(finish, state='unknown', ended_utc=utc(),
+                               reason='its holder (pid %s) is gone without a saved result; attempt %s and its CPUs are retained; '
+                                      'ACTION=resume reconciles it' % (finish.get('pid'), x['owner'].get('attempt')))
+            _retain_quietly(x)
+            return 'unknown'
+        return None
     if x['run'] not in plans:
         plans[x['run']] = _plan_of(x['run'])
     e = next((d for d in plans[x['run']].get('days') or [] if d['day'] == x['day']), None)
@@ -1491,8 +1503,26 @@ def _release_owner(x, why):
     owner = x.get('owner')
     if owner is None:
         return
+    archived = _archive_marker(owner.get('marker'), 'stale')
+    if archived:
+        x['save_request'] = None
+        x.setdefault('save_requests_stale', []).append(dict(archived=archived, why=why, at_utc=utc()))
     x.setdefault('owner_history', []).append(dict(owner, released_utc=utc(), released_why=why))
     x['owner'] = None
+
+
+def _archive_marker(marker, label):
+    """The day's save marker and its class acknowledgment moved aside as <name>.<label>-<epoch> (never deleted)."""
+    if not marker:
+        return []
+    stamp = int(time.time())
+    archived = []
+    for path in (Path(marker), Path(str(marker) + '.class-ack.json')):
+        if path.exists():
+            target = path.with_name('%s.%s-%d' % (path.name, label, stamp))
+            os.rename(path, target)
+            archived.append(str(target))
+    return archived
 
 
 def _retain_quietly(x):
@@ -1830,7 +1860,7 @@ def owner_status(run, day):
                          else 'save pending acknowledgment' if (root or {}).get('save_request') else (root or {}).get('state')))
 
 
-def resume_owner(run, day, by):
+def resume_owner(run, day, by, rebook=False):
     """The explicit resume of a saved/unknown owned day: its marker archived beside its acknowledgment, the ROOT-line entry
     (and its class entry) back to queued WITH the same owner binding (attempt, CPUs, booking, marker), so the next
     admission books exactly the retained CPUs and the Run resumes the same attempt. Nothing is reconciled by guessing: an
@@ -1844,23 +1874,30 @@ def resume_owner(run, day, by):
         if owner is None:
             raise SystemExit('%s %s has no owner binding; nothing to resume' % (run, day))
         finish = x.get('finish') or {}
+        import frankie_box_cores as C
+        ledger = C.LEDGER / ('%s.json' % owner.get('booking'))
+        retained = json.loads(ledger.read_bytes()).get('retained') if ledger.is_file() else None
+        if retained is None and owner.get('cpus') and not rebook:
+            released = C.RELEASED / ('%s.json' % owner.get('booking'))
+            raise SystemExit('the retained booking %s of %s %s is not in the ledger any more (%s): the exact CPU set cannot be '
+                             'reused; an explicit owner decision is required: REBOOK=on resumes the same attempt %s on any '
+                             'free 16 CPUs' % (owner.get('booking'), run, day,
+                                                json.loads(released.read_bytes()).get('release_reason') if released.is_file()
+                                                else 'no ledger record', owner['attempt']))
+        if rebook and retained is None:
+            x['owner'] = owner = dict(owner, cpus=None, booking=None,
+                                      rebooked=dict(by=by, at_utc=utc(), previous_cpus=owner.get('cpus'),
+                                                    previous_booking=owner.get('booking')))
         if x['state'] in OWNER_STATES:
             x.update(state='queued', where=None, reason='resumed by %s: back in line at its own place with its owner binding '
-                                                         '(attempt %s, CPUs %s)' % (by, owner['attempt'], owner.get('cpus')))
+                                                         '(attempt %s, CPUs %s)' % (by, owner['attempt'], owner.get('cpus') or 'any free 16'))
             phase = 'root'
         elif x['state'] == 'done' and finish.get('state') in OWNER_STATES:
             x['finish'] = dict(finish, state='resume', resumed_by=by, resumed_utc=utc())
             phase = 'finish'
         else:
             raise SystemExit('%s %s is %s (finish %s): only a saved/unknown day is resumed' % (run, day, x['state'], finish.get('state')))
-        marker = Path(owner['marker'])
-        stamp = int(time.time())
-        archived = []
-        for path in (marker, Path(str(marker) + '.class-ack.json')):
-            if path.exists():
-                target = path.with_name('%s.resumed-%d' % (path.name, stamp))
-                os.rename(path, target)
-                archived.append(str(target))
+        archived = _archive_marker(owner['marker'], 'resumed')
         x['save_request'] = None
         x.setdefault('resumes', []).append(dict(at=time.time(), at_utc=utc(), by=by, phase=phase, archived=archived))
         save('root', doc)
@@ -1893,6 +1930,8 @@ def main():
     p.add_argument('--poll-seconds', type=int, default=60)
     p.add_argument('--kick', choices=('on', 'off'), default='on', help='enqueue: kick the line\'s worker after')
     p.add_argument('--scope', help='worker/kick/handover: the authorized RUN:YYYYMMDD,... this worker may admit (required)')
+    p.add_argument('--rebook', choices=('on', 'off'), default='off',
+                   help='resume: the retained booking is gone (released): resume the same attempt on any free 16 CPUs')
     a = p.parse_args()
     if a.action == 'show':
         if a.events != 'all' and not a.events.isdigit():
@@ -1906,7 +1945,7 @@ def main():
         sys.path.insert(0, str(HERE))
         by = 'dispatch %s' % a.action
         out = (request_save(a.run, a.day, by) if a.action == 'save' else owner_status(a.run, a.day) if a.action == 'status'
-               else resume_owner(a.run, a.day, by))
+               else resume_owner(a.run, a.day, by, rebook=a.rebook == 'on'))
         print(json.dumps(out, indent=1, sort_keys=True, default=str))
         return 0
     if not (a.line and a.code_root and a.commit):

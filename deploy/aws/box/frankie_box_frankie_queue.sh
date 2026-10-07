@@ -21,8 +21,9 @@
 #                                next boundary (a class in progress acknowledges first); acknowledgment pending = status
 #   status  RUN DAY              read-only: the owner binding, marker, class acknowledgment, ledger booking (live /
 #                                retained / released), both line entries and the worker, distinctly
-#   resume  RUN DAY              a saved/unknown owned day back in line with the SAME owner (attempt, CPUs, marker
-#                                archived); then kick LINE=root (SCOPE=RUN:DAY) so the next admission takes it
+#   resume  RUN DAY [REBOOK=on]  a saved/unknown owned day back in line with the SAME owner (attempt, CPUs, marker
+#                                archived); refused when its retained booking is gone unless REBOOK=on (the same attempt
+#                                on any free 16 CPUs, an explicit decision); then kick LINE=root (SCOPE=RUN:...)
 # LINE is root or class. MARKETS_SHA (the dispatched commit) is required for every action but show and status.
 set -eu
 export HOME="${HOME:-/root}"
@@ -46,7 +47,8 @@ case "$ACTION" in save|status|resume)
     : "${MARKETS_SHA:?full dispatched commit required}"
     [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
   fi
-  exec "$PY" -B "$SCRIPT" --action "$ACTION" --run "$RUN" --day "$DAY" ;;
+  case "${REBOOK:-off}" in on|off) ;; *) echo "REBOOK must be on or off" >&2; exit 2;; esac
+  exec "$PY" -B "$SCRIPT" --action "$ACTION" --run "$RUN" --day "$DAY" --rebook "${REBOOK:-off}" ;;
 esac
 : "${MARKETS_SHA:?full dispatched commit required}"
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }

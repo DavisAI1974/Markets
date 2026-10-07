@@ -622,8 +622,13 @@ class Controller:
         if not self.state:
             return
         if self.resume_pending is None and self.state.resume_pending():
-            # a previous controller left a resume unresolved (durable): reconciled, never re-sent
-            self.resume_pending = self.state.resume_pending()
+            # a previous controller left a resume unresolved (durable): reconciled, never re-sent; an unreadable record is
+            # named and ends the service (nothing is guessed about a launch that may have happened)
+            pending = self.state.resume_pending()
+            if pending.get('unreadable') or not pending.get('job_id') or not pending.get('since'):
+                raise SystemExit('resume-pending.json is unreadable or incomplete (%s): read it and move it aside by hand; '
+                                 'nothing is re-sent' % (pending.get('error') or 'missing job_id/since'))
+            self.resume_pending = pending
             self.event(step='resume', attempt=self.resume_pending.get('job_id'), result='pending from a previous controller',
                        detail='reconciled through the worker status; not redispatched')
             return
@@ -974,9 +979,12 @@ class Controller:
                 day = job['job_id'][len(self.run) + 1:len(self.run) + 9]
                 prepared = box('prepare', MAIN, 1800, CODE_ROOT=self.a.code_root, RUN=self.run, DAY=day,
                                WHERE=w.where, ATTEMPT=job['job_id'], COMMIT=self.commit)
-                if not self.start_day(w, prepared['state'], retained=True):
-                    raise RuntimeError('retained preparation did not complete (or the lease was not established); same '
-                                       'claim and inputs kept')
+                started = self.start_day(w, prepared['state'], retained=True)
+                if started is None:
+                    raise LeaseNotEstablished('lease ownership not established before the retained submission; nothing '
+                                              'sent; same claim and inputs kept')
+                if not started:
+                    raise RuntimeError('retained preparation did not complete; same claim and inputs kept')
                 return dict(job_id=job['job_id'], resumed_preparation=True)
             if (saved['run'], saved['name'], saved['where'], saved['commit']) != \
                     (self.run, job['job_id'], w.where, self.commit):
