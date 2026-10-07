@@ -1,3 +1,9 @@
+# Claude session drop-in — 2026-10-07 night, session 3: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007_NIGHT_SESSION3.md`
+
+Branch `ccr-d2f8f826-iefeah-frankie`. Parent-only; agents (model "opus") do the work. Greg's go for the one-day E2E on
+20231018 stands; launch as a fresh run a2 with DAY_CPUS=32 and native/legacy side by side once the open list is done.
+Full frames, nothing dropped or shrunk (absolute). Main box may be RUNNING idle: check its state first.
+
 # Claude session drop-in — 2026-10-07 night, session 2: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007_NIGHT_SESSION2.md`
 
 Branch `ccr-d2f8f826-iefeah-frankie`. Parent-only session; agents do the work, spawned with model "opus".
