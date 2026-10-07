@@ -9,9 +9,10 @@ two channels: Codex integrates from the CCODE documents; a Claude session starts
 Greg, at the start of the session: "Don't mess with old work. Just focus on step 8. Just do step 8A." Codex had fixed the
 sixth-return findings directly and landed `3a1416b7` with the Step 8A assignment (task doc top section). This branch was
 rebased onto it (every earlier commit was already integrated, so the rebase left nothing above Codex's tip), the index was
-rebuilt, and the slice was returned: `8936c260` the controller's lifetime on the main box plus launch prerequisites and
-controls (`pod_root/controller.py`, new `deploy/aws/box/frankie_box_cpu_controller.sh`) | `6048de03` the reachable Pod routes
-of `frankie_box_run.yml` closed, the marker refreshed | `8cfed7cc`, `d091e734` the two code-review passes (17 + 10 findings)
+rebuilt, and the slice was returned, then rebased once more onto Codex's current `439cb0bf` (three step-5 commits, no 8A
+file touched): `bc178ff3` the controller's lifetime on the main box plus launch prerequisites and
+controls (`pod_root/controller.py`, new `deploy/aws/box/frankie_box_cpu_controller.sh`) | `bd28796e` the reachable Pod routes
+of `frankie_box_run.yml` closed, the marker refreshed | `bdf7122b`, `cdeb61ce` the two code-review passes (17 + 10 findings)
 | the docs commit (tip). Record: `CCODE_STEP8_CPU_CONTROLLER_20261007.md`; pointer in the step-6 return section 10.
 Checks: `ast.parse`, `compile`, the static import and call checks, `sh/dash/bash -n`, `yaml.safe_load`, `git diff --check`;
 nothing run, no AWS, no dispatch. The four step-6/historical modules untouched; boundaries unchanged.

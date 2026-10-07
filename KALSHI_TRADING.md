@@ -12,7 +12,7 @@
   controller; `.github/workflows/frankie_box_run.yml` refuses the retired Jev/CLM Pod scripts before any step and its
   always-cleanup branch carries no provider call. Record: `research/kalshi/frankie_boss/CCODE_STEP8_CPU_CONTROLLER_20261007.md`.
   Not run. Superseded (routes refused, files kept as evidence): `deploy/aws/box/frankie_box_jev_pod.sh`,
-  `frankie_box_clm_sidecar_pod.sh`; the Pod-creation path that `controller.py` carried until `8936c260`.
+  `frankie_box_clm_sidecar_pod.sh`; the Pod-creation path that `controller.py` carried until `bc178ff3`.
 
 ## 2026-09-29 — Frankie's 13 historical points attached to each trading day
 - `research/kalshi/frankie_boss/operations/frankie_day_external.py` - FRANKIE_DAY_EXTERNAL_V1: the day file builder, the

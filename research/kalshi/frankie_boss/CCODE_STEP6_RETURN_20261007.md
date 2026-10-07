@@ -263,9 +263,9 @@ adversarially over the whole range (Greg: this has to be the last correction): `
 
 ## 10. Step 8A returned (2026-10-07): the CPU controller's lifetime and launch routing
 
-Codex fixed the sixth-return findings directly (`3a1416b7`) and assigned Step 8A. Returned on that tip, one commit per
-group: `8936c260` the controller's lifetime on the main box, launch prerequisites and controls | `6048de03` the reachable
-Pod routes of `frankie_box_run.yml` closed, the marker refreshed | `8cfed7cc` and `d091e734` the two code-review passes
+Codex fixed the sixth-return findings directly (`3a1416b7`) and assigned Step 8A. Returned on Codex's current tip
+`439cb0bf`, one commit per group: `bc178ff3` the controller's lifetime on the main box, launch prerequisites and controls | `bd28796e` the reachable
+Pod routes of `frankie_box_run.yml` closed, the marker refreshed | `bdf7122b` and `cdeb61ce` the two code-review passes
 (27 findings). The record, with the action-to-entrypoint/owner/receipt map, the recovery ownership, the dependencies
 still missing and the narrow requests, is `CCODE_STEP8_CPU_CONTROLLER_20261007.md`. SOURCE-BUILT / RUNTIME-UNVERIFIED;
 nothing run; no AWS; nothing of Steps 2-7 closed; the four owned step-6/historical modules untouched this round.

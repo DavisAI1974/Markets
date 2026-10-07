@@ -26,8 +26,8 @@ The older drop-ins below are history, not the current assignment.
 ```
 CCODE DROP-IN (new chat, 2026-10-07, seventh): Step 8A RETURNED (the CPU controller's lifetime and launch routing) + two review passes
 #run using-agent-skills
-Repo: DavisAI1974/Markets. Branch ccode/teacher-tasks-20261006b on Codex's 3a1416b7; commits 8936c260 lifetime/prerequisites/
-controls | 6048de03 Pod routes closed | 8cfed7cc d091e734 code-review passes (27 corrections) | the docs commit = tip. First commands:
+Repo: DavisAI1974/Markets. Branch ccode/teacher-tasks-20261006b on Codex's 439cb0bf (the 8A assignment is 3a1416b7); commits bc178ff3 lifetime/prerequisites/
+controls | bd28796e Pod routes closed | bdf7122b cdeb61ce code-review passes (27 corrections) | the docs commit = tip. First commands:
   git fetch origin ccode/teacher-tasks-20261006b ccr-5fce7de3-xa4hfg
   git checkout -B ccode/teacher-tasks-20261006b origin/ccode/teacher-tasks-20261006b
   git rebase origin/ccr-5fce7de3-xa4hfg && git log --oneline -10   (if Codex edited pod_root/controller.py, frankie_box_run.yml,

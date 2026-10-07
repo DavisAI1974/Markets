@@ -11,11 +11,11 @@ review fixes, main/class recovery and run/day scope are in
 ownership wording below. Source-only; no tests or AWS/runtime execution.
 ## STATE AFTER THE SEVENTH CHAT (2026-10-07): Step 8A RETURNED (the CPU controller's lifetime and launch routing)
 
-Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's `3a1416b7` (ccr-5fce7de3-xa4hfg; it integrated the sixth
-return `31832bf2`, fixed the sixth-return findings directly and assigned Step 8A), pushed. One `[skip ci]` commit per group:
-`8936c260` the controller's lifetime, prerequisites and controls (`pod_root/controller.py` + the new launcher
-`deploy/aws/box/frankie_box_cpu_controller.sh`) | `6048de03` the reachable Pod routes closed (`frankie_box_run.yml` + the
-marker `frankie_box_pod_root_loop.sh`) | `8cfed7cc` review pass 1 (17 findings) | `d091e734` review pass 2 (10) | the docs
+Branch `ccode/teacher-tasks-20261006b`, rebased clean onto Codex's CURRENT `439cb0bf` (ccr-5fce7de3-xa4hfg; the 8A assignment
+is `3a1416b7`, which integrated the sixth return `31832bf2`; Codex's three later step-5 commits touch no 8A file), pushed. One `[skip ci]` commit per group:
+`bc178ff3` the controller's lifetime, prerequisites and controls (`pod_root/controller.py` + the new launcher
+`deploy/aws/box/frankie_box_cpu_controller.sh`) | `bd28796e` the reachable Pod routes closed (`frankie_box_run.yml` + the
+marker `frankie_box_pod_root_loop.sh`) | `bdf7122b` review pass 1 (17 findings) | `cdeb61ce` review pass 2 (10) | the docs
 commit (tip). The record is `CCODE_STEP8_CPU_CONTROLLER_20261007.md`: the action map (section 1), the recovery ownership
 (2), one controller per run (3), the dependencies still missing (4, above all the main box's instance profile, which cannot
 be established from source and is Greg's decision), the Pod closure and the inventory of unrelated Pod entrypoints (5),

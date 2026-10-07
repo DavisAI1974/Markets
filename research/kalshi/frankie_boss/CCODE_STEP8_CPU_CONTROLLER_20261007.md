@@ -1,11 +1,12 @@
 # CCode Step 8A return: the CPU controller's lifetime and launch routing, 2026-10-07
 
 Assignment: `CCODE_NEXT_SOURCE_TASKS_20261006.md`, "ACTIVE CCODE ASSIGNMENT, Step 8A CPU controller lifetime and launch
-routing" (Greg, 2026-10-06 23:30-23:33 ET). Rebased onto Codex's `3a1416b7` (which integrated the sixth return `31832bf2`
-and assigned this slice); the codebase-memory index was rebuilt on that tree before any code change. Commits, one per
-group, then the two review passes: `8936c260` the controller's lifetime, prerequisites and controls (controller.py + the
-launcher) | `6048de03` the reachable Pod routes closed (frankie_box_run.yml + the marker) | `8cfed7cc` review pass 1 (17
-findings) | `d091e734` review pass 2 (10 findings) | the documentation commit (this file; the handoffs and drop-ins).
+routing" (Greg, 2026-10-06 23:30-23:33 ET). Assigned in Codex's `3a1416b7` (which integrated the sixth return `31832bf2`); the codebase-memory index was rebuilt on
+that tree before any code change; returned rebased onto Codex's CURRENT tip `439cb0bf` (its three step-5 successor commits
+touch none of the 8A files; its docs say the 8A assignment remains active and disjoint). Commits, one per
+group, then the two review passes: `bc178ff3` the controller's lifetime, prerequisites and controls (controller.py + the
+launcher) | `bd28796e` the reachable Pod routes closed (frankie_box_run.yml + the marker) | `bdf7122b` review pass 1 (17
+findings) | `cdeb61ce` review pass 2 (10 findings) | the documentation commit (this file; the handoffs and drop-ins).
 
 SOURCE-BUILT / RUNTIME-UNVERIFIED, every line of it: `ast.parse` and `compile` without project imports, a static check that
 every dotted module used is imported and every bare call is defined, `sh -n` / `dash -n` / `bash -n` on both shell files,
@@ -161,10 +162,10 @@ the lease is even read, and the launcher's liveness is that lock (`controller.al
 
 ## 7. The two review passes (what was fixed, what was kept)
 
-Pass 1 (`8cfed7cc`, 17 findings), the gravest: the launcher's liveness pattern never matched the unit's argv, so stop,
+Pass 1 (`bdf7122b`, 17 findings), the gravest: the launcher's liveness pattern never matched the unit's argv, so stop,
 resume and clear_stop misjudged a live controller; an orphan acknowledgment silenced every later stop; a plain
 read-then-put lease let two controllers win; the heartbeat could overwrite the release; a day that failed to start twice
-kept an open-ended service polling forever. Pass 2 (`d091e734`, 10): a start that ended refused reported success; a
+kept an open-ended service polling forever. Pass 2 (`cdeb61ce`, 10): a start that ended refused reported success; a
 failure between the lock and the service left no outcome; a save relay was refused for a newer dispatch ref; a
 just-resumed job read as retained. Kept as they are: the controller's own `write_json`/`read_json` (the controller must
 not import the worker's module; the identity rule it would share lives in a closure there); the `always()` refusal branch

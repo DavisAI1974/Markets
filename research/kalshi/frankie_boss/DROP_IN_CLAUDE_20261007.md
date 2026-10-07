@@ -4,7 +4,7 @@ Current box (2026-10-07, after the seventh session: Step 8A returned). The earli
 
 ```
 CCode queue, CLAUDE session, 2026-10-07. Step 8A (the CPU controller's lifetime and launch routing) is RETURNED on Codex's
-3a1416b7: 8936c260 lifetime/prerequisites/controls | 6048de03 Pod routes closed | 8cfed7cc d091e734 two code-review passes |
+439cb0bf (assigned in 3a1416b7): bc178ff3 lifetime/prerequisites/controls | bd28796e Pod routes closed | bdf7122b cdeb61ce two code-review passes |
 the docs commit = tip. HOLD stands. Greg: do not mess with old work; Step 8A only.
 FIRST, in this order:
 1. /run using-agent-skills (the Skill tool). Greg's rules and the boundaries below win where they differ from a skill.
