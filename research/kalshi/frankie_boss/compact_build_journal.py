@@ -262,7 +262,14 @@ class CompactBuildJournal:
             self._insert(start, count, encode_block(self._rows, trees), self._pending_previous, head)
         else:
             rows = self._rows                                        # the worker parses the bodies itself
-            self._inflight.append([self._submit(rows), start, count, self._pending_previous, head, rows])
+            try:
+                task = self._submit(rows)
+            except BrokenProcessPool as error:
+                # session 5 (toy self-test finding): a pool can be found broken at SUBMIT time, not only when a result
+                # is collected; the same redo: one encoder fewer, every in-flight block submitted again, in order
+                self._recover(error)
+                task = self._submit(rows)
+            self._inflight.append([task, start, count, self._pending_previous, head, rows])
             self._collect(all_of_them=False)
         self._rows, self._trees, self._pending_bytes = [], [], 0
 

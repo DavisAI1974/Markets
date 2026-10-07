@@ -50,6 +50,7 @@ and the brain entry it is committed in. A record first stamped at an earlier bou
 open candidates get no record and are listed with status (document confirmation_clock; receipt confirmation_clock).
 """
 import argparse
+import copy
 import hashlib
 import json
 import os
@@ -574,6 +575,16 @@ def coverage(batch_days, candidates, out_dir, searches=None, brain_documents=Non
 
 
 # ---------------------------------------------------------------------------------------------------------- operation
+def _phase(text, done, total=4):
+    """The stage heartbeat (frankie_box_stage_progress.report_phase): the update's four phases as units, so the
+    heartbeat's units/min and its report-only stall flag (600 s) see this stage; never raises, never changes it."""
+    try:
+        import frankie_box_stage_progress as SP
+        SP.report_phase(text, units_done=done, units_total=total, unit='survivor update phases')
+    except Exception:  # noqa: BLE001 - a probe is never the stage's outcome
+        pass
+
+
 def update(run, boundary_day, batch_days, brain, out_root, *, searches=None, log=print):
     import frankie_box_brain as BR
     from frankie_box_durable import write_json, witness
@@ -595,10 +606,24 @@ def update(run, boundary_day, batch_days, brain, out_root, *, searches=None, log
         late = [dict(label=d['label'], path=d['path'], sha256=d['sha256'], kind=d['kind'], day=d['day'],
                      reason='published after this boundary froze its selection; consumed at the next boundary')
                 for d in current['documents'] if d['sha256'] not in seen]
-        # the frozen documents are re-read by pin so the restart computes on the same bytes
+        # the frozen documents are re-read by pin so the restart computes on the same bytes. Dedupe (Greg, 2026-10-07):
+        # select() above has just read, length- and sha256-checked and parsed every current document; a frozen document
+        # whose path, bytes and sha256 equal a current one read straight from its manifest-pinned file (no correction
+        # applied) takes that parse instead of a second read of the same bytes. Every other frozen document is re-read by
+        # pin exactly as before. The content is the json.loads of the same verified bytes either way.
         import frankie_box_experiment_review as REVIEW
+        already = {(c['path'], c.get('bytes'), c['sha256']): c['content'] for c in current['documents']
+                   if not c.get('corrections_applied')}
+        reread = 0
         for d in selection['documents']:
-            d['content'] = json.loads(REVIEW._read_pin(dict(path=d['path'], bytes=d['bytes'], sha256=d['sha256'])))
+            key = (d['path'], d.get('bytes'), d['sha256'])
+            if key in already and not d.get('corrections_applied'):
+                d['content'] = copy.deepcopy(already[key])
+            else:
+                d['content'] = json.loads(REVIEW._read_pin(dict(path=d['path'], bytes=d['bytes'], sha256=d['sha256'])))
+                reread += 1
+        timings['frozen_documents_reread'] = reread
+        timings['frozen_documents_shared_with_select'] = len(selection['documents']) - reread
         if 'search_markets' not in selection:
             # a selection frozen before the confirmation clock existed: the confirming days' market reads are taken now,
             # each still verified against its lessons pin, and said so (never presented as frozen)
@@ -617,6 +642,7 @@ def update(run, boundary_day, batch_days, brain, out_root, *, searches=None, log
         inputs = dict(schema=INPUTS_SCHEMA, identity=identity, selection=stored, selection_sha256=digest(stored))
         write_json(inputs_path, inputs)
     timings['select'] = round(time.time() - t0, 3)
+    _phase('survivors: selection %s (%d documents)' % ('frozen' if frozen else 'read', len(selection['documents'])), 1)
     inputs_pin = dict(path=str(inputs_path), **witness(inputs_path))
     t0 = time.time()
     built = build(selection, boundary_day, batch_days, run)
@@ -624,9 +650,11 @@ def update(run, boundary_day, batch_days, brain, out_root, *, searches=None, log
                                 built['previously_stamped'], boundary_day, batch_days, built['counts']['previous_updates'] + 1)
     clock_index['search_markets_captured'] = selection.get('search_markets_captured')
     timings['build'] = round(time.time() - t0, 3)
+    _phase('survivors: candidates built (%d)' % len(built['candidates']), 2)
     t0 = time.time()
     cov = coverage(batch_days, built['candidates'], out, searches, brain_documents=len(selection['documents']))
     timings['coverage'] = round(time.time() - t0, 3)
+    _phase('survivors: all-99 coverage of %d days' % len(batch_days), 3)
     document = dict(schema=SCHEMA, run=run,
                     boundary=dict(day=boundary_day, batch_days=list(batch_days), sequence=built['counts']['previous_updates'] + 1,
                                   rule='a cross-day batch boundary keyed by its last day; a batch of one day is a boundary; '
@@ -670,6 +698,7 @@ def update(run, boundary_day, batch_days, brain, out_root, *, searches=None, log
         publication = dict(status='declined_existing_entry_differs', reason=str(error),
                            entry=str(Path(brain) / ('%s-survivors' % boundary_day)))
     timings['publish'] = round(time.time() - t0, 3)
+    _phase('survivors: published (%s)' % publication.get('status'), 4)
     # the confirmation clock as committed: stamped only when the brain entry holds this document (published or reused);
     # a declined publication leaves the records on survivors.json only, visible, never presented as committed
     committed = publication.get('status') in ('published', 'reused')

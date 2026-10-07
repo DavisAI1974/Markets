@@ -109,11 +109,28 @@ def prefetch_pointer_digests(classroom, teacher_rows):
     paths = [p for p in dict.fromkeys(paths) if p.is_file()]
     if not paths:
         return None, {}
+    # the shared pin helper (frankie_box_lane_pin.executor): each hashing thread pinned to its placement CPU (the other
+    # cores' threads first, the coordinator's own CPU left to the build); the plain pinned threads when it cannot load
+    try:
+        try:
+            import frankie_box_lane_pin as LP
+        except ImportError:
+            from deploy.aws.box import frankie_box_lane_pin as LP
+        pool = LP.executor('thread', len(paths))
+        PREFETCH.update(mode='lane_pin.executor', cpu_map=LP.record(len(paths), what='school pointer-file sha256 prefetch'),
+                        files=[str(p) for p in paths])
+        return pool, {str(p): pool.submit(_hash_file, p, None) for p in paths}
+    except Exception as error:  # noqa: BLE001 - placement only: the earlier pinned threads below
+        PREFETCH.update(mode='threads_pinned_in_task', helper_error='%s: %s' % (type(error).__name__, error),
+                        files=[str(p) for p in paths])
     from concurrent.futures import ThreadPoolExecutor
     order = _lane_physical_first()
     pool = ThreadPoolExecutor(max_workers=len(paths), thread_name_prefix='school-hash')
     return pool, {str(p): pool.submit(_hash_file, p, order[i % len(order)] if order else None)
                   for i, p in enumerate(paths)}
+
+
+PREFETCH = {}     # what the pointer-hash prefetch did (the receipt's `prefetch`, Day-1 visibility); {} = nothing prefetched
 
 
 def canonical(value):
@@ -585,6 +602,9 @@ def main():
     elif retained is not None:
         receipt['corrections'] = retained['corrections']
     receipt['workflow_report'] = workflow_report(a, doc, row, file, reused, successor, retained, currentness, started)
+    # added field: the pointer-hash prefetch (CPU map, files) or why there was none; the school file and index row untouched
+    receipt['prefetch'] = dict(PREFETCH) if PREFETCH else dict(mode='none', reason='a retained school was reused, or no '
+                                                                                   'large pointer file was present to prefetch')
     print(json.dumps(receipt, sort_keys=True, default=str), flush=True)
     return 0
 

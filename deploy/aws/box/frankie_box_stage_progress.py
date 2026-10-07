@@ -58,6 +58,10 @@ STALL_SECONDS = 600                # the probe flags a running stage whose units
 ENV = 'FRANKIE_STAGE_PROGRESS'     # the child's own phase file (report_phase), set by Run.child
 WORK_PROBE = 'FRANKIE_WORK_PROBE_V1'
 LOG_TAIL = 4096                    # bytes read from the end of the log for the last line (phase text fallback)
+try:
+    CLOCK_TICKS = os.sysconf('SC_CLK_TCK')
+except (AttributeError, ValueError, OSError):
+    CLOCK_TICKS = 100
 WORK_ROOT = '/opt/frankie-box/work/'   # where a process-named directory may hold a work probe (stacks pass)
 MAX_PROBE_DIRS = 256               # directories checked per sample (one small read each)
 QUEUE_DIR = Path('/opt/frankie-box/work/frankie-queue')
@@ -209,6 +213,7 @@ class Heartbeat:
         self.stage, self.key, self.log_path, self.interval = stage, str(key), log_path, interval
         self.pid, self.started = None, None
         self.peak_write = {}            # (pid, start ticks) -> the largest write_bytes seen
+        self.peak_cpu = {}              # (pid, start ticks) -> the largest utime+stime ticks seen (CPU use, stacks pass)
         self.written_files = set()
         self.probe_dirs = {}            # directory -> last checked (FRANKIE_WORK_PROBE_V1 progress.json beside open files)
         self.named_dirs = [str(d) for d in (probe_dirs or ()) if d]   # the caller's known probe directories, checked first
@@ -368,6 +373,14 @@ class Heartbeat:
             rss = 0
             for pid, ticks in pids:
                 rss += (_field(_read('/proc/%d/status' % pid), 'VmRSS:') or 0) * 1024
+                stat = _read('/proc/%d/stat' % pid)
+                try:
+                    fields = stat.rsplit(')', 1)[1].split() if stat else None
+                    if fields:
+                        self.peak_cpu[(pid, ticks)] = max(self.peak_cpu.get((pid, ticks), 0),
+                                                          int(fields[11]) + int(fields[12]))
+                except (IndexError, ValueError):
+                    pass
                 written = _field(_read('/proc/%d/io' % pid), 'write_bytes:')
                 if written is not None:
                     key = (pid, ticks)
@@ -397,6 +410,10 @@ class Heartbeat:
                     for directory in (parent, os.path.dirname(parent), os.path.dirname(os.path.dirname(parent))):
                         if directory and directory not in self.probe_dirs and len(self.probe_dirs) < 64:
                             self.probe_dirs[directory] = now
+            # CPU use (stacks pass, additive): utime+stime of every process of the tree ever sampled, in seconds (a
+            # LOWER BOUND like bytes_out); cpus_busy = CPU-seconds per wall second since the last line
+            line['cpu_seconds'] = round(sum(self.peak_cpu.values()) / float(CLOCK_TICKS), 2) if self.peak_cpu else None
+            line['sources']['cpu_seconds'] = '/proc stat utime+stime of the sampled tree (lower bound)'
             line.update(processes=len(pids), rss_bytes=rss if pids else None,
                         bytes_out=sum(self.peak_write.values()) if self.peak_write else None,
                         files_out=len(self.written_files))
@@ -444,6 +461,9 @@ class Heartbeat:
                     line['bytes_out_per_min'] = round((line['bytes_out'] - self.previous[1]) / span, 1)
                 if isinstance(line.get('units_done'), (int, float)) and isinstance(self.previous[2], (int, float)):
                     line['units_per_min'] = round((line['units_done'] - self.previous[2]) / span, 3)
+            if line.get('cpu_seconds') is not None and getattr(self, '_cpu_previous', None) is not None:
+                line['cpus_busy'] = round((line['cpu_seconds'] - self._cpu_previous) / (span * 60.0), 2) if span > 0 else None
+        self._cpu_previous = line.get('cpu_seconds')
         self.previous = (mono, line.get('bytes_out'), line.get('units_done'))
         # the stall watch (L-2): units that do not move while this heartbeat keeps writing; None while units are unknown
         done = line.get('units_done')
@@ -501,6 +521,7 @@ def stages_summary(run_dir, day=None):
                             exit_code=line.get('exit_code'), units_unchanged_s=line.get('units_unchanged_s'),
                             stalled=line.get('stalled'), work_probes=line.get('work_probes'), file=str(path),
                             units_source=(line.get('sources') or {}).get('units'), cpu_ranges=line.get('cpu_ranges'),
+                            cpu_seconds=line.get('cpu_seconds'), cpus_busy=line.get('cpus_busy'),
                             work_probes_error=line.get('work_probes_error'), sample_error=line.get('sample_error')))
     return dict(schema=SCHEMA + '_SUMMARY', run_dir=str(run_dir), day=day, at=now, stale_after_intervals=STALE_INTERVALS,
                 stalled_after_seconds=STALL_SECONDS, stages=out, run_probes=run_probes(run_dir))

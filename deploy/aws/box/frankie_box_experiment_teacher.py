@@ -131,6 +131,18 @@ def _sha256(path):
     return h.hexdigest()
 
 
+class _HashingWriter:
+    """A file wrapper for pickle.dump: every byte written to the file is also fed to sha256, so the digest is that of
+    exactly the bytes in the file (no second read pass). pickle sees only write(); the bytes are unchanged."""
+
+    def __init__(self, handle):
+        self.handle, self.sha256 = handle, hashlib.sha256()
+
+    def write(self, data):
+        self.sha256.update(data)
+        return self.handle.write(data)
+
+
 def _publish(out, result):
     """The step's receipt, complete or not at all; then the directory entry is durable."""
     temporary = out / 'receipt.json.pending'
@@ -559,6 +571,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     # Shared path only; the legacy no-policy walk is unchanged. Placement only: no row, hash or identity depends on it.
     LP = _box_module('frankie_box_lane_pin')
     PT.FINISH_POOL_RECORD.clear()
+    PT.PROGRESS = _work_probe(out, rc)          # unit progress of the raw pass and the finish (report-only)
+    PT.PROGRESS_ERRORS[0] = 0
     cpu_pinning = dict(schema='FRANKIE_TEACHER_CPU_PINNING_V1', outcome='not_pinned',
                        reason='legacy no-policy walk: placement unchanged' if market is None else None)
     if market is not None:
@@ -592,6 +606,9 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         limit = 2 * pre.workers * PT.EVIDENCE_BATCH if pre is not None else 1
         ahead, batch, slots, done, last, failed = deque(), [], [], [False], [None], [None]
         whole = tuple(entity) if entity is not None else None
+        # a resumed raw pass (parallel_teacher.RESUME_SKIP, set by row_pass before it starts this generator) skips the
+        # rows its save already holds: their payloads are read (the reader has no start-at-cursor) but not encoded
+        present_seen = [0]
 
         def flush():
             if batch:
@@ -615,7 +632,13 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                     break
                 entry = [item, None, None]
                 e = item['evidence']
-                if pre is not None and item['arithmetic']['status'] == 'present' and type(e) is dict:
+                skip = False
+                if item['arithmetic']['status'] == 'present':
+                    present_seen[0] += 1
+                    skip = present_seen[0] <= PT.RESUME_SKIP[0]
+                    if skip:
+                        precompute['resume_skipped_rows'] = present_seen[0]
+                if pre is not None and not skip and item['arithmetic']['status'] == 'present' and type(e) is dict:
                     m = e.get('normalized')
                     entity_row = whole is None or (type(m) is dict and (m.get('publisher_id'), m.get('instrument_id')) == whole)
                     entry[2] = len(batch)
@@ -770,6 +793,8 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         finally:
             PT.RAW_WORKER_CPUS = None
             PT.FINISH_WORKER_CPUS = None
+            PT.PROGRESS = None
+            raw_saves = dict(PT.SAVE_RECORD, progress_errors=PT.PROGRESS_ERRORS[0])
             cpu_pinning['finish_pool'] = dict(PT.FINISH_POOL_RECORD) if PT.FINISH_POOL_RECORD else None
             cpu_pinning['evidence_precompute'] = dict(precompute)
             if cpu_pinning['outcome'] in ('pinned', 'fallback') and 'restored' not in cpu_pinning:
@@ -816,6 +841,31 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
     attachment_path = out / 'teacher-attachment.pkl'
     body = dict(attachment=attachment, request_id=request_id, source_hash=rc['source_prefix_hash'], as_of=as_of,
                 through_cursor=through, entity=entity)
+    # The publication tail (stacks pass): the attachment is hashed as it is written (the same bytes pickle hands to the
+    # file; no read-back pass), the rows file is hashed on a thread while the external section is built, and a retained
+    # attachment is hashed on a thread too. hashlib releases the GIL on these buffers; the values are the files' sha256.
+    attachment_sha = [None]
+    hashers = {}
+
+    def hash_on_thread(name, path):
+        import threading
+        box = dict(sha256=None, error=None)
+
+        def run():
+            try:
+                box['sha256'] = _sha256(path)
+            except BaseException as error:  # noqa: BLE001 - raised at the join, in the original order
+                box['error'] = error
+        thread = threading.Thread(target=run, name='teacher-%s-sha256' % name, daemon=True)
+        thread.start()
+        hashers[name] = (thread, box)
+
+    def hashed(name):
+        thread, box = hashers.pop(name)
+        thread.join()
+        if box['error'] is not None:
+            raise box['error']
+        return box['sha256']
     if attachment_path.exists():
         with attachment_path.open('rb') as f:
             retained = pickle.load(f)
@@ -823,20 +873,24 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                 DC.snapshot_teacher_attachment(retained['attachment'], request_id=request_id, cycle_index=0,
                     cycle_count=1, source_hash=rc['source_prefix_hash'], as_of=as_of, through_cursor=through) != source:
             raise ValueError('retained teacher attachment differs; publication preserved for recovery')
+        hash_on_thread('attachment', attachment_path)
     else:
         temporary = attachment_path.with_name(attachment_path.name + '.pending')
         with temporary.open('wb') as f:
-            pickle.dump(body, f, protocol=pickle.HIGHEST_PROTOCOL)
+            writer = _HashingWriter(f)
+            pickle.dump(body, writer, protocol=pickle.HIGHEST_PROTOCOL)
             f.flush()
             os.fsync(f.fileno())
         os.replace(temporary, attachment_path)
+        attachment_sha[0] = writer.sha256.hexdigest()
     SE._save(out / ROWS_FILE, source)
+    hash_on_thread('rows', out / ROWS_FILE)
     phase('snapshot_rows_attachment')
     result = dict(schema='FRANKIE_EXPERIMENT_TEACHER_ROWS_V1', day=day, request_id=request_id, entity=list(entity),
                   ingestion_receipt=dict(path=str(receipt_path), sha256=receipt_sha256), rows=len(rows), processed=processed,
                   entity_rows=len(hashes), as_of=as_of, through_cursor=through, walk_seconds=round(walked, 1),
-                  seconds=round(time.time() - started, 1), rows_file=dict(file=ROWS_FILE, sha256=_sha256(out / ROWS_FILE)),
-                  attachment_file=dict(file='teacher-attachment.pkl', sha256=_sha256(out / 'teacher-attachment.pkl')),
+                  seconds=round(time.time() - started, 1), rows_file=dict(file=ROWS_FILE, sha256=None),
+                  attachment_file=dict(file='teacher-attachment.pkl', sha256=attachment_sha[0]),
                   model_calls=0, caveat='whole-day context: the exact-row check in finish compares the rows with themselves',
                   experiment_directive=directive_witness(), phase_timings=phases, cpu_pinning=cpu_pinning)
     if market is not None:
@@ -861,6 +915,10 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
             external.update(status='failed', error='%s: %s' % (type(error).__name__, error))
             code = 4
         phase('external_section')
+    result['rows_file']['sha256'] = hashed('rows')
+    if 'attachment' in hashers:
+        result['attachment_file']['sha256'] = hashed('attachment')
+    phase('hash_publications')
     result['external_section'] = external
     # the per-point summary of the 13 points (the day reports' 99-layer join reads it): from the key above only
     result['external_points'] = (external_points_summary(external_key) if external_key is not None else

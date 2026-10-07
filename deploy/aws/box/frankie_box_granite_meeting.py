@@ -602,6 +602,32 @@ def threads_resolution(params):
                 rule='null never resolves to the host CPU count; an integer never exceeds the claimed affinity')
 
 
+FLASH_ATTENTION_FLAGS = ('-fa', '--flash-attn')
+THREAD_ENV = ('OMP_NUM_THREADS', 'OMP_PROC_BIND', 'OMP_PLACES', 'GOMP_CPU_AFFINITY', 'OPENBLAS_NUM_THREADS',
+              'MKL_NUM_THREADS', 'GGML_NUM_THREADS', 'LLAMA_ARG_THREADS', 'LLAMA_ARG_FLASH_ATTN', 'LLAMA_ARG_THREADS_BATCH')
+
+
+def runtime_attention(command):
+    """The attention setting the server runs with, as a record (Greg's open call (a): flash attention off for
+    determinism?). The command line passes no --flash-attn flag, so llama-server b11440 takes its default 'auto', which
+    resolves ON for the CPU backend; its split-KV decode then reduces partials per thread chunk (see
+    frankie_box_jev_cpu.lane_threads), so the text depends on the thread count at the rounding level. Recorded only."""
+    given = [a for a in command if a in FLASH_ATTENTION_FLAGS]
+    env = os.environ.get('LLAMA_ARG_FLASH_ATTN')
+    return dict(flag_passed=bool(given), flash_attn=('as passed: %s' % given) if given else
+                ('environment LLAMA_ARG_FLASH_ATTN=%s' % env if env else 'not passed: llama-server default auto (b11440: on '
+                                                                        'for the CPU backend)'),
+                threads_batch='not passed: llama-server default = --threads',
+                open_call='Greg (a): 32 vs 16 threads and flash attention off for determinism; values left unchanged',
+                rule='record only; the command line is unchanged by this field')
+
+
+def thread_env():
+    """{name: value or None} of the thread/affinity environment the server inherits (explicit on the record; the
+    command's --threads is what llama.cpp's CPU threadpool uses)."""
+    return {name: os.environ.get(name) for name in THREAD_ENV}
+
+
 def resolve_threads(params):
     """(threads, host CPU count); see threads_resolution for the rule (null = the claimed slot, 1)."""
     resolved = threads_resolution(params)
@@ -840,6 +866,10 @@ class LlamaServer:
         # every thread llama.cpp creates inherits that set; on the claimed one-CPU adviser slot that is its one CPU.
         # The command line is unchanged; a refused pin keeps the inherited affinity and is recorded (L-2).
         self.cpus, self.placement = self._server_cpus(available)
+        # Greg's open call (a), documented and left as it is (stacks pass, 2026-10-07 night): the thread count above and
+        # the attention path are explicit fields of every attempt record and receipt; nothing here changes either value.
+        self.placement['attention'] = runtime_attention(command)
+        self.placement['thread_env'] = thread_env()
         if self.params.get('cpu_only'):
             command += ['--n-gpu-layers', '0']
         # the server's stderr goes to a FILE, whole (never a pipe that nobody drains; never sliced)

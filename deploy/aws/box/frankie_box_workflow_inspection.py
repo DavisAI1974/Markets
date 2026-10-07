@@ -351,8 +351,12 @@ def cpu_map_rows(body):
     return rows
 
 
+_PIECE_MAPS = []   # the CPU maps seen in the current piece (for its CPU use row)
+
+
 def cpu_map_block(body, label):
     rows = cpu_map_rows(body)
+    _PIECE_MAPS.extend((label, path, value) for path, value in rows)
     if not rows:
         return
     emit('#### ' + label + ': CPU map (lane, coordinator, workers, pool recovery; placement only, never a value)\n')
@@ -394,6 +398,66 @@ HEARTBEAT_KEYS = ('utc', 'final', 'outcome', 'exit_code', 'elapsed_s', 'phase', 
                   'rss_bytes', 'processes', 'cpu_ranges', 'sample_error', 'work_probes_error')
 
 
+def _count_cpus(text):
+    total = 0
+    for part in str(text or '').split(','):
+        part = part.strip()
+        if part:
+            low, _, high = part.partition('-')
+            try:
+                total += int(high or low) - int(low) + 1
+            except ValueError:
+                return None
+    return total or None
+
+
+def _jsonl_lines(path):
+    """Every JSON line of a heartbeat file read ONCE (under the metadata ceiling), or None when it is over it."""
+    if path.stat().st_size > METADATA_BYTE_LIMIT:
+        return None
+    out = []
+    for text in path.read_text(encoding='utf-8', errors='replace').splitlines():
+        if text.strip():
+            try:
+                out.append(json.loads(text))
+            except ValueError:
+                continue
+    return out
+
+
+def cpu_use(path, lines=None):
+    """The CPU use of one stage heartbeat file (whole file under the metadata ceiling): booked CPUs (the stage tree's
+    cpu_ranges), mean / max CPU-equivalents busy (cpus_busy, a lower bound), and the idle stretches: consecutive lines
+    using under half the booked CPUs, by phase, with their wall seconds. None fields = not measured (older heartbeat)."""
+    if lines is None:
+        return dict(unavailable='heartbeat file over the metadata ceiling or unreadable (first/last lines shown above)')
+    booked = next((_count_cpus(x.get('cpu_ranges')) for x in reversed(lines) if x.get('cpu_ranges')), None)
+    busy = [x.get('cpus_busy') for x in lines if isinstance(x.get('cpus_busy'), (int, float))]
+    stretches, current = [], None
+    for x in lines:
+        b, t = x.get('cpus_busy'), x.get('elapsed_s')
+        idle = booked and isinstance(b, (int, float)) and b < booked / 2.0
+        if idle:
+            if current is None or current['phase'] != x.get('phase'):
+                current = dict(phase=x.get('phase'), from_s=t, to_s=t, cpus_busy_max=b)
+                stretches.append(current)
+            current['to_s'] = t
+            current['cpus_busy_max'] = max(current['cpus_busy_max'], b)
+        else:
+            current = None
+    for item in stretches:
+        try:
+            item['wall_s'] = round(item['to_s'] - item['from_s'] + (lines[0].get('interval_s') or 30), 1)
+        except TypeError:
+            item['wall_s'] = None
+    return dict(booked_cpus=booked, cpu_ranges=next((x.get('cpu_ranges') for x in reversed(lines) if x.get('cpu_ranges')), None),
+                cpus_busy_mean=round(sum(busy) / len(busy), 2) if busy else None,
+                cpus_busy_max=max(busy) if busy else None, cpu_seconds=lines[-1].get('cpu_seconds') if lines else None,
+                measured_lines=len(busy), idle_stretches=stretches[:50],
+                idle_stretches_listed=len(stretches),
+                rule='lower bounds from /proc of the sampled tree; under half the booked CPUs = an idle stretch')
+
+
 def heartbeat_block(run_dir, day, stages):
     """The stage heartbeats of a piece (frankie_box_stage_progress, FRANKIE_STAGE_HEARTBEAT_V1): per stage file the
     first and last line, the units source and every work probe of the last line. Absent = no heartbeat recorded."""
@@ -402,23 +466,42 @@ def heartbeat_block(run_dir, day, stages):
         files.append(run_dir / 'days' / day / 'progress' / ('%s.jsonl' % stage))
         files += sorted(run_dir.glob('batches/*/progress/%s.jsonl' % stage))
     files = [f for f in dict.fromkeys(files) if f.is_file()]
+    uses = []
     emit('#### stage heartbeats (FRANKIE_STAGE_HEARTBEAT_V1; where time went; a probe never changes a stage)\n')
     if not files:
         emit('No stage heartbeat file for %s (none recorded: unknown, never zero).\n' % ', '.join(stages or ('this piece',)))
+        cpu_use_row(uses)
         return
     for path in files:
-        first, last, count = _jsonl_ends(path)
+        try:
+            lines = _jsonl_lines(path)            # one read serves the first/last lines and the CPU use row
+        except OSError:
+            lines = None
+        if lines:
+            first, last, count = lines[0], lines[-1], len(lines)
+        else:
+            first, last, count = _jsonl_ends(path)
         if not isinstance(last, dict):
             json_block(dict(file=str(path), unavailable=count if isinstance(count, str) else 'no JSON line'))
             continue
-        if last.get('key') not in (None, day, 'day-' + day) and not str(last.get('key')).startswith(day) \
-                and path.parent.parent.parent.name == 'batches':
-            pass                                  # a batch heartbeat: shown with its own key (its scope is the batch)
         json_block(dict(file=str(path), lines=count, key=last.get('key'), stage=last.get('stage'),
                         first={k: (first or {}).get(k) for k in ('utc', 'phase', 'units_done', 'units_total')},
                         last={k: last.get(k) for k in HEARTBEAT_KEYS},
                         units_source=(last.get('sources') or {}).get('units'),
                         work_probes=last.get('work_probes')))
+        uses.append((path, cpu_use(path, lines)))
+    cpu_use_row(uses)
+
+
+def cpu_use_row(uses):
+    """The piece's CPU use row (Greg, 2026-10-07: day 1 shows where CPUs sat idle in every piece): per stage heartbeat
+    the booked CPUs, the CPU-equivalents that did work and the idle stretches by phase, beside every CPU map the piece's
+    receipts record (frankie_box_lane_pin.record and the pieces' cpu_placement / pool_recovery)."""
+    emit('#### CPU use (booked CPUs, CPUs that did work, idle stretches by sub-step, recorded CPU maps)\n')
+    json_block(dict(heartbeats=[dict(file=str(path), **use) for path, use in uses],
+                    cpu_maps=[dict(source=label, at=path, map=value) for label, path, value in _PIECE_MAPS],
+                    absent=None if (uses or _PIECE_MAPS) else 'no heartbeat and no CPU map recorded for this piece: '
+                                                            'its CPU use is unknown, never zero'))
 
 
 
@@ -877,6 +960,7 @@ def main():
     preamble = '\n'.join(_OUT)
     for piece, title, stages in PIECES:
         _OUT.clear()
+        _PIECE_MAPS.clear()
         emit('## ' + piece + ': ' + title + '\n')
         if piece == 'preflight':
             lane_records(args.run_dir, plan['run'], args.day)
@@ -942,8 +1026,7 @@ def main():
             for report in body.get('reports') or []:
                 if isinstance(report, dict):
                     json_block(dict(existing_report=report, disposition='reuse this normal report; not regenerated'))
-        if stages:
-            heartbeat_block(args.run_dir, args.day, stages)
+        heartbeat_block(args.run_dir, args.day, stages)   # every piece: its heartbeats (or their absence) and CPU use
         for path in extra[piece]:
             if path.suffix.lower() == '.json':
                 metadata(path, 'Operator-supplied metadata (identity/consumption not independently verified)')

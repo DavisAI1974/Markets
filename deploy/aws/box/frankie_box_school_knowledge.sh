@@ -31,5 +31,7 @@ set -- --day "$DAY" --run "$RUN" --report-number "$REPORT_NUMBER" --classroom "$
 [ -z "${LESSONS:-}" ] || set -- "$@" --lessons "$LESSONS"
 [ -z "${TEACHER_ROWS:-}" ] || set -- "$@" --teacher-rows "$TEACHER_ROWS"
 [ -z "${SCHOOL_DAY:-}" ] || set -- "$@" --school-day "$SCHOOL_DAY"
+# one BLAS/OpenMP thread per process: the pools are sized from the booked lane (frankie_box_lane_pin), never by a library
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 exec nice -n 10 /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_school_knowledge.py" "$@"

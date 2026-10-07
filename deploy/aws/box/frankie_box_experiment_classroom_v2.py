@@ -171,15 +171,40 @@ def _attach_to_brain_entry(entry_dir, classroom_external_md, day_file, day_sha, 
     return manifest
 
 
+PIN_RECORD = {}
+
+
 def _pin_outputs(directory, names):
-    """{name: pin} for the produced files on disk, and the names that are not (listed, never pinned)."""
-    pinned, listed = {}, []
+    """{name: pin} for the produced files on disk, and the names that are not (listed, never pinned). The files are
+    hashed side by side on pinned threads over the booked lane (frankie_box_lane_pin.executor; hashlib releases the GIL
+    on each 16 MB block), each by the same streamed frankie_box_filehash.witness as before, and placed in `names` order:
+    the same pins in the same order. A file is still hashed whole each time (no stat-only skip: Greg's open call (c))."""
+    on_disk, listed = [], []
     for name in names:
         path = Path(directory) / name
         if path.is_file():
-            pinned[name] = dict(path=str(path), bytes=path.stat().st_size, sha256=_sha256(path))
+            on_disk.append((name, path))
         else:
             listed.append(dict(name=name, reason='not on disk after the classroom wrote its files'))
+    started = time.monotonic()
+    shas, how = None, None
+    if len(on_disk) > 1:
+        try:
+            import frankie_box_lane_pin as LP
+            lane = LP.lane_cpus()
+            workers = max(1, min(len(on_disk), len(lane)))
+            with LP.executor('thread', workers, lane) as pool:
+                shas = list(pool.map(lambda item: _sha256(item[1]), on_disk))
+            how = dict(LP.record(workers, lane, what='classroom output pins (sha256 threads)'))
+        except Exception as error:  # noqa: BLE001 - hashed one after another below, the reason recorded
+            shas, how = None, dict(where='this thread, one after another',
+                                   why='%s: %s' % (type(error).__name__, error))
+    if shas is None:
+        shas = [_sha256(path) for _, path in on_disk]
+        how = how or dict(where='this thread', why='one file or none')
+    pinned = {name: dict(path=str(path), bytes=path.stat().st_size, sha256=sha)
+              for (name, path), sha in zip(on_disk, shas)}
+    PIN_RECORD.update(how, files=len(on_disk), seconds=round(time.monotonic() - started, 3))
     return pinned, listed
 
 
@@ -1005,6 +1030,7 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     received['cpu_pinning'] = dict(received.get('cpu_pinning') or {}, **K.pinning_record())
     # a heartbeat that could not be written (the probe module failed to import), counted per error; {} = none
     received['probe_errors'] = dict(K.PROBE_ERRORS)
+    received['output_pins'] = dict(PIN_RECORD)              # where the output sha256s ran and how long
     key = ext['teacher_key']
     result = dict(schema=SCHEMA, day=day, status='complete', mode=mode, components=report['components'],
                   observations=report['observations'], pairs=report['pairs'], novel_findings=len(novel),

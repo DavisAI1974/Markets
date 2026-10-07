@@ -39,5 +39,7 @@ if [ -n "${HISTORICAL_CLAIMS:-}" ]; then
   case "$HISTORICAL_CLAIMS" in research/kalshi/frankie_boss/knowledge/HISTORICAL_CLAIMS_V1-*.json) ;; *) echo "HISTORICAL_CLAIMS must be a committed knowledge/HISTORICAL_CLAIMS_V1 file" >&2; exit 2;; esac
   set -- "$@" --historical-claims "$CODE_ROOT/$HISTORICAL_CLAIMS"
 fi
+# one BLAS/OpenMP thread per process: the pools are sized from the booked lane (frankie_box_lane_pin), never by a library
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT" MAP_URL="${MAP_URL:-}"
 exec nice -n 10 /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_scientific_teacher.py" "$@"

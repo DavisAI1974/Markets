@@ -25,5 +25,7 @@ for item in $(echo "${SEARCHES:-}" | tr ',' ' '); do
   case "$item" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]=/opt/frankie-box/work/experiment-search/*) set -- "$@" --search "$item";;
     *) echo "SEARCHES items must be DAY=<dir under experiment-search>: $item" >&2; exit 2;; esac
 done
+# one BLAS/OpenMP thread per process: the pools are sized from the booked lane (frankie_box_lane_pin), never by a library
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 exec nice -n 10 /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_survivor_update.py" "$@"
