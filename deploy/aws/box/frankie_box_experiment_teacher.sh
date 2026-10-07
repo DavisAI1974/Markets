@@ -44,7 +44,10 @@ if [ -n "${CPUS:-}" ]; then
 fi
 SHARE=$((NCPU / ND)); [ "$SHARE" -ge 2 ] || SHARE=2
 [ -z "${CPUS:-}" ] || [ $((SHARE * ND)) -le "$(nproc)" ] || { echo "$ND days need at least $((2 * ND)) cores; CPUS=$NCPU gives $SHARE each" >&2; exit 2; }
-echo "### teacher CPU budget: $NCPU of $(nproc) cores, $SHARE per day"
+# Every booked CPU is used (Greg, 2026-10-07 night): when the days do not divide the budget, the first NCPU % ND days
+# take one CPU more (32 CPUs, 3 days: 11, 11, 10), so no CPU of the booking sits idle; one day takes all of them.
+SPARE=0; [ $((SHARE * ND)) -le "$NCPU" ] && SPARE=$((NCPU - SHARE * ND))
+echo "### teacher CPU budget: $NCPU of $(nproc) cores, $SHARE per day$([ "$SPARE" -gt 0 ] && echo " (+1 on the first $SPARE)")"
 LOGS=/opt/frankie-box/work/experiment-teacher-rows/logs; mkdir -p "$LOGS"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH="$CODE_ROOT"
 I=0; PIDS=""
@@ -53,7 +56,8 @@ for DAY in $(echo "$DAYS" | tr ',' ' '); do
   case "$DAY" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "bad day $DAY" >&2; exit 2;; esac
   case "$R" in /opt/frankie-box/work/ingest-*/ingestion-receipt.json) ;; *) echo "bad receipt $R" >&2; exit 2;; esac
   [ -s "$R" ] || { echo "no receipt at $R" >&2; exit 2; }
-  FIRST=$(( (I - 1) * SHARE )); LAST=$(( FIRST + SHARE - 1 )); [ "$LAST" -lt "$NCPU" ] || LAST=$((NCPU - 1))
+  MINE_SHARE=$SHARE; [ "$I" -le "$SPARE" ] && MINE_SHARE=$((SHARE + 1))
+  FIRST=$(( (I - 1) * SHARE + (I - 1 < SPARE ? I - 1 : SPARE) )); LAST=$(( FIRST + MINE_SHARE - 1 )); [ "$LAST" -lt "$NCPU" ] || LAST=$((NCPU - 1))
   PIN=$(echo "$MINE" | tr ' ' '\n' | sed -n "$((FIRST + 1)),$((LAST + 1))p" | paste -sd, -)   # positions in the affinity
   SHA=$(sha256sum "$R" | cut -d' ' -f1)
   EXTRA=""
@@ -74,7 +78,7 @@ for DAY in $(echo "$DAYS" | tr ',' ' '); do
   # day's teacher sizes from the lane see the same CPUs as the walk, never the whole booking or the host count
   # shellcheck disable=SC2086
   FRANKIE_LANE_CPUS="$PIN" taskset -c "$PIN" /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_experiment_teacher.py" \
-    --day "$DAY" --ingestion-receipt "$R" --ingestion-receipt-sha256 "$SHA" --workers $((SHARE - 1)) $EXTRA > "$LOG" 2>&1 &
+    --day "$DAY" --ingestion-receipt "$R" --ingestion-receipt-sha256 "$SHA" --workers $((LAST - FIRST)) $EXTRA > "$LOG" 2>&1 &
   PIDS="$PIDS $!:$DAY:$LOG"
 done
 # Exit codes of one day (frankie_box_experiment_teacher.py): 0 rows published; 4 rows published, the external section
