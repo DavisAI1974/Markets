@@ -442,15 +442,15 @@ class LlamaServer:
                 raise MeetingCallFailed('llama-server exited while starting (returncode %s); its whole stderr is retained at %s'
                                         % (code, json.dumps(self.stderr_witness(), sort_keys=True)), evidence=self.stderr_witness())
             try:
-                with urllib.request.urlopen('http://127.0.0.1:%d/health' % self.port, timeout=min(5.0, max(0.001, deadline - time.monotonic()))) as response:
-                    health = json.loads(self._read_bounded(response, 'health'))
-                    if isinstance(health, dict) and health.get('status') == 'ok':
-                        return
+                status, raw = self._request('GET', '/health', None, 'health')
+                health = json.loads(raw) if status < 400 else None
+                if isinstance(health, dict) and health.get('status') == 'ok':
+                    return
             except MeetingBudgetExpired:
                 self.stop()
                 raise
-            except (urllib.error.URLError, TimeoutError, ValueError, ConnectionError, OSError, AttributeError, TypeError):
-                pass
+            except (MeetingCallFailed, ValueError, AttributeError, TypeError):
+                pass          # not healthy yet (its evidence is retained); the loop re-checks the clock and the process
             time.sleep(min(2.0, max(0.0, deadline - time.monotonic())))
         self.stop()
         if self.remaining() is not None and self.remaining() <= 0:
@@ -459,52 +459,72 @@ class LlamaServer:
         raise MeetingCallFailed('llama-server did not report healthy within %s s; stderr retained at %s'
                                 % (round(wait, 1), json.dumps(self.stderr_witness(), sort_keys=True)), evidence=self.stderr_witness())
 
-    def _read_bounded(self, stream, label):
-        """6R3: read a response body whole while the ABSOLUTE meeting deadline stays effective (the socket timeout is an
-        inactivity timeout, not a total-read bound); on expiry the partial bytes are retained and named, never dropped."""
+    def _read_bounded(self, response, conn, label):
+        """6R3-F: read a response body whole under the ABSOLUTE meeting deadline. Every blocking read is bounded by the
+        remaining budget through the connection's own socket timeout (the connection is ours: http.client), and read1
+        returns the bytes available rather than filling a buffer. Bytes already received are retained on the deadline,
+        on a timeout, on a connection failure and on a truncated body, never replaced by an error string."""
         chunks = []
-        while True:
-            remaining = self.remaining()
-            if remaining is not None and remaining <= 0:
-                partial = b''.join(chunks)
-                evidence = self.retain('%s-partial-body-at-deadline' % label, partial)
+        try:
+            while True:
+                remaining = self.remaining()
+                if remaining is not None and remaining <= 0:
+                    raise socket.timeout('meeting deadline')
+                if conn.sock is not None:
+                    conn.sock.settimeout(600.0 if remaining is None else max(0.001, min(600.0, remaining)))
+                chunk = response.read1(65536)
+                if not chunk:
+                    return b''.join(chunks)
+                chunks.append(chunk)
+        except (socket.timeout, TimeoutError, ConnectionError, OSError, http.client.HTTPException, ValueError) as error:
+            partial = b''.join(chunks)
+            evidence = dict(self.retain('%s-partial-body' % label, partial), error=repr(error))
+            if self.remaining() is not None and self.remaining() <= 0:
                 raise MeetingBudgetExpired('meeting time budget spent while reading the %s reply body (%d bytes received and '
                                            'retained: %s)' % (label, len(partial), json.dumps(evidence, sort_keys=True)))
-            chunk = stream.read(65536)
-            if not chunk:
-                return b''.join(chunks)
-            chunks.append(chunk)
+            raise MeetingCallFailed('reading the %s reply body failed after %d bytes (%r); the received bytes are retained: %s'
+                                    % (label, len(partial), error, json.dumps(evidence, sort_keys=True)), evidence=evidence)
+
+    def _request(self, method, route, body, label):
+        """One HTTP exchange on a connection this meeting owns: (status, body bytes). Connect, send, headers and body
+        are each bounded by the remaining budget; any transport or protocol failure is a MeetingCallFailed (or a
+        MeetingBudgetExpired when the budget is spent) with whatever was received retained; the socket is always closed."""
+        timeout = self._bounded(600)          # MeetingBudgetExpired here means: no request was sent
+        conn = http.client.HTTPConnection('127.0.0.1', self.port, timeout=timeout)
+        try:
+            try:
+                conn.connect()
+                conn.sock.settimeout(self._bounded(600))
+                conn.request(method, route, body=None if body is None else json.dumps(body).encode(),
+                             headers={'Content-Type': 'application/json'} if body is not None else {})
+                conn.sock.settimeout(self._bounded(600))
+                response = conn.getresponse()
+            except MeetingBudgetExpired:
+                raise
+            except (socket.timeout, TimeoutError, ConnectionError, OSError, http.client.HTTPException, ValueError) as error:
+                evidence = self.retain('%s-transport-error' % label, repr(error).encode())
+                if self.remaining() is not None and self.remaining() <= 0:
+                    raise MeetingBudgetExpired('meeting time budget spent during %s before any reply (%s)'
+                                               % (route, json.dumps(evidence, sort_keys=True)))
+                raise MeetingCallFailed('%s failed with no reply: %r (retained: %s)' % (route, error, json.dumps(evidence, sort_keys=True)),
+                                        evidence=evidence)
+            raw = self._read_bounded(response, conn, label if response.status < 400 else '%s-http-%s' % (label, response.status))
+            return response.status, raw
+        finally:
+            conn.close()
 
     def _post(self, route, body, label='request', expect=None):
         """POST and return (parsed, raw): the ORIGINAL bytes are kept beside the parsed value (6R3); `expect(parsed)` returns
         a reason the shape is unusable or None, and an unusable shape retains the raw bytes whole and raises
         MeetingCallFailed, never a KeyError/TypeError outside the meeting's own failure path."""
-        timeout = self._bounded(600)          # MeetingBudgetExpired here means: no request was sent
-        request = urllib.request.Request('http://127.0.0.1:%d%s' % (self.port, route), data=json.dumps(body).encode(),
-                                         method='POST', headers={'Content-Type': 'application/json'})
-        try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                raw = self._read_bounded(response, label)
-        except urllib.error.HTTPError as error:
-            try:
-                payload = self._read_bounded(error, label + '-http-%s' % error.code) if hasattr(error, 'read') else b''
-            except MeetingBudgetExpired:
-                raise
-            except OSError as inner:
-                payload = repr(inner).encode()
-            evidence = self.retain('%s-http-%s' % (label, error.code), payload)
-            if error.code == 404:
+        status, raw = self._request('POST', route, body, label)
+        if status >= 400:
+            evidence = self.retain('%s-http-%s' % (label, status), raw)
+            if status == 404:
                 raise MeetingCallFailed('the pinned llama-server has no %s route; the token count cannot be exact, so the meeting '
                                         'refuses rather than guess (reply retained: %s)' % (route, json.dumps(evidence, sort_keys=True)),
                                         evidence=evidence)
-            raise MeetingCallFailed('%s returned HTTP %s (reply retained whole: %s)' % (route, error.code, json.dumps(evidence, sort_keys=True)),
-                                    evidence=evidence)
-        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError, socket.timeout) as error:
-            evidence = self.retain('%s-transport-error' % label, repr(error).encode())
-            if self.remaining() is not None and self.remaining() <= 0:
-                raise MeetingBudgetExpired('meeting time budget spent during %s (no reply received; %s)'
-                                           % (route, json.dumps(evidence, sort_keys=True)))
-            raise MeetingCallFailed('%s failed with no reply: %r (retained: %s)' % (route, error, json.dumps(evidence, sort_keys=True)),
+            raise MeetingCallFailed('%s returned HTTP %s (reply retained whole: %s)' % (route, status, json.dumps(evidence, sort_keys=True)),
                                     evidence=evidence)
         try:
             parsed = json.loads(raw)
