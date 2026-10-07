@@ -27,19 +27,26 @@ READ, in order (research/kalshi/frankie_boss/):
 DONE (source-built, runtime-unverified; nothing ran): A-D (c31cad06 7cb2ce52 11082ff8 2a05c147); the correction queue
 D1 18b6edcd (prices: FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2, originating INPUT from the producer's retained open-group state;
 structures stay V1), B7/C2 8930b4f0, B2-B5 5fdc14f5, B1/B6/A4/C1 45f52d28, docs 6002a926, 602e29f6 = B7 BY DELETION.
-b5d0fe74 = Greg's step-5 direction applied (current tables decide; frozen bindings superseded in both seats + Frankie;
-propagation gaps listed in step-4 report section 8). The tip must be b5d0fe74 or later.
+73288615 = Greg's step-5 direction applied (current tables decide; frozen bindings superseded in both seats + Frankie;
+propagation gaps listed in step-4 report section 8). STEP 6: e922a6e2 (deadline through every request; durable per-item
+progress, interrupted calls explicit; whole evidence, process release), b3fb5a26 (workflow inputs as env vars; return.json;
+owner import named, never dispatched), 2f1d6630 (B2-B5 follow-ups), 11a433a7 (CCODE_STEP6_RETURN_20261007.md: the
+weight-learning answer = inference-only, decisions listed for Greg; interface requests to Codex's runner/queue/reports).
 GREG (2026-10-07, twice): NO reference to transaction costs in market-conditions work, period. The crypto_harness binding
 is deleted from REPRODUCTIONS (H01/H02 stay bound by crypto_trend_flip); no admission table, field, status word or
 sentence about costs exists in any owned module. Never reintroduce one; never "frame" a cost-based result as context.
-NEXT: (1) Codex's review of the correction commits lands in the task doc's top section: fix every source defect it names in
-the owned files, one [skip ci] commit per finding group, no reapplying what Codex integrated; (2) the exact price adapter
-on the V2 price contract (report section 8) is Codex's: answer questions on it only; (3) nothing else is assigned: do not
-open or invent a slice; if the task doc assigns more, trace first, build within settled contracts only; update step-4
-report sections 8/9 + the CCODE handoff + the Claude handoff + this drop-in; push with [skip ci].
+NEXT: (1) Codex's review of the step-6 and B2-B5 follow-up commits lands in the task doc's top section: fix every source
+defect it names in the owned files, one [skip ci] commit per finding group, no reapplying what Codex integrated; (2) the
+exact price adapter on the V2 price contract is Codex's: answer questions on it only; (3) weight learning: Greg's decisions
+(feedback, objective, pin policy, host) are open; implement no training, touch no hash gate; (4) nothing else is assigned:
+do not open or invent a slice; if the task doc assigns more, trace first, build within settled contracts only; update the
+step-6 return + step-4 report sections 8/9 + the Claude handoff + this drop-in; push with [skip ci].
+OWNED (step 6): frankie_box_granite_meeting.py, frankie_box_granite_meeting.sh, frankie_box_granite_meeting_setup.sh,
+.github/workflows/frankie_granite_meeting.yml, CCODE_STEP6_RETURN_20261007.md; plus the historical/teacher modules.
 Boundaries: source/interface review, ast.parse without project imports, git diff --check ONLY. No tests, runs, installs,
-model calls, AWS actions, dispatch, canaries or E2E. Never edit frankie_box_experiment_dipole.py or
-frankie_box_experiment_search.py. Never call frankie_box_historical_reproduction.run(); never rebuild the claims file.
+model calls, AWS actions, dispatch, canaries or E2E. Never edit frankie_box_experiment_dipole.py,
+frankie_box_experiment_search.py, frankie_box_brain.py, frankie_box_lane_state.py, frankie_box_experiment.py or the shared
+assignment/handoff documents (Codex's while step 5 is in flight): return exact interface requests instead. Never call frankie_box_historical_reproduction.run(); never rebuild the claims file.
 Granite pins/parameters settled (threads null). STOP before #5; preserved draft unapplied; never apply 9c19cc2.
 Memory A retired: H06-H08 stay historical, bind nothing. Greg's decisions stay open (listed in the Claude handoff).
 Commits end with the attribution lines the harness gives; no model identifiers in anything pushed. Nothing on the scratchpad.
