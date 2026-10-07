@@ -577,21 +577,76 @@ def _operation_evidence(operation_dir, plan_doc, run_doc):
     return evidence
 
 
-def coherence(entry, plan_doc, run_doc, comparison, status):
-    """B4 follow-up: the reasons record -> entry -> plan -> dispatch -> run -> comparison do not cohere, else [].
-    Identities must chain and the status must agree with the run's facts (returncode, timeout, dispatch)."""
+def read_dispatch(path):
+    """The dispatch marker parsed, or None when absent; the bytes' sha256 beside it (B4-R: parsed, not only hashed)."""
+    path = Path(path)
+    if not path.is_file():
+        return None, None
+    raw = path.read_bytes()
+    try:
+        return json.loads(raw), sha256_bytes(raw)
+    except ValueError:
+        return dict(schema=None, unreadable=True), sha256_bytes(raw)
+
+
+def coherence(entry, plan_doc, run_doc, comparison, status, dispatch_doc=None, dispatch_sha256=None):
+    """B4-R: the reasons record -> entry -> plan -> dispatch -> run -> comparison do not cohere, else []. Operation
+    SEMANTICS, not only file hashes: the plan must carry the CURRENT entry's command, comparison declarations, inventory,
+    pins and tables; the dispatch marker is parsed and must name this entry, this plan, the run's command/cwd/start and
+    an explicit authorization; the run must name that marker; the comparison status must follow its retained outputs."""
     reasons = []
+    plan_sha = sha256_bytes(canonical(plan_doc))
     if plan_doc.get('schema') != PLAN_SCHEMA or plan_doc.get('entry_id') != entry['id']:
         reasons.append('plan schema/entry (%s/%s) is not this entry\'s' % (plan_doc.get('schema'), plan_doc.get('entry_id')))
     if list(plan_doc.get('claims') or []) != list(entry['claims']) or plan_doc.get('pins') != pins_of(entry):
         reasons.append('plan claims/pins differ from the declared entry')
+    if plan_doc.get('binding_status') != entry['status'] or plan_doc.get('calculation') != entry.get('calculation'):
+        reasons.append('plan binding status/calculation differ from the declared entry')
+    if plan_doc.get('command') != entry.get('entry'):
+        reasons.append('plan command differs from the declared entry point')
+    if plan_doc.get('recorded_outputs') != (entry.get('recorded_outputs') or []):
+        reasons.append('plan comparison declarations differ from the declared recorded outputs')
+    if plan_doc.get('declared_inventory') != declared_inventory(entry):
+        reasons.append('plan declared inventory differs from the declared entry')
+    if plan_doc.get('binding_tables_sha256') != HC.binding_tables_sha256():
+        reasons.append('plan was made against other binding tables')
     if run_doc.get('schema') != RUN_SCHEMA or run_doc.get('entry_id') != entry['id']:
         reasons.append('run schema/entry (%s/%s) is not this entry\'s' % (run_doc.get('schema'), run_doc.get('entry_id')))
-    if run_doc.get('plan_sha256') != sha256_bytes(canonical(plan_doc)):
+    if run_doc.get('plan_sha256') != plan_sha:
         reasons.append('run.plan_sha256 does not name this plan')
+    if run_doc.get('capability_sha256') != plan_doc.get('capability_sha256'):
+        reasons.append('run and plan name different capability revisions')
     if run_doc.get('status') == 'run':
         if not run_doc.get('dispatch_sha256'):
             reasons.append('a run without its dispatch marker hash')
+        if dispatch_doc is None:
+            reasons.append('the dispatch marker was not supplied for a completed run')
+        else:
+            if dispatch_sha256 is not None and dispatch_sha256 != run_doc.get('dispatch_sha256'):
+                reasons.append('the dispatch marker bytes are not the ones the run names')
+            if dispatch_doc.get('schema') != DISPATCH_SCHEMA or dispatch_doc.get('status') != 'dispatched':
+                reasons.append('dispatch marker schema/status (%s/%s) is not a dispatch of this capability'
+                               % (dispatch_doc.get('schema'), dispatch_doc.get('status')))
+            if dispatch_doc.get('entry_id') != entry['id'] or dispatch_doc.get('plan_sha256') != plan_sha:
+                reasons.append('dispatch marker names another entry or plan')
+            if dispatch_doc.get('argv') != run_doc.get('argv') or dispatch_doc.get('cwd') != run_doc.get('cwd'):
+                reasons.append('dispatch marker command/cwd differ from the run\'s')
+            if dispatch_doc.get('authorized') is not True:
+                reasons.append('dispatch marker carries no explicit authorization')
+            if dispatch_doc.get('started_at') != run_doc.get('started_at'):
+                reasons.append('dispatch marker start differs from the run\'s')
+            if dispatch_doc.get('capability_sha256') != run_doc.get('capability_sha256'):
+                reasons.append('dispatch marker names another capability revision than the run')
+        command = plan_doc.get('command') or {}
+        expected_argv = [command.get('script')] + list(command.get('argv') or []) if command else None
+        if expected_argv is not None and run_doc.get('argv') != expected_argv:
+            reasons.append('the run\'s command differs from the plan\'s declared entry point')
+        if comparison.get('returncode') != run_doc.get('returncode') or comparison.get('timed_out') != run_doc.get('timed_out'):
+            reasons.append('comparison run facts (returncode/timed_out) differ from the run document')
+        if comparison.get('status') in PERFORMED and comparison.get('status') != 'performed_failed':
+            derived, _ = aggregate_status(comparison.get('outputs') or [])
+            if derived != comparison.get('status'):
+                reasons.append('comparison status %r does not follow its retained outputs (%r)' % (comparison.get('status'), derived))
         if comparison.get('returncode') != run_doc.get('returncode') or comparison.get('timed_out') != run_doc.get('timed_out'):
             reasons.append('comparison run facts (returncode/timed_out) differ from the run document')
         failed = bool(run_doc.get('timed_out')) or run_doc.get('returncode') != 0
@@ -620,7 +675,8 @@ def record(entry, plan_doc, run_doc, comparison, records_dir, operation_dir):
     status = 'not_run' if run_doc.get('status') != 'run' else comparison['status']
     if status not in STATUSES:
         raise ValueError('comparison status %r is not a record status' % status)
-    problems = coherence(entry, plan_doc, run_doc, comparison, status)
+    dispatch_doc, dispatch_sha = read_dispatch(Path(operation_dir) / 'dispatch.json')
+    problems = coherence(entry, plan_doc, run_doc, comparison, status, dispatch_doc=dispatch_doc, dispatch_sha256=dispatch_sha)
     if problems:
         raise ValueError('record refused, the operation does not cohere: ' + '; '.join(problems))
     doc = dict(schema=RECORD_SCHEMA, entry_id=entry['id'], claims=list(entry['claims']), status=status,
@@ -691,13 +747,17 @@ def _admit(doc, path, claim_id):
         run_doc = json.loads(Path(operation['run']['path']).read_bytes())
         if run_doc.get('status') != 'run':
             return 'performed status but the retained run is %r' % run_doc.get('status')
-        # B4 follow-up: the chain record -> entry -> plan -> dispatch -> run -> comparison must cohere
+        # B4-R: the chain record -> entry -> plan -> dispatch -> run -> comparison must cohere SEMANTICALLY
         dispatch = operation.get('dispatch') or {}
-        dpath = Path(dispatch.get('path') or '')
-        if not dpath.is_file() or sha256_bytes(dpath.read_bytes()) != dispatch.get('sha256') \
-                or dispatch.get('sha256') != run_doc.get('dispatch_sha256'):
+        dispatch_doc, dispatch_sha = read_dispatch(dispatch.get('path') or '')
+        if dispatch_doc is None or dispatch_sha != dispatch.get('sha256') or dispatch_sha != run_doc.get('dispatch_sha256'):
             return 'performed status without the dispatch marker the run names'
-        problems = coherence(entry, plan_doc, run_doc, doc.get('comparison') or {}, doc.get('status'))
+        if doc.get('capability_sha256') != plan_doc.get('capability_sha256'):
+            return 'record names another capability revision than its plan'
+        if doc.get('plan_sha256') != run_doc.get('plan_sha256'):
+            return 'record plan hash differs from the run\'s'
+        problems = coherence(entry, plan_doc, run_doc, doc.get('comparison') or {}, doc.get('status'),
+                             dispatch_doc=dispatch_doc, dispatch_sha256=dispatch_sha)
         if problems:
             return 'operation does not cohere: ' + '; '.join(problems)
     elif (doc.get('comparison') or {}).get('status') not in (None, 'not_run'):
