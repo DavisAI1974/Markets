@@ -3266,7 +3266,7 @@ restart 4 = 35617931290. Endpoint verify job 6c9af209-385f-4557-b1a4-a42a973d989
 ### 16:0xZ 09-21: THE GIT TOKEN IS IN SSM (written from this chat with the `Claude` IAM user's key, Greg's word); the token itself still has NO SCOPES
 
 Greg generated a CLASSIC PAT on his phone (expires 2026-12-20) and pasted it into chat; then pasted the `Claude` IAM
-user's access-key pair (the S100 key, id AKIAYI6JDCBVLKYQGLMH) as a photo. Both values are in this chat's record, by
+user's access-key pair (the S100 key, id AKIA-redacted (see KEYS.md)) as a photo. Both values are in this chat's record, by
 Greg's choice ("Just use it"). Installed session-only, chmod 600, outside the repo: `~/.config/markets/env` (the AWS
 pair, the D48 location) + `~/.aws/credentials`; `~/.config/markets/github.env` (the PAT). STS: user Claude, account
 ...4170. `put_parameter /markets/frankie/github-token` (us-east-2, SecureString, Overwrite): version 1, length 40.

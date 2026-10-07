@@ -47,7 +47,7 @@ Proof the chain works: heartbeat pushes `root/cycle-00-progress` since 15:35:54Z
 Expiry: the key question as a whole is Greg's (deferred at 16:3xZ 09-21); GitHub's expiration header reading is
 recorded in `CLAUDE_HANDOFF_20260920.md` 16:2xZ as an observation only.
 
-## AWS access-key pair (IAM user `Claude`, account ...4170, key id AKIAYI6JDCBVLKYQGLMH)
+## AWS access-key pair (IAM user `Claude`, account ...4170, key id AKIA-redacted (see KEYS.md))
 
 | Location | Readers | Measured |
 |---|---|---|

@@ -38,7 +38,7 @@ Branch: came up on stale S70 tip, rebased onto trunk `claude/kalshi-s79-kickoff-
 
 ## OPEN for S92 (priority)
 1. **VERIFY the box finished the clean year** (watch deploy/box-logs/ -> DONE; check 53 weeks markers + clean gz all 12 months). Kill the stopped v1 box `i-0e56896a51243edb2`.
-2. **ROTATE the AWS + Databento keys** (they're in the box boot config; standing item). AWS key `AKIAYI6JDCBVLKYQGLMH`, DB key `db-3ba8...` — Greg re-pastes fresh, rotate early.
+2. **ROTATE the AWS + Databento keys** (they're in the box boot config; standing item). AWS key `AKIA-redacted (see KEYS.md)`, DB key `db-3ba8...` — Greg re-pastes fresh, rotate early.
 3. **Migrate live data git->S3** (task #9): move kalshi-bins/pyth-ticks to S3 + add `--dest s3://` to the collectors + reroute the workflows (needs AWS secret in GH Actions, OR run collectors on the durable box/Routine). Then stop git data-branch pushes.
 4. **Net-of-fee/size validation at SUB-MINUTE.** NG/WTI lag is ALREADY TESTED (S81 existence + S81/S87 provisional
    net-of-toll, CL/NG positive gated) — do NOT re-test it. Open: (a) gold/silver's first net-of-fee-AT-SIZE read

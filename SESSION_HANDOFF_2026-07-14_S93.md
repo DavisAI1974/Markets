@@ -74,7 +74,7 @@ git = CODE, S3 = ALL DATA; NG and WTI kept SEPARATE; weather forecaster HANDS OF
 also in `/etc/markets/coach.env` on the box + `scratchpad/aws.env` this session).
 
 ## SECRETS (session-pasted; ROTATE early next session — they're on the box + were pasted here):
-`AWS_ACCESS_KEY_ID=AKIAYI6JDCBVLKYQGLMH`, `AWS_SECRET_ACCESS_KEY` (txRGHd...), `DATABENTO_API_KEY` (db-3ba8...),
+`AWS_ACCESS_KEY_ID=AKIA-redacted (see KEYS.md)`, `AWS_SECRET_ACCESS_KEY` ([redacted]...), `DATABENTO_API_KEY` (db-3ba8...),
 Bedrock region `us-east-1`, S3 region `us-east-2`.
 
 ## OPEN / S94 PRIORITIES

@@ -5,7 +5,7 @@
 Tip must begin "S104". (This branch carries S103's MBO track + all of S104; it is the current trunk of
 the forecaster work.)
 
-**AWS**: tx-pair (ID `AKIAYI6JDCBVLKYQGLMH`, ...4170, secret begins `txRGHd`; Greg pastes if not on
+**AWS**: tx-pair (ID `AKIA-redacted (see KEYS.md)`, ...4170, secret begins `[redacted]`; Greg pastes if not on
 disk). Write scratchpad/aws.env + ~/.aws/credentials; STS verify; ALWAYS
 `env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY` for boto3/platform_sync (placeholder-env trap).
 

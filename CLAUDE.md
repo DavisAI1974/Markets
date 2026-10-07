@@ -1035,8 +1035,8 @@ to-do: do not rotate opportunistically, and do not re-raise it every session. Un
 keys correctly — `~/.aws/credentials`, `scratchpad/aws.env`, `scratchpad/bento.env`, all chmod 600,
 outside the repo, never echoed into chat, a commit, or a log line.
 
-- THE CURRENT KEY (verified live S100): access key ID `AKIAYI6JDCBVLKYQGLMH`, secret begins
-  `txRGHd` (40 chars), account `...4170`, bucket `bento-568968024170-us-east-2-*`. The FULL
+- THE CURRENT KEY (verified live S100): access key ID `AKIA-redacted (see KEYS.md)`, secret begins
+  `[redacted]` (40 chars), account `...4170`, bucket `bento-568968024170-us-east-2-*`. The FULL
   secret is NEVER written in this repo (it is/was PUBLIC; AWS kills keys it finds on public
   GitHub). Full pair lives in: `scratchpad/aws.env` on Greg's box (untracked), and in cloud
   sessions `~/.aws/credentials` + `~/.claude/settings.json` env (both outside the repo).

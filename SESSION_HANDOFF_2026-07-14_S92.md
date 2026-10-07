@@ -108,7 +108,7 @@ Branch: came up on the stale S70 tip, reset onto trunk `claude/kalshi-s79-kickof
   day-ahead/spot pipeline noms (Greg's idea; Platts/NGI — new source), overnight-lean (free, we have the ticks),
   and the WINTER/backwardation tape (the decisive out-of-regime test — all 12 days were contango).
 
-## SECRETS (session-pasted, never git): `AWS_ACCESS_KEY_ID` (AKIAYI6J...), `AWS_SECRET_ACCESS_KEY` (txRGHd...),
+## SECRETS (session-pasted, never git): `AWS_ACCESS_KEY_ID` (AKIAYI6J...), `AWS_SECRET_ACCESS_KEY` ([redacted]...),
 `DATABENTO_API_KEY` (db-3ba8...), `AWS_DEFAULT_REGION=us-east-2`. **ROTATE early (standing item).** They sit in
 the box boot config + the Monday re-download runner.
 

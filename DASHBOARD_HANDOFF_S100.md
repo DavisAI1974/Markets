@@ -46,7 +46,7 @@ this page is the map of what to read, where it lives, and the four rules that pr
 1. git = CODE, S3 = ALL DATA. The dashboard reads data from S3 (or the local `data/` cache
    restored by `python research/kalshi/platform_sync.py pull --prefix <name>/`). NEVER commit
    data or credentials - this repo is/was PUBLIC.
-   AWS ACCESS: USE THE KEY WHOSE SECRET BEGINS `tx` (ID `AKIAYI6JDCBVLKYQGLMH`, account
+   AWS ACCESS: USE THE KEY WHOSE SECRET BEGINS `tx` (ID `AKIA-redacted (see KEYS.md)`, account
    ...4170, bucket `bento-568968024170-us-east-2-an`). The key is GOOD - if STS returns
    InvalidClientTokenId, the cloud container's placeholder env vars are overriding
    `~/.aws/credentials`: run AWS-touching commands via `bash -lc` or pass credentials

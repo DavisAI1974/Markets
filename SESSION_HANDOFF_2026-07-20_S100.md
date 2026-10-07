@@ -6,7 +6,7 @@ Branch: `claude/ng-coach-agent-loop-5ha5bf`. git = CODE, S3 = DATA (platform_syn
 
 An hour lost re-diagnosing a GOOD key: the container's placeholder env vars
 (`AWS_ACCESS_KEY_ID=proxy-injected...`) override `~/.aws/credentials`. THE key = secret begins
-`txRGHd` (ID ...QGLMH, account ...4170). Fix = `bash -lc` or explicit creds. Rotation DEFERRED
+`[redacted]` (ID ...QGLMH, account ...4170). Fix = `bash -lc` or explicit creds. Rotation DEFERRED
 TO GO-LIVE per Greg (standing; the S99 security block is superseded). Databento key `db-3ba8...`
 alive and in use (portal deactivation never happened; also fine per Greg).
 
