@@ -804,3 +804,93 @@ Checks:
 - `frankie_box_run.yml`: parses as YAML.
 - `git diff --check 0bb2698..e243b87`: clean.
 - The S3 checks above, read-only.
+
+## Sixth follow-up, 2026-10-07 night (session 2): the efficiency pass `89d67e2..d877df0`
+
+Reviewer: ccode_review, under the same go. This pass is READ-ONLY: no fixes, no git writes, no account calls, NO RUNS.
+The only write is this section.
+
+Commits reviewed: b0d20f5, dd7c2dc, 8bd8f5a and d877df0. dbd51c1 is doc-only and was skimmed. In passing (outside the
+range): 89d67e2 does fix E-1, since `external_ready` now waits until this run settles the S3 day file.
+
+### Verdict: APPROVED for integration (source only). Nothing blocks the one-day E2E.
+
+No change in this range alters a value, an order, a hash, a count, an identity or an exit code. No failure path reports
+done falsely.
+
+### What was checked
+
+**ROOT native traversal in a forked child (d877df0).**
+- It forks only on the recovery route with the native pass on, after `_input_records` has closed the INPUT spool
+  (`records.close()`).
+- `RowSpool.__iter__` opens its own file handle on every pass, so the parent and the child never share a file offset.
+  No buffered writer is open at the fork.
+- The legacy pass starts after the fork. The child sets its own SIGTERM flag and probe directory, and exits with
+  `os._exit` (0, 75 on save, 1 on error, with error-<pid>.json).
+- Exactly one traversal: the flock on `work/native-stage.lock` passes to the child's copy of the open description, and
+  the serial route takes the same lock.
+  - A completed `native-stage.json` is reused only after its witness check, and the legacy-stage-reused path never
+    forks.
+  - A failed or killed child, OOM included, makes the serial route resume from the retained checkpoint or refuse
+    visibly.
+- Any exit of `derive` forwards SIGTERM and joins the child, so the ROOT never returns while it still runs.
+- A SIGKILLed ROOT leaves an orphan, but its lock refuses a second traversal and its completed stage is reused.
+- Affinity: the parent pins itself to the lane's first CPU only after the fork. The child keeps the whole lane, and the
+  join restores the parent's affinity.
+- Copy-on-write: the parent holds the record spool on disk, not in memory, so the copy at fork is small.
+
+**Journal hashed once.**
+- `frankie_box_filehash.witness` is stat-keyed, in-process, and compared with the same receipt values, so the refusal is
+  the same as before.
+- The chained head-hash check still runs as the journal is read.
+
+**Search `spool_columns`.**
+- `time_key` is unused by `columns()`, so passing None in the workers changes nothing.
+- The byte ranges are cut at line starts and merged in file order, under `columns()`'s own None-padding rules. Key
+  insertion order equals the serial first-appearance order. Mixed kinds are computed the same way.
+- The whole file is hashed in order and checked against the pin before return.
+- The workers are forked before the hasher thread starts.
+
+**Scientific teacher part scan.**
+- `wanted` and the needles are built once across all days before the jobs, so every part uses the same set as before.
+- Results are merged in job order (days, then parts), so the row order is unchanged. Every part's sha256 and size are
+  still checked.
+- It goes serial when more than one thread is alive.
+
+**Classroom.**
+- Lazy settling: `bisect_left` reproduces the per-row close loop exactly, and the end-of-picture close is kept.
+  - Each series records its state once per row with an update. `fresh`, the runs and the reasons match.
+  - Events after the last row and the open interval at a cutoff are excluded, as before.
+- The Dipole pair fork pool:
+  - is used only with exactly one live thread;
+  - uses the same functions with `map` order kept;
+  - computes each pair independently, so the values are identical.
+
+**Ranged pulls.**
+- Sealed ingest: a range is marked done only after `pwrite` plus `fsync`, and the `.ranges` file is replaced
+  atomically. A corrupt `.ranges` file means a full redo. A non-206 reply or a short range fails visibly. The whole-file
+  sha256 against the pointer is unchanged.
+- The S3 day file is fetched into `.pending`, then its bytes and sha256 are checked against the receipt as before. URL
+  and HTTP errors are OSErrors and give `waiting`.
+
+**Probes and timing.** The timeline and spool timings are inspection fields. They enter no identity, and no reuse check
+compares those documents byte for byte (the search MANIFEST is written once).
+
+### Non-blocking
+
+- **S-1.** `spool_columns` forks a pool without the one-live-thread guard that the classroom and the scientific teacher
+  use. The guard is cheap: add `threading.active_count() == 1`, else run serially.
+- **S-2.** The classroom pair pool forks the classroom process, whose heap (the retained pictures and the native
+  arithmetic) can be large. A full GC in a worker would copy that heap per worker. With 171 short pair jobs this is
+  unlikely. Calling `gc.freeze()` before the fork would close it. Watch peak memory on the probe.
+- **S-3.** An interrupted ranged pull leaves a full-size sparse `.part`. If it is later resumed with `RANGE_STREAMS=1`
+  (the one-stream path), that path sees a complete `.part`. The whole-file sha check then refuses it visibly, never
+  falsely done. The fix is to drop the `.part` when no `.ranges` file is present after a ranged attempt.
+- **S-4.** The forked ROOT child inherits the parent's unflushed stdout buffer. The log may repeat a few pre-fork lines.
+  Cosmetic.
+
+Checks:
+- AST parse without imports: every changed `.py` file in the range parses.
+- `bash -n`: ok on the changed `.sh` files.
+- `git diff --check`: clean.
+- Nothing executed.
