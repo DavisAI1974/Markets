@@ -65,6 +65,9 @@ NEW SESSION -- Frankie (Greg, 2026-10-07 night). THE AGENTS ARE THE ONLY WAY WOR
   for more CPUs and workers. This supersedes 'all days on the main box' for the N-day run. To build then: a second
   r7i.8xlarge-class box (clone of the main box: Ssm profile, pinned Granite install, PySR), and the lane/controller
   routing across two hosts (the existing worker-box route is the starting point). Not started; no box created.
+- MULTI-BOX ROOT (Greg's design): multiply the existing full-box setup. Clone boxes; number every 16-CPU group
+  (lane) across all boxes 1..N; randomly assign each day a group number; each lane runs its day. No new scheduler:
+  the same lane logic, multiplied. Boxes killed as soon as the 30 days are done. Build after the one-day run.
 - REPORTS (Greg):
   - One-day run: a handful of STATUS reports, one per workflow piece: what it received, what it did, what it produced,
     so Greg can tweak or give a thumbs up. Human-only; never knowledge.
