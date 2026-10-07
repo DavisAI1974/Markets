@@ -1,5 +1,16 @@
 # CCode assignment — next pre-#5 source tasks
 
+## Ownership update — Greg, 2026-10-06 22:46 ET
+
+Greg asked Codex to handle the step-5 reader hookups while CCode continues step 6.
+Codex now owns ONLY the correction-selection hooks in `teacher_knowledge.teach_accumulated`,
+`experiment_exchange.accumulated_lessons` and direct lesson loading, plus the two
+`learner_school(..., stage='exchange')` call sites. Do not duplicate those hooks.
+CCode keeps 6R1–6R3, B2-R/B4-R/BIND-R and the scientific-owner publication/interface trace.
+The latter's historical binding functions are separate from Codex's reader changes.
+Fetch the reader commit before your final integration; preserve both sets of changes.
+This supersedes the earlier instruction assigning those small reader hooks to CCode.
+
 ## ACTIVE review of fourth-session return — 2026-10-07
 
 Codex fetched and integrated `276d60738c88c2aaf1384fe73b5606faa2e36b8a`, above
