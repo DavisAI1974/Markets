@@ -261,6 +261,32 @@ class SoftRefusal(RuntimeError):
     """A refusal inside Granite's self-assessment: recorded in its section, the run goes on (C24)."""
 
 
+class NativeInputView:
+    """The INPUT records as the pinned native traversal takes them: each observation without its bytes/bytearray fields.
+
+    The experiment ROOT spools every INPUT field (retain_frame_sections -> _input_records(retain_all_fields=True)), so
+    the legacy pass and its frame sections keep `dbn_wire_bytes`. The pinned native adapter (producers 2ebb8ce8,
+    native_full_capture_adapter.source_record -> _validate_source_value) refuses any bytes value, because its
+    source-record JSONL cannot carry one. Every native run before the experiment received exactly this projection: the
+    Monday ROOT's spool drops bytes fields at extraction (_input_records, retain_all_fields=False). Same records, same
+    order, same count; only the bytes-valued top-level fields are not handed to the native pass (they stay in the INPUT
+    spool, the legacy frames and the sealed journal). Copies; the spool is not changed. Used on every route (serial and
+    beside the legacy pass): _native_stage applies it."""
+    RULE = 'observation_without_bytes_fields (the projection every pre-experiment native run received)'
+
+    def __init__(self, records):
+        self._records = records
+
+    def __len__(self):
+        return len(self._records)
+
+    def __iter__(self):
+        for record in self._records:
+            if any(isinstance(value, (bytes, bytearray)) for value in record.values()):
+                record = {k: v for k, v in record.items() if not isinstance(v, (bytes, bytearray))}
+            yield record
+
+
 def _pin_worker(cpus):
     """A fan-out thread takes the next CPU in turn and is pinned to it (Greg, 2026-09-28: pin workers to CPUs so none sit
     idle); the prompt building and tokenizing each thread does before its model call run on its own CPU."""
@@ -1575,7 +1601,9 @@ class Session:
         stage_identity = dict(schema=NATIVE_RECOVERY_SCHEMA, source=self.source_binding,
             pin=pin['pins_witness']['sha256'], producers=self._producer_witnesses(pin),
             wrapper=witness(Path(B.__file__)), opening_book=opening_book,
-            opening_adapter_state_hash=evidence_hash(opening_adapter_state))
+            opening_adapter_state_hash=evidence_hash(opening_adapter_state),
+            native_input=NativeInputView.RULE)
+        records = NativeInputView(records)
         if recovery:
             from frankie_box_native_emission import binding as emission_binding
             stage_identity['emission'] = emission_binding()

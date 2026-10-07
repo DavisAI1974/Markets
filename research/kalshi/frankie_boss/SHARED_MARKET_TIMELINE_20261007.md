@@ -255,3 +255,23 @@ event order, cursors, pins, hashes, counts and decoded entries are unchanged by 
 - Open: the legacy digest tables could be written during the parent's wait for the native child (their save points are
   per scratch directory today); the native/journal readers' placement-coupled `columns()` calls stay serial; the
   measured split of legacy vs native seconds comes from the first canary. A fresh independent review is required.
+
+## 2026-10-07 night: E2E ROOT stop, native bytes refusal fixed (source-built, runtime unverified, review required)
+- Cause: the experiment ROOT calls `derive(retain_frame_sections=True)`, so `_input_records(retain_all_fields=True)`
+  keeps every INPUT field, including the bytes field `dbn_wire_bytes`. The pinned native adapter (producers 2ebb8ce8,
+  `native_full_capture_adapter.source_record` -> `_validate_source_value`) refuses any bytes value. Every earlier native
+  run (Monday) got the spool without bytes fields (`retain_all_fields=False`). The mismatch was already in the history
+  root 91f37661, but nothing reached it there: the experiment ROOT ran with the native pass off. 725dffd1 (native pass ON
+  by default) exposed it. The overlap fork, the hash cache and the day-file changes did not cause it: the fork only met
+  it right away instead of after the legacy pass.
+- Fix: `boss_session.NativeInputView`, applied in `_native_stage` on every route. The native pass gets each observation
+  without its bytes-valued top-level fields (the pre-experiment projection). Count, order and every other value are
+  unchanged. The legacy pass, the INPUT spool, the frames and the journal keep the bytes. `native-stage.json`'s identity
+  names the rule (`native_input`).
+- `root_execution.journal_sha256_reads` removed: it was a constant, not a measurement.
+- Later, when safe (Greg: not now): (a) the native stage beside the legacy pass is in source; relaunch with
+  `FRANKIE_ROOT_NATIVE_OVERLAP=off`; (b) a legacy-pass split. The adapter state is strictly sequential per record, so the
+  replay itself stays serial. The heavy, order-free part is encoding each frame row (`pack` + `json.dumps` of ~366 KB:
+  full-depth book with order ids, observation, the group's INPUT records). That could go to the lane's workers through an
+  ordered writer: rows pickled at the serial append point, lines written strictly in program order, save points drained
+  first. Same lines, same order. Profile first (measured: ~25 records/s, ~366 KB of frames per record).

@@ -298,13 +298,13 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                 status='calculations_retained' if not failures else 'calculations_retained_with_failures')
     # How the ROOT used its lane (operator inspection only; never an input to a calculation): the native stage beside
     # the legacy pass (work/native-overlap.json, FRANKIE_ROOT_NATIVE_OVERLAP_V1: child pid, CPUs, seconds, outcome) or
-    # the serial order when it is absent, and the journal sha256 passes this process made.
+    # the serial order when it is absent (a record of an earlier attempt stays pinned as written). No hash-pass count:
+    # the stat-keyed cache does not measure one, and the receipt never reports an unmeasured number.
     overlap_path = session.work / 'native-overlap.json'
     calc['root_execution'] = dict(
         native_overlap=witness(overlap_path) if overlap_path.is_file() else dict(
             status='absent', reason='serial order (FRANKIE_ROOT_NATIVE_OVERLAP=off, native pass off, a resumed '
                                     'completed native stage, or a saved derivation reused)'),
-        journal_sha256_reads=dict(count=1, basis='frankie_box_filehash stat-keyed cache shared with Session.derive'),
         data_workers=data_workers)
     if shared_market_policy is not None:
         # Pin existing spools at publication; a reader must never invent a new
