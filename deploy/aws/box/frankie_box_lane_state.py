@@ -146,6 +146,19 @@ def snapshot(brain=BRAIN, owner=None):
     school = Path(brain) / 'school'
     for p in sorted(school.glob('*.json')):
         files.append(pack_file(p))
+    # Correction links travel with both complete lesson objects. Research evidence keeps its
+    # owner-qualified witness; it is not copied through the learner answer wall.
+    import frankie_box_experiment_review as REVIEW
+    correction_files = {}
+    for correction in REVIEW.corrections([brain]).values():
+        for key in ('record', 'original', 'replacement'):
+            pin = correction[key]
+            correction_files[pin['path']] = pin
+    for path, pin in sorted(correction_files.items()):
+        packed = pack_file(Path(path))
+        if any(packed[k] != pin[k] for k in ('bytes', 'sha256')):
+            raise ValueError('correction changed while preparing lane publication')
+        files.append(packed)
     version = digest(json.dumps(dict(files=[(f['path'], f['sha256']) for f in files],
                                     pointers=pointers, source_brain=str(brain)), sort_keys=True).encode())
     return dict(owner=owner, version=version, source_brain=str(brain), files=files, large_source_pointers=pointers)
@@ -264,8 +277,8 @@ def boundary(day, stage, publish=True, brain=BRAIN):
 def learner_knowledge(day, stage, brain=BRAIN, *, classroom_mode=None):
     """Pin whole legal documents, including reconsideration and completed_native_evidence.
 
-    Preserve every top-level field unchanged; stage/answer walls apply to the
-    document, not a reduced selection of its claims or evidence fields.
+    Preserve every unaffected field. Explicit researched corrections deliver complete successors;
+    older/unresolved competing lessons remain. Stage/answer walls also cover correction availability.
     """
     import frankie_box_brain as BR
     before = {'root': -20, 'teacher': -10, 'classroom': 0, 'search': 10,
@@ -273,6 +286,8 @@ def learner_knowledge(day, stage, brain=BRAIN, *, classroom_mode=None):
     out, listed = [], []
     seen = set()
     versions = knowledge_versions()
+    import frankie_box_experiment_review as REVIEW
+    records = REVIEW.corrections([brain] + [v['root'] for v in versions])
     for root in [Path(brain)] + [Path(v['root']) for v in versions]:
         for label, m, d in BR.entries_before(root, '00', day=day):
             parsed = BR.parse_entry_name(d.name)
@@ -295,21 +310,32 @@ def learner_knowledge(day, stage, brain=BRAIN, *, classroom_mode=None):
                     raise FileNotFoundError('included learner knowledge is missing: %s' % p)
                 if p.stat().st_size != e['bytes'] or BR._file_sha256(p) != e['sha256']:
                     raise ValueError('knowledge source hash mismatch: %s' % p)
-                if e['sha256'] in seen:
-                    listed.append(dict(label=label, path=str(p), sha256=e['sha256'], reason='identical bytes already supplied'))
-                    continue
                 if not e['name'].endswith('.json'):
                     listed.append(dict(label=label, path=str(p), sha256=e['sha256'], bytes=e['bytes'],
                                        reason='retained text evidence; no structured learner calculation consumes this format'))
                     continue
                 content = json.loads(p.read_bytes())
-                seen.add(e['sha256'])
-                out.append(dict(label=label, day=eday, kind=kind, path=str(p), sha256=e['sha256'], content=content))
+                delivered = REVIEW.current_document(dict(label=label, day=eday, kind=kind, path=str(p),
+                    bytes=e['bytes'], sha256=e['sha256'], content=content), records, brain, day=day, stage=stage)
+                if delivered['sha256'] in seen:
+                    listed.append(dict(label=label, path=delivered['path'], sha256=delivered['sha256'],
+                                       reason='identical delivered bytes already supplied'))
+                    continue
+                seen.add(delivered['sha256'])
+                out.append(delivered)
     return dict(documents=out, listed=listed, versions=versions)
 
 
 def visible_knowledge(day, stage, brain=BRAIN):
     return learner_knowledge(day, stage, brain)['documents']
+
+
+def require_current_selection(path, brain=BRAIN):
+    """A frozen owner selection needs a checked successor when its actual inputs were corrected."""
+    import frankie_box_experiment_review as REVIEW
+    records = REVIEW.corrections(knowledge_roots(brain))
+    if records and Path(path).is_file():
+        REVIEW.require_current(REVIEW.frozen_documents(path), records)
 
 
 def import_meeting_record(exchange_path, record_path, expected_sha256):
@@ -432,11 +458,13 @@ def import_meeting_record(exchange_path, record_path, expected_sha256):
     return receipt
 
 
-def learner_school(day, brain=BRAIN, versions=None):
+def learner_school(day, brain=BRAIN, versions=None, *, stage='classroom'):
     """All completed experiment classes are eligible in workflow order, regardless of trading date or old role (Greg 2026-10-06)."""
     import frankie_box_brain as BR
     loaded, listed, seen = [], [], set()
     versions = knowledge_versions() if versions is None else versions
+    import frankie_box_experiment_review as REVIEW
+    records = REVIEW.corrections([brain] + [v['root'] for v in versions])
     for root in [Path(brain)] + [Path(v['root']) for v in versions]:
         try:
             index = BR._school_index(root)['rows']
@@ -453,9 +481,13 @@ def learner_school(day, brain=BRAIN, versions=None):
         rows, missing = BR.school_rows(root, pinned=eligible)
         listed.extend(missing)
         for row, doc in rows:
-            if row['sha256'] not in seen:
-                seen.add(row['sha256'])
-                loaded.append((dict(row, owner_root=str(root)), doc))
+            delivered = REVIEW.current_document(dict(path=str(root / BR.SCHOOL_DIR / row['file']),
+                sha256=row['sha256'], content=doc), records, brain, day=day, stage=stage)
+            if delivered['sha256'] not in seen:
+                seen.add(delivered['sha256'])
+                loaded.append((dict(row, owner_root=str(root), path=delivered['path'],
+                    sha256=delivered['sha256'], corrections_applied=delivered.get('corrections_applied', [])),
+                    delivered['content']))
     return loaded, listed
 
 

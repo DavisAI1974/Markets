@@ -1,5 +1,33 @@
 # Dipole coverage and both-teacher continuation — 2026-10-06
 
+## Current source integration — 2026-10-07 UTC / 2026-10-06 late ET
+
+CCode's fourth-session return through `276d6073` is integrated with its history; the review
+assignment was pushed as `9de41f86`. The newest task section names six remaining owned
+correction groups (6R1–6R3, B2-R, B4-R, BIND-R). B3 complete-plan reconstruction and B5
+selected-file refusal address their named findings. Neither steps 2–4 nor step 6 is closed.
+
+Codex's V2 exact-price adapter is source-built alongside the unchanged V1 structure contract.
+It joins originating INPUT membership, instrument and emitting group close; every declared
+row slot remains separate. V1 price identities and opening-state origins are explicitly
+unplaced, never guessed from timestamps/spool positions. Provenance stays out of channels.
+Actual market prices/spreads remain; trading-cost/profit criteria do not enter this research.
+
+Step 5 now has explicit scoped correction publication, transport and actual reader delivery,
+plus frozen-dependency refusal and stored-search source/arithmetic checks. Read
+`STEP5_CORRECTION_DELIVERY_20261007.md` for its exact limits. Older compatible lessons remain;
+unresolved conflicts about the same thing retain both accounts. Partial replacements preserve
+unaffected knowledge. Scientific-owner publication and corrected-successor scheduling are still
+open: refusal of stale work is not completion of the correction workflow. CCode can now build
+the assigned standalone reader hooks against the landed interfaces.
+
+The runtime-failure consumer wiring is also source-built: bound `runtime_failed` receipts
+become non-blocking waiting in the runner/queue; school/reports keep the stated reason.
+Granite weights remain fixed; no training path or adapter admission was implemented.
+SOURCE-BUILT / RUNTIME-UNVERIFIED. Source review, AST without project imports and whitespace
+only; no tests, model/data/project runs, reproduction, AWS, starts, dispatch or E2E.
+Pins/threads null unchanged; Memory A retired; H06–H08 historical/not_bound; never apply `9c19cc2`.
+
 ## Current return review — 2026-10-06 night ET / 2026-10-07 UTC
 
 Refetched integration `e697d52e` and CCode `d3945e13`. The latter is documentation

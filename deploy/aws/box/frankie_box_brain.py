@@ -245,10 +245,12 @@ def read_meeting_record(record_path, *, exchange_path, expected_sha256=None, com
 def read_meeting_for_exchange(exchange_path):
     """Read the owning experiment's receipt-bound meeting; never guess from an unrelated file."""
     exchange_path = Path(exchange_path)
-    source = json.loads(exchange_path.read_bytes())
+    source_raw = exchange_path.read_bytes()
+    source = json.loads(source_raw)
     day = str(source.get('day'))
     if (not re.fullmatch(r'[0-9]{8}', day) or source.get('view') != 'frankie'
-            or source.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1'):
+            or source.get('schema') != 'FRANKIE_EXPERIMENT_EXCHANGE_V1'
+            or not source.get('run') or not source.get('exchange_hash')):
         raise ValueError('meeting lookup requires a dated Frankie exchange view')
     directory = exchange_path.parent.parent.parent / 'meeting' / day
     path, receipt_path = directory / 'meeting.json', directory / 'receipt.json'
@@ -256,6 +258,28 @@ def read_meeting_for_exchange(exchange_path):
         return dict(status='missing', record=None, path=None, receipt=None,
                     reason='no published meeting receipt for this exchange')
     receipt = json.loads(receipt_path.read_bytes())
+    if receipt.get('status') == 'runtime_failed':
+        # Startup failed before a meeting record existed. Bind the refusal to the
+        # exact exchange and retained inputs, rather than inventing a discussion.
+        binding_pin, input_pin = receipt.get('binding') or {}, receipt.get('inputs') or {}
+        values = []
+        for name, selected in (('meeting-binding.json', binding_pin), ('meeting-input.json', input_pin)):
+            raw = (directory / name).read_bytes()
+            if selected.get('bytes') != len(raw) or selected.get('sha256') != sha256_bytes(raw):
+                raise ValueError('failed meeting receipt differs from retained ' + name)
+            values.append(json.loads(raw))
+        binding, _ = values
+        exchange = binding.get('exchange') or {}
+        if (receipt.get('schema') != 'FRANKIE_GRANITE_MEETING_RECEIPT_V1'
+                or str(receipt.get('day')) != day or not receipt.get('refused_to_run')
+                or binding.get('schema') != 'FRANKIE_GRANITE_MEETING_BINDING_V1'
+                or binding.get('day') != source.get('day') or binding.get('run') != source.get('run')
+                or exchange.get('sha256') != sha256_bytes(source_raw)
+                or exchange.get('exchange_hash') != source.get('exchange_hash')
+                or any((binding.get('input') or {}).get(k) != input_pin.get(k) for k in ('bytes', 'sha256'))):
+            raise ValueError('failed meeting receipt does not bind this run/day/Frankie exchange')
+        return dict(status='runtime_failed', record=None, path=None, receipt=receipt,
+                    reason='; '.join(receipt['refused_to_run']))
     pin = receipt.get('record') or {}
     raw = path.read_bytes()
     if (receipt.get('schema') != 'FRANKIE_GRANITE_MEETING_RECEIPT_V1'
@@ -533,6 +557,8 @@ def capture_base(brain, request_identity):
                                cycle=manifest.get('cycle'), day=manifest.get('day'), source_schema=manifest.get('schema'))
     value = dict(schema='FRANKIE_ACCUMULATED_KNOWLEDGE_BASE_V1', request_identity=request_identity,
                  entries=list(entries.values()), rule='all previously stored intact knowledge; immutable for this request')
+    import frankie_box_experiment_review as REVIEW
+    value['corrections'] = sorted(r['record']['sha256'] for r in REVIEW.corrections([brain]).values())
     school = _school_index(brain)['rows'] if (brain / SCHOOL_DIR / 'index.json').is_file() else []
     if school:          # the school days written so far, pinned by their index rows (the files are never overwritten)
         value['school'] = [{k: r.get(k) for k in ('day', 'file', 'sha256', 'bytes', 'report_number', 'include')} for r in school]
@@ -1038,18 +1064,49 @@ def entries_before(brain, cycle, day=None):
     return [(label, manifest, d) for _, label, manifest, d in sorted(found, key=lambda x: x[0])]
 
 
+def _correction_records(brain, snapshot=None):
+    import frankie_box_experiment_review as REVIEW
+    records = REVIEW.corrections([brain])
+    if snapshot:
+        pinned = set(json.loads(Path(snapshot).read_bytes()).get('corrections') or [])
+        if not pinned.issubset({r['record']['sha256'] for r in records.values()}):
+            raise ValueError('pinned request correction records are missing or changed')
+    return records
+
+
+def _corrected_knowledge(brain, pin, *, day, records, snapshot=None):
+    """A true complete-source successor; a pinned request may not silently acquire later corrections."""
+    import frankie_box_experiment_review as REVIEW
+    raw = Path(pin['path']).read_bytes()
+    if sha256_bytes(raw) != pin['sha256'] or ('bytes' in pin and len(raw) != pin['bytes']):
+        raise ValueError('included knowledge differs from its selected pin: ' + str(pin['path']))
+    delivered = REVIEW.current_document(dict(pin, content=json.loads(raw)), records, brain, day=day, stage='root')
+    if snapshot:
+        pinned = set(json.loads(Path(snapshot).read_bytes()).get('corrections') or [])
+        if any(r['sha256'] not in pinned for r in delivered.get('corrections_applied') or []):
+            raise ValueError('pending request knowledge has a later correction; an explicit successor request is required')
+    return delivered, Path(delivered['path']).read_bytes()
+
+
 def identity(brain, cycle, *, snapshot=None, day=None):
     """A short digest of every included prior entry (name + sha256): part of the corpus identity."""
     h = hashlib.sha256()
+    records = _correction_records(brain, snapshot)
     fm, _ = (None, None) if snapshot else frozen_entry(brain)
     for e in (fm or {}).get('entries', []):
         if e.get('include'):
+            if records and e['name'].endswith('.json'):
+                e, _ = _corrected_knowledge(brain, dict(e, path=str(Path(brain) / FROZEN_DIR / e['name'])),
+                                            day=day, records=records, snapshot=snapshot)
             h.update(f'frozen/{e["name"]}/{e["sha256"]}\n'.encode())
     for cyc, manifest, d in (snapshot_entries(brain, snapshot) if snapshot else entries_before(brain, cycle, day)):
         for e in manifest.get('entries', []):
             if e.get('include'):
+                if records and e['name'].endswith('.json'):
+                    e, _ = _corrected_knowledge(brain, dict(e, path=str(d / e['name'])),
+                                                day=day, records=records, snapshot=snapshot)
                 h.update(f'{cyc}/{e["name"]}/{e["sha256"]}\n'.encode())
-    for row, _ in _school_for(brain, snapshot, day)[0]:
+    for row, _ in _school_for(brain, snapshot, day, records=records)[0]:
         h.update(f'school/{row["day"]}/{row["sha256"]}\n'.encode())
     return h.hexdigest()[:16]
 
@@ -1057,15 +1114,24 @@ def identity(brain, cycle, *, snapshot=None, day=None):
 SCHOOL_SECTIONS = ('frankie_classwork', 'boss_teacher', 'scientific_teacher', 'exchange', 'day_file')
 
 
-def _school_for(brain, snapshot, day):
+def _school_for(brain, snapshot, day, *, records=None):
     """All completed other-day school records, regardless of trading date, or the exact captured selection.
     A base captured before school existed pins none. Without a day nothing is read (own-answer exclusion needs it).
     """
     if day is None:
         return [], []
     if snapshot:
-        return school_rows(brain, day, pinned=json.loads(Path(snapshot).read_bytes()).get('school') or [])
-    return school_rows(brain, day)
+        loaded, listed = school_rows(brain, day, pinned=json.loads(Path(snapshot).read_bytes()).get('school') or [])
+    else:
+        loaded, listed = school_rows(brain, day)
+    if records:
+        corrected = []
+        for row, doc in loaded:
+            delivered, _ = _corrected_knowledge(brain, dict(path=str(Path(brain) / SCHOOL_DIR / row['file']),
+                sha256=row['sha256']), day=day, records=records, snapshot=snapshot)
+            corrected.append((dict(row, sha256=delivered['sha256'], path=delivered['path']), delivered['content']))
+        loaded = corrected
+    return loaded, listed
 
 
 def load(brain, cycle, *, snapshot=None, carried=None, day=None):
@@ -1075,6 +1141,7 @@ def load(brain, cycle, *, snapshot=None, carried=None, day=None):
     to the first (Greg, 2026-09-28: dedupe; identical bytes are read by the model once) and are not re-read from disk."""
     parts, members = [], []
     carried = dict(carried or {})
+    records = _correction_records(brain, snapshot)
 
     def reference(label, e):
         """A one-line pointer for bytes already in the corpus, or None when the bytes are new."""
@@ -1096,6 +1163,9 @@ def load(brain, cycle, *, snapshot=None, carried=None, day=None):
             if not e.get('include'):
                 members.append(dict(name=f'brain-frozen-{name}', bytes=e.get('bytes'), treatment=f'frozen file excluded: {e.get("reason", "include false")}'))
                 continue
+            if records and name.endswith('.json'):
+                e, _ = _corrected_knowledge(brain, dict(e, path=str(p)), day=day, records=records, snapshot=snapshot)
+                p = Path(e['path'])
             if reference(f'brain-frozen-{name}', e):
                 continue
             data = p.read_bytes() if p.is_file() else None
@@ -1112,6 +1182,9 @@ def load(brain, cycle, *, snapshot=None, carried=None, day=None):
             if not e.get('include'):
                 members.append(dict(name=f'brain-cycle-{cyc}-{name}', bytes=e.get('bytes'), sha256=e.get('sha256'), treatment='brain entry excluded by its manifest (include false); not in the corpus'))
                 continue
+            if records and name.endswith('.json'):
+                e, _ = _corrected_knowledge(brain, dict(e, path=str(p)), day=day, records=records, snapshot=snapshot)
+                p = Path(e['path'])
             if reference(f'brain-cycle-{cyc}-{name}', e):
                 continue
             if not p.is_file():
@@ -1144,7 +1217,7 @@ def load(brain, cycle, *, snapshot=None, carried=None, day=None):
     # Frankie's school knowledge base: every earlier classroom day's school file, section by section, each labelled with
     # its author (R11). An inline item whose source bytes are already carried (the same lessons or exchange file read as
     # a brain entry above) is a one-line reference; a pointer item (a large file) is named, never read here.
-    loaded, listed = _school_for(brain, snapshot, day)
+    loaded, listed = _school_for(brain, snapshot, day, records=records)
     if loaded:
         parts.append("\n\n## Frankie's school: the school knowledge of every earlier classroom day (FRANKIE_SCHOOL_KNOWLEDGE_V1), "
                      'each section labelled with its author; counts per day, never pooled\n')

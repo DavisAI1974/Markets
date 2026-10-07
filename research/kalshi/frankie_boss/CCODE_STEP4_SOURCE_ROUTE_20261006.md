@@ -480,6 +480,26 @@ Blocked by the held late-scheduling decision: whether, when and under which owne
 knowledge (today: at the next owner boundary that freezes after it, by the existing selection).
 Checks: `ast.parse` of the three modules without project imports; `git diff --check`. No run.
 
+### Codex review and adapter integration after the fourth-session return (2026-10-07)
+
+Integrated CCode through `276d6073`. Complete-plan reconstruction (B3) and selected-file
+refusal (B5) address their named findings. Further B2 aggregate-coverage, B4 operation-semantic
+and historical-binding-identity corrections are assigned at the task doc top; do not mark
+historical reproduction/rework closed for either teacher. CCode owns those implementations.
+
+The reserved exact-price adapter is now source-built on `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2`:
+`prices.group.rows[slot].*` requires the original INPUT's membership, matching instrument and
+emitting close; original/local identity and emission/slot identity are checked independently.
+Every declared group-row slot is preserved, including gaps; every unplaced ordinal has a
+reason. V1 price rows/opening-state origins do not supply exact trade identity. Structure V1
+joins and provenance-channel exclusion remain. No timestamp or spool-position identity is
+inferred; these projections add no independent observations or identity-linked trajectories.
+
+Step 5's shared correction interfaces are described in `STEP5_CORRECTION_DELIVERY_20261007.md`.
+CCode's owned reader hooks and scientific-owner publication/successor interface are assigned.
+Step 6's remaining three recovery groups are also in that task; the Codex runtime-failure
+consumer wiring is built. No scientific computation or runtime verification occurred.
+
 ### Corrections after Codex's integration review (2026-10-07; CCODE_NEXT_SOURCE_TASKS top section, in its order)
 
 Commits on `ccode/teacher-tasks-20261006b` atop Codex's `19f72f47` (rebased 2026-10-07): `18b6edcd` D1 | `8930b4f0` B7/C2 |
@@ -612,26 +632,22 @@ price adapter (Codex, on the V2 contract above); runtime verification of all of 
 
 ## 9. Closure table after slices A-D (against the existing contracts; SOURCE-BUILT / RUNTIME-UNVERIFIED throughout)
 
-**Codex return review, 2026-10-06 22:11 ET:** integrated CCode through `ecd8720` with its
-original correction history. Section 8's implementation record is retained, but B2–B5 are
-not closed: comparison coverage can report a partial match as a whole match; pre-dispatch
-plan/inventory validation is incomplete; record/plan/dispatch/run identities and success facts
-are not fully linked; frozen missing/changed records are listed instead of refusing. Concrete
-required fixes are at the top of `CCODE_NEXT_SOURCE_TASKS_20261006.md`. B6's unsupplied-input
-interface remains open. D1 V2 is received; exact price placement remains Codex's pending work.
-Greg assigned CCode step 6; Codex owns the authorized step 5 work. The older STOP row below
-does not reverse those authorizations. Source review/AST/whitespace only; nothing was run.
+**Codex fourth-session return review, 2026-10-07:** CCode through `276d6073` is integrated.
+The current task doc assigns B2-R/B4-R/BIND-R and step-6 recovery corrections; B3/B5's named
+source findings are addressed. B6 input supply remains open. D1 V2 and the exact-price adapter
+are source-built, runtime-unverified. Greg authorized source work on step 5 and assigned CCode
+step 6; neither authorizes execution. See the new section 8 integration note and step-5 report.
 
 **Current correction status (supersedes the original closure table below):**
 
 | Step | After the 2026-10-07 corrections (`45f52d28`); SOURCE-BUILT / RUNTIME-UNVERIFIED |
 |---|---|
 | 2 | A4, C1, C2, B4/B5 source-corrected (section 8, Corrections). Open: native-learner and late-scheduling decisions (Greg); Codex's integration review of the corrections; runtime verification. |
-| 3 | D1 source-corrected: `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (contract in section 8). Open: Codex's exact price adapter on it; the held trajectory/4.2/4.4 definitions. Exact structures unchanged (V1). |
+| 3 | D1 source-corrected: `FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2` (contract in section 8). Codex's exact price adapter is source-built. Open: the held trajectory/4.2/4.4 definitions. Exact structures unchanged (V1). |
 | 4 | B1-B7 source-corrected (B7 by deletion); B2-B5 follow-ups source-corrected (`2f1d6630`: coverage apart from matched scope, the complete plan and inventory bound to the entry, the record chain coheres, a broken frozen record refuses). Open: the input-supply interface (B6: named, not built; Greg's authorization); reproduction/reformulation open for BOTH teachers; nothing run. |
-| 5 | STOP; draft unapplied, decisions held. |
+| 5 | Authorized source work: scoped correction delivery and stale-input refusal built. Open: scientific-owner publication, standalone hooks and corrected-successor scheduling. Old draft unapplied. |
 
-No correction above was delivered by the new documentation commit. The older table records
+The table distinguishes source implementation from the remaining review and workflow gaps. The older table records
 what A-D attempted to connect; it does not waive implementation defects or reduce remaining
 work to execution alone. H06-H08 remain historical/not_bound. All runtime verification is open.
 
@@ -639,6 +655,6 @@ work to execution alone. H06-H08 remain historical/not_bound. All runtime verifi
 |---|---|---|---|---|
 | 1 | lane save/resume (Codex) | built | none named for CCode | whole |
 | 2 | `teach_accumulated` -> `ST.test` -> brain writer -> exchange seats -> Frankie reply | A: discovery-day candidates and origin evidence to BOTH seats' records and the lawful reply, listed reasons voiced; C: the owner's completed-native reference in every accumulated result; D: late knowledge listed at both frozen boundaries; B: historical reproduction status read from hash-bound records | the three native-learner decisions and the late-scheduling decision (Greg); Codex's integration review | whole |
-| 3 | `experiment_search.build_series` + transforms/coupling (Codex) | D: price/structure rows carry exact INPUT/instrument provenance (contract above; Codex's adapter pending, incl. excluding `provenance.*` from channels) | conditions, transforms, windows, turn/entry definitions (REFORMULATIONS); 4.4 pair ownership and a 4.2 step definition (Greg) | whole |
+| 3 | `experiment_search.build_series` + transforms/coupling (Codex) | D: price V2 and structure V1 exact INPUT/instrument provenance now consumed by the reserved adapters; `provenance.*` excluded from channels | conditions, transforms, windows, turn/entry definitions (REFORMULATIONS); 4.4 pair ownership and a 4.2 step definition (Greg) | whole |
 | 4 | `ST.test`, `candidate_claims_doc`, exchange, `frankie_box_historical_claims` bindings, `frankie_box_historical_reproduction` | A: exact origin identity + both-seat arithmetic; B: REPRODUCTIONS / REFORMULATIONS (3 bound, 1 not_bound), stage/plan/run/compare/record capability (never invoked), `research_rework` reads records; C: every completed-native consumer classed | survivor/acceptance rules (#5); the teachers' authorized execution of the bound reproductions (inputs for two bindings are off-repository) | whole |
-| 5 | discussion | STOP | Greg | n/a |
+| 5 | explicit scoped correction reader and existing knowledge consumers | source-built; see step-5 report | scientific-owner publication, standalone hooks and successor scheduling | whole |

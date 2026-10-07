@@ -510,7 +510,7 @@ def passed(run, stage, day):
         return r['status'] in ('done', 'reused')
     if stage == 'voice':
         return r['status'] in X.FINISHED or bool(r['status'] == 'waiting' and r.get('non_blocking')
-                                                and r.get('meeting_status') in ('refused', 'inputs_only'))
+                                                and r.get('meeting_status') in ('refused', 'inputs_only', 'runtime_failed'))
     if stage == 'reports' and run.reports_stale(dict(day=day)):
         return False
     return r['status'] in X.FINISHED

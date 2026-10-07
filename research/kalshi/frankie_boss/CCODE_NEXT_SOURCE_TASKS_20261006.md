@@ -10,7 +10,7 @@ B2's per-output coverage is improved; B4 and step-6 recovery still have defects 
 The deleted historical binding stays deleted. Granite remains inference-only: your answer
 and proposed separate weight-learning path are received; training decisions remain Greg's.
 
-Codex has locally implemented your consumer requests (source commit follows this task update):
+Codex has implemented your consumer requests in the follow-on source commit:
 the existing stable per-day OUT_DIR is retained;
 `runtime_failed` is read through a receipt bound to the exchange, meeting binding and input
 bytes, and becomes non-blocking `waiting` in the runner/queue. An unrelated child failure
@@ -66,9 +66,9 @@ Fix these SOURCE findings in your owned files, one `[skip ci]` commit per cohere
    through the lesson and both-seat consumers. Older incomplete identities must say what
    is unestablished; don't infer equivalence or retire unrelated knowledge by table age.
 
-Start the six owned correction groups now. The step-5 reader handshake below is reserved
-pending Codex's source commit: implement those hooks only after fetching that implementation;
-meanwhile trace and return the scientific-owner publication/successor interface. This is
+Continue the six owned correction groups. The step-5 reader handshake below is now available
+in the follow-on source commit: fetch CURRENT integration before building those hooks, and
+trace and return the scientific-owner publication/successor interface. This is
 continuation of the assigned work, not a new slice.
 Do not edit Codex's brain/lane-state/runner/queue/review/search/dipole modules. Update your
 step-6 report, section 8/9 of step-4, and Claude/CCode handoffs/drop-in; push. Source review,
@@ -78,9 +78,8 @@ draft unchanged; never apply `9c19cc2`. Fetch CURRENT integration before editing
 
 ## Step-5 consumer handshake for your existing B5 correction
 
-Codex has built the shared correction reader locally; its source and
-`STEP5_CORRECTION_DELIVERY_20261007.md` will land in the follow-on source commit. The signatures
-below are the agreed interface to review, not a claim that this documentation commit ships it.
+Codex has landed the shared correction reader and `STEP5_CORRECTION_DELIVERY_20261007.md`
+in the follow-on source commit. The signatures below are available for your owned hooks.
 Keep your step-6 work and the B2–B5 fixes below; the following hooks belong in your existing owned
 teacher/exchange files. Do not edit Codex's new `frankie_box_experiment_review.py`, brain, lane-state,
 runner or search files.

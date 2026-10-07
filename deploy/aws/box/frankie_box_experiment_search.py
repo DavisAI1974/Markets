@@ -95,6 +95,7 @@ ROOT = Path('/opt/frankie-box/work/experiment-search')
 CELL_NAMES = ('session_phase', 'continuity_segment', 'source_day', 'source_role')
 F_LAST = 128                       # the exchange record flag that closes a group (the same close the frames spool marks)
 ROW_PROVENANCE_SCHEMA = 'FRANKIE_ROOT_ROW_PROVENANCE_V1'
+PRICE_ROW_PROVENANCE_SCHEMA = 'FRANKIE_ROOT_PRICE_ROW_PROVENANCE_V2'
 # Identity/metadata and absolute clocks are listed; latency provenance is not a market quantity.
 # Identity relationships continue to support their existing lawful consumers.
 EVENT_IDENTITY_FIELDS = ('order_id', 'sequence', 'channel_id', 'instrument_id', 'publisher_id', 'ts_recv_ns', 'ts_event_ns',
@@ -194,9 +195,9 @@ NOT_SEARCHED = (
      'market categories. Context can condition the search without becoming a measured market quantity'),
     ('price/structure row provenance', 'provenance.* is retained identity metadata, not a numerical series or cell. '
      'structures.group.* requires the selected derive receipt schema and exact ROOT closing INPUT, instrument and '
-     'full member list. Every unsupported original spool ordinal has a disposition. Price V1 original INPUT identity '
-     'awaits producer correction; prices.* remains a timestamp alias with explicit unselected-row accounting. '
-     'Exact structures and legacy aliases are duplicate representations, not independent evidence'),
+     'full member list. prices.group.rows[slot].* requires price V2 originating INPUT plus the emitting group close, '
+     'instrument and declared group-row slot; V1 never supplies exact trade identity. Every unsupported original spool '
+     'ordinal has a disposition. Exact projections and legacy aliases are duplicate evidence, not independent observations'),
     ('native evidence boundaries', 'selected completed native member/lifecycle ledgers with exact emission provenance '
      'enter the existing F_LAST axis, every leaf and ordered per-section emission slot. Native producers remain opt-in; '
      'old provenance-free rows, unmatched ROOT frames and FINALIZE rows have explicit retained dispositions. '
@@ -328,12 +329,13 @@ def asof_values(con, axis_t, known_at, values):
 
 
 def root_row_columns(spool, numeric, text, count, frames, owners, axis_rows, producer_schema):
-    """Place structures by exact original INPUT membership; list the unresolved price producer identity.
+    """Place structures and V2 prices by exact INPUT membership and declared emission identity.
 
     V1 prices currently stamp the closing INPUT, not necessarily the INPUT that supplied the trade. Do not
     reinterpret that input_index contract. Provenance and clocks remain in the pinned source, not features.
     """
     buckets, dispositions, seen = {}, {}, set()
+    schema = PRICE_ROW_PROVENANCE_SCHEMA if spool == 'prices' else ROW_PROVENANCE_SCHEMA
     identities = sorted(k for k in set(numeric) | set(text) if k == 'provenance' or k.startswith('provenance.'))
     member_slots = sorted((int(m.group(1)), key) for key in numeric
                           if (m := re.fullmatch(r'provenance\.input_record_indices\[(\d+)\]', key)))
@@ -355,25 +357,41 @@ def root_row_columns(spool, numeric, text, count, frames, owners, axis_rows, pro
 
     previous = None
     for ordinal in range(count):
-        if spool == 'prices':
-            disposition('price_original_input_identity_pending', ordinal)
-            continue
-        if producer_schema != ROW_PROVENANCE_SCHEMA:
+        if producer_schema != schema:
             disposition('no_bound_row_provenance_producer', ordinal)
             continue
-        if value('provenance.schema', ordinal) != ROW_PROVENANCE_SCHEMA:
+        if value('provenance.schema', ordinal) != schema:
             disposition('missing_or_unsupported_row_provenance', ordinal)
             continue
-        index = value('provenance.input_cursor', ordinal)
+        index = value('provenance.input_index' if spool == 'prices' else 'provenance.input_cursor', ordinal)
         instrument = value('provenance.instrument_id', ordinal)
+        if spool == 'prices' and value('provenance.origin', ordinal) == 'open_group_before_this_source':
+            if index is not None:
+                raise ValueError('opening-state price row claims an INPUT in this source')
+            disposition('opening_group_origin_outside_source', ordinal)
+            continue
         if any(type(v) is not int for v in (index, instrument)) or index < 0:
             disposition('unusable_input_or_instrument_identity', ordinal)
             continue
-        identity = index
-        if identity in seen or (previous is not None and identity <= previous):
-            raise ValueError(spool + ' original closing INPUT identities repeat or run backwards')
+        slot, close = 0, index
+        identity, emission = index, index
+        if spool == 'prices':
+            slot = value('provenance.group_row_ordinal', ordinal)
+            close = value('provenance.group_close_input_index', ordinal)
+            local = value('provenance.legacy_row_ordinal', ordinal)
+            kind = value('provenance.row_kind', ordinal)
+            origin = value('provenance.origin', ordinal)
+            if (any(type(v) is not int or v < 0 for v in (slot, close, local)) or index > close
+                    or kind not in ('trade', 'projection_at_event_group_end')
+                    or origin not in ('this_source', 'this_source_apply_failed')):
+                raise ValueError('V2 price row has inconsistent source/emission identity')
+            if kind == 'projection_at_event_group_end' and index != close:
+                raise ValueError('price projection must name the INPUT that emitted it at the group close')
+            identity, emission = (index, local), (close, slot)
+        if identity in seen or (previous is not None and emission <= previous):
+            raise ValueError(spool + ' original identities repeat or emissions run backwards')
         seen.add(identity)
-        previous = identity
+        previous = emission
         if frames is None:
             disposition('unsupported_root_group_membership', ordinal)
             continue
@@ -384,16 +402,18 @@ def root_row_columns(spool, numeric, text, count, frames, owners, axis_rows, pro
         frame = frames[position]
         if instrument != frame['instrument']:
             raise ValueError(spool + ' instrument differs from its exact ROOT group')
+        if close != frame['cursor']:
+            raise ValueError(spool + ' emission close differs from its originating INPUT group')
         if spool == 'structures':
             if index != frame['cursor']:
                 raise ValueError('structure does not name its owning group closing INPUT')
             members, ended = [], False
-            for slot, key in member_slots:
+            for member_slot, key in member_slots:
                 member = value(key, ordinal)
                 if member is None:
                     ended = True
                     continue
-                if ended or slot != len(members) or type(member) is not int:
+                if ended or member_slot != len(members) or type(member) is not int:
                     raise ValueError('structure INPUT membership has noninteger members or positional gaps')
                 members.append(member)
             if not members:
@@ -401,7 +421,10 @@ def root_row_columns(spool, numeric, text, count, frames, owners, axis_rows, pro
                 continue
             if members != sorted(frame['members']):
                 raise ValueError('structure INPUT membership differs from its exact ROOT frame')
-        buckets.setdefault(position, []).append(ordinal)
+        slots = buckets.setdefault(position, {})
+        if slot in slots:
+            raise ValueError(spool + ' duplicates a declared row slot within the same ROOT group')
+        slots[slot] = ordinal
         disposition('placed', ordinal)
 
     # Preserve all existing value/text leaves; only explicit identity metadata and absolute clocks are listed.
@@ -412,15 +435,18 @@ def root_row_columns(spool, numeric, text, count, frames, owners, axis_rows, pro
         for key, values in source.items():
             if key in excluded or not buckets:
                 continue
-            target['structures.group.' + key] = [values[buckets[position][0]]
-                if position in buckets else None for position in range(axis_rows)]
-    report = dict(schema=ROW_PROVENANCE_SCHEMA, source_rows=count,
+            for slot in sorted({slot for group in buckets.values() for slot in group}):
+                name = ('structures.group.' if spool == 'structures' else 'prices.group.rows[%d].' % slot) + key
+                target[name] = [values[buckets[position][slot]]
+                    if slot in buckets.get(position, {}) else None for position in range(axis_rows)]
+    report = dict(schema=schema, source_rows=count,
                   placed_rows=dispositions.get('placed', {}).get('rows', 0),
                   matched_root_frames=len(buckets), frames_without_source_rows=axis_rows - len(buckets),
                   dispositions=dispositions, identities_and_clocks=sorted(set(identities) | (clocks & (set(numeric) | set(text)))),
                   numeric=sorted(out_numeric), text=sorted(out_text),
                   rule='structures equal the original closing INPUT cursor, instrument and full ROOT member list. '
-                       'Prices await corrected original trade INPUT provenance; V1 currently stamps the group close. '
+                       'V2 prices require originating INPUT membership, instrument and the emitting group close; '
+                       'every declared group-row slot is retained without compression. V1 prices remain unsupported. '
                        'No timestamp/ordinal join, fill or interpolation. '
                        'Group projections and legacy timestamp aliases are the same evidence, not independent observations; '
                        'positions are not identity-linked trajectories or a change to F_LAST lag units')
@@ -562,7 +588,8 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
             continue
         num, text, other, count = columns(unpack_spool(path, pin), time_key)
         group_numeric, group_text, group_report = root_row_columns(
-            spool, num, text, count, root_frames, root_owners, n, derive.get('row_provenance_schema'))
+            spool, num, text, count, root_frames, root_owners, n,
+            derive.get('price_row_provenance_schema' if spool == 'prices' else 'row_provenance_schema'))
         group_report.update(frames_sha256=frames_pin['sha256'], membership_implementation=JOURNAL.binding(),
                             producer_receipt=dict(path=str(derive_path), bytes=derive_pin['bytes'], sha256=derive_pin['sha256'])
                             if derive_pin is not None else None)
@@ -576,9 +603,9 @@ def build_series(day_dir, log, external_fields_mode=None, workers=15, *, data_ma
                 if key == 'provenance' or key.startswith('provenance.'):
                     del mapping[key]
         sources.append(dict(source=spool, path=str(path), rows=count, bytes=pin['bytes'], sha256=pin['sha256'],
-                            placement='structures.group.* uses exact ROOT membership; other aliases keep legacy timestamp-asof selection',
-                            identity_limit='price original INPUT provenance awaits producer correction; legacy asof aliases '
-                                           'do not establish exact group/entity identity; inspect exact_group_join dispositions',
+                            placement='group projections use exact ROOT membership; legacy aliases keep timestamp-asof selection',
+                            identity_limit='price V1/opening-state origins cannot establish exact trade INPUT membership; '
+                                           'legacy asof aliases do not establish it either; inspect exact_group_join dispositions',
                             exact_group_join=group_report,
                             numeric=sorted(num), text=sorted(text), not_searched=other))
         gates.append(dict(source=spool + '.group', passed=True if group_report['placed_rows'] else None,

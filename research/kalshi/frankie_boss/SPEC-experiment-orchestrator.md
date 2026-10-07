@@ -6,6 +6,12 @@ The step-5 discussion has settled its purpose: get the research right and fix er
 their actual downstream uses. Replace the former one-time freeze/untouched-confirmation/cost
 description for this continuous-learning experiment with market-only checking and correction.
 
+Greg's subsequent clarification: older lessons remain available regardless of age. Conflicting
+knowledge about the SAME thing requires research of its circumstances; keep both accounts while
+unresolved. A researched replacement may be partial or circumstance-specific and must retain all
+unaffected knowledge. Full replacement is never presumed. The current source implementation and
+remaining delivery/successor gaps are in `STEP5_CORRECTION_DELIVERY_20261007.md`; #5 is not complete.
+
 - Check the existing mathematics, original market evidence, causal timing and stated conditions.
   Preserve symbolic/nonlinear discovery and the existing settled scientific calculations. No new
   profit objective, numerical threshold, rarity gate or invented scientific definition follows.

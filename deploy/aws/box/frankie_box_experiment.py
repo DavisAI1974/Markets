@@ -640,6 +640,8 @@ class Run:
         import frankie_box_lane_state as LS
         self._knowledge[(stage, key)] = LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage,
                                                  brain=self.plan.get('brain') or BRAIN)
+        if stage in ('lessons', 'exchange'):
+            self.require_current_teacher_inputs(key[:8])
         full = dict(os.environ, MARKETS_SHA=self.commit, CODE_ROOT=str(self.code_root), **{k: str(v) for k, v in env.items()})
         command = ['sh' if script.endswith('ingest_block.sh') else 'bash', str(self.box / script)]
         if stage in self.cores.DAY_RUN_STAGES:  # exactly 16 CPUs booked, the step under taskset -c <them> (frankie_box_cores.py)
@@ -1351,6 +1353,16 @@ class Run:
         claims = json.loads((self.code_root / self.plan['historical_claims']).read_bytes())
         return LESSONS_ROOT / 'historical' / ('%s-%s.json' % ('-'.join(sorted(searched_days)), claims['catalog_sha256'][:12]))
 
+    def require_current_teacher_inputs(self, day):
+        """After knowledge sync and before reuse/dispatch: frozen errors need checked successors."""
+        import frankie_box_lane_state as LS
+        brain = self.plan.get('brain') or BRAIN
+        paths = (self.dir / 'scientific-knowledge' / day / 'inputs.json',
+                 self.dir / 'exchange' / day / 'scientific-knowledge' / 'inputs.json',
+                 self.dir / 'exchange' / day / 'learner-knowledge.json')
+        for path in paths:
+            LS.require_current_selection(path, brain=brain)
+
     def exchange(self, e):
         day = e['day']
         if not e['classroom_arm']:
@@ -1358,6 +1370,7 @@ class Run:
         if e['role'] != 'discovery':
             return self.record('exchange', day, 'skipped', reason='discovery days only (R15)')
         target = self.dir / 'exchange' / day
+        self.require_current_teacher_inputs(day)
         if (target / 'receipt.json').is_file():
             r = json.loads((target / 'receipt.json').read_bytes())
             return self.record('exchange', day, 'reused', exchange=r['exchange']['path'], frankie_view=r['frankie_view']['path'],
@@ -1372,6 +1385,18 @@ class Run:
             return self.record('exchange', day, 'waiting', reason='the day\'s search is %s' % ((search or {}).get('status')
                                                                                               or 'not run'))
         files, listed = self.lessons_files(e, lessons)
+        import frankie_box_experiment_review as REVIEW
+        import frankie_box_lane_state as LS
+        brain = self.plan.get('brain') or BRAIN
+        corrections = REVIEW.corrections(LS.knowledge_roots(brain))
+        corrected_files = []
+        for path in files:
+            raw = Path(path).read_bytes()
+            delivered = REVIEW.current_document(dict(path=str(path), bytes=len(raw),
+                sha256=hashlib.sha256(raw).hexdigest(), content=json.loads(raw)),
+                corrections, brain, day=day, stage='exchange')
+            corrected_files.append(Path(delivered['path']))
+        files = corrected_files
         # Completed accumulated lessons are also actual exchange inputs, even without a new lesson of this day.
         rows, rows_why = self.rows_file(e)
         env = dict(DAY=day, RUN=self.plan['run'], LESSONS=','.join(str(f) for f in files), OUT_DIR=target,
@@ -1412,19 +1437,25 @@ class Run:
                 GM.publish_meeting_record(x['frankie_view'], target, brain)
                 reused = True
         if not reused:
+            receipt_path = target / 'receipt.json'
+            prior_receipt = receipt_path.read_bytes() if receipt_path.is_file() else None
             env = dict(EXCHANGE_VIEW=x['frankie_view'], OUT_DIR=target, BRAIN=brain)
             code, log = self.child('voice', day, 'frankie_box_granite_meeting.sh', env)
             if code != 0:
-                return self.record('voice', day, 'failed', exit_code=code, log=log,
-                                   reason='meeting child failed; retained artifacts are kept for recovery')
+                current = receipt_path.read_bytes() if receipt_path.is_file() else None
+                if (current is None or current == prior_receipt
+                        or json.loads(current).get('status') != 'runtime_failed'):
+                    return self.record('voice', day, 'failed', exit_code=code, log=log,
+                                       reason='meeting child failed; retained artifacts are kept for recovery')
         result = BR.read_meeting_for_exchange(x['frankie_view'])
         if result['status'] == 'missing':
             return self.record('voice', day, 'failed', exit_code=code, log=log, reason=result['reason'])
         r = result['receipt']
         fields = dict(exit_code=code, log=log, meeting_status=result['status'], meeting=result['path'],
-                      meeting_sha256=r['record']['sha256'], model_calls=r.get('model_calls', 0),
+                      meeting_sha256=(r.get('record') or {}).get('sha256'), model_calls=r.get('model_calls', 0),
                       publication=r.get('publication'), brain_entry=r.get('brain_entry'),
-                      counts=r.get('counts'), receipt=str(target / 'receipt.json'))
+                      counts=r.get('counts'), receipt=str(target / 'receipt.json'),
+                      runtime_evidence=r.get('evidence'), binding=r.get('binding'))
         if result['status'] == 'complete':
             return self.record('voice', day, 'reused' if reused else 'done', **fields)
         return self.record('voice', day, 'waiting', non_blocking=True,
@@ -1675,22 +1706,26 @@ class Run:
                            brain_entry=brain_entry)
 
     def search_knowledge(self, e, target):
-        """Carry actual search candidates, with exact part/row provenance; counts alone are not discoveries."""
+        """Check existing arithmetic/roles before publication; reuse is never independent confirmation."""
+        import frankie_box_experiment_review as REVIEW
+        from frankie_box_durable import write_json
         manifest_path = target / 'MANIFEST.json'
-        manifest = json.loads(manifest_path.read_bytes())
-        findings = []
-        for pin in manifest['couplings']['parts']:
-            part = target / pin['path']
-            if not part.resolve().is_relative_to(target.resolve()) or sha256_file(part) != pin['sha256']:
-                raise ValueError('search part differs from its manifest: %s' % part)
-            with part.open() as handle:
-                for ordinal, raw in enumerate(handle):
-                    row = json.loads(raw)
-                    if row['beyond_chance']:
-                        findings.append(dict(content=row, part=pin['path'], part_sha256=pin['sha256'],
-                                             row=ordinal, row_sha256=hashlib.sha256(raw.encode()).hexdigest()))
-        body = dict(schema='FRANKIE_SEARCH_FINDINGS_V1', day=e['day'], role=e['role'], findings=findings,
-                    manifest_sha256=sha256_file(manifest_path),
+        checked = REVIEW.search_findings(target, e['day'])
+        if checked['role'] != e['role']:
+            raise ValueError('search review differs from the planned day role')
+        review_body = {k: v for k, v in checked.items() if k != 'findings'}
+        review_path = target / ('knowledge-review-' + REVIEW.digest(REVIEW.canonical(review_body)) + '.json')
+        if not review_path.exists():
+            write_json(review_path, review_body)
+        elif json.loads(review_path.read_bytes()) != review_body:
+            raise ValueError('retained search review differs from its content address')
+        if checked['review']['listed']:
+            raise ValueError('search evidence needs source correction before teaching; every affected row is listed in '
+                             + str(review_path))
+        # Preserve the established findings bytes when checking valid retained work. Adding a
+        # review does not invent a new finding identity or invalidate an unaffected old lesson.
+        body = dict(schema='FRANKIE_SEARCH_FINDINGS_V1', day=e['day'], role=e['role'], findings=checked['findings'],
+                    manifest_sha256=checked['manifest_sha256'],
                     status='search candidates; scientific double-checks and survivor treatment occur in their code stages',
                     rule='every beyond-chance row retained individually; no rarity gate or pooling; all counts remain in the parts')
         path = target / 'knowledge-findings.json'
@@ -1700,8 +1735,11 @@ class Run:
         if not path.exists():
             import frankie_box_lane_state as LS
             LS.write(path, body)
-        return self.brain_stage(e['day'], 'search', [manifest_path, path],
-                                summary=dict(target=str(target), role=e['role']), inline_limit=len(raw))
+        publication = self.brain_stage(e['day'], 'search', [manifest_path, path],
+                                      summary=dict(target=str(target), role=e['role']), inline_limit=len(raw))
+        publication['source_review'] = dict(path=str(review_path), sha256=sha256_file(review_path),
+                                           independent_observations_added=0)
+        return publication
 
     def accumulated_lessons(self, e):
         """Non-classroom days use the existing owner-local accumulated scientific reader too."""
@@ -1717,6 +1755,7 @@ class Run:
         if not (search and search['status'] in FINISHED and search.get('target')):
             return self.record('accumulated_lessons', day, 'waiting', reason='the owning day search is not complete')
         target = self.dir / 'scientific-knowledge' / day
+        self.require_current_teacher_inputs(day)
         key = day + '-accumulated'
         code, log = self.child('lessons', key, 'frankie_box_scientific_teacher.sh',
                                dict(SEARCHES=search['target'], BRAIN=self.plan.get('brain') or str(BRAIN),

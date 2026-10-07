@@ -1,5 +1,16 @@
 # Frankie 30 Day AWS Runbook 20261006
 
+## Source continuation — steps 5 and 6, 2026-10-07 UTC
+
+Step 5's governing decision below is unchanged. The built correction-delivery interfaces and
+remaining scientific-owner/successor gaps are in `STEP5_CORRECTION_DELIVERY_20261007.md`.
+CCode's step-6 return is integrated through `276d6073`; concrete remaining recovery and
+historical corrections are in the newest `CCODE_NEXT_SOURCE_TASKS_20261006.md` section.
+Codex has connected the new bound runtime-failure receipt to non-blocking runner/queue handling.
+No independent Granite weight learning exists. The V2 exact-price adapter is source-built;
+raw market prices and their time associations remain. Steps 2–6 are not declared complete.
+Verification is source review/AST/whitespace only; every runtime/AWS hold remains.
+
 ## Step #5 clarified — 2026-10-06 21:53 ET
 
 Greg settled workflow #5 as market-only checking, correction and immediate teaching of corrected
