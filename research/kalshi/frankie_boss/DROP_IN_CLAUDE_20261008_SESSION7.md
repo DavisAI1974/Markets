@@ -43,6 +43,15 @@ NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS.
 - Session 5's container was still alive during session 6 and pushed two BOX_RECORD_*.md files; its disk guard
   (pid 32657, 15 GB floor) may still run on the box; harmless.
 
+- 03:12Z UPDATE: the second resume on 6076950 did NOT reach the receipt either. Cause (exact, from the box): the sealed-
+  record shortcut missed because frankie_box_monday_calculations.inline_layer_without_array anchors its tail parse on
+  `"reason"` right after the array's `],`, while a2's sealed layer ends `], "producer": ..., "reason": null, "status":
+  "derived"`; so load_retained_layers fell back to the whole Python parse of the 472 GB inline layer at ~27 MB/s (4.8 h).
+  Greg ordered the shutdown; the child was killed with the marker standing -> SAVED, NO RECEIPT. The fix (anchor on the
+  first top-level key after `],`) was assigned to the digest role at close: check the E2E record / git log for it; if it
+  is on the tip, stage it before the next resume; the resume then takes the layer by its claim (no read) and the frames
+  spool by one 7-min counting pass (this old seal has no spool count), then writes the receipt.
+
 ## What session 6 built (ALL SOURCE-BUILT / RUNTIME-UNVERIFIED unless marked LIVE)
 - LIVE on the box: the hold (save marker at projection) fired exactly as designed; ROOT c9bf631 SIGKILLed mid-digest
   (02:08Z) and again on e0d7ae0 (02:59Z) with the marker standing -> entry SAVED both times (Run.child check_save after
