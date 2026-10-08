@@ -138,13 +138,40 @@ def write_claims_from_derivation(root_dir, *, force=False):
         by = 'root reuse: receipt/derive.json sha256 (sealed on %s) + stat + tail at %s' % (
             commit, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
         items = []
+        # ROOT-digest role, 2026-10-08 (the live trace on 6076950: 57 rows, none for the 496.7 GB frames spool, so the
+        # legacy-stage reuse counted it whole): the five legacy spools from work/legacy-stage.json's artifacts (the
+        # bytes + sha256 the seal measured whole) FIRST, each with its sealed count: the artifact's own (this code's
+        # seals) or, for an older seal, the one the ROOT's own records hold (_sealed_spool_counts: input_records,
+        # failure_count, the layer heads' `count`); the row then carries count + count_basis and a reuse that takes
+        # the claim reopens the spool from the count and reads nothing of it
+        stage = work / 'legacy-stage.json'
+        if stage.is_file():
+            from frankie_box_boss_session import _sealed_spool_counts
+            saved = json.loads(stage.read_bytes())
+            counts = _sealed_spool_counts(saved.get('receipt') or result, work / 'derived')
+            for artifact in saved.get('artifacts') or []:
+                if not str(artifact.get('path', '')).endswith('.jsonl'):
+                    continue
+                item = dict(artifact, kind='spool')
+                if not isinstance(item.get('count'), int):
+                    found = counts.get(str(Path(artifact['path']).resolve()))
+                    if found is not None:
+                        item.update(count=found['count'], count_basis=found['basis'])
+                    else:
+                        item.pop('count', None)
+                elif not item.get('count_basis'):
+                    item['count_basis'] = 'the seal\'s own count of the closed spool (legacy-stage.json)'
+                items.append(item)
         for entry in (result.get('layers') or {}).values():
             items.append(entry)
             for spool in (entry.get('spools') or {}).values():        # a reference layer's spools (frames, groups)
-                items.append(spool)
+                items.append(dict(spool, kind='spool', count_basis='the sealed reference layer\'s spool record')
+                             if isinstance(spool.get('count'), int) else spool)
         record_spool = (result.get('rows') or {}).get('record_spool')
         if record_spool:
-            items.append(record_spool)
+            items.append(dict(record_spool, kind='spool', count=result['input_records'],
+                              count_basis='the sealed receipt\'s input_records')
+                         if isinstance(result.get('input_records'), int) else record_spool)
         native = result.get('bedrock') or {}
         items.extend(v for v in (native.get('ledgers') or {}).values())
         for key in ('result', 'receipt'):
@@ -157,7 +184,11 @@ def write_claims_from_derivation(root_dir, *, force=False):
                 if path in seen:
                     continue
                 seen.add(path)
-                rows.append(file_claim(item['path'], int(item['bytes']), item['sha256'], by))
+                row = file_claim(item['path'], int(item['bytes']), item['sha256'], by)
+                if item.get('kind') == 'spool' and isinstance(item.get('count'), int):
+                    row['count'] = item['count']                      # additive: the spool's sealed line count
+                    row['count_basis'] = item.get('count_basis') or 'the sealed record'
+                rows.append(row)
             except (OSError, ValueError, KeyError, TypeError) as error:
                 skipped.append(dict(path=item.get('path') if isinstance(item, dict) else None,
                                     reason='%s: %s' % (type(error).__name__, error)))

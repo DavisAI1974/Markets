@@ -28,6 +28,31 @@ PARENT = Path('/opt/frankie-box/work/monday-calculations')
 INLINE_TAIL_BYTES = 64 << 10
 
 
+def inline_layer_head(path):
+    """(head, array_key) of a legacy layer file: the top-level keys before its row array (`frames` or `groups`),
+    parsed from the file's head and no further (the array itself is never read); array_key None when the file holds
+    no such array (then `head` is the whole document: legacy_price and the other small layers). A reference layer
+    (frankie_box_layer_spool) reads through the same streaming parser, so its `head` is the old layer's. The sealed
+    count of a spool lives here: `count` beside the array, written by the same ROOT from the same closed spool
+    (ROOT-digest role, 2026-10-08: shared by inline_layer_without_array and the legacy-stage reuse's spool counts)."""
+    from frankie_box_digest_sources import _JSON
+    head, key = {}, None
+    with Path(path).open(encoding='utf-8') as stream:
+        parser = _JSON(stream)
+        parser.expect('{')
+        while parser.peek() != '}':
+            key = parser.value()
+            parser.expect(':')
+            if key in ('frames', 'groups'):
+                break
+            head[key] = parser.value()
+            if parser.peek() == '}':
+                key = None
+                break
+            parser.expect(',')
+    return head, key
+
+
 def inline_layer_without_array(path, frames, structures):
     """An INLINE legacy layer file (legacy_book_imbalance / legacy_structure_observables, the whole spool encoded in
     it: 472 GB on a2) rebuilt WITHOUT parsing its array (session 6, Greg: no redundant pass): the keys before the array
@@ -42,25 +67,11 @@ def inline_layer_without_array(path, frames, structures):
     is one of them, parsed whole for the cost of 64 KiB). ROOT-digest role, 2026-10-08: the first form looked for
     `"reason"` right after the bracket and never matched the real layout (`producer` sits between them: toy
     test_sealed_count.py), so every held claim still cost the whole counting read on top of the head and tail."""
-    from frankie_box_digest_sources import _JSON
     path = Path(path)
     size = path.stat().st_size
     if size <= INLINE_TAIL_BYTES:
         return None
-    head, key = {}, None
-    with path.open(encoding='utf-8') as stream:
-        parser = _JSON(stream)
-        parser.expect('{')
-        while parser.peek() != '}':
-            key = parser.value()
-            parser.expect(':')
-            if key in ('frames', 'groups'):
-                break
-            head[key] = parser.value()
-            if parser.peek() == '}':
-                key = None
-                break
-            parser.expect(',')
+    head, key = inline_layer_head(path)
     if key not in ('frames', 'groups') or not isinstance(head.get('count'), int) or any(k >= key for k in head):
         return None
     with path.open('rb') as handle:

@@ -1366,6 +1366,82 @@ def _witness_counting(path):
     return dict(value, count=newlines[0])
 
 
+def _sealed_spool_counts(receipt, derived):
+    """{resolved spool path: dict(count, basis)} for the five legacy spools of a sealed ROOT, from the ROOT's OWN
+    records and no read of any spool (ROOT-digest role, 2026-10-08; the live trace on 6076950: an old seal's (c9bf631)
+    legacy-stage.json artifacts carry no count, so the 496.7 GB frames spool went to _witness_counting, ~7 min at
+    1.2 GB/s, on every reuse). The INPUT spool's count is the receipt's input_records (the record spool named under
+    rows.record_spool), the failures spool's its failure_count, the prices spool's the legacy_price layer's `count`,
+    the frames and structures spools' the `count` beside the array in their layer's head (inline_layer_head: the head
+    only, never the array; a reference layer's own spool record first). A layer that cannot be read gives no count
+    for its spool (the caller then counts in one pass)."""
+    from frankie_box_monday_calculations import inline_layer_head
+    out = {}
+    rows = Path(derived) / '.rows'
+
+    def put(path, count, basis):
+        if path and isinstance(count, int) and count >= 0:
+            out[str(Path(path).resolve())] = dict(count=count, basis=basis)
+    record = ((receipt.get('rows') or {}).get('record_spool') or {}).get('path')
+    put(record, receipt.get('input_records'), 'the sealed receipt\'s input_records')
+    put(rows / 'failures.jsonl', receipt.get('failure_count'), 'the sealed receipt\'s failure_count')
+    layers = receipt.get('layers') or {}
+    for name, spool, key in (('legacy_price', 'prices', None), ('legacy_book_imbalance', 'frames', 'frames'),
+                             ('legacy_structure_observables', 'structures', 'groups')):
+        entry = layers.get(name) or {}
+        path = entry.get('path') or str(Path(derived) / (name + '.json'))
+        ref = (entry.get('spools') or {}).get(key) if key else None
+        if isinstance(ref, dict) and isinstance(ref.get('count'), int):
+            put(ref.get('path') or rows / (spool + '.jsonl'), ref['count'],
+                'the sealed reference layer %s.json\'s spool record' % name)
+            continue
+        try:
+            head, array = inline_layer_head(path)
+        except (OSError, ValueError):
+            continue
+        if array == key and isinstance(head.get('count'), int):
+            put(rows / (spool + '.jsonl'), head['count'],
+                'the sealed layer %s.json\'s count %s (the same ROOT wrote it from this closed spool)'
+                % (name, 'beside its array' if key else 'in its head'))
+    return out
+
+
+def _legacy_spool_artifact(item, claims, mode, sealed_counts):
+    """(witness, count, how) for a legacy-stage spool artifact {path, bytes, sha256[, kind, count]} on the reuse route.
+    Nothing is read whole while the ROOT's own records answer (ROOT-digest role, 2026-10-08): an artifact sealed with
+    its count (kind 'spool', this code's seal) takes it; a count-less one (an older seal) takes the count carried on
+    its FRANKIE_FILE_CLAIM_V1 row, else the one _sealed_spool_counts found in the sealed receipt/layer heads; the
+    witness is the claim while stat and the last 64 KiB hold (_artifact_check: one 64 KiB read), else the file read
+    whole once. With no count anywhere, or no holding claim, the whole read counts in the same pass (_witness_counting)
+    and a sealed count it disagrees with refuses. mode 'full' (FRANKIE_ROOT_LEGACY_REUSE_CHECK) keeps every whole read."""
+    path = Path(item['path'])
+    claim = {k: item[k] for k in ('bytes', 'sha256')}
+    resolved = str(path.resolve())
+    row = claims.get(resolved) if mode == 'claim' else None
+    if row is not None and (row.get('bytes'), row.get('sha256')) != (claim['bytes'], claim['sha256']):
+        row = None
+    count, source = None, None
+    if item.get('kind') == 'spool' and isinstance(item.get('count'), int):
+        count, source = item['count'], 'the sealed count'
+    elif row is not None and isinstance(row.get('count'), int):
+        count, source = row['count'], 'the claim\'s sealed count (%s)' % (row.get('count_basis') or 'recorded with the claim')
+    elif resolved in sealed_counts:
+        count, source = sealed_counts[resolved]['count'], sealed_counts[resolved]['basis']
+    basis = _claim_still_holds(row) if (row is not None and count is not None) else None
+    if basis is not None:
+        _filehash().remember(path, claim)
+        return dict(claim), count, source + '; ' + basis
+    counted = _witness_counting(path)
+    seen = {k: counted[k] for k in ('bytes', 'sha256')}
+    if count is not None and counted['count'] != count:
+        raise ValueError('completed legacy stage spool %s holds %d rows, its sealed count says %d'
+                         % (item['path'], counted['count'], count))
+    return seen, counted['count'], ('one pass, sha256 + count together (%s)'
+                                    % ('the seal recorded no count and no claim carries one' if count is None
+                                       else source + ', checked by the pass: ' + (
+                                           'no claim row holds' if mode == 'claim' else 'FRANKIE_ROOT_LEGACY_REUSE_CHECK=full')))
+
+
 def _file_claim_rows(spool_items, ledger_items):
     """FRANKIE_FILE_CLAIM_V1 rows (research/kalshi/frankie_boss/operations/ingest_block_sources.file_claim) for every spool
     and native ledger this ROOT witnessed whole: path, bytes, sha256 (the claim), the stat identity and the sha256 of the
@@ -1378,7 +1454,14 @@ def _file_claim_rows(spool_items, ledger_items):
                       ('ROOT native stage (the reconciled ledger witness)', ledger_items)):
         for item in items:
             try:
-                rows.append(file_claim(item['path'], int(item['bytes']), item['sha256'], by))
+                row = file_claim(item['path'], int(item['bytes']), item['sha256'], by)
+                if item.get('kind') == 'spool' and isinstance(item.get('count'), int):
+                    # additive (ROOT-digest role, 2026-10-08): a spool's sealed line count travels with its claim, so
+                    # a reuse that takes the claim reopens the spool from the count (first and last lines) and reads
+                    # nothing else; count_basis names the record the count came from
+                    row['count'] = item['count']
+                    row['count_basis'] = item.get('count_basis') or 'the seal\'s own count of the closed spool'
+                rows.append(row)
             except (OSError, ValueError, KeyError, TypeError) as error:
                 skipped.append(dict(path=item.get('path'), reason='%s: %s' % (type(error).__name__, error)))
     return rows, skipped
@@ -2609,17 +2692,16 @@ class Session:
                 B = _box_module('frankie_box_bedrock')
                 reopened, reads, sealed_spools, witnessed, checks = {}, [], [], {}, []
                 claims, mode = _load_file_claims(self.work), _reuse_check_mode(LEGACY_REUSE_CHECK_SETTING)
+                # ROOT-digest role, 2026-10-08 (the live trace on 6076950: a2's c9bf631 seal recorded no spool count,
+                # so the 496.7 GB frames spool was counted whole here on every reuse): a spool artifact's count comes
+                # from the seal, else its claim row, else the sealed receipt / layer heads (_sealed_spool_counts), and
+                # its witness from the claim while stat + tail hold; the counting pass runs only with neither
+                sealed_counts = _sealed_spool_counts(saved_stage['receipt'], derived)
                 for item in saved_stage['artifacts']:
                     path, claim = Path(item['path']), {k: item[k] for k in ('bytes', 'sha256')}
                     count = None
-                    if item.get('kind') == 'spool' and isinstance(item.get('count'), int):
-                        seen, how = _artifact_check(item, claims, mode)
-                        count = item['count']
-                        how = 'the sealed count; ' + how
-                    elif path.suffix == '.jsonl':
-                        counted = _witness_counting(path)
-                        seen, count = {k: counted[k] for k in ('bytes', 'sha256')}, counted['count']
-                        how = 'one pass, sha256 + count together (the seal recorded no count)'
+                    if path.suffix == '.jsonl' or (item.get('kind') == 'spool' and isinstance(item.get('count'), int)):
+                        seen, count, how = _legacy_spool_artifact(item, claims, mode, sealed_counts)
                     else:
                         seen, how = _artifact_check(item, claims, mode)
                     if seen != claim:
