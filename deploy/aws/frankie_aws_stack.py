@@ -232,8 +232,6 @@ def step_cw_agent(account, args):
             if 'ParameterNotFound' not in str(error):
                 raise
             param = None
-        assocs = account.read('ssm', REGION_BOX, 'describe_association', Name='AmazonCloudWatch-ManageAgent',
-                              InstanceId=args.instance_id) if False else None  # one-shot lookup below
         assocs = account.read('ssm', REGION_BOX, 'list_associations', AssociationFilterList=[
             {'key': 'Name', 'value': 'AmazonCloudWatch-ManageAgent'}]).get('Associations', [])
     except Exception as error:  # noqa: BLE001

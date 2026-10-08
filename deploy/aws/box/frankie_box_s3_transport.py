@@ -321,24 +321,31 @@ def _single(url, part, size, attempts, receipt, watch, say, name):
     return True, h.hexdigest()
 
 
-def _configs(kind):
-    """[(label, TransferConfig)]: CRT first when awscrt imports, then classic; and the reason CRT is absent (or None)."""
+def _configs(kind, part_bytes=None, concurrency=None):
+    """[(label, TransferConfig)]: CRT first when awscrt imports, then classic; and the reason CRT is absent (or None).
+    part_bytes / concurrency (optional, additive 2026-10-08) override the part size and in-flight parts of BOTH clients;
+    None keeps the module constants (CRT 128 MiB x 16; classic 16 MiB x 15 down, 128 MiB x 16 up)."""
     from boto3.s3.transfer import TransferConfig
-    classic = CLASSIC_DOWNLOAD if kind == 'download' else CLASSIC_UPLOAD
+    classic = dict(CLASSIC_DOWNLOAD if kind == 'download' else CLASSIC_UPLOAD)
+    if part_bytes:
+        classic['multipart_chunksize'] = int(part_bytes)
+    if concurrency:
+        classic['max_concurrency'] = int(concurrency)
     configs, why = [('classic', TransferConfig(**classic))], None
     try:
         import awscrt  # noqa: F401
         configs.insert(0, ('crt', TransferConfig(preferred_transfer_client='crt', multipart_threshold=64 << 20,
-                                                 multipart_chunksize=CRT_PART, max_concurrency=CRT_CONCURRENCY)))
+                                                 multipart_chunksize=int(part_bytes or CRT_PART),
+                                                 max_concurrency=int(concurrency or CRT_CONCURRENCY))))
     except Exception as error:  # noqa: BLE001 - no awscrt in this interpreter: classic only, the reason recorded
         why = 'awscrt not importable (%s: %s); classic client' % (type(error).__name__, str(error)[:120])
     return configs, why
 
 
-def _run_configs(receipt, kind, call):
+def _run_configs(receipt, kind, call, part_bytes=None, concurrency=None):
     """call(config) for CRT then classic; the transport used and every fallback reason on the receipt; True if one did."""
     try:
-        configs, why = _configs(kind)
+        configs, why = _configs(kind, part_bytes, concurrency)
     except Exception as error:  # noqa: BLE001 - no boto3: nothing to try
         receipt.update(transport=None, transport_fallback='boto3 not importable (%s: %s)' % (
             type(error).__name__, str(error)[:120]))
@@ -356,11 +363,22 @@ def _run_configs(receipt, kind, call):
     return False
 
 
-def download(bucket, key, dest, *, region, expected_bytes=None, expected_sha256=None, client=None, say=print):
-    """See the module docstring."""
+def _transfer_options(receipt, part_bytes, concurrency):
+    """Record the optional transfer overrides on the receipt (keys present only when given)."""
+    if part_bytes:
+        receipt['part_bytes'] = int(part_bytes)
+    if concurrency:
+        receipt['concurrency'] = int(concurrency)
+
+
+def download(bucket, key, dest, *, region, expected_bytes=None, expected_sha256=None, client=None, say=print,
+             part_bytes=None, concurrency=None):
+    """See the module docstring. part_bytes / concurrency (optional, additive 2026-10-08): per-call transfer overrides
+    for both clients; None keeps the module constants. Recorded on the receipt only when given."""
     name, started = os.path.basename(dest), time.time()
     receipt = _receipt('download', dest=str(dest), bucket=bucket, key=key, region=region, expected_bytes=expected_bytes,
                        expected_sha256=expected_sha256, hash_pass='after_download')
+    _transfer_options(receipt, part_bytes, concurrency)
     part = str(dest) + '.part'
     try:
         import boto3
@@ -368,7 +386,8 @@ def download(bucket, key, dest, *, region, expected_bytes=None, expected_sha256=
     except Exception as error:  # noqa: BLE001
         receipt.update(status='refused', reason='no S3 client (%s: %s)' % (type(error).__name__, str(error)[:160]))
         return receipt
-    if not _run_configs(receipt, 'download', lambda config: s3.download_file(bucket, key, part, Config=config)):
+    if not _run_configs(receipt, 'download', lambda config: s3.download_file(bucket, key, part, Config=config),
+                        part_bytes, concurrency):
         receipt.update(status='refused', reason='every transfer client failed (see transport_fallback)',
                        seconds=round(time.time() - started, 3))
         say('REFUSED (download):', name)
@@ -377,12 +396,43 @@ def download(bucket, key, dest, *, region, expected_bytes=None, expected_sha256=
                    say, name, started)
 
 
-def upload(path, bucket, key, *, region, sha256=None, extra_args=None, client=None):
-    """See the module docstring."""
+STORAGE_CLASSES = ('STANDARD', 'STANDARD_IA', 'ONEZONE_IA', 'INTELLIGENT_TIERING', 'GLACIER_IR', 'GLACIER',
+                   'DEEP_ARCHIVE', 'EXPRESS_ONEZONE')
+CHECKSUM_ALGORITHMS = ('CRC64NVME', 'CRC32', 'CRC32C', 'SHA1', 'SHA256')
+
+
+def _upload_extra_args(receipt, extra_args, storage_class, checksum_algorithm):
+    """Merge the optional StorageClass / ChecksumAlgorithm into ExtraArgs. A value the caller already set differently
+    in extra_args is a conflict and refuses loudly (never silently overwritten). Returns (extra_args, reason)."""
+    merged = dict(extra_args or {})
+    for key, value, allowed in (('StorageClass', storage_class, STORAGE_CLASSES),
+                                ('ChecksumAlgorithm', checksum_algorithm, CHECKSUM_ALGORITHMS)):
+        if value is None:
+            continue
+        if value not in allowed:
+            return None, '%s %r not in %s' % (key, value, allowed)
+        if key in merged and merged[key] != value:
+            return None, '%s conflict: extra_args has %r, argument is %r' % (key, merged[key], value)
+        merged[key] = value
+        receipt[{'StorageClass': 'storage_class', 'ChecksumAlgorithm': 'checksum_algorithm'}[key]] = value
+    return merged, None
+
+
+def upload(path, bucket, key, *, region, sha256=None, extra_args=None, client=None,
+           storage_class=None, checksum_algorithm=None, part_bytes=None, concurrency=None):
+    """See the module docstring. Optional, additive (2026-10-08): storage_class (S3 StorageClass, e.g. GLACIER for the
+    day archives), checksum_algorithm (S3 ChecksumAlgorithm, e.g. CRC64NVME full-object trailing checksum),
+    part_bytes / concurrency (transfer overrides for both clients). Each is recorded on the receipt only when given;
+    a conflicting value already in extra_args refuses the upload with the reason on the receipt."""
     started = time.time()
     size = os.path.getsize(path)
     receipt = _receipt('upload', path=str(path), bucket=bucket, key=key, region=region, bytes=size, sha256=sha256,
                        hash_pass='given' if sha256 else None)
+    _transfer_options(receipt, part_bytes, concurrency)
+    extra_args, reason = _upload_extra_args(receipt, extra_args, storage_class, checksum_algorithm)
+    if reason:
+        receipt.update(status='refused', reason=reason, seconds=round(time.time() - started, 3))
+        return receipt
     try:
         import boto3
         s3 = client or boto3.client('s3', region_name=region)
@@ -390,7 +440,7 @@ def upload(path, bucket, key, *, region, sha256=None, extra_args=None, client=No
         receipt.update(status='refused', reason='no S3 client (%s: %s)' % (type(error).__name__, str(error)[:160]))
         return receipt
     ok = _run_configs(receipt, 'upload', lambda config: s3.upload_file(str(path), bucket, key, ExtraArgs=extra_args or {},
-                                                                       Config=config))
+                                                                       Config=config), part_bytes, concurrency)
     receipt.update(status='uploaded' if ok else 'refused', seconds=round(time.time() - started, 3))
     if not ok:
         receipt['reason'] = 'every transfer client failed (see transport_fallback)'
