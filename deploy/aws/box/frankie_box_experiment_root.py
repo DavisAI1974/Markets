@@ -113,6 +113,65 @@ def _sha256_file(path):
     return h.hexdigest()
 
 
+def write_claims_from_derivation(root_dir, *, force=False):
+    """<root>/work/file-claims.jsonl (FRANKIE_FILE_CLAIM_V1 rows) for a ROOT reused or resumed on this code whose seal
+    wrote no claims (a2's c9bf631 seal): one row per layer file, INPUT spool, reference-layer spool and native ledger /
+    result / receipt, from the sha256 and bytes the ROOT itself recorded at its seal (derive.json) plus a fresh stat
+    identity and one 64 KiB tail read; never a full read. The parent's rule (Greg's call (c) made exact: claim + stat +
+    tail, not stat alone): a consumer (the classroom's brain publication, the data export, this file's resume checks)
+    takes a row only while (dev, ino, size, mtime_ns) and the last-64-KiB sha256 still match. Written only when the
+    file is absent (force rewrites). Returns a note dict for the receipt; never raises. Callable at the queue's root
+    boundary for a REUSED ROOT (Run.root's reused branch is fenced): write_claims_from_derivation(<root>)."""
+    root = Path(root_dir)
+    work, note = root / 'work', dict(schema='FRANKIE_FILE_CLAIM_V1', path=str(root / 'work' / 'file-claims.jsonl'))
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import (file_claim, write_file_claims,
+                                                                                   FILE_CLAIMS_NAME)
+        target = work / FILE_CLAIMS_NAME
+        note['path'] = str(target)
+        if target.is_file() and not force:
+            return dict(note, status='present', rows=sum(1 for _ in target.open('rb')))
+        result = json.loads((work / 'derive.json').read_bytes())
+        receipt_path = root / 'calculations-receipt.json'
+        commit = (json.loads(receipt_path.read_bytes()).get('commit') if receipt_path.is_file() else None) \
+            or result.get('commit') or 'an earlier checkout'
+        by = 'root reuse: receipt/derive.json sha256 (sealed on %s) + stat + tail at %s' % (
+            commit, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+        items = []
+        for entry in (result.get('layers') or {}).values():
+            items.append(entry)
+            for spool in (entry.get('spools') or {}).values():        # a reference layer's spools (frames, groups)
+                items.append(spool)
+        record_spool = (result.get('rows') or {}).get('record_spool')
+        if record_spool:
+            items.append(record_spool)
+        native = result.get('bedrock') or {}
+        items.extend(v for v in (native.get('ledgers') or {}).values())
+        for key in ('result', 'receipt'):
+            if isinstance(native.get(key), dict):
+                items.append(native[key])
+        rows, skipped, seen = [], [], set()
+        for item in items:
+            try:
+                path = str(Path(item['path']).resolve())
+                if path in seen:
+                    continue
+                seen.add(path)
+                rows.append(file_claim(item['path'], int(item['bytes']), item['sha256'], by))
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                skipped.append(dict(path=item.get('path') if isinstance(item, dict) else None,
+                                    reason='%s: %s' % (type(error).__name__, error)))
+        written = write_file_claims(work, rows)
+        out = dict(note, status=written.get('status'), rows=len(rows), claimed_by=by)
+        if written.get('reason'):
+            out['reason'] = written['reason']
+        if skipped:
+            out['skipped'] = skipped
+        return out
+    except Exception as error:  # noqa: BLE001 - a claim is a hint for later stages, never the ROOT's outcome
+        return dict(note, status='not_written', reason='%s: %s' % (type(error).__name__, error))
+
+
 def _save_new_complete(path, value):
     """Publish complete JSON exclusively; an interrupted temporary stays for recovery."""
     path = Path(path)
@@ -324,10 +383,30 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     session.phase('deriving', 'experiment ROOT: sealed day, legacy and native calculations; no giant bedrock digest'
                   if bedrock else 'experiment ROOT: the legacy pass on the sealed day; bedrock off')
     retained = session.work / 'derive.json'
+    retained_checks = claims_note = None
     if resume and retained.is_file():
         # The existing legacy reader/render helpers recover the finished calculation stage without replaying it.
         from frankie_box_monday_calculations import load_retained_layers, write_retained_digest
+        from frankie_box_boss_session import (_artifact_check, _load_file_claims, _reuse_check_mode,
+                                              LEGACY_REUSE_CHECK_SETTING)
         result = json.loads(retained.read_bytes())
+        # session 6, second pass (the relaunch role, live on a2): the native evidence (193.7 GB) and every layer (the
+        # 472 GB inline legacy_book_imbalance.json) were read whole here through the uncached witness on every resume,
+        # then the layers again inside load_retained_layers. Now: the claims file is written from the ROOT's own sealed
+        # sha256/bytes when absent (write_claims_from_derivation), every artifact is taken by its claim while stat and
+        # the last 64 KiB hold (else read whole once through the per-process cache; FRANKIE_ROOT_LEGACY_REUSE_CHECK=full
+        # restores the reads), the witnesses handed to load_retained_layers; recorded on the receipt.
+        claims_note = write_claims_from_derivation(output)
+        claims, mode = _load_file_claims(session.work), _reuse_check_mode(LEGACY_REUSE_CHECK_SETTING)
+        retained_checks, witnessed = [], {}
+
+        def evidence(item, what):
+            path = safe_path(item['path'])                     # the same refusal as the witness before (no symlink)
+            seen, basis = _artifact_check(dict(item, path=str(path)), claims, mode)
+            if dict(seen, path=str(path)) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
+                raise ValueError('saved %s differs: %s' % (what, item['path']))
+            retained_checks.append(dict(path=str(path), bytes=item['bytes'], basis=basis))
+            witnessed[str(path.resolve())] = dict(path=str(path), bytes=item['bytes'], sha256=item['sha256'])
         if result.get('source_binding') != binding or result.get('pin_identity', {}).get('sha256') != \
                 witness(output / 'calculation-pins.json')['sha256']:
             raise ValueError('saved derivation belongs to another source/pin')
@@ -343,12 +422,14 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             if native.get('emission') != binding['native_calculation_policy']['emission']:
                 raise ValueError('saved native emission provenance policy differs; retained outputs preserved')
             for item in [native['receipt'], native['result'], *native['ledgers'].values()]:
-                if witness(Path(item['path'])) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
-                    raise ValueError('saved native evidence differs: ' + item['path'])
+                evidence(item, 'native evidence')
         for item in result['layers'].values():
-            if witness(Path(item['path'])) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
-                raise ValueError('saved calculation layer differs: %s' % item['path'])
-        _, _, _, prices, frames, structures, failures, layers, _ = load_retained_layers(session, allow_failures=True)
+            evidence(item, 'calculation layer')
+        _, _, _, prices, frames, structures, failures, layers, _ = load_retained_layers(
+            session, allow_failures=True, layer_witnesses=witnessed)
+        session.note('retained evidence: %d artifacts, %d by their claim, %d read whole' % (
+            len(retained_checks), sum(c['basis'].startswith('the saved claim') for c in retained_checks),
+            sum(c['basis'].startswith('read whole') for c in retained_checks)))
         if len(failures) != result['failure_count']:
             raise ValueError('saved failure spool differs from derivation')
         if digest:
@@ -386,6 +467,10 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                 failure_count=failures, opening_book=opening_book, external=external,
                 external_computation=_pinned(output / 'external-computation.json')
                 if external['status'] == 'attached' else None,
+                # session 6, additive: the resume's evidence checks (claim or read whole) and the claims file note
+                retained_evidence_check=(dict(schema='FRANKIE_LEGACY_REUSE_CHECK_V1', artifacts=retained_checks)
+                                         if retained_checks is not None else None),
+                file_claims=claims_note if claims_note is not None else result.get('file_claims'),
                 failures_note=(None if not failures else 'records a producer could not use; each listed with its index '
                                'and error in derive.json / work/derived/.rows/failures.jsonl; every other record calculated'),
                 model_calls=0, source_replays=0, source_writes=0,

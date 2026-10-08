@@ -174,6 +174,104 @@ class _HashingWriter:
         return self.handle.write(data)
 
 
+def _write_attachment(attachment_path, body):
+    """pickle.dump(body) to <attachment>.pending hashed as written, then published; the sha256 of the bytes written."""
+    temporary = attachment_path.with_name(attachment_path.name + '.pending')
+    with temporary.open('wb') as f:
+        writer = _HashingWriter(f)
+        pickle.dump(body, writer, protocol=pickle.HIGHEST_PROTOCOL)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(temporary, attachment_path)
+    return writer.sha256.hexdigest()
+
+
+def _attachment_writer_main(attachment_path, body, cpu, sidecar):
+    """The side process: on its lane CPU, write the attachment, leave the digest in the sidecar (whole, then renamed)."""
+    import signal
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    pin = 'pinned'
+    if cpu is not None:
+        try:
+            os.sched_setaffinity(0, {cpu})
+        except OSError as error:                     # listed; the write goes on with the inherited mask
+            pin = 'fallback: the OS refused (%s); the inherited mask was kept' % error
+    digest = _write_attachment(attachment_path, body)
+    pending = Path(str(sidecar) + '.%d.pending' % os.getpid())
+    pending.write_text(json.dumps(dict(sha256=digest, pin=pin)), encoding='utf-8')
+    os.replace(pending, sidecar)
+
+
+def _start_attachment_writer(attachment_path, body, lane):
+    """Fork the attachment writer when no attachment stands and this process runs one thread; else None (the caller
+    writes in order). {'process', 'sidecar', 'record'}: the record goes on the receipt (cpu_pinning.attachment_writer)."""
+    import multiprocessing
+    import threading
+    if attachment_path.exists():
+        return None
+    record = dict(outcome='not_started')
+    if not sys.platform.startswith('linux'):
+        record['reason'] = 'not Linux (no fork)'
+        return dict(process=None, sidecar=None, record=record)
+    if threading.active_count() > 1:
+        record['reason'] = 'live threads: %s (a fork beside a live thread can inherit a held lock); written in order' % sorted(
+            t.name for t in threading.enumerate() if t is not threading.current_thread())
+        return dict(process=None, sidecar=None, record=record)
+    cpu = None
+    try:
+        if lane and len(lane) > 1:
+            cpu = LP.placement(1, list(lane))[1][0]
+    except Exception as error:  # noqa: BLE001 - placement only
+        record['placement'] = 'no CPU chosen (%s: %s); the child keeps the inherited mask' % (type(error).__name__, error)
+    sidecar = attachment_path.with_name(attachment_path.name + '.sha256')
+    for stale in [sidecar] + list(sidecar.parent.glob(sidecar.name + '.*.pending')):
+        try:
+            stale.unlink()
+        except OSError:
+            pass
+    process = multiprocessing.get_context('fork').Process(
+        target=_attachment_writer_main, args=(attachment_path, body, cpu, sidecar), name='teacher-attachment-writer')
+    process.start()
+    record.update(outcome='running', pid=process.pid, cpu=cpu, started_at=round(time.time(), 3))
+    return dict(process=process, sidecar=sidecar, record=record, started=time.monotonic())
+
+
+def _finish_attachment_writer(writer, attachment_path, body):
+    """Join the side writer and take its digest; a writer that was not started, died or left no digest is redone here
+    (the same bytes). The sha256 of the published attachment."""
+    if writer is None or writer['process'] is None:
+        digest = _write_attachment(attachment_path, body)
+        if writer is not None:
+            writer['record'].update(outcome='written_in_order')
+        return digest
+    process, sidecar, record = writer['process'], writer['sidecar'], writer['record']
+    clock = time.monotonic()
+    process.join()
+    record.update(parent_waited_s=round(time.monotonic() - clock, 3), side_seconds=round(time.monotonic() - writer['started'], 3),
+                  exitcode=process.exitcode)
+    digest = None
+    if process.exitcode == 0 and sidecar.is_file() and attachment_path.is_file():
+        try:
+            note = json.loads(sidecar.read_text(encoding='utf-8'))
+            digest, record['pin'] = note['sha256'], note.get('pin')
+        except (OSError, ValueError, KeyError) as error:
+            record['sidecar_error'] = '%s: %s' % (type(error).__name__, error)
+    try:
+        sidecar.unlink()
+    except OSError:
+        pass
+    if digest is not None:
+        record['outcome'] = 'side_process'
+        return digest
+    record.update(outcome='redone_in_order', reason='side process exit %s, no digest' % process.exitcode)
+    for stale in attachment_path.parent.glob(attachment_path.name + '.pending'):
+        try:
+            stale.unlink()
+        except OSError:
+            pass
+    return _write_attachment(attachment_path, body)
+
+
 def _publish(out, result):
     """The step's receipt, complete or not at all; then the directory entry is durable."""
     temporary = out / 'receipt.json.pending'
@@ -933,11 +1031,19 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
         print(json.dumps(result, sort_keys=True), flush=True)
         return 5
     request_id = 'experiment-%s-cycle-00' % day
-    source = DC.snapshot_teacher_attachment(attachment, request_id=request_id, cycle_index=0, cycle_count=1,
-                                            source_hash=rc['source_prefix_hash'], as_of=as_of, through_cursor=through)
     attachment_path = out / 'teacher-attachment.pkl'
     body = dict(attachment=attachment, request_id=request_id, source_hash=rc['source_prefix_hash'], as_of=as_of,
                 through_cursor=through, entity=entity)
+    # Endings pass (2026-10-08; Greg: CPUs in every step of the ending): the attachment pickle (pure Python, GIL-bound)
+    # is written by a forked side process pinned to one lane CPU while this process builds the snapshot (DC.snapshot_
+    # teacher_attachment reads the attachment and builds new rows; it never mutates it) and writes the rows file; the
+    # child hashes the bytes as it writes them (the same _HashingWriter, the same pickle of the same objects at the same
+    # addresses: the same bytes) and leaves the digest in a sidecar. Taken only when this process runs one thread (a fork
+    # beside a live thread can inherit a held lock); a child that could not start, died or left no digest is redone
+    # here, in order, exactly as before. Recorded on cpu_pinning.attachment_writer.
+    attachment_writer = _start_attachment_writer(attachment_path, body, cpu_pinning.get('lane'))
+    source = DC.snapshot_teacher_attachment(attachment, request_id=request_id, cycle_index=0, cycle_count=1,
+                                            source_hash=rc['source_prefix_hash'], as_of=as_of, through_cursor=through)
     # The publication tail (stacks pass): the attachment is hashed as it is written (the same bytes pickle hands to the
     # file; no read-back pass), the rows file is hashed on a thread while the external section is built, and a retained
     # attachment is hashed on a thread too. hashlib releases the GIL on these buffers; the values are the files' sha256.
@@ -971,16 +1077,12 @@ def _teach(day, receipt_path, receipt_sha256, workers, day_external=None, day_ex
                     cycle_count=1, source_hash=rc['source_prefix_hash'], as_of=as_of, through_cursor=through) != source:
             raise ValueError('retained teacher attachment differs; publication preserved for recovery')
         hash_on_thread('attachment', attachment_path)
+        SE._save(out / ROWS_FILE, source)
     else:
-        temporary = attachment_path.with_name(attachment_path.name + '.pending')
-        with temporary.open('wb') as f:
-            writer = _HashingWriter(f)
-            pickle.dump(body, writer, protocol=pickle.HIGHEST_PROTOCOL)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(temporary, attachment_path)
-        attachment_sha[0] = writer.sha256.hexdigest()
-    SE._save(out / ROWS_FILE, source)
+        SE._save(out / ROWS_FILE, source)               # beside the side process writing the attachment
+        attachment_sha[0] = _finish_attachment_writer(attachment_writer, attachment_path, body)
+    cpu_pinning['attachment_writer'] = attachment_writer['record'] if attachment_writer else dict(
+        outcome='not_started', reason='a retained attachment stands (resume); it is hashed on a thread instead')
     hash_on_thread('rows', out / ROWS_FILE)
     phase('snapshot_rows_attachment')
     result = dict(schema='FRANKIE_EXPERIMENT_TEACHER_ROWS_V1', day=day, request_id=request_id, entity=list(entity),
