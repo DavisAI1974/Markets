@@ -303,3 +303,59 @@ Skill full-run-orchestrator invoked first. AWS via the Aws connector only; GitHu
   derived_v4_mechanics_fifo_features.json.gz pos 167,772,160 (the layer pass, each read whole on d67b9c63). Entry running,
   save_request true. Stage: HEAD of 46cfe907...-37800918122-1/markets = 46cfe9074bec6094653cf1f6df72d6bee76f05e6 landed;
   staging-receipt.json not yet (stage python 2513 still finishing); run 37800918122 in_progress.
+- 15:32:46Z PROBE 4 (read-only, SSM bc37625d-867e-46db-9d87-b10ced3af602): receipt ABSENT; marker standing; child 1834 Dl
+  28:11, read_bytes 219,024,965,632, fd 3 derived_v4_mechanics_fifo_features.json.gz pos 7,214,202,880 (of 10.9 GB).
+  Entry running, save_request true. ROOT log 94 lines. derive.json evidence sizes: native evidence 5 items
+  202,271,586,960 B (DONE: ledgers + receipt + result); layers 51 items 521,826,946,335 B, the largest
+  derived/legacy_book_imbalance.json 472,040,420,230 B, then full_bid_ask_depth.json.gz 29.5 GB, derived_v4_mechanics_
+  fifo_features.json.gz 10.9 GB, fifo_queues.json.gz 3.5 GB. Remaining on d67b9c63 at 132 MB/s: ~515 GB of layers (~65
+  min) + the frames spool's one counting read in load_retained_layers (496.7 GB, ~63 min; its claim fails on st_dev like
+  every other, 60769509's count_basis cannot take the sealed count) -> receipt ~17:4xZ, then exit 75 -> SAVED.
+  SAVED will NOT land inside the brief's 30-minute window (to ~15:57Z); nothing refused, nothing to kill: probing on.
+  Stage receipt still absent at 15:32:46Z (python 2513 running); run 37800918122 in_progress.
+- 15:33:31Z STAGE run 37800918122 COMPLETED success. 15:34:17Z PROBE 5 (read-only, SSM 75b64cf8-2430-4031-b7e2-89d7f388aa8c):
+  staging-receipt.json PRESENT in /opt/frankie-box/code/46cfe9074bec6094653cf1f6df72d6bee76f05e6-37800918122-1/:
+  FRANKIE_INACTIVE_CODE_STAGING_RECEIPT_V1, status staged, commit 46cfe9074bec6094653cf1f6df72d6bee76f05e6, files 4128
+  (d67b9c63 had 4120: +tests/test_file_claims_v2.py and the records), pack_sha256
+  e34d58d668c1e582f7eefa06a0a37e3069e89c07791dae48504c215d6e043fe6, intent_sha256 a0febdd0..., active_checkout_changed
+  false, model_calls 0, source_replays 0; `git rev-parse HEAD` = 46cfe907 (the staged checkout's git log is shallow, so
+  the fix commit's message is not listed there; the fix is verified by ancestry locally and by content in probe 6).
+  NEW CODE_ROOT for the resume: /opt/frankie-box/code/46cfe9074bec6094653cf1f6df72d6bee76f05e6-37800918122-1/markets,
+  MARKETS_SHA=46cfe9074bec6094653cf1f6df72d6bee76f05e6.
+  ROOT: receipt ABSENT; marker standing; child 1834 Dl 29:42, read_bytes 230,698,090,496, fd 3 full_bid_ask_depth.json.gz
+  pos 4,513,071,104 of 29.5 GB. Entry running, save_request true. Watchdog 15:32:30Z findings 1 repins 0.
+- 15:35:39Z PROBE 6 (read-only, SSM 84580814-1ecb-4510-80b1-2dab89307425): STAGED FIX VERIFIED BY CONTENT in
+  46cfe907...-37800918122-1/markets: FRANKIE_FILE_CLAIM_V2 x2 + `def filesystem_identity` in
+  research/kalshi/frankie_boss/operations/ingest_block_sources.py, `claims_dir` x13 in frankie_box_boss_session.py,
+  `claims_dir=session.work` in frankie_box_experiment_root.py; py_compile of the three ok; the running d67b9c63 checkout has
+  no FRANKIE_FILE_CLAIM_V2 (0). ROOT: receipt ABSENT; marker standing; child 1834 Dl 31:04, read_bytes 241,544,560,640,
+  fd 3 full_bid_ask_depth.json.gz pos 15,367,929,856. Entry running, save_request true. df / avail 787,618,238,464 B.
+- 15:36:58Z PROBE 7 (read-only, SSM 285ed40e-4f4c-40c0-8a50-18652430179a): receipt ABSENT; marker standing; child 1834 Dl
+  32:23, read_bytes 251,912,880,128 (+10.37 GB in 79 s = 131 MB/s), fd 3 full_bid_ask_depth.json.gz pos 25,736,249,344.
+  Entry running, save_request true. ROOT log 94 lines. Watchdog 15:36:30Z findings 1 repins 0.
+- 15:38:13Z PROBE 8 (read-only, SSM 84a68326-64a7-40e8-a223-01e4be1f4dfa): receipt ABSENT; marker standing; child 1834 Dl
+  33:38, read_bytes 261,654,687,744; fd 3 NOW derived/legacy_book_imbalance.json pos 5,939,134,464 of 472,040,420,230 (the
+  472 GB inline layer; ~59 min at 131 MB/s -> ends ~16:37Z). Entry running, save_request true. ROOT log 94 lines.
+- 15:39:24Z PROBE 9 (read-only, SSM bdf70c91-ab93-4a28-a63c-850db00fb75f): receipt ABSENT; marker standing; child 1834 Dl
+  34:49, read_bytes 271,041,540,096, legacy_book_imbalance.json pos 15,317,598,208. Entry running, save_request true.
+  Watchdog 15:38:30Z findings 1 repins 0.
+- 15:40:33Z PROBE 10 (read-only, SSM 71f19428-6fc0-4024-8bf0-093c5aa8eba1): receipt ABSENT; marker standing; child 1834 Dl
+  35:58, read_bytes 280,076,070,912, legacy_book_imbalance.json pos 24,360,517,632. Entry running, save_request true.
+- 15:41:42Z PROBE 11 (read-only, SSM d833927c-02fe-43ae-af92-ac22847e1a1b): receipt ABSENT; marker standing; child 1834 Dl
+  37:07, read_bytes 289,106,411,520, legacy_book_imbalance.json pos 33,386,659,840. Entry running, save_request true.
+  Watchdog 15:40:30Z findings 1 repins 0.
+- 15:42:50Z PROBE 12 (read-only, SSM d07d1f88-6492-4995-b0ba-50505e9d3e3b): receipt ABSENT; marker standing; child 1834 Dl
+  38:15, read_bytes 298,073,833,472, legacy_book_imbalance.json pos 42,362,470,400. Entry running, save_request true.
+- 15:43:59Z PROBE 13 (read-only, SSM 0d89cf7a-92da-4a89-bf5b-6c2ee637a9e1): receipt ABSENT; marker standing; child 1834 Dl
+  39:24, read_bytes 307,028,672,512, legacy_book_imbalance.json pos 51,304,726,528. Entry running, save_request true.
+  Watchdog 15:42:30Z findings 1 repins 0.
+- 15:45:07Z PROBE 14 (read-only, SSM 25351d95-5e56-43c6-a64c-43e35057f093): receipt ABSENT; marker standing; child 1834 Dl
+  40:32, read_bytes 316,004,483,072, legacy_book_imbalance.json pos 60,280,537,088. Entry running, save_request true.
+- 15:46:17Z PROBE 15 (read-only, SSM ea28c8a2-bae2-4f2a-91f8-71de915ff9c2): receipt ABSENT; marker standing; child 1834 Dl
+  41:42, read_bytes 325,101,932,544, legacy_book_imbalance.json pos 69,390,565,376. Entry running, save_request true.
+  Watchdog 15:44:30Z findings 1 repins 0.
+- 15:47:25Z PROBE 16 (read-only, SSM 53ae23f9-bccb-48e2-939e-8c84932a2fc4): receipt ABSENT; marker standing; child 1834 Dl
+  42:50, read_bytes 334,027,411,456, legacy_book_imbalance.json pos 78,316,044,288. Entry running, save_request true.
+- 15:48:33Z PROBE 17 (read-only, SSM 6a44ddc2-afe3-4d97-b32f-ec1f834a8336): receipt ABSENT; marker standing; child 1834 Dl
+  43:58, read_bytes 342,978,056,192, legacy_book_imbalance.json pos 87,258,300,416. Entry running, save_request true.
+  Watchdog 15:48:30Z findings 1 repins 0.
