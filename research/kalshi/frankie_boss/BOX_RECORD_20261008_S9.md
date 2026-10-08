@@ -353,3 +353,13 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   the marker. (4) Resume + kick on the new checkout with FRANKIE_ROOT_DIGEST=off: receipt in minutes, boundary by claim,
   teacher on 64. (5) Standalone render inside the booking resumes the digest's second decode alongside the teacher,
   done long before the classroom. Saves ~1 h of chain time on this day.
+
+## Parent: Greg 17:4xZ "There is no reason we have to wait" -> STOPPED NOW (17:42:39Z)
+- SSM 9790da8e: ROOT child 5714 SIGKILLed 17:42:39Z with the marker standing (the digest's first decode was ~35% through;
+  the digest is re-derivable from the retained layers; nothing retained is touched). Entry SAVED 17:43:06Z (the worker's
+  check_save), owner attempt -a1, booking day-run-20231018-day_slot_repoint-1791479892-5613 RETAINED on 0-63. SSM
+  4b770c37 17:43:27Z: the 62 orphaned digest helpers (ppid 1) reaped; worker unit gone; only cpu-watch runs.
+- The db96f24 stage (run 37816561759, dispatched 17:26Z) is still in progress at 17:43Z: the transfer dir exists, no
+  staging-receipt yet (the box disk was saturated by the render; free now). The resume + kick (FRANKIE_ROOT_DIGEST=off)
+  go out the moment its receipt lands; resuming on 1c59623 would run the old whole-read boundary validator (2.5 h at
+  125 MiB/s), so it waits for db96f24.
