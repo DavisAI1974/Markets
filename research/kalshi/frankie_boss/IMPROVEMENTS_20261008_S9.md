@@ -42,3 +42,23 @@ stage 6 min, restart, work in flight lost); a fix staged while the box is busy o
 - A fleet box keeps the days assigned to it from the first stage to the end: NO box switching, no day migrates to another
   box; the classroom lease only orders which box's day goes next. Apply when the fleet source (frankie_box_fleet.py day
   list / claims) is next touched; not this second.
+
+## For Greg's return (2026-10-08 18:2xZ): not done today
+1. THE WAIT THING (Greg: "we have to eliminate the wait thing"): hardcoded waits in the chain: the queue worker's 60 s poll
+   (QUEUE_POLL_SECONDS), the kick's bounded lock wait (KICK_LOCK_WAIT_SECONDS), the teacher's "retrying in the held slot"
+   loop, the ~6 min stage, the parent's own timers. Every hand-off event-driven: a kick/resume proceeds the instant its
+   condition holds (inotify/condition files, no fixed sleeps).
+2. One source read per digest table (FRANKIE_DIGEST_DECODES=1): NOT BUILT (speculate-and-verify renderer; days).
+3. Per-part progress inside a digest pass (5faef9ef) and the I/O priorities (3cb0deea): pushed, NEVER RUN on the box; the
+   I/O priority is inert on EBS NVMe (`none` scheduler) until the volume scheduler is set to bfq (box config).
+4. Look-ahead of classroom / data-search / scientific teacher / meeting / jev / end for shapes A-E: NOT DONE (only the
+   teacher stage read by hand; the broad brief is refused by the auto-mode classifier: assign named fixes one by one).
+5. Classroom write_entry copies the full digest into the brain and _checked_entry re-hashes the brain's copies on every
+   capture_base/snapshot_entries and classroom v2 reuse: open (frankie_box_brain.py ~971).
+6. The render route WITHOUT FRANKIE_RENDER_BOOKING still rewrites calculations-receipt.json (teacher would be refused):
+   open.
+7. Greg's calls: validate `off` as the default (today a kick-time setting; `claim` default); the literal 64 workers rule.
+8. Fleet rule "a box keeps its days end to end": not yet in frankie_box_fleet.py.
+9. Root volume raise to 16,000/1,250 BEFORE any render (blocked until the 12:08Z downsize finishes optimizing); revert the
+   archive volume (10,000/1,000 since 17:34Z) when idle.
+10. frankie_box_adviser_market.py:1708/:1871 comment says selected_files "hashes them whole": now by claim (text only).
