@@ -121,3 +121,15 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   status `grown` is missing from emit_outcome's tag map (a cosmetic print defect; exit 1 instead of 0). Entry still `saved`,
   marker standing, no unit, no child. STOPPED here per the instruction (no retry); reported to the parent. Remaining step is
   the resume + kick + status (the grow need not be re-run: the booking already holds 0-63).
+- 16:49:32Z PARENT GO (16:49Z): run the rest of step 2 without the grow. SSM b7415ad3 (Failed rc 2): `show` read the
+  booking on CPUs 0-27 in its first 30 lines (live idle; the head cut the rest; the ledger had 0-63). RESUME RAN: note "the next
+  ROOT-line admission books exactly the retained CPUs and resumes attempt e2e-20231018-a2-20231018-a1; kick the root worker
+  with this run/day in scope"; archived Q/save/e2e-20231018-a2-20231018.save-request.json.resumed-1791478174; owner
+  booking day-run-...-3111, attempt -a1. Then MY OWN script defect: `${PIPESTATUS[0]}` is a bash-ism and AWS-RunShellScript
+  runs sh -> "Bad substitution", the script aborted after the resume; the kick did NOT run (nothing else touched).
+- 16:49:55Z KICK (SSM 4bf8d77c, rc 0): before it root.json seq 2 state `queued`, owner booking -3111 (owner record lists 32
+  cpus). kick exit 0: frankie-cpu-watch.service started (27109f4d, correct=on resize=on, every 120 s for 43200 s); root
+  worker unit frankie-queue-root-1791478195 (systemd-run), log Q/logs/root-worker.log, worker lock held; run_settings
+  {FRANKIE_CLASSROOM_CPUS: all, FRANKIE_ROOT_DIGEST: on}; scope e2e-20231018-a2:20231018. STATUS: booking cpus 0-63,
+  retained (16:34:31Z), alive false (pre-admission); marker standing false; owner code_root/commit now 27109f4d (owner.cpus
+  still lists 0-31: the admission is to book the retained ledger, which holds 0-63; checked at the first probe).
