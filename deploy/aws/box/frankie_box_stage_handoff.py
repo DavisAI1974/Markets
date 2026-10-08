@@ -158,7 +158,8 @@ def lane_of(run):
     """The day's held lane for the children: the owner's CPU set, else the slot booking's ledger, else the environment."""
     owner = getattr(run, 'owner', None) or {}
     if owner.get('cpus'):
-        return str(owner['cpus'])
+        cpus = owner['cpus']
+        return ','.join(str(c) for c in cpus) if isinstance(cpus, (list, tuple)) else str(cpus)
     booking = getattr(run, 'slot_booking', None)
     if booking:
         try:
