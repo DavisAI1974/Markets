@@ -202,3 +202,17 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
     --shared-market-policy FRANKIE_SHARED_MARKET_TIMELINE_V1 --bedrock on` (NO --resume), affinity 0-15,32-47. A FRESH
     ROOT in a new directory, on 32 CPUs: not "the same spot", not 64. The -a1 directory is still on disk, untouched.
   - Not killed (role limit). Reported to the parent at once.
+
+## Parent: the binding refusal and the from-scratch -a2 (17:0xZ)
+- 17:01:59Z handover on 0e2a568 ran; 17:02:09Z the new worker took seq 2 on the grown booking 0-63 (the take-over fix
+  worked); 17:02:13Z the ROOT child died: source-binding.json 'retained ROOT source/pin differs' (operator record above,
+  traceback verbatim). CAUSE (parent, source): the binding dict carries data_workers; the saved -a1 binding says 31, the
+  64-CPU child came with 63; content_rebinds treats any non-path difference as an identity refusal. The worker count is a
+  run-size parameter, not calculation identity. The worker's retry-once rule then minted attempt -a2 FROM SCRATCH on 32
+  CPUs (no --resume): the opposite of the directive.
+- 17:06:07Z PARENT KILL (SSM 2d4e9386): child 5221 (-a2) SIGKILLed after ~2 min; R2 dir 28 MB, kept as an interrupted
+  attempt (never deleted). R1 (-a1) untouched: derive.json and legacy-stage.json present.
+- Source role (opus) assigned: (1) a changed data_workers is a recorded run-size rebind, never a refusal; the Session
+  sizes helpers from this run's count (63 on 64); (2) a committed repair tool frankie_box_queue_repoint.py: re-point the
+  entry to attempt -a1 on a retained booking rebooked for the owner and grown to 64, owner binding as _bind_owner mints
+  it, state unknown; then ACTION=resume + kick/handover on the restaged tip.
