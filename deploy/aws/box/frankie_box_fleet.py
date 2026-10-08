@@ -80,6 +80,14 @@ def _utc():
     return time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 
 
+def _try(thunk, default=None):
+    """Run a best-effort S3 read/write; never let an advisory call (day-list state, queue read) crash the gate."""
+    try:
+        return thunk()
+    except Exception:  # noqa: BLE001
+        return default
+
+
 # ----------------------------------------------------------------------------------------------- configuration
 def enabled():
     """Fleet mode is on exactly when the run setting FRANKIE_FLEET_DAY_LIST is set and non-empty."""
@@ -497,21 +505,26 @@ def classroom_gate(run, day, stage, out_dir, code_root, commit, *, log=print, st
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     instance = instance_id()
-    ready = record_root_finished(run, day, st=st, instance=instance)
-    got = acquire_classroom_lease(run, day, commit, st=st, instance=instance)
+    try:
+        ready = record_root_finished(run, day, st=st, instance=instance)
+        got = acquire_classroom_lease(run, day, commit, st=st, instance=instance)
+    except Exception as error:  # noqa: BLE001 - an S3 error is a WAIT (fail-closed: never two classrooms), not a crash;
+        # the WAIT unit retries S3 every poll, so a transient blip recovers on its own
+        ready = dict(status='error', error='%s: %s' % (type(error).__name__, str(error)[:200]))
+        got = dict(acquired=False, holder=None, reason='fleet store error: %s: %s' % (type(error).__name__, str(error)[:200]))
     base = dict(schema=GATE_SCHEMA, run=run, day=day, stage=stage, instance=instance, commit=commit, at=time.time(),
                 ready=ready, lease=got)
     if got['acquired']:
-        set_day_stage_state(run, day, 'classroom', 'lease_held', st=st)
+        _try(lambda: set_day_stage_state(run, day, 'classroom', 'lease_held', st=st))
         rec = dict(base, decision='proceed', reason='this box holds the global classroom lease; straight on to the '
                                                     'classroom (no save at the gate in fleet mode)')
     else:
-        queue = waiting_queue(st=st)
+        queue = _try(lambda: waiting_queue(st=st)) or []
         position = next((i for i, m in enumerate(queue) if m.get('run') == run and m.get('day') == day), None)
         rec = dict(base, decision='waiting', holder=got.get('holder'), position=position, queue_len=len(queue),
                    reason='the global classroom lease is held by %s; %s/%s is #%s in line; the day is saved and a WAIT '
                           'unit will resume it when the lease frees' % (got.get('holder'), run, day, position))
-        set_day_stage_state(run, day, 'classroom', 'waiting', st=st)
+        _try(lambda: set_day_stage_state(run, day, 'classroom', 'waiting', st=st))
         if start_wait:
             rec['wait_unit'] = start_wait_unit(run, day, stage, out_dir, code_root, commit, log=log)
     _write_json(out_dir / 'fleet-gate.json', rec)
@@ -524,6 +537,10 @@ def start_wait_unit(run, day, stage, out_dir, code_root, commit, *, log=print):
     when it acquires it, resumes + kicks the day on the launching checkout; it never cleans or kills anything."""
     import shutil
     out_dir = Path(out_dir)
+    if (os.environ.get('FRANKIE_FLEET_NO_WAIT_UNIT') or '').strip():
+        # gate-only mode (and the toys): do not spawn the detached poller; the day stays saved and a re-dispatch or an
+        # operator re-runs the gate. Recorded so the receipt is honest about why no poller exists.
+        return dict(status='suppressed', reason='FRANKIE_FLEET_NO_WAIT_UNIT set: no WAIT unit spawned')
     started = out_dir / 'fleet-wait.started'
     try:
         with open(started, 'x', encoding='utf-8') as handle:

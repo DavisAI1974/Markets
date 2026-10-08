@@ -138,6 +138,17 @@ def on():
     return os.environ.get(SWITCH, 'on') != 'off'
 
 
+def _fleet():
+    """The fleet module when fleet mode is on (FRANKIE_FLEET_DAY_LIST set), else None. When it is None every fleet
+    branch below is skipped and the one-box end-to-end run is exactly what it was (the same-box trigger is the
+    default): a single `if _fleet() is not None` guards all of it."""
+    try:
+        import frankie_box_fleet as FL
+    except ImportError:
+        return None
+    return FL if FL.enabled() else None
+
+
 def _load(path):
     try:
         return json.loads(Path(path).read_bytes())
@@ -335,6 +346,14 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
                 successor=STAGES.get(stage, {}).get('successor'), commit=commit, code_root=str(code_root))
     if not record or record.get('status') not in FINISHED_WITH_OUTPUTS:
         return dict(base, status='nothing_to_hand_off', reason='the step is %s' % ((record or {}).get('status')))
+    fleet = _fleet()
+    if fleet is not None and stage in fleet.RELEASE_STAGES:
+        # the classroom is done (this boundary runs after the stage): release the global classroom lease so the next
+        # box in line can take it; idempotent (released only when this box holds it) and never blocks the day
+        try:
+            base['fleet_release'] = fleet.release_if_held(run.plan['run'], e['day'], log=log)
+        except Exception as error:  # noqa: BLE001
+            base['fleet_release'] = dict(status='error', error='%s: %s' % (type(error).__name__, str(error)[:200]))
     existing = _load(out_dir / 'handoff.json')
     clean = _load(out_dir / 'clean' / 'clean-receipt.json')
     trigger = _load(out_dir / 'trigger.json')
@@ -346,7 +365,13 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
         # unchanged, so only changed files are re-read); the failed receipt is kept aside, never read as a pass
         os.replace(out_dir / 'handoff.json', out_dir / ('handoff.failed-%d.json' % int(existing.get('at') or time.time())))
         existing = None
-    if existing and (existing.get('status') == 'validated' or (existing.get('status') == 'saved' and trigger_done)):
+    if existing and existing.get('status') == 'fleet_waiting':
+        # the day was saved at the classroom gate waiting for the global lease; the WAIT unit resumed it (it acquired
+        # the lease). Re-run the boundary: re-validate (unchanged stat = no read), re-run the gate (now this box holds
+        # the lease, so acquire is idempotent -> 'fleet_proceed'); the earlier fleet_waiting receipt is kept aside
+        os.replace(out_dir / 'handoff.json', out_dir / ('handoff.fleet-waiting-%d.json' % int(time.time())))
+        existing = None
+    if existing and (existing.get('status') in ('validated', 'fleet_proceed') or (existing.get('status') == 'saved' and trigger_done)):
         # once per (stage, key): a resumed day passes this boundary again after a DONE trigger (or a validated-only pass)
         return dict(existing, status='already', earlier_status=existing['status'],
                     clean_status=(clean or {}).get('status'), trigger_status=(trigger or {}).get('status'),
@@ -393,6 +418,26 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
         else:
             why = 'validation exit %d: no validator receipt or an unlisted refusal (see %s)' % (code, vlog)
         return _write(out_dir / 'handoff.json', dict(base, status='failed', reason=why))
+    if fleet is not None and stage in fleet.gate_stages():
+        # the ROOT->classroom boundary (gate stage, default `teacher`): the stage validated; now serialise the
+        # classroom across the fleet. classroom_gate records this box ready and claims the ONE global lease.
+        #  - proceed: this box holds the lease -> straight on to the classroom (the gate stage does NOT clean-on-save
+        #    in fleet mode: a save+resume here would race the lease; the clean optimisation is skipped for this one
+        #    stage only, and only in fleet mode).
+        #  - waiting: another box holds the lease -> save the day (it stops here, exit 75) and let the detached WAIT
+        #    unit classroom_gate started resume+kick it when the lease frees. A visible WAIT, like the digest WAIT.
+        gate = fleet.classroom_gate(run.plan['run'], e['day'], stage, out_dir, code_root, commit, log=log)
+        base['fleet_gate'] = gate
+        if gate.get('decision') == 'waiting':
+            saved = request_own_save(run, e, by='%s boundary: validated; the global classroom lease is held by %s; '
+                                                 'the day waits in line (fleet)' % (stage, gate.get('holder')))
+            return _write(out_dir / 'handoff.json', dict(base, status='fleet_waiting', save=saved,
+                          reason='validated; the global classroom lease is held by %s; the day is saved and a WAIT '
+                                 'unit resumes it when the lease frees (it is #%s in line)'
+                                 % (gate.get('holder'), gate.get('position'))))
+        return _write(out_dir / 'handoff.json', dict(base, status='fleet_proceed',
+                      reason='validated; this box holds the global classroom lease; straight on to the classroom '
+                             '(the gate stage does not save/clean in fleet mode)'))
     if clean_again is False:
         return _write(out_dir / 'handoff.json', dict(base, status='validated',
                                                      reason='re-validated after an unfinished clean (trigger %s, clean %s): '
