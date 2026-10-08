@@ -38,6 +38,31 @@ point. Fix problem and restart from exactly the same spot." Then: "Will fix in n
    any run; FULL DEPTH digests.
 ```
 
+## Session 9 decision (parent, 16:3xZ 2026-10-08): the child is STOPPED before its receipt, not after
+Greg's directive applied: "stop, fix and restart ... use all 64 cps for it and 64 workers". The parent read the source on the
+tip before acting (record: BOX_RECORD_20261008_S9.md). Two facts changed step 4(a) of the box above:
+- Run.root's REUSED branch (frankie_box_experiment.py ~1700-1745) returns on an existing calculations-receipt.json and never
+  renders the digest; the class line then WAITS for a standalone frankie_box_render_digest.sh, which takes only CPUs
+  OUTSIDE the live/retained bookings (cores plan --step digest-render). With the booking grown to 64 that render has no
+  CPUs. So letting the d67b9c63 child write its receipt (~17:4xZ, after ~63 more minutes of counting the 496.7 GB frames
+  spool whole) would make the drop-in's chain ("the ROOT renders its own full-depth digest on the 64 lane") impossible.
+- Stopping the child with the save marker standing is the designed route: Run.child calls check_save() right after the
+  child exits, before the exit code (the entry goes SAVED, attempt + CPUs + booking retained; session 7's precedent: child
+  killed with the marker standing -> SAVED, no receipt; resumed later). The whole-read pass writes nothing but the receipt
+  at its end, so "retain all info to this point" holds. The resume on the 46cfe907 checkout then runs the ROOT child
+  --resume --digest on --data-workers 63 on the grown 0-63: claims V1 accepted on their tails and rewritten V2, legacy
+  spools reopened from sealed counts (receipt in minutes), then process 4 renders the digest FULL DEPTH on the 64 lane.
+- Order on the box (box-operator role, fable): kill -KILL the child 1834 only -> entry SAVED (worker ends exit 5, lock
+  released) -> stop the old cpu-watch unit -> ONE script: grow the booking to 64, ACTION=resume, ACTION=kick with
+  FRANKIE_ROOT_DIGEST=on FRANKIE_CLASSROOM_CPUS=all (DAY_CPUS not given) -> watch the receipt, the claim decisions, the
+  digest start. The grow is never done while a step runs on the old code: the watchdog (resize=on) kicks a resize at the
+  OWNER's commit, i.e. the old checkout.
+- "64 workers": the ledger's rule counts the coordinator (the largest WORKERS that fit a 64 booking is 63), so the ROOT
+  runs 63 pool workers + its coordinator on the 64 CPUs. Making it a literal 64 is one rule change in frankie_box_cores
+  (ingest_workers / day_cpus() - 1) and is Greg's call, not made here (no new code unless the run breaks).
+- Parent self check-in armed for 17:29Z (trig_01PHZXgJGTQVMqyDgdPNkjBh). The 18:20Z volume raise stays session 8's timer;
+  the parent verifies it after 18:25Z and does it if it did not fire (cooldown from 12:08Z ends 18:08Z).
+
 ## The box NOW (16:1xZ 2026-10-08)
 - Main box i-035994afa8bdf66a5, us-east-1d, RESIZED to r7i.16xlarge (64 vCPU) this session, RUNNING, SSM Online,
   KeepRunning=true. Volumes vol-0d36715924f03b86c (root) and vol-004b68c077be09cc9 (archive) at BASELINE 3,000 IOPS /
