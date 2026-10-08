@@ -3,26 +3,39 @@
 ## Drop-in box (paste into the new session)
 
 ```
-NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS. Greg's rules this session: do what is best for
-SCIENCE and SPEED; STOP building more tests and validators - if something does not work in the run, fix it then.
+NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS. Greg's rules: best for SCIENCE and SPEED; STOP
+building more tests and validators - if something does not work in the run, fix it then.
+GREG'S DIRECTIVE FOR THIS SESSION (16:2xZ 2026-10-08, verbatim): "Definitely do the cpu add now, retain all info to this
+point. Fix problem and restart from exactly the same spot." Then: "Will fix in new session."
 1. git fetch origin ccr-d2f8f826-iefeah-frankie && git checkout -B ccr-d2f8f826-iefeah-frankie origin/ccr-d2f8f826-iefeah-frankie
    Confirm the tip is the commit named at the bottom of this file, or newer. SHALLOW clone: `git fetch --deepen=400` first.
-2. Read THIS file, then DROP_IN_CLAUDE_20261008_SESSION8.md (every decision and state block of session 8, newest at the top
-   of its body), then BOX_RECORD_20261008_S8_START.md (the live box timeline), FLEET_SOURCE_STATUS_SESSION8.md and the two
-   REVIEW_20261008_FLEET_SOURCE*.md files. The session-8 drop-in's "Run state (UNCHANGED since the session-7 drop-in)" block
-   and everything below it is HISTORY; the box state now is in THIS file.
-3. Session = parent only; spawn agents with model "fable"; api-and-interface-design first; AWS via the Aws connector (test
-   with one read-only STS call; the IAM user Claude's key pair is NOT in a new container: Greg pastes it if the connector is
-   down). Greg is in and out: background agents die with a container resume, so (a) every role writes its record file
-   incrementally, (b) long source work runs in a CLOUD SESSION (create_session, pushes to the branch), (c) a self check-in
+2. Read THIS file, then DROP_IN_CLAUDE_20261008_SESSION8.md (newest blocks at the top of its body), then
+   BOX_RECORD_20261008_S8_START.md (the live box timeline, newest section last), FLEET_SOURCE_STATUS_SESSION8.md and the two
+   REVIEW_20261008_FLEET_SOURCE*.md files.
+3. Session = parent only; agents model "fable"; api-and-interface-design first; AWS via the Aws connector (one read-only
+   STS call first). Every role writes its record incrementally; long source work in a CLOUD SESSION; a self check-in
    (send_later) re-reads the records and continues from them.
-4. SESSION 8's TIMERS ARE STILL ARMED IN SESSION 8 (they wake that session even when Greg is elsewhere): the a2 check-in
-   every 30 min (next 16:36Z) and the 18:20Z step (ModifyVolume raise of the two main-box volumes, then the full-depth
-   digest render on the sibling lane beside the teacher). Do NOT duplicate them unless session 8 is confirmed dead; if you
-   take them over, delete session 8's triggers first (list_triggers: "a2 restart check-in (3)", "Volume raise + digest
-   render (a2)") so two sessions never drive the box at once.
-5. No fleet launch without Greg's explicit "launch the first box". No second-box or clone-volume action. Nothing is dropped
-   from any run; FULL DEPTH digests.
+4. SESSION 8 IS PASSIVE ON THE RUN: its box-operator stops at SAVED (no resume, no kick); its a2 check-in is DELETED; the one
+   timer left in session 8 is the 18:20Z ModifyVolume raise of the two main-box volumes (harmless to the run; it appends a
+   note to this file). THIS session owns the restart. FIRST ACTION, the directive applied in order, on the box:
+   (a) confirm a2 reads SAVED (box record; one read-only probe), the claim-fix checkout
+       /opt/frankie-box/code/46cfe907...-37800918122-1/markets (= 5bf723f4's box code) staged with its receipt, booking
+       day-run-20231018-day_slot_root-1791402822-3111 retained on 0-31, receipt ABSENT;
+   (b) THE CPU ADD: grow that booking from 0-31 to ALL 64 (frankie_box_cores `grow --booking <id> --size 64 --reason
+       "Greg 16:2xZ CPU add"`; same booking id; it must not WAIT since nothing holds 32-63; if it refuses, STOP and report);
+       verify `cores show` reads 0-63;
+   (c) RESTART FROM EXACTLY THE SAME SPOT, RETAINING EVERYTHING: ACTION=resume RUN=e2e-20231018-a2 DAY=20231018 over SSM
+       on that checkout (CODE_ROOT + MARKETS_SHA explicit; the workflow route is refused when the branch moves), then
+       ACTION=kick LINE=root SCOPE=e2e-20231018-a2:20231018 with FRANKIE_ROOT_DIGEST=on (the ROOT renders its own FULL-DEPTH
+       digest on the 64 lane right after the receipt; no separate sibling-lane render) and FRANKIE_CLASSROOM_CPUS=all;
+       DAY_CPUS not given (the plan reads the HELD booking = 64). The resume accepts a2's 57 V1 claims on their tails and
+       rewrites them V2: nothing recomputed; the receipt in minutes; record the claim decisions from the receipt.
+   (d) then watch: receipt -> digest (disk-bound at the baseline 132 MB/s until 18:20Z) -> validate -> teacher -> classroom
+       -> data/search -> scientific teacher -> meeting -> Jev -> end, all on 0-63. Fix what breaks, restage, resume at the
+       save boundary. No new validators.
+5. No fleet launch without Greg's explicit "launch the first box" (fleet pass-2 NEW-1/NEW-2 being fixed minimally in the
+   cloud session; the rest deferred "fix when it bites"). No second-box or clone-volume action. Nothing is dropped from
+   any run; FULL DEPTH digests.
 ```
 
 ## The box NOW (16:1xZ 2026-10-08)
@@ -65,6 +78,7 @@ SCIENCE and SPEED; STOP building more tests and validators - if something does n
   live dimensions after first boot); the recover action on the alarm; the role tag typo "Project = frankie".
 
 ## Next, in order
+0. The directive in the box above (CPU add, restart from the same spot) is the first action.
 1. Confirm a2's receipt and the claim decisions (v1-compat rows rewritten V2) from the box record; then watch the chain:
    validate, teacher, the 18:20Z render on 32-63, the classroom on 64.
 2. If anything in the run breaks: fix THAT (Greg), restage, resume at the save boundary. No new validators.

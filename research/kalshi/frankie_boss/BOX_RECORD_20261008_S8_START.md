@@ -410,3 +410,25 @@ Skill full-run-orchestrator invoked first. AWS via the Aws connector only; GitHu
 - 16:17:09Z PROBE 30 (read-only, SSM bc2d9419-28fc-443c-bf42-a7c83e814ecb): receipt ABSENT; marker standing; child 1834 Dl
   1:12:33, read_bytes 567,918,608,384, legacy_book_imbalance.json pos 312,207,212,544. Entry running, save_request true.
   Watchdog 16:16:30Z findings 1 repins 0.
+- 16:2xZ DIRECTIVE from Greg via the parent (verbatim): "Definitely do the cpu add now, retain all info to this point. Fix
+  problem and restart from exactly the same spot." Applied at the restart, after SAVED and before the resume/kick, on the
+  staged 46cfe907 checkout: (1) GROW the retained booking day-run-20231018-day_slot_root-1791402822-3111 from 0-31 to all
+  64 with frankie_box_cores grow (same booking id, cpu-plan.json recorded; nothing holds 32-63 so it must not WAIT; a refusal
+  or a wait = record the reason and STOP, no kick); verify with `cores show` that the booking reads 0-63 first. (2) Then
+  ACTION=resume as briefed and ACTION=kick LINE=root SCOPE=e2e-20231018-a2:20231018 with FRANKIE_ROOT_DIGEST=on (CHANGED: the
+  ROOT renders its own full-depth digest on the 64-CPU lane right after the receipt) and FRANKIE_CLASSROOM_CPUS=all; DAY_CPUS
+  not given (the plan reads the held booking = 64 -> WORKERS 63). (3) The save retains everything; the resume continues
+  from the marker with the V1 claims accepted and rewritten; confirm on the receipt nothing was recomputed beyond the claim
+  tail reads; record the claim decisions. (4) Watch for the receipt, then the digest start on 0-63 (disk-bound at the
+  132 MB/s baseline until the 18:20Z volume raise), record its first progress line, then report.
+- 16:2xZ CHANGE from Greg via the parent (verbatim: "Will fix in new session."): the directive above is CANCELLED. Keep
+  probing (read-only) until the entry reads SAVED or the receipt appears, then do NOTHING else on the box: NO grow, NO
+  resume, NO kick. Record the SAVED reading (state, seq, booking 0-31 retained, marker, receipt, the staged 46cfe907
+  checkout + receipt) and report; box left RUNNING, KeepRunning=true. The new session restarts a2 from exactly that spot.
+  (For that session, from the 46cfe907 source: `frankie_box_cores.py grow --booking ID --size N [--reason TEXT]` widens a
+  live/retained day-run booking with free CPUs, same id, recorded under `grown`, exit 75 = waiting, 2 = refused; the
+  dispatchable frankie_box_cores.sh wrapper only offers show|reap|release, so grow is a direct python call with
+  CODE_ROOT/PYTHONPATH set; the resume plan refuses a size that differs from the retained set unless the booking was grown.)
+- 16:19:58Z PROBE 31 (read-only, SSM 7e3b5526-4909-4779-8ead-2583e9a295dd): receipt ABSENT; marker standing; child 1834 Dl
+  1:15:23, read_bytes 590,190,362,624, legacy_book_imbalance.json pos 334,470,578,176. Entry running, save_request true.
+  Watchdog 16:18:30Z findings 1 repins 0.
