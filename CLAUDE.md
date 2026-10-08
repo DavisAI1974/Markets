@@ -1,3 +1,10 @@
+# Claude session drop-in — 2026-10-08 early, session 6: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261008_SESSION6.md`
+
+Branch `ccr-d2f8f826-iefeah-frankie`. Parent-only; agents (model "fable") do the work. a2's ROOT finished its passes on
+c9bf631; a queue save HOLD is armed for after the digest so the teacher does not start on old code; disk was being freed
+onto an archive volume. First: confirm the hold and the disk, KeepRunning=true, then RESTAGE the tip and resume a2 at
+the teacher. Everything from session 5 is SOURCE-BUILT / RUNTIME-UNVERIFIED. Full data, absolute.
+
 # Claude session drop-in — 2026-10-07 night, session 5: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261007_NIGHT_SESSION5.md`
 
 Branch `ccr-d2f8f826-iefeah-frankie`. Parent-only; agents (model "opus") do the work. a2's ROOT is RUNNING on c9bf631
