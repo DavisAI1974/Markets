@@ -271,3 +271,11 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   holding claim, 0 read whole" = the claim fix (5bf723f4) and the spool fix (2aed2f0e) verified LIVE: zero whole reads.
   Receipt absent at 17:19Z (the digest, process 4, now renders on the 64 lane); the operator reports the receipt, the
   claim decisions and the digest's first progress line.
+- 17:19:55Z PROBE (SSM 301b1559; the parent's from-scratch kill guard built into every probe: none found): worker unit
+  frankie-queue-root-1791479893; entry seq 2 `running`, owner -a1, 64 cpus, "its whole day in the held box slot
+  ...-5613". ROOT child pid 5714 ALIVE (etime 01:38, 23% cpu, rss 459 MB), cmdline `--output-root
+  .../e2e-20231018-a2-20231018-a1 --data-workers 63 --digest on --resume`; its own affinity `0` (the coordinator keeps the
+  lowest booked CPU; helpers take 1-63). Passed the identity check. ROOT log 17:18:33Z: every legacy layer "reusing
+  retained legacy layer ... (parsed)", then "retained evidence: 56 artifacts, 56 by their claim, 0 read whole; 5 spools, 5
+  reopened from a sealed count and a holding claim, 0 read whole". The spool whole-count is gone (the 63-min frames read
+  avoided). Receipt not yet written.
