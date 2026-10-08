@@ -9,9 +9,10 @@ and the AWS tool upgrades ROOT got. Owner: the data/search stage agent. Branch c
 **a2 gets this only by a restage of the work-branch tip before its data export starts** (after ROOT, teacher and
 classroom). Never stage an intermediate WIP snapshot.
 
-## 0. Two findings to read first (not fixed here; they decide whether stage 7 can finish on 20231018)
+## 0. Two findings to read first (finding 1 is now addressed by section 9 on Greg's R5 GO; finding 2 stays open)
 
-1. **The search holds the whole frames spool in memory (likely out of memory on 20231018).**
+1. **The search held the whole frames spool in memory (likely out of memory on 20231018). ADDRESSED in section 9: the
+   frames are typed on-disk columns by default; the text below is the original finding.**
    `build_series` (search.py:835) calls `spool_columns`, which materializes every scalar leaf of
    root/work/derived/.rows/frames.jsonl as Python lists (`columns()`, search.py:285). a2's frames spool was
    256.6 GB at 314,117 rows (about 817 KB of JSON per F_LAST row: full-depth books, FIFO observations and every group
@@ -229,3 +230,121 @@ Everything above. Unmeasured: the FrontierHasher's single-pass effect (needs a s
 the window's memory, heartbeat rates, the lane-sized wrapper defaults on the box (the orchestrator passes its own
 WORKERS, so the default changes only manual runs). The frames-memory finding is from a2's measured spool size and the
 code, not from a run.
+
+## 9. Follow-up (Greg's R5 GO + "save/restore must match ROOT's"): on-disk frame columns, two options, ROOT's save contract
+
+### 9.1 On-disk frame columns (`FRANKIE_SEARCH_FRAME_COLUMNS=disk`, the default; `memory` = the proof reference only)
+- `disk_spool_columns` (search.py:1011-1150): the frames spool decoded ONCE in ordered byte ranges cut at line starts
+  (each line is one F_LAST group, so every cut is a group-closed boundary) on the lane's pinned workers
+  (`lane_pin.ordered_map`, in-flight window 2 per worker, dead worker redone); each worker (`_disk_chunk`,
+  search.py:804-835) runs the unchanged `columns()` on its range only and writes ONE chunk file (fsynced, renamed) with
+  one segment per channel; the coordinator receives chunks IN FILE ORDER and keeps only the channel order (first
+  appearance: spool_columns' merge rule) and the segment lists. The whole-spool sha256 is compared with the export pin
+  at the end (FrontierHasher, one disk pass shared with the decode).
+- Readers: `FrameColumnStore.column` (search.py:837-891) rebuilds the exact list `columns()` would have built for one
+  channel; `ColumnRef` (search.py:893-919) stands where the search held `np.asarray(values, dtype=object)` (len without
+  reading, `__array__`, iteration, indexing, slicing); `ContextLabelRef` (search.py:921-954) is a frames ID/calendar
+  channel moved to the cells (the same JSON labels, the overlap refusal kept as one pass at build time);
+  `FrameColumns` (search.py:956-1004) is the `{channel: values}` mapping. At most `COLUMN_CACHE_ENTRIES` (4) channels are
+  materialized per process. `build_series` (search.py:1459-1496) uses refs for every frames series and cell, and hands
+  the exact-membership readers (native, journal, SharedFrameView, all through the frozen `frame_index`) a mapping of
+  exactly the columns `frame_index` consults (input_cursor, native_frame.instrument_id, ts_event_ns,
+  input_record_indices[*], input_records[*].instrument_id), materialized once: same keys consulted, same result.
+- prepared.pkl now pickles refs (directory + channel), not the frame values.
+- **Not on disk (stated):** the transform step arrays (int8, rows x series x transforms bytes, in memory as before),
+  the cell index (positions per cell value; with ID cells this is call (b)'s cost), the non-frames sources (structures,
+  prices, INPUT, native, journal, dipole, external: their leakage gates run on in-memory values as before; frames have
+  no per-field gate, the frames are the axis source). A full-day V2 frames spool can still carry more channels than the
+  coupling stage can search in a day; the cell/job preview (9.4) shows the count before the jobs exist.
+
+### 9.2 The two options (Greg: build both, measure, do not pick by taste)
+| | Option A: DIGEST_V10 tables (`FRANKIE_SEARCH_COLUMN_CODEC=digest_v10`) | Option B: typed segments (`typed`, current default pending the canary) |
+|---|---|---|
+| Segment | one DIGEST_V10 table per channel per chunk, rendered and parsed by the EXISTING `frankie_box_digest_render.render_table` / `parse_table` (scales, ^k/=k/?k runs, fractions, X exact cells, dictionary where it pays); column named `group_index` (the grammar's integer-delta column) when that parses back exactly, else `v` (`_encode_digest`, search.py:774-786) | positions (uint32, omitted when dense), tags (uint8: None/int64/float64 bits/bool/big int), int64 payload, big ints as decimal text; text as positions + uint64 offsets + UTF-8 surrogatepass (`_encode_numeric`/`_encode_text`, search.py:634-730) |
+| Exactness | write-time verifier: render, parse, compare type and float bits for every segment; refuse the chunk otherwise | encoding is total (every type and bit pattern has a tag); proven by the toy |
+| Random access | by chunk (segment index per channel) | by chunk |
+| In-memory form when read | Python values (parse_table returns them) | Python values (the consumers, transforms and gates, take Python objects) |
+| Toy (533,684-byte spool, 1,500 rows, 14 chunks) | 113,130 B on disk (0.21 of the spool); exact | 176,027 B on disk (0.33); exact |
+| Toy canary (180 KB sample, 3 workers; NOT representative: fork overhead, tiny rows) | read 3.6 MB/s of spool per worker | read 39.5 MB/s of spool per worker (about 11x A) |
+- The in-memory form "typed integer arrays" Greg named for option A is not built: parse_table yields Python values and
+  every consumer (transforms, cells, discovery) takes Python objects today. A typed-array reader would be a new
+  decoder of the grammar, which the instruction forbids writing; listed.
+- The chunk/save shape follows the segmented ledger's (ordered frozen parts with their digests, a resume prefix), not
+  its API (`SegmentedRowSink` is a ROOT RowSink).
+
+### 9.3 Canary (Greg's measurement rule; committed, runs on the box only on Greg's go)
+`deploy/aws/box/frankie_box_search_columns_canary.py`: windows spread over the first 90% of a real frames spool (a spool
+still being appended is never read at its tail), each split into lane-worker ranges; for A and B it writes the chunks
+with the search's own `_disk_chunk` on pinned workers, reads every channel back on one process with the search's reader,
+compares every value with `columns()` of the same ranges, and reports bytes on disk, write rate (all workers and per
+worker), read rate per worker (values/s and spool bytes/s), peak RSS per worker, and the extrapolation to
+`--full-bytes`. Default sample: 3 windows x (workers x 4 MiB) (about 370 MB at 31 workers), meant to finish in 1-2
+minutes; scratch under /opt/frankie-box/work/canary-search-columns/<ts>, removed unless --keep.
+Command (after a2's ROOT legacy pass ends, or accept I/O contention with it; staged checkout <sha>):
+```
+cd /opt/frankie-box/code/<sha>/markets && PYTHONPATH=$PWD /opt/frankie-box/venv/bin/python -B \
+  deploy/aws/box/frankie_box_search_columns_canary.py \
+  --frames /opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/work/derived/.rows/frames.jsonl \
+  --workers 31 --full-bytes 430e9
+```
+(run under the day's booking, e.g. `taskset -c 0-31`, or with FRANKIE_LANE_CPUS=0-31). Ran here only on the toy spool.
+
+### 9.4 Cell/job preview (Greg's call (b) unchanged, made visible)
+`cell_preview` (search.py:3078-3096), called before the cell index and the job list (search.py:3262): total cells,
+columns, jobs = cells x transforms x series, the 25 largest columns by cell count; written to
+recovery/cell-preview.json, the log, the heartbeat, and MANIFEST `cell_preview`. Toy: 27 cells, 6 columns, jobs equal
+to the generated job count.
+
+### 9.5 Save/restore vs ROOT (items 1-7 of the directive)
+| # | ROOT contract | Before | After (file:line) |
+|---|---|---|---|
+| 1 | SIGTERM marks the save, run to the next save point, exit 75; workers reset SIGTERM | MISSING: no handler (SIGTERM killed the search/export); the lane stop file only | DONE: search `install_save_handler` / `_stop_requested` / `_worker_default_sigterm` (search.py:563-595, 2190-2200), installed in `_search` (search.py:3200-3206) and restored by `search()` (search.py:3130-3141); every pool task resets SIGTERM first (_spool_range_columns, _spool_range_rows, _disk_chunk, _gate_job, _step_job, _cell_job, _part_nominations, _discovery_job, native _decode_range); export the same (data.py:138-215, `export` wraps `_export`, data.py:519-541). Exit 75 at: a frame chunk boundary, before/after the preparation, after the transforms, a cell job's next partner, a discovery problem; the export after the file segment in hand |
+| 2 | periodic exact saves at group-closed points | PARTIAL: per-transform, per-cell, per-problem states; none inside the preparation | DONE for the frames decode (the dominant part): the index (channel order, segments, rows, the OpenSSL running hash state, the spool's stat and last line) saved every 32 chunks or 120 s and at a requested save. The export appends a running hash state every 8 GiB of a large file. PARTIAL: the other sources of the preparation (native, journal, INPUT, structures, prices, dipole, external) have no save inside; a stop during them runs on to the next frames-free save point (the prepared.pkl) |
+| 3 | positions without re-read (ROOT's `_saved_spool_position` / `_resume_row_spool` rule) | MISSING | DONE by mirroring the rule (the search reads, it does not append RowSpools, so the helpers themselves do not apply; the comments name them): the hash continues from the saved `_ResumableSha256` state (FrontierHasher `resumable`/`resume`, search.py:386-475); resume only on the same unchanged spool (device, inode, size, mtime, last line via `frankie_box_boss_session._line_ending_at`), else one full pass from byte 0 with the saved chunks set aside (named on the receipt). Chunk files are checked by size as written (no re-read). Export: finished pins and saved running states reused after a requested save under the same rule (stat + last 64 KiB) |
+| 4 | identity is content (content_rebinds) | MISSING: the identity carried the directive's absolute path; a checkout move refused | DONE: `accept_saved_identity` (search.py:3043-3076) uses `frankie_box_experiment_root.content_rebinds`, records moves under recovery/checkout-rebinds/, keeps the SAVED identity; `directive_document` adds the directive's bytes (search.py:3005) |
+| 5 | function-level code identities | MISSING: whole-file sha256 of search, transforms, surface, native, journal (+ the whole frankie_box_boss_session.py), dipole | DONE: identity V2 (`continuation_identities`, search.py:3011-3027) binds `frankie_box_bedrock.code_identity` of `SEARCH_VALUE_CODE` and each module's `save_identity()` (transforms.py:156, surface.py:130, native.py:500, journal.py:377 incl. `Session._find_observation` only, dipole.py:247). The receipt fields (`binding()`, code pins) are unchanged |
+| 6 | additive; old saves load | - | DONE: a V1 (c9bf631-era) save is accepted while every file is byte-identical (the V1 identity is rebuilt and compared); the FrameColumnStore pickle defaults its codec; export progress V1 rows are reused only with the (c) switch; the probe continues from the saved chunk count |
+| 7 | seal check against the saved claim | PARTIAL | DONE: the continued hash ends in the full-spool sha256 compared with the export pin; chunk sizes checked at the seal; coupling parts: a resumed complete job re-hashes and compares with its saved digest (existing), and discovery's read cross-checks. Export: a reused or continued pin has no second full read in the export; the search's decode of each file is the witness (stated on the receipt) |
+
+Export and Greg's open call (c): after a REQUESTED save, the export resumes like ROOT (finished pins kept, running
+hashes continued, ROOT's unchanged-file rule). Any other rerun reuses nothing unless FRANKIE_EXPORT_REUSE_PINS=on (call
+(c) still open for that case).
+
+### 9.6 Tests (toy; `selftest_disk_columns.py`, 18/18, and `selftest_stacks.py` re-run, 16/16)
+```
+option B typed: every channel == columns() (order, values, types, float bits; 14 chunks) PASS
+option A digest_v10: every channel == columns() (order, values, types, float bits; 14 chunks) PASS
+a requested save exits 75 at a chunk boundary, index saved with the running hash       PASS 5 chunks saved
+resume continues at the saved chunk (no re-read of the hashed prefix) and equals from-scratch PASS
+after an append the save is refused for reuse: one full pass, old chunks set aside, exact PASS
+search disk (B) == memory: MANIFEST science, part names and sha256, discovery problems PASS 594 parts, 11 series, 27 cells
+search disk (A) == memory: MANIFEST science, part names and sha256, discovery problems PASS
+search: save inside the frames decode -> exit 75 -> resume -> MANIFEST science and parts == memory PASS 7 chunks
+cell/job preview is on the MANIFEST and matches the generated jobs                     PASS
+memory receipt (per-worker peak RSS) on the MANIFEST in disk mode                      PASS
+a save from another checkout of the same source is accepted, the saved identity kept, the move recorded PASS
+changed value code refuses                                                             PASS
+an old V1 (whole-file) save loads while byte-identical                                 PASS
+function-level identity: a comment keeps it, a change to the named code changes it     PASS
+SIGTERM marks the save in the coordinator; a forked worker dies on SIGTERM (default restored) PASS
+export: a requested save exits 75 with the running hash and a saved line recorded      PASS
+export resume after the save: same pins as from scratch; saved state continued, not re-read PASS
+export without any save on record: every file hashed from byte 0, same pins            PASS
+```
+The end-to-end search runs the real `search()` (numpy 2.5.3, pyarrow and duckdb importable here) on a toy export (only
+the frames spool; native/journal/dipole/external listed absent) with 3 workers, 2 transforms, lags 3, discovery off
+(PySR here would fetch Julia), `blas_reduction` stubbed (its module imports torch). "MANIFEST science" is the MANIFEST
+minus timings, CPU placement, parse diagnostics, memory/continuation receipts and the toy run directory in paths.
+Toy rows carry nested books, bytes, bools, ints beyond int64, NaN, -0.0, lone surrogates, sparse and late channels, an
+ID context channel (order_id, becomes cells) and a backwards receive clock.
+Scripts (scratchpad, not committed): /tmp/claude-0/-home-user-Markets/2248cf40-1f2f-560c-b5b2-bc0289b3f56b/scratchpad/search/selftest_disk_columns.py, selftest_stacks.py, run_canary_toy.py.
+
+### 9.7 RUNTIME-UNVERIFIED and open
+- Nothing ran on the box. Unmeasured: the real chunk size ratio, write/read rates, per-worker RSS, the disk space the
+  store needs next to a ~430 GB spool (the toy ratios 0.21-0.33 are not evidence), and the option choice (the canary).
+- The orchestrator side of exit 75 for data/search (`Run.data` / `Run.search` record `failed` on a non-zero code,
+  experiment.py:4294/4338) belongs to its owner; 260e475 notes "exit 75 = saved helper across child steps" there.
+- The frame_index membership columns are materialized once (2 x max group size + 3 columns x rows); a very wide group
+  makes that large; it is the frozen timeline's row-by-row access (request R3).
+- Option A's typed-array in-memory form (not built, see 9.2); the steps arrays and the cell index stay in memory.
+- Save points inside the non-frames sources of the preparation (9.5 item 2, PARTIAL).
