@@ -260,3 +260,14 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   ACTION=resume), identity refusals on resume are a visible 'refused' outcome (resume-refused.json). Decision: launch now
   on 1c59623; the validator-by-claim and no-retry fixes are staged while the digest runs and applied at the digest's end
   (save marker after receipt+digest -> resume + kick on the new tip). The operator may kill a from-scratch child on sight.
+
+## LAUNCHED (parent probe 17:19:04Z, SSM a93a28bc)
+- Greg 17:1xZ: "Start workflow now. There's nothing wrong with the data ... Override and relaunch from there." The operator's
+  repoint + resume + kick on CR3 (1c59623) had gone out: unit frankie-queue-root-1791479893 running; entry seq 2 RUNNING,
+  owner attempt e2e-20231018-a2-20231018-a1, cpus 0-63 (64); ROOT child pid 5714 (cores-run 5712) etime 0:47:
+  `--output-root .../e2e-20231018-a2-20231018-a1 --data-workers 63 --digest on --resume`, main thread on CPU 0 (lane
+  placement). The binding check PASSED (data_workers 31 -> 63 recorded as a run-size rebind). ROOT log 17:18:33Z:
+  "retained evidence: 56 artifacts, 56 by their claim, 0 read whole; 5 spools, 5 reopened from a sealed count and a
+  holding claim, 0 read whole" = the claim fix (5bf723f4) and the spool fix (2aed2f0e) verified LIVE: zero whole reads.
+  Receipt absent at 17:19Z (the digest, process 4, now renders on the 64 lane); the operator reports the receipt, the
+  claim decisions and the digest's first progress line.
