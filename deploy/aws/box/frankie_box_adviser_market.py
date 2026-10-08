@@ -2083,7 +2083,14 @@ def retain_context(path, context):
             raise ValueError('retained adviser market context differs; explicit owner recovery required: ' + str(path))
     else:
         write_bytes(path, data)
-    return dict(path=str(path), **witness(path))
+    # dedupe pass 2026-10-08 (COMPUTE): write_bytes remembers its write-stream witness in frankie_box_filehash, so the
+    # witness here is that value with no read-back; an existing file compared above is hashed once and cached for the
+    # exchange's own witness of it (same values; durable's loop when the cache module is not importable)
+    try:
+        import frankie_box_filehash as F
+    except ImportError:
+        return dict(path=str(path), **witness(path))
+    return dict(path=str(path), **F.witness(path))
 
 
 def load_context(path, *, identity, scope):

@@ -37,7 +37,21 @@ import signal
 import time
 import urllib.parse
 
-from frankie_box_durable import witness, write_bytes, write_json
+from frankie_box_durable import write_bytes, write_json
+from frankie_box_durable import witness as _durable_witness
+
+
+def witness(path):
+    """{bytes, sha256} of a file (frankie_box_durable.witness's values). Dedupe pass 2026-10-08 (COMPUTE): served by
+    frankie_box_filehash.witness, the per-process once-per-file cache (stat-keyed; a file changed while hashed is
+    refused), so pinned() followed by pin() on the same input, the brain entry witnessed right after write_json, and
+    every repeated witness of an unchanged file in this process read it once. Same values; durable's loop when the
+    cache module is not importable."""
+    try:
+        import frankie_box_filehash as F
+    except ImportError:
+        return _durable_witness(path)
+    return F.witness(path)
 
 SHARED_RUNTIME = 'frankie_box_granite_meeting.local_runtime'     # the ONE runtime definition Jev binds to (Greg, 2026-10-07)
 JEV_THREADS = 32      # THE one setting for Jev's llama-server threads (Greg, 2026-10-07 night: "Should be 32"); clamped

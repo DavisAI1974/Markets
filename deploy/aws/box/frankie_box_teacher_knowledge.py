@@ -162,10 +162,11 @@ def teach_accumulated(day, search, brain, out_dir, *, _successor=None):
 
     day, search, out_dir = str(day), Path(search), Path(out_dir)
     manifest_path = search / 'MANIFEST.json'
-    manifest_witness = witness(manifest_path)
+    # dedupe pass 2026-10-08 (COMPUTE): the owning search manifest is read ONCE and witnessed from those bytes (before:
+    # witness() streamed it, read_bytes() read it again and the two were compared, a guard against the file changing
+    # between the two reads; with one read the parsed bytes ARE the witnessed bytes). Same {bytes, sha256} values.
     manifest_raw = manifest_path.read_bytes()
-    if hashlib.sha256(manifest_raw).hexdigest() != manifest_witness['sha256']:
-        raise ValueError('owning search manifest changed while being read')
+    manifest_witness = dict(bytes=len(manifest_raw), sha256=hashlib.sha256(manifest_raw).hexdigest())
     manifest = json.loads(manifest_raw)
     if str(manifest.get('day')) != day:
         raise ValueError('accumulated claims must use this owning day search')

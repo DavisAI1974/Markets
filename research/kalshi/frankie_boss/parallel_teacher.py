@@ -762,20 +762,36 @@ class TeacherSaved(SystemExit):
         super().__init__(75)
 
 
+class _HashingWriter:
+    """A write-through target for pickle.dump that hashes every byte as it is written (session 6, 2026-10-08: the
+    saved state's digest comes from the write stream; before, the pending file was read back whole for it)."""
+
+    def __init__(self, handle):
+        self._handle, self._digest = handle, hashlib.sha256()
+
+    def write(self, data):
+        self._digest.update(data)
+        return self._handle.write(data)
+
+    def hexdigest(self):
+        return self._digest.hexdigest()
+
+
 def _save_raw_state(path, body):
-    # Same local, hash-bound pickle convention as the existing journal walk cache.
+    # Same local, hash-bound pickle convention as the existing journal walk cache: 64 hex digits of the sha256 of the
+    # bytes after them, then the pickle. The bytes written are the same as before; the digest is taken on the write
+    # stream (one pass, no read-back), the durability order (body fsync, digest write, fsync, replace, dir fsync) kept.
     import pickle
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + '.pending')
     with temporary.open('wb') as handle:
         handle.write(b'0' * 64)
-        pickle.dump(body, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        hashing = _HashingWriter(handle)
+        pickle.dump(body, hashing, protocol=pickle.HIGHEST_PROTOCOL)
         handle.flush()
         os.fsync(handle.fileno())
-    with temporary.open('rb') as handle:
-        handle.seek(64)
-        digest = hashlib.file_digest(handle, 'sha256').hexdigest().encode()
+    digest = hashing.hexdigest().encode()
     with temporary.open('r+b') as handle:
         handle.write(digest)
         handle.flush()
@@ -789,13 +805,31 @@ def _save_raw_state(path, body):
 
 
 def _load_raw_state(path):
+    # The file is mapped and read ONCE: the hash pass brings its pages in, the unpickle consumes the same mapped bytes
+    # (before: one read for the hash, a second for the unpickle). The order is unchanged on purpose: the hash is
+    # verified in full BEFORE any byte is unpickled, so a tampered or truncated file is refused without executing it.
+    import mmap
     import pickle
     with Path(path).open('rb') as handle:
-        expected = handle.read(64)
-        if hashlib.file_digest(handle, 'sha256').hexdigest().encode() != expected:
+        size = os.fstat(handle.fileno()).st_size
+        if size < 64:
             raise ValueError('saved teacher state hash differs; retained, not discarded')
-        handle.seek(64)
-        return pickle.load(handle)
+        with mmap.mmap(handle.fileno(), 0, access=mmap.ACCESS_READ) as mapped:
+            view = memoryview(mapped)
+            try:
+                expected, body = view[:64], view[64:]
+                try:
+                    digest = hashlib.sha256()
+                    for start in range(0, len(body), 1 << 24):
+                        digest.update(body[start:start + (1 << 24)])
+                    if digest.hexdigest().encode() != bytes(expected):
+                        raise ValueError('saved teacher state hash differs; retained, not discarded')
+                    return pickle.loads(body)
+                finally:
+                    expected.release()
+                    body.release()
+            finally:
+                view.release()
 
 
 def _dstate_row(e, control):

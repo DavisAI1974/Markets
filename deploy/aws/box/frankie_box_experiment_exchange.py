@@ -460,6 +460,19 @@ def _ledger_code_identity():
         return None
 
 
+def _file_witness(path):
+    """{bytes, sha256} of a whole file. Dedupe pass 2026-10-08 (COMPUTE): frankie_box_filehash.witness, the per-process
+    once-per-file cache (stat-keyed, a file changed while hashed is refused): the retained shared-market context is
+    witnessed by the adviser right after it is written (its write-stream value) and again by this step's record, so the
+    second witness reads nothing. Same bytes, same sha256 as sha256_bytes(path.read_bytes()); that loop is the fallback."""
+    try:
+        import frankie_box_filehash as F
+    except ImportError:
+        raw = Path(path).read_bytes()
+        return dict(bytes=len(raw), sha256=sha256_bytes(raw))
+    return F.witness(path)
+
+
 def _load_ledger_save(retain_dir, raw_pin, notes):
     """The saved measurement when its manifest binds the same rows file (bytes and sha256 just measured from the
     file's own bytes: never a stat-only skip), the same code identity and the pickle's own bytes/sha256; else None with
@@ -2009,7 +2022,7 @@ def context_only(a, out, started):
     path = out / 'shared-market-context.json'
     line = dict(schema=CONTEXT_ONLY_SCHEMA, run=a.run, day=a.day, status='retained' if context is not None else 'not_bound',
                 listed=why, teacher_rows=a.teacher_rows,
-                shared_market_context=(dict(path=str(path), bytes=path.stat().st_size, sha256=sha256_bytes(path.read_bytes()))
+                shared_market_context=(dict(path=str(path), **_file_witness(path))
                                        if context is not None and path.is_file() else None),
                 scope=(context or {}).get('scope'), placement=dict(placement, teacher_ledger_pools=list(LEDGER_POOLS)),
                 ledger_save=save_notes, save_requested=_save_requested(),
@@ -2111,8 +2124,7 @@ def main():
     import frankie_box_adviser_market as AM
     shared_market = full['sources'].get('shared_market_context')
     context_path = out / 'shared-market-context.json'
-    shared_market_pin = (dict(path=str(context_path), bytes=context_path.stat().st_size,
-                              sha256=sha256_bytes(context_path.read_bytes()))
+    shared_market_pin = (dict(path=str(context_path), **_file_witness(context_path))
                          if shared_market is not None and context_path.is_file() else None)
     lesson_sources = full['sources']['lessons']
     workflow_report = AM.workflow_report('exchange', context=shared_market,

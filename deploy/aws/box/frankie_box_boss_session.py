@@ -1226,6 +1226,7 @@ def _saved_spool_position(spool):
     hasher: RowSpool.saved_position() itself (a full read, as before)."""
     library = _sha256_library()
     if library is None:
+        spool._sha256_read_from_zero = True       # a full read in this process (RowSpool.saved_position)
         return spool.saved_position()
     if not spool._writer.closed:
         spool._writer.flush()
@@ -1237,6 +1238,10 @@ def _saved_spool_position(spool):
     hashed_from = hasher.length
     _hash_file_into(path, hasher, observed.st_size)
     spool._sha256_held = (hasher.state(), hasher.length)
+    if hashed_from == 0:
+        # session 6: every byte of the file went through this process's hasher (a fresh spool's first save, or a
+        # state that could not be continued); read by _input_records, which then records the claim as the witness
+        spool._sha256_read_from_zero = True
     position = dict(path=str(path), count=spool._count, bytes=observed.st_size, sha256=hasher.hexdigest())
     try:
         tail = _line_ending_at(path, observed.st_size)
@@ -1282,6 +1287,7 @@ def _resume_row_spool(spool_class, position):
                        % fast.get('openssl', 'an unrecorded OpenSSL'))
             else:
                 held, why = (fast['sha256_state'], position['bytes']), None
+    full_pass = held is None
     if held is None:
         hasher, newlines = (_ResumableSha256(library) if library is not None else _PlainSha256()), [0]
         _hash_file_into(path, hasher, observed.st_size, newlines)
@@ -1302,6 +1308,9 @@ def _resume_row_spool(spool_class, position):
         spool._ends = [unpack(json.loads(first)), unpack(json.loads(last))]
     if held is not None:
         spool._sha256_held = held
+    # session 6: True only when the full pass above hashed the whole file here (its sha256 was checked against the
+    # claim); a fast resume (stat + last line) leaves the prefix unread by this process
+    spool._sha256_read_from_zero = full_pass
     spool._writer = path.open('a', encoding='utf-8', newline='\n')
     how = ('unchanged file: stat and last line checked, no full read' if why is None
            else 'one full pass (sha256 + count): ' + why)

@@ -578,10 +578,13 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
         event(dict(phase='code_identity_unavailable', rule='frankie_box_bedrock.code_identity could not be imported: '
                    'saves carry no function-level pass identity; the builder identity is still bound'))
     plan = json.loads(plan_path.read_bytes()) if (resume and plan_path.is_file()) else None
+    # dedupe pass 2026-10-08 (COMPUTE, resume only): the saved states and adapters are read ONCE here, checked against the
+    # plan's sha256s from those bytes and loaded below from the same bytes (before: a hashing read, then read_bytes again)
+    saved_raw = (states_path.read_bytes(), pickles_path.read_bytes()) if plan is not None else None
     if plan is not None and (plan.get('schema') != PLAN_SCHEMA or plan.get('manifest_hash') != manifest_hash
                              or plan.get('implementation') != identity or plan.get('segment_records') != segment_records
-                             or _sha256_file(states_path) != plan.get('states_sha256')
-                             or _sha256_file(pickles_path) != plan.get('adapters_sha256')):
+                             or hashlib.sha256(saved_raw[0]).hexdigest() != plan.get('states_sha256')
+                             or hashlib.sha256(saved_raw[1]).hexdigest() != plan.get('adapters_sha256')):
         raise ValueError('the saved pass-1 plan is for another manifest, code identity or segment size; refused '
                          '(move segments/ aside to start over)')
     if plan is not None and code is not None and plan.get('code') is not None and plan['code'] != code:
@@ -623,8 +626,8 @@ def ingest_parallel(scope, paths, *, pin, session, source_names, journal_path, o
         states, pickles = one['states'], one['pickles']
         records = one['records']
     else:
-        states = unpack(json.loads(states_path.read_bytes()))
-        pickles = pickle.loads(pickles_path.read_bytes())
+        states = unpack(json.loads(saved_raw[0]))           # the bytes checked above, not read again
+        pickles = pickle.loads(saved_raw[1])
         one = pass_one(scope, paths, pin, session, takes=takes, tails=tails, opening_state=opening_state,
                        source_names=source_names, evolve=False, event=event)          # the records again; no state recomputed
         records = one['records']
