@@ -104,3 +104,9 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
 
 ## Box-operator (opus): the restart on 64 (16:5xZ)
 - 16:45Z start: record read; run 37811038079 in_progress (head 27109f4d). Waiting for the stage before any box touch.
+- 16:46:24Z run 37811038079 completed, conclusion success.
+- 16:47:56Z PROBE (SSM 5bead97e, rc 0, read-only): staging-receipt status `staged`, commit 27109f4d..., files 4133,
+  active_checkout_changed false; `git rev-parse HEAD` = 27109f4de339c4947e0149c8450c08df92f0ade2; `grep -c spool_reopen`
+  frankie_box_experiment_root.py = 2 (the fix is in). State unchanged: root.json seq 2 e2e-20231018-a2/20231018 `saved`,
+  owner booking day-run-20231018-day_slot_root-1791402822-3111 (attempt -a1, cpus 0-31); ledger cpus 0-31 size 32 commit
+  d67b9c63 `retained`; receipt ABSENT; no frankie-* unit; no experiment_root process; nproc 64.
