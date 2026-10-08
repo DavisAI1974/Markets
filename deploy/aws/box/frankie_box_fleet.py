@@ -169,12 +169,22 @@ class FakeStore:
         path = self._path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
         data = (json.dumps(body, sort_keys=True, indent=1) + '\n').encode()
+        # write the full content to a unique temp, then os.link it into place: link is atomic and fails if the target
+        # exists (the exclusivity of If-None-Match: *), and the linked inode already carries the bytes, so a concurrent
+        # reader never sees a half-written object (S3's all-or-nothing object visibility). Toy fidelity: without this a
+        # racer can read the just-created but still-empty file.
+        import uuid
+        tmp = path.with_name(path.name + '.tmp-' + uuid.uuid4().hex)
+        tmp.write_bytes(data)
         try:
-            fd = os.open(str(path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+            os.link(str(tmp), str(path))     # atomic, exclusive; the inode already holds the bytes
         except FileExistsError:
             raise ConditionalExists(key)
-        with os.fdopen(fd, 'wb') as handle:
-            handle.write(data)
+        finally:
+            try:
+                os.remove(str(tmp))
+            except FileNotFoundError:
+                pass
         return True
 
     def put(self, key, body):

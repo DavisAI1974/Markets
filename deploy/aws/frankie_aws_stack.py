@@ -15,7 +15,14 @@ Contract
 - Steps never touch the fenced box modules; they only call the AWS APIs.
 
 Steps (in run order): ebs-status, s3-gateway-endpoint, s3-lifecycle, cw-agent, cw-alarms, detailed-monitoring,
-scheduler-stop, launch-template, compute-optimizer, snapshot-archive.
+scheduler-stop, golden-ami, launch-template, fleet-launch, compute-optimizer, snapshot-archive.
+
+The fleet steps (session 8, Greg's plan: up to 15 x 64-vCPU boxes, two days per box, ROOT in parallel, then the
+classroom one day at a time across the fleet): golden-ami images a STOPPED staged box; launch-template builds
+`frankie-day-box` (r7i.16xlarge, IMDSv2, Ssm, terminate-on-shutdown, the account CMK, user-data that stages a commit
+then runs the box's two assigned days); fleet-launch runs N boxes from it, refusing when N x 64 exceeds the live
+service-quota (On-Demand L-1216C47A or, with --spot, Spot L-34B43A08). All dry-run by default; --apply --confirm is
+NEVER run by the build role.
 """
 from __future__ import annotations
 
@@ -28,6 +35,7 @@ import time
 
 SCHEMA = 'FRANKIE_AWS_STACK_V1'
 CONFIRM = 'GREG_GO_AWS_STACK'
+ACCOUNT = '568968024170'
 REGION_BOX = 'us-east-1'
 REGION_DATA = 'us-east-2'
 BOX = 'i-035994afa8bdf66a5'
@@ -39,8 +47,18 @@ BUCKET_GRANITE = 'frankie-granite42-568968024170-us-east-1'
 AGENT_PARAMETER = 'AmazonCloudWatch-frankie-box'
 LAUNCH_TEMPLATE = 'frankie-day-box'
 ALARM_PREFIX = 'frankie-box-'
+# The fleet (session 8). The CMK is the account key the clones and the box root already use; EBS takes its ARN.
+CMK_KEY_ID = '77551067-fa8c-412c-87a5-490d85ae2e79'
+CMK_ARN = 'arn:aws:kms:%s:%s:key/%s' % (REGION_BOX, ACCOUNT, CMK_KEY_ID)
+QUOTA_ONDEMAND = 'L-1216C47A'           # Running On-Demand Standard (A,C,D,H,I,M,R,T,Z) instances, us-east-1
+QUOTA_SPOT = 'L-34B43A08'               # All Standard Spot Instance Requests, us-east-1
+REPO = 'DavisAI1974/Markets'
+GITHUB_TOKEN_PARAM = '/markets/frankie/github-token'   # SSM SecureString in us-east-2 the box reads (workflow line 43)
+FLEET_INSTANCE_TYPE = 'r7i.16xlarge'    # 64 vCPU, 512 GiB (Greg's fleet box)
+FLEET_RUN_DEFAULT = 'e2e-20231018-a2'   # the run name the days run under (the first box resumes a2)
 STEP_ORDER = ['ebs-status', 's3-gateway-endpoint', 's3-lifecycle', 'cw-agent', 'cw-alarms', 'detailed-monitoring',
-              'scheduler-stop', 'launch-template', 'compute-optimizer', 'snapshot-archive']
+              'scheduler-stop', 'golden-ami', 'launch-template', 'fleet-launch', 'compute-optimizer',
+              'snapshot-archive']
 
 # CloudWatch agent configuration: disk/mem/diskio with stable alarm dimensions [InstanceId, path] / [InstanceId].
 # Source: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html
@@ -60,26 +78,98 @@ AGENT_CONFIG = {
     },
 }
 
-# User-data for the one-box-per-day launch template: stripe every instance-store NVMe (or the scratch gp3 volumes)
-# into /mnt/scratch with mdadm RAID0. Source: https://docs.aws.amazon.com/ebs/latest/userguide/raid-config.html
-USER_DATA = r'''#!/bin/bash
-set -eu
-ROOT_DEV=$(lsblk -no PKNAME "$(findmnt -no SOURCE /)")
+# Optional scratch preamble: stripe any extra gp3/NVMe into /mnt/scratch (only when --scratch-volumes > 0; r7i has no
+# NVMe, so the fleet box normally has none). Source: https://docs.aws.amazon.com/ebs/latest/userguide/raid-config.html
+SCRATCH_SNIPPET = r'''ROOT_DEV=$(lsblk -no PKNAME "$(findmnt -no SOURCE /)")
 mapfile -t DEVS < <(lsblk -dno NAME,TYPE | awk '$2=="disk"{print "/dev/"$1}' | grep -v "/dev/${ROOT_DEV}")
-if [ "${#DEVS[@]}" -eq 0 ]; then echo "frankie: no scratch devices"; exit 0; fi
-mkdir -p /mnt/scratch
-if [ "${#DEVS[@]}" -eq 1 ]; then
-  mkfs.ext4 -F -E lazy_itable_init=0,lazy_journal_init=0 "${DEVS[0]}"
-  mount -o noatime,lazytime "${DEVS[0]}" /mnt/scratch
-else
-  mdadm --create /dev/md0 --level=0 --chunk=256 --raid-devices="${#DEVS[@]}" "${DEVS[@]}"
-  mkfs.ext4 -F -E lazy_itable_init=0,lazy_journal_init=0 /dev/md0
-  mount -o noatime,lazytime /dev/md0 /mnt/scratch
+if [ "${#DEVS[@]}" -gt 0 ]; then
+  mkdir -p /mnt/scratch
+  if [ "${#DEVS[@]}" -eq 1 ]; then
+    mkfs.ext4 -F -E lazy_itable_init=0,lazy_journal_init=0 "${DEVS[0]}"
+    mount -o noatime,lazytime "${DEVS[0]}" /mnt/scratch
+  else
+    mdadm --create /dev/md0 --level=0 --chunk=256 --raid-devices="${#DEVS[@]}" "${DEVS[@]}"
+    mkfs.ext4 -F -E lazy_itable_init=0,lazy_journal_init=0 /dev/md0
+    mount -o noatime,lazytime /dev/md0 /mnt/scratch
+  fi
+  for d in "${DEVS[@]}"; do echo 4096 > "/sys/block/$(basename "$d")/queue/read_ahead_kb" || true; done
+  chmod 1777 /mnt/scratch
 fi
-for d in "${DEVS[@]}"; do echo 4096 > "/sys/block/$(basename "$d")/queue/read_ahead_kb" || true; done
-chmod 1777 /mnt/scratch
-echo "frankie: scratch ready on ${#DEVS[@]} device(s)"
 '''
+
+# The fleet box's user-data (session 8). INSTALLS NOTHING NEW (git, awscli and the venv are baked into the golden AMI):
+# it reads its two assigned days + the commit from its own instance tags (IMDSv2, InstanceMetadataTags=enabled),
+# obtains the code at that commit under the required /opt/frankie-box/code/<commit> checkout (the box's own stage path),
+# turns fleet mode ON (FRANKIE_FLEET_DAY_LIST, so the classroom is serialised across the fleet by the S3 lease), claims
+# each day (the per-day conditional write), then starts each day on the root line with DAY_CPUS explicit. The handoff
+# chain carries each day to its successor; the classroom gate waits in line for the global lease. Every value is
+# explicit: the commit, the two days, DAY_CPUS, the run, the fleet location and region all come from tags/placeholders
+# the launch-template or fleet-launch fills. RUNTIME-UNVERIFIED (nothing has booted from this).
+FLEET_USER_DATA_TMPL = r'''#!/bin/bash
+set -euo pipefail
+exec >>/var/log/frankie-fleet-userdata.log 2>&1
+echo "frankie fleet user-data start $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+__SCRATCH__
+TOKEN=$(curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
+md() {{ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "http://169.254.169.254/latest/$1"; }}
+IID=$(md meta-data/instance-id)
+REGION=$(md meta-data/placement/region)
+COMMIT=$(md "meta-data/tags/instance/Commit")
+DAYS=$(md "meta-data/tags/instance/Day")           # the two assigned days, comma-separated
+RUN=$(md "meta-data/tags/instance/Run")
+case "$COMMIT" in *[!0-9a-f]*) echo "frankie: bad Commit tag"; exit 2;; esac
+[ "${{#COMMIT}}" -eq 40 ] || {{ echo "frankie: Commit tag must be a full 40-hex commit"; exit 2; }}
+export FRANKIE_FLEET_INSTANCE="$IID"
+export FRANKIE_FLEET_DAY_LIST="{day_list}"         # same for every box -> fleet mode ON (the classroom is serialised)
+export FRANKIE_FLEET_REGION="{fleet_region}"
+export MARKETS_SHA="$COMMIT"
+CODE_ROOT="/opt/frankie-box/code/$COMMIT"           # the box's required staged-checkout location
+BOX_DIR="/opt/frankie-box/box/$COMMIT"
+# the stage for this commit: the reviewed code at the pinned commit under CODE_ROOT (the self-driving fleet box stages
+# from git rather than the SSM reviewed-helper dispatch; see FLEET_SOURCE_STATUS for the open choice)
+if [ ! -d "$CODE_ROOT/.git" ]; then
+  GH=$(aws ssm get-parameter --with-decryption --name "{github_token_param}" --region "{token_region}" \
+        --query Parameter.Value --output text)
+  git clone "https://x-access-token:$GH@github.com/{repo}" "$CODE_ROOT"
+  unset GH
+fi
+git -C "$CODE_ROOT" fetch --depth 1 origin "$COMMIT"
+git -C "$CODE_ROOT" checkout -q "$COMMIT"
+export CODE_ROOT
+mkdir -p "$BOX_DIR"
+# run each assigned day on the root line, DAY_CPUS explicit; the handoff chain carries it on, the classroom lease
+# serialises the classroom across the fleet; the second day waits for CPUs/the first day's classroom (Greg's plan)
+IFS=',' read -ra DAY_ARR <<< "$DAYS"
+for D in "${{DAY_ARR[@]}}"; do
+  case "$D" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "frankie: bad Day '$D'"; continue;; esac
+  python3 -I -S -B "$CODE_ROOT/deploy/aws/box/frankie_box_fleet.py" claim-day \
+    --run "$RUN" --day "$D" --stage root --commit "$COMMIT" || echo "frankie: day $D already claimed; skipping"
+  CODE_ROOT="$CODE_ROOT" MARKETS_SHA="$COMMIT" RUN="$RUN" DAYS="$D" DAY_CPUS={day_cpus} DETACH=on \
+    bash "$CODE_ROOT/deploy/aws/box/frankie_box_experiment.sh" ACTION=start || echo "frankie: day $D start returned $?"
+done
+echo "frankie fleet user-data done $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+'''
+
+
+def fleet_user_data(args):
+    """Fill the fleet user-data template from the stack args (every value explicit)."""
+    bucket, prefix = _fleet_day_list_location(args)
+    day_list = '%s/%s' % (bucket, prefix) if bucket != BUCKET_GRANITE else prefix
+    scratch = SCRATCH_SNIPPET if args.scratch_volumes > 0 else 'true  # no scratch volumes on this box\n'
+    return FLEET_USER_DATA_TMPL.replace('__SCRATCH__', scratch).format(
+        day_list=day_list, fleet_region=args.fleet_region, github_token_param=args.github_token_param,
+        token_region=REGION_DATA, repo=REPO, day_cpus=args.day_cpus)
+
+
+def _fleet_day_list_location(args):
+    """(bucket, prefix) of the fleet day list from --fleet-day-list (default: a run-named prefix under the granite
+    bucket). Mirrors frankie_box_fleet.location so the box and the launcher agree."""
+    raw = (args.fleet_day_list or '').strip().removeprefix('s3://').strip('/')
+    import re
+    if '/' in raw and re.fullmatch(r'[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]', raw.split('/', 1)[0]) and \
+            ('-' in raw.split('/', 1)[0] or '.' in raw.split('/', 1)[0]):
+        return raw.split('/', 1)
+    return BUCKET_GRANITE, raw or ('fleet/%s' % args.run)
 
 
 def receipt(step, **fields):
@@ -371,27 +461,34 @@ def step_scheduler_stop(account, args):
 
 
 def launch_template_data(args):
-    """The one-box-per-day template. Source: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html"""
-    block_devices = [{'DeviceName': '/dev/sda1',
-                      'Ebs': {'VolumeType': 'gp3', 'VolumeSize': args.root_gib, 'Iops': args.root_iops,
-                              'Throughput': args.root_throughput, 'DeleteOnTermination': True, 'Encrypted': True}}]
+    """The fleet day-box template `frankie-day-box` (r7i.16xlarge, two days per box, resumable; session 8). IMDSv2
+    required, instance tags readable from metadata (the user-data reads Day/Commit/Run), detailed monitoring on,
+    terminate-on-shutdown, the account CMK on every encrypted volume, Project=frankie + Role/Name/Day tags on the
+    instance AND its volumes. Source: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html"""
+    root_ebs = {'VolumeType': 'gp3', 'VolumeSize': args.root_gib, 'Iops': args.root_iops,
+                'Throughput': args.root_throughput, 'DeleteOnTermination': True, 'Encrypted': True,
+                'KmsKeyId': args.kms_key_id}
+    block_devices = [{'DeviceName': '/dev/sda1', 'Ebs': root_ebs}]
     for i in range(args.scratch_volumes):
         block_devices.append({'DeviceName': '/dev/sd%s' % chr(ord('f') + i),
                               'Ebs': {'VolumeType': 'gp3', 'VolumeSize': args.scratch_gib, 'Iops': args.scratch_iops,
                                       'Throughput': args.scratch_throughput, 'DeleteOnTermination': True,
-                                      'Encrypted': True}})
-    tags = [{'Key': 'Project', 'Value': 'Frankie'}, {'Key': 'Role', 'Value': 'day-box'},
-            {'Key': 'KeepRunning', 'Value': 'false'}]
+                                      'Encrypted': True, 'KmsKeyId': args.kms_key_id}})
+    # Day/Commit/Run are stamped per box by fleet-launch; the template carries empty placeholders so the keys exist
+    tags = [{'Key': 'Project', 'Value': 'frankie'}, {'Key': 'Role', 'Value': 'day-box'},
+            {'Key': 'Name', 'Value': args.launch_template}, {'Key': 'KeepRunning', 'Value': 'false'},
+            {'Key': 'Day', 'Value': ''}, {'Key': 'Commit', 'Value': ''}, {'Key': 'Run', 'Value': args.run}]
     return {
         'ImageId': args.image_id,
         'InstanceType': args.instance_type,
         'IamInstanceProfile': {'Name': args.instance_profile},
-        'MetadataOptions': {'HttpTokens': 'required', 'HttpPutResponseHopLimit': 2, 'HttpEndpoint': 'enabled'},
+        'MetadataOptions': {'HttpTokens': 'required', 'HttpPutResponseHopLimit': 2, 'HttpEndpoint': 'enabled',
+                            'InstanceMetadataTags': 'enabled'},
         'Monitoring': {'Enabled': True},
         'InstanceInitiatedShutdownBehavior': 'terminate',
         'EbsOptimized': True,
         'BlockDeviceMappings': block_devices,
-        'UserData': base64.b64encode(USER_DATA.encode()).decode(),
+        'UserData': base64.b64encode(fleet_user_data(args).encode()).decode(),
         'TagSpecifications': [{'ResourceType': 'instance', 'Tags': tags}, {'ResourceType': 'volume', 'Tags': tags}],
     }
 
@@ -399,10 +496,10 @@ def launch_template_data(args):
 def step_launch_template(account, args):
     """Create the `frankie-day-box` launch template (a new version when it exists and the data differs)."""
     rec = receipt('launch-template', cost='$0 for the template; instances launched from it cost the type price '
-                                          '(r8id.8xlarge $2.66112/h, r7i.8xlarge $2.1168/h on-demand).')
+                                          '(r7i.16xlarge $4.233600/h on-demand, ~$1.27-1.70/h Spot).')
     if not args.image_id:
-        rec.update(status='needs_input', reason='--image-id not given (the golden AMI; the box AMI is '
-                                                'ami-025d99823a4caad37 but its 2 TB root is not the lean image)')
+        rec.update(status='needs_input', reason='--image-id not given (the golden AMI from the golden-ami step; the '
+                                                'box AMI ami-025d99823a4caad37 is a 2 TB root, not the lean fleet image)')
         return rec
     data = launch_template_data(args)
     try:
@@ -431,6 +528,128 @@ def step_launch_template(account, args):
                       LaunchTemplateData=data, VersionDescription='frankie_aws_stack initial',
                       TagSpecifications=[{'ResourceType': 'launch-template',
                                           'Tags': [{'Key': 'Project', 'Value': 'Frankie'}]}])
+    return _finish(rec, account)
+
+
+def step_golden_ami(account, args):
+    """Image a STOPPED staged box into a lean golden AMI the launch template boots from. NoReboot (the box is stopped);
+    the AMI name carries the staged commit. Source: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-an-ami-ebs.html"""
+    rec = receipt('golden-ami', cost='$0 to create; the AMI snapshots cost $0.05/GB-mo on changed blocks (a lean ~100 '
+                                     'GB root ~ $5/mo).')
+    if not args.commit:
+        rec.update(status='needs_input', reason='--commit not given (the staged commit the AMI name carries)')
+        return rec
+    try:
+        inst = account.read('ec2', REGION_BOX, 'describe_instances', InstanceIds=[args.source_instance_id])
+        state = inst['Reservations'][0]['Instances'][0]['State']['Name']
+    except Exception as error:  # noqa: BLE001
+        rec.update(status='refused', reason=_error_text(error))
+        return rec
+    name = 'frankie-day-box-%s-%s' % (args.commit[:12], time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()))
+    rec['checked'] = {'source_instance': args.source_instance_id, 'state': state, 'ami_name': name}
+    if state != 'stopped':
+        rec.update(status='refused', reason='the source instance is %s; image a STOPPED instance for a consistent root '
+                                            '(stop it first, or use NoReboot knowingly)' % state)
+        return rec
+    account.write(rec, 'ec2', REGION_BOX, 'create_image', InstanceId=args.source_instance_id, Name=name, NoReboot=True,
+                  Description='Frankie fleet day-box golden image, staged commit %s' % args.commit,
+                  TagSpecifications=[{'ResourceType': rt, 'Tags': [{'Key': 'Project', 'Value': 'frankie'},
+                                                                   {'Key': 'Role', 'Value': 'day-box-ami'},
+                                                                   {'Key': 'Commit', 'Value': args.commit}]}
+                                     for rt in ('image', 'snapshot')])
+    return _finish(rec, account)
+
+
+def _vcpus_of(instance):
+    """vCPUs of a running instance from its CpuOptions (CoreCount x ThreadsPerCore)."""
+    cpu = instance.get('CpuOptions') or {}
+    if cpu.get('CoreCount') and cpu.get('ThreadsPerCore'):
+        return int(cpu['CoreCount']) * int(cpu['ThreadsPerCore'])
+    return 0
+
+
+def _day_pairs(days, count):
+    """Split the day list into `count` boxes of up to two days each; returns [[d1,d2], [d3,d4], ...] (the last box may
+    carry one). Refuses when there are more boxes than day-pairs would fill or days do not cover the boxes."""
+    pairs = [days[i:i + 2] for i in range(0, len(days), 2)]
+    return pairs[:count]
+
+
+def step_fleet_launch(account, args):
+    """Launch N day-boxes from the template, two days each from the day list, refusing when N x 64 vCPUs exceeds the
+    LIVE service-quota (On-Demand L-1216C47A, or Spot L-34B43A08 with --spot). Spot is lawful for ROOT only (resumable
+    from the save marker; the classroom must stay On-Demand), so --spot boxes are tagged ROOT-stage. Dry run prints the
+    exact per-box plan. Source: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/launch-instance-from-launch-template.html"""
+    rec = receipt('fleet-launch', cost='r7i.16xlarge $4.233600/h on-demand (~$1.27-1.70/h Spot) per box; template, '
+                                       'tags and the quota read are $0.')
+    if args.count <= 0:
+        rec.update(status='needs_input', reason='--count N (the number of boxes) required')
+        return rec
+    days = [d for d in (args.days or '').split(',') if d]
+    if not days:
+        rec.update(status='needs_input', reason='--days d1,d2,... (the day list, two per box) required')
+        return rec
+    if any(len(d) != 8 or not d.isdigit() for d in days):
+        rec.update(status='refused', reason='every --days value must be an 8-digit YYYYMMDD')
+        return rec
+    if len(days) < args.count:
+        rec.update(status='refused', reason='%d days cannot fill %d boxes (need up to two per box, at least one each)'
+                                            % (len(days), args.count))
+        return rec
+    quota_code = QUOTA_SPOT if args.spot else QUOTA_ONDEMAND
+    market = 'Spot' if args.spot else 'On-Demand'
+    try:
+        quota = account.read('service-quotas', REGION_BOX, 'get_service_quota', ServiceCode='ec2',
+                             QuotaCode=quota_code)['Quota']['Value']
+        running = account.read('ec2', REGION_BOX, 'describe_instances',
+                               Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])['Reservations']
+    except Exception as error:  # noqa: BLE001
+        rec.update(status='refused', reason=_error_text(error))
+        return rec
+    used = 0
+    for res in running:
+        for inst in res.get('Instances', []):
+            is_spot = inst.get('InstanceLifecycle') == 'spot'
+            if is_spot == bool(args.spot):          # count only the instances that draw on THIS market's quota
+                used += _vcpus_of(inst)
+    need = args.count * 64
+    headroom = int(quota) - used
+    rec['checked'] = {'market': market, 'quota_code': quota_code, 'quota_vcpus': int(quota), 'used_vcpus': used,
+                      'headroom_vcpus': headroom, 'requested_vcpus': need, 'boxes': args.count}
+    if need > headroom:
+        rec.update(status='refused', reason='%d boxes need %d vCPUs; the live %s quota (%s) is %d with %d in use, '
+                                            'leaving %d. Reduce --count or raise the quota first.'
+                                            % (args.count, need, market, quota_code, int(quota), used, headroom))
+        return rec
+    pairs = _day_pairs(days, args.count)
+    if not args.image_id:
+        rec.update(status='needs_input', reason='--image-id (the golden AMI) required to launch; the plan above is '
+                                                'otherwise sound')
+        return rec
+    if not args.commit:
+        rec.update(status='needs_input', reason='--commit (the staged commit the boxes stage and run) required')
+        return rec
+    plan = []
+    for i, box_days in enumerate(pairs):
+        name = 'frankie-day-%s-%s' % (args.commit[:8], '-'.join(box_days))
+        tags = [{'Key': 'Project', 'Value': 'frankie'}, {'Key': 'Role', 'Value': 'day-box%s' % ('-root-spot' if args.spot else '')},
+                {'Key': 'Name', 'Value': name}, {'Key': 'Day', 'Value': ','.join(box_days)},
+                {'Key': 'Commit', 'Value': args.commit}, {'Key': 'Run', 'Value': args.run},
+                {'Key': 'ClassroomEligible', 'Value': 'false' if args.spot else 'true'}]
+        run_params = dict(LaunchTemplate={'LaunchTemplateName': args.launch_template, 'Version': '$Latest'},
+                          MinCount=1, MaxCount=1,
+                          TagSpecifications=[{'ResourceType': 'instance', 'Tags': tags},
+                                             {'ResourceType': 'volume', 'Tags': tags}])
+        if args.spot:
+            run_params['InstanceMarketOptions'] = {'MarketType': 'spot',
+                                                   'SpotOptions': {'SpotInstanceType': 'one-time'}}
+        plan.append(dict(box=i + 1, name=name, days=box_days, market=market))
+        account.write(rec, 'ec2', REGION_BOX, 'run_instances', **run_params)
+    rec['checked']['plan'] = plan
+    if args.spot:
+        rec['checked']['note'] = ('Spot boxes run ROOT only (resumable); their days\' classrooms must run on an '
+                                  'On-Demand box. The S3 classroom lease serialises classrooms fleet-wide; a Spot box '
+                                  'reaching the gate still waits in line. Runtime policy, named for Greg.')
     return _finish(rec, account)
 
 
@@ -500,7 +719,9 @@ STEPS = {
     'cw-alarms': step_cw_alarms,
     'detailed-monitoring': step_detailed_monitoring,
     'scheduler-stop': step_scheduler_stop,
+    'golden-ami': step_golden_ami,
     'launch-template': step_launch_template,
+    'fleet-launch': step_fleet_launch,
     'compute-optimizer': step_compute_optimizer,
     'snapshot-archive': step_snapshot_archive,
 }
@@ -532,15 +753,27 @@ def build_parser():
     # scheduler-stop
     p.add_argument('--stop-cron', default='')
     p.add_argument('--scheduler-role-arn', default='')
-    # launch-template
+    # launch-template (the fleet day-box) + golden-ami + fleet-launch
     p.add_argument('--launch-template', default=LAUNCH_TEMPLATE)
     p.add_argument('--image-id', default='')
-    p.add_argument('--instance-type', default='r8id.8xlarge')
+    p.add_argument('--instance-type', default=FLEET_INSTANCE_TYPE)
     p.add_argument('--instance-profile', default='Ssm')
-    p.add_argument('--root-gib', type=int, default=200)
-    p.add_argument('--root-iops', type=int, default=3000)
-    p.add_argument('--root-throughput', type=int, default=125)
-    p.add_argument('--scratch-volumes', type=int, default=0, help='extra gp3 volumes striped by user-data (0 = NVMe only)')
+    p.add_argument('--kms-key-id', default=CMK_ARN, help='the account CMK ARN for EBS encryption (the box root/clones use it)')
+    p.add_argument('--root-gib', type=int, default=3072, help='fleet root gp3 size (a day\'s ~1.4 TB x2, or clean-after-save)')
+    p.add_argument('--root-iops', type=int, default=16000)
+    p.add_argument('--root-throughput', type=int, default=1000)
+    p.add_argument('--day-cpus', type=int, default=32, choices=[16, 32, 64], help='CPUs a day-run books (verified: 32)')
+    p.add_argument('--run', default=FLEET_RUN_DEFAULT, help='the run name the days run under')
+    p.add_argument('--commit', default='', help='the staged commit the golden AMI/boxes carry and run')
+    p.add_argument('--github-token-param', default=GITHUB_TOKEN_PARAM, help='SSM SecureString (us-east-2) the box clones with')
+    p.add_argument('--fleet-day-list', default='', help='the S3 day list location (bucket/prefix); default a run-named '
+                                                        'prefix under the granite bucket')
+    p.add_argument('--source-instance-id', default=BOX, help='golden-ami: the STOPPED staged box to image')
+    p.add_argument('--fleet-region', default=REGION_BOX)
+    p.add_argument('--count', type=int, default=0, help='fleet-launch: number of boxes')
+    p.add_argument('--days', default='', help='fleet-launch: comma list of YYYYMMDD days (two per box)')
+    p.add_argument('--spot', action='store_true', help='fleet-launch: Spot market (ROOT-stage boxes only; classroom On-Demand)')
+    p.add_argument('--scratch-volumes', type=int, default=0, help='extra gp3 volumes striped by user-data (0 = none; r7i has no NVMe)')
     p.add_argument('--scratch-gib', type=int, default=2048)
     p.add_argument('--scratch-iops', type=int, default=16000)
     p.add_argument('--scratch-throughput', type=int, default=1000)
