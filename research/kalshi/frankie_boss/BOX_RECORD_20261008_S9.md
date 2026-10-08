@@ -374,3 +374,9 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   count and a holding claim, 0 read whole"; "resumed with DIGEST=off: the saved derivation's digest never completed;
   recorded as skipped"; "resumed from the saved derivation; no legacy calculation replay". ~80 s from kick to receipt.
   Entry running (the worker at the stage boundary: validate by claim -> save -> clean -> teacher).
+- 17:50-17:51Z (SSM 4bf4a75c, 7414e0d1, 47ead242): after the receipt the ROOT child exited; the WORKER process 6551 itself
+  (db96f24) is reading R/work/bedrock/recovery-.../ledgers/exact_member_rows.jsonl (193.7 GB) whole: read_bytes 50.9 GB
+  at 17:51:35Z, one thread in folio_wait, ~131 MB/s -> ends ~18:11Z. A post-receipt bookkeeping read in Run.root's done
+  path (native_pass_facts / all99 / brain_stage / inline_spool_layer_bytes: being located) re-reading data the ROOT just
+  took by claim: shape C (second pass). Not killed (the receipt is written; it ends on its own); the day's step record
+  root.json is written after it, then the boundary -> teacher. Fix assigned for the reused branch and every later day.
