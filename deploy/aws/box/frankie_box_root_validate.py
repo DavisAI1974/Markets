@@ -81,6 +81,7 @@ MAX_LINKS = 40
 MAX_UNPINNED = 5000
 OK_STATUSES = ('ok', 'archived_s3_head_ok')
 CHECK_SETTING = 'FRANKIE_ROOT_VALIDATE_CHECK'      # claim (default): take a holding file claim | full: read every file whole
+                                                   # | off: the boundary skips this validator (frankie_box_stage_handoff)
 OWN_PIN_SOURCES = ('calculations-receipt.json:', 'derive.json:')   # the ROOT's own measured witnesses (claim row added)
 S3_CLIENT = None      # a test or caller may set an S3 client here; otherwise boto3 is built lazily in the worker
 
@@ -519,8 +520,12 @@ def _s3_head(job, pointer):
 
 def check_mode():
     mode = os.environ.get(CHECK_SETTING, 'claim')
+    if mode == 'off':
+        # session 9: 'off' is the boundary's setting (frankie_box_stage_handoff skips this validator and records why)
+        raise ValueError('%s=off skips the validator at the stage boundary (frankie_box_stage_handoff); run it directly '
+                         'with claim or full' % CHECK_SETTING)
     if mode not in ('claim', 'full'):
-        raise ValueError('%s must be claim or full, not %r' % (CHECK_SETTING, mode))
+        raise ValueError('%s must be claim, full or off (the boundary skip), not %r' % (CHECK_SETTING, mode))
     return mode
 
 

@@ -33,7 +33,10 @@ The switch: FRANKIE_CLEAN_ON_SAVE=on (default) = validate -> save -> clean -> au
 -> successor directly (no save, no clean). One switch for every stage, recorded on every receipt.
 FRANKIE_ROOT_VALIDATE_CHECK=claim (default; session 9, one pass) lets step 1 take the ROOT's own file claims
 (R/work/file-claims.jsonl: stat identity + last 64 KiB of a file the ROOT witnessed whole) instead of a second whole read;
-=full reads every pinned file whole. The mode and the by-claim / read-whole counts are on validate.json and the log line. Receipts under
+=full reads every pinned file whole; =off (session 9, Greg: "we have too many gates and validations") SKIPS the validator
+at the boundary: handoff.json and the log line record validate = {check: 'off', basis, receipt_sha256} (the ROOT's own receipt
+and file claims are its validation) and the boundary goes on exactly as after exit 0. The mode and the by-claim / read-whole
+counts are on validate.json and the log line. Receipts under
 <run>/handoff/<key>/<stage>/: handoff.json (FRANKIE_STAGE_HANDOFF_V1), validate.json (the validator's), clean/
 clean-receipt.json + moved-manifest.json, trigger.json (FRANKIE_ROOT_CLEAN_TRIGGER_V1, with the stage name).
 
@@ -240,6 +243,28 @@ def _python():
     return VENV_PYTHON if Path(VENV_PYTHON).is_file() else sys.executable
 
 
+VALIDATE_CHECK = 'FRANKIE_ROOT_VALIDATE_CHECK'     # claim (default) | full | off (frankie_box_root_validate.CHECK_SETTING)
+OFF_BASIS = dict(root='validated by the ROOT itself: its receipt and file claims (retained_evidence_check / spool_reopen / '
+                      'file_claims on the receipt)')
+OFF_BASIS_OTHER = 'not re-read at the boundary (%s=off): the stage\'s own step receipt stands as its record' % VALIDATE_CHECK
+
+
+def validate_off(stage, roots, step_receipt):
+    """The validate record for FRANKIE_ROOT_VALIDATE_CHECK=off: no file is read but the one receipt hashed here (the ROOT's
+    calculations-receipt.json for the root collector, else the stage's step receipt)."""
+    import hashlib
+    root_stage = STAGES.get(stage, {}).get('collector') == 'root' and roots
+    receipt = Path(roots[0]) / 'calculations-receipt.json' if root_stage else Path(step_receipt)
+    try:
+        with receipt.open('rb') as stream:
+            sha = hashlib.file_digest(stream, 'sha256').hexdigest()
+    except OSError as error:
+        sha = None
+        receipt = '%s (unreadable: %s)' % (receipt, error)
+    return dict(check='off', exit_code=0, basis=OFF_BASIS['root'] if root_stage else OFF_BASIS_OTHER,
+                receipt=str(receipt), receipt_sha256=sha, setting=VALIDATE_CHECK)
+
+
 def run_validate(run, stage, key, out_dir, pins_args, lane, log):
     """The validator as a child on the lane (taskset of the held CPUs; FRANKIE_LANE_CPUS for lane_pin; the day's own
     stop marker as FRANKIE_LANE_STOP_FILE so a save stops it with exit 75). Returns (exit code, receipt or None)."""
@@ -408,15 +433,23 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
     else:
         pins_args = [a for r in receipts for a in ('--receipt', str(r))] + [a for r in roots for a in ('--dir', str(r))] + \
                     [a for r in roots for a in ('--only-under', str(r))]
-    _write(out_dir / 'handoff.json', dict(base, status='validating', roots=[str(r) for r in roots],
-                                          receipts=[str(r) for r in receipts], lane=lane))
-    code, validation, vlog = run_validate(run, stage, key, out_dir, pins_args, lane, log)
-    totals = (validation or {}).get('totals') or {}
-    base.update(roots=[str(r) for r in roots], receipts=[str(r) for r in receipts], lane=lane,
-                validate=dict(exit_code=code, log=vlog, totals=totals, mismatches=(validation or {}).get('mismatches'),
-                              reader_refusals=(validation or {}).get('reader_refusals'),
-                              seconds=(validation or {}).get('seconds'), receipt=str(out_dir / 'validate.json'),
-                              check=(validation or {}).get('check')))
+    if os.environ.get(VALIDATE_CHECK, 'claim') == 'off':
+        # session 9: the validator is skipped; the boundary goes on exactly as after exit 0
+        code, validation, totals = 0, None, {}
+        base.update(roots=[str(r) for r in roots], receipts=[str(r) for r in receipts], lane=lane,
+                    validate=validate_off(stage, roots, step_receipt))
+        log('%s %s: validate off (%s=off; %s; receipt sha256 %s)' % (stage, key, VALIDATE_CHECK, base['validate']['basis'],
+                                                                     base['validate']['receipt_sha256']))
+    else:
+        _write(out_dir / 'handoff.json', dict(base, status='validating', roots=[str(r) for r in roots],
+                                              receipts=[str(r) for r in receipts], lane=lane))
+        code, validation, vlog = run_validate(run, stage, key, out_dir, pins_args, lane, log)
+        totals = (validation or {}).get('totals') or {}
+        base.update(roots=[str(r) for r in roots], receipts=[str(r) for r in receipts], lane=lane,
+                    validate=dict(exit_code=code, log=vlog, totals=totals, mismatches=(validation or {}).get('mismatches'),
+                                  reader_refusals=(validation or {}).get('reader_refusals'),
+                                  seconds=(validation or {}).get('seconds'), receipt=str(out_dir / 'validate.json'),
+                                  check=(validation or {}).get('check')))
     if code == 75:
         return _write(out_dir / 'handoff.json', dict(base, status='validate_saved',
                                                      reason='the validator stopped on the day\'s standing save (exit 75); '
