@@ -316,3 +316,14 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   16,000/1,250, archive 10,000/1,000; session 8's 18:20Z timer is the fallback.
 - Restage for the resume after SAVED: db96f24 (validator by claim incl. digest/container rows; no from-scratch retry;
   2ce40e8) dispatched 17:26Z.
+
+## Parent: Greg 17:2xZ "Relaunch unless that render is absolutely needed in next 5 minutes"
+- Decision: the digest is read for work only by the classroom (classroom-arm day); the teacher (next, the long pole) does
+  not read it. The render at the baseline disk rate needs ~2 decodes of 497 GB (~1 h+ until the 18:08Z raise, then ~15-20
+  min). So: STOP the ROOT child now with the marker standing (lawful: Run.child -> check_save -> SAVED, everything
+  retained; the digest's scratch stays, a killed pass restarts from its last checkpoint later), then ACTION=resume +
+  ACTION=kick with FRANKIE_ROOT_DIGEST=off on the db96f24 checkout: receipt in minutes (claims), boundary validate by
+  claim, teacher on 64 at once. The digest is rendered BEFORE the classroom, after the volume raise, inside the day's own
+  booking (the standalone render takes only CPUs outside bookings: a small render-mode change needed; written while the
+  teacher runs). The operator role was stopped by Greg: the parent drives the box directly from here.
+- 17:28:23Z (SSM 586f9970): CR4 staging receipt not yet on the box (run 37816561759 in progress); nothing killed yet.
