@@ -804,11 +804,13 @@ def box_in_use(run_name=None):
         notes = sorted(Q.SAVE_DIR.glob('*.save-request.json.clean.json')) if Q.SAVE_DIR.is_dir() else []
         for note in notes:
             try:
-                status = json.loads(note.read_bytes()).get('status')
+                body = json.loads(note.read_bytes())
+                status, note_pid = body.get('status'), body.get('pid')
             except (OSError, ValueError):
-                status = 'unreadable'
-            if status in ('running', 'unreadable'):
-                busy.append('a stage clean is in progress on %s (%s)' % (note.name, status))
+                status, note_pid = 'unreadable', None
+            # session 6 review finding 8 (Patch H): a 'running' note is live only while its recorded pid exists
+            if status == 'unreadable' or (status == 'running' and note_pid and Path('/proc/%s' % note_pid).exists()):
+                busy.append('a stage clean is in progress on %s (%s, pid %s)' % (note.name, status, note_pid))
     except Exception:  # noqa: BLE001 - the marker notes are a hint; the process/unit checks above are the record
         pass
     return busy

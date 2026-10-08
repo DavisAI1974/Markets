@@ -1879,7 +1879,7 @@ def _archive_marker(marker, label):
         return []
     stamp = int(time.time())
     archived = []
-    for path in (Path(marker), Path(str(marker) + '.class-ack.json')):
+    for path in (Path(marker), Path(str(marker) + '.class-ack.json'), Path(str(marker) + '.clean.json')):   # session 6 review H
         if path.exists():
             target = path.with_name('%s.%s-%d' % (path.name, label, stamp))
             os.rename(path, target)
@@ -2278,7 +2278,14 @@ def retire_run(run, by, reason):
             for x in mine:
                 event(line, 'retired', seq=x['seq'], run=run, day=x['day'], state=x['state'], by=by, reason=reason)
             out[line] = [dict(seq=x['seq'], day=x['day'], state=x['state']) for x in mine]
-    return dict(schema='FRANKIE_QUEUE_RETIRE_V1', run=run, retired=out, by=by, reason=reason,
+    # session 6 review finding 6 (Patch F): the retired run's bind-mount fstab lines (frankie-clean run=<run>) are umounted
+    # and removed; the archive copies stay where they are
+    try:
+        import frankie_box_root_move as M
+        fstab_bind_lines = M.remove_fstab_lines(run)
+    except Exception as error:  # noqa: BLE001 - named, never the retire's outcome
+        fstab_bind_lines = dict(error='%s: %s' % (type(error).__name__, error))
+    return dict(schema='FRANKIE_QUEUE_RETIRE_V1', run=run, retired=out, by=by, reason=reason, fstab_bind_lines=fstab_bind_lines,
                 note='entries kept under each line\'s retired list; bookings, ROOT directories, receipts and brain entries '
                      'untouched')
 

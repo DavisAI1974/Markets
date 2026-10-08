@@ -101,7 +101,13 @@ def _teacher_rows_dirs(record):
         base = Path(X.TEACHER_ROWS)
     except ImportError:
         base = Path('/opt/frankie-box/work/experiment-teacher-rows')
-    return [base / d for d in (record.get('days') or []) if isinstance(d, str)]
+    dirs = [base / d for d in (record.get('days') or []) if isinstance(d, str)]
+    # the step receipt also names the rows directories per day under inspection.outputs.rows (experiment.py 4232)
+    rows = ((record.get('inspection') or {}).get('outputs') or {}).get('rows') or {}
+    for value in (rows.values() if isinstance(rows, dict) else []):
+        if isinstance(value, str) and value.startswith('/') and Path(value) not in dirs:
+            dirs.append(Path(value))
+    return dirs
 
 
 def _report_dirs(record):
@@ -112,7 +118,7 @@ def _report_dirs(record):
 STAGES = {
     'root': dict(roots=('calculations',), inner=('calculations-receipt.json', 'work/derive.json'), collector='root',
                  guarded=('work/derived/.rows/', 'work/bedrock/', 'work/derived/.projection-v2/'), successor='teacher'),
-    'teacher': dict(roots=('rows',), roots_from=_teacher_rows_dirs, inner=('receipt.json',), successor='classroom (arm day) / data'),
+    'teacher': dict(roots=(), roots_from=_teacher_rows_dirs, inner=('receipt.json',), successor='classroom (arm day) / data'),
     'classroom': dict(roots=('classroom',), inner=('completion.json', 'receipt.json'), successor='data'),
     'data': dict(roots=('target',), inner=('MANIFEST.json',), successor='search'),
     'search': dict(roots=('target',), inner=('MANIFEST.json',), successor='lessons (batch) / frankie_lessons'),
@@ -466,26 +472,35 @@ def wait_saved(run, day, bound, say=print):
 
 
 def successor_running(run, day, own_unit=None):
-    """Processes or units already working this run/day (the successor must not be started twice)."""
+    """Processes or workers already working this run/day (the successor must not be started twice). Review 2026-10-08
+    finding 7 (Patch G): a ROOT-line worker's argv is `frankie_box_frankie_queue.py --action worker ... --scope RUN:DAYS`
+    and its unit is frankie-queue-<line>-<epoch>, so the match is on the worker's --scope (and the line's lock through
+    frankie_box_frankie_queue.worker_state), besides the stage children (frankie_box_experiment*) naming run and day."""
     found = []
     try:
-        out = subprocess.run(['pgrep', '-af', 'frankie_box_experiment'], capture_output=True, text=True).stdout
+        out = subprocess.run(['pgrep', '-af', 'frankie_box_experiment|frankie_box_frankie_queue.py --action worker'],
+                             capture_output=True, text=True).stdout
         for line in out.splitlines():
             pid = line.split(' ', 1)[0]
-            if pid != str(os.getpid()) and run in line and day in line and 'stage_handoff' not in line:
+            if pid == str(os.getpid()) or 'stage_handoff' in line:
+                continue
+            if '--action worker' in line:
+                scope = line.split('--scope', 1)[1].split()[0] if '--scope' in line else ''
+                if scope.startswith(run + ':') and day in scope.split(':', 1)[1].split(','):
+                    found.append(line[:200])
+            elif run in line and day in line:
                 found.append(line[:200])
-    except OSError:
+    except (OSError, IndexError):
         pass
-    if shutil.which('systemctl'):
-        try:
-            out = subprocess.run(['systemctl', 'list-units', 'frankie-*', '--all', '--plain', '--no-legend'],
-                                 capture_output=True, text=True).stdout
-            for line in out.splitlines():
-                name = line.split()[0] if line.split() else ''
-                if run in name and day in name and 'clean' not in name and name != own_unit:
-                    found.append(name)
-        except OSError:
-            pass
+    try:
+        import frankie_box_frankie_queue as Q
+        for line_name in Q.LINES:
+            status, held = Q.worker_state(line_name)
+            scope = (status or {}).get('scope') or ''
+            if held and scope.startswith(run + ':') and day in scope.split(':', 1)[1].split(','):
+                found.append('%s line worker holds its lock (pid %s, scope %s)' % (line_name, (status or {}).get('pid'), scope))
+    except Exception:  # noqa: BLE001 - no queue on this host (toys): the process check above stands
+        pass
     return found
 
 
@@ -567,6 +582,7 @@ def clean_action(args):
     cpus = sorted(V._parse_cpus(args.cpus)) if args.cpus else None
     archive_root = Path(os.environ.get('FRANKIE_ARCHIVE_ROOT') or M.ARCHIVE_ROOT)
     box_root = Path(os.environ.get('FRANKIE_BOX_ROOT') or M.BOX_ROOT)
+    os.environ['FRANKIE_CLEAN_LABEL'] = 'run=%s day=%s stage=%s' % (args.run, args.day, args.stage)   # the fstab line's tag
     receipt = M.clean(roots, expected, out_dir=clean_dir, cpus=cpus, guarded=STAGES.get(args.stage, {}).get('guarded', ()),
                       floor=floor_bytes(), archive_root=archive_root, box_root=box_root, say=say,
                       native_complete=native_complete(args.stage, roots))
@@ -591,15 +607,15 @@ def clean_action(args):
                                      if i['kind'] in ('move', 'archive', 'bind_mount') and i.get('status') == 'done'])
     _write(out_dir / 'trigger.json', result)
     _note_beside_marker(marker, dict(result, note='the clean unit\'s outcome beside the day\'s marker'))
-    # the S3 Glacier second copy (call (f): both), AFTER the trigger so the day's chain never waits for it; on this
-    # unit's lane; its receipt lands beside the clean receipt; a refusal (switch off, no bucket) is recorded, never a failure
+    # the S3 Glacier second copy (call (f): both), AFTER the trigger so the day's chain never waits for it, in its OWN
+    # detached unit with no lane pin, under nice -n 19 ionice -c 3 (review finding 9, Patch I: the resumed day owns the
+    # retained lane and reads the same volume); its receipt lands beside the clean receipt; a refusal (switch off, no
+    # bucket, above the cap) is recorded there, never a failure
     try:
-        fake = os.environ.get('FRANKIE_ARCHIVE_S3_FAKE')
-        s3 = M.upload_archives(receipt['items'], out_dir=clean_dir, archive_root=archive_root,
-                               transport=_fake_transport(fake) if fake else None, say=say)
-        say('s3 second copy: %s (%s objects; %s)' % (s3.get('status'), s3.get('uploaded', 0), s3.get('reason') or s3.get('bucket')))
+        started = start_upload_unit(args, clean_dir, say)
+        say('s3 second copy: unit started (%s)' % json.dumps(started, sort_keys=True, default=str))
     except Exception as error:  # noqa: BLE001 - never the clean's outcome
-        say('s3 second copy: not made (%s: %s)' % (type(error).__name__, error))
+        say('s3 second copy: unit not started (%s: %s)' % (type(error).__name__, error))
     if result['status'] == 'done' and not os.environ.get('FRANKIE_HANDOFF_NO_KEEP_RUNNING'):
         try:
             import frankie_box_experiment as X
@@ -610,9 +626,59 @@ def clean_action(args):
     return 0 if result['status'] == 'done' else 3
 
 
+def start_upload_unit(args, clean_dir, say=print):
+    """The Glacier second copy as its own detached unit: unpinned (no taskset), nice -n 19 ionice -c 3, the launching
+    checkout's module with --action upload; recorded in <clean dir>/s3-upload-unit.json."""
+    clean_dir = Path(clean_dir)
+    log_path = clean_dir / 's3-upload.log'
+    argv = [_python(), '-B', str(Path(args.code_root) / 'deploy/aws/box/frankie_box_stage_handoff.py'), '--action', 'upload',
+            '--run', args.run, '--day', args.day, '--stage', args.stage, '--handoff-dir', str(args.handoff_dir),
+            '--code-root', str(args.code_root), '--commit', args.commit]
+    env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(args.code_root), HOME=os.environ.get('HOME') or '/root')
+    for name in ('FRANKIE_ARCHIVE_S3', 'FRANKIE_ARCHIVE_BUCKET', 'FRANKIE_ARCHIVE_PREFIX', 'FRANKIE_ARCHIVE_REGION',
+                 'FRANKIE_ARCHIVE_S3_FAKE', 'FRANKIE_ARCHIVE_S3_MAX_BYTES', 'FRANKIE_ARCHIVE_ROOT', 'FRANKIE_HANDOFF_PYTHON',
+                 'FRANKIE_HANDOFF_DETACH'):
+        if os.environ.get(name):
+            env[name] = os.environ[name]
+    gentle = (['nice', '-n', '19'] if shutil.which('nice') else []) + (['ionice', '-c', '3'] if shutil.which('ionice') else [])
+    how = None
+    if shutil.which('systemd-run') and os.environ.get('FRANKIE_HANDOFF_DETACH', 'systemd') != 'session':
+        unit = 'frankie-upload-%s-%s-%s-%d' % (args.stage, args.run, args.day, int(time.time()))
+        cmd = ['systemd-run', '--unit', unit, '--collect', '-p', 'StandardOutput=append:%s' % log_path,
+               '-p', 'StandardError=append:%s' % log_path, '-p', 'KillMode=mixed', '-p', 'Nice=19', '-p', 'IOSchedulingClass=idle'] + \
+              [x for k, v in sorted(env.items()) for x in ('-E', '%s=%s' % (k, v))] + argv
+        code = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).returncode
+        how = dict(method='systemd-run', unit=unit, exit_code=code, nice=19, ioclass='idle')
+    if how is None or how['exit_code'] != 0:
+        with open(log_path, 'ab') as out:
+            proc = subprocess.Popen(gentle + argv, env=dict(os.environ, **env), stdout=out, stderr=subprocess.STDOUT,
+                                    stdin=subprocess.DEVNULL, start_new_session=True)
+        how = dict(method='new session', pid=proc.pid, prefix=gentle, systemd_run=how)
+    _write(clean_dir / 's3-upload-unit.json', dict(schema='FRANKIE_ROOT_MOVE_S3_UNIT_V1', at=time.time(), how=how, argv=argv,
+                                                  rule='unpinned, nice 19 / idle I/O class, after the trigger; the chain never waits'))
+    return how
+
+
+def upload_action(args):
+    """The upload unit's body: the clean receipt's items -> frankie_box_root_move.upload_archives (Glacier second copy)."""
+    import frankie_box_root_move as M
+    clean_dir = Path(args.handoff_dir) / 'clean'
+    receipt = _load(clean_dir / 'clean-receipt.json')
+    if not receipt:
+        print('no clean receipt under %s; nothing to upload' % clean_dir, flush=True)
+        return 3
+    archive_root = Path(os.environ.get('FRANKIE_ARCHIVE_ROOT') or M.ARCHIVE_ROOT)
+    fake = os.environ.get('FRANKIE_ARCHIVE_S3_FAKE')
+    s3 = M.upload_archives(receipt['items'], out_dir=clean_dir, archive_root=archive_root,
+                           transport=_fake_transport(fake) if fake else None,
+                           say=lambda t: print('%s %s' % (time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), t), flush=True))
+    print('s3 second copy: %s (%s objects; %s)' % (s3.get('status'), s3.get('uploaded', 0), s3.get('reason') or s3.get('bucket')), flush=True)
+    return 0 if s3.get('status') in ('done', 'refused') else 3
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split('\n', 1)[0])
-    parser.add_argument('--action', required=True, choices=('clean', 'trigger'))
+    parser.add_argument('--action', required=True, choices=('clean', 'trigger', 'upload'))
     parser.add_argument('--run', required=True)
     parser.add_argument('--day', required=True)
     parser.add_argument('--stage', required=True)
@@ -625,6 +691,8 @@ def main(argv=None):
     parser.add_argument('--receipt', action='append', default=[])
     parser.add_argument('--cpus')
     args = parser.parse_args(argv)
+    if args.action == 'upload':
+        return upload_action(args)
     if args.action == 'trigger':
         result = trigger(args.handoff_dir, args.run, args.day, args.stage, args.code_root, args.commit)
         print(json.dumps(result, indent=1, sort_keys=True, default=str))

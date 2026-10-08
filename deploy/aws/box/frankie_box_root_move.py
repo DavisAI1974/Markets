@@ -170,6 +170,12 @@ def plan(roots, pins, *, guarded=(), floor=FLOOR_BYTES, archive_root=ARCHIVE_ROO
             if not directory.is_dir() or directory.is_symlink():
                 continue
             real = os.path.realpath(str(directory))
+            if os.path.ismount(directory):
+                # review 2026-10-08 finding 5 (Patch E): an earlier clean bind-mounted it already; nothing to copy or move
+                items.append(dict(kind='stay', old_path=str(directory), new_path=None, bytes=_du(directory), pinned=True,
+                                  reason='already a bind mount (an earlier clean); nothing planned'))
+                skip.add(real)
+                continue
             inside = {os.path.relpath(r, real): pins[r] for r in pins if r.startswith(real + '/')}
             size = _du(directory)
             skip.add(real)
@@ -187,7 +193,8 @@ def plan(roots, pins, *, guarded=(), floor=FLOOR_BYTES, archive_root=ARCHIVE_ROO
                 except ValueError:
                     rel = Path(str(directory).lstrip('/'))
                 items.append(dict(kind='bind_mount', old_path=str(directory), new_path=str(Path(archive_root) / rel), bytes=size,
-                                  pinned=True, pins_inside={k: {x: v.get(x) for x in ('bytes', 'sha256')} for k, v in inside.items()},
+                                  pinned=True, archive_root=str(archive_root),
+                                  pins_inside={k: {x: v.get(x) for x in ('bytes', 'sha256')} for k, v in inside.items()},
                                   reason='guarded (safe_path readers refuse a symlink): %d bytes, %d pinned files; moved by '
                                          'bind mount' % (size, len(inside))))
     pinned_dirs = set()
@@ -355,8 +362,52 @@ def _readme(old, new, kind, bytes_, sha256, listing=None):
                               'archive' if kind == 'archive' else 'file', sha256,
                               ('listing: %s\n' % listing) if listing else '',
                               ('rm the symlink; zstd -dc %s | tar -xf - -C %s' % (new, os.path.dirname(old)))
-                              if kind == 'archive' else 'rm the symlink; cp %s %s' % (new, old)))
+                              if kind == 'archive' else
+                              ('this directory is a BIND MOUNT of %s: `umount %s` FIRST, then remove the fstab line '
+                               'marked frankie-clean; NEVER rm -rf through it (that deletes the archive copy)'
+                               % (new, old[:-len('.bind-mount')] if old.endswith('.bind-mount') else old))
+                              if kind == 'bind_mount' else 'rm the symlink; cp %s %s' % (new, old)))
     Path(old + README_SUFFIX).write_text(text, encoding='utf-8')
+
+
+def fstab_has_mount(fstab, mount_point):
+    """True when the fstab file names mount_point (its second field) on a non-comment line."""
+    wanted = str(mount_point).rstrip('/') or '/'
+    try:
+        for line in Path(fstab).read_text().splitlines():
+            fields = line.split('#', 1)[0].split()
+            if len(fields) >= 2 and fields[1].rstrip('/') == wanted:
+                return True
+    except OSError:
+        return False
+    return False
+
+
+def remove_fstab_lines(run, fstab=None, umount=True):
+    """retire_run's part (review finding 6, Patch F): every `# frankie-clean run=<run> ...` bind line of the retired run
+    is umounted (when still mounted) and removed from fstab; the archive copies stay. Returns what was done."""
+    fstab = fstab or os.environ.get('FRANKIE_FSTAB') or '/etc/fstab'
+    tag = '# frankie-clean run=%s ' % run
+    try:
+        lines = Path(fstab).read_text().splitlines()
+    except OSError as error:
+        return dict(fstab=fstab, removed=[], error=str(error))
+    kept, removed = [], []
+    for line in lines:
+        if tag in line:
+            fields = line.split('#', 1)[0].split()
+            mount_point = fields[1] if len(fields) >= 2 else None
+            unmounted = None
+            if umount and mount_point and os.path.ismount(mount_point):
+                unmounted = subprocess.run(['umount', mount_point], capture_output=True, text=True).returncode == 0
+            removed.append(dict(line=line, mount_point=mount_point, unmounted=unmounted))
+        else:
+            kept.append(line)
+    if removed:
+        pending = fstab + '.pending'
+        Path(pending).write_text('\n'.join(kept) + ('\n' if kept else ''))
+        os.replace(pending, fstab)
+    return dict(fstab=fstab, removed=removed)
 
 
 def _taskset(cpus):
@@ -594,7 +645,15 @@ def do_bind_mount(item, cpus=None, say=print, mount_cmd=None, fstab=None):
     out.update(verified_through_mount=len(verified), ismount=os.path.ismount(old))
     if bad or (mount_cmd == 'mount' and not os.path.ismount(old)):
         return unwind('verification through the mount failed: %s' % (bad[:5] or 'not a mount point'))
-    line = '%s %s none bind,nofail 0 0' % (new, old)
+    # review 2026-10-08 finding 6 (Patch F): the archive volume itself must be in fstab (else the bind line would come up
+    # on an EMPTY directory after a reboot); the bind line requires that mount and carries a frankie-clean label that
+    # retire_run removes (remove_fstab_lines) after umount
+    archive_root = str(item.get('archive_root') or os.environ.get('FRANKIE_ARCHIVE_ROOT') or ARCHIVE_ROOT)
+    if not fstab_has_mount(fstab, archive_root):
+        return unwind('the archive volume %s has no entry in %s: a bind line would come up on an empty directory after a '
+                      'reboot' % (archive_root, fstab))
+    line = '%s %s none bind,nofail,x-systemd.requires-mounts-for=%s 0 0  # frankie-clean %s' % (
+        new, old, archive_root, os.environ.get('FRANKIE_CLEAN_LABEL') or 'run=? day=? stage=?')
     try:
         current = Path(fstab).read_text() if Path(fstab).is_file() else ''
         if line not in current:
