@@ -122,6 +122,26 @@ the dry-run script is deploy/aws/frankie_aws_stack.py (drop `--apply` for the dr
 Order when the connector is back: A, then B and C (cheap, reversible, save money today), then the Greg-decided ones (E, F, G),
 then D and H with the fleet go. Nothing here starts a box.
 
+## The a2 clone for the 64-vCPU second box (Greg, 2026-10-08 ~11:40Z: "Do clone now while we wait")
+Both boxes sit in us-east-1d, so a same-AZ copy is lawful. EBS Volume Clone (CreateVolume from a source volume, instant) is the
+better tool but the Aws connector's sandbox SDK predates it ("Unknown parameter 'SourceVolumeId'"), so the route taken is the
+documented snapshot route: SNAPSHOTS STARTED 11:45:32Z with the main box STOPPED (clean, consistent):
+  snap-099dba434c7c58222 <- vol-0d36715924f03b86c (main root: OS + /opt/frankie-box/work incl. a2's SAVED day), 2048 GiB, encrypted
+  snap-088e77e04676ab8d9 <- vol-004b68c077be09cc9 (main archive volume), 2048 GiB, encrypted
+  (tags Name=frankie-a2-root-20261008 / frankie-a2-archive-20261008, Purpose=frankie-a2-clone, TargetInstance=i-0d17573dbce871520)
+Next (self check-in armed for 12:26Z, trig_016Ce4a7JcLvwNxgA19AUGyj): when both read completed, CreateVolume from each in
+us-east-1d (gp3 2048 GiB, baseline 3,000 / 125 while idle, VolumeInitializationRate 300 MiB/s so the copy finishes at a known
+rate, same CMK), tagged frankie-a2-clone-{root,archive}-20261008; NOT attached, NO box started. Before any run on the second box:
+ModifyVolume both to 16,000 / 1,250 (6 h cooldown per volume between modifications).
+Box-side plan when Greg gives the go (NOT done): the cloned root carries the Ubuntu label cloudimg-rootfs like the second box's own
+root; attach it only after the second box has booted (hot attach, /dev/sdg), mount it at /mnt/main-root and bind-mount
+/mnt/main-root/opt/frankie-box over /opt/frankie-box (or boot the second box FROM the clone by swapping /dev/sda1 while stopped:
+Greg's call; it makes the second box the main box's whole environment on 64 CPUs). The archive clone attaches as /dev/sdh at
+/opt/frankie-box/archive. Alternative Greg can do himself in the console in seconds: EC2 > Volumes > select the volume > Actions >
+Copy volume (the instant clone); then these snapshots are the durable a2 backup instead of the clone source.
+Costs: the two snapshots ~$0.05/GB-mo on used blocks (~$75/mo if kept; they are also the first durable copy of a2 off the main
+box); the two clone volumes $328/mo at baseline; initialization ~$0.0036/GiB of snapshot data.
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
