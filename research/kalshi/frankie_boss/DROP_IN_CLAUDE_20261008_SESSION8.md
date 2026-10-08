@@ -314,6 +314,16 @@ attached; instance profile arn:aws:iam::568968024170:instance-profile/frankie-da
 tag landed as key "Project = frankie" with an empty value (fix to Project=frankie when convenient). launch-template's default
 profile now resolves. The fleet launch stays blocked only by the review's B1-B7 fixes (slice f, in progress).
 
+## Fleet slice (f) LANDED (0c1b9d6c, 73293c51, cda7b0e3, b11b541d, c914f658; parent verified: 64 fleet toys, compile, YAML, bash -n,
+diff check): all seven BLOCKING review findings fixed, S1-S14 and N1-N8 fixed or answered (finding -> commit table in
+FLEET_SOURCE_STATUS_SESSION8.md). Key shapes: user-data PREPARES a box and installs a reboot-resume unit, fresh day starts are
+driven per instance by frankie_box_run.yml (the review's option a; no self-start, no `|| echo`); the classroom gate takes the
+global lease ONLY when the box's CPUs are free and the WAIT resume rebooks; golden-ami refuses a dirty/large source and
+user-data wipes box-local run state; KeepRunning=true stamped at launch; epoch heartbeats. The other half of B4 (the queue's
+request_save RELEASES a fleet_waiting day's booking, REBOOK on resume) is being built by a queue role in a worktree now.
+An independent RE-REVIEW of B1-B7 is running (REVIEW_20261008_FLEET_SOURCE_PASS2.md); the fleet template is launchable for one
+proof box only after that verdict and the queue change, and only on Greg's explicit "launch the first box".
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
