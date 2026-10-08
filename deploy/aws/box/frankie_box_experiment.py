@@ -1234,6 +1234,8 @@ class Run:
         self.queue_previous = None       # the class worker: (PREVIOUS, None, from) taken from the class line
         self.school_day = None           # the class worker: the class line's school-day number = the report number N
         self._school_recovery = set()    # recover_school: the days whose own successor drain holds drain.lock (no nested drain)
+        self._root_rederived = {}        # day -> session 9: the root step record re-derived from the ROOT on disk (root_on_disk)
+        self._teacher_rederived = None   # the current teacher call's days whose root record was re-derived (on its receipt)
         self._day_file_sha = {}          # (day, ingest dir) -> (the attached day file's sha256, why absent), read once (day_rows)
         # THE OWNER BINDING (Step 8, 2026-10-07): a queue day carries its owner (run, day, host, attempt, commit, code root,
         # exact CPU set, booking, day-specific save marker), bound by the queue BEFORE dispatch. This Run reads the save
@@ -1358,6 +1360,36 @@ class Run:
             return False, 'superseded by the checked school successor %s' % retained['original']['sha256'][:12]
         return True, None
 
+    def root_on_disk(self, e):
+        """Session 9 (Greg: "stuff like that should never kill workflow"): a stage's readiness is judged from the ROOT ON
+        DISK, never from a stale step record. When the day's root step record is not finished (a killed attempt's 'failed',
+        a worker killed before it re-recorded the step) but root_of finds the day's completed calculations-receipt.json
+        (the same resolution root()'s reused branch uses), root(e) re-records the step ('reused' with the receipt's
+        policy; a policy mismatch stays its refusal, as today); the re-derivation is noted (the teacher receipt carries
+        it). Returns the day's root step record (re-derived or as it stands). A save (int SystemExit) propagates."""
+        r = self.receipt('root', e['day'])
+        if r and (r.get('status') in FINISHED or r.get('remote_calculations')
+                  or (r.get('status') == 'refused' and 'retained_policy' in r)):
+            return r
+        calc = None
+        try:
+            calc, _ = root_of(e, self.plan['run'])
+            if calc is None:
+                return r
+            fresh = self.root(e) or self.receipt('root', e['day']) or {}
+        except (Exception, SystemExit) as error:  # noqa: BLE001 - listed on the record's reader, never kills the stage
+            if isinstance(error, SystemExit) and isinstance(error.code, int):
+                raise                                  # a requested save (exit 75) is honoured, never swallowed
+            self._root_rederived[e['day']] = ('root step NOT re-recorded from the retained receipt %s (%s: %s); the record '
+                                              'stays %s' % (calc, type(error).__name__, str(error)[:300],
+                                                            (r or {}).get('status') or 'absent'))
+            self.log('root %s %s: %s' % (self.plan['run'], e['day'], self._root_rederived[e['day']]))
+            return r
+        self._root_rederived[e['day']] = ('root step re-recorded from the retained receipt %s (was %s, now %s)' % (
+            calc / 'calculations-receipt.json', (r or {}).get('status') or 'absent', fresh.get('status')))
+        self.log('root %s %s: %s' % (self.plan['run'], e['day'], self._root_rederived[e['day']]))
+        return fresh
+
     def remote_root(self, day):
         receipt = self.receipt('root', day)
         if receipt and receipt.get('remote_calculations') and receipt.get('status') in FINISHED:
@@ -1428,6 +1460,8 @@ class Run:
             import frankie_box_lane_state as LS
             LS.boundary(os.environ.get('FRANKIE_LANE_DAY', key[:8]), stage, brain=self.plan.get('brain') or BRAIN)
         fields['knowledge_available'] = self._knowledge.pop((stage, key), None)
+        if stage == 'teacher' and self._teacher_rederived:
+            fields.setdefault('root_rederived', self._teacher_rederived)   # session 9: readiness from the ROOT on disk
         body = dict(schema='FRANKIE_EXPERIMENT_STEP_V1', run=self.plan['run'], stage=stage, key=key, status=status,
                     at=time.time(), commit=self.commit, plan_sha256=plan_digest(self.plan),
                     directive_sha256=(self.plan.get('directive') or {}).get('sha256'), **fields)
@@ -2393,7 +2427,7 @@ class Run:
         """The classroom step's readiness checks, in its order: (None, None, facts) when the day may take its class now;
         ('reused', None, facts) when its classroom is complete already; else (status, reason, facts). facts carry calc,
         the classroom directory d and the teacher rows once known. Used by the step and by the class line's enqueue."""
-        root = self.receipt('root', e['day'])
+        root = self.root_on_disk(e)                  # session 9: the ROOT on disk, never a stale step record
         if root and root.get('status') == 'refused' and 'retained_policy' in root:
             return 'refused', 'refused: the day\'s ROOT is refused under the plan\'s shared market policy: %s' % root.get('reason'), {}
         if not (root and root['status'] in FINISHED and root.get('calculations')):
@@ -4287,6 +4321,10 @@ class Run:
         if len(entries) == 1 and entries[0]['day'] in remote and batch_key == 'day-' + entries[0]['day']:
             return remote[entries[0]['day']]
         local = [e for e in entries if e['day'] not in remote]
+        for e in local:
+            self.root_on_disk(e)                         # session 9: a stale root step record never holds the teacher
+        self._teacher_rederived = {e['day']: self._root_rederived[e['day']] for e in local
+                                   if e['day'] in self._root_rederived} or None
         remote_waiting = [day for day, r in remote.items() if not done_status(r)]
         todo = [e for e in local if rows_of(e)[0] is None]
         brain_entries = {}
@@ -4526,7 +4564,7 @@ class Run:
         'waiting ...' while the ROOT is not complete here; 'refused ...' when it is refused or complete under another
         policy or implementation (preserved; never recomputed or relabelled; the compatible successor is a new run
         name). A remote owner's ROOT is that lane's, never a caller-local alias."""
-        r = self.receipt('root', e['day']) or {}
+        r = self.root_on_disk(e) or {}                # session 9: the ROOT on disk, never a stale step record
         if r.get('remote_calculations'):
             return None, 'refused: the day\'s ROOT belongs to its remote owner %s; its teacher runs there' % r.get('owner')
         if r.get('status') == 'refused' and 'retained_policy' in r:
@@ -4676,7 +4714,7 @@ class Run:
         if remote is not None:
             return remote
         target = DATA / e['day'] / ('cycle-' + CYCLE)
-        root = self.receipt('root', e['day'])
+        root = self.root_on_disk(e)                  # session 9: the ROOT on disk, never a stale step record
         if (target / 'MANIFEST.json').is_file():
             # an existing export is reused only when it was built from THIS run's ROOT of the day; one from another ROOT
             # (an earlier or partial run) is a second export of the day: declined with both named, never reused blind
@@ -4745,7 +4783,7 @@ class Run:
         # per-day causal axis, and the search refuses before its manifest (build_series: frames_pin None, SystemExit).
         # Under the missing-coverage rule that is a listed outcome of THIS step, never the day's failure: not_run with
         # the reason, the day goes on (Jev and the lessons name it when they need the search)
-        root = self.receipt('root', e['day']) or {}
+        root = self.root_on_disk(e) or {}            # session 9: the ROOT on disk, never a stale step record
         calc = Path(root['calculations']) if root.get('calculations') else None
         frames = (calc / 'work' / 'derived' / '.rows' / 'frames.jsonl') if calc else None
         if frames is None or not frames.is_file() or frames.stat().st_size == 0:
