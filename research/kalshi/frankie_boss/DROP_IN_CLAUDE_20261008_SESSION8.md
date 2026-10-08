@@ -307,6 +307,13 @@ REBOOKS on resume; the lease is taken only when the box's CPUs are free. Slice (
 blocking + S2/S4/S14 before any fleet launch, then the rest. A proof box driven the existing way (stage + SSM start with the full
 variable set) is fine; via the fleet template it is not, yet.
 
+## frankie-day-box ROLE APPLIED by Greg in the IAM console (role 15:19Z, inline policy FrankieDayBox-20261008 ~15:28Z) and VERIFIED
+by the parent through the connector 15:3xZ: 13 statements, sids in the scripted order, fleet/* prefix, the archive bucket, Bedrock
+invoke, the self-tag condition aws:ResourceTag/Project=frankie, no wildcard resource on any write; AmazonSSMManagedInstanceCore
+attached; instance profile arn:aws:iam::568968024170:instance-profile/frankie-day-box exists with the role. Cosmetic: the role's
+tag landed as key "Project = frankie" with an empty value (fix to Project=frankie when convenient). launch-template's default
+profile now resolves. The fleet launch stays blocked only by the review's B1-B7 fixes (slice f, in progress).
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO

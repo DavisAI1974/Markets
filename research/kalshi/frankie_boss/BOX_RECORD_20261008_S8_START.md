@@ -281,3 +281,10 @@ Skill full-run-orchestrator invoked first. AWS via the Aws connector only; GitHu
   comment "box-operator s8 15:2xZ stage the claim-fix tip for a2 resume"): queued (204). The stage runs on its own lock in a
   new /opt/frankie-box/code/<tip>-<run>-1 directory beside the running d67b9c63 checkout (session 6 precedent: ebc7ef38
   landed 01:49Z while 14860 ran on c9bf631). Run id and bound commit recorded below.
+- 15:27:28Z STAGE run 37800918122 (run_number 845) in_progress, head_sha 46cfe9074bec6094653cf1f6df72d6bee76f05e6 = the
+  parent's record snapshot ("Box record session 8: restart on the claim fix (in-progress snapshot)") pushed on top of
+  38cfb10b between my fetch and the dispatch. Checked: 5bf723f4 is an ancestor of 46cfe907; 38cfb10b..46cfe907 is this
+  record file only; 5bf723f4..46cfe907 outside the .md records = tests/test_file_claims_v2.py only. So the staged
+  checkout runs exactly 5bf723f4's box code. ACCEPTED as the staged tip.
+- NOTE on probing: the Aws connector's run_script has a 60 s wall; a probe with a 90 s sleep inside timed out (no command
+  reached the box). Probes are sent without a sleep from here on.
