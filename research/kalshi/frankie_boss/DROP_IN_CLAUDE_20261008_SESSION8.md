@@ -333,6 +333,16 @@ before re-queueing. One-box path unchanged. RUNTIME-UNVERIFIED on the box. Remai
 review verdict on B1-B7 (running) and the builder's confirmation that its WAIT resume passes REBOOK=on in the shape
 resume_owner expects.
 
+## Fleet review PASS 2 verdict (REVIEW_20261008_FLEET_SOURCE_PASS2.md, final at fa4e13bd)
+B1, B2, B5, B7 CLOSED; B4 closed for the lease; B3 and B6 PARTIAL. Two NEW BLOCKING: NEW-1 a fleet-wide deadlock with the
+lease FREE (the gate joins the waiting line before its CPU check and fairness yields to the earliest live waiter; a CPU-blocked
+waiter heartbeats forever, so every ready box yields forever: reproduced on the toy store); NEW-2 KeepRunning is cleared while a
+box's days all wait in line (the fleet's normal state), so the idle guard stops fleet boxes within 6 h. Plus NEW-3..10 should-fix
+and six nits. VERDICT: one proof box, ONE day, day list ON = yes (role applied, AMI from a clean staged box, day driven by
+frankie_box_run.yml stage+start); one box with TWO classroom-arm days = no as reviewed (the reviewer's scenario pre-dates the
+queue half of B4; re-trace assigned); the 15-box fleet = no until NEW-1/NEW-2. One-box E2E unchanged line by line. Slice (g)
+assigned to the cloud session (NEW-1, NEW-2, NEW-3..10, nits, the B3/B6 partials, the B4 re-trace with the queue half).
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
