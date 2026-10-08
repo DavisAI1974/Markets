@@ -204,6 +204,16 @@ PRE-LAUNCH CHECKLIST for this box (in this order, each one connector call; nothi
      (the verified shape is DAY_CPUS=32; 64 is new) and FRANKIE_ROOT_DIGEST=off; the receipt in minutes; then validate, teacher.
   Quota: one running r7i.16xlarge = 64 of the 256 On-Demand vCPUs.
 
+## Greg's CPU decisions for the 64-vCPU box (2026-10-08 ~13:1xZ, one word each; CPU-plan role cfd53d0b + follow-up commits)
+1. a2 classroom on ALL 64 (the booking grows 32 -> 64 at the classroom boundary; `all` becomes the default for a classroom-arm day).
+2. The digest render runs DURING the teacher, on 32-63 (the sibling threads of the retained 0-31 booking).
+3. Jev threads follow the lane: 64 on a 64 lane (clamped to the lane, no literal 32).
+4. Watchdog: re-pin AND resize ON by default (FRANKIE_CPU_WATCH_CORRECT=on, FRANKIE_CPU_WATCH_RESIZE=on; the kick starts the loop);
+   choice by wall-clock only, never cost.
+5. Fleet second ROOT on a box: WHOLE CORES FIRST; siblings of a held booking only as the recorded fallback.
+a2 settings at start: resume/validate/teacher on the retained 0-31 (DAY_CPUS stays 32: the queue resume never reads it, a changed
+plan on the same run is refused); render on 32-63 concurrently; classroom on 0-63. ALL RUNTIME-UNVERIFIED until the box runs.
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
