@@ -25,5 +25,12 @@ mkdir -p "$OUTPUT_ROOT/work" && printf '%s\n' "$PLAN" > "$OUTPUT_ROOT/work/rende
 LANE=$(printf '%s' "$PLAN" | /opt/frankie-box/venv/bin/python -I -S -B -c 'import json,sys; print(json.load(sys.stdin)["cpu_list"])')
 [ -n "$LANE" ] || { echo "refused: the CPU plan named no CPUs" >&2; exit 4; }
 export FRANKIE_LANE_CPUS="$LANE"
+# Session 8: the render's LAWFUL stop point. A file at FRANKIE_DIGEST_STOP_FILE (default below; the CPU watchdog's resize
+# writes it, an operator may too) stops the render at its next PASS BOUNDARY with exit 75 after the per-pass checkpoint
+# (frankie_box_digest_parallel.stop_requested); the same command again resumes at the first unsaved pass. A stale stop file
+# from an earlier stop is removed here before the start so a resume never stops itself.
+export FRANKIE_DIGEST_STOP_FILE="${FRANKIE_DIGEST_STOP_FILE:-$OUTPUT_ROOT/work/render-stop-request.json}"
+rm -f "$FRANKIE_DIGEST_STOP_FILE"
+echo "### render stop file (a lawful stop at the next pass boundary): $FRANKIE_DIGEST_STOP_FILE"
 exec taskset -c "$FRANKIE_LANE_CPUS" /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_render_digest.py" \
   --commit "$MARKETS_SHA" --output-root "$OUTPUT_ROOT"

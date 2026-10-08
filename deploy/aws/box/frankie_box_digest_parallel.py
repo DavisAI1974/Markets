@@ -63,6 +63,27 @@ POOL_CLOSE_GRACE_SECONDS = 60.0  # _bounded_executor_stop: a graceful shutdown (
 POOL_STOP_SECONDS = 10.0         # then terminate()+join, then kill()+join, each bounded
 
 
+STOP_FILE_ENV = 'FRANKIE_DIGEST_STOP_FILE'   # session 8: the render's LAWFUL stop point (the CPU watchdog's resize, or an operator)
+STOPPED_EXIT = 75                            # the same code every saved Frankie job exits with (frankie_box_cores.SAVED_EXIT)
+
+
+class DigestStopped(SystemExit):
+    """The render stopped at a pass boundary on FRANKIE_DIGEST_STOP_FILE: every finished pass is in scratch/passes.pkl,
+    the pass that would have started next was not started; the same command again resumes there (exit 75)."""
+
+    def __init__(self, table, label, path):
+        super().__init__(STOPPED_EXIT)
+        self.table, self.label, self.path = table, label, path
+
+
+def stop_requested(environ=None):
+    """The stop file's path when FRANKIE_DIGEST_STOP_FILE names an existing file, else None. Checked ONLY between passes
+    (frankie_box_digest_parallel.step and before the copy): a pass in flight always finishes and saves first, so
+    nothing is redone on the resume; the wait for the stop is at most one pass. Orchestration only: not in _pass_code."""
+    path = (os.environ if environ is None else environ).get(STOP_FILE_ENV)
+    return path if path and Path(path).is_file() else None
+
+
 def _stage_phase(phase, units_done=None, units_total=None, unit=None, every=None):
     """The stage heartbeat's phase file (frankie_box_stage_progress.report_phase: a no-op outside a Run.child stage;
     session 6: the digest, ROOT process 4, showed its stage name and no units). Never changes a table: an import or
@@ -1069,6 +1090,10 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         if label in passes:
             note(name, label + ' (saved)')
             return passes[label]
+        stop = stop_requested()
+        if stop:                              # session 8: the lawful stop point, between passes, every earlier pass saved
+            note(name, label + ' NOT STARTED: stop requested (%s); exit %d, the same command resumes here' % (stop, STOPPED_EXIT))
+            raise DigestStopped(name, label, stop)
         note(name, label)
         passes[label] = run()
         _save_checkpoint(scratch, key, code, passes)
@@ -1122,6 +1147,10 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         if not destination.is_file() or TS._identity(destination) != copied['identity']:
             raise ValueError('table %s changed since its copy save point; remove %s to rebuild it' % (name, scratch))
     else:
+        stop = stop_requested()
+        if stop:                              # session 8: the copy is a saved pass too; the stop point stands before it
+            note(name, 'copy NOT STARTED: stop requested (%s); exit %d, the same command resumes here' % (stop, STOPPED_EXIT))
+            raise DigestStopped(name, 'copy', stop)
         note(name, 'copy')
         copied = _copy(destination, name, n, facts, whole, first, scales, sep, parts, sizes, reserve)
         if copied['numbered'] != numbering['total']:
