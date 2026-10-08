@@ -1,3 +1,12 @@
+# Claude session drop-in — 2026-10-08, session 8: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261008_SESSION8.md`
+
+Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW clone: `git fetch --deepen=400` before any merge-base). Parent-only; agents
+(model "fable"). Greg's FLEET plan (verbatim in the drop-in): 15 x 64-vCPU boxes, 2 days per box, ROOT at 32 CPUs per day on
+all 15 in parallel, then the classroom one day at a time on all 64. FIRST ACTION of the session: file the EC2 vCPU quota
+increase (L-1216C47A, us-east-1, 1152) unless Greg already filed it. NO box starts, NO coding or building until Greg's go.
+Both AWS connectors were down at the end of session 7 (reconnect, then one read-only STS call). Run state unchanged: all
+boxes STOPPED, a2/20231018 SAVED with no receipt; the resume fix is on the tip (stage it before any resume).
+
 # Claude session drop-in — 2026-10-08, session 7: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261008_SESSION7.md`
 
 Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW clone: `git fetch --deepen=400` before any merge-base). Parent-only; agents
