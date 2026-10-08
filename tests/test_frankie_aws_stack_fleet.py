@@ -135,6 +135,37 @@ class TestFleetLaunch(unittest.TestCase):
         first = rec['actions'][0]['params']['TagSpecifications'][0]['Tags']
         self.assertIn({'Key': 'Day', 'Value': '20231018,20231019'}, first)
 
+    def test_refuses_day_overflow_no_silent_drop(self):
+        acct = FakeAccount(self.canned())
+        args = args_for(['--run', 'e2e-a', '--count', '2', '--days', '20231018,20231019,20231020,20231021,20231022',
+                         '--image-id', 'ami-1', '--commit', 'a' * 40])   # 5 days, 2 boxes -> 1 would be dropped
+        rec = S.step_fleet_launch(acct, args)
+        self.assertEqual(rec['status'], 'refused')
+        self.assertIn('20231022', rec['reason'])      # the unassigned day is NAMED, not silently dropped
+        self.assertEqual(len(rec['actions']), 0)
+
+    def test_need_uses_the_instance_type(self):
+        acct = FakeAccount(self.canned(quota=640.0))
+        args = args_for(['--run', 'e2e-a', '--count', '2', '--days', '20231018,20231019,20231020,20231021',
+                         '--image-id', 'ami-1', '--commit', 'a' * 40, '--instance-type', 'r7i.8xlarge'])
+        rec = S.step_fleet_launch(acct, args)
+        self.assertEqual(rec['checked']['vcpus_per_box'], 32)     # r7i.8xlarge, not a hard 64
+        self.assertEqual(rec['checked']['requested_vcpus'], 64)   # 2 x 32
+
+    def test_version_pinned_and_daylist_tag(self):
+        canned = dict(self.canned(quota=640.0))
+        canned['describe_launch_template_versions'] = {'LaunchTemplateVersions': [{'VersionNumber': 7}]}
+        acct = FakeAccount(canned)
+        args = args_for(['--run', 'e2e-a', '--count', '1', '--days', '20231018,20231019', '--image-id', 'ami-1',
+                         '--commit', 'a' * 40])
+        rec = S.step_fleet_launch(acct, args)
+        self.assertEqual(rec['status'], 'planned')
+        self.assertEqual(rec['checked']['template_version'], '7')
+        run = rec['actions'][0]['params']
+        self.assertEqual(run['LaunchTemplate']['Version'], '7')    # S8: pinned, not $Latest
+        tags = {t['Key']: t['Value'] for t in run['TagSpecifications'][0]['Tags']}
+        self.assertIn('DayList', tags)                             # S8: per-box day-list location
+
     def test_spot_refused_for_day_boxes_by_default(self):
         acct = FakeAccount(self.canned())
         args = args_for(['--run', 'e2e-a', '--count', '2', '--days', '20231018,20231019,20231020,20231021',
@@ -231,6 +262,31 @@ class TestGoldenAmi(unittest.TestCase):
         acct = FakeAccount({})
         rec = S.step_golden_ami(acct, args_for([]))
         self.assertEqual(rec['status'], 'needs_input')
+
+    def test_refuses_a_non_lean_root(self):
+        acct = FakeAccount({
+            'describe_instances': {'Reservations': [{'Instances': [{'State': {'Name': 'stopped'},
+                'RootDeviceName': '/dev/sda1',
+                'BlockDeviceMappings': [{'DeviceName': '/dev/sda1', 'Ebs': {'VolumeId': 'vol-1'}}]}]}]},
+            'describe_volumes': {'Volumes': [{'Size': 2048}]},   # the main box's 2 TB root
+        })
+        rec = S.step_golden_ami(acct, args_for(['--commit', 'a' * 40]))
+        self.assertEqual(rec['status'], 'refused')
+        self.assertIn('max-root-gib', rec['reason'])
+        self.assertEqual(len(rec['actions']), 0)
+
+
+class TestShutdownBehavior(unittest.TestCase):
+    def test_default_terminate_and_stop_option(self):
+        self.assertEqual(S.launch_template_data(args_for(['--commit', 'a' * 40, '--run', 'e2e-a']))
+                         ['InstanceInitiatedShutdownBehavior'], 'terminate')
+        self.assertEqual(S.launch_template_data(args_for(['--commit', 'a' * 40, '--run', 'e2e-a',
+                         '--shutdown-behavior', 'stop']))['InstanceInitiatedShutdownBehavior'], 'stop')
+
+    def test_user_data_reads_daylist_tag(self):
+        ud = base64.b64decode(S.launch_template_data(args_for(['--commit', 'a' * 40, '--run', 'e2e-a'])
+                              )['UserData']).decode()
+        self.assertIn('tags/instance/DayList', ud)   # S8
 
 
 if __name__ == '__main__':

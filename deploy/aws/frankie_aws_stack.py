@@ -135,6 +135,7 @@ for i in $(seq 1 30); do   # S13: tags lag IMDS by seconds after launch; retry ~
   COMMIT=$(curl -fsS -H "$H" "http://169.254.169.254/latest/meta-data/tags/instance/Commit" || true)
   RUN=$(curl -fsS -H "$H" "http://169.254.169.254/latest/meta-data/tags/instance/Run" || true)
   DAYS=$(curl -fsS -H "$H" "http://169.254.169.254/latest/meta-data/tags/instance/Day" || true)
+  DAYLIST=$(curl -fsS -H "$H" "http://169.254.169.254/latest/meta-data/tags/instance/DayList" || true)  # S8: per box
   R=$(curl -fsS -H "$H" "http://169.254.169.254/latest/meta-data/placement/region" || true)
   [ -n "$R" ] && REGION="$R"
   [ -n "$IID" ] && [ -n "$COMMIT" ] && [ -n "$RUN" ] && break
@@ -144,6 +145,7 @@ case "$COMMIT" in *[!0-9a-f]*) fail "Commit tag is not hex";; esac
 [ "${{#COMMIT}}" -eq 40 ] || fail "Commit tag must be a full 40-hex commit (got '${{COMMIT}}')"
 [ -n "$RUN" ] || fail "Run tag empty"
 [ -n "$IID" ] || fail "instance-id unreadable from IMDS"
+[ -n "$DAYLIST" ] || DAYLIST="{day_list}"   # S8: prefer the per-box DayList tag; fall back to the template's baked value
 CODE_ROOT="/opt/frankie-box/code/$COMMIT"
 BOX_DIR="/opt/frankie-box/box/$COMMIT"
 mkdir -p "$BOX_DIR"
@@ -169,7 +171,7 @@ FILES=$(git -C "$CODE_ROOT" ls-files | wc -l | tr -d ' ')
 # decision 1: the staging receipt so every fleet box names the identical commit/tree
 python3 -I -S -c "import json,sys,time; json.dump({{'schema':'FRANKIE_FLEET_STAGE_V1','status':'staged','commit':sys.argv[1],'tree_sha':sys.argv[2],'file_count':int(sys.argv[3]),'instance':sys.argv[4],'code_root':sys.argv[5],'staged_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}}, open(sys.argv[6],'w'), indent=1, sort_keys=True)" "$COMMIT" "$TREE" "$FILES" "$IID" "$CODE_ROOT" "$BOX_DIR/stage-receipt.json"
 # the box-local fleet config: EVERY process on the box (including run.yml-dispatched starts) sees fleet mode from it
-python3 -I -S -c "import json,sys; json.dump({{'schema':'FRANKIE_FLEET_CONFIG_V1','day_list':sys.argv[1],'region':sys.argv[2],'instance':sys.argv[3],'run':sys.argv[4],'commit':sys.argv[5],'code_root':sys.argv[6]}}, open('/opt/frankie-box/fleet.json','w'), indent=1, sort_keys=True)" "{day_list}" "$REGION" "$IID" "$RUN" "$COMMIT" "$CODE_ROOT"
+python3 -I -S -c "import json,sys; json.dump({{'schema':'FRANKIE_FLEET_CONFIG_V1','day_list':sys.argv[1],'region':sys.argv[2],'instance':sys.argv[3],'run':sys.argv[4],'commit':sys.argv[5],'code_root':sys.argv[6]}}, open('/opt/frankie-box/fleet.json','w'), indent=1, sort_keys=True)" "$DAYLIST" "$REGION" "$IID" "$RUN" "$COMMIT" "$CODE_ROOT"
 # B6: run the committed day driver on EVERY boot (reboot-resume), via a systemd unit, not once
 cat > /etc/systemd/system/frankie-fleet-day.service <<UNIT
 [Unit]
@@ -527,7 +529,8 @@ def launch_template_data(args):
         'MetadataOptions': {'HttpTokens': 'required', 'HttpPutResponseHopLimit': 2, 'HttpEndpoint': 'enabled',
                             'InstanceMetadataTags': 'enabled'},
         'Monitoring': {'Enabled': True},
-        'InstanceInitiatedShutdownBehavior': 'terminate',
+        'InstanceInitiatedShutdownBehavior': args.shutdown_behavior,   # S7: terminate (Greg) or stop (safer; a day's
+        #                                                                un-archived data is not lost to a stray shutdown)
         'EbsOptimized': True,
         'BlockDeviceMappings': block_devices,
         'UserData': base64.b64encode(fleet_user_data(args).encode()).decode(),
@@ -704,16 +707,33 @@ def step_golden_ami(account, args):
         rec.update(status='needs_input', reason='--commit not given (the staged commit the AMI name carries)')
         return rec
     try:
-        inst = account.read('ec2', REGION_BOX, 'describe_instances', InstanceIds=[args.source_instance_id])
-        state = inst['Reservations'][0]['Instances'][0]['State']['Name']
+        inst = account.read('ec2', REGION_BOX, 'describe_instances', InstanceIds=[args.source_instance_id])['Reservations'][0]['Instances'][0]
+        state = inst['State']['Name']
+        root_name = inst.get('RootDeviceName')
+        root_vol = next((m['Ebs']['VolumeId'] for m in inst.get('BlockDeviceMappings', [])
+                         if m.get('DeviceName') == root_name and m.get('Ebs')), None)
+        root_gib = None
+        if root_vol:
+            vols = account.read('ec2', REGION_BOX, 'describe_volumes', VolumeIds=[root_vol])['Volumes']
+            root_gib = vols[0]['Size'] if vols else None
     except Exception as error:  # noqa: BLE001
         rec.update(status='refused', reason=_error_text(error))
         return rec
     name = 'frankie-day-box-%s-%s' % (args.commit[:12], time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()))
-    rec['checked'] = {'source_instance': args.source_instance_id, 'state': state, 'ami_name': name}
+    rec['checked'] = {'source_instance': args.source_instance_id, 'state': state, 'ami_name': name,
+                      'root_volume': root_vol, 'root_gib': root_gib, 'max_root_gib': args.max_root_gib}
     if state != 'stopped':
         rec.update(status='refused', reason='the source instance is %s; image a STOPPED instance for a consistent root '
                                             '(stop it first, or use NoReboot knowingly)' % state)
+        return rec
+    # B5: refuse a NON-LEAN source (the main box's 2 TB root carries a2's queue, retained bookings and ~1.4 TB of day
+    # data; 15 boxes would each boot with a foreign saved day). Image a clean staged box. The root-size check is the
+    # review's offered simple proxy for "no box-local run state"; --max-root-gib sets the lean bound.
+    if root_gib is not None and root_gib > args.max_root_gib:
+        rec.update(status='refused', reason='the source root volume is %d GiB, over the lean bound --max-root-gib %d: '
+                                            'image a CLEAN staged box, not the main box (its queue/bookings/day data '
+                                            'would ship in the AMI). Raise --max-root-gib only for a knowingly-lean '
+                                            'large root.' % (root_gib, args.max_root_gib))
         return rec
     account.write(rec, 'ec2', REGION_BOX, 'create_image', InstanceId=args.source_instance_id, Name=name, NoReboot=True,
                   Description='Frankie fleet day-box golden image, staged commit %s' % args.commit,
@@ -732,9 +752,18 @@ def _vcpus_of(instance):
     return 0
 
 
+def _vcpus_for_type(instance_type):
+    """vCPUs for an EC2 instance type from its size suffix (S6: `need` must use --instance-type, not a hard 64).
+    r7i.16xlarge = 64. Unknown -> 64 (the fleet default) so the quota check is never silently too small."""
+    sizes = {'medium': 1, 'large': 2, 'xlarge': 4, '2xlarge': 8, '4xlarge': 16, '8xlarge': 32, '12xlarge': 48,
+             '16xlarge': 64, '24xlarge': 96, '32xlarge': 128, '48xlarge': 192}
+    size = (instance_type or '').split('.', 1)[-1]
+    return sizes.get(size, 64)
+
+
 def _day_pairs(days, count):
     """Split the day list into `count` boxes of up to two days each; returns [[d1,d2], [d3,d4], ...] (the last box may
-    carry one). Refuses when there are more boxes than day-pairs would fill or days do not cover the boxes."""
+    carry one)."""
     pairs = [days[i:i + 2] for i in range(0, len(days), 2)]
     return pairs[:count]
 
@@ -772,13 +801,21 @@ def step_fleet_launch(account, args):
         rec.update(status='refused', reason='%d days cannot fill %d boxes (need up to two per box, at least one each)'
                                             % (len(days), args.count))
         return rec
+    if len(days) > 2 * args.count:
+        # S6: do not SILENTLY drop days -- refuse and name the ones that would not be assigned
+        rec.update(status='refused', reason='%d days exceed the %d boxes x 2/day = %d capacity; the %d unassigned days '
+                                            'would be dropped silently. Raise --count or shorten --days. Unassigned: %s'
+                                            % (len(days), args.count, 2 * args.count, len(days) - 2 * args.count,
+                                               ','.join(days[2 * args.count:])))
+        return rec
     quota_code = QUOTA_SPOT if args.spot else QUOTA_ONDEMAND
     market = 'Spot' if args.spot else 'On-Demand'
     try:
         quota = account.read('service-quotas', REGION_BOX, 'get_service_quota', ServiceCode='ec2',
                              QuotaCode=quota_code)['Quota']['Value']
+        # S6: pending counts against the quota too, not only running
         running = account.read('ec2', REGION_BOX, 'describe_instances',
-                               Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])['Reservations']
+                               Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'pending']}])['Reservations']
     except Exception as error:  # noqa: BLE001
         rec.update(status='refused', reason=_error_text(error))
         return rec
@@ -788,10 +825,12 @@ def step_fleet_launch(account, args):
             is_spot = inst.get('InstanceLifecycle') == 'spot'
             if is_spot == bool(args.spot):          # count only the instances that draw on THIS market's quota
                 used += _vcpus_of(inst)
-    need = args.count * 64
+    per_box = _vcpus_for_type(args.instance_type)   # S6: need uses the actual instance type
+    need = args.count * per_box
     headroom = int(quota) - used
     rec['checked'] = {'market': market, 'quota_code': quota_code, 'quota_vcpus': int(quota), 'used_vcpus': used,
-                      'headroom_vcpus': headroom, 'requested_vcpus': need, 'boxes': args.count}
+                      'headroom_vcpus': headroom, 'requested_vcpus': need, 'boxes': args.count,
+                      'instance_type': args.instance_type, 'vcpus_per_box': per_box}
     if need > headroom:
         rec.update(status='refused', reason='%d boxes need %d vCPUs; the live %s quota (%s) is %d with %d in use, '
                                             'leaving %d. Reduce --count or raise the quota first.'
@@ -805,24 +844,57 @@ def step_fleet_launch(account, args):
     if not args.commit:
         rec.update(status='needs_input', reason='--commit (the staged commit the boxes stage and run) required')
         return rec
-    plan = []
+    # S8: pin the template VERSION NUMBER (not the loose $Latest, which a later fleet-launch --run could move under a
+    # day list baked for another run) and record it; verify it exists.
+    version = '$Latest'
+    try:
+        v = account.read('ec2', REGION_BOX, 'describe_launch_template_versions',
+                         LaunchTemplateName=args.launch_template, Versions=['$Latest'])['LaunchTemplateVersions'][0]
+        version = str(v['VersionNumber'])
+    except Exception as error:  # noqa: BLE001
+        if 'NotFound' in str(error):
+            rec.update(status='refused', reason='launch template %s not found; run the launch-template step first'
+                                                % args.launch_template)
+            return rec
+        rec['checked']['version_pin'] = 'unverified (%s); using $Latest' % _error_text(error)
+    rec['checked']['template_version'] = version
+    day_list_loc = '%s/%s' % _fleet_day_list_location(args) if _fleet_day_list_location(args)[0] != BUCKET_GRANITE \
+        else _fleet_day_list_location(args)[1]
+    plan, launched, failed = [], [], []
     for i, box_days in enumerate(pairs):
         name = 'frankie-day-%s-%s' % (args.commit[:8], '-'.join(box_days))
         tags = [{'Key': 'Project', 'Value': 'frankie'}, {'Key': 'Role', 'Value': 'day-box%s' % ('-root-spot' if args.spot else '')},
                 {'Key': 'Name', 'Value': name}, {'Key': 'Day', 'Value': ','.join(box_days)},
                 {'Key': 'Commit', 'Value': args.commit}, {'Key': 'Run', 'Value': args.run},
+                {'Key': 'DayList', 'Value': day_list_loc},   # S8: the day-list location per box, so a reused template never mismatches
                 {'Key': 'KeepRunning', 'Value': 'true'},   # B6: protected from the idle guard while its day runs
                 {'Key': 'ClassroomEligible', 'Value': 'false' if args.spot else 'true'}]
-        run_params = dict(LaunchTemplate={'LaunchTemplateName': args.launch_template, 'Version': '$Latest'},
+        run_params = dict(LaunchTemplate={'LaunchTemplateName': args.launch_template, 'Version': version},
                           MinCount=1, MaxCount=1,
                           TagSpecifications=[{'ResourceType': 'instance', 'Tags': tags},
                                              {'ResourceType': 'volume', 'Tags': tags}])
         if args.spot:
             run_params['InstanceMarketOptions'] = {'MarketType': 'spot',
                                                    'SpotOptions': {'SpotInstanceType': 'one-time'}}
-        plan.append(dict(box=i + 1, name=name, days=box_days, market=market))
-        account.write(rec, 'ec2', REGION_BOX, 'run_instances', **run_params)
-    rec['checked']['plan'] = plan
+        entry = dict(box=i + 1, name=name, days=box_days, market=market)
+        # S6: per-box try/except so a mid-loop RunInstances error (VcpuLimitExceeded between the quota read and here,
+        # InsufficientInstanceCapacity) records the boxes already launched and returns 'partial', never losing them.
+        try:
+            resp = account.write(rec, 'ec2', REGION_BOX, 'run_instances', **run_params)
+            if resp:   # apply mode: record the real InstanceId(s) (S5)
+                ids = [inst['InstanceId'] for inst in resp.get('Instances', [])]
+                entry['instance_ids'] = ids
+                launched.extend((iid, box_days) for iid in ids)
+        except Exception as error:  # noqa: BLE001
+            entry['error'] = _error_text(error)
+            failed.append(entry)
+            plan.append(entry)
+            rec.update(status='partial', reason='launched %d of %d boxes; box %d (%s) failed: %s. The launched ids are '
+                                                'on the receipt.' % (i, len(pairs), i + 1, ','.join(box_days), entry['error']))
+            rec['checked'].update(plan=plan, launched=[dict(instance=iid, days=d) for iid, d in launched], failed=failed)
+            return rec
+        plan.append(entry)
+    rec['checked'].update(plan=plan, launched=[dict(instance=iid, days=d) for iid, d in launched])
     if args.spot:
         rec['checked']['note'] = ('Spot boxes run ROOT only (resumable); their days\' classrooms must run on an '
                                   'On-Demand box. The S3 classroom lease serialises classrooms fleet-wide; a Spot box '
@@ -952,6 +1024,11 @@ def build_parser():
     p.add_argument('--fleet-day-list', default='', help='the S3 day list location (bucket/prefix); default a run-named '
                                                         'prefix under the granite bucket')
     p.add_argument('--source-instance-id', default=BOX, help='golden-ami: the STOPPED staged box to image')
+    p.add_argument('--max-root-gib', type=int, default=300, help='golden-ami: refuse a source root volume larger than '
+                                                                 'this (a non-lean box carries foreign run state/data)')
+    p.add_argument('--shutdown-behavior', default='terminate', choices=['terminate', 'stop'],
+                   help='launch-template InstanceInitiatedShutdownBehavior (Greg chose terminate; stop is safer against '
+                        'a stray shutdown deleting a day, see review S7)')
     p.add_argument('--fleet-region', default=REGION_BOX)
     p.add_argument('--count', type=int, default=0, help='fleet-launch: number of boxes')
     p.add_argument('--days', default='', help='fleet-launch: comma list of YYYYMMDD days (two per box)')

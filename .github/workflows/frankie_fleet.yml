@@ -164,10 +164,13 @@ jobs:
           # fleet boxes = Project=frankie minus the two main boxes, UNLESS a main box is explicitly named
           to_stop = [i for i in found if (i not in main) or (i in named)]
           skipped_main = [i for i in found if i in main and i not in named]
+          not_found = sorted(named - set(found))   # N3: named in --instances but not running/pending
           print('Project=frankie running/pending:', found or 'none')
           print('will STOP (never terminate):', to_stop or 'none')
           if skipped_main:
               print('left alone (main boxes, not named in --instances):', skipped_main)
+          if not_found:
+              print('named in --instances but not running/pending (nothing to do):', not_found)
           if to_stop:
               ec2.stop_instances(InstanceIds=to_stop)
               print('stop_instances requested for', to_stop)
