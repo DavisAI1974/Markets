@@ -228,3 +228,7 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   CODE_ROOT: /opt/frankie-box/code/1c59623c81287c43b0ff45b95c50d0f6b79947bc-37814850954-1/markets.
 - Operator (opus) continued: stage -> repoint -a1 SIZE=64 -> ACTION=resume -> ACTION=kick (digest on, classroom all) ->
   watch the child's first minute, the receipt (claim decisions), the digest start, then the teacher.
+- 17:1xZ PARENT NEXT: -a2 child killed by the parent 17:06:07Z (entry seq 2 `failed`, ownerless; bookings -3111 and -5059
+  released; R1 -a1 intact). Fix 1c59623 (data_workers difference = recorded run-size rebind; repair tool
+  frankie_box_queue_repoint.sh); restage run 37814850954 (17:13:12Z) -> CR3=/opt/frankie-box/code/1c59623...-37814850954-1/
+  markets. Plan: verify, then repoint -a1 on 64 + resume + kick, then watch the first minute closely.
