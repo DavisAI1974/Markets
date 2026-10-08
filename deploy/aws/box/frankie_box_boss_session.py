@@ -807,6 +807,10 @@ def write_layer_reference(path, value, scans=None):
             _stage_phase(phase, units_done=0, units_total=size, unit='bytes')
             scans[str(spool.path)] = LS.scan_spool(spool.path, on_bytes=on_bytes)
             _stage_phase(phase, units_done=size, units_total=size, unit='bytes')
+            # session 6: the scan's witness is this process's one hash of the spool; every later witness(spool) in this
+            # process (the legacy-stage artifacts, the receipt's shared_market_sources) is served from it, not re-read
+            if hasattr(_filehash(), 'remember'):
+                _filehash().remember(spool.path, scans[str(spool.path)])
     document = LS.reference_document(path, value, keys, {key: scans[str(value[key].path)] for key in keys})
     durable.write_json(path, document)
     return {key: scans[str(value[key].path)] for key in keys}

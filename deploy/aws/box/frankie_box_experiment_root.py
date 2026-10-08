@@ -94,6 +94,17 @@ def content_rebinds(saved, built, where='$'):
     return [] if type(saved) is type(built) and saved == built else None
 
 
+def _pinned(path):
+    """A receipt pin {path, bytes, sha256} of a file this ROOT wrote or read (session 6, Greg: "we only do 1 pass"):
+    the same refusal as frankie_box_prepare_trading_day.witness (safe_path: an absolute, symlink-free regular path), the
+    sha256 from frankie_box_filehash's per-process cache, which the durable writer fills from its WRITE stream and the
+    reference layers fill from their one spool scan, so derive.json, the layer files and the three shared spools are not
+    read again at the receipt (before: a full uncached read of each, the frames spool among them, at every ROOT's end)."""
+    path = safe_path(path)
+    import frankie_box_filehash
+    return dict(path=str(path), **frankie_box_filehash.witness(path))
+
+
 def _sha256_file(path):
     h = hashlib.sha256()
     with open(path, 'rb') as f:
@@ -357,17 +368,17 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     # record index and error, and are named in the receipt; the day's calculations go on to the next steps.
     failures = result['failure_count']
     calc = dict(schema='FRANKIE_EXPERIMENT_DAY_CALCULATIONS_V1', commit=commit, day=day, day_role=day_role,
-                source_binding=witness(output / 'source-binding.json'),
-                calculation_pins=witness(output / 'calculation-pins.json'),
-                derivation=witness(session.work / 'derive.json'),
-                digest=witness(session.work / 'derivation-digest-full.md') if digest else None,
+                source_binding=_pinned(output / 'source-binding.json'),
+                calculation_pins=_pinned(output / 'calculation-pins.json'),
+                derivation=_pinned(session.work / 'derive.json'),
+                digest=_pinned(session.work / 'derivation-digest-full.md') if digest else None,
                 root_processes=result.get('root_processes'),
                 native_calculation_policy=binding.get('native_calculation_policy'),
                 frame_sections_schema=result.get('frame_sections_schema'), frame_sections=result.get('frame_sections'),
                 not_run=[dict(process=k, reason='not selected by this source-bound ROOT configuration')
                          for k, v in (result.get('root_processes') or {}).items() if v == 'skipped'],
                 failure_count=failures, opening_book=opening_book, external=external,
-                external_computation=witness(output / 'external-computation.json')
+                external_computation=_pinned(output / 'external-computation.json')
                 if external['status'] == 'attached' else None,
                 failures_note=(None if not failures else 'records a producer could not use; each listed with its index '
                                'and error in derive.json / work/derived/.rows/failures.jsonl; every other record calculated'),
@@ -376,14 +387,14 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     rebind_dir = output / 'checkout-rebinds'
     if rebind_dir.is_dir():
         # additive: the checkout moves recorded in this attempt (content_rebinds), each pinned
-        calc['checkout_rebinds'] = [witness(path) for path in sorted(rebind_dir.glob('*.json'))]
+        calc['checkout_rebinds'] = [_pinned(path) for path in sorted(rebind_dir.glob('*.json'))]
     # How the ROOT used its lane (operator inspection only; never an input to a calculation): the native stage beside
     # the legacy pass (work/native-overlap.json, FRANKIE_ROOT_NATIVE_OVERLAP_V1: child pid, CPUs, seconds, outcome) or
     # the serial order when it is absent (a record of an earlier attempt stays pinned as written). No hash-pass count:
     # the stat-keyed cache does not measure one, and the receipt never reports an unmeasured number.
     overlap_path = session.work / 'native-overlap.json'
     calc['root_execution'] = dict(
-        native_overlap=witness(overlap_path) if overlap_path.is_file() else dict(
+        native_overlap=_pinned(overlap_path) if overlap_path.is_file() else dict(
             status='absent', reason='serial order (FRANKIE_ROOT_NATIVE_OVERLAP=off, native pass off, a resumed '
                                     'completed native stage, or a saved derivation reused)'),
         data_workers=data_workers,
@@ -404,7 +415,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
         for name in ('frames', 'prices', 'structures'):
             spool = session.work / 'derived' / '.rows' / (name + '.jsonl')
             if spool.is_file():
-                calc['shared_market_sources'][name] = dict(path=str(spool), **witness(spool))
+                calc['shared_market_sources'][name] = _pinned(spool)    # (was dict(path=..., **witness()): a duplicate 'path' keyword)
             else:
                 # Listed, never fabricated: the reader presents a thinner picture without this layer.
                 calc['shared_market_sources'][name] = dict(status='absent', path=str(spool),
