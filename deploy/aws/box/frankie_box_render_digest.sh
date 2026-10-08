@@ -12,33 +12,18 @@ export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1
 if ! /opt/frankie-box/venv/bin/python -B -c 'import cloudpickle; assert cloudpickle.__version__ == "3.1.2"'; then
   /opt/frankie-box/venv/bin/python -m pip install --no-cache-dir cloudpickle==3.1.2
 fi
-# Session 6 (2026-10-08): the render runs on the CPUs it is given, never inside a live booking. FRANKIE_LANE_CPUS (e.g.
-# 16-31) is checked against /opt/frankie-box/cpu-bookings (frankie_box_cores.live_bookings: a booking with a live pid, or
-# a retained one, holds its CPUs); any overlap refuses (exit 4) and names the booking; the render is then pinned there
-# (taskset) and the digest writer sizes its helpers from it (frankie_box_digest_document.lane_cpus). Unset = the
-# process's own affinity, as before.
-if [ -n "${FRANKIE_LANE_CPUS:-}" ]; then
-  CODE_ROOT="$CODE_ROOT" FRANKIE_LANE_CPUS="$FRANKIE_LANE_CPUS" /opt/frankie-box/venv/bin/python -B - <<'PY' || exit 4
-import os, sys
-sys.path.insert(0, os.environ['CODE_ROOT'] + '/deploy/aws/box')
-import frankie_box_cores as C
-wanted = set()
-for part in os.environ['FRANKIE_LANE_CPUS'].split(','):
-    part = part.strip()
-    if part:
-        low, _, high = part.partition('-')
-        wanted.update(range(int(low), int(high or low) + 1))
-held = [(b.get('booking'), sorted(set(b.get('cpus') or []) & wanted)) for b in C.live_bookings()
-        if (b.get('_alive') or b.get('_retained')) and set(b.get('cpus') or []) & wanted]
-if held:
-    print('refused: FRANKIE_LANE_CPUS %s overlaps a live or retained booking: %s' % (
-        os.environ['FRANKIE_LANE_CPUS'], '; '.join('%s holds %s' % (b, c) for b, c in held)), file=sys.stderr)
-    sys.exit(4)
-print('lane %s free of live bookings' % os.environ['FRANKIE_LANE_CPUS'])
-PY
-  export FRANKIE_LANE_CPUS
-  exec taskset -c "$FRANKIE_LANE_CPUS" /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_render_digest.py" \
-    --commit "$MARKETS_SHA" --output-root "$OUTPUT_ROOT"
-fi
-exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_render_digest.py" \
+# Session 6 (2026-10-08): the render runs on the CPUs it is given, never inside a live booking. Session 8: the CPU set
+# comes from the ONE resolver (frankie_box_cores.py plan --step digest-render): every CPU outside the live/retained
+# bookings, whole physical cores first; FRANKIE_LANE_CPUS, when set, must lie inside that free set (refused with the
+# bookings named, exit 4); unset is NO LONGER the process's own affinity (that overlapped a retained booking on the
+# 64-vCPU box). The render is pinned there (taskset) and the digest writer sizes its helpers from it
+# (frankie_box_digest_document.lane_cpus). The plan JSON (CPUs, reasoning, the physical cores shared with bookings) is
+# printed and kept at $OUTPUT_ROOT/work/render-cpu-plan.json.
+PLAN=$(CODE_ROOT="$CODE_ROOT" /opt/frankie-box/venv/bin/python -I -S -B "$CODE_ROOT/deploy/aws/box/frankie_box_cores.py" plan --step digest-render) || { echo "refused: $PLAN" >&2; exit 4; }
+echo "### render CPU plan: $PLAN"
+mkdir -p "$OUTPUT_ROOT/work" && printf '%s\n' "$PLAN" > "$OUTPUT_ROOT/work/render-cpu-plan.json"
+LANE=$(printf '%s' "$PLAN" | /opt/frankie-box/venv/bin/python -I -S -B -c 'import json,sys; print(json.load(sys.stdin)["cpu_list"])')
+[ -n "$LANE" ] || { echo "refused: the CPU plan named no CPUs" >&2; exit 4; }
+export FRANKIE_LANE_CPUS="$LANE"
+exec taskset -c "$FRANKIE_LANE_CPUS" /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_render_digest.py" \
   --commit "$MARKETS_SHA" --output-root "$OUTPUT_ROOT"

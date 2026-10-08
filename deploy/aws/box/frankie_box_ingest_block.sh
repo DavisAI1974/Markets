@@ -84,7 +84,7 @@ case "$OPENING_RECEIPT" in *..*) echo "OPENING_RECEIPT must not contain .."; exi
 # A size not free: the day does not start, prints CPU_BOOKING_WAITING with 'waiting: N free of M needed' and the script
 # exits 75 (retry later).
 DAY_CPUS="${DAY_CPUS:-}"
-case "$DAY_CPUS" in ""|auto|8|16|24|32) ;; *) echo "DAY_CPUS must be 8, 16, 24, 32 or auto"; exit 2;; esac
+case "$DAY_CPUS" in ""|auto|8|16|24|32|48|64) ;; *) echo "DAY_CPUS must be 8, 16, 24, 32, 48, 64 or auto (frankie_box_cores.INGEST_SIZES)"; exit 2;; esac
 case "$WORKERS" in "") ;; *[!0-9]*) echo "WORKERS must be an integer"; exit 2;; esac
 case "$CANARY" in ""|*[!0-9]*) echo "CANARY must be an integer"; exit 2;; esac
 NCPU=$(nproc 2>/dev/null || echo 1)
@@ -94,8 +94,8 @@ AT=1
 size_day() {   # resolves DAY_CPUS and WORKERS for the day process(es) about to start (after the checkout: this commit's
   # frankie_box_cores.py answers `free`); idempotent once resolved; AT = the days that will book side by side
   if [ -z "$DAY_CPUS" ] && [ -n "$WORKERS" ]; then
-    for S in 8 16 24 32; do if [ $((WORKERS + 1)) -le "$S" ]; then DAY_CPUS=$S; break; fi; done
-    [ -n "$DAY_CPUS" ] || { echo "WORKERS=$WORKERS needs $((WORKERS + 1)) CPUs, more than the 32 a day process books; refused"; return 2; }
+    for S in 8 16 24 32 48 64; do if [ $((WORKERS + 1)) -le "$S" ]; then DAY_CPUS=$S; break; fi; done
+    [ -n "$DAY_CPUS" ] || { echo "WORKERS=$WORKERS needs $((WORKERS + 1)) CPUs, more than the 64 a day process books; refused"; return 2; }
   fi
   if [ -z "$DAY_CPUS" ]; then
     if [ "$MODE" = parallel ] || [ "$ACTION" = conform ]; then DAY_CPUS=auto; else DAY_CPUS=8; fi
@@ -104,7 +104,7 @@ size_day() {   # resolves DAY_CPUS and WORKERS for the day process(es) about to 
     FREE=$("$PY" -I -S "$MK/deploy/aws/box/frankie_box_cores.py" free 2>/dev/null | cut -d' ' -f1)
     case "$FREE" in ""|*[!0-9]*) FREE=$NCPU; echo "### the ledger's free count could not be read; sizing from the box's $NCPU CPUs";; esac
     PER=$((FREE / AT)); DAY_CPUS=8
-    for S in 16 24 32; do if [ "$PER" -ge "$S" ]; then DAY_CPUS=$S; fi; done
+    for S in 16 24 32 48 64; do if [ "$PER" -ge "$S" ]; then DAY_CPUS=$S; fi; done
     echo "### DAY_CPUS=auto: $FREE CPUs free for $AT day process(es) side by side: $DAY_CPUS CPUs each"
   fi
   [ "$DAY_CPUS" -le "$NCPU" ] || { echo "DAY_CPUS=$DAY_CPUS is more than the box's $NCPU CPUs; refused"; return 2; }

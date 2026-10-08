@@ -151,6 +151,16 @@ FINISHED = ('done', 'reused', 'skipped', 'not_run')   # not_run: a listed outcom
                                                        # this day: a search with no causal axis); the day goes on
 HANDED_OFF = 'waiting_for_pod'           # the jev step's end on the box: material relayed, the Pod is its own dispatch
 BOX_ROOT = Path('/opt/frankie-box')
+
+
+def _cores():
+    """The box's CPU booking ledger module beside this file (frankie_box_cores: DAY_RUN_SIZES, DAY_RUN_CPUS, lane_for);
+    the one source of every CPU size here, never a literal (session 8)."""
+    here = str(Path(__file__).resolve().parent)
+    if here not in sys.path:
+        sys.path.insert(0, here)
+    import frankie_box_cores
+    return frankie_box_cores
 WORK = BOX_ROOT / 'work'
 RUNS = WORK / 'experiment'
 ROOTS = WORK / 'experiment-roots'
@@ -443,8 +453,8 @@ def load_plan(a, code_root):
     for key in NATIVE_CUTOFF_PLAN_KEYS:
         if getattr(a, key, None) is not None:
             plan[key] = getattr(a, key)
-    # the day slot size: saved only when not the default 16, so every older plan keeps its fingerprint
-    if getattr(a, 'day_cpus', None) not in (None, 16):
+    # the day slot size: saved only when not the ledger's default (16), so every older plan keeps its fingerprint
+    if getattr(a, 'day_cpus', None) not in (None, _cores().DAY_RUN_CPUS):
         plan['day_cpus'] = int(a.day_cpus)
     inspection = getattr(a, 'inspection', None)
     if inspection is not None:
@@ -2389,6 +2399,9 @@ class Run:
             env['PREVIOUS'] = previous
         # the plan's native-entry cutoff, only when the plan carries it (else unset: the classroom's defaults apply)
         env.update({var: self.plan[key] for key, var in NATIVE_CUTOFF_ENV.items() if self.plan.get(key) is not None})
+        lane_plan, lane_why = self.classroom_lane(day, d)   # session 8: the resolver + grow (all 64) before the child
+        if lane_plan is None:
+            return self.record('classroom', day, lane_why[0], reason=lane_why[1])
         import frankie_box_frankie_queue as Q
         with Q.class_running(self.log):              # exactly one class at a time on the box, queue or not
             code, log = self.child('classroom', day, 'frankie_box_experiment_classroom_v2.sh', env)
@@ -2654,10 +2667,60 @@ class Run:
     INSPECTION_SECONDS = 900          # the reporter reads recorded metadata only (8 MiB ceiling per file); never a long job
 
     def day_cpus(self):
-        """The run's day slot size (Greg, 2026-10-07: "Give the day 32 CPUs and that many workers"): plan day_cpus (32 =
-        both main-box lanes as one booking), else the ledger's DAY_RUN_CPUS (16). Every worker count the orchestrator
-        hands a stage is this minus one coordinator; the stages that read their affinity or FRANKIE_LANE_CPUS scale too."""
+        """The run's day slot size (Greg, 2026-10-07: "Give the day 32 CPUs and that many workers"; session 8: 64 = the whole
+        64-vCPU box). While this Run HOLDS its day booking, the booking's live size is the answer (the ledger made it
+        agree with the plan at booking, or refused; a booking grown at the classroom boundary (FRANKIE_CLASSROOM_CPUS)
+        is wider than the plan and every later stage scales to it); before the booking, plan day_cpus, else the
+        ledger's DAY_RUN_CPUS (16, Greg 2026-09-29: "Correct 16"). Every worker count the orchestrator hands a stage is
+        this minus one coordinator; the stages that read their affinity or FRANKIE_LANE_CPUS scale too."""
+        booking = getattr(self, 'slot_booking', None)
+        if booking:
+            try:
+                held, _why = self.cores.held_booking(booking)
+            except (OSError, ValueError):
+                held = None
+            if held and held.get('cpus'):
+                return len(held['cpus'])
         return int(self.plan.get('day_cpus') or self.cores.DAY_RUN_CPUS)
+
+    def classroom_lane(self, day, out_dir):
+        """Session 8 (Greg: "a classroom day gets all 64"): the classroom day's CPU set from the ONE resolver
+        (frankie_box_cores.lane_for 'classroom-day'): FRANKIE_CLASSROOM_CPUS (a run setting given at kick time, FA-6)
+        held (default: the day's booking, unchanged) | all | one of DAY_RUN_SIZES. A wider set is reached by GROWING the
+        day's held booking in the ledger before the classroom child starts (same booking, the extra CPUs taken when
+        free, else the day WAITS visibly); the child then runs under taskset of the grown booking (cmd_run_inside reads
+        it fresh) and day_cpus() scales the later stages. The answer and the grow outcome are written to
+        <classroom dir>/cpu-plan.json. Returns (plan, None) or (None, (state, reason))."""
+        booking = getattr(self, 'slot_booking', None)
+        held = None
+        if booking:
+            try:
+                held, _why = self.cores.held_booking(booking)
+            except (OSError, ValueError):
+                held = None
+        try:
+            plan = self.cores.lane_for('classroom-day', run=self.plan['run'], day=day, held=held)
+        except self.cores.PlanRefused as error:
+            return None, ('refused', 'classroom CPU plan: %s' % error)
+        if plan.get('grow_to'):
+            if not booking:
+                return None, ('refused', 'classroom CPU plan asks %d CPUs but this Run holds no day booking to grow' % plan['grow_to'])
+            _b, outcome = self.cores.grow(booking, plan['grow_to'], 'classroom day: %s' % plan['basis'][-1])
+            plan['grow'] = outcome
+            if outcome['status'] != 'grown':
+                try:
+                    Path(out_dir).mkdir(parents=True, exist_ok=True)
+                    (Path(out_dir) / 'cpu-plan.json').write_text(json.dumps(plan, indent=1, sort_keys=True))
+                except OSError:
+                    pass
+                return None, ('waiting' if outcome['status'] == 'waiting' else 'refused', 'classroom CPU plan: ' + outcome['reason'])
+        try:
+            Path(out_dir).mkdir(parents=True, exist_ok=True)
+            (Path(out_dir) / 'cpu-plan.json').write_text(json.dumps(plan, indent=1, sort_keys=True))
+        except OSError as error:
+            self.log('classroom cpu-plan.json not written (%s); the plan: %s' % (error, plan['cpu_list']))
+        self.log('classroom %s CPUs %s (%s)' % (day, plan['cpu_list'], '; '.join(plan['basis'])))
+        return plan, None
 
     def ingest_size(self):
         """(DAY_CPUS, WORKERS or None, how) for one ingest day process (frankie_box_ingest_block.sh). A plan with a day
@@ -5222,9 +5285,10 @@ def main():
                    '(saved with the plan; default unset = 48)')
     p.add_argument('--native-cutoff-check-every', type=int, help='check the cutoff every N pictures (saved with the plan; '
                    'default unset = 10000)')
-    p.add_argument('--day-cpus', type=int, choices=(16, 32),
-                   help='the day slot size, saved with the plan at the first start: 16 (default, one lane) or 32 (Greg, '
-                        '2026-10-07: both main-box lanes, CPUs 0-31, ONE booking the day holds across all its stages)')
+    p.add_argument('--day-cpus', type=int, choices=_cores().DAY_RUN_SIZES,
+                   help='the day slot size, saved with the plan at the first start: one of %s (frankie_box_cores.DAY_RUN_SIZES; '
+                        '16 = the default, one lane; 32 = Greg 2026-10-07, ONE booking the day holds across all its stages; '
+                        '64 = the whole 64-vCPU box, session 8)' % (_cores().DAY_RUN_SIZES,))
     p.add_argument('--inspection', choices=('auto', 'one_day', 'off'), default='auto',
                    help='the per-piece status reports (frankie_box_workflow_inspection, Greg 2026-10-07: the ONE-day run '
                         'only), saved with the plan at the first start: auto = one_day when the plan holds exactly one '
