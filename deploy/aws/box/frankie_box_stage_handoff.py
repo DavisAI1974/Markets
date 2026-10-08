@@ -203,8 +203,8 @@ def request_own_save(run, e, by):
         try:
             out = Q.request_save(run.plan['run'], e['day'], by)
             return dict(how='queue request_save', marker=out.get('marker'), standing=True)
-        except SystemExit as refusal:
-            why = str(refusal)
+        except (SystemExit, OSError, RuntimeError, ValueError, KeyError) as refusal:
+            why = '%s: %s' % (type(refusal).__name__, refusal)
             if 'stands already' in why:
                 return dict(how='queue request_save', marker=str(Q.marker_of(run.plan['run'], e['day'])), standing=True,
                             note='a save request stood already')
@@ -242,12 +242,13 @@ def start_clean_unit(run, e, stage, key, out_dir, roots, receipts, lane, code_ro
     env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONNOUSERSITE='1', PYTHONPATH=str(code_root), HOME=os.environ.get('HOME') or '/root',
                MARKETS_SHA=commit, CODE_ROOT=str(code_root))
     for name in ('FRANKIE_QUEUE_DIR', 'FRANKIE_QUEUE_SH', 'FRANKIE_HANDOFF_PYTHON', 'FRANKIE_ZSTD', 'FRANKIE_ARCHIVE_ROOT',
-                 'FRANKIE_BOX_ROOT', 'FRANKIE_HANDOFF_NO_KEEP_RUNNING', 'FRANKIE_HANDOFF_WAIT_SAVED_SECONDS', SWITCH):
+                 'FRANKIE_BOX_ROOT', 'FRANKIE_HANDOFF_NO_KEEP_RUNNING', 'FRANKIE_HANDOFF_WAIT_SAVED_SECONDS',
+                 'FRANKIE_HANDOFF_DETACH', SWITCH):
         if os.environ.get(name):
             env[name] = os.environ[name]
     pinned = (['taskset', '-c', lane] if lane and shutil.which('taskset') else [])
     how = None
-    if shutil.which('systemd-run'):
+    if shutil.which('systemd-run') and os.environ.get('FRANKIE_HANDOFF_DETACH', 'systemd') != 'session':
         unit = 'frankie-clean-%s-%s-%s-%d' % (stage, run.plan['run'], e['day'], int(time.time()))
         cmd = ['systemd-run', '--unit', unit, '--collect', '-p', 'StandardOutput=append:%s' % log_path,
                '-p', 'StandardError=append:%s' % log_path, '-p', 'KillMode=mixed'] + \
