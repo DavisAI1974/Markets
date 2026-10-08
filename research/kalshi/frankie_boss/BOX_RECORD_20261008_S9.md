@@ -387,3 +387,13 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   receipt (17:46Z) stands. NOT restarted until the all-99 fix (coverage from the sealed native records, no ledger scan)
   is staged; then kick (reconcile -> unknown, worker ends waiting_owner) -> ACTION=resume -> kick: root REUSED (receipt
   present) -> all99 from records -> boundary by claim -> teacher on 64.
+- 17:5xZ render role returned: 418005d render INSIDE the day's booking (FRANKIE_RENDER_BOOKING=<id>; --keep-receipt so
+  the teacher's receipt check holds; layers by claim, spools from sealed counts; shared reopen_retained_spools) + THE
+  CHECKPOINT FINDING: every digest call made a new random scratch dir (.digest-<uuid4>), so a stopped render NEVER resumed
+  its pass checkpoints before; now _adopt_checkpoint moves the sibling scratch's usable passes in (same key, pass code,
+  lane, spool path, decodes). 3b4bf8c watchdog resize kicks at the newest staged checkout. 7c4837c
+  FRANKIE_ROOT_VALIDATE_CHECK=off (claim stays default). 1c341e29 frankie_box_day_status.sh (one-screen probe).
+  Today: the 17:42Z kill was mid-pass (no pass of table 2 saved), so the render restarts table 2 from its first pass;
+  tables 0/1 reused if their saves landed. Render command for later (after the teacher starts), on a checkout carrying
+  418005d: CODE_ROOT=<CR5> MARKETS_SHA=<sha> OUTPUT_ROOT=R FRANKIE_RENDER_BOOKING=day-run-20231018-day_slot_repoint-
+  1791479892-5613 bash $CODE_ROOT/deploy/aws/box/frankie_box_render_digest.sh.
