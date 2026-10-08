@@ -1194,8 +1194,9 @@ def _book_slot(x, stage, commit):
     over"): EXACTLY 16 CPUs booked once in the core ledger, held by this worker process for the whole day (ROOT, teacher,
     data, search, lessons, the class, Jev); every step runs inside it (frankie_box_cores.py run --inside) and nothing
     re-books between steps, so no other day can take the CPUs while the day is between two steps. A day with an owner
-    binding (a resume) books EXACTLY its retained CPU set: the ledger hands the owner its retained booking back and
-    nobody else. Returns (booking id, cpus, None) or (None, None, the ledger's waiting/refused reason)."""
+    binding (a resume) books EXACTLY its retained CPU set, or the set it was grown to (same booking id): the ledger hands
+    the owner its retained booking back and nobody else (session 9; _bind_owner then records the grown set). Returns
+    (booking id, cpus, None) or (None, None, the ledger's waiting/refused reason)."""
     import frankie_box_cores as C
     cpus = (x.get('owner') or {}).get('cpus') or x.get('cpus')
     # the run's day slot size (plan day_cpus: 32 = both main-box lanes as one booking; default 16)
@@ -1256,6 +1257,10 @@ def _bind_owner(x, slot, cpus, code_root, commit):
     # successor (Run.jev_rebooked) instead of a refusal (second review F1)
     held = list(owner.get('held_bookings') or [])
     held.append(dict(booking=slot, cpus=sorted(cpus), bound_utc=utc()))
+    if owner.get('cpus') and sorted(owner['cpus']) != sorted(cpus):
+        # session 9 (Greg's CPU add before a resume): the retained booking was GROWN; the owner binding records the
+        # booking's actual set from here on (re-books between steps, resume/status readouts), the old set kept
+        owner = dict(owner, cpus_before_grow=sorted(owner['cpus']))
     owner = dict(owner, cpus=sorted(cpus), booking=slot, holder_pid=os.getpid(), holder_utc=utc(), held_bookings=held)
     x['owner'] = owner
     import frankie_box_cores as C

@@ -788,10 +788,20 @@ def book_locked(kind, size, pid, meta, window):
         if not set(requested).issubset(free):
             # the owner of a RETAINED booking of exactly this set takes it back IN PLACE (one record replaced, never a
             # moment with the CPUs free or double booked): the same booking id, the new holder pid, the retention kept
-            # as its history; anyone else waits
-            mine = [b for b in bookings if b['_retained'] and sorted(b['cpus']) == sorted(requested)
-                    and (b.get('retained') or {}).get('run') == meta.get('run')
-                    and (b.get('retained') or {}).get('day') == meta.get('day')]
+            # as its history; anyone else waits. Session 9 (Greg's CPU add before a resume, live on a2): a retained
+            # booking GROWN from this set (the set a subset, the CPUs beyond it exactly its `grown` records' `added`) is
+            # taken over too, on its FULL grown set; the exact match is preferred when both exist.
+            def _ours(b):
+                return (b['_retained'] and (b.get('retained') or {}).get('run') == meta.get('run')
+                        and (b.get('retained') or {}).get('day') == meta.get('day'))
+
+            def _grown_from_requested(b):
+                if not b.get('grown') or not set(requested) <= set(b['cpus']):
+                    return False
+                added = {c for g in b['grown'] for c in g.get('added') or []}
+                return set(b['cpus']) - set(requested) == added
+            mine = ([b for b in bookings if _ours(b) and sorted(b['cpus']) == sorted(requested)]
+                    or [b for b in bookings if _ours(b) and _grown_from_requested(b)])
             if not mine:
                 return None, dict(status='waiting', reason='the retained lane CPU set is still occupied')
             asked = meta.get('asked_size')
@@ -801,7 +811,7 @@ def book_locked(kind, size, pid, meta, window):
                     'the plan asks %d CPUs but the retained booking %s holds %d (%s); a saved day resumes on EXACTLY its '
                     'set: grow the booking (frankie_box_cores.py grow --booking %s --size %d --reason ...) or keep the plan '
                     'at %d' % (asked, mine[0]['booking'], size, cpu_list(requested), mine[0]['booking'], asked, size)))
-            orphan = sorted(c for c in requested if c in held)
+            orphan = sorted(c for c in mine[0]['cpus'] if c in held)
             if orphan:
                 return None, dict(status='waiting', in_use_unbooked=cpu_list(orphan),
                                   reason='the retained lane CPU set is in use by a Frankie process not in the ledger (CPUs %s; '
@@ -810,15 +820,21 @@ def book_locked(kind, size, pid, meta, window):
             if start is None:
                 return None, dict(status='refused', reason='pid %d is not running' % pid)
             b = mine[0]
-            b['resumed'] = (b.get('resumed') or []) + [dict(retained=b.pop('retained'), at=now_iso(), at_epoch=time.time(),
-                                                           stage=meta.get('stage'), commit=meta.get('commit'), pid=pid)]
+            took = dict(retained=b.pop('retained'), at=now_iso(), at_epoch=time.time(), stage=meta.get('stage'),
+                        commit=meta.get('commit'), pid=pid)
+            if sorted(b['cpus']) != sorted(requested):
+                took.update(requested=cpu_list(requested), grown_to=cpu_list(b['cpus']))
+            b['resumed'] = (b.get('resumed') or []) + [took]
             b['_retained'] = False
             b['pids'] = [dict(pid=pid, start=start, role='booking holder')]
             b['stage'] = meta.get('stage')
             b['commit'] = meta.get('commit') or b.get('commit')
             write_json(b['_path'], b)
-            return b, dict(status='booked', booking=b['booking'], cpus=cpu_list(b['cpus']), parent_cpu=b['parent_cpu'],
-                           resumed_from=b['booking'])
+            out = dict(status='booked', booking=b['booking'], cpus=cpu_list(b['cpus']), parent_cpu=b['parent_cpu'],
+                       resumed_from=b['booking'])
+            if 'grown_to' in took:
+                out.update(requested=took['requested'], grown_to=took['grown_to'])
+            return b, out
     if requested is None:
         # S1 (stacks pass 2026-10-07): the owner of a booking RETAINED on a save (cmd_run: a job of a RETAINABLE kind that
         # exited SAVED_EXIT) takes it back in place by kind, run and day without naming its CPUs (the ingest wrapper never
