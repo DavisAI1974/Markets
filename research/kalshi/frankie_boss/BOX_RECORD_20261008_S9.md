@@ -435,3 +435,15 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   -> worker KILLED (the read is the second pass the staged fixes remove: 11c65ac2 teacher witnesses by claim; the boundary
   validator goes OFF at the relaunch: FRANKIE_ROOT_VALIDATE_CHECK=off, 7c4837c = the step taken out). Resume + kick on
   CR6 (607eb273) when its receipt lands (~18:12Z).
+- 18:10:31Z volumes: root vol-0d36715924f03b86c still OPTIMIZING (53%) -> raise refused again; archive raise optimizing 92%.
+- 18:10:43Z (SSM 6012c26e): CR6 (607eb273) staged ok; ACTION=resume refused "is done (finish running): only a saved/unknown
+  day is resumed" (the dead finish owner not yet reconciled; the SSM executionTimeout then killed the script mid-kick).
+  18:11:54Z (SSM 683210e2) the same (timeout 48 s too short for a kick's bounded lock wait). 18:13:10Z (SSM 1ab3d6e2,
+  executionTimeout 400): kick on db96f24 (reconcile the finish: unknown) -> resume on CR6 -> kick on CR6 with
+  FRANKIE_ROOT_VALIDATE_CHECK=off FRANKIE_ROOT_DIGEST=off FRANKIE_CLASSROOM_CPUS=all -> the teacher. Result below.
+- Render role returned: 3cb0deea I/O priority (helpers class 2/7, staging 2/0; effective only under bfq; EBS NVMe runs
+  `none`, so recorded, not effective until the scheduler is set); 5faef9ef per-part durable progress inside the snapshot
+  and plan passes (chunk = 256 MiB / 65,536 rows; a kill loses at most one chunk per helper; stop file honoured at every
+  chunk; 48 scratch kill/resume cases byte-identical); 66b3fdc2 records. One-read digest (DECODES=1) NOT built: the plan
+  pass needs table-wide facts (column order, keys-once shapes) from the whole snapshot; a speculate-and-verify renderer
+  is days of work (recorded in IMPROVEMENTS item 14). Existing digest tests: 94 passed, 6 pre-existing failures.
