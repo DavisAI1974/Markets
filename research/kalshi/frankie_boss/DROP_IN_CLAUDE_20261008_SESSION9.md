@@ -38,7 +38,7 @@ point. Fix problem and restart from exactly the same spot." Then: "Will fix in n
    any run; FULL DEPTH digests.
 ```
 
-## PAUSE STATE (parent, 18:2xZ 2026-10-08): the box is being STOPPED; the day is SAVED with everything retained
+## PAUSE STATE (parent, 18:20Z 2026-10-08): the box is STOPPED (KeepRunning=false); the day is SAVED with everything retained
 
 Resume box for the next session (paste):
 ```
@@ -48,11 +48,12 @@ BOX_RECORD_20261008_S9.md (newest sections last), IMPROVEMENTS_20261008_S9.md, t
 STATE: main box i-035994afa8bdf66a5 (r7i.16xlarge, us-east-1) STOPPED, KeepRunning=false. Day e2e-20231018-a2/20231018:
 ROOT-line entry done, finish SAVED on its marker (18:15Z), attempt e2e-20231018-a2-20231018-a1 with its receipt (17:46Z;
 digest NOT rendered: process 4 skipped), booking day-run-20231018-day_slot_repoint-1791479892-5613 retained on 0-63.
-Resume checkout on the box: /opt/frankie-box/code/59367e319315bb597bcc9590daa56a6107f0a618-<run>-1/markets (every fix of
-2026-10-08 session 9; verify its staging-receipt; if absent, stage the tip with frankie_box_run.yml ACTION=stage).
+Resume checkout: NOT on the box yet (the box was stopped at 18:20Z before stage run 37823195314 landed): FIRST stage the
+tip (frankie_box_run.yml ACTION=stage, script deploy/aws/box/frankie_box_stage_code.sh) after StartInstances; the
+checkout is /opt/frankie-box/code/<tip sha>-<run>-1/markets (every fix of 2026-10-08 session 9 is on the tip 59367e31+).
 Volumes: root vol-0d36715924f03b86c at 3,000/125 with its 12:08Z downsize still OPTIMIZING (a raise is refused until it
 completes; check DescribeVolumesModifications, then raise to 16,000/1,250 BEFORE any render); archive
-vol-004b68c077be09cc9 raised to 10,000/1,000 (18:34Z... see the record).
+vol-004b68c077be09cc9 raised to 10,000/1,000 at 17:34Z (revert to baseline when idle; 6 h cooldown).
 RESTART (on Greg's go), over SSM on that checkout with CODE_ROOT + MARKETS_SHA explicit:
   1. StartInstances; CreateTags KeepRunning=true; wait SSM Online.
   2. ACTION=resume RUN=e2e-20231018-a2 DAY=20231018 (frankie_box_frankie_queue.sh): finish 'resume'.

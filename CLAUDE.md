@@ -1,3 +1,11 @@
+# Claude session drop-in — 2026-10-08, session 9 PAUSED (box STOPPED 18:20Z): READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261008_SESSION9.md` (the PAUSE STATE box at its top)
+
+Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW: `git fetch --deepen=400`). Greg: stopping here, boxes ended for a while. Main box
+i-035994afa8bdf66a5 STOPPED, KeepRunning=false; day e2e-20231018-a2/20231018 SAVED (finish) with the ROOT receipt, attempt -a1
+and its 64-CPU booking retained; digest not rendered. Every fix of session 9 is on the tip (stage it first at the restart).
+Standing calls: one pass, no multiple passes; gates that re-check receipted data are off; an owned day is never retried from
+scratch; a box keeps its days end to end; fixes made ahead of the chain. Records: BOX_RECORD_20261008_S9.md, IMPROVEMENTS_20261008_S9.md.
+
 # Claude session drop-in — 2026-10-08, session 9: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261008_SESSION9.md`
 
 Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW clone: `git fetch --deepen=400` first). Parent-only; agents (model "fable");

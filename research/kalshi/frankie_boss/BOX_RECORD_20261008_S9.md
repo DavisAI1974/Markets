@@ -472,3 +472,9 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   ...repoint-1791479892-5613 (0-63) retained, marker standing, receipt (17:46Z) in place; only cpu-watch runs. No kill.
   Stage 513b08ff (run 37822734333) on the box with receipt.
 - Next: 59367e31 stage receipt -> stop cpu-watch -> StopInstances i-035994afa8bdf66a5 + KeepRunning=false -> records.
+- 18:20:43Z (SSM 246f9f4f/quiesce): Greg "No wait! Land it now!" -> cpu-watch stopped; 0 frankie units, 0 frankie procs;
+  entry done | finish saved | attempt -a1; the 59367e31 stage (run 37823195314) had NOT reached the box (restage at the
+  restart). CreateTags KeepRunning=false (+reason); StopInstances i-035994afa8bdf66a5: running -> stopping 18:20:4xZ.
+  Volumes left as they are: root 3,000/125 (downsize still optimizing; raise refused until it completes), archive
+  10,000/1,000 (raised 17:34Z; revert when idle to save ~$70/mo, 6 h cooldown).
+## END OF SESSION 9 BOX WORK. Resume: the drop-in's resume box (stage 59367e31 first).
