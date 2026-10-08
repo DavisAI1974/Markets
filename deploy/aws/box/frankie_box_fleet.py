@@ -60,6 +60,11 @@ DEFAULT_BUCKET = 'frankie-granite42-568968024170-us-east-1'   # the frankie leas
 DEFAULT_REGION = 'us-east-1'
 DEFAULT_GATE_STAGES = ('teacher',)                   # ROOT -> teacher -> (gate) -> classroom; the serial boundary
 RELEASE_STAGES = ('classroom', 'data')               # release the lease once the classroom is done (data = safety)
+# A day does NOT end at the classroom (Greg, 2026-10-08): after the classroom the day runs data/search ->
+# scientific-teacher -> the Granite "voice" meeting -> jev -> end/record/retain, per-box on the grown 64 lane (the
+# lease is already released). A day is DONE only at its tail (jev); recording every stage lets the status probe show
+# the real current stage and never call a day done at the classroom.
+FLEET_DONE_STAGES = ('jev',)
 DEFAULT_POLL_SECONDS = 30
 DEFAULT_WAIT_SECONDS = 86400                          # the WAIT unit's own life: a whole fleet run
 DEFAULT_FAIR_WAIT_SECONDS = 300                       # yield to a strictly earlier LIVE waiter this long, then race
@@ -337,6 +342,27 @@ def seed_day_list(run, assignments, commit, *, st=None):
         return dict(status='seeded', days=len(body['days']), day_list=body)
     except ConditionalExists:
         return dict(status='exists', day_list=read_day_list(st))
+
+
+def record_stage_progress(run, day, stage, *, st=None, instance=None):
+    """Record a stage DONE on the shared day list and advance current_stage; set done_utc only at the tail stage (jev).
+    The day is carried through its FULL sequence (classroom is not the end), so the status probe shows the real current
+    stage and marks a day done only after jev/end. Advisory (unconditional read-modify-write); the lease and the claim
+    stay the authoritative control objects."""
+    st = st or store()
+    instance = instance or instance_id()
+    doc = st.get(DAY_LIST_KEY)
+    if not doc:
+        return dict(status='no_list')
+    for entry in doc.get('days', []):
+        if entry.get('day') == day:
+            entry.setdefault('stages', {})[stage] = dict(state='done', at=_utc(), instance=instance)
+            entry['current_stage'] = stage
+            if stage in FLEET_DONE_STAGES:
+                entry['done_utc'] = _utc()
+            st.put(DAY_LIST_KEY, doc)
+            return dict(status='recorded', day=day, stage=stage, done=stage in FLEET_DONE_STAGES)
+    return dict(status='day_absent', day=day)
 
 
 def set_day_stage_state(run, day, stage, state, *, st=None):

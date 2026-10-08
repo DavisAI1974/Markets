@@ -1,0 +1,172 @@
+name: Frankie fleet (plan / launch / status / stop-all for the session-8 day-box fleet)
+# Session 8 (Greg: "start workflow updating so we're ready to go"). Drives the fleet steps of
+# deploy/aws/frankie_aws_stack.py and the read-only probe deploy/aws/box/frankie_fleet_status.py. It NEVER touches the
+# per-box run path (frankie_box_run.yml is unchanged and still takes any instance id for per-box probes/kicks).
+#   plan      dry run of fleet-launch (prints the per-box plan; records nothing, launches nothing).
+#   launch    runs fleet-launch with --apply --confirm GREG_GO_AWS_STACK, ONLY when the confirm input equals that exact
+#             string; otherwise it refuses and nothing runs.
+#   status    read-only: one line per Project=frankie instance (id, state, assigned days, current stage, lease holder),
+#             from the S3 day list + EC2 DescribeInstances. Starts nothing.
+#   stop-all  STOPS (never terminates) every Project=frankie fleet box; refuses without a confirm; never the main boxes
+#             i-035994afa8bdf66a5 or i-0d17573dbce871520 unless named explicitly in the `instances` input.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'plan | launch | status | stop-all'
+        required: true
+        type: choice
+        options: [plan, status, launch, stop-all]
+        default: plan
+      days:
+        description: 'plan/launch: comma list of YYYYMMDD days (two per box)'
+        required: false
+        default: ''
+      count:
+        description: 'plan/launch: number of boxes'
+        required: false
+        default: '0'
+      spot:
+        description: 'plan/launch: true = Spot market (ROOT-stage boxes only; classroom stays On-Demand)'
+        required: false
+        default: 'false'
+      image_id:
+        description: 'launch: the golden AMI id (from the golden-ami step)'
+        required: false
+        default: ''
+      commit:
+        description: 'plan/launch: the staged 40-hex commit the boxes stage and run'
+        required: false
+        default: ''
+      run:
+        description: 'the run name the days run under'
+        required: false
+        default: 'e2e-20231018-a2'
+      fleet_day_list:
+        description: 'the S3 day-list location (bucket/prefix); blank = fleet/<run> under the granite bucket'
+        required: false
+        default: ''
+      confirm:
+        description: 'launch: must equal GREG_GO_AWS_STACK. stop-all: any non-empty value to proceed.'
+        required: false
+        default: ''
+      instances:
+        description: 'stop-all: extra instance ids (comma/space) it MAY stop, e.g. to name a main box explicitly'
+        required: false
+        default: ''
+      region:
+        description: 'AWS region'
+        required: false
+        default: 'us-east-1'
+permissions:
+  contents: read
+concurrency:
+  # one fleet action at a time; never cancel a launch or a stop in flight
+  group: frankie-fleet
+  cancel-in-progress: false
+jobs:
+  fleet:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_EC2_METADATA_DISABLED: 'true'
+      ACTION: ${{ inputs.action }}
+      DAYS: ${{ inputs.days }}
+      COUNT: ${{ inputs.count }}
+      SPOT: ${{ inputs.spot }}
+      IMAGE_ID: ${{ inputs.image_id }}
+      COMMIT: ${{ inputs.commit }}
+      RUN: ${{ inputs.run }}
+      FLEET_DAY_LIST: ${{ inputs.fleet_day_list }}
+      CONFIRM: ${{ inputs.confirm }}
+      INSTANCES: ${{ inputs.instances }}
+      REGION: ${{ inputs.region }}
+      MAIN_BOXES: 'i-035994afa8bdf66a5 i-0d17573dbce871520'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Report which repository secrets are set (names only; values never read)
+        env:
+          HAS_AWS_PAIR: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+        run: |
+          echo "repository secrets set AWS_PAIR=$HAS_AWS_PAIR"
+
+      - name: plan (dry run; records nothing)
+        if: inputs.action == 'plan'
+        run: |
+          set -euo pipefail
+          args=(--steps fleet-launch --days "$DAYS" --count "$COUNT" --run "$RUN")
+          [ -n "$COMMIT" ] && args+=(--commit "$COMMIT")
+          [ -n "$IMAGE_ID" ] && args+=(--image-id "$IMAGE_ID")
+          [ -n "$FLEET_DAY_LIST" ] && args+=(--fleet-day-list "$FLEET_DAY_LIST")
+          [ "$SPOT" = "true" ] && args+=(--spot)
+          python3 deploy/aws/frankie_aws_stack.py "${args[@]}"
+
+      - name: launch (requires confirm GREG_GO_AWS_STACK)
+        if: inputs.action == 'launch'
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM" != "GREG_GO_AWS_STACK" ]; then
+            echo "launch refused: the confirm input must equal GREG_GO_AWS_STACK exactly (got '${CONFIRM}'); nothing launched"
+            exit 1
+          fi
+          [ -n "$IMAGE_ID" ] || { echo "launch needs --image-id (the golden AMI)"; exit 1; }
+          [ -n "$COMMIT" ] || { echo "launch needs --commit (the staged commit)"; exit 1; }
+          args=(--steps fleet-launch --days "$DAYS" --count "$COUNT" --run "$RUN" --commit "$COMMIT" --image-id "$IMAGE_ID"
+                --apply --confirm GREG_GO_AWS_STACK)
+          [ -n "$FLEET_DAY_LIST" ] && args+=(--fleet-day-list "$FLEET_DAY_LIST")
+          [ "$SPOT" = "true" ] && args+=(--spot)
+          python3 deploy/aws/frankie_aws_stack.py "${args[@]}"
+
+      - name: status (read-only)
+        if: inputs.action == 'status'
+        env:
+          FRANKIE_FLEET_DAY_LIST: ${{ inputs.fleet_day_list }}
+          FRANKIE_FLEET_REGION: ${{ inputs.region }}
+        run: |
+          set -euo pipefail
+          if [ -z "${FRANKIE_FLEET_DAY_LIST}" ]; then
+            export FRANKIE_FLEET_DAY_LIST="fleet/${RUN}"
+          fi
+          python3 deploy/aws/box/frankie_fleet_status.py --region "$REGION"
+
+      - name: stop-all (stops, never terminates; fleet boxes only unless a main box is named)
+        if: inputs.action == 'stop-all'
+        run: |
+          set -euo pipefail
+          if [ -z "$CONFIRM" ]; then
+            echo "stop-all refused: pass a non-empty confirm input; nothing stopped"
+            exit 1
+          fi
+          python - <<'PY'
+          import os, boto3
+          region = os.environ['REGION']
+          main = set(os.environ.get('MAIN_BOXES', '').split())
+          named = set(x for x in os.environ.get('INSTANCES', '').replace(',', ' ').split() if x)
+          ec2 = boto3.client('ec2', region_name=region)
+          # every Project=frankie box that is running or pending
+          resp = ec2.describe_instances(Filters=[{'Name': 'tag:Project', 'Values': ['frankie']},
+                                                 {'Name': 'instance-state-name', 'Values': ['running', 'pending']}])
+          found = [i['InstanceId'] for r in resp['Reservations'] for i in r['Instances']]
+          # fleet boxes = Project=frankie minus the two main boxes, UNLESS a main box is explicitly named
+          to_stop = [i for i in found if (i not in main) or (i in named)]
+          skipped_main = [i for i in found if i in main and i not in named]
+          print('Project=frankie running/pending:', found or 'none')
+          print('will STOP (never terminate):', to_stop or 'none')
+          if skipped_main:
+              print('left alone (main boxes, not named in --instances):', skipped_main)
+          if to_stop:
+              ec2.stop_instances(InstanceIds=to_stop)
+              print('stop_instances requested for', to_stop)
+          else:
+              print('nothing to stop')
+          PY

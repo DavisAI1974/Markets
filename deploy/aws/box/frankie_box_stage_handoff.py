@@ -418,6 +418,13 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
         else:
             why = 'validation exit %d: no validator receipt or an unlisted refusal (see %s)' % (code, vlog)
         return _write(out_dir / 'handoff.json', dict(base, status='failed', reason=why))
+    if fleet is not None:
+        # record this stage DONE on the shared day list (advisory): the day is carried through its full sequence
+        # (classroom -> data/search -> scientific-teacher -> voice meeting -> jev -> end), done only at the tail
+        try:
+            base['fleet_stage'] = fleet.record_stage_progress(run.plan['run'], e['day'], stage)
+        except Exception as error:  # noqa: BLE001 - never block the day on an advisory day-list write
+            base['fleet_stage'] = dict(status='error', error='%s: %s' % (type(error).__name__, str(error)[:200]))
     if fleet is not None and stage in fleet.gate_stages():
         # the ROOT->classroom boundary (gate stage, default `teacher`): the stage validated; now serialise the
         # classroom across the fleet. classroom_gate records this box ready and claims the ONE global lease.
