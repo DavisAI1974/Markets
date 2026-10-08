@@ -3389,7 +3389,8 @@ class Session:
                                                     '; %d skipped' % len(skipped) if skipped else ''))
         return out
 
-    def _write_digest(self, receipt, layers, prices, frames, structures, roll, first, buys, sells, bedrock=True):
+    def _write_digest(self, receipt, layers, prices, frames, structures, roll, first, buys, sells, bedrock=True,
+                      frame_form=None):
         """Publish a file from pinned layer snapshots only after exact table proofs. bedrock=False writes the header,
         layer statuses and legacy tables only (what Granite reads); the bedrock layers stay whole in their layer files."""
         sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -3398,7 +3399,8 @@ class Session:
             self.work / 'derivation-digest-full.md', receipt, layers, prices, frames, structures,
             roll, first, buys, sells,
             bedrock_entries={name: entry for name, entry in receipt['layers'].items() if entry.get('bedrock')} if bedrock else {},
-            scratch_directory=self.work / 'derived' / ('.digest-' + uuid.uuid4().hex))
+            scratch_directory=self.work / 'derived' / ('.digest-' + uuid.uuid4().hex),
+            frame_form=frame_form)      # session 6: None = the writer's default (top_ten for full-depth frames)
         write_json(self.work / 'digest-proof.json', proof)
         return proof
 
