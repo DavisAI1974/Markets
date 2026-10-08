@@ -134,9 +134,10 @@ class DigestStopped(SystemExit):
 
 
 def stop_requested(environ=None):
-    """The stop file's path when FRANKIE_DIGEST_STOP_FILE names an existing file, else None. Checked ONLY between passes
-    (frankie_box_digest_parallel.step and before the copy): a pass in flight always finishes and saves first, so
-    nothing is redone on the resume; the wait for the stop is at most one pass. Orchestration only: not in _pass_code."""
+    """The stop file's path when FRANKIE_DIGEST_STOP_FILE names an existing file, else None. Checked between passes
+    (frankie_box_digest_parallel.step and before the copy) and, session 9, by every helper of the snapshot and plan
+    passes at each chunk boundary after its chunk is saved (_stop_at_chunk): the wait for the stop is at most one chunk
+    there, and the resume continues each part from its last chunk. Orchestration only: not in _pass_code."""
     path = (os.environ if environ is None else environ).get(STOP_FILE_ENV)
     return path if path and Path(path).is_file() else None
 
@@ -223,7 +224,8 @@ class PinnedPool:
     executor reports it as BrokenProcessPool on every task it held; the pool is started again on one CPU fewer (the
     last of the order, a second hardware thread first) and every task of every caller that had not completed is
     submitted again with its own job. The part functions are pure functions of their job (the plan pass starts from an
-    empty count file, _plan_fresh; the final pass truncates its outputs), so a task run twice returns the same result.
+    empty count file or continues from its last durable chunk, _plan_fresh; the final pass truncates its outputs), so a
+    task run twice returns the same result.
     With every helper lost the tasks run in the calling thread. A task's own exception still raises from map()."""
 
     def __init__(self, cpus, label='digest table helpers', note=None):
@@ -338,9 +340,9 @@ class PinnedPool:
 
 
 def _plan_fresh(job):
-    """The plan pass of one part from an empty count file: the coordinator removes it before the pass, and a part re-done
-    after its helper died starts from nothing again (sqlite would refuse the existing table)."""
-    (Path(job[1]) / 'freq.sqlite').unlink(missing_ok=True)
+    """The plan pass of one part: from its last complete chunk when its durable progress record (session 9) matches,
+    else from an empty count file (_plan removes the part's plan files itself; sqlite would refuse the existing table),
+    so a part re-done after its helper died continues where its last chunk ended."""
     return _plan(job)
 
 
@@ -575,13 +577,17 @@ def _cross_of(row, columns, top):
     return {c: flat[c] for c in columns if c in flat}
 
 
-def _part_db(directory, stage):
+def _part_db(directory, stage, durable=False):
     # Part databases are scratch (a failed pass is redone from its inputs), so no journal and no fsync per commit; a
     # 1 GiB page cache per helper keeps the per-candidate count upserts off the disk (profile 2026-09-28: the count
-    # pass sat at 37% CPU in disk wait with the default 2 MB cache on 28 helpers).
+    # pass sat at 37% CPU in disk wait with the default 2 MB cache on 28 helpers). Session 9, durable (the plan pass's
+    # per-part progress): a write-ahead log, fsync'd at each commit (one commit a chunk), so a stop keeps every
+    # committed chunk and drops the one in flight; the plan pass returns the file to a plain journal when it ends.
     db = sqlite3.connect(Path(directory) / (stage + '.sqlite'))
-    db.execute('PRAGMA journal_mode=OFF')
-    db.execute('PRAGMA synchronous=OFF')
+    db.execute('PRAGMA journal_mode=%s' % ('WAL' if durable else 'OFF'))
+    db.execute('PRAGMA synchronous=%s' % ('FULL' if durable else 'OFF'))
+    if durable:
+        db.execute('PRAGMA journal_size_limit=%d' % (64 << 20))
     db.execute('PRAGMA temp_store=MEMORY')
     db.execute('PRAGMA cache_size=-1048576')
     return db
@@ -617,20 +623,209 @@ def _digest(key):
     return hashlib.sha256(key.encode()).digest()
 
 
+# ---- Session 9: per-part durable progress inside the source-reading passes --------------------------------------------
+# Greg, 2026-10-08: "we were supposed to have updated all the save and retain and restart code in everything to reflect
+# retaining all outputs so we don't have to spend one minute rerunning something". Before this, a pass saved only at its
+# END (_save_checkpoint), so a stop or kill inside the snapshot or plan pass (each one decode of the source: ~63 min of
+# the 497 GB frames spool at 125 MiB/s) lost the whole pass. Now each part's helper saves its progress at every CHUNK
+# (FRANKIE_DIGEST_CHUNK_BYTES of a spool part, default 256 MiB; FRANKIE_DIGEST_CHUNK_ROWS rows of any other part,
+# default 65,536): what the part has emitted so far is fsync'd first, then one progress record (chunk index, rows done,
+# byte offset into the part's spool range, the per-chunk sha256 of what was emitted, the pass state at that row) is
+# committed atomically. A helper that starts on a part with a progress record of the same TOKEN (the table's checkpoint
+# key, the pass's code, the part's index, the source file's size and mtime) continues from its last complete chunk:
+# output beyond the record (the chunk in flight at the stop) is trimmed, never the whole part redone; a part already
+# complete returns its saved result. A record that disagrees with its files in a way a trim cannot mend (a file shorter
+# than recorded, another token) starts that part fresh, the reason on the receipt. The chunking is orchestration: the
+# same rows reach the same state in the same order, so the table's bytes do not depend on it (the toys and a forced
+# mid-part kill + resume compared byte for byte). The stop file (FRANKIE_DIGEST_STOP_FILE) is also honoured at every
+# chunk boundary: a helper commits its chunk, then stops (PartStopped), so a lawful stop waits at most one chunk.
+CHUNK_SETTINGS = dict(bytes='FRANKIE_DIGEST_CHUNK_BYTES', rows='FRANKIE_DIGEST_CHUNK_ROWS')
+CHUNK_DEFAULTS = dict(bytes=256 << 20, rows=65536)
+SNAPSHOT_PROGRESS = 'snapshot.progress'
+
+
+class PartStopped(Exception):
+    """A helper stopped at a chunk boundary on the stop file, its part's progress saved (session 9)."""
+
+
+def chunk_setting():
+    out = {}
+    for k, name in CHUNK_SETTINGS.items():
+        value = os.environ.get(name)
+        out[k] = CHUNK_DEFAULTS[k] if value in (None, '') else int(value)
+        if out[k] < 1:
+            raise ValueError('%s must be a positive integer, not %r' % (name, value))
+    return out
+
+
+def _rows_from(spec, rows=0, offset=None):
+    """(row, rows done, resume offset) for each row of one part from `rows` rows on (a spool part: from byte `offset` of
+    its range): the same rows, decoded as _source_rows decodes them, in the same order. The offset is the spool position
+    just after the row (None for the other kinds, which resume by count)."""
+    if spec['kind'] == 'spool':
+        from research.kalshi.frankie_boss.c15_journal import unpack
+        position = spec['start'] if offset is None else offset
+        with open(spec['path'], 'rb') as handle:
+            handle.seek(position)
+            for line in handle:
+                if position >= spec['end']:
+                    break
+                position += len(line)
+                rows += 1
+                yield unpack(json.loads(line.decode('utf-8'))), rows, position
+        return
+    if rows:
+        if spec['kind'] == 'inline':
+            spec = dict(spec, rows=spec['rows'][rows:])
+        elif spec['kind'] == 'members':
+            spec = dict(spec, keys=spec['keys'][rows:])
+        else:
+            spec = dict(spec, start=spec['start'] + rows, count=spec['count'] - rows)
+    for row in _source_rows(spec):
+        rows += 1
+        yield row, rows, None
+
+
+def _source_witness(spec):
+    """The part's source file as it stands (size, mtime): in the progress token, so a changed source never resumes."""
+    path = spec.get('path') or spec.get('database')
+    if not path:
+        return None
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+    return [st.st_size, st.st_mtime_ns]
+
+
+def _part_token(key, code, label, index, spec, extra=None):
+    return hashlib.sha256(json.dumps([key, code[label], label, index, _source_witness(spec), extra],
+                                     sort_keys=True, default=str).encode()).hexdigest()
+
+
+def _sync_dir(directory):
+    fd = os.open(directory, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _durable_write(path, data):
+    """data to path, all or nothing: a temporary file fsync'd, renamed over, the directory fsync'd."""
+    tmp = path.with_name(path.name + '.tmp')
+    with tmp.open('wb') as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(tmp, path)
+    _sync_dir(path.parent)
+
+
+def _load_pickle(path):
+    try:
+        return pickle.loads(Path(path).read_bytes())
+    except (OSError, ValueError, EOFError, pickle.UnpicklingError, AttributeError, ImportError):
+        return None
+
+
+def _chunk_due(spec, chunk_rows, offset, chunk_offset, chunking):
+    if spec['kind'] == 'spool':
+        return offset - chunk_offset >= chunking['bytes']
+    return chunk_rows >= chunking['rows']
+
+
+def _stop_at_chunk(durable):
+    path = durable.get('stop')
+    if path and Path(path).is_file():
+        raise PartStopped('part stopped at a chunk boundary on the stop file %s (its progress is saved)' % path)
+
+
+def _progress_note(**given):
+    note = dict(resumed_from_chunk=None, rows_kept=0, trimmed_bytes=0, reused_complete=False, fresh_reason=None,
+                chunks=0)
+    note.update(given)
+    return note
+
+
 # ---- phase 1: snapshot ---------------------------------------------------------------------------------------------
 
 def _snapshot(job):
-    # Nothing is written: the later passes read the rows again from the same read-only source, in the same order. The
+    # No row is written: the later passes read the rows again from the same read-only source, in the same order. The
     # rows are JSON decoded (sources.sqlite payloads), so the serial writer's type-preservation spool check cannot fail
-    # on them and is not repeated here.
-    spec, directory = job[0], job[1]
+    # on them and is not repeated here. Session 9: with `durable` (job[3]: token, chunking, stop, reserve) the part's
+    # state and its cross-context rows are saved at every chunk (SNAPSHOT_PROGRESS, cross-NNNNNN.pkl) and a restart
+    # continues from the last complete chunk.
+    spec, directory = job[0], Path(job[1])
     cross_columns = list(job[2]) if len(job) > 2 and job[2] else None     # fuse_context: the context from this decode
-    Path(directory).mkdir(parents=True, exist_ok=True)
+    durable = job[3] if len(job) > 3 else None
+    directory.mkdir(parents=True, exist_ok=True)
     observer, n, first, last = DG.Observer(), 0, None, None
     state = ({}, {}, {})
     cross = [] if cross_columns else None
     top = bool(cross_columns) and all('.' not in c for c in cross_columns)
-    for n, row in enumerate(_source_rows(spec), 1):
+    offset, chunks, files, note = None, 0, [], _progress_note()
+
+    def cross_files():
+        return sorted(directory.glob('cross-*.pkl'))
+
+    if durable:
+        saved = _load_pickle(directory / SNAPSHOT_PROGRESS)
+        why = None if saved is not None else 'no progress record'
+        if saved is not None and saved.get('token') != durable['token']:
+            why = 'progress of another table key, code or source'
+        if why is None:
+            for name, digest, size in saved['files']:
+                path = directory / name
+                if not path.is_file() or path.stat().st_size != size or \
+                        hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+                    why = 'saved cross chunk %s missing or changed' % name
+                    break
+        if why is None:
+            kept = {name for name, _, _ in saved['files']}
+            for path in cross_files():
+                if path.name not in kept:
+                    note['trimmed_bytes'] += path.stat().st_size
+                    path.unlink()                   # the chunk in flight at the stop
+            if cross is not None:
+                for name, _, _ in saved['files']:
+                    cross.extend(pickle.loads((directory / name).read_bytes()))
+            if saved.get('done'):
+                result = dict(saved['result'], cross=cross)
+                result['progress'] = _progress_note(reused_complete=True, chunks=saved['chunks'], rows_kept=saved['rows'])
+                return result
+            observer, n, first, last, state = saved['observer'], saved['rows'], saved['first'], saved['last'], saved['state']
+            offset, chunks, files = saved['offset'], saved['chunks'], list(saved['files'])
+            note.update(resumed_from_chunk=chunks, rows_kept=n)
+        else:
+            note['fresh_reason'] = why
+            for path in cross_files():
+                path.unlink()
+            (directory / SNAPSHOT_PROGRESS).unlink(missing_ok=True)
+    chunk_rows, chunk_offset, saved_cross = 0, offset if offset is not None else spec.get('start', 0), len(cross or ())
+
+    def save(done):
+        nonlocal chunks, chunk_rows, chunk_offset, saved_cross
+        _room(directory, reserve=durable['reserve'])
+        if cross is not None and len(cross) > saved_cross:
+            name = 'cross-%06d.pkl' % chunks
+            data = pickle.dumps(cross[saved_cross:], protocol=4)
+            _durable_write(directory / name, data)
+            files.append((name, hashlib.sha256(data).hexdigest(), len(data)))
+            saved_cross = len(cross)
+        if chunk_rows or done:
+            chunks += 1
+        record = dict(token=durable['token'], done=done, chunks=chunks, rows=n, offset=offset, files=files)
+        if done:
+            record['result'] = dict(observer=observer, n=n, first=first, last=last, state=state)
+        else:
+            record.update(observer=observer, first=first, last=last, state=state)
+        _durable_write(directory / SNAPSHOT_PROGRESS, pickle.dumps(record, protocol=4))
+        chunk_rows, chunk_offset = 0, offset
+        if not done:
+            _stop_at_chunk(durable)
+
+    for row, n, offset in _rows_from(spec, n, offset):
         if cross is not None:
             cross.append(_cross_of(row, cross_columns, top))
         flat = DG._flatten(dict(row))
@@ -639,10 +834,19 @@ def _snapshot(job):
             first = flat
         last = flat
         _fold(state, flat)
-    return dict(observer=observer, n=n, first=first, last=last, state=state, cross=cross)
+        chunk_rows += 1
+        if durable and _chunk_due(spec, chunk_rows, offset, chunk_offset, durable['chunking']):
+            save(False)
+    if durable:
+        save(True)
+        note['chunks'] = chunks
+    return dict(observer=observer, n=n, first=first, last=last, state=state, cross=cross, progress=note)
 
 
 # ---- phase 2: plan cells, derived and constant flags, dictionary counts and scales, in one read --------------------
+
+PLAN_FILES = ('freq.sqlite', 'freq.sqlite-wal', 'freq.sqlite-shm', 'cells.jsonl.gz', 'digests.bin')
+
 
 def _plan(job):
     """Plans every cell and counts the dictionary candidates in the same read of the part's rows; no plan is stored.
@@ -651,32 +855,90 @@ def _plan(job):
     except while a column may still be excluded here (derived '=' or constant on every row of this part so far): its
     candidates are held apart and counted as soon as it cannot be (a column that varies in any part is kept), or left in
     the held table for the merge to count only if the column is kept table-wide. Positions run over every candidate in
-    row-major order, so the first-occurrence order of the kept candidates is the serial one."""
+    row-major order, so the first-occurrence order of the kept candidates is the serial one.
+
+    Session 9, modes['durable'] (token, chunking, stop): the part's progress is committed at every chunk inside
+    freq.sqlite itself (table progress, in the same transaction as the chunk's counts), after the chunk's cells (one
+    gzip member a chunk, so the file stays one readable gzip stream) and digests are fsync'd; a restart with the same
+    token trims the files to the record and continues from the next row (_rows_from). Without it (a direct caller),
+    the part starts from an empty count file as before."""
     spec, directory, facts, seed, first, reserve = job[:6]
+    directory = Path(directory)
     modes = job[6] if len(job) > 6 else {}
+    durable = modes.get('durable')
     # one_decode: every row's cells to the part's own scratch (cells.jsonl.gz, zlib level 1: the table's text before
     # the dictionary, streamed, bounded by the reserve, deleted after the final pass) and, under canonical_verify, the
     # canonical digest of every source row (digests.bin, 32 bytes a row) for the inverse proof: the final and verify
     # passes then decode no source row
     one_decode, canonical = bool(modes.get('one_decode')), bool(modes.get('canonical'))
     import gzip
-    cells_out = gzip.open(Path(directory) / 'cells.jsonl.gz', 'wt', compresslevel=1, encoding='utf-8', newline='\n') \
-        if one_decode else None
-    digests_out = (Path(directory) / 'digests.bin').open('wb') if (one_decode and canonical) else None
-    canonical_reason = None
     columns = facts.columns
-    _room(directory, reserve=reserve)
-    prev, values, integers, lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
     width = len(columns)
-    derived, constant = [True] * width, [True] * width
-    scale_state = [[DG.SCALE_MAX, False] for _ in range(width)]
-    held = [{} for _ in range(width)]
-    db = _part_db(directory, 'freq')
+    note = _progress_note()
+    saved = None
+    if durable and (directory / 'freq.sqlite').is_file():
+        try:
+            probe = sqlite3.connect(directory / 'freq.sqlite')
+            try:
+                found = probe.execute('SELECT blob FROM progress WHERE id=0').fetchone()
+            finally:
+                probe.close()
+            saved = pickle.loads(found[0]) if found else None
+            why = None if saved is not None else 'no committed chunk'
+        except (sqlite3.Error, pickle.UnpicklingError, EOFError, ValueError):
+            saved, why = None, 'no readable progress record'
+        if saved is not None and saved.get('token') != durable['token']:
+            saved, why = None, 'progress of another table key, code or source'
+        if saved is not None:
+            for name, size in (('cells.jsonl.gz', saved['cells_bytes'] if one_decode else None),
+                               ('digests.bin', saved['digests_bytes'] if saved['digests_on'] else None)):
+                if size is not None and (not (directory / name).is_file() or (directory / name).stat().st_size < size):
+                    saved, why = None, '%s shorter than its progress record' % name
+                    break
+        if saved is None:
+            note['fresh_reason'] = why
+    elif durable:
+        note['fresh_reason'] = 'no progress record'
+    if saved is None:
+        for name in PLAN_FILES:
+            (directory / name).unlink(missing_ok=True)     # an empty count file (sqlite refuses the existing table)
+    elif saved.get('done'):
+        return dict(saved['result'], progress=_progress_note(reused_complete=True, chunks=saved['chunks'],
+                                                             rows_kept=saved['rows']))
+    if saved is not None:
+        for name, size in (('cells.jsonl.gz', saved['cells_bytes']), ('digests.bin', saved['digests_bytes'])):
+            path = directory / name
+            if path.is_file() and path.stat().st_size > size:
+                note['trimmed_bytes'] += path.stat().st_size - size
+                os.truncate(path, size)                       # the chunk in flight at the stop
+        note.update(resumed_from_chunk=saved['chunks'], rows_kept=saved['rows'])
+    cells_raw = (directory / 'cells.jsonl.gz').open('r+b' if saved is not None else 'wb') if one_decode else None
+    if cells_raw is not None:
+        cells_raw.seek(0, os.SEEK_END)
+    digests_on = (saved['digests_on'] if saved is not None else (one_decode and canonical))
+    digests_out = (directory / 'digests.bin').open('r+b' if saved is not None else 'wb') if digests_on else None
+    if digests_out is not None:
+        digests_out.seek(0, os.SEEK_END)
+    _room(directory, reserve=reserve)
+    if saved is None:
+        prev, values, integers, lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
+        derived, constant = [True] * width, [True] * width
+        scale_state = [[DG.SCALE_MAX, False] for _ in range(width)]
+        held = [{} for _ in range(width)]
+        position, rows, offset, chunks, canonical_reason, chunk_sha = 0, 0, None, 0, None, []
+    else:
+        prev, values, integers, lists = saved['prev'], saved['values'], saved['integers'], saved['lists']
+        derived, constant, scale_state, held = saved['derived'], saved['constant'], saved['scale_state'], saved['held']
+        position, rows, offset, chunks = saved['position'], saved['rows'], saved['offset'], saved['chunks']
+        canonical_reason, chunk_sha = saved['canonical_reason'], list(saved['chunk_sha'])
+    db = _part_db(directory, 'freq', durable=bool(durable))
     # cost = the estimated tokens of the candidate's inline spelling (a function of its text), for the dictionary cutoff
-    db.execute('CREATE TABLE frequency (digest BLOB PRIMARY KEY, count INTEGER NOT NULL, first INTEGER NOT NULL, '
+    db.execute('CREATE TABLE IF NOT EXISTS frequency (digest BLOB PRIMARY KEY, count INTEGER NOT NULL, first INTEGER NOT NULL, '
                'cost INTEGER NOT NULL) WITHOUT ROWID')
-    db.execute('CREATE TABLE held (j INTEGER NOT NULL, digest BLOB NOT NULL, count INTEGER NOT NULL, '
+    db.execute('CREATE TABLE IF NOT EXISTS held (j INTEGER NOT NULL, digest BLOB NOT NULL, count INTEGER NOT NULL, '
                'first INTEGER NOT NULL, cost INTEGER NOT NULL, PRIMARY KEY (j, digest)) WITHOUT ROWID')
+    if durable:
+        db.execute('CREATE TABLE IF NOT EXISTS progress (id INTEGER PRIMARY KEY, blob BLOB NOT NULL)')
     batch = {}
 
     def flush():
@@ -696,22 +958,77 @@ def _plan(job):
             entry[0] += count
             entry[1] = min(entry[1], position)
 
-    position = 0
-    for i, row in enumerate(_source_rows(spec)):
+    cells_gz, cells_hash = None, hashlib.sha256()
+
+    def emit(line):
+        nonlocal cells_gz
+        if cells_gz is None:                 # one gzip member a chunk: the file reads as one stream (gzip.open)
+            cells_gz = gzip.GzipFile(filename='', fileobj=cells_raw, mode='wb', compresslevel=1, mtime=0)
+        data = line.encode('utf-8')
+        cells_gz.write(data)
+        cells_hash.update(data)
+
+    def close_files(final):
+        nonlocal cells_gz, cells_hash
+        if cells_gz is not None:
+            cells_gz.close()                 # the member's trailer; cells_raw stays open
+            cells_gz = None
+            chunk_sha.append(cells_hash.hexdigest())
+            cells_hash = hashlib.sha256()
+        for handle in (cells_raw, digests_out):
+            if handle is not None:
+                handle.flush()
+                os.fsync(handle.fileno())
+                if final:
+                    handle.close()
+
+    def result():
+        return dict(derived=derived, constant=constant, scales=scale_state,
+                    cells_bytes=(directory / 'cells.jsonl.gz').stat().st_size if one_decode else 0,
+                    digests_bytes=(directory / 'digests.bin').stat().st_size if digests_on else 0,
+                    canonical_reason=canonical_reason)
+
+    def commit(done):
+        # the chunk's cells and digests on disk first, then its counts and the progress record in one transaction
+        nonlocal chunks
+        close_files(done)
+        flush()
+        if done:
+            db.executemany('INSERT INTO held VALUES (?, ?, ?, ?, ?)',
+                           ((j, key, count, at, cost) for j, h in enumerate(held) for key, (count, at, cost) in sorted(h.items())))
+        if durable:
+            chunks += 1
+            record = dict(token=durable['token'], done=done, chunks=chunks, rows=rows, offset=offset, position=position,
+                          cells_bytes=cells_raw.tell() if (cells_raw is not None and not cells_raw.closed) else
+                          ((directory / 'cells.jsonl.gz').stat().st_size if one_decode else 0),
+                          digests_bytes=digests_out.tell() if (digests_out is not None and not digests_out.closed) else
+                          ((directory / 'digests.bin').stat().st_size if digests_on else 0),
+                          digests_on=digests_on, canonical_reason=canonical_reason, chunk_sha=chunk_sha)
+            if done:
+                record['result'] = result()
+            else:
+                record.update(prev=prev, values=values, integers=integers, lists=lists, derived=derived,
+                              constant=constant, scale_state=scale_state, held=held)
+            db.execute('INSERT OR REPLACE INTO progress VALUES (0, ?)', (pickle.dumps(record, protocol=4),))
+        db.commit()
+
+    chunk_rows, chunk_offset = 0, offset if offset is not None else spec.get('start', 0)
+    for row, rows, offset in _rows_from(spec, rows, offset):
+        i = rows - 1
         flat = DG._flatten(dict(row))
         cells = DG._plan_row(flat, columns, prev, values, integers, lists, facts)
-        if cells_out is not None:
+        if cells_raw is not None:
             if i % 4096 == 0:
                 _room(directory, reserve=reserve)
-            cells_out.write(json.dumps(cells, separators=(',', ':')) + '\n')
+            emit(json.dumps(cells, separators=(',', ':')) + '\n')
             if digests_out is not None:
                 try:
                     digests_out.write(canonical_digest(dict(row)))
                 except _NotCanonical as error:
                     canonical_reason = 'row %d holds a %s leaf: verified by DG._same instead' % (i, error)
                     digests_out.close()
-                    (Path(directory) / 'digests.bin').unlink(missing_ok=True)
-                    digests_out = None
+                    (directory / 'digests.bin').unlink(missing_ok=True)
+                    digests_out, digests_on = None, False
         for j, c in enumerate(columns):
             kind, text = cells[j]
             if derived[j] and text != '=':
@@ -739,24 +1056,25 @@ def _plan(job):
             else:
                 DG.scale_step(scale_state[j], text)
         prev = flat
-    flush()
-    db.executemany('INSERT INTO held VALUES (?, ?, ?, ?, ?)',
-                   ((j, key, count, at, cost) for j, h in enumerate(held) for key, (count, at, cost) in sorted(h.items())))
-    db.commit()
+        chunk_rows += 1
+        if durable and _chunk_due(spec, chunk_rows, offset, chunk_offset, durable['chunking']):
+            commit(False)
+            chunk_rows, chunk_offset = 0, offset
+            try:
+                _stop_at_chunk(durable)
+            except PartStopped:
+                db.close()
+                for handle in (cells_raw, digests_out):
+                    if handle is not None:
+                        handle.close()
+                raise
+    commit(True)
+    if durable:                                # the merge attaches a plain file
+        db.execute('PRAGMA wal_checkpoint(TRUNCATE)')
+        db.execute('PRAGMA journal_mode=DELETE')
     db.close()
-    cells_bytes = digests_bytes = 0
-    for handle, name in ((cells_out, 'cells.jsonl.gz'), (digests_out, 'digests.bin')):
-        if handle is not None:
-            handle.flush()
-            os.fsync(handle.fileno())
-            handle.close()
-            size = (Path(directory) / name).stat().st_size
-            if name == 'cells.jsonl.gz':
-                cells_bytes = size
-            else:
-                digests_bytes = size
-    return dict(derived=derived, constant=constant, scales=scale_state, cells_bytes=cells_bytes,
-                digests_bytes=digests_bytes, canonical_reason=canonical_reason)
+    note['chunks'] = chunks
+    return dict(result(), progress=note)
 
 
 # ---- phase 3: merge (coordinator, digests only) ---------------------------------------------------------------------
@@ -968,7 +1286,8 @@ def _pass_code():
     import inspect
     import frankie_box_digest_sources as S
     base = [hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest() for m in (TS, DG)]
-    passes = (('snapshot', (_readonly, _source_rows, _fold, _snapshot, S._decoded, S._compare_groups, _seeds)),
+    passes = (('snapshot', (_readonly, _source_rows, _fold, _snapshot, S._decoded, S._compare_groups, _seeds,
+                            _rows_from, _load_pickle, _chunk_due)),     # session 9: positions and chunk restore
               ('plan', (_part_db, _digest, _plan, _table_facts, _canonical, canonical_digest)),   # digests.bin under one_decode
               ('merge', (_merge,)),
               ('final', (_lookup_db, _final)),
@@ -1040,6 +1359,69 @@ def _adopt_checkpoint(scratch, key, code):
     _stage_phase('root-digest: table %s resumes from %s (saved passes: %s)' % (
         key.get('name'), best[0], ', '.join(label for label in code if label in best[1])))
     return best[1]
+
+
+PROGRESS_KEY = 'progress-key.json'
+
+
+def _key_digest(key):
+    return hashlib.sha256(json.dumps(key, sort_keys=True, default=str).encode()).hexdigest()
+
+
+def _progress_parts(directory):
+    return len(list(Path(directory).glob('part-*/' + SNAPSHOT_PROGRESS))) + len(list(Path(directory).glob('part-*/freq.sqlite')))
+
+
+def _adopt_progress(scratch, key):
+    """Session 9: a stopped attempt's PER-PART progress of this table when no pass of it was saved (a stop inside the
+    first pass leaves no passes.pkl, so _adopt_checkpoint finds nothing): the sibling .digest-*/<this table directory>
+    whose progress-key.json names exactly this key and which holds the most parts' progress is MOVED to `scratch` (one
+    rename, nothing copied or deleted). Each helper then judges its own part's record by its token. Returns True if one
+    was moved."""
+    scratch = Path(scratch)
+    wanted, best = _key_digest(key), None
+    for marker in sorted(scratch.parent.parent.glob('.digest-*/%s/%s' % (scratch.name, PROGRESS_KEY))):
+        directory = marker.parent
+        if directory.parent == scratch.parent or directory.is_symlink():
+            continue
+        try:
+            if json.loads(marker.read_text()).get('key') != wanted:
+                continue
+        except (OSError, ValueError, AttributeError):
+            continue
+        count = _progress_parts(directory)
+        if count and (best is None or count > best[1]):
+            best = (directory, count)
+    if best is None:
+        return False
+    scratch.parent.mkdir(parents=True, exist_ok=True)
+    os.rename(best[0], scratch)
+    with (scratch / 'adopted.json').open('a', encoding='utf-8') as handle:
+        handle.write(json.dumps(dict(schema='FRANKIE_PARALLEL_TABLE_ADOPTED_V1', moved_from=str(best[0]), passes=[],
+                                     part_progress=best[1], at=time.time()), sort_keys=True) + '\n')
+    _stage_phase('root-digest: table %s resumes from %s (per-part progress of %d part passes)' % (
+        key.get('name'), best[0], best[1]))
+    return True
+
+
+def _clear_scratch(scratch, key):
+    """No usable pass save point: the scratch starts over, except the part directories when the scratch's progress key
+    is exactly this key (session 9: each helper keeps or discards its own part's progress by its token)."""
+    marker = scratch / PROGRESS_KEY
+    try:
+        same = json.loads(marker.read_text()).get('key') == _key_digest(key)
+    except (OSError, ValueError, AttributeError):
+        same = False
+    if not same:
+        shutil.rmtree(scratch)
+        return
+    for path in scratch.iterdir():
+        if path.name == PROGRESS_KEY or (path.is_dir() and path.name.startswith('part-')):
+            continue
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
 
 
 def _seeds(snaps):
@@ -1144,11 +1526,22 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     key, code = _checkpoint_key(name, specs), _pass_code()
     key = dict(key, modes=dict(fuse_context=fused, one_decode=one, canonical_verify=canon))
     passes = _load_checkpoint(scratch, key, code) if scratch.is_dir() else _adopt_checkpoint(scratch, key, code)
+    if passes is None and not scratch.exists():
+        _adopt_progress(scratch, key)         # session 9: a stop inside the first pass left per-part progress only
     if passes is None:
         if scratch.exists():
-            shutil.rmtree(scratch)            # no usable save point: the scratch (any older layout) starts over
-        scratch.mkdir(parents=True)
+            _clear_scratch(scratch, key)      # no usable save point: starts over, except matching per-part progress
+        scratch.mkdir(parents=True, exist_ok=True)
         passes = {}
+    marker = scratch / PROGRESS_KEY
+    if not marker.is_file():
+        _durable_write(marker, json.dumps(dict(key=_key_digest(key), name=name)).encode())
+    # session 9: per-part durable progress inside the source-reading passes (chunking and stop file are orchestration)
+    chunking, stop_file = chunk_setting(), os.environ.get(STOP_FILE_ENV)
+
+    def durable(label, index, spec, extra=None):
+        return dict(token=_part_token(key, code, label, index, spec, extra), chunking=chunking, stop=stop_file,
+                    reserve=reserve)
     given = progress or (lambda *a: None)
     labels = ('snapshot', 'plan', 'merge', 'final', 'copy', 'verify')
 
@@ -1196,7 +1589,13 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
             note(name, label + ' NOT STARTED: stop requested (%s); exit %d, the same command resumes here' % (stop, STOPPED_EXIT))
             raise DigestStopped(name, label, stop)
         note(name, label)
-        passes[label] = run()
+        try:
+            passes[label] = run()
+        except PartStopped:                   # session 9: the helpers stopped at their chunk boundaries, progress saved
+            stop = stop_requested() or STOP_FILE_ENV
+            note(name, label + ' STOPPED inside the pass at the parts\' chunk boundaries (%s); exit %d, the same command '
+                 'resumes each part from its last chunk' % (stop, STOPPED_EXIT))
+            raise DigestStopped(name, label, stop)
         _save_checkpoint(scratch, key, code, passes)
         return passes[label]
 
@@ -1204,8 +1603,14 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     with (contextlib.nullcontext(shared) if shared is not None else PinnedPool(cpus, label='table %s helpers' % name)) \
             as pool:
         _room(scratch, reserve=reserve)
-        snaps = step('snapshot', lambda: list(pool.map(_snapshot, [(spec, str(p), list(cross_columns) if fused else None)
-                                                                   for spec, p in zip(specs, parts)])))
+        snaps = step('snapshot', lambda: list(pool.map(_snapshot, [
+            (spec, str(p), list(cross_columns) if fused else None,
+             durable('snapshot', i, spec, list(cross_columns) if fused else None))
+            for i, (spec, p) in enumerate(zip(specs, parts))])))
+        for p in parts:                       # saved: the parts' snapshot progress is no longer needed
+            (p / SNAPSHOT_PROGRESS).unlink(missing_ok=True)
+            for chunk in p.glob('cross-*.pkl'):
+                chunk.unlink()
         if on_cross is not None:
             import itertools
             on_cross(itertools.chain.from_iterable(s.get('cross') or [] for s in snaps))
@@ -1213,9 +1618,10 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         columns = facts.columns
 
         def plan():
-            drop('freq.sqlite', 'cells.jsonl.gz', 'digests.bin')
-            return list(pool.map(_plan_fresh, [(spec, str(p), facts, seed, first, reserve, dict(one_decode=one, canonical=canon))
-                                               for spec, p, seed in zip(specs, parts, seeds)]))
+            # session 9: no drop here; each part keeps its durable progress (same token) or starts from empty files
+            return list(pool.map(_plan_fresh, [(spec, str(p), facts, seed, first, reserve,
+                                                dict(one_decode=one, canonical=canon, durable=durable('plan', i, spec)))
+                                               for i, (spec, p, seed) in enumerate(zip(specs, parts, seeds))]))
         planned = step('plan', plan)
         whole, kept, scales = _table_facts(columns, n, planned)
         cells_bytes = sum(f.get('cells_bytes') or 0 for f in planned)
@@ -1303,6 +1709,16 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         raise ValueError('verified table count mismatch')
     shutil.rmtree(scratch)       # proved: the scratch (inverse, part directories) is no longer needed
     decodes = 1 + (0 if fused or not cross_columns else 1) + (1 if one else 2) + (0 if by_digest else 1)
+
+    def chunk_record(label, results):
+        notes = [(i, r.get('progress') or {}) for i, r in enumerate(results)]
+        resumed = [dict(part=i, from_chunk=n['resumed_from_chunk'], rows_kept=n['rows_kept'], trimmed_bytes=n['trimmed_bytes'])
+                   for i, n in notes if n.get('resumed_from_chunk') is not None]
+        return dict(parts_resumed_from_chunk=resumed,
+                    parts_complete_reused=[i for i, n in notes if n.get('reused_complete')],
+                    chunks_redone=len(resumed),        # at most the one chunk in flight at the stop, per resumed part
+                    parts_fresh={str(i): n['fresh_reason'] for i, n in notes if n.get('fresh_reason')},
+                    chunks=sum(n.get('chunks') or 0 for _, n in notes))
     return dict(path=str(destination), rows=n, verified=True, verified_identity=before,
                 scratch_directory=str(scratch), parts=len(specs),
                 passes=dict(schema='FRANKIE_DIGEST_PASSES_V2', fuse_context=fused, one_decode=one,
@@ -1310,7 +1726,10 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
                             cells_scratch_bytes=cells_bytes, digests_bytes=digests_bytes,
                             decodes_setting=dict(value=modes['decodes'], basis=modes['basis'],
                                                  feeds_context=bool(cross_columns)),
-                            settings={k: 'on' if modes[k] else 'off' for k in PASS_SETTINGS}))
+                            settings={k: 'on' if modes[k] else 'off' for k in PASS_SETTINGS},
+                            chunk_progress=dict(schema='FRANKIE_DIGEST_PART_PROGRESS_V1', chunking=chunking,
+                                                snapshot=chunk_record('snapshot', snaps),
+                                                plan=chunk_record('plan', planned))))
 
 
 def pool_map_verify(jobs, cpus, pool=None):

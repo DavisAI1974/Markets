@@ -550,6 +550,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
             raise ValueError('proved table changed before its byte witness')
         bedrock['stages'][index] = dict(name=name, rows=proof['rows'], path=path, digest=digest)
         _save_table(scratch, ordinal, key, bedrock['stages'][index])
+        entry['passes'] = proof.get('passes')          # session 9: the pass reductions and the per-part chunk progress
         entry['ended'] = time.time()
 
     # The bedrock sources (layer preparation and member merge, on the pinned helpers) are independent of the legacy
