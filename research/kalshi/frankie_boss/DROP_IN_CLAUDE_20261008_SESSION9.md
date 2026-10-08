@@ -122,3 +122,23 @@ tip before acting (record: BOX_RECORD_20261008_S9.md). Two facts changed step 4(
 ## Tip at handoff
 - The commit carrying this file (parent fa733f39/cb156bca record snapshots; 5bf723f4 claim fix; 36c082ec queue half;
   b79a7a27 fleet status). Stage the tip or newer; never a WIP snapshot.
+
+## Session 8 CLOSING NOTE (16:4xZ) - read before touching the box
+- SESSION 8 HAS NO TIMERS LEFT (the 18:20Z volume-raise trigger was DELETED at 16:4xZ because session 9 is already acting on
+  the box). SESSION 9 MUST raise the two main-box volumes itself once the cooldown clears (~18:08Z): ModifyVolume
+  vol-0d36715924f03b86c -> 16,000 IOPS / 1,250 MiB/s and vol-004b68c077be09cc9 -> 10,000 / 1,000 (they sit at the baseline
+  3,000 / 125 since 12:08Z; at baseline every whole-file read runs at ~132 MB/s).
+- a2 state at 16:35Z (session-8 operator, 36 read-only probes, record BOX_RECORD_20261008_S8_START.md last section): entry seq 2
+  SAVED "on its day-bound marker", booking day-run-20231018-day_slot_root-1791402822-3111 retained 0-31, marker STANDING (not
+  archived), receipt ABSENT, R untouched since 03:02Z (derive.json 01:33Z, file-claims.jsonl 57 V1 rows), no frankie process
+  left, the 46cfe907 checkout (= 5bf723f4's code) staged with its receipt. The SAVED came from SESSION 9 SIGKILLing the ROOT
+  child 1834 at 16:34:31Z (SSM "s9 kill child 1834, poll saved"); the standing marker turned the end into SAVED. Session 8
+  killed nothing. The box was last seen RUNNING; KeepRunning had been reset to false by the ended worker and the session-8
+  operator set it back to TRUE at 16:38:10Z (tag only): if session 9 intends a STOP ("s9 probe before stop"), that tag is
+  session 8's last write and session 9 owns the decision from here.
+- Defect to fix when convenient (Greg: fix when it bites; it bit): the resume's whole-hash pass has NO save check between
+  artifacts (frankie_box_experiment_root ~416-467; RowSpool.reopen reads spools whole), so a save marker only acts after the
+  receipt. With V2 claims the whole-hash path should be rare; add a per-artifact save check there if it bites again.
+- The grow command exists only in the Python (`frankie_box_cores.py grow --booking ID --size N [--reason]`; exit 75 waiting,
+  2 refused); the cores.sh wrapper has no grow action; the resume plan refuses a changed size unless the booking was grown.
+- The Aws connector's run_script has a ~60 s wall: never sleep inside a script; poll with separate calls.

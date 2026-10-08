@@ -444,3 +444,72 @@ Skill full-run-orchestrator invoked first. AWS via the Aws connector only; GitHu
 - 16:32:05Z PROBE 35 (read-only, SSM cd288fe6-c690-4ac3-b317-8b3d3329656a): receipt ABSENT; marker standing; child 1834 Dl
   1:27:30, read_bytes 685,413,654,528, legacy_book_imbalance.json pos 429,698,056,192 (ends ~16:37Z). Entry running,
   save_request true. Watchdog 16:30:31Z findings 1 repins 0.
+- 16:35:05Z PROBE 36 (read-only, SSM aa9c06a4-8efa-46e4-9202-45debf6b1688): ENTRY SAVED. Child 1834 GONE; root worker unit
+  gone (frankie-cpu-watch still listed running at this instant); receipt ABSENT; marker standing (497 B, 15:27:22Z); ROOT
+  log still 94 lines (last 15:05:48Z: nothing printed by the child at its end). It stopped between 16:32:05Z (pos 429.7 GB
+  of the 472 GB layer, read_bytes 685.4 GB) and 16:34:31Z, BEFORE the receipt: an exit at a point not on my save-check map.
+- 16:35:49Z SAVED READING (read-only, SSM a864cd56-7df0-4216-b87d-a8462b508ef5; EC2 DescribeInstances): box RUNNING.
+  root.json entry seq 2: run e2e-20231018-a2 day 20231018 state SAVED, where box-slot, reason "saved on its day-bound marker
+  Q/save/e2e-20231018-a2-20231018.save-request.json", retained_booking day-run-20231018-day_slot_root-1791402822-3111,
+  finish null, retain_error null, save_request = the marker identity (requested_at 1791473242.476846, sha256 9f6b4e5b...),
+  owner commit d67b9c63. Booking ledger /opt/frankie-box/cpu-bookings/day-run-20231018-day_slot_root-1791402822-3111.json:
+  cpus 0-31, pids [], holder None, RETAINED at 16:34:31Z by pid 1758 (pids_at_retain: 1758 booking holder, 1834 step root),
+  reason "the day is saved on its owner; its CPUs stay its own until ACTION=resume", release null, grown null.
+  ACTION=status (read-only on d67b9c63): verdict "saved", entry saved, marker standing TRUE (same path/identity), booking
+  alive false / retained as above, worker {state waiting_owner at 16:34:40Z, pid 1758, scope e2e-20231018-a2:20231018,
+  pending 1, commit d67b9c63}; unit frankie-queue-root-1791471869 exited 16:34:43Z status 5 (= saved/waiting, by design;
+  "Consumed 9min 41.972s CPU time, 801.8M memory peak"). R: calculations-receipt.json ABSENT; progress.json unchanged
+  (15:05:48Z, stage deriving pid 1834); work/derive.json intact (80,813 B, 01:33:06Z, sha256 948074df...);
+  work/file-claims.jsonl UNCHANGED (41,542 B, 03:02:14Z, 57 V1 rows); nothing under R/work newer than 03:02:14Z: this ROOT
+  pass wrote NOTHING to R. SURPRISE: EC2 tag KeepRunning now reads "false" (it read true at 15:25:31Z); reason tag read next.
+  NOTHING ELSE DONE on the box (no grow, no resume, no kick), per Greg's change.
+- 16:37:07Z FOLLOW-UP (read-only, SSM bd05626b-12c9-4bd0-855a-f8f2ac10b356; EC2 DescribeTags): marker CONFIRMED standing
+  (Q/save/e2e-20231018-a2-20231018.save-request.json, 497 B, 15:27:22Z, sha 9f6b4e5b...; not archived: that happens on
+  resume). root-events.jsonl: save_requested 15:27:22Z (pid 2471) -> slot_saved 16:34:40Z ("child": null: the worker
+  recorded no child exit code) -> worker_end 16:34:40Z (pid 1758, state waiting_owner, pending 1). root-worker/progress.json
+  16:34:40Z stage root:waiting_owner. Kernel log: NO oom / killed-process lines since 16:30Z. frankie-cpu-watch.service:
+  "Stopping" 16:35:32Z, deactivated (its last pass 16:34:31Z: bookings 1 findings 1 repins 0); no frankie unit or process
+  left on the box. No idle timer/cron on the box (only frankie-actions-runner.service). KeepRunning=false was set BY THE
+  WORKER at its end: KeepRunningReason "frankie_box_frankie_queue.py worker: root line worker ended (scope
+  e2e-20231018-a2:20231018)". Greg's change says the box stays RUNNING with KeepRunning=true, so the tag is restored (a
+  tag only; nothing on the box) and recorded next. df / avail 787,615,739,904 B; load 0.07.
+- 16:38:10Z KeepRunning=true RESTORED (EC2 CreateTags, a tag only; read back true) with KeepRunningReason "box-operator s8
+  16:3xZ: a2 SAVED on its marker (entry seq 2, booking 0-31 retained, no receipt); Greg: box stays RUNNING, new session
+  restarts a2; the worker had set false at its end". Box RUNNING r7i.16xlarge; nothing started on it.
+- 16:38:29Z CHILD EXIT READ (read-only, SSM 2efb76eb-ab61-4608-beb7-4e8f5e6815c5; prior SSM 6df4c0ab-614e-4757-8897-
+  b39684c08429): /opt/frankie-box/work/experiment/e2e-20231018-a2/days/20231018/progress/root.jsonl final heartbeat at
+  1791477271.463 (16:34:31Z): outcome "exited", exit_code 137 (SIGKILL), elapsed_s 5396.5, phase deriving, pid 1832 (the
+  cores-run wrapper forwarding the child's exit), processes 0; the heartbeats to 16:34:07Z show cpus_busy 0.1, rss 476 MB,
+  bytes_out 32,768 (nothing written). The kick was at 1791471869.47 (15:04:29Z): the kill came 5,400 s = 90 min after it.
+  So the ROOT child did NOT stop at a save point: it was SIGKILLed by a 90-minute bound (source located below), and the
+  standing marker turned that exit into SAVED (experiment.py step(): a standing marker makes ANY child exit SystemExit(75)).
+  Kernel log clean (no OOM). keep-running.json last entry: asked false by "frankie_box_frankie_queue.py worker", reason
+  "root line worker ended", tagged true (the worker clears the tag at its end). ROOT log 8,270 B, 94 lines, unchanged.
+  THE SPOT for the new session: R unchanged since 03:02:14Z (derive.json 01:33:06Z sha 948074df..., file-claims.jsonl
+  57 V1 rows 03:02:14Z, no receipt, no handoff/), entry SAVED on the 15:27:22Z marker (standing), booking
+  day-run-20231018-day_slot_root-1791402822-3111 retained 0-31; staged and receipted for the restart:
+  /opt/frankie-box/code/46cfe9074bec6094653cf1f6df72d6bee76f05e6-37800918122-1/markets (MARKETS_SHA 46cfe907..., =
+  5bf723f4's box code, staging-receipt status staged, files 4128, pack e34d58d6...).
+- 16:41:12Z WHO KILLED THE CHILD (read-only: SSM ListCommands + the agent's orchestration dir; SSM b093bb03-7c66-413e-
+  910a-90327528adfe, 4bf7ca53-c8f0-4b54-b284-04a7dc8916de): NOT a bound in the code (no timeout on the child's wait; the
+  watchdog's 163431Z record: repins [], resize [], no kills; kernel log clean). SSM commands from ANOTHER SESSION ("s9", the
+  new session Greg named) ran on this box: 16:25:28Z 2bbabe14 "s9 read-only probe 1" (Failed), 16:26:45Z 0674a214 "s9
+  read-only probe 2", 16:34:13Z 553b8a3a "s9 probe before stop", 16:34:31Z bfb66780 "s9 kill child 1834, poll saved",
+  16:35:31Z 4a56dbaa "s9 stop old watchdog (d67b9c63)", 16:35:33Z 8e042a91 "s9 parent probe: state after hold"; also
+  16:39:45Z be42bb68 AmazonCloudWatch-ManageAgent (Failed; not mine). So session 9 SIGKILLed the ROOT child 1834 at
+  16:34:31Z while my 15:27:22Z marker stood; the worker turned the exit into SAVED, retained the booking and ended; s9 then
+  stopped the cpu-watch unit. This role killed nothing and ran only read-only probes after the save and the stage; its
+  only non-read action after SAVED was the KeepRunning=true tag at 16:38:10Z (per Greg's "box stays RUNNING"); s9's
+  "probe before stop" may mean it intends a box stop: the parent must reconcile with session 9 before anything else.
+
+### State at hand-back (16:4xZ)
+- Box i-035994afa8bdf66a5 RUNNING r7i.16xlarge (LaunchTime 15:02:19Z), KeepRunning=true (restored 16:38:10Z), SSM Online.
+  Volumes at baseline 3,000/125 (the ~18:1xZ raise is the parent's). No frankie unit or process on the box. df / 787.6 GB.
+- a2/20231018: entry seq 2 SAVED on the 15:27:22Z marker (standing, sha 9f6b4e5b...), booking ...-3111 retained 0-31,
+  no receipt, no handoff/; R untouched since 03:02:14Z (derive.json 01:33:06Z, 57 V1 claim rows). Exactly the spot the new
+  session restarts from. Nothing of this pass needs undoing.
+- Staged for it: /opt/frankie-box/code/46cfe9074bec6094653cf1f6df72d6bee76f05e6-37800918122-1/markets (MARKETS_SHA
+  46cfe9074bec6094653cf1f6df72d6bee76f05e6 = 5bf723f4's box code + tests + records; staging-receipt status staged, files
+  4128, pack e34d58d6...; run 37800918122). The d67b9c63 checkout (the killed pass's code) is still there.
+- Not touched: i-0d17573dbce871520, i-08cee7171c0a76a04, clone volumes, snapshots, IAM, quotas, launch templates,
+  ModifyVolume; no grow, no resume, no kick, no digest, no classroom, no stop.
