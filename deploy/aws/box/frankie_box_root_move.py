@@ -158,9 +158,10 @@ def plan(roots, pins, *, guarded=(), floor=FLOOR_BYTES, archive_root=ARCHIVE_ROO
                         items.append(dict(kind='stay', old_path=str(aside), new_path=None, bytes=0, pinned=False,
                                           reason='leftover of an interrupted clean could not be put back (%s)' % error))
                         continue
-                    items.append(dict(kind='stay', old_path=str(original), new_path=None, pinned=False,
+                    items.append(dict(kind='stay', old_path=str(aside), new_path=str(original), pinned=False,
                                       bytes=original.lstat().st_size if original.is_file() else _du(original),
-                                      reason='recovered from %s (an interrupted earlier clean); planned afresh below' % aside.name))
+                                      reason='leftover of an interrupted earlier clean: renamed back to %s and planned afresh '
+                                             'below' % original.name))
     for root in roots:
         redundant += redundant_ledger_segments(Path(root), pins, native_complete, floor=floor, archive_root=archive_root,
                                                box_root=box_root, held=held)

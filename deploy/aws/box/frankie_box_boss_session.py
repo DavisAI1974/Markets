@@ -1366,6 +1366,42 @@ def _witness_counting(path):
     return dict(value, count=newlines[0])
 
 
+def _file_claim_rows(spool_items, ledger_items):
+    """FRANKIE_FILE_CLAIM_V1 rows (research/kalshi/frankie_boss/operations/ingest_block_sources.file_claim) for every spool
+    and native ledger this ROOT witnessed whole: path, bytes, sha256 (the claim), the stat identity and the sha256 of the
+    last 64 KiB, one 64 KiB read per file (workflow-dedupe R1, 2026-10-08). A later stage (the data export) takes a claim
+    while stat and the tail still match, else hashes in full. Returns (rows, skipped): a file whose size no longer equals
+    its claim is listed under skipped, never claimed."""
+    from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
+    rows, skipped = [], []
+    for by, items in (('ROOT legacy stage seal', spool_items),
+                      ('ROOT native stage (the reconciled ledger witness)', ledger_items)):
+        for item in items:
+            try:
+                rows.append(file_claim(item['path'], int(item['bytes']), item['sha256'], by))
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                skipped.append(dict(path=item.get('path'), reason='%s: %s' % (type(error).__name__, error)))
+    return rows, skipped
+
+
+NATIVE_REUSE_CHECK_SETTING = 'FRANKIE_ROOT_NATIVE_REUSE_CHECK'      # claim (default) | full
+
+
+def _claim_still_holds(claim):
+    """The basis text when a saved FRANKIE_FILE_CLAIM_V1 row still describes the file (same device, inode, size and
+    mtime_ns, and the same sha256 of its last 64 KiB: one 64 KiB read), else None (the caller reads the file whole)."""
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
+        if not isinstance(claim, dict) or claim.get('schema') != 'FRANKIE_FILE_CLAIM_V1':
+            return None
+        now = file_claim(claim['path'], int(claim['bytes']), claim['sha256'], 'check')
+        if (now['stat'], now['tail_bytes'], now['tail_sha256']) != (list(claim['stat']), claim['tail_bytes'], claim['tail_sha256']):
+            return None
+    except (ImportError, OSError, ValueError, KeyError, TypeError):
+        return None
+    return 'the saved claim (bytes, sha256) with its stat identity and last 64 KiB unchanged; not read whole here'
+
+
 def _reopen_counted_spool(spool_class, path, count):
     """RowSpool.reopen(path)'s object for a retained spool whose line count is known from an exact claim (the sealed
     witness's bytes and sha256 matched, so the bytes are the sealed ones and the count is the one sealed with them):
@@ -2520,7 +2556,7 @@ class Session:
                 # and reopened from the sealed count (first and last lines only); one sealed without a count (an
                 # earlier seal) is one pass hashing and counting together. Every other artifact is witnessed as before.
                 B = _box_module('frankie_box_bedrock')
-                reopened, reads = {}, []
+                reopened, reads, sealed_spools = {}, [], []
                 for item in saved_stage['artifacts']:
                     path, claim = Path(item['path']), {k: item[k] for k in ('bytes', 'sha256')}
                     count = None
@@ -2537,6 +2573,8 @@ class Session:
                     if count is not None:
                         reopened[str(path.resolve())] = _reopen_counted_spool(B.RowSpool, path, count)
                         reads.append(f'{path.name}: {how}')
+                        sealed_spools.append(dict(path=str(path), **claim, kind='spool', count=count))
+                self._sealed_spool_artifacts = sealed_spools          # the file claims after the native stage
                 from frankie_box_monday_calculations import load_retained_layers
                 receipt = saved_stage['receipt']
                 _, _, records, prices, frames, structures, failures, layers, _ = load_retained_layers(
@@ -3035,6 +3073,7 @@ class Session:
             # route reopens it from the sealed count after one witness instead of counting it in a second full pass
             artifacts = [dict(path=str(rows.path), **spool_witness(rows), kind='spool', count=len(rows))
                          for rows in (records, prices, frames, structures, failures)]
+            self._sealed_spool_artifacts = [dict(item) for item in artifacts]      # the file claims after the native stage
             # session 5: the last saved claims (running-hash sha256s) checked against these full reads at the seal (the
             # INPUT spool's claim is checked in _input_records against its own full witness)
             _check_spool_claims(final_positions, dict(zip(names, artifacts[1:])))
@@ -3248,6 +3287,7 @@ class Session:
             opening_adapter_state=opening_adapter_state, opening_book=opening_book,
             save_requested=save_requested, recovery=True)
         receipt['native_recovery_schema'] = NATIVE_RECOVERY_SCHEMA
+        receipt['file_claims'] = self._write_file_claims(receipt)      # session 6 (R1): additive, never a refusal
         receipt['root_processes'] = dict(legacy='run', bedrock_traversal='run', bedrock_projection='run',
                                          digest='run' if digest else 'skipped')
         receipt['digest_bedrock'] = True if digest_bedrock is None else digest_bedrock
@@ -3262,6 +3302,25 @@ class Session:
         _box_module('frankie_box_progress').for_session(self).update(
             'root-derived', state='complete', failed=receipt['failure_count'])
         return receipt
+
+    def _write_file_claims(self, receipt):
+        """work/file-claims.jsonl (FRANKIE_FILE_CLAIM_V1, one row per spool and native ledger this ROOT witnessed
+        whole; workflow-dedupe R1): the receipt's `file_claims` = path, count and the writer's note; a failure to write
+        is recorded (status not_written), never a reason to stop the ROOT."""
+        try:
+            from research.kalshi.frankie_boss.operations.ingest_block_sources import write_file_claims, FILE_CLAIMS_NAME
+            ledgers = list(((receipt.get('bedrock') or {}).get('ledgers') or {}).values())
+            rows, skipped = _file_claim_rows(getattr(self, '_sealed_spool_artifacts', None) or [], ledgers)
+            note = write_file_claims(self.work, rows)
+        except Exception as error:  # noqa: BLE001 - a claim is a hint for later stages, never the ROOT's outcome
+            self.note('file claims not written: %s: %s' % (type(error).__name__, error))
+            return dict(status='not_written', reason='%s: %s' % (type(error).__name__, error))
+        out = dict(path=str(self.work / FILE_CLAIMS_NAME), count=len(rows), **note)
+        if skipped:
+            out['skipped'] = skipped
+        self.note('file claims: %d rows (%s)%s' % (len(rows), note.get('status'),
+                                                    '; %d skipped' % len(skipped) if skipped else ''))
+        return out
 
     def _write_digest(self, receipt, layers, prices, frames, structures, roll, first, buys, sells, bedrock=True):
         """Publish a file from pinned layer snapshots only after exact table proofs. bedrock=False writes the header,
