@@ -706,6 +706,7 @@ def _final(job):
     def planned_cells():
         # one_decode: the cells the plan pass wrote for this part (no source decode); else the source decoded and
         # planned again from the part's seed, as before (and, under canonical_verify, its canonical digest kept)
+        nonlocal prev
         if one_decode:
             with gzip.open(directory / 'cells.jsonl.gz', 'rt', encoding='utf-8', newline='\n') as saved:
                 for line in saved:
@@ -714,6 +715,7 @@ def _final(job):
         for row in _source_rows(spec):
             flat = DG._flatten(dict(row))
             cells = DG._plan_row(flat, columns, prev, values, integers, lists, facts)
+            prev = flat
             yield cells, row
     digests_out = (directory / 'digests.bin').open('wb') if (canonical and not one_decode) else None
     canonical_reason = None
@@ -731,12 +733,18 @@ def _final(job):
                 named[0] += 1
             return entry
 
-        for i, row in enumerate(_source_rows(spec)):
+        for i, (cells, row) in enumerate(planned_cells()):
             if i % 256 == 0:
                 _room(directory, reserve=reserve)
-            flat = DG._flatten(dict(row))
-            cells = DG._plan_row(flat, columns, prev, values, integers, lists, facts)
-            prev = flat
+            if row is not None:
+                if digests_out is not None:
+                    try:
+                        digests_out.write(canonical_digest(dict(row)))
+                    except _NotCanonical as error:
+                        canonical_reason = 'row %d holds a %s leaf: verified by DG._same instead' % (i, error)
+                        digests_out.close()
+                        (directory / 'digests.bin').unlink(missing_ok=True)
+                        digests_out = None
             out = DG.finish_row(cells, kept, columns, scales, number)
             if any('\t' in cell or '\n' in cell for cell in out):
                 raise ValueError('a table cell holds a tab or a newline')
@@ -746,8 +754,15 @@ def _final(job):
         for handle in (rows, names):
             handle.flush()
             os.fsync(handle.fileno())
+    digests_bytes = 0
+    if digests_out is not None:
+        digests_out.flush()
+        os.fsync(digests_out.fileno())
+        digests_out.close()
+        digests_bytes = (directory / 'digests.bin').stat().st_size
     lookup.close()
-    return dict(has_space=has_space, size=(directory / 'rows.txt').stat().st_size, named=named[0] - start)
+    return dict(has_space=has_space, size=(directory / 'rows.txt').stat().st_size, named=named[0] - start,
+                digests_bytes=digests_bytes, canonical_reason=canonical_reason)
 
 
 # ---- phase 5: inverse verification, per part ------------------------------------------------------------------------
@@ -766,7 +781,8 @@ def _segment_lines(path, offset, length):
 
 
 def _verify(job):
-    (path, offset, length, count, spec, header, dictionary, seed) = job
+    (path, offset, length, count, spec, header, dictionary, seed) = job[:8]
+    digests = job[8] if len(job) > 8 else None        # canonical_verify: the source rows' digests kept by the last decode
     lookup = _lookup_db(dictionary)
 
     def entry(number):
@@ -776,6 +792,27 @@ def _verify(job):
         return DG.entry_value(found[0])
 
     decoder = DG.RowDecoder(header, entry, seed)
+    if digests is not None:
+        # the parsed-back row's canonical digest against the source row's (equal exactly when DG._same holds over
+        # CANONICAL_TYPES; a parsed row outside them cannot equal a canonical source row, so it is a mismatch)
+        with Path(digests).open('rb') as kept:
+            if os.fstat(kept.fileno()).st_size != 32 * count:
+                raise ValueError('source row digests do not cover the table part')
+            i = -1
+            for i, line in enumerate(_segment_lines(path, offset, length)):
+                if i >= count:
+                    raise ValueError('table part line count differs')
+                row = decoder.decode(line)
+                try:
+                    parsed = canonical_digest(DG._unflatten(row))
+                except _NotCanonical:
+                    parsed = None
+                if parsed != kept.read(32):
+                    raise ValueError(f'table {header.name} part row {i} does not round-trip')
+        if i + 1 != count:
+            raise ValueError('table part line count differs')
+        lookup.close()
+        return count
     expected = iter(_source_rows(spec))
     i = -1
     for i, line in enumerate(_segment_lines(path, offset, length)):
@@ -923,7 +960,7 @@ def _copy(destination, name, n, facts, whole, first, scales, sep, parts, sizes, 
 
 
 def write_table_parallel(destination, name, specs, scratch_directory, cpus, progress=None, reserve=DISK_RESERVE,
-                         pool=None):
+                         pool=None, cross_columns=None, on_cross=None):
     """specs: ordered part row sources (see _source_rows). The same bytes and proof as TS.write_table over the same rows
     (no context); note the ROWS differ for `bedrock.members`, where _source_rows applies MEMBER_LIST_PATHS and the serial
     reader does not, so that table is not byte-identical to a serial build of sources.sqlite. reserve = the bytes every
@@ -939,7 +976,17 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     scratch = Path(scratch_directory)
+    # session 6: the pass modes (see PASS_SETTINGS); cross_columns + on_cross = the cross-table context collected
+    # inside the snapshot pass (fuse_context) and handed to on_cross(rows) once that pass is done (saved or run)
+    modes = pass_modes()
+    fused = bool(cross_columns) and modes['fuse_context']
+    if on_cross is not None and not fused:
+        raise ValueError('on_cross needs cross_columns and %s=on' % PASS_SETTINGS['fuse_context'])
+    one = modes['one_decode']
+    canon_ok, canon_why = _canonical_self_check() if modes['canonical_verify'] else (False, PASS_SETTINGS['canonical_verify'] + '=off')
+    canon = modes['canonical_verify'] and canon_ok
     key, code = _checkpoint_key(name, specs), _pass_code()
+    key = dict(key, modes=dict(fuse_context=fused, one_decode=one, canonical_verify=canon))
     passes = _load_checkpoint(scratch, key, code) if scratch.is_dir() else None
     if passes is None:
         if scratch.exists():
@@ -979,6 +1026,8 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         resume_from('final')
     if 'merge' in passes and 'final' not in passes and not dictionary.is_file():
         resume_from('merge')
+    if 'plan' in passes and 'final' not in passes and one and not present('cells.jsonl.gz'):
+        resume_from('plan')              # one_decode: the final pass reads the plan pass's cells
     if 'plan' in passes and 'merge' not in passes and not present('freq.sqlite'):
         resume_from('plan')
 
@@ -995,28 +1044,41 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     with (contextlib.nullcontext(shared) if shared is not None else PinnedPool(cpus, label='table %s helpers' % name)) \
             as pool:
         _room(scratch, reserve=reserve)
-        snaps = step('snapshot', lambda: list(pool.map(_snapshot, [(spec, str(p)) for spec, p in zip(specs, parts)])))
+        snaps = step('snapshot', lambda: list(pool.map(_snapshot, [(spec, str(p), list(cross_columns) if fused else None)
+                                                                   for spec, p in zip(specs, parts)])))
+        if on_cross is not None:
+            import itertools
+            on_cross(itertools.chain.from_iterable(s.get('cross') or [] for s in snaps))
         facts, n, first, seeds = _seeds(snaps)
         columns = facts.columns
 
         def plan():
-            drop('freq.sqlite')
-            return list(pool.map(_plan_fresh, [(spec, str(p), facts, seed, first, reserve) for spec, p, seed in zip(specs, parts, seeds)]))
+            drop('freq.sqlite', 'cells.jsonl.gz', 'digests.bin')
+            return list(pool.map(_plan_fresh, [(spec, str(p), facts, seed, first, reserve, dict(one_decode=one, canonical=canon))
+                                               for spec, p, seed in zip(specs, parts, seeds)]))
         planned = step('plan', plan)
         whole, kept, scales = _table_facts(columns, n, planned)
+        cells_bytes = sum(f.get('cells_bytes') or 0 for f in planned)
+        canonical_reasons = [f['canonical_reason'] for f in planned if f.get('canonical_reason')]
 
         numbering = step('merge', lambda: _merge(parts, dictionary, kept, reserve))
         drop('freq.sqlite')                   # numbered and saved: the parts' counts are no longer needed
 
         def final():
             drop('rows.txt', 'names.txt')
-            return list(pool.map(_final, [(spec, str(p), i, facts, seed, kept, scales, str(dictionary), start, reserve)
+            if not one:
+                drop('digests.bin')
+            return list(pool.map(_final, [(spec, str(p), i, facts, seed, kept, scales, str(dictionary), start, reserve,
+                                           dict(one_decode=one, canonical=canon and not one))
                                           for i, (spec, p, seed, start)
                                           in enumerate(zip(specs, parts, seeds, numbering['starts']))]))
         finals = step('final', final)
         if sum(f['named'] for f in finals) != numbering['total']:
             raise ValueError('table %s: the parts named %d dictionary entries, the merge numbered %d'
                              % (name, sum(f['named'] for f in finals), numbering['total']))
+        drop('cells.jsonl.gz')                # the final pass has numbered the cells: the scratch text is not kept
+        canonical_reasons += [f['canonical_reason'] for f in finals if f.get('canonical_reason')]
+        digests_bytes = sum((f.get('digests_bytes') or 0) for f in (planned if one else finals))
         sep = _separator(finals)
         sizes = [f['size'] for f in finals]
 
@@ -1059,16 +1121,30 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     total = destination.stat().st_size
     if offsets and offsets[0] + sum(sizes) != total:
         raise ValueError('table parts do not end the file')
-    jobs = [(str(destination), off, size, s['n'], spec, header, str(inverse / 'table.sqlite'), seed)
-            for off, size, s, spec, seed in zip(offsets, sizes, snaps, specs, seeds)]
+    # canonical_verify: every part's source-row digests must be there (an interrupted scratch may lack them) and no
+    # part met a leaf outside CANONICAL_TYPES; otherwise every part verifies by DG._same against the source, as before
+    by_digest = canon and not canonical_reasons and present('digests.bin')
+    verify_basis = ('the canonical digest of every source row kept by the %s pass (%s)' % ('plan' if one else 'final', canon_why)
+                    if by_digest else 'the source rows decoded again and compared by DG._same (%s)'
+                    % ('; '.join(canonical_reasons) if canonical_reasons else (canon_why if modes['canonical_verify']
+                                                                                 else PASS_SETTINGS['canonical_verify'] + '=off')
+                       if not canon or canonical_reasons else 'a part has no digests file'))
+    jobs = [(str(destination), off, size, s['n'], spec, header, str(inverse / 'table.sqlite'), seed,
+             str(p / 'digests.bin') if by_digest else None)
+            for off, size, s, spec, seed, p in zip(offsets, sizes, snaps, specs, seeds, parts)]
     verified = sum(pool_map_verify(jobs, cpus, pool=shared))
     if TS._identity(destination) != before:
         raise ValueError('table changed during inverse proof')
     if verified != n:
         raise ValueError('verified table count mismatch')
     shutil.rmtree(scratch)       # proved: the scratch (inverse, part directories) is no longer needed
+    decodes = 1 + (0 if fused or not cross_columns else 1) + (1 if one else 2) + (0 if by_digest else 1)
     return dict(path=str(destination), rows=n, verified=True, verified_identity=before,
-                scratch_directory=str(scratch), parts=len(specs))
+                scratch_directory=str(scratch), parts=len(specs),
+                passes=dict(schema='FRANKIE_DIGEST_PASSES_V1', fuse_context=fused, one_decode=one,
+                            canonical_verify=by_digest, verify_basis=verify_basis, source_decodes=decodes,
+                            cells_scratch_bytes=cells_bytes, digests_bytes=digests_bytes,
+                            settings={k: os.environ.get(v, 'on') for k, v in PASS_SETTINGS.items()}))
 
 
 def pool_map_verify(jobs, cpus, pool=None):
