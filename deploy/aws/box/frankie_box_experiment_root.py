@@ -39,6 +39,57 @@ PARENT = Path('/opt/frankie-box/work/experiment-roots')
 INGESTION_SCHEMA = 'BOSS_BLOCK_INGESTION_RECEIPT_V1'
 REPOSITORY = Path(__file__).resolve().parents[3]       # this checkout's root (the one that builds the documents)
 CHECKOUT_REBIND_SCHEMA = 'FRANKIE_ROOT_CHECKOUT_REBIND_V1'
+# Session 9 (Greg, 17:2xZ: "stuff like that should never kill workflow"): an identity refusal on a RESUME (the retained
+# ROOT's saved source/pin/derivation/evidence differs from what this checkout builds or reads) is a distinct, visible
+# outcome: <attempt>/work/resume-refused.json (FRANKIE_ROOT_RESUME_REFUSED_V1) and exit 65 (EX_DATAERR; the wrapper uses 2,
+# a ValueError exits 1, 75 is the save exit). Run.root records the day 'refused' with this reason; the queue keeps the owned
+# day 'unknown' with its attempt, CPUs and booking for ACTION=resume after the cause is fixed. Nothing is deleted or rewritten.
+RESUME_REFUSED_EXIT = 65
+RESUME_REFUSED_SCHEMA = 'FRANKIE_ROOT_RESUME_REFUSED_V1'
+
+
+class ResumeRefused(ValueError):
+    """A resume of a retained ROOT refused on identity: the reason, the document it concerns, what differs when known."""
+
+    def __init__(self, reason, document=None, differs=None):
+        super().__init__(reason)
+        self.reason, self.document, self.differs = reason, document, differs
+
+
+def _differs(saved, built, prefix=''):
+    """The top-level fields of two JSON documents that differ: scalar values named, others by their sha256."""
+    if not (isinstance(saved, dict) and isinstance(built, dict)):
+        saved, built = dict(value=saved), dict(value=built)
+    out = []
+    for key in sorted(set(saved) | set(built), key=str):
+        a, b = saved.get(key), built.get(key)
+        if a == b:
+            continue
+        def shown(v):
+            if v is None or isinstance(v, (str, int, float, bool)):
+                return v
+            return dict(sha256=hashlib.sha256(json.dumps(v, sort_keys=True, default=str).encode()).hexdigest())
+        out.append(dict(field=prefix + str(key), saved=shown(a), this_run=shown(b),
+                        present=dict(saved=key in saved, this_run=key in built)))
+    return out
+
+
+def _write_resume_refused(output, commit, refusal):
+    """<output>/work/resume-refused.json for a refused resume; an earlier refusal record is kept beside it (renamed with
+    its time), never deleted. Returns the path."""
+    work = Path(output) / 'work'
+    work.mkdir(mode=0o700, exist_ok=True)
+    path = work / 'resume-refused.json'
+    if path.exists():
+        os.rename(path, work / ('resume-refused.%d.json' % path.stat().st_mtime_ns))
+    _save_new_complete(path, dict(schema=RESUME_REFUSED_SCHEMA, reason=refusal.reason, document=refusal.document,
+                                  differs=refusal.differs, commit=commit, at=time.time(),
+                                  at_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), pid=os.getpid(),
+                                  output_root=str(output), exit_code=RESUME_REFUSED_EXIT,
+                                  rule='a refused resume: the attempt directory and every saved document are kept as they '
+                                       'are; the day is retained for ACTION=resume after the cause is fixed; never retried '
+                                       'from scratch'))
+    return path
 
 
 def _checkout_relative(path):
@@ -405,7 +456,10 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                     built[field] = saved[field]
             moves = content_rebinds(saved, built)
             if moves is None:
-                raise ValueError('retained ROOT source/pin differs: %s' % path)
+                # session 9: an identity refusal on a resume is its own visible outcome (exit RESUME_REFUSED_EXIT and
+                # work/resume-refused.json, main below), never a generic failure; the saved document is untouched
+                raise ResumeRefused('retained ROOT source/pin differs: %s' % path, document=str(path),
+                                    differs=_differs(saved, built))
             if moves or sized:
                 rebinds.append(dict(document=str(path), sha256=_sha256_file(path), moves=moves, run_size=sized))
             return saved
@@ -464,92 +518,112 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     retained = session.work / 'derive.json'
     retained_checks = claims_note = spool_checks = None
     if resume and retained.is_file():
-        # The existing legacy reader/render helpers recover the finished calculation stage without replaying it.
-        from frankie_box_monday_calculations import load_retained_layers, write_retained_digest
-        from frankie_box_boss_session import (_artifact_check, _load_file_claims, _reuse_check_mode,
-                                              LEGACY_REUSE_CHECK_SETTING, _legacy_spool_artifact,
-                                              _reopen_counted_spool, _sealed_spool_counts)
-        import frankie_box_bedrock as B
-        result = json.loads(retained.read_bytes())
-        # session 6, second pass (the relaunch role, live on a2): the native evidence (193.7 GB) and every layer (the
-        # 472 GB inline legacy_book_imbalance.json) were read whole here through the uncached witness on every resume,
-        # then the layers again inside load_retained_layers. Now: the claims file is written from the ROOT's own sealed
-        # sha256/bytes when absent (write_claims_from_derivation), every artifact is taken by its claim while stat and
-        # the last 64 KiB hold (else read whole once through the per-process cache; FRANKIE_ROOT_LEGACY_REUSE_CHECK=full
-        # restores the reads), the witnesses handed to load_retained_layers; recorded on the receipt.
-        claims_note = write_claims_from_derivation(output)
-        claims, mode = _load_file_claims(session.work), _reuse_check_mode(LEGACY_REUSE_CHECK_SETTING)
-        retained_checks, witnessed = [], {}
+        try:
+            # The existing legacy reader/render helpers recover the finished calculation stage without replaying it.
+            from frankie_box_monday_calculations import load_retained_layers, write_retained_digest
+            from frankie_box_boss_session import (_artifact_check, _load_file_claims, _reuse_check_mode,
+                                                  LEGACY_REUSE_CHECK_SETTING, _legacy_spool_artifact,
+                                                  _reopen_counted_spool, _sealed_spool_counts)
+            import frankie_box_bedrock as B
+            result = json.loads(retained.read_bytes())
+            # session 6, second pass (the relaunch role, live on a2): the native evidence (193.7 GB) and every layer (the
+            # 472 GB inline legacy_book_imbalance.json) were read whole here through the uncached witness on every resume,
+            # then the layers again inside load_retained_layers. Now: the claims file is written from the ROOT's own sealed
+            # sha256/bytes when absent (write_claims_from_derivation), every artifact is taken by its claim while stat and
+            # the last 64 KiB hold (else read whole once through the per-process cache; FRANKIE_ROOT_LEGACY_REUSE_CHECK=full
+            # restores the reads), the witnesses handed to load_retained_layers; recorded on the receipt.
+            claims_note = write_claims_from_derivation(output)
+            claims, mode = _load_file_claims(session.work), _reuse_check_mode(LEGACY_REUSE_CHECK_SETTING)
+            retained_checks, witnessed = [], {}
 
-        def evidence(item, what):
-            path = safe_path(item['path'])                     # the same refusal as the witness before (no symlink)
-            seen, basis = _artifact_check(dict(item, path=str(path)), claims, mode, claims_dir=session.work)
-            if dict(seen, path=str(path)) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
-                raise ValueError('saved %s differs: %s' % (what, item['path']))
-            retained_checks.append(dict(path=str(path), bytes=item['bytes'], basis=basis))
-            witnessed[str(path.resolve())] = dict(path=str(path), bytes=item['bytes'], sha256=item['sha256'])
-        if result.get('source_binding') != binding or result.get('pin_identity', {}).get('sha256') != \
-                witness(output / 'calculation-pins.json')['sha256']:
-            raise ValueError('saved derivation belongs to another source/pin')
-        if result.get('producers') != session._producer_witnesses(session._pin()):
-            raise ValueError('saved derivation producers changed')
-        if result.get('frame_sections_schema') != FRAME_SECTIONS_SCHEMA:
-            raise ValueError('saved derivation has another frame projection; retained outputs preserved')
-        if bedrock and (result.get('native_recovery_schema') != NATIVE_RECOVERY_SCHEMA
-                        or not result.get('bedrock') or result['bedrock'].get('skipped')):
-            raise ValueError('saved derivation lacks completed native calculations; retained outputs preserved')
-        if bedrock:
-            native = result['bedrock']
-            if native.get('emission') != binding['native_calculation_policy']['emission']:
-                raise ValueError('saved native emission provenance policy differs; retained outputs preserved')
-            for item in [native['receipt'], native['result'], *native['ledgers'].values()]:
-                evidence(item, 'native evidence')
-        for item in result['layers'].values():
-            evidence(item, 'calculation layer')
-        # Session 9 (Greg: "fix spool before it starts"): before, load_retained_layers was called without spools=, so
-        # each of the five legacy spools was reopened by RowSpool.reopen, which counts EVERY line: a whole read of the
-        # 496.7 GB frames spool (~63 min at the box's 131 MB/s) on every resume. Now, as the legacy-stage reuse inside
-        # Session.derive already does: each spool artifact sealed in work/legacy-stage.json takes its count from the
-        # seal, else its claim row (write_claims_from_derivation above added the rows), else the sealed receipt / layer
-        # heads (_sealed_spool_counts), and its witness from the claim while stat + the last 64 KiB hold
-        # (_legacy_spool_artifact); the spool is then reopened from the count, first and last lines only
-        # (_reopen_counted_spool) and handed to load_retained_layers as spools=. A spool with no count or no holding
-        # claim is read whole ONCE there (sha256 + count in one pass, a sealed count it disagrees with refuses); a
-        # spool with no sealed artifact at all stays on RowSpool.reopen's whole count. Each case is named on the
-        # receipt (spool_reopen), never silent.
-        spool_checks, reopened = [], {}
-        rows_dir = session.work / 'derived' / '.rows'
-        stage = session.work / 'legacy-stage.json'
-        saved_stage = json.loads(stage.read_bytes()) if stage.is_file() else {}
-        sealed_counts = _sealed_spool_counts(saved_stage.get('receipt') or result, session.work / 'derived')
-        for item in saved_stage.get('artifacts') or []:
-            if not (str(item.get('path', '')).endswith('.jsonl')
-                    or (item.get('kind') == 'spool' and isinstance(item.get('count'), int))):
-                continue
-            path = Path(item['path'])
-            seen, count, how = _legacy_spool_artifact(item, claims, mode, sealed_counts, claims_dir=session.work)
-            if seen != {k: item[k] for k in ('bytes', 'sha256')}:
-                raise ValueError('retained legacy spool changed: ' + item['path'])
-            reopened[str(path.resolve())] = _reopen_counted_spool(B.RowSpool, path, count)
-            spool_checks.append(dict(path=str(path), bytes=item['bytes'], count=count, basis=how,
-                                     reopened_from='the count: first and last lines read, no other line'))
-        for path in [*rows_dir.glob('input-*.jsonl')] + [rows_dir / (n + '.jsonl')
-                                                         for n in ('prices', 'frames', 'structures', 'failures')]:
-            if str(path.resolve()) not in reopened:
-                spool_checks.append(dict(path=str(path), bytes=path.stat().st_size if path.is_file() else None,
-                                         count=None, basis='read whole: RowSpool.reopen counts every line (no sealed '
-                                         'legacy-stage.json artifact names this spool)',
-                                         reopened_from='RowSpool.reopen in load_retained_layers (every line read)'))
-        _, _, _, prices, frames, structures, failures, layers, _ = load_retained_layers(
-            session, allow_failures=True, spools=reopened, layer_witnesses=witnessed)
-        session.note('retained evidence: %d artifacts, %d by their claim, %d read whole; %d spools, %d reopened from '
-                     'a sealed count and a holding claim, %d read whole' % (
-            len(retained_checks), sum(c['basis'].startswith('the saved claim') for c in retained_checks),
-            sum(c['basis'].startswith('read whole') for c in retained_checks), len(spool_checks),
-            sum('the saved claim' in c['basis'] for c in spool_checks),
-            sum('the saved claim' not in c['basis'] for c in spool_checks)))
-        if len(failures) != result['failure_count']:
-            raise ValueError('saved failure spool differs from derivation')
+            def evidence(item, what):
+                path = safe_path(item['path'])                     # the same refusal as the witness before (no symlink)
+                seen, basis = _artifact_check(dict(item, path=str(path)), claims, mode, claims_dir=session.work)
+                if dict(seen, path=str(path)) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
+                    raise ResumeRefused('saved %s differs: %s' % (what, item['path']), document=item['path'],
+                                        differs=_differs({k: item[k] for k in ('path', 'bytes', 'sha256')},
+                                                         dict(seen, path=str(path))))
+                retained_checks.append(dict(path=str(path), bytes=item['bytes'], basis=basis))
+                witnessed[str(path.resolve())] = dict(path=str(path), bytes=item['bytes'], sha256=item['sha256'])
+            if result.get('source_binding') != binding or result.get('pin_identity', {}).get('sha256') != \
+                    witness(output / 'calculation-pins.json')['sha256']:
+                raise ResumeRefused('saved derivation belongs to another source/pin', document=str(retained),
+                                    differs=_differs(dict(source_binding=result.get('source_binding'),
+                                                          pin_sha256=result.get('pin_identity', {}).get('sha256')),
+                                                     dict(source_binding=binding,
+                                                          pin_sha256=witness(output / 'calculation-pins.json')['sha256']))
+                                    + _differs(result.get('source_binding') or {}, binding, 'source_binding.'))
+            if result.get('producers') != session._producer_witnesses(session._pin()):
+                raise ResumeRefused('saved derivation producers changed', document=str(retained),
+                                    differs=_differs(result.get('producers') or {},
+                                                     session._producer_witnesses(session._pin()), 'producers.'))
+            if result.get('frame_sections_schema') != FRAME_SECTIONS_SCHEMA:
+                raise ResumeRefused('saved derivation has another frame projection; retained outputs preserved', document=str(retained))
+            if bedrock and (result.get('native_recovery_schema') != NATIVE_RECOVERY_SCHEMA
+                            or not result.get('bedrock') or result['bedrock'].get('skipped')):
+                raise ResumeRefused('saved derivation lacks completed native calculations; retained outputs preserved', document=str(retained))
+            if bedrock:
+                native = result['bedrock']
+                if native.get('emission') != binding['native_calculation_policy']['emission']:
+                    raise ResumeRefused('saved native emission provenance policy differs; retained outputs preserved',
+                                        document=str(retained),
+                                        differs=_differs(dict(emission=native.get('emission')),
+                                                         dict(emission=binding['native_calculation_policy']['emission'])))
+                for item in [native['receipt'], native['result'], *native['ledgers'].values()]:
+                    evidence(item, 'native evidence')
+            for item in result['layers'].values():
+                evidence(item, 'calculation layer')
+            # Session 9 (Greg: "fix spool before it starts"): before, load_retained_layers was called without spools=, so
+            # each of the five legacy spools was reopened by RowSpool.reopen, which counts EVERY line: a whole read of the
+            # 496.7 GB frames spool (~63 min at the box's 131 MB/s) on every resume. Now, as the legacy-stage reuse inside
+            # Session.derive already does: each spool artifact sealed in work/legacy-stage.json takes its count from the
+            # seal, else its claim row (write_claims_from_derivation above added the rows), else the sealed receipt / layer
+            # heads (_sealed_spool_counts), and its witness from the claim while stat + the last 64 KiB hold
+            # (_legacy_spool_artifact); the spool is then reopened from the count, first and last lines only
+            # (_reopen_counted_spool) and handed to load_retained_layers as spools=. A spool with no count or no holding
+            # claim is read whole ONCE there (sha256 + count in one pass, a sealed count it disagrees with refuses); a
+            # spool with no sealed artifact at all stays on RowSpool.reopen's whole count. Each case is named on the
+            # receipt (spool_reopen), never silent.
+            spool_checks, reopened = [], {}
+            rows_dir = session.work / 'derived' / '.rows'
+            stage = session.work / 'legacy-stage.json'
+            saved_stage = json.loads(stage.read_bytes()) if stage.is_file() else {}
+            sealed_counts = _sealed_spool_counts(saved_stage.get('receipt') or result, session.work / 'derived')
+            for item in saved_stage.get('artifacts') or []:
+                if not (str(item.get('path', '')).endswith('.jsonl')
+                        or (item.get('kind') == 'spool' and isinstance(item.get('count'), int))):
+                    continue
+                path = Path(item['path'])
+                seen, count, how = _legacy_spool_artifact(item, claims, mode, sealed_counts, claims_dir=session.work)
+                if seen != {k: item[k] for k in ('bytes', 'sha256')}:
+                    raise ResumeRefused('retained legacy spool changed: ' + item['path'], document=item['path'],
+                                        differs=_differs({k: item[k] for k in ('bytes', 'sha256')}, seen))
+                reopened[str(path.resolve())] = _reopen_counted_spool(B.RowSpool, path, count)
+                spool_checks.append(dict(path=str(path), bytes=item['bytes'], count=count, basis=how,
+                                         reopened_from='the count: first and last lines read, no other line'))
+            for path in [*rows_dir.glob('input-*.jsonl')] + [rows_dir / (n + '.jsonl')
+                                                             for n in ('prices', 'frames', 'structures', 'failures')]:
+                if str(path.resolve()) not in reopened:
+                    spool_checks.append(dict(path=str(path), bytes=path.stat().st_size if path.is_file() else None,
+                                             count=None, basis='read whole: RowSpool.reopen counts every line (no sealed '
+                                             'legacy-stage.json artifact names this spool)',
+                                             reopened_from='RowSpool.reopen in load_retained_layers (every line read)'))
+            _, _, _, prices, frames, structures, failures, layers, _ = load_retained_layers(
+                session, allow_failures=True, spools=reopened, layer_witnesses=witnessed)
+            session.note('retained evidence: %d artifacts, %d by their claim, %d read whole; %d spools, %d reopened from '
+                         'a sealed count and a holding claim, %d read whole' % (
+                len(retained_checks), sum(c['basis'].startswith('the saved claim') for c in retained_checks),
+                sum(c['basis'].startswith('read whole') for c in retained_checks), len(spool_checks),
+                sum('the saved claim' in c['basis'] for c in spool_checks),
+                sum('the saved claim' not in c['basis'] for c in spool_checks)))
+            if len(failures) != result['failure_count']:
+                raise ResumeRefused('saved failure spool differs from derivation', document=str(retained))
+        except ResumeRefused:
+            raise
+        except ValueError as error:
+            # session 9: any other refusal of the retained evidence on this resume (a helper's own check) is the same
+            # visible outcome as the explicit ones above: retained, never a generic failure
+            raise ResumeRefused(str(error), document=str(retained)) from error
         if digest:
             write_retained_digest(session, result, layers, prices, frames, structures, bedrock=False)
         elif (result.get('root_processes') or {}).get('digest') == 'run' \
@@ -657,10 +731,19 @@ def main():
                    help='why --bedrock off (recorded on derive.json); default: legacy_plan without the shared market '
                         'policy, caller_override with it; ignored with --bedrock on')
     a = p.parse_args()
-    print(json.dumps(calculate_day(a.commit, a.ingestion_receipt, a.ingestion_receipt_sha256, a.day, a.day_role,
-                                   a.output_root, a.data_workers, a.digest == 'on', a.frozen_survivors, a.resume,
-                                   bedrock=a.bedrock == 'on', shared_market_policy=a.shared_market_policy,
-                                   bedrock_off_cause=a.bedrock_off_cause), sort_keys=True), flush=True)
+    try:
+        result = calculate_day(a.commit, a.ingestion_receipt, a.ingestion_receipt_sha256, a.day, a.day_role,
+                               a.output_root, a.data_workers, a.digest == 'on', a.frozen_survivors, a.resume,
+                               bedrock=a.bedrock == 'on', shared_market_policy=a.shared_market_policy,
+                               bedrock_off_cause=a.bedrock_off_cause)
+    except ResumeRefused as refusal:
+        if not a.resume:
+            raise
+        path = _write_resume_refused(Path(a.output_root), a.commit, refusal)
+        print('ROOT_RESUME_REFUSED %s' % json.dumps(dict(reason=refusal.reason, document=refusal.document, record=str(path),
+                                                         exit_code=RESUME_REFUSED_EXIT), sort_keys=True), flush=True)
+        sys.exit(RESUME_REFUSED_EXIT)
+    print(json.dumps(result, sort_keys=True), flush=True)
 
 
 if __name__ == '__main__':

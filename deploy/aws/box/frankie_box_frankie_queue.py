@@ -101,8 +101,9 @@ KICK_GRACE_SECONDS = 900             # a kick this recent keeps the box in use (
 STATES = ('queued', 'running', 'done', 'failed', 'saved', 'unknown')
 # saved: the day's owner stopped at a boundary on its day-bound save marker and retains its attempt, exact CPU set and
 #        booking; it leaves this state only through ACTION=resume (never ordinary admission or a failure retry).
-# unknown: the owner's process is gone without a saved result or acknowledgment (a kill, a crash); its attempt, CPUs and
-#        booking are retained; ACTION=resume reconciles and resumes it, nothing requeues it on its own.
+# unknown: the owner's process is gone without a saved result or acknowledgment (a kill, a crash), or (session 9) an OWNED
+#        day's ROOT step failed or its resume was refused (_retain_owned_failure; the failure in resume_failures); its
+#        attempt, CPUs and booking are retained; ACTION=resume reconciles and resumes it, nothing requeues it on its own.
 SAVE_DIR = QUEUE / 'save'                 # <run>-<day>.save-request.json: the day-bound save marker; its acknowledgments beside it
 OWNER_STATES = ('saved', 'unknown')
 
@@ -1746,7 +1747,8 @@ def _end_slot(holder, entry, run):
     if result in OWNER_STATES:
         import frankie_box_cores as C
         try:
-            C.retain(holder['slot'], entry['run'], entry['day'], attempt=(getattr(run, 'owner', None) or {}).get('attempt'),
+            C.retain(holder['slot'], entry['run'], entry['day'],
+                     attempt=(getattr(run, 'owner', None) or entry.get('owner') or {}).get('attempt'),
                      reason='the day is %s on its owner; its CPUs stay its own until ACTION=resume' % result)
             holder['retained'] = holder['slot']
             return
@@ -1780,11 +1782,57 @@ def _root_job(entry, code_root, commit, log, holder):
         elif r['status'] == 'waiting':
             holder['result'] = ('queued', r.get('reason'), {})
         else:
-            holder['result'] = ('failed', '%s: %s' % (r['status'], r.get('reason')), dict(log=r.get('log')))
+            holder['result'] = ('failed', '%s: %s' % (r['status'], r.get('reason')),
+                                dict(log=r.get('log'), root_step=dict(status=r['status'], exit_code=r.get('exit_code'),
+                                                                      output_root=r.get('output_root'), resume=r.get('resume'),
+                                                                      resume_refused=r.get('resume_refused'))))
     except (Exception, SystemExit) as error:          # a refusal is the day's failure, never the worker's
         _thread_end(error, facts, holder, entry, run, 'failed')
     finally:
+        _retain_owned_failure(holder, entry, commit)  # session 9: an OWNED day's failure is unknown, retained (never retried)
         _end_slot(holder, entry, run)
+
+
+def _owned_root(entry):
+    """Whether the day's ROOT attempt is OWNED (session 9, Greg: "stuff like that should never kill workflow"): its owner
+    binding was retained before this admission (an ACTION=resume of a saved/unknown day), or its attempt's ROOT directory
+    exists (retained work: a resume, or a first attempt that failed after its ROOT directory was made). Returns the why,
+    or None for a day that never had either (a first attempt that failed before any ROOT directory existed)."""
+    import frankie_box_experiment as X
+    owner = entry.get('owner') or {}
+    if ((entry.get('attempts') or [{}])[-1]).get('owner_resumed'):
+        return 'its owner binding (attempt %s) was retained before this admission: a resume' % owner.get('attempt')
+    if owner.get('attempt') and (X.ROOTS / owner['attempt']).is_dir():
+        return 'its attempt\'s ROOT directory %s exists (retained work)' % (X.ROOTS / owner['attempt'])
+    return None
+
+
+def _retain_owned_failure(holder, entry, commit):
+    """Session 9 (live 17:02-17:04Z, a2/20231018: the owned attempt -a1's resume refused on an identity check, the day was
+    recorded failed, the worker released its owner and booking and started a FRESH attempt -a2 from scratch on a new
+    booking with no --resume): a day whose ROOT attempt is OWNED (_owned_root) is NEVER retried on a new attempt. Any
+    failure of its ROOT step (an exit code, a refusal, an identity refusal on the resume, an exception) turns the slot's
+    result into 'unknown': _end_slot then RETAINS its booking for the owner, the worker keeps the owner binding, attempt and
+    CPUs (the OWNER_STATES branch of root_worker), the failure is recorded on the entry (resume_failures), and only
+    ACTION=resume brings it back after the cause is fixed. The retry-once rule stays ONLY for a day that never had an
+    owner binding or ROOT directory (a first attempt that failed before any ROOT directory existed)."""
+    result = holder.get('result')
+    if not result or result[0] != 'failed':
+        return
+    why_owned = _owned_root(entry)
+    if why_owned is None:
+        return
+    _, reason, facts = result
+    owner = entry.get('owner') or {}
+    step = (facts or {}).get('root_step') or {}
+    resumed = ((entry.get('attempts') or [{}])[-1]).get('owner_resumed') or step.get('resume')
+    record = dict(at=time.time(), at_utc=utc(), commit=commit, attempt=owner.get('attempt'), booking=holder.get('slot'),
+                  cpus=owner.get('cpus'), status=step.get('status') or 'failed', exit_code=step.get('exit_code'),
+                  reason=reason, resume=bool(resumed), owned=why_owned, output_root=step.get('output_root'),
+                  resume_refused=step.get('resume_refused'), log=(facts or {}).get('log'))
+    text = '%s: %s; retained for ACTION=resume after the cause is fixed; never retried from scratch' % (
+        'its resume failed' if resumed else 'its owned attempt %s failed' % owner.get('attempt'), reason)
+    holder['result'] = ('unknown', text, dict(facts or {}, resume_failure=record))
 
 
 def _sync_root(doc, x, plans):
@@ -2042,6 +2090,10 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                         (y.get('owner') or {}).get('cpus')))
                     continue
                 if result in OWNER_STATES:
+                    if facts.get('resume_failure'):
+                        # session 9: an owned day's failed or refused ROOT (_retain_owned_failure): unknown, its owner
+                        # binding, attempt, CPUs and booking retained; the failure on the entry; never retried from scratch
+                        y.setdefault('resume_failures', []).append(facts['resume_failure'])
                     y.update(state=result, reason=reason, retained_booking=job['holder'].get('retained'),
                              retain_error=job['holder'].get('retain_error'), child=facts.get('child'),
                              **_released_fields(job['holder']))
@@ -2082,8 +2134,17 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     _release_owner(y, 'claimed elsewhere: this box holds nothing of the day')
                 elif result == 'queued':
                     y.update(state='queued', where=None, reason='back in line at its own place: %s' % reason)
-                    _release_owner(y, 'back in line before any work: the next admission binds afresh on free CPUs')
+                    if _owned_root(y):
+                        # session 9: an OWNED day (a resume, or its ROOT directory exists) keeps its owner binding and
+                        # attempt; only its booking is re-booked (the waiting finish's rule), never a new attempt
+                        _rebook_owner(y, 'back in line before any work: the owned attempt is kept; the retry books any '
+                                         'free slot for the same owner binding')
+                    else:
+                        _release_owner(y, 'back in line before any work: the next admission binds afresh on free CPUs')
                 else:
+                    # the retry-once rule (a new attempt on free CPUs) applies ONLY here: a day that never had an owner
+                    # binding or ROOT directory before it failed (a first attempt that failed before any ROOT directory
+                    # existed). An owned day's failure never reaches this branch: _retain_owned_failure made it 'unknown'
                     y.update(state='failed', where=None, reason=reason)
                     _release_owner(y, 'failed: the attempt is kept as evidence; a retry mints the next attempt on free CPUs')
                 event('root', 'slot_end', seq=seq, day=y['day'], run=y['run'], result=result, reason=reason, facts=facts)
@@ -2178,6 +2239,7 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     break                                   # no free slot: everything behind the front waits
                 holder = dict(slot=slot)
                 _bind_source(x, code_root, commit)
+                owner_resumed = x.get('owner') is not None   # session 9: an owner binding retained BEFORE this admission
                 try:
                     owner = _bind_owner(x, slot, cpus, code_root, commit)   # durable BEFORE the thread: attempt, CPUs, marker
                 except (Exception, SystemExit) as error:                    # a refusal of the day, never the worker's end
@@ -2187,7 +2249,8 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     continue
                 x.setdefault('attempts', []).append(dict(where='box-slot', pid=os.getpid(), commit=commit,
                                                          started=time.time(), started_utc=utc(), slot_booking=slot,
-                                                         attempt=owner['attempt'], cpus=owner['cpus']))
+                                                         attempt=owner['attempt'], cpus=owner['cpus'],
+                                                         owner_resumed=owner_resumed))
                 x.update(state='running', where='box-slot', reason='its whole day in the held box slot %s' % slot)
                 save('root', doc)                            # intent is durable before scientific work starts
                 t = threading.Thread(target=_root_job, args=(dict(x), code_root, commit, log, holder), daemon=True)

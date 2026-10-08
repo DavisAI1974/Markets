@@ -164,6 +164,7 @@ def _cores():
 WORK = BOX_ROOT / 'work'
 RUNS = WORK / 'experiment'
 ROOTS = WORK / 'experiment-roots'
+RESUME_REFUSED_EXIT = 65    # frankie_box_experiment_root.RESUME_REFUSED_EXIT: a resume refused on identity (session 9)
 TEACHER_ROWS = WORK / 'experiment-teacher-rows'
 DATA = WORK / 'experiment-data'
 SEARCH = WORK / 'experiment-search'
@@ -1780,10 +1781,30 @@ class Run:
                                        'ROOT of the day runs)' if held else 'no claim store')
         if saved:
             return saved
+        refused = output / 'work' / 'resume-refused.json'
+        if resume and code == RESUME_REFUSED_EXIT and refused.is_file():
+            # session 9 (Greg, 17:2xZ: "stuff like that should never kill workflow"): the ROOT child refused the RESUME on
+            # identity (frankie_box_experiment_root.ResumeRefused: exit 65 after writing work/resume-refused.json,
+            # FRANKIE_ROOT_RESUME_REFUSED_V1). A visible 'refused' outcome naming what differs, never the generic 'no
+            # calculations-receipt.json' failure; the attempt directory and every saved document are kept as they are,
+            # and the queue retains the owned day as unknown for ACTION=resume after the cause is fixed
+            try:
+                body = json.loads(refused.read_bytes())
+            except (OSError, ValueError) as error:
+                body = dict(reason='the refusal record %s is unreadable (%s: %s)' % (refused, type(error).__name__, error))
+            stale = isinstance(body.get('at'), (int, float)) and body['at'] < child_started
+            self.claim_end(e, output, None, 'the box ROOT resume was refused on identity (exit %s): %s' % (code, body.get('reason')))
+            return self.record('root', e['day'], 'refused', exit_code=code, log=log, output_root=str(output),
+                               interrupted_attempts=attempts, seconds=child_seconds, resume=True,
+                               resume_refused=dict(body, record=str(refused), stale_record=stale),
+                               reason='its resume was refused on identity: %s%s (record %s); the attempt %s is kept, nothing '
+                                      'deleted or rewritten; ACTION=resume after the cause is fixed' % (
+                                          body.get('reason'), ' (document %s)' % body['document'] if body.get('document') else '',
+                                          refused, output.name))
         if code != 0 or not (output / 'calculations-receipt.json').is_file():
             self.claim_end(e, output, None, 'the box ROOT attempt ended without calculations-receipt.json (exit %s)' % code)
             return self.record('root', e['day'], 'failed', exit_code=code, log=log, output_root=str(output),
-                               interrupted_attempts=attempts, seconds=child_seconds,
+                               interrupted_attempts=attempts, seconds=child_seconds, resume=resume,
                                native_pass=native_pass_facts(output, None, policy, child_seconds),
                                reason='no calculations-receipt.json (the attempt is kept)%s' % (
                                    '; the native pass was ON (policy %s): its failure, if it is the cause, is named in the '
