@@ -150,3 +150,17 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   nothing. A fix is either source (the take-over matching a retained booking that was GROWN from the requested set, i.e.
   requested is a subset and `grown` records the added CPUs; or _book_slot reading the retained ledger set for an owned
   day) or a state edit of root.json owner.cpus. Both are outside this role; NOT done. Reported to the parent at 16:5xZ.
+
+## Parent: the grown-booking take-over blocker (16:5xZ-17:0xZ)
+- 16:49:34Z resume + 16:49:55Z kick ran on 27109f4d (operator record above); worker frankie-queue-root-1791478195 polls
+  with pending 1, running []: `_book_slot` requests the owner binding's cpus 0-31 and `book_locked`'s retained take-over
+  accepts only an EXACT set match, while the booking was grown to 0-63 at 16:48:22Z. Waiting forever, harmless (nothing
+  runs, no booking held by the worker). The grow was built for the classroom boundary (the running day grows its own
+  held booking); a grow of a RETAINED booking before its resume was never taken over. Greg: "it's just our code that
+  isn't allowing it so override blocker".
+- Source role (opus, Greg's usage rule) assigned: book_locked accepts a retained booking GROWN from the requested set
+  (subset + the grown records' added CPUs), returns the full set; the queue records the grown set on the owner binding.
+  Then: restage, then ACTION=handover LINE=root on the new checkout with FRANKIE_ROOT_DIGEST=on FRANKIE_CLASSROOM_CPUS=all
+  (handover signals the idle old worker to end and starts the new worker at the new commit with the run settings:
+  frankie_box_frankie_queue.handover carries _run_settings_env()), then watch.
+- The grow printout defect (emit_outcome KeyError 'grown' after the ledger write) fixed on the tip: 1b4c909.
