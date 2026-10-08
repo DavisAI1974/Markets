@@ -327,6 +327,131 @@ def _fold(state, flat):
     DG.fold(state, flat)
 
 
+# ---- Session 6 (Greg, 2026-10-08, verbatim: "We stream the data in and get 32 CPUs and workers on this job"): fewer
+# decodes of the source rows. A spool table decoded every row five times (cross context, snapshot, plan, final, verify:
+# the 496.7 GB full-depth frames of a2, ~29 min per decode on 31 helpers). Three exact reductions, each a run setting
+# on|off (default on) so a canary can compare the old and the new bytes:
+#   fuse_context    the cross-table context columns are collected inside the snapshot pass (5 -> 4);
+#   canonical_verify the inverse proof compares each parsed-back row with a canonical digest of the source row kept by
+#                   the last pass that decoded it (32 bytes a row), instead of decoding the source a fifth time (-> 3);
+#                   taken only while the canonical form is injective over DG._same's domain: a type-tagged, prefix-free
+#                   encoding over CANONICAL_TYPES, checked at runtime against DG._same on a probe vector
+#                   (_canonical_self_check) and refused for any other leaf type (the row then verifies by DG._same);
+#   one_decode      the plan pass writes every row's pre-dictionary cells (DG._plan_row's output) to the part's own
+#                   scratch (cells.jsonl: the table's text, never a copy of the spool; bounded by the disk reserve,
+#                   deleted after the final pass, its bytes on the receipt) and the final pass numbers them from there
+#                   without decoding the source (-> 2: snapshot and plan).
+# The table's bytes do not depend on any of the three (the same cells, dictionary and rows in the same order).
+PASS_SETTINGS = dict(fuse_context='FRANKIE_DIGEST_FUSE_CONTEXT', canonical_verify='FRANKIE_DIGEST_CANONICAL_VERIFY',
+                     one_decode='FRANKIE_DIGEST_ONE_DECODE')
+
+
+def pass_modes():
+    """{fuse_context, canonical_verify, one_decode: bool} from the run settings (on|off, default on)."""
+    out = {}
+    for key, name in PASS_SETTINGS.items():
+        value = os.environ.get(name, 'on')
+        if value not in ('on', 'off'):
+            raise ValueError('%s must be on or off, not %r' % (name, value))
+        out[key] = value == 'on'
+    return out
+
+
+CANONICAL_TYPES = (type(None), bool, int, float, str, bytes, list, tuple, dict)
+
+
+class _NotCanonical(TypeError):
+    """A leaf type outside CANONICAL_TYPES: the row is verified by DG._same instead."""
+
+
+def _canonical(value, out):
+    """Append the type-tagged, prefix-free encoding of value to out (a list of bytes). Over CANONICAL_TYPES two values
+    have equal encodings exactly when DG._same holds: floats by repr (an exact round trip; -0.0 keeps its sign; every
+    NaN one spelling, as _same treats every NaN as equal), ints by their digits, bools apart from ints, lists apart from
+    tuples, strings and bytes with their length, dict keys tagged and sorted by their own encoding."""
+    if value is None:
+        out.append(b'n')
+    elif isinstance(value, bool):
+        out.append(b'b1' if value else b'b0')
+    elif isinstance(value, int):
+        out.append(b'i%d;' % value)
+    elif isinstance(value, float):
+        out.append(b'fnan;' if value != value else b'f' + repr(value).encode('ascii') + b';')
+    elif isinstance(value, str):
+        raw = value.encode('utf-8', 'surrogatepass')
+        out.append(b's%d:' % len(raw))
+        out.append(raw)
+    elif isinstance(value, bytes):
+        out.append(b'y%d:' % len(value))
+        out.append(value)
+    elif isinstance(value, (list, tuple)):
+        out.append((b'l' if isinstance(value, list) else b't') + b'%d[' % len(value))
+        for item in value:
+            _canonical(item, out)
+        out.append(b']')
+    elif isinstance(value, dict):
+        keyed = []
+        for key, item in value.items():
+            piece = []
+            _canonical(key, piece)
+            keyed.append((b''.join(piece), item))
+        keyed.sort(key=lambda pair: pair[0])
+        out.append(b'd%d{' % len(keyed))
+        for key_bytes, item in keyed:
+            out.append(key_bytes)
+            _canonical(item, out)
+        out.append(b'}')
+    else:
+        raise _NotCanonical(type(value).__name__)
+
+
+def canonical_digest(value):
+    """sha256 of the canonical encoding (32 bytes); _NotCanonical for a leaf type outside CANONICAL_TYPES."""
+    out = []
+    _canonical(value, out)
+    return hashlib.sha256(b''.join(out)).digest()
+
+
+_CANONICAL_CHECK = []
+
+
+def _canonical_self_check():
+    """(ok, reason): once per process, the canonical encoding against DG._same on every pair of a probe vector that
+    holds the cases the domain turns on (0.0 and -0.0, 1, 1.0 and True, every-NaN, int/str, list/tuple, nested dicts
+    and lists, bytes, None, big ints, unicode). Any disagreement in either direction refuses the canonical verify."""
+    if _CANONICAL_CHECK:
+        return _CANONICAL_CHECK[0]
+    nan = float('nan')
+    probes = [None, True, False, 0, 1, -1, 1 << 70, 0.0, -0.0, 1.0, 0.1, 1e300, float('inf'), float('-inf'), nan,
+              float.fromhex('0x1.8p+1023') * float('inf'), '', '1', 'a', 'a\x00b', 'é', b'', b'\x00', b'ab',
+              [], [1], [1.0], [True], (1,), [[1]], [(1,)], {}, {'a': 1}, {'a': 1.0}, {'a': True}, {'b': 1},
+              {'a': {'b': [1, 2.0, 'x', None]}}, {'a': {'b': [1, 2.0, 'x', nan]}}, {'a': [0.0]}, {'a': [-0.0]},
+              [1, 2], [2, 1], {'x': 1, 'y': 2}, {'y': 2, 'x': 1}]
+    encoded = []
+    for probe in probes:
+        try:
+            encoded.append(canonical_digest(probe))
+        except _NotCanonical as error:
+            _CANONICAL_CHECK.append((False, 'probe %r not canonical: %s' % (probe, error)))
+            return _CANONICAL_CHECK[0]
+    for i, a in enumerate(probes):
+        for j, b in enumerate(probes):
+            if (encoded[i] == encoded[j]) != bool(DG._same(a, b)):
+                _CANONICAL_CHECK.append((False, 'canonical encoding disagrees with DG._same on %r vs %r' % (a, b)))
+                return _CANONICAL_CHECK[0]
+    _CANONICAL_CHECK.append((True, 'injective over %s on the probe vector (%d values, every pair agrees with DG._same)'
+                             % (', '.join(t.__name__ for t in CANONICAL_TYPES), len(probes))))
+    return _CANONICAL_CHECK[0]
+
+
+def _cross_of(row, columns, top):
+    """One row's cross-table context columns (the values _cross_rows yields), from the decoded row."""
+    if top:
+        return {c: row[c] for c in columns if c in row and not (isinstance(row[c], dict) and row[c])}
+    flat = DG._flatten(dict(row))
+    return {c: flat[c] for c in columns if c in flat}
+
+
 def _part_db(directory, stage):
     # Part databases are scratch (a failed pass is redone from its inputs), so no journal and no fsync per commit; a
     # 1 GiB page cache per helper keeps the per-candidate count upserts off the disk (profile 2026-09-28: the count

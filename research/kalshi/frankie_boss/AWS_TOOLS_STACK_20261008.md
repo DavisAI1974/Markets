@@ -296,3 +296,117 @@ holding the Claude IAM credentials (dry run first: drop `--apply`). Equivalent r
 - Cost: https://docs.aws.amazon.com/compute-optimizer/latest/ug/getting-started.html,
   https://docs.aws.amazon.com/cost-management/latest/userguide/cost-optimization-hub.html,
   https://aws.amazon.com/aws-cost-management/pricing/.
+
+## 7. Digest rendering services (Greg's follow-up, 2026-10-08: "are you 100% sure there is no AWS render skill?")
+SOURCE-BUILT / RUNTIME-UNVERIFIED; read-only research via the Aws connector (search_documentation agent_skills +
+general, retrieve_skill, read_documentation). No account call, no change.
+
+The job: ROOT's digest decodes the day's frames spool (JSON lines, 496.7 GB, ~1.47M lines of full-depth order-book
+frames, ~338 KB per line) and renders tables into the Markdown digest, plus 46 smaller tables from the native ledgers
+(193.7 GB). Measured: our Python decode runs 9.25 MB/s per core; one pass on the box = 29 min on 32 CPUs
+(496.7 GB / (32 x 9.25 MB/s) = 28.0 min computed; the EBS read floor is 496.7 GB / 1.25 GB/s = 6.6 min, so the pass is
+CPU-bound); five passes on c9bf631 = 2.4 h. Greg's rule: nothing dropped, full depth, stream it, many CPUs.
+
+### 7.1 The registry answer
+**No AWS agent skill covers rendering or aggregating large JSONL into tables or documents.** This follow-up ran 14
+more agent_skills sweeps at 6-10 results each with the exact terms Greg named (athena, glue, ETL, spark, EMR,
+emr-serverless, data processing, analytics, lake, batch, HPC, step functions map, bedrock data automation,
+quicksight, opensearch, sagemaker processing, render, markdown, report, JSONL aggregation). Every name returned was
+already in the 113 of section 1; nothing new appeared. The certainty is bounded by the tool: the registry exposes
+ranked search, not a catalog listing, so the statement is "no skill matched 25+ relevant terms across two passes",
+not an exhaustive enumeration.
+
+What the sweeps return instead, and what each actually covers (read in full this pass: querying-data-lake,
+ingesting-into-data-lake; read in pass 1: aws-step-functions, querying-aws-s3, querying-data-lake):
+| skill_name | Scope | Fits the digest? |
+|---|---|---|
+| querying-data-lake | Athena SQL execution (workgroup, statement classification, cost report); output CSV, or UNLOAD/CTAS to Parquet/ORC/Avro/JSON | Aggregation only, to files, not to a document; the renderer would not be ours |
+| ingesting-into-data-lake | Glue 5.x PySpark job templates, Athena CTAS, S3 JSON/CSV/Parquet -> Iceberg/S3 Tables; its own troubleshooting row: "CTAS timeout: dataset too large for Athena -> switch to Glue ETL or batch with WHERE filters" | Converts JSONL into a table; does not render |
+| aws-step-functions | Distributed Map: up to 10,000 child workflows (1,000 default), ItemReader InputType JSONL supported; `.sync` integrations | Orchestrates a sharded render; the renderer is still ours |
+| redshift-guide | Redshift COPY/UNLOAD, Spectrum external tables | Warehouse, not a renderer; not costed here |
+| amazon-opensearch-service | Indexing JSON for search/log analytics, PPL, dashboards | Search index, not a document |
+| querying-aws-s3 / querying-aws-cloudwatch / querying-aws-sagemaker-catalog | Athena over S3 Metadata, CloudWatch and SageMaker system tables | Metadata only |
+| aws-transform | Code transformations at scale via Batch/Fargate | Code, not data |
+Absent from the registry: EMR, EMR Serverless, a standalone Glue job-authoring skill, AWS Batch, QuickSight,
+Bedrock Data Automation, SageMaker Processing, ParallelCluster. Bedrock Data Automation is PDF/TIFF/JPEG/PNG/DOCX,
+images and video (500 MB max per request, 3,000 pages with the splitter): not applicable to JSONL at all.
+
+### 7.2 The invariant that decides the comparison
+The 9.25 MB/s per core is our CPython decode+render. Athena SQL replaces it (SQL aggregation, a different rendering
+path); Glue, EMR Serverless, Athena Spark, Batch and Lambda would run OUR decoder as-is (PySpark UDF, container or
+function) at the same 9.25 MB/s per core. So one pass costs **496.7 GB / 9.25 MB/s = 53,700 core-seconds = 14.9
+core-hours** on every service that keeps the renderer, and the services differ only in (a) price per core-hour,
+(b) how many cores run at once (wall time), (c) data staging, (d) whether the output is still the byte-identical
+digest. The native ledgers (193.7 GB, 46 tables) are the same arithmetic at 0.39x: 5.8 core-hours per pass.
+
+Staging for any S3-reading service: upload 496.7 GB from the box at the 1.25 GB/s EBS read ceiling (NIC 1.56 GB/s)
+= 6.6 min; $0 in-Region to a us-east-1 bucket (the granite bucket exists; the gateway endpoint carries it), or
+$4.97-9.94 cross-Region to the bento bucket ($0.01-0.02/GB); PUTs at 128 MiB parts = 3,790 requests = $0.02;
+S3 Standard us-east-1 $0.023/GB-mo = $11.43/month for 496.7 GB ($0.38/day pro-rated). Every Athena row fits: the
+32 MB practical row limit vs ~338 KB per frame line; JSON SerDe needs one record per line (true of the spool).
+
+### 7.3 One pass over 496.7 GB, per service (prices us-east-1 list, read 2026-10-08)
+| Option | Price basis | One pass: cost | One pass: wall time | Byte-identical digest? | Gate / limit |
+|---|---|---|---|---|---|
+| The box as is (r7i.8xlarge, 32 CPUs) | $2.1168/h | $1.02 (29 min) | 29 min measured; 2.4 h for five passes | YES (it is the renderer) | EBS floor 6.6 min; CPU-bound |
+| Bigger EC2 for the step: r7i.16xlarge (64 vCPU) | $4.2336/h | $0.99 (14 min) | 14.0 min computed (EBS 2,500 MB/s floor 3.3 min) | YES, same code | second box exists, stopped (resized to 16xlarge) |
+| Bigger EC2 for the step: r7i.48xlarge (192 vCPU) | $12.7008/h on-demand; Spot ~$3.2-3.8/h (0.25-0.30x, from the measured r7i.8xlarge Spot ratio) | $0.99 on-demand, $0.25-0.30 Spot (4.7 min compute) | 4.7 min compute + data staging: EBS Volume Clone of the spool volume (instant, same AZ) or S3 pull at 50 Gbps NIC (6.25 GB/s, ~80 s if S3 parallelism delivers it); EBS ceiling 5,000 MB/s = 1.7 min floor | YES, same code, hyperthread-aware pinning as today | 192 vCPUs against the 640-vCPU request (pending); Spot interruption costs one 5-min pass, nothing stateful |
+| AWS Batch on a large instance | Batch $0; EC2 price as above | same as the EC2 row + 2-4 min instance start per job | same + start-up | YES if the container carries our renderer; NO cpuset/hyperthread pinning inside the container | no Batch skill; containers only |
+| Step Functions Distributed Map + Lambda | 4,000 free transitions then $0.025/1,000; Lambda $0.0000166667/GB-s, 1 vCPU per 1,769 MB, 15 min max, 10,240 MB max | 14.9 core-h = 53,700 s x 1.769 GB = 94,990 GB-s = $1.58 + ~$0.02 requests | 1,000 children (default) x 0.5 GB each at 9.25 MB/s = 54 s per pass; 10,000 children = 5.4 s (quota) | YES only with a sharded renderer and a deterministic, order-preserving merge (the existing parallel digest table bdc05a62 is that pattern on the box); Lambda container image up to 10 GB holds the renderer | code work: shard + merge; S3 staging first |
+| AWS Glue (Spark, our decoder as a PySpark UDF) | $0.44/DPU-h, 1 DPU = 4 vCPU/16 GB, 1-min minimum; G.8X = 32 vCPU, G.16X = 64 vCPU per worker | 3.73 DPU-h x $0.44 = $1.64 | 48 G.1X workers (192 vCPU) ~4.7 min + 1-2 min start | NO as SQL; YES only via the UDF route with a deterministic merge; Spark's own output ordering is not deterministic without an ORDER BY (single-node final sort) | S3 staging; a Glue job to write and keep |
+| EMR Serverless (Spark) | $0.052624/vCPU-h + $0.0057785/GB-h, 1-min minimum; workers up to 32 vCPU/244 GB | 14.9 vCPU-h x $0.052624 = $0.78 + 59.6 GB-h (4 GB/vCPU) x $0.0057785 = $0.34 = $1.13 | ~4.7 min on 192 vCPU + ~1 min start | same as Glue (UDF route only) | **default quota 16 concurrent vCPUs per account** (adjustable; auto-raises with use): at 16 vCPU one pass = 56 min until the increase lands |
+| Athena for Apache Spark | $0.35/DPU-h (4 vCPU per DPU) | 3.73 DPU-h x $0.35 = $1.30 | ~4.7 min on 48 DPU + session start | same as Glue | notebook/session model; S3 staging |
+| Athena SQL (CTAS / UNLOAD) | $5/TB scanned, 10 MB minimum; DDL free; capacity reservations $0.30/DPU-h (min 24 DPU = $7.20/h) | $2.48 per pass over the uncompressed JSON, whatever the split | not published per TB; the DML timeout is 30 min and a 497 GB single-query JSON scan risks it, so split the spool into N objects and run parallel queries (20 concurrent DML default) | **NO**: SQL aggregation is a new rendering path; UNLOAD writes from parallel workers in non-deterministic order, SELECT output is one CSV; floats re-formatted; the Markdown is not produced | S3 staging; Glue table definition for the nested frame schema |
+| Athena SQL after a one-time Parquet conversion | CTAS to Parquet (Snappy) $2.48 once; then scans read only the referenced columns | later per-query scans ~$0.25-0.50 (columnar, compressed; the 3:1 and column-subset savings AWS documents) | minutes per query | NO (same as above) | USE WHEN cross-day SQL questions are asked of archived spools |
+| Redshift Serverless / OpenSearch | not costed | - | - | NO | out of scope for a render |
+| Bedrock Data Automation | per page/image/minute | - | - | - | NOT APPLICABLE: documents/images/video only |
+
+### 7.4 Verdicts
+- **USE NOW: a bigger EC2 for the digest step, same renderer.** r7i.16xlarge (exists, stopped): one pass 14 min,
+  $0.99; r7i.48xlarge: one pass ~5 min, $1.06 on-demand ($0.25-0.30 Spot; a stateless pass can take Spot). Five
+  passes: 70 min on the 16xlarge, ~25 min on the 48xlarge, versus 2.4 h today. Byte-identical by construction. Data
+  reaches it by EBS Volume Clone (instant, us-east-1d) without an S3 round-trip. Launch via the launch-template step
+  (`--instance-type r7i.48xlarge`); needs the vCPU quota (640 requested) and Greg's go.
+- **USE WHEN the five passes must be minutes, not tens of minutes: Step Functions Distributed Map + Lambda** with a
+  sharded renderer and a deterministic merge. $1.58 per pass, 54 s per pass at 1,000-way (the default), after a 6.6-min
+  one-time S3 staging per day. It is the box's existing parallel-digest-table pattern at 30x the width; the merge must
+  be proven byte-exact by parse-back before it replaces anything (Greg's lossless rule).
+- **USE WHEN cross-day SQL is wanted over archived spools: Athena after one CTAS to Parquet** ($2.48 once per day's
+  spool, cents per later query). Not a digest; a second way to ask questions of the same bytes. Pairs with S3 Glacier
+  restores of archived days.
+- **NOT APPLICABLE for the digest itself: Athena SQL, Glue, EMR Serverless, Athena Spark, AWS Batch, OpenSearch,
+  Redshift, Bedrock Data Automation.** The SQL engines produce a new digest form with non-deterministic ordering and
+  re-formatted values; the Spark engines only reach our decoder as a UDF at the same 9.25 MB/s per core, so they buy
+  nothing over EC2 cores at $0.076-0.11 per vCPU-hour versus EC2's $0.066 on-demand / ~$0.018 Spot, and they add S3
+  staging; EMR Serverless additionally starts at a 16-vCPU account quota; Batch loses CPU pinning.
+- **The lever none of the services move: the 9.25 MB/s per core decode.** Every option above scales cores; only the
+  decoder's own speed changes the 14.9 core-hours per pass. That is a code item (parser choice, pass fusion of the
+  five passes into one streaming pass), not an AWS one, and it multiplies whatever AWS width is chosen.
+
+### 7.5 The single best stack for "the digest in minutes with nothing dropped"
+1. Fuse the five passes into as few streaming passes as the renderer allows (code; 2.4 h -> 29 min on the box alone).
+2. Run the digest step on a burst box: r7i.48xlarge from the `frankie-day-box` launch template, Spot allowed for this
+   stateless step, the spool reached by EBS Volume Clone (instant) or the archive's CRT pull; 192 cores, hyperthread
+   map applied -> ~5 min per pass, $1.06 on-demand / $0.30 Spot; terminate on completion. Byte-identical digest.
+3. Stack the width further only through Distributed Map + Lambda (54 s per pass, $1.58) once a sharded renderer with a
+   parse-back-proven merge exists; the same shards also run on the box's 32 CPUs today.
+4. Keep Athena + Parquet as the cross-day question engine over archived spools ($2.48 one-time per day), never as the
+   digest.
+Cost of the stack per day: ~$1-6 of burst compute for all passes + $0.38/day of S3 Standard if staged + $0 Step
+Functions (inside the free tier) -- against the 2.4 h of main-box time ($5.08) it replaces.
+
+### 7.6 Sources for section 7
+https://aws.amazon.com/athena/pricing/ ($5/TB, 10 MB min, $0.30/DPU-h reservations, $0.35/DPU-h Spark);
+https://repost.aws/knowledge-center/athena-service-quota-errors (30-min DML timeout, 262,144-byte query string);
+https://docs.aws.amazon.com/athena/latest/ug/data-types-considerations.html (32 MB per row);
+https://docs.aws.amazon.com/athena/latest/ug/unload.html and
+https://docs.aws.amazon.com/athena/latest/ug/performance-tuning-query-optimization-techniques.html (UNLOAD parallel
+writers; SELECT = one uncompressed CSV); https://aws.amazon.com/glue/pricing/ ($0.44/DPU-h);
+https://aws.amazon.com/blogs/big-data/scale-your-aws-glue-for-apache-spark-jobs-with-r-type-g-12x-and-g-16x-workers/
+(worker sizes); https://aws.amazon.com/emr/pricing/ ($0.052624/vCPU-h, $0.0057785/GB-h);
+https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/app-behavior.html (worker sizes to 32 vCPU/244 GB);
+https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/endpoints-quotas.html (16 concurrent vCPU default);
+https://docs.aws.amazon.com/help-panel/step-functions/latest/console/map-max-concurrency-dist.html (1,000 default,
+10,000 max); https://aws.amazon.com/blogs/compute/introducing-jsonl-support-with-step-functions-distributed-map/
+(JSONL ItemReader); https://aws.amazon.com/bedrock/faqs/ and https://docs.aws.amazon.com/bedrock/latest/userguide/bda-limits.html
+(BDA modalities and limits); https://aws.amazon.com/lambda/pricing/ (GB-s rate, from pass-1 reading).
