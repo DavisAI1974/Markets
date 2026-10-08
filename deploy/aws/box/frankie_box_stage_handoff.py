@@ -30,7 +30,10 @@ At a stage's boundary (its step receipt finished: done or reused), boundary() ru
                trigger receipt and beside the day's marker (<marker>.clean.json, shown by ACTION=status); an operator
                resumes by hand, and the boundary then goes on to the successor without a second clean.
 The switch: FRANKIE_CLEAN_ON_SAVE=on (default) = validate -> save -> clean -> auto resume -> successor; off = validate
--> successor directly (no save, no clean). One switch for every stage, recorded on every receipt. Receipts under
+-> successor directly (no save, no clean). One switch for every stage, recorded on every receipt.
+FRANKIE_ROOT_VALIDATE_CHECK=claim (default; session 9, one pass) lets step 1 take the ROOT's own file claims
+(R/work/file-claims.jsonl: stat identity + last 64 KiB of a file the ROOT witnessed whole) instead of a second whole read;
+=full reads every pinned file whole. The mode and the by-claim / read-whole counts are on validate.json and the log line. Receipts under
 <run>/handoff/<key>/<stage>/: handoff.json (FRANKIE_STAGE_HANDOFF_V1), validate.json (the validator's), clean/
 clean-receipt.json + moved-manifest.json, trigger.json (FRANKIE_ROOT_CLEAN_TRIGGER_V1, with the stage name).
 
@@ -260,8 +263,11 @@ def run_validate(run, stage, key, out_dir, pins_args, lane, log):
         out.write(('\n### %s %s validate at %s\n' % (stage, key, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))).encode())
         out.flush()
         code = subprocess.call(command, env=env, stdout=out, stderr=subprocess.STDOUT)
-    log('%s %s: validate exit %d (%s)' % (stage, key, code, log_path))
-    return code, _load(receipt_path), str(log_path)
+    validation = _load(receipt_path)
+    totals, check = (validation or {}).get('totals') or {}, (validation or {}).get('check') or {}
+    log('%s %s: validate exit %d (check %s: %s by claim, %s read whole) (%s)' % (
+        stage, key, code, check.get('mode'), totals.get('verified_by_claim'), totals.get('read_whole'), log_path))
+    return code, validation, str(log_path)
 
 
 def request_own_save(run, e, by, release_booking=False):
@@ -409,7 +415,8 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
     base.update(roots=[str(r) for r in roots], receipts=[str(r) for r in receipts], lane=lane,
                 validate=dict(exit_code=code, log=vlog, totals=totals, mismatches=(validation or {}).get('mismatches'),
                               reader_refusals=(validation or {}).get('reader_refusals'),
-                              seconds=(validation or {}).get('seconds'), receipt=str(out_dir / 'validate.json')))
+                              seconds=(validation or {}).get('seconds'), receipt=str(out_dir / 'validate.json'),
+                              check=(validation or {}).get('check')))
     if code == 75:
         return _write(out_dir / 'handoff.json', dict(base, status='validate_saved',
                                                      reason='the validator stopped on the day\'s standing save (exit 75); '

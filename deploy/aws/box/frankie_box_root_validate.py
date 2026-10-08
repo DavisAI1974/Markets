@@ -18,6 +18,23 @@ SIGTERM stops new submissions, the files in flight finish, the per-file results 
 unchanged. Progress: a FRANKIE_WORK_PROBE_V1 progress.json (frankie_box_progress.Probe) in <out dir>/root-validate/,
 exported as FRANKIE_ROOT_VALIDATE_DIR so the stage heartbeat finds it by environment.
 
+One pass (session 9, 2026-10-08, Greg: "we're only doing 1 pass on things, no multiple passes"): the ROOT has just
+witnessed its spools, layer files and native ledgers whole and recorded each as a FRANKIE_FILE_CLAIM_V2 row in
+R/work/file-claims.jsonl (path, bytes, sha256, inode/size/mtime_ns/filesystem identity, sha256 of the last 64 KiB, a
+spool's sealed count). FRANKIE_ROOT_VALIDATE_CHECK=claim (the default) takes such a claim instead of a second whole
+read, the rule every other consumer already uses (frankie_box_boss_session._artifact_check / _claim_still_holds): a row
+for the job's real path (or its pinned path) whose path resolves to the very file the job reads, whose bytes and sha256
+equal the pin's, which still holds (stat identity + the last 64 KiB: one 64 KiB read; a V1 row taken is rewritten V2 in
+the claims file), and, when the pin expects a count, carries that count (a reference layer's recorded index must end at
+[count, bytes]) is VERIFIED BY CLAIM: status ok, check 'claim', how 'by claim: <basis>'. Anything else (no row, other
+bytes/sha256, a changed stat or tail, a pinned count the row does not carry, a pre-read problem, a missing file or an S3
+pointer) is read whole exactly as before (how 'read whole: <why>'). The claim checks run first, serially in this
+process (no fork pool for them: a few hundred stat + 64 KiB reads, and the claims file is rewritten by one process
+only); only the files left go to the lane's pool. FRANKIE_ROOT_VALIDATE_CHECK=full reads every file whole. The mode and
+the per-file basis are on validate.json (check, totals.verified_by_claim / totals.read_whole, each artifact's how) and
+on the summary line. A claim-verified result is a verified result everywhere (exit code, partial.json reuse in claim
+mode). Only a ROOT run (--root) has a claims file; --receipt stages read whole as before.
+
 Not transparent: frankie_box_prepare_trading_day.safe_path refuses a symlink at a path or any parent, and it guards the
 teacher stage's readers of the spools (frankie_box_market_timeline._local), the native ledgers/sections
 (frankie_box_experiment_native._take_all, frankie_box_bedrock.ledger_path, frankie_box_segmented_ledger.ordered_chunks)
@@ -56,6 +73,7 @@ EXIT_OK, EXIT_USAGE, EXIT_MISMATCH, EXIT_NOT_READABLE, EXIT_SAVED = 0, 2, 3, 4, 
 MAX_LINKS = 40
 MAX_UNPINNED = 5000
 OK_STATUSES = ('ok', 'archived_s3_head_ok')
+CHECK_SETTING = 'FRANKIE_ROOT_VALIDATE_CHECK'      # claim (default): take a holding file claim | full: read every file whole
 S3_CLIENT = None      # a test or caller may set an S3 client here; otherwise boto3 is built lazily in the worker
 
 # Where safe_path-guarded readers read (relative to R): a symlink in the chain under one of these makes the next stage
@@ -491,13 +509,86 @@ def _s3_head(job, pointer):
                 check='head (not a read)')
 
 
+def check_mode():
+    mode = os.environ.get(CHECK_SETTING, 'claim')
+    if mode not in ('claim', 'full'):
+        raise ValueError('%s must be claim or full, not %r' % (CHECK_SETTING, mode))
+    return mode
+
+
+def load_claims(root):
+    """{resolved path: FRANKIE_FILE_CLAIM row} from R/work/file-claims.jsonl (frankie_box_boss_session._load_file_claims;
+    {} when absent or unreadable: then every file is read whole)."""
+    import frankie_box_boss_session as BS
+    return BS._load_file_claims(Path(root) / 'work')
+
+
+def check_by_claim(job, claims, claims_dir):
+    """(artifact record, None) when the job is verified by its file claim (no whole read), else (None, why it is read
+    whole). The rule is in the module docstring; the chain, stat and reader_refusals are recorded as for a read."""
+    started = time.monotonic()
+    path, expected = job['path'], job['expected']
+    if job.get('pre'):
+        return None, 'a pre-read problem (%s)' % ', '.join(job['pre'])
+    row = None
+    for key in (job['realpath'], os.path.realpath(path), path):
+        row = claims.get(key)
+        if row is not None:
+            break
+    if row is None:
+        return None, 'no claim row for the path'
+    if expected.get('bytes') is None or not expected.get('sha256'):
+        return None, 'the pin records no bytes/sha256 to match a claim against'
+    if (row.get('bytes'), row.get('sha256')) != (expected['bytes'], expected['sha256']):
+        return None, 'the claim row\'s bytes/sha256 differ from the pin'
+    count = None
+    if expected.get('count') is not None:
+        if not isinstance(row.get('count'), int):
+            return None, 'the pin expects a count and the claim row carries none (the count needs the pass)'
+        if row['count'] != expected['count']:
+            return None, 'the claim row\'s count %s differs from the pinned %s' % (row['count'], expected['count'])
+        count = row['count']
+    elif isinstance(row.get('count'), int):
+        count = row['count']
+    index = expected.get('index')
+    if index is not None and (not isinstance(index, list) or not index or count is None
+                              or list(index[-1]) != [count, expected['bytes']]):
+        return None, 'the pinned row index does not end at [count, bytes]'
+    chain, final, error = symlink_chain(path)
+    if error:
+        return None, 'the path does not resolve (%s)' % error
+    if os.path.realpath(str(row['path'])) != os.path.realpath(final):
+        return None, 'the claim row names another file'
+    import frankie_box_boss_session as BS
+    try:
+        stat = _stat_key(final)
+    except OSError as error:
+        return None, 'stat failed (%s)' % error.__class__.__name__
+    basis = BS._claim_still_holds(row, claims_dir=claims_dir, claims=claims)
+    if basis is None:
+        return None, 'the claim no longer holds (stat identity or the last 64 KiB changed)'
+    observed = dict(bytes=row['bytes'], sha256=row['sha256'])
+    if count is not None and job['kind'] in ('spool', 'ledger'):
+        observed['count'] = count
+    out = dict(path=path, kind=job['kind'], expected=expected, claims=job['claims'], problems=[], observed=observed,
+               chain=chain, stat=stat, bytes_read=int(row.get('tail_bytes') or 0), check='claim',
+               how='by claim: ' + basis, count_basis=row.get('count_basis') if count is not None else None)
+    if job['kind'] == 'ledger':
+        recorded = next((c.get('rows_recorded') for c in job['claims'] if c.get('rows_recorded') is not None), None)
+        out['ledger_rows_match'] = None if recorded is None or count is None else recorded == count
+    out['reader_refusals'] = reader_refusals(job['root'], path, [c['path'] for c in chain])
+    out['status'] = 'ok'
+    out['seconds'] = round(time.monotonic() - started, 3)
+    return out, None
+
+
 def check_job(job):
     """Worker: one streamed read of the file at job['path'] (through its symlink chain), compared with job['expected'].
     Returns the artifact record (status, problems, observed, chain, stat, seconds, bytes_read)."""
     started = time.monotonic()
     path, expected = job['path'], job['expected']
     out = dict(path=path, kind=job['kind'], expected=expected, claims=job['claims'], problems=list(job.get('pre') or []),
-               observed={}, chain=[], stat=None, bytes_read=0, check='read')
+               observed={}, chain=[], stat=None, bytes_read=0, check='read', how=job.get('how') or 'read whole')
     chain, final, error = symlink_chain(path)
     out['chain'] = chain
     if error:
@@ -505,7 +596,7 @@ def check_job(job):
         pointer = _load(pointer_path) if error == 'missing' and pointer_path.is_file() else None
         if isinstance(pointer, dict) and pointer.get('bucket'):
             head = _s3_head(job, pointer)
-            out.update(observed=head['observed'], check=head['check'], pointer=str(pointer_path))
+            out.update(observed=head['observed'], check=head['check'], pointer=str(pointer_path), how='S3 head (not a read)')
             out['problems'] += head['problems']
             out['status'] = head['status'] if not out['problems'] or head['status'] != 'archived_s3_head_ok' \
                 else out['problems'][0].split(':')[0]
@@ -608,9 +699,11 @@ def _write_json(path, value):
     os.replace(pending, path)
 
 
-def _reusable(entry, job):
-    """A saved per-file result is reused when it was ok, its chain is the same and the target's stat is unchanged."""
-    if not entry or entry.get('status') not in OK_STATUSES or entry.get('check') != 'read':
+def _reusable(entry, job, mode='full'):
+    """A saved per-file result is reused when it was ok, its chain is the same and the target's stat is unchanged (a
+    claim-verified result only in claim mode: full mode reads it whole)."""
+    if not entry or entry.get('status') not in OK_STATUSES or entry.get('check') not in (
+            ('read', 'claim') if mode == 'claim' else ('read',)):
         return False
     chain, final, error = symlink_chain(job['path'])
     if error or chain != entry.get('chain'):
@@ -643,6 +736,9 @@ def validate(root=None, *, cpus=None, out=None, moved_manifest=None, run_dir=Non
     if moved_manifest:
         add_manifest(pins, moved_manifest)
     jobs = plan_jobs(pins)
+    mode = check_mode()
+    claims_dir = (root / 'work') if root is not None else None
+    claims = load_claims(root) if (mode == 'claim' and root is not None) else {}
     lane = list(cpus) if cpus else LP.lane_cpus()
     workers = max(1, len(lane) - 1)
     cpu_map = LP.record(workers, lane, what='%s-validate: one worker per file, largest first' % stage)
@@ -652,7 +748,7 @@ def validate(root=None, *, cpus=None, out=None, moved_manifest=None, run_dir=Non
     results, skipped, pending = {}, [], []
     for job in jobs:
         entry = (saved_entries or {}).get(job['realpath'])
-        if _reusable(entry, job):
+        if _reusable(entry, job, mode):
             results[job['realpath']] = dict(entry, reused_from_partial=True)
             skipped.append(job['path'])
         else:
@@ -682,6 +778,33 @@ def validate(root=None, *, cpus=None, out=None, moved_manifest=None, run_dir=Non
     report = {}
     stopped = False
     try:
+        # the claim checks first, serially here (one stat + one 64 KiB read each); only the rest go to the pool
+        whole = []
+        for i, job in enumerate(pending):
+            if mode != 'claim':
+                job['how'] = 'read whole (%s=full)' % CHECK_SETTING
+                whole.append(job)
+                continue
+            if not claims_dir:
+                job['how'] = 'read whole: no claims file for a --receipt stage'
+                whole.append(job)
+                continue
+            if stopping():
+                whole.extend(pending[i:])
+                break
+            result, why = check_by_claim(job, claims, claims_dir)
+            if result is None:
+                job['how'] = 'read whole: ' + why
+                whole.append(job)
+                continue
+            results[job['realpath']] = result
+            say('%-22s %14s B %8.1f s  %s  (%s)' % (result['status'], result['observed'].get('bytes'),
+                                                    result['seconds'], result['path'], result['how']))
+        if len(whole) != len(pending):
+            save_partial()
+            if probe is not None:
+                probe.update('%s-validate' % stage, len(results), len(jobs))
+        pending = whole
         if pending:
             for job, result in LP.ordered_map(check_job, pending, workers, cpus=lane, stop=stopping, report=report,
                                               poll=1.0):
@@ -723,12 +846,18 @@ def validate(root=None, *, cpus=None, out=None, moved_manifest=None, run_dir=Non
                                archived_s3=sum(1 for a in artifacts if a['status'] == 'archived_s3_head_ok'),
                                mismatches=len(mismatches), not_readable=len(not_readable),
                                bytes_read=sum(a.get('bytes_read') or 0 for a in artifacts if not a.get('reused_from_partial')),
-                               reused_from_partial=len(skipped)),
+                               reused_from_partial=len(skipped),
+                               verified_by_claim=sum(1 for a in artifacts if a.get('check') == 'claim' and a['status'] == 'ok'),
+                               read_whole=sum(1 for a in artifacts if a.get('check') == 'read')),
+                   check=dict(setting=CHECK_SETTING, mode=mode, claims_file=str(claims_dir / 'file-claims.jsonl') if claims_dir else None,
+                              claim_rows=len(claims)),
                    mismatches=[dict(path=a['path'], status=a['status'], problems=a['problems']) for a in mismatches],
                    reader_refusals=[dict(path=a['path'], guards=a['reader_refusals']) for a in not_readable
                                     if a.get('reader_refusals')],
                    archives=pins.archives, listed_inputs=pins.listed_inputs, pool=report, stopped=stopped, exit_code=code,
-                   rule='every pinned artifact read once through its symlink chain; nothing modified; exit 0 only when '
+                   rule='every pinned artifact verified once through its symlink chain: by its holding file claim (claim '
+                        'mode: stat identity + last 64 KiB, the ROOT\'s own whole-read witness) or read whole; nothing '
+                        'modified but a V1 claim row rewritten V2; exit 0 only when '
                         'every pin is ok and readable by the next stage; 3 mismatch; 4 verified but behind a safe_path '
                         'reader\'s symlink or in S3; 75 stopped early (partial.json resumes it)')
     _write_json(out, receipt)
@@ -760,10 +889,11 @@ def main(argv=None):
         print('REFUSED:', error, file=sys.stderr)
         return EXIT_USAGE
     t = receipt['totals']
-    print('%s validate %s: pinned %d, ok %d, archived(S3 head) %d, mismatches %d, not readable %d, reused %d, '
-          '%d bytes read in %.1f s; exit %d' % (receipt['stage'], receipt['root'] or ', '.join(receipt['roots']), t['pinned'], t['ok'], t['archived_s3'], t['mismatches'],
-                                                t['not_readable'], t['reused_from_partial'], t['bytes_read'],
-                                                receipt['seconds'], code))
+    print('%s validate %s: pinned %d, ok %d (check %s: %d by claim, %d read whole), archived(S3 head) %d, mismatches %d, '
+          'not readable %d, reused %d, %d bytes read in %.1f s; exit %d' % (
+              receipt['stage'], receipt['root'] or ', '.join(receipt['roots']), t['pinned'], t['ok'], receipt['check']['mode'],
+              t['verified_by_claim'], t['read_whole'], t['archived_s3'], t['mismatches'], t['not_readable'],
+              t['reused_from_partial'], t['bytes_read'], receipt['seconds'], code))
     for item in receipt['mismatches']:
         print('  MISMATCH %s: %s' % (item['path'], '; '.join(item['problems'])))
     for item in receipt['reader_refusals']:
