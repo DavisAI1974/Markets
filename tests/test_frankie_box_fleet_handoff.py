@@ -47,10 +47,10 @@ class HandoffFleetBase(unittest.TestCase):
         os.environ.clear()
         os.environ.update(self.env)
 
-    def run_boundary(self, run_dir):
+    def run_boundary(self, run_dir, arm=True):
         run = FakeRun(run_dir)
         record = dict(status='done', days=['20231018'])
-        return H.boundary(run, {'day': '20231018'}, 'teacher', 'day', record,
+        return H.boundary(run, {'day': '20231018', 'classroom_arm': arm}, 'teacher', 'day', record,
                           code_root=run.code_root, commit='c0ffee' * 6 + 'cafe', log=lambda *a: None)
 
 
@@ -75,6 +75,12 @@ class TestFleetGate(HandoffFleetBase):
         self.assertEqual(rec['status'], 'fleet_proceed')
         self.assertEqual(rec['fleet_gate']['decision'], 'proceed')
         self.assertEqual(F.lease_holder(st=F.store())['holder_instance'], 'i-box1')
+
+    def test_non_arm_day_skips_the_gate(self):
+        # S3: a non-arm day runs no classroom, so it must not take the global lease
+        rec = self.run_boundary(Path(self.tmp) / 'nonarm', arm=False)
+        self.assertNotIn(rec['status'], ('fleet_proceed', 'fleet_waiting'))
+        self.assertIsNone(F.lease_holder(st=F.store()))
 
     def test_wait_when_lease_held_by_another(self):
         # another box holds the single global lease for its own day

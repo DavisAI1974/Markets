@@ -192,12 +192,22 @@ class TestDayList(FleetBase):
         again = F.seed_day_list('e2e-a', a, 'c0ffee', st=st)
         self.assertEqual(again['status'], 'exists')       # create-only: two seeders safe
 
-    def test_stage_state_advisory(self):
-        st = self.store_for('i-op')
-        F.seed_day_list('e2e-a', [{'day': '20231018', 'box': 'i-box1'}], 'c0ffee', st=st)
+    def test_stage_state_on_per_day_object(self):
+        # S4: stage state lives on the day's OWN progress object (one writer per day), not the shared day list
+        st = self.store_for('i-box1')
         F.set_day_stage_state('e2e-a', '20231018', 'root', 'done', st=st)
-        doc = F.read_day_list(st=st)
-        self.assertEqual(doc['days'][0]['stages']['root']['state'], 'done')
+        prog = F.read_progress('e2e-a', '20231018', st=st)
+        self.assertEqual(prog['stages']['root']['state'], 'done')
+        self.assertEqual(prog['box'], 'i-box1')
+
+    def test_arm_vs_nonarm_done_tail(self):
+        st = self.store_for('i-box1')
+        F.record_stage_progress('e2e-a', '20231018', 'jev', arm=True, st=st)
+        self.assertTrue(F.read_progress('e2e-a', '20231018', st=st).get('done_utc'))      # arm: done at jev
+        F.record_stage_progress('e2e-a', '20231019', 'accumulated_lessons', arm=False, st=st)
+        self.assertTrue(F.read_progress('e2e-a', '20231019', st=st).get('done_utc'))      # non-arm: done at its tail
+        F.record_stage_progress('e2e-a', '20231020', 'classroom', arm=True, st=st)
+        self.assertIsNone(F.read_progress('e2e-a', '20231020', st=st).get('done_utc'))    # never done at the classroom
 
 
 class TestDriverSupport(FleetBase):
@@ -242,6 +252,24 @@ class TestConfigFile(FleetBase):
         finally:
             os.environ.clear()
             os.environ.update(saved)
+
+
+class TestDetachedEnv(FleetBase):
+    def test_env_allowlist(self):
+        # S10: a detached unit's env is an allowlist (FRANKIE_*/AWS_* + a few), never the whole environment; newline
+        # values are dropped
+        os.environ['FRANKIE_FLEET_KEEP'] = 'yes'
+        os.environ['SOME_SECRET_TOKEN'] = 'sshh'
+        os.environ['BAD_NEWLINE'] = 'a\nb'
+        os.environ['FRANKIE_HAS_NEWLINE'] = 'x\ny'
+        env = F._detached_env('/code')
+        self.assertEqual(env['PYTHONPATH'], '/code')
+        self.assertEqual(env.get('FRANKIE_FLEET_KEEP'), 'yes')
+        self.assertNotIn('SOME_SECRET_TOKEN', env)        # not allowlisted
+        self.assertNotIn('BAD_NEWLINE', env)              # not allowlisted
+        self.assertNotIn('FRANKIE_HAS_NEWLINE', env)      # allowlisted prefix but a newline value -> dropped
+        for k in ('FRANKIE_FLEET_KEEP', 'SOME_SECRET_TOKEN', 'BAD_NEWLINE', 'FRANKIE_HAS_NEWLINE'):
+            os.environ.pop(k, None)
 
 
 class TestCLI(FleetBase):

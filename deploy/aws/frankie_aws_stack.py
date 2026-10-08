@@ -201,6 +201,21 @@ def fleet_user_data(args):
         token_region=REGION_DATA, repo=REPO)
 
 
+def _bad_fleet_prefix(args):
+    """S11: the module's keys all live under <prefix> on the day-list bucket; the day-box role grants only `fleet/*` on
+    the granite bucket. A location outside that escapes the grant -> every control write is AccessDenied -> the gate
+    treats it as a silent WAIT. Refuse it at launch unless --allow-any-prefix names a widened role. Returns a refusal
+    reason or None."""
+    if getattr(args, 'allow_any_prefix', False):
+        return None
+    bucket, prefix = _fleet_day_list_location(args)
+    if bucket != BUCKET_GRANITE or not (prefix + '/').startswith('fleet/'):
+        return ('the fleet day-list location %s/%s is outside fleet/ on the granite bucket, which the day-box role '
+                'grants (fleet/*). A box there gets AccessDenied -> a silent classroom WAIT. Use fleet/<run>, or pass '
+                '--allow-any-prefix after widening the role.' % (bucket, prefix))
+    return None
+
+
 def _fleet_day_list_location(args):
     """(bucket, prefix) of the fleet day list from --fleet-day-list (default: a run-named prefix under the granite
     bucket). Mirrors frankie_box_fleet.location so the box and the launcher agree."""
@@ -551,6 +566,10 @@ def step_launch_template(account, args):
                                                 'bucket/prefix, or --run (the location defaults to fleet/<run>; --run '
                                                 'has no default, Greg decision 5)')
         return rec
+    bad = _bad_fleet_prefix(args)   # S11
+    if bad:
+        rec.update(status='refused', reason=bad)
+        return rec
     # the instance profile must exist (read-only GetInstanceProfile): a template naming an absent profile launches boxes
     # with no role. NoSuchEntity -> refuse (run day-box-role first); a credentials/other error is noted, not fatal (an
     # offline dry run still prints the plan)
@@ -797,6 +816,10 @@ def step_fleet_launch(account, args):
     if any(len(d) != 8 or not d.isdigit() for d in days):
         rec.update(status='refused', reason='every --days value must be an 8-digit YYYYMMDD')
         return rec
+    bad = _bad_fleet_prefix(args)   # S11
+    if bad:
+        rec.update(status='refused', reason=bad)
+        return rec
     if len(days) < args.count:
         rec.update(status='refused', reason='%d days cannot fill %d boxes (need up to two per box, at least one each)'
                                             % (len(days), args.count))
@@ -1023,6 +1046,8 @@ def build_parser():
     p.add_argument('--github-token-param', default=GITHUB_TOKEN_PARAM, help='SSM SecureString (us-east-2) the box clones with')
     p.add_argument('--fleet-day-list', default='', help='the S3 day list location (bucket/prefix); default a run-named '
                                                         'prefix under the granite bucket')
+    p.add_argument('--allow-any-prefix', action='store_true', help='allow a day-list location outside fleet/ on the '
+                                                                   'granite bucket (needs a widened day-box role; S11)')
     p.add_argument('--source-instance-id', default=BOX, help='golden-ami: the STOPPED staged box to image')
     p.add_argument('--max-root-gib', type=int, default=300, help='golden-ami: refuse a source root volume larger than '
                                                                  'this (a non-lean box carries foreign run state/data)')

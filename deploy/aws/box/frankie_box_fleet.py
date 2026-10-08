@@ -63,9 +63,11 @@ DEFAULT_GATE_STAGES = ('teacher',)                   # ROOT -> teacher -> (gate)
 RELEASE_STAGES = ('classroom', 'data')               # release the lease once the classroom is done (data = safety)
 # A day does NOT end at the classroom (Greg, 2026-10-08): after the classroom the day runs data/search ->
 # scientific-teacher -> the Granite "voice" meeting -> jev -> end/record/retain, per-box on the grown 64 lane (the
-# lease is already released). A day is DONE only at its tail (jev); recording every stage lets the status probe show
-# the real current stage and never call a day done at the classroom.
+# lease is already released). An ARM day is DONE only at its tail (jev); a NON-ARM day never runs a classroom or jev,
+# so it is done at its own tail (accumulated_lessons / survivors) -- S3. Recording every stage lets the status probe
+# show the real current stage and never call a day done at the classroom.
 FLEET_DONE_STAGES = ('jev',)
+FLEET_DONE_STAGES_NONARM = ('accumulated_lessons', 'survivors')
 DEFAULT_POLL_SECONDS = 30
 DEFAULT_WAIT_SECONDS = 604800                        # S14: 7 days covers a 30-classroom serial chain (~60-90 h) with
 #                                                      margin; the marker is heartbeated so the box stays in line, and a
@@ -79,6 +81,7 @@ LEASE_SCHEMA = 'FRANKIE_FLEET_LEASE_V1'
 WAIT_SCHEMA = 'FRANKIE_FLEET_WAIT_V1'
 GATE_SCHEMA = 'FRANKIE_FLEET_GATE_V1'
 TAKEOVER_SCHEMA = 'FRANKIE_FLEET_TAKEOVER_V1'
+PROGRESS_SCHEMA = 'FRANKIE_FLEET_PROGRESS_V1'
 
 DAY_LIST_KEY = 'day-list.json'
 LEASE_KEY = 'classroom.lease.json'
@@ -358,6 +361,12 @@ def claim_key(run, day, stage):
     return 'claims/%s/%s/%s.json' % (run, day, stage)
 
 
+def progress_key(run, day):
+    # S4: one progress object PER DAY, written only by the single box that owns that day -> no 15-writer lost updates
+    # on the shared day-list object. The day list keeps only the static assignments.
+    return 'progress/%s/%s.json' % (run, day)
+
+
 def waiting_key(run, day):
     return 'waiting/%s/%s.json' % (run, day)
 
@@ -380,40 +389,60 @@ def seed_day_list(run, assignments, commit, *, st=None):
         return dict(status='exists', day_list=read_day_list(st))
 
 
-def record_stage_progress(run, day, stage, *, st=None, instance=None):
-    """Record a stage DONE on the shared day list and advance current_stage; set done_utc only at the tail stage (jev).
-    The day is carried through its FULL sequence (classroom is not the end), so the status probe shows the real current
-    stage and marks a day done only after jev/end. Advisory (unconditional read-modify-write); the lease and the claim
-    stay the authoritative control objects."""
+def _update_progress(run, day, *, st, instance, mutate):
+    """Read-modify-write THIS day's own progress object (S4: one writer per day, no cross-box contention)."""
+    st = st or store()
+    key = progress_key(run, day)
+    doc = st.get(key) or dict(schema=PROGRESS_SCHEMA, run=run, day=day, box=instance, stages={})
+    doc['box'] = instance
+    mutate(doc)
+    st.put(key, doc)
+    return doc
+
+
+def record_stage_progress(run, day, stage, *, arm=None, st=None, instance=None):
+    """Record a stage DONE on THIS day's progress object and advance current_stage; set done_utc at the day's TAIL
+    (jev for an arm day, accumulated_lessons/survivors for a non-arm day -- S3), never at the classroom. Advisory; the
+    lease and the claim stay the authoritative control objects."""
     st = st or store()
     instance = instance or instance_id()
-    doc = st.get(DAY_LIST_KEY)
-    if not doc:
-        return dict(status='no_list')
-    for entry in doc.get('days', []):
-        if entry.get('day') == day:
-            entry.setdefault('stages', {})[stage] = dict(state='done', at=_utc(), instance=instance)
-            entry['current_stage'] = stage
-            if stage in FLEET_DONE_STAGES:
-                entry['done_utc'] = _utc()
-            st.put(DAY_LIST_KEY, doc)
-            return dict(status='recorded', day=day, stage=stage, done=stage in FLEET_DONE_STAGES)
-    return dict(status='day_absent', day=day)
+    done = (stage in FLEET_DONE_STAGES) if arm else (stage in FLEET_DONE_STAGES_NONARM)
+
+    def mutate(doc):
+        doc['stages'][stage] = dict(state='done', at=_utc(), instance=instance)
+        doc['current_stage'] = stage
+        doc['classroom_arm'] = bool(arm)
+        if done:
+            doc['done_utc'] = _utc()
+    _update_progress(run, day, st=st, instance=instance, mutate=mutate)
+    return dict(status='recorded', day=day, stage=stage, done=done)
 
 
 def set_day_stage_state(run, day, stage, state, *, st=None):
-    """Advisory: record a day's per-stage state on the shared list (read-modify-write, unconditional put). The claim
-    record and the lease are the authoritative control objects; this keeps the human-readable list current."""
+    """Advisory: record a day's per-stage state on THIS day's progress object (the classroom lease_held/waiting/
+    ineligible markers the probe shows). One writer per day."""
     st = st or store()
-    doc = st.get(DAY_LIST_KEY)
-    if not doc:
-        return dict(status='no_list')
-    for entry in doc.get('days', []):
-        if entry.get('day') == day:
-            entry.setdefault('stages', {})[stage] = dict(state=state, at=_utc(), instance=instance_id())
-            st.put(DAY_LIST_KEY, doc)
-            return dict(status='set', day=day, stage=stage, state=state)
-    return dict(status='day_absent', day=day)
+    instance = instance_id()
+
+    def mutate(doc):
+        doc['stages'][stage] = dict(state=state, at=_utc(), instance=instance)
+    _update_progress(run, day, st=st, instance=instance, mutate=mutate)
+    return dict(status='set', day=day, stage=stage, state=state)
+
+
+def read_progress(run, day, *, st=None):
+    return (st or store()).get(progress_key(run, day))
+
+
+def list_progress(run, *, st=None):
+    """Every day's progress object for the run (the probe folds these onto the day-list assignments)."""
+    st = st or store()
+    out = {}
+    for item in st.list('progress/%s/' % run):
+        doc = st.get(item['key'])
+        if doc and doc.get('day'):
+            out[doc['day']] = doc
+    return out
 
 
 # ----------------------------------------------------------------------------------------------- per-day claim
@@ -451,6 +480,8 @@ def claim_day(run, day, stage, commit, *, st=None, instance=None):
     body = dict(schema=CLAIM_SCHEMA, run=run, day=day, stage=stage, instance=instance, commit=commit, claimed_utc=_utc())
     try:
         st.put_if_absent(key, body)
+        # S5: record the owning box on the day's progress object so the probe names the box even before any stage
+        _try(lambda: _update_progress(run, day, st=st, instance=instance, mutate=lambda d: d.setdefault('box', instance)))
         return dict(won=True, holder=instance, record=body, key=key)
     except ConditionalExists:
         held = st.get(key) or {}
@@ -639,6 +670,24 @@ def _python():
     return VENV_PYTHON if Path(VENV_PYTHON).is_file() else sys.executable
 
 
+_ENV_ALLOW = ('HOME', 'PATH', 'LANG', 'LC_ALL', 'PYTHONPATH', 'PYTHONDONTWRITEBYTECODE', 'PYTHONNOUSERSITE',
+              'AWS_REGION', 'AWS_DEFAULT_REGION', 'AWS_EC2_METADATA_DISABLED')
+
+
+def _detached_env(code_root):
+    """S10: the env a detached fleet unit is given -- an allowlist plus FRANKIE_*/AWS_* (never the whole environment,
+    which could carry a newline value that breaks the unit or a stray secret into `systemctl show`). Newline values
+    are dropped."""
+    env = dict(PYTHONDONTWRITEBYTECODE='1', PYTHONPATH=str(code_root))
+    for name, value in os.environ.items():
+        if value is None or '\n' in value:
+            continue
+        if name in _ENV_ALLOW or name.startswith('FRANKIE_') or name.startswith('AWS_'):
+            env[name] = value
+    env['PYTHONPATH'] = str(code_root)
+    return env
+
+
 def classroom_gate(run, day, stage, out_dir, code_root, commit, *, log=print, st=None, start_wait=True):
     """At the ROOT->classroom boundary (the gate stage): record this box ready, then claim the lease. Returns a receipt
     with decision 'proceed' (this box holds the lease; the day goes straight on to the classroom) or 'waiting' (another
@@ -674,6 +723,9 @@ def classroom_gate(run, day, stage, out_dir, code_root, commit, *, log=print, st
         _try(lambda: set_day_stage_state(run, day, 'classroom', 'lease_held', st=st))
         rec = dict(base, decision='proceed', reason='this box holds the global classroom lease; straight on to the '
                                                     'classroom (no save at the gate in fleet mode)')
+        # S12: a detached heartbeat refreshes the lease while the classroom runs, so the operator (the only one who may
+        # take over) can tell a long classroom from a dead holder. Suppressible (toys / gate-only).
+        rec['heartbeat_unit'] = _try(lambda: start_heartbeat_unit(run, day, out_dir, code_root, commit, log=log))
     else:
         queue = _try(lambda: waiting_queue(st=st)) or []
         position = next((i for i, m in enumerate(queue) if m.get('run') == run and m.get('day') == day), None)
@@ -715,7 +767,7 @@ def start_wait_unit(run, day, stage, out_dir, code_root, commit, *, log=print):
     log_path = out_dir / 'fleet-wait.log'
     argv = [_python(), '-B', str(HERE / 'frankie_box_fleet.py'), '--action', 'wait', '--run', run, '--day', day,
             '--stage', stage, '--out-dir', str(out_dir), '--code-root', str(code_root), '--commit', commit]
-    env = dict(os.environ, PYTHONDONTWRITEBYTECODE='1', PYTHONPATH=str(code_root))
+    env = _detached_env(code_root)   # S10: an allowlist, not the whole environment (no newline values, no stray secrets)
     how = None
     if shutil.which('systemd-run') and os.environ.get('FRANKIE_HANDOFF_DETACH', 'systemd') != 'session':
         unit = 'frankie-fleet-wait-%s-%s-%d' % (run, day, int(time.time()))
@@ -762,6 +814,53 @@ def _load_json(path):
         return json.loads(Path(path).read_bytes())
     except (OSError, ValueError):
         return None
+
+
+def start_heartbeat_unit(run, day, out_dir, code_root, commit, *, log=print):
+    """S12: a detached unit that heartbeats the classroom lease while this box holds it (so a stale lease is a dead
+    holder, not a long classroom). Once-guarded, suppressed under FRANKIE_FLEET_NO_WAIT_UNIT; dies when the lease is no
+    longer held by this box."""
+    import shutil
+    out_dir = Path(out_dir)
+    if (os.environ.get('FRANKIE_FLEET_NO_WAIT_UNIT') or '').strip():
+        return dict(status='suppressed')
+    try:
+        with open(out_dir / 'fleet-heartbeat.started', 'x', encoding='utf-8') as handle:
+            handle.write('%s %s %s\n' % (_utc(), run, day))
+    except FileExistsError:
+        return dict(status='already_started')
+    log_path = out_dir / 'fleet-heartbeat.log'
+    argv = [_python(), '-B', str(HERE / 'frankie_box_fleet.py'), '--action', 'heartbeat', '--run', run, '--day', day,
+            '--stage', 'classroom', '--out-dir', str(out_dir), '--code-root', str(code_root), '--commit', commit]
+    env = _detached_env(code_root)
+    if shutil.which('systemd-run') and os.environ.get('FRANKIE_HANDOFF_DETACH', 'systemd') != 'session':
+        unit = 'frankie-fleet-heartbeat-%s-%s-%d' % (run, day, int(time.time()))
+        cmd = ['systemd-run', '--unit', unit, '--collect', '-p', 'StandardOutput=append:%s' % log_path,
+               '-p', 'StandardError=append:%s' % log_path, '-p', 'KillMode=mixed'] + \
+              [x for k, v in sorted(env.items()) for x in ('-E', '%s=%s' % (k, v))] + argv
+        code = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).returncode
+        if code == 0:
+            return dict(status='started', how=dict(method='systemd-run', unit=unit))
+    with open(log_path, 'ab') as out:
+        proc = subprocess.Popen(argv, env=env, stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                start_new_session=True)
+    return dict(status='started', how=dict(method='new session', pid=proc.pid))
+
+
+def heartbeat_action(args):
+    """The heartbeat unit's body: refresh the lease every poll while this box holds it; exit once it does not."""
+    poll = _int_setting(POLL_SETTING, DEFAULT_POLL_SECONDS)
+    deadline = time.monotonic() + _int_setting(WAIT_MAX_SETTING, DEFAULT_WAIT_SECONDS)
+    say = lambda t: print('%s %s' % (_utc(), t), flush=True)  # noqa: E731
+    st = store()
+    while time.monotonic() < deadline:
+        out = _try(lambda: heartbeat_classroom_lease(args.run, args.day, st=st)) or {}
+        if out.get('status') != 'beat':
+            say('fleet heartbeat: lease no longer held by this box (%s); exiting' % out.get('status'))
+            return 0
+        time.sleep(poll)
+    say('fleet heartbeat: deadline reached; exiting')
+    return 0
 
 
 def fleet_resume(run, day, code_root, commit, out_dir, *, log=print):
@@ -863,12 +962,15 @@ def main(argv=None):
     take.add_argument('--commit', required=True)
     take.add_argument('--by', required=True)
     take.add_argument('--force', action='store_true')
-    w = sub.add_parser('wait')
-    for flag in ('--run', '--day', '--stage', '--out-dir', '--code-root', '--commit'):
-        w.add_argument(flag, required=True)
+    for name in ('wait', 'heartbeat'):
+        p = sub.add_parser(name)
+        for flag in ('--run', '--day', '--stage', '--out-dir', '--code-root', '--commit'):
+            p.add_argument(flag, required=True)
     args = parser.parse_args(argv)
     if args.action == 'wait':
         return wait_action(args)
+    if args.action == 'heartbeat':
+        return heartbeat_action(args)
     if args.action == 'saved-days':
         # read-only, no fleet-mode gate (the driver uses it to decide whether there is anything to resume)
         for day in box_saved_days(args.run):

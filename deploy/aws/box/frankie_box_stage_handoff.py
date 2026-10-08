@@ -422,13 +422,15 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
             why = 'validation exit %d: no validator receipt or an unlisted refusal (see %s)' % (code, vlog)
         return _write(out_dir / 'handoff.json', dict(base, status='failed', reason=why))
     if fleet is not None:
-        # record this stage DONE on the shared day list (advisory): the day is carried through its full sequence
-        # (classroom -> data/search -> scientific-teacher -> voice meeting -> jev -> end), done only at the tail
+        # record this stage DONE on the day's own progress object (advisory): the day is carried through its full
+        # sequence (classroom -> data/search -> scientific-teacher -> voice meeting -> jev -> end), done only at the
+        # tail -- jev for an arm day, accumulated_lessons/survivors for a non-arm day (S3)
         try:
-            base['fleet_stage'] = fleet.record_stage_progress(run.plan['run'], e['day'], stage)
-        except Exception as error:  # noqa: BLE001 - never block the day on an advisory day-list write
+            base['fleet_stage'] = fleet.record_stage_progress(run.plan['run'], e['day'], stage, arm=e.get('classroom_arm'))
+        except Exception as error:  # noqa: BLE001 - never block the day on an advisory write
             base['fleet_stage'] = dict(status='error', error='%s: %s' % (type(error).__name__, str(error)[:200]))
-    if fleet is not None and stage in fleet.gate_stages():
+    # S3: gate ONLY a classroom-arm day. A non-arm day runs no classroom, so it must not take the global lease.
+    if fleet is not None and stage in fleet.gate_stages() and e.get('classroom_arm'):
         # the ROOT->classroom boundary (gate stage, default `teacher`): the stage validated; now serialise the
         # classroom across the fleet. classroom_gate records this box ready and claims the ONE global lease.
         #  - proceed: this box holds the lease -> straight on to the classroom (the gate stage does NOT clean-on-save

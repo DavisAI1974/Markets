@@ -55,6 +55,28 @@ class TestCollect(unittest.TestCase):
         self.assertIn('i-box1', states)
         self.assertEqual(states['i-box1'], '(not in DescribeInstances)')   # on the list, not launched/terminated
 
+    def test_gate_state_and_unassigned_shown(self):
+        # N8: a waiting/ineligible day shows its gate state; S5/N8: a day with no box is shown, not dropped
+        dl = {'schema': 'FRANKIE_FLEET_DAY_LIST_V1', 'run': 'e2e-a', 'days': [
+            {'day': '20231018', 'box': 'i-box1', 'current_stage': 'teacher',
+             'stages': {'classroom': {'state': 'waiting'}}},
+            {'day': '20231019', 'box': None},   # not launched / not claimed yet
+            {'day': '20231020', 'box': 'i-spot', 'current_stage': 'teacher',
+             'stages': {'classroom': {'state': 'ineligible'}}},
+        ]}
+        status = P.collect(day_list=dl, lease=None, ec2_instances=[], region='us-east-1')
+        self.assertIn('20231019', status['unassigned_days'])
+        text = P.render(status)
+        self.assertIn('gate:waiting', text)
+        self.assertIn('gate:ineligible', text)
+        self.assertIn('(unassigned)', text)
+
+    def test_store_error_shown_not_free(self):
+        # S11: a store error is surfaced, not rendered as "lease: free"
+        status = P.collect(day_list=None, lease=None, ec2_instances=[], region='us-east-1',
+                           store_error='AccessDenied: fleet/ prefix')
+        self.assertIn('STORE ERROR', P.render(status))
+
     def test_render_mentions_lease_and_days(self):
         dl = toy_day_list()
         status = P.collect(day_list=dl, lease=dl['_lease'], ec2_instances=[], region='us-east-1')

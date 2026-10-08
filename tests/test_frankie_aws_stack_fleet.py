@@ -135,6 +135,20 @@ class TestFleetLaunch(unittest.TestCase):
         first = rec['actions'][0]['params']['TagSpecifications'][0]['Tags']
         self.assertIn({'Key': 'Day', 'Value': '20231018,20231019'}, first)
 
+    def test_refuses_prefix_outside_fleet(self):
+        acct = FakeAccount(self.canned())
+        base = ['--run', 'e2e-a', '--count', '1', '--days', '20231018,20231019', '--image-id', 'ami-1',
+                '--commit', 'a' * 40, '--fleet-day-list', 'runs/x']   # outside fleet/ on the granite bucket
+        rec = S.step_fleet_launch(acct, args_for(base))
+        self.assertEqual(rec['status'], 'refused')
+        self.assertIn('fleet/', rec['reason'])
+        self.assertEqual(len(rec['actions']), 0)
+        # --allow-any-prefix lifts the prefix refusal (it then proceeds to the version/quota checks)
+        rec2 = S.step_fleet_launch(FakeAccount(dict(self.canned(quota=640.0),
+                                   describe_launch_template_versions={'LaunchTemplateVersions': [{'VersionNumber': 1}]})),
+                                   args_for(base + ['--allow-any-prefix']))
+        self.assertNotEqual(rec2['status'], 'refused')
+
     def test_refuses_day_overflow_no_silent_drop(self):
         acct = FakeAccount(self.canned())
         args = args_for(['--run', 'e2e-a', '--count', '2', '--days', '20231018,20231019,20231020,20231021,20231022',
