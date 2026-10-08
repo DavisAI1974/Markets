@@ -471,43 +471,67 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         futures.append(side.submit(finish_serial, ordinal, name, key, proof['rows'], path, root, proof['verified_identity']))
         return _Rows(root/'table.sqlite')
 
-    def context_job(ordinal, name, specs):
+    def cross_columns_of(name):
+        return sorted({col for (_, _), (source, col) in DG.CROSS_DERIVED.items() if source == name})
+
+    def context_db(ordinal, name, context_rows, mode):
         # the context database in the serial writer's form (table 'source', TS._dump rows) holding the columns later
         # tables derive from this one; empty when none does
-        entry = timed(ordinal, name + ' (context)', 'parallel-context')
+        entry = timed(ordinal, name + ' (context)', mode)
         root = scratch/('table-%04d' % ordinal)
-        columns = sorted({col for (_, _), (source, col) in DG.CROSS_DERIVED.items() if source == name})
         root.mkdir(parents=True, exist_ok=False)
         cdb = sqlite3.connect(root/'table.sqlite')
         try:
             cdb.execute('CREATE TABLE source (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL)')
-            if columns:
-                for i, row in enumerate(PP.cross_context(specs, columns, helper_cpus, pool=pool)):
-                    cdb.execute('INSERT INTO source VALUES (?, ?)', (i, TS._dump(row)))
+            for i, row in enumerate(context_rows):
+                cdb.execute('INSERT INTO source VALUES (?, ?)', (i, TS._dump(row)))
             cdb.commit()
         finally:
             cdb.close()
         entry['ended'] = time.time()
         return _Rows(root/'table.sqlite'), _witness(root/'table.sqlite')
 
-    def parallel_table(ordinal, name, rows, specs, context_future):
+    def context_job(ordinal, name, specs):
+        columns = cross_columns_of(name)
+        return context_db(ordinal, name, PP.cross_context(specs, columns, helper_cpus, pool=pool) if columns else (),
+                          'parallel-context')
+
+    def parallel_table(ordinal, name, rows, specs, context_future, fused=None):
         # A big legacy table read from a closed RowSpool (the frame sections make legacy_book_imbalance hundreds of GB
         # on a full day) is written by the parallel table writer: the same bytes and inverse proof as TS.write_table over
         # the same rows (frankie_box_digest_parallel), each helper reading its own line range of the spool (never held
-        # whole). Every field and row is kept; nothing is reduced.
+        # whole). Every field and row is kept; nothing is reduced. Session 6 (Greg: "We stream the data in and get 32
+        # CPUs and workers on this job"): with FRANKIE_DIGEST_FUSE_CONTEXT=on the cross-table context is collected by
+        # the writer's own snapshot decode (fused: a Future resolved from inside the writer) instead of a decode of its
+        # own; the writer's other reductions (one_decode, canonical_verify) are its run settings (PP.PASS_SETTINGS).
         entry = timed(ordinal, name, 'parallel')
         path = scratch/('table-%04d.txt' % ordinal)
         key = legacy_key(name, None, code, legacy_inputs)
-        proof = PP.write_table_parallel(path, name, specs, scratch/('table-%04d.parallel' % ordinal), helper_cpus,
-                                        reserve=reserve, pool=pool)
+        columns = cross_columns_of(name) if fused is not None else None
+
+        def on_cross(context_rows):
+            try:
+                fused.set_result(context_db(ordinal, name, context_rows, 'parallel-context (fused into the snapshot pass)'))
+            except BaseException as error:  # noqa: BLE001 - the waiting serial table sees the error, never a hang
+                fused.set_exception(error)
+                raise
+        try:
+            proof = PP.write_table_parallel(path, name, specs, scratch/('table-%04d.parallel' % ordinal), helper_cpus,
+                                            reserve=reserve, pool=pool, cross_columns=columns,
+                                            on_cross=on_cross if fused is not None else None)
+        except BaseException as error:
+            if fused is not None and not fused.done():
+                fused.set_exception(error)
+            raise
         if proof['rows'] != len(rows):
             raise ValueError('parallel legacy table rows differ from the spool count')
         digest = _witness(path)
         if TS._identity(path) != proof['verified_identity']:
             raise ValueError('proved table changed before its byte witness')
-        _, context_witness = context_future.result()
+        _, context_witness = (fused if fused is not None else context_future).result()
         legacy_stages[ordinal] = dict(name=name, rows=proof['rows'], path=path, digest=digest)
         _save_table(scratch, ordinal, key, legacy_stages[ordinal], context=context_witness)
+        entry['passes'] = proof.get('passes')          # the writer's pass reductions, on the proof's timeline
         entry['ended'] = time.time()
 
     def bedrock_table(index, ordinal, name, spec, key):
@@ -558,8 +582,15 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         rows = {ordinal: rows_of[ordinal]() for ordinal in range(reused, LEGACY_TABLES)}
         parallel = {ordinal for ordinal in rows
                     if context_of[ordinal] is None and _parallel_spool(rows[ordinal]) and parts > 1}
+        fuse = PP.pass_modes()['fuse_context']
         for ordinal in sorted(parallel):
             specs = PP.spool_specs(rows[ordinal].path, parts)
+            if fuse and cross_columns_of(names[ordinal]):
+                from concurrent.futures import Future
+                fused = Future()                 # resolved by the writer's snapshot pass (parallel_table.on_cross)
+                contexts[names[ordinal]] = fused
+                futures.append(side.submit(parallel_table, ordinal, names[ordinal], rows[ordinal], specs, None, fused))
+                continue
             context_future = side.submit(context_job, ordinal, names[ordinal], specs)
             contexts[names[ordinal]] = context_future
             futures.append(context_future)
