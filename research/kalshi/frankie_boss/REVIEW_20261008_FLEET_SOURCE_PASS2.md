@@ -138,3 +138,126 @@ duration (ps-visible to any local user; the box is single-tenant) -- NIT. `_deta
 has no lifecycle field -> `is_spot False`, correct); all families counted (over-conservative, safe); `need = count *
 _vcpus_for_type(type)` (S:774-781, unknown size -> 64, never too small); `headroom = quota - used`; refused when `need >
 headroom`. Correct for the stated purpose.
+
+---------------------------------------------------------------------------------------------------------------------------
+
+## NEW findings (what the fixes introduced), ranked
+
+### BLOCKING
+
+**NEW-1. A live but CPU-blocked waiter at the head of the line makes every other box yield forever (fleet-wide
+deadlock with the lease FREE).** F:719 (`classroom_gate` writes the waiting marker BEFORE the CPU check), F:587 (the box
+itself is refused the lease on `waits_for > 0`), F:596-608 (every OTHER box yields to the earliest waiter while its
+heartbeat silence is under `fair_wait`), F:916 (the WAIT unit heartbeats every 30 s). Scenario: box 1 (two arm days)
+reaches the gate first in the fleet with its sibling in ROOT -> not CPU-ready -> `fleet_waiting`, marker epoch earliest,
+heartbeating. Boxes 2-15 reach their gates CPU-ready, lease free -> `next_in_line` = box 1, silent 0 s -> yield; poll;
+yield... Box 1 cannot become ready until its sibling finishes ROOT+teacher (hours) -- and with the queue half absent,
+never (B4's box deadlock). REPRODUCED on the toys' file store: box1 blocked (`FRANKIE_FLEET_CPU_READY=no`, marker
+heartbeated), box2 ready, lease free -> box2 `acquired=False, "yielding to earlier LIVE waiter i-box1 ... silent 0s"`,
+holder None. The toys never combine "earlier waiter live" with "earlier waiter not ready" (`test_fairness_first_to_finish
+_first`, `test_cpu_not_ready_blocks_the_lease`, `test_dead_earlier_waiter_does_not_deadlock` each test one axis).
+Minimal fix: readiness must be part of the marker. In `wait_action` (and the gate) write `cpu_ready: true|false` on the
+marker with each heartbeat (`heartbeat_waiting` takes the flag); in `acquire_classroom_lease` yield only to an earlier
+waiter that is live AND whose marker does not say `cpu_ready is False` (an absent flag = ready, for old markers).
+Alternative: do not `record_root_finished` until the box is CPU-ready (enter the line when ready), at the cost of order
+by readiness instead of teacher-finish. Add the two-axis toy.
+
+**NEW-2. The queue clears KeepRunning while the box lawfully waits in line, the idle guard stops it, and a restarted box
+is stopped again.** Sources in B6 above. Scenario A: box with its day(s) saved at the gate (WAIT unit polling, which
+`box_in_use` does not count) -> the last line worker's end clears the tag -> `17 */6 * * *` guard -> StopInstances;
+the box's marker goes silent, the fleet passes it (NEW-1 aside), its days never run until an operator starts the box.
+Scenario B: the operator starts it -> the driver resumes + kicks -> `KeepRunning` is still `false` (nobody re-stamps it;
+the kicked worker's end would clear it again anyway) -> the guard stops the box within 6 h, mid-ROOT, worker alive or not.
+Minimal fix (three small pieces, any two suffice for the proof box): the driver stamps `KeepRunning=true` before its
+first resume (it has the role permission; `X.keep_running(run, True, ...)` or one `create_tags`); `box_in_use` counts a
+live `frankie-fleet-wait-*` / `frankie-fleet-heartbeat-*` unit (or the box's `fleet-gate.json` decisions `waiting`
+with a live unit) as in use; and, as the original B6 fix asked, the guard leaves `Role=day-box` instances alone while
+their progress object has no `done_utc` (idle_instance_guard.py is untouched by these commits).
+
+### SHOULD FIX
+
+**NEW-3. S2's "release on a failed classroom" is dead code on the real class-worker path.** The handoff moved the
+release before the FINISHED check (H:353-362; toy `test_release_on_failed_classroom` passes), but the class worker's
+`keep()` (queue:812-829) returns `'failed'` on `not passed(...)` BEFORE calling `_boundary`, and a save returns
+`'waiting'` at :837-841 before it too. So the boundary never sees a failed classroom record; the holder keeps the lease
+and the fleet waits for `takeover-lease --force`. Fix (queue owner): in `keep()`, when `stage == 'classroom'` and the
+step did not pass, call `_fleet().release_if_held(...)` (fleet mode only) before returning `'failed'`; or route the
+failed record through `_boundary` as the handoff already expects. Note the moved release is still correct for a `saved`
+classroom: a save never reaches the boundary, so the resumed classroom continues as holder.
+
+**NEW-4. Fail-open `classroom_cpus_ready` -> `None` -> proceed will hold the lease idle for a sibling's whole tail once
+the queue half lands.** F:565 (`PlanRefused` = indeterminate = proceed). With a fleet-gate save that RELEASES the
+booking (the parent's option 3), the waiting day holds no booking -> `lane_for` raises "holds no live or retained
+day-run booking" -> proceed -> lease taken -> resume -> admission needs 32 free -> the sibling holds its grown 64 through
+data/search/scientific-teacher/voice/jev (hours) -> the lease is held idle for that whole tail, per box, serialised
+across 15 boxes. Fix: when the day holds no booking, answer ready only if `len(free online CPUs) >= plan day_cpus`
+(admission possible now), else not ready; keep `None` only for "no cores module / no ledger".
+
+**NEW-5. The reboot driver re-kicks without the run settings and skips `unknown` days.** frankie_fleet_day.sh:38-41 runs
+`resume`/`kick` from the systemd unit's bare environment: `_run_settings_env()` (queue:528-545) forwards the KICKING
+process's `FRANKIE_*`, so every run setting of the original dispatch (`FRANKIE_CLASSROOM_CPUS=held` -- the very fallback
+B4 relies on -- `FRANKIE_ROOT_NATIVE_OVERLAP`, `FRANKIE_QUEUE_*`) is lost after a reboot and the day continues under
+defaults (the classroom grows to `all` on a two-day box: the B4 deadlock returns). And `box_saved_days` (F:449-475)
+lists `saved` only; a reboot mid-stage leaves the entry `running` until a reconcile marks it `unknown`, which
+`resume_owner` accepts and the driver never lists. Fix: the run.yml start (or the orchestrator start in fleet mode)
+writes the dispatch's `FRANKIE_*` run settings next to `fleet.json` (the worker status already records `run_settings`,
+queue:512; the driver can read the newest one) and the driver exports them for resume/kick; the driver runs
+`ACTION=status` (the reconcile) before `saved-days` and includes `unknown` entries, recorded on the driver log.
+
+**NEW-6. `fleet.json`/the systemd unit pin the user-data's commit; a run.yml restage moves the day to a newer tip and a
+reboot resumes it on the old one.** S:168-187 (`code_root`, `commit`, `ExecStart=... $CODE_ROOT/...`); run.yml has no
+fleet awareness. The drop-in's own practice is "RESTAGE the tip and resume". Fix: the driver resolves `code_root` from
+the newest staging receipt under `/opt/frankie-box/box/*/stage-receipt.json` (or run.yml's stage rewrites `fleet.json`),
+and the unit runs the driver from a fixed path (`/opt/frankie-box/frankie_fleet_day.sh`, copied at stage) so the
+driver itself is the staged commit's.
+
+**NEW-7. The driver trusts `fleet.json.instance`.** An AMI taken from a fleet-PREPARED box (small root, so B5's size
+proxy passes) ships `fleet.json`, `.fleet-prepared` (so no wipe) and an enabled unit that can run before cloud-init
+rewrites the config, resuming the imaged box's days under the new instance id. Fix: the driver reads IMDS instance-id
+and exits 2 ("fleet.json is another instance's") on a mismatch; golden-ami refuses a source tagged `Role=day-box`.
+
+**NEW-8. A transient S3 error in the WAIT loop moves the day to the back of the line.** F:925-930 releases via
+`release_classroom_lease`, which also DELETES the day's waiting marker (F:638); the next poll's `heartbeat_waiting`
+finds none and re-creates it with `root_finish_epoch = now`. Fix: on the exception path delete only the lease (a
+`release_lease_only`), never the marker; or let `heartbeat_waiting` re-create with the epoch recorded on the gate receipt.
+
+**NEW-9. `fleet_resume`'s once-guard can strand the lease under the new retry loop.** F:881-884 writes `fleet-resume.fired`
+BEFORE the resume runs; if the resume raises mid-way (not a non-zero exit, which releases), `wait_action`'s except
+releases the lease and polls again; the next acquire succeeds and `fleet_resume` returns `already_fired` -> the unit
+exits 0 with the lease HELD and the day still saved. Narrow. Fix: treat `already_fired` without a `done` receipt as
+failed (release + exit 2), or write the fired marker only after a successful resume+kick.
+
+**NEW-10. The heartbeat unit exits on ONE transient error.** F:863: `_try(...)` -> `{}` -> `status != 'beat'` -> exit;
+S12's purpose (a stale lease means a dead holder) is defeated by a single S3 blip during a 3-hour classroom. Fix: exit
+only on an explicit `not_held`; retry (log) on an exception.
+
+### NIT
+
+- NIT-1. frankie_fleet_day.sh:39,42: `echo "... (exit $?)"` inside `if ! cmd; then` prints 0 (the negated status);
+  capture `rc=$?` before the `if`. :24 `saved-days ... || true` turns an unreadable ledger into "nothing to do, exit 0".
+- NIT-2. The gate receipt for a CPU-blocked day says "the global classroom lease is held by None" (H:461-466 uses
+  `gate.get('holder')`); say "waiting for this box's CPUs (waits_for N)" so the probe's `gate:waiting` is honest.
+- NIT-3. S13 half: `fail()` covers the tag checks only; a failing `aws ssm get-parameter`/`git` under `set -e` exits
+  with no `fleet-boot-failed.json`. A `trap 'fail "line $LINENO"' ERR` closes it.
+- NIT-4. `_detached_env` forwards every `AWS_*`; `AWS_EC2_METADATA_DISABLED` is the only one wanted on a role box.
+- NIT-5. `S3Store.head` returns `lm` unchanged when it has no `.timestamp` (a string from a fake); fine, declared.
+- NIT-6. Toy coverage gaps: the driver (bash -n only), `wait_action`'s exception path, `fleet_resume` failure release,
+  `_wait_unit_alive`, `classroom_cpus_ready` against the real resolver, and the NEW-1 two-axis fairness case.
+
+---------------------------------------------------------------------------------------------------------------------------
+
+## What must change before launch
+
+ONE proof box, day list ON:
+- one day on the box: nothing in code; operationally the day-box role applied (done per the drop-in), the AMI from a
+  CLEAN staged box, run.yml stage+start aimed at the fleet instance id with the full dispatch set.
+- two classroom-arm days on the box: `FRANKIE_CLASSROOM_CPUS=held` in the dispatch (32-CPU classroom; Greg's call), or
+  wait for the queue's booking-release-on-save; NEW-5 means a reboot would lose that setting.
+The 15-box fleet: NEW-1 and NEW-2 first (both small), then NEW-3/4/5 before a 30-day run; B3's fresh-start claim before
+any run where two dispatches could name one day.
+
+## RUNTIME-UNVERIFIED by this review too
+Everything is traced from source; the only thing executed was the toys and the NEW-1 reproduction on the file-backed
+fake store. Not exercised: S3 conditional writes on the bucket, IMDS tag timing, cloud-init vs the enabled unit's
+ordering at first boot, systemd-run on the fleet AMI, run.yml's stage/start against a non-main instance id, the queue's
+admission latency after the driver's kick.
