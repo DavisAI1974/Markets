@@ -23,14 +23,26 @@ from frankie_box_author_monday_launch import fresh, sync_directory
 PARENT = Path('/opt/frankie-box/work/monday-calculations')
 
 
-def load_retained_layers(session, *, allow_failures=False, receipt=None, spools=None):
+def load_retained_layers(session, *, allow_failures=False, receipt=None, spools=None, layer_witnesses=None):
     """The completed legacy layers and spools as ROOT retained them; no journal read, no recalculation. Shared by
     resume_legacy and the render-only step (frankie_box_render_digest.py).
     spools (session 6, 2026-10-08, additive): {resolved spool path: RowSpool} already reopened by the caller from an
     exact claim (the legacy-stage reuse witnesses each spool once and reopens it from its sealed count); a spool not in
-    it is reopened here by RowSpool.reopen as before. The count checks below apply to both."""
+    it is reopened here by RowSpool.reopen as before. The count checks below apply to both.
+    layer_witnesses (second pass, additive): {resolved layer path: {path, bytes, sha256}} the caller already verified;
+    a layer in it is not read again for its witness. Otherwise the witness goes through the per-process hash cache
+    (frankie_box_filehash) after safe_path (a symlink is still refused, as prepare_trading_day.witness refuses it), so a
+    layer witnessed earlier in this process (the reuse routes) costs no read; before, an INLINE layer (472 GB on a2)
+    was read whole here on every resume besides the caller's own witness."""
     from frankie_box_digest_sources import _JSON
     import frankie_box_bedrock as B
+    import frankie_box_filehash
+
+    def layer_witness(path):
+        found = (layer_witnesses or {}).get(str(Path(path).resolve()))
+        if found is not None:
+            return dict(path=str(path), bytes=found['bytes'], sha256=found['sha256'])
+        return dict(path=str(path), **frankie_box_filehash.witness(safe_path(path)))
     pin = session._pin()
     derived = session.work / 'derived'
     candidates = list((derived / '.rows').glob('input-*.jsonl'))
@@ -78,7 +90,7 @@ def load_retained_layers(session, *, allow_failures=False, receipt=None, spools=
             session.note('reusing retained legacy layer ' + name + ' (spool reference)')
             layers[name] = value
             entries[name] = dict(status=value['status'], producer=value.get('producer'),
-                                reason=value.get('reason'), **witness(path))
+                                reason=value.get('reason'), **layer_witness(path))
             continue
         with path.open(encoding='utf-8') as stream:
             parser = _JSON(stream)
@@ -103,7 +115,7 @@ def load_retained_layers(session, *, allow_failures=False, receipt=None, spools=
         session.note('reusing retained legacy layer ' + name)
         layers[name] = value
         entries[name] = dict(status=value['status'], producer=value.get('producer'),
-                            reason=value.get('reason'), **witness(path))
+                            reason=value.get('reason'), **layer_witness(path))
     return pin, derived, records, prices, frames, structures, failures, layers, entries
 
 

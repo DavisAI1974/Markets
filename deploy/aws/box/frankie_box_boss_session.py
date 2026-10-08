@@ -3375,7 +3375,9 @@ class Session:
         try:
             from research.kalshi.frankie_boss.operations.ingest_block_sources import write_file_claims, FILE_CLAIMS_NAME
             ledgers = list(((receipt.get('bedrock') or {}).get('ledgers') or {}).values())
-            rows, skipped = _file_claim_rows(getattr(self, '_sealed_spool_artifacts', None) or [], ledgers)
+            spools = list(getattr(self, '_sealed_spool_artifacts', None) or [])
+            spools.extend(getattr(self, '_sealed_layer_artifacts', None) or [])     # the layer files (inline: big)
+            rows, skipped = _file_claim_rows(spools, ledgers)
             note = write_file_claims(self.work, rows)
         except Exception as error:  # noqa: BLE001 - a claim is a hint for later stages, never the ROOT's outcome
             self.note('file claims not written: %s: %s' % (type(error).__name__, error))
