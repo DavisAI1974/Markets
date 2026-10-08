@@ -47,10 +47,11 @@ NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS.
   record shortcut missed because frankie_box_monday_calculations.inline_layer_without_array anchors its tail parse on
   `"reason"` right after the array's `],`, while a2's sealed layer ends `], "producer": ..., "reason": null, "status":
   "derived"`; so load_retained_layers fell back to the whole Python parse of the 472 GB inline layer at ~27 MB/s (4.8 h).
-  Greg ordered the shutdown; the child was killed with the marker standing -> SAVED, NO RECEIPT. The fix (anchor on the
-  first top-level key after `],`) was assigned to the digest role at close: check the E2E record / git log for it; if it
-  is on the tip, stage it before the next resume; the resume then takes the layer by its claim (no read) and the frames
-  spool by one 7-min counting pass (this old seal has no spool count), then writes the receipt.
+  Greg ordered the shutdown; the child was killed with the marker standing -> SAVED, NO RECEIPT. The fix IS ON THE TIP (commit 133c9ba or newer): inline_layer_without_array anchors on the array's top-level close
+  (any trailing keys), spool claims carry their sealed counts from the ROOT's own records (INPUT/prices/frames/structures/
+  failures), the legacy-stage reuse takes every spool by claim; toys 29/29 + 17/17. STAGE IT (frankie_box_run.yml stage_code
+  ACTION=stage on the work branch) before the next resume; the resume then reads the layer's head + 64 KiB tail and each
+  spool's 64 KiB tail (no big read) and writes the receipt in minutes.
 
 ## What session 6 built (ALL SOURCE-BUILT / RUNTIME-UNVERIFIED unless marked LIVE)
 - LIVE on the box: the hold (save marker at projection) fired exactly as designed; ROOT c9bf631 SIGKILLed mid-digest
