@@ -254,3 +254,9 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   -a1, booking -5613, bound 17:18:13Z, code_root/commit 1c59623. KICK exit 0: "frankie-cpu-watch already runs; nothing
   started" (that watch is still the 27109f4d one); root worker unit frankie-queue-root-1791479893, worker lock held.
   STATUS: booking -5613 alive true, cpus 0-63, retained null; marker not standing; owner -a1, cpus 0-63, commit 1c59623.
+- 17:18:03Z parent probe (SSM b66fd568): box quiet (entry failed, no worker, no child); the stage 37814850954 completes
+  ~17:19Z; the operator kicks on CR3 then. Greg (17:2xZ): "stuff like that should never kill workflow" -> source role
+  (opus) assigned: an owned day is never retried from scratch (a failed/refused resume -> unknown, retained, waiting for
+  ACTION=resume), identity refusals on resume are a visible 'refused' outcome (resume-refused.json). Decision: launch now
+  on 1c59623; the validator-by-claim and no-retry fixes are staged while the digest runs and applied at the digest's end
+  (save marker after receipt+digest -> resume + kick on the new tip). The operator may kill a from-scratch child on sight.
