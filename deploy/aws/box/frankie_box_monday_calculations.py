@@ -33,11 +33,20 @@ def inline_layer_without_array(path, frames, structures):
     it: 472 GB on a2) rebuilt WITHOUT parsing its array (session 6, Greg: no redundant pass): the keys before the array
     are parsed from the file's head (they end with `count`, the length the same ROOT wrote beside the array it then
     encoded from the same closed spool), the keys after it are read from the last 64 KiB (the text after the array's
-    closing bracket, from `"reason"` on), the array is the retained spool. Only for a file whose bytes are verified (a
-    held claim or a witness in this process): then the array's length IS `count`. Returns (value, basis) or None when
-    the file is not in that layout (the caller parses it whole, as before)."""
+    top-level closing bracket: frankie_box_durable.write_json writes indent=1 with sorted keys, so the file is
+    `count, fields, frames, producer, reason, status` (`count, groups, producer, reason, row_provenance, status` for
+    the structures), the array closes as newline + ONE space + `]` and nothing nested closes at that indentation; the
+    keys after it all sort after the array key), the array is the retained spool. Only for a file whose bytes are
+    verified (a held claim or a witness in this process): then the array's length IS `count`. Returns (value, basis)
+    or None when the file is not in that layout (the caller parses it whole, as before: a file within the tail's size
+    is one of them, parsed whole for the cost of 64 KiB). ROOT-digest role, 2026-10-08: the first form looked for
+    `"reason"` right after the bracket and never matched the real layout (`producer` sits between them: toy
+    test_sealed_count.py), so every held claim still cost the whole counting read on top of the head and tail."""
     from frankie_box_digest_sources import _JSON
     path = Path(path)
+    size = path.stat().st_size
+    if size <= INLINE_TAIL_BYTES:
+        return None
     head, key = {}, None
     with path.open(encoding='utf-8') as stream:
         parser = _JSON(stream)
@@ -52,21 +61,27 @@ def inline_layer_without_array(path, frames, structures):
                 key = None
                 break
             parser.expect(',')
-    if key not in ('frames', 'groups') or not isinstance(head.get('count'), int):
+    if key not in ('frames', 'groups') or not isinstance(head.get('count'), int) or any(k >= key for k in head):
         return None
-    size = path.stat().st_size
     with path.open('rb') as handle:
-        handle.seek(max(0, size - INLINE_TAIL_BYTES))
+        handle.seek(size - INLINE_TAIL_BYTES)
         tail = handle.read()
-    at = tail.rfind(b'"reason"')
-    if at < 0:
-        return None
-    before = tail[:at].rstrip()
-    if not (before.endswith(b',') and before[:-1].rstrip().endswith(b']')):
-        return None
-    try:
-        trailing = json.loads(b'{' + tail[at:])
-    except ValueError:
+    trailing, at = None, tail.find(b'\n ]')
+    while at >= 0:
+        rest = tail[at + 3:].strip()
+        if rest == b'}':                        # the array was the last key
+            trailing = {}
+            break
+        if rest.startswith(b','):
+            try:
+                found = json.loads(b'{' + rest[1:])
+            except ValueError:
+                return None
+            if isinstance(found, dict) and all(k > key for k in found):
+                trailing = found                # every key after the array sorts after it (a head list's close does not)
+                break
+        at = tail.find(b'\n ]', at + 1)
+    if trailing is None:
         return None
     spool = frames if key == 'frames' else structures
     if head['count'] != len(spool):
@@ -75,8 +90,8 @@ def inline_layer_without_array(path, frames, structures):
     value[key] = spool
     value.update(trailing)
     return value, ('sealed record: the layer head\'s count beside its array (written by the same ROOT from the same '
-                   'closed spool) and the keys after the array from the last 64 KiB; the array not parsed; the file\'s '
-                   'bytes verified by the caller')
+                   'closed spool) and the keys after the array\'s top-level close from the last 64 KiB; the array not '
+                   'parsed; the file\'s bytes verified by the caller')
 
 
 class _HashingRaw(io.RawIOBase):
