@@ -162,10 +162,11 @@ def plan(roots, pins, *, guarded=(), floor=FLOOR_BYTES, archive_root=ARCHIVE_ROO
                         stack.append(entry)                   # holds a pinned file: looked at file by file
                         continue
                     size = _du(entry)
+                    # a directory with no pin inside is read by no later stage through a pin, so the guarded prefixes
+                    # (which protect PINNED paths a safe_path reader opens) do not hold it back: a2's 68 GB pre-save
+                    # ledger copy under work/bedrock/ledgers is exactly this case
                     if size < floor:
                         stay(entry, size, 'under the floor (%d < %d bytes); nothing inside is pinned' % (size, floor), False)
-                    elif _guarded(rel, guarded):
-                        stay(entry, size, 'under a guarded prefix (a safe_path reader of the next stage)', False)
                     elif any(h == real or h.startswith(real + '/') for h in held):
                         stay(entry, size, 'a live process holds a file in it open', False)
                     else:

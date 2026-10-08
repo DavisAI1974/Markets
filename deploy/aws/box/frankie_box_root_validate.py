@@ -696,7 +696,7 @@ def validate(root=None, *, cpus=None, out=None, moved_manifest=None, run_dir=Non
                    totals=dict(pinned=len(jobs), checked=len(artifacts), ok=sum(1 for a in artifacts if a['status'] == 'ok'),
                                archived_s3=sum(1 for a in artifacts if a['status'] == 'archived_s3_head_ok'),
                                mismatches=len(mismatches), not_readable=len(not_readable),
-                               bytes_read=sum(a.get('bytes_read') or 0 for a in artifacts),
+                               bytes_read=sum(a.get('bytes_read') or 0 for a in artifacts if not a.get('reused_from_partial')),
                                reused_from_partial=len(skipped)),
                    mismatches=[dict(path=a['path'], status=a['status'], problems=a['problems']) for a in mismatches],
                    reader_refusals=[dict(path=a['path'], guards=a['reader_refusals']) for a in not_readable
