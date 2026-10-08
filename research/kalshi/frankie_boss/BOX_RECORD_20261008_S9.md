@@ -279,3 +279,10 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   retained legacy layer ... (parsed)", then "retained evidence: 56 artifacts, 56 by their claim, 0 read whole; 5 spools, 5
   reopened from a sealed count and a holding claim, 0 read whole". The spool whole-count is gone (the 63-min frames read
   avoided). Receipt not yet written.
+- 17:23:16Z SAVE (parent order; SSM e8cbc290, rc 0): guard: child 5714 -a1 --resume ok (etime 04:59), nothing killed.
+  ACTION=save exit 0: entry_state running; note "the owner stops at its next boundary; a class in progress acknowledges
+  first"; requested {attempt -a1, booking day-run-20231018-day_slot_repoint-1791479892-5613, cpus 0-63, by "dispatch save",
+  requested_utc 2026-10-08T17:23:16Z, schema FRANKIE_QUEUE_SAVE_REQUEST_V1}. MARKER
+  /opt/frankie-box/work/frankie-queue/save/e2e-20231018-a2-20231018.save-request.json, 693 B, 17:23:16, sha256
+  73c902f3992af8e71db03a19ae90dbb969005402938f7d06e5ef15c882d74338; status marker identity = that sha / requested_at
+  1791480196.7406182; entry still `running` (the child renders on; it exits 75 after _calculate_day returns). Receipt not yet.
