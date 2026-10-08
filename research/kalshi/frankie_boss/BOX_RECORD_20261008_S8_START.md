@@ -151,3 +151,36 @@ nothing; the chain's own class kick inherits FRANKIE_CLASSROOM_CPUS=all from the
   Note: "the next ROOT-line admission books exactly the retained CPUs and resumes attempt ...-a1; kick the root worker with this
   run/day in scope". After: entry seq 2 state QUEUED ("resumed by dispatch resume: back in line at its own place with its owner
   binding"), save_request false, retained_booking ...-3111.
+- 15:04:29Z STEP 3b KICK (state-changing; SSM 4f3b5707-182c-486c-8d22-1b2b8438345d, rc 0; a first SendCommand of the SAME script
+  was refused by the SSM API on its 100-char Comment limit and never reached the box). Script sent (bash -s <<'EOF'): the two
+  exports above, then `FRANKIE_ROOT_DIGEST=off FRANKIE_CLASSROOM_CPUS=all ACTION=kick LINE=root SCOPE=e2e-20231018-a2:20231018
+  bash $CODE_ROOT/deploy/aws/box/frankie_box_frankie_queue.sh` (DAY_CPUS not given; FRANKIE_CLEAN_ON_SAVE at its default).
+  Output: "cpu watch loop: exit 0 ... correct=on resize=on; Running as unit: frankie-cpu-watch.service (invocation
+  241fc82fadae4f688e71165f01fd12c4); frankie-cpu-watch started (every 120 s for 43200 s)"; "root worker started for
+  e2e-20231018-a2:20231018 (systemd-run, unit frankie-queue-root-1791471869, exit_code 0); worker lock held". Kick json
+  (Q/root-kick.json 986 B): started true, how {systemd-run, unit frankie-queue-root-1791471869}, run_settings
+  {FRANKIE_CLASSROOM_CPUS: all, FRANKIE_ROOT_DIGEST: off}, scope e2e-20231018-a2:20231018, by dispatch, at 1791471869.47,
+  cpu_watch {started true, exit_code 0, script <d67b9c63>/deploy/aws/box/frankie_box_cpu_watch.sh}.
+  At 15:04:38Z: unit frankie-queue-root-1791471869 active/running MainPID 1758, Environment CODE_ROOT=<d67b9c63 checkout>
+  FRANKIE_CLASSROOM_CPUS=all FRANKIE_ROOT_DIGEST=off MARKETS_SHA=d67b9c63...; unit frankie-cpu-watch.service active/running
+  (python -I -S -B frankie_box_cpu_watch.py --loop --interval 120 --max-seconds 43200 --work-dir /opt/frankie-box/work/cpu-watch
+  --window 1, pid 1765). Procs: 1758 root worker; 1765 watchdog; 1832 cores run --kind day-run --day 20231018 --run
+  e2e-20231018-a2; 1834 experiment_root --commit d67b9c63 (the ROOT child). /opt/frankie-box/work/cpu-watch/: first record
+  20261008T150429Z.json (3,662 B) + loop.log + watch.log. Entry seq 2 state RUNNING where box-slot, retained_booking
+  ...-3111, owner commit d67b9c63 (rebound at admission). Class line NOT kicked by hand (see the decision above).
+- 15:05:11Z WATCH 1 (read-only, SSM 473a6689-e0d3-4938-96b9-7b20f7d95fad): ROOT child 1834 Dl elapsed 0:36, 24.5% CPU, RSS
+  276,832 KB, psr 31, affinity 0-31 (inside the retained booking); read_bytes 4,537,004,032, write 0; fd 3 = /opt/frankie-box/
+  work/ingest-20231018-gh-36571235912-1/journal.compact.sqlite pos 4,311,744,512 (the sealed-day read); fds 1,2 = /opt/frankie-box/
+  work/experiment/e2e-20231018-a2/logs/20231018-root.log (pos 8,164). receipt ABSENT; progress.json still the 03:02Z one (pid
+  88265); derive.json 01:33Z; file-claims.jsonl 57 rows (03:02Z). Watchdog record 20261008T150429Z.json: FRANKIE_CPU_WATCH_V1,
+  settings correct=on resize=on, bookings 1, findings 3 all kind "unbooked" (kick-time Frankie processes at affinity 0-63, e.g.
+  pid 1751; "listed only"), repins 0, resize 0 (watch.log line "bookings 1 findings 3 (unbooked 3) repins 0 resize 0").
+  root-worker.log tail still the 03:14:56Z waiting_owner block (the new worker's lines come later). load 0.51.
+- 15:06:29Z WATCH 2 (read-only, SSM c95604d1-8438-4278-9a6c-e586d08d2048): ROOT log (/opt/frankie-box/work/experiment/
+  e2e-20231018-a2/logs/20231018-root.log, 94 lines): "### root 20231018 frankie_box_experiment_root.sh at 2026-10-08T15:04:35Z";
+  "15:05:48Z experiment ROOT: sealed day, legacy and native calculations; no giant bedrock digest" (digest off honoured).
+  1834 Dl elapsed 1:54, 17.2% CPU, RSS 442,628 KB, 32 threads, 0 children; read_bytes 14,452,219,904, write 24,576; fd 3 =
+  R/work/bedrock/recovery-6f84a8a86f454010b61346b401e3eb5f/ledgers/exact_lifecycle_rows.jsonl pos 5,167,382,528 (the evidence
+  pass over the native ledgers). receipt ABSENT; file-claims.jsonl still 03:02Z (41,542 B); derive.json 01:33Z. R/work holds
+  bedrock, boss-jobs, derived, input-state.pkl, legacy-cpu-split.json (+2 retained), legacy-stage.json, legacy-state.pkl,
+  native-layer-records.json, native-overlap.json (+6 retained), native-stage.json, native-stage.lock. load 0.91.
