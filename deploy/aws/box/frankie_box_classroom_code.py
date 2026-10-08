@@ -2923,6 +2923,76 @@ def picture_texts(pictures):
     return texts
 
 
+# ---- the 19 component answers side by side (endings pass, 2026-10-08; Greg: "CPUs in every step of this ending
+# process"). component_answer is a pure function of its arguments and of module state that is only READ here
+# (_EVIDENCE_CACHE filled by the runner's guided_evidence phase, the spliced picture texts keyed by object identity,
+# TEACHER_FORM_COMPONENTS, STATES): a process forked from the runner holds the same objects at the same addresses, so a
+# worker computes the same value, and the value comes back through the pool's pickle with its object sharing intact,
+# so the phase file the runner saves holds the same bytes as an in-process answer (toy-proven: endings/selftest). ----
+_ANSWER_SHARED = {}
+
+
+def _component_answer_job(name):
+    s = _ANSWER_SHARED
+    return component_answer(s['visible'], s['components'][name], s['rights'][name], learner_context=s['learner_context'],
+                            shared_market=s['shared_market'], exhaustion_d=s['exhaustion_d'])
+
+
+def component_answers_side_by_side(visible, names, components, rights, *, learner_context=None, shared_market=None,
+                                   exhaustion_d=None, on_start=None):
+    """Yield (name, component_answer(visible, components[name], rights[name], ...)) for `names` in that order: on a
+    pinned fork pool over the booked lane (frankie_box_lane_pin.ordered_map; a dead worker's answer is redone with one
+    worker fewer) when this process can fork and more than one answer is wanted, else here one after another with the
+    reason recorded. on_start(), when given, is called once the workers are forked (or at the start of the serial path),
+    so the caller can begin an independent computation on a thread beside the answers. The placement goes on
+    PINNING_RECORD['component_answers']. A value is identical either way (see the section note)."""
+    import gc
+    import multiprocessing
+    import time
+    started = time.monotonic()
+    names = list(names)
+    lane = lane_cpus()
+    workers = min(len(lane), len(names))
+    forkable, waited, why = _fork_ready() if workers > 1 else (False, 0.0, 'one answer or one CPU')
+    report, done = {}, 0
+    if forkable:
+        LP = _lane_pin()
+        _ANSWER_SHARED.update(visible=visible, components=components, rights=rights, learner_context=learner_context,
+                              shared_market=shared_market, exhaustion_d=exhaustion_d)
+        gc.freeze()
+        mapped = LP.ordered_map(_component_answer_job, names, workers, cpus=lane,
+                                context=multiprocessing.get_context('fork'), poll=5.0, report=report,
+                                on_start=(lambda pool: on_start()) if on_start is not None else None)
+        try:
+            for name, value in mapped:
+                done += 1
+                heartbeat('classroom: component answers', done, len(names), unit='components', every=1.0)
+                yield name, value
+        finally:
+            mapped.close()                     # the pool is stopped now (bounded)
+            gc.unfreeze()
+            _ANSWER_SHARED.clear()
+            PINNING_RECORD['component_answers'] = dict(
+                LP.record(workers, lane, what='classroom component answers (fork pool, ordered_map)'),
+                worker_deaths=report.get('worker_deaths'), redone=report.get('redone'), answers=len(names),
+                yielded=done, waited_for_threads_s=waited, seconds=round(time.monotonic() - started, 3),
+                rule='each component answer computed once on a worker and saved by the runner in name order; the '
+                     'same value as an in-process answer')
+    else:
+        if on_start is not None:
+            on_start()
+        try:
+            for name in names:
+                yield name, component_answer(visible, components[name], rights[name], learner_context=learner_context,
+                                             shared_market=shared_market, exhaustion_d=exhaustion_d)
+                done += 1
+                heartbeat('classroom: component answers', done, len(names), unit='components', every=1.0)
+        finally:
+            PINNING_RECORD['component_answers'] = dict(
+                workers=1, where='this process, one answer after another', why=why, answers=len(names), yielded=done,
+                waited_for_threads_s=waited, seconds=round(time.monotonic() - started, 3))
+
+
 def _calculate_evidence(pre, origin):
     """One unchanged per-component/per-pair calculation for every lawful observation source."""
     math = _classroom_math()

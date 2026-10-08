@@ -497,7 +497,9 @@ def sha256_bytes(data):
 
 def sha256_files(paths):
     """sha256_bytes(path.read_bytes()) for each path, in order, streamed (derived layers run to many GB) and hashed on
-    threads (hashlib releases the GIL)."""
+    threads (hashlib releases the GIL): pinned threads over the booked lane, as many as files up to the lane's width
+    (frankie_box_lane_pin.executor; endings pass 2026-10-08: sized from the lane, never a constant), else a plain pool
+    of the same width."""
     from concurrent.futures import ThreadPoolExecutor
     def one(path):
         # once per unchanged file per run (frankie_box_filehash.py): brain_ready, identity() and load() check the same
@@ -510,8 +512,80 @@ def sha256_files(paths):
     paths = list(paths)
     if len(paths) < 2:
         return [one(p) for p in paths]
-    with ThreadPoolExecutor(min(14, len(paths))) as pool:
+    try:
+        import frankie_box_lane_pin as LP
+        lane = LP.lane_cpus()
+        pool = LP.executor('thread', max(1, min(len(paths), len(lane))), lane)
+    except Exception:  # noqa: BLE001 - placement only; the values are the same on an unpinned pool
+        pool = ThreadPoolExecutor(min(14, len(paths)))
+    with pool:
         return list(pool.map(one, paths))
+
+
+FILE_CLAIMS_NAME = 'file-claims.jsonl'
+CLAIM_TAIL_BYTES = 64 << 10
+
+
+def file_claims(directory):
+    """{(device, inode, size, mtime_ns): claim row} from <directory>/file-claims.jsonl: FRANKIE_FILE_CLAIM_V1 rows
+    (research/kalshi/frankie_boss/operations/ingest_block_sources.file_claim; the ROOT's rows under <root>/work/, dedupe
+    pass request R1) for files a stage measured whole on its write stream. A missing or unreadable file, or a row without
+    the full identity, yields nothing (the caller hashes); never raises."""
+    claims = {}
+    path = Path(directory) / FILE_CLAIMS_NAME
+    try:
+        lines = path.read_bytes().splitlines() if path.is_file() else []
+    except OSError:
+        return claims
+    for line in lines:
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        stat = row.get('stat') if isinstance(row, dict) else None
+        if (row.get('schema') != 'FRANKIE_FILE_CLAIM_V1' or not isinstance(stat, list) or len(stat) != 4
+                or type(row.get('bytes')) is not int or not row.get('sha256') or not row.get('tail_sha256')
+                or stat[2] != row['bytes']):
+            continue
+        claims[tuple(stat)] = dict(row, claim_file=str(path))
+    return claims
+
+
+def _tail_sha256(path, size):
+    with open(path, 'rb') as handle:
+        handle.seek(max(0, size - CLAIM_TAIL_BYTES))
+        return hashlib.sha256(handle.read()).hexdigest()
+
+
+def file_witnesses(paths, claims):
+    """[(sha256, basis)] for `paths` in order. A file whose (device, inode, size, mtime_ns) AND the sha256 of its last
+    64 KiB equal a claim row's takes the claim's sha256 (basis 'claim', the export's exact rule, `_pins_progress`); every
+    other file is hashed from byte 0 here on sha256_files (basis 'hashed'). Nothing is taken on stat alone (Greg's open
+    call (c) untouched); the basis is recorded by the caller. Endings pass 2026-10-08: on a2 the classroom's brain entry
+    hashed ROOT's 472 GB inline layer from byte 0 (one sequential sha256, ~7 min at the volume's 1.1 GB/s) to write
+    derived-files.md; with ROOT's claim row that is one 64 KiB read."""
+    paths = list(paths)
+    taken, to_hash = {}, []
+    for index, path in enumerate(paths):
+        row = None
+        if claims:
+            try:
+                s = os.stat(path)
+                row = claims.get((s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns))
+                if row is not None and row['tail_sha256'] != _tail_sha256(path, s.st_size):
+                    row = None
+            except OSError:
+                row = None
+        if row is not None:
+            taken[index] = (row['sha256'], dict(basis='claim', claimed_by=row.get('claimed_by'), claim_file=row.get('claim_file'),
+                                                rule='stat (device, inode, size, mtime_ns) and the last 64 KiB checked; '
+                                                     'any difference hashes from byte 0'))
+        else:
+            to_hash.append(index)
+    hashed = sha256_files([paths[i] for i in to_hash])
+    for index, digest in zip(to_hash, hashed):
+        taken[index] = (digest, dict(basis='hashed'))
+    return [taken[i] for i in range(len(paths))]
 
 
 def _lessons_doc(response):
@@ -820,10 +894,15 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
     derived = work / 'derived'
     if derived.is_dir():
         paths = [f for f in sorted(derived.iterdir()) if f.is_file()]
-        files = [dict(name=f.name, bytes=f.stat().st_size, sha256=digest) for f, digest in zip(paths, sha256_files(paths))]
+        # the witness of each derived file: the writing stage's FRANKIE_FILE_CLAIM_V1 claim when stat and the last 64 KiB
+        # still match (<work>/file-claims.jsonl), else hashed here (file_witnesses); the document's bytes are the same
+        # either way, the basis per file is on the manifest entry (additive, endings pass 2026-10-08)
+        witnessed = file_witnesses(paths, file_claims(work))
+        files = [dict(name=f.name, bytes=f.stat().st_size, sha256=digest) for f, (digest, _) in zip(paths, witnessed)]
         doc = ('# Derived files of this cycle (witnessed by name, bytes, sha256; the derivation digest renders their content losslessly)\n\n'
                '| file | bytes | sha256 |\n|---|---:|---|\n' + '\n'.join(f"| {f['name']} | {f['bytes']} | {f['sha256']} |" for f in files) + '\n')
         put('derived-files.md', doc.encode('utf-8'), derived, 'witness of the derived files (their content is in the digest)', False)
+        entries[-1]['witness_basis'] = {f.name: basis for f, (_, basis) in zip(paths, witnessed)}
     docs = out / 'docs'
     if calcs_only:
         absent('session-doc-*.md', docs)

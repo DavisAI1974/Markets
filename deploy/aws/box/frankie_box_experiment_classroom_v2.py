@@ -72,19 +72,28 @@ def _sha256(path):
 
 
 def _bytes(path, raw):
+    """Write `raw` durably (unchanged bytes are left as they are) and return its witness {bytes, sha256}: the write
+    stream's (frankie_box_durable.write_chunks, remembered in frankie_box_filehash), or of the equal bytes already on
+    disk (hashed from memory, remembered the same way): no read-back either way (endings pass, 2026-10-08)."""
     path = Path(path)
     if path.exists() and path.read_bytes() == raw:
-        return
+        value = dict(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+        try:
+            from frankie_box_filehash import remember
+            remember(path, value)
+        except ImportError:
+            pass
+        return value
     from frankie_box_durable import write_bytes
-    write_bytes(path, raw)
+    return write_bytes(path, raw)
 
 
 def _text(path, text):
-    _bytes(path, text.encode('utf-8'))
+    return _bytes(path, text.encode('utf-8'))
 
 
 def _dump(path, body):
-    _text(path, json.dumps(body, indent=1, sort_keys=True, default=str))
+    return _text(path, json.dumps(body, indent=1, sort_keys=True, default=str))
 
 
 # Function-level identities of the code the classroom invokes from other files (drop-in session 5, open item 5; the
@@ -407,6 +416,83 @@ class _SideTask:
                 process.kill()
                 process.join(5)
             self.record['outcome'] = 'stopped_with_the_classroom'
+
+
+class _ThreadTask:
+    """One independent computation on a thread of this process, beside work that releases the GIL (the external
+    section's numpy Pearson beside the forked component-answer pool; endings pass 2026-10-08). No fork: the same
+    process, the same OpenBLAS reduction setting (dipole_classroom_external.blas_reduction), so the same bits. result()
+    joins and hands the value to the same phase() as before, or re-raises the exception the computation raised (the same
+    object: a ModeNotAnswerable still reaches the runner's refusal path); when the thread was never started the value is
+    computed here, in order."""
+
+    def __init__(self, name, function):
+        self.name, self.function, self.thread = name, function, None
+        self.box = {}
+        self.record = dict(operation=name, outcome='not_started')
+
+    def start(self):
+        import threading
+        def body():
+            try:
+                self.box['value'] = self.function()
+            except BaseException as error:  # noqa: BLE001 - re-raised by result()
+                self.box['error'] = error
+        self.thread = threading.Thread(target=body, name='classroom-thread-' + self.name, daemon=True)
+        self.started = time.monotonic()
+        self.thread.start()
+        self.record.update(outcome='running', started_at=round(time.time(), 3))
+        return self
+
+    def result(self):
+        if self.thread is None:
+            self.record.update(outcome='computed_in_order', reason='thread not started')
+            return self.function()
+        clock = time.monotonic()
+        self.thread.join()
+        self.record.update(parent_waited_s=round(time.monotonic() - clock, 3),
+                           thread_seconds=round(time.monotonic() - self.started, 3))
+        if 'error' in self.box:
+            self.record.update(outcome='raised', error='%s: %s' % (type(self.box['error']).__name__, self.box['error']))
+            raise self.box['error']
+        self.record['outcome'] = 'thread'
+        return self.box['value']
+
+
+def _side_writes(items, directory, cpus, ready):
+    """Write the classroom's large output files side by side (endings pass, 2026-10-08): each item (name, function) runs
+    its own `_dump`/`_text` calls on a forked side process pinned to one lane CPU (frankie_box_lane_pin.placement over
+    `cpus`, one CPU per writer, physical cores first) while the runner goes on with the host's grade chain; the function
+    returns {file name: witness} and collect() hands every witness to frankie_box_filehash.remember, so the output pins
+    (_pin_outputs) stay cache hits and no file written here is read back. The bytes are the same: the same json.dumps,
+    the same durable write, in another process. A writer that could not be forked, died or failed is redone here in
+    order (_SideTask.result), as every side task is. Returns (tasks, placement record)."""
+    tasks, how = [], None
+    try:
+        import frankie_box_lane_pin as LP
+        _, worker_cpus, basis = LP.placement(len(items), cpus)
+        how = dict(LP.record(len(items), cpus, what='classroom output writers (one side process per file group)'))
+    except Exception as error:  # noqa: BLE001 - placement only; the writers then take the whole CPU list
+        worker_cpus, how = [list(cpus)] * len(items), dict(where='side processes on the whole off-consumer list',
+                                                          why='%s: %s' % (type(error).__name__, error))
+    for (name, function), cpu in zip(items, worker_cpus):
+        tasks.append(_SideTask('write:' + name, function, directory, [cpu] if isinstance(cpu, int) else cpu).start(ready))
+    return tasks, how
+
+
+def _collect_side_writes(tasks):
+    """Join the side writers; remember every witness; {name: record} for the receipt."""
+    records = {}
+    for task in tasks:
+        witnesses = task.result()
+        try:
+            from frankie_box_filehash import remember
+            for path, value in (witnesses or {}).items():
+                remember(path, value)
+        except ImportError:
+            pass
+        records[task.name] = dict(task.record, files=sorted(str(p) for p in (witnesses or {})))
+    return records
 
 
 def _owner_sigterm(requested, owner):
@@ -944,18 +1030,44 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
         # The anchor pictures enter every component answer whole (the published guarantee); each is encoded ONCE on
         # the lane (K.picture_texts: a pinned fork pool) and spliced into each answer that names it: the same bytes.
         # Only when a component answer is still to be computed; released after the summary.
-        if shared_market is not None and any(not phase_path('component:' + n).exists() for n in names):
+        pending_names = [n for n in names if not phase_path('component:' + n).exists()]
+        if shared_market is not None and pending_names:
             shared_market.prepare_picture_texts()        # placement: received.cpu_pinning.picture_texts
-        outputs = {n: phase('component:' + n, lambda n=n: K.component_answer(
-            visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)],
-            learner_context=learner_context, shared_market=shared_market, exhaustion_d=exhaustion_d)) for n in names}
+        # Endings pass (2026-10-08; Greg: CPUs in every step of the ending): the component answers still to be computed
+        # run side by side on a pinned fork pool over the lane (K.component_answers_side_by_side, ordered_map) and
+        # arrive in name order; each is saved by the same phase() as before (the same value, the same pickle bytes),
+        # a saved one is restored as before. The external section (numpy Pearson, releases the GIL) runs on a thread
+        # of this process started once the pool is forked, and its phase takes that value in the same place.
+        external = _ThreadTask('external_answers', lambda: KX.answers(
+            ext_visible, dipole_visible=visible, learner_context=learner_context,
+            independent_evidence=independent_external, knowledge=knowledge, school=school))
+        start_external = external.start if not phase_path('external_answers').exists() else None
+        answers = K.component_answers_side_by_side(
+            visible, pending_names, {n: C.component(visible, n) for n in pending_names},
+            {n: [q['right'] for q in C.pairs_of(visible, n)] for n in pending_names},
+            learner_context=learner_context, shared_market=shared_market, exhaustion_d=exhaustion_d,
+            on_start=start_external) if pending_names else None
+        def next_answer(expected):
+            name, value = next(answers)
+            if name != expected:
+                raise ValueError('component answers arrived out of order: %s before %s' % (name, expected))
+            return value
+        outputs = {}
+        try:
+            for n in names:
+                outputs[n] = phase('component:' + n, (lambda n=n: next_answer(n)) if n in pending_names else
+                                   lambda n=n: K.component_answer(
+                                       visible, C.component(visible, n), [q['right'] for q in C.pairs_of(visible, n)],
+                                       learner_context=learner_context, shared_market=shared_market, exhaustion_d=exhaustion_d))
+        finally:
+            if answers is not None:
+                answers.close()                          # the pool is ended (bounded) before any later fork
+        received['side_by_side'] = dict(received.get('side_by_side') or {}, external_answers=external.record)
         summary = phase('summary', lambda: K.summary_answer(visible, outputs, learner_context=learner_context,
                                                           shared_market=shared_market, exhaustion_d=exhaustion_d))
         if shared_market is not None:
             shared_market.release_picture_texts()
-        ext_ledgers = phase('external_answers', lambda: KX.answers(
-            ext_visible, dipole_visible=visible, learner_context=learner_context,
-            independent_evidence=independent_external, knowledge=knowledge, school=school))
+        ext_ledgers = phase('external_answers', external.result)
         # The 13 external points (Greg via Frankie, 2026-10-07): per point how the classroom used it (computed / context /
         # absent), the series that entered the external section arithmetic (each value at or after its reader stamp), the
         # 99 entries the day file declares it feeds with the mapping basis (exact / closest) and the placement note, and
@@ -997,25 +1109,44 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     built = phase('assembly', lambda: C.assemble(visible, outputs, summary))
     report = phase('answer_report', lambda: C.validate(visible, built['ledgers']))
     ext_report = phase('external_report', lambda: EXT.validate_external_ledgers(ext_ledgers, ext['pre_message']))
-    _dump(d / 'code-answers.json', dict(schema=K.SCHEMA, rules=rules_witness, outputs=outputs, summary=summary,
-                                        school=reproduction, stage_knowledge=knowledge_reproduction,
-                                        learner_reading=learner_reading, model_calls=0,
-                                        shared_market=shared_market.summary() if shared_market is not None else None,
-                                        shared_market_external=shared_external, all99_coverage=all99,
-                                        exhaustion_d=K._exhaustion_d_receipt(exhaustion_d),
-                                        native_entries=native_entries))
-    _dump(d / 'learner-knowledge.json', dict(day=day, stage='classroom', documents=knowledge,
-                                           versions=knowledge_input['versions'], listed=knowledge_input['listed'],
-                                           school_documents=school, school_listed=school_listed,
-                                           school_sources=reproduction['school_days_read'],
-                                           learner_reading=learner_reading,
-                                           applied_to=['component_answer', 'summary_answer', 'external_answers']))
-    _dump(d / 'ledgers.json', built['ledgers'])
-    _text(d / 'classroom.md', C.render_markdown(built['ledgers'], built['dropped_findings']))
-    _dump(d / 'external-code-answers.json', dict(schema=KX.SCHEMA, rules=rules_witness, ledgers=ext_ledgers, model_calls=0))
-    _dump(d / 'external-novel-findings.json', dict(schema='FRANKIE_EXTERNAL_FINDINGS_V1', day=day,
-          findings=ext_ledgers['external_novel_findings'],
-          source=dict(path=str(d / 'external-code-answers.json'), sha256=_sha256(d / 'external-code-answers.json'))))
+    # Endings pass (2026-10-08): the large answer files (the picture texts sit in the outputs, the ledgers and the
+    # rendered markdown) are encoded and written on side processes, one lane CPU each, beside the host's grade chain
+    # below; the same json.dumps and the same durable write (the same bytes), their write-stream witnesses remembered
+    # here so the output pins read nothing back. Collected before the grade-chain files are written.
+    def write_code_answers():
+        return {str(d / 'code-answers.json'): _dump(d / 'code-answers.json', dict(
+            schema=K.SCHEMA, rules=rules_witness, outputs=outputs, summary=summary,
+            school=reproduction, stage_knowledge=knowledge_reproduction,
+            learner_reading=learner_reading, model_calls=0,
+            shared_market=shared_market.summary() if shared_market is not None else None,
+            shared_market_external=shared_external, all99_coverage=all99,
+            exhaustion_d=K._exhaustion_d_receipt(exhaustion_d),
+            native_entries=native_entries))}
+    def write_learner_knowledge():
+        return {str(d / 'learner-knowledge.json'): _dump(d / 'learner-knowledge.json', dict(
+            day=day, stage='classroom', documents=knowledge,
+            versions=knowledge_input['versions'], listed=knowledge_input['listed'],
+            school_documents=school, school_listed=school_listed,
+            school_sources=reproduction['school_days_read'],
+            learner_reading=learner_reading,
+            applied_to=['component_answer', 'summary_answer', 'external_answers']))}
+    def write_ledgers():
+        return {str(d / 'ledgers.json'): _dump(d / 'ledgers.json', built['ledgers'])}
+    def write_classroom_md():
+        return {str(d / 'classroom.md'): _text(d / 'classroom.md', C.render_markdown(built['ledgers'], built['dropped_findings']))}
+    def write_external():
+        first = _dump(d / 'external-code-answers.json', dict(schema=KX.SCHEMA, rules=rules_witness, ledgers=ext_ledgers, model_calls=0))
+        second = _dump(d / 'external-novel-findings.json', dict(schema='FRANKIE_EXTERNAL_FINDINGS_V1', day=day,
+                       findings=ext_ledgers['external_novel_findings'],
+                       source=dict(path=str(d / 'external-code-answers.json'), sha256=first['sha256'])))
+        return {str(d / 'external-code-answers.json'): first, str(d / 'external-novel-findings.json'): second}
+    writer_lane = K.lane_cpus()
+    writer_consumer, writer_siblings, _ = K._lane_pin().consumer_core(writer_lane)
+    writers, writers_placement = _side_writes(
+        [('code-answers', write_code_answers), ('learner-knowledge', write_learner_knowledge), ('ledgers', write_ledgers),
+         ('classroom-md', write_classroom_md), ('external', write_external)],
+        d, [c for c in writer_lane if c != writer_consumer and c not in writer_siblings] or writer_lane,
+        K._fork_ready(wait=2.0))
 
     # ---- the 19 components and 171 pairs: exactly the V1 arm's calls
     request_sha256 = digest(request)
@@ -1047,6 +1178,10 @@ def _run(day, calculations, teacher_rows, previous, brain, day_external, day_ext
     ext_ack, ext_completion = phase('external_finish', lambda: EXT.finish_external(binding=ext['binding'], key=ext['teacher_key'], pre=ext['pre_message'],
                                                   ledgers=ext_ledgers, grade=ext_grade, correction=ext_correction,
                                                   reply=ext_reply, initial_session_id=session_id, model_identity=MODEL_IDENTITY))
+
+    # the side writers of the answer files (started above, beside the two grade chains): joined here, witnesses remembered
+    received['side_by_side'] = dict(received.get('side_by_side') or {}, output_writers=dict(
+        placement=writers_placement, tasks=_collect_side_writes(writers)))
 
     files = dict(teachback=teachback, **{'post-grade': grade}, **{'novel-findings': list(novel)},
                  **{'novelty-investigation': novelty}, **{'correction-request': correction},

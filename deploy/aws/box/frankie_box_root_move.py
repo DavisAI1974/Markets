@@ -601,6 +601,13 @@ def do_bind_mount(item, cpus=None, say=print, mount_cmd=None, fstab=None):
     if missing:
         out.update(status='failed', reason='pinned files not found under the directory: %s; original untouched' % missing[:10])
         return out
+    # review 2026-10-08 finding 6 (Patch F): the archive volume itself must be in fstab (else the bind line would come up
+    # on an EMPTY directory after a reboot); checked BEFORE the original is touched, so a refusal needs no unwind
+    archive_root = str(item.get('archive_root') or os.environ.get('FRANKIE_ARCHIVE_ROOT') or ARCHIVE_ROOT)
+    if not fstab_has_mount(fstab, archive_root):
+        out.update(status='failed', reason='the archive volume %s has no entry in %s: a bind line would come up on an empty '
+                                           'directory after a reboot; original untouched, copy kept at %s' % (archive_root, fstab, new))
+        return out
     aside = old + '.premount-aside'
     os.rename(old, aside)
     os.mkdir(old)
@@ -645,13 +652,8 @@ def do_bind_mount(item, cpus=None, say=print, mount_cmd=None, fstab=None):
     out.update(verified_through_mount=len(verified), ismount=os.path.ismount(old))
     if bad or (mount_cmd == 'mount' and not os.path.ismount(old)):
         return unwind('verification through the mount failed: %s' % (bad[:5] or 'not a mount point'))
-    # review 2026-10-08 finding 6 (Patch F): the archive volume itself must be in fstab (else the bind line would come up
-    # on an EMPTY directory after a reboot); the bind line requires that mount and carries a frankie-clean label that
-    # retire_run removes (remove_fstab_lines) after umount
-    archive_root = str(item.get('archive_root') or os.environ.get('FRANKIE_ARCHIVE_ROOT') or ARCHIVE_ROOT)
-    if not fstab_has_mount(fstab, archive_root):
-        return unwind('the archive volume %s has no entry in %s: a bind line would come up on an empty directory after a '
-                      'reboot' % (archive_root, fstab))
+    # the bind line requires the archive volume's mount (checked above) and carries a frankie-clean label that retire_run
+    # removes (remove_fstab_lines) after umount
     line = '%s %s none bind,nofail,x-systemd.requires-mounts-for=%s 0 0  # frankie-clean %s' % (
         new, old, archive_root, os.environ.get('FRANKIE_CLEAN_LABEL') or 'run=? day=? stage=?')
     try:
