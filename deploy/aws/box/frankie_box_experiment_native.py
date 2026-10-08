@@ -5,6 +5,8 @@ completed-knowledge evidence; they are not repeated observations or early live f
 """
 import hashlib
 import json
+import os
+import threading
 import time
 from pathlib import Path
 
@@ -94,25 +96,151 @@ def _regular_under(root, pin, name, directory):
         return False
 
 
+# Session 9 (Greg: "fix before we get there so we don't have to stop"; one pass over the data, never two): the ROOT
+# sealed and claimed every native ledger and section product (work/file-claims.jsonl, FRANKIE_FILE_CLAIM_V2: path,
+# bytes, sha256, inode/size/mtime_ns/filesystem identity, sha256 of the last 64 KiB). The teacher's shared market
+# timeline and the data stage each called selected_files, which hashed every ledger whole again (a2's member ledger is
+# 193.7 GB, ~25 min at 131 MB/s, per stage). Now each large artifact takes its claim when one holds (the row's bytes and
+# sha256 equal to the derivation pin, stat and tail unchanged: frankie_box_boss_session._claim_still_holds, one 64 KiB
+# read); only a file with no holding claim is hashed whole (pinned lane threads as before), and that whole read, when
+# it equals the pin with the stat unchanged across it, appends its claim row (existing rows byte for byte) so the next
+# consumer takes it. The witness handed to take() is the same {bytes, sha256}; its basis rides on the future and on the
+# selected item ('selection_basis'). FRANKIE_ROOT_LEGACY_REUSE_CHECK=full (or FRANKIE_ROOT_NATIVE_REUSE_CHECK=full)
+# restores the whole reads.
+_CLAIM_APPEND_LOCK = threading.Lock()
+
+
+class _Known:
+    """A finished witness with its basis (the claim), shaped like the future take() reads."""
+    def __init__(self, value, basis):
+        self.value, self.basis = value, basis
+
+    def result(self):
+        return self.value
+
+
+class _Later:
+    """One whole read computed when take() reaches it (the serial order), shaped like the future take() reads."""
+    def __init__(self, function, basis):
+        self.function, self.basis, self.done = function, basis, None
+
+    def result(self):
+        if self.done is None:
+            self.done = (self.function(),)
+        return self.done[0]
+
+
+def _claims_mode():
+    return 'full' if 'full' in (os.environ.get('FRANKIE_ROOT_LEGACY_REUSE_CHECK'),
+                                os.environ.get('FRANKIE_ROOT_NATIVE_REUSE_CHECK')) else 'claim'
+
+
+def _session_claims():
+    try:
+        import frankie_box_boss_session as S
+    except ImportError:
+        from deploy.aws.box import frankie_box_boss_session as S
+    return S
+
+
+def _claim_basis(path, pin, claims, work):
+    """The basis text when the saved claim row for this path still holds and names the pin's bytes and sha256; else
+    (None, why it is read whole). Never raises."""
+    try:
+        row = claims.get(str(Path(path).resolve()))
+        if row is None:
+            return None, 'no claim row for this path in work/file-claims.jsonl'
+        if (row.get('bytes'), row.get('sha256')) != (pin['bytes'], pin['sha256']):
+            return None, 'the claim row names other bytes/sha256 than the derivation pin'
+        held = _session_claims()._claim_still_holds(row, claims_dir=work, claims=claims)
+        if held is None:
+            return None, 'the claim row no longer holds (inode, size, mtime_ns, filesystem or last 64 KiB changed)'
+        return held, None
+    except Exception as error:  # noqa: BLE001 - a claim is a hint: without one the file is read whole
+        return None, 'claim not taken (%s: %s)' % (type(error).__name__, error)
+
+
+def _whole_then_claim(path, pin, work):
+    """The whole-file witness; when it equals the pin and the file's stat did not move across the read, its
+    FRANKIE_FILE_CLAIM_V2 row is appended to work/file-claims.jsonl (existing rows byte for byte, one atomic rewrite)
+    so the next consumer takes the claim. The append is a hint: it never raises; its outcome is listed."""
+    before = Path(path).stat()
+    seen = _witness(path)
+    note = dict(path=str(path))
+    try:
+        if seen != {k: pin[k] for k in ('bytes', 'sha256')}:
+            note['claim'] = 'not appended: the whole read differs from the pin (raised by the check)'
+        else:
+            from research.kalshi.frankie_boss.operations.ingest_block_sources import (file_claim, FILE_CLAIMS_NAME,
+                                                                                       _write_claims_atomic)
+            row = file_claim(path, seen['bytes'], seen['sha256'],
+                             'native selection (selected_files) whole read at %s'
+                             % time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+            if row['stat'] != [before.st_ino, before.st_size, before.st_mtime_ns]:
+                note['claim'] = 'not appended: the file\'s stat moved during the whole read'
+            else:
+                target = Path(work) / FILE_CLAIMS_NAME
+                with _CLAIM_APPEND_LOCK:
+                    text = target.read_text(encoding='utf-8') if target.is_file() else ''
+                    if text and not text.endswith('\n'):
+                        text += '\n'
+                    _write_claims_atomic(target, (text + json.dumps(row, sort_keys=True) + '\n').encode())
+                note['claim'] = 'appended to ' + str(target)
+    except Exception as error:  # noqa: BLE001 - the claim is a hint for the next consumer, never this check's outcome
+        note['claim'] = 'not appended (%s: %s)' % (type(error).__name__, error)
+    LAST_SELECTION_CHECK.setdefault('claims_appended', []).append(note)
+    return seen
+
+
 def _prefetch_witnesses(root, wanted):
-    """{path: future of its witness} for the (pin, name, directory) entries take() would read, on pinned threads."""
+    """(pool or None, {path: future-like of its witness}) for the (pin, name, directory) entries take() would read:
+    a holding claim is the witness (no read); the rest are hashed whole on pinned threads (two or more) or when take()
+    reaches them (one). Each future-like carries .basis ('by claim: ...' | 'read whole: <why>')."""
     LAST_SELECTION_CHECK.clear()
-    targets = []
+    work = Path(root) / 'work'
+    mode = _claims_mode()
+    claims = {}
+    if mode == 'claim':
+        try:
+            claims = _session_claims()._load_file_claims(work)
+        except Exception:  # noqa: BLE001 - no claims: every file is read whole
+            claims = {}
+    known, whole, bases = {}, [], {}
     for pin, name, directory in wanted:
-        if isinstance(pin, dict) and _regular_under(root, pin, name, directory) and pin['path'] not in targets:
-            targets.append(pin['path'])
-    if len(targets) < 2:
-        return None, {}
+        if not (isinstance(pin, dict) and _regular_under(root, pin, name, directory)):
+            continue
+        path = pin['path']
+        if path in known or any(path == p for p, _, _ in whole):
+            continue
+        if mode == 'full':
+            held, why = None, 'FRANKIE_ROOT_LEGACY_REUSE_CHECK=full (or FRANKIE_ROOT_NATIVE_REUSE_CHECK=full)'
+        else:
+            held, why = _claim_basis(path, pin, claims, work)
+        if held is not None:
+            known[path] = _Known({k: pin[k] for k in ('bytes', 'sha256')}, 'by claim: ' + held)
+        else:
+            whole.append((path, pin, 'read whole: ' + why))
+        bases[path] = known[path].basis if path in known else whole[-1][2]
+    LAST_SELECTION_CHECK.update(files=len(known) + len(whole), by_claim=len(known), read_whole=len(whole),
+                                basis=bases, started=time.time())
+    if len(whole) < 2:
+        for path, pin, basis in whole:
+            known[path] = _Later(lambda p=path, q=pin: _whole_then_claim(p, q, work), basis)
+        return None, known
     try:
         import frankie_box_lane_pin as LP
     except ImportError:
         from deploy.aws.box import frankie_box_lane_pin as LP
     lane = LP.lane_cpus()
-    count = max(1, min(len(targets), len(lane)))
+    count = max(1, min(len(whole), len(lane)))
     pool = LP.executor('thread', count, lane)
-    LAST_SELECTION_CHECK.update(files=len(targets), threads=count, started=time.time(),
+    LAST_SELECTION_CHECK.update(threads=count,
                                 cpu_placement=LP.record(count, lane, what='native selection witnesses (pinned threads)'))
-    return pool, {path: pool.submit(_witness, path) for path in targets}
+    for path, pin, basis in whole:
+        future = pool.submit(_whole_then_claim, path, pin, work)
+        future.basis = basis
+        known[path] = future
+    return pool, known
 
 
 def selected_files(root, day):
@@ -151,8 +279,8 @@ def selected_files(root, day):
     finally:
         if pool is not None:
             pool.shutdown(wait=True, cancel_futures=True)
-            if LAST_SELECTION_CHECK.get('started'):
-                LAST_SELECTION_CHECK['seconds'] = round(time.time() - LAST_SELECTION_CHECK.pop('started'), 3)
+        if LAST_SELECTION_CHECK.get('started'):
+            LAST_SELECTION_CHECK['seconds'] = round(time.time() - LAST_SELECTION_CHECK.pop('started'), 3)
 
 
 def _take_all(root, binding, native, derive, policy, selected, measured):
@@ -170,7 +298,9 @@ def _take_all(root, binding, native, derive, policy, selected, measured):
         selected.append(dict(stage='root', path=str(relative), source=str(path),
             pattern='completed native derivation:' + role, what='existing exact native calculation evidence',
             native_role=role, evidence_contract=evidence_contract(role),
-            expected={k: pin[k] for k in ('bytes', 'sha256')}))
+            expected={k: pin[k] for k in ('bytes', 'sha256')},
+            selection_basis=getattr(future, 'basis', None) or 'read whole: a small artifact (claims are taken for the '
+                                                               'ledgers and section products)'))
 
     take('receipt', native['receipt'], 'receipt.json', 'work/bedrock')
     take('result', native['result'], 'result.json', 'work/bedrock')
