@@ -177,3 +177,10 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
 - 16:58Z PARENT NEXT: take-over fix 0e2a568 in source; restage run 37812835190 (dispatched 16:57:32Z) staging
   0e2a568548cccac2e8e9bb500f0f07753819255b into CR2=/opt/frankie-box/code/0e2a568...-37812835190-1/markets. Plan: verify the
   stage, then ACTION=handover LINE=root on CR2 (old worker 4813 signalled; new --wait-lock worker), then watch.
+- 17:01:01Z run 37812835190 completed, success.
+- 17:01:59Z VERIFY + HANDOVER (SSM b6ef35f1, rc 0): staging-receipt `staged`, commit 0e2a568, files 4133; HEAD 0e2a568548cc...;
+  `grep -c grown_to` cores.py 3, `grep -c cpus_before_grow` queue.py 1. State before: entry seq 2 `queued` (owner.cpus 32),
+  ledger n 64 retained, worker 4813 running (17:01:08Z), receipt absent. HANDOVER exit 0: {"old_worker": 4813, "signalled":
+  4813, "superseded_waiting": [], "new_unit": "frankie-queue-root-handover-1791478919", "systemd_run_exit": 0, "log":
+  Q/logs/root-worker.log, "note": "the old worker finishes the days in its slots and ends; the new one waits on the lock,
+  then runs"}. Status after: booking 0-63 retained (alive false), marker not standing, owner commit still 27109f4d (pre-take).
