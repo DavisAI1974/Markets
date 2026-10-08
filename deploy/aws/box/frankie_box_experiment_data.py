@@ -249,15 +249,21 @@ def _pin_job(job):
     return size, hasher.hexdigest(), round(time.time() - started, 3)
 
 
-CLAIMS_NAME = 'file-claims.jsonl'         # FRANKIE_FILE_CLAIM_V1 rows an earlier stage wrote beside what it sealed
+CLAIMS_NAME = 'file-claims.jsonl'         # FRANKIE_FILE_CLAIM_V1/V2 rows an earlier stage wrote beside what it sealed
 
 
 def _stage_claims(dirs):
-    """{(device, inode, size, mtime_ns): claim row} from every stage directory's file-claims.jsonl and work/file-claims.jsonl
-    (FRANKIE_FILE_CLAIM_V1, research/kalshi/frankie_boss/operations/ingest_block_sources.file_claim: a sealed file's bytes
-    and sha256 measured whole by the stage that wrote it, with its stat and the sha256 of its last 64 KiB). A row without
-    the full identity is skipped; an unreadable file is listed. Returns (claims, files read, skipped rows)."""
+    """{(inode, size, mtime_ns): claim row} from every stage directory's file-claims.jsonl and work/file-claims.jsonl
+    (FRANKIE_FILE_CLAIM_V1 or V2, research/kalshi/frankie_boss/operations/ingest_block_sources.file_claim: a sealed file's
+    bytes and sha256 measured whole by the stage that wrote it, with its identity and the sha256 of its last 64 KiB).
+    Session 8 (2026-10-08): keyed without the device number (it renumbers across a reboot); a V2 row's filesystem is
+    checked at the take. A row without the full identity is skipped; an unreadable file is listed. Returns (claims,
+    files read, skipped rows)."""
     claims, read, skipped = {}, [], 0
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_identity
+    except ImportError:
+        return claims, read, skipped
     for stage, base in sorted((dirs or {}).items()):
         if not base:
             continue
@@ -276,13 +282,12 @@ def _stage_claims(dirs):
                 except ValueError:
                     skipped += 1
                     continue
-                stat = row.get('stat') if isinstance(row, dict) else None
-                if (row.get('schema') != 'FRANKIE_FILE_CLAIM_V1' or not isinstance(stat, list) or len(stat) != 4
-                        or type(row.get('bytes')) is not int or not row.get('sha256') or not row.get('tail_sha256')
-                        or stat[2] != row['bytes']):
+                identity = claim_identity(row)
+                if (identity is None or type(row.get('bytes')) is not int or not row.get('sha256')
+                        or not row.get('tail_sha256') or identity[1] != row['bytes']):
                     skipped += 1
                     continue
-                claims[tuple(stat)] = dict(row, claim_file=str(candidate), claim_stage=stage)
+                claims[identity] = dict(row, claim_file=str(candidate), claim_stage=stage)
                 rows += 1
             read.append(dict(stage=stage, path=str(candidate), rows=rows))
     return claims, read, skipped
@@ -329,19 +334,26 @@ def _pins_progress(progress_path, paths, reuse, claims=None):
         # destination shares device, inode, size and mtime with the sealed source) is taken under the same rule as the
         # export's own after-save rows: stat AND the last 64 KiB must match; else the file is hashed from byte 0 here.
         # Nothing is skipped on stat alone (Greg's open call (c) untouched); the basis is on the MANIFEST per file.
-        row = (claims or {}).get(tuple(key))
-        if row is not None and row['tail_sha256'] == _tail_sha256(p, key[2]):
+        row = (claims or {}).get((key[1], key[2], key[3]))
+        held = None
+        if row is not None:
+            try:
+                from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
+                held = claim_still_holds(row, p)          # inode, size, mtime_ns, the filesystem (V2) and the tail
+            except ImportError:
+                held = None
+        if held is not None:
             reused[str(p)] = (row['bytes'], row['sha256'], 0.0)
             claimed[str(p)] = dict(hash_basis='claim', claimed_by=row.get('claimed_by'), claim_file=row.get('claim_file'),
-                                   claim_stage=row.get('claim_stage'), claim_path=row.get('path'),
-                                   rehash_rule='stat (device, inode, size, mtime_ns) and the last 64 KiB checked here; '
-                                               'any difference hashes from byte 0')
+                                   claim_stage=row.get('claim_stage'), claim_path=row.get('path'), claim_schema=held['basis'],
+                                   rehash_rule='inode, size, mtime_ns, the filesystem identity (a V2 row) and the last '
+                                               '64 KiB checked here; any difference hashes from byte 0')
     rule = ('resume after a requested save: ROOT\'s unchanged-file rule (stat and last 64 KiB) keeps finished pins and '
             'continues saved running hashes' if after_save else
             'FRANKIE_EXPORT_REUSE_PINS=on: recorded pins of identical stat reused (Greg\'s open call (c))' if reuse else
             'no requested save on record and the reuse switch off: every file hashed from byte 0')
     if claimed:
-        rule += '; %d file(s) pinned from an earlier stage\'s FRANKIE_FILE_CLAIM_V1 claim (stat and last 64 KiB checked)' % len(claimed)
+        rule += '; %d file(s) pinned from an earlier stage\'s file claim (V1 or V2: identity and last 64 KiB checked)' % len(claimed)
     return dict(rows=len(saved) + len(partial), torn_lines=torn, after_save=after_save, claimed=claimed), reused, resumes, rule
 
 
@@ -625,10 +637,12 @@ def _export(day, cycle, dirs, root=ROOT, workers=1):
     claims, claim_files, claim_rows_skipped = _stage_claims(dirs)
     pins, hashing = _pin_all([item['destination'] for item in files], workers,
                              progress_path=target.parent / (target.name + '.pins-progress.jsonl'), claims=claims)
-    hashing['claims'] = dict(schema='FRANKIE_FILE_CLAIM_V1', files=claim_files, rows=len(claims), rows_skipped=claim_rows_skipped,
+    hashing['claims'] = dict(schema='FRANKIE_FILE_CLAIM_V2', read=['FRANKIE_FILE_CLAIM_V1', 'FRANKIE_FILE_CLAIM_V2'],
+                             files=claim_files, rows=len(claims), rows_skipped=claim_rows_skipped,
                              accepted=hashing['save_point']['found'].get('claimed') or {},
-                             rule='a linked file whose device, inode, size, mtime_ns and last 64 KiB equal a claim row\'s is '
-                                  'pinned from that claim (hash_basis claim); every other file is hashed from byte 0 here')
+                             rule='a linked file whose inode, size, mtime_ns, filesystem identity (a V2 row) and last 64 KiB '
+                                  'equal a claim row\'s is pinned from that claim (hash_basis claim); every other file is hashed '
+                                  'from byte 0 here')
     # the native selection checks plan() ran (frankie_box_experiment_native.selected_files: the large ledgers and
     # section products witnessed side by side on pinned threads before their pins are compared); diagnostic only
     try:

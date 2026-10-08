@@ -527,27 +527,29 @@ CLAIM_TAIL_BYTES = 64 << 10
 
 
 def file_claims(directory):
-    """{(device, inode, size, mtime_ns): claim row} from <directory>/file-claims.jsonl: FRANKIE_FILE_CLAIM_V1 rows
+    """{(inode, size, mtime_ns): claim row} from <directory>/file-claims.jsonl: FRANKIE_FILE_CLAIM_V1 or V2 rows
     (research/kalshi/frankie_boss/operations/ingest_block_sources.file_claim; the ROOT's rows under <root>/work/, dedupe
-    pass request R1) for files a stage measured whole on its write stream. A missing or unreadable file, or a row without
-    the full identity, yields nothing (the caller hashes); never raises."""
+    pass request R1) for files a stage measured whole on its write stream. Session 8 (2026-10-08): keyed without the
+    device number (it renumbers across a reboot); a V2 row's filesystem identity is checked at the take
+    (ingest_block_sources.claim_still_holds). A missing or unreadable file, or a row without the full identity, yields
+    nothing (the caller hashes); never raises."""
     claims = {}
     path = Path(directory) / FILE_CLAIMS_NAME
     try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_identity
         lines = path.read_bytes().splitlines() if path.is_file() else []
-    except OSError:
+    except (OSError, ImportError):
         return claims
     for line in lines:
         try:
             row = json.loads(line)
         except ValueError:
             continue
-        stat = row.get('stat') if isinstance(row, dict) else None
-        if (row.get('schema') != 'FRANKIE_FILE_CLAIM_V1' or not isinstance(stat, list) or len(stat) != 4
-                or type(row.get('bytes')) is not int or not row.get('sha256') or not row.get('tail_sha256')
-                or stat[2] != row['bytes']):
+        identity = claim_identity(row)
+        if (identity is None or type(row.get('bytes')) is not int or not row.get('sha256') or not row.get('tail_sha256')
+                or identity[1] != row['bytes']):
             continue
-        claims[tuple(stat)] = dict(row, claim_file=str(path))
+        claims[identity] = dict(row, claim_file=str(path))
     return claims
 
 
@@ -558,8 +560,8 @@ def _tail_sha256(path, size):
 
 
 def file_witnesses(paths, claims):
-    """[(sha256, basis)] for `paths` in order. A file whose (device, inode, size, mtime_ns) AND the sha256 of its last
-    64 KiB equal a claim row's takes the claim's sha256 (basis 'claim', the export's exact rule, `_pins_progress`); every
+    """[(sha256, basis)] for `paths` in order. A file whose (inode, size, mtime_ns), filesystem (a V2 row) AND the
+    sha256 of its last 64 KiB equal a claim row's takes the claim's sha256 (basis 'claim', the export's exact rule, `_pins_progress`); every
     other file is hashed from byte 0 here on sha256_files (basis 'hashed'). Nothing is taken on stat alone (Greg's open
     call (c) untouched); the basis is recorded by the caller. Endings pass 2026-10-08: on a2 the classroom's brain entry
     hashed ROOT's 472 GB inline layer from byte 0 (one sequential sha256, ~7 min at the volume's 1.1 GB/s) to write
@@ -567,19 +569,20 @@ def file_witnesses(paths, claims):
     paths = list(paths)
     taken, to_hash = {}, []
     for index, path in enumerate(paths):
-        row = None
+        row, held = None, None
         if claims:
             try:
+                from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds
                 s = os.stat(path)
-                row = claims.get((s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns))
-                if row is not None and row['tail_sha256'] != _tail_sha256(path, s.st_size):
-                    row = None
-            except OSError:
-                row = None
-        if row is not None:
+                row = claims.get((s.st_ino, s.st_size, s.st_mtime_ns))
+                held = claim_still_holds(row, path) if row is not None else None
+            except (OSError, ImportError):
+                held = None
+        if held is not None:
             taken[index] = (row['sha256'], dict(basis='claim', claimed_by=row.get('claimed_by'), claim_file=row.get('claim_file'),
-                                                rule='stat (device, inode, size, mtime_ns) and the last 64 KiB checked; '
-                                                     'any difference hashes from byte 0'))
+                                                claim_schema=held['basis'],
+                                                rule='inode, size, mtime_ns, the filesystem identity (a V2 row) and the last '
+                                                     '64 KiB checked; any difference hashes from byte 0'))
         else:
             to_hash.append(index)
     hashed = sha256_files([paths[i] for i in to_hash])

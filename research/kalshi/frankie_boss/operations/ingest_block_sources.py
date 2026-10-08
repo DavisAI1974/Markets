@@ -44,7 +44,9 @@ import json
 import os
 import re
 import sqlite3
+import subprocess
 import sys
+import threading
 import time
 from contextlib import ExitStack
 from dataclasses import asdict
@@ -485,44 +487,198 @@ def _journal_sha256(result, journal):
     return value or sha256_file(journal)
 
 
-FILE_CLAIM_SCHEMA = 'FRANKIE_FILE_CLAIM_V1'
+FILE_CLAIM_SCHEMA = 'FRANKIE_FILE_CLAIM_V2'
+FILE_CLAIM_SCHEMAS = ('FRANKIE_FILE_CLAIM_V1', FILE_CLAIM_SCHEMA)      # both read; V2 written (session 8, 2026-10-08)
 FILE_CLAIMS_NAME = 'file-claims.jsonl'
 CLAIM_TAIL_BYTES = 64 << 10
+CLAIM_RULE = ('taken by a later stage only when inode, size, mtime_ns, the filesystem identity and the last 64 KiB '
+              'match; else that stage hashes in full')
+_FS_IDENTITY_CACHE = {}       # st_dev -> (identity, basis) for this process: a device does not renumber while it runs
+
+
+def filesystem_identity(path, info=None):
+    """(identity, basis) of the filesystem holding `path`: the identity that survives a reboot where st_dev does not
+    (session 8, 2026-10-08: a2's two NVMe volumes enumerated in the other order after a restart, root 66305 -> 66306,
+    so every FRANKIE_FILE_CLAIM_V1 row failed on st_dev alone and ~1.2 TB fell to "read whole"). In order: the
+    filesystem UUID from /dev/disk/by-uuid (the link whose device number is the file's st_dev; basis 'by-uuid'),
+    `findmnt -no UUID,SOURCE -T <path>` (basis 'findmnt-uuid', or 'mount-source' when the mount has no UUID), the
+    mount's source from /proc/self/mounts (basis 'mount-source'), else 'st_dev:<n>' (basis 'st_dev': the old identity,
+    recorded as such). Cached per st_dev for the process. Raises only the path's own OSError."""
+    info = info or os.stat(path)
+    if info.st_dev in _FS_IDENTITY_CACHE:
+        return _FS_IDENTITY_CACHE[info.st_dev]
+    found = None
+    try:
+        by_uuid = Path('/dev/disk/by-uuid')
+        for link in (sorted(by_uuid.iterdir()) if by_uuid.is_dir() else ()):
+            try:
+                if os.stat(link).st_rdev == info.st_dev:
+                    found = (link.name, 'by-uuid')
+                    break
+            except OSError:
+                continue
+    except OSError:
+        found = None
+    if found is None:
+        try:
+            out = subprocess.run(['findmnt', '-no', 'UUID,SOURCE', '-T', str(path)], capture_output=True, text=True,
+                                 timeout=20)
+            fields = out.stdout.split() if out.returncode == 0 else []
+            if len(fields) >= 2 and fields[0]:
+                found = (fields[0], 'findmnt-uuid')
+            elif len(fields) == 1 and fields[0]:
+                found = (fields[0], 'mount-source')
+        except (OSError, subprocess.SubprocessError, ValueError):
+            found = None
+    if found is None:
+        try:
+            best = None
+            for line in Path('/proc/self/mounts').read_text().splitlines():
+                parts = line.split()
+                if len(parts) < 2:
+                    continue
+                try:
+                    if os.stat(parts[1]).st_dev == info.st_dev and (best is None or len(parts[1]) > len(best[1])):
+                        best = (parts[0], parts[1])
+                except OSError:
+                    continue
+            if best is not None:
+                found = (best[0], 'mount-source')
+        except OSError:
+            found = None
+    if found is None:
+        found = ('st_dev:%d' % info.st_dev, 'st_dev')
+    _FS_IDENTITY_CACHE[info.st_dev] = found
+    return found
+
+
+def claim_identity(row):
+    """(inode, size, mtime_ns) of a claim row of either schema, else None. A V1 row stores stat as
+    [st_dev, ino, size, mtime_ns]; a V2 row as [ino, size, mtime_ns] with the filesystem under fs_uuid."""
+    if not isinstance(row, dict) or row.get('schema') not in FILE_CLAIM_SCHEMAS:
+        return None
+    stat = row.get('stat')
+    if not isinstance(stat, list) or not all(type(v) is int for v in stat):
+        return None
+    if row['schema'] == 'FRANKIE_FILE_CLAIM_V1' and len(stat) == 4:
+        return (stat[1], stat[2], stat[3])
+    if row['schema'] == FILE_CLAIM_SCHEMA and len(stat) == 3:
+        return (stat[0], stat[1], stat[2])
+    return None
+
+
+def _claim_tail(path, info):
+    with Path(path).open('rb') as handle:
+        handle.seek(max(0, info.st_size - CLAIM_TAIL_BYTES))
+        return handle.read()
 
 
 def file_claim(path, bytes_, sha256, claimed_by):
-    """One FRANKIE_FILE_CLAIM_V1 row for a sealed file this step measured whole: its path, bytes and sha256 (the claim)
-    plus the file's identity now (device, inode, size, mtime_ns) and the sha256 of its last 64 KiB. Dedupe pass
-    2026-10-08: a later stage that would hash the same unchanged file again (the data export pins every linked file from
-    byte 0) may take this claim when the identity and the tail still match, exactly ROOT's unchanged-file rule
-    (frankie_box_boss_session._resume_row_spool: claim + stat + last line) and the export's own after-save rule; anything
-    else is one full pass there. The claim is a hint: a missing or unreadable claims file costs the full hash, never a
-    refusal. Written only after the whole-file hash and the seal; the row names who measured."""
+    """One FRANKIE_FILE_CLAIM_V2 row for a sealed file this step measured whole: its path, bytes and sha256 (the claim)
+    plus the file's identity now (inode, size, mtime_ns, and the filesystem's identity under fs_uuid / fs_basis,
+    filesystem_identity) and the sha256 of its last 64 KiB. Dedupe pass 2026-10-08: a later stage that would hash the
+    same unchanged file again (the data export pins every linked file from byte 0) may take this claim when the
+    identity and the tail still match, exactly ROOT's unchanged-file rule (frankie_box_boss_session._resume_row_spool:
+    claim + stat + last line) and the export's own after-save rule; anything else is one full pass there. Session 8
+    (2026-10-08): st_dev is no longer part of the identity (it renumbers across a reboot); it rides beside the row as
+    st_dev_observed, informational only. The claim is a hint: a missing or unreadable claims file costs the full hash,
+    never a refusal. Written only after the whole-file hash and the seal; the row names who measured."""
     path = Path(path)
     info = path.stat()
     if info.st_size != bytes_:
         raise ValueError('file claim refused: %s is %d bytes, the measured claim says %d' % (path, info.st_size, bytes_))
-    with path.open('rb') as handle:
-        handle.seek(max(0, info.st_size - CLAIM_TAIL_BYTES))
-        tail = handle.read()
+    tail = _claim_tail(path, info)
+    fs_uuid, fs_basis = filesystem_identity(path, info)
     return dict(schema=FILE_CLAIM_SCHEMA, path=str(path.resolve()), bytes=bytes_, sha256=sha256,
-                stat=[info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns], tail_bytes=len(tail),
-                tail_sha256=hashlib.sha256(tail).hexdigest(), claimed_by=claimed_by, at=time.time(),
-                rule='taken by a later stage only when stat and the last 64 KiB match; else that stage hashes in full')
+                stat=[info.st_ino, info.st_size, info.st_mtime_ns], fs_uuid=fs_uuid, fs_basis=fs_basis,
+                st_dev_observed=info.st_dev, tail_bytes=len(tail),
+                tail_sha256=hashlib.sha256(tail).hexdigest(), claimed_by=claimed_by, at=time.time(), rule=CLAIM_RULE)
+
+
+def claim_still_holds(row, path=None):
+    """Whether a saved claim row (either schema) still describes the file at `path` (the row's own path when None):
+    inode, size and mtime_ns equal, bytes equal to the size, and the sha256 of the last 64 KiB equal (one 64 KiB read,
+    the only read). A V2 row must also sit on the filesystem whose identity it names (fs_uuid). A V1 row (st_dev in
+    its identity) is accepted on inode + size + mtime_ns + tail alone, st_dev being renumberable across a reboot, and
+    the result carries the same claim rewritten as V2 (`refreshed`) for the caller to persist (refresh_file_claims);
+    a tail that differs is never accepted. Returns None when the claim does not hold (the caller reads the file
+    whole), else dict(basis='v2' | 'v1-compat', text=<the receipt basis>, refreshed=<V2 row or None>). Never raises."""
+    try:
+        identity = claim_identity(row)
+        if identity is None:
+            return None
+        path = Path(path if path is not None else row['path'])
+        info = path.stat()
+        if (info.st_ino, info.st_size, info.st_mtime_ns) != identity or info.st_size != int(row['bytes']):
+            return None
+        tail = _claim_tail(path, info)
+        if (len(tail), hashlib.sha256(tail).hexdigest()) != (row['tail_bytes'], row['tail_sha256']):
+            return None
+        fs_uuid, fs_basis = filesystem_identity(path, info)
+        if row['schema'] == FILE_CLAIM_SCHEMA:
+            if row.get('fs_uuid') != fs_uuid:
+                return None
+            return dict(basis='v2', refreshed=None,
+                        text='the saved claim (v2) with its inode, size, mtime_ns, filesystem (%s) and last 64 KiB '
+                             'unchanged; not read whole here' % fs_basis)
+        refreshed = dict(row, schema=FILE_CLAIM_SCHEMA, stat=[info.st_ino, info.st_size, info.st_mtime_ns],
+                         fs_uuid=fs_uuid, fs_basis=fs_basis, st_dev_observed=info.st_dev,
+                         upgraded_from='FRANKIE_FILE_CLAIM_V1', upgraded_at=time.time(), rule=CLAIM_RULE)
+        return dict(basis='v1-compat', refreshed=refreshed,
+                    text='the saved claim (v1-compat: st_dev %s at the seal, %d now, no longer part of the identity) '
+                         'with its inode, size, mtime_ns and last 64 KiB unchanged; not read whole here; row rewritten '
+                         'as %s on filesystem (%s)' % (row['stat'][0], info.st_dev, FILE_CLAIM_SCHEMA, fs_basis))
+    except (OSError, ValueError, KeyError, TypeError, IndexError):
+        return None
+
+
+_CLAIMS_WRITE_LOCK = threading.Lock()
+
+
+def _write_claims_atomic(target, data):
+    """Temp beside the target, fsync, rename: a reader sees the old file or the new one, never a partial."""
+    with _CLAIMS_WRITE_LOCK:
+        temporary = target.with_name(target.name + '.pending')
+        with temporary.open('wb') as stream:
+            stream.write(data); stream.flush(); os.fsync(stream.fileno())
+        os.replace(temporary, target)
 
 
 def write_file_claims(directory, rows):
     """<directory>/file-claims.jsonl, one claim row per line (rewritten whole). Returns the receipt note; never raises."""
     target = Path(directory) / FILE_CLAIMS_NAME
     try:
-        data = ''.join(json.dumps(row, sort_keys=True) + '\n' for row in rows).encode()
-        temporary = target.with_name(target.name + '.pending')
-        with temporary.open('wb') as stream:
-            stream.write(data); stream.flush(); os.fsync(stream.fileno())
-        os.replace(temporary, target)
+        _write_claims_atomic(target, ''.join(json.dumps(row, sort_keys=True) + '\n' for row in rows).encode())
         return dict(file=target.name, schema=FILE_CLAIM_SCHEMA, rows=len(rows), status='written')
     except (OSError, ValueError, TypeError) as error:
         return dict(file=target.name, schema=FILE_CLAIM_SCHEMA, rows=len(rows), status='not_written',
+                    reason='%s: %s' % (type(error).__name__, error))
+
+
+def refresh_file_claims(directory, refreshed):
+    """Rewrite <directory>/file-claims.jsonl with every non-V2 row whose path is in `refreshed` ({resolved path: V2
+    row}) replaced in place: order kept, every other line byte-for-byte, atomically (_write_claims_atomic). Session 8:
+    a V1 row matched on inode/size/mtime_ns/tail is rewritten as V2 so a stale st_dev row never persists for a later
+    stage. Nothing is written when no row changes. Returns the note dict; never raises (a failed refresh leaves the old
+    file, still readable as V1)."""
+    target = Path(directory) / FILE_CLAIMS_NAME
+    try:
+        lines, out, replaced = target.read_text(encoding='utf-8').splitlines(), [], 0
+        for line in lines:
+            try:
+                row = json.loads(line)
+            except ValueError:
+                out.append(line + '\n'); continue
+            new = refreshed.get(str(row.get('path'))) if isinstance(row, dict) else None
+            if new is not None and row.get('schema') != FILE_CLAIM_SCHEMA:
+                out.append(json.dumps(new, sort_keys=True) + '\n'); replaced += 1
+            else:
+                out.append(line + '\n')
+        if replaced:
+            _write_claims_atomic(target, ''.join(out).encode())
+        return dict(file=target.name, schema=FILE_CLAIM_SCHEMA, rows=len(lines), refreshed=replaced, status='written')
+    except (OSError, ValueError, TypeError) as error:
+        return dict(file=target.name, schema=FILE_CLAIM_SCHEMA, refreshed=0, status='not_written',
                     reason='%s: %s' % (type(error).__name__, error))
 
 

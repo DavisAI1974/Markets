@@ -1406,14 +1406,16 @@ def _sealed_spool_counts(receipt, derived):
     return out
 
 
-def _legacy_spool_artifact(item, claims, mode, sealed_counts):
+def _legacy_spool_artifact(item, claims, mode, sealed_counts, claims_dir=None):
     """(witness, count, how) for a legacy-stage spool artifact {path, bytes, sha256[, kind, count]} on the reuse route.
     Nothing is read whole while the ROOT's own records answer (ROOT-digest role, 2026-10-08): an artifact sealed with
     its count (kind 'spool', this code's seal) takes it; a count-less one (an older seal) takes the count carried on
     its FRANKIE_FILE_CLAIM_V1 row, else the one _sealed_spool_counts found in the sealed receipt/layer heads; the
     witness is the claim while stat and the last 64 KiB hold (_artifact_check: one 64 KiB read), else the file read
     whole once. With no count anywhere, or no holding claim, the whole read counts in the same pass (_witness_counting)
-    and a sealed count it disagrees with refuses. mode 'full' (FRANKIE_ROOT_LEGACY_REUSE_CHECK) keeps every whole read."""
+    and a sealed count it disagrees with refuses. mode 'full' (FRANKIE_ROOT_LEGACY_REUSE_CHECK) keeps every whole read.
+    claims_dir (session 8): the directory of file-claims.jsonl; a V1 row taken on inode/size/mtime_ns/tail is rewritten
+    there as V2 (_claim_still_holds)."""
     path = Path(item['path'])
     claim = {k: item[k] for k in ('bytes', 'sha256')}
     resolved = str(path.resolve())
@@ -1427,7 +1429,7 @@ def _legacy_spool_artifact(item, claims, mode, sealed_counts):
         count, source = row['count'], 'the claim\'s sealed count (%s)' % (row.get('count_basis') or 'recorded with the claim')
     elif resolved in sealed_counts:
         count, source = sealed_counts[resolved]['count'], sealed_counts[resolved]['basis']
-    basis = _claim_still_holds(row) if (row is not None and count is not None) else None
+    basis = _claim_still_holds(row, claims_dir=claims_dir, claims=claims) if (row is not None and count is not None) else None
     if basis is not None:
         _filehash().remember(path, claim)
         return dict(claim), count, source + '; ' + basis
@@ -1443,9 +1445,9 @@ def _legacy_spool_artifact(item, claims, mode, sealed_counts):
 
 
 def _file_claim_rows(spool_items, ledger_items):
-    """FRANKIE_FILE_CLAIM_V1 rows (research/kalshi/frankie_boss/operations/ingest_block_sources.file_claim) for every spool
-    and native ledger this ROOT witnessed whole: path, bytes, sha256 (the claim), the stat identity and the sha256 of the
-    last 64 KiB, one 64 KiB read per file (workflow-dedupe R1, 2026-10-08). A later stage (the data export) takes a claim
+    """FRANKIE_FILE_CLAIM_V2 rows (research/kalshi/frankie_boss/operations/ingest_block_sources.file_claim) for every spool
+    and native ledger this ROOT witnessed whole: path, bytes, sha256 (the claim), the identity (inode, size, mtime_ns,
+    filesystem UUID; session 8: no st_dev) and the sha256 of the last 64 KiB, one 64 KiB read per file (workflow-dedupe R1, 2026-10-08). A later stage (the data export) takes a claim
     while stat and the tail still match, else hashes in full. Returns (rows, skipped): a file whose size no longer equals
     its claim is listed under skipped, never claimed."""
     from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
@@ -1479,31 +1481,32 @@ def _reuse_check_mode(setting):
 
 
 def _load_file_claims(directory):
-    """{resolved path: FRANKIE_FILE_CLAIM_V1 row} from <directory>/file-claims.jsonl; {} when absent or unreadable (a
+    """{resolved path: claim row, V1 or V2} from <directory>/file-claims.jsonl; {} when absent or unreadable (a
     claim is a hint: without one the file is read whole)."""
     out = {}
     try:
-        from research.kalshi.frankie_boss.operations.ingest_block_sources import FILE_CLAIMS_NAME
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import FILE_CLAIMS_NAME, FILE_CLAIM_SCHEMAS
         for line in (Path(directory) / FILE_CLAIMS_NAME).read_text(encoding='utf-8').splitlines():
             row = json.loads(line)
-            if isinstance(row, dict) and row.get('schema') == 'FRANKIE_FILE_CLAIM_V1':
+            if isinstance(row, dict) and row.get('schema') in FILE_CLAIM_SCHEMAS:
                 out[str(row['path'])] = row
     except (ImportError, OSError, ValueError, KeyError, TypeError):
         return {}
     return out
 
 
-def _artifact_check(item, claims, mode):
+def _artifact_check(item, claims, mode, claims_dir=None):
     """A saved artifact {path, bytes, sha256} against the file now: (witness, basis). With mode 'claim' and a saved
-    FRANKIE_FILE_CLAIM_V1 row for the path whose bytes/sha256 are the artifact's and which still holds (stat identity
-    and last 64 KiB), the witness is the claim (no full read); otherwise the file is read whole through the per-process
-    cache (basis 'read whole'). A difference raises as before."""
+    claim row (V1 or V2) for the path whose bytes/sha256 are the artifact's and which still holds (inode, size,
+    mtime_ns, filesystem and last 64 KiB), the witness is the claim (no full read); otherwise the file is read whole
+    through the per-process cache (basis 'read whole'). A difference raises as before. claims_dir (session 8): where a
+    V1 row taken on inode/size/mtime_ns/tail is rewritten as V2."""
     path = Path(item['path'])
     claim = {k: item[k] for k in ('bytes', 'sha256')}
     row = claims.get(str(path.resolve())) if mode == 'claim' else None
     basis = None
     if row is not None and (row.get('bytes'), row.get('sha256')) == (claim['bytes'], claim['sha256']):
-        basis = _claim_still_holds(row)
+        basis = _claim_still_holds(row, claims_dir=claims_dir, claims=claims)
     if basis is None:
         seen = witness(path)
         if seen != claim:
@@ -1514,19 +1517,27 @@ def _artifact_check(item, claims, mode):
     return dict(claim), basis
 
 
-def _claim_still_holds(claim):
-    """The basis text when a saved FRANKIE_FILE_CLAIM_V1 row still describes the file (same device, inode, size and
-    mtime_ns, and the same sha256 of its last 64 KiB: one 64 KiB read), else None (the caller reads the file whole)."""
+def _claim_still_holds(claim, claims_dir=None, claims=None):
+    """The basis text when a saved claim row (FRANKIE_FILE_CLAIM_V1 or V2) still describes the file: same inode, size
+    and mtime_ns, the same sha256 of its last 64 KiB (one 64 KiB read), and for a V2 row the same filesystem identity
+    (ingest_block_sources.claim_still_holds); else None (the caller reads the file whole). Session 8 (2026-10-08): the
+    device number is no longer part of the identity (a2's volumes renumbered across a reboot and every row fell to
+    "read whole"); a V1 row is taken on inode/size/mtime_ns/tail (basis 'v1-compat') and, when claims_dir names the
+    directory of file-claims.jsonl, rewritten there as V2 atomically (refresh_file_claims) and replaced in `claims`,
+    so a stale st_dev row does not persist. A V2 row's basis is 'v2'. Both are recorded on the receipt's basis text."""
     try:
-        from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
-        if not isinstance(claim, dict) or claim.get('schema') != 'FRANKIE_FILE_CLAIM_V1':
-            return None
-        now = file_claim(claim['path'], int(claim['bytes']), claim['sha256'], 'check')
-        if (now['stat'], now['tail_bytes'], now['tail_sha256']) != (list(claim['stat']), claim['tail_bytes'], claim['tail_sha256']):
-            return None
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import claim_still_holds, refresh_file_claims
+        held = claim_still_holds(claim)
     except (ImportError, OSError, ValueError, KeyError, TypeError):
         return None
-    return 'the saved claim (bytes, sha256) with its stat identity and last 64 KiB unchanged; not read whole here'
+    if held is None:
+        return None
+    if held['refreshed'] is not None:
+        if claims_dir is not None:
+            refresh_file_claims(claims_dir, {held['refreshed']['path']: held['refreshed']})
+        if isinstance(claims, dict) and held['refreshed']['path'] in claims:
+            claims[held['refreshed']['path']] = held['refreshed']
+    return held['text']
 
 
 def _reopen_counted_spool(spool_class, path, count):
@@ -2692,6 +2703,7 @@ class Session:
                 B = _box_module('frankie_box_bedrock')
                 reopened, reads, sealed_spools, witnessed, checks = {}, [], [], {}, []
                 claims, mode = _load_file_claims(self.work), _reuse_check_mode(LEGACY_REUSE_CHECK_SETTING)
+                claims_dir = self.work                  # session 8: a V1 row taken is rewritten there as V2
                 # ROOT-digest role, 2026-10-08 (the live trace on 6076950: a2's c9bf631 seal recorded no spool count,
                 # so the 496.7 GB frames spool was counted whole here on every reuse): a spool artifact's count comes
                 # from the seal, else its claim row, else the sealed receipt / layer heads (_sealed_spool_counts), and
@@ -2701,9 +2713,9 @@ class Session:
                     path, claim = Path(item['path']), {k: item[k] for k in ('bytes', 'sha256')}
                     count = None
                     if path.suffix == '.jsonl' or (item.get('kind') == 'spool' and isinstance(item.get('count'), int)):
-                        seen, count, how = _legacy_spool_artifact(item, claims, mode, sealed_counts)
+                        seen, count, how = _legacy_spool_artifact(item, claims, mode, sealed_counts, claims_dir=claims_dir)
                     else:
-                        seen, how = _artifact_check(item, claims, mode)
+                        seen, how = _artifact_check(item, claims, mode, claims_dir=claims_dir)
                     if seen != claim:
                         raise ValueError('completed legacy stage artifact changed: ' + item['path'])
                     checks.append(dict(path=str(path), bytes=claim['bytes'], basis=how))
@@ -3451,7 +3463,7 @@ class Session:
         return receipt
 
     def _write_file_claims(self, receipt):
-        """work/file-claims.jsonl (FRANKIE_FILE_CLAIM_V1, one row per spool and native ledger this ROOT witnessed
+        """work/file-claims.jsonl (FRANKIE_FILE_CLAIM_V2, one row per spool and native ledger this ROOT witnessed
         whole; workflow-dedupe R1): the receipt's `file_claims` = path, count and the writer's note; a failure to write
         is recorded (status not_written), never a reason to stop the ROOT."""
         try:
@@ -3626,7 +3638,7 @@ class Session:
                 receipt_path = Path(run['result']['path']).parent / 'receipt.json'
                 artifacts = [dict(path=str(receipt_path), **witness(receipt_path)), run['result']]
                 artifacts.extend(run['ledgers'].values())
-                # session 6: each artifact also carries its FRANKIE_FILE_CLAIM_V1 row (stat identity + last 64 KiB), so
+                # session 6: each artifact also carries its FRANKIE_FILE_CLAIM_V2 row (identity + last 64 KiB), so
                 # the parent's reuse can take the claim instead of reading the ledgers whole (additive; absent on error)
                 try:
                     claims, _ = _file_claim_rows([], [{k: item[k] for k in ('path', 'bytes', 'sha256')} for item in artifacts])

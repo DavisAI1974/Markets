@@ -114,7 +114,7 @@ def _sha256_file(path):
 
 
 def write_claims_from_derivation(root_dir, *, force=False):
-    """<root>/work/file-claims.jsonl (FRANKIE_FILE_CLAIM_V1 rows) for a ROOT reused or resumed on this code whose seal
+    """<root>/work/file-claims.jsonl (FRANKIE_FILE_CLAIM_V2 rows) for a ROOT reused or resumed on this code whose seal
     wrote no claims (a2's c9bf631 seal): one row per layer file, INPUT spool, reference-layer spool and native ledger /
     result / receipt, from the sha256 and bytes the ROOT itself recorded at its seal (derive.json) plus a fresh stat
     identity and one 64 KiB tail read; never a full read. The parent's rule (Greg's call (c) made exact: claim + stat +
@@ -123,7 +123,7 @@ def write_claims_from_derivation(root_dir, *, force=False):
     file is absent (force rewrites). Returns a note dict for the receipt; never raises. Callable at the queue's root
     boundary for a REUSED ROOT (Run.root's reused branch is fenced): write_claims_from_derivation(<root>)."""
     root = Path(root_dir)
-    work, note = root / 'work', dict(schema='FRANKIE_FILE_CLAIM_V1', path=str(root / 'work' / 'file-claims.jsonl'))
+    work, note = root / 'work', dict(schema='FRANKIE_FILE_CLAIM_V2', path=str(root / 'work' / 'file-claims.jsonl'))
     try:
         from research.kalshi.frankie_boss.operations.ingest_block_sources import (file_claim, write_file_claims,
                                                                                    FILE_CLAIMS_NAME)
@@ -433,7 +433,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
 
         def evidence(item, what):
             path = safe_path(item['path'])                     # the same refusal as the witness before (no symlink)
-            seen, basis = _artifact_check(dict(item, path=str(path)), claims, mode)
+            seen, basis = _artifact_check(dict(item, path=str(path)), claims, mode, claims_dir=session.work)
             if dict(seen, path=str(path)) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
                 raise ValueError('saved %s differs: %s' % (what, item['path']))
             retained_checks.append(dict(path=str(path), bytes=item['bytes'], basis=basis))
