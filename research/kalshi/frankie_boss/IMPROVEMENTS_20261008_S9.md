@@ -36,3 +36,8 @@ stage 6 min, restart, work in flight lost); a fix staged while the box is busy o
 | 17 | all day | One read-only `status` probe that prints the whole picture (entry, owner, booking, child cmdline/affinity, receipt, digest progress, disk rate, watchdog) instead of ad-hoc scripts | ~2-5 min per probe, dozens per day. DONE (source): `RUN=<run> DAY=<day> sh deploy/aws/box/frankie_box_day_status.sh` (read-only, POSIX sh + the venv python for JSON; entry/owner/booking, ROOT child flags/affinity/helpers, render, receipt/digest, scratch checkpoints, ROOT log, cpu-watch line, nvme0n1 MiB/s over 3 s, df) |
 | 18 | all day | Every restage is ~6 min; batch fixes into one stage per boundary | ~6 min per avoided stage |
 | 19 | 17:0xZ | Only data identity (sealed source, pins, counts) in every binding; every run parameter recorded, never compared (the generalisation of #5 across all stages) | one blocker per stage otherwise |
+
+## Standing rules from Greg (2026-10-08, session 9)
+- A fleet box keeps the days assigned to it from the first stage to the end: NO box switching, no day migrates to another
+  box; the classroom lease only orders which box's day goes next. Apply when the fleet source (frankie_box_fleet.py day
+  list / claims) is next touched; not this second.
