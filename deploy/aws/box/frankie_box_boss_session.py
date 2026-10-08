@@ -2329,6 +2329,41 @@ class Session:
             os.kill(process.pid, signal.SIGTERM)       # the child saves at its next closed group, then exits
         self._join_native_overlap(process, reason)
 
+    FINALIZE_PROJECTION_SCHEMA = 'FRANKIE_ROOT_FINALIZE_PROJECTION_V1'
+
+    def _finalize_projection(self, layers, spool_form, derived):
+        """What the legacy layer writes (finalize) will add to the disk, projected BEFORE anything is written, with the
+        free space (2026-10-08): a spool reference layer is its other keys plus a few hundred bytes and one index entry
+        per INDEX_EVERY rows (no row is re-encoded); an inline one (FRANKIE_ROOT_LAYER_SPOOLS=inline) is at least its
+        spools' bytes again (a2's frames layer was ~1.9x its spool); every other layer is its own encoding. Refuses,
+        writing nothing, when the free space is below the projection plus FRANKIE_ROOT_DISK_FLOOR_GB (the Run's floor,
+        default 0). The receipt carries the projection; written_bytes is added after the writes."""
+        import shutil
+        B = _box_module('frankie_box_bedrock')
+        LS = _box_module('frankie_box_layer_spool')
+        per_layer = {}
+        for name, value in layers.items():
+            spools = {key: spool for key, spool in value.items() if isinstance(spool, B.RowSpool)}
+            rest = {key: item for key, item in value.items() if key not in spools}
+            text = len(json.dumps(rest, indent=1, sort_keys=True, default=str).encode('utf-8'))
+            if spools and spool_form == 'reference':
+                per_layer[name] = text + sum(1024 + 48 * (len(spool) // LS.INDEX_EVERY + 2) for spool in spools.values())
+            elif spools:
+                per_layer[name] = text + sum(spool.path.stat().st_size for spool in spools.values())
+            else:
+                per_layer[name] = text
+        projected = sum(per_layer.values())
+        free = shutil.disk_usage(derived).free
+        floor = int(float(os.environ.get('FRANKIE_ROOT_DISK_FLOOR_GB') or 0) * 1024 ** 3)
+        projection = dict(schema=self.FINALIZE_PROJECTION_SCHEMA, spool_form=spool_form, projected_bytes=projected,
+                          per_layer=per_layer, free_bytes_before=free, floor_bytes=floor,
+                          rule='the legacy layer files only (the spools are already written); refuse below projection + '
+                               'floor, nothing written')
+        if free < projected + floor:
+            raise ValueError(f'finalize would write ~{projected} bytes of legacy layers with {free} free (floor '
+                             f'{floor}); nothing written, the saved legacy state retained for a resume')
+        return projection
+
     def _derive(self, *, source=None, bedrock=True, digest=True, opening_adapter_state=None, opening_book=None,
                 recovery=False, save_requested=None, retain_frame_sections=False, digest_bedrock=None,
                 bedrock_off_cause=None):
@@ -2860,7 +2895,8 @@ class Session:
             _check_spool_claims(final_positions, {name: spool_witness(rows) for name, rows
                                                   in zip(names, (prices, frames, structures, failures))})
             receipt['spool_claims_check'] = dict(schema=SPOOL_RESUME_SCHEMA, spools=list(names), route='bedrock off',
-                                                 cost='one full read of each legacy spool, added on this route')
+                                                 cost='one full read of each legacy spool not already read by its '
+                                                      'reference layer, added on this route')
         if recovery and bedrock:
             # A separately published legacy completion lets interrupted native traversal/projection
             # continue without replaying or recalculating the already completed legacy stage.

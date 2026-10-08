@@ -50,9 +50,29 @@ def load_retained_layers(session, *, allow_failures=False, receipt=None):
     names = list(dict.fromkeys(['legacy_price', 'legacy_native_signed_flow', 'legacy_per_second_roll20',
         'legacy_book_imbalance', 'legacy_structure_observables'] + list(pin['registry_layers'])))
     layers, entries = {}, {}
+    import frankie_box_layer_spool as LS
     for name in names:
         path = derived / (name + '.json')
         value = {}
+        reference = LS.read_reference(path)
+        if reference is not None:
+            # a spool reference layer (2026-10-08): its spools are the retained spools themselves (never re-read here;
+            # the same count, path and bytes required), every other key as written
+            refs = LS.spool_refs(reference)
+            for key, ref in refs.items():
+                spool = frames if key == 'frames' else structures if key == 'groups' else None
+                if (spool is None or ref['count'] != len(spool)
+                        or LS.spool_path(path, ref).resolve() != Path(spool.path).resolve()
+                        or Path(spool.path).stat().st_size != ref['bytes']):
+                    raise ValueError('retained legacy layer and spool counts differ')
+                value[key] = spool
+            value.update({key: item for key, item in reference.items()
+                          if key not in refs and key not in (LS.MARKER, LS.SPOOLS_KEY)})
+            session.note('reusing retained legacy layer ' + name + ' (spool reference)')
+            layers[name] = value
+            entries[name] = dict(status=value['status'], producer=value.get('producer'),
+                                reason=value.get('reason'), **witness(path))
+            continue
         with path.open(encoding='utf-8') as stream:
             parser = _JSON(stream)
             parser.expect('{')

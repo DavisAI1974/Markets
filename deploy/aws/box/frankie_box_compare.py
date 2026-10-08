@@ -62,7 +62,8 @@ def _layer_summary(path):
                 if isinstance(value.get(key), list):
                     count = len(value[key])
                     break
-        return count, sorted(k for k in value if k not in ('status', 'producer', 'reason'))[:30]
+        # a spool reference layer (frankie_box_layer_spool) carries its count; its marker keys are not layer fields
+        return count, sorted(k for k in value if k not in ('status', 'producer', 'reason') and not k.startswith('#'))[:30]
     except Exception:
         return None
 

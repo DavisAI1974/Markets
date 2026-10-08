@@ -116,7 +116,8 @@ for s_, e_ in HR.sections(head):
 import frankie_box_digest_render as DG, math
 work = os.path.join(os.environ['ROOT'], 'session', 'work')
 receipt = json.load(open(os.path.join(work, 'derive.json')))
-L = {n: json.load(open(os.path.join(work, 'derived', n + '.json'))) for n in ('legacy_price', 'legacy_native_signed_flow', 'legacy_per_second_roll20', 'legacy_book_imbalance', 'legacy_structure_observables')}
+import frankie_box_layer_spool as LS   # an old-form layer as json.load gives it; a spool reference layer with its rows streamed
+L = {n: LS.load(os.path.join(work, 'derived', n + '.json')) for n in ('legacy_price', 'legacy_native_signed_flow', 'legacy_per_second_roll20', 'legacy_book_imbalance', 'legacy_structure_observables')}
 prices = L['legacy_price'].get('first', []) and None
 old = open(os.path.join(work, 'derivation-digest-full.md'), 'rb').read()
 ps = L['legacy_native_signed_flow']['per_second']; buys = [r['buy'] for r in ps]; sells = [r['sell'] for r in ps]; first = ps[0]['second'] if ps else L['legacy_per_second_roll20'].get('first_second', 0)
