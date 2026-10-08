@@ -53,6 +53,9 @@ class TestLaunchTemplateData(unittest.TestCase):
         self.assertIn('frankie_box_experiment.sh', ud)        # the existing run entrypoint
         self.assertIn('frankie_box_fleet.py', ud)             # the per-day claim
         self.assertIn('meta-data/tags/instance/Day', ud)      # reads its two days from its tags
+        self.assertIn('rev-parse HEAD', ud)                   # decision 1: verify the checkout is the pinned commit
+        self.assertIn('FRANKIE_FLEET_STAGE_V1', ud)           # decision 1: writes a staging receipt
+        self.assertIn('stage-receipt.json', ud)
 
 
 class TestFleetLaunch(unittest.TestCase):
@@ -60,9 +63,17 @@ class TestFleetLaunch(unittest.TestCase):
         return {'get_service_quota': {'Quota': {'Value': quota}},
                 'describe_instances': {'Reservations': [{'Instances': list(running)}]}}
 
+    def test_refuses_missing_run(self):
+        acct = FakeAccount(self.canned())
+        args = args_for(['--count', '2', '--days', '20231018,20231019', '--image-id', 'ami-1', '--commit', 'a' * 40])
+        rec = S.step_fleet_launch(acct, args)   # no --run
+        self.assertEqual(rec['status'], 'needs_input')
+        self.assertIn('run', rec['reason'])
+        self.assertEqual(len(rec['actions']), 0)
+
     def test_quota_refusal(self):
         acct = FakeAccount(self.canned(quota=256.0))
-        args = args_for(['--count', '8', '--days', ','.join('2023101%d' % i for i in range(8)),
+        args = args_for(['--run', 'e2e-a', '--count', '8', '--days', ','.join('2023101%d' % i for i in range(8)),
                          '--image-id', 'ami-1', '--commit', 'a' * 40])
         rec = S.step_fleet_launch(acct, args)
         self.assertEqual(rec['status'], 'refused')
@@ -75,7 +86,7 @@ class TestFleetLaunch(unittest.TestCase):
         acct = FakeAccount(self.canned(quota=256.0, running=running))
         # 2 boxes need 128 vCPUs; headroom is 256 - 64 = 192, so it fits; a 3rd box (192) would exactly fill it, a 4th
         # (256) would exceed. Here 2 boxes plan.
-        args = args_for(['--count', '2', '--days', '20231018,20231019,20231020,20231021',
+        args = args_for(['--run', 'e2e-a', '--count', '2', '--days', '20231018,20231019,20231020,20231021',
                          '--image-id', 'ami-1', '--commit', 'a' * 40])
         rec = S.step_fleet_launch(acct, args)
         self.assertEqual(rec['checked']['used_vcpus'], 64)
@@ -86,7 +97,7 @@ class TestFleetLaunch(unittest.TestCase):
     def test_quota_refuses_when_running_usage_leaves_too_little(self):
         running = [{'CpuOptions': {'CoreCount': 32, 'ThreadsPerCore': 2}}]  # 64 vCPUs in use
         acct = FakeAccount(self.canned(quota=256.0, running=running))
-        args = args_for(['--count', '4', '--days', ','.join('2023101%d' % i for i in range(8)),
+        args = args_for(['--run', 'e2e-a', '--count', '4', '--days', ','.join('2023101%d' % i for i in range(8)),
                          '--image-id', 'ami-1', '--commit', 'a' * 40])
         rec = S.step_fleet_launch(acct, args)   # 4 x 64 = 256 > headroom 192
         self.assertEqual(rec['status'], 'refused')
@@ -107,18 +118,37 @@ class TestFleetLaunch(unittest.TestCase):
         first = rec['actions'][0]['params']['TagSpecifications'][0]['Tags']
         self.assertIn({'Key': 'Day', 'Value': '20231018,20231019'}, first)
 
-    def test_spot_uses_spot_quota_and_tags(self):
+    def test_spot_refused_for_day_boxes_by_default(self):
+        acct = FakeAccount(self.canned())
+        args = args_for(['--run', 'e2e-a', '--count', '2', '--days', '20231018,20231019,20231020,20231021',
+                         '--image-id', 'ami-1', '--commit', 'c' * 40, '--spot'])   # no --allow-spot-days
+        rec = S.step_fleet_launch(acct, args)
+        self.assertEqual(rec['status'], 'refused')
+        self.assertIn('Spot', rec['reason'])
+        self.assertEqual(len(rec['actions']), 0)
+
+    def test_spot_with_allow_uses_spot_quota_and_tags(self):
         canned = {'get_service_quota': lambda p: {'Quota': {'Value': 256.0 if p['QuotaCode'] == S.QUOTA_SPOT else 9.0}},
                   'describe_instances': {'Reservations': []}}
         acct = FakeAccount(canned)
-        args = args_for(['--count', '2', '--days', '20231018,20231019,20231020,20231021', '--image-id', 'ami-1',
-                         '--commit', 'c' * 40, '--spot'])
+        args = args_for(['--run', 'e2e-a', '--count', '2', '--days', '20231018,20231019,20231020,20231021',
+                         '--image-id', 'ami-1', '--commit', 'c' * 40, '--spot', '--allow-spot-days'])
         rec = S.step_fleet_launch(acct, args)
         self.assertEqual(rec['checked']['quota_code'], S.QUOTA_SPOT)   # read the SPOT quota, not On-Demand
         self.assertEqual(rec['status'], 'planned')
         self.assertEqual(rec['actions'][0]['params']['InstanceMarketOptions']['MarketType'], 'spot')
         tags = {t['Key']: t['Value'] for t in rec['actions'][0]['params']['TagSpecifications'][0]['Tags']}
         self.assertEqual(tags['ClassroomEligible'], 'false')           # Spot box: ROOT stage only
+
+
+class TestLaunchTemplateStep(unittest.TestCase):
+    def test_needs_day_list_location(self):
+        from frankie_aws_stack import Account
+        acct = Account(apply=False, say=lambda *a: None)
+        rec = S.step_launch_template(acct, args_for(['--image-id', 'ami-1']))   # no --run, no --fleet-day-list
+        self.assertEqual(rec['status'], 'needs_input')
+        self.assertIn('day-list', rec['reason'])
+        self.assertEqual(len(rec['actions']), 0)
 
 
 class TestGoldenAmi(unittest.TestCase):

@@ -158,6 +158,19 @@ class TestDayList(FleetBase):
         self.assertEqual(doc['days'][0]['stages']['root']['state'], 'done')
 
 
+class TestCLI(FleetBase):
+    def test_claim_day_cli(self):
+        import subprocess
+        box = str(HERE.parent / 'deploy' / 'aws' / 'box' / 'frankie_box_fleet.py')
+        env = dict(os.environ, FRANKIE_FLEET_DAY_LIST='fleet/run-x', FRANKIE_FLEET_S3_FAKE=self.tmp,
+                   FRANKIE_FLEET_INSTANCE='i-cli')
+        argv = [sys.executable, box, 'claim-day', '--run', 'e2e-a', '--day', '20231018', '--commit', 'c0ffee']
+        first = subprocess.run(argv, env=env, capture_output=True, text=True)
+        self.assertEqual(first.returncode, 0, first.stderr)       # the claim won
+        second = subprocess.run(argv, env=dict(env, FRANKIE_FLEET_INSTANCE='i-other'), capture_output=True, text=True)
+        self.assertEqual(second.returncode, 1)                    # a second box loses -> exit 1 (user-data skips it)
+
+
 class TestGate(FleetBase):
     def test_gate_proceeds_when_lease_free(self):
         out = Path(self.tmp) / 'handoff' / 'day' / 'teacher'
@@ -166,6 +179,16 @@ class TestGate(FleetBase):
         self.assertEqual(rec['decision'], 'proceed')
         self.assertEqual(F.lease_holder(st=st)['holder_instance'], 'i-box1')
         self.assertTrue((out / 'fleet-gate.json').is_file())
+
+    def test_gate_ineligible_box_refused_the_lease(self):
+        # a Spot / ClassroomEligible=false box is refused the lease and does NOT acquire or wait (decision 2)
+        os.environ['FRANKIE_FLEET_CLASSROOM_ELIGIBLE'] = 'false'
+        out = Path(self.tmp) / 'handoff' / 'spotday' / 'teacher'
+        st = self.store_for('i-spot')
+        rec = F.classroom_gate('e2e-a', '20231018', 'teacher', out, '/code', 'c0ffee', st=st, start_wait=False)
+        self.assertEqual(rec['decision'], 'ineligible')
+        self.assertIsNone(F.lease_holder(st=st))      # it never took the lease
+        os.environ.pop('FRANKIE_FLEET_CLASSROOM_ELIGIBLE')
 
     def test_gate_waits_when_lease_held(self):
         # box1 holds the lease for its day

@@ -135,22 +135,39 @@ def _int_setting(name, default):
         return default
 
 
+def _imds(path):
+    """One IMDSv2 GET, or None off-box / on error (never raises)."""
+    try:
+        import urllib.request
+        token = urllib.request.Request('http://169.254.169.254/latest/api/token', method='PUT',
+                                       headers={'X-aws-ec2-metadata-token-ttl-seconds': '60'})
+        tok = urllib.request.urlopen(token, timeout=1).read().decode()
+        req = urllib.request.Request('http://169.254.169.254/latest/' + path,
+                                     headers={'X-aws-ec2-metadata-token': tok})
+        return urllib.request.urlopen(req, timeout=1).read().decode().strip()
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def instance_id():
     """This box's EC2 instance id: FRANKIE_FLEET_INSTANCE (set by user-data from IMDS; toys set it), else IMDSv2, else
     the hostname (never an AWS call under a toy, which always sets the env)."""
     forced = (os.environ.get(INSTANCE_SETTING) or '').strip()
     if forced:
         return forced
-    try:
-        import urllib.request
-        token = urllib.request.Request('http://169.254.169.254/latest/api/token', method='PUT',
-                                       headers={'X-aws-ec2-metadata-token-ttl-seconds': '60'})
-        tok = urllib.request.urlopen(token, timeout=1).read().decode()
-        idr = urllib.request.Request('http://169.254.169.254/latest/meta-data/instance-id',
-                                     headers={'X-aws-ec2-metadata-token': tok})
-        return urllib.request.urlopen(idr, timeout=1).read().decode().strip()
-    except Exception:  # noqa: BLE001 - no IMDS (toy / off-box): the hostname is the stable fallback
-        return socket.gethostname()
+    return _imds('meta-data/instance-id') or socket.gethostname()
+
+
+def classroom_eligible():
+    """May this box ever hold the classroom lease? Decision 2 (Greg, "best for science and speed"): a Spot box is NOT
+    classroom-eligible (a reclaimed classroom loses a day of the serial chain), so it is REFUSED the lease and its day
+    stays at the gate for an operator. Read from FRANKIE_FLEET_CLASSROOM_ELIGIBLE (toys / override) then the box's
+    ClassroomEligible instance tag; the default is eligible (a plain On-Demand box with no such tag)."""
+    env = (os.environ.get('FRANKIE_FLEET_CLASSROOM_ELIGIBLE') or '').strip().lower()
+    if env:
+        return env not in ('false', '0', 'no', 'off')
+    tag = _imds('meta-data/tags/instance/ClassroomEligible')
+    return (tag or 'true').strip().lower() not in ('false', '0', 'no', 'off')
 
 
 # ----------------------------------------------------------------------------------------------- the S3 store
@@ -541,6 +558,19 @@ def classroom_gate(run, day, stage, out_dir, code_root, commit, *, log=print, st
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     instance = instance_id()
+    if not classroom_eligible():
+        # decision 2: a Spot (ClassroomEligible=false) box must NEVER hold the classroom lease; it refuses here and the
+        # day stays at the gate (saved) for an operator to move its ROOT/teacher output to an On-Demand box. No lease,
+        # no WAIT unit (a WAIT unit would eventually acquire the lease, which is exactly what must not happen).
+        rec = dict(schema=GATE_SCHEMA, run=run, day=day, stage=stage, instance=instance, commit=commit, at=time.time(),
+                   decision='ineligible', holder=None,
+                   reason='this box is ClassroomEligible=false (Spot / ROOT-stage only); it is refused the classroom '
+                          'lease. The day stays saved at the gate for an operator to run its classroom on an '
+                          'On-Demand box.')
+        _try(lambda: set_day_stage_state(run, day, 'classroom', 'ineligible', st=st))
+        _write_json(out_dir / 'fleet-gate.json', rec)
+        log('fleet gate %s %s/%s: ineligible (%s)' % (stage, run, day, rec['reason']))
+        return rec
     try:
         ready = record_root_finished(run, day, st=st, instance=instance)
         got = acquire_classroom_lease(run, day, commit, st=st, instance=instance)
@@ -676,6 +706,10 @@ def main(argv=None):
     seed.add_argument('--run', required=True)
     seed.add_argument('--commit', required=True)
     seed.add_argument('--assignments', required=True, help='JSON list [{"day":"YYYYMMDD","box":"i-..","spot":false}]')
+    claim = sub.add_parser('claim-day')
+    for flag in ('--run', '--day', '--commit'):
+        claim.add_argument(flag, required=True)
+    claim.add_argument('--stage', default='root')
     take = sub.add_parser('takeover-lease')
     take.add_argument('--run', required=True)
     take.add_argument('--day', required=True)
@@ -696,6 +730,10 @@ def main(argv=None):
                               day_list=read_day_list()), indent=1, default=str))
     elif args.action == 'queue':
         print(json.dumps(waiting_queue(), indent=1, default=str))
+    elif args.action == 'claim-day':
+        out = claim_day(args.run, args.day, args.stage, args.commit)
+        print(json.dumps(out, indent=1, default=str))
+        return 0 if out.get('won') else 1
     elif args.action == 'seed-day-list':
         print(json.dumps(seed_day_list(args.run, json.loads(args.assignments), args.commit), indent=1, default=str))
     elif args.action == 'takeover-lease':

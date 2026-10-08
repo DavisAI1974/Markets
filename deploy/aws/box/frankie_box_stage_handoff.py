@@ -365,11 +365,12 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
         # unchanged, so only changed files are re-read); the failed receipt is kept aside, never read as a pass
         os.replace(out_dir / 'handoff.json', out_dir / ('handoff.failed-%d.json' % int(existing.get('at') or time.time())))
         existing = None
-    if existing and existing.get('status') == 'fleet_waiting':
-        # the day was saved at the classroom gate waiting for the global lease; the WAIT unit resumed it (it acquired
-        # the lease). Re-run the boundary: re-validate (unchanged stat = no read), re-run the gate (now this box holds
-        # the lease, so acquire is idempotent -> 'fleet_proceed'); the earlier fleet_waiting receipt is kept aside
-        os.replace(out_dir / 'handoff.json', out_dir / ('handoff.fleet-waiting-%d.json' % int(time.time())))
+    if existing and existing.get('status') in ('fleet_waiting', 'fleet_ineligible'):
+        # the day was saved at the classroom gate (waiting for the lease, or refused as ClassroomEligible=false). On a
+        # resume re-run the boundary: re-validate (unchanged stat = no read) and re-run the gate (if this box now holds
+        # the lease, acquire is idempotent -> 'fleet_proceed'; if an operator moved an ineligible day here, it re-gates
+        # cleanly). The earlier receipt is kept aside.
+        os.replace(out_dir / 'handoff.json', out_dir / ('handoff.%s-%d.json' % (existing['status'].replace('_', '-'), int(time.time()))))
         existing = None
     if existing and (existing.get('status') in ('validated', 'fleet_proceed') or (existing.get('status') == 'saved' and trigger_done)):
         # once per (stage, key): a resumed day passes this boundary again after a DONE trigger (or a validated-only pass)
@@ -435,6 +436,13 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
         #    unit classroom_gate started resume+kick it when the lease frees. A visible WAIT, like the digest WAIT.
         gate = fleet.classroom_gate(run.plan['run'], e['day'], stage, out_dir, code_root, commit, log=log)
         base['fleet_gate'] = gate
+        if gate.get('decision') == 'ineligible':
+            # a Spot / ClassroomEligible=false box: refused the lease; the day is saved at the gate for an operator
+            saved = request_own_save(run, e, by='%s boundary: validated; this box is ClassroomEligible=false; the day '
+                                                 'stays at the gate for an operator (fleet)' % stage)
+            return _write(out_dir / 'handoff.json', dict(base, status='fleet_ineligible', save=saved,
+                          reason='validated; this box may not run the classroom (ClassroomEligible=false); the day is '
+                                 'saved at the gate for an operator to run its classroom on an On-Demand box'))
         if gate.get('decision') == 'waiting':
             saved = request_own_save(run, e, by='%s boundary: validated; the global classroom lease is held by %s; '
                                                  'the day waits in line (fleet)' % (stage, gate.get('holder')))

@@ -39,9 +39,9 @@ on:
         required: false
         default: ''
       run:
-        description: 'the run name the days run under'
-        required: false
-        default: 'e2e-20231018-a2'
+        description: 'the run name the days run under (REQUIRED, no default; never reuse the one-box a2 run e2e-20231018-a2)'
+        required: true
+        default: ''
       fleet_day_list:
         description: 'the S3 day-list location (bucket/prefix); blank = fleet/<run> under the granite bucket'
         required: false
@@ -135,6 +135,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${FRANKIE_FLEET_DAY_LIST}" ]; then
+            if [ -z "${RUN}" ]; then
+              echo "status needs the day-list location: set fleet_day_list, or run (the location defaults to fleet/<run>; run has no default)"
+              exit 1
+            fi
             export FRANKIE_FLEET_DAY_LIST="fleet/${RUN}"
           fi
           python3 deploy/aws/box/frankie_fleet_status.py --region "$REGION"

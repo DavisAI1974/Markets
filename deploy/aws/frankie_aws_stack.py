@@ -55,7 +55,7 @@ QUOTA_SPOT = 'L-34B43A08'               # All Standard Spot Instance Requests, u
 REPO = 'DavisAI1974/Markets'
 GITHUB_TOKEN_PARAM = '/markets/frankie/github-token'   # SSM SecureString in us-east-2 the box reads (workflow line 43)
 FLEET_INSTANCE_TYPE = 'r7i.16xlarge'    # 64 vCPU, 512 GiB (Greg's fleet box)
-FLEET_RUN_DEFAULT = 'e2e-20231018-a2'   # the run name the days run under (the first box resumes a2)
+# --run has NO default (Greg decision 5): a missing run is refused so no fleet reuses the one-box a2 run e2e-20231018-a2.
 STEP_ORDER = ['ebs-status', 's3-gateway-endpoint', 's3-lifecycle', 'cw-agent', 'cw-alarms', 'detailed-monitoring',
               'scheduler-stop', 'golden-ami', 'launch-template', 'fleet-launch', 'compute-optimizer',
               'snapshot-archive']
@@ -135,8 +135,17 @@ if [ ! -d "$CODE_ROOT/.git" ]; then
 fi
 git -C "$CODE_ROOT" fetch --depth 1 origin "$COMMIT"
 git -C "$CODE_ROOT" checkout -q "$COMMIT"
+# decision 1: the stage pins a FULL commit hash (the 40-hex check above already refuses a branch name or a short hash);
+# verify the checkout is exactly it and write a staging receipt in the shape frankie_box_stage_code.sh's stage writes,
+# so every fleet box's receipt names the identical commit/tree
+GOT=$(git -C "$CODE_ROOT" rev-parse HEAD)
+[ "$GOT" = "$COMMIT" ] || {{ echo "frankie: rev-parse HEAD ($GOT) != pinned commit ($COMMIT); refusing"; exit 2; }}
 export CODE_ROOT
 mkdir -p "$BOX_DIR"
+TREE=$(git -C "$CODE_ROOT" rev-parse "HEAD^{{tree}}")
+FILES=$(git -C "$CODE_ROOT" ls-files | wc -l | tr -d ' ')
+python3 -I -S -c "import json,sys,time; json.dump({{'schema':'FRANKIE_FLEET_STAGE_V1','status':'staged','commit':sys.argv[1],'tree_sha':sys.argv[2],'file_count':int(sys.argv[3]),'instance':sys.argv[4],'code_root':sys.argv[5],'staged_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}}, open(sys.argv[6],'w'), indent=1, sort_keys=True)" "$COMMIT" "$TREE" "$FILES" "$IID" "$CODE_ROOT" "$BOX_DIR/stage-receipt.json"
+echo "frankie: staged $COMMIT (tree $TREE, $FILES files); receipt $BOX_DIR/stage-receipt.json"
 # run each assigned day on the root line, DAY_CPUS explicit; the handoff chain carries it on, the classroom lease
 # serialises the classroom across the fleet; the second day waits for CPUs/the first day's classroom (Greg's plan)
 IFS=',' read -ra DAY_ARR <<< "$DAYS"
@@ -501,6 +510,11 @@ def step_launch_template(account, args):
         rec.update(status='needs_input', reason='--image-id not given (the golden AMI from the golden-ami step; the '
                                                 'box AMI ami-025d99823a4caad37 is a 2 TB root, not the lean fleet image)')
         return rec
+    if not args.run and not args.fleet_day_list:
+        rec.update(status='needs_input', reason='the user-data needs the fleet day-list location: pass --fleet-day-list '
+                                                'bucket/prefix, or --run (the location defaults to fleet/<run>; --run '
+                                                'has no default, Greg decision 5)')
+        return rec
     data = launch_template_data(args)
     try:
         found = account.read('ec2', REGION_BOX, 'describe_launch_templates', Filters=[
@@ -582,6 +596,18 @@ def step_fleet_launch(account, args):
     exact per-box plan. Source: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/launch-instance-from-launch-template.html"""
     rec = receipt('fleet-launch', cost='r7i.16xlarge $4.233600/h on-demand (~$1.27-1.70/h Spot) per box; template, '
                                        'tags and the quota read are $0.')
+    if not args.run:
+        rec.update(status='needs_input', reason='--run (the run name) required and has NO default: a missing run is '
+                                                'refused so no fleet reuses the one-box a2 run e2e-20231018-a2 '
+                                                '(Greg, decision 5)')
+        return rec
+    if args.spot and not args.allow_spot_days:
+        rec.update(status='refused', reason='--spot for DAY boxes is refused by default (Greg, decision 2): a reclaimed '
+                                            'classroom loses a day of the serial chain and the day\'s data sits on the '
+                                            'reclaimed box. Spot is for stateless burst work (the digest render), not '
+                                            'day boxes. Pass --allow-spot-days to override knowingly (the boxes are '
+                                            'tagged ClassroomEligible=false and the gate refuses them the classroom).')
+        return rec
     if args.count <= 0:
         rec.update(status='needs_input', reason='--count N (the number of boxes) required')
         return rec
@@ -763,7 +789,11 @@ def build_parser():
     p.add_argument('--root-iops', type=int, default=16000)
     p.add_argument('--root-throughput', type=int, default=1000)
     p.add_argument('--day-cpus', type=int, default=32, choices=[16, 32, 64], help='CPUs a day-run books (verified: 32)')
-    p.add_argument('--run', default=FLEET_RUN_DEFAULT, help='the run name the days run under')
+    p.add_argument('--run', default='', help='the run name the days run under (NO default; a missing run is refused so '
+                                             'no fleet reuses the one-box a2 run, Greg decision 5)')
+    p.add_argument('--allow-spot-days', action='store_true', help='fleet-launch: allow --spot for DAY boxes (refused by '
+                                                                  'default; a reclaimed classroom loses a day, so Spot '
+                                                                  'is for stateless burst work, not day boxes)')
     p.add_argument('--commit', default='', help='the staged commit the golden AMI/boxes carry and run')
     p.add_argument('--github-token-param', default=GITHUB_TOKEN_PARAM, help='SSM SecureString (us-east-2) the box clones with')
     p.add_argument('--fleet-day-list', default='', help='the S3 day list location (bucket/prefix); default a run-named '
