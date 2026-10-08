@@ -69,3 +69,37 @@ GitHub dispatch via the github MCP tools. Every action below carries its UTC tim
   sections C1/C2; scripts sent as `bash -s <<'EOF'`), on the same frankie_box_frankie_queue.sh the workflow would run.
 - 14:33Z CORRECTION to the 14:29Z reading: derive.json lives at R/work/derive.json (`session.work`, E2E record line 1172
   "resumed from work/derive.json"); the probe listed R/derive.json, the wrong path. Re-read at the next SSM probe.
+- 14:31:27Z read-only SSM 7787506f-025e-49ea-a032-2ddda7a35e7d: R/work/derive.json PRESENT, 80,813 B, 01:33:06Z, sha256
+  948074df0394e33adbc82035a236949f6f78ee80523aa5b70e2ec5f1179e8eec, root_processes {bedrock_projection run, bedrock_traversal
+  run, digest run, legacy run}, failure_count 0, 50 layers, bedrock not skipped (the 14:29Z "absent" was the wrong path; the
+  tip's resume takes the claims route `if resume and work/derive.json.is_file()`, experiment_root.py 416-418, so the resume
+  WOULD have been lawful). R/work also holds file-claims.jsonl (03:02Z), legacy-stage.json, native-layer-records.json, native-
+  stage.json, derived/, bedrock/. STAGED CHECKOUT LANDED: /opt/frankie-box/code/d67b9c63ba18c35e9f7cad49802735f1d455fb35-37792772826-1/markets,
+  `git rev-parse HEAD` = d67b9c63ba18c35e9f7cad49802735f1d455fb35 (the stage python process 1751 still finishing sync/receipt).
+
+## HALT (Greg, 14:3xZ via the parent, verbatim: "Keep box off until absolutely ready")
+- Received 14:3xZ BEFORE any ACTION=resume or ACTION=kick was sent. NOTHING ran on R; no ROOT child, no worker, no unit was
+  started by this role. Steps 5-6 NOT performed. The staged checkout stays in place (reusable: stage it again only if the tip
+  moves). Actions now: KeepRunning=false (reason "Greg 14:3xZ keep box off until ready"), wait for the stage run to finish its
+  receipt so the checkout is complete, then StopInstances and wait for stopped.
+- 14:31:42Z stage run 37792772826 COMPLETED success (stage-code / inactive-code job; the staged checkout above).
+- 14:31:50Z CreateTags KeepRunning=false (+reason "Greg 14:3xZ keep box off until ready ..."); read back false.
+- 14:32:19Z pre-stop read (SSM 60562be5-c010-4e66-8f72-9974ee5991aa): staging-receipt.json PRESENT in
+  /opt/frankie-box/code/d67b9c63ba18c35e9f7cad49802735f1d455fb35-37792772826-1/ (FRANKIE_INACTIVE_CODE_STAGING_RECEIPT_V1,
+  status staged, commit d67b9c63, files 4120, pack_sha256 aa898f730b370b40f9a9641a44a264764493522447de925c0eaccd705fa1ff27,
+  active_checkout_changed false, model_calls 0, source_replays 0); HEAD d67b9c63. frankie units 0, frankie procs 0.
+  a2 entry seq 2 state SAVED, retained_booking day-run-20231018-day_slot_root-1791402822-3111; save marker standing (497 B,
+  03:09Z); calculations-receipt.json ABSENT. `sync` run.
+- 14:32:25Z StopInstances i-035994afa8bdf66a5: running -> stopping. 14:33:13Z state STOPPED (r7i.16xlarge, KeepRunning=false).
+
+## End state (14:33Z)
+- Box i-035994afa8bdf66a5 STOPPED, r7i.16xlarge, KeepRunning=false, both volumes attached at baseline 3,000/125 (modifications
+  still optimizing; raise refused until they finish and the 6 h cooldown clears ~18:1xZ).
+- Day e2e-20231018-a2/20231018 UNCHANGED: SAVED on its marker (sha 5738b245...), booking 0-31 retained, owner commit 6076950,
+  NO receipt, no teacher; derive.json intact at R/work/derive.json. Nothing ran on R this session.
+- Staged and receipted for the next go: /opt/frankie-box/code/d67b9c63ba18c35e9f7cad49802735f1d455fb35-37792772826-1/markets
+  (= 85ce2827's box code + the additive fleet module). Next session: StartInstances, SSM Online, KeepRunning=true, then
+  ACTION=resume RUN=e2e-20231018-a2 DAY=20231018 and ACTION=kick LINE=root SCOPE=e2e-20231018-a2:20231018
+  FRANKIE_ROOT_DIGEST=off FRANKIE_CLASSROOM_CPUS=all with CODE_ROOT=<that checkout> MARKETS_SHA=d67b9c63... (SSM route with the
+  explicit sha, or restage if the branch tip must be the one dispatched), unless the tip has moved in CODE (then restage).
+- Not touched: i-0d17573dbce871520, i-08cee7171c0a76a04, the clone volumes, snapshots, IAM, quotas, launch templates.
