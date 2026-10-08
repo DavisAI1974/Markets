@@ -5,6 +5,8 @@ the classroom cache identity, the writing inputs and the docs index; the bedrock
 call). A sha256 is sequential, so it cannot be spread over CPUs; instead each file is hashed once and the value is
 reused while the file is unchanged: the key is (resolved path, device, inode, size, mtime_ns, ctime_ns), the file is
 streamed (never held whole) and a file that changes while it is hashed is refused. Same values as hashing again.
+Session 6 (2026-10-08): a file written by frankie_box_durable.write_chunks is remembered here from its write-stream hash
+(remember), so the writer's own receipt witness costs no read.
 """
 import hashlib
 import os
@@ -50,3 +52,19 @@ def witness(path):
 
 def sha256_file(path):
     return witness(path)['sha256']
+
+
+def remember(path, value):
+    """A witness computed on the WRITE stream (frankie_box_durable.write_chunks, 2026-10-08): kept under the published
+    file's key so the next witness(path) of the unchanged file is this value with no read. Refused (nothing kept) when
+    the file's size is not the witnessed byte count; never raises."""
+    try:
+        key = _key(path)
+        if key[3] != int(value['bytes']):
+            return False
+        kept = dict(bytes=int(value['bytes']), sha256=str(value['sha256']))
+    except (OSError, KeyError, TypeError, ValueError):
+        return False
+    with _LOCK:
+        _CACHE[key] = kept
+    return True

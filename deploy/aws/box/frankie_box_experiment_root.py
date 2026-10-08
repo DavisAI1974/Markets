@@ -386,7 +386,16 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
         native_overlap=witness(overlap_path) if overlap_path.is_file() else dict(
             status='absent', reason='serial order (FRANKIE_ROOT_NATIVE_OVERLAP=off, native pass off, a resumed '
                                     'completed native stage, or a saved derivation reused)'),
-        data_workers=data_workers)
+        data_workers=data_workers,
+        # additive (session 6, the ROOT AWS treatment audit): stated, not measured. How this ROOT's file hashes were
+        # taken and that it moved no bytes over S3 itself (its inputs are the sealed ingest and the attached day file
+        # read in place; the day file's fetch and the outputs' archive are other pieces with their own receipts).
+        hash_basis='frankie_box_filehash.witness: one streamed sha256 per unchanged file per process (16 MiB reads), '
+                   'keyed on path, device, inode, size, mtime_ns, ctime_ns; no stat-only skip across processes '
+                   '(Greg\'s open call (c) undecided); the spool witnesses are the reference layers\' single scans',
+        s3_transfer='none in this process: the sealed journal, the opening book and day-external.json are read in '
+                    'place; the presigned day-external fetch (frankie_box_day_external, shared transport) and the '
+                    'archive/offload of the outputs carry their own transport receipts')
     if shared_market_policy is not None:
         # Pin existing spools at publication; a reader must never invent a new
         # source identity by hashing whatever happens to be at an old pathname.

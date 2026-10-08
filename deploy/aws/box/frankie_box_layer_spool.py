@@ -54,8 +54,10 @@ def row_value(line, unpack=None):
     return json.loads(row_text(line, unpack))
 
 
-def scan_spool(path, every=INDEX_EVERY):
-    """One read of a closed spool: bytes, sha256, row count (newlines; the last row must end on one) and the index."""
+def scan_spool(path, every=INDEX_EVERY, on_bytes=None):
+    """One read of a closed spool: bytes, sha256, row count (newlines; the last row must end on one) and the index.
+    on_bytes(n), when given, hears every chunk read (a caller's progress probe over a multi-hundred-GB spool); it never
+    changes the scan: an exception raised by it is swallowed, the values are the same with or without it."""
     path = Path(path)
     digest, size, count, index, target = hashlib.sha256(), 0, 0, [[0, 0]], every
     last = b'\n'
@@ -65,6 +67,11 @@ def scan_spool(path, every=INDEX_EVERY):
             if not chunk:
                 break
             digest.update(chunk)
+            if on_bytes is not None:
+                try:
+                    on_bytes(len(chunk))
+                except Exception:  # noqa: BLE001 - a probe never changes the scan
+                    pass
             found = chunk.count(b'\n')
             position, passed = -1, 0                       # newlines passed inside this chunk
             while count + found >= target:                 # row `target` begins just after newline number `target`

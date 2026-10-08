@@ -31,6 +31,7 @@ import re
 import shutil
 import sqlite3
 import sys
+import time
 import zlib
 
 BOX = Path(__file__).resolve().parent
@@ -56,6 +57,58 @@ def _init(box, cpus, fallback=()):
     except queue_module.Empty:
         cpu = set(fallback) or set(os.sched_getaffinity(0))
     os.sched_setaffinity(0, cpu)
+
+
+POOL_CLOSE_GRACE_SECONDS = 60.0  # _bounded_executor_stop: a graceful shutdown (idle helpers exit at once) may take this
+POOL_STOP_SECONDS = 10.0         # then terminate()+join, then kill()+join, each bounded
+
+
+def _stage_phase(phase, units_done=None, units_total=None, unit=None, every=None):
+    """The stage heartbeat's phase file (frankie_box_stage_progress.report_phase: a no-op outside a Run.child stage;
+    session 6: the digest, ROOT process 4, showed its stage name and no units). Never changes a table: an import or
+    write failure is swallowed as report_phase swallows its own. Orchestration only: not in _code_identity."""
+    try:
+        import frankie_box_stage_progress as _SP
+        _SP.report_phase(phase, units_done=units_done, units_total=units_total, unit=unit, every=every)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _bounded_executor_stop(executor, graceful):
+    """End a ProcessPoolExecutor without an unbounded wait (session 6; the rule of frankie_box_boss_session.
+    _bounded_pool_stop and lane_pin's dead-worker handling: never hang). graceful = shutdown(wait=True) on a daemon
+    thread given POOL_CLOSE_GRACE_SECONDS (idle helpers exit at once; a helper mid-task finishes it); then every live
+    helper process is terminated and joined within POOL_STOP_SECONDS, then killed and joined within POOL_STOP_SECONDS.
+    Returns None when the executor ended by itself, else what had to be done (pids, at, exit codes). The helpers' only
+    output is the executor's result pipe (every pass writes its part files itself and is redone whole on a loss), so a
+    kill loses nothing durable. The spawn helpers never inherited the ROOT's SIGTERM flag handler (exec resets it)."""
+    import threading
+    processes = list((getattr(executor, '_processes', None) or {}).values())
+
+    def body():
+        try:
+            executor.shutdown(wait=True, cancel_futures=True)
+        except Exception:  # noqa: BLE001 - an executor already broken; the processes are still checked below
+            pass
+    thread = threading.Thread(target=body, name='digest-pool-stop', daemon=True)
+    thread.start()
+    thread.join(POOL_CLOSE_GRACE_SECONDS if graceful else POOL_STOP_SECONDS)
+    if not thread.is_alive():
+        return None
+    acted = dict(graceful=graceful, terminated=[], killed=[], at=round(time.time(), 3), stop_thread_still_waiting=True)
+    for process in processes:
+        if process.is_alive():
+            process.terminate()
+            process.join(POOL_STOP_SECONDS)
+            acted['terminated'].append(dict(pid=process.pid, exit_code=process.exitcode))
+    for process in processes:
+        if process.is_alive():
+            process.kill()
+            process.join(POOL_STOP_SECONDS)
+            acted['killed'].append(dict(pid=process.pid, exit_code=process.exitcode))
+    thread.join(POOL_STOP_SECONDS)
+    acted['stop_thread_still_waiting'] = thread.is_alive()
+    return acted
 
 
 def _pool(cpus):
@@ -88,6 +141,7 @@ class PinnedPool:
         self.tasks_redone = 0
         self._lock = threading.RLock()
         self._generation = 0
+        self.stop_kills = []              # what _bounded_executor_stop had to do (session 6): terminated/killed pids
         self._executor = _pool(self.cpus) if self.cpus else None
 
     @property
@@ -112,7 +166,7 @@ class PinnedPool:
             if generation != self._generation or self._executor is None:
                 return                          # another caller already restarted this generation
             broken, before = self._executor, len(self.cpus)
-            broken.shutdown(wait=True, cancel_futures=True)
+            self._stop_executor(broken, graceful=False)
             self.cpus = self.cpus[:-1]
             self.workers_lost += before - len(self.cpus)
             self._generation += 1
@@ -152,13 +206,25 @@ class PinnedPool:
 
     def record(self):
         return dict(started_workers=self.started_workers, workers=len(self.cpus), workers_lost=self.workers_lost,
-                    tasks_redone=self.tasks_redone, cpus=list(self.cpus))
+                    tasks_redone=self.tasks_redone, cpus=list(self.cpus),
+                    stop_kills=list(self.stop_kills))   # additive (session 6): empty when every stop ended by itself
+
+    def _stop_executor(self, executor, graceful):
+        """shutdown + join, bounded (_bounded_executor_stop); what had to be terminated or killed is recorded and noted."""
+        acted = _bounded_executor_stop(executor, graceful)
+        if acted and (acted['terminated'] or acted['killed'] or acted['stop_thread_still_waiting']):
+            self.stop_kills.append(acted)
+            if self.note is not None:
+                self.note('%s: the helper pool did not end within its bound; %d helper(s) terminated, %d killed%s; '
+                          'helpers write nothing the proof keeps, nothing lost'
+                          % (self.label, len(acted['terminated']), len(acted['killed']),
+                             '; its stop thread was left waiting' if acted['stop_thread_still_waiting'] else ''))
 
     def close(self):
         with self._lock:
             executor, self._executor = self._executor, None
         if executor is not None:
-            executor.shutdown(wait=True)
+            self._stop_executor(executor, graceful=True)
 
     def __enter__(self):
         return self
@@ -682,7 +748,16 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
             shutil.rmtree(scratch)            # no usable save point: the scratch (any older layout) starts over
         scratch.mkdir(parents=True)
         passes = {}
-    note = progress or (lambda *a: None)
+    given = progress or (lambda *a: None)
+    labels = ('snapshot', 'plan', 'merge', 'final', 'copy', 'verify')
+
+    def note(table, label):
+        # the caller's progress as before, plus the stage heartbeat's phase file at every pass boundary (session 6):
+        # pass index of the table's six passes, the table named; never per row
+        given(table, label)
+        head = label.split(' ', 1)[0]
+        _stage_phase('root-digest: table %s pass %s (%d parts)' % (table, label, len(specs)),
+                     units_done=labels.index(head) + 1 if head in labels else None, units_total=len(labels), unit='passes')
     parts = [scratch / ('part-%04d' % i) for i in range(len(specs))]
     dictionary = scratch / 'dictionary.sqlite'
 

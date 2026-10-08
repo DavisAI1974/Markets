@@ -32,10 +32,14 @@ Transport (session 6, the ROOT AWS treatment): every presigned GET goes through 
 deploy/aws/box/frankie_box_s3_transport.fetch_url (session 5): above 64 MiB concurrent 16 MiB byte ranges on ONE range
 pool shared by every member (RANGE_STREAMS, the NIC budget is not multiplied by FETCH_STREAMS), at or below one stream with
 range-resume; the sha256 computed in order as the bytes land (read and hashed once); bounded retries and a report-only
-stall note; a FRANKIE_WORK_PROBE_V1 progress.json beside the fetched objects (<RUN>/src/progress.json, bytes). Each fetch
-listing entry keeps its keys (key, status, bytes, transport, seconds) and gains the transport receipt (transport_receipt,
-sha256, hash_pass, retries, stalls, reason) additively. The S3 attach PUT stays the presigned curl PUT (the box's role
-writes nothing to S3; the shared transport's upload needs a role) and its entry names that (transport, reason).
+stall note; a FRANKIE_WORK_PROBE_V1 progress.json beside the fetched objects (<RUN>/src/progress.json, bytes) AND the
+stage phase file (frankie_box_stage_progress.report_phase, $FRANKIE_STAGE_PROGRESS: bytes landed of bytes to fetch, every
+15 s, so a multi-GB partition shows movement instead of one object count that stands still). Each fetch listing entry
+keeps its keys (key, status, bytes, transport, seconds) and gains the transport receipt (transport_receipt: sha256,
+hash_pass, retries, stalls, reason, transport_fallback, kept_aside, bytes_per_second, expected_sha256, at) additively;
+the run record gains `transport` (the shared module and its sha256, the stream and range settings, why CRT does not
+apply here, the re-hash rule). The S3 attach PUT stays the presigned curl PUT (the box's role writes nothing to S3;
+the shared transport's upload needs a role) and its entry names that (transport, transport_reason).
 Every day file carries Frankie's 13 points mapped to the 99 (POINT_REGISTRY_MAP of the builder, closest entry with its
 reason; Greg 2026-10-07) and every row one reader stamp, published_ns = max(event_time_ns, publication), a row with no
 event time of its own at 14:00 ET of the trading day; the receipt repeats the map, the rule and the code sha256s.
@@ -49,6 +53,7 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -163,7 +168,34 @@ FETCH_STREAMS = int(os.environ.get('FETCH_STREAMS') or 16)   # concurrent object
 # here and the curve manifest sha256 check (verify_curve) and the history manifest check (the builder) are unchanged.
 # RANGE_STREAMS=1 restores the one-stream download (still through the transport: range-resume after a drop).
 RANGE_STREAMS = int(os.environ.get('RANGE_STREAMS') or 15)
-TRANSPORT_RECEIPT_KEYS = ('sha256', 'hash_pass', 'retries', 'stalls', 'reason', 'transport_fallback', 'kept_aside')
+TRANSPORT_RECEIPT_KEYS = ('sha256', 'hash_pass', 'retries', 'stalls', 'reason', 'transport_fallback', 'kept_aside',
+                          'bytes_per_second', 'expected_sha256', 'at')
+REHASH_RULE = ('the curve files are hashed again by verify_curve and the day-history files by the builder against their '
+               'manifests (nothing skips a hash because a file was just fetched or its stat is unchanged: Greg\'s open '
+               'call (c)); the fetch\'s in-stream sha256 is on each listing entry for comparison')
+
+
+def transport_summary(fetch_workers):
+    """The run record's `transport` block (additive): which transport fetched, with what settings, and why the CRT S3
+    client does not apply to this piece."""
+    path = Path(T.__file__)
+    return dict(module='deploy/aws/box/' + path.name, sha256=sha256_file(path), schema=T.SCHEMA,
+                fetch_streams=fetch_workers, range_streams=RANGE_STREAMS, range_bytes=T.RANGE_BYTES,
+                ranged_above=T.RANGED_ABOVE, socket_timeout_s=T.SOCKET_TIMEOUT, attempts=T.ATTEMPTS,
+                stall_note_s=T.STALL_SECONDS, hash_pass='in_stream (read and hashed once as the bytes land)',
+                crt='not applicable: every GET and PUT here is a presigned URL (the box role holds no S3 credential), '
+                    'and the CRT/classic S3 clients sign their own requests; the ranged urllib path is the transport',
+                rehash_rule=REHASH_RULE)
+
+
+def _stage_phase(phase, units_done=None, units_total=None, unit=None, every=None):
+    """The stage heartbeat's phase file (frankie_box_stage_progress.report_phase; a no-op outside a Run.child stage).
+    Never changes the stage: an import or write failure is swallowed here as report_phase swallows its own."""
+    try:
+        import frankie_box_stage_progress as _SP
+        _SP.report_phase(phase, units_done=units_done, units_total=units_total, unit=unit, every=every)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _fetch_one(k, url_map, src, ranges=None, on_bytes=None):
@@ -196,24 +228,30 @@ def fetch(keys, url_map, src, listing, workers=FETCH_STREAMS):
     to_fetch = [k for k in keys if not ((src / k).is_file() and (src / k).stat().st_size == url_map[k].get('bytes'))]
     total = sum(url_map[k].get('bytes') or 0 for k in to_fetch if isinstance(url_map[k].get('bytes'), int))
     probe = T.WorkProbe(str(src) if to_fetch else None, 'fetch:day-external-objects', total)
-    moved = [0]
+    moved, done = [0], [0]
+    lock = threading.Lock()
+
+    def phase():
+        return 'external: fetching day-history objects (%d of %d objects, %d to fetch)' % (done[0], len(keys), len(to_fetch))
 
     def on_bytes(n):
-        moved[0] += n
-        probe.update(moved[0])
+        with lock:
+            moved[0] += n
+            landed = moved[0]
+        probe.update(landed)
+        _stage_phase(phase(), units_done=landed, units_total=total, unit='bytes', every=15)
     out = []
     ranges = ThreadPoolExecutor(max(1, RANGE_STREAMS), thread_name_prefix='range')
+    _stage_phase(phase(), units_done=0, units_total=total, unit='bytes')
     try:
         with ThreadPoolExecutor(max_workers=max(1, min(workers, len(keys) or 1))) as pool:
             futures = [pool.submit(_fetch_one, k, url_map, src, ranges, on_bytes) for k in keys]
-            for i, fut in enumerate(as_completed(futures), 1):
+            for fut in as_completed(futures):
                 out.append(fut.result())
-                try:                                 # the stage heartbeat (frankie_box_stage_progress); never changes the stage
-                    import frankie_box_stage_progress as _SP
-                    _SP.report_phase('external: fetching day-history objects', units_done=i, units_total=len(keys),
-                                     unit='objects', every=10)
-                except Exception:  # noqa: BLE001
-                    pass
+                done[0] += 1
+                # the stage heartbeat (frankie_box_stage_progress): bytes landed of bytes to fetch, the object count in
+                # the phase text (one object may be a multi-GB partition: bytes move while the count stands still)
+                _stage_phase(phase(), units_done=min(moved[0], total), units_total=total, unit='bytes')
     finally:
         ranges.shutdown(wait=True)       # every range thread has returned by now (each member's fetch_url awaited its ranges)
         probe.update(moved[0], state='complete' if all(o['status'] != 'failed' for o in out) else 'failed', force=True)
@@ -398,7 +436,8 @@ def main():
     record = dict(schema='FRANKIE_DAY_EXTERNAL_RUN_V1', action=a.action, run=a.run, days=days, markets_sha=a.markets_sha,
                   workers=workers, fetch_workers=a.fetch_workers,
                   history_prefix=history_prefix, eia930_history_prefix=eia930_prefix,
-                  family_history_prefixes=family_prefixes(history_prefix, eia930_prefix, overrides), at=time.time(), fetch=[], curve=[], built=[], attach=[])
+                  family_history_prefixes=family_prefixes(history_prefix, eia930_prefix, overrides), at=time.time(), fetch=[], curve=[], built=[], attach=[],
+                  transport=transport_summary(a.fetch_workers))     # additive (session 6): the shared transport and its settings
     if a.action == 'build':
         if run_dir.exists():
             raise SystemExit('%s exists: a build RUN is fresh (ACTION=link reuses one)' % run_dir)

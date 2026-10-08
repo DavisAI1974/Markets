@@ -762,6 +762,17 @@ def _spool_line_ranges(path, size, step):
 LAYER_SPOOL_FORMS = ('reference', 'inline')
 
 
+def _stage_phase(phase, units_done=None, units_total=None, unit=None, every=None):
+    """The stage heartbeat's phase file (frankie_box_stage_progress.report_phase: a no-op outside a Run.child stage;
+    session 6, the ROOT AWS treatment: the finalize's spool scans and inline encodes showed no units on a2 for 80 min).
+    Never changes the stage: an import or write failure is swallowed as report_phase swallows its own."""
+    try:
+        _box_module('frankie_box_stage_progress').report_phase(phase, units_done=units_done, units_total=units_total,
+                                                              unit=unit, every=every)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def layer_spool_form():
     """How a layer whose value holds a whole RowSpool is written (FRANKIE_ROOT_LAYER_SPOOLS): 'reference' (default,
     2026-10-08: frankie_box_layer_spool's FRANKIE_LAYER_SPOOL_REF_V1, a few KB naming the spool) or 'inline' (the
@@ -787,7 +798,15 @@ def write_layer_reference(path, value, scans=None):
         if not spool._writer.closed:
             raise ValueError('a layer spool must be closed before its layer is written')
         if str(spool.path) not in scans:
-            scans[str(spool.path)] = LS.scan_spool(spool.path)
+            size, read = spool.path.stat().st_size, [0]
+            phase = 'root-legacy-finalize: scanning spool %s for the reference layer %s' % (spool.path.name, Path(path).name)
+
+            def on_bytes(n):
+                read[0] += n
+                _stage_phase(phase, units_done=min(read[0], size), units_total=size, unit='bytes', every=15)
+            _stage_phase(phase, units_done=0, units_total=size, unit='bytes')
+            scans[str(spool.path)] = LS.scan_spool(spool.path, on_bytes=on_bytes)
+            _stage_phase(phase, units_done=size, units_total=size, unit='bytes')
     document = LS.reference_document(path, value, keys, {key: scans[str(value[key].path)] for key in keys})
     durable.write_json(path, document)
     return {key: scans[str(value[key].path)] for key in keys}
@@ -832,6 +851,11 @@ def write_layer_json(path, value, cpus, window_per_worker=2, note=None):
             spool = spools[key]
             ranges = _spool_line_ranges(spool.path, spool.path.stat().st_size, LAYER_RANGE_BYTES)
             pending, total, first = collections.deque(), 0, True
+            # the stage heartbeat: ranges encoded of the spool's ranges (session 6; a2's 472 GB inline layer showed
+            # no units for 63 min). Phase boundaries and every 15 s, never per row.
+            phase = 'root-legacy-finalize: encoding spool %s into %s (inline)' % (spool.path.name, Path(path).name)
+            encoded_ranges, range_count = 0, len(ranges)
+            _stage_phase(phase, units_done=0, units_total=range_count, unit='ranges')
             submitted = iter(ranges)
             for item in submitted:
                 pending.append(pinned.submit(_layer_range_text, item))
@@ -843,6 +867,8 @@ def write_layer_json(path, value, cpus, window_per_worker=2, note=None):
                 nxt = next(submitted, None)
                 if nxt is not None:
                     pending.append(pinned.submit(_layer_range_text, nxt))
+                encoded_ranges += 1
+                _stage_phase(phase, units_done=encoded_ranges, units_total=range_count, unit='ranges', every=15)
                 if not count:
                     continue
                 if not first:
@@ -2272,8 +2298,28 @@ class Session:
             return []
         return list(overlap.get('native_cpus') or [])
 
+    NATIVE_OVERLAP_JOIN_SECONDS = 1800.0   # _join_native_overlap: the most it waits for the child after its SIGTERM
+    NATIVE_OVERLAP_KILL_JOIN_SECONDS = 60.0  # then the wait after SIGKILL (kernel reaping)
+
     def _join_native_overlap(self, process, outcome_note):
-        process.join()
+        # Bounded (session 6, the ROOT AWS treatment; the rule of frankie_box_lane_pin's dead-worker handling and the
+        # session-5 shard/pool stops: never hang). The normal route reaches here with the child already ended
+        # (_await_native_overlap polls is_alive), so the bound matters only on the save/stop routes, where the child was
+        # asked (SIGTERM) to save at its next closed group: a2's checkpoints took seconds, the bound is 30 min. A child
+        # still alive at the bound is SIGKILLed and the kill is recorded (join_kill) and noted; its checkpoints are
+        # atomic (pending + rename) and its ledgers resume from the last checkpoint, so a kill loses no saved state.
+        process.join(self.NATIVE_OVERLAP_JOIN_SECONDS)
+        join_kill = None
+        if process.is_alive():
+            process.kill()
+            process.join(self.NATIVE_OVERLAP_KILL_JOIN_SECONDS)
+            join_kill = dict(pid=process.pid, at=round(time.time(), 3), after_seconds=self.NATIVE_OVERLAP_JOIN_SECONDS,
+                             exit_code=process.exitcode, still_alive=process.is_alive(),
+                             rule='the native child did not end within the bound after its save request; SIGKILLed; '
+                                  'its last checkpoint stands (atomic writes), the serial route resumes from it')
+            self.note(f'native stage beside the legacy pass: child {process.pid} still alive '
+                      f'{self.NATIVE_OVERLAP_JOIN_SECONDS:.0f} s after its save request; killed (exit '
+                      f'{process.exitcode}); nothing saved is lost')
         overlap = getattr(self, '_native_overlap', None) or {}
         lane = overlap.get('lane')
         if lane:
@@ -2290,7 +2336,8 @@ class Session:
         self._native_overlap_record(finished_at=time.time(), exit_code=code, outcome=outcome, note=outcome_note,
                                     seconds=round(time.time() - overlap.get('started', time.time()), 3),
                                     error=load_json(error) if (code not in (0, self.NATIVE_OVERLAP_SAVED)
-                                                               and error.is_file()) else None)
+                                                               and error.is_file()) else None,
+                                    **(dict(join_kill=join_kill) if join_kill else {}))   # additive: only when it acted
         self._native_overlap = None
         return outcome
 
