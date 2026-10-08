@@ -77,6 +77,26 @@ Console: Service Quotas > Amazon EC2 > the quota above > Request increase at acc
 The AWS research recorded the current value at 640 (unverified in session 7: both connectors were down).
 ```
 
+RESULT 2026-10-08 ~12:0xZ (Aws connector live, account ...4170, root caller): current value is 256 vCPUs (NOT 640; the 640 was
+the research's unverified figure). One request is already OPEN: id 66c042562b594ac18e9966a1939b5b62Tf00eIjo, DesiredValue 640,
+status CASE_OPENED, support case 179140016900825, filed 2026-10-07T19:09:28Z by root (Greg). RequestServiceQuotaIncrease for 1152
+was REFUSED: "Only one open service quota increase request is allowed per quota" (ResourceAlreadyExistsException). The Support
+API cannot amend the case (SubscriptionRequiredException: no premium support plan). Two ways to 1152: (a) Greg replies on
+support case 179140016900825 in the Support Center console asking for 1152 instead of 640; (b) wait for the 640 to resolve,
+then file 1152 (a second request after the first closes is allowed). At 640, with the three existing boxes stopped (stopped
+instances do not count), the fleet fits 10 x 64-vCPU boxes.
+
+Idle storage inventory (read-only, same sweep; gp3 list prices $0.08/GB-mo, $0.005 per IOPS over 3,000, $0.04 per MiB/s over 125):
+us-east-1: vol-0d36715924f03b86c (main root, 2048 GiB, 16,000 IOPS, 1,250 MiB/s, ~$274/mo, of which ~$110 is provisioned extras);
+vol-004b68c077be09cc9 (main archive, 2048 GiB, 10,000 / 1,000, ~$234/mo, ~$70 extras); vol-0fbf7bc0991bc8e39 (second box root,
+2048 GiB, 16,000 / 1,000, ~$264/mo, ~$100 extras); 0 snapshots, 0 Elastic IPs. us-east-2: vol-05a0b1e56f8c16478 (year-pull root,
+300 GiB, baseline, $24/mo); vol-05c3d967e07b2d61f (UNATTACHED 250 GiB, $20/mo); six standard snapshots (1,190 GiB nominal, up to
+$60/mo): two are Greg's 2026-09-29 "before termination" preservations of the old native host (snap-0ec119eebb2964b4d root 120 GB,
+snap-0142c4b8766b5b7ea data 250 GB), two back AMI ami-0bd716486a4f2ad02 (snap-09b37f01d8562324a, snap-091668dfa6e630234; deleting
+them means deregistering the AMI), snap-0af0f3714bbf2a87e (2026-09-16 restore-verified data) and snap-028afdc9066adab30
+(2026-08-28 pre-reboot preservation). Cheapest reversible cut while the boxes are stopped: ModifyVolume the three 2 TB volumes
+to baseline 3,000 / 125 (~$280/mo = ~$9.3/day saved; raise again before a run; 6 h cooldown between modifications per volume).
+
 If Greg has already filed it himself (he said he would in the new session), confirm with
 ListRequestedServiceQuotaChangeHistoryByQuota and do not file a second one.
 
