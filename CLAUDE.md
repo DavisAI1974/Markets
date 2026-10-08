@@ -2,8 +2,8 @@
 
 Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW clone: `git fetch --deepen=400` before any merge-base). Parent-only; agents
 (model "fable") do the work. Greg paused for the night: the main box is STOPPED (KeepRunning=false); the day
-e2e-20231018-a2/20231018 is SAVED with its booking retained and (expected) its ROOT receipt written on checkout 6076950
-with the digest OFF; no teacher ran. Start the box only on Greg's go, then ACTION=resume + ACTION=kick on the newest staged
+e2e-20231018-a2/20231018 is SAVED with its booking retained and NO ROOT receipt (both resumes were killed before it: the sealed-record
+shortcut missed on a tail-parse anchor, fix assigned); no teacher ran. Start the box only on Greg's go, then ACTION=resume + ACTION=kick on the newest staged
 tip. The digest for this classroom-arm day must be rendered FULL DEPTH before the classroom (NO top-ten: Greg, nothing
 dropped). Everything from session 6 is SOURCE-BUILT / RUNTIME-UNVERIFIED except the hold, the two saves, the resume and
 the manual clean, which ran live.
