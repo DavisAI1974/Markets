@@ -56,7 +56,9 @@ def content_rebinds(saved, built, where='$'):
     checkout moves when the ONLY differences are file witnesses ({path, bytes, sha256, ...}) whose bytes, sha256 and
     every other key are equal and whose paths name the same file inside a checkout: the current path is
     <this checkout>/<rel> and the saved path is <another absolute prefix>/<rel>. Returns None for any other difference
-    (a hash, bytes, schema, data_workers, policy, a key, a value type, a path outside the checkout). Old saved documents
+    (a hash, bytes, schema, data_workers, policy, a key, a value type, a path outside the checkout; the source binding's
+    data_workers is substituted with the saved value before this compare and recorded as a run-size rebind, session 9:
+    save_or_match run_size). Old saved documents
     (absolute paths of the checkout that wrote them) fall under the same rule; nothing saved is rewritten."""
     if isinstance(saved, dict) and isinstance(built, dict):
         if set(saved) != set(built):
@@ -383,17 +385,29 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     output.mkdir(mode=0o700, exist_ok=resume)
     sync_directory(PARENT)
     rebinds = []
-    def save_or_match(path, body):
+    def save_or_match(path, body, run_size=()):
         """The saved document when this checkout builds the same content (equal, or equal but for the checkout prefix
         of recorded file paths: content_rebinds); it stays the identity, never rewritten. Any other difference refuses
-        (retained, never discarded). A fresh ROOT publishes the built document."""
+        (retained, never discarded). A fresh ROOT publishes the built document.
+        Session 9 (live 17:02Z: the -a1 resume on its grown 64-CPU booking refused on data_workers 31 -> 63): the
+        fields named in `run_size` (the source binding's data_workers) are run-size parameters, not calculation
+        identity; they are compared with the saved value substituted, and a difference is recorded in this attempt's
+        checkout-rebinds record (and so the receipt), never refused and never rewritten."""
         if resume and path.exists():
             saved = json.loads(path.read_bytes())
-            moves = content_rebinds(saved, json.loads(json.dumps(body, sort_keys=True, allow_nan=False)))
+            built = json.loads(json.dumps(body, sort_keys=True, allow_nan=False))
+            sized = []
+            for field in run_size:
+                if field in saved and field in built and saved[field] != built[field]:
+                    sized.append(dict(document=str(path), field=field, saved=saved[field], this_run=built[field],
+                                      rule='the worker count is a run-size parameter (Greg\'s CPU add), not calculation '
+                                           'identity; the saved binding stays the identity'))
+                    built[field] = saved[field]
+            moves = content_rebinds(saved, built)
             if moves is None:
                 raise ValueError('retained ROOT source/pin differs: %s' % path)
-            if moves:
-                rebinds.append(dict(document=str(path), sha256=_sha256_file(path), moves=moves))
+            if moves or sized:
+                rebinds.append(dict(document=str(path), sha256=_sha256_file(path), moves=moves, run_size=sized))
             return saved
         _save_new_complete(path, body)
         return body
@@ -425,7 +439,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             emission=emission_binding())
     # on resume the SAVED binding stays the identity (Session reads source-binding.json; every stage identity and the
     # retained derivation compare against it), whatever checkout path this process built
-    binding = save_or_match(output / 'source-binding.json', binding)
+    binding = save_or_match(output / 'source-binding.json', binding, run_size=('data_workers',))
     if external['status'] == 'attached':
         save_or_match(output / 'external-computation.json', external_computation)
     if rebinds:
@@ -436,9 +450,14 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
         _save_new_complete(records / ('%d-%s.json' % (time.time_ns(), uuid.uuid4().hex[:8])), dict(
             schema=CHECKOUT_REBIND_SCHEMA, at=time.time(), commit=commit, current_checkout=str(REPOSITORY),
             saved_checkouts=sorted({m['saved_checkout'] for r in rebinds for m in r['moves']}), documents=rebinds,
+            run_size=[x for r in rebinds for x in r.get('run_size') or []],
             rule='the saved documents differ from this checkout\'s only in the checkout prefix of recorded file paths '
-                 'whose bytes and sha256 are equal; the saved documents stay the identity'))
+                 'whose bytes and sha256 are equal, and/or in a run-size parameter (data_workers: this run\'s CPU '
+                 'booking); the saved documents stay the identity'))
     session = Session(output, day, '00', None)
+    # session 9: the Session sizes its helpers from the worker count THIS process was started with (the grown lane),
+    # never the saved binding's (the identity, which may name the smaller booking the attempt began on)
+    session.requested_data_workers = data_workers
     session.request_sha256 = witness(output / 'source-binding.json')['sha256']
     session.phase('deriving', 'experiment ROOT: sealed day, legacy and native calculations; no giant bedrock digest'
                   if bedrock else 'experiment ROOT: the legacy pass on the sealed day; bedrock off')

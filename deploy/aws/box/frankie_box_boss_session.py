@@ -2854,7 +2854,7 @@ class Session:
         # replay has a whole core (AWS deep dive / review L-3); without a readable topology only the replay CPU is kept.
         topology = cpu_topology(lane)
         replay_core = [c for c in lane if topology and topology[c] == topology[lane[0]]] if topology else lane[:1]
-        helper_limit = max(0, int((self.source_binding or {}).get('data_workers') or 1))
+        helper_limit = max(0, self._data_workers())
         helpers = [c for c in lane if c not in replay_core][:helper_limit]
         shard_mode = os.environ.get('FRANKIE_ROOT_LEGACY_FRAME_SHARDS', 'on')
         if shard_mode not in ('on', 'off'):
@@ -3172,7 +3172,7 @@ class Session:
         # A native stage beside this pass that has already ended hands its CPUs to the layer encoders too (Greg,
         # 2026-10-07: every CPU used); the requested data_workers count still bounds them.
         freed = [c for c in self._freed_native_cpus() if c not in lane]
-        layer_cpus = (lane[1:] + freed)[:max(0, int((self.source_binding or {}).get('data_workers') or 1))] \
+        layer_cpus = (lane[1:] + freed)[:max(0, self._data_workers())] \
             if retain_frame_sections else []
         if freed and layer_cpus:
             self._native_overlap_record(layer_encoders_widened=dict(cpus=[c for c in layer_cpus if c in freed]))
@@ -3482,6 +3482,14 @@ class Session:
         self.note('file claims: %d rows (%s)%s' % (len(rows), note.get('status'),
                                                     '; %d skipped' % len(skipped) if skipped else ''))
         return out
+
+    def _data_workers(self):
+        """The worker count that sizes this process's helpers (session 9): the count this process was started with
+        (`requested_data_workers`, set by the experiment ROOT from --data-workers: the grown lane's 63 on a 64-CPU
+        booking) when given, else the source binding's (the identity; 31 for an attempt begun on 32 CPUs). Sizing
+        only: no byte, order or hash depends on it; the binding is never rewritten."""
+        requested = getattr(self, 'requested_data_workers', None)
+        return int(requested or (self.source_binding or {}).get('data_workers') or 1)
 
     def _write_digest(self, receipt, layers, prices, frames, structures, roll, first, buys, sells, bedrock=True):
         """Publish a file from pinned layer snapshots only after exact table proofs. bedrock=False writes the header,
@@ -3859,9 +3867,9 @@ class Session:
                 try:
                     os.sched_setaffinity(0, set(affinity) - set(idle))
                     with CompactConformanceReader(rows_path, expected_count=count, expected_head_hash=head,
-                            workers=self.source_binding.get('data_workers', 1)) as reader:
+                            workers=self._data_workers()) as reader:
                         os.sched_setaffinity(0, {consumer})
-                        probe.reader_workers = dict(requested=self.source_binding.get('data_workers', 1),
+                        probe.reader_workers = dict(requested=self._data_workers(),
                                                     effective=len(reader.worker_cpus), worker_cpus=list(reader.worker_cpus),
                                                     consumer_cpu=consumer, consumer_core_idle_siblings=idle,
                                                     topology_basis=('/sys/devices/system/cpu/cpu*/topology' if topology
