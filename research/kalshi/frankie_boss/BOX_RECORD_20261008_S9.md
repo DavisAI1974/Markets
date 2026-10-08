@@ -369,3 +369,8 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   archived); kick exit 0: root worker unit frankie-queue-root-1791481494 (FRANKIE_ROOT_DIGEST=off FRANKIE_CLASSROOM_CPUS=all),
   cpu-watch already running (its loop code now db96f24). Entry RUNNING "its whole day in the held box slot", attempt -a1,
   64 CPUs. Expected: ROOT child --resume --digest off -> receipt in minutes -> boundary validate by claim -> teacher.
+- 17:46:16Z RECEIPT: R/calculations-receipt.json written (27,734 B) by the resumed ROOT child on db96f24 (SSM 8e380559
+  probe 17:47:10Z): "retained evidence: 56 artifacts, 56 by their claim, 0 read whole; 5 spools, 5 reopened from a sealed
+  count and a holding claim, 0 read whole"; "resumed with DIGEST=off: the saved derivation's digest never completed;
+  recorded as skipped"; "resumed from the saved derivation; no legacy calculation replay". ~80 s from kick to receipt.
+  Entry running (the worker at the stage boundary: validate by claim -> save -> clean -> teacher).
