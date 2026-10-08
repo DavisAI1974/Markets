@@ -73,10 +73,26 @@ def floor_bytes():
 # each root to collect pins from (besides the Run's own step receipt); guarded = prefixes (relative to each root) that
 # a safe_path reader of the next stage opens (a symlink there would be refused: those files stay); successor = the
 # stage the trigger's resume reaches next (informational; the queue's own order decides).
+def _teacher_rows_dirs(record):
+    # frankie_box_experiment_teacher.py:179-184 writes <TEACHER_ROWS>/<day>/receipt.json; the Run's teacher step receipt
+    # (experiment.py:4187) names the days, not the directories
+    try:
+        import frankie_box_experiment as X
+        base = Path(X.TEACHER_ROWS)
+    except ImportError:
+        base = Path('/opt/frankie-box/work/experiment-teacher-rows')
+    return [base / d for d in (record.get('days') or []) if isinstance(d, str)]
+
+
+def _report_dirs(record):
+    # frankie_box_experiment_day_reports.py:407 writes receipt.json beside the report files the step record lists
+    return [Path(item['file']).parent for item in (record.get('reports') or []) if isinstance(item, dict) and item.get('file')]
+
+
 STAGES = {
     'root': dict(roots=('calculations',), inner=('calculations-receipt.json', 'work/derive.json'), collector='root',
                  guarded=('work/derived/.rows/', 'work/bedrock/', 'work/derived/.projection-v2/'), successor='teacher'),
-    'teacher': dict(roots=('rows',), inner=('receipt.json',), successor='classroom (arm day) / data'),
+    'teacher': dict(roots=('rows',), roots_from=_teacher_rows_dirs, inner=('receipt.json',), successor='classroom (arm day) / data'),
     'classroom': dict(roots=('classroom',), inner=('completion.json', 'receipt.json'), successor='data'),
     'data': dict(roots=('target',), inner=('MANIFEST.json',), successor='search'),
     'search': dict(roots=('target',), inner=('MANIFEST.json',), successor='lessons (batch) / frankie_lessons'),
@@ -86,8 +102,8 @@ STAGES = {
     'frankie_lessons': dict(roots=(), inner=(), successor='exchange'),
     'exchange': dict(roots=('exchange',), inner=('receipt.json',), successor='voice'),
     'voice': dict(roots=(), inner=(), successor='school'),
-    'school': dict(roots=('file',), inner=('receipt.json',), successor='reports'),
-    'reports': dict(roots=(), inner=(), successor='jev / close'),
+    'school': dict(roots=('file',), inner=(), successor='reports'),       # its receipt is the child's last log line (experiment.py:3565), no file
+    'reports': dict(roots=(), roots_from=_report_dirs, inner=('receipt.json',), successor='jev / close'),
     'jev': dict(roots=(), inner=(), successor='reports revision / close'),
 }
 
@@ -126,6 +142,12 @@ def output_roots(stage, record):
         if isinstance(value, str) and value.startswith('/'):
             path = Path(value)
             root = path if path.is_dir() else path.parent
+            if root not in roots and root.is_dir():
+                roots.append(root)
+    derive = STAGES.get(stage, {}).get('roots_from')
+    if derive is not None:
+        for root in derive(record):
+            root = Path(root)
             if root not in roots and root.is_dir():
                 roots.append(root)
     return roots
@@ -476,17 +498,14 @@ def clean_action(args):
     clean_dir = out_dir / 'clean'
     clean_dir.mkdir(parents=True, exist_ok=True)
     say = lambda t: print('%s %s' % (time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), t), flush=True)
-    if not os.environ.get('FRANKIE_HANDOFF_NO_KEEP_RUNNING'):
-        try:
-            import frankie_box_experiment as X
-            X.keep_running(args.run, True, '%s clean unit of %s running (validate -> save -> clean -> trigger)'
-                           % (args.stage, args.day), 'frankie_box_stage_handoff.py clean', log=say)
-        except Exception as error:  # noqa: BLE001 - a cost guard, never the clean's outcome
-            say('keep-running: not set (%s: %s)' % (type(error).__name__, error))
     bound = float(os.environ.get('FRANKIE_HANDOFF_WAIT_SAVED_SECONDS') or WAIT_SAVED_SECONDS)
     _, _, marker = day_state(args.run, args.day)
     base = dict(schema=TRIGGER_SCHEMA, run=args.run, day=args.day, stage=args.stage, code_root=args.code_root,
                 commit=args.commit, at=time.time())
+    # in progress, beside the day's marker: frankie_box_experiment.box_in_use counts it (and this unit's process) as
+    # the box in use, so the worker ending saved never clears KeepRunning mid-clean; the tag itself is re-set true at
+    # the end only when a successor was triggered (the resumed day then owns it)
+    _note_beside_marker(marker, dict(base, status='running', pid=os.getpid(), reason='the clean unit is running'))
     if not wait_saved(args.run, args.day, bound, say):
         body = dict(base, status='failed', reason='the day was not recorded saved within %d s (%s); nothing cleaned, no resume'
                                                    % (bound, (day_state(args.run, args.day),)))
@@ -525,6 +544,13 @@ def clean_action(args):
                                      if i['kind'] in ('move', 'archive') and i.get('status') == 'done'])
     _write(out_dir / 'trigger.json', result)
     _note_beside_marker(marker, dict(result, note='the clean unit\'s outcome beside the day\'s marker'))
+    if result['status'] == 'done' and not os.environ.get('FRANKIE_HANDOFF_NO_KEEP_RUNNING'):
+        try:
+            import frankie_box_experiment as X
+            X.keep_running(args.run, True, '%s clean of %s done; the day resumed and kicked on %s (it owns the box now)'
+                           % (args.stage, args.day, args.commit[:12]), 'frankie_box_stage_handoff.py clean', log=say)
+        except Exception as error:  # noqa: BLE001 - a cost guard, never the clean's outcome
+            say('keep-running: not set (%s: %s)' % (type(error).__name__, error))
     return 0 if result['status'] == 'done' else 3
 
 

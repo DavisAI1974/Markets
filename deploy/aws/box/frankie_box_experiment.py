@@ -781,6 +781,36 @@ def box_in_use(run_name=None):
                     busy.append('CPU controller of %s holds its lock' % lock.parent.name)
         except OSError:
             busy.append('CPU controller lock %s unreadable: assumed in use' % lock)
+    # session 6 (frankie_box_stage_handoff): a stage's clean unit on the retained lane keeps the box in use while it runs,
+    # so a line worker ending saved at a boundary never clears the tag mid-clean: the unit's process (the module's clean
+    # action, under systemd-run as frankie-clean-* or as a detached session) and a day marker whose clean note is in progress
+    try:
+        import subprocess as sp
+        out = sp.run(['pgrep', '-af', 'frankie_box_stage_handoff.py --action clean'], capture_output=True, text=True).stdout
+        pids = [line.split(' ', 1)[0] for line in out.splitlines() if line.strip() and line.split(' ', 1)[0] != str(os.getpid())]
+        if pids:
+            busy.append('stage clean unit(s) running: pids %s' % ' '.join(pids))
+        if shutil.which('systemctl'):
+            out = sp.run(['systemctl', 'list-units', 'frankie-clean-*', '--all', '--plain', '--no-legend'],
+                         capture_output=True, text=True).stdout
+            units = [line.split()[0] for line in out.splitlines()
+                     if line.split() and line.split()[0].startswith('frankie-clean-') and ('running' in line or 'activating' in line)]
+            if units:
+                busy.append('stage clean unit(s) live: %s' % ', '.join(units))
+    except Exception as error:  # noqa: BLE001
+        busy.append('clean unit check unavailable (%s): assumed in use' % type(error).__name__)
+    try:
+        import frankie_box_frankie_queue as Q
+        notes = sorted(Q.SAVE_DIR.glob('*.save-request.json.clean.json')) if Q.SAVE_DIR.is_dir() else []
+        for note in notes:
+            try:
+                status = json.loads(note.read_bytes()).get('status')
+            except (OSError, ValueError):
+                status = 'unreadable'
+            if status in ('running', 'unreadable'):
+                busy.append('a stage clean is in progress on %s (%s)' % (note.name, status))
+    except Exception:  # noqa: BLE001 - the marker notes are a hint; the process/unit checks above are the record
+        pass
     return busy
 
 
