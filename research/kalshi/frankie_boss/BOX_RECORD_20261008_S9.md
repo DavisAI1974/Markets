@@ -327,3 +327,16 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   booking (the standalone render takes only CPUs outside bookings: a small render-mode change needed; written while the
   teacher runs). The operator role was stopped by Greg: the parent drives the box directly from here.
 - 17:28:23Z (SSM 586f9970): CR4 staging receipt not yet on the box (run 37816561759 in progress); nothing killed yet.
+
+## Parent: the render runs to the end (Greg 17:3xZ); the root volume cannot be raised yet (17:34Z)
+- Greg: "Just stop"; "Then finish render. It's the non essential stuff that has to stop"; "Start render from where it
+  stopped" -> probe 784b3b95 17:31:40Z: the render NEVER stopped (the parent's stop call was interrupted before it was
+  sent): child 5714 alive, 62 of 63 helpers reading, disk at 124 MiB/s (the baseline ceiling), entry running, marker
+  standing. Nothing touched.
+- 17:34Z (Aws connector): vol-0d36715924f03b86c (root, the day's data) modification 12:07:59Z -> 3,000/125 is still
+  OPTIMIZING at 47% (5.5 h in); ModifyVolume refused "cannot be modified in modification state OPTIMIZING": the raise is
+  impossible until it completes (~23:30Z at this pace). vol-004b68c077be09cc9 (archive): raise to 10,000/1,000 ACCEPTED
+  17:34:29Z (modifying); it does not carry the digest's reads. Digest at 125 MiB/s: ~63 min per decode, two decodes ->
+  done ~19:25Z, then receipt -> SAVED (marker) -> resume + kick on db96f24 -> boundary by claim -> teacher on 64.
+- Alternative offered to Greg (not taken unless he says): stop the render now, teacher now (host-bound), render the digest
+  alongside inside the day's booking (needs a small render-mode change) before the classroom.
