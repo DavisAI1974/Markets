@@ -101,3 +101,6 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
 - Restart operator spawned on model opus (Greg's rule from the launch on): wait for the stage receipt, verify the fix is in
   the checkout, then ONE script: grow the booking to 64, ACTION=resume, ACTION=kick FRANKIE_ROOT_DIGEST=on
   FRANKIE_CLASSROOM_CPUS=all (DAY_CPUS not given), then watch sparsely: receipt (claim decisions, spool_reopen), digest start.
+
+## Box-operator (opus): the restart on 64 (16:5xZ)
+- 16:45Z start: record read; run 37811038079 in_progress (head 27109f4d). Waiting for the stage before any box touch.
