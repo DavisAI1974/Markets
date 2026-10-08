@@ -107,6 +107,14 @@ def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 *
         have = knowledge_path.read_bytes()
         if sha256_bytes(have) == digest:
             return dict(json.loads(manifest_path.read_bytes()), source_witness=bases), True
+        # session 9 (a2: the ROOT's entry is filed before the digest is rendered beside the teacher; a later record of
+        # the same ROOT lists the digest too): the ONLY difference allowed is the digest ADDED as a source (every earlier
+        # source record identical, the summary differing only in its `digest` field). Then the new knowledge is filed
+        # beside the original as stage-knowledge-attached-<sha16>.json (the original stays byte for byte) and the
+        # manifest names it: 'digest attached later'. Anything else declines as before (R16).
+        attached = _attach_digest_later(entry_dir, manifest_path, have, body, raw, digest, records, bases)
+        if attached is not None:
+            return attached
         raise ValueError('%s already holds different stage knowledge; duplicate data declines (R16)' % entry_dir)
     if entry_dir.exists():
         if (any(p.name not in ('stage-knowledge.json', 'stage-knowledge.json.pending', 'MANIFEST.json.pending')
@@ -139,6 +147,70 @@ def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 *
     finally:
         os.close(directory)
     return manifest, False
+
+
+ATTACHED_LATER = 'digest attached later'
+DIGEST_SOURCE_NAME = 'derivation-digest-full.md'
+
+
+def _attach_digest_later(entry_dir, manifest_path, have, body, raw, digest, records, bases):
+    """(manifest, reused) when the new stage knowledge is the filed one plus the digest only, else None (the caller
+    declines). Reused when this exact knowledge is already attached. A second, different attachment is not made (None)."""
+    manifest = json.loads(manifest_path.read_bytes())
+    for entry in manifest.get('entries') or []:
+        if entry.get('sha256') == digest and entry.get('attached_later') == ATTACHED_LATER:
+            return dict(manifest, source_witness=bases, current_knowledge=entry['name'], attachment=ATTACHED_LATER), True
+    try:
+        old = json.loads(have)
+    except ValueError:
+        return None
+    if any(e.get('attached_later') for e in manifest.get('entries') or []):
+        return None                                  # one attachment per entry; a different one is different knowledge
+    if {k: old.get(k) for k in ('schema', 'day', 'stage', 'rule')} != {k: body.get(k) for k in ('schema', 'day', 'stage', 'rule')}:
+        return None
+    previous = old.get('sources') or []
+    added = [r for r in records if r not in previous]
+    if not added or [r for r in records if r in previous] != previous \
+            or any(Path(r['path']).name != DIGEST_SOURCE_NAME for r in added):
+        return None
+    before, after = dict(old.get('summary') or {}), dict(body.get('summary') or {})
+    before.pop('digest', None)
+    after.pop('digest', None)
+    if before != after:
+        return None
+    name = 'stage-knowledge-attached-%s.json' % digest[:16]
+    target = entry_dir / name
+    if target.exists() and target.read_bytes() != raw:
+        return None
+    if not target.exists():
+        pending = entry_dir / (name + '.pending')
+        with pending.open('wb') as handle:
+            handle.write(raw)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(pending, target)
+    witnessed = {b['path']: b for b in bases}
+    manifest['entries'].append(dict(
+        name=name, bytes=len(raw), sha256=digest, include=True, attached_later=ATTACHED_LATER,
+        attaches_to=dict(name='stage-knowledge.json', sha256=sha256_bytes(have)),
+        added_sources=[dict(path=r['path'], bytes=r['bytes'], sha256=r['sha256'],
+                            basis=(witnessed.get(r['path']) or {}).get('basis')) for r in added],
+        source='; '.join(r['path'] for r in records),
+        kind='the %s knowledge again with the digest added (rendered after the entry was filed); the original '
+             'stage-knowledge.json is kept byte for byte' % body.get('stage')))
+    manifest['attached_later'] = (manifest.get('attached_later') or []) + [dict(name=name, sha256=digest, at=time.time())]
+    pending = entry_dir / 'MANIFEST.json.pending'
+    with pending.open('w', encoding='utf-8') as handle:
+        handle.write(json.dumps(manifest, indent=1, sort_keys=True) + '\n')
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(pending, manifest_path)
+    directory = os.open(entry_dir, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+    return dict(manifest, source_witness=bases, current_knowledge=name, attachment=ATTACHED_LATER), False
 
 
 def write_lessons_entry(brain, day, lessons_path):

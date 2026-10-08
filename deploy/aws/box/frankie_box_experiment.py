@@ -1376,22 +1376,36 @@ class Run:
         return self.record(stage, key, 'waiting', owner=root['owner'],
                            reason='the owning AWS lane has not published a completed %s receipt; its artifacts stay there' % stage)
 
-    def brain_stage(self, day, stage, sources, summary=None, inline_limit=2 * 1024 * 1024):
+    def brain_stage(self, day, stage, sources, summary=None, inline_limit=2 * 1024 * 1024, declined='record'):
         """Immediately commit newly available stage knowledge to Frankie's brain before advancing. Session 9: each
         source's sha256 comes from its attempt's FRANKIE_FILE_CLAIM row when the claim still holds (stat + last 64 KiB;
         the ROOT's digest, layers, spools and ledgers), else from one whole read, after which a large source's claim row
-        is written (frankie_box_brain.stage_source_witness); the basis per source is on this record (source_witness)."""
+        is written (frankie_box_brain.stage_source_witness); the basis per source is on this record (source_witness).
+        An entry filed before the digest existed takes the digest as an attachment (status 'digest attached later';
+        knowledge_sha256 is then the attached file's). The brain's own decline of DIFFERENT knowledge (R16) is a recorded
+        outcome on the step's receipt (status 'declined', reason, the existing entry's hashes), never the day's failure;
+        declined='raise' keeps the exception (E-5's caller moves the replaced day-file entry aside on it)."""
         import frankie_box_brain as BR
         brain = Path(self.plan.get('brain') or str(BRAIN))
-        manifest, reused = BR.write_stage_entry(brain, day, stage, sources, summary=summary, inline_limit=inline_limit)
         entry = brain / ('%s-%s' % (day, stage))
+        try:
+            manifest, reused = BR.write_stage_entry(brain, day, stage, sources, summary=summary, inline_limit=inline_limit)
+        except ValueError as error:
+            if declined == 'raise' or 'different' not in str(error) or 'stage knowledge' not in str(error):
+                raise
+            have = {k: (sha256_file(entry / n) if (entry / n).is_file() else None)
+                    for k, n in (('manifest_sha256', 'MANIFEST.json'), ('knowledge_sha256', 'stage-knowledge.json'))}
+            self.log('brain %s %s: DECLINED (recorded, the day continues): %s' % (stage, day, error))
+            return dict(path=str(entry), reused=False, status='declined', reason=str(error),
+                        rule='the brain keeps the knowledge it holds (R16); this record names the decline', **have)
         witnessed = manifest.get('source_witness') or []
-        self.log('brain %s %s: %s%s; sources: %s' % (stage, day, entry, ' (reused)' if reused else '',
-                                                      ', '.join('%s %s' % (Path(w['path']).name, w['basis'])
-                                                                for w in witnessed)))
-        return dict(path=str(entry), reused=reused,
+        status = manifest.get('attachment') or ('reused' if reused else 'written')
+        self.log('brain %s %s: %s (%s); sources: %s' % (stage, day, entry, status,
+                                                         ', '.join('%s %s' % (Path(w['path']).name, w['basis'])
+                                                                   for w in witnessed)))
+        return dict(path=str(entry), reused=reused, status=status,
                     manifest_sha256=sha256_file(entry / 'MANIFEST.json'),
-                    knowledge_sha256=sha256_file(entry / 'stage-knowledge.json'),
+                    knowledge_sha256=sha256_file(entry / (manifest.get('current_knowledge') or 'stage-knowledge.json')),
                     source_witness=witnessed)
 
     def record(self, stage, key, status, **fields):
@@ -2276,7 +2290,7 @@ class Run:
         brain_moved = None
         try:
             brain_entry = self.brain_stage(day, 'day-file', [path, directory / DAY_FILE_RECEIPT],
-                                           summary=dict(day_file=str(path), sha256=sha))
+                                           summary=dict(day_file=str(path), sha256=sha), declined='raise')
         except ValueError as error:
             # E-5: ONLY the brain's own refusal "already holds different stage knowledge" (frankie_box_brain.
             # write_stage_entry, R16) moves the replaced file's entry aside (never deleted; outside ENTRY_GLOBS) so the
