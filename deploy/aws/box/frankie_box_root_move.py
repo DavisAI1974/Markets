@@ -56,6 +56,7 @@ teacher through the symlink) vs S3 Standard ~$0.023/GB-month (~$30/month for 1.3
 until it is restored.
 """
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -142,6 +143,24 @@ def plan(roots, pins, *, guarded=(), floor=FLOOR_BYTES, archive_root=ARCHIVE_ROO
     items = []
     redundant = []
     skip = set()
+    for root in roots:
+        # review 2026-10-08 finding 2 (Patch B): an earlier clean that died between rename-aside and symlink/mount left
+        # <old>.moving-aside / .archiving-aside / .premount-aside without its original: put it back, then plan afresh
+        if Path(root).is_dir():
+            for suffix in ('.moving-aside', '.archiving-aside', '.premount-aside'):
+                for aside in sorted(Path(root).rglob('*' + suffix)):
+                    original = Path(str(aside)[:-len(suffix)])
+                    if original.exists() or original.is_symlink():
+                        continue
+                    try:
+                        os.rename(aside, original)
+                    except OSError as error:
+                        items.append(dict(kind='stay', old_path=str(aside), new_path=None, bytes=0, pinned=False,
+                                          reason='leftover of an interrupted clean could not be put back (%s)' % error))
+                        continue
+                    items.append(dict(kind='stay', old_path=str(original), new_path=None, pinned=False,
+                                      bytes=original.lstat().st_size if original.is_file() else _du(original),
+                                      reason='recovered from %s (an interrupted earlier clean); planned afresh below' % aside.name))
     for root in roots:
         redundant += redundant_ledger_segments(Path(root), pins, native_complete, floor=floor, archive_root=archive_root,
                                                box_root=box_root, held=held)
@@ -249,7 +268,26 @@ def plan(roots, pins, *, guarded=(), floor=FLOOR_BYTES, archive_root=ARCHIVE_ROO
                                       reason='pinned, %d bytes, outside every guarded prefix: behind a symlink' % info.st_size))
     order = {'move': 0, 'archive': 0, 'bind_mount': 0, 'stay': 1}
     items.sort(key=lambda i: (order[i['kind']], -i['bytes'], i['old_path']))
+    # review 2026-10-08 finding 3 (Patch C): the archive volume must hold the plan plus 5 %; otherwise everything stays
+    # (the reason named on every item) and the boundary goes on without a save
+    planned_bytes = sum(i['bytes'] for i in redundant + items if i['kind'] != 'stay')
+    free = archive_free_bytes(archive_root)
+    if planned_bytes and free < planned_bytes * 1.05:
+        why = ('archive volume %s: %d bytes free, %d planned (+5%% = %d): nothing moved; free the volume or raise it'
+               % (archive_root, free, planned_bytes, int(planned_bytes * 1.05)))
+        return [dict(i, kind='stay', new_path=None, reason=why) if i['kind'] != 'stay' else i for i in redundant + items]
     return redundant + items
+
+
+def archive_free_bytes(archive_root):
+    """Free bytes of the filesystem the archive root is (or will be created) on: the nearest existing ancestor."""
+    path = Path(archive_root)
+    while not path.exists() and path.parent != path:
+        path = path.parent
+    try:
+        return shutil.disk_usage(path).free
+    except OSError:
+        return 0
 
 
 def redundant_ledger_segments(root, pins, native_complete, *, floor=FLOOR_BYTES, archive_root=ARCHIVE_ROOT,
@@ -331,13 +369,18 @@ def _copy_hashed(source, destination):
     part = destination + '.part'
     Path(destination).parent.mkdir(parents=True, exist_ok=True)
     hashed, size = hashlib.sha256(), 0
-    with _open_read(source) as src, open(part, 'wb') as out:
-        for block in iter(lambda: src.read(CHUNK), b''):
-            out.write(block)
-            hashed.update(block)
-            size += len(block)
-        out.flush()
-        os.fsync(out.fileno())
+    try:
+        with _open_read(source) as src, open(part, 'wb') as out:
+            for block in iter(lambda: src.read(CHUNK), b''):
+                out.write(block)
+                hashed.update(block)
+                size += len(block)
+            out.flush()
+            os.fsync(out.fileno())
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(part)                      # review finding 3 (Patch C): never a partial copy left on the archive volume
+        raise
     return part, size, hashed.hexdigest()
 
 
@@ -513,11 +556,22 @@ def do_bind_mount(item, cpus=None, say=print, mount_cmd=None, fstab=None):
     out['mount'] = dict(command=[mount_cmd, '--bind', new, old], exit_code=result.returncode, stderr=result.stderr[-500:])
 
     def unwind(why):
-        subprocess.run(['umount', old], capture_output=True) if mount_cmd == 'mount' else None
+        # review finding 2 (Patch B): never rename the original back over a path that is still a mount point
+        if mount_cmd == 'mount':
+            subprocess.run(['umount', old], capture_output=True)
+            if os.path.ismount(old):
+                out.update(status='failed', reason=why + '; umount %s refused (busy): the copy STAYS MOUNTED, the original is '
+                                                         'at %s; an operator umounts and renames it back; the next boundary '
+                                                         'validates again' % (old, aside))
+                out['seconds'] = round(time.monotonic() - started, 3)
+                return out
         try:
             os.rmdir(old)
-        except OSError:
-            pass
+        except OSError as error:
+            out.update(status='failed', reason=why + '; the mount point %s could not be removed (%s): the original is at %s; '
+                                                     'an operator renames it back' % (old, error, aside))
+            out['seconds'] = round(time.monotonic() - started, 3)
+            return out
         os.rename(aside, old)
         out.update(status='failed', reason=why + '; the original is back in place, the copy kept at %s' % new)
         out['seconds'] = round(time.monotonic() - started, 3)
@@ -677,11 +731,16 @@ def upload_archives(results, *, out_dir, archive_root=ARCHIVE_ROOT, transport=No
     region = region if region is not None else os.environ.get('FRANKIE_ARCHIVE_REGION', 'us-east-1')
     started = time.time()
     copies = archived_copies(results, archive_root)
+    limit = int(os.environ.get('FRANKIE_ARCHIVE_S3_MAX_BYTES') or (2 << 40))      # review finding 3 (Patch C): 2 TiB per clean
+    total = sum(os.path.getsize(c[0]) for c in copies if os.path.isfile(c[0]))
     receipt = dict(schema=S3_SCHEMA, at=started, switch=switch, bucket=bucket, prefix=prefix, region=region,
-                   storage_class=storage_class, objects=[], candidates=len(copies), volume_vs_s3=VOLUME_VS_S3,
+                   storage_class=storage_class, objects=[], candidates=len(copies), bytes=total, max_bytes=limit,
+                   volume_vs_s3=VOLUME_VS_S3,
                    rule='a second copy only: nothing on the archive volume is deleted; the day\'s chain never waits for it')
     if switch == 'off':
         receipt.update(status='refused', reason='FRANKIE_ARCHIVE_S3=off')
+    elif total > limit:
+        receipt.update(status='refused', reason='%d bytes exceed FRANKIE_ARCHIVE_S3_MAX_BYTES %d; nothing uploaded' % (total, limit))
     elif not bucket:
         receipt.update(status='refused', reason='FRANKIE_ARCHIVE_BUCKET unset: no S3 copy made (recorded, not a failure)')
     else:

@@ -1813,7 +1813,8 @@ class Run:
                            # the one-day inspection (frankie_box_workflow_inspection.py): what the ROOT child received,
                            # how this caller used it, what it produced; operator review only, never knowledge or a gate
                            inspection=dict(inputs=dict(ingestion_receipt=dict(path=ing['receipt'], sha256=ing['receipt_sha256']),
-                                                       env={k: str(v) for k, v in env.items()}, owned_attempt=self.owned_attempt),
+                                                       env={k: str(v) for k, v in env.items()}, owned_attempt=self.owned_attempt,
+                                                       digest_setting=digest_setting),
                                            use=dict(resume=resume, plan_policy=policy or 'none (an older saved legacy plan, kept as saved: native pass off; every NEW run has it ON)',
                                                     interrupted_attempts=attempts, claim=held[2] if held else 'no claim store'),
                                            outputs=dict(calculations=str(output), exit_code=code,

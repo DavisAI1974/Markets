@@ -98,6 +98,7 @@ class Pins:
         self.documents = []
         self.problems = []
         self.archives = []           # the moved-manifest's archived directories (checked by stat, never read)
+        self.listed_inputs = []      # witnesses outside the stage's output roots: an INPUT, stat only, never read, never fatal
 
     def claim(self, source, path, bytes_=None, sha256=None, count=None, index=None, kind=None, extra=None):
         if not path:
@@ -367,29 +368,42 @@ def add_manifest(pins, manifest_path):
     pins.document(manifest_path, body, n)
 
 
-def _walk_pins(pins, source, value, where):
+def _walk_pins(pins, source, value, where, only_under=None):
     """Every {path, bytes, sha256[, count]} object anywhere inside a receipt value (the common FRANKIE_*_V* artifact
-    shape) becomes one claim; lists and dicts are walked, nothing else is interpreted."""
+    shape) UNDER one of the stage's output roots (only_under, real paths) becomes one claim; a witness outside them is
+    an INPUT of the stage (review 2026-10-08 finding 4, Patch D): recorded in pins.listed_inputs by stat only (present,
+    size equal), never read, never fatal. With only_under None (no output roots) nothing is pinned: every witness is
+    listed. Lists and dicts are walked, nothing else is interpreted."""
     n = 0
     if isinstance(value, dict):
         if _has_witness(value) and isinstance(value.get('path'), str) and value['path'].startswith('/'):
+            real = os.path.realpath(value['path'])
+            if not only_under or not any(real == r or real.startswith(r + '/') for r in only_under):
+                present = os.path.exists(value['path'])
+                pins.listed_inputs.append(dict(source='%s:%s' % (source, where), path=value['path'], bytes=value['bytes'],
+                                               sha256=value['sha256'], present=present,
+                                               size_matches=(os.path.getsize(value['path']) == value['bytes']) if present else None,
+                                               check='stat only (an input of the stage: never read, never fatal)'))
+                return n
             count = value.get('count') if isinstance(value.get('count'), int) and str(value['path']).endswith('.jsonl') else None
             pins.claim('%s:%s' % (source, where), value['path'], value['bytes'], value['sha256'], count=count)
             n += 1
         for key, item in value.items():
             if key == 'claims':
                 continue
-            n += _walk_pins(pins, source, item, '%s.%s' % (where, key) if where else str(key))
+            n += _walk_pins(pins, source, item, '%s.%s' % (where, key) if where else str(key), only_under)
     elif isinstance(value, list):
         for i, item in enumerate(value):
-            n += _walk_pins(pins, source, item, '%s[%d]' % (where, i))
+            n += _walk_pins(pins, source, item, '%s[%d]' % (where, i), only_under)
     return n
 
 
-def collect_generic(receipt_paths, root=None):
-    """The pins of ANY stage: every artifact object its receipt files record, plus each receipt file itself (measured;
-    its own bytes become the expectation, so a later run sees it unchanged). Raises ValueError when no receipt loads."""
+def collect_generic(receipt_paths, root=None, only_under=None):
+    """The pins of ANY stage: every artifact object its receipt files record UNDER the stage's output roots
+    (only_under; a witness elsewhere is a listed input, stat only), plus each receipt file itself (measured; its own
+    bytes become the expectation, so a later run sees it unchanged). Raises ValueError when no receipt loads."""
     pins = Pins(root or (Path(receipt_paths[0]).parent if receipt_paths else '/'))
+    under = [os.path.realpath(str(r)) for r in (only_under or [])] or None
     loaded = 0
     for path in receipt_paths:
         path = Path(path)
@@ -397,7 +411,7 @@ def collect_generic(receipt_paths, root=None):
         n = 0
         if body is not None:
             loaded += 1
-            n = _walk_pins(pins, path.name, body, '')
+            n = _walk_pins(pins, path.name, body, '', under)
             pins.claim('self (measured): ' + path.name, path, path.stat().st_size if path.is_file() else None, None)
         pins.document(path, body, n)
     if not loaded:
@@ -713,7 +727,7 @@ def validate(root=None, *, cpus=None, out=None, moved_manifest=None, run_dir=Non
                    mismatches=[dict(path=a['path'], status=a['status'], problems=a['problems']) for a in mismatches],
                    reader_refusals=[dict(path=a['path'], guards=a['reader_refusals']) for a in not_readable
                                     if a.get('reader_refusals')],
-                   archives=pins.archives, pool=report, stopped=stopped, exit_code=code,
+                   archives=pins.archives, listed_inputs=pins.listed_inputs, pool=report, stopped=stopped, exit_code=code,
                    rule='every pinned artifact read once through its symlink chain; nothing modified; exit 0 only when '
                         'every pin is ok and readable by the next stage; 3 mismatch; 4 verified but behind a safe_path '
                         'reader\'s symlink or in S3; 75 stopped early (partial.json resumes it)')
@@ -729,6 +743,7 @@ def main(argv=None):
     parser.add_argument('--receipt', action='append', default=[], help='any stage: a receipt file to collect pins from (repeatable)')
     parser.add_argument('--stage', default='root', help='the stage name on the receipt and the probe')
     parser.add_argument('--dir', action='append', default=[], help='any stage: an output directory listed for unpinned files')
+    parser.add_argument('--only-under', action='append', default=[], help='any stage: a witness outside these roots is a listed input (stat only), not a pin')
     parser.add_argument('--cpus', help='CPU ranges (0-31); default FRANKIE_LANE_CPUS / the affinity')
     parser.add_argument('--out', help='receipt path (default R/work/root-validate.json)')
     parser.add_argument('--moved-manifest', help='the CLEAN step\'s FRANKIE_ROOT_MOVE_MANIFEST_V1 to cross-check')
@@ -737,7 +752,7 @@ def main(argv=None):
     if not args.root and not args.receipt:
         parser.error('--root R or --receipt <file> required')
     try:
-        pins = collect_generic(args.receipt) if args.receipt and not args.root else None
+        pins = collect_generic(args.receipt, only_under=args.only_under or None) if args.receipt and not args.root else None
         receipt, code = validate(args.root, cpus=_parse_cpus(args.cpus) if args.cpus else None, out=args.out,
                                  moved_manifest=args.moved_manifest, run_dir=args.run_dir, pins=pins, stage=args.stage,
                                  roots=args.dir or None)

@@ -353,6 +353,12 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             raise ValueError('saved failure spool differs from derivation')
         if digest:
             write_retained_digest(session, result, layers, prices, frames, structures, bedrock=False)
+        elif (result.get('root_processes') or {}).get('digest') == 'run' \
+                and not (session.work / 'derivation-digest-full.md').is_file():
+            # session 6: the saved derive.json was written before an interrupted digest (it says 'run'); this ROOT runs
+            # with DIGEST=off and no digest file exists, so the receipt below says 'skipped' (derive.json is not rewritten)
+            result = dict(result, root_processes=dict(result['root_processes'], digest='skipped'))
+            session.note('resumed with DIGEST=off: the saved derivation\'s digest never completed; recorded as skipped')
         session.note('resumed from the saved derivation; no legacy calculation replay')
         if hasattr(session, 'native_layer_records'):
             # the per-layer native records of the retained derivation (work/native-layer-records.json, bound to its

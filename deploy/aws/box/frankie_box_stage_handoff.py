@@ -193,7 +193,7 @@ def collect(stage, step_receipt, roots):
             V._walk_pins(pins, Path(step_receipt).name, _load(step_receipt), '')
         return pins
     return V.collect_generic([str(f) for f in receipt_files(stage, step_receipt, roots)],
-                             root=roots[0] if roots else None)
+                             root=roots[0] if roots else None, only_under=roots)
 
 
 def lane_of(run):
@@ -330,15 +330,30 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
     if not record or record.get('status') not in FINISHED_WITH_OUTPUTS:
         return dict(base, status='nothing_to_hand_off', reason='the step is %s' % ((record or {}).get('status')))
     existing = _load(out_dir / 'handoff.json')
-    if existing and existing.get('status') in ('saved', 'failed', 'validated'):
-        # once per (stage, key): a resumed day passes this boundary again with its clean done, failed or unfinished
-        clean = _load(out_dir / 'clean' / 'clean-receipt.json')
-        trigger = _load(out_dir / 'trigger.json')
+    clean = _load(out_dir / 'clean' / 'clean-receipt.json')
+    trigger = _load(out_dir / 'trigger.json')
+    trigger_done = (trigger or {}).get('status') == 'done'
+    clean_again = None
+    if existing and existing.get('status') == 'failed':
+        # review 2026-10-08 finding 1 (Patch A): a FAILED validation is never "handed off before". The queue retries a
+        # failed finish once per worker start; that retry validates AGAIN (partial.json reuses every file whose stat is
+        # unchanged, so only changed files are re-read); the failed receipt is kept aside, never read as a pass
+        os.replace(out_dir / 'handoff.json', out_dir / ('handoff.failed-%d.json' % int(existing.get('at') or time.time())))
+        existing = None
+    if existing and (existing.get('status') == 'validated' or (existing.get('status') == 'saved' and trigger_done)):
+        # once per (stage, key): a resumed day passes this boundary again after a DONE trigger (or a validated-only pass)
         return dict(existing, status='already', earlier_status=existing['status'],
                     clean_status=(clean or {}).get('status'), trigger_status=(trigger or {}).get('status'),
                     reason='this boundary was handed off before (%s); the clean %s; the trigger %s; the day goes on to %s'
                            % (existing['status'], (clean or {}).get('status') or 'left no receipt',
                               (trigger or {}).get('status') or 'left no receipt', base['successor']))
+    if existing and existing.get('status') == 'saved' and not trigger_done:
+        # review finding 2 (Patch B): the clean never triggered (a box reboot, a failed item, a hand resume): validate
+        # again (unchanged stat = no read), then go on WITHOUT a second clean; the earlier receipts stay beside this one
+        os.replace(out_dir / 'handoff.json', out_dir / ('handoff.unfinished-%d.json' % int(time.time())))
+        base['earlier'] = dict(status='saved', trigger=(trigger or {}).get('status'), clean=(clean or {}).get('status'))
+        clean_again = False
+        existing = None
     roots = output_roots(stage, record)
     step_receipt = run.receipt_path(stage, key)
     receipts = receipt_files(stage, step_receipt, roots)
@@ -346,7 +361,8 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
     if STAGES.get(stage, {}).get('collector') == 'root' and roots:
         pins_args = ['--root', str(roots[0]), '--run-dir', str(run.dir)] + [a for r in receipts for a in ('--receipt', str(r))]
     else:
-        pins_args = [a for r in receipts for a in ('--receipt', str(r))] + [a for r in roots for a in ('--dir', str(r))]
+        pins_args = [a for r in receipts for a in ('--receipt', str(r))] + [a for r in roots for a in ('--dir', str(r))] + \
+                    [a for r in roots for a in ('--only-under', str(r))]
     _write(out_dir / 'handoff.json', dict(base, status='validating', roots=[str(r) for r in roots],
                                           receipts=[str(r) for r in receipts], lane=lane))
     code, validation, vlog = run_validate(run, stage, key, out_dir, pins_args, lane, log)
@@ -371,6 +387,12 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
         else:
             why = 'validation exit %d: no validator receipt or an unlisted refusal (see %s)' % (code, vlog)
         return _write(out_dir / 'handoff.json', dict(base, status='failed', reason=why))
+    if clean_again is False:
+        return _write(out_dir / 'handoff.json', dict(base, status='validated',
+                                                     reason='re-validated after an unfinished clean (trigger %s, clean %s): '
+                                                            'no second clean; straight on to %s' % (
+                                                                base['earlier'].get('trigger') or 'absent',
+                                                                base['earlier'].get('clean') or 'absent', base['successor'])))
     if switch == 'off':
         return _write(out_dir / 'handoff.json', dict(base, status='validated',
                                                      reason='%s=off: validated; no save, no clean; straight on to %s'
@@ -540,7 +562,7 @@ def clean_action(args):
     if STAGES.get(args.stage, {}).get('collector') == 'root' and roots:
         pins = V.collect_pins(roots[0], args.run_dir)
     else:
-        pins = V.collect_generic(args.receipt, root=roots[0] if roots else None) if args.receipt else V.Pins('/')
+        pins = V.collect_generic(args.receipt, root=roots[0] if roots else None, only_under=roots) if args.receipt else V.Pins('/')
     expected = {real: job['expected'] for real, job in pins.jobs.items()}
     cpus = sorted(V._parse_cpus(args.cpus)) if args.cpus else None
     archive_root = Path(os.environ.get('FRANKIE_ARCHIVE_ROOT') or M.ARCHIVE_ROOT)
