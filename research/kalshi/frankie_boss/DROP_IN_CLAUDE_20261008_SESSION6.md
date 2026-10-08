@@ -94,5 +94,37 @@ NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS.
 6. Cross-owner requests recorded in each STACKS_PASS file (school R2 one teacher child per batch needs a repeatable
    ledger CLI; exchange X6 Jev request binds the commit; teacher anchor-pictures hand-off; reports 99-layer join pool).
 
+## State at the session-5 close (~00:48Z 2026-10-08; the box work below was IN FLIGHT when the session closed: VERIFY FIRST)
+- Greg at close: "just save data and do handoff and drop in. We'll clean in next session."
+- ROOT a2: native stage complete 00:15Z; the layer write (legacy_book_imbalance.json, old inline form, ~497 GB) was at ~333 GB
+  at 00:28Z, 8.1 GB/min, ending ~00:48Z; then legacy-stage.json, native join/reuse, projection, digest, receipt. The HOLD
+  watcher (queue ACTION=save on stage root-projection or later) was armed in 265 s rounds; if the session ended between rounds
+  the box is UNARMED: re-arm it (script text in the hold agent's record, copied below in spirit) or, if ROOT already completed,
+  check root.json: did the teacher start on c9bf631? If it did, decide with Greg (the teacher on old code; a restage mid-stage).
+- DISK: free space was 67 GB at 00:40Z falling 8.1 GB/min. A detached disk guard (/opt/frankie-box/archive/.logs/disk-guard.sh,
+  log .logs/disk-guard.log, pid list .logs/disk-guard.frozen-pids) SIGSTOPs ROOT 14860's whole tree below 15 GB free and
+  exits. FIRST CHECK: `ps -o pid,stat,wchan,args -p 14860` and its children: state T means FROZEN. If frozen: free space must
+  be above 100 GB (see the removals below), then `kill -CONT 14860` first, then its children (deepest last), and confirm the
+  layer file grows again. Frozen is safe; nothing is lost.
+- ARCHIVE: vol-004b68c077be09cc9 (gp3 2048 GiB, 1000 MiB/s, 10000 IOPS, ~$234/month) mounted /opt/frankie-box/archive.
+  The Monday root monday-calculations/full-20211004-20260927-r1-48 (427.3 GB) was archived as ONE tar.zst (297,465,977,258 B,
+  tar totals 427,265,044,480 B, zstd rc 0, sha256 recorded in <archive>.sha256). Greg stopped its second verification pass
+  (the decompress-list) and ordered the source removed on the completed checks; the agent was executing that at close: CHECK
+  whether the source directory is gone (symlink + README at the old path) and df -B1 /. A parallel batch (3 pinned idle CPU
+  pairs, one tar.zst per directory, verified, then removed) was running over 50 jobs: other-day ingest-* dirs, teacher rows,
+  days-2026092x/0930 roots, the retired a1 attempt, 7 non-referenced checkouts, transfer tarballs; log archive/.logs/batch.log.
+  NOT removed, must stay: day-external, checkouts c9bf631/98579cea/275367fe/18cbc5a4 and their transfer-*, the 66 GB
+  pre-save ledger copy (checkpoint 000005 names it), everything under a2's attempt and ingest-20231018.
+- KeepRunning=true was set at close; after the hold lands the worker clears it: re-set before the idle guard (06:17Z).
+- Archive-policy lesson (Greg): per-subdirectory archives so compression/verification use many CPUs; sha256 on the write
+  stream and the listing from tar -v at creation; exactly ONE read-back pass, never two; zstd -T0 on an idle lane; pin to
+  measured-idle sibling pairs; ionice is a no-op under the NVMe none scheduler, manage contention by concurrency; keep a disk
+  guard armed whenever a stage writes a file comparable to the free space.
+- Session 5 also landed (source): spool layers streamed by reference (frankie_box_layer_spool.py, FRANKIE_LAYER_SPOOL_REF_V1,
+  one shared loader, old layers load; ROOT preflight projects finalize bytes). It reaches a run only by the restage; it removes
+  the 497 GB layer copy that caused tonight's disk problem.
+- Session-5 scratchpad records (hold agent, probe, tests) live only in session 5's container; everything durable is in the
+  E2E record's Session 5 sections, the STACKS_PASS files, the review file and this drop-in.
+
 ## Tip at handoff
-(appended by the parent at the end of session 5)
+(appended by the parent at the end of session 5; see the last commit on the branch)
