@@ -592,9 +592,15 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
             output.flush()
             os.fsync(output.fileno())
         staged = sink.witness()
-        # the one read-back of the staged document: its bytes on disk are the bytes written
-        if _witness(stage) != staged:
-            raise ValueError('staged digest read back differs from the bytes written')
+        # session 6 (Greg, 2026-10-08: "we only do 1 pass"): the staged document's witness is its write-stream hash; the
+        # read-back pass is kept only under FRANKIE_DURABLE_READBACK=on (frankie_box_durable's switch), otherwise the
+        # size on disk is checked against the bytes written. The published inode is remembered by frankie_box_filehash
+        # so the ROOT's receipt pin and _measure_digest cost no read of the digest either.
+        if os.environ.get('FRANKIE_DURABLE_READBACK', 'off') == 'on':
+            if _witness(stage) != staged:
+                raise ValueError('staged digest read back differs from the bytes written')
+        elif os.stat(stage).st_size != staged['bytes']:
+            raise ValueError('staged digest size on disk differs from the bytes written')
         staged_inode = _inode(stage)
         result = dict(schema='FRANKIE_STREAMED_DIGEST_V1', path=str(destination), verified=True,
                       **staged, tables=[dict(name=e['name'],rows=e['rows'],**e['digest']) for e in stages],
@@ -602,8 +608,9 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
                       cpu_schedule=dict(schema='FRANKIE_DIGEST_CPU_SCHEDULE_V1', placement=place, parts=parts,
                                         table_threads=table_threads, helpers=pool.record(), notes=list(notes),
                                         timeline=sorted(timeline, key=lambda e: (e['ordinal'], e['name'])),
-                                        stage_witness='hashed as written and read back once; the intent and the '
-                                        'publication reuse it for the same unchanged inode'))
+                                        stage_witness='hashed as written (read back once only under '
+                                        'FRANKIE_DURABLE_READBACK=on; session 6); the intent and the publication '
+                                        'reuse it for the same unchanged inode'))
         _save_new(scratch/'verification-receipt.json', result)
         if _inode(stage) != staged_inode:
             raise ValueError('staged digest changed after its witness')
@@ -616,6 +623,11 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         _sync_directory(destination.parent)
         if _inode(destination) != staged_inode:
             raise ValueError('published digest is not the verified staged inode')
+        try:
+            import frankie_box_filehash
+            frankie_box_filehash.remember(destination, staged)      # session 6: no later witness() reads the digest
+        except (ImportError, AttributeError):
+            pass
         _save_new(scratch/'publication-receipt.json',
                   dict(schema='FRANKIE_DIGEST_PUBLICATION_V1',destination=str(destination),
                        intent=_witness(scratch/'publication-intent.json'),**staged,
