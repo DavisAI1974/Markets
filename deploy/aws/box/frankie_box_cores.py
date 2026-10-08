@@ -69,6 +69,18 @@ is gone (or never recorded within UNATTACHED_CLAIM_SECONDS) is released by the n
 the slot, the step WAITS in place (polling every SLOT_WAIT_POLL s) and its CPU_BOOKING line names the holder and the
 seconds waited. The CPU never leaves the day's booking, so no other day can take it and nothing is double booked.
 
+THE RESOLVER AND THE 64-vCPU BOX (session 8, 2026-10-08; Greg: "make sure CPUs are designed for every upcoming step ...
+so nothing has to change mid-run"; "a generic cpu call code that we could do so if we forget a place it just kicks in").
+lane_for(step, ...) is the ONE place a step's CPU set comes from: the live core map (core_map: thread_siblings_list,
+never an N/N+16 convention; the 16xlarge pairs N with N+32) and the live/retained bookings. day-slot = the plan's
+day_cpus (16 | 32 | 64, REQUIRED; a retained booking answers exactly its set and a differing plan is REFUSED unless the
+booking was grown), step-inside/jev = the held booking, teacher-lanes = the held booking cut among the batch days,
+classroom-day = FRANKIE_CLASSROOM_CPUS (held | all | a size: "a classroom day gets all 64", reached by `grow`),
+digest-render = every CPU outside the bookings (FRANKIE_LANE_CPUS must lie inside that set). `grow --booking ID --size N`
+widens a live or retained day-run booking with free CPUs (same id, recorded under `grown`; waits like a booking; never
+shrinks). `plan --step S` prints the answer read-only. frankie_box_cpu_watch.py audits every Frankie process against
+its booking every 120 s.
+
 OPERATIONS
   book     --kind K [--day D --run R --stage S --commit C --workers W --verify V --pid P]: book for pid P (default the
            caller's parent); prints the booking; exit 75 = waiting, 2 = refused
@@ -80,6 +92,9 @@ OPERATIONS
            retains it for that owner instead of reaping it)
   retain   --booking ID --run R --day D [--attempt A --reason TEXT]: mark a live day-run booking retained by its owner
            (a saved day): its CPUs stay booked after its pids end, until the owner resumes or an operator releases
+  grow     --booking ID --size N [--reason TEXT]: widen a live/retained day-run booking to N (one of DAY_RUN_SIZES) with
+           free CPUs; exit 75 = waiting for them, 2 = refused
+  plan     --step S [--size N --run R --day D --days D1,D2]: READ-ONLY, the resolver's CPU set and reasoning as JSON
   show     READ-ONLY: every CPU -> its owner (booking or unbooked Frankie process) and its live use, the free count, what
            can be booked now; --json for the raw record
   free     READ-ONLY: '<free> <online>' CPUs now (a sizing hint; the booking decides under the lock)
@@ -109,13 +124,16 @@ DAY_RUN_CPUS = 16                       # every day-run step, exactly (Greg, 202
 # Greg, 2026-10-07: "Give the day 32 CPUs and that many workers." A run may set its day slot size (plan day_cpus):
 # 16 (the default, one lane) or 32 (both lanes of the main box, CPUs 0-31, ONE booking held by the day for all its
 # stages). A 32 slot is never split: it waits until all 32 are free.
-DAY_RUN_SIZES = (16, 32)
+# Session 8 (2026-10-08, the main box resized to r7i.16xlarge, 64 vCPU = 32 physical cores x 2 threads; Greg: "a
+# classroom day gets all 64"): 64 = the whole 64-vCPU box as ONE booking. The sizes are the lawful day slots; the box's
+# live core map (core_map, from /sys thread_siblings_list) decides which CPUs they land on, never a sibling convention.
+DAY_RUN_SIZES = (16, 32, 64)
 INGEST_CPUS = 8                         # an ingest / canary / conform day process, unless it asks a larger size
 # Greg, 2026-10-07 night ("Including ingest. Basically anything using a cpu"): an ingest day process may book 8, 16, 24 or
 # 32 CPUs (--size; frankie_box_ingest_block.sh DAY_CPUS): one day can take the whole box, or days side by side fill it.
 # The output does not depend on the count (the encodings are pure, the replay segments are fixed by the plan, the
 # reader only verifies); never split, never squeezed: a size that is not free waits like any booking.
-INGEST_SIZES = (8, 16, 24, 32)
+INGEST_SIZES = (8, 16, 24, 32, 48, 64)   # 48/64: a 64-vCPU box (session 8); frankie_box_ingest_block.sh lists the same
 WAITING_EXIT = 75                       # EX_TEMPFAIL: not started, a later dispatch retries
 SAVED_EXIT = 75                         # the SAME code from a job that RAN: it stopped at a save point on a requested save
                                         # (ROOT, ingest INGEST_SAVED, every stage with a save route; stacks pass 2026-10-07).
@@ -201,9 +219,250 @@ def size_of(kind, workers=None, verify=None, size=None):
 
 # ------------------------------------------------------------------------------------------------------------ /proc
 
-def online_cpus():
+# ------------------------------------------------------------------------------------- the live core map and the resolver
+
+SYS_CPU = '/sys/devices/system/cpu'
+
+
+class PlanRefused(ValueError):
+    """The resolver could not give a step its CPUs: the reasoning is the message (it goes on the receipt as is)."""
+
+
+def core_map(sys_root=SYS_CPU, online=None):
+    """The box's LIVE core map, read, never assumed (session 8: the 8xlarge paired N with N+16, the 16xlarge pairs N with
+    N+32; a convention written into code is wrong on the next box). {online: [cpus], cores: [[cpu, sibling, ...], ...]
+    (one list per physical core, cores in the order of their first CPU, the ONLINE threads only), siblings: {cpu: [its
+    siblings]}, threads_per_core, basis}. Without a readable topology every CPU is its own core and basis says so."""
+    online = sorted(online if online is not None else online_cpus(sys_root))
+    root = Path(sys_root)
+    groups, seen, siblings, basis = [], set(), {}, 'thread_siblings_list of every online CPU'
+    for cpu in online:
+        try:
+            listed = sorted(c for c in parse_list((root / ('cpu%d' % cpu) / 'topology' / 'thread_siblings_list').read_text().strip())
+                            if c in online)
+        except (OSError, ValueError):
+            listed, basis = [cpu], 'topology unreadable for some CPU: every CPU counted as its own core'
+        if cpu not in listed:
+            listed = sorted(set(listed) | {cpu})
+        siblings[cpu] = [c for c in listed if c != cpu]
+        if cpu not in seen:
+            groups.append(listed)
+            seen.update(listed)
+    threads = max((len(g) for g in groups), default=1)
+    return dict(online=online, cores=groups, siblings=siblings, threads_per_core=threads, basis=basis,
+                nproc=len(online), physical_cores=len(groups))
+
+
+def core_of(cpu, cmap):
+    """The index of cpu's physical core in cmap['cores'] (-1 when unknown)."""
+    for i, group in enumerate(cmap['cores']):
+        if cpu in group:
+            return i
+    return -1
+
+
+def whole_cores_first(cpus, cmap):
+    """`cpus` ordered one hardware thread per physical core first (cores by their first CPU), then the siblings: the
+    order a lane of N CPUs is cut from a free set so it spans the most physical cores."""
+    cpus = set(cpus)
+    order = []
+    for level in range(cmap['threads_per_core']):
+        for group in cmap['cores']:
+            mine = [c for c in group if c in cpus]
+            if len(mine) > level:
+                order.append(mine[level])
+    return order
+
+
+def shared_cores(cpus, others, cmap):
+    """The CPUs of `cpus` whose physical core also carries a CPU of `others` (hyperthread sharing: a throughput note,
+    never a double booking; the ledger books CPUs)."""
+    others = set(others)
+    return sorted(c for c in cpus if any(s in others for s in cmap['siblings'].get(c, [])))
+
+
+LANE_STEPS = ('day-slot', 'step-inside', 'classroom-day', 'teacher-lanes', 'jev', 'digest-render')
+CLASSROOM_CPUS_SETTING = 'FRANKIE_CLASSROOM_CPUS'     # held (default) | all | one of DAY_RUN_SIZES: a run setting (FA-6)
+
+
+def lane_for(step, plan_size=None, run=None, day=None, days=None, bookings=None, cmap=None, environ=None, held=None):
+    """THE ONE RESOLVER (Greg, session 8: "a generic cpu call ... so if we forget a place it just kicks in"): the CPU set
+    a named step runs on, from the box's live core map and the live/retained bookings, with its reasoning. Returns
+    dict(step, cpus, cpu_list, size, basis=[...], notes=[...], shares_cores_with=[...]) or raises PlanRefused with the
+    reasoning (a missing or contradictory value is refused loudly; nothing here ever answers 32 by habit).
+
+      day-slot        the day's ONE booking for every stage (ROOT, validate, teacher, classroom, data, search, lessons,
+                      exchange, voice, Jev, survivors): plan_size (the run's plan day_cpus) is REQUIRED and one of
+                      DAY_RUN_SIZES <= nproc. A retained booking of run/day answers EXACTLY its set; a plan_size that
+                      differs from it is refused unless the booking was grown (cmd_grow records the decision).
+      step-inside     a stage of a day that holds its booking: that booking's CPUs (held = the booking record), nothing
+                      else; refused without one.
+      classroom-day   Greg: "a classroom day gets all 64": FRANKIE_CLASSROOM_CPUS=all (or an integer of DAY_RUN_SIZES)
+                      answers every online CPU (that size), reached by growing the held booking at the classroom
+                      boundary (grow_to, grow_cpus, waits_for on the answer; cmd_grow waits for the CPUs); unset or
+                      'held' answers the held booking, unchanged (grow_to None).
+      teacher-lanes   the held booking cut among `days` (the batch): per-day lanes, whole cores first, every CPU used
+                      (the first len%n days take one more), on the answer as `lanes`.
+      jev             the held booking whole (Greg, 2026-10-07 night: Jev like everyone else); threads are
+                      frankie_box_jev_cpu.JEV_THREADS clamped to it, named in the notes.
+      digest-render   the CPUs outside EVERY live or retained booking, whole cores first; FRANKIE_LANE_CPUS, when set,
+                      must lie inside that free set (refused otherwise); nothing free = refused. The physical cores it
+                      shares with bookings (hyperthread siblings) are listed, never hidden.
+    `bookings`, `cmap`, `environ`, `held` are injectable for toys; live by default."""
+    if step not in LANE_STEPS:
+        raise PlanRefused('unknown step %r (one of %s)' % (step, ', '.join(LANE_STEPS)))
+    cmap = cmap if cmap is not None else core_map()
+    environ = os.environ if environ is None else environ
+    bookings = [b for b in (live_bookings() if bookings is None else bookings) if b.get('_alive') or b.get('_retained')]
+    online = list(cmap['online'])
+    basis = ['core map: %d online CPUs, %d physical cores x %d threads (%s)' % (
+        cmap['nproc'], cmap['physical_cores'], cmap['threads_per_core'], cmap['basis'])]
+    booked = {c for b in bookings for c in b.get('cpus') or []}
+
+    def answer(cpus, size=None, notes=None, **extra):
+        cpus = sorted(cpus)
+        others = booked - set(cpus)
+        out = dict(schema='FRANKIE_CPU_PLAN_V1', step=step, cpus=cpus, cpu_list=cpu_list(cpus), size=size or len(cpus),
+                   basis=list(basis), notes=list(notes or []), shares_cores_with=shared_cores(cpus, others, cmap),
+                   physical_cores=len({core_of(c, cmap) for c in cpus}), nproc=cmap['nproc'])
+        out.update(extra)
+        return out
+
+    def mine():
+        return [b for b in bookings if b.get('kind') == 'day-run' and b.get('run') == run and b.get('day') == day]
+
+    if step == 'day-slot':
+        if plan_size is None:
+            raise PlanRefused('day-slot: the run\'s plan day_cpus is missing; a day slot has no default size here '
+                              '(DAY_CPUS=%s at the first start)' % '|'.join(map(str, DAY_RUN_SIZES)))
+        if plan_size not in DAY_RUN_SIZES:
+            raise PlanRefused('day-slot: plan day_cpus %s is not one of %s' % (plan_size, DAY_RUN_SIZES))
+        if plan_size > cmap['nproc']:
+            raise PlanRefused('day-slot: plan day_cpus %d is more than the box\'s %d CPUs' % (plan_size, cmap['nproc']))
+        basis.append('plan day_cpus %d' % plan_size)
+        ours = [b for b in mine() if b.get('_retained')]
+        if ours:
+            b = ours[0]
+            cpus = sorted(b['cpus'])
+            if len(cpus) != plan_size and not b.get('grown'):
+                raise PlanRefused('day-slot: the plan asks %d CPUs but the retained booking %s of %s %s holds %d (%s); a '
+                                  'saved day resumes on EXACTLY its set: grow the booking (frankie_box_cores.py grow '
+                                  '--booking %s --size %d --reason ...) or keep the plan at %d; nothing resolves this silently'
+                                  % (plan_size, b['booking'], run, day, len(cpus), cpu_list(cpus), b['booking'],
+                                     plan_size, len(cpus)))
+            basis.append('retained booking %s holds exactly %s%s' % (
+                b['booking'], cpu_list(cpus), ' (grown: %s)' % '; '.join(g.get('reason') or '?' for g in b['grown'])
+                if b.get('grown') else ''))
+            return answer(cpus, size=len(cpus), booking=b['booking'], retained=True)
+        free = [c for c in online if c not in booked]
+        if len(free) < plan_size:
+            raise PlanRefused('day-slot: %d free of %d needed (booked: %s); the slot waits, it is never cut smaller'
+                              % (len(free), plan_size, cpu_list(booked) or 'none'))
+        # the ledger books lowest-first for a day run (book_locked); the resolver names the same set so the two agree
+        cpus = sorted(free)[:plan_size]
+        order = whole_cores_first(free, cmap)
+        basis.append('lowest %d free CPUs (the ledger\'s day-run rule)' % plan_size)
+        notes = []
+        if sorted(order[:plan_size]) != cpus:
+            notes.append('whole-cores-first would be %s (%d physical cores)' % (
+                cpu_list(order[:plan_size]), len({core_of(c, cmap) for c in order[:plan_size]})))
+        return answer(cpus, size=plan_size, notes=notes, retained=False)
+
+    if step == 'digest-render':
+        free = [c for c in online if c not in booked]
+        if not free:
+            raise PlanRefused('digest-render: no CPU outside the live/retained bookings (%s); the render never runs inside '
+                              'a booking' % cpu_list(booked))
+        given = environ.get('FRANKIE_LANE_CPUS')
+        if given:
+            try:
+                wanted = sorted(parse_list(given))
+            except (ValueError, TypeError):
+                raise PlanRefused('digest-render: FRANKIE_LANE_CPUS %r is not a CPU list' % given)
+            inside = set(wanted) & booked
+            if inside:
+                holders = sorted({x['booking'] for x in bookings if set(x.get('cpus') or []) & inside})
+                raise PlanRefused('digest-render: FRANKIE_LANE_CPUS %s overlaps a live or retained booking (CPUs %s; %s)'
+                                  % (given, cpu_list(inside), ', '.join(holders)))
+            missing = set(wanted) - set(online)
+            if missing:
+                raise PlanRefused('digest-render: FRANKIE_LANE_CPUS %s names CPUs not online (%s)' % (given, cpu_list(missing)))
+            basis.append('FRANKIE_LANE_CPUS=%s given, inside the free set %s' % (given, cpu_list(free)))
+            return answer(wanted)
+        order = whole_cores_first(free, cmap)
+        basis.append('every CPU outside the bookings (%d free of %d), whole cores first' % (len(free), cmap['nproc']))
+        return answer(order)
+
+    # the stages of a day that holds its booking
+    b = held if held is not None else next(iter(mine()), None)
+    if step == 'classroom-day':
+        given = environ.get(CLASSROOM_CPUS_SETTING)
+        if given not in (None, '', 'held'):
+            if given == 'all':
+                size = cmap['nproc']
+            else:
+                try:
+                    size = int(given)
+                except ValueError:
+                    raise PlanRefused('%s must be held, all or one of %s, not %r' % (CLASSROOM_CPUS_SETTING, DAY_RUN_SIZES, given))
+            if size not in DAY_RUN_SIZES or size > cmap['nproc']:
+                raise PlanRefused('%s=%s asks %d CPUs: not one of %s within the box\'s %d'
+                                  % (CLASSROOM_CPUS_SETTING, given, size, DAY_RUN_SIZES, cmap['nproc']))
+            basis.append('%s=%s: the classroom day gets %d CPUs (Greg, session 8: "a classroom day gets all 64"), '
+                         'reached by growing the held booking at the classroom boundary' % (CLASSROOM_CPUS_SETTING, given, size))
+            if b is None:
+                raise PlanRefused('classroom-day: %s %s holds no live or retained day-run booking to grow' % (run, day))
+            have = sorted(b['cpus'])
+            if len(have) > size:
+                raise PlanRefused('classroom-day: the held booking %s already holds %d CPUs, more than the %d asked; a '
+                                  'booking never shrinks' % (b['booking'], len(have), size))
+            if len(have) == size:
+                basis.append('held booking %s already holds %d' % (b['booking'], size))
+                return answer(have, booking=b['booking'], grow_to=None, grow_cpus=[], waits_for=0)
+            taken = {c for x in bookings for c in x.get('cpus') or [] if x['booking'] != b['booking']}
+            free = [c for c in online if c not in taken and c not in have]
+            need = size - len(have)
+            if len(free) < need:
+                basis.append('%d of the %d extra CPUs are free now (booked elsewhere: %s): grow WAITS for them, visibly'
+                             % (len(free), need, cpu_list(taken) or 'none'))
+            else:
+                basis.append('the %d extra CPUs are free now: %s' % (need, cpu_list(sorted(free)[:need])))
+            return answer(have + sorted(free)[:need], size=size, booking=b['booking'], grow_to=size,
+                          grow_cpus=sorted(free)[:need], waits_for=max(0, need - len(free)))
+        basis.append('%s unset/held: the classroom runs on the day\'s held booking, unchanged' % CLASSROOM_CPUS_SETTING)
+    if b is None:
+        raise PlanRefused('%s: %s %s holds no live or retained day-run booking; a stage never runs outside its day\'s '
+                          'booking' % (step, run, day))
+    cpus = sorted(b['cpus'])
+    basis.append('held booking %s: %s (%d CPUs)' % (b['booking'], cpu_list(cpus), len(cpus)))
+    if step == 'jev':
+        threads, note = None, ''
+        try:
+            import frankie_box_jev_cpu as J
+            threads = min(int(J.JEV_THREADS), len(cpus))
+            note = 'llama-server threads: JEV_THREADS %d clamped to the lane = %d' % (J.JEV_THREADS, threads)
+        except Exception as error:  # noqa: BLE001 - toys without the module
+            note = 'JEV_THREADS unavailable here (%s)' % type(error).__name__
+        return answer(cpus, booking=b['booking'], threads=threads, notes=[note])
+    if step == 'teacher-lanes':
+        n = max(1, len(days or []))
+        order = whole_cores_first(cpus, cmap)
+        share, spare = divmod(len(cpus), n)
+        if share < 2:
+            raise PlanRefused('teacher-lanes: %d days on %d CPUs leave fewer than 2 CPUs per day' % (n, len(cpus)))
+        lanes, at = [], 0
+        for i in range(n):
+            take = share + (1 if i < spare else 0)
+            lanes.append(sorted(order[at:at + take]))
+            at += take
+        basis.append('%d day(s): %d CPUs each (+1 on the first %d), whole cores first, every CPU used' % (n, share, spare))
+        return answer(cpus, booking=b['booking'], lanes=lanes, lane_lists=[cpu_list(lane) for lane in lanes])
+    return answer(cpus, booking=b['booking'], grow_to=None)
+
+
+def online_cpus(sys_root=SYS_CPU):
     try:
-        text = Path('/sys/devices/system/cpu/online').read_text().strip()
+        text = (Path(sys_root) / 'online').read_text().strip()
     except OSError:
         return list(range(os.cpu_count() or 1))
     return parse_list(text)
@@ -494,6 +753,13 @@ def book_locked(kind, size, pid, meta, window):
                     and (b.get('retained') or {}).get('day') == meta.get('day')]
             if not mine:
                 return None, dict(status='waiting', reason='the retained lane CPU set is still occupied')
+            asked = meta.get('asked_size')
+            if asked not in (None, size) and not mine[0].get('grown'):
+                # session 8: never silently the retained size when the plan says another (the resolver's rule, lane_for)
+                return None, dict(status='refused', reason=(
+                    'the plan asks %d CPUs but the retained booking %s holds %d (%s); a saved day resumes on EXACTLY its '
+                    'set: grow the booking (frankie_box_cores.py grow --booking %s --size %d --reason ...) or keep the plan '
+                    'at %d' % (asked, mine[0]['booking'], size, cpu_list(requested), mine[0]['booking'], asked, size)))
             orphan = sorted(c for c in requested if c in held)
             if orphan:
                 return None, dict(status='waiting', in_use_unbooked=cpu_list(orphan),
@@ -581,7 +847,9 @@ def record_waiting(kind, meta, outcome):
 def book(kind, pid, meta, window):
     size, why = size_of(kind, meta.get('workers'), meta.get('verify'), meta.get('size'))
     if not why and kind == 'day-run' and meta.get('cpus') and len(meta['cpus']) != size:
-        # a saved day's resume books exactly its retained set: its size is that set's size
+        # a saved day's resume books exactly its retained set: its size is that set's size; the size the plan asked is
+        # carried (asked_size) and book_locked refuses the takeover when they differ and the booking was never grown
+        meta = dict(meta, asked_size=size)
         size, why = (len(meta['cpus']), None) if len(meta['cpus']) in DAY_RUN_SIZES else (
             None, 'a retained day-run set of %d CPUs is not one of %s' % (len(meta['cpus']), DAY_RUN_SIZES))
     if why:
@@ -591,6 +859,63 @@ def book(kind, pid, meta, window):
     if outcome['status'] == 'waiting':
         outcome['record'] = record_waiting(kind, meta, outcome)
     return b, outcome
+
+
+def grow_locked(b, size, reason, window):
+    """Under the lock: widen day-run booking `b` (live or retained) to `size` CPUs with free CPUs (lowest first, so a
+    64 on an idle 64-vCPU box is 0-63), the same booking id, the decision recorded under `grown`. (b, outcome) or
+    (None, waiting/refused outcome). Never shrinks; never moves a CPU of another booking; the holder's affinity is NOT
+    changed here (the next step runs under taskset of the new cpu_list; a running step keeps its own affinity until
+    the watchdog re-pins it or it resumes)."""
+    if b.get('kind') != 'day-run':
+        return None, dict(status='refused', reason='only a day-run booking grows (%s is %s)' % (b['booking'], b.get('kind')))
+    if size not in DAY_RUN_SIZES:
+        return None, dict(status='refused', reason='a day-run slot is one of %s CPUs (asked %s)' % (DAY_RUN_SIZES, size))
+    have = sorted(b['cpus'])
+    if size <= len(have):
+        return None, dict(status='refused', reason='booking %s holds %d CPUs already; grow only widens (asked %d)'
+                                                   % (b['booking'], len(have), size))
+    me = os.getpid()
+    procs_now = processes()
+    held, _, _, bookings = usage(window, exclude=ancestors(procs_now, me) | {me})
+    online = online_cpus()
+    if size > len(online):
+        return None, dict(status='refused', reason='%d CPUs asked, the box has %d' % (size, len(online)))
+    taken = {c for x in bookings for c in x['cpus'] if x['booking'] != b['booking']}
+    free = [c for c in online if c not in taken and c not in held and c not in have]
+    need = size - len(have)
+    if len(free) < need:
+        return None, dict(status='waiting', free=len(free), needed=need, free_cpus=cpu_list(free), booked_cpus=cpu_list(taken),
+                          in_use_unbooked=cpu_list(held),
+                          reason='waiting: %d free of the %d more CPUs needed to grow %s from %d to %d (booked by the ledger: '
+                                 '%s; in use outside it: %s)' % (len(free), need, b['booking'], len(have), size,
+                                                                  cpu_list(taken) or 'none', cpu_list(held) or 'none'))
+    added = sorted(free)[:need]
+    cpus = sorted(have + added)
+    record = dict(at=now_iso(), at_epoch=time.time(), from_size=len(have), to_size=size, added=added, added_list=cpu_list(added),
+                  reason=reason, by_pid=me, rule=day_run_rule(size))
+    b['grown'] = (b.get('grown') or []) + [record]
+    b.update(cpus=cpus, cpu_list=cpu_list(cpus), parent_cpu=cpus[0], owns_cpu0=cpus[0] == 0, worker_cpus=cpus[1:], size=size,
+             rule=day_run_rule(size), demand=size)
+    write_json(b['_path'], b)
+    return b, dict(status='grown', booking=b['booking'], cpus=b['cpu_list'], added=cpu_list(added), from_size=len(have), to_size=size)
+
+
+def grow(booking, size, reason, window=1.0):
+    """Widen a live or retained day-run booking (session 8, Greg: "a classroom day gets all 64"; the fleet: two ROOTs at
+    32, then the classroom one day at a time on all 64). Returns (booking record, outcome); outcome status grown |
+    waiting | refused, the reason on it."""
+    with Lock():
+        path = LEDGER / (booking + '.json')
+        if not path.is_file():
+            return None, dict(status='refused', reason='booking %s is not in the ledger (released or never made)' % booking)
+        b = json.loads(path.read_bytes())
+        b['_path'] = str(path)
+        b['_alive'] = any(alive(p) for p in b.get('pids') or [])
+        b['_retained'] = bool(b.get('retained'))
+        if not b['_alive'] and not b['_retained']:
+            return None, dict(status='refused', reason='booking %s has no live pid and is not retained (stale: reap it)' % booking)
+        return grow_locked(b, size, reason, window)
 
 
 def attach(booking, pid, role):
@@ -906,6 +1231,24 @@ def cmd_run(a):
     return code
 
 
+def cmd_grow(a):
+    b, outcome = grow(a.booking, a.size, a.reason or 'grown by hand', a.window)
+    emit_outcome(a, outcome)
+    print(json.dumps(outcome, sort_keys=True))
+    return 0 if outcome['status'] == 'grown' else WAITING_EXIT if outcome['status'] == 'waiting' else REFUSED_EXIT
+
+
+def cmd_plan(a):
+    """READ-ONLY: the resolver's answer for a step (lane_for), as JSON; a refusal prints its reasoning and exits 2."""
+    try:
+        out = lane_for(a.step, plan_size=a.size, run=a.run, day=a.day, days=(a.days.split(',') if a.days else None))
+    except PlanRefused as error:
+        print(json.dumps(dict(schema='FRANKIE_CPU_PLAN_V1', step=a.step, refused=str(error)), sort_keys=True))
+        return REFUSED_EXIT
+    print(json.dumps(out, sort_keys=True))
+    return 0
+
+
 def cmd_own(a):
     b = own(a.booking, a.run, a.day, a.attempt)
     print(json.dumps({k: v for k, v in b.items() if not k.startswith('_')}, indent=1, sort_keys=True))
@@ -988,6 +1331,10 @@ def cmd_show(a):
     free = [c for c in online if c not in by_cpu and c not in held]
     lines = ['### CPU ledger %s (%s), %d online CPUs, sampled %.1f s; read-only' % (LEDGER, os.uname().nodename,
                                                                                   len(online), a.window)]
+    cmap = core_map(online=online)
+    lines.append('core map: %d physical cores x %d threads (%s); siblings: %s' % (
+        cmap['physical_cores'], cmap['threads_per_core'], cmap['basis'],
+        ' '.join(cpu_list(g) for g in cmap['cores'][:8]) + (' ...' if len(cmap['cores']) > 8 else '')))
     for c in online:
         owners = by_cpu.get(c, [])
         if len(owners) > 1:
@@ -1074,6 +1421,18 @@ def main():
     s.add_argument('--json', action='store_true')
     s = sub.add_parser('allowed')
     s.add_argument('--pid', type=int, required=True)
+    s = sub.add_parser('grow', help='widen a live or retained day-run booking to a larger lawful size with free CPUs')
+    s.add_argument('--booking', required=True)
+    s.add_argument('--size', type=int, required=True, help='one of %s, larger than the booking holds' % (DAY_RUN_SIZES,))
+    s.add_argument('--reason')
+    s.add_argument('--window', type=float, default=1.0)
+    s.add_argument('--outcome')
+    s = sub.add_parser('plan', help='READ-ONLY: the resolver (lane_for) for a step')
+    s.add_argument('--step', required=True, choices=LANE_STEPS)
+    s.add_argument('--size', type=int, help='day-slot: the plan day_cpus')
+    s.add_argument('--run')
+    s.add_argument('--day')
+    s.add_argument('--days', help='teacher-lanes: the batch days, comma list')
     s = sub.add_parser('free')
     s.add_argument('--window', type=float, default=1.0)
     a = p.parse_args()
@@ -1087,7 +1446,7 @@ def main():
         except (ValueError, TypeError):
             raise SystemExit('--cpus: a comma list of CPUs / ranges')
     return dict(book=cmd_book, run=cmd_run, release=cmd_release, retain=cmd_retain, own=cmd_own, reap=cmd_reap, show=cmd_show,
-                allowed=cmd_allowed, free=cmd_free)[a.action](a)
+                allowed=cmd_allowed, free=cmd_free, grow=cmd_grow, plan=cmd_plan)[a.action](a)
 
 
 if __name__ == '__main__':
