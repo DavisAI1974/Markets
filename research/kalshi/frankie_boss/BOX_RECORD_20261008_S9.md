@@ -164,3 +164,13 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   (handover signals the idle old worker to end and starts the new worker at the new commit with the run settings:
   frankie_box_frankie_queue.handover carries _run_settings_env()), then watch.
 - The grow printout defect (emit_outcome KeyError 'grown' after the ledger write) fixed on the tip: 1b4c909.
+- 16:5xZ source role returned 0e2a568 (cores book_locked: a retained booking GROWN from the requested set is taken over
+  on its full set, exact match preferred, orphan check over the full set, `resumed[-1]` carries requested/grown_to; queue
+  _bind_owner keeps the old set as owner.cpus_before_grow; E2E doc section). Parent review: ok; py_compile ok. Confirmed by
+  the role: day_cpus() reads the held booking (64); the ROOT child runs under `taskset -c <booking cpu_list>` from
+  cmd_run_inside (frankie_box_cores.py ~1182-1201), so 0-63 with --data-workers 63.
+- 16:57:32Z RESTAGE dispatched: run 37812835190 (run_number 847) bound to 0e2a568548cccac2e8e9bb500f0f07753819255b.
+  CODE_ROOT for the handover: /opt/frankie-box/code/0e2a568548cccac2e8e9bb500f0f07753819255b-37812835190-1/markets.
+- Operator (opus) continued: after the stage, ACTION=handover LINE=root SCOPE=e2e-20231018-a2:20231018 with
+  FRANKIE_ROOT_DIGEST=on FRANKIE_CLASSROOM_CPUS=all on that checkout (the idle old worker 4813 ends on SIGTERM; the new
+  --wait-lock worker takes the lock and admits the day on 0-63), then the receipt and the digest start.
