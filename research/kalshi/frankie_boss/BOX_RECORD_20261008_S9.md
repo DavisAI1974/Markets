@@ -397,3 +397,8 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   tables 0/1 reused if their saves landed. Render command for later (after the teacher starts), on a checkout carrying
   418005d: CODE_ROOT=<CR5> MARKETS_SHA=<sha> OUTPUT_ROOT=R FRANKIE_RENDER_BOOKING=day-run-20231018-day_slot_repoint-
   1791479892-5613 bash $CODE_ROOT/deploy/aws/box/frankie_box_render_digest.sh.
+- 17:5xZ coverage role returned 5c669032: all-99 coverage from the ROOT's sealed native records only (derive.json bedrock
+  block + the bound bedrock receipt), NO ledger scan (FRANKIE_ALL99_SCAN=on only), entries without a record 'not measured',
+  the root done/reused records never depend on the coverage. Parent: py_compile ok. Greg: "push and relaunch"; "when
+  change lands we move forward" -> STAGE dispatched at once on 5c669032 (run id below); then kick (reconcile the dead
+  owner -> unknown, worker ends waiting_owner) -> ACTION=resume -> kick: root reused -> boundary by claim -> teacher.
