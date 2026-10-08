@@ -500,18 +500,23 @@ def _snapshot(job):
     # Nothing is written: the later passes read the rows again from the same read-only source, in the same order. The
     # rows are JSON decoded (sources.sqlite payloads), so the serial writer's type-preservation spool check cannot fail
     # on them and is not repeated here.
-    spec, directory = job
+    spec, directory = job[0], job[1]
+    cross_columns = list(job[2]) if len(job) > 2 and job[2] else None     # fuse_context: the context from this decode
     Path(directory).mkdir(parents=True, exist_ok=True)
     observer, n, first, last = DG.Observer(), 0, None, None
     state = ({}, {}, {})
+    cross = [] if cross_columns else None
+    top = bool(cross_columns) and all('.' not in c for c in cross_columns)
     for n, row in enumerate(_source_rows(spec), 1):
+        if cross is not None:
+            cross.append(_cross_of(row, cross_columns, top))
         flat = DG._flatten(dict(row))
         observer.add(flat)
         if first is None:
             first = flat
         last = flat
         _fold(state, flat)
-    return dict(observer=observer, n=n, first=first, last=last, state=state)
+    return dict(observer=observer, n=n, first=first, last=last, state=state, cross=cross)
 
 
 # ---- phase 2: plan cells, derived and constant flags, dictionary counts and scales, in one read --------------------
@@ -524,7 +529,18 @@ def _plan(job):
     candidates are held apart and counted as soon as it cannot be (a column that varies in any part is kept), or left in
     the held table for the merge to count only if the column is kept table-wide. Positions run over every candidate in
     row-major order, so the first-occurrence order of the kept candidates is the serial one."""
-    spec, directory, facts, seed, first, reserve = job
+    spec, directory, facts, seed, first, reserve = job[:6]
+    modes = job[6] if len(job) > 6 else {}
+    # one_decode: every row's cells to the part's own scratch (cells.jsonl.gz, zlib level 1: the table's text before
+    # the dictionary, streamed, bounded by the reserve, deleted after the final pass) and, under canonical_verify, the
+    # canonical digest of every source row (digests.bin, 32 bytes a row) for the inverse proof: the final and verify
+    # passes then decode no source row
+    one_decode, canonical = bool(modes.get('one_decode')), bool(modes.get('canonical'))
+    import gzip
+    cells_out = gzip.open(Path(directory) / 'cells.jsonl.gz', 'wt', compresslevel=1, encoding='utf-8', newline='\n') \
+        if one_decode else None
+    digests_out = (Path(directory) / 'digests.bin').open('wb') if (one_decode and canonical) else None
+    canonical_reason = None
     columns = facts.columns
     _room(directory, reserve=reserve)
     prev, values, integers, lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
@@ -558,9 +574,21 @@ def _plan(job):
             entry[1] = min(entry[1], position)
 
     position = 0
-    for row in _source_rows(spec):
+    for i, row in enumerate(_source_rows(spec)):
         flat = DG._flatten(dict(row))
         cells = DG._plan_row(flat, columns, prev, values, integers, lists, facts)
+        if cells_out is not None:
+            if i % 4096 == 0:
+                _room(directory, reserve=reserve)
+            cells_out.write(json.dumps(cells, separators=(',', ':')) + '\n')
+            if digests_out is not None:
+                try:
+                    digests_out.write(canonical_digest(dict(row)))
+                except _NotCanonical as error:
+                    canonical_reason = 'row %d holds a %s leaf: verified by DG._same instead' % (i, error)
+                    digests_out.close()
+                    (Path(directory) / 'digests.bin').unlink(missing_ok=True)
+                    digests_out = None
         for j, c in enumerate(columns):
             kind, text = cells[j]
             if derived[j] and text != '=':
@@ -593,7 +621,19 @@ def _plan(job):
                    ((j, key, count, at, cost) for j, h in enumerate(held) for key, (count, at, cost) in sorted(h.items())))
     db.commit()
     db.close()
-    return dict(derived=derived, constant=constant, scales=scale_state)
+    cells_bytes = digests_bytes = 0
+    for handle, name in ((cells_out, 'cells.jsonl.gz'), (digests_out, 'digests.bin')):
+        if handle is not None:
+            handle.flush()
+            os.fsync(handle.fileno())
+            handle.close()
+            size = (Path(directory) / name).stat().st_size
+            if name == 'cells.jsonl.gz':
+                cells_bytes = size
+            else:
+                digests_bytes = size
+    return dict(derived=derived, constant=constant, scales=scale_state, cells_bytes=cells_bytes,
+                digests_bytes=digests_bytes, canonical_reason=canonical_reason)
 
 
 # ---- phase 3: merge (coordinator, digests only) ---------------------------------------------------------------------
@@ -652,13 +692,31 @@ def _final(job):
     """The part's rows planned again from its seed and written with the dictionary, cells joined by tabs (no cell holds
     a tab or a newline, checked); the copy turns the tabs into spaces when the table's separator is a space. The text of
     every dictionary entry this part numbers (its first occurrence is here) goes to names.txt, in number order."""
-    spec, directory, index, facts, seed, kept, scales, dictionary, start, reserve = job
+    spec, directory, index, facts, seed, kept, scales, dictionary, start, reserve = job[:10]
+    modes = job[10] if len(job) > 10 else {}
+    one_decode, canonical = bool(modes.get('one_decode')), bool(modes.get('canonical'))
     columns = facts.columns
     prev, values, integers, lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
     lookup = _lookup_db(dictionary)
     has_space, named = False, [start]
     directory = Path(directory)
     _room(directory, reserve=reserve)
+    import gzip
+
+    def planned_cells():
+        # one_decode: the cells the plan pass wrote for this part (no source decode); else the source decoded and
+        # planned again from the part's seed, as before (and, under canonical_verify, its canonical digest kept)
+        if one_decode:
+            with gzip.open(directory / 'cells.jsonl.gz', 'rt', encoding='utf-8', newline='\n') as saved:
+                for line in saved:
+                    yield json.loads(line), None
+            return
+        for row in _source_rows(spec):
+            flat = DG._flatten(dict(row))
+            cells = DG._plan_row(flat, columns, prev, values, integers, lists, facts)
+            yield cells, row
+    digests_out = (directory / 'digests.bin').open('wb') if (canonical and not one_decode) else None
+    canonical_reason = None
     with (directory / 'rows.txt').open('w', encoding='utf-8', newline='\n') as rows, \
             (directory / 'names.txt').open('w', encoding='utf-8', newline='\n') as names:
         def number(kind, text, key):
