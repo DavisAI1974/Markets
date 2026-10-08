@@ -1385,6 +1385,50 @@ def _file_claim_rows(spool_items, ledger_items):
 
 
 NATIVE_REUSE_CHECK_SETTING = 'FRANKIE_ROOT_NATIVE_REUSE_CHECK'      # claim (default) | full
+LEGACY_REUSE_CHECK_SETTING = 'FRANKIE_ROOT_LEGACY_REUSE_CHECK'      # claim (default) | full
+
+
+def _reuse_check_mode(setting):
+    mode = os.environ.get(setting, 'claim')
+    if mode not in ('claim', 'full'):
+        raise ValueError('%s must be claim or full' % setting)
+    return mode
+
+
+def _load_file_claims(directory):
+    """{resolved path: FRANKIE_FILE_CLAIM_V1 row} from <directory>/file-claims.jsonl; {} when absent or unreadable (a
+    claim is a hint: without one the file is read whole)."""
+    out = {}
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import FILE_CLAIMS_NAME
+        for line in (Path(directory) / FILE_CLAIMS_NAME).read_text(encoding='utf-8').splitlines():
+            row = json.loads(line)
+            if isinstance(row, dict) and row.get('schema') == 'FRANKIE_FILE_CLAIM_V1':
+                out[str(row['path'])] = row
+    except (ImportError, OSError, ValueError, KeyError, TypeError):
+        return {}
+    return out
+
+
+def _artifact_check(item, claims, mode):
+    """A saved artifact {path, bytes, sha256} against the file now: (witness, basis). With mode 'claim' and a saved
+    FRANKIE_FILE_CLAIM_V1 row for the path whose bytes/sha256 are the artifact's and which still holds (stat identity
+    and last 64 KiB), the witness is the claim (no full read); otherwise the file is read whole through the per-process
+    cache (basis 'read whole'). A difference raises as before."""
+    path = Path(item['path'])
+    claim = {k: item[k] for k in ('bytes', 'sha256')}
+    row = claims.get(str(path.resolve())) if mode == 'claim' else None
+    basis = None
+    if row is not None and (row.get('bytes'), row.get('sha256')) == (claim['bytes'], claim['sha256']):
+        basis = _claim_still_holds(row)
+    if basis is None:
+        seen = witness(path)
+        if seen != claim:
+            raise ValueError('retained artifact changed: ' + item['path'])
+        _filehash().remember(path, seen)
+        return seen, 'read whole: bytes and sha256 equal to the saved artifact'
+    _filehash().remember(path, claim)      # a later witness() of the unchanged file in this process costs no read
+    return dict(claim), basis
 
 
 def _claim_still_holds(claim):
@@ -2555,31 +2599,48 @@ class Session:
                 # sealed with its count (kind 'spool', this code's seal) is witnessed through the per-process cache
                 # and reopened from the sealed count (first and last lines only); one sealed without a count (an
                 # earlier seal) is one pass hashing and counting together. Every other artifact is witnessed as before.
+                # Second pass (the relaunch role, live on a2): an INLINE layer (472 GB legacy_book_imbalance.json) was
+                # read whole here AND again by load_retained_layers' own witness; now every artifact with a sealed count
+                # or a holding claim (work/file-claims.jsonl: stat identity + last 64 KiB, written at the seal) is taken
+                # without a full read, FRANKIE_ROOT_LEGACY_REUSE_CHECK=full restores the reads, and the witnesses are
+                # handed to load_retained_layers (layer_witnesses=) so it reads none of them again. Recorded on the
+                # receipt as legacy_stage_reuse_check. The inline layer's frames/groups count parse in
+                # load_retained_layers stays (the layer's other keys follow its array; a reference layer costs nothing).
                 B = _box_module('frankie_box_bedrock')
-                reopened, reads, sealed_spools = {}, [], []
+                reopened, reads, sealed_spools, witnessed, checks = {}, [], [], {}, []
+                claims, mode = _load_file_claims(self.work), _reuse_check_mode(LEGACY_REUSE_CHECK_SETTING)
                 for item in saved_stage['artifacts']:
                     path, claim = Path(item['path']), {k: item[k] for k in ('bytes', 'sha256')}
                     count = None
                     if item.get('kind') == 'spool' and isinstance(item.get('count'), int):
-                        seen, count, how = witness(path), item['count'], 'one witness read + the sealed count'
+                        seen, how = _artifact_check(item, claims, mode)
+                        count = item['count']
+                        how = 'the sealed count; ' + how
                     elif path.suffix == '.jsonl':
                         counted = _witness_counting(path)
                         seen, count = {k: counted[k] for k in ('bytes', 'sha256')}, counted['count']
                         how = 'one pass, sha256 + count together (the seal recorded no count)'
                     else:
-                        seen = witness(path)
+                        seen, how = _artifact_check(item, claims, mode)
                     if seen != claim:
                         raise ValueError('completed legacy stage artifact changed: ' + item['path'])
+                    checks.append(dict(path=str(path), bytes=claim['bytes'], basis=how))
+                    witnessed[str(path.resolve())] = dict(path=str(path), **claim)
                     if count is not None:
                         reopened[str(path.resolve())] = _reopen_counted_spool(B.RowSpool, path, count)
                         reads.append(f'{path.name}: {how}')
                         sealed_spools.append(dict(path=str(path), **claim, kind='spool', count=count))
                 self._sealed_spool_artifacts = sealed_spools          # the file claims after the native stage
+                self._sealed_layer_artifacts = [w for p, w in witnessed.items() if not p.endswith('.jsonl')]
                 from frankie_box_monday_calculations import load_retained_layers
                 receipt = saved_stage['receipt']
+                receipt['legacy_stage_reuse_check'] = dict(schema='FRANKIE_LEGACY_REUSE_CHECK_V1', setting=mode,
+                                                           artifacts=checks)
                 _, _, records, prices, frames, structures, failures, layers, _ = load_retained_layers(
-                    self, allow_failures=True, receipt=receipt, spools=reopened)
-                self.note('legacy stage reuse: each spool read once (' + '; '.join(reads) + ')')
+                    self, allow_failures=True, receipt=receipt, spools=reopened, layer_witnesses=witnessed)
+                self.note('legacy stage reuse: each spool read at most once (' + '; '.join(reads) + '); layers: '
+                          + ', '.join(f'{Path(c["path"]).name}: {c["basis"].split(":")[0]}'
+                                      for c in checks if not c['path'].endswith('.jsonl')))
                 if len(failures) != receipt['failure_count']:
                     raise ValueError('completed legacy stage failure count differs')
                 self.note('native continuation: completed legacy outputs reused without replay or calculation')
@@ -3084,6 +3145,10 @@ class Session:
                              for item in receipt['layers'].values())
             write_json(self.work / 'legacy-stage.json', dict(schema=NATIVE_RECOVERY_SCHEMA,
                        identity=identity, receipt=receipt, artifacts=artifacts))
+            # session 6 (R1, second pass): the file claims for the spools and the layer files at the seal itself (the
+            # native ledgers join them after the native stage), so a resume takes them instead of reading whole
+            self._sealed_layer_artifacts = [dict(item) for item in artifacts[5:]]
+            self._write_file_claims(dict(bedrock=None))
             return self._complete_native_derivation(pin, derived, receipt, layers, records, prices, frames,
                 structures, opening_adapter_state=opening_adapter_state, opening_book=opening_book,
                 save_requested=save_requested, digest=digest, digest_bedrock=digest_bedrock)
