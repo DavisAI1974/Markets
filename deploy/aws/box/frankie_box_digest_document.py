@@ -508,7 +508,9 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         entry = timed(ordinal, name, 'parallel')
         path = scratch/('table-%04d.txt' % ordinal)
         key = legacy_key(name, None, code, legacy_inputs)
-        columns = cross_columns_of(name) if fused is not None else None
+        # the context columns are handed over whether or not they are fused (the writer fuses only under its
+        # setting; given them it counts the separate cross-context decode on its proof: source_decodes 5 at =5)
+        columns = cross_columns_of(name) or None
 
         def on_cross(context_rows):
             try:
