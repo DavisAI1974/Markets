@@ -82,7 +82,11 @@ NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS.
    (f) spool archive policy/region (archive volume exists now); content dedupe of pinned evidence files (lessons,
    survivors, school, reports, coupling parts: a new rendering changes bytes other stages compare); the seal check on the
    BEDROCK=off route (parent's call, one full read, reversible); digest every day vs classroom days.
-5. Cross-owner requests recorded in each STACKS_PASS file (school R2 one teacher child per batch needs a repeatable
+5. Greg (2026-10-08 00:2xZ, to discuss later, not decided): for the 30-day run with ONE BOX PER DAY, a day may have to keep
+   its good data with it on its box. Sizing fact from a2: one day's ROOT wrote ~497 GB frames spool + ~497 GB whole-spool
+   layer copy (old form) + ~290 GB native ledgers + digest (unmeasured) on a 2 TB root volume and ran out; the streamed
+   reference layer (in flight) removes the copy. Decide the per-box disk and the archive policy (f) together.
+6. Cross-owner requests recorded in each STACKS_PASS file (school R2 one teacher child per batch needs a repeatable
    ledger CLI; exchange X6 Jev request binds the commit; teacher anchor-pictures hand-off; reports 99-layer join pool).
 
 ## Tip at handoff
