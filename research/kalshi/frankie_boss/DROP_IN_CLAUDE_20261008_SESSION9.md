@@ -38,6 +38,37 @@ point. Fix problem and restart from exactly the same spot." Then: "Will fix in n
    any run; FULL DEPTH digests.
 ```
 
+## PAUSE STATE (parent, 18:2xZ 2026-10-08): the box is being STOPPED; the day is SAVED with everything retained
+
+Resume box for the next session (paste):
+```
+NEW SESSION -- Frankie (Greg). Parent only; roles (model opus) do the work; AWS via the Aws connector (one read-only STS call
+first). Branch ccr-d2f8f826-iefeah-frankie; SHALLOW: git fetch --deepen=400. Read research/kalshi/frankie_boss/
+BOX_RECORD_20261008_S9.md (newest sections last), IMPROVEMENTS_20261008_S9.md, then this file.
+STATE: main box i-035994afa8bdf66a5 (r7i.16xlarge, us-east-1) STOPPED, KeepRunning=false. Day e2e-20231018-a2/20231018:
+ROOT-line entry done, finish SAVED on its marker (18:15Z), attempt e2e-20231018-a2-20231018-a1 with its receipt (17:46Z;
+digest NOT rendered: process 4 skipped), booking day-run-20231018-day_slot_repoint-1791479892-5613 retained on 0-63.
+Resume checkout on the box: /opt/frankie-box/code/59367e319315bb597bcc9590daa56a6107f0a618-<run>-1/markets (every fix of
+2026-10-08 session 9; verify its staging-receipt; if absent, stage the tip with frankie_box_run.yml ACTION=stage).
+Volumes: root vol-0d36715924f03b86c at 3,000/125 with its 12:08Z downsize still OPTIMIZING (a raise is refused until it
+completes; check DescribeVolumesModifications, then raise to 16,000/1,250 BEFORE any render); archive
+vol-004b68c077be09cc9 raised to 10,000/1,000 (18:34Z... see the record).
+RESTART (on Greg's go), over SSM on that checkout with CODE_ROOT + MARKETS_SHA explicit:
+  1. StartInstances; CreateTags KeepRunning=true; wait SSM Online.
+  2. ACTION=resume RUN=e2e-20231018-a2 DAY=20231018 (frankie_box_frankie_queue.sh): finish 'resume'.
+  3. FRANKIE_ROOT_VALIDATE_CHECK=off FRANKIE_STAGE_HANDOFF=off FRANKIE_ROOT_DIGEST=off FRANKIE_CLASSROOM_CPUS=all
+     ACTION=kick LINE=root SCOPE=e2e-20231018-a2:20231018 -> the teacher on 0-63 (readiness from the ROOT on disk;
+     native witnesses by claim: no ledger re-hash).
+  4. Once the teacher runs: the digest inside the same booking: CODE_ROOT=<checkout> MARKETS_SHA=59367e31...
+     OUTPUT_ROOT=/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1
+     FRANKIE_RENDER_BOOKING=day-run-20231018-day_slot_repoint-1791479892-5613 bash
+     $CODE_ROOT/deploy/aws/box/frankie_box_render_digest.sh (resumes from the checkpoints; per-chunk progress now).
+  5. Probe with RUN=e2e-20231018-a2 DAY=20231018 sh deploy/aws/box/frankie_box_day_status.sh (read-only). Fix only what
+     breaks; one pass everywhere; no gates that re-check receipted data.
+Greg's standing calls this session: one pass, no multiple passes; gates/validators that re-check are overkill (off);
+an owned day is never retried from scratch; a box keeps its days end to end; fixes made ahead of the chain, not logged.
+```
+
 ## Session 9 decision (parent, 16:3xZ 2026-10-08): the child is STOPPED before its receipt, not after
 Greg's directive applied: "stop, fix and restart ... use all 64 cps for it and 64 workers". The parent read the source on the
 tip before acting (record: BOX_RECORD_20261008_S9.md). Two facts changed step 4(a) of the box above:
