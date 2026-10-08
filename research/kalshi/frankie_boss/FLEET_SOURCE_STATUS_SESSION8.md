@@ -126,3 +126,46 @@ market. The toys cover the pure logic and the control-plane semantics via the fi
 resolver (the classroom grow to all-64 is already the resolver's classroom-day default; the lease only decides WHICH box
 runs its classroom at a time, not the CPU set). The classroom/teacher/queue/experiment stage files are unchanged; the
 fleet logic lives in the new module and the handoff only.
+
+## Review findings resolution (REVIEW_20261008_FLEET_SOURCE.md, commit 19598860) -- slice f
+Each finding was verified against the code and fixed, or answered with the traced reason. Commits on
+ccr-d2f8f826-iefeah-frankie: batch1 0c1b9d6c (user-data B1/B2/B3/B5-wipe/B6/S9/S13), batch2 73293c51
+(B4/B7/S1/S2/S14), batch3 cda7b0e3 (B5 golden-ami/S5/S6/S7/S8/N3), batch4 b11b541d (S3/S4/S5/S10/S11/S12/N8),
+batch5 (N1/N2/N4/N5 + these docs). 64 fleet toys pass; py_compile/ast.parse/YAML/bash -n (incl. the rendered
+user-data + the day driver)/git diff --check clean. Nothing run; no AWS call.
+
+| # | finding | resolution |
+|---|---------|-----------|
+| B1 | user-data can't start a day (fraction of inputs, no partition route, `|| echo`) | FIXED 0c1b9d6c. User-data no longer attempts a fresh start; it PREPARES the box and installs a reboot-resume driver. Fresh day-start is driven per instance by frankie_box_run.yml (stage+start, full dispatch set + presign) -- review option (a), chosen. No `|| echo`. |
+| B2 | second day's start refused (two ACTION=start) | FIXED 0c1b9d6c. No self-start in user-data; the reboot-resume driver resumes BOTH saved days. The external run.yml start uses one DAYS="D1,D2". |
+| B3 | claim-day a no-op (`-S` drops boto3; no `continue`) | FIXED 0c1b9d6c. The driver runs claim-day under the venv python with an exit split (0 won / 1 lost->skip / >=2 error->stop); claim-day returns 2 when fleet mode is OFF and 2 on any error. |
+| B4 | two-day box deadlocks holding the GLOBAL lease | FIXED (fleet half) 73293c51: the gate takes the lease ONLY when the box can give the classroom its CPUs (resolver waits_for==0), and the WAIT resume passes REBOOK=on. ANSWERED (queue half): the parent's full option-3 (a fleet_waiting day RELEASES its booking so the holder grows to 64) needs request_save to drop the booking on a fleet-gate save -- today it RETAINS (queue:2205). One-line queue change for CCode/the queue owner (request_save honoring a release flag). No-queue-change fallback also named: FRANKIE_CLASSROOM_CPUS=held runs the classroom on the box's own 32. |
+| B5 | golden AMI defaults to the main box (foreign queue/bookings/2 TB) | FIXED cda7b0e3 (golden-ami refuses a root over --max-root-gib) + 0c1b9d6c (user-data first-boot wipe of box-local run state). |
+| B6 | idle guard stops fleet boxes; a stopped box never resumes | FIXED 0c1b9d6c. Template + per-box tags stamp KeepRunning=true (the idle guard stops only KeepRunning!=true; the day-box role from slice e lets the box keep it true); user-data installs a systemd unit that re-runs the day driver on EVERY boot (reboot-resume). |
+| B7 | real-store fairness (datetime mtime) stalls on a dead earliest waiter | FIXED 73293c51. S3Store.head returns a float epoch; the WAIT unit heartbeats its waiting marker; fairness measures heartbeat SILENCE, so a dead earliest waiter no longer deadlocks the line. A drop-waiting operator CLI is NOT added (the heartbeat-silence skip removes the need; takeover-lease handles a stale lease). |
+| S1 | order degrades to first-poller after 300 s | FIXED 73293c51. The marker keeps root_finish_epoch for ORDER and a separate heartbeat_epoch for liveness. |
+| S2 | lease not released on every exit path | FIXED 73293c51. Release at the classroom/data boundary runs BEFORE the FINISHED check (a failed classroom frees it); fleet_resume releases on a resume/kick failure; wait_action wraps each poll and releases-if-held on an exception; start_wait_unit no longer refuses on a DEAD unit. |
+| S3 | non-arm days take the lease; never "done" | FIXED b11b541d. The gate fires only for e['classroom_arm']; done_utc at jev (arm) or accumulated_lessons/survivors (non-arm). |
+| S4 | lost updates on the shared day list (15 writers) | FIXED b11b541d. Stage state moved to per-day progress objects (one writer per day); the day list keeps only static assignments; the probe folds them. |
+| S5 | InstanceId/box not recorded; box-less days dropped | FIXED cda7b0e3 (fleet-launch records each InstanceId+days on the receipt) + b11b541d (claim_day records the box; the probe shows unassigned days in their own row). |
+| S6 | silent day drop; under-counted usage; no partial record | FIXED cda7b0e3. fleet-launch refuses a day overflow (names the dropped days); counts pending+running; sizes need by --instance-type; per-box try/except records launched ids + returns 'partial'. |
+| S7 | terminate-on-shutdown + DeleteOnTermination root | ANSWERED/FIXED cda7b0e3. --shutdown-behavior {terminate,stop}, default terminate (Greg's choice, cited in the quota appeal; no box script calls shutdown, so no self-terminate path); stop offered for the cautious. Greg's call on the default. |
+| S8 | day-list baked in template; $Latest loose | FIXED cda7b0e3. fleet-launch pins the template version number and stamps a per-box DayList tag; the user-data reads the tag (falls back to the baked value). |
+| S9 | GitHub token persisted in .git/config | FIXED 0c1b9d6c. Clone/fetch use a one-shot http.extraheader auth; `remote set-url` to a tokenless URL; the token is never in a URL or on disk. |
+| S10 | WAIT unit dumps the whole env into -E | FIXED b11b541d. Detached units get an allowlist (_detached_env: FRANKIE_*/AWS_* + a few); newline values dropped. |
+| S11 | any prefix escapes the IAM grant -> silent WAIT | FIXED b11b541d. The launcher refuses a location outside fleet/ on the granite bucket unless --allow-any-prefix; the probe shows a store error, not "free"; the gate records the S3 error. |
+| S12 | no heartbeat during the classroom | FIXED b11b541d. classroom_gate on 'proceed' starts a detached heartbeat unit that refreshes the lease while the box holds it. |
+| S13 | IMDS tag race; a fatal user-data = silent idle box | FIXED 0c1b9d6c. Tag reads retry ~60s with curl -f; a bad/absent tag writes fleet-boot-failed.json and exits 2. |
+| S14 | 24h WAIT bound strands the tail of a 30-day fleet | FIXED 73293c51. Bound is 7 days with the marker heartbeated; a reboot re-arms the unit via the reboot-resume driver. |
+| N1 | record_root_finished at the teacher gate (not root) | FIXED b11b541d+batch5. The marker carries basis='teacher-finish'. |
+| N2 | takeover leaves the prior holder's classroom running | ANSWERED batch5. The takeover audit + CLI note warn to force only once the prior holder is confirmed dead (two classrooms otherwise). |
+| N3 | stop-all silently ignores unmatched named ids | FIXED cda7b0e3. stop-all prints ids named in --instances but not running/pending. |
+| N4 | full-history clone; aws CLI assumed | FIXED/NOTED 0c1b9d6c+batch5. The clone is --depth 1; the aws/git assumption is noted in the README. |
+| N5 | launch-template now needs --run/--fleet-day-list | NOTED batch5 in FRANKIE_AWS_STACK_README.md (intentional, loud). |
+| N6 | pip pins match | No change (already correct). |
+| N7 | __doc__ split / CLI prints whole list | No change (fine). |
+| N8 | probe hides the gate state | FIXED b11b541d. A waiting/ineligible day shows gate:waiting / gate:ineligible; unassigned days get their own row. |
+
+ONE open item for the owners (not fleet-source): B4's booking-release-on-save (the queue's request_save), a one-line
+change for CCode/the queue owner so the parent's full option-3 works end to end; the fleet-source half and the
+no-queue-change fallback are built.

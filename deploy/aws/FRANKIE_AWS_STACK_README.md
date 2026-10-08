@@ -46,3 +46,17 @@ python3 deploy/aws/frankie_aws_stack.py --steps launch-template --image-id ami-x
 `python3 -m py_compile`, `ast.parse`, `--help`, and a dry run with a fake account (the scratchpad toy test); no AWS
 call was made from this session. Each step's write calls are recorded on its receipt before they run, so an apply
 run leaves the exact call list even if a later call fails.
+
+## Fleet steps (session 8, added slice f) and the review's NITs
+- Steps: `day-box-role` (the fleet boxes' IAM role + instance profile; apply as root), `golden-ami` (image a CLEAN
+  stopped staged box; refuses a root over --max-root-gib), `launch-template` (`frankie-day-box`: r7i.16xlarge, IMDSv2,
+  Ssm, KeepRunning=true, the account CMK, user-data that PREPARES the box + installs the reboot-resume unit; it needs
+  `--run` or `--fleet-day-list` to form the day-list location and the `frankie-day-box` instance profile to exist),
+  `fleet-launch` (`--days`/`--count`/`--spot`; refuses over-quota, a day overflow, `--spot` for day boxes without
+  `--allow-spot-days`, and a day-list prefix outside `fleet/` without `--allow-any-prefix`; pins the template version).
+- N5: a full-stack `--apply` stops at `launch-template` with needs_input when `--run`/`--fleet-day-list` is absent --
+  that is intentional and loud; pass them (or run only the earlier steps).
+- N4: the fleet user-data assumes `git` and the `aws` CLI are on the golden AMI (it installs nothing); the clone is
+  `--depth 1` (not a full-history clone).
+- Fresh day-start is driven per instance by `frankie_box_run.yml` (stage + start with the full dispatch set + the
+  presign); the user-data only prepares the box and resumes its saved days on each boot (review B1).

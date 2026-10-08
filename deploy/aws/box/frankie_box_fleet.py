@@ -496,7 +496,11 @@ def record_root_finished(run, day, *, st=None, instance=None, epoch=None):
     st = st or store()
     instance = instance or instance_id()
     epoch = time.time() if epoch is None else epoch
+    # N1: the gate is at the teacher->classroom boundary (decision 3), so this epoch is the TEACHER-finish time, which
+    # is the order boxes become ready for the classroom (ROOT+teacher done). The field name is kept for continuity;
+    # `basis` says what it is.
     body = dict(schema=WAIT_SCHEMA, run=run, day=day, instance=instance, root_finish_epoch=round(epoch, 3),
+                basis='teacher-finish (the gate is at teacher->classroom; = ready-for-classroom time)',
                 root_finished_utc=_utc(), heartbeat_epoch=round(time.time(), 3), heartbeat_utc=_utc())
     try:
         st.put_if_absent(waiting_key(run, day), body)
@@ -654,7 +658,8 @@ def takeover_classroom_lease(run, day, commit, by, *, force=False, st=None, inst
         return dict(status='refused', reason='a lease takeover is an explicit operator action: pass force=True',
                     current=cur)
     audit = dict(schema=TAKEOVER_SCHEMA, at=_utc(), by=by, new_holder=instance, run=run, day=day, commit=commit,
-                 prior=cur)
+                 prior=cur, warning='N2: if the prior holder is still alive its classroom keeps running -- there may '
+                 'be TWO classrooms until it ends. Only force a takeover once the prior holder is confirmed dead.')
     st.put('classroom.lease.takeover-%d.json' % int(time.time()), audit)
     body = dict(schema=LEASE_SCHEMA, holder_instance=instance, run=run, day=day, commit=commit, acquired_utc=_utc(),
                 heartbeat_utc=_utc(), heartbeat_epoch=round(time.time(), 3), takeover=audit)
