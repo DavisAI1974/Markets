@@ -1672,14 +1672,19 @@ class Run:
                                    all99=all99, inspection=dict(outputs=dict(all99=all99_summary(all99))),
                                    reason='the completed ROOT %s does not carry the plan\'s shared market policy (%s); it is '
                                           'preserved; the compatible successor is a new run name' % (calc, mismatch))
-            sources = [calc / 'calculations-receipt.json', calc / 'work' / 'derive.json',
-                       calc / 'work' / 'derivation-digest-full.md']
+            sources = [calc / 'calculations-receipt.json', calc / 'work' / 'derive.json']
+            # session 6: a ROOT without the digest (a day with no digest reader) is listed, never a missing source
+            digest_path = calc / 'work' / 'derivation-digest-full.md'
+            if digest_path.is_file():
+                sources.append(digest_path)
             if (calc / 'external-computation.json').is_file():
                 sources.append(calc / 'external-computation.json')
             brain_entry = self.brain_stage(e['day'], 'root', sources,
                                            summary=dict(calculations=str(calc), role=e['role'],
                                                         root_status=retained.get('status'),
-                                                        producer_failures=retained.get('failure_count')))
+                                                        producer_failures=retained.get('failure_count'),
+                                                        digest=('attached' if digest_path.is_file() else
+                                                                self.DIGEST_NOT_BUILT)))
             all99 = self.all99(e['day'], calc, retained, policy, None)
             return self.record('root', e['day'], 'reused', calculations=str(calc), interrupted_attempts=attempts,
                                receipt_sha256=sha256_file(calc / 'calculations-receipt.json')
@@ -1711,7 +1716,15 @@ class Run:
             return self.record('root', e['day'], 'waiting', reason=held[1], claim=held[2])
         env = dict(INGESTION_RECEIPT=ing['receipt'], INGESTION_RECEIPT_SHA256=ing['receipt_sha256'], DAY=e['day'],
                    DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=self.day_cpus() - 1,
-                   DIGEST='on', RESUME='on' if resume else 'off',
+                   # session 6 (Greg, 2026-10-08: "some of these end steps feel redundant"): ROOT process 4, the Markdown
+                   # digest (~95 MB, 30 workers, 6+ min on a2), is read FOR WORK by the classroom only (classroom.py /
+                   # classroom_v2.py / classroom_staged.py / classroom_cache.py, classroom-arm days; the teacher, search,
+                   # data, reports, exchange and inspection stages read the JSON layers and spools); every other reader
+                   # records its hash. Built on a classroom-arm day, or for every day when the plan says root_digest 'on';
+                   # else 'off' (derive.json root_processes.digest 'skipped' with its not_run reason, the receipt's digest
+                   # null), listed as not built on the brain entry and this record, never a failure
+                   DIGEST='on' if (e['classroom_arm'] or self.plan.get('root_digest') == 'on') else 'off',
+                   RESUME='on' if resume else 'off',
                    # the ROOT's own finalize preflight keeps this Run's floor (2026-10-08; Session._finalize_projection)
                    FRANKIE_ROOT_DISK_FLOOR_GB=self.floor / 1024 ** 3)
         if self.plan['frozen_survivors']:
@@ -1742,14 +1755,17 @@ class Run:
         # the 99 layers combined for Frankie: per entry produced / admitted / absent (thinner picture, the day stays) /
         # knowledge / retired / sealed / disabled / output, on this receipt and in the one-day inspection (Greg, 2026-10-07)
         all99 = self.all99(e['day'], output, calc, policy, self.shared_policy_mismatch(calc.get('shared_market_policy')) if policy else None)
+        digest_path = output / 'work' / 'derivation-digest-full.md'      # session 6: absent on a day with no digest reader
         brain_entry = self.brain_stage(e['day'], 'root',
-                                       [output / 'calculations-receipt.json', output / 'work' / 'derive.json',
-                                        output / 'work' / 'derivation-digest-full.md'] +
+                                       [output / 'calculations-receipt.json', output / 'work' / 'derive.json'] +
+                                       ([digest_path] if digest_path.is_file() else []) +
                                        ([output / 'external-computation.json']
                                         if (output / 'external-computation.json').is_file() else []),
                                        summary=dict(calculations=str(output), role=e['role'],
                                                     root_status=calc.get('status'),
-                                                    producer_failures=calc.get('failure_count')))
+                                                    producer_failures=calc.get('failure_count'),
+                                                    digest=('attached' if digest_path.is_file() else
+                                                            self.DIGEST_NOT_BUILT)))
         finalize = None
         try:
             finalize = json.loads((output / 'work' / 'derive.json').read_bytes()).get('finalize_projection')
@@ -1761,7 +1777,12 @@ class Run:
                            # 2026-10-08: what the ROOT's finalize projected and wrote, and its inline spool-layer bytes
                            # (0 on reference layers), which the root disk gate does not reserve again
                            finalize_projection=finalize, inline_spool_layer_bytes=self.inline_spool_layer_bytes(measured),
-                           interrupted_attempts=attempts, digest=True, plan_policy=policy, seconds=child_seconds,
+                           # session 6: digest = whether the ROOT built it (was a constant True), with the rule
+                           interrupted_attempts=attempts, digest=digest_path.is_file(),
+                           digest_rule=('classroom-arm day: the classroom reads the digest' if e['classroom_arm'] else
+                                        'plan root_digest on' if self.plan.get('root_digest') == 'on' else
+                                        self.DIGEST_NOT_BUILT),
+                           plan_policy=policy, seconds=child_seconds,
                            native_pass=native, shared_market_policy=calc.get('shared_market_policy'),
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
                            brain_entry=brain_entry, owner_binding=self.owner, all99=all99,

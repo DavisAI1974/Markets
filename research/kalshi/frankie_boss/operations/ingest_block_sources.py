@@ -485,6 +485,47 @@ def _journal_sha256(result, journal):
     return value or sha256_file(journal)
 
 
+FILE_CLAIM_SCHEMA = 'FRANKIE_FILE_CLAIM_V1'
+FILE_CLAIMS_NAME = 'file-claims.jsonl'
+CLAIM_TAIL_BYTES = 64 << 10
+
+
+def file_claim(path, bytes_, sha256, claimed_by):
+    """One FRANKIE_FILE_CLAIM_V1 row for a sealed file this step measured whole: its path, bytes and sha256 (the claim)
+    plus the file's identity now (device, inode, size, mtime_ns) and the sha256 of its last 64 KiB. Dedupe pass
+    2026-10-08: a later stage that would hash the same unchanged file again (the data export pins every linked file from
+    byte 0) may take this claim when the identity and the tail still match, exactly ROOT's unchanged-file rule
+    (frankie_box_boss_session._resume_row_spool: claim + stat + last line) and the export's own after-save rule; anything
+    else is one full pass there. The claim is a hint: a missing or unreadable claims file costs the full hash, never a
+    refusal. Written only after the whole-file hash and the seal; the row names who measured."""
+    path = Path(path)
+    info = path.stat()
+    if info.st_size != bytes_:
+        raise ValueError('file claim refused: %s is %d bytes, the measured claim says %d' % (path, info.st_size, bytes_))
+    with path.open('rb') as handle:
+        handle.seek(max(0, info.st_size - CLAIM_TAIL_BYTES))
+        tail = handle.read()
+    return dict(schema=FILE_CLAIM_SCHEMA, path=str(path.resolve()), bytes=bytes_, sha256=sha256,
+                stat=[info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns], tail_bytes=len(tail),
+                tail_sha256=hashlib.sha256(tail).hexdigest(), claimed_by=claimed_by, at=time.time(),
+                rule='taken by a later stage only when stat and the last 64 KiB match; else that stage hashes in full')
+
+
+def write_file_claims(directory, rows):
+    """<directory>/file-claims.jsonl, one claim row per line (rewritten whole). Returns the receipt note; never raises."""
+    target = Path(directory) / FILE_CLAIMS_NAME
+    try:
+        data = ''.join(json.dumps(row, sort_keys=True) + '\n' for row in rows).encode()
+        temporary = target.with_name(target.name + '.pending')
+        with temporary.open('wb') as stream:
+            stream.write(data); stream.flush(); os.fsync(stream.fileno())
+        os.replace(temporary, target)
+        return dict(file=target.name, schema=FILE_CLAIM_SCHEMA, rows=len(rows), status='written')
+    except (OSError, ValueError, TypeError) as error:
+        return dict(file=target.name, schema=FILE_CLAIM_SCHEMA, rows=len(rows), status='not_written',
+                    reason='%s: %s' % (type(error).__name__, error))
+
+
 def _hash_beside(path):
     try:
         return _HashBeside(path)
@@ -830,13 +871,23 @@ def main():
         with checkpoint.open('xb') as stream:
             stream.write(checkpoint_raw); stream.flush(); os.fsync(stream.fileno())
         write_once(directory / 'completion.json', dict(result['completion'], conformance=result.get('conformance', 'inline')))
+        journal_sha256 = _journal_sha256(result, journal)
+        # dedupe pass 2026-10-08: the sealed journal's claim (bytes, sha256, stat, last 64 KiB) beside the receipt, for the
+        # stages that pin the same unchanged file again (file_claim); additive, a hint only, never a refusal
+        try:
+            file_claims = write_file_claims(directory, [file_claim(journal, journal.stat().st_size, journal_sha256,
+                                                                   'ingest_block_sources (hashed whole beside the drain)')])
+        except (OSError, ValueError) as error:
+            file_claims = dict(file=FILE_CLAIMS_NAME, schema=FILE_CLAIM_SCHEMA, rows=0, status='not_written',
+                               reason='%s: %s' % (type(error).__name__, error))
         receipt = dict(common, schema=RECEIPT_SCHEMA, writer=writer,
                        record_count=result['completion']['record_count'], journal_count=result['completion']['journal_count'],
                        journal_hash=result['completion']['journal_hash'], group_count=result['completion']['group_count'],
                        source_prefix_hash=result['completion']['source_prefix_hash'],
                        completion_digest=result['completion_digest'],
                        checkpoint_sha256=hashlib.sha256(checkpoint_raw).hexdigest(), checkpoint_state_hash=state['state_hash'],
-                       journal_file=journal.name, journal_sha256=_journal_sha256(result, journal), journal_bytes=journal.stat().st_size,
+                       journal_file=journal.name, journal_sha256=journal_sha256, journal_bytes=journal.stat().st_size,
+                       file_claims=file_claims,
                        ingest_seconds=result['ingest_seconds'], ingest_cpu_seconds=result['ingest_cpu_seconds'],
                        records_per_second=result['records_per_second'], ms_per_record=result['ms_per_record'],
                        conformance_seconds=result['conformance_seconds'], sessions=result['sessions'],

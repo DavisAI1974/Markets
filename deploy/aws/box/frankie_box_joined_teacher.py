@@ -258,10 +258,11 @@ def _job_stream(job):
     return layer, len(written)
 
 
-def extract(derive_path, out, workers, log):
-    """Every row of every layer into part files, in parallel; resumes from saved parts."""
+def extract(derive_path, out, workers, log, derive=None):
+    """Every row of every layer into part files, in parallel; resumes from saved parts. `derive` (additive, dedupe pass
+    2026-10-08): the parsed derive.json when the caller already read those bytes; None reads the file here as before."""
     from frankie_box_digest_sources import _published_layout, _range_receipts, FRAGMENTS_PER_JOB
-    derive = json.loads(Path(derive_path).read_bytes())
+    derive = json.loads(Path(derive_path).read_bytes()) if derive is None else derive
     entries = derive.get('layers') or {}
     parts = Path(out) / 'parts'
     parts.mkdir(parents=True, exist_ok=True)
@@ -760,14 +761,18 @@ def main():
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     log = Log(out)
-    receipt = witness(args.calculations_receipt)
+    # dedupe pass 2026-10-08 (COMPUTE): the receipt and derive.json are each read ONCE, witnessed from those bytes and
+    # parsed from the same bytes (before: a hashing read, then read_bytes again for the parse). Same values.
+    receipt_raw = Path(args.calculations_receipt).read_bytes()
+    receipt = dict(path=str(Path(args.calculations_receipt)), bytes=len(receipt_raw), sha256=hashlib.sha256(receipt_raw).hexdigest())
     if receipt['sha256'] != args.calculations_sha256:
         raise SystemExit('the calculations receipt differs from the recorded sha256')
-    calculations = json.loads(Path(args.calculations_receipt).read_bytes())
+    calculations = json.loads(receipt_raw)
     if calculations.get('schema') != 'FRANKIE_MONDAY_CALCULATIONS_V1' or calculations.get('status') != 'calculations_retained':
         raise SystemExit('completed Monday calculations required')
     args.derive = calculations['derivation']['path']
-    derive = witness(args.derive)
+    derive_raw = Path(args.derive).read_bytes()
+    derive = dict(path=str(Path(args.derive)), bytes=len(derive_raw), sha256=hashlib.sha256(derive_raw).hexdigest())
     if derive['sha256'] != calculations['derivation']['sha256']:
         raise SystemExit('derive.json differs from the calculations receipt')
     manifest_path = out / 'MANIFEST.json'
@@ -776,7 +781,7 @@ def main():
         return
     started = time.time()
     log('joined teacher: derive %s (%s), %d workers' % (args.derive, derive['sha256'][:16], args.workers))
-    layers = extract(args.derive, out, args.workers, log)
+    layers = extract(args.derive, out, args.workers, log, derive=json.loads(derive_raw))
     index = join(out, log)
     pairs = couplings(out, index, args.workers, args.lags, args.all_pairs, log)
     listing, total, beyond = sources(out, index, layers, log)

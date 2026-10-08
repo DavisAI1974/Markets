@@ -473,6 +473,47 @@ def _file_witness(path):
     return F.witness(path)
 
 
+ROWS_CLAIM_TAIL_BYTES = 64 << 10
+
+
+def _rows_file_identity(path):
+    """The rows file's identity now: stat (device, inode, size, mtime_ns) and the sha256 of its last 64 KiB; the
+    "same unchanged file" half of ROOT's rule (frankie_box_boss_session._resume_row_spool: claim + stat + last line)."""
+    path = Path(path)
+    info = path.stat()
+    with path.open('rb') as handle:
+        handle.seek(max(0, info.st_size - ROWS_CLAIM_TAIL_BYTES))
+        tail = handle.read()
+    return dict(stat=[info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns], tail_bytes=len(tail),
+                tail_sha256=sha256_bytes(tail))
+
+
+def _claimed_rows_pin(retain_dir, path, notes):
+    """The ledger-save manifest's rows claim ({bytes, sha256}) when it names this very unchanged file (its recorded stat
+    and last 64 KiB equal the file's now), else None (the rows are read and hashed in full). Dedupe pass 2026-10-08
+    (COMPUTE across the context-only and exchange steps): the second step took the saved measurement only after reading
+    and re-hashing the whole rows file; the claim + stat + tail rule replaces that read. Never raises."""
+    try:
+        manifest_path = Path(retain_dir) / (LEDGER_SAVE_NAME + '.json')
+        if not manifest_path.is_file():
+            return None
+        manifest = json.loads(manifest_path.read_bytes())
+        rows, identity = manifest.get('rows') or {}, manifest.get('rows_file_identity') or {}
+        if manifest.get('schema') != LEDGER_SAVE_SCHEMA or rows.get('path') != str(path) or not identity.get('tail_sha256'):
+            return None
+        now = _rows_file_identity(path)
+        if identity.get('stat') != now['stat'] or identity.get('tail_sha256') != now['tail_sha256'] \
+                or type(rows.get('bytes')) is not int or rows['bytes'] != now['stat'][2] or not rows.get('sha256'):
+            notes['rows_claim'] = 'the saved rows claim names another file state (stat or last 64 KiB differ); read in full'
+            return None
+        notes['rows_claim'] = ('rows pin taken from the ledger save %s: stat and the last 64 KiB equal the saved ones; '
+                               'the rows were not read again (hash_basis claim)' % manifest_path)
+        return dict(bytes=rows['bytes'], sha256=rows['sha256'])
+    except (OSError, ValueError, TypeError, KeyError) as error:
+        notes['rows_claim'] = 'rows claim not usable (%s: %s); read in full' % (type(error).__name__, str(error)[:200])
+        return None
+
+
 def _load_ledger_save(retain_dir, raw_pin, notes):
     """The saved measurement when its manifest binds the same rows file (bytes and sha256 just measured from the
     file's own bytes: never a stat-only skip), the same code identity and the pickle's own bytes/sha256; else None with
@@ -515,7 +556,12 @@ def _write_ledger_save(retain_dir, measure, raw_pin, notes):
         from frankie_box_durable import write_bytes
         data = pickle.dumps(measure, protocol=pickle.HIGHEST_PROTOCOL)
         write_bytes(Path(retain_dir) / (LEDGER_SAVE_NAME + '.pickle'), data)
+        try:
+            rows_file_identity = _rows_file_identity(measure['path'])   # additive: stat and the last 64 KiB of the rows file
+        except OSError as error:
+            rows_file_identity = dict(unavailable='%s: %s' % (type(error).__name__, error))
         manifest = dict(schema=LEDGER_SAVE_SCHEMA, rows=dict(path=measure['path'], **raw_pin), code=identity,
+                        rows_file_identity=rows_file_identity,
                         pickle=dict(bytes=len(data), sha256=sha256_bytes(data)), at=round(time.time(), 3),
                         rule='the exchange step loads this instead of parsing and ledgering the rows again when the rows '
                              'file (re-hashed), the code identity and the pickle all match')
@@ -541,8 +587,17 @@ def teacher_rows(path, retain_dir=None, notes=None):
     path = Path(path)
     if not path.is_file():
         return None, '%s is not on the box' % path
+    if retain_dir is not None:
+        claimed_pin = _claimed_rows_pin(retain_dir, path, notes)
+        if claimed_pin is not None:
+            saved = _load_ledger_save(retain_dir, claimed_pin, notes)
+            if saved is not None and saved.get('path') == str(path):
+                notes['rows_hash_basis'] = 'claim'
+                return saved, None
+            notes['rows_claim'] += '; the saved measurement itself was not usable, so the rows are read in full'
     raw = path.read_bytes()
     raw_pin = dict(bytes=len(raw), sha256=sha256_bytes(raw))
+    notes['rows_hash_basis'] = 'hashed'
     if retain_dir is not None:
         saved = _load_ledger_save(retain_dir, raw_pin, notes)
         if saved is not None and saved.get('path') == str(path):
