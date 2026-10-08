@@ -247,6 +247,35 @@ class ResizeMachine(unittest.TestCase):
         self.assertEqual(record['resize'][-1]['state'], 'request_failed')
 
 
+class Defaults(unittest.TestCase):
+    def test_corrections_on_unless_off(self):
+        self.assertEqual(W.corrections_enabled({}), (True, True))
+        self.assertEqual(W.corrections_enabled({'FRANKIE_CPU_WATCH_CORRECT': 'off'}), (False, True))
+        self.assertEqual(W.corrections_enabled({'FRANKIE_CPU_WATCH_RESIZE': 'off'}), (True, False))
+        self.assertEqual(W.corrections_enabled({'FRANKIE_CPU_WATCH_CORRECT': 'on', 'FRANKIE_CPU_WATCH_RESIZE': 'on'}), (True, True))
+
+
+class KickStartsTheLoop(unittest.TestCase):
+    """frankie_box_frankie_queue._start_cpu_watch: the loop rides every kick, idempotent, never a reason to refuse."""
+
+    def test_start_cpu_watch_records_outcome(self):
+        import frankie_box_frankie_queue as Q
+        with tempfile.TemporaryDirectory() as d:
+            out = Q._start_cpu_watch(d, log=lambda *_: None)
+            self.assertFalse(out['started'])
+            self.assertIn('predates the watchdog', out['reason'])
+            fake = Path(d) / 'deploy' / 'aws' / 'box' / 'frankie_box_cpu_watch.sh'
+            fake.parent.mkdir(parents=True)
+            fake.write_text('#!/bin/sh\necho "### cpu watch $ACTION on $CODE_ROOT"\n')
+            out = Q._start_cpu_watch(d, log=lambda *_: None)
+            self.assertTrue(out['started'])
+            self.assertIn('cpu watch loop on %s' % d, out['output'])
+            fake.write_text('#!/bin/sh\nexit 2\n')
+            out = Q._start_cpu_watch(d, log=lambda *_: None)
+            self.assertFalse(out['started'])
+            self.assertEqual(out['exit_code'], 2)
+
+
 class StepOf(unittest.TestCase):
     def test_step_from_roles(self):
         saved = C.alive

@@ -360,6 +360,26 @@ def class_running(log=print):
             fcntl.flock(f, fcntl.LOCK_UN)
 
 
+CPU_WATCH_SCRIPT = 'deploy/aws/box/frankie_box_cpu_watch.sh'
+
+
+def _start_cpu_watch(code_root, log=print, script=None):
+    """Session 8 (Greg, decision 4): every kick starts the CPU watchdog loop (frankie_box_cpu_watch.sh ACTION=loop on the
+    kicked checkout: idempotent under its own systemd unit / flock; re-pin and resize ON unless the kicker's env says off),
+    so it runs without anyone remembering. Its outcome goes on the kick record; it is never a reason to refuse the kick."""
+    script = Path(script) if script else Path(code_root) / CPU_WATCH_SCRIPT
+    if not script.is_file():
+        return dict(started=False, reason='no %s in %s (that checkout predates the watchdog)' % (CPU_WATCH_SCRIPT, code_root))
+    try:
+        out = subprocess.run(['sh', str(script)], env=dict(os.environ, ACTION='loop', CODE_ROOT=str(code_root)),
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return dict(started=False, reason='%s: %s' % (type(error).__name__, error))
+    text = out.stdout.decode('utf-8', 'replace').strip()
+    log('cpu watch loop: exit %d; %s' % (out.returncode, text[-300:]))
+    return dict(started=out.returncode == 0, exit_code=out.returncode, output=text[-600:], script=str(script))
+
+
 def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scope=None):
     """Start the line's worker detached (systemd-run, else a new session) unless one runs, FOR the authorized scope
     (RUN:days; refused without one). The kicked worker is bounded by max_seconds like a dispatched one. A running worker
@@ -420,8 +440,9 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
     # the box in use for KICK_GRACE_SECONDS
     import frankie_box_cores as C
     settings = _run_settings_env()
+    cpu_watch = _start_cpu_watch(code_root, log)      # session 8: the watchdog loop rides every kick (idempotent)
     C.write_json(QUEUE / ('%s-kick.json' % line), dict(schema='FRANKIE_QUEUE_KICK_V1', line=line, at=time.time(), at_utc=utc(),
-                                                       by=by, scope=scope['text'], how=how, run_settings=settings))
+                                                       by=by, scope=scope['text'], how=how, run_settings=settings, cpu_watch=cpu_watch))
     deadline, held = time.time() + KICK_LOCK_WAIT_SECONDS, False
     while time.time() < deadline:
         _, held = worker_state(line)
@@ -430,11 +451,11 @@ def kick(line, code_root, commit, max_seconds, poll_seconds, by, log=print, scop
         time.sleep(1.0)
     with locked():
         event(line, 'kick', by=by, commit=commit, code_root=str(code_root), max_seconds=max_seconds, how=how, log=str(log_path),
-              scope=scope['text'], worker_lock_held=bool(held), run_settings=settings)
+              scope=scope['text'], worker_lock_held=bool(held), run_settings=settings, cpu_watch=cpu_watch)
     log('%s worker started for %s (%s); log %s; worker lock %s' % (line, scope['text'], how, log_path,
                                                                   'held' if held else 'NOT yet held after %d s' % KICK_LOCK_WAIT_SECONDS))
     return dict(started=True, how=how, log=str(log_path), scope=scope['text'], worker_lock_held=bool(held),
-                run_settings=settings)
+                run_settings=settings, cpu_watch=cpu_watch)
 
 
 def handover(line, code_root, commit, max_seconds, poll_seconds, log=print, scope=None):

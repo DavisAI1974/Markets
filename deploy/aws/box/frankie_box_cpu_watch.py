@@ -11,7 +11,9 @@ lane CPU no thread of the tree can reach (a pool that sized itself small), and e
 wider than the lane it RUNS on. The record is /opt/frankie-box/work/cpu-watch/<stamp>.json (FRANKIE_CPU_WATCH_V1) plus
 one line in /opt/frankie-box/work/cpu-watch/watch.log. Read-only by default.
 
-CORRECTIONS, in order of wall-clock cost, each off by default and each written on the record with the estimate behind it:
+CORRECTIONS, in order of wall-clock cost, each ON BY DEFAULT (Greg, session 8, decision 4: off only when set to off) and each
+written on the record with the estimate behind it; every kick of a queue line starts the loop (frankie_box_frankie_queue.kick
+-> frankie_box_cpu_watch.sh ACTION=loop, idempotent under its own unit and lock), so it runs without anyone remembering:
   FRANKIE_CPU_WATCH_CORRECT=on   RE-PIN (instant): a thread outside its booking is set to affinity AND booking (the whole
                                  booking when nothing is left); a step root narrower than its lane is widened to the lane.
                                  Workers pinned to ONE CPU inside their lane are by design (frankie_box_lane_pin) and are
@@ -450,6 +452,12 @@ def render_processes(procs, bookings):
     return out
 
 
+def corrections_enabled(environ=None):
+    """(correct, resize): ON unless the setting is exactly 'off' (Greg, session 8: the defaults are on)."""
+    environ = os.environ if environ is None else environ
+    return environ.get(CORRECT_ENV, 'on') != 'off', environ.get(RESIZE_ENV, 'on') != 'off'
+
+
 def one_pass(work_dir=WORK_DIR, window=1.0, environ=None, now=None):
     """One live pass: collect, audit, correct (when asked), record. Returns the record."""
     environ = os.environ if environ is None else environ
@@ -468,8 +476,11 @@ def one_pass(work_dir=WORK_DIR, window=1.0, environ=None, now=None):
             plan_reasons[r['booking']] = str(error)
     remaining = {b['booking']: remaining_seconds(b) for b in bookings}
     out = audit(bookings + renders, procs, live_affinity, live_threads, cmap, cmap['online'], plans=plans, remaining=remaining)
-    record = dict(schema=SCHEMA, at=stamp, host=os.uname().nodename, interval=INTERVAL, correct=environ.get(CORRECT_ENV) == 'on',
-                  resize=[], resize_enabled=environ.get(RESIZE_ENV) == 'on', plan_refusals=plan_reasons, **out)
+    correct, resize = corrections_enabled(environ)
+    record = dict(schema=SCHEMA, at=stamp, host=os.uname().nodename, interval=INTERVAL, correct=correct, resize=[],
+                  resize_enabled=resize, settings={CORRECT_ENV: environ.get(CORRECT_ENV, 'unset = on'),
+                                                   RESIZE_ENV: environ.get(RESIZE_ENV, 'unset = on')},
+                  plan_refusals=plan_reasons, **out)
     if record['correct']:
         record['repins'] = apply_repins(record['findings'], os.sched_setaffinity)
     if record['resize_enabled']:

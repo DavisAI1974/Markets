@@ -5,7 +5,8 @@
 # setsid), bounded by MAX_SECONDS (43200); ACTION=status: the last lines of watch.log and the newest record; ACTION=stop:
 # stop the detached loop (its own unit; it never touches a Frankie job). Its own flock: two watchers never run a pass at
 # once; its own workflow group (box-cpu-watch-<instance>) beside the box-progress probes.
-# Corrections are OFF unless asked, each a FRANKIE_* run setting on the record:
+# Corrections are ON by default (Greg, session 8: off only when set to off), each a FRANKIE_* run setting on the record; the
+# queue's kick starts ACTION=loop itself (idempotent), so the loop runs without anyone remembering:
 #   FRANKIE_CPU_WATCH_CORRECT=on  re-pin (affinity only): a thread outside its booking back inside it, a step root
 #                                 narrower than its lane widened to it. Cannot grow a pool sized at start (said on the record).
 #   FRANKIE_CPU_WATCH_RESIZE=on   the lawful stop-and-resume of a step whose planned lane is >= 1.5x its running lane and
@@ -19,8 +20,8 @@ WATCH="$ROOT/work/cpu-watch"; UNIT=frankie-cpu-watch
 case "$ACTION" in once|loop|status|stop) ;; *) echo "ACTION must be once, loop, status or stop" >&2; exit 2;; esac
 case "${INTERVAL:-120}" in ""|*[!0-9]*) echo "INTERVAL must be whole seconds" >&2; exit 2;; esac
 case "${MAX_SECONDS:-43200}" in ""|*[!0-9]*) echo "MAX_SECONDS must be whole seconds" >&2; exit 2;; esac
-case "${FRANKIE_CPU_WATCH_CORRECT:-off}" in on|off) ;; *) echo "FRANKIE_CPU_WATCH_CORRECT must be on or off" >&2; exit 2;; esac
-case "${FRANKIE_CPU_WATCH_RESIZE:-off}" in on|off) ;; *) echo "FRANKIE_CPU_WATCH_RESIZE must be on or off" >&2; exit 2;; esac
+case "${FRANKIE_CPU_WATCH_CORRECT:-on}" in on|off) ;; *) echo "FRANKIE_CPU_WATCH_CORRECT must be on or off" >&2; exit 2;; esac
+case "${FRANKIE_CPU_WATCH_RESIZE:-on}" in on|off) ;; *) echo "FRANKIE_CPU_WATCH_RESIZE must be on or off" >&2; exit 2;; esac
 case "$CODE_ROOT" in *..*) echo "no .. in CODE_ROOT" >&2; exit 2;; esac
 case "$CODE_ROOT" in "") ;; "$ROOT"/code/*/markets) ;; *) echo "CODE_ROOT must be $ROOT/code/<...>/markets" >&2; exit 2;; esac
 if [ "$ACTION" = status ]; then
@@ -42,7 +43,7 @@ fi
 TOOL="$CODE_ROOT/deploy/aws/box/frankie_box_cpu_watch.py"
 [ -f "$TOOL" ] || { echo "$TOOL is not there (that checkout predates the watchdog)" >&2; exit 2; }
 PY="$ROOT/venv/bin/python"; [ -x "$PY" ] || PY=python3
-export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 FRANKIE_CPU_WATCH_CORRECT="${FRANKIE_CPU_WATCH_CORRECT:-off}" FRANKIE_CPU_WATCH_RESIZE="${FRANKIE_CPU_WATCH_RESIZE:-off}"
+export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 FRANKIE_CPU_WATCH_CORRECT="${FRANKIE_CPU_WATCH_CORRECT:-on}" FRANKIE_CPU_WATCH_RESIZE="${FRANKIE_CPU_WATCH_RESIZE:-on}"
 mkdir -p "$WATCH"
 echo "### cpu watch $ACTION: code $TOOL ($(git -C "$CODE_ROOT" rev-parse HEAD 2>/dev/null || echo unknown)), correct=$FRANKIE_CPU_WATCH_CORRECT resize=$FRANKIE_CPU_WATCH_RESIZE"
 case "$ACTION" in
