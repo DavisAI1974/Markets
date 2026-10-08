@@ -270,6 +270,13 @@ GetInstanceProfile frankie-day-box both NoSuchEntity). Route instead: a `day-box
 the IAM console from the statement list above. launch-template then defaults --instance-profile frankie-day-box and refuses when
 the profile is absent.
 
+## Greg's standing go (15:0xZ, verbatim: "I'm going to give you a push and launched go now preemptively in case i miss your message")
+Scope as the parent reads it: push every return to the branch as it lands; at 18:20Z raise the volumes and launch the full-depth
+digest render beside the teacher; restage + resume a2 at a save boundary if a review fix touches its chain; let the chain run
+through validate, teacher, classroom (all 64) and the rest of the day. NOT covered: a fleet box launch (needs the frankie-day-box
+role, which only Greg can apply, and the review verdict on the day list) and any second-box / clone-volume action. The main box was
+RESTARTED ~15:0xZ on Greg's go ("if there's a better faster way, do that"): a2 resumed on the staged d67b9c63 via SSM.
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO

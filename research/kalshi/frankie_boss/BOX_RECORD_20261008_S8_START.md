@@ -103,3 +103,51 @@ GitHub dispatch via the github MCP tools. Every action below carries its UTC tim
   FRANKIE_ROOT_DIGEST=off FRANKIE_CLASSROOM_CPUS=all with CODE_ROOT=<that checkout> MARKETS_SHA=d67b9c63... (SSM route with the
   explicit sha, or restage if the branch tip must be the one dispatched), unless the tip has moved in CODE (then restage).
 - Not touched: i-0d17573dbce871520, i-08cee7171c0a76a04, the clone volumes, snapshots, IAM, quotas, launch templates.
+
+## 15:0xZ restart on Greg's go (BOX-OPERATOR role, second pass)
+Greg's go via the parent (15:0xZ, verbatim): "If there's a better faster way, do that" after "I just didn't want it sitting idle
+while we made a bunch of changes"; the parent decided: START the main box now and resume a2 so the teacher (the long pole) runs
+while the fleet work finishes. Limits unchanged (only i-035994afa8bdf66a5; no second box, clone volumes, snapshots, IAM, quotas,
+launch templates, fleet; no digest render, no hand classroom, no stop, no ModifyVolume: cooldown until ~18:20Z, the parent does it).
+Route: the staged checkout CODE_ROOT=/opt/frankie-box/code/d67b9c63ba18c35e9f7cad49802735f1d455fb35-37792772826-1/markets with
+MARKETS_SHA=d67b9c63ba18c35e9f7cad49802735f1d455fb35 explicit over SSM (Aws connector, SendCommand AWS-RunShellScript, scripts as
+`bash -s <<'EOF'`), NOT a workflow dispatch (the ref tip has moved on: 1e07412f locally at 15:00Z; a dispatch would bind
+MARKETS_SHA to that tip and the queue would refuse the d67b9c63 checkout). No restage: d67b9c63 carries the CPU plan + the resume
+fixes; the later commits are fleet/docs, inert for a2.
+Class-line kick decision (source, d67b9c63 frankie_box_frankie_queue.py): `class_worker` on an EMPTY class line ends idle at once
+(front None -> state idle, lock released, exit 0), and the ROOT chain kicks the class line itself after the teacher
+(`_after_root` -> `kick('class', ...)`), whose `_run_settings_env()` reads the ROOT worker's own environment = the root kick's
+FRANKIE_* settings carried by systemd-run -E (S6 C2 precedent: the unit's Environment held FRANKIE_ROOT_DIGEST/CLEAN_ON_SAVE).
+Decision 1 also made `all` the classroom default when unset. So NO manual class kick now: it would end idle immediately and carry
+nothing; the chain's own class kick inherits FRANKIE_CLASSROOM_CPUS=all from the root kick below.
+
+### Timeline (second pass)
+- 15:01:45Z STEP 1 read-only DescribeInstances: i-035994afa8bdf66a5 STOPPED, r7i.16xlarge, us-east-1d, KeepRunning=false
+  (reason: the 14:3xZ HALT), /dev/sda1=vol-0d36715924f03b86c, /dev/sdf=vol-004b68c077be09cc9 (unchanged from 14:33Z).
+- 15:02:1xZ STEP 1 StartInstances i-035994afa8bdf66a5: stopped -> pending (first CreateTags refused: my KeepRunningReason exceeded
+  the 256-char tag limit; nothing else affected). 15:02:35Z CreateTags KeepRunning=true + KeepRunningReason "box-operator s8
+  15:0xZ: Greg go via parent ('if there is a better faster way, do that'); box started to resume a2 day 20231018 (resume+kick)
+  on staged d67b9c63 so the teacher runs while fleet work finishes"; read back true. 15:02:36Z state RUNNING (LaunchTime
+  15:02:19Z, public DNS ec2-54-227-168-200.compute-1.amazonaws.com); 15:02:42Z SSM PingStatus Online (last ping 15:02:38Z).
+- 15:03:11Z STEP 2 PROBE (read-only, SSM 484b60ca-21da-40f7-b6eb-cce25a595e2a, rc 0): up 0 min, load 0.19, nproc 64. Staged
+  checkout d67b9c63...-37792772826-1/markets present (14:31Z), `git rev-parse HEAD` = d67b9c63ba18c35e9f7cad49802735f1d455fb35,
+  staging-receipt status staged, commit d67b9c63, files 4120. R: calculations-receipt.json ABSENT, handoff/ ABSENT,
+  work/derive.json 80,813 B 01:33Z sha256 948074df... (unchanged). Q root.json: seq 2 run e2e-20231018-a2 day 20231018 state
+  SAVED, retained_booking day-run-20231018-day_slot_root-1791402822-3111, save_request true, owner commit 6076950. class.json
+  ABSENT. save/: the standing marker e2e-20231018-a2-20231018.save-request.json 497 B 03:09Z + 5 .resumed-* archives (+ a1's).
+  cores show (d67b9c63 ledger): core map 32 cores x 2 threads, siblings N,N+32; CPUs 0-8 shown booked by ...-3111 live idle
+  (output cut at 12 lines; the 14:29Z full read had 0-31 booked, 32-63 free). frankie units 0, frankie procs 0, no
+  /opt/frankie-box/work/cpu-watch yet. Matches the 14:33Z end state. GO for the resume.
+- 15:03:41Z STEP 3a RESUME (state-changing; SSM 266466c3-3cf4-43e3-a84a-e5e5a9133be7, rc 0). Script sent (bash -s <<'EOF'):
+  `export CODE_ROOT=/opt/frankie-box/code/d67b9c63ba18c35e9f7cad49802735f1d455fb35-37792772826-1/markets;
+  export MARKETS_SHA=d67b9c63ba18c35e9f7cad49802735f1d455fb35; ACTION=resume RUN=e2e-20231018-a2 DAY=20231018 bash
+  $CODE_ROOT/deploy/aws/box/frankie_box_frankie_queue.sh` (the script also carried one mistyped MARKETS_SHA export line
+  immediately overridden by the correct one; HEAD d67b9c63 verified in the same script and the queue's HEAD==MARKETS_SHA check
+  passed). Output: resumed phase root, run e2e-20231018-a2 day 20231018; marker ARCHIVED to
+  save/e2e-20231018-a2-20231018.save-request.json.resumed-1791471821 (6 .resumed-* now, no standing marker); owner attempt
+  e2e-20231018-a2-20231018-a1, booking day-run-20231018-day_slot_root-1791402822-3111 (bound 2026-10-07T19:53:42Z by pid 3111),
+  cpus 0-31, held_bookings x5 (19:53:42, 21:47:27, 22:43:49, 02:24:06, 03:01:56), holder_pid 88228 (03:01:56Z), owner commit
+  6076950 (code_root the 6076950 checkout) until the next admission; source_history 98579cea -> 275367fe -> c9bf631 -> e0d7ae0.
+  Note: "the next ROOT-line admission books exactly the retained CPUs and resumes attempt ...-a1; kick the root worker with this
+  run/day in scope". After: entry seq 2 state QUEUED ("resumed by dispatch resume: back in line at its own place with its owner
+  binding"), save_request false, retained_booking ...-3111.
