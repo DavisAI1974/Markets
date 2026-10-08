@@ -1377,15 +1377,22 @@ class Run:
                            reason='the owning AWS lane has not published a completed %s receipt; its artifacts stay there' % stage)
 
     def brain_stage(self, day, stage, sources, summary=None, inline_limit=2 * 1024 * 1024):
-        """Immediately commit newly available stage knowledge to Frankie's brain before advancing."""
+        """Immediately commit newly available stage knowledge to Frankie's brain before advancing. Session 9: each
+        source's sha256 comes from its attempt's FRANKIE_FILE_CLAIM row when the claim still holds (stat + last 64 KiB;
+        the ROOT's digest, layers, spools and ledgers), else from one whole read, after which a large source's claim row
+        is written (frankie_box_brain.stage_source_witness); the basis per source is on this record (source_witness)."""
         import frankie_box_brain as BR
         brain = Path(self.plan.get('brain') or str(BRAIN))
         manifest, reused = BR.write_stage_entry(brain, day, stage, sources, summary=summary, inline_limit=inline_limit)
         entry = brain / ('%s-%s' % (day, stage))
-        self.log('brain %s %s: %s%s' % (stage, day, entry, ' (reused)' if reused else ''))
+        witnessed = manifest.get('source_witness') or []
+        self.log('brain %s %s: %s%s; sources: %s' % (stage, day, entry, ' (reused)' if reused else '',
+                                                      ', '.join('%s %s' % (Path(w['path']).name, w['basis'])
+                                                                for w in witnessed)))
         return dict(path=str(entry), reused=reused,
                     manifest_sha256=sha256_file(entry / 'MANIFEST.json'),
-                    knowledge_sha256=sha256_file(entry / 'stage-knowledge.json'))
+                    knowledge_sha256=sha256_file(entry / 'stage-knowledge.json'),
+                    source_witness=witnessed)
 
     def record(self, stage, key, status, **fields):
         path = self.receipt_path(stage, key)

@@ -3502,6 +3502,19 @@ class Session:
             bedrock_entries={name: entry for name, entry in receipt['layers'].items() if entry.get('bedrock')} if bedrock else {},
             scratch_directory=self.work / 'derived' / ('.digest-' + uuid.uuid4().hex))
         write_json(self.work / 'digest-proof.json', proof)
+        # session 9 (one pass over the data): the complete digest's FRANKIE_FILE_CLAIM_V2 row, from the bytes and sha256
+        # the writer hashed on its write stream (never a second read: one stat + the last 64 KiB), appended to
+        # work/file-claims.jsonl (existing rows byte for byte); the brain stage entry and the boundary validator take it.
+        # Both the ROOT's in-process digest and the standalone render (write_retained_digest) pass here. A hint only.
+        try:
+            from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
+            row = file_claim(self.work / 'derivation-digest-full.md', int(proof['bytes']), proof['sha256'],
+                             'digest writer (Session._write_digest): the write-stream sha256 at %s'
+                             % time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+            note = brain_module().append_file_claim(self.work, row)
+        except Exception as error:  # noqa: BLE001 - a claim is a hint for later stages, never the digest's outcome
+            note = dict(status='not_written', reason='%s: %s' % (type(error).__name__, error))
+        self.note('digest claim row: %s%s' % (note.get('status'), (' (%s)' % note['reason']) if note.get('reason') else ''))
         return proof
 
     @staticmethod

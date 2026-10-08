@@ -73,13 +73,17 @@ def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 *
     if not re.fullmatch('[0-9]{8}', str(day)):
         raise ValueError('stage knowledge day must be YYYYMMDD')
     brain = Path(brain)
-    records = []
+    records, bases = [], []
     for item in sources:
         p = Path(item)
         if not p.is_file():
             raise FileNotFoundError('stage knowledge source missing: %s' % p)
-        from frankie_box_filehash import witness
-        pin = witness(p)
+        # session 9 (Greg: one pass over the data, never two): a source's FRANKIE_FILE_CLAIM row when it still holds
+        # (stat + filesystem + last 64 KiB), else read whole; a large source read whole leaves its claim row behind.
+        # The basis is NOT part of stage-knowledge.json (the entry's bytes stay the same whichever way the sha256 came,
+        # so a repeat reuses the entry); it rides on the manifest of a first write and on the returned manifest.
+        pin, basis = stage_source_witness(p)
+        bases.append(dict(path=str(p), **basis))
         rec = dict(path=str(p), **pin, inline=False)
         if pin['bytes'] <= inline_limit and p.suffix.lower() in ('.json', '.md', '.txt'):
             raw = p.read_bytes()
@@ -102,7 +106,7 @@ def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 *
     if manifest_path.is_file() and knowledge_path.is_file():
         have = knowledge_path.read_bytes()
         if sha256_bytes(have) == digest:
-            return json.loads(manifest_path.read_bytes()), True
+            return dict(json.loads(manifest_path.read_bytes()), source_witness=bases), True
         raise ValueError('%s already holds different stage knowledge; duplicate data declines (R16)' % entry_dir)
     if entry_dir.exists():
         if (any(p.name not in ('stage-knowledge.json', 'stage-knowledge.json.pending', 'MANIFEST.json.pending')
@@ -121,7 +125,7 @@ def write_stage_entry(brain, day, stage, sources, summary=None, inline_limit=2 *
     manifest = dict(schema=SCHEMA, cycle=stage, day=str(day), entry_kind='stage_knowledge', entries=[
         dict(name='stage-knowledge.json', bytes=len(raw), sha256=digest, source='; '.join(r['path'] for r in records),
              include=True, kind='immediate %s knowledge' % stage)
-    ], unavailable=[], knowledge_status='available_immediately',
+    ], unavailable=[], knowledge_status='available_immediately', source_witness=bases,
        note='stage knowledge committed before the workflow advances; exact large sources remain at the digest-bound paths')
     pending = entry_dir / 'MANIFEST.json.pending'
     with pending.open('w', encoding='utf-8') as handle:
@@ -589,6 +593,122 @@ def file_witnesses(paths, claims):
     for index, digest in zip(to_hash, hashed):
         taken[index] = (digest, dict(basis='hashed'))
     return [taken[i] for i in range(len(paths))]
+
+
+STAGE_CLAIM_THRESHOLD = 256 << 20     # a source at or over this many bytes, read whole for want of a claim, gets one
+
+
+def _claims_work_of(path):
+    """<D>/work for the nearest ancestor D of `path` holding work/file-claims.jsonl (the attempt the source belongs to:
+    a ROOT attempt's calculations-receipt.json, derive.json, digest, layers and spools all sit under it), else None."""
+    for parent in Path(path).resolve().parents:
+        if (parent / 'work' / FILE_CLAIMS_NAME).is_file():
+            return parent / 'work'
+    return None
+
+
+def _claim_row_of(work, path):
+    """The last FRANKIE_FILE_CLAIM_V1/V2 row of <work>/file-claims.jsonl naming `path` (resolved), else None."""
+    want, found = str(Path(path).resolve()), None
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import FILE_CLAIM_SCHEMAS
+        lines = (Path(work) / FILE_CLAIMS_NAME).read_bytes().splitlines()
+    except (OSError, ImportError):
+        return None
+    for line in lines:
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(row, dict) and row.get('schema') in FILE_CLAIM_SCHEMAS and str(row.get('path')) == want:
+            found = row
+    return found
+
+
+def append_file_claim(work, row):
+    """Append one FRANKIE_FILE_CLAIM_V2 row to <work>/file-claims.jsonl: every existing line byte for byte, the row
+    after them, one atomic rewrite (ingest_block_sources._write_claims_atomic) under an flock on the <work> directory
+    itself (no lock file is added to the attempt); a row already there for the same path, sha256 and stat is not added
+    twice. Returns the note dict; never raises (a claim is a hint: without it the next reader reads whole)."""
+    import fcntl
+    work = Path(work)
+    target = work / FILE_CLAIMS_NAME
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import _write_claims_atomic
+        directory = os.open(work, os.O_RDONLY)
+        try:
+            fcntl.flock(directory, fcntl.LOCK_EX)
+            text = target.read_text(encoding='utf-8') if target.is_file() else ''
+            for line in text.splitlines():
+                try:
+                    have = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(have, dict) and all(have.get(k) == row.get(k) for k in ('path', 'sha256', 'stat')):
+                    return dict(file=str(target), status='present', added=0)
+            if text and not text.endswith('\n'):
+                text += '\n'
+            _write_claims_atomic(target, (text + json.dumps(row, sort_keys=True) + '\n').encode())
+        finally:
+            os.close(directory)              # closing the descriptor releases the lock
+        return dict(file=str(target), status='written', added=1)
+    except Exception as error:  # noqa: BLE001 - a claim is a hint, never a stage's outcome
+        return dict(file=str(target), status='not_written', added=0, reason='%s: %s' % (type(error).__name__, error))
+
+
+def stage_source_witness(path, threshold=None):
+    """({bytes, sha256}, basis) of one stage-entry source with at most ONE whole read (session 9, Greg: "one pass over
+    the data, never two"). The rule:
+      - a claim row for the source under its attempt (<D>/work/file-claims.jsonl, D the nearest such ancestor) whose
+        bytes equal the file's size and which still holds (inode, size, mtime_ns, the filesystem of a V2 row and the
+        sha256 of the last 64 KiB: ingest_block_sources.claim_still_holds, the rule of
+        frankie_box_boss_session._claim_still_holds) gives the sha256 (basis 'by claim'; a V1 row taken this way is
+        rewritten as V2 there); one 64 KiB read;
+      - else the file is hashed whole (frankie_box_filehash.witness: once per unchanged file per process), basis
+        'read whole'; at or over `threshold` bytes (STAGE_CLAIM_THRESHOLD, 256 MiB; FRANKIE_BRAIN_CLAIM_THRESHOLD
+        overrides) the claim row is then written beside the attempt's others (file_claim on the stat the hash ran
+        on) so the next stage takes it: basis 'read whole once, claim written'. With no claims file above the source
+        nothing is written and the basis says so."""
+    from frankie_box_filehash import witness, remember
+    p = Path(path)
+    if threshold is None:
+        threshold = int(os.environ.get('FRANKIE_BRAIN_CLAIM_THRESHOLD') or STAGE_CLAIM_THRESHOLD)
+    work = _claims_work_of(p)
+    before = os.stat(p)
+    if work is not None:
+        row = _claim_row_of(work, p)
+        if row is not None and row.get('bytes') == before.st_size and row.get('sha256'):
+            try:
+                from research.kalshi.frankie_boss.operations.ingest_block_sources import (claim_still_holds,
+                                                                                           refresh_file_claims)
+                held = claim_still_holds(row, p)
+                if held is not None and held['refreshed'] is not None:
+                    refresh_file_claims(work, {held['refreshed']['path']: held['refreshed']})
+            except ImportError:
+                held = None
+            if held is not None:
+                pin = dict(bytes=int(row['bytes']), sha256=str(row['sha256']))
+                remember(p, pin)              # a later witness() of the unchanged file in this process reads nothing
+                return pin, dict(basis='by claim', claim_file=str(work / FILE_CLAIMS_NAME), claim_schema=held['basis'],
+                                 claimed_by=row.get('claimed_by'))
+    pin = witness(p)
+    if pin['bytes'] < threshold:
+        return pin, dict(basis='read whole')
+    if work is None:
+        return pin, dict(basis='read whole once, no claim written: no work/%s above the source' % FILE_CLAIMS_NAME)
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
+        row = file_claim(p, pin['bytes'], pin['sha256'],
+                         'brain stage entry (frankie_box_brain.write_stage_entry): read whole once at %s'
+                         % time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+    except (OSError, ValueError, ImportError) as error:
+        return pin, dict(basis='read whole once, no claim written: %s: %s' % (type(error).__name__, error))
+    if row['stat'] != [before.st_ino, before.st_size, before.st_mtime_ns]:
+        return pin, dict(basis='read whole once, no claim written: the file changed identity after its hash')
+    note = append_file_claim(work, row)
+    if note['status'] == 'not_written':
+        return pin, dict(basis='read whole once, no claim written: ' + note.get('reason', ''), claim_file=note['file'])
+    return pin, dict(basis='read whole once, claim written', claim_file=note['file'])
 
 
 def _lessons_doc(response):
