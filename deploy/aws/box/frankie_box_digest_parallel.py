@@ -85,6 +85,19 @@ def _bounded_executor_stop(executor, graceful):
     import threading
     processes = list((getattr(executor, '_processes', None) or {}).values())
 
+    def alive(process):
+        # race-free: the executor's own management thread may reap a helper first, after which
+        # multiprocessing.Process.exitcode/is_alive stay None/True for this handle (popen_fork.poll swallows the
+        # ChildProcessError); the kernel's answer is the record
+        try:
+            os.kill(process.pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+        return Path('/proc/%d' % process.pid).is_dir() and 'Z' not in (
+            (Path('/proc/%d/stat' % process.pid).read_text().rsplit(')', 1)[-1].split() or ['?'])[0])
+
     def body():
         try:
             executor.shutdown(wait=True, cancel_futures=True)
@@ -97,15 +110,17 @@ def _bounded_executor_stop(executor, graceful):
         return None
     acted = dict(graceful=graceful, terminated=[], killed=[], at=round(time.time(), 3), stop_thread_still_waiting=True)
     for process in processes:
-        if process.is_alive():
+        if alive(process):
             process.terminate()
             process.join(POOL_STOP_SECONDS)
-            acted['terminated'].append(dict(pid=process.pid, exit_code=process.exitcode))
+            acted['terminated'].append(dict(pid=process.pid, exit_code=process.exitcode, alive_after=alive(process)))
     for process in processes:
-        if process.is_alive():
+        if alive(process):
             process.kill()
             process.join(POOL_STOP_SECONDS)
-            acted['killed'].append(dict(pid=process.pid, exit_code=process.exitcode))
+            acted['killed'].append(dict(pid=process.pid, exit_code=process.exitcode, alive_after=alive(process),
+                                        exit_code_note=None if process.exitcode is not None else
+                                        'reaped by the executor\'s own thread first; alive_after is the kernel\'s answer'))
     thread.join(POOL_STOP_SECONDS)
     acted['stop_thread_still_waiting'] = thread.is_alive()
     return acted

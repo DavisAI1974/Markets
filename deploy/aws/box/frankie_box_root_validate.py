@@ -30,6 +30,10 @@ Exit: 0 every pinned artifact ok and locally readable; 3 any mismatch (each name
 next stage; 75 stopped early (partial saved); 2 no receipt or bad arguments. Never modifies any artifact.
 
 CLI: --root R [--cpus 0-31] [--out R/work/root-validate.json] [--moved-manifest path] [--run-dir <run>]
+     or, for ANY stage (session 6, Greg: "carry this exact sequence from handoff to handoff between workflow pieces"):
+     --receipt <file> [--receipt ...] [--stage name] --out <receipt path>: every {path, bytes, sha256[, count]} object
+     found anywhere in those receipt files (walked recursively; the FRANKIE_*_V* receipts all record artifacts in that
+     shape) is a pin, each receipt file itself is measured, and the same read-once engine runs (collect_generic).
 """
 import argparse
 import hashlib
@@ -93,6 +97,7 @@ class Pins:
         self.jobs = {}
         self.documents = []
         self.problems = []
+        self.archives = []           # the moved-manifest's archived directories (checked by stat, never read)
 
     def claim(self, source, path, bytes_=None, sha256=None, count=None, index=None, kind=None, extra=None):
         if not path:
@@ -299,9 +304,29 @@ def add_manifest(pins, manifest_path):
         pins.document(manifest_path, body, 0)
         return
     n = 0
+    archives = []
     for move in moves:
         old, new = move.get('old_path'), move.get('new_path')
         if not old:
+            continue
+        if move.get('kind') == 'archive':
+            # a directory archived as one tar.zst (frankie_box_root_move): the symlink at old_path must point at it and
+            # the archive's size must be the bytes written on its stream; never read here (one pass, no read-back)
+            problems = []
+            if not os.path.islink(old):
+                problems.append('manifest_symlink_missing')
+            elif new and os.path.realpath(old) != os.path.realpath(new):
+                problems.append('manifest_target_differs')
+            try:
+                size = os.stat(new).st_size if new else None
+            except OSError:
+                size, problems = None, problems + ['missing']
+            if size is not None and move.get('bytes_archived') is not None and size != move['bytes_archived']:
+                problems.append('bytes_differ')
+            archives.append(dict(old_path=old, new_path=new, bytes_archived=move.get('bytes_archived'), observed_bytes=size,
+                                 sha256_recorded=move.get('sha256'), status=problems[0] if problems else 'archive_symlink_ok',
+                                 problems=problems, check='stat (the archive is not read)'))
+            n += 1
             continue
         if move.get('bucket'):
             pins.claim('moved-manifest:s3', old, move.get('bytes'), move.get('sha256'),
@@ -323,7 +348,49 @@ def add_manifest(pins, manifest_path):
                 job['pre'].append(check)
         job['manifest'] = dict(old_path=old, new_path=new)
         n += 1
+    pins.archives = archives
+    for item in archives:
+        if item['problems']:
+            pins.problems.append('archived %s: %s' % (item['old_path'], '; '.join(item['problems'])))
     pins.document(manifest_path, body, n)
+
+
+def _walk_pins(pins, source, value, where):
+    """Every {path, bytes, sha256[, count]} object anywhere inside a receipt value (the common FRANKIE_*_V* artifact
+    shape) becomes one claim; lists and dicts are walked, nothing else is interpreted."""
+    n = 0
+    if isinstance(value, dict):
+        if _has_witness(value) and isinstance(value.get('path'), str) and value['path'].startswith('/'):
+            count = value.get('count') if isinstance(value.get('count'), int) and str(value['path']).endswith('.jsonl') else None
+            pins.claim('%s:%s' % (source, where), value['path'], value['bytes'], value['sha256'], count=count)
+            n += 1
+        for key, item in value.items():
+            if key == 'claims':
+                continue
+            n += _walk_pins(pins, source, item, '%s.%s' % (where, key) if where else str(key))
+    elif isinstance(value, list):
+        for i, item in enumerate(value):
+            n += _walk_pins(pins, source, item, '%s[%d]' % (where, i))
+    return n
+
+
+def collect_generic(receipt_paths, root=None):
+    """The pins of ANY stage: every artifact object its receipt files record, plus each receipt file itself (measured;
+    its own bytes become the expectation, so a later run sees it unchanged). Raises ValueError when no receipt loads."""
+    pins = Pins(root or (Path(receipt_paths[0]).parent if receipt_paths else '/'))
+    loaded = 0
+    for path in receipt_paths:
+        path = Path(path)
+        body = _load(path)
+        n = 0
+        if body is not None:
+            loaded += 1
+            n = _walk_pins(pins, path.name, body, '')
+            pins.claim('self (measured): ' + path.name, path, path.stat().st_size if path.is_file() else None, None)
+        pins.document(path, body, n)
+    if not loaded:
+        raise ValueError('no receipt file loads among: %s' % ', '.join(str(p) for p in receipt_paths))
+    return pins
 
 
 # ------------------------------------------------------------------------------------------------------- one file
@@ -528,28 +595,34 @@ def _reusable(entry, job):
         return False
 
 
-def validate(root, *, cpus=None, out=None, moved_manifest=None, run_dir=None, stop=None, say=print):
+def validate(root=None, *, cpus=None, out=None, moved_manifest=None, run_dir=None, stop=None, say=print, pins=None,
+             stage='root', roots=None):
     """Run the validation; returns (receipt dict, exit code). stop() -> True ends submissions (the lane stop file or
-    SIGTERM when None)."""
+    SIGTERM when None). root: a ROOT attempt directory (its six documents are the pins); pins: prepared Pins of any
+    stage (collect_generic) with `roots` the directories listed for unpinned files; stage names the receipt."""
     import frankie_box_lane_pin as LP
-    root = Path(root)
-    if root.is_symlink():
+    root = Path(root) if root else None
+    if root is not None and root.is_symlink():
         raise ValueError('the attempt directory itself is a symlink; refused (only its contents may move): %s' % root)
+    if out is None and root is None:
+        raise ValueError('--out is required without --root')
     out = Path(out) if out else root / 'work' / 'root-validate.json'
-    state_dir = out.parent / 'root-validate'
+    state_dir = out.parent / ('%s-validate' % stage)
     os.environ['FRANKIE_ROOT_VALIDATE_DIR'] = str(state_dir)
     partial_path = state_dir / 'partial.json'
     started = time.time()
-    pins = collect_pins(root, run_dir)
+    if pins is None:
+        pins = collect_pins(root, run_dir)
+    roots = [Path(r) for r in (roots if roots is not None else ([root] if root is not None else []))]
     if moved_manifest:
         add_manifest(pins, moved_manifest)
     jobs = plan_jobs(pins)
     lane = list(cpus) if cpus else LP.lane_cpus()
     workers = max(1, len(lane) - 1)
-    cpu_map = LP.record(workers, lane, what='root-validate: one worker per file, largest first')
+    cpu_map = LP.record(workers, lane, what='%s-validate: one worker per file, largest first' % stage)
 
     saved = _load(partial_path) if partial_path.is_file() else None
-    saved_entries = (saved or {}).get('entries') if isinstance(saved, dict) and saved.get('root') == str(root) else {}
+    saved_entries = (saved or {}).get('entries') if isinstance(saved, dict) and saved.get('root') == str(pins.root) else {}
     results, skipped, pending = {}, [], []
     for job in jobs:
         entry = (saved_entries or {}).get(job['realpath'])
@@ -572,12 +645,12 @@ def validate(root, *, cpus=None, out=None, moved_manifest=None, run_dir=None, st
         import frankie_box_progress
         probe = frankie_box_progress.Probe(state_dir)
         probe.cpus, probe.workers = lane, workers
-        probe.update('root-validate', len(skipped), len(jobs))
+        probe.update('%s-validate' % stage, len(skipped), len(jobs))
     except Exception:  # noqa: BLE001 - the probe never changes the outcome
         probe = None
 
     def save_partial():
-        _write_json(partial_path, dict(schema=PARTIAL_SCHEMA, root=str(root), at=time.time(),
+        _write_json(partial_path, dict(schema=PARTIAL_SCHEMA, root=str(pins.root), at=time.time(),
                                        entries={k: v for k, v in results.items()}))
 
     report = {}
@@ -589,7 +662,7 @@ def validate(root, *, cpus=None, out=None, moved_manifest=None, run_dir=None, st
                 results[job['realpath']] = result
                 save_partial()
                 if probe is not None:
-                    probe.update('root-validate', len(results), len(jobs))
+                    probe.update('%s-validate' % stage, len(results), len(jobs))
                 say('%-22s %14s B %8.1f s  %s%s' % (result['status'], result['observed'].get('bytes'),
                                                    result.get('seconds') or 0, result['path'],
                                                    '  <- ' + '; '.join(result['problems']) if result['problems'] else ''))
@@ -612,10 +685,14 @@ def validate(root, *, cpus=None, out=None, moved_manifest=None, run_dir=None, st
     else:
         code = EXIT_OK
     own = {str(out), str(state_dir), str(partial_path), str(state_dir / 'progress.json')}
-    receipt = dict(schema=SCHEMA, at=started, root=str(root), seconds=round(time.time() - started, 3),
+    unpinned = [unpinned_present(r, pins, own) for r in roots]
+    receipt = dict(schema=SCHEMA, at=started, root=str(root) if root else None, stage=stage, roots=[str(r) for r in roots],
+                   seconds=round(time.time() - started, 3),
                    cpus=cpu_map, documents=pins.documents, document_problems=pins.problems,
                    artifacts=artifacts, not_done=not_done, skipped_unchanged=skipped,
-                   unpinned=unpinned_present(root, pins, own),
+                   unpinned=unpinned[0] if len(unpinned) == 1 else dict(
+                       count=sum(u['count'] for u in unpinned), listed=[x for u in unpinned for x in u['listed']][:MAX_UNPINNED],
+                       truncated=any(u['truncated'] for u in unpinned), status='not_pinned_but_present'),
                    totals=dict(pinned=len(jobs), checked=len(artifacts), ok=sum(1 for a in artifacts if a['status'] == 'ok'),
                                archived_s3=sum(1 for a in artifacts if a['status'] == 'archived_s3_head_ok'),
                                mismatches=len(mismatches), not_readable=len(not_readable),
@@ -624,33 +701,40 @@ def validate(root, *, cpus=None, out=None, moved_manifest=None, run_dir=None, st
                    mismatches=[dict(path=a['path'], status=a['status'], problems=a['problems']) for a in mismatches],
                    reader_refusals=[dict(path=a['path'], guards=a['reader_refusals']) for a in not_readable
                                     if a.get('reader_refusals')],
-                   pool=report, stopped=stopped, exit_code=code,
+                   archives=pins.archives, pool=report, stopped=stopped, exit_code=code,
                    rule='every pinned artifact read once through its symlink chain; nothing modified; exit 0 only when '
                         'every pin is ok and readable by the next stage; 3 mismatch; 4 verified but behind a safe_path '
                         'reader\'s symlink or in S3; 75 stopped early (partial.json resumes it)')
     _write_json(out, receipt)
     if probe is not None:
-        probe.update('root-validate', len(results), len(jobs), state='complete' if not stopped else 'running')
+        probe.update('%s-validate' % stage, len(results), len(jobs), state='complete' if not stopped else 'running')
     return receipt, code
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split('\n', 1)[0])
-    parser.add_argument('--root', required=True, help='the ROOT attempt directory R')
+    parser.add_argument('--root', help='the ROOT attempt directory R (its six pin documents)')
+    parser.add_argument('--receipt', action='append', default=[], help='any stage: a receipt file to collect pins from (repeatable)')
+    parser.add_argument('--stage', default='root', help='the stage name on the receipt and the probe')
+    parser.add_argument('--dir', action='append', default=[], help='any stage: an output directory listed for unpinned files')
     parser.add_argument('--cpus', help='CPU ranges (0-31); default FRANKIE_LANE_CPUS / the affinity')
     parser.add_argument('--out', help='receipt path (default R/work/root-validate.json)')
     parser.add_argument('--moved-manifest', help='the CLEAN step\'s FRANKIE_ROOT_MOVE_MANIFEST_V1 to cross-check')
     parser.add_argument('--run-dir', help='the Run directory (days/<day>/root.json pins the receipt sha256)')
     args = parser.parse_args(argv)
+    if not args.root and not args.receipt:
+        parser.error('--root R or --receipt <file> required')
     try:
+        pins = collect_generic(args.receipt) if args.receipt and not args.root else None
         receipt, code = validate(args.root, cpus=_parse_cpus(args.cpus) if args.cpus else None, out=args.out,
-                                 moved_manifest=args.moved_manifest, run_dir=args.run_dir)
+                                 moved_manifest=args.moved_manifest, run_dir=args.run_dir, pins=pins, stage=args.stage,
+                                 roots=args.dir or None)
     except ValueError as error:
         print('REFUSED:', error, file=sys.stderr)
         return EXIT_USAGE
     t = receipt['totals']
-    print('ROOT validate %s: pinned %d, ok %d, archived(S3 head) %d, mismatches %d, not readable %d, reused %d, '
-          '%d bytes read in %.1f s; exit %d' % (receipt['root'], t['pinned'], t['ok'], t['archived_s3'], t['mismatches'],
+    print('%s validate %s: pinned %d, ok %d, archived(S3 head) %d, mismatches %d, not readable %d, reused %d, '
+          '%d bytes read in %.1f s; exit %d' % (receipt['stage'], receipt['root'] or ', '.join(receipt['roots']), t['pinned'], t['ok'], t['archived_s3'], t['mismatches'],
                                                 t['not_readable'], t['reused_from_partial'], t['bytes_read'],
                                                 receipt['seconds'], code))
     for item in receipt['mismatches']:
