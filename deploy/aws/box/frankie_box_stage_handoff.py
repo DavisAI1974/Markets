@@ -344,16 +344,18 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
     switch = 'on' if on() else 'off'
     base = dict(schema=SCHEMA, run=run.plan['run'], day=e['day'], stage=stage, key=key, switch=switch, at=time.time(),
                 successor=STAGES.get(stage, {}).get('successor'), commit=commit, code_root=str(code_root))
-    if not record or record.get('status') not in FINISHED_WITH_OUTPUTS:
-        return dict(base, status='nothing_to_hand_off', reason='the step is %s' % ((record or {}).get('status')))
     fleet = _fleet()
     if fleet is not None and stage in fleet.RELEASE_STAGES:
-        # the classroom is done (this boundary runs after the stage): release the global classroom lease so the next
-        # box in line can take it; idempotent (released only when this box holds it) and never blocks the day
+        # the classroom boundary runs after the classroom stage: release the global classroom lease so the next box in
+        # line can take it. S2: this runs for a FAILED classroom too (BEFORE the FINISHED-with-outputs check below),
+        # because a holder whose classroom failed must free the lease, not keep the fleet waiting for an operator.
+        # Idempotent (released only when this box holds it) and never blocks the day.
         try:
             base['fleet_release'] = fleet.release_if_held(run.plan['run'], e['day'], log=log)
         except Exception as error:  # noqa: BLE001
             base['fleet_release'] = dict(status='error', error='%s: %s' % (type(error).__name__, str(error)[:200]))
+    if not record or record.get('status') not in FINISHED_WITH_OUTPUTS:
+        return dict(base, status='nothing_to_hand_off', reason='the step is %s' % ((record or {}).get('status')))
     existing = _load(out_dir / 'handoff.json')
     clean = _load(out_dir / 'clean' / 'clean-receipt.json')
     trigger = _load(out_dir / 'trigger.json')

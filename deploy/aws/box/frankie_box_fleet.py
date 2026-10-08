@@ -67,7 +67,9 @@ RELEASE_STAGES = ('classroom', 'data')               # release the lease once th
 # the real current stage and never call a day done at the classroom.
 FLEET_DONE_STAGES = ('jev',)
 DEFAULT_POLL_SECONDS = 30
-DEFAULT_WAIT_SECONDS = 86400                          # the WAIT unit's own life: a whole fleet run
+DEFAULT_WAIT_SECONDS = 604800                        # S14: 7 days covers a 30-classroom serial chain (~60-90 h) with
+#                                                      margin; the marker is heartbeated so the box stays in line, and a
+#                                                      reboot re-arms the WAIT unit via the reboot-resume driver
 DEFAULT_FAIR_WAIT_SECONDS = 300                       # yield to a strictly earlier LIVE waiter this long, then race
 VENV_PYTHON = '/opt/frankie-box/venv/bin/python'
 
@@ -314,7 +316,9 @@ class S3Store:
         from botocore.exceptions import ClientError
         try:
             obj = self.client().head_object(Bucket=self.bucket, Key=self._key(key))
-            return dict(exists=True, bytes=obj.get('ContentLength'), mtime=obj.get('LastModified'))
+            lm = obj.get('LastModified')
+            # B7: a float epoch (not a datetime) so the fairness age check works on the real store, not only the fake
+            return dict(exists=True, bytes=obj.get('ContentLength'), mtime=lm.timestamp() if hasattr(lm, 'timestamp') else lm)
         except ClientError as error:
             if error.response.get('Error', {}).get('Code') in ('404', 'NoSuchKey', 'NotFound'):
                 return None
@@ -462,12 +466,25 @@ def record_root_finished(run, day, *, st=None, instance=None, epoch=None):
     instance = instance or instance_id()
     epoch = time.time() if epoch is None else epoch
     body = dict(schema=WAIT_SCHEMA, run=run, day=day, instance=instance, root_finish_epoch=round(epoch, 3),
-                root_finished_utc=_utc())
+                root_finished_utc=_utc(), heartbeat_epoch=round(time.time(), 3), heartbeat_utc=_utc())
     try:
         st.put_if_absent(waiting_key(run, day), body)
         return dict(status='recorded', marker=body)
     except ConditionalExists:
         return dict(status='stood', marker=st.get(waiting_key(run, day)))
+
+
+def heartbeat_waiting(run, day, *, st=None, instance=None):
+    """B7/S1: re-PUT this box's waiting marker with a fresh heartbeat so 'live in line' means 'still polling', not
+    'marker old'. Keeps the original root_finish_epoch (the ORDER, first finisher first); refreshes heartbeat_epoch."""
+    st = st or store()
+    instance = instance or instance_id()
+    cur = st.get(waiting_key(run, day))
+    if not cur:
+        return record_root_finished(run, day, st=st, instance=instance)
+    cur['heartbeat_epoch'], cur['heartbeat_utc'] = round(time.time(), 3), _utc()
+    st.put(waiting_key(run, day), cur)
+    return dict(status='beat', marker=cur)
 
 
 def waiting_queue(*, st=None):
@@ -493,6 +510,27 @@ def lease_holder(*, st=None):
     return (st or store()).get(LEASE_KEY)
 
 
+def classroom_cpus_ready(run, day):
+    """B4: may this box give its classroom the CPUs it needs RIGHT NOW? The gate takes the global lease only when the
+    answer is yes, so the lease is never held while the box waits on a sibling day's CPUs. Returns (ready, detail):
+    True = the classroom can grow/run now (resolver waits_for == 0); False = it would wait for CPUs; None = cannot tell
+    (no resolver/ledger here) -> the caller proceeds (fail-open: the lease's mutual exclusion is still safe; the
+    liveness risk on a two-day box is what the waiter's booking release, REBOOK on resume, addresses).
+    FRANKIE_FLEET_CPU_READY=yes|no overrides for the toys."""
+    override = (os.environ.get('FRANKIE_FLEET_CPU_READY') or '').strip().lower()
+    if override in ('yes', '1', 'true', 'on'):
+        return True, dict(source='override', value=override)
+    if override in ('no', '0', 'false', 'off'):
+        return False, dict(source='override', value=override)
+    try:
+        import frankie_box_cores as C
+        answer = C.lane_for('classroom-day', run=run, day=day)
+        waits = answer.get('waits_for', 0) if isinstance(answer, dict) else 0
+        return (waits == 0), dict(source='resolver', waits_for=waits, cpus=answer.get('cpu_list') if isinstance(answer, dict) else None)
+    except Exception as error:  # noqa: BLE001 - PlanRefused / no ledger / no cores: indeterminate -> proceed
+        return None, dict(source='indeterminate', error='%s: %s' % (type(error).__name__, str(error)[:160]))
+
+
 def acquire_classroom_lease(run, day, commit, *, st=None, instance=None, fair=True, fair_wait=None):
     """Try to take the ONE global classroom lease for (run, day). Returns {acquired, holder, reason}.
     - Idempotent: if this box already holds it, acquired is True with no write.
@@ -509,14 +547,26 @@ def acquire_classroom_lease(run, day, commit, *, st=None, instance=None, fair=Tr
     if cur:
         return dict(acquired=False, holder=cur.get('holder_instance'), reason='held by %s for %s/%s'
                     % (cur.get('holder_instance'), cur.get('run'), cur.get('day')), lease=cur)
+    # B4: do not take the global lease until this box can give the classroom its CPUs (never hold the lease while
+    # waiting on a sibling day's CPUs). `None` (indeterminate) proceeds; `False` waits.
+    ready, cpu_detail = classroom_cpus_ready(run, day)
+    if ready is False:
+        return dict(acquired=False, holder=None, reason='the box cannot give the classroom its CPUs yet (%s); not '
+                    'taking the lease' % cpu_detail.get('waits_for', cpu_detail), cpu=cpu_detail)
     if fair:
         earliest = next_in_line(st=st)
         if earliest and not (earliest.get('run') == run and earliest.get('day') == day):
-            head = st.head(waiting_key(earliest.get('run'), earliest.get('day')))
-            age = (time.time() - head['mtime']) if head and isinstance(head.get('mtime'), (int, float)) else 0.0
-            if age < fair_wait:
-                return dict(acquired=False, holder=None, reason='yielding to earlier waiter %s (%s/%s), %.0fs old'
-                            % (earliest.get('instance'), earliest.get('run'), earliest.get('day'), age),
+            # B7/S1: yield only to a LIVE earlier finisher -- its heartbeat (refreshed every poll) younger than
+            # fair_wait. A dead earliest waiter (crashed, reclaimed; its heartbeat goes silent) never deadlocks the
+            # line. The order is the root-finish epoch (first finisher first); liveness is the heartbeat silence.
+            beat = earliest.get('heartbeat_epoch')
+            if not isinstance(beat, (int, float)):
+                head = st.head(waiting_key(earliest.get('run'), earliest.get('day')))
+                beat = head.get('mtime') if head and isinstance(head.get('mtime'), (int, float)) else None
+            silence = (time.time() - beat) if isinstance(beat, (int, float)) else fair_wait + 1
+            if silence < fair_wait:
+                return dict(acquired=False, holder=None, reason='yielding to earlier LIVE waiter %s (%s/%s), silent %.0fs'
+                            % (earliest.get('instance'), earliest.get('run'), earliest.get('day'), silence),
                             next_in_line=earliest)
     body = dict(schema=LEASE_SCHEMA, holder_instance=instance, run=run, day=day, commit=commit,
                 acquired_utc=_utc(), heartbeat_utc=_utc(), heartbeat_epoch=round(time.time(), 3))
@@ -652,7 +702,16 @@ def start_wait_unit(run, day, stage, out_dir, code_root, commit, *, log=print):
         with open(started, 'x', encoding='utf-8') as handle:
             handle.write('%s %s %s %s\n' % (_utc(), run, day, stage))
     except FileExistsError:
-        return dict(status='already_started', note='a WAIT unit was started for this boundary before')
+        # S2: do not refuse just because the marker stands -- a box reboot / OOM can leave it with a DEAD unit. Only
+        # refuse if the recorded WAIT unit is actually alive; otherwise clear the marker and start a fresh one.
+        if _wait_unit_alive(out_dir):
+            return dict(status='already_started', note='a live WAIT unit is already polling for this boundary')
+        try:
+            os.remove(started)
+            with open(started, 'x', encoding='utf-8') as handle:
+                handle.write('%s %s %s %s (restarted; prior unit dead)\n' % (_utc(), run, day, stage))
+        except (FileExistsError, OSError):
+            return dict(status='already_started', note='a WAIT unit marker stands and could not be reclaimed')
     log_path = out_dir / 'fleet-wait.log'
     argv = [_python(), '-B', str(HERE / 'frankie_box_fleet.py'), '--action', 'wait', '--run', run, '--day', day,
             '--stage', stage, '--out-dir', str(out_dir), '--code-root', str(code_root), '--commit', commit]
@@ -670,7 +729,39 @@ def start_wait_unit(run, day, stage, out_dir, code_root, commit, *, log=print):
             proc = subprocess.Popen(argv, env=env, stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                                     start_new_session=True)
         how = dict(method='new session', pid=proc.pid, systemd_run=how)
+    # S2: record the unit/pid so a later gate pass can tell a live poller from a dead one (box reboot / OOM)
+    _write_json(out_dir / 'fleet-wait.unit.json', dict(at=time.time(), how=how))
     return dict(status='started', how=how, log=str(log_path))
+
+
+def _wait_unit_alive(out_dir):
+    """True when the recorded WAIT unit is still running (systemd unit active, or the recorded pid alive). Unknown /
+    unreadable -> False, so a dead or lost unit is replaced rather than blocking the line forever (S2)."""
+    import shutil
+    how = (_load_json(Path(out_dir) / 'fleet-wait.unit.json') or {}).get('how') or {}
+    unit = how.get('unit')
+    if unit and shutil.which('systemctl'):
+        try:
+            out = subprocess.run(['systemctl', 'is-active', unit], capture_output=True, text=True).stdout.strip()
+            if out == 'active':
+                return True
+        except OSError:
+            pass
+    pid = how.get('pid') or (how.get('systemd_run') or {}).get('pid')
+    if isinstance(pid, int):
+        try:
+            os.kill(pid, 0)
+            return True
+        except (OSError, ProcessLookupError):
+            return False
+    return False
+
+
+def _load_json(path):
+    try:
+        return json.loads(Path(path).read_bytes())
+    except (OSError, ValueError):
+        return None
 
 
 def fleet_resume(run, day, code_root, commit, out_dir, *, log=print):
@@ -687,17 +778,21 @@ def fleet_resume(run, day, code_root, commit, out_dir, *, log=print):
             handle.write('%s %s %s\n' % (_utc(), run, day))
     except FileExistsError:
         return dict(base, status='already_fired')
+    # B4: REBOOK=on on the resume so the day re-books its CPUs fresh (its booking may have been released while it
+    # waited in line); kick starts the root-line worker.
     env = dict(os.environ, CODE_ROOT=str(code_root), MARKETS_SHA=commit, RUN=run, DAY=day)
     steps = []
-    for action, extra in (('resume', {}), ('kick', dict(LINE='root', SCOPE='%s:%s' % (run, day)))):
+    for action, extra in (('resume', dict(REBOOK='on')), ('kick', dict(LINE='root', SCOPE='%s:%s' % (run, day)))):
         result = subprocess.run([queue_sh], env=dict(env, ACTION=action, **extra), capture_output=True, text=True)
         steps.append(dict(action=action, exit_code=result.returncode, stdout=result.stdout[-4000:],
                           stderr=result.stderr[-2000:]))
         log('fleet resume %s/%s: %s exit %d' % (run, day, action, result.returncode))
         if result.returncode != 0:
-            return _write_json(receipt, dict(base, status='failed', steps=steps,
-                               reason='%s exited %d; the day stays saved (an operator resumes by hand)'
-                                      % (action, result.returncode)))
+            # S2: a failed resume/kick must not strand the global lease held by this box with no classroom running
+            rel = release_classroom_lease(run, day)
+            return _write_json(receipt, dict(base, status='failed', steps=steps, lease_released=rel,
+                               reason='%s exited %d; the lease was released (%s); the day stays saved (an operator '
+                                      'resumes by hand)' % (action, result.returncode, rel.get('status'))))
     return _write_json(receipt, dict(base, status='done', steps=steps,
                        reason='the lease was acquired; resumed and kicked on %s (%s)' % (code_root, commit[:12])))
 
@@ -711,16 +806,24 @@ def wait_action(args):
     out_dir = Path(args.out_dir)
     st = store()
     while True:
-        got = acquire_classroom_lease(args.run, args.day, args.commit, st=st)
-        _write_json(out_dir / 'fleet-gate.json', dict(schema=GATE_SCHEMA, run=args.run, day=args.day, stage=args.stage,
-                    instance=instance_id(), decision='proceed' if got['acquired'] else 'waiting', lease=got,
-                    at=time.time(), in_wait_unit=True))
-        if got['acquired']:
-            set_day_stage_state(args.run, args.day, 'classroom', 'lease_held', st=st)
-            res = fleet_resume(args.run, args.day, args.code_root, args.commit, out_dir, log=say)
-            say('fleet wait: lease acquired; resume %s' % res['status'])
-            return 0
-        say('fleet wait: %s; next poll in %ds' % (got['reason'], poll))
+        # S2: one S3 blip must not kill the unit (or, worse, strand the lease after an acquire). Each poll is wrapped;
+        # on an exception the unit releases the lease if it holds it, then keeps polling.
+        try:
+            _try(lambda: heartbeat_waiting(args.run, args.day, st=st))   # B7: stay LIVE in line each poll
+            got = acquire_classroom_lease(args.run, args.day, args.commit, st=st)
+            _write_json(out_dir / 'fleet-gate.json', dict(schema=GATE_SCHEMA, run=args.run, day=args.day,
+                        stage=args.stage, instance=instance_id(), decision='proceed' if got['acquired'] else 'waiting',
+                        lease=got, at=time.time(), in_wait_unit=True))
+            if got['acquired']:
+                _try(lambda: set_day_stage_state(args.run, args.day, 'classroom', 'lease_held', st=st))
+                res = fleet_resume(args.run, args.day, args.code_root, args.commit, out_dir, log=say)
+                say('fleet wait: lease acquired; resume %s' % res['status'])
+                return 0
+            say('fleet wait: %s; next poll in %ds' % (got['reason'], poll))
+        except Exception as error:  # noqa: BLE001
+            say('fleet wait: poll error (%s: %s); releasing the lease if held, then retrying'
+                % (type(error).__name__, str(error)[:200]))
+            _try(lambda: release_classroom_lease(args.run, args.day, st=st))
         if time.monotonic() >= deadline:
             say('fleet wait: ran out of time without the lease; the day stays saved for an operator')
             return 2

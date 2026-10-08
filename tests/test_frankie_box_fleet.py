@@ -128,6 +128,48 @@ class TestLease(FleetBase):
         early = F.acquire_classroom_lease('e2e-a', '20231018', 'c0ffee', st=st_early, instance='i-early')
         self.assertTrue(early['acquired'])
 
+    def test_cpu_not_ready_blocks_the_lease(self):
+        # B4: the box cannot give the classroom its CPUs -> do NOT take the global lease (never hold it while blocked)
+        os.environ['FRANKIE_FLEET_CPU_READY'] = 'no'
+        st = self.store_for('i-box1')
+        F.record_root_finished('e2e-a', '20231018', st=st, instance='i-box1', epoch=100)
+        got = F.acquire_classroom_lease('e2e-a', '20231018', 'c0ffee', st=st, instance='i-box1')
+        self.assertFalse(got['acquired'])
+        self.assertIn('CPUs', got['reason'])
+        self.assertIsNone(F.lease_holder(st=st))        # the lease was NOT taken
+        os.environ.pop('FRANKIE_FLEET_CPU_READY')
+
+    def test_cpu_ready_allows_the_lease(self):
+        os.environ['FRANKIE_FLEET_CPU_READY'] = 'yes'
+        st = self.store_for('i-box1')
+        F.record_root_finished('e2e-a', '20231018', st=st, instance='i-box1', epoch=100)
+        got = F.acquire_classroom_lease('e2e-a', '20231018', 'c0ffee', st=st, instance='i-box1')
+        self.assertTrue(got['acquired'])
+        os.environ.pop('FRANKIE_FLEET_CPU_READY')
+
+    def test_heartbeat_waiting_refreshes_liveness_not_order(self):
+        st = self.store_for('i-box1')
+        F.record_root_finished('e2e-a', '20231018', st=st, instance='i-box1', epoch=100.0)
+        before = F.store().get(F.waiting_key('e2e-a', '20231018'))
+        F.heartbeat_waiting('e2e-a', '20231018', st=st, instance='i-box1')
+        after = F.store().get(F.waiting_key('e2e-a', '20231018'))
+        self.assertEqual(after['root_finish_epoch'], 100.0)                 # ORDER is unchanged
+        self.assertGreaterEqual(after['heartbeat_epoch'], before['heartbeat_epoch'])   # liveness refreshed
+
+    def test_dead_earlier_waiter_does_not_deadlock(self):
+        os.environ['FRANKIE_FLEET_CPU_READY'] = 'yes'
+        # an earlier finisher whose heartbeat is ancient (crashed); a later LIVE box must not yield to it forever
+        st_dead = self.store_for('i-dead')
+        F.record_root_finished('e2e-a', '20231018', st=st_dead, instance='i-dead', epoch=100)
+        marker = st_dead.get(F.waiting_key('e2e-a', '20231018'))
+        marker['heartbeat_epoch'] = 1.0                  # ancient: the dead box stopped polling
+        st_dead.put(F.waiting_key('e2e-a', '20231018'), marker)
+        st_late = self.store_for('i-late')
+        F.record_root_finished('e2e-a', '20231020', st=st_late, instance='i-late', epoch=500)
+        got = F.acquire_classroom_lease('e2e-a', '20231020', 'c0ffee', st=st_late, instance='i-late', fair_wait=300)
+        self.assertTrue(got['acquired'])                 # the stale earlier waiter did not block the line
+        os.environ.pop('FRANKIE_FLEET_CPU_READY')
+
     def test_takeover_requires_force(self):
         st1 = self.store_for('i-box1')
         F.acquire_classroom_lease('e2e-a', '20231018', 'c0ffee', st=st1, instance='i-box1')

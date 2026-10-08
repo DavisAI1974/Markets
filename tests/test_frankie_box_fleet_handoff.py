@@ -86,6 +86,17 @@ class TestFleetGate(HandoffFleetBase):
         self.assertEqual(rec['fleet_gate']['holder'], 'i-box2')
         self.assertTrue(rec['save']['standing'])        # the day was saved so it stops here
 
+    def test_release_on_failed_classroom(self):
+        # S2: a classroom that FAILED must still release the global lease (before the nothing_to_hand_off return)
+        st = F.store()
+        F.acquire_classroom_lease('e2e-a', '20231018', 'c0ffee', st=st, instance='i-box1')
+        run = FakeRun(Path(self.tmp) / 'failc')
+        rec = H.boundary(run, {'day': '20231018'}, 'classroom', 'day', dict(status='failed'),
+                         code_root=run.code_root, commit='c0ffee' * 6 + 'cafe', log=lambda *a: None)
+        self.assertEqual(rec['status'], 'nothing_to_hand_off')         # a failed record is not handed off
+        self.assertEqual(rec['fleet_release']['status'], 'released')   # but the lease was freed
+        self.assertIsNone(F.lease_holder(st=F.store()))
+
     def test_release_at_classroom_boundary(self):
         # this box holds the lease; a classroom boundary releases it (idempotent)
         st = F.store()
