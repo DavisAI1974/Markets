@@ -411,3 +411,21 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   (reads as test removal); named fixes go through: the parent reads ahead and assigns each one.
 - Decision: HOLD the relaunch for the teacher fix (~16 min: fix + stage) rather than let the teacher re-hash 25 min on the
   old code; then stage, kick/resume/kick. The 5c669032 stage (run 37820658519) landed meanwhile; unused unless the fix slips.
+
+## Parent: relaunch sequence (18:02-18:06Z), Greg: "Relaunch first!!!"
+- 18:02:50Z kick on 5c669032 (the parent's script hit the connector's 60 s wall; the kick ran): the new worker refused the
+  day: "the day is running (or unknown) on its source db96f24...; a running day never moves to another source (save it
+  first)" (the dead-owner entry still read 'running'; only a worker on its own source reconciles it).
+- 18:04:38Z kick on db96f24 (SSM 98dc564c): the worker took the day at once (finish_take) and the ROOT-line entry read
+  DONE at 18:04:41Z (root reused from the 17:46Z receipt; no scan); the finish phase (stage boundary -> teacher) runs on
+  db96f24, which lacks the teacher fix.
+- Fixes landed meanwhile: 11c65ac2 (frankie_box_experiment_native: the native ledger witnesses by file claim, used by the
+  teacher's shared market timeline and the data stage: ~25 min saved per stage on a2) and 607eb273 (brain stage entries
+  take the file claims; the digest's claim row written at write time).
+- 18:05:39Z ACTION=save on db96f24 (SSM a1b53406, exit 0): the day saves at this boundary BEFORE the teacher (entry done,
+  finish running, save_request true). 18:05:45Z STAGE dispatched: run 37821632039 bound to 607eb273 (= 11c65ac2 +
+  607eb273 + 5c669032 + all earlier). CR6=/opt/frankie-box/code/607eb273f87101556b87b8d9fc794b9cbdb83b76-37821632039-1/
+  markets. Next: when the finish reads saved and CR6's receipt is on the box: ACTION=resume + ACTION=kick (digest off,
+  classroom all) on CR6 -> teacher without the 194 GB re-hash.
+- Open (brain role): a root brain entry written without the digest and later re-recorded with it must not decline; fix
+  assigned.
