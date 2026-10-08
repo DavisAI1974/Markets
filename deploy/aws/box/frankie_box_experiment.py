@@ -1360,6 +1360,9 @@ class Run:
 
     # disk
     INLINE_SPOOL_LAYERS = ('legacy_book_imbalance', 'legacy_structure_observables')
+    # session 6: the reason a ROOT ran without process 4 (the Markdown digest); on the root record and the brain entry
+    DIGEST_NOT_BUILT = ('not built: no stage of this day reads the derivation digest for work (only the classroom does, '
+                        'on a classroom-arm day; the plan key root_digest on builds it for every day)')
 
     def inline_spool_layer_bytes(self, record):
         """Bytes of a measured ROOT step's old-form (inline) spool layers: re-encodings of its spools that a ROOT on this

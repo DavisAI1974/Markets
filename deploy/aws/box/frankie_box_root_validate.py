@@ -309,6 +309,18 @@ def add_manifest(pins, manifest_path):
         old, new = move.get('old_path'), move.get('new_path')
         if not old:
             continue
+        if move.get('kind') == 'bind_mount':
+            # a guarded directory moved by bind mount (frankie_box_root_move.do_bind_mount): a real directory at old_path,
+            # no symlink; its pinned files are ordinary jobs read once through the mount
+            problems = []
+            if not os.path.isdir(old) or os.path.islink(old):
+                problems.append('bind_mount_missing' if not os.path.isdir(old) else 'bind_mount_is_symlink')
+            archives.append(dict(old_path=old, new_path=new, kind='bind_mount', files=len(move.get('files') or []),
+                                 ismount=os.path.ismount(old) if os.path.isdir(old) else None,
+                                 status=problems[0] if problems else 'bind_mount_ok', problems=problems,
+                                 check='stat (a real directory; the pins inside are read once as ordinary jobs)'))
+            n += 1
+            continue
         if move.get('kind') == 'archive':
             # a directory archived as one tar.zst (frankie_box_root_move): the symlink at old_path must point at it and
             # the archive's size must be the bytes written on its stream; never read here (one pass, no read-back)

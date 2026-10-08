@@ -61,6 +61,26 @@ WAIT_POLL_SECONDS = 10
 VENV_PYTHON = '/opt/frankie-box/venv/bin/python'
 
 
+def native_complete(stage, roots):
+    """The ROOT's native stage is complete (work/native-stage.json present): the resumed sink's append segments and the
+    pre-save ledger copy are then redundant (frankie_box_root_move.redundant_ledger_segments)."""
+    return bool(STAGES.get(stage, {}).get('collector') == 'root' and roots and (Path(roots[0]) / 'work' / 'native-stage.json').is_file())
+
+
+def _fake_transport(log_path):
+    """The toy's transport (FRANKIE_ARCHIVE_S3_FAKE=<log>): no boto3; every upload call appended to the log."""
+    class Fake:
+        @staticmethod
+        def upload(path, bucket, key, *, region, sha256=None, extra_args=None, storage_class=None, **_):
+            r = dict(schema='FRANKIE_S3_TRANSPORT_V1', op='upload', path=str(path), bucket=bucket, key=key, region=region,
+                     bytes=os.path.getsize(path), sha256=sha256, storage_class=storage_class, status='uploaded',
+                     transport='fake', extra_args=extra_args)
+            with open(log_path, 'a') as handle:
+                handle.write(json.dumps(r, sort_keys=True) + '\n')
+            return r
+    return Fake
+
+
 def floor_bytes():
     """The clean's floor (frankie_box_root_move.FLOOR_BYTES, 1 GiB); FRANKIE_CLEAN_FLOOR_BYTES overrides it (toy tests)."""
     import frankie_box_root_move as M
@@ -275,7 +295,9 @@ def start_clean_unit(run, e, stage, key, out_dir, roots, receipts, lane, code_ro
                MARKETS_SHA=commit, CODE_ROOT=str(code_root))
     for name in ('FRANKIE_QUEUE_DIR', 'FRANKIE_QUEUE_SH', 'FRANKIE_HANDOFF_PYTHON', 'FRANKIE_ZSTD', 'FRANKIE_ARCHIVE_ROOT',
                  'FRANKIE_BOX_ROOT', 'FRANKIE_HANDOFF_NO_KEEP_RUNNING', 'FRANKIE_HANDOFF_WAIT_SAVED_SECONDS',
-                 'FRANKIE_HANDOFF_DETACH', 'FRANKIE_CLEAN_FLOOR_BYTES', SWITCH):
+                 'FRANKIE_HANDOFF_DETACH', 'FRANKIE_CLEAN_FLOOR_BYTES', 'FRANKIE_ARCHIVE_S3', 'FRANKIE_ARCHIVE_BUCKET',
+                 'FRANKIE_ARCHIVE_PREFIX', 'FRANKIE_ARCHIVE_REGION', 'FRANKIE_ARCHIVE_S3_FAKE', 'FRANKIE_MOUNT_CMD',
+                 'FRANKIE_FSTAB', SWITCH):
         if os.environ.get(name):
             env[name] = os.environ[name]
     pinned = (['taskset', '-c', lane] if lane and shutil.which('taskset') else [])
@@ -360,6 +382,7 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
         pins = collect(stage, step_receipt, roots)
         items = M.plan(roots, {real: job['expected'] for real, job in pins.jobs.items()},
                        guarded=STAGES.get(stage, {}).get('guarded', ()), floor=floor_bytes(),
+                       native_complete=native_complete(stage, roots),
                        archive_root=Path(os.environ.get('FRANKIE_ARCHIVE_ROOT') or M.ARCHIVE_ROOT),
                        box_root=Path(os.environ.get('FRANKIE_BOX_ROOT') or M.BOX_ROOT))
     except ValueError as error:
@@ -523,7 +546,8 @@ def clean_action(args):
     archive_root = Path(os.environ.get('FRANKIE_ARCHIVE_ROOT') or M.ARCHIVE_ROOT)
     box_root = Path(os.environ.get('FRANKIE_BOX_ROOT') or M.BOX_ROOT)
     receipt = M.clean(roots, expected, out_dir=clean_dir, cpus=cpus, guarded=STAGES.get(args.stage, {}).get('guarded', ()),
-                      floor=floor_bytes(), archive_root=archive_root, box_root=box_root, say=say)
+                      floor=floor_bytes(), archive_root=archive_root, box_root=box_root, say=say,
+                      native_complete=native_complete(args.stage, roots))
     receipt.update(stage=args.stage, run=args.run, day=args.day, key=args.key, switch='on' if on() else 'off')
     _write(clean_dir / 'clean-receipt.json', receipt)
     say('clean %s %s %s: %s, %d moved, %d failed, %d bytes freed' % (
@@ -544,6 +568,15 @@ def clean_action(args):
                                      if i['kind'] in ('move', 'archive') and i.get('status') == 'done'])
     _write(out_dir / 'trigger.json', result)
     _note_beside_marker(marker, dict(result, note='the clean unit\'s outcome beside the day\'s marker'))
+    # the S3 Glacier second copy (call (f): both), AFTER the trigger so the day's chain never waits for it; on this
+    # unit's lane; its receipt lands beside the clean receipt; a refusal (switch off, no bucket) is recorded, never a failure
+    try:
+        fake = os.environ.get('FRANKIE_ARCHIVE_S3_FAKE')
+        s3 = M.upload_archives(receipt['items'], out_dir=clean_dir, archive_root=archive_root,
+                               transport=_fake_transport(fake) if fake else None, say=say)
+        say('s3 second copy: %s (%s objects; %s)' % (s3.get('status'), s3.get('uploaded', 0), s3.get('reason') or s3.get('bucket')))
+    except Exception as error:  # noqa: BLE001 - never the clean's outcome
+        say('s3 second copy: not made (%s: %s)' % (type(error).__name__, error))
     if result['status'] == 'done' and not os.environ.get('FRANKIE_HANDOFF_NO_KEEP_RUNNING'):
         try:
             import frankie_box_experiment as X
