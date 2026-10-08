@@ -128,3 +128,4 @@ NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS.
 
 ## Tip at handoff
 (appended by the parent at the end of session 5; see the last commit on the branch)
+- Work branch tip at handoff: a26a176 (this line is in the next commit, which is the tip to confirm or newer).
