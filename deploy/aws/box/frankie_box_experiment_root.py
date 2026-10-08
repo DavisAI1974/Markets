@@ -121,21 +121,32 @@ def write_claims_from_derivation(root_dir, *, force=False):
     tail, not stat alone): a consumer (the classroom's brain publication, the data export, this file's resume checks)
     takes a row only while (dev, ino, size, mtime_ns) and the last-64-KiB sha256 still match. Written only when the
     file is absent (force rewrites). Returns a note dict for the receipt; never raises. Callable at the queue's root
-    boundary for a REUSED ROOT (Run.root's reused branch is fenced): write_claims_from_derivation(<root>)."""
+    boundary for a REUSED ROOT (Run.root's reused branch is fenced): write_claims_from_derivation(<root>).
+    Session 9 (Greg: "fix spool before it starts"; a2's file-claims.jsonl holds 57 V1 rows from an older seal, the
+    native ledgers and the layers, NO row for any of the five legacy spools, so the resume counted the 496.7 GB frames
+    spool whole): when the file EXISTS, the rows already there are never touched (byte for byte) and a row is ADDED
+    for every artifact below that has none yet (the five legacy spools among them, with their sealed count), appended
+    atomically; the note says how many rows were added and for which paths (status stays 'present'). The absent-file
+    behaviour is unchanged."""
     root = Path(root_dir)
     work, note = root / 'work', dict(schema='FRANKIE_FILE_CLAIM_V2', path=str(root / 'work' / 'file-claims.jsonl'))
+    existing, present_rows = None, 0
     try:
         from research.kalshi.frankie_boss.operations.ingest_block_sources import (file_claim, write_file_claims,
-                                                                                   FILE_CLAIMS_NAME)
+                                                                                   FILE_CLAIMS_NAME,
+                                                                                   _write_claims_atomic)
         target = work / FILE_CLAIMS_NAME
         note['path'] = str(target)
         if target.is_file() and not force:
-            return dict(note, status='present', rows=sum(1 for _ in target.open('rb')))
+            from frankie_box_boss_session import _load_file_claims
+            present_rows = sum(1 for _ in target.open('rb'))
+            existing = _load_file_claims(work)             # {resolved path: row}; a row there is never rewritten
         result = json.loads((work / 'derive.json').read_bytes())
         receipt_path = root / 'calculations-receipt.json'
         commit = (json.loads(receipt_path.read_bytes()).get('commit') if receipt_path.is_file() else None) \
             or result.get('commit') or 'an earlier checkout'
-        by = 'root reuse: receipt/derive.json sha256 (sealed on %s) + stat + tail at %s' % (
+        by = '%s: receipt/derive.json sha256 (sealed on %s) + stat + tail at %s' % (
+            'root resume (row added beside the existing claims)' if existing is not None else 'root reuse',
             commit, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
         items = []
         # ROOT-digest role, 2026-10-08 (the live trace on 6076950: 57 rows, none for the 496.7 GB frames spool, so the
@@ -184,6 +195,8 @@ def write_claims_from_derivation(root_dir, *, force=False):
                 if path in seen:
                     continue
                 seen.add(path)
+                if existing is not None and path in existing:
+                    continue                                          # session 9: the row already there stays as it is
                 row = file_claim(item['path'], int(item['bytes']), item['sha256'], by)
                 if item.get('kind') == 'spool' and isinstance(item.get('count'), int):
                     row['count'] = item['count']                      # additive: the spool's sealed line count
@@ -192,6 +205,19 @@ def write_claims_from_derivation(root_dir, *, force=False):
             except (OSError, ValueError, KeyError, TypeError) as error:
                 skipped.append(dict(path=item.get('path') if isinstance(item, dict) else None,
                                     reason='%s: %s' % (type(error).__name__, error)))
+        if existing is not None:
+            # session 9: the existing lines byte for byte, the new rows after them, one atomic rewrite
+            out = dict(note, status='present', rows=present_rows + len(rows), added=len(rows),
+                       added_paths=[row['path'] for row in rows], claimed_by=by)
+            if rows:
+                text = target.read_text(encoding='utf-8')
+                if text and not text.endswith('\n'):
+                    text += '\n'
+                _write_claims_atomic(target, (text + ''.join(json.dumps(row, sort_keys=True) + '\n'
+                                                             for row in rows)).encode())
+            if skipped:
+                out['skipped'] = skipped
+            return out
         written = write_file_claims(work, rows)
         out = dict(note, status=written.get('status'), rows=len(rows), claimed_by=by)
         if written.get('reason'):
@@ -200,6 +226,9 @@ def write_claims_from_derivation(root_dir, *, force=False):
             out['skipped'] = skipped
         return out
     except Exception as error:  # noqa: BLE001 - a claim is a hint for later stages, never the ROOT's outcome
+        if existing is not None:                                      # the file is there, its rows untouched
+            return dict(note, status='present', rows=present_rows, added=0,
+                        reason='no row added: %s: %s' % (type(error).__name__, error))
         return dict(note, status='not_written', reason='%s: %s' % (type(error).__name__, error))
 
 
@@ -414,12 +443,14 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
     session.phase('deriving', 'experiment ROOT: sealed day, legacy and native calculations; no giant bedrock digest'
                   if bedrock else 'experiment ROOT: the legacy pass on the sealed day; bedrock off')
     retained = session.work / 'derive.json'
-    retained_checks = claims_note = None
+    retained_checks = claims_note = spool_checks = None
     if resume and retained.is_file():
         # The existing legacy reader/render helpers recover the finished calculation stage without replaying it.
         from frankie_box_monday_calculations import load_retained_layers, write_retained_digest
         from frankie_box_boss_session import (_artifact_check, _load_file_claims, _reuse_check_mode,
-                                              LEGACY_REUSE_CHECK_SETTING)
+                                              LEGACY_REUSE_CHECK_SETTING, _legacy_spool_artifact,
+                                              _reopen_counted_spool, _sealed_spool_counts)
+        import frankie_box_bedrock as B
         result = json.loads(retained.read_bytes())
         # session 6, second pass (the relaunch role, live on a2): the native evidence (193.7 GB) and every layer (the
         # 472 GB inline legacy_book_imbalance.json) were read whole here through the uncached witness on every resume,
@@ -456,11 +487,48 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                 evidence(item, 'native evidence')
         for item in result['layers'].values():
             evidence(item, 'calculation layer')
+        # Session 9 (Greg: "fix spool before it starts"): before, load_retained_layers was called without spools=, so
+        # each of the five legacy spools was reopened by RowSpool.reopen, which counts EVERY line: a whole read of the
+        # 496.7 GB frames spool (~63 min at the box's 131 MB/s) on every resume. Now, as the legacy-stage reuse inside
+        # Session.derive already does: each spool artifact sealed in work/legacy-stage.json takes its count from the
+        # seal, else its claim row (write_claims_from_derivation above added the rows), else the sealed receipt / layer
+        # heads (_sealed_spool_counts), and its witness from the claim while stat + the last 64 KiB hold
+        # (_legacy_spool_artifact); the spool is then reopened from the count, first and last lines only
+        # (_reopen_counted_spool) and handed to load_retained_layers as spools=. A spool with no count or no holding
+        # claim is read whole ONCE there (sha256 + count in one pass, a sealed count it disagrees with refuses); a
+        # spool with no sealed artifact at all stays on RowSpool.reopen's whole count. Each case is named on the
+        # receipt (spool_reopen), never silent.
+        spool_checks, reopened = [], {}
+        rows_dir = session.work / 'derived' / '.rows'
+        stage = session.work / 'legacy-stage.json'
+        saved_stage = json.loads(stage.read_bytes()) if stage.is_file() else {}
+        sealed_counts = _sealed_spool_counts(saved_stage.get('receipt') or result, session.work / 'derived')
+        for item in saved_stage.get('artifacts') or []:
+            if not (str(item.get('path', '')).endswith('.jsonl')
+                    or (item.get('kind') == 'spool' and isinstance(item.get('count'), int))):
+                continue
+            path = Path(item['path'])
+            seen, count, how = _legacy_spool_artifact(item, claims, mode, sealed_counts, claims_dir=session.work)
+            if seen != {k: item[k] for k in ('bytes', 'sha256')}:
+                raise ValueError('retained legacy spool changed: ' + item['path'])
+            reopened[str(path.resolve())] = _reopen_counted_spool(B.RowSpool, path, count)
+            spool_checks.append(dict(path=str(path), bytes=item['bytes'], count=count, basis=how,
+                                     reopened_from='the count: first and last lines read, no other line'))
+        for path in [*rows_dir.glob('input-*.jsonl')] + [rows_dir / (n + '.jsonl')
+                                                         for n in ('prices', 'frames', 'structures', 'failures')]:
+            if str(path.resolve()) not in reopened:
+                spool_checks.append(dict(path=str(path), bytes=path.stat().st_size if path.is_file() else None,
+                                         count=None, basis='read whole: RowSpool.reopen counts every line (no sealed '
+                                         'legacy-stage.json artifact names this spool)',
+                                         reopened_from='RowSpool.reopen in load_retained_layers (every line read)'))
         _, _, _, prices, frames, structures, failures, layers, _ = load_retained_layers(
-            session, allow_failures=True, layer_witnesses=witnessed)
-        session.note('retained evidence: %d artifacts, %d by their claim, %d read whole' % (
+            session, allow_failures=True, spools=reopened, layer_witnesses=witnessed)
+        session.note('retained evidence: %d artifacts, %d by their claim, %d read whole; %d spools, %d reopened from '
+                     'a sealed count and a holding claim, %d read whole' % (
             len(retained_checks), sum(c['basis'].startswith('the saved claim') for c in retained_checks),
-            sum(c['basis'].startswith('read whole') for c in retained_checks)))
+            sum(c['basis'].startswith('read whole') for c in retained_checks), len(spool_checks),
+            sum('the saved claim' in c['basis'] for c in spool_checks),
+            sum('the saved claim' not in c['basis'] for c in spool_checks)))
         if len(failures) != result['failure_count']:
             raise ValueError('saved failure spool differs from derivation')
         if digest:
@@ -501,6 +569,9 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
                 # session 6, additive: the resume's evidence checks (claim or read whole) and the claims file note
                 retained_evidence_check=(dict(schema='FRANKIE_LEGACY_REUSE_CHECK_V1', artifacts=retained_checks)
                                          if retained_checks is not None else None),
+                # session 9, additive: what each of the five legacy spools was reopened from on the resume (a sealed
+                # count + a holding claim: first and last lines only; else the one whole pass that counted it)
+                spool_reopen=spool_checks,
                 file_claims=claims_note if claims_note is not None else result.get('file_claims'),
                 failures_note=(None if not failures else 'records a producer could not use; each listed with its index '
                                'and error in derive.json / work/derived/.rows/failures.jsonl; every other record calculated'),
