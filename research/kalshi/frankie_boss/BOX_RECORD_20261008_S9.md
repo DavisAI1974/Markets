@@ -58,3 +58,18 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   day-bound marker ... (attempt e2e-20231018-a2-20231018-a1, CPUs [0..31] retained)" and "day saved on its assigned lane;
   resume the retained attempt". Unit frankie-queue-root-1791471869 still active at 16:34:42Z (expected: it ends `saved`,
   exit 5, on its next poll).
+- 16:35:16Z PROBE after the save (SSM 473bc88f, rc 0): unit frankie-queue-root-1791471869 GONE (0 root-worker units; the
+  worker's last record 16:34:40Z state waiting_owner, pid 1758, worker_lock_held false). root.json seq 2 e2e-20231018-a2/
+  20231018 state `saved`, owner booking day-run-20231018-day_slot_root-1791402822-3111, attempt e2e-20231018-a2-20231018-a1,
+  save_request standing. Marker Q/save/e2e-20231018-a2-20231018.save-request.json 497 B 15:27 standing. Ledger
+  /opt/frankie-box/cpu-bookings/day-run-20231018-day_slot_root-1791402822-3111.json: cpus 0-31, size 32, commit d67b9c63,
+  `retained` {at 2026-10-08T16:34:31Z, attempt e2e-20231018-a2-20231018-a1, by_pid 1758, pids_at_retain [1758 booking holder,
+  1834 step root], reason "the day is saved on its owner; its CPUs stay its own until ACTION=resume"}; owner {at 15:04:30Z}.
+  Receipt R/calculations-receipt.json ABSENT (confirmed at 16:34:13Z, nothing wrote it since: the child died in the whole-read).
+- 16:35:32Z CLEAN (SSM 4a56dbaa, rc 0): `systemctl stop frankie-cpu-watch.service` rc 0 -> inactive; its last loop line
+  20261008T163431Z bookings 1 findings 1 (unbooked 1) repins 0 resize 0. No frankie-* unit active. nproc 64, online 0-63.
+- 16:36Z HOLD (parent, Greg's new instruction): the grow, the resume and the kick were NOT run; the step-4 script was never
+  sent. Greg wants the spool whole-count fixed in the source and the tip restaged before the restart (a new staged checkout,
+  not 46cfe907). STATE AT HOLD: entry `saved`; booking day-run-20231018-day_slot_root-1791402822-3111 retained 0-31 (size 32,
+  not grown); marker standing; receipt absent; no root worker, no watchdog, no ROOT child; the old checkout d67b9c63 and the
+  staged 46cfe907 both present on disk, untouched. Box RUNNING, nothing killed beyond child 1834.
