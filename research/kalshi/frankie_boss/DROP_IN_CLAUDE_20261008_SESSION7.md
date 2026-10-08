@@ -94,5 +94,12 @@ NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS.
    claim + stat + tail (never stat alone); the re-pin list B1-B6; the second-box/48xlarge digest render.
 5. Switch the session back to auto before the automatic chain runs unattended.
 
+## Digest commands (full depth, nothing dropped; FRANKIE_DIGEST_DECODES unset = 2 decodes, ~58 min on 32 CPUs for the frames table; =5 = the present writer, same bytes)
+- Canary first (2 GiB slice of a2's frames spool, old writer vs new, sha256 of both, ~2 min on a 16-CPU lane; dry run without RUN=1):
+  `CODE_ROOT=/opt/frankie-box/code/<tip>-<run>-1/markets FRANKIE_LANE_CPUS=<free CPUs> RUN=1 bash "$CODE_ROOT/deploy/aws/box/frankie_box_digest_canary_slice.sh"`
+- Render (after R/calculations-receipt.json exists; refuses CPUs inside a live booking):
+  `R=/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1; CODE_ROOT=<tip checkout> MARKETS_SHA=<tip> OUTPUT_ROOT=$R FRANKIE_LANE_CPUS=<free CPUs> bash "$CODE_ROOT/deploy/aws/box/frankie_box_render_digest.sh"`
+
 ## Tip at handoff
-(appended by the parent at the end of session 6)
+- Work branch tip at handoff: the commit carrying this line (parent of this commit = ff9364a: digest decode ladder + canary;
+  133c9ba: the resume fixes). Stage THIS tip or newer before the resume; every "WIP snapshot" commit in between is mid-edit.
