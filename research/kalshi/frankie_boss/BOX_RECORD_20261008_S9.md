@@ -133,3 +133,20 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   {FRANKIE_CLASSROOM_CPUS: all, FRANKIE_ROOT_DIGEST: on}; scope e2e-20231018-a2:20231018. STATUS: booking cpus 0-63,
   retained (16:34:31Z), alive false (pre-admission); marker standing false; owner code_root/commit now 27109f4d (owner.cpus
   still lists 0-31: the admission is to book the retained ledger, which holds 0-63; checked at the first probe).
+- 16:52:54Z PROBE 1 (SSM 84d48966): units frankie-cpu-watch + frankie-queue-root-1791478195 active; NO experiment_root
+  child; receipt absent; ROOT log tail unchanged since 15:05:48Z; cpu-watch 16:51:55Z bookings 1 findings 2 (unbooked 2 =
+  the worker 4813 and the watch 4820 themselves, listed only).
+- 16:53:06-16:53:40Z (SSM 7016e9e2, 8c6f5c09, 674d442f, read-only): worker pid 4813 sleeping (hrtimer_nanosleep, 1 thread),
+  root-worker.json state running, pending 1, running [], 16:53:00Z; root.json seq 2 `queued` (reason "resumed by dispatch
+  resume ... CPUs [0..31]"); root-events.jsonl: the last event is the 16:49:56Z kick, NO `take` (at 15:04 the take came
+  within a minute of the resume).
+- ROOT CAUSE (source read, 27109f4d): the worker can never admit the day. frankie_box_frankie_queue._book_slot books with
+  cpus = owner.cpus (root.json owner binding: 0-31, 32 CPUs; the resume kept the binding as it was) and calls
+  frankie_box_cores.book; book() (cores.py ~784-796) takes a retained booking back in place ONLY when
+  `sorted(b['cpus']) == sorted(requested)`; the grown booking holds 0-63, so no match ->
+  `dict(status='waiting', reason='the retained lane CPU set is still occupied')` -> the worker breaks and re-polls every
+  60 s, forever. The grow (ledger 0-63, `grown` record) is not reflected in the queue's owner binding (owner.cpus,
+  held_bookings, the last attempt's cpus: all 0-31). Harmless while it waits: the worker holds no booking and starts
+  nothing. A fix is either source (the take-over matching a retained booking that was GROWN from the requested set, i.e.
+  requested is a subset and `grown` records the added CPUs; or _book_slot reading the retained ledger set for an owned
+  day) or a state edit of root.json owner.cpus. Both are outside this role; NOT done. Reported to the parent at 16:5xZ.
