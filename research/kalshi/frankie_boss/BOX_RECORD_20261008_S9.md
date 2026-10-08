@@ -174,3 +174,6 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
 - Operator (opus) continued: after the stage, ACTION=handover LINE=root SCOPE=e2e-20231018-a2:20231018 with
   FRANKIE_ROOT_DIGEST=on FRANKIE_CLASSROOM_CPUS=all on that checkout (the idle old worker 4813 ends on SIGTERM; the new
   --wait-lock worker takes the lock and admits the day on 0-63), then the receipt and the digest start.
+- 16:58Z PARENT NEXT: take-over fix 0e2a568 in source; restage run 37812835190 (dispatched 16:57:32Z) staging
+  0e2a568548cccac2e8e9bb500f0f07753819255b into CR2=/opt/frankie-box/code/0e2a568...-37812835190-1/markets. Plan: verify the
+  stage, then ACTION=handover LINE=root on CR2 (old worker 4813 signalled; new --wait-lock worker), then watch.
