@@ -19,7 +19,23 @@ fi
 # 64-vCPU box). The render is pinned there (taskset) and the digest writer sizes its helpers from it
 # (frankie_box_digest_document.lane_cpus). The plan JSON (CPUs, reasoning, the physical cores shared with bookings) is
 # printed and kept at $OUTPUT_ROOT/work/render-cpu-plan.json.
-PLAN=$(CODE_ROOT="$CODE_ROOT" /opt/frankie-box/venv/bin/python -I -S -B "$CODE_ROOT/deploy/aws/box/frankie_box_cores.py" plan --step digest-render) || { echo "refused: $PLAN" >&2; exit 4; }
+# Session 9 (Greg: the digest ALONGSIDE the teacher, inside the day's own booking): FRANKIE_RENDER_BOOKING=<the day's
+# booking id> (live while the teacher runs, or retained) makes the resolver answer EXACTLY that booking's cpu_list, refused
+# unless the ledger record belongs to the same run/day as OUTPUT_ROOT's attempt (<run>-<day>-a<N>; its owner/retained
+# attempt equal to it) and the receipt's day; FRANKIE_LANE_CPUS is then set to that list (taskset below), so the digest's
+# part count and pass save point key are the ROOT child's on the same booking. The plan JSON records it (inside_booking).
+# On this route the ROOT's calculations-receipt.json is left byte for byte (the teacher binds its sha256): the render's
+# record is $OUTPUT_ROOT/work/digest-render.json (--keep-receipt). Unset: unchanged (every CPU outside the bookings).
+KEEP=
+if [ -n "${FRANKIE_RENDER_BOOKING:-}" ]; then
+  DAY=$(/opt/frankie-box/venv/bin/python -I -S -B -c 'import json,sys; print(json.load(open(sys.argv[1]))["day"])' "$OUTPUT_ROOT/calculations-receipt.json") || { echo "refused: no day on $OUTPUT_ROOT/calculations-receipt.json" >&2; exit 4; }
+  ATTEMPT=$(basename "$OUTPUT_ROOT")
+  export FRANKIE_RENDER_BOOKING
+  PLAN=$(CODE_ROOT="$CODE_ROOT" /opt/frankie-box/venv/bin/python -I -S -B "$CODE_ROOT/deploy/aws/box/frankie_box_cores.py" plan --step digest-render --day "$DAY" --attempt "$ATTEMPT") || { echo "refused: $PLAN" >&2; exit 4; }
+  KEEP=--keep-receipt
+else
+  PLAN=$(CODE_ROOT="$CODE_ROOT" /opt/frankie-box/venv/bin/python -I -S -B "$CODE_ROOT/deploy/aws/box/frankie_box_cores.py" plan --step digest-render) || { echo "refused: $PLAN" >&2; exit 4; }
+fi
 echo "### render CPU plan: $PLAN"
 mkdir -p "$OUTPUT_ROOT/work" && printf '%s\n' "$PLAN" > "$OUTPUT_ROOT/work/render-cpu-plan.json"
 LANE=$(printf '%s' "$PLAN" | /opt/frankie-box/venv/bin/python -I -S -B -c 'import json,sys; print(json.load(sys.stdin)["cpu_list"])')
@@ -33,4 +49,4 @@ export FRANKIE_DIGEST_STOP_FILE="${FRANKIE_DIGEST_STOP_FILE:-$OUTPUT_ROOT/work/r
 rm -f "$FRANKIE_DIGEST_STOP_FILE"
 echo "### render stop file (a lawful stop at the next pass boundary): $FRANKIE_DIGEST_STOP_FILE"
 exec taskset -c "$FRANKIE_LANE_CPUS" /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_render_digest.py" \
-  --commit "$MARKETS_SHA" --output-root "$OUTPUT_ROOT"
+  --commit "$MARKETS_SHA" --output-root "$OUTPUT_ROOT" $KEEP

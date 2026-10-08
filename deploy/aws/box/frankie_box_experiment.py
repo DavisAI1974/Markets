@@ -2364,9 +2364,12 @@ class Run:
             # session 6: a ROOT run with the digest off (FRANKIE_ROOT_DIGEST / root_digest_setting) is a visible WAIT with
             # the way to put it right, re-evaluated every pass, never a silent failure of the day: the digest is rendered
             # later from the retained layers (frankie_box_render_digest.sh on this experiment root, every row whole)
+            # session 9: inside the day's own booking (beside the teacher; the ROOT receipt is kept, the render's record
+            # is work/digest-render.json); without FRANKIE_RENDER_BOOKING it takes only CPUs outside every booking
             return 'waiting', ('the ROOT %s has no derivation digest (its ROOT ran with the digest off); render it from the '
                                'retained layers, then the class line takes the day: MARKETS_SHA=<staged commit> '
-                               'CODE_ROOT=<staged checkout> OUTPUT_ROOT=%s bash deploy/aws/box/frankie_box_render_digest.sh'
+                               'CODE_ROOT=<staged checkout> OUTPUT_ROOT=%s FRANKIE_RENDER_BOOKING=<the day\'s booking id '
+                               '(live or retained; frankie_box_cores.py show)> bash deploy/aws/box/frankie_box_render_digest.sh'
                                % (calc, calc)), facts
         rows, source, why = self.day_rows(e)
         if rows is None and why and why.startswith('refused'):

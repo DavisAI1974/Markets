@@ -943,6 +943,37 @@ def _save_checkpoint(scratch, key, code, passes):
     os.replace(tmp, scratch / 'passes.pkl')
 
 
+def _adopt_checkpoint(scratch, key, code):
+    """Session 9: the pass save points of THIS table left by an earlier stopped attempt of the same calculation root.
+    Every digest call writes into a fresh <root>/work/derived/.digest-<uuid4> (frankie_box_boss_session.Session._write_digest),
+    so this table's scratch (<that>/table-NNNN.parallel) is new on every start, and before this a stopped render (the stop
+    file, a kill, the ROOT child's in-process digest) never found its own passes.pkl again. Here the sibling
+    .digest-*/<the same table directory name> whose passes.pkl holds the most passes usable under exactly this key (the
+    table's name and part specs, the pass modes) and this pass code is MOVED to `scratch` (one rename on the same
+    filesystem: nothing copied, nothing deleted; the earlier scratch keeps everything else). Returns the passes, or None.
+    The caller's lock (the calculation root's single digest writer) keeps two writers off one directory."""
+    scratch = Path(scratch)
+    best = None
+    for saved in sorted(scratch.parent.parent.glob('.digest-*/%s/passes.pkl' % scratch.name)):
+        directory = saved.parent
+        if directory.parent == scratch.parent or directory.is_symlink():
+            continue
+        passes = _load_checkpoint(directory, key, code)
+        if passes and (best is None or len(passes) > len(best[1])):
+            best = (directory, passes)
+    if best is None:
+        return None
+    scratch.parent.mkdir(parents=True, exist_ok=True)
+    os.rename(best[0], scratch)
+    with (scratch / 'adopted.json').open('a', encoding='utf-8') as handle:
+        handle.write(json.dumps(dict(schema='FRANKIE_PARALLEL_TABLE_ADOPTED_V1', moved_from=str(best[0]),
+                                     passes=[label for label in code if label in best[1]], at=time.time()),
+                                sort_keys=True) + '\n')
+    _stage_phase('root-digest: table %s resumes from %s (saved passes: %s)' % (
+        key.get('name'), best[0], ', '.join(label for label in code if label in best[1])))
+    return best[1]
+
+
 def _seeds(snaps):
     """The table's facts (the parts' observers merged in part order: the serial writer's facts), row count and first
     row, and each part's planner seed (the previous row and the last value / integer / list head per column before the
@@ -1023,7 +1054,9 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
 
     Save points per pass (Greg, 2026-09-28: stop, fix and restart without losing work): each finished pass records its
     result in scratch/passes.pkl, keyed by the table's parts and the code the pass depends on (_pass_code); a rerun with
-    the same scratch directory resumes at the first pass not saved under the current code. A pass's files are deleted
+    the same scratch directory resumes at the first pass not saved under the current code, and a rerun in a NEW digest
+    scratch (every digest call makes one) first adopts the sibling table directory with the most usable passes
+    (_adopt_checkpoint, session 9). A pass's files are deleted
     only once the pass that reads them is saved.
 
     pool: a PinnedPool shared with other tables written at the same time (the digest's one set of pinned helpers); None
@@ -1042,7 +1075,7 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     canon = modes['canonical_verify'] and canon_ok
     key, code = _checkpoint_key(name, specs), _pass_code()
     key = dict(key, modes=dict(fuse_context=fused, one_decode=one, canonical_verify=canon))
-    passes = _load_checkpoint(scratch, key, code) if scratch.is_dir() else None
+    passes = _load_checkpoint(scratch, key, code) if scratch.is_dir() else _adopt_checkpoint(scratch, key, code)
     if passes is None:
         if scratch.exists():
             shutil.rmtree(scratch)            # no usable save point: the scratch (any older layout) starts over

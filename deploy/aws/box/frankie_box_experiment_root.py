@@ -307,6 +307,42 @@ def _save_new_complete(path, value):
     sync_directory(path.parent)
 
 
+
+def reopen_retained_spools(session, result, claims, mode):
+    """(spool_checks, reopened) for the five legacy spools of a retained ROOT: each spool artifact sealed in
+    work/legacy-stage.json reopened from its sealed count while its claim holds (first and last lines only), keyed by its
+    resolved path for load_retained_layers(spools=...); a spool no sealed artifact names is listed as read whole there.
+    Shared by the ROOT resume below and the standalone digest render (frankie_box_render_digest.py, session 9): both
+    reopen the SAME RowSpool paths (the sealed artifact's own path string), so the parallel digest table's part specs,
+    and with them its per-pass save point key, are the same on both routes. ResumeRefused (a ValueError) on a change."""
+    import frankie_box_bedrock as B
+    from frankie_box_boss_session import _legacy_spool_artifact, _reopen_counted_spool, _sealed_spool_counts
+    spool_checks, reopened = [], {}
+    rows_dir = session.work / 'derived' / '.rows'
+    stage = session.work / 'legacy-stage.json'
+    saved_stage = json.loads(stage.read_bytes()) if stage.is_file() else {}
+    sealed_counts = _sealed_spool_counts(saved_stage.get('receipt') or result, session.work / 'derived')
+    for item in saved_stage.get('artifacts') or []:
+        if not (str(item.get('path', '')).endswith('.jsonl')
+                or (item.get('kind') == 'spool' and isinstance(item.get('count'), int))):
+            continue
+        path = Path(item['path'])
+        seen, count, how = _legacy_spool_artifact(item, claims, mode, sealed_counts, claims_dir=session.work)
+        if seen != {k: item[k] for k in ('bytes', 'sha256')}:
+            raise ResumeRefused('retained legacy spool changed: ' + item['path'], document=item['path'],
+                                differs=_differs({k: item[k] for k in ('bytes', 'sha256')}, seen))
+        reopened[str(path.resolve())] = _reopen_counted_spool(B.RowSpool, path, count)
+        spool_checks.append(dict(path=str(path), bytes=item['bytes'], count=count, basis=how,
+                                 reopened_from='the count: first and last lines read, no other line'))
+    for path in [*rows_dir.glob('input-*.jsonl')] + [rows_dir / (n + '.jsonl')
+                                                     for n in ('prices', 'frames', 'structures', 'failures')]:
+        if str(path.resolve()) not in reopened:
+            spool_checks.append(dict(path=str(path), bytes=path.stat().st_size if path.is_file() else None,
+                                     count=None, basis='read whole: RowSpool.reopen counts every line (no sealed '
+                                     'legacy-stage.json artifact names this spool)',
+                                     reopened_from='RowSpool.reopen in load_retained_layers (every line read)'))
+    return spool_checks, reopened
+
 def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_root, data_workers=1, digest=False,
                   frozen_survivors=None, resume=False, *, bedrock=True, shared_market_policy=None, bedrock_off_cause=None):
     requested = [False]
@@ -591,30 +627,7 @@ def _calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_r
             # claim is read whole ONCE there (sha256 + count in one pass, a sealed count it disagrees with refuses); a
             # spool with no sealed artifact at all stays on RowSpool.reopen's whole count. Each case is named on the
             # receipt (spool_reopen), never silent.
-            spool_checks, reopened = [], {}
-            rows_dir = session.work / 'derived' / '.rows'
-            stage = session.work / 'legacy-stage.json'
-            saved_stage = json.loads(stage.read_bytes()) if stage.is_file() else {}
-            sealed_counts = _sealed_spool_counts(saved_stage.get('receipt') or result, session.work / 'derived')
-            for item in saved_stage.get('artifacts') or []:
-                if not (str(item.get('path', '')).endswith('.jsonl')
-                        or (item.get('kind') == 'spool' and isinstance(item.get('count'), int))):
-                    continue
-                path = Path(item['path'])
-                seen, count, how = _legacy_spool_artifact(item, claims, mode, sealed_counts, claims_dir=session.work)
-                if seen != {k: item[k] for k in ('bytes', 'sha256')}:
-                    raise ResumeRefused('retained legacy spool changed: ' + item['path'], document=item['path'],
-                                        differs=_differs({k: item[k] for k in ('bytes', 'sha256')}, seen))
-                reopened[str(path.resolve())] = _reopen_counted_spool(B.RowSpool, path, count)
-                spool_checks.append(dict(path=str(path), bytes=item['bytes'], count=count, basis=how,
-                                         reopened_from='the count: first and last lines read, no other line'))
-            for path in [*rows_dir.glob('input-*.jsonl')] + [rows_dir / (n + '.jsonl')
-                                                             for n in ('prices', 'frames', 'structures', 'failures')]:
-                if str(path.resolve()) not in reopened:
-                    spool_checks.append(dict(path=str(path), bytes=path.stat().st_size if path.is_file() else None,
-                                             count=None, basis='read whole: RowSpool.reopen counts every line (no sealed '
-                                             'legacy-stage.json artifact names this spool)',
-                                             reopened_from='RowSpool.reopen in load_retained_layers (every line read)'))
+            spool_checks, reopened = reopen_retained_spools(session, result, claims, mode)
             _, _, _, prices, frames, structures, failures, layers, _ = load_retained_layers(
                 session, allow_failures=True, spools=reopened, layer_witnesses=witnessed)
             session.note('retained evidence: %d artifacts, %d by their claim, %d read whole; %d spools, %d reopened from '

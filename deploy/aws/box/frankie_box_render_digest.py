@@ -13,6 +13,14 @@ the staged commit and a digest_render record naming the receipt it supersedes; t
 re-assembled from it (frankie_box_principal_inputs.sh with the new receipt's path and sha256).
 
     frankie_box_render_digest.py --commit <staged sha> --output-root /opt/frankie-box/work/monday-calculations/<root>
+
+Session 9 (2026-10-08), the render INSIDE the day's own booking (frankie_box_render_digest.sh FRANKIE_RENDER_BOOKING=<id>,
+beside the teacher): --keep-receipt leaves calculations-receipt.json exactly as the ROOT wrote it (the teacher's shared
+identity binds its sha256: frankie_box_experiment teacher judging compares it), and records the render in
+work/digest-render.json (FRANKIE_DIGEST_RENDER_V1) instead; the class line reads work/derivation-digest-full.md itself. An
+experiment root is opened as the ROOT resume opens it (session 9): layers by their file claims, the five legacy spools from
+their sealed counts (frankie_box_experiment_root.reopen_retained_spools), so no 497 GB whole count and the SAME spool path
+strings as the ROOT child: the parallel table's part specs and pass save point key are the ROOT child's.
 """
 import argparse
 import fcntl
@@ -73,7 +81,31 @@ def root_kind(output, old):
     raise ValueError('retained Monday calculation root or experiment root required')
 
 
-def render(commit, output_root):
+RENDER_RECORD = 'digest-render.json'        # under <root>/work, the --keep-receipt route's record (create-only)
+
+
+def _retained_inputs(session, derivation):
+    """(spools, layer_witnesses) for load_retained_layers on an experiment root, exactly as the ROOT resume takes them:
+    every layer by its holding file claim (else read whole once), every sealed spool from its count (no whole count)."""
+    from frankie_box_boss_session import _artifact_check, _load_file_claims, _reuse_check_mode, LEGACY_REUSE_CHECK_SETTING
+    from frankie_box_experiment_root import reopen_retained_spools
+    claims, mode = _load_file_claims(session.work), _reuse_check_mode(LEGACY_REUSE_CHECK_SETTING)
+    witnessed, bases = {}, []
+    for item in derivation['layers'].values():
+        path = safe_path(item['path'])
+        seen, basis = _artifact_check(dict(item, path=str(path)), claims, mode, claims_dir=session.work)
+        if dict(seen, path=str(path)) != {k: item[k] for k in ('path', 'bytes', 'sha256')}:
+            raise ValueError('retained calculation layer differs: ' + item['path'])
+        witnessed[str(path.resolve())] = dict(path=str(path), bytes=item['bytes'], sha256=item['sha256'])
+        bases.append(basis)
+    checks, spools = reopen_retained_spools(session, derivation, claims, mode)
+    print('RENDER inputs: %d layers, %d by their claim; %d spools, %d reopened from a sealed count' % (
+        len(bases), sum(str(b).startswith('the saved claim') for b in bases), len(checks),
+        sum(c['count'] is not None for c in checks)), flush=True)
+    return spools, witnessed
+
+
+def render(commit, output_root, keep_receipt=False):
     require_checkout(commit)
     output = safe_path(output_root)
     if not output.is_dir():
@@ -92,6 +124,16 @@ def render(commit, output_root):
     derivation = json.loads(Path(old['derivation']['path']).read_bytes())
     if kind == 'monday' and derivation.get('failure_count') != 0:
         raise ValueError('calculation failures remain')
+    if keep_receipt and kind != 'experiment':
+        raise ValueError('--keep-receipt is the experiment root route (the day in flight)')
+    record_path = output / 'work' / RENDER_RECORD
+    if keep_receipt and record_path.is_file():
+        done = json.loads(record_path.read_bytes())
+        digest_now = output / 'work' / 'derivation-digest-full.md'
+        if digest_now.is_file() and digest_now.stat().st_size == (done.get('digest') or {}).get('bytes'):
+            print('RENDER already done: ' + json.dumps(dict(record=str(record_path), digest=done.get('digest')),
+                                                         sort_keys=True), flush=True)
+            return done
 
     from frankie_box_boss_session import Session
     import frankie_box_digest_render as DG
@@ -130,9 +172,28 @@ def render(commit, output_root):
     session.phase('deriving', 'render-only: the digest in ' + DG.SCHEMA + ' from the retained layers (legacy tables; bedrock stays in its layer files); no recalculation')
     # an experiment root: producer failures allowed (allow_failures reads derive.json's listed inputs); every frames row
     # rendered whole (Greg, 2026-10-08: no data dropped; the full depth as the ROOT's own digest renders it)
+    spools, witnessed = _retained_inputs(session, derivation) if kind == 'experiment' else (None, None)
     _, _, _, prices, frames, structures, _, layers, _ = load_retained_layers(session, allow_failures=(kind == 'experiment'),
-                                                                            receipt=derivation if kind == 'experiment' else None)
+                                                                            receipt=derivation if kind == 'experiment' else None,
+                                                                            spools=spools, layer_witnesses=witnessed)
     write_retained_digest(session, derivation, layers, prices, frames, structures, bedrock=False)
+    if keep_receipt:
+        # the day is in flight: the ROOT's receipt stays byte for byte (the teacher binds its sha256); the render's own
+        # record names the digest, its proof and the receipt it left standing
+        record = dict(schema='FRANKIE_DIGEST_RENDER_V1', digest_schema=DG.SCHEMA, at=time.time(), commit=commit, day=day,
+                      root_kind=kind, digest=witness(session.work / 'derivation-digest-full.md'),
+                      digest_proof=witness(session.work / 'digest-proof.json'), root_receipt_kept=witness(receipt_path),
+                      moved_aside=moved, recalculation=False, model_calls=0,
+                      render_booking=os.environ.get('FRANKIE_RENDER_BOOKING'), lane_cpus=os.environ.get('FRANKIE_LANE_CPUS'),
+                      bedrock_tables='not rendered: retained in the layer files',
+                      reason='the ROOT ran with the digest off; rendered from the retained layers inside the day\'s booking')
+        if record_path.exists():                      # an earlier record whose digest is gone: kept aside, never named
+            record_path.rename(aside / RENDER_RECORD)
+        save_new(record_path, record)
+        session.phase('derived', 'render-only done (ROOT receipt kept): ' + DG.SCHEMA)
+        print('RENDER ' + json.dumps(dict(record=str(record_path), digest=record['digest'], receipt_kept=record['root_receipt_kept'],
+                                          schema=DG.SCHEMA), sort_keys=True), flush=True)
+        return record
 
     # where the bedrock tables are: the moved-aside digest when it carries them, else wherever the last render said
     previous = old.get('digest_render') or {}
@@ -170,8 +231,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--commit', required=True)
     parser.add_argument('--output-root', required=True)
+    parser.add_argument('--keep-receipt', action='store_true',
+                        help='leave calculations-receipt.json as the ROOT wrote it; record work/digest-render.json')
     args = parser.parse_args()
-    render(args.commit, args.output_root)
+    render(args.commit, args.output_root, keep_receipt=args.keep_receipt)
 
 
 if __name__ == '__main__':

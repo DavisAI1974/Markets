@@ -310,9 +310,11 @@ def allocate_day_slot(free, size, cmap):
 
 LANE_STEPS = ('day-slot', 'step-inside', 'classroom-day', 'teacher-lanes', 'jev', 'digest-render')
 CLASSROOM_CPUS_SETTING = 'FRANKIE_CLASSROOM_CPUS'     # held (default) | all | one of DAY_RUN_SIZES: a run setting (FA-6)
+RENDER_BOOKING_SETTING = 'FRANKIE_RENDER_BOOKING'     # session 9: the digest render INSIDE this day's own booking
 
 
-def lane_for(step, plan_size=None, run=None, day=None, days=None, bookings=None, cmap=None, environ=None, held=None):
+def lane_for(step, plan_size=None, run=None, day=None, days=None, bookings=None, cmap=None, environ=None, held=None,
+             attempt=None):
     """THE ONE RESOLVER (Greg, session 8: "a generic cpu call ... so if we forget a place it just kicks in"): the CPU set
     a named step runs on, from the box's live core map and the live/retained bookings, with its reasoning. Returns
     dict(step, cpus, cpu_list, size, basis=[...], notes=[...], shares_cores_with=[...]) or raises PlanRefused with the
@@ -335,6 +337,11 @@ def lane_for(step, plan_size=None, run=None, day=None, days=None, bookings=None,
       digest-render   the CPUs outside EVERY live or retained booking, whole cores first; FRANKIE_LANE_CPUS, when set,
                       must lie inside that free set (refused otherwise); nothing free = refused. The physical cores it
                       shares with bookings (hyperthread siblings) are listed, never hidden.
+                      Session 9 (Greg: the digest alongside the teacher, inside the day's own booking): with
+                      FRANKIE_RENDER_BOOKING=<booking id> the answer is EXACTLY that live or retained day-run booking's
+                      CPUs, refused unless the booking belongs to the same run/day as `attempt` (the output root's
+                      <run>-<day>-a<N> name; its owner/retained attempt, when recorded, equal to it) and `day` (the
+                      receipt's day); FRANKIE_LANE_CPUS, when set, must equal that set. On the answer: inside_booking.
     `bookings`, `cmap`, `environ`, `held` are injectable for toys; live by default."""
     if step not in LANE_STEPS:
         raise PlanRefused('unknown step %r (one of %s)' % (step, ', '.join(LANE_STEPS)))
@@ -390,6 +397,52 @@ def lane_for(step, plan_size=None, run=None, day=None, days=None, bookings=None,
         basis.append(how)
         return answer(cpus, size=plan_size, notes=(['FALLBACK: part of this slot sits on hyperthread siblings of held CPUs']
                                                   if fallback else []), retained=False, fallback=fallback)
+
+    if step == 'digest-render' and environ.get(RENDER_BOOKING_SETTING):
+        inside = environ[RENDER_BOOKING_SETTING]
+        b = next((x for x in bookings if x.get('booking') == inside), None)
+        if b is None:
+            raise PlanRefused('digest-render: %s=%s is not a live or retained booking in the ledger' % (RENDER_BOOKING_SETTING, inside))
+        if b.get('kind') != 'day-run':
+            raise PlanRefused('digest-render: booking %s is a %s booking, not a day\'s day-run booking' % (inside, b.get('kind')))
+        named = re.fullmatch(r'(.+)-([0-9]{8})-a([0-9]+)', attempt or '')
+        if not named:
+            raise PlanRefused('digest-render: the output root\'s attempt name %r is not <run>-<day>-a<N>' % attempt)
+        a_run, a_day = named.group(1), named.group(2)
+        if day is not None and str(day) != a_day:
+            raise PlanRefused('digest-render: the receipt\'s day %s is not the attempt %s\'s day' % (day, attempt))
+        seen = []
+        for where, rec in (('booking', b), ('owner', b.get('owner') or {}), ('retained', b.get('retained') or {})):
+            r, d, at = rec.get('run'), rec.get('day'), (rec.get('attempt') if where != 'booking' else None)
+            if r is None and d is None:
+                continue
+            if (r is not None and r != a_run) or (d is not None and str(d) != a_day) or (at and at != attempt):
+                raise PlanRefused('digest-render: booking %s belongs to %s %s%s (its %s record), not to the attempt %s (%s %s)'
+                                  % (inside, r, d, ' attempt ' + at if at else '', where, attempt, a_run, a_day))
+            seen.append(where)
+        if not any(rec.get('run') for rec in (b, b.get('owner') or {}, b.get('retained') or {})):
+            raise PlanRefused('digest-render: booking %s names no run; it cannot be matched to %s' % (inside, attempt))
+        cpus = sorted(b.get('cpus') or [])
+        missing = set(cpus) - set(online)
+        if not cpus or missing:
+            raise PlanRefused('digest-render: booking %s holds %s (not online: %s)' % (inside, cpu_list(cpus) or 'no CPU',
+                                                                                     cpu_list(missing) or 'none'))
+        given = environ.get('FRANKIE_LANE_CPUS')
+        if given:
+            try:
+                wanted = sorted(parse_list(given))
+            except (ValueError, TypeError):
+                raise PlanRefused('digest-render: FRANKIE_LANE_CPUS %r is not a CPU list' % given)
+            if wanted != cpus:
+                raise PlanRefused('digest-render: FRANKIE_LANE_CPUS %s is not booking %s\'s set %s (inside a booking the '
+                                  'render takes exactly its CPUs)' % (given, inside, cpu_list(cpus)))
+        state = 'retained' if b.get('_retained') and not b.get('_alive') else 'live'
+        basis.append('inside the day\'s own booking %s (%s, %s; matched on its %s record%s): exactly its CPUs %s'
+                     % (inside, state, attempt, '/'.join(seen), 's' if len(seen) > 1 else '', cpu_list(cpus)))
+        return answer(cpus, booking=inside, inside_booking=dict(
+            booking=inside, run=a_run, day=a_day, attempt=attempt, state=state, cpus=cpu_list(cpus), matched_on=seen,
+            grown=len(b.get('grown') or []), owner=b.get('owner'), retained=b.get('retained'),
+            note='the render shares the booking with the day\'s running step (the teacher\'s wall is host answers)'))
 
     if step == 'digest-render':
         free = [c for c in online if c not in booked]
@@ -1339,7 +1392,8 @@ def cmd_grow(a):
 def cmd_plan(a):
     """READ-ONLY: the resolver's answer for a step (lane_for), as JSON; a refusal prints its reasoning and exits 2."""
     try:
-        out = lane_for(a.step, plan_size=a.size, run=a.run, day=a.day, days=(a.days.split(',') if a.days else None))
+        out = lane_for(a.step, plan_size=a.size, run=a.run, day=a.day, days=(a.days.split(',') if a.days else None),
+                       attempt=a.attempt)
     except PlanRefused as error:
         print(json.dumps(dict(schema='FRANKIE_CPU_PLAN_V1', step=a.step, refused=str(error)), sort_keys=True))
         return REFUSED_EXIT
@@ -1531,6 +1585,7 @@ def main():
     s.add_argument('--run')
     s.add_argument('--day')
     s.add_argument('--days', help='teacher-lanes: the batch days, comma list')
+    s.add_argument('--attempt', help='digest-render with FRANKIE_RENDER_BOOKING: the output root\'s attempt name')
     s = sub.add_parser('free')
     s.add_argument('--window', type=float, default=1.0)
     a = p.parse_args()

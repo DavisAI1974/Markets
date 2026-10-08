@@ -183,7 +183,9 @@ def audit(bookings, procs, affinity_of, threads_of, cmap, online, plans=None, re
                     findings.append(dict(kind='outside_booking', booking=b['booking'], pid=pid, tid=tid, affinity=C.cpu_list(aff),
                                          outside=C.cpu_list(outside), command=(procs.get(pid) or {}).get('cmdline', '')[:120],
                                          correction=dict(set_to=C.cpu_list((aff & cpus) or cpus))))
-                elif pid in roots and len(aff) < len(cpus):
+                elif pid in roots and len(aff) < len(cpus) and b.get('kind') != 'render':
+                    # (a digest render pins its own coordinator thread to one CPU of its lane by design, as lane_pin
+                    # workers are: never widened)
                     findings.append(dict(kind='narrower_than_lane', booking=b['booking'], pid=pid, tid=tid, affinity=C.cpu_list(aff),
                                          lane=C.cpu_list(cpus), command=(procs.get(pid) or {}).get('cmdline', '')[:120],
                                          correction=dict(set_to=C.cpu_list(cpus))))
@@ -447,8 +449,22 @@ def render_processes(procs, bookings):
         if 'frankie_box_render_digest.py' not in info.get('cmdline', '') or pid in claimed:
             continue
         aff = live_affinity(pid) or set()
+        lane = None
+        # session 9: a render started INSIDE a day's own booking (FRANKIE_RENDER_BOOKING) is planned on that booking,
+        # never on the free set: a resize to the free set would change its part count and lose its pass save points
+        try:
+            env = dict(e.split(b'=', 1) for e in Path('/proc/%d/environ' % pid).read_bytes().split(b'\0') if b'=' in e)
+            inside = (env.get(C.RENDER_BOOKING_SETTING.encode()) or b'').decode() or None
+            # the lane the render was given (its wrapper's FRANKIE_LANE_CPUS): the digest pins its main thread to ONE
+            # coordinator CPU, so the main thread's affinity alone read as a 1-CPU lane and asked a resize
+            lane = sorted(C.parse_list(env[b'FRANKIE_LANE_CPUS'].decode())) if env.get(b'FRANKIE_LANE_CPUS') else None
+        except (OSError, ValueError, TypeError):
+            inside = None
+        aff = set(lane) if lane else aff
         out.append(dict(booking='render-%d' % pid, kind='render', cpus=sorted(aff), cpu_list=C.cpu_list(aff), _alive=True, _retained=False,
-                        pids=[dict(pid=pid, start=C.start_time(pid), role='step digest-render (unbooked render)')], run=None, day=None))
+                        pids=[dict(pid=pid, start=C.start_time(pid), role='step digest-render (%s)' % (
+                            'inside booking ' + inside if inside else 'unbooked render'))], run=None, day=None,
+                        inside_booking=inside))
     return out
 
 
@@ -470,6 +486,12 @@ def one_pass(work_dir=WORK_DIR, window=1.0, environ=None, now=None):
     renders = render_processes(procs, bookings)
     plans, plan_reasons = planned_lanes(bookings, cmap)
     for r in renders:
+        if r.get('inside_booking'):
+            held = next((b for b in bookings if b['booking'] == r['inside_booking']), None)
+            if held:
+                r['cpus'], r['cpu_list'] = sorted(held['cpus']), C.cpu_list(held['cpus'])
+            plans[r['booking']] = sorted(r['cpus'])
+            continue
         try:
             plans[r['booking']] = C.lane_for('digest-render', bookings=bookings, cmap=cmap, environ={})['cpus']
         except C.PlanRefused as error:
