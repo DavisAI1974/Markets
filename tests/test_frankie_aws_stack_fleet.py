@@ -12,15 +12,25 @@ sys.path.insert(0, str(HERE.parent / 'deploy' / 'aws'))
 import frankie_aws_stack as S  # noqa: E402
 
 
+class NoSuchEntityException(Exception):
+    pass
+
+
 class FakeAccount(S.Account):
-    """apply=False (writes are recorded, never performed); reads come from a canned table keyed by operation."""
+    """apply=False (writes are recorded, never performed); reads come from a canned table keyed by operation. An op not
+    in the table raises a NoSuchEntity-shaped error (so 'absent' IAM resources read as missing); a canned value that is
+    an Exception is raised; a callable is called with the params."""
 
     def __init__(self, canned):
         super().__init__(apply=False, say=lambda *a: None)
         self.canned = canned
 
     def read(self, service, region, operation, **params):
+        if operation not in self.canned:
+            raise NoSuchEntityException('NoSuchEntity: %s' % operation)
         value = self.canned[operation]
+        if isinstance(value, Exception):
+            raise value
         return value(params) if callable(value) else value
 
 
@@ -141,6 +151,43 @@ class TestFleetLaunch(unittest.TestCase):
         self.assertEqual(tags['ClassroomEligible'], 'false')           # Spot box: ROOT stage only
 
 
+class TestDayBoxRole(unittest.TestCase):
+    def test_policy_builds_and_validates(self):
+        policy = S.day_box_role_policy()
+        self.assertEqual(policy['Version'], '2012-10-17')
+        self.assertEqual(len(policy['Statement']), 13)
+        for stmt in policy['Statement']:
+            self.assertEqual(stmt['Effect'], 'Allow')
+            res = stmt['Resource'] if isinstance(stmt['Resource'], list) else [stmt['Resource']]
+            for arn in res:
+                self.assertTrue(arn == '*' or arn.startswith('arn:aws:'), 'bad Resource %r in %s' % (arn, stmt['Sid']))
+        tag = next(s for s in policy['Statement'] if s['Sid'] == 'Ec2SelfTag')
+        self.assertEqual(tag['Condition']['StringEquals']['aws:ResourceTag/Project'], 'frankie')
+        params = next(s for s in policy['Statement'] if s['Sid'] == 'SsmGetParameter')
+        self.assertEqual(len(params['Resource']), 4)         # the four SSM parameters
+
+    def test_creates_when_absent(self):
+        acct = FakeAccount({})   # every IAM read is NoSuchEntity -> everything absent
+        rec = S.step_day_box_role(acct, args_for([]))
+        ops = [a['operation'] for a in rec['actions']]
+        self.assertEqual(ops, ['create_role', 'attach_role_policy', 'put_role_policy', 'create_instance_profile',
+                               'add_role_to_instance_profile'])
+        put = next(a for a in rec['actions'] if a['operation'] == 'put_role_policy')
+        self.assertEqual(put['params']['PolicyName'], S.IAM_INLINE_POLICY)
+
+    def test_present_when_all_exist(self):
+        acct = FakeAccount({
+            'get_role': {'Role': {'RoleName': S.IAM_ROLE}},
+            'list_attached_role_policies': {'AttachedPolicies': [{'PolicyArn': S.SSM_MANAGED_ARN}]},
+            'get_role_policy': {'PolicyDocument': S.day_box_role_policy()},
+            'get_instance_profile': {'InstanceProfile': {'Roles': [{'RoleName': S.IAM_ROLE}]}},
+        })
+        rec = S.step_day_box_role(acct, args_for([]))
+        self.assertEqual(rec['status'], 'present')
+        self.assertEqual(len(rec['actions']), 0)             # idempotent, never widens
+        self.assertTrue(rec['checked']['inline_matches'])
+
+
 class TestLaunchTemplateStep(unittest.TestCase):
     def test_needs_day_list_location(self):
         from frankie_aws_stack import Account
@@ -148,6 +195,13 @@ class TestLaunchTemplateStep(unittest.TestCase):
         rec = S.step_launch_template(acct, args_for(['--image-id', 'ami-1']))   # no --run, no --fleet-day-list
         self.assertEqual(rec['status'], 'needs_input')
         self.assertIn('day-list', rec['reason'])
+        self.assertEqual(len(rec['actions']), 0)
+
+    def test_refuses_absent_instance_profile(self):
+        acct = FakeAccount({})   # get_instance_profile -> NoSuchEntity
+        rec = S.step_launch_template(acct, args_for(['--image-id', 'ami-1', '--run', 'e2e-a']))
+        self.assertEqual(rec['status'], 'refused')
+        self.assertIn('day-box-role', rec['reason'])
         self.assertEqual(len(rec['actions']), 0)
 
 

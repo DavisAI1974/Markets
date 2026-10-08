@@ -54,10 +54,23 @@ QUOTA_ONDEMAND = 'L-1216C47A'           # Running On-Demand Standard (A,C,D,H,I,
 QUOTA_SPOT = 'L-34B43A08'               # All Standard Spot Instance Requests, us-east-1
 REPO = 'DavisAI1974/Markets'
 GITHUB_TOKEN_PARAM = '/markets/frankie/github-token'   # SSM SecureString in us-east-2 the box reads (workflow line 43)
+BUCKET_ARCHIVE = 'frankie-archive-568968024170-us-east-1'   # the us-east-1 archive bucket (parent 85ce2827)
+IAM_ROLE = 'frankie-day-box'            # the fleet boxes' OWN role (never widen the main box's Ssm role)
+IAM_PROFILE = 'frankie-day-box'
+IAM_INLINE_POLICY = 'FrankieDayBox-20261008'
+# The four SSM parameters the Ssm role names; the self-driving stage needs github-token. The granite-service and
+# runpod-serverless paths are the best-known names (confirm against the Ssm role's inline policy at apply if they differ;
+# an over-narrow parameter ARN only fails the specific GetParameter, never widens anything).
+SSM_PARAM_ARNS = [
+    'arn:aws:ssm:us-east-2:%s:parameter/markets/frankie/github-token' % ACCOUNT,
+    'arn:aws:ssm:us-east-2:%s:parameter/markets/frankie/granite-service' % ACCOUNT,
+    'arn:aws:ssm:us-east-2:%s:parameter/markets/frankie/runpod-serverless' % ACCOUNT,
+    'arn:aws:ssm:us-east-1:%s:parameter/markets/DATABENTO_API_KEY' % ACCOUNT,
+]
 FLEET_INSTANCE_TYPE = 'r7i.16xlarge'    # 64 vCPU, 512 GiB (Greg's fleet box)
 # --run has NO default (Greg decision 5): a missing run is refused so no fleet reuses the one-box a2 run e2e-20231018-a2.
 STEP_ORDER = ['ebs-status', 's3-gateway-endpoint', 's3-lifecycle', 'cw-agent', 'cw-alarms', 'detailed-monitoring',
-              'scheduler-stop', 'golden-ami', 'launch-template', 'fleet-launch', 'compute-optimizer',
+              'scheduler-stop', 'day-box-role', 'golden-ami', 'launch-template', 'fleet-launch', 'compute-optimizer',
               'snapshot-archive']
 
 # CloudWatch agent configuration: disk/mem/diskio with stable alarm dimensions [InstanceId, path] / [InstanceId].
@@ -515,6 +528,19 @@ def step_launch_template(account, args):
                                                 'bucket/prefix, or --run (the location defaults to fleet/<run>; --run '
                                                 'has no default, Greg decision 5)')
         return rec
+    # the instance profile must exist (read-only GetInstanceProfile): a template naming an absent profile launches boxes
+    # with no role. NoSuchEntity -> refuse (run day-box-role first); a credentials/other error is noted, not fatal (an
+    # offline dry run still prints the plan)
+    try:
+        account.read('iam', REGION_BOX, 'get_instance_profile', InstanceProfileName=args.instance_profile)
+        rec['checked'] = dict(rec.get('checked') or {}, instance_profile=args.instance_profile, profile_present=True)
+    except Exception as error:  # noqa: BLE001
+        if 'NoSuchEntity' in str(error) or 'NoSuchEntity' in type(error).__name__:
+            rec.update(status='refused', reason='instance profile %s does not exist: run the day-box-role step first '
+                                                '(python3 frankie_aws_stack.py --steps day-box-role)' % args.instance_profile)
+            return rec
+        rec['checked'] = dict(rec.get('checked') or {}, instance_profile=args.instance_profile,
+                              profile_check='unverified (%s)' % _error_text(error))
     data = launch_template_data(args)
     try:
         found = account.read('ec2', REGION_BOX, 'describe_launch_templates', Filters=[
@@ -542,6 +568,110 @@ def step_launch_template(account, args):
                       LaunchTemplateData=data, VersionDescription='frankie_aws_stack initial',
                       TagSpecifications=[{'ResourceType': 'launch-template',
                                           'Tags': [{'Key': 'Project', 'Value': 'Frankie'}]}])
+    return _finish(rec, account)
+
+
+def day_box_role_policy():
+    """The ONE inline policy FrankieDayBox-20261008 for the fleet boxes' role, exactly as the IAM-gap audit lists
+    (DROP_IN_CLAUDE_20261008_SESSION8.md): the granite day-list/claims/lease + the Ssm role's pod-root/box-runs/
+    host-deliveries S3, read of the bento ingest/day_external prefixes, the archive bucket (if boxes upload directly),
+    Bedrock in us-east-1 (the Granite voice meeting), self DescribeInstances/CreateTags scoped to Project=frankie, the
+    four SSM parameters, SSM command/info reads, and GetCallerIdentity. Never broader than this."""
+    g = 'arn:aws:s3:::%s' % BUCKET_GRANITE
+    d = 'arn:aws:s3:::%s' % BUCKET_DATA
+    a = 'arn:aws:s3:::%s' % BUCKET_ARCHIVE
+    return {
+        'Version': '2012-10-17',
+        'Statement': [
+            {'Sid': 'GraniteList', 'Effect': 'Allow', 'Action': 's3:ListBucket', 'Resource': g},
+            {'Sid': 'GraniteObjects', 'Effect': 'Allow',
+             'Action': ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
+             'Resource': [g + '/fleet/*', g + '/pod-root/*', g + '/box-runs/*']},
+            {'Sid': 'GraniteHostDeliveries', 'Effect': 'Allow',
+             'Action': ['s3:GetObject', 's3:PutObject', 's3:AbortMultipartUpload'], 'Resource': g + '/host-deliveries/*'},
+            {'Sid': 'BentoList', 'Effect': 'Allow', 'Action': 's3:ListBucket', 'Resource': d,
+             'Condition': {'StringLike': {'s3:prefix': ['frankie/ingest/*', 'frankie/day_external/*']}}},
+            {'Sid': 'BentoGet', 'Effect': 'Allow', 'Action': 's3:GetObject',
+             'Resource': [d + '/frankie/ingest/*', d + '/frankie/day_external/*']},
+            {'Sid': 'ArchiveList', 'Effect': 'Allow', 'Action': 's3:ListBucket', 'Resource': a},
+            {'Sid': 'ArchiveObjects', 'Effect': 'Allow',
+             'Action': ['s3:GetObject', 's3:PutObject', 's3:AbortMultipartUpload'], 'Resource': a + '/*'},
+            {'Sid': 'BedrockInvoke', 'Effect': 'Allow',
+             'Action': ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
+             'Resource': ['arn:aws:bedrock:us-east-1::foundation-model/*',
+                          'arn:aws:bedrock:us-east-1:%s:inference-profile/*' % ACCOUNT]},
+            {'Sid': 'Ec2Describe', 'Effect': 'Allow', 'Action': 'ec2:DescribeInstances', 'Resource': '*'},
+            {'Sid': 'Ec2SelfTag', 'Effect': 'Allow', 'Action': 'ec2:CreateTags',
+             'Resource': 'arn:aws:ec2:us-east-1:%s:instance/*' % ACCOUNT,
+             'Condition': {'StringEquals': {'aws:ResourceTag/Project': 'frankie'}}},
+            {'Sid': 'SsmGetParameter', 'Effect': 'Allow', 'Action': 'ssm:GetParameter', 'Resource': SSM_PARAM_ARNS},
+            {'Sid': 'SsmCommandInfo', 'Effect': 'Allow',
+             'Action': ['ssm:GetCommandInvocation', 'ssm:DescribeInstanceInformation'], 'Resource': '*'},
+            {'Sid': 'StsWhoAmI', 'Effect': 'Allow', 'Action': 'sts:GetCallerIdentity', 'Resource': '*'},
+        ],
+    }
+
+
+DAY_BOX_TRUST = {'Version': '2012-10-17', 'Statement': [{'Effect': 'Allow',
+                 'Principal': {'Service': 'ec2.amazonaws.com'}, 'Action': 'sts:AssumeRole'}]}
+SSM_MANAGED_ARN = 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+
+
+def step_day_box_role(account, args):
+    """Create the fleet boxes' role frankie-day-box (trust ec2), attach AmazonSSMManagedInstanceCore, put the ONE inline
+    policy FrankieDayBox-20261008, create the instance profile frankie-day-box and add the role; tag both
+    Project=frankie. Idempotent: if a piece exists it is verified and reported, never widened. The dry run prints the
+    full policy JSON. IAM is a NEW role, never a change to the main box's Ssm role."""
+    rec = receipt('day-box-role', cost='$0 (IAM role, inline policy and instance profile are free).')
+    policy = day_box_role_policy()
+    rec['checked'] = {'role': IAM_ROLE, 'instance_profile': IAM_PROFILE, 'inline_policy': IAM_INLINE_POLICY,
+                      'statements': len(policy['Statement']), 'policy': policy, 'managed': SSM_MANAGED_ARN}
+
+    def read(op, **kw):
+        try:
+            return account.read('iam', REGION_BOX, op, **kw)
+        except Exception as error:  # noqa: BLE001
+            if 'NoSuchEntity' in str(error) or 'NoSuchEntity' in type(error).__name__:
+                return None
+            raise
+    try:
+        role = read('get_role', RoleName=IAM_ROLE)
+        attached = read('list_attached_role_policies', RoleName=IAM_ROLE) if role else None
+        inline = read('get_role_policy', RoleName=IAM_ROLE, PolicyName=IAM_INLINE_POLICY) if role else None
+        profile = read('get_instance_profile', InstanceProfileName=IAM_PROFILE)
+    except Exception as error:  # noqa: BLE001
+        rec.update(status='refused', reason=_error_text(error))
+        return rec
+    tags = [{'Key': 'Project', 'Value': 'frankie'}]
+    if not role:
+        account.write(rec, 'iam', REGION_BOX, 'create_role', RoleName=IAM_ROLE,
+                      AssumeRolePolicyDocument=json.dumps(DAY_BOX_TRUST), Tags=tags,
+                      Description='Frankie fleet day-box: SSM + fleet S3 + Bedrock + self-tag (never the main box role)')
+        account.write(rec, 'iam', REGION_BOX, 'attach_role_policy', RoleName=IAM_ROLE, PolicyArn=SSM_MANAGED_ARN)
+        account.write(rec, 'iam', REGION_BOX, 'put_role_policy', RoleName=IAM_ROLE, PolicyName=IAM_INLINE_POLICY,
+                      PolicyDocument=json.dumps(policy))
+    else:
+        have_managed = any(p.get('PolicyArn') == SSM_MANAGED_ARN for p in (attached or {}).get('AttachedPolicies', []))
+        if not have_managed:
+            account.write(rec, 'iam', REGION_BOX, 'attach_role_policy', RoleName=IAM_ROLE, PolicyArn=SSM_MANAGED_ARN)
+        if not inline:
+            account.write(rec, 'iam', REGION_BOX, 'put_role_policy', RoleName=IAM_ROLE, PolicyName=IAM_INLINE_POLICY,
+                          PolicyDocument=json.dumps(policy))
+        else:
+            # never widen an existing inline policy: verify and report only
+            rec['checked']['inline_matches'] = (inline.get('PolicyDocument') == policy)
+    if not profile:
+        account.write(rec, 'iam', REGION_BOX, 'create_instance_profile', InstanceProfileName=IAM_PROFILE, Tags=tags)
+        account.write(rec, 'iam', REGION_BOX, 'add_role_to_instance_profile', InstanceProfileName=IAM_PROFILE,
+                      RoleName=IAM_ROLE)
+    else:
+        roles = [r.get('RoleName') for r in (profile or {}).get('InstanceProfile', {}).get('Roles', [])]
+        rec['checked']['profile_has_role'] = IAM_ROLE in roles
+        if IAM_ROLE not in roles:
+            account.write(rec, 'iam', REGION_BOX, 'add_role_to_instance_profile', InstanceProfileName=IAM_PROFILE,
+                          RoleName=IAM_ROLE)
+    if not rec['actions']:
+        rec['status'] = 'present'
     return _finish(rec, account)
 
 
@@ -745,6 +875,7 @@ STEPS = {
     'cw-alarms': step_cw_alarms,
     'detailed-monitoring': step_detailed_monitoring,
     'scheduler-stop': step_scheduler_stop,
+    'day-box-role': step_day_box_role,
     'golden-ami': step_golden_ami,
     'launch-template': step_launch_template,
     'fleet-launch': step_fleet_launch,
@@ -783,7 +914,8 @@ def build_parser():
     p.add_argument('--launch-template', default=LAUNCH_TEMPLATE)
     p.add_argument('--image-id', default='')
     p.add_argument('--instance-type', default=FLEET_INSTANCE_TYPE)
-    p.add_argument('--instance-profile', default='Ssm')
+    p.add_argument('--instance-profile', default=IAM_PROFILE, help='the fleet boxes\' instance profile (default '
+                                                                   'frankie-day-box from the day-box-role step)')
     p.add_argument('--kms-key-id', default=CMK_ARN, help='the account CMK ARN for EBS encryption (the box root/clones use it)')
     p.add_argument('--root-gib', type=int, default=3072, help='fleet root gp3 size (a day\'s ~1.4 TB x2, or clean-after-save)')
     p.add_argument('--root-iops', type=int, default=16000)
