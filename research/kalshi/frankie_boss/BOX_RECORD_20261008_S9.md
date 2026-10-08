@@ -447,3 +447,18 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   chunk; 48 scratch kill/resume cases byte-identical); 66b3fdc2 records. One-read digest (DECODES=1) NOT built: the plan
   pass needs table-wide facts (column order, keys-once shapes) from the whole snapshot; a speculate-and-verify renderer
   is days of work (recorded in IMPROVEMENTS item 14). Existing digest tests: 94 passed, 6 pre-existing failures.
+- 18:13:10-18:13:19Z (SSM 1ab3d6e2, executionTimeout 400): kick on db96f24 reconciled the finish (unknown) and ended;
+  ACTION=resume on CR6 (607eb273): finish 'resume'; kick on CR6 with FRANKIE_ROOT_VALIDATE_CHECK=off FRANKIE_ROOT_DIGEST=off
+  FRANKIE_CLASSROOM_CPUS=all: worker frankie-queue-root-1791483190, finish running.
+- 18:14:21Z (SSM 3b91fc32): NO teacher process; the worker log: "teacher ... waiting (no day of the batch is ready for its
+  teacher (sealed ingest, day file, completed shared-policy ROOT)); retrying in the held slot". 18:15:07Z (SSM 4d31a5ec):
+  CAUSE: the day's step record days/20231018/root.json still reads 'failed' (17:06Z, the from-scratch -a2 attempt);
+  the receipt on disk is complete (status calculations_retained, shared policy = the plan's); the two workers that would
+  have re-recorded the root step 'reused' were killed inside the whole-ledger reads. The teacher's readiness judges the
+  step record, not the ROOT on disk: a gate. Fix assigned (opus): readiness re-derives the root step from the retained
+  receipt (Run.root reused branch) when the record is not finished; same for every stage that gates on it.
+- Greg 18:1xZ: "Get all box changes on box and all code fixes done and on the boxes and we are going to quit for a
+  little while. End boxes so nothing is running after all changes on box are done." -> ACTION=save written 18:14:21Z (the
+  day stops at the worker's next check; the teacher never started, nothing in flight); FINAL stage dispatched 18:14:2xZ
+  on 513b08ff (everything up to the render durability) and a last one follows the readiness fix; then StopInstances +
+  KeepRunning=false; the volumes stay at baseline (the root volume's optimize must finish before any raise).
