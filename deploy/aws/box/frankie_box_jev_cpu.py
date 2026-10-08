@@ -54,7 +54,8 @@ def witness(path):
     return F.witness(path)
 
 SHARED_RUNTIME = 'frankie_box_granite_meeting.local_runtime'     # the ONE runtime definition Jev binds to (Greg, 2026-10-07)
-JEV_THREADS = 32      # THE one setting for Jev's llama-server threads (Greg, 2026-10-07 night: "Should be 32"); clamped
+JEV_THREADS = None    # THE one setting for Jev's llama-server threads. None = THE LANE SIZE (Greg, session 8, 2026-10-08:
+                      # "JEV_THREADS follows the lane: 64 on a 64 lane"; never a literal default); an integer is clamped
                       # to the held lane's CPU count at run time (lane_threads). The only runtime row not read from Granite.
 PIECE_CHARS_PER_TOKEN = 2   # derived row: piece_chars = Granite's input_token_cap_per_call x 2 (below the client's 3-chars-
                             # per-token hint, so a piece plus its instruction fits under the cap; the exact tokenizer decides)
@@ -92,12 +93,15 @@ def lane_threads(lane):
     token and the text diverges from there. The same thread count gives the same chunking and the same reduction order, so
     a run is reproducible at a fixed count. The effective count is therefore bound into the owner identity."""
     cpus = sorted(lane)
-    threads = max(1, min(int(JEV_THREADS), len(cpus))) if cpus else int(JEV_THREADS)
-    cores, basis = physical_cores(cpus) if cpus else (None, 'no lane CPUs given')
+    if not cpus:
+        raise ValueError('Jev needs the held lane\'s CPUs to size his threads (JEV_THREADS %s; never a literal default)' % JEV_THREADS)
+    threads = max(1, min(int(JEV_THREADS), len(cpus))) if JEV_THREADS else len(cpus)
+    cores, basis = physical_cores(cpus)
     return threads, dict(setting=JEV_THREADS, threads=threads, lane_cpus=cpus, lane_cpu_count=len(cpus),
                          physical_cores=cores, physical_cores_basis=basis,
-                         rule='threads = JEV_THREADS clamped to the held lane\'s CPU count; the server is pinned to that many '
-                              'lane CPUs in physical-core order (LlamaServer._server_cpus / _pin_child)',
+                         rule='threads = the held lane\'s CPU count (JEV_THREADS None, Greg session 8), or JEV_THREADS clamped '
+                              'to it, never above it; the server is pinned to that many lane CPUs in physical-core order '
+                              '(LlamaServer._server_cpus / _pin_child)',
                          hyperthreads=(None if cores is None else max(0, threads - cores)))
 
 
@@ -136,8 +140,8 @@ def bind_runtime(config_path, transport, shared=None, lane=None):
         # the held lane): an integer, so LlamaServer.threads_resolution records it as given and never falls to its
         # null rule (the meeting's one-CPU slot)
         server_params=dict(params, threads=threads, cpu_only=True,
-                           threads_source='frankie_box_jev_cpu.JEV_THREADS=%d clamped to the held lane (%d CPUs)'
-                                          % (JEV_THREADS, len(lane or []))),
+                           threads_source='frankie_box_jev_cpu.JEV_THREADS=%s (None = the lane size) clamped to the held lane '
+                                          '(%d CPUs)' % (JEV_THREADS, len(lane or []))),
         threads=threads, thread_record=thread_record, temperature=params['temperature'], top_p=params['top_p'], context_size=ctx,
         max_output_tokens=out, input_token_cap=cap,
         min_output_tokens=out,                 # derived: Granite always reserves its full per-call output
