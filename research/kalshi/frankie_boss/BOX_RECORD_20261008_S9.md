@@ -462,3 +462,13 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   day stops at the worker's next check; the teacher never started, nothing in flight); FINAL stage dispatched 18:14:2xZ
   on 513b08ff (everything up to the render durability) and a last one follows the readiness fix; then StopInstances +
   KeepRunning=false; the volumes stay at baseline (the root volume's optimize must finish before any raise).
+
+## STOP for the pause (Greg 18:1xZ: "we're stopping here and ending boxes for a while")
+- 18:17Z readiness fix landed: 59367e31 (Run.root_on_disk: a stage judges the ROOT on disk; a stale root step record is
+  rebuilt from the retained receipt as 'reused'; applied to teacher, shared_root_of (the live gate), classroom_ready,
+  data, search). Stage dispatched ~18:18Z (the box's resume checkout; its run id and receipt below).
+- 18:18:41Z (SSM 0f41bc00): the day STOPPED CLEANLY on the 18:14Z marker: ROOT-line entry done, finish SAVED ("saved on
+  its day-bound marker", 18:15Z), the worker ended itself (keep-running asked false), attempt -a1 + booking
+  ...repoint-1791479892-5613 (0-63) retained, marker standing, receipt (17:46Z) in place; only cpu-watch runs. No kill.
+  Stage 513b08ff (run 37822734333) on the box with receipt.
+- Next: 59367e31 stage receipt -> stop cpu-watch -> StopInstances i-035994afa8bdf66a5 + KeepRunning=false -> records.
