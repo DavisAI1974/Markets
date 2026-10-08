@@ -294,6 +294,19 @@ booking doing the evidence pass over the native ledgers (reading at ~126 MB/s = 
 ~26 min at this rate; the 18:20Z raise lifts it to 1,250 MiB/s for everything after). Receipt not yet written at 15:1xZ; the
 file-claims and derive.json are the saved ones. Next: the receipt, validate, the teacher (the stage handoff self-drives).
 
+## Fleet source REVIEW verdict (REVIEW_20261008_FLEET_SOURCE.md, 19598860; independent reviewer on tip 5cada66f)
+a2's one-box path: UNCHANGED and SAFE (every fleet branch behind one guard; the one-box toy confirms). The fleet template: NOT
+LAUNCHABLE until seven BLOCKING findings are fixed: B1 user-data cannot start a day (missing dispatch set, `|| echo` swallows the
+refusal: an idle $4.23/h box); B2 the second day per box never starts (two ACTION=start on one run); B3 the per-day claim is a no-op
+(python -I -S has no boto3; no `continue`); B4 lease DEADLOCK (day A grows to 64 while day B, saved at the gate, RETAINS its 32);
+B5 golden-ami defaults to the dirty main box (a2's state on every fleet box); B6 the idle guard stops fleet boxes within 6 h and
+user-data runs once; B7 the lease age check compares a datetime to a number (every later waiter yields forever). Plus 14 SHOULD
+FIX (S2 lease not released on failure paths, S4 lost updates on the day-list RMW, S14 WAIT bound < a 30-classroom chain, ...) and
+8 nits. B4 DECIDED by the parent on Greg's "science and speed": a day saved at the gate as fleet_waiting RELEASES its booking and
+REBOOKS on resume; the lease is taken only when the box's CPUs are free. Slice (f) assigned to the cloud session: all seven
+blocking + S2/S4/S14 before any fleet launch, then the rest. A proof box driven the existing way (stage + SSM start with the full
+variable set) is fine; via the fleet template it is not, yet.
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
