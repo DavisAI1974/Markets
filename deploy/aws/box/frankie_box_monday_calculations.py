@@ -72,11 +72,16 @@ def inline_layer_without_array(path, frames, structures):
     if size <= INLINE_TAIL_BYTES:
         return None
     head, key = inline_layer_head(path)
-    if key not in ('frames', 'groups') or not isinstance(head.get('count'), int) or any(k >= key for k in head):
+    if key not in ('frames', 'groups') or not isinstance(head.get('count'), int):
         return None
     with path.open('rb') as handle:
         handle.seek(size - INLINE_TAIL_BYTES)
         tail = handle.read()
+    # the trailing object is anchored on the array's TOP-LEVEL close in the tail (`\n ]`: indent=1 closes a top-level
+    # list as newline + one space + `]`, nothing nested closes at that indentation) and parsed as `{` + the text after
+    # its comma: any trailing keys, in any order (a2's `producer, reason, status`; an older order just as well). A
+    # head list's close (a file whose array and trailing keys fit inside the tail) is told apart because the object
+    # after it would hold the array key or a head key; the next top-level close is tried then
     trailing, at = None, tail.find(b'\n ]')
     while at >= 0:
         rest = tail[at + 3:].strip()
@@ -88,8 +93,8 @@ def inline_layer_without_array(path, frames, structures):
                 found = json.loads(b'{' + rest[1:])
             except ValueError:
                 return None
-            if isinstance(found, dict) and all(k > key for k in found):
-                trailing = found                # every key after the array sorts after it (a head list's close does not)
+            if isinstance(found, dict) and key not in found and not (set(found) & set(head)):
+                trailing = found
                 break
         at = tail.find(b'\n ]', at + 1)
     if trailing is None:
