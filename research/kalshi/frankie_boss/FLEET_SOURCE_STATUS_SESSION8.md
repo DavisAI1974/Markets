@@ -42,6 +42,16 @@ end of `E2E_ONE_DAY_20231018.md`.
   lane after release.
 - Toys: `tests/test_frankie_fleet_status.py` (7). Pass.
 
+### (e) The day-box-role IAM step + launch-template defaults to frankie-day-box
+A dry-run `day-box-role` step (never applied by this role) that creates the fleet boxes' OWN role `frankie-day-box`
+(trust ec2), attaches AmazonSSMManagedInstanceCore, puts the one inline policy `FrankieDayBox-20261008` (13 statements,
+exactly the drop-in's IAM-gap list), creates the instance profile and adds the role, tags both Project=frankie;
+idempotent, never widens an existing inline policy, and the dry run prints the full policy JSON on the receipt.
+`launch-template` now defaults `--instance-profile frankie-day-box` and refuses (read-only GetInstanceProfile) when the
+profile is absent. Greg applies it with `--apply --confirm GREG_GO_AWS_STACK --steps day-box-role` or from the console.
+Toys: policy builds+validates, creates-when-absent (5 writes), present-when-all-exist (0 writes), launch-template
+refuses an absent profile.
+
 ### (d) Greg's five decisions applied
 See "Decisions - ALL RESOLVED" below: staging pins a full commit hash + writes a receipt; a Spot/ClassroomEligible=false
 box is refused the classroom lease and fleet-launch refuses --spot for day boxes without --allow-spot-days; the gate
@@ -58,9 +68,11 @@ spot-refused-without-allow, spot-with-allow, launch-template needs-location, use
 - `e984ec33` - (c) the fleet workflow + status probe + full-day stage tracking + 7 toys.
 - `33f777fa` / `764366a5` - the (a-c) docs.
 - `b35b6939` - (d) Greg's five decisions applied + the claim-day CLI + 5 more toys.
+- `90e46f33` - the (d) docs.
+- `d78e0f95` - (e) the day-box-role IAM step + launch-template default/refusal + 4 toys.
 - (this docs update lands in a following commit.)
 Verification on every touched file: py_compile + ast.parse on .py, YAML safe_load on the workflow, bash -n on the pure
-run blocks AND the rendered user-data, git diff --check clean; 40/40 toys pass (`python -m unittest
+run blocks AND the rendered user-data, git diff --check clean; 44/44 toys pass (`python -m unittest
 tests.test_frankie_box_fleet tests.test_frankie_box_fleet_handoff tests.test_frankie_aws_stack_fleet
 tests.test_frankie_fleet_status`).
 
@@ -85,11 +97,14 @@ Two scope notes from the parent (also applied, in e984ec33):
 - **Full day sequence (not just the classroom).** The lease covers ONLY the classroom; data/search -> scientific-teacher
   -> the Granite voice meeting -> jev -> end run per-box on the grown 64 lane after the lease is released. The day-list
   state + the status probe mark a day done only at jev/end (FLEET_DONE_STAGES).
-- **Instance profile = reuse Ssm by name.** The launch template defaults `--instance-profile Ssm` (the main box's
-  profile; per the session records it carries SSM, Bedrock in us-east-1, and S3). No IAM was created or changed. ONE
-  thing to confirm before launch (the only residual item): that the Ssm role's S3 statement includes the new us-east-1
-  frankie-archive bucket (85ce2827); if it is bucket-scoped and omits it, add it, or switch to the day-scoped profile
-  AWS_TOOLS_STACK section 3.9 sketches. I did not touch IAM.
+- **Instance profile = the fleet boxes' OWN role `frankie-day-box` (RESOLVED by slice e, replacing the "reuse Ssm"
+  residual).** The parent's read-only IAM audit (drop-in "IAM gap for fleet boxes") confirmed the main box's Ssm role
+  does NOT cover the fleet/* prefix, the archive bucket, self-tagging or Bedrock, so widening Ssm is wrong. Slice (e)
+  adds the dry-run `day-box-role` step that creates a NEW role `frankie-day-box` + instance profile with the one inline
+  policy `FrankieDayBox-20261008` (the audit's exact statements); launch-template now defaults
+  `--instance-profile frankie-day-box` and refuses when that profile is absent. Greg applies the role with
+  `frankie_aws_stack.py --apply --confirm GREG_GO_AWS_STACK --steps day-box-role` (or from the IAM console); I did NOT
+  create or change any IAM. No residual IAM item remains.
 
 ## RUNTIME-UNVERIFIED (everything; the container has 4 CPUs, no ledger, no S3)
 The real S3Store against the bucket (412 handling, paging); classroom_gate + the WAIT unit end to end on the box; the
