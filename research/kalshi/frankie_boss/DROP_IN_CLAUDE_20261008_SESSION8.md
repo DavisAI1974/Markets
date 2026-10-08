@@ -187,6 +187,18 @@ box); the two clone volumes $328/mo at baseline; initialization ~$0.0036/GiB of 
   ~/.config/markets/env + ~/.aws/credentials (chmod 600, outside the repo), STS verified as user/Claude: the fallback credential
   path beside the connector. The Support API stays unusable on either (Basic support plan).
 
+## The day-1 box RESIZED (Greg, 12:1xZ: "we will want to increase day 1 box before we launch again")
+Main box i-035994afa8bdf66a5 resized r7i.8xlarge -> r7i.16xlarge (64 vCPU, 512 GiB) while STOPPED (ModifyInstanceAttribute; free
+until started; reversible the same way). a2's SAVED day stays in place on its own volumes: the resume on 64 CPUs needs no volume
+swap. The second-box clone (snapshots above) becomes the durable copy of a2 and a spare fleet box, not the resume target.
+PRE-LAUNCH CHECKLIST for this box (in this order, each one connector call; nothing done until Greg's go to start):
+  1. ModifyVolume vol-0d36715924f03b86c back to 16,000 IOPS / 1,250 MiB/s and vol-004b68c077be09cc9 to 10,000 / 1,000 (the
+     baseline change was 12:0xZ; the 6 h cooldown clears ~18:1xZ; a modify inside the cooldown is refused, not harmful).
+  2. StartInstances; SSM Online; KeepRunning=true; the hold/probe attached.
+  3. Stage the tip (frankie_box_run.yml, ACTION=stage), then ACTION=resume + ACTION=kick with DAY_CPUS=64 only if Greg says so
+     (the verified shape is DAY_CPUS=32; 64 is new) and FRANKIE_ROOT_DIGEST=off; the receipt in minutes; then validate, teacher.
+  Quota: one running r7i.16xlarge = 64 of the 256 On-Demand vCPUs.
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
