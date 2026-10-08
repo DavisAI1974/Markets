@@ -128,12 +128,11 @@ def render(commit, output_root):
             if earlier:
                 moved[key] = str(sorted(earlier)[0])
     session.phase('deriving', 'render-only: the digest in ' + DG.SCHEMA + ' from the retained layers (legacy tables; bedrock stays in its layer files); no recalculation')
-    # an experiment root: producer failures allowed (allow_failures reads derive.json's listed inputs); the frames in the
-    # top-ten form by default (frankie_box_digest_document.frame_form_for; FRANKIE_DIGEST_FRAME_FORM overrides)
+    # an experiment root: producer failures allowed (allow_failures reads derive.json's listed inputs); every frames row
+    # rendered whole (Greg, 2026-10-08: no data dropped; the full depth as the ROOT's own digest renders it)
     _, _, _, prices, frames, structures, _, layers, _ = load_retained_layers(session, allow_failures=(kind == 'experiment'),
                                                                             receipt=derivation if kind == 'experiment' else None)
     write_retained_digest(session, derivation, layers, prices, frames, structures, bedrock=False)
-    proof = json.loads((session.work / 'digest-proof.json').read_bytes())
 
     # where the bedrock tables are: the moved-aside digest when it carries them, else wherever the last render said
     previous = old.get('digest_render') or {}
@@ -147,7 +146,7 @@ def render(commit, output_root):
                                       supersedes=witness(superseded), previous_digest=old.get('digest'),
                                       previous_digest_proof=old.get('digest_proof'), moved_aside=moved,
                                       recalculation=False, model_calls=0, bedrock_tables_in=bedrock_in,
-                                      root_kind=kind, day=day, frame_form=proof.get('frame_form'),
+                                      root_kind=kind, day=day,
                                       bedrock_tables='not rendered: retained in the layer files' +
                                                      (' and in ' + bedrock_in if bedrock_in else '')))
     if kind == 'experiment':

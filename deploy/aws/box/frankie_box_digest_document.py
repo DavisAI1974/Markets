@@ -281,49 +281,10 @@ def _inode(path):
 LEGACY_TABLES = 5            # the legacy tables, always written: ordinals 0-4; the bedrock tables follow from 5
 TABLE_THREADS = 4            # bedrock tables written at once on the shared helpers (FRANKIE_DIGEST_TABLE_THREADS)
 
-# The frame form of the legacy_book_imbalance table (session 6, 2026-10-08). An experiment ROOT's frames carry the full
-# depth (every price level and order id, the group's INPUT records: FULL_DEPTH_FRAME_SECTIONS, boss_session.FRAME_SECTIONS)
-# beside the top-ten summary fields every earlier digest rendered; rendering the full depth into the Markdown digest
-# is the 496.7 GB table-0002 of a2 (five decodes, hours, a document no reader can hold). 'top_ten' drops the section
-# keys from every frame row as it is decoded (the row's other keys as they are: the Monday 95 MB form); 'full' renders
-# every key. Greg decides the form: FRANKIE_DIGEST_FRAME_FORM=top_ten|full overrides; the default is top_ten for a
-# derivation whose receipt records frame_sections_schema (full-depth frames), full otherwise (nothing to drop).
-FRAME_FORM_SETTING = 'FRANKIE_DIGEST_FRAME_FORM'
-FRAME_FORMS = ('top_ten', 'full')
-FULL_DEPTH_FRAME_SECTIONS = ('book', 'activity', 'integrity', 'native_frame', 'observation', 'input_records',
-                             'input_record_indices')
-
-
-def frame_form_for(receipt, given=None):
-    """The frame form to render: given (the caller's) or FRANKIE_DIGEST_FRAME_FORM, else the receipt's default."""
-    form = given or os.environ.get(FRAME_FORM_SETTING)
-    if form is None:
-        form = 'top_ten' if (receipt or {}).get('frame_sections_schema') else 'full'
-    if form not in FRAME_FORMS:
-        raise ValueError('%s must be one of %s, not %r' % (FRAME_FORM_SETTING, '|'.join(FRAME_FORMS), form))
-    return form
-
-
-def frame_section_keys():
-    """The full-depth frame section keys (boss_session.FRAME_SECTIONS when that module is loaded, else the copy here)."""
-    module, _ = _topology_helpers()
-    keys = tuple(getattr(module, 'FRAME_SECTIONS', ()) or ()) if module is not None else ()
-    return keys or FULL_DEPTH_FRAME_SECTIONS
-
-
-class _WithoutKeys:
-    """rows (a RowSpool or any iterable with a length) with the given top-level keys dropped from every row: the serial
-    writer's view of the top-ten frame form (the parallel writer drops them inside its part specs)."""
-
-    def __init__(self, rows, excluded):
-        self._rows, self._excluded = rows, frozenset(excluded)
-
-    def __len__(self):
-        return len(self._rows)
-
-    def __iter__(self):
-        for row in self._rows:
-            yield {k: v for k, v in row.items() if k not in self._excluded}
+# Greg, 2026-10-08, verbatim: "no! There we go dropping data like I said not to. We stream the data in and get 32 CPUs
+# and workers on this job." Every frames row is rendered whole (the full depth, every price level and order id, the
+# group's INPUT records): no top-ten form, no truncation, no sampling. The work is the HOW: one streamed decode of the
+# frames spool on the booked lane (see the session-6 ROOT-dedupe record in E2E_ONE_DAY_20231018.md).
 
 
 def _pin_thread(cpus):
@@ -379,7 +340,7 @@ def cpu_placement(lane):
 
 
 def write_digest(destination, receipt, layers, prices, frames, structures, roll, first, buys, sells,
-                 *, bedrock_entries, scratch_directory, disk_reserve=None, frame_form=None):
+                 *, bedrock_entries, scratch_directory, disk_reserve=None):
     """Fresh destination only; all scratch retained, even after publication failure.
 
     disk_reserve: the bytes the parallel table writer keeps free on the scratch filesystem (a setting: the argument,
@@ -445,11 +406,6 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
                      if not entry.get('bedrock')}
 
     import frankie_box_digest_parallel as PP
-    frame_form = frame_form_for(receipt, frame_form)
-    frame_excluded = frame_section_keys() if frame_form == 'top_ten' else ()
-    if frame_excluded:
-        # the top-ten form keys the frames table (ordinal 2, and the context derived from it) apart from the full form
-        legacy_inputs = dict(legacy_inputs, frame_form='top_ten', frame_sections_dropped=sorted(frame_excluded))
     lane = lane_cpus()
     place = cpu_placement(lane)
     helper_cpus = place['helpers']
@@ -602,10 +558,8 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         rows = {ordinal: rows_of[ordinal]() for ordinal in range(reused, LEGACY_TABLES)}
         parallel = {ordinal for ordinal in rows
                     if context_of[ordinal] is None and _parallel_spool(rows[ordinal]) and parts > 1}
-        if frame_excluded and 2 in rows and 2 not in parallel:
-            rows[2] = _WithoutKeys(rows[2], frame_excluded)           # the serial route's view of the top-ten form
         for ordinal in sorted(parallel):
-            specs = PP.spool_specs(rows[ordinal].path, parts, excluded=frame_excluded if ordinal == 2 else None)
+            specs = PP.spool_specs(rows[ordinal].path, parts)
             context_future = side.submit(context_job, ordinal, names[ordinal], specs)
             contexts[names[ordinal]] = context_future
             futures.append(context_future)
@@ -656,10 +610,6 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         result = dict(schema='FRANKIE_STREAMED_DIGEST_V1', path=str(destination), verified=True,
                       **staged, tables=[dict(name=e['name'],rows=e['rows'],**e['digest']) for e in stages],
                       scratch_directory=str(scratch),
-                      frame_form=dict(form=frame_form, sections_dropped=sorted(frame_excluded),     # session 6, additive
-                                      rule='top_ten drops the full-depth frame sections from every frames row as it '
-                                           'is decoded (the Monday digest form); full renders every key; '
-                                           + FRAME_FORM_SETTING + ' overrides the receipt default'),
                       cpu_schedule=dict(schema='FRANKIE_DIGEST_CPU_SCHEDULE_V1', placement=place, parts=parts,
                                         table_threads=table_threads, helpers=pool.record(), notes=list(notes),
                                         timeline=sorted(timeline, key=lambda e: (e['ordinal'], e['name'])),

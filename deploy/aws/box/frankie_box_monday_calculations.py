@@ -119,7 +119,7 @@ def load_retained_layers(session, *, allow_failures=False, receipt=None, spools=
     return pin, derived, records, prices, frames, structures, failures, layers, entries
 
 
-def write_retained_digest(session, receipt, layers, prices, frames, structures, bedrock=True, frame_form=None):
+def write_retained_digest(session, receipt, layers, prices, frames, structures, bedrock=True):
     """The digest from the retained layers, exactly as ROOT's assembly writes it (the roll series and per-second flow).
     bedrock=False: no bedrock sources or tables (the render-only step; Granite's read stops at the bedrock heading)."""
     flow = layers['legacy_native_signed_flow']['per_second']
@@ -128,7 +128,7 @@ def write_retained_digest(session, receipt, layers, prices, frames, structures, 
     frankie_box_progress.for_session(session).update('root-digest')
     session._write_digest(receipt, layers, prices, frames, structures,
         [float('nan') if v is None else v for v in roll_layer['series']], roll_layer['first_second'],
-        [r['buy'] for r in flow], [r['sell'] for r in flow], bedrock=bedrock, frame_form=frame_form)
+        [r['buy'] for r in flow], [r['sell'] for r in flow], bedrock=bedrock)
 
 
 def resume_legacy(session, source):
