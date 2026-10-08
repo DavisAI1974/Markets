@@ -5,6 +5,8 @@ route. It retains actual results for the existing principal/host/session to use.
 """
 import argparse
 import copy
+import hashlib
+import io
 import json
 import fcntl
 import sqlite3
@@ -21,6 +23,116 @@ from frankie_box_prepare_trading_day import read_pin, require_checkout, save_new
 from frankie_box_author_monday_launch import fresh, sync_directory
 
 PARENT = Path('/opt/frankie-box/work/monday-calculations')
+
+
+INLINE_TAIL_BYTES = 64 << 10
+
+
+def inline_layer_without_array(path, frames, structures):
+    """An INLINE legacy layer file (legacy_book_imbalance / legacy_structure_observables, the whole spool encoded in
+    it: 472 GB on a2) rebuilt WITHOUT parsing its array (session 6, Greg: no redundant pass): the keys before the array
+    are parsed from the file's head (they end with `count`, the length the same ROOT wrote beside the array it then
+    encoded from the same closed spool), the keys after it are read from the last 64 KiB (the text after the array's
+    closing bracket, from `"reason"` on), the array is the retained spool. Only for a file whose bytes are verified (a
+    held claim or a witness in this process): then the array's length IS `count`. Returns (value, basis) or None when
+    the file is not in that layout (the caller parses it whole, as before)."""
+    from frankie_box_digest_sources import _JSON
+    path = Path(path)
+    head, key = {}, None
+    with path.open(encoding='utf-8') as stream:
+        parser = _JSON(stream)
+        parser.expect('{')
+        while parser.peek() != '}':
+            key = parser.value()
+            parser.expect(':')
+            if key in ('frames', 'groups'):
+                break
+            head[key] = parser.value()
+            if parser.peek() == '}':
+                key = None
+                break
+            parser.expect(',')
+    if key not in ('frames', 'groups') or not isinstance(head.get('count'), int):
+        return None
+    size = path.stat().st_size
+    with path.open('rb') as handle:
+        handle.seek(max(0, size - INLINE_TAIL_BYTES))
+        tail = handle.read()
+    at = tail.rfind(b'"reason"')
+    if at < 0:
+        return None
+    before = tail[:at].rstrip()
+    if not (before.endswith(b',') and before[:-1].rstrip().endswith(b']')):
+        return None
+    try:
+        trailing = json.loads(b'{' + tail[at:])
+    except ValueError:
+        return None
+    spool = frames if key == 'frames' else structures
+    if head['count'] != len(spool):
+        raise ValueError('retained legacy layer and spool counts differ')
+    value = dict(head)
+    value[key] = spool
+    value.update(trailing)
+    return value, ('sealed record: the layer head\'s count beside its array (written by the same ROOT from the same '
+                   'closed spool) and the keys after the array from the last 64 KiB; the array not parsed; the file\'s '
+                   'bytes verified by the caller')
+
+
+class _HashingRaw(io.RawIOBase):
+    """A raw binary reader that feeds every byte it hands out to a sha256: one pass serves the streaming parser (the
+    count) and the witness (the hash) together."""
+
+    def __init__(self, handle):
+        self._handle, self.hasher, self.size = handle, hashlib.sha256(), 0
+
+    def readable(self):
+        return True
+
+    def readinto(self, buffer):
+        got = self._handle.readinto(buffer)
+        if got:
+            self.hasher.update(memoryview(buffer)[:got])
+            self.size += got
+        return got
+
+
+def parse_inline_layer_counting(path, frames, structures):
+    """The whole inline layer parsed once from a stream that hashes as it reads: (value, witness {bytes, sha256}); the
+    frames/groups array counted against the spool as before. The witness is remembered in the per-process hash cache,
+    so the layer entry's witness costs no second read (before: the parse, then a whole second read for the sha256)."""
+    from frankie_box_digest_sources import _JSON
+    import frankie_box_filehash
+    path = Path(path)
+    value = {}
+    with open(path, 'rb', buffering=0) as raw:
+        hashing = _HashingRaw(raw)
+        with io.TextIOWrapper(io.BufferedReader(hashing, 1 << 20), encoding='utf-8', newline='') as stream:
+            parser = _JSON(stream)
+            parser.expect('{')
+            while parser.peek() != '}':
+                key = parser.value()
+                parser.expect(':')
+                if key in ('frames', 'groups'):
+                    count = sum(1 for _ in parser.array())
+                    spool = frames if key == 'frames' else structures
+                    if count != len(spool):
+                        raise ValueError('retained legacy layer and spool counts differ')
+                    value[key] = spool
+                else:
+                    value[key] = parser.value()
+                if parser.peek() == '}':
+                    break
+                parser.expect(',')
+            parser.expect('}')
+            if parser.peek():
+                raise ValueError('trailing legacy layer bytes')
+            stream.read()                     # the rest of the file (whitespace) through the hasher
+    witness = dict(bytes=hashing.size, sha256=hashing.hasher.hexdigest())
+    if hashing.size != path.stat().st_size:
+        raise ValueError('retained legacy layer changed while it was read')
+    frankie_box_filehash.remember(path, witness)
+    return value, witness
 
 
 def load_retained_layers(session, *, allow_failures=False, receipt=None, spools=None, layer_witnesses=None):
@@ -92,30 +204,21 @@ def load_retained_layers(session, *, allow_failures=False, receipt=None, spools=
             entries[name] = dict(status=value['status'], producer=value.get('producer'),
                                 reason=value.get('reason'), **layer_witness(path))
             continue
-        with path.open(encoding='utf-8') as stream:
-            parser = _JSON(stream)
-            parser.expect('{')
-            while parser.peek() != '}':
-                key = parser.value()
-                parser.expect(':')
-                if key in ('frames', 'groups'):
-                    count = sum(1 for _ in parser.array())
-                    spool = frames if key == 'frames' else structures
-                    if count != len(spool):
-                        raise ValueError('retained legacy layer and spool counts differ')
-                    value[key] = spool
-                else:
-                    value[key] = parser.value()
-                if parser.peek() == '}':
-                    break
-                parser.expect(',')
-            parser.expect('}')
-            if parser.peek():
-                raise ValueError('trailing legacy layer bytes')
-        session.note('reusing retained legacy layer ' + name)
+        # session 6 (Greg: no redundant pass): an inline layer whose bytes the caller verified (layer_witnesses) is
+        # rebuilt from its head and tail without parsing its array (inline_layer_without_array); any other inline layer
+        # is parsed once from a hashing stream (parse_inline_layer_counting: the count and the witness in one pass,
+        # never the parse and then a second whole read for the sha256). count_basis on the entry says which.
+        sealed = (inline_layer_without_array(path, frames, structures)
+                  if str(Path(path).resolve()) in (layer_witnesses or {}) else None)
+        if sealed is not None:
+            value, count_basis = sealed
+        else:
+            value, _ = parse_inline_layer_counting(path, frames, structures)
+            count_basis = 'parsed: the array counted in the one pass that also hashed the file'
+        session.note('reusing retained legacy layer %s (%s)' % (name, count_basis.split(':')[0]))
         layers[name] = value
         entries[name] = dict(status=value['status'], producer=value.get('producer'),
-                            reason=value.get('reason'), **layer_witness(path))
+                            reason=value.get('reason'), **layer_witness(path), count_basis=count_basis)
     return pin, derived, records, prices, frames, structures, failures, layers, entries
 
 
