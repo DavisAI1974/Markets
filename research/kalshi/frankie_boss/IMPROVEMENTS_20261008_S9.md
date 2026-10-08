@@ -20,6 +20,7 @@ stage 6 min, restart, work in flight lost); a fix staged while the box is busy o
 ## NOW (stop-and-fix candidates while the render runs; staged before SAVED they cost 0)
 | # | Seen | Improvement | Call |
 |---|------|-------------|------|
+| 9a | 17:4xZ | **Everything is retained, nothing re-run (Greg)**: the digest render checkpoints only at the END of a pass; a stop inside a pass loses that pass's in-flight work (today ~24 min of the first decode). Fix: per-part durable progress inside a pass (each helper writes its part incrementally with a part checkpoint; the resume continues from the last complete chunk), so a stop anywhere loses at most one helper's current chunk | top of the NOW list: before the next render starts |
 | 9 | 17:3xZ | Look-ahead audit of teacher / classroom / data-search / scientific teacher / meeting / Jev / end for the same shapes (exact-set, run-size identity, second passes, retry/kill gates, worker literals) - record LOOKAHEAD_SWEEP_20261008_S9.md | fixes landed before ~19:10Z go into one restage with db96f24; later ones cost a cycle each |
 | 10 | 17:2xZ | Boundary validate OFF by default (the ROOT's own receipt + claims are the validation; claim/full stay as explicit settings) | the claim mode already costs only minutes; OFF is a usage/clarity gain; stage if ready |
 
