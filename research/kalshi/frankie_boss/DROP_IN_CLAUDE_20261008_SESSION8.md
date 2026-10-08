@@ -238,6 +238,31 @@ queue refuses a staged checkout whose HEAD differs, so with commits landing ever
 refused; resume + kick go over SSM through the Aws connector with CODE_ROOT and MARKETS_SHA explicit (session 6's live route), or
 the branch is frozen and restaged first. Staged and receipted on the box now: /opt/frankie-box/code/d67b9c63...-37792772826-1/markets.
 
+## Fleet workflow LANDED (e984ec33 + 764366a5, tip 764366a5; parent re-ran 35/35 fleet toys, YAML parse, py_compile, diff check)
+.github/workflows/frankie_fleet.yml: plan (dry run) / launch (refused unless confirm == GREG_GO_AWS_STACK; needs image_id + commit)
+/ status (read-only, one line per Project=frankie box from the S3 day list + DescribeInstances) / stop-all (confirm required;
+StopInstances only; never i-035994afa8bdf66a5 or i-0d17573dbce871520 unless named). frankie_box_run.yml unchanged. Full-day
+tracking: a day is done only after jev. Slice (d) (Greg's five decisions) is being built next in the cloud session.
+
+## IAM gap for fleet boxes (read-only audit of instance profile Ssm, 14:5xZ; NOT changed; Greg's go needed)
+The launch template reuses profile Ssm (role Ssm: AmazonSSMManagedInstanceCore + inline FrankieBoxStep8A-20261007). That role
+grants S3 only on frankie-granite42.../pod-root/*, box-runs/*, host-deliveries/* and read on bento .../frankie/ingest/* +
+day_external/*; ssm:GetParameter on the github-token / granite-service / runpod / DATABENTO parameters; ec2:CreateTags on the
+MAIN box only; ssm:SendCommand to the second box only; NO bedrock statement (the box reaches Bedrock today through the key
+file the main box carries, not the role). A self-driving fleet box therefore CANNOT: write the day list / claims / lease
+(s3 Put/Get/List under the FRANKIE_FLEET_DAY_LIST prefix, default fleet/<run>/* on the granite bucket), tag itself
+(KeepRunning, stage tags), upload its archive to frankie-archive-568968024170-us-east-1 (today the runner presigns the
+archive upload, so this one only matters if boxes upload directly), or call Bedrock for the Granite meeting unless the golden
+AMI carries the key file. PROPOSED (one go from Greg; applied by the connector as a NEW role frankie-day-box with its own
+instance profile, per AWS_TOOLS_STACK section 3.9, never by widening Ssm):
+  - s3:ListBucket on frankie-granite42-...; s3:GetObject/PutObject/DeleteObject on frankie-granite42-.../fleet/* (claims and
+    the lease use PutObject If-None-Match, which is plain s3:PutObject);
+  - s3:ListBucket + GetObject/PutObject/AbortMultipartUpload on frankie-archive-568968024170-us-east-1/* (if boxes upload);
+  - bedrock:InvokeModel + InvokeModelWithResponseStream on us-east-1 foundation models (the teacher-logic helper);
+  - ec2:CreateTags / DescribeInstances on instances with aws:ResourceTag/Project=frankie (self-tagging);
+  - the same ssm:GetParameter grants as Ssm (github-token for the self-driving stage).
+Then launch-template --instance-profile frankie-day-box. Until then: fleet boxes can run ROOT only with the day list OFF.
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
