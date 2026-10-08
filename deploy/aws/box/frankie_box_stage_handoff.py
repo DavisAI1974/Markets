@@ -564,8 +564,9 @@ def clean_action(args):
     result['clean'] = dict(receipt=str(clean_dir / 'clean-receipt.json'), manifest=receipt.get('manifest'),
                            moved=receipt.get('moved'), bytes_freed=receipt.get('bytes_freed'),
                            archives=[dict(old_path=i['old_path'], new_path=i['new_path'], bytes=i.get('bytes_archived', i.get('bytes_copied')),
-                                          sha256=i.get('sha256'), kind=i['kind']) for i in receipt['items']
-                                     if i['kind'] in ('move', 'archive') and i.get('status') == 'done'])
+                                          sha256=i.get('sha256') or ('per file: %d files in the moved-manifest' % len(i.get('files') or [])),
+                                          kind=i['kind']) for i in receipt['items']
+                                     if i['kind'] in ('move', 'archive', 'bind_mount') and i.get('status') == 'done'])
     _write(out_dir / 'trigger.json', result)
     _note_beside_marker(marker, dict(result, note='the clean unit\'s outcome beside the day\'s marker'))
     # the S3 Glacier second copy (call (f): both), AFTER the trigger so the day's chain never waits for it; on this
