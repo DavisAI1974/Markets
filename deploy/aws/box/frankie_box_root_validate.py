@@ -34,6 +34,13 @@ only); only the files left go to the lane's pool. FRANKIE_ROOT_VALIDATE_CHECK=fu
 the per-file basis are on validate.json (check, totals.verified_by_claim / totals.read_whole, each artifact's how) and
 on the summary line. A claim-verified result is a verified result everywhere (exit code, partial.json reuse in claim
 mode). Only a ROOT run (--root) has a claims file; --receipt stages read whole as before.
+A pinned artifact with NO claim row whose pin comes from the attempt's OWN calculations-receipt.json or work/derive.json
+(OWN_PIN_SOURCES: the bytes + sha256 the ROOT measured when it wrote the file; e.g. work/derivation-digest-full.md and the
+sealed INPUT container derive.json:rows) gets a FRANKIE_FILE_CLAIM_V2 row written here (ingest_block_sources.file_claim:
+a fresh stat identity + one 64 KiB tail; count only when the pin carries one; refused when the size is not the pinned
+bytes; claimed_by names the pin documents), appended to the claims file once after the claim pass, and is then verified
+by claim as the others; listed on validate.json as check.claims_added (totals.claims_added). Same trust as the existing
+rows (the ROOT's own witness); FRANKIE_ROOT_VALIDATE_CHECK=full writes no row and reads whole.
 
 Not transparent: frankie_box_prepare_trading_day.safe_path refuses a symlink at a path or any parent, and it guards the
 teacher stage's readers of the spools (frankie_box_market_timeline._local), the native ledgers/sections
@@ -74,6 +81,7 @@ MAX_LINKS = 40
 MAX_UNPINNED = 5000
 OK_STATUSES = ('ok', 'archived_s3_head_ok')
 CHECK_SETTING = 'FRANKIE_ROOT_VALIDATE_CHECK'      # claim (default): take a holding file claim | full: read every file whole
+OWN_PIN_SOURCES = ('calculations-receipt.json:', 'derive.json:')   # the ROOT's own measured witnesses (claim row added)
 S3_CLIENT = None      # a test or caller may set an S3 client here; otherwise boto3 is built lazily in the worker
 
 # Where safe_path-guarded readers read (relative to R): a symlink in the chain under one of these makes the next stage
@@ -523,9 +531,42 @@ def load_claims(root):
     return BS._load_file_claims(Path(root) / 'work')
 
 
-def check_by_claim(job, claims, claims_dir):
+def _own_pin_sources(job):
+    return [c['source'] for c in job['claims'] if str(c.get('source', '')).startswith(OWN_PIN_SOURCES)]
+
+
+def _add_own_claim(job, claims, added):
+    """A FRANKIE_FILE_CLAIM_V2 row for a job with no row whose pin is the ROOT's own (OWN_PIN_SOURCES): (row, None) or
+    (None, why not). The row joins `claims` and `added` (appended to the claims file after the pass)."""
+    sources = _own_pin_sources(job)
+    if not sources:
+        return None, 'no claim row for the path (and no pin from the ROOT\'s own receipt/derive.json)'
+    expected = job['expected']
+    if expected.get('bytes') is None or not expected.get('sha256'):
+        return None, 'no claim row and the pin records no bytes/sha256'
+    chain, final, error = symlink_chain(job['path'])
+    if error:
+        return None, 'the path does not resolve (%s)' % error
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import file_claim
+        row = file_claim(final, int(expected['bytes']), expected['sha256'],
+                         'ROOT boundary validator (session 9): the pin of %s (bytes + sha256 the ROOT measured when it '
+                         'wrote the file) + stat + tail at %s' % (', '.join(sources),
+                                                                 time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())))
+    except (ImportError, OSError, ValueError, TypeError) as refusal:
+        return None, 'no claim row and none could be added (%s: %s)' % (type(refusal).__name__, refusal)
+    if expected.get('count') is not None:
+        row['count'] = expected['count']
+        row['count_basis'] = 'the pinned count (%s)' % ', '.join(sources)
+    claims[row['path']] = row
+    added.append(row)
+    return row, None
+
+
+def check_by_claim(job, claims, claims_dir, added=None):
     """(artifact record, None) when the job is verified by its file claim (no whole read), else (None, why it is read
-    whole). The rule is in the module docstring; the chain, stat and reader_refusals are recorded as for a read."""
+    whole). The rule is in the module docstring; the chain, stat and reader_refusals are recorded as for a read. With
+    `added` (a list), a job with no row whose pin is the ROOT's own gets one first (_add_own_claim)."""
     started = time.monotonic()
     path, expected = job['path'], job['expected']
     if job.get('pre'):
@@ -536,7 +577,11 @@ def check_by_claim(job, claims, claims_dir):
         if row is not None:
             break
     if row is None:
-        return None, 'no claim row for the path'
+        if added is None:
+            return None, 'no claim row for the path'
+        row, why = _add_own_claim(job, claims, added)
+        if row is None:
+            return None, why
     if expected.get('bytes') is None or not expected.get('sha256'):
         return None, 'the pin records no bytes/sha256 to match a claim against'
     if (row.get('bytes'), row.get('sha256')) != (expected['bytes'], expected['sha256']):
@@ -580,6 +625,22 @@ def check_by_claim(job, claims, claims_dir):
     out['status'] = 'ok'
     out['seconds'] = round(time.monotonic() - started, 3)
     return out, None
+
+
+def append_claims(claims_dir, rows):
+    """The added rows appended to <claims_dir>/file-claims.jsonl in one atomic rewrite (the lines already there byte for
+    byte; the file created when absent). Returns the note; never raises (the rows still verified this run in memory)."""
+    try:
+        from research.kalshi.frankie_boss.operations.ingest_block_sources import FILE_CLAIMS_NAME, _write_claims_atomic
+        target = Path(claims_dir) / FILE_CLAIMS_NAME
+        text = target.read_text(encoding='utf-8') if target.is_file() else ''
+        if text and not text.endswith('\n'):
+            text += '\n'
+        _write_claims_atomic(target, (text + ''.join(json.dumps(r, sort_keys=True) + '\n' for r in rows)).encode())
+        return dict(path=str(target), added=len(rows), status='written')
+    except Exception as error:  # noqa: BLE001 - a claim row is a hint for later stages, never the validation's outcome
+        return dict(path=str(Path(claims_dir) / 'file-claims.jsonl'), added=0, status='not_written',
+                    reason='%s: %s' % (type(error).__name__, error))
 
 
 def check_job(job):
@@ -777,9 +838,10 @@ def validate(root=None, *, cpus=None, out=None, moved_manifest=None, run_dir=Non
 
     report = {}
     stopped = False
+    added, claims_note = [], None
     try:
         # the claim checks first, serially here (one stat + one 64 KiB read each); only the rest go to the pool
-        whole = []
+        whole, added = [], []
         for i, job in enumerate(pending):
             if mode != 'claim':
                 job['how'] = 'read whole (%s=full)' % CHECK_SETTING
@@ -792,7 +854,7 @@ def validate(root=None, *, cpus=None, out=None, moved_manifest=None, run_dir=Non
             if stopping():
                 whole.extend(pending[i:])
                 break
-            result, why = check_by_claim(job, claims, claims_dir)
+            result, why = check_by_claim(job, claims, claims_dir, added)
             if result is None:
                 job['how'] = 'read whole: ' + why
                 whole.append(job)
@@ -800,6 +862,8 @@ def validate(root=None, *, cpus=None, out=None, moved_manifest=None, run_dir=Non
             results[job['realpath']] = result
             say('%-22s %14s B %8.1f s  %s  (%s)' % (result['status'], result['observed'].get('bytes'),
                                                     result['seconds'], result['path'], result['how']))
+        if added:
+            claims_note = append_claims(claims_dir, added)
         if len(whole) != len(pending):
             save_partial()
             if probe is not None:
@@ -848,9 +912,13 @@ def validate(root=None, *, cpus=None, out=None, moved_manifest=None, run_dir=Non
                                bytes_read=sum(a.get('bytes_read') or 0 for a in artifacts if not a.get('reused_from_partial')),
                                reused_from_partial=len(skipped),
                                verified_by_claim=sum(1 for a in artifacts if a.get('check') == 'claim' and a['status'] == 'ok'),
-                               read_whole=sum(1 for a in artifacts if a.get('check') == 'read')),
+                               read_whole=sum(1 for a in artifacts if a.get('check') == 'read'),
+                               claims_added=len(added)),
                    check=dict(setting=CHECK_SETTING, mode=mode, claims_file=str(claims_dir / 'file-claims.jsonl') if claims_dir else None,
-                              claim_rows=len(claims)),
+                              claim_rows=len(claims),
+                              claims_added=[dict(path=r['path'], bytes=r['bytes'], count=r.get('count'),
+                                                 claimed_by=r['claimed_by']) for r in added],
+                              claims_written=claims_note),
                    mismatches=[dict(path=a['path'], status=a['status'], problems=a['problems']) for a in mismatches],
                    reader_refusals=[dict(path=a['path'], guards=a['reader_refusals']) for a in not_readable
                                     if a.get('reader_refusals')],

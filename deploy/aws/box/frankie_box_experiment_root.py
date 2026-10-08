@@ -232,6 +232,13 @@ def write_claims_from_derivation(root_dir, *, force=False):
                 items.append(dict(spool, kind='spool', count_basis='the sealed reference layer\'s spool record')
                              if isinstance(spool.get('count'), int) else spool)
         record_spool = (result.get('rows') or {}).get('record_spool')
+        container = result.get('rows') or {}
+        if all(isinstance(container.get(k), t) for k, t in (('path', str), ('bytes', int), ('sha256', str))):
+            # session 9 (one pass at the boundary): the sealed INPUT container itself (no count: derive.json's rows
+            # count is the journal record count, not newlines). The digest gets no row here: on the resume route this
+            # runs BEFORE the digest is rendered, so the only pin in reach is the previous render's; the boundary
+            # validator adds that row from the final receipt (frankie_box_root_validate OWN_PIN_SOURCES)
+            items.append({k: container[k] for k in ('path', 'bytes', 'sha256')})
         if record_spool:
             items.append(dict(record_spool, kind='spool', count=result['input_records'],
                               count_basis='the sealed receipt\'s input_records')
