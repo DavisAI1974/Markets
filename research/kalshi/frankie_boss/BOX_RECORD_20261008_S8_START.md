@@ -364,3 +364,28 @@ Skill full-run-orchestrator invoked first. AWS via the Aws connector only; GitHu
 - 15:50:50Z PROBE 19 (read-only, SSM 248b1de3-5225-4f04-86a8-405ee591d28a): receipt ABSENT; marker standing; child 1834 Dl
   46:15, read_bytes 360,980,013,056, legacy_book_imbalance.json pos 105,260,253,184. Entry running, save_request true.
   Watchdog 15:50:30Z findings 1 repins 0.
+- 15:51:59Z PROBE 20 (read-only, SSM 748264a6-aead-4bc6-8ae9-16cedf3533d8): receipt ABSENT; marker standing; child 1834 Dl
+  47:24, read_bytes 370,039,709,696, legacy_book_imbalance.json pos 114,319,949,824. Entry running, save_request true.
+- 15:52Z PARENT'S INSTRUCTION (received mid-task): do not give up at the 30-minute mark, never kill the child; probe every
+  3 minutes (read-only) until the entry reads SAVED, up to 17:00Z, one line per probe; on SAVED proceed as briefed
+  (confirm the staged 46cfe907 checkout + receipt, ACTION=resume + ACTION=kick over SSM with CODE_ROOT/MARKETS_SHA explicit,
+  watch for the receipt, record the claim decisions); if the receipt appears BEFORE SAVED, record it, do not restart,
+  report; if neither by 17:00Z, report the exact state and stop. Note: on this route the receipt and SAVED are one event
+  a few seconds apart (receipt written -> child exit 75 -> the worker's check_save marks the entry saved).
+- 15:53:37Z PROBE 21 (read-only, SSM f17aa252-afe8-4c22-a3c6-18975380a596): receipt ABSENT; marker standing; child 1834 Dl
+  49:02, read_bytes 382,790,397,952, legacy_book_imbalance.json pos 127,070,633,984. Entry running, save_request true.
+  Spools under R/work/derived/.rows: frames.jsonl 496,743,568,399 B, structures.jsonl 1,063,001,944 B, input-34b22334...
+  .jsonl 537,361,074 B, prices.jsonl 17,393,149 B, failures.jsonl 0 B. On d67b9c63's resume route load_retained_layers is
+  called without `spools=`, so each spool goes through B.RowSpool.reopen (checked next: whether that is a whole counting
+  read; if so the frames spool adds ~63 min after the layers -> SAVED ~17:4xZ, after the parent's 17:00Z cutoff).
+- 15:55Z CONFIRMED (git show d67b9c63:deploy/aws/box/frankie_box_bedrock.py, class RowSpool.reopen): reopen iterates every
+  line of the spool (`for line in stream: obj._count += 1`), a whole read. So after the 472 GB layer (~16:37Z) and the
+  small layers, load_retained_layers reopens input (0.54 GB), prices, frames (496.7 GB: ~63 min at 132 MB/s), structures
+  (1.06 GB), failures -> receipt + exit 75 + SAVED ~17:4xZ, i.e. AFTER the parent's 17:00Z cutoff. No save check exists
+  anywhere on that path (SIGTERM only sets the flag read after the return). Probing on to 17:00Z as instructed.
+- 15:55:01Z PROBE 22 (read-only, SSM f5b57b81-336f-4615-90a7-36b0de23906c): receipt ABSENT; marker standing; child 1834 Dl
+  50:26, read_bytes 393,834,000,384, legacy_book_imbalance.json pos 138,110,042,112. Entry running, save_request true.
+- 15:56:23Z PROBE 23 (read-only, SSM 5b483a7d-b776-42a9-b3d8-35d2db3374d2): receipt ABSENT; marker standing; child 1834 Dl
+  51:48, read_bytes 404,588,195,840, legacy_book_imbalance.json pos 148,864,237,568. Entry running, save_request true.
+  Watchdog 15:54:30Z findings 1 repins 0. (The 30-minute window of the brief closes 15:57Z: NOT saved; probing on to
+  17:00Z per the parent's instruction.)
