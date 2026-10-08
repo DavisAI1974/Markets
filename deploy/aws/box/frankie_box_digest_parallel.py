@@ -46,11 +46,68 @@ import frankie_box_digest_stream as TS  # noqa: E402
 POOL_PIN_WAIT_SECONDS = 5.0      # a helper's wait for its CPU before it takes the pool's whole CPU set instead
 
 
+# Session 9 (Greg, 2026-10-08: "Do the fixes now"): the digest's helpers read the source at LOW best-effort I/O priority
+# (class 2 level 7) so a checkout staging (frankie_box_stage_code.py: class 2 level 0) and the day's other stages are
+# served first on a shared volume. Set by each helper on itself (the ioprio_set syscall through the stdlib's ctypes: no
+# ionice binary, no psutil); read back by the coordinator for the receipt (PinnedPool.record()['io_priority'], one key).
+# Where the syscall is unavailable nothing changes and the reason is recorded. An I/O priority takes effect only under a
+# block scheduler that honours it (bfq: class and level; mq-deadline: class only; none: no effect), so the receipt also
+# carries each block device's scheduler. Orchestration only: never in _pass_code, never changes a table's bytes.
+HELPER_IO_PRIORITY = (2, 7)
+_IOPRIO_SYSCALLS = {'x86_64': (251, 252), 'aarch64': (30, 31)}      # (ioprio_set, ioprio_get)
+_IOPRIO_WHO_PROCESS = 1
+
+
+def _ioprio_call(which, *args):
+    """(result, None) or (None, reason): one ioprio syscall, never raising."""
+    try:
+        import ctypes
+        numbers = _IOPRIO_SYSCALLS.get(os.uname().machine)
+        if numbers is None or not sys.platform.startswith('linux'):
+            return None, 'no ioprio syscall number for %s/%s' % (sys.platform, os.uname().machine)
+        libc = ctypes.CDLL(None, use_errno=True)
+        result = libc.syscall(numbers[which], *args)
+        if result < 0:
+            return None, 'ioprio syscall errno %d' % ctypes.get_errno()
+        return result, None
+    except Exception as error:  # noqa: BLE001 - the priority is a preference: no change, the reason recorded
+        return None, '%s: %s' % (type(error).__name__, error)
+
+
+def set_io_priority(klass, level, pid=0):
+    """ioprio_set(IOPRIO_WHO_PROCESS, pid (0: the calling thread, inherited by its threads and children), class<<13|level).
+    Returns None when set, else the reason nothing changed."""
+    return _ioprio_call(0, _IOPRIO_WHO_PROCESS, int(pid), (int(klass) << 13) | int(level))[1]
+
+
+def io_priority_of(pid=0):
+    """{'class', 'level'} of a process (class 0 = none: the kernel derives best-effort from the nice value), or {'error'}."""
+    value, why = _ioprio_call(1, _IOPRIO_WHO_PROCESS, int(pid))
+    return dict(error=why) if value is None else {'class': value >> 13, 'level': value & 0x1fff}
+
+
+def block_schedulers():
+    """{device: the active I/O scheduler}: whether an I/O priority can take effect at all (none: it cannot)."""
+    out = {}
+    for path in sorted(Path('/sys/block').glob('*/queue/scheduler')):
+        if path.parts[-3].startswith(('loop', 'ram', 'zram')):
+            continue
+        try:
+            text = path.read_text()
+        except OSError:
+            continue
+        found = re.search(r'\[([^\]]+)\]', text)
+        out[path.parts[-3]] = found.group(1) if found else text.strip()
+    return out
+
+
 def _init(box, cpus, fallback=()):
     """Each helper takes one CPU of the pool's hand-out (in the order given: one thread per physical core first) and is
-    pinned to it. A helper that finds the hand-out empty never blocks there: it is pinned to the pool's whole CPU set."""
+    pinned to it. A helper that finds the hand-out empty never blocks there: it is pinned to the pool's whole CPU set.
+    Session 9: each helper sets its own I/O priority to HELPER_IO_PRIORITY (no change where unavailable)."""
     if box not in sys.path:
         sys.path.insert(0, box)
+    set_io_priority(*HELPER_IO_PRIORITY)
     import queue as queue_module
     try:
         cpu = {cpus.get(timeout=POOL_PIN_WAIT_SECONDS)}
@@ -240,10 +297,21 @@ class PinnedPool:
                             self.tasks_redone += 1
         return out
 
+    def io_priority(self):
+        """Session 9: the helpers' I/O priority as set (HELPER_IO_PRIORITY) and as read back from each live helper."""
+        with self._lock:
+            executor = self._executor
+        helpers = {str(pid): io_priority_of(pid) for pid in sorted((getattr(executor, '_processes', None) or {}))} \
+            if executor is not None else {}
+        return dict(requested=dict(zip(('class', 'level'), HELPER_IO_PRIORITY)), how='ioprio_set syscall (stdlib ctypes) '
+                    'in each helper at start; no change where unavailable', helpers_read_back=helpers,
+                    block_schedulers=block_schedulers(), coordinator=io_priority_of(0))
+
     def record(self):
         return dict(started_workers=self.started_workers, workers=len(self.cpus), workers_lost=self.workers_lost,
                     tasks_redone=self.tasks_redone, cpus=list(self.cpus),
-                    stop_kills=list(self.stop_kills))   # additive (session 6): empty when every stop ended by itself
+                    stop_kills=list(self.stop_kills),   # additive (session 6): empty when every stop ended by itself
+                    io_priority=self.io_priority())     # additive (session 9)
 
     def _stop_executor(self, executor, graceful):
         """shutdown + join, bounded (_bounded_executor_stop); what had to be terminated or killed is recorded and noted."""

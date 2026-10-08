@@ -227,9 +227,32 @@ def sync_tree(root):
         sync_directory(parent)
 
 
-def stage(pack, checksum, commit, run_id):
+# Session 9 (Greg, 2026-10-08): staging a checkout runs at HIGH best-effort I/O priority (class 2 level 0), so it is
+# served before the digest's helpers (class 2 level 7) on a shared volume; this process and the git commands it starts
+# (inherited). The ioprio_set syscall through the stdlib's ctypes (this helper imports no box code); where unavailable
+# nothing changes and the reason is on the staging receipt (key io_priority). Never changes what is staged.
+STAGING_IO_PRIORITY = (2, 0)
+
+
+def raise_io_priority():
+    try:
+        import ctypes
+        numbers = {'x86_64': (251, 252), 'aarch64': (30, 31)}.get(os.uname().machine)
+        if numbers is None:
+            return dict(requested=list(STAGING_IO_PRIORITY), applied=False, reason='no ioprio syscall number')
+        libc = ctypes.CDLL(None, use_errno=True)
+        if libc.syscall(numbers[0], 1, 0, (STAGING_IO_PRIORITY[0] << 13) | STAGING_IO_PRIORITY[1]) < 0:
+            return dict(requested=list(STAGING_IO_PRIORITY), applied=False, reason='errno %d' % ctypes.get_errno())
+        value = libc.syscall(numbers[1], 1, 0)
+        return dict(requested=list(STAGING_IO_PRIORITY), applied=True, read_back=[value >> 13, value & 0x1fff])
+    except Exception as error:
+        return dict(requested=list(STAGING_IO_PRIORITY), applied=False, reason=type(error).__name__)
+
+
+def stage(pack, checksum, commit, run_id, io_priority=None):
     if not sys.platform.startswith('linux'):
         raise ValueError('Linux staging only')
+    io_priority = io_priority if io_priority is not None else raise_io_priority()
     full_commit(commit)
     if not re.fullmatch('[A-Za-z0-9_-]{1,96}', str(run_id)):
         raise ValueError('bare unique run id required')
@@ -252,7 +275,8 @@ def stage(pack, checksum, commit, run_id):
     receipt = dict(schema='FRANKIE_INACTIVE_CODE_STAGING_RECEIPT_V1',
                    status='staged',commit=commit,code_root=str(target),
                    pack_sha256=checksum,files=count,intent_sha256=digest(intent),
-                   active_checkout_changed=False,model_calls=0,source_replays=0)
+                   active_checkout_changed=False,model_calls=0,source_replays=0,
+                   io_priority=io_priority)
     save_new(root/'staging-receipt.json',receipt)
     return receipt
 
@@ -352,6 +376,7 @@ def download(url,destination,size,checksum):
 
 def stage_from_map(commit,run_id,checksum,size,map_url):
     full_commit(commit)
+    io_priority=raise_io_priority()      # session 9: the download and the import at high priority
     if not re.fullmatch('[A-Za-z0-9_-]{1,96}',str(run_id)):
         raise ValueError('bare unique run id required')
     with open_url(map_url) as response:
@@ -376,7 +401,7 @@ def stage_from_map(commit,run_id,checksum,size,map_url):
                   bytes=size,sha256=checksum,run_id=run_id))
     pack=transfer/'source.pack'
     download(pin['url'],pack,size,checksum)
-    return stage(pack,checksum,commit,run_id)
+    return stage(pack,checksum,commit,run_id,io_priority=io_priority)
 
 
 def main():
