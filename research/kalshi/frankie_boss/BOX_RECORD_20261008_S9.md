@@ -244,3 +244,13 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   whole reads; recorded per file in validate.json. To apply it to this day: a save marker after the ROOT's receipt +
   digest (calculate_day's post-return check), then resume + kick on the restaged tip, so the boundary runs the
   claim-taking validator. Decision on applying it to this day: pending the digest's progress and Greg's word.
+- 17:15:53Z run 37814850954 completed, success.
+- 17:18:10Z VERIFY + REPOINT + RESUME + KICK (SSM 104d85f5, rc 0): staged, commit 1c59623; HEAD 1c59623c8128...; repoint.sh
+  present; `grep -c run_size` experiment_root.py 7; only frankie-cpu-watch unit; 0 experiment_root processes; entry seq 2
+  `failed`, no owner. REPOINT exit 0: {"status": "repointed", "attempt": "e2e-20231018-a2-20231018-a1", "booking":
+  "day-run-20231018-day_slot_repoint-1791479892-5613", "cpus": 0-63, "size": 64, "state": "unknown", "route":
+  "rebook_for_owner at the plan size 32 (...-5613), grown to 64 (16-31,48-63)"}. RESUME exit 0: note "the next ROOT-line
+  admission books exactly the retained CPUs and resumes attempt e2e-20231018-a2-20231018-a1"; archived []; owner attempt
+  -a1, booking -5613, bound 17:18:13Z, code_root/commit 1c59623. KICK exit 0: "frankie-cpu-watch already runs; nothing
+  started" (that watch is still the 27109f4d one); root worker unit frankie-queue-root-1791479893, worker lock held.
+  STATUS: booking -5613 alive true, cpus 0-63, retained null; marker not standing; owner -a1, cpus 0-63, commit 1c59623.
