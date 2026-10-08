@@ -281,6 +281,9 @@ def _source_rows(spec):
         return
     if spec['kind'] == 'spool':           # a legacy RowSpool file: its line range, decoded as RowSpool.__iter__ decodes
         from research.kalshi.frankie_boss.c15_journal import unpack
+        # excluded (session 6, 2026-10-08, the top-ten frame form): top-level keys dropped from every decoded row (the
+        # full-depth frame sections), the row otherwise as decoded; absent or empty = every key, as before
+        excluded = frozenset(spec.get('excluded') or ())
         position = spec['start']
         with open(spec['path'], 'rb') as handle:
             handle.seek(position)
@@ -288,7 +291,8 @@ def _source_rows(spec):
                 if position >= spec['end']:
                     break
                 position += len(line)
-                yield unpack(json.loads(line.decode('utf-8')))
+                row = unpack(json.loads(line.decode('utf-8')))
+                yield {k: v for k, v in row.items() if k not in excluded} if excluded else row
         return
     db = _readonly(spec['database'])
     try:
@@ -897,12 +901,14 @@ def pool_map_verify(jobs, cpus, pool=None):
 
 # ---- splitting a table into parts ----------------------------------------------------------------------------------
 
-def spool_specs(path, parts):
+def spool_specs(path, parts, excluded=None):
     """Ordered part specs over a closed legacy RowSpool file (frankie_box_bedrock.RowSpool: one packed row per line):
     contiguous line-aligned byte ranges, about size/parts bytes each, read straight from the file by each helper (the
     rows are never held whole). The parts are positions, not a different row set: their rows in order are the spool's
-    rows, and the parallel writer's bytes do not depend on where the parts are cut."""
+    rows, and the parallel writer's bytes do not depend on where the parts are cut.
+    excluded (session 6): top-level row keys every part drops as it decodes (_source_rows); None = none."""
     path = Path(path)
+    extra = dict(excluded=sorted(excluded)) if excluded else {}
     size = path.stat().st_size
     cuts = [0]
     with path.open('rb') as handle:
@@ -916,8 +922,8 @@ def spool_specs(path, parts):
             if cuts[-1] < cut < size:
                 cuts.append(cut)
     cuts.append(size)
-    return [dict(kind='spool', path=str(path), start=a, end=b) for a, b in zip(cuts, cuts[1:]) if b > a] or \
-        [dict(kind='spool', path=str(path), start=0, end=0)]
+    return [dict(kind='spool', path=str(path), start=a, end=b, **extra) for a, b in zip(cuts, cuts[1:]) if b > a] or \
+        [dict(kind='spool', path=str(path), start=0, end=0, **extra)]
 
 
 def _cross_rows(job):
