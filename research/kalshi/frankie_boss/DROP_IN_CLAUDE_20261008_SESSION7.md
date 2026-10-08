@@ -18,7 +18,16 @@ NEW SESSION -- Frankie (Greg). THE AGENTS ARE THE ONLY WAY WORK RUNS.
    on the newest staged checkout; the teacher starts next.
 ```
 
-## Run state at handoff (session 6, ~03:1xZ 2026-10-08; VERIFY FIRST, the shutdown was in flight when this was written)
+## Run state at handoff (session 6, VERIFIED 03:17Z 2026-10-08)
+- Main box i-035994afa8bdf66a5 STOPPED 03:17:03Z (KeepRunning=false); root vol-0d36715924f03b86c + archive vol-004b68c077be09cc9
+  kept. Other instances already stopped: us-east-1 i-0d17573dbce871520 frankie-linux-r7i4xl (r7i.16xlarge, the second box),
+  us-east-2 i-08cee7171c0a76a04 markets-year-pull-v2. Only EBS storage accrues.
+- Day e2e-20231018-a2/20231018: root.json state SAVED on its marker (save/e2e-20231018-a2-20231018.save-request.json standing,
+  written 03:09:51Z on 6076950; archived by the next ACTION=resume), booking ...-3111 retained (CPUs 0-31), owner commit
+  6076950, NO receipt, derive.json still the 01:33:06Z one, no teacher. Three ROOT kills tonight, all 'saved' on the marker
+  path: c9bf631 02:08:14Z (digest), e0d7ae0 02:59:54Z (layer parse), 6076950 03:14:11Z (layer parse).
+- Operator records of this session: BOX_RECORD_20261008_S6_{PROBE,HOLD,CLEAN,RELAUNCH}.md (+ the hold watcher and clean-a2 v2
+  scripts as .txt) in this directory.
 - Run e2e-20231018-a2, day 20231018 (a CLASSROOM-ARM day: plan classroom_arm=['20231018'], role discovery, cls midweek),
   attempt e2e-20231018-a2-20231018-a1, R=/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1, booking
   day-run-20231018-day_slot_root-1791402822-3111 (CPUs 0-31) RETAINED through every save. Expected final state: entry SAVED

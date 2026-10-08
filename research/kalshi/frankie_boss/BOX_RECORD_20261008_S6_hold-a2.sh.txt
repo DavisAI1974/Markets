@@ -1,0 +1,66 @@
+#!/bin/bash
+# hold-a2: pause run e2e-20231018-a2 day 20231018 at the ROOT->teacher boundary (Greg's standing instruction, 2026-10-08).
+# Reads R/progress.json; once the ROOT is past its last pre-projection save check (stage root-projection or later, or
+# the receipt exists) it runs the queue's ACTION=save exactly once (never a second marker), then logs ACTION=status
+# every 60 s for 30 minutes and exits. Never kills, removes, moves or tags anything.
+R=/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1
+Q=/opt/frankie-box/work/frankie-queue
+CODE_ROOT=/opt/frankie-box/code/c9bf631e884813adb79d263c80afd52a7fd9d837-37695921903-1/markets
+MARKETS_SHA=c9bf631e884813adb79d263c80afd52a7fd9d837
+RUN=e2e-20231018-a2
+DAY=20231018
+ROOT_PID=14860
+MARKER=$Q/save/$RUN-$DAY.save-request.json
+LOG=/opt/frankie-box/archive/.logs/hold-a2.log
+WRAP=$CODE_ROOT/deploy/aws/box/frankie_box_frankie_queue.sh
+PY=/opt/frankie-box/venv/bin/python
+log(){ echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }
+stage(){ "$PY" -c 'import json,sys
+try: print(json.load(open(sys.argv[1])).get("stage",""))
+except Exception as e: print("unreadable:"+type(e).__name__)' "$R/progress.json" 2>/dev/null; }
+yn(){ [ -e "$1" ] && echo yes || echo no; }
+teacher_running(){ pgrep -f 'frankie_box_(experiment|joined|scientific)_teacher' >/dev/null 2>&1; }
+log "watcher start pid $$ unit ${HOLD_UNIT:-?} poll 5s; R=$R marker=$MARKER"
+n=0
+while :; do
+  s=$(stage)
+  hit=0
+  case "$s" in root-projection|root-projection-publication|root-digest|root-derived) hit=1;; esac
+  [ -f "$R/calculations-receipt.json" ] && hit=1
+  if [ "$hit" = 1 ]; then
+    log "TRIGGER stage=$s receipt=$(yn "$R/calculations-receipt.json") legacy-stage.json=$(yn "$R/work/legacy-stage.json") pid$ROOT_PID=$(ps -o stat= -p $ROOT_PID 2>/dev/null || echo gone)"
+    if teacher_running; then
+      log "REFUSED: a teacher process is already running; not writing a marker"; pgrep -af 'frankie_box_(experiment|joined|scientific)_teacher' >> "$LOG"
+    elif [ -f "$MARKER" ]; then
+      log "marker already stands; not writing a second"; cat "$MARKER" >> "$LOG"; echo >> "$LOG"
+    else
+      log "FIRING ACTION=save RUN=$RUN DAY=$DAY"
+      out=$(cd / && CODE_ROOT="$CODE_ROOT" MARKETS_SHA="$MARKETS_SHA" ACTION=save RUN="$RUN" DAY="$DAY" bash "$WRAP" 2>&1); rc=$?
+      log "ACTION=save exit=$rc"; printf '%s\n' "$out" >> "$LOG"
+      log "marker standing now: $(yn "$MARKER")"
+    fi
+    break
+  fi
+  if ! kill -0 $ROOT_PID 2>/dev/null; then
+    log "ROOT pid $ROOT_PID is gone with stage=$s and no receipt; not firing (nothing to hold at the boundary)"
+    pgrep -af 'frankie_box' >> "$LOG" 2>&1
+    break
+  fi
+  n=$((n+1))
+  if [ $((n % 12)) = 0 ]; then
+    log "waiting stage=$s pid$ROOT_PID=$(ps -o stat=,etime= -p $ROOT_PID 2>/dev/null | tr -s ' ') legacy-stage.json=$(yn "$R/work/legacy-stage.json") marker=$(yn "$MARKER")"
+  fi
+  sleep 5
+done
+end=$(( $(date +%s) + 1800 ))
+while [ "$(date +%s)" -lt "$end" ]; do
+  log "STATUS stage=$(stage) receipt=$(yn "$R/calculations-receipt.json") pid$ROOT_PID=$(ps -o stat=,etime= -p $ROOT_PID 2>/dev/null | tr -s ' ' || echo gone) marker=$(yn "$MARKER") teacher=$(teacher_running && echo RUNNING || echo none)"
+  (cd / && CODE_ROOT="$CODE_ROOT" ACTION=status RUN="$RUN" DAY="$DAY" bash "$WRAP" 2>&1 | "$PY" -c 'import json,sys
+raw=sys.stdin.read()
+try:
+  d=json.loads(raw); r=d.get("root_entry") or {}
+  print(json.dumps(dict(verdict=d.get("verdict"), entry_state=r.get("state"), finish=(r.get("finish") or {}).get("state"), save_request=bool(r.get("save_request")), marker=d.get("marker"), booking=d.get("booking"), worker=d.get("worker"))))
+except Exception: print(raw[-1500:])') >> "$LOG" 2>&1
+  sleep 60
+done
+log "watcher end"

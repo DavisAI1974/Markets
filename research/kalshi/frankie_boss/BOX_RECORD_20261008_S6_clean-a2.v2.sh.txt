@@ -1,0 +1,404 @@
+#!/bin/bash
+# v2 2026-10-08 ~02:20Z (relaunch role, Greg option b): preflight 2 accepts the legacy-stage.json pin when the receipt is absent
+# and the entry is saved (recorded as receipt_basis on the CLEAN_RECEIPT); the MOVE is left out of the plan (zips only). Nothing else changed.
+# clean-a2: clean and zip the finished ROOT output of run e2e-20231018-a2 (day 20231018) ONCE the day is saved at the
+# ROOT->teacher boundary (Greg, 2026-10-08: "when he saves is then when he starts cleaning and zipping"; "we only do
+# 1 pass. Eliminate the 2nd pass"). Prepared 2026-10-08 by the clean role; it is the session-5 batch method
+# (archive/.logs/batch-worker3.sh: tar -vv listing at creation, zstd, sha256 on the WRITE stream through tee, symlink +
+# ARCHIVED README at the old path) with the ONE-pass rule applied (no decompress-list read-back) and two kinds of job:
+#   move  a file a later stage reads BY PATH through a plain open (the 472 GB inline layer legacy_book_imbalance.json:
+#         frankie_box_joined_teacher._job_stream, frankie_box_teach._stream_layer, load_retained_layers): copied as a
+#         PLAIN file to the archive volume in the same relative layout, sha256 on the write stream compared with the
+#         ROOT's own pin (work/legacy-stage.json), then a SYMLINK to the plain copy at the old path (never a tarball).
+#   zip   files NO later stage reads (the native finalization's append segments *.append.jsonl, whose bytes are already
+#         materialized in the final ledgers, and the pre-save ledger copy work/bedrock/ledgers/, the byte PREFIX of the
+#         same ledgers, named only by checkpoint 000005 for a native resume that is complete): tar -vv | zstd -T0 to
+#         <archive>/<rel>.tar.zst, sha256 on the write stream, the listing from tar -vv at creation, the source removed
+#         and a symlink + README left at the old path.
+# NEVER touched (STAY): the attempt directory itself (root() refuses a symlinked attempt dir), the receipts
+# (calculations-receipt.json, work/derive.json, work/derivation-digest-full.md, external-computation.json), everything
+# under work/derived/.rows/ (frankie_box_market_timeline._local refuses a symlink at the path or any parent), everything
+# the native selection pins under work/bedrock/recovery-*/ (receipt.json, result.json, the three final ledgers:
+# frankie_box_experiment_native._take_all refuses symlinks), work/derived/.projection-v2/ (same), the checkpoints,
+# anything under the 1 GiB floor, progress/probe files.
+# Modes:  dry-run  (default) prints the preflight results, the plan with measured sizes, the measured idle CPU pairs and
+#                  the duration estimate; writes NOTHING (not even the log).
+#         execute  refuses unless every preflight condition holds, then runs the jobs largest-first, N at a time, each
+#                  pinned to its own measured-idle sibling CPU pairs (zstd -T0 inside that set), with a disk guard that
+#                  SIGSTOPs the jobs below 15 GB free on EITHER volume and SIGCONTs them above 40 GB; writes the
+#                  moved-manifest and ends with one CLEAN_RECEIPT line. Idempotent: a job whose source is already the
+#                  symlink to its finished output is skipped; a stale .part is discarded and the job redone.
+#         __job    internal (one job in its own process group).
+set -u
+MODE=${1:-dry-run}
+R=${CLEAN_R:-/opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1}
+AR=${CLEAN_AR:-/opt/frankie-box/archive}
+Q=${CLEAN_Q:-/opt/frankie-box/work/frankie-queue}
+RUN=${CLEAN_RUN:-e2e-20231018-a2}
+DAY=${CLEAN_DAY:-20231018}
+ATTEMPT=$(basename "$R")
+DEST=$AR/work/experiment-roots/$ATTEMPT
+MANIFEST=$AR/work/experiment-roots/$ATTEMPT.moved-manifest.json
+LOGS=$AR/.logs
+LOG=$LOGS/clean-a2.log
+RESULTS=$LOGS/clean-a2.results.jsonl
+PGIDS=$LOGS/clean-a2.pgids
+LOCK=$LOGS/clean-a2.lock
+GUARD_MIN=${CLEAN_GUARD_MIN:-15000000000}
+GUARD_RESUME=${CLEAN_GUARD_RESUME:-40000000000}
+FLOOR=${CLEAN_FLOOR:-1073741824}
+JOBS_N=${CLEAN_JOBS:-3}
+PAIRS_PER_JOB=${CLEAN_PAIRS:-5}
+IDLE_MAX=${CLEAN_IDLE_MAX:-10}
+ZSTD=${CLEAN_ZSTD:-zstd}
+ZSTD_LEVEL=${CLEAN_ZSTD_LEVEL:--3}
+PY=${CLEAN_PY:-/opt/frankie-box/venv/bin/python}; [ -x "$PY" ] || PY=python3
+SELF=$(readlink -f "$0")
+SELF_SHA=$(sha256sum "$SELF" | cut -c1-64)
+MOVE_REL=work/derived/legacy_book_imbalance.json
+PRESAVE_REL=work/bedrock/ledgers
+STAMP(){ date -u +%FT%TZ; }
+say(){ echo "$(STAMP) $*"; }
+log(){ if [ "$MODE" = dry-run ]; then say "$*"; else say "$*" | tee -a "$LOG"; fi; }
+avail(){ df -B1 --output=avail "$1" 2>/dev/null | tail -n1 | tr -d ' '; }
+fsize(){ stat -c %s "$1" 2>/dev/null || echo 0; }
+dubytes(){ find "$1" -type f -printf '%s\n' 2>/dev/null | awk '{s+=$1} END {printf "%d", s+0}'; }
+gb(){ awk -v b="$1" 'BEGIN {printf "%.2f GB", b/1e9}'; }
+
+# ------------------------------------------------------------------------------------------------------- the plan
+# One line per job: kind|relative path|bytes, measured now, largest first. Nothing under the floor, nothing guarded.
+plan(){
+  local rel size f
+  # v2 (2026-10-08 02:2xZ, relaunch role): the MOVE of $MOVE_REL is LEFT OUT of the plan. The resumed ROOT's legacy-stage
+  # reuse (frankie_box_monday_calculations.load_retained_layers at e0d7ae0, line 106) witnesses the inline layer with
+  # frankie_box_prepare_trading_day.witness -> open_regular -> safe_path, which refuses any symlink component
+  # ('symlink path refused'); a symlink at the old path would make the resumed ROOT refuse. The three zips stay: nothing
+  # on the reuse route names work/bedrock/ledgers/ or the recovery .append.jsonl segments (boss_session 2549-2582,
+  # 3443-3465; restore_driver/copy_ledger_prefixes only inside B.run, skipped when native-stage.json is complete).
+  # if [ -f "$R/$MOVE_REL" ] && [ ! -L "$R/$MOVE_REL" ]; then
+  #   size=$(fsize "$R/$MOVE_REL"); [ "$size" -ge "$FLOOR" ] && echo "move|$MOVE_REL|$size"
+  # elif [ -L "$R/$MOVE_REL" ]; then echo "done|$MOVE_REL|0"; fi
+  for f in "$R"/work/bedrock/recovery-*/ledgers/*.append.jsonl; do
+    [ -e "$f" ] || [ -L "$f" ] || continue
+    rel=${f#"$R"/}
+    if [ -L "$f" ]; then echo "done|$rel|0"; continue; fi
+    size=$(fsize "$f"); [ "$size" -ge "$FLOOR" ] && echo "zip|$rel|$size"
+  done
+  if [ -d "$R/$PRESAVE_REL" ] && [ ! -L "$R/$PRESAVE_REL" ]; then
+    size=$(dubytes "$R/$PRESAVE_REL"); [ "$size" -ge "$FLOOR" ] && echo "zipdir|$PRESAVE_REL|$size"
+  elif [ -L "$R/$PRESAVE_REL" ]; then echo "done|$PRESAVE_REL|0"; fi
+}
+sorted_plan(){ plan | sort -t'|' -k3,3nr; }
+
+# ------------------------------------------------------------------------------------------------------ the pin
+pin_of(){   # bytes sha256 of a pinned artifact path from work/legacy-stage.json (else derive.json); "" when unknown
+  "$PY" - "$R" "$1" <<'EOF'
+import json, sys
+root, want = sys.argv[1], sys.argv[2]
+found = None
+def walk(o):
+    global found
+    if isinstance(o, dict):
+        if o.get('path') == want and isinstance(o.get('sha256'), str) and isinstance(o.get('bytes'), int):
+            found = o
+        for v in o.values(): walk(v)
+    elif isinstance(o, list):
+        for v in o: walk(v)
+for name in ('work/legacy-stage.json', 'work/derive.json'):
+    try: walk(json.load(open(root + '/' + name)))
+    except Exception: continue
+    if found: break
+print('%d %s' % (found['bytes'], found['sha256']) if found else '')
+EOF
+}
+
+# ---------------------------------------------------------------------------------- step 0: the teacher rows directory
+# The session-5 batch replaced /opt/frankie-box/work/experiment-teacher-rows (24.9 GB of OTHER days' rows) with a symlink
+# to its tar.zst. The a2 teacher writes experiment-teacher-rows/<day>/ (frankie_box_experiment_teacher.py:45,550) and every
+# reader addresses experiment-teacher-rows/<day> of the run's own days only (frankie_box_experiment.py rows_of 536-547,
+# 2260, 4109, 4160, school 3560; no glob/iterdir; teacher_knowledge / scientific_teacher never name it), so for a one-day
+# run the fix is a REAL empty directory with the ARCHIVED README inside it naming the tar.zst and its sha256.
+ROWS=${CLEAN_ROWS:-$(dirname "$Q")/experiment-teacher-rows}
+rows_dir_step(){   # $1 = dry-run | execute
+  local target readme_old sha note="$ROWS/ARCHIVED-OTHER-DAYS.README.txt"
+  if [ -L "$ROWS" ]; then
+    target=$(readlink "$ROWS"); readme_old="$ROWS.ARCHIVED.README.txt"
+    sha=$( [ -s "$target.sha256" ] && cut -c1-64 "$target.sha256" || echo unknown )
+    echo "STEP 0: $ROWS is a SYMLINK -> $target ($(fsize "$target") B, sha256 $sha); the a2 teacher would mkdir under a tarball"
+    if [ "$1" = execute ]; then
+      if busy_procs | grep -q teacher; then echo "STEP 0 REFUSED: a teacher process is running"; return 1; fi
+      rm "$ROWS" && mkdir "$ROWS" || { echo "STEP 0 FAILED: could not replace the symlink with a directory"; return 1; }
+      { echo "Other days' teacher rows (experiment-teacher-rows/<day> of earlier runs; see the listing) were archived by the session-5 batch on $(date -u -r "$target" +%FT%TZ 2>/dev/null) to:"
+        echo "  $target  ($(fsize "$target") B, sha256 $sha, listing $target.listing.src.txt)"
+        echo "This directory was recreated REAL and EMPTY on $(STAMP) by clean-a2.sh (sha256 $SELF_SHA) so the a2 teacher can write experiment-teacher-rows/<day>/."
+        echo "Restore the archived days beside the new ones: zstd -dc $target | tar -C $(dirname "$ROWS") -xf -   (never over a day the a2 teacher wrote)"
+        [ -f "$readme_old" ] && { echo "Original ARCHIVED README (kept at $readme_old):"; cat "$readme_old"; }
+      } > "$note"
+      [ -d "$ROWS" ] && [ ! -L "$ROWS" ] || { echo "STEP 0 FAILED: test -d $ROWS"; return 1; }
+      echo "STEP 0 DONE: real directory now; ls -la:"; ls -la "$ROWS"
+    else
+      echo "STEP 0 (dry-run) would: rm the symlink; mkdir $ROWS; write $note naming the tar.zst and its sha256; test -d; ls -la"
+    fi
+  elif [ -d "$ROWS" ]; then
+    echo "STEP 0: $ROWS is already a real directory ($(ls -1 "$ROWS" 2>/dev/null | wc -l) entries); nothing to do"
+    [ -f "$note" ] || echo "  (no $note inside: the archived other-days rows are named by $ROWS.ARCHIVED.README.txt if present)"
+  else
+    echo "STEP 0: $ROWS is absent"; [ "$1" = execute ] && { mkdir -p "$ROWS" && echo "  created empty"; }
+  fi
+  return 0
+}
+
+# ------------------------------------------------------------------------------------------------- preflight
+queue_state(){
+  "$PY" - "$Q/root.json" "$RUN" "$DAY" <<'EOF'
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+    hits = [e for e in d.get('entries', []) if e.get('run') == sys.argv[2] and str(e.get('day')) == sys.argv[3]]
+    print(hits[0].get('state') if len(hits) == 1 else 'entries:%d' % len(hits))
+except Exception as e:
+    print('unreadable:' + type(e).__name__)
+EOF
+}
+open_under_R(){   # count of open descriptors / cwds under R held by any other process
+  local n=0 p t
+  for p in /proc/[0-9]*; do
+    [ "${p#/proc/}" = "$$" ] && continue
+    t=$(readlink "$p/cwd" 2>/dev/null); case "$t" in "$R"|"$R"/*) n=$((n+1));; esac
+    for fd in "$p"/fd/*; do t=$(readlink "$fd" 2>/dev/null); case "$t" in "$R"/*) n=$((n+1));; esac; done
+  done 2>/dev/null
+  echo $n
+}
+busy_procs(){ pgrep -af 'frankie_box_experiment_root\.py|frankie_box_(experiment|joined|scientific)_teacher|batch-worker|frankie_box_root_move|frankie_box_root_validate' | grep -v "$$" | grep -v 'pgrep' ; }
+
+measure_idle_pairs(){   # sibling pairs (a,b) with both CPUs under IDLE_MAX % busy over 5 s; cpu0's pair excluded
+  local a b s1 s2
+  s1=$(grep '^cpu[0-9]' /proc/stat); sleep 5; s2=$(grep '^cpu[0-9]' /proc/stat)
+  paste -d' ' <(echo "$s1") <(echo "$s2") | awk '{b1=$2+$3+$4+$7+$8; i1=$5+$6; b2=$13+$14+$15+$18+$19; i2=$16+$17; t=(b2-b1)+(i2-i1); printf "%s %.1f\n", substr($1,4), (t>0?100*(b2-b1)/t:0)}' > "$BUSY_TMP"
+  for a in $(cut -d' ' -f1 "$BUSY_TMP" | sort -n); do
+    [ -r /sys/devices/system/cpu/cpu$a/topology/thread_siblings_list ] || continue
+    b=$(tr ',' '\n' < /sys/devices/system/cpu/cpu$a/topology/thread_siblings_list | grep -vx "$a" | head -n1)
+    [ -n "$b" ] && [ "$a" -lt "$b" ] || continue
+    [ "$a" = 0 ] && continue
+    awk -v a="$a" -v b="$b" -v m="$IDLE_MAX" '$1==a {ba=$2} $1==b {bb=$2} END {if (ba<m && bb<m) print a","b}' "$BUSY_TMP"
+  done
+}
+BUSY_TMP=$(mktemp)
+trap 'rm -f "$BUSY_TMP"' EXIT
+
+preflight(){   # prints one line per condition; returns the number of failures
+  local fails=0 ok st n a_free r_free need
+  chk(){ if [ "$1" = 0 ]; then echo "  PASS $2"; else echo "  FAIL $2"; fails=$((fails+1)); fi; }
+  [ -d "$R" ] && [ ! -L "$R" ]; chk $? "R is a directory and not a symlink: $R"
+  # v2 (Greg, 2026-10-08, option b): with the queue entry 'saved' and R/calculations-receipt.json ABSENT (the ROOT tree
+  # was killed at 02:08:14Z before its receipt), the legacy-stage.json pin stands in for the receipt (preflight 11
+  # verifies that pin against the file when a move is planned); the basis is recorded on the CLEAN_RECEIPT.
+  if [ -f "$R/calculations-receipt.json" ] && [ ! -L "$R/calculations-receipt.json" ]; then
+    RECEIPT_BASIS="calculations-receipt.json present"; chk 0 "R/calculations-receipt.json exists (ROOT completion published)"
+  elif [ ! -e "$R/calculations-receipt.json" ] && [ "$(queue_state)" = saved ] && [ -f "$R/work/legacy-stage.json" ] && [ ! -L "$R/work/legacy-stage.json" ]; then
+    LEGACY_STAGE_SHA=$(sha256sum "$R/work/legacy-stage.json" | cut -c1-64)
+    RECEIPT_BASIS="calculations-receipt.json ABSENT (ROOT killed before its receipt); entry saved; the legacy-stage.json pin accepted in its place (work/legacy-stage.json $(fsize "$R/work/legacy-stage.json") B sha256 $LEGACY_STAGE_SHA)"
+    chk 0 "R/calculations-receipt.json ABSENT and entry saved: work/legacy-stage.json pin accepted in its place (sha256 $LEGACY_STAGE_SHA)"
+  else
+    RECEIPT_BASIS="neither the receipt nor an acceptable legacy-stage.json pin"; chk 1 "R/calculations-receipt.json exists (ROOT completion published)"
+  fi
+  st=$(queue_state); [ "$st" = saved ]; chk $? "queue entry $RUN/$DAY state is 'saved' (read: $st)"
+  n=$(open_under_R); [ "$n" = 0 ]; chk $? "no process holds a file or cwd under R open (open: $n)"
+  n=$(busy_procs | wc -l); [ "$n" = 0 ]; chk $? "no ROOT / teacher / batch / validate process running (found: $n)"
+  [ -n "${CLEAN_SKIP_MOUNT_CHECK:-}" ] || findmnt -n "$AR" >/dev/null 2>&1; chk $? "archive volume mounted at $AR${CLEAN_SKIP_MOUNT_CHECK:+ (check skipped: test)}"
+  need=$(( PLAN_BYTES + GUARD_MIN )); a_free=$(avail "$AR"); [ "${a_free:-0}" -ge "$need" ]; chk $? "archive free $(gb "${a_free:-0}") >= planned $(gb "$PLAN_BYTES") uncompressed + 15 GB"
+  r_free=$(avail /); [ "${r_free:-0}" -ge "$GUARD_MIN" ]; chk $? "root free $(gb "${r_free:-0}") >= 15 GB"
+  for t in tar taskset flock sha256sum tee findmnt; do command -v "$t" >/dev/null; chk $? "tool present: $t"; done
+  command -v "$ZSTD" >/dev/null; chk $? "tool present: $ZSTD"
+  [ -x "$PY" ] || command -v "$PY" >/dev/null; chk $? "python: $PY"
+  n=$(echo "$IDLE_PAIRS" | grep -c .); [ "$n" -ge "$JOBS_N" ]; chk $? "measured-idle sibling CPU pairs >= $JOBS_N (idle pairs: $n: $(echo $IDLE_PAIRS | tr '\n' ' '))"
+  if echo "$PLAN" | grep -q '^move|'; then
+    st=$(pin_of "$R/$MOVE_REL"); [ -n "$st" ] && [ "${st%% *}" = "$(fsize "$R/$MOVE_REL")" ]; chk $? "move pin found in legacy-stage.json and its bytes equal the file (pin: ${st:-none})"
+  fi
+  [ -n "$PLAN" ]; chk $? "plan is not empty"
+  return $fails
+}
+
+show_plan(){
+  local kind rel size total=0 line
+  echo "PLAN (largest first; sizes measured now):"
+  while IFS='|' read -r kind rel size; do
+    case "$kind" in
+      move)   echo "  MOVE   $(printf '%16d' "$size") B  $(gb "$size")  $rel  -> $DEST/$rel  (plain copy + symlink; sha256 on the write stream vs the ROOT pin)";;
+      zip)    echo "  ZIP    $(printf '%16d' "$size") B  $(gb "$size")  $rel  -> $DEST/$rel.tar.zst  (tar -vv | zstd -T0; source removed; symlink + README)";;
+      zipdir) echo "  ZIPDIR $(printf '%16d' "$size") B  $(gb "$size")  $rel/ -> $DEST/$rel.tar.zst  (tar -vv | zstd -T0; directory removed; symlink + README)";;
+      done)   echo "  DONE   already a symlink: $rel";;
+    esac
+    total=$((total+size))
+  done <<< "$PLAN"
+  echo "  total to take off the root volume: $total B ($(gb "$total"))"
+  echo "STAY (never touched): the attempt dir; calculations-receipt.json, work/derive.json, work/derivation-digest-full.md, external-computation.json;"
+  echo "  work/derived/.rows/* (frames.jsonl $(fsize "$R/work/derived/.rows/frames.jsonl") B: market_timeline._local refuses symlinks);"
+  echo "  work/bedrock/recovery-*/{receipt.json,result.json,ledgers/*_rows.jsonl} (experiment_native._take_all refuses symlinks);"
+  echo "  work/derived/.projection-v2/ ($(dubytes "$R/work/derived/.projection-v2") B, same reader); checkpoints; everything under $FLOOR B."
+  echo "ESTIMATE: archive-volume write cap 1000 MiB/s: $(awk -v b="$total" 'BEGIN {printf "%.0f", b/1048576000}') s for the move bytes plus the compressed zips; root read at 1.09-1.25 GB/s: $(awk -v b="$total" 'BEGIN {printf "%.0f-%.0f", b/1.25e9, b/1.09e9}') s; expect 10-13 min wall, 20 min pessimistic."
+}
+
+# ------------------------------------------------------------------------------------------------------- one job
+result_line(){ ( flock 9; printf '%s\n' "$1" >&9 ) 9>>"$RESULTS"; }
+jqesc(){ "$PY" -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1"; }
+readme(){   # $1 old $2 new $3 kind $4 bytes $5 sha $6 verified $7 restore
+  printf '%s moved %s to %s (%s B, sha256 %s, computed on the write stream); ONE pass, no read-back (Greg 2026-10-08); verified at creation: %s. Restore: %s\n' \
+    "$(basename "$1")" "$(STAMP)" "$2" "$4" "$5" "$6" "$7" > "$1.ARCHIVED.README.txt"
+}
+job(){   # kind rel cpus
+  local kind=$1 rel=$2 cpus=$3 src out t0 ps sha size exp src_bytes wn wf wb sn sf sb ok=0 listing restore v
+  src=$R/$rel; t0=$(date +%s)
+  case "$kind" in move) out=$DEST/$rel;; *) out=$DEST/$rel.tar.zst;; esac
+  mkdir -p "$(dirname "$out")"
+  log "[$cpus] START $kind $rel -> $out"
+  if [ -L "$src" ]; then log "[$cpus] SKIP already a symlink: $src -> $(readlink "$src")"; result_line "{\"kind\":\"$kind\",\"old_path\":$(jqesc "$src"),\"new_path\":$(jqesc "$out"),\"status\":\"skipped\",\"reason\":\"already a symlink\"}"; return 0; fi
+  if [ ! -e "$src" ]; then log "[$cpus] SKIP missing: $src"; result_line "{\"kind\":\"$kind\",\"old_path\":$(jqesc "$src"),\"new_path\":$(jqesc "$out"),\"status\":\"skipped\",\"reason\":\"source missing\"}"; return 0; fi
+  if [ -e "$out" ] && [ -s "$out.sha256" ] && [ ! -L "$src" ]; then
+    log "[$cpus] REFUSED: $out exists with a sha256 while the source is still here; not overwriting, not removing (operator decides)"
+    result_line "{\"kind\":\"$kind\",\"old_path\":$(jqesc "$src"),\"new_path\":$(jqesc "$out"),\"status\":\"failed\",\"reason\":\"output exists beside a live source\"}"; return 1
+  fi
+  rm -f "$out.part" "$out.sha256.tmp"
+  if [ "$kind" = move ]; then
+    exp=$(pin_of "$src"); src_bytes=$(fsize "$src")
+    taskset -c "$cpus" dd if="$src" bs=4M status=none | taskset -c "$cpus" tee "$out.part" | taskset -c "$cpus" sha256sum > "$out.sha256.tmp"
+    ps="${PIPESTATUS[0]} ${PIPESTATUS[1]} ${PIPESTATUS[2]}"
+    sha=$(cut -c1-64 "$out.sha256.tmp"); size=$(fsize "$out.part"); rm -f "$out.sha256.tmp"
+    v="pipestatus $ps bytes stream $size src $src_bytes pin ${exp:-none} sha $sha"
+    if [ "$ps" = "0 0 0" ] && [ "$size" = "$src_bytes" ] && [ -n "$exp" ] && [ "$size" = "${exp%% *}" ] && [ "$sha" = "${exp##* }" ]; then
+      sync "$out.part"; mv "$out.part" "$out"; printf '%s  %s\n' "$sha" "$(basename "$out")" > "$out.sha256"
+      mv "$src" "$src.moving-aside" && ln -s "$out" "$src" && rm -f "$src.moving-aside"
+      restore="rm $src; cp $out $src"
+      readme "$src" "$out" move "$size" "$sha" "$v" "$restore"
+      log "[$cpus] MOVED $src ($(($(date +%s)-t0)) s) $v free_root $(avail /) free_archive $(avail "$AR")"
+      result_line "{\"kind\":\"move\",\"op\":\"move\",\"old_path\":$(jqesc "$src"),\"new_path\":$(jqesc "$out"),\"bytes\":$size,\"bytes_copied\":$size,\"sha256\":\"$sha\",\"pin\":$(jqesc "$exp"),\"status\":\"done\",\"seconds\":$(($(date +%s)-t0)),\"cpus\":\"$cpus\"}"
+      ok=1
+    else
+      mv "$out.part" "$out.part.rejected" 2>/dev/null
+      log "[$cpus] MOVE FAILED (source kept, copy kept aside as .part.rejected) $src $v"
+      result_line "{\"kind\":\"move\",\"old_path\":$(jqesc "$src"),\"new_path\":$(jqesc "$out"),\"status\":\"failed\",\"reason\":$(jqesc "$v")}"
+    fi
+  else
+    listing=$out.listing.txt
+    sn=$(find "$src" | wc -l); sf=$(find "$src" -type f | wc -l); sb=$(dubytes "$src")
+    taskset -c "$cpus" tar -C "$(dirname "$src")" -cvvf - "$(basename "$src")" 2> "$listing" | taskset -c "$cpus" "$ZSTD" -T0 "$ZSTD_LEVEL" -q | taskset -c "$cpus" tee "$out.part" | taskset -c "$cpus" sha256sum > "$out.sha256.tmp"
+    ps="${PIPESTATUS[0]} ${PIPESTATUS[1]} ${PIPESTATUS[2]} ${PIPESTATUS[3]}"
+    echo "$ps" > "$out.pipestatus"
+    sha=$(cut -c1-64 "$out.sha256.tmp"); size=$(fsize "$out.part"); rm -f "$out.sha256.tmp"
+    wn=$(wc -l < "$listing"); wf=$(awk '$1 ~ /^-/' "$listing" | wc -l); wb=$(awk '$1 ~ /^-/ {s+=$3} END {printf "%d", s+0}' "$listing")
+    v="pipestatus $ps entries w$wn/src$sn files w$wf/src$sf bytes w$wb/src$sb archive $size sha $sha"
+    if [ "$ps" = "0 0 0 0" ] && [ "$wn" = "$sn" ] && [ "$wf" = "$sf" ] && [ "$wb" = "$sb" ] && [ "$size" -gt 0 ]; then
+      sync "$out.part"; mv "$out.part" "$out"; printf '%s  %s\n' "$sha" "$(basename "$out")" > "$out.sha256"
+      rm -rf "$src" && ln -s "$out" "$src"
+      restore="rm $src; zstd -dc $out | tar -C $(dirname "$src") -xf -"
+      readme "$src" "$out" archive "$size" "$sha" "$v" "$restore"
+      log "[$cpus] ZIPPED+REMOVED $src ($(($(date +%s)-t0)) s) $v free_root $(avail /) free_archive $(avail "$AR")"
+      result_line "{\"kind\":\"archive\",\"op\":\"zip\",\"old_path\":$(jqesc "$src"),\"new_path\":$(jqesc "$out"),\"bytes\":$sb,\"bytes_archived\":$size,\"sha256\":\"$sha\",\"listing_path\":$(jqesc "$listing"),\"entries\":$wn,\"status\":\"done\",\"seconds\":$(($(date +%s)-t0)),\"cpus\":\"$cpus\"}"
+      ok=1
+    else
+      mv "$out.part" "$out.part.rejected" 2>/dev/null
+      log "[$cpus] ZIP FAILED (source kept, archive kept aside as .part.rejected) $src $v"
+      result_line "{\"kind\":\"archive\",\"old_path\":$(jqesc "$src"),\"new_path\":$(jqesc "$out"),\"status\":\"failed\",\"reason\":$(jqesc "$v")}"
+    fi
+  fi
+  [ $ok = 1 ]
+}
+
+# ---------------------------------------------------------------------------------------------------- disk guard
+guard(){   # SIGSTOP every running job's process group below GUARD_MIN on either volume; SIGCONT above GUARD_RESUME
+  local paused=0 fr fa g n=0
+  while [ -e "$PGIDS" ]; do
+    fr=$(avail /); fa=$(avail "$AR")
+    if [ "${fr:-0}" -lt "$GUARD_MIN" ] || [ "${fa:-0}" -lt "$GUARD_MIN" ]; then
+      if [ $paused = 0 ]; then for g in $(cat "$PGIDS" 2>/dev/null); do kill -STOP -- -"$g" 2>/dev/null; done; paused=1; log "GUARD PAUSED jobs: root free $fr archive free $fa (limit $GUARD_MIN)"; fi
+    elif [ $paused = 1 ] && [ "${fr:-0}" -gt "$GUARD_RESUME" ] && [ "${fa:-0}" -gt "$GUARD_RESUME" ]; then
+      for g in $(cat "$PGIDS" 2>/dev/null); do kill -CONT -- -"$g" 2>/dev/null; done; paused=0; log "GUARD RESUMED jobs: root free $fr archive free $fa"
+    fi
+    n=$((n+1)); [ $((n % 30)) = 0 ] && log "guard: root free $fr archive free $fa paused=$paused"
+    sleep 2
+  done
+}
+
+# ------------------------------------------------------------------------------------------------------- main
+if [ "$MODE" = __job ]; then job "$2" "$3" "$4"; exit $?; fi
+if [ "$MODE" = rows-dir ]; then MODE=execute; rows_dir_step execute; exit $?; fi
+case "$MODE" in dry-run|execute) ;; *) echo "usage: $0 [dry-run|execute|rows-dir]"; exit 2;; esac
+PLAN=$(sorted_plan)
+PLAN_BYTES=$(echo "$PLAN" | awk -F'|' '{s+=$3} END {printf "%d", s+0}')
+IDLE_PAIRS=${CLEAN_IDLE_PAIRS:-$(measure_idle_pairs)}   # CLEAN_IDLE_PAIRS: test-only injection
+echo "clean-a2 $MODE at $(STAMP) script sha256 $SELF_SHA R=$R archive=$AR"
+rows_dir_step dry-run
+echo "PREFLIGHT:"
+preflight; FAILS=$?
+show_plan
+if [ "$MODE" = dry-run ]; then
+  [ $FAILS = 0 ] && echo "DRY-RUN: every preflight condition holds; 'execute' would run the plan above. Nothing written." || echo "DRY-RUN: $FAILS preflight condition(s) FAIL; 'execute' would REFUSE. Nothing written."
+  exit 0
+fi
+mkdir -p "$LOGS" "$DEST"
+exec 8>"$LOCK"; flock -n 8 || { say "REFUSED: another clean-a2 holds $LOCK"; exit 2; }
+if [ $FAILS != 0 ]; then log "REFUSED: $FAILS preflight condition(s) failed (see above); nothing done"; exit 2; fi
+STEP0=$(rows_dir_step execute); RC0=$?; printf '%s\n' "$STEP0" | tee -a "$LOG"
+[ $RC0 = 0 ] || { log "REFUSED: step 0 (teacher rows directory) failed; nothing else done"; exit 2; }
+T0=$(date +%s); ROOT_FREE0=$(avail /); AR_FREE0=$(avail "$AR")
+log "EXECUTE start script sha256 $SELF_SHA jobs=$JOBS_N pairs/job=$PAIRS_PER_JOB plan_bytes=$PLAN_BYTES root_free=$ROOT_FREE0 archive_free=$AR_FREE0"
+echo "$PLAN" | tee -a "$LOG" >/dev/null
+: > "$RESULTS"; : > "$PGIDS"
+# CPU sets: job i takes idle pairs i, i+N, i+2N, ... (at most PAIRS_PER_JOB), so every job owns distinct full cores
+mapfile -t PAIRS <<< "$IDLE_PAIRS"
+declare -a CPUSETS
+for ((i=0; i<JOBS_N; i++)); do
+  set=""; for ((k=i, c=0; k<${#PAIRS[@]} && c<PAIRS_PER_JOB; k+=JOBS_N, c++)); do set="${set:+$set,}${PAIRS[k]}"; done
+  CPUSETS[i]=$set
+done
+log "CPU sets: ${CPUSETS[*]}"
+guard & GUARD_PID=$!
+declare -a SLOT_PID SLOT_JOB
+mapfile -t JOBS <<< "$(echo "$PLAN" | grep -v '^done|')"
+next=0; FAILED=0; DONE=0
+while :; do
+  for ((i=0; i<JOBS_N; i++)); do
+    if [ -n "${SLOT_PID[i]:-}" ] && ! kill -0 "${SLOT_PID[i]}" 2>/dev/null; then
+      wait "${SLOT_PID[i]}"; rc=$?; [ $rc = 0 ] && DONE=$((DONE+1)) || FAILED=$((FAILED+1))
+      sed -i "/^${SLOT_PID[i]}\$/d" "$PGIDS"; SLOT_PID[i]=""
+    fi
+    if [ -z "${SLOT_PID[i]:-}" ] && [ $next -lt ${#JOBS[@]} ]; then
+      IFS='|' read -r kind rel size <<< "${JOBS[next]}"; next=$((next+1))
+      [ -z "$kind" ] && continue
+      setsid bash "$SELF" __job "$kind" "$rel" "${CPUSETS[i]}" >> "$LOGS/clean-a2.job-$i.out" 2>&1 &
+      SLOT_PID[i]=$!; echo "$!" >> "$PGIDS"
+    fi
+  done
+  running=0; for ((i=0; i<JOBS_N; i++)); do [ -n "${SLOT_PID[i]:-}" ] && running=$((running+1)); done
+  [ $running = 0 ] && [ $next -ge ${#JOBS[@]} ] && break
+  sleep 1
+done
+rm -f "$PGIDS"; wait "$GUARD_PID" 2>/dev/null
+# the moved-manifest (FRANKIE_ROOT_MOVE_MANIFEST_V1 shape: frankie_box_root_validate.add_manifest reads kind move|archive)
+"$PY" - "$RESULTS" "$MANIFEST" "$RUN" "$DAY" "$ATTEMPT" "$SELF_SHA" <<'EOF'
+import json, os, sys, time
+results = [json.loads(l) for l in open(sys.argv[1]) if l.strip()]
+moves = [r for r in results if r.get('status') == 'done']
+try:   # a re-run merges: earlier moves stay recorded (keyed by old_path), new ones are added
+    earlier = json.load(open(sys.argv[2])).get('moves') or []
+except Exception:
+    earlier = []
+seen = {m.get('old_path') for m in moves}
+moves = [m for m in earlier if m.get('old_path') not in seen] + moves
+body = dict(schema='FRANKIE_ROOT_MOVE_MANIFEST_V1', at=time.time(), utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+            run=sys.argv[3], day=sys.argv[4], attempt=sys.argv[5], script_sha256=sys.argv[6], moves=moves,
+            not_moved=[r for r in results if r.get('status') != 'done'],
+            rule='every move: the symlink at old_path serves the plain copy at new_path (sha256 on the write stream equal to the '
+                 "ROOT's pin); every archive: one tar -vv | zstd -T0 pass, sha256 on the write stream, listing at creation, no "
+                 'read-back; a failed item keeps its source and is not listed in moves')
+path = sys.argv[2]
+tmp = path + '.pending'
+with open(tmp, 'w') as f: json.dump(body, f, indent=1, sort_keys=True); f.write('\n')
+os.replace(tmp, path)
+EOF
+T1=$(date +%s); ROOT_FREE1=$(avail /); AR_FREE1=$(avail "$AR")
+STATUS=done; [ $FAILED = 0 ] || STATUS=failed
+RECEIPT=$("$PY" -c 'import json,sys; a=sys.argv; print("CLEAN_RECEIPT "+json.dumps(dict(schema="FRANKIE_CLEAN_A2_RECEIPT_V1", status=a[1], run=a[2], day=a[3], attempt=a[4], started_utc=a[5], ended_utc=a[6], seconds=int(a[7]), jobs_done=int(a[8]), jobs_failed=int(a[9]), root_free_before=int(a[10]), root_free_after=int(a[11]), root_freed=int(a[11])-int(a[10]), archive_free_before=int(a[12]), archive_free_after=int(a[13]), archive_written=int(a[12])-int(a[13]), manifest=a[14], log=a[15], script_sha256=a[16], cpu_sets=a[17], receipt_basis=a[18], plan_note=a[19]), sort_keys=True))' \
+  "$STATUS" "$RUN" "$DAY" "$ATTEMPT" "$(date -u -d @$T0 +%FT%TZ)" "$(date -u -d @$T1 +%FT%TZ)" "$((T1-T0))" "$DONE" "$FAILED" "$ROOT_FREE0" "$ROOT_FREE1" "$AR_FREE0" "$AR_FREE1" "$MANIFEST" "$LOG" "$SELF_SHA" "${CPUSETS[*]}" "${RECEIPT_BASIS:-unknown}" "v2: the MOVE of $MOVE_REL left out (safe_path on the resumed ROOT's legacy-stage reuse refuses a symlink); zips only")
+echo "$RECEIPT" | tee -a "$LOG"
+[ "$STATUS" = done ]
