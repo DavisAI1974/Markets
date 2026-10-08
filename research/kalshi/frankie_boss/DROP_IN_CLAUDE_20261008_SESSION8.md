@@ -170,6 +170,23 @@ Copy volume (the instant clone); then these snapshots are the durable a2 backup 
 Costs: the two snapshots ~$0.05/GB-mo on used blocks (~$75/mo if kept; they are also the first durable copy of a2 off the main
 box); the two clone volumes $328/mo at baseline; initialization ~$0.0036/GiB of snapshot data.
 
+## DONE 2026-10-08 12:0xZ via the Aws connector (Greg: "You can do all of those things with connector")
+- Go-list B, idle storage cuts: the three 2 TB gp3 volumes in us-east-1 (vol-0d36715924f03b86c, vol-004b68c077be09cc9,
+  vol-0fbf7bc0991bc8e39) MODIFIED to baseline 3,000 IOPS / 125 MiB/s while the boxes are stopped (~$280/mo saved; RAISE BEFORE ANY
+  RUN: main root 16,000/1,250, archive 10,000/1,000, second-box root 16,000/1,000; 6 h cooldown per volume after this change).
+  us-east-2: the unattached 250 GB volume vol-05c3d967e07b2d61f DELETED (its latest copy snap-0142c4b8766b5b7ea of 2026-09-29 kept);
+  AMI ami-0bd716486a4f2ad02 (frankie-sunday-native-region-move-20260917, the terminated old native host) DEREGISTERED and its two
+  snapshots snap-091668dfa6e630234 + snap-09b37f01d8562324a DELETED; superseded copies snap-0af0f3714bbf2a87e (2026-09-16) and
+  snap-028afdc9066adab30 (2026-08-28 year-pull pre-reboot) DELETED. KEPT: Greg's two 2026-09-29 before-termination snapshots
+  (snap-0ec119eebb2964b4d root 120 GB, snap-0142c4b8766b5b7ea data 250 GB) and the year-pull root volume vol-05a0b1e56f8c16478.
+- Tagging: Project=frankie on every instance, volume and snapshot in both regions (11 EC2 resources) and on both buckets; resource
+  group `frankie` created in us-east-1 (8 members) and us-east-2 (5 members), tag-based, all resource types. The fleet launch
+  template must stamp Project=frankie on every box and volume. Cost allocation tag activation (ce UpdateCostAllocationTagsStatus
+  Project=Active) REFUSED "Tag keys not found" until billing has seen the key (up to 24 h): retry at the next check-in.
+- The `Claude` IAM user's key pair (the key ending GLMH (ID in KEYS.md), created 2026-07-13, the only key) installed in this container at
+  ~/.config/markets/env + ~/.aws/credentials (chmod 600, outside the repo), STS verified as user/Claude: the fallback credential
+  path beside the connector. The Support API stays unusable on either (Basic support plan).
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
