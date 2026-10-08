@@ -255,3 +255,29 @@ Skill full-run-orchestrator invoked first. AWS via the Aws connector only; GitHu
   -T R gives the same UUID) and 6c02aaf8-620a-4b3c-bc41-f9aafaf14f3b -> nvme1n1 (the archive volume): the by-uuid branch of
   filesystem_identity has what it needs. Watchdog 15:24:29Z: bookings 1 findings 1 (unbooked 1 = itself) repins 0.
   Receipt absent -> the restart proceeds.
+- 15:26Z SOURCE CHECK before the save (git show d67b9c63, the running checkout): the resume route's evidence pass
+  (frankie_box_experiment_root.py 416-467: `evidence()` per native ledger and layer -> boss_session._artifact_check ->
+  witness() read whole) carries NO save check between artifacts; the ROOT's marker checks on this route are calculate_day's
+  post-return check (225-234: after _calculate_day returns, i.e. after calculations-receipt.json is written ->
+  TeacherSaved exit 75 "ROOT completion published; resume uses the completed receipt") and the derive() path (482), which
+  the retained route does not take. So the premise "save points between artifacts" does not hold at d67b9c63: the marker
+  stops the ROOT at its RECEIPT (session 6's hold outcome), not inside the whole-hash pass. The marker is still the right
+  hold (never a kill): the chain then pauses before validate/teacher, and the restage + resume puts the fixed code (claims
+  V2 on validate, export and brain readers) under everything after the receipt; root() reuses the completed receipt.
+  Expected SAVED time: the member ledger ends ~15:31Z, then legacy_observable_rows (0.74 GB), the layers (incl. the 472 GB
+  inline layer) and whatever load_retained_layers reads: ~17:3xZ-17:5xZ at the 132 MB/s baseline, NOT within 30 min.
+- 15:27:22Z STEP 2 SAVE (state-changing; SSM f0ba70ea-f5c9-4677-99a4-c00472469efe, rc 0): on the running checkout
+  (CODE_ROOT d67b9c63...-37792772826-1/markets, MARKETS_SHA d67b9c63 explicit, HEAD verified) `ACTION=save
+  RUN=e2e-20231018-a2 DAY=20231018` -> accepted: entry_state running, marker
+  Q/save/e2e-20231018-a2-20231018.save-request.json written 15:27:22Z, 497 B, sha256
+  9f6b4e5ba0f712796372cd218514b2533ca501048335fc303da6510299094930, FRANKIE_QUEUE_SAVE_REQUEST_V1, attempt
+  e2e-20231018-a2-20231018-a1, booking day-run-20231018-day_slot_root-1791402822-3111, cpus 0-31, requested_at
+  1791473242.476846, by "dispatch save". ACTION=status: marker standing true (identity sha 9f6b4e5b...), booking alive
+  (retained null), owner commit d67b9c63 code_root the d67b9c63 checkout, held_bookings x5, class_entry null, class_ack null.
+  ROOT child 1834 Dl, 10.9% CPU, read_bytes 178,497,912,832, fd 3 exact_member_rows.jsonl pos 161,665,253,376 of
+  193,743,650,444; /proc/1834/environ FRANKIE_LANE_STOP_FILE = that marker path (the child reads it at its check points).
+- 15:27:2xZ STEP 3 STAGE dispatched (github actions_run_trigger, frankie_box_run.yml, ref ccr-d2f8f826-iefeah-frankie,
+  script=deploy/aws/box/frankie_box_stage_code.sh, variables=ACTION=stage, instance=i-035994afa8bdf66a5, region=us-east-1,
+  comment "box-operator s8 15:2xZ stage the claim-fix tip for a2 resume"): queued (204). The stage runs on its own lock in a
+  new /opt/frankie-box/code/<tip>-<run>-1 directory beside the running d67b9c63 checkout (session 6 precedent: ebc7ef38
+  landed 01:49Z while 14860 ran on c9bf631). Run id and bound commit recorded below.
