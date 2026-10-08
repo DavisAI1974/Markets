@@ -73,3 +73,31 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   not 46cfe907). STATE AT HOLD: entry `saved`; booking day-run-20231018-day_slot_root-1791402822-3111 retained 0-31 (size 32,
   not grown); marker standing; receipt absent; no root worker, no watchdog, no ROOT child; the old checkout d67b9c63 and the
   staged 46cfe907 both present on disk, untouched. Box RUNNING, nothing killed beyond child 1834.
+
+## Parent: the spool fix and the restage (16:3xZ-16:4xZ)
+- Greg (16:3xZ, verbatim pieces): "save all data generated so we can start at exactly the same spot when you restart it
+  after fixes"; "it's just our code that isn't allowing it so override blocker"; "if there are issues, save data first and
+  then restart at same place when you restart"; "a go for any changes you might do getting to the workflow launch and then a
+  go for workflow launch when it's ready. And fix spool before it starts"; "when workflow launches, switch down to opus";
+  "if restage is long process use the 64 cpus" (it is ~6 min, single-process copy; the 64 go to the restart); "for the
+  remaining root processes use 64 cpus".
+- 16:35:34Z parent probe (SSM 8e042a91): the operator's hold landed; child gone, entry SAVED on the marker, booking 0-31
+  retained (not grown), receipt absent, no frankie unit. Nothing grown/resumed/kicked.
+- The spool issue (source read, tip 734ba7d..f20801a): the resume route in frankie_box_experiment_root.py called
+  load_retained_layers without spools=, so RowSpool.reopen counted every line of the 496.7 GB frames spool (~63 min at
+  131 MB/s) on every resume; write_claims_from_derivation added nothing to an existing claims file (a2's 57 V1 rows carry
+  no spool rows). SOURCE-FIX role (fable): commit 2aed2f0e (frankie_box_experiment_root.py +80/-9; E2E doc section
+  "Session 9: spool whole-count on the resume route"): rows ADDED for artifacts without one (the five legacy spools with
+  sealed bytes/sha256, stat + tail, count + count_basis), existing rows untouched; the resume reopens each spool from its
+  count via _legacy_spool_artifact + _reopen_counted_spool and hands spools= to load_retained_layers; receipt key
+  spool_reopen names each spool's basis; a spool without a count or a holding claim is read whole ONCE, named. Parent
+  review: the existing-row check and _load_file_claims use the same absolute-path key; _write_claims_atomic(target, bytes)
+  matches; the claims are loaded after the note adds the rows; py_compile ok. RUNTIME-UNVERIFIED until the receipt.
+- 16:43:35Z RESTAGE dispatched (github actions_run_trigger frankie_box_run.yml, script frankie_box_stage_code.sh,
+  variables ACTION=stage, instance i-035994afa8bdf66a5, us-east-1): run 37811038079 (run_number 846) bound to head
+  27109f4de339c4947e0149c8450c08df92f0ade2 = 2aed2f0e + session 8's closing record (.md only; verified: no non-.md diff
+  between 2aed2f0e and 27109f4d; 2aed2f0e is its ancestor). NEW CODE_ROOT for the restart:
+  /opt/frankie-box/code/27109f4de339c4947e0149c8450c08df92f0ade2-37811038079-1/markets, MARKETS_SHA 27109f4d....
+- Restart operator spawned on model opus (Greg's rule from the launch on): wait for the stage receipt, verify the fix is in
+  the checkout, then ONE script: grow the booking to 64, ACTION=resume, ACTION=kick FRANKIE_ROOT_DIGEST=on
+  FRANKIE_CLASSROOM_CPUS=all (DAY_CPUS not given), then watch sparsely: receipt (claim decisions, spool_reopen), digest start.
