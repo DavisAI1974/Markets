@@ -80,6 +80,28 @@ The AWS research recorded the current value at 640 (unverified in session 7: bot
 If Greg has already filed it himself (he said he would in the new session), confirm with
 ListRequestedServiceQuotaChangeHistoryByQuota and do not file a second one.
 
+## The AWS go-list (session 8, Greg: "we need to do aws upgrades ... don't know if those are listed along with the box increase")
+Everything the AWS research named, in ONE place beside the quota request. Each line is one go from Greg; each needs a working
+Aws connector (at 11:4xZ 2026-10-08 the `Aws` connector reads needs_reconnect and `aws-mcp` answers expired credentials; the
+container holds only the proxy's placeholder keys). Full detail: AWS_TOOLS_STACK_20261008.md sections 4, 5 and 7.5;
+the dry-run script is deploy/aws/frankie_aws_stack.py (drop `--apply` for the dry run).
+
+| # | Item | What it does | Cost | Needs |
+|---|---|---|---|---|
+| A | EC2 vCPU quota L-1216C47A us-east-1 -> 1152 | the fleet (15 x 64) + the three existing boxes + headroom | $0 | FIRST; check history before filing |
+| B | Idle storage cuts, now, boxes stopped | ModifyVolume the three 2 TB gp3 volumes back to baseline (3,000 IOPS / 125 MiB/s) while stopped (raise again before a run); delete the unattached 250 GB volume; delete the six old us-east-2 snapshots | saves most of the ~$29/day idle bill | Greg's go per volume/snapshot (look at each first) |
+| C | Budgets + anomaly detection | raise DavisAI-Monthly-Cost-Guard from $200 before the fleet month; `ce CreateAnomalyMonitor` by service | $0 | Greg's number for the budget |
+| D | Fleet launch (stack S1) | launch template frankie-day-box (IMDSv2, Ssm, terminate-on-shutdown), golden AMI from the main box's staged checkout, EC2 Fleet or 15 RunInstances, 3 TB gp3 per box or clean-after-save; the shared day list on S3 + the cross-box claim (source work, not built) | r7i.16xlarge ~$4.20/h per box on-demand; template/AMI $0 | A granted + Greg's go on the fleet plan; first launch = ONE box resuming a2 |
+| E | Archive policy (call f) + bucket region (R1) | S3 Glacier via storage_class on the archive upload, lifecycle (abort incomplete MPU 7 d, transition), Deep Archive after 90 d; a us-east-1 archive bucket so every archive byte rides the free gateway endpoint | -$200/mo vs volumes; avoids $89-178 cross-region on ~8.9 TB | Greg's class and region choice |
+| F | Guards in the account (stack S3) | CloudWatch agent via State Manager, alarms disk 85% / mem 95% / system-recover, SNS email; idle-stop ONLY after the HOLD/KeepRunning handshake calls DisableAlarmActions | ~$0.85/mo (+$2.10 detailed monitoring) | SNS email address; idle-stop stays off |
+| G | Compute Optimizer + Cost Optimization Hub | enrol; findings after ~30 h of metrics | $0 | go |
+| H | Digest burst box (section 7.5) | the digest step on r7i.48xlarge (192 cores, ~5 min per pass, $1.06 on-demand / $0.30 Spot) from the launch template, spool by EBS Volume Clone; or the stopped second box (64 vCPU, ~14 min per pass) by volume clone | $1-6 per day | A granted (48xlarge) or Greg's go (second box) |
+| I | S3 gateway endpoint | verify vpce-0472311a451e2cedf (exists); nothing to create | $0 | none |
+| J | Opt-ins not recommended yet | EventBridge scheduler stop (conflicts with KeepRunning), detailed monitoring without idle-stop | - | skip |
+
+Order when the connector is back: A, then B and C (cheap, reversible, save money today), then the Greg-decided ones (E, F, G),
+then D and H with the fleet go. Nothing here starts a box.
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
