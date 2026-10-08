@@ -429,3 +429,9 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   classroom all) on CR6 -> teacher without the 194 GB re-hash.
 - Open (brain role): a root brain entry written without the digest and later re-recorded with it must not decline; fix
   assigned.
+- 18:07:00Z (SSM d1d25ed2): the finish-phase worker 7301 (db96f24) is reading exact_member_rows.jsonl WHOLE again (13.9 GB
+  in, 43% CPU, 125 MiB/s), handoff dir empty, save_request standing. Greg: "Fix this since we're stopped and it's blocking
+  us. Once this blocker is fixed, relaunch, then the fixes that aren't blocking; then take one of those steps out."
+  -> worker KILLED (the read is the second pass the staged fixes remove: 11c65ac2 teacher witnesses by claim; the boundary
+  validator goes OFF at the relaunch: FRANKIE_ROOT_VALIDATE_CHECK=off, 7c4837c = the step taken out). Resume + kick on
+  CR6 (607eb273) when its receipt lands (~18:12Z).
