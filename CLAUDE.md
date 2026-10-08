@@ -1,3 +1,13 @@
+# Claude session drop-in — 2026-10-08, session 7: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261008_SESSION7.md`
+
+Branch `ccr-d2f8f826-iefeah-frankie` (SHALLOW clone: `git fetch --deepen=400` before any merge-base). Parent-only; agents
+(model "fable") do the work. Greg paused for the night: the main box is STOPPED (KeepRunning=false); the day
+e2e-20231018-a2/20231018 is SAVED with its booking retained and (expected) its ROOT receipt written on checkout 6076950
+with the digest OFF; no teacher ran. Start the box only on Greg's go, then ACTION=resume + ACTION=kick on the newest staged
+tip. The digest for this classroom-arm day must be rendered FULL DEPTH before the classroom (NO top-ten: Greg, nothing
+dropped). Everything from session 6 is SOURCE-BUILT / RUNTIME-UNVERIFIED except the hold, the two saves, the resume and
+the manual clean, which ran live.
+
 # Claude session drop-in — 2026-10-08 early, session 6: READ FIRST `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20261008_SESSION6.md`
 
 Branch `ccr-d2f8f826-iefeah-frankie`. Parent-only; agents (model "fable") do the work. a2's ROOT finished its passes on
