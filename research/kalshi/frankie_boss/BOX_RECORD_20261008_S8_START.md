@@ -194,3 +194,37 @@ nothing; the chain's own class kick inherits FRANKIE_CLASSROOM_CPUS=all from the
   472 GB layer or the 496.7 GB frames spool are read whole too (the volumes sit at baseline until the parent's ~18:20Z raise).
   Watchdog pass 2 at 15:06:29Z: "bookings 1 findings 68 (outside_booking 67, unbooked 1) repins 67 resize 0" -> the watchdog
   RE-PINNED 67 threads (correct=on); record 20261008T150629Z.json read next. Not intervening.
+- 15:08:48Z CLAIMS READ (read-only, SSM bb0ff4b5-f831-4593-9502-df5b30db5001) + 15:09:51Z WATCH 4 (SSM cddc7edf-4d21-4919-9cc0-
+  9bcaa9115a19): CAUSE OF THE WHOLE READS FOUND. Every file-claims.jsonl row (57, written 03:02:14Z by the 6076950 ROOT) carries
+  stat [66305, <ino>, <size>, <mtime_ns>]; the same files NOW stat with st_dev 66306 (ino, size, mtime_ns unchanged: e.g.
+  exact_member_rows.jsonl ino 8691177, 193,743,650,444 B, mtime 1791418009). This boot enumerated the NVMe devices in the other
+  order (nvme1n1 = 259:0 = /opt/frankie-box/archive, dev 66304; nvme0n1 = 259:1 = /, dev 66306; the 03:02Z boot had / at 66305).
+  Source (d67b9c63): ingest_block_sources.file_claim stores `stat=[st_dev, st_ino, st_size, st_mtime_ns]`; boss_session.
+  _claim_still_holds requires "same device, inode, size and mtime_ns"; _artifact_check then falls to "read whole: bytes and
+  sha256 equal to the saved artifact" (lawful, one pass through the per-process cache). So the sealed-record shortcut is
+  defeated for EVERY artifact by the device renumbering alone, on both ledgers and layers. Measured rate 132 MB/s
+  (read_bytes 32.70 -> 41.00 GB in 63 s) = the volume's baseline 125 MiB/s. Ledgers: exact_lifecycle_rows.jsonl 7.56 GB (read),
+  exact_member_rows.jsonl 193.7 GB (pos 24.16 GB at 15:09:51Z; ends ~15:31Z), legacy_observable_rows.jsonl 0.74 GB; then the
+  layers incl. the 472 GB inline layer and the spools (the 496.7 GB frames spool if it is witnessed): ~1.2 TB at 132 MB/s =
+  ~2.5 h -> receipt ~17:3xZ-17:5xZ at baseline (before the parent's 18:20Z volume raise; a ModifyVolume on the live volume
+  would speed the remainder without touching the process). The tail-anchor + sealed-count fixes decide the PARSE, not this hash
+  read; whether they hold is seen only when the layer stage starts (the ROOT log is silent after 15:05:48Z until then).
+  FINDING FOR THE ROOT ROLE: st_dev in the claim identity breaks every claim across any reboot that renumbers NVMe devices;
+  the identity should be (st_ino, size, mtime_ns [+ filesystem UUID]) with the 64 KiB tail; and file-claims.jsonl is written
+  only when ABSENT (write_claims_from_derivation), so the stale 66305 rows persist for the later stages (validate / data export)
+  unless this ROOT's seal rewrites them. Watchdog pass 3 (15:08:29Z): findings 1 (unbooked = the watchdog itself), repins 0;
+  the 67 repins of pass 2 were worker pid 1758's 66 threads + cores-run pid 1832, affinity set 0-63 -> 0-31 (the booking);
+  the ROOT child 1834 was always on 0-31. 1834 Dl 5:16, 12.8% CPU, RSS 445 MB; receipt ABSENT; log 94 lines. load 1.00.
+  Decision: NOT intervening (nothing refused; the chain runs its lawful fallback); handing the finding to the parent now
+  rather than waiting the 40 min for a receipt that cannot land before ~17:3xZ. Box left RUNNING, KeepRunning=true.
+
+### State at hand-back (15:1xZ)
+- Box i-035994afa8bdf66a5 RUNNING r7i.16xlarge (LaunchTime 15:02:19Z), KeepRunning=true, SSM Online. Volumes at baseline.
+- Units: frankie-queue-root-1791471869 (root worker pid 1758, scope e2e-20231018-a2:20231018, env FRANKIE_ROOT_DIGEST=off
+  FRANKIE_CLASSROOM_CPUS=all, MAX_SECONDS 43200), frankie-cpu-watch (pid 1765, every 120 s, correct=on resize=on, bound 43200 s).
+  ROOT child pid 1834 (experiment_root --commit d67b9c63 --resume) under cores run pid 1832, affinity 0-31, reading artifacts whole.
+- Entry seq 2 RUNNING box-slot, booking ...-3111 (0-31), owner commit d67b9c63; no marker; class line empty (the chain
+  enqueues + kicks it after the teacher with the inherited FRANKIE_CLASSROOM_CPUS=all).
+- Next in the chain, untouched: receipt -> validate on 0-31 -> teacher (the long pole) -> class line (classroom on 0-63 via grow,
+  which WAITS while the render holds 32-63). The digest render is the parent's (after the 18:20Z raise; FRANKIE_LANE_CPUS unset).
+- Not touched: i-0d17573dbce871520, i-08cee7171c0a76a04, clone volumes, snapshots, IAM, quotas, launch templates, ModifyVolume.
