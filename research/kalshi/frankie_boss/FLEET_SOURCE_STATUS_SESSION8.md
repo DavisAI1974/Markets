@@ -43,6 +43,9 @@ end of `E2E_ONE_DAY_20231018.md`.
 - Toys: `tests/test_frankie_fleet_status.py` (7). Pass.
 
 ### (e) The day-box-role IAM step + launch-template defaults to frankie-day-box
+APPLIED IN THE ACCOUNT 2026-10-08 15:19-15:28Z: Greg created the role `frankie-day-box` + instance profile + inline
+policy `FrankieDayBox-20261008` in the IAM console; the parent verified 13/13 statements in the scripted order via the
+connector. launch-template's read-only GetInstanceProfile check now resolves. Nothing more for fleet-source here.
 A dry-run `day-box-role` step (never applied by this role) that creates the fleet boxes' OWN role `frankie-day-box`
 (trust ec2), attaches AmazonSSMManagedInstanceCore, puts the one inline policy `FrankieDayBox-20261008` (13 statements,
 exactly the drop-in's IAM-gap list), creates the instance profile and adds the role, tags both Project=frankie;
