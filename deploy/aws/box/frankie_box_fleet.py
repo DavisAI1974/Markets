@@ -178,6 +178,26 @@ def instance_id():
     return _imds('meta-data/instance-id') or socket.gethostname()
 
 
+def keep_running_self(*, instance=None, region=None):
+    """NEW-2: best-effort self-stamp KeepRunning=true on THIS box while it is lawfully busy waiting in line, so the
+    idle guard does not stop a box whose only live work is the detached WAIT/heartbeat unit (its ROOT/teacher worker
+    has already exited and the queue cleared KeepRunning). Called each poll from wait_action/heartbeat_action. Never
+    raises and never runs under the toys (a fake store, or FRANKIE_FLEET_NO_KEEP_RUNNING set, or no real instance id)."""
+    if (os.environ.get('FRANKIE_FLEET_S3_FAKE') or os.environ.get('FRANKIE_FLEET_NO_KEEP_RUNNING') or '').strip():
+        return dict(status='skipped', reason='toy / suppressed')
+    inst = instance or instance_id()
+    if not inst or not inst.startswith('i-'):
+        return dict(status='skipped', reason='no real EC2 instance id (%s)' % inst)
+    try:
+        import boto3  # noqa: PLC0415 - imported inside the call so the module stays import-clean off-box
+        reg = region or location()[2]
+        boto3.client('ec2', region_name=reg).create_tags(Resources=[inst],
+                                                          Tags=[{'Key': 'KeepRunning', 'Value': 'true'}])
+        return dict(status='stamped', instance=inst, region=reg)
+    except Exception as error:  # noqa: BLE001 - advisory; a failure here must never stop the wait loop
+        return dict(status='error', error='%s: %s' % (type(error).__name__, str(error)[:160]))
+
+
 def classroom_eligible():
     """May this box ever hold the classroom lease? Decision 2 (Greg, "best for science and speed"): a Spot box is NOT
     classroom-eligible (a reclaimed classroom loses a day of the serial chain), so it is REFUSED the lease and its day
@@ -490,9 +510,12 @@ def claim_day(run, day, stage, commit, *, st=None, instance=None):
 
 
 # ----------------------------------------------------------------------------------------------- waiting queue
-def record_root_finished(run, day, *, st=None, instance=None, epoch=None):
+def record_root_finished(run, day, *, st=None, instance=None, epoch=None, cpu_ready=None):
     """Write this box's waiting marker (create-only): it is ready for the classroom. The epoch (ROOT/teacher finish
-    time) orders the queue. A marker that stands is kept (the first finish time is the one that orders)."""
+    time) orders the queue. A marker that stands is kept (the first finish time is the one that orders).
+    NEW-1: `cpu_ready` (True/False/None from classroom_cpus_ready) is stamped on the marker so a box that is in line but
+    cannot give its classroom the CPUs yet never makes the rest of the fleet yield to it (absent/True/None = treated as
+    ready in the yield test; only an explicit False is skipped)."""
     st = st or store()
     instance = instance or instance_id()
     epoch = time.time() if epoch is None else epoch
@@ -502,6 +525,8 @@ def record_root_finished(run, day, *, st=None, instance=None, epoch=None):
     body = dict(schema=WAIT_SCHEMA, run=run, day=day, instance=instance, root_finish_epoch=round(epoch, 3),
                 basis='teacher-finish (the gate is at teacher->classroom; = ready-for-classroom time)',
                 root_finished_utc=_utc(), heartbeat_epoch=round(time.time(), 3), heartbeat_utc=_utc())
+    if cpu_ready is not None:
+        body['cpu_ready'] = bool(cpu_ready)
     try:
         st.put_if_absent(waiting_key(run, day), body)
         return dict(status='recorded', marker=body)
@@ -509,15 +534,19 @@ def record_root_finished(run, day, *, st=None, instance=None, epoch=None):
         return dict(status='stood', marker=st.get(waiting_key(run, day)))
 
 
-def heartbeat_waiting(run, day, *, st=None, instance=None):
+def heartbeat_waiting(run, day, *, st=None, instance=None, cpu_ready=None):
     """B7/S1: re-PUT this box's waiting marker with a fresh heartbeat so 'live in line' means 'still polling', not
-    'marker old'. Keeps the original root_finish_epoch (the ORDER, first finisher first); refreshes heartbeat_epoch."""
+    'marker old'. Keeps the original root_finish_epoch (the ORDER, first finisher first); refreshes heartbeat_epoch.
+    NEW-1: also refresh `cpu_ready` each poll (None leaves the prior value), so the fleet's yield test sees whether this
+    head-of-line box can actually run its classroom right now."""
     st = st or store()
     instance = instance or instance_id()
     cur = st.get(waiting_key(run, day))
     if not cur:
-        return record_root_finished(run, day, st=st, instance=instance)
+        return record_root_finished(run, day, st=st, instance=instance, cpu_ready=cpu_ready)
     cur['heartbeat_epoch'], cur['heartbeat_utc'] = round(time.time(), 3), _utc()
+    if cpu_ready is not None:
+        cur['cpu_ready'] = bool(cpu_ready)
     st.put(waiting_key(run, day), cur)
     return dict(status='beat', marker=cur)
 
@@ -594,12 +623,16 @@ def acquire_classroom_lease(run, day, commit, *, st=None, instance=None, fair=Tr
             # B7/S1: yield only to a LIVE earlier finisher -- its heartbeat (refreshed every poll) younger than
             # fair_wait. A dead earliest waiter (crashed, reclaimed; its heartbeat goes silent) never deadlocks the
             # line. The order is the root-finish epoch (first finisher first); liveness is the heartbeat silence.
+            # NEW-1: and only to one that CAN run its classroom now -- an explicit cpu_ready==False means it is in line
+            # but blocked on a sibling day's CPUs, so yielding to it would deadlock the whole fleet with the lease free.
+            # An absent flag (old markers) or True/None is treated as ready, so this never over-skips.
+            blocked = (earliest.get('cpu_ready') is False)
             beat = earliest.get('heartbeat_epoch')
             if not isinstance(beat, (int, float)):
                 head = st.head(waiting_key(earliest.get('run'), earliest.get('day')))
                 beat = head.get('mtime') if head and isinstance(head.get('mtime'), (int, float)) else None
             silence = (time.time() - beat) if isinstance(beat, (int, float)) else fair_wait + 1
-            if silence < fair_wait:
+            if silence < fair_wait and not blocked:
                 return dict(acquired=False, holder=None, reason='yielding to earlier LIVE waiter %s (%s/%s), silent %.0fs'
                             % (earliest.get('instance'), earliest.get('run'), earliest.get('day'), silence),
                             next_in_line=earliest)
@@ -716,7 +749,10 @@ def classroom_gate(run, day, stage, out_dir, code_root, commit, *, log=print, st
         log('fleet gate %s %s/%s: ineligible (%s)' % (stage, run, day, rec['reason']))
         return rec
     try:
-        ready = record_root_finished(run, day, st=st, instance=instance)
+        # NEW-1: stamp whether this box can give its classroom the CPUs right now on the waiting marker, so the fleet
+        # never yields to a head-of-line box that is itself blocked on a sibling day's CPUs (deadlock with lease free).
+        cpu_ready, _cpu_detail = classroom_cpus_ready(run, day)
+        ready = record_root_finished(run, day, st=st, instance=instance, cpu_ready=cpu_ready)
         got = acquire_classroom_lease(run, day, commit, st=st, instance=instance)
     except Exception as error:  # noqa: BLE001 - an S3 error is a WAIT (fail-closed: never two classrooms), not a crash;
         # the WAIT unit retries S3 every poll, so a transient blip recovers on its own
@@ -859,6 +895,7 @@ def heartbeat_action(args):
     say = lambda t: print('%s %s' % (_utc(), t), flush=True)  # noqa: E731
     st = store()
     while time.monotonic() < deadline:
+        keep_running_self()   # NEW-2: this box holds the lease and is running a classroom; keep it from being stopped
         out = _try(lambda: heartbeat_classroom_lease(args.run, args.day, st=st)) or {}
         if out.get('status') != 'beat':
             say('fleet heartbeat: lease no longer held by this box (%s); exiting' % out.get('status'))
@@ -913,7 +950,9 @@ def wait_action(args):
         # S2: one S3 blip must not kill the unit (or, worse, strand the lease after an acquire). Each poll is wrapped;
         # on an exception the unit releases the lease if it holds it, then keeps polling.
         try:
-            _try(lambda: heartbeat_waiting(args.run, args.day, st=st))   # B7: stay LIVE in line each poll
+            keep_running_self()   # NEW-2: this box is lawfully busy (waiting in line); keep it from being stopped
+            cpu_ready, _cpu_detail = classroom_cpus_ready(args.run, args.day)   # NEW-1: refresh readiness on the marker
+            _try(lambda: heartbeat_waiting(args.run, args.day, st=st, cpu_ready=cpu_ready))  # B7: stay LIVE in line
             got = acquire_classroom_lease(args.run, args.day, args.commit, st=st)
             _write_json(out_dir / 'fleet-gate.json', dict(schema=GATE_SCHEMA, run=args.run, day=args.day,
                         stage=args.stage, instance=instance_id(), decision='proceed' if got['acquired'] else 'waiting',

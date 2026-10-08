@@ -27,6 +27,24 @@ if [ "${#SAVED[@]}" -eq 0 ]; then
   "$PY" -B "$FLEET" note-awaiting --run "$RUN" || true
   exit 0
 fi
+# NEW-2: stamp KeepRunning=true on THIS box before resuming, so the idle guard does not stop it after the resumed
+# worker exits and the queue clears the tag (the WAIT/heartbeat units then re-stamp it each poll). Best-effort: the
+# day-box role grants ec2:CreateTags on self; a failure here must never stop the resume.
+REGION=$(field region); [ -n "$REGION" ] || REGION=us-east-1
+IID=$(field instance)
+if [ -z "$IID" ]; then
+  TOK=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" || true)
+  [ -n "$TOK" ] && IID=$(curl -s -H "X-aws-ec2-metadata-token: $TOK" "http://169.254.169.254/latest/meta-data/instance-id" || true)
+fi
+if [ -n "$IID" ] && command -v aws >/dev/null 2>&1; then
+  if aws ec2 create-tags --region "$REGION" --resources "$IID" --tags Key=KeepRunning,Value=true; then
+    echo "stamped KeepRunning=true on $IID before resume"
+  else
+    echo "KeepRunning stamp failed for $IID (continuing; WAIT/heartbeat units re-stamp each poll)"
+  fi
+else
+  echo "no instance id or aws cli for the KeepRunning stamp; the WAIT/heartbeat units re-stamp each poll"
+fi
 rc=0
 for D in "${SAVED[@]}"; do
   case "$D" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) continue;; esac

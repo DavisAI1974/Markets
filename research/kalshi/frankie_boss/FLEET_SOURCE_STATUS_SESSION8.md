@@ -171,5 +171,26 @@ user-data + the day driver)/git diff --check clean. Nothing run; no AWS call.
 
 B4's queue half (the booking-release-on-save in request_save) is now MERGED (queue role 74d8470b; branch tip 36c082ec/
 cfb8001d) and verified here (74/74 fleet+queue-release toys). No open fleet-launch item remains from the pass-1 review;
-all of B1-B7, S1-S14 and N1-N8 are resolved. (REVIEW_20261008_FLEET_SOURCE_PASS2.md is now on origin -- its findings are
-folded in when the parent pings.)
+all of B1-B7, S1-S14 and N1-N8 are resolved.
+
+## Pass-2 (REVIEW_20261008_FLEET_SOURCE_PASS2.md, fa4e13bd) -- slice (g), NARROWED by Greg
+
+Greg's instruction (verbatim): "stop building more tests and validators. If something doesn't work in this then we fix
+it." So slice (g) fixes ONLY the two BLOCKING findings, with the minimal code change each and NO new tests/validators/
+checks; the existing 74 toys still pass unchanged. Everything else is DEFERRED: fix when it bites in a run.
+
+| # | finding | status |
+| --- | --- | --- |
+| NEW-1 | a live but CPU-blocked head-of-line waiter makes every other box yield forever (fleet-wide deadlock, lease FREE) | FIXED. The waiting marker now carries `cpu_ready` (record_root_finished / heartbeat_waiting take the flag; classroom_gate and wait_action compute it via classroom_cpus_ready each time). acquire_classroom_lease yields to an earlier LIVE waiter ONLY when its marker does not say `cpu_ready is False` (absent/True/None = ready, so old markers and the indeterminate case never over-skip). A blocked head-of-line box no longer stalls the line. |
+| NEW-2 | a box lawfully waiting in line has no live worker, the queue cleared KeepRunning, the idle guard stops it | FIXED (my files' part). `keep_running_self()` (best-effort boto3 ec2:CreateTags KeepRunning=true on self; no-op under the toys) is called each poll from wait_action and heartbeat_action, and the reboot driver (frankie_fleet_day.sh) stamps KeepRunning=true before its first resume. box_in_use (experiment.py) and the guard's Role=day-box exemption (idle_instance_guard.py) are OTHER roles' files -- not touched; the self-stamp covers the proof box on its own. |
+
+### Deferred -- fix when it bites in a run (NOT worked in slice g, per Greg)
+
+- NEW-3 -- S2's release-on-failed-classroom is dead on the real class-worker path (queue owner's keep() returns 'failed'/'waiting' before the boundary). Queue-owner fix.
+- NEW-4 -- fail-open classroom_cpus_ready -> None -> proceed will hold the lease idle for a sibling's whole tail once the booking-release lands. Tighten only when it actually bites.
+- NEW-5 -- the reboot driver re-kicks without the original run settings and skips `unknown` days.
+- NEW-6, NEW-7, NEW-8, NEW-9, NEW-10 -- see the pass-2 review; none blocks the first fleet run.
+- NIT-1..NIT-6 -- cosmetic (argv-visible git header, _detached_env AWS_* passthrough, etc.).
+- B3 fresh-start-claim and the NEW-3 queue-owner item -- deferred with NEW-3.
+
+(REVIEW_20261008_FLEET_SOURCE_PASS2.md remains on origin as the full record.)
