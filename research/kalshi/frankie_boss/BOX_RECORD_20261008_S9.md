@@ -232,3 +232,15 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   released; R1 -a1 intact). Fix 1c59623 (data_workers difference = recorded run-size rebind; repair tool
   frankie_box_queue_repoint.sh); restage run 37814850954 (17:13:12Z) -> CR3=/opt/frankie-box/code/1c59623...-37814850954-1/
   markets. Plan: verify, then repoint -a1 on 64 + resume + kick, then watch the first minute closely.
+
+## Parent: Greg's one-pass question and the boundary validator (17:2xZ)
+- Greg: "I thought the validation was the source binding? Isn't this a double pass with just a different name?" Answer
+  from source: the source-binding check (save_or_match) is a document compare, no data read. The ROOT stage-boundary
+  validate (frankie_box_root_validate via frankie_box_stage_handoff.run_validate, session 6, Greg's order then) re-reads
+  EVERY pinned artifact whole (~1.2 TB on a2: frames spool, inline layer, native ledgers) and takes no file claim: a
+  second full pass under another name (~20 min on 64 after the volume raise; ~2.5 h at the baseline rate).
+- Source role (opus) assigned: the validator takes the FRANKIE_FILE_CLAIM_V2 rows (bytes/sha256 equal to the pin, stat +
+  64 KiB tail hold -> verified by claim; spools need the row's count), FRANKIE_ROOT_VALIDATE_CHECK=full restores the
+  whole reads; recorded per file in validate.json. To apply it to this day: a save marker after the ROOT's receipt +
+  digest (calculate_day's post-return check), then resume + kick on the restaged tip, so the boundary runs the
+  claim-taking validator. Decision on applying it to this day: pending the digest's progress and Greg's word.
