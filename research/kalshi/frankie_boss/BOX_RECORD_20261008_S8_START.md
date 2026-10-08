@@ -228,3 +228,30 @@ nothing; the chain's own class kick inherits FRANKIE_CLASSROOM_CPUS=all from the
 - Next in the chain, untouched: receipt -> validate on 0-31 -> teacher (the long pole) -> class line (classroom on 0-63 via grow,
   which WAITS while the render holds 32-63). The digest render is the parent's (after the 18:20Z raise; FRANKIE_LANE_CPUS unset).
 - Not touched: i-0d17573dbce871520, i-08cee7171c0a76a04, clone volumes, snapshots, IAM, quotas, launch templates, ModifyVolume.
+
+## 15:2xZ restart on the claim fix (5bf723f4)
+Greg's standing order via the parent (15:2xZ, verbatim): "keep building and launch the workflow when ready to get 1 day going
+again". The parent decided: the file-claim fix is on the branch (5bf723f4 "file claims survive a reboot": st_dev dropped from
+the claim identity, fs UUID added, V2 rows, V1 rows accepted on a tail match and rewritten), so RESTART a2 on it: save on the
+marker, restage, resume + kick; the resume then takes the claims shortcut in minutes instead of hashing ~1.2 TB whole.
+Limits unchanged (only i-035994afa8bdf66a5; no second box, clone volumes, snapshots, IAM, quotas, launch templates, fleet; no
+digest render, no hand classroom, no stop, no ModifyVolume until ~18:1xZ; the ROOT child is never killed: the marker only).
+Skill full-run-orchestrator invoked first. AWS via the Aws connector only; GitHub dispatch via mcp__github__ tools.
+
+### Timeline (third pass)
+- 15:25:24Z `git fetch origin ccr-d2f8f826-iefeah-frankie`: origin tip 38cfb10b ("tests/test_file_claims_v2.py, the seven
+  file-claim toys as unittest cases") on 5bf723f4 ("file claims survive a reboot ... FRANKIE_FILE_CLAIM_V2; V1 read, refreshed
+  on match") on 242c7273. 38cfb10b >= 5bf723f4 and carries the fix: this is the tip to stage (tests only on top; inert on the box).
+- 15:25:31Z STEP 1 read-only (Aws connector; DescribeInstances + DescribeInstanceInformation + SSM
+  45e1831c-7a4d-4e40-a8b5-dd922deee25e rc 0): i-035994afa8bdf66a5 RUNNING r7i.16xlarge (LaunchTime 15:02:19Z), KeepRunning=true,
+  SSM Online (last ping 15:21:11Z). up 23 min, load 1.00. R/calculations-receipt.json ABSENT. ROOT child 1834 alive (Dl, 11.0%
+  CPU, RSS 446 MB, psr 4), read_bytes 163,780,096,000; fd 3 = R/work/bedrock/recovery-6f84.../ledgers/exact_member_rows.jsonl
+  pos 146,934,857,728 of 193,743,650,444 (still the whole read of the native member ledger; ~6 min to its end at 132 MB/s).
+  cores-run 1832 (parent of 1834), units frankie-queue-root-1791471869 + frankie-cpu-watch active. ROOT log unchanged (4
+  lines, last 15:05:48Z); progress.json stage deriving pid 1834. Entry seq 2 RUNNING, retained_booking ...-3111, save_request
+  None, owner commit d67b9c63. save/: 4 newest .resumed-* (last 1791471821 = the 15:03Z resume), NO standing marker.
+  file-claims.jsonl unchanged (41,542 B, 03:02:14Z, 57 V1 rows), stat now dev 66306 ino 8657742. Filesystem identity on the
+  box for the new code: /dev/disk/by-uuid/d662a37e-da8d-4720-94ff-f588450178c0 -> nvme0n1p1 (= /, the root volume; findmnt
+  -T R gives the same UUID) and 6c02aaf8-620a-4b3c-bc41-f9aafaf14f3b -> nvme1n1 (the archive volume): the by-uuid branch of
+  filesystem_identity has what it needs. Watchdog 15:24:29Z: bookings 1 findings 1 (unbooked 1 = itself) repins 0.
+  Receipt absent -> the restart proceeds.
