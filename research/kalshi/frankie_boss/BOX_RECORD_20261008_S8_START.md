@@ -298,3 +298,8 @@ Skill full-run-orchestrator invoked first. AWS via the Aws connector only; GitHu
   save_request true. Stage: /opt/frankie-box/code/46cfe9074bec6094653cf1f6df72d6bee76f05e6-37800918122-1 being written by
   the stage python 2513 ("Stage exact reviewed source in a fresh inactive Linux checkout; never run it"); no
   staging-receipt.json yet; run 37800918122 in_progress on GitHub.
+- 15:31:47Z PROBE 3 (read-only, SSM 8fd27671-3d31-4fb6-9660-f1dd384ef094): receipt ABSENT; marker standing; child 1834 Dl
+  27:12, read_bytes 211,970,146,304: the member ledger is DONE; fd 3 now R/work/derived/.projection-v2/published-238b86.../
+  derived_v4_mechanics_fifo_features.json.gz pos 167,772,160 (the layer pass, each read whole on d67b9c63). Entry running,
+  save_request true. Stage: HEAD of 46cfe907...-37800918122-1/markets = 46cfe9074bec6094653cf1f6df72d6bee76f05e6 landed;
+  staging-receipt.json not yet (stage python 2513 still finishing); run 37800918122 in_progress.
