@@ -1364,6 +1364,26 @@ class Run:
     DIGEST_NOT_BUILT = ('not built: no stage of this day reads the derivation digest for work (only the classroom does, '
                         'on a classroom-arm day; the plan key root_digest on builds it for every day)')
 
+    @staticmethod
+    def root_digest_setting(entry, plan, environ=None):
+        """The ROOT's DIGEST (process 4, the Markdown digest) as a run setting (session 6, 2026-10-08): FRANKIE_ROOT_DIGEST
+        on|off given at kick time (frankie_box_frankie_queue.sh exports every FRANKIE_* shell variable to the worker it
+        starts, FA-6; Run.child hands the worker's whole environment to the ROOT) wins; any other value raises ValueError
+        (root() refuses the day with the reason, nothing runs); unset = the day's rule: on for a classroom-arm day (the
+        classroom is the only stage that reads the digest for work) or when the plan says root_digest on, else off.
+        Returns dict(value, basis); recorded on the root record (digest_setting) and the inspection inputs."""
+        environ = os.environ if environ is None else environ
+        given = environ.get('FRANKIE_ROOT_DIGEST')
+        if given is not None:
+            if given not in ('on', 'off'):
+                raise ValueError('FRANKIE_ROOT_DIGEST must be on or off, not %r' % given)
+            return dict(value=given, basis='FRANKIE_ROOT_DIGEST=%s given at kick time (run setting)' % given)
+        if entry.get('classroom_arm'):
+            return dict(value='on', basis='classroom-arm day: the classroom reads the digest')
+        if (plan or {}).get('root_digest') == 'on':
+            return dict(value='on', basis='plan root_digest on')
+        return dict(value='off', basis=Run.DIGEST_NOT_BUILT)
+
     def inline_spool_layer_bytes(self, record):
         """Bytes of a measured ROOT step's old-form (inline) spool layers: re-encodings of its spools that a ROOT on this
         code no longer writes (2026-10-08: frankie_box_layer_spool references, a few KB each). Recorded on the step when
@@ -1717,16 +1737,20 @@ class Run:
         held = self.claim_root(e, output)          # None = no claim store on the box: exactly as before
         if held is not None and not held[0]:
             return self.record('root', e['day'], 'waiting', reason=held[1], claim=held[2])
+        # session 6 (Greg, 2026-10-08: "some of these end steps feel redundant"; a2's digest decoding the 496.7 GB frames
+        # spool five times): ROOT process 4, the Markdown digest, is a RUN SETTING (root_digest_setting: FRANKIE_ROOT_DIGEST
+        # on|off at kick time wins, else on for a classroom-arm day or plan root_digest on, else off). It is read FOR WORK
+        # by the classroom only (classroom.py / classroom_v2.py / classroom_staged.py / classroom_cache.py; the teacher,
+        # search, data, reports, exchange and inspection stages read the JSON layers and spools); every other reader
+        # records its hash. Off = derive.json root_processes.digest 'skipped' with its not_run reason, the receipt's
+        # digest null, listed as not built on the brain entry and this record, never a failure.
+        try:
+            digest_setting = self.root_digest_setting(e, self.plan)
+        except ValueError as error:
+            return self.record('root', e['day'], 'refused', reason=str(error))
         env = dict(INGESTION_RECEIPT=ing['receipt'], INGESTION_RECEIPT_SHA256=ing['receipt_sha256'], DAY=e['day'],
                    DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=self.day_cpus() - 1,
-                   # session 6 (Greg, 2026-10-08: "some of these end steps feel redundant"): ROOT process 4, the Markdown
-                   # digest (~95 MB, 30 workers, 6+ min on a2), is read FOR WORK by the classroom only (classroom.py /
-                   # classroom_v2.py / classroom_staged.py / classroom_cache.py, classroom-arm days; the teacher, search,
-                   # data, reports, exchange and inspection stages read the JSON layers and spools); every other reader
-                   # records its hash. Built on a classroom-arm day, or for every day when the plan says root_digest 'on';
-                   # else 'off' (derive.json root_processes.digest 'skipped' with its not_run reason, the receipt's digest
-                   # null), listed as not built on the brain entry and this record, never a failure
-                   DIGEST='on' if (e['classroom_arm'] or self.plan.get('root_digest') == 'on') else 'off',
+                   DIGEST=digest_setting['value'],
                    RESUME='on' if resume else 'off',
                    # the ROOT's own finalize preflight keeps this Run's floor (2026-10-08; Session._finalize_projection)
                    FRANKIE_ROOT_DISK_FLOOR_GB=self.floor / 1024 ** 3)
@@ -1781,10 +1805,7 @@ class Run:
                            # (0 on reference layers), which the root disk gate does not reserve again
                            finalize_projection=finalize, inline_spool_layer_bytes=self.inline_spool_layer_bytes(measured),
                            # session 6: digest = whether the ROOT built it (was a constant True), with the rule
-                           interrupted_attempts=attempts, digest=digest_path.is_file(),
-                           digest_rule=('classroom-arm day: the classroom reads the digest' if e['classroom_arm'] else
-                                        'plan root_digest on' if self.plan.get('root_digest') == 'on' else
-                                        self.DIGEST_NOT_BUILT),
+                           interrupted_attempts=attempts, digest=digest_path.is_file(), digest_setting=digest_setting,
                            plan_policy=policy, seconds=child_seconds,
                            native_pass=native, shared_market_policy=calc.get('shared_market_policy'),
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'),
