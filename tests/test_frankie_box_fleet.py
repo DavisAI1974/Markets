@@ -158,6 +158,50 @@ class TestDayList(FleetBase):
         self.assertEqual(doc['days'][0]['stages']['root']['state'], 'done')
 
 
+class TestDriverSupport(FleetBase):
+    def test_box_saved_days(self):
+        import json as J
+        qdir = Path(self.tmp) / 'q'
+        qdir.mkdir()
+        (qdir / 'root.json').write_text(J.dumps({'entries': [
+            {'run': 'e2e-a', 'day': '20231018', 'state': 'saved'},
+            {'run': 'e2e-a', 'day': '20231019', 'state': 'running'},
+            {'run': 'e2e-a', 'day': '20231020', 'state': 'done', 'finish': {'state': 'saved'}},
+            {'run': 'other', 'day': '20231021', 'state': 'saved'},
+        ]}))
+        got = F.box_saved_days('e2e-a', queue_dir=qdir)
+        self.assertEqual(sorted(got), ['20231018', '20231020'])   # saved, or done+finish saved, this run only
+
+    def test_claim_day_off_is_error_exit_2(self):
+        import subprocess
+        box = str(HERE.parent / 'deploy' / 'aws' / 'box' / 'frankie_box_fleet.py')
+        env = {k: v for k, v in os.environ.items() if k not in ('FRANKIE_FLEET_DAY_LIST', 'FRANKIE_FLEET_CONFIG')}
+        env['FRANKIE_FLEET_CONFIG'] = str(Path(self.tmp) / 'no-such-config.json')   # fleet mode OFF
+        out = subprocess.run([sys.executable, box, 'claim-day', '--run', 'e2e-a', '--day', '20231018',
+                              '--commit', 'c0ffee'], env=env, capture_output=True, text=True)
+        self.assertEqual(out.returncode, 2)       # B3: OFF is an error for claim-day, never a silent win (0)
+
+
+class TestConfigFile(FleetBase):
+    def test_box_config_turns_fleet_on(self):
+        import json as J
+        cfg = Path(self.tmp) / 'fleet.json'
+        cfg.write_text(J.dumps({'day_list': 'fleet/run-cfg', 'region': 'us-east-1', 'instance': 'i-cfg'}))
+        env = {k: v for k, v in os.environ.items()
+               if k not in ('FRANKIE_FLEET_DAY_LIST', 'FRANKIE_FLEET_INSTANCE')}   # env wins; drop it to test config
+        saved = dict(os.environ)
+        try:
+            os.environ.clear()
+            os.environ.update(env)
+            os.environ['FRANKIE_FLEET_CONFIG'] = str(cfg)
+            self.assertTrue(F.enabled())                      # env unset, config names a day list -> on
+            self.assertEqual(F.location()[1], 'fleet/run-cfg')
+            self.assertEqual(F.instance_id(), 'i-cfg')
+        finally:
+            os.environ.clear()
+            os.environ.update(saved)
+
+
 class TestCLI(FleetBase):
     def test_claim_day_cli(self):
         import subprocess

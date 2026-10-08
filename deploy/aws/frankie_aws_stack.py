@@ -109,66 +109,83 @@ if [ "${#DEVS[@]}" -gt 0 ]; then
 fi
 '''
 
-# The fleet box's user-data (session 8). INSTALLS NOTHING NEW (git, awscli and the venv are baked into the golden AMI):
-# it reads its two assigned days + the commit from its own instance tags (IMDSv2, InstanceMetadataTags=enabled),
-# obtains the code at that commit under the required /opt/frankie-box/code/<commit> checkout (the box's own stage path),
-# turns fleet mode ON (FRANKIE_FLEET_DAY_LIST, so the classroom is serialised across the fleet by the S3 lease), claims
-# each day (the per-day conditional write), then starts each day on the root line with DAY_CPUS explicit. The handoff
-# chain carries each day to its successor; the classroom gate waits in line for the global lease. Every value is
-# explicit: the commit, the two days, DAY_CPUS, the run, the fleet location and region all come from tags/placeholders
-# the launch-template or fleet-launch fills. RUNTIME-UNVERIFIED (nothing has booted from this).
+# The fleet box's user-data (session 8, rewritten in slice f for review findings B1/B2/B3/B5/B6/S9/S13). INSTALLS
+# NOTHING NEW (git, awscli and the venv are on the golden AMI). It PREPARES the box and sets up reboot-resume; it does
+# NOT start a day from scratch (B1): a self-driving box has no lawful route to its partitions, so a FRESH day-start is
+# driven per instance by frankie_box_run.yml (ACTION=stage then ACTION=start with the FULL dispatch set + the presign),
+# with fleet mode on via /opt/frankie-box/fleet.json. Preparation: read its tags (IMDSv2, with retry and -f so a 404
+# body is never read as a value, S13); refuse LOUDLY to a boot-failed marker on a bad tag (never a silent idle box);
+# wipe box-local run state on the FIRST boot only (B5, guarded so a reboot keeps progress); stage the pinned commit
+# WITHOUT persisting the token on disk (S9); verify rev-parse HEAD and write the staging receipt (decision 1); write
+# the box-local fleet config so every process sees fleet mode; install a systemd unit that runs the committed day
+# driver on EVERY boot (B6: reboot-resume, not once). RUNTIME-UNVERIFIED (nothing has booted from this).
 FLEET_USER_DATA_TMPL = r'''#!/bin/bash
 set -euo pipefail
 exec >>/var/log/frankie-fleet-userdata.log 2>&1
 echo "frankie fleet user-data start $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 __SCRATCH__
-TOKEN=$(curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
-md() {{ curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "http://169.254.169.254/latest/$1"; }}
-IID=$(md meta-data/instance-id)
-REGION=$(md meta-data/placement/region)
-COMMIT=$(md "meta-data/tags/instance/Commit")
-DAYS=$(md "meta-data/tags/instance/Day")           # the two assigned days, comma-separated
-RUN=$(md "meta-data/tags/instance/Run")
-case "$COMMIT" in *[!0-9a-f]*) echo "frankie: bad Commit tag"; exit 2;; esac
-[ "${{#COMMIT}}" -eq 40 ] || {{ echo "frankie: Commit tag must be a full 40-hex commit"; exit 2; }}
-export FRANKIE_FLEET_INSTANCE="$IID"
-export FRANKIE_FLEET_DAY_LIST="{day_list}"         # same for every box -> fleet mode ON (the classroom is serialised)
-export FRANKIE_FLEET_REGION="{fleet_region}"
-export MARKETS_SHA="$COMMIT"
-CODE_ROOT="/opt/frankie-box/code/$COMMIT"           # the box's required staged-checkout location
+mkdir -p /opt/frankie-box/box
+fail() {{ printf '{{"schema":"FRANKIE_FLEET_BOOT_FAILED_V1","reason":"%s","instance":"%s","at_utc":"%s"}}\n' "$1" "${{IID:-}}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > /opt/frankie-box/box/fleet-boot-failed.json; echo "frankie: BOOT FAILED: $1"; exit 2; }}
+IID=""; COMMIT=""; RUN=""; DAYS=""; REGION="{fleet_region}"
+for i in $(seq 1 30); do   # S13: tags lag IMDS by seconds after launch; retry ~60s with -f
+  TOKEN=$(curl -fsS -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 600" || true)
+  [ -n "$TOKEN" ] || {{ sleep 2; continue; }}
+  H="X-aws-ec2-metadata-token: $TOKEN"
+  IID=$(curl -fsS -H "$H" "http://169.254.169.254/latest/meta-data/instance-id" || true)
+  COMMIT=$(curl -fsS -H "$H" "http://169.254.169.254/latest/meta-data/tags/instance/Commit" || true)
+  RUN=$(curl -fsS -H "$H" "http://169.254.169.254/latest/meta-data/tags/instance/Run" || true)
+  DAYS=$(curl -fsS -H "$H" "http://169.254.169.254/latest/meta-data/tags/instance/Day" || true)
+  R=$(curl -fsS -H "$H" "http://169.254.169.254/latest/meta-data/placement/region" || true)
+  [ -n "$R" ] && REGION="$R"
+  [ -n "$IID" ] && [ -n "$COMMIT" ] && [ -n "$RUN" ] && break
+  sleep 2
+done
+case "$COMMIT" in *[!0-9a-f]*) fail "Commit tag is not hex";; esac
+[ "${{#COMMIT}}" -eq 40 ] || fail "Commit tag must be a full 40-hex commit (got '${{COMMIT}}')"
+[ -n "$RUN" ] || fail "Run tag empty"
+[ -n "$IID" ] || fail "instance-id unreadable from IMDS"
+CODE_ROOT="/opt/frankie-box/code/$COMMIT"
 BOX_DIR="/opt/frankie-box/box/$COMMIT"
-# the stage for this commit: the reviewed code at the pinned commit under CODE_ROOT (the self-driving fleet box stages
-# from git rather than the SSM reviewed-helper dispatch; see FLEET_SOURCE_STATUS for the open choice)
-if [ ! -d "$CODE_ROOT/.git" ]; then
-  GH=$(aws ssm get-parameter --with-decryption --name "{github_token_param}" --region "{token_region}" \
-        --query Parameter.Value --output text)
-  git clone "https://x-access-token:$GH@github.com/{repo}" "$CODE_ROOT"
-  unset GH
-fi
-git -C "$CODE_ROOT" fetch --depth 1 origin "$COMMIT"
-git -C "$CODE_ROOT" checkout -q "$COMMIT"
-# decision 1: the stage pins a FULL commit hash (the 40-hex check above already refuses a branch name or a short hash);
-# verify the checkout is exactly it and write a staging receipt in the shape frankie_box_stage_code.sh's stage writes,
-# so every fleet box's receipt names the identical commit/tree
-GOT=$(git -C "$CODE_ROOT" rev-parse HEAD)
-[ "$GOT" = "$COMMIT" ] || {{ echo "frankie: rev-parse HEAD ($GOT) != pinned commit ($COMMIT); refusing"; exit 2; }}
-export CODE_ROOT
 mkdir -p "$BOX_DIR"
+# B5: FIRST boot only, clear any box-local run state (belt-and-suspenders; golden-ami refuses a dirty source). The
+# marker guard means a REBOOT never wipes a day's progress.
+if [ ! -f /opt/frankie-box/.fleet-prepared ]; then
+  echo "frankie: first boot; clearing box-local run state"
+  rm -rf /opt/frankie-box/work/frankie-queue /opt/frankie-box/work/cpu-bookings /opt/frankie-box/cpu-bookings \
+         /opt/frankie-box/work/experiment /opt/frankie-box/work/logs 2>/dev/null || true
+fi
+# S9: stage the pinned commit with an auth header for the fetch only; the token is NEVER written to .git/config
+GH=$(aws ssm get-parameter --with-decryption --name "{github_token_param}" --region "{token_region}" --query Parameter.Value --output text)
+AUTH="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH" | base64 -w0)"
+unset GH
+[ -d "$CODE_ROOT/.git" ] || git -c http.extraheader="$AUTH" clone --depth 1 "https://github.com/{repo}" "$CODE_ROOT"
+git -C "$CODE_ROOT" -c http.extraheader="$AUTH" fetch --depth 1 origin "$COMMIT"
+git -C "$CODE_ROOT" checkout -q "$COMMIT"
+git -C "$CODE_ROOT" remote set-url origin "https://github.com/{repo}"   # S9: no token left on disk
+GOT=$(git -C "$CODE_ROOT" rev-parse HEAD)
+[ "$GOT" = "$COMMIT" ] || fail "rev-parse HEAD ($GOT) != pinned commit ($COMMIT)"
 TREE=$(git -C "$CODE_ROOT" rev-parse "HEAD^{{tree}}")
 FILES=$(git -C "$CODE_ROOT" ls-files | wc -l | tr -d ' ')
+# decision 1: the staging receipt so every fleet box names the identical commit/tree
 python3 -I -S -c "import json,sys,time; json.dump({{'schema':'FRANKIE_FLEET_STAGE_V1','status':'staged','commit':sys.argv[1],'tree_sha':sys.argv[2],'file_count':int(sys.argv[3]),'instance':sys.argv[4],'code_root':sys.argv[5],'staged_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}}, open(sys.argv[6],'w'), indent=1, sort_keys=True)" "$COMMIT" "$TREE" "$FILES" "$IID" "$CODE_ROOT" "$BOX_DIR/stage-receipt.json"
-echo "frankie: staged $COMMIT (tree $TREE, $FILES files); receipt $BOX_DIR/stage-receipt.json"
-# run each assigned day on the root line, DAY_CPUS explicit; the handoff chain carries it on, the classroom lease
-# serialises the classroom across the fleet; the second day waits for CPUs/the first day's classroom (Greg's plan)
-IFS=',' read -ra DAY_ARR <<< "$DAYS"
-for D in "${{DAY_ARR[@]}}"; do
-  case "$D" in [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "frankie: bad Day '$D'"; continue;; esac
-  python3 -I -S -B "$CODE_ROOT/deploy/aws/box/frankie_box_fleet.py" claim-day \
-    --run "$RUN" --day "$D" --stage root --commit "$COMMIT" || echo "frankie: day $D already claimed; skipping"
-  CODE_ROOT="$CODE_ROOT" MARKETS_SHA="$COMMIT" RUN="$RUN" DAYS="$D" DAY_CPUS={day_cpus} DETACH=on \
-    bash "$CODE_ROOT/deploy/aws/box/frankie_box_experiment.sh" ACTION=start || echo "frankie: day $D start returned $?"
-done
-echo "frankie fleet user-data done $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+# the box-local fleet config: EVERY process on the box (including run.yml-dispatched starts) sees fleet mode from it
+python3 -I -S -c "import json,sys; json.dump({{'schema':'FRANKIE_FLEET_CONFIG_V1','day_list':sys.argv[1],'region':sys.argv[2],'instance':sys.argv[3],'run':sys.argv[4],'commit':sys.argv[5],'code_root':sys.argv[6]}}, open('/opt/frankie-box/fleet.json','w'), indent=1, sort_keys=True)" "{day_list}" "$REGION" "$IID" "$RUN" "$COMMIT" "$CODE_ROOT"
+# B6: run the committed day driver on EVERY boot (reboot-resume), via a systemd unit, not once
+cat > /etc/systemd/system/frankie-fleet-day.service <<UNIT
+[Unit]
+Description=Frankie fleet day driver (reboot-resume)
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+ExecStart=/bin/bash $CODE_ROOT/deploy/aws/box/frankie_fleet_day.sh
+[Install]
+WantedBy=multi-user.target
+UNIT
+touch /opt/frankie-box/.fleet-prepared
+systemctl daemon-reload
+systemctl enable --now frankie-fleet-day.service || true
+echo "frankie fleet user-data done (prepared; day-start is driven by run.yml; reboot-resume via the unit) $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 '''
 
 
@@ -179,7 +196,7 @@ def fleet_user_data(args):
     scratch = SCRATCH_SNIPPET if args.scratch_volumes > 0 else 'true  # no scratch volumes on this box\n'
     return FLEET_USER_DATA_TMPL.replace('__SCRATCH__', scratch).format(
         day_list=day_list, fleet_region=args.fleet_region, github_token_param=args.github_token_param,
-        token_region=REGION_DATA, repo=REPO, day_cpus=args.day_cpus)
+        token_region=REGION_DATA, repo=REPO)
 
 
 def _fleet_day_list_location(args):
@@ -495,9 +512,13 @@ def launch_template_data(args):
                               'Ebs': {'VolumeType': 'gp3', 'VolumeSize': args.scratch_gib, 'Iops': args.scratch_iops,
                                       'Throughput': args.scratch_throughput, 'DeleteOnTermination': True,
                                       'Encrypted': True, 'KmsKeyId': args.kms_key_id}})
-    # Day/Commit/Run are stamped per box by fleet-launch; the template carries empty placeholders so the keys exist
+    # Day/Commit/Run are stamped per box by fleet-launch; the template carries empty placeholders so the keys exist.
+    # KeepRunning=true at launch (B6): the idle guard stops only boxes with KeepRunning != true, so a fleet box is
+    # protected while its day runs; the run clears it (keep_running(false)) at the day's end as today, after which the
+    # box is idle-stop eligible. The day-box role (slice e) grants the box ec2:CreateTags on Project=frankie so its
+    # own keep_running succeeds (the main-box-only grant was the gap the review named).
     tags = [{'Key': 'Project', 'Value': 'frankie'}, {'Key': 'Role', 'Value': 'day-box'},
-            {'Key': 'Name', 'Value': args.launch_template}, {'Key': 'KeepRunning', 'Value': 'false'},
+            {'Key': 'Name', 'Value': args.launch_template}, {'Key': 'KeepRunning', 'Value': 'true'},
             {'Key': 'Day', 'Value': ''}, {'Key': 'Commit', 'Value': ''}, {'Key': 'Run', 'Value': args.run}]
     return {
         'ImageId': args.image_id,
@@ -790,6 +811,7 @@ def step_fleet_launch(account, args):
         tags = [{'Key': 'Project', 'Value': 'frankie'}, {'Key': 'Role', 'Value': 'day-box%s' % ('-root-spot' if args.spot else '')},
                 {'Key': 'Name', 'Value': name}, {'Key': 'Day', 'Value': ','.join(box_days)},
                 {'Key': 'Commit', 'Value': args.commit}, {'Key': 'Run', 'Value': args.run},
+                {'Key': 'KeepRunning', 'Value': 'true'},   # B6: protected from the idle guard while its day runs
                 {'Key': 'ClassroomEligible', 'Value': 'false' if args.spot else 'true'}]
         run_params = dict(LaunchTemplate={'LaunchTemplateName': args.launch_template, 'Version': '$Latest'},
                           MinCount=1, MaxCount=1,

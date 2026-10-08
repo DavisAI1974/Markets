@@ -56,6 +56,7 @@ WAIT_MAX_SETTING = 'FRANKIE_FLEET_WAIT_SECONDS'
 FAIR_WAIT_SETTING = 'FRANKIE_FLEET_LEASE_FAIR_WAIT_SECONDS'
 PYTHON_SETTING = 'FRANKIE_FLEET_PYTHON'
 
+CONFIG_FILE = '/opt/frankie-box/fleet.json'          # the box-local fleet config the user-data writes (env wins over it)
 DEFAULT_BUCKET = 'frankie-granite42-568968024170-us-east-1'   # the frankie leases/pod-root bucket (us-east-1)
 DEFAULT_REGION = 'us-east-1'
 DEFAULT_GATE_STAGES = ('teacher',)                   # ROOT -> teacher -> (gate) -> classroom; the serial boundary
@@ -94,9 +95,22 @@ def _try(thunk, default=None):
 
 
 # ----------------------------------------------------------------------------------------------- configuration
+def _config_file():
+    """The box-local fleet config (CONFIG_FILE, or FRANKIE_FLEET_CONFIG for toys), or {} when absent/unreadable. It lets
+    EVERY process on a fleet box see fleet mode without the env being threaded through each dispatch; the env always
+    wins over it. A box with no such file (the one-box main box, the container) is simply not in fleet mode."""
+    path = os.environ.get('FRANKIE_FLEET_CONFIG') or CONFIG_FILE
+    try:
+        return json.loads(Path(path).read_bytes())
+    except (OSError, ValueError):
+        return {}
+
+
 def enabled():
-    """Fleet mode is on exactly when the run setting FRANKIE_FLEET_DAY_LIST is set and non-empty."""
-    return bool((os.environ.get(DAY_LIST_SETTING) or '').strip())
+    """Fleet mode is on when FRANKIE_FLEET_DAY_LIST is set, or the box-local fleet config names a day list."""
+    if (os.environ.get(DAY_LIST_SETTING) or '').strip():
+        return True
+    return bool((_config_file().get('day_list') or '').strip())
 
 
 def _looks_like_bucket(name):
@@ -108,18 +122,19 @@ def location():
     """(bucket, prefix, region). FRANKIE_FLEET_DAY_LIST = `[<bucket>/]<key-prefix>` (an optional s3:// is stripped):
     if it has a '/' and the head looks like a bucket, that head is the bucket and the tail the prefix; otherwise the
     whole value is the prefix under the default (or FRANKIE_FLEET_BUCKET) bucket."""
-    raw = (os.environ.get(DAY_LIST_SETTING) or '').strip()
+    cfg = _config_file()
+    raw = (os.environ.get(DAY_LIST_SETTING) or cfg.get('day_list') or '').strip()
     if raw.startswith('s3://'):
         raw = raw[len('s3://'):]
     raw = raw.strip('/')
-    bucket_override = (os.environ.get(BUCKET_SETTING) or '').strip()
+    bucket_override = (os.environ.get(BUCKET_SETTING) or cfg.get('bucket') or '').strip()
     if bucket_override:
         bucket, prefix = bucket_override, raw
     elif '/' in raw and _looks_like_bucket(raw.split('/', 1)[0]):
         bucket, prefix = raw.split('/', 1)
     else:
         bucket, prefix = DEFAULT_BUCKET, raw
-    region = (os.environ.get(REGION_SETTING) or DEFAULT_REGION).strip()
+    region = (os.environ.get(REGION_SETTING) or cfg.get('region') or DEFAULT_REGION).strip()
     return bucket, prefix.strip('/'), region
 
 
@@ -152,7 +167,7 @@ def _imds(path):
 def instance_id():
     """This box's EC2 instance id: FRANKIE_FLEET_INSTANCE (set by user-data from IMDS; toys set it), else IMDSv2, else
     the hostname (never an AWS call under a toy, which always sets the env)."""
-    forced = (os.environ.get(INSTANCE_SETTING) or '').strip()
+    forced = (os.environ.get(INSTANCE_SETTING) or _config_file().get('instance') or '').strip()
     if forced:
         return forced
     return _imds('meta-data/instance-id') or socket.gethostname()
@@ -398,6 +413,31 @@ def set_day_stage_state(run, day, stage, state, *, st=None):
 
 
 # ----------------------------------------------------------------------------------------------- per-day claim
+def box_saved_days(run, *, queue_dir=None):
+    """This box's own SAVED days for `run`, from the local queue ledger (root.json): entries in state 'saved', or 'done'
+    with finish 'saved'. The reboot-resume driver resumes exactly these (box-local, already-staged; no partition route
+    needed). Empty when the queue has none (a fresh box awaiting its external day-start dispatch)."""
+    base = Path(queue_dir) if queue_dir else None
+    if base is None:
+        try:
+            import frankie_box_frankie_queue as Q
+            base = Q.QUEUE
+        except ImportError:
+            base = Path(os.environ.get('FRANKIE_QUEUE_DIR') or '/opt/frankie-box/work/frankie-queue')
+    try:
+        doc = json.loads((base / 'root.json').read_bytes())
+    except (OSError, ValueError):
+        return []
+    out = []
+    for entry in doc.get('entries', []):
+        if entry.get('run') != run:
+            continue
+        state, finish = entry.get('state'), (entry.get('finish') or {}).get('state')
+        if state == 'saved' or (state == 'done' and finish == 'saved'):
+            out.append(entry.get('day'))
+    return [d for d in out if isinstance(d, str)]
+
+
 def claim_day(run, day, stage, commit, *, st=None, instance=None):
     """Claim a (run, day, stage) with a conditional write: exactly one box can win. Returns {won, holder, record}.
     The days are pre-assigned on the list; this is the hard guarantee that two boxes never run the same day."""
@@ -710,6 +750,10 @@ def main(argv=None):
     for flag in ('--run', '--day', '--commit'):
         claim.add_argument(flag, required=True)
     claim.add_argument('--stage', default='root')
+    saved = sub.add_parser('saved-days')
+    saved.add_argument('--run', required=True)
+    awaiting = sub.add_parser('note-awaiting')
+    awaiting.add_argument('--run', required=True)
     take = sub.add_parser('takeover-lease')
     take.add_argument('--run', required=True)
     take.add_argument('--day', required=True)
@@ -722,8 +766,22 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.action == 'wait':
         return wait_action(args)
+    if args.action == 'saved-days':
+        # read-only, no fleet-mode gate (the driver uses it to decide whether there is anything to resume)
+        for day in box_saved_days(args.run):
+            print(day)
+        return 0
     if not enabled():
+        if args.action == 'claim-day':
+            print('fleet mode is OFF (%s unset and no box config): cannot claim' % DAY_LIST_SETTING)
+            return 2        # B3: OFF is an ERROR for claim-day, never a silent win the driver would read as success
         print('fleet mode is OFF (%s unset): nothing to do' % DAY_LIST_SETTING)
+        return 0
+    if args.action == 'note-awaiting':
+        _write_json(Path('/opt/frankie-box/box') / ('fleet-awaiting-dispatch-%s.json' % args.run),
+                    dict(schema='FRANKIE_FLEET_AWAITING_V1', run=args.run, instance=instance_id(), at=time.time(),
+                         reason='no box-local saved days; awaiting the external day-start dispatch (run.yml stage+start)'))
+        print('awaiting dispatch for %s' % args.run)
         return 0
     if args.action == 'status':
         print(json.dumps(dict(location=location(), instance=instance_id(), lease=lease_holder(),
@@ -731,9 +789,13 @@ def main(argv=None):
     elif args.action == 'queue':
         print(json.dumps(waiting_queue(), indent=1, default=str))
     elif args.action == 'claim-day':
-        out = claim_day(args.run, args.day, args.stage, args.commit)
+        try:
+            out = claim_day(args.run, args.day, args.stage, args.commit)
+        except Exception as error:  # noqa: BLE001 - B3: an error is exit >=2 (the driver STOPS), never a false win
+            print(json.dumps(dict(error='%s: %s' % (type(error).__name__, error)), default=str))
+            return 2
         print(json.dumps(out, indent=1, default=str))
-        return 0 if out.get('won') else 1
+        return 0 if out.get('won') else 1       # 0 = won, 1 = lost to another box (the driver skips the day)
     elif args.action == 'seed-day-list':
         print(json.dumps(seed_day_list(args.run, json.loads(args.assignments), args.commit), indent=1, default=str))
     elif args.action == 'takeover-lease':

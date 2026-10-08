@@ -55,17 +55,24 @@ class TestLaunchTemplateData(unittest.TestCase):
         self.assertEqual(tags['Role'], 'day-box')
         self.assertIn('Day', tags)       # placeholder the per-box launch fills
 
-    def test_user_data_is_explicit(self):
-        data = S.launch_template_data(args_for(['--commit', 'a' * 40, '--run', 'e2e-a', '--day-cpus', '32']))
+    def test_user_data_prepares_and_sets_reboot_resume(self):
+        data = S.launch_template_data(args_for(['--commit', 'a' * 40, '--run', 'e2e-a']))
         ud = base64.b64decode(data['UserData']).decode()
-        self.assertIn('FRANKIE_FLEET_DAY_LIST', ud)          # fleet mode on for every box
-        self.assertIn('DAY_CPUS=32', ud)                      # explicit
-        self.assertIn('frankie_box_experiment.sh', ud)        # the existing run entrypoint
-        self.assertIn('frankie_box_fleet.py', ud)             # the per-day claim
-        self.assertIn('meta-data/tags/instance/Day', ud)      # reads its two days from its tags
+        self.assertIn('meta-data/tags/instance/Day', ud)      # reads its assignment from its tags
         self.assertIn('rev-parse HEAD', ud)                   # decision 1: verify the checkout is the pinned commit
         self.assertIn('FRANKIE_FLEET_STAGE_V1', ud)           # decision 1: writes a staging receipt
         self.assertIn('stage-receipt.json', ud)
+        self.assertIn('fleet.json', ud)                       # the box-local fleet config (fleet mode for all procs)
+        self.assertIn('frankie-fleet-day.service', ud)        # B6: reboot-resume on every boot, not once
+        self.assertIn('.fleet-prepared', ud)                  # B5: first-boot-only wipe guard
+        self.assertIn('fleet-boot-failed.json', ud)           # S13: a bad tag writes a loud marker, never silent idle
+        # B1: the user-data no longer tries a broken fresh start
+        self.assertNotIn('ACTION=start', ud)
+        self.assertNotIn('|| echo', ud)
+        # S9: the token is NEVER baked into a clone URL or left in .git/config
+        self.assertNotIn('x-access-token:$GH@', ud)
+        self.assertNotIn('https://x-access-token', ud)
+        self.assertIn('remote set-url origin', ud)
 
 
 class TestFleetLaunch(unittest.TestCase):
