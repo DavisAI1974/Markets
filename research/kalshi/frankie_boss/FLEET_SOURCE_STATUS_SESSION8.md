@@ -51,6 +51,15 @@ idempotent, never widens an existing inline policy, and the dry run prints the f
 profile is absent. Greg applies it with `--apply --confirm GREG_GO_AWS_STACK --steps day-box-role` or from the console.
 Toys: policy builds+validates, creates-when-absent (5 writes), present-when-all-exist (0 writes), launch-template
 refuses an absent profile.
+Two facts confirmed by the parent (2026-10-08, verified (e) here 44/44 + the dry run printing the full policy):
+- The four SSM parameter ARNs are CONFIRMED exact matches against the Ssm role's inline policy (the "best-known" caveat
+  is removed; the code comment now says confirmed): .../markets/frankie/github-token, .../granite-service,
+  .../runpod-serverless (us-east-2) and .../markets/DATABENTO_API_KEY (us-east-1).
+- The container's dry run runs as IAM user `Claude`, which has NO IAM permissions, so `iam:GetInstanceProfile` returns
+  AccessDenied here (not NoSuchEntity). That is why launch-template's profile check only REFUSES on NoSuchEntity and
+  merely NOTES any other error (AccessDenied, no creds) so an offline/limited dry run still prints the plan -- kept as
+  built. Greg applies `day-box-role` as root (console or a root-credentialed shell); the main box's Ssm role is never
+  touched.
 
 ### (d) Greg's five decisions applied
 See "Decisions - ALL RESOLVED" below: staging pins a full commit hash + writes a receipt; a Spot/ClassroomEligible=false

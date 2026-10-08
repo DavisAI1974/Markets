@@ -58,9 +58,8 @@ BUCKET_ARCHIVE = 'frankie-archive-568968024170-us-east-1'   # the us-east-1 arch
 IAM_ROLE = 'frankie-day-box'            # the fleet boxes' OWN role (never widen the main box's Ssm role)
 IAM_PROFILE = 'frankie-day-box'
 IAM_INLINE_POLICY = 'FrankieDayBox-20261008'
-# The four SSM parameters the Ssm role names; the self-driving stage needs github-token. The granite-service and
-# runpod-serverless paths are the best-known names (confirm against the Ssm role's inline policy at apply if they differ;
-# an over-narrow parameter ARN only fails the specific GetParameter, never widens anything).
+# The four SSM parameters the Ssm role names (CONFIRMED against the Ssm role's inline policy by the parent's read-only
+# audit, 2026-10-08: exact matches). The self-driving stage needs github-token.
 SSM_PARAM_ARNS = [
     'arn:aws:ssm:us-east-2:%s:parameter/markets/frankie/github-token' % ACCOUNT,
     'arn:aws:ssm:us-east-2:%s:parameter/markets/frankie/granite-service' % ACCOUNT,
