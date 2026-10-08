@@ -111,8 +111,20 @@ def sha256_bytes(data):
 
 
 def witness_file(path):
-    """Hash every byte sequentially without materializing a model-sized Python bytes object."""
+    """{path, bytes, sha256}: every byte hashed sequentially without materializing a model-sized Python bytes object.
+    Dedupe pass 2026-10-08 (COMPUTE): the value comes from frankie_box_filehash.witness, the per-process once-per-file
+    cache keyed on path/device/inode/size/mtime/ctime (a file that changes while hashed is refused, an unchanged one
+    is hashed once). Before, the model weights, llama-server and every extracted runtime file were read and hashed four
+    times in one meeting process (the gate inside local_runtime, the gate again before the items, the binding, the
+    record) and a file just written by frankie_box_durable was read back for its witness. Same bytes, same sha256;
+    the local loop below is the fallback when the cache module is not importable."""
     path = Path(path)
+    try:
+        import frankie_box_filehash as F
+    except ImportError:
+        F = None
+    if F is not None:
+        return dict(path=str(path), **F.witness(path))
     digest, size = hashlib.sha256(), 0
     with path.open('rb') as source:
         while True:
