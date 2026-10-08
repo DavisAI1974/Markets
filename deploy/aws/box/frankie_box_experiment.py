@@ -1329,13 +1329,37 @@ class Run:
         return body
 
     # disk
+    INLINE_SPOOL_LAYERS = ('legacy_book_imbalance', 'legacy_structure_observables')
+
+    def inline_spool_layer_bytes(self, record):
+        """Bytes of a measured ROOT step's old-form (inline) spool layers: re-encodings of its spools that a ROOT on this
+        code no longer writes (2026-10-08: frankie_box_layer_spool references, a few KB each). Recorded on the step when
+        it was measured on this code; else read from its calculations directory (a reference layer counts 0)."""
+        if isinstance(record.get('inline_spool_layer_bytes'), int):
+            return record['inline_spool_layer_bytes']
+        calculations = record.get('calculations')
+        if not calculations:
+            return 0
+        from frankie_box_layer_spool import read_reference
+        total = 0
+        for name in self.INLINE_SPOOL_LAYERS:
+            path = Path(calculations) / 'work' / 'derived' / (name + '.json')
+            try:
+                if path.is_file() and path.lstat().st_nlink == 1 and read_reference(path) is None:
+                    total += path.lstat().st_size
+            except (OSError, ValueError):
+                continue
+        return total
+
     def disk_ok(self, stage):
         free = shutil.disk_usage(BOX_ROOT).free
-        sizes = []
+        sizes, adjusted = [], 0
         for p in (self.dir / 'days').glob('*/%s.json' % stage) if (self.dir / 'days').is_dir() else ():
             r = json.loads(p.read_bytes())
             if r.get('status') == 'done' and isinstance(r.get('new_bytes'), int):
-                sizes.append(r['new_bytes'])
+                inline = self.inline_spool_layer_bytes(r) if stage == 'root' else 0
+                adjusted += inline
+                sizes.append(r['new_bytes'] - inline)
         for p in (self.dir / 'batches').glob('*/%s.json' % stage) if (self.dir / 'batches').is_dir() else ():
             r = json.loads(p.read_bytes())
             if r.get('status') == 'done' and isinstance(r.get('new_bytes'), int):
@@ -1343,7 +1367,7 @@ class Run:
         largest = max(sizes) if sizes else 0
         if free - largest < self.floor:
             self.stopped = dict(stage=stage, free_bytes=free, largest_measured_step_bytes=largest, floor_bytes=self.floor,
-                                measured_steps=len(sizes),
+                                measured_steps=len(sizes), inline_spool_layer_bytes_not_reserved=adjusted,
                                 reason='the step would take free space below the floor (largest measured %s step %d '
                                        'bytes, free %d, floor %d)' % (stage, largest, free, self.floor))
             return False
@@ -1657,7 +1681,9 @@ class Run:
             return self.record('root', e['day'], 'waiting', reason=held[1], claim=held[2])
         env = dict(INGESTION_RECEIPT=ing['receipt'], INGESTION_RECEIPT_SHA256=ing['receipt_sha256'], DAY=e['day'],
                    DAY_ROLE=e['role'], OUTPUT_ROOT=output, DATA_WORKERS=self.day_cpus() - 1,
-                   DIGEST='on', RESUME='on' if resume else 'off')
+                   DIGEST='on', RESUME='on' if resume else 'off',
+                   # the ROOT's own finalize preflight keeps this Run's floor (2026-10-08; Session._finalize_projection)
+                   FRANKIE_ROOT_DISK_FLOOR_GB=self.floor / 1024 ** 3)
         if self.plan['frozen_survivors']:
             env['FROZEN_SURVIVORS'] = self.plan['frozen_survivors']
         if policy:
@@ -1694,8 +1720,17 @@ class Run:
                                        summary=dict(calculations=str(output), role=e['role'],
                                                     root_status=calc.get('status'),
                                                     producer_failures=calc.get('failure_count')))
+        finalize = None
+        try:
+            finalize = json.loads((output / 'work' / 'derive.json').read_bytes()).get('finalize_projection')
+        except (OSError, ValueError):
+            finalize = None
+        measured = dict(calculations=str(output))
         return self.record('root', e['day'], 'done', exit_code=code, log=log, calculations=str(output),
                            receipt_sha256=sha256_file(output / 'calculations-receipt.json'), new_bytes=new_bytes(output),
+                           # 2026-10-08: what the ROOT's finalize projected and wrote, and its inline spool-layer bytes
+                           # (0 on reference layers), which the root disk gate does not reserve again
+                           finalize_projection=finalize, inline_spool_layer_bytes=self.inline_spool_layer_bytes(measured),
                            interrupted_attempts=attempts, digest=True, plan_policy=policy, seconds=child_seconds,
                            native_pass=native, shared_market_policy=calc.get('shared_market_policy'),
                            root_status=calc.get('status'), producer_failures=calc.get('failure_count'),

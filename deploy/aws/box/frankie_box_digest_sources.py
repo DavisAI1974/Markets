@@ -25,9 +25,14 @@ META_FIELDS = frozenset(('status', 'reason', 'producer', 'member_paths', 'lifecy
 
 
 class _JSON:
-    """Decode one array element at a time; never collect a row array."""
+    """Decode one array element at a time; never collect a row array.
+    A spool reference layer (frankie_box_layer_spool, FRANKIE_LAYER_SPOOL_REF_V1: the layer names its ROOT spool instead
+    of holding a re-encoded copy of every row) is read through layer_text(): the parser sees the old layer's JSON value
+    text rendered from the spool as it reads (the same values in the same order); every other layer's handle is read
+    unchanged. This is the one place every streaming layer reader goes through (2026-10-08)."""
     def __init__(self, handle):
-        self.handle, self.buffer, self.pos, self.eof = handle, '', 0, False
+        from frankie_box_layer_spool import layer_text
+        self.handle, self.buffer, self.pos, self.eof = layer_text(handle), '', 0, False
         self.decoder = json.JSONDecoder()
 
     def fill(self):

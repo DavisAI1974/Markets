@@ -759,6 +759,40 @@ def _spool_line_ranges(path, size, step):
     return [(str(path), a, b) for a, b in zip(cuts, cuts[1:]) if b > a]
 
 
+LAYER_SPOOL_FORMS = ('reference', 'inline')
+
+
+def layer_spool_form():
+    """How a layer whose value holds a whole RowSpool is written (FRANKIE_ROOT_LAYER_SPOOLS): 'reference' (default,
+    2026-10-08: frankie_box_layer_spool's FRANKIE_LAYER_SPOOL_REF_V1, a few KB naming the spool) or 'inline' (the
+    earlier re-encoding of every row into the layer file, byte for byte as before)."""
+    form = os.environ.get('FRANKIE_ROOT_LAYER_SPOOLS', 'reference')
+    if form not in LAYER_SPOOL_FORMS:
+        raise ValueError('FRANKIE_ROOT_LAYER_SPOOLS must be reference or inline')
+    return form
+
+
+def write_layer_reference(path, value, scans=None):
+    """The layer as a spool reference (frankie_box_layer_spool.reference_document, written by
+    frankie_box_durable.write_json): every top-level RowSpool value becomes a reference with the spool's bytes, sha256,
+    row count and row index from ONE read of the spool (scan_spool), the other keys exactly as before. `scans` (a dict)
+    is filled with {spool path: scan} so the stage reuses those reads as its witnesses. Returns the scans used."""
+    B = _box_module('frankie_box_bedrock')
+    durable = _box_module('frankie_box_durable')
+    LS = _box_module('frankie_box_layer_spool')
+    scans = scans if scans is not None else {}
+    keys = sorted(key for key, spool in value.items() if isinstance(spool, B.RowSpool))
+    for key in keys:
+        spool = value[key]
+        if not spool._writer.closed:
+            raise ValueError('a layer spool must be closed before its layer is written')
+        if str(spool.path) not in scans:
+            scans[str(spool.path)] = LS.scan_spool(spool.path)
+    document = LS.reference_document(path, value, keys, {key: scans[str(value[key].path)] for key in keys})
+    durable.write_json(path, document)
+    return {key: scans[str(value[key].path)] for key in keys}
+
+
 def write_layer_json(path, value, cpus, window_per_worker=2, note=None):
     """frankie_box_durable.write_json(path, value), byte for byte, with every top-level RowSpool value of the layer
     (legacy_book_imbalance.frames, legacy_structure_observables.groups) decoded and encoded on encoders pinned one per
@@ -2772,8 +2806,10 @@ class Session:
             receipt['unclosed_input_groups'] = {str(i): [item[0] for item in rows]
                                                 for i, rows in pending_inputs.items()}
         # The layer files carrying a whole spool (legacy_book_imbalance.frames, legacy_structure_observables.groups) are
-        # re-encoded on the lane's pinned encoders, byte for byte the serial write_json (write_layer_json); the writer
-        # itself (join, sha256, write) stays on the lane's first CPU.
+        # written as spool REFERENCES by default (2026-10-08, Greg: stream to the next step, never dump a second copy;
+        # write_layer_reference: a few KB each, the spool's bytes/sha256/count/row index from one read of it, reused
+        # below as the stage's witnesses); FRANKIE_ROOT_LAYER_SPOOLS=inline keeps the earlier re-encoding on the lane's
+        # pinned encoders, byte for byte the serial write_json (write_layer_json; join, sha256, write on lane[0]).
         # A native stage beside this pass that has already ended hands its CPUs to the layer encoders too (Greg,
         # 2026-10-07: every CPU used); the requested data_workers count still bounds them.
         freed = [c for c in self._freed_native_cpus() if c not in lane]
@@ -2781,30 +2817,54 @@ class Session:
             if retain_frame_sections else []
         if freed and layer_cpus:
             self._native_overlap_record(layer_encoders_widened=dict(cpus=[c for c in layer_cpus if c in freed]))
-        if layer_cpus:
+        spool_form = layer_spool_form()
+        spool_scans = {}                          # {spool path: scan_spool}: one read per spool, reused as witnesses
+        receipt['finalize_projection'] = self._finalize_projection(layers, spool_form, derived)
+        if layer_cpus and spool_form == 'inline':
             os.sched_setaffinity(0, {lane[0]})
         for name, value in layers.items():
             path = derived / f'{name}.json'
             started = time.time()
-            write_layer_json(path, value, layer_cpus, note=self.note)
-            if layer_cpus and any(isinstance(v, B.RowSpool) for v in value.values()):
-                self.note(f'layer {name}.json written in {time.time() - started:.1f} s (spools encoded on pinned lane '
-                          f'CPUs {cpu_ranges(layer_cpus)})')
+            has_spool = any(isinstance(v, B.RowSpool) for v in value.values())
+            if has_spool and spool_form == 'reference':
+                scans = write_layer_reference(path, value, spool_scans)
+                self.note(f'layer {name}.json written as a spool reference in {time.time() - started:.1f} s '
+                          f'({path.stat().st_size} bytes; spools {", ".join(sorted(scans))} read once)')
+            else:
+                write_layer_json(path, value, layer_cpus if spool_form == 'inline' else [], note=self.note)
+                if layer_cpus and has_spool:
+                    self.note(f'layer {name}.json written in {time.time() - started:.1f} s (spools encoded on pinned '
+                              f'lane CPUs {cpu_ranges(layer_cpus)})')
             receipt['layers'][name] = dict(status=value['status'], producer=value.get('producer'), reason=value.get('reason'), **witness(path), path=str(path))
-        if layer_cpus:
+            if has_spool and spool_form == 'reference':
+                # additive: the layer's sha256 above is the REFERENCE document's; the spools' own sha256 beside it
+                receipt['layers'][name].update(
+                    form='spool_reference', reference_schema=_box_module('frankie_box_layer_spool').SCHEMA,
+                    sha256_meaning='sha256 and bytes of the reference document (FRANKIE_LAYER_SPOOL_REF_V1), not of '
+                                   'the rows; each spool\'s own bytes/sha256/count are under spools',
+                    spools={key: dict(path=str(value[key].path), **{k: scan[k] for k in ('bytes', 'sha256', 'count')})
+                            for key, scan in scans.items()})
+        if layer_cpus and spool_form == 'inline':
             os.sched_setaffinity(0, set(lane))
+        receipt['finalize_projection'].update(written_bytes=sum(entry['bytes'] for entry in receipt['layers'].values()
+                                                                if entry.get('bytes') is not None))
+
+        def spool_witness(rows):
+            # a spool read once by its reference layer is witnessed by that read (the same bytes and sha256 values)
+            scan = spool_scans.get(str(rows.path))
+            return dict(bytes=scan['bytes'], sha256=scan['sha256']) if scan else witness(rows.path)
         if final_positions and not (recovery and bedrock):
             # session 5, review 2.2 (nothing quiet): a route that saved spool claims and has no legacy-stage witness
             # (BEDROCK=off) pays one full read of each legacy spool here, so a fast resume's acceptance (stat + last
             # line) is still checked against the whole file on every route; listed on the receipt
-            _check_spool_claims(final_positions, {name: witness(rows.path) for name, rows
+            _check_spool_claims(final_positions, {name: spool_witness(rows) for name, rows
                                                   in zip(names, (prices, frames, structures, failures))})
             receipt['spool_claims_check'] = dict(schema=SPOOL_RESUME_SCHEMA, spools=list(names), route='bedrock off',
                                                  cost='one full read of each legacy spool, added on this route')
         if recovery and bedrock:
             # A separately published legacy completion lets interrupted native traversal/projection
             # continue without replaying or recalculating the already completed legacy stage.
-            artifacts = [dict(path=str(rows.path), **witness(rows.path))
+            artifacts = [dict(path=str(rows.path), **spool_witness(rows))
                          for rows in (records, prices, frames, structures, failures)]
             # session 5: the last saved claims (running-hash sha256s) checked against these full reads at the seal (the
             # INPUT spool's claim is checked in _input_records against its own full witness)
