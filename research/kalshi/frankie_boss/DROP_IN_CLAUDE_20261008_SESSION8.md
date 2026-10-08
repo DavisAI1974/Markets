@@ -221,6 +221,23 @@ TargetInstance=i-0d17573dbce871520. NOT attached, no box started. The two snapsh
 session container was RESUMED at ~14:0xZ; the build agent (fleet source) and the AWS-apply agent were lost with it before any durable
 output (no worktree branch, no record file, the account unchanged by the read-only sweep); both relaunched with the same briefs.
 
+## Fleet source LANDED (cloud session session_017Gvs4EeRCAaoZmnqZXBf7Y; tip 33f777fa; 28/28 toys re-run by the parent) and
+Greg's five fleet decisions (14:5xZ, "Do what is best for science and speed", chosen by the parent on those grounds):
+1. Staging on a fleet box: self-driving git stage at boot, pinned to a FULL commit hash from the box's tag (branch names refused),
+   rev-parse verified, a staging receipt in frankie_box_stage_code.sh's shape on every box.
+2. Spot: a box tagged ClassroomEligible=false is refused the classroom lease; fleet-launch tags every --spot box so and refuses
+   --spot for day boxes unless --allow-spot-days (a reclaimed classroom loses a day of the serial chain; the day's data sits on
+   that box). Spot is for stateless burst work (the digest render on a 48xlarge), not day boxes.
+3. The classroom gate stays at the teacher -> classroom boundary (the teacher is per-box parallel work; only the classroom is serial).
+4. No clean-on-save at the gate (as built); the day's own chain cleans later.
+5. --run and the day-list prefix have no default; a missing --run is refused (never reuse e2e-20231018-a2).
+Slices still being built in the cloud session: (c) .github/workflows/frankie_fleet.yml (plan / launch with the exact confirm
+string / status / stop-all) + deploy/aws/box/frankie_fleet_status.py; (d) the five decisions above. Watch: FLEET_SOURCE_STATUS_SESSION8.md.
+Box route for the next go (box-operator finding 14:3xZ): frankie_box_run.yml binds MARKETS_SHA to the ref tip AT DISPATCH and the
+queue refuses a staged checkout whose HEAD differs, so with commits landing every few minutes a workflow-dispatched resume is
+refused; resume + kick go over SSM through the Aws connector with CODE_ROOT and MARKETS_SHA explicit (session 6's live route), or
+the branch is frozen and restaged first. Staged and receipted on the box now: /opt/frankie-box/code/d67b9c63...-37792772826-1/markets.
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
