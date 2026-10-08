@@ -184,3 +184,13 @@ nothing; the chain's own class kick inherits FRANKIE_CLASSROOM_CPUS=all from the
   pass over the native ledgers). receipt ABSENT; file-claims.jsonl still 03:02Z (41,542 B); derive.json 01:33Z. R/work holds
   bedrock, boss-jobs, derived, input-state.pkl, legacy-cpu-split.json (+2 retained), legacy-stage.json, legacy-state.pkl,
   native-layer-records.json, native-overlap.json (+6 retained), native-stage.json, native-stage.lock. load 0.91.
+- 15:07:51Z WATCH 3 (read-only, SSM 7c82d222-21b2-4717-b2f5-c0d7877c6da4): 1834 Dl elapsed 3:16, 14.3% CPU, 32 threads, psr 0;
+  read_bytes 25,305,116,672 (+10.85 GB in 82 s = ~132 MB/s = the volume's BASELINE 125 MiB/s); fd 3 = R/work/bedrock/
+  recovery-6f84.../ledgers/exact_member_rows.jsonl pos 8,472,494,080 of 193,743,650,444 (a WHOLE READ; exact_lifecycle_rows.jsonl
+  was read whole before it). ROOT log 94 lines: header 15:04:35Z, "CPU_BOOKING inside the day's held slot ...-3111: CPUs 0-31",
+  "inside the held day slot ... (stage root)", 15:05:48Z sealed day line; nothing after. progress.json rewritten 15:05:48Z
+  (363 B). receipt ABSENT; file-claims.jsonl UNCHANGED (03:02:14Z; the tip did not rewrite it). FLAG: the native ledgers are
+  not taken by their claims; at 132 MB/s the 193.7 GB ledger alone is ~24 min, and the receipt is NOT "within minutes" if the
+  472 GB layer or the 496.7 GB frames spool are read whole too (the volumes sit at baseline until the parent's ~18:20Z raise).
+  Watchdog pass 2 at 15:06:29Z: "bookings 1 findings 68 (outside_booking 67, unbooked 1) repins 67 resize 0" -> the watchdog
+  RE-PINNED 67 threads (correct=on); record 20261008T150629Z.json read next. Not intervening.

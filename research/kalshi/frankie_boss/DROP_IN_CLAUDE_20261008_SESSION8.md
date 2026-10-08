@@ -277,6 +277,23 @@ through validate, teacher, classroom (all 64) and the rest of the day. NOT cover
 role, which only Greg can apply, and the review verdict on the day list) and any second-box / clone-volume action. The main box was
 RESTARTED ~15:0xZ on Greg's go ("if there's a better faster way, do that"): a2 resumed on the staged d67b9c63 via SSM.
 
+## The day-box role step LANDED (d78e0f95 + c6dcba97; parent verified 44/44 fleet toys) and HOW GREG APPLIES IT (15:1xZ)
+The IAM user Claude has NO IAM permissions (the dry run from the container got AccessDenied on iam:GetInstanceProfile), and the
+session classifier blocks IAM creation through the connector, so the role is created by GREG as root, once. Fastest: the IAM
+console. Steps: (1) IAM > Roles > Create role > Trusted entity AWS service > EC2 > Next; attach AmazonSSMManagedInstanceCore;
+name frankie-day-box; tag Project=frankie; Create. (2) Open the role > Permissions > Add permissions > Create inline policy > JSON:
+paste the policy JSON printed by `python3 deploy/aws/frankie_aws_stack.py --steps day-box-role` (dry run; the full 13-statement
+FrankieDayBox-20261008 policy; the parent can print it into chat on request); name it FrankieDayBox-20261008; Create. (3) Creating
+the role in the console for EC2 also creates the instance profile of the same name (frankie-day-box); verify under the role's
+summary. Alternative: a root-credentialed shell running `python3 deploy/aws/frankie_aws_stack.py --apply --confirm GREG_GO_AWS_STACK
+--steps day-box-role` (idempotent; prints a receipt). After it exists, launch-template defaults to it and refuses when absent.
+
+## a2 RESUMED (15:0xZ restart; box-operator record BOX_RECORD_20261008_S8_START.md "15:0xZ restart" section)
+The resume + kick went over SSM on the staged d67b9c63 checkout; a ROOT child (pid 1834) is RUNNING on the retained 0-31
+booking doing the evidence pass over the native ledgers (reading at ~126 MB/s = the BASELINE volume cap: 193.7 GB of ledgers
+~26 min at this rate; the 18:20Z raise lifts it to 1,250 MiB/s for everything after). Receipt not yet written at 15:1xZ; the
+file-claims and derive.json are the saved ones. Next: the receipt, validate, the teacher (the stage handoff self-drives).
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
