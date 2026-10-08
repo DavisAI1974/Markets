@@ -1063,7 +1063,10 @@ def meta_of(a):
 def emit_outcome(a, outcome):
     if getattr(a, 'outcome', None):
         write_json(a.outcome, outcome)
-    tag = dict(booked='CPU_BOOKING', waiting='CPU_BOOKING_WAITING', refused='CPU_BOOKING_REFUSED')[outcome['status']]
+    # session 9 (live on a2, 16:48Z): `grow` returns status 'grown' and this map raised KeyError AFTER the ledger was
+    # written, so the command exited 1 on a grow that had landed; 'grown' and 'rebooked' are tagged like 'booked'
+    tag = dict(booked='CPU_BOOKING', grown='CPU_BOOKING_GROWN', rebooked='CPU_BOOKING', waiting='CPU_BOOKING_WAITING',
+               refused='CPU_BOOKING_REFUSED').get(outcome['status'], 'CPU_BOOKING_' + str(outcome['status']).upper())
     print('%s %s' % (tag, outcome.get('reason') or json.dumps(outcome, sort_keys=True)), flush=True)
     if outcome['status'] != 'booked':
         print(json.dumps(outcome, indent=1, sort_keys=True), flush=True)
