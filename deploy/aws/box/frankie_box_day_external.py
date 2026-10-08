@@ -28,6 +28,14 @@ the days' keys, each key once) through FETCH_STREAMS concurrent presigned GETs (
 requests); the curve files are hashed by the lane's CPUs side by side; the days are built side by side, one process per
 day, WORKERS of them (0 or unset: every CPU this process may run on, os.sched_getaffinity). Values, hashes, the receipt
 and the 99 mapping are the same as a serial run: only the order of the work changes, and listings are sorted by key.
+Transport (session 6, the ROOT AWS treatment): every presigned GET goes through the ONE shared transport
+deploy/aws/box/frankie_box_s3_transport.fetch_url (session 5): above 64 MiB concurrent 16 MiB byte ranges on ONE range
+pool shared by every member (RANGE_STREAMS, the NIC budget is not multiplied by FETCH_STREAMS), at or below one stream with
+range-resume; the sha256 computed in order as the bytes land (read and hashed once); bounded retries and a report-only
+stall note; a FRANKIE_WORK_PROBE_V1 progress.json beside the fetched objects (<RUN>/src/progress.json, bytes). Each fetch
+listing entry keeps its keys (key, status, bytes, transport, seconds) and gains the transport receipt (transport_receipt,
+sha256, hash_pass, retries, stalls, reason) additively. The S3 attach PUT stays the presigned curl PUT (the box's role
+writes nothing to S3; the shared transport's upload needs a role) and its entry names that (transport, reason).
 Every day file carries Frankie's 13 points mapped to the 99 (POINT_REGISTRY_MAP of the builder, closest entry with its
 reason; Greg 2026-10-07) and every row one reader stamp, published_ns = max(event_time_ns, publication), a row with no
 event time of its own at 14:00 ET of the trading day; the receipt repeats the map, the rule and the code sha256s.
@@ -44,6 +52,9 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import frankie_box_s3_transport as T  # noqa: E402  (the ONE shared S3 transport, beside this file)
 
 BOX = Path('/opt/frankie-box')
 WORK = BOX / 'work'
@@ -144,89 +155,68 @@ def wanted_keys(day, keys, history_prefix, prints, eia930_prefix=None, overrides
 
 
 FETCH_STREAMS = int(os.environ.get('FETCH_STREAMS') or 16)   # concurrent object GETs (S3 guidance: parallel requests)
-# A large object (the curve's MBO/statistics partitions) is pulled as concurrent byte-range GETs of the same presigned URL,
-# each range written at its offset into <dest>.part (aws-storage skill, S3 byte-range fetches: 8-16 MB ranges; the
-# ingest fetch's and the journal pull's pattern, frankie_box_ingest_block.sh). Small objects keep the one curl stream.
-# The bytes land at the same offsets: the size check here and the curve manifest sha256 check (verify_curve) and the
-# history manifest check (the builder) are unchanged. RANGE_STREAMS=1 restores the one-stream download.
-RANGE_BYTES = 16 << 20
-RANGED_ABOVE = 64 << 20
+# A large object (the curve's MBO/statistics partitions) is pulled as concurrent byte-range GETs of the same presigned URL
+# by the shared transport (frankie_box_s3_transport.fetch_url: 16 MiB ranges above 64 MiB, each written at its offset,
+# hashed in order as the bytes land; aws-storage skill, S3 byte-range fetches: 8-16 MB ranges). ONE range pool of
+# RANGE_STREAMS threads is shared by every member fetched at once (FETCH_STREAMS object GETs), so the NIC budget is
+# RANGE_STREAMS ranges in flight, not FETCH_STREAMS x RANGE_STREAMS. The bytes land at the same offsets: the size check
+# here and the curve manifest sha256 check (verify_curve) and the history manifest check (the builder) are unchanged.
+# RANGE_STREAMS=1 restores the one-stream download (still through the transport: range-resume after a drop).
 RANGE_STREAMS = int(os.environ.get('RANGE_STREAMS') or 15)
+TRANSPORT_RECEIPT_KEYS = ('sha256', 'hash_pass', 'retries', 'stalls', 'reason', 'transport_fallback', 'kept_aside')
 
 
-def _ranged_get(url, part, size, streams=None):
-    """0 when every range of [0, size) arrived whole (HTTP 206, exact length) and was written at its offset, else 1."""
-    import random
-    import urllib.request
-    streams = max(1, streams or RANGE_STREAMS)
-    fd = os.open(str(part), os.O_RDWR | os.O_CREAT, 0o644)
-    try:
-        os.ftruncate(fd, size)
-
-        def one(i):
-            start, end = i * RANGE_BYTES, min(size, (i + 1) * RANGE_BYTES) - 1
-            for attempt in range(6):
-                try:
-                    request = urllib.request.Request(url, headers={'Range': 'bytes=%d-%d' % (start, end)})
-                    with urllib.request.urlopen(request, timeout=120) as response:
-                        if response.status != 206:
-                            return False
-                        data = response.read()
-                    if len(data) == end - start + 1:
-                        os.pwrite(fd, data, start)
-                        return True
-                except OSError as error:
-                    print('   retry %d range %d of %s: %s' % (attempt + 1, i, part.name, error), flush=True)
-                time.sleep(min(60, 5 * (attempt + 1)) * (0.5 + random.random()))   # backoff with jitter (S3 503 SlowDown)
-            return False
-        with ThreadPoolExecutor(streams) as pool:
-            ok = all(pool.map(one, range((size + RANGE_BYTES - 1) // RANGE_BYTES)))
-        os.fsync(fd)
-    finally:
-        os.close(fd)
-    return 0 if ok else 1
-
-
-def _fetch_one(k, url_map, src):
-    """One object of the day history through its presigned GET (curl, retries; byte ranges above RANGED_ABOVE); its
-    listing entry."""
+def _fetch_one(k, url_map, src, ranges=None, on_bytes=None):
+    """One object of the day history through its presigned GET (the shared transport: byte ranges above its 64 MiB
+    threshold on the shared `ranges` pool, one resumable stream below); its listing entry. A stale `.part` from an
+    interrupted earlier GET is replaced (the transport truncates it) and the object is fetched whole."""
     dest = src / k
     entry = url_map[k]
     if dest.is_file() and dest.stat().st_size == entry.get('bytes'):
         return dict(key=k, status='present')
     dest.parent.mkdir(parents=True, exist_ok=True)
-    part = Path(str(dest) + '.part')
     size = entry.get('bytes')
-    started = time.time()
-    if isinstance(size, int) and size > RANGED_ABOVE and RANGE_STREAMS > 1:
-        if part.exists():
-            part.unlink()                        # a stale partial from an interrupted one-stream GET; refetched whole
-        returncode, transport = _ranged_get(entry['url'], part, size), 'ranged-%d' % RANGE_STREAMS
-    else:
-        returncode = subprocess.run(['curl', '-fsS', '--proto', '=https', '-L', '--retry', '5', '--retry-delay', '5',
-                                     '-o', str(part), '--url', entry['url']]).returncode
-        transport = 'curl'
-    if returncode != 0 or not part.is_file() or part.stat().st_size != size:
-        return dict(key=k, status='failed', returncode=returncode, transport=transport)
-    os.replace(part, dest)
-    return dict(key=k, status='downloaded', bytes=size, transport=transport, seconds=round(time.time() - started, 1))
+    if not isinstance(size, int) or size < 0:
+        return dict(key=k, status='failed', transport=None, reason='the presigned map declares no byte size for the object')
+    receipt = T.fetch_url(entry['url'], dest, expected_bytes=size, expected_sha256=entry.get('sha256'),
+                          range_streams=RANGE_STREAMS, ranges=ranges, on_bytes=on_bytes,
+                          say=lambda *a: print(*a, flush=True))
+    out = dict(key=k, transport=receipt.get('transport'), seconds=receipt.get('seconds'),
+               transport_receipt={key: receipt.get(key) for key in TRANSPORT_RECEIPT_KEYS if key in receipt})
+    if receipt.get('status') != 'restored':
+        return dict(out, status='failed', reason=receipt.get('reason'))
+    return dict(out, status='downloaded', bytes=receipt.get('bytes'))
 
 
 def fetch(keys, url_map, src, listing, workers=FETCH_STREAMS):
     """Every key once, `workers` presigned GETs at a time (S3 serves parallel requests; one GET per object at a time was
-    the stage's wall clock); the listing is sorted by key whatever order the GETs finish in."""
+    the stage's wall clock) on ONE shared range pool; the listing is sorted by key whatever order the GETs finish in.
+    One aggregate FRANKIE_WORK_PROBE_V1 probe (<src>/progress.json, bytes of every object to fetch) for the heartbeat."""
     keys = sorted(set(keys))
+    to_fetch = [k for k in keys if not ((src / k).is_file() and (src / k).stat().st_size == url_map[k].get('bytes'))]
+    total = sum(url_map[k].get('bytes') or 0 for k in to_fetch if isinstance(url_map[k].get('bytes'), int))
+    probe = T.WorkProbe(str(src) if to_fetch else None, 'fetch:day-external-objects', total)
+    moved = [0]
+
+    def on_bytes(n):
+        moved[0] += n
+        probe.update(moved[0])
     out = []
-    with ThreadPoolExecutor(max_workers=max(1, min(workers, len(keys) or 1))) as pool:
-        futures = [pool.submit(_fetch_one, k, url_map, src) for k in keys]
-        for i, fut in enumerate(as_completed(futures), 1):
-            out.append(fut.result())
-            try:                                 # the stage heartbeat (frankie_box_stage_progress); never changes the stage
-                import frankie_box_stage_progress as _SP
-                _SP.report_phase('external: fetching day-history objects', units_done=i, units_total=len(keys),
-                                 unit='objects', every=10)
-            except Exception:  # noqa: BLE001
-                pass
+    ranges = ThreadPoolExecutor(max(1, RANGE_STREAMS), thread_name_prefix='range')
+    try:
+        with ThreadPoolExecutor(max_workers=max(1, min(workers, len(keys) or 1))) as pool:
+            futures = [pool.submit(_fetch_one, k, url_map, src, ranges, on_bytes) for k in keys]
+            for i, fut in enumerate(as_completed(futures), 1):
+                out.append(fut.result())
+                try:                                 # the stage heartbeat (frankie_box_stage_progress); never changes the stage
+                    import frankie_box_stage_progress as _SP
+                    _SP.report_phase('external: fetching day-history objects', units_done=i, units_total=len(keys),
+                                     unit='objects', every=10)
+                except Exception:  # noqa: BLE001
+                    pass
+    finally:
+        ranges.shutdown(wait=True)       # every range thread has returned by now (each member's fetch_url awaited its ranges)
+        probe.update(moved[0], state='complete' if all(o['status'] != 'failed' for o in out) else 'failed', force=True)
     listing.extend(sorted(out, key=lambda x: x['key']))
 
 
@@ -345,7 +335,9 @@ def attach(day, run_dir, url_map, brain, results):
             continue
         r = subprocess.run(['curl', '-fsS', '--proto', '=https', '-X', 'PUT', '--upload-file', str(path), '--url', slot['url']])
         results.append(dict(day=day, step='s3', key=key, status='uploaded' if r.returncode == 0 else 'failed',
-                            returncode=r.returncode))
+                            returncode=r.returncode, transport='curl-presigned-put',
+                            transport_reason='a presigned PUT slot of the dispatch map: the box role writes nothing to S3, so '
+                                             'the shared transport\'s CRT/classic upload (a signed PUT) does not apply'))
     if brain:
         entry = Path(brain) / ('%s-external' % day)
         manifest = entry / 'MANIFEST.json'
