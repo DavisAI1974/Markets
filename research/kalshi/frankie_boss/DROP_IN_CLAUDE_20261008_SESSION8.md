@@ -324,6 +324,15 @@ request_save RELEASES a fleet_waiting day's booking, REBOOK on resume) is being 
 An independent RE-REVIEW of B1-B7 is running (REVIEW_20261008_FLEET_SOURCE_PASS2.md); the fleet template is launchable for one
 proof box only after that verdict and the queue change, and only on Greg's explicit "launch the first box".
 
+## B4 queue half LANDED (0ac369ee + ab9271d3, tip 36c082ec; parent verified: 10 new toys + all fleet/cpu toys, compile, bash -n,
+diff check): request_save(release_booking=True) releases a fleet_waiting day's booking on its SAVED end (recorded as
+booking_released / released_cpus on the entry, owner binding and save record); only the stage handoff's fleet_waiting branch
+passes the flag (ineligible and every ordinary save retain byte-identically); resume_owner of a released day REBOOKS via
+frankie_box_cores.rebook_for_owner (whole cores first, under the ledger's one flock, refuses loudly when no lane is free)
+before re-queueing. One-box path unchanged. RUNTIME-UNVERIFIED on the box. Remaining before any fleet launch: the pass-2
+review verdict on B1-B7 (running) and the builder's confirmation that its WAIT resume passes REBOOK=on in the shape
+resume_owner expects.
+
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
 - Day e2e-20231018-a2/20231018: SAVED on its day-bound marker, booking retained (CPUs 0-31), owner commit 6076950, NO
