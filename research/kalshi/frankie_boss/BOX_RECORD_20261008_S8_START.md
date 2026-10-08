@@ -30,3 +30,5 @@ GitHub dispatch via the github MCP tools. Every action below carries its UTC tim
 - 14:27:38Z STEP 2 StartInstances i-035994afa8bdf66a5: stopped -> pending. 14:27:39Z CreateTags KeepRunning=true
   (+KeepRunningReason "box-operator role session 8 ... Greg: Go; box started to resume a2 ... on the staged tip 85ce2827");
   DescribeTags read back KeepRunning=true.
+- 14:28:02Z box RUNNING (LaunchTime 14:27:38Z), SSM PingStatus Online (last ping 14:27:58Z), public DNS
+  ec2-54-227-194-12.compute-1.amazonaws.com. KeepRunning=true.
