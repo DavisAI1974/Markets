@@ -42,3 +42,19 @@ AWS: Aws connector live (STS read-only, account ...4170, root caller) 16:24Z.
 - Claims (5bf723f4): frankie_box_experiment_root.write_claims_from_derivation writes V2 rows (stat identity + 64 KiB tail +
   sealed counts for the five legacy spools) and returns a note for the receipt; the resume accepts V1 rows on a tail match
   and rewrites them. The claim decisions are read from the receipt's claims note, the ROOT log and work/file-claims.jsonl.
+
+## Box-operator: stop, grow, restart (16:4xZ)
+Role: box-operator (fable), session 9, under the parent. AWS via the Aws connector only (SSM SendCommand / GetCommandInvocation).
+- 16:34:13Z PROBE (SSM 553b8a3a, rc 0): receipt ABSENT; marker Q/save/e2e-20231018-a2-20231018.save-request.json 497 B 15:27
+  standing (six .resumed-* markers beside it, history); child 1834 Rl 01:29:38 10.5% CPU on the exact cmdline (d67b9c63
+  experiment_root --day 20231018 --resume --data-workers 31 --digest off --bedrock on); fd 3 = R/work/derived/
+  legacy_book_imbalance.json pos 446,542,381,056 of 472,040,420,230; root.json seq 2 e2e-20231018-a2/20231018 state
+  `running`, owner booking day-run-20231018-day_slot_root-1791402822-3111, save_request standing (by "dispatch save",
+  requested 15:27:22Z, sha 9f6b4e5b..., cpus 0-31). Units: frankie-queue-root-1791471869 (worker, d67b9c63) and
+  frankie-cpu-watch (d67b9c63 --loop --interval 120) active. The whole-read pass had not reached the frames spool: nothing on
+  disk is lost by the stop (that pass writes only the receipt at its end).
+- 16:34:31Z STOP (SSM bfb66780, rc 0): `kill -KILL 1834` (the child only); gone at 16:34:34Z. root.json: 16:34:38Z `running`
+  -> 16:34:42Z `saved` (the worker's check_save). Worker log: "ROOT seq 2 20231018 (e2e-20231018-a2): saved: saved on its
+  day-bound marker ... (attempt e2e-20231018-a2-20231018-a1, CPUs [0..31] retained)" and "day saved on its assigned lane;
+  resume the retained attempt". Unit frankie-queue-root-1791471869 still active at 16:34:42Z (expected: it ends `saved`,
+  exit 5, on its next poll).
