@@ -363,3 +363,9 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   staging-receipt yet (the box disk was saturated by the render; free now). The resume + kick (FRANKIE_ROOT_DIGEST=off)
   go out the moment its receipt lands; resuming on 1c59623 would run the old whole-read boundary validator (2.5 h at
   125 MiB/s), so it waits for db96f24.
+- 17:44:33Z the db96f24 stage landed (staging-receipt staged, HEAD db96f24; the stage crawled while the render saturated
+  the disk). 17:44:54Z RESUME + KICK (SSM 2c47881b) on CR4=/opt/frankie-box/code/db96f24f3260bf0d70c763b297c2ba9b84f571a6-
+  37816561759-1/markets: resume exit 0 (owner attempt -a1, booking ...repoint-1791479892-5613 grown 0-63, marker
+  archived); kick exit 0: root worker unit frankie-queue-root-1791481494 (FRANKIE_ROOT_DIGEST=off FRANKIE_CLASSROOM_CPUS=all),
+  cpu-watch already running (its loop code now db96f24). Entry RUNNING "its whole day in the held box slot", attempt -a1,
+  64 CPUs. Expected: ROOT child --resume --digest off -> receipt in minutes -> boundary validate by claim -> teacher.
