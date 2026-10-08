@@ -262,6 +262,13 @@ instance profile, per AWS_TOOLS_STACK section 3.9, never by widening Ssm):
   - ec2:CreateTags / DescribeInstances on instances with aws:ResourceTag/Project=frankie (self-tagging);
   - the same ssm:GetParameter grants as Ssm (github-token for the self-driving stage).
 Then launch-template --instance-profile frankie-day-box. Until then: fleet boxes can run ROOT only with the day list OFF.
+STATUS 15:0xZ: Greg said "Make the role". The parent's direct CreateRole/PutRolePolicy call through the connector was STOPPED by
+the session's safety classifier (IAM role creation from this session); verified afterwards that NOTHING was created (GetRole and
+GetInstanceProfile frankie-day-box both NoSuchEntity). Route instead: a `day-box-role` dry-run step in deploy/aws/frankie_aws_stack.py
+(assigned to the cloud session as part of slice d) that Greg applies from the console or from a shell holding the Claude IAM key
+(`python3 deploy/aws/frankie_aws_stack.py --apply --confirm GREG_GO_AWS_STACK --steps day-box-role`), or Greg creates the role in
+the IAM console from the statement list above. launch-template then defaults --instance-profile frankie-day-box and refuses when
+the profile is absent.
 
 ## Run state (UNCHANGED since the session-7 drop-in; verified 03:17Z 2026-10-08, re-verified read-only later in session 7)
 - All three instances STOPPED, no Elastic IPs, only EBS storage accrues. Main box KeepRunning=false.
