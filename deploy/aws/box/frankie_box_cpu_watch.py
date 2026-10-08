@@ -325,6 +325,9 @@ def drive_resize(finding, work_dir, record, actions):
             if stage == 'root':
                 req['log'].append(dict(at=now, did='request_save', out=actions['request_save'](finding['run'], finding['day'])))
             elif stage == 'digest-render':
+                # the stopped render's CODE_ROOT / MARKETS_SHA / OUTPUT_ROOT, read before the stop so the restart has them
+                req['step_pid'] = finding.get('step_pid')
+                req['environment'] = actions['render_environment'](finding['step_pid'])
                 req['log'].append(dict(at=now, did='stop_render', out=str(actions['stop_render'](finding['step_pid']))))
             else:
                 req['log'].append(dict(at=now, did='none', out='no mechanism for %s' % stage))
@@ -410,6 +413,14 @@ def live_actions():
     def render_stopped(pid):
         return not Path('/proc/%d' % pid).exists()
 
+    def render_environment(pid):
+        env = Path('/proc/%d/environ' % pid).read_bytes().split(b'\0')
+        values = dict(e.split(b'=', 1) for e in env if b'=' in e)
+        out = {k: values[k.encode()].decode() for k in ('CODE_ROOT', 'MARKETS_SHA', 'OUTPUT_ROOT') if k.encode() in values}
+        if len(out) != 3:
+            raise ValueError('the render pid %d carries %s of CODE_ROOT/MARKETS_SHA/OUTPUT_ROOT: not restartable from here' % (pid, sorted(out)))
+        return out
+
     def restart_render(req):
         env = req.get('environment') or {}
         if not env.get('CODE_ROOT'):
@@ -421,7 +432,8 @@ def live_actions():
         child = subprocess.Popen(cmd, env=full, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
         return 'restarted as pid %d on the resolver\'s lane' % child.pid
     return dict(request_save=request_save, owner_state=owner_state, grow=grow, resume=resume, kick=kick,
-                stop_render=stop_render, render_stopped=render_stopped, restart_render=restart_render)
+                stop_render=stop_render, render_stopped=render_stopped, restart_render=restart_render,
+                render_environment=render_environment)
 
 
 def render_processes(procs, bookings):

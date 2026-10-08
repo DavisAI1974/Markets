@@ -175,6 +175,8 @@ class ResizeMachine(unittest.TestCase):
                             grow=rec('grow', dict(status='grown', cpus='0-63')),
                             resume=rec('resume', 'resumed'), kick=rec('kick', 'kicked'),
                             stop_render=rec('stop_render', '/x/render-stop-request.json'),
+                            render_environment=rec('render_environment', dict(CODE_ROOT='/opt/frankie-box/code/t-r-1/markets',
+                                                                               MARKETS_SHA='t', OUTPUT_ROOT='/opt/frankie-box/work/experiment-roots/x')),
                             render_stopped=rec('render_stopped', lambda pid: not self.state['render_alive']),
                             restart_render=rec('restart_render', 'restarted'))
 
@@ -219,7 +221,10 @@ class ResizeMachine(unittest.TestCase):
         f = self.finding('digest-render', booking='render-4242')
         record = dict(resize=[])
         W.drive_resize(f, self.d.name, record, self.actions)
-        self.assertEqual([c[0] for c in self.calls], ['stop_render'])
+        self.assertEqual([c[0] for c in self.calls], ['render_environment', 'stop_render'])
+        req = json.loads((Path(self.d.name) / 'resize-render-4242.json').read_bytes())
+        self.assertEqual(req['environment']['OUTPUT_ROOT'], '/opt/frankie-box/work/experiment-roots/x')
+        self.assertEqual(req['step_pid'], 4242)
         W.drive_resize(f, self.d.name, record, self.actions)
         self.assertEqual([c[0] for c in self.calls][-1], 'render_stopped')
         self.assertEqual(json.loads((Path(self.d.name) / 'resize-render-4242.json').read_bytes())['log'][-1]['did'], 'wait')
