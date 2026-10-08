@@ -23,9 +23,12 @@ from frankie_box_author_monday_launch import fresh, sync_directory
 PARENT = Path('/opt/frankie-box/work/monday-calculations')
 
 
-def load_retained_layers(session, *, allow_failures=False, receipt=None):
+def load_retained_layers(session, *, allow_failures=False, receipt=None, spools=None):
     """The completed legacy layers and spools as ROOT retained them; no journal read, no recalculation. Shared by
-    resume_legacy and the render-only step (frankie_box_render_digest.py)."""
+    resume_legacy and the render-only step (frankie_box_render_digest.py).
+    spools (session 6, 2026-10-08, additive): {resolved spool path: RowSpool} already reopened by the caller from an
+    exact claim (the legacy-stage reuse witnesses each spool once and reopens it from its sealed count); a spool not in
+    it is reopened here by RowSpool.reopen as before. The count checks below apply to both."""
     from frankie_box_digest_sources import _JSON
     import frankie_box_bedrock as B
     pin = session._pin()
@@ -33,7 +36,11 @@ def load_retained_layers(session, *, allow_failures=False, receipt=None):
     candidates = list((derived / '.rows').glob('input-*.jsonl'))
     if len(candidates) != 1:
         raise ValueError('one retained complete INPUT spool required')
-    records = B.RowSpool.reopen(candidates[0])
+
+    def reopen(path):
+        found = (spools or {}).get(str(Path(path).resolve()))
+        return found if found is not None else B.RowSpool.reopen(path)
+    records = reopen(candidates[0])
     missing = []
     if allow_failures:
         if receipt is None:
@@ -43,7 +50,7 @@ def load_retained_layers(session, *, allow_failures=False, receipt=None):
             raise ValueError('retained INPUT spool differs from its derivation receipt')
     if len(records) + len(missing) != session.source_binding['record_count']:
         raise ValueError('retained INPUT spool count differs')
-    prices, frames, structures, failures = [B.RowSpool.reopen(derived / '.rows' / (n + '.jsonl'))
+    prices, frames, structures, failures = [reopen(derived / '.rows' / (n + '.jsonl'))
                                             for n in ('prices', 'frames', 'structures', 'failures')]
     if len(failures) and not allow_failures:
         raise ValueError('retained legacy stage has failures; cannot certify complete reuse')

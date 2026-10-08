@@ -1340,6 +1340,56 @@ def _check_input_spool_claim(claim, seen):
         raise ValueError('the INPUT spool differs from its last saved claim; retained for recovery')
 
 
+# ---- Session 6 (2026-10-08, Greg: "eliminate redundant steps"): one read per retained spool ----------------------------
+# The INPUT spool's receipt witness (container['record_spool'].hash_basis) says how its sha256 was taken:
+INPUT_SPOOL_HASH_BASIS = dict(
+    claim='the last save\'s SHA-256, run in this process over every byte of the spool (a fresh extraction hashes from '
+          'byte 0 at its saves; a resume that made its one full pass hashed the whole file and continued): the same '
+          'bytes a separate witness read would hash again, so that read is not repeated; the file size is checked '
+          'against the claim and the value is kept in the per-process hash cache for the seal',
+    witness='one full witness read after the extraction (no save recorded a claim on this route)',
+    witness_after_fast_resume='one full witness read after the extraction, compared with the last saved claim (review '
+                              '2.7): the resume checked stat and the last line only, so the prefix was not read here')
+
+
+def _witness_counting(path):
+    """One pass over a retained spool, {bytes, sha256, count}: the sha256 and the newline count together (the pass
+    _resume_row_spool makes for an older save), the {bytes, sha256} remembered in the per-process hash cache so a
+    later witness(path) of the unchanged file costs no read. For a legacy-stage spool artifact saved without a count."""
+    path = Path(path)
+    size = path.stat().st_size
+    library = _sha256_library()
+    hasher, newlines = (_ResumableSha256(library) if library is not None else _PlainSha256()), [0]
+    _hash_file_into(path, hasher, size, newlines)
+    value = dict(bytes=size, sha256=hasher.hexdigest())
+    _filehash().remember(path, value)
+    return dict(value, count=newlines[0])
+
+
+def _reopen_counted_spool(spool_class, path, count):
+    """RowSpool.reopen(path)'s object for a retained spool whose line count is known from an exact claim (the sealed
+    witness's bytes and sha256 matched, so the bytes are the sealed ones and the count is the one sealed with them):
+    only the first and last lines are read (the same _ends as reopen); a partial final record is refused as reopen
+    refuses it; a count that disagrees with an empty or non-empty file is refused."""
+    from research.kalshi.frankie_boss.c15_journal import unpack
+    path = Path(path)
+    count = int(count)
+    size = path.stat().st_size
+    if (count == 0) != (size == 0):
+        raise ValueError('retained row spool count differs')
+    spool = spool_class.__new__(spool_class)
+    spool.path, spool._count, spool._ends = path, count, []
+    with path.open('rb') as handle:
+        if count:
+            tail = _line_ending_at(path, size)          # refuses a partial final record
+            first = handle.readline()
+            handle.seek(tail['offset'])
+            last = handle.read(size - tail['offset'])
+            spool._ends = [unpack(json.loads(first)), unpack(json.loads(last))]
+    spool._writer = handle                             # closed handle: read-only, as RowSpool.reopen leaves it
+    return spool
+
+
 def _records_cursor(path, index, offset):
     """The INPUT row cursor a legacy save records beside next_record: the byte offset of row `index` and the line
     ending there (a resume seeks to the offset after checking that line)."""
@@ -2464,13 +2514,34 @@ class Session:
                 saved_stage = load_json(stage)
                 if saved_stage.get('identity') != identity:
                     raise ValueError('completed legacy stage belongs to another native source/policy; retained')
+                # session 6: each spool artifact is read ONCE here (before: its witness, then load_retained_layers
+                # reopened it by counting every line, a second full pass over the frames spool among them). A spool
+                # sealed with its count (kind 'spool', this code's seal) is witnessed through the per-process cache
+                # and reopened from the sealed count (first and last lines only); one sealed without a count (an
+                # earlier seal) is one pass hashing and counting together. Every other artifact is witnessed as before.
+                B = _box_module('frankie_box_bedrock')
+                reopened, reads = {}, []
                 for item in saved_stage['artifacts']:
-                    if witness(Path(item['path'])) != {k: item[k] for k in ('bytes', 'sha256')}:
+                    path, claim = Path(item['path']), {k: item[k] for k in ('bytes', 'sha256')}
+                    count = None
+                    if item.get('kind') == 'spool' and isinstance(item.get('count'), int):
+                        seen, count, how = witness(path), item['count'], 'one witness read + the sealed count'
+                    elif path.suffix == '.jsonl':
+                        counted = _witness_counting(path)
+                        seen, count = {k: counted[k] for k in ('bytes', 'sha256')}, counted['count']
+                        how = 'one pass, sha256 + count together (the seal recorded no count)'
+                    else:
+                        seen = witness(path)
+                    if seen != claim:
                         raise ValueError('completed legacy stage artifact changed: ' + item['path'])
+                    if count is not None:
+                        reopened[str(path.resolve())] = _reopen_counted_spool(B.RowSpool, path, count)
+                        reads.append(f'{path.name}: {how}')
                 from frankie_box_monday_calculations import load_retained_layers
                 receipt = saved_stage['receipt']
                 _, _, records, prices, frames, structures, failures, layers, _ = load_retained_layers(
-                    self, allow_failures=True, receipt=receipt)
+                    self, allow_failures=True, receipt=receipt, spools=reopened)
+                self.note('legacy stage reuse: each spool read once (' + '; '.join(reads) + ')')
                 if len(failures) != receipt['failure_count']:
                     raise ValueError('completed legacy stage failure count differs')
                 self.note('native continuation: completed legacy outputs reused without replay or calculation')
@@ -2960,7 +3031,9 @@ class Session:
         if recovery and bedrock:
             # A separately published legacy completion lets interrupted native traversal/projection
             # continue without replaying or recalculating the already completed legacy stage.
-            artifacts = [dict(path=str(rows.path), **spool_witness(rows))
+            # session 6: each spool artifact also carries its kind and sealed line count (additive keys), so the reuse
+            # route reopens it from the sealed count after one witness instead of counting it in a second full pass
+            artifacts = [dict(path=str(rows.path), **spool_witness(rows), kind='spool', count=len(rows))
                          for rows in (records, prices, frames, structures, failures)]
             # session 5: the last saved claims (running-hash sha256s) checked against these full reads at the seal (the
             # INPUT spool's claim is checked in _input_records against its own full witness)
@@ -3570,8 +3643,22 @@ class Session:
         container['bytes_fields_not_spooled'] = {} if retain_all_fields else bytes_fields
         if retain_all_fields:
             container['bytes_fields_spooled'] = bytes_fields
-        container['record_spool'] = dict(path=str(records.path), **witness(records.path))
-        _check_input_spool_claim(input_claim[0], container['record_spool'])
+        claim = input_claim[0]
+        if (claim is not None and getattr(records, '_sha256_read_from_zero', False)
+                and records.path.stat().st_size == claim['bytes'] and _filehash().remember(records.path, claim)):
+            # session 6: the claim's SHA-256 ran over every byte of this spool in THIS process (a fresh extraction's
+            # saves hash from byte 0; a resume that made its one full pass hashed the whole file, checked it against
+            # the saved claim, and continued), so the separate full witness read here would hash the same bytes
+            # again: the claim is the witness, the size checked, the value kept in the per-process cache (the seal's
+            # witness of this spool costs no read either). A fast resume (stat + last line: the prefix unread here)
+            # keeps the full witness read and the review-2.7 comparison below. Recorded as hash_basis.
+            container['record_spool'] = dict(path=str(records.path), bytes=claim['bytes'], sha256=claim['sha256'],
+                                             hash_basis=INPUT_SPOOL_HASH_BASIS['claim'])
+            return records, container
+        container['record_spool'] = dict(path=str(records.path), **witness(records.path),
+                                         hash_basis=INPUT_SPOOL_HASH_BASIS['witness' if claim is None
+                                                                            else 'witness_after_fast_resume'])
+        _check_input_spool_claim(claim, container['record_spool'])
         return records, container
 
     @staticmethod
