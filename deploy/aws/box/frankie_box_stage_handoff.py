@@ -264,13 +264,16 @@ def run_validate(run, stage, key, out_dir, pins_args, lane, log):
     return code, _load(receipt_path), str(log_path)
 
 
-def request_own_save(run, e, by):
+def request_own_save(run, e, by, release_booking=False):
     """The day's own save marker: the queue's request_save when the day has a ROOT-line entry (the entry's save_request
-    and event recorded as ACTION=save would), else the marker body written create-only at the Run's bound marker."""
+    and event recorded as ACTION=save would), else the marker body written create-only at the Run's bound marker.
+    release_booking=True (session 8, B4) ONLY from the fleet classroom gate's fleet_waiting branch: the marker asks the
+    queue to RELEASE the day's CPU booking at the save boundary (the lease holder's classroom grows to the whole box;
+    the WAIT unit's resume re-books). The default writes the marker exactly as before."""
     try:
         import frankie_box_frankie_queue as Q
         try:
-            out = Q.request_save(run.plan['run'], e['day'], by)
+            out = Q.request_save(run.plan['run'], e['day'], by, release_booking=release_booking, release_reason=by if release_booking else None)
             return dict(how='queue request_save', marker=out.get('marker'), standing=True)
         except (SystemExit, OSError, RuntimeError, ValueError, KeyError) as refusal:
             why = '%s: %s' % (type(refusal).__name__, refusal)
@@ -286,6 +289,8 @@ def request_own_save(run, e, by):
                 attempt=(getattr(run, 'owner', None) or {}).get('attempt'), booking=getattr(run, 'slot_booking', None),
                 cpus=(getattr(run, 'owner', None) or {}).get('cpus'), requested_at=time.time(),
                 requested_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), by=by)
+    if release_booking:
+        body.update(release_booking=True, release_reason=by)
     try:
         Path(marker).parent.mkdir(parents=True, exist_ok=True)
         with open(marker, 'x', encoding='utf-8') as handle:
@@ -448,11 +453,15 @@ def boundary(run, e, stage, key, record, *, code_root, commit, log=print):
                           reason='validated; this box may not run the classroom (ClassroomEligible=false); the day is '
                                  'saved at the gate for an operator to run its classroom on an On-Demand box'))
         if gate.get('decision') == 'waiting':
+            # B4 (queue half, session 8): the fleet_waiting save RELEASES this day's CPU booking (the explicit flag, never
+            # inferred from text) so the sibling day holding the lease can grow its classroom to the whole box; the WAIT
+            # unit's resume re-books (REBOOK=on; resume_owner re-books through the ledger from the release record)
             saved = request_own_save(run, e, by='%s boundary: validated; the global classroom lease is held by %s; '
-                                                 'the day waits in line (fleet)' % (stage, gate.get('holder')))
-            return _write(out_dir / 'handoff.json', dict(base, status='fleet_waiting', save=saved,
-                          reason='validated; the global classroom lease is held by %s; the day is saved and a WAIT '
-                                 'unit resumes it when the lease frees (it is #%s in line)'
+                                                 'the day waits in line (fleet)' % (stage, gate.get('holder')),
+                                     release_booking=True)
+            return _write(out_dir / 'handoff.json', dict(base, status='fleet_waiting', save=saved, booking_release_requested=True,
+                          reason='validated; the global classroom lease is held by %s; the day is saved with its CPU booking '
+                                 'released and a WAIT unit resumes (re-books) it when the lease frees (it is #%s in line)'
                                  % (gate.get('holder'), gate.get('position'))))
         return _write(out_dir / 'handoff.json', dict(base, status='fleet_proceed',
                       reason='validated; this box holds the global classroom lease; straight on to the classroom '

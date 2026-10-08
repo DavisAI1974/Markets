@@ -1694,10 +1694,50 @@ def _needs_finish(x, plans):
     return any(d['day'] == x['day'] for d in plans[x['run']].get('days') or [])
 
 
+def _standing_release(entry):
+    """The day's standing save marker asks for its booking to be RELEASED (request_save release_booking=True: the fleet
+    classroom gate's fleet_waiting save) -> the marker body; else None. Read from the marker file (the entry the thread
+    holds is its admission-time copy; the marker is create-only and bound to the owner), never inferred from text."""
+    marker = (entry.get('owner') or {}).get('marker') or str(marker_of(entry['run'], entry['day']))
+    try:
+        body = json.loads(Path(marker).read_bytes())
+    except (OSError, ValueError):
+        return None
+    return body if body.get('release_booking') is True else None
+
+
+def _released_fields(holder):
+    """The release facts of a slot that ended RELEASED on a fleet-gate save, for the entry's record; {} otherwise, so
+    every other day's record is byte-identical to before."""
+    if not holder.get('booking_released'):
+        return {}
+    return dict(booking_released=True, released_booking=holder.get('released_booking'), released_cpus=holder.get('released_cpus'),
+                release_reason=holder.get('release_reason'))
+
+
 def _end_slot(holder, entry, run):
     """The slot at the end of the day's thread: released on every ordinary end; RETAINED (the ledger keeps the exact CPUs
-    for this owner, nobody else books them) when the day is saved or unknown."""
+    for this owner, nobody else books them) when the day is saved or unknown -- except (session 8, B4) a day SAVED on a
+    marker that asks `release_booking` (the fleet classroom gate's fleet_waiting save): its booking is RELEASED with the
+    CPU set on the record, so the sibling holding the global lease can grow; its resume re-books (resume_owner)."""
     result = (holder.get('result') or ('ended',))[0]
+    if result == 'saved':
+        asked = _standing_release(entry)
+        if asked is not None:
+            import frankie_box_cores as C
+            why = 'the day %s %s is saved at the fleet classroom gate (fleet_waiting): its booking is released so the lease ' \
+                  'holder\'s classroom can grow; ACTION=resume re-books it (%s)' % (entry['run'], entry['day'], asked.get('release_reason'))
+            cpus = (entry.get('owner') or {}).get('cpus') or (getattr(run, 'owner', None) or {}).get('cpus')
+            try:
+                rec = C.release(holder['slot'], why)
+            except (OSError, ValueError) as error:
+                holder['release_error'] = '%s: %s' % (type(error).__name__, error)
+                print('slot %s of %s %s NOT released on its fleet-gate save (%s); it stays in the ledger, not retained either'
+                      % (holder['slot'], entry['run'], entry['day'], holder['release_error']), flush=True)
+                return
+            holder.update(booking_released=True, released_booking=holder['slot'], release_reason=asked.get('release_reason'),
+                          released_cpus=sorted((rec or {}).get('cpus') or cpus or []))
+            return
     if result in OWNER_STATES:
         import frankie_box_cores as C
         try:
@@ -1845,6 +1885,17 @@ def _jev_progress(run_name, day):
     return None
 
 
+def _note_release(x, holder):
+    """A slot released on a fleet-gate save: the release facts on the owner binding (resume_owner reads them to re-book)
+    and on the standing save record. Nothing for any other end."""
+    facts = _released_fields(holder)
+    if not facts:
+        return
+    x['owner'] = dict(x.get('owner') or {}, **facts)
+    if isinstance(x.get('save_request'), dict):
+        x['save_request'].update(facts)
+
+
 def _release_owner(x, why, failed_finish=False):
     """A failed (never saved) day gives its owner binding up: kept as history, so the once-per-worker retry binds afresh
     (the next attempt number, any free 16 CPUs) exactly as before the contract. The booking itself was released by the
@@ -1955,7 +2006,8 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     y['finish'] = dict(y.get('finish') or {}, state=result if result in OWNER_STATES + ('finished', 'waiting')
                                        else 'failed', reason=reason, ended_utc=utc(), facts=facts,
                                        retained_booking=job['holder'].get('retained'), child=facts.get('child'),
-                                       inspection=facts.get('inspection'))
+                                       inspection=facts.get('inspection'), **_released_fields(job['holder']))
+                    _note_release(y, job['holder'])
                     if y['finish']['state'] == 'failed':
                         _release_owner(y, 'finish failed: the next admission books any free slot; the owner binding is history',
                                        failed_finish=True)
@@ -1974,7 +2026,9 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     y.update(state='done', reason=None, where='box-slot', calculations=facts.get('calculations'),
                              done_seq=doc['next_done_seq'], done_at=time.time(), done_utc=utc(),
                              finish=dict(state=result, reason=reason, ended_utc=utc(), facts=facts,
-                                         retained_booking=job['holder'].get('retained'), child=facts.get('child')))
+                                         retained_booking=job['holder'].get('retained'), child=facts.get('child'),
+                                         **_released_fields(job['holder'])))
+                    _note_release(y, job['holder'])
                     doc['next_done_seq'] += 1
                     event('root', 'slot_' + result, seq=seq, day=y['day'], run=y['run'], reason=reason, owner=y.get('owner'),
                           child=facts.get('child'), root_done=True)
@@ -1984,7 +2038,9 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
                     continue
                 if result in OWNER_STATES:
                     y.update(state=result, reason=reason, retained_booking=job['holder'].get('retained'),
-                             retain_error=job['holder'].get('retain_error'), child=facts.get('child'))
+                             retain_error=job['holder'].get('retain_error'), child=facts.get('child'),
+                             **_released_fields(job['holder']))
+                    _note_release(y, job['holder'])
                     event('root', 'slot_' + result, seq=seq, day=y['day'], run=y['run'], reason=reason, owner=y.get('owner'),
                           child=facts.get('child'))
                     log('ROOT seq %d %s (%s): %s: %s (attempt %s, CPUs %s retained)' % (
@@ -2202,10 +2258,14 @@ def root_worker(code_root, commit, max_seconds, poll_seconds, log=print, wait_lo
 
 # ------------------------------------------------------------------------------------- save / status / resume (the owner)
 
-def request_save(run, day, by):
+def request_save(run, day, by, release_booking=False, release_reason=None):
     """The day-bound save: the owner's marker written create-only. Allowed while the day's owner runs (the ROOT line entry
     running, or done with its finish running). The owner stops at its next boundary; a class-arm day in its class phase
-    waits for the class child's acknowledgment first. Returns what stands; never kills, clears or completes anything."""
+    waits for the class child's acknowledgment first. Returns what stands; never kills, clears or completes anything.
+    release_booking (session 8, B4): True ONLY for the fleet classroom gate's fleet_waiting save: the marker carries
+    `release_booking: true` (+ release_reason) and _end_slot RELEASES the day's CPU booking instead of retaining it, so
+    the sibling day holding the global classroom lease can grow to the whole box; resume_owner re-books it. False (the
+    default: the hold, the stage handoff's ordinary save, an operator save) writes the marker exactly as before."""
     with locked():
         doc = load('root')
         x = next((y for y in doc['entries'] if y['run'] == run and y['day'] == day), None)
@@ -2222,15 +2282,21 @@ def request_save(run, day, by):
         marker = Path(owner['marker'])
         body = dict(schema='FRANKIE_QUEUE_SAVE_REQUEST_V1', run=run, day=day, attempt=owner['attempt'], booking=owner.get('booking'),
                     cpus=owner.get('cpus'), requested_at=time.time(), requested_utc=utc(), by=by)
+        if release_booking:
+            body.update(release_booking=True, release_reason=release_reason or 'fleet classroom gate: the day waits for the '
+                        'global classroom lease; its CPUs go to the holder\'s classroom')
         try:
             C.write_json(marker, body, exclusive=True)
         except FileExistsError:
             raise SystemExit('a save request stands already: %s' % marker)
         x['save_request'] = dict(body, identity=marker_identity(marker))
         save('root', doc)
-        event('root', 'save_requested', seq=x['seq'], day=day, run=run, marker=str(marker), by=by)
+        event('root', 'save_requested', seq=x['seq'], day=day, run=run, marker=str(marker), by=by,
+              **(dict(release_booking=True) if release_booking else {}))
         return dict(requested=body, marker=str(marker), entry_state=x['state'],
-                    note='the owner stops at its next boundary; a class in progress acknowledges first; ACTION=status shows it')
+                    note='the owner stops at its next boundary; a class in progress acknowledges first; ACTION=status shows it'
+                         + ('; its booking is RELEASED at that boundary (fleet gate save); ACTION=resume re-books it'
+                            if release_booking else ''))
 
 
 def owner_status(run, day):
@@ -2328,6 +2394,30 @@ def resume_owner(run, day, by, rebook=False):
         import frankie_box_cores as C
         ledger = C.LEDGER / ('%s.json' % owner.get('booking'))
         retained = json.loads(ledger.read_bytes()).get('retained') if ledger.is_file() else None
+        if owner.get('booking_released') and retained is None:
+            # session 8 (B4): the day was saved at the fleet classroom gate and its booking RELEASED (the record says so,
+            # explicitly). Re-book NOW through the ledger under its one lock -- the resolver names a lane (whole cores
+            # first) and the same lane is booked and retained for this owner -- or refuse loudly with the reason; the
+            # next admission then books EXACTLY the new set. The REBOOK flag is accepted and not required: the
+            # release on the save is the recorded decision.
+            size = int(_plan_of(run).get('day_cpus') or len(owner.get('released_cpus') or []) or C.DAY_RUN_CPUS)
+            b, outcome = C.rebook_for_owner(run, day, owner['attempt'], size, 'day-slot-resume', owner.get('commit'),
+                                            reason='resumed by %s after its fleet-gate release (booking %s, CPUs %s)' % (
+                                                by, owner.get('released_booking'), owner.get('released_cpus')))
+            if b is None:
+                raise SystemExit('%s %s: its booking %s (CPUs %s) was released at the fleet classroom gate and no %d-CPU lane '
+                                 'is free to re-book now: %s; the day stays %s (resume again when a lane frees)' % (
+                                     run, day, owner.get('released_booking'), owner.get('released_cpus'), size,
+                                     outcome.get('reason'), x['state']))
+            decision = dict(by=by, at_utc=utc(), previous_cpus=owner.get('released_cpus'), previous_booking=owner.get('released_booking'),
+                            booking=b['booking'], cpus=sorted(b['cpus']), size=size, resolver=outcome.get('resolver'),
+                            fallback=outcome.get('fallback'), rule='re-booked at resume after a fleet-gate release (B4)')
+            x['owner'] = owner = dict(owner, cpus=sorted(b['cpus']), booking=b['booking'], rebooked=decision, booking_released=False,
+                                      released_history=list(owner.get('released_history') or []) + [dict(
+                                          booking=owner.get('released_booking'), cpus=owner.get('released_cpus'),
+                                          reason=owner.get('release_reason'), rebooked_to=b['booking'])])
+            x.setdefault('owner_rebooks', []).append(decision)
+            retained = b.get('retained')
         if retained is None and owner.get('cpus') and not rebook:
             released = C.RELEASED / ('%s.json' % owner.get('booking'))
             raise SystemExit('the retained booking %s of %s %s is not in the ledger any more (%s): the exact CPU set cannot be '
@@ -2385,6 +2475,10 @@ def main():
     p.add_argument('--scope', help='worker/kick/handover: the authorized RUN:YYYYMMDD,... this worker may admit (required)')
     p.add_argument('--rebook', choices=('on', 'off'), default='off',
                    help='resume: the retained booking is gone (released): resume the same attempt on any free 16 CPUs')
+    p.add_argument('--release-booking', choices=('on', 'off'), default='off',
+                   help='save: release the day\'s CPU booking at the save boundary (the fleet classroom gate\'s fleet_waiting '
+                        'save ONLY); off (default) retains it exactly as before')
+    p.add_argument('--release-reason', help='save --release-booking on: the recorded reason')
     a = p.parse_args()
     if a.action == 'show':
         if a.events != 'all' and not a.events.isdigit():
@@ -2404,7 +2498,8 @@ def main():
             raise SystemExit('--run [A-Za-z0-9_-] and --day YYYYMMDD required')
         sys.path.insert(0, str(HERE))
         by = 'dispatch %s' % a.action
-        out = (request_save(a.run, a.day, by) if a.action == 'save' else owner_status(a.run, a.day) if a.action == 'status'
+        out = (request_save(a.run, a.day, by, release_booking=a.release_booking == 'on', release_reason=a.release_reason)
+               if a.action == 'save' else owner_status(a.run, a.day) if a.action == 'status'
                else resume_owner(a.run, a.day, by, rebook=a.rebook == 'on'))
         print(json.dumps(out, indent=1, sort_keys=True, default=str))
         return 0

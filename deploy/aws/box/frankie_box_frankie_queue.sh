@@ -19,6 +19,8 @@
 #                                this commit (every day runs its whole day in its slot) waits on the lock and takes over
 #   save    RUN DAY              the day-bound save of a running owned day: its marker written; the owner stops at its
 #                                next boundary (a class in progress acknowledges first); acknowledgment pending = status
+#           [RELEASE_BOOKING=on] the fleet classroom gate's fleet_waiting save ONLY: the booking is RELEASED at that
+#                                boundary (recorded with its CPU set) instead of retained; ACTION=resume re-books it
 #   status  RUN DAY              read-only: the owner binding, marker, class acknowledgment, ledger booking (live /
 #                                retained / released), both line entries and the worker, distinctly
 #   resume  RUN DAY [REBOOK=on]  a saved/unknown owned day back in line with the SAME owner (attempt, CPUs, marker
@@ -74,7 +76,12 @@ case "$ACTION" in save|status|resume)
     [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
   fi
   case "${REBOOK:-off}" in on|off) ;; *) echo "REBOOK must be on or off" >&2; exit 2;; esac
-  exec "$PY" -B "$SCRIPT" --action "$ACTION" --run "$RUN" --day "$DAY" --rebook "${REBOOK:-off}" ;;
+  # session 8 (B4): RELEASE_BOOKING=on on ACTION=save releases the day's CPU booking at the save boundary (the fleet
+  # classroom gate's fleet_waiting save ONLY; RELEASE_REASON recorded); off (default) retains it exactly as before
+  case "${RELEASE_BOOKING:-off}" in on|off) ;; *) echo "RELEASE_BOOKING must be on or off" >&2; exit 2;; esac
+  set -- --action "$ACTION" --run "$RUN" --day "$DAY" --rebook "${REBOOK:-off}" --release-booking "${RELEASE_BOOKING:-off}"
+  [ -z "${RELEASE_REASON:-}" ] || set -- "$@" --release-reason "$RELEASE_REASON"
+  exec "$PY" -B "$SCRIPT" "$@" ;;
 esac
 : "${MARKETS_SHA:?full dispatched commit required}"
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }

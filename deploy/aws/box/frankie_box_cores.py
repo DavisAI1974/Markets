@@ -1010,6 +1010,36 @@ def retain(booking, run, day, attempt=None, reason=None):
         return _retain_locked(b, run, day, attempt=attempt, reason=reason)
 
 
+def rebook_for_owner(run, day, attempt, size, stage, commit, window=1.0, reason=None):
+    """Session 8 (B4, the queue half): a saved day whose booking was RELEASED at the fleet classroom gate re-books under
+    ONE ledger lock at its resume: the resolver (lane_for day-slot = allocate_day_slot, whole cores first) names the
+    lane and refuses loudly when none is free; the same lane is booked (the same allocation, so the two agree) for this
+    pid, marked owned by (run, day, attempt) and RETAINED for that owner at once, so the next queue admission takes it
+    back in place (book_locked's retained take-over) and nothing else -- a sibling's grow included -- can take those CPUs
+    between the resolver's answer and the booking. Returns (booking record, outcome): status rebooked | refused |
+    waiting, the reason and the resolver's basis on the outcome."""
+    meta = dict(run=run, day=day, stage=stage, commit=commit, size=size)
+    with Lock():
+        try:
+            plan = lane_for('day-slot', plan_size=size, run=run, day=day)
+        except PlanRefused as refusal:
+            return None, dict(status='refused', reason='no lane for %s %s: %s' % (run, day, refusal))
+        if plan.get('retained'):
+            return None, dict(status='refused', reason='booking %s of %s %s is still retained in the ledger (%s): nothing to '
+                                                       're-book; resume it on its own set' % (plan.get('booking'), run, day,
+                                                                                               plan.get('cpu_list')))
+        b, outcome = book_locked('day-run', size, os.getpid(), meta, window)
+        if b is None:
+            return None, dict(outcome, resolver=plan.get('basis'))
+        b['owner'] = dict(run=run, day=day, attempt=attempt, at=now_iso())
+        b['rebooked_for_owner'] = dict(at=now_iso(), at_epoch=time.time(), by_pid=os.getpid(), reason=reason,
+                                       resolver=plan.get('basis'), fallback=plan.get('fallback'))
+        _retain_locked(b, run, day, attempt=attempt,
+                       reason=reason or 'rebooked at resume for its owner; held until its next admission takes it back')
+        return b, dict(status='rebooked', booking=b['booking'], cpus=cpu_list(b['cpus']), size=size,
+                       resolver=plan.get('basis'), fallback=plan.get('fallback'), placement=b.get('placement'))
+
+
 def release(booking, reason, exit_code=None):
     with Lock():
         path = LEDGER / (booking + '.json')

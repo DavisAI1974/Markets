@@ -36,7 +36,8 @@ class HandoffFleetBase(unittest.TestCase):
         self._orig_save = H.request_own_save
         # a passing validation and a no-op save, so the toy reaches the NEW fleet branch deterministically
         H.run_validate = lambda run, stage, key, out_dir, pins_args, lane, log: (0, {'totals': {'pinned': 3, 'ok': 3}}, 'log')
-        H.request_own_save = lambda run, e, by: dict(how='stub', marker=run.stop_marker, standing=True, by=by)
+        H.request_own_save = lambda run, e, by, release_booking=False: dict(how='stub', marker=run.stop_marker, standing=True,
+                                                                           by=by, release_booking=release_booking)
         os.environ['FRANKIE_FLEET_S3_FAKE'] = self.tmp
         os.environ['FRANKIE_FLEET_INSTANCE'] = 'i-box1'
         os.environ['FRANKIE_FLEET_NO_WAIT_UNIT'] = '1'   # the toy never spawns the detached poller
