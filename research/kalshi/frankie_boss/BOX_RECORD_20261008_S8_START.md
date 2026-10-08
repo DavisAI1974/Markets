@@ -438,3 +438,6 @@ Skill full-run-orchestrator invoked first. AWS via the Aws connector only; GitHu
 - 16:26:04Z PROBE 33 (read-only, SSM d6ac4999-be5e-4f11-aeb2-92cc8828ffe9): receipt ABSENT; marker standing; child 1834 Rl
   1:21:29, read_bytes 638,093,512,704, legacy_book_imbalance.json pos 382,386,307,072. Entry running, save_request true.
   Watchdog 16:24:30Z findings 1 repins 0.
+- 16:29:06Z PROBE 34 (read-only, SSM e43aeb2a-1f84-4426-a5c6-54e1b433cf09): receipt ABSENT; marker standing; child 1834 Dl
+  1:24:31, read_bytes 661,963,300,864, legacy_book_imbalance.json pos 406,243,508,224. Entry running, save_request true.
+  Watchdog 16:28:30Z findings 1 repins 0.
