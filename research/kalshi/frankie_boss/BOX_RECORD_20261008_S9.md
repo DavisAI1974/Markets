@@ -303,3 +303,16 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   retained); the resume + kick then run on the next staged checkout (validator by claim, no-retry rule, the sweep's
   fixes). Look-ahead audit role (opus) assigned for the later stages (A exact-set, B run-size identity, C second passes,
   D retry/kill gates, E worker literals); record LOOKAHEAD_SWEEP_20261008_S9.md.
+
+## Parent: the digest is rendering; relaunch is live (17:25-17:26Z)
+- Greg: "Relaunch! Your only focus should be that relaunch"; "Why sleep and other process?" Probes c94e8d9b / 97fa66a7:
+  ROOT child 5714 (etime 7:16) = the digest COORDINATOR, 68 threads, sleeping on a futex waiting for its pool (that is
+  the "sleep"); 62 multiprocessing helpers (pids 5794-5857, one per lane CPU) all in state D (disk wait) at 10-13% CPU,
+  four at ~43%: the digest's parallel decode of the frames spool, disk-bound at the baseline 125 MiB/s (child read_bytes
+  177 MB at the coordinator; the helpers read). Open fd: work/derived/.digest-afc98a5a.../families.sqlite. Nothing is
+  blocked; throughput is the volume. Save marker standing (17:23Z, 693 B; entry running, save_request set): the child
+  stops lawfully after receipt + digest -> SAVED.
+- Volume raise: cooldown from 12:08Z ends 18:08Z; parent timer armed 18:09Z (trig_01FBCVp7CoDNSn8utvUYRbvb): root
+  16,000/1,250, archive 10,000/1,000; session 8's 18:20Z timer is the fallback.
+- Restage for the resume after SAVED: db96f24 (validator by claim incl. digest/container rows; no from-scratch retry;
+  2ce40e8) dispatched 17:26Z.
