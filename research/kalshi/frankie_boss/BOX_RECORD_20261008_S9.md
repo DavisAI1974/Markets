@@ -184,3 +184,21 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   4813, "superseded_waiting": [], "new_unit": "frankie-queue-root-handover-1791478919", "systemd_run_exit": 0, "log":
   Q/logs/root-worker.log, "note": "the old worker finishes the days in its slots and ends; the new one waits on the lock,
   then runs"}. Status after: booking 0-63 retained (alive false), marker not standing, owner commit still 27109f4d (pre-take).
+- 17:04:21Z / 17:04:42Z PROBES (SSM 8cdd9284, 4593435e, read-only) -- THE RESUME FAILED AND THE WORKER STARTED A FRESH ATTEMPT:
+  - The new worker (unit frankie-queue-root-handover-1791478919, pid 5059, Environment FRANKIE_CLASSROOM_CPUS=all
+    FRANKIE_ROOT_DIGEST=on MARKETS_SHA=0e2a568...) took seq 2 at 17:02:09Z on the retained booking -3111, now on 0-63 (the
+    take-over fix worked: log "CPU_BOOKING inside the day's held slot day-run-...-3111: CPUs 0,...,63").
+  - The ROOT at 17:02:13Z died at once: frankie_box_experiment_root.py line 428 `_calculate_day` ->
+    `binding = save_or_match(output / 'source-binding.json', binding)` -> line 394 `raise ValueError('retained ROOT
+    source/pin differs: %s' % path)` -> `ValueError: retained ROOT source/pin differs:
+    /opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a1/source-binding.json` (the -a1 source-binding pins
+    calculation-pins.json sha 45e35f68... written under the earlier commit; the 0e2a568 binding differs).
+  - 17:04:09Z slot_end "failed: no calculations-receipt.json (the attempt is kept) ...". The worker released the owner
+    and booking -3111 (its ledger file is gone from cpu-bookings/) and, retrying once per worker start, at 17:04:10Z MINTED
+    attempt e2e-20231018-a2-20231018-a2 on a NEW booking day-run-20231018-day_slot_root-1791479050-5059, CPUs 0-15,32-47
+    (32, the plan's day_cpus), owner commit 0e2a568.
+  - Child pid 5221 RUNNING: `frankie_box_experiment_root.py --commit 0e2a568... --day 20231018 --day-role discovery
+    --output-root /opt/frankie-box/work/experiment-roots/e2e-20231018-a2-20231018-a2 --data-workers 31 --digest on
+    --shared-market-policy FRANKIE_SHARED_MARKET_TIMELINE_V1 --bedrock on` (NO --resume), affinity 0-15,32-47. A FRESH
+    ROOT in a new directory, on 32 CPUs: not "the same spot", not 64. The -a1 directory is still on disk, untouched.
+  - Not killed (role limit). Reported to the parent at once.
