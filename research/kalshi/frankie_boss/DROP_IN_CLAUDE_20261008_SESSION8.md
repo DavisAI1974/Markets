@@ -125,6 +125,11 @@ denial says "gradually"; a second request to 1152 follows after the first fleet 
   first stage, and all data in S3/EBS in this account. We are happy to accept a partial increase (e.g. 384 or 512) as a first
   step toward 640.
 
+APPEAL POSTED by Greg on case 179140016900825 at 2026-10-08 08:39:29 ET (12:39Z), asking 256 -> 512 (8 x r7i.16xlarge, staged
+ramp, one-week phase, terminate-on-shutdown, cost controls named). The case stays open; the connector cannot file a second request
+while it is. Do NOT file anything on this quota; poll ListRequestedServiceQuotaChangeHistoryByQuota + GetServiceQuota at each
+check-in and report a change. If approved at 512: 8 On-Demand boxes + 4 Spot boxes for ROOT.
+
 If Greg has already filed it himself (he said he would in the new session), confirm with
 ListRequestedServiceQuotaChangeHistoryByQuota and do not file a second one.
 
