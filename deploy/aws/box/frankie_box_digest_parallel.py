@@ -327,33 +327,64 @@ def _fold(state, flat):
     DG.fold(state, flat)
 
 
-# ---- Session 6 (Greg, 2026-10-08, verbatim: "We stream the data in and get 32 CPUs and workers on this job"): fewer
-# decodes of the source rows. A spool table decoded every row five times (cross context, snapshot, plan, final, verify:
-# the 496.7 GB full-depth frames of a2, ~29 min per decode on 31 helpers). Three exact reductions, each a run setting
-# on|off (default on) so a canary can compare the old and the new bytes:
-#   fuse_context    the cross-table context columns are collected inside the snapshot pass (5 -> 4);
-#   canonical_verify the inverse proof compares each parsed-back row with a canonical digest of the source row kept by
-#                   the last pass that decoded it (32 bytes a row), instead of decoding the source a fifth time (-> 3);
-#                   taken only while the canonical form is injective over DG._same's domain: a type-tagged, prefix-free
-#                   encoding over CANONICAL_TYPES, checked at runtime against DG._same on a probe vector
-#                   (_canonical_self_check) and refused for any other leaf type (the row then verifies by DG._same);
-#   one_decode      the plan pass writes every row's pre-dictionary cells (DG._plan_row's output) to the part's own
-#                   scratch (cells.jsonl: the table's text, never a copy of the spool; bounded by the disk reserve,
-#                   deleted after the final pass, its bytes on the receipt) and the final pass numbers them from there
-#                   without decoding the source (-> 2: snapshot and plan).
-# The table's bytes do not depend on any of the three (the same cells, dictionary and rows in the same order).
+# ---- Session 6 (Greg, 2026-10-08, verbatim: "We stream the data in and get 32 CPUs and workers on this job"; "we only
+# do 1 pass. Eliminate the 2nd pass"): fewer decodes of the source rows. A spool table decoded every row five times
+# (cross context, snapshot, plan, final, verify: the 496.7 GB full-depth frames of a2, ~29 min per decode on 31
+# helpers). Three exact reductions, switched together by ONE run setting, FRANKIE_DIGEST_DECODES = 5 | 4 | 3 | 2 (the
+# decodes of a table that feeds a cross-table context; default 2, the floor without a second copy of the spool: the
+# dictionary grammar is two-pass, the column set depends on the deepest row and the dictionary on every part's counts,
+# so no row's final text exists before the whole table has been seen twice):
+#   5  none (the writer as before: cross context, snapshot, plan, final, verify)
+#   4  + fuse_context    the cross-table context columns are collected inside the snapshot pass (5 -> 4);
+#   3  + canonical_verify the inverse proof compares each parsed-back row with a canonical digest of the source row kept
+#                        by the last pass that decoded it (32 bytes a row), instead of decoding the source again (-> 3);
+#                        taken only while the canonical form is injective over DG._same's domain: a type-tagged,
+#                        prefix-free encoding over exactly CANONICAL_TYPES (a subclass is refused), checked at runtime
+#                        against DG._same on a probe vector (_canonical_self_check) and refused for any other leaf type
+#                        (the table then verifies by DG._same against the source, the reason on the receipt);
+#   2  + one_decode      the plan pass writes every row's pre-dictionary cells (DG._plan_row's output) to the part's own
+#                        scratch (cells.jsonl.gz: the table's text, never a copy of the spool; bounded by the disk
+#                        reserve, deleted after the final pass, its bytes on the receipt) and the final pass numbers
+#                        them from there without decoding the source (-> 2: snapshot and plan).
+# The three settings below switch each reduction alone (on|off; the canary's per-reduction comparison); given beside
+# FRANKIE_DIGEST_DECODES they must agree with it or the writer refuses. The table's bytes do not depend on any of the
+# three (the same cells, dictionary and rows in the same order): toys test_decodes_identity.py / test_two_decodes.py.
 PASS_SETTINGS = dict(fuse_context='FRANKIE_DIGEST_FUSE_CONTEXT', canonical_verify='FRANKIE_DIGEST_CANONICAL_VERIFY',
                      one_decode='FRANKIE_DIGEST_ONE_DECODE')
+DECODES_SETTING = 'FRANKIE_DIGEST_DECODES'
+DECODES_DEFAULT = 2
+DECODES_LADDER = {5: dict(fuse_context=False, canonical_verify=False, one_decode=False),
+                 4: dict(fuse_context=True, canonical_verify=False, one_decode=False),
+                 3: dict(fuse_context=True, canonical_verify=True, one_decode=False),
+                 2: dict(fuse_context=True, canonical_verify=True, one_decode=True)}
 
 
 def pass_modes():
-    """{fuse_context, canonical_verify, one_decode: bool} from the run settings (on|off, default on)."""
-    out = {}
+    """{fuse_context, canonical_verify, one_decode: bool, decodes: int, basis: str} from the run settings:
+    FRANKIE_DIGEST_DECODES (5|4|3|2, default 2) sets the three; a per-reduction setting (on|off) given as well must
+    agree with it (else ValueError), and given alone (no FRANKIE_DIGEST_DECODES) it overrides the default ladder."""
+    given = os.environ.get(DECODES_SETTING)
+    if given is None:
+        decodes, basis = DECODES_DEFAULT, '%s unset: default %d' % (DECODES_SETTING, DECODES_DEFAULT)
+    else:
+        if given.strip() not in ('5', '4', '3', '2'):
+            raise ValueError('%s must be 5, 4, 3 or 2, not %r' % (DECODES_SETTING, given))
+        decodes = int(given.strip())
+        basis = '%s=%d' % (DECODES_SETTING, decodes)
+    out = dict(DECODES_LADDER[decodes])
     for key, name in PASS_SETTINGS.items():
-        value = os.environ.get(name, 'on')
+        value = os.environ.get(name)
+        if value is None:
+            continue
         if value not in ('on', 'off'):
             raise ValueError('%s must be on or off, not %r' % (name, value))
+        if given is not None and (value == 'on') != out[key]:
+            raise ValueError('%s=%s contradicts %s=%d (%s is %s there)'
+                             % (name, value, DECODES_SETTING, decodes, key, 'on' if out[key] else 'off'))
         out[key] = value == 'on'
+        basis += '; %s=%s' % (name, value)
+    out['decodes'] = decodes
+    out['basis'] = basis
     return out
 
 
@@ -361,35 +392,38 @@ CANONICAL_TYPES = (type(None), bool, int, float, str, bytes, list, tuple, dict)
 
 
 class _NotCanonical(TypeError):
-    """A leaf type outside CANONICAL_TYPES: the row is verified by DG._same instead."""
+    """A leaf type outside CANONICAL_TYPES (a subclass included): the row is verified by DG._same instead."""
 
 
 def _canonical(value, out):
-    """Append the type-tagged, prefix-free encoding of value to out (a list of bytes). Over CANONICAL_TYPES two values
-    have equal encodings exactly when DG._same holds: floats by repr (an exact round trip; -0.0 keeps its sign; every
-    NaN one spelling, as _same treats every NaN as equal), ints by their digits, bools apart from ints, lists apart from
-    tuples, strings and bytes with their length, dict keys tagged and sorted by their own encoding."""
+    """Append the type-tagged, prefix-free encoding of value to out (a list of bytes). Over exactly CANONICAL_TYPES two
+    values have equal encodings exactly when DG._same holds: floats by repr (an exact round trip; -0.0 keeps its sign;
+    every NaN one spelling, as _same treats every NaN as equal), ints by their digits, bools apart from ints, lists
+    apart from tuples, strings and bytes with their length, dict keys tagged and sorted by their own encoding. A
+    subclass (a numpy float64 is a float whose repr differs; DG._same calls it equal to the plain float it parses back
+    to) is refused, never mis-spelled: the row then verifies by DG._same."""
+    kind = type(value)
     if value is None:
         out.append(b'n')
-    elif isinstance(value, bool):
+    elif kind is bool:
         out.append(b'b1' if value else b'b0')
-    elif isinstance(value, int):
+    elif kind is int:
         out.append(b'i%d;' % value)
-    elif isinstance(value, float):
+    elif kind is float:
         out.append(b'fnan;' if value != value else b'f' + repr(value).encode('ascii') + b';')
-    elif isinstance(value, str):
+    elif kind is str:
         raw = value.encode('utf-8', 'surrogatepass')
         out.append(b's%d:' % len(raw))
         out.append(raw)
-    elif isinstance(value, bytes):
+    elif kind is bytes:
         out.append(b'y%d:' % len(value))
         out.append(value)
-    elif isinstance(value, (list, tuple)):
-        out.append((b'l' if isinstance(value, list) else b't') + b'%d[' % len(value))
+    elif kind is list or kind is tuple:
+        out.append((b'l' if kind is list else b't') + b'%d[' % len(value))
         for item in value:
             _canonical(item, out)
         out.append(b']')
-    elif isinstance(value, dict):
+    elif kind is dict:
         keyed = []
         for key, item in value.items():
             piece = []
@@ -846,7 +880,7 @@ def _pass_code():
     import frankie_box_digest_sources as S
     base = [hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest() for m in (TS, DG)]
     passes = (('snapshot', (_readonly, _source_rows, _fold, _snapshot, S._decoded, S._compare_groups, _seeds)),
-              ('plan', (_part_db, _digest, _plan, _table_facts)),
+              ('plan', (_part_db, _digest, _plan, _table_facts, _canonical, canonical_digest)),   # digests.bin under one_decode
               ('merge', (_merge,)),
               ('final', (_lookup_db, _final)),
               ('copy', (_separator, _copy)))
@@ -1141,10 +1175,12 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     decodes = 1 + (0 if fused or not cross_columns else 1) + (1 if one else 2) + (0 if by_digest else 1)
     return dict(path=str(destination), rows=n, verified=True, verified_identity=before,
                 scratch_directory=str(scratch), parts=len(specs),
-                passes=dict(schema='FRANKIE_DIGEST_PASSES_V1', fuse_context=fused, one_decode=one,
+                passes=dict(schema='FRANKIE_DIGEST_PASSES_V2', fuse_context=fused, one_decode=one,
                             canonical_verify=by_digest, verify_basis=verify_basis, source_decodes=decodes,
                             cells_scratch_bytes=cells_bytes, digests_bytes=digests_bytes,
-                            settings={k: os.environ.get(v, 'on') for k, v in PASS_SETTINGS.items()}))
+                            decodes_setting=dict(value=modes['decodes'], basis=modes['basis'],
+                                                 feeds_context=bool(cross_columns)),
+                            settings={k: 'on' if modes[k] else 'off' for k in PASS_SETTINGS}))
 
 
 def pool_map_verify(jobs, cpus, pool=None):

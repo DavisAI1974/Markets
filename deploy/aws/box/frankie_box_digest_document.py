@@ -501,9 +501,10 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         # on a full day) is written by the parallel table writer: the same bytes and inverse proof as TS.write_table over
         # the same rows (frankie_box_digest_parallel), each helper reading its own line range of the spool (never held
         # whole). Every field and row is kept; nothing is reduced. Session 6 (Greg: "We stream the data in and get 32
-        # CPUs and workers on this job"): with FRANKIE_DIGEST_FUSE_CONTEXT=on the cross-table context is collected by
-        # the writer's own snapshot decode (fused: a Future resolved from inside the writer) instead of a decode of its
-        # own; the writer's other reductions (one_decode, canonical_verify) are its run settings (PP.PASS_SETTINGS).
+        # CPUs and workers on this job"): under FRANKIE_DIGEST_DECODES <= 4 (default 2; PP.pass_modes) the cross-table
+        # context is collected by the writer's own snapshot decode (fused: a Future resolved from inside the writer)
+        # instead of a decode of its own; the writer's other reductions (canonical_verify at 3, one_decode at 2) are
+        # the same setting's; which ran and the scratch bytes are on the proof's `passes`, copied to the timeline.
         entry = timed(ordinal, name, 'parallel')
         path = scratch/('table-%04d.txt' % ordinal)
         key = legacy_key(name, None, code, legacy_inputs)
