@@ -340,3 +340,16 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   done ~19:25Z, then receipt -> SAVED (marker) -> resume + kick on db96f24 -> boundary by claim -> teacher on 64.
 - Alternative offered to Greg (not taken unless he says): stop the render now, teacher now (host-bound), render the digest
   alongside inside the day's booking (needs a small render-mode change) before the classroom.
+
+## Parent: Greg 17:4xZ "Let's make changes now. If we have to stop, save renders first"
+- Source facts: frankie_box_digest_parallel saves a checkpoint after EVERY pass (a pass in flight always finishes and
+  saves); a stop is honoured only between passes and only when FRANKIE_DIGEST_STOP_FILE names an existing file in the
+  child's environment; the same scratch resumes at the first unsaved pass under the same pass code (no digest code
+  changed today). First decode of the frames spool: 17:18Z -> ~18:22Z at 125 MiB/s.
+- Plan: (1) source now (opus role): the standalone render runs INSIDE the day's own booking (FRANKIE_RENDER_BOOKING),
+  checkpoint-compatible with the ROOT child's scratch; watchdog kicks at the newest staged checkout; validate `off`
+  setting (claim stays default); a one-screen day status probe. (2) Restage. (3) At the first pass boundary (~18:22Z):
+  stop the ROOT child (the stop file if the child honours it, else a kill right after the checkpoint), entry SAVED on
+  the marker. (4) Resume + kick on the new checkout with FRANKIE_ROOT_DIGEST=off: receipt in minutes, boundary by claim,
+  teacher on 64. (5) Standalone render inside the booking resumes the digest's second decode alongside the teacher,
+  done long before the classroom. Saves ~1 h of chain time on this day.
