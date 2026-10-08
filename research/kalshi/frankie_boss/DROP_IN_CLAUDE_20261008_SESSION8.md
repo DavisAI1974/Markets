@@ -97,6 +97,34 @@ them means deregistering the AMI), snap-0af0f3714bbf2a87e (2026-09-16 restore-ve
 (2026-08-28 pre-reboot preservation). Cheapest reversible cut while the boxes are stopped: ModifyVolume the three 2 TB volumes
 to baseline 3,000 / 125 (~$280/mo = ~$9.3/day saved; raise again before a run; 6 h cooldown between modifications per volume).
 
+DENIED 2026-10-08 ~11:50Z (Greg's screenshot of case 179140016900825): "at this time we are unable to approve ... Service quotas are
+put in place to help you gradually ramp up activity ... If you'd like to appeal this decision, please reopen this case and provide
+as detailed a use case as possible." Service Quotas still shows the request CASE_OPENED (it flips to CASE_CLOSED when the case
+resolves; a new request can be filed only then). Spot quota L-34B43A08 ("All Standard Spot Instance Requests") is a SEPARATE
+256 vCPUs. What runs TODAY without any increase (stopped boxes do not count): 4 x 64-vCPU boxes On-Demand + 4 x 64-vCPU on Spot
+(ROOT is resumable from its save marker, so Spot is lawful for ROOT; the classroom stays On-Demand) = 8 fleet boxes.
+
+THE APPEAL (Greg pastes this as a reply on case 179140016900825, "reopen" the case; ask for the SAME 640, staged, not 1152: the
+denial says "gradually"; a second request to 1152 follows after the first fleet week has billed):
+
+  Subject: Appeal - Running On-Demand Standard instances, us-east-1, 256 -> 640 vCPUs (staged ramp)
+
+  Use case: batch scientific computation over historical commodity-market order-book data (natural gas futures, NYMEX) for
+  DavisAI Markets. Each job processes one trading day: about 500 GB of order-book frames plus 400 GB of derived ledgers,
+  CPU-bound, memory-heavy (the working set needs the 512 GiB of an r7i.16xlarge). We have 30 such days to process, each day
+  independent of the others, and we run two days per instance. This account has run the same workload on r7i.8xlarge
+  (i-035994afa8bdf66a5) and r7i.16xlarge (i-0d17573dbce871520) since September 2026 and paid for it; the next phase is the same
+  job across more days in parallel.
+
+  Requested: 640 vCPUs = 10 x r7i.16xlarge (64 vCPU each). Duration: each instance lives about 2 days, then terminates
+  (InstanceInitiatedShutdownBehavior=terminate from a launch template); the whole phase is about one week. After that we expect
+  to ask for 1152 for the final 15-instance phase, once this phase has billed normally.
+
+  Cost controls in place: AWS Budgets (daily and monthly guards with alerts), CloudWatch alarms on disk and system status,
+  instances launched from a launch template with IMDSv2 and terminate-on-shutdown, resumable checkpoints so Spot can carry the
+  first stage, and all data in S3/EBS in this account. We are happy to accept a partial increase (e.g. 384 or 512) as a first
+  step toward 640.
+
 If Greg has already filed it himself (he said he would in the new session), confirm with
 ListRequestedServiceQuotaChangeHistoryByQuota and do not file a second one.
 
