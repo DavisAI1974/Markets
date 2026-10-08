@@ -27,15 +27,32 @@ end of `E2E_ONE_DAY_20231018.md`.
 - Toys: `tests/test_frankie_aws_stack_fleet.py` (10). Pass. Dry-run CLI exercised (receipts written, needs-input gating).
 - All dry-run by default; `--apply --confirm GREG_GO_AWS_STACK` was NEVER run.
 
-## Commit hashes (on ccr-d2f8f826-iefeah-frankie; rebased onto the parent's box records)
+### (c) The fleet workflow + status probe
+- `.github/workflows/frankie_fleet.yml` (NEW), modelled on `frankie_box_run.yml`: `plan` (dry-run fleet-launch, records
+  nothing), `launch` (fleet-launch `--apply --confirm GREG_GO_AWS_STACK`, refused unless the confirm input equals that
+  exact string), `status` (read-only probe), `stop-all` (refuses without confirm; STOPS never terminates every
+  Project=frankie fleet box; never the main boxes `i-035994afa8bdf66a5` / `i-0d17573dbce871520` unless named in the
+  `instances` input). `frankie_box_run.yml` is unchanged.
+- `deploy/aws/box/frankie_fleet_status.py` (NEW): the read-only probe the `status` action runs. Joins the S3 day list +
+  EC2 DescribeInstances into one line per instance; runnable locally with `--day-list <path>` (no boto3, no AWS).
+- Full-day stage tracking (Greg's scope note 1): a day does NOT end at the classroom. `frankie_box_fleet` gains
+  `record_stage_progress` + `FLEET_DONE_STAGES=('jev',)`; the handoff records every stage DONE on the day list as the
+  day runs its full sequence (classroom -> data/search -> scientific-teacher -> voice meeting -> jev -> end), done only
+  at the tail (jev). The lease still covers ONLY the classroom; the post-classroom stages run per-box on the grown 64
+  lane after release.
+- Toys: `tests/test_frankie_fleet_status.py` (7). Pass.
+
+## Commit hashes (on ccr-d2f8f826-iefeah-frankie; rebased onto the parent's box records; hashes are the current ones)
 - `eb1bafe3` - the fleet module + its 14 toys.
 - `7bbdae02` - the handoff hooks (gate + release) + 4 toys.
 - `268f70cf` - the stack fleet steps (launch-template fleet spec, fleet-launch, golden-ami) + 10 toys + the atomic
   fake-store fix.
-- (this status file + the E2E section land in a following commit.)
-Verification on every touched file: py_compile + ast.parse on .py, bash -n on the stage script, git diff --check clean;
-28/28 toys pass (`python -m unittest tests.test_frankie_box_fleet tests.test_frankie_box_fleet_handoff
-tests.test_frankie_aws_stack_fleet`).
+- `33f777fa` - the first docs (E2E section + this status file's first version).
+- `e984ec33` - (c) the fleet workflow + status probe + full-day stage tracking + 7 toys.
+- (this docs update lands in a following commit.)
+Verification on every touched file: py_compile + ast.parse on .py, YAML safe_load on the workflow, bash -n on the pure
+run blocks, git diff --check clean; 35/35 toys pass (`python -m unittest tests.test_frankie_box_fleet
+tests.test_frankie_box_fleet_handoff tests.test_frankie_aws_stack_fleet tests.test_frankie_fleet_status`).
 
 ## Open decisions for Greg
 1. **Self-driving stage vs. the SSM reviewed-helper stage.** The fleet user-data stages the commit by `git clone/checkout`
@@ -58,6 +75,19 @@ tests.test_frankie_aws_stack_fleet`).
 5. **The day-list prefix and the run name.** `FRANKIE_FLEET_DAY_LIST` defaults the bucket to the granite bucket; the day
    list is seeded by `frankie_box_fleet.py seed-day-list` or an operator. The launch steps default `--run e2e-20231018-a2`
    and `--fleet-day-list fleet/<run>`. Confirm the run name and prefix for the real fleet.
+6. **The fleet box instance profile (scope note 2).** The launch template defaults `--instance-profile Ssm` -- the SAME
+   profile the main box i-035994afa8bdf66a5 runs under, which per the session records carries SSM, Bedrock in us-east-1
+   (the Granite voice meeting calls Bedrock as the teacher-logic helper) and S3 (the data + frankie-granite42 buckets).
+   Reused by name; I made NO IAM change (source/plan only). The one thing to confirm before launch: S3 access to the NEW
+   us-east-1 frankie-archive bucket (the parent's 85ce2827 created it) in the Ssm role -- if the role's S3 statement is
+   bucket-scoped and does not include it, add it, or switch to the day-scoped profile AWS_TOOLS_STACK section 3.9
+   sketches (s3 Get on the day prefix, Put on the archive prefix, ssm:UpdateInstanceInformation, cloudwatch:PutMetricData,
+   ec2:TerminateInstances on self). Your call; I did not touch IAM.
+7. **A day's full sequence after the classroom (scope note 1) is honoured, not dropped.** The lease covers ONLY the
+   classroom; data/search -> scientific-teacher -> the Granite voice meeting -> jev -> end run per-box on the grown 64
+   lane after the lease is released, as ordinary stages, and the day-list state + the status probe mark a day done only
+   at jev/end. Nothing to decide unless you want the "done" tail stage to be something other than `jev`
+   (FLEET_DONE_STAGES in frankie_box_fleet.py).
 
 ## RUNTIME-UNVERIFIED (everything; the container has 4 CPUs, no ledger, no S3)
 The real S3Store against the bucket (412 handling, paging); classroom_gate + the WAIT unit end to end on the box; the
