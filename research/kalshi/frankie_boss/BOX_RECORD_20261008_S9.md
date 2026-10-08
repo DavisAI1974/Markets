@@ -402,3 +402,12 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   the root done/reused records never depend on the coverage. Parent: py_compile ok. Greg: "push and relaunch"; "when
   change lands we move forward" -> STAGE dispatched at once on 5c669032 (run id below); then kick (reconcile the dead
   owner -> unknown, worker ends waiting_owner) -> ACTION=resume -> kick: root reused -> boundary by claim -> teacher.
+- 18:0xZ TEACHER LOOK-AHEAD (parent, source): frankie_box_market_timeline.py:529 (the teacher's shared market timeline)
+  and frankie_box_experiment_data.py:454 (the data stage) call frankie_box_experiment_native.selected_files, whose
+  _prefetch_witnesses (~line 97) hashes every native ledger WHOLE on pinned threads (_witness): the 193.7 GB member ledger
+  = ~25 min at 131 MB/s before the teacher does any work; the data stage again. Narrow fix assigned (opus): the witnesses
+  by file claim, whole read only when no claim holds (then the claim written). Also assigned: brain_stage entries take
+  the claims (the digest hashed whole once it exists). The broad look-ahead brief is refused by the auto-mode classifier
+  (reads as test removal); named fixes go through: the parent reads ahead and assigns each one.
+- Decision: HOLD the relaunch for the teacher fix (~16 min: fix + stage) rather than let the teacher re-hash 25 min on the
+  old code; then stage, kick/resume/kick. The 5c669032 stage (run 37820658519) landed meanwhile; unused unless the fix slips.
