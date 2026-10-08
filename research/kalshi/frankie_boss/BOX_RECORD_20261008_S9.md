@@ -110,3 +110,14 @@ Role: box-operator (fable), session 9, under the parent. AWS via the Aws connect
   frankie_box_experiment_root.py = 2 (the fix is in). State unchanged: root.json seq 2 e2e-20231018-a2/20231018 `saved`,
   owner booking day-run-20231018-day_slot_root-1791402822-3111 (attempt -a1, cpus 0-31); ledger cpus 0-31 size 32 commit
   d67b9c63 `retained`; receipt ABSENT; no frankie-* unit; no experiment_root process; nproc 64.
+- 16:48:21Z GROW+RESUME+KICK script (SSM f324eef2, Failed rc 10): HEAD 27109f4d; `frankie_box_cores.py grow --booking
+  day-run-20231018-day_slot_root-1791402822-3111 --size 64` exit 1 with a Traceback in the PRINT, after the grow was applied:
+  `cmd_grow -> emit_outcome(a, outcome)` line 1066 `tag = dict(booked='CPU_BOOKING', waiting='CPU_BOOKING_WAITING',
+  refused='CPU_BOOKING_REFUSED')[outcome['status']]` -> `KeyError: 'grown'`. The script's gate printed "GROW NOT DONE (exit 1
+  ...); stopping here" and exited 10: show, resume, kick and status were NOT run.
+- 16:48:35Z READ-ONLY CHECK (SSM 31a96e46, rc 0): the grow DID land. Ledger mtime 16:48:22, cpus 0-63 n 64 size 64 (commit
+  still d67b9c63, the booking's own), `grown` [{from_size 32, to_size 64, added 32-63, at 16:48:22Z, by_pid 4745, reason
+  "Greg 16:2xZ CPU add: a2 restart on all 64"}], `retained` unchanged (16:34:31Z, attempt -a1). Cause: cmd_grow's outcome
+  status `grown` is missing from emit_outcome's tag map (a cosmetic print defect; exit 1 instead of 0). Entry still `saved`,
+  marker standing, no unit, no child. STOPPED here per the instruction (no retry); reported to the parent. Remaining step is
+  the resume + kick + status (the grow need not be re-run: the booking already holds 0-63).
